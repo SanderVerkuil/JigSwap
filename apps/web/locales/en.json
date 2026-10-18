@@ -1898,6 +1898,8 @@
       "household_invite_received": "Household invites",
       "household_invite_accepted": "Household invite accepted",
       "connection_offer_received": "Invitations to follow each other",
+      "circle_invite_received": "Circle invites",
+      "circle_invite_accepted": "Circle invite accepted",
       "whats_new": "What's new",
       "report_decided": "Report outcomes",
       "content_removed": "Content removed",
@@ -2030,6 +2032,14 @@
         "title": "Follow each other?",
         "message": "{hasActorName, select, yes {{actorName} invited you to JigSwap. Follow each other?} other {Someone invited you to JigSwap. Follow each other?}}"
       },
+      "circle_invite_received": {
+        "title": "Circle invite",
+        "message": "{hasActorName, select, yes {{actorName} invited you to join a circle.} other {Someone invited you to join a circle.}}"
+      },
+      "circle_invite_accepted": {
+        "title": "Invite accepted",
+        "message": "{hasActorName, select, yes {{actorName} accepted your circle invitation.} other {Someone accepted your circle invitation.}}"
+      },
       "whats_new": {
         "title": "New in JigSwap",
         "message": "See what's new in JigSwap."
@@ -2085,6 +2095,8 @@
       "household_invite_received": "When someone invites you to their household.",
       "household_invite_accepted": "When someone accepts your household invite.",
       "connection_offer_received": "When the person who invited you to JigSwap asks to follow each other.",
+      "circle_invite_received": "When a circle admin invites you to join their circle.",
+      "circle_invite_accepted": "When someone accepts your invitation to a circle.",
       "whats_new": "When a new feature or change to JigSwap is announced.",
       "report_decided": "When a moderator decides on a report you filed.",
       "content_removed": "When a moderator removes one of your messages or photos after a report.",
@@ -2234,6 +2246,12 @@
       },
       "connection_offer_received": {
         "sentence": "<b>{actor}</b> invited you to JigSwap. Follow each other?"
+      },
+      "circle_invite_received": {
+        "sentence": "<b>{actor}</b> invited you to join {hasCircle, select, yes {<b>{circle}</b>} other {a circle}}."
+      },
+      "circle_invite_accepted": {
+        "sentence": "<b>{actor}</b> accepted your invitation to {hasCircle, select, yes {<b>{circle}</b>} other {your circle}}."
       },
       "report_decided": {
         "sentence": "{decision, select, dismissed {We reviewed your report and found no violation, so no action was taken.} content_removed {We reviewed your report and removed the content.} warned {We reviewed your report and warned the member.} other {We reviewed your report.}}"

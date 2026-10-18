@@ -82,6 +82,7 @@ export const deliveryContentOf = (
   if (context.exchangeStatus) params["exchangeStatus"] = context.exchangeStatus;
   if (context.messagePreview) params["messagePreview"] = context.messagePreview;
   if (context.messageKind) params["messageKind"] = context.messageKind;
+  if (context.circleName) params["circleName"] = context.circleName;
 
   return {
     params,

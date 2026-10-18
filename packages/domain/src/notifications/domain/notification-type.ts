@@ -30,6 +30,8 @@ export type NotificationType =
   | "household_invite_received" // Household: HouseholdInviteSent — someone invited the member to their household
   | "household_invite_accepted" // Household: HouseholdInviteAccepted — the member's invite was accepted
   | "connection_offer_received" // Social: ConnectionOffered — their inviter offers to follow each other
+  | "circle_invite_received" // Sharing: CircleInviteIssued — a circle Admin invited the member to join
+  | "circle_invite_accepted" // Sharing: CircleInviteAccepted — the member's circle invite was accepted
   | "whats_new" // Product: a What's new entry marked `notify: true` was published (not a domain event)
   | "report_decided" // Safety: a moderator decided a report the member filed (DSA Art. 16(5))
   | "content_removed" // Safety: a moderator removed the member's reported content (DSA Art. 17)
@@ -62,6 +64,8 @@ export const NOTIFICATION_TYPES: readonly NotificationType[] = [
   "household_invite_received",
   "household_invite_accepted",
   "connection_offer_received",
+  "circle_invite_received",
+  "circle_invite_accepted",
   "whats_new",
   "report_decided",
   "content_removed",
@@ -86,6 +90,7 @@ export const EMAIL_ELIGIBLE_TYPES: ReadonlySet<NotificationType> = new Set([
   "new_follower",
   "follow_request_received",
   "follow_request_approved",
+  "circle_invite_received",
 ]);
 
 // Types the member cannot switch off in-app: the DSA Art. 17 statement of reasons must reach the

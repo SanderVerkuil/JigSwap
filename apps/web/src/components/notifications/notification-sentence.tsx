@@ -56,10 +56,13 @@ export function NotificationSentence({ view }: { view: NotificationView }) {
   const memberName = useActorName();
   const displayName = useMemberDisplayName();
   const { type, actors, actorCount, context } = view;
-  // An anonymous, not-departed trade party is a living member hidden by privacy (e.g. an owner who
-  // declined without replying), not a former one: name them with the generic member label.
+  // An anonymous, not-departed trade party or circle inviter/invitee is a living member hidden by
+  // privacy (e.g. an owner who declined without replying), not a former one: name them with the
+  // generic member label.
   const actorName = (actor: NotificationActorView | undefined) =>
-    type.startsWith("trade_") && actor?.anonymous && !actor.departed
+    (type.startsWith("trade_") || type.startsWith("circle_invite_")) &&
+    actor?.anonymous &&
+    !actor.departed
       ? displayName(null)
       : memberName(actor);
 
@@ -97,6 +100,8 @@ export function NotificationSentence({ view }: { view: NotificationView }) {
     decision: context.reportDecision ?? "",
     restricted: context.restrictedContent ?? "",
     ground: context.ground ?? "",
+    circle: context.circleName ?? "",
+    hasCircle: context.circleName ? "yes" : "no",
     b: bold,
   };
   const key =

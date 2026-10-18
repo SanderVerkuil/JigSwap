@@ -338,6 +338,43 @@ describe("renderEmail with resolved delivery content", () => {
     },
   );
 
+  it.each([
+    ["en", "Mara invited you to join Saturday Puzzlers.", "View invite"],
+    [
+      "nl",
+      "Mara heeft je uitgenodigd voor Saturday Puzzlers.",
+      "Bekijk uitnodiging",
+    ],
+  ] as const)(
+    "%s: a circle invite names the inviter and the live circle name, deep-linking the invite",
+    async (locale, body, cta) => {
+      const email = await renderEmail({
+        type: "circle_invite_received",
+        params: { actorName: "Mara", circleName: "Saturday Puzzlers" },
+        locale,
+        baseUrl: BASE,
+        relatedId: "inv-1",
+        href: "/circles?invite=inv-1",
+      });
+      expect(email.text).toContain(body);
+      expect(email.html).toContain(cta);
+      expect(email.html).toContain(`href="${BASE}/circles?invite=inv-1"`);
+    },
+  );
+
+  it("a circle invite without a visible circle name uses the generic sentence", async () => {
+    const email = await renderEmail({
+      type: "circle_invite_received",
+      params: {},
+      locale: "en",
+      baseUrl: BASE,
+    });
+    expect(email.text).toContain(
+      "Someone invited you to join a circle on JigSwap.",
+    );
+    expect(email.html).toContain(`href="${BASE}/circles"`);
+  });
+
   it("a nameless reviewer falls back to the generic actor label and no rating line", async () => {
     const email = await renderEmail({
       type: "review_received",

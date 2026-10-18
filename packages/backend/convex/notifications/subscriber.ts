@@ -532,6 +532,55 @@ const translate = async (
     }
     // HouseholdInviteDeclined: DELIBERATELY unmapped — decline is silent (spec).
 
+    // --- Sharing ---
+    // Circle invite notifications carry no actorName snapshot: the actor is always a ref, and the
+    // read side reveals them only by the ordinary public / mutual rule. Nothing is sent across a
+    // block (either way) that landed before the event was dispatched.
+    case "CircleInviteIssued": {
+      const inviterId = p.inviterId as string;
+      const inviteeId = p.inviteeId as string;
+      if (
+        await isBlockedEitherWay(ctx, asMember(inviteeId), asMember(inviterId))
+      ) {
+        return [];
+      }
+      return [
+        cmd(
+          inviteeId,
+          "circle_invite_received",
+          p.inviteId as string,
+          {},
+          {
+            actor: inviterId,
+            subject: { kind: "circleInvite", inviteId: p.inviteId as string },
+          },
+        ),
+      ];
+    }
+    case "CircleInviteAccepted": {
+      const inviterId = p.inviterId as string;
+      const inviteeId = p.inviteeId as string;
+      if (
+        await isBlockedEitherWay(ctx, asMember(inviterId), asMember(inviteeId))
+      ) {
+        return [];
+      }
+      return [
+        cmd(
+          inviterId,
+          "circle_invite_accepted",
+          p.circleId as string,
+          {},
+          {
+            actor: inviteeId,
+            subject: { kind: "circle", circleId: p.circleId as string },
+          },
+        ),
+      ];
+    }
+    // CircleInviteDeclined: DELIBERATELY unmapped — decline is silent to the inviter (spec).
+    // CircleInviteRevoked / CircleInviteExpired: no member-facing notification.
+
     default:
       return [];
   }

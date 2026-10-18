@@ -986,6 +986,8 @@ export default defineSchema({
       v.literal("household_invite_received"),
       v.literal("household_invite_accepted"),
       v.literal("connection_offer_received"),
+      v.literal("circle_invite_received"),
+      v.literal("circle_invite_accepted"),
       v.literal("whats_new"),
       v.literal("report_decided"),
       v.literal("content_removed"),
@@ -1009,9 +1011,9 @@ export default defineSchema({
     actorIds: v.optional(v.array(v.id("users"))),
     actorCount: v.optional(v.number()),
     // What the notification is about (mirrors the domain NotificationSubject). Exchange, thread,
-    // follow request, invite, household, review, proposal, whats-new and connection-offer ids are
-    // opaque aggregate
-    // ids; puzzle/copy/goal are the Convex `_id`s every producer already holds.
+    // follow request, invite, household, circle invite, circle, review, proposal, whats-new and
+    // connection-offer ids are opaque aggregate ids; puzzle/copy/goal are the Convex `_id`s every
+    // producer already holds.
     subject: v.optional(
       v.union(
         v.object({ kind: v.literal("exchange"), exchangeId: v.string() }),
@@ -1019,6 +1021,8 @@ export default defineSchema({
         v.object({ kind: v.literal("followRequest"), requestId: v.string() }),
         v.object({ kind: v.literal("householdInvite"), inviteId: v.string() }),
         v.object({ kind: v.literal("household"), householdId: v.string() }),
+        v.object({ kind: v.literal("circleInvite"), inviteId: v.string() }),
+        v.object({ kind: v.literal("circle"), circleId: v.string() }),
         v.object({ kind: v.literal("puzzle"), puzzleId: v.id("puzzles") }),
         v.object({ kind: v.literal("copy"), copyId: v.id("ownedPuzzles") }),
         v.object({ kind: v.literal("goal"), goalId: v.id("goals") }),

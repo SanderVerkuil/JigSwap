@@ -23,5 +23,8 @@ export const ctaPath = (type: EmailType, relatedId?: string): string => {
     case "follow_request_received":
     case "follow_request_approved":
       return "/people";
+    // The invite deep link comes from the resolved delivery (only while the invite is open).
+    case "circle_invite_received":
+      return "/circles";
   }
 };

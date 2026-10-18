@@ -13,6 +13,9 @@ import type { DeliveryContent } from "./deliveryContent";
 //                 follow_request_received (requester), follow_request_approved (target),
 //                 household_invite_received (inviter), household_invite_accepted (invitee),
 //                 connection_offer_received (inviter)
+//                 circle_invite_received (inviter), circle_invite_accepted (invitee)
+//   circleName  — circle_invite_received/accepted: never stored; overlaid live by the delivery
+//                 resolution when the recipient may see the circle
 //   puzzleTitle — puzzle_approved/rejected, proposal_approved/rejected, admin_proposal_filed,
 //                 admin_definition_submitted
 //   goalTitle   — goal_achieved
@@ -203,6 +206,18 @@ const COPY: Record<NotificationType, (p: Params) => NotificationText> = {
     message: p["actorName"]
       ? `${p["actorName"]} invited you to JigSwap. Follow each other?`
       : "Someone invited you to JigSwap. Follow each other?",
+  }),
+  circle_invite_received: (p) => ({
+    title: "Circle invite",
+    message: p["circleName"]
+      ? `${p["actorName"] ?? "Someone"} invited you to join ${p["circleName"]}`
+      : `${p["actorName"] ?? "Someone"} invited you to join a circle`,
+  }),
+  circle_invite_accepted: (p) => ({
+    title: "Invite accepted",
+    message: p["circleName"]
+      ? `${p["actorName"] ?? "Someone"} accepted your invitation to ${p["circleName"]}`
+      : `${p["actorName"] ?? "Someone"} accepted your circle invitation`,
   }),
   whats_new: () => ({
     title: "New in JigSwap",

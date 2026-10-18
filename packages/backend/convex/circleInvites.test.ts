@@ -1,3 +1,4 @@
+import { EMAIL_ELIGIBLE_TYPES } from "@jigswap/domain";
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError, type Value } from "convex/values";
 import { describe, expect, test } from "vitest";
@@ -238,6 +239,29 @@ const contactableOutsider = async (t: T, alice: Id<"users">) => {
   await mutualFollow(t, alice, id);
   return id;
 };
+
+const flushScheduled = async (t: T) => {
+  for (let i = 0; i < 10; i++) {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await t.finishInProgressScheduledFunctions();
+  }
+};
+
+const notificationsOf = (t: T, userId: Id<"users">) =>
+  t.run((ctx) =>
+    ctx.db
+      .query("notifications")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect(),
+  );
+
+const viewsOf = async (t: T, who: Who) =>
+  (
+    await as(t, who).query(
+      api.notifications.listMyNotificationViews.listMyNotificationViews,
+      { paginationOpts: { numItems: 20, cursor: null } },
+    )
+  ).page;
 
 // convex-test serializes ConvexError.data to a JSON string at the function boundary; normalise.
 const dataOf = (e: unknown): { code?: string } => {
@@ -924,5 +948,122 @@ describe("sharing.listInvitableMembers", () => {
         "CircleNotFound",
       );
     }
+  });
+});
+
+describe("circle invite notifications", () => {
+  test("the invitee is notified (actor = inviter, circleInvite subject), deep-linked while open", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, carol, circleId } = await seed(t);
+    await mutualFollow(t, alice, carol);
+    const inviteId = await invite(t, "alice", circleId, carol);
+    await flushScheduled(t);
+
+    const rows = await notificationsOf(t, carol);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      type: "circle_invite_received",
+      relatedId: inviteId,
+      actorIds: [alice],
+      subject: { kind: "circleInvite", inviteId },
+    });
+    // No name snapshot: the actor is resolved live through the privacy rules.
+    expect(rows[0].params?.actorName).toBeUndefined();
+
+    const [view] = await viewsOf(t, "carol");
+    expect(view.context.circleName).toBe("Saturday Puzzlers");
+    expect(view.href).toBe(`/circles?invite=${inviteId}`);
+    expect(view.actors[0]).toMatchObject({ anonymous: false, memberId: alice });
+
+    // Once answered, the row stays but links to the circles page.
+    await accept(t, "carol", inviteId);
+    const [after] = await viewsOf(t, "carol");
+    expect(after.href).toBe("/circles");
+    expect(after.state).toBe("unavailable");
+  });
+
+  test("accepting notifies the inviter (actor = invitee, circle subject)", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, carol, circleId } = await seed(t);
+    await mutualFollow(t, alice, carol);
+    const inviteId = await invite(t, "alice", circleId, carol);
+    await accept(t, "carol", inviteId);
+    await flushScheduled(t);
+
+    const rows = await notificationsOf(t, alice);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      type: "circle_invite_accepted",
+      relatedId: circleId,
+      actorIds: [carol],
+      subject: { kind: "circle", circleId },
+    });
+    const [view] = await viewsOf(t, "alice");
+    expect(view.context.circleName).toBe("Saturday Puzzlers");
+    expect(view.href).toBe("/circles");
+  });
+
+  test("a private inviter reached only by a thread stays anonymous in the notification", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, carol, circleId } = await seed(t);
+    await pairThread(t, alice, carol);
+    await invite(t, "alice", circleId, carol);
+    await flushScheduled(t);
+
+    const [view] = await viewsOf(t, "carol");
+    expect(view.actors[0]).toEqual({ anonymous: true });
+  });
+
+  test("declining is silent: the inviter gets nothing", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, carol, circleId } = await seed(t);
+    await mutualFollow(t, alice, carol);
+    const inviteId = await invite(t, "alice", circleId, carol);
+    await decline(t, "carol", inviteId);
+    await flushScheduled(t);
+
+    expect(await notificationsOf(t, alice)).toEqual([]);
+  });
+
+  test("a block landing before dispatch suppresses the notification", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, carol, circleId } = await seed(t);
+    await mutualFollow(t, alice, carol);
+    await invite(t, "alice", circleId, carol);
+    await block(t, carol, alice);
+    await flushScheduled(t);
+
+    expect(await notificationsOf(t, carol)).toEqual([]);
+  });
+
+  test("circle_invite_received is email-eligible; circle_invite_accepted is in-app/push only", async () => {
+    expect(EMAIL_ELIGIBLE_TYPES.has("circle_invite_received")).toBe(true);
+    expect(EMAIL_ELIGIBLE_TYPES.has("circle_invite_accepted")).toBe(false);
+
+    const t = convexTest(schema, modules);
+    const { alice, carol, circleId } = await seed(t);
+    await mutualFollow(t, alice, carol);
+    await as(t, "carol").mutation(
+      api.notifications.updateNotificationPreference
+        .updateNotificationPreference,
+      { type: "circle_invite_received", channel: "email", enabled: true },
+    );
+    await as(t, "alice").mutation(
+      api.notifications.updateNotificationPreference
+        .updateNotificationPreference,
+      { type: "circle_invite_accepted", channel: "email", enabled: true },
+    );
+    const inviteId = await invite(t, "alice", circleId, carol);
+    await accept(t, "carol", inviteId);
+    await flushScheduled(t);
+
+    const emails = (
+      await t.run((ctx) =>
+        ctx.db.system.query("_scheduled_functions").collect(),
+      )
+    )
+      .filter((job) => job.name.includes("sendEmail"))
+      .map((job) => (job.args[0] as { type: string }).type);
+    expect(emails).toEqual(["circle_invite_received"]);
   });
 });
