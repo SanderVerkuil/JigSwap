@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { blockedEitherWaySet } from "../social/blocks";
 import { profileVisibilityOf } from "../social/privacy";
 import { collectCircleSharedCopies } from "./circleSharedCopies";
 import { toOwnedCopyView } from "./mappers";
@@ -122,9 +123,11 @@ export const browseOwnedPuzzles = query({
     // availability collect missed — de-duplicated by copy id.
     const shown: Doc<"ownedPuzzles">[] = [];
     const seen = new Set<string>();
+    // Copies of members blocked either way with the viewer are never shown (spec 2.6).
+    const blockedIds = await blockedEitherWaySet(ctx, memberId);
     for (const copy of availableNotOwn) {
       const id = copy._id as unknown as string;
-      if (seen.has(id)) continue;
+      if (seen.has(id) || blockedIds.has(copy.ownerId)) continue;
       if (circleSharedIds.has(id) || (await ownerIsPublic(copy.ownerId))) {
         shown.push(copy);
         seen.add(id);
@@ -132,7 +135,7 @@ export const browseOwnedPuzzles = query({
     }
     for (const copy of circleShared) {
       const id = copy._id as unknown as string;
-      if (seen.has(id)) continue;
+      if (seen.has(id) || blockedIds.has(copy.ownerId)) continue;
       // Circle copies still respect includeOwnPuzzles: a viewer's own copy is excluded by default.
       if (!args.includeOwnPuzzles && copy.ownerId === memberId) continue;
       shown.push(copy);
