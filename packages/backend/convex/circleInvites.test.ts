@@ -1354,6 +1354,34 @@ describe("circle invite notifications", () => {
     expect(view.href).toBe("/circles");
   });
 
+  test("the accepted invitee is named to the inviter while both are in the circle", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, carol, circleId } = await seed(t);
+    await mutualFollow(t, alice, carol);
+    const inviteId = await invite(t, "alice", circleId, carol);
+    await accept(t, "carol", inviteId);
+    await flushScheduled(t);
+    // No longer mutual, and Carol is private: only the circle rule names her now, even after she
+    // blocks Alice (as the members list and the chat do).
+    await unfollow(t, alice, carol);
+    await unfollow(t, carol, alice);
+    await blockMember(t, carol, alice);
+
+    const [named] = await viewsOf(t, "alice");
+    expect(named.actors[0]).toMatchObject({
+      anonymous: false,
+      memberId: carol,
+    });
+
+    // Once Carol is out of the circle, the ordinary rules decide: anonymous.
+    await as(t, "alice").mutation(api.sharing.removeMember.removeMember, {
+      circleId,
+      memberId: carol,
+    });
+    const [after] = await viewsOf(t, "alice");
+    expect(after.actors[0]).toEqual({ anonymous: true });
+  });
+
   test("a private inviter who has since unfollowed is anonymous in the notification", async () => {
     const t = convexTest(schema, modules);
     const { alice, carol, circleId } = await seed(t);
