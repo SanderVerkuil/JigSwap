@@ -25,28 +25,28 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>54/54</span>
+                <span class='fraction'>61/61</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">81.33% </span>
+                <span class="strong">80.72% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>61/75</span>
+                <span class='fraction'>67/83</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>10/10</span>
+                <span class='fraction'>8/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>51/51</span>
+                <span class='fraction'>57/57</span>
             </div>
         
             
@@ -257,7 +257,17 @@
 <a name='L192'></a><a href='#L192'>192</a>
 <a name='L193'></a><a href='#L193'>193</a>
 <a name='L194'></a><a href='#L194'>194</a>
-<a name='L195'></a><a href='#L195'>195</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L195'></a><a href='#L195'>195</a>
+<a name='L196'></a><a href='#L196'>196</a>
+<a name='L197'></a><a href='#L197'>197</a>
+<a name='L198'></a><a href='#L198'>198</a>
+<a name='L199'></a><a href='#L199'>199</a>
+<a name='L200'></a><a href='#L200'>200</a>
+<a name='L201'></a><a href='#L201'>201</a>
+<a name='L202'></a><a href='#L202'>202</a>
+<a name='L203'></a><a href='#L203'>203</a>
+<a name='L204'></a><a href='#L204'>204</a>
+<a name='L205'></a><a href='#L205'>205</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -428,7 +438,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -440,16 +455,21 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { paginationOptsValidator, type PaginationOptions } from "convex/server";
 import { v } from "convex/values";
@@ -542,7 +562,7 @@ export const listProfileCompletions = query({
         endDate: row.endDate ?? <span class="branch-1 cbranch-no" title="branch not covered" >row.startDate,</span>
         completionTimeMinutes: row.completionTimeMinutes,
         datePrecision: row.datePrecision ?? ("day" as const),
-        photoUrls: await approvedPhotoUrls(ctx, row),
+        ...(await profilePhotos(ctx, row)),
         thumbnailUrl,
         link,
       });
@@ -621,29 +641,39 @@ const pageDatedThenUndated = async (
 };
 &nbsp;
 // Approved photos only: unlike the self-facing log (which shows pending with a badge), a profile is
-// seen by others, so a photo awaiting moderation stays hidden. No sidecar = legacy = approved.
-const approvedPhotoUrls = async (
+// seen by others, so a photo awaiting moderation is never shown — it surfaces only as a blurhash
+// placeholder (lib/blurhash: no URL, no id). Rejected photos appear in neither list. No sidecar =
+// legacy = approved.
+const profilePhotos = async (
   ctx: QueryCtx,
   row: Pick&lt;Doc&lt;"completions"&gt;, "aggregateId" | "photos"&gt;,
-): Promise&lt;string[]&gt; =&gt; {
-  if (row.photos.length === 0) return [];
-  const statusByFile = new Map&lt;string, string | undefined&gt;();
+): Promise&lt;{
+  photoUrls: string[];
+  pendingPhotos: { blurhash: string | null }[];
+}&gt; =&gt; {
+  if (row.photos.length === 0) return { photoUrls: [], pendingPhotos: [] };
+  const sidecarByFile = new Map&lt;string, Doc&lt;"completionImages"&gt;&gt;();
   const completionId = row.aggregateId;
   <span class="missing-if-branch" title="else path not taken" >E</span>if (completionId) {
     const sidecars = await ctx.db
       .query("completionImages")
       .withIndex("by_completion", (q) =&gt; q.eq("completionId", completionId))
       .collect();
-    for (const s of sidecars)
-      statusByFile.set(s.fileId as string, s.moderationStatus);
+    for (const s of sidecars) sidecarByFile.set(s.fileId as string, s);
   }
-  const urls = await Promise.all(
-    row.photos.map(async (fileId) =&gt; {
-      const status = statusByFile.get(fileId as string) ?? <span class="branch-1 cbranch-no" title="branch not covered" >"approved";</span>
-      return status === "approved" ? await ctx.storage.getUrl(fileId) : null;
-    }),
-  );
-  return urls.filter((url): url is string =&gt; url !== null);
+  const photoUrls: string[] = [];
+  const pendingPhotos: { blurhash: string | null }[] = [];
+  for (const fileId of row.photos) {
+    const sidecar = sidecarByFile.get(fileId as string);
+    const status = sidecar?.moderationStatus ?? <span class="branch-1 cbranch-no" title="branch not covered" >"approved";</span>
+    if (status === "approved") {
+      const url = await ctx.storage.getUrl(fileId);
+      <span class="missing-if-branch" title="else path not taken" >E</span>if (url) photoUrls.push(url);
+    } else <span class="missing-if-branch" title="else path not taken" >E</span>if (status === "pending" || status === "unscored") {
+      pendingPhotos.push({ blurhash: sidecar?.blurhash ?? null });
+    }
+  }
+  return { photoUrls, pendingPhotos };
 };
 &nbsp;</pre></td></tr></table></pre>
 
@@ -652,7 +682,7 @@ const approvedPhotoUrls = async (
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-18T09:32:37.755Z
+                at 2026-10-18T09:50:19.389Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
