@@ -1234,7 +1234,7 @@
       },
       "clerk": {
         "title": "Clerk",
-        "description": "Onze authenticatieprovider, met EU-dataresidentie. Clerk bewaart je inloggegevens en basisaccountgegevens (naam, e-mailadres, avatar) en verzorgt het inloggen. Als je je account verwijdert, krijgen wij daar bericht van via Clerk en verwijderen we je accountrecord. Als een lid je per e-mail uitnodigt, sturen we je één uitnodiging en bewaren we geen kopie van je adres; onze inlogdienst bewaart de uitnodiging tot die na 14 dagen verloopt."
+        "description": "Onze authenticatieprovider, met EU-dataresidentie. Clerk bewaart je inloggegevens en basisaccountgegevens (naam, e-mailadres, avatar) en verzorgt het inloggen. Als je je account verwijdert, krijgen wij daar bericht van via Clerk en verwijderen we je accountrecord. Als een lid je per e-mail uitnodigt, sturen we je één uitnodiging en bewaren we geen kopie van je adres (alleen een gecodeerde vingerafdruk ervan, 30 dagen lang, zodat je niet nog eens gemaild wordt). Clerk bewaart de uitnodiging tot je die gebruikt of tot die na 14 dagen verloopt; daarna verwijderen we hem."
       },
       "vercel": {
         "title": "Vercel",

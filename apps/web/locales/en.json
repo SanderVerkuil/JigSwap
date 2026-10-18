@@ -1234,7 +1234,7 @@
       },
       "clerk": {
         "title": "Clerk",
-        "description": "Our authentication provider, with EU data residency. Clerk stores your sign-in credentials and core account details (name, email address, avatar) and handles signing in. When you delete your account, Clerk notifies us and we remove your account record. When a member invites you by email, we send you one invitation and keep no copy of your address; our sign-in provider holds the invitation until it expires after 14 days."
+        "description": "Our authentication provider, with EU data residency. Clerk stores your sign-in credentials and core account details (name, email address, avatar) and handles signing in. When you delete your account, Clerk notifies us and we remove your account record. When a member invites you by email, we send you one invitation and keep no copy of your address (only a coded fingerprint of it for 30 days, so you aren't emailed again). Clerk holds the invitation until you use it or it expires after 14 days; after that we delete it."
       },
       "vercel": {
         "title": "Vercel",
