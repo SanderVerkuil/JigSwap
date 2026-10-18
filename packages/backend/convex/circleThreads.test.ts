@@ -1005,3 +1005,28 @@ describe("account deletion", () => {
     );
   });
 });
+
+describe("reports", () => {
+  test("a member can only report, and the evidence only holds, messages sent after they joined", async () => {
+    const t = convexTest(schema, modules);
+    const { dave, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    const before = (await post(t, "alice", threadId, "before dave")) as string;
+    await join(t, circleId, dave);
+    await flush(t);
+    const after = (await post(t, "alice", threadId, "after dave")) as string;
+
+    const report = (targetId: string) =>
+      as(t, "dave").mutation(api.reports.fileReport.fileReport, {
+        targetKind: "message",
+        targetId,
+        reason: "harassment_hate",
+      });
+    await expectCode(report(before), "NotFound");
+    const { reportId } = await report(after);
+    const row = await t.run((ctx) => ctx.db.get(reportId));
+    const evidence = JSON.stringify(row?.evidence);
+    expect(evidence).toContain("after dave");
+    expect(evidence).not.toContain("before dave");
+  });
+});

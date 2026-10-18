@@ -7,6 +7,7 @@ import {
   participantsKeyOf,
 } from "../conversation/adapters/threadMapper";
 import { asImage, isDeliverable } from "../conversation/messageAttachments";
+import { participantRowOf } from "../conversation/readModelHelpers";
 import { requireMember } from "../identity/requireMember";
 import { enforceRateLimit } from "../lib/rateLimits";
 import { canViewCopy } from "../library/canViewCopy";
@@ -301,7 +302,9 @@ const holdReportedAttachments = async (
 };
 
 // A message the reporter can read (a participant of its thread), authored by someone. The
-// evidence is the message plus up to EVIDENCE_PRECEDING_MESSAGES before it, ascending. A message
+// evidence is the message plus up to EVIDENCE_PRECEDING_MESSAGES before it, ascending. In a circle
+// thread both stop at the reporter's joinedAt: they can only report, and the snapshot only holds,
+// what they could see (sent strictly after it). A message
 // a moderator already removed is snapshotted as removed, with an empty body and no copy. A media
 // row without an attachment (legacy image rows) is blanked as in toThreadMessageView (an
 // unverified client string, #145); an attached media row keeps its caption.
@@ -322,14 +325,20 @@ const messageTarget = async (
     )
     .unique();
   if (!thread?.participants.includes(reporterId)) return null;
+  const floor =
+    thread.subjectKind === "circle"
+      ? (await participantRowOf(ctx, thread.aggregateId, reporterId))?.joinedAt
+      : undefined;
+  if (floor !== undefined && message.sentAt <= floor) return null;
 
   const preceding = await ctx.db
     .query("threadMessages")
-    .withIndex("by_thread_sent", (q) =>
-      q
-        .eq("threadAggregateId", message.threadAggregateId)
-        .lt("sentAt", message.sentAt),
-    )
+    .withIndex("by_thread_sent", (q) => {
+      const scoped = q.eq("threadAggregateId", message.threadAggregateId);
+      return floor === undefined
+        ? scoped.lt("sentAt", message.sentAt)
+        : scoped.gt("sentAt", floor).lt("sentAt", message.sentAt);
+    })
     .order("desc")
     .take(EVIDENCE_PRECEDING_MESSAGES);
   const messages = [...preceding.reverse(), message].map((row) => {
