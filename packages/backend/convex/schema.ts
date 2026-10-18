@@ -987,8 +987,11 @@ export default defineSchema({
         kind: v.literal("location"),
         threadAggregateId: v.string(),
         uploaderId: v.id("users"),
-        lat: v.number(),
-        lng: v.number(),
+        // Absent once cleared: a moderator removed the location (after the evidence copy of its
+        // map was taken; reports/attachmentEvidence), or the account was deleted. The label goes
+        // with them.
+        lat: v.optional(v.number()),
+        lng: v.optional(v.number()),
         precision: v.union(v.literal("exact"), v.literal("approximate")),
         label: v.optional(v.string()),
         mapFileId: v.optional(v.id("_storage")),

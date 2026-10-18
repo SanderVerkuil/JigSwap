@@ -47,7 +47,14 @@ export const getLocationForRender = internalQuery({
   args: { attachmentId: v.id("messageAttachments") },
   handler: async (ctx, { attachmentId }) => {
     const row = await ctx.db.get(attachmentId);
-    if (row?.kind !== "location" || row.messageId !== undefined) return null;
+    if (
+      row?.kind !== "location" ||
+      row.messageId !== undefined ||
+      row.lat === undefined ||
+      row.lng === undefined
+    ) {
+      return null;
+    }
     return { lat: row.lat, lng: row.lng, precision: row.precision };
   },
 });

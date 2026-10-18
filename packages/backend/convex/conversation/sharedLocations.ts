@@ -73,7 +73,14 @@ export const locationAttachmentViewOf = async (
   attachmentId: Id<"messageAttachments">,
 ): Promise<LocationAttachmentView | null> => {
   const row = await ctx.db.get(attachmentId);
-  if (row?.kind !== "location" || row.removedAt !== undefined) return null;
+  if (
+    row?.kind !== "location" ||
+    row.removedAt !== undefined ||
+    row.lat === undefined ||
+    row.lng === undefined
+  ) {
+    return null;
+  }
   const mapUrl =
     row.mapStatus === "ready" && row.mapFileId
       ? await ctx.storage.getUrl(row.mapFileId)

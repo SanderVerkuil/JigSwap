@@ -669,7 +669,12 @@ describe("reports and removal", () => {
       statementOfReasons: "Unwanted location",
     });
     await settleDueJobs(t);
-    expect((await row(t, id))!.removedAt).toEqual(expect.any(Number));
+    const removed = (await row(t, id))!;
+    expect(removed.removedAt).toEqual(expect.any(Number));
+    // With the map copied as evidence, nothing that places anyone is kept.
+    expect(removed.lat).toBeUndefined();
+    expect(removed.lng).toBeUndefined();
+    expect(removed.label).toBeUndefined();
     expect(await blobExists(t, mapFileId)).toBe(false);
     const report = (await t.run((ctx) => ctx.db.get(reportId)))!;
     expect(report.evidenceFileId).toBeDefined();

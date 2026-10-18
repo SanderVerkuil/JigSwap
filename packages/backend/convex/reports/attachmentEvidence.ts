@@ -203,6 +203,16 @@ export const recordEvidence = internalMutation({
     });
     await deleteAttachmentBlobs(ctx, { ...row, evidenceHold: undefined });
     await deleteReveals(ctx, attachmentId);
+    // A removed location keeps nothing that places anyone: with its map copied (or known to be
+    // missing), its coordinates and label are cleared too.
+    if (row.kind === "location" && row.removedAt !== undefined) {
+      await ctx.db.patch(attachmentId, {
+        lat: undefined,
+        lng: undefined,
+        label: undefined,
+        updatedAt: Date.now(),
+      });
+    }
   },
 });
 
