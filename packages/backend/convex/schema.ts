@@ -1120,8 +1120,9 @@ export default defineSchema({
   })
     .index("by_thread", ["threadAggregateId"])
     .index("by_thread_member", ["threadAggregateId", "memberId"])
-    // Account-deletion purge.
-    .index("by_member", ["memberId"]),
+    // setTyping's per-member cap (the member's latest write, any thread) and the account-deletion
+    // purge.
+    .index("by_member", ["memberId", "writtenAt"]),
 
   reviews: defineTable({
     // PartnerReview aggregate identity. Optional so pre-existing rows still validate; the new

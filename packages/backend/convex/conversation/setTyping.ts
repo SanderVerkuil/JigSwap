@@ -18,11 +18,12 @@ import {
 //
 // A silent no-op (no write, the same null) when the caller appears offline (Q13), when the pair of
 // an exchange/DM thread is blocked either way (a circle thread hides blocked pairs from each other
-// in getTyping instead), or when their row was written (set or cleared) under TYPING_THROTTLE_MS
-// ago. It never throws for these, so typing can't be used to probe a block or someone's status.
+// in getTyping instead), or when ANY of their typing rows, in any thread, was written (set or
+// cleared) under TYPING_THROTTLE_MS ago: one write per 2 s per member, whatever the number of
+// threads. It never throws for these, so typing can't be used to probe a block or someone's status.
 //
-// No rate limit: the throttle already caps the writes at one per 2 s per thread and member, and a
-// rateLimits row would add a second write to every typing write (spec R.2 Q19 wants them lean).
+// No rateLimits row: the throttle already caps the writes at one per 2 s per member with a single
+// indexed read, and a counter would add a second write to every typing write (R.2 Q19).
 export const setTyping = mutation({
   args: { threadId: v.string() },
   handler: async (ctx, args): Promise<null> => {
@@ -39,8 +40,15 @@ export const setTyping = mutation({
     }
 
     const now = Date.now();
+    // The member's latest write in any thread (this one included) under the throttle.
+    const recentWrite = await ctx.db
+      .query("typingIndicators")
+      .withIndex("by_member", (q) =>
+        q.eq("memberId", me).gt("writtenAt", now - TYPING_THROTTLE_MS),
+      )
+      .first();
+    if (recentWrite) return null;
     const row = await typingRowOf(ctx, args.threadId, me);
-    if (row && now - row.writtenAt < TYPING_THROTTLE_MS) return null;
     if (row) {
       await ctx.db.patch(row._id, { typingAt: now, writtenAt: now });
     } else {

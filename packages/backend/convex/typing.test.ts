@@ -259,6 +259,27 @@ describe("setTyping: silent no-ops", () => {
     expect(rows[0].typingAt).toBe(rows[0].writtenAt);
   });
 
+  test("one write per 2 s per member across threads", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, dmId, circleThreadId } = await seed(t);
+    await setTyping(t, "alice", dmId);
+
+    // Another thread within the throttle: no row there.
+    expect(await setTyping(t, "alice", circleThreadId)).toBeNull();
+    expect(await typingRows(t, circleThreadId)).toEqual([]);
+    // Other members are not affected.
+    await setTyping(t, "bob", circleThreadId);
+    expect(typerNames(await getTyping(t, "carol", circleThreadId))).toEqual([
+      "bob",
+    ]);
+
+    await backdate(t, dmId, alice, TYPING_THROTTLE_MS + 500);
+    await setTyping(t, "alice", circleThreadId);
+    expect(
+      typerNames(await getTyping(t, "carol", circleThreadId)).sort(),
+    ).toEqual(["alice", "bob"]);
+  });
+
   test("a DM pair blocked either way: no row, and an earlier row stays hidden", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob, dmId } = await seed(t);
@@ -500,6 +521,7 @@ describe("cleanup", () => {
     const t = convexTest(schema, modules);
     const { alice, bob, dmId, circleThreadId } = await seed(t);
     await setTyping(t, "alice", dmId);
+    await backdate(t, dmId, alice, TYPING_THROTTLE_MS + 500);
     await setTyping(t, "alice", circleThreadId);
     await setTyping(t, "bob", circleThreadId);
 
