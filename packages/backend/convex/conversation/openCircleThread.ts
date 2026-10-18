@@ -12,7 +12,9 @@ import { toConvexError } from "./errors";
 // authenticated member; the use case refuses an unknown circle and a non-member alike with
 // CircleNotFound (never "not a member"), and is idempotent per circle: the first open seeds the
 // thread from the circle's current members and their join times. Shares the posting rate limit,
-// which also bounds probing circle ids. Returns the thread's aggregateId.
+// counted only for opens that succeed: a refusal throws, which rolls the counter write back too,
+// so it does not bound probing. That is acceptable because circle ids are random UUIDs, and every
+// refusal is the same CircleNotFound. Returns the thread's aggregateId.
 export const openCircleThread = mutation({
   args: { circleId: v.string() },
   handler: async (ctx, args) => {
