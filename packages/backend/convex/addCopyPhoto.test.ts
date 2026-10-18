@@ -80,12 +80,15 @@ describe("addCopyPhoto", () => {
     expect(images[0].createdAt).toBeGreaterThan(0);
     expect(images[0].updatedAt).toBe(images[0].createdAt);
 
-    // It would surface in the gallery, which reads the same table by_owned_puzzle.
+    // The gallery reads the same table by_owned_puzzle, but never serves this photo yet: until
+    // the CSAM hash check has passed the uploader gets a placeholder, not a URL
+    // (lib/imageModeration/hashCheckFields), and these fake bytes are refused by the pipeline's
+    // input guards once it runs. Either way: no gallery entry.
     const view = await asAlice(t).query(
       api.library.getCopyInstanceView.getCopyInstanceView,
       { copyId: aliceCopy },
     );
-    expect(view?.gallery.length).toBe(1);
+    expect(view?.gallery).toEqual([]);
   });
 
   test("a new photo is inserted pending and schedules the moderation job", async () => {

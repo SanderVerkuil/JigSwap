@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 import {
   buildCopyViewContext,
   canViewCopyWithContext,
@@ -193,11 +194,19 @@ const profilePhotos = async (
   for (const fileId of row.photos) {
     const sidecar = sidecarByFile.get(fileId as string);
     const status = sidecar?.moderationStatus ?? "approved";
-    if (status === "approved") {
+    // No URL (and no blurhash) before the CSAM hash check has passed (hashCheckFields).
+    const cleared = !sidecar || isHashCleared(sidecar);
+    if (status === "approved" && cleared) {
       const url = await ctx.storage.getUrl(fileId);
       if (url) photoUrls.push(url);
-    } else if (status === "pending" || status === "unscored") {
-      pendingPhotos.push({ blurhash: sidecar?.blurhash ?? null });
+    } else if (
+      status === "approved" ||
+      status === "pending" ||
+      status === "unscored"
+    ) {
+      pendingPhotos.push({
+        blurhash: cleared ? (sidecar?.blurhash ?? null) : null,
+      });
     }
   }
   return { photoUrls, pendingPhotos };

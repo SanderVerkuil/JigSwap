@@ -3,6 +3,7 @@ import { query } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { adminMemberLabelOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
+import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 
 // The flagged-photos review queue: every auto-rejected copy photo, with enough context (image url,
 // classifier verdict, uploader, puzzle title) for an admin to restore or confirm removal.
@@ -31,7 +32,8 @@ export const listRejectedPhotos = query({
           (copy ? (await ctx.db.get(copy.puzzleId))?.title : undefined);
         return {
           imageId: row._id,
-          url: await ctx.storage.getUrl(row.fileId),
+          // No URL before the CSAM hash check has passed (hashCheckFields).
+          url: isHashCleared(row) ? await ctx.storage.getUrl(row.fileId) : null,
           score: row.moderationScore ?? null,
           label: row.moderationLabel ?? null,
           uploaderName: uploader ? adminMemberLabelOf(uploader) : null,

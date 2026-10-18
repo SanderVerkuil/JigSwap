@@ -61,6 +61,8 @@ export const attachCompletionPhotos = mutation({
         uploaderId: memberId as unknown as Id<"users">,
         fileId: fileId as Id<"_storage">,
         moderationStatus: "pending",
+        // Publication gate: no URL until the CSAM hash check has passed (hashCheckFields).
+        hashCheckPendingSince: now,
         createdAt: now,
         updatedAt: now,
       });

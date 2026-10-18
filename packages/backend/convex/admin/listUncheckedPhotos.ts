@@ -4,6 +4,7 @@ import { query, type QueryCtx } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { adminMemberLabelOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
+import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 
 // Per status and table: the queue shows at most this many rows (oldest first); the rest follow as
 // earlier ones are decided.
@@ -50,7 +51,8 @@ export const listUncheckedPhotos = query({
           status,
           reason: row.moderationReason ?? null,
           attempts: row.moderationAttempts ?? null,
-          url: await ctx.storage.getUrl(row.fileId),
+          // No URL before the CSAM hash check has passed (hashCheckFields).
+          url: isHashCleared(row) ? await ctx.storage.getUrl(row.fileId) : null,
           puzzleTitle: title ?? (row._id as string),
           uploaderName: await uploaderLabel(ctx, row.uploaderId),
           uploadedAt: row.createdAt,
@@ -76,7 +78,8 @@ export const listUncheckedPhotos = query({
           status,
           reason: row.moderationReason ?? null,
           attempts: row.moderationAttempts ?? null,
-          url: await ctx.storage.getUrl(row.fileId),
+          // No URL before the CSAM hash check has passed (hashCheckFields).
+          url: isHashCleared(row) ? await ctx.storage.getUrl(row.fileId) : null,
           puzzleTitle: completion?.copySnapshot?.title ?? row.completionId,
           uploaderName: await uploaderLabel(ctx, row.uploaderId),
           uploadedAt: row.createdAt,

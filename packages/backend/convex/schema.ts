@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { hashCheckFields } from "./lib/imageModeration/hashCheckFields";
 
 // The proposable field diff, shared by puzzleChangeProposals.changes and .baseline. Mirrors the
 // domain PuzzleDefinitionChanges shape exactly (barcodes grouped: supplying the group replaces
@@ -358,6 +359,8 @@ export default defineSchema({
     // The admin who decided this photo by hand (approve/reject of a pending or unscored photo).
     // A manual decision is final: the re-screen backfill skips such rows.
     moderatedBy: v.optional(v.id("users")),
+    // CSAM hash-check bookkeeping + publication gate (lib/imageModeration/hashCheckFields).
+    ...hashCheckFields,
 
     // --- Timestamps ---
     createdAt: v.number(),
@@ -494,6 +497,8 @@ export default defineSchema({
     // The admin who decided this photo by hand (approve/reject of a pending or unscored photo).
     // A manual decision is final: the re-screen backfill skips such rows.
     moderatedBy: v.optional(v.id("users")),
+    // CSAM hash-check bookkeeping + publication gate (lib/imageModeration/hashCheckFields).
+    ...hashCheckFields,
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -622,6 +627,9 @@ export default defineSchema({
     md5: v.string(),
     sha1: v.string(),
     provider: v.string(),
+    // True when the match came from a later re-check of stored hashes, after the original upload
+    // had already been replaced by its re-encode: `fileId` then holds the re-encode.
+    originalDiscarded: v.optional(v.boolean()),
     matchedAt: v.number(),
     status: v.union(
       v.literal("open"),

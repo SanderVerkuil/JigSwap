@@ -8,7 +8,6 @@ import type { Id } from "../../_generated/dataModel";
 import type { ActionCtx } from "../../_generated/server";
 import {
   makeModerationPortFromEnv,
-  nextRetryDelayMs,
   planModerationStep,
   readScreeningConfig,
   screeningLogFields,
@@ -27,7 +26,6 @@ import {
 } from "./csamHashCheck";
 import {
   checkImageBytes,
-  checkImageSize,
   INVALID_IMAGE_LABEL,
   type ImageGuardFailure,
 } from "./guards";
@@ -39,22 +37,25 @@ import {
 //
 // Per attempt:
 //   1. Load the row (skip when gone or no longer pending: first verdict wins, re-runs are no-ops).
-//   2. Input guards (lib/imageModeration/guards): the stored size before downloading the blob,
-//      then the magic bytes and the header's pixel count before any decode. A refused upload is
-//      "rejected" with label "invalid_image" (the guard's reason in moderationReason), never
-//      classified, and its blob is deleted. Never fails open. WebP passes the guards but jimp
-//      cannot decode it: it is classified as uploaded (no EXIF strip, no blurhash) and stored again
-//      as "image/webp" when the client claimed another type (see guards.ts for why it is kept).
-//   3. (any attempt until the row is marked `reencodedAt`) Re-encode via jimp — PNG when it has transparency, else JPEG — which
-//      DROPS all EXIF/metadata, compute the blurhash from the same decode, swap the row to the
-//      clean blob (setFile) and delete the original. A decode failure is refused as
-//      "decode_failed", except WebP (see below).
-//   4. CSAM hash check (lib/imageModeration/csamHashCheck), BEFORE the swap and classification:
-//      MD5 + SHA-1 of the ORIGINAL bytes (what hash lists match) and of the re-encode. A match
-//      calls the table's `quarantine` and stops: never classified, never delivered, the original
-//      blob kept. "unavailable" is logged and continues; "no_match" continues.
-//   5. Classify the clean bytes via the configured PhotoModerationPort.
-//   6. Record the verdict (setVerdict), or re-schedule `retry` with backoff for a retryable
+//   2. Download the blob (an upload over HASH_MAX_BYTES is refused unread) and run the input
+//      guards (lib/imageModeration/guards): size, magic bytes, the header's pixel count, all
+//      before any decode. Then (first attempt only) re-encode in memory via jimp — PNG when it
+//      has transparency, else JPEG — which DROPS all EXIF/metadata, plus the blurhash. A decode
+//      failure is refused as "decode_failed", except WebP, which jimp cannot decode: it is
+//      classified as uploaded and stored again as "image/webp" when the client claimed another
+//      type (see guards.ts for why it is kept).
+//   3. CSAM hash check (lib/imageModeration/csamHashCheck), until the row has passed one: MD5 +
+//      SHA-1 of the ORIGINAL bytes (what hash lists match) and of the re-encode, BEFORE any
+//      refusal, swap or classification. A match stores the matched bytes again as a NEW blob,
+//      calls the table's `quarantine` (always escalates) and deletes the uploaded blob, so no URL
+//      ever issued points at the evidence; nothing else runs. no_match opens the publication gate
+//      (setHashCheck; lib/imageModeration/hashCheckFields): no read model serves the row before.
+//      "unavailable" is logged at error level and the gate stays closed.
+//   4. A refused upload is "rejected" with label "invalid_image" (the reason in
+//      moderationReason), never classified, and its blob is deleted. Never fails open.
+//   5. Swap the row to the re-encode (setFile) and delete the original.
+//   6. Classify the clean bytes via the configured PhotoModerationPort.
+//   7. Record the verdict (setVerdict), or re-schedule `retry` with backoff for a retryable
 //      unscored result with attempts left.
 //
 // Why jimp (not sharp): Convex's Node runtime bundles the action; sharp ships a platform-specific
@@ -118,12 +119,16 @@ export const reencodeImage = async (
   };
 };
 
+/** Uploads larger than this are refused without being read or hashed (memory bound). */
+export const HASH_MAX_BYTES = 50 * 1024 * 1024;
+
 /** The row fields the pipeline itself needs; a table's `load` may return more (for `describe`). */
 export type ModerationRow = {
   fileId: Id<"_storage">;
   moderationStatus?: string;
-  /** Set by `setFile` once the row holds its re-encoded blob (absent = still the upload). */
-  reencodedAt?: number;
+  uploaderId: Id<"users">;
+  hashCheckedAt?: number;
+  pendingHashes?: ImageHashes[];
 };
 
 /** The verdict the pipeline writes through a table's `setVerdict`. */
@@ -134,6 +139,17 @@ export type ModerationVerdictArgs = {
   moderationLabel?: string;
   moderationReason?: string;
   moderationAttempts?: number;
+};
+
+/** What a table's `quarantine` step receives (lib/imageModeration/quarantine.quarantineArgs). */
+export type QuarantineArgs = {
+  imageId: string;
+  fileId: Id<"_storage">;
+  uploaderId: Id<"users">;
+  md5: string;
+  sha1: string;
+  provider: string;
+  originalDiscarded: boolean;
 };
 
 /**
@@ -165,14 +181,20 @@ export interface ImageModerationSteps<R extends ModerationRow> {
     unknown
   >;
   /**
-   * A CSAM hash match: flip the still-pending row to "quarantined", hide it wherever else the
-   * table references the blob (without deleting it), and raise the escalation
-   * (lib/imageModeration/quarantine). Receives the matched hashes and the provider name.
+   * A CSAM hash match: force the row to "quarantined" on the preserved blob, hide it wherever
+   * else the table references it, and raise the escalation (always, even when the row is gone).
+   * Returns the escalation id.
    */
-  quarantine: FunctionReference<
+  quarantine: FunctionReference<"mutation", "internal", QuarantineArgs, string>;
+  /** Record a no_match (opens the publication gate) or unavailable hash-check outcome. */
+  setHashCheck: FunctionReference<
     "mutation",
     "internal",
-    { imageId: string; md5: string; sha1: string; provider: string },
+    {
+      imageId: string;
+      status: "no_match" | "unavailable";
+      hashes?: ImageHashes[];
+    },
     unknown
   >;
   /** The calling action itself, re-scheduled for a retry. */
@@ -183,6 +205,56 @@ export interface ImageModerationSteps<R extends ModerationRow> {
     unknown
   >;
 }
+
+/**
+ * Preserve matched bytes and quarantine: store them again as a NEW blob (never served, so no URL
+ * ever issued can reach it), run the table's quarantine step (which always escalates), then
+ * delete the blob the row pointed at. Afterwards the wide event carries ONLY the escalation id:
+ * no row, uploader or image ids, no decision label.
+ */
+const preserveAndQuarantine = async (
+  ctx: ActionCtx,
+  quarantine: ImageModerationSteps<ModerationRow>["quarantine"],
+  event: WideEvent,
+  args: {
+    imageId: string;
+    bytes: Uint8Array;
+    uploadedFileId: Id<"_storage">;
+    uploaderId: Id<"users">;
+    matched: ImageHashes;
+    provider: string;
+    originalDiscarded: boolean;
+  },
+) => {
+  const preservedId = await ctx.storage.store(
+    new Blob([toArrayBuffer(args.bytes)], { type: "application/octet-stream" }),
+  );
+  let escalationId: string;
+  try {
+    escalationId = await ctx.runMutation(quarantine, {
+      imageId: args.imageId,
+      fileId: preservedId,
+      uploaderId: args.uploaderId,
+      md5: args.matched.md5,
+      sha1: args.matched.sha1,
+      provider: args.provider,
+      originalDiscarded: args.originalDiscarded,
+    });
+  } catch (error) {
+    // The uploaded blob is untouched, so nothing is lost; drop the unreferenced copy.
+    await ctx.storage.delete(preservedId).catch(() => {});
+    throw error;
+  }
+  // Best-effort: the uploaded blob may already be gone (the uploader removed the photo).
+  await ctx.storage.delete(args.uploadedFileId).catch(() => {});
+  for (const key of Object.keys(event)) {
+    if (key !== "event" && key !== "outcome" && key !== "attempt") {
+      delete event[key];
+    }
+  }
+  event.csam_hashcheck_status = "match";
+  event.escalation_id = escalationId;
+};
 
 /** Run one moderation attempt (1-based `attempt`) for `imageId`. Never throws. */
 export const runImageModeration = async <R extends ModerationRow>(
@@ -195,7 +267,8 @@ export const runImageModeration = async <R extends ModerationRow>(
   // ONE canonical wide event per attempt (logging-best-practices): high-cardinality ids,
   // business context (from `describe`), the re-encode + classifier facts (model, threshold, the
   // raw per-label scores), the decision, and timing. Built up through the pipeline and flushed
-  // once in `finally`, then forwarded to Axiom.
+  // once in `finally`, then forwarded to Axiom. On a CSAM match it is cut down to the
+  // escalation id (preserveAndQuarantine).
   const event: WideEvent = {
     event: steps.event,
     outcome: "success",
@@ -241,7 +314,7 @@ export const runImageModeration = async <R extends ModerationRow>(
     });
   };
 
-  // Delete an original blob unless a CSAM escalation preserves it (the same file re-uploaded).
+  // Delete an original blob unless a CSAM escalation preserves it.
   const deleteUnlessPreserved = async (fileId: Id<"_storage">) => {
     const preserved = await ctx.runQuery(
       internal.lib.imageModeration.quarantine.isBlobPreserved,
@@ -301,17 +374,16 @@ export const runImageModeration = async <R extends ModerationRow>(
       await deleteUnlessPreserved(row.fileId);
     };
 
-    // Size guard BEFORE the download. A missing blob falls through to the download step, which
-    // records it as unscored (missing_file) exactly as before.
+    // Too large to even read: refused without hashing (it cannot be held in memory). Anything
+    // up to HASH_MAX_BYTES is downloaded and hash-checked before the size guard refuses it.
     const storedBytes = await ctx.runQuery(
       internal.lib.imageModeration.blobMetadata.getBlobSize,
       { storageId: row.fileId },
     );
     if (storedBytes !== null) {
       event.stored_bytes = storedBytes;
-      const size = checkImageSize(storedBytes);
-      if (!size.ok) {
-        await refuse(size.reason);
+      if (storedBytes > HASH_MAX_BYTES) {
+        await refuse("too_large");
         return;
       }
     }
@@ -334,26 +406,21 @@ export const runImageModeration = async <R extends ModerationRow>(
       return;
     }
 
-    // Type + decompression-bomb guards on the header, before anything decodes the bytes.
+    // Size, type and decompression-bomb guards on the header, before anything decodes the bytes.
     const guard = checkImageBytes(bytes);
-    if (!guard.ok) {
-      await refuse(guard.reason);
-      return;
+    let refusal: ImageGuardFailure | null = guard.ok ? null : guard.reason;
+    if (guard.ok) {
+      event.image_format = guard.format;
+      event.image_width = guard.width;
+      event.image_height = guard.height;
     }
-    event.image_format = guard.format;
-    event.image_width = guard.width;
-    event.image_height = guard.height;
 
-    // Re-encode (strip EXIF/metadata) on ANY attempt until the row is marked re-encoded, so a
-    // retry after a download or swap failure never classifies (and so never publishes) the
-    // original with its EXIF/GPS. A decode failure is refused (a header that says JPEG/PNG/GIF
-    // over a body that is not one is a polyglot or a corrupt file), except for WebP, which jimp
-    // cannot decode: it keeps the best-effort path and is classified as uploaded, but is stored
-    // again as "image/webp" when the client claimed another type, so the blob is never served
-    // as HTML or SVG.
-    let cleanBytes = bytes;
-    if (row.reencodedAt === undefined) {
-      let encoded: Awaited<ReturnType<typeof reencodeImage>> | null = null;
+    // Re-encode (strip EXIF/metadata) on the first attempt only — a retry finds the row already
+    // pointing at the clean blob. In memory only: nothing is stored or deleted until the hash
+    // check has passed. A decode failure is refused (a header that says JPEG/PNG/GIF over a body
+    // that is not one is a polyglot or a corrupt file), except for WebP (see the header).
+    let encoded: Awaited<ReturnType<typeof reencodeImage>> | null = null;
+    if (guard.ok && attempt === 1) {
       try {
         encoded = await reencodeImage(bytes);
         event.reencoded = true;
@@ -362,89 +429,95 @@ export const runImageModeration = async <R extends ModerationRow>(
       } catch (error) {
         event.reencoded = false;
         event.reencode_error = errMsg(error);
+        if (guard.format !== "webp") refusal = "decode_failed";
       }
-      if (!encoded && guard.format !== "webp") {
-        await refuse("decode_failed");
-        return;
-      }
+    }
 
-      // CSAM hash check BEFORE the swap and classification. Only the outcome is logged.
+    // CSAM hash check until the row has passed one, BEFORE any refusal, swap or classification.
+    // Only the outcome is logged, never the hashes.
+    if (row.hashCheckedAt === undefined) {
+      const variants = encoded
+        ? [hashImageBytes(bytes), hashImageBytes(encoded.bytes)]
+        : [hashImageBytes(bytes)];
       const hashCheck = await checkAllHashes(
         makeCsamHashCheckPortFromEnv(process.env),
-        encoded
-          ? [hashImageBytes(bytes), hashImageBytes(encoded.bytes)]
-          : [hashImageBytes(bytes)],
+        variants,
       );
       event.csam_hashcheck_status = hashCheck.status;
       event.csam_hashcheck_reason = hashCheck.reason ?? null;
       if (hashCheck.status === "match" && hashCheck.matched) {
-        event.decision = "quarantined";
-        await ctx.runMutation(steps.quarantine, {
+        await preserveAndQuarantine(ctx, steps.quarantine, event, {
           imageId,
-          md5: hashCheck.matched.md5,
-          sha1: hashCheck.matched.sha1,
+          bytes,
+          uploadedFileId: row.fileId,
+          uploaderId: row.uploaderId,
+          matched: hashCheck.matched,
           provider: hashConfig.provider,
+          originalDiscarded: false,
         });
         return;
       }
-      // Unavailable: continue to classification, but surface it at error level for alerting.
+      if (hashCheck.status === "no_match" && refusal === null) {
+        await ctx.runMutation(steps.setHashCheck, {
+          imageId,
+          status: "no_match",
+        });
+      }
+      // Unavailable: the gate stays closed; surface it at error level for alerting.
       if (hashCheck.status === "unavailable") event.outcome = "error";
+    }
 
-      const replacement = encoded
-        ? encoded
-        : mime !== "image/webp"
-          ? { bytes, mime: "image/webp", blurhash: undefined }
-          : null;
-      if (!encoded && replacement) event.restored_as = "image/webp";
-      if (replacement) {
-        // Tracks the just-stored blob across the try/catch. If `setFile` throws AFTER the store
-        // succeeded, the row still points at the original, so the new blob is unreferenced.
-        // There is no storage GC, so we must delete it ourselves.
-        let storedFileId: Id<"_storage"> | null = null;
-        try {
-          const newFileId = await ctx.storage.store(
-            new Blob([toArrayBuffer(replacement.bytes)], {
-              type: replacement.mime,
-            }),
-          );
-          storedFileId = newFileId;
-          await ctx.runMutation(steps.setFile, {
-            imageId,
-            fileId: newFileId,
-            blurhash: replacement.blurhash,
-          });
-          // Swap succeeded: the row now points at the new blob, so it is no longer the one to
-          // clean up on failure; drop the original instead (best-effort).
-          storedFileId = null;
-          cleanBytes = replacement.bytes;
-          mime = replacement.mime;
-          await deleteUnlessPreserved(row.fileId);
-        } catch (error) {
-          event.reencoded = false;
-          event.swap_error = errMsg(error);
-          // If the new blob was stored but the row swap failed, it is orphaned (the row still
-          // references the original). Delete it best-effort.
-          if (storedFileId !== null) {
-            try {
-              await ctx.storage.delete(storedFileId);
-            } catch (cleanupError) {
-              event.orphan_cleanup_error = errMsg(cleanupError);
-            }
+    if (refusal !== null) {
+      await refuse(refusal);
+      return;
+    }
+
+    // Swap the row to the re-encode (or a WebP stored under the wrong type to "image/webp") and
+    // drop the original.
+    let cleanBytes = bytes;
+    const replacement =
+      attempt !== 1
+        ? null
+        : encoded
+          ? encoded
+          : mime !== "image/webp"
+            ? { bytes, mime: "image/webp", blurhash: undefined }
+            : null;
+    if (!encoded && replacement) event.restored_as = "image/webp";
+    if (replacement) {
+      // Tracks the just-stored blob across the try/catch. If `setFile` throws AFTER the store
+      // succeeded, the row still points at the original, so the new blob is unreferenced. There
+      // is no storage GC, so we must delete it ourselves.
+      let storedFileId: Id<"_storage"> | null = null;
+      try {
+        const newFileId = await ctx.storage.store(
+          new Blob([toArrayBuffer(replacement.bytes)], {
+            type: replacement.mime,
+          }),
+        );
+        storedFileId = newFileId;
+        await ctx.runMutation(steps.setFile, {
+          imageId,
+          fileId: newFileId,
+          blurhash: replacement.blurhash,
+        });
+        // Swap succeeded: the row now points at the new blob, so it is no longer the one to
+        // clean up on failure; drop the original instead (best-effort).
+        storedFileId = null;
+        cleanBytes = replacement.bytes;
+        mime = replacement.mime;
+        await deleteUnlessPreserved(row.fileId);
+      } catch (error) {
+        event.reencoded = false;
+        event.swap_error = errMsg(error);
+        // If the new blob was stored but the row swap failed, it is orphaned (the row still
+        // references the original). Delete it best-effort before falling back.
+        if (storedFileId !== null) {
+          try {
+            await ctx.storage.delete(storedFileId);
+          } catch (cleanupError) {
+            event.orphan_cleanup_error = errMsg(cleanupError);
           }
-          // Never classify (and so never publish) the original: retry the whole attempt, and
-          // once the retries are spent refuse it rather than approve it.
-          const delayMs = nextRetryDelayMs(attempt);
-          if (delayMs !== null) {
-            event.decision = "retry_scheduled";
-            event.retry_in_ms = delayMs;
-            await ctx.scheduler.runAfter(delayMs, steps.retry, {
-              imageId,
-              attempt: attempt + 1,
-            });
-          } else {
-            await refuse("decode_failed");
-          }
-          return;
         }
       }
     }

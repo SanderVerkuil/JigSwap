@@ -46,6 +46,9 @@ export const addCopyPhoto = mutation({
       title: args.title,
       tag: args.tag,
       moderationStatus: "pending",
+      // Publication gate: no URL for this photo, to anyone, until the CSAM hash check has passed
+      // (lib/imageModeration/hashCheckFields).
+      hashCheckPendingSince: now,
       createdAt: now,
       updatedAt: now,
     });

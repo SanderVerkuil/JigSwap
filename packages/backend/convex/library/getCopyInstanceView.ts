@@ -18,6 +18,7 @@ import { personView } from "../household/getMyHousehold";
 import { householdDefaultOf, membershipOf } from "../household/memberships";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
+import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 import { projectMemberIdentity } from "../social/privacy";
 import { canViewCopy } from "./canViewCopy";
 import { ratingBreakdownOf } from "./definitionAggregates";
@@ -300,8 +301,11 @@ export const getCopyInstanceView = query({
     // Moderation gate: include a photo iff it's approved (absent status == legacy == approved), OR
     // it's the viewer's OWN pending/unscored upload (so they see their "pending review" photo; an
     // unscored photo could not be checked yet and stays private until a re-screen). Rejected
-    // photos — and other members' pending/unscored photos — are excluded for everyone.
+    // photos — and other members' pending/unscored photos — are excluded for everyone. And no
+    // photo is served, to anyone, before its CSAM hash check has passed (isHashCleared): until
+    // then even the uploader gets a placeholder below.
     const visibleImageRows = imageRows.filter((img) => {
+      if (!isHashCleared(img)) return false;
       const status = img.moderationStatus ?? "approved";
       if (status === "approved") return true;
       return (
@@ -343,17 +347,24 @@ export const getCopyInstanceView = query({
     // Other members' photos still being screened: a blurhash placeholder only (lib/blurhash, 4x3,
     // too coarse to reveal content) — never a URL, storage id or row id. Rejected photos are not
     // listed at all, so a rejection leaves no trace for other viewers.
+    // A photo whose hash check has not passed shows as a placeholder to everyone, the uploader
+    // included, and without its blurhash.
     const pendingPhotos: PendingPhotoPlaceholder[] = imageRows
       .filter((img) => {
         const status = img.moderationStatus ?? "approved";
-        return (
-          (status === "pending" || status === "unscored") &&
-          img.uploaderId !== viewerId
-        );
+        if (
+          status !== "approved" &&
+          status !== "pending" &&
+          status !== "unscored"
+        ) {
+          return false;
+        }
+        if (!isHashCleared(img)) return true;
+        return status !== "approved" && img.uploaderId !== viewerId;
       })
       .sort((a, b) => b.createdAt - a.createdAt)
       .map((img) => ({
-        blurhash: img.blurhash ?? null,
+        blurhash: isHashCleared(img) ? (img.blurhash ?? null) : null,
         createdAt: img.createdAt,
       }));
 
@@ -376,7 +387,8 @@ export const getCopyInstanceView = query({
       if (
         coverRow &&
         coverRow.ownedPuzzleId === args.copyId &&
-        (coverRow.moderationStatus ?? "approved") === "approved"
+        (coverRow.moderationStatus ?? "approved") === "approved" &&
+        isHashCleared(coverRow)
       ) {
         const coverUrl = await ctx.storage.getUrl(coverRow.fileId);
         if (coverUrl) {

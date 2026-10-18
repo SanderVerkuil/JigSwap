@@ -1,6 +1,7 @@
 import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 import {
   buildCopyViewContext,
   canViewCopyWithContext,
@@ -147,19 +148,22 @@ export const resolvePhotoItems = async (
 ): Promise<PhotoItem[]> => {
   if (row.photos.length === 0) return [];
   const completionId = row.aggregateId;
-  const statusByFile = new Map<string, string | undefined>();
+  const sidecarByFile = new Map<string, Doc<"completionImages">>();
   if (completionId) {
     const sidecars = await ctx.db
       .query("completionImages")
       .withIndex("by_completion", (q) => q.eq("completionId", completionId))
       .collect();
     for (const s of sidecars) {
-      statusByFile.set(s.fileId as string, s.moderationStatus);
+      sidecarByFile.set(s.fileId as string, s);
     }
   }
   const items = await Promise.all(
     row.photos.map(async (fileId): Promise<PhotoItem | null> => {
-      const status = statusByFile.get(fileId as string);
+      const sidecar = sidecarByFile.get(fileId as string);
+      const status = sidecar?.moderationStatus;
+      // No URL before the CSAM hash check has passed, the uploader included (hashCheckFields).
+      if (sidecar && !isHashCleared(sidecar)) return null;
       // A quarantined photo (CSAM hash match) is never served, its uploader included; the
       // quarantine also drops it from `photos`, so this is defence in depth.
       if (status === "rejected" || status === "quarantined") return null;

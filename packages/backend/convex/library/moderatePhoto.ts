@@ -27,6 +27,7 @@ export const moderatePhoto = internalAction({
         setFile: internal.library.moderationStore.setModerationFile,
         setVerdict: internal.library.moderationStore.setModerationVerdict,
         quarantine: internal.library.moderationStore.quarantineImage,
+        setHashCheck: internal.library.moderationStore.setHashCheck,
         retry: internal.library.moderatePhoto.moderatePhoto,
       },
       { imageId, attempt: attempt ?? 1 },

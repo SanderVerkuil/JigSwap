@@ -8,6 +8,8 @@ import {
 } from "../_generated/server";
 import { stampModerationAction } from "../admin/stampModerationAction";
 import {
+  applyHashCheckResult,
+  hashCheckResultArgs,
   isPreservedBlob,
   quarantineArgs,
   recordCsamEscalation,
@@ -31,6 +33,8 @@ export const getImageForModeration = internalQuery({
       fileId: row.fileId,
       moderationStatus: row.moderationStatus,
       reencodedAt: row.reencodedAt,
+      hashCheckedAt: row.hashCheckedAt,
+      pendingHashes: row.pendingHashes,
       // Business context for the wide event (which completion / who uploaded).
       completionId: row.completionId,
       uploaderId: row.uploaderId,
@@ -172,38 +176,46 @@ export const setModerationVerdict = internalMutation({
   },
 });
 
-// A CSAM hash match (lib/imageModeration/quarantine): flip a still-pending sidecar to
-// "quarantined" (first verdict wins), drop its id from the completions row's `photos` array so no
-// read of that array can reach it (a direct system write that leaves updatedAt alone, like a
-// rejection), and raise the escalation. Unlike a rejection the blob is NOT deleted.
+// A CSAM hash match (lib/imageModeration/quarantine). FORCES the sidecar to "quarantined"
+// whatever its status now, points it at the preserved blob, drops the uploaded blob's id from the
+// completions row's `photos` array (a direct system write that leaves updatedAt alone, like a
+// rejection), and ALWAYS raises the escalation, even when the sidecar is gone.
 export const quarantineImage = internalMutation({
   args: { imageId: v.id("completionImages"), ...quarantineArgs },
   handler: async (ctx, { imageId, ...match }) => {
     const row = await ctx.db.get(imageId);
-    if (!row || row.moderationStatus !== "pending") return;
-    await ctx.db.patch(imageId, {
-      moderationStatus: "quarantined",
-      updatedAt: Date.now(),
-    });
-    const completion = await ctx.db
-      .query("completions")
-      .withIndex("by_aggregate_id", (q) =>
-        q.eq("aggregateId", row.completionId),
-      )
-      .unique();
-    if (completion) {
-      await ctx.db.patch(completion._id, {
-        photos: completion.photos.filter((id) => id !== row.fileId),
+    if (row) {
+      await ctx.db.patch(imageId, {
+        moderationStatus: "quarantined",
+        fileId: match.fileId,
+        pendingHashes: undefined,
+        updatedAt: Date.now(),
       });
+      const completion = await ctx.db
+        .query("completions")
+        .withIndex("by_aggregate_id", (q) =>
+          q.eq("aggregateId", row.completionId),
+        )
+        .unique();
+      if (completion) {
+        await ctx.db.patch(completion._id, {
+          photos: completion.photos.filter((id) => id !== row.fileId),
+        });
+      }
     }
-    await recordCsamEscalation(ctx, {
+    return recordCsamEscalation(ctx, {
       table: "completionImages",
       rowId: imageId,
-      uploaderId: row.uploaderId,
-      fileId: row.fileId,
       ...match,
     });
   },
+});
+
+// Record the CSAM hash-check outcome (lib/imageModeration/quarantine.applyHashCheckResult).
+export const setHashCheck = internalMutation({
+  args: { imageId: v.id("completionImages"), ...hashCheckResultArgs },
+  handler: (ctx, { imageId, ...result }) =>
+    applyHashCheckResult(ctx, imageId, result),
 });
 
 // One page of sidecars for the re-screen (same candidate rule as the library: unscored, or
