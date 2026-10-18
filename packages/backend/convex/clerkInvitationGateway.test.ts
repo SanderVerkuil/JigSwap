@@ -15,6 +15,7 @@ const clerk = vi.hoisted(() => ({
   createInvitation: vi.fn(),
   revokeInvitation: vi.fn(),
   deleteInvitation: vi.fn(),
+  updateUserMetadata: vi.fn(),
 }));
 vi.mock("@clerk/backend", () => ({
   createClerkClient: clerk.createClerkClient,
@@ -28,6 +29,7 @@ beforeEach(() => {
       revokeInvitation: clerk.revokeInvitation,
       deleteInvitation: clerk.deleteInvitation,
     },
+    users: { updateUserMetadata: clerk.updateUserMetadata },
   });
 });
 
@@ -132,6 +134,7 @@ describe("retireInvitation", () => {
     const calls: string[] = [];
     const fake = {
       create: vi.fn(),
+      clearInviteMetadata: vi.fn(),
       revoke: vi.fn(async (id: string) => {
         calls.push(`revoke:${id}`);
         throw clerkError("not_found", 404);
@@ -149,6 +152,7 @@ describe("retireInvitation", () => {
   it("reports a failed delete", async () => {
     const fake = {
       create: vi.fn(),
+      clearInviteMetadata: vi.fn(),
       revoke: vi.fn(async () => {}),
       delete: vi.fn(async () => {
         throw new TypeError("fetch failed");
@@ -156,6 +160,16 @@ describe("retireInvitation", () => {
     };
     expect(await retireInvitation(fake, "inv_1")).toEqual({
       delete: "TypeError",
+    });
+  });
+});
+
+describe("clerkInvitationGateway.clearInviteMetadata", () => {
+  it("nulls jsInvite in the user's public metadata (Clerk merges, null deletes)", async () => {
+    clerk.updateUserMetadata.mockResolvedValue({ id: "user_1" });
+    await gateway().clearInviteMetadata("user_1");
+    expect(clerk.updateUserMetadata).toHaveBeenCalledWith("user_1", {
+      publicMetadata: { jsInvite: null },
     });
   });
 });

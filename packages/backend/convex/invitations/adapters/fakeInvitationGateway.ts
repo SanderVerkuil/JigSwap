@@ -15,6 +15,7 @@ export interface FakeInvitationGateway extends InvitationGateway {
   readonly created: CreateInvitationInput[];
   readonly revoked: string[];
   readonly deleted: string[];
+  readonly cleared: string[];
 }
 
 export const makeFakeInvitationGateway = (): FakeInvitationGateway => {
@@ -26,6 +27,7 @@ export const makeFakeInvitationGateway = (): FakeInvitationGateway => {
     created: [],
     revoked: [],
     deleted: [],
+    cleared: [],
     async create(input) {
       fake.created.push(input);
       seq += 1;
@@ -52,6 +54,9 @@ export const makeFakeInvitationGateway = (): FakeInvitationGateway => {
     async delete(id) {
       fake.deleted.push(id);
       if (fake.failDelete) throw new Error("fake delete failure");
+    },
+    async clearInviteMetadata(clerkUserId) {
+      fake.cleared.push(clerkUserId);
     },
   };
   return fake;
