@@ -12,13 +12,15 @@ import {
 // delivery payload rather than the persisted row, because a member may have in-app disabled (then
 // no row exists).
 //
-// Returns null when the recipient must not get it at all: an admin-only type for a recipient who is
+// Returns null when the recipient must not get it at all: their account is deleted, an admin-only type for a recipient who is
 // no longer an admin, or a circle invite or connection offer that is no longer on offer. There is no JWT in a scheduled action, so admin status comes from the
 // recipient's `users.role` mirror (the same source the subscriber's admin fan-out targets).
 export const resolveForDelivery = internalQuery({
   args: deliveryResolutionArgs,
   handler: async (ctx, args) => {
     const recipient = await ctx.db.get(args.recipientId);
+    // A deleted (or tombstoned) account gets nothing that was still due when it went.
+    if (!recipient || !recipient.isActive) return null;
     const cache = createNotificationViewCache({
       viewerIsAdmin: recipient?.role === "admin",
     });
