@@ -240,19 +240,18 @@ export function contextCopyHref(copy: InboxContextCopy): string {
   return copyHref(copy.copyId);
 }
 
-// Covers shown in an inbox row's stack before the "+N" counter.
-export const COVER_STACK_VISIBLE = 3;
-
-// Screen-reader summary of a row's puzzle stack: "About 5 puzzles: A, B, C and
-// 2 more" — the first COVER_STACK_VISIBLE titles, the rest counted.
+// Screen-reader summary of a thread's puzzles: "About 5 puzzles: A, B, C and
+// 2 more" — the first `shown` titles named, the rest counted (an inbox row,
+// which shows one cover, names one: "About 5 puzzles: A and 4 more").
 export function coverStackSummary(
   titles: readonly string[],
   locale: string,
   t: Translator,
+  shown = 3,
 ): string {
-  const shown = titles.slice(0, COVER_STACK_VISIBLE);
-  const rest = titles.length - shown.length;
-  const items = rest > 0 ? [...shown, t("moreCount", { count: rest })] : shown;
+  const named = titles.slice(0, shown);
+  const rest = titles.length - named.length;
+  const items = rest > 0 ? [...named, t("moreCount", { count: rest })] : named;
   const list = new Intl.ListFormat(locale, {
     style: "long",
     type: "conjunction",

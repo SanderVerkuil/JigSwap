@@ -1,135 +1,78 @@
 "use client";
 
-// The puzzles an inbox row is about, as a fanned stack of small covers at the
-// start of the row's second line (same 20px line box as the snippet beside
-// it). The first cover sits on top, each next one slightly behind; hovering or
-// keyboard-focusing the row spreads them apart, and the cover under the
-// pointer lifts and names itself in a tooltip ("<title> · <whose copy>"; on
-// keyboard focus the front cover does). Purely presentational inside the row
-// link: the group's summary label ("About 5 puzzles: A, B, C and 2 more") is
-// what the link announces, and each cover keeps its title as its name.
+// Puzzle cover tiles for the messaging surfaces: the shared 24px tile (cover
+// image, or the puzzle glyph on a muted card with a hairline edge), the
+// tooltip provider their names share, and the inbox row's single cover (the
+// conversation's most recent puzzle). The thread header's stack of all the
+// conversation's puzzles lives in thread-puzzle-stack.tsx.
 import { Image } from "@/compat/image";
 import { TooltipContent } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { Puzzle } from "lucide-react";
 import { useState, type ReactNode } from "react";
-import { COVER_STACK_VISIBLE, type InboxContextCopy } from "./format";
+import type { InboxContextCopy } from "./format";
 
-// Stacking order, front to back (static classes so Tailwind sees them).
-const Z_INDEX = ["z-[4]", "z-[3]", "z-[2]", "z-[1]"];
-
-// Shared tile box: overlapped at rest, spread on row hover/focus; transitions
-// are dropped under prefers-reduced-motion (the spacing still changes).
-const tileClass = (index: number, ringClass: string) =>
-  cn(
-    "relative -my-0.5 flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-[5px] ring-2 transition-[margin,translate] duration-200 ease-out motion-reduce:transition-none motion-reduce:duration-0",
-    ringClass,
-    Z_INDEX[index],
-    index > 0 && "-ml-3 group-hover:ml-1 group-focus-visible:ml-1",
-  );
-
-export function CoverStack({
-  copies,
-  label,
-  ringClass,
-  describe,
-  keyboardFocused,
+// One cover. `glyphShifted`: the tile's left half is covered by the card in
+// front of it, so the glyph moves into the visible right half.
+export function CoverTile({
+  copy,
+  className,
+  glyphShifted = false,
 }: {
-  copies: readonly InboxContextCopy[];
-  // Summary for assistive tech (coverStackSummary).
-  label: string;
-  // Separation ring in the row's background colour.
-  ringClass: string;
-  // Tooltip text for one cover: "<title> · <whose copy>".
-  describe: (copy: InboxContextCopy) => string;
-  // The row link has keyboard focus: the front cover lifts and shows its name.
-  keyboardFocused: boolean;
+  copy: InboxContextCopy;
+  className?: string;
+  glyphShifted?: boolean;
 }) {
-  const visible = copies.slice(0, COVER_STACK_VISIBLE);
-  const rest = copies.length - visible.length;
-  // The cover whose tooltip the pointer opened (Radix applies the delays).
-  const [hovered, setHovered] = useState<number | null>(null);
-  const openIndex = hovered ?? (keyboardFocused ? 0 : null);
   return (
     <span
-      role="group"
-      aria-label={label}
-      className="flex shrink-0 items-center"
+      className={cn(
+        // A hairline edge so each card in a stack reads as its own puzzle.
+        "bg-muted border-foreground/20 relative flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-[5px] border",
+        className,
+      )}
     >
-      {visible.map((copy, index) => (
-        <TooltipPrimitive.Root
-          key={copy.copyId}
-          open={openIndex === index}
-          onOpenChange={(open) =>
-            setHovered((current) =>
-              open ? index : current === index ? null : current,
-            )
-          }
-        >
-          <TooltipPrimitive.Trigger asChild>
-            <span
-              className={cn(
-                tileClass(index, ringClass),
-                // A hairline edge so each card in the deck reads as its own puzzle.
-                "bg-muted border-foreground/20 border hover:z-10 hover:-translate-y-0.5",
-                // Keyboard users get the same lift on the front cover.
-                index === 0 && "group-focus-visible:-translate-y-0.5",
-              )}
-            >
-              {copy.coverUrl ? (
-                <Image
-                  src={copy.coverUrl}
-                  alt={copy.title}
-                  fill
-                  className="object-cover"
-                />
-              ) : (
-                <span role="img" aria-label={copy.title} className="flex">
-                  <Puzzle
-                    aria-hidden
-                    className={cn(
-                      "text-muted-foreground size-3.5",
-                      // Behind the front tile only the right half shows, so a back
-                      // tile's glyph sits right of centre until the stack spreads.
-                      index > 0 &&
-                        "translate-x-1 transition-transform duration-200 group-hover:translate-x-0 group-focus-visible:translate-x-0 motion-reduce:transition-none motion-reduce:duration-0",
-                    )}
-                  />
-                </span>
-              )}
-            </span>
-          </TooltipPrimitive.Trigger>
-          {/* Portalled, so the row/list overflow can't clip it; it just
-              appears under prefers-reduced-motion. */}
-          <TooltipContent
-            side="top"
-            sideOffset={6}
-            // Keep clear of the screen edge on narrow viewports.
-            collisionPadding={8}
-            className="max-w-[min(18rem,calc(100vw-2rem))] motion-reduce:animate-none"
-          >
-            {describe(copy)}
-          </TooltipContent>
-        </TooltipPrimitive.Root>
-      ))}
-      {rest > 0 && (
-        // Beside the stack, never under it, so "+N" stays readable.
-        <span className="bg-muted text-muted-foreground -my-0.5 ml-1 flex h-6 min-w-6 shrink-0 items-center justify-center rounded-[5px] px-1 text-[11px] font-semibold tabular-nums">
-          +{rest}
+      {copy.coverUrl ? (
+        <Image
+          src={copy.coverUrl}
+          alt={copy.title}
+          fill
+          className="object-cover"
+        />
+      ) : (
+        <span role="img" aria-label={copy.title} className="flex">
+          <Puzzle
+            aria-hidden
+            className={cn(
+              "text-muted-foreground size-3.5 transition-transform duration-200 motion-reduce:transition-none motion-reduce:duration-0",
+              glyphShifted && "translate-x-1",
+            )}
+          />
         </span>
       )}
     </span>
   );
 }
 
-// One provider per inbox list so tooltip delays are shared: a short first
-// delay, then instant hand-off while the pointer sweeps across the stack.
-export function CoverStackTooltipProvider({
-  children,
-}: {
-  children: ReactNode;
-}) {
+// The name tooltip for one cover: portalled (row/list/header overflow can't
+// clip it), clear of the screen edge, and it simply appears under
+// prefers-reduced-motion.
+export function CoverTooltipContent({ children }: { children: ReactNode }) {
+  return (
+    <TooltipContent
+      side="top"
+      sideOffset={6}
+      collisionPadding={8}
+      className="max-w-[min(18rem,calc(100vw-2rem))] motion-reduce:animate-none"
+    >
+      {children}
+    </TooltipContent>
+  );
+}
+
+// Shared tooltip delays: a short first delay, then instant hand-off while the
+// pointer sweeps from cover to cover.
+export function CoverTooltipProvider({ children }: { children: ReactNode }) {
   return (
     // disableHoverableContent: these tooltips are just names, and Radix's
     // grace area toward the (wide) tooltip would otherwise keep one cover's
@@ -141,5 +84,39 @@ export function CoverStackTooltipProvider({
     >
       {children}
     </TooltipPrimitive.Provider>
+  );
+}
+
+// An inbox row's puzzle: the most recent one only, as a single cover at the
+// start of the row's second line. It lifts and names itself ("<title> ·
+// <whose copy>") on hover, or when the row has keyboard focus. Purely
+// presentational inside the row link: `label` (all the thread's puzzles,
+// summarised) is what the link announces.
+export function RowCover({
+  copy,
+  label,
+  describe,
+  keyboardFocused,
+}: {
+  copy: InboxContextCopy;
+  label: string;
+  describe: (copy: InboxContextCopy) => string;
+  keyboardFocused: boolean;
+}) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <span role="group" aria-label={label} className="flex shrink-0">
+      <TooltipPrimitive.Root
+        open={hovered || keyboardFocused}
+        onOpenChange={setHovered}
+      >
+        <TooltipPrimitive.Trigger asChild>
+          <span className="-my-0.5 flex transition-transform duration-200 ease-out group-focus-visible:-translate-y-0.5 hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:duration-0">
+            <CoverTile copy={copy} />
+          </span>
+        </TooltipPrimitive.Trigger>
+        <CoverTooltipContent>{describe(copy)}</CoverTooltipContent>
+      </TooltipPrimitive.Root>
+    </span>
   );
 }

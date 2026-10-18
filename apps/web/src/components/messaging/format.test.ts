@@ -376,6 +376,15 @@ describe("coverStackSummary", () => {
     );
   });
 
+  it("names only as many titles as asked (an inbox row names one)", () => {
+    expect(coverStackSummary(["A", "B", "C", "D", "E"], "en", en, 1)).toBe(
+      "About 5 puzzles: A and 4 more",
+    );
+    expect(coverStackSummary(["A", "B", "C", "D", "E"], "nl", nl, 1)).toBe(
+      "Over 5 puzzels: A en nog 4",
+    );
+  });
+
   it("counts the titles beyond the visible three", () => {
     expect(coverStackSummary(["A", "B", "C", "D", "E"], "en", en)).toBe(
       "About 5 puzzles: A, B, C, and 2 more",

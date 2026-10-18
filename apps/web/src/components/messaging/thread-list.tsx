@@ -17,7 +17,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeftRight, MessageSquare, User } from "lucide-react";
 import { useState } from "react";
 import { useLocale, useNow, useTranslations } from "use-intl";
-import { CoverStack, CoverStackTooltipProvider } from "./cover-stack";
+import { CoverTooltipProvider, RowCover } from "./cover-stack";
 import {
   copyOwnerHint,
   coverStackSummary,
@@ -146,7 +146,7 @@ function ThreadListBody({ activeThreadId }: { activeThreadId?: string }) {
   }
 
   return (
-    <CoverStackTooltipProvider>
+    <CoverTooltipProvider>
       <nav aria-label={t("conversationsLabel")}>
         <ul role="list" className="flex flex-col gap-0.5 p-2 max-md:-mx-2">
           {inbox.map((thread) => (
@@ -162,7 +162,7 @@ function ThreadListBody({ activeThreadId }: { activeThreadId?: string }) {
           ))}
         </ul>
       </nav>
-    </CoverStackTooltipProvider>
+    </CoverTooltipProvider>
   );
 }
 
@@ -183,8 +183,8 @@ function ThreadRow({
 }) {
   const t = useTranslations("messages");
   const displayName = useMemberDisplayName();
-  // Keyboard (focus-visible) focus on the row: the cover stack names its
-  // front cover, as hovering does for the cover under the pointer.
+  // Keyboard (focus-visible) focus on the row: the row's cover lifts and
+  // names itself, as hovering it does.
   const [keyboardFocused, setKeyboardFocused] = useState(false);
 
   const unread = thread.unreadCount > 0;
@@ -247,13 +247,15 @@ function ThreadRow({
           </time>
         </div>
         <div className="mt-0.5 flex items-center gap-2 text-[13px] leading-5">
+          {/* The most recent puzzle; the label summarises all of them. */}
           {contextCopies.length > 0 && (
-            <CoverStack
-              copies={contextCopies}
+            <RowCover
+              copy={contextCopies[0]}
               label={coverStackSummary(
                 contextCopies.map((copy) => copy.title),
                 locale,
                 t,
+                1,
               )}
               keyboardFocused={keyboardFocused}
               describe={(copy) =>
@@ -263,11 +265,6 @@ function ThreadRow({
                   t,
                   displayName,
                 )}`
-              }
-              ringClass={
-                selected
-                  ? "ring-jigsaw-primary-tint"
-                  : "ring-background md:ring-card"
               }
             />
           )}
