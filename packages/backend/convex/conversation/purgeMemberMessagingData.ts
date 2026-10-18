@@ -20,6 +20,11 @@ import { removeForDeletedMember } from "./messageAttachments";
 //   invitesIn    the circle invites they received } notifications pointing at them, so the other
 //   offersOut    the connection offers they made  } party has nothing left to open (like
 //   offersIn     the connection offers made them  } purgeDeletedCircle, nothing is announced)
+//   followsOut   their edges to the people they follow } deleted whatever their status, with
+//   followsIn    the edges of the people following them } the follow notifications naming them
+//   requestsOut  the follow requests they sent          } in the other party's inbox (a grouped
+//   requestsIn   the follow requests sent to them       } new_follower row only loses them)
+//                Follower counts and "followers you know" are read live from `follows`.
 //   rateLimits   their own counters (never the deployment-wide MapTiler budget keys)
 // One phase at a time, PURGE_BATCH_SIZE rows per run: a run that did not finish its phase
 // schedules the next run with the page cursor, so each run stays well inside Convex's per-mutation
@@ -40,6 +45,10 @@ const PHASES = [
   "invitesIn",
   "offersOut",
   "offersIn",
+  "followsOut",
+  "followsIn",
+  "requestsOut",
+  "requestsIn",
   "rateLimits",
 ] as const;
 type Phase = (typeof PHASES)[number];
@@ -55,6 +64,10 @@ const phaseValidator = v.union(
   v.literal("invitesIn"),
   v.literal("offersOut"),
   v.literal("offersIn"),
+  v.literal("followsOut"),
+  v.literal("followsIn"),
+  v.literal("requestsOut"),
+  v.literal("requestsIn"),
   v.literal("rateLimits"),
 );
 
@@ -104,6 +117,41 @@ const deleteOffer = async (ctx: MutationCtx, row: Doc<"connectionOffers">) => {
     row.aggregateId,
   );
   await ctx.db.delete(row._id);
+};
+
+// Take `actorId` out of the recipient's notifications of one follow type: a row naming only them is
+// deleted; a grouped new_follower row drops them from its actors and, when they were its newest
+// actor (whose name and id the row carries for legacy renderers), points at the next one instead.
+const removeActorFromNotifications = async (
+  ctx: MutationCtx,
+  recipientId: Id<"users">,
+  type: "new_follower" | "follow_request_received" | "follow_request_approved",
+  actorId: Id<"users">,
+): Promise<void> => {
+  const rows = await ctx.db
+    .query("notifications")
+    .withIndex("by_user_type", (q) =>
+      q.eq("userId", recipientId).eq("type", type),
+    )
+    .collect();
+  for (const row of rows) {
+    const actorIds = row.actorIds ?? [];
+    if (!actorIds.includes(actorId) && row.relatedId !== actorId) continue;
+    const rest = actorIds.filter((id) => id !== actorId);
+    if (rest.length === 0) {
+      await ctx.db.delete(row._id);
+      continue;
+    }
+    const { actorName: _name, ...params } = row.params ?? {};
+    await ctx.db.patch(row._id, {
+      actorIds: rest,
+      actorCount: Math.max(row.actorCount ?? 0, actorIds.length) - 1,
+      ...(row.relatedId === actorId && {
+        relatedId: rest[0],
+        params: Object.keys(params).length > 0 ? params : undefined,
+      }),
+    });
+  }
 };
 
 const runPhase = async (
@@ -201,6 +249,64 @@ const runPhase = async (
         .withIndex("by_to_status", (q) => q.eq("toId", memberId))
         .paginate(opts);
       for (const row of page.page) await deleteOffer(ctx, row);
+      return page;
+    }
+    case "followsOut": {
+      const page = await ctx.db
+        .query("follows")
+        .withIndex("by_follower", (q) => q.eq("followerId", memberId))
+        .paginate(opts);
+      for (const row of page.page) {
+        await removeActorFromNotifications(
+          ctx,
+          row.followeeId,
+          "new_follower",
+          memberId,
+        );
+        await ctx.db.delete(row._id);
+      }
+      return page;
+    }
+    case "followsIn": {
+      // Nothing in the follower's inbox comes from this edge: a follow_request_approved from the
+      // member goes with its request (requestsIn).
+      const page = await ctx.db
+        .query("follows")
+        .withIndex("by_followee", (q) => q.eq("followeeId", memberId))
+        .paginate(opts);
+      for (const row of page.page) await ctx.db.delete(row._id);
+      return page;
+    }
+    case "requestsOut": {
+      const page = await ctx.db
+        .query("followRequests")
+        .withIndex("by_requester", (q) => q.eq("requesterId", memberId))
+        .paginate(opts);
+      for (const row of page.page) {
+        await removeActorFromNotifications(
+          ctx,
+          row.targetId,
+          "follow_request_received",
+          memberId,
+        );
+        await ctx.db.delete(row._id);
+      }
+      return page;
+    }
+    case "requestsIn": {
+      const page = await ctx.db
+        .query("followRequests")
+        .withIndex("by_target", (q) => q.eq("targetId", memberId))
+        .paginate(opts);
+      for (const row of page.page) {
+        await removeActorFromNotifications(
+          ctx,
+          row.requesterId,
+          "follow_request_approved",
+          memberId,
+        );
+        await ctx.db.delete(row._id);
+      }
       return page;
     }
     case "rateLimits": {
