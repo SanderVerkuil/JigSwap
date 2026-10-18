@@ -425,6 +425,38 @@ describe("account deletion: email invitations", () => {
     expect(gate.gateway?.deleted).toEqual(["inv_alice_1"]);
   });
 
+  test("the pending in-app invite an email invitation made is withdrawn", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("householdInvites", {
+        aggregateId: "hh-invite-1",
+        householdId: "hh_1",
+        inviterId: s.alice,
+        inviteeId: s.carol,
+        status: "pending",
+        createdAt: now,
+        viaEmail: true,
+      });
+      await ctx.db.insert("emailInvites", {
+        aggregateId: "ref-alice-hh",
+        kind: "household",
+        inviterId: s.alice,
+        householdId: "hh_1",
+        fallback: { householdInviteId: "hh-invite-1" },
+        createdAt: now,
+        expiresAt: now + 14 * 24 * 60 * 60_000,
+      });
+    });
+
+    await deleteAlice(t);
+
+    expect(
+      await t.run((ctx) => ctx.db.query("householdInvites").collect()),
+    ).toEqual([]);
+  });
+
   test("her emailInvite rate-limit counter goes with the others", async () => {
     const t = convexTest(schema, modules);
     const s = await seed(t);
@@ -446,5 +478,59 @@ describe("account deletion: email invitations", () => {
           .unique(),
       ),
     ).toBeNull();
+  });
+});
+
+describe("account deletion: household invites", () => {
+  test("every household invite she sent or received goes, with the invitee's notification; others stay", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      const invite = (
+        aggregateId: string,
+        inviterId: Id<"users">,
+        inviteeId: Id<"users">,
+        status: "pending" | "accepted" | "declined",
+      ) =>
+        ctx.db.insert("householdInvites", {
+          aggregateId,
+          householdId: "hh_1",
+          inviterId,
+          inviteeId,
+          status,
+          createdAt: now,
+        });
+      await invite("hh-alice-carol", s.alice, s.carol, "pending");
+      await invite("hh-alice-bob", s.alice, s.bob, "declined");
+      await invite("hh-bob-alice", s.bob, s.alice, "accepted");
+      await invite("hh-bob-carol", s.bob, s.carol, "pending");
+      for (const inviteId of ["hh-alice-carol", "hh-bob-carol"]) {
+        await ctx.db.insert("notifications", {
+          userId: s.carol,
+          type: "household_invite_received",
+          title: "Household invite",
+          message: "Household invite",
+          isRead: false,
+          createdAt: now,
+          subject: { kind: "householdInvite", inviteId },
+        });
+      }
+    });
+
+    await deleteAlice(t);
+
+    const left = await t.run(async (ctx) => ({
+      invites: (await ctx.db.query("householdInvites").collect()).map(
+        (row) => row.aggregateId,
+      ),
+      notifications: (await ctx.db.query("notifications").collect())
+        .filter((row) => row.type === "household_invite_received")
+        .map((row) =>
+          row.subject?.kind === "householdInvite" ? row.subject.inviteId : "",
+        ),
+    }));
+    expect(left.invites).toEqual(["hh-bob-carol"]);
+    expect(left.notifications).toEqual(["hh-bob-carol"]);
   });
 });

@@ -34,6 +34,11 @@ export interface InvitationGateway {
    * failure.
    */
   delete(id: string): Promise<void>;
+  /**
+   * Remove our invitation ref from a signed-up user's public metadata (it came from the
+   * invitation), so ids don't linger. Throws on failure.
+   */
+  clearInviteMetadata(clerkUserId: string): Promise<void>;
 }
 
 // The configured adapter. Env is read lazily per call (repo convention). Tests replace this

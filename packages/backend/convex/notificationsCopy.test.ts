@@ -53,10 +53,10 @@ describe("renderNotificationText", () => {
     expect(
       renderNotificationText("connection_offer_received", { actorName: "Bo" })
         .message,
-    ).toBe("Bo invited you to JigSwap. Follow each other?");
+    ).toBe("Bo invited you to follow each other.");
     expect(
       renderNotificationText("connection_offer_received", {}).message,
-    ).toBe("Someone invited you to JigSwap. Follow each other?");
+    ).toBe("Someone invited you to follow each other.");
   });
 });
 

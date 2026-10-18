@@ -55,5 +55,11 @@ export const clerkInvitationGateway = (config: {
       // Also deletes "the copies of the invitation email Clerk stored for its recipient".
       await clerk().invitations.deleteInvitation(id);
     },
+    async clearInviteMetadata(clerkUserId) {
+      // Clerk merges publicMetadata, and a null value deletes the key.
+      await clerk().users.updateUserMetadata(clerkUserId, {
+        publicMetadata: { jsInvite: null },
+      });
+    },
   };
 };

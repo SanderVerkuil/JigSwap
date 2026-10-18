@@ -207,8 +207,8 @@ const COPY: Record<NotificationType, (p: Params) => NotificationText> = {
   connection_offer_received: (p) => ({
     title: "Follow each other?",
     message: p["actorName"]
-      ? `${p["actorName"]} invited you to JigSwap. Follow each other?`
-      : "Someone invited you to JigSwap. Follow each other?",
+      ? `${p["actorName"]} invited you to follow each other.`
+      : "Someone invited you to follow each other.",
   }),
   circle_invite_received: (p) => ({
     title: "Circle invite",

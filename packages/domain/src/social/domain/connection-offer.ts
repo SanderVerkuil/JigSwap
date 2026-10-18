@@ -6,9 +6,10 @@ import { ConnectionOfferId, MemberId } from "./ids";
 export type ConnectionOfferStatus =
   "pending" | "accepted" | "declined" | "expired";
 
-// Where the offer came from: a member's network invite link or a household invite link (email
-// invites will add their own source).
-export type ConnectionOfferSource = "inviteLink" | "householdLink";
+// Where the offer came from: a member's network invite link, a household invite link, or an email
+// invitation (to someone who signed up through it, or who already had an account).
+export type ConnectionOfferSource =
+  "inviteLink" | "householdLink" | "emailInvite";
 
 // An unanswered offer lapses 30 days after it was made.
 export const CONNECTION_OFFER_TTL_MS = 30 * 24 * 60 * 60 * 1000;

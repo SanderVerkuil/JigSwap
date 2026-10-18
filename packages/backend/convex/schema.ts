@@ -1435,13 +1435,18 @@ export default defineSchema({
   // Social: confirm-first connection offers (ConnectionOffer aggregate). Redeeming an invite link
   // at sign-up offers the new member (toId) a mutual follow with the link's owner (fromId); nothing
   // is followed until they accept. inviteLinkId attributes an accept to the link's
-  // followsEstablished. At most one pending row per ordered pair (by_from_to_status); expiry is
-  // lazy (reads check expiresAt) plus a scheduled expire at expiresAt.
+  // followsEstablished; an email invitation (source "emailInvite") offers the same with none. At
+  // most one pending row per ordered pair (by_from_to_status); expiry is lazy (reads check
+  // expiresAt) plus a scheduled expire at expiresAt.
   connectionOffers: defineTable({
     aggregateId: v.string(),
     fromId: v.id("users"),
     toId: v.id("users"),
-    source: v.union(v.literal("inviteLink"), v.literal("householdLink")),
+    source: v.union(
+      v.literal("inviteLink"),
+      v.literal("householdLink"),
+      v.literal("emailInvite"),
+    ),
     inviteLinkId: v.optional(v.id("inviteLinks")),
     status: v.union(
       v.literal("pending"),
@@ -1534,10 +1539,18 @@ export default defineSchema({
     ),
     createdAt: v.number(),
     respondedAt: v.optional(v.number()),
+    // Made by an email invitation whose address already had an account (invitations/fallbacks).
+    // Left out of the admin's named pending list (getMyHousehold), which shows it only as the
+    // email invitation's "Invitation sent", so the list never reveals that the address had an
+    // account. Replaced by a fresh invite when the admin also invites the member in-app
+    // (inviteToHousehold).
+    viaEmail: v.optional(v.boolean()),
   })
     .index("by_aggregate_id", ["aggregateId"])
     .index("by_invitee_status", ["inviteeId", "status"])
-    .index("by_household", ["householdId"]),
+    .index("by_household", ["householdId"])
+    // Account deletion (conversation/purgeMemberMessagingData householdInvitesOut).
+    .index("by_inviter", ["inviterId"]),
 
   // Email invitations (#222, invitations/): the inviter's local reference for one invitation sent by
   // email to someone who is not on JigSwap yet. It stores NO email address, so the pending list
