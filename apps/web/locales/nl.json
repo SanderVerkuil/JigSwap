@@ -2096,7 +2096,7 @@
         "sentence": "{hasPuzzle, select, yes {<b>{actor}</b> heeft een probleem gemeld met je ruil voor <b>{puzzle}</b>.} other {<b>{actor}</b> heeft een probleem gemeld met je ruil.}}"
       },
       "message_received": {
-        "sentence": "<b>{actor}</b> heeft je een bericht gestuurd.",
+        "sentence": "{media, select, image {<b>{actor}</b> heeft een foto gestuurd.} location {<b>{actor}</b> heeft een locatie gedeeld.} other {<b>{actor}</b> heeft je een bericht gestuurd.}}",
         "sentenceAnonymous": "Je hebt een nieuw bericht.",
         "actions": {
           "reply": "Beantwoorden",

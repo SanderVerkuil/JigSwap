@@ -306,6 +306,27 @@ describe("NotificationItem rendering", () => {
     },
   );
 
+  it.each([
+    ["en", undefined, "Mara sent you a message."],
+    ["en", "image", "Mara sent a photo."],
+    ["en", "location", "Mara shared a location."],
+    ["nl", "image", "Mara heeft een foto gestuurd."],
+    ["nl", "location", "Mara heeft een locatie gedeeld."],
+  ] as const)(
+    "names a message_received by its media kind (%s, %s)",
+    (locale, messageKind, text) => {
+      const { container } = renderItem(
+        base({
+          type: "message_received",
+          href: "/messages/t1",
+          context: messageKind ? { messageKind } : {},
+        }),
+        { locale },
+      );
+      expect(rowLink(container)!.textContent).toContain(text);
+    },
+  );
+
   it("never links a trade-revealed actor's profile: the row opens the trade", () => {
     const { container } = renderItem(
       base({

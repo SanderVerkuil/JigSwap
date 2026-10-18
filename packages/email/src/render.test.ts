@@ -287,6 +287,26 @@ describe("renderEmail with resolved delivery content", () => {
     },
   );
 
+  it.each([
+    ["en", "image", "Anna sent a photo on JigSwap."],
+    ["en", "location", "Anna shared a location on JigSwap."],
+    ["nl", "image", "Anna heeft een foto gestuurd op JigSwap."],
+    ["nl", "location", "Anna heeft een locatie gedeeld op JigSwap."],
+  ] as const)(
+    "%s: a %s message is named by its kind, with no preview paragraph",
+    async (locale, messageKind, body) => {
+      const email = await renderEmail({
+        type: "message_received",
+        params: { actorName: "Anna", messageKind },
+        locale,
+        baseUrl: BASE,
+        href: "/messages/thread-1",
+      });
+      expect(email.text).toContain(body);
+      expect(email.text).not.toContain("“");
+    },
+  );
+
   it("omits the detail paragraph when its token has no value", async () => {
     const email = await renderEmail({
       type: "message_received",

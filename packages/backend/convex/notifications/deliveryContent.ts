@@ -81,6 +81,7 @@ export const deliveryContentOf = (
   if (context.rating !== undefined) params["rating"] = String(context.rating);
   if (context.exchangeStatus) params["exchangeStatus"] = context.exchangeStatus;
   if (context.messagePreview) params["messagePreview"] = context.messagePreview;
+  if (context.messageKind) params["messageKind"] = context.messageKind;
 
   return {
     params,

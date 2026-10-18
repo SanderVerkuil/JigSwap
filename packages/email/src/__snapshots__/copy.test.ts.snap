@@ -65,6 +65,10 @@ exports[`copy catalog > pins the copy catalog verbatim (mutation guard + copy ch
         "cta": "Read message",
         "detail": "“{messagePreview}”",
         "heading": "New message",
+        "mediaBody": {
+          "image": "{actorName} sent a photo on JigSwap.",
+          "location": "{actorName} shared a location on JigSwap.",
+        },
         "subject": "New message from {actorName} on JigSwap",
       },
       "nl": {
@@ -72,6 +76,10 @@ exports[`copy catalog > pins the copy catalog verbatim (mutation guard + copy ch
         "cta": "Lees bericht",
         "detail": "“{messagePreview}”",
         "heading": "Nieuw bericht",
+        "mediaBody": {
+          "image": "{actorName} heeft een foto gestuurd op JigSwap.",
+          "location": "{actorName} heeft een locatie gedeeld op JigSwap.",
+        },
         "subject": "Nieuw bericht van {actorName} op JigSwap",
       },
     },

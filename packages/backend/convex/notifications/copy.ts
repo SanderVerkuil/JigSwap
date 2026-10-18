@@ -19,7 +19,8 @@ import type { DeliveryContent } from "./deliveryContent";
 //   rating      — review_received (1-5, snapshotted)
 // The push send action renders from the delivery resolved for the recipient (pushTextOf), which
 // overlays the live actor name and context: puzzleTitle on the trade types (the exchanged copy),
-// messagePreview on message_received, and actorName on every type that has an actor.
+// messagePreview or messageKind (image | location) on message_received, and actorName on every
+// type that has an actor.
 // whats_new carries no params: relatedId is the entry id, and the entry title is per-locale content
 // the backend manifest doesn't hold, so push uses a static line.
 
@@ -68,6 +69,19 @@ const COPY: Record<NotificationType, (p: Params) => NotificationText> = {
   message_received: (p) => {
     const actor = p["actorName"];
     const preview = p["messagePreview"];
+    // A photo or location is named by its kind; its caption is never shown.
+    const media =
+      p["messageKind"] === "image"
+        ? "sent a photo"
+        : p["messageKind"] === "location"
+          ? "shared a location"
+          : undefined;
+    if (media) {
+      return {
+        title: actor ? `New message from ${actor}` : "New message",
+        message: `${actor ?? "Someone"} ${media}`,
+      };
+    }
     if (actor && preview) {
       return { title: `New message from ${actor}`, message: preview };
     }

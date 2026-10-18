@@ -123,6 +123,27 @@ describe("renderNotificationText with resolved context", () => {
       }),
     ).toEqual({ title: "New message", message: "You have a new message" });
   });
+
+  it.each([
+    ["image", "Bo sent a photo"],
+    ["location", "Bo shared a location"],
+  ] as const)(
+    "message_received names a %s by its kind, never the caption",
+    (messageKind, message) => {
+      expect(
+        renderNotificationText("message_received", {
+          actorName: "Bo",
+          messageKind,
+        }),
+      ).toEqual({ title: "New message from Bo", message });
+    },
+  );
+
+  it("message_received for a photo from a nameless sender stays generic", () => {
+    expect(
+      renderNotificationText("message_received", { messageKind: "image" }),
+    ).toEqual({ title: "New message", message: "Someone sent a photo" });
+  });
 });
 
 describe("pushTextOf", () => {

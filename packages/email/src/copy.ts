@@ -33,6 +33,11 @@ export interface EmailCopy {
   readonly detail?: string;
   /** Replaces `cta` when the button deep-links to the specific item rather than its list page. */
   readonly deepCta?: string;
+  /**
+   * Replaces `body` (and `richBody`) when the `messageKind` param names a media kind: a photo or
+   * location is described by its kind, never by its caption.
+   */
+  readonly mediaBody?: Readonly<Record<"image" | "location", string>>;
 }
 
 // Locale-appropriate fallbacks merged UNDER params at render time, so copy may reference
@@ -165,6 +170,10 @@ export const EMAIL_COPY: Record<EmailType, Record<EmailLocale, EmailCopy>> = {
       body: "{actorName} sent you a message on JigSwap.",
       cta: "Read message",
       detail: "“{messagePreview}”",
+      mediaBody: {
+        image: "{actorName} sent a photo on JigSwap.",
+        location: "{actorName} shared a location on JigSwap.",
+      },
     },
     nl: {
       subject: "Nieuw bericht van {actorName} op JigSwap",
@@ -172,6 +181,10 @@ export const EMAIL_COPY: Record<EmailType, Record<EmailLocale, EmailCopy>> = {
       body: "{actorName} heeft je een bericht gestuurd op JigSwap.",
       cta: "Lees bericht",
       detail: "“{messagePreview}”",
+      mediaBody: {
+        image: "{actorName} heeft een foto gestuurd op JigSwap.",
+        location: "{actorName} heeft een locatie gedeeld op JigSwap.",
+      },
     },
   },
   review_received: {
