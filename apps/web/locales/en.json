@@ -741,6 +741,7 @@
   },
   "messages": {
     "anonymous": "Anonymous user",
+    "deletedMember": "Deleted member",
     "attachPuzzle": "Attach a puzzle",
     "attachTitle": "Attach a puzzle",
     "attached": "Attached: {title}",
@@ -830,6 +831,7 @@
       "altOwn": "Your photo",
       "tileLabel": "Photo {index} of {count}, open",
       "removed": "Photo removed",
+      "noLongerAvailable": "Photo no longer available",
       "sensitive": "Sensitive content",
       "notChecked": "Not checked",
       "show": "Show",
@@ -1215,10 +1217,10 @@
         "title": "Our lawful basis, in plain terms",
         "description": "Under the GDPR we need a legal reason for each use of your data. Ours are:",
         "items": [
-          "Performing our agreement with you: everything needed to run the service you signed up for — your account, library, exchanges, and messages",
-          "Legitimate interests: keeping JigSwap secure, preventing abuse, screening uploaded photos, operational logging, and understanding usage so we can improve the service",
+          "Performing our agreement with you: everything needed to run the service you signed up for — your account, library, exchanges, and messages, including the photos and locations you attach to them",
+          "Legitimate interests: keeping JigSwap secure, preventing abuse, screening uploaded photos, handling reports and blocks, operational logging, and understanding usage so we can improve the service",
           "Consent: where we ask you first, such as browser push notifications",
-          "Legal obligations: the rare cases where we must keep or share data because the law requires it"
+          "Legal obligations: handling notices of illegal content and explaining our moderation decisions under the EU Digital Services Act, and the rare cases where we must keep or share data because the law requires it"
         ]
       }
     },
@@ -1263,6 +1265,58 @@
         "Until this finishes, the photo is visible only to you. If the check cannot be completed (for example because the screening service is unavailable), the photo stays visible only to you until it has been checked"
       ]
     },
+    "messaging": {
+      "title": "Messages, Photos and Locations",
+      "description": "Messages you send are visible only to the members of that conversation. You can attach photos and share a location:",
+      "items": [
+        "Photos in messages go through the same pipeline as other photos: they are re-encoded, which strips hidden metadata such as EXIF data (including any embedded location), and screened by the automated content-safety check before the other member receives them",
+        "A photo the check marks as possibly sensitive, a photo from someone who is not your mutual follower, and a photo the check could not complete (labelled \"not checked\") are shown blurred until the recipient taps Show",
+        "A photo the check stops is not delivered. You are told, and you can ask for a review",
+        "Sharing a location is one-shot: it sends a single place, never your live position",
+        "A pin you place on the map is sent exactly where you put it. \"Use my current location\" is rounded to an area of about 1 km; sending your exact current position is only offered to members who are your mutual followers, and only when you choose it. While you look at the map around your current position, its centre (rounded to about 100 m) is remembered for 15 minutes, so that a pin placed right where you are is sent as an approximate area too",
+        "The map preview of a shared location is rendered once, on our servers, when you send it (see MapTiler above)"
+      ]
+    },
+    "safety": {
+      "title": "Blocking and Reporting",
+      "description": "You can block a member and report content or members that break the rules.",
+      "blockingTitle": "Blocking",
+      "blocking": "When you block someone, they can no longer message you, follow you or propose trades. They are not notified. Your block list is private: only you can see it, in your Privacy & safety settings. An unblock deletes the block.",
+      "reportingTitle": "Reporting",
+      "reportingDescription": "When you file a report, we store:",
+      "reportingItems": [
+        "Who filed it, what it is about, the reason you chose and any details you add",
+        "For a notice of illegal content: the name and email address you give us",
+        "For a reported message: a copy of that message and up to 10 messages before it in the conversation, so a moderator can see the context",
+        "Our decision and the reasons we give for it"
+      ],
+      "reporterWithheld": "We never tell the reported member who reported them. Both sides are told the outcome; the reported member receives a statement of the reasons for any action we take."
+    },
+    "retention": {
+      "title": "How Long We Keep Data",
+      "description": "We keep data only as long as we need it:",
+      "items": [
+        "Photos you attach but never send: deleted after 24 hours",
+        "Photos you sent that are still being checked a week later: deleted",
+        "Messages, photos and shared locations: for as long as your account exists, unless a moderator removes them earlier",
+        "A photo the automated check stopped: kept for 30 days so you can ask for a review (or until the review is decided), then deleted. Our moderation log keeps a record that a check stopped a photo, without the photo itself",
+        "Content removed after a report: a copy is kept as evidence for 6 months after the decision, then deleted",
+        "Reports: kept for 12 months after the decision. After that, the reporter's identity, the details they wrote and the copied messages are deleted; only the decision itself remains. Longer only when a report is escalated to law enforcement",
+        "Blocks: for as long as the block is active",
+        "Map images in the location picker: deleted after about 10 minutes; the rounded centre of a map around your current position: 15 minutes",
+        "Technical logs (Axiom): 30 days. Logs never contain message text, captions, coordinates or report text"
+      ],
+      "deletionTitle": "When you delete your account",
+      "deletion": [
+        "Your text messages stay in the conversations you had, so the other member's history still makes sense; they are shown as sent by a \"deleted member\"",
+        "Your photos and map images are deleted. Only a blurred colour placeholder remains in the conversation, labelled \"Photo no longer available\"",
+        "The coordinates and place names of locations you shared are deleted",
+        "Your blocks (and blocks others placed on you) are deleted",
+        "Reports you filed stay with us for moderation, but without your name or contact details",
+        "Reports about you are kept until their 12-month retention ends",
+        "A photo or location that is part of an open report is kept until that report is decided"
+      ]
+    },
     "analytics": {
       "title": "Analytics and Error Reporting",
       "description": "We use analytics to understand how JigSwap is used and to catch errors before they spoil the fun.",
@@ -1278,7 +1332,7 @@
       "noSale": "We do not sell, rent, or trade your personal data. Ever.",
       "limitedSharing": "Data is shared only in these cases:",
       "circumstances": [
-        "With the providers named in this policy, as processors on our behalf: Convex (database and files), Clerk (sign-in), Vercel (hosting), PostHog (analytics and error reporting), Axiom (operational logs, EU-hosted), and Hugging Face (automated photo screening)",
+        "With the providers named in this policy, as processors on our behalf: Convex (database and files), Clerk (sign-in), Vercel (hosting), PostHog (analytics and error reporting), Axiom (operational logs, EU-hosted), Hugging Face or Sightengine (automated photo screening), and MapTiler (maps and place search)",
         "With other members, to the extent you choose — your profile and the parts of your library you share are visible according to your settings",
         "When the law requires it, or to protect the service and its members against fraud or abuse",
         "For anything else: only with your explicit consent"
@@ -1348,7 +1402,7 @@
   "terms": {
     "title": "Terms of Service",
     "lastUpdated": "Last Updated",
-    "effectiveDate": "2 July 2026",
+    "effectiveDate": "18 October 2026",
     "introduction": "These Terms of Service ('Terms') govern your use of JigSwap, a community platform for jigsaw puzzle enthusiasts, run by Sander Verkuil. JigSwap is a hobby project, not a commercial marketplace. By creating an account or using JigSwap, you agree to these Terms.",
     "acceptance": {
       "title": "Acceptance of Terms",
@@ -1395,6 +1449,20 @@
         "Scraping the service or attempting to gain unauthorised access to accounts or systems",
         "Impersonating another person or member"
       ]
+    },
+    "moderation": {
+      "title": "Moderation",
+      "description": "This section explains how we keep JigSwap safe and how we handle content and members that break these Terms.",
+      "screeningTitle": "Automated screening",
+      "screening": "Every photo you upload — to your library, a finished puzzle or a message — is checked automatically by a content-safety service before others can see it. A photo the check flags is not published or delivered; a photo it marks as possibly sensitive, or could not check, is shown blurred until the viewer chooses to see it. If you think the check got it wrong, you can ask for a person to review it (see below).",
+      "reportingTitle": "Reporting",
+      "reporting": "Use Report on a message, photo, profile or puzzle to tell us about content or behaviour that breaks these Terms. To report illegal content, choose that reason and give your name, your email address and a statement that your report is made in good faith. The member you report is not told who reported them.",
+      "decisionsTitle": "Our decisions",
+      "decisions": "A moderator reviews each report and decides whether to remove the content, warn the member, or take no action. The person who reported is told the outcome. If we remove your content or warn you, we send you a statement of reasons: what we did, why, whether an automated tool was involved, and how to ask for a review.",
+      "reviewTitle": "Asking for a review",
+      "review": "If you disagree with a decision, reply via the contact page and a person will look at it again. This review is voluntary and does not affect your other rights, including going to court.",
+      "blockingTitle": "Blocking",
+      "blocking": "You can block any member. A blocked member can no longer message you, follow you or propose trades, and is not notified. Trades already accepted can still be completed. You can unblock them at any time from your Privacy & safety settings."
     },
     "trading": {
       "title": "Swaps, Sales, and Loans",
@@ -3962,6 +4030,7 @@
         "reportedMessage": "Reported",
         "system": "System",
         "deletedMember": "Deleted member",
+        "anonymisedReporter": "Anonymised",
         "otherParticipant": "Other participant",
         "otherReports": "{count, plural, =0 {No other reports against this member} one {# other report against this member} other {# other reports against this member}}",
         "decisions": {

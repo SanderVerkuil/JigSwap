@@ -99,7 +99,9 @@ export interface LocationAvailabilityView {
  * "Show" (sensitive band, not checked, a sender who is not the reader's mutual follower, or a
  * photo the reader reported); decided per reader, and carrying NO url: the tap calls
  * conversation.revealMessageImage. Once revealed it comes back `ready` with `revealed: true`.
- * `removed`: a moderator removed it (placeholder only). `url`/`thumbUrl` only when `ready`.
+ * `removed`: a moderator removed it (placeholder only), or with `unavailable` its sender deleted
+ * their account (the blurhash placeholder, "Photo no longer available"). `url`/`thumbUrl` only
+ * when `ready`.
  */
 export interface MessageAttachmentView {
   readonly status: "ready" | "blurred" | "removed";
@@ -113,6 +115,8 @@ export interface MessageAttachmentView {
   readonly notChecked?: true;
   /** A photo that would be blurred, shown because this reader tapped Show earlier. */
   readonly revealed?: true;
+  /** `removed` because the sender deleted their account, not by a moderator. */
+  readonly unavailable?: true;
 }
 
 /**

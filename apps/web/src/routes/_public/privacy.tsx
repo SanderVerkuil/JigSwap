@@ -84,6 +84,45 @@ function PrivacyPolicyPage() {
         { type: "list", items: list("photos.steps") },
       ],
     },
+    // Messaging, safety and retention (spec 2.4-2.8). [LAWYER] A lawyer should review these three
+    // sections, in particular: withholding the reporter's identity in an access request (GDPR Art.
+    // 15(4), UAVG Art. 41) and not disclosing a block list to the blocked member; keeping a deleted
+    // member's text messages; and the retention periods. Verify the Axiom dataset retention is set
+    // to 30 days before relying on that line.
+    // Offlimits / EOKM HashCheckService (CSAM hash matching, spec R.11) is not enabled, so it is
+    // not mentioned. When it is: add it to the photo pipeline steps and name Offlimits and the
+    // police as recipients under a legal obligation (dataSharing.circumstances).
+    {
+      id: "p-messaging",
+      heading: t("messaging.title"),
+      blocks: [
+        { type: "p", text: t("messaging.description") },
+        { type: "list", items: list("messaging.items") },
+      ],
+    },
+    {
+      id: "p-safety",
+      heading: t("safety.title"),
+      blocks: [
+        { type: "p", text: t("safety.description") },
+        { type: "sub", text: t("safety.blockingTitle") },
+        { type: "p", text: t("safety.blocking") },
+        { type: "sub", text: t("safety.reportingTitle") },
+        { type: "p", text: t("safety.reportingDescription") },
+        { type: "list", items: list("safety.reportingItems") },
+        { type: "strong", text: t("safety.reporterWithheld") },
+      ],
+    },
+    {
+      id: "p-retention",
+      heading: t("retention.title"),
+      blocks: [
+        { type: "p", text: t("retention.description") },
+        { type: "list", items: list("retention.items") },
+        { type: "sub", text: t("retention.deletionTitle") },
+        { type: "list", items: list("retention.deletion") },
+      ],
+    },
     {
       id: "p-analytics",
       heading: t("analytics.title"),

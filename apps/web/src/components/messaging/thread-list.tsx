@@ -19,6 +19,7 @@ import { useState } from "react";
 import { useLocale, useNow, useTranslations } from "use-intl";
 import { CoverTooltipProvider, RowCover } from "./cover-stack";
 import {
+  anonymousLabel,
   copyOwnerHint,
   coverStackSummary,
   formatCompactTime,
@@ -199,7 +200,7 @@ function ThreadRow({
   // A location always names the sharer (its caption is not the point).
   const location = last?.kind === "location" && !last.removed;
   const otherName = thread.subject.otherMember.anonymous
-    ? t("anonymous")
+    ? anonymousLabel(thread.subject.otherMember, t)
     : displayName(thread.subject.otherMember.member);
   const snippet =
     body === undefined

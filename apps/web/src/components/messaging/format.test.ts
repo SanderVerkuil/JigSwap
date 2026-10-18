@@ -78,6 +78,14 @@ describe("threadSubjectTitle", () => {
     expect(threadSubjectTitle(subject, t, displayName)).toBe("anonymous");
   });
 
+  it("names a DM partner who deleted their account 'Deleted member'", () => {
+    const subject = {
+      kind: "dm",
+      otherMember: { anonymous: true, anonRef: "anon-123", departed: true },
+    } as InboxThread["subject"];
+    expect(threadSubjectTitle(subject, t, displayName)).toBe("deletedMember");
+  });
+
   it("titles an exchange thread with its type and puzzle title", () => {
     const subject = {
       kind: "exchange",

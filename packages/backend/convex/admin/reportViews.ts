@@ -6,12 +6,12 @@ import { messagePreviewOf } from "../notifications/viewRules";
 // Shared read helpers for the admin report queue (listReports, getReport) and decideReport's
 // audit label. Admin-only surfaces: labels may include the email by design.
 
-/** A member's admin label, or null when the account is gone. */
+/** A member's admin label, or null when the account is gone (or the reporter is anonymised). */
 export const adminLabelOf = async (
   ctx: QueryCtx,
-  userId: Id<"users">,
+  userId: Id<"users"> | undefined,
 ): Promise<string | null> => {
-  const user = await ctx.db.get(userId);
+  const user = userId ? await ctx.db.get(userId) : null;
   return user ? adminMemberLabelOf(user) : null;
 };
 

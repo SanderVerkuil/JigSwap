@@ -62,7 +62,7 @@ export const getReport = query({
     // The notice stores the notifier email only when it differs from the account's.
     const notifierEmail =
       report.illegalNotice?.notifierEmail ??
-      (report.illegalNotice
+      (report.illegalNotice && report.reporterId
         ? (await ctx.db.get(report.reporterId))?.email
         : undefined);
 

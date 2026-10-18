@@ -135,6 +135,7 @@ import type * as conversation_messageAttachments from "../conversation/messageAt
 import type * as conversation_moderateMessageImage from "../conversation/moderateMessageImage.js";
 import type * as conversation_openDmThread from "../conversation/openDmThread.js";
 import type * as conversation_postMessage from "../conversation/postMessage.js";
+import type * as conversation_purgeMemberMessagingData from "../conversation/purgeMemberMessagingData.js";
 import type * as conversation_readModelHelpers from "../conversation/readModelHelpers.js";
 import type * as conversation_renderLocationMap from "../conversation/renderLocationMap.js";
 import type * as conversation_renderPickerMap from "../conversation/renderPickerMap.js";
@@ -339,6 +340,7 @@ import type * as puzzles from "../puzzles.js";
 import type * as reports_attachmentEvidence from "../reports/attachmentEvidence.js";
 import type * as reports_fileReport from "../reports/fileReport.js";
 import type * as reports_listMyReports from "../reports/listMyReports.js";
+import type * as reports_retention from "../reports/retention.js";
 import type * as reputation_adapters_convexExchangeCompletionPort from "../reputation/adapters/convexExchangeCompletionPort.js";
 import type * as reputation_adapters_convexPartnerReviewRepository from "../reputation/adapters/convexPartnerReviewRepository.js";
 import type * as reputation_adapters_convexReputationProfileRepository from "../reputation/adapters/convexReputationProfileRepository.js";
@@ -613,6 +615,7 @@ declare const fullApi: ApiFromModules<{
   "conversation/moderateMessageImage": typeof conversation_moderateMessageImage;
   "conversation/openDmThread": typeof conversation_openDmThread;
   "conversation/postMessage": typeof conversation_postMessage;
+  "conversation/purgeMemberMessagingData": typeof conversation_purgeMemberMessagingData;
   "conversation/readModelHelpers": typeof conversation_readModelHelpers;
   "conversation/renderLocationMap": typeof conversation_renderLocationMap;
   "conversation/renderPickerMap": typeof conversation_renderPickerMap;
@@ -817,6 +820,7 @@ declare const fullApi: ApiFromModules<{
   "reports/attachmentEvidence": typeof reports_attachmentEvidence;
   "reports/fileReport": typeof reports_fileReport;
   "reports/listMyReports": typeof reports_listMyReports;
+  "reports/retention": typeof reports_retention;
   "reputation/adapters/convexExchangeCompletionPort": typeof reputation_adapters_convexExchangeCompletionPort;
   "reputation/adapters/convexPartnerReviewRepository": typeof reputation_adapters_convexPartnerReviewRepository;
   "reputation/adapters/convexReputationProfileRepository": typeof reputation_adapters_convexReputationProfileRepository;

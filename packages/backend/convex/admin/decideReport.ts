@@ -8,6 +8,7 @@ import { releaseEvidenceHold } from "../conversation/messageAttachments";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
 import { makeNotify } from "../notifications/adapters/makeNotify";
+import { scheduleReportRetention } from "../reports/retention";
 import { deleteCopyPhoto } from "./deleteCopyPhoto";
 import { adminLabelOf } from "./reportViews";
 import { stampModerationAction } from "./stampModerationAction";
@@ -86,6 +87,8 @@ export const decideReport = mutation({
         decidedBy: adminId,
         decidedAt: now,
       });
+      // Kept 12 months after the decision, then purged (spec 2.8).
+      await scheduleReportRetention(ctx, row._id, now);
     }
 
     // A reported message photo: on removal, copy its bytes into report-only evidence (which then
@@ -112,8 +115,10 @@ export const decideReport = mutation({
 
     // No actorId and no subject on any of these: the moderator is never exposed, and the
     // outcome lives entirely in params (see notifications/copy.ts for the contract).
+    // An anonymised reporter (account deleted) and a deleted reported member get nothing.
     const notify = makeNotify(ctx);
     for (const row of sameTarget) {
+      if (!row.reporterId) continue;
       await notify({
         memberId: toMemberId(row.reporterId),
         type: "report_decided",
@@ -121,7 +126,10 @@ export const decideReport = mutation({
         params: { decision },
       });
     }
-    if (decision !== "dismissed") {
+    if (
+      decision !== "dismissed" &&
+      (await ctx.db.get(report.reportedUserId)) !== null
+    ) {
       await notify({
         memberId: toMemberId(report.reportedUserId),
         type:

@@ -30,6 +30,12 @@ vi.mock("@convex-dev/react-query", async (importOriginal) => ({
   },
 }));
 
+// happy-dom has no 2D canvas: any blurhash "decodes" to a fixed data URL.
+vi.mock("@/components/photos/pending-photo-placeholder", () => ({
+  blurhashToDataUrl: (hash: string | null) =>
+    hash ? "data:image/png;base64,BLUR" : null,
+}));
+
 vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
@@ -240,6 +246,30 @@ describe("MessagePhotos", () => {
     expect(screen.getAllByText("Photo removed")).toHaveLength(2);
     expect(screen.queryAllByRole("button")).toHaveLength(0);
     expect(container.querySelector("img")).toBeNull();
+  });
+
+  it("unavailable (the sender deleted their account): the blurhash behind 'Photo no longer available', no actions", () => {
+    const { container } = wrap(
+      <MessagePhotos
+        messages={[
+          photo("m1", {
+            status: "removed",
+            unavailable: true,
+            blurhash: "LEHV6nWB2yk8pyo0adR*.7kCMdnj",
+            w: 1600,
+            h: 1200,
+          }),
+        ]}
+        own={false}
+        authorName="Mara"
+      />,
+    );
+    expect(screen.getByText("Photo no longer available")).toBeTruthy();
+    expect(screen.queryByText("Photo removed")).toBeNull();
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
+    const images = container.querySelectorAll("img");
+    expect(images).toHaveLength(1);
+    expect(images[0].getAttribute("src")).toBe("data:image/png;base64,BLUR");
   });
 
   it("groups photos into a grid: tiles named 'Photo n of 3, open', the first spanning the row", () => {

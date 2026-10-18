@@ -78,7 +78,8 @@ export function ReportDetail({ report }: { report: ReportDetailView }) {
         <Meta label={t("reason")}>{tReasons(report.reason)}</Meta>
         <Meta label={t("targetKind")}>{t(`kinds.${report.targetKind}`)}</Meta>
         <Meta label={t("reporter")}>
-          {report.reporterLabel ?? t("deletedMember")}
+          {report.reporterLabel ??
+            t(report.reporterId ? "deletedMember" : "anonymisedReporter")}
         </Meta>
         <Meta label={t("reported")}>
           {report.reportedLabel ?? t("deletedMember")}
@@ -102,7 +103,8 @@ export function ReportDetail({ report }: { report: ReportDetailView }) {
         <section className="flex flex-col gap-1 rounded-md border p-3 text-sm">
           <h3 className="font-semibold">{t("illegalNotice")}</h3>
           <p>
-            {report.illegalNotice.notifierName}
+            {/* Absent once the reporter is anonymised (account deleted, or retention). */}
+            {report.illegalNotice.notifierName ?? t("anonymisedReporter")}
             {/* Absent when neither the notice nor the account has an email. */}
             {report.illegalNotice.notifierEmail &&
               ` · ${report.illegalNotice.notifierEmail}`}

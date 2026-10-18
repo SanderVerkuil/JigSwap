@@ -10,7 +10,9 @@
 // - blurred (sensitive, not checked, a non-mutual sender, or reported): the
 //   blurhash only, with "… · Show" (revealMessageImage, then the photo) and
 //   Report; nothing in it describes the content;
-// - removed: a "Photo removed" placeholder of the same geometry.
+// - removed: a "Photo removed" placeholder of the same geometry; when its
+//   sender deleted their account (`unavailable`), the blurhash behind "Photo
+//   no longer available".
 import { blurhashToDataUrl } from "@/components/photos/pending-photo-placeholder";
 import { ReportDialog } from "@/components/safety/report-dialog";
 import { Button } from "@/components/ui/button";
@@ -237,6 +239,32 @@ function PhotoTile({
     [view.blurhash],
   );
   const style = { aspectRatio: aspect };
+
+  if (view.status === "removed" && view.unavailable) {
+    return (
+      <div
+        style={style}
+        className={cn(
+          "bg-muted relative flex items-center justify-center overflow-hidden rounded-[inherit] p-2",
+          className,
+        )}
+      >
+        {blurSrc && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={blurSrc}
+            alt=""
+            aria-hidden
+            className="absolute inset-0 size-full object-cover"
+          />
+        )}
+        <span className="relative flex items-center gap-1 rounded-full bg-black/45 px-2 py-1 text-center text-xs text-white">
+          <ImageOff className="size-4 shrink-0" aria-hidden />
+          {t("noLongerAvailable")}
+        </span>
+      </div>
+    );
+  }
 
   if (view.status === "removed") {
     return (

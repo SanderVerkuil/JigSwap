@@ -196,6 +196,97 @@ export const releaseEvidenceHold = async (
     evidenceHold: undefined,
     updatedAt: Date.now(),
   });
+  // A deleted member's attachment the report was holding: its account purge can finish now.
+  await finishDeletedMemberPurge(ctx, { ...row, evidenceHold: undefined });
+};
+
+/**
+ * Account deletion (conversation/purgeMemberMessagingData), for one attachment the member sent:
+ * - a quarantined photo is left whole: the CSAM preservation owns it;
+ * - an undelivered one (staged, still being checked, rejected) is deleted with its blobs, unless
+ *   an open report holds it;
+ * - a delivered one stays as a "removed" row (`removedReason: "account_deleted"`): a photo keeps
+ *   its blurhash and size for the "Photo no longer available" placeholder, a location loses its
+ *   coordinates and label. Its blobs are deleted, unless an open report holds them: then
+ *   releaseEvidenceHold (or the evidence copy, reports/attachmentEvidence) finishes the purge.
+ * A photo a moderator already removed keeps its reason. Idempotent.
+ */
+export const removeForDeletedMember = async (
+  ctx: MutationCtx,
+  row: Doc<"messageAttachments">,
+): Promise<void> => {
+  if (row.kind === "image" && row.moderationStatus === "quarantined") return;
+  if (row.messageId === undefined) {
+    if (row.evidenceHold) return;
+    await deleteAttachmentBlobs(ctx, row);
+    if (row.kind === "image") await deleteReveals(ctx, row._id);
+    await ctx.db.delete(row._id);
+    return;
+  }
+  const now = Date.now();
+  let removed: Doc<"messageAttachments"> = row;
+  if (row.kind === "image") {
+    if (row.moderationStatus !== "removed") {
+      removed = {
+        ...row,
+        moderationStatus: "removed",
+        removedReason: "account_deleted",
+      };
+      await ctx.db.patch(row._id, {
+        moderationStatus: "removed",
+        removedReason: "account_deleted",
+        updatedAt: now,
+      });
+    }
+  } else if (row.removedReason === undefined) {
+    // A location a moderator removed too: its coordinates are the member's personal data.
+    removed = {
+      ...row,
+      removedAt: row.removedAt ?? now,
+      removedReason: "account_deleted",
+    };
+    await ctx.db.patch(row._id, {
+      removedAt: row.removedAt ?? now,
+      removedReason: "account_deleted",
+      updatedAt: now,
+    });
+  }
+  await finishDeletedMemberPurge(ctx, removed);
+};
+
+/**
+ * The blob and personal-data part of removeForDeletedMember, once no open report holds the row:
+ * delete its blobs and every viewer's reveal; a location's coordinates and label are cleared
+ * (clearLocationCoordinates). A no-op for any other row.
+ */
+export const finishDeletedMemberPurge = async (
+  ctx: MutationCtx,
+  row: Doc<"messageAttachments">,
+): Promise<void> => {
+  if (row.removedReason !== "account_deleted" || row.evidenceHold) return;
+  await deleteAttachmentBlobs(ctx, row);
+  if (row.kind === "image") {
+    await deleteReveals(ctx, row._id);
+    return;
+  }
+  await clearLocationCoordinates(ctx, row._id);
+};
+
+/**
+ * Clear a removed location's coordinates and label: nothing that places anyone stays on the row
+ * (a moderator's removal once its evidence is settled, reports/attachmentEvidence; an account
+ * deletion, finishDeletedMemberPurge). The read model and the render treat it as gone.
+ */
+export const clearLocationCoordinates = async (
+  ctx: MutationCtx,
+  attachmentId: Id<"messageAttachments">,
+): Promise<void> => {
+  await ctx.db.patch(attachmentId, {
+    lat: undefined,
+    lng: undefined,
+    label: undefined,
+    updatedAt: Date.now(),
+  });
 };
 
 // Drop a photo that will never be delivered (expired, purged, or its pair is now blocked): blobs
@@ -467,13 +558,17 @@ export const messageAttachmentViews = (ctx: QueryCtx, viewer: Id<"users">) => {
       ...(row.height !== undefined && { h: row.height }),
     };
     if (!isDeliverable(row)) {
-      // Removed keeps its placeholder; rejected/quarantined (never appended, so only reachable
-      // through corrupt data) show nothing at all.
+      // Removed keeps its placeholder (a deleted sender's photo says so: `unavailable`);
+      // rejected/quarantined (never appended, so only reachable through corrupt data) show
+      // nothing at all.
       return row.moderationStatus === "removed"
         ? {
             status: "removed",
             ...size,
             ...(row.blurhash !== undefined && { blurhash: row.blurhash }),
+            ...(row.removedReason === "account_deleted" && {
+              unavailable: true as const,
+            }),
           }
         : { status: "removed" };
     }

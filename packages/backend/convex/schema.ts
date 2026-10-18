@@ -975,6 +975,10 @@ export default defineSchema({
         // whole for the CSAM preservation, but gone for its sender just the same (every sender-facing
         // read and mutation treats it as not found).
         hiddenFromSender: v.optional(v.boolean()),
+        // Why a "removed" photo is gone when no moderator removed it: its sender deleted their
+        // account (users.purgeMemberMessagingData). Its blobs are deleted, the row keeps its
+        // blurhash and size, and the thread shows "Photo no longer available".
+        removedReason: v.optional(v.literal("account_deleted")),
         createdAt: v.number(),
         updatedAt: v.number(),
       }),
@@ -1007,6 +1011,9 @@ export default defineSchema({
         evidenceHold: v.optional(v.boolean()),
         // A moderator removed it after a report (its message is tombstoned, the map deleted).
         removedAt: v.optional(v.number()),
+        // Removed because its sender deleted their account: the map is deleted and the
+        // coordinates and label cleared (users.purgeMemberMessagingData).
+        removedReason: v.optional(v.literal("account_deleted")),
         createdAt: v.number(),
         updatedAt: v.number(),
       }),
@@ -1017,7 +1024,9 @@ export default defineSchema({
     .index("by_moderation_status", ["moderationStatus"])
     .index("by_message", ["messageId"])
     .index("by_review_requested", ["reviewRequestedAt"])
-    .index("by_hash_check_pending", ["hashCheckPendingSince"]),
+    .index("by_hash_check_pending", ["hashCheckPendingSince"])
+    // A member's own attachments, for the account-deletion purge.
+    .index("by_uploader", ["uploaderId"]),
 
   // A location-picker view the member rendered around their device position ("Use my current
   // location"; conversation/renderPickerMap in GPS mode). The light server-side signal behind the
@@ -1039,7 +1048,10 @@ export default defineSchema({
     attachmentId: v.id("messageAttachments"),
     viewerId: v.id("users"),
     revealedAt: v.number(),
-  }).index("by_attachment_viewer", ["attachmentId", "viewerId"]),
+  })
+    .index("by_attachment_viewer", ["attachmentId", "viewerId"])
+    // A member's own reveals, for the account-deletion purge.
+    .index("by_viewer", ["viewerId"]),
 
   // Member-lookup projection of threads.participants, kept in sync by the repository on every
   // save (same pattern as circleMembers — Convex cannot index embedded arrays). Also the
@@ -1675,7 +1687,10 @@ export default defineSchema({
   // `_id` fallback).
   // `evidence` is snapshotted at filing time so later edits or removal can't destroy it.
   reports: defineTable({
-    reporterId: v.id("users"),
+    // Absent once the reporter is anonymised: they deleted their account, or the report reached
+    // the end of its retention (12 months after the decision). `reporterAnonymisedAt` marks it.
+    reporterId: v.optional(v.id("users")),
+    reporterAnonymisedAt: v.optional(v.number()),
     targetKind: v.union(
       v.literal("user"),
       v.literal("message"),
@@ -1699,7 +1714,8 @@ export default defineSchema({
     // DSA Art. 16(2) notice elements; present iff reason === "illegal".
     illegalNotice: v.optional(
       v.object({
-        notifierName: v.string(),
+        // Absent once the reporter is anonymised (see reporterId).
+        notifierName: v.optional(v.string()),
         // Only when it differs from the reporter's account email; read falls back to the account's.
         notifierEmail: v.optional(v.string()),
         goodFaith: v.literal(true),
@@ -1754,6 +1770,9 @@ export default defineSchema({
     evidenceMissing: v.optional(v.boolean()),
     decidedBy: v.optional(v.id("users")),
     decidedAt: v.optional(v.number()),
+    // The retention purge ran (reports/retention, 12 months after the decision): the reporter is
+    // anonymised and the details and evidence message bodies are cleared.
+    retentionPurgedAt: v.optional(v.number()),
     createdAt: v.number(),
   })
     .index("by_status_created", ["status", "createdAt"])
