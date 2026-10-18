@@ -51,5 +51,9 @@ export const clerkInvitationGateway = (config: {
     async revoke(id) {
       await clerk().invitations.revokeInvitation(id);
     },
+    async delete(id) {
+      // Also deletes "the copies of the invitation email Clerk stored for its recipient".
+      await clerk().invitations.deleteInvitation(id);
+    },
   };
 };

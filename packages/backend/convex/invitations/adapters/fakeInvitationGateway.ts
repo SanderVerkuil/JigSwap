@@ -11,8 +11,10 @@ export type FakeCreateOutcome = CreateInvitationResult["kind"] | "error";
 export interface FakeInvitationGateway extends InvitationGateway {
   nextCreate: FakeCreateOutcome;
   failRevoke: boolean;
+  failDelete: boolean;
   readonly created: CreateInvitationInput[];
   readonly revoked: string[];
+  readonly deleted: string[];
 }
 
 export const makeFakeInvitationGateway = (): FakeInvitationGateway => {
@@ -20,8 +22,10 @@ export const makeFakeInvitationGateway = (): FakeInvitationGateway => {
   const fake: FakeInvitationGateway = {
     nextCreate: "created",
     failRevoke: false,
+    failDelete: false,
     created: [],
     revoked: [],
+    deleted: [],
     async create(input) {
       fake.created.push(input);
       seq += 1;
@@ -44,6 +48,10 @@ export const makeFakeInvitationGateway = (): FakeInvitationGateway => {
     async revoke(id) {
       fake.revoked.push(id);
       if (fake.failRevoke) throw new Error("fake revoke failure");
+    },
+    async delete(id) {
+      fake.deleted.push(id);
+      if (fake.failDelete) throw new Error("fake delete failure");
     },
   };
   return fake;

@@ -286,7 +286,7 @@ describe("sendEmailInvite", () => {
     expect(sentEmails()).toHaveLength(1);
     expect(email.recipients).toEqual([{ email: NEW_ADDRESS }]);
     expect(email.subject).toBe("Alice invited you to JigSwap");
-    expect(email.from.name).toBe("Alice | JigSwap");
+    expect(email.from.name).toBe("JigSwap");
     expect(email.html_content).toContain(
       "https://clerk.example/v1/tickets/accept?ticket=inv_fake_1",
     );
@@ -515,6 +515,7 @@ describe("sendEmailInvite", () => {
 
     expect(await send(t, "alice", NEW_ADDRESS)).toEqual({ status: "sent" });
     expect(gateway.revoked).toEqual(["inv_fake_1"]);
+    expect(gateway.deleted).toEqual(["inv_fake_1"]);
     expect(sentEmails()).toEqual([]);
     expect(await sendLog(t)).toEqual([]);
     expect(logged.some((line) => line.includes('"emailInvite.no_url"'))).toBe(
@@ -541,6 +542,7 @@ describe("sendEmailInvite", () => {
 
     expect(await send(t, "alice", NEW_ADDRESS)).toEqual({ status: "sent" });
     expect(gateway.revoked).toEqual(["inv_fake_1"]);
+    expect(gateway.deleted).toEqual(["inv_fake_1"]);
     expect(await sendLog(t)).toEqual([]);
     expect(logged.join("\n")).not.toContain(NEW_ADDRESS);
   });
@@ -639,10 +641,11 @@ describe("revokeEmailInvite", () => {
 
     expect(await rowsOf(t)).toEqual([]);
     expect(gateway.revoked).toEqual(["inv_fake_1"]);
+    expect(gateway.deleted).toEqual(["inv_fake_1"]);
     expect(await list(t, "alice")).toEqual([]);
   });
 
-  test("a revoke that fails at Clerk still removes the row", async () => {
+  test("a revoke that fails at Clerk still deletes the invitation there and removes the row", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
     await send(t, "alice", NEW_ADDRESS);
@@ -654,6 +657,7 @@ describe("revokeEmailInvite", () => {
       { inviteRef: view.inviteRef },
     );
     expect(await rowsOf(t)).toEqual([]);
+    expect(gateway.deleted).toEqual(["inv_fake_1"]);
   });
 
   test("an existing member's row revokes the same way, with no Clerk call", async () => {
@@ -668,6 +672,7 @@ describe("revokeEmailInvite", () => {
     );
     expect(await rowsOf(t)).toEqual([]);
     expect(gateway.revoked).toEqual([]);
+    expect(gateway.deleted).toEqual([]);
   });
 
   test("someone else's ref, an unknown ref and a revoked ref get the same generic error", async () => {
@@ -688,6 +693,7 @@ describe("revokeEmailInvite", () => {
     );
     expect(await rowsOf(t)).toHaveLength(1);
     expect(gateway.revoked).toEqual([]);
+    expect(gateway.deleted).toEqual([]);
 
     await revoke("alice", view.inviteRef);
     expect(await codeOf(revoke("alice", view.inviteRef))).toBe(
@@ -732,10 +738,12 @@ describe("expiry", () => {
     await settleDueJobs(t);
     expect(await rowsOf(t)).toEqual([]);
     expect(gateway.revoked).toEqual(["inv_fake_1"]);
+    expect(gateway.deleted).toEqual(["inv_fake_1"]);
 
     // Already gone: a no-op.
     await expire();
     await settleDueJobs(t);
     expect(gateway.revoked).toEqual(["inv_fake_1"]);
+    expect(gateway.deleted).toEqual(["inv_fake_1"]);
   });
 });

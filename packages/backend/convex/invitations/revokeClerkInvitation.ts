@@ -5,7 +5,10 @@ import { internalAction } from "../_generated/server";
 import { ingestToAxiom } from "../lib/axiom";
 import { logEvent, type WideEvent } from "../lib/logEvent";
 import { invitationErrorCode } from "./adapters/clerkInvitationGateway";
-import { makeInvitationGatewayFromEnv } from "./adapters/invitationGateway";
+import {
+  makeInvitationGatewayFromEnv,
+  retireInvitation,
+} from "./adapters/invitationGateway";
 
 const reasonValidator = v.union(
   v.literal("revoked"),
@@ -15,9 +18,10 @@ const reasonValidator = v.union(
 type RevokeReason = typeof reasonValidator.type;
 
 /**
- * Revoke one Clerk invitation, best-effort: a failure (already accepted or revoked, Clerk down,
- * no CLERK_SECRET_KEY) is logged and dropped. The local row is already gone or being dropped, and
- * a revoke only blocks the link (spec E.0), so nothing depends on it succeeding.
+ * Revoke and then delete one Clerk invitation, best-effort: a failure (already accepted or
+ * revoked, Clerk down, no CLERK_SECRET_KEY) is logged and dropped. The local row is already gone
+ * or being dropped, so nothing depends on it succeeding. The delete makes Clerk drop its copy of
+ * the address (spec E.0).
  */
 export const revokeInvitationBestEffort = async (
   clerkInvitationId: string,
@@ -34,7 +38,14 @@ export const revokeInvitationBestEffort = async (
       event.skip_reason = "unconfigured";
       return;
     }
-    await makeInvitationGatewayFromEnv().revoke(clerkInvitationId);
+    const errors = await retireInvitation(
+      makeInvitationGatewayFromEnv(),
+      clerkInvitationId,
+    );
+    if (errors.revoke !== undefined || errors.delete !== undefined) {
+      event.outcome = "error";
+      event.error = errors;
+    }
   } catch (error) {
     event.outcome = "error";
     event.error = { code: invitationErrorCode(error) };

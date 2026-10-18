@@ -10,6 +10,7 @@ import { makeEmailSenderFromEnv } from "../notifications/adapters/email";
 import { invitationErrorCode } from "./adapters/clerkInvitationGateway";
 import {
   makeInvitationGatewayFromEnv,
+  retireInvitation,
   type CreateInvitationResult,
   type InvitationGateway,
 } from "./adapters/invitationGateway";
@@ -41,16 +42,15 @@ const errorCodeOf = (error: unknown): string =>
 
 const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const revokeQuietly = async (
+// Revoke and delete an invitation we created but won't use; failures go on the wide event.
+const retireQuietly = async (
   gateway: InvitationGateway,
   id: string,
   event: WideEvent,
 ): Promise<void> => {
-  try {
-    await gateway.revoke(id);
-  } catch (error) {
-    event.revoke_error = invitationErrorCode(error);
-  }
+  const errors = await retireInvitation(gateway, id);
+  if (errors.revoke !== undefined) event.revoke_error = errors.revoke;
+  if (errors.delete !== undefined) event.delete_error = errors.delete;
 };
 
 // Steps 5–8 of the spec, after the gate, the rate limit and the ref row have committed. Returns
@@ -110,11 +110,11 @@ const deliver = async (
     { inviteRef: begun.ref, clerkInvitationId: created.id },
   );
   if (!kept) {
-    await revokeQuietly(gateway, created.id, event);
+    await retireQuietly(gateway, created.id, event);
     return "withdrawn";
   }
   if (created.kind === "no_url") {
-    await revokeQuietly(gateway, created.id, event);
+    await retireQuietly(gateway, created.id, event);
     // Its own event, so the TO VERIFY outcome is easy to alert on.
     logEvent({ event: "emailInvite.no_url", outcome: "error", kind });
     return "no_url";
@@ -142,7 +142,7 @@ const deliver = async (
     event.error = {
       code: error instanceof Error ? error.name : "unknown",
     };
-    await revokeQuietly(gateway, created.id, event);
+    await retireQuietly(gateway, created.id, event);
     return "send_failed";
   }
   await ctx.runMutation(internal.invitations.emailInviteStore.recordSend, {

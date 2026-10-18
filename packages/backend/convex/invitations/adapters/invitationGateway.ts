@@ -1,6 +1,9 @@
 "use node";
 
-import { clerkInvitationGateway } from "./clerkInvitationGateway";
+import {
+  clerkInvitationGateway,
+  invitationErrorCode,
+} from "./clerkInvitationGateway";
 
 // Outbound port to the identity provider's invitation system (Clerk). It keeps track of the
 // invitation and its sign-up link; we send the email ourselves.
@@ -26,6 +29,11 @@ export interface InvitationGateway {
   create(input: CreateInvitationInput): Promise<CreateInvitationResult>;
   /** Revoke an invitation so its link stops working. Throws on failure. */
   revoke(id: string): Promise<void>;
+  /**
+   * Delete an invitation and the provider's stored copy of its email (the address). Throws on
+   * failure.
+   */
+  delete(id: string): Promise<void>;
 }
 
 // The configured adapter. Env is read lazily per call (repo convention). Tests replace this
@@ -34,3 +42,27 @@ export const makeInvitationGatewayFromEnv = (
   env: Record<string, string | undefined> = process.env,
 ): InvitationGateway =>
   clerkInvitationGateway({ secretKey: env["CLERK_SECRET_KEY"] });
+
+/**
+ * Retire an invitation we no longer want: revoke it (the link stops working), then delete it (the
+ * provider drops its record of the address). Each step is best-effort; returns the error codes of
+ * the steps that failed, for the caller's wide event. TO VERIFY (spec E.0, 3): whether delete
+ * alone is enough.
+ */
+export const retireInvitation = async (
+  gateway: InvitationGateway,
+  id: string,
+): Promise<{ revoke?: string; delete?: string }> => {
+  const errors: { revoke?: string; delete?: string } = {};
+  try {
+    await gateway.revoke(id);
+  } catch (error) {
+    errors.revoke = invitationErrorCode(error);
+  }
+  try {
+    await gateway.delete(id);
+  } catch (error) {
+    errors.delete = invitationErrorCode(error);
+  }
+  return errors;
+};

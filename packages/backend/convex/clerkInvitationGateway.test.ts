@@ -4,6 +4,7 @@ import {
   clerkInvitationGateway,
   invitationErrorCode,
 } from "./invitations/adapters/clerkInvitationGateway";
+import { retireInvitation } from "./invitations/adapters/invitationGateway";
 
 // The Clerk adapter for the InvitationGateway port, against a mocked Clerk client: no test reaches
 // Clerk. It pins the request we make (notify: false, never ignoreExisting) and how Clerk's answers
@@ -13,6 +14,7 @@ const clerk = vi.hoisted(() => ({
   createClerkClient: vi.fn(),
   createInvitation: vi.fn(),
   revokeInvitation: vi.fn(),
+  deleteInvitation: vi.fn(),
 }));
 vi.mock("@clerk/backend", () => ({
   createClerkClient: clerk.createClerkClient,
@@ -24,6 +26,7 @@ beforeEach(() => {
     invitations: {
       createInvitation: clerk.createInvitation,
       revokeInvitation: clerk.revokeInvitation,
+      deleteInvitation: clerk.deleteInvitation,
     },
   });
 });
@@ -113,6 +116,47 @@ describe("clerkInvitationGateway.revoke", () => {
     await expect(gateway().revoke("inv_1")).rejects.toBeInstanceOf(
       ClerkAPIResponseError,
     );
+  });
+});
+
+describe("clerkInvitationGateway.delete", () => {
+  it("deletes the invitation by id", async () => {
+    clerk.deleteInvitation.mockResolvedValue({ id: "inv_1", deleted: true });
+    await gateway().delete("inv_1");
+    expect(clerk.deleteInvitation).toHaveBeenCalledWith("inv_1");
+  });
+});
+
+describe("retireInvitation", () => {
+  it("revokes then deletes, and still deletes when the revoke fails", async () => {
+    const calls: string[] = [];
+    const fake = {
+      create: vi.fn(),
+      revoke: vi.fn(async (id: string) => {
+        calls.push(`revoke:${id}`);
+        throw clerkError("not_found", 404);
+      }),
+      delete: vi.fn(async (id: string) => {
+        calls.push(`delete:${id}`);
+      }),
+    };
+    expect(await retireInvitation(fake, "inv_1")).toEqual({
+      revoke: "not_found",
+    });
+    expect(calls).toEqual(["revoke:inv_1", "delete:inv_1"]);
+  });
+
+  it("reports a failed delete", async () => {
+    const fake = {
+      create: vi.fn(),
+      revoke: vi.fn(async () => {}),
+      delete: vi.fn(async () => {
+        throw new TypeError("fetch failed");
+      }),
+    };
+    expect(await retireInvitation(fake, "inv_1")).toEqual({
+      delete: "TypeError",
+    });
   });
 });
 

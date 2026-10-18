@@ -406,6 +406,7 @@ describe("account deletion: email invitations", () => {
 
     expect(await emailInviteRefs(t)).toEqual(["ref-bob-1"]);
     expect(gate.gateway?.revoked).toEqual(["inv_alice_1"]);
+    expect(gate.gateway?.deleted).toEqual(["inv_alice_1"]);
   });
 
   test("in batches too", async () => {
@@ -421,6 +422,7 @@ describe("account deletion: email invitations", () => {
 
     expect(await emailInviteRefs(t)).toEqual(["ref-bob-1"]);
     expect(gate.gateway?.revoked).toEqual(["inv_alice_1"]);
+    expect(gate.gateway?.deleted).toEqual(["inv_alice_1"]);
   });
 
   test("her emailInvite rate-limit counter goes with the others", async () => {
