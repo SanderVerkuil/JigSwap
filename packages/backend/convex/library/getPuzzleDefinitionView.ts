@@ -22,9 +22,10 @@ import {
 // Auth-gated catalog detail read for a puzzle DEFINITION (not a single copy). Aggregates the
 // community's review-rating distribution, ownership/completion stats, the viewer's own ownership, and
 // a short list of REACHABLE available copies the viewer could acquire. The reachability gate —
-// owner profile PUBLIC, OR the copy is shared into a circle the viewer belongs to — is replicated
-// from browseOwnedPuzzles/circleSharedCopies so this matches Browse exactly. Returns null for an
-// unknown puzzle.
+// owner profile PUBLIC, OR the copy is shared into a circle the viewer belongs to — mirrors
+// browseOwnedPuzzles, but decides the circle clause per copy (isCircleSharedWithViewer, uncapped in
+// effect) where Browse uses the capped batched collector, so a copy shared long ago into a very busy
+// circle can appear here and not in Browse. Returns null for an unknown puzzle.
 export const getPuzzleDefinitionView = query({
   args: { puzzleId: v.id("puzzles") },
   handler: async (ctx, args): Promise<PuzzleDefinitionDetailView | null> => {
