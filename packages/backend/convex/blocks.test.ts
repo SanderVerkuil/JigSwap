@@ -209,6 +209,30 @@ describe("blocked pair is refused", () => {
         await expectCode(post(t, "bob", threadId), "CannotReply");
       });
 
+      test("listAttachableCopies lists nothing on either side", async () => {
+        const t = convexTest(schema, modules);
+        const ids = await seed(t);
+        await shareCircle(t, ids.alice, ids.bob);
+        await seedSaleCopy(t, ids.alice);
+        await seedSaleCopy(t, ids.bob);
+        const threadId = await asAlice(t).mutation(
+          api.conversation.openDmThread.openDmThread,
+          { recipientId: ids.bob },
+        );
+        const list = (as: "alice" | "bob", side: "mine" | "theirs") =>
+          (as === "alice" ? asAlice(t) : asBob(t)).query(
+            api.conversation.listAttachableCopies.listAttachableCopies,
+            { threadId, side },
+          );
+        expect(await list("alice", "theirs")).toHaveLength(1);
+        await block(t, ids);
+
+        for (const as of ["alice", "bob"] as const) {
+          expect(await list(as, "mine")).toEqual([]);
+          expect(await list(as, "theirs")).toEqual([]);
+        }
+      });
+
       test("startCopyConversation", async () => {
         const t = convexTest(schema, modules);
         const ids = await seed(t);

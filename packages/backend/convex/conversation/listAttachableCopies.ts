@@ -7,6 +7,7 @@ import {
   buildCopyViewContext,
   canViewCopyWithContext,
 } from "../library/canViewCopy";
+import { isBlockedEitherWay } from "../social/blocks";
 import { projectMemberIdentity } from "../social/privacy";
 import { messageCopyViewOf } from "./copyCard";
 import { threadRowByAggregateId } from "./readModelHelpers";
@@ -22,7 +23,8 @@ const RESULT_CAP = 50;
 // participant can view; `"theirs"` = the other participant's copies the caller can view (the
 // owner always can). Participants only (ThreadNotFound / NotParticipant, as getThreadMessages).
 // An anonymised other member yields [] for "theirs": listing their copies would tie the hidden
-// member to identifiable copies, and the picker hides their tab anyway. Newest copies first;
+// member to identifiable copies, and the picker hides their tab anyway. A pair blocked either way
+// yields [] for both sides (postMessage refuses the post anyway). Newest copies first;
 // `search` is a case-insensitive substring match on title or brand.
 export const listAttachableCopies = query({
   args: {
@@ -47,6 +49,7 @@ export const listAttachableCopies = query({
     }
     const other = thread.participants.find((p) => p !== me);
     if (!other) return [];
+    if (await isBlockedEitherWay(ctx, me, other)) return [];
 
     let owner: Id<"users">;
     let viewer: Id<"users">;
