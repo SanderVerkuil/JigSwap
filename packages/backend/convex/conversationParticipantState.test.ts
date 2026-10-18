@@ -534,7 +534,10 @@ describe("backfillParticipantState", () => {
     vi.useRealTimers();
   });
 
-  const backfill = (t: T, args: { dryRun?: boolean } = {}) =>
+  const backfill = (
+    t: T,
+    args: { dryRun?: boolean; batchSize?: number } = {},
+  ) =>
     t.mutation(
       internal.conversation.backfillParticipantState.backfillParticipantState,
       args,
@@ -666,5 +669,74 @@ describe("backfillParticipantState", () => {
     expect(
       rows.every((r) => r.unreadCount === 0 && r.lastActivityAt !== undefined),
     ).toBe(true);
+  });
+
+  test("keeps live values and fills only the missing fields", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, threadId } = await seedThreads(t);
+    const lastMessageBefore = (await threadRow(t, threadId)).lastMessage;
+    const bobRow = await participantRow(t, threadId, bob);
+    const aliceRow = await participantRow(t, threadId, alice);
+    // bob: a live count that differs from what the scan would give, activity missing.
+    // alice: every state field missing.
+    await t.run(async (ctx) => {
+      await ctx.db.patch(bobRow._id, {
+        unreadCount: 7,
+        lastActivityAt: undefined,
+      });
+      await ctx.db.patch(aliceRow._id, {
+        lastReadAt: undefined,
+        unreadCount: undefined,
+        lastActivityAt: undefined,
+      });
+    });
+
+    await backfill(t);
+
+    const thread = await threadRow(t, threadId);
+    const bobAfter = await participantRow(t, threadId, bob);
+    const aliceAfter = await participantRow(t, threadId, alice);
+    expect(canonical(thread.lastMessage)).toBe(canonical(lastMessageBefore));
+    expect(bobAfter.unreadCount).toBe(7);
+    expect(bobAfter.lastReadAt).toBe(bobRow.lastReadAt);
+    expect(bobAfter.lastActivityAt).toBe(thread.lastMessageAt);
+    // alice has no legacy receipt, so lastReadAt stays absent; bob's reply is her one unread.
+    expect(aliceAfter.lastReadAt).toBeUndefined();
+    expect(aliceAfter.unreadCount).toBe(1);
+    expect(aliceAfter.lastActivityAt).toBe(thread.lastMessageAt);
+  });
+
+  test("batchSize sets the page size and carries to every rescheduled batch", async () => {
+    vi.useFakeTimers();
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 5; i++) {
+        await ctx.db.insert("threads", {
+          aggregateId: `small-${i}`,
+          subjectKind: "dm",
+          participants: [alice],
+          participantsKey: alice,
+          createdAt: i,
+        });
+        await ctx.db.insert("threadParticipants", {
+          threadAggregateId: `small-${i}`,
+          memberId: alice,
+        });
+      }
+    });
+
+    expect(await backfill(t, { batchSize: 2 })).toMatchObject({
+      threadsScanned: 2,
+    });
+    const scheduled = await t.run((ctx) =>
+      ctx.db.system.query("_scheduled_functions").collect(),
+    );
+    expect(scheduled[0].args[0]).toMatchObject({ batchSize: 2 });
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    const rows = await t.run((ctx) =>
+      ctx.db.query("threadParticipants").collect(),
+    );
+    expect(rows.every((r) => r.lastActivityAt !== undefined)).toBe(true);
   });
 });

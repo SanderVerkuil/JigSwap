@@ -5,10 +5,11 @@ import { internalMutation } from "../_generated/server";
 import { toLastMessage } from "./adapters/threadMapper";
 import { unreadCountOf } from "./readModelHelpers";
 
-// Threads per batch. Each thread costs one newest-message read, its participant rows (2 for pair
-// threads, ≤ 50 for groups) and per row at most one capped unread scan plus one patch, so 100
-// threads stay far below Convex's per-mutation document-read and write limits.
-export const BACKFILL_PARTICIPANT_STATE_BATCH = 100;
+// Default threads per batch (override with `batchSize`). Each thread costs one newest-message
+// read, its participant rows (2 today: only pair threads exist) and per row at most one unread
+// scan of ≤ UNREAD_SCAN_READ_CAP rows plus one patch. 25 threads × 2 rows × 500 rows read stays
+// inside Convex's per-mutation document-read limit even in the worst case.
+export const BACKFILL_PARTICIPANT_STATE_BATCH = 25;
 
 type Counts = {
   threadsScanned: number;
@@ -27,6 +28,8 @@ export const backfillParticipantState = internalMutation({
   args: {
     cursor: v.optional(v.union(v.string(), v.null())),
     dryRun: v.optional(v.boolean()),
+    // Threads per batch; carried to every rescheduled batch.
+    batchSize: v.optional(v.number()),
     // Running totals carried across batches so the final batch logs the whole run.
     totals: v.optional(
       v.object({
@@ -36,9 +39,12 @@ export const backfillParticipantState = internalMutation({
       }),
     ),
   },
-  handler: async (ctx, { cursor, dryRun, totals }): Promise<Counts> => {
+  handler: async (
+    ctx,
+    { cursor, dryRun, batchSize, totals },
+  ): Promise<Counts> => {
     const page = await ctx.db.query("threads").paginate({
-      numItems: BACKFILL_PARTICIPANT_STATE_BATCH,
+      numItems: batchSize ?? BACKFILL_PARTICIPANT_STATE_BATCH,
       cursor: cursor ?? null,
     });
 
@@ -117,6 +123,7 @@ export const backfillParticipantState = internalMutation({
           cursor: page.continueCursor,
           totals: runTotals,
           ...(dryRun ? { dryRun } : {}),
+          ...(batchSize !== undefined ? { batchSize } : {}),
         },
       );
     }
