@@ -897,6 +897,80 @@ describe("posting", () => {
 });
 
 describe("message notifications", () => {
+  test("the blocker's messages still notify the member they blocked; never by email", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    await block(t, alice, bob);
+    // Bob opted in to message emails: a circle thread still sends him none.
+    await as(t, "bob").mutation(
+      api.notifications.updateNotificationPreference
+        .updateNotificationPreference,
+      { type: "message_received", channel: "email", enabled: true },
+    );
+    await post(t, "alice", threadId, "from alice");
+    await post(t, "bob", threadId, "from bob");
+    await flush(t);
+    const messageRows = (userId: Id<"users">) =>
+      t.run(async (ctx) =>
+        (
+          await ctx.db
+            .query("notifications")
+            .withIndex("by_user", (q) => q.eq("userId", userId))
+            .collect()
+        ).filter((n) => n.type === "message_received"),
+      );
+    // Bob (blocked) hears from Alice as before; Alice (the blocker) hears nothing from Bob.
+    const toBob = await messageRows(bob);
+    expect(toBob.length).toBeGreaterThan(0);
+    expect(await messageRows(alice)).toEqual([]);
+    // In-app and push only: no per-message email in a circle thread.
+    expect(toBob.map((n) => n.channel ?? "inApp")).toContain("inApp");
+    const emails = (
+      await t.run((ctx) =>
+        ctx.db.system.query("_scheduled_functions").collect(),
+      )
+    ).filter((job) => job.name.toLowerCase().includes("email"));
+    expect(emails).toEqual([]);
+  });
+
+  test("an ex-member whose sync never ran is not notified", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, carol, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    // Bob loses his seat with no membership event (the thread still lists him).
+    await t.run(async (ctx) => {
+      const circle = await ctx.db
+        .query("circles")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", circleId))
+        .unique();
+      await ctx.db.patch(circle!._id, {
+        memberships: circle!.memberships.filter((m) => m.memberId !== bob),
+      });
+      const link = await ctx.db
+        .query("circleMembers")
+        .withIndex("by_circle_member", (q) =>
+          q.eq("circleAggregateId", circleId).eq("memberId", bob),
+        )
+        .unique();
+      await ctx.db.delete(link!._id);
+    });
+    await post(t, "alice", threadId, "hello");
+    await flush(t);
+    const count = (userId: Id<"users">) =>
+      t.run(
+        async (ctx) =>
+          (
+            await ctx.db
+              .query("notifications")
+              .withIndex("by_user", (q) => q.eq("userId", userId))
+              .collect()
+          ).filter((n) => n.type === "message_received").length,
+      );
+    expect(await count(bob)).toBe(0);
+    expect(await count(carol)).toBeGreaterThan(0);
+  });
+
   test("a circle notification never previews a message from a member the viewer blocked", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob, circleId } = await seed(t);

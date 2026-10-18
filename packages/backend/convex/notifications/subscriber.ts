@@ -1,5 +1,6 @@
 import {
   toMemberId,
+  type Channel,
   type MemberId,
   type NotificationSubject,
   type NotifyMemberCommand,
@@ -7,7 +8,7 @@ import {
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
-import { isBlockedEitherWay } from "../social/blocks";
+import { blockStateBetween, isBlockedEitherWay } from "../social/blocks";
 import { makeNotify } from "./adapters/makeNotify";
 import { isViewingMessages } from "./presenceGate";
 
@@ -24,6 +25,7 @@ export const handleDomainEvent = async (
 ): Promise<void> => {
   const notify = makeNotify(ctx);
   const commands = await translate(ctx, event);
+  const circleThreads = new Map<string, Promise<boolean>>();
   for (const cmd of commands) {
     // Blocks are silent (spec 2.6): nothing a member blocked either way with the recipient does
     // reaches them. The one place every notification type passes through. Exception: the
@@ -31,7 +33,7 @@ export const handleDomainEvent = async (
     // notifications still arrive, but without the actor (their fallback copy names nobody).
     if (
       cmd.actorId !== undefined &&
-      (await isBlockedEitherWay(ctx, cmd.actorId, cmd.memberId))
+      (await blocksSilence(ctx, cmd, circleThreads))
     ) {
       if (!EXCHANGE_LIFECYCLE_TYPES.has(cmd.type)) continue;
       const { actorId: _actor, ...withoutActor } = cmd;
@@ -40,6 +42,67 @@ export const handleDomainEvent = async (
     }
     await notify(cmd);
   }
+};
+
+// Whether a block keeps `cmd` from its recipient. Either way, except for a message in a circle
+// thread: there only the RECIPIENT's block on the author silences it. Dropping the blocker's
+// messages to the member they blocked would tell that member about the block, which in a circle
+// is meant to stay silent (spec 5.3).
+const blocksSilence = async (
+  ctx: MutationCtx,
+  cmd: NotifyMemberCommand,
+  circleThreads: Map<string, Promise<boolean>>,
+): Promise<boolean> => {
+  const actorId = cmd.actorId!;
+  const threadId =
+    cmd.type === "message_received" && cmd.subject?.kind === "thread"
+      ? cmd.subject.threadId
+      : undefined;
+  if (threadId !== undefined) {
+    let isCircle = circleThreads.get(threadId);
+    if (!isCircle) {
+      isCircle = loadThread(ctx, threadId).then(
+        (thread) => thread?.subjectKind === "circle",
+      );
+      circleThreads.set(threadId, isCircle);
+    }
+    if (await isCircle) {
+      return (await blockStateBetween(ctx, cmd.memberId, actorId)) === "byMe";
+    }
+  }
+  return isBlockedEitherWay(ctx, actorId, cmd.memberId);
+};
+
+const CIRCLE_MESSAGE_CHANNELS: readonly Channel[] = ["inApp", "push"];
+
+// Each current circle member's floor in the thread: the later of their participant row's and
+// their seat's joinedAt. Members without a seat, or with a row lacking joinedAt, are absent.
+const circleFloors = async (
+  ctx: MutationCtx,
+  thread: Doc<"threads">,
+): Promise<Map<string, number>> => {
+  const floors = new Map<string, number>();
+  if (thread.circleId === undefined) return floors;
+  const circleId = thread.circleId;
+  const circle = await ctx.db
+    .query("circles")
+    .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", circleId))
+    .unique();
+  const seatOf = new Map(
+    (circle?.memberships ?? []).map((m) => [m.memberId as string, m.joinedAt]),
+  );
+  for (const row of await ctx.db
+    .query("threadParticipants")
+    .withIndex("by_thread", (q) =>
+      q.eq("threadAggregateId", thread.aggregateId),
+    )
+    .collect()) {
+    const seat = seatOf.get(row.memberId as string);
+    if (seat !== undefined && row.joinedAt !== undefined) {
+      floors.set(row.memberId as string, Math.max(seat, row.joinedAt));
+    }
+  }
+  return floors;
 };
 
 // Exchange lifecycle notifications that keep flowing for a blocked pair (an accepted exchange
@@ -267,29 +330,20 @@ const translate = async (
         thread.subjectKind === "exchange"
           ? await memberName(ctx, authorId)
           : {};
-      // A circle member is never told about a message from before they joined (a join that
-      // landed between the post and this dispatch). A blocked author's message is dropped for the
-      // blocker below, at the one place every notification passes (handleDomainEvent).
-      const floorOf = new Map<string, number>();
-      if (thread.subjectKind === "circle") {
-        for (const row of await ctx.db
-          .query("threadParticipants")
-          .withIndex("by_thread", (q) =>
-            q.eq("threadAggregateId", thread.aggregateId),
-          )
-          .collect()) {
-          if (row.joinedAt !== undefined) {
-            floorOf.set(row.memberId as string, row.joinedAt);
-          }
-        }
-      }
+      // A circle thread notifies only members who can see the message: a current seat (an
+      // ex-member whose participant sync is pending or failed gets nothing) and a floor before it
+      // (the later of their row's and seat's joinedAt; a row without one fails closed). A blocked
+      // author's message is dropped for the blocker below (handleDomainEvent).
+      const circle = thread.subjectKind === "circle";
+      const floorOf = circle
+        ? await circleFloors(ctx, thread)
+        : new Map<string, number>();
       const recipients = thread.participants.filter(
         (participant) =>
           (participant as string) !== authorId &&
-          !(
-            (floorOf.get(participant as string) ?? -Infinity) >=
-            event.occurredAt
-          ),
+          (!circle ||
+            (floorOf.get(participant as string) ?? Infinity) <
+              event.occurredAt),
       );
       // Presence suppression: a recipient already on /messages sees the message live (plus an
       // in-tab toast) — creating a bell row or emailing them would double-notify. Fail-open:
@@ -300,12 +354,15 @@ const translate = async (
           absent.push(participant);
         }
       }
-      return absent.map((participant) =>
-        cmd(participant, "message_received", thread.aggregateId, author, {
+      return absent.map((participant) => ({
+        ...cmd(participant, "message_received", thread.aggregateId, author, {
           actor: authorId,
           subject: { kind: "thread", threadId: thread.aggregateId },
         }),
-      );
+        // No per-message email in a circle thread: one per message to every absent member is a
+        // cost and spam vector. In-app and push only, until G5's delayed digest replaces this.
+        ...(circle && { channels: CIRCLE_MESSAGE_CHANNELS }),
+      }));
     }
 
     // --- Solving ---
