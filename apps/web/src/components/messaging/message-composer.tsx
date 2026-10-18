@@ -2,10 +2,10 @@
 
 // Composer under the active thread. Sends text messages (optionally with one
 // attached puzzle copy, picked via AttachPicker) with an optimistic
-// append into the exact getThreadMessages subscription the thread view holds
-// (the established withOptimisticUpdate pattern — see use-favorites); Convex
-// replaces the local patch when the server result streams back, so pending
-// messages clear themselves. Layout per the message-center redesign spec §7.
+// insert into the newest page of the listThreadMessages paginated
+// subscription the thread view holds (the established withOptimisticUpdate
+// pattern — see use-favorites); Convex replaces the local patch when the
+// server result streams back, so pending messages clear themselves. Layout per the message-center redesign spec §7.
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { conversationErrorCode } from "@/components/messaging/format";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import type { OptimisticUpdate } from "convex/browser";
+// sanctioned convex/react exception: insertAtTop, the paginated-query optimistic helper (see tanstack-query migration spec)
+import { insertAtTop } from "convex/react";
 import type { FunctionArgs } from "convex/server";
 import { Puzzle, Send } from "lucide-react";
 import { useId, useRef, useState } from "react";
@@ -29,33 +31,27 @@ const MAX_MESSAGE_LENGTH = 4000;
 
 type PostMessageArgs = FunctionArgs<typeof gateway.conversation.postMessage>;
 
-// Append the message locally to the { threadId }-only subscription the thread
-// view holds; Convex reverts the patch when the mutation settles. Module-level
+// Insert the message locally at the top (newest end) of the thread view's
+// newest-first paginated subscription; a no-op until that first page has
+// loaded. Convex reverts the patch when the mutation settles. Module-level
 // factory so the impure Date.now()/randomUUID calls stay out of render.
 const optimisticAppend =
   (staged: MessageCopy | null): OptimisticUpdate<PostMessageArgs> =>
   (localStore, args) => {
-    const current = localStore.getQuery(
-      gateway.conversation.getThreadMessages,
-      { threadId: args.threadId },
-    );
-    if (current === undefined) return;
-    localStore.setQuery(
-      gateway.conversation.getThreadMessages,
-      { threadId: args.threadId },
-      [
-        ...current,
-        {
-          id: `pending-${crypto.randomUUID()}`,
-          isMine: true,
-          kind: args.kind,
-          body: args.body,
-          sentAt: Date.now(),
-          // The staged card is already loaded — show it on the pending bubble.
-          ...(staged && args.copyId === staged.copyId ? { copy: staged } : {}),
-        },
-      ],
-    );
+    insertAtTop({
+      paginatedQuery: gateway.conversation.listThreadMessages,
+      argsToMatch: { threadId: args.threadId },
+      localQueryStore: localStore,
+      item: {
+        id: `pending-${crypto.randomUUID()}`,
+        isMine: true,
+        kind: args.kind,
+        body: args.body,
+        sentAt: Date.now(),
+        // The staged card is already loaded — show it on the pending bubble.
+        ...(staged && args.copyId === staged.copyId ? { copy: staged } : {}),
+      },
+    });
   };
 
 export function MessageComposer({

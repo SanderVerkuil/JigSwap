@@ -15,7 +15,7 @@ import {
 import { ConvexError } from "convex/values";
 
 // This route is deep-linked (message notifications carry thread ids), so a
-// stale or foreign id surfaces here as a ConvexError from getThreadMessages.
+// stale or foreign id surfaces here as a ConvexError from listThreadMessages.
 // Render those as the in-shell 404 and rethrow anything else to the default
 // catch boundary.
 function ThreadError({ error }: ErrorComponentProps) {
