@@ -1,15 +1,26 @@
-import type { DomainEventPublisher, SharingDomainEvent } from "@jigswap/domain";
+import {
+  makeWithdrawInvitesFrom,
+  type CircleId,
+  type DomainEventPublisher,
+  type MemberId,
+  type SharingDomainEvent,
+} from "@jigswap/domain";
+import { internal } from "../../_generated/api";
 import type { Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
 import { makeEventPublisher } from "../../events/makeEventPublisher";
 import { deleteCircleSharesOfCopy } from "./circleCopyShares";
+import { convexCircleInviteRepository } from "./convexCircleInviteRepository";
+import { systemClock } from "./systemClock";
 
 // Driven adapter for the DomainEventPublisher port, built per-mutation with `ctx`. It durably
 // records + schedules ALL sharing events (for async subscribers like Notifications) while KEEPING
 // the CRITICAL projections inline, in the SAME transaction: CopySharedToCircle materialises the
 // circle-copy link so a freshly shared copy is immediately discoverable to circle members, and
 // MemberLeftCircle withdraws the departed member's own links so their copies stop being reachable
-// through the circle the moment they are out of it.
+// through the circle the moment they are out of it, and withdraws the invites they still had
+// pending there (see withdrawInvitesFrom). CircleInviteIssued schedules the invite's
+// expiry at its expiresAt (expiry is also applied lazily on every read and transition).
 export const inProcessEventPublisher = (
   ctx: MutationCtx,
 ): DomainEventPublisher =>
@@ -28,9 +39,32 @@ export const inProcessEventPublisher = (
           event.circleId as string,
           event.memberId as unknown as Id<"users">,
         );
+        await withdrawInvitesFrom(ctx, event.circleId, event.memberId);
+      } else if (event.name === "CircleInviteIssued") {
+        await ctx.scheduler.runAt(
+          event.expiresAt,
+          internal.sharing.expireCircleInvite.expireCircleInvite,
+          { inviteId: event.inviteId as string },
+        );
       }
     }
   });
+
+/**
+ * Withdraw the pending invites `inviterId` sent to the circle, in the caller's transaction. Runs
+ * when they leave or are removed (MemberLeftCircle, above) and when they lose Admin
+ * (sharing/changePermission), so nobody can join on an ex-inviter's word and the seats free up.
+ */
+export const withdrawInvitesFrom = (
+  ctx: MutationCtx,
+  circleId: CircleId,
+  inviterId: MemberId,
+): Promise<number> =>
+  makeWithdrawInvitesFrom({
+    invites: convexCircleInviteRepository(ctx),
+    events: inProcessEventPublisher(ctx),
+    clock: systemClock,
+  })({ circleId, inviterId });
 
 // Idempotent projection of a CopySharedToCircle event into the `circleCopyShares` read model.
 const projectCopyShare = async (

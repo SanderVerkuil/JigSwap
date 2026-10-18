@@ -490,6 +490,15 @@ export const gateway = {
     shareCopyToCircle: api.sharing.shareCopyToCircle.shareCopyToCircle,
     myCircles: api.sharing.listMyCircles.listMyCircles,
     circle: api.sharing.getCircle.getCircle,
+    // Invitations: an Admin invites a contactable member, the invitee accepts or declines, the
+    // inviter or any Admin revokes. A pending invite grants nothing until accepted.
+    inviteToCircle: api.sharing.inviteToCircle.inviteToCircle,
+    acceptInvite: api.sharing.acceptCircleInvite.acceptCircleInvite,
+    declineInvite: api.sharing.declineCircleInvite.declineCircleInvite,
+    revokeInvite: api.sharing.revokeCircleInvite.revokeCircleInvite,
+    myInvites: api.sharing.listMyCircleInvites.listMyCircleInvites,
+    circleInvites: api.sharing.listCircleInvites.listCircleInvites,
+    invitableMembers: api.sharing.listInvitableMembers.listInvitableMembers,
   },
 
   // Global search: the single read behind the ⌘K command palette. One query returns a grouped,

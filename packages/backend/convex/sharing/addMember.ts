@@ -19,6 +19,9 @@ import { toConvexError } from "./errors";
 // Composition root for adding a member to a circle. The actor is derived from auth; the aggregate
 // gates the add on the actor holding Admin. `circleId` is the domain CircleId aggregateId;
 // `memberId` is the target user's _id (the resolved MemberId).
+// Still PUBLIC for now because the web "add member" flow calls it; circle invitations
+// (inviteToCircle / acceptCircleInvite) replace that flow, and the follow-up PR that switches the
+// UI to invites makes this an internal mutation.
 export const addMember = mutation({
   args: {
     circleId: v.string(),

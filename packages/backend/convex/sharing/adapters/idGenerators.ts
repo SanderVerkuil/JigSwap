@@ -1,8 +1,11 @@
 import {
   toCircleId,
+  toCircleInviteId,
   toMembershipId,
   type CircleId,
   type CircleIdGenerator,
+  type CircleInviteId,
+  type CircleInviteIdGenerator,
   type MembershipId,
   type MembershipIdGenerator,
 } from "@jigswap/domain";
@@ -15,4 +18,8 @@ export const circleIdGenerator: CircleIdGenerator = {
 
 export const membershipIdGenerator: MembershipIdGenerator = {
   next: (): MembershipId => toMembershipId(crypto.randomUUID()),
+};
+
+export const circleInviteIdGenerator: CircleInviteIdGenerator = {
+  next: (): CircleInviteId => toCircleInviteId(crypto.randomUUID()),
 };

@@ -986,6 +986,8 @@ export default defineSchema({
       v.literal("household_invite_received"),
       v.literal("household_invite_accepted"),
       v.literal("connection_offer_received"),
+      v.literal("circle_invite_received"),
+      v.literal("circle_invite_accepted"),
       v.literal("whats_new"),
       v.literal("report_decided"),
       v.literal("content_removed"),
@@ -1009,9 +1011,9 @@ export default defineSchema({
     actorIds: v.optional(v.array(v.id("users"))),
     actorCount: v.optional(v.number()),
     // What the notification is about (mirrors the domain NotificationSubject). Exchange, thread,
-    // follow request, invite, household, review, proposal, whats-new and connection-offer ids are
-    // opaque aggregate
-    // ids; puzzle/copy/goal are the Convex `_id`s every producer already holds.
+    // follow request, invite, household, circle invite, circle, review, proposal, whats-new and
+    // connection-offer ids are opaque aggregate ids; puzzle/copy/goal are the Convex `_id`s every
+    // producer already holds.
     subject: v.optional(
       v.union(
         v.object({ kind: v.literal("exchange"), exchangeId: v.string() }),
@@ -1019,6 +1021,8 @@ export default defineSchema({
         v.object({ kind: v.literal("followRequest"), requestId: v.string() }),
         v.object({ kind: v.literal("householdInvite"), inviteId: v.string() }),
         v.object({ kind: v.literal("household"), householdId: v.string() }),
+        v.object({ kind: v.literal("circleInvite"), inviteId: v.string() }),
+        v.object({ kind: v.literal("circle"), circleId: v.string() }),
         v.object({ kind: v.literal("puzzle"), puzzleId: v.id("puzzles") }),
         v.object({ kind: v.literal("copy"), copyId: v.id("ownedPuzzles") }),
         v.object({ kind: v.literal("goal"), goalId: v.id("goals") }),
@@ -1116,6 +1120,38 @@ export default defineSchema({
     .index("by_member", ["memberId"])
     .index("by_circle", ["circleAggregateId"])
     .index("by_circle_member", ["circleAggregateId", "memberId"]),
+
+  // Circle invitations (CircleInvite aggregate). A pending invite is NOT a membership: it grants
+  // nothing until the invitee accepts and is seated in `circles.memberships`. "pending" past
+  // `expiresAt` reads as expired (lazy); a scheduled expireCircleInvite flips the stored status.
+  circleInvites: defineTable({
+    aggregateId: v.string(), // CircleInviteId
+    circleAggregateId: v.string(), // CircleId
+    inviteeId: v.id("users"),
+    inviterId: v.id("users"),
+    permission: v.union(
+      v.literal("ViewOnly"),
+      v.literal("Exchange"),
+      v.literal("Admin"),
+    ),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("accepted"),
+      v.literal("declined"),
+      v.literal("revoked"),
+      v.literal("expired"),
+    ),
+    createdAt: v.number(),
+    expiresAt: v.number(),
+    decidedAt: v.optional(v.number()),
+    // The member who revoked it; absent when the system withdrew it (its inviter left or lost
+    // Admin), which holds off no re-invite.
+    revokedBy: v.optional(v.id("users")),
+  })
+    .index("by_aggregate_id", ["aggregateId"])
+    .index("by_invitee_status", ["inviteeId", "status"])
+    .index("by_circle_status", ["circleAggregateId", "status"])
+    .index("by_circle_invitee", ["circleAggregateId", "inviteeId"]),
 
   // Read model of copies shared into a circle, projected from the CopySharedToCircle event. Sharing
   // owns no copy state; this link makes a friend-circle copy discoverable to the circle's members.

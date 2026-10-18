@@ -28,6 +28,8 @@ export type NotificationViewType =
   | "household_invite_received"
   | "household_invite_accepted"
   | "connection_offer_received"
+  | "circle_invite_received"
+  | "circle_invite_accepted"
   | "whats_new"
   | "report_decided"
   | "content_removed"
@@ -121,6 +123,11 @@ export interface NotificationViewContext {
    * copy can say "{name} sent a photo" / "{name} shared a location" (never a caption).
    */
   messageKind?: "image" | "location";
+  /**
+   * The circle's live name (circle invite types): for the invitee of a circle invite, or for a
+   * current member of the circle an invite was accepted into.
+   */
+  circleName?: string;
   /**
    * The stored actor name of a row without actor refs (legacy), for types whose actor contacted
    * the viewer. Absent whenever `actors` is resolved.

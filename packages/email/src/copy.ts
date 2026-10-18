@@ -14,6 +14,7 @@ export const EMAIL_TYPES = [
   "new_follower",
   "follow_request_received",
   "follow_request_approved",
+  "circle_invite_received",
 ] as const;
 
 export type EmailType = (typeof EMAIL_TYPES)[number];
@@ -278,6 +279,24 @@ export const EMAIL_COPY: Record<EmailType, Record<EmailLocale, EmailCopy>> = {
       body: "{actorName} heeft je volgverzoek goedgekeurd. Je kunt nu hun profiel en puzzels bekijken.",
       cta: "Bekijk leden",
       deepCta: "Bekijk profiel",
+    },
+  },
+  circle_invite_received: {
+    en: {
+      subject: "{actorName} invited you to a circle on JigSwap",
+      heading: "Circle invite",
+      body: "{actorName} invited you to join a circle on JigSwap.",
+      cta: "View circles",
+      richBody: "{actorName} invited you to join {circleName}.",
+      deepCta: "View invite",
+    },
+    nl: {
+      subject: "{actorName} heeft je uitgenodigd voor een kring op JigSwap",
+      heading: "Uitnodiging voor een kring",
+      body: "{actorName} heeft je uitgenodigd voor een kring op JigSwap.",
+      cta: "Bekijk kringen",
+      richBody: "{actorName} heeft je uitgenodigd voor {circleName}.",
+      deepCta: "Bekijk uitnodiging",
     },
   },
 };

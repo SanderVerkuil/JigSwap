@@ -23,6 +23,8 @@ export const toCatalogCategoryId = (value: string): Id<"CatalogCategoryId"> =>
 export const toFileId = (value: string): Id<"FileId"> => toId<"FileId">(value);
 export const toCircleId = (value: string): Id<"CircleId"> =>
   toId<"CircleId">(value);
+export const toCircleInviteId = (value: string): Id<"CircleInviteId"> =>
+  toId<"CircleInviteId">(value);
 export const toNotificationId = (value: string): Id<"NotificationId"> =>
   toId<"NotificationId">(value);
 export const toThreadId = (value: string): Id<"ThreadId"> =>

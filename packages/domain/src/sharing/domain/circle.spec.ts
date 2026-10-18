@@ -1,13 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
   toCircleId,
+  toCircleInviteId,
   toCopyId,
   toMemberId,
   toMembershipId,
 } from "../../shared-kernel";
 import { Circle, MAX_CIRCLE_MEMBERS } from "./circle";
-import { MemberLeftCircle } from "./events";
-import { MembershipId } from "./ids";
+import { CircleInvite } from "./circle-invite";
+import { MemberJoinedCircle, MemberLeftCircle } from "./events";
+import { CircleId, MembershipId } from "./ids";
 
 const owner = toMemberId("owner");
 const alice = toMemberId("alice");
@@ -375,6 +377,106 @@ describe("Circle", () => {
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("NotCircleAdmin");
       expect(circle.pullEvents()).toHaveLength(0);
+    });
+  });
+
+  describe("isAdmin", () => {
+    it("is true for the owner and Admin members only", () => {
+      const circle = newCircle();
+      circle.addMember(owner, membershipId(), alice, "Admin", NOW);
+      circle.addMember(owner, membershipId(), bob, "Exchange", NOW);
+      expect(circle.isAdmin(owner)).toBe(true);
+      expect(circle.isAdmin(alice)).toBe(true);
+      expect(circle.isAdmin(bob)).toBe(false);
+      expect(circle.isAdmin(stranger)).toBe(false);
+    });
+  });
+
+  describe("admitInvitee", () => {
+    // An invite from `inviterId` to `stranger`, accepted unless told otherwise.
+    const inviteFrom = (
+      inviterId = owner,
+      opts: { accept?: boolean; circle?: CircleId } = {},
+    ): CircleInvite => {
+      const issued = CircleInvite.issue({
+        id: toCircleInviteId("invite-1"),
+        circleId: opts.circle ?? circleId,
+        inviterId,
+        inviteeId: stranger,
+        permission: "Exchange",
+        now: NOW,
+      });
+      if (!issued.isOk) throw new Error("setup: issue failed");
+      if (opts.accept !== false) issued.value.accept(stranger, NOW);
+      return issued.value;
+    };
+
+    it("seats the invitee at the invite's permission and records MemberJoinedCircle", () => {
+      const circle = newCircle();
+      circle.pullEvents();
+      const id = membershipId();
+
+      const result = circle.admitInvitee(inviteFrom(), id, NOW);
+
+      expect(result.isOk).toBe(true);
+      const seat = circle.members.find((m) => m.memberId === stranger);
+      expect(seat?.id).toBe(id);
+      expect(seat?.permission).toBe("Exchange");
+      expect(circle.pullEvents()).toEqual([
+        new MemberJoinedCircle(circleId, stranger, NOW),
+      ]);
+    });
+
+    it("refuses an invite that is not accepted, or is for another circle", () => {
+      const circle = newCircle();
+      circle.pullEvents();
+      for (const invite of [
+        inviteFrom(owner, { accept: false }),
+        inviteFrom(owner, { circle: toCircleId("circle-2") }),
+      ]) {
+        const result = circle.admitInvitee(invite, membershipId(), NOW);
+        expect(result.isErr && result.error.code).toBe("InviteNotAccepted");
+      }
+      expect(circle.isMember(stranger)).toBe(false);
+      expect(circle.pullEvents()).toEqual([]);
+    });
+
+    it("refuses when the inviter is no longer an Admin of the circle", () => {
+      const circle = newCircle();
+      circle.addMember(owner, membershipId(), alice, "Admin", NOW);
+      circle.changePermission(owner, alice, "ViewOnly");
+      circle.pullEvents();
+
+      const result = circle.admitInvitee(
+        inviteFrom(alice),
+        membershipId(),
+        NOW,
+      );
+
+      expect(result.isErr && result.error.code).toBe("NotCircleAdmin");
+      expect(circle.isMember(stranger)).toBe(false);
+      expect(circle.pullEvents()).toEqual([]);
+    });
+
+    it("refuses an invitee who already belongs, and a full circle", () => {
+      const member = newCircle();
+      member.addMember(owner, membershipId(), stranger, "ViewOnly", NOW);
+      const again = member.admitInvitee(inviteFrom(), membershipId(), NOW);
+      expect(again.isErr && again.error.code).toBe("AlreadyMember");
+
+      const full = newCircle();
+      for (let i = 1; i < MAX_CIRCLE_MEMBERS; i += 1) {
+        full.addMember(
+          owner,
+          membershipId(),
+          toMemberId(`m-${i}`),
+          "ViewOnly",
+          NOW,
+        );
+      }
+      const result = full.admitInvitee(inviteFrom(), membershipId(), NOW);
+      expect(result.isErr && result.error.code).toBe("CircleFull");
+      expect(full.isMember(stranger)).toBe(false);
     });
   });
 

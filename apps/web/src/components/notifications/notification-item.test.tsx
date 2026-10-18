@@ -288,6 +288,55 @@ describe("NotificationItem rendering", () => {
   );
 
   it.each([
+    [
+      "en",
+      "circle_invite_received",
+      "Mara invited you to join Saturday Puzzlers.",
+    ],
+    [
+      "nl",
+      "circle_invite_received",
+      "Mara heeft je uitgenodigd voor Saturday Puzzlers.",
+    ],
+    [
+      "en",
+      "circle_invite_accepted",
+      "Mara accepted your invitation to Saturday Puzzlers.",
+    ],
+    [
+      "nl",
+      "circle_invite_accepted",
+      "Mara heeft je uitnodiging voor Saturday Puzzlers geaccepteerd.",
+    ],
+  ] as const)(
+    "%s: %s names the actor and the live circle name",
+    (locale, type, text) => {
+      const { container } = renderItem(
+        base({
+          type,
+          href: "/circles",
+          context: { circleName: "Saturday Puzzlers" },
+        }),
+        { locale },
+      );
+      expect(rowLink(container)!.textContent).toContain(text);
+    },
+  );
+
+  it("names a privacy-hidden circle inviter generically and falls back to 'a circle'", () => {
+    const { container } = renderItem(
+      base({
+        type: "circle_invite_received",
+        actors: [{ anonymous: true }],
+        href: "/circles",
+      }),
+    );
+    const sentence = rowLink(container)!.textContent;
+    expect(sentence).toContain("Puzzler invited you to join a circle.");
+    expect(sentence).not.toMatch(/Former member/);
+  });
+
+  it.each([
     ["en", "Former member declined your trade for Starry Night."],
     ["nl", "Voormalig lid"],
   ] as const)(

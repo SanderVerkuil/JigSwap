@@ -10,6 +10,7 @@ import { projectTradeParty } from "../exchange/tradeParty";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { canViewCopy } from "../library/canViewCopy";
 import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
+import { circleOfOpenInvite } from "../sharing/circleAccess";
 import {
   ADMIN_NOTIFICATION_TYPES,
   decideFollowBack,
@@ -154,7 +155,8 @@ const requestPending = async (
   );
 };
 
-// The aggregate-id lookups the subjects need (exchange, thread, follow request, household invite).
+// The aggregate-id lookups the subjects need (exchange, thread, follow request, household invite,
+// circle invite, circle).
 const loadExchange = (
   ctx: QueryCtx,
   cache: NotificationViewCache,
@@ -209,6 +211,26 @@ const loadConnectionOffer = (
       .query("connectionOffers")
       .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", id))
       .unique(),
+  );
+
+const loadCircleInvite = (
+  ctx: QueryCtx,
+  cache: NotificationViewCache,
+  id: string,
+) =>
+  memoized(cache, `circleInvite:${id}`, () =>
+    ctx.db
+      .query("circleInvites")
+      .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", id))
+      .first(),
+  );
+
+const loadCircle = (ctx: QueryCtx, cache: NotificationViewCache, id: string) =>
+  memoized(cache, `circle:${id}`, () =>
+    ctx.db
+      .query("circles")
+      .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", id))
+      .first(),
   );
 
 const loadDoc = <T extends "puzzles" | "ownedPuzzles" | "goals">(
@@ -493,6 +515,26 @@ const resolveSubject = async (
           invite && invite.inviteeId === viewerId ? invite.status : null,
         ),
       };
+    }
+    // Only while the invite is still on offer to the viewer (the same rule as
+    // listMyCircleInvites) does it name the circle and deep-link the invite; otherwise it shows
+    // as unavailable with no name at all.
+    case "circleInvite": {
+      const invite = await loadCircleInvite(ctx, cache, subject.inviteId);
+      const circle =
+        invite && invite.inviteeId === viewerId
+          ? await circleOfOpenInvite(ctx, invite, Date.now())
+          : null;
+      return circle
+        ? { available: true, context: { circleName: circle.name } }
+        : { available: false, context: {} };
+    }
+    // Only a current member of the circle learns its live name.
+    case "circle": {
+      const circle = await loadCircle(ctx, cache, subject.circleId);
+      return circle && circle.memberships.some((m) => m.memberId === viewerId)
+        ? { available: true, context: { circleName: circle.name } }
+        : { available: false, context: {} };
     }
     case "puzzle": {
       const puzzle = await loadDoc(

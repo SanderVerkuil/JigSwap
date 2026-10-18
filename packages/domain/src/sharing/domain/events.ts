@@ -1,5 +1,5 @@
 import { DomainEvent } from "../../shared-kernel";
-import { CircleId, CopyId, MemberId } from "./ids";
+import { CircleId, CircleInviteId, CopyId, MemberId } from "./ids";
 
 // All Sharing domain events implement DomainEvent (name + occurredAt). They are plain immutable
 // records: the Circle aggregate records them; an outbound publisher serialises and dispatches them
@@ -54,5 +54,73 @@ export class CopySharedToCircle implements DomainEvent {
   ) {}
 }
 
+// An Admin invited a member to a circle. Carries `expiresAt` so the backend can schedule the
+// invite's expiry without reloading it; drives the invitee's circle_invite_received notification.
+export class CircleInviteIssued implements DomainEvent {
+  readonly name = "CircleInviteIssued";
+  constructor(
+    readonly inviteId: CircleInviteId,
+    readonly circleId: CircleId,
+    readonly inviterId: MemberId,
+    readonly inviteeId: MemberId,
+    readonly expiresAt: Date,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+// The invitee accepted (their MemberJoinedCircle is recorded by the Circle alongside). Drives the
+// inviter's circle_invite_accepted notification.
+export class CircleInviteAccepted implements DomainEvent {
+  readonly name = "CircleInviteAccepted";
+  constructor(
+    readonly inviteId: CircleInviteId,
+    readonly circleId: CircleId,
+    readonly inviteeId: MemberId,
+    readonly inviterId: MemberId,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+// The invitee declined. Silent: no notification is mapped for it.
+export class CircleInviteDeclined implements DomainEvent {
+  readonly name = "CircleInviteDeclined";
+  constructor(
+    readonly inviteId: CircleInviteId,
+    readonly circleId: CircleId,
+    readonly inviteeId: MemberId,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+// The inviter or an Admin withdrew a pending invite (`revokedBy`), or the system did because its
+// inviter left or lost Admin (`revokedBy` null).
+export class CircleInviteRevoked implements DomainEvent {
+  readonly name = "CircleInviteRevoked";
+  constructor(
+    readonly inviteId: CircleInviteId,
+    readonly circleId: CircleId,
+    readonly revokedBy: MemberId | null,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+// A pending invite reached its expiresAt unanswered.
+export class CircleInviteExpired implements DomainEvent {
+  readonly name = "CircleInviteExpired";
+  constructor(
+    readonly inviteId: CircleInviteId,
+    readonly circleId: CircleId,
+    readonly occurredAt: Date,
+  ) {}
+}
+
 export type SharingDomainEvent =
-  CircleCreated | MemberJoinedCircle | MemberLeftCircle | CopySharedToCircle;
+  | CircleCreated
+  | MemberJoinedCircle
+  | MemberLeftCircle
+  | CopySharedToCircle
+  | CircleInviteIssued
+  | CircleInviteAccepted
+  | CircleInviteDeclined
+  | CircleInviteRevoked
+  | CircleInviteExpired;

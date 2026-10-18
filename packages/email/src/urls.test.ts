@@ -15,6 +15,7 @@ const EXPECTED: Record<EmailType, string> = {
   new_follower: "/people",
   follow_request_received: "/people",
   follow_request_approved: "/people",
+  circle_invite_received: "/circles",
 };
 
 const EXPECTED_WITH_RELATED_ID: Record<EmailType, string> = {

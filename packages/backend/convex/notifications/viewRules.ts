@@ -24,6 +24,9 @@ export const ADMIN_NOTIFICATION_TYPES: ReadonlySet<NotificationType> = new Set([
  *
  * Trade types are deliberately NOT here: their actor is a trade counterparty, resolved by the
  * per-trade rule (TRADE_NOTIFICATION_TYPES).
+ *
+ * Circle invite types are deliberately NOT here either: their actor goes through the ordinary
+ * public / mutual rule, matching the projectMemberIdentity reveal the invite lists use.
  */
 export const INITIATOR_NOTIFICATION_TYPES: ReadonlySet<NotificationType> =
   new Set([
@@ -261,6 +264,9 @@ export const legacyNotificationHref = (
     // The offer is answered in the People page's requests area.
     case "connection_offer_received":
       return "/people";
+    case "circle_invite_received":
+    case "circle_invite_accepted":
+      return "/circles";
     case "whats_new":
       return relatedId ? `/whats-new#entry-${relatedId}` : "/whats-new";
     default:
@@ -321,6 +327,11 @@ export const notificationHref = (input: HrefInput): string | null => {
       return subject?.kind === "whatsNew"
         ? `/whats-new#entry-${seg(subject.entryId)}`
         : "/whats-new";
+    // While the invite is still open, deep-link it; otherwise the circles page.
+    case "circle_invite_received":
+      return subject?.kind === "circleInvite" && input.subjectAvailable
+        ? `/circles?invite=${seg(subject.inviteId)}`
+        : "/circles";
     default:
       return legacyNotificationHref(type, input.relatedId);
   }

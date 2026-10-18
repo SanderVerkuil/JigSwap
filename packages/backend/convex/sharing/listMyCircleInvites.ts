@@ -1,0 +1,49 @@
+import type { MyCircleInviteView } from "@jigswap/contracts";
+import type { Id } from "../_generated/dataModel";
+import { query } from "../_generated/server";
+import { requireMember } from "../identity/requireMember";
+import { projectMemberIdentity } from "../social/privacy";
+import { circleOfOpenInvite } from "./circleAccess";
+
+// The signed-in member's open circle invites, newest first: the circle's name and size, the
+// inviter (projected, salted per invite) and the offered seat. Never the member list or shared
+// copies: a pending invite grants nothing. Only invites still on offer (circleOfOpenInvite) are
+// listed; ones accept would refuse are left out rather than shown as dead ends.
+export const listMyCircleInvites = query({
+  args: {},
+  handler: async (ctx): Promise<MyCircleInviteView[]> => {
+    const viewerId = (await requireMember(ctx)) as unknown as Id<"users">;
+    const now = Date.now();
+    const invites = await ctx.db
+      .query("circleInvites")
+      .withIndex("by_invitee_status", (q) =>
+        q.eq("inviteeId", viewerId).eq("status", "pending"),
+      )
+      .collect();
+
+    const views: { createdAt: number; view: MyCircleInviteView }[] = [];
+    for (const invite of invites) {
+      const circle = await circleOfOpenInvite(ctx, invite, now);
+      if (!circle) continue;
+      views.push({
+        createdAt: invite.createdAt,
+        view: {
+          inviteId: invite.aggregateId,
+          circleName: circle.name,
+          memberCount: circle.memberships.length,
+          inviter: await projectMemberIdentity(
+            ctx,
+            viewerId,
+            invite.inviterId,
+            invite.aggregateId,
+          ),
+          permission: invite.permission,
+          expiresAt: invite.expiresAt,
+        },
+      });
+    }
+    return views
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .map(({ view }) => view);
+  },
+});

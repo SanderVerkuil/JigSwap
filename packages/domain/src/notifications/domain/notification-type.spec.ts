@@ -28,6 +28,8 @@ describe("NOTIFICATION_TYPES", () => {
       "household_invite_received",
       "household_invite_accepted",
       "connection_offer_received",
+      "circle_invite_received",
+      "circle_invite_accepted",
       "whats_new",
       "report_decided",
       "content_removed",
@@ -52,6 +54,7 @@ describe("EMAIL_ELIGIBLE_TYPES", () => {
         "new_follower",
         "follow_request_received",
         "follow_request_approved",
+        "circle_invite_received",
       ].sort(),
     );
   });

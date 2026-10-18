@@ -4,6 +4,9 @@ import { Id } from "../../shared-kernel";
 // child entity with its own identity (so admins can address a specific membership row).
 export type CircleId = Id<"CircleId">;
 export type MembershipId = Id<"MembershipId">;
+// A circle invitation is its own aggregate: it lives and resolves (accept, decline, revoke,
+// expire) independently of the circle's membership list.
+export type CircleInviteId = Id<"CircleInviteId">;
 
 // Foreign-aggregate references held as branded strings. Sharing never loads these aggregates; it
 // only carries their ids. MemberId is owned by Identity & Access; CopyId is owned by Library.

@@ -1,4 +1,5 @@
 import { DomainEvent, err, ok, Result } from "../../shared-kernel";
+import type { CircleInvite } from "./circle-invite";
 import { SharingError } from "./errors";
 import {
   CircleCreated,
@@ -91,6 +92,11 @@ export class Circle {
     return this.memberships.some((m) => m.memberId === memberId);
   }
 
+  // Does this member hold Admin here? The owner always does.
+  isAdmin(memberId: MemberId): boolean {
+    return this.requireAdmin(memberId).isOk;
+  }
+
   // Add a member at a permission level. Only an Admin actor may do so; the member must not already
   // belong and the circle must have a free seat. Emits MemberJoinedCircle.
   addMember(
@@ -102,16 +108,24 @@ export class Circle {
   ): Result<void, SharingError> {
     const gate = this.requireAdmin(actor);
     if (gate.isErr) return err(gate.error);
-    if (this.isMember(memberId)) return err(SharingError.alreadyMember());
-    if (this.memberships.length >= MAX_CIRCLE_MEMBERS) {
-      return err(SharingError.circleFull());
-    }
+    return this.seat(membershipId, memberId, permission, now);
+  }
 
-    this.memberships.push(
-      Membership.create(membershipId, memberId, permission, now),
-    );
-    this.record(new MemberJoinedCircle(this.state.id, memberId, now));
-    return ok(undefined);
+  // Seat the invitee of an accepted invite, at the invite's permission. Authorised by the invite
+  // rather than by an acting Admin: the invite must be to THIS circle and accepted, and its inviter
+  // must STILL be an Admin here (an inviter who lost Admin or left can't bring anyone in). The same
+  // already-member and seat-cap rules as addMember apply. Emits MemberJoinedCircle.
+  admitInvitee(
+    invite: CircleInvite,
+    membershipId: MembershipId,
+    now: Date,
+  ): Result<void, SharingError> {
+    if (invite.circleId !== this.state.id || invite.status !== "accepted") {
+      return err(SharingError.inviteNotAccepted());
+    }
+    const gate = this.requireAdmin(invite.inviterId);
+    if (gate.isErr) return err(gate.error);
+    return this.seat(membershipId, invite.inviteeId, invite.permission, now);
   }
 
   // Remove a member. Only an Admin actor may do so; the target must be a member and must not be the
@@ -207,6 +221,24 @@ export class Circle {
     if (!seat || !canManageMembers(seat.permission)) {
       return err(SharingError.notCircleAdmin());
     }
+    return ok(undefined);
+  }
+
+  private seat(
+    membershipId: MembershipId,
+    memberId: MemberId,
+    permission: PermissionLevel,
+    now: Date,
+  ): Result<void, SharingError> {
+    if (this.isMember(memberId)) return err(SharingError.alreadyMember());
+    if (this.memberships.length >= MAX_CIRCLE_MEMBERS) {
+      return err(SharingError.circleFull());
+    }
+
+    this.memberships.push(
+      Membership.create(membershipId, memberId, permission, now),
+    );
+    this.record(new MemberJoinedCircle(this.state.id, memberId, now));
     return ok(undefined);
   }
 

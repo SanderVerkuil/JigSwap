@@ -12,7 +12,14 @@ export type SharingErrorCode =
   | "CannotRemoveOwner"
   | "DuplicatePermission"
   | "OwnerCannotLeave"
-  | "CircleFull";
+  | "CircleFull"
+  | "CannotInvite"
+  | "NotInvitee"
+  | "InviteNotPending"
+  | "InviteExpired"
+  | "InviteNotDue"
+  | "InviteNotAccepted"
+  | "CannotRevokeInvite";
 
 export class SharingError extends DomainError {
   override readonly name = "SharingError";
@@ -77,6 +84,60 @@ export class SharingError extends DomainError {
     return new SharingError(
       "CircleFull",
       "This circle has reached its member limit",
+    );
+  }
+
+  // The invitee may not be invited (self, or the contact rule refused). Deliberately ONE code for
+  // every reason, so a refusal never tells the inviter which condition failed (e.g. a block).
+  static cannotInvite(): SharingError {
+    return new SharingError(
+      "CannotInvite",
+      "This member can't be invited to the circle",
+    );
+  }
+
+  // Only the invitee may answer (accept or decline) a circle invite.
+  static notInvitee(): SharingError {
+    return new SharingError(
+      "NotInvitee",
+      "Only the invited member may answer this invite",
+    );
+  }
+
+  // The invite was already accepted, declined, revoked or expired.
+  static inviteNotPending(): SharingError {
+    return new SharingError(
+      "InviteNotPending",
+      "This invite is no longer pending",
+    );
+  }
+
+  // The invite is still marked pending but its expiry has passed (expiry is applied lazily).
+  static inviteExpired(): SharingError {
+    return new SharingError("InviteExpired", "This invite has expired");
+  }
+
+  // An expiry was attempted before the invite's expiresAt.
+  static inviteNotDue(): SharingError {
+    return new SharingError(
+      "InviteNotDue",
+      "This invite has not reached its expiry yet",
+    );
+  }
+
+  // Admission needs an invite to THIS circle that its invitee has accepted.
+  static inviteNotAccepted(): SharingError {
+    return new SharingError(
+      "InviteNotAccepted",
+      "This invite has not been accepted for this circle",
+    );
+  }
+
+  // Only the inviter or a current Admin of the circle may revoke an invite.
+  static cannotRevokeInvite(): SharingError {
+    return new SharingError(
+      "CannotRevokeInvite",
+      "Only the inviter or a circle admin may revoke this invite",
     );
   }
 }

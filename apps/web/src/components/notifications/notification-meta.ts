@@ -16,6 +16,7 @@ import {
   Target,
   UserCheck,
   UserPlus,
+  Users,
   XCircle,
   type LucideIcon,
 } from "lucide-react";
@@ -48,6 +49,8 @@ export type NotificationType =
   | "household_invite_received"
   | "household_invite_accepted"
   | "connection_offer_received"
+  | "circle_invite_received"
+  | "circle_invite_accepted"
   | "whats_new"
   | "report_decided"
   | "content_removed"
@@ -78,6 +81,8 @@ export const NOTIFICATION_TYPES: NotificationType[] = [
   "household_invite_received",
   "household_invite_accepted",
   "connection_offer_received",
+  "circle_invite_received",
+  "circle_invite_accepted",
   "whats_new",
   "report_decided",
   "content_removed",
@@ -130,6 +135,8 @@ export const NOTIFICATION_CATEGORIES: readonly NotificationCategory[] = [
       "household_invite_received",
       "household_invite_accepted",
       "connection_offer_received",
+      "circle_invite_received",
+      "circle_invite_accepted",
       "puzzle_favorited",
       "review_received",
       "goal_achieved",
@@ -175,6 +182,7 @@ export const EMAIL_ELIGIBLE_TYPES: ReadonlySet<NotificationType> = new Set([
   "new_follower",
   "follow_request_received",
   "follow_request_approved",
+  "circle_invite_received",
 ]);
 
 export type NotificationChannel = "inApp" | "email" | "push";
@@ -285,6 +293,9 @@ export function notificationIcon(type: string): LucideIcon {
     case "household_invite_received":
     case "household_invite_accepted":
       return House;
+    case "circle_invite_received":
+    case "circle_invite_accepted":
+      return Users;
     case "whats_new":
       return Sparkles;
     case "report_decided":
@@ -308,6 +319,7 @@ export function notificationAccent(type: string): string {
     case "proposal_approved":
     case "follow_request_approved":
     case "household_invite_accepted":
+    case "circle_invite_accepted":
       return "text-green-600 dark:text-green-400";
     case "trade_declined":
     case "trade_cancelled":
@@ -330,6 +342,7 @@ export function notificationAccent(type: string): string {
     case "follow_request_received":
     case "household_invite_received":
     case "connection_offer_received":
+    case "circle_invite_received":
       return "text-blue-500 dark:text-blue-400";
     case "admin_proposal_filed":
     case "admin_definition_submitted":

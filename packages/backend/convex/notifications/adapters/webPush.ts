@@ -127,6 +127,11 @@ export const notificationUrl = (type: string, relatedId?: string): string => {
     // A connection offer is answered in the People page's requests area.
     case "connection_offer_received":
       return "/people";
+    // Circle invites resolve on the Circles page (C2 adds the invite panel there).
+    case "circle_invite_received":
+      return relatedId ? `/circles?invite=${relatedId}` : "/circles";
+    case "circle_invite_accepted":
+      return "/circles";
     // What's new: relatedId is the entry id; the page anchors each card as #entry-<id>.
     case "whats_new":
       return relatedId ? `/whats-new#entry-${relatedId}` : "/whats-new";
