@@ -53,6 +53,8 @@ const KIND_META: Record<ActivityRow["kind"], [LucideIcon, string]> = {
   report_dismissed: [XCircle, "text-muted-foreground"],
   report_content_removed: [Trash2, "text-destructive"],
   report_warned: [Flag, "text-jigsaw-warning"],
+  message_image_auto_rejected: [Flag, "text-jigsaw-warning"],
+  message_image_restored: [Undo2, "text-muted-foreground"],
 };
 
 // Single source of truth for "kinds with an admin.moderation.activity.* message":

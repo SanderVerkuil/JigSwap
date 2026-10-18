@@ -13,6 +13,8 @@ export const RATE_LIMITS = {
   blockToggle: { windowMs: DAY, max: 30 },
   reportFile: { windowMs: DAY, max: 10 },
   imageStage: { windowMs: HOUR, max: 20 },
+  // Upload URLs for message photos: each staged photo needs one, plus retries of failed uploads.
+  imageUploadUrl: { windowMs: HOUR, max: 40 },
   locationSend: { windowMs: DAY, max: 20 },
   circleInvite: { windowMs: DAY, max: 30 },
 } as const satisfies Record<string, { windowMs: number; max: number }>;

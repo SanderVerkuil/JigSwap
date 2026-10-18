@@ -3758,7 +3758,9 @@
         "csam_escalation_updated": "<strong>{actor}</strong> updated a hash-match escalation (<strong>{target}</strong>)",
         "report_dismissed": "<strong>{actor}</strong> dismissed a report about <strong>{target}</strong>",
         "report_content_removed": "<strong>{actor}</strong> removed reported content from <strong>{target}</strong>",
-        "report_warned": "<strong>{actor}</strong> warned <strong>{target}</strong> after a report"
+        "report_warned": "<strong>{actor}</strong> warned <strong>{target}</strong> after a report",
+        "message_image_auto_rejected": "<strong>{actor}</strong> auto-flagged a <strong>{target}</strong>",
+        "message_image_restored": "<strong>{actor}</strong> restored a <strong>{target}</strong> after a review request"
       },
       "activityEmpty": "No moderation activity yet.",
       "screening": {

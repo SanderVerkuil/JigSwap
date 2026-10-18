@@ -614,6 +614,8 @@ export default defineSchema({
       v.literal("report_dismissed"),
       v.literal("report_content_removed"),
       v.literal("report_warned"),
+      v.literal("message_image_auto_rejected"),
+      v.literal("message_image_restored"),
     ),
     targetLabel: v.string(), // denormalized display title at decision time
     targetId: v.string(),

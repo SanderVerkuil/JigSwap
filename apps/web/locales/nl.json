@@ -3758,7 +3758,9 @@
         "csam_escalation_updated": "<strong>{actor}</strong> werkte een hash-match-escalatie bij (<strong>{target}</strong>)",
         "report_dismissed": "<strong>{actor}</strong> wees een melding over <strong>{target}</strong> af",
         "report_content_removed": "<strong>{actor}</strong> verwijderde gemelde inhoud van <strong>{target}</strong>",
-        "report_warned": "<strong>{actor}</strong> waarschuwde <strong>{target}</strong> na een melding"
+        "report_warned": "<strong>{actor}</strong> waarschuwde <strong>{target}</strong> na een melding",
+        "message_image_auto_rejected": "<strong>{actor}</strong> heeft een <strong>{target}</strong> automatisch gemarkeerd",
+        "message_image_restored": "<strong>{actor}</strong> heeft een <strong>{target}</strong> hersteld na een verzoek om herbeoordeling"
       },
       "activityEmpty": "Nog geen moderatieactiviteit.",
       "screening": {

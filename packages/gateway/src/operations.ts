@@ -219,6 +219,14 @@ export const gateway = {
       api.conversation.getCopyConversation.getCopyConversation,
     startCopyConversation:
       api.conversation.startCopyConversation.startCopyConversation,
+    // Message photos: upload URL, stage (claim the blob), send up to 4 with a caption, and the
+    // sender's outbox of undelivered photos.
+    generateMessageUploadUrl:
+      api.conversation.generateMessageUploadUrl.generateMessageUploadUrl,
+    stageMessageImage: api.conversation.stageMessageImage.stageMessageImage,
+    sendStagedImages: api.conversation.sendStagedImages.sendStagedImages,
+    listMyPendingAttachments:
+      api.conversation.listMyPendingAttachments.listMyPendingAttachments,
   },
 
   // Chain-of-Custody: a Copy's provenance (original owner -> each settled transfer -> current
