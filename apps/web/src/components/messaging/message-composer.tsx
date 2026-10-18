@@ -69,12 +69,18 @@ export function MessageComposer({
   threadId,
   recipientName,
   theirsLabel,
+  placeholder,
+  canAttachCopy = true,
 }: {
   threadId: string;
   // Names the textarea ("Message Esther"); falls back to the generic label.
   recipientName?: string;
   // The attach picker's tab for the other member's copies; null hides it.
   theirsLabel: string | null;
+  // The textarea's placeholder ("Write to Puzzle Club…"); the generic one by default.
+  placeholder?: string;
+  // Whether "Attach a puzzle" is offered (not yet in circle threads).
+  canAttachCopy?: boolean;
 }) {
   const t = useTranslations("messages");
   const { member } = useCurrentMember();
@@ -257,7 +263,7 @@ export function MessageComposer({
         <AttachMenu
           triggerRef={attachButtonRef}
           photosAvailable={photosAvailable}
-          onPuzzle={() => setPickerOpen(true)}
+          onPuzzle={canAttachCopy ? () => setPickerOpen(true) : undefined}
           onPhoto={() => fileInputRef.current?.click()}
           locationAvailable={locationAvailable}
           onLocation={() => setLocationOpen(true)}
@@ -270,7 +276,7 @@ export function MessageComposer({
             if (error) setError(null);
           }}
           onKeyDown={handleKeyDown}
-          placeholder={t("typeMessage")}
+          placeholder={placeholder ?? t("typeMessage")}
           aria-label={
             recipientName
               ? t("messageName", { name: recipientName })
@@ -335,25 +341,27 @@ export function MessageComposer({
           }}
         />
       )}
-      <AttachPicker
-        open={pickerOpen}
-        onOpenChange={setPickerOpen}
-        threadId={threadId}
-        theirsLabel={theirsLabel}
-        onSelect={(copy) => {
-          setStaged(copy);
-          pickedRef.current = true;
-        }}
-        onCloseAutoFocus={(event) => {
-          event.preventDefault();
-          if (pickedRef.current) {
-            pickedRef.current = false;
-            focusAfterAttachChange();
-          } else {
-            attachButtonRef.current?.focus();
-          }
-        }}
-      />
+      {canAttachCopy && (
+        <AttachPicker
+          open={pickerOpen}
+          onOpenChange={setPickerOpen}
+          threadId={threadId}
+          theirsLabel={theirsLabel}
+          onSelect={(copy) => {
+            setStaged(copy);
+            pickedRef.current = true;
+          }}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            if (pickedRef.current) {
+              pickedRef.current = false;
+              focusAfterAttachChange();
+            } else {
+              attachButtonRef.current?.focus();
+            }
+          }}
+        />
+      )}
     </div>
   );
 }
