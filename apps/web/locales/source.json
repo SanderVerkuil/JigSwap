@@ -2762,6 +2762,26 @@
     "createFailed": "Couldn't create an invite link. Try again.",
     "revokeFailed": "Couldn't revoke the links. Try again."
   },
+  "emailInvite": {
+    "emailLabel": "Email address",
+    "emailPlaceholder": "name@example.com",
+    "submit": "Invite by email",
+    "note": "They get one invitation, valid for 14 days. JigSwap keeps no copy of the address.",
+    "sent": "Invitation sent",
+    "errors": {
+      "invalidEmail": "Enter a valid email address.",
+      "rateLimited": "You've sent a lot of invitations today. Try again {when}.",
+      "generic": "Couldn't send the invitation. Try again."
+    },
+    "pendingTitle": "Sent invitations",
+    "pendingSent": "Invitation sent {when}",
+    "pendingExpires": "expires {date}",
+    "revoke": "Revoke",
+    "revokeConfirmTitle": "Revoke this invitation?",
+    "revokeConfirmBody": "The invitation stops working. You can send a new one later.",
+    "revoked": "Invitation revoked",
+    "revokeFailed": "Couldn't revoke the invitation. Try again."
+  },
   "forms": {
     "owned-puzzle-form": {
       "title": "Add New Puzzle",

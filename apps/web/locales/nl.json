@@ -2762,6 +2762,26 @@
     "createFailed": "Kon geen uitnodigingslink maken. Probeer het opnieuw.",
     "revokeFailed": "Kon de links niet intrekken. Probeer het opnieuw."
   },
+  "emailInvite": {
+    "emailLabel": "E-mailadres",
+    "emailPlaceholder": "naam@voorbeeld.nl",
+    "submit": "Uitnodigen per e-mail",
+    "note": "Diegene krijgt één uitnodiging, 14 dagen geldig. JigSwap bewaart het adres niet.",
+    "sent": "Uitnodiging verstuurd",
+    "errors": {
+      "invalidEmail": "Vul een geldig e-mailadres in.",
+      "rateLimited": "Je hebt vandaag veel uitnodigingen verstuurd. Probeer het {when} opnieuw.",
+      "generic": "Kon de uitnodiging niet versturen. Probeer het opnieuw."
+    },
+    "pendingTitle": "Verstuurde uitnodigingen",
+    "pendingSent": "Uitnodiging verstuurd {when}",
+    "pendingExpires": "verloopt {date}",
+    "revoke": "Intrekken",
+    "revokeConfirmTitle": "Deze uitnodiging intrekken?",
+    "revokeConfirmBody": "De uitnodiging werkt dan niet meer. Je kunt later een nieuwe sturen.",
+    "revoked": "Uitnodiging ingetrokken",
+    "revokeFailed": "Kon de uitnodiging niet intrekken. Probeer het opnieuw."
+  },
   "forms": {
     "owned-puzzle-form": {
       "title": "Nieuwe Puzzel Toevoegen",
