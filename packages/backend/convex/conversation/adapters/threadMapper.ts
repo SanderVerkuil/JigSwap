@@ -79,22 +79,36 @@ export const toMessageRow = (
   ...(message.copyId !== undefined && {
     copyId: message.copyId as unknown as Id<"ownedPuzzles">,
   }),
+  // The domain's opaque attachmentRef is the attachment row id; absent stays absent.
+  ...(message.attachmentRef !== undefined && {
+    attachmentId: message.attachmentRef,
+  }),
 });
+
+// Whether a row's body must never reach a renderer: a media row (image/location) WITHOUT an
+// attachment. Legacy image rows were written by the old postMessage, whose image body was an
+// unverified client string (never screened or ownership-checked).
+export const isUnattachedMedia = (
+  row: Pick<ThreadMessageRow, "kind" | "attachmentId">,
+): boolean =>
+  (row.kind === "image" || row.kind === "location") &&
+  row.attachmentId === undefined;
 
 // Message row -> the thread's denormalized `lastMessage` summary: body truncated to
 // LAST_MESSAGE_BODY_MAX code points (never splitting a surrogate pair, which would be invalid
-// Unicode and could fail the write), and blank for `image` rows (their body is an unverified client
-// string that must never reach a renderer).
+// Unicode and could fail the write). A media row's body is its caption ("" when none), so the
+// inbox can render "Photo" / "Location" from `kind`; the attachment ref is never copied. A media
+// row without an attachment (legacy image rows) is blanked: its body is an unverified client
+// string that must never reach a renderer.
 export const toLastMessage = (
   row: ThreadMessageRow,
 ): NonNullable<Doc<"threads">["lastMessage"]> => ({
   messageId: row.messageId,
   ...(row.authorId !== undefined && { authorId: row.authorId }),
   kind: row.kind,
-  body:
-    row.kind === "image"
-      ? ""
-      : Array.from(row.body).slice(0, LAST_MESSAGE_BODY_MAX).join(""),
+  body: isUnattachedMedia(row)
+    ? ""
+    : Array.from(row.body).slice(0, LAST_MESSAGE_BODY_MAX).join(""),
   sentAt: row.sentAt,
   ...(row.copyId !== undefined && { copyId: row.copyId }),
 });

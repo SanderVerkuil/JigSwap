@@ -12,11 +12,12 @@ import {
 } from "../exchange/tradeParty";
 import { requireMember } from "../identity/requireMember";
 import { anonymousMemberOf, projectMemberIdentity } from "../social/privacy";
+import { toLastMessage } from "./adapters/threadMapper";
 import { viewableContextCopies } from "./copyCard";
 import {
   participantUnreadCountOf,
   threadRowByAggregateId,
-  toThreadMessageView,
+  toLastMessageView,
 } from "./readModelHelpers";
 
 // Context-copy bounds. Message references are read through by_thread_copy_sent, so plain messages
@@ -217,16 +218,19 @@ const toInboxThreadView = async (
 ): Promise<InboxThreadView | null> => {
   const subject = await subjectOf(ctx, thread, me);
   if (!subject) return null;
-  // The denormalized summary; rows the backfill has not reached fall back to reading the message.
+  // The denormalized summary; rows the backfill has not reached fall back to reading the message,
+  // summarised the same way (so the preview never carries an attachment ref).
+  const newestRow = thread.lastMessage
+    ? null
+    : await ctx.db
+        .query("threadMessages")
+        .withIndex("by_thread_sent", (q) =>
+          q.eq("threadAggregateId", thread.aggregateId),
+        )
+        .order("desc")
+        .first();
   const last =
-    thread.lastMessage ??
-    (await ctx.db
-      .query("threadMessages")
-      .withIndex("by_thread_sent", (q) =>
-        q.eq("threadAggregateId", thread.aggregateId),
-      )
-      .order("desc")
-      .first());
+    thread.lastMessage ?? (newestRow ? toLastMessage(newestRow) : null);
   const contextCopies = await contextCopiesOf(
     ctx,
     thread,
@@ -237,7 +241,7 @@ const toInboxThreadView = async (
   return {
     threadId: thread.aggregateId,
     subject,
-    lastMessage: last ? toThreadMessageView(last, me) : null,
+    lastMessage: last ? toLastMessageView(last, me) : null,
     unreadCount: await participantUnreadCountOf(ctx, thread, membership),
     contextCopies,
     updatedAt: thread.lastMessageAt ?? thread.createdAt,

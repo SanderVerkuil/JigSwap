@@ -825,8 +825,10 @@ export default defineSchema({
     ),
     lastMessageAt: v.optional(v.number()), // denormalized for inbox ordering
     // Denormalized inbox summary of the newest message, written in the same transaction as its
-    // insert. `body` is truncated (LAST_MESSAGE_BODY_MAX) and blank for `image` rows. Absent on
-    // empty threads and on rows the backfill has not reached (the inbox then reads the message).
+    // insert. `body` is truncated (LAST_MESSAGE_BODY_MAX); for media rows it is the caption, and
+    // blank for a media row without an attachment (legacy image rows). Never an attachment ref.
+    // Absent on empty threads and on rows the backfill has not reached (the inbox then reads the
+    // message).
     lastMessage: v.optional(
       v.object({
         messageId: v.string(),
@@ -834,6 +836,7 @@ export default defineSchema({
         kind: v.union(
           v.literal("text"),
           v.literal("image"),
+          v.literal("location"),
           v.literal("system"),
         ),
         body: v.string(),
@@ -852,9 +855,19 @@ export default defineSchema({
     threadAggregateId: v.string(),
     messageId: v.string(),
     authorId: v.optional(v.id("users")), // absent for system messages
-    kind: v.union(v.literal("text"), v.literal("image"), v.literal("system")),
+    kind: v.union(
+      v.literal("text"),
+      v.literal("image"),
+      v.literal("location"),
+      v.literal("system"),
+    ),
+    // Text: the message. Media (image/location): the optional caption, "" allowed.
     body: v.string(),
     sentAt: v.number(),
+    // The media message's attachment (the domain's opaque attachmentRef); absent on text/system
+    // rows and on legacy image rows. A plain string until the attachments table lands, when it
+    // becomes v.id("messageAttachments").
+    attachmentId: v.optional(v.string()),
     // The copy this message is about, when sent from a copy's "Message" action. Lives on the
     // message (not the thread) because a DM is one long-lived thread per pair, spanning many
     // puzzles; absent on plain/system messages and every pre-existing row.
