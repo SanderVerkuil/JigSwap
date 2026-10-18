@@ -84,6 +84,48 @@ export interface ExchangeSummaryView extends ExchangeFields {
   offeredPuzzle: ExchangePuzzleView | null;
 }
 
+/** One review the trade partner RECEIVED, as shown on the trade card. */
+export interface TradePartnerReviewView {
+  rating: number;
+  comment?: string;
+  createdAt: number;
+  /** The reviewer's display name; absent when the reviewer is anonymous to the viewer. */
+  reviewerName?: string;
+}
+
+/**
+ * The counterparty card of ONE exchange (`exchange.tradePartner`), for a party of that exchange.
+ * - "hidden": a living member the viewer may not identify in this trade (the requester, before the
+ *   owner accepted or replied). Nothing else is disclosed.
+ * - "departed": the account was deleted or deactivated.
+ * - "revealed": visible by the ordinary rules (public / mutual) OR revealed by this trade only.
+ *   Carries ONLY the trade card: display name, handle, email (see below) and the reviews the member
+ *   received. `profileViewable` is true only when the member is visible by the ordinary rules —
+ *   link their normal profile only then.
+ *
+ * EMAIL: the requester's email always reaches the owner (the requester consented by sending the
+ * request). The owner's email reaches the requester only once the owner accepted or replied in THIS
+ * exchange — even when the owner's profile is public, so proposing can't harvest emails.
+ */
+export type TradePartnerView =
+  | { state: "hidden" }
+  | { state: "departed" }
+  | {
+      state: "revealed";
+      memberId: string;
+      /** Display name (profile display name, else account name, else username). */
+      name?: string;
+      username?: string;
+      email?: string;
+      profileViewable: boolean;
+      reviews: {
+        averageRating: number;
+        totalReviews: number;
+        /** Newest first, at most 10. */
+        items: TradePartnerReviewView[];
+      };
+    };
+
 /**
  * Platform exchange counters (legacy `getExchangeStats`). Status buckets mirror the legacy keys
  * exactly (`rejected`, not `declined`).

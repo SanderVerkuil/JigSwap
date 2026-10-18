@@ -194,8 +194,11 @@ export const gateway = {
     stats: api.exchange.getExchangeStats.getExchangeStats,
     // The viewer's copies they may offer in a swap for a requested copy (propose's offer rule).
     offerableCopies: api.exchange.getOfferableCopies.getOfferableCopies,
-    // Whether proposing for a copy would reveal the (currently anonymous) requester to its owner.
+    // The request-flow notice: whether the caller's own profile is private (the owner always gets
+    // the requester's trade card). null = signed out / missing / own / unviewable copy.
     requestDisclosure: api.exchange.getRequestDisclosure.getRequestDisclosure,
+    // The counterparty card of one exchange (per-trade reveal: name, handle, email, reviews).
+    tradePartner: api.exchange.getTradePartner.getTradePartner,
   },
 
   // Conversation: threads, DMs, exchange chat, inbox.

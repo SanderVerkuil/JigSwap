@@ -860,3 +860,139 @@ describe("per-trade reveal: data export", () => {
     expect(after.exchanges[0]!.recipientId).toBe(w.owner);
   });
 });
+
+describe("getTradePartner", () => {
+  const card = async (t: T, who: string, exchangeId: string) =>
+    as(t, who).query(api.exchange.getTradePartner.getTradePartner, {
+      exchangeId: await docIdOf(t, exchangeId),
+    });
+
+  const addReview = (
+    t: T,
+    exchangeId: Id<"exchanges">,
+    reviewerId: Id<"users">,
+    revieweeId: Id<"users">,
+    rating: number,
+    createdAt: number,
+  ) =>
+    t.run((ctx) =>
+      ctx.db.insert("reviews", {
+        exchangeId,
+        reviewerId,
+        revieweeId,
+        rating,
+        comment: `rated ${rating}`,
+        categories: {
+          communication: rating,
+          packaging: rating,
+          condition: rating,
+          timeliness: rating,
+        },
+        createdAt,
+      }),
+    );
+
+  test("the owner gets the requester's card with email and received reviews right after propose", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    const ex = await propose(t, "requester", w.copy);
+    const exId = await docIdOf(t, ex);
+    // The third member reviewed the requester twice; the third member is private and unknown to
+    // the owner, so their name stays off the card.
+    await addReview(t, exId, w.third, w.requester, 4, 10);
+    await addReview(t, exId, w.third, w.requester, 5, 20);
+
+    const view = await card(t, "owner", ex);
+
+    expect(view).toMatchObject({
+      state: "revealed",
+      memberId: w.requester,
+      username: "requester",
+      email: "requester@example.com",
+      profileViewable: false,
+      reviews: { averageRating: 4.5, totalReviews: 2 },
+    });
+    if (view?.state !== "revealed") throw new Error("unreachable");
+    expect(view.reviews.items.map((r) => r.rating)).toEqual([5, 4]);
+    expect(view.reviews.items[0]).not.toHaveProperty("reviewerName");
+    const json = JSON.stringify(view);
+    for (const leak of [
+      w.third,
+      "avatars/requester",
+      "requester bio",
+      "requester town",
+    ]) {
+      expect(json).not.toContain(leak);
+    }
+  });
+
+  test("a revealed reviewer is named on the card", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    await setVisibility(t, w.third, "public");
+    const ex = await propose(t, "requester", w.copy);
+    await addReview(t, await docIdOf(t, ex), w.third, w.requester, 3, 10);
+
+    const view = await card(t, "owner", ex);
+    if (view?.state !== "revealed") throw new Error("expected revealed");
+    expect(view.reviews.items[0]?.reviewerName).toBe("X");
+  });
+
+  test("the requester gets { hidden } until the owner acts, then the card with email", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    const ex = await propose(t, "requester", w.copy);
+
+    expect(await card(t, "requester", ex)).toEqual({ state: "hidden" });
+
+    await postInThread(t, "owner", ex, "Hi!");
+    expect(await card(t, "requester", ex)).toMatchObject({
+      state: "revealed",
+      memberId: w.owner,
+      email: "owner@example.com",
+      profileViewable: false,
+    });
+  });
+
+  test("a public owner is visible but their email waits for the owner to act", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    await setVisibility(t, w.owner, "public");
+    const ex = await propose(t, "requester", w.copy);
+
+    const before = await card(t, "requester", ex);
+    expect(before).toMatchObject({
+      state: "revealed",
+      memberId: w.owner,
+      profileViewable: true,
+    });
+    expect(before).not.toHaveProperty("email");
+
+    await act(t, "owner", "accept", ex);
+    expect(await card(t, "requester", ex)).toMatchObject({
+      email: "owner@example.com",
+    });
+  });
+
+  test("the email stays inside its trade: a second trade with no owner action shows none", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    await setVisibility(t, w.owner, "public");
+    const first = await propose(t, "requester", w.copy);
+    await act(t, "owner", "accept", first);
+    const second = await propose(t, "requester", w.copy2);
+
+    expect(await card(t, "requester", first)).toHaveProperty("email");
+    expect(await card(t, "requester", second)).not.toHaveProperty("email");
+  });
+
+  test("departed counterparty and non-party", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    const ex = await propose(t, "requester", w.copy);
+
+    expect(await card(t, "third", ex)).toBeNull();
+    await t.run((ctx) => ctx.db.patch(w.requester, { isActive: false }));
+    expect(await card(t, "owner", ex)).toEqual({ state: "departed" });
+  });
+});

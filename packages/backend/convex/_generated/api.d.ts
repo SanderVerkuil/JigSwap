@@ -133,6 +133,7 @@ import type * as exchange_getExchangesByOwner from "../exchange/getExchangesByOw
 import type * as exchange_getExchangesByRequester from "../exchange/getExchangesByRequester.js";
 import type * as exchange_getOfferableCopies from "../exchange/getOfferableCopies.js";
 import type * as exchange_getRequestDisclosure from "../exchange/getRequestDisclosure.js";
+import type * as exchange_getTradePartner from "../exchange/getTradePartner.js";
 import type * as exchange_getUserExchanges from "../exchange/getUserExchanges.js";
 import type * as exchange_propose from "../exchange/propose.js";
 import type * as exchange_raiseDispute from "../exchange/raiseDispute.js";
@@ -547,6 +548,7 @@ declare const fullApi: ApiFromModules<{
   "exchange/getExchangesByRequester": typeof exchange_getExchangesByRequester;
   "exchange/getOfferableCopies": typeof exchange_getOfferableCopies;
   "exchange/getRequestDisclosure": typeof exchange_getRequestDisclosure;
+  "exchange/getTradePartner": typeof exchange_getTradePartner;
   "exchange/getUserExchanges": typeof exchange_getUserExchanges;
   "exchange/propose": typeof exchange_propose;
   "exchange/raiseDispute": typeof exchange_raiseDispute;
