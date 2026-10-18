@@ -13,8 +13,12 @@ export type CirclePermissionLevel = "ViewOnly" | "Exchange" | "Admin";
 export interface CircleMemberView {
   // The domain MembershipId.
   membershipId: string;
-  // The member's user _id (the resolved MemberId).
-  memberId: DocId;
+  /**
+   * The member's user _id (the resolved MemberId). Absent for a `departed` seat: like the identity
+   * chokepoint's anonymous projection, a departed member's real id never crosses the wire. Manage
+   * a seat by its `membershipId` (removeMember / changePermission accept it).
+   */
+  memberId?: DocId;
   /** Raw account name; may be absent. Render via resolveMemberDisplayName / useMemberDisplayName. */
   name?: string;
   username?: string;

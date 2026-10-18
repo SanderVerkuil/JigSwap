@@ -351,8 +351,12 @@ describe("other circle surfaces project members consistently", () => {
     });
     const byId = new Map(circle!.members.map((m) => [m.memberId, m]));
     expect(byId.get(privy)?.name).toBe("Privy");
-    const departed = byId.get(gone)!;
+    // A departed seat carries no memberId at all (its real id would undo the anonymisation).
+    expect(byId.has(gone)).toBe(false);
+    const departed = circle!.members.find((m) => m.departed)!;
     expect(departed.departed).toBe(true);
+    expect(departed.memberId).toBeUndefined();
+    expect(JSON.stringify(circle)).not.toContain(gone);
     expect(departed.name).toBeUndefined();
     expect(departed.username).toBeUndefined();
     expect(JSON.stringify(departed)).not.toContain("Gonzo");
@@ -494,10 +498,15 @@ describe("departed members are never revealed, by any rule", () => {
     const circle = await asViewer(t).query(api.sharing.getCircle.getCircle, {
       circleId: CIRCLE,
     });
-    const seat = circle!.members.find((m) => m.memberId === pubGone)!;
-    expect(seat.departed).toBe(true);
-    expect(seat.name).toBeUndefined();
-    expect(JSON.stringify(seat)).not.toContain("PubGone");
+    // Both departed seats (pubGone and the seed's gone) are anonymous, with no memberId.
+    const seats = circle!.members.filter((m) => m.departed);
+    expect(seats).toHaveLength(2);
+    for (const seat of seats) {
+      expect(seat.memberId).toBeUndefined();
+      expect(seat.name).toBeUndefined();
+    }
+    expect(JSON.stringify(circle)).not.toContain("PubGone");
+    expect(JSON.stringify(circle)).not.toContain(pubGone);
   });
 });
 
@@ -731,9 +740,10 @@ describe("a block vetoes the circle reveal on the chokepoint only", () => {
     const circle = await asViewer(t).query(api.sharing.getCircle.getCircle, {
       circleId: CIRCLE,
     });
-    const seat = circle!.members.find((m) => m.memberId === gone)!;
+    const seat = circle!.members.find((m) => m.departed)!;
     expect(seat.departed).toBe(true);
     expect(seat.name).toBeUndefined();
+    expect(JSON.stringify(circle)).not.toContain(gone);
   });
 });
 

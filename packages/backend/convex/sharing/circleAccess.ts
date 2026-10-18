@@ -1,4 +1,10 @@
-import { SharingApplicationError, toCircleId } from "@jigswap/domain";
+import {
+  SharingApplicationError,
+  toCircleId,
+  toMemberId,
+  type MemberId,
+} from "@jigswap/domain";
+import { ConvexError } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { isBlockedEitherWay } from "../social/blocks";
@@ -11,6 +17,29 @@ export const circleByAggregateId = (ctx: QueryCtx, circleId: string) =>
     .query("circles")
     .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", circleId))
     .unique();
+
+/**
+ * The member a seat-management mutation (removeMember / changePermission) targets: `memberId`, or
+ * the member holding the seat `membershipId` (a departed seat's view carries no user id). Exactly
+ * one must be given. An unknown circle or membershipId resolves to an id no seat holds, so the use
+ * case still answers CircleNotFound / NotCircleAdmin / NotAMember in its own order and a
+ * membershipId can't be used to probe a circle the caller doesn't administer.
+ */
+export const seatMemberId = async (
+  ctx: QueryCtx,
+  args: { circleId: string; memberId?: Id<"users">; membershipId?: string },
+): Promise<MemberId> => {
+  if ((args.memberId === undefined) === (args.membershipId === undefined)) {
+    throw new ConvexError({
+      code: "InvalidArgument",
+      message: "Pass exactly one of memberId or membershipId",
+    });
+  }
+  if (args.memberId !== undefined) return toMemberId(args.memberId);
+  const row = await circleByAggregateId(ctx, args.circleId);
+  const seat = row?.memberships.find((m) => m.id === args.membershipId);
+  return toMemberId(seat?.memberId ?? `unknown-seat:${args.membershipId}`);
+};
 
 /** Whether `memberId` holds an Admin seat in the circle (the owner's seat is always Admin). */
 export const isCircleAdmin = (

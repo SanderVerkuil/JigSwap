@@ -6,7 +6,8 @@ export type CirclePermissionLevel = "ViewOnly" | "Exchange" | "Admin";
 
 export interface CircleMemberView {
   membershipId: string;
-  memberId: string;
+  // Absent for a departed seat (its real id never reaches the client): manage seats by membershipId.
+  memberId?: string;
   name?: string;
   username?: string;
   avatar?: string;

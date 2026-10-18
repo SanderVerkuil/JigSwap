@@ -286,7 +286,9 @@ function MemberRow({ member }: { member: CircleMember }) {
   const projectedName = useProjectedMemberName();
   const { member: me } = useCurrentMember();
   const [reporting, setReporting] = useState(false);
-  const isMe = me?._id === member.memberId;
+  // A departed seat carries no memberId: never "me", no profile link, no Report.
+  const { memberId } = member;
+  const isMe = memberId !== undefined && me?._id === memberId;
   const name = projectedName(
     member.departed
       ? { anonymous: true, departed: true }
@@ -298,9 +300,10 @@ function MemberRow({ member }: { member: CircleMember }) {
     : member.permission === "Admin"
       ? tCircles("permissions.Admin")
       : null;
-  const profileHref = member.departed
-    ? null
-    : `/members/${encodeURIComponent(member.username ?? member.memberId)}`;
+  const profileHref =
+    member.departed || memberId === undefined
+      ? null
+      : `/members/${encodeURIComponent(member.username ?? memberId)}`;
 
   return (
     <li className="flex min-h-12 items-center gap-3 rounded-lg px-2 py-1">
@@ -335,7 +338,7 @@ function MemberRow({ member }: { member: CircleMember }) {
           </Badge>
         )}
       </div>
-      {!isMe && !member.departed && (
+      {!isMe && !member.departed && memberId !== undefined && (
         <>
           <Button
             variant="ghost"
@@ -347,9 +350,9 @@ function MemberRow({ member }: { member: CircleMember }) {
             <Flag aria-hidden className="size-4" />
           </Button>
           <ReportDialog
-            target={{ kind: "user", id: member.memberId }}
+            target={{ kind: "user", id: memberId }}
             name={name}
-            memberId={member.memberId as Id<"users">}
+            memberId={memberId as Id<"users">}
             open={reporting}
             onOpenChange={setReporting}
           />

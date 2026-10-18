@@ -87,7 +87,7 @@ export function ManageCircleDialog({
     try {
       await removeMember.mutateAsync({
         circleId,
-        memberId: member.memberId as Id<"users">,
+        membershipId: member.membershipId,
       });
     } catch (error) {
       console.error("Failed to remove member:", error);
@@ -101,7 +101,7 @@ export function ManageCircleDialog({
     try {
       await changePermission.mutateAsync({
         circleId,
-        memberId: member.memberId as Id<"users">,
+        membershipId: member.membershipId,
         permission,
       });
     } catch (error) {

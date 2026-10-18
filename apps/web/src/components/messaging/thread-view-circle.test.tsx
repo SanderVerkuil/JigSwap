@@ -200,7 +200,7 @@ const CIRCLE_DETAIL = {
     },
     {
       membershipId: "ms3",
-      memberId: "u_gone",
+      // A departed seat carries no memberId (getCircle drops it).
       departed: true,
       permission: "Exchange",
       joinedAt: 0,

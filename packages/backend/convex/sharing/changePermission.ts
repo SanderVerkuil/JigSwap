@@ -1,7 +1,6 @@
 import {
   makeChangePermission,
   toCircleId,
-  toMemberId,
   type MemberId,
   type PermissionLevel,
 } from "@jigswap/domain";
@@ -13,14 +12,17 @@ import {
   inProcessEventPublisher,
   withdrawInvitesFrom,
 } from "./adapters/inProcessEventPublisher";
+import { seatMemberId } from "./circleAccess";
 import { toConvexError } from "./errors";
 
 // Composition root for changing a member's permission within a circle. The actor is derived from
-// auth; the aggregate gates the change on Admin and refuses the owner / no-op changes.
+// auth; the aggregate gates the change on Admin and refuses the owner / no-op changes. The seat is
+// named by `memberId` or by `membershipId` (a departed seat's view has no user id).
 export const changePermission = mutation({
   args: {
     circleId: v.string(),
-    memberId: v.id("users"),
+    memberId: v.optional(v.id("users")),
+    membershipId: v.optional(v.string()),
     permission: v.union(
       v.literal("ViewOnly"),
       v.literal("Exchange"),
@@ -36,7 +38,7 @@ export const changePermission = mutation({
     });
 
     const circleId = toCircleId(args.circleId);
-    const memberId = toMemberId(args.memberId);
+    const memberId = await seatMemberId(ctx, args);
     const result = await changePermission({
       circleId,
       actorId: actorId as MemberId,
