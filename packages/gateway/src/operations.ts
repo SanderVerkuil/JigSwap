@@ -205,6 +205,9 @@ export const gateway = {
   conversation: {
     openDmThread: api.conversation.openDmThread.openDmThread,
     openCircleThread: api.conversation.openCircleThread.openCircleThread,
+    // The circle page's chat preview: the circle's thread id (null when there is none yet or the
+    // viewer can't read it yet; never creates one). Members only, CircleNotFound otherwise.
+    getCircleThreadId: api.conversation.getCircleThreadId.getCircleThreadId,
     postMessage: api.conversation.postMessage.postMessage,
     markThreadRead: api.conversation.markThreadRead.markThreadRead,
     setThreadMuted: api.conversation.setThreadMuted.setThreadMuted,
