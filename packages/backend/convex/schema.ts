@@ -1427,7 +1427,10 @@ export default defineSchema({
     inviterId: v.id("users"),
     newMemberId: v.id("users"),
     createdAt: v.number(),
-  }).index("by_new_member", ["newMemberId"]),
+  })
+    .index("by_new_member", ["newMemberId"])
+    // Account deletion: the redemptions of an inviter's links (conversation/purgeMemberMessagingData).
+    .index("by_inviter", ["inviterId"]),
 
   // Social: confirm-first connection offers (ConnectionOffer aggregate). Redeeming an invite link
   // at sign-up offers the new member (toId) a mutual follow with the link's owner (fromId); nothing

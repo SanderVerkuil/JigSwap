@@ -25,6 +25,14 @@ import { removeForDeletedMember } from "./messageAttachments";
 //   requestsOut  the follow requests they sent          } in the other party's inbox (a grouped
 //   requestsIn   the follow requests sent to them       } new_follower row only loses them)
 //                Follower counts and "followers you know" are read live from `follows`.
+//   staleNewFollower      } follow notifications naming them that no edge or request leads to any
+//   staleRequestReceived  } more (they unfollowed, or cancelled a request): every row of the type
+//   staleRequestApproved  } is scanned, since actorIds is an array and cannot be indexed
+//   redemptionsOut  the redemptions of their invite links } deleted; the counters on the links
+//   redemptionsIn   their own redemption of someone's link } stay (historic totals, no identity)
+//   inviteLinks     their invite links, so none can still be redeemed
+//   pushSubscriptions, favorites, tourProgress, settings  their own per-member rows
+//   notifications   their own inbox (resolveForDelivery drops an email or push still due)
 //   rateLimits   their own counters (never the deployment-wide MapTiler budget keys)
 // One phase at a time, PURGE_BATCH_SIZE rows per run: a run that did not finish its phase
 // schedules the next run with the page cursor, so each run stays well inside Convex's per-mutation
@@ -49,6 +57,17 @@ const PHASES = [
   "followsIn",
   "requestsOut",
   "requestsIn",
+  "staleNewFollower",
+  "staleRequestReceived",
+  "staleRequestApproved",
+  "redemptionsOut",
+  "redemptionsIn",
+  "inviteLinks",
+  "pushSubscriptions",
+  "favorites",
+  "tourProgress",
+  "settings",
+  "notifications",
   "rateLimits",
 ] as const;
 type Phase = (typeof PHASES)[number];
@@ -68,6 +87,17 @@ const phaseValidator = v.union(
   v.literal("followsIn"),
   v.literal("requestsOut"),
   v.literal("requestsIn"),
+  v.literal("staleNewFollower"),
+  v.literal("staleRequestReceived"),
+  v.literal("staleRequestApproved"),
+  v.literal("redemptionsOut"),
+  v.literal("redemptionsIn"),
+  v.literal("inviteLinks"),
+  v.literal("pushSubscriptions"),
+  v.literal("favorites"),
+  v.literal("tourProgress"),
+  v.literal("settings"),
+  v.literal("notifications"),
   v.literal("rateLimits"),
 );
 
@@ -119,13 +149,43 @@ const deleteOffer = async (ctx: MutationCtx, row: Doc<"connectionOffers">) => {
   await ctx.db.delete(row._id);
 };
 
-// Take `actorId` out of the recipient's notifications of one follow type: a row naming only them is
-// deleted; a grouped new_follower row drops them from its actors and, when they were its newest
-// actor (whose name and id the row carries for legacy renderers), points at the next one instead.
+type FollowNoticeType =
+  "new_follower" | "follow_request_received" | "follow_request_approved";
+
+// Take `actorId` out of one follow notification: a row naming only them is deleted; a grouped
+// new_follower row drops them from its actors and, when they were its newest actor (whose name and
+// id the row carries for legacy renderers), points at the next one instead. A grouped row stores
+// at most MAX_GROUPED_ACTOR_IDS actors, so an actor past the cap is not on it at all: nothing
+// names them, but its actorCount stays one too high ("and N others"). Left as is: no stored data
+// says which actors fell past the cap.
+const removeActorFromRow = async (
+  ctx: MutationCtx,
+  row: Doc<"notifications">,
+  actorId: Id<"users">,
+): Promise<void> => {
+  const actorIds = row.actorIds ?? [];
+  if (!actorIds.includes(actorId) && row.relatedId !== actorId) return;
+  const rest = actorIds.filter((id) => id !== actorId);
+  if (rest.length === 0) {
+    await ctx.db.delete(row._id);
+    return;
+  }
+  const { actorName: _name, ...params } = row.params ?? {};
+  await ctx.db.patch(row._id, {
+    actorIds: rest,
+    actorCount: Math.max(row.actorCount ?? 0, actorIds.length) - 1,
+    ...(row.relatedId === actorId && {
+      relatedId: rest[0],
+      params: Object.keys(params).length > 0 ? params : undefined,
+    }),
+  });
+};
+
+// Take `actorId` out of the recipient's notifications of one follow type.
 const removeActorFromNotifications = async (
   ctx: MutationCtx,
   recipientId: Id<"users">,
-  type: "new_follower" | "follow_request_received" | "follow_request_approved",
+  type: FollowNoticeType,
   actorId: Id<"users">,
 ): Promise<void> => {
   const rows = await ctx.db
@@ -134,25 +194,14 @@ const removeActorFromNotifications = async (
       q.eq("userId", recipientId).eq("type", type),
     )
     .collect();
-  for (const row of rows) {
-    const actorIds = row.actorIds ?? [];
-    if (!actorIds.includes(actorId) && row.relatedId !== actorId) continue;
-    const rest = actorIds.filter((id) => id !== actorId);
-    if (rest.length === 0) {
-      await ctx.db.delete(row._id);
-      continue;
-    }
-    const { actorName: _name, ...params } = row.params ?? {};
-    await ctx.db.patch(row._id, {
-      actorIds: rest,
-      actorCount: Math.max(row.actorCount ?? 0, actorIds.length) - 1,
-      ...(row.relatedId === actorId && {
-        relatedId: rest[0],
-        params: Object.keys(params).length > 0 ? params : undefined,
-      }),
-    });
-  }
+  for (const row of rows) await removeActorFromRow(ctx, row, actorId);
 };
+
+const STALE_FOLLOW_TYPE = {
+  staleNewFollower: "new_follower",
+  staleRequestReceived: "follow_request_received",
+  staleRequestApproved: "follow_request_approved",
+} as const satisfies Partial<Record<Phase, FollowNoticeType>>;
 
 const runPhase = async (
   ctx: MutationCtx,
@@ -307,6 +356,112 @@ const runPhase = async (
         );
         await ctx.db.delete(row._id);
       }
+      return page;
+    }
+    case "staleNewFollower":
+    case "staleRequestReceived":
+    case "staleRequestApproved": {
+      // Reads every row of the type, in pages (a deletion is rare; the scan is bounded per run).
+      // If this grows too large, project actors into an indexed (actorId, notificationId) table.
+      const type = STALE_FOLLOW_TYPE[phase];
+      const page = await ctx.db
+        .query("notifications")
+        .withIndex("by_type", (q) => q.eq("type", type))
+        .paginate(opts);
+      for (const row of page.page) {
+        if (row.userId !== memberId)
+          await removeActorFromRow(ctx, row, memberId);
+      }
+      return page;
+    }
+    case "redemptionsOut": {
+      const page = await ctx.db
+        .query("inviteRedemptions")
+        .withIndex("by_inviter", (q) => q.eq("inviterId", memberId))
+        .paginate(opts);
+      for (const row of page.page) await ctx.db.delete(row._id);
+      return page;
+    }
+    case "redemptionsIn": {
+      // A household link they used keeps consumedAt (it stays used up) but no longer names them.
+      const page = await ctx.db
+        .query("inviteRedemptions")
+        .withIndex("by_new_member", (q) => q.eq("newMemberId", memberId))
+        .paginate(opts);
+      for (const row of page.page) {
+        const link = await ctx.db.get(row.inviteLinkId);
+        if (link?.consumedBy === memberId) {
+          await ctx.db.patch(link._id, { consumedBy: undefined });
+        }
+        await ctx.db.delete(row._id);
+      }
+      return page;
+    }
+    case "inviteLinks": {
+      const page = await ctx.db
+        .query("inviteLinks")
+        .withIndex("by_owner", (q) => q.eq("ownerId", memberId))
+        .paginate(opts);
+      for (const row of page.page) await ctx.db.delete(row._id);
+      return page;
+    }
+    case "pushSubscriptions": {
+      const page = await ctx.db
+        .query("pushSubscriptions")
+        .withIndex("by_user", (q) => q.eq("userId", memberId))
+        .paginate(opts);
+      for (const row of page.page) await ctx.db.delete(row._id);
+      return page;
+    }
+    case "favorites": {
+      const page = await ctx.db
+        .query("favorites")
+        .withIndex("by_user", (q) => q.eq("userId", memberId))
+        .paginate(opts);
+      for (const row of page.page) await ctx.db.delete(row._id);
+      return page;
+    }
+    case "tourProgress": {
+      const page = await ctx.db
+        .query("whatsNewTourProgress")
+        .withIndex("by_member_tour", (q) => q.eq("memberId", memberId))
+        .paginate(opts);
+      for (const row of page.page) await ctx.db.delete(row._id);
+      return page;
+    }
+    case "settings": {
+      // One row per member in each: a handful of reads, never paged.
+      const rows = [
+        ...(await ctx.db
+          .query("notificationPreferences")
+          .withIndex("by_member", (q) => q.eq("memberId", memberId))
+          .collect()),
+        ...(await ctx.db
+          .query("solvingPreferences")
+          .withIndex("by_member", (q) => q.eq("memberId", memberId))
+          .collect()),
+        ...(await ctx.db
+          .query("profiles")
+          .withIndex("by_member", (q) => q.eq("memberId", memberId))
+          .collect()),
+        ...(await ctx.db
+          .query("whatsNewReadStates")
+          .withIndex("by_member", (q) => q.eq("memberId", memberId))
+          .collect()),
+        ...(await ctx.db
+          .query("memberOnboarding")
+          .withIndex("by_member", (q) => q.eq("memberId", memberId))
+          .collect()),
+      ];
+      for (const row of rows) await ctx.db.delete(row._id);
+      return { isDone: true, continueCursor: "" };
+    }
+    case "notifications": {
+      const page = await ctx.db
+        .query("notifications")
+        .withIndex("by_user", (q) => q.eq("userId", memberId))
+        .paginate(opts);
+      for (const row of page.page) await ctx.db.delete(row._id);
       return page;
     }
     case "rateLimits": {
