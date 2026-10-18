@@ -444,11 +444,14 @@ const resolveSubject = async (
             .first(),
       );
       const preview =
-        last && last.kind === "text" ? messagePreviewOf(last.body) : undefined;
+        last && last.kind === "text" && last.removedAt === undefined
+          ? messagePreviewOf(last.body)
+          : undefined;
       // A media message is described by its kind, never by its caption. Attachment-less (legacy)
       // image rows get neither: there is no real photo behind them.
       const messageKind =
         last &&
+        last.removedAt === undefined &&
         (last.kind === "image" || last.kind === "location") &&
         last.attachmentId !== undefined
           ? last.kind

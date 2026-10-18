@@ -872,6 +872,10 @@ export default defineSchema({
     // message (not the thread) because a DM is one long-lived thread per pair, spanning many
     // puzzles; absent on plain/system messages and every pre-existing row.
     copyId: v.optional(v.id("ownedPuzzles")),
+    // Moderation tombstone (admin/decideReport, content_removed): the read models blank the body
+    // and drop the copy card. The stored body stays for the report evidence trail.
+    removedAt: v.optional(v.number()),
+    removedReason: v.optional(v.string()),
   })
     .index("by_thread_sent", ["threadAggregateId", "sentAt"])
     // Copy-referencing messages of a thread, grouped per copy (rows without a copyId sort first

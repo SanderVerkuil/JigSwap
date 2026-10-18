@@ -37,6 +37,8 @@ export interface ThreadMessageView {
    * inbox preview never carries it. The attachment itself is resolved by a later read model.
    */
   readonly attachmentId?: string;
+  /** Set when a moderator removed the message: `body` is empty; render "Message removed". */
+  readonly removed?: true;
 }
 
 /**
