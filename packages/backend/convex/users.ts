@@ -305,7 +305,8 @@ export const deleteUser = internalMutation({
       return;
     }
     // Their messaging data (attachments, reveals, blocks, filed reports, rate-limit counters) and
-    // their circle invites and connection offers both ways, in batches after this mutation
+    // their circle invites, connection offers, follow edges and follow requests both ways, in
+    // batches after this mutation
     // (conversation/purgeMemberMessagingData). Also for a tombstoned
     // member below: a quarantined photo is left whole by the purge, so the CSAM preservation is
     // unaffected. [LAWYER] A lawyer should confirm that purging the rest of a member under an open
