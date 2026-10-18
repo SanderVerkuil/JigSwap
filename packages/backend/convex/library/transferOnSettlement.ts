@@ -8,6 +8,7 @@ import type { MutationCtx } from "../_generated/server";
 import { convexCopyRepository } from "./adapters/convexCopyRepository";
 import { libraryEventPublisher } from "./adapters/eventPublisher";
 import { systemClock } from "./adapters/systemClock";
+import { toConvexError } from "./errors";
 
 // Library's reaction to a settled swap/sale (Exchange's OwnershipTransferred): the SAME copy changes
 // hands — the aggregate reassigns the owner and resets owner-scoped fields, keeping the physical
@@ -35,7 +36,10 @@ export const handleDomainEvent = async (
   });
   // The household permission was the PREVIOUS owner's choice for their household; the new owner
   // starts from the default (absent = "manage") for theirs.
-  if (result.isOk && copy.householdPermission !== undefined) {
+  // A refusal is an integrity anomaly here (the settled copy exists), never an expected outcome:
+  // throw so dispatch logs + records it and the custody row written alongside rolls back.
+  if (result.isErr) throw toConvexError(result.error);
+  if (copy.householdPermission !== undefined) {
     await ctx.db.patch(copy._id, { householdPermission: undefined });
   }
 };

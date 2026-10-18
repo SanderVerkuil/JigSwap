@@ -6,6 +6,7 @@ import { convexLoanRepository } from "./adapters/convexLoanRepository";
 import { libraryEventPublisher } from "./adapters/eventPublisher";
 import { loanIdGenerator } from "./adapters/idGenerators";
 import { systemClock } from "./adapters/systemClock";
+import { toConvexError } from "./errors";
 
 // Library's reaction to a settled LEND (Exchange's PossessionTransferred): open an open-ended Loan
 // and move possession of the copy to the borrower. Ownership stays with the lender (the copy owner).
@@ -26,7 +27,7 @@ export const handleDomainEvent = async (
     events: libraryEventPublisher(ctx),
     clock: systemClock,
   });
-  await openLoan({
+  const opened = await openLoan({
     copyId: toCopyId(copyRow.aggregateId),
     borrowerId: toOwnerId(p.borrower as string),
     expectedReturn:
@@ -34,4 +35,7 @@ export const handleDomainEvent = async (
         ? undefined
         : new Date(p.expectedReturn as number),
   });
+  // A refusal (copy vanished, lend to self) contradicts a settled lend: throw so dispatch logs and
+  // records it instead of the loan silently never opening.
+  if (opened.isErr) throw toConvexError(opened.error);
 };

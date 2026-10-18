@@ -404,6 +404,28 @@ describe("dispatch failure visibility + retry policy", () => {
     });
   });
 
+  test("a refused settlement loan (lend to self) is a visible failure, not a silent no-op", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, copy } = await seedExchange(t);
+    await t.run((ctx) => ctx.db.patch(copy, { aggregateId: "copy-agg-self" }));
+
+    const eventId = await recordEvent(t, "PossessionTransferred", {
+      copyId: copy,
+      exchangeId: "x-2",
+      borrower: bob, // the copy's own owner
+    });
+    await t.mutation(internal.events.dispatch.dispatch, { eventId });
+
+    const event = await t.run((ctx) => ctx.db.get(eventId));
+    expect(event?.failedAt).toBeDefined();
+    expect(event?.failedHandlers).toEqual(["openLoan"]);
+    expect(event?.lastError?.handler).toBe("openLoan");
+    expect(dispatchErrorLines()[0]).toMatchObject({ handler: "openLoan" });
+    expect(await t.run((ctx) => ctx.db.query("loans").collect())).toHaveLength(
+      0,
+    );
+  });
+
   test("a clean dispatch keeps the original row shape (processedAt only)", async () => {
     const t = convexTest(schema, modules);
     const eventId = await recordEvent(t, "SomethingUnrelated", {});
