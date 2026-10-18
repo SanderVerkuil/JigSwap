@@ -32,9 +32,15 @@ export const INVITER_NAME_MAX_LENGTH = 60;
 // C0 and C1 control characters plus the Unicode line and paragraph separators.
 const LINE_BREAKS_AND_CONTROLS = /[\p{Cc}\u2028\u2029]/gu;
 
+// Invisible format characters: the bidi marks, embeddings, overrides and isolates (U+061C,
+// U+200E-U+200F, U+202A-U+202E, U+2066-U+2069) that could reorder the subject, and the
+// zero-width ones.
+const FORMAT_CHARACTERS = /\p{Cf}/gu;
+
 /**
  * The inviter's display name as an invitation email may show it (in the subject too): every
- * line break and control character becomes a space, runs of whitespace collapse, and a name
+ * line break and control character becomes a space, invisible format characters (bidi controls,
+ * zero-width characters) are dropped, runs of whitespace collapse, and a name
  * longer than INVITER_NAME_MAX_LENGTH characters is cut with an ellipsis. `undefined` when
  * nothing printable is left, so the email falls back to its generic label.
  */
@@ -43,6 +49,7 @@ export const inviterNameForEmail = (
 ): string | undefined => {
   const flat = (raw ?? "")
     .replace(LINE_BREAKS_AND_CONTROLS, " ")
+    .replace(FORMAT_CHARACTERS, "")
     .replace(/\s+/g, " ")
     .trim();
   if (flat.length === 0) return undefined;

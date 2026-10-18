@@ -86,6 +86,28 @@ describe("inviterNameForEmail", () => {
     expect(inviterNameForEmail("A\u2028B\u2029C")).toBe("A B C");
   });
 
+  it("drops bidi controls and other invisible format characters", () => {
+    for (const mark of [
+      "\u061C",
+      "\u200E",
+      "\u200F",
+      "\u202A",
+      "\u202B",
+      "\u202C",
+      "\u202D",
+      "\u202E",
+      "\u2066",
+      "\u2067",
+      "\u2068",
+      "\u2069",
+      "\u200B",
+      "\uFEFF",
+    ]) {
+      expect(inviterNameForEmail(`Ann${mark}a${mark}${mark}`)).toBe("Anna");
+    }
+    expect(inviterNameForEmail("\u202E\u2066")).toBeUndefined();
+  });
+
   it("collapses whitespace runs and trims", () => {
     expect(inviterNameForEmail("  Anna    de   Vries  ")).toBe("Anna de Vries");
   });
