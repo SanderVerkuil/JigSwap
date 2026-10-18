@@ -273,7 +273,8 @@ export const expireStagedAttachment = async (
  * Per-request resolver from an image message's attachment id to the viewer's attachment view.
  * URLs only for a deliverable, hash-cleared photo; never for a quarantined, rejected or removed
  * one. "blurred" is per viewer: the sensitive band, "not checked" (unscored), a sender who is not
- * the viewer's mutual follower (spec R.2), or a photo the viewer has an open report on. A blurred
+ * the viewer's mutual follower (spec R.2), or a photo (or its message) the viewer has an open
+ * report on. A blurred
  * view carries NO URL (only the blurhash and size): the viewer gets it by tapping Show
  * (revealMessageImage), after which the photo is served to them directly (`revealed`), except
  * while they have an open report on it. The uploader sees their own photo unblurred. Callers have
@@ -317,7 +318,7 @@ export const messageAttachmentViews = (ctx: QueryCtx, viewer: Id<"users">) => {
     };
     let revealed = false;
     if (row.uploaderId !== viewer) {
-      if (await hasOpenReport(ctx, viewer, row._id)) {
+      if (await hasOpenReport(ctx, viewer, row)) {
         return { status: "blurred", ...placeholder };
       }
       const blurred =
@@ -354,21 +355,33 @@ const hasRevealed = async (
     )
     .first()) !== null;
 
+// An open report by this viewer on the photo, or on the image message carrying it.
 const hasOpenReport = async (
   ctx: QueryCtx,
   reporterId: Id<"users">,
-  attachmentId: Id<"messageAttachments">,
-): Promise<boolean> =>
-  (await ctx.db
-    .query("reports")
-    .withIndex("by_reporter_target", (q) =>
-      q
-        .eq("reporterId", reporterId)
-        .eq("targetKind", "attachment")
-        .eq("targetId", attachmentId as string),
-    )
-    .filter((q) => q.eq(q.field("status"), "open"))
-    .first()) !== null;
+  row: Attachment,
+): Promise<boolean> => {
+  const targets: [Doc<"reports">["targetKind"], string][] = [
+    ["attachment", row._id as string],
+    ...(row.messageId !== undefined
+      ? [["message", row.messageId] as [Doc<"reports">["targetKind"], string]]
+      : []),
+  ];
+  for (const [targetKind, targetId] of targets) {
+    const open = await ctx.db
+      .query("reports")
+      .withIndex("by_reporter_target", (q) =>
+        q
+          .eq("reporterId", reporterId)
+          .eq("targetKind", targetKind)
+          .eq("targetId", targetId),
+      )
+      .filter((q) => q.eq(q.field("status"), "open"))
+      .first();
+    if (open) return true;
+  }
+  return false;
+};
 
 /**
  * The uploader's outbox view of one undelivered photo. A quarantined photo is shown exactly like

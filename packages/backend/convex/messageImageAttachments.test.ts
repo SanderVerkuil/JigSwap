@@ -1023,13 +1023,17 @@ describe("reporting a photo", () => {
 
   test("a message report on an image message holds and, on removal, removes its photo", async () => {
     const t = convexTest(schema, modules);
-    const { id } = await deliveredPhoto(t);
+    const { id, threadId } = await deliveredPhoto(t);
     const messageId = (await attachment(t, id))!.messageId!;
     const { reportId } = await asBob(t).mutation(
       api.reports.fileReport.fileReport,
       { targetKind: "message", targetId: messageId, reason: "sexual" },
     );
     expect((await attachment(t, id))!.evidenceHold).toBe(true);
+    // Reporting the photo's message blurs it for the reporter too, without a URL.
+    const [forBob] = await threadOf(t, asBob, threadId);
+    expect(forBob.attachment!.status).toBe("blurred");
+    expect(forBob.attachment).not.toHaveProperty("url");
     await asAdmin(t).mutation(api.admin.decideReport.decideReport, {
       reportId,
       decision: "content_removed",
