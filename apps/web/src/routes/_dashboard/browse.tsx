@@ -135,7 +135,10 @@ function BrowsePage() {
       {puzzleFilter && (
         <PuzzleFilterChip
           puzzleId={puzzleFilter}
-          onRemove={() => navigate({ to: "/browse", search: {} })}
+          onRemove={() =>
+            // Clearing a filter stays on the same page: keep the scroll position.
+            navigate({ to: "/browse", search: {}, resetScroll: false })
+          }
         />
       )}
       {/* Query builder + result count + view toggle. Members compose multiple
