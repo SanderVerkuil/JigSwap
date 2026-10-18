@@ -1,8 +1,12 @@
 import { DomainEvent, err, ok, Result } from "../../shared-kernel";
-import { ConversationError, MAX_MESSAGE_LENGTH } from "./errors";
+import {
+  ConversationError,
+  MAX_CAPTION_LENGTH,
+  MAX_MESSAGE_LENGTH,
+} from "./errors";
 import { MessagePosted } from "./events";
 import { CopyId, ExchangeId, MemberId, MessageId, ThreadId } from "./ids";
-import { Message, MessageState } from "./message";
+import { MediaMessageKind, Message, MessageState } from "./message";
 
 // A thread's subject: what the conversation is about. Exchange threads are opened by the
 // system when an exchange is proposed; DM threads are member-opened, exactly two participants.
@@ -17,17 +21,21 @@ export interface ReadReceipt {
   readonly lastReadAt: Date;
 }
 
-// Input to post a member-authored message: the new message's id, the posting member, whether it
-// is text or image (system is excluded — those go through postSystemMessage), the body, and the
-// send instant. The author and body are validated against the aggregate's own data.
+// Input to post a member-authored message: the new message's id, the posting member, its kind
+// (system is excluded — those go through postSystemMessage), the body, and the send instant. For
+// `text` the body is the message; for a media kind (`image`, `location`) it is an optional caption
+// and `attachmentRef` is required. The author, body and attachment are validated against the
+// aggregate's own data.
 export interface PostMessageProps {
   readonly id: MessageId;
   readonly authorId: MemberId;
-  readonly kind: "text" | "image";
+  readonly kind: "text" | MediaMessageKind;
   readonly body: string;
   readonly sentAt: Date;
   // Optional reference to the copy the message is about (see MessageState.copyId).
   readonly copyId?: CopyId;
+  // The attachment a media message carries (see MessageState.attachmentRef).
+  readonly attachmentRef?: string;
 }
 
 // Input to post a service-authored system message: no member author, just the body and instant.
@@ -54,8 +62,9 @@ export interface ThreadState {
 // exchange threads; a member pair for DMs). It owns the participant set, the messages appended in
 // this unit of work (the stored log is append-only and never loaded), and a per-participant
 // ReadReceipt. Every invariant it enforces is decided from its own data: a
-// non-participant cannot post; a member cannot author a system message; bodies are non-empty;
-// marking read touches only the caller's receipt.
+// non-participant cannot post; a member cannot author a system message; text bodies are
+// non-empty; media messages carry an attachment and at most a short caption; marking read
+// touches only the caller's receipt.
 export class Thread {
   private events: DomainEvent[] = [];
 
@@ -127,14 +136,22 @@ export class Thread {
     );
   }
 
-  // Append a member-authored text/image message. Rejects a non-participant author, a body that
-  // is empty after trimming, and an over-long body; records MessagePosted on success.
+  // Append a member-authored text or media message. Rejects a non-participant author, then
+  // applies the kind's rules: text needs a non-empty body (≤ MAX_MESSAGE_LENGTH) and no
+  // attachment; image/location need an attachmentRef and allow an empty caption
+  // (≤ MAX_CAPTION_LENGTH). Records MessagePosted on success.
   postMessage(props: PostMessageProps): Result<Message, ConversationError> {
     if (!this.isParticipant(props.authorId)) {
       return err(ConversationError.notParticipant());
     }
-    const bodyError = Thread.validateBody(props.body);
-    if (bodyError) return err(bodyError);
+    const contentError =
+      props.kind === "text"
+        ? (Thread.validateTextBody(props.body) ??
+          (props.attachmentRef === undefined
+            ? null
+            : ConversationError.attachmentNotAllowed()))
+        : Thread.validateMedia(props.body, props.attachmentRef);
+    if (contentError) return err(contentError);
 
     return ok(
       this.append(
@@ -145,6 +162,9 @@ export class Thread {
           body: props.body,
           sentAt: props.sentAt,
           ...(props.copyId !== undefined && { copyId: props.copyId }),
+          ...(props.attachmentRef !== undefined && {
+            attachmentRef: props.attachmentRef,
+          }),
         },
         props.sentAt,
       ),
@@ -152,12 +172,12 @@ export class Thread {
   }
 
   // Append a service-authored system message. There is no member author and no participant check
-  // (the service is trusted); only the body rules apply. This is the ONLY path that creates a
+  // (the service is trusted); only the text body rules apply. This is the ONLY path that creates a
   // `system` message — a member can never author one (see postMessage's kind type).
   postSystemMessage(
     props: PostSystemMessageProps,
   ): Result<Message, ConversationError> {
-    const bodyError = Thread.validateBody(props.body);
+    const bodyError = Thread.validateTextBody(props.body);
     if (bodyError) return err(bodyError);
 
     return ok(
@@ -228,13 +248,29 @@ export class Thread {
     return this.state.participants.includes(memberId);
   }
 
-  // Shared body rules for both post paths: a body must be non-empty AFTER trimming (whitespace-
-  // only is empty) and at most MAX_MESSAGE_LENGTH characters. The trim is only for the emptiness
-  // check — the body itself is stored as-given, never mutated.
-  private static validateBody(body: string): ConversationError | null {
+  // The text rule (text and system messages): a body must be non-empty AFTER trimming
+  // (whitespace-only is empty) and at most MAX_MESSAGE_LENGTH characters. The trim is only for the
+  // emptiness check — the body itself is stored as-given, never mutated.
+  private static validateTextBody(body: string): ConversationError | null {
     if (body.trim().length === 0) return ConversationError.emptyMessage();
     if (body.length > MAX_MESSAGE_LENGTH) {
       return ConversationError.messageTooLong();
+    }
+    return null;
+  }
+
+  // The media rule (image and location messages): an attachmentRef is required (blank counts as
+  // missing), and the body is an optional caption — empty is fine — of at most MAX_CAPTION_LENGTH
+  // characters, stored as-given.
+  private static validateMedia(
+    caption: string,
+    attachmentRef: string | undefined,
+  ): ConversationError | null {
+    if (attachmentRef === undefined || attachmentRef.trim().length === 0) {
+      return ConversationError.attachmentRequired();
+    }
+    if (caption.length > MAX_CAPTION_LENGTH) {
+      return ConversationError.captionTooLong();
     }
     return null;
   }

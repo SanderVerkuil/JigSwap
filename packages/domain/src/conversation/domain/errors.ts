@@ -10,12 +10,18 @@ export type ConversationErrorCode =
   | "NotParticipant"
   | "EmptyMessage"
   | "MessageTooLong"
+  | "CaptionTooLong"
+  | "AttachmentRequired"
+  | "AttachmentNotAllowed"
   | "SystemMessageNotAuthorable"
   | "DmRequiresTwoParticipants";
 
-// The maximum accepted message body length in characters (text, or an image's storage
-// reference). Exported so transports/UI can enforce the same bound client-side.
+// The maximum accepted text message body length in characters. Exported so transports/UI can
+// enforce the same bound client-side.
 export const MAX_MESSAGE_LENGTH = 4000;
+
+// The maximum accepted caption length in characters for a media (image/location) message.
+export const MAX_CAPTION_LENGTH = 1000;
 
 export class ConversationError extends DomainError {
   override readonly name = "ConversationError";
@@ -27,7 +33,7 @@ export class ConversationError extends DomainError {
     super(message);
   }
 
-  // Only a member who is a participant of the Thread may post a text/image message.
+  // Only a member who is a participant of the Thread may post a member-authored message.
   static notParticipant(): ConversationError {
     return new ConversationError(
       "NotParticipant",
@@ -35,7 +41,7 @@ export class ConversationError extends DomainError {
     );
   }
 
-  // A message body (text, or an image's storage reference) must be non-empty.
+  // A text (or system) message body must be non-empty.
   static emptyMessage(): ConversationError {
     return new ConversationError(
       "EmptyMessage",
@@ -43,11 +49,35 @@ export class ConversationError extends DomainError {
     );
   }
 
-  // A message body may not exceed MAX_MESSAGE_LENGTH characters.
+  // A text (or system) message body may not exceed MAX_MESSAGE_LENGTH characters.
   static messageTooLong(): ConversationError {
     return new ConversationError(
       "MessageTooLong",
       `A message body must be at most ${MAX_MESSAGE_LENGTH} characters`,
+    );
+  }
+
+  // A media message's caption may not exceed MAX_CAPTION_LENGTH characters (it may be empty).
+  static captionTooLong(): ConversationError {
+    return new ConversationError(
+      "CaptionTooLong",
+      `A caption must be at most ${MAX_CAPTION_LENGTH} characters`,
+    );
+  }
+
+  // An image or location message must reference its attachment.
+  static attachmentRequired(): ConversationError {
+    return new ConversationError(
+      "AttachmentRequired",
+      "An image or location message requires an attachment",
+    );
+  }
+
+  // A text message carries no attachment.
+  static attachmentNotAllowed(): ConversationError {
+    return new ConversationError(
+      "AttachmentNotAllowed",
+      "A text message cannot carry an attachment",
     );
   }
 

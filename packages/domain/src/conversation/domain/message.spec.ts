@@ -19,5 +19,20 @@ describe("Message", () => {
     expect(msg.body).toBe("Hello there");
     expect(msg.sentAt).toBe(state.sentAt);
     expect(msg.toState()).toEqual(state);
+    expect(msg.attachmentRef).toBeUndefined();
+  });
+
+  it("exposes a media message's attachment reference and caption", () => {
+    const media: MessageState = {
+      ...state,
+      kind: "location",
+      body: "",
+      attachmentRef: "att-1",
+    };
+    const msg = Message.fromState(media);
+    expect(msg.kind).toBe("location");
+    expect(msg.body).toBe("");
+    expect(msg.attachmentRef).toBe("att-1");
+    expect(msg.toState()).toEqual(media);
   });
 });

@@ -73,6 +73,27 @@ describe("makePostMessage", () => {
     expect(reloaded?.messages[0]?.copyId).toBe(copyId);
   });
 
+  it("posts a media message carrying the command's attachment reference", async () => {
+    const result = await post(
+      cmd({ kind: "image", body: "", attachmentRef: "att-1" }),
+    );
+
+    expect(result.isOk).toBe(true);
+    const reloaded = await threads.findById(threadId);
+    expect(reloaded?.messages[0]?.kind).toBe("image");
+    expect(reloaded?.messages[0]?.attachmentRef).toBe("att-1");
+    const posted = events.published[0] as unknown as { kind: string };
+    expect(posted.kind).toBe("image");
+  });
+
+  it("rejects a media message without an attachment and publishes nothing", async () => {
+    const result = await post(cmd({ kind: "location", body: "here" }));
+
+    expect(result.isErr).toBe(true);
+    if (result.isErr) expect(result.error.code).toBe("AttachmentRequired");
+    expect(events.published).toHaveLength(0);
+  });
+
   it("rejects ThreadNotFound and writes nothing", async () => {
     const result = await post(cmd({ threadId: missingThread }));
 

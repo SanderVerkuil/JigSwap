@@ -19,7 +19,7 @@ export interface PostMessageDeps {
 }
 
 // Transaction script: load the thread (ThreadNotFound if absent), then delegate the participant
-// and non-empty-body rules to Thread.postMessage. On success persist the thread and publish its
+// and per-kind body/attachment rules to Thread.postMessage. On success persist the thread and publish its
 // recorded MessagePosted.
 export const makePostMessage =
   (deps: PostMessageDeps): PostMessage =>
@@ -40,6 +40,7 @@ export const makePostMessage =
       body: cmd.body,
       sentAt: deps.clock.now(),
       copyId: cmd.copyId,
+      attachmentRef: cmd.attachmentRef,
     });
     if (message.isErr) return err(message.error);
 
