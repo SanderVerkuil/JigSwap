@@ -16,7 +16,6 @@ import { query } from "../_generated/server";
 import { copyAccessOf } from "../household/copyAccess";
 import { personView } from "../household/getMyHousehold";
 import { householdDefaultOf, membershipOf } from "../household/memberships";
-import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
 import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 import { projectMemberIdentity } from "../social/privacy";
@@ -321,16 +320,15 @@ export const getCopyInstanceView = query({
         .map(async (img): Promise<CopyPhoto | null> => {
           const url = await ctx.storage.getUrl(img.fileId);
           if (!url) return null;
-          // Resolve the uploader's display name (the lightbox shows who took the shot); null when
-          // the user row vanished so an orphaned photo never breaks the gallery.
-          const uploader = await ctx.db.get(img.uploaderId);
+          // The uploader (the lightbox shows who took the shot), projected like every other member
+          // on this page: a hidden uploader (often the hidden owner) is never named.
           return {
             id: img._id as string,
             url,
             caption: img.title ?? img.tag ?? null,
             tag: img.tag ?? null,
             description: img.description ?? null,
-            uploaderName: memberDisplayNameOf(uploader) ?? null,
+            uploader: await project(img.uploaderId as string),
             takenAt: img.takenAt ?? null,
             createdAt: img.createdAt,
             // Only "approved" or the viewer's own "pending"/"unscored" survive the filter above;
@@ -427,7 +425,7 @@ export const getCopyInstanceView = query({
         difficulty: puzzle?.difficulty,
         tags: puzzle?.tags ?? [],
       },
-      acquiredByViewerAt,
+      acquiredByViewerAt: viewerIsOwner ? acquiredByViewerAt : null,
       since,
       before,
       completions: completionsGrouped,

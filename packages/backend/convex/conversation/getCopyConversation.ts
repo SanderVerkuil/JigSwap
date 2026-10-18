@@ -13,7 +13,9 @@ import { messageCopyViewOf } from "./copyCard";
 // Where a copy's "Message" action lands. The counterpart is ALWAYS the copy's owner, derived
 // here from the copy (for a household copy that is the actual owner, not a housemate); the client
 // passes only the copy id. Read-only: it never creates a thread (startCopyConversation does, on
-// first send). See CopyConversationView for the statuses.
+// first send). See CopyConversationView for the statuses. An owner anonymous to the viewer gets the
+// constant `ownerHidden` BEFORE the DM lookup: the DM is one per pair, so surfacing it (or any
+// owner-derived field) from a copy would let a viewer tie several copies to one hidden owner.
 export const getCopyConversation = query({
   args: { copyId: v.id("ownedPuzzles") },
   handler: async (ctx, args): Promise<CopyConversationView> => {
@@ -25,6 +27,9 @@ export const getCopyConversation = query({
     }
     const ownerId = copy.ownerId;
     if (ownerId === me) return { status: "self" };
+
+    const owner = await projectMemberIdentity(ctx, me, ownerId, copy._id);
+    if (owner.anonymous) return { status: "ownerHidden" };
 
     const dm = await ctx.db
       .query("threads")
@@ -45,7 +50,7 @@ export const getCopyConversation = query({
     return {
       status: "new",
       copy: await messageCopyViewOf(ctx, copy),
-      owner: await projectMemberIdentity(ctx, me, ownerId, copy._id),
+      owner,
       canMessage: await convexConnectionPolicy(ctx).canMessage(
         toMemberId(me as string),
         toMemberId(ownerId as string),

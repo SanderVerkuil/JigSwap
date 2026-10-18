@@ -100,7 +100,12 @@ export function NewCopyConversation({ copyId }: { copyId: string }) {
 
   const backLink = <BackToInboxLink />;
 
-  if (isError || view?.status === "unavailable" || view?.status === "self") {
+  if (
+    isError ||
+    view?.status === "unavailable" ||
+    view?.status === "self" ||
+    view?.status === "ownerHidden"
+  ) {
     return (
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="flex h-14 shrink-0 items-center px-2 md:hidden">
@@ -108,9 +113,13 @@ export function NewCopyConversation({ copyId }: { copyId: string }) {
         </div>
         <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 text-center">
           <p className="text-sm font-medium">
-            {view?.status === "self" ? t("self") : t("unavailable")}
+            {view?.status === "self"
+              ? t("self")
+              : view?.status === "ownerHidden"
+                ? t("ownerHidden")
+                : t("unavailable")}
           </p>
-          {view?.status === "self" && (
+          {(view?.status === "self" || view?.status === "ownerHidden") && (
             <Link
               href={`/copies/${copyId}`}
               className="text-primary-text text-sm underline-offset-4 hover:underline"

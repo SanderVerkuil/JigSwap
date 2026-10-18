@@ -823,7 +823,10 @@ describe("getCopyInstanceView rich detail", () => {
     expect(first?.caption).toBe("Box front");
     expect(first?.tag).toBe("box_front");
     expect(first?.description).toBe("The front of the box");
-    expect(first?.uploaderName).toBe("Viewer");
+    expect(first?.uploader).toMatchObject({
+      anonymous: false,
+      member: { name: "Viewer" },
+    });
     expect(first?.takenAt).toBe(now + 10);
     expect(first?.createdAt).toBe(now);
 
@@ -833,7 +836,10 @@ describe("getCopyInstanceView rich detail", () => {
     expect(second?.caption).toBe("pieces");
     expect(second?.tag).toBe("pieces");
     expect(second?.description).toBeNull();
-    expect(second?.uploaderName).toBe("Viewer");
+    expect(second?.uploader).toMatchObject({
+      anonymous: false,
+      member: { name: "Viewer" },
+    });
   });
 
   test("gallery moderation gating: approved/absent shown to all; rejected hidden; pending only to its uploader", async () => {

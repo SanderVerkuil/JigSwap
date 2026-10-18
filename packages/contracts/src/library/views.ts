@@ -388,8 +388,11 @@ export interface CopyPhoto {
   tag: string | null;
   /** The uploader-provided description, or null when absent. */
   description: string | null;
-  /** The uploader's display name, or null when the uploader could not be resolved. */
-  uploaderName: string | null;
+  /**
+   * Who uploaded the photo, privacy-projected for the viewer (salt = the copy id, like the copy's
+   * owner), so a hidden uploader is never named and can't be matched across copies.
+   */
+  uploader: ProjectedMember;
   /** When the photo was taken (epoch ms), or null when not recorded. */
   takenAt: number | null;
   /** When the photo row was created (epoch ms). */
@@ -483,9 +486,10 @@ export interface CopyInstanceView {
   };
   /**
    * When the viewer acquired the copy (the latest custody transfer to them, else the copy's
-   * creation time). Only meaningful when `viewerIsOwner` is true.
+   * creation time). Null unless `viewerIsOwner`: a non-owner would otherwise get the copy's
+   * creation time, which batch-added copies share and which would tie them to one owner.
    */
-  acquiredByViewerAt: number;
+  acquiredByViewerAt: number | null;
   /** Events at/after `acquiredByViewerAt` (the viewer's own tenure). Empty for non-owners. */
   since: CopyInstanceTimelineEntry[];
   /** Events before `acquiredByViewerAt` (gated history). All events for non-owners. */

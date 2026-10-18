@@ -14,7 +14,10 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { gateway, Id } from "@/gateway";
-import { useMemberDisplayName } from "@/lib/member-display-name";
+import {
+  useMemberDisplayName,
+  useProjectedMemberName,
+} from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -70,6 +73,7 @@ export function PhotoLightbox({
   const t = useTranslations("copyInstance.photoLightbox");
   const tSafety = useTranslations("safety");
   const displayName = useMemberDisplayName();
+  const projectedName = useProjectedMemberName();
   const format = useFormatter();
   const setCopyCover = useMutation({
     mutationFn: useConvexMutation(gateway.library.setCopyCover),
@@ -240,7 +244,8 @@ export function PhotoLightbox({
             <dl className="text-sm">
               <div className="text-muted-foreground">
                 {t("uploadedBy", {
-                  name: displayName({ name: photo.uploaderName }),
+                  // A hidden uploader reads as the generic member label.
+                  name: projectedName(photo.uploader, displayName(null)),
                 })}
               </div>
               <div className="text-muted-foreground">
@@ -341,7 +346,7 @@ export function PhotoLightbox({
             with it doesn't dismiss the lightbox. */}
         <ReportDialog
           target={{ kind: "photo", id: photo.id }}
-          name={displayName({ name: photo.uploaderName })}
+          name={projectedName(photo.uploader, displayName(null))}
           open={reporting}
           onOpenChange={setReporting}
           returnFocusRef={reportRef}

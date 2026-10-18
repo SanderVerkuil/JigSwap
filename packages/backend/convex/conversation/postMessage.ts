@@ -6,6 +6,7 @@ import { requireMember } from "../identity/requireMember";
 import { enforceRateLimit } from "../lib/rateLimits";
 import { canViewCopy } from "../library/canViewCopy";
 import { assertThreadNotBlocked } from "../social/blocks";
+import { projectMemberIdentity } from "../social/privacy";
 import { convexThreadRepository } from "./adapters/convexThreadRepository";
 import { messageIdGenerator } from "./adapters/idGenerators";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
@@ -16,14 +17,30 @@ import { threadRowByAggregateId } from "./readModelHelpers";
 // A copy may be attached to a message in a thread iff it exists, is OWNED by one of the thread's
 // participants, and EVERY participant may view it right now (canViewCopy) — so an attachment
 // never shows the other side a copy they could not open, and nobody can drop a third party's
-// copy into a conversation. Same rule for DM and exchange threads.
+// copy into a conversation. Same rule for DM and exchange threads. The OTHER participant's copy is
+// also refused while they are anonymous to the author: otherwise success vs CopyNotFound would
+// reveal whether the hidden partner owns a copy the author can see (#154).
 const isAttachable = async (
   ctx: QueryCtx,
   thread: Doc<"threads">,
   copyId: Id<"ownedPuzzles">,
+  authorId: Id<"users">,
 ): Promise<boolean> => {
   const copy = await ctx.db.get(copyId);
   if (!copy || !thread.participants.includes(copy.ownerId)) return false;
+  if (
+    copy.ownerId !== authorId &&
+    (
+      await projectMemberIdentity(
+        ctx,
+        authorId,
+        copy.ownerId,
+        thread.aggregateId,
+      )
+    ).anonymous
+  ) {
+    return false;
+  }
   for (const participant of thread.participants) {
     if (!(await canViewCopy(ctx, participant, copy))) return false;
   }
@@ -58,7 +75,12 @@ export const postMessage = mutation({
       if (
         thread &&
         isParticipant &&
-        !(await isAttachable(ctx, thread, args.copyId))
+        !(await isAttachable(
+          ctx,
+          thread,
+          args.copyId,
+          authorId as unknown as Id<"users">,
+        ))
       ) {
         throw new ConvexError({
           code: "CopyNotFound",

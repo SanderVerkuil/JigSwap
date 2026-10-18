@@ -220,6 +220,7 @@ function CopyInstanceDetail({
   const t = useTranslations("copyInstance");
   const tShell = useTranslations("shell");
   const tOwner = useTranslations("copyOwner");
+  const tConversation = useTranslations("copyConversation");
   const tPuzzles = useTranslations("puzzles");
   const tStart = useTranslations("solving.startSolve");
   const tCompletions = useTranslations("solving.completions");
@@ -526,7 +527,7 @@ function CopyInstanceDetail({
               icon={<Clock className="h-3.5 w-3.5" />}
               label={t("inYourLibrary")}
               value={
-                copy.viewerIsOwner
+                copy.acquiredByViewerAt !== null
                   ? ownedDuration(copy.acquiredByViewerAt)
                   : "—"
               }
@@ -627,7 +628,12 @@ function CopyInstanceDetail({
                     {t("actions.requestSwap")}
                   </Button>
                 )}
-                {!copy.owner.anonymous && (
+                {copy.owner.anonymous ? (
+                  // No conversation with a hidden owner (getCopyConversation: ownerHidden).
+                  <p className="text-muted-foreground self-center text-sm">
+                    {tConversation("ownerHidden")}
+                  </p>
+                ) : (
                   <Button
                     variant="outline"
                     onClick={() => navigate(copyMessageRoute(copyId))}

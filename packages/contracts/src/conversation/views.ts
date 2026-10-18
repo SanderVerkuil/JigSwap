@@ -64,11 +64,15 @@ export interface MessageCopyView {
  * exist or the viewer may not view it. `self`: the viewer owns it. `existing`: a DM with the
  * owner already exists — open it. `new`: no DM yet — show a composer addressed to the owner
  * (privacy-projected; their raw id never crosses the wire); `canMessage` mirrors the
- * ConnectionPolicy that startCopyConversation enforces.
+ * ConnectionPolicy that startCopyConversation enforces. `ownerHidden`: the owner is anonymous to
+ * the viewer, so the copy page offers no conversation (every DM is one per pair, so landing on it
+ * would tie copies to one hidden owner); deliberately constant, with no thread or owner fields,
+ * and startCopyConversation refuses it.
  */
 export type CopyConversationView =
   | { readonly status: "unavailable" }
   | { readonly status: "self" }
+  | { readonly status: "ownerHidden" }
   | { readonly status: "existing"; readonly threadId: string }
   | {
       readonly status: "new";
