@@ -1936,7 +1936,7 @@
     },
     "connectionOffers": {
       "title": "Invitations",
-      "invitedYou": "<b>{name}</b> invited you to JigSwap. Follow each other?",
+      "invitedYou": "<b>{name}</b> invited you to follow each other.",
       "followEachOther": "Follow each other",
       "notNow": "Not now",
       "connected": "You and {name} now follow each other",
@@ -2236,7 +2236,7 @@
       },
       "connection_offer_received": {
         "title": "Follow each other?",
-        "message": "{hasActorName, select, yes {{actorName} invited you to JigSwap. Follow each other?} other {Someone invited you to JigSwap. Follow each other?}}"
+        "message": "{hasActorName, select, yes {{actorName} invited you to follow each other.} other {Someone invited you to follow each other.}}"
       },
       "circle_invite_received": {
         "title": "Circle invite",
@@ -2308,7 +2308,7 @@
       "follow_request_approved": "When a follow request you sent is approved.",
       "household_invite_received": "When someone invites you to their household.",
       "household_invite_accepted": "When someone accepts your household invite.",
-      "connection_offer_received": "When the person who invited you to JigSwap asks to follow each other.",
+      "connection_offer_received": "When someone who invited you asks to follow each other.",
       "circle_invite_received": "When a circle admin invites you to join their circle.",
       "circle_invite_accepted": "When someone accepts your invitation to a circle.",
       "circle_deleted": "When the owner deletes a circle you're in.",
@@ -2461,7 +2461,7 @@
         "sentence": "<b>{actor}</b> joined your household."
       },
       "connection_offer_received": {
-        "sentence": "<b>{actor}</b> invited you to JigSwap. Follow each other?"
+        "sentence": "<b>{actor}</b> invited you to follow each other."
       },
       "circle_invite_received": {
         "sentence": "<b>{actor}</b> invited you to join {hasCircle, select, yes {<b>{circle}</b>} other {a circle}}."

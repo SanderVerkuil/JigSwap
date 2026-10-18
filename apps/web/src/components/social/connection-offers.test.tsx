@@ -71,7 +71,7 @@ describe("ConnectionOfferList", () => {
   it("names the inviter and asks to follow each other, with both answers", () => {
     const html = render([ann]);
     expect(byTag(html, "p").map(textOf)).toEqual([
-      "Ann invited you to JigSwap. Follow each other?",
+      "Ann invited you to follow each other.",
     ]);
     expect(byTag(html, "button").map(textOf)).toEqual([
       "Follow each other",
@@ -82,7 +82,7 @@ describe("ConnectionOfferList", () => {
   it("is localised in Dutch", () => {
     const html = render([ann], "nl");
     expect(byTag(html, "p").map(textOf)).toEqual([
-      "Ann heeft je uitgenodigd voor JigSwap. Elkaar volgen?",
+      "Ann heeft je uitgenodigd om elkaar te volgen.",
     ]);
     expect(byTag(html, "button").map(textOf)).toEqual([
       "Elkaar volgen",
@@ -93,7 +93,7 @@ describe("ConnectionOfferList", () => {
   it("uses the generic member label for an inviter without a display name", () => {
     const html = render([offer({ memberId: "u2" })]);
     expect(byTag(html, "p").map(textOf)).toEqual([
-      "Puzzler invited you to JigSwap. Follow each other?",
+      "Puzzler invited you to follow each other.",
     ]);
   });
 

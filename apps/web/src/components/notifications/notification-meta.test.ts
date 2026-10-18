@@ -77,10 +77,10 @@ describe("notificationCopy", () => {
     ).toBe("Mara is lid geworden van je huishouden.");
     expect(
       message("en", "connection_offer_received", { actorName: "Mara" }),
-    ).toBe("Mara invited you to JigSwap. Follow each other?");
+    ).toBe("Mara invited you to follow each other.");
     expect(
       message("nl", "connection_offer_received", { actorName: "Mara" }),
-    ).toBe("Mara heeft je uitgenodigd voor JigSwap. Elkaar volgen?");
+    ).toBe("Mara heeft je uitgenodigd om elkaar te volgen.");
   });
 
   it("falls back to the generic sentence when a param is missing or blank", () => {
