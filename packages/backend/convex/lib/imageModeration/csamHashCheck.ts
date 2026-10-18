@@ -50,6 +50,40 @@ export interface CsamHashCheckPort {
 /** Per-request timeout; a hung request becomes "unavailable". */
 export const OFFLIMITS_HCS_TIMEOUT_MS = 10_000;
 
+/** Largest response body read from HCS; anything bigger is "unavailable" (response_too_large). */
+export const OFFLIMITS_HCS_MAX_RESPONSE_BYTES = 64 * 1024;
+
+// Read a response body as text, refusing more than `maxBytes` (checked against Content-Length up
+// front and enforced while streaming). Returns null when the cap is exceeded.
+const readCappedText = async (
+  response: Response,
+  maxBytes: number,
+): Promise<string | null> => {
+  const declared = Number(response.headers.get("content-length"));
+  if (Number.isFinite(declared) && declared > maxBytes) return null;
+  if (!response.body) return "";
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel().catch(() => {});
+      return null;
+    }
+    chunks.push(value);
+  }
+  const all = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    all.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(all);
+};
+
 /** The "none" adapter: always no_match. The default when nothing is configured. */
 export const makeNoopCsamHashCheckPort = (): CsamHashCheckPort => ({
   provider: "none",
@@ -112,6 +146,8 @@ export const makeOfflimitsCsamHashCheckPort = (
           },
           body: offlimitsHcsWireFormat.requestBody(hashes),
           signal: AbortSignal.timeout(OFFLIMITS_HCS_TIMEOUT_MS),
+          // Never follow a redirect: the basic-auth header must not travel to another host.
+          redirect: "error",
         });
       } catch {
         return { status: "unavailable", reason: "network" };
@@ -121,7 +157,14 @@ export const makeOfflimitsCsamHashCheckPort = (
       }
       let body: unknown;
       try {
-        body = await response.json();
+        const text = await readCappedText(
+          response,
+          OFFLIMITS_HCS_MAX_RESPONSE_BYTES,
+        );
+        if (text === null) {
+          return { status: "unavailable", reason: "response_too_large" };
+        }
+        body = JSON.parse(text);
       } catch {
         return { status: "unavailable", reason: "bad_response" };
       }

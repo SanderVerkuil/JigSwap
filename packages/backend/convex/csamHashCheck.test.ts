@@ -91,6 +91,49 @@ describe("offlimits adapter", () => {
     }
   });
 
+  test("never follows redirects and caps the response body at 64 KB", async () => {
+    const fetchImpl = replies(200, { match: false });
+    await makeCsamHashCheckPortFromEnv(ENV, { fetchImpl }).check(HASHES);
+    const [, init] = fetchImpl.mock.calls[0] as unknown as [
+      string,
+      RequestInit,
+    ];
+    expect(init.redirect).toBe("error");
+
+    const huge = JSON.stringify({ match: true, pad: "x".repeat(70_000) });
+    const streamed = makeCsamHashCheckPortFromEnv(ENV, {
+      fetchImpl: vi.fn(
+        async () =>
+          new Response(
+            new ReadableStream({
+              start(controller) {
+                controller.enqueue(new TextEncoder().encode(huge));
+                controller.close();
+              },
+            }),
+            { status: 200 },
+          ),
+      ),
+    });
+    expect(await streamed.check(HASHES)).toEqual({
+      status: "unavailable",
+      reason: "response_too_large",
+    });
+    const declared = makeCsamHashCheckPortFromEnv(ENV, {
+      fetchImpl: vi.fn(
+        async () =>
+          new Response("{}", {
+            status: 200,
+            headers: { "content-length": "999999" },
+          }),
+      ),
+    });
+    expect(await declared.check(HASHES)).toEqual({
+      status: "unavailable",
+      reason: "response_too_large",
+    });
+  });
+
   test("refuses to send credentials to a non-HTTPS URL", async () => {
     const fetchImpl = replies(200, { match: false });
     const port = makeOfflimitsCsamHashCheckPort({
