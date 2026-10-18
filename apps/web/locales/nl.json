@@ -4594,6 +4594,8 @@
     "dontShowAgain": "Niet meer tonen",
     "iosStepShare": "Tik op <icon></icon> <b>Deel</b> (onder <b>⋯</b> als je het niet ziet)",
     "iosStepAdd": "Kies <icon></icon> <b>Zet op beginscherm</b>",
+    "androidStepMenu": "Tik op <icon></icon> <b>menu</b> rechtsboven in Chrome",
+    "androidStepInstall": "Kies <icon></icon> <b>Toevoegen aan startscherm</b> of <b>App installeren</b>, en dan <b>Installeren</b>",
     "iosPush": "Na installeren kan JigSwap je ook meldingen sturen op iPhone en iPad.",
     "menuTitle": "App installeren",
     "menuSub": "Open JigSwap vanaf je beginscherm"

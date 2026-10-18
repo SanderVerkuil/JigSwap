@@ -81,6 +81,25 @@ describe("InstallAppTipView", () => {
     expect(onNever).toHaveBeenCalledOnce();
   });
 
+  it("Android without a prompt: shows Chrome's menu steps, no install button", () => {
+    render(
+      wrap(
+        <InstallAppTipView
+          method="android-menu"
+          onInstall={noop}
+          onSnooze={noop}
+          onNever={noop}
+        />,
+      ),
+    );
+    const steps = screen.getAllByRole("listitem").map((li) => li.textContent);
+    expect(steps[0]).toContain("menu");
+    expect(steps[1]).toContain("Add to home screen");
+    expect(screen.queryByText(/notifications on iPhone/)).toBeNull();
+    expect(screen.queryByRole("button", { name: /Install app/ })).toBeNull();
+    expect(screen.getByRole("button", { name: "Not now" })).toBeTruthy();
+  });
+
   it("renders Dutch copy", () => {
     render(
       wrap(
@@ -120,7 +139,15 @@ describe("InstallAppTip", () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    delete (navigator as { getInstalledRelatedApps?: unknown })
+      .getInstalledRelatedApps;
   });
+
+  const setInstalledRelatedApps = (apps: unknown[]) =>
+    Object.defineProperty(window.navigator, "getInstalledRelatedApps", {
+      value: vi.fn(() => Promise.resolve(apps)),
+      configurable: true,
+    });
 
   const seenBefore = () =>
     localStorage.setItem("jigswap.installTip", JSON.stringify({ visits: 1 }));
@@ -177,6 +204,37 @@ describe("InstallAppTip", () => {
     await act(async () => {
       await Promise.resolve();
       await Promise.resolve();
+    });
+    expect(screen.queryByRole("region")).toBeNull();
+  });
+
+  it("Android Chrome without a prompt: shows the menu steps when JigSwap isn't installed", async () => {
+    setUserAgent(ANDROID_CHROME);
+    setInstalledRelatedApps([]);
+    seenBefore();
+    render(wrap(<InstallAppTip />));
+    await act(async () => {
+      await Promise.resolve();
+    });
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+    expect(screen.getByRole("region")).toBeTruthy();
+    expect(screen.getAllByRole("listitem")[1].textContent).toContain(
+      "Add to home screen",
+    );
+  });
+
+  it("Android Chrome without a prompt: stays hidden when JigSwap is already installed", async () => {
+    setUserAgent(ANDROID_CHROME);
+    setInstalledRelatedApps([{ platform: "webapp" }]);
+    seenBefore();
+    render(wrap(<InstallAppTip />));
+    await act(async () => {
+      await Promise.resolve();
+    });
+    act(() => {
+      vi.advanceTimersByTime(3000);
     });
     expect(screen.queryByRole("region")).toBeNull();
   });

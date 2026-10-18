@@ -9,7 +9,14 @@ import {
 } from "@/components/whats-new/surface-busy";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { safeStorage } from "@/lib/safe-storage";
-import { Bell, Download, Share, SquarePlus, X } from "lucide-react";
+import {
+  Bell,
+  Download,
+  EllipsisVertical,
+  Share,
+  SquarePlus,
+  X,
+} from "lucide-react";
 import { useEffect, useId, useState, type ReactNode } from "react";
 import { useTranslations } from "use-intl";
 import {
@@ -61,7 +68,7 @@ function useTextEntryFocused(): boolean {
 // The mobile "Add JigSwap to your home screen" tip: a non-modal card stuck just above the tab bar.
 // It shows itself from the second session on this device, never when installed / unsupported /
 // on desktop, and only when no tour, dialog or prompt is on screen; the quick sheet's "Install
-// app" row can also open it on iOS. Mounted in the dashboard shell only, so public and auth pages
+// app" row can also open it on iOS, or on Android Chrome when no install prompt was captured. Mounted in the dashboard shell only, so public and auth pages
 // never see it.
 export function InstallAppTip() {
   const pathname = usePathname();
@@ -202,15 +209,15 @@ export function InstallAppTipView({
         {method === "ios" && (
           <>
             <ol className="mt-3 space-y-2 text-sm">
-              <IosStep number={1}>
+              <Step number={1}>
                 {t.rich("iosStepShare", {
                   icon: () => <Glyph icon={<Share className="size-4" />} />,
                   b: (chunks) => (
                     <strong className="font-semibold">{chunks}</strong>
                   ),
                 })}
-              </IosStep>
-              <IosStep number={2}>
+              </Step>
+              <Step number={2}>
                 {t.rich("iosStepAdd", {
                   icon: () => (
                     <Glyph icon={<SquarePlus className="size-4" />} />
@@ -219,13 +226,36 @@ export function InstallAppTipView({
                     <strong className="font-semibold">{chunks}</strong>
                   ),
                 })}
-              </IosStep>
+              </Step>
             </ol>
             <p className="text-muted-foreground mt-3 flex items-start gap-1.5 text-xs">
               <Bell aria-hidden className="mt-px size-3.5 shrink-0" />
               {t("iosPush")}
             </p>
           </>
+        )}
+
+        {method === "android-menu" && (
+          <ol className="mt-3 space-y-2 text-sm">
+            <Step number={1}>
+              {t.rich("androidStepMenu", {
+                icon: () => (
+                  <Glyph icon={<EllipsisVertical className="size-4" />} />
+                ),
+                b: (chunks) => (
+                  <strong className="font-semibold">{chunks}</strong>
+                ),
+              })}
+            </Step>
+            <Step number={2}>
+              {t.rich("androidStepInstall", {
+                icon: () => <Glyph icon={<Download className="size-4" />} />,
+                b: (chunks) => (
+                  <strong className="font-semibold">{chunks}</strong>
+                ),
+              })}
+            </Step>
+          </ol>
         )}
 
         <div className="mt-3 flex justify-end gap-2">
@@ -247,13 +277,7 @@ export function InstallAppTipView({
   );
 }
 
-function IosStep({
-  number,
-  children,
-}: {
-  number: number;
-  children: ReactNode;
-}) {
+function Step({ number, children }: { number: number; children: ReactNode }) {
   return (
     <li className="flex items-center gap-2">
       <span className="text-muted-foreground w-4 shrink-0 tabular-nums">

@@ -8,7 +8,9 @@ category: feature
 
 Je kunt JigSwap nu op je telefoon installeren en openen zoals elke andere app.
 
-- **Op Android** tik je op **App installeren** als de tip verschijnt.
+- **Op Android** tik je op **App installeren** als de tip verschijnt. Geen knop?
+  Open het **⋮**-menu van Chrome en kies **Toevoegen aan startscherm** of
+  **App installeren**.
 - **Op iPhone en iPad** tik je op **Deel** en dan op **Zet op beginscherm**.
   Na installeren kan JigSwap je daar ook meldingen sturen.
 

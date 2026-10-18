@@ -4594,6 +4594,8 @@
     "dontShowAgain": "Don't show again",
     "iosStepShare": "Tap <icon></icon> <b>Share</b> (under <b>⋯</b> if hidden)",
     "iosStepAdd": "Choose <icon></icon> <b>Add to Home Screen</b>",
+    "androidStepMenu": "Tap <icon></icon> <b>menu</b> at the top right of Chrome",
+    "androidStepInstall": "Choose <icon></icon> <b>Add to home screen</b> or <b>Install app</b>, then <b>Install</b>",
     "iosPush": "Installing also lets JigSwap send you notifications on iPhone and iPad.",
     "menuTitle": "Install app",
     "menuSub": "Open JigSwap from your home screen"
