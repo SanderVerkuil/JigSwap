@@ -65,7 +65,7 @@ function BlockedByMe({ partner }: { partner: MemberView | null }) {
         ref={triggerRef}
         variant="outline"
         size="sm"
-        className="h-11 shrink-0 md:h-8"
+        className="text-foreground h-11 shrink-0 md:h-8"
         onClick={() => setConfirming(true)}
       >
         {t("unblock")}
