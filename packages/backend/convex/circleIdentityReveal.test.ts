@@ -548,15 +548,34 @@ describe("the circle-reveal view is identity only", () => {
 });
 
 describe("circle membership follows the real junction", () => {
-  test("adding a member through the REAL addMember reveals; removeMember ends it", async () => {
+  // Membership is seeded directly (seat + junction row) rather than through the public addMember
+  // mutation: the circle invite/accept flow makes addMember internal, reachable only via accept.
+  test("a seated member is revealed; the REAL removeMember ends it", async () => {
     const t = convexTest(schema, modules);
     const { viewer, stranger } = await seed(t);
     expect((await project(t, viewer, stranger)).anonymous).toBe(true);
 
-    await asHost(t).mutation(api.sharing.addMember.addMember, {
-      circleId: CIRCLE,
-      memberId: stranger,
-      permission: "ViewOnly",
+    await t.run(async (ctx) => {
+      const circle = await ctx.db
+        .query("circles")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", CIRCLE))
+        .unique();
+      if (!circle) throw new Error("seeded circle missing");
+      await ctx.db.patch(circle._id, {
+        memberships: [
+          ...circle.memberships,
+          {
+            id: "m-stranger",
+            memberId: stranger,
+            permission: "ViewOnly",
+            joinedAt: 1,
+          },
+        ],
+      });
+      await ctx.db.insert("circleMembers", {
+        circleAggregateId: CIRCLE,
+        memberId: stranger,
+      });
     });
     expect(nameOf(await project(t, viewer, stranger))).toBe("Strange");
 
