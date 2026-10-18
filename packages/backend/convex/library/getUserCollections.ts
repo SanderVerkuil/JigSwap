@@ -60,10 +60,11 @@ export const getUserCollections = query({
       });
     }
 
-    // Another member's collection counts only the member copies getCollectionById would show this
-    // viewer (THE copy gate — so a private copy in a public collection is neither listed nor
-    // counted); the viewer's own collections keep the raw member count. Sequential: the copy-view
-    // context's memos aren't safe to share across a Promise.all.
+    // A collection counts only its owner's OWN copies (the rule getCollectionById lists by: a member
+    // row for a copy that changed hands is stale). Another member's collection further counts only
+    // the copies getCollectionById would show this viewer (THE copy gate — so a private copy in a
+    // public collection is neither listed nor counted). One db.get per member row. Sequential: the
+    // copy-view context's memos aren't safe to share across a Promise.all.
     let context: CopyViewContext | null = null;
     const views = [];
     for (const collection of collections) {
@@ -71,21 +72,27 @@ export const getUserCollections = query({
         .query("collectionMembers")
         .withIndex("by_collection", (q) => q.eq("collectionId", collection._id))
         .collect();
-      let count = members.length;
-      if (collection.userId !== currentUser._id) {
+      const viewerOwnsCollection = collection.userId === currentUser._id;
+      if (!viewerOwnsCollection) {
         context ??= await buildCopyViewContext(
           ctx,
           currentUser._id as Id<"users">,
         );
-        count = 0;
-        for (const member of members) {
-          const copy = member.ownedPuzzleId
-            ? await ctx.db.get(member.ownedPuzzleId)
-            : null;
-          if (copy && (await canViewCopyWithContext(ctx, copy, context))) {
-            count += 1;
-          }
+      }
+      let count = 0;
+      for (const member of members) {
+        const copy = member.ownedPuzzleId
+          ? await ctx.db.get(member.ownedPuzzleId)
+          : null;
+        if (!copy || copy.ownerId !== collection.userId) continue;
+        if (
+          context &&
+          !viewerOwnsCollection &&
+          !(await canViewCopyWithContext(ctx, copy, context))
+        ) {
+          continue;
         }
+        count += 1;
       }
       views.push(
         toCollectionView(collection, count, {

@@ -315,6 +315,10 @@ describe("collections on ownership transfer", () => {
     expect(reads.collection?.puzzles.map((p) => p._id)).toEqual([alices.copy]);
     expect(reads.collection?.puzzles[0]?.notes).toBe("alice-note");
     expect(reads.containing).toEqual([]);
+    // The count follows the same rule: the stale foreign row is not counted.
+    expect(
+      reads.userCollections.find((c) => c._id === aliceCollection)?.puzzleCount,
+    ).toBe(1);
     expect(reads.json).not.toContain(noahs.copy);
     expect(reads.json).not.toContain(NOAH_NOTE);
     expect(reads.json).not.toContain(String(NOAH_PRICE));
