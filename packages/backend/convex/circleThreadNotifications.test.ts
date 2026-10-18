@@ -52,12 +52,25 @@ const flush = async (t: T) => {
   }
 };
 
-// Alice owns "Puzzle Club"; Bob and Carol are members; Dave is outside it.
+// A push subscription: push is only scheduled for a member who has one.
+const subscribe = (t: T, userId: Id<"users">) =>
+  t.run((ctx) =>
+    ctx.db.insert("pushSubscriptions", {
+      userId,
+      endpoint: `https://push.example/${userId}`,
+      p256dh: "p",
+      auth: "a",
+      createdAt: Date.now(),
+    }),
+  );
+
+// Alice owns "Puzzle Club"; Bob and Carol are members; Dave is outside it. Everyone has push.
 const seed = async (t: T) => {
   const alice = await mkUser(t, "alice");
   const bob = await mkUser(t, "bob");
   const carol = await mkUser(t, "carol");
   const dave = await mkUser(t, "dave");
+  for (const member of [alice, bob, carol, dave]) await subscribe(t, member);
   const circleId = (await as(t, "alice").mutation(
     api.sharing.createCircle.createCircle,
     { name: "Puzzle Club" },
@@ -414,6 +427,32 @@ describe("push throttle and tag", () => {
         .unique(),
     );
     expect(seat?.lastPushedAt).toBe(t0 + PUSH_THROTTLE_MS);
+  });
+
+  test("a member without a push subscription gets no push job and no throttle write", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, threadId } = await seed(t);
+    await t.run(async (ctx) => {
+      for (const row of await ctx.db
+        .query("pushSubscriptions")
+        .withIndex("by_user", (q) => q.eq("userId", bob))
+        .collect()) {
+        await ctx.db.delete(row._id);
+      }
+    });
+    await post(t, "alice", threadId, "one");
+    expect(await pushesTo(t, bob)).toEqual([]);
+    const seat = await t.run((ctx) =>
+      ctx.db
+        .query("threadParticipants")
+        .withIndex("by_thread_member", (q) =>
+          q.eq("threadAggregateId", threadId).eq("memberId", bob),
+        )
+        .unique(),
+    );
+    expect(seat?.lastPushedAt).toBeUndefined();
+    // The in-app row still lands.
+    expect(await rowsOf(t, bob)).toHaveLength(1);
   });
 
   test("a burst of messages pushes once, and in-app still groups every one", async () => {

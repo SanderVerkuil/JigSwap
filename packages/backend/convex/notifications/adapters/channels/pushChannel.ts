@@ -21,6 +21,15 @@ export const pushChannel =
   (ctx: MutationCtx) =>
   async (notification: Notification): Promise<void> => {
     const state = notification.toState();
+    // No push subscription: nothing to send to, so no throttle write and no Node action (each
+    // scheduled action is a billed function call, for every member who never enabled push).
+    const subscribed = await ctx.db
+      .query("pushSubscriptions")
+      .withIndex("by_user", (q) =>
+        q.eq("userId", state.userId as unknown as Id<"users">),
+      )
+      .first();
+    if (!subscribed) return;
     if (
       (state.type === "message_received" ||
         state.type === "circle_message_received") &&

@@ -472,9 +472,17 @@ describe("channels", () => {
 
   test("the push channel forwards params and refs next to the snapshot text", async () => {
     const s = await setup();
-    await s.t.run((ctx) =>
-      pushChannel(ctx)(notification(s, { channel: "push" })),
-    );
+    await s.t.run(async (ctx) => {
+      // Push is only scheduled for a member with a push subscription.
+      await ctx.db.insert("pushSubscriptions", {
+        userId: s.viewer,
+        endpoint: "https://push.example/viewer",
+        p256dh: "p",
+        auth: "a",
+        createdAt: Date.now(),
+      });
+      await pushChannel(ctx)(notification(s, { channel: "push" }));
+    });
     expect(await scheduledArgs(s, "sendWebPush")).toEqual([
       expect.objectContaining({
         userId: s.viewer,
