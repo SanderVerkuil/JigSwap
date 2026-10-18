@@ -420,7 +420,12 @@ describe("profiles", () => {
       const [member, stats, byClerk] = await reads(who, target, clerkId);
       expect(member).toMatchObject({ _id: target });
       expect(stats).not.toBeNull();
-      expect(byClerk).toMatchObject({ _id: target });
+      // getUserByClerkId resolves only the caller's own Clerk id (#282).
+      if (clerkId === `clerk_${who}`) {
+        expect(byClerk).toMatchObject({ _id: target });
+      } else {
+        expect(byClerk).toBeNull();
+      }
     }
   });
 
