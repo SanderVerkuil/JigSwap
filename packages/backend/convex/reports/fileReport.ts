@@ -258,7 +258,8 @@ const canReportMember = async (
 
 // A message the reporter can read (a participant of its thread), authored by someone. The
 // evidence is the message plus up to EVIDENCE_PRECEDING_MESSAGES before it, ascending. A message
-// a moderator already removed is snapshotted as removed, with an empty body and no copy.
+// a moderator already removed is snapshotted as removed, with an empty body and no copy. A legacy
+// image row's body is blanked as in toThreadMessageView (an unverified client string, #145).
 const messageTarget = async (
   ctx: MutationCtx,
   reporterId: Id<"users">,
@@ -292,7 +293,7 @@ const messageTarget = async (
       messageId: row.messageId,
       ...(row.authorId !== undefined ? { authorId: row.authorId } : {}),
       kind: row.kind,
-      body: removed ? "" : row.body,
+      body: removed || row.kind === "image" ? "" : row.body,
       sentAt: row.sentAt,
       ...(row.copyId !== undefined && !removed ? { copyId: row.copyId } : {}),
       ...(removed ? { removed: true as const } : {}),

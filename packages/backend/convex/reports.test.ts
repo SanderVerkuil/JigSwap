@@ -530,6 +530,30 @@ describe("fileReport: rules", () => {
     });
   });
 
+  test("a legacy image message is snapshotted with a blank body", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await t.run(async (ctx) => {
+      const m9 = await ctx.db
+        .query("threadMessages")
+        .withIndex("by_message_id", (q) => q.eq("messageId", "m9"))
+        .first();
+      await ctx.db.patch(m9!._id, {
+        kind: "image",
+        body: "https://evil.example/x.png",
+      });
+    });
+    const { reportId } = await file(asBob(t), {
+      targetKind: "message",
+      targetId: "m11",
+    });
+    const messages = (await reportRow(t, reportId)).evidence.messages!;
+    expect(messages.find((m) => m.messageId === "m9")).toMatchObject({
+      kind: "image",
+      body: "",
+    });
+  });
+
   test("a non-message target carries no message evidence", async () => {
     const t = convexTest(schema, modules);
     const { bob } = await seed(t);
