@@ -25,9 +25,10 @@ const flush = async (t: T) => {
 const CIRCLE = "circle-saturday";
 const OTHER_CIRCLE = "circle-sunday";
 
-type Transfer = { from: "alice" | "noah"; to: "alice" | "noah"; at: number };
+type Member = "alice" | "noah" | "carol";
+type Transfer = { from: Member; to: Member; at: number };
 type Case = {
-  owner: "alice" | "noah";
+  owner: Member;
   sharedAt: number;
   transfers?: Transfer[];
   // CopySharedToCircle events in the durable log for this copy (circle + time).
@@ -84,6 +85,37 @@ const CASES: Record<string, Case> = {
     shareEvents: [{ circleId: OTHER_CIRCLE, at: 2500 }],
     deleted: true,
   },
+  // Back to Alice, then on to Carol: the sharer owned it again in between, but not now -> stale.
+  staleAfterReturnThenResale: {
+    owner: "carol",
+    sharedAt: 1000,
+    transfers: [
+      { from: "alice", to: "noah", at: 2000 },
+      { from: "noah", to: "alice", at: 3000 },
+      { from: "alice", to: "carol", at: 4000 },
+    ],
+    deleted: true,
+  },
+  // Noah shared it during an EARLIER ownership, then it went back to Alice and returned to him: that
+  // re-share predates the last transfer, so it proves nothing about his current ownership -> stale.
+  staleResharedBeforeLastTransfer: {
+    owner: "noah",
+    sharedAt: 1000,
+    transfers: [
+      { from: "alice", to: "noah", at: 2000 },
+      { from: "noah", to: "alice", at: 3000 },
+      { from: "alice", to: "noah", at: 4000 },
+    ],
+    shareEvents: [{ circleId: CIRCLE, at: 2500 }],
+    deleted: true,
+  },
+  // A transfer at exactly `sharedAt` is not "after" the share; ambiguous ties are kept.
+  transferAtSharedAt: {
+    owner: "noah",
+    sharedAt: 2000,
+    transfers: [{ from: "alice", to: "noah", at: 2000 }],
+    deleted: false,
+  },
 };
 const STALE = Object.values(CASES).filter((c) => c.deleted).length;
 const KEPT = Object.values(CASES).length - STALE;
@@ -104,6 +136,7 @@ const seed = (t: T) =>
     const members = {
       alice: await mkUser("clerk_alice"),
       noah: await mkUser("clerk_noah"),
+      carol: await mkUser("clerk_carol"),
     };
     const puzzleId = await ctx.db.insert("puzzles", {
       title: "Mountain Vista",
@@ -230,6 +263,16 @@ describe("backfillStaleCircleShares", () => {
     const first = await run(t, { batchSize: 2 });
     expect(first.scanned).toBe(2);
     expect(await remainingCopyIds(t)).toEqual(kept);
+  });
+
+  test("a dry run across batches deletes nothing in any batch", async () => {
+    const t = convexTest(schema, modules);
+    const { copyOf } = await seed(t);
+    const all = [...Object.values(copyOf), DANGLING_COPY].sort();
+
+    const first = await run(t, { dryRun: true, batchSize: 2 });
+    expect(first.scanned).toBe(2);
+    expect(await remainingCopyIds(t)).toEqual(all);
   });
 
   test("keeps a transferred share it cannot clear within the event scan cap (undetermined, not deleted)", async () => {
