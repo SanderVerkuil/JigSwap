@@ -13,6 +13,8 @@ export const RATE_LIMITS = {
   blockToggle: { windowMs: DAY, max: 30 },
   reportFile: { windowMs: DAY, max: 10 },
   imageStage: { windowMs: HOUR, max: 20 },
+  // The daily cap next to imageStage's hourly one (spec 2.7: 20/h and 100/day).
+  imageStageDaily: { windowMs: DAY, max: 100 },
   // Upload URLs for message photos: each staged photo needs one, plus retries of failed uploads.
   imageUploadUrl: { windowMs: HOUR, max: 40 },
   // Taps on "Show" for a blurred message photo (each hands out its URL).

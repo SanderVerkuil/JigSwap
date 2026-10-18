@@ -172,13 +172,23 @@ const storeJpeg = async (t: T, type = "image/jpeg") => {
   );
 };
 
-const stage = async (t: T, threadId: string, storageId?: Id<"_storage">) =>
+// Stage a photo as Alice; the raw result ({ attachmentId } or { refused }).
+const stageRaw = async (t: T, threadId: string, storageId?: Id<"_storage">) =>
   asAlice(t).mutation(api.conversation.stageMessageImage.stageMessageImage, {
     threadId,
     storageId: storageId ?? (await storeJpeg(t)),
     width: 800,
     height: 600,
   });
+
+// Stage a photo as Alice and return its attachment id (fails the test on a refusal).
+const stage = async (t: T, threadId: string, storageId?: Id<"_storage">) => {
+  const result = await stageRaw(t, threadId, storageId);
+  if (!("attachmentId" in result)) {
+    throw new Error(`staging refused: ${result.refused}`);
+  }
+  return result.attachmentId;
+};
 
 const send = (
   t: T,
@@ -225,6 +235,9 @@ const outbox = (t: T, threadId: string) =>
     api.conversation.listMyPendingAttachments.listMyPendingAttachments,
     { threadId },
   );
+
+const attachmentRows = (t: T) =>
+  t.run((ctx) => ctx.db.query("messageAttachments").collect());
 
 const blobExists = (t: T, id: Id<"_storage">) =>
   t.run(async (ctx) => (await ctx.db.system.get(id)) !== null);
@@ -299,11 +312,24 @@ describe("staging a photo", () => {
     },
   );
 
-  test("staging is rate limited (imageStage), and so are upload URLs (imageUploadUrl)", async () => {
+  test("staging is rate limited (imageStage hourly), and so are upload URLs (imageUploadUrl)", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, threadId } = await openThread(t);
+    await t.run((ctx) =>
+      ctx.db.insert("rateLimits", {
+        key: `imageStage:${alice}`,
+        windowStart: Date.now(),
+        count: RATE_LIMITS.imageStage.max,
+      }),
+    );
+    await expect(stage(t, threadId)).rejects.toThrow(/RateLimited/);
+  });
+
+  test("staging has a daily cap too (imageStageDaily, 100/day)", async () => {
     const t = convexTest(schema, modules);
     const { alice, threadId } = await openThread(t);
     await t.run(async (ctx) => {
-      for (const name of ["imageStage", "imageUploadUrl"] as const) {
+      for (const name of ["imageStageDaily", "imageUploadUrl"] as const) {
         await ctx.db.insert("rateLimits", {
           key: `${name}:${alice}`,
           windowStart: Date.now(),
@@ -328,14 +354,73 @@ describe("staging a photo", () => {
       new Uint8Array(10 * 1024 * 1024 + 1),
       "image/jpeg",
     );
-    await expect(stage(t, threadId, big)).rejects.toThrow(/ImageTooLarge/);
-    await expect(
-      stage(t, threadId, await storeJpeg(t, "image/gif")),
-    ).rejects.toThrow(/UnsupportedImageType/);
+    expect(await stageRaw(t, threadId, big)).toEqual({
+      refused: "ImageTooLarge",
+    });
+    const gif = await storeJpeg(t, "image/gif");
+    expect(await stageRaw(t, threadId, gif)).toEqual({
+      refused: "UnsupportedImageType",
+    });
+    // A refused fresh upload that nothing references is deleted right away (the refusal is a
+    // result, not a throw, so the delete commits).
+    expect(await blobExists(t, big)).toBe(false);
+    expect(await blobExists(t, gif)).toBe(false);
     const old = await storeJpeg(t);
     const later = Date.now() + 16 * 60_000;
     vi.spyOn(Date, "now").mockReturnValue(later);
-    await expect(stage(t, threadId, old)).rejects.toThrow(/UploadExpired/);
+    expect(await stageRaw(t, threadId, old)).toEqual({
+      refused: "UploadExpired",
+    });
+    // A stale blob is never deleted: it may be referenced where no index can tell (box art,
+    // legacy completion photos), and deleting it on request would let anyone destroy it.
+    expect(await blobExists(t, old)).toBe(true);
+    expect(await attachmentRows(t)).toEqual([]);
+  });
+
+  test("a blob another image table references is refused and never deleted", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, threadId } = await openThread(t);
+    const copyPhoto = await storeJpeg(t, "image/gif");
+    const completionPhoto = await storeJpeg(t);
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      const puzzleId = await ctx.db.insert("puzzles", {
+        title: "P",
+        pieceCount: 500,
+        status: "approved",
+        submittedBy: alice,
+        createdAt: now,
+        updatedAt: now,
+      });
+      const copy = await ctx.db.insert("ownedPuzzles", {
+        puzzleId,
+        ownerId: alice,
+        condition: "good",
+        availability: { forTrade: false, forSale: false, forLend: false },
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("ownedPuzzleImages", {
+        ownedPuzzleId: copy,
+        uploaderId: alice,
+        fileId: copyPhoto,
+        createdAt: now,
+        updatedAt: now,
+      } as never);
+      await ctx.db.insert("completionImages", {
+        completionId: "c1",
+        uploaderId: alice,
+        fileId: completionPhoto,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+    for (const fileId of [copyPhoto, completionPhoto]) {
+      await expect(stageRaw(t, threadId, fileId)).rejects.toThrow(
+        /InvalidUpload/,
+      );
+      expect(await blobExists(t, fileId)).toBe(true);
+    }
   });
 
   test("refuses bad sizes, an already-claimed blob and a CSAM-preserved blob", async () => {

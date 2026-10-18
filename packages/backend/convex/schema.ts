@@ -169,6 +169,8 @@ export default defineSchema({
     .index("by_brand", ["brand"])
     .index("by_publisher", ["publisher"])
     .index("by_tags", ["tags"])
+    // Whether a blob is a puzzle's box art (message-photo claims refuse it).
+    .index("by_image", ["image"])
     .index("by_aggregate_id", ["aggregateId"])
     // Lets a contributor list their own submissions (e.g. own not-yet-approved puzzles).
     .index("by_submitted_by", ["submittedBy"])
@@ -377,7 +379,9 @@ export default defineSchema({
   })
     .index("by_owned_puzzle", ["ownedPuzzleId"])
     .index("by_moderation_status", ["moderationStatus"])
-    .index("by_hash_check_pending", ["hashCheckPendingSince"]),
+    .index("by_hash_check_pending", ["hashCheckPendingSince"])
+    // Whether a blob is already a copy photo (message-photo claims refuse it).
+    .index("by_file", ["fileId"]),
 
   // Named collections for organizing puzzles
   collections: defineTable({
@@ -514,7 +518,9 @@ export default defineSchema({
   })
     .index("by_completion", ["completionId"])
     .index("by_moderation_status", ["moderationStatus"])
-    .index("by_hash_check_pending", ["hashCheckPendingSince"]),
+    .index("by_hash_check_pending", ["hashCheckPendingSince"])
+    // Whether a blob is already a completion photo (message-photo claims refuse it).
+    .index("by_file", ["fileId"]),
 
   // One review per (member, puzzle definition). `rating` is optional ONLY to
   // hold migrated text-only legacy reviews (the old catalog form required text,
