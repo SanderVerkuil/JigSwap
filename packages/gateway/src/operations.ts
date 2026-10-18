@@ -369,6 +369,11 @@ export const gateway = {
     inviteContext: api.social.getInviteContext.getInviteContext,
     recordInviteLanding: api.social.recordInviteLanding.recordInviteLanding,
     redeemInvite: api.social.redeemInvite.redeemInvite,
+    // Confirm-first: a redeemed invite link OFFERS the new member a mutual follow with the
+    // inviter. The recipient lists their open offers and accepts (follow each other) or declines.
+    connectionOffers: api.social.listMyConnectionOffers.listMyConnectionOffers,
+    acceptConnection: api.social.acceptConnection.acceptConnection,
+    declineConnection: api.social.declineConnection.declineConnection,
     acceptQrFollow: api.social.acceptQrFollow.acceptQrFollow,
     // Household-context invite links (admin-only, single-use, 14-day expiry, rate-limited). A new
     // member redeeming one gets a PENDING household invite; revoke withdraws the actor's open ones.

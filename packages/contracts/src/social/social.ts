@@ -157,6 +157,18 @@ export type ProjectedMember =
     };
 
 /**
+ * An open connection offer to the viewer (social.listMyConnectionOffers): the person who invited
+ * them to JigSwap offers to follow each other, and nothing is followed until the viewer accepts.
+ * `offerId` is what acceptConnection / declineConnection take.
+ */
+export interface ConnectionOfferView {
+  readonly offerId: string;
+  readonly from: ProjectedMember;
+  readonly source: "inviteLink" | "householdLink";
+  readonly createdAt: number;
+}
+
+/**
  * "Followers you know" social proof for a member profile: accounts the VIEWER follows who also
  * follow the target member (viewer's following ∩ target's followers) — deliberately NOT plain
  * mutual followers. Personalized (the read is requireMember-gated) and one direction only.

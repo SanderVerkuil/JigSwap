@@ -1165,6 +1165,31 @@ export default defineSchema({
     createdAt: v.number(),
   }).index("by_new_member", ["newMemberId"]),
 
+  // Social: confirm-first connection offers (ConnectionOffer aggregate). Redeeming an invite link
+  // at sign-up offers the new member (toId) a mutual follow with the link's owner (fromId); nothing
+  // is followed until they accept. inviteLinkId attributes an accept to the link's
+  // followsEstablished. At most one pending row per ordered pair (by_from_to_status); expiry is
+  // lazy (reads check expiresAt) plus a scheduled expire at expiresAt.
+  connectionOffers: defineTable({
+    aggregateId: v.string(),
+    fromId: v.id("users"),
+    toId: v.id("users"),
+    source: v.union(v.literal("inviteLink"), v.literal("householdLink")),
+    inviteLinkId: v.optional(v.id("inviteLinks")),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("accepted"),
+      v.literal("declined"),
+      v.literal("expired"),
+    ),
+    createdAt: v.number(),
+    expiresAt: v.number(),
+    respondedAt: v.optional(v.number()),
+  })
+    .index("by_aggregate_id", ["aggregateId"])
+    .index("by_from_to_status", ["fromId", "toId", "status"])
+    .index("by_to_status", ["toId", "status"]),
+
   // FollowRequest aggregate rows: a member asking to follow a private-profile member.
   // status pending → approved | declined; respondedAt backs the 7-day decline cooldown.
   // Declined rows are kept (not deleted) so a re-request inside the cooldown can be

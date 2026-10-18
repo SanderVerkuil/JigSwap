@@ -1,6 +1,6 @@
 import { COOLDOWN_MS, makeFollowMember, toMemberId } from "@jigswap/domain";
 import { Id } from "../_generated/dataModel";
-import { MutationCtx } from "../_generated/server";
+import { MutationCtx, QueryCtx } from "../_generated/server";
 import { convexFollowRepository } from "./adapters/convexFollowRepository";
 import { followIdGenerator } from "./adapters/idGenerators";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
@@ -15,25 +15,15 @@ export type EstablishMutualFollowResult = {
   edgesCreated: number;
 };
 
-// Establish follow edges in BOTH directions between two members, tolerating edges that already
-// exist, and resolve any RESOLVABLE follow request between the pair. Used by QR scan + invite
-// redemption — these flows bypass the private-profile request gate that the followMember ENDPOINT
-// applies (Phase 2). Consent-verification (the decline cooldown) is enforced HERE, structurally,
-// so every caller is protected: Convex mutations are public endpoints, and a forwarded invite
-// token in an existing member's hands must not become a way to bypass a decline. It still goes
-// through the domain use case so MemberFollowed events reach the activity feed and notifications.
-export async function establishMutualFollow(
-  ctx: MutationCtx,
+// Whether a follow request between the pair, in EITHER direction, was declined inside the
+// cooldown. Shared by establishMutualFollow and the connection offers, so a link can neither force
+// nor even offer a connection the other side recently refused.
+export async function inDeclineCooldownEitherWay(
+  ctx: QueryCtx,
   a: Id<"users">,
   b: Id<"users">,
-): Promise<EstablishMutualFollowResult> {
-  const now = Date.now();
-
-  // Anti-pester invariant (Phase 2), enforced structurally for ALL callers: while a decline of
-  // EITHER party against the other is inside its cooldown, NO token path may force a connection.
-  // Tokens are forwardable (share button, copyable URL), so possession is not in-person consent.
-  // A genuinely new member (redeemInvite's real case) has no prior request rows and never trips
-  // this. Refuse cleanly: create no edges, flip no rows, and report established:false.
+  now: number,
+): Promise<boolean> {
   for (const [requesterId, targetId] of [
     [a, b],
     [b, a],
@@ -50,8 +40,33 @@ export async function establishMutualFollow(
       request.respondedAt !== undefined &&
       now - request.respondedAt < COOLDOWN_MS
     ) {
-      return { established: false, edgesCreated: 0 };
+      return true;
     }
+  }
+  return false;
+}
+
+// Establish follow edges in BOTH directions between two members, tolerating edges that already
+// exist, and resolve any RESOLVABLE follow request between the pair. Used by QR scan + accepting
+// an invite link's connection offer — these flows bypass the private-profile request gate that
+// the followMember ENDPOINT applies (Phase 2). Consent-verification (the decline cooldown) is enforced HERE, structurally,
+// so every caller is protected: Convex mutations are public endpoints, and a forwarded invite
+// token in an existing member's hands must not become a way to bypass a decline. It still goes
+// through the domain use case so MemberFollowed events reach the activity feed and notifications.
+export async function establishMutualFollow(
+  ctx: MutationCtx,
+  a: Id<"users">,
+  b: Id<"users">,
+): Promise<EstablishMutualFollowResult> {
+  const now = Date.now();
+
+  // Anti-pester invariant (Phase 2), enforced structurally for ALL callers: while a decline of
+  // EITHER party against the other is inside its cooldown, NO token path may force a connection.
+  // Tokens are forwardable (share button, copyable URL), so possession is not in-person consent.
+  // A genuinely new member (redeemInvite's real case) has no prior request rows and never trips
+  // this. Refuse cleanly: create no edges, flip no rows, and report established:false.
+  if (await inDeclineCooldownEitherWay(ctx, a, b, now)) {
+    return { established: false, edgesCreated: 0 };
   }
 
   const followMemberUseCase = makeFollowMember({
