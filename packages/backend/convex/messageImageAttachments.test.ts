@@ -928,6 +928,24 @@ describe("revealing a blurred photo", () => {
     ).toHaveLength(1);
   });
 
+  test.each(["attachment", "message"] as const)(
+    "refused while the viewer has an open %s report on the photo",
+    async (targetKind) => {
+      const t = convexTest(schema, modules);
+      const { id } = await blurredPhoto(t);
+      const targetId =
+        targetKind === "attachment"
+          ? id
+          : (await attachment(t, id))!.messageId!;
+      await asBob(t).mutation(api.reports.fileReport.fileReport, {
+        targetKind,
+        targetId,
+        reason: "sexual",
+      });
+      await expect(reveal(asBob, t, id)).rejects.toThrow(/AttachmentNotFound/);
+    },
+  );
+
   test("participants only, delivered photos only, not in a blocked pair, rate limited", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob, id, threadId } = await blurredPhoto(t);

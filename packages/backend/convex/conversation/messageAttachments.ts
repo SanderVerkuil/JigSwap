@@ -477,8 +477,8 @@ const hasRevealed = async (
     )
     .first()) !== null;
 
-// An open report by this viewer on the photo, or on the image message carrying it.
-const hasOpenReport = async (
+/** An open report by this viewer on the photo, or on the image message carrying it. */
+export const hasOpenReport = async (
   ctx: QueryCtx,
   reporterId: Id<"users">,
   row: Attachment,
