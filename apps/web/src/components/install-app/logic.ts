@@ -6,8 +6,11 @@
  * How this browser can install the site, or null when it can't (or we can't explain how).
  * - "prompt": Chromium fired `beforeinstallprompt`, so an "Install app" button can call prompt().
  * - "ios": iOS Safari, or iOS Chrome/Edge on iOS 16.4+, which add to the home screen via Share.
+ * - "android-menu": Chrome on Android without a captured prompt. Chrome fires the event only when
+ *   its own heuristics allow (engagement, no recent dismissal, once per page load), but its ⋮ menu
+ *   can install the site at any time.
  */
-export type InstallMethod = "prompt" | "ios";
+export type InstallMethod = "prompt" | "ios" | "android-menu";
 
 export interface BrowserTraits {
   userAgent: string;
@@ -51,16 +54,32 @@ export function iosCanAddToHomeScreen(traits: BrowserTraits): boolean {
   return /Safari\//.test(ua);
 }
 
-/** The install path to offer, or null: a captured prompt wins, then iOS's Share steps. */
+/** Chrome itself on Android: not an app's WebView ("; wv)") or another Chromium browser. */
+export function isAndroidChrome({ userAgent }: BrowserTraits): boolean {
+  if (!/Android/.test(userAgent) || !/Chrome\/\d/.test(userAgent)) return false;
+  if (/; wv\)/.test(userAgent)) return false;
+  return !/SamsungBrowser|EdgA|OPR\/|YaBrowser|UCBrowser|DuckDuckGo|Firefox/.test(
+    userAgent,
+  );
+}
+
+/**
+ * The install path to offer, or null: a captured prompt wins, then iOS's Share steps, then
+ * Chrome's menu on Android. `installed` is navigator.getInstalledRelatedApps()'s answer (null
+ * while unknown): the menu steps only show once JigSwap is known not to be installed already.
+ */
 export function installMethod({
   traits,
   hasPrompt,
+  installed,
 }: {
   traits: BrowserTraits;
   hasPrompt: boolean;
+  installed: boolean | null;
 }): InstallMethod | null {
   if (hasPrompt) return "prompt";
   if (iosCanAddToHomeScreen(traits)) return "ios";
+  if (installed === false && isAndroidChrome(traits)) return "android-menu";
   return null;
 }
 

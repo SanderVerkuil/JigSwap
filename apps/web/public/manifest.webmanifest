@@ -12,6 +12,9 @@
   "background_color": "#fdfdff",
   "theme_color": "#ffffff",
   "categories": ["entertainment", "lifestyle", "social"],
+  "related_applications": [
+    { "platform": "webapp", "url": "/manifest.webmanifest" }
+  ],
   "icons": [
     {
       "src": "/icon-192.png",

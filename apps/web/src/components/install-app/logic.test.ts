@@ -3,6 +3,7 @@ import {
   EMPTY_TIP_STATE,
   installMethod,
   iosCanAddToHomeScreen,
+  isAndroidChrome,
   isIOS,
   isStandalone,
   MIN_VISITS,
@@ -36,6 +37,12 @@ const UA = {
     "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
   androidFirefox:
     "Mozilla/5.0 (Android 14; Mobile; rv:125.0) Gecko/125.0 Firefox/125.0",
+  androidWebView:
+    "Mozilla/5.0 (Linux; Android 14; Pixel 8 Build/AP1A; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/124.0.0.0 Mobile Safari/537.36",
+  androidSamsung:
+    "Mozilla/5.0 (Linux; Android 14; SM-S921B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/25.0 Chrome/121.0.0.0 Mobile Safari/537.36",
+  androidEdge:
+    "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36 EdgA/124.0.2478.50",
 };
 
 const phone = (userAgent: string) => ({ userAgent, maxTouchPoints: 5 });
@@ -74,26 +81,74 @@ describe("iosCanAddToHomeScreen", () => {
   });
 });
 
+describe("isAndroidChrome", () => {
+  it("recognises Chrome on Android only", () => {
+    expect(isAndroidChrome(phone(UA.androidChrome))).toBe(true);
+    expect(isAndroidChrome(phone(UA.androidWebView))).toBe(false);
+    expect(isAndroidChrome(phone(UA.androidSamsung))).toBe(false);
+    expect(isAndroidChrome(phone(UA.androidEdge))).toBe(false);
+    expect(isAndroidChrome(phone(UA.androidFirefox))).toBe(false);
+    expect(isAndroidChrome(phone(UA.iphoneChrome174))).toBe(false);
+  });
+});
+
 describe("installMethod", () => {
   it("prefers a captured install prompt", () => {
     expect(
-      installMethod({ traits: phone(UA.androidChrome), hasPrompt: true }),
+      installMethod({
+        traits: phone(UA.androidChrome),
+        hasPrompt: true,
+        installed: null,
+      }),
     ).toBe("prompt");
   });
 
   it("falls back to the iOS Share steps", () => {
     expect(
-      installMethod({ traits: phone(UA.iphoneSafari), hasPrompt: false }),
+      installMethod({
+        traits: phone(UA.iphoneSafari),
+        hasPrompt: false,
+        installed: null,
+      }),
     ).toBe("ios");
   });
 
-  it("offers nothing without a prompt or an iOS path", () => {
+  it("falls back to Chrome's menu on Android once JigSwap is known not installed", () => {
     expect(
-      installMethod({ traits: phone(UA.androidChrome), hasPrompt: false }),
-    ).toBeNull();
-    expect(
-      installMethod({ traits: phone(UA.androidFirefox), hasPrompt: false }),
-    ).toBeNull();
+      installMethod({
+        traits: phone(UA.androidChrome),
+        hasPrompt: false,
+        installed: false,
+      }),
+    ).toBe("android-menu");
+  });
+
+  it("offers no Android menu steps when installed or the install state is unknown", () => {
+    for (const installed of [true, null]) {
+      expect(
+        installMethod({
+          traits: phone(UA.androidChrome),
+          hasPrompt: false,
+          installed,
+        }),
+      ).toBeNull();
+    }
+  });
+
+  it("offers nothing to other Android browsers without a prompt", () => {
+    for (const ua of [
+      UA.androidFirefox,
+      UA.androidWebView,
+      UA.androidSamsung,
+    ]) {
+      expect(
+        installMethod({
+          traits: phone(ua),
+          hasPrompt: false,
+          installed: false,
+        }),
+      ).toBeNull();
+    }
   });
 });
 

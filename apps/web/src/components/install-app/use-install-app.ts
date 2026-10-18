@@ -36,6 +36,34 @@ function readStandalone(): boolean {
   });
 }
 
+// Whether JigSwap is already installed on this device, via the manifest's related_applications
+// self-entry (Chrome on Android answers this from inside the app's scope). null while unknown or
+// unsupported. Asked again whenever the first subscriber mounts.
+let installed: boolean | null = null;
+const installedListeners = new Set<() => void>();
+const setInstalled = (value: boolean) => {
+  installed = value;
+  for (const listener of installedListeners) listener();
+};
+
+if (typeof window !== "undefined") {
+  window.addEventListener("appinstalled", () => setInstalled(true));
+}
+
+function subscribeInstalled(listener: () => void): () => void {
+  const nav = navigator as Navigator & {
+    getInstalledRelatedApps?: () => Promise<unknown[]>;
+  };
+  if (installedListeners.size === 0 && nav.getInstalledRelatedApps) {
+    nav
+      .getInstalledRelatedApps()
+      .then((apps) => setInstalled(apps.length > 0))
+      .catch(() => {});
+  }
+  installedListeners.add(listener);
+  return () => installedListeners.delete(listener);
+}
+
 /**
  * How this browser can install JigSwap, or null (already installed, unsupported, or SSR / the
  * first client render, so markup matches hydration). Re-renders when a Chromium install prompt
@@ -46,6 +74,11 @@ export function useInstallMethod(): InstallMethod | null {
     subscribeInstallPrompt,
     () => getInstallPrompt() !== null,
     () => false,
+  );
+  const knownInstalled = useSyncExternalStore(
+    subscribeInstalled,
+    () => installed,
+    () => null,
   );
   const client = useSyncExternalStore(
     noopSubscribe,
@@ -59,6 +92,7 @@ export function useInstallMethod(): InstallMethod | null {
       maxTouchPoints: navigator.maxTouchPoints ?? 0,
     },
     hasPrompt,
+    installed: knownInstalled,
   });
 }
 
