@@ -735,6 +735,7 @@
     "placeholder": "Write a message about this puzzle…",
     "firstMessageHint": "Your conversation starts when you send the first message.",
     "self": "This is your own puzzle.",
+    "ownerHidden": "This owner keeps their profile private, so you can't message them from here.",
     "unavailable": "This puzzle isn't available to message about.",
     "backToPuzzle": "Back to the puzzle"
   },

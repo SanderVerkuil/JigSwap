@@ -735,6 +735,7 @@
     "placeholder": "Schrijf een bericht over deze puzzel…",
     "firstMessageHint": "Je gesprek begint zodra je het eerste bericht verstuurt.",
     "self": "Dit is je eigen puzzel.",
+    "ownerHidden": "Deze eigenaar heeft een privéprofiel, dus vanaf hier kun je geen bericht sturen.",
     "unavailable": "Over deze puzzel kun je geen bericht sturen.",
     "backToPuzzle": "Terug naar de puzzel"
   },
