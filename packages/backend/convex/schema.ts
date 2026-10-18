@@ -625,6 +625,16 @@ export default defineSchema({
     ),
     rowId: v.string(),
     uploaderId: v.id("users"),
+    // Who the uploader was AT MATCH TIME, so the report survives account deletion (the users
+    // row is only tombstoned while an escalation is not closed; see users.deleteUser).
+    uploaderSnapshot: v.optional(
+      v.object({
+        clerkId: v.string(),
+        email: v.optional(v.string()),
+        name: v.optional(v.string()),
+        username: v.optional(v.string()),
+      }),
+    ),
     // Absent only when a later re-check matched after the photo's blob was already gone.
     fileId: v.optional(v.id("_storage")),
     md5: v.string(),
@@ -643,7 +653,8 @@ export default defineSchema({
     note: v.optional(v.string()),
   })
     .index("by_status", ["status", "matchedAt"])
-    .index("by_file", ["fileId"]),
+    .index("by_file", ["fileId"])
+    .index("by_uploader", ["uploaderId"]),
 
   // Community change proposals against APPROVED catalog definitions. `changes` is the exact
   // patch the definition receives on approval; `baseline` snapshots the changed fields' values

@@ -35,7 +35,16 @@ export const listCsamEscalations = query({
           id: row._id,
           table: row.table,
           uploaderId: row.uploaderId,
-          uploaderLabel: uploader ? adminMemberLabelOf(uploader) : null,
+          // The live account when it still has a profile, else the snapshot taken at match time
+          // (the account may have been deleted or tombstoned since).
+          uploaderLabel:
+            uploader && uploader.isActive
+              ? adminMemberLabelOf(uploader)
+              : (row.uploaderSnapshot?.name ??
+                row.uploaderSnapshot?.email ??
+                row.uploaderSnapshot?.clerkId ??
+                null),
+          uploaderSnapshot: row.uploaderSnapshot ?? null,
           md5: row.md5,
           sha1: row.sha1,
           provider: row.provider,

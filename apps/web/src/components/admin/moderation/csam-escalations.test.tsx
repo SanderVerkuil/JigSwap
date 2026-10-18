@@ -26,6 +26,7 @@ const escalation = (
   table: "ownedPuzzleImages",
   uploaderId: "u1" as never,
   uploaderLabel: "alice",
+  uploaderSnapshot: null,
   md5: "d41d8cd98f00b204e9800998ecf8427e",
   sha1: "da39a3ee5e6b4b0d3255bfef95601890afd80709",
   provider: "offlimits",

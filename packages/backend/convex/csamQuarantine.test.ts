@@ -283,6 +283,7 @@ describe("hash match on a copy photo", () => {
         "table",
         "uploaderId",
         "uploaderLabel",
+        "uploaderSnapshot",
       ].sort(),
     );
     // An admin cannot hand-decide it from the unchecked queue either.
@@ -992,5 +993,50 @@ describe("re-screen hash-checks legacy and unscored photos (M6)", () => {
     );
     expect(batch.approved).toBe(1);
     expect(await escalations(t)).toEqual([]);
+  });
+});
+
+describe("uploader identity survives account deletion (M5)", () => {
+  test("the escalation snapshots the uploader; deleting the account tombstones it while the escalation is open", async () => {
+    vi.stubGlobal("fetch", routedFetch("match"));
+    const t = convexTest(schema, modules);
+    const { alice, copy } = await seed(t);
+    await addCopyPhoto(t, copy);
+    const [escalation] = await escalations(t);
+    expect(escalation.uploaderSnapshot).toEqual({
+      clerkId: "clerk_alice",
+      email: "clerk_alice@example.com",
+      name: "clerk_alice",
+      username: undefined,
+    });
+
+    await t.mutation(internal.users.deleteUser, { id: "clerk_alice" });
+
+    const tombstone = await t.run((ctx) => ctx.db.get(alice));
+    expect(tombstone).not.toBeNull();
+    expect(tombstone?.isActive).toBe(false);
+    expect(tombstone?.email).toBeUndefined();
+    expect(tombstone?.name).toBeUndefined();
+    const listed = await asAdmin(t).query(
+      api.admin.listCsamEscalations.listCsamEscalations,
+      {},
+    );
+    expect(listed.escalations[0].uploaderLabel).toBe("clerk_alice");
+  });
+
+  test("once every escalation is closed the account is deleted as usual", async () => {
+    vi.stubGlobal("fetch", routedFetch("match"));
+    const t = convexTest(schema, modules);
+    const { alice, copy } = await seed(t);
+    await addCopyPhoto(t, copy);
+    const [escalation] = await escalations(t);
+    await t.run((ctx) => ctx.db.patch(escalation._id, { status: "closed" }));
+
+    await t.mutation(internal.users.deleteUser, { id: "clerk_alice" });
+
+    expect(await t.run((ctx) => ctx.db.get(alice))).toBeNull();
+    expect((await escalations(t))[0].uploaderSnapshot?.clerkId).toBe(
+      "clerk_alice",
+    );
   });
 });

@@ -63,8 +63,20 @@ export const recordCsamEscalation = async (
         .first()
     : null;
   if (existing) return existing._id;
+  // Snapshot the uploader's identity now: the report must survive account deletion.
+  const uploader = await ctx.db.get(args.uploaderId);
   const escalationId = await ctx.db.insert("csamEscalations", {
     ...args,
+    ...(uploader
+      ? {
+          uploaderSnapshot: {
+            clerkId: uploader.clerkId,
+            email: uploader.email,
+            name: uploader.name,
+            username: uploader.username,
+          },
+        }
+      : {}),
     matchedAt: Date.now(),
     status: "open",
   });
