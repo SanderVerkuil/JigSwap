@@ -29,6 +29,9 @@ describe("NOTIFICATION_TYPES", () => {
       "household_invite_accepted",
       "connection_offer_received",
       "whats_new",
+      "report_decided",
+      "content_removed",
+      "member_warned",
     ]);
   });
 });

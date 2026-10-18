@@ -23,6 +23,9 @@ const ACTORLESS: ReadonlySet<NotificationViewType> = new Set([
   "proposal_approved",
   "proposal_rejected",
   "photo_removed",
+  "report_decided",
+  "content_removed",
+  "member_warned",
 ]);
 
 /**
@@ -90,6 +93,10 @@ export function NotificationSentence({ view }: { view: NotificationView }) {
     hasGoal: context.goalTitle ? "yes" : "no",
     // message_received: a photo or shared location is named by its kind, never its caption.
     media: context.messageKind ?? "none",
+    // Report outcomes (report_decided, content_removed, member_warned).
+    decision: context.reportDecision ?? "",
+    restricted: context.restrictedContent ?? "",
+    ground: context.ground ?? "",
     b: bold,
   };
   const key =

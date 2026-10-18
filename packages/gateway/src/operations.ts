@@ -457,6 +457,14 @@ export const gateway = {
     communityAvatars: api.insights.getCommunityAvatars.getCommunityAvatars,
   },
 
+  // Reports (DSA notices) about a member or their content: a message, copy, photo or exchange the
+  // reporter can see. One open report per reporter and target (a repeat returns the existing one);
+  // rate-limited; filing never removes anything. listMyReports is the caller's own, newest first.
+  reports: {
+    fileReport: api.reports.fileReport.fileReport,
+    listMyReports: api.reports.listMyReports.listMyReports,
+  },
+
   // Public marketing contact form: operational/support write, not a bounded context. The thin
   // mutation is unauthenticated and persists the message for admin triage.
   contact: {
@@ -528,6 +536,12 @@ export const gateway = {
     // CSAM hash matches (metadata only, never an image) and the operator's "reported" mark.
     listCsamEscalations: api.admin.listCsamEscalations.listCsamEscalations,
     markCsamEscalation: api.admin.markCsamEscalation.markCsamEscalation,
+    // DSA notice-and-action queue: reports by status (newest first), one report with its evidence
+    // snapshot, and the decision (dismissed / content_removed / warned, with a statement of
+    // reasons), which also decides every other open report on the same target.
+    listReports: api.admin.listReports.listReports,
+    getReport: api.admin.getReport.getReport,
+    decideReport: api.admin.decideReport.decideReport,
     // Admin users directory (read-only v1 — no user actions). Paginated; an optional
     // `search` arg switches to the by_searchable_name index. Rows are AdminUserView
     // DTOs whose `role` is the display-only Clerk mirror (authz stays JWT-based).

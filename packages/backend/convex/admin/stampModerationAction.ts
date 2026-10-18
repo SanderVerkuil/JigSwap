@@ -18,7 +18,10 @@ type ModerationKind =
   | "image_quarantined"
   | "csam_escalation_updated"
   | "role_granted"
-  | "role_revoked";
+  | "role_revoked"
+  | "report_dismissed"
+  | "report_content_removed"
+  | "report_warned";
 
 // One-liner used by every moderation decision point so the audit trail can't drift.
 export const stampModerationAction = (

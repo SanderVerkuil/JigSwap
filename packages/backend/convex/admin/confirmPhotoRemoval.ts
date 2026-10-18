@@ -4,8 +4,8 @@ import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
-import { isPreservedBlob } from "../lib/imageModeration/quarantine";
 import { makeNotify } from "../notifications/adapters/makeNotify";
+import { deleteCopyPhoto } from "./deleteCopyPhoto";
 import { stampModerationAction } from "./stampModerationAction";
 
 // Review-queue decision: the auto-rejection stands, so the photo is removed for good — blob and
@@ -29,19 +29,7 @@ export const confirmPhotoRemoval = mutation({
       copy?.snapshot?.title ??
       (copy ? (await ctx.db.get(copy.puzzleId))?.title : undefined);
 
-    // Clear the copy's cover if this photo was it (mirrors removeCopyPhoto), then drop blob + row.
-    if (copy?.coverImageId === imageId) {
-      await ctx.db.patch(copy._id, { coverImageId: undefined });
-    }
-    // An upload refused by the pipeline's input guards (invalid_image) has no blob left, and a
-    // blob preserved for a CSAM escalation is never deleted.
-    if (
-      (await ctx.db.system.get(row.fileId)) &&
-      !(await isPreservedBlob(ctx, row.fileId))
-    ) {
-      await ctx.storage.delete(row.fileId);
-    }
-    await ctx.db.delete(imageId);
+    await deleteCopyPhoto(ctx, row, copy);
 
     await stampModerationAction(ctx, {
       actorId: memberId as unknown as Id<"users">,

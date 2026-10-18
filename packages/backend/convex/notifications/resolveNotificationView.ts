@@ -444,11 +444,14 @@ const resolveSubject = async (
             .first(),
       );
       const preview =
-        last && last.kind === "text" ? messagePreviewOf(last.body) : undefined;
+        last && last.kind === "text" && last.removedAt === undefined
+          ? messagePreviewOf(last.body)
+          : undefined;
       // A media message is described by its kind, never by its caption. Attachment-less (legacy)
       // image rows get neither: there is no real photo behind them.
       const messageKind =
         last &&
+        last.removedAt === undefined &&
         (last.kind === "image" || last.kind === "location") &&
         last.attachmentId !== undefined
           ? last.kind
@@ -547,17 +550,44 @@ const resolveSubject = async (
   }
 };
 
+// The report-outcome params (report_decided, content_removed, member_warned), narrowed to the
+// literals the contract allows; anything else is dropped.
+const REPORT_DECISIONS = ["dismissed", "content_removed", "warned"] as const;
+const RESTRICTED_CONTENT = ["message", "photo"] as const;
+const GROUNDS = [
+  "spam_scam",
+  "harassment_hate",
+  "sexual",
+  "fake_trade",
+  "illegal",
+  "other",
+] as const;
+const oneOf = <T extends string>(
+  allowed: readonly T[],
+  value: string | undefined,
+): T | undefined =>
+  (allowed as readonly string[]).includes(value ?? "")
+    ? (value as T)
+    : undefined;
+
 // Snapshot context from params: the fallback title when the live subject is unavailable (or the
-// row has no subject), plus the immutable values (reason, rating) that only live in params.
+// row has no subject), plus the immutable values (reason, rating, report outcome) that only live
+// in params.
 const paramsContext = (
   params: Record<string, string> | undefined,
 ): NotificationViewContext => {
   const rating = Number(params?.rating);
+  const reportDecision = oneOf(REPORT_DECISIONS, params?.decision);
+  const restrictedContent = oneOf(RESTRICTED_CONTENT, params?.restricted);
+  const ground = oneOf(GROUNDS, params?.ground);
   return {
     ...(params?.puzzleTitle ? { puzzleTitle: params.puzzleTitle } : {}),
     ...(params?.goalTitle ? { goalTitle: params.goalTitle } : {}),
     ...(params?.reason ? { reason: params.reason } : {}),
     ...(params?.rating && Number.isFinite(rating) ? { rating } : {}),
+    ...(reportDecision ? { reportDecision } : {}),
+    ...(restrictedContent ? { restrictedContent } : {}),
+    ...(ground ? { ground } : {}),
   };
 };
 

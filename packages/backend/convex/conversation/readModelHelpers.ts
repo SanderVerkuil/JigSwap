@@ -21,7 +21,13 @@ export const threadRowByAggregateId = (
 // The message columns a DTO is built from.
 type MessageFields = Pick<
   Doc<"threadMessages">,
-  "messageId" | "authorId" | "kind" | "body" | "sentAt" | "attachmentId"
+  | "messageId"
+  | "authorId"
+  | "kind"
+  | "body"
+  | "sentAt"
+  | "attachmentId"
+  | "removedAt"
 >;
 
 /**
@@ -31,7 +37,8 @@ type MessageFields = Pick<
  * its caption as `body` plus its `attachmentId`. A media row WITHOUT an attachment has its body
  * BLANKED: `postMessage` no longer accepts images, and any legacy image row's body is an
  * unverified, client-supplied string (never screened or ownership-checked), so it must never reach
- * a renderer.
+ * a renderer. A moderator-removed message keeps its slot but carries an empty body, no
+ * attachment ref and `removed: true`.
  *
  * Seam: the attachments PR resolves `attachmentId` into an `attachment` view (status, URLs) for
  * the reader in threadMessageViewOf, the way `copyId` resolves into `copy`.
@@ -43,9 +50,11 @@ export const toThreadMessageView = (
   id: row.messageId,
   isMine: row.authorId === me,
   kind: row.kind,
-  body: isUnattachedMedia(row) ? "" : row.body,
+  body: isUnattachedMedia(row) || row.removedAt !== undefined ? "" : row.body,
   sentAt: row.sentAt,
-  ...(row.attachmentId !== undefined && { attachmentId: row.attachmentId }),
+  ...(row.removedAt !== undefined
+    ? { removed: true as const }
+    : row.attachmentId !== undefined && { attachmentId: row.attachmentId }),
 });
 
 /**
@@ -62,6 +71,7 @@ export const toLastMessageView = (
   kind: summary.kind,
   body: summary.body,
   sentAt: summary.sentAt,
+  ...(summary.removed && { removed: true as const }),
 });
 
 // Unread counting stops once 50 QUALIFYING (post-receipt, not-own-authored) messages are found,
@@ -153,7 +163,8 @@ export const threadMessageViewOf = (ctx: QueryCtx, me: Id<"users">) => {
   const cardOf = viewableCopyCards(ctx, me);
   return async (row: Doc<"threadMessages">): Promise<ThreadMessageView> => {
     const view = toThreadMessageView(row, me);
-    if (!row.copyId) return view;
+    // A removed message renders only as "Message removed": no copy card, no copyUnavailable.
+    if (!row.copyId || row.removedAt !== undefined) return view;
     const copy = await cardOf(row.copyId);
     // A reference the reader can no longer follow (deleted, or no longer viewable) is
     // flagged rather than dropped, so the UI can say "no longer available".

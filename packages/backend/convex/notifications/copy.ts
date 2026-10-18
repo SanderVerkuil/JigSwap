@@ -18,6 +18,12 @@ import type { DeliveryContent } from "./deliveryContent";
 //   goalTitle   — goal_achieved
 //   reason      — proposal_rejected (moderator-entered, may be absent)
 //   rating      — review_received (1-5, snapshotted)
+//   decision    — report_decided ("dismissed" | "content_removed" | "warned")
+//   restricted  — content_removed ("message" | "photo")
+//   ground      — content_removed, member_warned (the report reason the decision rests on)
+//   reason      — also content_removed, member_warned: the moderator's statement of reasons
+//   automated   — content_removed, member_warned ("false": decided by a person)
+//   redress     — content_removed, member_warned (how to ask for a review)
 // The push send action renders from the delivery resolved for the recipient (pushTextOf), which
 // overlays the live actor name and context: puzzleTitle on the trade types (the exchanged copy),
 // messagePreview or messageKind (image | location) on message_received, and actorName on every
@@ -201,6 +207,25 @@ const COPY: Record<NotificationType, (p: Params) => NotificationText> = {
   whats_new: () => ({
     title: "New in JigSwap",
     message: "See what's new in JigSwap",
+  }),
+  report_decided: (p) => ({
+    title: "Report reviewed",
+    message:
+      p["decision"] === "dismissed"
+        ? "We reviewed your report and took no action"
+        : "We reviewed your report and took action",
+  }),
+  content_removed: (p) => ({
+    title: "Content removed",
+    message: p["reason"]
+      ? `A moderator removed your ${p["restricted"] === "photo" ? "photo" : "message"}: ${p["reason"]}`
+      : `A moderator removed your ${p["restricted"] === "photo" ? "photo" : "message"}`,
+  }),
+  member_warned: (p) => ({
+    title: "Warning from a moderator",
+    message: p["reason"]
+      ? `A moderator warned you: ${p["reason"]}`
+      : "A moderator warned you about your activity",
   }),
 };
 

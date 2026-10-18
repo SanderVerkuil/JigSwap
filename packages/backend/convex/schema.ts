@@ -611,6 +611,9 @@ export default defineSchema({
       v.literal("csam_escalation_updated"),
       v.literal("role_granted"),
       v.literal("role_revoked"),
+      v.literal("report_dismissed"),
+      v.literal("report_content_removed"),
+      v.literal("report_warned"),
     ),
     targetLabel: v.string(), // denormalized display title at decision time
     targetId: v.string(),
@@ -842,6 +845,8 @@ export default defineSchema({
         body: v.string(),
         sentAt: v.number(),
         copyId: v.optional(v.id("ownedPuzzles")),
+        // Set when a moderator removed this message (body then empty, no copyId).
+        removed: v.optional(v.literal(true)),
       }),
     ),
     createdAt: v.number(),
@@ -872,6 +877,10 @@ export default defineSchema({
     // message (not the thread) because a DM is one long-lived thread per pair, spanning many
     // puzzles; absent on plain/system messages and every pre-existing row.
     copyId: v.optional(v.id("ownedPuzzles")),
+    // Moderation tombstone (admin/decideReport, content_removed): the read models blank the body
+    // and drop the copy card. The stored body stays for the report evidence trail.
+    removedAt: v.optional(v.number()),
+    removedReason: v.optional(v.string()),
   })
     .index("by_thread_sent", ["threadAggregateId", "sentAt"])
     // Copy-referencing messages of a thread, grouped per copy (rows without a copyId sort first
@@ -978,6 +987,9 @@ export default defineSchema({
       v.literal("household_invite_accepted"),
       v.literal("connection_offer_received"),
       v.literal("whats_new"),
+      v.literal("report_decided"),
+      v.literal("content_removed"),
+      v.literal("member_warned"),
     ),
     // Legacy pre-rendered English copy. Optional since notifications went structured: new rows
     // store `params` and the edges render copy (web via i18n keys, email via @jigswap/email).
@@ -1464,6 +1476,86 @@ export default defineSchema({
     startedAt: v.number(),
     completedAt: v.optional(v.number()),
   }).index("by_entry", ["entryId"]),
+
+  // DSA notice-and-action (spec 2.5): a member's report about another member or their content.
+  // Filing never changes the target; an admin decides it (admin/decideReport), which may tombstone
+  // a message or remove a photo. `targetId` is the target's canonical id string: users / copy /
+  // photo `_id`, the threadMessages `messageId`, or the exchange aggregateId (raw `_id` fallback).
+  // `evidence` is snapshotted at filing time so later edits or removal can't destroy it.
+  reports: defineTable({
+    reporterId: v.id("users"),
+    // An "attachment" kind arrives with message image attachments.
+    targetKind: v.union(
+      v.literal("user"),
+      v.literal("message"),
+      v.literal("copy"),
+      v.literal("photo"),
+      v.literal("exchange"),
+    ),
+    targetId: v.string(),
+    reportedUserId: v.id("users"),
+    reason: v.union(
+      v.literal("spam_scam"),
+      v.literal("harassment_hate"),
+      v.literal("sexual"),
+      v.literal("fake_trade"),
+      v.literal("illegal"),
+      v.literal("other"),
+    ),
+    details: v.optional(v.string()), // <= 1000 characters
+    // DSA Art. 16(2) notice elements; present iff reason === "illegal".
+    illegalNotice: v.optional(
+      v.object({
+        notifierName: v.string(),
+        // Only when it differs from the reporter's account email; read falls back to the account's.
+        notifierEmail: v.optional(v.string()),
+        goodFaith: v.literal(true),
+      }),
+    ),
+    evidence: v.object({
+      // message target: up to 10 preceding messages of the thread plus the target, ascending.
+      messages: v.optional(
+        v.array(
+          v.object({
+            messageId: v.string(),
+            authorId: v.optional(v.id("users")),
+            kind: v.union(
+              v.literal("text"),
+              v.literal("image"),
+              v.literal("location"),
+              v.literal("system"),
+            ),
+            body: v.string(),
+            sentAt: v.number(),
+            copyId: v.optional(v.id("ownedPuzzles")),
+            // Already moderator-removed when the report was filed: body "" and no copyId.
+            removed: v.optional(v.literal(true)),
+          }),
+        ),
+      ),
+    }),
+    status: v.union(
+      v.literal("open"),
+      v.literal("actioned"),
+      v.literal("dismissed"),
+    ),
+    decision: v.optional(
+      v.union(
+        v.literal("dismissed"),
+        v.literal("content_removed"),
+        v.literal("warned"),
+      ),
+    ),
+    statementOfReasons: v.optional(v.string()),
+    decidedBy: v.optional(v.id("users")),
+    decidedAt: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_status_created", ["status", "createdAt"])
+    .index("by_target", ["targetKind", "targetId"])
+    .index("by_reporter_target", ["reporterId", "targetKind", "targetId"])
+    .index("by_reporter_created", ["reporterId", "createdAt"])
+    .index("by_reported_user", ["reportedUserId", "createdAt"]),
 
   // Fixed-window rate limit counters (lib/rateLimits). One row per key ("<limit>:<memberId>"),
   // reset in place when its window has passed, so the table stays bounded without a cleanup job.

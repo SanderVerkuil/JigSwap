@@ -30,7 +30,10 @@ export type NotificationType =
   | "household_invite_received" // Household: HouseholdInviteSent — someone invited the member to their household
   | "household_invite_accepted" // Household: HouseholdInviteAccepted — the member's invite was accepted
   | "connection_offer_received" // Social: ConnectionOffered — their inviter offers to follow each other
-  | "whats_new"; // Product: a What's new entry marked `notify: true` was published (not a domain event)
+  | "whats_new" // Product: a What's new entry marked `notify: true` was published (not a domain event)
+  | "report_decided" // Safety: a moderator decided a report the member filed (DSA Art. 16(5))
+  | "content_removed" // Safety: a moderator removed the member's reported content (DSA Art. 17)
+  | "member_warned"; // Safety: a moderator warned the member over a report (DSA Art. 17)
 
 // All notification types, for iteration (e.g. seeding default preferences). Kept in sync with the
 // union above by construction.
@@ -60,6 +63,9 @@ export const NOTIFICATION_TYPES: readonly NotificationType[] = [
   "household_invite_accepted",
   "connection_offer_received",
   "whats_new",
+  "report_decided",
+  "content_removed",
+  "member_warned",
 ];
 
 // Types that may be delivered by EMAIL. Deliberately a subset: only high-value, act-on-it
@@ -80,4 +86,12 @@ export const EMAIL_ELIGIBLE_TYPES: ReadonlySet<NotificationType> = new Set([
   "new_follower",
   "follow_request_received",
   "follow_request_approved",
+]);
+
+// Types the member cannot switch off in-app: the DSA Art. 17 statement of reasons must reach the
+// member whose content a moderator restricted, whatever their preferences say. Other channels
+// (push/email) still follow the preference.
+export const MANDATORY_IN_APP_TYPES: ReadonlySet<NotificationType> = new Set([
+  "content_removed",
+  "member_warned",
 ]);

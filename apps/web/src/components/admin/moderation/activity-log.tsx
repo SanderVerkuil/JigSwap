@@ -50,6 +50,9 @@ const KIND_META: Record<ActivityRow["kind"], [LucideIcon, string]> = {
   csam_escalation_updated: [ShieldCheck, "text-muted-foreground"],
   role_granted: [ShieldCheck, "text-jigsaw-success"],
   role_revoked: [ShieldOff, "text-destructive"],
+  report_dismissed: [XCircle, "text-muted-foreground"],
+  report_content_removed: [Trash2, "text-destructive"],
+  report_warned: [Flag, "text-jigsaw-warning"],
 };
 
 // Single source of truth for "kinds with an admin.moderation.activity.* message":
