@@ -86,6 +86,7 @@ Variables read by the backend (`packages/backend/convex`):
 
 | Variable                             | Required?    | Used by                                         | Notes                                                                                                                                                                                                                                                                                                                                 |
 | ------------------------------------ | ------------ | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ANON_REF_SECRET`                    | **Required** | `convex/social/privacy.ts`                      | HMAC key for hidden members' `anonRef` (#178). At least 32 characters; see [`ANON_REF_SECRET`](#anon_ref_secret-every-deployment). Without it the backend fails closed (a throwaway key per request plus a `console.error`), so it works but hidden members' refs change on every response.                                           |
 | `CLERK_WEBHOOK_SECRET`               | Optional     | `convex/http.ts`                                | Read **per-request** inside the webhook handler; when unset the handler logs a warning and answers `503` — the preview deploys and works (Clerk webhooks never reach previews anyway). Still recommended on dev and **required in prod**, where Clerk actually delivers webhooks.                                                     |
 | `NEXT_PUBLIC_CLERK_FRONTEND_API_URL` | **Required** | `convex/auth.config.ts`                         | Clerk issuer domain; without it the preview deploys but rejects every authenticated request.                                                                                                                                                                                                                                          |
 | `AXIOM_API_KEY`                      | Optional     | `convex/lib/axiom.ts`                           | Wide-event log shipping; logging is a no-op without it.                                                                                                                                                                                                                                                                               |
@@ -107,7 +108,53 @@ Variables read by the backend (`packages/backend/convex`):
 
 At minimum, set a preview default for **`NEXT_PUBLIC_CLERK_FRONTEND_API_URL`**
 (pointing at the same Clerk dev instance the dev deployment uses, so users from the dev
-snapshot can sign in on previews). Everything else is optional on previews.
+snapshot can sign in on previews) and for **`ANON_REF_SECRET`** (below). Everything else
+is optional on previews.
+
+#### `ANON_REF_SECRET` (every deployment)
+
+When a member is hidden from the viewer, the backend replaces them with an `anonRef`.
+That ref is an HMAC-SHA256 keyed by this server-only secret
+(`packages/backend/convex/social/privacy.ts`, #178). Without the key, a viewer cannot
+recompute a ref from a candidate member id. The secret must be at least 32 characters.
+If it is unset or too short, the backend does **not** fall back to an unkeyed hash. It
+signs with a random key that lasts for one request and logs
+`ANON_REF_SECRET is unset or shorter than 32 characters…` in the deployment's logs on
+every such request. Pages keep working, but refs change on every response.
+
+Set it **before merging #178**. The production deploy runs right after CI passes on main,
+and setting the variable earlier is harmless because the old code never reads it.
+Run the commands from `packages/backend`. Use a different value for production than for
+dev and previews. Leave the value out of the command so the CLI prompts for it and the
+secret stays out of your shell history:
+
+```bash
+openssl rand -base64 48            # one value for prod, one for dev + previews (64 chars each)
+
+npx convex env set --prod ANON_REF_SECRET                     # production (prompts for the value)
+npx convex env set ANON_REF_SECRET                            # the shared dev deployment
+npx convex env default set --type preview ANON_REF_SECRET     # default for NEW previews
+
+# Existing previews predate the default (defaults apply only at creation), so set it on
+# each live one too, or remove and re-add the PR's `preview` label to recreate it:
+npx convex env set --deployment preview/<branch-with-slashes-as-dashes> ANON_REF_SECRET
+
+# Check (names only, values are never printed):
+npx convex env list --prod --names-only
+npx convex env list --names-only
+npx convex env default list --type preview --names-only
+```
+
+`npx convex env set ANON_REF_SECRET` without a flag targets the deployment in your local
+`packages/backend/.env.local` (`CONVEX_DEPLOYMENT`). If that is not the shared dev
+deployment, pass `--deployment <name>`. No GitHub or Vercel secret is needed: the GitHub
+preview workflow and the Vercel build both deploy to the same Convex preview, and that
+preview reads the project default.
+
+Nothing stores an `anonRef`. The schema, notifications and data export never contain
+one, and the web app never reads the value. So setting or rotating the secret
+changes each hidden member's ref once, on the next render. Rotate it by setting a new
+value the same way.
 
 ### 3. Vercel: point preview frontends at their branch's preview backend
 
