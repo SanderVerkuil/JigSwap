@@ -41,6 +41,8 @@ beforeEach(() => {
   vi.stubEnv("AXIOM_API_KEY", "");
   vi.stubEnv("MODERATION_PROVIDER", "");
   vi.stubEnv("HF_MODERATION_TOKEN", "");
+  vi.stubEnv("SIGHTENGINE_API_USER", "");
+  vi.stubEnv("SIGHTENGINE_SECRET_KEY", "");
 });
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -280,6 +282,75 @@ describe("moderatePhoto (copy photos)", () => {
     expect(row.moderationStatus).toBe("approved");
     expect(row.moderationScore).toBeUndefined();
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("moderatePhoto with the Sightengine provider", () => {
+  const sightengineReplies = (erotica: number) =>
+    vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            status: "success",
+            nudity: {
+              sexual_activity: 0.001,
+              sexual_display: 0.001,
+              erotica,
+              none: 1 - erotica,
+            },
+          }),
+          { status: 200 },
+        ),
+    );
+
+  test("a clean result approves with the explicit score; an explicit one rejects", async () => {
+    vi.stubEnv("MODERATION_PROVIDER", "sightengine");
+    vi.stubEnv("SIGHTENGINE_API_USER", "123");
+    vi.stubEnv("SIGHTENGINE_SECRET_KEY", "fake-secret");
+    const fetchMock = sightengineReplies(0.02);
+    vi.stubGlobal("fetch", fetchMock);
+    const t = convexTest(schema, modules);
+    const { copy } = await seed(t);
+
+    const { row } = await addPhoto(t, copy);
+    expect(row.moderationStatus).toBe("approved");
+    expect(row.moderationScore).toBe(0.02);
+    expect(row.moderationLabel).toBe("erotica");
+    expect((fetchMock.mock.calls[0] as unknown as [string])[0]).toBe(
+      "https://api.sightengine.com/1.0/check.json",
+    );
+
+    vi.stubGlobal("fetch", sightengineReplies(0.96));
+    const t2 = convexTest(schema, modules);
+    const second = await seed(t2);
+    expect((await addPhoto(t2, second.copy)).row.moderationStatus).toBe(
+      "rejected",
+    );
+  });
+
+  test("without credentials the photo is unscored and the health check names the missing vars", async () => {
+    vi.stubEnv("MODERATION_PROVIDER", "sightengine");
+    vi.stubEnv("SIGHTENGINE_SECRET_KEY", "fake-secret");
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const t = convexTest(schema, modules);
+    const { copy } = await seed(t);
+
+    const { row } = await addPhoto(t, copy);
+    expect(row.moderationStatus).toBe("unscored");
+    expect(row.moderationReason).toBe("missing_token");
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    const health = await asAdmin(t).query(
+      api.admin.getPhotoScreeningHealth.getPhotoScreeningHealth,
+      {},
+    );
+    expect(health).toMatchObject({
+      provider: "sightengine",
+      status: "missing_token",
+      missingVars: ["SIGHTENGINE_API_USER"],
+    });
+    expect(JSON.stringify(health)).not.toContain("fake-secret");
   });
 });
 

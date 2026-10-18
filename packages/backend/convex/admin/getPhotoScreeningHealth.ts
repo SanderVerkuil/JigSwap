@@ -8,7 +8,8 @@ import { readScreeningConfig } from "../library/adapters/photoModeration";
 export const SCREENING_HEALTH_COUNT_CAP = 100;
 
 // Admin-only health of automated photo screening, for the moderation page's indicator. From env it
-// reports whether screening is enabled and a Hugging Face token is present (NEVER the token value);
+// reports the selected provider and whether its credentials are present — the NAMES of any missing
+// env vars, NEVER a value;
 // from the data, how many copy/completion photos are currently "unscored" (the classifier could not
 // check them, so they are visible to their uploader only). A rising unscored count means the
 // provider is down or misconfigured; the per-attempt `screening_outcome` logs say why.
@@ -40,6 +41,8 @@ export const getPhotoScreeningHealth = query({
       provider: config.provider,
       model: config.model,
       tokenConfigured: config.tokenConfigured,
+      // Names only (e.g. "SIGHTENGINE_SECRET_KEY"), never values.
+      missingVars: config.missingVars,
       unscoredCopyPhotos,
       unscoredCompletionPhotos,
       countCap: SCREENING_HEALTH_COUNT_CAP,

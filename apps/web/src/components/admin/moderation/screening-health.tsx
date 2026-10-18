@@ -1,7 +1,7 @@
 "use client";
 
 // Admin indicator for automated photo screening: renders nothing while screening is configured
-// and every photo got checked; otherwise a warning that says what is wrong (no Hugging Face token,
+// and every photo got checked; otherwise a warning that says what is wrong (provider credentials missing,
 // screening turned off) and how many photos are waiting "unscored" (visible to their uploader only).
 import { gateway } from "@/gateway";
 import { convexQuery } from "@convex-dev/react-query";
@@ -18,7 +18,14 @@ export function ScreeningHealth() {
 
   const unscored = health.unscoredCopyPhotos + health.unscoredCompletionPhotos;
   const messages: string[] = [];
-  if (health.status === "missing_token") messages.push(t("missingToken"));
+  if (health.status === "missing_token") {
+    messages.push(
+      t("missingToken", {
+        provider: health.provider,
+        vars: health.missingVars.join(", "),
+      }),
+    );
+  }
   if (health.status === "disabled") messages.push(t("disabled"));
   if (unscored > 0) {
     const capped =

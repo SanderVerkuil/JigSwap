@@ -3600,7 +3600,7 @@
       "activityEmpty": "No moderation activity yet.",
       "screening": {
         "title": "Photo screening needs attention",
-        "missingToken": "Screening is not configured on this deployment (HF_MODERATION_TOKEN is not set). New photos stay visible to their uploader only until they can be checked.",
+        "missingToken": "Screening is not configured on this deployment (provider {provider}; not set: {vars}). New photos stay visible to their uploader only until they can be checked.",
         "disabled": "Screening is turned off on this deployment (MODERATION_PROVIDER=none). New photos are published without a check.",
         "unscored": "{countLabel} {count, plural, one {photo} other {photos}} could not be checked yet and {count, plural, one {is} other {are}} visible to the uploader only. Once screening works, run the re-screen from the one-shot migrations runbook."
       },
