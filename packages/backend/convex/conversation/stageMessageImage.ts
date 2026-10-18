@@ -23,8 +23,11 @@ const isDimension = (n: number) =>
   Number.isInteger(n) && n >= 1 && n <= MESSAGE_IMAGE_MAX_DIMENSION;
 
 // Whether any table already references the blob (a copy photo, a completion photo, a message
-// photo, a puzzle's box art) or a CSAM escalation preserves it: such a blob is never claimed and
-// never deleted here.
+// photo, a puzzle's box art or a proposed one, a report's evidence copy) or a CSAM escalation
+// preserves it: such a blob is never claimed and never deleted here. Known residual: legacy
+// completion photos that predate their completionImages sidecar live only in the unindexable
+// `completions.photos` array (and a proposal's `baseline.image` is the puzzle's current box art,
+// already covered by puzzles.by_image).
 const isReferenced = async (
   ctx: QueryCtx,
   storageId: Id<"_storage">,
@@ -43,6 +46,16 @@ const isReferenced = async (
     (await ctx.db
       .query("puzzles")
       .withIndex("by_image", (q) => q.eq("image", storageId))
+      .first()) !== null ||
+    (await ctx.db
+      .query("puzzleChangeProposals")
+      .withIndex("by_changes_image", (q) =>
+        q.eq("changes.image", storageId as string),
+      )
+      .first()) !== null ||
+    (await ctx.db
+      .query("reports")
+      .withIndex("by_evidence_file", (q) => q.eq("evidenceFileId", storageId))
       .first()) !== null ||
     (await isPreservedBlob(ctx, storageId))
   );

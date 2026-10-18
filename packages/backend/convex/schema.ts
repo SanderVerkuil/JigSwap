@@ -710,7 +710,9 @@ export default defineSchema({
     .index("by_aggregate_id", ["aggregateId"])
     .index("by_status", ["status"])
     .index("by_definition", ["puzzleDefinitionId"])
-    .index("by_proposer", ["proposedBy", "status"]),
+    .index("by_proposer", ["proposedBy", "status"])
+    // Whether a blob is a proposed box art (message-photo claims refuse it).
+    .index("by_changes_image", ["changes.image"]),
 
   // User goals for puzzle completion
   goals: defineTable({

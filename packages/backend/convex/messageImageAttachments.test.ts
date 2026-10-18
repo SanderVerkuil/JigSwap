@@ -378,6 +378,43 @@ describe("staging a photo", () => {
     expect(await attachmentRows(t)).toEqual([]);
   });
 
+  test("a blob held as report evidence or proposed as box art is refused and never deleted", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, threadId } = await openThread(t);
+    // Wrong type, so an unreferenced blob would be deleted by the refusal.
+    const evidence = await storeJpeg(t, "image/gif");
+    const proposed = await storeJpeg(t, "image/gif");
+    await t.run(async (ctx) => {
+      await ctx.db.insert("reports", {
+        reporterId: bob,
+        targetKind: "user",
+        targetId: alice,
+        reportedUserId: alice,
+        reason: "other",
+        evidence: {},
+        status: "actioned",
+        evidenceFileId: evidence,
+        createdAt: 1,
+      });
+      await ctx.db.insert("puzzleChangeProposals", {
+        aggregateId: "p1",
+        puzzleDefinitionId: "d1",
+        proposedBy: alice,
+        status: "pending",
+        changes: { image: proposed },
+        baseline: {},
+        createdAt: 1,
+        updatedAt: 1,
+      });
+    });
+    for (const fileId of [evidence, proposed]) {
+      await expect(stageRaw(t, threadId, fileId)).rejects.toThrow(
+        /InvalidUpload/,
+      );
+      expect(await blobExists(t, fileId)).toBe(true);
+    }
+  });
+
   test("a blob another image table references is refused and never deleted", async () => {
     const t = convexTest(schema, modules);
     const { alice, threadId } = await openThread(t);
