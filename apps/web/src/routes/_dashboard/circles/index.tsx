@@ -1,4 +1,5 @@
 import { useUser } from "@/compat/clerk";
+import { Link } from "@/compat/link";
 import { canManageCircle } from "@/components/circles/circle-admin-sections";
 import { CircleAvatarStack } from "@/components/circles/circle-avatar-stack";
 import { MyCircleInvitations } from "@/components/circles/circle-invitations";
@@ -20,6 +21,7 @@ import {
 } from "@/components/community/primitives";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { MemberInitial } from "@/components/members/member-initial";
+import { circleHref } from "@/components/messaging/format";
 import { OpenCircleChatButton } from "@/components/messaging/open-circle-chat";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -215,9 +217,11 @@ function CirclesPage() {
   );
 }
 
-// One circle as a full-width row tile: gradient icon chip, heading-font name
-// with the viewer's role badge, a one-line blurb, then the overlapping member
-// avatar stack and a big-number members stat on the right.
+// One circle as a full-width row tile. The identity half (gradient icon chip,
+// heading-font name with the viewer's role badge, a one-line blurb) links to
+// the circle's page; the member avatar stack, the members stat and the actions
+// sit beside it from xl up and wrap onto their own line below that, so the
+// name always keeps the room it needs.
 function CircleRow({
   circle,
   gradientIndex,
@@ -228,16 +232,15 @@ function CircleRow({
   onManage?: () => void;
 }) {
   const t = useTranslations("circles");
-
-  return (
-    <Card className="flex flex-row items-center gap-4 p-4">
+  const identity = (
+    <>
       <CoverChip icon={Users} size={52} gradientIndex={gradientIndex} />
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2.5">
-          <span className="font-heading truncate text-lg font-bold">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="font-heading min-w-0 truncate text-lg font-bold">
             {circle.name}
           </span>
-          <Badge variant="secondary">
+          <Badge variant="secondary" className="shrink-0">
             {circle.isOwnedByViewer ? t("roleOwner") : t("roleMember")}
           </Badge>
         </div>
@@ -245,7 +248,22 @@ function CircleRow({
           {circle.isOwnedByViewer ? t("ownedByYou") : t("sharedWithYou")}
         </p>
       </div>
-      <div className="flex items-center gap-5">
+    </>
+  );
+
+  return (
+    <Card className="flex flex-col gap-3 p-4 xl:flex-row xl:items-center xl:gap-4">
+      {circle.aggregateId ? (
+        <Link
+          href={circleHref(circle.aggregateId)}
+          className="hover:bg-accent/50 focus-visible:ring-ring -m-2 flex min-w-0 flex-1 items-center gap-4 rounded-lg p-2 transition-colors outline-none focus-visible:ring-2 motion-reduce:transition-none"
+        >
+          {identity}
+        </Link>
+      ) : (
+        <div className="flex min-w-0 flex-1 items-center gap-4">{identity}</div>
+      )}
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
         {circle.aggregateId && (
           <CircleMembersStack
             circleId={circle.aggregateId}
@@ -256,23 +274,31 @@ function CircleRow({
           value={circle.memberCount}
           label={t("membersLabel", { count: circle.memberCount })}
         />
-        {circle.aggregateId && (
-          <OpenCircleChatButton
-            circleId={circle.aggregateId}
-            circleName={circle.name}
-          />
-        )}
-        {onManage && (
-          <Button variant="ghost" size="sm" onClick={onManage}>
-            <Settings className="h-4 w-4" />
-          </Button>
-        )}
-        {!circle.isOwnedByViewer && circle.aggregateId && (
-          <LeaveCircleAction
-            circleId={circle.aggregateId}
-            circleName={circle.name}
-          />
-        )}
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+          {circle.aggregateId && (
+            <OpenCircleChatButton
+              circleId={circle.aggregateId}
+              circleName={circle.name}
+            />
+          )}
+          {onManage && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="size-11 md:size-8"
+              onClick={onManage}
+              aria-label={t("page.manageNamed", { circle: circle.name })}
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+          )}
+          {!circle.isOwnedByViewer && circle.aggregateId && (
+            <LeaveCircleAction
+              circleId={circle.aggregateId}
+              circleName={circle.name}
+            />
+          )}
+        </div>
       </div>
     </Card>
   );
@@ -294,14 +320,14 @@ function CircleMembersStack({
   );
 
   if (isPending || detail === undefined) {
-    return <Skeleton className="hidden h-8 w-20 rounded-full sm:block" />;
+    return <Skeleton className="h-8 w-20 rounded-full" />;
   }
   if (!detail || detail.members.length === 0) {
     return null;
   }
 
   return (
-    <div className="hidden sm:flex">
+    <div className="flex">
       <CircleAvatarStack
         circleName={circleName}
         members={detail.members.map((member: CircleMemberView) => ({
