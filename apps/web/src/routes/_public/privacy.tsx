@@ -70,6 +70,8 @@ function PrivacyPolicyPage() {
         { type: "p", text: t("dataStorage.huggingface.description") },
         { type: "sub", text: t("dataStorage.sightengine.title") },
         { type: "p", text: t("dataStorage.sightengine.description") },
+        { type: "sub", text: t("dataStorage.maptiler.title") },
+        { type: "p", text: t("dataStorage.maptiler.description") },
         { type: "sub", text: t("dataStorage.axiom.title") },
         { type: "p", text: t("dataStorage.axiom.description") },
       ],

@@ -1,8 +1,13 @@
+import type {
+  MessageAttachmentView,
+  ThreadMessageView,
+} from "@jigswap/contracts";
 import { convexTest, type TestConvex } from "convex-test";
 import { Jimp } from "jimp";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { asImage } from "./conversation/messageAttachments";
 import { RATE_LIMITS } from "./lib/rateLimits";
 import { EVIDENCE_MAX_ATTEMPTS } from "./reports/attachmentEvidence";
 import schema from "./schema";
@@ -203,8 +208,12 @@ const send = (
     ...(caption !== undefined && { caption }),
   });
 
+// A message's photo view (these threads carry only image attachments).
+const photoOf = (message: ThreadMessageView) =>
+  message.attachment as MessageAttachmentView | undefined;
+
 const attachment = (t: T, id: Id<"messageAttachments">) =>
-  t.run((ctx) => ctx.db.get(id));
+  t.run(async (ctx) => asImage(await ctx.db.get(id)));
 
 const messageRows = (t: T, threadId: string) =>
   t.run((ctx) =>
@@ -556,7 +565,7 @@ describe("deferred append", () => {
       attachmentId: id,
       attachment: { status: "ready", w: 800, h: 600 },
     });
-    expect(messages[0].attachment!.url).toEqual(expect.any(String));
+    expect(photoOf(messages[0])!.url).toEqual(expect.any(String));
     const [inbox] = await asBob(t).query(
       api.conversation.getMyInbox.getMyInbox,
       {},
@@ -902,7 +911,7 @@ describe("blur, per viewer", () => {
     const id = await stage(t, threadId);
     await settleDueJobs(t);
     await send(t, threadId, [id]);
-    expect((await threadOf(t, asBob, threadId))[0].attachment!.status).toBe(
+    expect(photoOf((await threadOf(t, asBob, threadId))[0])!.status).toBe(
       "ready",
     );
     // Bob stops following Alice: the same stored photo is now blurred for him.
@@ -916,10 +925,10 @@ describe("blur, per viewer", () => {
       await ctx.db.delete(edge!._id);
     });
     const [blurred] = await threadOf(t, asBob, threadId);
-    expect(blurred.attachment!.status).toBe("blurred");
+    expect(photoOf(blurred)!.status).toBe("blurred");
     expect(blurred.attachment).not.toHaveProperty("url");
     expect((await attachment(t, id))!.moderationStatus).toBe("approved");
-    expect((await threadOf(t, asAlice, threadId))[0].attachment!.status).toBe(
+    expect(photoOf((await threadOf(t, asAlice, threadId))[0])!.status).toBe(
       "ready",
     );
   });
@@ -1276,7 +1285,7 @@ describe("reporting a photo", () => {
       body: "caption",
     });
     // The reporter's own view blurs the photo at once.
-    expect((await threadOf(t, asBob, threadId))[0].attachment!.status).toBe(
+    expect(photoOf((await threadOf(t, asBob, threadId))[0])!.status).toBe(
       "blurred",
     );
     // Not a participant, or the uploader themself: NotFound.
@@ -1435,7 +1444,7 @@ describe("reporting a photo", () => {
     expect((await attachment(t, id))!.evidenceHold).toBe(true);
     // Reporting the photo's message blurs it for the reporter too, without a URL.
     const [forBob] = await threadOf(t, asBob, threadId);
-    expect(forBob.attachment!.status).toBe("blurred");
+    expect(photoOf(forBob)!.status).toBe("blurred");
     expect(forBob.attachment).not.toHaveProperty("url");
     await asAdmin(t).mutation(api.admin.decideReport.decideReport, {
       reportId,

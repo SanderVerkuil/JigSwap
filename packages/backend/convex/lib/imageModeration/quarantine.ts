@@ -154,7 +154,9 @@ export const applyHashCheckResult = async (
   },
 ) => {
   const row = await ctx.db.get(imageId);
-  if (!row || row.moderationStatus === "quarantined") return;
+  // (A shared location is never hash-checked.)
+  if (!row || ("kind" in row && row.kind === "location")) return;
+  if (row.moderationStatus === "quarantined") return;
   if (result.status === "no_match") {
     await ctx.db.patch(imageId, {
       hashCheckedAt: Date.now(),

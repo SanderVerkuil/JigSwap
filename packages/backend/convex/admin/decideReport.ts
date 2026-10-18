@@ -166,7 +166,8 @@ const blankLastMessageSummary = async (ctx: MutationCtx, messageId: string) => {
 };
 
 // Tombstone a message: its body and copy reference are cleared, and an image message's photo is
-// marked "removed" (its blobs go once reports/attachmentEvidence has copied them). Idempotent.
+// marked "removed", a location message's place `removedAt` (their blobs go once
+// reports/attachmentEvidence has copied them). Idempotent.
 const tombstoneMessage = async (
   ctx: MutationCtx,
   messageId: string,
@@ -187,9 +188,20 @@ const tombstoneMessage = async (
   const attachment = message.attachmentId
     ? await ctx.db.get(message.attachmentId)
     : null;
-  if (attachment && attachment.moderationStatus !== "removed") {
+  if (
+    attachment?.kind === "image" &&
+    attachment.moderationStatus !== "removed"
+  ) {
     await ctx.db.patch(attachment._id, {
       moderationStatus: "removed",
+      updatedAt: Date.now(),
+    });
+  } else if (
+    attachment?.kind === "location" &&
+    attachment.removedAt === undefined
+  ) {
+    await ctx.db.patch(attachment._id, {
+      removedAt: Date.now(),
       updatedAt: Date.now(),
     });
   }

@@ -3,7 +3,9 @@
 // Composer under the active thread. Sends text messages (optionally with one
 // attached puzzle copy, picked via AttachPicker), or up to 4 staged photos
 // with the text as their caption (sendStagedImages; the photos then wait in
-// the thread's outbox until they are delivered). Text messages get an optimistic
+// the thread's outbox until they are delivered). Location opens its own
+// picker, which sends on its own (sendLocation); it is offered only while
+// conversation.locationAvailable says location sharing is configured. Text messages get an optimistic
 // insert into the newest page of the listThreadMessages paginated
 // subscription the thread view holds (the established withOptimisticUpdate
 // pattern — see use-favorites); Convex replaces the local patch when the
@@ -14,20 +16,21 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway, type Id } from "@/gateway";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useConvexMutation } from "@convex-dev/react-query";
-import { useMutation } from "@tanstack/react-query";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type { OptimisticUpdate } from "convex/browser";
 // sanctioned convex/react exception: insertAtTop, the paginated-query optimistic helper (see tanstack-query migration spec)
 import { insertAtTop } from "convex/react";
 import type { FunctionArgs } from "convex/server";
 import { Send } from "lucide-react";
-import { useId, useRef, useState } from "react";
+import { useCallback, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import { AttachMenu } from "./attach-menu";
 import { AttachPicker } from "./attach-picker";
 import { COMPOSER_SLOT_CLASS, ComposerClosed } from "./composer-closed";
 import type { MessageCopy } from "./copy-card";
+import { LocationPicker } from "./location-picker";
 import { sendState } from "./photo-staging";
 import { PHOTO_ACCEPT } from "./prepare-photo";
 import { StagedCopyChip } from "./staged-copy-chip";
@@ -102,6 +105,18 @@ export function MessageComposer({
   // (never naming a block).
   // Keyed by thread so moving to another thread reopens the composer.
   const [closedThreadId, setClosedThreadId] = useState<string | null>(null);
+  const [locationOpen, setLocationOpen] = useState(false);
+  // A LocationUnavailable refusal hides Location for this thread.
+  const [locationHiddenIn, setLocationHiddenIn] = useState<string | null>(null);
+  const { data: location } = useQuery(
+    convexQuery(gateway.conversation.locationAvailable, { threadId }),
+  );
+  const locationAvailable =
+    location?.available === true && locationHiddenIn !== threadId;
+  const hideLocation = useCallback(() => {
+    setLocationHiddenIn(threadId);
+    setLocationOpen(false);
+  }, [threadId]);
 
   const postMessage = useMutation({
     mutationFn: useConvexMutation(
@@ -244,6 +259,8 @@ export function MessageComposer({
           photosAvailable={photosAvailable}
           onPuzzle={() => setPickerOpen(true)}
           onPhoto={() => fileInputRef.current?.click()}
+          locationAvailable={locationAvailable}
+          onLocation={() => setLocationOpen(true)}
         />
         <Textarea
           ref={textareaRef}
@@ -298,6 +315,25 @@ export function MessageComposer({
         <p role="alert" className="text-destructive mt-1.5 text-xs">
           {error}
         </p>
+      )}
+      {locationAvailable && (
+        <LocationPicker
+          open={locationOpen}
+          onOpenChange={setLocationOpen}
+          threadId={threadId}
+          recipientName={recipientName ?? t("locations.recipientFallback")}
+          exactCurrentLocation={location?.exactCurrentLocation === true}
+          onSent={() => setError(null)}
+          onCannotReply={() => {
+            setLocationOpen(false);
+            setClosedThreadId(threadId);
+          }}
+          onUnavailable={hideLocation}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            attachButtonRef.current?.focus();
+          }}
+        />
       )}
       <AttachPicker
         open={pickerOpen}

@@ -39,8 +39,59 @@ export interface ThreadMessageView {
   readonly attachmentId?: string;
   /** Set when a moderator removed the message: `body` is empty; render "Message removed". */
   readonly removed?: true;
-  /** An image message's photo as this reader may see it (thread reads only). */
-  readonly attachment?: MessageAttachmentView;
+  /**
+   * A media message's attachment as this reader may see it (thread reads only): an image
+   * message's photo, or a location message's place (`kind: "location"`).
+   */
+  readonly attachment?: MessageAttachmentView | LocationAttachmentView;
+}
+
+/**
+ * A shared location (spec 2.4), for the thread's participants only. `lat`/`lng` are the shared
+ * coordinates, already rounded by precision: 5 decimals when `exact`, a ~1 km grid when
+ * `approximate` (render "Approximate area"). `mapUrl` is the preview rendered once at send time
+ * and served from our own storage (absent when the render failed: show a text card). `openUrl`
+ * opens the place on openstreetmap.org (load it only when tapped).
+ */
+export interface LocationAttachmentView {
+  readonly kind: "location";
+  readonly lat: number;
+  readonly lng: number;
+  readonly precision: "exact" | "approximate";
+  readonly label?: string;
+  readonly mapUrl?: string;
+  readonly openUrl: string;
+}
+
+/** A place search result in the location picker (conversation.searchPlaces). */
+export interface PlaceSearchResultView {
+  readonly label: string;
+  readonly lat: number;
+  readonly lng: number;
+}
+
+/**
+ * One server-rendered view of the location picker (conversation.renderPickerMap): a short-lived
+ * image URL (deleted about 10 minutes later) of `width` x `height` pixels centred on `lat`/`lng` at
+ * `zoom` (Web Mercator, 512 px tiles), with the pin at its centre.
+ */
+export interface PickerMapView {
+  readonly url: string;
+  readonly lat: number;
+  readonly lng: number;
+  readonly zoom: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+/**
+ * Whether location sharing can be offered in a thread (conversation.locationAvailable).
+ * `exactCurrentLocation`: the other participant is the caller's mutual follower, so the picker
+ * may offer "exact" for a current-location pin (the server enforces the same rule).
+ */
+export interface LocationAvailabilityView {
+  readonly available: boolean;
+  readonly exactCurrentLocation: boolean;
 }
 
 /**

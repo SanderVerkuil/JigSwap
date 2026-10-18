@@ -1,5 +1,6 @@
 import { ConvexError } from "convex/values";
 import { query } from "../_generated/server";
+import type { ImageAttachment } from "../conversation/messageAttachments";
 import { isAdmin } from "../identity/isAdmin";
 import { adminMemberLabelOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
@@ -21,7 +22,8 @@ export const listImageReviewRequests = query({
     return Promise.all(
       rows
         .filter(
-          (row) =>
+          (row): row is ImageAttachment =>
+            row.kind === "image" &&
             row.moderationStatus === "rejected" &&
             row.reviewDecidedAt === undefined,
         )

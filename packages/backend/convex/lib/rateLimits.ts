@@ -21,6 +21,10 @@ export const RATE_LIMITS = {
   imageReveal: { windowMs: HOUR, max: 120 },
   locationSend: { windowMs: DAY, max: 20 },
   circleInvite: { windowMs: DAY, max: 30 },
+  // Place searches in the location picker (each proxies one MapTiler Geocoding request).
+  locationSearch: { windowMs: HOUR, max: 60 },
+  // Picker map views (each pan, zoom or tap re-renders the view from MapTiler tiles).
+  locationPicker: { windowMs: HOUR, max: 60 },
 } as const satisfies Record<string, { windowMs: number; max: number }>;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;
@@ -66,4 +70,77 @@ export const enforceRateLimit = async (
     retry_after_ms: retryAfterMs,
   });
   throw new ConvexError({ code: "RateLimited", retryAfterMs });
+};
+
+// The deployment-wide MapTiler budget: every upstream request (a tile, a Static Maps image, a
+// geocoding call) is charged against an hourly and a daily cap, whoever triggered it, so no mix
+// of members can run up the provider bill. Caps from env (positive integers), with defaults:
+//   MAPTILER_HOURLY_CAP - default 2000 requests per fixed hour
+//   MAPTILER_DAILY_CAP  - default 20000 requests per fixed day
+// One row per window on the rateLimits table (keys "maptiler:global:hour" / ":day").
+export const MAPTILER_HOURLY_CAP_DEFAULT = 2000;
+export const MAPTILER_DAILY_CAP_DEFAULT = 20_000;
+
+const positiveIntOr = (raw: string | undefined, fallback: number): number => {
+  const n = Number(raw);
+  return Number.isInteger(n) && n > 0 ? n : fallback;
+};
+
+export const mapTilerCaps = (env: Record<string, string | undefined>) => ({
+  hourly: positiveIntOr(env.MAPTILER_HOURLY_CAP, MAPTILER_HOURLY_CAP_DEFAULT),
+  daily: positiveIntOr(env.MAPTILER_DAILY_CAP, MAPTILER_DAILY_CAP_DEFAULT),
+});
+
+/**
+ * Charge `requests` upstream MapTiler requests to the global budget. False (and nothing
+ * written) when either window would go over its cap; the refusal is logged.
+ */
+export const chargeMapTilerBudget = async (
+  ctx: MutationCtx,
+  requests: number,
+): Promise<boolean> => {
+  if (requests <= 0) return true;
+  const caps = mapTilerCaps(process.env);
+  const now = Date.now();
+  const windows = [
+    { key: "maptiler:global:hour", windowMs: HOUR, cap: caps.hourly },
+    { key: "maptiler:global:day", windowMs: DAY, cap: caps.daily },
+  ];
+  const planned = [];
+  for (const window of windows) {
+    const row = await ctx.db
+      .query("rateLimits")
+      .withIndex("by_key", (q) => q.eq("key", window.key))
+      .unique();
+    const fresh = row === null || now - row.windowStart >= window.windowMs;
+    const count = (fresh ? 0 : row.count) + requests;
+    if (count > window.cap) {
+      logEvent({
+        event: "rateLimit.refused",
+        outcome: "error",
+        limit: window.key,
+        window_ms: window.windowMs,
+        max: window.cap,
+        requests,
+        retry_after_ms: row ? row.windowStart + window.windowMs - now : 0,
+      });
+      return false;
+    }
+    planned.push({ window, row, fresh, count });
+  }
+  for (const { window, row, fresh, count } of planned) {
+    if (row === null) {
+      await ctx.db.insert("rateLimits", {
+        key: window.key,
+        windowStart: now,
+        count,
+      });
+    } else {
+      await ctx.db.patch(row._id, {
+        ...(fresh && { windowStart: now }),
+        count,
+      });
+    }
+  }
+  return true;
 };

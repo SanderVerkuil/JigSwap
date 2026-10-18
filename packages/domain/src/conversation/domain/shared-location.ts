@@ -42,6 +42,32 @@ const snapApproximate = (lat: number, lng: number): [number, number] => {
   return [round5(snappedLat), round5(snappedLng)];
 };
 
+// Where a shared pin came from. `pin`: placed on the map or picked from a place search (a chosen
+// spot). `gps`: "use my current location", not moved since (the member's own position).
+export type LocationSource = "pin" | "gps";
+
+export interface LocationPrecisionRequest {
+  readonly source: LocationSource;
+  // What the member asked for. Only meaningful for a `gps` pin: the per-send "exact" toggle.
+  readonly requested: LocationPrecision;
+  // Whether the sender and the recipient follow each other.
+  readonly mutualFollowers: boolean;
+}
+
+// The precision a location is shared at (spec R.5). A placed or searched pin is sent exactly. The
+// member's current location is snapped to the approximate grid unless they explicitly chose exact
+// AND the recipient is a mutual follower. A GUARDRAIL against accidents, not a security boundary:
+// `source` comes from the client (and a member can always place a pin on their own address), so
+// this protects members who use "my current location" from over-sharing by mistake; it cannot
+// stop a member who wants to share exactly.
+export const resolveLocationPrecision = (
+  request: LocationPrecisionRequest,
+): LocationPrecision =>
+  request.source === "pin" ||
+  (request.requested === "exact" && request.mutualFollowers)
+    ? "exact"
+    : "approximate";
+
 // SharedLocation: a one-shot place shared in a conversation (never live). Pure value object: it
 // range-checks the coordinates, rounds them by precision (so only the shared coordinates are ever
 // stored, never the raw device fix) and trims the optional label.

@@ -845,6 +845,50 @@
       "sentAPhoto": "{name} heeft een foto gestuurd",
       "youSentAPhoto": "Je hebt een foto gestuurd",
       "sendGone": "Deze foto's kunnen niet meer worden verstuurd. Voeg ze opnieuw toe om het nog eens te proberen."
+    },
+    "locations": {
+      "attachLocation": "Locatie",
+      "pickerTitle": "Locatie delen",
+      "consent": "Deze plek delen met {name}? Diegene ziet hem op een kaart in dit gesprek. Kies liever een openbare ontmoetingsplek dan je huisadres.",
+      "searchLabel": "Zoek een plek",
+      "searchPlaceholder": "Station, café, straat…",
+      "searching": "Zoeken…",
+      "noResults": "Geen plekken gevonden.",
+      "searchFailed": "Plekken zoeken lukt nu niet.",
+      "useCurrentLocation": "Gebruik mijn huidige locatie",
+      "locating": "Je locatie bepalen…",
+      "locationDenied": "Je locatie is niet beschikbaar. Zoek liever een plek.",
+      "mapAlt": "Kaart met de speld op de gekozen plek",
+      "mapHint": "Tik op de kaart om de speld daarheen te verplaatsen, of gebruik de knoppen.",
+      "mapLoading": "Kaart laden…",
+      "mapFailed": "De kaart kan nu niet worden getoond.",
+      "pickFirst": "Zoek een plek of gebruik je huidige locatie om de speld te plaatsen.",
+      "zoomIn": "Inzoomen",
+      "zoomOut": "Uitzoomen",
+      "panUp": "Naar het noorden",
+      "panDown": "Naar het zuiden",
+      "panLeft": "Naar het westen",
+      "panRight": "Naar het oosten",
+      "exactToggle": "Deel mijn exacte locatie",
+      "exactWarning": "{name} ziet precies waar je nu bent.",
+      "approximateNote": "Je huidige locatie wordt gedeeld als een gebied bij benadering (ongeveer 1 km).",
+      "labelLabel": "Naam van de plek (optioneel)",
+      "captionLabel": "Bericht (optioneel)",
+      "send": "Locatie versturen",
+      "sending": "Versturen…",
+      "sendFailed": "De locatie kon niet worden verstuurd. Probeer het opnieuw.",
+      "rateLimited": "Je hebt voorlopig het maximale aantal locaties gedeeld. Probeer het later opnieuw.",
+      "unavailable": "Locaties kunnen nu niet worden gedeeld.",
+      "approximateArea": "Omgeving bij benadering",
+      "openInMaps": "Openen in kaarten",
+      "opensInNewTab": "(opent in een nieuw tabblad)",
+      "sharedLocation": "Gedeelde locatie",
+      "mapPreviewAlt": "Kaart van {place}",
+      "mapUnavailable": "Kaartvoorbeeld niet beschikbaar",
+      "locationGone": "Deze locatie is niet meer beschikbaar.",
+      "sharedALocation": "{name} heeft een locatie gedeeld",
+      "youSharedALocation": "Je hebt een locatie gedeeld",
+      "recipientFallback": "de ander"
     }
   },
   "profile": {
@@ -1200,6 +1244,10 @@
       "sightengine": {
         "title": "Sightengine",
         "description": "Fotocontrole (ter vervanging van Hugging Face). Sightengine wordt beheerd door Kozelo SAS in Parijs, Frankrijk. Elke foto die je uploadt wordt naar de veiligheidsdienst van Sightengine gestuurd. Die controleert de foto op expliciete inhoud en geeft een score terug; de afbeelding wordt alleen verwerkt om dat resultaat te geven. De datacenters van Sightengine staan vooral in de Europese Unie, maar afhankelijk van de beschikbaarheid kan de verwerking ook in Canada of de Verenigde Staten plaatsvinden."
+      },
+      "maptiler": {
+        "title": "MapTiler",
+        "description": "Kaarten en plekken zoeken voor gedeelde locaties. MapTiler wordt beheerd door MapTiler AG in Zwitserland. Als je een plek zoekt of een locatie deelt in een bericht, sturen onze servers je zoektekst en de coördinaten van de kaart naar MapTiler, dat ze alleen gebruikt om plekken te vinden en kaartafbeeldingen terug te geven. MapTiler wordt nooit vanuit jouw browser of die van de ontvanger benaderd en ziet je IP-adres dus nooit. De kaartafbeelding van een gedeelde locatie bewaren we zelf."
       },
       "axiom": {
         "title": "Axiom",

@@ -33,7 +33,11 @@ import { photoAspect } from "./photo-staging";
 type ThreadMessage = FunctionReturnType<
   typeof gateway.conversation.listThreadMessages
 >["page"][number];
-type AttachmentView = NonNullable<ThreadMessage["attachment"]>;
+// A photo's view (location attachments render through MessageLocation).
+type AttachmentView = Exclude<
+  NonNullable<ThreadMessage["attachment"]>,
+  { kind: "location" }
+>;
 
 // The single photo / gallery width, as a share of the thread column.
 const MEDIA_WIDTH = "w-72 max-w-full";
@@ -51,7 +55,7 @@ function effectiveView(
   revealed: Record<string, string>,
 ): AttachmentView {
   const view = message.attachment;
-  if (!view || message.removed) return { status: "removed" };
+  if (!view || message.removed || "kind" in view) return { status: "removed" };
   const url = message.attachmentId && revealed[message.attachmentId];
   if (view.status === "blurred" && url) {
     return { ...view, status: "ready", url, revealed: true };
