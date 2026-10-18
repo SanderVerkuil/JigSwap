@@ -2,6 +2,7 @@
 
 import { PhotoZoom } from "@/components/copies/photo-zoom";
 import { MemberInitial } from "@/components/members/member-initial";
+import { ReportDialog } from "@/components/safety/report-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,11 +23,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  Flag,
   MessageCircle,
   Star,
   Trash2,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "use-intl";
 
@@ -66,6 +68,7 @@ export function PhotoLightbox({
   coverImageId: string | null;
 }) {
   const t = useTranslations("copyInstance.photoLightbox");
+  const tSafety = useTranslations("safety");
   const displayName = useMemberDisplayName();
   const format = useFormatter();
   const setCopyCover = useMutation({
@@ -77,6 +80,8 @@ export function PhotoLightbox({
   const settingCover = setCopyCover.isPending;
   const removing = removeCopyPhoto.isPending;
   const [confirmRemove, setConfirmRemove] = useState(false);
+  const [reporting, setReporting] = useState(false);
+  const reportRef = useRef<HTMLButtonElement>(null);
 
   const count = gallery.length;
   const photo = gallery[index];
@@ -311,12 +316,36 @@ export function PhotoLightbox({
                   {t("removePhoto")}
                 </Button>
               ))}
+
+            {/* Others' approved photos can be reported (the uploader can't
+                report their own; the server refuses that too). */}
+            {!canSetCover && photo.moderationStatus === "approved" && (
+              <Button
+                ref={reportRef}
+                variant="ghost"
+                size="sm"
+                onClick={() => setReporting(true)}
+                className="text-destructive hover:text-destructive h-11 w-full justify-start md:h-8"
+              >
+                <Flag className="h-4 w-4" />
+                {tSafety("reportPhoto")}
+              </Button>
+            )}
           </div>
 
           <div className="border-border border-t px-5 py-4">
             <PhotoComments photoId={photo.id as Id<"ownedPuzzleImages">} />
           </div>
         </div>
+        {/* Inside the content so Radix treats it as a nested layer: interacting
+            with it doesn't dismiss the lightbox. */}
+        <ReportDialog
+          target={{ kind: "photo", id: photo.id }}
+          name={displayName({ name: photo.uploaderName })}
+          open={reporting}
+          onOpenChange={setReporting}
+          returnFocusRef={reportRef}
+        />
       </DialogContent>
     </Dialog>
   );

@@ -4325,6 +4325,10 @@
     "copyFailed": "Couldn't copy the text.",
     "reportMessage": "Report message",
     "messageRemoved": "This message was removed by a moderator.",
-    "otherMember": "the other member"
+    "otherMember": "the other member",
+    "reportName": "Report {name}",
+    "reportMember": "Report member",
+    "reportPhoto": "Report photo",
+    "exchangeActions": "Trade actions"
   }
 }

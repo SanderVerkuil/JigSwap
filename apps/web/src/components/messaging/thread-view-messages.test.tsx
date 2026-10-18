@@ -171,4 +171,18 @@ describe("ThreadView message actions", () => {
       screen.getByRole("checkbox", { name: "Also block Mara" }),
     ).toBeTruthy();
   });
+
+  it("offers Report {name} before Block in the header menu", async () => {
+    renderThread(dmThread());
+    fireEvent.keyDown(
+      screen.getByRole("button", { name: "Conversation options" }),
+      { key: "Enter" },
+    );
+    await screen.findByRole("menuitem", { name: "Block Mara" });
+    expect(
+      screen.getAllByRole("menuitem").map((item) => item.textContent),
+    ).toEqual(["View profile", "Report Mara", "Block Mara"]);
+    fireEvent.click(screen.getByRole("menuitem", { name: "Report Mara" }));
+    expect(await screen.findByText("Reporting Mara")).toBeTruthy();
+  });
 });

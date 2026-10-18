@@ -236,9 +236,13 @@ describe("ThreadView composer slot when blocked", () => {
     },
   );
 
-  it("offers Block {name} in the header's one overflow menu, after the quick links", async () => {
+  it("offers Report and Block {name} in the header's one overflow menu, after the quick links", async () => {
     renderThread(dmThread());
-    expect(await openThreadMenu()).toEqual(["View profile", "Block Mara"]);
+    expect(await openThreadMenu()).toEqual([
+      "View profile",
+      "Report Mara",
+      "Block Mara",
+    ]);
     fireEvent.click(screen.getByRole("menuitem", { name: "Block Mara" }));
     expect(
       await screen.findByRole("alertdialog", { name: "Block Mara?" }),
@@ -250,11 +254,12 @@ describe("ThreadView composer slot when blocked", () => {
     expect(await openThreadMenu()).toEqual(["View profile"]);
   });
 
-  it("offers Block {name} for an exchange thread's partner", async () => {
+  it("offers Report and Block {name} for an exchange thread's partner", async () => {
     renderThread(exchangeThread());
     expect(await openThreadMenu()).toEqual([
       "View profile",
       "View exchange",
+      "Report Mara",
       "Block Mara",
     ]);
   });

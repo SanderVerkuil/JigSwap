@@ -4325,6 +4325,10 @@
     "copyFailed": "Kopiëren is niet gelukt.",
     "reportMessage": "Bericht melden",
     "messageRemoved": "Dit bericht is verwijderd door een moderator.",
-    "otherMember": "het andere lid"
+    "otherMember": "het andere lid",
+    "reportName": "{name} melden",
+    "reportMember": "Lid melden",
+    "reportPhoto": "Foto melden",
+    "exchangeActions": "Ruilacties"
   }
 }
