@@ -49,6 +49,8 @@ export const toFollowId = (value: string): Id<"FollowId"> =>
   toId<"FollowId">(value);
 export const toFollowRequestId = (value: string): Id<"FollowRequestId"> =>
   toId<"FollowRequestId">(value);
+export const toConnectionOfferId = (value: string): Id<"ConnectionOfferId"> =>
+  toId<"ConnectionOfferId">(value);
 export const toCommentId = (value: string): Id<"CommentId"> =>
   toId<"CommentId">(value);
 export const toPhotoCommentId = (value: string): Id<"PhotoCommentId"> =>
