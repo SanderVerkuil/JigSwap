@@ -296,6 +296,27 @@ describe("library.updateCopySharing", () => {
     expect(row?.salePrice).toEqual({ amount: 1500, currency: "EUR" });
   });
 
+  test("updating sharing without a salePrice keeps the stored sale price", async () => {
+    const t = convexTest(schema, modules);
+    const { puzzleAggregateId } = await seed(t);
+    const copyId = await acquireForAlice(t, puzzleAggregateId);
+    await asAlice(t).mutation(api.library.updateCopySharing.updateCopySharing, {
+      copyId,
+      visibility: "visible",
+      forSale: true,
+      salePrice: { amountCents: 1500, currency: "EUR" },
+    });
+    await asAlice(t).mutation(api.library.updateCopySharing.updateCopySharing, {
+      copyId,
+      visibility: "visible",
+      forTrade: true,
+      forSale: true,
+    });
+    const row = await copyRow(t, copyId);
+    expect(row?.availability.forTrade).toBe(true);
+    expect(row?.salePrice).toEqual({ amount: 1500, currency: "EUR" });
+  });
+
   test("a copy reserved by an active exchange cannot be made available => CopyReserved", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob, puzzleAggregateId } = await seed(t);
