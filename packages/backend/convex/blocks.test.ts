@@ -345,7 +345,7 @@ describe("blocked pair is refused", () => {
 });
 
 describe("blockMember side effects", () => {
-  test("severs follows and declines pending requests both ways, cancels pending proposals both ways, leaves accepted exchanges", async () => {
+  test("severs follows and declines pending requests both ways, closes pending proposals as the blocker, leaves accepted exchanges", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob } = await seed(t);
     await followMutually(t, alice, bob);
@@ -397,24 +397,60 @@ describe("blockMember side effects", () => {
       ctx.db.query("followRequests").collect(),
     );
     expect(requests.map((r) => r.status)).toEqual(["declined", "declined"]);
+    // Alice (the blocker) cancels her own proposal and declines bob's: nothing is attributed to
+    // bob, who never acted.
     expect(await exchangeStatus(t, fromAlice)).toBe("cancelled");
-    expect(await exchangeStatus(t, fromBob)).toBe("cancelled");
+    expect(await exchangeStatus(t, fromBob)).toBe("rejected");
     expect(await exchangeStatus(t, accepted)).toBe("accepted");
 
-    // The cancellation flows like a normal one: its thread gets the lifecycle system message.
-    const threadId = await asAlice(t).query(
-      api.conversation.getThreadByExchange.getThreadByExchange,
-      { exchangeId: fromBob },
-    );
-    const messages = await t.run((ctx) =>
+    // Each closure flows like a normal one: its thread gets the lifecycle system message.
+    const systemBodies = async (exchangeId: string) => {
+      const threadId = await asAlice(t).query(
+        api.conversation.getThreadByExchange.getThreadByExchange,
+        { exchangeId },
+      );
+      const messages = await t.run((ctx) =>
+        ctx.db
+          .query("threadMessages")
+          .withIndex("by_thread_sent", (q) =>
+            q.eq("threadAggregateId", threadId!),
+          )
+          .collect(),
+      );
+      return messages.filter((m) => m.kind === "system").map((m) => m.body);
+    };
+    expect(await systemBodies(fromBob)).toEqual([
+      "Exchange proposed",
+      "Exchange rejected",
+    ]);
+    expect(await systemBodies(fromAlice)).toEqual([
+      "Exchange proposed",
+      "Exchange cancelled",
+    ]);
+    // No "they cancelled" ever reaches the blocker: bob didn't do anything.
+    const alicesNotifications = await t.run((ctx) =>
       ctx.db
-        .query("threadMessages")
-        .withIndex("by_thread_sent", (q) =>
-          q.eq("threadAggregateId", threadId!),
-        )
+        .query("notifications")
+        .filter((q) => q.eq(q.field("userId"), alice))
         .collect(),
     );
-    expect(messages.filter((m) => m.kind === "system")).toHaveLength(2);
+    expect(
+      alicesNotifications.filter((n) =>
+        ["trade_cancelled", "trade_declined"].includes(n.type),
+      ),
+    ).toEqual([]);
+    const bobsNotifications = await t.run((ctx) =>
+      ctx.db
+        .query("notifications")
+        .filter((q) => q.eq(q.field("userId"), bob))
+        .collect(),
+    );
+    expect(
+      bobsNotifications
+        .map((n) => n.type)
+        .filter((type) => ["trade_cancelled", "trade_declined"].includes(type))
+        .sort(),
+    ).toEqual(["trade_cancelled", "trade_declined"]);
   });
 
   test("the inbox keeps the thread; the blocker sees the block, the blocked member a read-only thread", async () => {

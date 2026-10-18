@@ -1,5 +1,6 @@
 import {
   makeCancelExchange,
+  makeDeclineExchange,
   makeUnfollowMember,
   toExchangeId,
   toMemberId,
@@ -24,9 +25,11 @@ export const MAX_BLOCKS = 1000;
 // Block a member (spec 2.6): silent, no notification to the blocked member. Idempotent: blocking
 // an already-blocked member changes nothing. In the same transaction it severs the social
 // connection both ways (follow edges through the unfollow use case, pending follow requests
-// declined) and cancels pending exchange proposals between the pair through the exchange cancel
-// use case, so the usual system message and notification flow. Accepted exchanges and loans are
-// left alone: they can still be completed, only their chat closes.
+// declined) and closes pending exchange proposals between the pair, always acting as the blocker
+// so nothing is attributed to the blocked member: proposals the blocked member sent are DECLINED
+// (it reads as an ordinary decline), proposals the blocker sent are CANCELLED, through the
+// exchange use cases so the usual system message and notification flow. Accepted exchanges and
+// loans are left alone: they can still be completed, only their chat closes.
 export const blockMember = mutation({
   args: { memberId: v.id("users") },
   handler: async (ctx, { memberId: blockedId }): Promise<void> => {
@@ -75,8 +78,22 @@ export const blockMember = mutation({
     ] as const) {
       await removeFollow(ctx, a, b);
       await declinePendingRequest(ctx, a, b);
-      await cancelPendingProposals(ctx, a, b);
     }
+    // The blocker's own proposals: cancelled. Proposals sent to the blocker: declined.
+    await closePendingProposals(
+      ctx,
+      blockerId,
+      blockedId,
+      makeCancelExchange,
+      blockerId,
+    );
+    await closePendingProposals(
+      ctx,
+      blockedId,
+      blockerId,
+      makeDeclineExchange,
+      blockerId,
+    );
   },
 });
 
@@ -129,12 +146,15 @@ const declinePendingRequest = async (
   });
 };
 
-// Cancel every still-proposed exchange the initiator sent the recipient, as its initiator
-// (cancel is the initiator's transition; ExchangeCancelled posts the system message).
-const cancelPendingProposals = async (
+// Close every still-proposed exchange the initiator sent the recipient through `make`, as `actorId`
+// (cancel is the initiator's transition, decline the recipient's). ExchangeCancelled /
+// ExchangeRejected post the system message.
+const closePendingProposals = async (
   ctx: MutationCtx,
   initiatorId: Id<"users">,
   recipientId: Id<"users">,
+  make: typeof makeCancelExchange | typeof makeDeclineExchange,
+  actorId: Id<"users">,
 ) => {
   const proposals = await ctx.db
     .query("exchanges")
@@ -146,7 +166,7 @@ const cancelPendingProposals = async (
       ),
     )
     .collect();
-  const cancel = makeCancelExchange({
+  const close = make({
     exchanges: convexExchangeRepository(ctx),
     events: exchangeEventPublisher(ctx),
     clock: systemClock,
@@ -155,9 +175,9 @@ const cancelPendingProposals = async (
     // Pre-aggregateId legacy rows aren't reachable by the domain repository (so no lifecycle
     // mutation, accept included, can act on them either).
     if (!proposal.aggregateId) continue;
-    const result = await cancel({
+    const result = await close({
       exchangeId: toExchangeId(proposal.aggregateId),
-      actingMemberId: toMemberId(initiatorId),
+      actingMemberId: toMemberId(actorId),
     });
     if (result.isErr) throw toExchangeConvexError(result.error);
   }
