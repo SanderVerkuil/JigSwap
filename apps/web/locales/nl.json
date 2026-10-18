@@ -2084,6 +2084,7 @@
       },
       "message_received": {
         "sentence": "<b>{actor}</b> heeft je een bericht gestuurd.",
+        "sentenceAnonymous": "Je hebt een nieuw bericht.",
         "actions": {
           "reply": "Beantwoorden",
           "replyAria": "{actor} beantwoorden"

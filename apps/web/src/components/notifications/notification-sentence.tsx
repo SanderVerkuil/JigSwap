@@ -71,6 +71,15 @@ export function NotificationSentence({ view }: { view: NotificationView }) {
     return <>{notificationCopy({ type, params }, t).message}</>;
   }
 
+  // A privacy-hidden (living) message sender is not a "Former member": a nameless sentence.
+  if (
+    type === "message_received" &&
+    actors[0]?.anonymous &&
+    !actors[0].departed
+  ) {
+    return <>{t("rich.message_received.sentenceAnonymous")}</>;
+  }
+
   const values = {
     actor: actorName(actors[0]),
     actor2: actorName(actors[1]),
