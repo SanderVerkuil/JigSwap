@@ -818,10 +818,29 @@ export default defineSchema({
     exchangeId: v.optional(v.id("exchanges")), // set iff subjectKind === "exchange"
     participants: v.array(v.id("users")),
     participantsKey: v.string(),
-    readReceipts: v.array(
-      v.object({ memberId: v.id("users"), lastReadAt: v.number() }),
+    // DEPRECATED: read receipts now live on threadParticipants.lastReadAt. No longer written;
+    // read only as the fallback until conversation/backfillParticipantState has run, then dropped.
+    readReceipts: v.optional(
+      v.array(v.object({ memberId: v.id("users"), lastReadAt: v.number() })),
     ),
     lastMessageAt: v.optional(v.number()), // denormalized for inbox ordering
+    // Denormalized inbox summary of the newest message, written in the same transaction as its
+    // insert. `body` is truncated (LAST_MESSAGE_BODY_MAX) and blank for `image` rows. Absent on
+    // empty threads and on rows the backfill has not reached (the inbox then reads the message).
+    lastMessage: v.optional(
+      v.object({
+        messageId: v.string(),
+        authorId: v.optional(v.id("users")),
+        kind: v.union(
+          v.literal("text"),
+          v.literal("image"),
+          v.literal("system"),
+        ),
+        body: v.string(),
+        sentAt: v.number(),
+        copyId: v.optional(v.id("ownedPuzzles")),
+      }),
+    ),
     createdAt: v.number(),
   })
     .index("by_aggregate_id", ["aggregateId"])
@@ -848,13 +867,23 @@ export default defineSchema({
     .index("by_message_id", ["messageId"]),
 
   // Member-lookup projection of threads.participants, kept in sync by the repository on every
-  // save (same pattern as circleMembers — Convex cannot index embedded arrays).
+  // save (same pattern as circleMembers — Convex cannot index embedded arrays). Also the
+  // per-member conversation state, so a read receipt patches only the reader's row. The state
+  // fields are optional until conversation/backfillParticipantState has run; reads fall back.
   threadParticipants: defineTable({
     threadAggregateId: v.string(),
     memberId: v.id("users"),
+    // The member's read receipt (moved off threads.readReceipts). Absent = never read.
+    lastReadAt: v.optional(v.number()),
+    // Unread messages for this member, capped at UNREAD_SCAN_CAP (50 = "50 or more").
+    unreadCount: v.optional(v.number()),
+    // The thread's lastMessageAt (createdAt while empty), copied for by_member_activity.
+    lastActivityAt: v.optional(v.number()),
   })
     .index("by_member", ["memberId"])
-    .index("by_thread", ["threadAggregateId"]),
+    .index("by_thread", ["threadAggregateId"])
+    .index("by_thread_member", ["threadAggregateId", "memberId"])
+    .index("by_member_activity", ["memberId", "lastActivityAt"]),
 
   reviews: defineTable({
     // PartnerReview aggregate identity. Optional so pre-existing rows still validate; the new

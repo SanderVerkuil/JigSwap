@@ -39,6 +39,9 @@ export interface PostSystemMessageProps {
 
 // The persistable shape of a Thread, kept close to the storage columns so the 1b mapper is a
 // field-for-field translation. Messages and receipts are stored as their own flat state arrays.
+// `messages` holds ONLY the messages appended in this unit of work: history is never hydrated
+// (no invariant reads it), so a rehydrated thread starts with `[]` and the repository inserts
+// every entry as new.
 export interface ThreadState {
   readonly id: ThreadId;
   readonly subject: ThreadSubject;
@@ -48,8 +51,9 @@ export interface ThreadState {
 }
 
 // Thread: the Conversation aggregate root, scoped by its subject (one per ExchangeId for
-// exchange threads; a member pair for DMs). It owns the participant set, the ordered message log,
-// and a per-participant ReadReceipt. Every invariant it enforces is decided from its own data: a
+// exchange threads; a member pair for DMs). It owns the participant set, the messages appended in
+// this unit of work (the stored log is append-only and never loaded), and a per-participant
+// ReadReceipt. Every invariant it enforces is decided from its own data: a
 // non-participant cannot post; a member cannot author a system message; bodies are non-empty;
 // marking read touches only the caller's receipt.
 export class Thread {
@@ -77,6 +81,7 @@ export class Thread {
     return this.state.participants;
   }
 
+  // The messages appended in this unit of work, in append order — not the thread's history.
   get messages(): readonly Message[] {
     return this.state.messages.map((m) => Message.fromState(m));
   }

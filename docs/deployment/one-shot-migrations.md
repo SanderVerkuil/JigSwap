@@ -336,3 +336,77 @@ is found in the real run's `deletedRows` (its `circleId` and `copyId`) and resto
 copy's owner sharing it into that circle again (`sharing/shareCopyToCircle` recreates the
 row), or by re-inserting a `circleCopyShares` row with that `circleId` and `copyId` in the
 dashboard (`sharedAt` = now).
+
+---
+
+## `conversation/backfillParticipantState` — denormalised inbox state on existing threads
+
+**When:** once per deployment, after the conversation participant-state change (receipts
+and unread counts on `threadParticipants`, `threads.lastMessage`) is deployed there. The
+reads work without it (rows without the fields fall back to the old receipt lookup and
+message scans), so there is no deploy ordering pressure: it removes those per-row scans
+from the inbox and the unread badge. It must have run before the follow-up PR that drops
+`threads.readReceipts`.
+
+**Legacy `conversation/backfill:run` (exchange chat → threads):** neither this runbook nor
+the code records whether that older one-shot has completed in production (the legacy
+`messages` table is still in the schema, and its comment says the table is dropped once
+the backfill has run there). Confirm that before this deploy. Do **not** run it after
+this deploy: it raises `threads.readReceipts` and creates participant rows without
+`lastReadAt`, `unreadCount` or `lastActivityAt`, so its effect would only reach the
+fallback reads. If it must still run, run it first and then run this backfill.
+
+**What it does:** pages through `threads` (25 threads per batch by default, `batchSize`
+overrides it; each batch is its own transaction and reschedules the next until the table
+is exhausted) and fills only fields that are absent:
+
+- `threads.lastMessage`: the newest message (`by_thread_sent`), body truncated to 280
+  characters and blank for `image` rows. Threads without messages stay without one.
+- per `threadParticipants` row:
+  - `lastReadAt` from the member's entry in `threads.readReceipts` (left absent when the
+    member never read the thread);
+  - `unreadCount` by the same capped scan the reads fall back to (50 = "50 or more"; the
+    scan reads at most 500 rows, so a member with a very long run of their own messages
+    after their receipt gets a lower bound);
+  - `lastActivityAt` = the thread's `lastMessageAt`, or `createdAt` while empty.
+
+It never overwrites a field the live write paths already set, and it never touches
+`threads.readReceipts`, `lastMessageAt`, participants or messages.
+
+**Safe to re-run:** yes. Every field is written only when absent, so a second run patches
+0 threads and 0 participant rows.
+
+**Commands:**
+
+```bash
+cd packages/backend
+
+# dev: dry run (counts only, writes nothing), then the real run
+npx convex run conversation/backfillParticipantState:backfillParticipantState '{"dryRun":true}'
+npx convex run conversation/backfillParticipantState:backfillParticipantState '{}'
+
+# prod: same, after dev looks right
+npx convex run --prod conversation/backfillParticipantState:backfillParticipantState '{"dryRun":true}'
+npx convex run --prod conversation/backfillParticipantState:backfillParticipantState '{}'
+
+# if a batch hits a read limit, retry with a smaller batch (the default is 25)
+npx convex run --prod conversation/backfillParticipantState:backfillParticipantState '{"dryRun":true,"batchSize":10}'
+npx convex run --prod conversation/backfillParticipantState:backfillParticipantState '{"batchSize":10}'
+```
+
+The command returns the FIRST batch's `{ threadsScanned, threadsPatched,
+participantsPatched }`; the remaining batches run as scheduled functions. Each batch logs a
+line `conversation/backfillParticipantState batch {...,"totals":{...},"isDone":...}`
+(prefixed `(dry run)` for dry runs); the line with `"isDone":true` carries the whole run's
+totals. Follow it with `npx convex logs` (add `--prod` for prod) or in the dashboard Logs.
+
+**Verify:**
+
+1. The real run's final `totals` match the dry run's final `totals` (give or take threads
+   that received a message or a read in between, which the live paths already filled).
+2. Run the dry run again: its final totals show `"threadsPatched":0` and
+   `"participantsPatched":0`.
+3. In the dashboard data view, spot-check a few older `threadParticipants` rows: they carry
+   `unreadCount` and `lastActivityAt` (and `lastReadAt` where the thread row has a receipt
+   for that member), and threads with messages carry `lastMessage`. The inbox shows the
+   same unread counts and snippets as before the run.

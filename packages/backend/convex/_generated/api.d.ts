@@ -104,6 +104,7 @@ import type * as conversation_adapters_inProcessEventPublisher from "../conversa
 import type * as conversation_adapters_systemClock from "../conversation/adapters/systemClock.js";
 import type * as conversation_adapters_threadMapper from "../conversation/adapters/threadMapper.js";
 import type * as conversation_backfill from "../conversation/backfill.js";
+import type * as conversation_backfillParticipantState from "../conversation/backfillParticipantState.js";
 import type * as conversation_canMessage from "../conversation/canMessage.js";
 import type * as conversation_copyCard from "../conversation/copyCard.js";
 import type * as conversation_countLegacyImageMessages from "../conversation/countLegacyImageMessages.js";
@@ -114,6 +115,7 @@ import type * as conversation_getThreadByExchange from "../conversation/getThrea
 import type * as conversation_getThreadMessages from "../conversation/getThreadMessages.js";
 import type * as conversation_getUnreadTotal from "../conversation/getUnreadTotal.js";
 import type * as conversation_listAttachableCopies from "../conversation/listAttachableCopies.js";
+import type * as conversation_listThreadMessages from "../conversation/listThreadMessages.js";
 import type * as conversation_markThreadRead from "../conversation/markThreadRead.js";
 import type * as conversation_openDmThread from "../conversation/openDmThread.js";
 import type * as conversation_postMessage from "../conversation/postMessage.js";
@@ -529,6 +531,7 @@ declare const fullApi: ApiFromModules<{
   "conversation/adapters/systemClock": typeof conversation_adapters_systemClock;
   "conversation/adapters/threadMapper": typeof conversation_adapters_threadMapper;
   "conversation/backfill": typeof conversation_backfill;
+  "conversation/backfillParticipantState": typeof conversation_backfillParticipantState;
   "conversation/canMessage": typeof conversation_canMessage;
   "conversation/copyCard": typeof conversation_copyCard;
   "conversation/countLegacyImageMessages": typeof conversation_countLegacyImageMessages;
@@ -539,6 +542,7 @@ declare const fullApi: ApiFromModules<{
   "conversation/getThreadMessages": typeof conversation_getThreadMessages;
   "conversation/getUnreadTotal": typeof conversation_getUnreadTotal;
   "conversation/listAttachableCopies": typeof conversation_listAttachableCopies;
+  "conversation/listThreadMessages": typeof conversation_listThreadMessages;
   "conversation/markThreadRead": typeof conversation_markThreadRead;
   "conversation/openDmThread": typeof conversation_openDmThread;
   "conversation/postMessage": typeof conversation_postMessage;

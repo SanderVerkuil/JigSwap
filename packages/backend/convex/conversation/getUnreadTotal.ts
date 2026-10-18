@@ -2,13 +2,14 @@ import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import {
+  participantUnreadCountOf,
   subjectRenders,
   threadRowByAggregateId,
-  unreadCountOf,
 } from "./readModelHelpers";
 
 // The caller's total unread messages across all their threads — the app-shell badge number.
-// Each summand is the same per-thread capped count getMyInbox shows (see UNREAD_SCAN_CAP), and
+// Each summand is the same per-thread capped count getMyInbox shows (the membership's
+// denormalized unreadCount, scan fallback; see UNREAD_SCAN_CAP), and
 // only threads getMyInbox would render count (see subjectRenders) so the badge never shows
 // unread the inbox doesn't.
 export const getUnreadTotal = query({
@@ -27,7 +28,7 @@ export const getUnreadTotal = query({
         membership.threadAggregateId,
       );
       if (thread && (await subjectRenders(ctx, thread))) {
-        total += await unreadCountOf(ctx, thread, me);
+        total += await participantUnreadCountOf(ctx, thread, membership);
       }
     }
     return total;
