@@ -4,6 +4,12 @@ import type { WhatsNewManifestEntry } from "./types";
 
 export const WHATS_NEW_MANIFEST: readonly WhatsNewManifestEntry[] = [
   {
+    "id": "blocking-reporting",
+    "publishedAt": 1792336500000,
+    "highlight": true,
+    "notify": false
+  },
+  {
     "id": "circle-invitations",
     "publishedAt": 1792336440000,
     "highlight": false,
