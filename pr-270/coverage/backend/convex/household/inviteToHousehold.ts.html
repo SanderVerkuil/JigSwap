@@ -118,7 +118,15 @@
 <a name='L53'></a><a href='#L53'>53</a>
 <a name='L54'></a><a href='#L54'>54</a>
 <a name='L55'></a><a href='#L55'>55</a>
-<a name='L56'></a><a href='#L56'>56</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -132,9 +140,9 @@
 <span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">64x</span>
+<span class="cline-any cline-yes">67x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">64x</span>
+<span class="cline-any cline-yes">67x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -146,37 +154,44 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">61x</span>
-<span class="cline-any cline-yes">61x</span>
-<span class="cline-any cline-yes">61x</span>
-<span class="cline-any cline-yes">60x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">64x</span>
+<span class="cline-any cline-yes">64x</span>
+<span class="cline-any cline-yes">64x</span>
+<span class="cline-any cline-yes">63x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">60x</span>
+<span class="cline-any cline-yes">63x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">60x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">60x</span>
+<span class="cline-any cline-yes">63x</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">60x</span>
-<span class="cline-any cline-yes">58x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">64x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">64x</span>
+<span class="cline-any cline-yes">59x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { makeInviteToHousehold, toMemberId } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { deleteNotificationsAbout } from "../invitations/fallbacks";
 import { isBlockedEitherWay } from "../social/blocks";
 import { householdDeps } from "./adapters/deps";
 import { toConvexError } from "./errors";
@@ -200,7 +215,8 @@ export const inviteToHousehold = mutation({
     }
     // The admin's email invitation may already have reached this member (a pending viaEmail
     // invite, hidden from their pending list). Answering DuplicateInvite would reveal whose
-    // address it was, so the admin takes that invite over instead: it is listed by name from now on.
+    // address it was, so that invite (and its notification) goes, and this one is made exactly as
+    // if it had never existed: the same checks, errors, createdAt and notification.
     const deps = householdDeps(ctx);
     const household = await deps.households.findByMember(actorId);
     if (household?.isAdmin(actorId)) {
@@ -216,8 +232,13 @@ export const inviteToHousehold = mutation({
           row.viaEmail === true &amp;&amp; row.householdId === (household.id as string),
       );
       if (viaEmail !== undefined) {
-        await ctx.db.patch(viaEmail._id, { viaEmail: undefined });
-        return viaEmail.aggregateId;
+        await deleteNotificationsAbout(
+          ctx,
+          viaEmail.inviteeId,
+          "household_invite_received",
+          viaEmail.aggregateId,
+        );
+        await ctx.db.delete(viaEmail._id);
       }
     }
     const result = await makeInviteToHousehold(deps)({
@@ -235,7 +256,7 @@ export const inviteToHousehold = mutation({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-18T19:06:02.482Z
+                at 2026-10-18T19:22:25.893Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

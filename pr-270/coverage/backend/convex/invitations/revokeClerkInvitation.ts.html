@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">80% </span>
+                <span class="strong">72.22% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>12/15</span>
+                <span class='fraction'>13/18</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">50% </span>
+                <span class="strong">83.33% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>1/2</span>
+                <span class='fraction'>5/6</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">80% </span>
+                <span class="strong">72.22% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>12/15</span>
+                <span class='fraction'>13/18</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line medium'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -115,7 +115,21 @@
 <a name='L50'></a><a href='#L50'>50</a>
 <a name='L51'></a><a href='#L51'>51</a>
 <a name='L52'></a><a href='#L52'>52</a>
-<a name='L53'></a><a href='#L53'>53</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">3x</span>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -136,6 +150,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -153,8 +168,15 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -174,7 +196,10 @@ import { internalAction } from "../_generated/server";
 import { ingestToAxiom } from "../lib/axiom";
 import { logEvent, type WideEvent } from "../lib/logEvent";
 import { invitationErrorCode } from "./adapters/clerkInvitationGateway";
-import { makeInvitationGatewayFromEnv } from "./adapters/invitationGateway";
+import {
+  makeInvitationGatewayFromEnv,
+  retireInvitation,
+} from "./adapters/invitationGateway";
 &nbsp;
 const reasonValidator = v.union(
   v.literal("revoked"),
@@ -184,9 +209,10 @@ const reasonValidator = v.union(
 type RevokeReason = typeof reasonValidator.type;
 &nbsp;
 /**
- * Revoke one Clerk invitation, best-effort: a failure (already accepted or revoked, Clerk down,
- * no CLERK_SECRET_KEY) is logged and dropped. The local row is already gone or being dropped, and
- * a revoke only blocks the link (spec E.0), so nothing depends on it succeeding.
+ * Revoke and then delete one Clerk invitation, best-effort: a failure (already accepted or
+ * revoked, Clerk down, no CLERK_SECRET_KEY) is logged and dropped. The local row is already gone
+ * or being dropped, so nothing depends on it succeeding. The delete makes Clerk drop its copy of
+ * the address (spec E.0).
  */
 export const revokeInvitationBestEffort = async (
   clerkInvitationId: string,
@@ -203,10 +229,17 @@ export const revokeInvitationBestEffort = async (
 <span class="cstat-no" title="statement not covered" >      event.skip_reason = "unconfigured";</span>
 <span class="cstat-no" title="statement not covered" >      return;</span>
     }
-    await makeInvitationGatewayFromEnv().revoke(clerkInvitationId);
+    const errors = await retireInvitation(
+      makeInvitationGatewayFromEnv(),
+      clerkInvitationId,
+    );
+    if (errors.revoke !== undefined || errors.delete !== undefined) {
+      event.outcome = "error";
+      event.error = errors;
+    }
   } catch (error) {
-    event.outcome = "error";
-    event.error = { code: invitationErrorCode(error) };
+<span class="cstat-no" title="statement not covered" >    event.outcome = "error";</span>
+<span class="cstat-no" title="statement not covered" >    event.error = { code: invitationErrorCode(error) };</span>
   } finally {
     await ingestToAxiom(logEvent(event));
   }
@@ -226,7 +259,7 @@ export const revokeClerkInvitation = internalAction({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-18T19:06:02.482Z
+                at 2026-10-18T19:22:25.893Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
