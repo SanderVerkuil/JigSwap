@@ -17,6 +17,7 @@ import {
   isNearRecentGpsView,
   LOCATION_RENDER_TIMEOUT_MS,
 } from "./sharedLocations";
+import { clearTypingOf } from "./typingIndicators";
 
 const precisionValidator = v.union(
   v.literal("exact"),
@@ -37,7 +38,8 @@ const precisionValidator = v.union(
 // location, with exact not chosen. SharedLocation rounds the coordinates by the resolved
 // precision, so only the shared coordinates are stored. The row starts "pending", the map render
 // is scheduled, and so is expireLocationRender as a backstop; the message is appended once the
-// render settles (sharedLocations.settleLocation).
+// render settles (sharedLocations.settleLocation). Sending clears the caller's typing row, as
+// postMessage does.
 export const sendLocation = mutation({
   args: {
     threadId: v.string(),
@@ -119,6 +121,7 @@ export const sendLocation = mutation({
       internal.conversation.locationStore.expireLocationRender,
       { attachmentId },
     );
+    await clearTypingOf(ctx, args.threadId, me);
     return { attachmentId };
   },
 });

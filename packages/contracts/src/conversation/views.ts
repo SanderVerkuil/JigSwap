@@ -303,3 +303,14 @@ export interface InboxThreadView {
    */
   readonly readOnly?: true;
 }
+
+/**
+ * One other participant who is typing in a thread (conversation/getTyping), as the viewer may
+ * see them. `ageMs` is how long ago their indicator was refreshed, measured on the server when
+ * the query ran: the client hides the entry once `ageMs` plus its own elapsed time reaches 6 s, so
+ * no clock comparison between the two is needed.
+ */
+export interface TypingView {
+  readonly member: ProjectedMember;
+  readonly ageMs: number;
+}

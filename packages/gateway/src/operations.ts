@@ -211,6 +211,10 @@ export const gateway = {
     postMessage: api.conversation.postMessage.postMessage,
     markThreadRead: api.conversation.markThreadRead.markThreadRead,
     setThreadMuted: api.conversation.setThreadMuted.setThreadMuted,
+    // Typing indicators: refresh/clear the caller's own, and who else is typing in a thread.
+    setTyping: api.conversation.setTyping.setTyping,
+    clearTyping: api.conversation.clearTyping.clearTyping,
+    getTyping: api.conversation.getTyping.getTyping,
     getMyInbox: api.conversation.getMyInbox.getMyInbox,
     getThreadMessages: api.conversation.getThreadMessages.getThreadMessages,
     listThreadMessages: api.conversation.listThreadMessages.listThreadMessages,
