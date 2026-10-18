@@ -230,6 +230,7 @@ import type * as insights_sampling from "../insights/sampling.js";
 import type * as invitations_adapters_clerkInvitationGateway from "../invitations/adapters/clerkInvitationGateway.js";
 import type * as invitations_adapters_fakeInvitationGateway from "../invitations/adapters/fakeInvitationGateway.js";
 import type * as invitations_adapters_invitationGateway from "../invitations/adapters/invitationGateway.js";
+import type * as invitations_applySignupInvite from "../invitations/applySignupInvite.js";
 import type * as invitations_clearInviteMetadata from "../invitations/clearInviteMetadata.js";
 import type * as invitations_config from "../invitations/config.js";
 import type * as invitations_emailInviteStore from "../invitations/emailInviteStore.js";
@@ -722,6 +723,7 @@ declare const fullApi: ApiFromModules<{
   "invitations/adapters/clerkInvitationGateway": typeof invitations_adapters_clerkInvitationGateway;
   "invitations/adapters/fakeInvitationGateway": typeof invitations_adapters_fakeInvitationGateway;
   "invitations/adapters/invitationGateway": typeof invitations_adapters_invitationGateway;
+  "invitations/applySignupInvite": typeof invitations_applySignupInvite;
   "invitations/clearInviteMetadata": typeof invitations_clearInviteMetadata;
   "invitations/config": typeof invitations_config;
   "invitations/emailInviteStore": typeof invitations_emailInviteStore;

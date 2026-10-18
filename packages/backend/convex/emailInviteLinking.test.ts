@@ -1,4 +1,5 @@
 import { convexTest, type TestConvex } from "convex-test";
+import { Webhook } from "svix";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -8,8 +9,9 @@ import {
 } from "./invitations/adapters/fakeInvitationGateway";
 import schema from "./schema";
 
-// Email invitations, the in-app side (#222, spec E1/E2): the fallbacks for an address that already
-// belongs to a member, and their withdrawal. Clerk is never reached (the fake gateway); AhaSend is
+// Email invitations, the in-app side (#222, spec E1/E2): sign-up through the link (the Clerk
+// user.created webhook), the fallbacks for an address that already belongs to a member, and
+// their withdrawal. Clerk is never reached (the fake gateway); AhaSend is
 // a stubbed fetch. The keys are dummy, non-secret test values.
 
 const gate = vi.hoisted(() => ({
@@ -425,5 +427,234 @@ describe("household invite to an existing member", () => {
     expect((await householdInvites(t)).map((r) => r.status)).toEqual([
       "accepted",
     ]);
+  });
+});
+
+// --- sign-up through the link: the svix-signed Clerk webhook ---
+
+const WEBHOOK_SECRET = "whsec_dGVzdHNlY3JldA==";
+
+const postUserEvent = async (
+  t: T,
+  type: "user.created" | "user.updated",
+  publicMetadata: unknown,
+) => {
+  const body = JSON.stringify({
+    type,
+    data: {
+      id: "clerk_newbie",
+      first_name: "New",
+      last_name: "Bie",
+      username: "newbie",
+      image_url: "",
+      created_at: Date.now(),
+      updated_at: Date.now(),
+      public_metadata: publicMetadata,
+      primary_email_address_id: "idn_1",
+      email_addresses: [
+        {
+          id: "idn_1",
+          email_address: "newbie@example.org",
+          verification: { status: "verified" },
+        },
+      ],
+    },
+  });
+  const msgId = `msg_${Math.random()}`;
+  const timestamp = new Date();
+  const response = await t.fetch("/clerk-users-webhook", {
+    method: "POST",
+    headers: {
+      "svix-id": msgId,
+      "svix-timestamp": String(Math.floor(timestamp.getTime() / 1000)),
+      "svix-signature": new Webhook(WEBHOOK_SECRET).sign(
+        msgId,
+        timestamp,
+        body,
+      ),
+    },
+    body,
+  });
+  expect(response.status).toBe(200);
+  await settleDueJobs(t);
+};
+
+const newbieId = (t: T) =>
+  t.run(
+    async (ctx) =>
+      (
+        await ctx.db
+          .query("users")
+          .withIndex("by_clerk_id", (q) => q.eq("clerkId", "clerk_newbie"))
+          .unique()
+      )?._id,
+  );
+
+const inviteNewbie = async (t: T, kind: "follow" | "household" = "follow") => {
+  await send(t, "alice", "newbie@example.org", kind);
+  const [row] = await emailInviteRows(t);
+  return row;
+};
+
+describe("sign-up through an email invitation", () => {
+  beforeEach(() => {
+    vi.stubEnv("CLERK_WEBHOOK_SECRET", WEBHOOK_SECRET);
+  });
+
+  test("follow: a pending offer from the inviter and no follow; accepting follows each other", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    const row = await inviteNewbie(t);
+
+    await postUserEvent(t, "user.created", {
+      jsInvite: { kind: "follow", ref: row.aggregateId },
+    });
+
+    const newbie = await newbieId(t);
+    const [offer] = await offers(t);
+    expect(offer).toMatchObject({
+      fromId: s.alice,
+      toId: newbie,
+      source: "emailInvite",
+      status: "pending",
+    });
+    expect(await follows(t)).toEqual([]);
+    expect(await emailInviteRows(t)).toEqual([]);
+    expect(gateway.cleared).toEqual(["clerk_newbie"]);
+
+    await t
+      .withIdentity({ subject: "clerk_newbie" })
+      .mutation(api.social.acceptConnection.acceptConnection, {
+        offerId: offer.aggregateId,
+      });
+    expect(await follows(t)).toHaveLength(2);
+  });
+
+  test("household: a pending invite into the inviter's household, named for the admin, no follow", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    const householdId = await seedHousehold(t, s.alice, s.bob);
+    const row = await inviteNewbie(t, "household");
+
+    await postUserEvent(t, "user.created", {
+      jsInvite: { kind: "household", ref: row.aggregateId },
+    });
+
+    const newbie = await newbieId(t);
+    const [invite] = await householdInvites(t);
+    expect(invite).toMatchObject({
+      householdId,
+      inviterId: s.alice,
+      inviteeId: newbie,
+      status: "pending",
+    });
+    expect(invite.viaEmail).toBeUndefined();
+    expect(
+      (await myHouseholdPending(t, "alice")).map((view) => view.inviteId),
+    ).toEqual([invite.aggregateId]);
+    expect(await offers(t)).toEqual([]);
+    expect(await follows(t)).toEqual([]);
+    expect(await emailInviteRows(t)).toEqual([]);
+  });
+
+  test("household: nothing when the inviter is no longer the admin", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await seedHousehold(t, s.alice, s.bob);
+    const row = await inviteNewbie(t, "household");
+    await t.run(async (ctx) => {
+      for (const m of await ctx.db.query("householdMembers").collect()) {
+        await ctx.db.patch(m._id, {
+          role: m.memberId === s.alice ? "member" : "admin",
+        });
+      }
+    });
+
+    await postUserEvent(t, "user.created", {
+      jsInvite: { kind: "household", ref: row.aggregateId },
+    });
+
+    expect(await householdInvites(t)).toEqual([]);
+    expect(await emailInviteRows(t)).toEqual([]);
+  });
+
+  test.each([
+    ["no metadata", null],
+    ["no jsInvite", { role: "admin" }],
+    ["a string jsInvite", { jsInvite: "follow" }],
+    ["an unknown kind", { jsInvite: { kind: "circle", ref: "REF" } }],
+    ["a non-string ref", { jsInvite: { kind: "follow", ref: 42 } }],
+    ["a ref that isn't ours", { jsInvite: { kind: "follow", ref: "a b;c" } }],
+  ])("ignores %s", async (_label, metadata) => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const row = await inviteNewbie(t);
+    const withRef = JSON.parse(
+      JSON.stringify(metadata).replace("REF", row.aggregateId),
+    );
+
+    await postUserEvent(t, "user.created", withRef);
+
+    expect(await newbieId(t)).toBeDefined();
+    expect(await offers(t)).toEqual([]);
+    expect(await emailInviteRows(t)).toHaveLength(1);
+    expect(gateway.cleared).toEqual([]);
+  });
+
+  test("an unknown ref does nothing, but the ref is still cleared", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await inviteNewbie(t);
+
+    await postUserEvent(t, "user.created", {
+      jsInvite: { kind: "follow", ref: "00000000-0000-0000-0000-000000000000" },
+    });
+
+    expect(await offers(t)).toEqual([]);
+    expect(await emailInviteRows(t)).toHaveLength(1);
+    expect(gateway.cleared).toEqual(["clerk_newbie"]);
+  });
+
+  test("a kind mismatch does nothing", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await seedHousehold(t, s.alice, s.bob);
+    const row = await inviteNewbie(t, "household");
+
+    await postUserEvent(t, "user.created", {
+      jsInvite: { kind: "follow", ref: row.aggregateId },
+    });
+
+    expect(await offers(t)).toEqual([]);
+    expect(await householdInvites(t)).toEqual([]);
+    expect(await emailInviteRows(t)).toHaveLength(1);
+  });
+
+  test("a revoked invitation does nothing", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const row = await inviteNewbie(t);
+    await revoke(t, "alice", row.aggregateId);
+
+    await postUserEvent(t, "user.created", {
+      jsInvite: { kind: "follow", ref: row.aggregateId },
+    });
+
+    expect(await offers(t)).toEqual([]);
+  });
+
+  test("only user.created applies it, and a redelivery makes no second offer", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const row = await inviteNewbie(t);
+    const metadata = { jsInvite: { kind: "follow", ref: row.aggregateId } };
+
+    await postUserEvent(t, "user.updated", metadata);
+    expect(await offers(t)).toEqual([]);
+    expect(await emailInviteRows(t)).toHaveLength(1);
+
+    await postUserEvent(t, "user.created", metadata);
+    await postUserEvent(t, "user.created", metadata);
+    expect(await offers(t)).toHaveLength(1);
   });
 });

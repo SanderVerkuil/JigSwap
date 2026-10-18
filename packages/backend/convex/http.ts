@@ -2,7 +2,8 @@ import type { WebhookEvent } from "@clerk/backend";
 import { httpRouter } from "convex/server";
 import { Webhook } from "svix";
 import { internal } from "./_generated/api";
-import { httpAction } from "./_generated/server";
+import { httpAction, type ActionCtx } from "./_generated/server";
+import { signupInviteOf } from "./invitations/applySignupInvite";
 
 const handleClerkWebhook = httpAction(async (ctx, request) => {
   // Read the secret per-request (NOT at module scope) so a deployment without it — e.g. a preview
@@ -36,6 +37,13 @@ const handleClerkWebhook = httpAction(async (ctx, request) => {
       await ctx.runMutation(internal.users.updateOrCreateUser, {
         clerkUser: event.data,
       });
+      if (event.type === "user.created") {
+        await applySignupInviteOf(
+          ctx,
+          event.data.id,
+          event.data.public_metadata,
+        );
+      }
       break;
     }
     case "user.deleted": {
@@ -52,6 +60,30 @@ const handleClerkWebhook = httpAction(async (ctx, request) => {
     status: 200,
   });
 });
+
+// A new member who signed up through an email invitation carries its { jsInvite: { kind, ref } }
+// in their public metadata, which only our Backend API calls can write. Anything malformed is
+// ignored, and a failure never fails the user sync (svix would redeliver the whole event).
+async function applySignupInviteOf(
+  ctx: ActionCtx,
+  clerkUserId: string,
+  publicMetadata: unknown,
+): Promise<void> {
+  const invite = signupInviteOf(publicMetadata);
+  if (invite === null) return;
+  try {
+    await ctx.runMutation(
+      internal.invitations.applySignupInvite.applySignupInvite,
+      { clerkUserId, ...invite },
+    );
+  } catch (error) {
+    console.error(
+      "applySignupInvite failed for invite",
+      invite.ref,
+      error instanceof Error ? error.name : "unknown",
+    );
+  }
+}
 
 const http = httpRouter();
 http.route({
