@@ -211,3 +211,75 @@ describe("copy-page messaging with an anonymous owner (#154)", () => {
     expect(threadId).toBe(dmId);
   });
 });
+
+// Route 2 of #154: postMessage's copy attachment. Success vs CopyNotFound must not reveal whether
+// an anonymous DM partner owns a copy the author can see.
+describe("attaching a copy in a DM with an anonymous partner (#154)", () => {
+  const post = (
+    t: TestConvex<typeof schema>,
+    threadId: string,
+    copyId: Id<"ownedPuzzles">,
+  ) =>
+    asViewer(t).mutation(api.conversation.postMessage.postMessage, {
+      threadId,
+      kind: "text",
+      body: "About this one",
+      copyId,
+    });
+
+  const errorDataOf = async (p: Promise<unknown>) => {
+    try {
+      await p;
+    } catch (e) {
+      expect(e).toBeInstanceOf(ConvexError);
+      return dataOf(e);
+    }
+    throw new Error("expected a rejection");
+  };
+
+  test("the partner's copy and a third party's copy are rejected identically", async () => {
+    const t = convexTest(schema, modules);
+    const { viewer, hidden, hiddenA, otherC } = await seed(t);
+    const dmId = await seedDm(t, viewer, hidden);
+
+    const ownedByPartner = await errorDataOf(post(t, dmId, hiddenA));
+    const ownedByThirdParty = await errorDataOf(post(t, dmId, otherC));
+
+    expect(ownedByPartner).toEqual({
+      code: "CopyNotFound",
+      message: "Copy not found",
+    });
+    expect(ownedByPartner).toEqual(ownedByThirdParty);
+    expect(await messageCount(t)).toBe(0);
+  });
+
+  test("the author's own copy still attaches", async () => {
+    const t = convexTest(schema, modules);
+    const { viewer, hidden } = await seed(t);
+    const dmId = await seedDm(t, viewer, hidden);
+    // Open copy of the viewer (public profile): the hidden partner can view it too.
+    const mine = await t.run(async (ctx) => {
+      const puzzle = await ctx.db.query("puzzles").first();
+      return ctx.db.insert("ownedPuzzles", {
+        puzzleId: puzzle!._id,
+        ownerId: viewer,
+        condition: "good",
+        availability: { forTrade: true, forSale: false, forLend: false },
+        createdAt: 1,
+        updatedAt: 1,
+      });
+    });
+
+    await post(t, dmId, mine);
+    expect(await messageCount(t)).toBe(1);
+  });
+
+  test("control: a revealed partner's copy still attaches", async () => {
+    const t = convexTest(schema, modules);
+    const { viewer, pub, publicCopy } = await seed(t);
+    const dmId = await seedDm(t, viewer, pub);
+
+    await post(t, dmId, publicCopy);
+    expect(await messageCount(t)).toBe(1);
+  });
+});
