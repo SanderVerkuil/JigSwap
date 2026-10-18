@@ -266,6 +266,34 @@ describe("collections on ownership transfer", () => {
     expect(after.json).not.toContain(NOAH_NOTE);
     expect(after.json).not.toContain(String(NOAH_PRICE));
 
+    // #155's rule P lets the other party of a completed exchange view a PRIVATE copy, so the old
+    // owner can reach the sold copy on its own. Even with a stale row pointing her collection at it,
+    // the collection must neither list nor count it, and no read may carry Noah's fields.
+    await asNoah(t).mutation(api.library.updateCopySharing.updateCopySharing, {
+      copyId: copyAggregateId,
+      visibility: "private",
+      forTrade: false,
+      forSale: false,
+      forLend: false,
+    });
+    await t.run(async (ctx) =>
+      ctx.db.insert("collectionMembers", {
+        collectionId: aliceCollection,
+        ownedPuzzleId: copy,
+        addedAt: Date.now(),
+      }),
+    );
+    const viaExchange = await aliceReads(t, copy, aliceCollection);
+    expect(viaExchange.copyPage).not.toBeNull();
+    expect(viaExchange.collection?.puzzles).toEqual([]);
+    expect(
+      viaExchange.userCollections.find((c) => c._id === aliceCollection)
+        ?.puzzleCount,
+    ).toBe(0);
+    expect(viaExchange.containing).toEqual([]);
+    expect(viaExchange.json).not.toContain(NOAH_NOTE);
+    expect(viaExchange.json).not.toContain(String(NOAH_PRICE));
+
     // Control: Noah still sees his own private fields on the copy in his own collection.
     const noahCollection = await collectionWith(
       t,
