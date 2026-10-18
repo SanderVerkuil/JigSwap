@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">84.61% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>11/11</span>
+                <span class='fraction'>11/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">75% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>8/8</span>
+                <span class='fraction'>6/8</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>9/9</span>
+                <span class='fraction'>10/10</span>
             </div>
         
             
@@ -104,7 +104,11 @@
 <a name='L39'></a><a href='#L39'>39</a>
 <a name='L40'></a><a href='#L40'>40</a>
 <a name='L41'></a><a href='#L41'>41</a>
-<a name='L42'></a><a href='#L42'>42</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -119,11 +123,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">64x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">72x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1601x</span>
+<span class="cline-any cline-yes">13x</span>
 <span class="cline-any cline-yes">13x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">13x</span>
@@ -141,6 +146,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -155,6 +163,7 @@ import type { MutationCtx } from "../_generated/server";
 import { convexCopyRepository } from "./adapters/convexCopyRepository";
 import { libraryEventPublisher } from "./adapters/eventPublisher";
 import { systemClock } from "./adapters/systemClock";
+import { toConvexError } from "./errors";
 &nbsp;
 // Library's reaction to a settled swap/sale (Exchange's OwnershipTransferred): the SAME copy changes
 // hands — the aggregate reassigns the owner and resets owner-scoped fields, keeping the physical
@@ -164,7 +173,7 @@ export const handleDomainEvent = async (
   ctx: MutationCtx,
   event: Doc&lt;"domainEvents"&gt;,
 ): Promise&lt;void&gt; =&gt; {
-  if (event.name !== "OwnershipTransferred") return;
+  <span class="missing-if-branch" title="if path not taken" >I</span>if (event.name !== "OwnershipTransferred") <span class="cstat-no" title="statement not covered" >return;</span>
   const p = event.payload as Record&lt;string, unknown&gt;;
 &nbsp;
   const copy = await ctx.db.get(p.copyId as Id&lt;"ownedPuzzles"&gt;);
@@ -182,7 +191,10 @@ export const handleDomainEvent = async (
   });
   // The household permission was the PREVIOUS owner's choice for their household; the new owner
   // starts from the default (absent = "manage") for theirs.
-  if (result.isOk &amp;&amp; copy.householdPermission !== undefined) {
+  // A refusal is an integrity anomaly here (the settled copy exists), never an expected outcome:
+  // throw so dispatch logs + records it and the custody row written alongside rolls back.
+  <span class="missing-if-branch" title="if path not taken" >I</span>if (result.isErr) <span class="cstat-no" title="statement not covered" >throw toConvexError(result.error);</span>
+  if (copy.householdPermission !== undefined) {
     await ctx.db.patch(copy._id, { householdPermission: undefined });
   }
 };
@@ -193,7 +205,7 @@ export const handleDomainEvent = async (
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-18T11:23:11.447Z
+                at 2026-10-18T15:24:27.476Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
