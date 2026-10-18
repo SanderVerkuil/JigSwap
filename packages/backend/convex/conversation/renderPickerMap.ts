@@ -40,6 +40,9 @@ export const renderPickerMap = action({
     lat: v.number(),
     lng: v.number(),
     zoom: v.number(),
+    // "gps": this view is centred on the device position ("Use my current location"); it is
+    // remembered briefly for sendLocation's precision guardrail (locationGpsViews).
+    mode: v.optional(v.literal("gps")),
   },
   handler: async (ctx, args): Promise<PickerMapView> => {
     if (
@@ -69,6 +72,9 @@ export const renderPickerMap = action({
         limit: "locationPicker",
         upstreamRequests:
           config.status === "ok" ? upstreamRequestsFor(config, view) : 0,
+        ...(args.mode === "gps" && {
+          gpsView: { lat: view.lat, lng: view.lng },
+        }),
       },
     );
     if (config.status !== "ok") throw unavailable();

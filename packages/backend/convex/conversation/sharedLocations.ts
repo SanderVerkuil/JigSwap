@@ -1,6 +1,7 @@
 import type { LocationAttachmentView } from "@jigswap/contracts";
 import { makePostMessage, toMemberId, toThreadId } from "@jigswap/domain";
 import { ConvexError } from "convex/values";
+import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import { logEvent } from "../lib/logEvent";
@@ -44,6 +45,78 @@ export const PICKER_MAP_TTL_MS = 10 * 60_000;
  * (expireLocationRender): it is appended as a text card rather than never arriving.
  */
 export const LOCATION_RENDER_TIMEOUT_MS = 10 * 60_000;
+
+/** How long a GPS-mode picker view is remembered (locationGpsViews). */
+export const GPS_VIEW_TTL_MS = 15 * 60_000;
+/**
+ * A "pin" this close to a remembered GPS view counts as the member's current location: ~100 m,
+ * plus up to ~65 m for the 3-decimal rounding of the stored view centre.
+ */
+export const GPS_MATCH_RADIUS_METRES = 165;
+
+const round3 = (value: number) => Math.round(value * 1e3) / 1e3;
+
+/** Great-circle distance in metres. */
+export const distanceMetres = (
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number },
+): number => {
+  const rad = Math.PI / 180;
+  const dLat = (b.lat - a.lat) * rad;
+  const dLng = (b.lng - a.lng) * rad;
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLng / 2) ** 2;
+  return 2 * 6_371_000 * Math.asin(Math.min(1, Math.sqrt(h)));
+};
+
+/**
+ * Remember a picker view the member rendered around their device position, rounded to 3
+ * decimals (~110 m), for GPS_VIEW_TTL_MS (the deletion is scheduled here).
+ */
+export const recordGpsView = async (
+  ctx: MutationCtx,
+  memberId: Id<"users">,
+  threadAggregateId: string,
+  centre: { lat: number; lng: number },
+): Promise<void> => {
+  const viewId = await ctx.db.insert("locationGpsViews", {
+    memberId,
+    threadAggregateId,
+    lat: round3(centre.lat),
+    lng: round3(centre.lng),
+    createdAt: Date.now(),
+  });
+  await ctx.scheduler.runAfter(
+    GPS_VIEW_TTL_MS,
+    internal.conversation.locationStore.deleteGpsView,
+    { viewId },
+  );
+};
+
+/**
+ * Whether a point lies within GPS_MATCH_RADIUS_METRES of a GPS view this member rendered in this
+ * thread during the last GPS_VIEW_TTL_MS.
+ */
+export const isNearRecentGpsView = async (
+  ctx: QueryCtx,
+  memberId: Id<"users">,
+  threadAggregateId: string,
+  point: { lat: number; lng: number },
+): Promise<boolean> => {
+  const views = await ctx.db
+    .query("locationGpsViews")
+    .withIndex("by_member_thread", (q) =>
+      q
+        .eq("memberId", memberId)
+        .eq("threadAggregateId", threadAggregateId)
+        .gt("createdAt", Date.now() - GPS_VIEW_TTL_MS),
+    )
+    .collect();
+  return views.some(
+    (view) => distanceMetres(view, point) <= GPS_MATCH_RADIUS_METRES,
+  );
+};
 
 /** Feature gate (spec R.6): no MapTiler key means no location sharing at all. */
 export const assertLocationAvailable = (): void => {

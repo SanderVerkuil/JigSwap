@@ -1019,6 +1019,19 @@ export default defineSchema({
     .index("by_review_requested", ["reviewRequestedAt"])
     .index("by_hash_check_pending", ["hashCheckPendingSince"]),
 
+  // A location-picker view the member rendered around their device position ("Use my current
+  // location"; conversation/renderPickerMap in GPS mode). The light server-side signal behind the
+  // precision guardrail: sendLocation treats a "pin" close to one of these as current location
+  // (sharedLocations.GPS_MATCH_RADIUS_METRES). Coordinates rounded to 3 decimals (~110 m), never
+  // the raw fix; each row is deleted GPS_VIEW_TTL_MS (15 min) after it was recorded.
+  locationGpsViews: defineTable({
+    memberId: v.id("users"),
+    threadAggregateId: v.string(),
+    lat: v.number(),
+    lng: v.number(),
+    createdAt: v.number(),
+  }).index("by_member_thread", ["memberId", "threadAggregateId", "createdAt"]),
+
   // A participant tapped "Show" on a blurred message photo (conversation/revealMessageImage).
   // Blurred photos carry no URL in the thread read; once a viewer has revealed one, the read
   // serves its URL to that viewer, so it doesn't re-blur on every render. Per viewer, never shared.

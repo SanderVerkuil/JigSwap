@@ -5,7 +5,11 @@ import { requireMember } from "../identity/requireMember";
 import { chargeMapTilerBudget, enforceRateLimit } from "../lib/rateLimits";
 import { assertThreadNotBlocked } from "../social/blocks";
 import { participantThreadOf } from "./messageAttachments";
-import { assertLocationAvailable, settleLocation } from "./sharedLocations";
+import {
+  assertLocationAvailable,
+  recordGpsView,
+  settleLocation,
+} from "./sharedLocations";
 
 // The database side of the location actions (searchPlaces, renderPickerMap, renderLocationMap):
 // actions can't read or write the database themselves.
@@ -37,6 +41,7 @@ export const gateLocationCall = internalMutation({
         message: "Locations can't be shared right now",
       });
     }
+    if (gpsView) await recordGpsView(ctx, me, threadId, gpsView);
     const user = await ctx.db.get(me);
     return { preferredLanguage: user?.preferredLanguage };
   },
@@ -85,6 +90,14 @@ export const chargeRender = internalMutation({
   args: { upstreamRequests: v.number() },
   handler: async (ctx, { upstreamRequests }): Promise<boolean> =>
     chargeMapTilerBudget(ctx, upstreamRequests),
+});
+
+/** A remembered GPS view expired (GPS_VIEW_TTL_MS after it was recorded). */
+export const deleteGpsView = internalMutation({
+  args: { viewId: v.id("locationGpsViews") },
+  handler: async (ctx, { viewId }) => {
+    if (await ctx.db.get(viewId)) await ctx.db.delete(viewId);
+  },
 });
 
 /**

@@ -56,8 +56,10 @@ export interface LocationPrecisionRequest {
 
 // The precision a location is shared at (spec R.5). A placed or searched pin is sent exactly. The
 // member's current location is snapped to the approximate grid unless they explicitly chose exact
-// AND the recipient is a mutual follower: exact current location is never shared with anyone else,
-// whatever was requested.
+// AND the recipient is a mutual follower. A GUARDRAIL against accidents, not a security boundary:
+// `source` comes from the client (and a member can always place a pin on their own address), so
+// this protects members who use "my current location" from over-sharing by mistake; it cannot
+// stop a member who wants to share exactly.
 export const resolveLocationPrecision = (
   request: LocationPrecisionRequest,
 ): LocationPrecision =>

@@ -187,7 +187,12 @@ describe("LocationPickerBody", () => {
       "Your current location is shared as an approximate area (about 1 km).",
     );
     expect(screen.queryByText("Share my exact location")).toBeNull();
-    expect(callsTo(RENDER)[0]).toMatchObject({ lat: 52.12346, lng: 5.09877 });
+    // Rendered in GPS mode, so the server can recognise the device position.
+    expect(callsTo(RENDER)[0]).toMatchObject({
+      lat: 52.12346,
+      lng: 5.09877,
+      mode: "gps",
+    });
     await act(async () => fireEvent.click(sendButton()));
     expect(callsTo(SEND)[0]).toMatchObject({
       source: "gps",
@@ -250,7 +255,13 @@ describe("LocationPickerBody", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Move east" }));
     await waitFor(() => expect(callsTo(RENDER)).toHaveLength(3));
-    const east = callsTo(RENDER)[2] as { lat: number; lng: number };
+    const east = callsTo(RENDER)[2] as {
+      lat: number;
+      lng: number;
+      mode?: string;
+    };
+    // A moved pin is no longer the device position.
+    expect(east.mode).toBeUndefined();
     expect(east.lat).toBeCloseTo(52, 4);
     expect(east.lng).toBeGreaterThan(5);
     // A quarter of 600 px at zoom 16.

@@ -234,13 +234,22 @@ export function LocationPickerBody({
   });
 
   const map = useQuery({
-    queryKey: ["location-picker-map", threadId, pin?.lat, pin?.lng, pin?.zoom],
+    queryKey: [
+      "location-picker-map",
+      threadId,
+      pin?.lat,
+      pin?.lng,
+      pin?.zoom,
+      pin?.source,
+    ],
     queryFn: () =>
       renderPickerMap({
         threadId,
         lat: pin!.lat,
         lng: pin!.lng,
         zoom: pin!.zoom,
+        // Lets the server recognise a "pin" left on the device position.
+        ...(pin!.source === "gps" ? { mode: "gps" as const } : {}),
       }),
     enabled: pin !== null,
     staleTime: VIEW_CACHE_MS,

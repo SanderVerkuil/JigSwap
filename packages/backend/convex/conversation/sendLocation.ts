@@ -14,6 +14,7 @@ import { participantThreadOf } from "./messageAttachments";
 import {
   assertLocationAvailable,
   isMutualWithOthers,
+  isNearRecentGpsView,
   LOCATION_RENDER_TIMEOUT_MS,
 } from "./sharedLocations";
 
@@ -24,12 +25,19 @@ const precisionValidator = v.union(
 
 // Share a place in a thread, once (spec 2.4, R.5, R.6). Gates: location sharing configured
 // (LocationUnavailable), a participant, the pair not blocked either way, the message and the
-// daily location limits. The precision is decided here, never by the client: a placed or
-// searched pin (`source: "pin"`) is exact; the member's current location (`source: "gps"`) is
-// snapped to the ~1 km grid unless they chose exact AND every other participant is a mutual
-// follower. SharedLocation rounds the coordinates by that precision, so only the shared
-// coordinates are ever stored. The row starts "pending" and the map render is scheduled; the
-// message is appended once the render settles (sharedLocations.settleLocation).
+// daily location limits.
+//
+// PRECISION is a guardrail against accidents, not a security boundary: the server cannot know
+// where coordinates came from, and a member can always type in their own address. `source` is
+// what the picker says: a placed or searched pin ("pin") is exact; the member's current location
+// ("gps") is snapped to the ~1 km grid unless they chose exact AND every other participant is a
+// mutual follower (resolveLocationPrecision). One light server-side signal backs it up: a "pin"
+// within GPS_MATCH_RADIUS_METRES of a picker view this member rendered around their device
+// position in this thread during the last 15 minutes (locationGpsViews) is treated as current
+// location, with exact not chosen. SharedLocation rounds the coordinates by the resolved
+// precision, so only the shared coordinates are stored. The row starts "pending", the map render
+// is scheduled, and so is expireLocationRender as a backstop; the message is appended once the
+// render settles (sharedLocations.settleLocation).
 export const sendLocation = mutation({
   args: {
     threadId: v.string(),
@@ -58,12 +66,20 @@ export const sendLocation = mutation({
         message: `A caption must be at most ${MAX_CAPTION_LENGTH} characters`,
       });
     }
+    // A "pin" sitting on the member's recent GPS view is their current location after all.
+    const looksLikeGps =
+      args.source === "pin" &&
+      Number.isFinite(args.lat) &&
+      Number.isFinite(args.lng) &&
+      (await isNearRecentGpsView(ctx, me, args.threadId, args));
+    const source = looksLikeGps ? "gps" : args.source;
+    const requested = looksLikeGps ? "approximate" : args.precision;
     const precision = resolveLocationPrecision({
-      source: args.source,
-      requested: args.precision,
+      source,
+      requested,
       mutualFollowers:
-        args.source === "gps" &&
-        args.precision === "exact" &&
+        source === "gps" &&
+        requested === "exact" &&
         (await isMutualWithOthers(ctx, thread.participants, me)),
     });
     const shared = SharedLocation.create({

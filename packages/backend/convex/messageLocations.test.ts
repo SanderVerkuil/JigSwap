@@ -774,6 +774,88 @@ describe("global MapTiler budget", () => {
   });
 });
 
+describe("precision guardrail: a pin on a recent GPS view", () => {
+  const gpsView = (t: T, threadId: string, lat: number, lng: number) =>
+    asAlice(t).action(api.conversation.renderPickerMap.renderPickerMap, {
+      threadId,
+      lat,
+      lng,
+      zoom: 15,
+      mode: "gps",
+    });
+
+  test("a 'pin' within ~100 m of the member's GPS view is sent as approximate current location", async () => {
+    const t = convexTest(schema, modules);
+    const { threadId } = await openThread(t);
+    await gpsView(t, threadId, 52.0907374, 5.1214209);
+    const views = await t.run((ctx) =>
+      ctx.db.query("locationGpsViews").collect(),
+    );
+    // Rounded to ~110 m, never the device fix.
+    expect(views).toMatchObject([{ lat: 52.091, lng: 5.121 }]);
+
+    // 50 m north of the GPS position, claimed as a placed pin.
+    const id = await send(t, threadId, { lat: 52.09119, lng: 5.12142 });
+    expect(await row(t, id)).toMatchObject({
+      precision: "approximate",
+      lat: 52.09,
+    });
+  });
+
+  test("a pin well away from it stays exact; a view in another thread doesn't count", async () => {
+    const t = convexTest(schema, modules);
+    const { threadId } = await openThread(t);
+    await gpsView(t, threadId, 52.0907, 5.1214);
+    const far = await send(t, threadId, { lat: 52.1, lng: 5.13 });
+    expect((await row(t, far))!.precision).toBe("exact");
+  });
+
+  test("the view is forgotten after 15 minutes", async () => {
+    const t = convexTest(schema, modules);
+    const { threadId } = await openThread(t);
+    const before = Date.now();
+    await gpsView(t, threadId, 52.0907, 5.1214);
+    const jobs = await t.run((ctx) =>
+      ctx.db.system.query("_scheduled_functions").collect(),
+    );
+    const expiry = jobs.find((job) => job.name.includes("deleteGpsView"))!;
+    expect(expiry.scheduledTime).toBeGreaterThanOrEqual(before + 15 * 60_000);
+    await t.mutation(
+      internal.conversation.locationStore.deleteGpsView,
+      expiry.args[0] as { viewId: Id<"locationGpsViews"> },
+    );
+    expect(
+      await t.run((ctx) => ctx.db.query("locationGpsViews").collect()),
+    ).toEqual([]);
+    // And an old view no longer matches even before its deletion runs.
+    await t.run(async (ctx) =>
+      ctx.db.insert("locationGpsViews", {
+        memberId: (await ctx.db.query("users").first())!._id,
+        threadAggregateId: threadId,
+        lat: 52.091,
+        lng: 5.121,
+        createdAt: Date.now() - 16 * 60_000,
+      }),
+    );
+    const id = await send(t, threadId, { lat: 52.0907, lng: 5.1214 });
+    expect((await row(t, id))!.precision).toBe("exact");
+  });
+
+  test("a non-GPS picker view is not remembered", async () => {
+    const t = convexTest(schema, modules);
+    const { threadId } = await openThread(t);
+    await asAlice(t).action(api.conversation.renderPickerMap.renderPickerMap, {
+      threadId,
+      lat: 52.0907,
+      lng: 5.1214,
+      zoom: 15,
+    });
+    expect(
+      await t.run((ctx) => ctx.db.query("locationGpsViews").collect()),
+    ).toEqual([]);
+  });
+});
+
 describe("a render that never settles", () => {
   test("sendLocation schedules a backstop 10 minutes out; a still-pending location is then delivered as a text card", async () => {
     const t = convexTest(schema, modules);
