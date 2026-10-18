@@ -165,8 +165,14 @@ patterns:
   synchronous reactions in the same transaction (e.g. marking a transferred copy unavailable,
   recomputing goal progress), then (2) appends each event to the `domainEvents` table and schedules
   `events/dispatch.ts` via `ctx.scheduler.runAfter(0)`. The dispatcher fans events to async
-  subscribers (Notifications, Custody, Library transfer, Library loan) and stamps `processedAt`
-  only after all succeed — at-least-once delivery with Convex's automatic retry on rollback.
+  subscribers (trade reveal, Notifications, Conversation, Custody, Library transfer, Library loan),
+  each in its own sub-transaction, and stamps `processedAt` once all succeed. Convex does **not**
+  retry a scheduled mutation on an application error, so a throwing subscriber is caught: its
+  writes roll back, the others commit, and it is logged as an `events.dispatch` error wide event
+  (forwarded to Axiom). Idempotent subscribers (`retry: true`) are re-dispatched with backoff up to
+  5 passes; the rest give up at once. A given-up event gets `failedAt` (index `by_failed`),
+  `failedHandlers` and `lastError`, and needs an operator. Alert on it in Axiom with
+  `['jigswap'] | where event == "events.dispatch" and outcome == "error" and will_retry == false`.
 
 ### 1.6 The TanStack Start web app
 

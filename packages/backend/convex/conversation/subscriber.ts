@@ -74,7 +74,8 @@ export const handleDomainEvent = async (
     clock: systemClock,
   });
   const posted = await post({ threadId: opened.value, body });
-  // A failure here (e.g. corrupt thread) must THROW so the dispatcher's transaction rolls back
-  // and the scheduler retries — the event must not be stamped processed with the message lost.
+  // A failure here (e.g. corrupt thread) must THROW so this subscriber's sub-transaction rolls
+  // back and the dispatcher records + alerts on it (events/dispatch) — the event must not be
+  // stamped processed with the message lost. Not auto-retried: a re-run appends a message.
   if (posted.isErr) throw toConvexError(posted.error);
 };

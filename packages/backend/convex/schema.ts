@@ -1244,8 +1244,20 @@ export default defineSchema({
     occurredAt: v.number(),
     context: v.string(),
     processedAt: v.optional(v.number()),
+    // Dispatch bookkeeping, written only once a subscriber has failed (a clean dispatch stamps
+    // processedAt alone). attempts = dispatch passes run; completedHandlers are skipped on retry;
+    // failedHandlers gave up (non-idempotent, blocked by a failed dependency, or out of retries).
+    // failedAt marks the event terminally failed — it needs an operator, never auto-retries.
+    attempts: v.optional(v.number()),
+    completedHandlers: v.optional(v.array(v.string())),
+    failedHandlers: v.optional(v.array(v.string())),
+    lastError: v.optional(
+      v.object({ handler: v.string(), message: v.string() }),
+    ),
+    failedAt: v.optional(v.number()),
   })
     .index("by_processed", ["processedAt"])
+    .index("by_failed", ["failedAt"])
     // Backs the activity feed: pull recent events of a given name in a bounded time window without
     // a full-table scan-and-filter.
     .index("by_name", ["name", "occurredAt"]),
