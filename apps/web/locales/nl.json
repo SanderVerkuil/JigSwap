@@ -3806,7 +3806,8 @@
         },
         "table": {
           "ownedPuzzleImages": "Foto bij exemplaar",
-          "completionImages": "Foto bij voltooiing"
+          "completionImages": "Foto bij voltooiing",
+          "messageAttachments": "Foto in bericht"
         },
         "matched": "Match {time} via {provider}",
         "uploader": "Geüpload door {name}",

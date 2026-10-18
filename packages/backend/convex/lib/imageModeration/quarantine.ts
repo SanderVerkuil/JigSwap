@@ -31,12 +31,14 @@ import { imageHashPair } from "./hashCheckFields";
 // rejected one. [LAWYER] A lawyer should confirm this reading of Art. 17/18, and whether a
 // statement must follow later (for example once law enforcement agrees).
 
-export type QuarantinedTable = "ownedPuzzleImages" | "completionImages";
+export type QuarantinedTable =
+  "ownedPuzzleImages" | "completionImages" | "messageAttachments";
 
 // Audit-trail label per table: no puzzle title or other content, just which kind of photo.
 const TABLE_LABEL: Record<QuarantinedTable, string> = {
   ownedPuzzleImages: "Copy photo",
   completionImages: "Completion photo",
+  messageAttachments: "Message photo",
 };
 
 /** Insert the escalation row and stamp `image_quarantined` (no actor: the automated pipeline). */
@@ -144,7 +146,8 @@ export const hashCheckResultArgs = {
  */
 export const applyHashCheckResult = async (
   ctx: MutationCtx,
-  imageId: Id<"ownedPuzzleImages"> | Id<"completionImages">,
+  imageId:
+    Id<"ownedPuzzleImages"> | Id<"completionImages"> | Id<"messageAttachments">,
   result: {
     status: "no_match" | "unavailable";
     hashes?: { md5: string; sha1: string }[];

@@ -79,9 +79,9 @@ export const toMessageRow = (
   ...(message.copyId !== undefined && {
     copyId: message.copyId as unknown as Id<"ownedPuzzles">,
   }),
-  // The domain's opaque attachmentRef is the attachment row id; absent stays absent.
+  // The domain's opaque attachmentRef is the messageAttachments row id; absent stays absent.
   ...(message.attachmentRef !== undefined && {
-    attachmentId: message.attachmentRef,
+    attachmentId: message.attachmentRef as Id<"messageAttachments">,
   }),
 });
 

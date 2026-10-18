@@ -635,6 +635,7 @@ export default defineSchema({
     table: v.union(
       v.literal("ownedPuzzleImages"),
       v.literal("completionImages"),
+      v.literal("messageAttachments"),
     ),
     rowId: v.string(),
     uploaderId: v.id("users"),
@@ -869,10 +870,10 @@ export default defineSchema({
     // Text: the message. Media (image/location): the optional caption, "" allowed.
     body: v.string(),
     sentAt: v.number(),
-    // The media message's attachment (the domain's opaque attachmentRef); absent on text/system
-    // rows and on legacy image rows. A plain string until the attachments table lands, when it
-    // becomes v.id("messageAttachments").
-    attachmentId: v.optional(v.string()),
+    // The media message's attachment row (the domain's opaque attachmentRef); absent on
+    // text/system rows and on legacy image rows. Written only by the deferred append
+    // (conversation/messageAttachments.ts) once the attachment is deliverable.
+    attachmentId: v.optional(v.id("messageAttachments")),
     // The copy this message is about, when sent from a copy's "Message" action. Lives on the
     // message (not the thread) because a DM is one long-lived thread per pair, spanning many
     // puzzles; absent on plain/system messages and every pre-existing row.
@@ -887,6 +888,77 @@ export default defineSchema({
     // as undefined and are excluded by a range on copyId). Backs the inbox's context copies.
     .index("by_thread_copy_sent", ["threadAggregateId", "copyId", "sentAt"])
     .index("by_message_id", ["messageId"]),
+
+  // A message's attachment (spec 2.1/2.2), staged BEFORE its message exists: the uploader stages
+  // a photo (conversation/stageMessageImage), the shared image pipeline screens it
+  // (conversation/attachmentModerationStore), and the thread message is appended only once it is
+  // deliverable AND its send was requested (deferred append, conversation/messageAttachments.ts).
+  // Until then nothing about it reaches the other participant: no message, no lastMessage, no
+  // unread, no notification. Moderation state lives here, never in the append-only history.
+  // `kind` is "image" only for now; "location" joins the union with location sharing.
+  messageAttachments: defineTable({
+    kind: v.literal("image"),
+    threadAggregateId: v.string(),
+    uploaderId: v.id("users"),
+    fileId: v.id("_storage"),
+    // A smaller rendition; not produced yet (the shared pipeline has no thumbnail step).
+    thumbFileId: v.optional(v.id("_storage")),
+    // Pixel size the client reported at staging (layout only: the aspect-ratio box).
+    width: v.optional(v.number()),
+    height: v.optional(v.number()),
+    byteSize: v.number(),
+    contentType: v.string(),
+    // The image-table lifecycle (incl. "unscored" and "quarantined"), plus:
+    // - "blurred": scored in the sensitive band (MESSAGE_IMAGE_BLUR_THRESHOLD up to the reject
+    //   threshold); delivered blurred with "Show". (A non-mutual sender's image is ALSO shown
+    //   blurred, but that is decided per viewer at read time, never stored.)
+    // - "removed": a moderator removed it after a report; its message is tombstoned.
+    // "unscored" (the classifier stayed unavailable through the retries) is delivered blurred
+    // and labelled "not checked"; it is never silently approved.
+    moderationStatus: v.union(
+      v.literal("pending"),
+      v.literal("approved"),
+      v.literal("blurred"),
+      v.literal("unscored"),
+      v.literal("rejected"),
+      v.literal("quarantined"),
+      v.literal("removed"),
+    ),
+    moderationScore: v.optional(v.number()),
+    moderationLabel: v.optional(v.string()),
+    moderationReason: v.optional(v.string()),
+    moderationAttempts: v.optional(v.number()),
+    // Blurhash (lib/blurhash) of the clean image, from the pipeline's re-encode. Kept on removal
+    // so a removed photo can keep a placeholder; never exposed for a rejected/quarantined row.
+    blurhash: v.optional(v.string()),
+    // CSAM hash-check bookkeeping + publication gate (lib/imageModeration/hashCheckFields).
+    ...hashCheckFields,
+    // Set by sendStagedImages: the batch's request time (shared by up to 4 photos) and each
+    // photo's position in it; delivery is in this order. The caption rides on the batch's LAST
+    // photo.
+    sendRequestedAt: v.optional(v.number()),
+    sendIndex: v.optional(v.number()),
+    caption: v.optional(v.string()),
+    // The appended thread message (absent = not delivered). Set once, by the first appender.
+    messageId: v.optional(v.string()),
+    // An open report references it: its blobs are never deleted by expiry or removal.
+    evidenceHold: v.optional(v.boolean()),
+    // The sender was told their photo was rejected (message_image_rejected), once.
+    rejectionNotifiedAt: v.optional(v.number()),
+    // "Ask for a review" (spec R.10): only then may an admin see an auto-rejected photo.
+    reviewRequestedAt: v.optional(v.number()),
+    reviewDecidedAt: v.optional(v.number()),
+    // The admin who restored or upheld it on review.
+    moderatedBy: v.optional(v.id("users")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_thread_uploader", ["threadAggregateId", "uploaderId"])
+    .index("by_file", ["fileId"])
+    .index("by_moderation_status", ["moderationStatus"])
+    .index("by_message", ["messageId"])
+    .index("by_review_requested", ["reviewRequestedAt"])
+    .index("by_hash_check_pending", ["hashCheckPendingSince"]),
 
   // Member-lookup projection of threads.participants, kept in sync by the repository on every
   // save (same pattern as circleMembers — Convex cannot index embedded arrays). Also the

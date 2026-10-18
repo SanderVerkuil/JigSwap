@@ -3806,7 +3806,8 @@
         },
         "table": {
           "ownedPuzzleImages": "Copy photo",
-          "completionImages": "Completion photo"
+          "completionImages": "Completion photo",
+          "messageAttachments": "Message photo"
         },
         "matched": "Matched {time} via {provider}",
         "uploader": "Uploaded by {name}",
