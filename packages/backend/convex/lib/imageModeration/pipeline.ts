@@ -345,6 +345,32 @@ export const runImageModeration = async <R extends ModerationRow>(
       return;
     }
 
+    // A row that references a blob already preserved for an escalation (a re-used storage id)
+    // is quarantined at once and joins that escalation; the blob is never read, swapped or
+    // deleted.
+    const preservedHashes = await ctx.runQuery(
+      internal.lib.imageModeration.quarantine.getPreservedHashes,
+      { storageId: row.fileId },
+    );
+    if (preservedHashes) {
+      const escalationId = await ctx.runMutation(steps.quarantine, {
+        imageId,
+        fileId: row.fileId,
+        uploaderId: row.uploaderId,
+        ...preservedHashes,
+        provider: hashConfig.provider,
+        originalDiscarded: false,
+      });
+      for (const key of Object.keys(event)) {
+        if (key !== "event" && key !== "outcome" && key !== "attempt") {
+          delete event[key];
+        }
+      }
+      event.csam_hashcheck_status = "already_preserved";
+      event.escalation_id = escalationId;
+      return;
+    }
+
     // Refuse an upload that fails an input guard: reject it (first verdict wins), then delete
     // the blob, but only when the row took this verdict and still points at it, so a blob a
     // concurrent attempt already decided on is never touched. A store's own reject side effects

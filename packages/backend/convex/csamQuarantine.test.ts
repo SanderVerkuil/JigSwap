@@ -740,3 +740,77 @@ describe("logging on a match (L2)", () => {
     expect(matchLine).not.toContain(escalation.md5);
   });
 });
+
+describe("preserved blobs can never be re-used (H1)", () => {
+  const quarantineOne = async (t: TestConvex<typeof schema>) => {
+    vi.stubGlobal("fetch", routedFetch("match"));
+    const { alice, copy, copyAggregateId } = await seed(t);
+    const { row } = await addCopyPhoto(t, copy);
+    return { alice, copy, copyAggregateId, preservedId: row.fileId };
+  };
+
+  test("addCopyPhoto and attachCompletionPhotos refuse a preserved storage id with a generic not-found", async () => {
+    const t = convexTest(schema, modules);
+    const { copy, copyAggregateId, preservedId } = await quarantineOne(t);
+
+    await expect(
+      asAlice(t).mutation(api.library.addCopyPhoto.addCopyPhoto, {
+        copyId: copy,
+        fileId: preservedId,
+        tag: "box_front",
+      }),
+    ).rejects.toThrow("File not found");
+    const { completionId } = await asAlice(t).mutation(
+      api.solving.recordCompletion.recordCompletion,
+      {
+        copyId: copyAggregateId,
+        startDate: Date.now() - 7_200_000,
+        endDate: Date.now() - 3_600_000,
+      },
+    );
+    await expect(
+      asAlice(t).mutation(
+        api.solving.attachCompletionPhotos.attachCompletionPhotos,
+        { completionId, storageIds: [preservedId] },
+      ),
+    ).rejects.toThrow("Photo not found");
+    expect(await blobExists(t, preservedId)).toBe(true);
+  });
+
+  test("a row that already points at a preserved blob is quarantined at once and joins its escalation", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, copy, preservedId } = await quarantineOne(t);
+    const now = Date.now();
+    const imageId = await t.run((ctx) =>
+      ctx.db.insert("ownedPuzzleImages", {
+        ownedPuzzleId: copy,
+        uploaderId: alice,
+        fileId: preservedId,
+        moderationStatus: "pending",
+        hashCheckPendingSince: now,
+        createdAt: now,
+        updatedAt: now,
+      }),
+    );
+
+    await t.action(internal.library.moderatePhoto.moderatePhoto, { imageId });
+
+    const row = await t.run((ctx) => ctx.db.get(imageId));
+    expect(row?.moderationStatus).toBe("quarantined");
+    expect(row?.fileId).toBe(preservedId);
+    expect(await blobExists(t, preservedId)).toBe(true);
+    expect(await escalations(t)).toHaveLength(1);
+  });
+
+  test("the owner's copy-detail read never lists a quarantined photo's storage id", async () => {
+    const t = convexTest(schema, modules);
+    const { copy, preservedId } = await quarantineOne(t);
+    const detail = await asAlice(t).query(
+      api.library.getOwnedPuzzleWithCollectionStatus
+        .getOwnedPuzzleWithCollectionStatus,
+      { ownedPuzzleId: copy },
+    );
+    expect(detail).not.toBeNull();
+    expect(JSON.stringify(detail)).not.toContain(preservedId);
+  });
+});

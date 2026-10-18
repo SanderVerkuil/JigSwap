@@ -76,12 +76,15 @@ export const getOwnedPuzzleWithCollectionStatus = query({
       .order("desc")
       .collect();
 
-    const images = await ctx.db
-      .query("ownedPuzzleImages")
-      .withIndex("by_owned_puzzle", (q) =>
-        q.eq("ownedPuzzleId", args.ownedPuzzleId),
-      )
-      .collect();
+    // A quarantined photo (CSAM hash match) is never exposed, not even its storage id.
+    const images = (
+      await ctx.db
+        .query("ownedPuzzleImages")
+        .withIndex("by_owned_puzzle", (q) =>
+          q.eq("ownedPuzzleId", args.ownedPuzzleId),
+        )
+        .collect()
+    ).filter((img) => img.moderationStatus !== "quarantined");
 
     const collectionStatus: OwnedCopyCollectionStatusView = collection
       ? {

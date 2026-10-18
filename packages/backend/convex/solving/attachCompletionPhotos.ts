@@ -9,6 +9,7 @@ import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { isPreservedBlob } from "../lib/imageModeration/quarantine";
 import { convexCompletionRepository } from "./adapters/convexCompletionRepository";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
 import { systemClock } from "./adapters/systemClock";
@@ -41,6 +42,13 @@ export const attachCompletionPhotos = mutation({
       (id) => !attached.has(id),
     );
     if (newIds.length === 0) return;
+    // A blob preserved for a CSAM escalation can never be attached again (generic not-found, so
+    // nothing about the escalation is revealed).
+    for (const id of newIds) {
+      if (await isPreservedBlob(ctx, id as Id<"_storage">)) {
+        throw new ConvexError("Photo not found");
+      }
+    }
 
     const attachUseCase = makeAttachCompletionPhotos({
       completions: convexCompletionRepository(ctx),

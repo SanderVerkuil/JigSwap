@@ -53,6 +53,13 @@ export const recordCsamEscalation = async (
     originalDiscarded: boolean;
   },
 ): Promise<Id<"csamEscalations">> => {
+  // One escalation per preserved blob: a row re-pointed at an already-preserved blob (see
+  // getPreservedHashes) joins the existing escalation instead of raising a second one.
+  const existing = await ctx.db
+    .query("csamEscalations")
+    .withIndex("by_file", (q) => q.eq("fileId", args.fileId))
+    .first();
+  if (existing) return existing._id;
   const escalationId = await ctx.db.insert("csamEscalations", {
     ...args,
     matchedAt: Date.now(),
@@ -75,6 +82,19 @@ export const isPreservedBlob = async (
     .query("csamEscalations")
     .withIndex("by_file", (q) => q.eq("fileId", fileId))
     .first()) !== null;
+
+// For the Node pipeline (no ctx.db): the matched hashes when a blob is already preserved for an
+// escalation (a row that references it is quarantined at once), else null.
+export const getPreservedHashes = internalQuery({
+  args: { storageId: v.id("_storage") },
+  handler: async (ctx, { storageId }) => {
+    const escalation = await ctx.db
+      .query("csamEscalations")
+      .withIndex("by_file", (q) => q.eq("fileId", storageId))
+      .first();
+    return escalation ? { md5: escalation.md5, sha1: escalation.sha1 } : null;
+  },
+});
 
 // For the Node pipeline (no ctx.db): check before deleting an original blob.
 export const isBlobPreserved = internalQuery({

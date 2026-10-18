@@ -4,6 +4,7 @@ import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { canManageCopy } from "../household/copyAccess";
 import { requireMember } from "../identity/requireMember";
+import { isPreservedBlob } from "../lib/imageModeration/quarantine";
 
 // Composition root for attaching an uploaded photo to an owned copy, keyed by the copy's Convex id.
 // Pairs with `generateUploadUrl`: the client uploads the blob, then calls this with the returned
@@ -33,6 +34,15 @@ export const addCopyPhoto = mutation({
     // Owner, or a household member the owner left at "manage" (co-owner).
     if (!(await canManageCopy(ctx, memberId, copy))) {
       throw new ConvexError("Only the owner can add a photo to this copy");
+    }
+
+    // A blob preserved for a CSAM escalation can never be attached again; the error is the same
+    // generic one a missing file gives, so nothing about the escalation is revealed.
+    if (
+      !(await ctx.db.system.get(args.fileId)) ||
+      (await isPreservedBlob(ctx, args.fileId))
+    ) {
+      throw new ConvexError("File not found");
     }
 
     const now = Date.now();
