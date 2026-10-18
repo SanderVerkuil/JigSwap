@@ -18,6 +18,11 @@ export const getCollectionsForOwnedPuzzle = query({
       .unique();
     if (!user) throw new ConvexError("User not found");
 
+    // Only the copy's owner has it on their shelves: a stale member row (the copy changed hands)
+    // must not tell the previous owner it is still in their collection.
+    const copy = await ctx.db.get(args.ownedPuzzleId);
+    if (!copy || copy.ownerId !== user._id) return [];
+
     const members = await ctx.db
       .query("collectionMembers")
       .withIndex("by_owned_puzzle", (q) =>

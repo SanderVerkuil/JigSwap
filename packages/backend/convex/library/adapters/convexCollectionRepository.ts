@@ -169,3 +169,24 @@ export const convexCollectionRepository = (
     },
   };
 };
+
+// Remove one copy (`copyId` is the Library CopyId aggregateId) from every collection that holds
+// it. A collection is a shelf of its owner's OWN copies, so when the copy changes hands the
+// previous owner's collections must let go of it (in-transaction reaction to
+// CopyOwnershipTransferred). No collection keeps a denormalised count or cover, so this is the
+// whole change.
+export const deleteCollectionMembershipsOfCopy = async (
+  ctx: MutationCtx,
+  copyId: string,
+): Promise<void> => {
+  const copy = await ctx.db
+    .query("ownedPuzzles")
+    .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", copyId))
+    .unique();
+  if (!copy) return;
+  const memberships = await ctx.db
+    .query("collectionMembers")
+    .withIndex("by_owned_puzzle", (q) => q.eq("ownedPuzzleId", copy._id))
+    .collect();
+  for (const membership of memberships) await ctx.db.delete(membership._id);
+};
