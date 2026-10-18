@@ -230,6 +230,12 @@ export const gateway = {
     requestImageReview: api.conversation.requestImageReview.requestImageReview,
     // "Show" on a blurred message photo: its URL, after the participant's tap.
     revealMessageImage: api.conversation.revealMessageImage.revealMessageImage,
+    // Location sharing (MapTiler, server-side only): whether it is offered, the picker's place
+    // search and map views (both ACTIONS: call them with useConvexAction), and the send.
+    locationAvailable: api.conversation.locationAvailable.locationAvailable,
+    searchPlaces: api.conversation.searchPlaces.searchPlaces,
+    renderPickerMap: api.conversation.renderPickerMap.renderPickerMap,
+    sendLocation: api.conversation.sendLocation.sendLocation,
   },
 
   // Chain-of-Custody: a Copy's provenance (original owner -> each settled transfer -> current
