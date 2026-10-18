@@ -270,6 +270,42 @@ describe("getPresenceOf", () => {
   });
 });
 
+describe("getPresenceOf timing", () => {
+  test("every mutual, unblocked target costs the same component read", async () => {
+    const t = setup();
+    const viewer = await seedMember(t, "viewer");
+    await share(t, "viewer");
+    const names = ["online", "invisible", "unshared", "inactive", "stranger"];
+    const ids: Record<string, Id<"users">> = {};
+    for (const name of names) {
+      ids[name] = await seedMember(t, name);
+      if (name !== "stranger") await mutual(t, viewer, ids[name]);
+      if (name !== "unshared") await share(t, name);
+    }
+    await as(t, "invisible").mutation(
+      api.social.setPresencePreferences.setPresencePreferences,
+      { override: "invisible" },
+    );
+    for (const name of names) {
+      await heartbeat(t, name, ids[name] as Id<"users">, APP_ONLINE_ROOM);
+    }
+    await t.run((ctx) => ctx.db.patch(ids.inactive!, { isActive: false }));
+
+    const listUser = vi.spyOn(presence, "listUser");
+    const result = await presenceOf(
+      t,
+      "viewer",
+      names.map((name) => ids[name] as Id<"users">),
+    );
+    expect(result).toEqual([{ memberId: ids.online, status: "online" }]);
+    // Hidden, unshared and inactive targets are read exactly like the visible one; only the
+    // non-mutual stranger stops before the component.
+    expect(listUser.mock.calls.map(([, userId]) => userId).sort()).toEqual(
+      [ids.online, ids.invisible, ids.unshared, ids.inactive].sort(),
+    );
+  });
+});
+
 describe("presence settings", () => {
   test("default: never asked, automatic", async () => {
     const t = setup();

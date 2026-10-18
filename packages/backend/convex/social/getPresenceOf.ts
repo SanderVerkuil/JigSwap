@@ -16,9 +16,10 @@ export const MAX_PRESENCE_TARGETS = 50;
 // Which of these members the viewer may see as online or away (spec 5.1). Members who are
 // offline, hidden, invisible, not mutual, blocked either way, or not sharing are all simply
 // ABSENT, so none of those states can be told apart. Never returns lastDisconnected or any other
-// timestamp. Reads per target: their settings row, at most two follow-edge lookups and, only
-// when visible, their user row and the component's per-user room list (which changes on
-// transitions, not on every heartbeat, so subscribers aren't re-run per heartbeat).
+// timestamp. Reads per target: at most two follow-edge lookups and, for every mutual follower
+// not blocked either way, always the same three: their settings row, their user row and the
+// component's per-user room list (which changes on transitions, not on every heartbeat, so
+// subscribers aren't re-run per heartbeat).
 export const getPresenceOf = query({
   args: { memberIds: v.array(v.id("users")) },
   handler: async (ctx, { memberIds }): Promise<PresenceView[]> => {
@@ -39,22 +40,32 @@ export const getPresenceOf = query({
 
     const views: PresenceView[] = [];
     for (const targetId of new Set(memberIds)) {
+      const blockedEitherWay = blocked.has(targetId);
+      const mutual =
+        !blockedEitherWay &&
+        (await areMutualFollowers(ctx, viewerId, targetId));
+      // Every target past the relationship gates costs the same reads whatever their settings,
+      // activity or account state, so timing can't tell "invisible" or "not sharing" from
+      // "offline". (Blocked or non-mutual targets stop here: the follow edges are no secret to
+      // the viewer, and a block deletes them anyway.)
+      if (!mutual) continue;
       const prefs = await findPresencePreferences(ctx, targetId);
-      const targetOverride = prefs?.override ?? "auto";
-      const visible = canSeePresence({
-        viewerId: toMemberId(viewerId),
-        targetId: toMemberId(targetId),
-        blockedEitherWay: blocked.has(targetId),
-        mutual: await areMutualFollowers(ctx, viewerId, targetId),
-        targetShare: prefs?.share,
-        targetOverride,
-        viewerShare,
-      });
-      if (!visible) continue;
-      // A deleted or deactivated (tombstoned) member is never shown, whatever rows remain.
       const target = await ctx.db.get(targetId);
-      if (!target || !target.isActive) continue;
       const rooms = await presence.listUser(ctx, targetId as string, true);
+      const targetOverride = prefs?.override ?? "auto";
+      const visible =
+        canSeePresence({
+          viewerId: toMemberId(viewerId),
+          targetId: toMemberId(targetId),
+          blockedEitherWay,
+          mutual,
+          targetShare: prefs?.share,
+          targetOverride,
+          viewerShare,
+        }) &&
+        // A deleted or deactivated (tombstoned) member is never shown, whatever rows remain.
+        target?.isActive === true;
+      if (!visible) continue;
       const status = effectiveStatus({
         override: targetOverride,
         inOnlineRoom: rooms.some((room) => room.roomId === APP_ONLINE_ROOM),
