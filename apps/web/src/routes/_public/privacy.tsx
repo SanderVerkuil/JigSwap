@@ -100,6 +100,29 @@ function PrivacyPolicyPage() {
         { type: "list", items: list("messaging.items") },
       ],
     },
+    // Group chats, online status and typing (group-threads spec 5.6). [LAWYER] Online status
+    // relies on legitimate interest (Art. 6(1)(f)) with opt-in, mutual-only and reciprocal
+    // safeguards, not consent; a lawyer should confirm that framing. Keep these lines in step
+    // with getPresenceOf (INVISIBLE_VIEWERS_SEE_OTHERS) and the typing gates. No new processors.
+    {
+      id: "p-groups",
+      heading: t("groups.title"),
+      blocks: [
+        { type: "p", text: t("groups.description") },
+        { type: "list", items: list("groups.items") },
+      ],
+    },
+    {
+      id: "p-presence",
+      heading: t("presence.title"),
+      blocks: [
+        { type: "p", text: t("presence.description") },
+        { type: "sub", text: t("presence.onlineTitle") },
+        { type: "list", items: list("presence.onlineItems") },
+        { type: "sub", text: t("presence.typingTitle") },
+        { type: "list", items: list("presence.typingItems") },
+      ],
+    },
     {
       id: "p-safety",
       heading: t("safety.title"),

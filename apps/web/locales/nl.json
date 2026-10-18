@@ -1263,7 +1263,7 @@
         "description": "Onder de AVG hebben we voor elk gebruik van je gegevens een wettelijke grondslag nodig. Dit zijn de onze:",
         "items": [
           "Uitvoering van onze overeenkomst met jou: alles wat nodig is voor de dienst waarvoor je je hebt aangemeld — je account, bibliotheek, uitwisselingen en berichten, inclusief de foto's en locaties die je eraan toevoegt",
-          "Gerechtvaardigd belang: JigSwap veilig houden, misbruik voorkomen, geüploade foto's controleren, meldingen en blokkeringen afhandelen, operationele logging en begrijpen hoe de dienst wordt gebruikt zodat we die kunnen verbeteren",
+          "Gerechtvaardigd belang: JigSwap veilig houden, misbruik voorkomen, geüploade foto's controleren, meldingen en blokkeringen afhandelen, laten zien dat iemand typt en, als je ervoor kiest die te delen, je online status, operationele logging en begrijpen hoe de dienst wordt gebruikt zodat we die kunnen verbeteren",
           "Toestemming: waar we je eerst om toestemming vragen, zoals bij pushmeldingen in je browser",
           "Wettelijke verplichting: meldingen van illegale inhoud afhandelen en onze moderatiebesluiten toelichten onder de Europese digitaledienstenverordening (DSA), en de zeldzame gevallen waarin we gegevens moeten bewaren of delen omdat de wet dat vereist"
         ]
@@ -1322,6 +1322,37 @@
         "De kaartweergave van een gedeelde locatie wordt eenmalig op onze servers gemaakt als je hem verstuurt (zie MapTiler hierboven)"
       ]
     },
+    "groups": {
+      "title": "Groepschats in kringen",
+      "description": "Elke vriendenkring heeft een groepschat. Wat je daar schrijft, deel je met de leden van de kring:",
+      "items": [
+        "De groepschat van een kring is alleen zichtbaar voor de huidige leden van de kring",
+        "Een nieuw lid ziet alleen de berichten van na het moment dat diegene erbij kwam, niet de eerdere. Dat geldt ook als iemand opnieuw meedoet",
+        "Verlaat je een kring of word je verwijderd, dan verlies je de toegang tot de chat. De berichten die je stuurde, blijven in de chat staan voor de leden, als deel van het gesprek van de groep",
+        "Leden van een kring zien in de chat elkaars naam en avatar, ook als een profiel privé is",
+        "Blokkeer je een lid met wie je in een kring zit, dan worden diens berichten voor jou verborgen. Diegene ziet die van jou gewoon en krijgt niets te horen over de blokkering",
+        "Nieuwe berichten geven leden een melding in de app en als pushmelding, samengevoegd tot één melding per gesprek en zonder de tekst van het bericht. Demp je een chat, dan krijg je er geen enkele melding meer van",
+        "Kringchats sturen nooit een e-mail per bericht. E-mail staat standaard uit; zet je het aan, dan krijg je ongeveer 30 minuten na een bericht dat je nog niet hebt gelezen één korte samenvatting, hoogstens één keer per 6 uur per chat",
+        "Meldt iemand een bericht in een groepschat, dan kan de kopie die we voor moderators bewaren eerdere berichten van andere leden bevatten (zie Blokkeren en melden)"
+      ]
+    },
+    "presence": {
+      "title": "Online status en typen",
+      "description": "Twee functies laten zien wat je op dit moment doet. Geen van beide laat zien wanneer je voor het laatst online was.",
+      "onlineTitle": "Online status",
+      "onlineItems": [
+        "Je online status staat uit tot je kiest om hem te delen. Je kunt hem altijd weer uitzetten op je pagina Privacy en veiligheid",
+        "Alleen leden die je wederzijds volgt, kunnen je status zien, en alleen als zij die van hen ook delen: deel je die van jou niet, dan zie je die van anderen ook niet. Samen in een kring zitten maakt je status niet zichtbaar",
+        "Je status is online, afwezig of offline, en wordt bepaald zolang JigSwap open is in je browser. We laten nooit zien wanneer je voor het laatst online was, en we houden geen geschiedenis bij van wanneer je online was",
+        "Met Offline weergeven zie je er voor iedereen offline uit en zien anderen niet dat je typt"
+      ],
+      "typingTitle": "Typen",
+      "typingItems": [
+        "Typ je in een gesprek, dan zien de anderen in dat gesprek een paar seconden dat je typt. In de groepschat van een kring zijn dat ook leden die je niet wederzijds volgt",
+        "Het is nooit te zien tussen jou en een lid dat jij hebt geblokkeerd of dat jou heeft geblokkeerd",
+        "Het wordt niet verstuurd zolang je Offline weergeven gebruikt"
+      ]
+    },
     "safety": {
       "title": "Blokkeren en melden",
       "description": "Je kunt een lid blokkeren en inhoud of leden melden die zich niet aan de regels houden.",
@@ -1348,6 +1379,8 @@
         "Inhoud die na een melding is verwijderd: een kopie wordt als bewijs tot 6 maanden na het besluit bewaard en daarna verwijderd",
         "Meldingen: bewaard tot 12 maanden na het besluit. Daarna worden de identiteit van de melder, de toelichting en de gekopieerde berichten verwijderd; alleen het besluit zelf blijft over. Langer alleen als een melding aan politie of justitie is doorgegeven",
         "Blokkeringen: zolang de blokkering actief is",
+        "Online status: je keuze om hem te delen, zolang je account bestaat. Om je status te bepalen, bewaren we ook wanneer je laatste sessie in JigSwap eindigde; dat wordt nooit aan iemand getoond en wordt met je account verwijderd",
+        "Typen: wanneer je voor het laatst typte in een gesprek, bewaard tot je daar weer een bericht verstuurt, het gesprek verlaat of je account verwijdert",
         "Kaartafbeeldingen in de locatiekiezer: na ongeveer 10 minuten verwijderd; het afgeronde midden van een kaart rond je huidige positie: 15 minuten",
         "Technische logs (Axiom): 30 dagen. Logs bevatten nooit berichttekst, bijschriften, coördinaten of de tekst van meldingen"
       ],
@@ -1357,6 +1390,7 @@
         "Je foto's en kaartafbeeldingen worden verwijderd. In het gesprek blijft alleen een vage kleurvlak-plaatshouder over, met \"Foto niet meer beschikbaar\"",
         "De coördinaten en plaatsnamen van locaties die je deelde worden verwijderd",
         "Je blokkeringen (en blokkeringen die anderen op jou hebben) worden verwijderd",
+        "Je instellingen voor je online status en de gegevens achter je online status en typen worden verwijderd",
         "Meldingen die jij deed blijven bij ons voor de moderatie, maar zonder je naam of contactgegevens",
         "Meldingen over jou worden bewaard tot hun bewaartermijn van 12 maanden afloopt",
         "Een foto of locatie die deel uitmaakt van een openstaande melding wordt bewaard totdat over die melding is besloten"
@@ -1461,7 +1495,7 @@
         "Een persoonlijke bibliotheek om je exemplaren, hun staat en foto's ervan bij te houden",
         "Het loggen van voltooiingen (wanneer je een puzzel af had en hoe lang je erover deed) en het ordenen van exemplaren in collecties",
         "Uitwisselingen tussen leden — ruilen, verkopen en uitlenen — met berichten om ze te regelen",
-        "Kringen (besloten vriendengroepen) om een deel van je bibliotheek te delen, plus profielen en volgen",
+        "Kringen (besloten vriendengroepen) om een deel van je bibliotheek te delen en samen te chatten in een groepschat, plus profielen en volgen",
         "Persoonlijke inzichten en statistieken over je puzzelen, inclusief een download van je eigen gegevens"
       ]
     },
@@ -1508,7 +1542,7 @@
       "reviewTitle": "Om een herbeoordeling vragen",
       "review": "Ben je het niet eens met een besluit, reageer dan via de contactpagina en een mens bekijkt het opnieuw. Deze herbeoordeling is vrijwillig en doet niets af aan je andere rechten, waaronder naar de rechter stappen.",
       "blockingTitle": "Blokkeren",
-      "blocking": "Je kunt elk lid blokkeren. Een geblokkeerd lid kan je geen berichten meer sturen, je niet volgen en geen ruil voorstellen, en krijgt daar geen melding van. Geaccepteerde ruilen kunnen nog worden afgerond. Je kunt de blokkering altijd opheffen in je instellingen onder Privacy en veiligheid."
+      "blocking": "Je kunt elk lid blokkeren. Een geblokkeerd lid kan je geen berichten meer sturen, je niet volgen en geen ruil voorstellen, en krijgt daar geen melding van. Geaccepteerde ruilen kunnen nog worden afgerond. Zitten jullie samen in een kring, dan blijven jullie daar allebei in: diens berichten in de groepschat worden voor jou verborgen, en diegene krijgt daar niets over te horen. Je kunt de blokkering altijd opheffen in je instellingen onder Privacy en veiligheid."
     },
     "trading": {
       "title": "Ruilen, verkopen en uitlenen",
@@ -1526,7 +1560,7 @@
       "description": "Verschillende dingen op JigSwap zijn van verschillende mensen:",
       "yourContent": {
         "title": "Jouw content",
-        "description": "Foto's, beoordelingen, reacties en andere content die je plaatst blijven van jou. Door iets te plaatsen geef je ons een niet-exclusieve licentie om die content op te slaan en te tonen zodat de dienst kan werken — bijvoorbeeld om je puzzelfoto's te laten zien aan de leden met wie je ze hebt gedeeld. Puzzels die je aan de gedeelde catalogus toevoegt, worden onderdeel van de communitycatalogus die alle leden kunnen gebruiken. Geüploade foto's doorlopen een automatische veiligheidscontrole voordat andere leden ze kunnen zien (zie het privacybeleid voor details)."
+        "description": "Foto's, beoordelingen, reacties en andere content die je plaatst blijven van jou. Door iets te plaatsen geef je ons een niet-exclusieve licentie om die content op te slaan en te tonen zodat de dienst kan werken — bijvoorbeeld om je puzzelfoto's te laten zien aan de leden met wie je ze hebt gedeeld. Berichten die je in de groepschat van een kring plaatst, blijven zichtbaar voor de leden nadat je de kring hebt verlaten. Puzzels die je aan de gedeelde catalogus toevoegt, worden onderdeel van de communitycatalogus die alle leden kunnen gebruiken. Geüploade foto's doorlopen een automatische veiligheidscontrole voordat andere leden ze kunnen zien (zie het privacybeleid voor details)."
       },
       "platform": {
         "title": "Het platform en puzzelillustraties",
