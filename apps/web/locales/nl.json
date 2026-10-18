@@ -4783,6 +4783,10 @@
   "presence": {
     "online": "Online",
     "away": "Afwezig",
+    "statusAuto": "Status: Automatisch",
+    "statusAway": "Status: Afwezig",
+    "statusInvisible": "Status: Offline weergeven",
+    "statusFailed": "Je status kon niet worden gewijzigd. Probeer het opnieuw.",
     "shareTitle": "Online-status",
     "shareLabel": "Laat zien wanneer ik online ben aan mensen die we wederzijds volgen. Als dit uit staat, zie jij ook niet of anderen online zijn.",
     "saveFailed": "Je keuze kon niet worden opgeslagen. Probeer het opnieuw.",

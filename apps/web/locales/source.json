@@ -4783,6 +4783,10 @@
   "presence": {
     "online": "Online",
     "away": "Away",
+    "statusAuto": "Status: Automatic",
+    "statusAway": "Status: Away",
+    "statusInvisible": "Status: Appear offline",
+    "statusFailed": "Couldn't change your status. Try again.",
     "shareTitle": "Online status",
     "shareLabel": "Show when I'm online to people I follow mutually. If off, you won't see others' status either.",
     "saveFailed": "Couldn't save your choice. Try again.",
