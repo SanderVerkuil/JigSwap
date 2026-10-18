@@ -11,6 +11,7 @@ import {
   CIRCLE_SHARES_READ_PER_CIRCLE,
   collectCircleSharedCopies,
   MAX_SHARES_READ_PER_COPY,
+  MAX_VIEWER_CIRCLES_READ,
 } from "./library/circleSharedCopies";
 import schema from "./schema";
 
@@ -21,7 +22,10 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 const NOW = 1_000_000;
 
 // Wrap ctx.db so every row a `circleCopyShares` query yields (collect/take/first/unique) is counted.
-const countingShareReads = (ctx: QueryCtx) => {
+const countingShareReads = (
+  ctx: QueryCtx,
+  counted: string = "circleCopyShares",
+) => {
   const counter = { rows: 0 };
   const wrap = (q: object): object =>
     new Proxy(q, {
@@ -50,7 +54,7 @@ const countingShareReads = (ctx: QueryCtx) => {
       if (prop === "query") {
         return (table: string) => {
           const q = target.query(table as "circleCopyShares");
-          return table === "circleCopyShares" ? wrap(q) : q;
+          return table === counted ? wrap(q) : q;
         };
       }
       const value = Reflect.get(target, prop) as unknown;
@@ -235,4 +239,27 @@ describe("circle clause read bounds (#190)", () => {
       });
     });
   }
+
+  // Anyone can seat a member into circles without consent today, so the viewer's own membership list
+  // is not trusted to be small either: past MAX_VIEWER_CIRCLES_READ circles the over-cap route fails
+  // CLOSED (not circle-shared) instead of reading them all.
+  test("over-cap copy, viewer seated in more circles than the viewer-circle cap: fails closed, reads bounded", async () => {
+    const t = convexTest(schema, modules);
+    const { viewer, target } = await t.run(async (ctx) => {
+      const seeded = await seedOverCap(true)(ctx);
+      for (let c = 0; c < MAX_VIEWER_CIRCLES_READ; c++) {
+        await ctx.db.insert("circleMembers", {
+          circleAggregateId: `junk-${c}`,
+          memberId: seeded.viewer,
+        });
+      }
+      return seeded;
+    });
+    await t.run(async (raw) => {
+      const { ctx, counter } = countingShareReads(raw, "circleMembers");
+      const row = (await raw.db.get(target))!;
+      expect(await canViewCopy(ctx, viewer, row)).toBe(false);
+      expect(counter.rows).toBeLessThanOrEqual(MAX_VIEWER_CIRCLES_READ + 1);
+    });
+  });
 });

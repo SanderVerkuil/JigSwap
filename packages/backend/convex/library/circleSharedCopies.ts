@@ -20,10 +20,14 @@ import { convexCopyRepository } from "./adapters/convexCopyRepository";
 // BOUNDED (#190): at most CIRCLE_SHARES_READ_PER_CIRCLE shares are read per circle (newest first), so a
 // copy shared further back in a very busy circle can drop out of this batched set. That only affects
 // the list surface built on it (Browse); every per-copy gate (canViewCopy / canViewCopyWithContext,
-// the definition view) uses `isCircleSharedWithViewer` instead, which reads that copy's own shares and
-// is never capped, so the cap can't hide a copy on its detail page.
+// the definition view) uses `isCircleSharedWithViewer` instead, which reads that copy's own shares
+// (capped by_copy, with a viewer-circle fallback that reaches the same decision up to
+// MAX_VIEWER_CIRCLES_READ), so this cap can't hide a copy on its detail page.
 export const CIRCLE_SHARES_READ_PER_CIRCLE = 200;
 export const MAX_SHARES_READ_PER_COPY = 100;
+// Generous next to real use (a member in hundreds of friend circles is already extreme; each circle
+// holds at most 50 members), while keeping the fallback well inside Convex's per-function read limits.
+export const MAX_VIEWER_CIRCLES_READ = 500;
 
 const isMemberOf = async (
   ctx: QueryCtx,
@@ -43,9 +47,12 @@ const isMemberOf = async (
 //
 // The share count is OWNER-controlled (one copy can be shared into any number of solo circles), so
 // at most MAX_SHARES_READ_PER_COPY shares are read by_copy. Past that, the candidate circles come from
-// the VIEWER's own memberships instead (circleMembers.by_member, bounded by what the viewer joined),
-// each probed with a circleCopyShares.by_circle_copy point lookup. Both routes yield the same set of
-// qualifying circles, so the decision is identical to the uncapped rule (no false negatives).
+// the VIEWER's own memberships instead (circleMembers.by_member), each probed with a
+// circleCopyShares.by_circle_copy point lookup. Both routes yield the same set of qualifying circles,
+// so the decision is identical to the uncapped rule (no false negatives) as long as the viewer is in
+// at most MAX_VIEWER_CIRCLES_READ circles. Beyond that the fallback FAILS CLOSED (not circle-shared):
+// today any circle admin can seat a member without consent, so this list is attacker-inflatable too.
+// The root fix is consent-based circle invitations plus a per-member circle cap.
 export const isCircleSharedWithViewer = async (
   ctx: QueryCtx,
   viewerId: Id<"users">,
@@ -64,7 +71,8 @@ export const isCircleSharedWithViewer = async (
     const links = await ctx.db
       .query("circleMembers")
       .withIndex("by_member", (q) => q.eq("memberId", viewerId))
-      .collect();
+      .take(MAX_VIEWER_CIRCLES_READ + 1);
+    if (links.length > MAX_VIEWER_CIRCLES_READ) return false;
     candidateCircles = (
       await Promise.all(
         links.map(async ({ circleAggregateId }) =>
