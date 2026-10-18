@@ -23,7 +23,7 @@ import { useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import { AttachPicker } from "./attach-picker";
-import { ComposerClosed } from "./composer-closed";
+import { COMPOSER_SLOT_CLASS, ComposerClosed } from "./composer-closed";
 import type { MessageCopy } from "./copy-card";
 import { StagedCopyChip } from "./staged-copy-chip";
 
@@ -142,7 +142,7 @@ export function MessageComposer({
   if (closedThreadId === threadId) return <ComposerClosed reason="cantReply" />;
 
   return (
-    <div className="bg-card shrink-0 border-t px-3 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] md:px-4 md:pb-3">
+    <div className={COMPOSER_SLOT_CLASS}>
       {staged && (
         <StagedCopyChip
           copy={staged}

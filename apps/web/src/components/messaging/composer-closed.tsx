@@ -4,7 +4,7 @@
 // blocker sees "You blocked {name}." with Unblock; everyone else (a readOnly
 // thread, or a send refused with CannotReply / NotConnected) sees the neutral
 // "You can't reply to this conversation.", which never mentions a block. Same
-// border and height as the composer so the thread doesn't jump.
+// frame (COMPOSER_SLOT_CLASS) and height as the composer so the thread doesn't jump.
 import { BlockMemberDialog } from "@/components/social/block-member-dialog";
 import { Button } from "@/components/ui/button";
 import type { Id } from "@/gateway";
@@ -12,6 +12,11 @@ import { useMemberDisplayName } from "@/lib/member-display-name";
 import type { MemberView } from "@jigswap/contracts";
 import { useRef, useState } from "react";
 import { useTranslations } from "use-intl";
+
+// The composer slot's frame, shared with MessageComposer so the banner keeps
+// the composer's card background, border, padding and safe-area inset.
+export const COMPOSER_SLOT_CLASS =
+  "bg-card shrink-0 border-t px-3 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] md:px-4 md:pb-3";
 
 export function ComposerClosed({
   reason,
@@ -22,7 +27,7 @@ export function ComposerClosed({
   partner?: MemberView | null;
 }) {
   return (
-    <div className="border-t pt-3">
+    <div className={COMPOSER_SLOT_CLASS}>
       <div
         role="status"
         className="text-muted-foreground flex min-h-11 items-center justify-between gap-3 text-sm md:min-h-9"

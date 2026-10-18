@@ -16,6 +16,7 @@ import type { ReactNode } from "react";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
+import { COMPOSER_SLOT_CLASS } from "./composer-closed";
 import type { InboxThread } from "./format";
 import { ThreadView } from "./thread-view";
 
@@ -178,6 +179,20 @@ describe("ThreadView composer slot when blocked", () => {
       expect(mocks.mutation).toHaveBeenCalledWith(UNBLOCK, {
         memberId: "member_mara",
       }),
+    );
+  });
+
+  it("frames the banner like the composer slot (padding, border, safe-area inset)", () => {
+    renderThread(dmThread());
+    const composerSlot = screen
+      .getByRole("textbox")
+      .closest(".border-t") as HTMLElement;
+    expect(composerSlot.className).toBe(COMPOSER_SLOT_CLASS);
+    cleanup();
+
+    renderThread(dmThread({ blocked: "byMe" }));
+    expect(screen.getByRole("status").parentElement?.className).toBe(
+      COMPOSER_SLOT_CLASS,
     );
   });
 
