@@ -3272,7 +3272,8 @@
       "centered": "Gecentreerd",
       "fullWidth": "Volledige Breedte",
       "hideEmail": "E-mailadres Verbergen",
-      "admin": "Beheer"
+      "admin": "Beheer",
+      "privacySafety": "Privacy en veiligheid"
     },
     "theme": {
       "toggle": "Thema wisselen",
@@ -4268,8 +4269,11 @@
     "blockConfirmBody": "{name} kan je geen berichten meer sturen, je niet volgen en geen ruil voorstellen. Diegene krijgt geen melding, maar ziet wel dat reageren niet meer kan. Geaccepteerde ruilen kunnen nog worden afgerond. Gedeelde kringen of huishoudens veranderen niet. Deblokkeer je diegene later, dan worden volgrelaties die door de blokkering zijn verwijderd niet hersteld.",
     "blockConfirmTitle": "{name} blokkeren?",
     "blocked": "{name} geblokkeerd",
+    "blockedAt": "Geblokkeerd <time>{date}</time>",
     "blockedBanner": "Je hebt {name} geblokkeerd.",
     "blockedBannerUnnamed": "Je hebt dit lid geblokkeerd. Je kunt de blokkering opheffen onder Privacy en veiligheid.",
+    "blockedEmpty": "Je hebt niemand geblokkeerd.",
+    "blockedMembers": "Geblokkeerde leden",
     "blockError": "{name} blokkeren is niet gelukt. Probeer het opnieuw.",
     "blockName": "{name} blokkeren",
     "cantReply": "Je kunt niet meer reageren in dit gesprek.",
@@ -4281,6 +4285,7 @@
     "unblockConfirmTitle": "{name} deblokkeren?",
     "unblocked": "{name} gedeblokkeerd",
     "unblockError": "{name} deblokkeren is niet gelukt. Probeer het opnieuw.",
+    "unblockName": "{name} deblokkeren",
     "undo": "Ongedaan maken"
   }
 }

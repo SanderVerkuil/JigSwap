@@ -3272,7 +3272,8 @@
       "centered": "Centered",
       "fullWidth": "Full Width",
       "hideEmail": "Hide Email Address",
-      "admin": "Admin"
+      "admin": "Admin",
+      "privacySafety": "Privacy & safety"
     },
     "theme": {
       "toggle": "Toggle theme",
@@ -4268,8 +4269,11 @@
     "blockConfirmBody": "{name} won't be able to message you, follow you or propose trades. They won't be notified, but they'll see they can't reply. Accepted trades can still be completed. Shared circles or households aren't changed. If you unblock them later, follows removed by the block aren't restored.",
     "blockConfirmTitle": "Block {name}?",
     "blocked": "Blocked {name}",
+    "blockedAt": "Blocked <time>{date}</time>",
     "blockedBanner": "You blocked {name}.",
     "blockedBannerUnnamed": "You blocked this member. You can unblock them under Privacy & safety.",
+    "blockedEmpty": "You haven't blocked anyone.",
+    "blockedMembers": "Blocked members",
     "blockError": "Couldn't block {name}. Please try again.",
     "blockName": "Block {name}",
     "cantReply": "You can't reply to this conversation.",
@@ -4281,6 +4285,7 @@
     "unblockConfirmTitle": "Unblock {name}?",
     "unblocked": "Unblocked {name}",
     "unblockError": "Couldn't unblock {name}. Please try again.",
+    "unblockName": "Unblock {name}",
     "undo": "Undo"
   }
 }
