@@ -59,7 +59,7 @@ export const MAX_REPORT_DETAILS = 1000;
 /** What is reported. A message carries its text so the dialog can quote it. */
 export type ReportTarget =
   | { kind: "message"; id: string; snippet: string }
-  | { kind: "user" | "photo" | "exchange"; id: string };
+  | { kind: "user" | "photo" | "exchange" | "attachment"; id: string };
 
 // Refusal codes from reports/fileReport → safety.report.errors.* keys.
 const ERROR_KEYS = {
@@ -268,7 +268,7 @@ function ReportForm({
         </blockquote>
       ) : (
         <p className="bg-muted rounded-md px-3 py-2 text-sm">
-          {target.kind === "photo"
+          {target.kind === "photo" || target.kind === "attachment"
             ? t("reportingPhoto", { name })
             : t("reportingMember", { name })}
         </p>

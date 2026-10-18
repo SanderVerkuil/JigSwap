@@ -193,12 +193,23 @@ function ThreadRow({
   const body = last?.removed
     ? tSafety("messageRemoved")
     : last?.body.replace(/\s+/g, " ").trim();
+  const mine = last?.isMine === true;
+  // A photo without a caption names the sender instead of an empty body.
+  const photoOnly = last?.kind === "image" && !last.removed && !body;
   const snippet =
     body === undefined
       ? t("noMessages")
-      : last?.isMine
-        ? t("youPrefix", { body })
-        : body;
+      : photoOnly
+        ? mine
+          ? t("photos.youSentAPhoto")
+          : t("photos.sentAPhoto", {
+              name: thread.subject.otherMember.anonymous
+                ? t("anonymous")
+                : displayName(thread.subject.otherMember.member),
+            })
+        : mine
+          ? t("youPrefix", { body })
+          : body;
   const fullTime = formatFullDateTime(thread.updatedAt, locale);
   // muted-foreground on the selected tint is < 4.5:1; darken it there.
   const mutedText = selected ? "text-foreground/75" : "text-muted-foreground";

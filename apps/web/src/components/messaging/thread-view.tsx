@@ -32,12 +32,15 @@ import {
   formatFullDateTime,
   formatMessageTime,
   groupThreadMessages,
+  segmentMessages,
   threadSubjectTitle,
   type ThreadItem,
 } from "./format";
 import { MessageActions } from "./message-actions";
 import { MessageComposer } from "./message-composer";
+import { MessagePhotos } from "./message-photos";
 import { OlderMessagesSlot } from "./older-messages-slot";
+import { PhotoOutbox } from "./photo-outbox";
 import { RemovedMessage } from "./removed-message";
 import { ThreadSubjectAvatar } from "./thread-list";
 import { threadPartner } from "./thread-partner";
@@ -94,6 +97,15 @@ export function ThreadView({
   const { data: inbox } = useQuery(
     convexQuery(gateway.conversation.getMyInbox, me ? {} : "skip"),
   );
+  // My photos here that aren't messages yet (being checked, or stopped).
+  const { data: pendingPhotos } = useQuery(
+    convexQuery(
+      gateway.conversation.listMyPendingAttachments,
+      me ? { threadId } : "skip",
+    ),
+  );
+  const outboxCount =
+    pendingPhotos?.filter((photo) => photo.sendRequested).length ?? 0;
   const thread = inbox?.find((row) => row.threadId === threadId);
   const title = thread
     ? threadSubjectTitle(thread.subject, t, displayName)
@@ -158,8 +170,16 @@ export function ThreadView({
   // position so the content the reader was looking at stays put. A layout
   // effect, so the corrected position is what gets painted.
   const scrollSnapshotRef = useRef<ScrollSnapshot | undefined>(undefined);
+  // Whether the reader is at the bottom, as of the last scroll or commit:
+  // a photo that finishes loading then keeps the newest message in view.
+  const pinnedRef = useRef(true);
   const recordScroll = () => {
     const scroller = scrollerRef.current;
+    if (scroller) {
+      pinnedRef.current =
+        scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight <
+        120;
+    }
     scrollSnapshotRef.current = scroller
       ? {
           oldestId,
@@ -185,6 +205,13 @@ export function ThreadView({
     recordScroll();
   });
 
+  const onMediaLoad = () => {
+    const scroller = scrollerRef.current;
+    if (scroller && pinnedRef.current) {
+      scroller.scrollTop = scroller.scrollHeight;
+    }
+  };
+
   useEffect(() => {
     // Scroll rule: jump instantly to the newest message on first load; after
     // that, follow new messages only when the user is already near the bottom
@@ -208,7 +235,7 @@ export function ThreadView({
         behavior: reduceMotion ? "auto" : "smooth",
       });
     }
-  }, [loaded, newestId, newestIsMine]);
+  }, [loaded, newestId, newestIsMine, outboxCount]);
 
   // Infinite scroll-up: load the next older page when the sentinel at the top
   // of the list comes into view (within 200px). Declared after the first-load
@@ -277,13 +304,17 @@ export function ThreadView({
     const text = newest.body.replace(/\s+/g, " ").trim();
     const region = liveRegionRef.current;
     if (!region) return;
-    const announcement = t("newMessageAnnouncement", {
-      name: title ?? t("threadFallbackTitle"),
-      body:
-        text.length > ANNOUNCE_MAX
-          ? `${text.slice(0, ANNOUNCE_MAX - 1)}…`
-          : text,
-    });
+    const name = title ?? t("threadFallbackTitle");
+    const announcement =
+      newest.kind === "image" && !text
+        ? t("photos.sentAPhoto", { name })
+        : t("newMessageAnnouncement", {
+            name,
+            body:
+              text.length > ANNOUNCE_MAX
+                ? `${text.slice(0, ANNOUNCE_MAX - 1)}…`
+                : text,
+          });
     // Clear first and set on the next frame, so a message identical to the
     // previous announcement is still read out.
     region.textContent = "";
@@ -361,7 +392,7 @@ export function ThreadView({
             />
           ))}
         </div>
-      ) : items.length === 0 ? (
+      ) : items.length === 0 && outboxCount === 0 ? (
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 px-4 text-center">
           <div className="bg-muted flex size-12 items-center justify-center rounded-full">
             <MessageSquare className="text-muted-foreground size-6" />
@@ -393,8 +424,12 @@ export function ThreadView({
               locale={locale}
               otherAuthor={otherAuthor}
               otherAuthorId={otherAuthorId as Id<"users"> | undefined}
+              onMediaLoad={onMediaLoad}
             />
           ))}
+          {pendingPhotos && (
+            <PhotoOutbox pending={pendingPhotos} onMediaLoad={onMediaLoad} />
+          )}
         </ol>
       )}
 
@@ -445,11 +480,13 @@ function ThreadItemView({
   locale,
   otherAuthor,
   otherAuthorId,
+  onMediaLoad,
 }: {
   item: ThreadItem<ThreadMessage>;
   locale: string;
   otherAuthor: string;
   otherAuthorId: Id<"users"> | undefined;
+  onMediaLoad: () => void;
 }) {
   const t = useTranslations("messages");
   if (item.type === "day") {
@@ -475,57 +512,134 @@ function ThreadItemView({
   const { own, messages } = item;
   const last = messages[messages.length - 1];
   const lastPending = last.id.startsWith("pending-");
+  const renderMessage = (message: ThreadMessage, index: number) => {
+    const pending = message.id.startsWith("pending-");
+    const bubble = (
+      <div
+        title={formatFullDateTime(message.sentAt, locale)}
+        className={cn(
+          BUBBLE_CLASS,
+          own
+            ? "bg-primary text-primary-foreground"
+            : "bg-muted text-foreground",
+          bubbleCorners(own, index, messages.length),
+          pending && "opacity-70",
+        )}
+      >
+        {message.body}
+      </div>
+    );
+    return (
+      <Fragment key={message.id}>
+        {message.copy && (
+          <MessageCopyCard
+            copy={message.copy}
+            className={cn("w-72 max-w-full", pending && "opacity-70")}
+          />
+        )}
+        {message.copyUnavailable && (
+          <CopyUnavailableCard className={cn(pending && "opacity-70")} />
+        )}
+        {message.removed ? (
+          <RemovedMessage
+            title={formatFullDateTime(message.sentAt, locale)}
+            className={bubbleCorners(own, index, messages.length)}
+          />
+        ) : own ? (
+          bubble
+        ) : (
+          <MessageActions
+            messageId={message.id}
+            body={message.body}
+            authorName={otherAuthor}
+            authorId={otherAuthorId}
+          >
+            {bubble}
+          </MessageActions>
+        )}
+      </Fragment>
+    );
+  };
+
   return (
     <li
       className={cn("flex flex-col gap-0.5", own ? "items-end" : "items-start")}
     >
       {/* Bubble side and colour carry authorship visually; say it too. */}
       <span className="sr-only">{own ? t("you") : otherAuthor}:</span>
-      {messages.map((message, index) => {
-        const pending = message.id.startsWith("pending-");
-        const bubble = (
-          <div
-            title={formatFullDateTime(message.sentAt, locale)}
-            className={cn(
-              "max-w-[min(80%,30rem)] rounded-2xl px-3.5 py-2 text-sm leading-5 break-words whitespace-pre-wrap",
-              own
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-foreground",
-              bubbleCorners(own, index, messages.length),
-              pending && "opacity-70",
-            )}
-          >
-            {message.body}
-          </div>
+      {segmentMessages(messages).map((segment) => {
+        if (segment.type === "message") {
+          return renderMessage(
+            segment.message,
+            messages.indexOf(segment.message),
+          );
+        }
+        const [first] = segment.messages;
+        const single = segment.messages.length === 1;
+        const reportable = (message: ThreadMessage) =>
+          !own && !message.removed && message.attachmentId !== undefined;
+        const media = (
+          <MessagePhotos
+            messages={segment.messages}
+            own={own}
+            authorName={otherAuthor}
+            authorId={otherAuthorId}
+            onMediaLoad={onMediaLoad}
+          />
         );
         return (
-          <Fragment key={message.id}>
-            {message.copy && (
-              <MessageCopyCard
-                copy={message.copy}
-                className={cn("w-72 max-w-full", pending && "opacity-70")}
-              />
-            )}
-            {message.copyUnavailable && (
-              <CopyUnavailableCard className={cn(pending && "opacity-70")} />
-            )}
-            {message.removed ? (
-              <RemovedMessage
-                title={formatFullDateTime(message.sentAt, locale)}
-                className={bubbleCorners(own, index, messages.length)}
-              />
-            ) : own ? (
-              bubble
-            ) : (
+          <Fragment key={`photos-${first.id}`}>
+            {/* One photo carries its message's More menu; in a gallery the
+                caption bubble does, and each photo reports from the viewer. */}
+            {single && reportable(first) ? (
               <MessageActions
-                messageId={message.id}
-                body={message.body}
+                messageId={first.id}
+                body={first.body}
                 authorName={otherAuthor}
                 authorId={otherAuthorId}
+                attachmentId={first.attachmentId}
               >
-                {bubble}
+                {media}
               </MessageActions>
+            ) : (
+              media
             )}
+            {segment.messages.map((message) => {
+              if (!message.body.trim() || message.removed) return null;
+              const bubble = (
+                <div
+                  key={message.id}
+                  title={formatFullDateTime(message.sentAt, locale)}
+                  className={cn(
+                    BUBBLE_CLASS,
+                    own
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-foreground",
+                    bubbleCorners(
+                      own,
+                      messages.indexOf(message),
+                      messages.length,
+                    ),
+                  )}
+                >
+                  {message.body}
+                </div>
+              );
+              return !single && reportable(message) ? (
+                <MessageActions
+                  key={message.id}
+                  messageId={message.id}
+                  body={message.body}
+                  authorName={otherAuthor}
+                  authorId={otherAuthorId}
+                  attachmentId={message.attachmentId}
+                >
+                  {bubble}
+                </MessageActions>
+              ) : (
+                bubble
+              );
+            })}
           </Fragment>
         );
       })}
@@ -559,6 +673,9 @@ function CopyUnavailableCard({ className }: { className?: string }) {
     </div>
   );
 }
+
+const BUBBLE_CLASS =
+  "max-w-[min(80%,30rem)] rounded-2xl px-3.5 py-2 text-sm leading-5 break-words whitespace-pre-wrap";
 
 // Tighten the inner-side corners where bubbles of one group stack.
 function bubbleCorners(own: boolean, index: number, count: number) {

@@ -1,7 +1,9 @@
 "use client";
 
 // Composer under the active thread. Sends text messages (optionally with one
-// attached puzzle copy, picked via AttachPicker) with an optimistic
+// attached puzzle copy, picked via AttachPicker), or up to 4 staged photos
+// with the text as their caption (sendStagedImages; the photos then wait in
+// the thread's outbox until they are delivered). Text messages get an optimistic
 // insert into the newest page of the listThreadMessages paginated
 // subscription the thread view holds (the established withOptimisticUpdate
 // pattern — see use-favorites); Convex replaces the local patch when the
@@ -18,14 +20,19 @@ import type { OptimisticUpdate } from "convex/browser";
 // sanctioned convex/react exception: insertAtTop, the paginated-query optimistic helper (see tanstack-query migration spec)
 import { insertAtTop } from "convex/react";
 import type { FunctionArgs } from "convex/server";
-import { Puzzle, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import { useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
+import { AttachMenu } from "./attach-menu";
 import { AttachPicker } from "./attach-picker";
 import { COMPOSER_SLOT_CLASS, ComposerClosed } from "./composer-closed";
 import type { MessageCopy } from "./copy-card";
+import { sendState } from "./photo-staging";
+import { PHOTO_ACCEPT } from "./prepare-photo";
 import { StagedCopyChip } from "./staged-copy-chip";
+import { StagedPhotoChips } from "./staged-photo-chips";
+import { usePhotosAvailable, usePhotoStaging } from "./use-photo-staging";
 
 // The Thread aggregate rejects longer bodies (ConvexError code MessageTooLong).
 const MAX_MESSAGE_LENGTH = 4000;
@@ -80,6 +87,11 @@ export function MessageComposer({
   // the attach button.
   const pickedRef = useRef(false);
   const stagedDescriptionId = useId();
+  const photosDescriptionId = useId();
+  const sendHintId = useId();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const staging = usePhotoStaging(threadId);
+  const photosAvailable = usePhotosAvailable();
   const isMobile = useIsMobile();
   // After picking or removing an attachment: the textarea on desktop; on
   // phones the attach button, so the keyboard doesn't pop up unasked.
@@ -97,7 +109,51 @@ export function MessageComposer({
     ).withOptimisticUpdate(optimisticAppend(staged)),
   });
 
+  const sendStagedImages = useMutation({
+    mutationFn: useConvexMutation(gateway.conversation.sendStagedImages),
+  });
+  const action = sendState({
+    body,
+    photos: staging.photos,
+    hasCopy: staged !== null,
+  });
+
+  // Photos with the text as their caption. The text clears right away; the
+  // chips once the send is recorded (they reappear in the outbox).
+  const sendPhotos = async (attachmentIds: string[]) => {
+    const caption = body.trim();
+    setError(null);
+    setBody("");
+    try {
+      await sendStagedImages.mutateAsync({
+        threadId,
+        attachmentIds: attachmentIds as Id<"messageAttachments">[],
+        ...(caption ? { caption } : {}),
+      });
+      staging.clear();
+    } catch (err) {
+      setBody((current) => current || caption);
+      const code = conversationErrorCode(err);
+      if (code === "CannotReply" || code === "NotConnected") {
+        setClosedThreadId(threadId);
+        return;
+      }
+      if (code === "AttachmentNotFound") {
+        // A staged photo can no longer be sent (gone, or expired): drop them.
+        staging.clear();
+        setError(t("photos.sendGone"));
+        return;
+      }
+      setError(
+        code === "CaptionTooLong" ? t("photos.captionTooLong") : t("sendError"),
+      );
+    }
+  };
+
   const send = async () => {
+    if (!me || sendStagedImages.isPending) return;
+    if (action.kind === "photos") return sendPhotos(action.attachmentIds);
+    if (action.kind !== "text") return;
     const trimmed = body.trim();
     // A message always carries text; an attachment rides along with it.
     if (!trimmed || !me) return;
@@ -153,17 +209,42 @@ export function MessageComposer({
           }}
         />
       )}
+      <StagedPhotoChips
+        photos={staging.photos}
+        onRemove={(key) => {
+          staging.remove(key);
+          focusAfterAttachChange();
+        }}
+      />
+      {staging.photos.length > 0 && (
+        <span id={photosDescriptionId} className="sr-only">
+          {t("photos.attachedCount", { count: staging.photos.length })}
+        </span>
+      )}
+      {/* Outside the menu, so the picker still opens from the tap (iOS). */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={PHOTO_ACCEPT}
+        multiple
+        hidden
+        tabIndex={-1}
+        aria-hidden
+        onChange={(event) => {
+          const files = Array.from(event.target.files ?? []);
+          // Reset, so picking the same file again still fires.
+          event.target.value = "";
+          if (files.length > 0) staging.addFiles(files);
+          focusAfterAttachChange();
+        }}
+      />
       <div className="flex items-end gap-2">
-        <Button
-          ref={attachButtonRef}
-          variant="ghost"
-          size="icon"
-          className="text-muted-foreground size-11 rounded-full md:size-10"
-          onClick={() => setPickerOpen(true)}
-          aria-label={t("attachPuzzle")}
-        >
-          <Puzzle className="size-5" />
-        </Button>
+        <AttachMenu
+          triggerRef={attachButtonRef}
+          photosAvailable={photosAvailable}
+          onPuzzle={() => setPickerOpen(true)}
+          onPhoto={() => fileInputRef.current?.click()}
+        />
         <Textarea
           ref={textareaRef}
           value={body}
@@ -178,8 +259,17 @@ export function MessageComposer({
               ? t("messageName", { name: recipientName })
               : t("typeMessage")
           }
-          // Announces the staged attachment ("Attached: <title>").
-          aria-describedby={staged ? stagedDescriptionId : undefined}
+          // Announces the staged attachments ("Attached: <title>", "2 photos
+          // attached") and why Send is off when a puzzle and photos clash.
+          aria-describedby={
+            [
+              staged && stagedDescriptionId,
+              staging.photos.length > 0 && photosDescriptionId,
+              action.kind === "blocked" && sendHintId,
+            ]
+              .filter(Boolean)
+              .join(" ") || undefined
+          }
           maxLength={MAX_MESSAGE_LENGTH}
           rows={1}
           // muted-foreground lifts the outline to ≥3:1 (--input is ~1.3:1).
@@ -187,7 +277,11 @@ export function MessageComposer({
         />
         <Button
           onClick={() => void send()}
-          disabled={!body.trim() || !me}
+          disabled={
+            !me ||
+            sendStagedImages.isPending ||
+            (action.kind !== "text" && action.kind !== "photos")
+          }
           size="icon"
           className="size-11 rounded-full md:size-10"
           aria-label={t("sendMessage")}
@@ -195,6 +289,11 @@ export function MessageComposer({
           <Send className="size-4" />
         </Button>
       </div>
+      {action.kind === "blocked" && (
+        <p id={sendHintId} className="text-muted-foreground mt-1.5 text-xs">
+          {t("photos.copyWithPhotos")}
+        </p>
+      )}
       {error && (
         <p role="alert" className="text-destructive mt-1.5 text-xs">
           {error}

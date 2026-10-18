@@ -2,7 +2,13 @@
 import { gateway } from "@/gateway";
 import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { ConvexReactClient } from "convex/react";
 import { getFunctionName } from "convex/server";
 import type { ReactNode } from "react";
@@ -251,5 +257,92 @@ describe("ThreadView message actions", () => {
     ).toEqual(["View profile", "Report Mara", "Block Mara"]);
     fireEvent.click(screen.getByRole("menuitem", { name: "Report Mara" }));
     expect(await screen.findByText("Reporting Mara")).toBeTruthy();
+  });
+});
+
+describe("ThreadView photos", () => {
+  const img = (id: string, sentAt: number, body = "") => ({
+    id,
+    isMine: false,
+    kind: "image",
+    body,
+    sentAt,
+    attachmentId: `att-${id}`,
+    attachment: { status: "ready", url: `https://files.test/${id}.jpg` },
+  });
+
+  const setup = (pending: unknown[] = []) => {
+    const convexQueryClient = new ConvexQueryClient(
+      new ConvexReactClient("https://example.convex.cloud"),
+    );
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          queryKeyHashFn: convexQueryClient.hashFn(),
+          staleTime: Infinity,
+          retry: false,
+          queryFn: () => new Promise<never>(() => {}),
+        },
+      },
+    });
+    queryClient.setQueryData(
+      convexQuery(gateway.conversation.getMyInbox, {}).queryKey,
+      [dmThread()],
+    );
+    queryClient.setQueryData(
+      convexQuery(gateway.conversation.listMyPendingAttachments, {
+        threadId: "thread_1",
+      }).queryKey,
+      pending,
+    );
+    const tree = () => (
+      <QueryClientProvider client={queryClient}>
+        <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+          <ThreadView threadId="thread_1" />
+        </IntlProvider>
+      </QueryClientProvider>
+    );
+    const view = render(tree());
+    return { rerender: () => view.rerender(tree()) };
+  };
+
+  it("groups photos sent within a minute into a gallery, with the caption beside it", () => {
+    mocks.messages = [img("p1", 1_000), img("p2", 20_000, "Our holiday")];
+    setup();
+    expect(
+      screen.getByRole("button", { name: "Photo 1 of 2, open" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Photo 2 of 2, open" }),
+    ).toBeTruthy();
+    expect(screen.getByText("Our holiday")).toBeTruthy();
+    // The caption bubble carries its message's More menu.
+    expect(
+      screen.getAllByRole("button", {
+        name: "More actions for message from Mara",
+      }),
+    ).toHaveLength(1);
+  });
+
+  it("shows my sent photos being checked at the end of the thread", () => {
+    mocks.messages = [MESSAGES[0]];
+    setup([
+      {
+        attachmentId: "att9",
+        status: "pending",
+        sendRequested: true,
+        createdAt: 5,
+      },
+    ]);
+    expect(screen.getByText("Checking photo…")).toBeTruthy();
+  });
+
+  it("announces an arriving photo without caption as '{name} sent a photo'", async () => {
+    mocks.messages = [MESSAGES[0]];
+    const { rerender } = setup();
+    mocks.messages = [MESSAGES[0], img("p1", 10)];
+    rerender();
+    const region = document.querySelector("[aria-live='polite']");
+    await waitFor(() => expect(region?.textContent).toBe("Mara sent a photo"));
   });
 });
