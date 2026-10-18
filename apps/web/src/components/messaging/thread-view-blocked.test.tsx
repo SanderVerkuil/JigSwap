@@ -249,9 +249,9 @@ describe("ThreadView composer slot when blocked", () => {
     ).toBeTruthy();
   });
 
-  it("byMe: the overflow menu keeps the quick links but offers no Block", async () => {
+  it("byMe: the overflow menu keeps the quick links and Report but offers no Block", async () => {
     renderThread(dmThread({ blocked: "byMe" }));
-    expect(await openThreadMenu()).toEqual(["View profile"]);
+    expect(await openThreadMenu()).toEqual(["View profile", "Report Mara"]);
   });
 
   it("offers Report and Block {name} for an exchange thread's partner", async () => {

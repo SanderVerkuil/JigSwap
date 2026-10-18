@@ -3,9 +3,10 @@
 // Thread header quick links (message-center redesign spec §5): the partner's
 // profile and the exchange, each only when the server marks it reachable.
 // Inline ghost buttons from md up. The header's one overflow menu lists the
-// links below md and, at every width, the actions on the partner (Block) when
-// the viewer may know who they are and hasn't blocked them (the composer slot's
-// banner then offers Unblock). The puzzles are the header's cover stack
+// links below md and, at every width, the actions on the partner (Report,
+// Block) when the viewer may know who they are. Once the viewer blocked them
+// only Report stays (the composer slot's banner offers Unblock). The puzzles
+// are the header's cover stack
 // (thread-puzzle-stack.tsx).
 import { Link } from "@/compat/link";
 import { MemberActionsMenu } from "@/components/social/member-actions-menu";
@@ -54,8 +55,9 @@ export function ThreadQuickLinks({
   const t = useTranslations("messages");
   const displayName = useMemberDisplayName();
   const links = threadQuickLinks(thread);
-  // Whom the safety items act on: none once the viewer blocked them.
-  const actOn = thread.blocked === "byMe" ? null : threadPartner(thread);
+  // Whom the safety items act on. Once the viewer blocked them only Report
+  // stays (Unblock is on the composer-slot banner).
+  const actOn = threadPartner(thread);
   if (links.length === 0 && !actOn) return null;
 
   // The links as menu items; the menu shows them only below md, where the
@@ -102,6 +104,7 @@ export function ThreadQuickLinks({
         <MemberActionsMenu
           memberId={actOn._id as Id<"users">}
           name={displayName(actOn)}
+          blocked={thread.blocked === "byMe"}
           label={t("threadActions")}
           icon={MoreVertical}
         >

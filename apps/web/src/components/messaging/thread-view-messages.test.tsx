@@ -204,6 +204,33 @@ describe("ThreadView message actions", () => {
     ).toBeTruthy();
   });
 
+  it("byMe: the header menu stays, with Report {name} only, and the report has no Also block", async () => {
+    // No quick links (profileHandle null), so Report is the menu's only item.
+    renderThread({
+      ...threadOf({
+        kind: "dm",
+        otherMember: { anonymous: false, member: mara },
+        profileHandle: null,
+      }),
+      blocked: "byMe",
+    });
+    fireEvent.keyDown(
+      screen.getByRole("button", { name: "Conversation options" }),
+      { key: "Enter" },
+    );
+    await screen.findByRole("menuitem", { name: "Report Mara" });
+    expect(
+      screen.getAllByRole("menuitem").map((item) => item.textContent),
+    ).toEqual(["Report Mara"]);
+    fireEvent.click(screen.getByRole("menuitem", { name: "Report Mara" }));
+    expect(
+      await screen.findByRole("dialog", { name: "Report Mara" }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole("checkbox", { name: "Also block Mara" }),
+    ).toBeNull();
+  });
+
   it("offers Report {name} before Block in the header menu", async () => {
     renderThread(dmThread());
     fireEvent.keyDown(

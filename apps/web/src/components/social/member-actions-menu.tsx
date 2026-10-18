@@ -3,7 +3,9 @@
 // Overflow menu of actions on another member, shared by the thread header and
 // the member profile. `children` are the host's own items (e.g. thread quick
 // links), ending in the host's own separator (so it can hide both per width);
-// the safety items (Report, then Block) follow. The trigger is a 44px
+// the safety items (Report, then Block) follow. With `blocked` (the viewer
+// already blocked them) only Report stays: Unblock lives elsewhere, and the
+// report dialog drops "Also block". The trigger is a 44px
 // target below md and is named by `label`; destructive items carry text, not
 // colour alone. Focus returns to the trigger when the confirm dialog closes.
 import { ReportDialog } from "@/components/safety/report-dialog";
@@ -27,6 +29,7 @@ export function MemberActionsMenu({
   label,
   icon: Icon,
   onBlocked,
+  blocked = false,
   className,
   children,
 }: {
@@ -37,6 +40,8 @@ export function MemberActionsMenu({
   label: string;
   icon: LucideIcon;
   onBlocked?: () => void;
+  /** The viewer already blocked this member: offer Report only. */
+  blocked?: boolean;
   className?: string;
   children?: ReactNode;
 }) {
@@ -68,14 +73,16 @@ export function MemberActionsMenu({
             <Flag aria-hidden />
             {t("reportName", { name })}
           </DropdownMenuItem>
-          <DropdownMenuItem
-            variant="destructive"
-            className="min-h-11 md:min-h-0"
-            onSelect={() => setConfirming(true)}
-          >
-            <Ban aria-hidden />
-            {t("blockName", { name })}
-          </DropdownMenuItem>
+          {!blocked && (
+            <DropdownMenuItem
+              variant="destructive"
+              className="min-h-11 md:min-h-0"
+              onSelect={() => setConfirming(true)}
+            >
+              <Ban aria-hidden />
+              {t("blockName", { name })}
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
       <BlockMemberDialog
@@ -90,7 +97,8 @@ export function MemberActionsMenu({
       <ReportDialog
         target={{ kind: "user", id: memberId }}
         name={name}
-        memberId={memberId}
+        // No "Also block" for a member the viewer already blocked.
+        memberId={blocked ? undefined : memberId}
         open={reporting}
         onOpenChange={setReporting}
         onBlocked={onBlocked}
