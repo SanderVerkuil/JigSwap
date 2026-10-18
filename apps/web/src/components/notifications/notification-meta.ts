@@ -179,6 +179,14 @@ export const EMAIL_ELIGIBLE_TYPES: ReadonlySet<NotificationType> = new Set([
 
 export type NotificationChannel = "inApp" | "email" | "push";
 
+// Types always delivered in-app (mirror of the domain's MANDATORY_IN_APP_TYPES — keep in sync by
+// hand): the DSA Art. 17 statement of reasons must reach the member whatever their preference. The
+// matrix shows their in-app switch on and disabled; push and email stay toggleable.
+export const MANDATORY_IN_APP_TYPES: ReadonlySet<NotificationType> = new Set([
+  "content_removed",
+  "member_warned",
+]);
+
 export const NOTIFICATION_CHANNELS: NotificationChannel[] = [
   "inApp",
   "email",

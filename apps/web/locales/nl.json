@@ -2244,7 +2244,8 @@
       "member_warned": {
         "sentence": "Een moderator heeft je gewaarschuwd wegens {ground, select, spam_scam {spam of oplichting} harassment_hate {intimidatie of haat} sexual {seksuele of ongepaste inhoud} fake_trade {een nepruil of niet komen opdagen} illegal {illegale inhoud} other {het overtreden van de communityregels}}. Dit besluit is door een mens genomen, niet automatisch. Reageer via de contactpagina om een herbeoordeling te vragen."
       }
-    }
+    },
+    "mandatoryInApp": "Altijd aan: wettelijk verplichte meldingen"
   },
   "solving": {
     "title": "Oplossen",

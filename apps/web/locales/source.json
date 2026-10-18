@@ -2244,7 +2244,8 @@
       "member_warned": {
         "sentence": "A moderator warned you for {ground, select, spam_scam {spam or scam} harassment_hate {harassment or hate} sexual {sexual or inappropriate content} fake_trade {a fake trade or no-show} illegal {illegal content} other {breaking the community rules}}. This was decided by a person, not automatically. Reply via the contact page to request a review."
       }
-    }
+    },
+    "mandatoryInApp": "Always on: legally required notices"
   },
   "solving": {
     "title": "Solving",
