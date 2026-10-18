@@ -174,6 +174,52 @@ describe("convexThreadRepository", () => {
     expect(row?.lastMessageAt).toBe(2_000);
   });
 
+  test("re-saving the same instance inserts no duplicates and does not double-count unread", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+    const a = toMemberId(alice);
+    const b = toMemberId(bob);
+
+    const thread = openDm(a, b);
+    postText(thread, a, "first", 1_000);
+    await t.run((ctx) => convexThreadRepository(ctx).save(thread));
+    postText(thread, a, "second", 2_000);
+    await t.run((ctx) => convexThreadRepository(ctx).save(thread));
+    // Nothing new appended: a pure re-save.
+    await t.run((ctx) => convexThreadRepository(ctx).save(thread));
+
+    const { messages, row, bobRow, aliceRow } = await t.run(async (ctx) => {
+      const participants = await ctx.db
+        .query("threadParticipants")
+        .withIndex("by_thread", (q) =>
+          q.eq("threadAggregateId", thread.id as string),
+        )
+        .collect();
+      return {
+        messages: await ctx.db
+          .query("threadMessages")
+          .withIndex("by_thread_sent", (q) =>
+            q.eq("threadAggregateId", thread.id as string),
+          )
+          .collect(),
+        row: await ctx.db
+          .query("threads")
+          .withIndex("by_aggregate_id", (q) =>
+            q.eq("aggregateId", thread.id as string),
+          )
+          .unique(),
+        bobRow: participants.find((p) => p.memberId === bob),
+        aliceRow: participants.find((p) => p.memberId === alice),
+      };
+    });
+    expect(messages.map((m) => m.body)).toEqual(["first", "second"]);
+    expect(bobRow?.unreadCount).toBe(2);
+    expect(aliceRow?.unreadCount).toBe(0);
+    expect(row?.lastMessageAt).toBe(2_000);
+    expect(row?.lastMessage?.body).toBe("second");
+    expect(bobRow?.lastActivityAt).toBe(2_000);
+  });
+
   test("system message persists: null author, kind survives, no stored authorId", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob } = await seed(t);

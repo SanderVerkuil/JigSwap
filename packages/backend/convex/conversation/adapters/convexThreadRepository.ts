@@ -26,7 +26,8 @@ import {
 //
 // The aggregate is append-only: it hydrates WITHOUT message history (no invariant reads it), so
 // a load-mutate-save touches only the thread row, its participant rows (≤ 50) and the appended
-// messages. One save per load: re-saving the same instance would append its messages again.
+// messages. Re-saving the same instance is a no-op for messages already stored (a by_message_id
+// point read per appended message, never a history scan).
 export const convexThreadRepository = (ctx: MutationCtx): ThreadRepository => {
   const rowById = (id: ThreadId): Promise<Doc<"threads"> | null> =>
     ctx.db
@@ -119,10 +120,18 @@ export const convexThreadRepository = (ctx: MutationCtx): ThreadRepository => {
       const existing = await rowById(state.id);
 
       // Every message on the aggregate was appended in this unit of work (hydration starts
-      // empty), so each is inserted without consulting the stored rows.
+      // empty). A point lookup by id skips any already stored by an earlier save of the same
+      // instance; only rows actually inserted count toward lastMessage, activity and unread.
       const appended: ThreadMessageRow[] = [];
       for (const message of state.messages) {
         const messageRow = toMessageRow(aggregateId, message);
+        const stored = await ctx.db
+          .query("threadMessages")
+          .withIndex("by_message_id", (q) =>
+            q.eq("messageId", messageRow.messageId),
+          )
+          .first();
+        if (stored) continue;
         await ctx.db.insert("threadMessages", messageRow);
         appended.push(messageRow);
       }
