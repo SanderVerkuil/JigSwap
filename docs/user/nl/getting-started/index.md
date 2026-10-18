@@ -1,7 +1,7 @@
 ---
 title: Aan de slag
 order: 1
-summary: "Maak je account aan, leer de indeling kennen, lees je dashboard, zoek snel en stel je taal in."
+summary: "Maak je account aan, richt je plank in, leer de indeling kennen, lees je dashboard, zoek snel en stel je taal in."
 ---
 
 # Aan de slag

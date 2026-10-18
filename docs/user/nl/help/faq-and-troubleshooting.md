@@ -51,9 +51,53 @@ Uitwisselingen gebruiken **dubbele bevestiging** — _beide_ partijen moeten de 
 </details>
 
 <details>
-<summary>Berichten lijken niet te werken / mijn bericht is niet verstuurd.</summary>
+<summary>Waarom kan ik dit lid geen bericht sturen?</summary>
 
-Het berichtenscherm is momenteel een voorvertoning en is **nog niet verbonden met live gegevens**. Echte berichten binnen een uitwisseling staan gepland maar zijn nog niet volledig beschikbaar.
+Je kunt berichten sturen naar leden die je wederzijds volgt, leden die met jou
+in een vriendenkring zitten, en leden met wie je al een gesprek of uitwisseling
+hebt. Anders is de knop **Bericht** uitgeschakeld. Zie
+[Berichten](/docs/staying-informed/messages#wie-je-een-bericht-kunt-sturen).
+
+</details>
+
+<details>
+<summary>Waarom kan ik niet reageren in een gesprek?</summary>
+
+Staat er in een gesprek "Je kunt niet meer reageren in dit gesprek.", dan kun
+je het andere lid niet meer bereiken, bijvoorbeeld omdat diegene jou heeft
+geblokkeerd. Heb je diegene zelf geblokkeerd, dan biedt het gesprek in plaats
+daarvan **Deblokkeren**. Zie
+[Blokkeren & Melden](/docs/discovering-and-community/blocking-and-reporting).
+
+</details>
+
+<details>
+<summary>Waarom is een foto in een gesprek vervaagd?</summary>
+
+Foto's zijn eerst vervaagd als de automatische controle het niet zeker wist
+(**Gevoelige inhoud**), als de controle niet kon worden uitgevoerd (**Niet
+gecontroleerd**), of als ze komen van iemand die je niet wederzijds volgt. Klik
+op **Tonen** om de foto te zien.
+
+</details>
+
+<details>
+<summary>Het andere lid heeft mijn foto niet ontvangen.</summary>
+
+Foto's worden automatisch gecontroleerd voordat ze worden bezorgd; zolang dat
+bezig is, zie je **Foto wordt gecontroleerd…**. Keurt de controle een foto af,
+dan wordt hij niet verstuurd en kun je op **Vraag om een beoordeling** klikken.
+Zie [Berichten](/docs/staying-informed/messages#fotocontrole).
+
+</details>
+
+<details>
+<summary>Waarom volgen we elkaar niet na mijn uitnodigingslink?</summary>
+
+Meldt iemand zich aan via jouw uitnodigingslink, dan vraagt JigSwap of jullie
+elkaar willen volgen. Jullie volgen elkaar pas zodra diegene **Elkaar volgen**
+kiest, en dan krijg je een melding. Diegene heeft 30 dagen om te reageren. Zie
+[Mensen & Volgen](/docs/discovering-and-community/people-and-following#vrienden-uitnodigen).
 
 </details>
 

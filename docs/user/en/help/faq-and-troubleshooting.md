@@ -51,9 +51,53 @@ Exchanges use **dual confirmation** — _both_ parties must confirm completion b
 </details>
 
 <details>
-<summary>Messaging doesn't seem to work / my message didn't send.</summary>
+<summary>Why can't I message this member?</summary>
 
-The Messages screen is currently a preview and is **not yet connected to live data**. Real in-exchange messaging is planned but not fully available yet.
+You can message members you follow each other with, members in a friend circle
+with you, and members you already have a conversation or exchange with.
+Otherwise the **Message** button is disabled. See
+[Messages](/docs/staying-informed/messages#who-you-can-message).
+
+</details>
+
+<details>
+<summary>Why can't I reply to a conversation?</summary>
+
+When a conversation shows "You can't reply to this conversation.", the other
+member is no longer reachable by you, for example because they blocked you. If
+you blocked them yourself, the conversation offers **Unblock** instead. See
+[Blocking & Reporting](/docs/discovering-and-community/blocking-and-reporting).
+
+</details>
+
+<details>
+<summary>Why is a photo in a conversation blurred?</summary>
+
+Photos are blurred at first when the automatic check wasn't sure about them
+(**Sensitive content**), when the check couldn't run (**Not checked**), or when
+they come from someone you don't follow each other with. Click **Show** to see
+the photo.
+
+</details>
+
+<details>
+<summary>The other member hasn't received my photo.</summary>
+
+Photos are checked automatically before they're delivered; while that happens
+you see **Checking photo…**. If the check flags a photo, it isn't sent and you
+can click **Ask for a review**. See
+[Messages](/docs/staying-informed/messages#photo-checks).
+
+</details>
+
+<details>
+<summary>Why didn't my invite link make us follow each other?</summary>
+
+When someone signs up through your invite link, JigSwap asks them whether you
+two should follow each other. You only follow each other once they choose
+**Follow each other**, and you get a notification when they do. They have 30
+days to answer. See
+[People & Following](/docs/discovering-and-community/people-and-following#invite-friends).
 
 </details>
 
