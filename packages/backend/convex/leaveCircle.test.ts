@@ -1,7 +1,7 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError, type Value } from "convex/values";
 import { describe, expect, test } from "vitest";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
@@ -87,7 +87,7 @@ const addToCircle = (
   memberId: Id<"users">,
   permission: "ViewOnly" | "Exchange" | "Admin" = "ViewOnly",
 ) =>
-  asAlice(t).mutation(api.sharing.addMember.addMember, {
+  asAlice(t).mutation(internal.sharing.addMember.addMember, {
     circleId,
     memberId,
     permission,

@@ -483,7 +483,6 @@ export const gateway = {
   // Library CopyId. Reads return typed @jigswap/contracts circle view DTOs.
   sharing: {
     createCircle: api.sharing.createCircle.createCircle,
-    addMember: api.sharing.addMember.addMember,
     removeMember: api.sharing.removeMember.removeMember,
     leaveCircle: api.sharing.leaveCircle.leaveCircle,
     changePermission: api.sharing.changePermission.changePermission,
