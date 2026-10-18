@@ -6,6 +6,10 @@ import {
   memberRowControls,
 } from "@/components/circles/circle-admin-sections";
 import { MyCircleInvitations } from "@/components/circles/circle-invitations";
+import {
+  isInvalidCircleName,
+  MAX_CIRCLE_NAME_LENGTH,
+} from "@/components/circles/circle-name";
 import { LeaveCircleAction } from "@/components/circles/leave-circle-action";
 import {
   CoverChip,
@@ -98,6 +102,7 @@ function CirclesPage() {
   const { invite: highlightInviteId } = Route.useSearch();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [name, setName] = useState("");
+  const [nameInvalid, setNameInvalid] = useState(false);
   const [manageCircleId, setManageCircleId] = useState<string | null>(null);
 
   const { data: circles, isPending: circlesPending } = useQuery(
@@ -114,7 +119,8 @@ function CirclesPage() {
       setName("");
       setIsCreateOpen(false);
     } catch (error) {
-      console.error("Failed to create circle:", error);
+      if (isInvalidCircleName(error)) setNameInvalid(true);
+      else console.error("Failed to create circle:", error);
     }
   };
 
@@ -155,9 +161,29 @@ function CirclesPage() {
               <Input
                 id="circle-name"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                maxLength={MAX_CIRCLE_NAME_LENGTH}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  setNameInvalid(false);
+                }}
                 placeholder={t("manage.namePlaceholder")}
+                aria-describedby="circle-name-counter"
+                aria-invalid={nameInvalid || undefined}
               />
+              <p
+                id="circle-name-counter"
+                className="text-muted-foreground mt-1 text-right text-xs"
+              >
+                {t("manage.nameCounter", {
+                  count: name.length,
+                  max: MAX_CIRCLE_NAME_LENGTH,
+                })}
+              </p>
+              {nameInvalid && (
+                <p role="alert" className="text-destructive text-sm">
+                  {t("manage.nameInvalid")}
+                </p>
+              )}
             </div>
           </div>
           <DialogFooter>

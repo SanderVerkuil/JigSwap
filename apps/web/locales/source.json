@@ -1734,6 +1734,8 @@
       "createDescription": "A circle is private. You become its first member and admin.",
       "nameLabel": "Name",
       "namePlaceholder": "e.g. Saturday Puzzlers",
+      "nameCounter": "{count}/{max}",
+      "nameInvalid": "A circle name must be 1 to 100 characters.",
       "cancel": "Cancel",
       "create": "Create",
       "title": "Manage {name}",

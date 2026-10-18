@@ -45,13 +45,15 @@ const issue = (inviterId = owner) => {
 
 // owner (Admin), admin (Admin) and member (ViewOnly).
 const circle = () => {
-  const c = Circle.create({
+  const opened = Circle.create({
     id: circleId,
     ownerId: owner,
     ownerMembershipId: toMembershipId("m-owner"),
     name: "Family",
     now: NOW,
   });
+  if (!opened.isOk) throw new Error("setup: create failed");
+  const c = opened.value;
   c.addMember(owner, toMembershipId("m-admin"), admin, "Admin", NOW);
   c.addMember(owner, toMembershipId("m-member"), member, "ViewOnly", NOW);
   c.pullEvents();
@@ -240,7 +242,8 @@ describe("CircleInvite", () => {
         name: "Other",
         now: NOW,
       });
-      expect(codeOf(issue().revoke(admin, other, NOW))).toBe(
+      if (!other.isOk) throw new Error("setup: create failed");
+      expect(codeOf(issue().revoke(admin, other.value, NOW))).toBe(
         "CannotRevokeInvite",
       );
     });

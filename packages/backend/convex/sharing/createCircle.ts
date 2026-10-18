@@ -9,10 +9,12 @@ import {
 } from "./adapters/idGenerators";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
 import { systemClock } from "./adapters/systemClock";
+import { toConvexError } from "./errors";
 
 // Composition root for creating a friend circle: authenticate -> wire adapters -> call the use
 // case -> return the new CircleId. The creator becomes the owner (implicitly Admin) and first
-// member; all behaviour lives in the (Convex-free) domain/application layers.
+// member; all behaviour lives in the (Convex-free) domain/application layers. A name that is
+// blank or over 100 characters once normalised is refused with InvalidCircleName.
 export const createCircle = mutation({
   args: { name: v.string() },
   handler: async (ctx, args): Promise<string> => {
@@ -30,8 +32,7 @@ export const createCircle = mutation({
       ownerId: ownerId as MemberId,
       name: args.name,
     });
-    // CreateCircle's error channel is `never`; the result is always ok (narrow to access value).
-    if (result.isErr) throw result.error;
+    if (result.isErr) throw toConvexError(result.error);
     return result.value as string;
   },
 });

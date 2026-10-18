@@ -6,7 +6,12 @@ import {
   toMemberId,
   toMembershipId,
 } from "../../shared-kernel";
-import { Circle, MAX_CIRCLE_MEMBERS } from "./circle";
+import {
+  Circle,
+  MAX_CIRCLE_MEMBERS,
+  MAX_CIRCLE_NAME_LENGTH,
+  type CreateCircleProps,
+} from "./circle";
 import { CircleInvite } from "./circle-invite";
 import { CircleDeleted, MemberJoinedCircle, MemberLeftCircle } from "./events";
 import { CircleId, MembershipId } from "./ids";
@@ -24,8 +29,15 @@ const membershipId = (): MembershipId => {
   return toMembershipId(`membership-${seq}`);
 };
 
+// Circle.create, unwrapped; a refusal fails the test setup.
+const created = (props: CreateCircleProps): Circle => {
+  const result = Circle.create(props);
+  if (!result.isOk) throw new Error("setup: create failed");
+  return result.value;
+};
+
 const newCircle = (): Circle =>
-  Circle.create({
+  created({
     id: circleId,
     ownerId: owner,
     ownerMembershipId: membershipId(),
@@ -36,7 +48,7 @@ const newCircle = (): Circle =>
 describe("Circle", () => {
   it("opens with the owner as its only member, implicitly Admin", () => {
     const ownerMembershipId = membershipId();
-    const circle = Circle.create({
+    const circle = created({
       id: circleId,
       ownerId: owner,
       ownerMembershipId,
@@ -55,6 +67,120 @@ describe("Circle", () => {
   it("records CircleCreated on open", () => {
     const events = newCircle().pullEvents();
     expect(events.map((e) => e.name)).toEqual(["CircleCreated"]);
+  });
+
+  describe("create: name", () => {
+    const createNamed = (name: string) =>
+      Circle.create({
+        id: circleId,
+        ownerId: owner,
+        ownerMembershipId: membershipId(),
+        name,
+        now: NOW,
+      });
+
+    it("caps a name at 100 characters", () => {
+      expect(MAX_CIRCLE_NAME_LENGTH).toBe(100);
+    });
+
+    it("stores the name trimmed", () => {
+      const result = createNamed("  Family  ");
+      expect(result.isOk && result.value.name).toBe("Family");
+    });
+
+    it("accepts 1 and exactly 100 characters, counted after trimming", () => {
+      for (const name of ["F", "x".repeat(100), ` ${"x".repeat(100)} `]) {
+        const result = createNamed(name);
+        expect(result.isOk && result.value.name).toBe(name.trim());
+      }
+    });
+
+    it("refuses an empty, whitespace-only or 101-character name with InvalidCircleName", () => {
+      for (const name of ["", "   \t\n", "x".repeat(101)]) {
+        const result = createNamed(name);
+        expect(result.isErr && result.error.code).toBe("InvalidCircleName");
+      }
+    });
+
+    it("drops bidi overrides and isolates from a new name", () => {
+      const result = createNamed("\u202Egnp.exe \u2066Family\u2069");
+      expect(result.isOk && result.value.name).toBe("gnp.exe Family");
+    });
+
+    it("drops zero-width spaces, word joiners and BOMs", () => {
+      const result = createNamed("\u200B Fam\u2060il\u200By\uFEFF ");
+      expect(result.isOk && result.value.name).toBe("Family");
+    });
+
+    it("turns control characters into single spaces", () => {
+      for (const [name, stored] of [
+        ["a\tb\nc", "a b c"],
+        ["a\u0000b", "a b"],
+        ["a \t\r\n  b", "a b"],
+        ["a\u200B \u200B b", "a b"],
+      ]) {
+        const result = createNamed(name);
+        expect(result.isOk && result.value.name).toBe(stored);
+      }
+    });
+
+    it("keeps ZWJ and ZWNJ: an emoji family stays one family, a Persian word keeps its ZWNJ", () => {
+      for (const name of [
+        "\u{1F468}\u200D\u{1F469}\u200D\u{1F467} puzzlers",
+        "\u0645\u06CC\u200C\u062E\u0648\u0627\u0647\u0645",
+      ]) {
+        const result = createNamed(name);
+        expect(result.isOk && result.value.name).toBe(name);
+      }
+    });
+
+    it("refuses a name with nothing visible with InvalidCircleName", () => {
+      for (const name of [
+        "\u200B\u200C\u200D\uFEFF",
+        " \u200B \u2060 ",
+        "\u200D",
+        "\u200C\u200D \u200C",
+        "\u0301",
+      ]) {
+        const result = createNamed(name);
+        expect(result.isErr && result.error.code).toBe("InvalidCircleName");
+      }
+    });
+
+    it("accepts a single visible letter, digit, symbol or punctuation mark", () => {
+      for (const name of ["F", "7", "🧩", "&"]) {
+        expect(createNamed(name).isOk).toBe(true);
+      }
+    });
+
+    it("measures the 100-character limit after dropping invisible characters", () => {
+      const name = "x".repeat(100);
+      const result = createNamed(`${name}\u200B\u200B\u202E`);
+      expect(result.isOk && result.value.name).toBe(name);
+    });
+
+    it("keeps accents and emoji intact", () => {
+      for (const name of [
+        "Puzzelclub Zoë & Renée",
+        "Café Crème",
+        "Puzzels 🧩❤️👍🏽🇳🇱",
+      ]) {
+        const result = createNamed(name);
+        expect(result.isOk && result.value.name).toBe(name);
+      }
+    });
+
+    it("rehydrates a stored name longer than the limit without re-checking it", () => {
+      const long = "x".repeat(150);
+      const circle = Circle.rehydrate({ ...newCircle().toState(), name: long });
+      expect(circle.name).toBe(long);
+      // Nor strips a stored name's invisible characters.
+      const odd = "Fam\u200Bily\u202E";
+      expect(
+        Circle.rehydrate({ ...newCircle().toState(), name: odd }).name,
+      ).toBe(odd);
+      expect(circle.delete(owner, long, NOW).isOk).toBe(true);
+    });
   });
 
   describe("addMember", () => {

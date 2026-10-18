@@ -58,7 +58,7 @@ describe("Sharing circle use cases", () => {
     shareCopy = makeShareCopyToCircle({ circles, events, clock });
   });
 
-  // Helper: create a circle and return its id (creation never fails).
+  // Helper: create a circle and return its id.
   const openCircle = async (): Promise<CircleId> => {
     const result = await createCircle({ ownerId: owner, name: "Family" });
     if (!result.isOk) throw new Error("setup: create failed");
@@ -77,6 +77,14 @@ describe("Sharing circle use cases", () => {
         expect(circle?.isMember(owner)).toBe(true);
       }
       expect(events.names()).toEqual(["CircleCreated"]);
+    });
+
+    it("refuses an invalid name with InvalidCircleName, saving and publishing nothing", async () => {
+      const result = await createCircle({ ownerId: owner, name: "   " });
+
+      expect(result.isErr && result.error.code).toBe("InvalidCircleName");
+      expect(circles.size()).toBe(0);
+      expect(events.names()).toEqual([]);
     });
   });
 

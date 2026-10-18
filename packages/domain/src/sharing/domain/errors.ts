@@ -21,7 +21,8 @@ export type SharingErrorCode =
   | "InviteNotAccepted"
   | "CannotRevokeInvite"
   | "NotCircleOwner"
-  | "ConfirmationMismatch";
+  | "ConfirmationMismatch"
+  | "InvalidCircleName";
 
 export class SharingError extends DomainError {
   override readonly name = "SharingError";
@@ -156,6 +157,15 @@ export class SharingError extends DomainError {
     return new SharingError(
       "ConfirmationMismatch",
       "The confirmation does not match the circle's name",
+    );
+  }
+
+  // A new circle's name, once normalised, must show something and be at most
+  // MAX_CIRCLE_NAME_LENGTH long.
+  static invalidCircleName(): SharingError {
+    return new SharingError(
+      "InvalidCircleName",
+      "A circle name must be between 1 and 100 characters",
     );
   }
 }

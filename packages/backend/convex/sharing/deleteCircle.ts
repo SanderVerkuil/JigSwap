@@ -12,9 +12,9 @@ import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
 import { systemClock } from "./adapters/systemClock";
 import { toConvexError } from "./errors";
 
-// The longest confirmName worth comparing: a bound on input, not a name rule. Circle names have no
-// length limit of their own (existing circles may have long names), so this sits far above any
-// real name; a lower cap would make such a circle undeletable.
+// The longest confirmName worth comparing: a bound on input, not a name rule. Only NEW circle names
+// are capped (at 100 characters); circles stored before that may have longer names, so this sits
+// far above any real name; a lower cap would make such a circle undeletable.
 export const MAX_CONFIRM_NAME_LENGTH = 1000;
 
 // Composition root for deleting a circle. Only the owner may, by typing the circle's exact name as
