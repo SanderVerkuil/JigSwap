@@ -23,6 +23,37 @@ JigSwap houdt een volledig **oplossingslogboek** bij van elke puzzel waar je aan
 
 > Je kunt tot **5 foto's** per voltooiing toevoegen, en bewerken kan binnen een venster van **24 uur** na het voltooien.
 
+### Puzzels vastleggen die je eerder hebt afgemaakt
+
+Heb je al puzzels opgelost voordat je lid werd van JigSwap, dan kun je er
+meerdere tegelijk vastleggen, ook als je niet meer precies weet wanneer.
+
+**Waar:** **Snel instellen → Leg vast wat je al hebt afgemaakt**
+(`/welcome?step=solves`). Open Snel instellen via je accountmenu.
+
+1. De stap toont de puzzels in je bibliotheek waarvoor nog geen oplossing is
+   vastgelegd. Klik op **Meer tonen** om er meer te zien.
+2. Vink **Ik heb _titel_ afgemaakt** aan bij elke puzzel die je hebt opgelost.
+3. Kies onder **Wanneer?** een van deze opties:
+   - **Weet ik niet meer** (de standaard),
+   - **Welk jaar**, en kies dan het jaar, of
+   - **Kies een datum**.
+4. Klik op **N puzzels vastleggen** (bijvoorbeeld **3 puzzels vastleggen**).
+
+Je kunt maximaal 25 puzzels tegelijk vastleggen. Deze oplossingen verschijnen
+niet in de activiteitenfeed van de community.
+
+Zo wordt de datum gebruikt die je kiest:
+
+- Een oplossing met alleen een jaar staat als "In 2023"; een oplossing zonder
+  datum staat als "Datum onbekend".
+- Oplossingen zonder datum tellen niet mee voor je doelen. Oplossingen met een
+  jaar wel.
+- Geen van beide heeft een oplostijd, en geen van beide telt mee in je
+  maandelijkse oplostrends.
+- Wil je later een precieze datum toevoegen, gebruik dan **Bewerken** bij de
+  oplossing op de pagina Voltooiingen, binnen het bewerkvenster van 24 uur.
+
 ### De pagina Voltooiingen
 
 De pagina Voltooiingen toont al je oplossingsregistraties, met de nieuwste bovenaan, met een samenvatting van drie statistieken bovenaan: **totaal afgerond**, **stukken gelegd** en **dit jaar afgerond**.

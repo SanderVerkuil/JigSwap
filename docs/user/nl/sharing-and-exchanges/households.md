@@ -1,0 +1,128 @@
+---
+title: Huishoudens
+order: 4
+summary: "Deel één puzzelbibliotheek met de mensen met wie je samenwoont, en kies per puzzel wat ze ermee mogen doen."
+---
+
+# Huishoudens
+
+Met een huishouden delen de mensen met wie je samenwoont één
+puzzelbibliotheek. Iedereen in het huishouden ziet elkaars puzzels in
+**Mijn Puzzels**. Puzzels blijven van wie ze heeft toegevoegd, en
+puzzelsessies blijven persoonlijk.
+
+**Waar:** **Mijn Bibliotheek** → **Huishouden** (`/household`).
+
+## Een huishouden aanmaken
+
+1. Open **Huishouden**.
+2. Klik op **Huishouden aanmaken**.
+
+Je wordt de **Beheerder** van het huishouden. Je kunt in één huishouden
+tegelijk zitten.
+
+## Iemand uitnodigen
+
+Alleen de beheerder van het huishouden kan uitnodigen. De persoon doet pas mee
+nadat diegene heeft geaccepteerd.
+
+### Een lid uitnodigen
+
+1. Ga naar **Huishouden** en zoek onder **Iemand uitnodigen** leden op naam.
+2. Klik op **Uitnodigen** naast de persoon.
+
+Diegene staat als **Uitgenodigd** onder **Wacht op antwoord** tot er een
+antwoord is.
+
+### Uitnodigen met een link
+
+Nodig iemand uit met een link, bijvoorbeeld iemand die nog niet op JigSwap zit.
+
+1. Ga naar **Huishouden** en klik onder **Uitnodigen met een link** op
+   **Uitnodigingslink maken**.
+2. Deel de link. Op apparaten die het ondersteunen, opent
+   **Uitnodigingslink delen** het deelmenu van je apparaat. Je kunt ook
+   **Link kopiëren**, **E-mail** of **WhatsApp** gebruiken.
+
+Elke link werkt één keer en verloopt na 14 dagen. JigSwap ziet en bewaart niet
+naar wie je hem stuurt. Wil je links annuleren die nog niet zijn gebruikt,
+klik dan op **Open links intrekken**.
+
+Wie de link opent, kan de uitnodiging accepteren of weigeren. Een nieuw lid dat
+zich via de link aanmeldt, vindt de uitnodiging op de eigen pagina
+**Huishouden**. Er wordt niets gedeeld tot diegene accepteert.
+
+## Een uitnodiging accepteren of weigeren
+
+1. Open de melding van de uitnodiging, of ga naar **Huishouden**. Uitnodigingen
+   staan onder **Uitnodigingen voor een huishouden**.
+2. Klik op **Accepteren** of **Weigeren**.
+
+## Wat leden van een huishouden kunnen zien en doen
+
+- Iedereen ziet ieders puzzels in **Mijn Puzzels**, met het label
+  **Huishouden · _naam_**, ook exemplaren die op privé staan.
+- Elk lid kan eigen puzzelsessies vastleggen op een puzzel van het huishouden.
+- Wat een lid verder met jouw puzzel mag doen, hangt af van de
+  **Toegang huishouden**.
+
+## Toegang huishouden instellen voor een puzzel
+
+Elke puzzel heeft een van twee toegangsniveaus:
+
+- **Mag beheren** — huisgenoten kunnen hem bewerken, uitlenen en ruilen.
+- **Alleen bekijken** — huisgenoten kunnen hem zien. In **Mijn Puzzels** heeft
+  hij het label **Huishouden · _naam_ · alleen bekijken**.
+
+Sommige acties blijven bij de eigenaar, wat het toegangsniveau ook is: de
+puzzel verwijderen, de toegang voor het huishouden wijzigen, hem in een
+vriendenkring delen en hem aan collecties toevoegen. Aanvragen van andere leden
+voor jouw puzzel komen nog steeds bij jou binnen.
+
+Toegang instellen voor één puzzel:
+
+1. Open de pagina van de puzzel.
+2. Kies onder **Toegang huishouden** voor **Mag beheren**, **Alleen bekijken**
+   of **Standaard van het huishouden gebruiken**.
+
+Alleen de eigenaar kan de toegang voor het huishouden van een puzzel wijzigen.
+
+## Meerdere puzzels tegelijk wijzigen
+
+1. Ga op **Huishouden** naar **Mijn puzzels in dit huishouden**.
+2. Filter de lijst eventueel op toegang voor het huishouden.
+3. Vink de puzzels aan die je wilt wijzigen, of gebruik **Alles selecteren**.
+4. Klik op **Instellen op Mag beheren**, **Instellen op Alleen bekijken** of
+   **Standaard van het huishouden gebruiken**.
+5. Bevestig met **Toegang wijzigen**.
+
+Je kunt maximaal 200 puzzels tegelijk wijzigen. Deze lijst toont alleen je
+eigen puzzels.
+
+## De standaard van het huishouden instellen
+
+De standaard van het huishouden geldt voor de puzzels van alle leden die geen
+eigen toegangsinstelling hebben. Een instelling voor een specifieke puzzel gaat
+altijd voor.
+
+1. Ga op **Huishouden** naar **Instellingen huishouden**.
+2. Kies onder **Standaardtoegang voor puzzels** voor **Mag beheren** of
+   **Alleen bekijken**.
+3. Bevestig met **Standaard wijzigen**.
+
+De pagina laat zien hoeveel puzzels de standaard volgen. Alleen de beheerder
+van het huishouden kan hem wijzigen; andere leden kunnen hem alleen bekijken.
+Een nieuw huishouden begint met **Mag beheren** als standaard.
+
+## Een huishouden verlaten of een lid verwijderen
+
+Wil je vertrekken, klik dan op **Huishouden verlaten** en bevestig. Je puzzels
+verlaten het huishouden met je mee, en je ziet de puzzels van de anderen niet
+meer.
+
+De beheerder kan een lid **Verwijderen**. Diens puzzels verlaten het huishouden
+met diegene mee.
+
+Vertrekt de beheerder, dan wordt het lid dat het langst in het huishouden zit
+de nieuwe beheerder. Ben je het laatste lid, dan wordt het huishouden opgeheven
+en vervallen openstaande uitnodigingen.

@@ -1,9 +1,11 @@
 ---
 title: Op de Hoogte Blijven
 order: 5
-summary: "Beheer meldingen via de kanalen in-app, e-mail en webpush."
+summary: "Stuur andere leden berichten en beheer meldingen via de kanalen in-app, e-mail en webpush."
 ---
 
 # Op de Hoogte Blijven
 
-Blijf op de hoogte van ruilverzoeken, berichten, behaalde doelen en meer — en kies precies wat je bereikt en hoe.
+Blijf op de hoogte van ruilverzoeken, berichten, behaalde doelen en meer. Praat
+met andere leden in Berichten, en kies precies welke meldingen je bereiken en
+hoe.

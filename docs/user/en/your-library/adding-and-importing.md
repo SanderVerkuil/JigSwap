@@ -1,7 +1,7 @@
 ---
 title: Adding & Importing Puzzles
 order: 2
-summary: "Add owned copies, create new catalog entries, import from a store URL, and contribute to the catalog."
+summary: "Add owned copies one at a time or several at once, search by barcode, import from a store URL, and contribute to the catalog."
 ---
 
 # Adding & Importing Puzzles
@@ -14,9 +14,16 @@ Adding a puzzle is a two-step flow:
 
 1. Click **Add Puzzle**.
 2. You'll see a chooser page. It lists:
-   - Your own submissions that aren't approved yet (at the top).
-   - The full **approved catalogue**, with infinite scroll and a free-text search box.
-3. If your puzzle already exists in the catalogue, select it to add a copy of it to your library. If it's new, continue to create it.
+   - **Your submissions**: puzzles you've added to the catalogue that aren't
+     approved yet (at the top).
+   - **All puzzles**: the full approved catalogue, with infinite scroll.
+3. Type in the search box to find your puzzle. The search covers the whole
+   catalogue by title or brand.
+4. To look a puzzle up by its **barcode**, type or paste the 12- or 13-digit
+   number from the box. If no puzzle has that barcode yet, click
+   **Register it** to create one with the barcode already filled in.
+5. If your puzzle already exists in the catalogue, select it to add a copy of
+   it to your library. If it's new, click **Create new**.
 
 ## Step 2 — Create or copy
 
@@ -40,6 +47,27 @@ You'll land on the creation/copy form (`/my-puzzles/add/new`).
 A **live preview card** and a **readiness checklist** sit alongside the form so you can see how your puzzle will look.
 
 > **Adding a copy of an existing puzzle:** When you add from the catalogue (copy mode), the puzzle's catalogue definition is locked read-only, and you only fill in the copy-specific fields (your condition, availability, notes, photos, etc.).
+
+## Add several puzzles at once
+
+**Where:** **My Puzzles → Add Puzzle → Add several** (`/my-puzzles/add/quick`).
+
+Use this to fill your shelf quickly, for example when you first join.
+
+1. Click **Add several** at the top of the chooser page.
+2. Search the catalogue by title, brand or barcode.
+3. Click each puzzle you own to pick it. Click it again to remove it. Puzzles
+   you already own are marked **On your shelf**.
+4. Review your picks under **Picked**. For each one, you can switch on
+   **Available to swap**. Picks aren't offered for swap or loan unless you do.
+5. Click **Add N puzzles** (for example, **Add 4 puzzles**).
+
+You can pick up to 25 puzzles at a time. Either all of them are added, or, if
+something goes wrong, none are, so you can safely try again.
+
+> **Can't find it?** Click **Register a new puzzle** (or **Register** followed
+> by your search) to create it. When you're done, you return to the picker,
+> where your new puzzle shows as **Pending review**.
 
 ## Contributing a brand-new puzzle to the catalogue
 
