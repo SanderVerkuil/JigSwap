@@ -1842,6 +1842,8 @@
     "ownedByYou": "Van jou",
     "sharedWithYou": "Met jou gedeeld",
     "membersLabel": "{count, plural, one {lid} other {leden}}",
+    "avatarStackLabel": "Leden van {circle}",
+    "avatarStackMore": "{count, plural, one {nog # lid} other {nog # leden}}",
     "emptyTitle": "Nog geen kringen",
     "emptySub": "Maak een kring aan om puzzels te ruilen met vrienden en familie.",
     "loading": "Kringen laden...",
