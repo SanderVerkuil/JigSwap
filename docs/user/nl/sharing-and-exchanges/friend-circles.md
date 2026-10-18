@@ -30,7 +30,7 @@ wederzijds volgt (jullie volgen elkaar).
 
 1. Klik op de pagina **Kringen** op de instellingenknop van de kring.
 2. Zoek de persoon onder **Uitnodigen**.
-3. Kies de **Rechten**: **ViewOnly**, **Exchange** of **Admin**.
+3. Kies de **Rechten**: **Alleen bekijken**, **Mag ruilen** of **Beheerder**.
 4. Klik op **Uitnodiging versturen**.
 
 De persoon krijgt een melding. De uitnodiging staat onder
@@ -57,8 +57,8 @@ niet meer beschikbaar."
 
 In het beheervenster kan elke beheerder:
 
-- het rechtenniveau van een lid wijzigen: **ViewOnly**, **Exchange** of
-  **Admin**;
+- het rechtenniveau van een lid wijzigen: **Alleen bekijken**, **Mag ruilen** of
+  **Beheerder**;
 - een lid verwijderen;
 - leden uitnodigen en openstaande uitnodigingen intrekken;
 - exemplaren in de kring delen.

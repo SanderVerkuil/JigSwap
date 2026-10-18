@@ -1854,6 +1854,11 @@
     "deleteConfirmLabel": "Typ {circle} om te bevestigen",
     "deleted": "Kring verwijderd",
     "deleteError": "Kon de kring niet verwijderen. Probeer het opnieuw.",
+    "permissions": {
+      "ViewOnly": "Alleen bekijken",
+      "Exchange": "Mag ruilen",
+      "Admin": "Beheerder"
+    },
     "invitations": {
       "title": "Uitnodigingen",
       "invitedBy": "Uitgenodigd door {name}",

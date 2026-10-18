@@ -30,7 +30,7 @@ Any circle **Admin** can invite. You can invite people you follow mutually
 
 1. On **Circles**, click the settings button on the circle.
 2. Under **Invite**, search for the person.
-3. Choose their **Permission**: **ViewOnly**, **Exchange** or **Admin**.
+3. Choose their **Permission**: **View only**, **Can exchange** or **Admin**.
 4. Click **Send invite**.
 
 The person gets a notification. Their invite shows under **Pending invites**
@@ -56,7 +56,7 @@ available."
 
 In the manage dialog, every Admin can:
 
-- change a member's permission level: **ViewOnly**, **Exchange** or **Admin**;
+- change a member's permission level: **View only**, **Can exchange** or **Admin**;
 - remove a member;
 - invite members and revoke pending invites;
 - share copies into the circle.

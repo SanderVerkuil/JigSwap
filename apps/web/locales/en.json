@@ -1854,6 +1854,11 @@
     "deleteConfirmLabel": "Type {circle} to confirm",
     "deleted": "Circle deleted",
     "deleteError": "Couldn't delete the circle. Please try again.",
+    "permissions": {
+      "ViewOnly": "View only",
+      "Exchange": "Can exchange",
+      "Admin": "Admin"
+    },
     "invitations": {
       "title": "Invitations",
       "invitedBy": "Invited by {name}",
