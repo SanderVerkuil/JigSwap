@@ -1,11 +1,12 @@
 import { ConversationApplicationError, type MemberId } from "@jigswap/domain";
 import type { Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
-import { toConvexError } from "../conversation/errors";
+import { cannotReplyError, toConvexError } from "../conversation/errors";
 
 // Member blocks (spec 2.6): the read-side helpers every gate shares. A block is silent and works
 // both ways, so gates ask "blocked either way" and refuse with the SAME generic error a lost
-// connection gets (NotConnected), never a block-specific one.
+// connection gets (NotConnected), never a block-specific one. Posting to an existing thread
+// refuses with the generic CannotReply instead (see assertThreadNotBlocked).
 
 type Member = Id<"users"> | MemberId;
 const asUserId = (m: Member) => m as unknown as Id<"users">;
@@ -70,9 +71,10 @@ export const assertPairNotBlocked = async (
 };
 
 /**
- * {@link assertPairNotBlocked} for a thread the member posts to, against its other participant.
- * Unknown threads and non-participants pass through untouched, so the caller's own
- * ThreadNotFound / NotParticipant errors stay what they were.
+ * Refuse posting to a thread whose other participant is blocked either way, with the generic
+ * CannotReply (NotConnected never otherwise comes out of posting to an existing thread, so it
+ * would single out a block). Unknown threads and non-participants pass through untouched, so
+ * the caller's own ThreadNotFound / NotParticipant errors stay what they were.
  */
 export const assertThreadNotBlocked = async (
   ctx: QueryCtx,
@@ -85,8 +87,11 @@ export const assertThreadNotBlocked = async (
     .unique();
   if (!thread || !thread.participants.includes(asUserId(memberId))) return;
   for (const other of thread.participants) {
-    if (other !== asUserId(memberId)) {
-      await assertPairNotBlocked(ctx, memberId, other);
+    if (
+      other !== asUserId(memberId) &&
+      (await isBlockedEitherWay(ctx, memberId, other))
+    ) {
+      throw cannotReplyError();
     }
   }
 };

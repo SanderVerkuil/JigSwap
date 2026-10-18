@@ -205,8 +205,8 @@ describe("blocked pair is refused", () => {
             recipientId: ids.alice,
           }),
         ).toBe(false);
-        await expectCode(post(t, "alice", threadId), "NotConnected");
-        await expectCode(post(t, "bob", threadId), "NotConnected");
+        await expectCode(post(t, "alice", threadId), "CannotReply");
+        await expectCode(post(t, "bob", threadId), "CannotReply");
       });
 
       test("startCopyConversation", async () => {
@@ -243,8 +243,8 @@ describe("blocked pair is refused", () => {
         expect(threadId).not.toBeNull();
         await block(t, ids);
 
-        await expectCode(post(t, "alice", threadId!), "NotConnected");
-        await expectCode(post(t, "bob", threadId!), "NotConnected");
+        await expectCode(post(t, "alice", threadId!), "CannotReply");
+        await expectCode(post(t, "bob", threadId!), "CannotReply");
         expect(await exchangeStatus(t, exchangeId)).toBe("accepted");
       });
 
