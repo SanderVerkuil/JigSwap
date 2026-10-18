@@ -42,15 +42,18 @@ const HANDLERS: readonly {
     name: "tradeReveal",
     run: handleTradeRevealEvent,
     retry: true,
+    // Update when the handler's own guard/switch gains an event.
     events: ["ExchangeAccepted", "MessagePosted"],
   },
   // Inserts notification rows + schedules email/push with no dedupe key.
+  // No `events` list on purpose: its switch is the only list (see the HANDLERS comment).
   { name: "notifications", run: handleNotificationEvent, retry: false },
   // Opens the exchange thread (idempotent) but APPENDS a lifecycle system message.
   {
     name: "conversation",
     run: handleConversationEvent,
     retry: false,
+    // Derived from the handler's own LIFECYCLE_BODIES table, so it tracks new lifecycle events.
     events: Object.keys(LIFECYCLE_BODIES),
   },
   // ONE sub-transaction for custody + the library transfer: custody records the pre-transfer owner
@@ -64,6 +67,7 @@ const HANDLERS: readonly {
       await handleLibraryTransferEvent(ctx, event);
     },
     retry: false,
+    // Update when the handler's own guard/switch gains an event.
     events: ["OwnershipTransferred"],
   },
   // A settled lend opens a loan; a re-run opens a second loan.
@@ -71,6 +75,7 @@ const HANDLERS: readonly {
     name: "openLoan",
     run: handleOpenLoanEvent,
     retry: false,
+    // Update when the handler's own guard/switch gains an event.
     events: ["PossessionTransferred"],
   },
 ];

@@ -182,8 +182,10 @@ patterns:
      is not already lent; `notifications` / `conversation` will land late (with today's
      timestamp), so skip them when that would confuse members.
   2. In the Convex dashboard, patch the `domainEvents` row: unset `failedAt`, `attempts` and
-     `lastError`; remove the handlers you want re-run from `failedHandlers` (leave any you chose to
-     skip); leave `completedHandlers` untouched.
+     `lastError`; remove the handlers you want re-run from `failedHandlers`, and MOVE any handler
+     you deliberately skip from `failedHandlers` into `completedHandlers` (a handler left in
+     `failedHandlers` keeps the event `failedAt` forever); otherwise leave `completedHandlers`
+     untouched.
   3. Run `events/dispatch:dispatch` with `{ "eventId": "<id>" }` (dashboard Functions tab or
      `npx convex run`). It runs only the handlers that are neither completed nor failed; a new
      failure is logged and recorded as usual.
