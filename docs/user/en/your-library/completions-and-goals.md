@@ -23,6 +23,36 @@ JigSwap keeps a full **solve log** of every puzzle you've worked on — even aft
 
 > You can attach up to **5 photos** per completion, and edits are allowed within a **24-hour** window after completing.
 
+### Log puzzles you finished in the past
+
+If you've solved puzzles before joining JigSwap, you can log several at once,
+even when you don't remember exactly when.
+
+**Where:** **Quick setup → Log puzzles you finished** (`/welcome?step=solves`).
+Open Quick setup from your account menu.
+
+1. The step lists the puzzles in your library that have no solve logged yet.
+   Click **Show more** to see more.
+2. Tick **I finished** next to each puzzle you've solved.
+3. Under **When?**, choose one:
+   - **I don't remember** (the default),
+   - **Which year**, then pick the year, or
+   - **Pick a date**.
+4. Click **Log N puzzles** (for example, **Log 3 puzzles**).
+
+You can log up to 25 puzzles at a time. These solves don't appear in the
+community activity feed.
+
+How the date you choose is used:
+
+- A solve with only a year shows as "In 2023"; one without a date shows as
+  "Date unknown".
+- Solves without a date don't count toward your goals. Solves with a year do.
+- Neither has a solve time, and neither is included in your monthly solve
+  trends.
+- To add an exact date later, **Edit** the solve on the Completions page
+  within the 24-hour edit window.
+
 ### The Completions page
 
 The Completions page shows all your solve records, newest first, with a three-stat summary at the top: **total finished**, **pieces placed**, and **finishes this year**.
