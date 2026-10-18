@@ -876,6 +876,11 @@
     },
     "puzzles": {
       "title": "Puzzels van {name}",
+      "filterLabel": "Welke puzzels van {name} tonen",
+      "filterAll": "Alle puzzels",
+      "filterAvailable": "Beschikbaar",
+      "availableNote": "Puzzels die {name} aanbiedt om te ruilen, uit te lenen of te verkopen.",
+      "emptyAvailable": "{name} heeft op dit moment geen puzzels om te ruilen, uit te lenen of te verkopen.",
       "showMore": "Meer tonen"
     },
     "completions": {

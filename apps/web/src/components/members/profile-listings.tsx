@@ -2,6 +2,7 @@
 
 import { Image } from "@/compat/image";
 import { Link } from "@/compat/link";
+import { SegmentedPills } from "@/components/add-puzzle/segmented-pills";
 import { SectionHead } from "@/components/dashboard-home/section-head";
 import { Button } from "@/components/ui/button";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
@@ -15,6 +16,7 @@ import { cn } from "@/lib/utils";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery } from "convex/react";
 import { CircleCheck, Puzzle } from "lucide-react";
+import { useState } from "react";
 import { useTranslations } from "use-intl";
 
 // A member's puzzles and finished solves on their profile page. Both reads are auth-gated and
@@ -48,26 +50,58 @@ function ShowMore({
   );
 }
 
+type PuzzlesFilter = "all" | "available";
+
+// `scope` is the server-computed libraryScope (getPublicProfile): "all" — the viewer sees the whole
+// library (self, household mate, mutual follower) and may narrow it to the available copies;
+// "available" — the server only ever returns the copies offered to swap/lend/sell, so the section
+// says so (the "N owned" stat counts every copy).
 export function ProfilePuzzlesSection({
   memberId,
   firstName,
+  scope,
 }: {
   memberId: Id<"users">;
   firstName: string;
+  scope: "all" | "available";
 }) {
   const t = useTranslations("profile.puzzles");
+  const [filter, setFilter] = useState<PuzzlesFilter>("all");
+  const effective: PuzzlesFilter = scope === "all" ? filter : "available";
   const { results, status, loadMore } = usePaginatedQuery(
     gateway.social.profileCopies,
-    { memberId },
+    { memberId, filter: effective },
     { initialNumItems: PAGE_SIZE },
   );
+  const empty = results.length === 0 && status !== "CanLoadMore";
   // A page can come back short (even empty) when copies fail the per-copy gate, so an empty first
-  // page that can still load more keeps the section (and its Show more) visible.
-  if (results.length === 0 && status !== "CanLoadMore") return null;
+  // page that can still load more keeps the section (and its Show more) visible. Once the viewer
+  // has narrowed the list, the section (and its filter) stays put so they can widen it again.
+  if (empty && !(scope === "all" && filter === "available")) return null;
   return (
     // `puzzles` is the anchor a grouped "added N puzzles" feed entry links to.
     <section id="puzzles" className="scroll-mt-20">
       <SectionHead title={t("title", { name: firstName })} icon={Puzzle} />
+      {scope === "all" && (
+        <div className="mb-4">
+          <SegmentedPills
+            options={[
+              { value: "all", label: t("filterAll") },
+              { value: "available", label: t("filterAvailable") },
+            ]}
+            value={filter}
+            onChange={setFilter}
+            ariaLabel={t("filterLabel", { name: firstName })}
+          />
+        </div>
+      )}
+      {effective === "available" && (
+        <p className="text-muted-foreground mb-4 text-sm">
+          {empty && status === "Exhausted"
+            ? t("emptyAvailable", { name: firstName })
+            : t("availableNote", { name: firstName })}
+        </p>
+      )}
       {/* The provider renders the app's shared auto-fill puzzle grid; cards are its direct children. */}
       <PuzzleViewProvider viewMode="grid">
         {results.map((copy) => (

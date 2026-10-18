@@ -8,7 +8,11 @@ import { computeMemberStats } from "../identity/getUserStats";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { optionalActingMember } from "../identity/optionalActingMember";
 import { resolveMemberByHandle } from "../identity/resolveMemberByHandle";
-import { areMutualFollowers, profileVisibilityOf } from "./privacy";
+import {
+  areMutualFollowers,
+  profileVisibilityOf,
+  seesFullLibrary,
+} from "./privacy";
 
 // The UNAUTHENTICATED read behind the redesigned public member profile. Handle resolution
 // (id-first, then slug, then username) is shared with getPublicMemberTeaser via
@@ -182,6 +186,12 @@ export const getPublicProfile = query({
       }
     }
 
+    // Mirrors listProfileCopies' scope so the UI knows whether to offer the all/available filter.
+    const libraryScope =
+      viewerId !== null && (await seesFullLibrary(ctx, viewerId, memberId))
+        ? "all"
+        : "available";
+
     return {
       locked: false,
       hero,
@@ -194,6 +204,7 @@ export const getPublicProfile = query({
       },
       records: { fastest, hardest },
       currentlySolving,
+      libraryScope,
     };
   },
 });

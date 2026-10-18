@@ -316,6 +316,42 @@ describe("getCopyInstanceView privacy gating", () => {
     expect(view).toBeNull();
   });
 
+  test("a MUTUAL follower may view a closed copy of a private owner (canViewCopy rule 6)", async () => {
+    const t = convexTest(schema, modules);
+    const { viewer, prevOwner, copy } = await seedCopy(t);
+    await t.run(async (ctx) => {
+      await ctx.db.patch(copy, { ownerId: prevOwner });
+    });
+    await setVisibility(t, prevOwner, "private");
+    await follow(t, viewer, prevOwner);
+    await follow(t, prevOwner, viewer);
+
+    const view = await asViewer(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: copy },
+    );
+    expect(view).not.toBeNull();
+    expect(view?.viewerIsOwner).toBe(false);
+  });
+
+  test("a ONE-WAY follow (either direction) does not reach a closed copy", async () => {
+    for (const direction of ["viewerFollows", "ownerFollows"] as const) {
+      const t = convexTest(schema, modules);
+      const { viewer, prevOwner, copy } = await seedCopy(t);
+      await t.run(async (ctx) => {
+        await ctx.db.patch(copy, { ownerId: prevOwner });
+      });
+      if (direction === "viewerFollows") await follow(t, viewer, prevOwner);
+      else await follow(t, prevOwner, viewer);
+
+      const view = await asViewer(t).query(
+        api.library.getCopyInstanceView.getCopyInstanceView,
+        { copyId: copy },
+      );
+      expect(view).toBeNull();
+    }
+  });
+
   test("a non-owned PUBLIC, OPEN copy is visible but omits owner-only fields", async () => {
     const t = convexTest(schema, modules);
     const { prevOwner, copy } = await seedCopy(t);

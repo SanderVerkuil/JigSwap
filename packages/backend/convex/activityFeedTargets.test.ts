@@ -172,7 +172,7 @@ describe("social.getActivityFeed — link targets", () => {
     });
   });
 
-  test("a private actor's completion has no target for a one-way follower, but does once mutual", async () => {
+  test("a private actor's completion has no target for a one-way follower, but links the copy once mutual", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob, definitionId } = await seed(t);
     await setVisibility(t, alice, "private");
@@ -190,9 +190,12 @@ describe("social.getActivityFeed — link targets", () => {
         createdAt: Date.now(),
       });
     });
-    expect((await entryOf(t, "bob", "completion"))?.target?.kind).toBe(
-      "definition",
-    );
+    // Mutual followers see the whole library (canViewCopy rule 6), so the closed copy itself is
+    // linked, not just its definition.
+    expect((await entryOf(t, "bob", "completion"))?.target).toEqual({
+      kind: "copy",
+      id: await copyDocId(t, copyId),
+    });
   });
 
   test("an exchange links a party to their trades and gives a non-party follower no target", async () => {
