@@ -75,7 +75,9 @@ describe("MessageComposer typing", () => {
     fireEvent.change(input, { target: { value: "Hello" } });
     fireEvent.keyDown(input, { key: "Enter" });
     await waitFor(() => expect(calls()).toContain(POST));
-    // postMessage clears the row; the composer sends no clearTyping of its own.
-    expect(calls()).toEqual([SET, CLEAR, SET, POST]);
+    // Retyping within 4 s of the last signal sends none (the leading edge holds
+    // across a stop); postMessage clears the row, so the composer sends no
+    // clearTyping of its own.
+    expect(calls()).toEqual([SET, CLEAR, POST]);
   });
 });

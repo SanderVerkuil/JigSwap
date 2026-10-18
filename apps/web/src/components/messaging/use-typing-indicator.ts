@@ -7,8 +7,10 @@
 // lapses on its own; there is no idle clearTyping (it would save nothing and
 // cost a call). clearTyping goes out only when the indicator is still live and
 // the member clearly stopped: the input was emptied, the tab was hidden, or
-// the thread view went away. A send clears the row on the server, so `onSent`
-// only resets the local throttle. Failures are ignored: typing is best-effort.
+// the thread view went away. A stop does NOT reset the 4 s leading edge, so
+// emptying and retyping can't send faster than one setTyping per 4 s. A send
+// clears the row on the server, so `onSent` only resets the local state (sends
+// are rate-limited on their own). Failures are ignored: typing is best-effort.
 import { gateway } from "@/gateway";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { TYPING_TTL_MS } from "@jigswap/contracts";
@@ -28,13 +30,17 @@ export function useTypingIndicator(threadId: string): {
   useEffect(() => {
     mutations.current = { setTyping, clearTyping };
   }, [setTyping, clearTyping]);
-  // When setTyping last went out for the current thread; null = not typing.
+  // When setTyping last went out for the current thread (the leading edge's
+  // clock); null = not since the thread opened or the last send.
   const lastSentAt = useRef<number | null>(null);
+  // Whether that signal is still on (no stop or send since).
+  const signalling = useRef(false);
 
   const stop = useCallback((id: string) => {
     const last = lastSentAt.current;
-    lastSentAt.current = null;
-    if (last !== null && Date.now() - last < TYPING_TTL_MS) {
+    const wasSignalling = signalling.current;
+    signalling.current = false;
+    if (wasSignalling && last !== null && Date.now() - last < TYPING_TTL_MS) {
       void mutations.current.clearTyping({ threadId: id }).catch(() => {});
     }
   }, []);
@@ -47,6 +53,8 @@ export function useTypingIndicator(threadId: string): {
     return () => {
       document.removeEventListener("visibilitychange", onVisibilityChange);
       stop(threadId);
+      // The next thread starts afresh.
+      lastSentAt.current = null;
     };
   }, [threadId, stop]);
 
@@ -61,6 +69,7 @@ export function useTypingIndicator(threadId: string): {
       const last = lastSentAt.current;
       if (last !== null && now - last < TYPING_SEND_INTERVAL_MS) return;
       lastSentAt.current = now;
+      signalling.current = true;
       void mutations.current.setTyping({ threadId }).catch(() => {});
     },
     [threadId, stop],
@@ -68,6 +77,7 @@ export function useTypingIndicator(threadId: string): {
 
   const onSent = useCallback(() => {
     lastSentAt.current = null;
+    signalling.current = false;
   }, []);
 
   return { onInput, onSent };
