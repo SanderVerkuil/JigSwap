@@ -313,6 +313,38 @@ describe("the offer", () => {
   });
 });
 
+describe("a brand-new account on a private inviter's network link", () => {
+  test("gets a pending offer and no edges, and only accepting connects them", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, newbie } = await seed(t);
+    // Alice's profile is private (seed); newbie was created moments ago.
+    const { token } = await as(t, "alice").mutation(
+      api.social.getMyInviteLink.getMyInviteLink,
+      {},
+    );
+
+    expect(
+      await as(t, "newbie").mutation(api.social.redeemInvite.redeemInvite, {
+        token,
+      }),
+    ).toEqual({ redeemed: true, inviterId: alice, connection: "pending" });
+    expect(await mutualEdges(t, alice, newbie)).toEqual({
+      ab: false,
+      ba: false,
+    });
+    expect(
+      await t.run((ctx) => ctx.db.query("followRequests").collect()),
+    ).toEqual([]);
+
+    const [offer] = await listFor(t, "newbie");
+    expect(offer.source).toBe("inviteLink");
+    expect(await accept(t, "newbie", offer.offerId)).toEqual({
+      connected: true,
+    });
+    expect(await mutualEdges(t, alice, newbie)).toEqual({ ab: true, ba: true });
+  });
+});
+
 describe("acceptConnection", () => {
   test("creates the mutual follow, bumps followsEstablished and only then tells the inviter", async () => {
     const t = convexTest(schema, modules);

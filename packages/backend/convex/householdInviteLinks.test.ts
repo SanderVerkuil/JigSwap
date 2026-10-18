@@ -380,6 +380,46 @@ describe("redeeming a household link", () => {
     expect(link?.consumedAt).toBeDefined();
   });
 
+  test("the offer and the household invite are separate answers: following each other does not join the household", async () => {
+    const t = convexTest(schema, modules);
+    const { ann, newbie } = await seed(t);
+    const householdId = await annCreatesHousehold(t);
+    const { token } = await mintAsAnn(t);
+    await redeem(t, "newbie", token);
+
+    // Both are pending, and nobody follows anybody yet.
+    const [offer] = await as(t, "newbie").query(
+      api.social.listMyConnectionOffers.listMyConnectionOffers,
+      {},
+    );
+    expect(offer.source).toBe("householdLink");
+    expect(offer.from.memberId).toBe(ann);
+    expect(
+      (await householdInvitesFor(t, newbie)).map((i) => [
+        i.householdId,
+        i.status,
+      ]),
+    ).toEqual([[householdId, "pending"]]);
+    expect(await mutualEdges(t, ann, newbie)).toEqual({ ab: false, ba: false });
+
+    // Accepting the offer follows each other; the household invite is still undecided.
+    await as(t, "newbie").mutation(
+      api.social.acceptConnection.acceptConnection,
+      { offerId: offer.offerId },
+    );
+    expect(await mutualEdges(t, ann, newbie)).toEqual({ ab: true, ba: true });
+    expect((await householdInvitesFor(t, newbie)).map((i) => i.status)).toEqual(
+      ["pending"],
+    );
+    expect(
+      await as(t, "newbie").query(
+        api.household.getMyHousehold.getMyHousehold,
+        {},
+      ),
+    ).toBeNull();
+    expect((await linkFor(t, token))?.followsEstablished).toBe(1);
+  });
+
   test("the invitee can accept and join", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
