@@ -294,3 +294,51 @@ describe("attaching a copy in a DM with an anonymous partner (#154)", () => {
     expect(await messageCount(t)).toBe(1);
   });
 });
+
+// The copy page itself (getCopyInstanceView) must not carry anything that ties two copies to one
+// hidden owner either: no raw uploader name, no shared acquisition timestamp.
+describe("copy page payload for a hidden owner's copies (#154)", () => {
+  test("two copies of one hidden owner share no owner-identifying value", async () => {
+    const t = convexTest(schema, modules);
+    const { hidden, hiddenA, hiddenB } = await seed(t);
+    await t.run(async (ctx) => {
+      let n = 0;
+      for (const copyId of [hiddenA, hiddenB]) {
+        n += 1;
+        await ctx.db.insert("ownedPuzzleImages", {
+          ownedPuzzleId: copyId,
+          uploaderId: hidden,
+          fileId: await ctx.storage.store(
+            new Blob([`img-${n}`], { type: "image/png" }),
+          ),
+          createdAt: 1000 + n,
+          updatedAt: 1000 + n,
+        });
+      }
+    });
+
+    const viewOf = (copyId: Id<"ownedPuzzles">) =>
+      asViewer(t).query(api.library.getCopyInstanceView.getCopyInstanceView, {
+        copyId,
+      });
+    const a = await viewOf(hiddenA);
+    const b = await viewOf(hiddenB);
+    if (!a || !b) throw new Error("both copies are viewable (held)");
+
+    expect(a.owner.anonymous && b.owner.anonymous).toBe(true);
+    if (a.owner.anonymous && b.owner.anonymous) {
+      expect(a.owner.anonRef).not.toBe(b.owner.anonRef);
+    }
+    const [photoA, photoB] = [a.gallery[0], b.gallery[0]];
+    expect(photoA.uploader).toMatchObject({ anonymous: true });
+    expect(photoB.uploader).toMatchObject({ anonymous: true });
+    expect(photoA.uploader).not.toEqual(photoB.uploader);
+    expect(a.acquiredByViewerAt).toBeNull();
+    expect(b.acquiredByViewerAt).toBeNull();
+    for (const view of [a, b]) {
+      const json = JSON.stringify(view);
+      expect(json).not.toContain(hidden);
+      expect(json).not.toContain("clerk_hidden");
+    }
+  });
+});
