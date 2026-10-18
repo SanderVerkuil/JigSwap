@@ -9,7 +9,8 @@ export interface CreateCircleCommand {
 }
 
 // Inbound port: the create-circle use case. Yields the new circle's id on success, or
-// InvalidCircleName when the trimmed name is empty or longer than MAX_CIRCLE_NAME_LENGTH.
+// InvalidCircleName when the normalised name shows nothing or is longer than
+// MAX_CIRCLE_NAME_LENGTH.
 export interface CreateCircle {
   (cmd: CreateCircleCommand): Promise<Result<CircleId, SharingError>>;
 }

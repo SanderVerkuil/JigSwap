@@ -107,15 +107,49 @@ describe("Circle", () => {
       expect(result.isOk && result.value.name).toBe("gnp.exe Family");
     });
 
-    it("drops zero-width and control characters, before trimming", () => {
-      const result = createNamed("\u200B Fam\u0000il\u200Dy\uFEFF ");
+    it("drops zero-width spaces, word joiners and BOMs", () => {
+      const result = createNamed("\u200B Fam\u2060il\u200By\uFEFF ");
       expect(result.isOk && result.value.name).toBe("Family");
     });
 
-    it("refuses a name of only zero-width characters with InvalidCircleName", () => {
-      for (const name of ["\u200B\u200C\u200D\uFEFF", " \u200B \u2060 "]) {
+    it("turns control characters into single spaces", () => {
+      for (const [name, stored] of [
+        ["a\tb\nc", "a b c"],
+        ["a\u0000b", "a b"],
+        ["a \t\r\n  b", "a b"],
+        ["a\u200B \u200B b", "a b"],
+      ]) {
+        const result = createNamed(name);
+        expect(result.isOk && result.value.name).toBe(stored);
+      }
+    });
+
+    it("keeps ZWJ and ZWNJ: an emoji family stays one family, a Persian word keeps its ZWNJ", () => {
+      for (const name of [
+        "\u{1F468}\u200D\u{1F469}\u200D\u{1F467} puzzlers",
+        "\u0645\u06CC\u200C\u062E\u0648\u0627\u0647\u0645",
+      ]) {
+        const result = createNamed(name);
+        expect(result.isOk && result.value.name).toBe(name);
+      }
+    });
+
+    it("refuses a name with nothing visible with InvalidCircleName", () => {
+      for (const name of [
+        "\u200B\u200C\u200D\uFEFF",
+        " \u200B \u2060 ",
+        "\u200D",
+        "\u200C\u200D \u200C",
+        "\u0301",
+      ]) {
         const result = createNamed(name);
         expect(result.isErr && result.error.code).toBe("InvalidCircleName");
+      }
+    });
+
+    it("accepts a single visible letter, digit, symbol or punctuation mark", () => {
+      for (const name of ["F", "7", "🧩", "&"]) {
+        expect(createNamed(name).isOk).toBe(true);
       }
     });
 

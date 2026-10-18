@@ -14,7 +14,7 @@ import { toConvexError } from "./errors";
 // Composition root for creating a friend circle: authenticate -> wire adapters -> call the use
 // case -> return the new CircleId. The creator becomes the owner (implicitly Admin) and first
 // member; all behaviour lives in the (Convex-free) domain/application layers. A name that is
-// empty or over 100 characters once trimmed is refused with InvalidCircleName.
+// blank or over 100 characters once normalised is refused with InvalidCircleName.
 export const createCircle = mutation({
   args: { name: v.string() },
   handler: async (ctx, args): Promise<string> => {

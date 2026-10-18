@@ -160,7 +160,8 @@ export class SharingError extends DomainError {
     );
   }
 
-  // A new circle's name, once trimmed, must be 1 to MAX_CIRCLE_NAME_LENGTH characters.
+  // A new circle's name, once normalised, must show something and be at most
+  // MAX_CIRCLE_NAME_LENGTH long.
   static invalidCircleName(): SharingError {
     return new SharingError(
       "InvalidCircleName",

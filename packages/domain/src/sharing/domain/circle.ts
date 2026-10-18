@@ -16,14 +16,28 @@ import { canManageMembers, PermissionLevel } from "./permission-level";
 // The most seats a circle may hold, the owner's included.
 export const MAX_CIRCLE_MEMBERS = 50;
 
-// The longest a circle's name may be, counted after trimming. Checked on create only: rehydrate
-// never re-checks, so circles stored before the limit keep their longer names.
+// The longest a circle's name may be, counted after normalising (see normaliseCircleName). Checked
+// on create only: rehydrate never re-checks, so circles stored before the limit keep their names.
 export const MAX_CIRCLE_NAME_LENGTH = 100;
 
-// Unicode control (Cc) and format (Cf) characters: bidi overrides/isolates, zero-width spaces and
-// joiners, BOMs. Invisible in a name, they can disguise it or pad an empty one, so a new name drops
-// them before it is trimmed and measured.
-const INVISIBLE_CHARACTERS = /[\p{Cc}\p{Cf}]/gu;
+// Control characters (Cc: tabs, newlines, NUL, ...) read as a word break, so they become spaces.
+const CONTROL_CHARACTERS = /\p{Cc}/gu;
+// Format characters (Cf: bidi overrides/isolates, zero-width spaces, BOMs) are invisible and can
+// disguise a name, so they go, except ZWNJ (U+200C) and ZWJ (U+200D): emoji ZWJ sequences and
+// Persian/Indic spelling need them.
+const FORMAT_CHARACTERS = /(?![\u200C\u200D])\p{Cf}/gu;
+const WHITESPACE_RUNS = /\s+/gu;
+// A name must show something: at least one letter, digit, symbol or punctuation mark.
+const VISIBLE_CHARACTER = /[\p{L}\p{N}\p{S}\p{P}]/u;
+
+// A new circle name as stored: control characters to spaces, format characters (bar ZWNJ/ZWJ)
+// removed, whitespace runs collapsed to one space, trimmed.
+const normaliseCircleName = (raw: string): string =>
+  raw
+    .replace(CONTROL_CHARACTERS, " ")
+    .replace(FORMAT_CHARACTERS, "")
+    .replace(WHITESPACE_RUNS, " ")
+    .trim();
 
 // Input to create(): a new private group and its first (owner) membership.
 export interface CreateCircleProps {
@@ -73,12 +87,13 @@ export class Circle {
     return this.memberships;
   }
 
-  // Open a new circle. The name loses its control/format characters, is trimmed, and must then be
-  // 1 to MAX_CIRCLE_NAME_LENGTH characters (InvalidCircleName otherwise). The owner is seeded as the first membership at Admin — the
-  // owner is implicitly Admin and can never be demoted or removed.
+  // Open a new circle. The name is normalised (normaliseCircleName) and must then show at least
+  // one visible character and be at most MAX_CIRCLE_NAME_LENGTH long (InvalidCircleName
+  // otherwise). The owner is seeded as the first membership at Admin — the owner is implicitly
+  // Admin and can never be demoted or removed.
   static create(props: CreateCircleProps): Result<Circle, SharingError> {
-    const name = props.name.replace(INVISIBLE_CHARACTERS, "").trim();
-    if (name.length === 0 || name.length > MAX_CIRCLE_NAME_LENGTH) {
+    const name = normaliseCircleName(props.name);
+    if (!VISIBLE_CHARACTER.test(name) || name.length > MAX_CIRCLE_NAME_LENGTH) {
       return err(SharingError.invalidCircleName());
     }
     const owner = Membership.create(
