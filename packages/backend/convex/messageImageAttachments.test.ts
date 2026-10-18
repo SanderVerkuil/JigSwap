@@ -1119,6 +1119,45 @@ describe("review appeal", () => {
     ).rejects.toThrow(/NotAwaitingReview/);
   });
 
+  test("restoring a photo that was never re-encoded re-runs the pipeline, then delivers it", async () => {
+    // The classifier would reject it again: the admin's restore is final all the same.
+    fakes.score = 0.97;
+    const t = convexTest(schema, modules);
+    const { alice, threadId } = await openThread(t);
+    const fileId = await storeJpeg(t);
+    const id = await t.run((ctx) =>
+      ctx.db.insert("messageAttachments", {
+        kind: "image",
+        threadAggregateId: threadId,
+        uploaderId: alice,
+        fileId,
+        width: 8,
+        height: 6,
+        byteSize: 1,
+        contentType: "image/jpeg",
+        moderationStatus: "rejected",
+        hashCheckedAt: 1,
+        sendRequestedAt: 1,
+        sendIndex: 0,
+        reviewRequestedAt: 2,
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    await asAdmin(t).mutation(api.admin.decideImageReview.decideImageReview, {
+      attachmentId: id,
+      decision: "restore",
+    });
+    expect((await attachment(t, id))!.moderationStatus).toBe("pending");
+    expect(await messageRows(t, threadId)).toEqual([]);
+    await settleDueJobs(t);
+    const row = (await attachment(t, id))!;
+    expect(row.moderationStatus).toBe("approved");
+    expect(row.reencodedAt).toEqual(expect.any(Number));
+    expect(row.fileId).not.toBe(fileId);
+    expect(await messageRows(t, threadId)).toHaveLength(1);
+  });
+
   test("uphold deletes the blob and the outbox shows the review upheld", async () => {
     const t = convexTest(schema, modules);
     const { id, threadId } = await rejectedPhoto(t);

@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalMutation, internalQuery } from "../_generated/server";
 import { stampModerationAction } from "../admin/stampModerationAction";
+import { INVALID_IMAGE_LABEL } from "../lib/imageModeration/guards";
 import {
   applyHashCheckResult,
   hashCheckResultArgs,
@@ -80,9 +81,15 @@ export const setModerationVerdict = internalMutation({
   handler: async (ctx, { imageId, moderationStatus, ...verdict }) => {
     const row = await ctx.db.get(imageId);
     if (!row || row.moderationStatus !== "pending") return;
-    const status =
-      moderationStatus === "approved" &&
-      (verdict.moderationScore ?? 0) >= MESSAGE_IMAGE_BLUR_THRESHOLD
+    // An admin restored this photo and sent it back only to be re-encoded: their approval is
+    // final, unless the file itself turned out unreadable.
+    const restored =
+      row.moderatedBy !== undefined &&
+      verdict.moderationLabel !== INVALID_IMAGE_LABEL;
+    const status = restored
+      ? "approved"
+      : moderationStatus === "approved" &&
+          (verdict.moderationScore ?? 0) >= MESSAGE_IMAGE_BLUR_THRESHOLD
         ? "blurred"
         : moderationStatus;
     await ctx.db.patch(imageId, {
