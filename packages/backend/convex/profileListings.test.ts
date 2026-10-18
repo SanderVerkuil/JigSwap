@@ -15,6 +15,7 @@ const PAGE = { numItems: 20, cursor: null };
 // finished solves (one with an approved and a pending photo) and one in-progress solve.
 // carol: PRIVATE profile with a finished solve, an open copy and an in-progress solve.
 // bob: mutual follower of alice AND carol. eve: signed in, follows nobody (non-mutual).
+// fay follows alice one-way; alice follows gus one-way. dan shares a household with alice.
 // Follow edges are seeded directly (followMember on a private target creates a request).
 const seed = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
@@ -32,6 +33,21 @@ const seed = async (t: TestConvex<typeof schema>) =>
     const bob = await user("clerk_bob", "Bob");
     const carol = await user("clerk_carol", "Carol");
     await user("clerk_eve", "Eve");
+    const dan = await user("clerk_dan", "Dan");
+    const fay = await user("clerk_fay", "Fay");
+    const gus = await user("clerk_gus", "Gus");
+    await ctx.db.insert("households", {
+      aggregateId: "hh-alice",
+      createdAt: now,
+    });
+    for (const memberId of [alice, dan]) {
+      await ctx.db.insert("householdMembers", {
+        householdId: "hh-alice",
+        memberId,
+        role: "member",
+        joinedAt: now,
+      });
+    }
 
     await ctx.db.insert("profiles", {
       memberId: alice,
@@ -48,6 +64,8 @@ const seed = async (t: TestConvex<typeof schema>) =>
       [bob, alice],
       [carol, bob],
       [bob, carol],
+      [fay, alice],
+      [alice, gus],
     ] as const) {
       await ctx.db.insert("follows", {
         followerId: a,
@@ -84,6 +102,7 @@ const seed = async (t: TestConvex<typeof schema>) =>
     const aliceOpen = await copy(alice, OPEN, now);
     const aliceClosed = await copy(alice, CLOSED, now - 1);
     const carolOpen = await copy(carol, OPEN, now);
+    const carolClosed = await copy(carol, CLOSED, now - 1);
 
     const approvedPhoto = await ctx.storage.store(
       new Blob(["approved"], { type: "image/png" }),
@@ -145,6 +164,7 @@ const seed = async (t: TestConvex<typeof schema>) =>
       aliceOpen,
       aliceClosed,
       carolOpen,
+      carolClosed,
       withPhotos,
       aliceInProgress,
       carolDone,
@@ -159,10 +179,12 @@ const listCopies = (
   t: TestConvex<typeof schema>,
   who: string,
   memberId: Id<"users">,
+  filter?: "all" | "available",
 ) =>
   as(t, who).query(api.social.listProfileCopies.listProfileCopies, {
     memberId,
     paginationOpts: PAGE,
+    filter,
   });
 
 const listCompletions = (
@@ -195,14 +217,41 @@ describe("profile listings — copies", () => {
     expect(result.isDone).toBe(true);
   });
 
-  test("a public profile shows open copies but hides non-shared (closed) ones", async () => {
+  test("a public profile shows a non-mutual viewer only open copies — whatever the filter", async () => {
+    // eve: stranger; fay follows alice one-way; gus is followed by alice one-way.
     const t = convexTest(schema, modules);
     const { alice, aliceOpen, aliceClosed } = await seed(t);
-    for (const viewer of ["bob", "eve"]) {
-      const ids = (await listCopies(t, viewer, alice)).page.map((c) => c._id);
-      expect(ids).toEqual([aliceOpen]);
-      expect(ids).not.toContain(aliceClosed);
+    for (const viewer of ["eve", "fay", "gus"]) {
+      for (const filter of [undefined, "all", "available"] as const) {
+        const ids = (await listCopies(t, viewer, alice, filter)).page.map(
+          (c) => c._id,
+        );
+        expect(ids).toEqual([aliceOpen]);
+        expect(ids).not.toContain(aliceClosed);
+      }
     }
+  });
+
+  test("a mutual follower sees the whole library by default and only open copies with 'available'", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, aliceOpen, aliceClosed } = await seed(t);
+    for (const filter of [undefined, "all"] as const) {
+      const ids = (await listCopies(t, "bob", alice, filter)).page.map(
+        (c) => c._id,
+      );
+      expect([...ids].sort()).toEqual([aliceOpen, aliceClosed].sort());
+    }
+    const available = (await listCopies(t, "bob", alice, "available")).page;
+    expect(available.map((c) => c._id)).toEqual([aliceOpen]);
+  });
+
+  test("a household mate sees the whole library", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, aliceOpen, aliceClosed } = await seed(t);
+    const ids = (await listCopies(t, "dan", alice)).page.map((c) => c._id);
+    expect([...ids].sort()).toEqual([aliceOpen, aliceClosed].sort());
+    const available = (await listCopies(t, "dan", alice, "available")).page;
+    expect(available.map((c) => c._id)).toEqual([aliceOpen]);
   });
 
   test("owner-only fields are absent from the returned copy — even for the owner", async () => {
@@ -230,15 +279,16 @@ describe("profile listings — copies", () => {
     const { alice, aliceOpen, aliceClosed } = await seed(t);
     const ids = (await listCopies(t, "alice", alice)).page.map((c) => c._id);
     expect([...ids].sort()).toEqual([aliceOpen, aliceClosed].sort());
+    const available = (await listCopies(t, "alice", alice, "available")).page;
+    expect(available.map((c) => c._id)).toEqual([aliceOpen]);
   });
 
-  test("a mutual follower of a private member only sees copies canViewCopy allows", async () => {
-    // canViewCopy reaches a private owner's copy only via a circle share; an open copy alone is
-    // not enough, even for a mutual follower whose profile view is unlocked.
+  test("a mutual follower of a private member sees their whole library", async () => {
+    // canViewCopy rule 6: mutual followers reach every copy, whatever the owner's visibility.
     const t = convexTest(schema, modules);
-    const { carol } = await seed(t);
-    const result = await listCopies(t, "bob", carol);
-    expect(result.page).toEqual([]);
+    const { carol, carolOpen, carolClosed } = await seed(t);
+    const ids = (await listCopies(t, "bob", carol)).page.map((c) => c._id);
+    expect([...ids].sort()).toEqual([carolOpen, carolClosed].sort());
   });
 });
 

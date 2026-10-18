@@ -511,7 +511,7 @@ function ExchangeChat({ exchangeId }: { exchangeId: string }) {
     return <p className="text-muted-foreground text-sm">{t("noThreadYet")}</p>;
   }
   return (
-    <div className="flex h-80 flex-col rounded-lg border px-3 pb-3">
+    <div className="flex h-80 flex-col overflow-hidden rounded-lg border">
       <ThreadView threadId={threadId} hideHeader />
     </div>
   );

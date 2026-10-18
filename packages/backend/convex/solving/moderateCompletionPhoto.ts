@@ -6,10 +6,13 @@ import { internalAction } from "../_generated/server";
 import { ingestToAxiom } from "../lib/axiom";
 import { logEvent, type WideEvent } from "../lib/logEvent";
 import {
-  HF_MODEL,
   makeModerationPortFromEnv,
-  readThreshold,
+  planModerationStep,
+  readScreeningConfig,
+  screeningLogFields,
   toArrayBuffer,
+  unscoredResult,
+  type ModerationResult,
 } from "../library/adapters/photoModeration";
 import { reencodeImage } from "../library/moderatePhoto";
 
@@ -18,35 +21,35 @@ const errMsg = (e: unknown): string =>
 
 // Async image-moderation pipeline for an uploaded completion photo — a clone of
 // `library/moderatePhoto.ts` operating on the `completionImages` sidecar table (see that file for
-// the full rationale: jimp-not-sharp, wide-event logging, env knobs). Scheduled (runAfter 0) by
-// `attachCompletionPhotos`, which inserts the sidecar as `moderationStatus: "pending"`. This
-// action:
-//   1. Re-encodes the blob via jimp (drops all EXIF/GPS metadata), then swaps the fileId to the
-//      clean blob — in BOTH the sidecar and the completions row's photos array, via
-//      `completionModerationStore.setModerationFile` — and deletes the original.
+// the full rationale: jimp-not-sharp, never-fail-open with retries, wide-event logging, env
+// knobs). Scheduled (runAfter 0) by `attachCompletionPhotos`, which inserts the sidecar as
+// `moderationStatus: "pending"`. This action:
+//   1. (first attempt only) Re-encodes the blob via jimp (drops all EXIF/GPS metadata), then swaps
+//      the fileId to the clean blob — in BOTH the sidecar and the completions row's photos array,
+//      via `completionModerationStore.setModerationFile` — and deletes the original.
 //   2. Classifies the clean bytes via the configured PhotoModerationPort and records the verdict
 //      (a rejection also removes the photo from the completion + deletes the blob + stamps).
 //
-// FAIL-OPEN: any error (download, decode, classify) leaves the photo APPROVED rather than blocking
-// a benign upload behind a transient failure — every such path is logged. The action NEVER throws.
-//
-// ENV (per Convex deployment):
-//   HF_MODERATION_TOKEN       — Hugging Face Inference API token (free). Unset => approve (disabled).
-//   MODERATION_PROVIDER       — "huggingface" (default) | "none" (always approve).
-//   MODERATION_NSFW_THRESHOLD — float in [0,1], default 0.85; nsfw score >= threshold => rejected.
+// When the photo cannot be checked it is NOT approved: retryable failures re-schedule this action
+// with backoff, otherwise (or once retries run out) the sidecar is stamped "unscored", which keeps
+// the photo visible to its uploader only. The action NEVER throws.
 export const moderateCompletionPhoto = internalAction({
-  args: { imageId: v.id("completionImages") },
-  handler: async (ctx, { imageId }) => {
+  // `attempt` is 1-based; absent = the first attempt (the upload's schedule).
+  args: { imageId: v.id("completionImages"), attempt: v.optional(v.number()) },
+  handler: async (ctx, { imageId, attempt: attemptArg }) => {
     const startedAt = Date.now();
-    const provider = (process.env.MODERATION_PROVIDER ?? "huggingface").trim();
-    // ONE canonical wide event per moderation, flushed once in `finally` (see library clone).
+    const attempt = attemptArg ?? 1;
+    const config = readScreeningConfig(process.env);
+    // ONE canonical wide event per attempt, flushed once in `finally` (see library clone).
     const event: WideEvent = {
       event: "solving.moderateCompletionPhoto",
       outcome: "success",
       image_id: imageId,
-      provider,
-      model: provider.toLowerCase() === "none" ? null : HF_MODEL,
-      nsfw_threshold: readThreshold(process.env.MODERATION_NSFW_THRESHOLD),
+      attempt,
+      provider: config.provider,
+      model: config.provider === "none" ? null : config.model,
+      nsfw_threshold: config.threshold,
+      screening_config: config.status,
     };
     const flush = async () => {
       event.duration_ms = Date.now() - startedAt;
@@ -54,11 +57,33 @@ export const moderateCompletionPhoto = internalAction({
       await ingestToAxiom(line);
     };
 
-    const approve = () =>
-      ctx.runMutation(
+    const finish = async (result: ModerationResult) => {
+      Object.assign(event, screeningLogFields(result));
+      if (result.status === "unscored") event.outcome = "error";
+      const step = planModerationStep(result, attempt);
+      if (step.kind === "retry") {
+        event.decision = "retry_scheduled";
+        event.retry_in_ms = step.delayMs;
+        await ctx.scheduler.runAfter(
+          step.delayMs,
+          internal.solving.moderateCompletionPhoto.moderateCompletionPhoto,
+          { imageId, attempt: attempt + 1 },
+        );
+        return;
+      }
+      event.decision = result.status;
+      await ctx.runMutation(
         internal.solving.completionModerationStore.setModerationVerdict,
-        { imageId, moderationStatus: "approved" },
+        {
+          imageId,
+          moderationStatus: result.status,
+          moderationScore: result.score ?? undefined,
+          moderationLabel: result.label ?? undefined,
+          moderationReason: result.reason ?? undefined,
+          moderationAttempts: attempt,
+        },
       );
+    };
 
     try {
       const row = await ctx.runQuery(
@@ -71,7 +96,7 @@ export const moderateCompletionPhoto = internalAction({
       }
       event.completion_id = row.completionId;
       event.uploader_id = row.uploaderId;
-      // Already decided (idempotent): a re-run on an approved/rejected row is a no-op.
+      // Already decided (idempotent): a re-run on a decided row is a no-op.
       if (row.moderationStatus !== "pending") {
         event.result = "skipped_not_pending";
         event.prior_status = row.moderationStatus ?? null;
@@ -79,95 +104,85 @@ export const moderateCompletionPhoto = internalAction({
       }
 
       let bytes: Uint8Array;
+      let mime: string | undefined;
       try {
         const blob = await ctx.storage.get(row.fileId);
         if (!blob) {
-          event.outcome = "error";
           event.error = { stage: "download", message: "storage blob missing" };
-          event.decision = "approved";
-          event.fail_open = true;
-          await approve();
+          await finish(unscoredResult("missing_file", false));
           return;
         }
         bytes = new Uint8Array(await blob.arrayBuffer());
+        mime = blob.type || undefined;
         event.original_bytes = bytes.length;
       } catch (error) {
-        event.outcome = "error";
         event.error = { stage: "download", message: errMsg(error) };
-        event.decision = "approved";
-        event.fail_open = true;
-        await approve();
+        await finish(unscoredResult("download_error", true));
         return;
       }
 
-      // Re-encode (strip EXIF/metadata). Best-effort: on decode failure, classify the original —
-      // no file swap happens on that path (verdict-only approval).
+      // Re-encode (strip EXIF/metadata) on the first attempt only. Best-effort: on decode failure,
+      // classify the original — no file swap happens on that path.
       let cleanBytes = bytes;
-      // Tracks the just-stored clean blob across the try/catch. If `setModerationFile` throws
-      // AFTER the store succeeded, the row still points at the original, so the clean blob is
-      // unreferenced. There is no storage GC, so delete it ourselves to avoid orphaning it.
-      let storedFileId: string | null = null;
-      try {
-        const { bytes: encoded, mime } = await reencodeImage(bytes);
-        cleanBytes = encoded;
-        event.reencoded = true;
-        event.reencoded_mime = mime;
-        event.reencoded_bytes = encoded.length;
-        const newFileId = await ctx.storage.store(
-          new Blob([toArrayBuffer(cleanBytes)], { type: mime }),
-        );
-        storedFileId = newFileId;
-        await ctx.runMutation(
-          internal.solving.completionModerationStore.setModerationFile,
-          { imageId, fileId: newFileId },
-        );
-        // Swap succeeded: the sidecar + completions row now point at the clean blob; drop the
-        // original instead (best-effort).
-        storedFileId = null;
+      if (attempt === 1) {
+        // Tracks the just-stored clean blob across the try/catch. If `setModerationFile` throws
+        // AFTER the store succeeded, the row still points at the original, so the clean blob is
+        // unreferenced. There is no storage GC, so delete it ourselves to avoid orphaning it.
+        let storedFileId: string | null = null;
         try {
-          await ctx.storage.delete(row.fileId);
-        } catch (error) {
-          event.delete_original_error = errMsg(error);
-        }
-      } catch (error) {
-        event.reencoded = false;
-        event.reencode_error = errMsg(error);
-        cleanBytes = bytes;
-        // If the clean blob was stored but the swap failed, delete it best-effort before falling
-        // back to the original.
-        if (storedFileId !== null) {
+          const { bytes: encoded, mime: encodedMime } =
+            await reencodeImage(bytes);
+          cleanBytes = encoded;
+          mime = encodedMime;
+          event.reencoded = true;
+          event.reencoded_mime = encodedMime;
+          event.reencoded_bytes = encoded.length;
+          const newFileId = await ctx.storage.store(
+            new Blob([toArrayBuffer(cleanBytes)], { type: encodedMime }),
+          );
+          storedFileId = newFileId;
+          await ctx.runMutation(
+            internal.solving.completionModerationStore.setModerationFile,
+            { imageId, fileId: newFileId },
+          );
+          // Swap succeeded: the sidecar + completions row now point at the clean blob; drop the
+          // original instead (best-effort).
+          storedFileId = null;
           try {
-            await ctx.storage.delete(storedFileId);
-          } catch (cleanupError) {
-            event.orphan_cleanup_error = errMsg(cleanupError);
+            await ctx.storage.delete(row.fileId);
+          } catch (error) {
+            event.delete_original_error = errMsg(error);
+          }
+        } catch (error) {
+          event.reencoded = false;
+          event.reencode_error = errMsg(error);
+          cleanBytes = bytes;
+          // If the clean blob was stored but the swap failed, delete it best-effort before falling
+          // back to the original.
+          if (storedFileId !== null) {
+            try {
+              await ctx.storage.delete(storedFileId);
+            } catch (cleanupError) {
+              event.orphan_cleanup_error = errMsg(cleanupError);
+            }
           }
         }
       }
 
-      // Classify. The port itself fails open; this try/catch is the last-resort guard.
+      // Classify. The port never throws; this try/catch is the last-resort guard.
+      let result: ModerationResult;
       try {
         const port = makeModerationPortFromEnv(process.env);
-        const result = await port.classify(cleanBytes);
-        await ctx.runMutation(
-          internal.solving.completionModerationStore.setModerationVerdict,
-          {
-            imageId,
-            moderationStatus: result.status,
-            moderationScore: result.score ?? undefined,
-            moderationLabel: result.label ?? undefined,
-          },
-        );
-        event.decision = result.status;
-        event.nsfw_score = result.score ?? null;
-        event.nsfw_label = result.label ?? null;
-        event.classifier_scores = result.scores;
+        result = await port.classify(cleanBytes, mime);
       } catch (error) {
-        event.outcome = "error";
         event.error = { stage: "classify", message: errMsg(error) };
-        event.decision = "approved";
-        event.fail_open = true;
-        await approve();
+        result = unscoredResult("internal_error", true);
       }
+      await finish(result);
+    } catch (error) {
+      // A store/scheduler call failed; the sidecar stays pending (visible to the uploader only).
+      event.outcome = "error";
+      event.error = { stage: "record", message: errMsg(error) };
     } finally {
       await flush();
     }

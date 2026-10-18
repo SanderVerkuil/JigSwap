@@ -133,3 +133,76 @@ Follow it with `npx convex logs` (add `--prod` for prod) or in the dashboard Log
    exchange between two private members: the requester now sees the owner (name, no
    avatar) in that exchange's view, while an older proposal the owner never answered
    still shows the owner as "member" to the requester.
+
+---
+
+## `library/rescreenPhotos` — screen photos that were never checked
+
+**When:** once per deployment, after the photo-screening fix (router endpoint + `unscored`
+outcome) is deployed there **and** the probe below returns `"screening_outcome":"scored"`.
+Until then the old pipeline called a retired Hugging Face host and approved every photo
+it could not check, so copy and completion photos uploaded in that period were published
+unchecked.
+
+**What it does:** pages through `ownedPuzzleImages` (`"table":"copy"`) or the
+`completionImages` sidecars (`"table":"completion"`), 10 rows per batch, and classifies
+the rows that were never actually checked: `moderationStatus` `"unscored"`, or approved
+(or absent, the legacy default) **without** a `moderationScore`. Rows that are pending,
+rejected or already scored are skipped. Photos are classified one at a time and each
+batch reschedules itself 10 s later (`batchSize` and `delayMs` override this), which
+keeps it inside the Hugging Face free-tier rate limits.
+
+- Clean score: the row is set to approved with its score.
+- nsfw score at or above the threshold: the row is rejected, exactly like a fresh upload.
+  It is hidden and stamped `photo_auto_rejected`; a completion photo is also detached
+  from its completion and its blob deleted. Copy photos land in the admin Flagged
+  Images queue, where they can be restored.
+- Could not be checked: the row is left exactly as it was. A legacy photo is never
+  hidden by a provider hiccup.
+
+On a configuration error (missing token, 401/403, 404 model) the run stops. On 429 or
+5xx it retries the same page with exponential backoff, up to 5 times in a row, then
+stops. Completion photos that predate sidecars (no `completionImages` row) are not
+covered.
+
+**Safe to re-run:** yes. Scored rows are no longer candidates, so a second run only
+picks up what is still unchecked.
+
+**Commands:**
+
+```bash
+cd packages/backend
+
+# 0. probe: one classification of a generated grey test image (no user data)
+npx convex run admin/probePhotoScreening:probePhotoScreening
+#    expect "config_status":"ok", "screening_outcome":"scored", "http_status":200
+
+# dev: dry run (counts only, no classifier calls, no writes), then the real run
+npx convex run library/rescreenPhotos:rescreenPhotos '{"table":"copy","dryRun":true}'
+npx convex run library/rescreenPhotos:rescreenPhotos '{"table":"completion","dryRun":true}'
+npx convex run library/rescreenPhotos:rescreenPhotos '{"table":"copy"}'
+npx convex run library/rescreenPhotos:rescreenPhotos '{"table":"completion"}'
+
+# prod: same, after dev looks right (add --prod to each command, probe first)
+npx convex run --prod admin/probePhotoScreening:probePhotoScreening
+npx convex run --prod library/rescreenPhotos:rescreenPhotos '{"table":"copy","dryRun":true}'
+```
+
+Each batch logs one JSON line with `"event":"library.rescreenPhotos"`, the `batch` and
+running `totals` (`scanned`, `candidates`, `approved`, `rejected`, `unscored`,
+`skipped`) and a `result` (`done`, `backoff`, `aborted_config`,
+`aborted_provider_unavailable`). Follow it with `npx convex logs` (add `--prod`).
+
+**Verify:**
+
+1. The final line says `"result":"done"`, and `totals.candidates` matches the dry run.
+2. A second dry run reports `candidates` close to 0. The remainder are photos whose
+   classification failed for that image, so they stay as they were.
+3. The admin moderation console no longer shows the "Photo screening needs attention"
+   warning (no unscored photos). Any new rejections appear under Flagged Images.
+
+**Monitoring (Axiom):** every moderation attempt emits `library.moderatePhoto` /
+`solving.moderateCompletionPhoto` with `screening_outcome` (`scored` | `unscored` |
+`disabled`) and `unscored_reason`. Alert when the share of `unscored` outcomes is high,
+for example more than 20% over an hour:
+`['jigswap'] | where event in ("library.moderatePhoto","solving.moderateCompletionPhoto") | summarize unscored=countif(screening_outcome=="unscored"), total=count() by bin(_time, 1h)`.

@@ -18,7 +18,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Bell, ChevronLeft, Search } from "lucide-react";
 import { useTranslations } from "use-intl";
 import { usePageHeaderContent } from "./page-header-slot";
-import { getNavGroup, getRouteMeta } from "./route-meta";
+import {
+  getNavGroup,
+  getRouteMeta,
+  isImmersiveMobileRoute,
+} from "./route-meta";
 import { ShellUserButton } from "./shell-user-button";
 
 // Shared 44px touch target for every control in the bar.
@@ -51,6 +55,9 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   const title =
     publishedTitle ??
     (meta && !isHome ? t(`pages.${meta.pageKey}.title`) : undefined);
+
+  // The thread header (with its own back link) replaces this bar there.
+  if (isImmersiveMobileRoute(pathname)) return null;
 
   return (
     <header className="sticky top-0 z-30 shrink-0 border-b bg-card pt-[env(safe-area-inset-top)] md:hidden">

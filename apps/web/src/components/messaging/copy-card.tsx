@@ -34,7 +34,7 @@ export function MessageCopyCard({
     <Link
       href={`/copies/${copy.copyId}`}
       className={cn(
-        "bg-background text-foreground hover:bg-accent flex items-center gap-3 rounded-lg border p-2 transition-colors",
+        "bg-background text-foreground hover:bg-accent focus-visible:ring-ring flex items-center gap-3 rounded-lg border p-2 transition-colors outline-none focus-visible:ring-2",
         className,
       )}
     >
@@ -42,7 +42,8 @@ export function MessageCopyCard({
         {copy.coverUrl ? (
           <Image
             src={copy.coverUrl}
-            alt={copy.title}
+            // The title is right beside it.
+            alt=""
             fill
             className="object-cover"
           />

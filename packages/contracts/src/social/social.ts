@@ -287,5 +287,11 @@ export type PublicProfileView =
       records: PublicProfileRecords;
       /** See CurrentlySolvingItemView — friends-only + opt-in; absent when the gate fails. */
       currentlySolving?: CurrentlySolvingItemView[];
+      /**
+       * Which puzzles the viewer's profile listing covers (server-computed): "all" — every owned
+       * copy, for the member themself, a household mate or a mutual follower; "available" — only
+       * the copies offered for swap/lend/trade, for everyone else (anonymous viewers included).
+       */
+      libraryScope: "all" | "available";
     }
   | { locked: true; hero: PublicProfileHero };

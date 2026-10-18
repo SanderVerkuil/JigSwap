@@ -53,3 +53,214 @@ export function threadSubjectTitle(
     title: subject.puzzleTitle ?? t("untitledPuzzle"),
   });
 }
+
+const MINUTE = 60_000;
+const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
+
+// Local-calendar-day index (DST-safe: rounds the 23h/25h days to whole days).
+function dayNumber(at: number): number {
+  const date = new Date(at);
+  return Math.round(
+    new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime() /
+      DAY,
+  );
+}
+
+// Full date + time for `title` attributes and screen-reader labels:
+// "Monday, October 12, 2026 at 2:05 PM" / "maandag 12 oktober 2026 om 14:05".
+export function formatFullDateTime(at: number, locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
+    dateStyle: "full",
+    timeStyle: "short",
+  }).format(at);
+}
+
+// Time of day under a message group: "2:05 PM" / "14:05".
+export function formatMessageTime(at: number, locale: string): string {
+  return new Intl.DateTimeFormat(locale, { timeStyle: "short" }).format(at);
+}
+
+// Fixed-width-ish inbox row timestamp (≤ ~11 chars) so every row's name and
+// snippet truncate at the same x: now / 5m / 2h / Mon / Oct 12 / Oct 12, 2025.
+export function formatCompactTime(
+  at: number,
+  now: number,
+  locale: string,
+  t: Translator,
+): string {
+  const age = Math.max(0, now - at);
+  if (age < MINUTE) return t("time.now");
+  if (age < HOUR) return t("time.minutes", { count: Math.floor(age / MINUTE) });
+  if (age < DAY) return t("time.hours", { count: Math.floor(age / HOUR) });
+  if (age < 7 * DAY) {
+    return new Intl.DateTimeFormat(locale, { weekday: "short" }).format(at);
+  }
+  const sameYear = new Date(at).getFullYear() === new Date(now).getFullYear();
+  return new Intl.DateTimeFormat(locale, {
+    day: "numeric",
+    month: "short",
+    ...(sameYear ? {} : { year: "numeric" }),
+  }).format(at);
+}
+
+// Day-separator label in a thread: Today / Yesterday / Monday (< 7 days) /
+// Mon, Oct 12 (this year) / Oct 12, 2025 (older).
+export function formatDayLabel(
+  at: number,
+  now: number,
+  locale: string,
+  t: Translator,
+): string {
+  const daysAgo = dayNumber(now) - dayNumber(at);
+  if (daysAgo <= 0) return t("dayToday");
+  if (daysAgo === 1) return t("dayYesterday");
+  if (daysAgo < 7) {
+    return new Intl.DateTimeFormat(locale, { weekday: "long" }).format(at);
+  }
+  if (new Date(at).getFullYear() === new Date(now).getFullYear()) {
+    return new Intl.DateTimeFormat(locale, {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    }).format(at);
+  }
+  return new Intl.DateTimeFormat(locale, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(at);
+}
+
+// The fields grouping needs; ThreadMessageView satisfies it.
+type GroupableMessage = {
+  readonly id: string;
+  readonly authorId: string | null;
+  readonly kind: string;
+  readonly sentAt: number;
+};
+
+export type ThreadItem<M extends GroupableMessage> =
+  | { type: "day"; key: string; label: string }
+  | { type: "system"; key: string; message: M }
+  | { type: "group"; key: string; own: boolean; messages: M[] };
+
+// Consecutive messages within this gap (same author, same day) share a group.
+const GROUP_GAP = 5 * MINUTE;
+
+// Lay out an ascending message list as day separators, standalone system
+// messages, and author groups: consecutive non-system messages by the same
+// author on the same local day, each ≤ 5 minutes after the previous one.
+export function groupThreadMessages<M extends GroupableMessage>(
+  messages: readonly M[],
+  me: string | undefined,
+  now: number,
+  locale: string,
+  t: Translator,
+): ThreadItem<M>[] {
+  const items: ThreadItem<M>[] = [];
+  let currentDay: number | undefined;
+  let group: Extract<ThreadItem<M>, { type: "group" }> | undefined;
+
+  for (const message of messages) {
+    const day = dayNumber(message.sentAt);
+    if (day !== currentDay) {
+      currentDay = day;
+      group = undefined;
+      items.push({
+        type: "day",
+        key: `day-${message.id}`,
+        label: formatDayLabel(message.sentAt, now, locale, t),
+      });
+    }
+    if (message.kind === "system") {
+      group = undefined;
+      items.push({ type: "system", key: message.id, message });
+      continue;
+    }
+    const previous = group?.messages.at(-1);
+    if (
+      group &&
+      previous &&
+      previous.authorId === message.authorId &&
+      message.sentAt - previous.sentAt <= GROUP_GAP
+    ) {
+      group.messages.push(message);
+      continue;
+    }
+    group = {
+      type: "group",
+      key: `group-${message.id}`,
+      own: message.authorId !== null && message.authorId === me,
+      messages: [message],
+    };
+    items.push(group);
+  }
+  return items;
+}
+
+export type InboxContextCopy = InboxThread["contextCopies"][number];
+
+export type ThreadQuickLink = {
+  kind: "profile" | "exchange";
+  href: string;
+};
+
+// Header quick links for a thread, in display order; each appears only when the
+// server says the target is reachable: the DM or trading partner's profile
+// (profileHandle non-null — not anonymised or inactive), then the exchange on
+// /trades. The puzzles live in the header's cover stack, not here.
+export function threadQuickLinks(thread: InboxThread): ThreadQuickLink[] {
+  const links: ThreadQuickLink[] = [];
+  const { subject } = thread;
+  if (subject.profileHandle !== null) {
+    links.push({
+      kind: "profile",
+      href: `/members/${encodeURIComponent(subject.profileHandle)}`,
+    });
+  }
+  if (subject.kind === "exchange") {
+    links.push({
+      kind: "exchange",
+      href: `/trades?exchange=${encodeURIComponent(subject.exchangeId)}`,
+    });
+  }
+  return links;
+}
+
+export function contextCopyHref(copy: InboxContextCopy): string {
+  return `/copies/${encodeURIComponent(copy.copyId)}`;
+}
+
+// Screen-reader summary of a thread's puzzles: "About 5 puzzles: A, B, C and
+// 2 more" — the first `shown` titles named, the rest counted (an inbox row,
+// which shows one cover, names one: "About 5 puzzles: A and 4 more").
+export function coverStackSummary(
+  titles: readonly string[],
+  locale: string,
+  t: Translator,
+  shown = 3,
+): string {
+  const named = titles.slice(0, shown);
+  const rest = titles.length - named.length;
+  const items = rest > 0 ? [...named, t("moreCount", { count: rest })] : named;
+  const list = new Intl.ListFormat(locale, {
+    style: "long",
+    type: "conjunction",
+  }).format(items);
+  return t("coverStackSummary", { count: titles.length, list });
+}
+
+// Whose copy a context copy is, for the header puzzle menu and the cover
+// tooltips: "Your copy", "<Name>'s copy", or a generic label when the other
+// member is anonymised (never a real identity).
+export function copyOwnerHint(
+  owner: InboxContextCopy["owner"],
+  otherMember: InboxThread["subject"]["otherMember"],
+  t: Translator,
+  displayName: (source: MemberNameSource) => string,
+): string {
+  if (owner === "viewer") return t("copyOwnerYou");
+  if (otherMember.anonymous) return t("copyOwnerOther");
+  return t("copyOwnerNamed", { name: displayName(otherMember.member) });
+}

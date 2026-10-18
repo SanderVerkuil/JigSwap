@@ -79,6 +79,23 @@ const followMutually = (
     });
   });
 
+// Connected WITHOUT a mutual follow: mutual followers can view every copy of each other's
+// (canViewCopy rule 6), so the "connected but may not view" cases connect through a shared circle,
+// which reaches only OPEN copies shared into it.
+const shareCircle = (
+  t: TestConvex<typeof schema>,
+  a: Id<"users">,
+  b: Id<"users">,
+) =>
+  t.run(async (ctx) => {
+    for (const memberId of [a, b]) {
+      await ctx.db.insert("circleMembers", {
+        circleAggregateId: "circle-ab",
+        memberId,
+      });
+    }
+  });
+
 const threadCount = (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => (await ctx.db.query("threads").collect()).length);
 
@@ -267,7 +284,7 @@ describe("startCopyConversation", () => {
   test("a copy the caller may not view is rejected", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob, closedCopy } = await seed(t);
-    await followMutually(t, alice, bob);
+    await shareCircle(t, alice, bob);
     await expectConvexCode(
       asAlice(t).mutation(
         api.conversation.startCopyConversation.startCopyConversation,
@@ -296,7 +313,7 @@ describe("getThreadMessages copy reference", () => {
   test("the copy card is omitted for a reader who can no longer view the copy", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob, openCopy } = await seed(t);
-    await followMutually(t, alice, bob);
+    await shareCircle(t, alice, bob);
     const threadId = await asAlice(t).mutation(
       api.conversation.startCopyConversation.startCopyConversation,
       { copyId: openCopy, body: "Is this still available?" },

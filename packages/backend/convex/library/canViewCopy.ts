@@ -1,7 +1,7 @@
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { householdMateIds } from "../household/memberships";
-import { profileVisibilityOf } from "../social/privacy";
+import { areMutualFollowers, profileVisibilityOf } from "../social/privacy";
 import { collectCircleSharedCopies } from "./circleSharedCopies";
 
 // A copy is "open" iff at least one exchange-availability flag is set (identical to
@@ -14,7 +14,7 @@ const isOpen = (copy: Doc<"ownedPuzzles">): boolean =>
 // Reusable per-request context so bulk callers (e.g. the completions enrichment) don't rebuild
 // the circle-shared set or re-read owner profiles per copy, and can't accidentally pass a
 // mismatched viewerId to `canViewCopyWithContext` (it's stamped in at construction). `ownerVisibility`
-// is a mutable memo.
+// and `mutualWithOwner` are mutable per-owner memos.
 export interface CopyViewContext {
   readonly viewerId: Id<"users">;
   readonly circleSharedOpenIds: ReadonlySet<Id<"ownedPuzzles">>;
@@ -22,6 +22,7 @@ export interface CopyViewContext {
   // viewer's library regardless of availability or profile visibility.
   readonly householdMateIds: ReadonlySet<Id<"users">>;
   readonly ownerVisibility: Map<Id<"users">, "public" | "private">;
+  readonly mutualWithOwner: Map<Id<"users">, boolean>;
 }
 
 export const buildCopyViewContext = async (
@@ -36,6 +37,7 @@ export const buildCopyViewContext = async (
     circleSharedOpenIds: new Set(circleShared.map((c) => c._id)),
     householdMateIds: await householdMateIds(ctx, viewerId),
     ownerVisibility: new Map(),
+    mutualWithOwner: new Map(),
   };
 };
 
@@ -45,7 +47,14 @@ export const buildCopyViewContext = async (
 //      page; they can already log solves against it from the Borrowed page; OR
 //   3. the owner's profile is PUBLIC and the copy is OPEN (at least one availability flag); OR
 //   4. the copy is shared into a circle the viewer belongs to; OR
-//   5. the owner is in the viewer's household (any household permission — "view" still views).
+//   5. the owner is in the viewer's household (any household permission — "view" still views); OR
+//   6. the viewer and the owner are MUTUAL followers (both follow edges) — friends see the whole
+//      library, open or not, whatever the owner's profile visibility.
+// VIEWING only: exchange proposals stay gated by the availability flags in the domain
+// (proposeExchange -> CopyNotAvailable), so rule 6 never makes a non-open copy exchangeable.
+// The per-copy `ownedPuzzles.visibility` field is deliberately NOT consulted: no UI sets it and
+// the domain default for a newly acquired copy is "private", so honouring it would hide nearly
+// every copy. Whether it should become a real per-copy privacy toggle is an open product question.
 export const canViewCopyWithContext = async (
   ctx: QueryCtx,
   copy: Doc<"ownedPuzzles">,
@@ -65,7 +74,14 @@ export const canViewCopyWithContext = async (
     if (visibility === "public") return true;
   }
 
-  return context.circleSharedOpenIds.has(copy._id);
+  if (context.circleSharedOpenIds.has(copy._id)) return true;
+
+  let mutual = context.mutualWithOwner.get(copy.ownerId);
+  if (mutual === undefined) {
+    mutual = await areMutualFollowers(ctx, viewerId, copy.ownerId);
+    context.mutualWithOwner.set(copy.ownerId, mutual);
+  }
+  return mutual;
 };
 
 // Single-copy convenience wrapper. The identity short-circuits AND the public+open check are

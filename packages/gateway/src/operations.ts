@@ -208,6 +208,8 @@ export const gateway = {
     markThreadRead: api.conversation.markThreadRead.markThreadRead,
     getMyInbox: api.conversation.getMyInbox.getMyInbox,
     getThreadMessages: api.conversation.getThreadMessages.getThreadMessages,
+    listAttachableCopies:
+      api.conversation.listAttachableCopies.listAttachableCopies,
     getThreadByExchange:
       api.conversation.getThreadByExchange.getThreadByExchange,
     canMessage: api.conversation.canMessage.canMessage,
@@ -504,6 +506,9 @@ export const gateway = {
     listRejectedPhotos: api.admin.listRejectedPhotos.listRejectedPhotos,
     restorePhoto: api.admin.restorePhoto.restorePhoto,
     confirmPhotoRemoval: api.admin.confirmPhotoRemoval.confirmPhotoRemoval,
+    // Photo-screening health (configured? how many photos are waiting unscored?).
+    getPhotoScreeningHealth:
+      api.admin.getPhotoScreeningHealth.getPhotoScreeningHealth,
     // Admin users directory (read-only v1 — no user actions). Paginated; an optional
     // `search` arg switches to the by_searchable_name index. Rows are AdminUserView
     // DTOs whose `role` is the display-only Clerk mirror (authz stays JWT-based).

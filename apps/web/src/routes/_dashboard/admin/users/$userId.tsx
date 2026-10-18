@@ -1,6 +1,7 @@
 import { QueueEmpty } from "@/components/admin/queue-empty";
 import { StatTile } from "@/components/admin/stat-tile";
 import { AuditList } from "@/components/admin/users/audit-list";
+import { CommunityProfileAction } from "@/components/admin/users/community-profile-action";
 import { UserRoleAction } from "@/components/admin/users/user-role-action";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { MemberInitial } from "@/components/members/member-initial";
@@ -105,11 +106,18 @@ function AdminUserDetailPage() {
               {profile.clerkId}
             </p>
           </div>
-          <UserRoleAction
-            userId={profile._id}
-            name={displayName(profile)}
-            role={profile.role}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <CommunityProfileAction
+              userId={profile._id}
+              name={displayName(profile)}
+              isActive={profile.isActive}
+            />
+            <UserRoleAction
+              userId={profile._id}
+              name={displayName(profile)}
+              role={profile.role}
+            />
+          </div>
         </div>
         {(profile.bio || profile.location || profile.preferredLanguage) && (
           <div className="mt-4 space-y-1 border-t pt-4 text-sm">

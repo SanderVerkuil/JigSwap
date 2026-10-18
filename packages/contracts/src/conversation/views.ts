@@ -20,7 +20,20 @@ export interface ThreadMessageView {
    * (including inbox previews).
    */
   readonly copy?: MessageCopyView;
+  /**
+   * Set (getThreadMessages only) when the message references a copy the reader can no longer
+   * view — deleted, or its visibility changed. `copy` is absent then; the UI renders a
+   * "no longer available" placeholder instead of the card.
+   */
+  readonly copyUnavailable?: true;
 }
+
+/**
+ * Which participant's copies the attach picker lists (listAttachableCopies): `mine` = the
+ * caller's copies the other participant can view; `theirs` = the other participant's copies the
+ * caller can view (always empty when that member is anonymised to the caller).
+ */
+export type AttachableCopySide = "mine" | "theirs";
 
 /** A compact card for the copy a conversation is about. */
 export interface MessageCopyView {
@@ -64,8 +77,31 @@ export type InboxThreadSubjectView =
       readonly exchangeType: "trade" | "sale" | "loan";
       /** The requested copy's puzzle title, if it resolves. */
       readonly puzzleTitle: string | null;
+      /** The trading partner (the exchange party other than the viewer), privacy-projected. */
+      readonly otherMember: ProjectedMember;
+      /** As on a DM subject: the partner's `/members/<handle>`, null when anonymised or inactive. */
+      readonly profileHandle: string | null;
     }
-  | { readonly kind: "dm"; readonly otherMember: ProjectedMember };
+  | {
+      readonly kind: "dm";
+      readonly otherMember: ProjectedMember;
+      /**
+       * The `/members/<handle>` handle (slug ?? username ?? member id) of the other member; null
+       * when they are anonymised to the viewer (their profile would be locked to them) or their
+       * account is inactive.
+       */
+      readonly profileHandle: string | null;
+    };
+
+/**
+ * A puzzle copy an inbox thread is about (header puzzle menu, inbox cover stack): the same compact
+ * card as a message's copy, plus whose copy it is. Only copies owned by one of the thread's two
+ * participants are listed, so `owner` is always one of them: `"viewer"` ("Your copy") or
+ * `"other"` (name them via the subject's privacy-projected `otherMember`).
+ */
+export interface InboxThreadContextCopy extends MessageCopyView {
+  readonly owner: "viewer" | "other";
+}
 
 /** One row of a member's inbox: the thread, its subject, and the caller's unread state. */
 export interface InboxThreadView {
@@ -79,6 +115,13 @@ export interface InboxThreadView {
    * 50 qualifying messages, so 50 genuinely means "50 or more" and reads as "50+".
    */
   readonly unreadCount: number;
+  /**
+   * The DISTINCT copies the thread is about that the viewer may view right now, at most 10.
+   * Exchange threads list the requested then the offered copy first; then copies referenced by
+   * messages, newest reference first. Copies owned by neither participant (legacy rows) are left
+   * out. Empty when none.
+   */
+  readonly contextCopies: readonly InboxThreadContextCopy[];
   /** Inbox ordering instant: the newest message's sentAt, or the thread's creation. */
   readonly updatedAt: number;
 }
