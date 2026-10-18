@@ -1,20 +1,22 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalMutation } from "../_generated/server";
+import { purgeCircleThreadBatch } from "../conversation/purgeCircleThread";
 
-// How many rows (copy-share links, then invites) one purge run deletes before rescheduling itself.
+// How many rows (copy-share links, then invites, then the circle thread's rows) one purge run
+// deletes before rescheduling itself.
 export const PURGE_BATCH_SIZE = 200;
 
 // Scheduled by the sharing publisher on CircleDeleted. The circle, its memberships and its pending
 // invites went in the deleting transaction; what is left (its circleCopyShares links, its decided
-// invites) can be large, so it goes here in batches that reschedule themselves until none remain. It is hygiene, not access control: every reader gates
-// on membership, which is already gone, so these rows are unreachable while they wait.
+// invites, and the circle's group thread) can be large, so it goes here in batches that reschedule
+// themselves until none remain. It is hygiene, not access control: every reader gates on
+// membership, which is already gone, so these rows are unreachable while they wait.
 //
-// Evidence holds: nothing under this circle can be held yet (there is no reports table or
-// `evidenceHold` field on this branch). When circle chats land (G4), the circle's thread is purged
-// here too: delete its participant and typing rows, and its messages and attachments EXCEPT those
-// with `evidenceHold` set, which are detached from the thread and kept (reachable only through
-// their report); report snapshots are never touched.
+// The circle thread (conversation/purgeCircleThread): its messages, attachments and participant
+// rows, then the thread row. Attachments under an open report's `evidenceHold` (and quarantined
+// photos) are kept, detached from the deleted thread and reachable only through their report;
+// report snapshots are never touched. Typing rows don't exist yet (G7 adds them and their purge).
 export const purgeDeletedCircle = internalMutation({
   args: { circleId: v.string() },
   handler: async (ctx, args): Promise<number> => {
@@ -44,8 +46,15 @@ export const purgeDeletedCircle = internalMutation({
         : [];
     for (const invite of invites) await ctx.db.delete(invite._id);
 
-    const deleted = shares.length + invites.length;
-    if (deleted === PURGE_BATCH_SIZE) {
+    const linked = shares.length + invites.length;
+    const deleted =
+      linked +
+      (await purgeCircleThreadBatch(
+        ctx,
+        args.circleId,
+        PURGE_BATCH_SIZE - linked,
+      ));
+    if (deleted >= PURGE_BATCH_SIZE) {
       await ctx.scheduler.runAfter(
         0,
         internal.sharing.purgeDeletedCircle.purgeDeletedCircle,

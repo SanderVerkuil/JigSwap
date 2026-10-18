@@ -295,3 +295,98 @@ describe("circle membership sync", () => {
     expect(threads).toHaveLength(0);
   });
 });
+
+describe("circle deletion", () => {
+  const seedAttachment = (
+    t: T,
+    threadId: string,
+    uploaderId: Id<"users">,
+    extra: { evidenceHold?: boolean; quarantined?: boolean } = {},
+  ) =>
+    t.run(async (ctx) => {
+      const now = Date.now();
+      const fileId = await ctx.storage.store(new Blob(["x"]));
+      return ctx.db.insert("messageAttachments", {
+        kind: "image",
+        threadAggregateId: threadId,
+        uploaderId,
+        fileId,
+        byteSize: 1,
+        contentType: "image/jpeg",
+        moderationStatus: extra.quarantined ? "quarantined" : "approved",
+        ...(extra.evidenceHold && { evidenceHold: true }),
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+  test("deleting the circle purges its thread, messages, participant rows and attachments, keeping evidence-held and quarantined ones", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    await post(t, "alice", threadId, "hello");
+    await post(t, "bob", threadId, "hi");
+    const plain = await seedAttachment(t, threadId, bob);
+    const held = await seedAttachment(t, threadId, bob, { evidenceHold: true });
+    const quarantined = await seedAttachment(t, threadId, bob, {
+      quarantined: true,
+    });
+    // Another circle's thread is untouched.
+    const other = (await as(t, "bob").mutation(
+      api.sharing.createCircle.createCircle,
+      { name: "Other" },
+    )) as string;
+    const otherThread = await open(t, "bob", other);
+    await post(t, "bob", otherThread, "still here");
+
+    await as(t, "alice").mutation(api.sharing.deleteCircle.deleteCircle, {
+      circleId,
+      confirmName: "Puzzle Club",
+    });
+    await flush(t);
+
+    await t.run(async (ctx) => {
+      expect(
+        await ctx.db
+          .query("threads")
+          .withIndex("by_circle", (q) => q.eq("circleId", circleId))
+          .first(),
+      ).toBeNull();
+      expect(await ctx.db.get(plain)).toBeNull();
+      const keptHeld = await ctx.db.get(held);
+      expect(keptHeld?.evidenceHold).toBe(true);
+      expect(
+        keptHeld && (await ctx.db.system.get(keptHeld.fileId as never)),
+      ).not.toBeNull();
+      expect(await ctx.db.get(quarantined)).not.toBeNull();
+    });
+    expect(await storedMessagesOf(t, threadId)).toHaveLength(0);
+    expect(await participantRowsOf(t, threadId)).toHaveLength(0);
+    expect(await storedMessagesOf(t, otherThread)).toHaveLength(1);
+  });
+
+  test("a thread larger than one batch is purged across batches", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 450; i++) {
+        await ctx.db.insert("threadMessages", {
+          threadAggregateId: threadId,
+          messageId: `m-${i}`,
+          authorId: alice,
+          kind: "text",
+          body: "x",
+          sentAt: Date.now() + i,
+        });
+      }
+    });
+    await as(t, "alice").mutation(api.sharing.deleteCircle.deleteCircle, {
+      circleId,
+      confirmName: "Puzzle Club",
+    });
+    await flush(t);
+    expect(await storedMessagesOf(t, threadId)).toHaveLength(0);
+    expect(await participantRowsOf(t, threadId)).toHaveLength(0);
+  });
+});
