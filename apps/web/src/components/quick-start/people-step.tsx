@@ -1,6 +1,7 @@
 "use client";
 
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
+import { ConnectionOffersStrip } from "@/components/social/connection-offers";
 import { FindPeople } from "@/components/social/find-people";
 import { inviteLandingUrl } from "@/components/social/invite-share";
 import { InviteShareActions } from "@/components/social/invite-share-actions";
@@ -15,9 +16,10 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "use-intl";
 import { PushPrompt } from "./push-prompt";
 
-// Step 3, Find people (spec §2.4): people you may know (only from existing ties: followers I
-// don't follow back and household members), the reused FindPeople search, and the member's own
-// invite link through the share sheet. The push offer follows the first follow or share here.
+// Step 3, Find people (spec §2.4): an open connection offer from whoever invited the member, people
+// you may know (only from existing ties: followers I don't follow back and household members), the
+// reused FindPeople search, and the member's own invite link through the share sheet. The push
+// offer follows the first follow or share here.
 export function PeopleStep({ status }: { status: QuickStartStepStatus }) {
   const t = useTranslations("quickStart.people");
   const { member } = useCurrentMember();
@@ -29,6 +31,7 @@ export function PeopleStep({ status }: { status: QuickStartStepStatus }) {
 
   return (
     <div className="flex flex-col gap-8">
+      <ConnectionOffersStrip />
       {suggestions.length > 0 && (
         <section className="flex flex-col gap-3">
           <h3 className="font-heading text-lg font-semibold">

@@ -97,6 +97,16 @@ const mutualEdges = (t: T, a: Id<"users">, b: Id<"users">) =>
     };
   });
 
+const pendingOffersTo = (t: T, toId: Id<"users">) =>
+  t.run((ctx) =>
+    ctx.db
+      .query("connectionOffers")
+      .withIndex("by_to_status", (q) =>
+        q.eq("toId", toId).eq("status", "pending"),
+      )
+      .collect(),
+  );
+
 const householdInvitesFor = (t: T, invitee: Id<"users">) =>
   t.run((ctx) =>
     ctx.db
@@ -310,7 +320,7 @@ describe("rate limits", () => {
 });
 
 describe("redeeming a household link", () => {
-  test("a new member gets a PENDING invite (not joined), the follow and the attribution", async () => {
+  test("a new member gets a PENDING invite (not joined), a connection offer (no follow) and the attribution", async () => {
     const t = convexTest(schema, modules);
     const { ann, newbie } = await seed(t);
     const householdId = await annCreatesHousehold(t);
@@ -320,6 +330,7 @@ describe("redeeming a household link", () => {
     expect(result).toEqual({
       redeemed: true,
       inviterId: ann,
+      connection: "pending",
       householdInvite: "pending",
     });
 
@@ -352,14 +363,61 @@ describe("redeeming a household link", () => {
       ).map((n) => n.type),
     );
     expect(types).toContain("household_invite_received");
+    expect(types).toContain("connection_offer_received");
 
-    // Attribution + mutual follow are kept; the link is consumed by the newcomer.
-    expect(await mutualEdges(t, ann, newbie)).toEqual({ ab: true, ba: true });
+    // Attribution is kept and the link is consumed by the newcomer, but nobody follows anyone:
+    // the newcomer is offered the connection with Ann (source householdLink) and confirms first.
+    expect(await mutualEdges(t, ann, newbie)).toEqual({ ab: false, ba: false });
+    const offers = await pendingOffersTo(t, newbie);
+    expect(offers.map((o) => [o.fromId, o.source])).toEqual([
+      [ann, "householdLink"],
+    ]);
     const link = await linkFor(t, token);
+    expect(offers[0].inviteLinkId).toBe(link?._id);
     expect(link?.signupsAttributed).toBe(1);
-    expect(link?.followsEstablished).toBe(1);
+    expect(link?.followsEstablished).toBe(0);
     expect(link?.consumedBy).toBe(newbie);
     expect(link?.consumedAt).toBeDefined();
+  });
+
+  test("the offer and the household invite are separate answers: following each other does not join the household", async () => {
+    const t = convexTest(schema, modules);
+    const { ann, newbie } = await seed(t);
+    const householdId = await annCreatesHousehold(t);
+    const { token } = await mintAsAnn(t);
+    await redeem(t, "newbie", token);
+
+    // Both are pending, and nobody follows anybody yet.
+    const [offer] = await as(t, "newbie").query(
+      api.social.listMyConnectionOffers.listMyConnectionOffers,
+      {},
+    );
+    expect(offer.source).toBe("householdLink");
+    expect(offer.from.memberId).toBe(ann);
+    expect(
+      (await householdInvitesFor(t, newbie)).map((i) => [
+        i.householdId,
+        i.status,
+      ]),
+    ).toEqual([[householdId, "pending"]]);
+    expect(await mutualEdges(t, ann, newbie)).toEqual({ ab: false, ba: false });
+
+    // Accepting the offer follows each other; the household invite is still undecided.
+    await as(t, "newbie").mutation(
+      api.social.acceptConnection.acceptConnection,
+      { offerId: offer.offerId },
+    );
+    expect(await mutualEdges(t, ann, newbie)).toEqual({ ab: true, ba: true });
+    expect((await householdInvitesFor(t, newbie)).map((i) => i.status)).toEqual(
+      ["pending"],
+    );
+    expect(
+      await as(t, "newbie").query(
+        api.household.getMyHousehold.getMyHousehold,
+        {},
+      ),
+    ).toBeNull();
+    expect((await linkFor(t, token))?.followsEstablished).toBe(1);
   });
 
   test("the invitee can accept and join", async () => {
@@ -423,6 +481,7 @@ describe("redeeming a household link", () => {
     expect(await redeem(t, "cat", token)).toEqual({ redeemed: false });
     expect(await householdInvitesFor(t, cat)).toEqual([]);
     expect(await mutualEdges(t, ann, cat)).toEqual({ ab: false, ba: false });
+    expect(await pendingOffersTo(t, cat)).toEqual([]);
     const link = await linkFor(t, token);
     expect(link?.consumedAt).toBeUndefined();
     expect(link?.signupsAttributed).toBe(0);
@@ -441,6 +500,7 @@ describe("redeeming a household link", () => {
       ab: false,
       ba: false,
     });
+    expect(await pendingOffersTo(t, newbie2)).toEqual([]);
     const ledger = await t.run((ctx) =>
       ctx.db
         .query("inviteRedemptions")
@@ -451,7 +511,7 @@ describe("redeeming a household link", () => {
     expect((await linkFor(t, token))?.signupsAttributed).toBe(1);
   });
 
-  test("an expired link is invalid as a whole: no ledger row, no follow, no invite", async () => {
+  test("an expired link is invalid as a whole: no ledger row, no offer, no follow, no invite", async () => {
     const t = convexTest(schema, modules);
     const { ann, newbie } = await seed(t);
     await annCreatesHousehold(t);
@@ -461,6 +521,7 @@ describe("redeeming a household link", () => {
 
     expect(await redeem(t, "newbie", token)).toEqual({ redeemed: false });
     expect(await householdInvitesFor(t, newbie)).toEqual([]);
+    expect(await pendingOffersTo(t, newbie)).toEqual([]);
     expect(await mutualEdges(t, ann, newbie)).toEqual({
       ab: false,
       ba: false,
@@ -487,7 +548,7 @@ describe("redeeming a household link", () => {
     expect(await householdInvitesFor(t, newbie)).toEqual([]);
   });
 
-  test("an inviter who is no longer the admin: invite skipped, follow and attribution kept", async () => {
+  test("an inviter who is no longer the admin: invite skipped, offer and attribution kept", async () => {
     const t = convexTest(schema, modules);
     const { ann, newbie } = await seed(t);
     await annCreatesHousehold(t);
@@ -504,10 +565,12 @@ describe("redeeming a household link", () => {
     expect(result).toEqual({
       redeemed: true,
       inviterId: ann,
+      connection: "pending",
       householdInvite: "skipped",
     });
     expect(await householdInvitesFor(t, newbie)).toEqual([]);
-    expect(await mutualEdges(t, ann, newbie)).toEqual({ ab: true, ba: true });
+    expect(await mutualEdges(t, ann, newbie)).toEqual({ ab: false, ba: false });
+    expect(await pendingOffersTo(t, newbie)).toHaveLength(1);
     expect((await linkFor(t, token))?.consumedBy).toBe(newbie);
   });
 
@@ -525,10 +588,12 @@ describe("redeeming a household link", () => {
     expect(result).toEqual({
       redeemed: true,
       inviterId: ann,
+      connection: "pending",
       householdInvite: "skipped",
     });
     expect(await householdInvitesFor(t, newbie)).toEqual([]);
-    expect(await mutualEdges(t, ann, newbie)).toEqual({ ab: true, ba: true });
+    expect(await mutualEdges(t, ann, newbie)).toEqual({ ab: false, ba: false });
+    expect(await pendingOffersTo(t, newbie)).toHaveLength(1);
   });
 
   test("no email address is stored anywhere along the way", async () => {
@@ -550,8 +615,8 @@ describe("redeeming a household link", () => {
   });
 });
 
-describe("plain network link (unchanged)", () => {
-  test("keeps attribution plus mutual follow and reports no household invite", async () => {
+describe("plain network link", () => {
+  test("keeps attribution, offers a connection (no follow) and reports no household invite", async () => {
     const t = convexTest(schema, modules);
     const { ann, newbie } = await seed(t);
     await annCreatesHousehold(t);
@@ -563,8 +628,12 @@ describe("plain network link (unchanged)", () => {
     expect(await redeem(t, "newbie", token)).toEqual({
       redeemed: true,
       inviterId: ann,
+      connection: "pending",
     });
-    expect(await mutualEdges(t, ann, newbie)).toEqual({ ab: true, ba: true });
+    expect(await mutualEdges(t, ann, newbie)).toEqual({ ab: false, ba: false });
+    expect(
+      (await pendingOffersTo(t, newbie)).map((o) => [o.fromId, o.source]),
+    ).toEqual([[ann, "inviteLink"]]);
     expect(await householdInvitesFor(t, newbie)).toEqual([]);
     const link = await linkFor(t, token);
     expect(link?.signupsAttributed).toBe(1);

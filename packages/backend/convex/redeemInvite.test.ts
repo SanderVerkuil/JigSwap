@@ -55,6 +55,20 @@ const mutualEdges = (
     return { ab: ab !== null, ba: ba !== null };
   });
 
+const offersBetween = (
+  t: TestConvex<typeof schema>,
+  fromId: Id<"users">,
+  toId: Id<"users">,
+) =>
+  t.run((ctx) =>
+    ctx.db
+      .query("connectionOffers")
+      .withIndex("by_from_to_status", (q) =>
+        q.eq("fromId", fromId).eq("toId", toId),
+      )
+      .collect(),
+  );
+
 const linkFor = (t: TestConvex<typeof schema>, token: string) =>
   t.run((ctx) =>
     ctx.db
@@ -64,7 +78,7 @@ const linkFor = (t: TestConvex<typeof schema>, token: string) =>
   );
 
 describe("redeemInvite", () => {
-  test("first redemption attributes signup and establishes the mutual follow", async () => {
+  test("first redemption attributes signup and offers a connection, following nobody yet", async () => {
     const t = convexTest(schema, modules);
     const { alice, newbie } = await seedUsers(t);
     const { token } = await asAlice(t).mutation(
@@ -76,38 +90,39 @@ describe("redeemInvite", () => {
       api.social.redeemInvite.redeemInvite,
       { token },
     );
-    expect(result).toEqual({ redeemed: true, inviterId: alice });
-
-    const edges = await t.run(async (ctx) => {
-      const ab = await ctx.db
-        .query("follows")
-        .withIndex("by_follower_followee", (q) =>
-          q.eq("followerId", alice).eq("followeeId", newbie),
-        )
-        .unique();
-      const ba = await ctx.db
-        .query("follows")
-        .withIndex("by_follower_followee", (q) =>
-          q.eq("followerId", newbie).eq("followeeId", alice),
-        )
-        .unique();
-      return { ab: ab !== null, ba: ba !== null };
+    expect(result).toEqual({
+      redeemed: true,
+      inviterId: alice,
+      connection: "pending",
     });
-    expect(edges).toEqual({ ab: true, ba: true });
 
-    const link = await t.run((ctx) =>
-      ctx.db
-        .query("inviteLinks")
-        .withIndex("by_token", (q) => q.eq("token", token))
-        .unique(),
+    // Confirm-first: no follow edge in either direction until the new member accepts.
+    expect(await mutualEdges(t, alice, newbie)).toEqual({
+      ab: false,
+      ba: false,
+    });
+
+    const link = await linkFor(t, token);
+    const offers = await offersBetween(t, alice, newbie);
+    expect(offers).toHaveLength(1);
+    expect(offers[0]).toMatchObject({
+      fromId: alice,
+      toId: newbie,
+      source: "inviteLink",
+      inviteLinkId: link?._id,
+      status: "pending",
+    });
+    expect(offers[0].expiresAt - offers[0].createdAt).toBe(
+      30 * 24 * 60 * 60 * 1000,
     );
     expect(link?.signupsAttributed).toBe(1);
-    expect(link?.followsEstablished).toBe(1);
+    // followsEstablished waits for the accept.
+    expect(link?.followsEstablished).toBe(0);
   });
 
   test("second redemption by the same member is a no-op (idempotent)", async () => {
     const t = convexTest(schema, modules);
-    await seedUsers(t);
+    const { alice, newbie } = await seedUsers(t);
     const { token } = await asAlice(t).mutation(
       api.social.getMyInviteLink.getMyInviteLink,
       {},
@@ -122,13 +137,10 @@ describe("redeemInvite", () => {
     );
     expect(second).toEqual({ redeemed: false });
 
-    const link = await t.run((ctx) =>
-      ctx.db
-        .query("inviteLinks")
-        .withIndex("by_token", (q) => q.eq("token", token))
-        .unique(),
-    );
+    const link = await linkFor(t, token);
     expect(link?.signupsAttributed).toBe(1);
+    // One offer per pair.
+    expect(await offersBetween(t, alice, newbie)).toHaveLength(1);
   });
 
   test("revoked and self tokens are no-ops", async () => {
@@ -155,7 +167,7 @@ describe("redeemInvite", () => {
     ).toEqual({ redeemed: false });
   });
 
-  test("a forwarded token cannot bypass a declined-in-cooldown request (no mutual edge)", async () => {
+  test("a forwarded token cannot bypass a declined-in-cooldown request (no offer, no edge)", async () => {
     const t = convexTest(schema, modules);
     const { alice, newbie } = await seedUsers(t);
     const { token } = await asAlice(t).mutation(
@@ -166,7 +178,7 @@ describe("redeemInvite", () => {
     // redeemInvite is normally new-member-only, but Convex mutations are PUBLIC endpoints: an
     // existing member holding a forwarded token could call it directly. Here "newbie" stands in
     // for that existing member who asked to follow private Alice and was DECLINED, still inside
-    // the cooldown. The structural gate in establishMutualFollow must refuse the follow.
+    // the cooldown. The link must not even offer the connection.
     const declinedAt = Date.now();
     await t.run(async (ctx) => {
       await ctx.db.insert("followRequests", {
@@ -183,10 +195,15 @@ describe("redeemInvite", () => {
       api.social.redeemInvite.redeemInvite,
       { token },
     );
-    // Redemption ledger + signup attribution still recorded (idempotency), but NO mutual edge and
-    // NO followsEstablished bump — so no mutual follow, which is exactly what gates access to
-    // Alice's private profile (areMutualFollowers stays false).
-    expect(result).toEqual({ redeemed: true, inviterId: alice });
+    // Redemption ledger + signup attribution still recorded (idempotency), but NO offer, NO
+    // mutual edge and NO followsEstablished bump — so no mutual follow, which is exactly what
+    // gates access to Alice's private profile (areMutualFollowers stays false).
+    expect(result).toEqual({
+      redeemed: true,
+      inviterId: alice,
+      connection: "skipped",
+    });
+    expect(await offersBetween(t, alice, newbie)).toEqual([]);
     expect(await mutualEdges(t, alice, newbie)).toEqual({
       ab: false,
       ba: false,
@@ -209,7 +226,7 @@ describe("redeemInvite", () => {
     expect(link?.followsEstablished).toBe(0);
   });
 
-  test("once the decline cooldown has expired, the same token establishes the follow", async () => {
+  test("once the decline cooldown has expired, the same token offers the connection", async () => {
     const t = convexTest(schema, modules);
     const { alice, newbie } = await seedUsers(t);
     const { token } = await asAlice(t).mutation(
@@ -234,15 +251,23 @@ describe("redeemInvite", () => {
       api.social.redeemInvite.redeemInvite,
       { token },
     );
-    expect(result).toEqual({ redeemed: true, inviterId: alice });
-    expect(await mutualEdges(t, alice, newbie)).toEqual({ ab: true, ba: true });
+    expect(result).toEqual({
+      redeemed: true,
+      inviterId: alice,
+      connection: "pending",
+    });
+    expect(await offersBetween(t, alice, newbie)).toHaveLength(1);
+    expect(await mutualEdges(t, alice, newbie)).toEqual({
+      ab: false,
+      ba: false,
+    });
 
     const link = await linkFor(t, token);
     expect(link?.signupsAttributed).toBe(1);
-    expect(link?.followsEstablished).toBe(1);
+    expect(link?.followsEstablished).toBe(0);
   });
 
-  test("an existing (old) account cannot redeem — no attribution, no follow (S1b)", async () => {
+  test("an existing (old) account cannot redeem — no attribution, no offer, no follow (S1b)", async () => {
     const t = convexTest(schema, modules);
     const { alice, newbie } = await seedUsers(t);
     const { token } = await asAlice(t).mutation(
@@ -264,7 +289,7 @@ describe("redeemInvite", () => {
     );
     expect(result).toEqual({ redeemed: false });
 
-    // No ledger row, no counters, no follow.
+    // No ledger row, no counters, no offer, no follow.
     const ledger = await t.run((ctx) =>
       ctx.db
         .query("inviteRedemptions")
@@ -272,6 +297,7 @@ describe("redeemInvite", () => {
         .unique(),
     );
     expect(ledger).toBeNull();
+    expect(await offersBetween(t, alice, newbie)).toEqual([]);
     expect(await mutualEdges(t, alice, newbie)).toEqual({
       ab: false,
       ba: false,
@@ -297,13 +323,18 @@ describe("redeemInvite", () => {
     );
     expect(accepted).toEqual({ established: true });
 
-    // 2. redeemInvite then runs on first dashboard visit. The edges already exist, so
-    //    edgesCreated is 0 and it must NOT bump followsEstablished again (signup is still attributed).
+    // 2. redeemInvite then runs on first dashboard visit. They already follow each other, so
+    //    no offer is made and followsEstablished is NOT bumped again (signup is still attributed).
     const redeemed = await asNewbie(t).mutation(
       api.social.redeemInvite.redeemInvite,
       { token },
     );
-    expect(redeemed).toEqual({ redeemed: true, inviterId: alice });
+    expect(redeemed).toEqual({
+      redeemed: true,
+      inviterId: alice,
+      connection: "skipped",
+    });
+    expect(await offersBetween(t, alice, newbie)).toEqual([]);
 
     expect(await mutualEdges(t, alice, newbie)).toEqual({ ab: true, ba: true });
     const link = await linkFor(t, token);

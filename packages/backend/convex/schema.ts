@@ -976,6 +976,7 @@ export default defineSchema({
       v.literal("follow_request_approved"),
       v.literal("household_invite_received"),
       v.literal("household_invite_accepted"),
+      v.literal("connection_offer_received"),
       v.literal("whats_new"),
     ),
     // Legacy pre-rendered English copy. Optional since notifications went structured: new rows
@@ -996,7 +997,8 @@ export default defineSchema({
     actorIds: v.optional(v.array(v.id("users"))),
     actorCount: v.optional(v.number()),
     // What the notification is about (mirrors the domain NotificationSubject). Exchange, thread,
-    // follow request, invite, household, review, proposal and whats-new ids are opaque aggregate
+    // follow request, invite, household, review, proposal, whats-new and connection-offer ids are
+    // opaque aggregate
     // ids; puzzle/copy/goal are the Convex `_id`s every producer already holds.
     subject: v.optional(
       v.union(
@@ -1014,6 +1016,7 @@ export default defineSchema({
           proposalId: v.string(),
         }),
         v.object({ kind: v.literal("whatsNew"), entryId: v.string() }),
+        v.object({ kind: v.literal("connectionOffer"), offerId: v.string() }),
       ),
     ),
     // Grouping (write-time merge of e.g. new_follower rows): the group a row belongs to and the
@@ -1205,6 +1208,31 @@ export default defineSchema({
     newMemberId: v.id("users"),
     createdAt: v.number(),
   }).index("by_new_member", ["newMemberId"]),
+
+  // Social: confirm-first connection offers (ConnectionOffer aggregate). Redeeming an invite link
+  // at sign-up offers the new member (toId) a mutual follow with the link's owner (fromId); nothing
+  // is followed until they accept. inviteLinkId attributes an accept to the link's
+  // followsEstablished. At most one pending row per ordered pair (by_from_to_status); expiry is
+  // lazy (reads check expiresAt) plus a scheduled expire at expiresAt.
+  connectionOffers: defineTable({
+    aggregateId: v.string(),
+    fromId: v.id("users"),
+    toId: v.id("users"),
+    source: v.union(v.literal("inviteLink"), v.literal("householdLink")),
+    inviteLinkId: v.optional(v.id("inviteLinks")),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("accepted"),
+      v.literal("declined"),
+      v.literal("expired"),
+    ),
+    createdAt: v.number(),
+    expiresAt: v.number(),
+    respondedAt: v.optional(v.number()),
+  })
+    .index("by_aggregate_id", ["aggregateId"])
+    .index("by_from_to_status", ["fromId", "toId", "status"])
+    .index("by_to_status", ["toId", "status"]),
 
   // FollowRequest aggregate rows: a member asking to follow a private-profile member.
   // status pending → approved | declined; respondedAt backs the 7-day decline cooldown.

@@ -1,6 +1,8 @@
 import { DomainEvent } from "../../shared-kernel";
+import type { ConnectionOfferSource } from "./connection-offer";
 import {
   CommentId,
+  ConnectionOfferId,
   FollowRequestId,
   MemberId,
   PhotoCommentId,
@@ -30,6 +32,19 @@ export class MemberUnfollowed implements DomainEvent {
   constructor(
     readonly followerId: MemberId,
     readonly followeeId: MemberId,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+// A member was offered a mutual follow with the person who invited them (an invite link redeemed
+// at sign-up). Nothing is followed until the recipient accepts; the inviter is told nothing.
+export class ConnectionOffered implements DomainEvent {
+  readonly name = "ConnectionOffered";
+  constructor(
+    readonly offerId: ConnectionOfferId,
+    readonly fromId: MemberId,
+    readonly toId: MemberId,
+    readonly source: ConnectionOfferSource,
     readonly occurredAt: Date,
   ) {}
 }

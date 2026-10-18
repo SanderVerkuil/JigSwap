@@ -157,6 +157,19 @@ export type ProjectedMember =
     };
 
 /**
+ * An open connection offer to the viewer (social.listMyConnectionOffers): the person who invited
+ * them to JigSwap offers to follow each other, and nothing is followed until the viewer accepts.
+ * `offerId` is what acceptConnection / declineConnection take.
+ */
+export interface ConnectionOfferView {
+  readonly offerId: string;
+  /** Teaser-shaped: exactly what the invite landing (/members/$handle) already disclosed. */
+  readonly from: MemberTeaserIdentity;
+  readonly source: "inviteLink" | "householdLink";
+  readonly createdAt: number;
+}
+
+/**
  * "Followers you know" social proof for a member profile: accounts the VIEWER follows who also
  * follow the target member (viewer's following ∩ target's followers) — deliberately NOT plain
  * mutual followers. Personalized (the read is requireMember-gated) and one direction only.
@@ -175,6 +188,16 @@ export interface FollowersYouKnowView {
     slug?: string;
   }[];
 }
+
+/**
+ * The identity part of {@link PublicMemberTeaserView}: name, handle and avatar, never bio,
+ * location, stats or counts. Reused wherever a surface may show only what a member's own direct
+ * link would show (e.g. the inviter on a connection offer).
+ */
+export type MemberTeaserIdentity = Pick<
+  PublicMemberTeaserView,
+  "memberId" | "displayName" | "username" | "slug" | "avatar"
+>;
 
 /**
  * The unauthenticated "who is this member" read behind /members/$handle. Deliberately tiny:

@@ -44,6 +44,7 @@ export type NotificationType =
   | "follow_request_approved"
   | "household_invite_received"
   | "household_invite_accepted"
+  | "connection_offer_received"
   | "whats_new";
 
 export const NOTIFICATION_TYPES: NotificationType[] = [
@@ -70,6 +71,7 @@ export const NOTIFICATION_TYPES: NotificationType[] = [
   "follow_request_approved",
   "household_invite_received",
   "household_invite_accepted",
+  "connection_offer_received",
   "whats_new",
 ];
 
@@ -112,6 +114,7 @@ export const NOTIFICATION_CATEGORIES: readonly NotificationCategory[] = [
       "follow_request_approved",
       "household_invite_received",
       "household_invite_accepted",
+      "connection_offer_received",
       "puzzle_favorited",
       "review_received",
       "goal_achieved",
@@ -247,6 +250,7 @@ export function notificationIcon(type: string): LucideIcon {
       return Inbox;
     case "new_follower":
     case "follow_request_received":
+    case "connection_offer_received":
       return UserPlus;
     case "follow_request_approved":
       return UserCheck;
@@ -288,6 +292,7 @@ export function notificationAccent(type: string): string {
     case "new_follower":
     case "follow_request_received":
     case "household_invite_received":
+    case "connection_offer_received":
       return "text-blue-500 dark:text-blue-400";
     case "admin_proposal_filed":
     case "admin_definition_submitted":

@@ -11,7 +11,8 @@ import type { DeliveryContent } from "./deliveryContent";
 // templates interpolate its actorName):
 //   actorName   — trade_request (initiator), message_received (author), new_follower (follower),
 //                 follow_request_received (requester), follow_request_approved (target),
-//                 household_invite_received (inviter), household_invite_accepted (invitee)
+//                 household_invite_received (inviter), household_invite_accepted (invitee),
+//                 connection_offer_received (inviter)
 //   puzzleTitle — puzzle_approved/rejected, proposal_approved/rejected, admin_proposal_filed,
 //                 admin_definition_submitted
 //   goalTitle   — goal_achieved
@@ -190,6 +191,12 @@ const COPY: Record<NotificationType, (p: Params) => NotificationText> = {
     message: p["actorName"]
       ? `${p["actorName"]} joined your household`
       : "Someone joined your household",
+  }),
+  connection_offer_received: (p) => ({
+    title: "Follow each other?",
+    message: p["actorName"]
+      ? `${p["actorName"]} invited you to JigSwap. Follow each other?`
+      : "Someone invited you to JigSwap. Follow each other?",
   }),
   whats_new: () => ({
     title: "New in JigSwap",

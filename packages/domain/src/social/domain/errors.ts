@@ -10,7 +10,11 @@ export type SocialErrorCode =
   | "RequestNotPending"
   | "InvalidDisplayName"
   | "EmptyCommentText"
-  | "InvalidCommentRating";
+  | "InvalidCommentRating"
+  | "NotConnectionOfferRecipient"
+  | "ConnectionOfferNotPending"
+  | "ConnectionOfferExpired"
+  | "ConnectionOfferNotDue";
 
 export class SocialError extends DomainError {
   override readonly name = "SocialError";
@@ -56,6 +60,38 @@ export class SocialError extends DomainError {
     return new SocialError(
       "InvalidCommentRating",
       `Comment rating must be an integer between 1 and 5, got ${value}`,
+    );
+  }
+
+  // Only the member a connection offer is addressed to may accept or decline it.
+  static notConnectionOfferRecipient(): SocialError {
+    return new SocialError(
+      "NotConnectionOfferRecipient",
+      "Only the recipient can answer this connection offer",
+    );
+  }
+
+  // A connection offer can only be answered or expired while it is still pending.
+  static connectionOfferNotPending(): SocialError {
+    return new SocialError(
+      "ConnectionOfferNotPending",
+      "This connection offer has already been resolved",
+    );
+  }
+
+  // A pending connection offer past its expiry can no longer be answered.
+  static connectionOfferExpired(): SocialError {
+    return new SocialError(
+      "ConnectionOfferExpired",
+      "This connection offer has expired",
+    );
+  }
+
+  // A pending connection offer cannot be expired before its expiry instant.
+  static connectionOfferNotDue(): SocialError {
+    return new SocialError(
+      "ConnectionOfferNotDue",
+      "This connection offer has not expired yet",
     );
   }
 }

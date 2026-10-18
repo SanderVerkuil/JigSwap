@@ -18,7 +18,9 @@ const LOOP_SHOWN_KEY = "jigswap.inviteLoopShown";
 const FALLBACK_SHOWN_KEY = "jigswap.inviteFallbackShown";
 
 // Mounted once in the authed dashboard layout. Three jobs, all one-shot:
-// 1. Redeem a localStorage invite token that survived the Clerk redirect (attribution).
+// 1. Redeem a localStorage invite token that survived the Clerk redirect (attribution). Redeeming
+//    follows nobody: it leaves a connection offer from the inviter (`connection: "pending"`), which
+//    the new member answers on the dashboard / People page (ConnectionOffersStrip).
 // 2. Loop closure: after a successful redemption, offer the new member their OWN QR (skippable).
 //    A household link instead leaves a pending household invite: open the quick start household
 //    step (/welcome?step=household) to accept it.

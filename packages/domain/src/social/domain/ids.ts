@@ -4,6 +4,7 @@ import { Id } from "../../shared-kernel";
 export type ProfileId = Id<"ProfileId">;
 export type FollowId = Id<"FollowId">;
 export type FollowRequestId = Id<"FollowRequestId">;
+export type ConnectionOfferId = Id<"ConnectionOfferId">;
 export type CommentId = Id<"CommentId">;
 export type PhotoCommentId = Id<"PhotoCommentId">;
 

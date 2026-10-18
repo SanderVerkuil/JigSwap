@@ -451,6 +451,22 @@ const translate = async (
       ];
     }
     // FollowRequestDeclined: DELIBERATELY unmapped — decline is silent (spec).
+    case "ConnectionOffered": {
+      // Only the new member hears about the offer. The inviter learns nothing until it is
+      // accepted, and then only through the new_follower that the follow itself emits.
+      return [
+        cmd(
+          p.toId as string,
+          "connection_offer_received",
+          p.offerId as string,
+          await memberName(ctx, p.fromId as string),
+          {
+            actor: p.fromId as string,
+            subject: { kind: "connectionOffer", offerId: p.offerId as string },
+          },
+        ),
+      ];
+    }
 
     // --- Household ---
     case "HouseholdInviteSent": {

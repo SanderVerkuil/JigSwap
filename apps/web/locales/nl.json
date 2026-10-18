@@ -1730,6 +1730,15 @@
       "declined": "Verzoek geweigerd",
       "error": "Er ging iets mis. Probeer het opnieuw."
     },
+    "connectionOffers": {
+      "title": "Uitnodigingen",
+      "invitedYou": "<b>{name}</b> heeft je uitgenodigd voor JigSwap. Elkaar volgen?",
+      "followEachOther": "Elkaar volgen",
+      "notNow": "Niet nu",
+      "connected": "Jij en {name} volgen elkaar nu",
+      "notConnected": "Jullie kunnen elkaar nu niet volgen.",
+      "error": "Er ging iets mis. Probeer het opnieuw."
+    },
     "ownedLabel": "in bezit",
     "swapsLabel": "ruilen",
     "ratingSr": "Gemiddelde beoordeling {rating} van 5 uit {count, plural, one {# review} other {# reviews}}",
@@ -1888,6 +1897,7 @@
       "follow_request_approved": "Volgverzoek goedgekeurd",
       "household_invite_received": "Uitnodigingen voor een huishouden",
       "household_invite_accepted": "Uitnodiging voor huishouden geaccepteerd",
+      "connection_offer_received": "Uitnodigingen om elkaar te volgen",
       "whats_new": "Wat is er nieuw"
     },
     "categories": {
@@ -2009,6 +2019,10 @@
         "title": "Uitnodiging geaccepteerd",
         "message": "{hasActorName, select, yes {{actorName} is lid geworden van je huishouden.} other {Iemand is lid geworden van je huishouden.}}"
       },
+      "connection_offer_received": {
+        "title": "Elkaar volgen?",
+        "message": "{hasActorName, select, yes {{actorName} heeft je uitgenodigd voor JigSwap. Elkaar volgen?} other {Iemand heeft je uitgenodigd voor JigSwap. Elkaar volgen?}}"
+      },
       "whats_new": {
         "title": "Nieuw in JigSwap",
         "message": "Bekijk wat er nieuw is in JigSwap."
@@ -2051,6 +2065,7 @@
       "follow_request_approved": "Wanneer een volgverzoek dat je stuurde wordt goedgekeurd.",
       "household_invite_received": "Wanneer iemand je uitnodigt voor hun huishouden.",
       "household_invite_accepted": "Wanneer iemand je uitnodiging voor het huishouden accepteert.",
+      "connection_offer_received": "Wanneer degene die je voor JigSwap heeft uitgenodigd vraagt om elkaar te volgen.",
       "whats_new": "Wanneer een nieuwe functie of wijziging in JigSwap wordt aangekondigd."
     },
     "pushServiceUnreachable": "Je browser kon zijn pushdienst niet bereiken. Sommige privacybrowsers blokkeren of verwijderen die — Brave schakelt het standaard uit (zet 'Google-services voor pushberichten gebruiken' aan in Instellingen), en de-Googled Chromium-browsers zoals Helium verwijderen het. Firefox, Chrome of Edge werkt wel.",
@@ -2194,6 +2209,9 @@
       },
       "household_invite_accepted": {
         "sentence": "<b>{actor}</b> is lid geworden van je huishouden."
+      },
+      "connection_offer_received": {
+        "sentence": "<b>{actor}</b> heeft je uitgenodigd voor JigSwap. Elkaar volgen?"
       }
     }
   },
@@ -4170,7 +4188,7 @@
     "people": {
       "suggested": "Mensen die je misschien kent",
       "inviteTitle": "Nodig iemand uit die nog niet op JigSwap zit",
-      "inviteBody": "Deel je uitnodigingslink. Als ze zich aanmelden, volgen jullie elkaar."
+      "inviteBody": "Deel je uitnodigingslink. Als ze zich aanmelden, vragen we of jullie elkaar willen volgen."
     },
     "household": {
       "lead": "Woon je samen met iemand die puzzelt? Deel één plank.",

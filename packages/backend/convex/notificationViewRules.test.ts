@@ -46,6 +46,7 @@ describe("isActorRevealed", () => {
     "follow_request_approved",
     "household_invite_received",
     "household_invite_accepted",
+    "connection_offer_received",
     "message_received",
     "review_received",
   ] as const)("%s: a private, non-mutual initiator is revealed", (type) => {
@@ -411,6 +412,7 @@ describe("legacyNotificationHref (mirror of the web's notificationHref)", () => 
     ["follow_request_received", "u", "/people"],
     ["follow_request_approved", "u", "/people"],
     ["household_invite_accepted", "h", "/household"],
+    ["connection_offer_received", "o", "/people"],
     ["whats_new", "e1", "/whats-new#entry-e1"],
     ["whats_new", undefined, "/whats-new"],
   ] as const)("%s (%s) -> %s", (type, relatedId, href) => {

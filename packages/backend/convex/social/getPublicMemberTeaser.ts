@@ -1,11 +1,10 @@
 import type { PublicMemberTeaserView } from "@jigswap/contracts";
 import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { optionalActingMember } from "../identity/optionalActingMember";
 import { resolveMemberByHandle } from "../identity/resolveMemberByHandle";
 import { isCopyPrivate, seesPrivateCopiesOf } from "../library/copyVisibility";
-import { profileVisibilityOf } from "./privacy";
+import { memberTeaserIdentityOf, profileVisibilityOf } from "./privacy";
 
 // The UNAUTHENTICATED read behind /members/$handle. Deliberately tiny: identity fields only —
 // never bio, shelf, stats, or location. A private member IS disclosed by name on their own direct
@@ -30,11 +29,9 @@ export const getPublicMemberTeaser = query({
       optionalActingMember(ctx),
     ]);
 
-    // Avatar: any signed-in member may see it — the spec's interstitial shows the person's full
-    // identity so the page feels human ("person feels present"); anonymous callers only see it
-    // with the member's explicit public-surface consent.
-    const avatar =
-      viewer !== null || user.shareAvatarPublicly ? user.avatar : undefined;
+    // Avatar (memberTeaserIdentityOf): any signed-in member may see it — the spec's interstitial
+    // shows the person's full identity so the page feels human ("person feels present");
+    // anonymous callers only see it with the member's explicit public-surface consent.
 
     // Coarse collection size — public profiles only. Capped so a giant collection can't blow the
     // Convex read limit and 500 the page (coarse count, capped — spec asks for ~N).
@@ -51,11 +48,7 @@ export const getPublicMemberTeaser = query({
     }
 
     return {
-      memberId,
-      displayName: memberDisplayNameOf(user, profile),
-      username: user.username,
-      slug: user.slug,
-      avatar,
+      ...memberTeaserIdentityOf(user, profile, viewer !== null),
       memberSince: user.createdAt,
       visibility,
       puzzleCount,

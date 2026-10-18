@@ -34,6 +34,7 @@ export const INITIATOR_NOTIFICATION_TYPES: ReadonlySet<NotificationType> =
     "follow_request_approved",
     "household_invite_received",
     "household_invite_accepted",
+    "connection_offer_received",
   ]);
 
 /**
@@ -257,6 +258,9 @@ export const legacyNotificationHref = (
     case "household_invite_received":
     case "household_invite_accepted":
       return "/household";
+    // The offer is answered in the People page's requests area.
+    case "connection_offer_received":
+      return "/people";
     case "whats_new":
       return relatedId ? `/whats-new#entry-${relatedId}` : "/whats-new";
     default:

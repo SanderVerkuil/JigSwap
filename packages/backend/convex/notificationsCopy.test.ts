@@ -35,6 +35,16 @@ describe("renderNotificationText", () => {
       "Your suggested edit was declined",
     );
   });
+
+  it("asks to follow each other on a connection offer, named or not", () => {
+    expect(
+      renderNotificationText("connection_offer_received", { actorName: "Bo" })
+        .message,
+    ).toBe("Bo invited you to JigSwap. Follow each other?");
+    expect(
+      renderNotificationText("connection_offer_received", {}).message,
+    ).toBe("Someone invited you to JigSwap. Follow each other?");
+  });
 });
 
 describe("renderNotificationText with resolved context", () => {
