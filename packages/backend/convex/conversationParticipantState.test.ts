@@ -7,7 +7,10 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { convexThreadRepository } from "./conversation/adapters/convexThreadRepository";
 import { LAST_MESSAGE_BODY_MAX } from "./conversation/adapters/threadMapper";
 import { BACKFILL_PARTICIPANT_STATE_BATCH } from "./conversation/backfillParticipantState";
-import { UNREAD_SCAN_CAP } from "./conversation/readModelHelpers";
+import {
+  UNREAD_SCAN_CAP,
+  UNREAD_SCAN_READ_CAP,
+} from "./conversation/readModelHelpers";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
@@ -296,6 +299,59 @@ describe("markThreadRead", () => {
     expect(canonical(await threadRow(t, threadId))).toBe(
       canonical(threadBefore),
     );
+  });
+});
+
+describe("fallback scan read cap", () => {
+  test("stops after UNREAD_SCAN_READ_CAP rows when the reader authored a long run", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+    const threadId = "legacy-long-run";
+    const own = UNREAD_SCAN_READ_CAP + 100;
+    await t.run(async (ctx) => {
+      await ctx.db.insert("threads", {
+        aggregateId: threadId,
+        subjectKind: "dm",
+        participants: [alice, bob],
+        participantsKey: [alice, bob].sort().join("|"),
+        createdAt: 0,
+        lastMessageAt: 3 + own,
+      });
+      for (const memberId of [alice, bob]) {
+        await ctx.db.insert("threadParticipants", {
+          threadAggregateId: threadId,
+          memberId,
+        });
+      }
+      // Three unread messages from alice, then a long run of bob's own messages after them.
+      for (let i = 1; i <= 3 + own; i++) {
+        await ctx.db.insert("threadMessages", {
+          threadAggregateId: threadId,
+          messageId: `m${i}`,
+          authorId: i <= 3 ? alice : bob,
+          kind: "text",
+          body: `m${i}`,
+          sentAt: i,
+        });
+      }
+    });
+    const bobTotal = () =>
+      asBob(t).query(api.conversation.getUnreadTotal.getUnreadTotal, {});
+
+    // The cap stops the scan inside bob's own run: 0 is a lower bound, not the true 3.
+    expect(await bobTotal()).toBe(0);
+
+    // Shorten bob's run below the cap: the scan now reaches alice's three messages.
+    await t.run(async (ctx) => {
+      const rows = await ctx.db
+        .query("threadMessages")
+        .withIndex("by_thread_sent", (q) =>
+          q.eq("threadAggregateId", threadId).gt("sentAt", 3),
+        )
+        .take(200);
+      for (const row of rows) await ctx.db.delete(row._id);
+    });
+    expect(await bobTotal()).toBe(3);
   });
 });
 

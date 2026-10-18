@@ -48,6 +48,11 @@ export const toThreadMessageView = (
 // summand).
 export const UNREAD_SCAN_CAP = 50;
 
+// The scan also stops after reading this many rows, so a member who authored a long run of their
+// own messages after their receipt cannot make it read without bound. Past it the count is a
+// lower bound (see unreadCountOf).
+export const UNREAD_SCAN_READ_CAP = 500;
+
 /**
  * The member's read receipt: their participant row's `lastReadAt`, falling back to the legacy
  * `threads.readReceipts` entry until conversation/backfillParticipantState has run. 0 = never read.
@@ -64,7 +69,9 @@ export const lastReadAtOf = (
 /**
  * The caller's unread count for one thread: messages with `sentAt` strictly after their read
  * receipt (no receipt = everything) that they did not author, counted newest-first until
- * {@link UNREAD_SCAN_CAP} qualifying messages are found — a return of 50 means "50 or more".
+ * {@link UNREAD_SCAN_CAP} qualifying messages are found — a return of 50 means "50 or more". It
+ * reads at most {@link UNREAD_SCAN_READ_CAP} rows; if that cap stops it first, the result is what
+ * it counted so far, a lower bound.
  */
 export const unreadCountOf = async (
   ctx: QueryCtx,
@@ -80,10 +87,11 @@ export const unreadCountOf = async (
     )
     .order("desc");
   let count = 0;
+  let read = 0;
   for await (const message of newestFirst) {
-    if (message.authorId === me) continue;
-    count += 1;
-    if (count >= UNREAD_SCAN_CAP) break;
+    read += 1;
+    if (message.authorId !== me) count += 1;
+    if (count >= UNREAD_SCAN_CAP || read >= UNREAD_SCAN_READ_CAP) break;
   }
   return count;
 };
