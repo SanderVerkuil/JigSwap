@@ -49,3 +49,34 @@ export function usePartyDisplayName(): (
     [t, displayName],
   );
 }
+
+/**
+ * A privacy-projected member (the server's `ProjectedMember`), structurally: revealed members carry
+ * their name source; hidden ones carry nothing identifying, plus `departed` when the account is
+ * gone or deactivated.
+ */
+type ProjectedMemberSource =
+  | { anonymous: false; member: MemberNameSource }
+  | { anonymous: true; departed?: boolean };
+
+/**
+ * Returns a formatter for a privacy-projected member's label: a revealed member's display name; a
+ * departed account's "Former member"; otherwise the caller's localized anonymous label (each
+ * surface keeps its own "Anonymous user" key). Never a real name for a hidden member.
+ */
+export function useProjectedMemberName(): (
+  member: ProjectedMemberSource,
+  anonymousLabel: string,
+) => string {
+  const t = useTranslations("notifications.rich");
+  const displayName = useMemberDisplayName();
+  return useCallback(
+    (member, anonymousLabel) =>
+      !member.anonymous
+        ? displayName(member.member)
+        : member.departed
+          ? t("formerMember")
+          : anonymousLabel,
+    [t, displayName],
+  );
+}

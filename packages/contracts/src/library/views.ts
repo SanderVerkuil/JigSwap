@@ -90,9 +90,22 @@ export interface OwnedCopyView {
   coverUrl?: string | null;
 }
 
+/**
+ * One `library.browseOwned` item: an OwnedCopyView whose owner is privacy-projected through the
+ * identity chokepoint (salt = the copy's _id). `ownerId` is present only when the owner is revealed,
+ * so a hidden owner's real id never crosses the wire.
+ */
+export interface BrowseOwnedCopyView extends Omit<
+  OwnedCopyView,
+  "ownerId" | "owner"
+> {
+  ownerId?: DocId;
+  owner: ProjectedMember;
+}
+
 /** The paginated wrapper `library.browseOwned` returns (offset/limit paging, not Convex cursors). */
 export interface BrowseOwnedCopiesView {
-  ownedPuzzles: OwnedCopyView[];
+  ownedPuzzles: BrowseOwnedCopyView[];
   total: number;
   hasMore: boolean;
 }

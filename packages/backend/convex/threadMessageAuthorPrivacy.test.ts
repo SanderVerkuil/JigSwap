@@ -14,7 +14,9 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 const tick = () => new Promise((resolve) => setTimeout(resolve, 3));
 
 // Priya: private profile, distinctive name/username. Nora: shares a circle with Priya (so the
-// ConnectionPolicy lets her open a DM) but neither follows the other.
+// ConnectionPolicy lets her open a DM) but neither follows the other. Sharing a circle is itself an
+// identity reveal (#152), so both leave the circle once the DM exists: the thread persists and
+// Priya is then hidden from Nora.
 const seed = (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
@@ -65,6 +67,11 @@ describe("thread message author privacy", () => {
       api.conversation.openDmThread.openDmThread,
       { recipientId: priya },
     );
+    await t.run(async (ctx) => {
+      for (const row of await ctx.db.query("circleMembers").collect()) {
+        await ctx.db.delete(row._id);
+      }
+    });
     await tick();
     await asNora(t).mutation(api.conversation.postMessage.postMessage, {
       threadId,

@@ -9,7 +9,7 @@ import { householdMateIds } from "../household/memberships";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
 import { blockedEitherWaySet } from "../social/blocks";
-import { profileVisibilityOf } from "../social/privacy";
+import { profileVisibilityOf, projectMemberIdentity } from "../social/privacy";
 import { isCircleSharedWithViewer } from "./circleSharedCopies";
 import {
   categoryNameOf,
@@ -129,7 +129,15 @@ export const getPuzzleDefinitionView = query({
       const existing = ownerCache.get(key);
       if (existing) return existing;
       const p = (async () => {
-        const user = await ctx.db.get(ownerId);
+        // Through the identity chokepoint: a hidden owner (e.g. departed) yields no name/avatar.
+        // The salt is irrelevant here (no anonRef is surfaced).
+        const projected = await projectMemberIdentity(
+          ctx,
+          viewerId,
+          ownerId,
+          args.puzzleId,
+        );
+        const user = projected.anonymous ? null : projected.member;
         const reputation = await ctx.db
           .query("reputationProfiles")
           .withIndex("by_member", (q) => q.eq("memberId", ownerId))

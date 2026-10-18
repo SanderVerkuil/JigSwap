@@ -4,7 +4,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { blockedEitherWaySet } from "../social/blocks";
-import { profileVisibilityOf } from "../social/privacy";
+import { profileVisibilityOf, projectMemberIdentity } from "../social/privacy";
 import { collectCircleSharedCopies } from "./circleSharedCopies";
 import { toOwnedCopyView } from "./mappers";
 import { resolveCopyCoverUrl } from "./resolveCoverUrl";
@@ -198,13 +198,25 @@ export const browseOwnedPuzzles = query({
 
     filtered.sort((a, b) => b.copy.createdAt - a.copy.createdAt);
 
+    // The owner is projected through the identity chokepoint (salt = the copy's _id, as on the copy
+    // page), so a hidden owner is anonymous and `ownerId` is only carried when they are revealed.
     const page = await Promise.all(
-      filtered.slice(offset, offset + limit).map(async ({ copy, puzzle }) =>
-        toOwnedCopyView(copy, puzzle, {
-          owner: await ctx.db.get(copy.ownerId),
+      filtered.slice(offset, offset + limit).map(async ({ copy, puzzle }) => {
+        const {
+          ownerId,
+          owner: _unjoined,
+          ...view
+        } = toOwnedCopyView(copy, puzzle, {
           coverUrl: await resolveCopyCoverUrl(ctx, copy, puzzle),
-        }),
-      ),
+        });
+        const owner = await projectMemberIdentity(
+          ctx,
+          memberId,
+          copy.ownerId,
+          copy._id as string,
+        );
+        return { ...view, ...(owner.anonymous ? {} : { ownerId }), owner };
+      }),
     );
 
     return {

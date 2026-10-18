@@ -115,9 +115,11 @@ const projectedOther = async (
 
 // The other member's /members/<handle> handle, built like the web's links (slug ?? username ??
 // id; resolveMemberByHandle resolves all three back to them). Null when the privacy chokepoint
-// anonymised them: their profile would render LOCKED to this viewer (getPublicProfile's
-// `unlocked` is the same self/public/mutual rule), and the handle itself is identifying. Null
-// too for an inactive account, which the route resolves to "not found".
+// anonymised them, since the handle itself is identifying. A member revealed only by the
+// chokepoint's circle rule DOES get a handle, and their profile renders LOCKED to this viewer
+// (getPublicProfile's `unlocked` is self/public/mutual only): acceptable, since the circle reveal is
+// identity only. Null too for an inactive account (the chokepoint already anonymises it), which
+// the route resolves to "not found".
 const profileHandleOf = async (
   ctx: QueryCtx,
   otherMember: ProjectedMember,
