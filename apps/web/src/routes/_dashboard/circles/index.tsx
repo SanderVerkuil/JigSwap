@@ -1,4 +1,7 @@
 import { useUser } from "@/compat/clerk";
+import { MyCircleInvitations } from "@/components/circles/circle-invitations";
+import { CircleInvitePicker } from "@/components/circles/circle-invite-picker";
+import { CirclePendingInvites } from "@/components/circles/circle-pending-invites";
 import { LeaveCircleAction } from "@/components/circles/leave-circle-action";
 import {
   CoverChip,
@@ -66,6 +69,10 @@ interface CircleMemberView {
 }
 
 export const Route = createFileRoute("/_dashboard/circles/")({
+  // `invite` is the circle_invite_received deep link: highlight that invitation.
+  validateSearch: (search: Record<string, unknown>): { invite?: string } => ({
+    invite: typeof search.invite === "string" ? search.invite : undefined,
+  }),
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "circles") }],
   }),
@@ -83,6 +90,7 @@ const PERMISSIONS: CirclePermissionLevel[] = ["ViewOnly", "Exchange", "Admin"];
 function CirclesPage() {
   const { user } = useUser();
   const t = useTranslations("circles");
+  const { invite: highlightInviteId } = Route.useSearch();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [name, setName] = useState("");
   const [manageCircleId, setManageCircleId] = useState<string | null>(null);
@@ -155,6 +163,8 @@ function CirclesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <MyCircleInvitations highlightInviteId={highlightInviteId} />
 
       {circles.length === 0 ? (
         <EmptyState
@@ -306,17 +316,8 @@ function ManageCircleDialog({
     ),
   );
 
-  const [search, setSearch] = useState("");
-  const [addPermission, setAddPermission] =
-    useState<CirclePermissionLevel>("ViewOnly");
   const [shareCopyId, setShareCopyId] = useState<string>("");
 
-  const { data: searchResults } = useQuery(
-    convexQuery(
-      gateway.identity.search,
-      search.trim().length >= 2 ? { searchTerm: search.trim() } : "skip",
-    ),
-  );
   const { data: myCopies } = useQuery(
     convexQuery(
       gateway.library.ownedByOwner,
@@ -326,9 +327,6 @@ function ManageCircleDialog({
     ),
   );
 
-  const addMember = useMutation({
-    mutationFn: useConvexMutation(gateway.sharing.addMember),
-  });
   const removeMember = useMutation({
     mutationFn: useConvexMutation(gateway.sharing.removeMember),
   });
@@ -338,19 +336,6 @@ function ManageCircleDialog({
   const shareCopy = useMutation({
     mutationFn: useConvexMutation(gateway.sharing.shareCopyToCircle),
   });
-
-  const handleAdd = async (memberId: string) => {
-    try {
-      await addMember.mutateAsync({
-        circleId,
-        memberId: memberId as Id<"users">,
-        permission: addPermission,
-      });
-      setSearch("");
-    } catch (error) {
-      console.error("Failed to add member:", error);
-    }
-  };
 
   const handleRemove = async (member: CircleMemberView) => {
     try {
@@ -390,7 +375,8 @@ function ManageCircleDialog({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl">
+      {/* Scrolls when the invite picker and pending list make it taller than a phone screen. */}
+      <DialogContent className="max-h-[90dvh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {t("manage.title", {
@@ -467,52 +453,11 @@ function ManageCircleDialog({
               ))}
             </section>
 
-            {/* Add member */}
+            {/* Invite: members join only by accepting */}
             <section className="space-y-3">
-              <h3 className="font-medium">{t("manage.addMember")}</h3>
-              <div className="flex items-center gap-2">
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder={t("manage.searchPlaceholder")}
-                />
-                <Select
-                  value={addPermission}
-                  onValueChange={(value: CirclePermissionLevel) =>
-                    setAddPermission(value)
-                  }
-                >
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PERMISSIONS.map((p) => (
-                      <SelectItem key={p} value={p}>
-                        {p}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              {searchResults && searchResults.length > 0 && (
-                <div className="space-y-1">
-                  {searchResults.map((result) => (
-                    <div
-                      key={result._id}
-                      className="flex items-center justify-between"
-                    >
-                      <span className="text-sm">{result.name}</span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleAdd(result._id)}
-                      >
-                        {t("manage.add")}
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <h3 className="font-medium">{t("invite.title")}</h3>
+              <CircleInvitePicker circleId={circleId} />
+              <CirclePendingInvites circleId={circleId} />
             </section>
 
             {/* Share a copy — surface the friend-circle VisibilityScope */}
