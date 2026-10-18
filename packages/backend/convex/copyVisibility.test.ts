@@ -522,3 +522,68 @@ describe("writes: updateCopySharing and the repository marker", () => {
     expect(row?.visibilityAuthoritative).toBe(true);
   });
 });
+
+describe("rule P: the other party of an exchange may see a private copy", () => {
+  const STATUSES = [
+    ["proposed", true],
+    ["accepted", true],
+    ["completed", true],
+    ["disputed", true],
+    ["rejected", false],
+    ["cancelled", false],
+  ] as const;
+
+  // `side` is where alice's private copy sits: offered by alice to frank, or requested by frank.
+  const seedExchange = async (
+    t: TestConvex<typeof schema>,
+    side: "offered" | "requested",
+    status: Doc<"exchanges">["status"],
+  ) => {
+    const cast = await seedCast(t);
+    const copy = await t.run(async (ctx) => {
+      const privateCopy = await insertCopy(ctx, cast, PRIVATE);
+      const franksCopy = await insertCopy(ctx, cast, {
+        ownerId: cast.frank,
+        availability: { ...CLOSED, forTrade: true },
+      });
+      await ctx.db.insert("exchanges", {
+        aggregateId: crypto.randomUUID(),
+        type: "trade",
+        status,
+        ...(side === "offered"
+          ? {
+              initiatorId: cast.alice,
+              recipientId: cast.frank,
+              offeredPuzzleId: privateCopy,
+              requestedPuzzleId: franksCopy,
+            }
+          : {
+              initiatorId: cast.frank,
+              recipientId: cast.alice,
+              offeredPuzzleId: franksCopy,
+              requestedPuzzleId: privateCopy,
+            }),
+        createdAt: NOW,
+        updatedAt: NOW,
+      });
+      return privateCopy;
+    });
+    return { cast, copy };
+  };
+
+  for (const side of ["offered", "requested"] as const) {
+    test.each(STATUSES)(
+      `${side} side, %s -> counterparty sees it: %s; third parties never`,
+      async (status, visible) => {
+        const t = convexTest(schema, modules);
+        const { copy } = await seedExchange(t, side, status);
+        const view = await viewCopy(t, "frank", copy);
+        expect(view !== null).toBe(visible);
+        if (view) expect(view.snapshot.visibility).toBe("private");
+        // The mutual follower and a stranger are not parties.
+        expect(await viewCopy(t, "bob", copy)).toBeNull();
+        expect(await viewCopy(t, "erin", copy)).toBeNull();
+      },
+    );
+  }
+});

@@ -12,6 +12,50 @@ const isOpen = (copy: Doc<"ownedPuzzles">): boolean =>
   copy.availability.forSale ||
   copy.availability.forLend;
 
+// Which exchange statuses let the other party see a PRIVATE copy involved in it (rule P below). Every
+// status is mapped explicitly (`satisfies Record<…>` makes a new status a type error here):
+//   proposed / accepted -> yes: the owner put the copy in front of this member to trade on.
+//   completed / disputed -> yes: the exchange went ahead; the parties keep its history (and a
+//                           dispute needs both parties to see what it is about).
+//   rejected / cancelled -> no: it never became a shared transaction, so the owner's privacy choice
+//                           wins again.
+const EXCHANGE_STATUSES_REVEALING_COPY = {
+  proposed: true,
+  accepted: true,
+  completed: true,
+  disputed: true,
+  rejected: false,
+  cancelled: false,
+} as const satisfies Record<Doc<"exchanges">["status"], boolean>;
+
+// Rule P: the viewer is a party (initiator or recipient) of a revealing exchange in which the copy
+// is the offered or the requested side. Two index reads (by_offered_copy / by_requested_copy, both
+// bounded by the copy's own exchanges); only reached for a private copy no earlier rule passed, so
+// bulk callers don't need a memo.
+const isExchangePartyFor = async (
+  ctx: QueryCtx,
+  viewerId: Id<"users">,
+  copy: Doc<"ownedPuzzles">,
+): Promise<boolean> => {
+  const [offered, requested] = await Promise.all([
+    ctx.db
+      .query("exchanges")
+      .withIndex("by_offered_copy", (q) => q.eq("offeredPuzzleId", copy._id))
+      .collect(),
+    ctx.db
+      .query("exchanges")
+      .withIndex("by_requested_copy", (q) =>
+        q.eq("requestedPuzzleId", copy._id),
+      )
+      .collect(),
+  ]);
+  return [...offered, ...requested].some(
+    (exchange) =>
+      EXCHANGE_STATUSES_REVEALING_COPY[exchange.status] &&
+      (exchange.initiatorId === viewerId || exchange.recipientId === viewerId),
+  );
+};
+
 // Reusable per-request context so bulk callers (e.g. the completions enrichment) don't rebuild
 // the circle-shared set or re-read owner profiles per copy, and can't accidentally pass a
 // mismatched viewerId to `canViewCopyWithContext` (it's stamped in at construction). `ownerVisibility`
@@ -52,9 +96,11 @@ export const buildCopyViewContext = async (
 //   6. the viewer and the owner are MUTUAL followers (both follow edges) — friends see the whole
 //      library, open or not, whatever the owner's profile visibility.
 // ...EXCEPT that a PRIVATE copy (effectiveCopyVisibility — the owner's per-copy toggle) stops after
-// rules 1, 2 and 5: only its owner, its current holder and the owner's household may see it. Rules
-// 3 and 4 already require an OPEN copy, which is never private, so in practice this removes rule 6
-// for private copies. There is deliberately no admin rule here; admin surfaces use their own reads.
+// rules 1, 2 and 5 plus one private-only rule:
+//   P. the viewer is the other PARTY of an exchange involving the copy (offered or requested side)
+//      that is live or went ahead — see EXCHANGE_STATUSES_REVEALING_COPY.
+// Rules 3 and 4 already require an OPEN copy, which is never private, so in practice this replaces
+// rule 6 with rule P for private copies. There is deliberately no admin rule here; admin surfaces use their own reads.
 // VIEWING only: exchange proposals stay gated by the availability flags in the domain
 // (proposeExchange -> CopyNotAvailable), so rule 6 never makes a non-open copy exchangeable.
 export const canViewCopyWithContext = async (
@@ -66,7 +112,7 @@ export const canViewCopyWithContext = async (
   if (copy.ownerId === viewerId) return true;
   if (copy.heldBy === viewerId) return true;
   if (context.householdMateIds.has(copy.ownerId)) return true;
-  if (isCopyPrivate(copy)) return false;
+  if (isCopyPrivate(copy)) return isExchangePartyFor(ctx, viewerId, copy);
 
   if (isOpen(copy)) {
     let visibility = context.ownerVisibility.get(copy.ownerId);
