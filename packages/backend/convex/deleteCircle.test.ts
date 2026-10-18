@@ -421,6 +421,22 @@ describe("sharing.deleteCircle", () => {
     await flushScheduled(t);
     expect((await rowsOf(t, circleId)).circleInvites).toHaveLength(0);
   });
+
+  test("the purge leaves a circle that still exists untouched", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, dave, circleId } = await seed(t);
+    await shareAlicesCopy(t, circleId);
+    await seedDecidedInvites(t, circleId, alice, dave, 1);
+    const before = await rowsOf(t, circleId);
+
+    expect(
+      await t.mutation(internal.sharing.purgeDeletedCircle.purgeDeletedCircle, {
+        circleId,
+      }),
+    ).toBe(0);
+    await flushScheduled(t);
+    expect(await rowsOf(t, circleId)).toEqual(before);
+  });
 });
 
 describe("circle_deleted notifications", () => {

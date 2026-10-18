@@ -18,6 +18,14 @@ export const PURGE_BATCH_SIZE = 200;
 export const purgeDeletedCircle = internalMutation({
   args: { circleId: v.string() },
   handler: async (ctx, args): Promise<number> => {
+    // Defensive: only ever purge a circle that is actually gone. A live circle's links and invites
+    // are its state, not leftovers, whoever scheduled this.
+    const live = await ctx.db
+      .query("circles")
+      .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", args.circleId))
+      .first();
+    if (live) return 0;
+
     const shares = await ctx.db
       .query("circleCopyShares")
       .withIndex("by_circle", (q) => q.eq("circleId", args.circleId))
