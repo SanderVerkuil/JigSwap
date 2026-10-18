@@ -4,6 +4,90 @@ import type { WhatsNewManifestEntry } from "./types";
 
 export const WHATS_NEW_MANIFEST: readonly WhatsNewManifestEntry[] = [
   {
+    "id": "library-visibility",
+    "publishedAt": 1792325580000,
+    "highlight": true,
+    "notify": true
+  },
+  {
+    "id": "message-center",
+    "publishedAt": 1792325520000,
+    "highlight": true,
+    "notify": false
+  },
+  {
+    "id": "rich-notifications",
+    "publishedAt": 1792325460000,
+    "highlight": false,
+    "notify": false
+  },
+  {
+    "id": "trade-identity-reveal",
+    "publishedAt": 1792325400000,
+    "highlight": false,
+    "notify": false
+  },
+  {
+    "id": "quick-start",
+    "publishedAt": 1792325340000,
+    "highlight": false,
+    "notify": false
+  },
+  {
+    "id": "reach-out-from-a-puzzle",
+    "publishedAt": 1792325280000,
+    "highlight": false,
+    "notify": false
+  },
+  {
+    "id": "installable-app",
+    "publishedAt": 1792325220000,
+    "highlight": false,
+    "notify": false
+  },
+  {
+    "id": "photo-screening",
+    "publishedAt": 1792325160000,
+    "highlight": false,
+    "notify": false
+  },
+  {
+    "id": "leave-circle",
+    "publishedAt": 1792325100000,
+    "highlight": false,
+    "notify": false
+  },
+  {
+    "id": "household-permissions",
+    "publishedAt": 1792325040000,
+    "highlight": false,
+    "notify": false
+  },
+  {
+    "id": "clickable-activity-feed",
+    "publishedAt": 1792324980000,
+    "highlight": false,
+    "notify": false
+  },
+  {
+    "id": "photo-zoom",
+    "publishedAt": 1792324920000,
+    "highlight": false,
+    "notify": false
+  },
+  {
+    "id": "tour-action-steps",
+    "publishedAt": 1792324860000,
+    "highlight": false,
+    "notify": false
+  },
+  {
+    "id": "privacy-safety-fixes",
+    "publishedAt": 1792324800000,
+    "highlight": false,
+    "notify": false
+  },
+  {
     "id": "households",
     "publishedAt": 1792226588000,
     "highlight": true,
