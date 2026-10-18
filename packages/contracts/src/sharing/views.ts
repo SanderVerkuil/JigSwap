@@ -19,6 +19,11 @@ export interface CircleMemberView {
   name?: string;
   username?: string;
   avatar?: string;
+  /**
+   * True when the member's account is gone or deactivated: name/username/avatar are then omitted
+   * (privacy chokepoint) and the UI renders "Former member".
+   */
+  departed?: boolean;
   permission: CirclePermissionLevel;
   joinedAt: number;
   // True for the owner's permanent, implicitly-Admin seat (cannot be removed or re-permissioned).

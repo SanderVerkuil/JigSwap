@@ -274,7 +274,8 @@ describe("library reads", () => {
     );
     expect(result.total).toBe(1);
     expect(result.hasMore).toBe(false);
-    expect(result.ownedPuzzles[0].owner?.name).toBe("Alice");
+    const owner = result.ownedPuzzles[0].owner;
+    expect(owner.anonymous ? null : owner.member.name).toBe("Alice");
     expect(result.ownedPuzzles[0].puzzle?.title).toBe("Mountain Vista");
   });
 

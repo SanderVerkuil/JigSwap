@@ -145,8 +145,10 @@ export interface PhotoCommentView {
  * `anonymous` is false the member is revealed as a full MemberView; when true the member is hidden
  * and ONLY a deterministic, non-reversible `anonRef` is emitted — NO real id, name, username, or
  * avatar crosses the wire. The viewer is revealed a member iff it is themself, the member's profile
- * is public, or the two are mutual followers; otherwise the member is anonymised. The "Anonymous
- * user" label is the UI's concern (i18n there); it is intentionally NOT part of this DTO.
+ * is public, the two are mutual followers, or the two are currently in the same circle (identity
+ * only: a circle reveal carries name/username/avatar, never bio/location); otherwise the member is
+ * anonymised. A departed member (see `departed`) is always anonymised. Labels ("Former member",
+ * "Anonymous user") are the UI's concern (i18n there); they are intentionally NOT part of this DTO.
  */
 export type ProjectedMember =
   | { anonymous: false; member: MemberView }
@@ -155,8 +157,9 @@ export type ProjectedMember =
       anonRef: string;
       /**
        * Set when the member's account is gone (deleted or deactivated), so the UI can say "Former
-       * member" rather than the anonymous label. Carries no identity. Today only exchange-thread
-       * inbox subjects (the per-trade projection) set it.
+       * member" rather than the anonymous label. Carries no identity. Set by the chokepoint
+       * (projectMemberIdentity, for every surface it gates) and by the per-trade projection of
+       * exchange-thread inbox subjects.
        */
       departed?: true;
     };

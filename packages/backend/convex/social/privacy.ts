@@ -71,6 +71,50 @@ export const areMutualFollowers = async (
 };
 
 /**
+ * True iff a and b are CURRENTLY members of at least one common circle. Reads only the
+ * `circleMembers` junction (the repository keeps it an exact mirror of each circle's memberships,
+ * deleting a row the moment a member leaves or is removed), so only real membership counts. The
+ * circle owner holds a membership seat, so owner <-> member pairs match too. a === b is not a
+ * shared circle — callers handle the self case before reaching here.
+ */
+export const shareACircle = async (
+  ctx: QueryCtx,
+  a: Id<"users">,
+  b: Id<"users">,
+): Promise<boolean> => {
+  if (a === b) return false;
+  const mine = await ctx.db
+    .query("circleMembers")
+    .withIndex("by_member", (q) => q.eq("memberId", a))
+    .collect();
+  for (const membership of mine) {
+    const shared = await ctx.db
+      .query("circleMembers")
+      .withIndex("by_circle_member", (q) =>
+        q
+          .eq("circleAggregateId", membership.circleAggregateId)
+          .eq("memberId", b),
+      )
+      .first();
+    if (shared) return true;
+  }
+  return false;
+};
+
+/**
+ * The ordinary identity-reveal rules, shared by every surface that reveals a member: the target's
+ * profile is public, or viewer and target are mutual followers. Excludes self (callers handle it),
+ * the circle rule and per-trade reveals, which layer on top.
+ */
+export const isRevealedByOrdinaryRules = async (
+  ctx: QueryCtx,
+  viewerId: Id<"users">,
+  targetId: Id<"users">,
+): Promise<boolean> =>
+  (await profileVisibilityOf(ctx, targetId)) === "public" ||
+  (await areMutualFollowers(ctx, viewerId, targetId));
+
+/**
  * The profile-content unlock rule (mirrors getPublicProfile's `unlocked`): the viewer may see a
  * member's deeper profile content (puzzles, solves) iff it is the member themself, the member's
  * profile is public, or the two are mutual followers. Never for a pair blocked either way.
@@ -144,13 +188,18 @@ export const anonymousMemberOf = (
  * with `salt` (pass the copyId so the same hidden member is stable within a timeline but
  * un-correlatable across copies). Rules, in order:
  *   1. target IS the viewer -> revealed (even if the viewer's own profile is private).
- *   2. target user row missing, or the target blocked the viewer -> anonymous. When the VIEWER
- *      blocked the target they are revealed: the blocker chose them and needs the name to unblock.
+ *   2. target user row missing -> anonymous, `departed`. The target blocked the viewer ->
+ *      anonymous, before every reveal rule below (a block vetoes the circle reveal too). When the
+ *      VIEWER blocked the target they are revealed: the blocker chose them and needs the name to
+ *      unblock.
  *   3. target's profile is public -> revealed.
  *   4. viewer and target are mutual followers -> revealed.
- *   5. otherwise -> anonymous.
- * In the anonymous branch the returned object carries ONLY `{ anonymous: true, anonRef }` — no real
- * id, name, username, or avatar.
+ *   5. viewer and target are currently in the same circle, and the target is active -> revealed,
+ *      IDENTITY ONLY (`bio`/`location` omitted). Product decision (#152): sharing a circle counts as
+ *      a reveal. It never unlocks profile content (canSeeProfileContent is unchanged).
+ *   6. otherwise -> anonymous (`departed` when the target is deactivated).
+ * Rules 3-4 are `isRevealedByOrdinaryRules`. In the anonymous branch the returned object carries
+ * ONLY `{ anonymous: true, anonRef }` (plus `departed`) — no real id, name, username, or avatar.
  */
 export const projectMemberIdentity = async (
   ctx: QueryCtx,
@@ -165,7 +214,13 @@ export const projectMemberIdentity = async (
   }
 
   const target = await ctx.db.get(targetId);
-  if (!target) return { anonymous: true, anonRef: anonRefOf(targetId, salt) };
+  if (!target) {
+    return {
+      anonymous: true,
+      anonRef: anonRefOf(targetId, salt),
+      departed: true,
+    };
+  }
   const block = await blockStateBetween(ctx, viewerId, targetId);
   if (block === "byThem") {
     return { anonymous: true, anonRef: anonRefOf(targetId, salt) };
@@ -173,15 +228,23 @@ export const projectMemberIdentity = async (
   if (block === "byMe")
     return { anonymous: false, member: toMemberView(target) };
 
-  if ((await profileVisibilityOf(ctx, targetId)) === "public") {
+  if (await isRevealedByOrdinaryRules(ctx, viewerId, targetId)) {
     return { anonymous: false, member: toMemberView(target) };
   }
 
-  if (await areMutualFollowers(ctx, viewerId, targetId)) {
-    return { anonymous: false, member: toMemberView(target) };
+  const departed = target.isActive === false;
+  if (!departed && (await shareACircle(ctx, viewerId, targetId))) {
+    const {
+      bio: _bio,
+      location: _location,
+      ...identity
+    } = toMemberView(target);
+    return { anonymous: false, member: identity };
   }
 
-  return { anonymous: true, anonRef: anonRefOf(targetId, salt) };
+  return departed
+    ? { anonymous: true, anonRef: anonRefOf(targetId, salt), departed: true }
+    : { anonymous: true, anonRef: anonRefOf(targetId, salt) };
 };
 
 /** The public projection of a review author: name + (consent-gated) avatar, or null. */
