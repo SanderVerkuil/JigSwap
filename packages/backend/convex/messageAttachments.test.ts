@@ -102,6 +102,23 @@ const followMutually = (
     });
   });
 
+// Ends the mutual follow (for example Alice stops following Bob): mutual followers see each other's whole
+// library, so a closed copy only becomes unviewable to the partner once they are no longer mutual.
+const endMutualFollow = (
+  t: TestConvex<typeof schema>,
+  follower: Id<"users">,
+  followee: Id<"users">,
+) =>
+  t.run(async (ctx) => {
+    const edge = await ctx.db
+      .query("follows")
+      .withIndex("by_follower_followee", (q) =>
+        q.eq("followerId", follower).eq("followeeId", followee),
+      )
+      .unique();
+    if (edge) await ctx.db.delete(edge._id);
+  });
+
 const flushScheduled = async (t: TestConvex<typeof schema>) => {
   for (let i = 0; i < 10; i++) {
     await new Promise((resolve) => setTimeout(resolve, 0));
@@ -183,6 +200,8 @@ describe("postMessage with copyId", () => {
     const t = convexTest(schema, modules);
     const s = await seed(t);
     const threadId = await aliceBobDm(t, s);
+    // No longer mutual: Bob's closed copy is now his alone to view (the thread itself remains).
+    await endMutualFollow(t, s.alice, s.bob);
     await expectConvexCode(
       post(asBob(t), threadId, s.bobClosed),
       "CopyNotFound",
@@ -271,10 +290,24 @@ describe("listAttachableCopies", () => {
     );
   });
 
-  test("mine: the caller's copies the other participant can view", async () => {
+  test("mutual followers can attach each other's closed copies too", async () => {
     const t = convexTest(schema, modules);
     const s = await seed(t);
     const threadId = await aliceBobDm(t, s);
+    expect(
+      (await list(asAlice(t), threadId, "mine")).map((c) => c.copyId),
+    ).toEqual([s.aliceClosed, s.aliceOpen]);
+    expect(
+      (await list(asAlice(t), threadId, "theirs")).map((c) => c.copyId),
+    ).toEqual([s.bobClosed, s.bobOpen2, s.bobOpen]);
+    await post(asAlice(t), threadId, s.bobClosed);
+  });
+
+  test("mine: the caller's copies the other participant can view (no longer mutual)", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    const threadId = await aliceBobDm(t, s);
+    await endMutualFollow(t, s.bob, s.alice);
     const mine = await list(asAlice(t), threadId, "mine");
     expect(mine.map((c) => c.copyId)).toEqual([s.aliceOpen]);
     expect(mine[0]).toMatchObject({
@@ -284,10 +317,11 @@ describe("listAttachableCopies", () => {
     });
   });
 
-  test("theirs: the other participant's copies the caller can view, newest first", async () => {
+  test("theirs: the other participant's copies the caller can view, newest first (no longer mutual)", async () => {
     const t = convexTest(schema, modules);
     const s = await seed(t);
     const threadId = await aliceBobDm(t, s);
+    await endMutualFollow(t, s.bob, s.alice);
     expect(
       (await list(asAlice(t), threadId, "theirs")).map((c) => c.copyId),
     ).toEqual([s.bobOpen2, s.bobOpen]);
@@ -345,9 +379,10 @@ describe("listAttachableCopies", () => {
         updatedAt: Date.now(),
       }),
     );
+    // Mutual followers: Alice sees Bob's whole library.
     expect(
       (await list(asAlice(t), threadId, "theirs")).map((c) => c.copyId),
-    ).toEqual([s.bobClosed]);
+    ).toEqual([s.bobClosed, s.bobOpen2, s.bobOpen]);
 
     // Alice unfollows: Bob (private) is now anonymised to her.
     await t.run(async (ctx) => {
