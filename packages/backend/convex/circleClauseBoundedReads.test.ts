@@ -10,6 +10,7 @@ import {
 import {
   CIRCLE_SHARES_READ_PER_CIRCLE,
   collectCircleSharedCopies,
+  MAX_SHARES_READ_PER_COPY,
 } from "./library/circleSharedCopies";
 import schema from "./schema";
 
@@ -191,4 +192,47 @@ describe("circle clause read bounds (#190)", () => {
       expect(collected).toHaveLength(CIRCLE_SHARES_READ_PER_CIRCLE);
     });
   });
+
+  // An owner can share one copy into arbitrarily many (solo) circles; past the per-copy cap the check
+  // must switch to the viewer's own circles rather than read every share, without false negatives.
+  const seedOverCap = (viewerSeated: boolean) => async (ctx: MutationCtx) => {
+    const { viewer, target } = await seed(0, 0)(ctx);
+    const row = (await ctx.db.get(target))!;
+    for (let c = 0; c < MAX_SHARES_READ_PER_COPY + 5; c++) {
+      await mkCircle(ctx, `solo-${c}`, row.ownerId, [row.ownerId]);
+      await ctx.db.insert("circleCopyShares", {
+        circleId: `solo-${c}`,
+        copyId: "target",
+        sharedAt: NOW,
+      });
+    }
+    // The viewer's circle (created and shared into LAST, so beyond the by_copy cap). When
+    // `viewerSeated` is false the owner is not in it, so it does not qualify.
+    await mkCircle(
+      ctx,
+      "V",
+      viewer,
+      viewerSeated ? [viewer, row.ownerId] : [viewer],
+    );
+    await ctx.db.insert("circleCopyShares", {
+      circleId: "V",
+      copyId: "target",
+      sharedAt: NOW,
+    });
+    return { viewer, target };
+  };
+
+  for (const viewerSeated of [true, false]) {
+    test(`copy shared past the per-copy cap: ${viewerSeated ? "visible via the viewer's circle beyond the cap" : "hidden without a qualifying viewer circle"}, reads bounded`, async () => {
+      const t = convexTest(schema, modules);
+      const { viewer, target } = await t.run(seedOverCap(viewerSeated));
+      await t.run(async (raw) => {
+        const { ctx, counter } = countingShareReads(raw);
+        const row = (await raw.db.get(target))!;
+        expect(await canViewCopy(ctx, viewer, row)).toBe(viewerSeated);
+        // The capped by_copy read plus one point lookup per viewer circle (one here).
+        expect(counter.rows).toBeLessThanOrEqual(MAX_SHARES_READ_PER_COPY + 2);
+      });
+    });
+  }
 });

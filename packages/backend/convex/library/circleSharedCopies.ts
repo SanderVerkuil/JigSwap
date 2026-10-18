@@ -23,6 +23,7 @@ import { convexCopyRepository } from "./adapters/convexCopyRepository";
 // the definition view) uses `isCircleSharedWithViewer` instead, which reads that copy's own shares and
 // is never capped, so the cap can't hide a copy on its detail page.
 export const CIRCLE_SHARES_READ_PER_CIRCLE = 200;
+export const MAX_SHARES_READ_PER_COPY = 100;
 
 const isMemberOf = async (
   ctx: QueryCtx,
@@ -39,6 +40,12 @@ const isMemberOf = async (
 // The single-copy form of the circle clause, with the same semantics as the batched collector below:
 // reads only THIS copy's shares (circleCopyShares.by_copy) and, per share, probes the viewer's and the
 // owner's junction rows, so the cost is O(shares of the copy), independent of the viewer's circles.
+//
+// The share count is OWNER-controlled (one copy can be shared into any number of solo circles), so
+// at most MAX_SHARES_READ_PER_COPY shares are read by_copy. Past that, the candidate circles come from
+// the VIEWER's own memberships instead (circleMembers.by_member, bounded by what the viewer joined),
+// each probed with a circleCopyShares.by_circle_copy point lookup. Both routes yield the same set of
+// qualifying circles, so the decision is identical to the uncapped rule (no false negatives).
 export const isCircleSharedWithViewer = async (
   ctx: QueryCtx,
   viewerId: Id<"users">,
@@ -49,10 +56,33 @@ export const isCircleSharedWithViewer = async (
   const shares = await ctx.db
     .query("circleCopyShares")
     .withIndex("by_copy", (q) => q.eq("copyId", copyId))
-    .collect();
+    .take(MAX_SHARES_READ_PER_COPY + 1);
+  let candidateCircles: string[];
+  if (shares.length <= MAX_SHARES_READ_PER_COPY) {
+    candidateCircles = shares.map((s) => s.circleId);
+  } else {
+    const links = await ctx.db
+      .query("circleMembers")
+      .withIndex("by_member", (q) => q.eq("memberId", viewerId))
+      .collect();
+    candidateCircles = (
+      await Promise.all(
+        links.map(async ({ circleAggregateId }) =>
+          (await ctx.db
+            .query("circleCopyShares")
+            .withIndex("by_circle_copy", (q) =>
+              q.eq("circleId", circleAggregateId).eq("copyId", copyId),
+            )
+            .first()) !== null
+            ? circleAggregateId
+            : null,
+        ),
+      )
+    ).filter((c) => c !== null);
+  }
   const qualifying = (
     await Promise.all(
-      shares.map(async ({ circleId }) => {
+      candidateCircles.map(async (circleId) => {
         // The collector only sees circles listForMember resolves: a viewer junction row AND an
         // existing circles row.
         const counts =
