@@ -48,16 +48,23 @@ export const participantsKeyOf = (participants: readonly MemberId[]): string =>
     .sort()
     .join("|");
 
-// Aggregate -> thread row payload (without the repository-filled columns).
+// Aggregate -> thread row payload (without the repository-filled columns). Circle threads have
+// no storage yet: the schema's `circle` subjectKind, `circleId` column and participant joinedAt
+// arrive with the circle threads backend (G4), so persisting one is refused loudly until then.
 export const toThreadRow = (thread: Thread): ThreadRow => {
   const state: ThreadState = thread.toState();
+  if (state.subject.kind === "circle") {
+    throw new Error(
+      `thread ${state.id as string} has a circle subject, which is not persisted yet (G4)`,
+    );
+  }
   return {
     aggregateId: state.id as string,
     subjectKind: state.subject.kind,
-    participants: state.participants.map(
+    participants: thread.participants.map(
       (memberId) => memberId as unknown as Id<"users">,
     ),
-    participantsKey: participantsKeyOf(state.participants),
+    participantsKey: participantsKeyOf(thread.participants),
   };
 };
 
@@ -130,7 +137,10 @@ export const toDomain = (
 ): ThreadState => ({
   id: toThreadId(row.aggregateId),
   subject: toSubject(row, exchangeId),
-  participants: row.participants.map((userId) => toMemberId(userId as string)),
+  // Stored exchange/DM participants carry no joinedAt: their floor is the thread's start.
+  participants: row.participants.map((userId) => ({
+    memberId: toMemberId(userId as string),
+  })),
   messages: [],
   readReceipts: toReadReceipts(row, participantRows),
 });

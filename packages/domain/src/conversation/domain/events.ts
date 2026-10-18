@@ -22,4 +22,29 @@ export class MessagePosted implements DomainEvent {
   ) {}
 }
 
-export type ConversationDomainEvent = MessagePosted;
+// A member joined a circle thread's participant set (lazy creation seeds the roster without
+// events; this records a later join or re-join). `joinedAt` is the new history floor.
+export class ParticipantJoined implements DomainEvent {
+  readonly name = "ParticipantJoined";
+  constructor(
+    readonly threadId: ThreadId,
+    readonly subject: ThreadSubject,
+    readonly memberId: MemberId,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+// A member left a circle thread's participant set, by leaving or by being removed from the
+// circle. The two are not told apart and the remover is never recorded.
+export class ParticipantLeft implements DomainEvent {
+  readonly name = "ParticipantLeft";
+  constructor(
+    readonly threadId: ThreadId,
+    readonly subject: ThreadSubject,
+    readonly memberId: MemberId,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+export type ConversationDomainEvent =
+  MessagePosted | ParticipantJoined | ParticipantLeft;

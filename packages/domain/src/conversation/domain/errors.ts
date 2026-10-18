@@ -16,7 +16,9 @@ export type ConversationErrorCode =
   | "InvalidCoordinates"
   | "LocationLabelTooLong"
   | "SystemMessageNotAuthorable"
-  | "DmRequiresTwoParticipants";
+  | "DmRequiresTwoParticipants"
+  | "CircleThreadRequiresParticipant"
+  | "ParticipantsFixed";
 
 // The maximum accepted text message body length in characters. Exported so transports/UI can
 // enforce the same bound client-side.
@@ -116,6 +118,24 @@ export class ConversationError extends DomainError {
     return new ConversationError(
       "DmRequiresTwoParticipants",
       "A DM thread requires exactly two distinct participants",
+    );
+  }
+
+  // A circle thread starts with at least one participant (a circle with only its owner still
+  // has a thread); an empty roster cannot open one.
+  static circleThreadRequiresParticipant(): ConversationError {
+    return new ConversationError(
+      "CircleThreadRequiresParticipant",
+      "A circle thread requires at least one participant",
+    );
+  }
+
+  // Only a circle thread's participant set moves (members join and leave the circle). Exchange
+  // and DM threads are a fixed pair: nobody can be added, removed, or announced as joining/leaving.
+  static participantsFixed(): ConversationError {
+    return new ConversationError(
+      "ParticipantsFixed",
+      "This thread's participants are fixed",
     );
   }
 }

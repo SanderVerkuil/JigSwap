@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  toCircleId,
   toCopyId,
   toExchangeId,
   toMemberId,
@@ -7,8 +8,9 @@ import {
   toThreadId,
 } from "../../shared-kernel";
 import { MAX_CAPTION_LENGTH, MAX_MESSAGE_LENGTH } from "./errors";
-import { MessagePosted } from "./events";
+import { MessagePosted, ParticipantJoined, ParticipantLeft } from "./events";
 import { MemberId, MessageId, ThreadId } from "./ids";
+import { SYSTEM_EVENT_BODY } from "./message";
 import { Thread, ThreadSubject } from "./thread";
 
 const alice = toMemberId("alice");
@@ -535,5 +537,318 @@ describe("Thread persistence", () => {
 
     expect(rehydrated.subject).toEqual({ kind: "dm" });
     expect(rehydrated.participants).toEqual([alice, bob]);
+  });
+});
+
+describe("Thread circle subject", () => {
+  const circleId = toCircleId("circle-1");
+  const T0 = new Date("2026-06-08T09:00:00Z");
+  const T1 = new Date("2026-06-08T09:30:00Z");
+
+  const openCircle = () => {
+    const result = Thread.openForCircle(threadId, circleId, [
+      { memberId: alice, joinedAt: T0 },
+      { memberId: bob, joinedAt: T1 },
+    ]);
+    if (!result.isOk) throw new Error("expected a circle thread");
+    return result.value;
+  };
+
+  const openPairs = () => {
+    const dm = Thread.openDm(threadId, [alice, bob]);
+    if (!dm.isOk) throw new Error("expected a dm thread");
+    return [openThread(), dm.value];
+  };
+
+  describe("openForCircle", () => {
+    it("opens a circle-subject thread seeded with the members and their joinedAt", () => {
+      const thread = openCircle();
+
+      expect(thread.subject).toEqual({ kind: "circle", circleId });
+      expect(thread.participants).toEqual([alice, bob]);
+      expect(thread.visibleFrom(alice)).toEqual(T0);
+      expect(thread.visibleFrom(bob)).toEqual(T1);
+      expect(thread.messages).toHaveLength(0);
+      expect(thread.readReceipts).toHaveLength(0);
+      expect(thread.pullEvents()).toHaveLength(0);
+    });
+
+    it("allows a single participant (a circle with only its owner)", () => {
+      const result = Thread.openForCircle(threadId, circleId, [
+        { memberId: alice, joinedAt: T0 },
+      ]);
+
+      expect(result.isOk).toBe(true);
+      if (result.isOk) expect(result.value.participants).toEqual([alice]);
+    });
+
+    it("rejects an empty roster with CircleThreadRequiresParticipant", () => {
+      const result = Thread.openForCircle(threadId, circleId, []);
+
+      expect(result.isErr).toBe(true);
+      if (result.isErr)
+        expect(result.error.code).toBe("CircleThreadRequiresParticipant");
+    });
+
+    it("keeps a member listed twice once, with its first joinedAt", () => {
+      const result = Thread.openForCircle(threadId, circleId, [
+        { memberId: alice, joinedAt: T0 },
+        { memberId: bob, joinedAt: T0 },
+        { memberId: alice, joinedAt: T1 },
+      ]);
+
+      expect(result.isOk).toBe(true);
+      if (!result.isOk) return;
+      expect(result.value.participants).toEqual([alice, bob]);
+      expect(result.value.visibleFrom(alice)).toEqual(T0);
+    });
+  });
+
+  describe("addParticipant", () => {
+    it("adds a new member with joinedAt = now and records ParticipantJoined", () => {
+      const thread = openCircle();
+
+      const result = thread.addParticipant(carol, NOW);
+
+      expect(result.isOk && result.value).toBe(true);
+      expect(thread.participants).toEqual([alice, bob, carol]);
+      expect(thread.visibleFrom(carol)).toEqual(NOW);
+      const [event] = thread.pullEvents() as readonly ParticipantJoined[];
+      expect(event).toBeInstanceOf(ParticipantJoined);
+      expect(event.name).toBe("ParticipantJoined");
+      expect(event.threadId).toBe(threadId);
+      expect(event.subject).toEqual({ kind: "circle", circleId });
+      expect(event.memberId).toBe(carol);
+      expect(event.occurredAt).toEqual(NOW);
+    });
+
+    it("is idempotent for a current participant: no change, joinedAt kept, no event", () => {
+      const thread = openCircle();
+
+      const result = thread.addParticipant(alice, NOW);
+
+      expect(result.isOk).toBe(true);
+      if (result.isOk) expect(result.value).toBe(false);
+      expect(thread.participants).toEqual([alice, bob]);
+      expect(thread.visibleFrom(alice)).toEqual(T0);
+      expect(thread.pullEvents()).toHaveLength(0);
+    });
+
+    it("a re-join after leaving sets a fresh joinedAt", () => {
+      const thread = openCircle();
+      thread.removeParticipant(alice, NOW);
+
+      const result = thread.addParticipant(alice, LATER);
+
+      expect(result.isOk && result.value).toBe(true);
+      expect(thread.visibleFrom(alice)).toEqual(LATER);
+      expect(thread.canSee(alice, NOW)).toBe(false);
+    });
+
+    it("rejects ParticipantsFixed on exchange and DM threads, changing nothing", () => {
+      for (const thread of openPairs()) {
+        const result = thread.addParticipant(carol, NOW);
+
+        expect(result.isErr).toBe(true);
+        if (result.isErr) expect(result.error.code).toBe("ParticipantsFixed");
+        expect(thread.participants).toEqual([alice, bob]);
+        expect(thread.pullEvents()).toHaveLength(0);
+      }
+    });
+  });
+
+  describe("removeParticipant", () => {
+    it("removes the member, drops their receipt only, and records ParticipantLeft", () => {
+      const thread = openCircle();
+      thread.markRead(alice, NOW);
+      thread.markRead(bob, NOW);
+
+      const result = thread.removeParticipant(bob, LATER);
+
+      expect(result.isOk && result.value).toBe(true);
+      expect(thread.participants).toEqual([alice]);
+      expect(thread.lastReadAt(bob)).toBeNull();
+      expect(thread.lastReadAt(alice)).toEqual(NOW);
+      const [event] = thread.pullEvents() as readonly ParticipantLeft[];
+      expect(event).toBeInstanceOf(ParticipantLeft);
+      expect(event.name).toBe("ParticipantLeft");
+      expect(event.threadId).toBe(threadId);
+      expect(event.subject).toEqual({ kind: "circle", circleId });
+      expect(event.memberId).toBe(bob);
+      expect(event.occurredAt).toEqual(LATER);
+    });
+
+    it("a removed member can no longer post or see the thread", () => {
+      const thread = openCircle();
+      thread.removeParticipant(bob, NOW);
+
+      const posted = thread.postMessage({
+        id: msg1,
+        authorId: bob,
+        kind: "text",
+        body: "still here?",
+        sentAt: LATER,
+      });
+
+      expect(posted.isErr).toBe(true);
+      if (posted.isErr) expect(posted.error.code).toBe("NotParticipant");
+      expect(thread.canSee(bob, LATER)).toBe(false);
+    });
+
+    it("removing a non-participant is a no-op: no change, no event", () => {
+      const thread = openCircle();
+
+      const result = thread.removeParticipant(carol, NOW);
+
+      expect(result.isOk).toBe(true);
+      if (result.isOk) expect(result.value).toBe(false);
+      expect(thread.participants).toEqual([alice, bob]);
+      expect(thread.pullEvents()).toHaveLength(0);
+    });
+
+    it("rejects ParticipantsFixed on exchange and DM threads, changing nothing", () => {
+      for (const thread of openPairs()) {
+        const result = thread.removeParticipant(bob, NOW);
+
+        expect(result.isErr).toBe(true);
+        if (result.isErr) expect(result.error.code).toBe("ParticipantsFixed");
+        expect(thread.participants).toEqual([alice, bob]);
+        expect(thread.pullEvents()).toHaveLength(0);
+      }
+    });
+  });
+
+  describe("history visibility", () => {
+    it("hides a message sent exactly at joinedAt (strict floor) and shows one just after", () => {
+      const thread = openCircle();
+
+      expect(thread.canSee(bob, T1)).toBe(false);
+      expect(thread.canSee(bob, new Date(T1.getTime() + 1))).toBe(true);
+      expect(thread.canSee(bob, T0)).toBe(false);
+      expect(thread.canSee(alice, T1)).toBe(true);
+    });
+
+    it("hides everything from a non-participant", () => {
+      expect(openCircle().canSee(carol, LATER)).toBe(false);
+      expect(openThread().canSee(carol, LATER)).toBe(false);
+      expect(openThread().visibleFrom(carol)).toBeNull();
+      expect(openCircle().visibleFrom(carol)).toBeNull();
+    });
+
+    it("has no floor on exchange and DM threads", () => {
+      for (const thread of openPairs()) {
+        expect(thread.visibleFrom(alice)).toBeNull();
+        expect(thread.canSee(alice, new Date(0))).toBe(true);
+      }
+    });
+
+    it("ignores a joinedAt stored on an exchange or DM participant", () => {
+      const thread = Thread.rehydrate({
+        id: threadId,
+        subject: { kind: "dm" },
+        participants: [
+          { memberId: alice, joinedAt: LATER },
+          { memberId: bob, joinedAt: LATER },
+        ],
+        messages: [],
+        readReceipts: [],
+      });
+
+      expect(thread.visibleFrom(alice)).toBeNull();
+      expect(thread.canSee(alice, NOW)).toBe(true);
+    });
+
+    it("has no floor for a circle participant stored without joinedAt (legacy)", () => {
+      const thread = Thread.rehydrate({
+        id: threadId,
+        subject: { kind: "circle", circleId },
+        participants: [{ memberId: alice }],
+        messages: [],
+        readReceipts: [],
+      });
+
+      expect(thread.visibleFrom(alice)).toBeNull();
+      expect(thread.canSee(alice, new Date(0))).toBe(true);
+    });
+  });
+
+  describe("join/leave system messages", () => {
+    it("carries the systemEvent on a circle thread's system message", () => {
+      const thread = openCircle();
+
+      const result = thread.postSystemMessage({
+        id: msg1,
+        body: SYSTEM_EVENT_BODY.joined,
+        sentAt: NOW,
+        systemEvent: { kind: "joined", memberId: carol },
+      });
+
+      expect(result.isOk).toBe(true);
+      if (!result.isOk) return;
+      expect(result.value.kind).toBe("system");
+      expect(result.value.body).toBe("member_joined");
+      expect(result.value.systemEvent).toEqual({
+        kind: "joined",
+        memberId: carol,
+      });
+      expect(thread.toState().messages[0]?.systemEvent).toEqual({
+        kind: "joined",
+        memberId: carol,
+      });
+      expect(thread.pullEvents().map((e) => e.name)).toEqual(["MessagePosted"]);
+    });
+
+    it("leaves systemEvent absent on a plain system message", () => {
+      const thread = openCircle();
+
+      thread.postSystemMessage({ id: msg1, body: "hello", sentAt: NOW });
+
+      expect(thread.toState().messages[0]).not.toHaveProperty("systemEvent");
+    });
+
+    it("rejects a systemEvent on exchange and DM threads with ParticipantsFixed", () => {
+      for (const thread of openPairs()) {
+        const result = thread.postSystemMessage({
+          id: msg1,
+          body: SYSTEM_EVENT_BODY.left,
+          sentAt: NOW,
+          systemEvent: { kind: "left", memberId: bob },
+        });
+
+        expect(result.isErr).toBe(true);
+        if (result.isErr) expect(result.error.code).toBe("ParticipantsFixed");
+        expect(thread.messages).toHaveLength(0);
+        expect(thread.pullEvents()).toHaveLength(0);
+      }
+    });
+
+    it("still applies the body rule to a join/leave message", () => {
+      const result = openCircle().postSystemMessage({
+        id: msg1,
+        body: "",
+        sentAt: NOW,
+        systemEvent: { kind: "left", memberId: bob },
+      });
+
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("EmptyMessage");
+    });
+  });
+
+  it("round-trips a circle thread with joinedAt through toState/rehydrate", () => {
+    const rehydrated = Thread.rehydrate(openCircle().toState());
+
+    expect(rehydrated.subject).toEqual({ kind: "circle", circleId });
+    expect(rehydrated.participants).toEqual([alice, bob]);
+    expect(rehydrated.visibleFrom(bob)).toEqual(T1);
+  });
+
+  it("stores exchange and DM participants without a joinedAt", () => {
+    for (const thread of openPairs()) {
+      expect(thread.toState().participants).toEqual([
+        { memberId: alice },
+        { memberId: bob },
+      ]);
+    }
   });
 });

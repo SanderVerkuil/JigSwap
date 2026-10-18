@@ -20,11 +20,12 @@ export class InMemoryThreadRepository implements ThreadRepository {
 
   async findDmByParticipants(a: MemberId, b: MemberId): Promise<Thread | null> {
     for (const state of this.store.values()) {
+      const memberIds = state.participants.map((p) => p.memberId);
       if (
         state.subject.kind === "dm" &&
-        state.participants.length === 2 &&
-        state.participants.includes(a) &&
-        state.participants.includes(b)
+        memberIds.length === 2 &&
+        memberIds.includes(a) &&
+        memberIds.includes(b)
       ) {
         return Thread.rehydrate(state);
       }
