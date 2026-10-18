@@ -2,6 +2,10 @@ import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
+import {
+  makeFakeInvitationGateway,
+  type FakeInvitationGateway,
+} from "./invitations/adapters/fakeInvitationGateway";
 import schema from "./schema";
 
 // Account deletion for circle invites and connection offers: users.deleteUser schedules
@@ -9,6 +13,16 @@ import schema from "./schema";
 // received and every connection offer they made or were made, of any status, together with the
 // notifications that point at them. The other party is left with nothing to open: no invite or
 // offer listed, no notification for it, and no email or push still to come.
+// The email invitations they sent go too, with their Clerk invitations revoked.
+
+// Email invitations' Clerk revokes go to the in-memory fake, never to Clerk.
+const gate = vi.hoisted(() => ({
+  gateway: null as FakeInvitationGateway | null,
+}));
+vi.mock("./invitations/adapters/invitationGateway", async (orig) => ({
+  ...(await orig<typeof import("./invitations/adapters/invitationGateway")>()),
+  makeInvitationGatewayFromEnv: () => gate.gateway,
+}));
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 type T = TestConvex<typeof schema>;
@@ -344,5 +358,91 @@ describe("account deletion: circle invites and connection offers", () => {
     expect(await invitesOf(t, s.alice)).toEqual([]);
     expect(await offersOf(t, s.alice)).toEqual([]);
     expect(await notificationsPointingAt(t, allIds(s))).toEqual([]);
+  });
+});
+
+describe("account deletion: email invitations", () => {
+  // Alice sent two email invitations (one reached Clerk, one went to an existing member and never
+  // did); Bob sent one of his own.
+  const seedEmailInvites = (t: T, s: Seeded) =>
+    t.run(async (ctx) => {
+      const now = Date.now();
+      const row = (
+        inviterId: Id<"users">,
+        aggregateId: string,
+        clerkInvitationId?: string,
+      ) =>
+        ctx.db.insert("emailInvites", {
+          aggregateId,
+          kind: "follow",
+          inviterId,
+          ...(clerkInvitationId !== undefined && { clerkInvitationId }),
+          createdAt: now,
+          expiresAt: now + 14 * 24 * 60 * 60_000,
+        });
+      await row(s.alice, "ref-alice-1", "inv_alice_1");
+      await row(s.alice, "ref-alice-2");
+      await row(s.bob, "ref-bob-1", "inv_bob_1");
+    });
+
+  const emailInviteRefs = (t: T) =>
+    t.run(async (ctx) =>
+      (await ctx.db.query("emailInvites").collect()).map(
+        (row) => row.aggregateId,
+      ),
+    );
+
+  beforeEach(() => {
+    gate.gateway = makeFakeInvitationGateway();
+    vi.stubEnv("CLERK_SECRET_KEY", "sk_test_dummy_not_a_real_key");
+  });
+
+  test("her rows are deleted and their Clerk invitations revoked; Bob's stay", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await seedEmailInvites(t, s);
+
+    await deleteAlice(t);
+
+    expect(await emailInviteRefs(t)).toEqual(["ref-bob-1"]);
+    expect(gate.gateway?.revoked).toEqual(["inv_alice_1"]);
+  });
+
+  test("in batches too", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await seedEmailInvites(t, s);
+
+    await t.mutation(
+      internal.conversation.purgeMemberMessagingData.purgeMemberMessagingData,
+      { memberId: s.alice, phase: "emailInvitesOut", batchSize: 1 },
+    );
+    await settleDueJobs(t);
+
+    expect(await emailInviteRefs(t)).toEqual(["ref-bob-1"]);
+    expect(gate.gateway?.revoked).toEqual(["inv_alice_1"]);
+  });
+
+  test("her emailInvite rate-limit counter goes with the others", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await t.run((ctx) =>
+      ctx.db.insert("rateLimits", {
+        key: `emailInvite:${s.alice}`,
+        windowStart: Date.now(),
+        count: 3,
+      }),
+    );
+
+    await deleteAlice(t);
+
+    expect(
+      await t.run((ctx) =>
+        ctx.db
+          .query("rateLimits")
+          .withIndex("by_key", (q) => q.eq("key", `emailInvite:${s.alice}`))
+          .unique(),
+      ),
+    ).toBeNull();
   });
 });
