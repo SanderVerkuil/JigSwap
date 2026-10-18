@@ -146,41 +146,112 @@ export const seesFullLibrary = async (
   return areMutualFollowers(ctx, viewerId, memberId);
 };
 
-// A tiny deterministic, non-reversible string hash (cyrb53) folded to base36. No crypto import: this
-// is an obfuscating reference token, not a security primitive. Same input -> same token, so one
-// hidden member reads consistently within a timeline; a different salt (the copyId) yields a
-// different token, so the same hidden member can't be correlated across copies.
-const cyrb53 = (str: string, seed = 0): string => {
-  let h1 = 0xdeadbeef ^ seed;
-  let h2 = 0x41c6ce57 ^ seed;
-  for (let i = 0; i < str.length; i++) {
-    const ch = str.charCodeAt(i);
-    h1 = Math.imul(h1 ^ ch, 2654435761);
-    h2 = Math.imul(h2 ^ ch, 1597334677);
+// anonRef = HMAC-SHA256(ANON_REF_SECRET, JSON.stringify(["anonRef/v1", targetId, salt])), first 80
+// bits in base32 (#178). Keyed so it can't be recomputed offline: the salt (copy/thread id) is known
+// to the viewer and member ids leak elsewhere, so an unkeyed hash let anyone test candidate ids.
+// Same (target, salt, secret) -> same ref, so one hidden member reads consistently within a
+// timeline; a different salt yields an uncorrelatable ref. Nothing stores anonRefs, so rotating
+// the secret only re-labels hidden members on the next render.
+//
+// The secret must be at least 32 characters. HMAC-SHA256 wants a key with ~256 bits of entropy;
+// `openssl rand -base64 48` (the runbook's command) gives 64 characters, and the floor rejects
+// placeholders such as "changeme" or a pasted token prefix that a brute force could cover.
+const ANON_REF_SECRET_MIN_LENGTH = 32;
+const ANON_REF_BYTES = 10; // 80 bits: ample for a display handle, well above the 64-bit floor.
+const BASE32 = "abcdefghijklmnopqrstuvwxyz234567";
+
+const encoder = new TextEncoder();
+
+const importHmacKey = (raw: Uint8Array<ArrayBuffer>): Promise<CryptoKey> =>
+  crypto.subtle.importKey(
+    "raw",
+    raw,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+
+// The imported key for the current secret value, reused across invocations in a warm isolate.
+let configuredKey: { secret: string; key: Promise<CryptoKey> } | undefined;
+
+// FAIL CLOSED when the secret is unset or too short: never throw (that would break every page
+// that shows a hidden member) and NEVER fall back to an unkeyed or default-keyed hash (that is the
+// leak this fixes). Instead each request gets a throwaway random key, memoised on its ctx so refs
+// stay stable within that one response (the per-page memoisation and UI grouping keep working),
+// but they are unreproducible and unlinkable across responses. Convex seeds the query/mutation
+// RNG freshly per invocation, so the key is unpredictable to the client; it must be generated
+// INSIDE the call (a module-level random value is fixed across runs). Every such request logs a
+// loud error naming the variable (never its value), so a misconfigured deployment can't look healthy.
+const ephemeralKeys = new WeakMap<object, Promise<CryptoKey>>();
+
+const anonRefKey = (ctx: object): Promise<CryptoKey> => {
+  const secret = process.env.ANON_REF_SECRET;
+  if (secret !== undefined && secret.length >= ANON_REF_SECRET_MIN_LENGTH) {
+    if (configuredKey?.secret !== secret) {
+      const entry = {
+        secret,
+        key: importHmacKey(encoder.encode(secret)),
+      };
+      // A rejected import must not stay cached: drop it so the next request retries.
+      entry.key.catch(() => {
+        if (configuredKey === entry) configuredKey = undefined;
+      });
+      configuredKey = entry;
+    }
+    return configuredKey.key;
   }
-  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
-  h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
-  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
-  h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
-  const n = 4294967296 * (2097151 & h2) + (h1 >>> 0);
-  return n.toString(36);
+  let key = ephemeralKeys.get(ctx);
+  if (!key) {
+    console.error(
+      `ANON_REF_SECRET is unset or shorter than ${ANON_REF_SECRET_MIN_LENGTH} characters: ` +
+        "anonymous member refs fall back to a throwaway per-request key (unstable across " +
+        "responses). Set it on this deployment, see docs/deployment/convex-preview-deployments.md.",
+    );
+    key = importHmacKey(crypto.getRandomValues(new Uint8Array(32)));
+    ephemeralKeys.set(ctx, key);
+  }
+  return key;
 };
 
-/** The deterministic, non-reversible reference token for a hidden member under a given salt. */
-const anonRefOf = (targetId: string, salt: string): string =>
-  cyrb53(`${targetId}:${salt}`);
+/** The keyed, non-reversible reference token for a hidden member under a given salt. */
+export const anonRefOf = async (
+  ctx: QueryCtx,
+  targetId: string,
+  salt: string,
+): Promise<string> => {
+  const signature = await crypto.subtle.sign(
+    "HMAC",
+    await anonRefKey(ctx),
+    encoder.encode(JSON.stringify(["anonRef/v1", targetId, salt])),
+  );
+  // Base32 (RFC 4648 alphabet, lowercase): 80 bits -> exactly 16 characters. No BigInt, since
+  // packages/gateway type-checks this file with a pre-ES2020 target.
+  let ref = "";
+  let bits = 0;
+  let value = 0;
+  for (const byte of new Uint8Array(signature, 0, ANON_REF_BYTES)) {
+    value = ((value << 8) | byte) & 0xfff;
+    bits += 8;
+    while (bits >= 5) {
+      ref += BASE32[(value >>> (bits - 5)) & 31];
+      bits -= 5;
+    }
+  }
+  return ref;
+};
 
 /**
  * The anonymous projection of `targetId` under `salt`: exactly what projectMemberIdentity emits for
  * a hidden member, for callers that decide visibility through another chokepoint (the per-trade
  * rule) but must keep the same salted reference.
  */
-export const anonymousMemberOf = (
+export const anonymousMemberOf = async (
+  ctx: QueryCtx,
   targetId: Id<"users">,
   salt: string,
-): Extract<ProjectedMember, { anonymous: true }> => ({
+): Promise<Extract<ProjectedMember, { anonymous: true }>> => ({
   anonymous: true,
-  anonRef: anonRefOf(targetId, salt),
+  anonRef: await anonRefOf(ctx, targetId, salt),
 });
 
 /**
@@ -213,20 +284,20 @@ export const projectMemberIdentity = async (
   if (targetId === viewerId) {
     const self = await ctx.db.get(viewerId);
     if (self) return { anonymous: false, member: toMemberView(self) };
-    return { anonymous: true, anonRef: anonRefOf(targetId, salt) };
+    return { anonymous: true, anonRef: await anonRefOf(ctx, targetId, salt) };
   }
 
   const target = await ctx.db.get(targetId);
   if (!target || target.isActive === false) {
     return {
       anonymous: true,
-      anonRef: anonRefOf(targetId, salt),
+      anonRef: await anonRefOf(ctx, targetId, salt),
       departed: true,
     };
   }
   const block = await blockStateBetween(ctx, viewerId, targetId);
   if (block === "byThem") {
-    return { anonymous: true, anonRef: anonRefOf(targetId, salt) };
+    return { anonymous: true, anonRef: await anonRefOf(ctx, targetId, salt) };
   }
   if (block === "byMe")
     return { anonymous: false, member: toMemberView(target) };
@@ -245,7 +316,7 @@ export const projectMemberIdentity = async (
     return { anonymous: false, member: identity };
   }
 
-  return { anonymous: true, anonRef: anonRefOf(targetId, salt) };
+  return { anonymous: true, anonRef: await anonRefOf(ctx, targetId, salt) };
 };
 
 /** The public projection of a review author: name + (consent-gated) avatar, or null. */

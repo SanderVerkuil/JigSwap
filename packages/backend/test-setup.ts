@@ -12,3 +12,9 @@ afterEach(async () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
   }
 });
+
+// #178: anonRef is an HMAC keyed by the server-only ANON_REF_SECRET. A dummy, NON-SECRET value for
+// tests only (≥ 32 chars, the production minimum); real deployments set their own via `convex env`.
+// Assigned unconditionally so a value exported in the developer's shell never leaks into tests.
+process.env.ANON_REF_SECRET =
+  "test-only-dummy-anon-ref-secret-not-used-anywhere-real";
