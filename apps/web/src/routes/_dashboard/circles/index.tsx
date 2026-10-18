@@ -5,6 +5,7 @@ import {
   CircleInviteSection,
   memberRowControls,
 } from "@/components/circles/circle-admin-sections";
+import { CircleAvatarStack } from "@/components/circles/circle-avatar-stack";
 import { MyCircleInvitations } from "@/components/circles/circle-invitations";
 import {
   isInvalidCircleName,
@@ -283,7 +284,10 @@ function CircleRow({
       </div>
       <div className="flex items-center gap-5">
         {circle.aggregateId && (
-          <CircleAvatarStack circleId={circle.aggregateId} />
+          <CircleMembersStack
+            circleId={circle.aggregateId}
+            circleName={circle.name}
+          />
         )}
         <MiniStat
           value={circle.memberCount}
@@ -305,10 +309,16 @@ function CircleRow({
   );
 }
 
-// The overlapping avatar stack of up to four circle members. The members come
-// from the (member-gated) circle detail read; while it loads we hold the space
-// with a skeleton so rows don't jump.
-function CircleAvatarStack({ circleId }: { circleId: string }) {
+// The circle's member avatar stack. The members come from the (member-gated)
+// circle detail read; while it loads we hold the space with a skeleton so
+// rows don't jump.
+function CircleMembersStack({
+  circleId,
+  circleName,
+}: {
+  circleId: string;
+  circleName: string;
+}) {
   const seatName = useCircleSeatName();
   const { data: detail, isPending } = useQuery(
     convexQuery(gateway.sharing.circle, { circleId }),
@@ -323,20 +333,15 @@ function CircleAvatarStack({ circleId }: { circleId: string }) {
 
   return (
     <div className="hidden sm:flex">
-      {detail.members.slice(0, 4).map((member: CircleMemberView, i) => (
-        <Avatar
-          key={member.membershipId}
-          className="ring-card size-8 ring-2 first:ml-0"
-          style={{ marginLeft: i === 0 ? 0 : -10 }}
-        >
-          {member.avatar && (
-            <AvatarImage src={member.avatar} alt={seatName(member)} />
-          )}
-          <AvatarFallback className="text-xs">
-            <MemberInitial source={member} />
-          </AvatarFallback>
-        </Avatar>
-      ))}
+      <CircleAvatarStack
+        circleName={circleName}
+        members={detail.members.map((member: CircleMemberView) => ({
+          key: member.membershipId,
+          name: seatName(member),
+          avatar: member.avatar,
+          fallback: <MemberInitial source={member} />,
+        }))}
+      />
     </div>
   );
 }
