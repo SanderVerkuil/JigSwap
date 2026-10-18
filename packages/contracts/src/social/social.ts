@@ -18,12 +18,25 @@ export interface ProfileView extends ConvexSystemFields {
    */
   visibility: "public" | "private";
   updatedAt: number;
-  /**
-   * Set when the viewer blocked this member: a stub (no bio) so the UI can offer Unblock. A
-   * member who blocked the viewer reads as null instead.
-   */
-  blockedByMe?: true;
 }
+
+/**
+ * What getProfile returns when the viewer blocked this member: identity and visibility only, so
+ * the UI can offer Unblock. Never the bio or the profile row's ids/timestamps, since a block must
+ * not reveal more than the private-profile rule allows. A member who blocked the viewer reads as
+ * null instead.
+ */
+export type BlockedProfileStub = Pick<
+  ProfileView,
+  "memberId" | "displayName" | "visibility"
+> & {
+  blockedByMe: true;
+} & {
+  // Every other ProfileView field is absent on the stub (typed never so reads see undefined).
+  [
+    K in Exclude<keyof ProfileView, "memberId" | "displayName" | "visibility">
+  ]?: never;
+};
 
 /**
  * One party of a follow relationship as surfaced in a followers/following list: the other member's

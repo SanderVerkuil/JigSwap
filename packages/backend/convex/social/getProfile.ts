@@ -1,4 +1,4 @@
-import type { ProfileView } from "@jigswap/contracts";
+import type { BlockedProfileStub, ProfileView } from "@jigswap/contracts";
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
@@ -14,7 +14,10 @@ import { toProfileView } from "./readViews";
 // typed ProfileView DTO.
 export const getProfile = query({
   args: { memberId: v.optional(v.id("users")) },
-  handler: async (ctx, args): Promise<ProfileView | null> => {
+  handler: async (
+    ctx,
+    args,
+  ): Promise<ProfileView | BlockedProfileStub | null> => {
     const viewer = (await requireMember(ctx)) as unknown as Id<"users">;
     const target = args.memberId ?? viewer;
 
@@ -28,9 +31,14 @@ export const getProfile = query({
         ? undefined
         : await blockStateBetween(ctx, viewer, target);
     if (block) {
-      // Blocked (spec 2.6): null for the blocked side; a stub without bio for the blocker.
+      // Blocked (spec 2.6): null for the blocked side; an identity-only stub for the blocker.
       return block === "byMe"
-        ? { ...toProfileView(row), bio: undefined, blockedByMe: true }
+        ? {
+            memberId: row.memberId,
+            displayName: row.displayName,
+            visibility: row.visibility ?? "public",
+            blockedByMe: true,
+          }
         : null;
     }
 
