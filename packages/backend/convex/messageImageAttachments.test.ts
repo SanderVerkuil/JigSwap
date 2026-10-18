@@ -1555,6 +1555,39 @@ describe("removal evidence", () => {
     expect(a.evidencePendingSince).toBeUndefined();
   });
 
+  test("the evidence copy is purged at its retention date, from every report", async () => {
+    const t = convexTest(schema, modules);
+    const { attachmentReport, messageReport, remove } = await removedPhoto(t);
+    await remove();
+    await settleDueJobs(t);
+    const before = await reportOf(t, attachmentReport.reportId);
+    const purgeJob = (
+      await t.run((ctx) =>
+        ctx.db.system.query("_scheduled_functions").collect(),
+      )
+    ).find((job) => job.name === "reports/attachmentEvidence:purgeEvidence")!;
+    expect(purgeJob.scheduledTime).toBe(before.evidenceRetainUntil);
+    expect(purgeJob.args[0]).toEqual({
+      evidenceFileId: before.evidenceFileId,
+    });
+    // Not before its date.
+    await t.mutation(internal.reports.attachmentEvidence.purgeEvidence, {
+      evidenceFileId: before.evidenceFileId!,
+    });
+    expect(await blobExists(t, before.evidenceFileId!)).toBe(true);
+    vi.spyOn(Date, "now").mockReturnValue(before.evidenceRetainUntil! + 1);
+    await t.mutation(internal.reports.attachmentEvidence.purgeEvidence, {
+      evidenceFileId: before.evidenceFileId!,
+    });
+    vi.mocked(Date.now).mockRestore();
+    expect(await blobExists(t, before.evidenceFileId!)).toBe(false);
+    for (const id of [attachmentReport.reportId, messageReport.reportId]) {
+      const report = await reportOf(t, id);
+      expect(report.evidenceFileId).toBeUndefined();
+      expect(report.evidenceRetainUntil).toBeUndefined();
+    }
+  });
+
   test("a missing source blob is recorded as missing, and the hold is released", async () => {
     const t = convexTest(schema, modules);
     const { id, row, attachmentReport, remove } = await removedPhoto(t);

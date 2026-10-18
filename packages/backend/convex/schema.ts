@@ -1708,7 +1708,9 @@ export default defineSchema({
     .index("by_target", ["targetKind", "targetId"])
     .index("by_reporter_target", ["reporterId", "targetKind", "targetId"])
     .index("by_reporter_created", ["reporterId", "createdAt"])
-    .index("by_reported_user", ["reportedUserId", "createdAt"]),
+    .index("by_reported_user", ["reportedUserId", "createdAt"])
+    // The reports sharing one evidence copy (its purge; message-photo claims refuse it).
+    .index("by_evidence_file", ["evidenceFileId"]),
 
   // Fixed-window rate limit counters (lib/rateLimits). One row per key ("<limit>:<memberId>"),
   // reset in place when its window has passed, so the table stays bounded without a cleanup job.

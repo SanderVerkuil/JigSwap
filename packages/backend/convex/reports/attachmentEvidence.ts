@@ -20,6 +20,10 @@ import { logEvent } from "../lib/logEvent";
 // Failure: a throwing attempt is retried with EVIDENCE_RETRY_DELAYS_MS. A missing source blob,
 // or a copy still failing after the last attempt, is recorded as `evidenceMissing` and the served
 // blob is deleted anyway: killing the photo's public URL wins over keeping evidence.
+//
+// Retention: each copy has its purge scheduled for `evidenceRetainUntil` (scheduler.runAt, durable
+// across deploys, exact to the copy) rather than a daily cron sweep; the repo has no crons yet and
+// this needs none. purgeEvidence deletes the blob and clears the fields on every report sharing it.
 
 /** How long removal evidence is kept after the decision (spec 2.8): six calendar months. */
 export const evidenceRetainUntil = (decidedAt: number): number => {
@@ -177,6 +181,13 @@ export const recordEvidence = internalMutation({
           : { evidenceMissing: true }),
       });
     }
+    if (evidenceFileId) {
+      await ctx.scheduler.runAt(
+        retainUntil,
+        internal.reports.attachmentEvidence.purgeEvidence,
+        { evidenceFileId },
+      );
+    }
     if (!row) return;
     // Every report on the photo now carries the copy (or knows it is missing), so the row's hold
     // protects nothing any more, even for a report still open: clear it and delete the served
@@ -186,5 +197,41 @@ export const recordEvidence = internalMutation({
       updatedAt: Date.now(),
     });
     await deleteAttachmentBlobs(ctx, { ...row, evidenceHold: undefined });
+  },
+});
+
+// The retention purge of an evidence copy (spec 2.8), scheduled for its retention date: delete the
+// blob and clear the fields on every report that shares it. Not before the latest of their dates
+// (rescheduled then); a no-op for a copy already gone.
+export const purgeEvidence = internalMutation({
+  args: { evidenceFileId: v.id("_storage") },
+  handler: async (ctx, { evidenceFileId }) => {
+    const reports = await ctx.db
+      .query("reports")
+      .withIndex("by_evidence_file", (q) =>
+        q.eq("evidenceFileId", evidenceFileId),
+      )
+      .collect();
+    const latest = Math.max(
+      0,
+      ...reports.map((r) => r.evidenceRetainUntil ?? 0),
+    );
+    if (latest > Date.now()) {
+      await ctx.scheduler.runAt(
+        latest,
+        internal.reports.attachmentEvidence.purgeEvidence,
+        { evidenceFileId },
+      );
+      return;
+    }
+    for (const report of reports) {
+      await ctx.db.patch(report._id, {
+        evidenceFileId: undefined,
+        evidenceRetainUntil: undefined,
+      });
+    }
+    if (await ctx.db.system.get(evidenceFileId)) {
+      await ctx.storage.delete(evidenceFileId);
+    }
   },
 });
