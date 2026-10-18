@@ -5,6 +5,7 @@ import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { toMemberView } from "../identity/toMemberView";
 import { canViewCopy } from "../library/canViewCopy";
+import { blockedEitherWaySet } from "./blocks";
 
 // Read side: the COPY-scoped comments on the given owned copy (the owner's own plain-text notes),
 // newest first — NOT the shared community reviews (those live on the catalog page via
@@ -29,25 +30,29 @@ export const listPuzzleComments = query({
       .withIndex("by_copy", (q) => q.eq("copyId", args.copyId))
       .order("desc")
       .collect();
+    // Authors blocked either way with the viewer drop out (spec 2.6).
+    const blockedIds = await blockedEitherWaySet(ctx, viewerId);
 
     return Promise.all(
-      rows.map(async (row): Promise<PuzzleCommentView> => {
-        const author = await ctx.db.get(row.authorId);
-        return {
-          id: row.aggregateId ?? row._id,
-          author: author
-            ? toMemberView(author)
-            : {
-                _id: row.authorId,
-                _creationTime: 0,
-                isActive: false,
-                createdAt: 0,
-                updatedAt: 0,
-              },
-          text: row.text,
-          createdAt: row.createdAt,
-        };
-      }),
+      rows
+        .filter((row) => !blockedIds.has(row.authorId))
+        .map(async (row): Promise<PuzzleCommentView> => {
+          const author = await ctx.db.get(row.authorId);
+          return {
+            id: row.aggregateId ?? row._id,
+            author: author
+              ? toMemberView(author)
+              : {
+                  _id: row.authorId,
+                  _creationTime: 0,
+                  isActive: false,
+                  createdAt: 0,
+                  updatedAt: 0,
+                },
+            text: row.text,
+            createdAt: row.createdAt,
+          };
+        }),
     );
   },
 });

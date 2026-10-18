@@ -1,8 +1,10 @@
 import type { PuzzleReviewView } from "@jigswap/contracts";
 import { v } from "convex/values";
+import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { toMemberView } from "../identity/toMemberView";
+import { blockedEitherWaySet } from "./blocks";
 
 // Read side: the community reviews on a catalog puzzle DEFINITION — the `puzzleReviews` table, one
 // row per (member, puzzle), keyed by puzzleId directly (the catalog detail page has no copyId).
@@ -19,14 +21,18 @@ import { toMemberView } from "../identity/toMemberView";
 export const listPuzzleReviews = query({
   args: { puzzleId: v.id("puzzles") },
   handler: async (ctx, args): Promise<PuzzleReviewView[]> => {
-    await requireMember(ctx);
+    const viewerId = (await requireMember(ctx)) as unknown as Id<"users">;
+    // Authors blocked either way with the viewer drop out (spec 2.6).
+    const blockedIds = await blockedEitherWaySet(ctx, viewerId);
 
     const rows = (
       await ctx.db
         .query("puzzleReviews")
         .withIndex("by_puzzle", (q) => q.eq("puzzleId", args.puzzleId))
         .collect()
-    ).sort((a, b) => b.updatedAt - a.updatedAt);
+    )
+      .filter((row) => !blockedIds.has(row.userId))
+      .sort((a, b) => b.updatedAt - a.updatedAt);
 
     return Promise.all(
       rows.map(async (row): Promise<PuzzleReviewView> => {

@@ -6,6 +6,7 @@ import { requireMember } from "../identity/requireMember";
 import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 import { canViewCopy } from "../library/canViewCopy";
 import { toOwnedCopyView } from "../library/mappers";
+import { isBlockedEitherWay } from "./blocks";
 
 // Social read: the curated, ordered set of owned copies a member has featured on their profile
 // shelf. Auth-gated. Returns them in the stored order and skips any entry that no longer exists or
@@ -21,6 +22,10 @@ export const featuredShelf = query({
   handler: async (ctx, args): Promise<OwnedCopyView[]> => {
     const viewerId = (await requireMember(ctx)) as unknown as Id<"users">;
     const isOwner = viewerId === args.userId;
+    // Blocked either way (spec 2.6): no shelf, even for a copy the viewer happens to hold.
+    if (!isOwner && (await isBlockedEitherWay(ctx, viewerId, args.userId))) {
+      return [];
+    }
 
     const profile = await ctx.db
       .query("profiles")

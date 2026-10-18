@@ -1,6 +1,8 @@
 import type { PublicPuzzleReviewView } from "@jigswap/contracts";
 import { v } from "convex/values";
 import { query } from "../_generated/server";
+import { optionalActingMember } from "../identity/optionalActingMember";
+import { blockedEitherWaySet } from "./blocks";
 import { projectPublicAuthor } from "./privacy";
 
 // UNAUTHENTICATED read of the community reviews on a catalog definition (the `puzzleReviews`
@@ -17,13 +19,20 @@ export const listPublicPuzzleReviews = query({
   handler: async (ctx, args): Promise<PublicPuzzleReviewView[]> => {
     const puzzle = await ctx.db.get(args.puzzleId);
     if (!puzzle || puzzle.status !== "approved") return [];
+    // Signed in: authors blocked either way with the viewer drop out (spec 2.6).
+    const viewerId = await optionalActingMember(ctx);
+    const blockedIds = viewerId
+      ? await blockedEitherWaySet(ctx, viewerId)
+      : new Set<string>();
 
     const rows = (
       await ctx.db
         .query("puzzleReviews")
         .withIndex("by_puzzle", (q) => q.eq("puzzleId", args.puzzleId))
         .collect()
-    ).sort((a, b) => b.updatedAt - a.updatedAt);
+    )
+      .filter((row) => !blockedIds.has(row.userId))
+      .sort((a, b) => b.updatedAt - a.updatedAt);
 
     return Promise.all(
       rows.map(async (row): Promise<PublicPuzzleReviewView> => ({
