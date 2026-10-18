@@ -4330,6 +4330,19 @@
     "reportName": "{name} melden",
     "reportMember": "Lid melden",
     "reportPhoto": "Foto melden",
-    "exchangeActions": "Ruilacties"
+    "exchangeActions": "Ruilacties",
+    "myReports": {
+      "title": "Jouw meldingen",
+      "empty": "Je hebt nog niets gemeld.",
+      "underReview": "In behandeling",
+      "handled": "Afgehandeld",
+      "target": {
+        "user": "Een lid",
+        "message": "Een bericht",
+        "copy": "Een puzzelexemplaar",
+        "photo": "Een foto",
+        "exchange": "Een ruil"
+      }
+    }
   }
 }

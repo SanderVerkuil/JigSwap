@@ -4330,6 +4330,19 @@
     "reportName": "Report {name}",
     "reportMember": "Report member",
     "reportPhoto": "Report photo",
-    "exchangeActions": "Trade actions"
+    "exchangeActions": "Trade actions",
+    "myReports": {
+      "title": "Your reports",
+      "empty": "You haven't reported anything.",
+      "underReview": "Under review",
+      "handled": "Handled",
+      "target": {
+        "user": "A member",
+        "message": "A message",
+        "copy": "A puzzle copy",
+        "photo": "A photo",
+        "exchange": "A trade"
+      }
+    }
   }
 }
