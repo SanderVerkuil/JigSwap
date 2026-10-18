@@ -198,7 +198,8 @@ const resolveTarget = async (
 };
 
 // A message the reporter can read (a participant of its thread), authored by someone. The
-// evidence is the message plus up to EVIDENCE_PRECEDING_MESSAGES before it, ascending.
+// evidence is the message plus up to EVIDENCE_PRECEDING_MESSAGES before it, ascending. A message
+// a moderator already removed is snapshotted as removed, with an empty body and no copy.
 const messageTarget = async (
   ctx: MutationCtx,
   reporterId: Id<"users">,
@@ -226,14 +227,18 @@ const messageTarget = async (
     )
     .order("desc")
     .take(EVIDENCE_PRECEDING_MESSAGES);
-  const messages = [...preceding.reverse(), message].map((row) => ({
-    messageId: row.messageId,
-    ...(row.authorId !== undefined ? { authorId: row.authorId } : {}),
-    kind: row.kind,
-    body: row.body,
-    sentAt: row.sentAt,
-    ...(row.copyId !== undefined ? { copyId: row.copyId } : {}),
-  }));
+  const messages = [...preceding.reverse(), message].map((row) => {
+    const removed = row.removedAt !== undefined;
+    return {
+      messageId: row.messageId,
+      ...(row.authorId !== undefined ? { authorId: row.authorId } : {}),
+      kind: row.kind,
+      body: removed ? "" : row.body,
+      sentAt: row.sentAt,
+      ...(row.copyId !== undefined && !removed ? { copyId: row.copyId } : {}),
+      ...(removed ? { removed: true as const } : {}),
+    };
+  });
   return {
     targetId: message.messageId,
     reportedUserId: message.authorId,

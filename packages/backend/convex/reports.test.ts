@@ -392,6 +392,51 @@ describe("fileReport: rules", () => {
     expect((await reportRow(t, reportId)).evidence.messages).toEqual(before);
   });
 
+  test("an already-removed neighbour is snapshotted as removed, with an empty body and no copy", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    const first = await file(asAlice(t), {
+      targetKind: "message",
+      targetId: "m10",
+    });
+    await asAdmin(t).mutation(api.admin.decideReport.decideReport, {
+      reportId: first.reportId,
+      decision: "content_removed",
+      statementOfReasons: "Harassing language",
+    });
+    // A legacy tombstone (before bodies were cleared) still has its body on the row.
+    await t.run(async (ctx) => {
+      const m8 = await ctx.db
+        .query("threadMessages")
+        .withIndex("by_message_id", (q) => q.eq("messageId", "m8"))
+        .first();
+      await ctx.db.patch(m8!._id, { removedAt: Date.now() });
+    });
+
+    const { reportId } = await file(asBob(t), {
+      targetKind: "message",
+      targetId: "m11",
+    });
+    const messages = (await reportRow(t, reportId)).evidence.messages!;
+    for (const id of ["m8", "m10"]) {
+      const snapshot = messages.find((m) => m.messageId === id)!;
+      expect(snapshot).toMatchObject({ body: "", removed: true });
+      expect(snapshot).not.toHaveProperty("copyId");
+    }
+    expect(messages.find((m) => m.messageId === "m9")).toEqual({
+      messageId: "m9",
+      authorId: alice,
+      kind: "text",
+      body: "message 9",
+      sentAt: 1009,
+    });
+    expect(messages[messages.length - 1]).toMatchObject({
+      messageId: "m11",
+      authorId: alice,
+      body: "message 11",
+    });
+  });
+
   test("a non-message target carries no message evidence", async () => {
     const t = convexTest(schema, modules);
     const { bob } = await seed(t);
@@ -710,11 +755,13 @@ describe("admin decideReport", () => {
         .withIndex("by_message_id", (q) => q.eq("messageId", "m10"))
         .first(),
     );
-    expect(row).toMatchObject({
-      body: "message 10",
-      removedReason: "harassment_hate",
-    });
+    // The content itself is gone from the row; the report's evidence keeps the original.
+    expect(row).toMatchObject({ body: "", removedReason: "harassment_hate" });
+    expect(row).not.toHaveProperty("copyId");
     expect(typeof row!.removedAt).toBe("number");
+    expect(
+      (await reportRow(t, reportId)).evidence.messages!.slice(-1)[0],
+    ).toMatchObject({ messageId: "m10", body: "message 10" });
     expect(await reportRow(t, reportId)).toMatchObject({
       status: "actioned",
       decision: "content_removed",

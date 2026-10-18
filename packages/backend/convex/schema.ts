@@ -1524,6 +1524,8 @@ export default defineSchema({
             body: v.string(),
             sentAt: v.number(),
             copyId: v.optional(v.id("ownedPuzzles")),
+            // Already moderator-removed when the report was filed: body "" and no copyId.
+            removed: v.optional(v.literal(true)),
           }),
         ),
       ),

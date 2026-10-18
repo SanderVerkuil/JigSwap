@@ -123,7 +123,9 @@ export const decideReport = mutation({
   },
 });
 
-// Remove the reported content: tombstone a message, delete a photo. A target that is already
+// Remove the reported content: tombstone a message (its body and copy reference are cleared too,
+// so the content is gone from the database, not just hidden; the report's evidence snapshot
+// keeps the original), delete a photo. A target that is already
 // gone (removed, or its author deleted it) needs nothing more. Other kinds have no content an
 // admin can remove here.
 const removeContent = async (ctx: MutationCtx, report: Doc<"reports">) => {
@@ -137,6 +139,8 @@ const removeContent = async (ctx: MutationCtx, report: Doc<"reports">) => {
         await ctx.db.patch(message._id, {
           removedAt: Date.now(),
           removedReason: report.reason,
+          body: "",
+          copyId: undefined,
         });
       }
       return;
