@@ -1291,6 +1291,19 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_member", ["memberId"]),
 
+  // Presence settings (federated settings, owned by social). One row per member; no row = never
+  // asked, override "auto". `share` undefined = never chosen; every gate tests `=== true`.
+  presencePreferences: defineTable({
+    memberId: v.id("users"),
+    share: v.optional(v.boolean()),
+    override: v.union(
+      v.literal("auto"),
+      v.literal("away"),
+      v.literal("invisible"),
+    ),
+    updatedAt: v.number(),
+  }).index("by_member", ["memberId"]),
+
   // Web Push subscriptions: one row per browser/device a member has granted push permission on. The
   // push channel (notifications/sendWebPush) fans a notification out to every active subscription of
   // the recipient via the Web Push protocol (VAPID). A subscription that the push service reports as
