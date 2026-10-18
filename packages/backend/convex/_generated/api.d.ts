@@ -400,6 +400,7 @@ import type * as sharing_getCircle from "../sharing/getCircle.js";
 import type * as sharing_inviteToCircle from "../sharing/inviteToCircle.js";
 import type * as sharing_leaveCircle from "../sharing/leaveCircle.js";
 import type * as sharing_listCircleInvites from "../sharing/listCircleInvites.js";
+import type * as sharing_listCircleSharedCopies from "../sharing/listCircleSharedCopies.js";
 import type * as sharing_listInvitableMembers from "../sharing/listInvitableMembers.js";
 import type * as sharing_listMyCircleInvites from "../sharing/listMyCircleInvites.js";
 import type * as sharing_listMyCircles from "../sharing/listMyCircles.js";
@@ -900,6 +901,7 @@ declare const fullApi: ApiFromModules<{
   "sharing/inviteToCircle": typeof sharing_inviteToCircle;
   "sharing/leaveCircle": typeof sharing_leaveCircle;
   "sharing/listCircleInvites": typeof sharing_listCircleInvites;
+  "sharing/listCircleSharedCopies": typeof sharing_listCircleSharedCopies;
   "sharing/listInvitableMembers": typeof sharing_listInvitableMembers;
   "sharing/listMyCircleInvites": typeof sharing_listMyCircleInvites;
   "sharing/listMyCircles": typeof sharing_listMyCircles;

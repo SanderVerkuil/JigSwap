@@ -521,6 +521,10 @@ export const gateway = {
     shareCopyToCircle: api.sharing.shareCopyToCircle.shareCopyToCircle,
     myCircles: api.sharing.listMyCircles.listMyCircles,
     circle: api.sharing.getCircle.getCircle,
+    // The circle page's shared puzzles: members only (CircleNotFound otherwise), canViewCopy per
+    // copy, private copies left out; a bounded newest-first strip.
+    circleSharedCopies:
+      api.sharing.listCircleSharedCopies.listCircleSharedCopies,
     // Invitations: an Admin invites a contactable member, the invitee accepts or declines, the
     // inviter or any Admin revokes. A pending invite grants nothing until accepted.
     inviteToCircle: api.sharing.inviteToCircle.inviteToCircle,
