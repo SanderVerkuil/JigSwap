@@ -9,12 +9,16 @@
 // every outcome, so a misconfigured or unreachable classifier is visible instead of a silent pass.
 //
 // ENV (per Convex deployment):
-//   MODERATION_PROVIDER       — "huggingface" (default) | "none" (explicitly disabled: approves
-//                               without classifying, logged as outcome "disabled").
+//   MODERATION_PROVIDER       — "huggingface" (default) | "sightengine" | "none" (explicitly
+//                               disabled: approves without classifying, logged as "disabled").
 //   HF_MODERATION_TOKEN       — Hugging Face access token with the "Inference Providers"
 //                               permission. Unset => every photo is "unscored" (missing_token).
 //   HF_MODERATION_MODEL       — optional model id, default Falconsai/nsfw_image_detection. Must be
 //                               served by the hf-inference provider and emit an "nsfw" label.
+//   SIGHTENGINE_API_USER      — Sightengine API user (provider "sightengine").
+//   SIGHTENGINE_SECRET_KEY    — Sightengine API secret (provider "sightengine"). Either missing =>
+//                               every photo is "unscored" (missing_token).
+//   SIGHTENGINE_MODEL         — optional, default nudity-2.1.
 //   MODERATION_NSFW_THRESHOLD — float in [0,1], default 0.85. nsfw score >= threshold => rejected.
 
 export const DEFAULT_NSFW_THRESHOLD = 0.85;
@@ -294,6 +298,189 @@ export const makeNoopModerationPort = (): PhotoModerationPort => ({
   },
 });
 
+// --- Sightengine (Kozelo SAS, Paris) -------------------------------------------------------------
+
+/** Sightengine's image check endpoint (multipart upload: media + models + api_user + api_secret). */
+export const SIGHTENGINE_ENDPOINT =
+  "https://api.sightengine.com/1.0/check.json";
+
+/** The default Sightengine nudity model. */
+export const SIGHTENGINE_MODEL = "nudity-2.1";
+
+/**
+ * nudity-2.1's explicit classes. Its scores are inclusive (a more explicit class also raises the
+ * milder ones), and the suggestive classes (bikini, cleavage, …) are not nudity, so the decisive
+ * "nsfw" score is the highest of these three — the same meaning as the HF model's nsfw label, so
+ * one MODERATION_NSFW_THRESHOLD works for both providers.
+ */
+export const SIGHTENGINE_EXPLICIT_CLASSES = [
+  "sexual_activity",
+  "sexual_display",
+  "erotica",
+] as const;
+
+const SIGHTENGINE_INTENSITY_CLASSES = [
+  ...SIGHTENGINE_EXPLICIT_CLASSES,
+  "very_suggestive",
+  "suggestive",
+  "mildly_suggestive",
+  "none",
+] as const;
+
+/**
+ * Map a Sightengine error (HTTP status and/or the body's `error.type`) to an unscored reason.
+ * Their error types: credentials_error, plan_error, usage_limit, media_error, argument_error,
+ * request_error, api_error, unknown_error; throttling is an HTTP 429.
+ */
+export const classifySightengineFailure = (
+  httpStatus: number,
+  errorType: string | undefined,
+): { reason: UnscoredReason; retryable: boolean } => {
+  if (httpStatus === 429 || errorType === "usage_limit") {
+    return { reason: "rate_limited", retryable: true };
+  }
+  if (
+    httpStatus === 401 ||
+    httpStatus === 403 ||
+    errorType === "credentials_error" ||
+    errorType === "plan_error"
+  ) {
+    return { reason: "auth", retryable: false };
+  }
+  if (httpStatus >= 500 || errorType === "api_error") {
+    return { reason: "provider_error", retryable: true };
+  }
+  // media_error / argument_error / request_error / unknown 4xx: retrying the same image won't help.
+  return { reason: "provider_error", retryable: false };
+};
+
+/** Turn a successful nudity response into a decision (pure; unit-tested). */
+export const decideFromSightengine = (
+  body: unknown,
+  threshold: number,
+): ModerationResult => {
+  const nudity =
+    body && typeof body === "object"
+      ? (body as { nudity?: Record<string, unknown> }).nudity
+      : undefined;
+  const scores: ModerationLabelScore[] = [];
+  if (nudity && typeof nudity === "object") {
+    for (const label of SIGHTENGINE_INTENSITY_CLASSES) {
+      const score = nudity[label];
+      if (typeof score === "number") scores.push({ label, score });
+    }
+  }
+  const explicit = scores.filter((s) =>
+    (SIGHTENGINE_EXPLICIT_CLASSES as readonly string[]).includes(s.label),
+  );
+  if (explicit.length !== SIGHTENGINE_EXPLICIT_CLASSES.length) {
+    return unscoredResult("bad_response", false, 200, scores);
+  }
+  const top = explicit.reduce((a, b) => (b.score > a.score ? b : a));
+  return {
+    status: top.score >= threshold ? "rejected" : "approved",
+    outcome: "scored",
+    score: top.score,
+    label: top.label,
+    scores,
+    reason: null,
+    retryable: false,
+    httpStatus: 200,
+  };
+};
+
+/** Options for the Sightengine adapter; injected so tests can supply a fake fetch. */
+export interface SightengineModerationOptions {
+  apiUser: string | undefined;
+  apiSecret: string | undefined;
+  threshold: number;
+  model?: string;
+  fetchImpl?: typeof fetch;
+  logger?: Pick<Console, "warn" | "error">;
+}
+
+/**
+ * The Sightengine adapter: multipart-uploads the image to check.json with the nudity model and
+ * decides from the explicit classes. Same contract as the HF adapter: any failure is "unscored"
+ * with a reason (never approved), it never throws, and it never logs the credentials.
+ */
+export const makeSightengineModerationPort = (
+  opts: SightengineModerationOptions,
+): PhotoModerationPort => {
+  const fetchImpl = opts.fetchImpl ?? fetch;
+  const log = opts.logger ?? console;
+  return {
+    async classify(
+      bytes: Uint8Array,
+      mime?: string,
+    ): Promise<ModerationResult> {
+      if (!opts.apiUser || !opts.apiSecret) {
+        log.warn(
+          "[moderation] SIGHTENGINE_API_USER / SIGHTENGINE_SECRET_KEY unset; photo left unscored.",
+        );
+        return unscoredResult("missing_token", false);
+      }
+      const form = new FormData();
+      form.append(
+        "media",
+        new Blob([toArrayBuffer(bytes)], {
+          type: mime ?? "application/octet-stream",
+        }),
+        mime === "image/png" ? "photo.png" : "photo.jpg",
+      );
+      form.append("models", opts.model ?? SIGHTENGINE_MODEL);
+      form.append("api_user", opts.apiUser);
+      form.append("api_secret", opts.apiSecret);
+
+      let response: Response;
+      try {
+        response = await fetchImpl(SIGHTENGINE_ENDPOINT, {
+          method: "POST",
+          body: form,
+          signal: AbortSignal.timeout(HF_TIMEOUT_MS),
+        });
+      } catch (error) {
+        log.error(
+          "[moderation] Sightengine request failed; photo left unscored.",
+          error instanceof Error ? error.message : String(error),
+        );
+        return unscoredResult("network", true);
+      }
+      let body: unknown;
+      try {
+        body = await response.json();
+      } catch {
+        body = undefined;
+      }
+      const error =
+        body && typeof body === "object"
+          ? (body as {
+              status?: string;
+              error?: { type?: string; message?: string };
+            })
+          : undefined;
+      if (!response.ok || error?.status === "failure") {
+        const { reason, retryable } = classifySightengineFailure(
+          response.status,
+          error?.error?.type,
+        );
+        // Only the error type/message is logged: the request (and its credentials) never is.
+        log.error(
+          `[moderation] Sightengine returned ${response.status} (${error?.error?.type ?? "no error type"}: ${error?.error?.message ?? ""}); photo left unscored.`,
+        );
+        return unscoredResult(reason, retryable, response.status);
+      }
+      if (body === undefined) {
+        log.error(
+          "[moderation] Sightengine returned a non-JSON body; photo left unscored.",
+        );
+        return unscoredResult("bad_response", false, response.status);
+      }
+      return decideFromSightengine(body, opts.threshold);
+    },
+  };
+};
+
 /** Read MODERATION_NSFW_THRESHOLD as a float in [0,1], falling back to the default if unparseable. */
 export const readThreshold = (raw: string | undefined): number => {
   if (raw == null) return DEFAULT_NSFW_THRESHOLD;
@@ -309,16 +496,24 @@ export interface ModerationEnv {
   MODERATION_PROVIDER?: string;
   HF_MODERATION_TOKEN?: string;
   HF_MODERATION_MODEL?: string;
+  SIGHTENGINE_API_USER?: string;
+  SIGHTENGINE_SECRET_KEY?: string;
+  SIGHTENGINE_MODEL?: string;
   MODERATION_NSFW_THRESHOLD?: string;
 }
 
-/** The normalised provider name: "none" disables screening; anything else means Hugging Face. */
-export const readProvider = (
-  raw: string | undefined,
-): "huggingface" | "none" =>
-  (raw ?? "huggingface").trim().toLowerCase() === "none"
-    ? "none"
-    : "huggingface";
+export type ModerationProvider = "huggingface" | "sightengine" | "none";
+
+/**
+ * The normalised provider name: "none" disables screening, "sightengine" selects Sightengine, and
+ * anything else (unset or a typo) means Hugging Face — a typo never silently disables screening.
+ */
+export const readProvider = (raw: string | undefined): ModerationProvider => {
+  const value = (raw ?? "huggingface").trim().toLowerCase();
+  if (value === "none") return "none";
+  if (value === "sightengine") return "sightengine";
+  return "huggingface";
+};
 
 /**
  * Select + build the configured moderation port from environment values. Defaults to the Hugging
@@ -329,8 +524,17 @@ export const makeModerationPortFromEnv = (
   env: ModerationEnv,
   deps?: { fetchImpl?: typeof fetch; logger?: Pick<Console, "warn" | "error"> },
 ): PhotoModerationPort => {
-  if (readProvider(env.MODERATION_PROVIDER) === "none") {
-    return makeNoopModerationPort();
+  const provider = readProvider(env.MODERATION_PROVIDER);
+  if (provider === "none") return makeNoopModerationPort();
+  if (provider === "sightengine") {
+    return makeSightengineModerationPort({
+      apiUser: sanitizeToken(env.SIGHTENGINE_API_USER),
+      apiSecret: sanitizeToken(env.SIGHTENGINE_SECRET_KEY),
+      threshold: readThreshold(env.MODERATION_NSFW_THRESHOLD),
+      model: env.SIGHTENGINE_MODEL?.trim() || SIGHTENGINE_MODEL,
+      fetchImpl: deps?.fetchImpl,
+      logger: deps?.logger,
+    });
   }
   return makeHuggingFaceModerationPort({
     token: sanitizeToken(env.HF_MODERATION_TOKEN),
@@ -346,8 +550,10 @@ export const makeModerationPortFromEnv = (
  * provider is enabled and a token is present. Used by the admin indicator and the post-deploy probe.
  */
 export interface ScreeningConfig {
-  provider: "huggingface" | "none";
+  provider: ModerationProvider;
   tokenConfigured: boolean;
+  /** The env var NAMES the selected provider needs but that are unset (never values). */
+  missingVars: string[];
   model: string;
   endpoint: string;
   threshold: number;
@@ -357,18 +563,33 @@ export interface ScreeningConfig {
 
 export const readScreeningConfig = (env: ModerationEnv): ScreeningConfig => {
   const provider = readProvider(env.MODERATION_PROVIDER);
-  const tokenConfigured = sanitizeToken(env.HF_MODERATION_TOKEN) !== undefined;
-  const model = readModel(env.HF_MODERATION_MODEL);
+  const required: (keyof ModerationEnv)[] =
+    provider === "sightengine"
+      ? ["SIGHTENGINE_API_USER", "SIGHTENGINE_SECRET_KEY"]
+      : provider === "huggingface"
+        ? ["HF_MODERATION_TOKEN"]
+        : [];
+  const missingVars = required.filter(
+    (name) => sanitizeToken(env[name]) === undefined,
+  );
+  const model =
+    provider === "sightengine"
+      ? env.SIGHTENGINE_MODEL?.trim() || SIGHTENGINE_MODEL
+      : readModel(env.HF_MODERATION_MODEL);
   return {
     provider,
-    tokenConfigured,
+    tokenConfigured: provider !== "none" && missingVars.length === 0,
+    missingVars,
     model,
-    endpoint: hfInferenceEndpoint(model),
+    endpoint:
+      provider === "sightengine"
+        ? SIGHTENGINE_ENDPOINT
+        : hfInferenceEndpoint(model),
     threshold: readThreshold(env.MODERATION_NSFW_THRESHOLD),
     status:
       provider === "none"
         ? "disabled"
-        : tokenConfigured
+        : missingVars.length === 0
           ? "ok"
           : "missing_token",
   };

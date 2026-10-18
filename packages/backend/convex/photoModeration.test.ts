@@ -350,6 +350,7 @@ describe("readScreeningConfig", () => {
     expect(readScreeningConfig({ HF_MODERATION_TOKEN: "hf_x" })).toEqual({
       provider: "huggingface",
       tokenConfigured: true,
+      missingVars: [],
       model: HF_MODEL,
       endpoint: hfInferenceEndpoint(HF_MODEL),
       threshold: DEFAULT_NSFW_THRESHOLD,

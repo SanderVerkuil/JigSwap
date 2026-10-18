@@ -150,7 +150,8 @@ the rows that were never actually checked: `moderationStatus` `"unscored"`, or a
 (or absent, the legacy default) **without** a `moderationScore`. Rows that are pending,
 rejected or already scored are skipped. Photos are classified one at a time and each
 batch reschedules itself 10 s later (`batchSize` and `delayMs` override this), which
-keeps it inside the Hugging Face free-tier rate limits.
+keeps it inside the free-tier rate limits of the screening provider (Hugging Face or
+Sightengine).
 
 - Clean score: the row is set to approved with its score.
 - nsfw score at or above the threshold: the row is rejected, exactly like a fresh upload.
