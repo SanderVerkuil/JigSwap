@@ -20,15 +20,29 @@ const def = (): NotificationPreference =>
   NotificationPreference.createDefault(id, alice, NOW);
 
 describe("NotificationPreference.createDefault", () => {
-  it("enables every type on inApp and disables email/push by default", () => {
+  it("enables every type on inApp and disables email/push by default, except circle message push", () => {
     const pref = def();
     for (const type of NOTIFICATION_TYPES) {
       expect(pref.allows(type, "inApp")).toBe(true);
       expect(pref.allows(type, "email")).toBe(false);
-      expect(pref.allows(type, "push")).toBe(false);
+      expect(pref.allows(type, "push")).toBe(
+        type === "circle_message_received",
+      );
     }
     expect(pref.id).toBe(id);
     expect(pref.memberId).toBe(alice);
+  });
+
+  it("a stored row written before a type existed falls back to that type's default", () => {
+    const pref = NotificationPreference.rehydrate({
+      id,
+      memberId: alice,
+      toggles: { message_received: { inApp: true, email: true, push: false } },
+      updatedAt: NOW,
+    });
+    expect(pref.allows("circle_message_received", "inApp")).toBe(true);
+    expect(pref.allows("circle_message_received", "push")).toBe(true);
+    expect(pref.allows("circle_message_received", "email")).toBe(false);
   });
 
   it("records no events on construction", () => {

@@ -22,12 +22,20 @@ export interface NotificationPreferenceState {
   readonly updatedAt: Date;
 }
 
-// Build the sensible default toggle map: every type enabled on inApp, email/push off. This is the
-// policy a member with no stored preference gets (the application layer materialises one of these).
+// Types whose push is on by default. Circle (group) messages push by default so a group chat is
+// noticed; the backend throttles them per thread, and nothing reaches a member without a push
+// subscription anyway.
+const PUSH_BY_DEFAULT: ReadonlySet<NotificationType> = new Set([
+  "circle_message_received",
+]);
+
+// Build the sensible default toggle map: every type enabled on inApp, email off, push off except
+// PUSH_BY_DEFAULT. This is the policy a member with no stored preference gets (the application
+// layer materialises one of these).
 const defaultToggles = (): Record<NotificationType, ResolvedChannelToggles> => {
   const map = {} as Record<NotificationType, ResolvedChannelToggles>;
   for (const type of NOTIFICATION_TYPES) {
-    map[type] = { inApp: true, email: false, push: false };
+    map[type] = { inApp: true, email: false, push: PUSH_BY_DEFAULT.has(type) };
   }
   return map;
 };
