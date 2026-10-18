@@ -6,7 +6,7 @@ import {
   toMessageId,
   toThreadId,
 } from "../../shared-kernel";
-import { MAX_MESSAGE_LENGTH } from "./errors";
+import { MAX_CAPTION_LENGTH, MAX_MESSAGE_LENGTH } from "./errors";
 import { MessagePosted } from "./events";
 import { MemberId, MessageId, ThreadId } from "./ids";
 import { Thread, ThreadSubject } from "./thread";
@@ -56,21 +56,6 @@ describe("Thread.postMessage", () => {
     expect(posted.authorId).toBe(alice);
     expect(posted.messageId).toBe(msg1);
     expect(posted.kind).toBe("text");
-  });
-
-  it("treats an image body as a storage reference and accepts it", () => {
-    const thread = openThread();
-
-    const result = thread.postMessage({
-      id: msg1,
-      authorId: bob,
-      kind: "image",
-      body: "storage://abc",
-      sentAt: NOW,
-    });
-
-    expect(result.isOk).toBe(true);
-    if (result.isOk) expect(result.value.kind).toBe("image");
   });
 
   it("rejects a non-participant author and appends nothing", () => {
@@ -224,6 +209,159 @@ describe("Thread.postMessage", () => {
     expect(about.isOk && about.value.copyId).toBe(copyId);
     expect(plain.isOk && plain.value.copyId).toBeUndefined();
     expect(thread.toState().messages[0]?.copyId).toBe(copyId);
+  });
+});
+
+describe("Thread.postMessage text vs media rules", () => {
+  it("rejects a text message that carries an attachment", () => {
+    const thread = openThread();
+
+    const result = thread.postMessage({
+      id: msg1,
+      authorId: alice,
+      kind: "text",
+      body: "hello",
+      sentAt: NOW,
+      attachmentRef: "att-1",
+    });
+
+    expect(result.isErr).toBe(true);
+    if (result.isErr) expect(result.error.code).toBe("AttachmentNotAllowed");
+    expect(thread.messages).toHaveLength(0);
+    expect(thread.pullEvents()).toHaveLength(0);
+  });
+
+  it.each(["image", "location"] as const)(
+    "appends a %s message with its attachment and caption, recording MessagePosted with the kind",
+    (kind) => {
+      const thread = openThread();
+
+      const result = thread.postMessage({
+        id: msg1,
+        authorId: bob,
+        kind,
+        body: "the meeting spot",
+        sentAt: NOW,
+        attachmentRef: "att-1",
+      });
+
+      expect(result.isOk).toBe(true);
+      if (!result.isOk) return;
+      expect(result.value.kind).toBe(kind);
+      expect(result.value.body).toBe("the meeting spot");
+      expect(result.value.attachmentRef).toBe("att-1");
+      expect(thread.toState().messages[0]?.attachmentRef).toBe("att-1");
+      const events = thread.pullEvents();
+      expect(events.map((e) => e.name)).toEqual(["MessagePosted"]);
+      expect((events[0] as unknown as { kind: string }).kind).toBe(kind);
+    },
+  );
+
+  it.each(["image", "location"] as const)(
+    "accepts a %s message with an empty caption",
+    (kind) => {
+      const thread = openThread();
+
+      const result = thread.postMessage({
+        id: msg1,
+        authorId: bob,
+        kind,
+        body: "",
+        sentAt: NOW,
+        attachmentRef: "att-1",
+      });
+
+      expect(result.isOk).toBe(true);
+      if (result.isOk) expect(result.value.body).toBe("");
+    },
+  );
+
+  it.each([
+    ["image", undefined],
+    ["image", ""],
+    ["location", undefined],
+    ["location", "  "],
+  ] as const)(
+    "rejects a %s message without an attachment (ref %j) with AttachmentRequired",
+    (kind, attachmentRef) => {
+      const thread = openThread();
+
+      const result = thread.postMessage({
+        id: msg1,
+        authorId: bob,
+        kind,
+        body: "caption",
+        sentAt: NOW,
+        ...(attachmentRef !== undefined && { attachmentRef }),
+      });
+
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("AttachmentRequired");
+      expect(thread.messages).toHaveLength(0);
+      expect(thread.pullEvents()).toHaveLength(0);
+    },
+  );
+
+  it("accepts a caption of exactly MAX_CAPTION_LENGTH", () => {
+    const thread = openThread();
+
+    const result = thread.postMessage({
+      id: msg1,
+      authorId: bob,
+      kind: "image",
+      body: "c".repeat(MAX_CAPTION_LENGTH),
+      sentAt: NOW,
+      attachmentRef: "att-1",
+    });
+
+    expect(result.isOk).toBe(true);
+  });
+
+  it("rejects a caption longer than MAX_CAPTION_LENGTH with CaptionTooLong (not MessageTooLong)", () => {
+    const thread = openThread();
+
+    const result = thread.postMessage({
+      id: msg1,
+      authorId: bob,
+      kind: "location",
+      body: "c".repeat(MAX_CAPTION_LENGTH + 1),
+      sentAt: NOW,
+      attachmentRef: "att-1",
+    });
+
+    expect(result.isErr).toBe(true);
+    if (result.isErr) expect(result.error.code).toBe("CaptionTooLong");
+    expect(thread.messages).toHaveLength(0);
+  });
+
+  it("still applies the text limit to text: a body over MAX_CAPTION_LENGTH is fine", () => {
+    const thread = openThread();
+
+    const result = thread.postMessage({
+      id: msg1,
+      authorId: alice,
+      kind: "text",
+      body: "t".repeat(MAX_CAPTION_LENGTH + 1),
+      sentAt: NOW,
+    });
+
+    expect(result.isOk).toBe(true);
+    if (result.isOk) expect(result.value.attachmentRef).toBeUndefined();
+  });
+
+  it("rejects a media post from a non-participant before checking the attachment", () => {
+    const thread = openThread();
+
+    const result = thread.postMessage({
+      id: msg1,
+      authorId: carol,
+      kind: "image",
+      body: "",
+      sentAt: NOW,
+    });
+
+    expect(result.isErr).toBe(true);
+    if (result.isErr) expect(result.error.code).toBe("NotParticipant");
   });
 });
 

@@ -67,10 +67,16 @@ export const renderEmail = async (
     : input.params;
   const values = { ...DEFAULT_PARAMS[input.locale], ...params };
   const footer = FOOTER[input.locale];
+  const messageKind = params["messageKind"];
+  const mediaBody =
+    messageKind === "image" || messageKind === "location"
+      ? copy.mediaBody?.[messageKind]
+      : undefined;
   const body =
-    copy.richBody && hasValues(copy.richBody, params, "actorName")
+    mediaBody ??
+    (copy.richBody && hasValues(copy.richBody, params, "actorName")
       ? copy.richBody
-      : copy.body;
+      : copy.body);
   const detail =
     copy.detail && hasValues(copy.detail, params)
       ? interpolate(copy.detail, values)

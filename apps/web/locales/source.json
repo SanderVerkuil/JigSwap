@@ -2096,7 +2096,7 @@
         "sentence": "{hasPuzzle, select, yes {<b>{actor}</b> flagged an issue with your trade for <b>{puzzle}</b>.} other {<b>{actor}</b> flagged an issue with your trade.}}"
       },
       "message_received": {
-        "sentence": "<b>{actor}</b> sent you a message.",
+        "sentence": "{media, select, image {<b>{actor}</b> sent a photo.} location {<b>{actor}</b> shared a location.} other {<b>{actor}</b> sent you a message.}}",
         "sentenceAnonymous": "You have a new message.",
         "actions": {
           "reply": "Reply",

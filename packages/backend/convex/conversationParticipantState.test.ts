@@ -1,4 +1,4 @@
-import { toMemberId, toMessageId, toThreadId } from "@jigswap/domain";
+import { Thread, toMemberId, toMessageId, toThreadId } from "@jigswap/domain";
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError, type Value } from "convex/values";
 import { afterEach, describe, expect, test, vi } from "vitest";
@@ -74,8 +74,9 @@ const post = async (
   });
 };
 
-// A legacy-shaped image message: postMessage is text-only, so it goes through the repository the
-// way a pre-#145 image row was written.
+// A legacy-shaped image message: postMessage is text-only, and the aggregate now refuses an image
+// without an attachment, so the attachment-less message is rehydrated onto the thread and saved
+// through the repository the way a pre-#145 image row was written.
 const postLegacyImage = async (
   t: T,
   authorId: Id<"users">,
@@ -87,15 +88,19 @@ const postLegacyImage = async (
     const repository = convexThreadRepository(ctx);
     const thread = await repository.findById(toThreadId(threadId));
     if (!thread) throw new Error("thread not found");
-    const posted = thread.postMessage({
-      id: toMessageId(crypto.randomUUID()),
-      authorId: toMemberId(authorId as string),
-      kind: "image",
-      body,
-      sentAt: new Date(),
+    const legacy = Thread.rehydrate({
+      ...thread.toState(),
+      messages: [
+        {
+          id: toMessageId(crypto.randomUUID()),
+          authorId: toMemberId(authorId as string),
+          kind: "image",
+          body,
+          sentAt: new Date(),
+        },
+      ],
     });
-    if (!posted.isOk) throw new Error("postMessage failed");
-    await repository.save(thread);
+    await repository.save(legacy);
   });
 };
 

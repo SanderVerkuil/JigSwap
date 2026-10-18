@@ -98,6 +98,11 @@ export interface NotificationViewContext {
   /** The latest text message in the thread, ~80 chars (thread participants only). */
   messagePreview?: string;
   /**
+   * Set instead of `messagePreview` when the latest message is a photo or a shared location, so
+   * copy can say "{name} sent a photo" / "{name} shared a location" (never a caption).
+   */
+  messageKind?: "image" | "location";
+  /**
    * The stored actor name of a row without actor refs (legacy), for types whose actor contacted
    * the viewer. Absent whenever `actors` is resolved.
    */

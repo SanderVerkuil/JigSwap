@@ -15,7 +15,8 @@ export interface ThreadMessageView {
    * no author id ever crosses the wire — a hidden member's raw id would de-anonymise them.
    */
   readonly isMine: boolean;
-  readonly kind: "text" | "image" | "system";
+  readonly kind: "text" | "image" | "location" | "system";
+  /** Text: the message. Media (image/location): the optional caption, "" when none. */
   readonly body: string;
   /** Epoch millis the message was sent. */
   readonly sentAt: number;
@@ -31,6 +32,11 @@ export interface ThreadMessageView {
    * "no longer available" placeholder instead of the card.
    */
   readonly copyUnavailable?: true;
+  /**
+   * The media message's attachment id (image/location rows that have one). Thread reads only; the
+   * inbox preview never carries it. The attachment itself is resolved by a later read model.
+   */
+  readonly attachmentId?: string;
 }
 
 /**

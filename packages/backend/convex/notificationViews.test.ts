@@ -771,6 +771,47 @@ describe("message_received", () => {
     expect(view.actors).toEqual([{ anonymous: true }]);
   });
 
+  // The latest message is media: the view names its kind and never carries its caption.
+  const seedMediaMessage = (
+    s: Setup,
+    kind: "image" | "location",
+    attachmentId?: string,
+  ) =>
+    s.t.run((ctx) =>
+      ctx.db.insert("threadMessages", {
+        threadAggregateId: "thread-1",
+        messageId: "m3",
+        authorId: s.mara,
+        kind,
+        body: "secret caption",
+        sentAt: now + 2,
+        ...(attachmentId !== undefined && { attachmentId }),
+      }),
+    );
+
+  test.each(["image", "location"] as const)(
+    "a latest %s message yields its kind and no preview",
+    async (kind) => {
+      const s = await setup();
+      await seedThread(s, [s.viewer, s.mara]);
+      await seedMediaMessage(s, kind, "att-1");
+      const view = await onlyView(s);
+      expect(view.context.messageKind).toBe(kind);
+      expect(view.context).not.toHaveProperty("messagePreview");
+      expect(JSON.stringify(view)).not.toContain("secret caption");
+      expect(JSON.stringify(view)).not.toContain("att-1");
+    },
+  );
+
+  test("a latest legacy image row (no attachment) yields neither kind nor preview", async () => {
+    const s = await setup();
+    await seedThread(s, [s.viewer, s.mara]);
+    await seedMediaMessage(s, "image");
+    const view = await onlyView(s);
+    expect(view.context).not.toHaveProperty("messageKind");
+    expect(view.context).not.toHaveProperty("messagePreview");
+  });
+
   test("a former participant gets no preview, no reply and no thread link", async () => {
     const s = await setup();
     await seedThread(s, [s.other, s.mara]);

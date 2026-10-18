@@ -433,9 +433,21 @@ const resolveSubject = async (
       );
       const preview =
         last && last.kind === "text" ? messagePreviewOf(last.body) : undefined;
+      // A media message is described by its kind, never by its caption. Attachment-less (legacy)
+      // image rows get neither: there is no real photo behind them.
+      const messageKind =
+        last &&
+        (last.kind === "image" || last.kind === "location") &&
+        last.attachmentId !== undefined
+          ? last.kind
+          : undefined;
       return {
         available: true,
-        context: preview ? { messagePreview: preview } : {},
+        context: preview
+          ? { messagePreview: preview }
+          : messageKind
+            ? { messageKind }
+            : {},
         decision: decideMessage(true),
       };
     }

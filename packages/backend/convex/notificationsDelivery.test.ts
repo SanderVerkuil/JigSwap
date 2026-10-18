@@ -11,6 +11,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import { emailChannel } from "./notifications/adapters/channels/emailChannel";
 import { pushChannel } from "./notifications/adapters/channels/pushChannel";
+import { pushTextOf } from "./notifications/copy";
 import schema from "./schema";
 
 // web-push signs and POSTs to the push service over https; replace it so the send action's payload
@@ -246,6 +247,38 @@ describe("resolveForDelivery: context and deep links", () => {
       },
       actorAnonymous: false,
       href: "/messages/thread-1",
+    });
+  });
+
+  test("message_received for a photo carries its kind, never the caption or attachment", async () => {
+    const s = await setup();
+    await seedThread(s, [s.viewer, s.mara]);
+    await s.t.run((ctx) =>
+      ctx.db.insert("threadMessages", {
+        threadAggregateId: "thread-1",
+        messageId: "m2",
+        authorId: s.mara,
+        kind: "image",
+        body: "secret caption",
+        sentAt: now + 1,
+        attachmentId: "att-1",
+      }),
+    );
+    const content = await resolve(s, {
+      recipientId: s.viewer,
+      type: "message_received",
+      params: { actorName: "Mara Display" },
+      relatedId: "thread-1",
+      actorId: s.mara,
+      subject: { kind: "thread", threadId: "thread-1" },
+    });
+    expect(content?.params).toEqual({
+      actorName: "Mara Display",
+      messageKind: "image",
+    });
+    expect(pushTextOf("message_received", content!)).toEqual({
+      title: "New message from Mara Display",
+      message: "Mara Display sent a photo",
     });
   });
 

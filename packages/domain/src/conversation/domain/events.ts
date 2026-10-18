@@ -7,7 +7,7 @@ import { ThreadSubject } from "./thread";
 // immutable records: the Thread records them; an outbound publisher (1b) serialises and
 // dispatches them to subscribers (Notifications, the other participant's unread badge).
 
-// A message was appended to a thread. `authorId` is the posting member for text/image messages
+// A message was appended to a thread. `authorId` is the posting member for member-authored messages
 // and null for service-authored system messages. Carries `kind` and the scoping `subject` so
 // subscribers need not reload the thread to route a notification.
 export class MessagePosted implements DomainEvent {

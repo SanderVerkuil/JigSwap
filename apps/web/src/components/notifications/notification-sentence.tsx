@@ -88,6 +88,8 @@ export function NotificationSentence({ view }: { view: NotificationView }) {
     hasPuzzle: context.puzzleTitle ? "yes" : "no",
     goal: context.goalTitle ?? "",
     hasGoal: context.goalTitle ? "yes" : "no",
+    // message_received: a photo or shared location is named by its kind, never its caption.
+    media: context.messageKind ?? "none",
     b: bold,
   };
   const key =

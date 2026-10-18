@@ -1,6 +1,7 @@
 import type { ThreadMessageView } from "@jigswap/contracts";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
+import { isUnattachedMedia } from "./adapters/threadMapper";
 import { viewableCopyCards } from "./copyCard";
 
 // Shared row->DTO mapping and unread logic for the conversation read models. Read models page
@@ -17,19 +18,23 @@ export const threadRowByAggregateId = (
     .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", threadAggregateId))
     .unique();
 
-// The message columns a DTO is built from: a `threadMessages` row or a thread's denormalized
-// `lastMessage` summary.
+// The message columns a DTO is built from.
 type MessageFields = Pick<
   Doc<"threadMessages">,
-  "messageId" | "authorId" | "kind" | "body" | "sentAt"
+  "messageId" | "authorId" | "kind" | "body" | "sentAt" | "attachmentId"
 >;
 
 /**
  * Message row -> DTO for viewer `me`. Authorship is viewer-relative (`isMine`); the raw author id
  * never leaves the server (it would de-anonymise a hidden member). A system message's absent
- * author column is never `me`, so it maps to `isMine: false`. An `image` row's body is BLANKED:
- * `postMessage` no longer accepts images, and any legacy image row's body is an unverified,
- * client-supplied string (never screened or ownership-checked), so it must never reach a renderer.
+ * author column is never `me`, so it maps to `isMine: false`. A media row (image/location) carries
+ * its caption as `body` plus its `attachmentId`. A media row WITHOUT an attachment has its body
+ * BLANKED: `postMessage` no longer accepts images, and any legacy image row's body is an
+ * unverified, client-supplied string (never screened or ownership-checked), so it must never reach
+ * a renderer.
+ *
+ * Seam: the attachments PR resolves `attachmentId` into an `attachment` view (status, URLs) for
+ * the reader in threadMessageViewOf, the way `copyId` resolves into `copy`.
  */
 export const toThreadMessageView = (
   row: MessageFields,
@@ -38,8 +43,25 @@ export const toThreadMessageView = (
   id: row.messageId,
   isMine: row.authorId === me,
   kind: row.kind,
-  body: row.kind === "image" ? "" : row.body,
+  body: isUnattachedMedia(row) ? "" : row.body,
   sentAt: row.sentAt,
+  ...(row.attachmentId !== undefined && { attachmentId: row.attachmentId }),
+});
+
+/**
+ * A thread's denormalized `lastMessage` summary -> the inbox preview DTO. The summary was
+ * sanitized when written (toLastMessage: truncated, unattached media blanked) and never carries an
+ * attachment ref, so its body is used as-is.
+ */
+export const toLastMessageView = (
+  summary: NonNullable<Doc<"threads">["lastMessage"]>,
+  me: Id<"users">,
+): ThreadMessageView => ({
+  id: summary.messageId,
+  isMine: summary.authorId === me,
+  kind: summary.kind,
+  body: summary.body,
+  sentAt: summary.sentAt,
 });
 
 // Unread counting stops once 50 QUALIFYING (post-receipt, not-own-authored) messages are found,
