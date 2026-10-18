@@ -1,13 +1,17 @@
 import presenceTest from "@convex-dev/presence/test";
 import { convexTest, type TestConvex } from "convex-test";
+import { ConvexError } from "convex/values";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { RATE_LIMITS } from "./lib/rateLimits";
 import {
   APP_AWAY_ROOM,
   APP_ONLINE_ROOM,
+  HEARTBEAT_LOG_SAMPLE_RATE,
   MESSAGES_ROOM,
   presence,
+  PRESENCE_ROOMS,
 } from "./presence";
 import schema from "./schema";
 
@@ -332,21 +336,61 @@ describe("presence heartbeat rooms", () => {
     );
   });
 
-  test("logs a bandwidth counter without member or session ids", async () => {
+  const heartbeatLines = (log: { mock: { calls: unknown[][] } }) =>
+    log.mock.calls
+      .map(([line]) => String(line))
+      .filter((line) => line.includes('"presence.heartbeat"'));
+
+  test("a sampled heartbeat logs a counter without member or session ids", async () => {
     const t = setup();
     const alice = await seedMember(t, "alice");
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.spyOn(Math, "random").mockReturnValue(0.0999);
     await heartbeat(t, "alice", alice, APP_ONLINE_ROOM);
-    const lines = log.mock.calls
-      .map(([line]) => String(line))
-      .filter((line) => line.includes('"presence.heartbeat"'));
+    const lines = heartbeatLines(log);
     expect(lines).toHaveLength(1);
     expect(JSON.parse(lines[0] ?? "{}")).toMatchObject({
       event: "presence.heartbeat",
       room: APP_ONLINE_ROOM,
+      sample_rate: HEARTBEAT_LOG_SAMPLE_RATE,
     });
     expect(lines[0]).not.toContain(alice as string);
     expect(lines[0]).not.toContain("session-");
+  });
+
+  test("the other nine in ten heartbeats log nothing", async () => {
+    const t = setup();
+    const alice = await seedMember(t, "alice");
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.spyOn(Math, "random").mockReturnValue(0.1);
+    await heartbeat(t, "alice", alice, APP_ONLINE_ROOM);
+    expect(heartbeatLines(log)).toEqual([]);
+  });
+
+  test("refuses heartbeats past the per-member limit, generically", async () => {
+    const t = setup();
+    const alice = await seedMember(t, "alice");
+    const bob = await seedMember(t, "bob");
+    const { max } = RATE_LIMITS.presenceHeartbeat;
+    for (let i = 0; i < max; i++) {
+      await heartbeat(
+        t,
+        "alice",
+        alice,
+        PRESENCE_ROOMS[i % 3] ?? MESSAGES_ROOM,
+      );
+    }
+    const refused = await heartbeat(t, "alice", alice, APP_ONLINE_ROOM).then(
+      () => null,
+      (error: unknown) => error,
+    );
+    expect(refused).toBeInstanceOf(ConvexError);
+    expect((refused as ConvexError<{ code: string }>).data.code).toBe(
+      "RateLimited",
+    );
+    expect(String((refused as Error).message)).not.toContain(alice as string);
+    // Per member: someone else is unaffected.
+    await heartbeat(t, "bob", bob, APP_ONLINE_ROOM);
   });
 });
 

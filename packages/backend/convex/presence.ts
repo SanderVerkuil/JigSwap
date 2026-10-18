@@ -4,6 +4,7 @@ import { components } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
 import { requireActiveMember } from "./identity/requireActiveMember";
 import { logEvent } from "./lib/logEvent";
+import { enforceRateLimit } from "./lib/rateLimits";
 
 // The presence rooms JigSwap allows. "messages": the member is somewhere on /messages, which
 // suppresses out-of-band message notifications (notifications/presenceGate). "app:online" /
@@ -25,6 +26,9 @@ export const presence = new Presence(components.presence);
 // negative number, hand the disconnect worker a deadline it can never settle).
 export const MIN_HEARTBEAT_INTERVAL_MS = 5_000;
 export const MAX_HEARTBEAT_INTERVAL_MS = 60_000;
+// One heartbeat in this many emits the bandwidth wide event (sample_rate on the line).
+export const HEARTBEAT_LOG_SAMPLE_RATE = 10;
+
 // The usePresence hook's sessionId is JSON of [uuid, roomId, userId], well under this.
 const MAX_SESSION_ID_LENGTH = 200;
 
@@ -52,6 +56,9 @@ export const heartbeat = mutation({
       throw new ConvexError("Invalid presence interval");
     if (sessionId.length === 0 || sessionId.length > MAX_SESSION_ID_LENGTH)
       throw new ConvexError("Invalid presence session");
+    // Generic RateLimited refusal; costs one small row read + patch per heartbeat (fixed window,
+    // one rateLimits row per member).
+    await enforceRateLimit(ctx, "presenceHeartbeat", memberId as string);
     const { sessionToken } = await presence.heartbeat(
       ctx,
       roomId,
@@ -59,9 +66,17 @@ export const heartbeat = mutation({
       sessionId,
       interval,
     );
-    // Bandwidth counter (spec R.2 Q19), reviewed in Axiom. Deliberately no member or session id:
-    // a per-member heartbeat log would be a presence history (spec 5.6).
-    logEvent({ event: "presence.heartbeat", outcome: "success", room: roomId });
+    // Bandwidth counter (spec R.2 Q19), reviewed in Axiom: sampled, so multiply counts by
+    // sample_rate. Deliberately no member or session id: a per-member heartbeat log would be a
+    // presence history (spec 5.6).
+    if (Math.random() < 1 / HEARTBEAT_LOG_SAMPLE_RATE) {
+      logEvent({
+        event: "presence.heartbeat",
+        outcome: "success",
+        room: roomId,
+        sample_rate: HEARTBEAT_LOG_SAMPLE_RATE,
+      });
+    }
     // The room token is shared by every member in the room; withhold it so it can never become
     // a roster capability again (the hook then subscribes `list` with "", which returns []).
     return { roomToken: "", sessionToken };
