@@ -690,3 +690,34 @@ describe("conversation surfaces for a circle-mate", () => {
     expect(profile?.locked).toBe(true);
   });
 });
+
+describe("a block vetoes the circle reveal", () => {
+  test("a circle-mate who blocked the viewer stays hidden from them, on the chokepoint and getCircle", async () => {
+    const t = convexTest(schema, modules);
+    const { viewer, privy } = await seed(t);
+    expect(nameOf(await project(t, viewer, privy))).toBe("Privy");
+
+    await t.run((ctx) =>
+      ctx.db.insert("blocks", {
+        blockerId: privy,
+        blockedId: viewer,
+        createdAt: Date.now(),
+      }),
+    );
+
+    const p = await project(t, viewer, privy);
+    expect(p).toEqual({ anonymous: true, anonRef: expect.any(String) });
+    expect(JSON.stringify(p)).not.toContain("Privy");
+
+    const circle = await asViewer(t).query(api.sharing.getCircle.getCircle, {
+      circleId: CIRCLE,
+    });
+    const seat = circle!.members.find((m) => m.memberId === privy)!;
+    expect(seat.name).toBeUndefined();
+    expect(seat.username).toBeUndefined();
+    expect(JSON.stringify(seat)).not.toContain("Privy");
+
+    // The blocker still sees whom they blocked (main's rule: they need the name to unblock).
+    expect(nameOf(await project(t, privy, viewer))).toBe("Viewer");
+  });
+});
