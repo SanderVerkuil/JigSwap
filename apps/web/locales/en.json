@@ -1234,7 +1234,7 @@
       },
       "clerk": {
         "title": "Clerk",
-        "description": "Our authentication provider, with EU data residency. Clerk stores your sign-in credentials and core account details (name, email address, avatar) and handles signing in. When you delete your account, Clerk notifies us and we remove your account record."
+        "description": "Our authentication provider, with EU data residency. Clerk stores your sign-in credentials and core account details (name, email address, avatar) and handles signing in. When you delete your account, Clerk notifies us and we remove your account record. When a member invites you by email, we send you one invitation and keep no copy of your address (only a coded fingerprint of it for 30 days, so you aren't emailed again). Clerk holds the invitation until you use it or it expires after 14 days; after that we delete it."
       },
       "vercel": {
         "title": "Vercel",
@@ -1439,7 +1439,8 @@
         "Treat other members with respect",
         "Describe your puzzles honestly, including condition and missing pieces",
         "Follow through on exchanges you agree to",
-        "Report problems or suspicious behaviour via the contact form"
+        "Report problems or suspicious behaviour via the contact form",
+        "Only invite people you know, and only to an address they gave you"
       ],
       "prohibitedTitle": "What is not allowed:",
       "prohibited": [
@@ -1962,7 +1963,8 @@
       "recentlyJoinedEmptyTitle": "No new members to show yet",
       "recentlyJoinedEmptySub": "Know a fellow puzzler? Show them your QR code.",
       "noResultsTitle": "Can't find them?",
-      "noResultsSub": "Ask for their profile link — or scan their QR."
+      "noResultsSub": "Ask for their profile link — or scan their QR.",
+      "emailInviteTitle": "Not on JigSwap yet?"
     },
     "discoverableNotice": {
       "body": "JigSwap now has a Find people directory. Members with a public profile can be found by name — check or change who can find you.",
@@ -2761,6 +2763,26 @@
     "rateLimited": "You've created a lot of invite links today. Try again tomorrow.",
     "createFailed": "Couldn't create an invite link. Try again.",
     "revokeFailed": "Couldn't revoke the links. Try again."
+  },
+  "emailInvite": {
+    "emailLabel": "Email address",
+    "emailPlaceholder": "name@example.com",
+    "submit": "Invite by email",
+    "note": "They get one invitation, valid for 14 days. JigSwap keeps no copy of the address.",
+    "sent": "Invitation sent",
+    "errors": {
+      "invalidEmail": "Enter a valid email address.",
+      "rateLimited": "You've sent a lot of invitations today. Try again {when}.",
+      "generic": "Couldn't send the invitation. Try again."
+    },
+    "pendingTitle": "Sent invitations",
+    "pendingSent": "Invitation sent {when}",
+    "pendingExpires": "expires {date}",
+    "revoke": "Revoke",
+    "revokeConfirmTitle": "Revoke this invitation?",
+    "revokeConfirmBody": "The invitation stops working. You can send a new one later.",
+    "revoked": "Invitation revoked",
+    "revokeFailed": "Couldn't revoke the invitation. Try again."
   },
   "forms": {
     "owned-puzzle-form": {

@@ -1234,7 +1234,7 @@
       },
       "clerk": {
         "title": "Clerk",
-        "description": "Onze authenticatieprovider, met EU-dataresidentie. Clerk bewaart je inloggegevens en basisaccountgegevens (naam, e-mailadres, avatar) en verzorgt het inloggen. Als je je account verwijdert, krijgen wij daar bericht van via Clerk en verwijderen we je accountrecord."
+        "description": "Onze authenticatieprovider, met EU-dataresidentie. Clerk bewaart je inloggegevens en basisaccountgegevens (naam, e-mailadres, avatar) en verzorgt het inloggen. Als je je account verwijdert, krijgen wij daar bericht van via Clerk en verwijderen we je accountrecord. Als een lid je per e-mail uitnodigt, sturen we je één uitnodiging en bewaren we geen kopie van je adres (alleen een gecodeerde vingerafdruk ervan, 30 dagen lang, zodat je niet nog eens gemaild wordt). Clerk bewaart de uitnodiging tot je die gebruikt of tot die na 14 dagen verloopt; daarna verwijderen we hem."
       },
       "vercel": {
         "title": "Vercel",
@@ -1439,7 +1439,8 @@
         "Behandel andere leden met respect",
         "Beschrijf je puzzels eerlijk, inclusief de staat en ontbrekende stukjes",
         "Kom uitwisselingen na die je bent aangegaan",
-        "Meld problemen of verdacht gedrag via het contactformulier"
+        "Meld problemen of verdacht gedrag via het contactformulier",
+        "Nodig alleen mensen uit die je kent, en alleen op een adres dat ze je zelf hebben gegeven"
       ],
       "prohibitedTitle": "Wat niet mag:",
       "prohibited": [
@@ -1962,7 +1963,8 @@
       "recentlyJoinedEmptyTitle": "Nog geen nieuwe leden om te tonen",
       "recentlyJoinedEmptySub": "Ken je een medepuzzelaar? Laat je QR-code zien.",
       "noResultsTitle": "Kun je ze niet vinden?",
-      "noResultsSub": "Vraag om hun profiellink — of scan hun QR-code."
+      "noResultsSub": "Vraag om hun profiellink — of scan hun QR-code.",
+      "emailInviteTitle": "Nog niet op JigSwap?"
     },
     "discoverableNotice": {
       "body": "JigSwap heeft nu een Mensen vinden-overzicht. Leden met een openbaar profiel zijn op naam te vinden — bekijk of wijzig wie jou kan vinden.",
@@ -2761,6 +2763,26 @@
     "rateLimited": "Je hebt vandaag veel uitnodigingslinks gemaakt. Probeer het morgen opnieuw.",
     "createFailed": "Kon geen uitnodigingslink maken. Probeer het opnieuw.",
     "revokeFailed": "Kon de links niet intrekken. Probeer het opnieuw."
+  },
+  "emailInvite": {
+    "emailLabel": "E-mailadres",
+    "emailPlaceholder": "naam@voorbeeld.nl",
+    "submit": "Uitnodigen per e-mail",
+    "note": "Diegene krijgt één uitnodiging, 14 dagen geldig. JigSwap bewaart het adres niet.",
+    "sent": "Uitnodiging verstuurd",
+    "errors": {
+      "invalidEmail": "Vul een geldig e-mailadres in.",
+      "rateLimited": "Je hebt vandaag veel uitnodigingen verstuurd. Probeer het {when} opnieuw.",
+      "generic": "Kon de uitnodiging niet versturen. Probeer het opnieuw."
+    },
+    "pendingTitle": "Verstuurde uitnodigingen",
+    "pendingSent": "Uitnodiging verstuurd {when}",
+    "pendingExpires": "verloopt {date}",
+    "revoke": "Intrekken",
+    "revokeConfirmTitle": "Deze uitnodiging intrekken?",
+    "revokeConfirmBody": "De uitnodiging werkt dan niet meer. Je kunt later een nieuwe sturen.",
+    "revoked": "Uitnodiging ingetrokken",
+    "revokeFailed": "Kon de uitnodiging niet intrekken. Probeer het opnieuw."
   },
   "forms": {
     "owned-puzzle-form": {

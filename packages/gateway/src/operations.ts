@@ -453,6 +453,17 @@ export const gateway = {
       api.social.listPublicPuzzleReviews.listPublicPuzzleReviews,
   },
 
+  // Email invitations (follow / household) for people not on JigSwap yet. Every send answers
+  // `sent` whether or not the address has an account; the list and revoke are inviter-only and
+  // carry no address. `availability` is false when the deployment has the feature switched off.
+  invitations: {
+    availability:
+      api.invitations.getEmailInviteAvailability.getEmailInviteAvailability,
+    send: api.invitations.sendEmailInvite.sendEmailInvite,
+    listMine: api.invitations.listMyEmailInvites.listMyEmailInvites,
+    revoke: api.invitations.revokeEmailInvite.revokeEmailInvite,
+  },
+
   // Insights: read-side aggregate stats. globalStats is platform-wide; the rest are the signed-in
   // member's own analytics (personal stats, trends, breakdowns) plus a self-service data export.
   insights: {

@@ -2,6 +2,7 @@
 
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { ConnectionOffersStrip } from "@/components/social/connection-offers";
+import { EmailInvite } from "@/components/social/email-invite";
 import { FindPeople } from "@/components/social/find-people";
 import { inviteLandingUrl } from "@/components/social/invite-share";
 import { InviteShareActions } from "@/components/social/invite-share-actions";
@@ -67,6 +68,7 @@ export function PeopleStep({ status }: { status: QuickStartStepStatus }) {
             />
           )
         ) : null}
+        <EmailInvite kind="follow" />
         <PushPrompt triggered={triggered} />
       </section>
     </div>
