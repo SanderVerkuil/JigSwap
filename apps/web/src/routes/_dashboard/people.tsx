@@ -226,6 +226,8 @@ function PeoplePage() {
         tab: value === "find" || value === "activity" ? value : undefined,
       },
       replace: true,
+      // A tab switch is a view change on the same page, not a new page: keep the scroll position.
+      resetScroll: false,
     });
   };
 
