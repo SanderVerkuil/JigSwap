@@ -4285,6 +4285,39 @@
     "unblocked": "Unblocked {name}",
     "unblockError": "Couldn't unblock {name}. Please try again.",
     "unblockName": "Unblock {name}",
-    "undo": "Undo"
+    "undo": "Undo",
+    "report": {
+      "title": "Report {name}",
+      "description": "Tell us what's wrong. Reports are private: only our moderators see them.",
+      "reportingMember": "Reporting {name}",
+      "reportingPhoto": "Reporting a photo from {name}",
+      "reasonLegend": "Why are you reporting this?",
+      "reasons": {
+        "spam_scam": "Spam or scam",
+        "harassment_hate": "Harassment or hate",
+        "sexual": "Sexual or inappropriate content",
+        "fake_trade": "Fake trade or no-show",
+        "illegal": "Illegal content",
+        "other": "Something else"
+      },
+      "detailsLabel": "Details (optional)",
+      "detailsCounter": "{count}/{max}",
+      "alsoBlock": "Also block {name}",
+      "goodFaith": "I confirm in good faith that this information is accurate and complete.",
+      "notifierIncluded": "Your name and email from your account are included with this notice, as the law requires.",
+      "submit": "Send report",
+      "submitting": "Sending…",
+      "doneTitle": "Report sent",
+      "doneBody": "Thanks — we've received your report. {name} won't know who reported them. We'll review it and let you know what we decided.",
+      "done": "Done",
+      "errors": {
+        "rateLimited": "You've sent a lot of reports today. Try again tomorrow.",
+        "notFound": "This can't be reported any more. It may have been removed.",
+        "detailsTooLong": "Details can be at most 1000 characters.",
+        "illegalNoticeRequired": "Confirm the good-faith statement to report illegal content.",
+        "illegalNoticeIncomplete": "Add a name and email to your account to report illegal content.",
+        "generic": "Couldn't send your report. Please try again."
+      }
+    }
   }
 }

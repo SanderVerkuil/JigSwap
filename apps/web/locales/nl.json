@@ -4285,6 +4285,39 @@
     "unblocked": "{name} gedeblokkeerd",
     "unblockError": "{name} deblokkeren is niet gelukt. Probeer het opnieuw.",
     "unblockName": "{name} deblokkeren",
-    "undo": "Ongedaan maken"
+    "undo": "Ongedaan maken",
+    "report": {
+      "title": "{name} melden",
+      "description": "Vertel ons wat er mis is. Meldingen zijn privé: alleen onze moderators zien ze.",
+      "reportingMember": "Je meldt {name}",
+      "reportingPhoto": "Je meldt een foto van {name}",
+      "reasonLegend": "Waarom meld je dit?",
+      "reasons": {
+        "spam_scam": "Spam of oplichting",
+        "harassment_hate": "Intimidatie of haat",
+        "sexual": "Seksuele of ongepaste inhoud",
+        "fake_trade": "Nepruil of niet komen opdagen",
+        "illegal": "Illegale inhoud",
+        "other": "Iets anders"
+      },
+      "detailsLabel": "Toelichting (optioneel)",
+      "detailsCounter": "{count}/{max}",
+      "alsoBlock": "{name} ook blokkeren",
+      "goodFaith": "Ik verklaar te goeder trouw dat deze informatie juist en volledig is.",
+      "notifierIncluded": "Je naam en e-mailadres uit je account worden met deze melding meegestuurd, zoals de wet vereist.",
+      "submit": "Melding versturen",
+      "submitting": "Versturen…",
+      "doneTitle": "Melding verstuurd",
+      "doneBody": "Bedankt, we hebben je melding ontvangen. {name} weet niet wie de melding heeft gedaan. We bekijken het en laten je weten wat we besluiten.",
+      "done": "Klaar",
+      "errors": {
+        "rateLimited": "Je hebt vandaag veel meldingen verstuurd. Probeer het morgen opnieuw.",
+        "notFound": "Dit kan niet meer worden gemeld. Misschien is het verwijderd.",
+        "detailsTooLong": "De toelichting mag maximaal 1000 tekens lang zijn.",
+        "illegalNoticeRequired": "Bevestig de verklaring te goeder trouw om illegale inhoud te melden.",
+        "illegalNoticeIncomplete": "Voeg een naam en e-mailadres toe aan je account om illegale inhoud te melden.",
+        "generic": "Je melding versturen is niet gelukt. Probeer het opnieuw."
+      }
+    }
   }
 }
