@@ -8,7 +8,8 @@ category: feature
 
 JigSwap can now be installed on your phone and opened like any other app.
 
-- **On Android**, tap **Install app** when the tip appears.
+- **On Android**, tap **Install app** when the tip appears. No button? Open
+  Chrome's **⋮** menu and choose **Add to home screen** or **Install app**.
 - **On iPhone and iPad**, tap **Share**, then **Add to Home Screen**. Installing
   also lets JigSwap send you notifications there.
 
