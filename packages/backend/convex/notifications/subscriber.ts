@@ -7,6 +7,7 @@ import {
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
+import { isBlockedEitherWay } from "../social/blocks";
 import { makeNotify } from "./adapters/makeNotify";
 import { isViewingMessages } from "./presenceGate";
 
@@ -24,6 +25,14 @@ export const handleDomainEvent = async (
   const notify = makeNotify(ctx);
   const commands = await translate(ctx, event);
   for (const cmd of commands) {
+    // Blocks are silent (spec 2.6): nothing a member blocked either way with the recipient does
+    // reaches them. The one place every notification type passes through.
+    if (
+      cmd.actorId !== undefined &&
+      (await isBlockedEitherWay(ctx, cmd.actorId, cmd.memberId))
+    ) {
+      continue;
+    }
     await notify(cmd);
   }
 };
