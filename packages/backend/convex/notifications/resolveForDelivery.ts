@@ -58,6 +58,21 @@ export const resolveForDelivery = internalQuery({
     ) {
       return null;
     }
-    return deliveryContentOf(view, args.params, args.actorId !== undefined);
+    const content = deliveryContentOf(
+      view,
+      args.params,
+      args.actorId !== undefined,
+    );
+    // A circle message never leaves the app with its text: email (the digest) and push say only
+    // where something was written, whatever a template might later interpolate.
+    if (args.type === "circle_message_received") {
+      const {
+        messagePreview: _preview,
+        messageKind: _kind,
+        ...params
+      } = content.params;
+      return { ...content, params };
+    }
+    return content;
   },
 });

@@ -1,5 +1,6 @@
 import presenceTest from "@convex-dev/presence/test";
 import { Notification, toMemberId, toNotificationId } from "@jigswap/domain";
+import { renderEmail } from "@jigswap/email";
 import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api, internal } from "./_generated/api";
@@ -778,5 +779,52 @@ describe("blocking: circle threads vs DMs", () => {
     // Bob blocks Alice just as she writes: he hears nothing either.
     await postThenBlock(t2, "alice", dm2, s2.bob, s2.alice);
     expect(await rowsOf(t2, s2.bob)).toEqual([]);
+  });
+});
+
+describe("circle message text never leaves the app", () => {
+  test("the delivery resolved for a circle message carries no preview, and the rendered digest holds no message text", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, threadId } = await seed(t);
+    await post(t, "alice", threadId, "secret plans for saturday");
+    const content = await t.query(
+      internal.notifications.resolveForDelivery.resolveForDelivery,
+      {
+        recipientId: bob,
+        type: "circle_message_received",
+        params: {},
+        relatedId: threadId,
+        subject: { kind: "thread", threadId },
+      },
+    );
+    expect(content).not.toBeNull();
+    expect(content!.params).toEqual({ circleName: "Puzzle Club" });
+    // The same thread resolved as a plain message would preview it: the strip is what keeps it out.
+    const dmShaped = await t.query(
+      internal.notifications.resolveForDelivery.resolveForDelivery,
+      {
+        recipientId: bob,
+        type: "message_received",
+        params: {},
+        relatedId: threadId,
+        subject: { kind: "thread", threadId },
+      },
+    );
+    expect(dmShaped!.params.messagePreview).toBe("secret plans for saturday");
+
+    for (const locale of ["en", "nl"] as const) {
+      const rendered = await renderEmail({
+        type: "circle_message_received",
+        params: content!.params,
+        locale,
+        baseUrl: "https://jigswap.site",
+        relatedId: threadId,
+        href: content!.href,
+      });
+      for (const part of [rendered.subject, rendered.html, rendered.text]) {
+        expect(part).not.toContain("secret plans");
+      }
+      expect(rendered.text).toContain("Puzzle Club");
+    }
   });
 });
