@@ -88,7 +88,7 @@ const tradePartner = async (
   const otherMember: ProjectedMember = member
     ? { anonymous: false, member }
     : {
-        ...anonymousMemberOf(partnerId, salt),
+        ...(await anonymousMemberOf(ctx, partnerId, salt)),
         ...(party.state === "departed" ? { departed: true as const } : {}),
       };
   const linkable = party.state === "visible" || party.state === "self";

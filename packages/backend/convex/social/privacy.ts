@@ -245,12 +245,13 @@ export const anonRefOf = async (
  * a hidden member, for callers that decide visibility through another chokepoint (the per-trade
  * rule) but must keep the same salted reference.
  */
-export const anonymousMemberOf = (
+export const anonymousMemberOf = async (
+  ctx: QueryCtx,
   targetId: Id<"users">,
   salt: string,
-): Extract<ProjectedMember, { anonymous: true }> => ({
+): Promise<Extract<ProjectedMember, { anonymous: true }>> => ({
   anonymous: true,
-  anonRef: anonRefOf(targetId, salt),
+  anonRef: await anonRefOf(ctx, targetId, salt),
 });
 
 /**
