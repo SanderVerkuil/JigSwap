@@ -143,9 +143,15 @@ export interface InboxThreadView {
   /** Inbox ordering instant: the newest message's sentAt, or the thread's creation. */
   readonly updatedAt: number;
   /**
-   * Set when the pair is blocked: "byMe" when the caller blocked the other participant (also
-   * when both did), "byThem" when only they did. The thread stays listed but is read-only; render
-   * "byThem" as the generic "You can't reply to this conversation".
+   * "byMe" when the caller blocked the other participant (also when both did). The thread stays
+   * listed but is read-only. Never says the other side blocked the caller; that surfaces only as
+   * {@link readOnly}.
    */
-  readonly blocked?: "byMe" | "byThem";
+  readonly blocked?: "byMe";
+  /**
+   * Set when the caller can't reply here for a reason the client must not tell apart: today,
+   * the other participant blocked the caller. Also meant for future states such as a deleted
+   * partner. Render it as the neutral "You can't reply to this conversation".
+   */
+  readonly readOnly?: true;
 }

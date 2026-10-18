@@ -250,7 +250,9 @@ const toInboxThreadView = async (
     unreadCount: await participantUnreadCountOf(ctx, thread, membership),
     contextCopies,
     updatedAt: thread.lastMessageAt ?? thread.createdAt,
-    ...(blocked ? { blocked } : {}),
+    // Only the blocker learns of the block; the blocked side just sees a read-only thread.
+    ...(blocked === "byMe" ? { blocked } : {}),
+    ...(blocked === "byThem" ? { readOnly: true as const } : {}),
   };
 };
 

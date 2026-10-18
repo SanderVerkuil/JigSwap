@@ -417,7 +417,7 @@ describe("blockMember side effects", () => {
     expect(messages.filter((m) => m.kind === "system")).toHaveLength(2);
   });
 
-  test("the inbox keeps the thread and flags the block per side", async () => {
+  test("the inbox keeps the thread; the blocker sees the block, the blocked member a read-only thread", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob } = await seed(t);
     await followMutually(t, alice, bob);
@@ -438,8 +438,11 @@ describe("blockMember side effects", () => {
     );
     expect(mine).toHaveLength(1);
     expect(mine[0]!.blocked).toBe("byMe");
+    expect(mine[0]!.readOnly).toBeUndefined();
     expect(theirs).toHaveLength(1);
-    expect(theirs[0]!.blocked).toBe("byThem");
+    // The blocked member never learns of the block: the thread is just read-only.
+    expect(theirs[0]!.blocked).toBeUndefined();
+    expect(theirs[0]!.readOnly).toBe(true);
   });
 });
 
