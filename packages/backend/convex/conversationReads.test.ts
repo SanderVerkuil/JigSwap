@@ -1,7 +1,7 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError, type Value } from "convex/values";
 import { describe, expect, test } from "vitest";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
@@ -491,5 +491,21 @@ describe("legacy image messages", () => {
     );
     expect(inbox[0].lastMessage?.id).toBe("legacy-image");
     expect(inbox[0].lastMessage?.body).toBe("");
+  });
+
+  test("countLegacyImageMessages counts image rows page by page", async () => {
+    const t = convexTest(schema, modules);
+    await seedLegacyImage(t);
+    const first = await t.query(
+      internal.conversation.countLegacyImageMessages.countLegacyImageMessages,
+      { paginationOpts: { numItems: 1, cursor: null } },
+    );
+    expect(first.scanned).toBe(1);
+    const rest = await t.query(
+      internal.conversation.countLegacyImageMessages.countLegacyImageMessages,
+      { paginationOpts: { numItems: 100, cursor: first.continueCursor } },
+    );
+    expect(rest.isDone).toBe(true);
+    expect(first.imageCount + rest.imageCount).toBe(1);
   });
 });
