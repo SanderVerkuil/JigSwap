@@ -5,7 +5,10 @@ import { internal } from "../_generated/api";
 import { action } from "../_generated/server";
 import { logEvent } from "../lib/logEvent";
 import {
+  fetchMapTiler,
+  GEOCODING_MAX_BYTES,
   geocodingUrl,
+  MapTilerError,
   MAX_SEARCH_QUERY_LENGTH,
   readMapTilerConfig,
   searchLanguageOf,
@@ -14,6 +17,10 @@ import {
 
 const MIN_QUERY_LENGTH = 2;
 const SEARCH_TIMEOUT_MS = 6_000;
+// "52.09, 5.12" / "52.09 5.12": a bare coordinate pair is not a place search (a reverse lookup
+// would turn coordinates into an address); it gets no results.
+const COORDINATES_ONLY =
+  /^[-+]?\d+(?:[.,]\d+)?\s*[,;\s]\s*[-+]?\d+(?:[.,]\d+)?$/;
 
 const unavailable = () =>
   new ConvexError({
@@ -21,12 +28,30 @@ const unavailable = () =>
     message: "Place search isn't available right now",
   });
 
+/**
+ * The query as it may go to the provider: trimmed, without `;` (MapTiler reads it as a batch
+ * separator), capped at MAX_SEARCH_QUERY_LENGTH. Null for one that is too short or only
+ * coordinates.
+ */
+export const normalizeSearchQuery = (raw: string): string | null => {
+  const query = raw
+    .replace(/;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, MAX_SEARCH_QUERY_LENGTH)
+    .trim();
+  if (query.length < MIN_QUERY_LENGTH) return null;
+  if (COORDINATES_ONLY.test(query)) return null;
+  return query;
+};
+
 // Place search for the location picker (spec R.6): a proxy for MapTiler Geocoding, so the
 // sender's browser never contacts MapTiler. Gated like every picker call (gateLocationCall:
-// participant, not blocked, the locationSearch limit). Searches the default countries (nl, be,
-// de) including POIs, ranked in the member's preferred language and, when given, near `near`,
-// which is always snapped to the ~1 km grid first (it may come from the device's GPS). Returns at
-// most 5 { label, lat, lng }, never the provider payload. The wide event carries neither the
+// participant, not blocked, the locationSearch limit). Searches the default countries (nl, be, de) including POIs, ranked in the member's
+// preferred language and, when given, near `near`, which is always snapped to the ~1 km grid
+// first (it may come from the device's GPS). A query that is too short or only coordinates gets
+// no results without any call. Returns at most 5 { label, lat, lng }, never the provider payload;
+// a response over GEOCODING_MAX_BYTES is a failed search. The wide event carries neither the
 // query nor coordinates.
 export const searchPlaces = action({
   args: {
@@ -35,8 +60,8 @@ export const searchPlaces = action({
     near: v.optional(v.object({ lat: v.number(), lng: v.number() })),
   },
   handler: async (ctx, args): Promise<PlaceSearchResultView[]> => {
-    const query = args.query.trim().slice(0, MAX_SEARCH_QUERY_LENGTH);
-    if (query.length < MIN_QUERY_LENGTH) return [];
+    const query = normalizeSearchQuery(args.query);
+    if (query === null) return [];
     const { preferredLanguage } = await ctx.runMutation(
       internal.conversation.locationStore.gateLocationCall,
       { threadId: args.threadId, limit: "locationSearch" },
@@ -52,19 +77,19 @@ export const searchPlaces = action({
         ? { lat: snapped.value.lat, lng: snapped.value.lng }
         : undefined;
     const startedAt = Date.now();
-    let status: number | undefined;
     try {
-      const response = await fetch(
+      const bytes = await fetchMapTiler(
+        fetch,
         geocodingUrl(config, {
           query,
           language: searchLanguageOf(preferredLanguage),
           near,
         }),
-        { signal: AbortSignal.timeout(SEARCH_TIMEOUT_MS) },
+        { maxBytes: GEOCODING_MAX_BYTES, timeoutMs: SEARCH_TIMEOUT_MS },
       );
-      status = response.status;
-      if (!response.ok) throw unavailable();
-      const results = toPlaceResults(await response.json());
+      const results = toPlaceResults(
+        JSON.parse(new TextDecoder().decode(bytes)),
+      );
       logEvent({
         event: "conversation.searchPlaces",
         outcome: "success",
@@ -73,11 +98,14 @@ export const searchPlaces = action({
         duration_ms: Date.now() - startedAt,
       });
       return results;
-    } catch {
+    } catch (error) {
       logEvent({
         event: "conversation.searchPlaces",
         outcome: "error",
-        ...(status !== undefined && { status }),
+        failure:
+          error instanceof MapTilerError ? error.reason : "invalid_response",
+        ...(error instanceof MapTilerError &&
+          error.status !== undefined && { status: error.status }),
         duration_ms: Date.now() - startedAt,
       });
       throw unavailable();

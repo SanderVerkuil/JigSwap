@@ -50,12 +50,74 @@ export const readMapTilerConfig = (env: Env): MapTilerConfig => {
 /** A provider failure; the message never contains the request URL (it holds the key). */
 export class MapTilerError extends Error {
   constructor(
-    readonly reason: "http" | "network" | "invalid_response",
+    readonly reason: "http" | "network" | "invalid_response" | "too_large",
     readonly status?: number,
   ) {
     super(`maptiler ${reason}${status !== undefined ? ` ${status}` : ""}`);
   }
 }
+
+/** The most bytes a tile (or Static Maps image) may have. */
+export const TILE_MAX_BYTES = 2 * 1024 * 1024;
+/** The most bytes a geocoding response may have. */
+export const GEOCODING_MAX_BYTES = 256 * 1024;
+
+/**
+ * GET a MapTiler URL and read at most `maxBytes` of its body. Redirects are refused (the key is
+ * in the URL, and the answer must come from MapTiler itself); a declared Content-Length over the
+ * cap is refused before reading, and the body is streamed and cut off at the cap otherwise.
+ * Every failure is a MapTilerError carrying no URL.
+ */
+export const fetchMapTiler = async (
+  fetchImpl: typeof fetch,
+  url: string,
+  { maxBytes, timeoutMs }: { maxBytes: number; timeoutMs: number },
+): Promise<Uint8Array> => {
+  let response: Response;
+  try {
+    response = await fetchImpl(url, {
+      redirect: "error",
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  } catch {
+    throw new MapTilerError("network");
+  }
+  if (!response.ok) {
+    await response.body?.cancel().catch(() => {});
+    throw new MapTilerError("http", response.status);
+  }
+  const declared = Number(response.headers.get("content-length"));
+  if (Number.isFinite(declared) && declared > maxBytes) {
+    await response.body?.cancel().catch(() => {});
+    throw new MapTilerError("too_large");
+  }
+  if (!response.body) return new Uint8Array(0);
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel().catch(() => {});
+        throw new MapTilerError("too_large");
+      }
+      chunks.push(value);
+    }
+  } catch (error) {
+    if (error instanceof MapTilerError) throw error;
+    throw new MapTilerError("network");
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return bytes;
+};
 
 // ---- Web Mercator (EPSG:3857) on 512 px tiles: the MapLibre zoom convention ----
 

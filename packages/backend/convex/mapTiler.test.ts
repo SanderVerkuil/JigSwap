@@ -4,6 +4,7 @@ import { describe, expect, test, vi } from "vitest";
 import { attributionWidth, renderMap } from "./conversation/adapters/mapRender";
 import {
   DEFAULT_MAP_ID,
+  fetchMapTiler,
   geocodingUrl,
   isLocationConfigured,
   MapTilerError,
@@ -315,5 +316,80 @@ describe("renderMap", () => {
     );
     const image = await Jimp.read(Buffer.from(png));
     expect(image.bitmap.width).toBe(600);
+  });
+});
+
+describe("fetchMapTiler", () => {
+  const opts = { maxBytes: 1000, timeoutMs: 1000 };
+
+  test("refuses redirects and returns the body under the cap", async () => {
+    const fetchImpl = vi.fn(async () => new Response(new Uint8Array(10)));
+    const bytes = await fetchMapTiler(
+      fetchImpl as unknown as typeof fetch,
+      "https://api.maptiler.com/x?key=k",
+      opts,
+    );
+    expect(bytes.byteLength).toBe(10);
+    expect((fetchImpl.mock.calls[0] as unknown[])[1]).toMatchObject({
+      redirect: "error",
+    });
+  });
+
+  test("a declared Content-Length over the cap is refused before reading", async () => {
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(new Uint8Array(10), {
+          headers: { "content-length": "5000" },
+        }),
+    );
+    await expect(
+      fetchMapTiler(fetchImpl as unknown as typeof fetch, "u", opts),
+    ).rejects.toMatchObject({ reason: "too_large" });
+  });
+
+  test("an undeclared body is cut off at the cap while streaming", async () => {
+    let pulled = 0;
+    const stream = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        pulled += 1;
+        controller.enqueue(new Uint8Array(400));
+        if (pulled > 50) controller.close();
+      },
+    });
+    const fetchImpl = vi.fn(async () => new Response(stream));
+    await expect(
+      fetchMapTiler(fetchImpl as unknown as typeof fetch, "u", opts),
+    ).rejects.toMatchObject({ reason: "too_large" });
+    expect(pulled).toBeLessThan(10);
+  });
+
+  test("a redirect (rejected by fetch) or network failure is 'network', with no URL", async () => {
+    const fetchImpl = vi.fn(async () => {
+      throw new TypeError("fetch failed: redirect https://evil.test/?key=k");
+    });
+    const error = await fetchMapTiler(
+      fetchImpl as unknown as typeof fetch,
+      "https://api.maptiler.com/x?key=k",
+      opts,
+    ).catch((e: unknown) => e);
+    expect(error).toMatchObject({ reason: "network" });
+    expect(String(error)).not.toContain("key=k");
+  });
+
+  test("an oversized tile fails the render cleanly", async () => {
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(new Uint8Array(10), {
+          headers: { "content-length": String(3 * 1024 * 1024) },
+        }),
+    );
+    await expect(
+      renderMap(
+        config,
+        { lat: 52, lng: 5, zoom: 15, width: 600, height: 300 },
+        { lat: 52, lng: 5, style: "pin" },
+        fetchImpl as unknown as typeof fetch,
+      ),
+    ).rejects.toMatchObject({ reason: "too_large" });
   });
 });

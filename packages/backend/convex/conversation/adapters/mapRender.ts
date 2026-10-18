@@ -2,11 +2,13 @@
 
 import { Jimp } from "jimp";
 import {
+  fetchMapTiler,
   MAP_ATTRIBUTION,
   MapTilerError,
   metresPerPixel,
   pixelInView,
   staticMapUrl,
+  TILE_MAX_BYTES,
   TILE_SIZE,
   tilesForView,
   tileUrl,
@@ -39,17 +41,12 @@ const BACKGROUND = 0xe5e7ebff;
 const PIN = { r: 225, g: 29, b: 72 };
 
 const fetchImage = async (fetchImpl: typeof fetch, url: string) => {
-  let response: Response;
+  const bytes = await fetchMapTiler(fetchImpl, url, {
+    maxBytes: TILE_MAX_BYTES,
+    timeoutMs: FETCH_TIMEOUT_MS,
+  });
   try {
-    response = await fetchImpl(url, {
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-    });
-  } catch {
-    throw new MapTilerError("network");
-  }
-  if (!response.ok) throw new MapTilerError("http", response.status);
-  try {
-    return await Jimp.read(Buffer.from(await response.arrayBuffer()));
+    return await Jimp.read(Buffer.from(bytes));
   } catch {
     throw new MapTilerError("invalid_response");
   }

@@ -681,3 +681,40 @@ describe("reports and removal", () => {
     }
   });
 });
+
+describe("search query rules and response caps", () => {
+  test("';' is stripped and a bare coordinate pair gets no results without a call", async () => {
+    const t = convexTest(schema, modules);
+    const { threadId } = await openThread(t);
+    for (const query of ["52.09, 5.12", "52.09 5.12", "-33.8;151.2"]) {
+      expect(
+        await asAlice(t).action(api.conversation.searchPlaces.searchPlaces, {
+          threadId,
+          query,
+        }),
+      ).toEqual([]);
+    }
+    expect(fetchMock).not.toHaveBeenCalled();
+    await asAlice(t).action(api.conversation.searchPlaces.searchPlaces, {
+      threadId,
+      query: "Domplein;Oudegracht",
+    });
+    const url = new URL(String(fetchMock.mock.calls[0][0]));
+    expect(decodeURIComponent(url.pathname)).toBe(
+      "/geocoding/Domplein Oudegracht.json",
+    );
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ redirect: "error" });
+  });
+
+  test("an oversized geocoding response is a clean SearchUnavailable", async () => {
+    const t = convexTest(schema, modules);
+    const { threadId } = await openThread(t);
+    fakes.geocoding = { features: [], padding: "x".repeat(300 * 1024) };
+    await expect(
+      asAlice(t).action(api.conversation.searchPlaces.searchPlaces, {
+        threadId,
+        query: "Domplein",
+      }),
+    ).rejects.toThrow(/SearchUnavailable/);
+  });
+});
