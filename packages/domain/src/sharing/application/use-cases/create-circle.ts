@@ -1,4 +1,4 @@
-import { Clock, DomainEventPublisher, ok } from "../../../shared-kernel";
+import { Clock, DomainEventPublisher, err, ok } from "../../../shared-kernel";
 import { Circle } from "../../domain";
 import {
   CreateCircle,
@@ -19,17 +19,19 @@ export interface CreateCircleDeps {
 }
 
 // Transaction script: mint a Circle (owner seeded as Admin member), persist, publish CircleCreated.
-// Creation enforces no app-level rule, so it cannot fail.
+// Only the domain's name rule can refuse it (InvalidCircleName); nothing is saved then.
 export const makeCreateCircle =
   (deps: CreateCircleDeps): CreateCircle =>
   async (cmd: CreateCircleCommand) => {
-    const circle = Circle.create({
+    const created = Circle.create({
       id: deps.circleIds.next(),
       ownerId: cmd.ownerId,
       ownerMembershipId: deps.membershipIds.next(),
       name: cmd.name,
       now: deps.clock.now(),
     });
+    if (created.isErr) return err(created.error);
+    const circle = created.value;
 
     await deps.circles.save(circle);
     await deps.events.publish(circle.pullEvents());

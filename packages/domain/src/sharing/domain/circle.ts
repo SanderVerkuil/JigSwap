@@ -16,6 +16,10 @@ import { canManageMembers, PermissionLevel } from "./permission-level";
 // The most seats a circle may hold, the owner's included.
 export const MAX_CIRCLE_MEMBERS = 50;
 
+// The longest a circle's name may be, counted after trimming. Checked on create only: rehydrate
+// never re-checks, so circles stored before the limit keep their longer names.
+export const MAX_CIRCLE_NAME_LENGTH = 100;
+
 // Input to create(): a new private group and its first (owner) membership.
 export interface CreateCircleProps {
   readonly id: CircleId;
@@ -64,9 +68,14 @@ export class Circle {
     return this.memberships;
   }
 
-  // Open a new circle. The owner is seeded as the first membership at Admin — the owner is
-  // implicitly Admin and can never be demoted or removed.
-  static create(props: CreateCircleProps): Circle {
+  // Open a new circle. The name is trimmed and must be 1 to MAX_CIRCLE_NAME_LENGTH characters
+  // (InvalidCircleName otherwise). The owner is seeded as the first membership at Admin — the
+  // owner is implicitly Admin and can never be demoted or removed.
+  static create(props: CreateCircleProps): Result<Circle, SharingError> {
+    const name = props.name.trim();
+    if (name.length === 0 || name.length > MAX_CIRCLE_NAME_LENGTH) {
+      return err(SharingError.invalidCircleName());
+    }
     const owner = Membership.create(
       props.ownerMembershipId,
       props.ownerId,
@@ -77,14 +86,14 @@ export class Circle {
       {
         id: props.id,
         ownerId: props.ownerId,
-        name: props.name,
+        name,
         memberships: [owner.toState()],
         createdAt: props.now,
       },
       [owner],
     );
     circle.record(new CircleCreated(props.id, props.ownerId, props.now));
-    return circle;
+    return ok(circle);
   }
 
   // Is this member currently in the circle? The owner is always a member; the VisibilityPolicy
