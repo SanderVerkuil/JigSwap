@@ -19,8 +19,10 @@ import { systemClock } from "./systemClock";
 // circle-copy link so a freshly shared copy is immediately discoverable to circle members, and
 // MemberLeftCircle withdraws the departed member's own links so their copies stop being reachable
 // through the circle the moment they are out of it, and withdraws the invites they still had
-// pending there (see withdrawInvitesFrom). CircleInviteIssued schedules the invite's
-// expiry at its expiresAt (expiry is also applied lazily on every read and transition).
+// pending there (see withdrawInvitesFrom). CircleDeleted deletes the circle's invites inline and
+// schedules the batched purge of what can be large (purgeDeletedCircle). CircleInviteIssued
+// schedules the invite's expiry at its expiresAt (expiry is also applied lazily on every read and
+// transition).
 export const inProcessEventPublisher = (
   ctx: MutationCtx,
 ): DomainEventPublisher =>
@@ -40,6 +42,13 @@ export const inProcessEventPublisher = (
           event.memberId as unknown as Id<"users">,
         );
         await withdrawInvitesFrom(ctx, event.circleId, event.memberId);
+      } else if (event.name === "CircleDeleted") {
+        await deleteCircleInvites(ctx, event.circleId as string);
+        await ctx.scheduler.runAfter(
+          0,
+          internal.sharing.purgeDeletedCircle.purgeDeletedCircle,
+          { circleId: event.circleId as string },
+        );
       } else if (event.name === "CircleInviteIssued") {
         await ctx.scheduler.runAt(
           event.expiresAt,
@@ -65,6 +74,20 @@ export const withdrawInvitesFrom = (
     events: inProcessEventPublisher(ctx),
     clock: systemClock,
   })({ circleId, inviterId });
+
+// Delete every invite to a deleted circle, pending or decided (≤ MAX_CIRCLE_MEMBERS pending; the
+// decided ones only fed the re-invite cooldown, which means nothing once the circle is gone).
+// Pending invitees are not told: their invite simply stops being listed.
+const deleteCircleInvites = async (
+  ctx: MutationCtx,
+  circleId: string,
+): Promise<void> => {
+  const invites = await ctx.db
+    .query("circleInvites")
+    .withIndex("by_circle_invitee", (q) => q.eq("circleAggregateId", circleId))
+    .collect();
+  for (const invite of invites) await ctx.db.delete(invite._id);
+};
 
 // Idempotent projection of a CopySharedToCircle event into the `circleCopyShares` read model.
 const projectCopyShare = async (

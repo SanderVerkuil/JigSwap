@@ -485,6 +485,8 @@ export const gateway = {
     createCircle: api.sharing.createCircle.createCircle,
     removeMember: api.sharing.removeMember.removeMember,
     leaveCircle: api.sharing.leaveCircle.leaveCircle,
+    // Owner only, confirmed by typing the circle's exact name.
+    deleteCircle: api.sharing.deleteCircle.deleteCircle,
     changePermission: api.sharing.changePermission.changePermission,
     shareCopyToCircle: api.sharing.shareCopyToCircle.shareCopyToCircle,
     myCircles: api.sharing.listMyCircles.listMyCircles,

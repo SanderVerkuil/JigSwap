@@ -350,6 +350,7 @@ import type * as sharing_changePermission from "../sharing/changePermission.js";
 import type * as sharing_circleAccess from "../sharing/circleAccess.js";
 import type * as sharing_createCircle from "../sharing/createCircle.js";
 import type * as sharing_declineCircleInvite from "../sharing/declineCircleInvite.js";
+import type * as sharing_deleteCircle from "../sharing/deleteCircle.js";
 import type * as sharing_errors from "../sharing/errors.js";
 import type * as sharing_expireCircleInvite from "../sharing/expireCircleInvite.js";
 import type * as sharing_getCircle from "../sharing/getCircle.js";
@@ -359,6 +360,7 @@ import type * as sharing_listCircleInvites from "../sharing/listCircleInvites.js
 import type * as sharing_listInvitableMembers from "../sharing/listInvitableMembers.js";
 import type * as sharing_listMyCircleInvites from "../sharing/listMyCircleInvites.js";
 import type * as sharing_listMyCircles from "../sharing/listMyCircles.js";
+import type * as sharing_purgeDeletedCircle from "../sharing/purgeDeletedCircle.js";
 import type * as sharing_readViews from "../sharing/readViews.js";
 import type * as sharing_removeMember from "../sharing/removeMember.js";
 import type * as sharing_revokeCircleInvite from "../sharing/revokeCircleInvite.js";
@@ -805,6 +807,7 @@ declare const fullApi: ApiFromModules<{
   "sharing/circleAccess": typeof sharing_circleAccess;
   "sharing/createCircle": typeof sharing_createCircle;
   "sharing/declineCircleInvite": typeof sharing_declineCircleInvite;
+  "sharing/deleteCircle": typeof sharing_deleteCircle;
   "sharing/errors": typeof sharing_errors;
   "sharing/expireCircleInvite": typeof sharing_expireCircleInvite;
   "sharing/getCircle": typeof sharing_getCircle;
@@ -814,6 +817,7 @@ declare const fullApi: ApiFromModules<{
   "sharing/listInvitableMembers": typeof sharing_listInvitableMembers;
   "sharing/listMyCircleInvites": typeof sharing_listMyCircleInvites;
   "sharing/listMyCircles": typeof sharing_listMyCircles;
+  "sharing/purgeDeletedCircle": typeof sharing_purgeDeletedCircle;
   "sharing/readViews": typeof sharing_readViews;
   "sharing/removeMember": typeof sharing_removeMember;
   "sharing/revokeCircleInvite": typeof sharing_revokeCircleInvite;
