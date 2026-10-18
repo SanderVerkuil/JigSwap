@@ -10,7 +10,10 @@ import type { Id } from "../_generated/dataModel";
 import { internalMutation, type MutationCtx } from "../_generated/server";
 import { participantRowOf } from "../conversation/readModelHelpers";
 import { isCurrentCircleMember } from "../conversation/threadMemberProjection";
-import { emailChannel } from "./adapters/channels/emailChannel";
+import {
+  DIGEST_ID_PREFIX,
+  emailChannel,
+} from "./adapters/channels/emailChannel";
 import { convexNotificationPreferenceRepository } from "./adapters/convexNotificationPreferenceRepository";
 import { isViewingMessages } from "./presenceGate";
 
@@ -110,7 +113,9 @@ export const maybeEmailThreadDigest = internalMutation({
     // the digest names no author.
     await emailChannel(ctx)(
       Notification.rehydrate({
-        id: toNotificationId(`digest:${threadId}:${memberId}:${now}`),
+        id: toNotificationId(
+          `${DIGEST_ID_PREFIX}${threadId}:${memberId}:${now}`,
+        ),
         userId: toMemberId(memberId as unknown as string),
         type: TYPE,
         params: {},

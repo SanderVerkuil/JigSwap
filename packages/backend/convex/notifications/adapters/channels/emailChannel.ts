@@ -11,10 +11,21 @@ import { deliveryRefsOf } from "../../deliveryContent";
 // structure (type + params + refs + locale). Scheduling keeps the delivering mutation
 // transactional; a mutation rollback also rolls the schedule back, so the notification's
 // aggregateId doubles as a safe idempotency key.
+// The id prefix of a circle thread digest (notifications/threadDigest). A circle message is only
+// ever emailed as that digest: any other circle_message_received delivery is refused here, so a
+// caller that forgets to narrow its channels can never send one email per message.
+export const DIGEST_ID_PREFIX = "digest:";
+
 export const emailChannel =
   (ctx: MutationCtx) =>
   async (notification: Notification): Promise<void> => {
     const state = notification.toState();
+    if (
+      state.type === "circle_message_received" &&
+      !(state.id as string).startsWith(DIGEST_ID_PREFIX)
+    ) {
+      return;
+    }
     const user = await ctx.db.get(state.userId as unknown as Id<"users">);
     // No verified email on file (see users.updateOrCreateUser): nothing to send to.
     if (!user?.email) return;

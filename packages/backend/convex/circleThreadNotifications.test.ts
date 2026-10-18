@@ -9,6 +9,7 @@ import {
   PUSH_THROTTLE_MS,
   pushChannel,
 } from "./notifications/adapters/channels/pushChannel";
+import { makeNotify } from "./notifications/adapters/makeNotify";
 import { renderNotificationText } from "./notifications/copy";
 import { DIGEST_COOLDOWN_MS } from "./notifications/threadDigest";
 import { MESSAGES_ROOM } from "./presence";
@@ -826,5 +827,26 @@ describe("circle message text never leaves the app", () => {
       }
       expect(rendered.text).toContain("Puzzle Club");
     }
+  });
+});
+
+describe("the email channel's digest-only guard", () => {
+  test("a circle message delivered on every channel still sends no per-message email", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, threadId } = await seed(t);
+    await enableEmail(t, "bob", "circle_message_received");
+    // A command that forgot to narrow its channels to in-app and push.
+    await t.run((ctx) =>
+      makeNotify(ctx)({
+        memberId: toMemberId(bob as unknown as string),
+        type: "circle_message_received",
+        params: {},
+        relatedId: threadId,
+        actorId: toMemberId(alice as unknown as string),
+        subject: { kind: "thread", threadId },
+      }),
+    );
+    expect(await emailsTo(t, bob)).toEqual([]);
+    expect(await rowsOf(t, bob)).toHaveLength(1);
   });
 });
