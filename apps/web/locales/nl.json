@@ -4262,5 +4262,20 @@
     "iosPush": "Na installeren kan JigSwap je ook meldingen sturen op iPhone en iPad.",
     "menuTitle": "App installeren",
     "menuSub": "Open JigSwap vanaf je beginscherm"
+  },
+  "safety": {
+    "blockAction": "Blokkeren",
+    "blockConfirmBody": "{name} kan je geen berichten meer sturen, je niet volgen en geen ruil voorstellen. Diegene krijgt geen melding, maar ziet wel dat reageren niet meer kan. Geaccepteerde ruilen kunnen nog worden afgerond. Gedeelde kringen of huishoudens veranderen niet. Deblokkeer je diegene later, dan worden volgrelaties die door de blokkering zijn verwijderd niet hersteld.",
+    "blockConfirmTitle": "{name} blokkeren?",
+    "blocked": "{name} geblokkeerd",
+    "blockError": "{name} blokkeren is niet gelukt. Probeer het opnieuw.",
+    "blockName": "{name} blokkeren",
+    "rateLimited": "Je hebt veel wijzigingen gedaan. Probeer het later opnieuw.",
+    "unblock": "Deblokkeren",
+    "unblockConfirmBody": "Diegene kan je weer berichten sturen als jullie verbonden zijn. Volgrelaties die door de blokkering zijn verwijderd, worden niet hersteld.",
+    "unblockConfirmTitle": "{name} deblokkeren?",
+    "unblocked": "{name} gedeblokkeerd",
+    "unblockError": "{name} deblokkeren is niet gelukt. Probeer het opnieuw.",
+    "undo": "Ongedaan maken"
   }
 }
