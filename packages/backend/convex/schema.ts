@@ -945,7 +945,8 @@ export default defineSchema({
     messageId: v.optional(v.string()),
     // An open report references it: its blobs are never deleted by expiry or removal.
     evidenceHold: v.optional(v.boolean()),
-    // The sender was told their photo was rejected (message_image_rejected), once.
+    // The sender was told their photo was not sent (message_image_rejected), once; rejected and
+    // quarantined photos get the same notice.
     rejectionNotifiedAt: v.optional(v.number()),
     // "Ask for a review" (spec R.10): only then may an admin see an auto-rejected photo.
     reviewRequestedAt: v.optional(v.number()),

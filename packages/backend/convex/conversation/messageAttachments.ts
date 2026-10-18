@@ -164,9 +164,16 @@ const appendMessage = async (
 
 // The sender learns of a rejection once it is final and they asked to send it: an in-app DSA
 // Art. 17 statement of reasons that names the automated check and offers a review. A quarantined
-// photo gets no notification (lib/imageModeration/quarantine: no tip-off).
+// photo gets the IDENTICAL generic notice: its absence would tell the sender that a hash list
+// matched (the tip-off lib/imageModeration/quarantine guards against). The notice names neither.
 const notifyRejection = async (ctx: MutationCtx, row: Attachment) => {
-  if (row.moderationStatus !== "rejected" || row.rejectionNotifiedAt) return;
+  if (
+    (row.moderationStatus !== "rejected" &&
+      row.moderationStatus !== "quarantined") ||
+    row.rejectionNotifiedAt
+  ) {
+    return;
+  }
   await makeNotify(ctx)({
     memberId: toMemberId(row.uploaderId as string),
     type: "message_image_rejected",

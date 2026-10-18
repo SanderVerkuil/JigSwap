@@ -91,7 +91,8 @@ export const setModerationVerdict = internalMutation({
 });
 
 // A CSAM hash match: FORCE "quarantined" on the preserved blob and always escalate. The photo was
-// never appended (appending needs a passed hash check), so no message references it.
+// never appended (appending needs a passed hash check), so no message references it. Its send
+// batch is advanced like after a verdict (the sender's generic "not sent" notice).
 export const quarantineImage = internalMutation({
   args: { imageId: v.id("messageAttachments"), ...quarantineArgs },
   handler: async (ctx, { imageId, ...match }) => {
@@ -103,11 +104,14 @@ export const quarantineImage = internalMutation({
         updatedAt: Date.now(),
       });
     }
-    return recordCsamEscalation(ctx, {
+    const escalationId = await recordCsamEscalation(ctx, {
       table: "messageAttachments",
       rowId: imageId,
       ...match,
     });
+    // A sent photo's sender gets the same generic notice a rejection would give.
+    await settleSendBatch(ctx, imageId);
+    return escalationId;
   },
 });
 

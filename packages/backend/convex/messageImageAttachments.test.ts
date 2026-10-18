@@ -548,7 +548,7 @@ describe("never delivered", () => {
     expect(stamps[0].actorId).toBeUndefined();
   });
 
-  test("quarantined: no message, no notification, and the outbox shows it exactly like a flagged photo", async () => {
+  test("quarantined: no message; the sender's notice and outbox are exactly those of a flagged photo", async () => {
     const t = convexTest(schema, modules);
     const { alice, threadId } = await openThread(t);
     fakes.score = 0.97;
@@ -564,8 +564,14 @@ describe("never delivered", () => {
       "quarantined",
     );
     expect(await messageRows(t, threadId)).toEqual([]);
-    // Only the classifier's rejection is notified (no tip-off on a hash match).
-    expect(await notificationsOf(t, alice)).toHaveLength(1);
+    // Both get the same generic notice: a missing one would give the hash match away.
+    const notices = await notificationsOf(t, alice);
+    expect(notices.map((n) => n.type)).toEqual([
+      "message_image_rejected",
+      "message_image_rejected",
+    ]);
+    expect(notices[1].params).toEqual(notices[0].params);
+    expect(notices[1].relatedId).toBe(notices[0].relatedId);
     const [a, b] = await outbox(t, threadId);
     const shape = ({ attachmentId: _id, createdAt: _at, ...rest }: typeof a) =>
       rest;
@@ -577,6 +583,29 @@ describe("never delivered", () => {
       w: 800,
       h: 600,
     });
+  });
+
+  test("a hash match found after the send (re-check) still sends the generic notice", async () => {
+    fakes.hcs = 503;
+    const t = convexTest(schema, modules);
+    const { alice, threadId } = await openThread(t);
+    const id = await stage(t, threadId);
+    await settleDueJobs(t);
+    await send(t, threadId, [id]);
+    const row = (await attachment(t, id))!;
+    await t.mutation(store.quarantineImage, {
+      imageId: id,
+      fileId: row.fileId,
+      uploaderId: alice,
+      md5: "m",
+      sha1: "s",
+      provider: "offlimits",
+      originalDiscarded: true,
+    });
+    expect((await notificationsOf(t, alice)).map((n) => n.type)).toEqual([
+      "message_image_rejected",
+    ]);
+    expect(await messageRows(t, threadId)).toEqual([]);
   });
 
   test("an unreadable upload is rejected as unreadable, never delivered", async () => {
