@@ -25,6 +25,8 @@ export const RATE_LIMITS = {
   locationSearch: { windowMs: HOUR, max: 60 },
   // Picker map views (each pan, zoom or tap re-renders the view from MapTiler tiles).
   locationPicker: { windowMs: HOUR, max: 60 },
+  // Email invitations (invitations/sendEmailInvite), follow and household together.
+  emailInvite: { windowMs: DAY, max: 10 },
 } as const satisfies Record<string, { windowMs: number; max: number }>;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;
@@ -141,6 +143,54 @@ export const chargeMapTilerBudget = async (
         count,
       });
     }
+  }
+  return true;
+};
+
+// The deployment-wide budget for Clerk invitation creations (invitations/sendEmailInvite). Clerk
+// allows 100 per hour for the whole application, so we stop well below that, whoever is inviting.
+//   CLERK_INVITES_HOURLY_CAP - positive integer, default 60 per fixed hour
+// One row on the rateLimits table (key "clerkInvites:global:hour").
+export const CLERK_INVITES_HOURLY_CAP_DEFAULT = 60;
+const CLERK_INVITES_KEY = "clerkInvites:global:hour";
+
+/**
+ * Charge one Clerk invitation creation to the global hourly budget. False (and nothing written)
+ * when the budget is spent; the refusal is logged as a rateLimit.refused event.
+ */
+export const chargeClerkInviteBudget = async (
+  ctx: MutationCtx,
+): Promise<boolean> => {
+  const cap = positiveIntOr(
+    process.env.CLERK_INVITES_HOURLY_CAP,
+    CLERK_INVITES_HOURLY_CAP_DEFAULT,
+  );
+  const now = Date.now();
+  const row = await ctx.db
+    .query("rateLimits")
+    .withIndex("by_key", (q) => q.eq("key", CLERK_INVITES_KEY))
+    .unique();
+  const fresh = row === null || now - row.windowStart >= HOUR;
+  const count = (fresh ? 0 : row.count) + 1;
+  if (count > cap) {
+    logEvent({
+      event: "rateLimit.refused",
+      outcome: "error",
+      limit: CLERK_INVITES_KEY,
+      window_ms: HOUR,
+      max: cap,
+      retry_after_ms: row ? row.windowStart + HOUR - now : 0,
+    });
+    return false;
+  }
+  if (row === null) {
+    await ctx.db.insert("rateLimits", {
+      key: CLERK_INVITES_KEY,
+      windowStart: now,
+      count,
+    });
+  } else {
+    await ctx.db.patch(row._id, { ...(fresh && { windowStart: now }), count });
   }
   return true;
 };

@@ -24,7 +24,7 @@ export interface NotificationEmailProps {
   readonly footerLinkUrl: string;
 }
 
-const styles = {
+export const styles = {
   body: {
     backgroundColor: "#f5f5f4",
     fontFamily: "Helvetica, Arial, sans-serif",

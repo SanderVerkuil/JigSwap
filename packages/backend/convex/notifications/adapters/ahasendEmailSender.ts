@@ -38,7 +38,12 @@ export const ahaSendEmailSender = (cfg: AhaSendConfig): EmailSender => ({
             email: cfg.from,
             name: stripCrlf(message.fromName ?? cfg.fromName),
           },
-          recipients: [{ email: message.to, name: stripCrlf(message.toName) }],
+          // An empty toName (an invitee we know only by address) sends no name.
+          recipients: [
+            message.toName
+              ? { email: message.to, name: stripCrlf(message.toName) }
+              : { email: message.to },
+          ],
           subject: stripCrlf(message.subject),
           html_content: message.html,
           text_content: message.text,

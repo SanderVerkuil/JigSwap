@@ -14,7 +14,8 @@ export type SocialErrorCode =
   | "NotConnectionOfferRecipient"
   | "ConnectionOfferNotPending"
   | "ConnectionOfferExpired"
-  | "ConnectionOfferNotDue";
+  | "ConnectionOfferNotDue"
+  | "InvalidEmail";
 
 export class SocialError extends DomainError {
   override readonly name = "SocialError";
@@ -93,5 +94,10 @@ export class SocialError extends DomainError {
       "ConnectionOfferNotDue",
       "This connection offer has not expired yet",
     );
+  }
+
+  // An address given for an email invitation is not a valid email address once normalised.
+  static invalidEmail(): SocialError {
+    return new SocialError("InvalidEmail", "This is not a valid email address");
   }
 }

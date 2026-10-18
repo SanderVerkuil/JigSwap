@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Doc, Id } from "../_generated/dataModel";
 import { internalMutation, type MutationCtx } from "../_generated/server";
+import { withdrawFallback } from "../invitations/fallbacks";
 import { logEvent } from "../lib/logEvent";
 import { RATE_LIMITS, type RateLimitName } from "../lib/rateLimits";
 import { removeForDeletedMember } from "./messageAttachments";
@@ -33,6 +34,9 @@ import { removeForDeletedMember } from "./messageAttachments";
 //   inviteLinks     their invite links, so none can still be redeemed
 //   pushSubscriptions, favorites, tourProgress, settings  their own per-member rows
 //   notifications   their own inbox (resolveForDelivery drops an email or push still due)
+//   emailInvitesOut  the email invitations they sent: each row is deleted, its pending in-app
+//                fallback withdrawn and its Clerk invitation revoked (best-effort, scheduled).
+//                The address-HMAC send log holds no member id and lapses on its own.
 //   rateLimits   their own counters (never the deployment-wide MapTiler budget keys)
 // One phase at a time, PURGE_BATCH_SIZE rows per run: a run that did not finish its phase
 // schedules the next run with the page cursor, so each run stays well inside Convex's per-mutation
@@ -68,6 +72,7 @@ const PHASES = [
   "tourProgress",
   "settings",
   "notifications",
+  "emailInvitesOut",
   "rateLimits",
 ] as const;
 type Phase = (typeof PHASES)[number];
@@ -98,6 +103,7 @@ const phaseValidator = v.union(
   v.literal("tourProgress"),
   v.literal("settings"),
   v.literal("notifications"),
+  v.literal("emailInvitesOut"),
   v.literal("rateLimits"),
 );
 
@@ -462,6 +468,24 @@ const runPhase = async (
         .withIndex("by_user", (q) => q.eq("userId", memberId))
         .paginate(opts);
       for (const row of page.page) await ctx.db.delete(row._id);
+      return page;
+    }
+    case "emailInvitesOut": {
+      const page = await ctx.db
+        .query("emailInvites")
+        .withIndex("by_inviter", (q) => q.eq("inviterId", memberId))
+        .paginate(opts);
+      for (const row of page.page) {
+        await withdrawFallback(ctx, row);
+        if (row.clerkInvitationId !== undefined) {
+          await ctx.scheduler.runAfter(
+            0,
+            internal.invitations.revokeClerkInvitation.revokeClerkInvitation,
+            { clerkInvitationId: row.clerkInvitationId, reason: "purged" },
+          );
+        }
+        await ctx.db.delete(row._id);
+      }
       return page;
     }
     case "rateLimits": {
