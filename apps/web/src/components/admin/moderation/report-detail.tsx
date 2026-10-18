@@ -114,7 +114,8 @@ export function ReportDetail({ report }: { report: ReportDetailView }) {
       )}
 
       {(report.targetKind === "photo" ||
-        report.targetKind === "attachment") && (
+        report.targetKind === "attachment" ||
+        (report.targetKind === "message" && report.photoUrl)) && (
         <section className="flex flex-col gap-1">
           <h3 className="text-xs tracking-wider text-muted-foreground uppercase">
             {t("photo")}

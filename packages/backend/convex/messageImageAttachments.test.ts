@@ -1408,6 +1408,22 @@ describe("reporting a photo", () => {
     expect((await attachment(t, id))!.evidenceHold).toBeUndefined();
   });
 
+  test("an admin sees the photo of a reported image message, only once hash-cleared", async () => {
+    const t = convexTest(schema, modules);
+    const { id } = await deliveredPhoto(t);
+    const messageId = (await attachment(t, id))!.messageId!;
+    const { reportId } = await asBob(t).mutation(
+      api.reports.fileReport.fileReport,
+      { targetKind: "message", targetId: messageId, reason: "sexual" },
+    );
+    const photoUrl = async () =>
+      (await asAdmin(t).query(api.admin.getReport.getReport, { reportId }))
+        .photoUrl;
+    expect(await photoUrl()).toEqual(expect.any(String));
+    await t.run((ctx) => ctx.db.patch(id, { hashCheckedAt: undefined }));
+    expect(await photoUrl()).toBeNull();
+  });
+
   test("a message report on an image message holds and, on removal, removes its photo", async () => {
     const t = convexTest(schema, modules);
     const { id, threadId } = await deliveredPhoto(t);

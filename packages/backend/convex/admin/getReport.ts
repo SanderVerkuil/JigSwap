@@ -27,16 +27,25 @@ export const getReport = query({
       const image = imageId ? await ctx.db.get(imageId) : null;
       photoUrl = image ? await ctx.storage.getUrl(image.fileId) : null;
     }
-    if (report.targetKind === "attachment") {
-      // The reported message photo, while its blob exists (an open report holds it). Never a
-      // quarantined one, and never before the CSAM hash check passed.
-      const attachmentId = ctx.db.normalizeId(
-        "messageAttachments",
-        report.targetId,
-      );
-      const attachment = attachmentId ? await ctx.db.get(attachmentId) : null;
+    // The reported message photo (an attachment report, or a report on its image message), while
+    // its blob exists (an open report holds it). Never a quarantined one, and never before the
+    // CSAM hash check passed.
+    const attachmentId =
+      report.targetKind === "attachment"
+        ? ctx.db.normalizeId("messageAttachments", report.targetId)
+        : report.targetKind === "message"
+          ? ((
+              await ctx.db
+                .query("threadMessages")
+                .withIndex("by_message_id", (q) =>
+                  q.eq("messageId", report.targetId),
+                )
+                .first()
+            )?.attachmentId ?? null)
+          : null;
+    const attachment = attachmentId ? await ctx.db.get(attachmentId) : null;
+    if (attachment) {
       photoUrl =
-        attachment &&
         attachment.moderationStatus !== "quarantined" &&
         attachment.hashCheckedAt !== undefined
           ? await ctx.storage.getUrl(attachment.fileId)
