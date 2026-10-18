@@ -4,6 +4,8 @@ import type { ConvexSystemFields } from "../shared/convex";
  * The Catalog puzzle definition document (`puzzles` table), embedded on exchange views exactly as
  * the legacy reads joined it (`requestedPuzzle` / `offeredPuzzle`). Faithful superset so consumers
  * reading `title` / `pieceCount` keep working. Optional fields mirror the schema's optionals.
+ * PRIVACY: the catalog submitter (`submittedBy`) is deliberately NOT carried: it is an unrelated
+ * member's raw id as far as the trade is concerned.
  */
 export interface ExchangePuzzleView extends ConvexSystemFields {
   aggregateId?: string;
@@ -24,8 +26,6 @@ export interface ExchangePuzzleView extends ConvexSystemFields {
   image?: string;
   searchableText?: string;
   status: "pending" | "approved" | "rejected" | "disabled";
-  /** Omitted when the submitter is a party anonymous to the viewer (see ExchangeFields' PRIVACY note). */
-  submittedBy?: string;
   createdAt: number;
   updatedAt: number;
 }
@@ -45,7 +45,10 @@ export interface ExchangeOwnedPuzzleView extends ConvexSystemFields {
     pieceCount: number;
     thumbnail?: string;
   };
-  /** Omitted when the copy's owner is anonymous to the viewer (see ExchangeFields' PRIVACY note). */
+  /**
+   * Present only when the copy's owner is a party the viewer may see: omitted for an anonymous party
+   * (see ExchangeFields' PRIVACY note) and for a non-party owner (an offered household mate's copy).
+   */
   ownerId?: string;
   condition: "new_sealed" | "like_new" | "good" | "fair" | "poor";
   missingPiecesCount?: number;

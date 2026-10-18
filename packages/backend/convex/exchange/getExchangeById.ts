@@ -41,11 +41,11 @@ export const getExchangeById = query({
       ownerState: parties.ownerState,
       // Gate each copy independently on the acting member: a party never sees the counterparty's
       // owner-only fields (notes / acquisition provenance), only those on the copy they own.
-      ownerPuzzle: toOwnedPuzzleView(ownerPuzzle, member, parties.hidden),
+      ownerPuzzle: toOwnedPuzzleView(ownerPuzzle, member, parties.visible),
       requesterPuzzle: toOwnedPuzzleView(
         requesterPuzzle,
         member,
-        parties.hidden,
+        parties.visible,
       ),
     };
   },
