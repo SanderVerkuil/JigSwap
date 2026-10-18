@@ -5,6 +5,7 @@ import enMessages from "../../../locales/en.json";
 import nlMessages from "../../../locales/nl.json";
 import type { InboxThread, Translator } from "./format";
 import {
+  contextCopyHref,
   conversationErrorCode,
   copyOwnerHint,
   coverStackSummary,
@@ -301,53 +302,45 @@ describe("threadQuickLinks", () => {
       otherMember: member,
       profileHandle,
     }) as InboxThread["subject"];
-  const copy = (copyId: string) => ({
-    copyId,
-    title: copyId,
-    brand: null,
-    pieceCount: null,
-    coverUrl: null,
-  });
-  const thread = (
-    subject: InboxThread["subject"],
-    contextCopies: ReturnType<typeof copy>[],
-  ) => ({ subject, contextCopies }) as unknown as InboxThread;
+  const thread = (subject: InboxThread["subject"]) =>
+    ({ subject, contextCopies: [] }) as unknown as InboxThread;
 
-  it("links a DM to the member profile and the one puzzle it is about", () => {
-    expect(threadQuickLinks(thread(dm("joost"), [copy("copy1")]))).toEqual([
+  it("links a DM to the member profile", () => {
+    expect(threadQuickLinks(thread(dm("joost")))).toEqual([
       { kind: "profile", href: "/members/joost" },
-      { kind: "puzzle", href: "/copies/copy1" },
     ]);
   });
 
   it("omits the profile link when the server withholds the handle", () => {
-    expect(threadQuickLinks(thread(dm(null), []))).toEqual([]);
+    expect(threadQuickLinks(thread(dm(null)))).toEqual([]);
   });
 
-  it("groups two or more puzzles into one menu, keeping the server's order", () => {
-    const copies = [copy("newest"), copy("older"), copy("oldest")];
-    expect(threadQuickLinks(thread(dm("joost"), copies))).toEqual([
-      { kind: "profile", href: "/members/joost" },
-      { kind: "puzzles", copies },
-    ]);
-  });
-
-  it("links an exchange thread to the partner, /trades?exchange=<id> and its puzzles", () => {
-    const copies = [copy("requested"), copy("offered")];
-    expect(threadQuickLinks(thread(exchange("joost"), copies))).toEqual([
+  it("links an exchange thread to the partner and /trades?exchange=<id>", () => {
+    expect(threadQuickLinks(thread(exchange("joost")))).toEqual([
       { kind: "profile", href: "/members/joost" },
       { kind: "exchange", href: "/trades?exchange=ex%201" },
-      { kind: "puzzles", copies },
     ]);
   });
 
   it("drops the exchange partner's profile when anonymised or inactive", () => {
-    expect(
-      threadQuickLinks(thread(exchange(null), [copy("requested")])),
-    ).toEqual([
+    expect(threadQuickLinks(thread(exchange(null)))).toEqual([
       { kind: "exchange", href: "/trades?exchange=ex%201" },
-      { kind: "puzzle", href: "/copies/requested" },
     ]);
+  });
+});
+
+describe("contextCopyHref", () => {
+  it("links to the copy page, escaping the id", () => {
+    expect(
+      contextCopyHref({
+        copyId: "c 1",
+        title: "x",
+        brand: null,
+        pieceCount: null,
+        coverUrl: null,
+        owner: "viewer",
+      }),
+    ).toBe("/copies/c%201");
   });
 });
 

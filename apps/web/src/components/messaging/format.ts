@@ -201,21 +201,18 @@ export function groupThreadMessages<M extends GroupableMessage>(
 
 export type InboxContextCopy = InboxThread["contextCopies"][number];
 
-export type ThreadQuickLink =
-  | { kind: "profile" | "exchange" | "puzzle"; href: string }
-  // Two or more puzzles: one menu listing them all, newest reference first.
-  | { kind: "puzzles"; copies: readonly InboxContextCopy[] };
-
-const copyHref = (copyId: string) => `/copies/${encodeURIComponent(copyId)}`;
+export type ThreadQuickLink = {
+  kind: "profile" | "exchange";
+  href: string;
+};
 
 // Header quick links for a thread, in display order; each appears only when the
-// server says the target is reachable (profileHandle non-null / contextCopies
-// non-empty). Profile (DM partner or trading partner, unless anonymised or
-// inactive), then the exchange on /trades, then the puzzle — or a puzzle menu
-// when the conversation is about several.
+// server says the target is reachable: the DM or trading partner's profile
+// (profileHandle non-null — not anonymised or inactive), then the exchange on
+// /trades. The puzzles live in the header's cover stack, not here.
 export function threadQuickLinks(thread: InboxThread): ThreadQuickLink[] {
   const links: ThreadQuickLink[] = [];
-  const { subject, contextCopies } = thread;
+  const { subject } = thread;
   if (subject.profileHandle !== null) {
     links.push({
       kind: "profile",
@@ -228,16 +225,11 @@ export function threadQuickLinks(thread: InboxThread): ThreadQuickLink[] {
       href: `/trades?exchange=${encodeURIComponent(subject.exchangeId)}`,
     });
   }
-  if (contextCopies.length === 1) {
-    links.push({ kind: "puzzle", href: copyHref(contextCopies[0].copyId) });
-  } else if (contextCopies.length > 1) {
-    links.push({ kind: "puzzles", copies: contextCopies });
-  }
   return links;
 }
 
 export function contextCopyHref(copy: InboxContextCopy): string {
-  return copyHref(copy.copyId);
+  return `/copies/${encodeURIComponent(copy.copyId)}`;
 }
 
 // Screen-reader summary of a thread's puzzles: "About 5 puzzles: A, B, C and

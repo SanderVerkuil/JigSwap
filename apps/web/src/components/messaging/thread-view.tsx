@@ -36,6 +36,7 @@ import {
 } from "./format";
 import { MessageComposer } from "./message-composer";
 import { ThreadSubjectAvatar } from "./thread-list";
+import { ThreadPuzzleStack } from "./thread-puzzle-stack";
 import { ThreadQuickLinks } from "./thread-quick-links";
 
 type ThreadMessage = FunctionReturnType<
@@ -225,11 +226,24 @@ export function ThreadView({
                 <Heading
                   ref={headingRef}
                   tabIndex={-1}
-                  className="font-heading decoration-primary-text/60 min-w-0 flex-1 truncate text-base font-bold underline-offset-4 outline-none focus-visible:underline"
+                  className="font-heading decoration-primary-text/60 min-w-0 truncate text-base font-bold underline-offset-4 outline-none focus-visible:underline"
                 >
                   {title ?? t("threadFallbackTitle")}
                 </Heading>
-                {thread && <ThreadQuickLinks thread={thread} />}
+                {/* The conversation's puzzles, right beside the name. */}
+                {thread && <ThreadPuzzleStack thread={thread} />}
+                <div className="ml-auto flex shrink-0 items-center">
+                  {thread && (
+                    <ThreadQuickLinks
+                      thread={thread}
+                      compact={
+                        thread.subject.kind === "exchange" &&
+                        thread.subject.profileHandle !== null &&
+                        thread.contextCopies.length > 0
+                      }
+                    />
+                  )}
+                </div>
               </>
             )}
           </div>

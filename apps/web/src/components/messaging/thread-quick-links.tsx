@@ -1,69 +1,56 @@
 "use client";
 
-// Thread header quick links (message-center redesign spec §5): profile,
-// exchange and puzzle, each only when the server marks it reachable. Inline
-// ghost buttons from md up; one overflow menu below md.
-import { Image } from "@/compat/image";
+// Thread header quick links (message-center redesign spec §5): the partner's
+// profile and the exchange, each only when the server marks it reachable.
+// Inline ghost buttons from md up; one overflow menu below md. The puzzles are
+// the header's cover stack (thread-puzzle-stack.tsx).
 import { Link } from "@/compat/link";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useMemberDisplayName } from "@/lib/member-display-name";
 import {
   ArrowLeftRight,
-  ChevronDown,
   MoreVertical,
-  Puzzle,
   User,
   type LucideIcon,
 } from "lucide-react";
 import { useTranslations } from "use-intl";
 import {
-  contextCopyHref,
-  copyOwnerHint,
   threadQuickLinks,
-  type InboxContextCopy,
   type InboxThread,
   type ThreadQuickLink,
 } from "./format";
 
-type SingleLink = Extract<ThreadQuickLink, { href: string }>;
-
 const LINK_META: Record<
-  SingleLink["kind"],
+  ThreadQuickLink["kind"],
   { icon: LucideIcon; label: string }
 > = {
   profile: { icon: User, label: "goToProfile" },
   exchange: { icon: ArrowLeftRight, label: "goToExchange" },
-  puzzle: { icon: Puzzle, label: "goToPuzzle" },
 };
 
-export function ThreadQuickLinks({ thread }: { thread: InboxThread }) {
+export function ThreadQuickLinks({
+  thread,
+  compact,
+}: {
+  thread: InboxThread;
+  // Icon-only on desktop, named by aria-label + tooltip, when the header also
+  // carries the puzzle stack and both links (an exchange) — otherwise the
+  // thread title would be squeezed to a few characters.
+  compact: boolean;
+}) {
   const t = useTranslations("messages");
-  const displayName = useMemberDisplayName();
   const links = threadQuickLinks(thread);
-  // Second line per puzzle: whose copy it is (several can share a title).
-  const ownerHint = (copy: InboxContextCopy) =>
-    copyOwnerHint(copy.owner, thread.subject.otherMember, t, displayName);
   if (links.length === 0) return null;
-  const single = links.filter((link): link is SingleLink => "href" in link);
-  const puzzles = links.find((link) => link.kind === "puzzles")?.copies;
-  // Three or more header items (an exchange with a partner profile and a
-  // puzzle menu) would squeeze the thread title to a few characters on the
-  // desktop pane: show them icon-only then, named by aria-label + tooltip.
-  const compact = links.length >= 3;
 
   return (
     <>
       <div className="hidden shrink-0 gap-1 md:flex">
-        {single.map(({ kind, href }) => {
+        {links.map(({ kind, href }) => {
           const { icon: Icon, label } = LINK_META[kind];
           return (
             <Button
@@ -83,43 +70,9 @@ export function ThreadQuickLinks({ thread }: { thread: InboxThread }) {
             </Button>
           );
         })}
-        {puzzles && (
-          // Several puzzles: one "Puzzles (N)" menu rather than N buttons.
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                aria-label={
-                  compact
-                    ? t("puzzlesMenu", { count: puzzles.length })
-                    : undefined
-                }
-                title={
-                  compact
-                    ? t("puzzlesMenu", { count: puzzles.length })
-                    : undefined
-                }
-              >
-                <Puzzle aria-hidden />
-                {compact
-                  ? puzzles.length
-                  : t("puzzlesMenu", { count: puzzles.length })}
-                <ChevronDown aria-hidden className="size-3.5 opacity-70" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-72">
-              {puzzles.map((copy) => (
-                <PuzzleMenuItem
-                  key={copy.copyId}
-                  copy={copy}
-                  hint={ownerHint(copy)}
-                />
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
       </div>
+      {/* Phones: the links in one overflow menu. The puzzles are not listed
+          here — the header's cover stack already opens them. */}
       <div className="shrink-0 md:hidden">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -132,11 +85,8 @@ export function ThreadQuickLinks({ thread }: { thread: InboxThread }) {
               <MoreVertical className="size-5" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="w-[min(18rem,calc(100vw-1rem))]"
-          >
-            {single.map(({ kind, href }) => {
+          <DropdownMenuContent align="end">
+            {links.map(({ kind, href }) => {
               const { icon: Icon, label } = LINK_META[kind];
               return (
                 // The menu only exists below md: keep each item a 44px target.
@@ -148,58 +98,9 @@ export function ThreadQuickLinks({ thread }: { thread: InboxThread }) {
                 </DropdownMenuItem>
               );
             })}
-            {puzzles && (
-              // A labelled group in the same menu, not a submenu: submenus
-              // open sideways (no room at 390px) and need an extra tap.
-              <DropdownMenuGroup>
-                {single.length > 0 && <DropdownMenuSeparator />}
-                <DropdownMenuLabel className="text-muted-foreground text-xs">
-                  {t("puzzlesGroup")}
-                </DropdownMenuLabel>
-                {puzzles.map((copy) => (
-                  <PuzzleMenuItem
-                    key={copy.copyId}
-                    copy={copy}
-                    hint={ownerHint(copy)}
-                    className="min-h-11"
-                  />
-                ))}
-              </DropdownMenuGroup>
-            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
     </>
-  );
-}
-
-// One puzzle in a menu: small cover (or the puzzle glyph) and its title.
-function PuzzleMenuItem({
-  copy,
-  hint,
-  className,
-}: {
-  copy: InboxContextCopy;
-  hint: string;
-  className?: string;
-}) {
-  return (
-    <DropdownMenuItem asChild className={className}>
-      <Link href={contextCopyHref(copy)}>
-        <span className="bg-muted relative flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-md">
-          {copy.coverUrl ? (
-            <Image src={copy.coverUrl} alt="" fill className="object-cover" />
-          ) : (
-            <Puzzle className="text-muted-foreground size-4" aria-hidden />
-          )}
-        </span>
-        <span className="min-w-0">
-          <span className="block truncate">{copy.title}</span>
-          <span className="text-muted-foreground block truncate text-xs">
-            {hint}
-          </span>
-        </span>
-      </Link>
-    </DropdownMenuItem>
   );
 }
