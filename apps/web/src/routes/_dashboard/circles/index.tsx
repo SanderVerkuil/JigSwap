@@ -1,8 +1,10 @@
 import { useUser } from "@/compat/clerk";
+import {
+  canManageCircle,
+  CircleDeleteSection,
+  CircleInviteSection,
+} from "@/components/circles/circle-admin-sections";
 import { MyCircleInvitations } from "@/components/circles/circle-invitations";
-import { CircleInvitePicker } from "@/components/circles/circle-invite-picker";
-import { CirclePendingInvites } from "@/components/circles/circle-pending-invites";
-import { DeleteCircleAction } from "@/components/circles/delete-circle-action";
 import { LeaveCircleAction } from "@/components/circles/leave-circle-action";
 import {
   CoverChip,
@@ -55,6 +57,7 @@ interface CircleSummaryView {
   name: string;
   memberCount: number;
   isOwnedByViewer: boolean;
+  viewerPermission: CirclePermissionLevel;
   createdAt: number;
 }
 
@@ -186,7 +189,7 @@ function CirclesPage() {
               circle={circle}
               gradientIndex={index}
               onManage={
-                circle.isOwnedByViewer && circle.aggregateId
+                canManageCircle(circle.viewerPermission) && circle.aggregateId
                   ? () => setManageCircleId(circle.aggregateId!)
                   : undefined
               }
@@ -454,12 +457,10 @@ function ManageCircleDialog({
               ))}
             </section>
 
-            {/* Invite: members join only by accepting */}
-            <section className="space-y-3">
-              <h3 className="font-medium">{t("invite.title")}</h3>
-              <CircleInvitePicker circleId={circleId} />
-              <CirclePendingInvites circleId={circleId} />
-            </section>
+            <CircleInviteSection
+              circleId={circleId}
+              viewerPermission={detail.viewerPermission}
+            />
 
             {/* Share a copy — surface the friend-circle VisibilityScope */}
             <section className="space-y-3">
@@ -497,19 +498,12 @@ function ManageCircleDialog({
               </div>
             </section>
 
-            {/* Owner only: delete the whole circle, confirmed by its name */}
-            {detail.members.some(
-              (m: CircleMemberView) =>
-                m.isOwner && m.memberId === convexUser?._id,
-            ) && (
-              <section className="border-t pt-4">
-                <DeleteCircleAction
-                  circleId={circleId}
-                  circleName={detail.name}
-                  onDeleted={onClose}
-                />
-              </section>
-            )}
+            <CircleDeleteSection
+              circleId={circleId}
+              circleName={detail.name}
+              isOwnedByViewer={detail.isOwnedByViewer}
+              onDeleted={onClose}
+            />
           </div>
         )}
 
