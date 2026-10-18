@@ -1,6 +1,7 @@
 import {
   Thread,
   toExchangeId,
+  type CircleId,
   type ExchangeId,
   type MemberId,
   type ThreadId,
@@ -112,6 +113,12 @@ export const convexThreadRepository = (ctx: MutationCtx): ThreadRepository => {
         )
         .unique();
       return row ? hydrate(row) : null;
+    },
+
+    // Circle threads are not stored yet (G4 adds the `by_circle` index and the `circle`
+    // subjectKind), so no circle ever has a thread here.
+    async findByCircle(_circleId: CircleId): Promise<Thread | null> {
+      return null;
     },
 
     async save(thread: Thread): Promise<void> {
