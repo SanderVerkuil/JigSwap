@@ -1,3 +1,4 @@
+import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import {
@@ -6,6 +7,7 @@ import {
   type MutationCtx,
 } from "../_generated/server";
 import { stampModerationAction } from "../admin/stampModerationAction";
+import { needsRescreen } from "./adapters/photoModeration";
 
 // DB-facing helpers for the moderatePhoto Node action. A Node action (`"use node"`) has no direct
 // `ctx.db` access, so it reads/writes the `ownedPuzzleImages` row through these internal functions.
@@ -106,5 +108,45 @@ export const setModerationVerdict = internalMutation({
     // First verdict wins: an absent status is legacy-approved, anything else is already decided.
     if (row.moderationStatus !== "pending") return;
     await writeVerdict(ctx, row, args);
+  },
+});
+
+// One page of rows for the re-screen: ids + file of the candidates, plus page bookkeeping.
+export const listRescreenCandidates = internalQuery({
+  args: { paginationOpts: paginationOptsValidator },
+  handler: async (ctx, { paginationOpts }) => {
+    const page = await ctx.db
+      .query("ownedPuzzleImages")
+      .paginate(paginationOpts);
+    return {
+      scanned: page.page.length,
+      candidates: page.page
+        .filter(needsRescreen)
+        .map((row) => ({ imageId: row._id as string, fileId: row.fileId })),
+      isDone: page.isDone,
+      continueCursor: page.continueCursor,
+    };
+  },
+});
+
+// Apply a re-screen verdict. Only a SCORED verdict (approved/rejected) is written, and only while
+// the row still needs a re-screen — a photo an admin restored, or that the live pipeline decided
+// meanwhile, is left alone. Returns whether the row was patched.
+export const applyRescreenVerdict = internalMutation({
+  args: {
+    imageId: v.id("ownedPuzzleImages"),
+    moderationStatus: v.union(v.literal("approved"), v.literal("rejected")),
+    moderationScore: v.number(),
+    moderationLabel: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const row = await ctx.db.get(args.imageId);
+    if (!row || !needsRescreen(row)) return false;
+    await writeVerdict(ctx, row, {
+      ...args,
+      moderationReason: undefined,
+      moderationAttempts: (row.moderationAttempts ?? 0) + 1,
+    });
+    return true;
   },
 });

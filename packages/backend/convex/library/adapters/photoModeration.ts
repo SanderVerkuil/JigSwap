@@ -375,6 +375,21 @@ export const readScreeningConfig = (env: ModerationEnv): ScreeningConfig => {
 };
 
 /**
+ * A row the re-screen should (re)classify: "unscored", or approved (absent = legacy approved)
+ * WITHOUT a classifier score — i.e. never actually checked (legacy, provider "none", or the old
+ * fail-open pipeline). Pending rows belong to the live pipeline; rejected and scored rows are
+ * decided.
+ */
+export const needsRescreen = (row: {
+  moderationStatus?: string;
+  moderationScore?: number;
+}): boolean => {
+  const status = row.moderationStatus ?? "approved";
+  if (status === "unscored") return true;
+  return status === "approved" && row.moderationScore === undefined;
+};
+
+/**
  * What the pipeline does with a classification result on attempt `attempt` (1-based): write the
  * verdict, or — for a retryable unscored result with attempts left — schedule another attempt.
  */

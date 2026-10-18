@@ -235,6 +235,7 @@ import type * as library_postPhotoComment from "../library/postPhotoComment.js";
 import type * as library_recallLoan from "../library/recallLoan.js";
 import type * as library_removeCopyFromCollection from "../library/removeCopyFromCollection.js";
 import type * as library_removeCopyPhoto from "../library/removeCopyPhoto.js";
+import type * as library_rescreenPhotos from "../library/rescreenPhotos.js";
 import type * as library_resolveCoverUrl from "../library/resolveCoverUrl.js";
 import type * as library_returnLoan from "../library/returnLoan.js";
 import type * as library_setCopiesHouseholdPermission from "../library/setCopiesHouseholdPermission.js";
@@ -647,6 +648,7 @@ declare const fullApi: ApiFromModules<{
   "library/recallLoan": typeof library_recallLoan;
   "library/removeCopyFromCollection": typeof library_removeCopyFromCollection;
   "library/removeCopyPhoto": typeof library_removeCopyPhoto;
+  "library/rescreenPhotos": typeof library_rescreenPhotos;
   "library/resolveCoverUrl": typeof library_resolveCoverUrl;
   "library/returnLoan": typeof library_returnLoan;
   "library/setCopiesHouseholdPermission": typeof library_setCopiesHouseholdPermission;

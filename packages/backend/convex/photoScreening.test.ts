@@ -352,6 +352,179 @@ describe("visibility of unscored photos", () => {
   });
 });
 
+describe("rescreenPhotos", () => {
+  // Three copy photos: legacy approved without a score, unscored, and already checked & clean.
+  const seedRows = async (t: TestConvex<typeof schema>) => {
+    const { alice, copy } = await seed(t);
+    const ids = await t.run(async (ctx) => {
+      const mk = async (fields: Record<string, unknown>) =>
+        ctx.db.insert("ownedPuzzleImages", {
+          ownedPuzzleId: copy,
+          uploaderId: alice,
+          fileId: await ctx.storage.store(
+            new Blob([crypto.randomUUID()], { type: "image/jpeg" }),
+          ),
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          ...fields,
+        } as never);
+      return {
+        legacy: await mk({}),
+        unscored: await mk({
+          moderationStatus: "unscored",
+          moderationReason: "missing_token",
+        }),
+        scored: await mk({
+          moderationStatus: "approved",
+          moderationScore: 0.02,
+        }),
+      };
+    });
+    return { copy, ids };
+  };
+
+  const rowsOf = (
+    t: TestConvex<typeof schema>,
+    ids: Record<string, Id<"ownedPuzzleImages">>,
+  ) =>
+    t.run(async (ctx) => ({
+      legacy: await ctx.db.get(ids.legacy),
+      unscored: await ctx.db.get(ids.unscored),
+      scored: await ctx.db.get(ids.scored),
+    }));
+
+  test("a dry run counts candidates and writes nothing", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const t = convexTest(schema, modules);
+    const { ids } = await seedRows(t);
+    const before = await rowsOf(t, ids);
+
+    const batch = await t.action(
+      internal.library.rescreenPhotos.rescreenPhotos,
+      {
+        table: "copy",
+        dryRun: true,
+      },
+    );
+
+    expect(batch).toMatchObject({ scanned: 3, candidates: 2, approved: 0 });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(await rowsOf(t, ids)).toEqual(before);
+  });
+
+  test("scores the unchecked rows (clean => approved with score, nsfw => rejected) and skips checked ones", async () => {
+    vi.stubEnv("HF_MODERATION_TOKEN", "hf_test");
+    const scores = [0.01, 0.97];
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify([{ label: "nsfw", score: scores.shift() ?? 0 }]),
+          { status: 200 },
+        ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const t = convexTest(schema, modules);
+    const { ids } = await seedRows(t);
+
+    const batch = await t.action(
+      internal.library.rescreenPhotos.rescreenPhotos,
+      {
+        table: "copy",
+        batchSize: 10,
+      },
+    );
+
+    expect(batch).toMatchObject({ candidates: 2, approved: 1, rejected: 1 });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const rows = await rowsOf(t, ids);
+    expect(rows.legacy?.moderationStatus).toBe("approved");
+    expect(rows.legacy?.moderationScore).toBe(0.01);
+    expect(rows.unscored?.moderationStatus).toBe("rejected");
+    expect(rows.unscored?.moderationReason).toBeUndefined();
+    expect(rows.scored?.moderationScore).toBe(0.02);
+  });
+
+  test("a provider failure leaves rows untouched (a legacy photo is never hidden by a hiccup)", async () => {
+    vi.stubEnv("HF_MODERATION_TOKEN", "hf_test");
+    vi.stubGlobal("fetch", hfReplies({ status: 401 }));
+    const t = convexTest(schema, modules);
+    const { ids } = await seedRows(t);
+    const before = await rowsOf(t, ids);
+
+    const batch = await t.action(
+      internal.library.rescreenPhotos.rescreenPhotos,
+      {
+        table: "copy",
+      },
+    );
+
+    expect(batch.unscored).toBe(1);
+    expect(await rowsOf(t, ids)).toEqual(before);
+    // Aborted on a configuration error: no follow-up batch scheduled.
+    const jobs = await t.run((ctx) =>
+      ctx.db.system.query("_scheduled_functions").collect(),
+    );
+    expect(jobs.filter((j) => j.name.includes("rescreenPhotos"))).toEqual([]);
+  });
+
+  test("a real run refuses up front without a token", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const t = convexTest(schema, modules);
+    await seedRows(t);
+    const batch = await t.action(
+      internal.library.rescreenPhotos.rescreenPhotos,
+      {
+        table: "copy",
+      },
+    );
+    expect(batch.scanned).toBe(0);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("rescreenPhotos (completion sidecars)", () => {
+  test("an unscored completion photo scored nsfw is rejected: detached from the completion and stamped", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+    const { completionId } = await asAlice(t).mutation(
+      api.solving.recordCompletion.recordCompletion,
+      {
+        copyId: copyAggregateId,
+        startDate: Date.now() - 7_200_000,
+        endDate: Date.now() - 3_600_000,
+      },
+    );
+    const fileId = await storeJpeg(t);
+    await asAlice(t).mutation(
+      api.solving.attachCompletionPhotos.attachCompletionPhotos,
+      { completionId, storageIds: [fileId] },
+    );
+    await settleDueJobs(t); // no token => unscored
+
+    vi.stubEnv("HF_MODERATION_TOKEN", "hf_test");
+    vi.stubGlobal("fetch", hfReplies({ nsfw: 0.95 }));
+    const batch = await t.action(
+      internal.library.rescreenPhotos.rescreenPhotos,
+      { table: "completion" },
+    );
+
+    expect(batch).toMatchObject({ candidates: 1, rejected: 1 });
+    const completion = await t.run((ctx) =>
+      ctx.db
+        .query("completions")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", completionId))
+        .unique(),
+    );
+    expect(completion?.photos).toEqual([]);
+    const stamps = await t.run((ctx) =>
+      ctx.db.query("moderationActions").collect(),
+    );
+    expect(stamps.map((s) => s.kind)).toEqual(["photo_auto_rejected"]);
+  });
+});
+
 describe("getPhotoScreeningHealth", () => {
   test("admin only", async () => {
     const t = convexTest(schema, modules);

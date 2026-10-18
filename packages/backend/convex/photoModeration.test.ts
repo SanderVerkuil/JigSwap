@@ -9,6 +9,7 @@ import {
   makeModerationPortFromEnv,
   makeNoopModerationPort,
   MODERATION_RETRY_DELAYS_MS,
+  needsRescreen,
   nextRetryDelayMs,
   planModerationStep,
   readModel,
@@ -399,5 +400,20 @@ describe("retry planning", () => {
       kind: "verdict",
       result: clean,
     });
+  });
+});
+
+describe("needsRescreen", () => {
+  test("unscored and unchecked-approved rows need a re-screen; decided ones do not", () => {
+    expect(needsRescreen({ moderationStatus: "unscored" })).toBe(true);
+    expect(needsRescreen({ moderationStatus: "approved" })).toBe(true);
+    expect(needsRescreen({})).toBe(true); // legacy: absent status
+    expect(
+      needsRescreen({ moderationStatus: "approved", moderationScore: 0.01 }),
+    ).toBe(false);
+    expect(
+      needsRescreen({ moderationStatus: "rejected", moderationScore: 0.9 }),
+    ).toBe(false);
+    expect(needsRescreen({ moderationStatus: "pending" })).toBe(false);
   });
 });
