@@ -42,10 +42,13 @@ export function ManageCircleDialog({
   circleId,
   viewerId,
   onClose,
+  onDeleted = onClose,
 }: {
   circleId: string;
   viewerId: string;
   onClose: () => void;
+  // After the owner deletes the circle; closing the dialog by default.
+  onDeleted?: () => void;
 }) {
   const t = useTranslations("circles");
   const seatName = useCircleSeatName();
@@ -252,7 +255,7 @@ export function ManageCircleDialog({
               circleId={circleId}
               circleName={detail.name}
               isOwnedByViewer={detail.isOwnedByViewer}
-              onDeleted={onClose}
+              onDeleted={onDeleted}
             />
           </div>
         )}

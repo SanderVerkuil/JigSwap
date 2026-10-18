@@ -1,6 +1,7 @@
 // "Leave circle" for a non-owner member: a destructive, labelled trigger behind
-// an AlertDialog confirm. On success the reactive myCircles query drops the
-// circle from the list, so there is nothing to navigate to.
+// an AlertDialog confirm. On the circles list the reactive myCircles query
+// drops the circle, so there is nothing to navigate to; the circle's own page
+// passes `onLeft` to move off a page the member can no longer see.
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,9 +24,11 @@ import { useTranslations } from "use-intl";
 export function LeaveCircleAction({
   circleId,
   circleName,
+  onLeft,
 }: {
   circleId: string;
   circleName: string;
+  onLeft?: () => void;
 }) {
   const t = useTranslations("circles");
   const tCommon = useTranslations("common");
@@ -36,6 +39,7 @@ export function LeaveCircleAction({
   const handleLeave = async () => {
     try {
       await leaveCircle.mutateAsync({ circleId });
+      onLeft?.();
     } catch {
       toast.error(t("leaveError"));
     }
@@ -47,7 +51,7 @@ export function LeaveCircleAction({
         <Button
           variant="ghost"
           size="sm"
-          className="text-destructive hover:text-destructive"
+          className="text-destructive hover:text-destructive h-11 md:h-8"
           disabled={leaveCircle.isPending}
         >
           <LogOut className="h-4 w-4" />
