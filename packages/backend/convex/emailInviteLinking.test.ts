@@ -1,7 +1,7 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { Webhook } from "svix";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import {
   makeFakeInvitationGateway,
@@ -713,5 +713,46 @@ describe("sign-up through an email invitation", () => {
     await postUserEvent(t, "user.created", metadata);
     await postUserEvent(t, "user.created", metadata);
     expect(await offers(t)).toHaveLength(1);
+  });
+});
+
+describe("expiry of an email invitation", () => {
+  const expireNow = async (t: T) => {
+    const [row] = await emailInviteRows(t);
+    await t.run((ctx) => ctx.db.patch(row._id, { expiresAt: Date.now() - 1 }));
+    await t.mutation(internal.invitations.emailInviteStore.expireEmailInvite, {
+      inviteRef: row.aggregateId,
+    });
+    await settleDueJobs(t);
+  };
+
+  test("withdraws a pending emailInvite offer it made, with its notification", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await send(t, "alice", "carol@example.com");
+    expect(await offers(t)).toHaveLength(1);
+
+    await expireNow(t);
+
+    expect(await emailInviteRows(t)).toEqual([]);
+    expect(await offers(t)).toEqual([]);
+    expect(
+      await notificationsOf(t, s.carol, "connection_offer_received"),
+    ).toEqual([]);
+  });
+
+  test("withdraws a pending viaEmail household invite it made", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await seedHousehold(t, s.alice, s.bob);
+    await send(t, "alice", "carol@example.com", "household");
+    expect(await householdInvites(t)).toHaveLength(1);
+
+    await expireNow(t);
+
+    expect(await householdInvites(t)).toEqual([]);
+    expect(
+      await notificationsOf(t, s.carol, "household_invite_received"),
+    ).toEqual([]);
   });
 });
