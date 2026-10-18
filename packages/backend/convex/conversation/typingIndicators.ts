@@ -1,3 +1,4 @@
+import { TYPING_TTL_MS } from "@jigswap/contracts";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import { logEvent } from "../lib/logEvent";
@@ -5,8 +6,8 @@ import { logEvent } from "../lib/logEvent";
 // Typing indicators (spec 4.3): one row per (thread, member), refreshed by setTyping, stopped by
 // clearTyping and read by getTyping. Shared constants and row helpers.
 
-/** A `typingAt` older than this no longer means "is typing". */
-export const TYPING_TTL_MS = 6_000;
+/** A `typingAt` older than this no longer means "is typing" (shared with the web client). */
+export { TYPING_TTL_MS };
 
 /** A member's typing row takes at most one write (set or clear) per this long. */
 export const TYPING_THROTTLE_MS = 2_000;

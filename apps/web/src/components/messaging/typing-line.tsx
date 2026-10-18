@@ -10,13 +10,11 @@
 import { gateway } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { convexQuery } from "@convex-dev/react-query";
-import type { TypingView } from "@jigswap/contracts";
+import { TYPING_TTL_MS, type TypingView } from "@jigswap/contracts";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useTranslations } from "use-intl";
 import { anonymousLabel } from "./format";
-
-const TYPING_TTL_MS = 6_000;
 
 const NO_TYPERS: readonly TypingView[] = [];
 

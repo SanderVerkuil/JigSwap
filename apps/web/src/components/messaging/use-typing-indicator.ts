@@ -11,13 +11,11 @@
 // only resets the local throttle. Failures are ignored: typing is best-effort.
 import { gateway } from "@/gateway";
 import { useConvexMutation } from "@convex-dev/react-query";
+import { TYPING_TTL_MS } from "@jigswap/contracts";
 import { useCallback, useEffect, useRef } from "react";
 
 /** The least time between two setTyping calls for one thread. */
 export const TYPING_SEND_INTERVAL_MS = 4_000;
-
-// How long the server treats a typing row as live (conversation/typingIndicators).
-const TYPING_TTL_MS = 6_000;
 
 export function useTypingIndicator(threadId: string): {
   onInput: (value: string) => void;
