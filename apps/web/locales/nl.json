@@ -3625,7 +3625,8 @@
         "flagged": "Gemarkeerde afbeeldingen",
         "activity": "Activiteitenlog",
         "unchecked": "Niet-gecontroleerde foto's",
-        "hashMatches": "Hash-matches"
+        "hashMatches": "Hash-matches",
+        "reports": "Meldingen"
       },
       "detail": {
         "submitted": "Ingezonden",
@@ -3752,6 +3753,100 @@
         "waiting": "Hash-check onbereikbaar: {countLabel} {count, plural, one {foto wacht} other {foto's wachten}}, niet gepubliceerd (oudste {since}). Ze worden automatisch opnieuw gecontroleerd.",
         "noteBy": "{name}, {time}",
         "addNote": "Notitie toevoegen"
+      },
+      "reports": {
+        "statusFilter": "Status van melding",
+        "loading": "Meldingen laden…",
+        "loadMore": "Meer laden",
+        "empty": {
+          "open": "Geen open meldingen.",
+          "actioned": "Nog geen meldingen met maatregel.",
+          "dismissed": "Nog geen afgewezen meldingen."
+        },
+        "statuses": {
+          "open": "Open",
+          "actioned": "Maatregel genomen",
+          "dismissed": "Afgewezen"
+        },
+        "kinds": {
+          "user": "Lid",
+          "message": "Bericht",
+          "copy": "Puzzelexemplaar",
+          "photo": "Foto",
+          "exchange": "Ruil"
+        },
+        "reportedArrow": "meldde",
+        "openCount": "{count, plural, one {# open melding tegen dit lid} other {# open meldingen tegen dit lid}}",
+        "detailTitle": "Melding",
+        "detailDescription": "Het bewijs bij deze melding en het beslisformulier.",
+        "reason": "Reden",
+        "targetKind": "Onderwerp",
+        "reporter": "Melder",
+        "reported": "Gemeld lid",
+        "filed": "Gemeld",
+        "status": "Status",
+        "details": "Toelichting van de melder",
+        "illegalNotice": "Melding van illegale inhoud",
+        "goodFaith": "Verklaring te goeder trouw bevestigd.",
+        "photo": "Gemelde foto",
+        "photoGone": "Deze foto bestaat niet meer.",
+        "evidence": "Gespreksfragment op het moment van melden",
+        "reportedMessage": "Gemeld",
+        "system": "Systeem",
+        "deletedMember": "Verwijderd lid",
+        "otherParticipant": "Andere deelnemer",
+        "otherReports": "{count, plural, =0 {Geen andere meldingen tegen dit lid} one {# andere melding tegen dit lid} other {# andere meldingen tegen dit lid}}",
+        "decisions": {
+          "dismissed": "Afgewezen",
+          "warned": "Lid gewaarschuwd",
+          "content_removed": "Inhoud verwijderd"
+        },
+        "decidedBy": "Besloten door {name}",
+        "decisionLegend": "Besluit",
+        "decide": {
+          "dismissed": "Afwijzen",
+          "warned": "Lid waarschuwen",
+          "content_removed": "Inhoud verwijderen"
+        },
+        "removeUnavailable": "Inhoud kan alleen worden verwijderd bij meldingen over berichten en foto's.",
+        "statementLabel": "Motivering (wordt naar het lid gestuurd)",
+        "statementHint": "{count}/{max} tekens. Verplicht: wat is beperkt, op welke grond, en hoe om herbeoordeling te vragen.",
+        "templateNames": {
+          "removal": "Sjabloon verwijdering",
+          "warning": "Sjabloon waarschuwing",
+          "noViolation": "Sjabloon geen overtreding"
+        },
+        "templateContent": {
+          "user": "je gedrag op JigSwap",
+          "message": "je bericht",
+          "copy": "je puzzelexemplaar",
+          "photo": "je foto",
+          "exchange": "je gedrag bij een ruil"
+        },
+        "grounds": {
+          "spam_scam": "spam en oplichting",
+          "harassment_hate": "intimidatie en haat",
+          "sexual": "seksuele of ongepaste inhoud",
+          "fake_trade": "nepruilen en niet komen opdagen",
+          "illegal": "illegale inhoud",
+          "other": "respectvol gedrag"
+        },
+        "templates": {
+          "removal": "We hebben {content} verwijderd omdat het in strijd is met onze communityrichtlijnen over {ground}. Denk je dat we het mis hebben? Dan kun je via de contactpagina om een herbeoordeling vragen.",
+          "warning": "We waarschuwen je over {content}: het is in strijd met onze communityrichtlijnen over {ground}. Er is deze keer niets verwijderd. Denk je dat we het mis hebben? Dan kun je via de contactpagina om een herbeoordeling vragen.",
+          "noViolation": "We hebben een melding over {content} bekeken en geen overtreding gevonden van onze communityrichtlijnen over {ground}. Er is niets beperkt. Je kunt via de contactpagina om een herbeoordeling vragen."
+        },
+        "submit": {
+          "none": "Kies een besluit",
+          "dismissed": "Melding afwijzen",
+          "warned": "Lid waarschuwen",
+          "content_removed": "Inhoud verwijderen"
+        },
+        "removeConfirmTitle": "Deze inhoud verwijderen?",
+        "removeConfirmBody": "Beide leden zien dat een moderator het heeft verwijderd, en de auteur krijgt je motivering. Dit kan niet ongedaan worden gemaakt.",
+        "cancel": "Annuleren",
+        "decided": "Besluit opgeslagen",
+        "decideError": "Het besluit opslaan is niet gelukt. Probeer het opnieuw."
       }
     },
     "contact": {

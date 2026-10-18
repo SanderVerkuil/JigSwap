@@ -12,6 +12,7 @@ import {
 } from "@/components/admin/moderation/flag-detail";
 import { KpiRow } from "@/components/admin/moderation/kpi-row";
 import { QueueList } from "@/components/admin/moderation/queue-list";
+import { ReportsQueue } from "@/components/admin/moderation/reports-queue";
 import { ScreeningHealth } from "@/components/admin/moderation/screening-health";
 import { severityBand } from "@/components/admin/moderation/severity";
 import {
@@ -38,7 +39,14 @@ import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Flag, History, Inbox, ScanEye, ShieldAlert } from "lucide-react";
+import {
+  Flag,
+  History,
+  Inbox,
+  MessageSquareWarning,
+  ScanEye,
+  ShieldAlert,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
@@ -276,6 +284,10 @@ function ModerationPage() {
               }
             />
           </TabsTrigger>
+          <TabsTrigger value="reports" className={TAB_TRIGGER_CLASS}>
+            <MessageSquareWarning aria-hidden />
+            {t("tabs.reports")}
+          </TabsTrigger>
           <TabsTrigger value="activity" className={TAB_TRIGGER_CLASS}>
             <History aria-hidden />
             {t("tabs.activity")}
@@ -458,6 +470,10 @@ function ModerationPage() {
               }}
             />
           )}
+        </TabsContent>
+
+        <TabsContent value="reports">
+          <ReportsQueue emptyTitle={tAdmin("queueEmpty.title")} />
         </TabsContent>
 
         <TabsContent value="activity">
