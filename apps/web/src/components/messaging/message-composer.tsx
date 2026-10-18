@@ -36,6 +36,7 @@ import { PHOTO_ACCEPT } from "./prepare-photo";
 import { StagedCopyChip } from "./staged-copy-chip";
 import { StagedPhotoChips } from "./staged-photo-chips";
 import { usePhotosAvailable, usePhotoStaging } from "./use-photo-staging";
+import { useTypingIndicator } from "./use-typing-indicator";
 
 // The Thread aggregate rejects longer bodies (ConvexError code MessageTooLong).
 const MAX_MESSAGE_LENGTH = 4000;
@@ -105,6 +106,7 @@ export function MessageComposer({
   const staging = usePhotoStaging(threadId);
   const photosAvailable = usePhotosAvailable();
   const isMobile = useIsMobile();
+  const typing = useTypingIndicator(threadId);
   // After picking or removing an attachment: the textarea on desktop; on
   // phones the attach button, so the keyboard doesn't pop up unasked.
   const focusAfterAttachChange = () =>
@@ -148,6 +150,7 @@ export function MessageComposer({
     const caption = body.trim();
     setError(null);
     setBody("");
+    typing.onSent();
     try {
       await sendStagedImages.mutateAsync({
         threadId,
@@ -186,6 +189,7 @@ export function MessageComposer({
     // Clear immediately — the optimistic append already shows the message.
     setBody("");
     setStaged(null);
+    typing.onSent();
     try {
       await postMessage.mutateAsync({
         threadId,
@@ -276,6 +280,7 @@ export function MessageComposer({
           value={body}
           onChange={(event) => {
             setBody(event.target.value);
+            typing.onInput(event.target.value);
             if (error) setError(null);
           }}
           onKeyDown={handleKeyDown}
@@ -333,7 +338,10 @@ export function MessageComposer({
           recipientName={recipientName ?? t("locations.recipientFallback")}
           group={locationGroup}
           exactCurrentLocation={location?.exactCurrentLocation === true}
-          onSent={() => setError(null)}
+          onSent={() => {
+            setError(null);
+            typing.onSent();
+          }}
           onCannotReply={() => {
             setLocationOpen(false);
             setClosedThreadId(threadId);

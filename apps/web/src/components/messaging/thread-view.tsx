@@ -67,6 +67,7 @@ import { threadPartner } from "./thread-partner";
 import { ThreadPuzzleStack } from "./thread-puzzle-stack";
 import { ThreadQuickLinks } from "./thread-quick-links";
 import { anchoredScrollTop, type ScrollSnapshot } from "./thread-scroll";
+import { TypingLine } from "./typing-line";
 
 type ThreadMessage = PaginatedQueryItem<
   typeof gateway.conversation.listThreadMessages
@@ -500,23 +501,26 @@ export function ThreadView({
           partner={pairThread ? threadPartner(pairThread) : null}
         />
       ) : (
-        <MessageComposer
-          threadId={threadId}
-          recipientName={title}
-          theirsLabel={theirsLabel}
-          {...(circleThread && {
-            placeholder: t("circle.composerPlaceholder", {
-              circle: circleThread.subject.name,
-            }),
-            // listAttachableCopies has nothing for circle threads yet.
-            canAttachCopy: false,
-            locationGroup: {
-              circle: circleThread.subject.name,
-              // Everyone but the sender sees the spot.
-              others: Math.max(1, circleThread.subject.memberCount - 1),
-            },
-          })}
-        />
+        <>
+          <TypingLine threadId={threadId} />
+          <MessageComposer
+            threadId={threadId}
+            recipientName={title}
+            theirsLabel={theirsLabel}
+            {...(circleThread && {
+              placeholder: t("circle.composerPlaceholder", {
+                circle: circleThread.subject.name,
+              }),
+              // listAttachableCopies has nothing for circle threads yet.
+              canAttachCopy: false,
+              locationGroup: {
+                circle: circleThread.subject.name,
+                // Everyone but the sender sees the spot.
+                others: Math.max(1, circleThread.subject.memberCount - 1),
+              },
+            })}
+          />
+        </>
       )}
     </div>
   );
