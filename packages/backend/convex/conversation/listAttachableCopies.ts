@@ -47,6 +47,10 @@ export const listAttachableCopies = query({
         message: "Only participants may read a thread",
       });
     }
+    // The picker is pair-shaped ("mine" for the one other side, "theirs" from them). A circle
+    // thread has no single other side, so it lists nothing here; postMessage's isAttachable still
+    // applies the circle rule (owner is a participant, every participant may view the copy).
+    if (thread.subjectKind === "circle") return [];
     const other = thread.participants.find((p) => p !== me);
     if (!other) return [];
     if (await isBlockedEitherWay(ctx, me, other)) return [];

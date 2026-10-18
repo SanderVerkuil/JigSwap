@@ -1,4 +1,9 @@
-import { makePostMessage, toCopyId, toThreadId } from "@jigswap/domain";
+import {
+  ConversationError,
+  makePostMessage,
+  toCopyId,
+  toThreadId,
+} from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { mutation, type QueryCtx } from "../_generated/server";
@@ -13,6 +18,7 @@ import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
 import { systemClock } from "./adapters/systemClock";
 import { toConvexError } from "./errors";
 import { threadRowByAggregateId } from "./readModelHelpers";
+import { isCurrentCircleMember } from "./threadMemberProjection";
 
 // A copy may be attached to a message in a thread iff it exists, is OWNED by one of the thread's
 // participants, and EVERY participant may view it right now (canViewCopy) — so an attachment
@@ -54,7 +60,10 @@ const isAttachable = async (
 // unowned reference). An optional `copyId` attaches a copy (see isAttachable); a copy failing
 // that gate is rejected as CopyNotFound, so the error never distinguishes "missing" from "not
 // yours / not viewable". The copy gate runs only for a participant of an existing thread; anyone
-// else gets the use case's own ThreadNotFound / NotParticipant. Returns the message id.
+// else gets the use case's own ThreadNotFound / NotParticipant. In a circle thread the author must
+// also still be in the circle (defence in depth over the async participant sync; a member who
+// just left or was removed gets the same NotParticipant), and no pair-block refusal applies.
+// Returns the message id.
 export const postMessage = mutation({
   args: {
     threadId: v.string(),
@@ -67,8 +76,20 @@ export const postMessage = mutation({
     await enforceRateLimit(ctx, "messagePost", authorId);
     await assertThreadNotBlocked(ctx, args.threadId, authorId);
 
+    const thread = await threadRowByAggregateId(ctx, args.threadId);
+    if (
+      thread?.subjectKind === "circle" &&
+      (thread.circleId === undefined ||
+        !(await isCurrentCircleMember(
+          ctx,
+          thread.circleId,
+          authorId as unknown as Id<"users">,
+        )))
+    ) {
+      throw toConvexError(ConversationError.notParticipant());
+    }
+
     if (args.copyId !== undefined) {
-      const thread = await threadRowByAggregateId(ctx, args.threadId);
       const isParticipant = thread?.participants.includes(
         authorId as unknown as Id<"users">,
       );

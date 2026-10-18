@@ -636,6 +636,63 @@ describe("join/leave rows and projection", () => {
   });
 });
 
+describe("blocking inside a circle", () => {
+  test("the blocker sees the blocked member's messages flagged; the blocked member sees the blocker named and normal", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    await block(t, alice, bob);
+    // Neither side is refused posting in the circle thread.
+    await post(t, "bob", threadId, "from bob");
+    await post(t, "alice", threadId, "from alice");
+
+    const aliceSees = await messagesOf(t, "alice", threadId);
+    expect(aliceSees[0]).toMatchObject({
+      body: "from bob",
+      authorBlockedByMe: true,
+    });
+    expect(aliceSees[1].authorBlockedByMe).toBeUndefined();
+
+    const bobSees = await messagesOf(t, "bob", threadId);
+    expect(bobSees.every((m) => m.authorBlockedByMe === undefined)).toBe(true);
+    // Alice blocked Bob, yet Bob still sees her named (the circle rule; the block stays silent).
+    expect(bobSees[1].author).toMatchObject({
+      anonymous: false,
+      member: { _id: alice },
+    });
+    // Carol, uninvolved, sees both normally.
+    const carolSees = await messagesOf(t, "carol", threadId);
+    expect(carolSees.every((m) => m.authorBlockedByMe === undefined)).toBe(
+      true,
+    );
+    // No block flags on the circle inbox row.
+    const [row] = await inboxOf(t, "bob");
+    expect(row.blocked).toBeUndefined();
+    expect(row.readOnly).toBeUndefined();
+  });
+
+  test("a blocked author's messages are not unread for the blocker, nor notified to them", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    await block(t, alice, bob);
+    await post(t, "bob", threadId, "one");
+    await post(t, "bob", threadId, "two");
+    await flush(t);
+
+    const unread = (clerkId: string) =>
+      as(t, clerkId).query(api.conversation.getUnreadTotal.getUnreadTotal, {});
+    expect(await unread("alice")).toBe(0);
+    expect(await unread("carol")).toBe(2);
+    const notified = await t.run((ctx) =>
+      ctx.db
+        .query("notifications")
+        .withIndex("by_user", (q) => q.eq("userId", alice))
+        .collect(),
+    );
+    expect(notified.filter((n) => n.type === "message_received")).toEqual([]);
+  });
+});
 
 describe("inbox, unread and mute", () => {
   test("a circle thread appears in the inbox only once it has a message for the viewer, or they opened it", async () => {
@@ -713,4 +770,93 @@ describe("inbox, unread and mute", () => {
   });
 });
 
+describe("posting", () => {
+  test("a removed member can't post, even before the sync has run", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    await as(t, "alice").mutation(api.sharing.removeMember.removeMember, {
+      circleId,
+      memberId: bob,
+    });
+    await expectCode(post(t, "bob", threadId, "still here?"), "NotParticipant");
+    await flush(t);
+    await expectCode(post(t, "bob", threadId, "still here?"), "NotParticipant");
+    await expectCode(post(t, "dave", threadId, "hi"), "NotParticipant");
+  });
 
+  test("markThreadRead works for a circle thread and clears only the caller's unread", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, carol, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    await post(t, "alice", threadId, "one");
+    await as(t, "bob").mutation(
+      api.conversation.markThreadRead.markThreadRead,
+      {
+        threadId,
+      },
+    );
+    const rows = await participantRowsOf(t, threadId);
+    expect(rows.find((r) => r.memberId === bob)?.unreadCount).toBe(0);
+    expect(rows.find((r) => r.memberId === carol)?.unreadCount).toBe(1);
+  });
+
+  test("the 50-member cap still holds for circles, so a circle thread never passes 50 participants", async () => {
+    const t = convexTest(schema, modules);
+    const { circleId } = await seed(t);
+    // Alice, Bob and Carol hold 3 seats; fill to 50.
+    for (let i = 0; i < 47; i++) {
+      await join(t, circleId, await mkUser(t, `extra${i}`));
+    }
+    const late = await mkUser(t, "late");
+    await expect(join(t, circleId, late)).rejects.toThrow();
+    await flush(t);
+    const threadId = await open(t, "alice", circleId);
+    const thread = await t.run((ctx) =>
+      ctx.db
+        .query("threads")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", threadId))
+        .unique(),
+    );
+    expect(thread!.participants).toHaveLength(50);
+  });
+});
+
+describe("message notifications", () => {
+  test("a member who joined after a message was posted is not notified about it", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, dave, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    await post(t, "alice", threadId, "before dave");
+    // Dave lands in the thread (floor after the post) before the post's dispatch runs.
+    await t.run(async (ctx) => {
+      const thread = await ctx.db
+        .query("threads")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", threadId))
+        .unique();
+      await ctx.db.patch(thread!._id, {
+        participants: [...thread!.participants, dave],
+      });
+      await ctx.db.insert("threadParticipants", {
+        threadAggregateId: threadId,
+        memberId: dave,
+        joinedAt: Date.now() + 1,
+        unreadCount: 0,
+      });
+    });
+    await flush(t);
+    const notified = (userId: Id<"users">) =>
+      t.run(async (ctx) =>
+        (
+          await ctx.db
+            .query("notifications")
+            .withIndex("by_user", (q) => q.eq("userId", userId))
+            .collect()
+        ).filter((n) => n.type === "message_received"),
+      );
+    expect(await notified(dave)).toEqual([]);
+    const [toBob] = await notified(bob);
+    // No author name is snapshotted into a circle message notification.
+    expect(toBob.params?.actorName).toBeUndefined();
+  });
+});

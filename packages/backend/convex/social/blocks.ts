@@ -74,7 +74,9 @@ export const assertPairNotBlocked = async (
  * Refuse posting to a thread whose other participant is blocked either way, with the generic
  * CannotReply (NotConnected never otherwise comes out of posting to an existing thread, so it
  * would single out a block). Unknown threads and non-participants pass through untouched, so
- * the caller's own ThreadNotFound / NotParticipant errors stay what they were.
+ * the caller's own ThreadNotFound / NotParticipant errors stay what they were. Exchange and DM
+ * threads only: a circle thread is shared context, and a block between two of its members
+ * removes neither from it (spec 5.3); the blocker sees the blocked member's messages collapsed.
  */
 export const assertThreadNotBlocked = async (
   ctx: QueryCtx,
@@ -86,6 +88,7 @@ export const assertThreadNotBlocked = async (
     .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", threadAggregateId))
     .unique();
   if (!thread || !thread.participants.includes(asUserId(memberId))) return;
+  if (thread.subjectKind === "circle") return;
   for (const other of thread.participants) {
     if (
       other !== asUserId(memberId) &&

@@ -260,12 +260,36 @@ const translate = async (
       if (authorId === null || authorId === undefined) return [];
       const thread = await loadThread(ctx, p.threadId as string);
       if (!thread) return [];
-      // No name snapshot for a DM: the sender may be anonymous to the recipient (resolved at read
-      // and send time through the privacy rules), so a stored name must never be there to leak.
+      // No name snapshot for a DM or a circle thread: the sender may be anonymous to the recipient
+      // (resolved at read and send time through the privacy rules), so a stored name must never
+      // be there to leak.
       const author =
-        thread.subjectKind === "dm" ? {} : await memberName(ctx, authorId);
+        thread.subjectKind === "exchange"
+          ? await memberName(ctx, authorId)
+          : {};
+      // A circle member is never told about a message from before they joined (a join that
+      // landed between the post and this dispatch). A blocked author's message is dropped for the
+      // blocker below, at the one place every notification passes (handleDomainEvent).
+      const floorOf = new Map<string, number>();
+      if (thread.subjectKind === "circle") {
+        for (const row of await ctx.db
+          .query("threadParticipants")
+          .withIndex("by_thread", (q) =>
+            q.eq("threadAggregateId", thread.aggregateId),
+          )
+          .collect()) {
+          if (row.joinedAt !== undefined) {
+            floorOf.set(row.memberId as string, row.joinedAt);
+          }
+        }
+      }
       const recipients = thread.participants.filter(
-        (participant) => (participant as string) !== authorId,
+        (participant) =>
+          (participant as string) !== authorId &&
+          !(
+            (floorOf.get(participant as string) ?? -Infinity) >=
+            event.occurredAt
+          ),
       );
       // Presence suppression: a recipient already on /messages sees the message live (plus an
       // in-tab toast) — creating a bell row or emailing them would double-notify. Fail-open:
