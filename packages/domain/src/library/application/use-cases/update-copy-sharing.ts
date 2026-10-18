@@ -40,7 +40,8 @@ export const makeUpdateCopySharing =
       forTrade: cmd.forTrade,
       forSale: cmd.forSale,
       forLend: cmd.forLend,
-      salePrice: cmd.salePrice,
+      // An omitted price keeps the stored one (clients that only toggle flags never send it).
+      salePrice: cmd.salePrice ?? copy.sharing.salePrice,
     });
 
     if (
