@@ -97,6 +97,7 @@ import type * as conversation_adapters_threadMapper from "../conversation/adapte
 import type * as conversation_backfill from "../conversation/backfill.js";
 import type * as conversation_canMessage from "../conversation/canMessage.js";
 import type * as conversation_copyCard from "../conversation/copyCard.js";
+import type * as conversation_countLegacyImageMessages from "../conversation/countLegacyImageMessages.js";
 import type * as conversation_errors from "../conversation/errors.js";
 import type * as conversation_getCopyConversation from "../conversation/getCopyConversation.js";
 import type * as conversation_getMyInbox from "../conversation/getMyInbox.js";
@@ -516,6 +517,7 @@ declare const fullApi: ApiFromModules<{
   "conversation/backfill": typeof conversation_backfill;
   "conversation/canMessage": typeof conversation_canMessage;
   "conversation/copyCard": typeof conversation_copyCard;
+  "conversation/countLegacyImageMessages": typeof conversation_countLegacyImageMessages;
   "conversation/errors": typeof conversation_errors;
   "conversation/getCopyConversation": typeof conversation_getCopyConversation;
   "conversation/getMyInbox": typeof conversation_getMyInbox;

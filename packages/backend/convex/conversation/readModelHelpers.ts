@@ -16,14 +16,19 @@ export const threadRowByAggregateId = (
     .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", threadAggregateId))
     .unique();
 
-/** Message row -> DTO. A system message's absent author column maps to null. */
+/**
+ * Message row -> DTO. A system message's absent author column maps to null. An `image` row's body
+ * is BLANKED: `postMessage` no longer accepts images, and any legacy image row's body is an
+ * unverified, client-supplied string (never screened or ownership-checked), so it must never reach
+ * a renderer.
+ */
 export const toThreadMessageView = (
   row: Doc<"threadMessages">,
 ): ThreadMessageView => ({
   id: row.messageId,
   authorId: row.authorId === undefined ? null : (row.authorId as string),
   kind: row.kind,
-  body: row.body,
+  body: row.kind === "image" ? "" : row.body,
   sentAt: row.sentAt,
 });
 

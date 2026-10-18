@@ -29,16 +29,17 @@ const isAttachable = async (
 };
 
 // Composition root for posting a member-authored message. The author is always the authenticated
-// member; the participant and non-empty-body rules are the aggregate's. `kind` is text or image
-// only — system messages are service-authored and have no transport here. An optional `copyId`
-// attaches a copy (see isAttachable); a copy failing that gate is rejected as CopyNotFound, so
-// the error never distinguishes "missing" from "not yours / not viewable". The copy gate runs only
-// for a participant of an existing thread; anyone else gets the use case's own ThreadNotFound /
-// NotParticipant. Returns the message id.
+// member; the participant and non-empty-body rules are the aggregate's. `kind` is text ONLY:
+// system messages are service-authored, and image messages are refused until attachments ship
+// through a server-verified upload path (an image body here would be an arbitrary, unscreened,
+// unowned reference). An optional `copyId` attaches a copy (see isAttachable); a copy failing
+// that gate is rejected as CopyNotFound, so the error never distinguishes "missing" from "not
+// yours / not viewable". The copy gate runs only for a participant of an existing thread; anyone
+// else gets the use case's own ThreadNotFound / NotParticipant. Returns the message id.
 export const postMessage = mutation({
   args: {
     threadId: v.string(),
-    kind: v.union(v.literal("text"), v.literal("image")),
+    kind: v.literal("text"),
     body: v.string(),
     copyId: v.optional(v.id("ownedPuzzles")),
   },
