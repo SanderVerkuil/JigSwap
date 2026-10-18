@@ -2,6 +2,7 @@ import { toMemberId } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { mutation, type MutationCtx } from "../_generated/server";
+import { toLastMessage } from "../conversation/adapters/threadMapper";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
 import { makeNotify } from "../notifications/adapters/makeNotify";
@@ -123,6 +124,25 @@ export const decideReport = mutation({
   },
 });
 
+// The thread's denormalized inbox summary (#166) copies the newest message's body and copy ref
+// when it is appended; if the removed message is that newest one, re-summarise it from the
+// tombstoned row so the inbox preview drops the content too and reads "Message removed".
+const blankLastMessageSummary = async (ctx: MutationCtx, messageId: string) => {
+  const row = await ctx.db
+    .query("threadMessages")
+    .withIndex("by_message_id", (q) => q.eq("messageId", messageId))
+    .first();
+  if (!row) return;
+  const thread = await ctx.db
+    .query("threads")
+    .withIndex("by_aggregate_id", (q) =>
+      q.eq("aggregateId", row.threadAggregateId),
+    )
+    .unique();
+  if (thread?.lastMessage?.messageId !== messageId) return;
+  await ctx.db.patch(thread._id, { lastMessage: toLastMessage(row) });
+};
+
 // Remove the reported content: tombstone a message (its body and copy reference are cleared too,
 // so the content is gone from the database, not just hidden; the report's evidence snapshot
 // keeps the original), delete a photo. A target that is already
@@ -142,6 +162,7 @@ const removeContent = async (ctx: MutationCtx, report: Doc<"reports">) => {
           body: "",
           copyId: undefined,
         });
+        await blankLastMessageSummary(ctx, message.messageId);
       }
       return;
     }

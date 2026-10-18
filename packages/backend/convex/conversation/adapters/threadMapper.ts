@@ -99,18 +99,21 @@ export const isUnattachedMedia = (
 // Unicode and could fail the write). A media row's body is its caption ("" when none), so the
 // inbox can render "Photo" / "Location" from `kind`; the attachment ref is never copied. A media
 // row without an attachment (legacy image rows) is blanked: its body is an unverified client
-// string that must never reach a renderer.
+// string that must never reach a renderer. A moderator-removed row is blanked and flagged.
 export const toLastMessage = (
   row: ThreadMessageRow,
 ): NonNullable<Doc<"threads">["lastMessage"]> => ({
   messageId: row.messageId,
   ...(row.authorId !== undefined && { authorId: row.authorId }),
   kind: row.kind,
-  body: isUnattachedMedia(row)
-    ? ""
-    : Array.from(row.body).slice(0, LAST_MESSAGE_BODY_MAX).join(""),
+  body:
+    isUnattachedMedia(row) || row.removedAt !== undefined
+      ? ""
+      : Array.from(row.body).slice(0, LAST_MESSAGE_BODY_MAX).join(""),
   sentAt: row.sentAt,
-  ...(row.copyId !== undefined && { copyId: row.copyId }),
+  ...(row.removedAt !== undefined
+    ? { removed: true as const }
+    : row.copyId !== undefined && { copyId: row.copyId }),
 });
 
 // Rows -> aggregate state. `exchangeId` is the OUTBOUND aggregateId, supplied by the repository

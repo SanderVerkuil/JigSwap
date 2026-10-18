@@ -71,6 +71,7 @@ export const toLastMessageView = (
   kind: summary.kind,
   body: summary.body,
   sentAt: summary.sentAt,
+  ...(summary.removed && { removed: true as const }),
 });
 
 // Unread counting stops once 50 QUALIFYING (post-receipt, not-own-authored) messages are found,

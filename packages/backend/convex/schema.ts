@@ -845,6 +845,8 @@ export default defineSchema({
         body: v.string(),
         sentAt: v.number(),
         copyId: v.optional(v.id("ownedPuzzles")),
+        // Set when a moderator removed this message (body then empty, no copyId).
+        removed: v.optional(v.literal(true)),
       }),
     ),
     createdAt: v.number(),

@@ -988,6 +988,53 @@ describe("admin decideReport", () => {
     });
   });
 
+  test("content_removed on the thread's newest message blanks the denormalized inbox summary", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    // The append path (#166) stores the newest message as threads.lastMessage.
+    await t.run(async (ctx) => {
+      const thread = await ctx.db
+        .query("threads")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", THREAD))
+        .unique();
+      const byId = (id: string) =>
+        ctx.db
+          .query("threadMessages")
+          .withIndex("by_message_id", (q) => q.eq("messageId", id))
+          .first();
+      // m10 (bob's) becomes the newest message.
+      await ctx.db.delete((await byId("m11"))!._id);
+      const m10 = (await byId("m10"))!;
+      await ctx.db.patch(thread!._id, {
+        lastMessage: {
+          messageId: "m10",
+          authorId: m10.authorId,
+          kind: "text",
+          body: m10.body,
+          sentAt: m10.sentAt,
+          copyId: m10.copyId,
+        },
+      });
+    });
+    const { reportId } = await file(asAlice(t), {
+      targetKind: "message",
+      targetId: "m10",
+    });
+    await asAdmin(t).mutation(api.admin.decideReport.decideReport, {
+      reportId,
+      decision: "content_removed",
+      statementOfReasons: "Harassing language",
+    });
+    for (const as of [asAlice(t), asBob(t)]) {
+      const inbox = await as.query(api.conversation.getMyInbox.getMyInbox, {});
+      expect(inbox[0].lastMessage).toMatchObject({
+        id: "m10",
+        body: "",
+        removed: true,
+      });
+    }
+  });
+
   test("content_removed on a photo deletes the row and blob and clears the cover", async () => {
     const t = convexTest(schema, modules);
     const { photo, openCopy } = await seed(t);
