@@ -819,4 +819,52 @@ describe("notifications", () => {
       expect(await replayFollow(t, u.bob, u.alice)).toEqual([]);
     },
   );
+  test.each(DIRECTIONS)(
+    "%s: a dispute on an accepted exchange still notifies, without the actor",
+    async (_, pair) => {
+      const t = convexTest(schema, modules);
+      const u = await seed(t);
+      const copy = await seedOpenCopy(t, u.alice);
+      const exchangeId = await as(t, "bob").mutation(
+        api.exchange.propose.propose,
+        {
+          recipientId: u.alice,
+          type: "sale",
+          requestedPuzzleId: copy,
+          salePrice: 10,
+        },
+      );
+      await as(t, "alice").mutation(api.exchange.accept.accept, {
+        exchangeId,
+      });
+      await flushScheduled(t);
+      await insertBlock(t, ...pair(u));
+
+      await as(t, "bob").mutation(api.exchange.raiseDispute.raiseDispute, {
+        exchangeId,
+      });
+      await flushScheduled(t);
+
+      const disputed = await t.run(async (ctx) =>
+        (
+          await ctx.db
+            .query("notifications")
+            .filter((q) => q.eq(q.field("userId"), u.alice))
+            .collect()
+        ).filter((n) => n.type === "exchange_disputed"),
+      );
+      expect(disputed.length).toBeGreaterThan(0);
+      for (const row of disputed) {
+        expect(row.actorIds ?? []).toEqual([]);
+      }
+    },
+  );
 });
+
+// Drain the async event dispatcher (lifecycle notifications come from a scheduled subscriber).
+const flushScheduled = async (t: T) => {
+  for (let i = 0; i < 10; i++) {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await t.finishInProgressScheduledFunctions();
+  }
+};
