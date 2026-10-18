@@ -23,6 +23,7 @@ import { useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import { AttachPicker } from "./attach-picker";
+import { ComposerClosed } from "./composer-closed";
 import type { MessageCopy } from "./copy-card";
 import { StagedCopyChip } from "./staged-copy-chip";
 
@@ -84,6 +85,10 @@ export function MessageComposer({
   // phones the attach button, so the keyboard doesn't pop up unasked.
   const focusAfterAttachChange = () =>
     (isMobile ? attachButtonRef : textareaRef).current?.focus();
+  // A NotConnected refusal means no reply can get through: close the composer
+  // with the same neutral text a blocked member sees (never naming a block).
+  // Keyed by thread so moving to another thread reopens the composer.
+  const [closedThreadId, setClosedThreadId] = useState<string | null>(null);
 
   const postMessage = useMutation({
     mutationFn: useConvexMutation(
@@ -111,6 +116,10 @@ export function MessageComposer({
       // Give the text back unless the user already started typing a new one.
       setBody((current) => current || trimmed);
       const code = conversationErrorCode(err);
+      if (code === "NotConnected") {
+        setClosedThreadId(threadId);
+        return;
+      }
       if (code === "CopyNotFound") {
         // The copy went away or out of view since it was picked: drop it.
         toast.error(t("copyNotFound"));
@@ -128,6 +137,8 @@ export function MessageComposer({
       void send();
     }
   };
+
+  if (closedThreadId === threadId) return <ComposerClosed reason="cantReply" />;
 
   return (
     <div className="bg-card shrink-0 border-t px-3 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] md:px-4 md:pb-3">

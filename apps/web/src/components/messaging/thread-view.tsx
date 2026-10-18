@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { useLocale, useNow, useTranslations } from "use-intl";
+import { ComposerClosed } from "./composer-closed";
 import { MessageCopyCard } from "./copy-card";
 import {
   formatFullDateTime,
@@ -36,7 +37,9 @@ import {
 } from "./format";
 import { MessageComposer } from "./message-composer";
 import { OlderMessagesSlot } from "./older-messages-slot";
+import { ThreadActions } from "./thread-actions";
 import { ThreadSubjectAvatar } from "./thread-list";
+import { threadPartner } from "./thread-partner";
 import { ThreadPuzzleStack } from "./thread-puzzle-stack";
 import { ThreadQuickLinks } from "./thread-quick-links";
 import { anchoredScrollTop, type ScrollSnapshot } from "./thread-scroll";
@@ -333,6 +336,7 @@ export function ThreadView({
                       }
                     />
                   )}
+                  {thread && <ThreadActions thread={thread} />}
                 </div>
               </>
             )}
@@ -398,11 +402,19 @@ export function ThreadView({
         className="sr-only"
       />
 
-      <MessageComposer
-        threadId={threadId}
-        recipientName={title}
-        theirsLabel={theirsLabel}
-      />
+      {/* A blocked pair's thread stays readable; only the composer closes. */}
+      {thread?.blocked ? (
+        <ComposerClosed
+          reason={thread.blocked === "byMe" ? "blockedByMe" : "cantReply"}
+          partner={threadPartner(thread)}
+        />
+      ) : (
+        <MessageComposer
+          threadId={threadId}
+          recipientName={title}
+          theirsLabel={theirsLabel}
+        />
+      )}
     </div>
   );
 }
