@@ -4,7 +4,7 @@ import type { WhatsNewManifestEntry } from "./types";
 
 export const WHATS_NEW_MANIFEST: readonly WhatsNewManifestEntry[] = [
   {
-    "id": "photo-location-messages",
+    "id": "messages-improvements",
     "publishedAt": 1792339200000,
     "highlight": true,
     "notify": false
