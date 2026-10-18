@@ -14,6 +14,7 @@ export const RATE_LIMITS = {
   reportFile: { windowMs: DAY, max: 10 },
   imageStage: { windowMs: HOUR, max: 20 },
   locationSend: { windowMs: DAY, max: 20 },
+  circleInvite: { windowMs: DAY, max: 30 },
 } as const satisfies Record<string, { windowMs: number; max: number }>;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;

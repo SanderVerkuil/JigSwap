@@ -1117,6 +1117,35 @@ export default defineSchema({
     .index("by_circle", ["circleAggregateId"])
     .index("by_circle_member", ["circleAggregateId", "memberId"]),
 
+  // Circle invitations (CircleInvite aggregate). A pending invite is NOT a membership: it grants
+  // nothing until the invitee accepts and is seated in `circles.memberships`. "pending" past
+  // `expiresAt` reads as expired (lazy); a scheduled expireCircleInvite flips the stored status.
+  circleInvites: defineTable({
+    aggregateId: v.string(), // CircleInviteId
+    circleAggregateId: v.string(), // CircleId
+    inviteeId: v.id("users"),
+    inviterId: v.id("users"),
+    permission: v.union(
+      v.literal("ViewOnly"),
+      v.literal("Exchange"),
+      v.literal("Admin"),
+    ),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("accepted"),
+      v.literal("declined"),
+      v.literal("revoked"),
+      v.literal("expired"),
+    ),
+    createdAt: v.number(),
+    expiresAt: v.number(),
+    decidedAt: v.optional(v.number()),
+  })
+    .index("by_aggregate_id", ["aggregateId"])
+    .index("by_invitee_status", ["inviteeId", "status"])
+    .index("by_circle_status", ["circleAggregateId", "status"])
+    .index("by_circle_invitee", ["circleAggregateId", "inviteeId"]),
+
   // Read model of copies shared into a circle, projected from the CopySharedToCircle event. Sharing
   // owns no copy state; this link makes a friend-circle copy discoverable to the circle's members.
   // `copyId` is the Library CopyId aggregateId (string), not a resolved owned-puzzle _id.

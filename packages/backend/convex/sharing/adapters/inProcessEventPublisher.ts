@@ -1,4 +1,5 @@
 import type { DomainEventPublisher, SharingDomainEvent } from "@jigswap/domain";
+import { internal } from "../../_generated/api";
 import type { Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
 import { makeEventPublisher } from "../../events/makeEventPublisher";
@@ -9,7 +10,8 @@ import { deleteCircleSharesOfCopy } from "./circleCopyShares";
 // the CRITICAL projections inline, in the SAME transaction: CopySharedToCircle materialises the
 // circle-copy link so a freshly shared copy is immediately discoverable to circle members, and
 // MemberLeftCircle withdraws the departed member's own links so their copies stop being reachable
-// through the circle the moment they are out of it.
+// through the circle the moment they are out of it. CircleInviteIssued schedules the invite's
+// expiry at its expiresAt (expiry is also applied lazily on every read and transition).
 export const inProcessEventPublisher = (
   ctx: MutationCtx,
 ): DomainEventPublisher =>
@@ -27,6 +29,12 @@ export const inProcessEventPublisher = (
           ctx,
           event.circleId as string,
           event.memberId as unknown as Id<"users">,
+        );
+      } else if (event.name === "CircleInviteIssued") {
+        await ctx.scheduler.runAt(
+          event.expiresAt,
+          internal.sharing.expireCircleInvite.expireCircleInvite,
+          { inviteId: event.inviteId as string },
         );
       }
     }
