@@ -17,16 +17,18 @@ export const threadRowByAggregateId = (
     .unique();
 
 /**
- * Message row -> DTO. A system message's absent author column maps to null. An `image` row's body
- * is BLANKED: `postMessage` no longer accepts images, and any legacy image row's body is an
- * unverified, client-supplied string (never screened or ownership-checked), so it must never reach
- * a renderer.
+ * Message row -> DTO for viewer `me`. Authorship is viewer-relative (`isMine`); the raw author id
+ * never leaves the server (it would de-anonymise a hidden member). A system message's absent
+ * author column is never `me`, so it maps to `isMine: false`. An `image` row's body is BLANKED:
+ * `postMessage` no longer accepts images, and any legacy image row's body is an unverified,
+ * client-supplied string (never screened or ownership-checked), so it must never reach a renderer.
  */
 export const toThreadMessageView = (
   row: Doc<"threadMessages">,
+  me: Id<"users">,
 ): ThreadMessageView => ({
   id: row.messageId,
-  authorId: row.authorId === undefined ? null : (row.authorId as string),
+  isMine: row.authorId === me,
   kind: row.kind,
   body: row.kind === "image" ? "" : row.body,
   sentAt: row.sentAt,

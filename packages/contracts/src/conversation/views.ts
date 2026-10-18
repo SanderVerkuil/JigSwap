@@ -8,8 +8,13 @@ import type { ProjectedMember } from "../social/social";
 export interface ThreadMessageView {
   /** The message's MessageId (threadMessages.messageId). */
   readonly id: string;
-  /** The authoring member's user _id; null for system (lifecycle) messages. */
-  readonly authorId: string | null;
+  /**
+   * Whether the VIEWER authored the message; false for the other participant's messages and for
+   * system (lifecycle) messages. Viewer-relative on purpose: a thread has exactly two
+   * participants, and the other one is already named (privacy-projected) by the inbox subject, so
+   * no author id ever crosses the wire — a hidden member's raw id would de-anonymise them.
+   */
+  readonly isMine: boolean;
   readonly kind: "text" | "image" | "system";
   readonly body: string;
   /** Epoch millis the message was sent. */

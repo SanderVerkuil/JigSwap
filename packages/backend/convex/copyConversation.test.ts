@@ -230,7 +230,7 @@ describe("startCopyConversation", () => {
     );
     expect(messages).toHaveLength(1);
     expect(messages[0]).toMatchObject({
-      authorId: alice,
+      isMine: false,
       body: "Is this still available?",
       copy: { copyId: openCopy, title: "Mountain Vista" },
     });

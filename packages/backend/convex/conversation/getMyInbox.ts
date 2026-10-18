@@ -202,7 +202,7 @@ const toInboxThreadView = async (
   return {
     threadId: thread.aggregateId,
     subject,
-    lastMessage: last ? toThreadMessageView(last) : null,
+    lastMessage: last ? toThreadMessageView(last, me) : null,
     unreadCount: await unreadCountOf(ctx, thread, me),
     contextCopies,
     updatedAt: thread.lastMessageAt ?? thread.createdAt,
