@@ -202,6 +202,15 @@ export const releaseEvidenceHold = async (
       .first();
     if (open) return;
   }
+  // Its thread is gone (a deleted circle's purge kept it only for the report): nothing can
+  // reach it any more, so it goes now, with its blobs and reveals.
+  if ((await threadRowByAggregateId(ctx, row.threadAggregateId)) === null) {
+    const released = { ...row, evidenceHold: undefined };
+    await deleteAttachmentBlobs(ctx, released);
+    if (row.kind === "image") await deleteReveals(ctx, row._id);
+    await ctx.db.delete(row._id);
+    return;
+  }
   await ctx.db.patch(attachmentId, {
     evidenceHold: undefined,
     updatedAt: Date.now(),
