@@ -13,7 +13,7 @@ import {
   settleSendBatch,
   UNDELIVERED_ATTACHMENT_TTL_MS,
 } from "./messageAttachments";
-import { clearTypingOf } from "./typingIndicators";
+import { deleteTypingRowOf } from "./typingIndicators";
 
 const notFound = () =>
   new ConvexError({ code: "AttachmentNotFound", message: "Photo not found" });
@@ -103,6 +103,6 @@ export const sendStagedImages = mutation({
       });
     }
     await settleSendBatch(ctx, rows[0]._id);
-    await clearTypingOf(ctx, args.threadId, me);
+    await deleteTypingRowOf(ctx, args.threadId, me);
   },
 });

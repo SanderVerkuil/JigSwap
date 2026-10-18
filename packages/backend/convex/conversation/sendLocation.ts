@@ -17,7 +17,7 @@ import {
   isNearRecentGpsView,
   LOCATION_RENDER_TIMEOUT_MS,
 } from "./sharedLocations";
-import { clearTypingOf } from "./typingIndicators";
+import { deleteTypingRowOf } from "./typingIndicators";
 
 const precisionValidator = v.union(
   v.literal("exact"),
@@ -121,7 +121,7 @@ export const sendLocation = mutation({
       internal.conversation.locationStore.expireLocationRender,
       { attachmentId },
     );
-    await clearTypingOf(ctx, args.threadId, me);
+    await deleteTypingRowOf(ctx, args.threadId, me);
     return { attachmentId };
   },
 });

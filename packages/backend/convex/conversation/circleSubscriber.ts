@@ -11,7 +11,7 @@ import { messageIdGenerator } from "./adapters/idGenerators";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
 import { toConvexError } from "./errors";
 import { participantRowOf } from "./readModelHelpers";
-import { clearTypingOf } from "./typingIndicators";
+import { deleteTypingRowOf } from "./typingIndicators";
 
 // The circle events this subscriber reacts to (events/dispatch registers it for exactly these).
 export const CIRCLE_MEMBERSHIP_EVENTS = [
@@ -67,7 +67,7 @@ export const handleCircleMembershipEvent = async (
 
   if (!seat) {
     if (participant) await apply("left", leftAt);
-    await clearTypingOf(ctx, thread.aggregateId, p.memberId as Id<"users">);
+    await deleteTypingRowOf(ctx, thread.aggregateId, p.memberId as Id<"users">);
     return;
   }
   const seatJoinedAt = seat.joinedAt.getTime();

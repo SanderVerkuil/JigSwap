@@ -130,7 +130,7 @@ const typingRows = (t: T, threadId?: string) =>
     ),
   );
 
-// Backdate a member's row, standing in for time passing.
+// Backdate a member's row (its typing signal and its last write), standing in for time passing.
 const backdate = (
   t: T,
   threadId: string,
@@ -145,9 +145,12 @@ const backdate = (
       )
       .unique();
     if (!row) throw new Error("no typing row");
-    const updatedAt = Date.now() - ageMs;
-    await ctx.db.patch(row._id, { updatedAt });
-    return updatedAt;
+    const at = Date.now() - ageMs;
+    await ctx.db.patch(row._id, {
+      writtenAt: at,
+      ...(row.typingAt !== undefined && { typingAt: at }),
+    });
+    return at;
   });
 
 const block = (t: T, blockerId: Id<"users">, blockedId: Id<"users">) =>
@@ -244,7 +247,7 @@ describe("setTyping: silent no-ops", () => {
 
     const recent = await backdate(t, dmId, alice, TYPING_THROTTLE_MS - 500);
     expect(await setTyping(t, "alice", dmId)).toBeNull();
-    expect((await typingRows(t, dmId)).map((r) => r.updatedAt)).toEqual([
+    expect((await typingRows(t, dmId)).map((r) => r.writtenAt)).toEqual([
       recent,
     ]);
 
@@ -252,7 +255,8 @@ describe("setTyping: silent no-ops", () => {
     await setTyping(t, "alice", dmId);
     const rows = await typingRows(t, dmId);
     expect(rows).toHaveLength(1);
-    expect(rows[0].updatedAt).toBeGreaterThan(old);
+    expect(rows[0].writtenAt).toBeGreaterThan(old);
+    expect(rows[0].typingAt).toBe(rows[0].writtenAt);
   });
 
   test("a DM pair blocked either way: no row, and an earlier row stays hidden", async () => {
@@ -268,7 +272,7 @@ describe("setTyping: silent no-ops", () => {
     // Alice's row was not refreshed and Bob wrote none.
     const rows = await typingRows(t, dmId);
     expect(rows.map((r) => r.memberId)).toEqual([alice]);
-    expect(rows[0].updatedAt).toBeLessThan(Date.now() - TYPING_THROTTLE_MS);
+    expect(rows[0].writtenAt).toBeLessThan(Date.now() - TYPING_THROTTLE_MS);
     expect(await getTyping(t, "bob", dmId)).toEqual([]);
   });
 
@@ -317,17 +321,55 @@ describe("getTyping", () => {
 });
 
 describe("clearing", () => {
-  test("clearTyping deletes only the caller's own row; a stranger's call touches nothing", async () => {
+  test("clearTyping stops only the caller's own signal and keeps the row; a stranger's call touches nothing", async () => {
     const t = convexTest(schema, modules);
-    const { bob, circleThreadId } = await seed(t);
+    const { alice, bob, circleThreadId } = await seed(t);
     await setTyping(t, "alice", circleThreadId);
     await setTyping(t, "bob", circleThreadId);
 
     expect(await clearTyping(t, "alice", circleThreadId)).toBeNull();
     expect(await clearTyping(t, "dave", circleThreadId)).toBeNull();
+    const rows = await typingRows(t, circleThreadId);
     expect(
-      (await typingRows(t, circleThreadId)).map((r) => r.memberId),
-    ).toEqual([bob]);
+      rows.map((r) => [r.memberId, r.typingAt !== undefined]).sort(),
+    ).toEqual(
+      [
+        [alice, false],
+        [bob, true],
+      ].sort(),
+    );
+    expect(typerNames(await getTyping(t, "carol", circleThreadId))).toEqual([
+      "bob",
+    ]);
+  });
+
+  test("a set, clear, set loop within 2 s writes the signal once and ends cleared", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, dmId } = await seed(t);
+
+    await setTyping(t, "alice", dmId);
+    const [first] = await typingRows(t, dmId);
+    await clearTyping(t, "alice", dmId);
+    const [cleared] = await typingRows(t, dmId);
+    // The stop is the row's last write: it counts against the throttle.
+    expect(cleared.typingAt).toBeUndefined();
+    expect(cleared.writtenAt).toBeGreaterThanOrEqual(first.writtenAt);
+
+    for (let i = 0; i < 5; i++) {
+      await setTyping(t, "alice", dmId); // throttled
+      await clearTyping(t, "alice", dmId); // nothing to clear
+    }
+    const rows = await typingRows(t, dmId);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]._id).toBe(first._id);
+    expect(rows[0].typingAt).toBeUndefined();
+    expect(rows[0].writtenAt).toBe(cleared.writtenAt);
+    expect(await getTyping(t, "bob", dmId)).toEqual([]);
+
+    // Past the throttle, typing again goes out on the same row.
+    await backdate(t, dmId, alice, TYPING_THROTTLE_MS + 500);
+    await setTyping(t, "alice", dmId);
+    expect(typerNames(await getTyping(t, "bob", dmId))).toEqual(["alice"]);
   });
 
   test("posting a message clears the author's row in the same transaction", async () => {
@@ -379,10 +421,13 @@ describe("the bandwidth wide event", () => {
     await setTyping(t, "alice", dmId); // throttled: no write, no line
     await backdate(t, dmId, alice, TYPING_THROTTLE_MS + 500);
     await setTyping(t, "alice", dmId); // patch
+    await clearTyping(t, "alice", dmId); // clear (a write too)
+    await clearTyping(t, "alice", dmId); // nothing to clear: no write, no line
     const lines = typingLines().map((line) => JSON.parse(line));
     expect(lines.map((l) => [l.write, l.thread_kind, l.sample_rate])).toEqual([
       ["insert", "dm", 10],
       ["patch", "dm", 10],
+      ["clear", undefined, 10],
     ]);
     for (const line of typingLines()) {
       expect(line).not.toContain(alice);
