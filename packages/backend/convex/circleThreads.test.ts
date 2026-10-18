@@ -1086,6 +1086,41 @@ describe("media in circle threads", () => {
     }
   });
 
+  test("Show on a photo: the uploader's block on the viewer is never told; the viewer's own block, a non-member and the floor refuse", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, dave, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    const photo = await seedPhoto(t, threadId, alice);
+    await t.run(async (ctx) => {
+      await ctx.db.patch(photo, { moderationStatus: "blurred" });
+      await settleSendBatch(ctx, photo);
+    });
+    const reveal = (clerkId: string) =>
+      as(t, clerkId).mutation(
+        api.conversation.revealMessageImage.revealMessageImage,
+        { attachmentId: photo },
+      );
+    // Alice (the uploader) blocked Bob: Bob can still reveal it, as before the block.
+    await block(t, alice, bob);
+    await expect(reveal("bob")).resolves.toMatchObject({
+      url: expect.any(String),
+    });
+    // Carol blocked Alice: it stays collapsed for Carol.
+    const carol = (await t.run((ctx) =>
+      ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", "carol"))
+        .unique(),
+    ))!._id;
+    await block(t, carol, alice);
+    await expectCode(reveal("carol"), "AttachmentNotFound");
+    // Dave is outside the circle, then joins after the photo: refused both times.
+    await expectCode(reveal("dave"), "AttachmentNotFound");
+    await join(t, circleId, dave);
+    await flush(t);
+    await expectCode(reveal("dave"), "AttachmentNotFound");
+  });
+
   test("the shared attachment gate refuses a removed member before the sync has run", async () => {
     const t = convexTest(schema, modules);
     const { bob, circleId } = await seed(t);
