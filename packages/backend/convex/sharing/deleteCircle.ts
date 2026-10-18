@@ -12,9 +12,10 @@ import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
 import { systemClock } from "./adapters/systemClock";
 import { toConvexError } from "./errors";
 
-// The longest confirmName worth comparing. Circle names have no length limit of their own yet, so
-// this is the cap the review set (100); anything longer can't be a name we'd accept here.
-export const MAX_CONFIRM_NAME_LENGTH = 100;
+// The longest confirmName worth comparing: a bound on input, not a name rule. Circle names have no
+// length limit of their own (existing circles may have long names), so this sits far above any
+// real name; a lower cap would make such a circle undeletable.
+export const MAX_CONFIRM_NAME_LENGTH = 1000;
 
 // Composition root for deleting a circle. Only the owner may, by typing the circle's exact name as
 // `confirmName`. In this transaction the circle, its memberships and its invites go and

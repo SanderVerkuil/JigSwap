@@ -443,7 +443,7 @@ describe("sharing.deleteCircle", () => {
     const t = convexTest(schema, modules);
     const { circleId } = await seed(t);
     const tooLong = NAME + "x".repeat(MAX_CONFIRM_NAME_LENGTH);
-    expect(MAX_CONFIRM_NAME_LENGTH).toBe(100);
+    expect(MAX_CONFIRM_NAME_LENGTH).toBe(1000);
 
     for (const [who, id] of [
       ["alice", circleId],
@@ -456,6 +456,22 @@ describe("sharing.deleteCircle", () => {
     }
     expect((await rowsOf(t, circleId)).circles).toHaveLength(1);
     expect(await deletedEvents(t)).toHaveLength(0);
+  });
+
+  test("a circle with a long name (no create-side cap) can still be deleted", async () => {
+    const t = convexTest(schema, modules);
+    const { circleId } = await seed(t);
+    const longName = "L".repeat(150);
+    await t.run(async (ctx) => {
+      const row = await ctx.db
+        .query("circles")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", circleId))
+        .unique();
+      if (row) await ctx.db.patch(row._id, { name: longName });
+    });
+
+    await deleteCircle(t, "alice", circleId, longName);
+    expect((await rowsOf(t, circleId)).circles).toHaveLength(0);
   });
 
   test("a second delete answers CircleNotFound", async () => {
