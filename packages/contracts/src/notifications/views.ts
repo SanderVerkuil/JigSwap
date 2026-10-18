@@ -30,6 +30,7 @@ export type NotificationViewType =
   | "connection_offer_received"
   | "circle_invite_received"
   | "circle_invite_accepted"
+  | "circle_deleted"
   | "whats_new"
   | "report_decided"
   | "content_removed"
@@ -125,7 +126,8 @@ export interface NotificationViewContext {
   messageKind?: "image" | "location";
   /**
    * The circle's live name (circle invite types): for the invitee of a circle invite, or for a
-   * current member of the circle an invite was accepted into.
+   * current member of the circle an invite was accepted into. For circle_deleted, the name
+   * snapshotted when the circle was deleted (shown to the members it was deleted under).
    */
   circleName?: string;
   /**

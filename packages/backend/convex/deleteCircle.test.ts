@@ -1,3 +1,4 @@
+import { EMAIL_ELIGIBLE_TYPES } from "@jigswap/domain";
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError, type Value } from "convex/values";
 import { describe, expect, test } from "vitest";
@@ -368,5 +369,79 @@ describe("sharing.deleteCircle", () => {
     expect((await rowsOf(t, "another-circle")).circleCopyShares).toHaveLength(
       1,
     );
+  });
+});
+
+describe("circle_deleted notifications", () => {
+  const notificationsOf = (t: T, userId: Id<"users">) =>
+    t.run((ctx) =>
+      ctx.db
+        .query("notifications")
+        .withIndex("by_user", (q) => q.eq("userId", userId))
+        .collect(),
+    );
+
+  test("every member but the owner is told neutrally, with the name snapshotted", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, carol, dave, circleId } = await seed(t);
+    await inviteDave(t, circleId, dave);
+    await flushScheduled(t);
+    // Dave's invite notification is the only row before the deletion.
+    expect(await notificationsOf(t, dave)).toHaveLength(1);
+
+    await deleteCircle(t, "alice", circleId);
+    await flushScheduled(t);
+
+    for (const member of [bob, carol]) {
+      const rows = (await notificationsOf(t, member)).filter(
+        (row) => row.type === "circle_deleted",
+      );
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({
+        relatedId: circleId,
+        params: { circleName: NAME },
+        subject: { kind: "circle", circleId },
+      });
+      expect(rows[0].actorIds ?? []).toEqual([]);
+    }
+    expect(await notificationsOf(t, alice)).toHaveLength(0);
+    // The pending invitee is not told.
+    expect(
+      (await notificationsOf(t, dave)).map((row) => row.type),
+    ).not.toContain("circle_deleted");
+
+    const views = (
+      await as(t, "carol").query(
+        api.notifications.listMyNotificationViews.listMyNotificationViews,
+        { paginationOpts: { numItems: 20, cursor: null } },
+      )
+    ).page.filter((view) => view.type === "circle_deleted");
+    expect(views).toHaveLength(1);
+    expect(views[0]).toMatchObject({
+      actors: [],
+      context: { circleName: NAME },
+      href: "/circles",
+      state: "unavailable",
+    });
+  });
+
+  test("push delivery carries the snapshotted name (in-app/push only, never email)", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, circleId } = await seed(t);
+    await deleteCircle(t, "alice", circleId);
+
+    const delivery = await t.query(
+      internal.notifications.resolveForDelivery.resolveForDelivery,
+      {
+        recipientId: bob,
+        type: "circle_deleted",
+        relatedId: circleId,
+        params: { circleName: NAME },
+        subject: { kind: "circle", circleId },
+      },
+    );
+    expect(delivery?.params.circleName).toBe(NAME);
+    expect(delivery?.href).toBe("/circles");
+    expect(EMAIL_ELIGIBLE_TYPES.has("circle_deleted")).toBe(false);
   });
 });

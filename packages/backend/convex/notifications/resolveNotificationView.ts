@@ -614,7 +614,8 @@ const oneOf = <T extends string>(
 
 // Snapshot context from params: the fallback title when the live subject is unavailable (or the
 // row has no subject), plus the immutable values (reason, rating, report outcome) that only live
-// in params.
+// in params. Only circle_deleted stores a circleName (its circle is gone); invite types resolve
+// theirs live.
 const paramsContext = (
   params: Record<string, string> | undefined,
 ): NotificationViewContext => {
@@ -625,6 +626,7 @@ const paramsContext = (
   return {
     ...(params?.puzzleTitle ? { puzzleTitle: params.puzzleTitle } : {}),
     ...(params?.goalTitle ? { goalTitle: params.goalTitle } : {}),
+    ...(params?.circleName ? { circleName: params.circleName } : {}),
     ...(params?.reason ? { reason: params.reason } : {}),
     ...(params?.rating && Number.isFinite(rating) ? { rating } : {}),
     ...(reportDecision ? { reportDecision } : {}),

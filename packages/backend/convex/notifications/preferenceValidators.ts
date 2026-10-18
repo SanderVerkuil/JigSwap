@@ -29,6 +29,7 @@ export const notificationTypeValidator = v.union(
   v.literal("connection_offer_received"),
   v.literal("circle_invite_received"),
   v.literal("circle_invite_accepted"),
+  v.literal("circle_deleted"),
   v.literal("whats_new"),
   v.literal("report_decided"),
   v.literal("content_removed"),

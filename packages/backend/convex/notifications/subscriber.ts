@@ -581,6 +581,22 @@ const translate = async (
     // CircleInviteDeclined: DELIBERATELY unmapped — decline is silent to the inviter (spec).
     // CircleInviteRevoked / CircleInviteExpired: no member-facing notification.
 
+    // Every member but the owner is told, neutrally: no actor (so there is nothing to filter on a
+    // block), the circle's name snapshotted because the circle is gone, and a circle subject that
+    // resolves as unavailable. Pending invitees are not told.
+    case "CircleDeleted": {
+      const circleId = p.circleId as string;
+      return (p.memberIds as string[]).map((memberId) =>
+        cmd(
+          memberId,
+          "circle_deleted",
+          circleId,
+          { circleName: p.circleName as string },
+          { subject: { kind: "circle", circleId } },
+        ),
+      );
+    }
+
     default:
       return [];
   }

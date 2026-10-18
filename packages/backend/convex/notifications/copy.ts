@@ -15,7 +15,8 @@ import type { DeliveryContent } from "./deliveryContent";
 //                 connection_offer_received (inviter)
 //                 circle_invite_received (inviter), circle_invite_accepted (invitee)
 //   circleName  — circle_invite_received/accepted: never stored; overlaid live by the delivery
-//                 resolution when the recipient may see the circle
+//                 resolution when the recipient may see the circle. circle_deleted: snapshotted
+//                 at deletion (the circle is gone), for the members it was deleted under
 //   puzzleTitle — puzzle_approved/rejected, proposal_approved/rejected, admin_proposal_filed,
 //                 admin_definition_submitted
 //   goalTitle   — goal_achieved
@@ -218,6 +219,12 @@ const COPY: Record<NotificationType, (p: Params) => NotificationText> = {
     message: p["circleName"]
       ? `${p["actorName"] ?? "Someone"} accepted your invitation to ${p["circleName"]}`
       : `${p["actorName"] ?? "Someone"} accepted your circle invitation`,
+  }),
+  circle_deleted: (p) => ({
+    title: "Circle deleted",
+    message: p["circleName"]
+      ? `${p["circleName"]} was deleted`
+      : "A circle you were in was deleted",
   }),
   whats_new: () => ({
     title: "New in JigSwap",

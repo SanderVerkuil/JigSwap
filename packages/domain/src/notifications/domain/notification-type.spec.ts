@@ -30,6 +30,7 @@ describe("NOTIFICATION_TYPES", () => {
       "connection_offer_received",
       "circle_invite_received",
       "circle_invite_accepted",
+      "circle_deleted",
       "whats_new",
       "report_decided",
       "content_removed",
