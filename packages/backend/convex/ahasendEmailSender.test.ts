@@ -76,6 +76,15 @@ describe("ahaSendEmailSender", () => {
     expect(body.from.name).toBe("Evil Bcc: x");
   });
 
+  it("sends no recipient name for an empty toName", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(okResponse());
+    await sender(fetchMock).send({ ...MESSAGE, toName: "" });
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+    );
+    expect(body.recipients).toEqual([{ email: "anna@example.com" }]);
+  });
+
   it("prefers the message's fromName over the configured default", async () => {
     const fetchMock = vi.fn().mockResolvedValue(okResponse());
     await sender(fetchMock).send({
