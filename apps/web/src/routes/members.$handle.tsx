@@ -7,6 +7,7 @@ import {
   ProfileCtaBand,
   type PublicProfileView,
 } from "@/components/members/profile-body";
+import { lockedProfileFromTeaser } from "@/components/members/teaser-profile";
 import { HouseholdLinkInvite } from "@/components/social/household-link-invite";
 import {
   INVITE_KEY,
@@ -48,11 +49,21 @@ export const Route = createFileRoute("/members/$handle")({
   }),
   loaderDeps: ({ search }) => ({ invite: search.invite }),
   loader: async ({ context, params, deps }) => {
-    const profile = await context.queryClient.ensureQueryData(
+    const fullProfile = await context.queryClient.ensureQueryData(
       convexQuery(gateway.social.publicProfile, {
         handle: params.handle,
       }),
     );
+    // Not openable, but maybe still known by name (teaser-profile.ts): a locked page, not a 404.
+    const teaser = fullProfile
+      ? null
+      : await context.queryClient.ensureQueryData(
+          convexQuery(gateway.social.publicMemberTeaser, {
+            handle: params.handle,
+          }),
+        );
+    const profile =
+      fullProfile ?? (teaser ? lockedProfileFromTeaser(teaser) : null);
     if (!profile) throw notFound();
     // Canonical display URL prefers the slug, then username; id URLs (QR/share
     // links) redirect. When neither exists the id URL is already canonical.
@@ -103,9 +114,16 @@ function MemberPage() {
   const displayName = useMemberDisplayName();
   const { handle } = Route.useParams();
   const { invite } = Route.useSearch();
-  const { data: profile } = useQuery(
+  const { data: fullProfile } = useQuery(
     convexQuery(gateway.social.publicProfile, { handle }),
   );
+  // The loader's fallback, kept reactive: only asked once the full profile reads as null.
+  const { data: teaser } = useQuery({
+    ...convexQuery(gateway.social.publicMemberTeaser, { handle }),
+    enabled: fullProfile === null,
+  });
+  const profile =
+    fullProfile ?? (teaser ? lockedProfileFromTeaser(teaser) : undefined);
 
   // Does `?invite=<token>` point at a live invite for THIS profile, and is it
   // the member's network link or a household link? No owner data. Phase 3
