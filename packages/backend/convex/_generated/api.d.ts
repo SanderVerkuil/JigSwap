@@ -223,6 +223,7 @@ import type * as identity_isCurrentUserAdmin from "../identity/isCurrentUserAdmi
 import type * as identity_listRecentPublicMembers from "../identity/listRecentPublicMembers.js";
 import type * as identity_memberDisplayName from "../identity/memberDisplayName.js";
 import type * as identity_optionalActingMember from "../identity/optionalActingMember.js";
+import type * as identity_requireActiveMember from "../identity/requireActiveMember.js";
 import type * as identity_requireMember from "../identity/requireMember.js";
 import type * as identity_resolveMemberByHandle from "../identity/resolveMemberByHandle.js";
 import type * as identity_searchUsers from "../identity/searchUsers.js";
@@ -449,6 +450,8 @@ import type * as social_getFollowRequesterPreview from "../social/getFollowReque
 import type * as social_getHouseholdLinkInvite from "../social/getHouseholdLinkInvite.js";
 import type * as social_getInviteContext from "../social/getInviteContext.js";
 import type * as social_getMyInviteLink from "../social/getMyInviteLink.js";
+import type * as social_getMyPresenceSettings from "../social/getMyPresenceSettings.js";
+import type * as social_getPresenceOf from "../social/getPresenceOf.js";
 import type * as social_getProfile from "../social/getProfile.js";
 import type * as social_getPublicMemberTeaser from "../social/getPublicMemberTeaser.js";
 import type * as social_getPublicProfile from "../social/getPublicProfile.js";
@@ -468,12 +471,14 @@ import type * as social_listPuzzleComments from "../social/listPuzzleComments.js
 import type * as social_listPuzzleReviews from "../social/listPuzzleReviews.js";
 import type * as social_postPuzzleComment from "../social/postPuzzleComment.js";
 import type * as social_postPuzzleReview from "../social/postPuzzleReview.js";
+import type * as social_presencePreferences from "../social/presencePreferences.js";
 import type * as social_privacy from "../social/privacy.js";
 import type * as social_readViews from "../social/readViews.js";
 import type * as social_recordInviteLanding from "../social/recordInviteLanding.js";
 import type * as social_redeemInvite from "../social/redeemInvite.js";
 import type * as social_resetInviteLink from "../social/resetInviteLink.js";
 import type * as social_revokeHouseholdInviteLinks from "../social/revokeHouseholdInviteLinks.js";
+import type * as social_setPresencePreferences from "../social/setPresencePreferences.js";
 import type * as social_setProfileVisibility from "../social/setProfileVisibility.js";
 import type * as social_unblockMember from "../social/unblockMember.js";
 import type * as social_unfollowMember from "../social/unfollowMember.js";
@@ -730,6 +735,7 @@ declare const fullApi: ApiFromModules<{
   "identity/listRecentPublicMembers": typeof identity_listRecentPublicMembers;
   "identity/memberDisplayName": typeof identity_memberDisplayName;
   "identity/optionalActingMember": typeof identity_optionalActingMember;
+  "identity/requireActiveMember": typeof identity_requireActiveMember;
   "identity/requireMember": typeof identity_requireMember;
   "identity/resolveMemberByHandle": typeof identity_resolveMemberByHandle;
   "identity/searchUsers": typeof identity_searchUsers;
@@ -956,6 +962,8 @@ declare const fullApi: ApiFromModules<{
   "social/getHouseholdLinkInvite": typeof social_getHouseholdLinkInvite;
   "social/getInviteContext": typeof social_getInviteContext;
   "social/getMyInviteLink": typeof social_getMyInviteLink;
+  "social/getMyPresenceSettings": typeof social_getMyPresenceSettings;
+  "social/getPresenceOf": typeof social_getPresenceOf;
   "social/getProfile": typeof social_getProfile;
   "social/getPublicMemberTeaser": typeof social_getPublicMemberTeaser;
   "social/getPublicProfile": typeof social_getPublicProfile;
@@ -975,12 +983,14 @@ declare const fullApi: ApiFromModules<{
   "social/listPuzzleReviews": typeof social_listPuzzleReviews;
   "social/postPuzzleComment": typeof social_postPuzzleComment;
   "social/postPuzzleReview": typeof social_postPuzzleReview;
+  "social/presencePreferences": typeof social_presencePreferences;
   "social/privacy": typeof social_privacy;
   "social/readViews": typeof social_readViews;
   "social/recordInviteLanding": typeof social_recordInviteLanding;
   "social/redeemInvite": typeof social_redeemInvite;
   "social/resetInviteLink": typeof social_resetInviteLink;
   "social/revokeHouseholdInviteLinks": typeof social_revokeHouseholdInviteLinks;
+  "social/setPresencePreferences": typeof social_setPresencePreferences;
   "social/setProfileVisibility": typeof social_setProfileVisibility;
   "social/unblockMember": typeof social_unblockMember;
   "social/unfollowMember": typeof social_unfollowMember;

@@ -1,0 +1,41 @@
+import { v } from "convex/values";
+import type { Id } from "../_generated/dataModel";
+import { mutation } from "../_generated/server";
+import { stopLiveTypingOf } from "../conversation/appearingOffline";
+import { requireActiveMember } from "../identity/requireActiveMember";
+import {
+  findPresencePreferences,
+  presenceOverrideValidator,
+} from "./presencePreferences";
+
+// The member sets their own presence sharing and/or override (member from auth; own row only).
+// An omitted field keeps its current value.
+export const setPresencePreferences = mutation({
+  args: {
+    share: v.optional(v.boolean()),
+    override: v.optional(presenceOverrideValidator),
+  },
+  handler: async (ctx, { share, override }): Promise<null> => {
+    const memberId = (await requireActiveMember(ctx)) as unknown as Id<"users">;
+    const updatedAt = Date.now();
+    const existing = await findPresencePreferences(ctx, memberId);
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        ...(share !== undefined && { share }),
+        ...(override !== undefined && { override }),
+        updatedAt,
+      });
+    } else {
+      await ctx.db.insert("presencePreferences", {
+        memberId,
+        share,
+        override: override ?? "auto",
+        updatedAt,
+      });
+    }
+    // Appearing offline also ends any typing indicator already showing (spec Q13).
+    if (override === "invisible")
+      await stopLiveTypingOf(ctx, memberId, updatedAt);
+    return null;
+  },
+});

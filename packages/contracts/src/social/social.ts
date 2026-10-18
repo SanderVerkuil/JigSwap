@@ -392,3 +392,18 @@ export type PublicProfileView =
        */
       blockedByMe?: true;
     };
+
+/**
+ * A member the viewer may see as present (social/getPresenceOf). Offline and hidden members are
+ * ABSENT, so the two can't be told apart; no last-seen or other timestamp is ever exposed.
+ */
+export interface PresenceView {
+  memberId: string;
+  status: "online" | "away";
+}
+
+/** The viewer's own presence settings. `share` null = never chosen (show the one-time prompt). */
+export interface PresenceSettingsView {
+  share: boolean | null;
+  override: "auto" | "away" | "invisible";
+}

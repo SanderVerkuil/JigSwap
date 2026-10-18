@@ -8,6 +8,7 @@ import {
 } from "../invitations/fallbacks";
 import { logEvent } from "../lib/logEvent";
 import { RATE_LIMITS, type RateLimitName } from "../lib/rateLimits";
+import { presence } from "../presence";
 import { removeForDeletedMember } from "./messageAttachments";
 
 // Account deletion for messaging data (spec R.9, 2.8), scheduled by users.deleteUser. Text
@@ -54,6 +55,8 @@ import { removeForDeletedMember } from "./messageAttachments";
 //                fallback withdrawn and its Clerk invitation revoked (best-effort, scheduled).
 //                The address-HMAC send log holds no member id and lapses on its own.
 //   rateLimits   their own counters (never the deployment-wide MapTiler budget keys)
+//   presence     their presencePreferences row and the presence component's rows for every room
+//                they were in (each keeps a lastDisconnected: a last-seen record, spec 5.6)
 // One phase at a time, PURGE_BATCH_SIZE rows per run: a run that did not finish its phase
 // schedules the next run with the page cursor, so each run stays well inside Convex's per-mutation
 // limits whatever the member's history. Rows a phase keeps (a quarantined or evidence-held photo)
@@ -94,6 +97,7 @@ const PHASES = [
   "notifications",
   "emailInvitesOut",
   "rateLimits",
+  "presence",
 ] as const;
 type Phase = (typeof PHASES)[number];
 
@@ -129,6 +133,7 @@ const phaseValidator = v.union(
   v.literal("notifications"),
   v.literal("emailInvitesOut"),
   v.literal("rateLimits"),
+  v.literal("presence"),
 );
 
 type Page = { isDone: boolean; continueCursor: string };
@@ -577,6 +582,21 @@ const runPhase = async (
           .withIndex("by_key", (q) => q.eq("key", `${name}:${memberId}`))
           .unique();
         if (row) await ctx.db.delete(row._id);
+      }
+      return { isDone: true, continueCursor: "" };
+    }
+    case "presence": {
+      // One settings row, and one component row per room (the heartbeat allowlists three rooms):
+      // a fixed handful, never paged. Listing first removes only rooms they are in, offline ones
+      // included, and covers every room the component holds for them.
+      const prefs = await ctx.db
+        .query("presencePreferences")
+        .withIndex("by_member", (q) => q.eq("memberId", memberId))
+        .unique();
+      if (prefs) await ctx.db.delete(prefs._id);
+      const rooms = await presence.listUser(ctx, memberId as string, false);
+      for (const { roomId } of rooms) {
+        await presence.removeRoomUser(ctx, roomId, memberId as string);
       }
       return { isDone: true, continueCursor: "" };
     }
