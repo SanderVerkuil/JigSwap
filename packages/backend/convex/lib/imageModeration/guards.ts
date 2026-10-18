@@ -16,7 +16,8 @@
 // client-side (spec 2.2) would close the gap for direct API uploads.
 //
 // GIF: jimp decodes the first frame into a bitmap of the logical screen size (omggif), so the
-// screen size in the header is what bounds the decode; the re-encode keeps that one frame.
+// screen size bounds the decode, and the first frame must fit inside the screen; the re-encode
+// keeps that one frame.
 
 /** Largest accepted upload, in bytes (10 MB). */
 export const MAX_IMAGE_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -31,7 +32,7 @@ export type ImageGuardFailure =
   | "too_large" // more than MAX_IMAGE_UPLOAD_BYTES
   | "unsupported_format" // the magic bytes are not JPEG / PNG / WebP / GIF
   | "unreadable_header" // a supported format whose header has no usable dimensions
-  | "too_many_pixels"; // more than MAX_IMAGE_PIXELS
+  | "too_many_pixels"; // more than MAX_IMAGE_PIXELS // a JPEG / PNG / GIF header over a body jimp cannot decode (set by the pipeline)
 
 /** The verdict label a refused upload is recorded with. */
 export const INVALID_IMAGE_LABEL = "invalid_image";
@@ -124,12 +125,44 @@ const pngDimensions = (
   return { width: u32be(b, 16), height: u32be(b, 20) };
 };
 
-// GIF: the logical screen descriptor right after the 6-byte signature (u16 LE each).
+// GIF: the logical screen descriptor right after the 6-byte signature (u16 LE each), checked
+// together with the FIRST image descriptor, which is the frame jimp decodes: it must lie inside
+// the logical screen (and so within the pixel budget the screen is checked against). Anything
+// before it must be well-formed extension blocks. No image descriptor => no usable header.
 const gifDimensions = (
   b: Uint8Array,
 ): { width: number; height: number } | null => {
-  if (b.length < 10) return null;
-  return { width: u16le(b, 6), height: u16le(b, 8) };
+  if (b.length < 13) return null;
+  const screen = { width: u16le(b, 6), height: u16le(b, 8) };
+  const flags = b[10];
+  // Global colour table: 3 * 2^(n+1) bytes when the flag bit is set.
+  let i = 13 + (flags & 0x80 ? 3 * (1 << ((flags & 0x07) + 1)) : 0);
+  while (i < b.length) {
+    const block = b[i];
+    if (block === 0x2c) {
+      // Image descriptor: left, top, width, height (u16 LE each).
+      if (i + 9 >= b.length) return null;
+      const left = u16le(b, i + 1);
+      const top = u16le(b, i + 3);
+      const width = u16le(b, i + 5);
+      const height = u16le(b, i + 7);
+      if (
+        width === 0 ||
+        height === 0 ||
+        left + width > screen.width ||
+        top + height > screen.height
+      ) {
+        return null;
+      }
+      return screen;
+    }
+    if (block !== 0x21) return null; // trailer (0x3B) or garbage before any frame
+    // Extension: introducer, label, then size-prefixed sub-blocks ending with a 0 size.
+    i += 2;
+    while (i < b.length && b[i] !== 0) i += b[i] + 1;
+    i += 1;
+  }
+  return null;
 };
 
 // WebP: the first chunk after "RIFF....WEBP" is VP8 (lossy), VP8L (lossless) or VP8X (extended).

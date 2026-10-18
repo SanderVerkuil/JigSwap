@@ -60,8 +60,29 @@ const jpegHeader = (width: number, height: number) =>
     [3, 1, 0x22, 0, 2, 0x11, 1, 3, 0x11, 1],
   );
 
-const gifHeader = (width: number, height: number) =>
-  bytesOf("GIF89a", u16le(width), u16le(height), [0, 0, 0], [0x3b]);
+// A GIF with a 2-colour global table, a graphic-control extension and a first frame at
+// (left, top) of the given size (default: the full screen).
+const gifHeader = (
+  width: number,
+  height: number,
+  frame: { left?: number; top?: number; width?: number; height?: number } = {},
+) =>
+  bytesOf(
+    "GIF89a",
+    u16le(width),
+    u16le(height),
+    [0x80, 0, 0],
+    [0, 0, 0, 255, 255, 255],
+    [0x21, 0xf9, 4, 0, 0, 0, 0, 0],
+    [0x2c],
+    u16le(frame.left ?? 0),
+    u16le(frame.top ?? 0),
+    u16le(frame.width ?? width),
+    u16le(frame.height ?? height),
+    [0],
+    [2, 2, 0x4c, 0x01, 0],
+    [0x3b],
+  );
 
 const webpVp8 = (width: number, height: number) =>
   bytesOf(
@@ -153,6 +174,33 @@ describe("readImageDimensions", () => {
     });
   });
 
+  test("a GIF's first frame must lie inside the logical screen (decoder DoS)", () => {
+    expect(readImageDimensions(gifHeader(10, 10), "gif")).toEqual({
+      width: 10,
+      height: 10,
+    });
+    expect(
+      readImageDimensions(
+        gifHeader(10, 10, { width: 60000, height: 60000 }),
+        "gif",
+      ),
+    ).toBeNull();
+    expect(
+      readImageDimensions(gifHeader(10, 10, { left: 5, width: 6 }), "gif"),
+    ).toBeNull();
+    // A screen with no frame at all.
+    expect(
+      readImageDimensions(
+        bytesOf("GIF89a", u16le(1), u16le(1), [0, 0, 0], [0x3b]),
+        "gif",
+      ),
+    ).toBeNull();
+    expect(checkImageBytes(gifHeader(10, 10, { height: 11 }))).toEqual({
+      ok: false,
+      reason: "unreadable_header",
+    });
+  });
+
   test("reads real jimp-encoded JPEG and PNG files", async () => {
     const image = new Jimp({ width: 37, height: 21, color: 0x336699ff });
     const jpeg = new Uint8Array(await image.getBuffer("image/jpeg"));
@@ -162,6 +210,8 @@ describe("readImageDimensions", () => {
       height: 21,
     });
     expect(readImageDimensions(png, "png")).toEqual({ width: 37, height: 21 });
+    const gif = new Uint8Array(await image.getBuffer("image/gif"));
+    expect(readImageDimensions(gif, "gif")).toEqual({ width: 37, height: 21 });
   });
 
   test("a truncated or zero-sized header has no dimensions", () => {
