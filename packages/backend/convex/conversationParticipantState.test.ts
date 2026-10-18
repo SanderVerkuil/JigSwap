@@ -65,13 +65,37 @@ const post = async (
   as: (t: T) => ReturnType<T["withIdentity"]>,
   threadId: string,
   body: string,
-  kind: "text" | "image" = "text",
 ) => {
   await tick();
   await as(t).mutation(api.conversation.postMessage.postMessage, {
     threadId,
-    kind,
+    kind: "text",
     body,
+  });
+};
+
+// A legacy-shaped image message: postMessage is text-only, so it goes through the repository the
+// way a pre-#145 image row was written.
+const postLegacyImage = async (
+  t: T,
+  authorId: Id<"users">,
+  threadId: string,
+  body: string,
+) => {
+  await tick();
+  await t.run(async (ctx) => {
+    const repository = convexThreadRepository(ctx);
+    const thread = await repository.findById(toThreadId(threadId));
+    if (!thread) throw new Error("thread not found");
+    const posted = thread.postMessage({
+      id: toMessageId(crypto.randomUUID()),
+      authorId: toMemberId(authorId as string),
+      kind: "image",
+      body,
+      sentAt: new Date(),
+    });
+    if (!posted.isOk) throw new Error("postMessage failed");
+    await repository.save(thread);
   });
 };
 
@@ -264,7 +288,7 @@ describe("post path", () => {
 
   test("lastMessage truncates long bodies and blanks image bodies", async () => {
     const t = convexTest(schema, modules);
-    const { bob } = await seed(t);
+    const { alice, bob } = await seed(t);
     const threadId = await openDm(t, bob);
 
     const long = "x".repeat(LAST_MESSAGE_BODY_MAX + 500);
@@ -289,7 +313,7 @@ describe("post path", () => {
       /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/,
     );
 
-    await post(t, asAlice, threadId, "https://example.com/i.png", "image");
+    await postLegacyImage(t, alice, threadId, "https://example.com/i.png");
     const thread = await threadRow(t, threadId);
     expect(thread.lastMessage?.kind).toBe("image");
     expect(thread.lastMessage?.body).toBe("");
