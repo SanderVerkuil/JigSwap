@@ -8,7 +8,7 @@ import { requireMember } from "../identity/requireMember";
 // only now may an admin see it (admin/listImageReviewRequests). Idempotent. A quarantined photo
 // takes the request exactly like a rejected one (the sender can't tell them apart), but it never
 // reaches the admin queue: nobody may view it. So that it also ENDS like a rejected one, a flip
-// after a randomised 24-72 h shows the sender "upheld" (showQuarantinedReviewUpheld).
+// after a randomised 24 h - 7 d shows the sender "upheld" (showQuarantinedReviewUpheld).
 export const requestImageReview = mutation({
   args: { attachmentId: v.id("messageAttachments") },
   handler: async (ctx, { attachmentId }): Promise<void> => {
@@ -43,9 +43,10 @@ export const requestImageReview = mutation({
   },
 });
 
-// A human review typically takes a day or more; the quarantine flip lands anywhere in 24-72 h.
+// A human review takes anywhere from a day to about a week; the quarantine flip lands uniformly
+// in 24 h - 7 d. Its timing is still not an admin's (a residual the PR documents).
 const QUARANTINE_REVIEW_MIN_MS = 24 * 60 * 60_000;
-const QUARANTINE_REVIEW_SPREAD_MS = 48 * 60 * 60_000;
+const QUARANTINE_REVIEW_SPREAD_MS = 6 * 24 * 60 * 60_000;
 
 // The sender-view-only end of a quarantined photo's review request: the outbox now shows
 // "upheld". Nothing else changes: the row stays quarantined and preserved, no admin decided it.

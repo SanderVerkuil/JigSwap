@@ -964,7 +964,7 @@ export default defineSchema({
     reviewRequestedAt: v.optional(v.number()),
     reviewDecidedAt: v.optional(v.number()),
     // A quarantined photo's review request "ends" for the sender like an upheld one (sender view
-    // only; no admin ever sees or decides it): set by a flip 24-72 h after the request.
+    // only; no admin ever sees or decides it): set by a flip 24 h - 7 d after the request.
     senderReviewUpheldAt: v.optional(v.number()),
     // The admin who restored or upheld it on review.
     moderatedBy: v.optional(v.id("users")),

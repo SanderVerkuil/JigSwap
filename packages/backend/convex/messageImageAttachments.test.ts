@@ -1138,6 +1138,31 @@ describe("review appeal", () => {
     expect(await messageRows(t, threadId)).toEqual([]);
   });
 
+  test("the quarantine review flip spreads over 24 h to 7 days", async () => {
+    fakes.hcs = "match";
+    const t = convexTest(schema, modules);
+    const { threadId } = await openThread(t);
+    const id = await stage(t, threadId);
+    await settleDueJobs(t);
+    vi.spyOn(Math, "random").mockReturnValue(0.999);
+    await asAlice(t).mutation(
+      api.conversation.requestImageReview.requestImageReview,
+      { attachmentId: id },
+    );
+    const [flip] = (
+      await t.run((ctx) =>
+        ctx.db.system.query("_scheduled_functions").collect(),
+      )
+    ).filter(
+      (job) =>
+        job.name ===
+        "conversation/requestImageReview:showQuarantinedReviewUpheld",
+    );
+    const delay = flip.scheduledTime - flip._creationTime;
+    expect(delay).toBeGreaterThan(6 * 24 * 60 * 60_000);
+    expect(delay).toBeLessThanOrEqual(7 * 24 * 60 * 60_000 + 1000);
+  });
+
   test("a quarantined photo takes the request like a rejected one but never reaches admins", async () => {
     fakes.hcs = "match";
     const t = convexTest(schema, modules);
@@ -1167,7 +1192,7 @@ describe("review appeal", () => {
     );
     const delay = flip.scheduledTime - flip._creationTime;
     expect(delay).toBeGreaterThanOrEqual(24 * 60 * 60_000 - 1000);
-    expect(delay).toBeLessThanOrEqual(72 * 60 * 60_000 + 1000);
+    expect(delay).toBeLessThanOrEqual(7 * 24 * 60 * 60_000 + 1000);
     await t.mutation(
       internal.conversation.requestImageReview.showQuarantinedReviewUpheld,
       { attachmentId: id },
