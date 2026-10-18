@@ -153,16 +153,29 @@ const asAlice = (t: T) => t.withIdentity({ subject: "clerk_alice" });
 const asBob = (t: T) => t.withIdentity({ subject: "clerk_bob" });
 
 // Media is not postable by clients: post it the way internal server code will, through the
-// aggregate and the repository (the PostMessage use case's own path).
+// aggregate and the repository (the PostMessage use case's own path), referencing a delivered
+// attachment row. Returns the attachment id.
 const postMedia = (
   t: T,
   authorId: Id<"users">,
   threadId: string,
   kind: "image" | "location",
   caption: string,
-  attachmentRef: string,
 ) =>
   t.run(async (ctx) => {
+    const attachmentRef = await ctx.db.insert("messageAttachments", {
+      kind: "image",
+      threadAggregateId: threadId,
+      uploaderId: authorId,
+      fileId: await ctx.storage.store(new Blob(["x"])),
+      byteSize: 1,
+      contentType: "image/jpeg",
+      moderationStatus: "approved",
+      hashCheckedAt: 1,
+      reencodedAt: 1,
+      createdAt: 1,
+      updatedAt: 1,
+    });
     const repository = convexThreadRepository(ctx);
     const thread = await repository.findById(toThreadId(threadId));
     if (!thread) throw new Error("thread not found");
@@ -177,6 +190,7 @@ const postMedia = (
     if (!posted.isOk)
       throw new Error(`postMessage failed: ${posted.error.code}`);
     await repository.save(thread);
+    return attachmentRef;
   });
 
 const openDm = async (t: T, bob: Id<"users">) =>
@@ -189,7 +203,13 @@ describe("media messages through the read models", () => {
     const t = convexTest(schema, modules);
     const { alice, bob } = await seed(t);
     const threadId = await openDm(t, bob);
-    await postMedia(t, alice, threadId, "image", "look at this", "att-1");
+    const attachmentId = await postMedia(
+      t,
+      alice,
+      threadId,
+      "image",
+      "look at this",
+    );
 
     const messages = await asBob(t).query(
       api.conversation.getThreadMessages.getThreadMessages,
@@ -199,7 +219,7 @@ describe("media messages through the read models", () => {
     expect(messages[0]).toMatchObject({
       kind: "image",
       body: "look at this",
-      attachmentId: "att-1",
+      attachmentId,
     });
 
     const [inbox] = await asBob(t).query(
@@ -218,7 +238,7 @@ describe("media messages through the read models", () => {
     const t = convexTest(schema, modules);
     const { alice, bob } = await seed(t);
     const threadId = await openDm(t, bob);
-    await postMedia(t, alice, threadId, "location", "", "att-2");
+    await postMedia(t, alice, threadId, "location", "");
     await t.run(async (ctx) => {
       const thread = await ctx.db
         .query("threads")

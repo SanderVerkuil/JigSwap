@@ -34,6 +34,7 @@ export const notificationTypeValidator = v.union(
   v.literal("report_decided"),
   v.literal("content_removed"),
   v.literal("member_warned"),
+  v.literal("message_image_rejected"),
 );
 
 export const channelValidator = v.union(

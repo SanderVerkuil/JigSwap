@@ -253,7 +253,7 @@ describe("resolveForDelivery: context and deep links", () => {
   test("message_received for a photo carries its kind, never the caption or attachment", async () => {
     const s = await setup();
     await seedThread(s, [s.viewer, s.mara]);
-    await s.t.run((ctx) =>
+    await s.t.run(async (ctx) =>
       ctx.db.insert("threadMessages", {
         threadAggregateId: "thread-1",
         messageId: "m2",
@@ -261,7 +261,17 @@ describe("resolveForDelivery: context and deep links", () => {
         kind: "image",
         body: "secret caption",
         sentAt: now + 1,
-        attachmentId: "att-1",
+        attachmentId: await ctx.db.insert("messageAttachments", {
+          kind: "image",
+          threadAggregateId: "thread-1",
+          uploaderId: s.mara,
+          fileId: await ctx.storage.store(new Blob(["x"])),
+          byteSize: 1,
+          contentType: "image/jpeg",
+          moderationStatus: "approved",
+          createdAt: now,
+          updatedAt: now,
+        }),
       }),
     );
     const content = await resolve(s, {

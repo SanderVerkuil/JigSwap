@@ -8,6 +8,7 @@ import {
 import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation, type MutationCtx } from "../_generated/server";
+import { dropUndeliveredPairAttachments } from "../conversation/messageAttachments";
 import { convexExchangeRepository } from "../exchange/adapters/convexExchangeRepository";
 import { inProcessEventPublisher as exchangeEventPublisher } from "../exchange/adapters/inProcessEventPublisher";
 import { toConvexError as toExchangeConvexError } from "../exchange/errors";
@@ -95,6 +96,7 @@ export const blockMember = mutation({
       makeDeclineExchange,
       blockerId,
     );
+    await dropUndeliveredPairAttachments(ctx, blockerId, blockedId);
   },
 });
 

@@ -556,12 +556,23 @@ describe("fileReport: rules", () => {
 
   test("an attached media message keeps its caption; a location row is snapshotted", async () => {
     const t = convexTest(schema, modules);
-    await seed(t);
+    const { alice } = await seed(t);
     await t.run(async (ctx) => {
-      for (const [messageId, kind, attachmentId] of [
-        ["m8", "image", "att-1"],
-        ["m9", "location", "att-2"],
+      for (const [messageId, kind] of [
+        ["m8", "image"],
+        ["m9", "location"],
       ] as const) {
+        const attachmentId = await ctx.db.insert("messageAttachments", {
+          kind: "image",
+          threadAggregateId: THREAD,
+          uploaderId: alice,
+          fileId: await ctx.storage.store(new Blob(["x"])),
+          byteSize: 1,
+          contentType: "image/jpeg",
+          moderationStatus: "approved",
+          createdAt: 1,
+          updatedAt: 1,
+        });
         const row = await ctx.db
           .query("threadMessages")
           .withIndex("by_message_id", (q) => q.eq("messageId", messageId))

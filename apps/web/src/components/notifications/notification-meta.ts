@@ -55,7 +55,8 @@ export type NotificationType =
   | "whats_new"
   | "report_decided"
   | "content_removed"
-  | "member_warned";
+  | "member_warned"
+  | "message_image_rejected";
 
 export const NOTIFICATION_TYPES: NotificationType[] = [
   "trade_request",
@@ -89,6 +90,7 @@ export const NOTIFICATION_TYPES: NotificationType[] = [
   "report_decided",
   "content_removed",
   "member_warned",
+  "message_image_rejected",
 ];
 
 // Types only admins ever receive; hidden from non-admin preference matrices.
@@ -160,7 +162,12 @@ export const NOTIFICATION_CATEGORIES: readonly NotificationCategory[] = [
   // Report outcomes and moderation of the member's own content (DSA notices).
   {
     key: "safety",
-    types: ["report_decided", "content_removed", "member_warned"],
+    types: [
+      "report_decided",
+      "content_removed",
+      "member_warned",
+      "message_image_rejected",
+    ],
   },
   {
     key: "admin",
@@ -196,6 +203,7 @@ export type NotificationChannel = "inApp" | "email" | "push";
 export const MANDATORY_IN_APP_TYPES: ReadonlySet<NotificationType> = new Set([
   "content_removed",
   "member_warned",
+  "message_image_rejected",
 ]);
 
 export const NOTIFICATION_CHANNELS: NotificationChannel[] = [
@@ -306,6 +314,8 @@ export function notificationIcon(type: string): LucideIcon {
       return ShieldCheck;
     case "content_removed":
       return ShieldX;
+    case "message_image_rejected":
+      return ImageOff;
     case "member_warned":
       return ShieldAlert;
     default:
@@ -332,6 +342,7 @@ export function notificationAccent(type: string): string {
     case "photo_removed":
     case "proposal_rejected":
     case "content_removed":
+    case "message_image_rejected":
       return "text-destructive";
     case "member_warned":
       return "text-jigsaw-warning";

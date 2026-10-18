@@ -775,10 +775,23 @@ describe("message_received", () => {
   const seedMediaMessage = (
     s: Setup,
     kind: "image" | "location",
-    attachmentId?: string,
+    attached = false,
   ) =>
-    s.t.run((ctx) =>
-      ctx.db.insert("threadMessages", {
+    s.t.run(async (ctx) => {
+      const attachmentId = attached
+        ? await ctx.db.insert("messageAttachments", {
+            kind: "image",
+            threadAggregateId: "thread-1",
+            uploaderId: s.mara,
+            fileId: await ctx.storage.store(new Blob(["x"])),
+            byteSize: 1,
+            contentType: "image/jpeg",
+            moderationStatus: "approved",
+            createdAt: now,
+            updatedAt: now,
+          })
+        : undefined;
+      await ctx.db.insert("threadMessages", {
         threadAggregateId: "thread-1",
         messageId: "m3",
         authorId: s.mara,
@@ -786,20 +799,21 @@ describe("message_received", () => {
         body: "secret caption",
         sentAt: now + 2,
         ...(attachmentId !== undefined && { attachmentId }),
-      }),
-    );
+      });
+      return attachmentId;
+    });
 
   test.each(["image", "location"] as const)(
     "a latest %s message yields its kind and no preview",
     async (kind) => {
       const s = await setup();
       await seedThread(s, [s.viewer, s.mara]);
-      await seedMediaMessage(s, kind, "att-1");
+      const attachmentId = await seedMediaMessage(s, kind, true);
       const view = await onlyView(s);
       expect(view.context.messageKind).toBe(kind);
       expect(view.context).not.toHaveProperty("messagePreview");
       expect(JSON.stringify(view)).not.toContain("secret caption");
-      expect(JSON.stringify(view)).not.toContain("att-1");
+      expect(JSON.stringify(view)).not.toContain(attachmentId!);
     },
   );
 

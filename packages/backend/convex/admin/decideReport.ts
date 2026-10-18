@@ -1,8 +1,10 @@
 import { toMemberId } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
+import { internal } from "../_generated/api";
 import type { Doc, Id } from "../_generated/dataModel";
 import { mutation, type MutationCtx } from "../_generated/server";
 import { toLastMessage } from "../conversation/adapters/threadMapper";
+import { releaseEvidenceHold } from "../conversation/messageAttachments";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
 import { makeNotify } from "../notifications/adapters/makeNotify";
@@ -24,8 +26,9 @@ const STAMP_KIND = {
   warned: "report_warned",
 } as const satisfies Record<Decision, string>;
 
-// Decide an open report (spec 2.5). "content_removed" tombstones a reported message or removes a
-// reported photo (the confirmPhotoRemoval path); it does not apply to user, copy or exchange
+// Decide an open report (spec 2.5). "content_removed" tombstones a reported message (with its
+// photo, for an image message or a reported message photo) or removes a reported copy photo (the
+// confirmPhotoRemoval path); it does not apply to user, copy or exchange
 // targets. "warned" and "dismissed" change no content. Every other OPEN report on the same target
 // is decided with it (same decision and statement). The decision is audit-stamped; each reporter
 // gets report_decided (Art. 16(5)) and the reported member gets the Art. 17 statement of reasons
@@ -85,6 +88,20 @@ export const decideReport = mutation({
       });
     }
 
+    // A reported message photo: on removal, copy its bytes into report-only evidence (which then
+    // deletes the served blob and releases the hold); otherwise just release the hold.
+    const attachmentId = await reportedAttachmentOf(ctx, report);
+    if (attachmentId && decision === "content_removed") {
+      await ctx.db.patch(report._id, { evidencePendingSince: now });
+      await ctx.scheduler.runAfter(
+        0,
+        internal.reports.attachmentEvidence.preserveEvidence,
+        { reportId: report._id, attachmentId, attempt: 1 },
+      );
+    } else if (attachmentId) {
+      await releaseEvidenceHold(ctx, attachmentId);
+    }
+
     await stampModerationAction(ctx, {
       actorId: adminId,
       kind: STAMP_KIND[decision],
@@ -112,7 +129,12 @@ export const decideReport = mutation({
         relatedId: report._id,
         params: {
           ...(decision === "content_removed"
-            ? { restricted: report.targetKind }
+            ? {
+                restricted:
+                  report.targetKind === "attachment"
+                    ? "photo"
+                    : report.targetKind,
+              }
             : {}),
           ground: report.reason,
           reason: statementOfReasons,
@@ -143,26 +165,73 @@ const blankLastMessageSummary = async (ctx: MutationCtx, messageId: string) => {
   await ctx.db.patch(thread._id, { lastMessage: toLastMessage(row) });
 };
 
+// Tombstone a message: its body and copy reference are cleared, and an image message's photo is
+// marked "removed" (its blobs go once reports/attachmentEvidence has copied them). Idempotent.
+const tombstoneMessage = async (
+  ctx: MutationCtx,
+  messageId: string,
+  reason: string,
+) => {
+  const message = await ctx.db
+    .query("threadMessages")
+    .withIndex("by_message_id", (q) => q.eq("messageId", messageId))
+    .first();
+  if (!message || message.removedAt !== undefined) return;
+  await ctx.db.patch(message._id, {
+    removedAt: Date.now(),
+    removedReason: reason,
+    body: "",
+    copyId: undefined,
+  });
+  await blankLastMessageSummary(ctx, message.messageId);
+  const attachment = message.attachmentId
+    ? await ctx.db.get(message.attachmentId)
+    : null;
+  if (attachment && attachment.moderationStatus !== "removed") {
+    await ctx.db.patch(attachment._id, {
+      moderationStatus: "removed",
+      updatedAt: Date.now(),
+    });
+  }
+};
+
+// The message photo a report is about: the attachment target itself, or the photo of a reported
+// image message. Null for every other report.
+const reportedAttachmentOf = async (
+  ctx: MutationCtx,
+  report: Doc<"reports">,
+): Promise<Id<"messageAttachments"> | null> => {
+  if (report.targetKind === "attachment") {
+    return ctx.db.normalizeId("messageAttachments", report.targetId);
+  }
+  if (report.targetKind !== "message") return null;
+  const message = await ctx.db
+    .query("threadMessages")
+    .withIndex("by_message_id", (q) => q.eq("messageId", report.targetId))
+    .first();
+  return message?.attachmentId ?? null;
+};
+
 // Remove the reported content: tombstone a message (its body and copy reference are cleared too,
 // so the content is gone from the database, not just hidden; the report's evidence snapshot
-// keeps the original), delete a photo. A target that is already
+// keeps the original), remove a message photo with its message, delete a copy photo. A target
+// that is already
 // gone (removed, or its author deleted it) needs nothing more. Other kinds have no content an
 // admin can remove here.
 const removeContent = async (ctx: MutationCtx, report: Doc<"reports">) => {
   switch (report.targetKind) {
     case "message": {
-      const message = await ctx.db
-        .query("threadMessages")
-        .withIndex("by_message_id", (q) => q.eq("messageId", report.targetId))
-        .first();
-      if (message && message.removedAt === undefined) {
-        await ctx.db.patch(message._id, {
-          removedAt: Date.now(),
-          removedReason: report.reason,
-          body: "",
-          copyId: undefined,
-        });
-        await blankLastMessageSummary(ctx, message.messageId);
+      await tombstoneMessage(ctx, report.targetId, report.reason);
+      return;
+    }
+    case "attachment": {
+      const attachmentId = ctx.db.normalizeId(
+        "messageAttachments",
+        report.targetId,
+      );
+      const attachment = attachmentId ? await ctx.db.get(attachmentId) : null;
+      if (attachment?.messageId) {
+        await tombstoneMessage(ctx, attachment.messageId, report.reason);
       }
       return;
     }

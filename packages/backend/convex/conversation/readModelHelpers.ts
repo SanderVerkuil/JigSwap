@@ -3,6 +3,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { isUnattachedMedia } from "./adapters/threadMapper";
 import { viewableCopyCards } from "./copyCard";
+import { messageAttachmentViews } from "./messageAttachments";
 
 // Shared row->DTO mapping and unread logic for the conversation read models. Read models page
 // the companion `threadMessages` rows via `by_thread_sent` directly and NEVER hydrate the Thread
@@ -157,12 +158,20 @@ export const subjectRenders = async (
 /**
  * Per-request mapper from a message row to the reader's DTO. A copy reference surfaces as a card
  * only while the reader may view the copy; otherwise as `copyUnavailable`, never revealing
- * anything about the copy. Shared by getThreadMessages and listThreadMessages.
+ * anything about the copy. An image message carries its photo as this reader may see it
+ * (messageAttachmentViews). Shared by getThreadMessages and listThreadMessages.
  */
 export const threadMessageViewOf = (ctx: QueryCtx, me: Id<"users">) => {
   const cardOf = viewableCopyCards(ctx, me);
+  const attachmentOf = messageAttachmentViews(ctx, me);
   return async (row: Doc<"threadMessages">): Promise<ThreadMessageView> => {
-    const view = toThreadMessageView(row, me);
+    const base = toThreadMessageView(row, me);
+    const view =
+      row.kind === "image" &&
+      row.attachmentId !== undefined &&
+      row.removedAt === undefined
+        ? { ...base, attachment: await attachmentOf(row.attachmentId) }
+        : base;
     // A removed message renders only as "Message removed": no copy card, no copyUnavailable.
     if (!row.copyId || row.removedAt !== undefined) return view;
     const copy = await cardOf(row.copyId);

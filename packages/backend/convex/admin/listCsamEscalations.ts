@@ -65,10 +65,14 @@ export const listCsamEscalations = query({
       }
     }
     // Photos held unpublished because the hash check was unavailable (stored hashes awaiting a
-    // re-check), across both image tables: a count (capped) and the oldest wait.
+    // re-check), across the image tables: a count (capped) and the oldest wait.
     let waitingPhotos = 0;
     let oldestWaitingSince: number | null = null;
-    for (const table of ["ownedPuzzleImages", "completionImages"] as const) {
+    for (const table of [
+      "ownedPuzzleImages",
+      "completionImages",
+      "messageAttachments",
+    ] as const) {
       const rows = await ctx.db
         .query(table)
         .withIndex("by_hash_check_pending", (q) =>

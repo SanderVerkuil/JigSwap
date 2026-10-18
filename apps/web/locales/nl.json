@@ -1943,7 +1943,8 @@
       "whats_new": "Wat is er nieuw",
       "report_decided": "Uitkomst van meldingen",
       "content_removed": "Inhoud verwijderd",
-      "member_warned": "Waarschuwingen van moderators"
+      "member_warned": "Waarschuwingen van moderators",
+      "message_image_rejected": "Niet verstuurde foto's"
     },
     "categories": {
       "trades": {
@@ -2099,6 +2100,10 @@
       "member_warned": {
         "title": "Waarschuwing van een moderator",
         "message": "Een moderator heeft je een waarschuwing gestuurd.{hasReason, select, yes { Reden: {reason}} other {}}"
+      },
+      "message_image_rejected": {
+        "title": "Foto niet verstuurd",
+        "message": "Onze automatische controle heeft een foto die je stuurde tegengehouden, dus hij is niet bezorgd."
       }
     },
     "pushDeviceTitle": "Push op dit apparaat",
@@ -2145,7 +2150,8 @@
       "whats_new": "Wanneer een nieuwe functie of wijziging in JigSwap wordt aangekondigd.",
       "report_decided": "Wanneer een moderator een besluit neemt over een melding die je hebt gedaan.",
       "content_removed": "Wanneer een moderator na een melding een bericht of foto van je verwijdert.",
-      "member_warned": "Wanneer een moderator je na een melding waarschuwt."
+      "member_warned": "Wanneer een moderator je na een melding waarschuwt.",
+      "message_image_rejected": "Wanneer onze automatische controle een foto tegenhoudt die je in een bericht stuurde."
     },
     "pushServiceUnreachable": "Je browser kon zijn pushdienst niet bereiken. Sommige privacybrowsers blokkeren of verwijderen die — Brave schakelt het standaard uit (zet 'Google-services voor pushberichten gebruiken' aan in Instellingen), en de-Googled Chromium-browsers zoals Helium verwijderen het. Firefox, Chrome of Edge werkt wel.",
     "rich": {
@@ -2309,6 +2315,9 @@
       },
       "member_warned": {
         "sentence": "Een moderator heeft je gewaarschuwd wegens {ground, select, spam_scam {spam of oplichting} harassment_hate {intimidatie of haat} sexual {seksuele of ongepaste inhoud} fake_trade {een nepruil of niet komen opdagen} illegal {illegale inhoud} other {het overtreden van de communityregels}}. Dit besluit is door een mens genomen, niet automatisch. Reageer via de contactpagina om een herbeoordeling te vragen."
+      },
+      "message_image_rejected": {
+        "sentence": "Een foto die je stuurde is niet bezorgd: onze automatische controle heeft hem tegengehouden. Dit is automatisch besloten, niet door een mens. Open het gesprek en kies Vraag om herbeoordeling als je denkt dat dit een vergissing is."
       }
     },
     "mandatoryInApp": "Altijd aan: wettelijk verplichte meldingen"
@@ -3749,7 +3758,9 @@
         "csam_escalation_updated": "<strong>{actor}</strong> werkte een hash-match-escalatie bij (<strong>{target}</strong>)",
         "report_dismissed": "<strong>{actor}</strong> wees een melding over <strong>{target}</strong> af",
         "report_content_removed": "<strong>{actor}</strong> verwijderde gemelde inhoud van <strong>{target}</strong>",
-        "report_warned": "<strong>{actor}</strong> waarschuwde <strong>{target}</strong> na een melding"
+        "report_warned": "<strong>{actor}</strong> waarschuwde <strong>{target}</strong> na een melding",
+        "message_image_auto_rejected": "<strong>{actor}</strong> heeft een <strong>{target}</strong> automatisch gemarkeerd",
+        "message_image_restored": "<strong>{actor}</strong> heeft een <strong>{target}</strong> hersteld na een verzoek om herbeoordeling"
       },
       "activityEmpty": "Nog geen moderatieactiviteit.",
       "screening": {
@@ -3806,7 +3817,8 @@
         },
         "table": {
           "ownedPuzzleImages": "Foto bij exemplaar",
-          "completionImages": "Foto bij voltooiing"
+          "completionImages": "Foto bij voltooiing",
+          "messageAttachments": "Foto in bericht"
         },
         "matched": "Match {time} via {provider}",
         "uploader": "Geüpload door {name}",
@@ -3839,7 +3851,8 @@
           "message": "Bericht",
           "copy": "Puzzelexemplaar",
           "photo": "Foto",
-          "exchange": "Ruil"
+          "exchange": "Ruil",
+          "attachment": "Foto in bericht"
         },
         "reportedArrow": "meldde",
         "openCount": "{count, plural, one {# open melding tegen dit lid} other {# open meldingen tegen dit lid}}",
@@ -3887,7 +3900,8 @@
           "message": "je bericht",
           "copy": "je puzzelexemplaar",
           "photo": "je foto",
-          "exchange": "je gedrag bij een ruil"
+          "exchange": "je gedrag bij een ruil",
+          "attachment": "je foto in een bericht"
         },
         "grounds": {
           "spam_scam": "spam en oplichting",
@@ -4502,7 +4516,8 @@
         "message": "Een bericht",
         "copy": "Een puzzelexemplaar",
         "photo": "Een foto",
-        "exchange": "Een ruil"
+        "exchange": "Een ruil",
+        "attachment": "Een foto in een bericht"
       }
     }
   }

@@ -8,7 +8,7 @@ import { adminLabelOf, reportsAgainst, targetSummaryOf } from "./reportViews";
 export const OTHER_REPORTS_LIMIT = 50;
 
 // One report for the admin decision screen: the full evidence snapshot, the Art. 16(2) notice
-// when there is one, a storage URL for a photo target that still exists, and the reported
+// when there is one, a storage URL for a photo or message-photo target that still exists, and the reported
 // member's other reports (count plus status/decision). Admin-only, gated like listRejectedPhotos.
 export const getReport = query({
   args: { reportId: v.id("reports") },
@@ -26,6 +26,34 @@ export const getReport = query({
       const imageId = ctx.db.normalizeId("ownedPuzzleImages", report.targetId);
       const image = imageId ? await ctx.db.get(imageId) : null;
       photoUrl = image ? await ctx.storage.getUrl(image.fileId) : null;
+    }
+    // The reported message photo (an attachment report, or a report on its image message), while
+    // its blob exists (an open report holds it). Never a quarantined one, and never before the
+    // CSAM hash check passed.
+    const attachmentId =
+      report.targetKind === "attachment"
+        ? ctx.db.normalizeId("messageAttachments", report.targetId)
+        : report.targetKind === "message"
+          ? ((
+              await ctx.db
+                .query("threadMessages")
+                .withIndex("by_message_id", (q) =>
+                  q.eq("messageId", report.targetId),
+                )
+                .first()
+            )?.attachmentId ?? null)
+          : null;
+    const attachment = attachmentId ? await ctx.db.get(attachmentId) : null;
+    if (attachment) {
+      photoUrl =
+        attachment.moderationStatus !== "quarantined" &&
+        attachment.hashCheckedAt !== undefined
+          ? await ctx.storage.getUrl(attachment.fileId)
+          : null;
+    }
+    // A removed message photo: its report-only evidence copy (the served blob is gone).
+    if (report.evidenceFileId) {
+      photoUrl = await ctx.storage.getUrl(report.evidenceFileId);
     }
 
     // The notice stores the notifier email only when it differs from the account's.

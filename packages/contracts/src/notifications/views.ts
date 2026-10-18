@@ -34,7 +34,8 @@ export type NotificationViewType =
   | "whats_new"
   | "report_decided"
   | "content_removed"
-  | "member_warned";
+  | "member_warned"
+  | "message_image_rejected";
 
 /**
  * A member who caused the notification. Anonymous (deleted, deactivated, or not visible to the
@@ -98,7 +99,7 @@ export interface NotificationViewContext {
   goalTitle?: string;
   /**
    * Moderator-entered reason: the rejection reason (proposal_rejected), or the statement of reasons
-   * (content_removed, member_warned).
+   * (content_removed, member_warned; message_image_rejected's automated statement).
    */
   reason?: string;
   /** The moderator's decision on a report the viewer filed (report_decided). */

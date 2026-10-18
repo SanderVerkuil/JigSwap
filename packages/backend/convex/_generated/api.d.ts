@@ -14,6 +14,7 @@ import type {
   FunctionReference,
 } from "convex/server";
 import type * as admin_confirmPhotoRemoval from "../admin/confirmPhotoRemoval.js";
+import type * as admin_decideImageReview from "../admin/decideImageReview.js";
 import type * as admin_decideReport from "../admin/decideReport.js";
 import type * as admin_decideUncheckedPhoto from "../admin/decideUncheckedPhoto.js";
 import type * as admin_deleteCopyPhoto from "../admin/deleteCopyPhoto.js";
@@ -24,6 +25,7 @@ import type * as admin_getPuzzleDefinitionDetail from "../admin/getPuzzleDefinit
 import type * as admin_getReport from "../admin/getReport.js";
 import type * as admin_getUserDetail from "../admin/getUserDetail.js";
 import type * as admin_listCsamEscalations from "../admin/listCsamEscalations.js";
+import type * as admin_listImageReviewRequests from "../admin/listImageReviewRequests.js";
 import type * as admin_listPuzzleDefinitions from "../admin/listPuzzleDefinitions.js";
 import type * as admin_listRejectedPhotos from "../admin/listRejectedPhotos.js";
 import type * as admin_listReports from "../admin/listReports.js";
@@ -108,23 +110,32 @@ import type * as conversation_adapters_idGenerators from "../conversation/adapte
 import type * as conversation_adapters_inProcessEventPublisher from "../conversation/adapters/inProcessEventPublisher.js";
 import type * as conversation_adapters_systemClock from "../conversation/adapters/systemClock.js";
 import type * as conversation_adapters_threadMapper from "../conversation/adapters/threadMapper.js";
+import type * as conversation_attachmentModerationStore from "../conversation/attachmentModerationStore.js";
 import type * as conversation_backfill from "../conversation/backfill.js";
 import type * as conversation_backfillParticipantState from "../conversation/backfillParticipantState.js";
 import type * as conversation_canMessage from "../conversation/canMessage.js";
 import type * as conversation_copyCard from "../conversation/copyCard.js";
 import type * as conversation_countLegacyImageMessages from "../conversation/countLegacyImageMessages.js";
 import type * as conversation_errors from "../conversation/errors.js";
+import type * as conversation_generateMessageUploadUrl from "../conversation/generateMessageUploadUrl.js";
 import type * as conversation_getCopyConversation from "../conversation/getCopyConversation.js";
 import type * as conversation_getMyInbox from "../conversation/getMyInbox.js";
 import type * as conversation_getThreadByExchange from "../conversation/getThreadByExchange.js";
 import type * as conversation_getThreadMessages from "../conversation/getThreadMessages.js";
 import type * as conversation_getUnreadTotal from "../conversation/getUnreadTotal.js";
 import type * as conversation_listAttachableCopies from "../conversation/listAttachableCopies.js";
+import type * as conversation_listMyPendingAttachments from "../conversation/listMyPendingAttachments.js";
 import type * as conversation_listThreadMessages from "../conversation/listThreadMessages.js";
 import type * as conversation_markThreadRead from "../conversation/markThreadRead.js";
+import type * as conversation_messageAttachments from "../conversation/messageAttachments.js";
+import type * as conversation_moderateMessageImage from "../conversation/moderateMessageImage.js";
 import type * as conversation_openDmThread from "../conversation/openDmThread.js";
 import type * as conversation_postMessage from "../conversation/postMessage.js";
 import type * as conversation_readModelHelpers from "../conversation/readModelHelpers.js";
+import type * as conversation_requestImageReview from "../conversation/requestImageReview.js";
+import type * as conversation_revealMessageImage from "../conversation/revealMessageImage.js";
+import type * as conversation_sendStagedImages from "../conversation/sendStagedImages.js";
+import type * as conversation_stageMessageImage from "../conversation/stageMessageImage.js";
 import type * as conversation_startCopyConversation from "../conversation/startCopyConversation.js";
 import type * as conversation_subscriber from "../conversation/subscriber.js";
 import type * as custody_getCopyCustodyTimeline from "../custody/getCopyCustodyTimeline.js";
@@ -316,6 +327,7 @@ import type * as onboarding_quickStartFacts from "../onboarding/quickStartFacts.
 import type * as onboarding_recordQuickStart from "../onboarding/recordQuickStart.js";
 import type * as presence from "../presence.js";
 import type * as puzzles from "../puzzles.js";
+import type * as reports_attachmentEvidence from "../reports/attachmentEvidence.js";
 import type * as reports_fileReport from "../reports/fileReport.js";
 import type * as reports_listMyReports from "../reports/listMyReports.js";
 import type * as reputation_adapters_convexExchangeCompletionPort from "../reputation/adapters/convexExchangeCompletionPort.js";
@@ -471,6 +483,7 @@ import type * as whatsNew_recordTourProgress from "../whatsNew/recordTourProgres
 
 declare const fullApi: ApiFromModules<{
   "admin/confirmPhotoRemoval": typeof admin_confirmPhotoRemoval;
+  "admin/decideImageReview": typeof admin_decideImageReview;
   "admin/decideReport": typeof admin_decideReport;
   "admin/decideUncheckedPhoto": typeof admin_decideUncheckedPhoto;
   "admin/deleteCopyPhoto": typeof admin_deleteCopyPhoto;
@@ -481,6 +494,7 @@ declare const fullApi: ApiFromModules<{
   "admin/getReport": typeof admin_getReport;
   "admin/getUserDetail": typeof admin_getUserDetail;
   "admin/listCsamEscalations": typeof admin_listCsamEscalations;
+  "admin/listImageReviewRequests": typeof admin_listImageReviewRequests;
   "admin/listPuzzleDefinitions": typeof admin_listPuzzleDefinitions;
   "admin/listRejectedPhotos": typeof admin_listRejectedPhotos;
   "admin/listReports": typeof admin_listReports;
@@ -565,23 +579,32 @@ declare const fullApi: ApiFromModules<{
   "conversation/adapters/inProcessEventPublisher": typeof conversation_adapters_inProcessEventPublisher;
   "conversation/adapters/systemClock": typeof conversation_adapters_systemClock;
   "conversation/adapters/threadMapper": typeof conversation_adapters_threadMapper;
+  "conversation/attachmentModerationStore": typeof conversation_attachmentModerationStore;
   "conversation/backfill": typeof conversation_backfill;
   "conversation/backfillParticipantState": typeof conversation_backfillParticipantState;
   "conversation/canMessage": typeof conversation_canMessage;
   "conversation/copyCard": typeof conversation_copyCard;
   "conversation/countLegacyImageMessages": typeof conversation_countLegacyImageMessages;
   "conversation/errors": typeof conversation_errors;
+  "conversation/generateMessageUploadUrl": typeof conversation_generateMessageUploadUrl;
   "conversation/getCopyConversation": typeof conversation_getCopyConversation;
   "conversation/getMyInbox": typeof conversation_getMyInbox;
   "conversation/getThreadByExchange": typeof conversation_getThreadByExchange;
   "conversation/getThreadMessages": typeof conversation_getThreadMessages;
   "conversation/getUnreadTotal": typeof conversation_getUnreadTotal;
   "conversation/listAttachableCopies": typeof conversation_listAttachableCopies;
+  "conversation/listMyPendingAttachments": typeof conversation_listMyPendingAttachments;
   "conversation/listThreadMessages": typeof conversation_listThreadMessages;
   "conversation/markThreadRead": typeof conversation_markThreadRead;
+  "conversation/messageAttachments": typeof conversation_messageAttachments;
+  "conversation/moderateMessageImage": typeof conversation_moderateMessageImage;
   "conversation/openDmThread": typeof conversation_openDmThread;
   "conversation/postMessage": typeof conversation_postMessage;
   "conversation/readModelHelpers": typeof conversation_readModelHelpers;
+  "conversation/requestImageReview": typeof conversation_requestImageReview;
+  "conversation/revealMessageImage": typeof conversation_revealMessageImage;
+  "conversation/sendStagedImages": typeof conversation_sendStagedImages;
+  "conversation/stageMessageImage": typeof conversation_stageMessageImage;
   "conversation/startCopyConversation": typeof conversation_startCopyConversation;
   "conversation/subscriber": typeof conversation_subscriber;
   "custody/getCopyCustodyTimeline": typeof custody_getCopyCustodyTimeline;
@@ -773,6 +796,7 @@ declare const fullApi: ApiFromModules<{
   "onboarding/recordQuickStart": typeof onboarding_recordQuickStart;
   presence: typeof presence;
   puzzles: typeof puzzles;
+  "reports/attachmentEvidence": typeof reports_attachmentEvidence;
   "reports/fileReport": typeof reports_fileReport;
   "reports/listMyReports": typeof reports_listMyReports;
   "reputation/adapters/convexExchangeCompletionPort": typeof reputation_adapters_convexExchangeCompletionPort;

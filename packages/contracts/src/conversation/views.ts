@@ -34,11 +34,55 @@ export interface ThreadMessageView {
   readonly copyUnavailable?: true;
   /**
    * The media message's attachment id (image/location rows that have one). Thread reads only; the
-   * inbox preview never carries it. The attachment itself is resolved by a later read model.
+   * inbox preview never carries it.
    */
   readonly attachmentId?: string;
   /** Set when a moderator removed the message: `body` is empty; render "Message removed". */
   readonly removed?: true;
+  /** An image message's photo as this reader may see it (thread reads only). */
+  readonly attachment?: MessageAttachmentView;
+}
+
+/**
+ * A delivered message photo for one reader. `ready`: show it. `blurred`: show the blurhash behind
+ * "Show" (sensitive band, not checked, a sender who is not the reader's mutual follower, or a
+ * photo the reader reported); decided per reader, and carrying NO url: the tap calls
+ * conversation.revealMessageImage. Once revealed it comes back `ready` with `revealed: true`.
+ * `removed`: a moderator removed it (placeholder only). `url`/`thumbUrl` only when `ready`.
+ */
+export interface MessageAttachmentView {
+  readonly status: "ready" | "blurred" | "removed";
+  readonly url?: string;
+  readonly thumbUrl?: string;
+  /** Pixel size, for the aspect-ratio box (absent when unknown). */
+  readonly w?: number;
+  readonly h?: number;
+  readonly blurhash?: string;
+  /** The automated check could not run: label the blur "Not checked". */
+  readonly notChecked?: true;
+  /** A photo that would be blurred, shown because this reader tapped Show earlier. */
+  readonly revealed?: true;
+}
+
+/**
+ * One of the caller's own photos in a thread that is not (yet) a message: staged, or sent and
+ * still being checked (`pending`), or stopped (`rejected`). A rejection's `reason` is
+ * `unreadable` (the file could not be decoded) or `flagged` (the automated check stopped it);
+ * `review` tracks "Ask for a review". Own image only once it may be served (`thumbUrl`), else a
+ * `blurhash` placeholder; a rejected photo carries neither.
+ */
+export interface PendingAttachmentView {
+  readonly attachmentId: string;
+  readonly status: "pending" | "rejected";
+  /** Sent (Send was pressed) rather than only staged in the composer. */
+  readonly sendRequested: boolean;
+  readonly reason?: "unreadable" | "flagged";
+  readonly review?: "requested" | "upheld";
+  readonly thumbUrl?: string;
+  readonly blurhash?: string;
+  readonly w?: number;
+  readonly h?: number;
+  readonly createdAt: number;
 }
 
 /**

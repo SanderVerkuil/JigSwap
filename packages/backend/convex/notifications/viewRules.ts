@@ -233,6 +233,7 @@ export const legacyNotificationHref = (
     case "exchange_disputed":
       return "/trades";
     case "message_received":
+    case "message_image_rejected":
       return relatedId ? `/messages/${relatedId}` : "/messages";
     case "review_received":
       return "/profile";

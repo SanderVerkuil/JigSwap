@@ -28,6 +28,8 @@ import type { DeliveryContent } from "./deliveryContent";
 //   reason      — also content_removed, member_warned: the moderator's statement of reasons
 //   automated   — content_removed, member_warned ("false": decided by a person)
 //   redress     — content_removed, member_warned (how to ask for a review)
+//   message_image_rejected carries reason (the automated statement), automated ("true") and
+//   redress; relatedId is the thread, where the sender can ask for a review.
 // The push send action renders from the delivery resolved for the recipient (pushTextOf), which
 // overlays the live actor name and context: puzzleTitle on the trade types (the exchanged copy),
 // messagePreview or messageKind (image | location) on message_received, and actorName on every
@@ -242,6 +244,11 @@ const COPY: Record<NotificationType, (p: Params) => NotificationText> = {
     message: p["reason"]
       ? `A moderator removed your ${p["restricted"] === "photo" ? "photo" : "message"}: ${p["reason"]}`
       : `A moderator removed your ${p["restricted"] === "photo" ? "photo" : "message"}`,
+  }),
+  message_image_rejected: () => ({
+    title: "Photo not sent",
+    message:
+      "Our automated check flagged a photo you sent, so it wasn't delivered. You can ask for a review in the conversation.",
   }),
   member_warned: (p) => ({
     title: "Warning from a moderator",

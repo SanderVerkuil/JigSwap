@@ -21,7 +21,9 @@ type ModerationKind =
   | "role_revoked"
   | "report_dismissed"
   | "report_content_removed"
-  | "report_warned";
+  | "report_warned"
+  | "message_image_auto_rejected"
+  | "message_image_restored";
 
 // One-liner used by every moderation decision point so the audit trail can't drift.
 export const stampModerationAction = (

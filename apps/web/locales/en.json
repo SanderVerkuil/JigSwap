@@ -1943,7 +1943,8 @@
       "whats_new": "What's new",
       "report_decided": "Report outcomes",
       "content_removed": "Content removed",
-      "member_warned": "Moderator warnings"
+      "member_warned": "Moderator warnings",
+      "message_image_rejected": "Photos not sent"
     },
     "categories": {
       "trades": {
@@ -2099,6 +2100,10 @@
       "member_warned": {
         "title": "Warning from a moderator",
         "message": "A moderator sent you a warning.{hasReason, select, yes { Reason: {reason}} other {}}"
+      },
+      "message_image_rejected": {
+        "title": "Photo not sent",
+        "message": "Our automated check flagged a photo you sent, so it wasn't delivered."
       }
     },
     "pushDeviceTitle": "Push on this device",
@@ -2145,7 +2150,8 @@
       "whats_new": "When a new feature or change to JigSwap is announced.",
       "report_decided": "When a moderator decides on a report you filed.",
       "content_removed": "When a moderator removes one of your messages or photos after a report.",
-      "member_warned": "When a moderator warns you after a report."
+      "member_warned": "When a moderator warns you after a report.",
+      "message_image_rejected": "When our automated check stops a photo you sent in a message."
     },
     "pushServiceUnreachable": "Your browser couldn't reach its push service. Some privacy browsers block or remove it — Brave disables it by default (enable 'Use Google services for push messaging' in Settings), and de-Googled Chromium builds like Helium strip it out. Firefox, Chrome, or Edge will work.",
     "rich": {
@@ -2309,6 +2315,9 @@
       },
       "member_warned": {
         "sentence": "A moderator warned you for {ground, select, spam_scam {spam or scam} harassment_hate {harassment or hate} sexual {sexual or inappropriate content} fake_trade {a fake trade or no-show} illegal {illegal content} other {breaking the community rules}}. This was decided by a person, not automatically. Reply via the contact page to request a review."
+      },
+      "message_image_rejected": {
+        "sentence": "A photo you sent wasn't delivered: our automated check flagged it. This was decided automatically, not by a person. Open the conversation and choose Ask for a review if you think this is a mistake."
       }
     },
     "mandatoryInApp": "Always on: legally required notices"
@@ -3749,7 +3758,9 @@
         "csam_escalation_updated": "<strong>{actor}</strong> updated a hash-match escalation (<strong>{target}</strong>)",
         "report_dismissed": "<strong>{actor}</strong> dismissed a report about <strong>{target}</strong>",
         "report_content_removed": "<strong>{actor}</strong> removed reported content from <strong>{target}</strong>",
-        "report_warned": "<strong>{actor}</strong> warned <strong>{target}</strong> after a report"
+        "report_warned": "<strong>{actor}</strong> warned <strong>{target}</strong> after a report",
+        "message_image_auto_rejected": "<strong>{actor}</strong> auto-flagged a <strong>{target}</strong>",
+        "message_image_restored": "<strong>{actor}</strong> restored a <strong>{target}</strong> after a review request"
       },
       "activityEmpty": "No moderation activity yet.",
       "screening": {
@@ -3806,7 +3817,8 @@
         },
         "table": {
           "ownedPuzzleImages": "Copy photo",
-          "completionImages": "Completion photo"
+          "completionImages": "Completion photo",
+          "messageAttachments": "Message photo"
         },
         "matched": "Matched {time} via {provider}",
         "uploader": "Uploaded by {name}",
@@ -3839,7 +3851,8 @@
           "message": "Message",
           "copy": "Puzzle copy",
           "photo": "Photo",
-          "exchange": "Trade"
+          "exchange": "Trade",
+          "attachment": "Message photo"
         },
         "reportedArrow": "reported",
         "openCount": "{count, plural, one {# open report against this member} other {# open reports against this member}}",
@@ -3887,7 +3900,8 @@
           "message": "your message",
           "copy": "your puzzle copy",
           "photo": "your photo",
-          "exchange": "your conduct in a trade"
+          "exchange": "your conduct in a trade",
+          "attachment": "your photo in a message"
         },
         "grounds": {
           "spam_scam": "spam and scams",
@@ -4502,7 +4516,8 @@
         "message": "A message",
         "copy": "A puzzle copy",
         "photo": "A photo",
-        "exchange": "A trade"
+        "exchange": "A trade",
+        "attachment": "A message photo"
       }
     }
   }
