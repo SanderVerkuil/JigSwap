@@ -1695,6 +1695,11 @@ export default defineSchema({
     // `evidenceRetainUntil` (decision + 6 months, spec 2.8; purged by the retention job).
     evidenceFileId: v.optional(v.id("_storage")),
     evidenceRetainUntil: v.optional(v.number()),
+    // Set while the evidence copy is being made (reports/attachmentEvidence); cleared with it.
+    evidencePendingSince: v.optional(v.number()),
+    // The copy could not be made (source gone, or the attempts ran out); the photo was still
+    // removed and its served blob deleted.
+    evidenceMissing: v.optional(v.boolean()),
     decidedBy: v.optional(v.id("users")),
     decidedAt: v.optional(v.number()),
     createdAt: v.number(),

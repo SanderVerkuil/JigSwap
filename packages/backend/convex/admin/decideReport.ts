@@ -92,10 +92,11 @@ export const decideReport = mutation({
     // deletes the served blob and releases the hold); otherwise just release the hold.
     const attachmentId = await reportedAttachmentOf(ctx, report);
     if (attachmentId && decision === "content_removed") {
+      await ctx.db.patch(report._id, { evidencePendingSince: now });
       await ctx.scheduler.runAfter(
         0,
         internal.reports.attachmentEvidence.preserveEvidence,
-        { reportId: report._id, attachmentId },
+        { reportId: report._id, attachmentId, attempt: 1 },
       );
     } else if (attachmentId) {
       await releaseEvidenceHold(ctx, attachmentId);

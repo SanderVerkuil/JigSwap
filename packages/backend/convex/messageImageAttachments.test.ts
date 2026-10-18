@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { RATE_LIMITS } from "./lib/rateLimits";
+import { EVIDENCE_MAX_ATTEMPTS } from "./reports/attachmentEvidence";
 import schema from "./schema";
 
 // Message image attachments (spec 2.1/2.2, R.1-R.3, R.10, R.12): staging checks, the deferred
@@ -1511,5 +1512,98 @@ describe("a hidden quarantined photo is gone for its sender", () => {
         }),
       ).rejects.toThrow(/NotFound/);
     }
+  });
+});
+
+describe("removal evidence", () => {
+  const removedPhoto = async (t: T) => {
+    const ctx = await openThread(t);
+    const id = await stage(t, ctx.threadId);
+    await settleDueJobs(t);
+    await send(t, ctx.threadId, [id]);
+    const row = (await attachment(t, id))!;
+    const attachmentReport = await asBob(t).mutation(
+      api.reports.fileReport.fileReport,
+      { targetKind: "attachment", targetId: id, reason: "sexual" },
+    );
+    const messageReport = await asBob(t).mutation(
+      api.reports.fileReport.fileReport,
+      { targetKind: "message", targetId: row.messageId!, reason: "other" },
+    );
+    const remove = () =>
+      asAdmin(t).mutation(api.admin.decideReport.decideReport, {
+        reportId: attachmentReport.reportId,
+        decision: "content_removed",
+        statementOfReasons: "Explicit photo",
+      });
+    return { ...ctx, id, row, attachmentReport, messageReport, remove };
+  };
+  const reportOf = (t: T, id: Id<"reports">) =>
+    t.run(async (ctx) => (await ctx.db.get(id))!);
+
+  test("the evidence copy lands on every report on the photo or its message", async () => {
+    const t = convexTest(schema, modules);
+    const { attachmentReport, messageReport, remove } = await removedPhoto(t);
+    await remove();
+    await settleDueJobs(t);
+    const a = await reportOf(t, attachmentReport.reportId);
+    const m = await reportOf(t, messageReport.reportId);
+    expect(m.status).toBe("open");
+    expect(a.evidenceFileId).toBeDefined();
+    expect(m.evidenceFileId).toBe(a.evidenceFileId);
+    expect(m.evidenceRetainUntil).toBe(a.evidenceRetainUntil);
+    expect(a.evidencePendingSince).toBeUndefined();
+  });
+
+  test("a missing source blob is recorded as missing, and the hold is released", async () => {
+    const t = convexTest(schema, modules);
+    const { id, row, attachmentReport, remove } = await removedPhoto(t);
+    await t.run((ctx) => ctx.storage.delete(row.fileId));
+    await remove();
+    await settleDueJobs(t);
+    const report = await reportOf(t, attachmentReport.reportId);
+    expect(report).toMatchObject({ evidenceMissing: true });
+    expect(report.evidenceFileId).toBeUndefined();
+    expect(report.evidencePendingSince).toBeUndefined();
+    expect((await attachment(t, id))!.evidenceHold).toBeUndefined();
+  });
+
+  test("a failing copy retries with backoff, and the last attempt kills the served blob anyway", async () => {
+    const t = convexTest(schema, modules);
+    const { id, row, attachmentReport, remove } = await removedPhoto(t);
+    vi.spyOn(Blob.prototype, "arrayBuffer").mockRejectedValue(
+      new Error("storage down"),
+    );
+    await remove();
+    expect(
+      (await reportOf(t, attachmentReport.reportId)).evidencePendingSince,
+    ).toEqual(expect.any(Number));
+    await settleDueJobs(t);
+    const retry = (
+      await t.run((ctx) =>
+        ctx.db.system.query("_scheduled_functions").collect(),
+      )
+    ).find(
+      (job) =>
+        job.name === "reports/attachmentEvidence:preserveEvidence" &&
+        job.state.kind === "pending",
+    )!;
+    expect(retry.args[0]).toMatchObject({ attempt: 2 });
+    expect(retry.scheduledTime - retry._creationTime).toBeGreaterThanOrEqual(
+      59_000,
+    );
+    // Still being retried: the served blob is kept for the copy.
+    expect(await blobExists(t, row.fileId)).toBe(true);
+
+    await t.action(internal.reports.attachmentEvidence.preserveEvidence, {
+      reportId: attachmentReport.reportId,
+      attachmentId: id,
+      attempt: EVIDENCE_MAX_ATTEMPTS,
+    });
+    expect(await blobExists(t, row.fileId)).toBe(false);
+    const report = await reportOf(t, attachmentReport.reportId);
+    expect(report).toMatchObject({ evidenceMissing: true });
+    expect(report.evidencePendingSince).toBeUndefined();
+    expect((await attachment(t, id))!.evidenceHold).toBeUndefined();
   });
 });
