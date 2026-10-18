@@ -1,11 +1,12 @@
 import { toMemberId, toMessageId, toThreadId } from "@jigswap/domain";
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError, type Value } from "convex/values";
-import { describe, expect, test } from "vitest";
-import { api } from "./_generated/api";
+import { afterEach, describe, expect, test, vi } from "vitest";
+import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { convexThreadRepository } from "./conversation/adapters/convexThreadRepository";
 import { LAST_MESSAGE_BODY_MAX } from "./conversation/adapters/threadMapper";
+import { BACKFILL_PARTICIPANT_STATE_BATCH } from "./conversation/backfillParticipantState";
 import { UNREAD_SCAN_CAP } from "./conversation/readModelHelpers";
 import schema from "./schema";
 
@@ -453,5 +454,145 @@ describe("listThreadMessages", () => {
       { threadId: "no-such-thread", ...args },
     );
     expect(await missing.catch(codeOf)).toBe("ThreadNotFound");
+  });
+});
+
+describe("backfillParticipantState", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const backfill = (t: T, args: { dryRun?: boolean } = {}) =>
+    t.mutation(
+      internal.conversation.backfillParticipantState.backfillParticipantState,
+      args,
+    );
+
+  const snapshot = (t: T) =>
+    t.run(async (ctx) => ({
+      threads: canonical(await ctx.db.query("threads").collect()),
+      participants: canonical(
+        await ctx.db.query("threadParticipants").collect(),
+      ),
+    }));
+
+  // A DM with history, receipts and unread on both sides, plus an empty DM, in live shape.
+  const seedThreads = async (t: T) => {
+    const { alice, bob, carol } = await seed(t);
+    const threadId = await openDm(t, bob);
+    await post(t, asAlice, threadId, "one");
+    await post(t, asBob, threadId, "reply");
+    await tick();
+    await asBob(t).mutation(api.conversation.markThreadRead.markThreadRead, {
+      threadId,
+    });
+    await post(t, asAlice, threadId, "two");
+    // An empty DM (bob and carol follow each other) stays without lastMessage.
+    await t.run(async (ctx) => {
+      await ctx.db.insert("follows", {
+        followerId: bob,
+        followeeId: carol,
+        createdAt: 3,
+      });
+      await ctx.db.insert("follows", {
+        followerId: carol,
+        followeeId: bob,
+        createdAt: 4,
+      });
+    });
+    const emptyId = await asBob(t).mutation(
+      api.conversation.openDmThread.openDmThread,
+      { recipientId: carol },
+    );
+    return { alice, bob, threadId, emptyId };
+  };
+
+  test("restores the live denormalised state; a dry run writes nothing; a re-run patches 0", async () => {
+    const t = convexTest(schema, modules);
+    const { threadId, emptyId } = await seedThreads(t);
+    const live = await t.run(async (ctx) => ({
+      lastMessage: (
+        await ctx.db
+          .query("threads")
+          .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", threadId))
+          .unique()
+      )?.lastMessage,
+      participants: canonical(
+        await ctx.db.query("threadParticipants").collect(),
+      ),
+    }));
+    await stripDenormalised(t, threadId);
+    await stripDenormalised(t, emptyId);
+
+    const stripped = await snapshot(t);
+    expect(await backfill(t, { dryRun: true })).toEqual({
+      threadsScanned: 2,
+      threadsPatched: 1,
+      participantsPatched: 4,
+    });
+    expect(await snapshot(t)).toEqual(stripped);
+
+    expect(await backfill(t)).toEqual({
+      threadsScanned: 2,
+      threadsPatched: 1,
+      participantsPatched: 4,
+    });
+    const filled = await t.run(async (ctx) => ({
+      lastMessage: (
+        await ctx.db
+          .query("threads")
+          .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", threadId))
+          .unique()
+      )?.lastMessage,
+      participants: canonical(
+        await ctx.db.query("threadParticipants").collect(),
+      ),
+    }));
+    expect(filled).toEqual(live);
+    expect((await threadRow(t, emptyId)).lastMessage).toBeUndefined();
+
+    expect(await backfill(t)).toEqual({
+      threadsScanned: 2,
+      threadsPatched: 0,
+      participantsPatched: 0,
+    });
+  });
+
+  test("reschedules itself until every thread is backfilled", async () => {
+    vi.useFakeTimers();
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    const total = BACKFILL_PARTICIPANT_STATE_BATCH + 3;
+    await t.run(async (ctx) => {
+      for (let i = 0; i < total; i++) {
+        const aggregateId = `legacy-${i}`;
+        await ctx.db.insert("threads", {
+          aggregateId,
+          subjectKind: "dm",
+          participants: [alice],
+          participantsKey: alice,
+          readReceipts: [],
+          createdAt: i,
+        });
+        await ctx.db.insert("threadParticipants", {
+          threadAggregateId: aggregateId,
+          memberId: alice,
+        });
+      }
+    });
+
+    expect(await backfill(t)).toEqual({
+      threadsScanned: BACKFILL_PARTICIPANT_STATE_BATCH,
+      threadsPatched: 0,
+      participantsPatched: BACKFILL_PARTICIPANT_STATE_BATCH,
+    });
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    const rows = await t.run((ctx) =>
+      ctx.db.query("threadParticipants").collect(),
+    );
+    expect(rows).toHaveLength(total);
+    expect(
+      rows.every((r) => r.unreadCount === 0 && r.lastActivityAt !== undefined),
+    ).toBe(true);
   });
 });

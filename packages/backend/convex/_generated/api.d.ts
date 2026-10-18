@@ -104,6 +104,7 @@ import type * as conversation_adapters_inProcessEventPublisher from "../conversa
 import type * as conversation_adapters_systemClock from "../conversation/adapters/systemClock.js";
 import type * as conversation_adapters_threadMapper from "../conversation/adapters/threadMapper.js";
 import type * as conversation_backfill from "../conversation/backfill.js";
+import type * as conversation_backfillParticipantState from "../conversation/backfillParticipantState.js";
 import type * as conversation_canMessage from "../conversation/canMessage.js";
 import type * as conversation_copyCard from "../conversation/copyCard.js";
 import type * as conversation_countLegacyImageMessages from "../conversation/countLegacyImageMessages.js";
@@ -530,6 +531,7 @@ declare const fullApi: ApiFromModules<{
   "conversation/adapters/systemClock": typeof conversation_adapters_systemClock;
   "conversation/adapters/threadMapper": typeof conversation_adapters_threadMapper;
   "conversation/backfill": typeof conversation_backfill;
+  "conversation/backfillParticipantState": typeof conversation_backfillParticipantState;
   "conversation/canMessage": typeof conversation_canMessage;
   "conversation/copyCard": typeof conversation_copyCard;
   "conversation/countLegacyImageMessages": typeof conversation_countLegacyImageMessages;
