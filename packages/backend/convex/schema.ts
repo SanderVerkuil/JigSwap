@@ -1452,4 +1452,12 @@ export default defineSchema({
     startedAt: v.number(),
     completedAt: v.optional(v.number()),
   }).index("by_entry", ["entryId"]),
+
+  // Fixed-window rate limit counters (lib/rateLimits). One row per key ("<limit>:<memberId>"),
+  // reset in place when its window has passed, so the table stays bounded without a cleanup job.
+  rateLimits: defineTable({
+    key: v.string(),
+    windowStart: v.number(),
+    count: v.number(),
+  }).index("by_key", ["key"]),
 });

@@ -234,6 +234,13 @@ describe("unread cap", () => {
     // 55 qualifying (other-authored, post-receipt) messages; same-ms sentAt is fine — every one
     // is newer than bob's absent receipt, so no ticks are needed.
     for (let i = 1; i <= 55; i++) {
+      // Stay under postMessage's 30/min rate limit: clear alice's window between bursts.
+      if (i % 30 === 0) {
+        await t.run(async (ctx) => {
+          for (const row of await ctx.db.query("rateLimits").collect())
+            await ctx.db.delete(row._id);
+        });
+      }
       await asAlice(t).mutation(api.conversation.postMessage.postMessage, {
         threadId,
         kind: "text",
