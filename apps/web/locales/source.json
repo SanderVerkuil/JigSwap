@@ -1669,6 +1669,10 @@
     "emptyTitle": "No circles yet",
     "emptySub": "Create a circle to swap puzzles with friends and family.",
     "loading": "Loading circles...",
+    "leave": "Leave circle",
+    "leaveConfirmTitle": "Leave {circle}?",
+    "leaveConfirmBody": "You'll lose access to this circle and the puzzles shared in it. An admin can invite you again.",
+    "leaveError": "Couldn't leave the circle. Please try again.",
     "manage": {
       "createTitle": "Create Circle",
       "createDescription": "A circle is private. You become its first member and admin.",

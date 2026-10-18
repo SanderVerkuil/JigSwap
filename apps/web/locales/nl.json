@@ -1669,6 +1669,10 @@
     "emptyTitle": "Nog geen kringen",
     "emptySub": "Maak een kring aan om puzzels te ruilen met vrienden en familie.",
     "loading": "Kringen laden...",
+    "leave": "Kring verlaten",
+    "leaveConfirmTitle": "{circle} verlaten?",
+    "leaveConfirmBody": "Je verliest de toegang tot deze kring en de puzzels die erin gedeeld zijn. Een beheerder kan je opnieuw uitnodigen.",
+    "leaveError": "Kon de kring niet verlaten. Probeer het opnieuw.",
     "manage": {
       "createTitle": "Kring Aanmaken",
       "createDescription": "Een kring is besloten. Je wordt het eerste lid en de beheerder.",
