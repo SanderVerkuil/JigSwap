@@ -130,9 +130,10 @@ got it wrong:
 
 Some photos you receive appear blurred at first:
 
-- **Sensitive content**: the automatic check wasn't sure about the photo, or
-  the sender is someone you don't follow each other with.
+- **Sensitive content**: the automatic check wasn't sure about the photo.
 - **Not checked**: the automatic check couldn't run.
+- **You don't follow each other**: the photo passed the check, but the sender
+  is someone you don't follow each other with.
 
 Click **Show** to see the photo. Once you've shown a photo, it stays visible
 for you.

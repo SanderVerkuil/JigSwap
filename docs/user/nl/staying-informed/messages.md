@@ -135,9 +135,10 @@ dat de controle zich vergist?
 
 Sommige foto's die je ontvangt, zijn eerst vervaagd:
 
-- **Gevoelige inhoud**: de automatische controle wist het niet zeker, of de
-  afzender is iemand die jij niet wederzijds volgt.
+- **Gevoelige inhoud**: de automatische controle wist het niet zeker.
 - **Niet gecontroleerd**: de automatische controle kon niet worden uitgevoerd.
+- **Jullie volgen elkaar niet**: de foto is door de controle gekomen, maar de
+  afzender is iemand met wie je elkaar niet volgt.
 
 Klik op **Tonen** om de foto te zien. Heb je een foto eenmaal getoond, dan
 blijft hij voor jou zichtbaar.

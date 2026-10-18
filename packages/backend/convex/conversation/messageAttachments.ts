@@ -580,15 +580,19 @@ export const messageAttachmentViews = (ctx: QueryCtx, viewer: Id<"users">) => {
     };
     let revealed = false;
     if (row.uploaderId !== viewer) {
-      if (await hasOpenReport(ctx, viewer, row)) {
-        return { status: "blurred", ...placeholder };
-      }
-      const blurred =
-        row.moderationStatus !== "approved" ||
+      // Passed screening, blurred only because the sender isn't a mutual follower: labelled as such.
+      const notMutual =
+        row.moderationStatus === "approved" &&
         !(await isMutual(row.uploaderId));
-      if (blurred) {
+      const blurredView: MessageAttachmentView = {
+        status: "blurred",
+        ...placeholder,
+        ...(notMutual && { notMutual: true as const }),
+      };
+      if (await hasOpenReport(ctx, viewer, row)) return blurredView;
+      if (row.moderationStatus !== "approved" || notMutual) {
         revealed = await hasRevealed(ctx, viewer, row._id);
-        if (!revealed) return { status: "blurred", ...placeholder };
+        if (!revealed) return blurredView;
       }
     }
     const url = await ctx.storage.getUrl(row.fileId);

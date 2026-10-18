@@ -834,6 +834,7 @@
       "noLongerAvailable": "Photo no longer available",
       "sensitive": "Sensitive content",
       "notChecked": "Not checked",
+      "notMutual": "You don't follow each other",
       "show": "Show",
       "revealFailed": "Couldn't show this photo. Please try again.",
       "checking": "Checking photo…",

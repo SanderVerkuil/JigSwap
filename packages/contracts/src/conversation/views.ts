@@ -113,6 +113,8 @@ export interface MessageAttachmentView {
   readonly blurhash?: string;
   /** The automated check could not run: label the blur "Not checked". */
   readonly notChecked?: true;
+  /** Passed the check, blurred because the sender isn't the reader's mutual follower: label it so. */
+  readonly notMutual?: true;
   /** A photo that would be blurred, shown because this reader tapped Show earlier. */
   readonly revealed?: true;
   /** `removed` because the sender deleted their account, not by a moderator. */
