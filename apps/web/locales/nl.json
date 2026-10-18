@@ -595,7 +595,8 @@
       "chosenPuzzle": "Een exemplaar toevoegen van",
       "copyDetails": "Jouw exemplaar"
     },
-    "removeFromCollection": "Uit deze collectie verwijderen"
+    "removeFromCollection": "Uit deze collectie verwijderen",
+    "private": "Privé"
   },
   "trades": {
     "title": "Uitwisselingen",
@@ -3400,7 +3401,16 @@
       "cover": "Omslagafbeelding",
       "useCatalogueImage": "Catalogusafbeelding gebruiken",
       "noPhotosForCover": "Voeg fotos toe aan dit exemplaar om een eigen omslag te kiezen.",
-      "notesPlaceholder": "Voeg een notitie toe over dit exemplaar…"
+      "notesPlaceholder": "Voeg een notitie toe over dit exemplaar…",
+      "visibility": {
+        "label": "Wie kan dit exemplaar zien",
+        "visible": "Zichtbaar voor de community",
+        "visibleHint": "Je vrienden zien het in je bibliotheek.",
+        "private": "Privé — alleen jij en je huishouden",
+        "privateHint": "Verborgen voor alle anderen, ook voor je vrienden.",
+        "offerNote": "Bied je een puzzel aan om te ruilen, uit te lenen of te verkopen, dan wordt hij zichtbaar.",
+        "privateDisabled": "Dit exemplaar wordt aangeboden en is dus zichtbaar. Trek het aanbod in om het privé te maken."
+      }
     },
     "photoCover": "Omslag",
     "photoPending": "Wordt beoordeeld"

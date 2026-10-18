@@ -39,6 +39,7 @@ import {
   Edit,
   FolderOpen,
   Heart,
+  Lock,
   MessageCircle,
   MoreHorizontal,
   Trash2,
@@ -327,6 +328,13 @@ export function PuzzleCard({
         >
           {t(puzzle.condition)}
         </Badge>
+        {/* Only the owner and their household ever receive a private copy. */}
+        {puzzle.visibility === "private" ? (
+          <Badge variant="outline" className="gap-1 text-xs">
+            <Lock className="size-3" aria-hidden />
+            {t("private")}
+          </Badge>
+        ) : null}
       </div>
 
       {showAvailability && (
