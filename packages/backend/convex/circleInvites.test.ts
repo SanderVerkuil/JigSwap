@@ -11,7 +11,7 @@ import schema from "./schema";
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 // Circle invitations: an Admin invites a member they may contact (not blocked either way, and a
-// mutual follow or a pair thread), the invitee accepts (joins) or declines (silent), the inviter
+// mutual follow), the invitee accepts (joins) or declines (silent), the inviter
 // or an Admin revokes, and an unanswered invite expires after 14 days. A pending invite is NOT a
 // membership.
 
@@ -109,6 +109,28 @@ const pairThread = (t: T, a: Id<"users">, b: Id<"users">) =>
         memberId,
       });
     }
+  });
+
+const pairThreadExists = (t: T, a: Id<"users">, b: Id<"users">) =>
+  t.run(
+    async (ctx) =>
+      (await ctx.db
+        .query("threads")
+        .withIndex("by_participants_key", (q) =>
+          q.eq("participantsKey", [a, b].sort().join("|")),
+        )
+        .first()) !== null,
+  );
+
+const unfollow = (t: T, follower: Id<"users">, followee: Id<"users">) =>
+  t.run(async (ctx) => {
+    const edge = await ctx.db
+      .query("follows")
+      .withIndex("by_follower_followee", (q) =>
+        q.eq("followerId", follower).eq("followeeId", followee),
+      )
+      .first();
+    if (edge) await ctx.db.delete(edge._id);
   });
 
 const block = (t: T, blocker: Id<"users">, blocked: Id<"users">) =>
@@ -313,10 +335,10 @@ describe("sharing.inviteToCircle", () => {
     expect(job?.args[0]).toEqual({ inviteId });
   });
 
-  test("another Admin may invite; an existing pair thread is enough contact", async () => {
+  test("another Admin may invite their own mutual follow", async () => {
     const t = convexTest(schema, modules);
     const { bob, carol, circleId } = await seed(t);
-    await pairThread(t, bob, carol);
+    await mutualFollow(t, bob, carol);
 
     const inviteId = await invite(t, "bob", circleId, carol);
     expect((await inviteRow(t, inviteId))?.inviterId).toBe(bob);
@@ -356,10 +378,10 @@ describe("sharing.inviteToCircle", () => {
     expect(await allInvites(t)).toEqual([]);
   });
 
-  test("being blocked BY the invitee is the same CannotInvite, even with a pair thread", async () => {
+  test("being blocked BY the invitee is the same CannotInvite", async () => {
     const t = convexTest(schema, modules);
     const { alice, carol, circleId } = await seed(t);
-    await pairThread(t, alice, carol);
+    await mutualFollow(t, alice, carol);
     await block(t, carol, alice);
 
     await expectConvexCode(invite(t, "alice", circleId, carol), "CannotInvite");
@@ -367,7 +389,7 @@ describe("sharing.inviteToCircle", () => {
 
   test("a shared circle alone does not make someone invitable", async () => {
     const t = convexTest(schema, modules);
-    const { carol, circleId } = await seed(t);
+    const { bob, carol, circleId } = await seed(t);
     // Bob and Carol share another circle, but neither follow each other nor have a thread.
     const other = (await as(t, "bob").mutation(
       api.sharing.createCircle.createCircle,
@@ -380,6 +402,51 @@ describe("sharing.inviteToCircle", () => {
     });
 
     await expectConvexCode(invite(t, "bob", circleId, carol), "CannotInvite");
+
+    // The shared circle lets Bob open a DM to Carol without her consent; that thread doesn't
+    // count either.
+    await as(t, "bob").mutation(api.conversation.openDmThread.openDmThread, {
+      recipientId: carol,
+    });
+    expect(await pairThreadExists(t, bob, carol)).toBe(true);
+    await expectConvexCode(invite(t, "bob", circleId, carol), "CannotInvite");
+  });
+
+  test("an exchange-proposal thread does not make someone invitable", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, carol, circleId } = await seed(t);
+    // Carol offers a copy for sale; Alice proposes on it, which opens a thread with no connection.
+    const copy = await t.run(async (ctx) => {
+      const now = Date.now();
+      const puzzleId = await ctx.db.insert("puzzles", {
+        aggregateId: crypto.randomUUID(),
+        title: "Harbour",
+        brand: "Ravensburger",
+        pieceCount: 500,
+        searchableText: "Harbour Ravensburger",
+        status: "approved",
+        submittedBy: carol,
+        createdAt: now,
+        updatedAt: now,
+      });
+      return ctx.db.insert("ownedPuzzles", {
+        puzzleId,
+        ownerId: carol,
+        condition: "good",
+        availability: { forTrade: false, forSale: true, forLend: false },
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+    await as(t, "alice").mutation(api.exchange.propose.propose, {
+      type: "sale",
+      requestedPuzzleId: copy,
+      salePrice: 1000,
+    });
+    await flushScheduled(t);
+    expect(await pairThreadExists(t, alice, carol)).toBe(true);
+
+    await expectConvexCode(invite(t, "alice", circleId, carol), "CannotInvite");
   });
 
   test("self and existing members are refused", async () => {
@@ -659,8 +726,8 @@ describe("a pending invite is not membership", () => {
   test("the invitee can't see the circle, its member list or a circle-shared copy", async () => {
     const t = convexTest(schema, modules);
     const { alice, carol, circleId } = await seed(t);
-    // Contact via a pair thread (a mutual follow would itself unlock Alice's copies).
-    await pairThread(t, alice, carol);
+    // Alice invites her mutual follow Carol; the shared copy is Bob's (Carol has no tie to Bob).
+    await mutualFollow(t, alice, carol);
 
     const puzzleId = await t.run(async (ctx) => {
       const now = Date.now();
@@ -678,7 +745,7 @@ describe("a pending invite is not membership", () => {
       });
       return aggregateId;
     });
-    const copyId = (await as(t, "alice").mutation(
+    const copyId = (await as(t, "bob").mutation(
       api.library.acquireCopy.acquireCopy,
       { puzzleDefinitionId: puzzleId, condition: "good" },
     )) as string;
@@ -691,7 +758,7 @@ describe("a pending invite is not membership", () => {
         availability: { forTrade: false, forSale: false, forLend: true },
       });
     });
-    await as(t, "alice").mutation(
+    await as(t, "bob").mutation(
       api.sharing.shareCopyToCircle.shareCopyToCircle,
       {
         circleId,
@@ -769,11 +836,12 @@ describe("sharing.listMyCircleInvites", () => {
     if (!view.inviter.anonymous) expect(view.inviter.member._id).toBe(alice);
   });
 
-  test("a private inviter reached only by a thread is anonymised", async () => {
+  test("a private inviter who has since unfollowed is anonymised", async () => {
     const t = convexTest(schema, modules);
     const { alice, carol, circleId } = await seed(t);
-    await pairThread(t, alice, carol);
+    await mutualFollow(t, alice, carol);
     await invite(t, "alice", circleId, carol);
+    await unfollow(t, alice, carol);
 
     const [view] = await as(t, "carol").query(
       api.sharing.listMyCircleInvites.listMyCircleInvites,
@@ -906,18 +974,20 @@ describe("sharing.listInvitableMembers", () => {
           updatedAt: Date.now(),
         }),
       );
-    const frank = await mk("Frank"); // public (no profile row), pair thread only
+    const frank = await mk("Frank"); // public (no profile row), mutual follow
+    const joe = await mk("Joe"); // public, pair thread only: a thread is not contact
     const gina = await mk("Gina"); // mutual follow, then blocked
     const hank = await mk("Hank"); // one-way follow only
     const ivy = await mk("Ivy"); // mutual follow, already invited
     await mutualFollow(t, alice, carol);
     await mutualFollow(t, alice, dave); // already a member
-    await pairThread(t, alice, frank);
+    await mutualFollow(t, alice, frank);
+    await pairThread(t, alice, joe);
     await mutualFollow(t, alice, gina);
     await block(t, gina, alice);
     await followOneWay(t, alice, hank);
     await mutualFollow(t, alice, ivy);
-    await pairThread(t, alice, eve); // private, not mutual: anonymised, so not offered
+    await pairThread(t, alice, eve); // private, thread only
     await invite(t, "alice", circleId, ivy);
 
     const list = await as(t, "alice").query(
@@ -932,6 +1002,36 @@ describe("sharing.listInvitableMembers", () => {
       { circleId, search: " fRa " },
     );
     expect(searched.map((m) => m.member._id)).toEqual([frank]);
+  });
+
+  test("scans at most 500 of the Admin's follow edges", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, carol, circleId } = await seed(t);
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 500; i++) {
+        const other = await ctx.db.insert("users", {
+          clerkId: `clerk_bulk_${i}`,
+          email: `bulk${i}@example.com`,
+          isActive: true,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        });
+        await ctx.db.insert("follows", {
+          followerId: alice,
+          followeeId: other,
+          createdAt: Date.now(),
+        });
+      }
+    });
+    // Carol's mutual edge comes after the first 500 edges, so this read doesn't reach it.
+    await mutualFollow(t, alice, carol);
+
+    expect(
+      await as(t, "alice").query(
+        api.sharing.listInvitableMembers.listInvitableMembers,
+        { circleId },
+      ),
+    ).toEqual([]);
   });
 
   test("Admins only: others get CircleNotFound", async () => {
@@ -1003,12 +1103,13 @@ describe("circle invite notifications", () => {
     expect(view.href).toBe("/circles");
   });
 
-  test("a private inviter reached only by a thread stays anonymous in the notification", async () => {
+  test("a private inviter who has since unfollowed is anonymous in the notification", async () => {
     const t = convexTest(schema, modules);
     const { alice, carol, circleId } = await seed(t);
-    await pairThread(t, alice, carol);
+    await mutualFollow(t, alice, carol);
     await invite(t, "alice", circleId, carol);
     await flushScheduled(t);
+    await unfollow(t, alice, carol);
 
     const [view] = await viewsOf(t, "carol");
     expect(view.actors[0]).toEqual({ anonymous: true });

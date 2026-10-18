@@ -9,13 +9,13 @@ import { openInvitesOf, requireCircleAdmin } from "./circleAccess";
 
 /** The most candidates one read returns. */
 export const MAX_INVITABLE_RESULTS = 50;
+/** The most of the Admin's follow edges one read scans. */
+export const MAX_FOLLOW_EDGES_SCANNED = 500;
 
 // The members a circle Admin may invite, for the invite picker. Built ONLY from the Admin's own
-// contacts (mutual follows plus partners of an existing pair thread), never from global search,
-// so it lists exactly the contact rule's candidates. Drops current members, open invitees and
-// anyone blocked either way, and only lists members whose identity the Admin may see (an
-// anonymised candidate could not be told apart, so it is not offered). `search` narrows by name or
-// username (case-insensitive substring).
+// mutual follows (the contact rule), never from global search or threads. Drops current members,
+// open invitees and anyone blocked either way, and only lists members whose identity the Admin
+// may see. `search` narrows by name or username (case-insensitive substring).
 export const listInvitableMembers = query({
   args: { circleId: v.string(), search: v.optional(v.string()) },
   handler: async (ctx, args): Promise<InvitableMemberView[]> => {
@@ -31,12 +31,13 @@ export const listInvitableMembers = query({
       ...(await blockedEitherWaySet(ctx, viewerId)),
     ]);
 
+    // Mutual follows only: members I follow who follow me back. Bounded so a member following
+    // thousands of accounts can't make this read unbounded.
     const candidates = new Set<Id<"users">>();
-    // Mutual follows: members I follow who follow me back.
     const following = await ctx.db
       .query("follows")
       .withIndex("by_follower", (q) => q.eq("followerId", viewerId))
-      .collect();
+      .take(MAX_FOLLOW_EDGES_SCANNED);
     for (const edge of following) {
       if (excluded.has(edge.followeeId)) continue;
       const back = await ctx.db
@@ -46,22 +47,6 @@ export const listInvitableMembers = query({
         )
         .first();
       if (back) candidates.add(edge.followeeId);
-    }
-    // Partners of an existing pair thread.
-    const threads = await ctx.db
-      .query("threadParticipants")
-      .withIndex("by_member", (q) => q.eq("memberId", viewerId))
-      .collect();
-    for (const link of threads) {
-      const thread = await ctx.db
-        .query("threads")
-        .withIndex("by_aggregate_id", (q) =>
-          q.eq("aggregateId", link.threadAggregateId),
-        )
-        .first();
-      if (!thread || thread.participants.length !== 2) continue;
-      const other = thread.participants.find((p) => p !== viewerId);
-      if (other && !excluded.has(other)) candidates.add(other);
     }
 
     const needle = args.search?.trim().toLowerCase() ?? "";
