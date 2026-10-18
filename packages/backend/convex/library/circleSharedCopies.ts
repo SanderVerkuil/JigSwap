@@ -16,6 +16,67 @@ import { convexCopyRepository } from "./adapters/convexCopyRepository";
 // `circleMembers` junction row, never a pending invite (#181). A copy with no such circle is dropped
 // (so a stale share left behind after the owner left the circle exposes nothing), and the policy gets
 // exactly those per-copy circles, never just any circle the viewer and owner happen to share.
+//
+// BOUNDED (#190): at most CIRCLE_SHARES_READ_PER_CIRCLE shares are read per circle (newest first), so a
+// copy shared further back in a very busy circle can drop out of this batched set. That only affects
+// the list surface built on it (Browse); every per-copy gate (canViewCopy / canViewCopyWithContext,
+// the definition view) uses `isCircleSharedWithViewer` instead, which reads that copy's own shares and
+// is never capped, so the cap can't hide a copy on its detail page.
+export const CIRCLE_SHARES_READ_PER_CIRCLE = 200;
+
+const isMemberOf = async (
+  ctx: QueryCtx,
+  circleId: string,
+  memberId: Id<"users">,
+): Promise<boolean> =>
+  (await ctx.db
+    .query("circleMembers")
+    .withIndex("by_circle_member", (q) =>
+      q.eq("circleAggregateId", circleId).eq("memberId", memberId),
+    )
+    .first()) !== null;
+
+// The single-copy form of the circle clause, with the same semantics as the batched collector below:
+// reads only THIS copy's shares (circleCopyShares.by_copy) and, per share, probes the viewer's and the
+// owner's junction rows, so the cost is O(shares of the copy), independent of the viewer's circles.
+export const isCircleSharedWithViewer = async (
+  ctx: QueryCtx,
+  viewerId: Id<"users">,
+  row: Doc<"ownedPuzzles">,
+): Promise<boolean> => {
+  const copyId = row.aggregateId;
+  if (copyId === undefined) return false;
+  const shares = await ctx.db
+    .query("circleCopyShares")
+    .withIndex("by_copy", (q) => q.eq("copyId", copyId))
+    .collect();
+  const qualifying = (
+    await Promise.all(
+      shares.map(async ({ circleId }) => {
+        // The collector only sees circles listForMember resolves: a viewer junction row AND an
+        // existing circles row.
+        const counts =
+          (await isMemberOf(ctx, circleId, viewerId)) &&
+          (await isMemberOf(ctx, circleId, row.ownerId)) &&
+          (await ctx.db
+            .query("circles")
+            .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", circleId))
+            .unique()) !== null;
+        return counts ? (circleId as CircleId) : null;
+      }),
+    )
+  ).filter((c) => c !== null);
+  if (qualifying.length === 0) return false;
+  const copy = await convexCopyRepository(
+    ctx as unknown as MutationCtx,
+  ).findById(toCopyId(copyId));
+  if (!copy) return false;
+  return makeCircleAwareVisibilityPolicy(() => qualifying).canView(
+    toOwnerId(viewerId),
+    copy,
+  );
+};
+
 export const collectCircleSharedCopies = async (
   ctx: QueryCtx,
   viewerId: Id<"users">,
@@ -32,7 +93,8 @@ export const collectCircleSharedCopies = async (
     const shares = await ctx.db
       .query("circleCopyShares")
       .withIndex("by_circle", (q) => q.eq("circleId", circle.id as string))
-      .collect();
+      .order("desc")
+      .take(CIRCLE_SHARES_READ_PER_CIRCLE);
     for (const share of shares) {
       const into = sharedInto.get(share.copyId) ?? [];
       into.push(circle.id);

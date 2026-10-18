@@ -2,7 +2,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { householdMateIds } from "../household/memberships";
 import { areMutualFollowers, profileVisibilityOf } from "../social/privacy";
-import { collectCircleSharedCopies } from "./circleSharedCopies";
+import { isCircleSharedWithViewer } from "./circleSharedCopies";
 import { isCopyPrivate } from "./copyVisibility";
 
 // A copy is "open" iff at least one exchange-availability flag is set (identical to
@@ -56,13 +56,14 @@ const isExchangePartyFor = async (
   );
 };
 
-// Reusable per-request context so bulk callers (e.g. the completions enrichment) don't rebuild
-// the circle-shared set or re-read owner profiles per copy, and can't accidentally pass a
+// Reusable per-request context so bulk callers (e.g. the completions enrichment) don't re-read the
+// household or owner profiles per copy, and can't accidentally pass a
 // mismatched viewerId to `canViewCopyWithContext` (it's stamped in at construction). `ownerVisibility`
-// and `mutualWithOwner` are mutable per-owner memos.
+// and `mutualWithOwner` are mutable per-owner memos. The circle clause is decided per copy
+// (`isCircleSharedWithViewer`, O(shares of that copy)), never by collecting every share in every
+// circle the viewer is in (#190).
 export interface CopyViewContext {
   readonly viewerId: Id<"users">;
-  readonly circleSharedOpenIds: ReadonlySet<Id<"ownedPuzzles">>;
   // The other members of the viewer's household (empty when none): their copies are in the
   // viewer's library regardless of availability or profile visibility.
   readonly householdMateIds: ReadonlySet<Id<"users">>;
@@ -74,12 +75,8 @@ export const buildCopyViewContext = async (
   ctx: QueryCtx,
   viewerId: Id<"users">,
 ): Promise<CopyViewContext> => {
-  const circleShared = (await collectCircleSharedCopies(ctx, viewerId)).filter(
-    isOpen,
-  );
   return {
     viewerId,
-    circleSharedOpenIds: new Set(circleShared.map((c) => c._id)),
     householdMateIds: await householdMateIds(ctx, viewerId),
     ownerVisibility: new Map(),
     mutualWithOwner: new Map(),
@@ -123,7 +120,9 @@ export const canViewCopyWithContext = async (
     if (visibility === "public") return true;
   }
 
-  if (context.circleSharedOpenIds.has(copy._id)) return true;
+  if (isOpen(copy) && (await isCircleSharedWithViewer(ctx, viewerId, copy))) {
+    return true;
+  }
 
   let mutual = context.mutualWithOwner.get(copy.ownerId);
   if (mutual === undefined) {
@@ -135,8 +134,8 @@ export const canViewCopyWithContext = async (
 
 // Single-copy convenience wrapper. The identity short-circuits AND the public+open check are
 // duplicated here ON PURPOSE, mirroring the pre-refactor gate's order exactly: without them every
-// existing call site would pay the full circle-shared collection (`buildCopyViewContext`) even for
-// the owner/holder/public-open fast paths, which today return before it.
+// existing call site would pay the household read (`buildCopyViewContext`) even for the
+// owner/holder/public-open fast paths, which today return before it.
 export const canViewCopy = async (
   ctx: QueryCtx,
   viewerId: Id<"users">,
