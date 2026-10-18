@@ -23,12 +23,14 @@ Sources: `@clerk/backend@3.25.0` (installed: `api/endpoints/InvitationApi.d.ts`,
 - On sign-up, the invitation's `publicMetadata` becomes the user's public metadata. Only the Backend API can write public metadata, so a client can't forge it.
 - Revoking blocks the link. It does not stop the person from signing up on their own.
 - There are **no webhooks for application invitations** (the `WebhookEvent` union only has `organizationInvitation.*`). Acceptance is seen through `user.created`, which carries `public_metadata`, in our svix-verified handler (`convex/http.ts`). We drive revoke and expiry ourselves.
-- Clerk rate-limits invitation creation (100/hour). Our per-inviter limit is far below that.
+- Clerk rate-limits invitation creation (100/hour, application-wide). Our per-inviter limit is far below that, and a deployment-wide budget (`CLERK_INVITES_HOURLY_CAP`, default 60/hour) keeps all inviters together below it.
+- `deleteInvitation(id)` exists (installed d.ts): it "permanently deletes the given invitation and the copies of the invitation email Clerk stored for its recipient", for any status. We revoke and then delete every invitation we retire.
 
 **TO VERIFY (open; the user tests this on the Clerk dev instance; agents never call the Clerk API):**
 
 1. Does `createInvitation` return `invitation.url` when `notify: false`?
 2. Does a `redirectUrl` of `<site>/sign-up` consume the ticket with the TanStack Start Clerk `<SignUp />`?
+3. Does Clerk keep a revoked or expired invitation, with its address, and does `deleteInvitation` remove it (and is a revoke before the delete still needed)?
 
 Everything below is built behind an `InvitationGateway` port, tested with a fake, and stays inert until it's switched on (see E.1, "Switch").
 
@@ -61,19 +63,22 @@ Setting the key on a deployment is a coordinator step, done after the TO VERIFY 
    - The address is kept only as `HMAC-SHA256(INVITE_EMAIL_HMAC_KEY, email)` in `emailInviteSendLog { emailHmac, sentAt }`. Rows older than 30 days are ignored and deleted by a scheduled cleanup.
    - Over the cap: nothing more happens, and the action still answers `sent`.
 6. **Existing member?** An internal query on `users.by_email` (our verified-email mirror).
-   - If one exists, take the kind's **in-app fallback** (E1/E2 below), wait a randomised 150–400 ms, and answer `sent`. No email goes to an existing member, and no Clerk call is made.
+   - If one exists, take the kind's **in-app fallback** (E1/E2 below) and answer `sent`. No email goes to an existing member, and no Clerk call is made.
 7. **Otherwise call** `gateway.create({ email, redirectUrl: <EMAIL_BASE_URL>/sign-up, expiresInDays: 14, publicMetadata: { jsInvite: { kind, ref: aggregateId } } })`.
    - The metadata carries only our opaque row id, never names.
+   - First charge the deployment-wide Clerk budget. Spent: no Clerk call, no email, answer `sent`, and log `rateLimit.refused`.
    - "Already exists" or "already invited" from Clerk (a race with our mirror): no email, answer `sent`.
-   - A missing `url`: revoke best-effort, no email, answer `sent`, and log `emailInvite.no_url`.
+   - A missing `url`: revoke and delete best-effort, no email, answer `sent`, and log `emailInvite.no_url`.
 8. **Send one email** through `packages/email` with the new `invite` template:
    - in the inviter's locale (the invitee has none yet);
-   - it names the inviter by their display name (length-capped, newlines stripped) and states the purpose: following each other, or joining their household;
+   - it names the inviter by their display name (length-capped, newlines, control and bidi/format characters stripped) and states the purpose: following each other, or joining their household;
+   - it is sent from "JigSwap", never from the inviter's name;
    - **no free-text note.**
    - The subject contains no user text other than the inviter's name.
-   - The footer says who invited them and that we keep nothing if they ignore it.
+   - The footer says who invited them and that, if they ignore it, JigSwap doesn't keep their address and the invitation stops working after 14 days. It claims nothing about the sign-in provider.
    - Then record the send in the send log.
 9. **The response is always `{ status: "sent" }`** for a well-formed address within the limits, whether or not the address has an account (no enumeration).
+   - Once step 4 has committed, every outcome (capped, existing member, any Clerk answer, sent, any failure, a throw included) answers `sent` no sooner than 2500 ms plus up to 500 ms of jitter after the call started, so the timing says nothing about the address either.
 
 **No reminders.** One email only.
 
@@ -82,8 +87,8 @@ Setting the key on a deployment is a coordinator step, done after the TO VERIFY 
 - **`invitations/listMyEmailInvites({ kind })` (query):** the inviter's own rows, as `{ inviteRef, kind, createdAt, expiresAt }`. Lapsed rows are filtered on read.
 - **`invitations/revokeEmailInvite({ inviteRef })` (action):**
   - Only the inviter can revoke. Any other ref gets the same generic `EmailInviteUnavailable`.
-  - It revokes the Clerk invitation best-effort, withdraws a still-pending in-app fallback (see E1/E2), and deletes the row.
-- **Expiry:** a scheduled `expireEmailInvite` at `expiresAt` revokes in Clerk best-effort and deletes the row. Reads also check `expiresAt`.
+  - It revokes and deletes the Clerk invitation best-effort, withdraws a still-pending in-app fallback (see E1/E2), and deletes the row.
+- **Expiry:** a scheduled `expireEmailInvite` at `expiresAt` withdraws a still-pending in-app fallback, revokes and deletes the Clerk invitation best-effort, and deletes the row. Reads also check `expiresAt`.
 - **Sign-up:** in `convex/http.ts` `user.created`, after `updateOrCreateUser`, if `public_metadata.jsInvite` is well-formed, call internal `invitations/applySignupInvite({ clerkUserId, kind, ref })`.
   - It loads the row by `ref`. If the row is missing (revoked, expired, purged) or the kind doesn't match, it does nothing.
   - Otherwise it applies the kind's semantics (E1/E2), deletes the row, and schedules a best-effort clear of `jsInvite` from the Clerk user's public metadata, so ids don't linger.
@@ -92,7 +97,7 @@ Setting the key on a deployment is a coordinator step, done after the TO VERIFY 
 
 ### Account deletion
 
-`conversation/purgeMemberMessagingData` gets a phase `emailInvitesOut` for the inviter's rows. Each row is deleted, its Clerk invitation is revoked best-effort (scheduled), and a pending fallback is withdrawn.
+`conversation/purgeMemberMessagingData` gets a phase `emailInvitesOut` for the inviter's rows. Each row is deleted, its Clerk invitation is revoked and deleted best-effort (scheduled), and a pending fallback is withdrawn.
 
 - The new `emailInvite` rate-limit key is covered by the existing `rateLimits` phase.
 - `emailInviteSendLog` holds no member id, only address HMACs on a 30-day TTL.
@@ -131,7 +136,7 @@ Setting the key on a deployment is a coordinator step, done after the TO VERIFY 
 
 - **No existence oracle:**
   - **Response:** always `sent`.
-  - **Timing:** the existing-member path waits a randomised 150–400 ms.
+  - **Timing:** every outcome after the first mutation answers after the same floor (2500 ms plus up to 500 ms of jitter).
   - **Pending list:** one row in every case, with no address or name.
   - **Errors:** the only refusals are about the inviter or the input (`InvalidEmail`, `RateLimited`, `EmailInvitesUnavailable`, the household-admin error).
 - **Server-side auth on every function.** Revoke and list are inviter-only. `applySignupInvite`, the gateway calls and the cleanup functions are internal.
