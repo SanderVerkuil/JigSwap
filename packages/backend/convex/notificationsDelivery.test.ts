@@ -642,6 +642,8 @@ describe("sendWebPush action", () => {
       title: "New message from Mara Display",
       body: "Still have the Ravensburger?",
       url: "/messages/thread-1",
+      // One OS notification per thread: a later push replaces this one.
+      tag: "thread:thread-1",
     });
   });
 
@@ -661,6 +663,7 @@ describe("sendWebPush action", () => {
     expect(sentPayload()).toMatchObject({
       body: 'Mara Display wants to trade for "Starry Night"',
       url: "/trades?exchange=ex-1",
+      tag: "trade_request",
     });
   });
 
@@ -729,6 +732,7 @@ describe("sendWebPush action", () => {
       type: "message_received",
       relatedId: "thread-1",
       url: "/messages",
+      tag: "message_received",
     });
   });
 });

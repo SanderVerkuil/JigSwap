@@ -781,6 +781,8 @@ describe("inbox, unread and mute", () => {
     const { bob, carol, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     await post(t, "alice", threadId, "one");
+    // Let the post's notification dispatch (which stamps lastPushedAt) settle first.
+    await flush(t);
     const before = await participantRowsOf(t, threadId);
 
     await as(t, "bob").mutation(

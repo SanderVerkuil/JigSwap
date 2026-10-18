@@ -11,10 +11,41 @@ import { deliveryRefsOf } from "../../deliveryContent";
 // deep link); the snapshot title/message rendered HERE from type+params stay as the args the action
 // has always taken. English-only by design (push localization is out of scope). No-ops downstream
 // when push is unconfigured or the member has no subscriptions.
+//
+// A message (only messages: other thread notices are never held back) is pushed at most once per
+// thread per member per PUSH_THROTTLE_MS (the thread's participant row keeps lastPushedAt); the
+// OS replaces rather than stacks a thread's pushes via the payload's thread tag (sendWebPush).
+export const PUSH_THROTTLE_MS = 2 * 60 * 1000;
+
 export const pushChannel =
   (ctx: MutationCtx) =>
   async (notification: Notification): Promise<void> => {
     const state = notification.toState();
+    if (
+      (state.type === "message_received" ||
+        state.type === "circle_message_received") &&
+      state.subject?.kind === "thread"
+    ) {
+      const threadId = state.subject.threadId;
+      const seat = await ctx.db
+        .query("threadParticipants")
+        .withIndex("by_thread_member", (q) =>
+          q
+            .eq("threadAggregateId", threadId)
+            .eq("memberId", state.userId as unknown as Id<"users">),
+        )
+        .first();
+      const now = state.createdAt.getTime();
+      if (seat) {
+        if (
+          seat.lastPushedAt !== undefined &&
+          now - seat.lastPushedAt < PUSH_THROTTLE_MS
+        ) {
+          return;
+        }
+        await ctx.db.patch(seat._id, { lastPushedAt: now });
+      }
+    }
     const { title, message } = renderNotificationText(
       state.type,
       state.params ?? {},

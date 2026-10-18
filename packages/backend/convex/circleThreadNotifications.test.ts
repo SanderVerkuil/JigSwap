@@ -1,7 +1,13 @@
+import { Notification, toMemberId, toNotificationId } from "@jigswap/domain";
 import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
+import {
+  PUSH_THROTTLE_MS,
+  pushChannel,
+} from "./notifications/adapters/channels/pushChannel";
+import { renderNotificationText } from "./notifications/copy";
 import schema from "./schema";
 
 // Circle thread and DM notifications (G5): the circle_message_received type, mute, per-thread
@@ -349,5 +355,96 @@ describe("author projection", () => {
     expect(view.actors).toEqual([{ anonymous: true }]);
     expect(view.context.circleName).toBeUndefined();
     expect(view.href).toBe("/messages");
+  });
+});
+
+describe("push throttle and tag", () => {
+  // Push one circle message to `memberId` at an explicit time (the domain clock), straight through
+  // the push channel.
+  let seq = 0;
+  const pushAt = (
+    t: T,
+    memberId: Id<"users">,
+    actorId: Id<"users">,
+    threadId: string,
+    at: number,
+  ) => {
+    seq += 1;
+    const notification = Notification.rehydrate({
+      id: toNotificationId(`push-${seq}`),
+      userId: toMemberId(memberId as unknown as string),
+      type: "circle_message_received",
+      params: {},
+      relatedId: threadId,
+      actorId: toMemberId(actorId as unknown as string),
+      subject: { kind: "thread", threadId },
+      channel: "push",
+      isRead: false,
+      createdAt: new Date(at),
+    });
+    return t.run((ctx) => pushChannel(ctx)(notification));
+  };
+
+  test("at most one push per thread per member per 2 minutes", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, carol, threadId } = await seed(t);
+    const dm = await openDm(t, "alice", bob);
+    const t0 = Date.now() + 60_000;
+    await pushAt(t, bob, alice, threadId, t0);
+    await pushAt(t, bob, carol, threadId, t0 + 1_000);
+    await pushAt(t, bob, alice, threadId, t0 + PUSH_THROTTLE_MS - 1);
+    // Another thread, and another member, have their own throttle.
+    await pushAt(t, bob, alice, dm, t0 + 2_000);
+    await pushAt(t, carol, alice, threadId, t0 + 3_000);
+    expect(await pushesTo(t, bob)).toHaveLength(2);
+    expect(await pushesTo(t, carol)).toHaveLength(1);
+
+    // Once the window has passed, the next message pushes again.
+    await pushAt(t, bob, alice, threadId, t0 + PUSH_THROTTLE_MS);
+    expect(await pushesTo(t, bob)).toHaveLength(3);
+    const seat = await t.run((ctx) =>
+      ctx.db
+        .query("threadParticipants")
+        .withIndex("by_thread_member", (q) =>
+          q.eq("threadAggregateId", threadId).eq("memberId", bob),
+        )
+        .unique(),
+    );
+    expect(seat?.lastPushedAt).toBe(t0 + PUSH_THROTTLE_MS);
+  });
+
+  test("a burst of messages pushes once, and in-app still groups every one", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, threadId } = await seed(t);
+    await post(t, "alice", threadId, "one");
+    await post(t, "carol", threadId, "two");
+    await post(t, "alice", threadId, "three");
+    const pushes = await pushesTo(t, bob);
+    expect(pushes).toHaveLength(1);
+    expect(pushes[0].args[0]).toMatchObject({
+      type: "circle_message_received",
+      subject: { kind: "thread", threadId },
+    });
+    const [row] = await rowsOf(t, bob);
+    expect(row.actorCount).toBe(2);
+  });
+});
+
+describe("circle push copy", () => {
+  test("says who wrote where, never what", () => {
+    expect(
+      renderNotificationText("circle_message_received", {
+        actorName: "Anna",
+        circleName: "Puzzle Club",
+        messagePreview: "secret plans",
+      }),
+    ).toEqual({
+      title: "New messages in Puzzle Club",
+      message: "Anna wrote in Puzzle Club",
+    });
+    expect(renderNotificationText("circle_message_received", {})).toEqual({
+      title: "New messages",
+      message: "New messages in your circle",
+    });
   });
 });

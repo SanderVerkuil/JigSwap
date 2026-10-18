@@ -3,7 +3,7 @@
  * Served at /sw.js (scope "/") so it controls the whole origin. It does NOT cache or intercept
  * fetches; its only job is to show notifications pushed by the backend (notifications/sendWebPush)
  * and route a click to the right in-app page. The push payload is the JSON produced by
- * toWebPushPayload: { title, body, type, url, relatedId }.
+ * toWebPushPayload: { title, body, type, url, relatedId, tag }.
  */
 
 self.addEventListener("install", () => {
@@ -26,9 +26,10 @@ self.addEventListener("push", (event) => {
   const title = data.title || "JigSwap";
   const options = {
     body: data.body || "",
-    tag: data.type || undefined,
-    // Coalesce repeats of the same type instead of stacking.
-    renotify: Boolean(data.type),
+    // Coalesce repeats (one per message thread, else one per type) instead of stacking. Payloads
+    // sent before `tag` existed fall back to the type.
+    tag: data.tag || data.type || undefined,
+    renotify: Boolean(data.tag || data.type),
     data: { url: data.url || "/notifications" },
   };
   event.waitUntil(self.registration.showNotification(title, options));
