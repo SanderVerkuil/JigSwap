@@ -6,6 +6,11 @@
 import { Link } from "@/compat/link";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { MemberInitial } from "@/components/members/member-initial";
+import { PresenceDot } from "@/components/presence/presence-dot";
+import {
+  usePresenceOf,
+  type PresenceStatus,
+} from "@/components/presence/use-presence";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -33,6 +38,15 @@ import {
   type Translator,
 } from "./format";
 import { NewConversationMenu } from "./new-conversation-menu";
+
+// The revealed partner of a DM row, the only rows that carry a presence dot
+// (exchange rows show an exchange chip, circle rows their members).
+function dmPartnerId(thread: AnyInboxThread): string | undefined {
+  const { subject } = thread;
+  return subject.kind === "dm" && !subject.otherMember.anonymous
+    ? subject.otherMember.member._id
+    : undefined;
+}
 
 // Avatar chip for a thread subject: the member's avatar/initials for a
 // revealed DM partner, a generic person glyph for an anonymised one, an
@@ -113,6 +127,9 @@ function ThreadListBody({ activeThreadId }: { activeThreadId?: string }) {
     isError,
     refetch,
   } = useQuery(convexQuery(gateway.conversation.getMyInbox, me ? {} : "skip"));
+  // One presence subscription for the list: DM partners, most recent first (exchange rows show
+  // an exchange chip, not the partner's avatar, so they carry no dot).
+  const presence = usePresenceOf(inbox?.map(dmPartnerId) ?? []);
 
   if (isError) {
     return (
@@ -170,6 +187,7 @@ function ThreadListBody({ activeThreadId }: { activeThreadId?: string }) {
               <ThreadRow
                 thread={thread}
                 selected={thread.threadId === activeThreadId}
+                presence={presence.get(dmPartnerId(thread) ?? "")}
                 now={now}
                 locale={locale}
                 meId={me}
@@ -188,12 +206,15 @@ function ThreadListBody({ activeThreadId }: { activeThreadId?: string }) {
 function ThreadRow({
   thread,
   selected,
+  presence,
   now,
   locale,
   meId,
 }: {
   thread: AnyInboxThread;
   selected: boolean;
+  /** The DM partner's status when the viewer may see it. */
+  presence: PresenceStatus | undefined;
   now: number;
   locale: string;
   meId: string | undefined;
@@ -248,7 +269,10 @@ function ThreadRow({
           className="bg-primary absolute inset-y-3 left-0 w-[3px] rounded-full"
         />
       )}
-      <ThreadSubjectAvatar subject={subject} />
+      <span className="relative flex shrink-0">
+        <ThreadSubjectAvatar subject={subject} />
+        <PresenceDot status={presence} />
+      </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
           <span

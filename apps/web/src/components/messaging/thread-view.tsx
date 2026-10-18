@@ -10,6 +10,8 @@
 import { Link } from "@/compat/link";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { MemberInitial } from "@/components/members/member-initial";
+import { PresenceDot } from "@/components/presence/presence-dot";
+import { usePresenceOf } from "@/components/presence/use-presence";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, type Id } from "@/gateway";
@@ -89,6 +91,7 @@ export function ThreadView({
   hideHeader?: boolean;
 }) {
   const t = useTranslations("messages");
+  const tPresence = useTranslations("presence");
   const displayName = useMemberDisplayName();
   const locale = useLocale();
   // Day labels ("Today"/"Yesterday") roll over without a reload.
@@ -147,6 +150,13 @@ export function ThreadView({
       : displayName(otherMember.member);
   // The other side's author, for their messages' Report: absent when anonymised.
   const otherAuthorId = pairThread ? threadPartner(pairThread)?._id : undefined;
+  // The partner's presence, DM or exchange alike: the backend returns a status only when the
+  // viewer may see it (mutual followers who both share), so non-mutual trade partners show none.
+  // Only the header shows it, so a header-less embed doesn't subscribe.
+  const presenceTarget = hideHeader ? undefined : otherAuthorId;
+  const partnerPresence = usePresenceOf([presenceTarget]).get(
+    presenceTarget ?? "",
+  );
   // The attach picker's "their puzzles" tab, named for the DM or trading
   // partner; absent for an anonymised member (the backend lists none of their
   // copies).
@@ -395,20 +405,31 @@ export function ThreadView({
             ) : (
               <>
                 {pairThread && (
-                  <ThreadSubjectAvatar
-                    subject={pairThread.subject}
-                    className="size-9"
-                  />
+                  // The status line below names the status for screen readers.
+                  <span aria-hidden className="relative flex shrink-0">
+                    <ThreadSubjectAvatar
+                      subject={pairThread.subject}
+                      className="size-9"
+                    />
+                    <PresenceDot status={partnerPresence} />
+                  </span>
                 )}
-                {/* Inbox loaded but this thread isn't in it (e.g. a subject that
-                    no longer resolves) — a generic title beats an eternal skeleton. */}
-                <Heading
-                  ref={headingRef}
-                  tabIndex={-1}
-                  className="font-heading decoration-primary-text/60 min-w-0 truncate text-base font-bold underline-offset-4 outline-none focus-visible:underline"
-                >
-                  {title ?? t("threadFallbackTitle")}
-                </Heading>
+                <div className="flex min-w-0 flex-col">
+                  {/* Inbox loaded but this thread isn't in it (e.g. a subject that
+                      no longer resolves) — a generic title beats an eternal skeleton. */}
+                  <Heading
+                    ref={headingRef}
+                    tabIndex={-1}
+                    className="font-heading decoration-primary-text/60 min-w-0 truncate text-base font-bold underline-offset-4 outline-none focus-visible:underline"
+                  >
+                    {title ?? t("threadFallbackTitle")}
+                  </Heading>
+                  {partnerPresence && (
+                    <p className="text-muted-foreground text-xs leading-4">
+                      {tPresence(partnerPresence)}
+                    </p>
+                  )}
+                </div>
                 {/* The conversation's puzzles, right beside the name. */}
                 {pairThread && <ThreadPuzzleStack thread={pairThread} />}
                 <div className="ml-auto flex shrink-0 items-center">
