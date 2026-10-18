@@ -344,6 +344,10 @@ export default defineSchema({
     // attempts the pipeline made. Absent on rows decided before these existed.
     moderationReason: v.optional(v.string()),
     moderationAttempts: v.optional(v.number()),
+    // Blurhash (lib/blurhash, 4x3) of the clean image, computed during the re-encode. Shown to
+    // other members in place of a photo that is still pending/unscored; never exposed for a
+    // rejected one. Absent on rows processed before it existed or whose decode failed.
+    blurhash: v.optional(v.string()),
 
     // --- Timestamps ---
     createdAt: v.number(),
@@ -466,6 +470,10 @@ export default defineSchema({
     moderationLabel: v.optional(v.string()),
     moderationReason: v.optional(v.string()),
     moderationAttempts: v.optional(v.number()),
+    // Blurhash (lib/blurhash, 4x3) of the clean image, computed during the re-encode. Shown to
+    // other members in place of a photo that is still pending/unscored; never exposed for a
+    // rejected one. Absent on rows processed before it existed or whose decode failed.
+    blurhash: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

@@ -35,11 +35,13 @@ export const setModerationFile = internalMutation({
   args: {
     imageId: v.id("ownedPuzzleImages"),
     fileId: v.id("_storage"),
+    // The clean image's blurhash (lib/blurhash), computed from the same decode.
+    blurhash: v.optional(v.string()),
   },
-  handler: async (ctx, { imageId, fileId }) => {
+  handler: async (ctx, { imageId, fileId, blurhash }) => {
     const exists = await ctx.db.get(imageId);
     if (!exists) return;
-    await ctx.db.patch(imageId, { fileId, updatedAt: Date.now() });
+    await ctx.db.patch(imageId, { fileId, blurhash, updatedAt: Date.now() });
   },
 });
 
