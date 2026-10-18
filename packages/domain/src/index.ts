@@ -12,6 +12,8 @@ export type { ExchangeId } from "./exchange";
 export type { MemberId } from "./identity";
 export type { CopyId, FileId, VisibilityPolicy } from "./library";
 export type { StarRating } from "./solving";
+// CircleId→Sharing (its owner; Conversation carries it as a circle thread's subject).
+export type { CircleId } from "./sharing";
 
 export * from "./catalog";
 export * from "./conversation";

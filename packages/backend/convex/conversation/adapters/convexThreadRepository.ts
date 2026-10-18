@@ -1,6 +1,7 @@
 import {
   Thread,
   toExchangeId,
+  type CircleId,
   type ExchangeId,
   type MemberId,
   type ThreadId,
@@ -114,8 +115,15 @@ export const convexThreadRepository = (ctx: MutationCtx): ThreadRepository => {
       return row ? hydrate(row) : null;
     },
 
+    // Circle threads are not stored yet (G4 adds the `by_circle` index and the `circle`
+    // subjectKind), so no circle ever has a thread here.
+    async findByCircle(_circleId: CircleId): Promise<Thread | null> {
+      return null;
+    },
+
     async save(thread: Thread): Promise<void> {
       const state = thread.toState();
+      const participants = thread.participants;
       const aggregateId = state.id as string;
       const existing = await rowById(state.id);
 
@@ -154,7 +162,7 @@ export const convexThreadRepository = (ctx: MutationCtx): ThreadRepository => {
         existing !== null &&
         participantsKeyOf(
           existing.participants.map((p) => p as unknown as MemberId),
-        ) !== participantsKeyOf(state.participants);
+        ) !== participantsKeyOf(participants);
       const row = {
         ...toThreadRow(thread),
         exchangeId:
@@ -185,7 +193,7 @@ export const convexThreadRepository = (ctx: MutationCtx): ThreadRepository => {
       for (const participantRow of await participantRowsOf(aggregateId)) {
         const memberId = participantRow.memberId as string;
         if (
-          state.participants.includes(memberId as MemberId) &&
+          participants.includes(memberId as MemberId) &&
           !rowOf.has(memberId)
         ) {
           rowOf.set(memberId, participantRow);
@@ -193,7 +201,7 @@ export const convexThreadRepository = (ctx: MutationCtx): ThreadRepository => {
           await ctx.db.delete(participantRow._id);
         }
       }
-      for (const memberId of state.participants) {
+      for (const memberId of participants) {
         const participantRow = rowOf.get(memberId as string);
         const receipt = receiptOf.get(memberId as string);
         const storedReadAt =

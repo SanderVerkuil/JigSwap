@@ -1,4 +1,10 @@
-import { ExchangeId, MemberId, Thread, ThreadId } from "../../../domain";
+import {
+  CircleId,
+  ExchangeId,
+  MemberId,
+  Thread,
+  ThreadId,
+} from "../../../domain";
 
 // Outbound port: persistence for the Thread aggregate. The 1b-convex adapter implements this over
 // `ctx.db` behind a mapper; the domain never sees a row. `findByExchange` backs the one-thread-
@@ -11,5 +17,8 @@ export interface ThreadRepository {
   // callers must pass two DISTINCT members — a self-pair query is undefined (the use case
   // rejects self-DMs before ever looking up).
   findDmByParticipants(a: MemberId, b: MemberId): Promise<Thread | null>;
+  // The circle-subject thread of the circle, if one was opened. Backs the one-thread-per-circle
+  // rule the OpenCircleThread use case enforces.
+  findByCircle(circleId: CircleId): Promise<Thread | null>;
   save(thread: Thread): Promise<void>;
 }

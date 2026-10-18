@@ -1,4 +1,4 @@
-import { ExchangeId, MemberId, Thread, ThreadId } from "../../domain";
+import { CircleId, ExchangeId, MemberId, Thread, ThreadId } from "../../domain";
 import { ThreadRepository } from "../ports/out/thread.repository";
 
 // In-memory ThreadRepository for use-case tests, keyed by thread id. Stores persisted state and
@@ -20,11 +20,24 @@ export class InMemoryThreadRepository implements ThreadRepository {
 
   async findDmByParticipants(a: MemberId, b: MemberId): Promise<Thread | null> {
     for (const state of this.store.values()) {
+      const memberIds = state.participants.map((p) => p.memberId);
       if (
         state.subject.kind === "dm" &&
-        state.participants.length === 2 &&
-        state.participants.includes(a) &&
-        state.participants.includes(b)
+        memberIds.length === 2 &&
+        memberIds.includes(a) &&
+        memberIds.includes(b)
+      ) {
+        return Thread.rehydrate(state);
+      }
+    }
+    return null;
+  }
+
+  async findByCircle(circleId: CircleId): Promise<Thread | null> {
+    for (const state of this.store.values()) {
+      if (
+        state.subject.kind === "circle" &&
+        state.subject.circleId === circleId
       ) {
         return Thread.rehydrate(state);
       }

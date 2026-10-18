@@ -1,12 +1,12 @@
 import { DomainError } from "../../shared-kernel";
-import { ExchangeId, ThreadId } from "../domain";
+import { CircleId, ExchangeId, ThreadId } from "../domain";
 
 // Orchestration-level failures the Thread aggregate cannot express because they depend on the
 // world (which threads exist) rather than the Thread's own data. Like ConversationError, the
 // `code` is the stable, machine-readable discriminant a transport adapter maps to; the message is
 // for logs/tests only.
 export type ConversationApplicationErrorCode =
-  "ThreadNotFound" | "NotConnected";
+  "ThreadNotFound" | "NotConnected" | "CircleNotFound";
 
 export class ConversationApplicationError extends DomainError {
   override readonly name = "ConversationApplicationError";
@@ -33,6 +33,15 @@ export class ConversationApplicationError extends DomainError {
     return new ConversationApplicationError(
       "NotConnected",
       "You can only message members you are connected with",
+    );
+  }
+
+  // No such circle, OR the actor is not one of its members: deliberately one outcome, so a
+  // non-member can't tell an existing circle from a missing one (never "not a member").
+  static circleNotFound(circleId: CircleId): ConversationApplicationError {
+    return new ConversationApplicationError(
+      "CircleNotFound",
+      `No circle found for ${circleId}`,
     );
   }
 }
