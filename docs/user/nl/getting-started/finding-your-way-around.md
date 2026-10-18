@@ -61,6 +61,10 @@ JigSwap je pushmeldingen kan sturen.
 2. Tik op **App installeren**.
 3. Bevestig in de melding van je browser.
 
+Heeft Chrome de installatievraag nog niet aangeboden, dan toont de tip twee
+stappen: tik op het **menu** rechtsboven in Chrome, kies **Toevoegen aan
+startscherm** of **App installeren**, en dan **Installeren**.
+
 **Op iPhone en iPad (Safari, of Chrome en Edge op recente iOS-versies):**
 
 1. Tik op **Deel** (onder **⋯** als je het niet ziet).

@@ -58,6 +58,10 @@ you push notifications.
 2. Tap **Install app**.
 3. Confirm in your browser's prompt.
 
+If Chrome hasn't offered the install prompt yet, the tip shows two steps
+instead: tap the **menu** at the top right of Chrome, then choose **Add to
+home screen** or **Install app**, and then **Install**.
+
 **On iPhone and iPad (Safari, or Chrome and Edge on recent iOS versions):**
 
 1. Tap **Share** (under **⋯** if you don't see it).
