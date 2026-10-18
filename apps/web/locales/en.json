@@ -1842,6 +1842,8 @@
     "ownedByYou": "Owned by you",
     "sharedWithYou": "Shared with you",
     "membersLabel": "{count, plural, one {member} other {members}}",
+    "avatarStackLabel": "Members of {circle}",
+    "avatarStackMore": "{count, plural, one {# more member} other {# more members}}",
     "emptyTitle": "No circles yet",
     "emptySub": "Create a circle to swap puzzles with friends and family.",
     "loading": "Loading circles...",
