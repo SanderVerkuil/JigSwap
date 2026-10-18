@@ -331,6 +331,7 @@ import type * as sharing_adapters_inProcessEventPublisher from "../sharing/adapt
 import type * as sharing_adapters_mapper from "../sharing/adapters/mapper.js";
 import type * as sharing_adapters_systemClock from "../sharing/adapters/systemClock.js";
 import type * as sharing_addMember from "../sharing/addMember.js";
+import type * as sharing_backfillStaleCircleShares from "../sharing/backfillStaleCircleShares.js";
 import type * as sharing_changePermission from "../sharing/changePermission.js";
 import type * as sharing_createCircle from "../sharing/createCircle.js";
 import type * as sharing_errors from "../sharing/errors.js";
@@ -755,6 +756,7 @@ declare const fullApi: ApiFromModules<{
   "sharing/adapters/mapper": typeof sharing_adapters_mapper;
   "sharing/adapters/systemClock": typeof sharing_adapters_systemClock;
   "sharing/addMember": typeof sharing_addMember;
+  "sharing/backfillStaleCircleShares": typeof sharing_backfillStaleCircleShares;
   "sharing/changePermission": typeof sharing_changePermission;
   "sharing/createCircle": typeof sharing_createCircle;
   "sharing/errors": typeof sharing_errors;
