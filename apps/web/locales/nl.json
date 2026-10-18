@@ -1217,10 +1217,10 @@
         "title": "Onze rechtsgrond, in gewone taal",
         "description": "Onder de AVG hebben we voor elk gebruik van je gegevens een wettelijke grondslag nodig. Dit zijn de onze:",
         "items": [
-          "Uitvoering van onze overeenkomst met jou: alles wat nodig is voor de dienst waarvoor je je hebt aangemeld — je account, bibliotheek, uitwisselingen en berichten",
-          "Gerechtvaardigd belang: JigSwap veilig houden, misbruik voorkomen, geüploade foto's controleren, operationele logging en begrijpen hoe de dienst wordt gebruikt zodat we die kunnen verbeteren",
+          "Uitvoering van onze overeenkomst met jou: alles wat nodig is voor de dienst waarvoor je je hebt aangemeld — je account, bibliotheek, uitwisselingen en berichten, inclusief de foto's en locaties die je eraan toevoegt",
+          "Gerechtvaardigd belang: JigSwap veilig houden, misbruik voorkomen, geüploade foto's controleren, meldingen en blokkeringen afhandelen, operationele logging en begrijpen hoe de dienst wordt gebruikt zodat we die kunnen verbeteren",
           "Toestemming: waar we je eerst om toestemming vragen, zoals bij pushmeldingen in je browser",
-          "Wettelijke verplichting: de zeldzame gevallen waarin we gegevens moeten bewaren of delen omdat de wet dat vereist"
+          "Wettelijke verplichting: meldingen van illegale inhoud afhandelen en onze moderatiebesluiten toelichten onder de Europese digitaledienstenverordening (DSA), en de zeldzame gevallen waarin we gegevens moeten bewaren of delen omdat de wet dat vereist"
         ]
       }
     },
@@ -1265,6 +1265,58 @@
         "Totdat dit klaar is, is de foto alleen voor jou zichtbaar. Als de controle niet kan worden uitgevoerd (bijvoorbeeld omdat de controledienst niet bereikbaar is), blijft de foto alleen voor jou zichtbaar totdat hij is gecontroleerd"
       ]
     },
+    "messaging": {
+      "title": "Berichten, foto's en locaties",
+      "description": "Berichten die je stuurt zijn alleen zichtbaar voor de leden van dat gesprek. Je kunt foto's toevoegen en een locatie delen:",
+      "items": [
+        "Foto's in berichten doorlopen hetzelfde proces als andere foto's: ze worden opnieuw gecodeerd, waardoor verborgen metadata zoals EXIF-gegevens (inclusief een eventuele locatie) wordt verwijderd, en ze worden automatisch gecontroleerd voordat het andere lid ze ontvangt",
+        "Een foto die de controle als mogelijk gevoelig aanmerkt, een foto van iemand die niet je wederzijdse volger is en een foto die niet gecontroleerd kon worden (gemarkeerd als \"niet gecontroleerd\") worden vervaagd getoond totdat de ontvanger op Tonen tikt",
+        "Een foto die de controle tegenhoudt wordt niet bezorgd. Je krijgt daar bericht over en kunt om een herbeoordeling vragen",
+        "Een locatie delen gebeurt eenmalig: je stuurt één plek, nooit je actuele positie",
+        "Een speld die je op de kaart zet wordt precies daar verstuurd. \"Mijn huidige locatie gebruiken\" wordt afgerond op een gebied van ongeveer 1 km; je exacte huidige positie versturen wordt alleen aangeboden aan leden die je wederzijdse volgers zijn, en alleen als je daarvoor kiest. Terwijl je de kaart rond je huidige positie bekijkt, onthouden we het midden ervan (afgerond op ongeveer 100 m) 15 minuten lang, zodat ook een speld die je precies op je eigen plek zet als een gebied bij benadering wordt verstuurd",
+        "De kaartweergave van een gedeelde locatie wordt eenmalig op onze servers gemaakt als je hem verstuurt (zie MapTiler hierboven)"
+      ]
+    },
+    "safety": {
+      "title": "Blokkeren en melden",
+      "description": "Je kunt een lid blokkeren en inhoud of leden melden die zich niet aan de regels houden.",
+      "blockingTitle": "Blokkeren",
+      "blocking": "Als je iemand blokkeert, kan diegene je geen berichten meer sturen, je niet volgen en geen ruil voorstellen. Diegene krijgt daar geen melding van. Je blokkeerlijst is privé: alleen jij ziet hem, in je instellingen onder Privacy en veiligheid. Deblokkeren verwijdert de blokkering.",
+      "reportingTitle": "Melden",
+      "reportingDescription": "Als je een melding doet, bewaren we:",
+      "reportingItems": [
+        "Wie de melding deed, waar die over gaat, de reden die je koos en eventuele toelichting",
+        "Bij een melding van illegale inhoud: de naam en het e-mailadres die je ons geeft",
+        "Bij een gemeld bericht: een kopie van dat bericht en maximaal 10 berichten ervoor in het gesprek, zodat een moderator de context kan zien",
+        "Ons besluit en de redenen die we daarvoor geven"
+      ],
+      "reporterWithheld": "We vertellen het gemelde lid nooit wie de melding heeft gedaan. Beide kanten horen de uitkomst; het gemelde lid krijgt bij elke maatregel een motivering van de redenen."
+    },
+    "retention": {
+      "title": "Hoe lang we gegevens bewaren",
+      "description": "We bewaren gegevens alleen zolang we ze nodig hebben:",
+      "items": [
+        "Foto's die je toevoegt maar nooit verstuurt: na 24 uur verwijderd",
+        "Verstuurde foto's die een week later nog steeds worden gecontroleerd: verwijderd",
+        "Berichten, foto's en gedeelde locaties: zolang je account bestaat, tenzij een moderator ze eerder verwijdert",
+        "Een foto die de automatische controle tegenhield: 30 dagen bewaard zodat je om een herbeoordeling kunt vragen (of totdat die herbeoordeling is afgerond), daarna verwijderd. In ons moderatielogboek blijft staan dat een controle een foto tegenhield, zonder de foto zelf",
+        "Inhoud die na een melding is verwijderd: een kopie wordt als bewijs tot 6 maanden na het besluit bewaard en daarna verwijderd",
+        "Meldingen: bewaard tot 12 maanden na het besluit. Daarna worden de identiteit van de melder, de toelichting en de gekopieerde berichten verwijderd; alleen het besluit zelf blijft over. Langer alleen als een melding aan politie of justitie is doorgegeven",
+        "Blokkeringen: zolang de blokkering actief is",
+        "Kaartafbeeldingen in de locatiekiezer: na ongeveer 10 minuten verwijderd; het afgeronde midden van een kaart rond je huidige positie: 15 minuten",
+        "Technische logs (Axiom): 30 dagen. Logs bevatten nooit berichttekst, bijschriften, coördinaten of de tekst van meldingen"
+      ],
+      "deletionTitle": "Als je je account verwijdert",
+      "deletion": [
+        "Je tekstberichten blijven in de gesprekken die je voerde, zodat de geschiedenis voor het andere lid begrijpelijk blijft; ze worden getoond als verstuurd door een \"verwijderd lid\"",
+        "Je foto's en kaartafbeeldingen worden verwijderd. In het gesprek blijft alleen een vage kleurvlak-plaatshouder over, met \"Foto niet meer beschikbaar\"",
+        "De coördinaten en plaatsnamen van locaties die je deelde worden verwijderd",
+        "Je blokkeringen (en blokkeringen die anderen op jou hebben) worden verwijderd",
+        "Meldingen die jij deed blijven bij ons voor de moderatie, maar zonder je naam of contactgegevens",
+        "Meldingen over jou worden bewaard tot hun bewaartermijn van 12 maanden afloopt",
+        "Een foto of locatie die deel uitmaakt van een openstaande melding wordt bewaard totdat over die melding is besloten"
+      ]
+    },
     "analytics": {
       "title": "Analyse en foutrapportage",
       "description": "We gebruiken analyse om te begrijpen hoe JigSwap wordt gebruikt en om fouten op te sporen voordat ze het plezier bederven.",
@@ -1280,7 +1332,7 @@
       "noSale": "We verkopen, verhuren of verhandelen je persoonsgegevens niet. Nooit.",
       "limitedSharing": "Gegevens worden alleen in deze gevallen gedeeld:",
       "circumstances": [
-        "Met de dienstverleners uit dit beleid, als verwerkers namens ons: Convex (database en bestanden), Clerk (inloggen), Vercel (hosting), PostHog (analyse en foutrapportage), Axiom (operationele logs, gehost in de EU) en Hugging Face (automatische fotocontrole)",
+        "Met de dienstverleners uit dit beleid, als verwerkers namens ons: Convex (database en bestanden), Clerk (inloggen), Vercel (hosting), PostHog (analyse en foutrapportage), Axiom (operationele logs, gehost in de EU), Hugging Face of Sightengine (automatische fotocontrole) en MapTiler (kaarten en plekken zoeken)",
         "Met andere leden, voor zover jij dat kiest — je profiel en de delen van je bibliotheek die je deelt zijn zichtbaar volgens jouw instellingen",
         "Wanneer de wet dat vereist, of om de dienst en haar leden te beschermen tegen fraude of misbruik",
         "Voor al het andere: alleen met jouw uitdrukkelijke toestemming"
