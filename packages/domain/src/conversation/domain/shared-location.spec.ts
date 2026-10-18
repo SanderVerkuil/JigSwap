@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { MAX_LOCATION_LABEL_LENGTH } from "./errors";
-import { SharedLocation, SharedLocationProps } from "./shared-location";
+import {
+  resolveLocationPrecision,
+  SharedLocation,
+  SharedLocationProps,
+} from "./shared-location";
 
 const create = (props: Partial<SharedLocationProps> = {}) =>
   SharedLocation.create({
@@ -164,5 +168,65 @@ describe("SharedLocation label", () => {
     const result = create({ label: "x".repeat(MAX_LOCATION_LABEL_LENGTH + 1) });
     expect(result.isErr).toBe(true);
     if (result.isErr) expect(result.error.code).toBe("LocationLabelTooLong");
+  });
+});
+
+describe("resolveLocationPrecision (spec R.5)", () => {
+  it.each([
+    ["exact", true],
+    ["exact", false],
+    ["approximate", true],
+    ["approximate", false],
+  ] as const)(
+    "a placed or searched pin is exact (requested %s, mutual %s)",
+    (requested, mutualFollowers) => {
+      expect(
+        resolveLocationPrecision({ source: "pin", requested, mutualFollowers }),
+      ).toBe("exact");
+    },
+  );
+
+  it("current location is exact only when chosen AND the recipient is mutual", () => {
+    expect(
+      resolveLocationPrecision({
+        source: "gps",
+        requested: "exact",
+        mutualFollowers: true,
+      }),
+    ).toBe("exact");
+  });
+
+  it("current location sent to a non-mutual is forced to approximate, even when exact was asked", () => {
+    expect(
+      resolveLocationPrecision({
+        source: "gps",
+        requested: "exact",
+        mutualFollowers: false,
+      }),
+    ).toBe("approximate");
+  });
+
+  it("current location defaults to approximate for a mutual follower too", () => {
+    expect(
+      resolveLocationPrecision({
+        source: "gps",
+        requested: "approximate",
+        mutualFollowers: true,
+      }),
+    ).toBe("approximate");
+  });
+
+  it("the resolved precision drives the rounding: a forced GPS fix lands on the grid", () => {
+    const precision = resolveLocationPrecision({
+      source: "gps",
+      requested: "exact",
+      mutualFollowers: false,
+    });
+    const shared = valueOf({ lat: 52.373123, lng: 4.892234, precision });
+    expect(shared.precision).toBe("approximate");
+    expect(shared.lat).toBe(52.37);
+    expect(valueOf({ lat: shared.lat, lng: shared.lng, precision })).toEqual(
+      shared,
+    );
   });
 });
