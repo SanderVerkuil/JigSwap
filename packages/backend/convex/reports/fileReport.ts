@@ -273,7 +273,9 @@ const attachmentTarget = async (
 ): Promise<Target | null> => {
   const attachmentId = ctx.db.normalizeId("messageAttachments", targetId);
   const row = attachmentId ? await ctx.db.get(attachmentId) : null;
-  if (!row?.messageId || !isDeliverable(row)) return null;
+  if (!row?.messageId || row.hiddenFromSender || !isDeliverable(row)) {
+    return null;
+  }
   const target = await messageTarget(ctx, reporterId, row.messageId);
   if (!target || target.reportedUserId !== row.uploaderId) return null;
   return { ...target, targetId: row._id };

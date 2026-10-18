@@ -16,6 +16,7 @@ export const requestImageReview = mutation({
     const row = await ctx.db.get(attachmentId);
     if (
       !row ||
+      row.hiddenFromSender ||
       row.uploaderId !== me ||
       row.messageId !== undefined ||
       (row.moderationStatus !== "rejected" &&

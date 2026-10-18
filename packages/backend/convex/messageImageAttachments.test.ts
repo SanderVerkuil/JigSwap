@@ -1434,3 +1434,82 @@ describe("purging undelivered photos", () => {
     }
   });
 });
+
+describe("a hidden quarantined photo is gone for its sender", () => {
+  // A quarantined photo hidden where a rejected one would be deleted must answer every
+  // sender-facing call exactly like the deleted one: AttachmentNotFound / absent.
+  const hiddenAndDeleted = async (t: T) => {
+    const ctx = await openThread(t);
+    fakes.score = 0.97;
+    const rejected = await stage(t, ctx.threadId);
+    await settleDueJobs(t);
+    fakes.hcs = "match";
+    const quarantined = await stage(t, ctx.threadId);
+    await settleDueJobs(t);
+    for (const id of [rejected, quarantined]) {
+      await t.mutation(store.purgeUndelivered, {
+        attachmentId: id,
+        rule: "rejected",
+      });
+    }
+    expect(await attachment(t, rejected)).toBeNull();
+    expect((await attachment(t, quarantined))!.hiddenFromSender).toBe(true);
+    return { ...ctx, rejected, quarantined };
+  };
+
+  test("review", async () => {
+    const t = convexTest(schema, modules);
+    const { rejected, quarantined } = await hiddenAndDeleted(t);
+    for (const attachmentId of [rejected, quarantined]) {
+      await expect(
+        asAlice(t).mutation(
+          api.conversation.requestImageReview.requestImageReview,
+          { attachmentId },
+        ),
+      ).rejects.toThrow(/AttachmentNotFound/);
+    }
+  });
+
+  test("send", async () => {
+    const t = convexTest(schema, modules);
+    const { rejected, quarantined, threadId } = await hiddenAndDeleted(t);
+    for (const id of [rejected, quarantined]) {
+      await expect(send(t, threadId, [id])).rejects.toThrow(
+        /AttachmentNotFound/,
+      );
+    }
+  });
+
+  test("outbox", async () => {
+    const t = convexTest(schema, modules);
+    const { threadId } = await hiddenAndDeleted(t);
+    expect(await outbox(t, threadId)).toEqual([]);
+  });
+
+  test("reveal", async () => {
+    const t = convexTest(schema, modules);
+    const { rejected, quarantined } = await hiddenAndDeleted(t);
+    for (const attachmentId of [rejected, quarantined]) {
+      await expect(
+        asAlice(t).mutation(
+          api.conversation.revealMessageImage.revealMessageImage,
+          { attachmentId },
+        ),
+      ).rejects.toThrow(/AttachmentNotFound/);
+    }
+  });
+
+  test("report", async () => {
+    const t = convexTest(schema, modules);
+    const { rejected, quarantined } = await hiddenAndDeleted(t);
+    for (const targetId of [rejected, quarantined]) {
+      await expect(
+        asBob(t).mutation(api.reports.fileReport.fileReport, {
+          targetKind: "attachment",
+          targetId,
+          reason: "sexual",
+        }),
+      ).rejects.toThrow(/NotFound/);
+    }
+  });
+});

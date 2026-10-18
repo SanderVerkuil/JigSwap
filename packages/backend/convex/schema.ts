@@ -967,7 +967,8 @@ export default defineSchema({
     // The admin who restored or upheld it on review.
     moderatedBy: v.optional(v.id("users")),
     // A quarantined photo at a point where a rejected one would be deleted (purge, block): kept
-    // whole for the CSAM preservation, but gone from the sender's outbox just the same.
+    // whole for the CSAM preservation, but gone for its sender just the same (every sender-facing
+    // read and mutation treats it as not found).
     hiddenFromSender: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),

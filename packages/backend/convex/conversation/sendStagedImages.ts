@@ -21,7 +21,8 @@ const notFound = () =>
 // each photo becomes its own image message once it is deliverable (deferred append,
 // messageAttachments.ts), which may be right away. Every photo must be the caller's, staged in
 // this thread and not sent yet; anything else is the same generic AttachmentNotFound, so the
-// result never tells a rejected or quarantined photo from a missing one.
+// result never tells a rejected or quarantined photo from a missing one (a quarantined photo
+// hidden from its sender answers exactly like a deleted rejected one).
 export const sendStagedImages = mutation({
   args: {
     threadId: v.string(),
@@ -57,6 +58,7 @@ export const sendStagedImages = mutation({
       const row = await ctx.db.get(id);
       if (
         !row ||
+        row.hiddenFromSender ||
         row.uploaderId !== me ||
         row.threadAggregateId !== args.threadId ||
         row.sendRequestedAt !== undefined ||

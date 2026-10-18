@@ -22,7 +22,9 @@ export const revealMessageImage = mutation({
         message: "Photo not found",
       });
     const row = await ctx.db.get(attachmentId);
-    if (!row?.messageId || !isDeliverable(row)) throw notFound();
+    if (!row?.messageId || row.hiddenFromSender || !isDeliverable(row)) {
+      throw notFound();
+    }
     const messageId = row.messageId;
     const message = await ctx.db
       .query("threadMessages")
