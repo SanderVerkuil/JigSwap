@@ -59,11 +59,13 @@ export function NotificationSentence({ view }: { view: NotificationView }) {
   const memberName = useActorName();
   const displayName = useMemberDisplayName();
   const { type, actors, actorCount, context } = view;
-  // An anonymous, not-departed trade party or circle inviter/invitee is a living member hidden by
-  // privacy (e.g. an owner who declined without replying), not a former one: name them with the
-  // generic member label.
+  // An anonymous, not-departed trade party, circle inviter/invitee or circle message author is a
+  // living member hidden by privacy (e.g. an owner who declined without replying), not a former
+  // one: name them with the generic member label.
   const actorName = (actor: NotificationActorView | undefined) =>
-    (type.startsWith("trade_") || type.startsWith("circle_invite_")) &&
+    (type.startsWith("trade_") ||
+      type.startsWith("circle_invite_") ||
+      type === "circle_message_received") &&
     actor?.anonymous &&
     !actor.departed
       ? displayName(null)
@@ -93,6 +95,8 @@ export function NotificationSentence({ view }: { view: NotificationView }) {
     actor: actorName(actors[0]),
     actor2: actorName(actors[1]),
     others: Math.max(0, actorCount - 2),
+    // circle_message_received: everyone after the first named author ("Anna and 2 others").
+    moreActors: Math.max(0, actorCount - 1),
     puzzle: context.puzzleTitle ?? "",
     hasPuzzle: context.puzzleTitle ? "yes" : "no",
     goal: context.goalTitle ?? "",

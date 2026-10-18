@@ -42,7 +42,7 @@ describe("getMyPreferences", () => {
       {},
     );
 
-    expect(Object.keys(prefs)).toHaveLength(32);
+    expect(Object.keys(prefs)).toHaveLength(33);
     // The stored email wins; the absent inApp key falls back to its default (true).
     expect(prefs.trade_request).toEqual({
       inApp: true,
@@ -60,6 +60,12 @@ describe("getMyPreferences", () => {
       inApp: true,
       email: false,
       push: false,
+    });
+    // Circle messages are the one type whose push is on by default.
+    expect(prefs.circle_message_received).toEqual({
+      inApp: true,
+      email: false,
+      push: true,
     });
   });
 });

@@ -52,6 +52,7 @@ export type NotificationType =
   | "circle_invite_received"
   | "circle_invite_accepted"
   | "circle_deleted"
+  | "circle_message_received"
   | "whats_new"
   | "report_decided"
   | "content_removed"
@@ -67,6 +68,7 @@ export const NOTIFICATION_TYPES: NotificationType[] = [
   "exchange_proposed",
   "exchange_disputed",
   "message_received",
+  "circle_message_received",
   "review_received",
   "puzzle_favorited",
   "puzzle_approved",
@@ -129,7 +131,7 @@ export const NOTIFICATION_CATEGORIES: readonly NotificationCategory[] = [
       "exchange_disputed",
     ],
   },
-  { key: "messages", types: ["message_received"] },
+  { key: "messages", types: ["message_received", "circle_message_received"] },
   {
     key: "social",
     types: [
@@ -193,6 +195,7 @@ export const EMAIL_ELIGIBLE_TYPES: ReadonlySet<NotificationType> = new Set([
   "follow_request_received",
   "follow_request_approved",
   "circle_invite_received",
+  "circle_message_received",
 ]);
 
 export type NotificationChannel = "inApp" | "email" | "push";
@@ -274,6 +277,7 @@ export function notificationIcon(type: string): LucideIcon {
     case "exchange_disputed":
       return XCircle;
     case "message_received":
+    case "circle_message_received":
       return MessageSquare;
     case "review_received":
       return Star;
@@ -352,6 +356,7 @@ export function notificationAccent(type: string): string {
     case "puzzle_favorited":
       return "text-pink-500";
     case "message_received":
+    case "circle_message_received":
       return "text-blue-500 dark:text-blue-400";
     case "new_follower":
     case "follow_request_received":

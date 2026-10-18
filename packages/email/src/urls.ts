@@ -12,6 +12,7 @@ export const ctaPath = (type: EmailType, relatedId?: string): string => {
     case "trade_cancelled":
       return "/trades";
     case "message_received":
+    case "circle_message_received":
       return relatedId ? `/messages/${relatedId}` : "/messages";
     case "review_received":
       return "/profile";

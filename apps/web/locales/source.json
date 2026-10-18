@@ -2088,6 +2088,7 @@
       "exchange_proposed": "Exchange proposed",
       "exchange_disputed": "Exchange disputed",
       "message_received": "New messages",
+      "circle_message_received": "Circle messages",
       "review_received": "Reviews received",
       "puzzle_favorited": "Puzzle favorited",
       "puzzle_approved": "Puzzle approved",
@@ -2120,7 +2121,7 @@
       },
       "messages": {
         "title": "Messages",
-        "description": "Direct messages from other members"
+        "description": "Direct messages from other members and your circles' group chats"
       },
       "social": {
         "title": "Social",
@@ -2175,6 +2176,10 @@
       "message_received": {
         "title": "New message",
         "message": "{hasActorName, select, yes {{actorName} sent you a new message.} other {You have a new message in your trade conversation.}}"
+      },
+      "circle_message_received": {
+        "title": "New messages in a circle",
+        "message": "There are new messages in one of your circles."
       },
       "review_received": {
         "title": "New review",
@@ -2295,6 +2300,7 @@
       "exchange_proposed": "When someone proposes an exchange — a swap, sale, or lend.",
       "exchange_disputed": "When an exchange you're part of is disputed.",
       "message_received": "When you receive a new message.",
+      "circle_message_received": "When someone writes in the group chat of one of your circles. Email comes as a short digest, never per message.",
       "review_received": "When someone leaves you a review after an exchange.",
       "puzzle_favorited": "When someone favourites a puzzle you added.",
       "puzzle_approved": "When a puzzle you submitted is approved for the catalogue.",
@@ -2365,6 +2371,13 @@
       "message_received": {
         "sentence": "{media, select, image {<b>{actor}</b> sent a photo.} location {<b>{actor}</b> shared a location.} other {<b>{actor}</b> sent you a message.}}",
         "sentenceAnonymous": "You have a new message.",
+        "actions": {
+          "reply": "Reply",
+          "replyAria": "Reply to {actor}"
+        }
+      },
+      "circle_message_received": {
+        "sentence": "{moreActors, plural, =0 {<b>{actor}</b> wrote} one {<b>{actor}</b> and # other wrote} other {<b>{actor}</b> and # others wrote}} in {hasCircle, select, yes {<b>{circle}</b>} other {your circle}}.",
         "actions": {
           "reply": "Reply",
           "replyAria": "Reply to {actor}"

@@ -94,6 +94,7 @@ export const notificationUrl = (type: string, relatedId?: string): string => {
     case "exchange_disputed":
       return "/trades";
     case "message_received":
+    case "circle_message_received":
       return "/messages";
     case "review_received":
       return "/profile";
