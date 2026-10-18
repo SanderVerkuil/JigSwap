@@ -1505,7 +1505,8 @@ export default defineSchema({
     illegalNotice: v.optional(
       v.object({
         notifierName: v.string(),
-        notifierEmail: v.string(),
+        // Only when it differs from the reporter's account email; read falls back to the account's.
+        notifierEmail: v.optional(v.string()),
         goodFaith: v.literal(true),
       }),
     ),

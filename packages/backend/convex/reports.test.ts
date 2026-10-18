@@ -579,10 +579,82 @@ describe("fileReport: rules", () => {
       reason: "illegal",
       illegalNotice: { goodFaith: true, notifierName: "  A. Liddell " },
     });
+    // The email equals the account's, so it isn't copied onto the notice.
     expect((await reportRow(t, reportId)).illegalNotice).toEqual({
       notifierName: "A. Liddell",
+      goodFaith: true,
+    });
+  });
+
+  test("illegal: a differing email is stored; getReport falls back to the account email", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, carol } = await seed(t);
+    const own = await file(asAlice(t), {
+      targetKind: "user",
+      targetId: bob,
+      reason: "illegal",
+      illegalNotice: {
+        goodFaith: true,
+        notifierEmail: " CLERK_ALICE@example.com ",
+      },
+    });
+    const other = await file(asAlice(t), {
+      targetKind: "user",
+      targetId: carol,
+      reason: "illegal",
+      illegalNotice: { goodFaith: true, notifierEmail: "legal@firm.example" },
+    });
+    expect((await reportRow(t, own.reportId)).illegalNotice).toEqual({
+      notifierName: "Alice",
+      goodFaith: true,
+    });
+    expect((await reportRow(t, other.reportId)).illegalNotice).toEqual({
+      notifierName: "Alice",
+      notifierEmail: "legal@firm.example",
+      goodFaith: true,
+    });
+
+    const detail = (reportId: Id<"reports">) =>
+      asAdmin(t).query(api.admin.getReport.getReport, { reportId });
+    expect((await detail(own.reportId)).illegalNotice).toEqual({
+      notifierName: "Alice",
       notifierEmail: "clerk_alice@example.com",
       goodFaith: true,
+    });
+    expect((await detail(other.reportId)).illegalNotice).toMatchObject({
+      notifierEmail: "legal@firm.example",
+    });
+  });
+
+  test("illegal: an over-long name or email, or a malformed email, is IllegalNoticeIncomplete", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seed(t);
+    for (const notice of [
+      { notifierName: "x".repeat(201) },
+      { notifierEmail: `${"x".repeat(243)}@example.com` },
+      { notifierEmail: "not-an-email" },
+      { notifierEmail: "two words@example.com" },
+    ]) {
+      await expectCode(
+        file(asAlice(t), {
+          targetKind: "user",
+          targetId: bob,
+          reason: "illegal",
+          illegalNotice: { goodFaith: true, ...notice },
+        }),
+        "IllegalNoticeIncomplete",
+      );
+    }
+    // At the limits it is accepted.
+    await file(asAlice(t), {
+      targetKind: "user",
+      targetId: bob,
+      reason: "illegal",
+      illegalNotice: {
+        goodFaith: true,
+        notifierName: "x".repeat(200),
+        notifierEmail: `${"x".repeat(242)}@example.com`,
+      },
     });
   });
 

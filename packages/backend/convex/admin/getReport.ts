@@ -28,6 +28,13 @@ export const getReport = query({
       photoUrl = image ? await ctx.storage.getUrl(image.fileId) : null;
     }
 
+    // The notice stores the notifier email only when it differs from the account's.
+    const notifierEmail =
+      report.illegalNotice?.notifierEmail ??
+      (report.illegalNotice
+        ? (await ctx.db.get(report.reporterId))?.email
+        : undefined);
+
     const others = (await reportsAgainst(ctx, report.reportedUserId)).filter(
       (row) => row._id !== report._id,
     );
@@ -39,7 +46,12 @@ export const getReport = query({
       reason: report.reason,
       ...(report.details !== undefined ? { details: report.details } : {}),
       ...(report.illegalNotice !== undefined
-        ? { illegalNotice: report.illegalNotice }
+        ? {
+            illegalNotice: {
+              ...report.illegalNotice,
+              ...(notifierEmail !== undefined ? { notifierEmail } : {}),
+            },
+          }
         : {}),
       evidence: report.evidence,
       status: report.status,

@@ -13,6 +13,13 @@ const reportFields = schema.tables.reports.validator.fields;
 
 /** Max length of the reporter's optional free-text details. */
 export const MAX_REPORT_DETAILS = 1000;
+/** Max length of the Art. 16(2) notifier name. */
+export const MAX_NOTIFIER_NAME = 200;
+/** Max length of the Art. 16(2) notifier email (RFC 5321 path limit). */
+export const MAX_NOTIFIER_EMAIL = 254;
+/** A basic shape check, not full RFC validation: something@something.tld, no spaces. */
+const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 /** How many messages before the reported one the evidence snapshot keeps. */
 export const EVIDENCE_PRECEDING_MESSAGES = 10;
 
@@ -102,7 +109,10 @@ export const fileReport = mutation({
 });
 
 // The Art. 16(2) notice for an "illegal" report: the good-faith statement is required; the
-// notifier's name and email fall back to the account's when the client omits them.
+// notifier's name and email fall back to the account's when the client omits them. The name is
+// capped at MAX_NOTIFIER_NAME, the email at MAX_NOTIFIER_EMAIL with a basic shape check (all
+// IllegalNoticeIncomplete). The email is stored only when it differs from the account's, so the
+// account email isn't copied into every notice; getReport falls back to it at read time.
 const illegalNoticeOf = async (
   ctx: MutationCtx,
   reporterId: Id<"users">,
@@ -121,13 +131,24 @@ const illegalNoticeOf = async (
     notice.notifierName?.trim() || account?.name?.trim() || undefined;
   const notifierEmail =
     notice.notifierEmail?.trim() || account?.email?.trim() || undefined;
-  if (!notifierName || !notifierEmail) {
+  if (
+    !notifierName ||
+    !notifierEmail ||
+    notifierName.length > MAX_NOTIFIER_NAME ||
+    notifierEmail.length > MAX_NOTIFIER_EMAIL ||
+    !EMAIL_SHAPE.test(notifierEmail)
+  ) {
     throw new ConvexError({
       code: "IllegalNoticeIncomplete",
-      message: "Reporting illegal content needs your name and email",
+      message: "Reporting illegal content needs your name and a valid email",
     });
   }
-  return { notifierName, notifierEmail, goodFaith: true };
+  const accountEmail = account?.email?.trim().toLowerCase();
+  return {
+    notifierName,
+    ...(notifierEmail.toLowerCase() !== accountEmail ? { notifierEmail } : {}),
+    goodFaith: true,
+  };
 };
 
 // Resolve the target as the reporter may see it, or null when it doesn't exist or isn't visible.
