@@ -1,11 +1,14 @@
 import { MemberInitial } from "@/components/members/member-initial";
-import type { MemberNameSource } from "@jigswap/contracts";
+import type { ExchangePartyState, MemberNameSource } from "@jigswap/contracts";
 import { renderToStaticMarkup } from "react-dom/server";
 import { IntlProvider } from "use-intl";
 import { describe, expect, it } from "vitest";
 import en from "../../locales/en.json";
 import nl from "../../locales/nl.json";
-import { useMemberDisplayName } from "./member-display-name";
+import {
+  useMemberDisplayName,
+  usePartyDisplayName,
+} from "./member-display-name";
 
 function Name({ source }: { source: MemberNameSource | null }) {
   const displayName = useMemberDisplayName();
@@ -50,6 +53,32 @@ describe("useMemberDisplayName", () => {
   it("falls back to the localized generic label", () => {
     expect(render(<Name source={{ name: "null null" }} />)).toBe("Puzzler");
     expect(render(<Name source={null} />, "nl")).toBe("Puzzelaar");
+  });
+});
+
+function PartyName({
+  source,
+  state,
+}: {
+  source: MemberNameSource | null;
+  state: ExchangePartyState;
+}) {
+  const partyName = usePartyDisplayName();
+  return <>{partyName(source, state)}</>;
+}
+
+describe("usePartyDisplayName", () => {
+  it("names a departed party 'Former member' and a hidden one generically", () => {
+    expect(render(<PartyName source={null} state="departed" />)).toBe(
+      "Former member",
+    );
+    expect(render(<PartyName source={null} state="departed" />, "nl")).toBe(
+      "Voormalig lid",
+    );
+    expect(render(<PartyName source={null} state="hidden" />)).toBe("Puzzler");
+    expect(
+      render(<PartyName source={{ name: "Mara" }} state="tradeRevealed" />),
+    ).toBe("Mara");
   });
 });
 

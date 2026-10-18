@@ -1,6 +1,7 @@
 import {
   memberInitials,
   resolveMemberDisplayName,
+  type ExchangePartyState,
   type MemberNameSource,
 } from "@jigswap/contracts";
 import { useCallback } from "react";
@@ -31,3 +32,20 @@ export function useMemberDisplayName(): (
 export const memberInitialOf = (
   source: MemberNameSource | null | undefined,
 ): string | undefined => memberInitials(resolveMemberDisplayName(source ?? {}));
+
+/**
+ * A trade party's name from its exchange-view state: "Former member" when the account is gone,
+ * else the member's resolved name (a hidden party is null, so it gets the generic label).
+ */
+export function usePartyDisplayName(): (
+  member: MemberNameSource | null | undefined,
+  state: ExchangePartyState | undefined,
+) => string {
+  const t = useTranslations("notifications.rich");
+  const displayName = useMemberDisplayName();
+  return useCallback(
+    (member, state) =>
+      state === "departed" ? t("formerMember") : displayName(member),
+    [t, displayName],
+  );
+}

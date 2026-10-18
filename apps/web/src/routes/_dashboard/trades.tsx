@@ -5,20 +5,23 @@ import {
   FilterBar,
 } from "@/components/community/primitives";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
+import { TradePartnerCard } from "@/components/exchange/trade-partner-card";
 import { ThreadView } from "@/components/messaging/thread-view";
 import { LeaveReviewDialog } from "@/components/reputation/leave-review-dialog";
-import { ReputationBadge } from "@/components/reputation/reputation-badge";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway, Id } from "@/gateway";
 import { useRelativeTime } from "@/hooks/use-relative-time";
-import { useMemberDisplayName } from "@/lib/member-display-name";
+import {
+  useMemberDisplayName,
+  usePartyDisplayName,
+} from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
 import { validateTradesSearch } from "@/lib/trades-search";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import {
   ArrowLeftRight,
@@ -26,7 +29,6 @@ import {
   MessageCircle,
   Package,
   Tag,
-  User,
   XCircle,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -254,7 +256,7 @@ function ExchangeListRow({
   isLast: boolean;
 }) {
   const t = useTranslations("trades");
-  const displayName = useMemberDisplayName();
+  const partyName = usePartyDisplayName();
   const tCommon = useTranslations("common");
   const relativeTime = useRelativeTime();
   const [open, setOpen] = useState(focused);
@@ -275,7 +277,10 @@ function ExchangeListRow({
   const primary = mineTitle ?? theirsTitle;
   const secondary = mineTitle ? theirsTitle : undefined;
   const counterparty = incoming ? exchange.requester : exchange.owner;
-  const who = displayName(counterparty);
+  const who = partyName(
+    counterparty,
+    incoming ? exchange.requesterState : exchange.ownerState,
+  );
 
   const KindIcon = KIND_ICONS[exchange.type] ?? ArrowLeftRight;
 
@@ -385,8 +390,6 @@ function ExchangeDetail({
   const partner =
     exchange.requester?._id === viewerId ? exchange.owner : exchange.requester;
   const partnerName = partner ? displayName(partner) : undefined;
-  // Who the from/to line names: the requester for incoming rows, else the owner (null while hidden).
-  const counterparty = incoming ? exchange.requester : exchange.owner;
 
   return (
     <div className="mt-3 ml-[60px] flex flex-col gap-4">
@@ -405,24 +408,11 @@ function ExchangeDetail({
         )}
       </div>
 
-      <div className="text-muted-foreground flex items-center gap-2 text-sm">
-        <User className="h-4 w-4" />
-        <span>
-          {incoming ? t("from") : t("to")}{" "}
-          {counterparty ? (
-            <Link
-              to="/members/$handle"
-              params={{ handle: counterparty.username ?? counterparty._id }}
-              className="text-foreground hover:underline"
-            >
-              {displayName(counterparty)}
-            </Link>
-          ) : (
-            displayName(counterparty)
-          )}
-        </span>
-        <ReputationBadge memberId={partnerId} />
-      </div>
+      <TradePartnerCard
+        exchangeId={exchange._id}
+        label={incoming ? t("from") : t("to")}
+        viewerIsRequester={!incoming}
+      />
 
       <div className="flex flex-wrap items-center gap-2">
         {exchange.status === "proposed" && incoming && (

@@ -646,6 +646,10 @@
       "completed": "Afgerond",
       "cancelled": "Geannuleerd",
       "disputed": "In geschil"
+    },
+    "partner": {
+      "hiddenNote": "Hun gegevens verschijnen zodra ze accepteren of reageren.",
+      "reviewsHeading": "Ontvangen reviews"
     }
   },
   "tradeRequest": {

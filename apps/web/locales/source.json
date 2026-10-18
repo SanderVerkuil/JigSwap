@@ -646,6 +646,10 @@
       "completed": "Completed",
       "cancelled": "Cancelled",
       "disputed": "Disputed"
+    },
+    "partner": {
+      "hiddenNote": "Their details appear once they accept or reply.",
+      "reviewsHeading": "Reviews received"
     }
   },
   "tradeRequest": {
