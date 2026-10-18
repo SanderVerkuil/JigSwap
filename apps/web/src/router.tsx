@@ -5,6 +5,7 @@ import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { DefaultCatchBoundary } from "./components/DefaultCatchBoundary";
 import { NotFoundContent } from "./components/NotFound";
+import { appScrollRestoration } from "./lib/scroll-restoration";
 import { routeTree } from "./routeTree.gen";
 
 export function getRouter() {
@@ -51,7 +52,7 @@ export function getRouter() {
     // NotFound) covers truly top-level unmatched paths where no shell applies.
     defaultNotFoundComponent: () => <NotFoundContent />,
     context: { queryClient, convexClient: convex, convexQueryClient },
-    scrollRestoration: true,
+    ...appScrollRestoration,
     Wrap: ({ children }) => (
       <ConvexProvider client={convexQueryClient.convexClient}>
         {children}

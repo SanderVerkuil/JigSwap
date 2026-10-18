@@ -15,6 +15,7 @@
 import { InstallAppTip } from "@/components/install-app/install-app-tip";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { WhatsNewAnnouncer } from "@/components/whats-new/announcer";
+import { APP_SCROLL_REGION_ID } from "@/lib/scroll-restoration";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { AppSidebar } from "./app-sidebar";
@@ -54,7 +55,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               {/* ONE scroll region holds the page head + content, so content scrolls UNDER the
                   glass head (sticky top-0). Clipped to the card's rounded corners by SidebarInset's
                   overflow-hidden. */}
-              <div className="flex-1 overflow-x-hidden md:min-h-0 md:overflow-y-auto md:[scrollbar-gutter:stable]">
+              <div
+                data-scroll-restoration-id={APP_SCROLL_REGION_ID}
+                className="flex-1 overflow-x-hidden md:min-h-0 md:overflow-y-auto md:[scrollbar-gutter:stable]"
+              >
                 <PageHead />
                 <ContentArea>{children}</ContentArea>
               </div>
