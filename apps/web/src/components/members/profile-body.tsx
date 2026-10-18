@@ -16,6 +16,7 @@ import {
   ProfilePuzzlesSection,
 } from "@/components/members/profile-listings";
 import { toPlankBox, type ShelfCopy } from "@/components/profile/to-plank-box";
+import { BlockMemberDialog } from "@/components/social/block-member-dialog";
 import { FollowButton } from "@/components/social/follow-button";
 import { MemberActionsMenu } from "@/components/social/member-actions-menu";
 import { MessageButton } from "@/components/social/message-button";
@@ -53,7 +54,7 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useTranslations } from "use-intl";
 
 // The web tier derives Convex view types from the gateway (not @jigswap/contracts directly).
@@ -96,6 +97,8 @@ export function ProfileBody({
   const displayName = useMemberDisplayName();
   const hero = profile.hero;
   const firstName = firstNameOf(displayName({ name: hero.displayName }));
+  // The viewer blocked this member: the payload is an identity stub.
+  const blockedByMe = profile.locked && profile.blockedByMe === true;
 
   return (
     // Inside the dashboard shell the content area already applies the user's
@@ -113,10 +116,16 @@ export function ProfileBody({
         hero={hero}
         viewer={viewer}
         locked={profile.locked}
+        blockedByMe={blockedByMe}
         returnToHref={returnToHref}
       />
 
-      {profile.locked ? (
+      {blockedByMe ? (
+        <BlockedCard
+          name={displayName({ name: hero.displayName })}
+          memberId={hero.memberId as Id<"users">}
+        />
+      ) : profile.locked ? (
         <LockedCard
           firstName={firstName}
           memberId={hero.memberId as Id<"users">}
@@ -160,11 +169,13 @@ function HeroSection({
   hero,
   viewer,
   locked,
+  blockedByMe,
   returnToHref,
 }: {
   hero: Hero;
   viewer: ProfileViewer;
   locked: boolean;
+  blockedByMe: boolean;
   returnToHref?: string;
 }) {
   const t = useTranslations("members.profile");
@@ -239,13 +250,16 @@ function HeroSection({
         </div>
       </div>
 
-      <HeroActions
-        viewer={viewer}
-        memberId={hero.memberId as Id<"users">}
-        name={name}
-        locked={hero.visibility === "private"}
-        returnToHref={returnToHref}
-      />
+      {/* Blocked: the BlockedCard below holds the only action, Unblock. */}
+      {!blockedByMe && (
+        <HeroActions
+          viewer={viewer}
+          memberId={hero.memberId as Id<"users">}
+          name={name}
+          locked={hero.visibility === "private"}
+          returnToHref={returnToHref}
+        />
+      )}
     </section>
   );
 }
@@ -689,6 +703,45 @@ function LockedCard({
           </SignUpLink>
         </Button>
       )}
+    </Card>
+  );
+}
+
+// ── Blocked by the viewer: a calm stub with Unblock ──────────────────────────
+function BlockedCard({
+  name,
+  memberId,
+}: {
+  name: string;
+  memberId: Id<"users">;
+}) {
+  const t = useTranslations("safety");
+  const router = useRouter();
+  const [confirming, setConfirming] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  return (
+    <Card className="mx-auto flex w-full max-w-md flex-col items-center gap-3 p-8 text-center">
+      <p className="text-muted-foreground text-sm">
+        {t("blockedBanner", { name })}
+      </p>
+      <Button
+        ref={triggerRef}
+        variant="outline"
+        className="h-11 md:h-9"
+        onClick={() => setConfirming(true)}
+      >
+        {t("unblock")}
+      </Button>
+      <BlockMemberDialog
+        mode="unblock"
+        memberId={memberId}
+        name={name}
+        open={confirming}
+        onOpenChange={setConfirming}
+        // Re-run the route loader so the full profile comes back.
+        onDone={() => void router.invalidate()}
+        returnFocusRef={triggerRef}
+      />
     </Card>
   );
 }
