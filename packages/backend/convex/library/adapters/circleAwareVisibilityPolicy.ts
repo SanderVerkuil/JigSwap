@@ -19,16 +19,18 @@ import {
 // (#181 — never merely any circle the two happen to share). The returned policy is then a pure,
 // synchronous function of those precomputed facts.
 
-// Map a Library Copy's SharingSetting to a Sharing VisibilityScope. The current SharingSetting has
-// no explicit "friendCircle" value; a private-but-circle-shared copy is treated as friendCircle so
-// circle members gain view. Public/availability behaviour is preserved exactly.
+// Map a Library Copy's SharingSetting to a Sharing VisibilityScope. The copy's visibility is the
+// EFFECTIVE one (copyMapper -> effectiveCopyVisibility): a legacy row's untrusted stored "private"
+// loads as "visible", so "private" here is always the owner's per-copy choice. That maps to the
+// "private" scope — no circle visibility — matching canViewCopy's isCopyPrivate early return.
+// Public/availability behaviour is preserved exactly.
 const scopeOf = (copy: Copy): VisibilityScope => {
   const sharing = copy.sharing;
   if (sharing.isAvailableFor("trade")) return "tradeable";
   if (sharing.isAvailableFor("sale")) return "tradeable";
   if (sharing.isAvailableFor("lend")) return "lendable";
   if (sharing.visibility === "visible") return "visible";
-  return "friendCircle"; // private copies fall back to circle-scoped visibility
+  return "private";
 };
 
 // The transaction kind a Library Copy is offered for (if any), to gate Sharing's transact check.

@@ -10,8 +10,8 @@ const componentLister: Lister = (ctx, userId) =>
 // Is this member currently on the messages page? Powers the message_received suppression
 // (design spec 2026-07-14): a present recipient gets NO bell/email/push — the open tab's live
 // UI + toast is the notification. FAIL-OPEN: any presence hiccup answers "no", because a
-// spurious notification beats a silently swallowed one, and a throw here would poison the
-// dispatch transaction (retried forever).
+// spurious notification beats a silently swallowed one, and a throw here would fail the
+// notifications subscriber for the event (logged + marked failed, never retried — events/dispatch).
 export const isViewingMessages = async (
   ctx: MutationCtx,
   userId: string,
