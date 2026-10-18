@@ -340,6 +340,7 @@ import type * as puzzles from "../puzzles.js";
 import type * as reports_attachmentEvidence from "../reports/attachmentEvidence.js";
 import type * as reports_fileReport from "../reports/fileReport.js";
 import type * as reports_listMyReports from "../reports/listMyReports.js";
+import type * as reports_retention from "../reports/retention.js";
 import type * as reputation_adapters_convexExchangeCompletionPort from "../reputation/adapters/convexExchangeCompletionPort.js";
 import type * as reputation_adapters_convexPartnerReviewRepository from "../reputation/adapters/convexPartnerReviewRepository.js";
 import type * as reputation_adapters_convexReputationProfileRepository from "../reputation/adapters/convexReputationProfileRepository.js";
@@ -819,6 +820,7 @@ declare const fullApi: ApiFromModules<{
   "reports/attachmentEvidence": typeof reports_attachmentEvidence;
   "reports/fileReport": typeof reports_fileReport;
   "reports/listMyReports": typeof reports_listMyReports;
+  "reports/retention": typeof reports_retention;
   "reputation/adapters/convexExchangeCompletionPort": typeof reputation_adapters_convexExchangeCompletionPort;
   "reputation/adapters/convexPartnerReviewRepository": typeof reputation_adapters_convexPartnerReviewRepository;
   "reputation/adapters/convexReputationProfileRepository": typeof reputation_adapters_convexReputationProfileRepository;

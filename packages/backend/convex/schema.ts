@@ -1770,6 +1770,9 @@ export default defineSchema({
     evidenceMissing: v.optional(v.boolean()),
     decidedBy: v.optional(v.id("users")),
     decidedAt: v.optional(v.number()),
+    // The retention purge ran (reports/retention, 12 months after the decision): the reporter is
+    // anonymised and the details and evidence message bodies are cleared.
+    retentionPurgedAt: v.optional(v.number()),
     createdAt: v.number(),
   })
     .index("by_status_created", ["status", "createdAt"])

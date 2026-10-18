@@ -8,6 +8,7 @@ import { releaseEvidenceHold } from "../conversation/messageAttachments";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
 import { makeNotify } from "../notifications/adapters/makeNotify";
+import { scheduleReportRetention } from "../reports/retention";
 import { deleteCopyPhoto } from "./deleteCopyPhoto";
 import { adminLabelOf } from "./reportViews";
 import { stampModerationAction } from "./stampModerationAction";
@@ -86,6 +87,8 @@ export const decideReport = mutation({
         decidedBy: adminId,
         decidedAt: now,
       });
+      // Kept 12 months after the decision, then purged (spec 2.8).
+      await scheduleReportRetention(ctx, row._id, now);
     }
 
     // A reported message photo: on removal, copy its bytes into report-only evidence (which then
