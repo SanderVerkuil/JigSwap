@@ -458,7 +458,7 @@ describe("sharing.deleteCircle", () => {
     expect(await deletedEvents(t)).toHaveLength(0);
   });
 
-  test("a circle with a long name (no create-side cap) can still be deleted", async () => {
+  test("a circle stored with a name over the create-side cap can still be deleted", async () => {
     const t = convexTest(schema, modules);
     const { circleId } = await seed(t);
     const longName = "L".repeat(150);
