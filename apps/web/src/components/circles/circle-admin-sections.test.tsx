@@ -11,6 +11,7 @@ import {
   canManageCircle,
   CircleDeleteSection,
   CircleInviteSection,
+  memberRowControls,
 } from "./circle-admin-sections";
 
 const useSignedOut = () => ({
@@ -154,5 +155,46 @@ describe("canManageCircle", () => {
     expect(canManageCircle("Admin")).toBe(true);
     expect(canManageCircle("Exchange")).toBe(false);
     expect(canManageCircle("ViewOnly")).toBe(false);
+  });
+});
+
+describe("memberRowControls", () => {
+  const ME = "u-me";
+  const owner = { memberId: "u-owner", isOwner: true };
+  const other = { memberId: "u-other", isOwner: false };
+  const self = { memberId: ME, isOwner: false };
+
+  it("lets an Admin change and remove another non-owner member", () => {
+    expect(memberRowControls("Admin", other, ME)).toEqual({
+      canChangePermission: true,
+      canRemove: true,
+    });
+  });
+
+  it("never edits the owner's seat", () => {
+    expect(memberRowControls("Admin", owner, ME)).toEqual({
+      canChangePermission: false,
+      canRemove: false,
+    });
+  });
+
+  it("offers no remove on the viewer's own row (that is Leave)", () => {
+    expect(memberRowControls("Admin", self, ME)).toEqual({
+      canChangePermission: true,
+      canRemove: false,
+    });
+  });
+
+  it("offers no remove until the viewer's id is known", () => {
+    expect(memberRowControls("Admin", other, undefined).canRemove).toBe(false);
+  });
+
+  it("drops every control once the viewer is no longer an Admin", () => {
+    for (const level of ["Exchange", "ViewOnly"] as const) {
+      expect(memberRowControls(level, other, ME)).toEqual({
+        canChangePermission: false,
+        canRemove: false,
+      });
+    }
   });
 });

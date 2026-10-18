@@ -3,6 +3,7 @@ import {
   canManageCircle,
   CircleDeleteSection,
   CircleInviteSection,
+  memberRowControls,
 } from "@/components/circles/circle-admin-sections";
 import { MyCircleInvitations } from "@/components/circles/circle-invitations";
 import { LeaveCircleAction } from "@/components/circles/leave-circle-action";
@@ -427,7 +428,13 @@ function ManageCircleDialog({
                   <div className="flex items-center gap-2">
                     <Select
                       value={member.permission}
-                      disabled={member.isOwner}
+                      disabled={
+                        !memberRowControls(
+                          detail.viewerPermission,
+                          member,
+                          convexUser?._id,
+                        ).canChangePermission
+                      }
                       onValueChange={(value: CirclePermissionLevel) =>
                         handlePermission(member, value)
                       }
@@ -443,7 +450,11 @@ function ManageCircleDialog({
                         ))}
                       </SelectContent>
                     </Select>
-                    {!member.isOwner && (
+                    {memberRowControls(
+                      detail.viewerPermission,
+                      member,
+                      convexUser?._id,
+                    ).canRemove && (
                       <Button
                         variant="ghost"
                         size="sm"

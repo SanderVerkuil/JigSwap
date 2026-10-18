@@ -13,6 +13,23 @@ type CirclePermissionLevel = "ViewOnly" | "Exchange" | "Admin";
 export const canManageCircle = (viewerPermission: CirclePermissionLevel) =>
   viewerPermission === "Admin";
 
+// The controls on one member's row in the manage dialog. Read off the live viewerPermission, so a
+// viewer who loses Admin while the dialog is open loses them at once. The owner's seat is never
+// editable, and the viewer's own row has no remove: walking out is Leave (recorded as "left"), not
+// a removal. Until the viewer's id is known, no row offers remove.
+export const memberRowControls = (
+  viewerPermission: CirclePermissionLevel,
+  member: { memberId: string; isOwner: boolean },
+  viewerId: string | undefined,
+) => {
+  const canEdit = canManageCircle(viewerPermission) && !member.isOwner;
+  return {
+    canChangePermission: canEdit,
+    canRemove:
+      canEdit && viewerId !== undefined && member.memberId !== viewerId,
+  };
+};
+
 // Invite: members join only by accepting. Any Admin, not only the owner.
 export function CircleInviteSection({
   circleId,
