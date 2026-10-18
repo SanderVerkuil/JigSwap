@@ -188,16 +188,18 @@ export const anonymousMemberOf = (
  * with `salt` (pass the copyId so the same hidden member is stable within a timeline but
  * un-correlatable across copies). Rules, in order:
  *   1. target IS the viewer -> revealed (even if the viewer's own profile is private).
- *   2. target user row missing -> anonymous, `departed`. The target blocked the viewer ->
- *      anonymous, before every reveal rule below (a block vetoes the circle reveal too). When the
- *      VIEWER blocked the target they are revealed: the blocker chose them and needs the name to
- *      unblock.
+ *   2. target user row missing, or deactivated (`isActive === false`) -> anonymous, `departed`.
+ *      Checked before every reveal rule, so a departed member is never named (matching
+ *      notifications, which render them "Former member"). Then: the target blocked the viewer ->
+ *      anonymous, also before every reveal rule below (a block vetoes the circle reveal too). When
+ *      the VIEWER blocked the target they are revealed: the blocker chose them and needs the name
+ *      to unblock.
  *   3. target's profile is public -> revealed.
  *   4. viewer and target are mutual followers -> revealed.
- *   5. viewer and target are currently in the same circle, and the target is active -> revealed,
- *      IDENTITY ONLY (`bio`/`location` omitted). Product decision (#152): sharing a circle counts as
- *      a reveal. It never unlocks profile content (canSeeProfileContent is unchanged).
- *   6. otherwise -> anonymous (`departed` when the target is deactivated).
+ *   5. viewer and target are currently in the same circle -> revealed, IDENTITY ONLY (`bio`/
+ *      `location` omitted). Product decision (#152): sharing a circle counts as a
+ *      reveal. It never unlocks profile content (canSeeProfileContent is unchanged).
+ *   6. otherwise -> anonymous.
  * Rules 3-4 are `isRevealedByOrdinaryRules`. In the anonymous branch the returned object carries
  * ONLY `{ anonymous: true, anonRef }` (plus `departed`) — no real id, name, username, or avatar.
  */
@@ -214,7 +216,7 @@ export const projectMemberIdentity = async (
   }
 
   const target = await ctx.db.get(targetId);
-  if (!target) {
+  if (!target || target.isActive === false) {
     return {
       anonymous: true,
       anonRef: anonRefOf(targetId, salt),
@@ -232,8 +234,7 @@ export const projectMemberIdentity = async (
     return { anonymous: false, member: toMemberView(target) };
   }
 
-  const departed = target.isActive === false;
-  if (!departed && (await shareACircle(ctx, viewerId, targetId))) {
+  if (await shareACircle(ctx, viewerId, targetId)) {
     const {
       bio: _bio,
       location: _location,
@@ -242,9 +243,7 @@ export const projectMemberIdentity = async (
     return { anonymous: false, member: identity };
   }
 
-  return departed
-    ? { anonymous: true, anonRef: anonRefOf(targetId, salt), departed: true }
-    : { anonymous: true, anonRef: anonRefOf(targetId, salt) };
+  return { anonymous: true, anonRef: anonRefOf(targetId, salt) };
 };
 
 /** The public projection of a review author: name + (consent-gated) avatar, or null. */

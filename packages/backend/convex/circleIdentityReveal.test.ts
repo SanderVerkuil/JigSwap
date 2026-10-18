@@ -373,3 +373,129 @@ describe("other circle surfaces project members consistently", () => {
     expect(json).not.toContain("Secret Town");
   });
 });
+
+// Insert an extra member directly (outside the shared seed), optionally seated in CIRCLE.
+const addUser = (
+  t: TestConvex<typeof schema>,
+  opts: {
+    clerkId: string;
+    name: string;
+    isActive: boolean;
+    visibility?: "public" | "private";
+    inCircle?: boolean;
+  },
+) =>
+  t.run(async (ctx) => {
+    const now = Date.now();
+    const id = await ctx.db.insert("users", {
+      clerkId: opts.clerkId,
+      email: `${opts.clerkId}@example.com`,
+      name: opts.name,
+      isActive: opts.isActive,
+      createdAt: now,
+      updatedAt: now,
+    });
+    if (opts.visibility) {
+      await ctx.db.insert("profiles", {
+        memberId: id,
+        visibility: opts.visibility,
+        updatedAt: now,
+      });
+    }
+    if (opts.inCircle) {
+      const circle = (await ctx.db
+        .query("circles")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", CIRCLE))
+        .unique())!;
+      await ctx.db.patch(circle._id, {
+        memberships: [
+          ...circle.memberships,
+          {
+            id: `m-${opts.clerkId}`,
+            memberId: id,
+            permission: "ViewOnly",
+            joinedAt: now,
+          },
+        ],
+      });
+      await ctx.db.insert("circleMembers", {
+        circleAggregateId: CIRCLE,
+        memberId: id,
+      });
+    }
+    return id;
+  });
+
+const DEPARTED = {
+  anonymous: true,
+  anonRef: expect.any(String),
+  departed: true,
+};
+
+describe("departed members are never revealed, by any rule", () => {
+  test("a PUBLIC inactive circle-mate projects departed", async () => {
+    const t = convexTest(schema, modules);
+    const { viewer } = await seed(t);
+    const pubGone = await addUser(t, {
+      clerkId: "clerk_pubgone",
+      name: "PubGone",
+      isActive: false,
+      inCircle: true,
+    });
+
+    const p = await project(t, viewer, pubGone);
+    expect(p).toEqual(DEPARTED);
+    expect(JSON.stringify(p)).not.toContain("PubGone");
+  });
+
+  test("a PUBLIC inactive non-circle member projects departed", async () => {
+    const t = convexTest(schema, modules);
+    const { viewer } = await seed(t);
+    const pubStranger = await addUser(t, {
+      clerkId: "clerk_pubstranger",
+      name: "PubStranger",
+      isActive: false,
+      visibility: "public",
+    });
+
+    expect(await project(t, viewer, pubStranger)).toEqual(DEPARTED);
+  });
+
+  test("a MUTUAL-follower inactive member projects departed", async () => {
+    const t = convexTest(schema, modules);
+    const { viewer, gone } = await seed(t);
+    await t.run(async (ctx) => {
+      await ctx.db.insert("follows", {
+        followerId: viewer,
+        followeeId: gone,
+        createdAt: 1,
+      });
+      await ctx.db.insert("follows", {
+        followerId: gone,
+        followeeId: viewer,
+        createdAt: 2,
+      });
+    });
+
+    expect(await project(t, viewer, gone)).toEqual(DEPARTED);
+  });
+
+  test("getCircle: a PUBLIC inactive member's seat shows departed, no name", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const pubGone = await addUser(t, {
+      clerkId: "clerk_pubgone",
+      name: "PubGone",
+      isActive: false,
+      inCircle: true,
+    });
+
+    const circle = await asViewer(t).query(api.sharing.getCircle.getCircle, {
+      circleId: CIRCLE,
+    });
+    const seat = circle!.members.find((m) => m.memberId === pubGone)!;
+    expect(seat.departed).toBe(true);
+    expect(seat.name).toBeUndefined();
+    expect(JSON.stringify(seat)).not.toContain("PubGone");
+  });
+});
