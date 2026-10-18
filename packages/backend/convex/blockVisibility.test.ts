@@ -297,6 +297,42 @@ describe("profiles", () => {
     });
   });
 
+  test("the identity reads return the blocker as not found to the blocked side only", async () => {
+    const t = convexTest(schema, modules);
+    const u = await seed(t);
+    await insertBlock(t, u.bob, u.alice);
+    const reads = (who: Who, target: Id<"users">, clerkId: string) =>
+      Promise.all([
+        as(t, who).query(api.identity.getUserById.getUserById, {
+          userId: target,
+        }),
+        as(t, who).query(api.identity.getUserStats.getUserStats, {
+          userId: target,
+        }),
+        as(t, who).query(api.identity.getUserByClerkId.getUserByClerkId, {
+          clerkId,
+        }),
+      ]);
+
+    // Alice was blocked by bob: bob reads as not found.
+    expect(await reads("alice", u.bob, "clerk_bob")).toEqual([
+      null,
+      null,
+      null,
+    ]);
+    // Bob (the blocker) still sees alice; each member still sees themselves.
+    for (const [who, target, clerkId] of [
+      ["bob", u.alice, "clerk_alice"],
+      ["alice", u.alice, "clerk_alice"],
+      ["bob", u.bob, "clerk_bob"],
+    ] as const) {
+      const [member, stats, byClerk] = await reads(who, target, clerkId);
+      expect(member).toMatchObject({ _id: target });
+      expect(stats).not.toBeNull();
+      expect(byClerk).toMatchObject({ _id: target });
+    }
+  });
+
   test("the blocker gets a minimal stub flagged blockedByMe", async () => {
     const t = convexTest(schema, modules);
     const u = await seed(t);

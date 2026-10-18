@@ -4,6 +4,7 @@ import type { Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { query } from "../_generated/server";
 import { isCopyPrivate, seesPrivateCopiesOf } from "../library/copyVisibility";
+import { blockStateBetween } from "../social/blocks";
 import { areMutualFollowers, profileVisibilityOf } from "../social/privacy";
 import { requireMember } from "./requireMember";
 
@@ -72,11 +73,14 @@ export const computeMemberStats = async (
 // Authenticated members only. Honours the profile-visibility chokepoint (see social/privacy.ts): a
 // member who went "private" has their stats hidden (returns null) from everyone except themselves
 // and their mutual followers — same rule as getUserById/getProfile. Default visibility is public.
+// A member who blocked the viewer has their stats hidden too (null), as getUserById.
 export const getUserStats = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args): Promise<MemberStatsView | null> => {
     const viewer = (await requireMember(ctx)) as unknown as Id<"users">;
     const target = args.userId;
+    if ((await blockStateBetween(ctx, viewer, target)) === "byThem")
+      return null;
 
     // Visibility ACL: a private member's stats are visible only to themselves and mutual followers.
     if (
