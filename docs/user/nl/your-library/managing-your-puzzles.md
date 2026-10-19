@@ -75,7 +75,9 @@ draaien voordat hij wordt geüpload. Sommige browsers blokkeren het bewerken van
 foto's om je privacy te beschermen (bijvoorbeeld Firefox met bescherming tegen
 fingerprinting). Daar wordt een foto die je niet hebt aangepast geüpload zoals
 hij is. Heb je hem wel aangepast, dan meldt JigSwap dat de wijzigingen niet
-kunnen worden toegepast en biedt aan de originele foto te uploaden.
+kunnen worden toegepast en biedt aan de originele foto te uploaden. De knop
+**Automatisch bijsnijden** staat er niet in die browsers, omdat hij de foto daar
+niet kan lezen.
 
 ### Foto's die wachten op controle
 

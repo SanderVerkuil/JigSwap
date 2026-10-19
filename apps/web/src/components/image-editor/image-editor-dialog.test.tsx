@@ -123,3 +123,41 @@ describe("ImageEditorDialog Apply", () => {
     },
   );
 });
+
+describe("ImageEditorDialog Auto crop", () => {
+  const autoCrop = () => screen.queryByRole("button", { name: "Auto crop" });
+
+  it("offers auto crop where canvas read-back can be trusted", () => {
+    renderEditor(vi.fn());
+    expect(autoCrop()).not.toBeNull();
+  });
+
+  it("hides auto crop in a scrambling browser", () => {
+    mocks.trusted.mockReturnValue(false);
+    renderEditor(vi.fn());
+    expect(autoCrop()).toBeNull();
+  });
+
+  it("probes the canvas once per opening, not on every render", () => {
+    mocks.trusted.mockClear();
+    renderEditor(vi.fn());
+    fireEvent.click(screen.getByRole("button", { name: "Rotate 90°" }));
+    fireEvent.click(screen.getByRole("button", { name: "drag frame" }));
+    expect(mocks.trusted).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not probe while closed", () => {
+    mocks.trusted.mockClear();
+    render(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <ImageEditorDialog
+          src={null}
+          fileName="photo.png"
+          onApply={vi.fn()}
+          onClose={() => {}}
+        />
+      </IntlProvider>,
+    );
+    expect(mocks.trusted).not.toHaveBeenCalled();
+  });
+});
