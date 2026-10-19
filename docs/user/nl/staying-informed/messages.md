@@ -1,7 +1,7 @@
 ---
 title: Berichten
 order: 2
-summary: "Chat met andere leden en je kringen, voeg puzzels, foto's en locaties toe, zie wie er typt of online is en vind oudere berichten terug."
+summary: "Chat met andere leden en je kringen, maak tekst op en voeg emoji, puzzels, foto's en locaties toe, zie wie er typt of online is en vind oudere berichten terug."
 ---
 
 # Berichten
@@ -233,6 +233,41 @@ De kop van het gesprek heeft snelkoppelingen naar waar het gesprek over gaat:
 
 Op een telefoon staan **Profiel bekijken** en **Uitwisseling bekijken** in het
 menu **Gespreksopties**.
+
+## Je berichten opmaken
+
+Je kunt tekst in een bericht opmaken door er een paar tekens omheen te typen.
+De opmaak zie je in het gesprek; voorbeelden in het overzicht en in meldingen
+tonen de gewone tekst.
+
+| Typ dit                    | Dan krijg je        |
+| -------------------------- | ------------------- |
+| `**vet**`                  | **vet**             |
+| `*cursief*` of `_cursief_` | _cursief_           |
+| `__onderstreept__`         | onderstreepte tekst |
+| `~~doorgehaald~~`          | ~~doorgehaald~~     |
+| `` `code` ``               | `code`              |
+
+- Opmaak werkt binnen één regel. Wil je meerdere regels opmaken, markeer dan
+  elke regel.
+- Tekens midden in een woord blijven zoals je ze typt, dus `snake_case` en
+  `2*3*4` krijgen geen opmaak.
+- Wil je een teken zoals `*` gewoon tonen, zet er dan een backslash voor:
+  `\*`.
+
+**Sneltoetsen:** selecteer tekst in het berichtvak en druk op **Ctrl+B** voor
+vet, **Ctrl+I** voor cursief of **Ctrl+U** voor onderstreept (**⌘** in plaats
+van **Ctrl** op een Mac). Druk nog een keer op dezelfde sneltoets om de opmaak
+weer weg te halen. Zonder selectie zet de sneltoets de tekens neer met de
+cursor ertussen.
+
+**Links:** webadressen die beginnen met `https://`, `http://` of `www.` worden
+links, die in een nieuw tabblad openen. De link toont altijd het volledige
+adres.
+
+**Emoji:** klik op een computer op de smileyknop naast het berichtvak om een
+emoji te kiezen; die komt waar de cursor staat. Gebruik op een telefoon de
+emojitoets van je toetsenbord.
 
 ## Een puzzel bijvoegen
 
