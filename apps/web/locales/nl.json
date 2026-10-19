@@ -2278,6 +2278,8 @@
       "follow_request_approved": "Volgverzoek goedgekeurd",
       "household_invite_received": "Uitnodigingen voor een huishouden",
       "household_invite_accepted": "Uitnodiging voor huishouden geaccepteerd",
+      "household_join_request_received": "Verzoeken om lid te worden van je huishouden",
+      "household_join_request_approved": "Verzoek om lid te worden goedgekeurd",
       "connection_offer_received": "Uitnodigingen om elkaar te volgen",
       "circle_invite_received": "Uitnodigingen voor een kring",
       "circle_invite_accepted": "Uitnodiging voor een kring geaccepteerd",
@@ -2419,6 +2421,14 @@
         "title": "Uitnodiging geaccepteerd",
         "message": "{hasActorName, select, yes {{actorName} is lid geworden van je huishouden.} other {Iemand is lid geworden van je huishouden.}}"
       },
+      "household_join_request_received": {
+        "title": "Verzoek om lid te worden",
+        "message": "{hasActorName, select, yes {{actorName} wil lid worden van je huishouden.} other {Iemand wil lid worden van je huishouden.}}"
+      },
+      "household_join_request_approved": {
+        "title": "Verzoek goedgekeurd",
+        "message": "{hasActorName, select, yes {{actorName} heeft je toegelaten tot hun huishouden.} other {Je verzoek om lid te worden van een huishouden is goedgekeurd.}}"
+      },
       "connection_offer_received": {
         "title": "Elkaar volgen?",
         "message": "{hasActorName, select, yes {{actorName} heeft je uitgenodigd om elkaar te volgen.} other {Iemand heeft je uitgenodigd om elkaar te volgen.}}"
@@ -2495,6 +2505,8 @@
       "follow_request_approved": "Wanneer een volgverzoek dat je stuurde wordt goedgekeurd.",
       "household_invite_received": "Wanneer iemand je uitnodigt voor hun huishouden.",
       "household_invite_accepted": "Wanneer iemand je uitnodiging voor het huishouden accepteert.",
+      "household_join_request_received": "Wanneer iemand lid wil worden van je huishouden.",
+      "household_join_request_approved": "Wanneer je verzoek om lid te worden van een huishouden is goedgekeurd.",
       "connection_offer_received": "Wanneer iemand die je heeft uitgenodigd vraagt om elkaar te volgen.",
       "circle_invite_received": "Wanneer een kringbeheerder je uitnodigt voor hun kring.",
       "circle_invite_accepted": "Wanneer iemand je uitnodiging voor een kring accepteert.",
@@ -2656,6 +2668,17 @@
       },
       "household_invite_accepted": {
         "sentence": "<b>{actor}</b> is lid geworden van je huishouden."
+      },
+      "household_join_request_received": {
+        "sentence": "<b>{actor}</b> wil lid worden van je huishouden.",
+        "resolved": {
+          "approved": "Goedgekeurd",
+          "declined": "Afgewezen",
+          "expired": "Verzoek verlopen of ingetrokken"
+        }
+      },
+      "household_join_request_approved": {
+        "sentence": "<b>{actor}</b> heeft je toegelaten tot hun huishouden."
       },
       "connection_offer_received": {
         "sentence": "<b>{actor}</b> heeft je uitgenodigd om elkaar te volgen."

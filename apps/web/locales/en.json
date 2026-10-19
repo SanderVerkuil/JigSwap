@@ -2278,6 +2278,8 @@
       "follow_request_approved": "Follow request approved",
       "household_invite_received": "Household invites",
       "household_invite_accepted": "Household invite accepted",
+      "household_join_request_received": "Requests to join your household",
+      "household_join_request_approved": "Request to join approved",
       "connection_offer_received": "Invitations to follow each other",
       "circle_invite_received": "Circle invites",
       "circle_invite_accepted": "Circle invite accepted",
@@ -2419,6 +2421,14 @@
         "title": "Invite accepted",
         "message": "{hasActorName, select, yes {{actorName} joined your household.} other {Someone joined your household.}}"
       },
+      "household_join_request_received": {
+        "title": "Request to join",
+        "message": "{hasActorName, select, yes {{actorName} asked to join your household.} other {Someone asked to join your household.}}"
+      },
+      "household_join_request_approved": {
+        "title": "Request approved",
+        "message": "{hasActorName, select, yes {{actorName} let you into their household.} other {Your request to join a household was approved.}}"
+      },
       "connection_offer_received": {
         "title": "Follow each other?",
         "message": "{hasActorName, select, yes {{actorName} invited you to follow each other.} other {Someone invited you to follow each other.}}"
@@ -2495,6 +2505,8 @@
       "follow_request_approved": "When a follow request you sent is approved.",
       "household_invite_received": "When someone invites you to their household.",
       "household_invite_accepted": "When someone accepts your household invite.",
+      "household_join_request_received": "When someone asks to join your household.",
+      "household_join_request_approved": "When your request to join a household is approved.",
       "connection_offer_received": "When someone who invited you asks to follow each other.",
       "circle_invite_received": "When a circle admin invites you to join their circle.",
       "circle_invite_accepted": "When someone accepts your invitation to a circle.",
@@ -2656,6 +2668,17 @@
       },
       "household_invite_accepted": {
         "sentence": "<b>{actor}</b> joined your household."
+      },
+      "household_join_request_received": {
+        "sentence": "<b>{actor}</b> asked to join your household.",
+        "resolved": {
+          "approved": "Approved",
+          "declined": "Declined",
+          "expired": "Request expired or withdrawn"
+        }
+      },
+      "household_join_request_approved": {
+        "sentence": "<b>{actor}</b> let you into their household."
       },
       "connection_offer_received": {
         "sentence": "<b>{actor}</b> invited you to follow each other."

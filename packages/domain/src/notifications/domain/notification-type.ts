@@ -30,6 +30,8 @@ export type NotificationType =
   | "follow_request_approved" // Social: FollowRequestApproved — the requester's access was granted
   | "household_invite_received" // Household: HouseholdInviteSent — someone invited the member to their household
   | "household_invite_accepted" // Household: HouseholdInviteAccepted — the member's invite was accepted
+  | "household_join_request_received" // Household: HouseholdJoinRequested — someone asked to join the admin's household
+  | "household_join_request_approved" // Household: HouseholdJoinRequestApproved — the member's request to join was approved
   | "connection_offer_received" // Social: ConnectionOffered — their inviter offers to follow each other
   | "circle_invite_received" // Sharing: CircleInviteIssued — a circle Admin invited the member to join
   | "circle_invite_accepted" // Sharing: CircleInviteAccepted — the member's circle invite was accepted
@@ -68,6 +70,8 @@ export const NOTIFICATION_TYPES: readonly NotificationType[] = [
   "follow_request_approved",
   "household_invite_received",
   "household_invite_accepted",
+  "household_join_request_received",
+  "household_join_request_approved",
   "connection_offer_received",
   "circle_invite_received",
   "circle_invite_accepted",

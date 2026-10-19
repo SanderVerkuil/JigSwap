@@ -8,6 +8,7 @@ export type NotificationSubject =
   | { readonly kind: "followRequest"; readonly requestId: string }
   | { readonly kind: "householdInvite"; readonly inviteId: string }
   | { readonly kind: "household"; readonly householdId: string }
+  | { readonly kind: "householdJoinRequest"; readonly requestId: string }
   | { readonly kind: "circleInvite"; readonly inviteId: string }
   | { readonly kind: "circle"; readonly circleId: string }
   | { readonly kind: "puzzle"; readonly puzzleId: string }

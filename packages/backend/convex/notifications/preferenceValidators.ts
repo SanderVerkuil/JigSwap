@@ -27,6 +27,8 @@ export const notificationTypeValidator = v.union(
   v.literal("follow_request_approved"),
   v.literal("household_invite_received"),
   v.literal("household_invite_accepted"),
+  v.literal("household_join_request_received"),
+  v.literal("household_join_request_approved"),
   v.literal("connection_offer_received"),
   v.literal("circle_invite_received"),
   v.literal("circle_invite_accepted"),

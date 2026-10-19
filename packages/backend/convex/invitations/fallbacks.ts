@@ -107,11 +107,14 @@ export const applyExistingMemberFallback = async (
   return { householdInviteId: inviteId };
 };
 
-/** Delete the recipient's notifications of `type` about one offer or invite. */
+/** Delete the recipient's notifications of `type` about one offer, invite or request to join. */
 export const deleteNotificationsAbout = async (
   ctx: MutationCtx,
   recipientId: Id<"users">,
-  type: "connection_offer_received" | "household_invite_received",
+  type:
+    | "connection_offer_received"
+    | "household_invite_received"
+    | "household_join_request_received",
   subjectId: string,
 ): Promise<void> => {
   const rows = await ctx.db
@@ -127,7 +130,9 @@ export const deleteNotificationsAbout = async (
         ? subject.offerId
         : subject?.kind === "householdInvite"
           ? subject.inviteId
-          : undefined;
+          : subject?.kind === "householdJoinRequest"
+            ? subject.requestId
+            : undefined;
     if (id === subjectId) await ctx.db.delete(row._id);
   }
 };

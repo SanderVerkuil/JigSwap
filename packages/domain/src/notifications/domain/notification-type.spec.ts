@@ -28,6 +28,8 @@ describe("NOTIFICATION_TYPES", () => {
       "follow_request_approved",
       "household_invite_received",
       "household_invite_accepted",
+      "household_join_request_received",
+      "household_join_request_approved",
       "connection_offer_received",
       "circle_invite_received",
       "circle_invite_accepted",

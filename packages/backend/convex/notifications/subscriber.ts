@@ -639,6 +639,42 @@ const translate = async (
       ];
     }
     // HouseholdInviteDeclined: DELIBERATELY unmapped — decline is silent (spec).
+    // A request to join tells the admin who minted the link (a dropped request records no event).
+    case "HouseholdJoinRequested": {
+      return [
+        cmd(
+          p.adminId as string,
+          "household_join_request_received",
+          p.requestId as string,
+          await memberName(ctx, p.requesterId as string),
+          {
+            actor: p.requesterId as string,
+            subject: {
+              kind: "householdJoinRequest",
+              requestId: p.requestId as string,
+            },
+          },
+        ),
+      ];
+    }
+    case "HouseholdJoinRequestApproved": {
+      return [
+        cmd(
+          p.requesterId as string,
+          "household_join_request_approved",
+          p.householdId as string,
+          await memberName(ctx, p.approverId as string),
+          {
+            actor: p.approverId as string,
+            subject: {
+              kind: "household",
+              householdId: p.householdId as string,
+            },
+          },
+        ),
+      ];
+    }
+    // Declined, withdrawn and void requests: DELIBERATELY unmapped — silent (spec).
 
     // --- Sharing ---
     // Circle invite notifications carry no actorName snapshot: the actor is always a ref, and the
