@@ -96,7 +96,10 @@ import {
 //   domainEvents (last; conversation/purgeMemberEvents) every finished event whose payload names
 //                them: their id becomes "deleted-member" and copied personal fields (email,
 //                clerkId, names, avatar, bio, location, notes, collection/category names) are
-//                dropped. Pages EVENT_SCRUB_BATCH_SIZE events per run: it walks the whole log.
+//                dropped. An event keyed by a copy alone (CopyDetailsUpdated, with the owner's
+//                notes) loses those personal fields once its copy is gone, theirs (deleted by the
+//                copies phase) or anyone's. Pages EVENT_SCRUB_BATCH_SIZE events per run: it walks
+//                the whole log.
 //                Starts EVENT_SCRUB_DELAY_MS after the household phase, once the events the
 //                purge itself emitted have been dispatched.
 //                Admin, CSAM and moderation records are separate tables and stay unchanged.
