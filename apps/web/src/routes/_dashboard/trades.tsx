@@ -613,7 +613,7 @@ function BorrowedList({ borrowed }: { borrowed: BorrowedLoan[] | undefined }) {
               {t("borrowedFrom", {
                 name: loan.lender
                   ? displayName(loan.lender)
-                  : t("unknownMember"),
+                  : t("deletedMember"),
               })}{" "}
               ·{" "}
               {t("openedRelative", {

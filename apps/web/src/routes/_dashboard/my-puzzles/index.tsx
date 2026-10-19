@@ -474,7 +474,7 @@ function PuzzlesPage() {
                             {tLending("onLoanTo", {
                               name: loan.borrower
                                 ? displayName(loan.borrower)
-                                : tLending("unknownMember"),
+                                : tLending("deletedMember"),
                             })}
                           </Badge>
                           <Button

@@ -3092,7 +3092,7 @@
     "statusReturned": "Returned",
     "statusRecalled": "Recalled",
     "borrowedBy": "Borrowed by {name}",
-    "unknownMember": "Unknown member",
+    "deletedMember": "Deleted member",
     "anonymousMember": "Anonymous user",
     "borrowedCount": "{count, plural, one {# borrowed puzzle} other {# borrowed puzzles}}",
     "pieceCount": "{count, plural, one {# piece} other {# pieces}}"

@@ -321,5 +321,16 @@ describe.each(Object.keys(departures) as (keyof typeof departures)[])(
       expect(reviews).toHaveLength(1);
       expect(reviews[0].author).toBeNull();
     });
+
+    test("loans name no departed party", async () => {
+      const { asViewer } = await setup();
+      const loans = await asViewer.query(
+        api.library.getBorrowedLoans.getBorrowedLoans,
+        {},
+      );
+      expect(loans).toHaveLength(1);
+      expect(loans[0].lender).toBeNull();
+      expectNoIdentity(loans);
+    });
   },
 );
