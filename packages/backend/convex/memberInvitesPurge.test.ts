@@ -534,3 +534,68 @@ describe("account deletion: household invites", () => {
     expect(left.notifications).toEqual(["hh-bob-carol"]);
   });
 });
+
+describe("account deletion: household join requests", () => {
+  test("every request to join she sent goes, with the admin's notification; others stay", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      const linkId = await ctx.db.insert("inviteLinks", {
+        ownerId: s.carol,
+        token: "hh-link",
+        createdAt: now,
+        landingViews: 0,
+        signupsAttributed: 0,
+        followsEstablished: 0,
+        context: { kind: "household", householdId: "hh_1" },
+        expiresAt: now - 1,
+      });
+      const request = (
+        aggregateId: string,
+        requesterId: Id<"users">,
+        status: "pending" | "declined" | "withdrawn",
+      ) =>
+        ctx.db.insert("householdJoinRequests", {
+          aggregateId,
+          householdId: "hh_1",
+          requesterId,
+          adminId: s.carol,
+          linkId,
+          status,
+          dropped: false,
+          createdAt: now,
+          expiresAt: now + 14 * 24 * 60 * 60 * 1000,
+        });
+      await request("jr-alice", s.alice, "pending");
+      await request("jr-alice-old", s.alice, "withdrawn");
+      await request("jr-bob", s.bob, "declined");
+      for (const requestId of ["jr-alice", "jr-bob"]) {
+        await ctx.db.insert("notifications", {
+          userId: s.carol,
+          type: "household_join_request_received",
+          isRead: false,
+          createdAt: now,
+          subject: { kind: "householdJoinRequest", requestId },
+        });
+      }
+    });
+
+    await deleteAlice(t);
+
+    const left = await t.run(async (ctx) => ({
+      requests: (await ctx.db.query("householdJoinRequests").collect()).map(
+        (row) => row.aggregateId,
+      ),
+      notifications: (await ctx.db.query("notifications").collect())
+        .filter((row) => row.type === "household_join_request_received")
+        .map((row) =>
+          row.subject?.kind === "householdJoinRequest"
+            ? row.subject.requestId
+            : "",
+        ),
+    }));
+    expect(left.requests).toEqual(["jr-bob"]);
+    expect(left.notifications).toEqual(["jr-bob"]);
+  });
+});
