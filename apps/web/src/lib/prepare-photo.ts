@@ -44,9 +44,24 @@ function canvasReadsBack(context: CanvasRenderingContext2D): boolean {
   );
 }
 
-// The image type the file's first bytes announce; the picked type otherwise
-// (some pickers report "" or "image/jpg").
-async function sniffedType(file: File): Promise<string> {
+/**
+ * Whether this browser's canvas read-back can be trusted, probed on a fresh
+ * canvas. False in browsers that scramble it (Firefox resistFingerprinting):
+ * anything baked through a canvas there comes out as noise.
+ */
+export function canvasCanBeTrusted(): boolean {
+  const canvas = document.createElement("canvas");
+  canvas.width = 2;
+  canvas.height = 1;
+  const context = canvas.getContext("2d");
+  return context !== null && canvasReadsBack(context);
+}
+
+/**
+ * The image type the file's first bytes announce; the picked type otherwise
+ * (some pickers report "" or "image/jpg").
+ */
+export async function sniffedType(file: Blob): Promise<string> {
   const b = new Uint8Array(await file.slice(0, 12).arrayBuffer());
   const ascii = (at: number, text: string) =>
     [...text].every((c, i) => b[at + i] === c.charCodeAt(0));

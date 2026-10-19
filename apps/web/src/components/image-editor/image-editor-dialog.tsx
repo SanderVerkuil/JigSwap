@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { canvasCanBeTrusted, sniffedType } from "@/lib/prepare-photo";
 import { RotateCw } from "lucide-react";
 import { useRef, useState } from "react";
 import { Cropper, type CropperRef } from "react-advanced-cropper";
@@ -19,12 +20,16 @@ import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import { contentBoundingBox } from "./auto-crop";
 import { rotateSize } from "./crop-math";
+import { exportChoice } from "./export-choice";
 
 // Reusable crop/rotate editor. `src` may be an object URL (fresh pick) or a CORS-served
 // storage URL (re-editing the stored image); onApply receives the baked File. The user
 // pans/zooms the image under a free-form, resizable crop stencil (react-advanced-cropper
 // handles wheel/pinch/drag gestures natively) and Apply reads the result straight off the
-// library's own canvas — no custom transform math.
+// library's own canvas — no custom transform math. Where canvas read-back is
+// scrambled (Firefox resistFingerprinting) that bake is noise: an unedited photo
+// is handed back as the original file, and an edit is refused with an offer to
+// use the original instead (export-choice).
 export interface ImageEditorDialogProps {
   src: string | null; // null = closed
   fileName: string;
@@ -56,10 +61,16 @@ export function ImageEditorDialog({
   const [rotation, setRotation] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [baking, setBaking] = useState(false);
+  // Whether the member moved, resized or auto-cropped the frame.
+  const [cropChanged, setCropChanged] = useState(false);
+  // An edit the browser can't bake (scrambled canvas): offer the original.
+  const [blocked, setBlocked] = useState(false);
 
   const reset = () => {
     setRotation(0);
     setLoaded(false);
+    setCropChanged(false);
+    setBlocked(false);
   };
 
   // cropperRef.rotateImage() rotates BY the given amount, not to an absolute angle, so
@@ -113,23 +124,48 @@ export function ImageEditorDialog({
         width: bbox.width / scale,
         height: bbox.height / scale,
       });
+      setCropChanged(true);
     } catch {
       // Tainted canvas (non-CORS remote) or decode failure.
       toast.error(t("autoCropFailed"));
     }
   };
 
-  const apply = async () => {
+  // The picked (or stored) image as it is, typed by its magic bytes; the
+  // server strips its metadata.
+  const originalFile = async (from: string) => {
+    const blob = await (await fetch(from)).blob();
+    return new File([blob], fileName, { type: await sniffedType(blob) });
+  };
+
+  const bakedFile = async () => {
+    const canvas = cropperRef.current?.getCanvas();
+    if (!canvas) throw new Error("no canvas");
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/jpeg", 0.9),
+    );
+    if (!blob) throw new Error("bake produced no blob");
+    return new File([blob], fileName, { type: "image/jpeg" });
+  };
+
+  const apply = async (useOriginal = false) => {
     if (!src) return;
+    const choice = useOriginal
+      ? "original"
+      : exportChoice({
+          canvasTrusted: canvasCanBeTrusted(),
+          rotation,
+          cropChanged,
+        });
+    if (choice === "blocked") {
+      setBlocked(true);
+      return;
+    }
     setBaking(true);
     try {
-      const canvas = cropperRef.current?.getCanvas();
-      if (!canvas) throw new Error("no canvas");
-      const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, "image/jpeg", 0.9),
+      onApply(
+        choice === "original" ? await originalFile(src) : await bakedFile(),
       );
-      if (!blob) throw new Error("bake produced no blob");
-      onApply(new File([blob], fileName, { type: "image/jpeg" }));
       reset();
     } catch {
       // Tainted canvas (non-CORS remote), decode failure, or toBlob failure.
@@ -165,6 +201,7 @@ export function ImageEditorDialog({
               crossOrigin="anonymous"
               className="h-[min(65vh,600px)] w-full"
               onReady={() => setLoaded(true)}
+              onInteractionEnd={() => setCropChanged(true)}
             />
           ) : (
             <div className="h-[min(65vh,600px)] w-full" />
@@ -207,6 +244,24 @@ export function ImageEditorDialog({
             {t("autoCrop")}
           </Button>
         </div>
+
+        {blocked && (
+          <div
+            role="alert"
+            className="bg-muted flex flex-col gap-3 rounded-lg p-3 text-sm sm:flex-row sm:items-center"
+          >
+            <p className="flex-1">{t("editingBlocked")}</p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={baking}
+              onClick={() => void apply(true)}
+            >
+              {t("useOriginal")}
+            </Button>
+          </div>
+        )}
 
         <DialogFooter>
           <Button

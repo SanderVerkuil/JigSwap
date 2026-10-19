@@ -68,6 +68,15 @@ Klik op een foto in de fotostrook om de lightbox te openen. Daarin kun je:
   **Zoom herstellen**.
 - Slepen om rond te kijken in een ingezoomde foto.
 
+### Een foto bijsnijden of draaien
+
+Als je een foto toevoegt, opent een editor waarin je hem kunt bijsnijden en
+draaien voordat hij wordt geüpload. Sommige browsers blokkeren het bewerken van
+foto's om je privacy te beschermen (bijvoorbeeld Firefox met bescherming tegen
+fingerprinting). Daar wordt een foto die je niet hebt aangepast geüpload zoals
+hij is. Heb je hem wel aangepast, dan meldt JigSwap dat de wijzigingen niet
+kunnen worden toegepast en biedt aan de originele foto te uploaden.
+
 ### Foto's die wachten op controle
 
 Elke foto die je uploadt, wordt automatisch gecontroleerd voordat andere leden

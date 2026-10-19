@@ -4,7 +4,7 @@
 // EXIF-rotated phone photos and odd MIME types was checked in real browsers
 // (headless Chrome, Firefox default/resistFingerprinting, Helium).
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { preparePhoto } from "./prepare-photo";
+import { canvasCanBeTrusted, preparePhoto } from "./prepare-photo";
 
 // What the fake browser decodes the next file as (null: cannot decode).
 let decoded: { width: number; height: number } | null;
@@ -190,5 +190,24 @@ describe("preparePhoto", () => {
       width: 800,
       height: 600,
     });
+  });
+});
+
+describe("canvasCanBeTrusted", () => {
+  it("trusts an exact or slightly noised read-back", () => {
+    readBack = (data) => data;
+    expect(canvasCanBeTrusted()).toBe(true);
+    readBack = noised;
+    expect(canvasCanBeTrusted()).toBe(true);
+  });
+
+  it("distrusts a scrambled read-back", () => {
+    readBack = scrambled;
+    expect(canvasCanBeTrusted()).toBe(false);
+  });
+
+  it("distrusts a browser without a 2D canvas", () => {
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
+    expect(canvasCanBeTrusted()).toBe(false);
   });
 });
