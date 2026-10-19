@@ -90,7 +90,8 @@ import {
 //                as a departed seat. With nobody active left it is deleted (purgeDeletedCircle).
 //                Their seats in other members' circles stay too, as departed seats.
 //   household    they leave it through the leave use case: an admin's household promotes its
-//                longest-standing member, a sole member's is dissolved
+//                longest-standing member, a sole member's is dissolved. Co-members already
+//                deleted leave first, so the promotion only lands on an active member.
 // One phase at a time, PURGE_BATCH_SIZE rows per run: a run that did not finish its phase
 // schedules the next run with the page cursor, so each run stays well inside Convex's per-mutation
 // limits whatever the member's history. Rows a phase keeps (a quarantined or evidence-held photo)

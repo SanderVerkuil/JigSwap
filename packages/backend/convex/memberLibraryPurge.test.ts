@@ -961,6 +961,41 @@ describe("account deletion: household", () => {
     expect(await seatsOf(t, household)).toHaveLength(2);
   });
 
+  test("her admin seat skips members whose accounts are already gone", async () => {
+    const t = newT();
+    const s = await seedMembers(t);
+    // Carol and Dave left before the purge took households along: Carol's row is deleted, Dave's
+    // is tombstoned. Both joined before Bob.
+    const household = await insertHousehold(t, [
+      [s.alice, "admin"],
+      [s.carol, "member"],
+      [s.dave, "member"],
+      [s.bob, "member"],
+    ]);
+    await t.run(async (ctx) => {
+      await ctx.db.delete(s.carol);
+      await ctx.db.patch(s.dave, { isActive: false });
+    });
+
+    await deleteMember(t, "alice");
+
+    expect(await seatsOf(t, household)).toEqual([[s.bob, "admin"]]);
+  });
+
+  test("with only departed members left beside her, her household is dissolved", async () => {
+    const t = newT();
+    const s = await seedMembers(t);
+    const household = await insertHousehold(t, [
+      [s.alice, "admin"],
+      [s.carol, "member"],
+    ]);
+    await t.run((ctx) => ctx.db.delete(s.carol));
+
+    await deleteMember(t, "alice");
+
+    expect(await seatsOf(t, household)).toEqual([]);
+  });
+
   test("as its sole member, her household is dissolved", async () => {
     const t = newT();
     const s = await seedMembers(t);

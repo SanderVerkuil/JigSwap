@@ -411,7 +411,9 @@ export const handOverOwnedCircles = async (
  * Take them out of their household through the leave use case: when they were its admin the
  * longest-standing remaining member is promoted, and when they were its last member it is
  * dissolved. The household model has no adult/child distinction, so "another adult takes over" is
- * exactly that promotion rule.
+ * exactly that promotion rule. Co-members whose accounts are already gone (deleted before this
+ * purge covered households) leave first, the same way, so the promotion can only land on an active
+ * member, and a household with nobody active left is dissolved.
  */
 export const leaveHousehold = async (
   ctx: MutationCtx,
@@ -422,12 +424,24 @@ export const leaveHousehold = async (
     .withIndex("by_member", (q) => q.eq("memberId", memberId))
     .first();
   if (seat) {
-    const result = await makeLeaveHousehold(householdDeps(ctx))({
-      actorId: toMemberId(memberId),
-    });
-    // Refused only if the household changed under us; the purge carries on rather than stall.
-    if (result.isErr) {
-      console.warn("purge: household not left", result.error.code);
+    const seats = await ctx.db
+      .query("householdMembers")
+      .withIndex("by_household", (q) => q.eq("householdId", seat.householdId))
+      .collect();
+    const departed: Id<"users">[] = [];
+    for (const other of seats) {
+      if (other.memberId === memberId) continue;
+      if (!(await isActiveMember(ctx, other.memberId))) {
+        departed.push(other.memberId);
+      }
+    }
+    const leave = makeLeaveHousehold(householdDeps(ctx));
+    for (const leaver of [...departed, memberId]) {
+      const result = await leave({ actorId: toMemberId(leaver) });
+      // Refused only if the household changed under us; the purge carries on rather than stall.
+      if (result.isErr) {
+        console.warn("purge: household not left", result.error.code);
+      }
     }
   }
   return { isDone: true, continueCursor: "" };
