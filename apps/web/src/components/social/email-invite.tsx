@@ -54,9 +54,12 @@ export function emailInviteError(
 export function EmailInvite({
   kind,
   heading,
+  pending = true,
 }: {
   kind: EmailInviteKind;
   heading?: ReactNode;
+  // The sent invitations below the form; the household lists them on its Members tab instead.
+  pending?: ReactNode;
 }) {
   const { data: available } = useQuery(
     convexQuery(gateway.invitations.availability, {}),
@@ -66,7 +69,7 @@ export function EmailInvite({
     <div className="space-y-3">
       {heading}
       <EmailInviteForm kind={kind} />
-      <EmailInviteListContainer kind={kind} />
+      {pending === true ? <EmailInviteListContainer kind={kind} /> : pending}
     </div>
   );
 }

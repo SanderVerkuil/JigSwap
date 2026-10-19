@@ -70,6 +70,11 @@ export const convexHouseholdInviteRepository = (
       else await ctx.db.insert("householdInvites", row);
     },
 
+    async remove(id: HouseholdInviteId) {
+      const row = await rowById(id);
+      if (row) await ctx.db.delete(row._id);
+    },
+
     async removePendingForHousehold(householdId: HouseholdId) {
       const rows = await ctx.db
         .query("householdInvites")

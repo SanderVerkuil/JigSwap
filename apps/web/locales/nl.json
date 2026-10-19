@@ -1866,13 +1866,12 @@
       "searchPlaceholder": "Zoek leden op naam",
       "action": "Uitnodigen",
       "sent": "Uitnodiging verstuurd",
-      "pending": "Wacht op antwoord",
-      "pendingBadge": "Uitgenodigd",
       "dialogTitle": "Uitnodigen voor je huishouden",
       "dialogSub": "Kies wat het makkelijkst is. Ze doen pas mee zodra ze accepteren.",
       "searchHeading": "Zoek een lid",
       "emailHeading": "Uitnodigen per e-mail",
-      "dialogTitleNamed": "Uitnodigen voor {name}"
+      "dialogTitleNamed": "Uitnodigen voor {name}",
+      "pendingOnMembersTab": "Verstuurde uitnodigingen staan op het tabblad Leden."
     },
     "leave": {
       "action": "Huishouden verlaten",
@@ -1983,6 +1982,17 @@
       "join": "Je wordt meteen lid van het huishouden van {name}.",
       "confirm": "Verlaten en lid worden",
       "cardBody": "Je zit al in {current}. Je kunt in één huishouden tegelijk zitten, dus lid worden betekent dat je dit verlaat."
+    },
+    "pending": {
+      "title": "Wacht op antwoord",
+      "invitesHeading": "Verstuurde uitnodigingen ({count})",
+      "invitedInApp": "Uitnodiging in de app · verstuurd {when}",
+      "emailTitle": "Uitnodiging per e-mail",
+      "emailMeta": "Verstuurd {when} · verloopt {date}",
+      "revokeInAppLabel": "Uitnodiging voor {name} intrekken",
+      "revokeInAppBody": "{name} kan hem niet meer accepteren. Je kunt diegene later opnieuw uitnodigen.",
+      "revokeEmailLabel": "E-mailuitnodiging van {when} intrekken",
+      "revoked": "Uitnodiging ingetrokken"
     }
   },
   "circles": {

@@ -7,4 +7,5 @@ export * from "./join-household-by-link";
 export * from "./leave-household";
 export * from "./remove-household-member";
 export * from "./rename-household";
+export * from "./revoke-household-invite";
 export * from "./set-household-default-copy-permission";

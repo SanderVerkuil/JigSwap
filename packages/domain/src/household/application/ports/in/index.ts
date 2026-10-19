@@ -45,6 +45,15 @@ export type DeclineHouseholdInvite = (
   cmd: RespondToHouseholdInviteCommand,
 ) => Outcome<void>;
 
+// The household admin withdraws a pending invite their household sent.
+export interface RevokeHouseholdInviteCommand {
+  readonly actorId: MemberId;
+  readonly inviteId: HouseholdInviteId;
+}
+export type RevokeHouseholdInvite = (
+  cmd: RevokeHouseholdInviteCommand,
+) => Outcome<void>;
+
 // An existing member accepts a household invite link minted by `inviterId` (the link's owner,
 // read server-side from the token, never from the client).
 export interface JoinHouseholdByLinkCommand {

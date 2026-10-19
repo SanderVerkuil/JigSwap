@@ -25,6 +25,9 @@ find what you came for straight away.
   default and the option to leave.
 - **One Invite button.** Household admins find every way to invite in one
   place: search for a member, share a link, or send an email.
+- **All pending invitations in one list.** The **Members** tab lists every
+  invitation still waiting for an answer, in the app and by email, and you
+  can revoke any of them.
 - **A name for your household.** The admin can name the household on the
   **Settings** tab. Only its members see the name.
 - **Switch households in one step.** Already in a household and invited to
