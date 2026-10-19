@@ -2228,6 +2228,7 @@
       "trade_declined": "Trade declined",
       "trade_completed": "Trade completed",
       "trade_cancelled": "Trade cancelled",
+      "trade_cancelled_member_deleted": "Trade cancelled (account deleted)",
       "exchange_proposed": "Exchange proposed",
       "exchange_disputed": "Exchange disputed",
       "message_received": "New messages",
@@ -2307,6 +2308,10 @@
       "trade_cancelled": {
         "title": "Exchange cancelled",
         "message": "The exchange request has been cancelled."
+      },
+      "trade_cancelled_member_deleted": {
+        "title": "Exchange cancelled",
+        "message": "A trade was cancelled because the other member deleted their account."
       },
       "exchange_proposed": {
         "title": "Exchange proposed",
@@ -2440,6 +2445,7 @@
       "trade_declined": "When someone declines a trade you proposed.",
       "trade_completed": "When a trade is completed.",
       "trade_cancelled": "When a trade is cancelled.",
+      "trade_cancelled_member_deleted": "When a trade is cancelled because the other member deleted their account.",
       "exchange_proposed": "When someone proposes an exchange — a swap, sale, or lend.",
       "exchange_disputed": "When an exchange you're part of is disputed.",
       "message_received": "When you receive a new message.",
@@ -2504,6 +2510,9 @@
       },
       "trade_cancelled": {
         "sentence": "{hasPuzzle, select, yes {<b>{actor}</b> cancelled the trade for <b>{puzzle}</b>.} other {<b>{actor}</b> cancelled the trade.}}"
+      },
+      "trade_cancelled_member_deleted": {
+        "sentence": "{hasPuzzle, select, yes {A trade with <b>{actor}</b> for <b>{puzzle}</b> was cancelled because the other member deleted their account.} other {A trade with <b>{actor}</b> was cancelled because the other member deleted their account.}}"
       },
       "trade_completed": {
         "sentence": "Your trade with <b>{actor}</b> is complete."

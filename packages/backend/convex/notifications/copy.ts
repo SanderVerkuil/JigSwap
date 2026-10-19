@@ -80,6 +80,12 @@ const COPY: Record<NotificationType, (p: Params) => NotificationText> = {
       ? `${p["actorName"]} cancelled the trade request${about(p, "for")}`
       : "Exchange request has been cancelled",
   }),
+  // The other party deleted their account: nobody to name, even if a name were overlaid.
+  trade_cancelled_member_deleted: () => ({
+    title: "Exchange Cancelled",
+    message:
+      "A trade was cancelled because the other member deleted their account",
+  }),
   message_received: (p) => {
     const actor = p["actorName"];
     const preview = p["messagePreview"];

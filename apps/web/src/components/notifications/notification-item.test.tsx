@@ -355,6 +355,32 @@ describe("NotificationItem rendering", () => {
     },
   );
 
+  it.each([
+    [
+      "en",
+      "A trade with Deleted member for Sky was cancelled because the other member deleted their account.",
+    ],
+    [
+      "nl",
+      "Een ruil met Verwijderd lid voor Sky is geannuleerd omdat het account van het andere lid is verwijderd.",
+    ],
+  ] as const)(
+    "%s: trade_cancelled_member_deleted names the counterpart as a Deleted member",
+    (locale, text) => {
+      const { container } = renderItem(
+        base({
+          type: "trade_cancelled_member_deleted",
+          actors: [{ anonymous: true, departed: true }],
+          actorCount: 1,
+          href: "/trades",
+          context: { puzzleTitle: "Sky" },
+        }),
+        { locale },
+      );
+      expect(rowLink(container)!.textContent).toContain(text);
+    },
+  );
+
   it("falls back to a nameless circle_deleted sentence", () => {
     const { container } = renderItem(
       base({

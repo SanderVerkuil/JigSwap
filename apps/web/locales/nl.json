@@ -2228,6 +2228,7 @@
       "trade_declined": "Ruil geweigerd",
       "trade_completed": "Ruil voltooid",
       "trade_cancelled": "Ruil geannuleerd",
+      "trade_cancelled_member_deleted": "Ruil geannuleerd (account verwijderd)",
       "exchange_proposed": "Ruil voorgesteld",
       "exchange_disputed": "Ruilgeschil",
       "message_received": "Nieuwe berichten",
@@ -2307,6 +2308,10 @@
       "trade_cancelled": {
         "title": "Ruil geannuleerd",
         "message": "Het ruilverzoek is geannuleerd."
+      },
+      "trade_cancelled_member_deleted": {
+        "title": "Ruil geannuleerd",
+        "message": "Een ruil is geannuleerd omdat het account van het andere lid is verwijderd."
       },
       "exchange_proposed": {
         "title": "Ruil voorgesteld",
@@ -2440,6 +2445,7 @@
       "trade_declined": "Wanneer iemand een ruil afwijst die je hebt voorgesteld.",
       "trade_completed": "Wanneer een ruil is voltooid.",
       "trade_cancelled": "Wanneer een ruil is geannuleerd.",
+      "trade_cancelled_member_deleted": "Wanneer een ruil wordt geannuleerd omdat het account van het andere lid is verwijderd.",
       "exchange_proposed": "Wanneer iemand een uitwisseling voorstelt — ruil, verkoop of uitlenen.",
       "exchange_disputed": "Wanneer een uitwisseling waaraan je deelneemt wordt betwist.",
       "message_received": "Wanneer je een nieuw bericht ontvangt.",
@@ -2504,6 +2510,9 @@
       },
       "trade_cancelled": {
         "sentence": "{hasPuzzle, select, yes {<b>{actor}</b> heeft de ruil voor <b>{puzzle}</b> geannuleerd.} other {<b>{actor}</b> heeft de ruil geannuleerd.}}"
+      },
+      "trade_cancelled_member_deleted": {
+        "sentence": "{hasPuzzle, select, yes {Een ruil met <b>{actor}</b> voor <b>{puzzle}</b> is geannuleerd omdat het account van het andere lid is verwijderd.} other {Een ruil met <b>{actor}</b> is geannuleerd omdat het account van het andere lid is verwijderd.}}"
       },
       "trade_completed": {
         "sentence": "Je ruil met <b>{actor}</b> is voltooid."

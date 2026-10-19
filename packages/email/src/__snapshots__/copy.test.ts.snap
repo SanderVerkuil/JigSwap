@@ -201,6 +201,24 @@ exports[`copy catalog > pins the copy catalog verbatim (mutation guard + copy ch
         "subject": "Een ruil is geannuleerd",
       },
     },
+    "trade_cancelled_member_deleted": {
+      "en": {
+        "body": "A trade was cancelled because the other member deleted their account.",
+        "cta": "View trades",
+        "deepCta": "View trade",
+        "heading": "Trade cancelled",
+        "richBody": "The trade for “{puzzleTitle}” was cancelled because the other member deleted their account.",
+        "subject": "A trade was cancelled",
+      },
+      "nl": {
+        "body": "Een ruil is geannuleerd omdat het account van het andere lid is verwijderd.",
+        "cta": "Bekijk uitwisselingen",
+        "deepCta": "Bekijk ruil",
+        "heading": "Ruil geannuleerd",
+        "richBody": "De ruil voor “{puzzleTitle}” is geannuleerd omdat het account van het andere lid is verwijderd.",
+        "subject": "Een ruil is geannuleerd",
+      },
+    },
     "trade_completed": {
       "en": {
         "body": "Your exchange has been marked as completed. Enjoy the puzzle!",
@@ -262,6 +280,7 @@ exports[`copy catalog > pins the copy catalog verbatim (mutation guard + copy ch
     "trade_declined",
     "trade_completed",
     "trade_cancelled",
+    "trade_cancelled_member_deleted",
     "message_received",
     "review_received",
     "puzzle_favorited",

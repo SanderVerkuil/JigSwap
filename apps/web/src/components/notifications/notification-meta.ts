@@ -30,6 +30,7 @@ export type NotificationType =
   | "trade_declined"
   | "trade_completed"
   | "trade_cancelled"
+  | "trade_cancelled_member_deleted"
   | "message_received"
   | "review_received"
   | "puzzle_favorited"
@@ -65,6 +66,7 @@ export const NOTIFICATION_TYPES: NotificationType[] = [
   "trade_declined",
   "trade_completed",
   "trade_cancelled",
+  "trade_cancelled_member_deleted",
   "exchange_proposed",
   "exchange_disputed",
   "message_received",
@@ -127,6 +129,7 @@ export const NOTIFICATION_CATEGORIES: readonly NotificationCategory[] = [
       "trade_declined",
       "trade_completed",
       "trade_cancelled",
+      "trade_cancelled_member_deleted",
       "exchange_proposed",
       "exchange_disputed",
     ],
@@ -187,6 +190,7 @@ export const EMAIL_ELIGIBLE_TYPES: ReadonlySet<NotificationType> = new Set([
   "trade_declined",
   "trade_completed",
   "trade_cancelled",
+  "trade_cancelled_member_deleted",
   "message_received",
   "review_received",
   "puzzle_favorited",
@@ -272,6 +276,7 @@ export function notificationIcon(type: string): LucideIcon {
     case "trade_declined":
     case "trade_completed":
     case "trade_cancelled":
+    case "trade_cancelled_member_deleted":
     case "exchange_proposed":
       return ArrowLeftRight;
     case "exchange_disputed":
@@ -341,6 +346,7 @@ export function notificationAccent(type: string): string {
       return "text-green-600 dark:text-green-400";
     case "trade_declined":
     case "trade_cancelled":
+    case "trade_cancelled_member_deleted":
     case "exchange_disputed":
     case "puzzle_rejected":
     case "photo_removed":

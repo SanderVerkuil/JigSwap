@@ -1,16 +1,23 @@
 import {
   makeDeleteCircle,
   makeLeaveHousehold,
+  makePostSystemMessage,
   toCircleId,
+  toExchangeId,
   toMemberId,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { householdDeps } from "../household/adapters/deps";
 import { isPreservedBlob } from "../lib/imageModeration/quarantine";
+import { makeNotify } from "../notifications/adapters/makeNotify";
 import { convexCircleRepository } from "../sharing/adapters/convexCircleRepository";
 import { inProcessEventPublisher as sharingEventPublisher } from "../sharing/adapters/inProcessEventPublisher";
 import { systemClock } from "../sharing/adapters/systemClock";
+import { convexThreadRepository } from "./adapters/convexThreadRepository";
+import { messageIdGenerator } from "./adapters/idGenerators";
+import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
+import { toConvexError } from "./errors";
 
 // Phase bodies of the account-deletion purge (conversation/purgeMemberMessagingData) for what the
 // member left outside messaging: their open trades and loans, their library copies, photos,
@@ -26,12 +33,55 @@ type Page = { isDone: boolean; continueCursor: string };
 // copies already moved), so it is trade history and stays, like completed/rejected/cancelled.
 const OPEN_EXCHANGE = new Set(["proposed", "accepted"]);
 
+// The system row posted in the exchange's thread. A fixed English identifier, like the lifecycle
+// bodies of conversation/subscriber (LIFECYCLE_BODIES).
+export const CANCELLED_BY_DELETION_BODY =
+  "Exchange cancelled: the other member deleted their account";
+
+/**
+ * Tell the other party, when their account is still active: a trade_cancelled_member_deleted
+ * notification (in-app, and push or email when their preferences turn those on), with the deleted
+ * member as its actor so it reads as "Deleted member", and a system row in the exchange's thread
+ * when it has one. A thread is never opened for this.
+ */
+const announceCancellation = async (
+  ctx: MutationCtx,
+  row: Doc<"exchanges">,
+  memberId: Id<"users">,
+): Promise<void> => {
+  const otherId =
+    row.initiatorId === memberId ? row.recipientId : row.initiatorId;
+  if ((await ctx.db.get(otherId))?.isActive !== true) return;
+  const exchangeId = row.aggregateId;
+  await makeNotify(ctx)({
+    memberId: toMemberId(otherId),
+    type: "trade_cancelled_member_deleted",
+    params: {},
+    relatedId: row._id,
+    actorId: toMemberId(memberId),
+    ...(exchangeId !== undefined && {
+      subject: { kind: "exchange" as const, exchangeId },
+    }),
+  });
+  if (exchangeId === undefined) return;
+  const threads = convexThreadRepository(ctx);
+  const thread = await threads.findByExchange(toExchangeId(exchangeId));
+  if (!thread) return;
+  const posted = await makePostSystemMessage({
+    threads,
+    messageIds: messageIdGenerator,
+    events: inProcessEventPublisher(ctx),
+    clock: systemClock,
+  })({ threadId: thread.id, body: CANCELLED_BY_DELETION_BODY });
+  if (posted.isErr) throw toConvexError(posted.error);
+};
+
 /**
  * Cancel the member's open exchanges on one side (they proposed it, or it was proposed to them).
  * Written directly, not through the Exchange aggregate: its cancel is the initiator's move and its
- * decline the recipient's, and neither fits a deletion. Nothing is announced (no event, so no
- * notification or thread message), like the rest of this purge; the row keeps both parties and
- * reads as cancelled for the other party.
+ * decline the recipient's, and neither fits a deletion. No Exchange event is emitted (so the
+ * ordinary trade_cancelled notification and "Exchange cancelled" row do not fire); the other party
+ * is told through announceCancellation instead. The row keeps both parties and reads as cancelled.
  */
 export const cancelOpenExchanges = async (
   ctx: MutationCtx,
@@ -52,6 +102,7 @@ export const cancelOpenExchanges = async (
   for (const row of page.page) {
     if (!OPEN_EXCHANGE.has(row.status)) continue;
     await ctx.db.patch(row._id, { status: "cancelled", updatedAt: now });
+    await announceCancellation(ctx, row, memberId);
   }
   return page;
 };

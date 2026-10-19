@@ -10,6 +10,7 @@ export type NotificationType =
   | "trade_declined"
   | "trade_completed"
   | "trade_cancelled"
+  | "trade_cancelled_member_deleted" // Account deletion: an open exchange cancelled because the other party deleted their account
   | "message_received"
   | "review_received"
   | "puzzle_favorited"
@@ -48,6 +49,7 @@ export const NOTIFICATION_TYPES: readonly NotificationType[] = [
   "trade_declined",
   "trade_completed",
   "trade_cancelled",
+  "trade_cancelled_member_deleted",
   "message_received",
   "review_received",
   "puzzle_favorited",
@@ -89,6 +91,7 @@ export const EMAIL_ELIGIBLE_TYPES: ReadonlySet<NotificationType> = new Set([
   "trade_declined",
   "trade_completed",
   "trade_cancelled",
+  "trade_cancelled_member_deleted",
   "message_received",
   "review_received",
   "puzzle_favorited",

@@ -92,6 +92,9 @@ notifications cover newer features:
 - **Circle invites** and **Circle invite accepted**: someone invites you to a
   friend circle, or accepts your invitation.
 - **Circle deleted**: the owner deleted a circle you were in.
+- **Trade cancelled (account deleted)**: a trade you had under way was
+  cancelled because the other member deleted their account. They show as
+  **Deleted member**.
 - **Circle messages**: someone wrote in the group chat of one of your circles.
   Messages in one conversation are combined into one notification. See
   [Messages](/docs/staying-informed/messages#notifications-from-circle-chats).

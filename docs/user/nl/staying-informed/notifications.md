@@ -96,6 +96,9 @@ catalogus gaan deze meldingen over nieuwere functies:
   geaccepteerd**: iemand nodigt je uit voor een vriendenkring, of accepteert
   jouw uitnodiging.
 - **Kring verwijderd**: de eigenaar heeft een kring verwijderd waar je in zat.
+- **Ruil geannuleerd (account verwijderd)**: een lopende ruil is geannuleerd
+  omdat het account van het andere lid is verwijderd. Dat lid staat er als
+  **Verwijderd lid**.
 - **Kringberichten**: iemand schreef in de groepschat van een van je kringen.
   Berichten in één gesprek worden samengevoegd tot één melding. Zie
   [Berichten](/docs/staying-informed/messages#meldingen-van-kringchats).

@@ -32,7 +32,8 @@ Iedereen kan de **landingspagina** lezen, plus **Over**, **Functies**, **Hoe Het
 Als je je account verwijdert, verdwijnen je bibliotheek en wat daarbij hoort:
 
 - Lopende ruilen en uitleningen worden geannuleerd of afgesloten; een puzzel
-  die je leende gaat terug naar de eigenaar.
+  die je leende gaat terug naar de eigenaar. Het andere lid van een lopende
+  ruil krijgt een melding dat die is geannuleerd.
 - Je puzzels worden verwijderd, met hun foto's, notities en voltooiingen, net
   als je andere foto's en voltooiingen, je doelen, collecties, verlanglijsten
   en eigen categorieën. Ze zijn niet meer te zien bij Bladeren of in kringen.

@@ -3,6 +3,7 @@ import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
+import { CANCELLED_BY_DELETION_BODY } from "./conversation/purgeMemberLibrary";
 import schema from "./schema";
 
 // Account deletion beyond messaging (spec 2026-10-19 deleted member ghost): users.deleteUser
@@ -188,6 +189,169 @@ describe("account deletion: open exchanges", () => {
     expect(await status(rejected)).toBe("rejected");
     expect(await status(disputed)).toBe("disputed");
     expect(await status(others)).toBe("proposed");
+  });
+});
+
+describe("account deletion: the other party of an open trade is told", () => {
+  // Bob proposed to buy Alice's copy and Carol's offer to Alice was accepted; Dave (already
+  // deleted) had proposed to her too. Every exchange went through the real use cases, so each
+  // has its thread.
+  const seed = async (t: T) => {
+    const s = await seedMembers(t);
+    const herCopy = await insertCopy(t, s.puzzleId, s.alice, {
+      availability: FOR_SALE,
+    });
+    const carolsCopy = await insertCopy(t, s.puzzleId, s.carol, {
+      availability: FOR_SALE,
+    });
+    const propose = (
+      who: Who,
+      recipientId: Id<"users">,
+      copy: Id<"ownedPuzzles">,
+    ) =>
+      as(t, who).mutation(api.exchange.propose.propose, {
+        recipientId,
+        type: "sale",
+        requestedPuzzleId: copy,
+        salePrice: 900,
+      });
+    const bobs = await propose("bob", s.alice, herCopy);
+    const hers = await propose("alice", s.carol, carolsCopy);
+    await as(t, "carol").mutation(api.exchange.accept.accept, {
+      exchangeId: hers,
+    });
+    const daves = await propose("dave", s.alice, herCopy);
+    await settleDueJobs(t);
+    await t.run((ctx) => ctx.db.patch(s.dave, { isActive: false }));
+    return { ...s, bobs, hers, daves };
+  };
+
+  const notificationsOf = (t: T, userId: Id<"users">) =>
+    t.run((ctx) =>
+      ctx.db
+        .query("notifications")
+        .withIndex("by_user", (q) => q.eq("userId", userId))
+        .collect(),
+    );
+
+  const lastThreadMessage = async (t: T, who: Who, exchangeId: string) => {
+    const thread = await as(t, who).query(
+      api.conversation.getThreadByExchange.getThreadByExchange,
+      { exchangeId },
+    );
+    const messages = await as(t, who).query(
+      api.conversation.getThreadMessages.getThreadMessages,
+      { threadId: thread! },
+    );
+    return messages[messages.length - 1];
+  };
+
+  test("Bob and Carol each get one notice naming a Deleted member, and a row in the thread", async () => {
+    const t = newT();
+    const s = await seed(t);
+    const before = {
+      bob: (await notificationsOf(t, s.bob)).length,
+      carol: (await notificationsOf(t, s.carol)).length,
+    };
+
+    await deleteMember(t, "alice");
+
+    for (const [who, id, exchangeId] of [
+      ["bob", s.bob, s.bobs],
+      ["carol", s.carol, s.hers],
+    ] as const) {
+      const rows = await notificationsOf(t, id);
+      expect(rows).toHaveLength(before[who] + 1);
+      const notice = rows.find(
+        (row) => row.type === "trade_cancelled_member_deleted",
+      );
+      expect(notice).toMatchObject({
+        channel: "inApp",
+        actorIds: [s.alice],
+        relatedId: await exchangeRowId(t, exchangeId),
+        subject: { kind: "exchange", exchangeId },
+      });
+      expect(notice?.params ?? {}).toEqual({});
+      expect(rows.some((row) => row.type === "trade_cancelled")).toBe(false);
+
+      const views = (
+        await as(t, who).query(
+          api.notifications.listMyNotificationViews.listMyNotificationViews,
+          { paginationOpts: { numItems: 20, cursor: null } },
+        )
+      ).page.filter((view) => view.type === "trade_cancelled_member_deleted");
+      expect(views).toHaveLength(1);
+      expect(views[0].actors).toEqual([DEPARTED]);
+
+      expect(await lastThreadMessage(t, who, exchangeId)).toMatchObject({
+        kind: "system",
+        body: CANCELLED_BY_DELETION_BODY,
+      });
+    }
+    // Dave's account is gone too: nobody to tell.
+    expect(
+      (await notificationsOf(t, s.dave)).filter(
+        (row) => row.type === "trade_cancelled_member_deleted",
+      ),
+    ).toEqual([]);
+  });
+
+  // The push and email sends scheduled for one member.
+  const sendsTo = (t: T, fragment: string, userId: Id<"users">) =>
+    t.run(async (ctx) =>
+      (
+        (await ctx.db.system
+          .query("_scheduled_functions")
+          .collect()) as unknown as { name: string; args: unknown[] }[]
+      ).filter(
+        (job) =>
+          job.name.includes(fragment) &&
+          (job.args[0] as { userId?: string }).userId === userId,
+      ),
+    );
+
+  test("push and email follow each member's preference for the type (both off by default)", async () => {
+    const t = newT();
+    const s = await seed(t);
+    for (const userId of [s.bob, s.carol]) {
+      await t.run((ctx) =>
+        ctx.db.insert("pushSubscriptions", {
+          userId,
+          endpoint: `https://push.example/${userId}`,
+          p256dh: "p",
+          auth: "a",
+          createdAt: Date.now(),
+        }),
+      );
+    }
+    const enable = (who: Who, channel: "push" | "email") =>
+      as(t, who).mutation(
+        api.notifications.updateNotificationPreference
+          .updateNotificationPreference,
+        { type: "trade_cancelled_member_deleted", channel, enabled: true },
+      );
+    await enable("bob", "push");
+    await enable("bob", "email");
+    const before = {
+      bobPush: (await sendsTo(t, "sendWebPush", s.bob)).length,
+      bobEmail: (await sendsTo(t, "sendEmail", s.bob)).length,
+      carolPush: (await sendsTo(t, "sendWebPush", s.carol)).length,
+      carolEmail: (await sendsTo(t, "sendEmail", s.carol)).length,
+    };
+
+    await deleteMember(t, "alice");
+
+    expect({
+      bobPush: (await sendsTo(t, "sendWebPush", s.bob)).length,
+      bobEmail: (await sendsTo(t, "sendEmail", s.bob)).length,
+      carolPush: (await sendsTo(t, "sendWebPush", s.carol)).length,
+      carolEmail: (await sendsTo(t, "sendEmail", s.carol)).length,
+    }).toEqual({
+      bobPush: before.bobPush + 1,
+      bobEmail: before.bobEmail + 1,
+      carolPush: before.carolPush,
+      carolEmail: before.carolEmail,
+    });
   });
 });
 

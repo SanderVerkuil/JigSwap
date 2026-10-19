@@ -74,7 +74,10 @@ import {
 // ever touches a copy someone else owns now: their History rows (transfers, loans, completions)
 // stay and name the member as a departed "Deleted member".
 //   exchangesOpen    the proposed/accepted exchanges they started } cancelled; completed, rejected,
-//   exchangesOpenIn  the proposed/accepted exchanges sent to them } cancelled and disputed stay
+//   exchangesOpenIn  the proposed/accepted exchanges sent to them } cancelled and disputed stay.
+//                The other party, if still active, gets a trade_cancelled_member_deleted
+//                notification (actor: the departed member, "Deleted member") and a system row in
+//                the exchange's thread.
 //   loansOpen    the open loans of copies they lent  } returned (closedAt now), the copy back with
 //   loansOpenIn  the open loans of copies they borrow } its owner; loan rows stay as history
 //   copies       the copies they own now (by_owner only), each with its collection memberships,
