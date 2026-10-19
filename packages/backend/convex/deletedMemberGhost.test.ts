@@ -311,5 +311,15 @@ describe.each(Object.keys(departures) as (keyof typeof departures)[])(
       expect(entry!.actorDeparted).toBe(true);
       expectNoIdentity(feed);
     });
+
+    test("public review authors are anonymous", async () => {
+      const { t, puzzleId } = await setup();
+      const reviews = await t.query(
+        api.social.listPublicPuzzleReviews.listPublicPuzzleReviews,
+        { puzzleId },
+      );
+      expect(reviews).toHaveLength(1);
+      expect(reviews[0].author).toBeNull();
+    });
   },
 );

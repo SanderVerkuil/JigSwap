@@ -351,7 +351,8 @@ export const projectPublicAuthor = async (
   memberId: Id<"users">,
 ): Promise<PublicAuthorView> => {
   const user = await ctx.db.get(memberId);
-  if (!user) return null;
+  // A departed (deleted or deactivated) author is never revealed, whatever their profile row says.
+  if (!user || !user.isActive) return null;
   const profile = await ctx.db
     .query("profiles")
     .withIndex("by_member", (q) => q.eq("memberId", memberId))
