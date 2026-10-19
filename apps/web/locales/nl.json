@@ -1224,7 +1224,7 @@
   "privacy": {
     "title": "Privacybeleid",
     "lastUpdated": "Laatst bijgewerkt",
-    "effectiveDate": "18 oktober 2026",
+    "effectiveDate": "19 oktober 2026",
     "introduction": "Dit privacybeleid legt uit welke persoonsgegevens JigSwap verzamelt, waarom we dat doen en welke rechten je hebt. JigSwap wordt beheerd door Sander Verkuil, die de verwerkingsverantwoordelijke is voor de verwerking die hier wordt beschreven. We willen zo min mogelijk verzamelen en transparant zijn over de rest.",
     "informationWeCollect": {
       "title": "Welke gegevens we verzamelen",
@@ -1335,7 +1335,7 @@
         "Verlaat je een kring of word je verwijderd, dan verlies je de toegang tot de chat. De berichten die je stuurde, blijven in de chat staan voor de leden, als deel van het gesprek van de groep",
         "Leden van een kring zien in de chat elkaars naam en avatar, ook als een profiel privé is",
         "Blokkeer je een lid met wie je in een kring zit, dan worden diens berichten voor jou verborgen. Diegene ziet die van jou gewoon en krijgt niets te horen over de blokkering",
-        "Nieuwe berichten geven leden een melding in de app en als pushmelding, samengevoegd tot één melding per gesprek en zonder de tekst van het bericht. Demp je een chat, dan krijg je er geen enkele melding meer van",
+        "Nieuwe berichten geven leden een melding in de app, samengevoegd tot één melding per gesprek en zonder de tekst van het bericht. Pushmeldingen zet je per soort melding zelf aan; voor berichten en kringberichten staan ze standaard uit. Demp je een chat, dan krijg je er geen enkele melding meer van",
         "Kringchats sturen nooit een e-mail per bericht. E-mail staat standaard uit; zet je het aan, dan krijg je ongeveer 30 minuten na een bericht dat je nog niet hebt gelezen één korte samenvatting, hoogstens één keer per 6 uur per chat",
         "Meldt iemand een bericht in een groepschat, dan kan de kopie die we voor moderators bewaren eerdere berichten van andere leden bevatten (zie Blokkeren en melden)"
       ]

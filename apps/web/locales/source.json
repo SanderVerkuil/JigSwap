@@ -1224,7 +1224,7 @@
   "privacy": {
     "title": "Privacy Policy",
     "lastUpdated": "Last Updated",
-    "effectiveDate": "18 October 2026",
+    "effectiveDate": "19 October 2026",
     "introduction": "This Privacy Policy explains what personal data JigSwap collects, why we collect it, and what your rights are. JigSwap is run by Sander Verkuil, who is the controller for the processing described here. We aim to collect as little as possible and to be transparent about the rest.",
     "informationWeCollect": {
       "title": "Information We Collect",
@@ -1335,7 +1335,7 @@
         "When you leave a circle or are removed, you lose access to its chat. The messages you sent stay in the chat for the members, as part of the group's conversation",
         "Members of a circle see each other's name and avatar in the chat, even when a profile is private",
         "If you block a member you share a circle with, their messages are hidden for you. They still see yours and are not told about the block",
-        "New messages notify members in the app and by push, combined into one notification per conversation and without the message text. Muting a chat stops all its notifications",
+        "New messages notify members in the app, combined into one notification per conversation and without the message text. Push notifications are opt-in for each type of notification, and are off by default for messages and circle messages. Muting a chat stops all its notifications",
         "Circle chats never send an email per message. Email is off by default; if you turn it on, you get one short summary about 30 minutes after a message you haven't read, at most once every 6 hours per chat",
         "If someone reports a message in a group chat, the copy we keep for moderators can include earlier messages from other members (see Blocking and Reporting)"
       ]
