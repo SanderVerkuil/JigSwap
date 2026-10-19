@@ -1,7 +1,7 @@
 import { Image } from "@/compat/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import Compressor from "compressorjs";
+import { preparePhoto } from "@/lib/prepare-photo";
 import { X } from "lucide-react";
 import { useState } from "react";
 import { FieldValues } from "react-hook-form";
@@ -38,20 +38,21 @@ export function FileUpload({
             const file = e.target.files?.[0];
             if (!file) return;
 
-            new Compressor(file, {
-              quality: 0.6,
-              maxWidth: 1024,
-              maxHeight: 1024,
-              success: (result) => {
+            preparePhoto(file).then(
+              (prepared) => {
                 setIsCompressing(false);
-                onChange(new File([result], file.name, { type: file.type }));
+                onChange(
+                  new File([prepared.file], file.name, {
+                    type: prepared.file.type,
+                  }),
+                );
               },
-              error: (error) => {
+              (error: unknown) => {
                 setIsCompressing(false);
                 setHasError(true);
                 console.error(error);
               },
-            });
+            );
           }}
         />
         {hasError && <p className="text-destructive text-sm">{t("error")}</p>}

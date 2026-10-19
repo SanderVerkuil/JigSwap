@@ -38,8 +38,8 @@ vi.mock("@convex-dev/react-query", async (importOriginal) => ({
   },
 }));
 
-vi.mock("./prepare-photo", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("./prepare-photo")>()),
+vi.mock("@/lib/prepare-photo", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/prepare-photo")>()),
   preparePhoto: mocks.prepare,
   uploadWithProgress: mocks.upload,
 }));

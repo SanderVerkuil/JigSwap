@@ -381,9 +381,6 @@ importers:
       cmdk:
         specifier: ^1.1.1
         version: 1.1.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
-      compressorjs:
-        specifier: ^1.4.0
-        version: 1.4.0
       convex:
         specifier: ^1.47.0
         version: 1.47.0(@clerk/clerk-react@5.61.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@clerk/react@6.17.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)
@@ -4101,9 +4098,6 @@ packages:
   bidi-js@1.0.3:
     resolution: {integrity: sha512-RKshQI1R3YQ+n9YJz2QQ147P66ELpa1FQEg20Dk8oW9t2KgLbpDLLp9aGZ7y8WHSshDknG0bknqGw5/tyCs5tw==}
 
-  blueimp-canvas-to-blob@3.29.0:
-    resolution: {integrity: sha512-0pcSSGxC0QxT+yVkivxIqW0Y4VlO2XSDPofBAqoJ1qJxgH9eiUDLv50Rixij2cDuEfx4M6DpD9UGZpRhT5Q8qg==}
-
   blurhash@2.0.5:
     resolution: {integrity: sha512-cRygWd7kGBQO3VEhPiTgq4Wc43ctsM+o46urrmPOiuAe+07fzlSB9OJVdpgDL0jPqXUVQ9ht7aq7kxOeJHRK+w==}
 
@@ -4265,9 +4259,6 @@ packages:
 
   commander@2.20.3:
     resolution: {integrity: sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==}
-
-  compressorjs@1.4.0:
-    resolution: {integrity: sha512-cfBWoYc4EkIgsbphT7R0SwSHHY+zGSMBaBK0e0T+iPJejKpsIyco3OoQUdH6ghTVrH2bysXjhlO5zTDPJWzSmQ==}
 
   consola@3.4.2:
     resolution: {integrity: sha512-5IKcdX0nnYavi6G7TtOhwkYzyjfJlatbjMjuLSfE2kYT5pMDOilZ4OvMhi637CcDICTmz3wARPoyhqyX1Y+XvA==}
@@ -5118,10 +5109,6 @@ packages:
   is-absolute-url@4.0.1:
     resolution: {integrity: sha512-/51/TKE88Lmm7Gc4/8btclNXWS+g50wXhYJq8HWIBAGUBnoAdRu1aXeh364t/O7wXDAcTJDP8PNuNKWUDWie+A==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
-
-  is-blob@2.1.0:
-    resolution: {integrity: sha512-SZ/fTft5eUhQM6oF/ZaASFDEdbFVe89Imltn9uZr03wdKMcWNVYSMjQPFtg05QuNkt5l5c135ElvXEQG0rk4tw==}
-    engines: {node: '>=6'}
 
   is-bun-module@2.0.0:
     resolution: {integrity: sha512-gNCGbnnnnFAUGKeZ9PdbyeGYJqewpmc2aKHUEMO5nQPWU9lOmv7jcmQIv+qHD8fXW6W7qfuCwX4rY9LNRjXrkQ==}
@@ -10644,8 +10631,6 @@ snapshots:
     dependencies:
       require-from-string: 2.0.2
 
-  blueimp-canvas-to-blob@3.29.0: {}
-
   blurhash@2.0.5: {}
 
   bmp-ts@1.0.9: {}
@@ -10819,11 +10804,6 @@ snapshots:
 
   commander@2.20.3:
     optional: true
-
-  compressorjs@1.4.0:
-    dependencies:
-      blueimp-canvas-to-blob: 3.29.0
-      is-blob: 2.1.0
 
   consola@3.4.2: {}
 
@@ -11769,8 +11749,6 @@ snapshots:
       '@formatjs/icu-messageformat-parser': 3.5.11
 
   is-absolute-url@4.0.1: {}
-
-  is-blob@2.1.0: {}
 
   is-bun-module@2.0.0:
     dependencies:
