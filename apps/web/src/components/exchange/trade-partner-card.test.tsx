@@ -157,10 +157,31 @@ describe("TradePartnerCard", () => {
     ).toBeNull();
   });
 
-  it("names a departed partner 'Former member'", () => {
+  it("names a departed partner 'Deleted member'", () => {
     renderCard({ state: "departed" });
-    expect(screen.getByText("Former member")).toBeTruthy();
+    expect(screen.getByText("Deleted member")).toBeTruthy();
     expect(screen.queryByRole("link")).toBeNull();
+  });
+
+  it("names a departed reviewer 'Deleted member'", () => {
+    const { container } = renderCard(
+      revealed({
+        reviews: {
+          averageRating: 5,
+          totalReviews: 1,
+          items: [
+            {
+              rating: 5,
+              createdAt: Date.UTC(2026, 0, 2),
+              reviewerDeparted: true,
+            },
+          ],
+        },
+      }),
+    );
+    expect(container.querySelector("li")?.textContent).toContain(
+      "Deleted member ·",
+    );
   });
 
   it("renders no card while loading or for a non-party", () => {

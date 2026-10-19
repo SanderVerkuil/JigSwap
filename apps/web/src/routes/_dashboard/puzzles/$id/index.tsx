@@ -18,7 +18,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StarRating } from "@/components/ui/star-rating";
 import { gateway, Id } from "@/gateway";
 import { useFavorites } from "@/hooks/use-favorites";
-import { useMemberDisplayName } from "@/lib/member-display-name";
+import {
+  useAuthorDisplayName,
+  useMemberDisplayName,
+} from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -613,8 +616,8 @@ function ReviewRow({
   relative: (timestamp: number) => string;
   last: boolean;
 }) {
-  const displayName = useMemberDisplayName();
-  const name = displayName(review.author);
+  const authorName = useAuthorDisplayName();
+  const name = authorName(review.author);
   return (
     <div className={cn("flex gap-3 py-3.5", !last && "border-border border-b")}>
       <MemberAvatar source={review.author} avatar={review.author.avatar} />

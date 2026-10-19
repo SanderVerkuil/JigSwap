@@ -29,8 +29,9 @@ export const toLoanView = async (
     openedAt: loan.openedAt,
     expectedReturn: loan.expectedReturn,
     closedAt: loan.closedAt,
-    lender: lender ? toMemberView(lender) : null,
-    borrower: borrower ? toMemberView(borrower) : null,
+    // A departed (deleted or deactivated) party is null: the web renders "Deleted member".
+    lender: lender?.isActive ? toMemberView(lender) : null,
+    borrower: borrower?.isActive ? toMemberView(borrower) : null,
   };
 };
 

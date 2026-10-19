@@ -32,8 +32,8 @@ const ACTORLESS: ReadonlySet<NotificationViewType> = new Set([
 ]);
 
 /**
- * Localized name for an actor: "Former member" when anonymous (deleted, deactivated), the generic
- * "Puzzler" when they have no name, else their resolved name.
+ * Localized name for an actor: "Deleted member" when the account is gone or deactivated, the
+ * generic "Puzzler" when they have no name or are hidden by privacy, else their resolved name.
  */
 export function useActorName(): (
   actor: NotificationActorView | undefined,
@@ -42,9 +42,9 @@ export function useActorName(): (
   const displayName = useMemberDisplayName();
   return useCallback(
     (actor) =>
-      !actor || actor.anonymous
-        ? t("formerMember")
-        : displayName({ name: actor.name }),
+      !actor || (actor.anonymous && actor.departed)
+        ? t("deletedMember")
+        : displayName(actor.anonymous ? null : { name: actor.name }),
     [t, displayName],
   );
 }
@@ -60,7 +60,7 @@ export function NotificationSentence({ view }: { view: NotificationView }) {
   const displayName = useMemberDisplayName();
   const { type, actors, actorCount, context } = view;
   // An anonymous, not-departed trade party, circle inviter/invitee or circle message author is a
-  // living member hidden by privacy (e.g. an owner who declined without replying), not a former
+  // living member hidden by privacy (e.g. an owner who declined without replying), not a deleted
   // one: name them with the generic member label.
   const actorName = (actor: NotificationActorView | undefined) =>
     (type.startsWith("trade_") ||
@@ -82,7 +82,7 @@ export function NotificationSentence({ view }: { view: NotificationView }) {
     return <>{notificationCopy({ type, params }, t).message}</>;
   }
 
-  // A privacy-hidden (living) message sender is not a "Former member": a nameless sentence.
+  // A privacy-hidden (living) message sender is not a "Deleted member": a nameless sentence.
   if (
     type === "message_received" &&
     actors[0]?.anonymous &&

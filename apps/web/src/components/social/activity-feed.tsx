@@ -20,6 +20,7 @@ import { ActivityTargetLink, ActorLink } from "./activity-links";
 
 export function ActivityFeed() {
   const t = useTranslations("activity");
+  const tRich = useTranslations("notifications.rich");
   const displayName = useMemberDisplayName();
   const relativeTime = useRelativeTime();
   const { data: feed } = useQuery(convexQuery(gateway.social.activityFeed, {}));
@@ -48,7 +49,9 @@ export function ActivityFeed() {
         const isYou = me != null && entry.memberId === me._id;
         // A grouped batch add reads "added N puzzles"; the other kinds ignore the count.
         const count = entry.batch?.count ?? 1;
-        const name = displayName({ name: entry.actorName });
+        const name = entry.actorDeparted
+          ? tRich("deletedMember")
+          : displayName({ name: entry.actorName });
         return (
           <div
             key={`${entry.ref}-${entry.memberId}-${entry.occurredAt}`}

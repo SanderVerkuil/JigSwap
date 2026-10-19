@@ -102,7 +102,7 @@ export function NotificationActions({
   }, [pending]);
 
   const actor = view.actors[0];
-  // A privacy-hidden (living) actor gets the generic member label, not "Former member".
+  // A privacy-hidden (living) actor gets the generic member label, not "Deleted member".
   const name =
     actor?.anonymous && !actor.departed ? displayName(null) : actorName(actor);
   const memberId =

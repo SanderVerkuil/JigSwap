@@ -291,3 +291,22 @@ describe("ActivityFeed — links", () => {
     expect(links(elementsOf(render([entry({ target: unknown })])))).toEqual([]);
   });
 });
+
+describe("ActivityFeed — a departed actor", () => {
+  const departed = (): Feed[number] => ({
+    memberId: "gone1",
+    kind: "completion",
+    occurredAt: Date.now() - 60_000,
+    ref: "completion-1",
+    actorDeparted: true,
+  });
+
+  it.each([
+    ["en", "Deleted member"],
+    ["nl", "Verwijderd lid"],
+  ] as const)("names them the ghost, unlinked (%s)", (locale, label) => {
+    const html = render([departed()], locale);
+    expect(sentences(html).some((s) => s.startsWith(label))).toBe(true);
+    expect(links(elementsOf(html))).toHaveLength(0);
+  });
+});

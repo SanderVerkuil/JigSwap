@@ -323,7 +323,7 @@ describe("ThreadView in a circle thread", () => {
     const panel = await screen.findByRole("dialog", { name: "Members (3)" });
     expect(within(panel).getByText("Owner")).toBeTruthy();
     expect(within(panel).getByText("(You)")).toBeTruthy();
-    expect(within(panel).getByText("Former member")).toBeTruthy();
+    expect(within(panel).getByText("Deleted member")).toBeTruthy();
     // Report for other members only: not for the viewer or a departed seat.
     expect(
       within(panel).getAllByRole("button", { name: /^Report / }),

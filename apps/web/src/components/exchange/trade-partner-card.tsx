@@ -44,7 +44,7 @@ export function TradePartnerCard({
 
   const name =
     partner.state === "departed"
-      ? tRich("formerMember")
+      ? tRich("deletedMember")
       : // Never resolve the name from the email: it is shown separately, only when allowed.
         displayName(
           partner.state === "revealed"
@@ -128,7 +128,10 @@ export function TradePartnerCard({
                   <StarRating value={review.rating} size="sm" />
                   {review.comment && <p className="mt-1">{review.comment}</p>}
                   <p className="text-muted-foreground mt-1 text-xs">
-                    {displayName({ name: review.reviewerName })} ·{" "}
+                    {review.reviewerDeparted
+                      ? tRich("deletedMember")
+                      : displayName({ name: review.reviewerName })}{" "}
+                    ·{" "}
                     {format.dateTime(new Date(review.createdAt), {
                       dateStyle: "medium",
                     })}

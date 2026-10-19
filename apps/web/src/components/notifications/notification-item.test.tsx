@@ -249,14 +249,22 @@ describe("NotificationItem rendering", () => {
     expect(screen.getByText("No longer available")).toBeTruthy();
   });
 
-  it("names an anonymous actor 'Former member' and a nameless one 'Puzzler' (en + nl)", () => {
-    renderItem(base({ actors: [{ anonymous: true }], href: null }));
-    expect(screen.getByText("Former member")).toBeTruthy();
+  it("names a departed actor 'Deleted member', a hidden or nameless one 'Puzzler' (en + nl)", () => {
+    renderItem(
+      base({ actors: [{ anonymous: true, departed: true }], href: null }),
+    );
+    expect(screen.getByText("Deleted member")).toBeTruthy();
     cleanup();
-    renderItem(base({ actors: [{ anonymous: true }], href: null }), {
-      locale: "nl",
-    });
-    expect(screen.getByText("Voormalig lid")).toBeTruthy();
+    renderItem(
+      base({ actors: [{ anonymous: true, departed: true }], href: null }),
+      { locale: "nl" },
+    );
+    expect(screen.getByText("Verwijderd lid")).toBeTruthy();
+    cleanup();
+    // A living member hidden by privacy is not "Deleted member".
+    renderItem(base({ actors: [{ anonymous: true }], href: null }));
+    expect(screen.getByText("Puzzler")).toBeTruthy();
+    expect(screen.queryByText("Deleted member")).toBeNull();
     cleanup();
     renderItem(
       base({
@@ -270,7 +278,7 @@ describe("NotificationItem rendering", () => {
     ["en", "Puzzler declined your trade for Starry Night."],
     ["nl", "Puzzelaar"],
   ] as const)(
-    "names a privacy-hidden trade_declined actor generically, not 'Former member' (%s)",
+    "names a privacy-hidden trade_declined actor generically, not 'Deleted member' (%s)",
     (locale, text) => {
       const { container } = renderItem(
         base({
@@ -283,7 +291,7 @@ describe("NotificationItem rendering", () => {
       );
       const sentence = rowLink(container)!.textContent;
       expect(sentence).toContain(text);
-      expect(sentence).not.toMatch(/Former member|Voormalig lid/);
+      expect(sentence).not.toMatch(/Deleted member|Verwijderd lid/);
     },
   );
 
@@ -342,7 +350,7 @@ describe("NotificationItem rendering", () => {
       );
       const sentence = rowLink(container)!.textContent;
       expect(sentence).toContain(text);
-      expect(sentence).not.toMatch(/Former member|Voormalig lid/);
+      expect(sentence).not.toMatch(/Deleted member|Verwijderd lid/);
       expect(container.querySelector("li")?.className).toContain("opacity-70");
     },
   );
@@ -372,14 +380,14 @@ describe("NotificationItem rendering", () => {
     );
     const sentence = rowLink(container)!.textContent;
     expect(sentence).toContain("Puzzler invited you to join a circle.");
-    expect(sentence).not.toMatch(/Former member/);
+    expect(sentence).not.toMatch(/Deleted member/);
   });
 
   it.each([
-    ["en", "Former member declined your trade for Starry Night."],
-    ["nl", "Voormalig lid"],
+    ["en", "Deleted member declined your trade for Starry Night."],
+    ["nl", "Verwijderd lid"],
   ] as const)(
-    "names a departed trade_declined actor 'Former member' (%s)",
+    "names a departed trade_declined actor 'Deleted member' (%s)",
     (locale, text) => {
       const { container } = renderItem(
         base({
@@ -514,7 +522,7 @@ describe("NotificationItem rendering", () => {
     },
   );
 
-  it("names a privacy-hidden circle message author with the generic label, not 'Former member'", () => {
+  it("names a privacy-hidden circle message author with the generic label, not 'Deleted member'", () => {
     const { container } = renderItem(
       base({
         type: "circle_message_received",
@@ -631,7 +639,7 @@ describe("rich sentences", () => {
     ["en", "Unread, You have a new message."],
     ["nl", "Ongelezen, Je hebt een nieuw bericht."],
   ] as const)(
-    "a privacy-hidden message sender gets a nameless sentence, not 'Former member' (%s)",
+    "a privacy-hidden message sender gets a nameless sentence, not 'Deleted member' (%s)",
     (locale, text) => {
       const { container } = renderItem(
         base({
@@ -645,7 +653,7 @@ describe("rich sentences", () => {
     },
   );
 
-  it("a departed message sender is still a 'Former member'", () => {
+  it("a departed message sender is still a 'Deleted member'", () => {
     const { container } = renderItem(
       base({
         type: "message_received",
@@ -654,7 +662,7 @@ describe("rich sentences", () => {
       }),
     );
     expect(rowLink(container)!.textContent).toBe(
-      "Unread, Former member sent you a message.",
+      "Unread, Deleted member sent you a message.",
     );
   });
 

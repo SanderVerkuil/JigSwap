@@ -11,14 +11,14 @@ export interface CircleMemberView {
   name?: string;
   username?: string;
   avatar?: string;
-  // The account is gone or deactivated: no name/username/avatar; render "Former member".
+  // The account is gone or deactivated: no name/username/avatar; render "Deleted member".
   departed?: boolean;
   permission: CirclePermissionLevel;
   joinedAt: number;
   isOwner: boolean;
 }
 
-// A circle seat's label: the member's display name, or "Former member" for a departed account (the
+// A circle seat's label: the member's display name, or "Deleted member" for a departed account (the
 // server omits its identity). The seat itself stays manageable (an admin can still remove it).
 export function useCircleSeatName() {
   const projectedName = useProjectedMemberName();

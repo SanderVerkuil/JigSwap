@@ -33,6 +33,7 @@ import { gateway, Id } from "@/gateway";
 import { formatCompletionDate } from "@/lib/completion-format";
 import { durationParts } from "@/lib/humanize-duration";
 import {
+  useAuthorDisplayName,
   useMemberDisplayName,
   useProjectedMemberName,
 } from "@/lib/member-display-name";
@@ -1421,8 +1422,8 @@ function CommentRow({
   relative: (timestamp: number) => string;
   last: boolean;
 }) {
-  const displayName = useMemberDisplayName();
-  const name = displayName(comment.author);
+  const authorName = useAuthorDisplayName();
+  const name = authorName(comment.author);
   return (
     <div className={cn("flex gap-3 py-3.5", !last && "border-border border-b")}>
       <Avatar className="h-8 w-8">
@@ -1449,7 +1450,7 @@ function CommentRow({
 }
 
 // Render a ProjectedMember inline: a revealed member shows their name; an
-// anonymised one shows the i18n "Anonymous user" label ("Former member" for a
+// anonymised one shows the i18n "Anonymous user" label ("Deleted member" for a
 // departed account) — never a real name.
 function ProjectedName({ member }: { member: ProjectedMember }) {
   const t = useTranslations("copyInstance");

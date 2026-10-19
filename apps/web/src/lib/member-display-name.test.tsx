@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import en from "../../locales/en.json";
 import nl from "../../locales/nl.json";
 import {
+  useAuthorDisplayName,
   useMemberDisplayName,
   usePartyDisplayName,
   useProjectedMemberName,
@@ -69,12 +70,12 @@ function PartyName({
 }
 
 describe("usePartyDisplayName", () => {
-  it("names a departed party 'Former member' and a hidden one generically", () => {
+  it("names a departed party 'Deleted member' and a hidden one generically", () => {
     expect(render(<PartyName source={null} state="departed" />)).toBe(
-      "Former member",
+      "Deleted member",
     );
     expect(render(<PartyName source={null} state="departed" />, "nl")).toBe(
-      "Voormalig lid",
+      "Verwijderd lid",
     );
     expect(render(<PartyName source={null} state="hidden" />)).toBe("Puzzler");
     expect(
@@ -107,16 +108,42 @@ describe("useProjectedMemberName", () => {
     );
   });
 
-  it('renders "Former member" for a departed account', () => {
+  it('renders "Deleted member" for a departed account', () => {
     expect(
       render(<ProjectedName member={{ anonymous: true, departed: true }} />),
-    ).toBe("Former member");
+    ).toBe("Deleted member");
     expect(
       render(
         <ProjectedName member={{ anonymous: true, departed: true }} />,
         "nl",
       ),
-    ).toBe("Voormalig lid");
+    ).toBe("Verwijderd lid");
+  });
+});
+
+function AuthorName({
+  author,
+}: {
+  author: MemberNameSource & { isActive?: boolean };
+}) {
+  const authorName = useAuthorDisplayName();
+  return <>{authorName(author)}</>;
+}
+
+describe("useAuthorDisplayName", () => {
+  it("renders an active author's name", () => {
+    expect(
+      render(<AuthorName author={{ name: "Mara Jansen", isActive: true }} />),
+    ).toBe("Mara Jansen");
+  });
+
+  it('renders "Deleted member" for a departed author (isActive: false)', () => {
+    expect(render(<AuthorName author={{ isActive: false }} />)).toBe(
+      "Deleted member",
+    );
+    expect(render(<AuthorName author={{ isActive: false }} />, "nl")).toBe(
+      "Verwijderd lid",
+    );
   });
 });
 

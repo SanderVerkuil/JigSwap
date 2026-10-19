@@ -2417,7 +2417,7 @@
     },
     "pushServiceUnreachable": "Your browser couldn't reach its push service. Some privacy browsers block or remove it — Brave disables it by default (enable 'Use Google services for push messaging' in Settings), and de-Googled Chromium builds like Helium strip it out. Firefox, Chrome, or Edge will work.",
     "rich": {
-      "formerMember": "Former member",
+      "deletedMember": "Deleted member",
       "unread": "Unread, ",
       "unavailable": "No longer available",
       "loadMore": "Load more",
@@ -3092,7 +3092,7 @@
     "statusReturned": "Returned",
     "statusRecalled": "Recalled",
     "borrowedBy": "Borrowed by {name}",
-    "unknownMember": "Unknown member",
+    "deletedMember": "Deleted member",
     "anonymousMember": "Anonymous user",
     "borrowedCount": "{count, plural, one {# borrowed puzzle} other {# borrowed puzzles}}",
     "pieceCount": "{count, plural, one {# piece} other {# pieces}}"

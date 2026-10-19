@@ -162,7 +162,7 @@ function BorrowedPage() {
                       {t("borrowedFrom", {
                         name: loan.lender
                           ? displayName(loan.lender)
-                          : t("unknownMember"),
+                          : t("deletedMember"),
                       })}
                     </span>
                   </div>

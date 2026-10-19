@@ -67,6 +67,8 @@ export interface ActivityEntryView {
   ref: string;
   /** Resolved server-side (profile displayName → account name → username, never email); absent = render the generic member label. */
   actorName?: string;
+  /** The actor's account was deleted or deactivated: no name or link, render "Deleted member". */
+  actorDeparted?: true;
   /** Present only on "acquisitionBatch" entries (`ref` is then the batch id). */
   batch?: ActivityBatchView;
   /**

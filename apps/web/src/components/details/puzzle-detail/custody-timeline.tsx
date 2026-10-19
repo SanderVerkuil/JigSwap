@@ -47,7 +47,7 @@ export function CustodyTimeline({ copyId }: CustodyTimelineProps) {
   if (timeline === null) return null;
 
   // Render a privacy-projected member's name: a revealed member shows their name; an anonymised one
-  // shows the "Anonymous user" label ("Former member" when departed) — never a real name.
+  // shows the "Anonymous user" label ("Deleted member" when departed) — never a real name.
   const ownerName = (member: ProjectedMember): string =>
     projectedName(member, t("anonymous"));
 

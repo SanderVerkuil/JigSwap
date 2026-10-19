@@ -34,7 +34,7 @@ export const memberInitialOf = (
 ): string | undefined => memberInitials(resolveMemberDisplayName(source ?? {}));
 
 /**
- * A trade party's name from its exchange-view state: "Former member" when the account is gone,
+ * A trade party's name from its exchange-view state: "Deleted member" when the account is gone,
  * else the member's resolved name (a hidden party is null, so it gets the generic label).
  */
 export function usePartyDisplayName(): (
@@ -45,7 +45,24 @@ export function usePartyDisplayName(): (
   const displayName = useMemberDisplayName();
   return useCallback(
     (member, state) =>
-      state === "departed" ? t("formerMember") : displayName(member),
+      state === "departed" ? t("deletedMember") : displayName(member),
+    [t, displayName],
+  );
+}
+
+/**
+ * Returns a formatter for an author's member view (reviews and comments): "Deleted member" when the
+ * account is gone or deactivated (the server sends `isActive: false` and nothing identifying), else
+ * the member's resolved name.
+ */
+export function useAuthorDisplayName(): (
+  author: MemberNameSource & { isActive?: boolean },
+) => string {
+  const t = useTranslations("notifications.rich");
+  const displayName = useMemberDisplayName();
+  return useCallback(
+    (author) =>
+      author.isActive === false ? t("deletedMember") : displayName(author),
     [t, displayName],
   );
 }
@@ -61,7 +78,7 @@ type ProjectedMemberSource =
 
 /**
  * Returns a formatter for a privacy-projected member's label: a revealed member's display name; a
- * departed account's "Former member"; otherwise the caller's localized anonymous label (each
+ * departed account's "Deleted member"; otherwise the caller's localized anonymous label (each
  * surface keeps its own "Anonymous user" key). Never a real name for a hidden member.
  */
 export function useProjectedMemberName(): (
@@ -75,7 +92,7 @@ export function useProjectedMemberName(): (
       !member.anonymous
         ? displayName(member.member)
         : member.departed
-          ? t("formerMember")
+          ? t("deletedMember")
           : anonymousLabel,
     [t, displayName],
   );

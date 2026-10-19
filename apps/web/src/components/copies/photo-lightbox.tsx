@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { gateway, Id } from "@/gateway";
 import {
+  useAuthorDisplayName,
   useMemberDisplayName,
   useProjectedMemberName,
 } from "@/lib/member-display-name";
@@ -454,8 +455,8 @@ function PhotoCommentRow({
   relative: (timestamp: number) => string;
   last: boolean;
 }) {
-  const displayName = useMemberDisplayName();
-  const name = displayName(comment.author);
+  const authorName = useAuthorDisplayName();
+  const name = authorName(comment.author);
   return (
     <div className={cn("flex gap-3 py-3", !last && "border-border border-b")}>
       <Avatar className="h-8 w-8">
