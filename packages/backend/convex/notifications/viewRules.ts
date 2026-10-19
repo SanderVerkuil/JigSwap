@@ -1,7 +1,8 @@
-import type {
-  NotificationActionKind,
-  NotificationResolvedAs,
-  NotificationViewState,
+import {
+  stripFormatting,
+  type NotificationActionKind,
+  type NotificationResolvedAs,
+  type NotificationViewState,
 } from "@jigswap/contracts";
 import type { NotificationSubject, NotificationType } from "@jigswap/domain";
 
@@ -347,10 +348,13 @@ export const notificationHref = (input: HrefInput): string | null => {
   }
 };
 
-/** First ~80 characters of a message body, whitespace-collapsed, with an ellipsis when cut. */
+/**
+ * First ~80 characters of a message body as plain text (formatting markers stripped),
+ * whitespace-collapsed, with an ellipsis when cut.
+ */
 export const MESSAGE_PREVIEW_LENGTH = 80;
 export const messagePreviewOf = (body: string): string | undefined => {
-  const text = body.replace(/\s+/g, " ").trim();
+  const text = stripFormatting(body).replace(/\s+/g, " ").trim();
   if (!text) return undefined;
   return text.length <= MESSAGE_PREVIEW_LENGTH
     ? text
