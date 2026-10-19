@@ -83,7 +83,9 @@ export function ProfileEditDialog() {
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">{t("displayName")}</label>
+            <label className="block text-sm font-medium">
+              {t("displayName")}
+            </label>
             <Input
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}

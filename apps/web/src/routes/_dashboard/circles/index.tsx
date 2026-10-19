@@ -137,7 +137,9 @@ function CirclesPage() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="circle-name">{t("manage.nameLabel")}</Label>
+              <Label htmlFor="circle-name" className="mb-2">
+                {t("manage.nameLabel")}
+              </Label>
               <Input
                 id="circle-name"
                 value={name}

@@ -45,7 +45,7 @@ export const PuzzleImportBar = ({ onDraft, onMatch }: PuzzleImportBarProps) => {
 
   return (
     <div className="space-y-2 rounded-lg border bg-muted/30 p-4">
-      <label htmlFor={inputId} className="text-sm font-medium">
+      <label htmlFor={inputId} className="block text-sm font-medium">
         {t("importFromUrl")}
       </label>
       <div className="flex gap-2">
