@@ -272,20 +272,24 @@ available**.
 
 ### In a circle chat
 
-In a circle's group chat you can attach one of your own puzzles, so the whole
-circle can see it:
+In a circle's group chat you can attach one of your own puzzles for the
+members who can see it:
 
-- The picker has only the **My puzzles** tab, and lists only puzzles that
-  everyone in the circle can see: puzzles you've
+- The picker has only the **My puzzles** tab, and lists the puzzles at least
+  one other member can see. The whole circle sees puzzles you've
   [shared with the circle](/docs/sharing-and-exchanges/friend-circles#share-a-copy-with-a-circle)
   while you offer them for swap, lend or sale, or, if your profile is public,
-  any puzzle you offer.
+  any puzzle you offer. Members of your household, and members you follow
+  who follow you back, can also see your other puzzles (household members
+  even your private ones).
+- A puzzle that only some members can see is marked **Not everyone in the
+  circle can see this** in the picker. You can still attach it.
 - You can't attach another member's puzzle in a circle chat.
 - Each member sees the card only while they're allowed to see the puzzle.
-  Once they can't, for example because you removed it, stopped sharing or
-  offering it, or left the circle, the card shows **This puzzle is no longer
-  available** for them. A member who blocked you, or whom you blocked, sees
-  that too.
+  Members who can't, for example because they aren't linked to you or because
+  you removed the puzzle, stopped sharing or offering it, or left the circle,
+  see **This puzzle isn't available to you** instead. It shows nothing about
+  the puzzle. A member who blocked you, or whom you blocked, sees that too.
 
 ## Send photos
 

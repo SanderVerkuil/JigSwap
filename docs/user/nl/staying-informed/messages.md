@@ -288,19 +288,24 @@ beschikbaar**.
 
 ### In een kringchat
 
-In de groepschat van een kring kun je een van je eigen puzzels bijvoegen,
-zodat de hele kring hem ziet:
+In de groepschat van een kring kun je een van je eigen puzzels bijvoegen voor
+de leden die hem kunnen zien:
 
-- Het venster heeft alleen het tabblad **Mijn puzzels**, en toont alleen
-  puzzels die iedereen in de kring kan zien: puzzels die je
+- Het venster heeft alleen het tabblad **Mijn puzzels**, en toont de puzzels
+  die minstens één ander lid kan zien. De hele kring ziet puzzels die je
   [met de kring deelt](/docs/sharing-and-exchanges/friend-circles#een-exemplaar-delen-met-een-kring)
   terwijl je ze aanbiedt om te ruilen, uit te lenen of te verkopen, of, als je
-  profiel openbaar is, elke puzzel die je aanbiedt.
+  profiel openbaar is, elke puzzel die je aanbiedt. Leden van je huishouden,
+  en leden die jij volgt en die jou terugvolgen, zien ook je andere puzzels
+  (leden van je huishouden zelfs je privépuzzels).
+- Een puzzel die maar een deel van de leden kan zien, staat in het venster
+  met **Niet iedereen in de kring kan deze zien**. Je kunt hem toch bijvoegen.
 - Je kunt in een kringchat geen puzzel van een ander lid bijvoegen.
-- Elk lid ziet de kaart alleen zolang die de puzzel mag zien. Kan dat niet
-  meer, bijvoorbeeld omdat je hem verwijderde, niet meer deelt of aanbiedt, of
-  de kring verliet, dan toont de kaart voor dat lid **Deze puzzel is niet meer
-  beschikbaar**. Dat ziet ook een lid dat jou blokkeerde of dat jij
+- Elk lid ziet de kaart alleen zolang die de puzzel mag zien. Leden die dat
+  niet mogen, bijvoorbeeld omdat ze geen band met je hebben of omdat je de
+  puzzel verwijderde, niet meer deelt of aanbiedt, of de kring verliet, zien
+  in plaats daarvan **Deze puzzel is niet beschikbaar voor jou**. Daarin staat
+  niets over de puzzel. Dat ziet ook een lid dat jou blokkeerde of dat jij
   blokkeerde.
 
 ## Foto's sturen

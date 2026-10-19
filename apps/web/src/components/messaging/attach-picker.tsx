@@ -5,8 +5,8 @@
 // (the latter hidden when the backend would return none — anonymised member),
 // a debounced search, and a list of copies; picking one hands it back and
 // closes. Lists only what listAttachableCopies allows, i.e. copies both
-// participants may view (in a circle: my copies the whole circle may view,
-// explained by `hint`).
+// participants may view (in a circle: my copies at least one other member may
+// view, explained by `hint`; one only some members may view says so).
 import { Image } from "@/compat/image";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,7 +33,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { Puzzle, Search, X } from "lucide-react";
+import { EyeOff, Puzzle, Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "use-intl";
 import type { MessageCopy } from "./copy-card";
@@ -296,7 +296,11 @@ function PickerPanel({
           <ul className="flex flex-col gap-0.5">
             {copies.map((copy) => (
               <li key={copy.copyId}>
-                <CopyOption copy={copy} onSelect={() => onSelect(copy)} />
+                <CopyOption
+                  copy={copy}
+                  limitedAudience={copy.limitedAudience === true}
+                  onSelect={() => onSelect(copy)}
+                />
               </li>
             ))}
           </ul>
@@ -308,12 +312,16 @@ function PickerPanel({
 
 function CopyOption({
   copy,
+  limitedAudience,
   onSelect,
 }: {
   copy: MessageCopy;
+  // Circle thread: only some of the circle's members may see this puzzle.
+  limitedAudience: boolean;
   onSelect: () => void;
 }) {
   const t = useTranslations("copyConversation");
+  const tMessages = useTranslations("messages");
   const meta = [
     copy.brand,
     copy.pieceCount !== null ? t("pieces", { count: copy.pieceCount }) : null,
@@ -340,6 +348,12 @@ function CopyOption({
         {meta && (
           <span className="text-muted-foreground block truncate text-xs">
             {meta}
+          </span>
+        )}
+        {limitedAudience && (
+          <span className="text-muted-foreground flex items-center gap-1 truncate text-xs">
+            <EyeOff aria-hidden className="size-3 shrink-0" />
+            {tMessages("circle.limitedAudience")}
           </span>
         )}
       </span>

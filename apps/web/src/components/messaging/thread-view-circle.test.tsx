@@ -164,6 +164,13 @@ const SHARED_COPY = {
   pieceCount: 1000,
   coverUrl: null,
 };
+// A puzzle only some of the circle may see (a household or mutual-follow link).
+const LIMITED_COPY = {
+  ...SHARED_COPY,
+  copyId: "copy_2",
+  title: "Quiet Harbour",
+  limitedAudience: true as const,
+};
 
 const circleThread: AnyInboxThread = {
   threadId: "thread_c",
@@ -249,7 +256,7 @@ const renderThread = (
       threadId: thread.threadId,
       side: "mine",
     }).queryKey,
-    [SHARED_COPY],
+    [SHARED_COPY, LIMITED_COPY],
   );
   if (presence) {
     // The viewer shares; one batched read for the members other than "me".
@@ -389,13 +396,23 @@ describe("ThreadView in a circle thread", () => {
     ).toEqual(["My puzzles"]);
     expect(
       within(picker).getByText(
-        "Only your puzzles that everyone in Puzzle Club can see. Share a puzzle with the circle to add it here.",
+        "Your puzzles that members of Puzzle Club can see. Share a puzzle with the circle so everyone can see it.",
       ),
     ).toBeTruthy();
     expect(within(picker).getByText("Harbour Lights")).toBeTruthy();
+    // Only the puzzle some members can't see says so.
+    const limited = within(picker).getByRole("button", {
+      name: /Quiet Harbour/,
+    });
+    expect(limited.textContent).toContain(
+      "Not everyone in the circle can see this",
+    );
+    expect(
+      within(picker).getAllByText("Not everyone in the circle can see this"),
+    ).toHaveLength(1);
   });
 
-  it("shows a shared puzzle's card, or that it is no longer available", () => {
+  it("shows a shared puzzle's card, or that it isn't available to the reader", () => {
     renderThread(circleThread, [
       ...CIRCLE_MESSAGES,
       {
@@ -418,10 +435,10 @@ describe("ThreadView in a circle thread", () => {
       },
     ]);
     expect(screen.getByText("Harbour Lights")).toBeTruthy();
-    expect(screen.getByText("This puzzle is no longer available")).toBeTruthy();
+    expect(screen.getByText("This puzzle isn't available to you")).toBeTruthy();
   });
 
-  it("says the puzzle is no longer available in Dutch", () => {
+  it("says the puzzle isn't available to the reader in Dutch", () => {
     renderThread(
       circleThread,
       [
@@ -438,7 +455,7 @@ describe("ThreadView in a circle thread", () => {
       "nl",
     );
     expect(
-      screen.getByText(nl.messages.copyUnavailable as string),
+      screen.getByText("Deze puzzel is niet beschikbaar voor jou"),
     ).toBeTruthy();
   });
 });
