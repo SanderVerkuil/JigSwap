@@ -274,6 +274,8 @@ import type * as invitations_revokeClerkInvitation from "../invitations/revokeCl
 import type * as invitations_revokeEmailInvite from "../invitations/revokeEmailInvite.js";
 import type * as invitations_sendEmailInvite from "../invitations/sendEmailInvite.js";
 import type * as lib_axiom from "../lib/axiom.js";
+import type * as lib_imageModeration_backfillBoxArtHashCheck from "../lib/imageModeration/backfillBoxArtHashCheck.js";
+import type * as lib_imageModeration_backfillBoxArtHashCheckStore from "../lib/imageModeration/backfillBoxArtHashCheckStore.js";
 import type * as lib_imageModeration_backfillStripMetadata from "../lib/imageModeration/backfillStripMetadata.js";
 import type * as lib_imageModeration_backfillStripMetadataStore from "../lib/imageModeration/backfillStripMetadataStore.js";
 import type * as lib_imageModeration_blobMetadata from "../lib/imageModeration/blobMetadata.js";
@@ -809,6 +811,8 @@ declare const fullApi: ApiFromModules<{
   "invitations/revokeEmailInvite": typeof invitations_revokeEmailInvite;
   "invitations/sendEmailInvite": typeof invitations_sendEmailInvite;
   "lib/axiom": typeof lib_axiom;
+  "lib/imageModeration/backfillBoxArtHashCheck": typeof lib_imageModeration_backfillBoxArtHashCheck;
+  "lib/imageModeration/backfillBoxArtHashCheckStore": typeof lib_imageModeration_backfillBoxArtHashCheckStore;
   "lib/imageModeration/backfillStripMetadata": typeof lib_imageModeration_backfillStripMetadata;
   "lib/imageModeration/backfillStripMetadataStore": typeof lib_imageModeration_backfillStripMetadataStore;
   "lib/imageModeration/blobMetadata": typeof lib_imageModeration_blobMetadata;

@@ -475,3 +475,62 @@ and a second dry run reports `"withMetadata":0`. Download a few
 switched images from the dashboard and check them with `exiv2 -pa` or `exiftool`: no
 metadata at all, `Orientation` included; and open them in a browser: they show the right way
 up.
+
+## `lib/imageModeration/backfillBoxArtHashCheck` — CSAM hash check of existing box art
+
+**When:** once per deployment that has the CSAM hash check configured
+(`CSAM_HASHCHECK_PROVIDER=offlimits` plus the `OFFLIMITS_HCS_*` variables), after box art
+through the shared moderation pipeline (`catalog/moderateBoxArt`) is deployed there. New box
+art is hash-checked on upload; box art stored before that never was. On a deployment where
+`backfillStripMetadata` has not run yet, run this one first: the strip replaces images that
+still hold the bytes as uploaded, and those are what hash lists match. Without a configured
+hash service a real run refuses to start (a dry run still counts).
+
+**What it does:** pages through one table, 25 rows per batch (`batchSize` overrides this),
+and for each box-art image whose `boxArtUploads` listing has not passed a hash check (or that
+has no listing: box art from before the listing existed) downloads it and checks the MD5 +
+SHA-1 of its stored bytes, exactly like the live pipeline:
+
+- **match:** handled like a match on upload. The bytes are preserved as a new blob, the
+  listing (created for legacy box art, attributed to the definition's submitter or the
+  proposer) becomes `quarantined`, the box art is detached from every definition and
+  proposal holding it (the puzzle then shows its placeholder), the original blob is deleted,
+  and a `csamEscalations` row (table `boxArtUploads`, `originalDiscarded: true` because the
+  stored bytes may not be the upload as sent) plus an `image_quarantined` audit stamp are
+  raised. The operator reports it from Admin → Moderation as usual; the uploader is not told.
+- **no_match:** recorded on the listing (`hashCheckedAt`), so a re-run skips it. The image
+  keeps being served.
+- **unavailable:** nothing changes (legacy box art stays served, as before) and it is
+  counted; re-run once the hash service is back.
+
+Box art the live pipeline owns (pending, quarantined, rejected) or that already passed a
+check is skipped.
+
+- `"table":"boxArt"`: `puzzles.image`.
+- `"table":"proposals"`: `puzzleChangeProposals.changes.image` (proposed box art).
+
+`dryRun` defaults to **true**: without `"dryRun":false` it only counts (`unchecked`) and calls
+nothing outside. **Safe to re-run:** yes; checked box art is skipped.
+
+```bash
+cd packages/backend
+
+# dev: dry runs (counts only), then the real runs
+npx convex run lib/imageModeration/backfillBoxArtHashCheck:backfillBoxArtHashCheck '{"table":"boxArt"}'
+npx convex run lib/imageModeration/backfillBoxArtHashCheck:backfillBoxArtHashCheck '{"table":"proposals"}'
+npx convex run lib/imageModeration/backfillBoxArtHashCheck:backfillBoxArtHashCheck '{"table":"boxArt","dryRun":false}'
+npx convex run lib/imageModeration/backfillBoxArtHashCheck:backfillBoxArtHashCheck '{"table":"proposals","dryRun":false}'
+
+# prod: same, after dev looks right (add --prod to each command)
+```
+
+The command returns the FIRST batch's counts (`scanned`, `unchecked`, `noMatch`, `matched`,
+`unavailable`, `skipped`); the remaining batches run as scheduled functions. Each batch logs
+one JSON line with `"event":"imageModeration.backfillBoxArtHashCheck"`, the table, `dry_run`
+and the running totals; the line with `"done":true` carries the whole run's totals. A match
+logs its own `imageModeration.backfillBoxArtHashCheck.match` line carrying only the
+escalation id.
+
+**Verify:** the real run's final `noMatch + matched + unavailable` equals the dry run's
+`unchecked`; with `unavailable` at 0, a second dry run reports `"unchecked":0`. Any
+`matched` shows up as an open escalation under Admin → Moderation.
