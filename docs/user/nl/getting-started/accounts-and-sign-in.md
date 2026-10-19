@@ -39,6 +39,9 @@ Als je je account verwijdert, verdwijnen je bibliotheek en wat daarbij hoort:
 - Een kring waarvan jij eigenaar bent gaat over naar een ander lid (zie
   [Vriendenkringen](/docs/sharing-and-exchanges/friend-circles)), en je
   verlaat je huishouden (zie [Huishoudens](/docs/sharing-and-exchanges/households)).
+- Ons interne overzicht van wat er in de app is gebeurd verwijst niet meer
+  naar jou: je accountverwijzing wordt vervangen en je e-mailadres, namen en
+  notities worden eruit verwijderd.
 
 Sommige dingen blijven, omdat ze bij de geschiedenis van andere leden horen:
 je beoordelingen en reacties, je ruilgeschiedenis, je bijdragen aan de
