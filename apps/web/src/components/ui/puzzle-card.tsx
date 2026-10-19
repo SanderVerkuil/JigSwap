@@ -87,7 +87,7 @@ interface PuzzleCardProps {
   onStartSolve?: (puzzleId: Id<"ownedPuzzles">) => void;
   solveInProgress?: boolean;
   isSelected?: boolean;
-  /** The owner's already-resolved label (e.g. "Former member" for a departed owner); shown when set. */
+  /** The owner's already-resolved label (e.g. "Deleted member" for a departed owner); shown when set. */
   ownerLabel?: string;
   showActions?: boolean;
   showAvailability?: boolean;

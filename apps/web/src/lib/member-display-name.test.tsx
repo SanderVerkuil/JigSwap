@@ -69,12 +69,12 @@ function PartyName({
 }
 
 describe("usePartyDisplayName", () => {
-  it("names a departed party 'Former member' and a hidden one generically", () => {
+  it("names a departed party 'Deleted member' and a hidden one generically", () => {
     expect(render(<PartyName source={null} state="departed" />)).toBe(
-      "Former member",
+      "Deleted member",
     );
     expect(render(<PartyName source={null} state="departed" />, "nl")).toBe(
-      "Voormalig lid",
+      "Verwijderd lid",
     );
     expect(render(<PartyName source={null} state="hidden" />)).toBe("Puzzler");
     expect(
@@ -107,16 +107,16 @@ describe("useProjectedMemberName", () => {
     );
   });
 
-  it('renders "Former member" for a departed account', () => {
+  it('renders "Deleted member" for a departed account', () => {
     expect(
       render(<ProjectedName member={{ anonymous: true, departed: true }} />),
-    ).toBe("Former member");
+    ).toBe("Deleted member");
     expect(
       render(
         <ProjectedName member={{ anonymous: true, departed: true }} />,
         "nl",
       ),
-    ).toBe("Voormalig lid");
+    ).toBe("Verwijderd lid");
   });
 });
 

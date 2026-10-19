@@ -44,7 +44,7 @@ export function TradePartnerCard({
 
   const name =
     partner.state === "departed"
-      ? tRich("formerMember")
+      ? tRich("deletedMember")
       : // Never resolve the name from the email: it is shown separately, only when allowed.
         displayName(
           partner.state === "revealed"

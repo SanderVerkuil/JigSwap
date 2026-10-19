@@ -2417,7 +2417,7 @@
     },
     "pushServiceUnreachable": "Je browser kon zijn pushdienst niet bereiken. Sommige privacybrowsers blokkeren of verwijderen die — Brave schakelt het standaard uit (zet 'Google-services voor pushberichten gebruiken' aan in Instellingen), en de-Googled Chromium-browsers zoals Helium verwijderen het. Firefox, Chrome of Edge werkt wel.",
     "rich": {
-      "formerMember": "Voormalig lid",
+      "deletedMember": "Verwijderd lid",
       "unread": "Ongelezen, ",
       "unavailable": "Niet meer beschikbaar",
       "loadMore": "Meer laden",

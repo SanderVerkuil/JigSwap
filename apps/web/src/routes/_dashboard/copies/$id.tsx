@@ -1449,7 +1449,7 @@ function CommentRow({
 }
 
 // Render a ProjectedMember inline: a revealed member shows their name; an
-// anonymised one shows the i18n "Anonymous user" label ("Former member" for a
+// anonymised one shows the i18n "Anonymous user" label ("Deleted member" for a
 // departed account) — never a real name.
 function ProjectedName({ member }: { member: ProjectedMember }) {
   const t = useTranslations("copyInstance");

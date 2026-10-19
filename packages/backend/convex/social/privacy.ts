@@ -261,7 +261,7 @@ export const anonymousMemberOf = async (
  *   1. target IS the viewer -> revealed (even if the viewer's own profile is private).
  *   2. target user row missing, or deactivated (`isActive === false`) -> anonymous, `departed`.
  *      Checked before every reveal rule, so a departed member is never named (matching
- *      notifications, which render them "Former member"). Then: the target blocked the viewer ->
+ *      notifications, which render them "Deleted member"). Then: the target blocked the viewer ->
  *      anonymous, also before every reveal rule below (a block vetoes the circle reveal too). When
  *      the VIEWER blocked the target they are revealed, IDENTITY ONLY (as rule 5): the blocker
  *      needs the name to unblock, and a block never unlocks `bio`, `location` or

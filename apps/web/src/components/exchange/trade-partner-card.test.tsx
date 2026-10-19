@@ -157,9 +157,9 @@ describe("TradePartnerCard", () => {
     ).toBeNull();
   });
 
-  it("names a departed partner 'Former member'", () => {
+  it("names a departed partner 'Deleted member'", () => {
     renderCard({ state: "departed" });
-    expect(screen.getByText("Former member")).toBeTruthy();
+    expect(screen.getByText("Deleted member")).toBeTruthy();
     expect(screen.queryByRole("link")).toBeNull();
   });
 
