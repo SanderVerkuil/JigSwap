@@ -62,16 +62,23 @@ If Chrome hasn't offered the install prompt yet, the tip shows two steps
 instead: tap the **menu** at the top right of Chrome, then choose **Add to
 home screen** or **Install app**, and then **Install**.
 
-**On iPhone and iPad (Safari, or Chrome and Edge on recent iOS versions):**
+**On Android (Firefox):** Firefox doesn't offer an install prompt, so the tip
+shows the steps:
 
-1. Tap **Share** (under **⋯** if you don't see it).
+1. Tap the **⋮ menu** in Firefox's toolbar (at the top or bottom).
+2. Choose **Add app to Home screen** or **Add to Home screen**, then confirm.
+
+**On iPhone and iPad (Safari, or Chrome, Edge and Firefox on recent iOS versions):**
+
+1. Tap **Share** (under **⋯** if you don't see it; in Firefox it's in the
+   address bar or Firefox's menu).
 2. Choose **Add to Home Screen**.
 
 The **Install app** item in the quick-action sheet shows these steps too.
 
 > **Tip:** From your second visit on a phone, JigSwap shows an
-> **Add JigSwap to your home screen** tip above the tab bar (on Android it has
-> its own **Install app** button). Tap **Not now** to
+> **Add JigSwap to your home screen** tip above the tab bar (on Android Chrome
+> it has its own **Install app** button). Tap **Not now** to
 > hide it for 30 days, or close it to stop it appearing. You can still install
 > from the quick-action sheet at any time. The tip doesn't appear once JigSwap
 > is installed.

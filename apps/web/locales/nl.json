@@ -4884,6 +4884,9 @@
     "iosStepAdd": "Kies <icon></icon> <b>Zet op beginscherm</b>",
     "androidStepMenu": "Tik op <icon></icon> <b>menu</b> rechtsboven in Chrome",
     "androidStepInstall": "Kies <icon></icon> <b>Toevoegen aan startscherm</b> of <b>App installeren</b>, en dan <b>Installeren</b>",
+    "firefoxIosStepShare": "Tik op <icon></icon> <b>Deel</b> in de adresbalk of het menu van Firefox",
+    "firefoxStepMenu": "Tik op <icon></icon> <b>menu</b> in de werkbalk van Firefox (boven of onder)",
+    "firefoxStepAdd": "Kies <icon></icon> <b>App toevoegen aan startscherm</b> of <b>Toevoegen aan startscherm</b>, en bevestig",
     "iosPush": "Na installeren kan JigSwap je ook meldingen sturen op iPhone en iPad.",
     "menuTitle": "App installeren",
     "menuSub": "Open JigSwap vanaf je beginscherm"

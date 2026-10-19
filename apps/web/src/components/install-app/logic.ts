@@ -6,11 +6,15 @@
  * How this browser can install the site, or null when it can't (or we can't explain how).
  * - "prompt": Chromium fired `beforeinstallprompt`, so an "Install app" button can call prompt().
  * - "ios": iOS Safari, or iOS Chrome/Edge on iOS 16.4+, which add to the home screen via Share.
+ * - "ios-firefox": Firefox on iOS 16.4+, which adds to the home screen via its own Share button.
  * - "android-menu": Chrome on Android without a captured prompt. Chrome fires the event only when
  *   its own heuristics allow (engagement, no recent dismissal, once per page load), but its ⋮ menu
  *   can install the site at any time.
+ * - "firefox-menu": Firefox on Android. It never fires `beforeinstallprompt`, so a button calling
+ *   prompt() would do nothing; its ⋮ menu adds the site to the home screen instead.
  */
-export type InstallMethod = "prompt" | "ios" | "android-menu";
+export type InstallMethod =
+  "prompt" | "ios" | "ios-firefox" | "android-menu" | "firefox-menu";
 
 export interface BrowserTraits {
   userAgent: string;
@@ -35,23 +39,42 @@ export function isIOS({ userAgent, maxTouchPoints }: BrowserTraits): boolean {
   return /Macintosh/.test(userAgent) && maxTouchPoints > 1;
 }
 
-/** Whether this iOS browser offers Share → "Add to Home Screen". */
+/** iOS 16.4+, where third-party browsers gained Share → "Add to Home Screen". */
+function iosAtLeast164(userAgent: string): boolean {
+  const version = iosVersion(userAgent);
+  return (
+    version !== null &&
+    (version[0] > 16 || (version[0] === 16 && version[1] >= 4))
+  );
+}
+
+/** Whether this iOS browser offers Share → "Add to Home Screen" (Firefox: see isIOSFirefox). */
 export function iosCanAddToHomeScreen(traits: BrowserTraits): boolean {
   if (!isIOS(traits)) return false;
   const ua = traits.userAgent;
   if (IOS_IN_APP.test(ua)) return false;
   // Chrome (CriOS) and Edge (EdgiOS) gained the action in iOS 16.4.
-  if (/CriOS|EdgiOS/.test(ua)) {
-    const version = iosVersion(ua);
-    return (
-      version !== null &&
-      (version[0] > 16 || (version[0] === 16 && version[1] >= 4))
-    );
-  }
-  // Other third-party iOS browsers (Firefox, DuckDuckGo, …): no documented path, so no tip.
+  if (/CriOS|EdgiOS/.test(ua)) return iosAtLeast164(ua);
+  // Other third-party iOS browsers (Firefox has its own steps; DuckDuckGo, …: no documented
+  // path, so no tip).
   if (/FxiOS|OPiOS|DuckDuckGo|YaBrowser/.test(ua)) return false;
   // In-app WKWebViews generally omit the "Safari/" token; real Safari always carries it.
   return /Safari\//.test(ua);
+}
+
+/** Firefox on iOS 16.4+, whose Share button offers "Add to Home Screen". */
+export function isIOSFirefox(traits: BrowserTraits): boolean {
+  return (
+    isIOS(traits) &&
+    /FxiOS\//.test(traits.userAgent) &&
+    !IOS_IN_APP.test(traits.userAgent) &&
+    iosAtLeast164(traits.userAgent)
+  );
+}
+
+/** Firefox on Android (and the Gecko browsers that share its UA). */
+export function isAndroidFirefox({ userAgent }: BrowserTraits): boolean {
+  return /Android/.test(userAgent) && /Firefox\/\d/.test(userAgent);
 }
 
 /** Chrome itself on Android: not an app's WebView ("; wv)") or another Chromium browser. */
@@ -65,8 +88,10 @@ export function isAndroidChrome({ userAgent }: BrowserTraits): boolean {
 
 /**
  * The install path to offer, or null: a captured prompt wins, then iOS's Share steps, then
- * Chrome's menu on Android. `installed` is navigator.getInstalledRelatedApps()'s answer (null
- * while unknown): the menu steps only show once JigSwap is known not to be installed already.
+ * Chrome's or Firefox's menu on Android. `installed` is navigator.getInstalledRelatedApps()'s
+ * answer (null while unknown): Chrome's menu steps only show once JigSwap is known not to be
+ * installed already. Firefox can't answer, so its steps show unless known installed (an
+ * installed copy opens standalone, where the tip never shows).
  */
 export function installMethod({
   traits,
@@ -79,7 +104,9 @@ export function installMethod({
 }): InstallMethod | null {
   if (hasPrompt) return "prompt";
   if (iosCanAddToHomeScreen(traits)) return "ios";
+  if (isIOSFirefox(traits)) return "ios-firefox";
   if (installed === false && isAndroidChrome(traits)) return "android-menu";
+  if (installed !== true && isAndroidFirefox(traits)) return "firefox-menu";
   return null;
 }
 

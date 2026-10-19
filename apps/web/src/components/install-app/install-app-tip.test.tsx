@@ -19,6 +19,8 @@ const IPHONE_SAFARI =
   "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1";
 const ANDROID_CHROME =
   "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36";
+const ANDROID_FIREFOX =
+  "Mozilla/5.0 (Android 14; Mobile; rv:125.0) Gecko/125.0 Firefox/125.0";
 
 const wrap = (node: ReactNode, locale: "en" | "nl" = "en") => (
   <IntlProvider
@@ -100,6 +102,41 @@ describe("InstallAppTipView", () => {
     expect(screen.getByRole("button", { name: "Not now" })).toBeTruthy();
   });
 
+  it("Firefox on Android: shows Firefox's menu steps, no install button", () => {
+    render(
+      wrap(
+        <InstallAppTipView
+          method="firefox-menu"
+          onInstall={noop}
+          onSnooze={noop}
+          onNever={noop}
+        />,
+      ),
+    );
+    const steps = screen.getAllByRole("listitem").map((li) => li.textContent);
+    expect(steps[0]).toContain("Firefox");
+    expect(steps[1]).toContain("Add app to Home screen");
+    expect(screen.queryByText(/notifications on iPhone/)).toBeNull();
+    expect(screen.queryByRole("button", { name: /Install/ })).toBeNull();
+  });
+
+  it("Firefox on iOS: shows Firefox's Share step, then Add to Home Screen", () => {
+    render(
+      wrap(
+        <InstallAppTipView
+          method="ios-firefox"
+          onInstall={noop}
+          onSnooze={noop}
+          onNever={noop}
+        />,
+      ),
+    );
+    const steps = screen.getAllByRole("listitem").map((li) => li.textContent);
+    expect(steps[0]).toContain("Firefox's menu");
+    expect(steps[1]).toContain("Add to Home Screen");
+    expect(screen.queryByRole("button", { name: /Install/ })).toBeNull();
+  });
+
   it("renders Dutch copy", () => {
     render(
       wrap(
@@ -176,6 +213,20 @@ describe("InstallAppTip", () => {
     expect(screen.queryByRole("region")).toBeNull();
     const state = JSON.parse(localStorage.getItem("jigswap.installTip") ?? "");
     expect(state.snoozedUntil).toBeGreaterThan(Date.now());
+  });
+
+  it("Firefox on Android: shows its menu steps without an install button", () => {
+    // Firefox has neither beforeinstallprompt nor getInstalledRelatedApps. (Runs before the
+    // Chrome tests below, which leave the module-level installed state set.)
+    setUserAgent(ANDROID_FIREFOX);
+    seenBefore();
+    render(wrap(<InstallAppTip />));
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+    expect(screen.getByRole("region")).toBeTruthy();
+    expect(screen.getAllByRole("listitem")[0].textContent).toContain("Firefox");
+    expect(screen.queryByRole("button", { name: "Install app" })).toBeNull();
   });
 
   it("Android: appears once beforeinstallprompt fires and calls prompt()", async () => {

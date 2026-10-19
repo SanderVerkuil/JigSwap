@@ -68,8 +68,9 @@ function useTextEntryFocused(): boolean {
 // The mobile "Add JigSwap to your home screen" tip: a non-modal card stuck just above the tab bar.
 // It shows itself from the second session on this device, never when installed / unsupported /
 // on desktop, and only when no tour, dialog or prompt is on screen; the quick sheet's "Install
-// app" row can also open it on iOS, or on Android Chrome when no install prompt was captured. Mounted in the dashboard shell only, so public and auth pages
-// never see it.
+// app" row can also open it on iOS, on Android Chrome when no install prompt was captured, and on
+// Firefox (Android and iOS), which never fires one. Mounted in the dashboard shell only, so public
+// and auth pages never see it.
 export function InstallAppTip() {
   const pathname = usePathname();
   const mobile = useIsMobile();
@@ -206,16 +207,19 @@ export function InstallAppTipView({
           </Button>
         </div>
 
-        {method === "ios" && (
+        {(method === "ios" || method === "ios-firefox") && (
           <>
             <ol className="mt-3 space-y-2 text-sm">
               <Step number={1}>
-                {t.rich("iosStepShare", {
-                  icon: () => <Glyph icon={<Share className="size-4" />} />,
-                  b: (chunks) => (
-                    <strong className="font-semibold">{chunks}</strong>
-                  ),
-                })}
+                {t.rich(
+                  method === "ios" ? "iosStepShare" : "firefoxIosStepShare",
+                  {
+                    icon: () => <Glyph icon={<Share className="size-4" />} />,
+                    b: (chunks) => (
+                      <strong className="font-semibold">{chunks}</strong>
+                    ),
+                  },
+                )}
               </Step>
               <Step number={2}>
                 {t.rich("iosStepAdd", {
@@ -235,25 +239,35 @@ export function InstallAppTipView({
           </>
         )}
 
-        {method === "android-menu" && (
+        {(method === "android-menu" || method === "firefox-menu") && (
           <ol className="mt-3 space-y-2 text-sm">
             <Step number={1}>
-              {t.rich("androidStepMenu", {
-                icon: () => (
-                  <Glyph icon={<EllipsisVertical className="size-4" />} />
-                ),
-                b: (chunks) => (
-                  <strong className="font-semibold">{chunks}</strong>
-                ),
-              })}
+              {t.rich(
+                method === "android-menu"
+                  ? "androidStepMenu"
+                  : "firefoxStepMenu",
+                {
+                  icon: () => (
+                    <Glyph icon={<EllipsisVertical className="size-4" />} />
+                  ),
+                  b: (chunks) => (
+                    <strong className="font-semibold">{chunks}</strong>
+                  ),
+                },
+              )}
             </Step>
             <Step number={2}>
-              {t.rich("androidStepInstall", {
-                icon: () => <Glyph icon={<Download className="size-4" />} />,
-                b: (chunks) => (
-                  <strong className="font-semibold">{chunks}</strong>
-                ),
-              })}
+              {t.rich(
+                method === "android-menu"
+                  ? "androidStepInstall"
+                  : "firefoxStepAdd",
+                {
+                  icon: () => <Glyph icon={<Download className="size-4" />} />,
+                  b: (chunks) => (
+                    <strong className="font-semibold">{chunks}</strong>
+                  ),
+                },
+              )}
             </Step>
           </ol>
         )}
