@@ -214,7 +214,7 @@ function EscalationRow({
       {escalation.status !== "closed" && (
         <div className="flex flex-wrap items-end gap-2">
           <div className="min-w-48 flex-1 space-y-1">
-            <label htmlFor={noteId} className="text-xs font-medium">
+            <label htmlFor={noteId} className="block text-xs font-medium">
               {t("noteLabel")}
             </label>
             <Input
