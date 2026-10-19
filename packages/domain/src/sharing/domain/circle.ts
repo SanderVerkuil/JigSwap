@@ -67,7 +67,7 @@ export class Circle {
   private events: DomainEvent[] = [];
 
   private constructor(
-    private readonly state: CircleState,
+    private state: CircleState,
     private memberships: Membership[],
   ) {}
 
@@ -206,6 +206,20 @@ export class Circle {
 
     this.memberships = this.memberships.map((m) =>
       m.memberId === memberId ? m.withPermission(permission) : m,
+    );
+    return ok(undefined);
+  }
+
+  // Hand the circle to another member (the system does this when the owner's account is deleted,
+  // conversation/purgeMemberMessagingData). The new owner must be a current member; their seat
+  // becomes Admin (the owner is always Admin), keeping its identity and join time. The old owner's
+  // seat stays as it is: a historical trace, now an ordinary seat the new owner may remove. Like
+  // changePermission, no event: nothing subscribes to an ownership change.
+  handOverOwnership(to: MemberId): Result<void, SharingError> {
+    if (!this.isMember(to)) return err(SharingError.notAMember());
+    this.state = { ...this.state, ownerId: to };
+    this.memberships = this.memberships.map((m) =>
+      m.memberId === to ? m.withPermission("Admin") : m,
     );
     return ok(undefined);
   }

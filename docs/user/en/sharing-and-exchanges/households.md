@@ -136,3 +136,6 @@ The admin can **Remove** a member. Their puzzles leave the household with them.
 If the admin leaves, the longest-standing member becomes the admin. If you're
 the last member, the household is dissolved and any pending invites are
 cancelled.
+
+A member who deletes their account leaves the household the same way, so if
+they were the admin, the longest-standing member takes over.

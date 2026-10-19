@@ -388,7 +388,9 @@ export default defineSchema({
     .index("by_moderation_status", ["moderationStatus"])
     .index("by_hash_check_pending", ["hashCheckPendingSince"])
     // Whether a blob is already a copy photo (message-photo claims refuse it).
-    .index("by_file", ["fileId"]),
+    .index("by_file", ["fileId"])
+    // Account deletion: the photos a member uploaded (conversation/purgeMemberMessagingData).
+    .index("by_uploader", ["uploaderId"]),
 
   // Named collections for organizing puzzles
   collections: defineTable({

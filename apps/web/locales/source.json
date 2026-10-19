@@ -1393,6 +1393,13 @@
         "Your online status settings and the records behind your online status and typing indicators are deleted",
         "Reports you filed stay with us for moderation, but without your name or contact details",
         "Reports about you are kept until their 12-month retention ends",
+        "Trades and loans that are still open are cancelled or closed; a puzzle you borrowed goes back to its owner",
+        "The puzzles in your library are deleted, with their photos, notes, reviews, links to collections and circles, and the solves you logged on them",
+        "All your photos of puzzles and solves are deleted, also on puzzles that now belong to someone else. Solves you logged without a puzzle from your library are deleted too",
+        "Your goals, collections, wishlists and personal categories are deleted",
+        "A circle you own passes to the admin who has been in it longest, or else to its longest-standing member; a circle with nobody else left in it is deleted",
+        "You leave your household. If you managed it, the member who has been in it longest takes over; if you were its only member, it is closed",
+        "Your reviews and comments, your trade history, your catalogue contributions and the puzzles you sold, traded or gave away stay, including your solves and loans in those puzzles' history (without photos). They are shown as by a \"Deleted member\", without your name, picture or profile",
         "A photo or location that is part of an open report is kept until that report is decided"
       ]
     },

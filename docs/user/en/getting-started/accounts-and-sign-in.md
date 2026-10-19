@@ -26,3 +26,22 @@ JigSwap uses a secure sign-in system (powered by Clerk). You'll need an account 
 ## Public pages (no account needed)
 
 Anyone can read the **landing page**, plus **About**, **Features**, **How It Works**, **Contact**, **Privacy Policy**, and **Terms** without signing in.
+
+## When you delete your account
+
+Deleting your account removes your library and what belongs to it:
+
+- Open trades and loans are cancelled or closed; a puzzle you borrowed goes
+  back to its owner.
+- Your puzzles, with their photos, notes and completions, are deleted, and so
+  are your other photos and completions, your goals, collections, wishlists
+  and personal categories. They no longer show up in Browse or in circles.
+- A circle you own passes to another member (see
+  [Friend Circles](/docs/sharing-and-exchanges/friend-circles)), and you leave
+  your household (see [Households](/docs/sharing-and-exchanges/households)).
+
+Some things stay, because they are part of other members' history: your
+reviews and comments, your trade history, your catalogue contributions, and
+puzzles you sold, traded or gave away, with your completions and loans in
+their history (without photos). They show as **Deleted member**, without your
+name, picture or profile. The **Privacy Policy** lists the details.

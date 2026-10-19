@@ -125,6 +125,12 @@ You lose access to the circle, its group chat and the puzzles shared in it.
 Your messages stay in the chat. An admin can invite you again; you then see
 only messages sent after you rejoined. The owner can't leave a circle; they can delete it instead.
 
+If the owner deletes their account, the circle passes to the admin who has been
+in it longest, or, without an admin, to the member who has been in it longest.
+The new owner becomes an admin. If nobody else is left in the circle, it is
+deleted. The former owner's seat shows as **Deleted member**; the new owner can
+remove it.
+
 ## Delete a circle
 
 Only the owner can delete a circle.

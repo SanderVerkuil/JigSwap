@@ -116,6 +116,7 @@ import type * as conversation_adapters_threadMapper from "../conversation/adapte
 import type * as conversation_appearingOffline from "../conversation/appearingOffline.js";
 import type * as conversation_attachmentModerationStore from "../conversation/attachmentModerationStore.js";
 import type * as conversation_backfill from "../conversation/backfill.js";
+import type * as conversation_backfillDeletedMemberData from "../conversation/backfillDeletedMemberData.js";
 import type * as conversation_backfillParticipantState from "../conversation/backfillParticipantState.js";
 import type * as conversation_canMessage from "../conversation/canMessage.js";
 import type * as conversation_circleSubscriber from "../conversation/circleSubscriber.js";
@@ -143,6 +144,7 @@ import type * as conversation_openCircleThread from "../conversation/openCircleT
 import type * as conversation_openDmThread from "../conversation/openDmThread.js";
 import type * as conversation_postMessage from "../conversation/postMessage.js";
 import type * as conversation_purgeCircleThread from "../conversation/purgeCircleThread.js";
+import type * as conversation_purgeMemberLibrary from "../conversation/purgeMemberLibrary.js";
 import type * as conversation_purgeMemberMessagingData from "../conversation/purgeMemberMessagingData.js";
 import type * as conversation_readModelHelpers from "../conversation/readModelHelpers.js";
 import type * as conversation_renderLocationMap from "../conversation/renderLocationMap.js";
@@ -629,6 +631,7 @@ declare const fullApi: ApiFromModules<{
   "conversation/appearingOffline": typeof conversation_appearingOffline;
   "conversation/attachmentModerationStore": typeof conversation_attachmentModerationStore;
   "conversation/backfill": typeof conversation_backfill;
+  "conversation/backfillDeletedMemberData": typeof conversation_backfillDeletedMemberData;
   "conversation/backfillParticipantState": typeof conversation_backfillParticipantState;
   "conversation/canMessage": typeof conversation_canMessage;
   "conversation/circleSubscriber": typeof conversation_circleSubscriber;
@@ -656,6 +659,7 @@ declare const fullApi: ApiFromModules<{
   "conversation/openDmThread": typeof conversation_openDmThread;
   "conversation/postMessage": typeof conversation_postMessage;
   "conversation/purgeCircleThread": typeof conversation_purgeCircleThread;
+  "conversation/purgeMemberLibrary": typeof conversation_purgeMemberLibrary;
   "conversation/purgeMemberMessagingData": typeof conversation_purgeMemberMessagingData;
   "conversation/readModelHelpers": typeof conversation_readModelHelpers;
   "conversation/renderLocationMap": typeof conversation_renderLocationMap;

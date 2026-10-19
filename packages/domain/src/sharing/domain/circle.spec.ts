@@ -551,6 +551,48 @@ describe("Circle", () => {
     });
   });
 
+  describe("handOverOwnership", () => {
+    it("makes a member the owner at Admin and keeps the old owner's seat", () => {
+      const circle = newCircle();
+      circle.addMember(owner, membershipId(), alice, "ViewOnly", NOW);
+      const aliceSeat = circle.members.find((m) => m.memberId === alice)!;
+      circle.pullEvents();
+
+      const result = circle.handOverOwnership(alice);
+
+      expect(result.isOk).toBe(true);
+      expect(circle.ownerId).toBe(alice);
+      expect(circle.toState().ownerId).toBe(alice);
+      const newSeat = circle.members.find((m) => m.memberId === alice)!;
+      expect(newSeat.permission).toBe("Admin");
+      // Same seat: identity and join time are kept.
+      expect(newSeat.id).toBe(aliceSeat.id);
+      expect(newSeat.joinedAt).toBe(aliceSeat.joinedAt);
+      // The old owner's seat stays as it was.
+      expect(circle.isMember(owner)).toBe(true);
+      expect(circle.members).toHaveLength(2);
+      // A state change like changePermission: no event.
+      expect(circle.pullEvents()).toEqual([]);
+    });
+
+    it("lets the new owner act as owner, and the old owner be removed", () => {
+      const circle = newCircle();
+      circle.addMember(owner, membershipId(), alice, "Exchange", NOW);
+      circle.handOverOwnership(alice);
+
+      expect(circle.leave(alice, NOW).isErr).toBe(true);
+      expect(circle.removeMember(alice, owner, NOW).isOk).toBe(true);
+    });
+
+    it("rejects a non-member", () => {
+      const circle = newCircle();
+      const result = circle.handOverOwnership(stranger);
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("NotAMember");
+      expect(circle.ownerId).toBe(owner);
+    });
+  });
+
   describe("shareCopy", () => {
     const copyId = toCopyId("copy-1");
 

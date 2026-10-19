@@ -26,3 +26,23 @@ JigSwap gebruikt een veilig inlogsysteem (mogelijk gemaakt door Clerk). Je hebt 
 ## Openbare pagina's (geen account nodig)
 
 Iedereen kan de **landingspagina** lezen, plus **Over**, **Functies**, **Hoe Het Werkt**, **Contact**, **Privacybeleid** en **Voorwaarden**, zonder in te loggen.
+
+## Als je je account verwijdert
+
+Als je je account verwijdert, verdwijnen je bibliotheek en wat daarbij hoort:
+
+- Lopende ruilen en uitleningen worden geannuleerd of afgesloten; een puzzel
+  die je leende gaat terug naar de eigenaar.
+- Je puzzels worden verwijderd, met hun foto's, notities en voltooiingen, net
+  als je andere foto's en voltooiingen, je doelen, collecties, verlanglijsten
+  en eigen categorieën. Ze zijn niet meer te zien bij Bladeren of in kringen.
+- Een kring waarvan jij eigenaar bent gaat over naar een ander lid (zie
+  [Vriendenkringen](/docs/sharing-and-exchanges/friend-circles)), en je
+  verlaat je huishouden (zie [Huishoudens](/docs/sharing-and-exchanges/households)).
+
+Sommige dingen blijven, omdat ze bij de geschiedenis van andere leden horen:
+je beoordelingen en reacties, je ruilgeschiedenis, je bijdragen aan de
+catalogus en de puzzels die je verkocht, ruilde of weggaf, met je voltooiingen
+en uitleningen in hun geschiedenis (zonder foto's). Ze staan er als
+**Verwijderd lid**, zonder je naam, foto of profiel. In het
+**Privacybeleid** staan de details.

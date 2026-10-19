@@ -136,6 +136,11 @@ function PrivacyPolicyPage() {
         { type: "strong", text: t("safety.reporterWithheld") },
       ],
     },
+    // "When you delete your account" mirrors the account purge (conversation/
+    // purgeMemberMessagingData). [LAWYER] A lawyer should confirm keeping a deleted member's
+    // reviews, comments, trade history, catalogue contributions and the History of copies they
+    // gave away (shown as "Deleted member", no identity), and handing their circles to another
+    // member.
     {
       id: "p-retention",
       heading: t("retention.title"),

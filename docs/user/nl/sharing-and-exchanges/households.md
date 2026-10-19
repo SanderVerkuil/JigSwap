@@ -147,3 +147,6 @@ met diegene mee.
 Vertrekt de beheerder, dan wordt het lid dat het langst in het huishouden zit
 de nieuwe beheerder. Ben je het laatste lid, dan wordt het huishouden opgeheven
 en vervallen openstaande uitnodigingen.
+
+Een lid dat zijn account verwijdert, verlaat het huishouden op dezelfde manier:
+was het de beheerder, dan neemt het lid dat er het langst in zit het over.
