@@ -4,7 +4,9 @@ import {
   installMethod,
   iosCanAddToHomeScreen,
   isAndroidChrome,
+  isAndroidFirefox,
   isIOS,
+  isIOSFirefox,
   isStandalone,
   MIN_VISITS,
   neverShow,
@@ -37,6 +39,12 @@ const UA = {
     "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
   androidFirefox:
     "Mozilla/5.0 (Android 14; Mobile; rv:125.0) Gecko/125.0 Firefox/125.0",
+  iphoneFirefox163:
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 16_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) FxiOS/110.0 Mobile/15E148 Safari/605.1.15",
+  androidFirefoxTablet:
+    "Mozilla/5.0 (Android 14; Tablet; rv:125.0) Gecko/125.0 Firefox/125.0",
+  desktopFirefox:
+    "Mozilla/5.0 (X11; Linux x86_64; rv:125.0) Gecko/20100101 Firefox/125.0",
   androidWebView:
     "Mozilla/5.0 (Linux; Android 14; Pixel 8 Build/AP1A; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/124.0.0.0 Mobile Safari/537.36",
   androidSamsung:
@@ -92,6 +100,25 @@ describe("isAndroidChrome", () => {
   });
 });
 
+describe("isIOSFirefox", () => {
+  it("recognises Firefox on iOS 16.4+ only", () => {
+    expect(isIOSFirefox(phone(UA.iphoneFirefox))).toBe(true);
+    expect(isIOSFirefox(phone(UA.iphoneFirefox163))).toBe(false);
+    expect(isIOSFirefox(phone(UA.iphoneSafari))).toBe(false);
+    expect(isIOSFirefox(phone(UA.androidFirefox))).toBe(false);
+  });
+});
+
+describe("isAndroidFirefox", () => {
+  it("recognises Firefox on Android phones and tablets only", () => {
+    expect(isAndroidFirefox(phone(UA.androidFirefox))).toBe(true);
+    expect(isAndroidFirefox(phone(UA.androidFirefoxTablet))).toBe(true);
+    expect(isAndroidFirefox(phone(UA.desktopFirefox))).toBe(false);
+    expect(isAndroidFirefox(phone(UA.androidChrome))).toBe(false);
+    expect(isAndroidFirefox(phone(UA.iphoneFirefox))).toBe(false);
+  });
+});
+
 describe("installMethod", () => {
   it("prefers a captured install prompt", () => {
     expect(
@@ -135,12 +162,45 @@ describe("installMethod", () => {
     }
   });
 
+  it("gives Firefox on Android its menu steps, never a prompt button", () => {
+    // Firefox never fires beforeinstallprompt, and can't say whether JigSwap is installed.
+    for (const installed of [false, null]) {
+      expect(
+        installMethod({
+          traits: phone(UA.androidFirefox),
+          hasPrompt: false,
+          installed,
+        }),
+      ).toBe("firefox-menu");
+    }
+    expect(
+      installMethod({
+        traits: phone(UA.androidFirefox),
+        hasPrompt: false,
+        installed: true,
+      }),
+    ).toBeNull();
+  });
+
+  it("gives Firefox on iOS 16.4+ its Share steps", () => {
+    expect(
+      installMethod({
+        traits: phone(UA.iphoneFirefox),
+        hasPrompt: false,
+        installed: null,
+      }),
+    ).toBe("ios-firefox");
+    expect(
+      installMethod({
+        traits: phone(UA.iphoneFirefox163),
+        hasPrompt: false,
+        installed: null,
+      }),
+    ).toBeNull();
+  });
+
   it("offers nothing to other Android browsers without a prompt", () => {
-    for (const ua of [
-      UA.androidFirefox,
-      UA.androidWebView,
-      UA.androidSamsung,
-    ]) {
+    for (const ua of [UA.androidWebView, UA.androidSamsung]) {
       expect(
         installMethod({
           traits: phone(ua),

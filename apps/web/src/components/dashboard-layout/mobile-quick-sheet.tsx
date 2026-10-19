@@ -97,7 +97,8 @@ export function MobileQuickSheet({
   };
 
   // The persistent install entry (the tip itself can be snoozed or turned off): the browser's
-  // install dialog where Chromium offers one, else the tip's iOS Share steps.
+  // install dialog where Chromium offers one, else the tip's manual steps (iOS Share, or the
+  // Chrome / Firefox menu on Android).
   const installMethod = useInstallMethod();
   const install = () => {
     onOpenChange(false);

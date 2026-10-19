@@ -65,17 +65,25 @@ Heeft Chrome de installatievraag nog niet aangeboden, dan toont de tip twee
 stappen: tik op het **menu** rechtsboven in Chrome, kies **Toevoegen aan
 startscherm** of **App installeren**, en dan **Installeren**.
 
-**Op iPhone en iPad (Safari, of Chrome en Edge op recente iOS-versies):**
+**Op Android (Firefox):** Firefox biedt geen installatievraag aan, dus de tip
+toont de stappen:
 
-1. Tik op **Deel** (onder **⋯** als je het niet ziet).
+1. Tik op het **⋮-menu** in de werkbalk van Firefox (boven of onder).
+2. Kies **App toevoegen aan startscherm** of **Toevoegen aan startscherm**, en
+   bevestig.
+
+**Op iPhone en iPad (Safari, of Chrome, Edge en Firefox op recente iOS-versies):**
+
+1. Tik op **Deel** (onder **⋯** als je het niet ziet; in Firefox zit het in de
+   adresbalk of het menu van Firefox).
 2. Kies **Zet op beginscherm**.
 
 Het item **App installeren** in het paneel met snelle acties toont deze stappen
 ook.
 
 > **Tip:** Vanaf je tweede bezoek op een telefoon toont JigSwap boven de
-> tabbalk de tip **Zet JigSwap op je beginscherm** (op Android met een eigen
-> knop **App installeren**). Tik op **Niet nu** om de tip 30 dagen te
+> tabbalk de tip **Zet JigSwap op je beginscherm** (in Chrome op Android met
+> een eigen knop **App installeren**). Tik op **Niet nu** om de tip 30 dagen te
 > verbergen, of sluit hem om hem niet meer te zien. Je kunt altijd nog
 > installeren via het paneel met snelle acties. De tip verschijnt niet meer
 > zodra JigSwap is geïnstalleerd.
