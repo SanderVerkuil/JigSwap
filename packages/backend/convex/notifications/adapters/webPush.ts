@@ -92,6 +92,7 @@ export const notificationUrl = (type: string, relatedId?: string): string => {
     case "trade_declined":
     case "trade_completed":
     case "trade_cancelled":
+    case "trade_cancelled_member_deleted":
     case "exchange_proposed":
     case "exchange_disputed":
       return "/trades";

@@ -7,6 +7,7 @@ export const EMAIL_TYPES = [
   "trade_declined",
   "trade_completed",
   "trade_cancelled",
+  "trade_cancelled_member_deleted",
   "message_received",
   "review_received",
   "puzzle_favorited",
@@ -162,6 +163,27 @@ export const EMAIL_COPY: Record<EmailType, Record<EmailLocale, EmailCopy>> = {
       cta: "Bekijk uitwisselingen",
       richBody:
         "{actorName} heeft het ruilverzoek voor “{puzzleTitle}” geannuleerd.",
+      deepCta: "Bekijk ruil",
+    },
+  },
+  // The other party deleted their account: nobody to name, so no {actorName}.
+  trade_cancelled_member_deleted: {
+    en: {
+      subject: "A trade was cancelled",
+      heading: "Trade cancelled",
+      body: "A trade was cancelled because the other member deleted their account.",
+      cta: "View trades",
+      richBody:
+        "The trade for “{puzzleTitle}” was cancelled because the other member deleted their account.",
+      deepCta: "View trade",
+    },
+    nl: {
+      subject: "Een ruil is geannuleerd",
+      heading: "Ruil geannuleerd",
+      body: "Een ruil is geannuleerd omdat het account van het andere lid is verwijderd.",
+      cta: "Bekijk uitwisselingen",
+      richBody:
+        "De ruil voor “{puzzleTitle}” is geannuleerd omdat het account van het andere lid is verwijderd.",
       deepCta: "Bekijk ruil",
     },
   },

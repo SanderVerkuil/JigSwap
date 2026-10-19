@@ -53,6 +53,7 @@ export const TRADE_NOTIFICATION_TYPES: ReadonlySet<NotificationType> = new Set([
   "trade_declined",
   "trade_completed",
   "trade_cancelled",
+  "trade_cancelled_member_deleted",
   "exchange_disputed",
 ]);
 
@@ -215,6 +216,7 @@ const TRADE_TYPES: ReadonlySet<NotificationType> = new Set([
   "trade_declined",
   "trade_completed",
   "trade_cancelled",
+  "trade_cancelled_member_deleted",
   "exchange_proposed",
   "exchange_disputed",
 ]);
@@ -236,6 +238,7 @@ export const legacyNotificationHref = (
     case "trade_declined":
     case "trade_completed":
     case "trade_cancelled":
+    case "trade_cancelled_member_deleted":
     case "exchange_proposed":
     case "exchange_disputed":
       return "/trades";

@@ -8,6 +8,7 @@ const EXPECTED: Record<EmailType, string> = {
   trade_declined: "/trades",
   trade_completed: "/trades",
   trade_cancelled: "/trades",
+  trade_cancelled_member_deleted: "/trades",
   message_received: "/messages",
   review_received: "/profile",
   puzzle_favorited: "/puzzles",
