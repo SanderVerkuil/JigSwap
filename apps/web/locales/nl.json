@@ -812,6 +812,7 @@
     "you": "Jij",
     "youPrefix": "Jij: {body}",
     "attach": "Bijvoegen",
+    "emojiButton": "Emoji toevoegen",
     "attachDescription": "Voeg een puzzel of foto's toe aan je bericht.",
     "photos": {
       "attachPhoto": "Foto",

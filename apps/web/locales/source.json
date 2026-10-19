@@ -812,6 +812,7 @@
     "you": "You",
     "youPrefix": "You: {body}",
     "attach": "Attach",
+    "emojiButton": "Add emoji",
     "attachDescription": "Add a puzzle or photos to your message.",
     "photos": {
       "attachPhoto": "Photo",

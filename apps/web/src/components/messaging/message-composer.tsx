@@ -30,6 +30,7 @@ import { AttachMenu } from "./attach-menu";
 import { AttachPicker } from "./attach-picker";
 import { COMPOSER_SLOT_CLASS, ComposerClosed } from "./composer-closed";
 import type { MessageCopy } from "./copy-card";
+import { EmojiButton } from "./emoji-button";
 import { LocationPicker } from "./location-picker";
 import { handleMarkupShortcut, MARKUP_KEYSHORTCUTS } from "./markup-shortcuts";
 import { sendState } from "./photo-staging";
@@ -304,7 +305,12 @@ export function MessageComposer({
           // muted-foreground lifts the outline to ≥3:1 (--input is ~1.3:1).
           className="border-muted-foreground/80 dark:border-muted-foreground/60 max-h-40 min-h-11 flex-1 resize-none rounded-[20px] px-4 py-2.5 md:min-h-10"
         />
-        {/* [ Message ] [ paperclip ] [ Send ]: DOM order is the tab order. */}
+        {/* [ Message ] [ emoji (md+) ] [ paperclip ] [ Send ]: DOM order is the tab order. */}
+        <EmojiButton
+          textareaRef={textareaRef}
+          maxLength={MAX_MESSAGE_LENGTH}
+          onValue={onValue}
+        />
         <AttachMenu
           triggerRef={attachButtonRef}
           photosAvailable={photosAvailable}
