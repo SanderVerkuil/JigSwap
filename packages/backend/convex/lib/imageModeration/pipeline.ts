@@ -30,6 +30,7 @@ import {
   INVALID_IMAGE_LABEL,
   type ImageGuardFailure,
 } from "./guards";
+import { findMetadata, stripImageMetadata } from "./stripMetadata";
 
 // The shared image-moderation pipeline behind every table of uploaded photos (copy photos,
 // completion photos, and later message attachments). Each table keeps a thin store module of
@@ -40,22 +41,25 @@ import {
 //   1. Load the row (skip when gone or no longer pending: first verdict wins, re-runs are no-ops).
 //   2. Download the blob (an upload over HASH_MAX_BYTES is refused unread) and run the input
 //      guards (lib/imageModeration/guards): size, magic bytes, the header's pixel count, all
-//      before any decode. Then (on any attempt until the row is marked `reencodedAt`) re-encode
-//      in memory via jimp — PNG when it
-//      has transparency, else JPEG — which DROPS all EXIF/metadata, plus the blurhash. A decode
-//      failure is refused as "decode_failed", except WebP, which jimp cannot decode: it is
-//      classified as uploaded and stored again as "image/webp" when the client claimed another
-//      type (see guards.ts for why it is kept).
+//      before any decode. Then (on any attempt until the row is marked `reencodedAt`) strip the
+//      metadata at byte level (lib/imageModeration/stripMetadata: Exif incl. GPS, XMP, IPTC,
+//      comments, PNG text chunks, WebP EXIF/XMP; a JPEG keeps only its Orientation) and
+//      re-encode that in memory via jimp — PNG when it has transparency, else JPEG; jimp bakes
+//      the orientation in — plus the blurhash. A malformed block structure or a decode failure
+//      is refused as "decode_failed", except WebP, which jimp cannot decode: its stripped bytes
+//      are stored instead (as "image/webp"). Whatever is stored must show no metadata left
+//      (findMetadata), or it is refused too.
 //   3. CSAM hash check (lib/imageModeration/csamHashCheck), until the row has passed one: MD5 +
 //      SHA-1 of the ORIGINAL bytes (what hash lists match) and of the re-encode, BEFORE any
 //      refusal, swap or classification. A match stores the matched bytes again as a NEW blob,
 //      calls the table's `quarantine` (always escalates) and deletes the uploaded blob, so no URL
 //      ever issued points at the evidence; nothing else runs. no_match opens the publication gate
-//      (setHashCheck; lib/imageModeration/hashCheckFields): no read model serves the row before.
-//      "unavailable" is logged at error level and the gate stays closed.
+//      (setHashCheck; lib/imageModeration/hashCheckFields), but only once the row holds the
+//      clean blob (after step 5): no read model serves the row before, so no URL is ever issued
+//      for the upload as sent. "unavailable" is logged at error level and the gate stays closed.
 //   4. A refused upload is "rejected" with label "invalid_image" (the reason in
 //      moderationReason), never classified, and its blob is deleted. Never fails open.
-//   5. Swap the row to the re-encode (setFile) and delete the original.
+//   5. Swap the row to the clean blob (setFile) and delete the original.
 //   6. Classify the clean bytes via the configured PhotoModerationPort.
 //   7. Record the verdict (setVerdict), or re-schedule `retry` with backoff for a retryable
 //      unscored result with attempts left.
@@ -480,28 +484,62 @@ export const runImageModeration = async <R extends ModerationRow>(
       event.image_height = guard.height;
     }
 
-    // Re-encode (strip EXIF/metadata) on ANY attempt until the row is marked re-encoded, so a
-    // retry after a download or swap failure never classifies (and so never publishes) the
-    // original with its EXIF/GPS. In memory only: nothing is stored or deleted until the hash
-    // check has passed. A decode failure is refused (a header that says JPEG/PNG/GIF over a body
-    // that is not one is a polyglot or a corrupt file), except for WebP (see the header).
-    let encoded: Awaited<ReturnType<typeof reencodeImage>> | null = null;
+    // Strip + re-encode on ANY attempt until the row is marked re-encoded, so a retry after a
+    // download or swap failure never classifies (and so never publishes) the original with its
+    // EXIF/GPS. In memory only: nothing is stored or deleted until the hash check has passed. A
+    // malformed or undecodable image is refused (a header that says JPEG/PNG/GIF over a body
+    // that is not one is a polyglot or a corrupt file); a WebP keeps its stripped bytes.
+    let encoded: {
+      bytes: Uint8Array;
+      mime: string;
+      blurhash?: string;
+    } | null = null;
     if (guard.ok && row.reencodedAt === undefined) {
-      try {
-        encoded = await reencodeImage(bytes);
-        event.reencoded = true;
+      // GIF has no byte-level stripper: jimp's re-encode (PNG/JPEG) drops its extensions.
+      const stripped =
+        guard.format === "gif"
+          ? bytes
+          : stripImageMetadata(bytes, guard.format);
+      if (stripped === null) {
+        event.strip_error = "malformed";
+        refusal = "decode_failed";
+      } else {
+        event.stripped_bytes = stripped.length;
+        try {
+          encoded = await reencodeImage(stripped);
+          event.reencoded = true;
+        } catch (error) {
+          event.reencoded = false;
+          event.reencode_error = errMsg(error);
+          if (guard.format === "webp") {
+            encoded = { bytes: stripped, mime: "image/webp" };
+          } else refusal = "decode_failed";
+        }
+      }
+      if (encoded) {
         event.reencoded_mime = encoded.mime;
         event.reencoded_bytes = encoded.bytes.length;
-      } catch (error) {
-        event.reencoded = false;
-        event.reencode_error = errMsg(error);
-        if (guard.format !== "webp") refusal = "decode_failed";
+        // Defence in depth: what is about to be stored must carry no metadata at all.
+        const format =
+          encoded.mime === "image/webp"
+            ? "webp"
+            : encoded.mime === "image/png"
+              ? "png"
+              : "jpeg";
+        const left = findMetadata(encoded.bytes, format);
+        if (left === null || left.length > 0) {
+          event.metadata_left = left === null ? "malformed" : left.join(",");
+          encoded = null;
+          refusal = "decode_failed";
+        }
       }
     }
 
     // CSAM hash check until the row has passed one, BEFORE any refusal, swap or classification.
     // Only the outcome is logged, never the hashes. Once "unavailable" has stored the hashes,
-    // the scheduled re-check (runHashRecheck) owns the outcome.
+    // the scheduled re-check (runHashRecheck) owns the outcome. A no_match opens the gate only
+    // after the swap below, so the upload as sent is never served.
+    let openGate = false;
     if (row.hashCheckedAt === undefined && row.pendingHashes === undefined) {
       const variants = encoded
         ? [hashImageBytes(bytes), hashImageBytes(encoded.bytes)]
@@ -524,12 +562,7 @@ export const runImageModeration = async <R extends ModerationRow>(
         });
         return;
       }
-      if (hashCheck.status === "no_match" && refusal === null) {
-        await ctx.runMutation(steps.setHashCheck, {
-          imageId,
-          status: "no_match",
-        });
-      }
+      openGate = hashCheck.status === "no_match" && refusal === null;
       // Unavailable: the gate stays closed. Keep the hashes (of the original AND the re-encode,
       // since the original is deleted after the swap below) and re-check them later. Surface it
       // at error level for alerting.
@@ -556,18 +589,17 @@ export const runImageModeration = async <R extends ModerationRow>(
       return;
     }
 
-    // Swap the row to the re-encode (or a WebP stored under the wrong type to "image/webp") and
-    // drop the original.
+    // Swap the row to the clean blob (the re-encode, or a WebP's stripped bytes) and drop the
+    // original. A row not yet re-encoded always has `encoded` here (otherwise it was refused);
+    // a WebP that had nothing to strip and is stored as image/webp already stays as it is.
     let cleanBytes = bytes;
+    const unchanged =
+      encoded !== null &&
+      encoded.mime === mime &&
+      encoded.bytes.length === bytes.length &&
+      encoded.bytes.every((byte, i) => byte === bytes[i]);
     const replacement =
-      row.reencodedAt !== undefined
-        ? null
-        : encoded
-          ? encoded
-          : mime !== "image/webp"
-            ? { bytes, mime: "image/webp", blurhash: undefined }
-            : null;
-    if (!encoded && replacement) event.restored_as = "image/webp";
+      row.reencodedAt !== undefined || unchanged ? null : encoded;
     if (replacement) {
       // Tracks the just-stored blob across the try/catch. If `setFile` throws AFTER the store
       // succeeded, the row still points at the original, so the new blob is unreferenced. There
@@ -618,6 +650,14 @@ export const runImageModeration = async <R extends ModerationRow>(
         }
         return;
       }
+    }
+
+    // The row holds the clean blob now: open the publication gate.
+    if (openGate) {
+      await ctx.runMutation(steps.setHashCheck, {
+        imageId,
+        status: "no_match",
+      });
     }
 
     // Classify. The port never throws; this try/catch is the last-resort guard.
