@@ -10,7 +10,13 @@ import { logEvent } from "../lib/logEvent";
 import { RATE_LIMITS, type RateLimitName } from "../lib/rateLimits";
 import { presence } from "../presence";
 import { removeForDeletedMember } from "./messageAttachments";
-import { cancelOpenExchanges, closeOpenLoans } from "./purgeMemberLibrary";
+import {
+  cancelOpenExchanges,
+  closeOpenLoans,
+  deleteOwnCopies,
+  deleteUploadedCopyPhotos,
+  purgeCompletions,
+} from "./purgeMemberLibrary";
 
 // Account deletion for messaging data (spec R.9, 2.8), scheduled by users.deleteUser. Text
 // messages stay: their author renders as "deleted member" (social/privacy projectMemberIdentity).
@@ -66,6 +72,14 @@ import { cancelOpenExchanges, closeOpenLoans } from "./purgeMemberLibrary";
 //   exchangesOpenIn  the proposed/accepted exchanges sent to them } cancelled and disputed stay
 //   loansOpen    the open loans of copies they lent  } returned (closedAt now), the copy back with
 //   loansOpenIn  the open loans of copies they borrow } its owner; loan rows stay as history
+//   copies       the copies they own now (by_owner only), each with its collection memberships,
+//                copy reviews, circle shares, copy-scoped comments, photos (blobs included) and
+//                their own completions on it. Exchanges, loans and custody entries naming it stay.
+//   copyPhotos   their photos on copies other members own: row, blob and the photo's comments
+//   completions  their remaining completions: one on a copy someone else owns stays (that copy's
+//                History) without its photos; any other goes, photos and blobs included
+//                Photos keep the attachments' rule: a quarantined one (CSAM hash match) stays whole
+//                and a blob a CSAM escalation preserves is never deleted.
 // One phase at a time, PURGE_BATCH_SIZE rows per run: a run that did not finish its phase
 // schedules the next run with the page cursor, so each run stays well inside Convex's per-mutation
 // limits whatever the member's history. Rows a phase keeps (a quarantined or evidence-held photo)
@@ -111,6 +125,9 @@ const PHASES = [
   "exchangesOpenIn",
   "loansOpen",
   "loansOpenIn",
+  "copies",
+  "copyPhotos",
+  "completions",
 ] as const;
 type Phase = (typeof PHASES)[number];
 
@@ -151,6 +168,9 @@ const phaseValidator = v.union(
   v.literal("exchangesOpenIn"),
   v.literal("loansOpen"),
   v.literal("loansOpenIn"),
+  v.literal("copies"),
+  v.literal("copyPhotos"),
+  v.literal("completions"),
 );
 
 type Page = { isDone: boolean; continueCursor: string };
@@ -625,6 +645,12 @@ const runPhase = async (
       return closeOpenLoans(ctx, memberId, "lender", opts);
     case "loansOpenIn":
       return closeOpenLoans(ctx, memberId, "borrower", opts);
+    case "copies":
+      return deleteOwnCopies(ctx, memberId, opts);
+    case "copyPhotos":
+      return deleteUploadedCopyPhotos(ctx, memberId, opts);
+    case "completions":
+      return purgeCompletions(ctx, memberId, opts);
   }
 };
 

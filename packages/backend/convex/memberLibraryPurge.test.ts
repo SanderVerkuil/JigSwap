@@ -1,7 +1,7 @@
 import presenceTest from "@convex-dev/presence/test";
 import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { internal } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import schema from "./schema";
 
@@ -251,5 +251,476 @@ describe("account deletion: open loans", () => {
     const carolCopy = await t.run((ctx) => ctx.db.get(borrowedByHer));
     expect(carolCopy?.ownerId).toBe(s.carol);
     expect(carolCopy?.heldBy).toBeUndefined();
+  });
+});
+
+// A stored blob, standing in for an uploaded photo.
+const storeBlob = (t: T) =>
+  t.run((ctx) =>
+    ctx.storage.store(new Blob(["photo"], { type: "image/jpeg" })),
+  );
+
+const blobExists = (t: T, fileId: Id<"_storage">) =>
+  t.run(async (ctx) => (await ctx.storage.get(fileId)) !== null);
+
+const insertPhoto = async (
+  t: T,
+  ownedPuzzleId: Id<"ownedPuzzles">,
+  uploaderId: Id<"users">,
+  extra: Partial<Doc<"ownedPuzzleImages">> = {},
+) => {
+  const fileId = await storeBlob(t);
+  const imageId = await t.run((ctx) =>
+    ctx.db.insert("ownedPuzzleImages", {
+      ownedPuzzleId,
+      uploaderId,
+      fileId,
+      moderationStatus: "approved",
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      ...extra,
+    }),
+  );
+  return { imageId, fileId };
+};
+
+let completionSeq = 0;
+// A finished completion with one photo (row `photos` + its completionImages sidecar).
+const insertCompletion = async (
+  t: T,
+  userId: Id<"users">,
+  ownedPuzzleId: Id<"ownedPuzzles"> | undefined,
+) => {
+  completionSeq += 1;
+  const aggregateId = `completion-${completionSeq}`;
+  const fileId = await storeBlob(t);
+  const completionId = await t.run(async (ctx) => {
+    const now = Date.now();
+    const id = await ctx.db.insert("completions", {
+      aggregateId,
+      userId,
+      ownedPuzzleId,
+      startDate: now - 3_600_000,
+      endDate: now - 60_000,
+      photos: [fileId],
+      isCompleted: true,
+      createdAt: now,
+      updatedAt: now,
+    });
+    await ctx.db.insert("completionImages", {
+      completionId: aggregateId,
+      uploaderId: userId,
+      fileId,
+      moderationStatus: "approved",
+      createdAt: now,
+      updatedAt: now,
+    });
+    return id;
+  });
+  return { completionId, aggregateId, fileId };
+};
+
+const completionImagesOf = (t: T, aggregateId: string) =>
+  t.run((ctx) =>
+    ctx.db
+      .query("completionImages")
+      .withIndex("by_completion", (q) => q.eq("completionId", aggregateId))
+      .collect(),
+  );
+
+// Bob buys `copy` from Alice through the real exchange path (propose, accept, both confirm), so
+// the settlement subscribers move the copy and record the custody entry.
+const sellToBob = async (
+  t: T,
+  copy: Id<"ownedPuzzles">,
+  alice: Id<"users">,
+) => {
+  const exchangeId = await as(t, "bob").mutation(api.exchange.propose.propose, {
+    recipientId: alice,
+    type: "sale",
+    requestedPuzzleId: copy,
+    salePrice: 1000,
+  });
+  await as(t, "alice").mutation(api.exchange.accept.accept, { exchangeId });
+  await as(t, "bob").mutation(
+    api.exchange.confirmCompletion.confirmCompletion,
+    { exchangeId },
+  );
+  await as(t, "alice").mutation(
+    api.exchange.confirmCompletion.confirmCompletion,
+    { exchangeId },
+  );
+  await settleDueJobs(t);
+  return exchangeId;
+};
+
+// propose returns the exchange's aggregateId; the read views take the row _id.
+const exchangeRowId = async (t: T, aggregateId: string) =>
+  (await t.run((ctx) =>
+    ctx.db
+      .query("exchanges")
+      .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", aggregateId))
+      .unique(),
+  ))!._id;
+
+const DEPARTED = { anonymous: true, departed: true };
+
+describe("account deletion: a copy she sold stays whole; her own library goes", () => {
+  // Alice sells one copy to Bob, after solving it (a completion with a photo), lending it to Carol
+  // and adding a photo of it. She keeps another copy, with photos, a collection, a copy review, a
+  // circle share and a copy note, and Bob's own solve of it while he borrowed it.
+  const seed = async (t: T) => {
+    const s = await seedMembers(t);
+    const sold = await insertCopy(t, s.puzzleId, s.alice, {
+      availability: FOR_SALE,
+    });
+    const soldAggregateId = await aggregateIdOf(t, sold);
+    const herSolveOfSold = await insertCompletion(t, s.alice, sold);
+    await t.run((ctx) =>
+      ctx.db.insert("loans", {
+        aggregateId: "loan-history",
+        copyId: soldAggregateId,
+        lenderId: s.alice,
+        borrowerId: s.carol,
+        status: "returned",
+        openedAt: Date.now() - 10_000,
+        closedAt: Date.now() - 5_000,
+      }),
+    );
+    const herPhotoOfSold = await insertPhoto(t, sold, s.alice);
+    const exchangeId = await sellToBob(t, sold, s.alice);
+
+    const own = await insertCopy(t, s.puzzleId, s.alice, {
+      availability: FOR_SALE,
+    });
+    const ownAggregateId = await aggregateIdOf(t, own);
+    const ownPhoto = await insertPhoto(t, own, s.alice);
+    const ownCover = await insertPhoto(t, own, s.alice);
+    await t.run((ctx) => ctx.db.patch(own, { coverImageId: ownCover.imageId }));
+    const herSolveOfOwn = await insertCompletion(t, s.alice, own);
+    const bobsSolveOfOwn = await insertCompletion(t, s.bob, own);
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      const collectionId = await ctx.db.insert("collections", {
+        userId: s.alice,
+        name: "Favourites",
+        visibility: "private",
+        isDefault: false,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("collectionMembers", {
+        collectionId,
+        ownedPuzzleId: own,
+        addedAt: now,
+      });
+      await ctx.db.insert("copyReviews", {
+        userId: s.bob,
+        copyId: own,
+        rating: 4,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("circleCopyShares", {
+        circleId: "circle-x",
+        copyId: ownAggregateId,
+        sharedAt: now,
+      });
+      await ctx.db.insert("puzzleComments", {
+        puzzleId: s.puzzleId,
+        copyId: own,
+        authorId: s.alice,
+        text: "Missing one edge piece",
+        createdAt: now,
+      });
+      await ctx.db.insert("photoComments", {
+        photoId: ownPhoto.imageId,
+        authorId: s.bob,
+        text: "Nice",
+        createdAt: now,
+      });
+    });
+    return {
+      ...s,
+      sold,
+      exchangeId,
+      herSolveOfSold,
+      herPhotoOfSold,
+      own,
+      ownPhoto,
+      ownCover,
+      herSolveOfOwn,
+      bobsSolveOfOwn,
+    };
+  };
+
+  test("the sale went through the real settlement path", async () => {
+    const t = newT();
+    const s = await seed(t);
+    const copy = await t.run((ctx) => ctx.db.get(s.sold));
+    expect(copy?.ownerId).toBe(s.bob);
+    const custody = await t.run((ctx) =>
+      ctx.db
+        .query("copyCustodyEntries")
+        .withIndex("by_copy", (q) => q.eq("copyId", s.sold as string))
+        .collect(),
+    );
+    expect(custody.map((e) => [e.previousOwner, e.newOwner])).toEqual([
+      [s.alice, s.bob],
+    ]);
+  });
+
+  test("Bob keeps the copy she sold him, with its full History naming her as departed", async () => {
+    const t = newT();
+    const s = await seed(t);
+    await deleteMember(t, "alice");
+
+    const copy = await t.run((ctx) => ctx.db.get(s.sold));
+    expect(copy?.ownerId).toBe(s.bob);
+
+    const view = await as(t, "bob").query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: s.sold },
+    );
+    expect(view).not.toBeNull();
+    expect(view!.transfers).toHaveLength(1);
+    expect(view!.transfers[0].from).toMatchObject(DEPARTED);
+    expect(view!.transfers[0].from).not.toHaveProperty("member");
+    expect(view!.completions).toHaveLength(1);
+    expect(view!.completions[0].solver).toMatchObject(DEPARTED);
+    expect(view!.loans).toHaveLength(1);
+    expect(view!.loans[0].lender).toMatchObject(DEPARTED);
+    expect(view!.loans[0].borrower).toMatchObject({ anonymous: false });
+    // Her photo of it is gone.
+    expect(view!.gallery).toEqual([]);
+
+    const timeline = await as(t, "bob").query(
+      api.custody.getCopyCustodyTimeline.getCopyCustodyTimeline,
+      { copyId: s.sold },
+    );
+    expect(timeline!.originalOwner).toMatchObject(DEPARTED);
+    expect(timeline!.originalOwner).not.toHaveProperty("member");
+    expect(timeline!.transfers).toHaveLength(1);
+    expect(timeline!.currentOwner).toMatchObject({ anonymous: false });
+
+    // The settled trade still opens for Bob.
+    const exchange = await as(t, "bob").query(
+      api.exchange.getExchangeById.getExchangeById,
+      { exchangeId: await exchangeRowId(t, s.exchangeId) },
+    );
+    expect(exchange?.status).toBe("completed");
+  });
+
+  test("her solve of the sold copy stays without its photos; her photo of it is deleted", async () => {
+    const t = newT();
+    const s = await seed(t);
+    await deleteMember(t, "alice");
+
+    const solve = await t.run((ctx) =>
+      ctx.db.get(s.herSolveOfSold.completionId),
+    );
+    expect(solve).not.toBeNull();
+    expect(solve!.photos).toEqual([]);
+    expect(await completionImagesOf(t, s.herSolveOfSold.aggregateId)).toEqual(
+      [],
+    );
+    expect(await blobExists(t, s.herSolveOfSold.fileId)).toBe(false);
+
+    expect(
+      await t.run((ctx) => ctx.db.get(s.herPhotoOfSold.imageId)),
+    ).toBeNull();
+    expect(await blobExists(t, s.herPhotoOfSold.fileId)).toBe(false);
+  });
+
+  test("her own copy goes with its photos, blobs, links and her solve; Bob's solve stays", async () => {
+    const t = newT();
+    const s = await seed(t);
+    await deleteMember(t, "alice");
+
+    const left = await t.run(async (ctx) => ({
+      copy: await ctx.db.get(s.own),
+      images: await ctx.db
+        .query("ownedPuzzleImages")
+        .withIndex("by_owned_puzzle", (q) => q.eq("ownedPuzzleId", s.own))
+        .collect(),
+      memberships: await ctx.db
+        .query("collectionMembers")
+        .withIndex("by_owned_puzzle", (q) => q.eq("ownedPuzzleId", s.own))
+        .collect(),
+      reviews: await ctx.db
+        .query("copyReviews")
+        .withIndex("by_copy", (q) => q.eq("copyId", s.own))
+        .collect(),
+      shares: await ctx.db.query("circleCopyShares").collect(),
+      notes: await ctx.db
+        .query("puzzleComments")
+        .withIndex("by_copy", (q) => q.eq("copyId", s.own))
+        .collect(),
+      photoComments: await ctx.db.query("photoComments").collect(),
+      herSolve: await ctx.db.get(s.herSolveOfOwn.completionId),
+      bobsSolve: await ctx.db.get(s.bobsSolveOfOwn.completionId),
+    }));
+    expect(left).toMatchObject({
+      copy: null,
+      images: [],
+      memberships: [],
+      reviews: [],
+      shares: [],
+      notes: [],
+      photoComments: [],
+      herSolve: null,
+    });
+    expect(left.bobsSolve?.photos).toHaveLength(1);
+    for (const fileId of [
+      s.ownPhoto.fileId,
+      s.ownCover.fileId,
+      s.herSolveOfOwn.fileId,
+    ]) {
+      expect(await blobExists(t, fileId)).toBe(false);
+    }
+    expect(await blobExists(t, s.bobsSolveOfOwn.fileId)).toBe(true);
+  });
+
+  test("Browse lists her copy before and not after", async () => {
+    const t = newT();
+    const s = await seed(t);
+    const browse = async () =>
+      (
+        await as(t, "carol").query(
+          api.library.browseOwnedPuzzles.browseOwnedPuzzles,
+          {},
+        )
+      ).ownedPuzzles.map((c) => c._id);
+    expect(await browse()).toContain(s.own);
+
+    await deleteMember(t, "alice");
+
+    expect(await browse()).not.toContain(s.own);
+  });
+
+  test("an exchange about her deleted copy still opens for Bob, cancelled", async () => {
+    const t = newT();
+    const s = await seed(t);
+    const exchangeId = await as(t, "bob").mutation(
+      api.exchange.propose.propose,
+      {
+        recipientId: s.alice,
+        type: "sale",
+        requestedPuzzleId: s.own,
+        salePrice: 900,
+      },
+    );
+    await deleteMember(t, "alice");
+
+    const view = await as(t, "bob").query(
+      api.exchange.getExchangeById.getExchangeById,
+      { exchangeId: await exchangeRowId(t, exchangeId) },
+    );
+    expect(view?.status).toBe("cancelled");
+    expect(view?.ownerPuzzle).toBeNull();
+    const list = await as(t, "bob").query(
+      api.exchange.getUserExchanges.getUserExchanges,
+      {},
+    );
+    expect(list.length).toBeGreaterThan(0);
+  });
+});
+
+describe("account deletion: photos kept for a CSAM escalation", () => {
+  test("a quarantined copy photo and a preserved blob stay; the rest goes", async () => {
+    const t = newT();
+    const s = await seedMembers(t);
+    const bobsCopy = await insertCopy(t, s.puzzleId, s.bob);
+    const own = await insertCopy(t, s.puzzleId, s.alice);
+    const quarantined = await insertPhoto(t, bobsCopy, s.alice, {
+      moderationStatus: "quarantined",
+    });
+    const quarantinedOnOwn = await insertPhoto(t, own, s.alice, {
+      moderationStatus: "quarantined",
+    });
+    const plain = await insertPhoto(t, bobsCopy, s.alice);
+    // A plain row whose blob an escalation preserves (the same file re-uploaded). The open
+    // escalation also tombstones Alice instead of deleting her row; the purge runs all the same.
+    const preserved = await insertPhoto(t, bobsCopy, s.alice);
+    await t.run((ctx) =>
+      ctx.db.insert("csamEscalations", {
+        table: "ownedPuzzleImages",
+        rowId: preserved.imageId,
+        uploaderId: s.alice,
+        fileId: preserved.fileId,
+        md5: "m",
+        sha1: "s",
+        provider: "test",
+        originalDiscarded: true,
+        status: "open",
+        matchedAt: Date.now(),
+      }),
+    );
+
+    await deleteMember(t, "alice");
+
+    const rows = await t.run(async (ctx) => ({
+      quarantined: await ctx.db.get(quarantined.imageId),
+      quarantinedOnOwn: await ctx.db.get(quarantinedOnOwn.imageId),
+      plain: await ctx.db.get(plain.imageId),
+      preserved: await ctx.db.get(preserved.imageId),
+    }));
+    expect(rows.quarantined).not.toBeNull();
+    expect(rows.quarantinedOnOwn).not.toBeNull();
+    expect(rows.plain).toBeNull();
+    expect(rows.preserved).toBeNull();
+    expect(await blobExists(t, quarantined.fileId)).toBe(true);
+    expect(await blobExists(t, quarantinedOnOwn.fileId)).toBe(true);
+    expect(await blobExists(t, plain.fileId)).toBe(false);
+    expect(await blobExists(t, preserved.fileId)).toBe(true);
+  });
+});
+
+describe("account deletion: batching", () => {
+  test("a small batch walks her copies over several runs", async () => {
+    const t = newT();
+    const s = await seedMembers(t);
+    const copies: Id<"ownedPuzzles">[] = [];
+    for (let i = 0; i < 7; i++) {
+      const copy = await insertCopy(t, s.puzzleId, s.alice);
+      await insertPhoto(t, copy, s.alice);
+      copies.push(copy);
+    }
+    const bobsCopy = await insertCopy(t, s.puzzleId, s.bob);
+
+    await t.mutation(
+      internal.conversation.purgeMemberMessagingData.purgeMemberMessagingData,
+      { memberId: s.alice, phase: "copies", batchSize: 2 },
+    );
+    // One run handles one page: two copies, and the next run is scheduled with the cursor.
+    const afterFirst = await t.run((ctx) =>
+      ctx.db
+        .query("ownedPuzzles")
+        .withIndex("by_owner", (q) => q.eq("ownerId", s.alice))
+        .collect(),
+    );
+    expect(afterFirst).toHaveLength(5);
+    const next = await t.run((ctx) =>
+      ctx.db.system.query("_scheduled_functions").collect(),
+    );
+    expect(next[next.length - 1]?.args[0]).toMatchObject({
+      phase: "copies",
+      batchSize: 2,
+      cursor: expect.any(String),
+    });
+
+    await settleDueJobs(t);
+
+    const rest = await t.run(async (ctx) => ({
+      hers: await ctx.db
+        .query("ownedPuzzles")
+        .withIndex("by_owner", (q) => q.eq("ownerId", s.alice))
+        .collect(),
+      images: await ctx.db.query("ownedPuzzleImages").collect(),
+      bobs: await ctx.db.get(bobsCopy),
+    }));
+    expect(rest.hers).toEqual([]);
+    expect(rest.images).toEqual([]);
+    expect(rest.bobs).not.toBeNull();
   });
 });
