@@ -34,6 +34,7 @@ import { useQuery } from "@tanstack/react-query";
 import { SquarePen, UserRound, Users } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "use-intl";
+import { CircleThreadAvatar } from "./circle-thread-avatar";
 import { useOpenCircleChat } from "./open-circle-chat";
 
 const OPTION_CLASS =
@@ -178,12 +179,10 @@ function CirclePicker() {
             disabled={pending}
             onClick={() => void open(circle.aggregateId!)}
           >
-            <span
-              aria-hidden
-              className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full"
-            >
-              <Users className="size-4" />
-            </span>
+            <CircleThreadAvatar
+              members={[]}
+              className="ring-background size-9 ring-2"
+            />
             <span className="min-w-0 flex-1 truncate">{circle.name}</span>
             <span className="text-muted-foreground shrink-0 text-xs font-normal tabular-nums">
               {t("circle.memberCount", { count: circle.memberCount })}
