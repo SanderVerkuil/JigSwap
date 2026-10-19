@@ -163,6 +163,9 @@ export const gateway = {
     // or declines (silently). The admin's pending requests are in `mine.joinRequests`.
     requestToJoin: api.household.requestToJoinHousehold.requestToJoinHousehold,
     myJoinRequest: api.household.myJoinRequest.myJoinRequest,
+    // Admin-only: the household's open single-use invite links (never the token), and revoking one.
+    openInviteLinks: api.household.listOpenInviteLinks.listOpenInviteLinks,
+    revokeInviteLink: api.household.revokeInviteLink.revokeInviteLink,
     withdrawJoinRequest: api.household.withdrawJoinRequest.withdrawJoinRequest,
     approveJoinRequest: api.household.approveJoinRequest.approveJoinRequest,
     declineJoinRequest: api.household.declineJoinRequest.declineJoinRequest,
@@ -493,6 +496,9 @@ export const gateway = {
       api.invitations.getEmailInviteAvailability.getEmailInviteAvailability,
     send: api.invitations.sendEmailInvite.sendEmailInvite,
     listMine: api.invitations.listMyEmailInvites.listMyEmailInvites,
+    // Admin-only: every pending email invitation to the admin's household, whoever sent it.
+    listForHousehold:
+      api.invitations.listHouseholdEmailInvites.listHouseholdEmailInvites,
     revoke: api.invitations.revokeEmailInvite.revokeEmailInvite,
   },
 

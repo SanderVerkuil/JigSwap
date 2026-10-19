@@ -28,6 +28,16 @@ export interface HouseholdSentInviteView {
   createdAt: number;
 }
 
+/**
+ * `household.openInviteLinks`: an open single-use invite link to the household (admin only). Never
+ * carries the token: the pending list shows when it was made and when it expires, with Revoke.
+ */
+export interface HouseholdInviteLinkView {
+  linkId: string;
+  createdAt: number;
+  expiresAt: number;
+}
+
 /** A request to join the household, waiting for the admin (visible to the admin only). */
 export interface HouseholdJoinRequestView {
   requestId: string;

@@ -10,6 +10,7 @@ import type { Id } from "../_generated/dataModel";
 import { internalMutation, internalQuery } from "../_generated/server";
 import { convexHouseholdRepository } from "../household/adapters/convexHouseholdRepository";
 import { toConvexError as toHouseholdConvexError } from "../household/errors";
+import { membershipOf } from "../household/memberships";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
 import { chargeClerkInviteBudget, enforceRateLimit } from "../lib/rateLimits";
@@ -185,8 +186,9 @@ export const deleteSendLogEntry = internalMutation({
 });
 
 /**
- * revokeEmailInvite's transactional step: only the inviter may revoke, and any other ref (unknown,
- * someone else's, already gone) is the same generic EmailInviteUnavailable. Withdraws a pending
+ * revokeEmailInvite's transactional step: the inviter may revoke, and so may the current admin of
+ * the household a household invitation is for; any other ref (unknown, someone else's, already
+ * gone) is the same generic EmailInviteUnavailable. Withdraws a pending
  * in-app fallback, deletes the row, and returns the Clerk invitation still to revoke.
  */
 export const takeForRevoke = internalMutation({
@@ -200,7 +202,20 @@ export const takeForRevoke = internalMutation({
       .query("emailInvites")
       .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", inviteRef))
       .unique();
-    if (row === null || row.inviterId !== me) throw emailInviteUnavailable();
+    if (row === null) throw emailInviteUnavailable();
+    // The sender, or the current admin of the household a household invitation is for (who sees
+    // it in their pending list, also after a handover). Anyone else: the same Unavailable.
+    if (row.inviterId !== me) {
+      const membership =
+        row.kind === "household" ? await membershipOf(ctx, me) : null;
+      if (
+        membership === null ||
+        membership.role !== "admin" ||
+        membership.householdId !== row.householdId
+      ) {
+        throw emailInviteUnavailable();
+      }
+    }
     await withdrawFallback(ctx, row);
     await ctx.db.delete(row._id);
     return { clerkInvitationId: row.clerkInvitationId ?? null };
