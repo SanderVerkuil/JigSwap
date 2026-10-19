@@ -3,7 +3,10 @@ import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { scrubPayload } from "./conversation/purgeMemberEvents";
+import {
+  scrubDeletedCopyEvent,
+  scrubPayload,
+} from "./conversation/purgeMemberEvents";
 import { EVENT_SCRUB_DELAY_MS } from "./conversation/purgeMemberMessagingData";
 import schema from "./schema";
 
@@ -249,5 +252,113 @@ describe("account deletion: domainEvents", () => {
         ownerId: "deleted-member",
       });
     }
+  });
+});
+
+describe("account deletion: events keyed by a copy alone", () => {
+  // CopyDetailsUpdated names no member, only the copy, and carries the owner's notes.
+  const details = (copyId: string, notes: string) => ({
+    copyId,
+    missingPiecesCount: 2,
+    notes,
+  });
+
+  const insertCopy = (t: T, ownerId: Id<"users">, aggregateId: string) =>
+    t.run(async (ctx) => {
+      const now = Date.now();
+      const puzzleId = await ctx.db.insert("puzzles", {
+        title: "Lighthouse",
+        pieceCount: 1000,
+        status: "approved",
+        submittedBy: ownerId,
+        createdAt: now,
+        updatedAt: now,
+      });
+      return ctx.db.insert("ownedPuzzles", {
+        aggregateId,
+        puzzleId,
+        ownerId,
+        condition: "good",
+        availability: { forTrade: false, forSale: false, forLend: false },
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+  test("her copy's notes go with her copy; Bob's copy and in-flight events keep theirs", async () => {
+    const t = newT();
+    const s = await seedMembers(t);
+    await insertCopy(t, s.alice, "copy-alice");
+    await insertCopy(t, s.bob, "copy-bob");
+    const hers = await insertEvent(
+      t,
+      "CopyDetailsUpdated",
+      details("copy-alice", "from my gran"),
+    );
+    const hersFailed = await insertEvent(
+      t,
+      "CopyDetailsUpdated",
+      details("copy-alice", "box dented"),
+      "failed",
+    );
+    const hersInFlight = await insertEvent(
+      t,
+      "CopyDetailsUpdated",
+      details("copy-alice", "still sending"),
+      "pending",
+    );
+    const bobs = await insertEvent(
+      t,
+      "CopyDetailsUpdated",
+      details("copy-bob", "Bob's note"),
+    );
+    // A copy someone deleted earlier: nothing reads its notes either.
+    const gone = await insertEvent(
+      t,
+      "CopyDetailsUpdated",
+      details("copy-gone", "old note"),
+    );
+    const noFields = await insertEvent(t, "CopyMadeUnavailable", {
+      copyId: "copy-alice",
+    });
+
+    await t.mutation(internal.users.deleteUser, { id: "clerk_alice" });
+    await settleDueJobs(t);
+    expect(await runDelayedScrubs(t)).toBe(1);
+
+    const copies = await t.run((ctx) => ctx.db.query("ownedPuzzles").collect());
+    expect(copies.map((c) => c.aggregateId)).toEqual(["copy-bob"]);
+    for (const id of [hers, hersFailed]) {
+      expect(await payloadOf(t, id)).toEqual({
+        copyId: "copy-alice",
+        missingPiecesCount: 2,
+      });
+    }
+    expect(await payloadOf(t, gone)).toEqual({
+      copyId: "copy-gone",
+      missingPiecesCount: 2,
+    });
+    expect(await payloadOf(t, hersInFlight)).toEqual(
+      details("copy-alice", "still sending"),
+    );
+    expect(await payloadOf(t, bobs)).toEqual(details("copy-bob", "Bob's note"));
+    expect(await payloadOf(t, noFields)).toEqual({ copyId: "copy-alice" });
+  });
+
+  test("a dry run reports the rewrite without making it; a copy is looked up once per page", async () => {
+    const t = newT();
+    const id = await insertEvent(
+      t,
+      "CopyDetailsUpdated",
+      details("copy-gone", "old note"),
+    );
+    const outcome = await t.run(async (ctx) => {
+      const event = (await ctx.db.get(id))!;
+      const copyExists = new Map<string, boolean>();
+      const dry = await scrubDeletedCopyEvent(ctx, event, copyExists, true);
+      return { dry, cached: [...copyExists.entries()] };
+    });
+    expect(outcome).toEqual({ dry: true, cached: [["copy-gone", false]] });
+    expect(await payloadOf(t, id)).toEqual(details("copy-gone", "old note"));
   });
 });

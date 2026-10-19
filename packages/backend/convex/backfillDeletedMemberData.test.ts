@@ -271,3 +271,100 @@ describe("conversation.backfillDeletedMemberData", () => {
     ]);
   });
 });
+
+describe("conversation.backfillDeletedMemberData: events keyed by a deleted copy", () => {
+  // An earlier deletion removed Hana's copy but left its CopyDetailsUpdated (no member id, her
+  // notes) in the log. Bob's copy still exists.
+  const seedCopyEvents = (t: T) =>
+    t.run(async (ctx) => {
+      const now = Date.now();
+      const bob = await ctx.db.insert("users", {
+        clerkId: "clerk_bob",
+        name: "bob",
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+      const puzzleId = await ctx.db.insert("puzzles", {
+        title: "Lighthouse",
+        pieceCount: 1000,
+        status: "approved",
+        submittedBy: bob,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("ownedPuzzles", {
+        aggregateId: "copy-b1",
+        puzzleId,
+        ownerId: bob,
+        condition: "good",
+        availability: { forTrade: false, forSale: false, forLend: false },
+        createdAt: now,
+        updatedAt: now,
+      });
+      const event = (copyId: string, notes: string) =>
+        ctx.db.insert("domainEvents", {
+          name: "CopyDetailsUpdated",
+          payload: { copyId, missingPiecesCount: 1, notes },
+          context: "library",
+          occurredAt: now,
+          processedAt: now,
+        });
+      return {
+        hanas: await event("copy-h1", "from my gran"),
+        bobs: await event("copy-b1", "Bob's note"),
+      };
+    });
+
+  const run = async (t: T, dryRun: boolean) => {
+    await t.mutation(
+      internal.conversation.backfillDeletedMemberData.backfillDeletedMemberData,
+      { dryRun, table: "domainEvents", batchSize: 1 },
+    );
+    await settleDueJobs(t);
+  };
+
+  const deletedCopyEventsLogged = () =>
+    logs
+      .filter((line) =>
+        line.startsWith("conversation/backfillDeletedMemberData"),
+      )
+      .map(
+        (line) =>
+          (
+            JSON.parse(line.slice(line.indexOf("{"))) as {
+              deletedCopyEvents?: number;
+            }
+          ).deletedCopyEvents ?? 0,
+      )
+      .reduce((a, b) => a + b, 0);
+
+  test("a dry run counts the event and changes nothing", async () => {
+    const t = newT();
+    const e = await seedCopyEvents(t);
+    await run(t, true);
+    expect(deletedCopyEventsLogged()).toBe(1);
+    expect(
+      await t.run(async (ctx) => (await ctx.db.get(e.hanas))!.payload),
+    ).toEqual({
+      copyId: "copy-h1",
+      missingPiecesCount: 1,
+      notes: "from my gran",
+    });
+  });
+
+  test("a real run drops the deleted copy's notes and keeps Bob's", async () => {
+    const t = newT();
+    const e = await seedCopyEvents(t);
+    await run(t, false);
+    expect(deletedCopyEventsLogged()).toBe(1);
+    const payloads = await t.run(async (ctx) => ({
+      hanas: (await ctx.db.get(e.hanas))!.payload,
+      bobs: (await ctx.db.get(e.bobs))!.payload,
+    }));
+    expect(payloads).toEqual({
+      hanas: { copyId: "copy-h1", missingPiecesCount: 1 },
+      bobs: { copyId: "copy-b1", missingPiecesCount: 1, notes: "Bob's note" },
+    });
+  });
+});

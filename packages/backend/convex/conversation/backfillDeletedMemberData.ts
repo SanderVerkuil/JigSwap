@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { internalMutation, type MutationCtx } from "../_generated/server";
+import { scrubDeletedCopyEvent, type CopyExists } from "./purgeMemberEvents";
 
 // Rows per batch: each costs at most one users point read (memoised per batch), so a batch stays
 // far inside Convex's per-transaction limits. `batchSize` overrides it, clamped to 1..MAX.
@@ -45,6 +46,8 @@ type MemberPage = {
   memberIds: Id<"users">[];
   isDone: boolean;
   continueCursor: string;
+  // domainEvents only: copy-keyed events whose copy is gone and that still carry personal fields.
+  deletedCopyEvents?: number;
 };
 
 const idsOf = async <R>(
@@ -73,10 +76,11 @@ const stringsIn = (value: unknown): string[] => {
 };
 
 // One page of `table`, as the member ids its rows belong to.
-const pageOf = (
+const pageOf = async (
   ctx: MutationCtx,
   table: Table,
   opts: PageOpts,
+  dryRun: boolean,
 ): Promise<MemberPage> => {
   switch (table) {
     case "exchanges":
@@ -110,12 +114,28 @@ const pageOf = (
         row.memberId,
       ]);
     // An event names members anywhere in its untyped payload: every string that is a users id.
-    case "domainEvents":
-      return idsOf(ctx.db.query("domainEvents"), opts, (row) =>
-        stringsIn(row.payload).map(
-          (s) => ctx.db.normalizeId("users", s) ?? undefined,
-        ),
-      );
+    // An event that names only a copy (CopyDetailsUpdated and its notes) leads to no member, so
+    // the walk scrubs it itself once its copy is gone (scrubDeletedCopyEvent; counted on a dry
+    // run): a copy deleted before the purge covered this has no purge left to do it.
+    case "domainEvents": {
+      const page = await ctx.db.query("domainEvents").paginate(opts);
+      const copyExists: CopyExists = new Map();
+      let deletedCopyEvents = 0;
+      for (const event of page.page) {
+        if (await scrubDeletedCopyEvent(ctx, event, copyExists, dryRun)) {
+          deletedCopyEvents += 1;
+        }
+      }
+      return {
+        isDone: page.isDone,
+        continueCursor: page.continueCursor,
+        memberIds: page.page
+          .flatMap((row) => stringsIn(row.payload))
+          .map((s) => ctx.db.normalizeId("users", s))
+          .filter((id): id is Id<"users"> => id !== null),
+        deletedCopyEvents,
+      };
+    }
   }
 };
 
@@ -127,7 +147,9 @@ const pageOf = (
  * conversation/purgeMemberMessagingData for each, starting at its `exchangesOpen` phase (the
  * earlier phases already ran when the account was deleted, and are safe to skip). Reschedules
  * itself page by page and table by table; `found` carries the ids seen so far, so each is reported
- * and scheduled once. Each batch logs its findings; the last logs the whole list. Re-running is
+ * and scheduled once. Its domainEvents walk also drops the personal fields (a copy's notes) from
+ * events keyed by a copy that no longer exists, or only counts them on a dry run
+ * (`deletedCopyEvents`). Each batch logs its findings; the last logs the whole list. Re-running is
  * harmless: a purged member leaves nothing behind to find. Run by an operator, with approval.
  */
 export const backfillDeletedMemberData = internalMutation({
@@ -148,10 +170,12 @@ export const backfillDeletedMemberData = internalMutation({
         Math.floor(args.batchSize ?? BACKFILL_DELETED_MEMBER_DATA_BATCH),
       ),
     );
-    const page = await pageOf(ctx, table, {
-      cursor: args.cursor ?? null,
-      numItems,
-    });
+    const page = await pageOf(
+      ctx,
+      table,
+      { cursor: args.cursor ?? null, numItems },
+      dryRun,
+    );
 
     const seen = new Set<string>(args.found ?? []);
     const checked = new Set<string>();
@@ -184,6 +208,9 @@ export const backfillDeletedMemberData = internalMutation({
         table,
         scanned: page.memberIds.length,
         departed,
+        ...(page.deletedCopyEvents !== undefined && {
+          deletedCopyEvents: page.deletedCopyEvents,
+        }),
         isDone,
         ...(isDone ? { found } : {}),
       }),
@@ -202,6 +229,12 @@ export const backfillDeletedMemberData = internalMutation({
         },
       );
     }
-    return { table, departed, found, isDone };
+    return {
+      table,
+      departed,
+      found,
+      isDone,
+      deletedCopyEvents: page.deletedCopyEvents ?? 0,
+    };
   },
 });

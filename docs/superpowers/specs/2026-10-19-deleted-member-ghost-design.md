@@ -107,7 +107,13 @@ Order matters: open trades and loans are settled before copies go, copies before
    skipped by the cursor. The phase starts 20 minutes after the household phase, past the
    dispatcher's full retry window (1 + 2 + 4 + 8 minutes), so the events the purge itself emitted
    (leaving the household, deleting a circle) are dispatched by then; the backfill below picks up
-   any other straggler.
+   any other straggler. An event that names only a copy cannot be attributed by id:
+   `CopyDetailsUpdated` carries `{ copyId, missingPiecesCount, notes }`. Such a copy-keyed event
+   (a string `copyId` in the payload) whose copy no longer exists (`ownedPuzzles.by_aggregate_id`)
+   loses the same personal fields; the copy id stays. Keyed on the copy being gone, not on copy
+   ids recorded by the `copies` phase: no state has to survive the purge's runs, the rule is
+   idempotent, and the same check serves stragglers and the backfill. It also clears the notes of
+   copies their owners deleted themselves, which nothing reads any more.
 
 The domain needs one new operation: `Circle.handOverOwnership(to, now)` (owner becomes `to`, `to`
 must be a current member; the old owner's seat stays). The household leave rule already exists.
@@ -119,8 +125,10 @@ the phases above clean up (`exchanges`, `loans`, `ownedPuzzles`, `ownedPuzzleIma
 `goals`, `collections`, `categories`, `circles`, `householdMembers`, and `domainEvents`, where any
 payload string that is a `users` id counts), collects member ids whose
 `users` row is missing or inactive, and returns them (dry run) or schedules `purgeMemberMessagingData` for each starting at
-`exchangesOpen` (real run). It must be run by an operator with approval; nothing in these PRs runs
-it.
+`exchangesOpen` (real run). Its `domainEvents` walk also applies the copy-keyed rule of phase 9
+to events whose copy is gone (counted as `deletedCopyEvents` on a dry run, rewritten on a real
+run), since a copy deleted before the purge covered libraries has no purge left to scrub it. It
+must be run by an operator with approval; nothing in these PRs runs it.
 
 ## Stack
 
