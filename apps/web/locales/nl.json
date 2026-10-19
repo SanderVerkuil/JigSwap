@@ -1240,7 +1240,7 @@
   "privacy": {
     "title": "Privacybeleid",
     "lastUpdated": "Laatst bijgewerkt",
-    "effectiveDate": "19 oktober 2026",
+    "effectiveDate": "20 oktober 2026",
     "introduction": "Dit privacybeleid legt uit welke persoonsgegevens JigSwap verzamelt, waarom we dat doen en welke rechten je hebt. JigSwap wordt beheerd door Sander Verkuil, die de verwerkingsverantwoordelijke is voor de verwerking die hier wordt beschreven. We willen zo min mogelijk verzamelen en transparant zijn over de rest.",
     "informationWeCollect": {
       "title": "Welke gegevens we verzamelen",
@@ -1304,13 +1304,9 @@
         "title": "Vercel",
         "description": "Onze hostingprovider. De JigSwap-webapplicatie wordt geleverd via het wereldwijde edge-netwerk van Vercel. Vercel bezorgt de site bij je browser; je persoonsgegevens zelf staan in de EU-gehoste diensten hierboven."
       },
-      "huggingface": {
-        "title": "Hugging Face",
-        "description": "Fotocontrole. Elke foto die je uploadt wordt naar een veiligheidsmodel gestuurd dat wordt gehost door Hugging Face. Dat controleert de foto op expliciete inhoud en geeft een score terug. Hugging Face verwerkt de afbeelding alleen om dat resultaat te geven. Hugging Face is gevestigd in de Verenigde Staten, dus deze verwerking kan buiten de Europese Unie plaatsvinden."
-      },
       "sightengine": {
         "title": "Sightengine",
-        "description": "Fotocontrole (ter vervanging van Hugging Face). Sightengine wordt beheerd door Kozelo SAS in Parijs, Frankrijk. Elke foto die je uploadt wordt naar de veiligheidsdienst van Sightengine gestuurd. Die controleert de foto op expliciete inhoud en geeft een score terug; de afbeelding wordt alleen verwerkt om dat resultaat te geven. De datacenters van Sightengine staan vooral in de Europese Unie, maar afhankelijk van de beschikbaarheid kan de verwerking ook in Canada of de Verenigde Staten plaatsvinden."
+        "description": "Fotocontrole. Sightengine wordt beheerd door Kozelo SAS in Parijs, Frankrijk. Elke afbeelding die je uploadt wordt naar de veiligheidsdienst van Sightengine gestuurd. Die controleert de afbeelding op expliciete inhoud en geeft een score terug; de afbeelding wordt alleen verwerkt om dat resultaat te geven. De datacenters van Sightengine staan vooral in de Europese Unie, maar afhankelijk van de beschikbaarheid kan de verwerking ook in Canada of de Verenigde Staten plaatsvinden."
       },
       "maptiler": {
         "title": "MapTiler",
@@ -1326,9 +1322,10 @@
       "description": "Foto's die je aan je bibliotheek of aan een gelegde puzzel toevoegt, en afbeeldingen die je uploadt als catalogusafbeelding van een puzzel, doorlopen een automatisch proces voordat andere leden ze kunnen zien:",
       "steps": [
         "De afbeelding wordt opnieuw gecodeerd, waardoor verborgen metadata zoals EXIF-gegevens — inclusief een eventuele locatie — wordt verwijderd",
-        "Een automatische veiligheidscontrole beoordeelt de afbeelding; hiervoor gebruiken we een van de controlediensten hierboven (Hugging Face of Sightengine), die de afbeelding uitsluitend voor dit doel verwerkt",
+        "Sightengine (zie hierboven) controleert de afbeelding automatisch op expliciete inhoud en verwerkt hem uitsluitend voor dit doel. Een afbeelding die de controle tegenhoudt, wordt niet aan andere leden getoond",
         "Totdat dit klaar is, is de foto alleen voor jou zichtbaar. Als de controle niet kan worden uitgevoerd (bijvoorbeeld omdat de controledienst niet bereikbaar is), blijft de foto alleen voor jou zichtbaar totdat hij is gecontroleerd",
-        "Een catalogusafbeelding wordt aan niemand getoond, ook niet aan jou, totdat hij de controle heeft doorstaan; tot dan toont de puzzel zijn standaardafbeelding"
+        "Een catalogusafbeelding wordt aan niemand getoond, ook niet aan jou, totdat hij de controle heeft doorstaan; tot dan toont de puzzel zijn standaardafbeelding",
+        "Als een afbeelding wordt gemeld als illegale inhoud, bijvoorbeeld beeldmateriaal van seksueel misbruik van kinderen, verwijdert een moderator hem en melden we hem bij de autoriteiten als de wet dat vereist"
       ]
     },
     "messaging": {
@@ -1440,7 +1437,7 @@
       "noSale": "We verkopen, verhuren of verhandelen je persoonsgegevens niet. Nooit.",
       "limitedSharing": "Gegevens worden alleen in deze gevallen gedeeld:",
       "circumstances": [
-        "Met de dienstverleners uit dit beleid, als verwerkers namens ons: Convex (database en bestanden), Clerk (inloggen), Vercel (hosting), PostHog (analyse en foutrapportage), Axiom (operationele logs, gehost in de EU), Hugging Face of Sightengine (automatische fotocontrole) en MapTiler (kaarten en plekken zoeken)",
+        "Met de dienstverleners uit dit beleid, als verwerkers namens ons: Convex (database en bestanden), Clerk (inloggen), Vercel (hosting), PostHog (analyse en foutrapportage), Axiom (operationele logs, gehost in de EU), Sightengine (automatische fotocontrole) en MapTiler (kaarten en plekken zoeken)",
         "Met andere leden, voor zover jij dat kiest — je profiel en de delen van je bibliotheek die je deelt zijn zichtbaar volgens jouw instellingen",
         "Wanneer de wet dat vereist, of om de dienst en haar leden te beschermen tegen fraude of misbruik",
         "Voor al het andere: alleen met jouw uitdrukkelijke toestemming"

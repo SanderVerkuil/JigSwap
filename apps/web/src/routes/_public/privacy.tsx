@@ -66,8 +66,6 @@ function PrivacyPolicyPage() {
         { type: "p", text: t("dataStorage.clerk.description") },
         { type: "sub", text: t("dataStorage.vercel.title") },
         { type: "p", text: t("dataStorage.vercel.description") },
-        { type: "sub", text: t("dataStorage.huggingface.title") },
-        { type: "p", text: t("dataStorage.huggingface.description") },
         { type: "sub", text: t("dataStorage.sightengine.title") },
         { type: "p", text: t("dataStorage.sightengine.description") },
         { type: "sub", text: t("dataStorage.maptiler.title") },
@@ -89,9 +87,12 @@ function PrivacyPolicyPage() {
     // 15(4), UAVG Art. 41) and not disclosing a block list to the blocked member; keeping a deleted
     // member's text messages; and the retention periods. Verify the Axiom dataset retention is set
     // to 30 days before relying on that line.
-    // Offlimits / EOKM HashCheckService (CSAM hash matching, spec R.11) is not enabled, so it is
-    // not mentioned. When it is: add it to the photo pipeline steps and name Offlimits and the
-    // police as recipients under a legal obligation (dataSharing.circumstances).
+    // Screening runs on Sightengine only (MODERATION_PROVIDER=sightengine on dev and prod); the
+    // Hugging Face adapter is still in the code but not used, so it is not listed. Offlimits /
+    // EOKM HashCheckService (CSAM hash matching, spec R.11) is not enabled
+    // (CSAM_HASHCHECK_PROVIDER unset), so no hash-list matching is claimed. When it is: add it to
+    // the photo pipeline steps and name Offlimits and the police as recipients under a legal
+    // obligation (dataSharing.circumstances).
     {
       id: "p-messaging",
       heading: t("messaging.title"),
