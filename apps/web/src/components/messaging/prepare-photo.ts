@@ -2,7 +2,12 @@
 // picked file to a JPEG (long edge ≤ 1600 px, q 0.8) through a canvas, which
 // also drops EXIF/GPS and converts HEIC/WebP wherever the browser can decode
 // them; then POST it to the upload URL with progress.
-import Compressor from "compressorjs";
+//
+// No compressorjs here: it skips the canvas (and hands back the original
+// file) unless canvas read-back is exact, so in browsers that add a little
+// read-back noise against fingerprinting (e.g. Helium, Brave) every photo
+// was refused. Their canvas output is fine. Only a scrambled read-back
+// (Firefox resistFingerprinting) means the JPEG would be noise too.
 
 const MAX_EDGE = 1600;
 const QUALITY = 0.8;
@@ -12,36 +17,52 @@ export const PHOTO_ACCEPT = "image/jpeg,image/png,image/heic,image/webp";
 
 export type PreparedPhoto = { file: Blob; width: number; height: number };
 
+// Read-back drift allowed per channel: anti-fingerprinting noise is a few
+// levels; random bytes fall outside it.
+const READ_BACK_TOLERANCE = 16;
+
+/** Whether canvas pixels come back (nearly) as written. */
+function canvasReadsBack(context: CanvasRenderingContext2D): boolean {
+  const probe = context.createImageData(2, 1);
+  probe.data.set([12, 23, 34, 255, 45, 56, 67, 255]);
+  context.putImageData(probe, 0, 0);
+  const back = context.getImageData(0, 0, 2, 1).data;
+  return probe.data.every(
+    (value, i) => Math.abs(back[i] - value) <= READ_BACK_TOLERANCE,
+  );
+}
+
 /** Rejects when the browser cannot decode the file. */
-export function preparePhoto(file: File): Promise<PreparedPhoto> {
-  return new Promise((resolve, reject) => {
-    let width = 0;
-    let height = 0;
-    new Compressor(file, {
-      quality: QUALITY,
-      maxWidth: MAX_EDGE,
-      maxHeight: MAX_EDGE,
-      mimeType: "image/jpeg",
-      // Always use the re-encode: strict mode would hand back the original
-      // (EXIF and all) whenever it is the smaller file.
-      strict: false,
-      convertSize: 0,
-      retainExif: false,
-      checkOrientation: true,
-      drew: (_context, canvas) => {
-        width = canvas.width;
-        height = canvas.height;
-      },
-      success: (result) => {
-        if (result.type !== "image/jpeg" || width < 1 || height < 1) {
-          reject(new Error("not converted"));
-          return;
-        }
-        resolve({ file: result, width, height });
-      },
-      error: reject,
-    });
-  });
+export async function preparePhoto(file: File): Promise<PreparedPhoto> {
+  const url = URL.createObjectURL(file);
+  try {
+    const image = new Image();
+    image.src = url;
+    // Browsers apply EXIF orientation when decoding, so the size is upright.
+    await image.decode();
+    const scale = Math.min(
+      1,
+      MAX_EDGE / Math.max(image.naturalWidth, image.naturalHeight),
+    );
+    const width = Math.max(1, Math.round(image.naturalWidth * scale));
+    const height = Math.max(1, Math.round(image.naturalHeight * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+    if (!context || !canvasReadsBack(context)) throw new Error("no canvas");
+    // JPEG has no alpha: put transparent PNG areas on white, not black.
+    context.fillStyle = "#fff";
+    context.fillRect(0, 0, width, height);
+    context.drawImage(image, 0, 0, width, height);
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/jpeg", QUALITY),
+    );
+    if (blob?.type !== "image/jpeg") throw new Error("not converted");
+    return { file: blob, width, height };
+  } finally {
+    URL.revokeObjectURL(url);
+  }
 }
 
 /** POST the blob to a Convex upload URL; resolves with its storage id. */
