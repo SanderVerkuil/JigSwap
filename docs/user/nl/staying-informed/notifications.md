@@ -71,7 +71,7 @@ springen.
 - Zet elk meldingstype aan of uit per kanaal: **In-app**, **E-mail** en
   **Push**.
 - Standaard staat elk type aan voor **In-app**; e-mail en push staan uit totdat
-  je ze aanzet. Alleen voor **Kringberichten** staat push standaard aan.
+  je ze aanzet.
 - E-mail is niet voor elk type beschikbaar.
 - Een paar veiligheidsberichten, zoals wanneer een moderator inhoud van je
   verwijdert of je waarschuwt, zijn gemarkeerd met **Altijd aan: wettelijk

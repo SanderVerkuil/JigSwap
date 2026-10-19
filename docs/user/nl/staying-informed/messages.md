@@ -149,9 +149,11 @@ Wil je liever niet samen in de groep zitten, dan kun je de kring verlaten.
 
 - Nieuwe berichten in een gesprek worden samengevoegd tot één melding, zoals
   "**Anna** en 2 anderen schreven in **Puzzelclub**."
-- Pushmeldingen voor kringberichten staan standaard aan (zodra je push op dit
-  apparaat hebt aangezet), en komen hoogstens één keer per 2 minuten per chat.
-  Ze tonen de tekst van het bericht niet.
+- Pushmeldingen voor kringberichten staan standaard uit. Zet push aan voor
+  **Kringberichten** in je
+  [meldingsvoorkeuren](/docs/staying-informed/notifications) (en zet push op
+  dit apparaat aan) om ze te krijgen. Ze komen hoogstens één keer per 2 minuten
+  per chat en tonen de tekst van het bericht niet.
 - Kringchats sturen nooit een e-mail per bericht. Zet je in je
   [meldingsvoorkeuren](/docs/staying-informed/notifications) e-mail aan voor
   **Kringberichten**, dan krijg je ongeveer 30 minuten na een bericht dat je
