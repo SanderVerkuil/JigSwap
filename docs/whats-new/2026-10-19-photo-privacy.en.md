@@ -12,8 +12,9 @@ JigSwap now removes them from every photo you add, wherever you add it.
 ## What's changed
 
 - **Every photo, every place.** Photos of your puzzles and solves, box art and
-  photos in messages lose their location, camera and date details. Only the
-  orientation stays, so photos still show the right way up.
+  photos in messages lose their location, camera and date details. A photo
+  taken sideways is turned the right way up first, so it still shows the right
+  way up.
 - **WebP photos in messages.** WebP photos can now be sent in messages from
   any browser that opens them, also when the browser sends the original photo.
 - **Checked on our servers too.** Your browser removes the details before

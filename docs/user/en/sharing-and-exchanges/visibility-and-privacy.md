@@ -101,8 +101,8 @@ Cameras and phones store hidden information in a photo, such as the place it
 was taken, the camera and the date. JigSwap removes it from every photo you
 add: photos of your puzzles and solves, box art and photos in messages. Your
 browser does this before uploading where it can; JigSwap's servers do it again
-before anyone else can see the photo. Only the photo's orientation is kept, so
-it shows the right way up.
+before anyone else can see the photo. A photo taken sideways is turned the
+right way up first, so it still shows the right way up.
 
 ## Photos are checked before others see them
 

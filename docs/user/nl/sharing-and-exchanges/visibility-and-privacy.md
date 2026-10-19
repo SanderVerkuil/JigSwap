@@ -108,7 +108,8 @@ waar hij is gemaakt, de camera en de datum. JigSwap haalt die weg uit elke foto
 die je toevoegt: foto's van je puzzels en voltooiingen, doosafbeeldingen en
 foto's in berichten. Je browser doet dat waar het kan al vóór het uploaden; de
 servers van JigSwap doen het nog een keer voordat iemand anders de foto kan
-zien. Alleen de stand van de foto blijft bewaard, zodat hij goed om staat.
+zien. Een foto die gedraaid is gemaakt, zetten ze eerst rechtop, zodat hij nog
+steeds goed om staat.
 
 ## Foto's worden gecontroleerd voordat anderen ze zien
 
