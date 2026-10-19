@@ -23,6 +23,9 @@ verkopen.
   verder niemand meer zit, wordt verwijderd.
 - **Huishoudens gaan ook door:** vertrekt de beheerder zo, dan neemt het lid
   dat er het langst in zit het over.
+- **Lopende ruilen worden geannuleerd, en je hoort het.** Had je een ruil
+  lopen met dat lid, dan wordt die geannuleerd en krijg je daar een melding
+  van, met een regel in de chat van de ruil.
 - **Je geschiedenis blijft.** Een puzzel die hij aan jou verkocht, ruilde of
   gaf, houdt zijn volledige geschiedenis, en reviews en ruilen blijven ook. Het
   vertrokken lid staat er als **Verwijderd lid**, zonder naam, foto of link.
