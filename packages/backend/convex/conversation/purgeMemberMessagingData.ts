@@ -10,6 +10,7 @@ import { logEvent } from "../lib/logEvent";
 import { RATE_LIMITS, type RateLimitName } from "../lib/rateLimits";
 import { presence } from "../presence";
 import { removeForDeletedMember } from "./messageAttachments";
+import { cancelOpenExchanges, closeOpenLoans } from "./purgeMemberLibrary";
 
 // Account deletion for messaging data (spec R.9, 2.8), scheduled by users.deleteUser. Text
 // messages stay: their author renders as "deleted member" (social/privacy projectMemberIdentity).
@@ -57,6 +58,14 @@ import { removeForDeletedMember } from "./messageAttachments";
 //   rateLimits   their own counters (never the deployment-wide MapTiler budget keys)
 //   presence     their presencePreferences row and the presence component's rows for every room
 //                they were in (each keeps a lastDisconnected: a last-seen record, spec 5.6)
+// Then the rest of what they left (conversation/purgeMemberLibrary; spec 2026-10-19 deleted member
+// ghost). Open trades and loans settle before their copies go, copies before photos. Nothing here
+// ever touches a copy someone else owns now: their History rows (transfers, loans, completions)
+// stay and name the member as a departed "Deleted member".
+//   exchangesOpen    the proposed/accepted exchanges they started } cancelled; completed, rejected,
+//   exchangesOpenIn  the proposed/accepted exchanges sent to them } cancelled and disputed stay
+//   loansOpen    the open loans of copies they lent  } returned (closedAt now), the copy back with
+//   loansOpenIn  the open loans of copies they borrow } its owner; loan rows stay as history
 // One phase at a time, PURGE_BATCH_SIZE rows per run: a run that did not finish its phase
 // schedules the next run with the page cursor, so each run stays well inside Convex's per-mutation
 // limits whatever the member's history. Rows a phase keeps (a quarantined or evidence-held photo)
@@ -98,6 +107,10 @@ const PHASES = [
   "emailInvitesOut",
   "rateLimits",
   "presence",
+  "exchangesOpen",
+  "exchangesOpenIn",
+  "loansOpen",
+  "loansOpenIn",
 ] as const;
 type Phase = (typeof PHASES)[number];
 
@@ -134,6 +147,10 @@ const phaseValidator = v.union(
   v.literal("emailInvitesOut"),
   v.literal("rateLimits"),
   v.literal("presence"),
+  v.literal("exchangesOpen"),
+  v.literal("exchangesOpenIn"),
+  v.literal("loansOpen"),
+  v.literal("loansOpenIn"),
 );
 
 type Page = { isDone: boolean; continueCursor: string };
@@ -600,6 +617,14 @@ const runPhase = async (
       }
       return { isDone: true, continueCursor: "" };
     }
+    case "exchangesOpen":
+      return cancelOpenExchanges(ctx, memberId, "initiator", opts);
+    case "exchangesOpenIn":
+      return cancelOpenExchanges(ctx, memberId, "recipient", opts);
+    case "loansOpen":
+      return closeOpenLoans(ctx, memberId, "lender", opts);
+    case "loansOpenIn":
+      return closeOpenLoans(ctx, memberId, "borrower", opts);
   }
 };
 

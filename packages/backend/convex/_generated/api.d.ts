@@ -143,6 +143,7 @@ import type * as conversation_openCircleThread from "../conversation/openCircleT
 import type * as conversation_openDmThread from "../conversation/openDmThread.js";
 import type * as conversation_postMessage from "../conversation/postMessage.js";
 import type * as conversation_purgeCircleThread from "../conversation/purgeCircleThread.js";
+import type * as conversation_purgeMemberLibrary from "../conversation/purgeMemberLibrary.js";
 import type * as conversation_purgeMemberMessagingData from "../conversation/purgeMemberMessagingData.js";
 import type * as conversation_readModelHelpers from "../conversation/readModelHelpers.js";
 import type * as conversation_renderLocationMap from "../conversation/renderLocationMap.js";
@@ -655,6 +656,7 @@ declare const fullApi: ApiFromModules<{
   "conversation/openDmThread": typeof conversation_openDmThread;
   "conversation/postMessage": typeof conversation_postMessage;
   "conversation/purgeCircleThread": typeof conversation_purgeCircleThread;
+  "conversation/purgeMemberLibrary": typeof conversation_purgeMemberLibrary;
   "conversation/purgeMemberMessagingData": typeof conversation_purgeMemberMessagingData;
   "conversation/readModelHelpers": typeof conversation_readModelHelpers;
   "conversation/renderLocationMap": typeof conversation_renderLocationMap;
