@@ -17,6 +17,8 @@ find what you came for straight away.
 - **Every puzzle in the household first.** The page opens on **Puzzles**:
   every puzzle in your household, yours and your housemates', each showing
   whose it is. Narrow it down to one person, or to puzzles for trade or lend.
+  The **⋯** menu on each card offers what you may do with that puzzle, as in
+  **My Puzzles**.
   In **My Puzzles**, a housemate's puzzle now shows their picture and name,
   and you can show only yours or only theirs.
 - **Four tabs.** Next to **Puzzles**, **Members** shows who's in your

@@ -17,7 +17,8 @@ meteen vindt waarvoor je kwam.
 - **Eerst alle puzzels van het huishouden.** De pagina opent op **Puzzels**:
   elke puzzel in je huishouden, van jou en van je huisgenoten, met bij elke
   puzzel van wie hij is. Toon alleen die van één persoon, of alleen puzzels
-  om te ruilen of te lenen. In **Mijn Puzzels** staat bij de puzzel van een
+  om te ruilen of te lenen. Het menu **⋯** op elke kaart biedt wat je met die
+  puzzel mag doen, net als in **Mijn Puzzels**. In **Mijn Puzzels** staat bij de puzzel van een
   huisgenoot nu zijn of haar foto en naam, en kun je alleen die van jou of
   alleen die van hen tonen.
 - **Vier tabbladen.** Naast **Puzzels** laat **Leden** zien wie er in je
