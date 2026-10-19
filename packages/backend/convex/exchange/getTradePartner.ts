@@ -74,8 +74,8 @@ export const getTradePartner = query({
 });
 
 // Reviews the partner RECEIVED: the rounded average over all of them (capped) and the newest few.
-// Reviewer names go through the ordinary privacy chokepoint; an anonymous reviewer is nameless and
-// no reviewer id is ever returned.
+// Reviewer names go through the ordinary privacy chokepoint; an anonymous reviewer is nameless (a
+// departed one is flagged `reviewerDeparted`) and no reviewer id is ever returned.
 const receivedReviews = async (
   ctx: QueryCtx,
   viewerId: Id<"users">,
@@ -128,5 +128,8 @@ const reviewItem = async (
     ...(review.comment !== undefined ? { comment: review.comment } : {}),
     createdAt: review.createdAt,
     ...(reviewerName !== undefined ? { reviewerName } : {}),
+    ...(reviewer.anonymous && reviewer.departed
+      ? { reviewerDeparted: true as const }
+      : {}),
   };
 };

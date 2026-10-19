@@ -91,6 +91,8 @@ export interface TradePartnerReviewView {
   createdAt: number;
   /** The reviewer's display name; absent when the reviewer is anonymous to the viewer. */
   reviewerName?: string;
+  /** The reviewer's account was deleted or deactivated (render "Deleted member"); never named. */
+  reviewerDeparted?: true;
 }
 
 /**

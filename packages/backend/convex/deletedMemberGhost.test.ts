@@ -283,5 +283,19 @@ describe.each(Object.keys(departures) as (keyof typeof departures)[])(
       expect(JSON.stringify(puzzle)).not.toContain(dora);
       expectNoIdentity(puzzle);
     });
+
+    test("trade reviews on a partner card are marked departed", async () => {
+      const { asViewer, viewerExchange } = await setup();
+      const partner = await asViewer.query(
+        api.exchange.getTradePartner.getTradePartner,
+        { exchangeId: viewerExchange },
+      );
+      if (partner?.state !== "revealed") throw new Error("partner hidden");
+      expect(partner.reviews.items).toHaveLength(1);
+      const [review] = partner.reviews.items;
+      expect(review.reviewerName).toBeUndefined();
+      expect(review.reviewerDeparted).toBe(true);
+      expectNoIdentity(partner.reviews);
+    });
   },
 );
