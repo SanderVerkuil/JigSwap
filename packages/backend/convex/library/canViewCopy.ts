@@ -8,7 +8,7 @@ import { isCopyPrivate } from "./copyVisibility";
 
 // A copy is "open" iff at least one exchange-availability flag is set (identical to
 // browseOwnedPuzzles/getPuzzleDefinitionView).
-const isOpen = (copy: Doc<"ownedPuzzles">): boolean =>
+export const isOpen = (copy: Doc<"ownedPuzzles">): boolean =>
   copy.availability.forTrade ||
   copy.availability.forSale ||
   copy.availability.forLend;
