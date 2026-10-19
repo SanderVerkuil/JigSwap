@@ -51,7 +51,7 @@ const tours: readonly TourDefinition[] = [
     steps: [
       { id: "start", route: "/household", target: "household-main" },
       { id: "invite", route: "/household", target: "household-invite" },
-      // Per-copy access, set in bulk from the household page's own "My puzzles" section.
+      // Per-copy access, set in bulk from the household page's Sharing tab.
       { id: "copy-access", route: "/household", target: "household-my-copies" },
     ],
   },

@@ -493,8 +493,8 @@
     "resultCount": "{count} of {total} puzzles",
     "searchHint": "Press ⌘K to search puzzles, people and more",
     "countMeta": "{count, plural, one {# puzzle} other {# puzzles}}",
-    "householdBadge": "Household · {name}",
-    "householdBadgeView": "Household · {name} · view only",
+    "householdPointer": "All puzzles in your household",
+    "householdPointerNamed": "All puzzles in {name}",
     "gridView": "Grid view",
     "listView": "List view",
     "deleteConfirmTitle": "Delete \"{title}\"?",
@@ -596,7 +596,13 @@
       "copyDetails": "Your copy"
     },
     "removeFromCollection": "Remove from this collection",
-    "private": "Private"
+    "private": "Private",
+    "ownerFilter": {
+      "label": "Whose puzzles",
+      "all": "All",
+      "mine": "Mine",
+      "household": "Household members'"
+    }
   },
   "trades": {
     "title": "Exchanges",
@@ -1941,9 +1947,9 @@
       "nameNone": "Not named yet"
     },
     "tabs": {
+      "puzzles": "Puzzles",
       "members": "Members",
-      "puzzles": "My puzzles",
-      "puzzlesShort": "Puzzles",
+      "sharing": "Sharing",
       "settings": "Settings"
     },
     "header": {
@@ -1951,7 +1957,18 @@
       "stackName": "your household"
     },
     "puzzles": {
-      "defaultLabel": "Household default:"
+      "defaultLabel": "Household default:",
+      "ownedBy": "Owned by",
+      "you": "You",
+      "viewOnly": "View only",
+      "ownerAll": "Everyone",
+      "ownerFilter": "Filter by owner",
+      "solo": "Only your puzzles are here so far. Invite someone to share puzzles with.",
+      "soloInvite": "Invite",
+      "emptyTitle": "No puzzles in the household yet",
+      "emptySub": "Puzzles you and your housemates add show up here.",
+      "noMatches": "No puzzles match these filters",
+      "clearFilters": "Clear filters"
     },
     "danger": {
       "title": "Leave this household"
@@ -4614,7 +4631,7 @@
       "steps": {
         "start": {
           "title": "Your household",
-          "body": "Create a household for the people you live with, or see who is in yours. Everyone in it sees each other's puzzles in My Puzzles."
+          "body": "Create a household for the people you live with, or see who is in yours. Every puzzle in the household is on its Puzzles tab, and in My Puzzles."
         },
         "invite": {
           "title": "Invite your housemates",
@@ -4622,7 +4639,7 @@
         },
         "copy-access": {
           "title": "You decide per puzzle",
-          "body": "Your puzzles stay yours. In My puzzles you choose what the household may do with each one: Can manage lets housemates edit, lend and swap it; View only lets them see it. Select several to change them at once."
+          "body": "Your puzzles stay yours. On the Sharing tab you choose what the household may do with each one: Can manage lets housemates edit, lend and swap it; View only lets them see it. Select several to change them at once."
         }
       }
     },

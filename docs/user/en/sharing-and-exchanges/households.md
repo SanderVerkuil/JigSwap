@@ -10,8 +10,9 @@ A household lets the people you live with share one puzzle library. Everyone
 in the household sees each other's puzzles in **My Puzzles**. Puzzles stay
 owned by whoever added them, and solves stay personal.
 
-**Where:** **My Library** → **Household** (`/household`). The page has three
-tabs: **Members**, **My puzzles** and **Settings**.
+**Where:** **My Library** → **Household** (`/household`). The page has four
+tabs: **Puzzles**, **Members**, **Sharing** and **Settings**. It opens on
+**Puzzles**.
 
 ## Create a household
 
@@ -111,10 +112,24 @@ withdrawn), you stay in your household and nothing changes.
 Not interested? Click **Decline**. Inviting someone never tells you whether
 they're already in a household.
 
+## See every puzzle in the household
+
+The **Puzzles** tab shows every puzzle in the household: yours and every
+housemate's, including copies set to private. Each card says whose it is: your
+own say **You**, a housemate's show their picture and name.
+
+- Click a person above the puzzles to see only theirs, or **Everyone** for all.
+- Use **Available**, **For Trade** or **For Lend** to see only puzzles on offer.
+- Click a puzzle to open it.
+
 ## What household members can see and do
 
-- Everyone sees everyone's puzzles in **My Puzzles**, labelled
-  **Household · _name_**, including copies set to private.
+- Everyone sees everyone's puzzles on the household's **Puzzles** tab and in
+  **My Puzzles**, including copies set to private. In **My Puzzles** a
+  housemate's puzzle shows their picture and name; puzzles without a name are
+  yours. Use the menu next to the view buttons to show **All**, only **Mine**,
+  or only **Household members'**. The link **All puzzles in your household**
+  opens the household's **Puzzles** tab.
 - Any member can log their own solves on a household puzzle.
 - What else a member may do with your puzzle depends on its
   **Household access**.
@@ -124,8 +139,8 @@ they're already in a household.
 Each puzzle has one of two access levels:
 
 - **Can manage** — housemates can edit, lend and swap it.
-- **View only** — housemates can see it. In **My Puzzles** it is labelled
-  **Household · _name_ · view only**.
+- **View only** — housemates can see it. Its card says **View only** next to
+  your name.
 
 Some actions stay with the owner whatever the access level: deleting the
 puzzle, changing its household access, sharing it into a friend circle and
@@ -142,7 +157,7 @@ Only the owner can change a puzzle's household access.
 
 ## Change several puzzles at once
 
-1. On **Household**, open the **My puzzles** tab.
+1. On **Household**, open the **Sharing** tab.
 2. Optionally filter the list by household access.
 3. Tick the puzzles you want to change, or use **Select all**.
 4. Click **Set to Can manage**, **Set to View only** or
