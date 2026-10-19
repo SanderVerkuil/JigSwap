@@ -17,6 +17,7 @@ import { copyAccessOf } from "../household/copyAccess";
 import { personView } from "../household/getMyHousehold";
 import { householdDefaultOf, membershipOf } from "../household/memberships";
 import { requireMember } from "../identity/requireMember";
+import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 import { projectMemberIdentity } from "../social/privacy";
 import { canViewCopy } from "./canViewCopy";
@@ -377,7 +378,7 @@ export const getCopyInstanceView = query({
     // NOTE: the catalogue image is a _storage id, so it MUST be resolved via getUrl — emitting the
     // raw id renders a broken <img src>. (snapshot.thumbnail caches the same storage id.)
     const globalImage = puzzle?.image
-      ? ((await ctx.storage.getUrl(puzzle.image)) ?? undefined)
+      ? ((await boxArtUrl(ctx, puzzle.image)) ?? undefined)
       : undefined;
     let coverImage: string | undefined = globalImage;
     let coverImageId: string | null = null;

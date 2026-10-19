@@ -1,6 +1,7 @@
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 
 // Read side for the add-copy picker: the current member's OWN not-yet-approved submissions.
 // Public catalog lists only surface approved definitions, but a member may acquire a copy of a
@@ -27,9 +28,7 @@ export const listMyContributedPuzzles = query({
     return Promise.all(
       notYetApproved.map(async (puzzle) => ({
         ...puzzle,
-        image: puzzle.image
-          ? await ctx.storage.getUrl(puzzle.image)
-          : undefined,
+        image: puzzle.image ? await boxArtUrl(ctx, puzzle.image) : undefined,
       })),
     );
   },

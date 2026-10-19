@@ -8,6 +8,7 @@ import { computeMemberStats } from "../identity/getUserStats";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { optionalActingMember } from "../identity/optionalActingMember";
 import { resolveMemberByHandle } from "../identity/resolveMemberByHandle";
+import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { seesPrivateCopiesOf } from "../library/copyVisibility";
 import { blockStateBetween } from "./blocks";
 import {
@@ -208,7 +209,7 @@ export const getPublicProfile = query({
               pieceCount ??= puzzle.pieceCount;
               if (puzzle.image) {
                 thumbnailUrl =
-                  (await ctx.storage.getUrl(puzzle.image)) ?? undefined;
+                  (await boxArtUrl(ctx, puzzle.image)) ?? undefined;
               }
             }
             return { title, pieceCount, startDate: c.startDate, thumbnailUrl };

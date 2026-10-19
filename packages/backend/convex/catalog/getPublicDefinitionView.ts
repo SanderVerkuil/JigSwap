@@ -1,6 +1,7 @@
 import type { PublicDefinitionDetailView } from "@jigswap/contracts";
 import { v } from "convex/values";
 import { query } from "../_generated/server";
+import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import {
   categoryNameOf,
   communityOwnersOf,
@@ -22,7 +23,7 @@ export const getPublicDefinitionView = query({
     if (!puzzle || puzzle.status !== "approved") return null;
 
     const image = puzzle.image
-      ? ((await ctx.storage.getUrl(puzzle.image)) ?? undefined)
+      ? ((await boxArtUrl(ctx, puzzle.image)) ?? undefined)
       : undefined;
     const categoryRow = puzzle.category
       ? await ctx.db.get(puzzle.category)

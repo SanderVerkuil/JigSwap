@@ -1,6 +1,7 @@
 import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 import {
   buildCopyViewContext,
@@ -93,7 +94,7 @@ export const listMyCompletions = query({
       [...puzzles.entries()].map(async ([id, puzzle]) => {
         puzzleThumbs.set(
           id,
-          puzzle?.image ? await ctx.storage.getUrl(puzzle.image) : null,
+          puzzle?.image ? await boxArtUrl(ctx, puzzle.image) : null,
         );
       }),
     );

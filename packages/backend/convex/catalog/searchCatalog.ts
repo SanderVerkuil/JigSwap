@@ -3,6 +3,7 @@ import { paginationOptsValidator, type PaginationResult } from "convex/server";
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { toPuzzleSummaryView } from "./mappers";
 
 // Catalog read for the member add-copy picker: the approved catalogue, paginated, narrowed
@@ -34,7 +35,7 @@ export const searchCatalog = query({
       result.page.map(async (puzzle) =>
         toPuzzleSummaryView(
           puzzle,
-          puzzle.image ? await ctx.storage.getUrl(puzzle.image) : null,
+          puzzle.image ? await boxArtUrl(ctx, puzzle.image) : null,
         ),
       ),
     );

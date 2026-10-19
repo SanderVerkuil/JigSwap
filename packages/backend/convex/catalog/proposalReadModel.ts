@@ -1,5 +1,6 @@
 import type { Doc } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
+import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 
 // Read-model helpers shared by the proposal queries. Conflict detection is DERIVED here at
 // read time (spec: "Show conflict, admin decides") — never stored, never enforced.
@@ -103,16 +104,14 @@ export const enrichProposal = async (
     puzzleId: puzzle?._id,
     definitionTitle: puzzle?.title,
     definitionImage: puzzle?.image
-      ? await ctx.storage.getUrl(puzzle.image)
+      ? await boxArtUrl(ctx, puzzle.image)
       : undefined,
     proposerName: proposer?.name,
     current,
     conflictFields: conflicts,
     hasConflict: conflicts.length > 0,
     proposedImageUrl: proposal.changes.image
-      ? await ctx.storage.getUrl(
-          proposal.changes.image as Parameters<typeof ctx.storage.getUrl>[0],
-        )
+      ? await boxArtUrl(ctx, proposal.changes.image)
       : undefined,
   };
 };

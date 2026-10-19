@@ -1,6 +1,7 @@
 import type { PuzzleSummaryView } from "@jigswap/contracts";
 import { v } from "convex/values";
 import { query } from "../_generated/server";
+import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { toPuzzleSummaryView } from "./mappers";
 
 // Catalog read: the most-recent approved puzzles for the home rail. Approved-only + newest-first +
@@ -19,7 +20,7 @@ export const getRecentPuzzles = query({
       puzzles.map(async (puzzle) =>
         toPuzzleSummaryView(
           puzzle,
-          puzzle.image ? await ctx.storage.getUrl(puzzle.image) : null,
+          puzzle.image ? await boxArtUrl(ctx, puzzle.image) : null,
         ),
       ),
     );

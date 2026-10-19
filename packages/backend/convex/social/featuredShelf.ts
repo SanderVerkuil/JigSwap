@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 import { canViewCopy } from "../library/canViewCopy";
 import { toOwnedCopyView } from "../library/mappers";
@@ -63,7 +64,7 @@ export const featuredShelf = query({
         }
       }
       if (!coverUrl && puzzle?.image) {
-        coverUrl = await ctx.storage.getUrl(puzzle.image);
+        coverUrl = await boxArtUrl(ctx, puzzle.image);
       }
 
       results.push(

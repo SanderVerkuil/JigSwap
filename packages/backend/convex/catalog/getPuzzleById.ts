@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { optionalActingMember } from "../identity/optionalActingMember";
+import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { toPuzzleDefinitionView } from "./mappers";
 
 // Catalog read: a single puzzle definition by Convex id, with its box-art URL resolved. Returns a
@@ -26,7 +27,7 @@ export const getPuzzleById = query({
       if (!isSubmitter && !(await isAdmin(ctx))) return null;
     }
 
-    const image = puzzle.image ? await ctx.storage.getUrl(puzzle.image) : null;
+    const image = puzzle.image ? await boxArtUrl(ctx, puzzle.image) : null;
     return toPuzzleDefinitionView(puzzle, image);
   },
 });

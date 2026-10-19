@@ -5,6 +5,7 @@ import { query } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { adminMemberLabelOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
+import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 
 // Admin read model: EVERY catalog definition regardless of status, newest first, paginated.
 // The public lists filter to approved; this console must also show pending/rejected/disabled.
@@ -46,7 +47,7 @@ export const listPuzzleDefinitions = query({
             status: puzzle.status,
             createdAt: puzzle.createdAt,
             submitterName: submitter ? adminMemberLabelOf(submitter) : null,
-            image: puzzle.image ? await ctx.storage.getUrl(puzzle.image) : null,
+            image: puzzle.image ? await boxArtUrl(ctx, puzzle.image) : null,
             ownerCount: distinctOwners.size,
           };
         },

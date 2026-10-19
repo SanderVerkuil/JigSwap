@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { internalQuery, query, type QueryCtx } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { toPuzzleSummaryView } from "./mappers";
 
 const findApprovedByBarcode = async (
@@ -45,7 +46,7 @@ export const findPuzzleByBarcode = internalQuery({
       brand: match.brand,
       pieceCount: match.pieceCount,
       imageUrl: match.image
-        ? ((await ctx.storage.getUrl(match.image)) ?? undefined)
+        ? ((await boxArtUrl(ctx, match.image)) ?? undefined)
         : undefined,
     };
   },
@@ -69,7 +70,7 @@ export const lookupPuzzleByBarcode = query({
     if (!match) return null;
     return toPuzzleSummaryView(
       match,
-      match.image ? await ctx.storage.getUrl(match.image) : null,
+      match.image ? await boxArtUrl(ctx, match.image) : null,
     );
   },
 });

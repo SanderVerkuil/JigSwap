@@ -6,6 +6,7 @@ import {
 import type { Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 
 // Bounded candidate scan: Insights is read-only and must never run an unbounded table scan, so we
 // take at most this many of the most-recent approved catalog definitions as the candidate pool. The
@@ -100,7 +101,7 @@ export const getRecommendations = query({
           pieceCount: puzzle?.pieceCount,
           thumbnail:
             puzzle?.image != null
-              ? await ctx.storage.getUrl(puzzle.image)
+              ? await boxArtUrl(ctx, puzzle.image)
               : undefined,
         };
       }),
