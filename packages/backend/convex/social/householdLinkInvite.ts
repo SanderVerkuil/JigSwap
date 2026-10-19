@@ -94,14 +94,20 @@ const REFUSALS: Record<
   },
 };
 
-// The mutations' gate: the link, when the caller may act on it; otherwise a coded refusal.
+// The mutations' gate: the link, when the caller may act on it; otherwise a coded refusal. A
+// member already in a household may act on it only when they agreed to leave that household
+// (allowAlreadyInHousehold: Accept with leaveCurrentHousehold, or Decline).
 export const requireAcceptableHouseholdLink = async (
   ctx: QueryCtx,
   token: string,
   memberId: Id<"users">,
   now: number,
+  allowAlreadyInHousehold = false,
 ): Promise<Doc<"inviteLinks">> => {
   const resolved = await resolveHouseholdLink(ctx, token, memberId, now);
+  if (resolved.state === "already-in-household" && allowAlreadyInHousehold) {
+    return resolved.link;
+  }
   if (resolved.state !== "can-accept") {
     throw new ConvexError(REFUSALS[resolved.state]);
   }

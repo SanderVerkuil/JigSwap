@@ -231,22 +231,19 @@ describe("at most one household", () => {
     );
   });
 
-  test("cannot invite someone who is already in a household", async () => {
+  test("cannot invite someone who is already in this household", async () => {
     const t = convexTest(schema, modules);
     const { bob } = await seed(t);
+    const inviteId = await annInvitesBob(t, bob);
     await as(t, "bob").mutation(
-      api.household.createHousehold.createHousehold,
-      {},
-    );
-    await as(t, "ann").mutation(
-      api.household.createHousehold.createHousehold,
-      {},
+      api.household.acceptHouseholdInvite.acceptHouseholdInvite,
+      { inviteId },
     );
     await expectConvexCode(
       as(t, "ann").mutation(api.household.inviteToHousehold.inviteToHousehold, {
         inviteeId: bob,
       }),
-      "InviteeAlreadyInHousehold",
+      "AlreadyMember",
     );
   });
 

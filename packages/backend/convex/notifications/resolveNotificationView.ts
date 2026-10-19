@@ -13,6 +13,7 @@ import {
   projectThreadMember,
 } from "../conversation/threadMemberProjection";
 import { projectTradeParty } from "../exchange/tradeParty";
+import { membershipOf } from "../household/memberships";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { canViewCopy } from "../library/canViewCopy";
 import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
@@ -594,11 +595,18 @@ const resolveSubject = async (
     }
     case "householdInvite": {
       const invite = await loadHouseholdInvite(ctx, cache, subject.inviteId);
+      const forViewer = invite && invite.inviteeId === viewerId ? invite : null;
+      const membership =
+        forViewer?.status === "pending"
+          ? await membershipOf(ctx, viewerId)
+          : null;
       return {
         available: true,
         context: {},
         decision: decideHouseholdInvite(
-          invite && invite.inviteeId === viewerId ? invite.status : null,
+          forViewer?.status ?? null,
+          membership !== null &&
+            membership.householdId !== forViewer?.householdId,
         ),
       };
     }

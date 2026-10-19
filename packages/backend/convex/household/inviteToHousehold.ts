@@ -8,8 +8,9 @@ import { householdDeps } from "./adapters/deps";
 import { toConvexError } from "./errors";
 
 // Composition root: the household admin invites a member (by users _id, picked from member search).
-// The inviter is ALWAYS the authenticated member; the use case enforces admin-only, invitee not in a
-// household, and one pending invite per invitee. Returns the HouseholdInviteId.
+// The inviter is ALWAYS the authenticated member; the use case enforces admin-only, invitee not
+// already in THIS household, and one pending invite per invitee. An invitee in another household
+// still gets the invite (they can leave theirs on accept); the inviter is not told either way. Returns the HouseholdInviteId.
 export const inviteToHousehold = mutation({
   args: { inviteeId: v.id("users") },
   handler: async (ctx, args): Promise<string> => {

@@ -435,7 +435,7 @@ describe("household invite to an existing member", () => {
     ]);
   });
 
-  test("an in-app invite of the same member refuses exactly as a fresh invite would", async () => {
+  test("an in-app invite of the same member behaves exactly as a fresh invite would", async () => {
     const t = convexTest(schema, modules);
     const s = await seed(t);
     await seedHousehold(t, s.alice, s.bob);
@@ -463,9 +463,16 @@ describe("household invite to an existing member", () => {
           (e: { data?: { code?: string } }) => e.data?.code,
         );
 
-    // Bob, already in a household, is the fresh-invite baseline.
-    expect(await codeOf(s.carol)).toBe(await codeOf(s.bob));
-    expect(await codeOf(s.carol)).toBe("InviteeAlreadyInHousehold");
+    // A member of another household gets an in-app invite like anyone else (they can leave theirs
+    // on accept), so the email invitation's hidden invite is replaced by one plain invite.
+    expect(await codeOf(s.carol)).toBe("ok");
+    const pending = (await householdInvites(t)).filter(
+      (row) => row.inviteeId === s.carol && row.status === "pending",
+    );
+    expect(pending).toHaveLength(1);
+    expect(pending[0].viaEmail).toBeUndefined();
+    // Bob, already in THIS household, is refused.
+    expect(await codeOf(s.bob)).toBe("AlreadyMember");
   });
 
   test("an accepted invite stays when the invitation is revoked", async () => {

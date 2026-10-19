@@ -12,12 +12,13 @@ import { householdDeps } from "./adapters/deps";
 import { toConvexError } from "./errors";
 
 // Composition root: the invitee accepts and joins the household. The use case is the authoritative
-// at-most-one-household check (the invitee may have joined another household since the invite).
-// The body is shared with notifications/act (Accept from a notification).
+// at-most-one-household check: an invitee in another household joins only with
+// leaveCurrentHousehold, leaving it in the same transaction (any refusal throws, so nothing is
+// half-done). The body is shared with notifications/act (Accept from a notification).
 export const acceptHouseholdInviteUseCase = async (
   ctx: MutationCtx,
   actorId: MemberId,
-  args: { inviteId: string },
+  args: { inviteId: string; leaveCurrentHousehold?: boolean },
 ): Promise<string> => {
   // An invite between a pair blocked either way reads as missing (spec 2.6: generic refusal).
   const invite = await ctx.db
@@ -30,13 +31,17 @@ export const acceptHouseholdInviteUseCase = async (
   const result = await makeAcceptHouseholdInvite(householdDeps(ctx))({
     actorId,
     inviteId: toHouseholdInviteId(args.inviteId),
+    leaveCurrentHousehold: args.leaveCurrentHousehold,
   });
   if (result.isErr) throw toConvexError(result.error);
   return result.value as string;
 };
 
 export const acceptHouseholdInvite = mutation({
-  args: { inviteId: v.string() },
+  args: {
+    inviteId: v.string(),
+    leaveCurrentHousehold: v.optional(v.boolean()),
+  },
   handler: async (ctx, args): Promise<string> =>
     acceptHouseholdInviteUseCase(ctx, await requireMember(ctx), args),
 });

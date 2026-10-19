@@ -9,13 +9,14 @@ import { requireAcceptableHouseholdLink } from "./householdLinkInvite";
 
 // An EXISTING member accepts a household invite link from the signed-in landing. Gated by
 // requireAcceptableHouseholdLink (live, unexpired, unused household link; owner still its admin;
-// caller is not the owner and in no household), then joined through the domain's
+// caller is not the owner and in no household, unless they asked to leave theirs with
+// leaveCurrentHousehold), then joined through the domain's
 // joinHouseholdByLink: the same invite + accept rules as an in-app invite, and the existing
 // household_invite_accepted notification to the admin. Consumes the token. No follow, no
 // attribution: this is not a signup. Returns the HouseholdId.
 export const acceptHouseholdLinkInvite = mutation({
-  args: { token: v.string() },
-  handler: async (ctx, { token }): Promise<string> => {
+  args: { token: v.string(), leaveCurrentHousehold: v.optional(v.boolean()) },
+  handler: async (ctx, { token, leaveCurrentHousehold }): Promise<string> => {
     const actorId = await requireMember(ctx);
     const memberId = actorId as unknown as Id<"users">;
     const now = Date.now();
@@ -24,11 +25,13 @@ export const acceptHouseholdLinkInvite = mutation({
       token,
       memberId,
       now,
+      leaveCurrentHousehold === true,
     );
 
     const joined = await makeJoinHouseholdByLink(householdDeps(ctx))({
       actorId,
       inviterId: toMemberId(link.ownerId),
+      leaveCurrentHousehold,
     });
     if (joined.isErr) throw toConvexError(joined.error);
 
