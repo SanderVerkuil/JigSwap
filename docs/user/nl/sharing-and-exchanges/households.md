@@ -22,6 +22,19 @@ drie tabbladen: **Leden**, **Mijn puzzels** en **Instellingen**.
 Je wordt de **Beheerder** van het huishouden. Je kunt in één huishouden
 tegelijk zitten.
 
+## Je huishouden een naam geven
+
+De beheerder kan het huishouden een naam geven, bijvoorbeeld "De familie
+Jansen". Die staat bovenaan **Huishouden**. Alleen leden van het huishouden zien
+de naam; mensen die je uitnodigt niet.
+
+1. Open op **Huishouden** het tabblad **Instellingen**.
+2. Typ onder **Naam van het huishouden** een naam van maximaal 100 tekens.
+3. Klik op **Naam opslaan**.
+
+Wil je de naam verwijderen, maak het veld dan leeg en klik op **Naam opslaan**.
+Andere leden zien de naam bij **Instellingen**, maar kunnen hem niet wijzigen.
+
 ## Iemand uitnodigen
 
 Alleen de beheerder van het huishouden kan uitnodigen. De persoon doet pas mee
