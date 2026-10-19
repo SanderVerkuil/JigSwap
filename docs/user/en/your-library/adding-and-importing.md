@@ -40,7 +40,7 @@ You'll land on the creation/copy form (`/my-puzzles/add/new`).
 
 - **Title**, **brand**, **piece count**, **difficulty**, **condition**.
 - **Availability chips**: mark it _for trade_, _for lend_, and/or _for sale_.
-- A **cover** — pick a color swatch, or upload/scrape a photo.
+- A **cover** — pick a color swatch, or upload/scrape a photo. A cover photo is checked automatically (like every photo you upload) before anyone sees it; a photo the check refuses can't be used, and until the check has finished the puzzle shows its placeholder.
 - **Tags** and **notes**.
 - **Advanced fields** (collapsible): EAN, UPC, model number, artist, series, shape, dimensions.
 
