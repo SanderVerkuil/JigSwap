@@ -71,6 +71,7 @@ const optimisticAppend =
 export function MessageComposer({
   threadId,
   recipientName,
+  label,
   theirsLabel,
   placeholder,
   attachHint,
@@ -79,9 +80,11 @@ export function MessageComposer({
   threadId: string;
   // Names the textarea ("Message Esther"); falls back to the generic label.
   recipientName?: string;
+  // The textarea's accessible name in place of "Message {recipientName}" (a circle thread).
+  label?: string;
   // The attach picker's tab for the other member's copies; null hides it.
   theirsLabel: string | null;
-  // The textarea's placeholder ("Write to Puzzle Club…"); the generic one by default.
+  // The textarea's placeholder ("Write to your circle Puzzle Club…"); the generic one by default.
   placeholder?: string;
   // A note above the attach picker's list (a circle thread: who can see the puzzles).
   attachHint?: string;
@@ -285,9 +288,10 @@ export function MessageComposer({
           aria-keyshortcuts={MARKUP_KEYSHORTCUTS}
           placeholder={placeholder ?? t("typeMessage")}
           aria-label={
-            recipientName
+            label ??
+            (recipientName
               ? t("messageName", { name: recipientName })
-              : t("typeMessage")
+              : t("typeMessage"))
           }
           // Announces the staged attachments ("Attached: <title>", "2 photos
           // attached") and why Send is off when a puzzle and photos clash.

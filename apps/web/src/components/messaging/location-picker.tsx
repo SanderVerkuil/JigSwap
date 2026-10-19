@@ -85,7 +85,7 @@ type Pin = {
 
 export type LocationPickerProps = {
   threadId: string;
-  /** The recipient's display name (consent copy, exact warning). */
+  /** The recipient's display name (consent copy, exact warning; unused when `group` is set). */
   recipientName: string;
   /** A circle thread: the consent names the circle and how many others see it. */
   group?: { circle: string; others: number };
@@ -192,6 +192,7 @@ export function LocationPicker({
 export function LocationPickerBody({
   threadId,
   recipientName,
+  group,
   exactCurrentLocation,
   onSent,
   onCannotReply,
@@ -528,7 +529,9 @@ export function LocationPickerBody({
             </div>
             <p className="text-muted-foreground text-xs">
               {exact
-                ? t("exactWarning", { name: recipientName })
+                ? group
+                  ? t("exactWarningGroup", { circle: group.circle })
+                  : t("exactWarning", { name: recipientName })
                 : t("approximateNote")}
             </p>
           </div>

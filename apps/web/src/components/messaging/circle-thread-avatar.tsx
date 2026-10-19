@@ -1,9 +1,11 @@
 "use client";
 
-// A circle thread's avatar (spec §6.1): up to two overlapping member avatars
-// from the inbox row's memberPreview, inside the same square a DM avatar takes,
-// or a Users glyph when there is nobody to show. Decorative: the circle's name
-// always sits beside it. Static on purpose: it lives inside the row's link, so
+// A circle thread's avatar (circle-chat identity spec §2): the most recent
+// other member's avatar top-left with the circle mark (a violet Users disc)
+// bottom-right, inside the same square a DM avatar takes, or a full-size
+// circle mark when there is nobody to show. It never shows a lone person, so
+// a circle can't pass for a DM. Decorative: the circle's name always sits
+// beside it. Static on purpose: it lives inside the row's link, so
 // the interactive CircleAvatarStack (buttons with tooltips) doesn't fit here.
 import { MemberInitial } from "@/components/members/member-initial";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -43,36 +45,28 @@ export function CircleThreadAvatar({
   members: readonly PreviewMember[];
   className?: string;
 }) {
-  const [first, second] = members;
+  const [first] = members;
   if (!first) {
     return (
       <span
         aria-hidden
         className={cn(
-          "bg-muted text-muted-foreground flex shrink-0 items-center justify-center rounded-full",
+          "bg-accent text-primary-text flex shrink-0 items-center justify-center rounded-full",
           className,
         )}
       >
-        <Users className="size-[18px]" />
+        <Users className="size-[45%]" />
       </span>
     );
   }
+  // The circle mark sits in front so it is never clipped: it is what tells a
+  // group from a person.
   return (
     <span aria-hidden className={cn("relative shrink-0", className)}>
-      {second ? (
-        <>
-          <PreviewAvatar
-            member={first}
-            className="top-0 left-0 z-[1] size-[70%]"
-          />
-          <PreviewAvatar
-            member={second}
-            className="right-0 bottom-0 size-[70%]"
-          />
-        </>
-      ) : (
-        <PreviewAvatar member={first} className="inset-0 size-full ring-0" />
-      )}
+      <PreviewAvatar member={first} className="top-0 left-0 size-[70%]" />
+      <span className="bg-accent text-primary-text ring-card absolute right-0 bottom-0 z-[1] flex size-[70%] items-center justify-center rounded-full ring-2">
+        <Users className="size-[55%]" />
+      </span>
     </span>
   );
 }

@@ -881,6 +881,7 @@
       "panRight": "Naar het oosten",
       "exactToggle": "Deel mijn exacte locatie",
       "exactWarning": "{name} ziet precies waar je nu bent.",
+      "exactWarningGroup": "Iedereen in {circle} ziet precies waar je nu bent.",
       "approximateNote": "Je huidige locatie wordt gedeeld als een gebied bij benadering (ongeveer 1 km).",
       "labelLabel": "Naam van de plek (optioneel)",
       "captionLabel": "Bericht (optioneel)",
@@ -921,7 +922,8 @@
       "blockedLocation": "Locatie van een lid dat je hebt geblokkeerd",
       "show": "Tonen",
       "announcement": "{author} in {circle}: {body}",
-      "composerPlaceholder": "Schrijf aan {circle}…",
+      "composerPlaceholder": "Schrijf aan je kring {circle}…",
+      "composerLabel": "Bericht sturen aan je kring {circle}",
       "mute": "Gesprek dempen",
       "unmute": "Dempen opheffen",
       "muted": "Gedempt",
@@ -2208,6 +2210,7 @@
     "yesterday": "Gisteren",
     "earlier": "Eerder",
     "newMessageToast": "Nieuw bericht van {name}",
+    "newCircleMessageToast": "Nieuw bericht in je kring {circle}",
     "newMessageToastOpen": "Openen",
     "preferences": "Meldingsvoorkeuren",
     "preferencesTitle": "Meldingsvoorkeuren",
@@ -2520,7 +2523,7 @@
         }
       },
       "circle_message_received": {
-        "sentence": "{moreActors, plural, =0 {<b>{actor}</b> schreef} one {<b>{actor}</b> en # ander schreven} other {<b>{actor}</b> en # anderen schreven}} in {hasCircle, select, yes {<b>{circle}</b>} other {je kring}}.",
+        "sentence": "{moreActors, plural, =0 {<b>{actor}</b> schreef} one {<b>{actor}</b> en # ander schreven} other {<b>{actor}</b> en # anderen schreven}} in {hasCircle, select, yes {je kring <b>{circle}</b>} other {je kring}}.",
         "actions": {
           "reply": "Beantwoorden",
           "replyAria": "{actor} beantwoorden"
