@@ -116,6 +116,7 @@ import type * as conversation_adapters_threadMapper from "../conversation/adapte
 import type * as conversation_appearingOffline from "../conversation/appearingOffline.js";
 import type * as conversation_attachmentModerationStore from "../conversation/attachmentModerationStore.js";
 import type * as conversation_backfill from "../conversation/backfill.js";
+import type * as conversation_backfillDeletedMemberData from "../conversation/backfillDeletedMemberData.js";
 import type * as conversation_backfillParticipantState from "../conversation/backfillParticipantState.js";
 import type * as conversation_canMessage from "../conversation/canMessage.js";
 import type * as conversation_circleSubscriber from "../conversation/circleSubscriber.js";
@@ -629,6 +630,7 @@ declare const fullApi: ApiFromModules<{
   "conversation/appearingOffline": typeof conversation_appearingOffline;
   "conversation/attachmentModerationStore": typeof conversation_attachmentModerationStore;
   "conversation/backfill": typeof conversation_backfill;
+  "conversation/backfillDeletedMemberData": typeof conversation_backfillDeletedMemberData;
   "conversation/backfillParticipantState": typeof conversation_backfillParticipantState;
   "conversation/canMessage": typeof conversation_canMessage;
   "conversation/circleSubscriber": typeof conversation_circleSubscriber;
