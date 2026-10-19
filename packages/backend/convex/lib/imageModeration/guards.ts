@@ -8,12 +8,10 @@
 // - Pixels: the width x height read from the header is at most MAX_IMAGE_PIXELS, so a tiny file
 //   that would decompress to a huge bitmap (a decompression bomb) is refused before decode.
 //
-// WebP: jimp 1.x has no WebP decoder, so the pipeline's re-encode fails on WebP and it keeps its
-// best-effort fallback (classify the original bytes; no EXIF strip, no blurhash). WebP is still
-// accepted here because the web client's compressorjs step keeps the picked file's type, so phones
-// and browsers that hand over WebP produce real uploads today; rejecting them would break photo
-// upload for those members. The client's canvas re-draw already drops EXIF. Converting to JPEG
-// client-side (spec 2.2) would close the gap for direct API uploads.
+// WebP: jimp 1.x has no WebP decoder, so the pipeline cannot re-encode it. It strips the WebP's
+// EXIF/XMP chunks at byte level instead (stripMetadata) and stores those bytes (no blurhash).
+// WebP stays accepted because phones and browsers hand it over and the web client may upload the
+// original when it cannot re-encode in the browser.
 //
 // GIF: jimp decodes the first frame into a bitmap of the logical screen size (omggif), so the
 // screen size bounds the decode, and the first frame must fit inside the screen; the re-encode

@@ -75,19 +75,40 @@ const recordForAlice = async (
   ).completionId;
 
 // Unique content per blob — convex-test content-addresses storage, so identical bytes would
-// yield identical URLs and blunt the "which photo survived" assertions below. The bytes start
-// with a valid 2x2 WebP (VP8L) header, stored as image/webp, so they pass the pipeline's input
-// guards and take its WebP best-effort path: jimp cannot decode WebP and the blob already has the
-// right type, so no file swap happens and the photo is classified as uploaded.
-const WEBP_HEADER = new Uint8Array([
-  0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x45, 0x42, 0x50, 0x56, 0x50, 0x38,
-  0x4c, 0, 0, 0, 0, 0x2f, 0x01, 0x40, 0x00, 0x00,
-]);
+// yield identical URLs and blunt the "which photo survived" assertions below. The bytes are a
+// well-formed 2x2 WebP (VP8L) with the unique part inside its image chunk, stored as image/webp,
+// so they pass the pipeline's input guards and take its WebP path: jimp cannot decode WebP, the
+// metadata strip finds nothing to drop, so no file swap happens and the photo is classified as
+// uploaded.
+const webpBlob = () => {
+  const body = new Uint8Array([
+    0x2f,
+    0x01,
+    0x40,
+    0x00,
+    0x00,
+    ...new TextEncoder().encode(crypto.randomUUID()),
+    0, // pad to an even chunk size
+  ]);
+  const chunk = body.length - 1;
+  const riff = 4 + 8 + body.length;
+  return new Uint8Array([
+    ...new TextEncoder().encode("RIFF"),
+    riff & 0xff,
+    riff >> 8,
+    0,
+    0,
+    ...new TextEncoder().encode("WEBPVP8L"),
+    chunk & 0xff,
+    chunk >> 8,
+    0,
+    0,
+    ...body,
+  ]);
+};
 const storeBlob = (t: TestConvex<typeof schema>) =>
   t.run((ctx) =>
-    ctx.storage.store(
-      new Blob([WEBP_HEADER, crypto.randomUUID()], { type: "image/webp" }),
-    ),
+    ctx.storage.store(new Blob([webpBlob()], { type: "image/webp" })),
   );
 
 const completionRow = (t: TestConvex<typeof schema>, aggregateId: string) =>

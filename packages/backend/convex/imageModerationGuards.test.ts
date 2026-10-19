@@ -1,15 +1,19 @@
+import { readFileSync } from "node:fs";
 import { convexTest, type TestConvex } from "convex-test";
 import { Jimp } from "jimp";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { MAX_IMAGE_UPLOAD_BYTES } from "./lib/imageModeration/guards";
+import { findMetadata } from "./lib/imageModeration/stripMetadata";
 import schema from "./schema";
 
 // The shared moderation pipeline's input guards, end to end: an upload that is not a supported
 // image, is too large, or announces too many pixels is rejected as "invalid_image" before any
-// decode or classifier call, and its blob is deleted. WebP passes the guards and keeps the
-// pre-existing best-effort path (jimp cannot decode it, so the original bytes are classified).
+// decode or classifier call, and its blob is deleted. Every accepted upload has its metadata
+// (EXIF incl. GPS, XMP, IPTC, comments, PNG text chunks, WebP EXIF/XMP) stripped before it is
+// stored, served or sent to the classifier; WebP, which jimp cannot decode, keeps its stripped
+// bytes.
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
@@ -224,20 +228,133 @@ describe("input guards (copy photos)", () => {
 
     expect(await t.run((ctx) => ctx.db.get(row._id))).toBeNull();
   });
+});
 
-  test("WebP passes the guards and keeps the best-effort path: classified as uploaded, no re-encode", async () => {
+// Real files with GPS in their metadata (written by ImageMagick, exiv2 and Pillow; see
+// stripMetadata.test.ts for what each carries).
+const fixture = (name: string) =>
+  new Uint8Array(
+    readFileSync(new URL(`../test-fixtures/images/${name}`, import.meta.url)),
+  );
+const SECRETS = ["Kerkstraat", "Utrecht", "FixtureCam", "52,5.2057N"];
+const latin1 = (bytes: Uint8Array) =>
+  Array.from(bytes, (byte) => String.fromCharCode(byte)).join("");
+const storedBytes = async (
+  t: TestConvex<typeof schema>,
+  id: Id<"_storage">,
+) => {
+  const stored = await t.run(async (ctx) => {
+    const blob = await ctx.storage.get(id);
+    return blob ? { buffer: await blob.arrayBuffer(), type: blob.type } : null;
+  });
+  return stored && { bytes: new Uint8Array(stored.buffer), type: stored.type };
+};
+// The bytes each classifier call was sent.
+const classifiedBytes = async (fetchMock: ReturnType<typeof cleanReply>) =>
+  Promise.all(
+    fetchMock.mock.calls.map(async (call) => {
+      const init = (call as unknown as [string, RequestInit])[1];
+      return new Uint8Array(await (init.body as Blob).arrayBuffer());
+    }),
+  );
+
+describe("metadata stripped before anything is stored or classified (copy photos)", () => {
+  test.each([
+    ["a JPEG", "gps.jpg", "image/jpeg", "image/jpeg", "jpeg", [48, 64]],
+    [
+      "a PNG with transparency",
+      "gps.png",
+      "image/png",
+      "image/png",
+      "png",
+      [40, 30],
+    ],
+    ["a WebP", "gps.webp", "image/webp", "image/webp", "webp", null],
+  ] as const)(
+    "%s with GPS is stored and classified without any metadata; the upload is deleted",
+    async (_name, file, uploadType, storedType, format, size) => {
+      const fetchMock = cleanReply();
+      vi.stubGlobal("fetch", fetchMock);
+      const t = convexTest(schema, modules);
+      const { copy } = await seed(t);
+      const fileId = await store(t, fixture(file), uploadType);
+
+      const row = await addCopyPhoto(t, copy, fileId);
+
+      expect(row.moderationStatus).toBe("approved");
+      expect(row.fileId).not.toBe(fileId);
+      expect(row.reencodedAt).toBeGreaterThan(0);
+      expect(row.hashCheckedAt).toBeGreaterThan(0);
+      expect(await blobExists(t, fileId)).toBe(false);
+      const stored = (await storedBytes(t, row.fileId))!;
+      expect(stored.type).toBe(storedType);
+      expect(findMetadata(stored.bytes, format)).toEqual([]);
+      for (const secret of SECRETS) {
+        expect(latin1(stored.bytes)).not.toContain(secret);
+      }
+      // jimp turned the JPEG upright (Orientation 6) when it re-encoded it.
+      if (size) {
+        const image = await Jimp.read(Buffer.from(stored.bytes));
+        expect([image.bitmap.width, image.bitmap.height]).toEqual(size);
+      }
+      const [sent] = await classifiedBytes(fetchMock);
+      expect(sent).toEqual(stored.bytes);
+    },
+  );
+
+  test("a JPEG whose segments run past the end is refused, never stored or classified", async () => {
     const fetchMock = cleanReply();
     vi.stubGlobal("fetch", fetchMock);
     const t = convexTest(schema, modules);
     const { copy } = await seed(t);
-    const fileId = await store(t, WEBP_BYTES, "image/webp");
+    const jpeg = fixture("gps.jpg");
+    // Keep the header (SOF0 with the dimensions) but cut the file before the scan ends.
+    const fileId = await store(
+      t,
+      jpeg.subarray(0, jpeg.length - 40),
+      "image/jpeg",
+    );
 
     const row = await addCopyPhoto(t, copy, fileId);
 
-    expect(row.moderationStatus).toBe("approved");
+    expect(row.moderationStatus).toBe("rejected");
+    expect(row.moderationReason).toBe("decode_failed");
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(await blobExists(t, fileId)).toBe(false);
+  });
+
+  test("when the swap to the clean blob fails, the gate stays closed: no URL for the upload as sent", async () => {
+    const fetchMock = cleanReply();
+    vi.stubGlobal("fetch", fetchMock);
+    const t = convexTest(schema, modules);
+    const { copy } = await seed(t);
+    const fileId = await store(t, fixture("gps.jpg"), "image/jpeg");
+    // Storing the clean blob fails: make every storage write in the pipeline throw.
+    const original = Blob.prototype.arrayBuffer;
+    let calls = 0;
+    vi.spyOn(Blob.prototype, "arrayBuffer").mockImplementation(function (
+      this: Blob,
+    ) {
+      calls += 1;
+      // The first read is the pipeline's download; the next is the store of the clean blob.
+      if (calls === 2) return Promise.reject(new Error("storage unavailable"));
+      return original.call(this);
+    });
+
+    const row = await addCopyPhoto(t, copy, fileId);
+
+    expect(row.moderationStatus).toBe("pending");
     expect(row.fileId).toBe(fileId);
-    expect(row.blurhash).toBeUndefined();
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(row.reencodedAt).toBeUndefined();
+    expect(row.hashCheckedAt).toBeUndefined();
+    expect(fetchMock).not.toHaveBeenCalled();
+    const view = await asAlice(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: copy },
+    );
+    expect(JSON.stringify(view)).not.toContain(
+      (await t.run((ctx) => ctx.storage.getUrl(fileId)))!,
+    );
   });
 });
 
