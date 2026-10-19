@@ -7,18 +7,14 @@ import {
 } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { isReferenced } from "../lib/imageModeration/blobReferences";
-import { checkImageBytes } from "../lib/imageModeration/guards";
-import {
-  findMetadata,
-  stripImageMetadata,
-} from "../lib/imageModeration/stripMetadata";
 
 // Box art (a puzzle definition's `image`, or a proposed one) is served to everyone, so it must
 // never carry the uploader's EXIF/GPS. The client uploads the file, then calls
-// catalog/sanitizeBoxArt, which strips the metadata at byte level, stores the clean bytes as a
-// new blob, deletes the upload and lists the clean blob in `boxArtUploads` for that member
-// (catalog/importPuzzleImage does the same for a fetched shop image). The catalog mutations only
-// take a NEW image listed there for the acting member (assertBoxArtImage).
+// catalog/sanitizeBoxArt, which strips the metadata and turns the pixels upright
+// (catalog/cleanBoxArt), stores the clean bytes as a new blob, deletes the upload and lists the
+// clean blob in `boxArtUploads` for that member (catalog/importPuzzleImage does the same for a
+// fetched shop image). The catalog mutations only take a NEW image listed there for the acting
+// member (assertBoxArtImage).
 
 /** An upload must be cleaned within this long of its creation. */
 export const BOX_ART_CLAIM_WINDOW_MS = 15 * 60_000;
@@ -30,32 +26,6 @@ export type BoxArtRefusal =
   | "unreadable_header"
   | "too_many_pixels"
   | "malformed";
-
-/**
- * Validate and strip box-art bytes: at most 10 MB, a JPEG, PNG or WebP by its magic bytes, a
- * usable header within the pixel budget, a well-formed block structure. GIF is refused: there is
- * no byte-level stripper for it and box art never needs it.
- */
-export const cleanBoxArt = (
-  bytes: Uint8Array,
-):
-  | { ok: true; bytes: Uint8Array; mime: string }
-  | { ok: false; reason: BoxArtRefusal } => {
-  const guard = checkImageBytes(bytes);
-  if (!guard.ok) {
-    return {
-      ok: false,
-      reason: guard.reason === "decode_failed" ? "malformed" : guard.reason,
-    };
-  }
-  if (guard.format === "gif")
-    return { ok: false, reason: "unsupported_format" };
-  const stripped = stripImageMetadata(bytes, guard.format);
-  if (!stripped || findMetadata(stripped, guard.format)?.length !== 0) {
-    return { ok: false, reason: "malformed" };
-  }
-  return { ok: true, bytes: stripped, mime: `image/${guard.format}` };
-};
 
 export const boxArtRefused = (reason: BoxArtRefusal) =>
   new ConvexError({

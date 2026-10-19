@@ -14,8 +14,8 @@ ook toevoegt.
 
 - **Elke foto, overal.** Foto's van je puzzels en voltooiingen,
   doosafbeeldingen en foto's in berichten verliezen hun locatie-, camera- en
-  datumgegevens. Alleen de stand blijft bewaard, zodat foto's goed om blijven
-  staan.
+  datumgegevens. Een foto die gedraaid is gemaakt, wordt eerst rechtop gezet,
+  zodat hij goed om blijft staan.
 - **WebP-foto's in berichten.** Je kunt nu WebP-foto's in berichten sturen
   vanuit elke browser die ze kan openen, ook als de browser de originele foto
   verstuurt.

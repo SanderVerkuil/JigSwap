@@ -4,11 +4,13 @@ import { Jimp } from "jimp";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { readImageDimensions } from "./lib/imageModeration/guards";
 import { findMetadata } from "./lib/imageModeration/stripMetadata";
 import schema from "./schema";
 
 // The one-shot metadata strip of images stored before every path stripped them: box art,
 // proposed box art, and copy/completion photos the pipeline did not re-encode (WebP, legacy).
+// Each gps.* fixture's Exif holds Orientation 6, so each is also turned upright.
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
@@ -27,6 +29,9 @@ const store = (t: TestConvex<typeof schema>, bytes: Uint8Array, type: string) =>
   t.run((ctx) =>
     ctx.storage.store(new Blob([bytes as BlobPart], { type })),
   ) as Promise<Id<"_storage">>;
+
+const typeOf = (t: TestConvex<typeof schema>, id: Id<"_storage">) =>
+  t.run(async (ctx) => (await ctx.storage.get(id))?.type ?? null);
 
 const bytesOf = async (t: TestConvex<typeof schema>, id: Id<"_storage">) => {
   const buffer = await t.run(async (ctx) =>
@@ -137,6 +142,8 @@ describe("backfillStripMetadata", () => {
       scanned: 2,
       withMetadata: 1,
       stripped: 0,
+      needsTurning: 1,
+      turned: 0,
       clean: 1,
       skipped: 0,
     });
@@ -145,13 +152,15 @@ describe("backfillStripMetadata", () => {
     expect(await bytesOf(t, seeded.gpsJpeg)).toEqual(fixture("gps.jpg"));
   });
 
-  test("box art: stripped, the definition and its proposal baselines switched, the old blob deleted", async () => {
+  test("box art: stripped and turned upright, the definition and its proposal baselines switched, the old blob deleted", async () => {
     const t = convexTest(schema, modules);
     const seeded = await seed(t);
 
     expect(await run(t, "boxArt", false)).toMatchObject({
       withMetadata: 1,
       stripped: 1,
+      needsTurning: 1,
+      turned: 1,
       clean: 1,
     });
 
@@ -159,6 +168,11 @@ describe("backfillStripMetadata", () => {
     expect(puzzle?.image).not.toBe(seeded.gpsJpeg);
     const clean = (await bytesOf(t, puzzle!.image!))!;
     expect(findMetadata(clean, "jpeg")).toEqual([]);
+    // 64x48 stored sideways (Orientation 6): now 48x64 upright.
+    expect(readImageDimensions(clean, "jpeg")).toEqual({
+      width: 48,
+      height: 64,
+    });
     expect(latin1(clean)).not.toContain("Kerkstraat");
     const proposal = await t.run((ctx) => ctx.db.get(seeded.proposal));
     expect(proposal?.baseline.image).toBe(puzzle?.image);
@@ -178,7 +192,10 @@ describe("backfillStripMetadata", () => {
     const t = convexTest(schema, modules);
     const seeded = await seed(t);
 
-    expect(await run(t, "proposals", false)).toMatchObject({ stripped: 1 });
+    expect(await run(t, "proposals", false)).toMatchObject({
+      stripped: 1,
+      turned: 1,
+    });
 
     const proposal = await t.run((ctx) => ctx.db.get(seeded.proposal));
     expect(proposal?.changes.image).not.toBe(seeded.gpsPng);
@@ -187,26 +204,95 @@ describe("backfillStripMetadata", () => {
       proposal!.changes.image as Id<"_storage">,
     ))!;
     expect(findMetadata(clean, "png")).toEqual([]);
+    expect(readImageDimensions(clean, "png")).toEqual({
+      width: 30,
+      height: 40,
+    });
     expect(await bytesOf(t, seeded.gpsPng)).toBeNull();
   });
 
-  test("copy photos: a decided WebP is stripped; a pending one is left to the pipeline", async () => {
+  test("copy photos: a decided sideways WebP is stripped and stored upright as JPEG; a pending one is left to the pipeline", async () => {
     const t = convexTest(schema, modules);
     const seeded = await seed(t);
 
     expect(await run(t, "copy", false)).toMatchObject({
       scanned: 2,
       stripped: 1,
+      turned: 1,
       skipped: 1,
     });
 
     const approved = await t.run((ctx) => ctx.db.get(seeded.approvedPhoto));
     expect(approved?.fileId).not.toBe(seeded.gpsWebp);
-    expect(findMetadata((await bytesOf(t, approved!.fileId))!, "webp")).toEqual(
-      [],
-    );
+    // jimp has no WebP encoder: the turned (opaque) photo is stored as JPEG.
+    expect(await typeOf(t, approved!.fileId)).toBe("image/jpeg");
+    const clean = (await bytesOf(t, approved!.fileId))!;
+    expect(findMetadata(clean, "jpeg")).toEqual([]);
+    expect(readImageDimensions(clean, "jpeg")).toEqual({
+      width: 30,
+      height: 40,
+    });
     expect(await bytesOf(t, seeded.gpsWebp)).toBeNull();
     const pending = await t.run((ctx) => ctx.db.get(seeded.pendingPhoto));
     expect(pending?.fileId).toBe(seeded.pendingWebp);
+  });
+
+  // Box art cleaned before sanitizeBoxArt turned pixels upright kept an Orientation-only Exif.
+  const storeBoxArt = async (
+    t: TestConvex<typeof schema>,
+    bytes: Uint8Array,
+    type: string,
+  ) => {
+    const seeded = await seed(t);
+    const image = await store(t, bytes, type);
+    await t.run((ctx) => ctx.db.patch(seeded.withGps, { image }));
+    return { ...seeded, image };
+  };
+  const orientationFixture = (name: string) => fixture(`orientation/${name}`);
+
+  test("box art that kept only an Orientation Exif is turned upright", async () => {
+    const t = convexTest(schema, modules);
+    const seeded = await storeBoxArt(
+      t,
+      orientationFixture("6.jpg"),
+      "image/jpeg",
+    );
+
+    expect(await run(t, "boxArt", false)).toMatchObject({
+      withMetadata: 1,
+      turned: 1,
+    });
+
+    const puzzle = await t.run((ctx) => ctx.db.get(seeded.withGps));
+    expect(puzzle?.image).not.toBe(seeded.image);
+    const clean = (await bytesOf(t, puzzle!.image!))!;
+    expect(findMetadata(clean, "jpeg")).toEqual([]);
+    expect(readImageDimensions(clean, "jpeg")).toEqual({
+      width: 24,
+      height: 16,
+    });
+  });
+
+  test("an image that needs turning but does not decode is still stripped, just not turned", async () => {
+    const t = convexTest(schema, modules);
+    const broken = orientationFixture("6.webp").slice();
+    // Corrupt the VP8L bitstream past its header (the dimensions stay readable).
+    const vp8l = latin1(broken).indexOf("VP8L");
+    broken.fill(0xff, vp8l + 8 + 5, vp8l + 8 + 40);
+    const seeded = await storeBoxArt(t, broken, "image/webp");
+
+    expect(await run(t, "boxArt", false)).toMatchObject({
+      withMetadata: 1,
+      stripped: 1,
+      needsTurning: 1,
+      turned: 0,
+    });
+
+    const puzzle = await t.run((ctx) => ctx.db.get(seeded.withGps));
+    expect(puzzle?.image).not.toBe(seeded.image);
+    expect(await typeOf(t, puzzle!.image!)).toBe("image/webp");
+    expect(findMetadata((await bytesOf(t, puzzle!.image!))!, "webp")).toEqual(
+      [],
+    );
   });
 });

@@ -4,15 +4,13 @@ import { ConvexError } from "convex/values";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import {
-  findMetadata,
-  orientationOnlyApp1,
-} from "./lib/imageModeration/stripMetadata";
+import { readImageDimensions } from "./lib/imageModeration/guards";
+import { findMetadata } from "./lib/imageModeration/stripMetadata";
 import schema from "./schema";
 
 // Box art never keeps the uploader's metadata: an upload goes through catalog/sanitizeBoxArt
-// (byte-level strip, new blob, upload deleted), a fetched shop image through importPuzzleImage
-// (same strip), and the catalog mutations only take a NEW image that the server cleaned for the
+// (strip, turned upright, new blob, upload deleted), a fetched shop image through
+// importPuzzleImage (same clean), and the catalog mutations only take a NEW image that the server cleaned for the
 // acting member. Fixtures: see stripMetadata.test.ts.
 
 vi.mock("node:dns/promises", () => ({
@@ -94,13 +92,23 @@ const sanitize = (t: TestConvex<typeof schema>, storageId: Id<"_storage">) =>
   asAlice(t).action(api.catalog.sanitizeBoxArt.sanitizeBoxArt, { storageId });
 
 describe("sanitizeBoxArt", () => {
+  // Each fixture's Exif holds Orientation 6, so each is stored turned upright (a turned WebP as
+  // JPEG: jimp has no WebP encoder); an upright WebP is stored as its stripped bytes.
   test.each([
-    ["JPEG", "gps.jpg", "image/jpeg", "jpeg"],
-    ["PNG", "gps.png", "image/png", "png"],
-    ["WebP", "gps.webp", "image/webp", "webp"],
+    ["JPEG", "gps.jpg", "image/jpeg", "image/jpeg", "jpeg", [48, 64]],
+    ["PNG", "gps.png", "image/png", "image/png", "png", [30, 40]],
+    ["sideways WebP", "gps.webp", "image/webp", "image/jpeg", "jpeg", [30, 40]],
+    [
+      "upright WebP",
+      "orientation/1.webp",
+      "image/webp",
+      "image/webp",
+      "webp",
+      [24, 16],
+    ],
   ] as const)(
-    "a %s with GPS is stored without metadata, listed for the member, and the upload deleted",
-    async (_name, file, type, format) => {
+    "a %s is stored upright without metadata, listed for the member, and the upload deleted",
+    async (_name, file, type, storedType, format, [width, height]) => {
       const t = convexTest(schema, modules);
       const { alice } = await seed(t);
       const uploadId = await upload(t, fixture(file), type);
@@ -110,8 +118,12 @@ describe("sanitizeBoxArt", () => {
       expect(cleanId).not.toBe(uploadId);
       expect(await stored(t, uploadId)).toBeNull();
       const clean = (await stored(t, cleanId))!;
-      expect(clean.type).toBe(type);
+      expect(clean.type).toBe(storedType);
       expect(findMetadata(clean.bytes, format)).toEqual([]);
+      expect(readImageDimensions(clean.bytes, format)).toEqual({
+        width,
+        height,
+      });
       for (const secret of SECRETS) {
         expect(latin1(clean.bytes)).not.toContain(secret);
       }
@@ -121,17 +133,6 @@ describe("sanitizeBoxArt", () => {
       expect(rows).toMatchObject([{ storageId: cleanId, uploaderId: alice }]);
     },
   );
-
-  test("a JPEG keeps only its Orientation, so it still shows upright", async () => {
-    const t = convexTest(schema, modules);
-    await seed(t);
-    const cleanId = await sanitize(
-      t,
-      await upload(t, fixture("gps.jpg"), "image/jpeg"),
-    );
-    const clean = (await stored(t, cleanId))!;
-    expect(latin1(clean.bytes)).toContain(latin1(orientationOnlyApp1(6)));
-  });
 
   test.each([
     [

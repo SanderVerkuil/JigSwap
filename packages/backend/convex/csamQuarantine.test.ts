@@ -343,6 +343,16 @@ describe("hash check outcomes that continue", () => {
     );
     expect(bodies).toHaveLength(2);
     expect(bodies[0]).toEqual({ md5: upload.md5, sha1: upload.sha1 });
+    // The second hash is of the re-encode exactly as it was then stored.
+    const stored = new Uint8Array(
+      (await t.run(async (ctx) =>
+        (await ctx.storage.get(row.fileId))!.arrayBuffer(),
+      )) as ArrayBuffer,
+    );
+    expect(bodies[1]).toEqual({
+      md5: createHash("md5").update(stored).digest("hex"),
+      sha1: createHash("sha1").update(stored).digest("hex"),
+    });
     // The original was swapped for the re-encode and deleted, as before.
     expect(row.fileId).not.toBe(upload.fileId);
     expect(await blobExists(t, upload.fileId)).toBe(false);

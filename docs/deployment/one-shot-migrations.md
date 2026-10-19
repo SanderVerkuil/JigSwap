@@ -414,18 +414,32 @@ totals. Follow it with `npx convex logs` (add `--prod` for prod) or in the dashb
 ## `lib/imageModeration/backfillStripMetadata` — strip metadata from images stored before
 
 **When:** once per deployment, after the server-side metadata strip (box art through
-`catalog/sanitizeBoxArt`, WebP in the photo pipeline) is deployed there. Before it, box art
+`catalog/sanitizeBoxArt`, WebP in the photo pipeline) and the orientation normalisation
+(images turned upright instead of keeping an Exif Orientation) are deployed there. Before it, box art
 was stored exactly as uploaded, and copy or completion photos in WebP (and rows older than
 the moderation pipeline) kept their EXIF, so some stored images still carry GPS
 coordinates, camera details or editor comments.
 
 **What it does:** pages through one table, 25 rows per batch (`batchSize` overrides this),
 downloads each image and looks for metadata blocks (Exif incl. GPS, XMP, IPTC, comments,
-PNG text chunks, WebP EXIF/XMP). An image that carries any is stripped at byte level (the
-pixels are untouched; a JPEG keeps only its Orientation tag), stored as a new blob, every
-row that pointed at the old blob is switched to it, and the old blob is deleted once
-nothing references it. Clean images, GIFs and images whose structure can't be parsed are
-left alone and counted.
+PNG text chunks, WebP EXIF/XMP). An image that carries any is stripped (every Exif block,
+Orientation included) and turned upright, the same way new uploads are
+(`lib/imageModeration/normaliseImage`):
+
+- No Orientation (or Orientation 1): stripped at byte level, the pixels untouched.
+- Orientation 2..8 (a phone photo stored sideways or mirrored): decoded, turned upright and
+  re-encoded with no metadata at all. A JPEG stays JPEG (quality 95, no chroma subsampling,
+  its RGB colour profile kept); a PNG stays PNG; a WebP becomes PNG when it has
+  transparency, else JPEG (there is no WebP encoder on the server), and the new blob gets
+  the matching content type. Box art cleaned by an earlier `sanitizeBoxArt` that kept an
+  Orientation-only Exif block counts as carrying metadata, so it is turned upright too.
+- An image that needs turning but is over the upload limits (10 MB, 25 MP) or does not
+  decode is still stripped at byte level (its GPS matters more than its rotation), just not
+  turned; it then shows sideways.
+
+The clean image is stored as a new blob, every row that pointed at the old blob is switched
+to it, and the old blob is deleted once nothing references it. Clean images, GIFs and
+images whose structure can't be parsed are left alone and counted.
 
 - `"table":"boxArt"`: `puzzles.image`, plus the proposals of that definition whose
   `baseline.image` or `changes.image` is the same blob.
@@ -449,11 +463,15 @@ npx convex run lib/imageModeration/backfillStripMetadata:backfillStripMetadata '
 ```
 
 The command returns the FIRST batch's counts (`scanned`, `withMetadata`, `stripped`,
-`clean`, `skipped`); the remaining batches run as scheduled functions. Each batch logs one
+`needsTurning`, `turned`, `clean`, `skipped`); the remaining batches run as scheduled
+functions. `needsTurning` (counted in a dry run too) is how many of the images with metadata
+hold an Orientation of 2..8; `turned` how many of those were stored upright. Each batch logs one
 JSON line with `"event":"imageModeration.backfillStripMetadata"`, the table, `dry_run` and
 the running totals; the line with `"done":true` carries the whole run's totals.
 
-**Verify:** the real run's final `stripped` matches the dry run's `withMetadata`, and a
-second dry run reports `"withMetadata":0`. Download a few switched images from the
-dashboard and check them with `exiv2 -pa` or `exiftool`: nothing but `Orientation` on a
-JPEG, nothing at all on PNG and WebP.
+**Verify:** the real run's final `stripped` matches the dry run's `withMetadata`, its
+`turned` matches the dry run's `needsTurning` (any difference was stripped but not turned),
+and a second dry run reports `"withMetadata":0`. Download a few
+switched images from the dashboard and check them with `exiv2 -pa` or `exiftool`: no
+metadata at all, `Orientation` included; and open them in a browser: they show the right way
+up.

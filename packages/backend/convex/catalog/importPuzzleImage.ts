@@ -6,7 +6,7 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { action } from "../_generated/server";
-import { cleanBoxArt } from "./boxArtUploads";
+import { cleanBoxArt } from "./cleanBoxArt";
 
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 const MAX_REDIRECTS = 5;
@@ -90,7 +90,7 @@ export const importPuzzleImage = action({
 
     // The content-type header is not trusted: CDNs serve real JPEGs as octet-stream, and a
     // mislabeled SVG/HTML body must never be stored. The magic bytes decide.
-    const clean = cleanBoxArt(new Uint8Array(buffer));
+    const clean = await cleanBoxArt(new Uint8Array(buffer));
     if (!clean.ok) throw new ConvexError("Unsupported image type");
 
     const storageId = await ctx.storage.store(

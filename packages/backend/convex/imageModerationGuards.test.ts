@@ -267,9 +267,26 @@ describe("metadata stripped before anything is stored or classified (copy photos
       "image/png",
       "image/png",
       "png",
-      [40, 30],
+      [30, 40],
     ],
-    ["a WebP", "gps.webp", "image/webp", "image/webp", "webp", null],
+    // Turned upright needs a decode: re-encoded (opaque, so JPEG) like the others.
+    [
+      "a sideways WebP",
+      "gps.webp",
+      "image/webp",
+      "image/jpeg",
+      "jpeg",
+      [30, 40],
+    ],
+    // Upright already: its stripped bytes are stored as they are.
+    [
+      "an upright WebP",
+      "orientation/1.webp",
+      "image/webp",
+      "image/webp",
+      "webp",
+      null,
+    ],
   ] as const)(
     "%s with GPS is stored and classified without any metadata; the upload is deleted",
     async (_name, file, uploadType, storedType, format, size) => {
@@ -292,7 +309,7 @@ describe("metadata stripped before anything is stored or classified (copy photos
       for (const secret of SECRETS) {
         expect(latin1(stored.bytes)).not.toContain(secret);
       }
-      // jimp turned the JPEG upright (Orientation 6) when it re-encoded it.
+      // Each fixture's Exif held Orientation 6: the stored pixels are turned upright.
       if (size) {
         const image = await Jimp.read(Buffer.from(stored.bytes));
         expect([image.bitmap.width, image.bitmap.height]).toEqual(size);
