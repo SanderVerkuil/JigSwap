@@ -282,8 +282,10 @@ export function notificationIcon(type: string): LucideIcon {
     case "exchange_disputed":
       return XCircle;
     case "message_received":
-    case "circle_message_received":
       return MessageSquare;
+    // The circle mark, so a group chat never reads as a message from a person.
+    case "circle_message_received":
+      return Users;
     case "review_received":
       return Star;
     case "puzzle_favorited":

@@ -290,10 +290,16 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("ThreadView in a circle thread", () => {
-  it("heads the thread with the circle name and its member count", () => {
+  it("heads the thread with the circle name, says it's a circle chat, and its member count", () => {
     renderThread(circleThread, CIRCLE_MESSAGES);
-    expect(screen.getByRole("heading", { name: "Puzzle Club" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "6 members" })).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: /^Puzzle Club\s*, Circle chat$/ }),
+    ).toBeTruthy();
+    const members = screen.getByRole("button", { name: "6 members" });
+    // The visible "Circle chat · " prefix sits beside the button, hidden from screen readers.
+    expect(members.parentElement!.textContent).toBe(
+      "Circle chat\u00a0·\u00a06 members",
+    );
   });
 
   it("says the member count in Dutch", () => {
@@ -373,9 +379,14 @@ describe("ThreadView in a circle thread", () => {
     );
   });
 
-  it("addresses the composer to the circle", () => {
+  it("addresses the composer to the circle, never like a person", () => {
     renderThread(circleThread, CIRCLE_MESSAGES);
-    expect(screen.getByPlaceholderText("Write to Puzzle Club…")).toBeTruthy();
+    const composer = screen.getByPlaceholderText(
+      "Write to your circle Puzzle Club…",
+    );
+    expect(composer.getAttribute("aria-label")).toBe(
+      "Message your circle Puzzle Club",
+    );
   });
 
   it("offers a puzzle to attach: only my puzzles, with who can see them", async () => {

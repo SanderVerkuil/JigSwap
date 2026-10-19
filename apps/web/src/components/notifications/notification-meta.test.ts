@@ -1,3 +1,4 @@
+import { MessageSquare, Users } from "lucide-react";
 import { createTranslator } from "use-intl";
 import { describe, expect, it } from "vitest";
 import en from "../../../locales/en.json";
@@ -8,8 +9,16 @@ import {
   NOTIFICATION_CATEGORIES,
   NOTIFICATION_TYPES,
   notificationCopy,
+  notificationIcon,
   type NotificationCopySource,
 } from "./notification-meta";
+
+describe("notificationIcon", () => {
+  it("marks circle messages with the circle mark, unlike a DM", () => {
+    expect(notificationIcon("circle_message_received")).toBe(Users);
+    expect(notificationIcon("message_received")).toBe(MessageSquare);
+  });
+});
 
 describe("NOTIFICATION_CATEGORIES", () => {
   it("covers every notification type exactly once", () => {

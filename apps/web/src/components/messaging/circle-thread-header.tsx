@@ -1,7 +1,8 @@
 "use client";
 
-// A circle thread's header (spec §6.2, §6.6): the member avatars, the circle's
-// name and a muted second line "6 members" that opens the members panel, the
+// A circle thread's header (spec §6.2, §6.6): the circle avatar, the circle's
+// name and a muted second line "Circle chat · 6 members" whose members part
+// opens the members panel, the
 // "Circle" quick link (md+), and one ⋯ menu: Mute/Unmute, Members, Open
 // circle, Leave circle, Report a member. The members panel is a 360px
 // right-side sheet on desktop and a bottom sheet on phones; it lists the
@@ -118,16 +119,24 @@ export function CircleThreadHeader({
       <CircleThreadAvatar members={subject.memberPreview} className="size-9" />
       <div className="flex min-w-0 flex-col">
         {heading}
-        <button
-          type="button"
-          aria-haspopup="dialog"
-          onClick={() => setMembersOpen(true)}
-          className="text-muted-foreground hover:text-foreground focus-visible:ring-ring relative w-fit rounded-sm text-left text-xs leading-4 outline-none hover:underline focus-visible:ring-2 max-md:before:absolute max-md:before:-inset-x-2 max-md:before:-inset-y-3"
-        >
-          {t("circle.memberCount", { count: subject.memberCount })}
-          {onlineCount > 0 &&
-            ` · ${tPresence("onlineCount", { count: onlineCount })}`}
-        </button>
+        {/* "Circle chat · 6 members · 2 online": the prefix names the chat a
+            group (the heading says it for screen readers); only the members
+            part opens the panel, and only it truncates. */}
+        <div className="text-muted-foreground flex min-w-0 items-baseline text-xs leading-4">
+          <span aria-hidden className="shrink-0">
+            {t("circle.circleChat")}&nbsp;·&nbsp;
+          </span>
+          <button
+            type="button"
+            aria-haspopup="dialog"
+            onClick={() => setMembersOpen(true)}
+            className="hover:text-foreground focus-visible:ring-ring relative min-w-0 truncate rounded-sm text-left outline-none hover:underline focus-visible:ring-2 max-md:before:absolute max-md:before:-inset-x-2 max-md:before:-inset-y-3"
+          >
+            {t("circle.memberCount", { count: subject.memberCount })}
+            {onlineCount > 0 &&
+              ` · ${tPresence("onlineCount", { count: onlineCount })}`}
+          </button>
+        </div>
       </div>
       <div className="ml-auto flex shrink-0 items-center gap-1">
         <Button asChild variant="ghost" size="sm" className="hidden md:flex">

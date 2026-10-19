@@ -285,6 +285,9 @@ function ThreadRow({
               highlighted ? "font-bold" : "font-medium",
             )}
           >
+            {subject.kind === "circle" && (
+              <span className="sr-only">{t("circle.circleChat")}: </span>
+            )}
             {threadSubjectTitle(subject, t, displayName)}
           </span>
           {muted && (

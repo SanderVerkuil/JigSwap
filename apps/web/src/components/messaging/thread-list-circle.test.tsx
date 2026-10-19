@@ -174,6 +174,35 @@ describe("ThreadList circle rows", () => {
     );
   });
 
+  it.each([
+    ["no other member", []],
+    ["one other member", [person("u_bas", "Bas")]],
+    ["several members", [person("u_bas", "Bas"), person("u_anna", "Anna")]],
+  ] as const)(
+    "marks the row as a circle chat, never a lone person (%s)",
+    (_, memberPreview) => {
+      renderList([
+        circleThread("c1", {
+          subject: {
+            kind: "circle",
+            circleId: "circle_1",
+            name: "Puzzle Club",
+            memberCount: memberPreview.length + 1,
+            memberPreview: [...memberPreview],
+          },
+        }),
+      ]);
+      const link = row("Puzzle Club");
+      // Screen readers hear "Circle chat: Puzzle Club".
+      expect(link.textContent).toContain("Circle chat: Puzzle Club");
+      // The avatar always carries the circle mark, and at most one member.
+      expect(link.querySelector(".lucide-users")).not.toBeNull();
+      expect(
+        link.querySelectorAll("[data-slot=avatar]").length,
+      ).toBeLessThanOrEqual(1);
+    },
+  );
+
   it("keeps a DM row as it was: no prefix, primary count, no bell", () => {
     renderList([dmThread, circleThread("c1")]);
     const link = row("Mara");
@@ -181,6 +210,8 @@ describe("ThreadList circle rows", () => {
     expect(within(link).getByText("2").className).toContain("bg-primary");
     expect(within(link).queryByText("Muted")).toBeNull();
     expect(within(link).getByText("Mara").className).toContain("font-bold");
+    expect(link.textContent).not.toContain("Circle chat");
+    expect(link.querySelector(".lucide-users")).toBeNull();
   });
 
   it("strips formatting markers from a DM snippet", () => {

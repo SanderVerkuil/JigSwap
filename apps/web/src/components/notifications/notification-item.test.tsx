@@ -522,16 +522,26 @@ describe("NotificationItem rendering", () => {
   });
 
   it.each([
-    ["en", 3, "Puzzle Club", "Unread, Mara and 2 others wrote in Puzzle Club."],
-    ["en", 2, "Puzzle Club", "Unread, Mara and 1 other wrote in Puzzle Club."],
+    [
+      "en",
+      3,
+      "Puzzle Club",
+      "Unread, Mara and 2 others wrote in your circle Puzzle Club.",
+    ],
+    [
+      "en",
+      2,
+      "Puzzle Club",
+      "Unread, Mara and 1 other wrote in your circle Puzzle Club.",
+    ],
     ["en", 1, undefined, "Unread, Mara wrote in your circle."],
     [
       "nl",
       3,
       "Puzzelclub",
-      "Ongelezen, Mara en 2 anderen schreven in Puzzelclub.",
+      "Ongelezen, Mara en 2 anderen schreven in je kring Puzzelclub.",
     ],
-    ["nl", 1, "Puzzelclub", "Ongelezen, Mara schreef in Puzzelclub."],
+    ["nl", 1, "Puzzelclub", "Ongelezen, Mara schreef in je kring Puzzelclub."],
   ] as const)(
     "renders a grouped circle_message_received (%s, %i actors)",
     (locale, actorCount, circleName, text) => {
@@ -558,7 +568,7 @@ describe("NotificationItem rendering", () => {
       }),
     );
     expect(rowLink(container)!.textContent).toBe(
-      "Unread, Puzzler wrote in Puzzle Club.",
+      "Unread, Puzzler wrote in your circle Puzzle Club.",
     );
   });
 

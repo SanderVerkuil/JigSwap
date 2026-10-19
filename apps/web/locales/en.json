@@ -881,6 +881,7 @@
       "panRight": "Move east",
       "exactToggle": "Share my exact location",
       "exactWarning": "{name} will see exactly where you are now.",
+      "exactWarningGroup": "Everyone in {circle} will see exactly where you are now.",
       "approximateNote": "Your current location is shared as an approximate area (about 1 km).",
       "labelLabel": "Name of the place (optional)",
       "captionLabel": "Message (optional)",
@@ -921,7 +922,8 @@
       "blockedLocation": "Location from a member you blocked",
       "show": "Show",
       "announcement": "{author} in {circle}: {body}",
-      "composerPlaceholder": "Write to {circle}…",
+      "composerPlaceholder": "Write to your circle {circle}…",
+      "composerLabel": "Message your circle {circle}",
       "mute": "Mute conversation",
       "unmute": "Unmute conversation",
       "muted": "Muted",
@@ -2208,6 +2210,7 @@
     "yesterday": "Yesterday",
     "earlier": "Earlier",
     "newMessageToast": "New message from {name}",
+    "newCircleMessageToast": "New message in your circle {circle}",
     "newMessageToastOpen": "Open",
     "preferences": "Notification preferences",
     "preferencesTitle": "Notification preferences",
@@ -2529,7 +2532,7 @@
         }
       },
       "circle_message_received": {
-        "sentence": "{moreActors, plural, =0 {<b>{actor}</b> wrote} one {<b>{actor}</b> and # other wrote} other {<b>{actor}</b> and # others wrote}} in {hasCircle, select, yes {<b>{circle}</b>} other {your circle}}.",
+        "sentence": "{moreActors, plural, =0 {<b>{actor}</b> wrote} one {<b>{actor}</b> and # other wrote} other {<b>{actor}</b> and # others wrote}} in {hasCircle, select, yes {your circle <b>{circle}</b>} other {your circle}}.",
         "actions": {
           "reply": "Reply",
           "replyAria": "Reply to {actor}"

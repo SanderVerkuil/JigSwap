@@ -401,6 +401,7 @@ export function ThreadView({
                     className="font-heading decoration-primary-text/60 min-w-0 truncate text-base leading-5 font-bold underline-offset-4 outline-none focus-visible:underline"
                   >
                     {title}
+                    <span className="sr-only">, {t("circle.circleChat")}</span>
                   </Heading>
                 }
               />
@@ -528,9 +529,13 @@ export function ThreadView({
           <TypingLine threadId={threadId} />
           <MessageComposer
             threadId={threadId}
-            recipientName={title}
+            // A circle is never addressed like a person: it gets its own label.
+            recipientName={circleThread ? undefined : title}
             theirsLabel={theirsLabel}
             {...(circleThread && {
+              label: t("circle.composerLabel", {
+                circle: circleThread.subject.name,
+              }),
               placeholder: t("circle.composerPlaceholder", {
                 circle: circleThread.subject.name,
               }),

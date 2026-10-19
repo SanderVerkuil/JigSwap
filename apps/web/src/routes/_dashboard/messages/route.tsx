@@ -89,17 +89,22 @@ function MessageToastWatcher() {
           tMessages as Translator,
           displayName,
         );
-        toast(t("newMessageToast", { name }), {
-          action: {
-            label: t("newMessageToastOpen"),
-            onClick: () => {
-              void navigate({
-                to: "/messages/$threadId",
-                params: { threadId: thread.threadId },
-              });
+        toast(
+          thread.subject.kind === "circle"
+            ? t("newCircleMessageToast", { circle: name })
+            : t("newMessageToast", { name }),
+          {
+            action: {
+              label: t("newMessageToastOpen"),
+              onClick: () => {
+                void navigate({
+                  to: "/messages/$threadId",
+                  params: { threadId: thread.threadId },
+                });
+              },
             },
           },
-        });
+        );
       }
     }
     lastSeen.current = next;
