@@ -26,6 +26,18 @@ describe("mergePendingInvites", () => {
     ]);
   });
 
+  it("adds open invite links in the same order", () => {
+    const rows = mergePendingInvites(
+      [{ inviteId: "i_1", invitee: { memberId: "u_cat" }, createdAt: 2 }],
+      [],
+      [
+        { linkId: "l_new", createdAt: 5, expiresAt: 20 },
+        { linkId: "l_old", createdAt: 1, expiresAt: 20 },
+      ],
+    );
+    expect(rows.map((row) => row.kind)).toEqual(["link", "inApp", "link"]);
+  });
+
   it("is empty when nothing is pending", () => {
     expect(mergePendingInvites([], [])).toEqual([]);
   });

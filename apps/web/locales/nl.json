@@ -2015,7 +2015,12 @@
       "approved": "{name} is lid geworden van je huishouden",
       "declined": "Verzoek geweigerd",
       "requestClosed": "Dit verzoek staat niet meer open.",
-      "requestsDot": "{count, plural, one {# verzoek om lid te worden} other {# verzoeken om lid te worden}}"
+      "requestsDot": "{count, plural, one {# verzoek om lid te worden} other {# verzoeken om lid te worden}}",
+      "linkTitle": "Uitnodigingslink",
+      "linkMeta": "Gemaakt {when} · verloopt {date}",
+      "revokeLinkLabel": "Uitnodigingslink van {when} intrekken",
+      "revokeLinkBody": "De link werkt niet meer. Wie hem van je kreeg, kan er niet meer mee lid worden.",
+      "linkRevoked": "Uitnodigingslink ingetrokken"
     }
   },
   "circles": {
