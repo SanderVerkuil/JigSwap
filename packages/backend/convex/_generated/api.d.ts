@@ -282,6 +282,7 @@ import type * as lib_imageModeration_backfillStripMetadata from "../lib/imageMod
 import type * as lib_imageModeration_backfillStripMetadataStore from "../lib/imageModeration/backfillStripMetadataStore.js";
 import type * as lib_imageModeration_blobMetadata from "../lib/imageModeration/blobMetadata.js";
 import type * as lib_imageModeration_quarantine from "../lib/imageModeration/quarantine.js";
+import type * as lib_imageModeration_rescreenStore from "../lib/imageModeration/rescreenStore.js";
 import type * as lib_logEvent from "../lib/logEvent.js";
 import type * as lib_rateLimits from "../lib/rateLimits.js";
 import type * as library_acquireCopies from "../library/acquireCopies.js";
@@ -821,6 +822,7 @@ declare const fullApi: ApiFromModules<{
   "lib/imageModeration/backfillStripMetadataStore": typeof lib_imageModeration_backfillStripMetadataStore;
   "lib/imageModeration/blobMetadata": typeof lib_imageModeration_blobMetadata;
   "lib/imageModeration/quarantine": typeof lib_imageModeration_quarantine;
+  "lib/imageModeration/rescreenStore": typeof lib_imageModeration_rescreenStore;
   "lib/logEvent": typeof lib_logEvent;
   "lib/rateLimits": typeof lib_rateLimits;
   "library/acquireCopies": typeof library_acquireCopies;

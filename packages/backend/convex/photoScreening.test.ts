@@ -554,6 +554,7 @@ describe("rescreenPhotos", () => {
       internal.library.rescreenPhotos.rescreenPhotos,
       {
         table: "copy",
+        dryRun: false,
         batchSize: 10,
       },
     );
@@ -579,6 +580,7 @@ describe("rescreenPhotos", () => {
       internal.library.rescreenPhotos.rescreenPhotos,
       {
         table: "copy",
+        dryRun: false,
       },
     );
 
@@ -600,6 +602,7 @@ describe("rescreenPhotos", () => {
       internal.library.rescreenPhotos.rescreenPhotos,
       {
         table: "copy",
+        dryRun: false,
       },
     );
     expect(batch.scanned).toBe(0);
@@ -630,7 +633,7 @@ describe("rescreenPhotos (completion sidecars)", () => {
     vi.stubGlobal("fetch", hfReplies({ nsfw: 0.95 }));
     const batch = await t.action(
       internal.library.rescreenPhotos.rescreenPhotos,
-      { table: "completion" },
+      { table: "completion", dryRun: false },
     );
 
     expect(batch).toMatchObject({ candidates: 1, rejected: 1 });

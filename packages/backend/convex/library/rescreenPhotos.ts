@@ -13,23 +13,34 @@ import {
   hashImageBytes,
   preserveAndQuarantine,
 } from "../lib/imageModeration/pipeline";
+import type { RescreenCandidate } from "../lib/imageModeration/rescreenStore";
 import { logEvent, type WideEvent } from "../lib/logEvent";
 import {
   makeModerationPortFromEnv,
   readScreeningConfig,
 } from "./adapters/photoModeration";
 
-// One-shot RE-SCREEN of existing photos that were never actually checked: rows "unscored", or
-// approved WITHOUT a classifier score (legacy, provider "none", or the pre-fix pipeline that
-// approved every photo when the Hugging Face call failed). See needsRescreen. Runbook:
+// One-shot RE-SCREEN of existing images that were never actually checked by the content
+// classifier: rows "unscored", or approved WITHOUT a classifier score (legacy, provider "none",
+// or the pre-fix pipeline that approved every photo when the Hugging Face call failed), and
+// images that have no moderation row at all. See needsRescreen. Runbook:
 // docs/deployment/one-shot-migrations.md.
 //
-// - `table`: "copy" (ownedPuzzleImages) or "completion" (completionImages sidecars). Run each.
-// - `dryRun`: counts candidates only — no classifier calls, no writes.
+// - `table`: run each.
+//   - "copy": ownedPuzzleImages;
+//   - "completion": completionImages sidecars;
+//   - "completionLegacy": completion photos without a sidecar (stored before sidecars existed);
+//     a sidecar is created for one that gets a verdict;
+//   - "boxArt": puzzles.image; "proposals": puzzleChangeProposals.changes.image. Box art without
+//     a boxArtUploads listing (stored before the listing existed) gets one when it gets a
+//     verdict (lib/imageModeration/rescreenStore).
+// - `dryRun` defaults to TRUE: it counts candidates only — no classifier or hash-service calls,
+//   no writes. A real run (`dryRun: false`) refuses to start unless the classifier is configured.
 // - Paginated + rate-limited: `batchSize` rows per run (default 10), classified one at a time,
 //   then the action re-schedules itself after `delayMs` (default 10 s) with the next cursor.
 // - Only a SCORED result is written (applyRescreenVerdict: approved / rejected, where rejected has
-//   the normal side effects: hidden, audit stamp; a completion photo is also detached + deleted).
+//   the live pipeline's side effects: hidden, audit stamp; a completion photo is also detached +
+//   deleted, box art detached from every definition and proposal + deleted).
 //   An unscored result leaves the row exactly as it was, so a provider hiccup never hides a legacy
 //   photo.
 // - Stops the whole run on a configuration problem (missing token, auth, unknown model): nothing
@@ -73,55 +84,121 @@ const addTotals = (a: Totals, b: Totals): Totals => ({
   quarantined: (a.quarantined ?? 0) + (b.quarantined ?? 0),
 });
 
+const tableValidator = v.union(
+  v.literal("copy"),
+  v.literal("completion"),
+  v.literal("completionLegacy"),
+  v.literal("boxArt"),
+  v.literal("proposals"),
+);
+type Table = typeof tableValidator.type;
+
 type Page = {
   scanned: number;
-  candidates: {
-    imageId: string;
-    fileId: Id<"_storage">;
-    uploaderId: Id<"users">;
-  }[];
+  candidates: RescreenCandidate[];
   isDone: boolean;
   continueCursor: string;
 };
 
-const loadPage = (
+const loadPage = async (
   ctx: ActionCtx,
-  table: "copy" | "completion",
+  table: Table,
   cursor: string | null,
   numItems: number,
-): Promise<Page> =>
-  table === "copy"
-    ? ctx.runQuery(internal.library.moderationStore.listRescreenCandidates, {
-        paginationOpts: { numItems, cursor },
-      })
-    : ctx.runQuery(
-        internal.solving.completionModerationStore.listRescreenCandidates,
-        { paginationOpts: { numItems, cursor } },
-      );
+): Promise<Page> => {
+  const paginationOpts = { numItems, cursor };
+  if (table === "boxArt" || table === "proposals") {
+    return ctx.runQuery(
+      internal.lib.imageModeration.rescreenStore.listBoxArtCandidates,
+      { table, paginationOpts },
+    );
+  }
+  if (table === "completionLegacy") {
+    return ctx.runQuery(
+      internal.lib.imageModeration.rescreenStore.listLegacyCompletionCandidates,
+      { paginationOpts },
+    );
+  }
+  const page =
+    table === "copy"
+      ? await ctx.runQuery(
+          internal.library.moderationStore.listRescreenCandidates,
+          { paginationOpts },
+        )
+      : await ctx.runQuery(
+          internal.solving.completionModerationStore.listRescreenCandidates,
+          { paginationOpts },
+        );
+  return {
+    ...page,
+    candidates: page.candidates.map((c) => ({ ...c, ref: c.imageId })),
+  };
+};
 
-const applyVerdict = (
+// The candidate's moderation row, created when it has none (legacy box art, a legacy
+// completion photo), so the verdict or the quarantine step has a row to act on.
+const ensureRow = async (
   ctx: ActionCtx,
-  table: "copy" | "completion",
-  imageId: string,
+  table: Table,
+  candidate: RescreenCandidate,
+): Promise<string> => {
+  if (candidate.imageId) return candidate.imageId;
+  if (table === "completionLegacy") {
+    return ctx.runMutation(
+      internal.lib.imageModeration.rescreenStore.ensureLegacyCompletionSidecar,
+      {
+        completionId: candidate.ref,
+        fileId: candidate.fileId,
+        uploaderId: candidate.uploaderId,
+      },
+    );
+  }
+  return ctx.runMutation(
+    internal.lib.imageModeration.backfillBoxArtHashCheckStore
+      .listingForQuarantine,
+    { storageId: candidate.fileId, uploaderId: candidate.uploaderId },
+  );
+};
+
+const quarantineStep = (table: Table) =>
+  table === "copy"
+    ? internal.library.moderationStore.quarantineImage
+    : table === "completion" || table === "completionLegacy"
+      ? internal.solving.completionModerationStore.quarantineImage
+      : internal.catalog.boxArtModerationStore.quarantine;
+
+const applyVerdict = async (
+  ctx: ActionCtx,
+  table: Table,
+  candidate: RescreenCandidate,
   verdict: {
     moderationStatus: "approved" | "rejected";
     moderationScore: number;
     moderationLabel?: string;
   },
-): Promise<boolean> =>
-  table === "copy"
-    ? ctx.runMutation(internal.library.moderationStore.applyRescreenVerdict, {
-        imageId: imageId as Id<"ownedPuzzleImages">,
-        ...verdict,
-      })
-    : ctx.runMutation(
-        internal.solving.completionModerationStore.applyRescreenVerdict,
-        { imageId: imageId as Id<"completionImages">, ...verdict },
-      );
+): Promise<boolean> => {
+  const imageId = await ensureRow(ctx, table, candidate);
+  if (table === "copy") {
+    return ctx.runMutation(
+      internal.library.moderationStore.applyRescreenVerdict,
+      { imageId: imageId as Id<"ownedPuzzleImages">, ...verdict },
+    );
+  }
+  if (table === "completion" || table === "completionLegacy") {
+    return ctx.runMutation(
+      internal.solving.completionModerationStore.applyRescreenVerdict,
+      { imageId: imageId as Id<"completionImages">, ...verdict },
+    );
+  }
+  return ctx.runMutation(
+    internal.catalog.boxArtModerationStore.applyRescreenVerdict,
+    { imageId: imageId as Id<"boxArtUploads">, ...verdict },
+  );
+};
 
 export const rescreenPhotos = internalAction({
   args: {
-    table: v.union(v.literal("copy"), v.literal("completion")),
+    table: tableValidator,
     dryRun: v.optional(v.boolean()),
     cursor: v.optional(v.union(v.string(), v.null())),
     batchSize: v.optional(v.number()),
@@ -130,6 +207,7 @@ export const rescreenPhotos = internalAction({
     totals: v.optional(totalsValidator),
   },
   handler: async (ctx, args): Promise<Totals> => {
+    const dryRun = args.dryRun ?? true;
     const batchSize = Math.max(
       1,
       Math.min(100, args.batchSize ?? RESCREEN_DEFAULT_BATCH),
@@ -140,7 +218,7 @@ export const rescreenPhotos = internalAction({
       event: "library.rescreenPhotos",
       outcome: "success",
       table: args.table,
-      dry_run: args.dryRun ?? false,
+      dry_run: dryRun,
       batch_size: batchSize,
       screening_config: config.status,
       model: config.model,
@@ -163,11 +241,11 @@ export const rescreenPhotos = internalAction({
           backoffs,
           batchSize,
           delayMs,
-          ...(args.dryRun ? { dryRun: true } : {}),
+          dryRun,
         },
       );
 
-    if (!args.dryRun && config.status !== "ok") {
+    if (!dryRun && config.status !== "ok") {
       // Nothing can be scored: refuse up front instead of burning through the table.
       event.outcome = "error";
       event.result = "aborted_config";
@@ -188,15 +266,12 @@ export const rescreenPhotos = internalAction({
     };
 
     let stop: "config" | "backoff" | null = null;
-    if (!args.dryRun) {
+    if (!dryRun) {
       const port = makeModerationPortFromEnv(process.env);
       // Legacy and unscored photos never went through the CSAM hash check: check them first.
       const hashPort = makeCsamHashCheckPortFromEnv(process.env);
       const hashProvider = readCsamHashCheckConfig(process.env).provider;
-      const quarantine =
-        args.table === "copy"
-          ? internal.library.moderationStore.quarantineImage
-          : internal.solving.completionModerationStore.quarantineImage;
+      const quarantine = quarantineStep(args.table);
 
       for (const candidate of page.candidates) {
         const blob = await ctx.storage.get(candidate.fileId);
@@ -217,7 +292,7 @@ export const rescreenPhotos = internalAction({
             quarantine,
             { event: "library.rescreenPhotos.match", outcome: "success" },
             {
-              imageId: candidate.imageId,
+              imageId: await ensureRow(ctx, args.table, candidate),
               bytes,
               uploadedFileId: candidate.fileId,
               uploaderId: candidate.uploaderId,
@@ -257,7 +332,7 @@ export const rescreenPhotos = internalAction({
           batch.skipped++; // provider "none": nothing scored.
           continue;
         }
-        const patched = await applyVerdict(ctx, args.table, candidate.imageId, {
+        const patched = await applyVerdict(ctx, args.table, candidate, {
           moderationStatus: result.status,
           moderationScore: result.score,
           moderationLabel: result.label ?? undefined,
@@ -299,7 +374,7 @@ export const rescreenPhotos = internalAction({
         );
       }
     } else if (!page.isDone) {
-      await next(page.continueCursor, totals, 0, args.dryRun ? 0 : delayMs);
+      await next(page.continueCursor, totals, 0, dryRun ? 0 : delayMs);
     } else {
       event.result = "done";
     }
