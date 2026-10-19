@@ -72,3 +72,10 @@ export interface SetHouseholdDefaultCopyPermissionCommand {
 export type SetHouseholdDefaultCopyPermission = (
   cmd: SetHouseholdDefaultCopyPermissionCommand,
 ) => Outcome<{ readonly changed: boolean }>;
+
+export interface RenameHouseholdCommand {
+  readonly actorId: MemberId;
+  // null clears the name.
+  readonly name: string | null;
+}
+export type RenameHousehold = (cmd: RenameHouseholdCommand) => Outcome<void>;

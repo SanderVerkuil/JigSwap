@@ -5,3 +5,4 @@ export * from "./domain-event";
 export * from "./domain-event-publisher";
 export * from "./identifier";
 export * from "./result";
+export * from "./display-name";

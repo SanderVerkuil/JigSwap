@@ -1,4 +1,11 @@
-import { DomainEvent, err, ok, Result } from "../../shared-kernel";
+import {
+  DomainEvent,
+  err,
+  hasVisibleCharacter,
+  normaliseDisplayName,
+  ok,
+  Result,
+} from "../../shared-kernel";
 import {
   resolveHouseholdCopyPermission,
   type HouseholdCopyPermission,
@@ -15,6 +22,9 @@ import { HouseholdId, MemberId } from "./ids";
 
 export type HouseholdRole = "admin" | "member";
 
+// The longest a household's name may be, counted after normalising (same rule as circle names).
+export const MAX_HOUSEHOLD_NAME_LENGTH = 100;
+
 export interface HouseholdMember {
   readonly memberId: MemberId;
   readonly role: HouseholdRole;
@@ -28,6 +38,8 @@ export interface HouseholdState {
   // The permission a member's copy grants the household when the copy has no explicit value.
   // Absent = the global default (manage), so existing households need no backfill.
   readonly defaultCopyPermission?: HouseholdCopyPermission;
+  // The members' own name for the household; absent = unnamed. Only members ever see it.
+  readonly name?: string;
 }
 
 // Household: the members who pool their libraries. The founder is the admin (invites + removes);
@@ -129,6 +141,24 @@ export class Household {
       ) !== permission;
     this.state = { ...this.state, defaultCopyPermission: permission };
     return ok({ changed });
+  }
+
+  // The admin names the household (like its other settings), or clears the name with null. The
+  // name is normalised and must then show a visible character and be at most
+  // MAX_HOUSEHOLD_NAME_LENGTH long. No event: nobody is notified.
+  rename(by: MemberId, raw: string | null): Result<void, HouseholdError> {
+    if (!this.isAdmin(by)) return err(HouseholdError.notHouseholdAdmin());
+    if (raw === null) {
+      const { name: _cleared, ...rest } = this.state;
+      this.state = rest;
+      return ok(undefined);
+    }
+    const name = normaliseDisplayName(raw);
+    if (!hasVisibleCharacter(name) || name.length > MAX_HOUSEHOLD_NAME_LENGTH) {
+      return err(HouseholdError.invalidHouseholdName());
+    }
+    this.state = { ...this.state, name };
+    return ok(undefined);
   }
 
   pullEvents(): readonly DomainEvent[] {
