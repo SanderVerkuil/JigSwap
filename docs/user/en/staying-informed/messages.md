@@ -10,7 +10,9 @@ summary: "Chat with other members and your circles, format text and add emoji, a
 
 Messages is where you talk to other members: one on one about a puzzle you
 spotted, a trade you're working out, or where to meet up, or together in the
-group chat of a friend circle. Every exchange has its own conversation too.
+group chat of a friend circle. Every exchange has its own conversation too,
+with a short line for each step (for example _Exchange accepted_), shown in
+your language.
 
 ## Who you can message
 

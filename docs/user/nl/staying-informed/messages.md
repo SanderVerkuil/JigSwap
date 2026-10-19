@@ -11,7 +11,8 @@ summary: "Chat met andere leden en je kringen, maak tekst op en voeg emoji, puzz
 In Berichten praat je met andere leden: één op één over een puzzel die je
 zag, een ruil die je aan het regelen bent of waar jullie afspreken, of samen in
 de groepschat van een vriendenkring. Elke uitwisseling heeft ook een eigen
-gesprek.
+gesprek, met een korte regel voor elke stap (bijvoorbeeld _Uitwisseling
+geaccepteerd_), in jouw taal.
 
 ## Wie je een bericht kunt sturen
 

@@ -55,6 +55,7 @@ import {
   segmentMessages,
   systemEventText,
   threadSubjectTitle,
+  tradeEventText,
   type InboxThread,
   type ThreadItem,
 } from "./format";
@@ -611,7 +612,9 @@ function ThreadItemView({
         <Info className="mr-1 inline size-3.5 align-[-0.2em]" aria-hidden />
         {item.message.systemEvent
           ? systemEventText(item.message.systemEvent, meId, t, displayName)
-          : item.message.body}
+          : item.message.tradeEvent
+            ? tradeEventText(item.message.tradeEvent, t)
+            : item.message.body}
       </li>
     );
   }

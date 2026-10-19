@@ -769,6 +769,14 @@
       "sale": "Sale",
       "loan": "Loan"
     },
+    "tradeEvent": {
+      "proposed": "Exchange proposed",
+      "accepted": "Exchange accepted",
+      "rejected": "Exchange rejected",
+      "cancelled": "Exchange cancelled",
+      "completed": "Exchange completed",
+      "cancelled_member_deleted": "Exchange cancelled: the other member deleted their account"
+    },
     "goToExchange": "View exchange",
     "goToProfile": "View profile",
     "goToPuzzleNamed": "View {title}",
