@@ -2,9 +2,9 @@ import type { Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 
 // Identity ACL: resolve the acting member from Clerk auth WITHOUT throwing (unlike
-// requireMember): an unauthenticated caller, or one whose Clerk subject has no user row or only a
-// deactivated one, simply yields null. For reads that stay open to anonymous callers but disclose more to
-// a signed-in member.
+// requireMember): an unauthenticated caller, or one whose Clerk subject has no user row or only
+// a deactivated one, simply yields null. For reads that stay open to anonymous callers but
+// disclose more to a signed-in member.
 export const optionalActingMember = async (
   ctx: QueryCtx,
 ): Promise<Id<"users"> | null> => {
