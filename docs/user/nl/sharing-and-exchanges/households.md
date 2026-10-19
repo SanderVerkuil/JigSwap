@@ -130,6 +130,35 @@ huishouden en verandert er niets.
 Geen interesse? Klik op **Weigeren**. Bij het uitnodigen zie je nooit of
 iemand al in een huishouden zit.
 
+## Vragen om lid te worden met een oude uitnodigingslink
+
+Is een uitnodigingslink voor een huishouden verlopen of al gebruikt, dan kun
+je degene die hem deelde nog wel vragen om je toe te laten:
+
+1. Open de link terwijl je bent ingelogd.
+2. Klik op **Vragen om lid te worden**. Zit je al in een huishouden, lees dan
+   wat er met dat huishouden gebeurt en bevestig met **Verzoek sturen**: als
+   je wordt toegelaten, stap je meteen over, net als bij
+   **Verlaten en lid worden**.
+
+Je ziet **Verzoek verstuurd**. Het verzoek staat op je pagina **Huishouden**,
+en je kunt het altijd intrekken met **Verzoek intrekken**. Je krijgt een
+melding als je wordt toegelaten. Verzoeken sluiten na 14 dagen. Je kunt één
+keer per link vragen, één verzoek tegelijk open hebben en maximaal 10
+verzoeken per dag sturen. Een verzoek vertelt je nooit iets over het
+huishouden dat je nog niet wist.
+
+### Een verzoek beantwoorden (beheerder)
+
+De beheerder van het huishouden krijgt een melding, en een stip op het
+tabblad **Leden**. Onder **Wacht op antwoord** staat bij
+**Verzoeken om lid te worden** elk verzoek:
+
+- Klik op **Toelaten** en bevestig met **Toelaten**. Diegene wordt meteen lid.
+  Staat het verzoek niet meer open (bijvoorbeeld omdat het is ingetrokken),
+  dan zie je **Dit verzoek staat niet meer open.**
+- Klik op **Weigeren** om nee te zeggen. Diegene krijgt dat niet te horen.
+
 ## Alle puzzels in het huishouden bekijken
 
 Het tabblad **Puzzels** toont elke puzzel in het huishouden: die van jou en

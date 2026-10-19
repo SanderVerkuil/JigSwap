@@ -30,6 +30,9 @@ meteen vindt waarvoor je kwam.
 - **Alle openstaande uitnodigingen in één lijst.** Het tabblad **Leden** toont
   elke uitnodiging die nog op antwoord wacht, in de app en per e-mail, en je
   kunt ze allemaal intrekken.
+- **Vragen om lid te worden.** Een uitnodigingslink voor een huishouden die
+  verlopen of al gebruikt is? Open hem en vraag of je erbij mag. De beheerder
+  laat je toe of weigert op het tabblad **Leden**.
 - **Een naam voor je huishouden.** De beheerder geeft het huishouden een naam
   op het tabblad **Instellingen**. Alleen de leden zien die naam.
 - **In één stap overstappen.** Zit je al in een huishouden en word je
