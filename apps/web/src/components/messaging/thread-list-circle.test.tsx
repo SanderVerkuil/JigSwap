@@ -237,3 +237,39 @@ describe("ThreadList circle rows", () => {
     ).toBeTruthy();
   });
 });
+
+describe("ThreadList trade lifecycle rows", () => {
+  const exchangeRow = (
+    lastMessage: AnyInboxThread["lastMessage"],
+  ): AnyInboxThread => ({
+    ...dmThread,
+    threadId: "ex_1",
+    subject: {
+      kind: "exchange",
+      exchangeId: "exchange_1",
+      exchangeType: "trade",
+      puzzleTitle: "Night Harbour",
+      otherMember: person("u_mara", "Mara"),
+      profileHandle: "mara",
+    },
+    lastMessage,
+  });
+
+  it("previews a trade line in the viewer's language", () => {
+    renderList(
+      [
+        exchangeRow({
+          id: "ex-m",
+          isMine: false,
+          kind: "system",
+          body: "exchange_proposed",
+          tradeEvent: { kind: "proposed" },
+          sentAt: 1,
+        }),
+      ],
+      "nl",
+    );
+    expect(screen.getByText("Uitwisseling voorgesteld")).toBeTruthy();
+    expect(screen.queryByText("exchange_proposed")).toBeNull();
+  });
+});

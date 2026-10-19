@@ -3,7 +3,6 @@ import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { CANCELLED_BY_DELETION_BODY } from "./conversation/purgeMemberLibrary";
 import schema from "./schema";
 
 // Account deletion beyond messaging (spec 2026-10-19 deleted member ghost): users.deleteUser
@@ -285,7 +284,8 @@ describe("account deletion: the other party of an open trade is told", () => {
 
       expect(await lastThreadMessage(t, who, exchangeId)).toMatchObject({
         kind: "system",
-        body: CANCELLED_BY_DELETION_BODY,
+        body: "exchange_cancelled_member_deleted",
+        tradeEvent: { kind: "cancelled_member_deleted" },
       });
     }
     // Dave's account is gone too: nobody to tell.

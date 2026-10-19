@@ -216,9 +216,66 @@ describe("getMyInbox", () => {
       expect(subject.exchangeType).toBe("sale");
       expect(subject.puzzleTitle).toBe("Test Puzzle");
       expect(inbox[0].lastMessage?.kind).toBe("system");
-      expect(inbox[0].lastMessage?.body).toBe("Exchange proposed");
+      expect(inbox[0].lastMessage?.tradeEvent).toEqual({ kind: "proposed" });
       expect(inbox[0].lastMessage?.isMine).toBe(false);
     }
+  });
+});
+
+describe("trade lifecycle lines", () => {
+  test("a row stored before tradeEvent existed maps its English body; an unknown body stays plain", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seed(t);
+    const copy = await seedSaleCopy(t, bob);
+    await asAlice(t).mutation(api.exchange.propose.propose, {
+      recipientId: bob,
+      type: "sale",
+      requestedPuzzleId: copy,
+      salePrice: 1000,
+    });
+    await flushScheduled(t);
+
+    // Rewrite the lifecycle row (and its inbox summary) the way it was stored before: English
+    // body, no tradeEvent. Add a system row whose body names no known step.
+    const threadId = await t.run(async (ctx) => {
+      const thread = (await ctx.db.query("threads").first())!;
+      const row = (await ctx.db.query("threadMessages").first())!;
+      await ctx.db.patch(row._id, {
+        body: "Exchange proposed",
+        tradeEvent: undefined,
+      });
+      await ctx.db.insert("threadMessages", {
+        threadAggregateId: thread.aggregateId,
+        messageId: "legacy-other",
+        kind: "system",
+        body: "Something else happened",
+        sentAt: row.sentAt - 1,
+      });
+      await ctx.db.patch(thread._id, {
+        lastMessage: {
+          messageId: row.messageId,
+          kind: "system",
+          body: "Exchange proposed",
+          sentAt: row.sentAt,
+        },
+      });
+      return thread.aggregateId;
+    });
+
+    const inbox = await asBob(t).query(
+      api.conversation.getMyInbox.getMyInbox,
+      {},
+    );
+    expect(inbox[0].lastMessage?.tradeEvent).toEqual({ kind: "proposed" });
+
+    const messages = await asBob(t).query(
+      api.conversation.getThreadMessages.getThreadMessages,
+      { threadId },
+    );
+    expect(messages.map((m) => [m.body, m.tradeEvent?.kind ?? null])).toEqual([
+      ["Something else happened", null],
+      ["Exchange proposed", "proposed"],
+    ]);
   });
 });
 

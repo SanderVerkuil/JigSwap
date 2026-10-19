@@ -443,16 +443,12 @@ describe("blockMember side effects", () => {
           )
           .collect(),
       );
-      return messages.filter((m) => m.kind === "system").map((m) => m.body);
+      return messages
+        .filter((m) => m.kind === "system")
+        .map((m) => m.tradeEvent?.kind);
     };
-    expect(await systemBodies(fromBob)).toEqual([
-      "Exchange proposed",
-      "Exchange rejected",
-    ]);
-    expect(await systemBodies(fromAlice)).toEqual([
-      "Exchange proposed",
-      "Exchange cancelled",
-    ]);
+    expect(await systemBodies(fromBob)).toEqual(["proposed", "rejected"]);
+    expect(await systemBodies(fromAlice)).toEqual(["proposed", "cancelled"]);
     // No "they cancelled" ever reaches the blocker: bob didn't do anything.
     const alicesNotifications = await t.run((ctx) =>
       ctx.db

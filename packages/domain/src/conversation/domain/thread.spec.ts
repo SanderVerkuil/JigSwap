@@ -10,7 +10,7 @@ import {
 import { MAX_CAPTION_LENGTH, MAX_MESSAGE_LENGTH } from "./errors";
 import { MessagePosted, ParticipantJoined, ParticipantLeft } from "./events";
 import { MemberId, MessageId, ThreadId } from "./ids";
-import { SYSTEM_EVENT_BODY } from "./message";
+import { SYSTEM_EVENT_BODY, TRADE_EVENT_BODY } from "./message";
 import { Thread, ThreadSubject } from "./thread";
 
 const alice = toMemberId("alice");
@@ -388,6 +388,22 @@ describe("Thread.postSystemMessage", () => {
     };
     expect(posted.authorId).toBeNull();
     expect(posted.kind).toBe("system");
+  });
+
+  it("carries a trade lifecycle row's structured tradeEvent", () => {
+    const thread = openThread();
+
+    const result = thread.postSystemMessage({
+      id: msg1,
+      body: TRADE_EVENT_BODY.accepted,
+      sentAt: NOW,
+      tradeEvent: { kind: "accepted" },
+    });
+
+    expect(result.isOk).toBe(true);
+    if (!result.isOk) return;
+    expect(result.value.tradeEvent).toEqual({ kind: "accepted" });
+    expect(result.value.body).toBe("exchange_accepted");
   });
 
   it("rejects an empty system body", () => {

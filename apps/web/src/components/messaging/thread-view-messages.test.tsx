@@ -15,6 +15,7 @@ import type { ReactNode } from "react";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
+import nl from "../../../locales/nl.json";
 import type { InboxThread } from "./format";
 import { ThreadView } from "./thread-view";
 
@@ -125,9 +126,17 @@ const MESSAGES = [
     sentAt: 4,
     removed: true,
   },
+  {
+    id: "m5",
+    isMine: false,
+    kind: "system",
+    body: "exchange_completed",
+    tradeEvent: { kind: "completed" },
+    sentAt: 5,
+  },
 ];
 
-const renderThread = (thread: InboxThread) => {
+const renderThread = (thread: InboxThread, locale: "en" | "nl" = "en") => {
   const convexQueryClient = new ConvexQueryClient(
     new ConvexReactClient("https://example.convex.cloud"),
   );
@@ -148,7 +157,11 @@ const renderThread = (thread: InboxThread) => {
   );
   render(
     <QueryClientProvider client={queryClient}>
-      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+      <IntlProvider
+        locale={locale}
+        messages={locale === "en" ? en : nl}
+        timeZone="Europe/Amsterdam"
+      >
         <ThreadView threadId={thread.threadId} />
       </IntlProvider>
     </QueryClientProvider>,
@@ -414,5 +427,19 @@ describe("ThreadView photos", () => {
     await waitFor(() =>
       expect(region?.textContent).toBe("Mara shared a location"),
     );
+  });
+});
+
+describe("ThreadView trade lifecycle lines", () => {
+  it("renders a trade line from its tradeEvent in the reader's language", () => {
+    renderThread(exchangeThread(), "nl");
+    expect(screen.getByText("Uitwisseling voltooid")).toBeTruthy();
+    expect(screen.queryByText("exchange_completed")).toBeNull();
+  });
+
+  it("renders it in English for an English reader, and an unmapped system line as its body", () => {
+    renderThread(exchangeThread());
+    expect(screen.getByText("Exchange completed")).toBeTruthy();
+    expect(screen.getByText("Trade accepted")).toBeTruthy();
   });
 });

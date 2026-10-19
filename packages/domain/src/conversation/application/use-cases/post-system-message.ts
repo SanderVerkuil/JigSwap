@@ -40,6 +40,7 @@ export const makePostSystemMessage =
       id: deps.messageIds.next(),
       body: cmd.body,
       sentAt: deps.clock.now(),
+      ...(cmd.tradeEvent !== undefined && { tradeEvent: cmd.tradeEvent }),
     });
     if (message.isErr) return err(message.error);
 

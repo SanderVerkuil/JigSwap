@@ -139,7 +139,42 @@ type MessageFields = Pick<
   | "sentAt"
   | "attachmentId"
   | "removedAt"
+  | "tradeEvent"
 >;
+
+type TradeEvent = NonNullable<Doc<"threadMessages">["tradeEvent"]>;
+
+// The English bodies trade lifecycle rows were written with before they carried a `tradeEvent`
+// (conversation/subscriber and the account-deletion purge wrote exactly these strings, and the
+// legacy-chat backfill copied the same ones), so those rows render translated too.
+const LEGACY_TRADE_EVENT_BODIES: Readonly<Record<string, TradeEvent["kind"]>> =
+  {
+    "Exchange proposed": "proposed",
+    "Exchange accepted": "accepted",
+    "Exchange rejected": "rejected",
+    "Exchange cancelled": "cancelled",
+    "Exchange completed": "completed",
+    "Exchange cancelled: the other member deleted their account":
+      "cancelled_member_deleted",
+  };
+
+/**
+ * A system row's trade lifecycle step: its stored `tradeEvent`, or, for a row written before
+ * that existed, the step its English body names. Undefined for any other row (the client then
+ * shows the body as-is).
+ */
+export const tradeEventOf = (
+  row: Pick<MessageFields, "kind" | "body" | "tradeEvent">,
+): TradeEvent | undefined => {
+  if (row.kind !== "system") return undefined;
+  if (row.tradeEvent !== undefined) return row.tradeEvent;
+  return Object.prototype.hasOwnProperty.call(
+    LEGACY_TRADE_EVENT_BODIES,
+    row.body,
+  )
+    ? { kind: LEGACY_TRADE_EVENT_BODIES[row.body] }
+    : undefined;
+};
 
 /**
  * Message row -> DTO for viewer `me`. Authorship is viewer-relative (`isMine`); the raw author id
@@ -157,16 +192,20 @@ type MessageFields = Pick<
 export const toThreadMessageView = (
   row: MessageFields,
   me: Id<"users">,
-): ThreadMessageView => ({
-  id: row.messageId,
-  isMine: row.authorId === me,
-  kind: row.kind,
-  body: isUnattachedMedia(row) || row.removedAt !== undefined ? "" : row.body,
-  sentAt: row.sentAt,
-  ...(row.removedAt !== undefined
-    ? { removed: true as const }
-    : row.attachmentId !== undefined && { attachmentId: row.attachmentId }),
-});
+): ThreadMessageView => {
+  const tradeEvent = tradeEventOf(row);
+  return {
+    id: row.messageId,
+    isMine: row.authorId === me,
+    kind: row.kind,
+    body: isUnattachedMedia(row) || row.removedAt !== undefined ? "" : row.body,
+    sentAt: row.sentAt,
+    ...(row.removedAt !== undefined
+      ? { removed: true as const }
+      : row.attachmentId !== undefined && { attachmentId: row.attachmentId }),
+    ...(tradeEvent !== undefined && { tradeEvent }),
+  };
+};
 
 /**
  * A thread's denormalized `lastMessage` summary -> the inbox preview DTO. The summary was
@@ -176,14 +215,18 @@ export const toThreadMessageView = (
 export const toLastMessageView = (
   summary: NonNullable<Doc<"threads">["lastMessage"]>,
   me: Id<"users">,
-): ThreadMessageView => ({
-  id: summary.messageId,
-  isMine: summary.authorId === me,
-  kind: summary.kind,
-  body: summary.body,
-  sentAt: summary.sentAt,
-  ...(summary.removed && { removed: true as const }),
-});
+): ThreadMessageView => {
+  const tradeEvent = tradeEventOf(summary);
+  return {
+    id: summary.messageId,
+    isMine: summary.authorId === me,
+    kind: summary.kind,
+    body: summary.body,
+    sentAt: summary.sentAt,
+    ...(summary.removed && { removed: true as const }),
+    ...(tradeEvent !== undefined && { tradeEvent }),
+  };
+};
 
 // Unread counting stops once 50 QUALIFYING (post-receipt, not-own-authored) messages are found,
 // so a count of 50 genuinely means "50 or more" and the UI can render it as "50+" — a badge past

@@ -123,6 +123,9 @@ export const toMessageRow = (
       memberId: message.systemEvent.memberId as unknown as Id<"users">,
     },
   }),
+  ...(message.tradeEvent !== undefined && {
+    tradeEvent: { kind: message.tradeEvent.kind },
+  }),
 });
 
 // Whether a row's body must never reach a renderer: a media row (image/location) WITHOUT an
@@ -155,6 +158,7 @@ export const toLastMessage = (
     ? { removed: true as const }
     : row.copyId !== undefined && { copyId: row.copyId }),
   ...(row.systemEvent !== undefined && { systemEvent: row.systemEvent }),
+  ...(row.tradeEvent !== undefined && { tradeEvent: row.tradeEvent }),
 });
 
 // Rows -> aggregate state. `exchangeId` is the OUTBOUND aggregateId, supplied by the repository

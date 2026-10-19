@@ -18,6 +18,7 @@ import {
   Message,
   MessageState,
   SystemEvent,
+  TradeEvent,
 } from "./message";
 
 // A thread's subject: what the conversation is about. Exchange threads are opened by the
@@ -68,12 +69,14 @@ export interface PostMessageProps {
 }
 
 // Input to post a service-authored system message: no member author, just the body and instant.
-// A circle thread's join/leave row also carries its structured `systemEvent`.
+// A circle thread's join/leave row also carries its structured `systemEvent`, an exchange
+// thread's lifecycle row its `tradeEvent`.
 export interface PostSystemMessageProps {
   readonly id: MessageId;
   readonly body: string;
   readonly sentAt: Date;
   readonly systemEvent?: SystemEvent;
+  readonly tradeEvent?: TradeEvent;
 }
 
 // The persistable shape of a Thread, kept close to the storage columns so the 1b mapper is a
@@ -320,6 +323,9 @@ export class Thread {
           sentAt: props.sentAt,
           ...(props.systemEvent !== undefined && {
             systemEvent: props.systemEvent,
+          }),
+          ...(props.tradeEvent !== undefined && {
+            tradeEvent: props.tradeEvent,
           }),
         },
         props.sentAt,

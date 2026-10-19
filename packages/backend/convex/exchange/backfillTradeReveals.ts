@@ -16,7 +16,8 @@ export const BACKFILL_TRADE_REVEALS_BATCH = 25;
 // FAILS CLOSED (the owner stays hidden) rather than blowing the transaction.
 export const MESSAGE_SCAN_CAP = 200;
 
-// The lifecycle system message conversation/subscriber posts on ExchangeAccepted.
+// The lifecycle system message conversation/subscriber posted on ExchangeAccepted before rows
+// carried a structured `tradeEvent`.
 const ACCEPTED_LIFECYCLE_BODY = "Exchange accepted";
 
 type Counts = {
@@ -56,7 +57,10 @@ const historyOf = async (ctx: MutationCtx, exchange: Doc<"exchanges">) => {
         (m) => m.senderId === owner && m.messageType !== "system",
       ),
     acceptedLifecycleMessage: threadMessages.some(
-      (m) => m.kind === "system" && m.body === ACCEPTED_LIFECYCLE_BODY,
+      (m) =>
+        m.kind === "system" &&
+        (m.tradeEvent?.kind === "accepted" ||
+          m.body === ACCEPTED_LIFECYCLE_BODY),
     ),
   };
 };

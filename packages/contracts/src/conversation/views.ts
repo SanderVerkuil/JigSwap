@@ -36,6 +36,20 @@ export interface ThreadMessageView {
     readonly kind: "joined" | "left";
     readonly member?: ProjectedMember;
   };
+  /**
+   * An exchange thread's lifecycle row (kind "system"): the trade step it records, for the client
+   * to render in the reader's language. Also set on rows stored before it existed, mapped from
+   * their English body; absent on every other message.
+   */
+  readonly tradeEvent?: {
+    readonly kind:
+      | "proposed"
+      | "accepted"
+      | "rejected"
+      | "cancelled"
+      | "completed"
+      | "cancelled_member_deleted";
+  };
   readonly kind: "text" | "image" | "location" | "system";
   /** Text: the message. Media (image/location): the optional caption, "" when none. */
   readonly body: string;

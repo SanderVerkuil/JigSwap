@@ -21,6 +21,32 @@ export interface SystemEvent {
 export const SYSTEM_EVENT_BODY: Readonly<Record<SystemEvent["kind"], string>> =
   { joined: "member_joined", left: "member_left" };
 
+// The trade lifecycle facts an exchange thread's system message records, so each reader's client
+// renders the line in their own language instead of a stored English sentence.
+// `cancelled_member_deleted`: the other party deleted their account while the trade was open.
+export type TradeEventKind =
+  | "proposed"
+  | "accepted"
+  | "rejected"
+  | "cancelled"
+  | "completed"
+  | "cancelled_member_deleted";
+
+export interface TradeEvent {
+  readonly kind: TradeEventKind;
+}
+
+// The stored body of a trade lifecycle system message: a render-neutral token, like
+// SYSTEM_EVENT_BODY (the renderer uses `tradeEvent`; the body only satisfies the non-empty rule).
+export const TRADE_EVENT_BODY: Readonly<Record<TradeEventKind, string>> = {
+  proposed: "exchange_proposed",
+  accepted: "exchange_accepted",
+  rejected: "exchange_rejected",
+  cancelled: "exchange_cancelled",
+  completed: "exchange_completed",
+  cancelled_member_deleted: "exchange_cancelled_member_deleted",
+};
+
 // A Message is an immutable entity within the Thread aggregate. `authorId` is the posting member
 // for text/media messages and null for system messages. Messages are only ever constructed by
 // the Thread (which enforces the participant/authoring/non-empty invariants), so there is no
@@ -39,6 +65,8 @@ export interface MessageState {
   readonly attachmentRef?: string;
   // The join/leave fact of a circle thread's system message; absent on every other message.
   readonly systemEvent?: SystemEvent;
+  // The trade lifecycle fact of an exchange thread's system message; absent on every other one.
+  readonly tradeEvent?: TradeEvent;
 }
 
 export class Message {
@@ -74,6 +102,10 @@ export class Message {
 
   get systemEvent(): SystemEvent | undefined {
     return this.state.systemEvent;
+  }
+
+  get tradeEvent(): TradeEvent | undefined {
+    return this.state.tradeEvent;
   }
 
   // Construct from already-validated state. Crossing into a Message never re-checks invariants;

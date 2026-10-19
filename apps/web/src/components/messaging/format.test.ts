@@ -3,7 +3,8 @@ import { createTranslator } from "use-intl";
 import { describe, expect, it } from "vitest";
 import enMessages from "../../../locales/en.json";
 import nlMessages from "../../../locales/nl.json";
-import type { InboxThread, Translator } from "./format";
+import sourceMessages from "../../../locales/source.json";
+import type { AnyInboxThread, InboxThread, Translator } from "./format";
 import {
   contextCopyHref,
   conversationErrorCode,
@@ -16,6 +17,7 @@ import {
   groupThreadMessages,
   threadQuickLinks,
   threadSubjectTitle,
+  tradeEventText,
 } from "./format";
 
 // Deterministic translator stub: bare key when no values, key + values when
@@ -469,5 +471,48 @@ describe("copyOwnerHint", () => {
     expect(
       copyOwnerHint("other", anonymised, translators.en, () => "Leaked Name"),
     ).not.toContain("Leaked");
+  });
+});
+
+describe("tradeEventText", () => {
+  type Kind = NonNullable<
+    NonNullable<AnyInboxThread["lastMessage"]>["tradeEvent"]
+  >["kind"];
+  // A Record so a new kind fails type-check here until it is listed (and so translated).
+  const KINDS: Record<Kind, true> = {
+    proposed: true,
+    accepted: true,
+    rejected: true,
+    cancelled: true,
+    completed: true,
+    cancelled_member_deleted: true,
+  };
+
+  it.each([
+    ["en", enMessages],
+    ["nl", nlMessages],
+    ["source", sourceMessages],
+  ] as const)("has a %s string for every kind", (locale, messages) => {
+    const t = createTranslator({
+      locale: locale === "nl" ? "nl" : "en",
+      messages,
+      namespace: "messages",
+    }) as unknown as Translator;
+    for (const kind of Object.keys(KINDS) as Kind[]) {
+      const text = tradeEventText({ kind }, t);
+      expect(text).not.toContain("tradeEvent.");
+      expect(text.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("reads in the viewer's language", () => {
+    const t = createTranslator({
+      locale: "nl",
+      messages: nlMessages,
+      namespace: "messages",
+    }) as unknown as Translator;
+    expect(tradeEventText({ kind: "rejected" }, t)).toBe(
+      "Uitwisseling afgewezen",
+    );
   });
 });

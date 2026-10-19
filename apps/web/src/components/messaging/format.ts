@@ -84,6 +84,17 @@ export function systemEventText(
   });
 }
 
+type TradeEvent = NonNullable<AnyInboxThread["lastMessage"]>["tradeEvent"];
+
+// An exchange thread's lifecycle row ("Exchange accepted"), in the reader's language. The server
+// also sets `tradeEvent` on rows stored as English text before it existed.
+export function tradeEventText(
+  event: NonNullable<TradeEvent>,
+  t: Translator,
+): string {
+  return t(`tradeEvent.${event.kind}`);
+}
+
 // A `useTranslations("messages")` translator, loosened so these helpers can be
 // shared between the list rows, the thread header, and the nav badge.
 export type Translator = (

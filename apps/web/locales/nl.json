@@ -769,6 +769,14 @@
       "sale": "Verkoop",
       "loan": "Uitleen"
     },
+    "tradeEvent": {
+      "proposed": "Uitwisseling voorgesteld",
+      "accepted": "Uitwisseling geaccepteerd",
+      "rejected": "Uitwisseling afgewezen",
+      "cancelled": "Uitwisseling geannuleerd",
+      "completed": "Uitwisseling voltooid",
+      "cancelled_member_deleted": "Uitwisseling geannuleerd: het account van het andere lid is verwijderd"
+    },
     "goToExchange": "Uitwisseling bekijken",
     "goToProfile": "Profiel bekijken",
     "goToPuzzleNamed": "{title} bekijken",

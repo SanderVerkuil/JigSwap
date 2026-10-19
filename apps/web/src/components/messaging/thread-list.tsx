@@ -35,6 +35,7 @@ import {
   formatFullDateTime,
   formatUnreadCount,
   threadSubjectTitle,
+  tradeEventText,
   type AnyInboxThread,
   type InboxThread,
   type Translator,
@@ -377,6 +378,10 @@ function pairSnippet(
   displayName: ReturnType<typeof useMemberDisplayName>,
 ): string {
   const last = thread.lastMessage;
+  // A trade lifecycle row reads in the viewer's language.
+  if (last?.kind === "system" && last.tradeEvent) {
+    return tradeEventText(last.tradeEvent, t);
+  }
   // A removed message has an empty body: name the removal instead.
   const body = last?.removed
     ? removedLabel

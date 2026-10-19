@@ -5,6 +5,7 @@ import {
   toCircleId,
   toExchangeId,
   toMemberId,
+  TRADE_EVENT_BODY,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
@@ -32,11 +33,6 @@ type Page = { isDone: boolean; continueCursor: string };
 // "disputed" is terminal in the Exchange state machine and can follow a completed settlement (the
 // copies already moved), so it is trade history and stays, like completed/rejected/cancelled.
 const OPEN_EXCHANGE = new Set(["proposed", "accepted"]);
-
-// The system row posted in the exchange's thread. A fixed English identifier, like the lifecycle
-// bodies of conversation/subscriber (LIFECYCLE_BODIES).
-export const CANCELLED_BY_DELETION_BODY =
-  "Exchange cancelled: the other member deleted their account";
 
 /**
  * Tell the other party, when their account is still active: a trade_cancelled_member_deleted
@@ -72,7 +68,11 @@ const announceCancellation = async (
     messageIds: messageIdGenerator,
     events: inProcessEventPublisher(ctx),
     clock: systemClock,
-  })({ threadId: thread.id, body: CANCELLED_BY_DELETION_BODY });
+  })({
+    threadId: thread.id,
+    body: TRADE_EVENT_BODY.cancelled_member_deleted,
+    tradeEvent: { kind: "cancelled_member_deleted" },
+  });
   if (posted.isErr) throw toConvexError(posted.error);
 };
 
