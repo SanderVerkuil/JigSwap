@@ -10,6 +10,12 @@ export const WHATS_NEW_MANIFEST: readonly WhatsNewManifestEntry[] = [
     "notify": false
   },
   {
+    "id": "household-improvements",
+    "publishedAt": 1792411200000,
+    "highlight": false,
+    "notify": false
+  },
+  {
     "id": "more-messages-improvements",
     "publishedAt": 1792355400000,
     "highlight": true,

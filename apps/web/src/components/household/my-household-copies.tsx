@@ -80,7 +80,7 @@ export function MyHouseholdCopies({
   const targetIds = selectedVisibleIds(selected, visible);
 
   return (
-    <section className="space-y-3" data-tour="household-my-copies">
+    <section className="space-y-3">
       <div>
         <h2 className="font-heading text-lg font-bold">{t("title")}</h2>
         <p className="text-muted-foreground text-sm">{t("sub")}</p>
@@ -145,6 +145,8 @@ export function MyHouseholdCopies({
             <Button
               size="sm"
               variant="outline"
+              // The longest label: let it wrap on phones instead of running off the page.
+              className="h-auto min-h-8 max-w-full shrink whitespace-normal text-left"
               disabled={targetIds.length === 0 || setMany.isPending}
               onClick={() => setConfirmTarget("default")}
             >
