@@ -5,6 +5,7 @@ import { HouseholdPendingList } from "@/components/household/household-pending-l
 import { HouseholdPuzzles } from "@/components/household/household-puzzles";
 import { HouseholdSettings } from "@/components/household/household-settings";
 import { MyHouseholdCopies } from "@/components/household/my-household-copies";
+import { MyJoinRequestCard } from "@/components/household/my-join-request-card";
 import { PersonRow, type Person } from "@/components/household/person-row";
 import { SwitchHouseholdDialog } from "@/components/household/switch-household-dialog";
 import { EmptyState } from "@/components/library/empty-state";
@@ -99,27 +100,31 @@ export function NoHousehold({
 
   if (invites.length === 0) {
     return (
-      <EmptyState
-        title={t("empty.title")}
-        sub={t("empty.sub")}
-        action={
-          <Button
-            variant="brand"
-            data-tour="household-main"
-            data-tour-action=""
-            disabled={create.isPending}
-            onClick={() => create.mutate({})}
-          >
-            <House className="h-4 w-4" />
-            {t("empty.create")}
-          </Button>
-        }
-      />
+      <div className="flex min-w-0 flex-col gap-6">
+        <MyJoinRequestCard onError={onError} />
+        <EmptyState
+          title={t("empty.title")}
+          sub={t("empty.sub")}
+          action={
+            <Button
+              variant="brand"
+              data-tour="household-main"
+              data-tour-action=""
+              disabled={create.isPending}
+              onClick={() => create.mutate({})}
+            >
+              <House className="h-4 w-4" />
+              {t("empty.create")}
+            </Button>
+          }
+        />
+      </div>
     );
   }
 
   return (
     <div className="flex min-w-0 flex-col gap-6">
+      <MyJoinRequestCard onError={onError} />
       <section className="space-y-3" data-tour="household-main">
         <h2 className="font-heading text-lg font-bold">{t("invites.title")}</h2>
         {invites.map((invite) => (
@@ -245,6 +250,7 @@ export function HouseholdDetails({
 
   return (
     <div className="flex min-w-0 flex-col gap-6">
+      <MyJoinRequestCard onError={onError} />
       {invites.map((invite) => (
         <SwitchInviteCard
           key={invite.inviteId}
@@ -292,6 +298,16 @@ export function HouseholdDetails({
           >
             {t("tabs.members")}
             <TabCount count={household.members.length} />
+            {/* Requests to join wait on this (not default) tab: a dot tells the admin. */}
+            {isAdmin && household.joinRequests.length > 0 && (
+              <span className="bg-jigsaw-primary size-2 rounded-full">
+                <span className="sr-only">
+                  {t("pending.requestsDot", {
+                    count: household.joinRequests.length,
+                  })}
+                </span>
+              </span>
+            )}
           </TabsTrigger>
           <TabsTrigger
             value="sharing"
@@ -366,6 +382,7 @@ export function HouseholdDetails({
 
           {isAdmin && (
             <HouseholdPendingList
+              requests={household.joinRequests}
               inApp={household.pendingInvites}
               onError={onError}
             />

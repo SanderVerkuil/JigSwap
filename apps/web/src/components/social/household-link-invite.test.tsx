@@ -1,3 +1,4 @@
+import type { HouseholdLinkJoinRequestState } from "@jigswap/contracts";
 import { parseFragment, type DefaultTreeAdapterMap } from "parse5";
 import { renderToStaticMarkup } from "react-dom/server";
 import { IntlProvider } from "use-intl";
@@ -15,6 +16,7 @@ const render = (
   state: HouseholdLinkState,
   locale: "en" | "nl" = "en",
   busy = false,
+  joinRequest?: HouseholdLinkJoinRequestState,
 ) =>
   renderToStaticMarkup(
     <IntlProvider
@@ -28,6 +30,9 @@ const render = (
         busy={busy}
         onAccept={noop}
         onDecline={noop}
+        joinRequest={joinRequest}
+        onAskToJoin={noop}
+        onWithdraw={noop}
       />
     </IntlProvider>,
   );
@@ -120,5 +125,51 @@ describe("HouseholdLinkInviteCard", () => {
       "Ann heeft je uitgenodigd voor hun huishouden",
     ]);
     expect(buttons(html).map(textOf)).toEqual(["Accepteren", "Weigeren"]);
+  });
+});
+
+describe("HouseholdLinkInviteCard: asking to join", () => {
+  const buttons = (html: string) =>
+    elementsOf(html)
+      .filter((e) => e.tagName === "button")
+      .map(textOf);
+  const texts = (html: string) => elementsOf(html).map(textOf);
+
+  it("offers Ask to join on an expired or used link the member hasn't asked on", () => {
+    for (const state of ["expired", "used"] as const) {
+      const html = render(state, "en", false, { status: "none" });
+      expect(buttons(html)).toEqual(["Ask to join"]);
+      expect(texts(html).join(" ")).toContain(
+        "You can still ask Ann to let you in.",
+      );
+    }
+  });
+
+  it("shows a pending request as waiting, with Withdraw", () => {
+    const html = render("expired", "en", false, {
+      status: "pending",
+      requestId: "r1",
+      expiresAt: 1,
+    });
+    expect(texts(html)).toContain(
+      "You asked Ann to let you into their household",
+    );
+    expect(buttons(html)).toEqual(["Withdraw request"]);
+  });
+
+  it("offers nothing once the member's one request for this link is used up", () => {
+    const html = render("used", "en", false, { status: "closed" });
+    expect(buttons(html)).toEqual([]);
+    expect(texts(html).join(" ")).toContain("Ask Ann for a new one.");
+  });
+
+  it("never offers a request on an invalid link", () => {
+    expect(buttons(render("invalid", "en", false, undefined))).toEqual([]);
+  });
+
+  it("tells a member of the link's household that they're already in it", () => {
+    const html = render("own-household");
+    expect(texts(html)).toContain("You're already in this household.");
+    expect(buttons(html)).toEqual([]);
   });
 });
