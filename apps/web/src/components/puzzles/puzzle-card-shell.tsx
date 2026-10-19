@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Puzzle } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslations } from "use-intl";
+import { BoxArtCheckingLabel } from "./box-art-checking";
 import { usePuzzleView } from "./puzzle-view-provider";
 
 // Normalized view-model the shell renders. Both the catalog card and the
@@ -46,6 +47,8 @@ export interface PuzzleCardShellProps {
   /** How the cover image fills its square: "cover" crops to fill (default),
    *  "contain" shows the whole image letterboxed. */
   imageFit?: "cover" | "contain";
+  /** The viewer's own box art for this puzzle is still being checked: label the placeholder. */
+  imageChecking?: boolean;
   className?: string;
 }
 
@@ -77,6 +80,7 @@ export function PuzzleCardShell({
   href,
   imageHref,
   imageFit = "cover",
+  imageChecking = false,
   className,
 }: PuzzleCardShellProps) {
   const t = useTranslations("puzzles");
@@ -118,6 +122,7 @@ export function PuzzleCardShell({
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-jigsaw-primary/15 to-jigsaw-primary-accent/15 text-jigsaw-primary/50">
             <Puzzle className="h-1/3 w-1/3" />
+            {imageChecking && <BoxArtCheckingLabel />}
           </div>
         )}
         {overlay}

@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StarRating } from "@/components/ui/star-rating";
 import { gateway, Id } from "@/gateway";
+import { useBoxArtInCheck } from "@/hooks/use-box-art-check";
 import { useFavorites } from "@/hooks/use-favorites";
 import {
   useAuthorDisplayName,
@@ -127,6 +128,7 @@ function PuzzleDefinitionDetail({
 
   const { isFavorite, toggleFavorite } = useFavorites();
   const favorited = isFavorite(puzzleId);
+  const boxArtInCheck = useBoxArtInCheck();
   const favoriteLabel = favorited
     ? tCatalog("removeFromFavorites")
     : tCatalog("addToFavorites");
@@ -188,7 +190,7 @@ function PuzzleDefinitionDetail({
           {definition.image ? (
             <ImageZoom src={definition.image} alt={definition.title} fill />
           ) : (
-            <PuzzleCoverFallback />
+            <PuzzleCoverFallback checking={boxArtInCheck.has(puzzleId)} />
           )}
         </div>
 

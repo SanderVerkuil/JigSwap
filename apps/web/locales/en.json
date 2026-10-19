@@ -602,6 +602,10 @@
       "all": "All",
       "mine": "Mine",
       "household": "Household members'"
+    },
+    "boxArtCheck": {
+      "label": "Being checked",
+      "toast": "Your image is still being checked. Until it has passed, nobody sees it, you included: a placeholder is shown instead. It is checked again automatically, so there is nothing you need to do."
     }
   },
   "trades": {

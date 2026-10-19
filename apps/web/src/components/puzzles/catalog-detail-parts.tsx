@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import type { MemberNameSource } from "@jigswap/contracts";
 import { Puzzle } from "lucide-react";
 import type { ReactNode } from "react";
+import { BoxArtCheckingLabel } from "./box-art-checking";
 
 // Shared presentational pieces for the divider-led catalog detail pages
 // (puzzle definition + copy instance). Extracted so the two pages stay visually
@@ -30,10 +31,16 @@ export function difficultyClasses(difficulty?: string) {
 
 // The violet gradient + centered puzzle glyph used as the no-image cover
 // fallback across the catalog detail pages.
-export function PuzzleCoverFallback() {
+export function PuzzleCoverFallback({
+  checking = false,
+}: {
+  /** The viewer's own box art for this puzzle is still being checked. */
+  checking?: boolean;
+}) {
   return (
     <div className="from-jigsaw-primary/20 to-jigsaw-primary text-jigsaw-primary-foreground/70 absolute inset-0 flex items-center justify-center bg-gradient-to-br">
       <Puzzle className="h-1/3 w-1/3" />
+      {checking && <BoxArtCheckingLabel />}
     </div>
   );
 }

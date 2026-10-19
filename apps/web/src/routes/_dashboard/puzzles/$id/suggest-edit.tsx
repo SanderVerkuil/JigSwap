@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway, Id } from "@/gateway";
+import { useBoxArtCheckNotice } from "@/hooks/use-box-art-check";
 import { useUploadBoxArt } from "@/hooks/use-upload-box-art";
 import { pageTitle } from "@/lib/page-title";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -175,6 +176,7 @@ function SuggestEditForm({
   }, [coverPreview]);
 
   const uploadBoxArt = useUploadBoxArt();
+  const notifyBoxArtCheck = useBoxArtCheckNotice();
   const propose = useConvexMutation(gateway.catalog.proposeChange);
   const editProposal = useConvexMutation(gateway.catalog.editChangeProposal);
 
@@ -222,6 +224,7 @@ function SuggestEditForm({
           ...args,
         });
       }
+      await notifyBoxArtCheck(args.image);
     },
     onSuccess: () => {
       toast.success(t(openProposal ? "updated" : "submitted"));

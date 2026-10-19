@@ -147,6 +147,8 @@ export default defineSchema({
   })
     .index("by_storage", ["storageId"])
     .index("by_moderation_status", ["moderationStatus"])
+    // The uploader's own box art still being checked (catalog/boxArtInCheck).
+    .index("by_uploader_status", ["uploaderId", "moderationStatus"])
     .index("by_hash_check_pending", ["hashCheckPendingSince"]),
 
   // Puzzles  - the actual puzzle designs that exist in the world

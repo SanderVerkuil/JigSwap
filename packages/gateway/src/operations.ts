@@ -16,6 +16,9 @@ export const gateway = {
     importPuzzleImage: api.catalog.importPuzzleImage.importPuzzleImage,
     // Strip an uploaded box art's metadata server-side; returns the clean storage id.
     sanitizeBoxArt: api.catalog.sanitizeBoxArt.sanitizeBoxArt,
+    // The acting member's own box art still being checked (served to no one until it passes).
+    isMyBoxArtInCheck: api.catalog.boxArtInCheck.isMyBoxArtInCheck,
+    listMyBoxArtInCheck: api.catalog.boxArtInCheck.listMyBoxArtInCheck,
     createPuzzle: api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
     updatePuzzle: api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
     approve: api.catalog.approvePuzzleDefinition.approvePuzzleDefinition,
