@@ -1,5 +1,5 @@
 import type { Doc, Id } from "../../_generated/dataModel";
-import type { MutationCtx } from "../../_generated/server";
+import type { MutationCtx, QueryCtx } from "../../_generated/server";
 
 // Everything that holds a box-art blob: the definitions whose `image` it is, and the change
 // proposals that propose it (`changes.image`) or recorded it as the definition's image when they
@@ -11,7 +11,7 @@ export type BoxArtHolders = {
 };
 
 export const boxArtHolders = async (
-  ctx: MutationCtx,
+  ctx: QueryCtx,
   blob: Id<"_storage">,
 ): Promise<BoxArtHolders> => {
   const definitions = await ctx.db
@@ -63,4 +63,28 @@ export const repointBoxArt = async (
       }),
     });
   }
+};
+
+/**
+ * A label for box art in the admin console: the title of a definition holding it, else of the
+ * definition a proposal holding it is for (the proposed title when it changes the title), else
+ * null (the box art is not attached to anything, e.g. a form never saved).
+ */
+export const boxArtTitle = async (
+  ctx: QueryCtx,
+  blob: Id<"_storage">,
+): Promise<string | null> => {
+  const holders = await boxArtHolders(ctx, blob);
+  const definition = holders.definitions[0];
+  if (definition) return definition.title;
+  const proposal = holders.proposals[0];
+  if (!proposal) return null;
+  if (proposal.changes.title) return proposal.changes.title;
+  const proposed = await ctx.db
+    .query("puzzles")
+    .withIndex("by_aggregate_id", (q) =>
+      q.eq("aggregateId", proposal.puzzleDefinitionId),
+    )
+    .first();
+  return proposed?.title ?? null;
 };

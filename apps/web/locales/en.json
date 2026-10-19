@@ -4133,7 +4133,8 @@
         "removed": "Removed image on “{title}” — {count} left in queue.",
         "restored": "Restored photo on “{title}” — {count} left in queue.",
         "manualApproved": "Approved photo on “{title}” — {count} left in queue.",
-        "manualRejected": "Rejected photo on “{title}” — {count} left in queue."
+        "manualRejected": "Rejected photo on “{title}” — {count} left in queue.",
+        "recheckQueued": "Checking the box art on “{title}” again."
       },
       "banner": {
         "pill": "ADMIN",
@@ -4230,7 +4231,8 @@
         },
         "source": {
           "copy": "Copy photo",
-          "completion": "Completion photo"
+          "completion": "Completion photo",
+          "boxArt": "Box art"
         },
         "reason": {
           "missing_token": "Screening not configured",
@@ -4252,7 +4254,8 @@
         "approve": "Approve Photo",
         "reject": "Reject Photo",
         "rejectArm": "Are you sure?",
-        "hint": "Approving publishes the photo to other members. Rejecting hides it; a rejected copy photo moves to Flagged Images, a rejected completion photo is deleted."
+        "recheck": "Check again",
+        "hint": "Approving publishes the photo to other members. Rejecting hides it; a rejected copy photo moves to Flagged Images, a rejected completion photo is deleted, and rejected box art is removed from its puzzle and deleted. Check again runs the automated check on box art once more, for example after the screening service is working again."
       },
       "csam": {
         "loading": "Loading hash matches…",

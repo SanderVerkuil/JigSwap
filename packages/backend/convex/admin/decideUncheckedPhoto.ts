@@ -1,8 +1,10 @@
 import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
+import { detachRejectedBoxArt } from "../catalog/boxArtModerationStore";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
+import { boxArtTitle } from "../lib/imageModeration/boxArtReferences";
 import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 import { detachRejectedCompletionPhoto } from "../solving/completionModerationStore";
 import { stampModerationAction } from "./stampModerationAction";
@@ -16,10 +18,16 @@ import { stampModerationAction } from "./stampModerationAction";
 // A rejected COPY photo moves to the Flagged Images queue (status "rejected"), where it can be
 // restored or its removal confirmed (which deletes it and notifies the uploader), exactly like an
 // automatic rejection. A rejected COMPLETION photo gets the same side effects as an automatic
-// rejection: it is detached from the completion and its blob deleted.
+// rejection: it is detached from the completion and its blob deleted. Rejected BOX ART likewise
+// (catalog/boxArtModerationStore.detachRejectedBoxArt): detached from every definition and
+// proposal holding it and its blob deleted; approved box art is served (boxArtUrl).
 export const decideUncheckedPhoto = mutation({
   args: {
-    source: v.union(v.literal("copy"), v.literal("completion")),
+    source: v.union(
+      v.literal("copy"),
+      v.literal("completion"),
+      v.literal("boxArt"),
+    ),
     imageId: v.string(),
     decision: v.union(v.literal("approve"), v.literal("reject")),
   },
@@ -62,6 +70,35 @@ export const decideUncheckedPhoto = mutation({
         actorId: memberId,
         kind,
         targetLabel: title ?? imageId,
+        targetId: imageId,
+      });
+      return;
+    }
+
+    if (source === "boxArt") {
+      const id = ctx.db.normalizeId("boxArtUploads", imageId);
+      const row = id ? await ctx.db.get(id) : null;
+      if (!id || !row) throw new ConvexError("Photo not found");
+      if (
+        row.moderationStatus !== "pending" &&
+        row.moderationStatus !== "unscored"
+      ) {
+        throw new ConvexError("Photo is already decided");
+      }
+      if (!isHashCleared(row)) {
+        throw new ConvexError("Photo has not passed the hash check yet");
+      }
+      const title = (await boxArtTitle(ctx, row.storageId)) ?? "Box art";
+      await ctx.db.patch(id, {
+        moderationStatus: status,
+        moderationReason: undefined,
+        moderatedBy: memberId,
+      });
+      if (decision === "reject") await detachRejectedBoxArt(ctx, row);
+      await stampModerationAction(ctx, {
+        actorId: memberId,
+        kind,
+        targetLabel: title,
         targetId: imageId,
       });
       return;

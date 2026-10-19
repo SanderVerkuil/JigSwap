@@ -24,6 +24,7 @@ const photo: UncheckedPhoto = {
   puzzleTitle: "Mountain Vista",
   uploaderName: "alice",
   uploadedAt: 0,
+  canRecheck: false,
 };
 
 let container: HTMLDivElement;
@@ -55,6 +56,7 @@ const render = (
           busy={false}
           onApprove={() => {}}
           onReject={() => {}}
+          onRecheck={() => {}}
           {...props}
         />
       </IntlProvider>,
@@ -107,6 +109,28 @@ describe("UncheckedDetail", () => {
     });
     act(() => button("Reject Photo").click());
     expect(onReject).not.toHaveBeenCalled();
+  });
+
+  it("offers Check again only for box art that can be re-checked (en/nl)", () => {
+    render();
+    expect(button("Check again")).toBeUndefined();
+    const onRecheck = vi.fn();
+    render({
+      photo: {
+        ...photo,
+        key: "boxArt:b1",
+        source: "boxArt",
+        imageId: "b1",
+        canRecheck: true,
+      },
+      onRecheck,
+    });
+    expect(container.textContent).toContain("Box art");
+    act(() => button("Check again").click());
+    expect(onRecheck).toHaveBeenCalledTimes(1);
+    render({ photo: { ...photo, source: "boxArt", canRecheck: true } }, "nl");
+    expect(container.textContent).toContain("Opnieuw controleren");
+    expect(container.textContent).toContain("Catalogusafbeelding");
   });
 
   it("busy disables both decisions", () => {

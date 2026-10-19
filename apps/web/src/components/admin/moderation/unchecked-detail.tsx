@@ -2,14 +2,15 @@
 
 // Detail pane for a photo the classifier has not decided (pending / unscored): the image behind
 // the same blur-until-reveal guard as the flagged pane, a metadata grid (status, why it could not
-// be checked, puzzle, uploader) and the two manual decisions. Mutations live in the route; reject
-// uses the app's two-step inline confirm (first click arms, second fires, disarms after 3s).
+// be checked, puzzle, uploader) and the two manual decisions, plus "Check again" for unscored box
+// art (`canRecheck`). Mutations live in the route; reject uses the app's two-step inline confirm
+// (first click arms, second fires, disarms after 3s).
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
 import type { FunctionReturnType } from "convex/server";
-import { Check, EyeOff, ImageOff, X } from "lucide-react";
+import { Check, EyeOff, ImageOff, RotateCw, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "use-intl";
 
@@ -35,11 +36,13 @@ export function UncheckedDetail({
   busy,
   onApprove,
   onReject,
+  onRecheck,
 }: {
   photo: UncheckedPhoto;
   busy: boolean;
   onApprove: () => void;
   onReject: () => void;
+  onRecheck: () => void;
 }) {
   const t = useTranslations("admin.moderation.unchecked");
   // NOTE: the caller keys this pane by photo, so reveal/armed state never carries over.
@@ -126,6 +129,12 @@ export function UncheckedDetail({
           <X aria-hidden />
           {armed ? t("rejectArm") : t("reject")}
         </Button>
+        {photo.canRecheck && (
+          <Button variant="outline" onClick={onRecheck} disabled={busy}>
+            <RotateCw aria-hidden />
+            {t("recheck")}
+          </Button>
+        )}
       </div>
     </div>
   );
