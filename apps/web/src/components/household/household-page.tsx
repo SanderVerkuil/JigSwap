@@ -1,6 +1,7 @@
 import { CircleAvatarStack } from "@/components/circles/circle-avatar-stack";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { HouseholdInviteDialog } from "@/components/household/household-invite-dialog";
+import { HouseholdPuzzles } from "@/components/household/household-puzzles";
 import { HouseholdSettings } from "@/components/household/household-settings";
 import { MyHouseholdCopies } from "@/components/household/my-household-copies";
 import { PersonRow, type Person } from "@/components/household/person-row";
@@ -34,6 +35,7 @@ import {
 } from "@/components/ui/underline-tabs";
 import { gateway, Id } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
+import { cn } from "@/lib/utils";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
@@ -51,10 +53,14 @@ import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
 // The household page's views (the route in routes/_dashboard/household.tsx only loads the data
-// and owns the ?tab= search param). Members (default), My puzzles and Settings tabs; the admin's
-// single Invite action lives in the shell page head and opens HouseholdInviteDialog.
+// and owns the ?tab= search param). Puzzles (default: every puzzle in the household), Members,
+// Sharing (the viewer's own puzzles' household access) and Settings tabs; the admin's single
+// Invite action lives in the shell page head and opens HouseholdInviteDialog.
 
-export type HouseholdTab = "members" | "puzzles" | "settings";
+export type HouseholdTab = "puzzles" | "members" | "sharing" | "settings";
+
+// Four tabs fit a phone's width with a tighter trigger padding below sm.
+const HOUSEHOLD_TAB_CLASS = cn(TAB_TRIGGER_CLASS, "px-2 sm:px-4");
 
 export type HouseholdData = NonNullable<
   FunctionReturnType<typeof gateway.household.mine>
@@ -247,7 +253,10 @@ export function HouseholdDetails({
         />
       ))}
 
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+      <div
+        data-tour="household-main"
+        className="flex flex-wrap items-center gap-x-3 gap-y-2"
+      >
         <CircleAvatarStack
           circleName={household.name ?? t("header.stackName")}
           members={household.members.map((member) => ({
@@ -270,25 +279,40 @@ export function HouseholdDetails({
         onValueChange={(value) => onTabChange(value as HouseholdTab)}
       >
         <TabsList className={UNDERLINE_TABS_LIST_CLASS}>
-          <TabsTrigger value="members" className={TAB_TRIGGER_CLASS}>
+          <TabsTrigger value="puzzles" className={HOUSEHOLD_TAB_CLASS}>
+            {t("tabs.puzzles")}
+          </TabsTrigger>
+          <TabsTrigger
+            value="members"
+            className={HOUSEHOLD_TAB_CLASS}
+            // For members, the tour's invite step explains who invites; the note itself sits in
+            // this (unmounted until opened) tab.
+            data-tour={isAdmin ? undefined : "household-invite"}
+          >
             {t("tabs.members")}
             <TabCount count={household.members.length} />
           </TabsTrigger>
           <TabsTrigger
-            value="puzzles"
-            className={TAB_TRIGGER_CLASS}
+            value="sharing"
+            className={HOUSEHOLD_TAB_CLASS}
             data-tour="household-my-copies"
           >
-            <span className="sm:hidden">{t("tabs.puzzlesShort")}</span>
-            <span className="hidden sm:inline">{t("tabs.puzzles")}</span>
+            {t("tabs.sharing")}
           </TabsTrigger>
-          <TabsTrigger value="settings" className={TAB_TRIGGER_CLASS}>
+          <TabsTrigger value="settings" className={HOUSEHOLD_TAB_CLASS}>
             {t("tabs.settings")}
           </TabsTrigger>
         </TabsList>
 
+        <TabsContent value="puzzles" className="mt-4">
+          <HouseholdPuzzles
+            household={household}
+            onInvite={isAdmin ? () => setInviteOpen(true) : undefined}
+          />
+        </TabsContent>
+
         <TabsContent value="members" className="mt-4 flex flex-col gap-6">
-          <section data-tour="household-main">
+          <section>
             <div className="divide-y rounded-lg border px-4">
               {household.members.map((member) => (
                 <PersonRow
@@ -359,16 +383,13 @@ export function HouseholdDetails({
           )}
 
           {!isAdmin && (
-            <p
-              data-tour="household-invite"
-              className="text-muted-foreground text-sm"
-            >
+            <p className="text-muted-foreground text-sm">
               {t("members.adminOnlyInvite")}
             </p>
           )}
         </TabsContent>
 
-        <TabsContent value="puzzles" className="mt-4 flex flex-col gap-6">
+        <TabsContent value="sharing" className="mt-4 flex flex-col gap-6">
           <p className="text-muted-foreground text-sm">
             {t("puzzles.defaultLabel")}{" "}
             <span className="text-foreground font-medium">

@@ -14,12 +14,15 @@ import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/household")({
-  // URL-addressable tabs (/household?tab=puzzles); Members is the default and carries no param.
+  // URL-addressable tabs (/household?tab=members); Puzzles is the default and carries no param.
+  // The old ?tab=puzzles (the viewer's own puzzles' access, now "sharing") lands on the default.
   validateSearch: (
     search: Record<string, unknown>,
-  ): { tab?: "puzzles" | "settings" } => ({
+  ): { tab?: "members" | "sharing" | "settings" } => ({
     tab:
-      search.tab === "puzzles" || search.tab === "settings"
+      search.tab === "members" ||
+      search.tab === "sharing" ||
+      search.tab === "settings"
         ? search.tab
         : undefined,
   }),
@@ -59,7 +62,7 @@ function HouseholdPage() {
 
   const onTabChange = (next: HouseholdTab) =>
     void navigate({
-      search: { tab: next === "members" ? undefined : next },
+      search: { tab: next === "puzzles" ? undefined : next },
       replace: true,
       // A tab switch is a view change on the same page, not a new page: keep the scroll position.
       resetScroll: false,
@@ -69,7 +72,7 @@ function HouseholdPage() {
     <HouseholdDetails
       household={household}
       invites={invites ?? []}
-      activeTab={tab ?? "members"}
+      activeTab={tab ?? "puzzles"}
       onTabChange={onTabChange}
       onError={fail}
     />

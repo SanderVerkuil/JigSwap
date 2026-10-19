@@ -493,8 +493,8 @@
     "resultCount": "{count} van {total} puzzels",
     "searchHint": "Druk op ⌘K om puzzels, mensen en meer te zoeken",
     "countMeta": "{count, plural, one {# puzzel} other {# puzzels}}",
-    "householdBadge": "Huishouden · {name}",
-    "householdBadgeView": "Huishouden · {name} · alleen bekijken",
+    "householdPointer": "Alle puzzels in je huishouden",
+    "householdPointerNamed": "Alle puzzels in {name}",
     "gridView": "Rasterweergave",
     "listView": "Lijstweergave",
     "deleteConfirmTitle": "\"{title}\" verwijderen?",
@@ -596,7 +596,13 @@
       "copyDetails": "Jouw exemplaar"
     },
     "removeFromCollection": "Uit deze collectie verwijderen",
-    "private": "Privé"
+    "private": "Privé",
+    "ownerFilter": {
+      "label": "Van wie",
+      "all": "Alles",
+      "mine": "Van mij",
+      "household": "Van huisgenoten"
+    }
   },
   "trades": {
     "title": "Uitwisselingen",
@@ -1941,9 +1947,9 @@
       "nameNone": "Nog geen naam"
     },
     "tabs": {
+      "puzzles": "Puzzels",
       "members": "Leden",
-      "puzzles": "Mijn puzzels",
-      "puzzlesShort": "Puzzels",
+      "sharing": "Delen",
       "settings": "Instellingen"
     },
     "header": {
@@ -1951,7 +1957,18 @@
       "stackName": "je huishouden"
     },
     "puzzles": {
-      "defaultLabel": "Standaard van het huishouden:"
+      "defaultLabel": "Standaard van het huishouden:",
+      "ownedBy": "Van",
+      "you": "Jij",
+      "viewOnly": "Alleen bekijken",
+      "ownerAll": "Iedereen",
+      "ownerFilter": "Filter op eigenaar",
+      "solo": "Hier staan nog alleen jouw puzzels. Nodig iemand uit om puzzels mee te delen.",
+      "soloInvite": "Uitnodigen",
+      "emptyTitle": "Nog geen puzzels in het huishouden",
+      "emptySub": "Puzzels die jij en je huisgenoten toevoegen, verschijnen hier.",
+      "noMatches": "Geen puzzels voor deze filters",
+      "clearFilters": "Filters wissen"
     },
     "danger": {
       "title": "Dit huishouden verlaten"
@@ -4614,7 +4631,7 @@
       "steps": {
         "start": {
           "title": "Je huishouden",
-          "body": "Maak een huishouden aan voor de mensen met wie je samenwoont, of bekijk wie er in het jouwe zit. Iedereen erin ziet elkaars puzzels in Mijn Puzzels."
+          "body": "Maak een huishouden aan voor de mensen met wie je samenwoont, of bekijk wie er in het jouwe zit. Elke puzzel in het huishouden staat op het tabblad Puzzels, en in Mijn Puzzels."
         },
         "invite": {
           "title": "Nodig je huisgenoten uit",
@@ -4622,7 +4639,7 @@
         },
         "copy-access": {
           "title": "Jij kiest per puzzel",
-          "body": "Je puzzels blijven van jou. Onder Mijn puzzels kies je per puzzel wat het huishouden ermee mag: met Mag beheren kunnen huisgenoten hem bewerken, uitlenen en ruilen; met Alleen bekijken zien ze hem alleen. Selecteer er meerdere om ze in één keer aan te passen."
+          "body": "Je puzzels blijven van jou. Op het tabblad Delen kies je per puzzel wat het huishouden ermee mag: met Mag beheren kunnen huisgenoten hem bewerken, uitlenen en ruilen; met Alleen bekijken zien ze hem alleen. Selecteer er meerdere om ze in één keer aan te passen."
         }
       }
     },

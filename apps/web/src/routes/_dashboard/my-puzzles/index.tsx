@@ -2,6 +2,7 @@ import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
+import { CopyOwnerLine } from "@/components/household/copy-owner-line";
 import { EmptyState } from "@/components/library/empty-state";
 import { FilterBar, FilterOption } from "@/components/library/filter-bar";
 import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
@@ -21,6 +22,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
@@ -28,7 +36,16 @@ import { pageTitle } from "@/lib/page-title";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Grid, House, Lightbulb, List, Plus, Undo2, X } from "lucide-react";
+import {
+  ArrowRight,
+  Grid,
+  House,
+  Lightbulb,
+  List,
+  Plus,
+  Undo2,
+  X,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslations } from "use-intl";
 
@@ -121,6 +138,11 @@ function PuzzlesPage() {
   const tCommon = useTranslations("common");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  // Whose copies to show when the viewer is in a household: everything, only their own, or only
+  // the ones that come through a household member.
+  const [ownerFilter, setOwnerFilter] = useState<"all" | "mine" | "household">(
+    "all",
+  );
   // The copy a solve is being logged against; null when the dialog is closed.
   const [solveTarget, setSolveTarget] = useState<{
     copyId: string;
@@ -164,6 +186,11 @@ function PuzzlesPage() {
   // whoever added them; `household.viewerAccess` says whether the viewer may manage or only view).
   const { data: householdCopies } = useQuery(
     convexQuery(gateway.household.copies, convexUser?._id ? {} : "skip"),
+  );
+  // The viewer's household (null when in none): My puzzles points at its Puzzles tab, where every
+  // puzzle in the household can be filtered by owner.
+  const { data: myHousehold } = useQuery(
+    convexQuery(gateway.household.mine, convexUser?._id ? {} : "skip"),
   );
   const allCopies = useMemo(
     () => [...(userownedPuzzles ?? []), ...(householdCopies ?? [])],
@@ -325,6 +352,9 @@ function PuzzlesPage() {
   // Free-text search now lives in the global ⌘K palette; this page narrows only by status. The
   // status pill maps onto the copy's availability flags or its solve state.
   const filteredownedPuzzles = allCopies.filter((puzzle) => {
+    const viaHousehold = householdAccessById.has(puzzle._id);
+    if (ownerFilter === "mine" && viaHousehold) return false;
+    if (ownerFilter === "household" && !viaHousehold) return false;
     if (statusFilter === "all") return true;
     const { forTrade, forLend, forSale } = puzzle.availability;
     if (statusFilter === "available") return forTrade || forLend || forSale;
@@ -379,10 +409,47 @@ function PuzzlesPage() {
       {/* Toolbar: a muted search hint on the left, view toggle on the right. Free-text search moved
           to the global ⌘K palette; the count + Add Puzzle action live in the shell page head. */}
       <div className="flex flex-wrap items-center gap-3">
-        <p className="text-muted-foreground hidden text-sm sm:block">
-          {t("searchHint")}
-        </p>
+        {myHousehold ? (
+          <Link
+            href="/household"
+            className="text-muted-foreground hover:text-foreground inline-flex min-w-0 items-center gap-1.5 text-sm underline-offset-4 hover:underline pointer-coarse:min-h-11"
+          >
+            <House className="size-4 shrink-0" aria-hidden />
+            <span className="min-w-0 truncate">
+              {myHousehold.name
+                ? t("householdPointerNamed", { name: myHousehold.name })
+                : t("householdPointer")}
+            </span>
+            <ArrowRight className="size-3.5 shrink-0" aria-hidden />
+          </Link>
+        ) : (
+          <p className="text-muted-foreground hidden text-sm sm:block">
+            {t("searchHint")}
+          </p>
+        )}
         <div className="ml-auto flex items-center gap-2">
+          {myHousehold && (
+            <Select
+              value={ownerFilter}
+              onValueChange={(value: "all" | "mine" | "household") =>
+                setOwnerFilter(value)
+              }
+            >
+              <SelectTrigger
+                className="w-44 pointer-coarse:min-h-11"
+                aria-label={t("ownerFilter.label")}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("ownerFilter.all")}</SelectItem>
+                <SelectItem value="mine">{t("ownerFilter.mine")}</SelectItem>
+                <SelectItem value="household">
+                  {t("ownerFilter.household")}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          )}
           <Button
             variant={viewMode === "grid" ? "secondary" : "ghost"}
             size="icon"
@@ -454,43 +521,36 @@ function PuzzlesPage() {
                   solveStateByCopyId.get(puzzle._id)?.inProgressCompletionId !=
                   null
                 }
+                owner={
+                  household && (
+                    <CopyOwnerLine
+                      owner={household.owner}
+                      viewOnly={household.viewerAccess === "view"}
+                    />
+                  )
+                }
                 loanBadge={
-                  (household || loan) && (
+                  loan && (
                     <div className="flex flex-wrap items-center gap-2">
-                      {household && (
-                        <Badge variant="outline" className="text-xs">
-                          <House className="h-3 w-3 mr-1" />
-                          {t(
-                            household.viewerAccess === "view"
-                              ? "householdBadgeView"
-                              : "householdBadge",
-                            { name: displayName(household.owner) },
-                          )}
-                        </Badge>
-                      )}
-                      {loan && (
-                        <>
-                          <Badge variant="secondary" className="text-xs">
-                            {tLending("onLoanTo", {
-                              name: loan.borrower
-                                ? displayName(loan.borrower)
-                                : tLending("deletedMember"),
-                            })}
-                          </Badge>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-7 px-2"
-                            disabled={recallingId === loan.loanId}
-                            onClick={() => handleRecallLoan(loan.loanId)}
-                          >
-                            <Undo2 className="h-3 w-3 mr-1" />
-                            {recallingId === loan.loanId
-                              ? tLending("recalling")
-                              : tLending("recallAction")}
-                          </Button>
-                        </>
-                      )}
+                      <Badge variant="secondary" className="text-xs">
+                        {tLending("onLoanTo", {
+                          name: loan.borrower
+                            ? displayName(loan.borrower)
+                            : tLending("deletedMember"),
+                        })}
+                      </Badge>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2"
+                        disabled={recallingId === loan.loanId}
+                        onClick={() => handleRecallLoan(loan.loanId)}
+                      >
+                        <Undo2 className="h-3 w-3 mr-1" />
+                        {recallingId === loan.loanId
+                          ? tLending("recalling")
+                          : tLending("recallAction")}
+                      </Button>
                     </div>
                   )
                 }

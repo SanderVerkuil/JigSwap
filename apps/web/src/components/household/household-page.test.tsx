@@ -115,18 +115,22 @@ const details = (
   );
 
 describe("HouseholdDetails", () => {
-  it("shows the identity strip and three tabs, Members first", () => {
-    const html = details("admin", "members");
+  it("shows the identity strip and four tabs, Puzzles first", () => {
+    const html = details("admin", "puzzles");
     const tabs = elementsOf(html).filter((e) => attr(e, "role") === "tab");
     expect(tabs.map(textOf)).toEqual([
+      "Puzzles",
       "Members2",
-      "PuzzlesMy puzzles",
+      "Sharing",
       "Settings",
     ]);
     expect(attr(tabs[0], "aria-selected")).toBe("true");
     expect(texts(html)).toContain("2 members");
-    // The copy-access tour step targets the always-mounted tab trigger.
-    expect(attr(tabs[1], "data-tour")).toBe("household-my-copies");
+    // The tour steps target always-mounted elements: the identity strip and the Sharing trigger.
+    expect(attr(tabs[2], "data-tour")).toBe("household-my-copies");
+    expect(
+      elementsOf(html).filter((e) => attr(e, "data-tour") === "household-main"),
+    ).toHaveLength(1);
   });
 
   it("gives the admin a per-member actions menu and the pending invites", () => {
@@ -151,15 +155,17 @@ describe("HouseholdDetails", () => {
     expect(
       els.some((e) => attr(e, "aria-label")?.startsWith("Actions for")),
     ).toBe(false);
-    const note = els.find(
-      (e) => textOf(e) === "Only the household admin can invite people.",
+    expect(texts(html)).toContain(
+      "Only the household admin can invite people.",
     );
-    expect(note && attr(note, "data-tour")).toBe("household-invite");
+    // The tour's invite step targets the always-mounted Members trigger for members.
+    const tabs = els.filter((e) => attr(e, "role") === "tab");
+    expect(attr(tabs[1], "data-tour")).toBe("household-invite");
     expect(texts(html)).not.toContain("Waiting for a response");
   });
 
-  it("puts the default line on the My puzzles tab", () => {
-    const html = details("member", "puzzles");
+  it("puts the default line on the Sharing tab", () => {
+    const html = details("member", "sharing");
     expect(texts(html)).toContain("Household default: View only");
   });
 

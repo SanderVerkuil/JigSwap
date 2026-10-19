@@ -92,6 +92,8 @@ interface PuzzleCardProps {
   showActions?: boolean;
   showAvailability?: boolean;
   showCollectionDropdown?: boolean;
+  /** Optional owner line (whose copy this is, e.g. a household member's), first in the content. */
+  owner?: ReactNode;
   // Optional lending slot (e.g. an "on loan to X" badge + Recall action). The page owns the loan
   // data so the card stays generic; rendered above the action row when provided.
   loanBadge?: ReactNode;
@@ -288,6 +290,7 @@ export function PuzzleCard({
   showActions = true,
   showAvailability = true,
   showCollectionDropdown = false,
+  owner,
   loanBadge,
   className = "",
 }: PuzzleCardProps) {
@@ -319,6 +322,7 @@ export function PuzzleCard({
   // owned-copy specifics that the shared shell deliberately doesn't know about.
   const badges = (
     <>
+      {owner}
       <div className="flex flex-wrap items-center gap-2 mb-2">
         <Badge
           variant={
