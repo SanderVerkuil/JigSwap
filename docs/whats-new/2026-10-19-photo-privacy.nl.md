@@ -16,6 +16,9 @@ ook toevoegt.
   doosafbeeldingen en foto's in berichten verliezen hun locatie-, camera- en
   datumgegevens. Alleen de stand blijft bewaard, zodat foto's goed om blijven
   staan.
+- **WebP-foto's in berichten.** Je kunt nu WebP-foto's in berichten sturen
+  vanuit elke browser die ze kan openen, ook als de browser de originele foto
+  verstuurt.
 - **Ook gecontroleerd op onze servers.** Je browser haalt de gegevens waar het
   kan al vóór het uploaden weg. De servers van JigSwap halen alles wat
   overblijft weg voordat iemand anders de foto kan zien.

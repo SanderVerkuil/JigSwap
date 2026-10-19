@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import type {
   MessageAttachmentView,
   ThreadMessageView,
@@ -8,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { asImage } from "./conversation/messageAttachments";
+import { findMetadata } from "./lib/imageModeration/stripMetadata";
 import { RATE_LIMITS } from "./lib/rateLimits";
 import { EVIDENCE_MAX_ATTEMPTS } from "./reports/attachmentEvidence";
 import schema from "./schema";
@@ -619,6 +621,43 @@ describe("deferred append", () => {
     const clean = await t.run((ctx) => ctx.storage.store(new Blob(["y"])));
     await t.mutation(store.setModerationFile, { imageId: id, fileId: clean });
     await t.mutation(store.setHashCheck, { imageId: id, status: "no_match" });
+    expect(await messageRows(t, threadId)).toHaveLength(1);
+  });
+
+  test("a WebP original (a browser that blocks the re-encode) is accepted and delivered without its metadata", async () => {
+    const t = convexTest(schema, modules);
+    const { threadId } = await openThread(t);
+    const fixture = new Uint8Array(
+      readFileSync(
+        new URL("../test-fixtures/images/gps.webp", import.meta.url),
+      ),
+    );
+    const uploadId = await storeUpload(t, fixture, "image/webp");
+    const staged = await stage(t, threadId, uploadId);
+    await settleDueJobs(t);
+    await send(t, threadId, [staged]);
+    await settleDueJobs(t);
+
+    const row = (await attachment(t, staged))!;
+    expect(row.reencodedAt).toEqual(expect.any(Number));
+    expect(row.fileId).not.toBe(uploadId);
+    expect(await blobExists(t, uploadId)).toBe(false);
+    const clean = await t.run(async (ctx) => {
+      const blob = await ctx.storage.get(row.fileId);
+      return blob && { type: blob.type, bytes: await blob.arrayBuffer() };
+    });
+    expect(clean!.type).toBe("image/webp");
+    const bytes = new Uint8Array(clean!.bytes);
+    expect(findMetadata(bytes, "webp")).toEqual([]);
+    const text = Array.from(bytes, (b) => String.fromCharCode(b)).join("");
+    for (const secret of [
+      "Kerkstraat",
+      "Utrecht",
+      "FixtureCam",
+      "52,5.2057N",
+    ]) {
+      expect(text).not.toContain(secret);
+    }
     expect(await messageRows(t, threadId)).toHaveLength(1);
   });
 

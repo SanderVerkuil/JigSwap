@@ -307,8 +307,8 @@ JPEG. This removes the hidden information cameras store in photos, such as the
 location where it was taken. Some browsers block this step to protect your
 privacy (for example Firefox with fingerprinting protection turned on). Then
 the original photo is sent, and JigSwap removes that hidden information on its
-servers before anyone can see the photo. Such a photo must be a JPEG or PNG of
-at most 10 MB.
+servers before anyone can see the photo. Such a photo must be a JPEG, PNG or
+WebP of at most 10 MB.
 
 A puzzle and photos go in separate messages. If **Photo** is missing from the
 menu, photos can't be sent right now.
