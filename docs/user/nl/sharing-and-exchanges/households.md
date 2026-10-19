@@ -49,8 +49,18 @@ om uit te nodigen: een lid zoeken, een link delen of een e-mail sturen.
 1. Klik op **Uitnodigen** en zoek onder **Zoek een lid** leden op naam.
 2. Klik op **Uitnodigen** naast de persoon.
 
-Diegene staat als **Uitgenodigd** onder **Wacht op antwoord** op het tabblad
-**Leden** tot er een antwoord is.
+Diegene staat onder **Wacht op antwoord** op het tabblad **Leden** tot er een
+antwoord is. Wil je de uitnodiging intrekken, klik dan ernaast op
+**Intrekken** en bevestig.
+
+### Openstaande uitnodigingen bekijken en intrekken
+
+Op het tabblad **Leden** ziet de beheerder onder **Wacht op antwoord** elke
+uitnodiging die nog op antwoord wacht: uitnodigingen aan leden op naam, en
+uitnodigingen per e-mail als **Uitnodiging per e-mail** (het adres zie je
+nooit). Bij elke regel staat hoe en wanneer hij is verstuurd. Klik op
+**Intrekken** en bevestig om er een in te trekken; diegene kan hem dan niet
+meer accepteren.
 
 ### Uitnodigen met een link
 
@@ -78,9 +88,10 @@ zich via de link aanmeldt, vindt de uitnodiging op de eigen pagina
 
 Diegene krijgt één e-mail, in jouw taal, met de uitnodiging om bij je
 huishouden te komen. Die is 14 dagen geldig. Er volgen geen herinneringen, en
-JigSwap bewaart het adres niet. Onder **Verstuurde uitnodigingen** zie je
-wanneer elke uitnodiging is verstuurd en wanneer die verloopt. Wil je er een
-annuleren, klik dan op **Intrekken** en bevestig.
+JigSwap bewaart het adres niet. Op het tabblad **Leden** staat hij onder
+**Wacht op antwoord** als **Uitnodiging per e-mail**, met wanneer hij is
+verstuurd en wanneer hij verloopt. Wil je er een annuleren, klik dan op
+**Intrekken** en bevestig.
 
 Je kunt maximaal 10 uitnodigingen per e-mail per dag versturen. Een adres
 krijgt hooguit één uitnodigingsmail per 30 dagen.

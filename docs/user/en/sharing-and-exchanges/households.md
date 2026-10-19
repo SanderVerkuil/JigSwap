@@ -46,8 +46,16 @@ invite: find a member, share a link, or send an email.
 1. Click **Invite**, then under **Find a member** search members by name.
 2. Click **Invite** next to the person.
 
-They show as **Invited** under **Waiting for a response** on the **Members**
-tab until they answer.
+They show under **Waiting for a response** on the **Members** tab until they
+answer. To withdraw the invitation, click **Revoke** next to them and confirm.
+
+### See and revoke pending invitations
+
+On the **Members** tab, the admin sees every invitation still waiting for an
+answer under **Waiting for a response**: invitations to members by name, and
+email invitations as **Email invitation** (the address is never shown). Each
+row says how it was sent and when. Click **Revoke** and confirm to withdraw
+one; the person can no longer accept it.
 
 ### Invite with a link
 
@@ -74,8 +82,9 @@ member who signs up through the link finds the invitation on their
 
 They get one email, in your language, inviting them to join your household.
 It's valid for 14 days. No reminders follow, and JigSwap keeps no copy of the
-address. Under **Sent invitations** you see when each invitation was sent and
-when it expires. To cancel one, click **Revoke** and confirm.
+address. On the **Members** tab, under **Waiting for a response**, it shows as
+**Email invitation** with when it was sent and when it expires. To cancel one,
+click **Revoke** and confirm.
 
 You can send up to 10 email invitations a day. An address gets at most one
 invitation email every 30 days.
