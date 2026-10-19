@@ -226,7 +226,7 @@ On a phone, **View profile** and **View exchange** are in the
 
 You can point the other member at any puzzle, yours or theirs:
 
-1. In the message box, click **Attach** (the **+** button).
+1. Click **Attach** (the paperclip button next to the send button).
 2. Choose **Attach a puzzle**.
 3. Pick from the **My puzzles** tab, or from the other member's tab (for
    example **Mara's puzzles**). Use **Search puzzles** to filter by title or
@@ -240,7 +240,7 @@ available**.
 
 ## Send photos
 
-1. Click **Attach** (the **+** button) and choose **Photo**.
+1. Click **Attach** (the paperclip button) and choose **Photo**.
 2. Pick up to 4 photos (JPEG, PNG, HEIC or WebP; HEIC and WebP work where your
    browser can open them).
 3. Optionally type a caption in the message box.
@@ -293,7 +293,7 @@ Click a photo to open it full size. In the viewer you can:
 
 Use this to agree on a meet-up spot for a swap or loan.
 
-1. Click **Attach** (the **+** button) and choose **Location**.
+1. Click **Attach** (the paperclip button) and choose **Location**.
 2. Read the note and pick a spot:
    - **Search for a place**, then choose a result, or
    - **Use my current location** (your browser asks for permission).
