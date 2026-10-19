@@ -2,7 +2,7 @@
 id: household-improvements
 publishedAt: "2026-10-19T12:00:00Z"
 title: "Household improvements"
-summary: "A tidier Household page with its own tabs and one Invite button, and your household can now have a name."
+summary: "A tidier Household page with tabs and one Invite button, a name for your household, and switching households in one step."
 category: improvement
 cta:
   label: "Open Household"
@@ -22,5 +22,8 @@ find what you came for straight away.
   place: search for a member, share a link, or send an email.
 - **A name for your household.** The admin can name the household on the
   **Settings** tab. Only its members see the name.
+- **Switch households in one step.** Already in a household and invited to
+  another? Choose **Leave and join**: you see exactly what happens to your
+  current household before you confirm.
 - **Invitations first.** If someone invited you and you're not in a household
   yet, their invitation is the first thing you see.

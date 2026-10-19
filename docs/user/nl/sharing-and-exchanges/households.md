@@ -98,6 +98,26 @@ uitnodiging voor een huishouden.
    huishouden, klik dan onder **Of begin je eigen huishouden** op
    **Huishouden aanmaken**.
 
+## Naar een ander huishouden overstappen
+
+Je kunt in één huishouden tegelijk zitten. Zit je al in een huishouden en
+nodigt iemand je uit voor het hunne, dan kun je in één stap overstappen:
+
+1. Open de melding van de uitnodiging en ga naar **Huishouden**, of open de
+   uitnodigingslink. De uitnodiging staat bovenaan **Huishouden**.
+2. Klik op **Verlaten en lid worden**.
+3. Lees wat er gebeurt en bevestig met **Verlaten en lid worden**.
+
+Je verlaat je huishouden en wordt meteen lid van het andere. Je puzzels gaan
+met je mee. Was je het enige lid, dan wordt je oude huishouden verwijderd en
+vervallen de openstaande uitnodigingen. Was je de beheerder, dan wordt het lid
+dat er het langst in zit de nieuwe beheerder. Lukt het lid worden niet
+(bijvoorbeeld omdat de uitnodiging is ingetrokken), dan blijf je in je
+huishouden en verandert er niets.
+
+Geen interesse? Klik op **Weigeren**. Bij het uitnodigen zie je nooit of
+iemand al in een huishouden zit.
+
 ## Wat leden van een huishouden kunnen zien en doen
 
 - Iedereen ziet ieders puzzels in **Mijn Puzzels**, met het label
