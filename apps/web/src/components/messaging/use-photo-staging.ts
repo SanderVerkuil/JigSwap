@@ -1,8 +1,9 @@
 "use client";
 
 // The composer's photo pipeline (spec 2.2): for each picked file, convert it
-// to a JPEG, get an upload URL, POST it with progress, then claim it with
-// stageMessageImage. State lives in stagingReducer; this hook only runs the
+// to a JPEG (or keep the original when the browser's canvas can't be trusted;
+// the server strips its metadata), get an upload URL, POST it with progress,
+// then claim it with stageMessageImage. State lives in stagingReducer; this hook only runs the
 // steps. There is no cheap "are photos available" query, so the first
 // ImagesUnavailable refusal hides Photo for the rest of the session.
 import { conversationErrorCode } from "@/components/messaging/format";

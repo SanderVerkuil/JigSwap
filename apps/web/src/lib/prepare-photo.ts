@@ -7,9 +7,13 @@
 // No compressorjs: it skips the canvas (and hands back the original file,
 // EXIF/GPS included) unless canvas read-back is exact, so in browsers that
 // add a little read-back noise against fingerprinting (e.g. Helium, Brave)
-// every photo went up as the original. Their canvas output is fine. Only a
-// scrambled read-back (Firefox resistFingerprinting) means the JPEG would be
-// noise too.
+// every photo went up as the original. Their canvas output is fine.
+//
+// Only a scrambled read-back (Firefox resistFingerprinting) means the JPEG
+// would be noise too. Then (and whenever the canvas yields no JPEG) the
+// ORIGINAL file is returned, typed by its magic bytes: the server strips its
+// metadata (EXIF incl. GPS, XMP, IPTC, comments) before anything is stored,
+// served or screened, and enforces the size and type limits.
 
 const MAX_EDGE = 1600;
 const QUALITY = 0.8;
@@ -17,7 +21,13 @@ const QUALITY = 0.8;
 /** The file picker's accept list. */
 export const PHOTO_ACCEPT = "image/jpeg,image/png,image/heic,image/webp";
 
-export type PreparedPhoto = { file: Blob; width: number; height: number };
+export type PreparedPhoto = {
+  file: Blob;
+  width: number;
+  height: number;
+  /** False when `file` is the original (the canvas could not be trusted). */
+  reencoded: boolean;
+};
 
 // Read-back drift allowed per channel: anti-fingerprinting noise is a few
 // levels; random bytes fall outside it.
@@ -34,7 +44,24 @@ function canvasReadsBack(context: CanvasRenderingContext2D): boolean {
   );
 }
 
-/** Rejects when the browser cannot decode the file. */
+// The image type the file's first bytes announce; the picked type otherwise
+// (some pickers report "" or "image/jpg").
+async function sniffedType(file: File): Promise<string> {
+  const b = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+  const ascii = (at: number, text: string) =>
+    [...text].every((c, i) => b[at + i] === c.charCodeAt(0));
+  if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "image/jpeg";
+  if (b[0] === 0x89 && ascii(1, "PNG")) return "image/png";
+  if (ascii(0, "RIFF") && ascii(8, "WEBP")) return "image/webp";
+  if (ascii(0, "GIF8")) return "image/gif";
+  return file.type;
+}
+
+/**
+ * Rejects when the browser cannot decode the file. Resolves with the original
+ * (`reencoded: false`, its decoded upright size) when the canvas cannot be
+ * trusted; the server strips its metadata.
+ */
 export async function preparePhoto(file: File): Promise<PreparedPhoto> {
   const url = URL.createObjectURL(file);
   try {
@@ -51,8 +78,14 @@ export async function preparePhoto(file: File): Promise<PreparedPhoto> {
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
+    const original = async (): Promise<PreparedPhoto> => ({
+      file: new Blob([file], { type: await sniffedType(file) }),
+      width: image.naturalWidth,
+      height: image.naturalHeight,
+      reencoded: false,
+    });
     const context = canvas.getContext("2d");
-    if (!context || !canvasReadsBack(context)) throw new Error("no canvas");
+    if (!context || !canvasReadsBack(context)) return await original();
     // JPEG has no alpha: put transparent PNG areas on white, not black.
     context.fillStyle = "#fff";
     context.fillRect(0, 0, width, height);
@@ -60,8 +93,8 @@ export async function preparePhoto(file: File): Promise<PreparedPhoto> {
     const blob = await new Promise<Blob | null>((resolve) =>
       canvas.toBlob(resolve, "image/jpeg", QUALITY),
     );
-    if (blob?.type !== "image/jpeg") throw new Error("not converted");
-    return { file: blob, width, height };
+    if (blob?.type !== "image/jpeg") return await original();
+    return { file: blob, width, height, reencoded: true };
   } finally {
     URL.revokeObjectURL(url);
   }

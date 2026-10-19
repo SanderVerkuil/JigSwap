@@ -101,6 +101,15 @@ De gegevens die je in de ene ruil ziet, geven geen toegang tot het profiel, de
 bibliotheek of de activiteit van het andere lid. Een tweede ruil met hetzelfde
 lid begint weer verborgen.
 
+## Foto's verraden niet waar ze zijn gemaakt
+
+Camera's en telefoons slaan verborgen informatie op in een foto, zoals de plek
+waar hij is gemaakt, de camera en de datum. JigSwap haalt die weg uit elke foto
+die je toevoegt: foto's van je puzzels en voltooiingen, doosafbeeldingen en
+foto's in berichten. Je browser doet dat waar het kan al vóór het uploaden; de
+servers van JigSwap doen het nog een keer voordat iemand anders de foto kan
+zien. Alleen de stand van de foto blijft bewaard, zodat hij goed om staat.
+
 ## Foto's worden gecontroleerd voordat anderen ze zien
 
 Nieuwe foto's van je puzzels en voltooiingen worden automatisch gecontroleerd
