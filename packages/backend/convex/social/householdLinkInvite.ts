@@ -10,26 +10,32 @@ import { isNetworkLink } from "./inviteLinkRules";
 // - "invalid": unknown, a network link, revoked, or the owner is no longer the admin of the
 //   household the link was minted for (left, or the household dissolved), or the inviter and the
 //   member are blocked either way (spec 2.6);
-// - "used" / "expired": single use and the 14-day expiry, checked server-side;
-// - "own-link": the inviter opened their own link;
+// - "own-link": the inviter opened their own link (whatever its expiry or use);
+// - "own-household": the member already belongs to the household the link was minted for (only
+//   ever told to its members, so it reveals nothing they don't know);
+// - "used" / "expired": single use and the 14-day expiry, checked server-side BEFORE the block and
+//   admin checks, so they never reveal either. Only these two let the member ask to join
+//   (household/requestToJoinHousehold);
 // - "already-in-household": the one-household rule (no Accept is offered);
 // - "can-accept": everything above passed.
 export type HouseholdLinkState =
   | "can-accept"
   | "already-in-household"
   | "own-link"
+  | "own-household"
   | "expired"
   | "used"
   | "invalid";
 
-// The link is returned only while it is live for this member (can-accept, already-in-household).
+// The link is returned while it is live for this member (can-accept, already-in-household) and
+// when it is expired or used (a request to join is asked from it).
 export type HouseholdLinkResolution =
   | {
-      state: "can-accept" | "already-in-household";
+      state: "can-accept" | "already-in-household" | "expired" | "used";
       link: Doc<"inviteLinks">;
     }
   | {
-      state: Exclude<HouseholdLinkState, "can-accept" | "already-in-household">;
+      state: "own-link" | "own-household" | "invalid";
       link?: undefined;
     };
 
@@ -46,11 +52,15 @@ export const resolveHouseholdLink = async (
   if (link === null || isNetworkLink(link) || link.revokedAt !== undefined) {
     return { state: "invalid" };
   }
-  if (link.consumedAt !== undefined) return { state: "used" };
-  if (link.expiresAt === undefined || link.expiresAt <= now) {
-    return { state: "expired" };
-  }
   if (link.ownerId === memberId) return { state: "own-link" };
+  const viewer = await membershipOf(ctx, memberId);
+  if (viewer !== null && viewer.householdId === link.context?.householdId) {
+    return { state: "own-household" };
+  }
+  if (link.consumedAt !== undefined) return { state: "used", link };
+  if (link.expiresAt === undefined || link.expiresAt <= now) {
+    return { state: "expired", link };
+  }
   if (await isBlockedEitherWay(ctx, link.ownerId, memberId)) {
     return { state: "invalid" };
   }
@@ -62,9 +72,7 @@ export const resolveHouseholdLink = async (
   ) {
     return { state: "invalid" };
   }
-  if ((await membershipOf(ctx, memberId)) !== null) {
-    return { state: "already-in-household", link };
-  }
+  if (viewer !== null) return { state: "already-in-household", link };
   return { state: "can-accept", link };
 };
 
@@ -87,6 +95,10 @@ const REFUSALS: Record<
   "own-link": {
     code: "OwnInviteLink",
     message: "This is your own invite link",
+  },
+  "own-household": {
+    code: "AlreadyMember",
+    message: "You are already in this household",
   },
   "already-in-household": {
     code: "AlreadyInHousehold",
@@ -112,4 +124,31 @@ export const requireAcceptableHouseholdLink = async (
     throw new ConvexError(REFUSALS[resolved.state]);
   }
   return resolved.link;
+};
+
+// The request-to-join gate: an expired or used household link (with its owner and household), or
+// the same coded refusal as Accept for every other state. A live link refuses with InviteLinkLive:
+// it can still be accepted, so there is nothing to ask.
+export const requireRequestableHouseholdLink = async (
+  ctx: QueryCtx,
+  token: string,
+  memberId: Id<"users">,
+  now: number,
+): Promise<Doc<"inviteLinks"> & { context: { householdId: string } }> => {
+  const resolved = await resolveHouseholdLink(ctx, token, memberId, now);
+  if (
+    resolved.state === "can-accept" ||
+    resolved.state === "already-in-household"
+  ) {
+    throw new ConvexError({
+      code: "InviteLinkLive",
+      message: "This invite link can still be accepted",
+    });
+  }
+  if (resolved.state !== "expired" && resolved.state !== "used") {
+    throw new ConvexError(REFUSALS[resolved.state]);
+  }
+  const { link } = resolved;
+  if (link.context === undefined) throw new ConvexError(REFUSALS.invalid);
+  return { ...link, context: link.context };
 };

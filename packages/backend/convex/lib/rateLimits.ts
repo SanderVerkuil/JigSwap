@@ -27,6 +27,8 @@ export const RATE_LIMITS = {
   locationPicker: { windowMs: HOUR, max: 60 },
   // Email invitations (invitations/sendEmailInvite), follow and household together.
   emailInvite: { windowMs: DAY, max: 10 },
+  // Requests to join a household (household/requestToJoinHousehold), like emailInvite.
+  householdJoinRequest: { windowMs: DAY, max: 10 },
   // Presence heartbeats across all rooms and tabs: a tab sends ~4/min (app room + messages at
   // 30 s), so 30/min covers several tabs while capping heartbeat cost abuse.
   presenceHeartbeat: { windowMs: MINUTE, max: 30 },

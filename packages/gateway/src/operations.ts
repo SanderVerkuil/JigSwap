@@ -157,6 +157,15 @@ export const gateway = {
     revokeInvite: api.household.revokeHouseholdInvite.revokeHouseholdInvite,
     // Admin-only: name the household (null clears it). Only members ever see the name (mine).
     rename: api.household.renameHousehold.renameHousehold,
+    // Ask to join through an expired or used household invite link ({ token, leaveCurrentHousehold? }
+    // → { requestId }, the same answer whether or not it reaches anyone); the requester's open
+    // request (or null) and withdrawing it; the admin approves ({ outcome: "joined" | "closed" })
+    // or declines (silently). The admin's pending requests are in `mine.joinRequests`.
+    requestToJoin: api.household.requestToJoinHousehold.requestToJoinHousehold,
+    myJoinRequest: api.household.myJoinRequest.myJoinRequest,
+    withdrawJoinRequest: api.household.withdrawJoinRequest.withdrawJoinRequest,
+    approveJoinRequest: api.household.approveJoinRequest.approveJoinRequest,
+    declineJoinRequest: api.household.declineJoinRequest.declineJoinRequest,
     // Admin-only: the household-wide permission for member copies without an explicit value.
     setDefaultCopyPermission:
       api.household.setDefaultCopyPermission.setDefaultCopyPermission,

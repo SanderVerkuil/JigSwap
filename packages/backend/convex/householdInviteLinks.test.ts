@@ -889,7 +889,10 @@ describe("existing member on a household link", () => {
     );
     await declineLink(t, "cat", token);
     expect((await linkFor(t, token))?.consumedBy).toBe(cat);
-    expect(await landing(t, "cat", token)).toEqual({ state: "used" });
+    expect(await landing(t, "cat", token)).toEqual({
+      state: "used",
+      joinRequest: { status: "none" },
+    });
   });
 
   test("an expired link is reported and refused", async () => {
@@ -905,7 +908,10 @@ describe("existing member on a household link", () => {
       if (row) await ctx.db.patch(row._id, { expiresAt: Date.now() - 1 });
     });
 
-    expect(await landing(t, "cat", token)).toEqual({ state: "expired" });
+    expect(await landing(t, "cat", token)).toEqual({
+      state: "expired",
+      joinRequest: { status: "none" },
+    });
     await expectConvexCode(acceptLink(t, "cat", token), "InviteLinkExpired");
     await expectConvexCode(declineLink(t, "cat", token), "InviteLinkExpired");
   });
@@ -917,7 +923,10 @@ describe("existing member on a household link", () => {
     const { token } = await mintAsAnn(t);
     await acceptLink(t, "cat", token);
 
-    expect(await landing(t, "bob", token)).toEqual({ state: "used" });
+    expect(await landing(t, "bob", token)).toEqual({
+      state: "used",
+      joinRequest: { status: "none" },
+    });
     await expectConvexCode(acceptLink(t, "bob", token), "InviteLinkUsed");
     expect(await householdInvitesFor(t, bob)).toEqual([]);
   });
@@ -975,7 +984,10 @@ describe("existing member on a household link", () => {
 
     await flushScheduled(t);
     expect(await notificationTypes(t, ann)).toEqual([]);
-    expect(await landing(t, "cat", token)).toEqual({ state: "used" });
+    expect(await landing(t, "cat", token)).toEqual({
+      state: "used",
+      joinRequest: { status: "none" },
+    });
     await expectConvexCode(acceptLink(t, "cat", token), "InviteLinkUsed");
   });
 

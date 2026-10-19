@@ -641,6 +641,14 @@ const translate = async (
     // HouseholdInviteDeclined: DELIBERATELY unmapped — decline is silent (spec).
     // A request to join tells the admin who minted the link (a dropped request records no event).
     case "HouseholdJoinRequested": {
+      // Withdrawn (or answered) before dispatch: nothing left to tell.
+      const request = await ctx.db
+        .query("householdJoinRequests")
+        .withIndex("by_aggregate_id", (q) =>
+          q.eq("aggregateId", p.requestId as string),
+        )
+        .unique();
+      if (request?.status !== "pending") return [];
       return [
         cmd(
           p.adminId as string,
