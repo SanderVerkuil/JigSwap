@@ -33,8 +33,13 @@ export interface RespondToHouseholdInviteCommand {
   readonly actorId: MemberId;
   readonly inviteId: HouseholdInviteId;
 }
+// An invitee already in another household joins only with leaveCurrentHousehold: they leave it
+// (dissolving it if they are its last member) and join in the same step, or nothing changes.
+export interface AcceptHouseholdInviteCommand extends RespondToHouseholdInviteCommand {
+  readonly leaveCurrentHousehold?: boolean;
+}
 export type AcceptHouseholdInvite = (
-  cmd: RespondToHouseholdInviteCommand,
+  cmd: AcceptHouseholdInviteCommand,
 ) => Outcome<HouseholdId>;
 export type DeclineHouseholdInvite = (
   cmd: RespondToHouseholdInviteCommand,
@@ -45,6 +50,8 @@ export type DeclineHouseholdInvite = (
 export interface JoinHouseholdByLinkCommand {
   readonly actorId: MemberId;
   readonly inviterId: MemberId;
+  // As for AcceptHouseholdInvite: leave the actor's current household as part of the join.
+  readonly leaveCurrentHousehold?: boolean;
 }
 export type JoinHouseholdByLink = (
   cmd: JoinHouseholdByLinkCommand,

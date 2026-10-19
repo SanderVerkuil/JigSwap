@@ -5,7 +5,6 @@ import { DomainError } from "../../shared-kernel";
 export type HouseholdApplicationErrorCode =
   | "AlreadyInHousehold"
   | "NotInHousehold"
-  | "InviteeAlreadyInHousehold"
   | "DuplicateInvite"
   | "InviteNotFound"
   | "HouseholdNotFound";
@@ -32,13 +31,6 @@ export class HouseholdApplicationError extends DomainError {
     return new HouseholdApplicationError(
       "NotInHousehold",
       "You are not in a household",
-    );
-  }
-
-  static inviteeAlreadyInHousehold(): HouseholdApplicationError {
-    return new HouseholdApplicationError(
-      "InviteeAlreadyInHousehold",
-      "This member is already in a household",
     );
   }
 

@@ -11,12 +11,7 @@ import {
   makeSetHouseholdDefaultCopyPermission,
 } from ".";
 import { toMemberId } from "../../../shared-kernel";
-import {
-  Household,
-  HouseholdId,
-  HouseholdInviteId,
-  MemberId,
-} from "../../domain";
+import { HouseholdId, HouseholdInviteId, MemberId } from "../../domain";
 import {
   FixedClock,
   InMemoryHouseholdInviteRepository,
@@ -117,14 +112,21 @@ describe("inviteToHousehold", () => {
     expect(result.isErr && result.error.code).toBe("NotHouseholdAdmin");
   });
 
-  it("rejects inviting someone who is already in a household", async () => {
+  it("invites someone who is in another household (they choose on accept)", async () => {
     await create();
     await create(bob);
+    const id = await invite();
+    expect((await invites.findById(id))?.status).toBe("pending");
+  });
+
+  it("rejects inviting someone already in this household", async () => {
+    await create();
+    await accept(bob, await invite());
     const result = await makeInviteToHousehold(deps)({
       actorId: ann,
       inviteeId: bob,
     });
-    expect(result.isErr && result.error.code).toBe("InviteeAlreadyInHousehold");
+    expect(result.isErr && result.error.code).toBe("AlreadyMember");
   });
 
   it("rejects a duplicate pending invite", async () => {
@@ -137,39 +139,14 @@ describe("inviteToHousehold", () => {
     expect(result.isErr && result.error.code).toBe("DuplicateInvite");
   });
 
-  it("rejects inviting yourself", async () => {
+  it("rejects inviting yourself (you are already in your household)", async () => {
     await create();
     const result = await makeInviteToHousehold(deps)({
       actorId: ann,
       inviteeId: ann,
     });
-    // You are already in (your own) household, which is checked first.
-    expect(result.isErr && result.error.code).toBe("InviteeAlreadyInHousehold");
-  });
-
-  it("relays the domain's self-invite rejection when the invitee lookup misses", async () => {
-    // Only the actor lookup finds the household, so the self-invite reaches HouseholdInvite.send.
-    class ActorLookupOnly extends InMemoryHouseholdRepository {
-      private lookups = 0;
-      override async findByMember(memberId: MemberId) {
-        this.lookups += 1;
-        return this.lookups === 1 ? super.findByMember(memberId) : null;
-      }
-    }
-    deps.households = households = new ActorLookupOnly();
-    await households.save(
-      Household.found({
-        id: "h" as HouseholdId,
-        founderId: ann,
-        now: clock.now(),
-      }),
-    );
-    const result = await makeInviteToHousehold(deps)({
-      actorId: ann,
-      inviteeId: ann,
-    });
-    expect(result.isErr && result.error.code).toBe("SelfInvite");
-    expect(events.published).toEqual([]);
+    expect(result.isErr && result.error.code).toBe("AlreadyMember");
+    expect(events.names()).not.toContain("HouseholdInviteSent");
   });
 });
 
@@ -228,6 +205,93 @@ describe("acceptHouseholdInvite", () => {
     expect(result.isErr && result.error.code).toBe("AlreadyMember");
     expect((await invites.findById(inviteId))?.status).toBe("pending");
     expect(events.published).toEqual([]);
+  });
+
+  describe("leaving the current household (leaveCurrentHousehold)", () => {
+    const switchTo = (actorId: MemberId, inviteId: HouseholdInviteId) =>
+      makeAcceptHouseholdInvite(deps)({
+        actorId,
+        inviteId,
+        leaveCurrentHousehold: true,
+      });
+
+    it("a sole member's household is dissolved with its pending invites, then they join", async () => {
+      const annHousehold = await create();
+      const bobHousehold = await create(bob);
+      const bobsOwnInvite = await invite(bob, cat);
+      const inviteId = await invite();
+      events.published.length = 0;
+
+      const result = await switchTo(bob, inviteId);
+      expect(result.isOk && result.value).toBe(annHousehold);
+      expect(await households.findById(bobHousehold)).toBeNull();
+      expect(await invites.findById(bobsOwnInvite)).toBeNull();
+      expect((await households.findByMember(bob))?.id).toBe(annHousehold);
+      expect(events.names()).toEqual([
+        "HouseholdMemberLeft",
+        "HouseholdDissolved",
+        "HouseholdInviteAccepted",
+        "HouseholdMemberJoined",
+      ]);
+    });
+
+    it("an admin with housemates leaves (longest-standing member takes over) and joins", async () => {
+      const annHousehold = await create();
+      const bobHousehold = await create(bob);
+      await accept(cat, await invite(bob, cat));
+      const inviteId = await invite();
+
+      expect((await switchTo(bob, inviteId)).isOk).toBe(true);
+      const left = await households.findById(bobHousehold);
+      expect(left?.isMember(bob)).toBe(false);
+      expect(left?.isAdmin(cat)).toBe(true);
+      expect((await households.findById(annHousehold))?.isMember(bob)).toBe(
+        true,
+      );
+    });
+
+    it("without the flag nothing changes", async () => {
+      await create();
+      const bobHousehold = await create(bob);
+      const inviteId = await invite();
+      events.published.length = 0;
+
+      const result = await accept(bob, inviteId);
+      expect(result.isErr && result.error.code).toBe("AlreadyInHousehold");
+      expect((await households.findByMember(bob))?.id).toBe(bobHousehold);
+      expect((await invites.findById(inviteId))?.status).toBe("pending");
+      expect(events.published).toEqual([]);
+    });
+
+    it("refuses without leaving when the target household is gone", async () => {
+      await create();
+      const bobHousehold = await create(bob);
+      const inviteId = await invite();
+      const stale = await invites.findById(inviteId);
+      await makeLeaveHousehold(deps)({ actorId: ann });
+      if (stale) await invites.save(stale);
+      events.published.length = 0;
+
+      const result = await switchTo(bob, inviteId);
+      expect(result.isErr && result.error.code).toBe("HouseholdNotFound");
+      expect((await households.findById(bobHousehold))?.isMember(bob)).toBe(
+        true,
+      );
+      expect(events.published).toEqual([]);
+    });
+
+    it("refuses without leaving when the invite was already answered", async () => {
+      await create();
+      const bobHousehold = await create(bob);
+      const inviteId = await invite();
+      await makeDeclineHouseholdInvite(deps)({ actorId: bob, inviteId });
+
+      const result = await switchTo(bob, inviteId);
+      expect(result.isErr && result.error.code).toBe("InviteNotPending");
+      expect((await households.findById(bobHousehold))?.isMember(bob)).toBe(
+        true,
+      );
+    });
   });
 
   it("rejects when the household has dissolved", async () => {
@@ -477,8 +541,22 @@ describe("joinHouseholdByLink", () => {
     await create(bob);
     events.published.length = 0;
     const result = await join(bob);
-    expect(result.isErr && result.error.code).toBe("InviteeAlreadyInHousehold");
+    expect(result.isErr && result.error.code).toBe("AlreadyInHousehold");
     expect(events.published).toEqual([]);
+  });
+
+  it("switches a member of another household who asked to leave it", async () => {
+    const annHousehold = await create();
+    const bobHousehold = await create(bob);
+    events.published.length = 0;
+    const result = await makeJoinHouseholdByLink(deps)({
+      actorId: bob,
+      inviterId: ann,
+      leaveCurrentHousehold: true,
+    });
+    expect(result.isOk && result.value).toBe(annHousehold);
+    expect(await households.findById(bobHousehold)).toBeNull();
+    expect(events.names()).not.toContain("HouseholdInviteSent");
   });
 
   it("rejects an inviter who is no longer the admin", async () => {
