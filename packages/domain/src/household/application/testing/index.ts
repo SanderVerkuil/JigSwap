@@ -82,6 +82,10 @@ export class InMemoryHouseholdInviteRepository implements HouseholdInviteReposit
     this.store.set(invite.id, invite.toState());
   }
 
+  async remove(id: HouseholdInviteId): Promise<void> {
+    this.store.delete(id);
+  }
+
   async removePendingForHousehold(householdId: HouseholdId): Promise<void> {
     for (const [id, state] of this.store) {
       if (state.householdId === householdId && state.status === "pending") {

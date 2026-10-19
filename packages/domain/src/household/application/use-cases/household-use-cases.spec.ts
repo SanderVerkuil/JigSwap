@@ -8,6 +8,7 @@ import {
   makeLeaveHousehold,
   makeRemoveHouseholdMember,
   makeRenameHousehold,
+  makeRevokeHouseholdInvite,
   makeSetHouseholdDefaultCopyPermission,
 } from ".";
 import { toMemberId } from "../../../shared-kernel";
@@ -331,6 +332,68 @@ describe("declineHouseholdInvite", () => {
   it("rejects an unknown invite", async () => {
     const result = await makeDeclineHouseholdInvite(deps)({
       actorId: bob,
+      inviteId: "nope" as HouseholdInviteId,
+    });
+    expect(result.isErr && result.error.code).toBe("InviteNotFound");
+  });
+});
+
+describe("revokeHouseholdInvite", () => {
+  it("lets the admin withdraw a pending invite, which then can't be accepted", async () => {
+    const householdId = await create();
+    const inviteId = await invite();
+    const result = await makeRevokeHouseholdInvite(deps)({
+      actorId: ann,
+      inviteId,
+    });
+    expect(result.isOk).toBe(true);
+    expect(await invites.findById(inviteId)).toBeNull();
+    const accepted = await accept(bob, inviteId);
+    expect(accepted.isErr && accepted.error.code).toBe("InviteNotFound");
+    expect((await households.findById(householdId))?.isMember(bob)).toBe(false);
+  });
+
+  it("lets the current admin revoke an invite sent before a handover", async () => {
+    await create();
+    const toBob = await invite();
+    expect((await accept(bob, toBob)).isOk).toBe(true);
+    const toCat = await invite(ann, cat);
+    await makeLeaveHousehold(deps)({ actorId: ann });
+    const result = await makeRevokeHouseholdInvite(deps)({
+      actorId: bob,
+      inviteId: toCat,
+    });
+    expect(result.isOk).toBe(true);
+  });
+
+  it("refuses a member who is not the admin, and the invitee", async () => {
+    await create();
+    expect((await accept(bob, await invite())).isOk).toBe(true);
+    const toCat = await invite(ann, cat);
+    for (const actorId of [bob, cat]) {
+      const result = await makeRevokeHouseholdInvite(deps)({
+        actorId,
+        inviteId: toCat,
+      });
+      expect(result.isErr && result.error.code).toBe("NotHouseholdAdmin");
+    }
+    expect((await invites.findById(toCat))?.status).toBe("pending");
+  });
+
+  it("leaves an answered invite alone", async () => {
+    await create();
+    const inviteId = await invite();
+    await makeDeclineHouseholdInvite(deps)({ actorId: bob, inviteId });
+    const result = await makeRevokeHouseholdInvite(deps)({
+      actorId: ann,
+      inviteId,
+    });
+    expect(result.isErr && result.error.code).toBe("InviteNotPending");
+  });
+
+  it("rejects an unknown invite", async () => {
+    const result = await makeRevokeHouseholdInvite(deps)({
+      actorId: ann,
       inviteId: "nope" as HouseholdInviteId,
     });
     expect(result.isErr && result.error.code).toBe("InviteNotFound");

@@ -153,6 +153,8 @@ export const gateway = {
     declineInvite: api.household.declineHouseholdInvite.declineHouseholdInvite,
     leave: api.household.leaveHousehold.leaveHousehold,
     removeMember: api.household.removeHouseholdMember.removeHouseholdMember,
+    // Admin-only: withdraw a pending in-app invite (with the invitee's notification about it).
+    revokeInvite: api.household.revokeHouseholdInvite.revokeHouseholdInvite,
     // Admin-only: name the household (null clears it). Only members ever see the name (mine).
     rename: api.household.renameHousehold.renameHousehold,
     // Admin-only: the household-wide permission for member copies without an explicit value.

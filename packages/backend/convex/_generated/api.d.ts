@@ -219,6 +219,7 @@ import type * as household_listMyHouseholdInvites from "../household/listMyHouse
 import type * as household_memberships from "../household/memberships.js";
 import type * as household_removeHouseholdMember from "../household/removeHouseholdMember.js";
 import type * as household_renameHousehold from "../household/renameHousehold.js";
+import type * as household_revokeHouseholdInvite from "../household/revokeHouseholdInvite.js";
 import type * as household_setDefaultCopyPermission from "../household/setDefaultCopyPermission.js";
 import type * as http from "../http.js";
 import type * as identity_getCurrentUser from "../identity/getCurrentUser.js";
@@ -740,6 +741,7 @@ declare const fullApi: ApiFromModules<{
   "household/memberships": typeof household_memberships;
   "household/removeHouseholdMember": typeof household_removeHouseholdMember;
   "household/renameHousehold": typeof household_renameHousehold;
+  "household/revokeHouseholdInvite": typeof household_revokeHouseholdInvite;
   "household/setDefaultCopyPermission": typeof household_setDefaultCopyPermission;
   http: typeof http;
   "identity/getCurrentUser": typeof identity_getCurrentUser;
