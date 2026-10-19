@@ -62,8 +62,10 @@ function EmojiPickerEmoji({
   return (
     <button
       {...props}
+      // flex-1: the columns share the row, so the grid fills whatever width the picker is
+      // given instead of leaving the space past the last column empty.
       className={cn(
-        "data-[active]:bg-accent flex size-7 items-center justify-center rounded-sm text-base",
+        "data-[active]:bg-accent flex h-8 min-w-0 flex-1 items-center justify-center rounded-sm text-lg",
         className,
       )}
       data-slot="emoji-picker-emoji"
