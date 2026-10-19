@@ -4071,7 +4071,9 @@
     "cancel": "Annuleren",
     "bakeFailed": "Deze afbeelding kon niet worden verwerkt",
     "autoCropNothing": "Geen egale rand om bij te snijden",
-    "autoCropFailed": "Deze afbeelding kon niet worden geanalyseerd"
+    "autoCropFailed": "Deze afbeelding kon niet worden geanalyseerd",
+    "editingBlocked": "Je browser blokkeert het bewerken van afbeeldingen om je privacy te beschermen, dus je wijzigingen kunnen niet worden toegepast. Je kunt in plaats daarvan de originele, onbewerkte foto uploaden.",
+    "useOriginal": "Origineel uploaden"
   },
   "mySuggestions": {
     "title": "Mijn voorstellen",

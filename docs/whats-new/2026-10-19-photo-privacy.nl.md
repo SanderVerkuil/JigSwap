@@ -25,4 +25,6 @@ ook toevoegt.
 - **Browsers die je privacy beschermen.** Browsers zoals Brave, Helium of
   Firefox met bescherming tegen fingerprinting uploadden de originele foto, of
   weigerden hem in berichten. Foto's werken daar nu ook, zonder de verborgen
-  gegevens.
+  gegevens. Bijsnijden of draaien wordt in die browsers geblokkeerd: een
+  ongewijzigde foto wordt geüpload zoals hij is, en na een wijziging biedt
+  JigSwap aan de originele foto te uploaden.

@@ -21,4 +21,6 @@ JigSwap now removes them from every photo you add, wherever you add it.
   else can see the photo.
 - **Privacy-focused browsers.** Browsers such as Brave, Helium or Firefox with
   fingerprinting protection used to upload the original photo, or refuse it in
-  messages. Photos now work there too, without the hidden details.
+  messages. Photos now work there too, without the hidden details. Cropping
+  or rotating a photo is blocked in those browsers: an unchanged photo is
+  uploaded as it is, and after a change JigSwap offers to upload the original.
