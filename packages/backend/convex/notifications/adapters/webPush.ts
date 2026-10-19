@@ -127,7 +127,11 @@ export const notificationUrl = (type: string, relatedId?: string): string => {
     // Household invites resolve on the Household page (accept/decline lives there).
     case "household_invite_received":
     case "household_invite_accepted":
+    case "household_join_request_approved":
       return "/household";
+    // Requests to join are answered in the household's Members tab (admin only).
+    case "household_join_request_received":
+      return "/household?tab=members";
     // A connection offer is answered in the People page's requests area.
     case "connection_offer_received":
       return "/people";

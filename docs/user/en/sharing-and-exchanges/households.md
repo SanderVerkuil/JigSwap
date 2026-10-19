@@ -121,6 +121,32 @@ withdrawn), you stay in your household and nothing changes.
 Not interested? Click **Decline**. Inviting someone never tells you whether
 they're already in a household.
 
+## Ask to join with an old invite link
+
+If a household invite link you got has expired or was already used, you can
+still ask the person who shared it to let you in:
+
+1. Open the link while signed in.
+2. Click **Ask to join**. If you're already in a household, read what will
+   happen to it and confirm with **Send request**: if they let you in, you
+   switch straight away, as with **Leave and join**.
+
+You see **Request sent**. The request waits on your **Household** page, and you
+can click **Withdraw request** at any time. You get a notification if they let
+you in. Requests close after 14 days. You can ask once per link, have one
+request open at a time, and send up to 10 requests a day. Asking never tells
+you anything about the household you didn't already know.
+
+### Answer a request (admin)
+
+The household admin gets a notification, and a dot on the **Members** tab.
+Under **Waiting for a response**, **Requests to join** lists each request:
+
+- Click **Approve** and confirm with **Let them in**. They join right away.
+  If the request is no longer open (for example, they withdrew it), you see
+  **This request is no longer open.**
+- Click **Decline** to say no. They aren't told.
+
 ## See every puzzle in the household
 
 The **Puzzles** tab shows every puzzle in the household: yours and every

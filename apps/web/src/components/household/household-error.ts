@@ -16,6 +16,12 @@ const KNOWN_CODES = new Set([
   "CopyNotFound",
   "AlreadyMember",
   "InvalidHouseholdName",
+  "JoinRequestOpen",
+  "JoinRequestAlreadySent",
+  "JoinRequestNotFound",
+  "JoinRequestNotPending",
+  "RateLimited",
+  "InviteLinkLive",
 ]);
 
 // The `household` namespace i18n key describing why a household mutation failed.

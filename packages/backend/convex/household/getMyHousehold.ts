@@ -1,4 +1,5 @@
 import type {
+  HouseholdJoinRequestView,
   HouseholdPersonView,
   HouseholdSentInviteView,
   HouseholdView,
@@ -9,6 +10,7 @@ import type { QueryCtx } from "../_generated/server";
 import { query } from "../_generated/server";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
+import { isBlockedEitherWay } from "../social/blocks";
 import {
   householdDefaultOf,
   membershipOf,
@@ -30,8 +32,10 @@ export const personView = async (
   };
 };
 
-// The acting member's household (members + roles), or null. Pending sent invites are returned to
-// the admin only — they are the one who chose those people. Also the household-wide default copy
+// The acting member's household (members + roles), or null. Pending sent invites and requests to
+// join are returned to the admin only — they are the one who chose those people and who answers
+// the requests. A request to join is listed while pending and not lapsed; a dropped one (asked
+// through a link the household's admin did not mint, or across a block) never is. Also the household-wide default copy
 // permission (resolved) and how many copies, across ALL members, follow it (no explicit value) —
 // what a change of the default would affect.
 export const getMyHousehold = query({
@@ -77,6 +81,26 @@ export const getMyHousehold = query({
       );
     }
 
+    const joinRequests: HouseholdJoinRequestView[] = [];
+    if (membership.role === "admin") {
+      const now = Date.now();
+      const rows = await ctx.db
+        .query("householdJoinRequests")
+        .withIndex("by_household_status", (q) =>
+          q.eq("householdId", membership.householdId).eq("status", "pending"),
+        )
+        .collect();
+      for (const row of rows.sort((a, b) => a.createdAt - b.createdAt)) {
+        if (row.dropped || row.expiresAt <= now) continue;
+        if (await isBlockedEitherWay(ctx, viewerId, row.requesterId)) continue;
+        joinRequests.push({
+          requestId: row.aggregateId,
+          requester: await personView(ctx, row.requesterId),
+          createdAt: row.createdAt,
+        });
+      }
+    }
+
     let copiesUsingDefault = 0;
     for (const row of rows) {
       const copies = await ctx.db
@@ -102,6 +126,7 @@ export const getMyHousehold = query({
       viewerRole: membership.role,
       members,
       pendingInvites,
+      joinRequests,
       defaultCopyPermission: resolveHouseholdCopyPermission(
         undefined,
         await householdDefaultOf(ctx, membership.householdId),

@@ -50,6 +50,8 @@ import {
 //   offersIn     the connection offers made them  } purgeDeletedCircle, nothing is announced)
 //   householdInvitesOut  the household invites they sent     } deleted whatever their status, with
 //   householdInvitesIn   the household invites they received } the invitee's notification about it
+//   householdJoinRequestsOut  the requests to join a household they sent: deleted whatever their
+//                status, with the admin's notification about each
 //   followsOut   their edges to the people they follow } deleted whatever their status, with
 //   followsIn    the edges of the people following them } the follow notifications naming them
 //   requestsOut  the follow requests they sent          } in the other party's inbox (a grouped
@@ -135,6 +137,7 @@ const PHASES = [
   "offersIn",
   "householdInvitesOut",
   "householdInvitesIn",
+  "householdJoinRequestsOut",
   "followsOut",
   "followsIn",
   "requestsOut",
@@ -184,6 +187,7 @@ const phaseValidator = v.union(
   v.literal("offersIn"),
   v.literal("householdInvitesOut"),
   v.literal("householdInvitesIn"),
+  v.literal("householdJoinRequestsOut"),
   v.literal("followsOut"),
   v.literal("followsIn"),
   v.literal("requestsOut"),
@@ -467,6 +471,24 @@ const runPhase = async (
           ctx,
           row.inviteeId,
           "household_invite_received",
+          row.aggregateId,
+        );
+        await ctx.db.delete(row._id);
+      }
+      return page;
+    }
+    case "householdJoinRequestsOut": {
+      // Every request to join they sent, whatever its status, with the
+      // household_join_request_received notification about it in the admin's inbox.
+      const page = await ctx.db
+        .query("householdJoinRequests")
+        .withIndex("by_requester", (q) => q.eq("requesterId", memberId))
+        .paginate(opts);
+      for (const row of page.page) {
+        await deleteInviteNotificationsAbout(
+          ctx,
+          row.adminId,
+          "household_join_request_received",
           row.aggregateId,
         );
         await ctx.db.delete(row._id);

@@ -4,4 +4,5 @@ export * from "./errors";
 export * from "./events";
 export * from "./household";
 export * from "./household-invite";
+export * from "./household-join-request";
 export * from "./ids";

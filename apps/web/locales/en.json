@@ -1902,7 +1902,13 @@
       "PermissionBatchTooLarge": "You can change at most 200 puzzles at once.",
       "CopyNotFound": "One of these puzzles no longer exists.",
       "InvalidHouseholdName": "A household name must be 1 to 100 characters.",
-      "AlreadyMember": "This member is already in your household."
+      "AlreadyMember": "This member is already in your household.",
+      "JoinRequestOpen": "You already asked to join a household. Withdraw that request first.",
+      "JoinRequestAlreadySent": "You already asked to join with this link.",
+      "JoinRequestNotFound": "This request no longer exists.",
+      "JoinRequestNotPending": "This request is no longer open.",
+      "RateLimited": "You've sent a lot of requests today. Try again tomorrow.",
+      "InviteLinkLive": "This invite link still works: you can accept it."
     },
     "bulkPermission": {
       "title": "My puzzles in this household",
@@ -1981,7 +1987,11 @@
       "puzzles": "Your puzzles go with you: your current housemates no longer see them, and you no longer see theirs.",
       "join": "You join {name}'s household right away.",
       "confirm": "Leave and join",
-      "cardBody": "You're already in {current}. You can be in one household at a time, so joining means leaving it."
+      "cardBody": "You're already in {current}. You can be in one household at a time, so joining means leaving it.",
+      "requestTitle": "Ask to join {name}'s household?",
+      "requestLead": "If {name} lets you in, this happens straight away:",
+      "requestJoin": "You join {name}'s household.",
+      "requestConfirm": "Send request"
     },
     "pending": {
       "title": "Waiting for a response",
@@ -1992,7 +2002,20 @@
       "revokeInAppLabel": "Revoke the invitation for {name}",
       "revokeInAppBody": "{name} can no longer accept it. You can invite them again later.",
       "revokeEmailLabel": "Revoke the email invitation sent {when}",
-      "revoked": "Invitation revoked"
+      "revoked": "Invitation revoked",
+      "requestsHeading": "Requests to join ({count})",
+      "askedToJoin": "Asked to join {when}",
+      "approve": "Approve",
+      "decline": "Decline",
+      "approveLabel": "Approve {name}'s request to join",
+      "declineLabel": "Decline {name}'s request to join",
+      "approveTitle": "Let {name} into your household?",
+      "approveBody": "They'll see every puzzle in the household, and you'll all see theirs. If they're in another household, they leave it now, as they agreed when asking.",
+      "approveConfirm": "Let them in",
+      "approved": "{name} joined your household",
+      "declined": "Request declined",
+      "requestClosed": "This request is no longer open.",
+      "requestsDot": "{count, plural, one {# request to join} other {# requests to join}}"
     }
   },
   "circles": {
@@ -2278,6 +2301,8 @@
       "follow_request_approved": "Follow request approved",
       "household_invite_received": "Household invites",
       "household_invite_accepted": "Household invite accepted",
+      "household_join_request_received": "Requests to join your household",
+      "household_join_request_approved": "Request to join approved",
       "connection_offer_received": "Invitations to follow each other",
       "circle_invite_received": "Circle invites",
       "circle_invite_accepted": "Circle invite accepted",
@@ -2419,6 +2444,14 @@
         "title": "Invite accepted",
         "message": "{hasActorName, select, yes {{actorName} joined your household.} other {Someone joined your household.}}"
       },
+      "household_join_request_received": {
+        "title": "Request to join",
+        "message": "{hasActorName, select, yes {{actorName} asked to join your household.} other {Someone asked to join your household.}}"
+      },
+      "household_join_request_approved": {
+        "title": "Request approved",
+        "message": "{hasActorName, select, yes {{actorName} let you into their household.} other {Your request to join a household was approved.}}"
+      },
       "connection_offer_received": {
         "title": "Follow each other?",
         "message": "{hasActorName, select, yes {{actorName} invited you to follow each other.} other {Someone invited you to follow each other.}}"
@@ -2495,6 +2528,8 @@
       "follow_request_approved": "When a follow request you sent is approved.",
       "household_invite_received": "When someone invites you to their household.",
       "household_invite_accepted": "When someone accepts your household invite.",
+      "household_join_request_received": "When someone asks to join your household.",
+      "household_join_request_approved": "When your request to join a household is approved.",
       "connection_offer_received": "When someone who invited you asks to follow each other.",
       "circle_invite_received": "When a circle admin invites you to join their circle.",
       "circle_invite_accepted": "When someone accepts your invitation to a circle.",
@@ -2656,6 +2691,17 @@
       },
       "household_invite_accepted": {
         "sentence": "<b>{actor}</b> joined your household."
+      },
+      "household_join_request_received": {
+        "sentence": "<b>{actor}</b> asked to join your household.",
+        "resolved": {
+          "approved": "Approved",
+          "declined": "Declined",
+          "expired": "Request expired or withdrawn"
+        }
+      },
+      "household_join_request_approved": {
+        "sentence": "<b>{actor}</b> let you into their household."
       },
       "connection_offer_received": {
         "sentence": "<b>{actor}</b> invited you to follow each other."
@@ -2940,7 +2986,16 @@
     "householdLinkInvalid": "This invite link is no longer valid.",
     "householdLinkJoined": "You joined {name}'s household",
     "householdLinkDeclined": "Invite declined",
-    "householdLinkFailed": "Couldn't respond to the invite. Please try again."
+    "householdLinkFailed": "Couldn't respond to the invite. Please try again.",
+    "householdLinkOwnHousehold": "You're already in this household.",
+    "householdLinkExpiredAsk": "This invite link has expired. You can still ask {name} to let you in.",
+    "householdLinkUsedAsk": "This invite link was already used. You can still ask {name} to let you in.",
+    "householdAskToJoin": "Ask to join",
+    "householdAskSent": "Request sent. You'll get a notification if {name} lets you in.",
+    "householdAskPendingTitle": "You asked {name} to let you into their household",
+    "householdAskPendingBody": "Waiting for an answer. Requests close after 14 days.",
+    "householdAskWithdraw": "Withdraw request",
+    "householdAskWithdrawn": "Request withdrawn"
   },
   "inviteShare": {
     "share": "Share invite link",

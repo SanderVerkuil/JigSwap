@@ -69,3 +69,6 @@ export const toHouseholdId = (value: string): Id<"HouseholdId"> =>
   toId<"HouseholdId">(value);
 export const toHouseholdInviteId = (value: string): Id<"HouseholdInviteId"> =>
   toId<"HouseholdInviteId">(value);
+export const toHouseholdJoinRequestId = (
+  value: string,
+): Id<"HouseholdJoinRequestId"> => toId<"HouseholdJoinRequestId">(value);

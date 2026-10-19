@@ -3,6 +3,8 @@ import {
   HouseholdId,
   HouseholdInvite,
   HouseholdInviteId,
+  HouseholdJoinRequest,
+  HouseholdJoinRequestId,
   MemberId,
 } from "../../../domain";
 
@@ -29,10 +31,29 @@ export interface HouseholdInviteRepository {
   removePendingForHousehold(householdId: HouseholdId): Promise<void>;
 }
 
+// Outbound port: persistence for HouseholdJoinRequest aggregates.
+export interface HouseholdJoinRequestRepository {
+  findById(id: HouseholdJoinRequestId): Promise<HouseholdJoinRequest | null>;
+  // One request per (requester, link), ever.
+  findByRequesterAndLink(
+    requesterId: MemberId,
+    linkId: string,
+  ): Promise<HouseholdJoinRequest | null>;
+  // The requester's requests still waiting (pending or silently declined); lapsing is the caller's.
+  listWaitingByRequester(
+    requesterId: MemberId,
+  ): Promise<readonly HouseholdJoinRequest[]>;
+  save(request: HouseholdJoinRequest): Promise<void>;
+}
+
 export interface HouseholdIdGenerator {
   next(): HouseholdId;
 }
 
 export interface HouseholdInviteIdGenerator {
   next(): HouseholdInviteId;
+}
+
+export interface HouseholdJoinRequestIdGenerator {
+  next(): HouseholdJoinRequestId;
 }

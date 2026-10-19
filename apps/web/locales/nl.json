@@ -1902,7 +1902,13 @@
       "PermissionBatchTooLarge": "Je kunt maximaal 200 puzzels tegelijk wijzigen.",
       "CopyNotFound": "Een van deze puzzels bestaat niet meer.",
       "InvalidHouseholdName": "Een naam voor een huishouden moet 1 tot 100 tekens lang zijn.",
-      "AlreadyMember": "Dit lid zit al in je huishouden."
+      "AlreadyMember": "Dit lid zit al in je huishouden.",
+      "JoinRequestOpen": "Je hebt al gevraagd om lid te worden van een huishouden. Trek dat verzoek eerst in.",
+      "JoinRequestAlreadySent": "Je hebt met deze link al gevraagd om lid te worden.",
+      "JoinRequestNotFound": "Dit verzoek bestaat niet meer.",
+      "JoinRequestNotPending": "Dit verzoek staat niet meer open.",
+      "RateLimited": "Je hebt vandaag veel verzoeken gestuurd. Probeer het morgen opnieuw.",
+      "InviteLinkLive": "Deze uitnodigingslink werkt nog: je kunt hem accepteren."
     },
     "bulkPermission": {
       "title": "Mijn puzzels in dit huishouden",
@@ -1981,7 +1987,11 @@
       "puzzles": "Je puzzels gaan met je mee: je huidige huisgenoten zien ze niet meer, en jij ziet die van hen niet meer.",
       "join": "Je wordt meteen lid van het huishouden van {name}.",
       "confirm": "Verlaten en lid worden",
-      "cardBody": "Je zit al in {current}. Je kunt in één huishouden tegelijk zitten, dus lid worden betekent dat je dit verlaat."
+      "cardBody": "Je zit al in {current}. Je kunt in één huishouden tegelijk zitten, dus lid worden betekent dat je dit verlaat.",
+      "requestTitle": "Vragen om lid te worden van het huishouden van {name}?",
+      "requestLead": "Als {name} je toelaat, gebeurt dit meteen:",
+      "requestJoin": "Je wordt lid van het huishouden van {name}.",
+      "requestConfirm": "Verzoek sturen"
     },
     "pending": {
       "title": "Wacht op antwoord",
@@ -1992,7 +2002,20 @@
       "revokeInAppLabel": "Uitnodiging voor {name} intrekken",
       "revokeInAppBody": "{name} kan hem niet meer accepteren. Je kunt diegene later opnieuw uitnodigen.",
       "revokeEmailLabel": "E-mailuitnodiging van {when} intrekken",
-      "revoked": "Uitnodiging ingetrokken"
+      "revoked": "Uitnodiging ingetrokken",
+      "requestsHeading": "Verzoeken om lid te worden ({count})",
+      "askedToJoin": "Vroeg {when} om lid te worden",
+      "approve": "Toelaten",
+      "decline": "Weigeren",
+      "approveLabel": "Verzoek van {name} om lid te worden toelaten",
+      "declineLabel": "Verzoek van {name} om lid te worden weigeren",
+      "approveTitle": "{name} toelaten tot je huishouden?",
+      "approveBody": "Diegene ziet elke puzzel in het huishouden, en jullie zien allemaal die van hem of haar. Zit diegene in een ander huishouden, dan verlaat hij of zij dat nu, zoals afgesproken bij het verzoek.",
+      "approveConfirm": "Toelaten",
+      "approved": "{name} is lid geworden van je huishouden",
+      "declined": "Verzoek geweigerd",
+      "requestClosed": "Dit verzoek staat niet meer open.",
+      "requestsDot": "{count, plural, one {# verzoek om lid te worden} other {# verzoeken om lid te worden}}"
     }
   },
   "circles": {
@@ -2278,6 +2301,8 @@
       "follow_request_approved": "Volgverzoek goedgekeurd",
       "household_invite_received": "Uitnodigingen voor een huishouden",
       "household_invite_accepted": "Uitnodiging voor huishouden geaccepteerd",
+      "household_join_request_received": "Verzoeken om lid te worden van je huishouden",
+      "household_join_request_approved": "Verzoek om lid te worden goedgekeurd",
       "connection_offer_received": "Uitnodigingen om elkaar te volgen",
       "circle_invite_received": "Uitnodigingen voor een kring",
       "circle_invite_accepted": "Uitnodiging voor een kring geaccepteerd",
@@ -2419,6 +2444,14 @@
         "title": "Uitnodiging geaccepteerd",
         "message": "{hasActorName, select, yes {{actorName} is lid geworden van je huishouden.} other {Iemand is lid geworden van je huishouden.}}"
       },
+      "household_join_request_received": {
+        "title": "Verzoek om lid te worden",
+        "message": "{hasActorName, select, yes {{actorName} wil lid worden van je huishouden.} other {Iemand wil lid worden van je huishouden.}}"
+      },
+      "household_join_request_approved": {
+        "title": "Verzoek goedgekeurd",
+        "message": "{hasActorName, select, yes {{actorName} heeft je toegelaten tot hun huishouden.} other {Je verzoek om lid te worden van een huishouden is goedgekeurd.}}"
+      },
       "connection_offer_received": {
         "title": "Elkaar volgen?",
         "message": "{hasActorName, select, yes {{actorName} heeft je uitgenodigd om elkaar te volgen.} other {Iemand heeft je uitgenodigd om elkaar te volgen.}}"
@@ -2495,6 +2528,8 @@
       "follow_request_approved": "Wanneer een volgverzoek dat je stuurde wordt goedgekeurd.",
       "household_invite_received": "Wanneer iemand je uitnodigt voor hun huishouden.",
       "household_invite_accepted": "Wanneer iemand je uitnodiging voor het huishouden accepteert.",
+      "household_join_request_received": "Wanneer iemand lid wil worden van je huishouden.",
+      "household_join_request_approved": "Wanneer je verzoek om lid te worden van een huishouden is goedgekeurd.",
       "connection_offer_received": "Wanneer iemand die je heeft uitgenodigd vraagt om elkaar te volgen.",
       "circle_invite_received": "Wanneer een kringbeheerder je uitnodigt voor hun kring.",
       "circle_invite_accepted": "Wanneer iemand je uitnodiging voor een kring accepteert.",
@@ -2656,6 +2691,17 @@
       },
       "household_invite_accepted": {
         "sentence": "<b>{actor}</b> is lid geworden van je huishouden."
+      },
+      "household_join_request_received": {
+        "sentence": "<b>{actor}</b> wil lid worden van je huishouden.",
+        "resolved": {
+          "approved": "Goedgekeurd",
+          "declined": "Afgewezen",
+          "expired": "Verzoek verlopen of ingetrokken"
+        }
+      },
+      "household_join_request_approved": {
+        "sentence": "<b>{actor}</b> heeft je toegelaten tot hun huishouden."
       },
       "connection_offer_received": {
         "sentence": "<b>{actor}</b> heeft je uitgenodigd om elkaar te volgen."
@@ -2940,7 +2986,16 @@
     "householdLinkInvalid": "Deze uitnodigingslink is niet meer geldig.",
     "householdLinkJoined": "Je bent lid van het huishouden van {name}",
     "householdLinkDeclined": "Uitnodiging geweigerd",
-    "householdLinkFailed": "Reageren op de uitnodiging is niet gelukt. Probeer het opnieuw."
+    "householdLinkFailed": "Reageren op de uitnodiging is niet gelukt. Probeer het opnieuw.",
+    "householdLinkOwnHousehold": "Je zit al in dit huishouden.",
+    "householdLinkExpiredAsk": "Deze uitnodigingslink is verlopen. Je kunt {name} nog wel vragen om je toe te laten.",
+    "householdLinkUsedAsk": "Deze uitnodigingslink is al gebruikt. Je kunt {name} nog wel vragen om je toe te laten.",
+    "householdAskToJoin": "Vragen om lid te worden",
+    "householdAskSent": "Verzoek verstuurd. Je krijgt een melding als {name} je toelaat.",
+    "householdAskPendingTitle": "Je hebt {name} gevraagd om je toe te laten tot hun huishouden",
+    "householdAskPendingBody": "Wacht op antwoord. Verzoeken sluiten na 14 dagen.",
+    "householdAskWithdraw": "Verzoek intrekken",
+    "householdAskWithdrawn": "Verzoek ingetrokken"
   },
   "inviteShare": {
     "share": "Uitnodigingslink delen",

@@ -1,7 +1,9 @@
+import { householdErrorKey } from "@/components/household/household-error";
 import { SwitchHouseholdDialog } from "@/components/household/switch-household-dialog";
 import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import type { HouseholdLinkJoinRequestState } from "@jigswap/contracts";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
@@ -16,8 +18,12 @@ export type HouseholdLinkState = FunctionReturnType<
 
 // The signed-in landing for an EXISTING member on a household invite link: "<inviter> invited you
 // to their household" with Accept / Decline; a member already in a household gets Leave and join
-// (confirmed in SwitchHouseholdDialog) / Decline; otherwise why they can't join. Every state comes from
-// social.getHouseholdLinkInvite; the server re-checks all of it on Accept and Decline.
+// (confirmed in SwitchHouseholdDialog) / Decline; otherwise why they can't join. On an expired or
+// used link the member may instead ask the inviter to let them in (once per link): a member in a
+// household first consents to leaving it (the "request" SwitchHouseholdDialog). The answer is
+// always "Request sent", and the request then reads as waiting until it is answered or lapses,
+// whatever happened to the household. Every state comes from social.getHouseholdLinkInvite; the
+// server re-checks all of it on Accept, Decline and the request.
 export function HouseholdLinkInvite({
   token,
   fallbackName,
@@ -27,9 +33,11 @@ export function HouseholdLinkInvite({
   fallbackName: string;
 }) {
   const t = useTranslations("invite");
+  const tHousehold = useTranslations("household");
   const navigate = useNavigate();
   const [declined, setDeclined] = useState(false);
   const [confirmSwitch, setConfirmSwitch] = useState(false);
+  const [confirmRequest, setConfirmRequest] = useState(false);
   const { data } = useQuery(
     convexQuery(gateway.social.householdLinkInvite, { token }),
   );
@@ -37,7 +45,10 @@ export function HouseholdLinkInvite({
   const { data: current } = useQuery(
     convexQuery(
       gateway.household.mine,
-      data?.state === "already-in-household" ? {} : "skip",
+      data?.state === "already-in-household" ||
+        data?.joinRequest?.status === "none"
+        ? {}
+        : "skip",
     ),
   );
   const name = data?.inviterName ?? fallbackName;
@@ -59,8 +70,20 @@ export function HouseholdLinkInvite({
     onError: () => toast.error(t("householdLinkFailed")),
   });
 
+  const askToJoin = useMutation({
+    mutationFn: useConvexMutation(gateway.household.requestToJoin),
+    onSuccess: () => toast.success(t("householdAskSent", { name })),
+    onError: (error) => toast.error(tHousehold(householdErrorKey(error))),
+  });
+  const withdraw = useMutation({
+    mutationFn: useConvexMutation(gateway.household.withdrawJoinRequest),
+    onSuccess: () => toast.success(t("householdAskWithdrawn")),
+    onError: (error) => toast.error(tHousehold(householdErrorKey(error))),
+  });
+
   if (!data || declined) return null;
   const switching = data.state === "already-in-household";
+  const joinRequest = data.joinRequest;
   return (
     <>
       <HouseholdLinkInviteCard
@@ -71,7 +94,35 @@ export function HouseholdLinkInvite({
           switching ? setConfirmSwitch(true) : accept.mutate({ token })
         }
         onDecline={() => decline.mutate({ token })}
+        joinRequest={joinRequest}
+        // Asking waits for the viewer's own household (null when in none), for the consent step.
+        askBusy={
+          joinRequest?.status === "none"
+            ? askToJoin.isPending || current === undefined
+            : withdraw.isPending
+        }
+        onAskToJoin={() =>
+          current ? setConfirmRequest(true) : askToJoin.mutate({ token })
+        }
+        onWithdraw={() =>
+          joinRequest?.status === "pending" &&
+          withdraw.mutate({ requestId: joinRequest.requestId })
+        }
       />
+      {joinRequest?.status === "none" && current && (
+        <SwitchHouseholdDialog
+          variant="request"
+          open={confirmRequest}
+          onOpenChange={setConfirmRequest}
+          current={current}
+          inviterName={name}
+          busy={askToJoin.isPending}
+          onConfirm={() => {
+            askToJoin.mutate({ token, leaveCurrentHousehold: true });
+            setConfirmRequest(false);
+          }}
+        />
+      )}
       {switching && current && (
         <SwitchHouseholdDialog
           open={confirmSwitch}
@@ -95,12 +146,21 @@ export function HouseholdLinkInviteCard({
   busy,
   onAccept,
   onDecline,
+  joinRequest,
+  askBusy = false,
+  onAskToJoin,
+  onWithdraw,
 }: {
   state: HouseholdLinkState;
   inviterName: string;
   busy: boolean;
   onAccept: () => void;
   onDecline: () => void;
+  // Expired and used links only: whether the member may still ask to join, or already asked.
+  joinRequest?: HouseholdLinkJoinRequestState;
+  askBusy?: boolean;
+  onAskToJoin?: () => void;
+  onWithdraw?: () => void;
 }) {
   const t = useTranslations("invite");
   const tHousehold = useTranslations("household.invites");
@@ -108,6 +168,71 @@ export function HouseholdLinkInviteCard({
   const headingId = useId();
 
   if (state === "own-link") return null;
+  if (state === "own-household") {
+    return (
+      <div className="text-muted-foreground mb-6 rounded-xl border px-4 py-3 text-center text-sm">
+        <p>{t("householdLinkOwnHousehold")}</p>
+      </div>
+    );
+  }
+  if (
+    (state === "expired" || state === "used") &&
+    joinRequest?.status === "pending"
+  ) {
+    return (
+      <section
+        aria-labelledby={headingId}
+        className="mb-6 flex w-full flex-col gap-3 rounded-xl border px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div className="flex items-start gap-2.5">
+          <Home className="text-jigsaw-primary mt-0.5 size-4 shrink-0" />
+          <div className="flex flex-col gap-1">
+            <h2 id={headingId} className="text-sm font-medium">
+              {t("householdAskPendingTitle", { name: inviterName })}
+            </h2>
+            <p className="text-muted-foreground text-sm">
+              {t("householdAskPendingBody")}
+            </p>
+          </div>
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={askBusy}
+          onClick={onWithdraw}
+          className="shrink-0 pointer-coarse:min-h-11"
+        >
+          {t("householdAskWithdraw")}
+        </Button>
+      </section>
+    );
+  }
+  if (
+    (state === "expired" || state === "used") &&
+    joinRequest?.status === "none"
+  ) {
+    return (
+      <div className="mb-6 flex flex-col items-center gap-3 rounded-xl border px-4 py-3 text-center text-sm sm:flex-row sm:justify-between sm:text-left">
+        <p className="text-muted-foreground">
+          {t(
+            state === "expired"
+              ? "householdLinkExpiredAsk"
+              : "householdLinkUsedAsk",
+            { name: inviterName },
+          )}
+        </p>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={askBusy}
+          onClick={onAskToJoin}
+          className="shrink-0 pointer-coarse:min-h-11"
+        >
+          {t("householdAskToJoin")}
+        </Button>
+      </div>
+    );
+  }
   if (state === "expired" || state === "used" || state === "invalid") {
     const key =
       state === "expired"

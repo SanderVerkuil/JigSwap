@@ -38,6 +38,8 @@ export const INITIATOR_NOTIFICATION_TYPES: ReadonlySet<NotificationType> =
     "follow_request_approved",
     "household_invite_received",
     "household_invite_accepted",
+    "household_join_request_received",
+    "household_join_request_approved",
     "connection_offer_received",
   ]);
 
@@ -200,6 +202,26 @@ export const decideHouseholdInvite = (
   }
 };
 
+/**
+ * The admin's request-to-join row, by the request's live status (null when it is gone, lapsed,
+ * withdrawn, void, or the viewer is no longer its household's admin). No inline actions: approving
+ * moves the requester out of any household they are in, so it is confirmed on the household page.
+ */
+export const decideHouseholdJoinRequest = (
+  status: "pending" | "approved" | "declined" | null,
+): ViewDecision => {
+  switch (status) {
+    case "pending":
+      return INFORMATIONAL;
+    case "approved":
+      return resolved("approved");
+    case "declined":
+      return resolved("declined");
+    default:
+      return resolved("expired");
+  }
+};
+
 export const decideMessage = (isParticipant: boolean): ViewDecision =>
   isParticipant ? actionable(["reply_message"]) : UNAVAILABLE;
 
@@ -272,7 +294,10 @@ export const legacyNotificationHref = (
       return "/people";
     case "household_invite_received":
     case "household_invite_accepted":
+    case "household_join_request_approved":
       return "/household";
+    case "household_join_request_received":
+      return "/household?tab=members";
     // The offer is answered in the People page's requests area.
     case "connection_offer_received":
       return "/people";

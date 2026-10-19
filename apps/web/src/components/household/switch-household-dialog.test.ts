@@ -18,6 +18,7 @@ const household = (
   viewerRole,
   members,
   pendingInvites: [],
+  joinRequests: [],
   defaultCopyPermission: "manage",
   copiesUsingDefault: 0,
 });

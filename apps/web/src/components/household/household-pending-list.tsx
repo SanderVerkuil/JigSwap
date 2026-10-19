@@ -22,10 +22,11 @@ import {
 } from "@convex-dev/react-query";
 import type {
   EmailInviteView,
+  HouseholdJoinRequestView,
   HouseholdSentInviteView,
 } from "@jigswap/contracts";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Mail, Send, Undo2 } from "lucide-react";
+import { Check, Mail, Send, Undo2, UserPlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "use-intl";
 
@@ -54,15 +55,19 @@ export function mergePendingInvites(
   ].sort((a, b) => b.createdAt - a.createdAt);
 }
 
-// The admin's "Waiting for a response" on the Members tab: every invitation the household is
-// still waiting on, in-app and by email, each with its kind and a confirmed Revoke. Rendered
-// only once both lists have loaded (so rows don't jump), and not at all when nothing is pending.
+// The admin's "Waiting for a response" on the Members tab: requests to join first (they need an
+// answer: Approve, confirmed, runs the requester's join; Decline is silent to them), then every
+// invitation the household is still waiting on, in-app and by email, each with its kind and a
+// confirmed Revoke. Rendered only once both invitation lists have loaded (so rows don't jump),
+// and not at all when nothing is pending.
 // Email rows are the admin's own email invitations (invitations.listMine), absent when the
 // deployment has email invites switched off.
 export function HouseholdPendingList({
+  requests,
   inApp,
   onError,
 }: {
+  requests: readonly HouseholdJoinRequestView[];
   inApp: readonly HouseholdSentInviteView[];
   onError: (error: unknown) => void;
 }) {
@@ -92,40 +97,148 @@ export function HouseholdPendingList({
   if (emailAvailable === undefined) return null;
   if (emailAvailable && email === undefined) return null;
   const rows = mergePendingInvites(inApp, email ?? []);
-  if (rows.length === 0) return null;
+  if (rows.length === 0 && requests.length === 0) return null;
 
   return (
-    <section className="space-y-2">
+    <section className="space-y-3">
       <h3 className="text-sm font-medium">{t("title")}</h3>
-      <div className="space-y-1">
-        <h4 className="text-muted-foreground text-xs font-medium">
-          {t("invitesHeading", { count: rows.length })}
-        </h4>
-        <ul className="divide-y rounded-lg border px-4">
-          {rows.map((row) =>
-            row.kind === "inApp" ? (
-              <InAppRow
-                key={row.invite.inviteId}
-                invite={row.invite}
-                busy={revokeInApp.isPending}
-                onRevoke={() =>
-                  revokeInApp.mutate({ inviteId: row.invite.inviteId })
-                }
+      {requests.length > 0 && (
+        <div className="space-y-1">
+          <h4 className="text-muted-foreground text-xs font-medium">
+            {t("requestsHeading", { count: requests.length })}
+          </h4>
+          <ul className="divide-y rounded-lg border px-4">
+            {requests.map((request) => (
+              <RequestRow
+                key={request.requestId}
+                request={request}
+                onError={onError}
               />
-            ) : (
-              <EmailRow
-                key={row.invite.inviteRef}
-                invite={row.invite}
-                busy={revokeEmail.isPending}
-                onRevoke={() =>
-                  revokeEmail.mutate({ inviteRef: row.invite.inviteRef })
-                }
-              />
-            ),
-          )}
-        </ul>
-      </div>
+            ))}
+          </ul>
+        </div>
+      )}
+      {rows.length > 0 && (
+        <div className="space-y-1">
+          <h4 className="text-muted-foreground text-xs font-medium">
+            {t("invitesHeading", { count: rows.length })}
+          </h4>
+          <ul className="divide-y rounded-lg border px-4">
+            {rows.map((row) =>
+              row.kind === "inApp" ? (
+                <InAppRow
+                  key={row.invite.inviteId}
+                  invite={row.invite}
+                  busy={revokeInApp.isPending}
+                  onRevoke={() =>
+                    revokeInApp.mutate({ inviteId: row.invite.inviteId })
+                  }
+                />
+              ) : (
+                <EmailRow
+                  key={row.invite.inviteRef}
+                  invite={row.invite}
+                  busy={revokeEmail.isPending}
+                  onRevoke={() =>
+                    revokeEmail.mutate({ inviteRef: row.invite.inviteRef })
+                  }
+                />
+              ),
+            )}
+          </ul>
+        </div>
+      )}
     </section>
+  );
+}
+
+function RequestRow({
+  request,
+  onError,
+}: {
+  request: HouseholdJoinRequestView;
+  onError: (error: unknown) => void;
+}) {
+  const t = useTranslations("household.pending");
+  const tCommon = useTranslations("common");
+  const displayName = useMemberDisplayName();
+  const relativeTime = useRelativeTime();
+  const name = displayName(request.requester);
+  const approve = useMutation({
+    mutationFn: useConvexMutation(gateway.household.approveJoinRequest),
+    onSuccess: ({ outcome }: { outcome: "joined" | "closed" }) =>
+      outcome === "joined"
+        ? toast.success(t("approved", { name }))
+        : toast.info(t("requestClosed")),
+    onError,
+  });
+  const decline = useMutation({
+    mutationFn: useConvexMutation(gateway.household.declineJoinRequest),
+    onSuccess: () => toast.success(t("declined")),
+    onError,
+  });
+  const busy = approve.isPending || decline.isPending;
+  return (
+    <li className="flex flex-col gap-2 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+      <div className="flex min-w-0 items-center gap-3">
+        <Avatar className="h-9 w-9">
+          <AvatarImage src={request.requester.avatar} alt="" />
+          <AvatarFallback>
+            <MemberInitial source={request.requester} />
+          </AvatarFallback>
+        </Avatar>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium">{name}</p>
+          <p className="text-muted-foreground text-xs">
+            <UserPlus aria-hidden className="mr-1 inline size-3" />
+            {t("askedToJoin", { when: relativeTime(request.createdAt) })}
+          </p>
+        </div>
+      </div>
+      <div className="flex shrink-0 gap-2 max-sm:[&>*]:flex-1">
+        <Button
+          size="sm"
+          variant="outline"
+          className="pointer-coarse:min-h-11"
+          disabled={busy}
+          aria-label={t("declineLabel", { name })}
+          onClick={() => decline.mutate({ requestId: request.requestId })}
+        >
+          <X aria-hidden className="h-4 w-4" />
+          {t("decline")}
+        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              size="sm"
+              variant="brand"
+              className="pointer-coarse:min-h-11"
+              disabled={busy}
+              aria-label={t("approveLabel", { name })}
+            >
+              <Check aria-hidden className="h-4 w-4" />
+              {t("approve")}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t("approveTitle", { name })}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("approveBody")}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => approve.mutate({ requestId: request.requestId })}
+              >
+                {t("approveConfirm")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </li>
   );
 }
 

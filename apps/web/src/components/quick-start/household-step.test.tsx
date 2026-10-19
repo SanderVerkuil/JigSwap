@@ -48,6 +48,7 @@ const household = (viewerRole: HouseholdRole): HouseholdView => ({
     },
   ],
   pendingInvites: [],
+  joinRequests: [],
   defaultCopyPermission: "manage",
   copiesUsingDefault: 0,
 });

@@ -31,6 +31,25 @@ export interface HouseholdMember {
   readonly joinedAt: Date;
 }
 
+// What leaving does to the household, as the leave-and-join confirmation names it: the last member
+// deletes it; an admin with housemates and no other admin hands it over (the longest-standing
+// member is promoted); anyone else just leaves.
+export type HouseholdLeaveConsequence = "deleted" | "handover" | "leave";
+
+export const householdLeaveConsequence = (
+  members: readonly Pick<HouseholdMember, "memberId" | "role">[],
+  memberId: MemberId,
+): HouseholdLeaveConsequence => {
+  const others = members.filter((m) => m.memberId !== memberId);
+  if (others.length === 0) return "deleted";
+  const isAdmin = members.some(
+    (m) => m.memberId === memberId && m.role === "admin",
+  );
+  return isAdmin && !others.some((m) => m.role === "admin")
+    ? "handover"
+    : "leave";
+};
+
 export interface HouseholdState {
   readonly id: HouseholdId;
   readonly members: readonly HouseholdMember[];
@@ -67,6 +86,10 @@ export class Household {
     return this.state.members.some(
       (m) => m.memberId === memberId && m.role === "admin",
     );
+  }
+
+  leaveConsequenceFor(memberId: MemberId): HouseholdLeaveConsequence {
+    return householdLeaveConsequence(this.state.members, memberId);
   }
 
   static found(props: {

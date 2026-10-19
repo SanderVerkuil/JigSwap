@@ -28,6 +28,9 @@ find what you came for straight away.
 - **All pending invitations in one list.** The **Members** tab lists every
   invitation still waiting for an answer, in the app and by email, and you
   can revoke any of them.
+- **Ask to join.** Got a household invite link that expired or was already
+  used? Open it and ask to be let in. The admin approves or declines on the
+  **Members** tab.
 - **A name for your household.** The admin can name the household on the
   **Settings** tab. Only its members see the name.
 - **Switch households in one step.** Already in a household and invited to

@@ -49,6 +49,8 @@ export type NotificationType =
   | "follow_request_approved"
   | "household_invite_received"
   | "household_invite_accepted"
+  | "household_join_request_received"
+  | "household_join_request_approved"
   | "connection_offer_received"
   | "circle_invite_received"
   | "circle_invite_accepted"
@@ -86,6 +88,8 @@ export const NOTIFICATION_TYPES: NotificationType[] = [
   "follow_request_approved",
   "household_invite_received",
   "household_invite_accepted",
+  "household_join_request_received",
+  "household_join_request_approved",
   "connection_offer_received",
   "circle_invite_received",
   "circle_invite_accepted",
@@ -143,6 +147,8 @@ export const NOTIFICATION_CATEGORIES: readonly NotificationCategory[] = [
       "follow_request_approved",
       "household_invite_received",
       "household_invite_accepted",
+      "household_join_request_received",
+      "household_join_request_approved",
       "connection_offer_received",
       "circle_invite_received",
       "circle_invite_accepted",
@@ -314,6 +320,8 @@ export function notificationIcon(type: string): LucideIcon {
       return UserCheck;
     case "household_invite_received":
     case "household_invite_accepted":
+    case "household_join_request_received":
+    case "household_join_request_approved":
       return House;
     case "circle_invite_received":
     case "circle_invite_accepted":
@@ -344,6 +352,7 @@ export function notificationAccent(type: string): string {
     case "proposal_approved":
     case "follow_request_approved":
     case "household_invite_accepted":
+    case "household_join_request_approved":
     case "circle_invite_accepted":
       return "text-green-600 dark:text-green-400";
     case "trade_declined":
@@ -369,6 +378,7 @@ export function notificationAccent(type: string): string {
     case "new_follower":
     case "follow_request_received":
     case "household_invite_received":
+    case "household_join_request_received":
     case "connection_offer_received":
     case "circle_invite_received":
       return "text-blue-500 dark:text-blue-400";

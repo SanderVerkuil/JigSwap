@@ -7,7 +7,10 @@ export type HouseholdApplicationErrorCode =
   | "NotInHousehold"
   | "DuplicateInvite"
   | "InviteNotFound"
-  | "HouseholdNotFound";
+  | "HouseholdNotFound"
+  | "JoinRequestNotFound"
+  | "JoinRequestOpen"
+  | "JoinRequestAlreadySent";
 
 export class HouseholdApplicationError extends DomainError {
   override readonly name = "HouseholdApplicationError";
@@ -52,6 +55,29 @@ export class HouseholdApplicationError extends DomainError {
     return new HouseholdApplicationError(
       "HouseholdNotFound",
       "This household no longer exists",
+    );
+  }
+
+  static joinRequestNotFound(): HouseholdApplicationError {
+    return new HouseholdApplicationError(
+      "JoinRequestNotFound",
+      "No such request to join",
+    );
+  }
+
+  // A member has at most one open request to join at a time.
+  static joinRequestOpen(): HouseholdApplicationError {
+    return new HouseholdApplicationError(
+      "JoinRequestOpen",
+      "You already have an open request to join a household",
+    );
+  }
+
+  // One request per invite link, ever.
+  static joinRequestAlreadySent(): HouseholdApplicationError {
+    return new HouseholdApplicationError(
+      "JoinRequestAlreadySent",
+      "You already asked to join through this link",
     );
   }
 }

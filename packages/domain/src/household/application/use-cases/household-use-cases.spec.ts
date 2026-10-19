@@ -1,33 +1,47 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   makeAcceptHouseholdInvite,
+  makeApproveHouseholdJoinRequest,
   makeCreateHousehold,
   makeDeclineHouseholdInvite,
+  makeDeclineHouseholdJoinRequest,
   makeInviteToHousehold,
   makeJoinHouseholdByLink,
   makeLeaveHousehold,
   makeRemoveHouseholdMember,
   makeRenameHousehold,
+  makeRequestToJoinHousehold,
   makeRevokeHouseholdInvite,
   makeSetHouseholdDefaultCopyPermission,
+  makeWithdrawHouseholdJoinRequest,
 } from ".";
 import { toMemberId } from "../../../shared-kernel";
-import { HouseholdId, HouseholdInviteId, MemberId } from "../../domain";
+import {
+  HOUSEHOLD_JOIN_REQUEST_TTL_MS,
+  HouseholdId,
+  HouseholdInviteId,
+  HouseholdJoinRequestId,
+  MemberId,
+} from "../../domain";
 import {
   FixedClock,
   InMemoryHouseholdInviteRepository,
+  InMemoryHouseholdJoinRequestRepository,
   InMemoryHouseholdRepository,
   RecordingEventPublisher,
   SequentialHouseholdIdGenerator,
   SequentialHouseholdInviteIdGenerator,
+  SequentialHouseholdJoinRequestIdGenerator,
 } from "../testing";
 
 const ann = toMemberId("ann");
 const bob = toMemberId("bob");
 const cat = toMemberId("cat");
+const dan = toMemberId("dan");
 
 let households: InMemoryHouseholdRepository;
 let invites: InMemoryHouseholdInviteRepository;
+let joinRequests: InMemoryHouseholdJoinRequestRepository;
 let events: RecordingEventPublisher;
 let clock: FixedClock;
 let deps: {
@@ -35,6 +49,8 @@ let deps: {
   invites: InMemoryHouseholdInviteRepository;
   householdIds: SequentialHouseholdIdGenerator;
   inviteIds: SequentialHouseholdInviteIdGenerator;
+  joinRequests: InMemoryHouseholdJoinRequestRepository;
+  joinRequestIds: SequentialHouseholdJoinRequestIdGenerator;
   events: RecordingEventPublisher;
   clock: FixedClock;
 };
@@ -42,6 +58,7 @@ let deps: {
 beforeEach(() => {
   households = new InMemoryHouseholdRepository();
   invites = new InMemoryHouseholdInviteRepository();
+  joinRequests = new InMemoryHouseholdJoinRequestRepository();
   events = new RecordingEventPublisher();
   clock = new FixedClock(new Date("2026-10-01T00:00:00Z"));
   deps = {
@@ -49,6 +66,8 @@ beforeEach(() => {
     invites,
     householdIds: new SequentialHouseholdIdGenerator(),
     inviteIds: new SequentialHouseholdInviteIdGenerator(),
+    joinRequests,
+    joinRequestIds: new SequentialHouseholdJoinRequestIdGenerator(),
     events,
     clock,
   };
@@ -635,5 +654,287 @@ describe("joinHouseholdByLink", () => {
     const result = await join(bob);
     expect(result.isErr && result.error.code).toBe("NotInHousehold");
     expect(events.published).toEqual([]);
+  });
+});
+
+describe("household join requests", () => {
+  // Ann's household; the link was minted by Ann (its admin).
+  const ask = (
+    actorId: MemberId,
+    householdId: HouseholdId,
+    props: {
+      linkId?: string;
+      adminId?: MemberId;
+      blocked?: boolean;
+      leaveCurrentHousehold?: boolean;
+    } = {},
+  ) =>
+    makeRequestToJoinHousehold(deps)({
+      actorId,
+      householdId,
+      adminId: props.adminId ?? ann,
+      linkId: props.linkId ?? "link-1",
+      blocked: props.blocked ?? false,
+      leaveCurrentHousehold: props.leaveCurrentHousehold,
+    });
+  const asked = async (
+    ...args: Parameters<typeof ask>
+  ): Promise<HouseholdJoinRequestId> => {
+    const result = await ask(...args);
+    if (result.isErr) throw result.error;
+    return result.value;
+  };
+  const approve = (
+    actorId: MemberId,
+    requestId: HouseholdJoinRequestId,
+    blocked = false,
+  ) => makeApproveHouseholdJoinRequest(deps)({ actorId, requestId, blocked });
+  const outcome = async (...args: Parameters<typeof approve>) => {
+    const result = await approve(...args);
+    if (result.isErr) throw result.error;
+    return result.value;
+  };
+  const statusOf = async (id: HouseholdJoinRequestId) =>
+    (await joinRequests.findById(id))?.status;
+  const later = () =>
+    clock.set(
+      new Date(clock.now().getTime() + HOUSEHOLD_JOIN_REQUEST_TTL_MS + 1),
+    );
+
+  describe("requestToJoinHousehold", () => {
+    it("stores a pending request and tells the admin", async () => {
+      const household = await create();
+      events.published.length = 0;
+      const id = await asked(bob, household);
+      const request = await joinRequests.findById(id);
+      expect(request?.status).toBe("pending");
+      expect(request?.dropped).toBe(false);
+      expect(request?.toState().leave).toBeUndefined();
+      expect(events.published).toMatchObject([
+        { name: "HouseholdJoinRequested", requesterId: bob, adminId: ann },
+      ]);
+    });
+
+    it("drops it, telling no one, when the household is gone, the owner is no longer admin, or the pair is blocked", async () => {
+      const household = await create();
+      await accept(cat, await invite(ann, cat));
+      events.published.length = 0;
+
+      const blocked = await asked(bob, household, { blocked: true });
+      const notAdmin = await asked(dan, household, { adminId: cat });
+      const eve = toMemberId("eve");
+      const gone = await asked(eve, "gone" as HouseholdId, {
+        linkId: "link-2",
+      });
+      for (const id of [blocked, notAdmin, gone]) {
+        expect((await joinRequests.findById(id))?.dropped).toBe(true);
+      }
+      expect(events.published).toEqual([]);
+    });
+
+    it("allows one request per link, ever", async () => {
+      const household = await create();
+      const id = await asked(bob, household);
+      await makeWithdrawHouseholdJoinRequest(deps)({
+        actorId: bob,
+        requestId: id,
+      });
+      const result = await ask(bob, household);
+      expect(result.isErr && result.error.code).toBe("JoinRequestAlreadySent");
+    });
+
+    it("allows one open request at a time (a declined or dropped one counts)", async () => {
+      const household = await create();
+      const id = await asked(bob, household);
+      await makeDeclineHouseholdJoinRequest(deps)({
+        actorId: ann,
+        requestId: id,
+      });
+      const second = await ask(bob, household, { linkId: "link-2" });
+      expect(second.isErr && second.error.code).toBe("JoinRequestOpen");
+
+      await asked(cat, household, { blocked: true });
+      const third = await ask(cat, household, { linkId: "link-2" });
+      expect(third.isErr && third.error.code).toBe("JoinRequestOpen");
+
+      // Once it lapses, another may be sent.
+      later();
+      expect((await ask(bob, household, { linkId: "link-3" })).isOk).toBe(true);
+    });
+
+    it("needs consent to leave the current household, and stores what leaving does", async () => {
+      const household = await create();
+      const bobHousehold = await create(bob);
+      const refused = await ask(bob, household);
+      expect(refused.isErr && refused.error.code).toBe("AlreadyInHousehold");
+
+      const id = await asked(bob, household, { leaveCurrentHousehold: true });
+      expect((await joinRequests.findById(id))?.toState().leave).toEqual({
+        householdId: bobHousehold,
+        consequence: "deleted",
+      });
+    });
+
+    it("rejects a member of the household itself", async () => {
+      const household = await create();
+      await accept(bob, await invite());
+      const result = await ask(bob, household, { leaveCurrentHousehold: true });
+      expect(result.isErr && result.error.code).toBe("AlreadyMember");
+    });
+  });
+
+  describe("approveHouseholdJoinRequest", () => {
+    it("lets a requester without a household in", async () => {
+      const household = await create();
+      const id = await asked(bob, household);
+      events.published.length = 0;
+
+      expect(await outcome(ann, id)).toBe("joined");
+      expect((await households.findByMember(bob))?.id).toBe(household);
+      expect(await statusOf(id)).toBe("approved");
+      expect(events.published).toMatchObject([
+        {
+          name: "HouseholdJoinRequestApproved",
+          requesterId: bob,
+          approverId: ann,
+        },
+        { name: "HouseholdMemberJoined", memberId: bob },
+      ]);
+    });
+
+    it("switches a sole member: their household is dissolved with its pending invites", async () => {
+      const household = await create();
+      const bobHousehold = await create(bob);
+      const bobsOwnInvite = await invite(bob, cat);
+      const id = await asked(bob, household, { leaveCurrentHousehold: true });
+
+      expect(await outcome(ann, id)).toBe("joined");
+      expect(await households.findById(bobHousehold)).toBeNull();
+      expect(await invites.findById(bobsOwnInvite)).toBeNull();
+      expect((await households.findByMember(bob))?.id).toBe(household);
+    });
+
+    it("switches an admin with housemates: the longest-standing member takes over", async () => {
+      const household = await create();
+      const bobHousehold = await create(bob);
+      await accept(cat, await invite(bob, cat));
+      const id = await asked(bob, household, { leaveCurrentHousehold: true });
+
+      expect(await outcome(ann, id)).toBe("joined");
+      expect((await households.findById(bobHousehold))?.isAdmin(cat)).toBe(
+        true,
+      );
+      // Exactly one household each.
+      expect((await households.findByMember(bob))?.id).toBe(household);
+      expect((await households.findById(bobHousehold))?.isMember(bob)).toBe(
+        false,
+      );
+    });
+
+    it("closes and voids when the requester's situation no longer matches their consent", async () => {
+      const household = await create();
+      const bobHousehold = await create(bob);
+      const id = await asked(bob, household, { leaveCurrentHousehold: true });
+      // A housemate joins Bob: leaving would now hand over instead of delete.
+      await accept(cat, await invite(bob, cat));
+      events.published.length = 0;
+
+      expect(await outcome(ann, id)).toBe("closed");
+      expect(await statusOf(id)).toBe("void");
+      expect((await households.findByMember(bob))?.id).toBe(bobHousehold);
+      expect(events.published).toEqual([]);
+    });
+
+    it("closes and voids when a requester without consent joined a household since", async () => {
+      const household = await create();
+      const id = await asked(bob, household);
+      await create(bob);
+      expect(await outcome(ann, id)).toBe("closed");
+      expect(await statusOf(id)).toBe("void");
+    });
+
+    it("closes a lapsed, declined, withdrawn, dropped or blocked request without changing it", async () => {
+      const household = await create();
+      const declined = await asked(bob, household);
+      await makeDeclineHouseholdJoinRequest(deps)({
+        actorId: ann,
+        requestId: declined,
+      });
+      expect(await outcome(ann, declined)).toBe("closed");
+      expect(await statusOf(declined)).toBe("declined");
+
+      const dropped = await asked(cat, household, { blocked: true });
+      expect(await outcome(ann, dropped)).toBe("closed");
+
+      const blocked = await asked(dan, household);
+      expect(await outcome(ann, blocked, true)).toBe("closed");
+      expect(await statusOf(blocked)).toBe("pending");
+
+      later();
+      expect(await outcome(ann, blocked)).toBe("closed");
+      expect(await households.findByMember(dan)).toBeNull();
+    });
+
+    it("refuses anyone but the household's admin", async () => {
+      const household = await create();
+      await accept(cat, await invite(ann, cat));
+      const id = await asked(bob, household);
+      for (const actor of [cat, dan]) {
+        const result = await approve(actor, id);
+        expect(result.isErr && result.error.code).toBe("NotHouseholdAdmin");
+      }
+      expect(await statusOf(id)).toBe("pending");
+    });
+
+    it("rejects an unknown request", async () => {
+      const result = await approve(ann, "nope" as HouseholdJoinRequestId);
+      expect(result.isErr && result.error.code).toBe("JoinRequestNotFound");
+    });
+  });
+
+  describe("declineHouseholdJoinRequest", () => {
+    it("declines silently; the requester still sees it as open", async () => {
+      const household = await create();
+      const id = await asked(bob, household);
+      events.published.length = 0;
+      const result = await makeDeclineHouseholdJoinRequest(deps)({
+        actorId: ann,
+        requestId: id,
+      });
+      expect(result.isOk).toBe(true);
+      expect(await statusOf(id)).toBe("declined");
+      expect((await joinRequests.findById(id))?.isOpen(clock.now())).toBe(true);
+      expect(events.published).toEqual([]);
+    });
+
+    it("refuses a non-admin", async () => {
+      const household = await create();
+      const id = await asked(bob, household);
+      const result = await makeDeclineHouseholdJoinRequest(deps)({
+        actorId: bob,
+        requestId: id,
+      });
+      expect(result.isErr && result.error.code).toBe("NotHouseholdAdmin");
+    });
+  });
+
+  describe("withdrawHouseholdJoinRequest", () => {
+    it("lets the requester withdraw, and only them", async () => {
+      const household = await create();
+      const id = await asked(bob, household);
+      const other = await makeWithdrawHouseholdJoinRequest(deps)({
+        actorId: cat,
+        requestId: id,
+      });
+      expect(other.isErr && other.error.code).toBe("NotRequester");
+
+      const result = await makeWithdrawHouseholdJoinRequest(deps)({
+        actorId: bob,
+        requestId: id,
+      });
+      expect(result.isOk).toBe(true);
+      expect(await statusOf(id)).toBe("withdrawn");
+      expect(await outcome(ann, id)).toBe("closed");
+    });
   });
 });

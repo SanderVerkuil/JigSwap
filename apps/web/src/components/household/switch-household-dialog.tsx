@@ -43,7 +43,9 @@ export function leaveConsequence(
 }
 
 // Confirm "leave your household and join <inviter>'s": names both households and the
-// consequences before the one irreversible step (the server leaves and joins atomically).
+// consequences before the one irreversible step (the server leaves and joins atomically). The
+// "request" variant is the same consent given up front when asking to join: if the admin lets
+// the member in, the switch happens then, without asking again.
 export function SwitchHouseholdDialog({
   open,
   onOpenChange,
@@ -51,6 +53,7 @@ export function SwitchHouseholdDialog({
   inviterName,
   busy,
   onConfirm,
+  variant = "join",
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -58,6 +61,7 @@ export function SwitchHouseholdDialog({
   inviterName: string;
   busy: boolean;
   onConfirm: () => void;
+  variant?: "join" | "request";
 }) {
   const t = useTranslations("household.switch");
   const tCommon = useTranslations("common");
@@ -70,8 +74,15 @@ export function SwitchHouseholdDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            {t("title", { current: currentName, name: inviterName })}
+            {variant === "request"
+              ? t("requestTitle", { name: inviterName })
+              : t("title", { current: currentName, name: inviterName })}
           </AlertDialogTitle>
+          {variant === "request" && (
+            <p className="text-muted-foreground text-sm">
+              {t("requestLead", { name: inviterName })}
+            </p>
+          )}
           <AlertDialogDescription asChild>
             <ul className="list-disc space-y-1 pl-5 text-left">
               <li>
@@ -85,7 +96,11 @@ export function SwitchHouseholdDialog({
                     : t("leave", { current: currentName })}
               </li>
               <li>{t("puzzles")}</li>
-              <li>{t("join", { name: inviterName })}</li>
+              <li>
+                {variant === "request"
+                  ? t("requestJoin", { name: inviterName })
+                  : t("join", { name: inviterName })}
+              </li>
             </ul>
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -96,7 +111,7 @@ export function SwitchHouseholdDialog({
             disabled={busy}
             onClick={onConfirm}
           >
-            {t("confirm")}
+            {variant === "request" ? t("requestConfirm") : t("confirm")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -24,6 +24,7 @@ import {
   decideFollowBack,
   decideFollowRequest,
   decideHouseholdInvite,
+  decideHouseholdJoinRequest,
   decideMessage,
   INFORMATIONAL,
   INITIATOR_NOTIFICATION_TYPES,
@@ -207,6 +208,18 @@ const loadHouseholdInvite = (
       .query("householdInvites")
       .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", id))
       .first(),
+  );
+
+const loadHouseholdJoinRequest = (
+  ctx: QueryCtx,
+  cache: NotificationViewCache,
+  id: string,
+) =>
+  memoized(cache, `householdJoinRequest:${id}`, () =>
+    ctx.db
+      .query("householdJoinRequests")
+      .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", id))
+      .unique(),
   );
 
 const loadConnectionOffer = (
@@ -607,6 +620,33 @@ const resolveSubject = async (
           forViewer?.status ?? null,
           membership !== null &&
             membership.householdId !== forViewer?.householdId,
+        ),
+      };
+    }
+    // The admin's request-to-join row: its live status while the viewer still administers the
+    // request's household. Withdrawn, void and lapsed requests read as expired, like a gone one.
+    case "householdJoinRequest": {
+      const request = await loadHouseholdJoinRequest(
+        ctx,
+        cache,
+        subject.requestId,
+      );
+      const membership = request ? await membershipOf(ctx, viewerId) : null;
+      const live =
+        request !== null &&
+        !request.dropped &&
+        membership?.role === "admin" &&
+        membership.householdId === request.householdId &&
+        (request.status === "approved" || request.expiresAt > Date.now())
+          ? request.status
+          : null;
+      return {
+        available: true,
+        context: {},
+        decision: decideHouseholdJoinRequest(
+          live === "pending" || live === "approved" || live === "declined"
+            ? live
+            : null,
         ),
       };
     }

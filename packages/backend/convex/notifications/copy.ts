@@ -12,6 +12,8 @@ import type { DeliveryContent } from "./deliveryContent";
 //   actorName   — trade_request (initiator), message_received (author), new_follower (follower),
 //                 follow_request_received (requester), follow_request_approved (target),
 //                 household_invite_received (inviter), household_invite_accepted (invitee),
+//                 household_join_request_received (requester),
+//                 household_join_request_approved (approving admin),
 //                 connection_offer_received (inviter)
 //                 circle_invite_received (inviter), circle_invite_accepted (invitee)
 //   circleName  — circle_invite_received/accepted, circle_message_received: never stored;
@@ -210,6 +212,18 @@ const COPY: Record<NotificationType, (p: Params) => NotificationText> = {
     message: p["actorName"]
       ? `${p["actorName"]} joined your household`
       : "Someone joined your household",
+  }),
+  household_join_request_received: (p) => ({
+    title: "Request to join",
+    message: p["actorName"]
+      ? `${p["actorName"]} asked to join your household`
+      : "Someone asked to join your household",
+  }),
+  household_join_request_approved: (p) => ({
+    title: "Request approved",
+    message: p["actorName"]
+      ? `${p["actorName"]} let you into their household`
+      : "Your request to join a household was approved",
   }),
   connection_offer_received: (p) => ({
     title: "Follow each other?",

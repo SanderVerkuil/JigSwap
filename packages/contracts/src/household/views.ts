@@ -28,6 +28,35 @@ export interface HouseholdSentInviteView {
   createdAt: number;
 }
 
+/** A request to join the household, waiting for the admin (visible to the admin only). */
+export interface HouseholdJoinRequestView {
+  requestId: string;
+  requester: HouseholdPersonView;
+  createdAt: number;
+}
+
+/**
+ * `household.myJoinRequest`: the viewer's own open request to join a household (waiting, not
+ * lapsed, still matching the household they agreed to leave). A declined request reads exactly the
+ * same as a waiting one: declining is silent. `inviter` is the admin whose link it was asked from.
+ */
+export interface MyHouseholdJoinRequestView {
+  requestId: string;
+  createdAt: number;
+  expiresAt: number;
+  inviter: HouseholdPersonView;
+}
+
+/**
+ * Where the viewer stands on asking to join through an expired or used household invite link:
+ * "none" (they may ask), "pending" (their request is open: waiting, or declined, which reads the
+ * same) or "closed" (they already used their one request for this link).
+ */
+export type HouseholdLinkJoinRequestState =
+  | { status: "none" }
+  | { status: "pending"; requestId: string; expiresAt: number }
+  | { status: "closed" };
+
 /** `household.mine`: the viewer's household, or null when they are in none. */
 export interface HouseholdView {
   householdId: string;
@@ -36,6 +65,8 @@ export interface HouseholdView {
   viewerRole: HouseholdRole;
   members: HouseholdMemberView[];
   pendingInvites: HouseholdSentInviteView[];
+  /** Requests to join, oldest first: the admin's only (empty for other members). */
+  joinRequests: HouseholdJoinRequestView[];
   /** Household-wide permission for member copies without an explicit value (unset = "manage"). */
   defaultCopyPermission: HouseholdCopyPermission;
   /** How many copies, across all members, have no explicit value and so follow the default. */
