@@ -306,9 +306,13 @@ export const deleteUser = internalMutation({
     }
     // Their messaging data (attachments, reveals, blocks, filed reports, rate-limit counters) and
     // their circle invites, connection offers, follow edges and follow requests both ways, their
-    // invite links and redemptions, their notification inbox and per-member settings, in
-    // batches after this mutation
-    // (conversation/purgeMemberMessagingData). Also for a tombstoned
+    // invite links and redemptions, their notification inbox and per-member settings; then their
+    // open exchanges (cancelled) and loans (returned), the copies they own now with their photos
+    // and storage files, their photos and completions elsewhere, goals, collections and personal
+    // categories; the circles they own go to another member (or are deleted with nobody left) and
+    // they leave their household. In batches after this mutation
+    // (conversation/purgeMemberMessagingData). A copy they sold or gave away is never touched: its
+    // History stays and names them only as a departed member. Also for a tombstoned
     // member below: a quarantined photo is left whole by the purge, so the CSAM preservation is
     // unaffected. [LAWYER] A lawyer should confirm that purging the rest of a member under an open
     // CSAM escalation is right (versus preserving it with the account).
