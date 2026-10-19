@@ -71,7 +71,7 @@ houden hun profiel privé; dan kun je ze vanaf hun puzzel geen bericht sturen.
 
 1. Klik bij de kring op **Groepschat openen**, op **Kringen** of op de eigen
    pagina van de kring. Of klik in Berichten op **Nieuw**, kies **Kringchat**
-   en kies de kring.
+   en kies de kring (elke kring toont het paarse kringicoon).
 2. Schrijf je bericht en verstuur het.
 
 De chat van een kring verschijnt in je overzicht zodra iemand erin heeft

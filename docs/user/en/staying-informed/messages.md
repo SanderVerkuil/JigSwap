@@ -68,7 +68,7 @@ profile private, in which case you can't message them from their puzzle.
 
 1. Click **Open group chat** on the circle, on **Circles** or on the circle's
    own page. Or, in Messages, click **New**, choose **Circle chat** and pick
-   the circle.
+   the circle (each one shows the purple circle icon).
 2. Write your message and send it.
 
 A circle's chat shows up in your inbox once someone has written in it, or once

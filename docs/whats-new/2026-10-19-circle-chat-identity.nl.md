@@ -14,7 +14,8 @@ Een kring met de naam van een persoon kon lijken op een privégesprek. Nu is
 een kringchat altijd als zodanig herkenbaar.
 
 - **Kringicoon.** In je overzicht en bovenaan de chat toont een kring de
-  avatar van een lid samen met het paarse kringicoon, nooit één persoon.
+  avatar van een lid samen met het paarse kringicoon, nooit één persoon. De kringen waaruit je kiest
+  onder **Nieuw** tonen hetzelfde icoon.
 - **"Kringchat" in de kop.** Onder de naam van de kring staat **Kringchat** en
   hoeveel leden er zijn.
 - **Duidelijkere teksten.** Het berichtvak zegt "Schrijf aan je kring …",

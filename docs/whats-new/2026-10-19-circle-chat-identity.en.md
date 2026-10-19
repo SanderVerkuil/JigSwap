@@ -14,7 +14,8 @@ A circle named like a person could look like a direct message. Now a circle
 chat is always marked as one.
 
 - **Circle icon.** In your inbox and at the top of the chat, a circle shows a
-  member's avatar together with the purple circle icon, never a single person.
+  member's avatar together with the purple circle icon, never a single person. The circles you pick from
+  under **New** show the same icon.
 - **"Circle chat" in the header.** Under the circle's name it says **Circle
   chat** and how many members there are.
 - **Clearer wording.** The message box says "Write to your circle …",

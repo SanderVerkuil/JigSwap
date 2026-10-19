@@ -33,7 +33,8 @@ Three signals, used the same way everywhere:
 | Email digest                                           | richBody "There are new messages in your circle {circleName}." / "…in je kring {circleName}."                                                                                                                                                                                                                                                       |
 
 Unchanged on purpose: per-run author avatar and name (already sender attribution), live-region
-announcement, typing line, New-menu circle picker, document title.
+announcement, typing line, document title. Follow-up: the New-menu circle picker now shows the full-size
+circle mark (`CircleThreadAvatar` with no members) instead of a grey disc.
 
 ## Edge cases
 
