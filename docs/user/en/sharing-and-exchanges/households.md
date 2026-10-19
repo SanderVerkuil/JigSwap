@@ -10,7 +10,8 @@ A household lets the people you live with share one puzzle library. Everyone
 in the household sees each other's puzzles in **My Puzzles**. Puzzles stay
 owned by whoever added them, and solves stay personal.
 
-**Where:** **My Library** → **Household** (`/household`).
+**Where:** **My Library** → **Household** (`/household`). The page has three
+tabs: **Members**, **My puzzles** and **Settings**.
 
 ## Create a household
 
@@ -23,18 +24,23 @@ You become the household's **Admin**. You can be in one household at a time.
 
 Only the household admin can invite. The person joins only after they accept.
 
+Click **Invite** at the top of **Household**. The dialog offers three ways to
+invite: find a member, share a link, or send an email.
+
 ### Invite a member
 
-1. On **Household**, under **Invite someone**, search members by name.
+1. Click **Invite**, then under **Find a member** search members by name.
 2. Click **Invite** next to the person.
 
-They show as **Invited** under **Waiting for a response** until they answer.
+They show as **Invited** under **Waiting for a response** on the **Members**
+tab until they answer.
 
 ### Invite with a link
 
 Use a link to invite someone, for example a person who isn't on JigSwap yet.
 
-1. On **Household**, under **Invite with a link**, click **Create invite link**.
+1. Click **Invite**, then under **Invite with a link** click
+   **Create invite link**.
 2. Share the link. On devices that support it, **Share invite link** opens
    your device's share sheet. You can also use **Copy link**, **Email** or **WhatsApp**.
 
@@ -48,7 +54,7 @@ member who signs up through the link finds the invitation on their
 
 ### Invite by email
 
-1. On **Household**, next to **Invite with a link**, enter the person's
+1. Click **Invite**, then under **Invite by email** enter the person's
    **Email address**.
 2. Click **Invite by email**. You see **Invitation sent**.
 
@@ -70,7 +76,8 @@ invite.
 
 1. Open the invitation notification, or go to **Household**. Invitations are
    listed under **Household invites**.
-2. Click **Accept** or **Decline**.
+2. Click **Accept** or **Decline**. If you'd rather start your own, click
+   **Create household** under **Or start your own household**.
 
 ## What household members can see and do
 
@@ -103,7 +110,7 @@ Only the owner can change a puzzle's household access.
 
 ## Change several puzzles at once
 
-1. On **Household**, go to **My puzzles in this household**.
+1. On **Household**, open the **My puzzles** tab.
 2. Optionally filter the list by household access.
 3. Tick the puzzles you want to change, or use **Select all**.
 4. Click **Set to Can manage**, **Set to View only** or
@@ -118,7 +125,7 @@ puzzles.
 The household default applies to every member's puzzles that have no access
 setting of their own. A setting made for a specific puzzle always wins.
 
-1. On **Household**, go to **Household settings**.
+1. On **Household**, open the **Settings** tab.
 2. Under **Default access for puzzles**, choose **Can manage** or **View only**.
 3. Confirm with **Change default**.
 
@@ -128,10 +135,11 @@ change it; other members see it read-only. A household starts with
 
 ## Leave a household or remove a member
 
-To leave, click **Leave household** and confirm. Your puzzles leave the
+To leave, open the **Settings** tab, click **Leave household** and confirm. Your puzzles leave the
 household with you, and you no longer see the others' puzzles.
 
-The admin can **Remove** a member. Their puzzles leave the household with them.
+The admin can remove a member: on the **Members** tab, click **⋯** next to
+them, choose **Remove from household** and confirm. Their puzzles leave the household with them.
 
 If the admin leaves, the longest-standing member becomes the admin. If you're
 the last member, the household is dissolved and any pending invites are

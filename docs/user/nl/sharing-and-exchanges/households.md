@@ -11,7 +11,8 @@ puzzelbibliotheek. Iedereen in het huishouden ziet elkaars puzzels in
 **Mijn Puzzels**. Puzzels blijven van wie ze heeft toegevoegd, en
 puzzelsessies blijven persoonlijk.
 
-**Waar:** **Mijn Bibliotheek** → **Huishouden** (`/household`).
+**Waar:** **Mijn Bibliotheek** → **Huishouden** (`/household`). De pagina heeft
+drie tabbladen: **Leden**, **Mijn puzzels** en **Instellingen**.
 
 ## Een huishouden aanmaken
 
@@ -26,19 +27,22 @@ tegelijk zitten.
 Alleen de beheerder van het huishouden kan uitnodigen. De persoon doet pas mee
 nadat diegene heeft geaccepteerd.
 
+Klik bovenaan **Huishouden** op **Uitnodigen**. Het venster biedt drie manieren
+om uit te nodigen: een lid zoeken, een link delen of een e-mail sturen.
+
 ### Een lid uitnodigen
 
-1. Ga naar **Huishouden** en zoek onder **Iemand uitnodigen** leden op naam.
+1. Klik op **Uitnodigen** en zoek onder **Zoek een lid** leden op naam.
 2. Klik op **Uitnodigen** naast de persoon.
 
-Diegene staat als **Uitgenodigd** onder **Wacht op antwoord** tot er een
-antwoord is.
+Diegene staat als **Uitgenodigd** onder **Wacht op antwoord** op het tabblad
+**Leden** tot er een antwoord is.
 
 ### Uitnodigen met een link
 
 Nodig iemand uit met een link, bijvoorbeeld iemand die nog niet op JigSwap zit.
 
-1. Ga naar **Huishouden** en klik onder **Uitnodigen met een link** op
+1. Klik op **Uitnodigen** en klik onder **Uitnodigen met een link** op
    **Uitnodigingslink maken**.
 2. Deel de link. Op apparaten die het ondersteunen, opent
    **Uitnodigingslink delen** het deelmenu van je apparaat. Je kunt ook
@@ -54,7 +58,7 @@ zich via de link aanmeldt, vindt de uitnodiging op de eigen pagina
 
 ### Uitnodigen per e-mail
 
-1. Vul op **Huishouden**, naast **Uitnodigen met een link**, het
+1. Klik op **Uitnodigen** en vul onder **Uitnodigen per e-mail** het
    **E-mailadres** van de persoon in.
 2. Klik op **Uitnodigen per e-mail**. Je ziet **Uitnodiging verstuurd**.
 
@@ -77,7 +81,9 @@ uitnodiging voor een huishouden.
 
 1. Open de melding van de uitnodiging, of ga naar **Huishouden**. Uitnodigingen
    staan onder **Uitnodigingen voor een huishouden**.
-2. Klik op **Accepteren** of **Weigeren**.
+2. Klik op **Accepteren** of **Weigeren**. Begin je liever je eigen
+   huishouden, klik dan onder **Of begin je eigen huishouden** op
+   **Huishouden aanmaken**.
 
 ## Wat leden van een huishouden kunnen zien en doen
 
@@ -110,7 +116,7 @@ Alleen de eigenaar kan de toegang voor het huishouden van een puzzel wijzigen.
 
 ## Meerdere puzzels tegelijk wijzigen
 
-1. Ga op **Huishouden** naar **Mijn puzzels in dit huishouden**.
+1. Open op **Huishouden** het tabblad **Mijn puzzels**.
 2. Filter de lijst eventueel op toegang voor het huishouden.
 3. Vink de puzzels aan die je wilt wijzigen, of gebruik **Alles selecteren**.
 4. Klik op **Instellen op Mag beheren**, **Instellen op Alleen bekijken** of
@@ -126,7 +132,7 @@ De standaard van het huishouden geldt voor de puzzels van alle leden die geen
 eigen toegangsinstelling hebben. Een instelling voor een specifieke puzzel gaat
 altijd voor.
 
-1. Ga op **Huishouden** naar **Instellingen huishouden**.
+1. Open op **Huishouden** het tabblad **Instellingen**.
 2. Kies onder **Standaardtoegang voor puzzels** voor **Mag beheren** of
    **Alleen bekijken**.
 3. Bevestig met **Standaard wijzigen**.
@@ -137,11 +143,13 @@ Een nieuw huishouden begint met **Mag beheren** als standaard.
 
 ## Een huishouden verlaten of een lid verwijderen
 
-Wil je vertrekken, klik dan op **Huishouden verlaten** en bevestig. Je puzzels
+Wil je vertrekken, open dan het tabblad **Instellingen**, klik op
+**Huishouden verlaten** en bevestig. Je puzzels
 verlaten het huishouden met je mee, en je ziet de puzzels van de anderen niet
 meer.
 
-De beheerder kan een lid **Verwijderen**. Diens puzzels verlaten het huishouden
+De beheerder kan een lid verwijderen: klik op het tabblad **Leden** op **⋯**
+naast diegene, kies **Uit het huishouden verwijderen** en bevestig. Diens puzzels verlaten het huishouden
 met diegene mee.
 
 Vertrekt de beheerder, dan wordt het lid dat het langst in het huishouden zit
