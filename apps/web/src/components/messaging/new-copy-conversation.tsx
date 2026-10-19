@@ -19,6 +19,7 @@ import { Send } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "use-intl";
 import { conversationErrorCode, threadSubjectTitle } from "./format";
+import { handleMarkupShortcut, MARKUP_KEYSHORTCUTS } from "./markup-shortcuts";
 import { StagedCopyChip } from "./staged-copy-chip";
 import { ThreadSubjectAvatar } from "./thread-list";
 import { BackToInboxLink } from "./thread-view";
@@ -71,6 +72,11 @@ export function NewCopyConversation({ copyId }: { copyId: string }) {
   const start = useMutation({
     mutationFn: useConvexMutation(gateway.conversation.startCopyConversation),
   });
+
+  const onValue = (value: string) => {
+    setBody(value);
+    if (error) setError(null);
+  };
 
   const send = async () => {
     const trimmed = body.trim();
@@ -178,11 +184,12 @@ export function NewCopyConversation({ copyId }: { copyId: string }) {
             <Textarea
               ref={textareaRef}
               value={body}
-              onChange={(event) => {
-                setBody(event.target.value);
-                if (error) setError(null);
-              }}
+              onChange={(event) => onValue(event.target.value)}
+              aria-keyshortcuts={MARKUP_KEYSHORTCUTS}
               onKeyDown={(event) => {
+                if (handleMarkupShortcut(event, MAX_MESSAGE_LENGTH, onValue)) {
+                  return;
+                }
                 // Enter sends; Shift+Enter inserts a newline (same as the thread composer).
                 if (event.key === "Enter" && !event.shiftKey) {
                   event.preventDefault();

@@ -31,6 +31,7 @@ import { AttachPicker } from "./attach-picker";
 import { COMPOSER_SLOT_CLASS, ComposerClosed } from "./composer-closed";
 import type { MessageCopy } from "./copy-card";
 import { LocationPicker } from "./location-picker";
+import { handleMarkupShortcut, MARKUP_KEYSHORTCUTS } from "./markup-shortcuts";
 import { sendState } from "./photo-staging";
 import { PHOTO_ACCEPT } from "./prepare-photo";
 import { StagedCopyChip } from "./staged-copy-chip";
@@ -215,7 +216,15 @@ export function MessageComposer({
     }
   };
 
+  // Text the composer changes itself (a shortcut, an emoji): the same as typing.
+  const onValue = (value: string) => {
+    setBody(value);
+    typing.onInput(value);
+    if (error) setError(null);
+  };
+
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (handleMarkupShortcut(event, MAX_MESSAGE_LENGTH, onValue)) return;
     // Enter sends; Shift+Enter inserts a newline.
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
@@ -270,12 +279,9 @@ export function MessageComposer({
         <Textarea
           ref={textareaRef}
           value={body}
-          onChange={(event) => {
-            setBody(event.target.value);
-            typing.onInput(event.target.value);
-            if (error) setError(null);
-          }}
+          onChange={(event) => onValue(event.target.value)}
           onKeyDown={handleKeyDown}
+          aria-keyshortcuts={MARKUP_KEYSHORTCUTS}
           placeholder={placeholder ?? t("typeMessage")}
           aria-label={
             recipientName
