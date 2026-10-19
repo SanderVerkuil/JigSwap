@@ -504,11 +504,11 @@ describe("circle push copy", () => {
         messagePreview: "secret plans",
       }),
     ).toEqual({
-      title: "New messages in Puzzle Club",
+      title: "Circle: Puzzle Club",
       message: "Anna wrote in Puzzle Club",
     });
     expect(renderNotificationText("circle_message_received", {})).toEqual({
-      title: "New messages",
+      title: "New circle messages",
       message: "New messages in your circle",
     });
   });

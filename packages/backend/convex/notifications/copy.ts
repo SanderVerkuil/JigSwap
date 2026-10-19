@@ -229,13 +229,14 @@ const COPY: Record<NotificationType, (p: Params) => NotificationText> = {
       ? `${p["circleName"]} was deleted`
       : "A circle you were in was deleted",
   }),
-  // Never a message preview: a group thread's push only says where something was written.
+  // Never a message preview: a group thread's push only says where something was written. The
+  // title starts with "Circle:" so a circle never reads as a person, even when the OS truncates it.
   circle_message_received: (p) => {
     const where = p["circleName"] ?? "your circle";
     return {
       title: p["circleName"]
-        ? `New messages in ${p["circleName"]}`
-        : "New messages",
+        ? `Circle: ${p["circleName"]}`
+        : "New circle messages",
       message: p["actorName"]
         ? `${p["actorName"]} wrote in ${where}`
         : `New messages in ${where}`,

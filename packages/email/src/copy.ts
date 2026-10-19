@@ -308,14 +308,14 @@ export const EMAIL_COPY: Record<EmailType, Record<EmailLocale, EmailCopy>> = {
       heading: "New messages",
       body: "There are new messages in one of your circles on JigSwap.",
       cta: "Read messages",
-      richBody: "There are new messages in {circleName}.",
+      richBody: "There are new messages in your circle {circleName}.",
     },
     nl: {
       subject: "Nieuwe berichten in je kring op JigSwap",
       heading: "Nieuwe berichten",
       body: "Er zijn nieuwe berichten in een van je kringen op JigSwap.",
       cta: "Lees berichten",
-      richBody: "Er zijn nieuwe berichten in {circleName}.",
+      richBody: "Er zijn nieuwe berichten in je kring {circleName}.",
     },
   },
 };
