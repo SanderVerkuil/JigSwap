@@ -12,13 +12,20 @@ import { circleRowOf } from "./readModelHelpers";
  *   (a) the author's profile is public, or
  *   (b) the copy is shared into THIS circle (circleCopyShares.by_circle_copy) and the circle exists.
  *
- * Why this equals "every current member may view it" (canViewCopy) without a per-member loop
- * (a circle has up to 50 members; per-member checks across the picker's scan would not fit a
- * query's read budget): for a co-member M who is not blocked either way with the author, an open
- * copy is never private, so canViewCopy reaches rule 3 (owner public + open: true under (a)) and
- * rule 4 (open + shared into a circle both M and the owner are in, which the circle-aware policy
- * then allows for an open copy: true under (b)). It is stricter than the per-member rule only for
- * copies every member could see through household or mutual-follow links, which aren't offered.
+ * Why this IMPLIES "every current, non-blocked member may view it" (canViewCopy) without a
+ * per-member loop (a circle has up to 50 members; per-member checks across the picker's scan would
+ * not fit a query's read budget): for a co-member M who is not blocked either way with the author,
+ * an open copy is never private, so canViewCopy reaches rule 3 (owner public + open: true under
+ * (a)) and rule 4 (open + shared into a circle both M and the owner are in, which the circle-aware
+ * policy then allows for an open copy: true under (b)). It is an implication, not an equivalence:
+ * the rule is deliberately STRICTER than the per-member check, so a copy every member could see
+ * only through household links, mutual follows, holding it (heldBy) or a share into some OTHER
+ * circle they all happen to be in is not offered.
+ *
+ * One more gap, in the safe direction: canViewCopy's circle clause (isCircleSharedWithViewer)
+ * fails closed past MAX_SHARES_READ_PER_COPY shares of the copy when M is in more than
+ * MAX_VIEWER_CIRCLES_READ circles. Such an M then gets the "no longer available" placeholder for a
+ * copy accepted under (b); nobody ever sees a card they may not view.
  *
  * A member blocked either way with the author is deliberately NOT considered: refusing the attach
  * would tell the author about a block they must not learn of. That member simply gets the

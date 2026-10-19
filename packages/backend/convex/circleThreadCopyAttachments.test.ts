@@ -194,6 +194,30 @@ const copyMessagesOf = async (t: T, clerkId: string, threadId: string) =>
     )
   ).filter((m) => m.copy !== undefined || m.copyUnavailable === true);
 
+const setProfileVisibility = (
+  t: T,
+  memberId: Id<"users">,
+  visibility: "public" | "private",
+) =>
+  t.run(async (ctx) => {
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_member", (q) => q.eq("memberId", memberId))
+      .unique();
+    await ctx.db.patch(profile!._id, { visibility });
+  });
+
+// The placeholder carries nothing of the copy: no card, and none of its title, brand or cover
+// anywhere in the message view.
+const expectPlaceholder = (message: unknown, title: string) => {
+  expect(message).toMatchObject({ copyUnavailable: true });
+  expect((message as { copy?: unknown }).copy).toBeUndefined();
+  const json = JSON.stringify(message);
+  expect(json).not.toContain(title);
+  expect(json).not.toContain("Ravensburger");
+  expect(json).not.toContain("coverUrl");
+};
+
 describe("postMessage with copyId in a circle thread", () => {
   test("accepts the author's own copy shared into the circle; every member sees the card", async () => {
     const t = convexTest(schema, modules);
@@ -211,13 +235,7 @@ describe("postMessage with copyId in a circle thread", () => {
   test("accepts the author's own open copy when their profile is public", async () => {
     const t = convexTest(schema, modules);
     const s = await seed(t);
-    await t.run(async (ctx) => {
-      const profile = await ctx.db
-        .query("profiles")
-        .withIndex("by_member", (q) => q.eq("memberId", s.bob))
-        .unique();
-      await ctx.db.patch(profile!._id, { visibility: "public" });
-    });
+    await setProfileVisibility(t, s.bob, "public");
 
     await post(t, "bob", s.threadId, s.bobUnshared);
 
@@ -232,6 +250,44 @@ describe("postMessage with copyId in a circle thread", () => {
     await followMutually(t, s.bob, s.carol);
 
     await expectCode(post(t, "bob", s.threadId, s.bobUnshared), "CopyNotFound");
+  });
+
+  test("refuses an unshared copy of a private profile even when every member follows the author mutually", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    // Every member could see it through rule 6; the circle rule deliberately doesn't count that.
+    await followMutually(t, s.bob, s.alice);
+    await followMutually(t, s.bob, s.carol);
+
+    await expectCode(post(t, "bob", s.threadId, s.bobUnshared), "CopyNotFound");
+  });
+
+  test("a copy without an aggregateId qualifies only through a public profile", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    const legacy = await mkCopy(t, s.bob, "Bob Legacy");
+    await t.run((ctx) => ctx.db.patch(legacy, { aggregateId: undefined }));
+
+    await expectCode(post(t, "bob", s.threadId, legacy), "CopyNotFound");
+
+    await setProfileVisibility(t, s.bob, "public");
+    await post(t, "bob", s.threadId, legacy);
+    const [message] = await copyMessagesOf(t, "carol", s.threadId);
+    expect(message?.copy?.copyId).toBe(legacy);
+  });
+
+  test("refuses once the circle row is gone", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await t.run(async (ctx) => {
+      const circle = await ctx.db
+        .query("circles")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", s.circleId))
+        .unique();
+      await ctx.db.delete(circle!._id);
+    });
+
+    await expectCode(post(t, "bob", s.threadId, s.bobShared), "CopyNotFound");
   });
 
   test("refuses a shared copy that isn't open (the circle clause needs an open copy)", async () => {
@@ -275,8 +331,7 @@ describe("postMessage with copyId in a circle thread", () => {
     await post(t, "bob", s.threadId, s.bobShared);
 
     const [forCarol] = await copyMessagesOf(t, "carol", s.threadId);
-    expect(forCarol?.copy).toBeUndefined();
-    expect(forCarol?.copyUnavailable).toBe(true);
+    expectPlaceholder(forCarol, "Bob Shared");
     const [forAlice] = await copyMessagesOf(t, "alice", s.threadId);
     expect(forAlice?.copy?.copyId).toBe(s.bobShared);
   });
@@ -356,8 +411,7 @@ describe("a shared puzzle at read time, per viewer", () => {
 
     for (const viewer of ["alice", "bob", "carol"]) {
       const [message] = await copyMessagesOf(t, viewer, s.threadId);
-      expect(message?.copy).toBeUndefined();
-      expect(message?.copyUnavailable).toBe(true);
+      expectPlaceholder(message, "Bob Shared");
     }
   });
 
@@ -377,10 +431,25 @@ describe("a shared puzzle at read time, per viewer", () => {
     });
 
     const [forAlice] = await copyMessagesOf(t, "alice", s.threadId);
-    expect(forAlice?.copy).toBeUndefined();
-    expect(forAlice?.copyUnavailable).toBe(true);
+    expectPlaceholder(forAlice, "Bob Shared");
     const [forBob] = await copyMessagesOf(t, "bob", s.threadId);
     expect(forBob?.copy?.copyId).toBe(s.bobShared);
+  });
+
+  test("a copy attached through a public profile turns into the placeholder once the profile goes private", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await setProfileVisibility(t, s.bob, "public");
+    await post(t, "bob", s.threadId, s.bobUnshared);
+
+    await setProfileVisibility(t, s.bob, "private");
+
+    for (const viewer of ["alice", "carol"]) {
+      const [message] = await copyMessagesOf(t, viewer, s.threadId);
+      expectPlaceholder(message, "Bob Unshared");
+    }
+    const [forBob] = await copyMessagesOf(t, "bob", s.threadId);
+    expect(forBob?.copy?.copyId).toBe(s.bobUnshared);
   });
 
   test("the card turns into the placeholder once its owner leaves the circle", async () => {
@@ -394,8 +463,7 @@ describe("a shared puzzle at read time, per viewer", () => {
     await flush(t);
 
     const [message] = await copyMessagesOf(t, "carol", s.threadId);
-    expect(message?.copy).toBeUndefined();
-    expect(message?.copyUnavailable).toBe(true);
+    expectPlaceholder(message, "Bob Shared");
   });
 
   test("the inbox lists no context copies for a circle thread", async () => {
