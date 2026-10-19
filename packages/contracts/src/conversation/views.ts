@@ -182,6 +182,15 @@ export interface MessageCopyView {
 }
 
 /**
+ * One option in the attach picker (listAttachableCopies). `limitedAudience`: in a circle thread,
+ * only some of the circle's members may see this copy; the others get an "isn't available to you"
+ * placeholder in its place. Absent everywhere else.
+ */
+export interface AttachableCopyView extends MessageCopyView {
+  readonly limitedAudience?: true;
+}
+
+/**
  * Where a copy's "Message" action lands (getCopyConversation). `unavailable`: the copy does not
  * exist or the viewer may not view it. `self`: the viewer owns it. `existing`: a DM with the
  * owner already exists — open it. `new`: no DM yet — show a composer addressed to the owner
