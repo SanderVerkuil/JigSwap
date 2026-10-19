@@ -3,6 +3,7 @@ import { paginationOptsValidator, type PaginationResult } from "convex/server";
 import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { query } from "../_generated/server";
+import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import {
   publicAvailabilityOf,
   ratingBreakdownOf,
@@ -102,7 +103,7 @@ export const browsePublicCatalog = query({
           brand: puzzle.brand,
           pieceCount: puzzle.pieceCount,
           difficulty: puzzle.difficulty,
-          image: puzzle.image ? await ctx.storage.getUrl(puzzle.image) : null,
+          image: puzzle.image ? await boxArtUrl(ctx, puzzle.image) : null,
           rating: { value: rating.rating, count: rating.count },
           availableToSwap: availability.total,
         };

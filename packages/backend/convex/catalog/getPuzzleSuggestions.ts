@@ -1,6 +1,7 @@
 import type { PuzzleSummaryView } from "@jigswap/contracts";
 import { v } from "convex/values";
 import { query } from "../_generated/server";
+import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { toPuzzleSummaryView } from "./mappers";
 
 // Catalog read: search-index suggestions for the add-copy picker. Approved-only (enforced at the
@@ -24,7 +25,7 @@ export const getPuzzleSuggestions = query({
       puzzles.map(async (puzzle) =>
         toPuzzleSummaryView(
           puzzle,
-          puzzle.image ? await ctx.storage.getUrl(puzzle.image) : null,
+          puzzle.image ? await boxArtUrl(ctx, puzzle.image) : null,
         ),
       ),
     );

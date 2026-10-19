@@ -114,14 +114,37 @@ export default defineSchema({
       searchField: "searchableName",
     }),
 
-  // Box art that went through the server's metadata strip (catalog/boxArtUploads): a clean blob
-  // and the member it was cleaned for. A definition or proposal only takes a NEW image that is
-  // listed here for the acting member, so no box art is stored with its EXIF/GPS.
+  // Box art that went through the server's checks (catalog/boxArtUploads): the blob and the
+  // member it was checked for. A definition or proposal only takes a NEW image that is listed
+  // here for the acting member, so no box art is stored with its EXIF/GPS.
   boxArtUploads: defineTable({
     storageId: v.id("_storage"),
     uploaderId: v.id("users"),
+    // The image-table lifecycle of the shared moderation pipeline (lib/imageModeration), as on
+    // ownedPuzzleImages. ABSENT on rows listed before box art was moderated: served as before.
+    // Box art is served to anyone only once "approved" with its hash check passed (boxArtUrl).
+    moderationStatus: v.optional(
+      v.union(
+        v.literal("pending"),
+        v.literal("approved"),
+        v.literal("rejected"),
+        v.literal("unscored"),
+        // A CSAM hash-list match: never served to anyone; the blob is preserved.
+        v.literal("quarantined"),
+      ),
+    ),
+    moderationScore: v.optional(v.number()),
+    moderationLabel: v.optional(v.string()),
+    moderationReason: v.optional(v.string()),
+    moderationAttempts: v.optional(v.number()),
+    // When the pipeline swapped the row to its re-encoded blob (absent = still the upload).
+    reencodedAt: v.optional(v.number()),
+    // CSAM hash-check bookkeeping + publication gate (lib/imageModeration/hashCheckFields).
+    ...hashCheckFields,
     createdAt: v.number(),
-  }).index("by_storage", ["storageId"]),
+  })
+    .index("by_storage", ["storageId"])
+    .index("by_hash_check_pending", ["hashCheckPendingSince"]),
 
   // Puzzles  - the actual puzzle designs that exist in the world
   puzzles: defineTable({

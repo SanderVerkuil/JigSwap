@@ -1,6 +1,7 @@
 import type { PuzzleSummaryView } from "@jigswap/contracts";
 import { paginationOptsValidator, type PaginationResult } from "convex/server";
 import { query } from "../_generated/server";
+import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { toPuzzleSummaryView } from "./mappers";
 
 // Catalog read: the public, browsable puzzle list (paginated). Pending/rejected submissions must
@@ -18,7 +19,7 @@ export const listAllPuzzles = query({
       puzzles.page.map(async (puzzle) =>
         toPuzzleSummaryView(
           puzzle,
-          puzzle.image ? await ctx.storage.getUrl(puzzle.image) : null,
+          puzzle.image ? await boxArtUrl(ctx, puzzle.image) : null,
         ),
       ),
     );

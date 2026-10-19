@@ -1,5 +1,6 @@
 import type { Doc } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
+import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 
 // Canonical card-cover resolution for an owned copy, shared by every list read so cards look the
@@ -24,7 +25,7 @@ export const resolveCopyCoverUrl = async (
     }
   }
   if (!coverUrl && puzzle?.image) {
-    coverUrl = await ctx.storage.getUrl(puzzle.image);
+    coverUrl = await boxArtUrl(ctx, puzzle.image);
   }
   return coverUrl;
 };

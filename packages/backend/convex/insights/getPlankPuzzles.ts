@@ -2,6 +2,7 @@ import type { PlankPuzzleView } from "@jigswap/contracts";
 import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { query } from "../_generated/server";
+import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { mulberry32, partialShuffle } from "./sampling";
 
 // Bounded candidate scan: same guard as getRecommendations — never an unbounded table scan. The
@@ -56,7 +57,7 @@ export const getPlankPuzzles = query({
       picked.map(async (puzzle) =>
         toPlankPuzzleView(
           puzzle,
-          puzzle.image != null ? await ctx.storage.getUrl(puzzle.image) : null,
+          puzzle.image != null ? await boxArtUrl(ctx, puzzle.image) : null,
         ),
       ),
     );

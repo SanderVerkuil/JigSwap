@@ -15,6 +15,7 @@ import {
 import { projectTradeParty } from "../exchange/tradeParty";
 import { membershipOf } from "../household/memberships";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
+import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { canViewCopy } from "../library/canViewCopy";
 import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
 import { circleOfOpenInvite } from "../sharing/circleAccess";
@@ -261,11 +262,12 @@ const loadDoc = <T extends "puzzles" | "ownedPuzzles" | "goals">(
 ) =>
   memoized(cache, `doc:${id}`, () => ctx.db.get(id)) as Promise<Doc<T> | null>;
 
-const storageUrl = (
+// Box art goes through its publication gate (lib/imageModeration/boxArtUrl).
+const boxArtUrlOf = (
   ctx: QueryCtx,
   cache: NotificationViewCache,
   id: Id<"_storage">,
-) => memoized(cache, `storage:${id}`, () => ctx.storage.getUrl(id));
+) => memoized(cache, `storage:${id}`, () => boxArtUrl(ctx, id));
 
 // --- actor projection ---
 
@@ -680,7 +682,7 @@ const resolveSubject = async (
         return { available: false, context: {} };
       }
       const thumbnailUrl = puzzle.image
-        ? await storageUrl(ctx, cache, puzzle.image)
+        ? await boxArtUrlOf(ctx, cache, puzzle.image)
         : null;
       return {
         available: true,

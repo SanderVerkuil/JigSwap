@@ -8,6 +8,7 @@ import { query } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { adminMemberLabelOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
+import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 
 // Admin read model for ONE catalog definition: the getUserDetail counterpart on the
 // catalog side. Definition facts + submitter, ownership stats and a capped distinct-owners
@@ -118,7 +119,7 @@ export const getPuzzleDefinitionDetail = query({
         status: puzzle.status,
         createdAt: puzzle.createdAt,
         updatedAt: puzzle.updatedAt,
-        image: puzzle.image ? await ctx.storage.getUrl(puzzle.image) : null,
+        image: puzzle.image ? await boxArtUrl(ctx, puzzle.image) : null,
         submitter: submitter
           ? { _id: submitter._id, name: adminMemberLabelOf(submitter) }
           : null,

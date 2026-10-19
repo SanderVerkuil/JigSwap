@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 import {
   buildCopyViewContext,
@@ -79,7 +80,7 @@ export const listProfileCompletions = query({
         (copy && reachable
           ? await resolveCopyCoverUrl(ctx, copy, puzzle)
           : puzzle?.image
-            ? await ctx.storage.getUrl(puzzle.image)
+            ? await boxArtUrl(ctx, puzzle.image)
             : null) ?? undefined;
 
       page.push({

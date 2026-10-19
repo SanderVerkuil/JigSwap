@@ -8,6 +8,7 @@ import { query } from "../_generated/server";
 import { householdMateIds } from "../household/memberships";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
+import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { blockedEitherWaySet } from "../social/blocks";
 import { profileVisibilityOf, projectMemberIdentity } from "../social/privacy";
 import { isCircleSharedWithViewer } from "./circleSharedCopies";
@@ -37,7 +38,7 @@ export const getPuzzleDefinitionView = query({
 
     // --- definition (catalog facts) -----------------------------------------------------------
     const image = puzzle.image
-      ? ((await ctx.storage.getUrl(puzzle.image)) ?? undefined)
+      ? ((await boxArtUrl(ctx, puzzle.image)) ?? undefined)
       : undefined;
     const categoryRow = puzzle.category
       ? await ctx.db.get(puzzle.category)

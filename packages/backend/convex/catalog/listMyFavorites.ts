@@ -2,6 +2,7 @@ import type { PuzzleSummaryView } from "@jigswap/contracts";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { toPuzzleSummaryView } from "./mappers";
 
 // Catalog read: the acting member's favorited puzzle definitions, newest-favorite first, as the
@@ -25,7 +26,7 @@ export const listMyFavorites = query({
       views.push(
         toPuzzleSummaryView(
           puzzle,
-          puzzle.image ? await ctx.storage.getUrl(puzzle.image) : null,
+          puzzle.image ? await boxArtUrl(ctx, puzzle.image) : null,
         ),
       );
     }
