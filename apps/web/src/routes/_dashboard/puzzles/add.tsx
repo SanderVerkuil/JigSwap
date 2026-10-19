@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { gateway, Id } from "@/gateway";
+import { useBoxArtCheckNotice } from "@/hooks/use-box-art-check";
 import { useUploadBoxArt } from "@/hooks/use-upload-box-art";
 import { pageTitle } from "@/lib/page-title";
 import {
@@ -110,6 +111,7 @@ function ContributePuzzlePage() {
   // Convex mutations & actions, called inside the contribute wrapper below.
   const createPuzzle = useConvexMutation(gateway.catalog.createPuzzle);
   const uploadBoxArt = useUploadBoxArt();
+  const notifyBoxArtCheck = useBoxArtCheckNotice();
   const importImage = useConvexAction(gateway.catalog.importPuzzleImage);
 
   // Maker-field autocomplete suggestion pools
@@ -209,6 +211,7 @@ function ContributePuzzlePage() {
             : undefined,
         image: imageId,
       });
+      await notifyBoxArtCheck(imageId);
     },
     onSuccess: () => {
       toast.success(t("puzzleSubmittedForReview"));

@@ -602,6 +602,10 @@
       "all": "Alles",
       "mine": "Van mij",
       "household": "Van huisgenoten"
+    },
+    "boxArtCheck": {
+      "label": "Wordt gecontroleerd",
+      "toast": "Je afbeelding wordt nog gecontroleerd. Tot die controle klaar is, ziet niemand hem, ook jij niet: in plaats daarvan staat er een standaardafbeelding. De controle wordt automatisch opnieuw gedaan, je hoeft niets te doen."
     }
   },
   "trades": {

@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway, Id } from "@/gateway";
+import { useBoxArtCheckNotice } from "@/hooks/use-box-art-check";
 import { useUploadBoxArt } from "@/hooks/use-upload-box-art";
 import { pageTitle } from "@/lib/page-title";
 import { safeReturnTo } from "@/lib/return-to";
@@ -168,6 +169,7 @@ function AddPuzzlePage() {
   const createOwned = useConvexMutation(gateway.library.createOwned);
   const updateSharing = useConvexMutation(gateway.library.updateSharing);
   const uploadBoxArt = useUploadBoxArt();
+  const notifyBoxArtCheck = useBoxArtCheckNotice();
   const importImage = useConvexAction(gateway.catalog.importPuzzleImage);
 
   // puzzleId from URL — pre-select an existing definition (copy mode).
@@ -326,6 +328,7 @@ function AddPuzzlePage() {
         definitionId = (await createPuzzle(
           buildCreatePuzzleArgs(imageId),
         )) as string;
+        await notifyBoxArtCheck(imageId);
       }
 
       // 2. Acquire a copy of that definition.

@@ -3,6 +3,7 @@
 import { Link } from "@/compat/link";
 import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
+import { useBoxArtInCheck } from "@/hooks/use-box-art-check";
 import { useFavorites } from "@/hooks/use-favorites";
 import { cn } from "@/lib/utils";
 import type { FunctionReturnType } from "convex/server";
@@ -25,6 +26,7 @@ export function PuzzleCard({ puzzle }: PuzzleCardProps) {
   const tCat = useTranslations("puzzles.puzzles");
   const { isFavorite, toggleFavorite } = useFavorites();
   const favorited = isFavorite(puzzle._id);
+  const boxArtInCheck = useBoxArtInCheck();
   const favoriteLabel = favorited
     ? tCat("removeFromFavorites")
     : tCat("addToFavorites");
@@ -43,6 +45,7 @@ export function PuzzleCard({ puzzle }: PuzzleCardProps) {
       }}
       imageHref={`/puzzles/${puzzle._id}`}
       imageFit="contain"
+      imageChecking={!puzzle.image && boxArtInCheck.has(puzzle._id)}
       actions={
         // The grid columns are ~212px wide, so the row must fit two buttons
         // without overflowing the card (which is `overflow-hidden`). The primary

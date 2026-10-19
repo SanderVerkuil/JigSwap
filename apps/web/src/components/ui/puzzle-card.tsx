@@ -30,6 +30,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { gateway, Id } from "@/gateway";
+import { useBoxArtInCheck } from "@/hooks/use-box-art-check";
 import type { FunctionReturnType } from "convex/server";
 import {
   Check,
@@ -296,6 +297,7 @@ export function PuzzleCard({
 }: PuzzleCardProps) {
   const t = useTranslations("puzzles");
   const tCompletions = useTranslations("solving.completions");
+  const boxArtInCheck = useBoxArtInCheck();
 
   // Early return if no puzzle data
   if (!puzzle.puzzle) {
@@ -317,6 +319,7 @@ export function PuzzleCard({
     // copy's custom cover shows on its card instead of the placeholder; falls back to legacy images.
     imageUrl: puzzle.coverUrl ?? puzzle.puzzle.images?.[0],
   };
+  const imageChecking = !view.imageUrl && boxArtInCheck.has(puzzle.puzzleId);
 
   // Context badges: condition, availability flags, and the owner — the
   // owned-copy specifics that the shared shell deliberately doesn't know about.
@@ -521,6 +524,7 @@ export function PuzzleCard({
           : undefined
       }
       imageFit={imageFit}
+      imageChecking={imageChecking}
       className={className}
     />
   );

@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway, Id } from "@/gateway";
+import { useBoxArtCheckNotice } from "@/hooks/use-box-art-check";
 import { useUploadBoxArt } from "@/hooks/use-upload-box-art";
 import { pageTitle } from "@/lib/page-title";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -134,6 +135,7 @@ function AdminEditForm({
   }, [coverPreview]);
 
   const uploadBoxArt = useUploadBoxArt();
+  const notifyBoxArtCheck = useBoxArtCheckNotice();
   const updatePuzzle = useConvexMutation(gateway.catalog.updatePuzzle);
 
   // Maker-field autocomplete suggestion pools
@@ -169,6 +171,7 @@ function AdminEditForm({
         puzzleDefinitionId: view.aggregateId!,
         ...args,
       });
+      await notifyBoxArtCheck(args.image);
     },
     onSuccess: () => {
       toast.success(t("edit.saved"));

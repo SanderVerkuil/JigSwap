@@ -58,6 +58,7 @@ import type * as catalog_adapters_systemClock from "../catalog/adapters/systemCl
 import type * as catalog_approveChangeProposal from "../catalog/approveChangeProposal.js";
 import type * as catalog_approvePuzzleDefinition from "../catalog/approvePuzzleDefinition.js";
 import type * as catalog_backfillCategories from "../catalog/backfillCategories.js";
+import type * as catalog_boxArtInCheck from "../catalog/boxArtInCheck.js";
 import type * as catalog_boxArtModerationStore from "../catalog/boxArtModerationStore.js";
 import type * as catalog_boxArtUploads from "../catalog/boxArtUploads.js";
 import type * as catalog_browsePublicCatalog from "../catalog/browsePublicCatalog.js";
@@ -596,6 +597,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/approveChangeProposal": typeof catalog_approveChangeProposal;
   "catalog/approvePuzzleDefinition": typeof catalog_approvePuzzleDefinition;
   "catalog/backfillCategories": typeof catalog_backfillCategories;
+  "catalog/boxArtInCheck": typeof catalog_boxArtInCheck;
   "catalog/boxArtModerationStore": typeof catalog_boxArtModerationStore;
   "catalog/boxArtUploads": typeof catalog_boxArtUploads;
   "catalog/browsePublicCatalog": typeof catalog_browsePublicCatalog;
