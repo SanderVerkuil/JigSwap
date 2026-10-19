@@ -7,6 +7,7 @@
 // ImagesUnavailable refusal hides Photo for the rest of the session.
 import { conversationErrorCode } from "@/components/messaging/format";
 import { gateway, type Id } from "@/gateway";
+import { preparePhoto, uploadWithProgress } from "@/lib/prepare-photo";
 import { useConvexMutation } from "@convex-dev/react-query";
 import {
   useCallback,
@@ -23,7 +24,6 @@ import {
   remainingSlots,
   stagingReducer,
 } from "./photo-staging";
-import { preparePhoto, uploadWithProgress } from "./prepare-photo";
 
 // Session-wide: set once photos turn out to be unavailable (no classifier).
 let photosUnavailable = false;

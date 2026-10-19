@@ -1,13 +1,15 @@
-// Browser-side steps of sending a message photo (spec 2.2): re-encode the
-// picked file to a JPEG (long edge ≤ 1600 px, q 0.8) through a canvas, which
-// also drops EXIF/GPS and converts HEIC/WebP wherever the browser can decode
-// them; then POST it to the upload URL with progress.
+// Browser-side preparation of every photo upload (message photos, spec 2.2;
+// completion photos; box art): re-encode the picked file to a JPEG (long edge
+// ≤ 1600 px, q 0.8) through a canvas, which also drops EXIF/GPS and converts
+// HEIC/WebP wherever the browser can decode them. Message photos are then
+// POSTed to the upload URL with progress (uploadWithProgress).
 //
-// No compressorjs here: it skips the canvas (and hands back the original
-// file) unless canvas read-back is exact, so in browsers that add a little
-// read-back noise against fingerprinting (e.g. Helium, Brave) every photo
-// was refused. Their canvas output is fine. Only a scrambled read-back
-// (Firefox resistFingerprinting) means the JPEG would be noise too.
+// No compressorjs: it skips the canvas (and hands back the original file,
+// EXIF/GPS included) unless canvas read-back is exact, so in browsers that
+// add a little read-back noise against fingerprinting (e.g. Helium, Brave)
+// every photo went up as the original. Their canvas output is fine. Only a
+// scrambled read-back (Firefox resistFingerprinting) means the JPEG would be
+// noise too.
 
 const MAX_EDGE = 1600;
 const QUALITY = 0.8;

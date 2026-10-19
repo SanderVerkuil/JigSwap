@@ -13,10 +13,10 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useReportSurfaceBusy } from "@/components/whats-new/surface-busy";
 import { gateway, type Id } from "@/gateway";
+import { preparePhoto } from "@/lib/prepare-photo";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import Compressor from "compressorjs";
 import { AlertTriangle, ImagePlus, X } from "lucide-react";
 import {
   createContext,
@@ -55,7 +55,7 @@ const MAX_PHOTOS = 5;
 
 interface PendingPhoto {
   id: string; // local key
-  file: File; // compressed file, ready to POST
+  file: File; // re-encoded JPEG (lib/prepare-photo), ready to POST
   previewUrl: string; // object URL of `file`; revoked on remove/close
   storageId?: string; // set once uploaded; retained across retries
   failed?: boolean; // last upload attempt failed (marked in UI, re-run by Retry)
@@ -103,7 +103,7 @@ export function CompletionFollowUpProvider({
   const activeRef = useRef(false);
   // Review submitted on a previous Save attempt → retry is attach-only (never re-review).
   const reviewDoneRef = useRef(false);
-  // Mirrors the completionId for async callbacks (compression finishing after a close must not
+  // Mirrors the completionId for async callbacks (a re-encode finishing after a close must not
   // leak a photo — or an unrevoked object URL — into a later session).
   const completionIdRef = useRef<string | null>(null);
 
@@ -179,21 +179,18 @@ export function CompletionFollowUpProvider({
   const pickFiles = (list: FileList | null) => {
     const session = completionId; // pin the session the pick belongs to
     const files = Array.from(list ?? []);
-    // Flat cap: only compress what still fits (see MAX_PHOTOS note above).
+    // Flat cap: only re-encode what still fits (see MAX_PHOTOS note above).
     const remaining = MAX_PHOTOS - photos.length;
     for (const file of files.slice(0, remaining)) {
-      new Compressor(file, {
-        quality: 0.6,
-        maxWidth: 1024,
-        maxHeight: 1024,
-        success: (result) => {
-          // Dialog closed (or reopened for another completion) while compressing: drop the
+      preparePhoto(file).then(
+        (prepared) => {
+          // Dialog closed (or reopened for another completion) while re-encoding: drop the
           // result before creating any object URL, so close always means fully-reset state.
           if (session === null || completionIdRef.current !== session) return;
-          const compressed = new File([result], file.name, {
-            type: file.type,
+          const encoded = new File([prepared.file], file.name, {
+            type: prepared.file.type,
           });
-          const previewUrl = URL.createObjectURL(compressed);
+          const previewUrl = URL.createObjectURL(encoded);
           // Re-check the cap against the CURRENT list (concurrent picks can race past the
           // pre-slice); in the reject branch revoke immediately — double-revoke is a no-op.
           setPhotos((prev) => {
@@ -203,15 +200,15 @@ export function CompletionFollowUpProvider({
             }
             return [
               ...prev,
-              { id: `photo-${nextPhotoId++}`, file: compressed, previewUrl },
+              { id: `photo-${nextPhotoId++}`, file: encoded, previewUrl },
             ];
           });
         },
-        error: (error) => {
-          console.error("Failed to compress photo:", error);
+        (error: unknown) => {
+          console.error("Failed to prepare photo:", error);
           toast.error(t("uploadFailed"));
         },
-      });
+      );
     }
   };
 
