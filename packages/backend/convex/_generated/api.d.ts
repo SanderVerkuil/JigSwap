@@ -336,6 +336,7 @@ import type * as notifications_adapters_notificationMapper from "../notification
 import type * as notifications_adapters_systemClock from "../notifications/adapters/systemClock.js";
 import type * as notifications_adapters_webPush from "../notifications/adapters/webPush.js";
 import type * as notifications_backfill from "../notifications/backfill.js";
+import type * as notifications_backfillCirclePushDefault from "../notifications/backfillCirclePushDefault.js";
 import type * as notifications_backfillRefs from "../notifications/backfillRefs.js";
 import type * as notifications_copy from "../notifications/copy.js";
 import type * as notifications_deliveryContent from "../notifications/deliveryContent.js";
@@ -848,6 +849,7 @@ declare const fullApi: ApiFromModules<{
   "notifications/adapters/systemClock": typeof notifications_adapters_systemClock;
   "notifications/adapters/webPush": typeof notifications_adapters_webPush;
   "notifications/backfill": typeof notifications_backfill;
+  "notifications/backfillCirclePushDefault": typeof notifications_backfillCirclePushDefault;
   "notifications/backfillRefs": typeof notifications_backfillRefs;
   "notifications/copy": typeof notifications_copy;
   "notifications/deliveryContent": typeof notifications_deliveryContent;
