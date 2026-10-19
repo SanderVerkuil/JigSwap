@@ -1240,7 +1240,7 @@
   "privacy": {
     "title": "Privacy Policy",
     "lastUpdated": "Last Updated",
-    "effectiveDate": "19 October 2026",
+    "effectiveDate": "20 October 2026",
     "introduction": "This Privacy Policy explains what personal data JigSwap collects, why we collect it, and what your rights are. JigSwap is run by Sander Verkuil, who is the controller for the processing described here. We aim to collect as little as possible and to be transparent about the rest.",
     "informationWeCollect": {
       "title": "Information We Collect",
@@ -1304,13 +1304,9 @@
         "title": "Vercel",
         "description": "Our hosting provider. The JigSwap web application is served through Vercel's global edge network. Vercel delivers the site to your browser; your personal data itself lives in the EU-hosted services above."
       },
-      "huggingface": {
-        "title": "Hugging Face",
-        "description": "Photo screening. Each photo you upload is sent to a content-safety model hosted by Hugging Face, which checks it for explicit content and returns a score. Hugging Face processes the image only to return that result. Hugging Face is based in the United States, so this processing may take place outside the European Union."
-      },
       "sightengine": {
         "title": "Sightengine",
-        "description": "Photo screening (replacing Hugging Face). Sightengine is operated by Kozelo SAS in Paris, France. Each photo you upload is sent to its content-safety service, which checks it for explicit content and returns a score; it processes the image only to return that result. Sightengine's data centres are mainly in the European Union, but depending on availability it may also process images in Canada or the United States."
+        "description": "Photo screening. Sightengine is operated by Kozelo SAS in Paris, France. Each image you upload is sent to its content-safety service, which checks it for explicit content and returns a score; it processes the image only to return that result. Sightengine's data centres are mainly in the European Union, but depending on availability it may also process images in Canada or the United States."
       },
       "maptiler": {
         "title": "MapTiler",
@@ -1326,9 +1322,10 @@
       "description": "Photos you add to your library or to a finished puzzle, and images you upload as a puzzle's catalogue image, go through an automatic pipeline before other members can see them:",
       "steps": [
         "The image is re-encoded, which strips hidden metadata such as EXIF data — including any embedded location",
-        "An automated content-safety check screens the image; for this we use one of the screening services listed above (Hugging Face or Sightengine), which processes the image for this purpose only",
+        "Sightengine (see above) screens the image automatically for explicit content and processes it for this purpose only. An image the check refuses is not shown to other members",
         "Until this finishes, the photo is visible only to you. If the check cannot be completed (for example because the screening service is unavailable), the photo stays visible only to you until it has been checked",
-        "A catalogue image is shown to no one, you included, until it has passed the check; until then the puzzle shows its placeholder"
+        "A catalogue image is shown to no one, you included, until it has passed the check; until then the puzzle shows its placeholder",
+        "If an image is reported as illegal content, for example child sexual abuse material, a moderator removes it and, where the law requires it, we report it to the authorities"
       ]
     },
     "messaging": {
@@ -1440,7 +1437,7 @@
       "noSale": "We do not sell, rent, or trade your personal data. Ever.",
       "limitedSharing": "Data is shared only in these cases:",
       "circumstances": [
-        "With the providers named in this policy, as processors on our behalf: Convex (database and files), Clerk (sign-in), Vercel (hosting), PostHog (analytics and error reporting), Axiom (operational logs, EU-hosted), Hugging Face or Sightengine (automated photo screening), and MapTiler (maps and place search)",
+        "With the providers named in this policy, as processors on our behalf: Convex (database and files), Clerk (sign-in), Vercel (hosting), PostHog (analytics and error reporting), Axiom (operational logs, EU-hosted), Sightengine (automated photo screening), and MapTiler (maps and place search)",
         "With other members, to the extent you choose — your profile and the parts of your library you share are visible according to your settings",
         "When the law requires it, or to protect the service and its members against fraud or abuse",
         "For anything else: only with your explicit consent"
