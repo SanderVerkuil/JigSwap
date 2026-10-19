@@ -80,8 +80,13 @@ Order matters: open trades and loans are settled before copies go, copies before
 1. `exchangesOpen`: their `proposed` / `accepted` exchanges (both sides) are cancelled, so nothing
    reserves a copy that is about to go. Completed / rejected / cancelled / `disputed` stay (trade
    history): `disputed` is terminal and can follow a settlement whose copies already moved, so it
-   is not cancelled. The cancellation is silent: no event, so the other party gets no notification
-   or thread message; they see the exchange as cancelled.
+   is not cancelled. No Exchange event is emitted (so the ordinary `trade_cancelled` notification
+   and "Exchange cancelled" thread row do not fire). Instead the other party, when their account is
+   still active, gets a `trade_cancelled_member_deleted` notification ("A trade was cancelled
+   because the other member deleted their account"; the deleted member is its actor and renders as
+   "Deleted member"; in-app on, push and email per their preferences, off by default) and, when
+   the exchange has a thread, a system row "Exchange cancelled: the other member deleted their
+   account". No thread is opened for it.
 2. `loansOpen`: open loans where they lend or borrow are closed (`returned`, `closedAt`), and a
    borrowed copy's `heldBy` is cleared so it is back with its owner. Loan rows stay as history.
 3. `copies`: `ownedPuzzles.by_owner = memberId`: each copy goes with its collection memberships,
