@@ -1866,13 +1866,12 @@
       "searchPlaceholder": "Search members by name",
       "action": "Invite",
       "sent": "Invite sent",
-      "pending": "Waiting for a response",
-      "pendingBadge": "Invited",
       "dialogTitle": "Invite to your household",
       "dialogSub": "Pick whichever is easiest. They join only once they accept.",
       "searchHeading": "Find a member",
       "emailHeading": "Invite by email",
-      "dialogTitleNamed": "Invite to {name}"
+      "dialogTitleNamed": "Invite to {name}",
+      "pendingOnMembersTab": "Sent invitations are listed on the Members tab."
     },
     "leave": {
       "action": "Leave household",
@@ -1983,6 +1982,17 @@
       "join": "You join {name}'s household right away.",
       "confirm": "Leave and join",
       "cardBody": "You're already in {current}. You can be in one household at a time, so joining means leaving it."
+    },
+    "pending": {
+      "title": "Waiting for a response",
+      "invitesHeading": "Invitations sent ({count})",
+      "invitedInApp": "In-app invite · sent {when}",
+      "emailTitle": "Email invitation",
+      "emailMeta": "Sent {when} · expires {date}",
+      "revokeInAppLabel": "Revoke the invitation for {name}",
+      "revokeInAppBody": "{name} can no longer accept it. You can invite them again later.",
+      "revokeEmailLabel": "Revoke the email invitation sent {when}",
+      "revoked": "Invitation revoked"
     }
   },
   "circles": {

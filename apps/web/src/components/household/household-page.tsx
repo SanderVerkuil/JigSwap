@@ -1,6 +1,7 @@
 import { CircleAvatarStack } from "@/components/circles/circle-avatar-stack";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { HouseholdInviteDialog } from "@/components/household/household-invite-dialog";
+import { HouseholdPendingList } from "@/components/household/household-pending-list";
 import { HouseholdPuzzles } from "@/components/household/household-puzzles";
 import { HouseholdSettings } from "@/components/household/household-settings";
 import { MyHouseholdCopies } from "@/components/household/my-household-copies";
@@ -363,23 +364,11 @@ export function HouseholdDetails({
             </div>
           </section>
 
-          {isAdmin && household.pendingInvites.length > 0 && (
-            <section className="space-y-2">
-              <h3 className="text-sm font-medium">{t("invite.pending")}</h3>
-              <div className="divide-y rounded-lg border px-4">
-                {household.pendingInvites.map((pending) => (
-                  <PersonRow
-                    key={pending.inviteId}
-                    person={pending.invitee}
-                    badge={
-                      <Badge variant="outline" className="text-xs">
-                        {t("invite.pendingBadge")}
-                      </Badge>
-                    }
-                  />
-                ))}
-              </div>
-            </section>
+          {isAdmin && (
+            <HouseholdPendingList
+              inApp={household.pendingInvites}
+              onError={onError}
+            />
           )}
 
           {!isAdmin && (

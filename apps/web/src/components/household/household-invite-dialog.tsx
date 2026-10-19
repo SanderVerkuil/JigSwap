@@ -11,8 +11,8 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { useTranslations } from "use-intl";
 
-// The household page's one "Invite" entry point (admin only): the three existing invite methods,
-// unchanged, in order of likelihood — find a member already on JigSwap, share a link, or email
+// The household page's one "Invite" entry point (admin only): the three existing invite methods
+// in order of likelihood (sent email invitations are listed on the Members tab, not here) — find a member already on JigSwap, share a link, or email
 // someone who isn't. Each component keeps its own behaviour and feedback; the quick start reuses
 // the same components directly.
 export function HouseholdInviteDialog({
@@ -58,6 +58,11 @@ export function HouseholdInviteDialog({
           <HouseholdInviteLink memberId={memberId} />
           <EmailInvite
             kind="household"
+            pending={
+              <p className="text-muted-foreground text-xs">
+                {t("pendingOnMembersTab")}
+              </p>
+            }
             heading={
               <>
                 <Separator className="mb-5" />

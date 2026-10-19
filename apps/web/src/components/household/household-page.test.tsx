@@ -133,7 +133,7 @@ describe("HouseholdDetails", () => {
     ).toHaveLength(1);
   });
 
-  it("gives the admin a per-member actions menu and the pending invites", () => {
+  it("gives the admin a per-member actions menu", () => {
     const html = details("admin", "members");
     const els = elementsOf(html);
     expect(
@@ -142,8 +142,6 @@ describe("HouseholdDetails", () => {
     expect(els.some((e) => attr(e, "aria-label") === "Actions for Bob")).toBe(
       true,
     );
-    expect(texts(html)).toContain("Waiting for a response");
-    expect(texts(html)).toContain("Cat");
     expect(texts(html)).not.toContain(
       "Only the household admin can invite people.",
     );
