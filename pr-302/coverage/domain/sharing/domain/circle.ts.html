@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>108/108</span>
+                <span class='fraction'>102/102</span>
             </div>
         
             
@@ -39,14 +39,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>33/33</span>
+                <span class='fraction'>32/32</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>92/92</span>
+                <span class='fraction'>86/86</span>
             </div>
         
             
@@ -382,19 +382,14 @@
 <a name='L317'></a><a href='#L317'>317</a>
 <a name='L318'></a><a href='#L318'>318</a>
 <a name='L319'></a><a href='#L319'>319</a>
-<a name='L320'></a><a href='#L320'>320</a>
-<a name='L321'></a><a href='#L321'>321</a>
-<a name='L322'></a><a href='#L322'>322</a>
-<a name='L323'></a><a href='#L323'>323</a>
-<a name='L324'></a><a href='#L324'>324</a>
-<a name='L325'></a><a href='#L325'>325</a>
-<a name='L326'></a><a href='#L326'>326</a>
-<a name='L327'></a><a href='#L327'>327</a>
-<a name='L328'></a><a href='#L328'>328</a>
-<a name='L329'></a><a href='#L329'>329</a>
-<a name='L330'></a><a href='#L330'>330</a>
-<a name='L331'></a><a href='#L331'>331</a>
-<a name='L332'></a><a href='#L332'>332</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L320'></a><a href='#L320'>320</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -415,25 +410,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">134x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -725,7 +701,14 @@
 <span class="cline-any cline-yes">409x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { DomainEvent, err, ok, Result } from "../../shared-kernel";
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import {
+  DomainEvent,
+  err,
+  hasVisibleCharacter,
+  normaliseDisplayName,
+  ok,
+  Result,
+} from "../../shared-kernel";
 import type { CircleInvite } from "./circle-invite";
 import { SharingError } from "./errors";
 import {
@@ -743,28 +726,9 @@ import { canManageMembers, PermissionLevel } from "./permission-level";
 // The most seats a circle may hold, the owner's included.
 export const MAX_CIRCLE_MEMBERS = 50;
 &nbsp;
-// The longest a circle's name may be, counted after normalising (see normaliseCircleName). Checked
+// The longest a circle's name may be, counted after normalising (see normaliseDisplayName). Checked
 // on create only: rehydrate never re-checks, so circles stored before the limit keep their names.
 export const MAX_CIRCLE_NAME_LENGTH = 100;
-&nbsp;
-// Control characters (Cc: tabs, newlines, NUL, ...) read as a word break, so they become spaces.
-const CONTROL_CHARACTERS = /\p{Cc}/gu;
-// Format characters (Cf: bidi overrides/isolates, zero-width spaces, BOMs) are invisible and can
-// disguise a name, so they go, except ZWNJ (U+200C) and ZWJ (U+200D): emoji ZWJ sequences and
-// Persian/Indic spelling need them.
-const FORMAT_CHARACTERS = /(?![\u200C\u200D])\p{Cf}/gu;
-const WHITESPACE_RUNS = /\s+/gu;
-// A name must show something: at least one letter, digit, symbol or punctuation mark.
-const VISIBLE_CHARACTER = /[\p{L}\p{N}\p{S}\p{P}]/u;
-&nbsp;
-// A new circle name as stored: control characters to spaces, format characters (bar ZWNJ/ZWJ)
-// removed, whitespace runs collapsed to one space, trimmed.
-const normaliseCircleName = (raw: string): string =&gt;
-  raw
-    .replace(CONTROL_CHARACTERS, " ")
-    .replace(FORMAT_CHARACTERS, "")
-    .replace(WHITESPACE_RUNS, " ")
-    .trim();
 &nbsp;
 // Input to create(): a new private group and its first (owner) membership.
 export interface CreateCircleProps {
@@ -814,13 +778,13 @@ export class Circle {
     return this.memberships;
   }
 &nbsp;
-  // Open a new circle. The name is normalised (normaliseCircleName) and must then show at least
+  // Open a new circle. The name is normalised (normaliseDisplayName) and must then show at least
   // one visible character and be at most MAX_CIRCLE_NAME_LENGTH long (InvalidCircleName
   // otherwise). The owner is seeded as the first membership at Admin — the owner is implicitly
   // Admin and can never be demoted or removed.
   static create(props: CreateCircleProps): Result&lt;Circle, SharingError&gt; {
-    const name = normaliseCircleName(props.name);
-    if (!VISIBLE_CHARACTER.test(name) || name.length &gt; MAX_CIRCLE_NAME_LENGTH) {
+    const name = normaliseDisplayName(props.name);
+    if (!hasVisibleCharacter(name) || name.length &gt; MAX_CIRCLE_NAME_LENGTH) {
       return err(SharingError.invalidCircleName());
     }
     const owner = Membership.create(
@@ -1063,7 +1027,7 @@ export class Circle {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-19T08:25:48.396Z
+                at 2026-10-19T08:34:52.356Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
