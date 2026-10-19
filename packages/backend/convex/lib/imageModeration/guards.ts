@@ -8,8 +8,10 @@
 // - Pixels: the width x height read from the header is at most MAX_IMAGE_PIXELS, so a tiny file
 //   that would decompress to a huge bitmap (a decompression bomb) is refused before decode.
 //
-// WebP: jimp 1.x has no WebP decoder, so the pipeline cannot re-encode it. It strips the WebP's
-// EXIF/XMP chunks at byte level instead (stripMetadata) and stores those bytes (no blurhash).
+// WebP: jimp 1.x has no WebP codec, so the pipeline does not re-encode an upright WebP. It strips
+// the WebP's EXIF/XMP chunks at byte level instead (stripMetadata) and stores those bytes (no
+// blurhash). One whose EXIF held an Orientation is decoded (WASM, normaliseImage), turned
+// upright and re-encoded like JPEG/PNG.
 // WebP stays accepted because phones and browsers hand it over and the web client may upload the
 // original when it cannot re-encode in the browser.
 //
@@ -31,7 +33,7 @@ export type ImageGuardFailure =
   | "unsupported_format" // the magic bytes are not JPEG / PNG / WebP / GIF
   | "unreadable_header" // a supported format whose header has no usable dimensions
   | "too_many_pixels" // more than MAX_IMAGE_PIXELS
-  | "decode_failed"; // a JPEG / PNG / GIF header over a body jimp cannot decode (set by the pipeline)
+  | "decode_failed"; // a header over a body that does not decode (set by the pipeline)
 
 /** The verdict label a refused upload is recorded with. */
 export const INVALID_IMAGE_LABEL = "invalid_image";

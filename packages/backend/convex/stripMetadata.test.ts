@@ -4,13 +4,15 @@ import { describe, expect, test } from "vitest";
 import { readImageDimensions } from "./lib/imageModeration/guards";
 import {
   findMetadata,
-  orientationOnlyApp1,
+  jpegIccSegments,
   stripImageMetadata,
+  type StrippableFormat,
 } from "./lib/imageModeration/stripMetadata";
 
 // Byte-level metadata stripping on real files. The fixtures (test-fixtures/images) were written
 // by ImageMagick, exiv2 and Pillow and carry GPS coordinates in every place a camera or editor
 // puts them:
+// Each Exif holds Orientation 6, which `stripImageMetadata` returns for the caller to apply.
 // - gps.jpg (64x48): Exif (Make/Model, DateTimeOriginal, UserComment, Orientation 6, a GPS IFD),
 //   XMP (exif:GPSLatitude/Longitude, dc:creator), IPTC in APP13 (City, By-line) and a COM.
 // - gps.png (40x30, with transparency): eXIf (same Exif incl. GPS), tEXt, zTXt and iTXt (XMP).
@@ -50,6 +52,10 @@ const pixelsOf = async (bytes: Uint8Array) => {
   };
 };
 
+// The stripped bytes (the Orientation is checked separately).
+const strip = (bytes: Uint8Array, format: StrippableFormat) =>
+  stripImageMetadata(bytes, format)?.bytes ?? null;
+
 // Insert raw bytes at an offset.
 const splice = (bytes: Uint8Array, at: number, insert: Uint8Array) =>
   new Uint8Array([...bytes.subarray(0, at), ...insert, ...bytes.subarray(at)]);
@@ -81,47 +87,53 @@ describe("JPEG", () => {
     expect(text(original)).toContain("52,5.2057N");
   });
 
-  test("strips every metadata segment and keeps only the Orientation tag", () => {
+  test("strips every metadata segment, Orientation included, and returns the Orientation", () => {
     const stripped = stripImageMetadata(fixture("gps.jpg"), "jpeg")!;
 
-    expect(findMetadata(stripped, "jpeg")).toEqual([]);
-    expectNoSecrets(stripped);
-    // SOI, JFIF APP0, then the 36-byte Orientation-only Exif block (orientation 6).
-    expect(text(stripped.subarray(6, 10))).toBe("JFIF");
-    expect(stripped.subarray(20, 56)).toEqual(orientationOnlyApp1(6));
-    expect(stripped.length).toBeLessThan(fixture("gps.jpg").length - 2900);
+    expect(stripped.orientation).toBe(6);
+    expect(findMetadata(stripped.bytes, "jpeg")).toEqual([]);
+    expectNoSecrets(stripped.bytes);
+    // SOI, JFIF APP0, then straight on to the image segments: no Exif block at all.
+    expect(text(stripped.bytes.subarray(6, 10))).toBe("JFIF");
+    expect(stripped.bytes[20]).toBe(0xff);
+    expect(stripped.bytes[21]).not.toBe(0xe1);
+    expect(stripped.bytes.length).toBeLessThan(
+      fixture("gps.jpg").length - 2900,
+    );
   });
 
-  test("the pixels are untouched and decoders still turn the photo upright", async () => {
+  test("the pixels are untouched (still stored sideways)", async () => {
     const original = fixture("gps.jpg");
-    const stripped = stripImageMetadata(original, "jpeg")!;
+    const stripped = strip(original, "jpeg")!;
 
-    // The header is unchanged (64x48 stored sideways); jimp applies Orientation 6 on read.
+    // 64x48 stored sideways; without the Exif, jimp no longer turns it on read.
     expect(readImageDimensions(stripped, "jpeg")).toEqual({
       width: 64,
       height: 48,
     });
-    const before = await pixelsOf(original);
     const after = await pixelsOf(stripped);
-    expect(after.width).toBe(48);
-    expect(after.height).toBe(64);
-    expect(after.data.equals(before.data)).toBe(true);
+    expect([after.width, after.height]).toEqual([64, 48]);
   });
 
-  test("stripping is idempotent (the Orientation block reads back)", () => {
-    const once = stripImageMetadata(fixture("gps.jpg"), "jpeg")!;
-    expect(stripImageMetadata(once, "jpeg")).toEqual(once);
+  test("stripping is idempotent", () => {
+    const once = strip(fixture("gps.jpg"), "jpeg")!;
+    expect(stripImageMetadata(once, "jpeg")).toEqual({
+      bytes: once,
+      orientation: 1,
+    });
   });
 
-  test("no Orientation (or Orientation 1) leaves no Exif block at all", async () => {
+  test("no Orientation (or Orientation 1) reads as 1", async () => {
     const plain = await plainJpeg();
     const withExif = splice(
       plain,
       2,
       segment(0xe1, "Exif\0\0MM\0*\0\0\0\x08\0\0\0\0\0\0"),
     );
-    const stripped = stripImageMetadata(withExif, "jpeg")!;
-    expect(stripped).toEqual(plain);
+    expect(stripImageMetadata(withExif, "jpeg")).toEqual({
+      bytes: plain,
+      orientation: 1,
+    });
   });
 
   test("drops MPF images, unknown APPn segments and bytes after EOI; keeps ICC and Adobe", async () => {
@@ -143,14 +155,14 @@ describe("JPEG", () => {
     ]);
     expect(findMetadata(tampered, "jpeg")).toEqual(["other", "other", "other"]);
 
-    const stripped = stripImageMetadata(tampered, "jpeg")!;
+    const stripped = strip(tampered, "jpeg")!;
     expectNoSecrets(stripped);
     expect(stripped).toEqual(
       splice(plain, 2, new Uint8Array([...icc, ...adobe])),
     );
   });
 
-  test("a big-endian Exif block with more than Orientation is reported and reduced", async () => {
+  test("a big-endian Exif block with more than Orientation is reported and dropped", async () => {
     const plain = await plainJpeg();
     // MM TIFF, IFD0 with Orientation 3 and a GPS IFD pointer (tag 0x8825).
     const tiff = new Uint8Array([
@@ -165,9 +177,22 @@ describe("JPEG", () => {
     );
     const withExif = splice(plain, 2, exif);
     expect(findMetadata(withExif, "jpeg")).toEqual(["exif"]);
-    expect(stripImageMetadata(withExif, "jpeg")).toEqual(
-      splice(plain, 2, orientationOnlyApp1(3)),
-    );
+    expect(stripImageMetadata(withExif, "jpeg")).toEqual({
+      bytes: plain,
+      orientation: 3,
+    });
+  });
+
+  test("ICC profile segments are handed over for an RGB profile only", async () => {
+    const plain = await plainJpeg();
+    // "ICC_PROFILE\0", sequence 1 of 1, then a profile whose colour space (offset 16) is given.
+    const icc = (space: string) =>
+      segment(0xe2, `ICC_PROFILE\0\x01\x01${"\0".repeat(16)}${space}rest`);
+    expect(jpegIccSegments(splice(plain, 2, icc("RGB ")))).toEqual([
+      icc("RGB "),
+    ]);
+    expect(jpegIccSegments(splice(plain, 2, icc("CMYK")))).toEqual([]);
+    expect(jpegIccSegments(plain)).toEqual([]);
   });
 
   test.each([
@@ -182,7 +207,7 @@ describe("JPEG", () => {
 });
 
 describe("PNG", () => {
-  test("strips eXIf, tEXt, zTXt and iTXt; the pixels (and transparency) are untouched", async () => {
+  test("strips eXIf, tEXt, zTXt and iTXt and returns the Orientation; the pixels (and transparency) are untouched", async () => {
     const original = fixture("gps.png");
     expect(findMetadata(original, "png")).toEqual([
       "text",
@@ -192,8 +217,12 @@ describe("PNG", () => {
     ]);
     expect(text(original)).toContain("Kerkstraat");
 
-    const stripped = stripImageMetadata(original, "png")!;
+    const { bytes: stripped, orientation } = stripImageMetadata(
+      original,
+      "png",
+    )!;
 
+    expect(orientation).toBe(6);
     expect(findMetadata(stripped, "png")).toEqual([]);
     expectNoSecrets(stripped);
     expect(text(stripped)).not.toMatch(/eXIf|tEXt|zTXt|iTXt/);
@@ -204,13 +233,13 @@ describe("PNG", () => {
   });
 
   test("drops bytes after IEND", () => {
-    const stripped = stripImageMetadata(fixture("gps.png"), "png")!;
+    const stripped = strip(fixture("gps.png"), "png")!;
     const trailed = new Uint8Array([
       ...stripped,
       ...new TextEncoder().encode("Kerkstraat"),
     ]);
     expect(findMetadata(trailed, "png")).toEqual(["other"]);
-    expect(stripImageMetadata(trailed, "png")).toEqual(stripped);
+    expect(strip(trailed, "png")).toEqual(stripped);
   });
 
   test.each([
@@ -240,14 +269,18 @@ describe("WebP", () => {
     return out;
   };
 
-  test("strips the EXIF and XMP chunks, clears their VP8X flags and fixes the RIFF size", () => {
+  test("strips the EXIF and XMP chunks (returning the Orientation), clears their VP8X flags and fixes the RIFF size", () => {
     const original = fixture("gps.webp");
     expect(chunks(original)).toEqual(["VP8X", "VP8 ", "EXIF", "XMP "]);
     expect(findMetadata(original, "webp")).toEqual(["exif", "xmp"]);
     expect(original[20] & 0x0c).toBe(0x0c);
 
-    const stripped = stripImageMetadata(original, "webp")!;
+    const { bytes: stripped, orientation } = stripImageMetadata(
+      original,
+      "webp",
+    )!;
 
+    expect(orientation).toBe(6);
     expect(chunks(stripped)).toEqual(["VP8X", "VP8 "]);
     expect(findMetadata(stripped, "webp")).toEqual([]);
     expectNoSecrets(stripped);

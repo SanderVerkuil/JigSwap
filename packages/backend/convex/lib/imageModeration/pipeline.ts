@@ -2,7 +2,6 @@
 
 import { createHash } from "node:crypto";
 import type { FunctionReference } from "convex/server";
-import { Jimp } from "jimp";
 import { internal } from "../../_generated/api";
 import type { Id } from "../../_generated/dataModel";
 import type { ActionCtx } from "../../_generated/server";
@@ -28,8 +27,10 @@ import {
 import {
   checkImageBytes,
   INVALID_IMAGE_LABEL,
+  type ImageFormat,
   type ImageGuardFailure,
 } from "./guards";
+import { decodeUpright, hasTransparency } from "./normaliseImage";
 import { findMetadata, stripImageMetadata } from "./stripMetadata";
 
 // The shared image-moderation pipeline behind every table of uploaded photos (copy photos,
@@ -43,20 +44,22 @@ import { findMetadata, stripImageMetadata } from "./stripMetadata";
 //      guards (lib/imageModeration/guards): size, magic bytes, the header's pixel count, all
 //      before any decode. Then (on any attempt until the row is marked `reencodedAt`) strip the
 //      metadata at byte level (lib/imageModeration/stripMetadata: Exif incl. GPS, XMP, IPTC,
-//      comments, PNG text chunks, WebP EXIF/XMP; a JPEG keeps only its Orientation) and
-//      re-encode that in memory via jimp — PNG when it has transparency, else JPEG; jimp bakes
-//      the orientation in — plus the blurhash. A malformed block structure or a decode failure
-//      is refused as "decode_failed", except WebP, which jimp cannot decode: its stripped bytes
-//      are stored instead (as "image/webp"). Whatever is stored must show no metadata left
-//      (findMetadata), or it is refused too.
+//      comments, PNG text chunks, WebP EXIF/XMP, Orientation included) and re-encode that in
+//      memory via jimp, turned upright for the Orientation the Exif held — PNG when it has
+//      transparency, else JPEG — plus the blurhash. A malformed block structure or a decode
+//      failure is refused as "decode_failed". An upright WebP (no Orientation, or 1) is not
+//      re-encoded: its stripped bytes are stored (as "image/webp"); one that needs turning is
+//      decoded (WASM) and re-encoded like the rest. Whatever is stored must show no metadata
+//      left (findMetadata), or it is refused too.
 //   3. CSAM hash check (lib/imageModeration/csamHashCheck), until the row has passed one: MD5 +
-//      SHA-1 of the ORIGINAL bytes (what hash lists match) and of the re-encode, BEFORE any
-//      refusal, swap or classification. A match stores the matched bytes again as a NEW blob,
-//      calls the table's `quarantine` (always escalates) and deletes the uploaded blob, so no URL
-//      ever issued points at the evidence; nothing else runs. no_match opens the publication gate
-//      (setHashCheck; lib/imageModeration/hashCheckFields), but only once the row holds the
-//      clean blob (after step 5): no read model serves the row before, so no URL is ever issued
-//      for the upload as sent. "unavailable" is logged at error level and the gate stays closed.
+//      SHA-1 of the ORIGINAL bytes (what hash lists match) and of the re-encode (what is stored,
+//      upright), BEFORE any refusal, swap or classification. A match stores the matched bytes
+//      again as a NEW blob, calls the table's `quarantine` (always escalates) and deletes the
+//      uploaded blob, so no URL ever issued points at the evidence; nothing else runs. no_match
+//      opens the publication gate (setHashCheck; lib/imageModeration/hashCheckFields), but only
+//      once the row holds the clean blob (after step 5): no read model serves the row before,
+//      so no URL is ever issued for the upload as sent. "unavailable" is logged at error level
+//      and the gate stays closed.
 //   4. A refused upload is "rejected" with label "invalid_image" (the reason in
 //      moderationReason), never classified, and its blob is deleted. Never fails open.
 //   5. Swap the row to the clean blob (setFile) and delete the original.
@@ -89,28 +92,26 @@ export const hashImageBytes = (bytes: Uint8Array): ImageHashes => ({
   sha1: createHash("sha1").update(bytes).digest("hex"),
 });
 
-// Re-encode arbitrary image bytes to a metadata-free image. Either output (PNG/JPEG) drops all
-// EXIF/metadata. Format is alpha-aware: if the source has ANY transparent pixel we emit PNG so the
-// transparency is preserved — a JPEG would flatten the alpha to black (jimp has no WebP encoder).
-// Opaque images emit JPEG (smaller). Returns the bytes plus the mime so the caller stores the blob
-// with the matching content type, and the image's blurhash (lib/blurhash) from the same decode.
+// Re-encode stripped image bytes (no Exif) to a metadata-free image, turned upright for the
+// Orientation (1..8) the stripped Exif held (lib/imageModeration/normaliseImage). Either output
+// (PNG/JPEG) carries no metadata. Format is alpha-aware: if the source has ANY transparent pixel
+// we emit PNG so the transparency is preserved — a JPEG would flatten the alpha to black (jimp has
+// no WebP encoder). Opaque images emit JPEG (smaller). Returns the bytes plus the mime so the
+// caller stores the blob with the matching content type, and the image's blurhash (lib/blurhash)
+// from the same decode. A WebP is decoded with the WASM decoder (only called for one that needs
+// turning; see runImageModeration).
 export const reencodeImage = async (
   input: Uint8Array,
+  format: ImageFormat,
+  orientation: number,
 ): Promise<{
   bytes: Uint8Array;
   mime: "image/png" | "image/jpeg";
   blurhash: string;
 }> => {
-  const image = await Jimp.read(Buffer.from(input));
+  const image = await decodeUpright(input, format, orientation);
   // bitmap.data is RGBA; a single non-opaque pixel means the image carries real transparency.
-  const data = image.bitmap.data;
-  let hasAlpha = false;
-  for (let i = 3; i < data.length; i += 4) {
-    if (data[i] < 255) {
-      hasAlpha = true;
-      break;
-    }
-  }
+  const hasAlpha = hasTransparency(image.bitmap.data);
   const out = hasAlpha
     ? await image.getBuffer("image/png")
     : await image.getBuffer("image/jpeg", { quality: 90 });
@@ -488,7 +489,7 @@ export const runImageModeration = async <R extends ModerationRow>(
     // download or swap failure never classifies (and so never publishes) the original with its
     // EXIF/GPS. In memory only: nothing is stored or deleted until the hash check has passed. A
     // malformed or undecodable image is refused (a header that says JPEG/PNG/GIF over a body
-    // that is not one is a polyglot or a corrupt file); a WebP keeps its stripped bytes.
+    // that is not one is a polyglot or a corrupt file); an upright WebP keeps its stripped bytes.
     let encoded: {
       bytes: Uint8Array;
       mime: string;
@@ -498,22 +499,30 @@ export const runImageModeration = async <R extends ModerationRow>(
       // GIF has no byte-level stripper: jimp's re-encode (PNG/JPEG) drops its extensions.
       const stripped =
         guard.format === "gif"
-          ? bytes
+          ? { bytes, orientation: 1 }
           : stripImageMetadata(bytes, guard.format);
       if (stripped === null) {
         event.strip_error = "malformed";
         refusal = "decode_failed";
+      } else if (guard.format === "webp" && stripped.orientation === 1) {
+        // Upright already: stored as its stripped bytes (not re-encoded, no blurhash).
+        event.stripped_bytes = stripped.bytes.length;
+        event.reencoded = false;
+        encoded = { bytes: stripped.bytes, mime: "image/webp" };
       } else {
-        event.stripped_bytes = stripped.length;
+        event.stripped_bytes = stripped.bytes.length;
+        event.orientation = stripped.orientation;
         try {
-          encoded = await reencodeImage(stripped);
+          encoded = await reencodeImage(
+            stripped.bytes,
+            guard.format,
+            stripped.orientation,
+          );
           event.reencoded = true;
         } catch (error) {
           event.reencoded = false;
           event.reencode_error = errMsg(error);
-          if (guard.format === "webp") {
-            encoded = { bytes: stripped, mime: "image/webp" };
-          } else refusal = "decode_failed";
+          refusal = "decode_failed";
         }
       }
       if (encoded) {
