@@ -19,6 +19,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { stripFormatting } from "@jigswap/contracts";
 import { useMutation, useQuery } from "@tanstack/react-query";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery, type PaginatedQueryItem } from "convex/react";
@@ -61,6 +62,7 @@ import { MessageActions } from "./message-actions";
 import { MessageComposer } from "./message-composer";
 import { locationAttachmentOf, MessageLocation } from "./message-location";
 import { MessagePhotos } from "./message-photos";
+import { MessageText } from "./message-text";
 import { OlderMessagesSlot } from "./older-messages-slot";
 import { PhotoOutbox } from "./photo-outbox";
 import { RemovedMessage } from "./removed-message";
@@ -339,7 +341,7 @@ export function ThreadView({
     if (newest.kind === "system" || newest.isMine) return;
     // A member the viewer blocked stays collapsed, so it isn't read out either.
     if (newest.authorBlockedByMe) return;
-    const text = newest.body.replace(/\s+/g, " ").trim();
+    const text = stripFormatting(newest.body).replace(/\s+/g, " ").trim();
     const region = liveRegionRef.current;
     if (!region) return;
     const body =
@@ -778,7 +780,7 @@ function GroupBody({
           pending && "opacity-70",
         )}
       >
-        {message.body}
+        <MessageText body={message.body} />
       </div>
     );
     if (message.kind === "location" && !message.removed) {
@@ -902,7 +904,7 @@ function GroupBody({
                     ),
                   )}
                 >
-                  {message.body}
+                  <MessageText body={message.body} />
                 </div>
               );
               return !single && reportable(message) ? (

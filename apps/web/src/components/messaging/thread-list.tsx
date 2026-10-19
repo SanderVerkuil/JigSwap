@@ -19,6 +19,7 @@ import { gateway } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
+import { stripFormatting } from "@jigswap/contracts";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeftRight, BellOff, MessageSquare, User } from "lucide-react";
 import { useState } from "react";
@@ -376,7 +377,9 @@ function pairSnippet(
   // A removed message has an empty body: name the removal instead.
   const body = last?.removed
     ? removedLabel
-    : last?.body.replace(/\s+/g, " ").trim();
+    : last
+      ? stripFormatting(last.body).replace(/\s+/g, " ").trim()
+      : undefined;
   const mine = last?.isMine === true;
   // A photo without a caption names the sender instead of an empty body.
   const photoOnly = last?.kind === "image" && !last.removed && !body;

@@ -183,6 +183,22 @@ describe("ThreadList circle rows", () => {
     expect(within(link).getByText("Mara").className).toContain("font-bold");
   });
 
+  it("strips formatting markers from a DM snippet", () => {
+    renderList([
+      {
+        ...dmThread,
+        lastMessage: {
+          id: "dm-m",
+          isMine: true,
+          kind: "text",
+          body: "**Sounds** _good_!",
+          sentAt: 1,
+        },
+      },
+    ]);
+    expect(within(row("Mara")).getByText("You: Sounds good!")).toBeTruthy();
+  });
+
   it("offers a New menu above the list", () => {
     renderList([dmThread]);
     expect(

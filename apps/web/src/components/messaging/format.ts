@@ -2,7 +2,7 @@
 // runtime imports so they unit-test in a plain node environment.
 
 import type { gateway } from "@/gateway";
-import type { MemberNameSource } from "@jigswap/contracts";
+import { stripFormatting, type MemberNameSource } from "@jigswap/contracts";
 import type { FunctionReturnType } from "convex/server";
 import { ConvexError } from "convex/values";
 
@@ -163,7 +163,7 @@ export function circleSnippet(
       : t("otherMember");
   const body = last.removed
     ? removedLabel
-    : last.body.replace(/\s+/g, " ").trim();
+    : stripFormatting(last.body).replace(/\s+/g, " ").trim();
   if (!last.removed && last.kind === "location") {
     return name === undefined
       ? t("locations.youSharedALocation")

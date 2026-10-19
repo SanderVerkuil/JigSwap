@@ -324,6 +324,35 @@ describe("ThreadView photos", () => {
     ).toHaveLength(1);
   });
 
+  it("renders formatting in a text bubble and a photo caption", () => {
+    mocks.messages = [
+      { id: "t1", isMine: false, kind: "text", body: "**bold** hi", sentAt: 1 },
+      img("p1", 100_000, "_holiday_"),
+    ];
+    setup();
+    expect(screen.getByText("bold").tagName).toBe("STRONG");
+    expect(screen.getByText("holiday").tagName).toBe("EM");
+  });
+
+  it("announces an arriving message without its formatting markers", async () => {
+    mocks.messages = [MESSAGES[0]];
+    const { rerender } = setup();
+    mocks.messages = [
+      MESSAGES[0],
+      {
+        id: "t2",
+        isMine: false,
+        kind: "text",
+        body: "**hi** _there_",
+        sentAt: 10,
+      },
+    ];
+    rerender();
+    const region = document.querySelector("[aria-live='polite']");
+    await waitFor(() => expect(region?.textContent).toContain("hi there"));
+    expect(region?.textContent).not.toContain("*");
+  });
+
   it("shows my sent photos being checked at the end of the thread", () => {
     mocks.messages = [MESSAGES[0]];
     setup([
