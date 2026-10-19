@@ -99,11 +99,15 @@ Order matters: open trades and loans are settled before copies go, copies before
 8. `household`: run the household leave use case for them (promotes / dissolves). Co-members whose
    accounts are already gone leave first through the same use case, so the promotion never lands
    on a departed member and a household with nobody active left is dissolved.
-9. `domainEvents` (last): page through `domainEvents`, rewrite every payload that mentions them:
-   their id becomes `"deleted-member"`, and personal fields copied into such a payload (names,
-   usernames, avatars, emails) are removed. Only events that have finished dispatch
-   (`processedAt` or `failedAt` set) are rewritten; a run still pending is skipped by the cursor
-   (it is processed within seconds; the backfill below picks up stragglers).
+9. `domainEvents` (last): page through `domainEvents` (1000 per run), rewrite every payload that
+   mentions them: their id becomes `"deleted-member"` wherever it appears, and personal fields
+   copied into such a payload (`email`, `clerkId`, `name`, `displayName`, `username`, `avatar`,
+   `bio`, `location`, `notes`, `collectionName`, `categoryName`) are removed. Only events that have
+   finished dispatch (`processedAt` or `failedAt` set) are rewritten; a run still pending is
+   skipped by the cursor. The phase starts 20 minutes after the household phase, past the
+   dispatcher's full retry window (1 + 2 + 4 + 8 minutes), so the events the purge itself emitted
+   (leaving the household, deleting a circle) are dispatched by then; the backfill below picks up
+   any other straggler.
 
 The domain needs one new operation: `Circle.handOverOwnership(to, now)` (owner becomes `to`, `to`
 must be a current member; the old owner's seat stays). The household leave rule already exists.
@@ -112,7 +116,8 @@ must be a current member; the old owner's seat stays). The household leave rule 
 
 `backfillDeletedMemberData` (internal mutation, `dryRun` default `true`): pages through every table
 the phases above clean up (`exchanges`, `loans`, `ownedPuzzles`, `ownedPuzzleImages`, `completions`,
-`goals`, `collections`, `categories`, `circles`, `householdMembers`), collects member ids whose
+`goals`, `collections`, `categories`, `circles`, `householdMembers`, and `domainEvents`, where any
+payload string that is a `users` id counts), collects member ids whose
 `users` row is missing or inactive, and returns them (dry run) or schedules `purgeMemberMessagingData` for each starting at
 `exchangesOpen` (real run). It must be run by an operator with approval; nothing in these PRs runs
 it.

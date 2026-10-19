@@ -3,6 +3,7 @@ import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { EVENT_SCRUB_DELAY_MS } from "./conversation/purgeMemberMessagingData";
 import schema from "./schema";
 
 // conversation/backfillDeletedMemberData: for accounts deleted before the purge covered their
@@ -51,6 +52,32 @@ const settleDueJobs = async (t: T) => {
   throw new Error("scheduled functions did not settle");
 };
 
+// The domainEvents phase starts EVENT_SCRUB_DELAY_MS after the rest of the purge. Run its pending
+// jobs now (checking the delay), in place of the scheduler.
+const runDelayedScrubs = async (t: T) => {
+  const jobs = await t.run((ctx) =>
+    ctx.db.system.query("_scheduled_functions").collect(),
+  );
+  const scrubs = jobs.filter(
+    (job) =>
+      job.state.kind === "pending" &&
+      job.name.includes("purgeMemberMessagingData") &&
+      job.args[0].phase === "domainEvents",
+  );
+  for (const job of scrubs) {
+    expect(job.scheduledTime - job._creationTime).toBeGreaterThanOrEqual(
+      EVENT_SCRUB_DELAY_MS - 1000,
+    );
+    await t.run((ctx) => ctx.scheduler.cancel(job._id));
+    await t.mutation(
+      internal.conversation.purgeMemberMessagingData.purgeMemberMessagingData,
+      job.args[0],
+    );
+  }
+  await settleDueJobs(t);
+  return scrubs.length;
+};
+
 // The ids the run's last batch reports.
 const reportedIds = (): string[] => {
   const last = logs.filter((line) =>
@@ -62,8 +89,8 @@ const reportedIds = (): string[] => {
 
 // Alice was hard-deleted (no users row) and left two copies; Dave is tombstoned (inactive) and
 // still owns a circle Bob is in; Erin was hard-deleted and still sits in Bob's household; Fred
-// was hard-deleted and left only a goal and an open loan of Bob's copy. Bob is active and has a
-// copy of his own.
+// was hard-deleted and left only a goal and an open loan of Bob's copy; Gina was hard-deleted and
+// left only an event in the log. Bob is active and has a copy of his own.
 const seed = (t: T) =>
   t.run(async (ctx) => {
     const now = Date.now();
@@ -80,6 +107,7 @@ const seed = (t: T) =>
     const dave = await mk("dave", false);
     const erin = await mk("erin");
     const fred = await mk("fred");
+    const gina = await mk("gina");
     const puzzleId = await ctx.db.insert("puzzles", {
       title: "Lighthouse",
       pieceCount: 1000,
@@ -149,8 +177,16 @@ const seed = (t: T) =>
     });
     await ctx.db.delete(alice);
     await ctx.db.delete(erin);
+    await ctx.db.insert("domainEvents", {
+      name: "MemberRegistered",
+      payload: { memberId: gina, clerkId: "clerk_gina", email: "g@x.test" },
+      context: "identity",
+      occurredAt: now,
+      processedAt: now,
+    });
     await ctx.db.delete(fred);
-    return { alice, bob, dave, erin, fred, bobsCopy };
+    await ctx.db.delete(gina);
+    return { alice, bob, dave, erin, fred, gina, bobsCopy };
   });
 
 const snapshot = (t: T) =>
@@ -164,6 +200,9 @@ const snapshot = (t: T) =>
     ),
     goals: (await ctx.db.query("goals").collect()).map((g) => g.userId),
     loans: (await ctx.db.query("loans").collect()).map((l) => l.status),
+    events: (await ctx.db.query("domainEvents").collect()).map(
+      (e) => e.payload,
+    ),
   }));
 
 describe("conversation.backfillDeletedMemberData", () => {
@@ -180,7 +219,7 @@ describe("conversation.backfillDeletedMemberData", () => {
 
     expect(await snapshot(t)).toEqual(before);
     expect(reportedIds().sort()).toEqual(
-      [s.alice, s.dave, s.erin, s.fred].sort(),
+      [s.alice, s.dave, s.erin, s.fred, s.gina].sort(),
     );
     // Nothing was scheduled beyond the backfill's own batches.
     const jobs = await t.run((ctx) =>
@@ -200,6 +239,7 @@ describe("conversation.backfillDeletedMemberData", () => {
       { dryRun: false, batchSize: 1 },
     );
     await settleDueJobs(t);
+    expect(await runDelayedScrubs(t)).toBe(5);
 
     const purges = (
       await t.run((ctx) =>
@@ -211,7 +251,7 @@ describe("conversation.backfillDeletedMemberData", () => {
         job.args[0].phase === "exchangesOpen",
     );
     expect(purges.map((job) => job.args[0].memberId).sort()).toEqual(
-      [s.alice, s.dave, s.erin, s.fred].sort(),
+      [s.alice, s.dave, s.erin, s.fred, s.gina].sort(),
     );
 
     const after = await snapshot(t);
@@ -223,5 +263,11 @@ describe("conversation.backfillDeletedMemberData", () => {
     // Fred's goal is gone and the copy he borrowed is back with Bob.
     expect(after.goals).toEqual([]);
     expect(after.loans).toEqual(["returned"]);
+    // Gina's event no longer names her, nor does the event of Erin leaving the household (emitted
+    // by her own purge, scrubbed once it was dispatched).
+    expect(after.events).toEqual([
+      { memberId: "deleted-member" },
+      { householdId: "hh-1", memberId: "deleted-member" },
+    ]);
   });
 });

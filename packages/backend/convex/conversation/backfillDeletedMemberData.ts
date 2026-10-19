@@ -10,7 +10,8 @@ export const BACKFILL_DELETED_MEMBER_DATA_BATCH = 200;
 export const BACKFILL_DELETED_MEMBER_DATA_MAX_BATCH = 1000;
 
 // The tables that hold what the later purge phases clean up, walked in this order. Each row names
-// the member(s) it belongs to; an exchange or a loan names both parties.
+// the member(s) it belongs to; an exchange or a loan names both parties, an event any member its
+// payload mentions (so a member who left nothing but events is found, and their purge scrubs them).
 const TABLES = [
   "exchanges",
   "loans",
@@ -22,6 +23,7 @@ const TABLES = [
   "categories",
   "circles",
   "householdMembers",
+  "domainEvents",
 ] as const;
 type Table = (typeof TABLES)[number];
 const tableValidator = v.union(
@@ -35,6 +37,7 @@ const tableValidator = v.union(
   v.literal("categories"),
   v.literal("circles"),
   v.literal("householdMembers"),
+  v.literal("domainEvents"),
 );
 
 type PageOpts = { cursor: string | null; numItems: number };
@@ -57,6 +60,16 @@ const idsOf = async <R>(
       .flatMap(members)
       .filter((id): id is Id<"users"> => id !== undefined),
   };
+};
+
+// Every string anywhere in an event payload.
+const stringsIn = (value: unknown): string[] => {
+  if (typeof value === "string") return [value];
+  if (Array.isArray(value)) return value.flatMap(stringsIn);
+  if (typeof value === "object" && value !== null) {
+    return Object.values(value).flatMap(stringsIn);
+  }
+  return [];
 };
 
 // One page of `table`, as the member ids its rows belong to.
@@ -96,6 +109,13 @@ const pageOf = (
       return idsOf(ctx.db.query("householdMembers"), opts, (row) => [
         row.memberId,
       ]);
+    // An event names members anywhere in its untyped payload: every string that is a users id.
+    case "domainEvents":
+      return idsOf(ctx.db.query("domainEvents"), opts, (row) =>
+        stringsIn(row.payload).map(
+          (s) => ctx.db.normalizeId("users", s) ?? undefined,
+        ),
+      );
   }
 };
 

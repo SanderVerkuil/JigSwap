@@ -39,6 +39,9 @@ Deleting your account removes your library and what belongs to it:
 - A circle you own passes to another member (see
   [Friend Circles](/docs/sharing-and-exchanges/friend-circles)), and you leave
   your household (see [Households](/docs/sharing-and-exchanges/households)).
+- Our internal record of what happened in the app no longer points to you:
+  your account reference is replaced and your email address, names and notes
+  are removed from it.
 
 Some things stay, because they are part of other members' history: your
 reviews and comments, your trade history, your catalogue contributions, and

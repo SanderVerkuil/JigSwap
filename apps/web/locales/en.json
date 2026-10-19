@@ -1399,6 +1399,7 @@
         "Your goals, collections, wishlists and personal categories are deleted",
         "A circle you own passes to the admin who has been in it longest, or else to its longest-standing member; a circle with nobody else left in it is deleted",
         "You leave your household. If you managed it, the member who has been in it longest takes over; if you were its only member, it is closed",
+        "Our internal record of what happened in the app no longer points to you: your account reference is replaced and your email address, names and notes copied into it are removed",
         "Your reviews and comments, your trade history, your catalogue contributions and the puzzles you sold, traded or gave away stay, including your solves and loans in those puzzles' history (without photos). They are shown as by a \"Deleted member\", without your name, picture or profile",
         "A photo or location that is part of an open report is kept until that report is decided"
       ]

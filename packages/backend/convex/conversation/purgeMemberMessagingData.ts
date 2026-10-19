@@ -10,6 +10,7 @@ import { logEvent } from "../lib/logEvent";
 import { RATE_LIMITS, type RateLimitName } from "../lib/rateLimits";
 import { presence } from "../presence";
 import { removeForDeletedMember } from "./messageAttachments";
+import { scrubMemberEvents } from "./purgeMemberEvents";
 import {
   cancelOpenExchanges,
   closeOpenLoans,
@@ -92,6 +93,13 @@ import {
 //   household    they leave it through the leave use case: an admin's household promotes its
 //                longest-standing member, a sole member's is dissolved. Co-members already
 //                deleted leave first, so the promotion only lands on an active member.
+//   domainEvents (last; conversation/purgeMemberEvents) every finished event whose payload names
+//                them: their id becomes "deleted-member" and copied personal fields (email,
+//                clerkId, names, avatar, bio, location, notes, collection/category names) are
+//                dropped. Pages EVENT_SCRUB_BATCH_SIZE events per run: it walks the whole log.
+//                Starts EVENT_SCRUB_DELAY_MS after the household phase, once the events the
+//                purge itself emitted have been dispatched.
+//                Admin, CSAM and moderation records are separate tables and stay unchanged.
 // One phase at a time, PURGE_BATCH_SIZE rows per run: a run that did not finish its phase
 // schedules the next run with the page cursor, so each run stays well inside Convex's per-mutation
 // limits whatever the member's history. Rows a phase keeps (a quarantined or evidence-held photo)
@@ -99,6 +107,12 @@ import {
 
 /** Rows handled per run. */
 export const PURGE_BATCH_SIZE = 100;
+// The domainEvents phase reads the whole log and writes only the events that name the member.
+export const EVENT_SCRUB_BATCH_SIZE = 1000;
+// It starts this long after the phase before it, so events the earlier phases emitted (leaving the
+// household, deleting a circle) have finished dispatching, retries included (events/dispatch: 1 +
+// 2 + 4 + 8 minutes), and are not skipped as in flight.
+export const EVENT_SCRUB_DELAY_MS = 20 * 60_000;
 
 const PHASES = [
   "attachments",
@@ -145,6 +159,7 @@ const PHASES = [
   "categories",
   "circlesOwned",
   "household",
+  "domainEvents",
 ] as const;
 type Phase = (typeof PHASES)[number];
 
@@ -193,6 +208,7 @@ const phaseValidator = v.union(
   v.literal("categories"),
   v.literal("circlesOwned"),
   v.literal("household"),
+  v.literal("domainEvents"),
 );
 
 type Page = { isDone: boolean; continueCursor: string };
@@ -682,6 +698,8 @@ const runPhase = async (
       return handOverOwnedCircles(ctx, memberId, opts);
     case "household":
       return leaveHousehold(ctx, memberId);
+    case "domainEvents":
+      return scrubMemberEvents(ctx, memberId, opts);
   }
 };
 
@@ -695,7 +713,9 @@ export const purgeMemberMessagingData = internalMutation({
   },
   handler: async (ctx, { memberId, phase, cursor, batchSize }) => {
     const current = phase ?? PHASES[0];
-    const numItems = batchSize ?? PURGE_BATCH_SIZE;
+    const numItems =
+      batchSize ??
+      (current === "domainEvents" ? EVENT_SCRUB_BATCH_SIZE : PURGE_BATCH_SIZE);
     const page = await runPhase(ctx, memberId, current, {
       cursor: cursor ?? null,
       numItems,
@@ -710,7 +730,9 @@ export const purgeMemberMessagingData = internalMutation({
       return;
     }
     await ctx.scheduler.runAfter(
-      0,
+      next === "domainEvents" && current !== "domainEvents"
+        ? EVENT_SCRUB_DELAY_MS
+        : 0,
       internal.conversation.purgeMemberMessagingData.purgeMemberMessagingData,
       {
         memberId,
