@@ -19,6 +19,7 @@ import {
   quarantineArgs,
   recordCsamEscalation,
 } from "../lib/imageModeration/quarantine";
+import { needsRescreen } from "../library/adapters/photoModeration";
 import { BOX_ART_CLAIM_WINDOW_MS } from "./boxArtUploads";
 
 // DB-facing steps of the shared image-moderation pipeline (lib/imageModeration/pipeline) for box
@@ -172,4 +173,36 @@ export const setHashCheck = internalMutation({
   args: { imageId: v.id("boxArtUploads"), ...hashCheckResultArgs },
   handler: (ctx, { imageId, ...result }) =>
     applyHashCheckResult(ctx, imageId, result),
+});
+
+// Apply a re-screen verdict (library/rescreenPhotos) to box art that was never classified (see
+// needsRescreen: unscored, or approved/legacy without a score, and not decided by an admin). Only
+// a SCORED verdict comes here. A rejection has the live pipeline's side effects: detached from
+// every definition and proposal, blob deleted, photo_auto_rejected stamped. Returns whether the
+// listing was patched.
+export const applyRescreenVerdict = internalMutation({
+  args: {
+    imageId: v.id("boxArtUploads"),
+    moderationStatus: v.union(v.literal("approved"), v.literal("rejected")),
+    moderationScore: v.number(),
+    moderationLabel: v.optional(v.string()),
+  },
+  handler: async (ctx, { imageId, ...verdict }) => {
+    const row = await ctx.db.get(imageId);
+    if (!row || !needsRescreen(row)) return false;
+    await ctx.db.patch(imageId, {
+      ...verdict,
+      moderationReason: undefined,
+      moderationAttempts: (row.moderationAttempts ?? 0) + 1,
+    });
+    if (verdict.moderationStatus === "rejected") {
+      await detachRejectedBoxArt(ctx, row);
+      await stampModerationAction(ctx, {
+        kind: "photo_auto_rejected",
+        targetLabel: "Box art",
+        targetId: imageId,
+      });
+    }
+    return true;
+  },
 });

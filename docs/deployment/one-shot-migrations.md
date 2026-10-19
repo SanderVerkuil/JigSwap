@@ -136,35 +136,66 @@ Follow it with `npx convex logs` (add `--prod` for prod) or in the dashboard Log
 
 ---
 
-## `library/rescreenPhotos` — screen photos that were never checked
+## `library/rescreenPhotos` — screen images that were never checked
 
 **When:** once per deployment, after the photo-screening fix (router endpoint + `unscored`
 outcome) is deployed there **and** the probe below returns `"screening_outcome":"scored"`.
 Until then the old pipeline called a retired Hugging Face host and approved every photo
 it could not check, so copy and completion photos uploaded in that period were published
-unchecked.
+unchecked. Box art and completion photos from before the sidecars never went through the
+content check at all; run those tables once box art through the shared moderation
+pipeline (`catalog/moderateBoxArt`, PR #337) is deployed there. Dev and prod screen with
+Sightengine (`MODERATION_PROVIDER=sightengine`); the CSAM hash check is not configured
+there, so only the content check runs.
 
-**What it does:** pages through `ownedPuzzleImages` (`"table":"copy"`) or the
-`completionImages` sidecars (`"table":"completion"`), 10 rows per batch, and classifies
-the rows that were never actually checked: `moderationStatus` `"unscored"`, or approved
-(or absent, the legacy default) **without** a `moderationScore`. Rows that are pending,
-rejected or already scored are skipped. Photos are classified one at a time and each
-batch reschedules itself 10 s later (`batchSize` and `delayMs` override this), which
-keeps it inside the free-tier rate limits of the screening provider (Hugging Face or
-Sightengine).
+**What it does:** pages through one table and classifies the images that were never
+actually checked: `moderationStatus` `"unscored"`, approved (or absent, the legacy default)
+**without** a `moderationScore`, or no moderation row at all. Rows that are pending,
+rejected, quarantined, already scored or decided by an admin (`moderatedBy`) are skipped.
 
-- Clean score: the row is set to approved with its score.
-- nsfw score at or above the threshold: the row is rejected, exactly like a fresh upload.
-  It is hidden and stamped `photo_auto_rejected`; a completion photo is also detached
-  from its completion and its blob deleted. Copy photos land in the admin Flagged
-  Images queue, where they can be restored.
-- Could not be checked: the row is left exactly as it was. A legacy photo is never
-  hidden by a provider hiccup.
+- `"table":"copy"`: `ownedPuzzleImages`.
+- `"table":"completion"`: the `completionImages` sidecars.
+- `"table":"completionLegacy"`: completion photos (`completions.photos`) with no
+  `completionImages` sidecar, stored before sidecars existed. A photo that gets a verdict
+  gets a sidecar. Completions without an `aggregateId` are skipped.
+- `"table":"boxArt"`: `puzzles.image`. `"table":"proposals"`: `puzzleChangeProposals
+.changes.image` (proposed box art). Box art without a `boxArtUploads` listing (stored
+  before the listing existed) gets one when it gets a verdict, attributed to the
+  definition's submitter or the proposer.
 
-On a configuration error (missing token, 401/403, 404 model) the run stops. On 429 or
-5xx it retries the same page with exponential backoff, up to 5 times in a row, then
-stops. Completion photos that predate sidecars (no `completionImages` row) are not
-covered.
+Each image follows the live pipeline:
+
+- **Hash check first** (only when `CSAM_HASHCHECK_PROVIDER` is configured; with it unset
+  this is a no-op and nothing is sent anywhere). A match is handled like a match on upload:
+  preserved, quarantined, detached, escalated, stamped, never classified. A no_match is not
+  recorded; `lib/imageModeration/backfillBoxArtHashCheck` stays the tool for that.
+- **Clean score:** the row is set to approved with its score. The image stays served.
+- **nsfw score at or above the threshold:** rejected, exactly like a fresh upload, and
+  stamped `photo_auto_rejected`. A copy photo is hidden and lands in the admin Flagged
+  Images queue, where it can be restored. A completion photo is detached from its
+  completion and its blob deleted. Box art is detached from every definition and proposal
+  holding it (the puzzle shows its placeholder) and its blob deleted.
+- **Could not be checked:** the row is left exactly as it was (no row is created) and it is
+  counted as `unscored`. A legacy image is never hidden by a provider hiccup.
+
+`dryRun` defaults to **true**: without `"dryRun":false` it only counts (`candidates`) and
+makes no classifier or hash-service call and no write. A real run refuses to start
+(`"result":"aborted_config"`, nothing scanned) unless the classifier is configured
+(`MODERATION_PROVIDER` with its credentials; `none` counts as not configured). On a
+configuration error mid-run (missing credentials, 401/403, unknown model) the run stops. On
+429, a Sightengine `usage_limit` or 5xx it retries the same page with exponential backoff
+(`delayMs` × 2, 4, 8 …), up to 5 times in a row, then stops (`aborted_provider_unavailable`);
+re-run it later and it picks up where it stopped.
+
+**Cost and rate limits (Sightengine):** every image classified is one Sightengine operation
+(model `nudity-2.1`), billed against the plan's monthly and daily quota; a dry run costs
+nothing. Images are classified one at a time, `batchSize` (default 10) per batch, and each
+batch reschedules itself `delayMs` (default 10 s) later: at most about 1 image per second,
+~3,600 per hour. Before a real run, add up the dry runs' `candidates` and compare them with
+what is left of the plan's quota (Sightengine dashboard → Usage). If it does not fit, run one
+table at a time on different days, or lower the pace (for example `"batchSize":5,
+"delayMs":30000`). Hitting the quota shows up as `usage_limit`: the run backs off and stops,
+and nothing is lost.
 
 **Safe to re-run:** yes. Scored rows are no longer candidates, so a second run only
 picks up what is still unchecked.
@@ -178,29 +209,38 @@ cd packages/backend
 npx convex run admin/probePhotoScreening:probePhotoScreening
 #    expect "config_status":"ok", "screening_outcome":"scored", "http_status":200
 
-# dev: dry run (counts only, no classifier calls, no writes), then the real run
-npx convex run library/rescreenPhotos:rescreenPhotos '{"table":"copy","dryRun":true}'
-npx convex run library/rescreenPhotos:rescreenPhotos '{"table":"completion","dryRun":true}'
+# dev: dry runs (the default: counts only, no classifier calls, no writes)
 npx convex run library/rescreenPhotos:rescreenPhotos '{"table":"copy"}'
 npx convex run library/rescreenPhotos:rescreenPhotos '{"table":"completion"}'
+npx convex run library/rescreenPhotos:rescreenPhotos '{"table":"completionLegacy"}'
+npx convex run library/rescreenPhotos:rescreenPhotos '{"table":"boxArt"}'
+npx convex run library/rescreenPhotos:rescreenPhotos '{"table":"proposals"}'
+
+# dev: the real runs, one table at a time (wait for "result":"done" in the logs)
+npx convex run library/rescreenPhotos:rescreenPhotos '{"table":"copy","dryRun":false}'
+# ...and the same for completion, completionLegacy, boxArt and proposals
 
 # prod: same, after dev looks right (add --prod to each command, probe first)
 npx convex run --prod admin/probePhotoScreening:probePhotoScreening
-npx convex run --prod library/rescreenPhotos:rescreenPhotos '{"table":"copy","dryRun":true}'
+npx convex run --prod library/rescreenPhotos:rescreenPhotos '{"table":"copy"}'
 ```
 
-Each batch logs one JSON line with `"event":"library.rescreenPhotos"`, the `batch` and
-running `totals` (`scanned`, `candidates`, `approved`, `rejected`, `unscored`,
-`skipped`) and a `result` (`done`, `backoff`, `aborted_config`,
+The command returns the FIRST batch's counts; the remaining batches run as scheduled
+functions. A dry run's `candidates` per batch is summed in the running `totals`. Each batch
+logs one JSON line with `"event":"library.rescreenPhotos"`, the table, `dry_run`, the
+`batch` and running `totals` (`scanned`, `candidates`, `approved`, `rejected`, `unscored`,
+`skipped`, `quarantined`) and a `result` (`done`, `backoff`, `aborted_config`,
 `aborted_provider_unavailable`). Follow it with `npx convex logs` (add `--prod`).
 
 **Verify:**
 
 1. The final line says `"result":"done"`, and `totals.candidates` matches the dry run.
-2. A second dry run reports `candidates` close to 0. The remainder are photos whose
+2. A second dry run reports `candidates` close to 0. The remainder are images whose
    classification failed for that image, so they stay as they were.
 3. The admin moderation console no longer shows the "Photo screening needs attention"
-   warning (no unscored photos). Any new rejections appear under Flagged Images.
+   warning (no unscored photos). Any new rejections of copy photos appear under Flagged
+   Images; rejected completion photos and box art show in the Activity Log
+   (`photo_auto_rejected`).
 
 **Monitoring (Axiom):** every moderation attempt emits `library.moderatePhoto` /
 `solving.moderateCompletionPhoto` with `screening_outcome` (`scored` | `unscored` |

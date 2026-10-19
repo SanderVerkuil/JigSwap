@@ -988,7 +988,7 @@ describe("re-screen hash-checks legacy and unscored photos (M6)", () => {
 
     const batch = await t.action(
       internal.library.rescreenPhotos.rescreenPhotos,
-      { table: "copy" },
+      { table: "copy", dryRun: false },
     );
 
     expect(batch.quarantined).toBe(1);
@@ -1019,7 +1019,7 @@ describe("re-screen hash-checks legacy and unscored photos (M6)", () => {
     );
     const batch = await t.action(
       internal.library.rescreenPhotos.rescreenPhotos,
-      { table: "copy" },
+      { table: "copy", dryRun: false },
     );
     expect(batch.approved).toBe(1);
     expect(await escalations(t)).toEqual([]);
