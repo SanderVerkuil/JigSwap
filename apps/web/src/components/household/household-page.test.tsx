@@ -2,7 +2,7 @@ import { ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ConvexProviderWithAuth, ConvexReactClient } from "convex/react";
 import { parseFragment, type DefaultTreeAdapterMap } from "parse5";
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { IntlProvider } from "use-intl";
 import { describe, expect, it } from "vitest";
@@ -99,10 +99,15 @@ const household = (viewerRole: "admin" | "member"): HouseholdData => ({
   copiesUsingDefault: 4,
 });
 
-const details = (viewerRole: "admin" | "member", activeTab: HouseholdTab) =>
+const details = (
+  viewerRole: "admin" | "member",
+  activeTab: HouseholdTab,
+  invites: ComponentProps<typeof HouseholdDetails>["invites"] = [],
+) =>
   renderHtml(
     <HouseholdDetails
       household={household(viewerRole)}
+      invites={invites}
       activeTab={activeTab}
       onTabChange={() => {}}
       onError={() => {}}
@@ -163,6 +168,33 @@ describe("HouseholdDetails", () => {
     expect(texts(html)).toContain("Household settings");
     expect(texts(html)).toContain("Leave this household");
     expect(texts(html)).toContain("Leave household");
+  });
+});
+
+describe("HouseholdDetails with an invite from another household", () => {
+  it("offers Leave and join or Decline above the household, on every tab", () => {
+    const invite = {
+      inviteId: "i_9",
+      inviter: { memberId: "u_frank", name: "Frank" },
+      createdAt: 1,
+    };
+    for (const tab of ["members", "settings"] as const) {
+      const html = details("member", tab, [invite]);
+      const all = texts(html);
+      expect(all).toContain("Frank invited you to their household");
+      expect(all).toContain(
+        "You're already in your current household. You can be in one household at a time, so joining means leaving it.",
+      );
+      const buttons = elementsOf(html)
+        .filter((e) => e.tagName === "button")
+        .map(textOf);
+      expect(buttons).toContain("Leave and join");
+      expect(buttons).toContain("Decline");
+    }
+  });
+
+  it("shows no switch card without invites", () => {
+    expect(texts(details("member", "members"))).not.toContain("Leave and join");
   });
 });
 

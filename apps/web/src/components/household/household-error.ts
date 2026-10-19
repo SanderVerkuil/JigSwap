@@ -5,7 +5,6 @@ import { ConvexError } from "convex/values";
 const KNOWN_CODES = new Set([
   "AlreadyInHousehold",
   "NotInHousehold",
-  "InviteeAlreadyInHousehold",
   "DuplicateInvite",
   "InviteNotFound",
   "HouseholdNotFound",
@@ -15,6 +14,7 @@ const KNOWN_CODES = new Set([
   "NotCopyOwner",
   "PermissionBatchTooLarge",
   "CopyNotFound",
+  "AlreadyMember",
   "InvalidHouseholdName",
 ]);
 

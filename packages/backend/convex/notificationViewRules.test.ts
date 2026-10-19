@@ -215,6 +215,13 @@ describe("decideHouseholdInvite", () => {
     });
   });
 
+  test("pending for a viewer in another household offers only decline", () => {
+    expect(decideHouseholdInvite("pending", true)).toEqual({
+      state: "actionable",
+      availableActions: ["decline_household_invite"],
+    });
+  });
+
   test.each([
     ["accepted", "joined"],
     ["declined", "declined"],

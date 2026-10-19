@@ -25,7 +25,7 @@ const pendingOfferBetween = (
 
 /**
  * A pending household invite from the inviter into `householdId`, through the same use case as an
- * in-app invite (admin only, invitee in no household, one pending invite). Only while the inviter
+ * in-app invite (admin only, invitee not already in it, one pending invite). Only while the inviter
  * is still in that household, and never for a pair blocked either way. The new invite's id, or
  * undefined when none was made.
  */

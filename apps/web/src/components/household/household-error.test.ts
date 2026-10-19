@@ -11,9 +11,9 @@ describe("householdErrorKey", () => {
     ).toBe("errors.AlreadyInHousehold");
     expect(
       householdErrorKey(
-        new ConvexError({ code: "InviteeAlreadyInHousehold", message: "x" }),
+        new ConvexError({ code: "AlreadyMember", message: "x" }),
       ),
-    ).toBe("errors.InviteeAlreadyInHousehold");
+    ).toBe("errors.AlreadyMember");
     expect(
       householdErrorKey(
         new ConvexError({ code: "PermissionBatchTooLarge", message: "x" }),

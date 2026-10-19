@@ -90,13 +90,13 @@ describe("HouseholdLinkInviteCard", () => {
     );
   });
 
-  it("already-in-household: says why, with no Accept or Decline", () => {
+  it("already-in-household: says why and offers Leave and join or Decline", () => {
     const html = render("already-in-household");
     expect(headings(html)).toEqual(["Ann invited you to their household"]);
     expect(paragraphs(html).join(" ")).toContain(
       "You're already in a household",
     );
-    expect(buttons(html)).toEqual([]);
+    expect(buttons(html).map(textOf)).toEqual(["Leave and join", "Decline"]);
   });
 
   it.each([

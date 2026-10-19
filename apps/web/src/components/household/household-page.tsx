@@ -4,6 +4,7 @@ import { HouseholdInviteDialog } from "@/components/household/household-invite-d
 import { HouseholdSettings } from "@/components/household/household-settings";
 import { MyHouseholdCopies } from "@/components/household/my-household-copies";
 import { PersonRow, type Person } from "@/components/household/person-row";
+import { SwitchHouseholdDialog } from "@/components/household/switch-household-dialog";
 import { EmptyState } from "@/components/library/empty-state";
 import { MemberInitial } from "@/components/members/member-initial";
 import {
@@ -176,11 +177,14 @@ export function NoHousehold({
 
 export function HouseholdDetails({
   household,
+  invites,
   activeTab,
   onTabChange,
   onError,
 }: {
   household: HouseholdData;
+  // Invites the viewer received from OTHER households: accepting means leaving this one.
+  invites: IncomingInvites;
   activeTab: HouseholdTab;
   onTabChange: (tab: HouseholdTab) => void;
   onError: (error: unknown) => void;
@@ -234,6 +238,15 @@ export function HouseholdDetails({
 
   return (
     <div className="flex min-w-0 flex-col gap-6">
+      {invites.map((invite) => (
+        <SwitchInviteCard
+          key={invite.inviteId}
+          invite={invite}
+          current={household}
+          onError={onError}
+        />
+      ))}
+
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <CircleAvatarStack
           circleName={household.name ?? t("header.stackName")}
@@ -472,5 +485,93 @@ export function HouseholdDetails({
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+// An invite to another household, seen by someone who is already in one: "<name> invited you to
+// their household", with Leave and join (confirmed, see SwitchHouseholdDialog) or Decline.
+function SwitchInviteCard({
+  invite,
+  current,
+  onError,
+}: {
+  invite: IncomingInvites[number];
+  current: HouseholdData;
+  onError: (error: unknown) => void;
+}) {
+  const t = useTranslations("household");
+  const tInvite = useTranslations("invite");
+  const displayName = useMemberDisplayName();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const inviterName = displayName(invite.inviter);
+
+  const accept = useMutation({
+    mutationFn: useConvexMutation(gateway.household.acceptInvite),
+    onSuccess: () => toast.success(t("joined")),
+    onError,
+  });
+  const decline = useMutation({
+    mutationFn: useConvexMutation(gateway.household.declineInvite),
+    onError,
+  });
+  const busy = accept.isPending || decline.isPending;
+
+  return (
+    <section className="border-jigsaw-primary/20 bg-jigsaw-primary/5 flex flex-col gap-3 rounded-xl border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 items-start gap-3">
+        <Avatar className="h-9 w-9">
+          <AvatarImage src={invite.inviter.avatar} />
+          <AvatarFallback>
+            <MemberInitial source={invite.inviter} />
+          </AvatarFallback>
+        </Avatar>
+        <div className="min-w-0 space-y-0.5">
+          <h2 className="text-sm font-medium">
+            {tInvite("householdLinkTitle", { name: inviterName })}
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            {t("switch.cardBody", {
+              current: current.name ?? t("switch.yourHousehold"),
+            })}
+          </p>
+        </div>
+      </div>
+      <div className="flex shrink-0 flex-wrap gap-2">
+        <Button
+          size="sm"
+          variant="brand"
+          className="pointer-coarse:min-h-11"
+          disabled={busy}
+          onClick={() => setConfirmOpen(true)}
+        >
+          <LogOut aria-hidden className="h-4 w-4" />
+          {t("switch.confirm")}
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="pointer-coarse:min-h-11"
+          disabled={busy}
+          onClick={() => decline.mutate({ inviteId: invite.inviteId })}
+        >
+          <X className="h-4 w-4" />
+          {t("invites.decline")}
+        </Button>
+      </div>
+      <SwitchHouseholdDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        current={current}
+        inviterName={inviterName}
+        busy={busy}
+        onConfirm={() => {
+          accept.mutate({
+            inviteId: invite.inviteId,
+            leaveCurrentHousehold: true,
+          });
+          setConfirmOpen(false);
+        }}
+      />
+    </section>
   );
 }

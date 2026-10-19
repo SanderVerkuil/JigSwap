@@ -1881,7 +1881,6 @@
       "generic": "Er ging iets mis. Probeer het opnieuw.",
       "AlreadyInHousehold": "Je zit al in een huishouden.",
       "NotInHousehold": "Je zit niet in een huishouden.",
-      "InviteeAlreadyInHousehold": "Dit lid zit al in een huishouden.",
       "DuplicateInvite": "Dit lid heeft al een openstaande uitnodiging.",
       "InviteNotFound": "Deze uitnodiging bestaat niet meer.",
       "HouseholdNotFound": "Dit huishouden bestaat niet meer.",
@@ -1891,7 +1890,8 @@
       "NotCopyOwner": "Alleen de eigenaar kan de toegang voor het huishouden van een puzzel wijzigen.",
       "PermissionBatchTooLarge": "Je kunt maximaal 200 puzzels tegelijk wijzigen.",
       "CopyNotFound": "Een van deze puzzels bestaat niet meer.",
-      "InvalidHouseholdName": "Een naam voor een huishouden moet 1 tot 100 tekens lang zijn."
+      "InvalidHouseholdName": "Een naam voor een huishouden moet 1 tot 100 tekens lang zijn.",
+      "AlreadyMember": "Dit lid zit al in je huishouden."
     },
     "bulkPermission": {
       "title": "Mijn puzzels in dit huishouden",
@@ -1949,6 +1949,17 @@
     },
     "danger": {
       "title": "Dit huishouden verlaten"
+    },
+    "switch": {
+      "yourHousehold": "je huidige huishouden",
+      "title": "{current} verlaten en lid worden van het huishouden van {name}?",
+      "deleted": "Je bent het enige lid van {current}, dus het wordt verwijderd en de openstaande uitnodigingen vervallen.",
+      "handover": "Je verlaat {current}, en {name} wordt de beheerder.",
+      "leave": "Je verlaat {current}.",
+      "puzzles": "Je puzzels gaan met je mee: je huidige huisgenoten zien ze niet meer, en jij ziet die van hen niet meer.",
+      "join": "Je wordt meteen lid van het huishouden van {name}.",
+      "confirm": "Verlaten en lid worden",
+      "cardBody": "Je zit al in {current}. Je kunt in één huishouden tegelijk zitten, dus lid worden betekent dat je dit verlaat."
     }
   },
   "circles": {
@@ -2880,7 +2891,7 @@
     "linkExpired": "Deze uitnodigingslink is verlopen of al gebruikt.",
     "householdLinkTitle": "{name} heeft je uitgenodigd voor hun huishouden",
     "householdLinkBody": "Als je meedoet, deel je je puzzelcollectie met het huishouden en zie je die van hen. Je puzzels blijven van jou, en je kunt altijd weer vertrekken.",
-    "householdLinkAlreadyInHousehold": "Je zit al in een huishouden. Je kunt maar in één tegelijk zitten, dus je kunt hier niet bij.",
+    "householdLinkAlreadyInHousehold": "Je zit al in een huishouden. Je kunt in één huishouden tegelijk zitten, maar je kunt het jouwe verlaten om bij dit huishouden te komen.",
     "householdLinkExpired": "Deze uitnodigingslink is verlopen. Vraag {name} om een nieuwe.",
     "householdLinkUsed": "Deze uitnodigingslink is al gebruikt. Vraag {name} om een nieuwe.",
     "householdLinkInvalid": "Deze uitnodigingslink is niet meer geldig.",

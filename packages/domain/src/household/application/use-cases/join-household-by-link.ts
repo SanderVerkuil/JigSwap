@@ -5,9 +5,9 @@ import { HouseholdDeps } from "./deps";
 import { makeInviteToHousehold } from "./invite-to-household";
 
 // An existing member accepts a household invite LINK: the same path as an in-app invite, as one
-// step. The link's owner invites the actor (admin-only, actor in no household) and the actor accepts
-// at once (the authoritative at-most-one-household check), or accepts the invite already pending
-// from that household. The acceptance and the join are published; the invite-sent event is not,
+// step. The link's owner invites the actor (admin-only) and the actor accepts at once (the
+// authoritative at-most-one-household check, with leaveCurrentHousehold to switch from another
+// household), or accepts the invite already pending from that household. The acceptance and the join are published; the invite-sent event is not,
 // because the actor is answering it right now and a "you were invited" notification would be noise.
 export const makeJoinHouseholdByLink =
   (deps: HouseholdDeps): JoinHouseholdByLink =>
@@ -37,6 +37,7 @@ export const makeJoinHouseholdByLink =
     const joined = await makeAcceptHouseholdInvite(quiet)({
       actorId: cmd.actorId,
       inviteId: invited.value,
+      leaveCurrentHousehold: cmd.leaveCurrentHousehold,
     });
     await deps.events.publish(
       buffered.filter((event) => event.name !== "HouseholdInviteSent"),

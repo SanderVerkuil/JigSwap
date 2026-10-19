@@ -173,16 +173,22 @@ export const decideFollowRequest = (
   }
 };
 
-/** The invite's status when addressed to the viewer; null when gone or addressed to someone else. */
+/**
+ * The invite's status when addressed to the viewer; null when gone or addressed to someone else.
+ * A viewer already in another household is offered only Decline inline: accepting means leaving
+ * that household, which needs the confirmation on the household page the row links to.
+ */
 export const decideHouseholdInvite = (
   status: "pending" | "accepted" | "declined" | null,
+  viewerInOtherHousehold = false,
 ): ViewDecision => {
   switch (status) {
     case "pending":
-      return actionable([
-        "accept_household_invite",
-        "decline_household_invite",
-      ]);
+      return actionable(
+        viewerInOtherHousehold
+          ? ["decline_household_invite"]
+          : ["accept_household_invite", "decline_household_invite"],
+      );
     case "accepted":
       return resolved("joined");
     case "declined":

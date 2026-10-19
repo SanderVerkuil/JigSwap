@@ -1,3 +1,4 @@
+import { SwitchHouseholdDialog } from "@/components/household/switch-household-dialog";
 import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -14,7 +15,8 @@ export type HouseholdLinkState = FunctionReturnType<
 >["state"];
 
 // The signed-in landing for an EXISTING member on a household invite link: "<inviter> invited you
-// to their household" with Accept / Decline, or why they can't join. Every state comes from
+// to their household" with Accept / Decline; a member already in a household gets Leave and join
+// (confirmed in SwitchHouseholdDialog) / Decline; otherwise why they can't join. Every state comes from
 // social.getHouseholdLinkInvite; the server re-checks all of it on Accept and Decline.
 export function HouseholdLinkInvite({
   token,
@@ -27,8 +29,16 @@ export function HouseholdLinkInvite({
   const t = useTranslations("invite");
   const navigate = useNavigate();
   const [declined, setDeclined] = useState(false);
+  const [confirmSwitch, setConfirmSwitch] = useState(false);
   const { data } = useQuery(
     convexQuery(gateway.social.householdLinkInvite, { token }),
+  );
+  // The viewer's own household, for the leave-and-join confirmation's consequences.
+  const { data: current } = useQuery(
+    convexQuery(
+      gateway.household.mine,
+      data?.state === "already-in-household" ? {} : "skip",
+    ),
   );
   const name = data?.inviterName ?? fallbackName;
 
@@ -50,14 +60,32 @@ export function HouseholdLinkInvite({
   });
 
   if (!data || declined) return null;
+  const switching = data.state === "already-in-household";
   return (
-    <HouseholdLinkInviteCard
-      state={data.state}
-      inviterName={name}
-      busy={accept.isPending || decline.isPending}
-      onAccept={() => accept.mutate({ token })}
-      onDecline={() => decline.mutate({ token })}
-    />
+    <>
+      <HouseholdLinkInviteCard
+        state={data.state}
+        inviterName={name}
+        busy={accept.isPending || decline.isPending || (switching && !current)}
+        onAccept={() =>
+          switching ? setConfirmSwitch(true) : accept.mutate({ token })
+        }
+        onDecline={() => decline.mutate({ token })}
+      />
+      {switching && current && (
+        <SwitchHouseholdDialog
+          open={confirmSwitch}
+          onOpenChange={setConfirmSwitch}
+          current={current}
+          inviterName={name}
+          busy={accept.isPending}
+          onConfirm={() => {
+            accept.mutate({ token, leaveCurrentHousehold: true });
+            setConfirmSwitch(false);
+          }}
+        />
+      )}
+    </>
   );
 }
 
@@ -76,6 +104,7 @@ export function HouseholdLinkInviteCard({
 }) {
   const t = useTranslations("invite");
   const tHousehold = useTranslations("household.invites");
+  const tSwitch = useTranslations("household.switch");
   const headingId = useId();
 
   if (state === "own-link") return null;
@@ -111,7 +140,7 @@ export function HouseholdLinkInviteCard({
           </p>
         </div>
       </div>
-      {state === "can-accept" && (
+      {(state === "can-accept" || state === "already-in-household") && (
         <div className="flex flex-wrap gap-2 sm:justify-end">
           <Button
             size="sm"
@@ -119,7 +148,7 @@ export function HouseholdLinkInviteCard({
             onClick={onAccept}
             className="pointer-coarse:min-h-11"
           >
-            {tHousehold("accept")}
+            {state === "can-accept" ? tHousehold("accept") : tSwitch("confirm")}
           </Button>
           <Button
             size="sm"

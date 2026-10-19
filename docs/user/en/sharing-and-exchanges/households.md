@@ -92,6 +92,25 @@ invite.
 2. Click **Accept** or **Decline**. If you'd rather start your own, click
    **Create household** under **Or start your own household**.
 
+## Join another household
+
+You can be in one household at a time. If you're already in one and someone
+invites you to theirs, you can switch in one step:
+
+1. Open the invitation notification and go to **Household**, or open the
+   invite link. The invitation shows at the top of **Household**.
+2. Click **Leave and join**.
+3. Read what happens and confirm with **Leave and join**.
+
+You leave your household and join theirs straight away. Your puzzles go with
+you. If you were the only member, your old household is deleted and its open
+invitations are cancelled. If you were its admin, the longest-standing member
+becomes the admin. If anything stops the join (for example the invitation was
+withdrawn), you stay in your household and nothing changes.
+
+Not interested? Click **Decline**. Inviting someone never tells you whether
+they're already in a household.
+
 ## What household members can see and do
 
 - Everyone sees everyone's puzzles in **My Puzzles**, labelled

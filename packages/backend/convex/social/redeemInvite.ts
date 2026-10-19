@@ -101,7 +101,7 @@ export const redeemInvite = mutation({
 
 // The household side of a household link: a PENDING invite from the link's owner, through the
 // same use case as an in-app invite, so it re-checks (at redeem time) that the owner is still the
-// admin, that the new member is in no household and that no invite is pending, and it emits
+// admin, that the new member is not already in it and that no invite is pending, and it emits
 // HouseholdInviteSent for the existing notification. The invitee must accept: never auto-join.
 // The owner must still be in the household the link was minted for, so a link outlives neither
 // their admin role nor that household. Any refusal is reported as "skipped".

@@ -574,7 +574,7 @@ describe("redeeming a household link", () => {
     expect((await linkFor(t, token))?.consumedBy).toBe(newbie);
   });
 
-  test("a domain refusal (invitee already in a household) is swallowed into skipped", async () => {
+  test("a new member who already founded a household still gets the pending invite", async () => {
     const t = convexTest(schema, modules);
     const { ann, newbie } = await seed(t);
     await annCreatesHousehold(t);
@@ -589,9 +589,10 @@ describe("redeeming a household link", () => {
       redeemed: true,
       inviterId: ann,
       connection: "pending",
-      householdInvite: "skipped",
+      householdInvite: "pending",
     });
-    expect(await householdInvitesFor(t, newbie)).toEqual([]);
+    // They choose on accept whether to leave their own household.
+    expect(await householdInvitesFor(t, newbie)).toHaveLength(1);
     expect(await mutualEdges(t, ann, newbie)).toEqual({ ab: false, ba: false });
     expect(await pendingOffersTo(t, newbie)).toHaveLength(1);
   });
@@ -830,7 +831,7 @@ describe("existing member on a household link", () => {
     ]);
   });
 
-  test("a member already in a household is told why and cannot accept or decline", async () => {
+  test("a member already in a household is told why and cannot accept without leaving it", async () => {
     const t = convexTest(schema, modules);
     const { cat } = await seed(t);
     await annCreatesHousehold(t);
@@ -845,9 +846,50 @@ describe("existing member on a household link", () => {
       inviterName: "Ann",
     });
     await expectConvexCode(acceptLink(t, "cat", token), "AlreadyInHousehold");
-    await expectConvexCode(declineLink(t, "cat", token), "AlreadyInHousehold");
     expect((await linkFor(t, token))?.consumedAt).toBeUndefined();
     expect(await householdInvitesFor(t, cat)).toEqual([]);
+  });
+
+  test("a member already in a household leaves it and joins in one step", async () => {
+    const t = convexTest(schema, modules);
+    const { ann, cat } = await seed(t);
+    await annCreatesHousehold(t);
+    const { token } = await mintAsAnn(t);
+    await as(t, "cat").mutation(
+      api.household.createHousehold.createHousehold,
+      {},
+    );
+
+    await as(t, "cat").mutation(
+      api.social.acceptHouseholdLinkInvite.acceptHouseholdLinkInvite,
+      { token, leaveCurrentHousehold: true },
+    );
+    const memberships = await t.run((ctx) =>
+      ctx.db.query("householdMembers").collect(),
+    );
+    // Cat's own household (she was its only member) is gone; she is in Ann's.
+    expect(memberships.filter((m) => m.memberId === cat)).toHaveLength(1);
+    expect(memberships.find((m) => m.memberId === cat)?.householdId).toBe(
+      memberships.find((m) => m.memberId === ann)?.householdId,
+    );
+    expect(
+      await t.run((ctx) => ctx.db.query("households").collect()),
+    ).toHaveLength(1);
+    expect((await linkFor(t, token))?.consumedBy).toBe(cat);
+  });
+
+  test("a member already in a household can decline the link", async () => {
+    const t = convexTest(schema, modules);
+    const { cat } = await seed(t);
+    await annCreatesHousehold(t);
+    const { token } = await mintAsAnn(t);
+    await as(t, "cat").mutation(
+      api.household.createHousehold.createHousehold,
+      {},
+    );
+    await declineLink(t, "cat", token);
+    expect((await linkFor(t, token))?.consumedBy).toBe(cat);
+    expect(await landing(t, "cat", token)).toEqual({ state: "used" });
   });
 
   test("an expired link is reported and refused", async () => {

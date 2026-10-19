@@ -2,7 +2,7 @@
 id: household-improvements
 publishedAt: "2026-10-19T12:00:00Z"
 title: "Verbeteringen aan huishoudens"
-summary: "Een overzichtelijkere pagina Huishouden met eigen tabbladen en één knop Uitnodigen, en je huishouden kan nu een naam krijgen."
+summary: "Een overzichtelijkere pagina Huishouden met tabbladen en één knop Uitnodigen, een naam voor je huishouden, en in één stap overstappen."
 category: improvement
 cta:
   label: "Huishouden openen"
@@ -23,5 +23,8 @@ meteen vindt waarvoor je kwam.
   sturen.
 - **Een naam voor je huishouden.** De beheerder geeft het huishouden een naam
   op het tabblad **Instellingen**. Alleen de leden zien die naam.
+- **In één stap overstappen.** Zit je al in een huishouden en word je
+  uitgenodigd voor een ander? Kies **Verlaten en lid worden**: je ziet precies
+  wat er met je huidige huishouden gebeurt voordat je bevestigt.
 - **Uitnodigingen eerst.** Heeft iemand je uitgenodigd en zit je nog niet in
   een huishouden, dan zie je die uitnodiging als eerste.
