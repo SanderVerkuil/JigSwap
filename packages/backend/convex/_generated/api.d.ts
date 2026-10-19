@@ -119,6 +119,7 @@ import type * as conversation_backfill from "../conversation/backfill.js";
 import type * as conversation_backfillDeletedMemberData from "../conversation/backfillDeletedMemberData.js";
 import type * as conversation_backfillParticipantState from "../conversation/backfillParticipantState.js";
 import type * as conversation_canMessage from "../conversation/canMessage.js";
+import type * as conversation_circleAttachableCopy from "../conversation/circleAttachableCopy.js";
 import type * as conversation_circleSubscriber from "../conversation/circleSubscriber.js";
 import type * as conversation_clearTyping from "../conversation/clearTyping.js";
 import type * as conversation_copyCard from "../conversation/copyCard.js";
@@ -636,6 +637,7 @@ declare const fullApi: ApiFromModules<{
   "conversation/backfillDeletedMemberData": typeof conversation_backfillDeletedMemberData;
   "conversation/backfillParticipantState": typeof conversation_backfillParticipantState;
   "conversation/canMessage": typeof conversation_canMessage;
+  "conversation/circleAttachableCopy": typeof conversation_circleAttachableCopy;
   "conversation/circleSubscriber": typeof conversation_circleSubscriber;
   "conversation/clearTyping": typeof conversation_clearTyping;
   "conversation/copyCard": typeof conversation_copyCard;

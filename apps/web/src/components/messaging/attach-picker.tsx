@@ -5,7 +5,8 @@
 // (the latter hidden when the backend would return none — anonymised member),
 // a debounced search, and a list of copies; picking one hands it back and
 // closes. Lists only what listAttachableCopies allows, i.e. copies both
-// participants may view.
+// participants may view (in a circle: my copies the whole circle may view,
+// explained by `hint`).
 import { Image } from "@/compat/image";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,6 +47,7 @@ export function AttachPicker({
   onOpenChange,
   threadId,
   theirsLabel,
+  hint,
   onSelect,
   onCloseAutoFocus,
 }: {
@@ -54,6 +56,8 @@ export function AttachPicker({
   threadId: string;
   // The other member's tab label; null hides that tab.
   theirsLabel: string | null;
+  // A note above the list (a circle thread: who can see the puzzles).
+  hint?: string;
   onSelect: (copy: MessageCopy) => void;
   // Where focus lands on close (the composer decides: textarea after a pick,
   // else the attach button) — without it Radix drops focus on <body>.
@@ -68,6 +72,7 @@ export function AttachPicker({
     <PickerBody
       threadId={threadId}
       theirsLabel={theirsLabel}
+      hint={hint}
       searchRef={searchRef}
       onSelect={(copy) => {
         onSelect(copy);
@@ -144,11 +149,13 @@ export function AttachPicker({
 function PickerBody({
   threadId,
   theirsLabel,
+  hint,
   searchRef,
   onSelect,
 }: {
   threadId: string;
   theirsLabel: string | null;
+  hint?: string;
   searchRef: React.RefObject<HTMLInputElement | null>;
   onSelect: (copy: MessageCopy) => void;
 }) {
@@ -170,6 +177,7 @@ function PickerBody({
       query={query}
       search={search}
       onQueryChange={setQuery}
+      hint={hint}
       searchRef={searchRef}
       onSelect={onSelect}
     />
@@ -214,6 +222,7 @@ function PickerPanel({
   query,
   search,
   onQueryChange,
+  hint,
   searchRef,
   onSelect,
 }: {
@@ -222,6 +231,7 @@ function PickerPanel({
   query: string;
   search: string;
   onQueryChange: (query: string) => void;
+  hint?: string;
   searchRef: React.RefObject<HTMLInputElement | null>;
   onSelect: (copy: MessageCopy) => void;
 }) {
@@ -254,6 +264,7 @@ function PickerPanel({
             className="h-11 pl-9 md:h-10"
           />
         </div>
+        {hint && <p className="text-muted-foreground mt-2 text-xs">{hint}</p>}
       </div>
       {/* Result count for screen readers, updated as the search settles. */}
       <p role="status" className="sr-only">

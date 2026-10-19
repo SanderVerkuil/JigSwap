@@ -16,17 +16,19 @@ import { convexThreadRepository } from "./adapters/convexThreadRepository";
 import { messageIdGenerator } from "./adapters/idGenerators";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
 import { systemClock } from "./adapters/systemClock";
+import { circleAttachableCopies } from "./circleAttachableCopy";
 import { toConvexError } from "./errors";
 import { threadRowByAggregateId } from "./readModelHelpers";
 import { isCurrentCircleMember } from "./threadMemberProjection";
 import { deleteTypingRowOf } from "./typingIndicators";
 
-// A copy may be attached to a message in a thread iff it exists, is OWNED by one of the thread's
-// participants, and EVERY participant may view it right now (canViewCopy) — so an attachment
-// never shows the other side a copy they could not open, and nobody can drop a third party's
-// copy into a conversation. Same rule for DM and exchange threads. The OTHER participant's copy is
-// also refused while they are anonymous to the author: otherwise success vs CopyNotFound would
-// reveal whether the hidden partner owns a copy the author can see (#154).
+// A copy may be attached to a message in a DM or exchange thread iff it exists, is OWNED by one of
+// the thread's participants, and EVERY participant may view it right now (canViewCopy) — so an
+// attachment never shows the other side a copy they could not open, and nobody can drop a third
+// party's copy into a conversation. The OTHER participant's copy is also refused while they are
+// anonymous to the author: otherwise success vs CopyNotFound would reveal whether the hidden
+// partner owns a copy the author can see (#154). A circle thread uses circleAttachableCopies
+// instead: only the author's own copy that the whole circle can see.
 const isAttachable = async (
   ctx: QueryCtx,
   thread: Doc<"threads">,
@@ -34,7 +36,11 @@ const isAttachable = async (
   authorId: Id<"users">,
 ): Promise<boolean> => {
   const copy = await ctx.db.get(copyId);
-  if (!copy || !thread.participants.includes(copy.ownerId)) return false;
+  if (!copy) return false;
+  if (thread.subjectKind === "circle") {
+    return circleAttachableCopies(ctx, thread, authorId)(copy);
+  }
+  if (!thread.participants.includes(copy.ownerId)) return false;
   if (
     copy.ownerId !== authorId &&
     (

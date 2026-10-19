@@ -1,7 +1,7 @@
 import type { AttachableCopySide, MessageCopyView } from "@jigswap/contracts";
-import { ConvexError, v } from "convex/values";
-import type { Id } from "../_generated/dataModel";
-import { query } from "../_generated/server";
+import { v } from "convex/values";
+import type { Doc, Id } from "../_generated/dataModel";
+import { query, type QueryCtx } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import {
   buildCopyViewContext,
@@ -9,8 +9,9 @@ import {
 } from "../library/canViewCopy";
 import { isBlockedEitherWay } from "../social/blocks";
 import { projectMemberIdentity } from "../social/privacy";
+import { circleAttachableCopies } from "./circleAttachableCopy";
 import { messageCopyViewOf } from "./copyCard";
-import { threadRowByAggregateId } from "./readModelHelpers";
+import { readableThreadOf } from "./readModelHelpers";
 
 // How many of the owner's copies are scanned (newest first, by_owner) and how many are returned.
 // Search is an in-memory filter over that scan, so a match older than the newest 500 copies is not
@@ -21,7 +22,9 @@ const RESULT_CAP = 50;
 // The copies the caller may attach to a message in a thread, mirroring postMessage's attach gate
 // (owned by a participant, viewable by both). `side: "mine"` = the caller's copies the other
 // participant can view; `"theirs"` = the other participant's copies the caller can view (the
-// owner always can). Participants only (ThreadNotFound / NotParticipant, as getThreadMessages).
+// owner always can). Readers only (readableThreadOf: ThreadNotFound / NotParticipant, and in a
+// circle thread a CURRENT member), as getThreadMessages. A circle thread lists the caller's copies
+// passing circleAttachableCopies for "mine" and nothing for "theirs".
 // An anonymised other member yields [] for "theirs": listing their copies would tie the hidden
 // member to identifiable copies, and the picker hides their tab anyway. A pair blocked either way
 // yields [] for both sides (postMessage refuses the post anyway). Newest copies first;
@@ -34,23 +37,19 @@ export const listAttachableCopies = query({
   },
   handler: async (ctx, args): Promise<MessageCopyView[]> => {
     const me = (await requireMember(ctx)) as unknown as Id<"users">;
-    const thread = await threadRowByAggregateId(ctx, args.threadId);
-    if (!thread) {
-      throw new ConvexError({
-        code: "ThreadNotFound",
-        message: "Thread not found",
-      });
+    const { thread } = await readableThreadOf(ctx, args.threadId, me);
+    const needle = args.search?.trim().toLowerCase() ?? "";
+    // A circle thread has no single other side: "theirs" is empty, and "mine" is the caller's
+    // copies passing postMessage's circle rule (circleAttachableCopies).
+    if (thread.subjectKind === "circle") {
+      if (args.side === "theirs") return [];
+      return scanAttachable(
+        ctx,
+        me,
+        needle,
+        circleAttachableCopies(ctx, thread, me),
+      );
     }
-    if (!thread.participants.includes(me)) {
-      throw new ConvexError({
-        code: "NotParticipant",
-        message: "Only participants may read a thread",
-      });
-    }
-    // The picker is pair-shaped ("mine" for the one other side, "theirs" from them). A circle
-    // thread has no single other side, so it lists nothing here; postMessage's isAttachable still
-    // applies the circle rule (owner is a participant, every participant may view the copy).
-    if (thread.subjectKind === "circle") return [];
     const other = thread.participants.find((p) => p !== me);
     if (!other) return [];
     if (await isBlockedEitherWay(ctx, me, other)) return [];
@@ -74,31 +73,43 @@ export const listAttachableCopies = query({
     }
 
     const context = await buildCopyViewContext(ctx, viewer);
-    const needle = args.search?.trim().toLowerCase() ?? "";
-    const copies = await ctx.db
-      .query("ownedPuzzles")
-      .withIndex("by_owner", (q) => q.eq("ownerId", owner))
-      .order("desc")
-      .take(SCAN_CAP);
-
-    const results: MessageCopyView[] = [];
-    for (const copy of copies) {
-      if (results.length >= RESULT_CAP) break;
-      if (!(await canViewCopyWithContext(ctx, copy, context))) continue;
-      if (needle) {
-        // Same snapshot-first precedence as the card, checked before resolving its cover URL.
-        const puzzle = await ctx.db.get(copy.puzzleId);
-        const title = copy.snapshot?.title ?? puzzle?.title ?? "";
-        const brand = copy.snapshot?.brand ?? puzzle?.brand ?? "";
-        if (
-          !title.toLowerCase().includes(needle) &&
-          !brand.toLowerCase().includes(needle)
-        ) {
-          continue;
-        }
-      }
-      results.push(await messageCopyViewOf(ctx, copy));
-    }
-    return results;
+    return scanAttachable(ctx, owner, needle, (copy) =>
+      canViewCopyWithContext(ctx, copy, context),
+    );
   },
 });
+
+// The owner's copies (newest first, SCAN_CAP scanned, RESULT_CAP returned) that pass `attachable`
+// and match `needle`, as cards.
+const scanAttachable = async (
+  ctx: QueryCtx,
+  owner: Id<"users">,
+  needle: string,
+  attachable: (copy: Doc<"ownedPuzzles">) => Promise<boolean>,
+): Promise<MessageCopyView[]> => {
+  const copies = await ctx.db
+    .query("ownedPuzzles")
+    .withIndex("by_owner", (q) => q.eq("ownerId", owner))
+    .order("desc")
+    .take(SCAN_CAP);
+
+  const results: MessageCopyView[] = [];
+  for (const copy of copies) {
+    if (results.length >= RESULT_CAP) break;
+    if (!(await attachable(copy))) continue;
+    if (needle) {
+      // Same snapshot-first precedence as the card, checked before resolving its cover URL.
+      const puzzle = await ctx.db.get(copy.puzzleId);
+      const title = copy.snapshot?.title ?? puzzle?.title ?? "";
+      const brand = copy.snapshot?.brand ?? puzzle?.brand ?? "";
+      if (
+        !title.toLowerCase().includes(needle) &&
+        !brand.toLowerCase().includes(needle)
+      ) {
+        continue;
+      }
+    }
+    results.push(await messageCopyViewOf(ctx, copy));
+  }
+  return results;
+};

@@ -900,6 +900,7 @@
       "recipientFallback": "the other member"
     },
     "circle": {
+      "attachHint": "Only your puzzles that everyone in {circle} can see. Share a puzzle with the circle to add it here.",
       "authorPrefix": "{name}: {body}",
       "memberCount": "{count, plural, one {# member} other {# members}}",
       "members": "Members",

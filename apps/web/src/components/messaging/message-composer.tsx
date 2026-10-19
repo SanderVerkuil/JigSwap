@@ -71,7 +71,7 @@ export function MessageComposer({
   recipientName,
   theirsLabel,
   placeholder,
-  canAttachCopy = true,
+  attachHint,
   locationGroup,
 }: {
   threadId: string;
@@ -81,8 +81,8 @@ export function MessageComposer({
   theirsLabel: string | null;
   // The textarea's placeholder ("Write to Puzzle Club…"); the generic one by default.
   placeholder?: string;
-  // Whether "Attach a puzzle" is offered (not yet in circle threads).
-  canAttachCopy?: boolean;
+  // A note above the attach picker's list (a circle thread: who can see the puzzles).
+  attachHint?: string;
   // A circle thread: the location consent addresses the group.
   locationGroup?: { circle: string; others: number };
 }) {
@@ -302,7 +302,7 @@ export function MessageComposer({
         <AttachMenu
           triggerRef={attachButtonRef}
           photosAvailable={photosAvailable}
-          onPuzzle={canAttachCopy ? () => setPickerOpen(true) : undefined}
+          onPuzzle={() => setPickerOpen(true)}
           onPhoto={() => fileInputRef.current?.click()}
           locationAvailable={locationAvailable}
           onLocation={() => setLocationOpen(true)}
@@ -354,27 +354,26 @@ export function MessageComposer({
           }}
         />
       )}
-      {canAttachCopy && (
-        <AttachPicker
-          open={pickerOpen}
-          onOpenChange={setPickerOpen}
-          threadId={threadId}
-          theirsLabel={theirsLabel}
-          onSelect={(copy) => {
-            setStaged(copy);
-            pickedRef.current = true;
-          }}
-          onCloseAutoFocus={(event) => {
-            event.preventDefault();
-            if (pickedRef.current) {
-              pickedRef.current = false;
-              focusAfterAttachChange();
-            } else {
-              attachButtonRef.current?.focus();
-            }
-          }}
-        />
-      )}
+      <AttachPicker
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        threadId={threadId}
+        theirsLabel={theirsLabel}
+        hint={attachHint}
+        onSelect={(copy) => {
+          setStaged(copy);
+          pickedRef.current = true;
+        }}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          if (pickedRef.current) {
+            pickedRef.current = false;
+            focusAfterAttachChange();
+          } else {
+            attachButtonRef.current?.focus();
+          }
+        }}
+      />
     </div>
   );
 }

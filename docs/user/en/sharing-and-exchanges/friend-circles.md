@@ -47,6 +47,9 @@ the circle, on **Circles** or on its page.
   sent stay in it for the others.
 - If you blocked someone in the circle, their messages are collapsed for you.
   They still see yours, and they aren't told.
+- You can attach one of your puzzles that the whole circle can see, such as
+  one you've shared with the circle. See
+  [Attach a puzzle](/docs/staying-informed/messages#in-a-circle-chat).
 
 For muting, typing, online status and notifications, see
 [Messages](/docs/staying-informed/messages#circle-group-chats).
