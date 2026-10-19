@@ -19,6 +19,7 @@ export function HouseholdInviteDialog({
   open,
   onOpenChange,
   memberId,
+  householdName,
   excludedIds,
   onError,
 }: {
@@ -26,6 +27,8 @@ export function HouseholdInviteDialog({
   onOpenChange: (open: boolean) => void;
   // The viewer (the admin): the invite link's landing page is theirs.
   memberId: string;
+  // The household's own name, when it has one (members only, like this dialog).
+  householdName: string | undefined;
   // Members and pending invitees: never offered again.
   excludedIds: ReadonlySet<string>;
   onError: (error: unknown) => void;
@@ -36,7 +39,11 @@ export function HouseholdInviteDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{t("dialogTitle")}</DialogTitle>
+          <DialogTitle>
+            {householdName
+              ? t("dialogTitleNamed", { name: householdName })
+              : t("dialogTitle")}
+          </DialogTitle>
           <DialogDescription>{t("dialogSub")}</DialogDescription>
         </DialogHeader>
         <div className="flex min-w-0 flex-col gap-5">

@@ -208,6 +208,8 @@ export function HouseholdDetails({
   // The one primary action, in the shell page head: the admin's Invite (icon-only on phones).
   usePageHeader(
     () => ({
+      // The household's own name, when the members gave it one, replaces the static title.
+      title: household.name,
       actions: isAdmin ? (
         <Button
           variant="brand"
@@ -221,7 +223,7 @@ export function HouseholdDetails({
         </Button>
       ) : undefined,
     }),
-    [isAdmin, t],
+    [household.name, isAdmin, t],
   );
 
   // Never offer someone who is already a member or already has a pending invite.
@@ -234,7 +236,7 @@ export function HouseholdDetails({
     <div className="flex min-w-0 flex-col gap-6">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <CircleAvatarStack
-          circleName={t("header.stackName")}
+          circleName={household.name ?? t("header.stackName")}
           members={household.members.map((member) => ({
             key: member.memberId,
             name: displayName(member),
@@ -373,6 +375,7 @@ export function HouseholdDetails({
 
           <HouseholdSettings
             isAdmin={isAdmin}
+            name={household.name}
             defaultCopyPermission={household.defaultCopyPermission}
             copiesUsingDefault={household.copiesUsingDefault}
             onError={onError}
@@ -406,6 +409,7 @@ export function HouseholdDetails({
           open={inviteOpen}
           onOpenChange={setInviteOpen}
           memberId={viewerId}
+          householdName={household.name}
           excludedIds={excluded}
           onError={onError}
         />
