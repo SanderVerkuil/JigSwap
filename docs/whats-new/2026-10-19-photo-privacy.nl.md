@@ -27,4 +27,5 @@ ook toevoegt.
   weigerden hem in berichten. Foto's werken daar nu ook, zonder de verborgen
   gegevens. Bijsnijden of draaien wordt in die browsers geblokkeerd: een
   ongewijzigde foto wordt geüpload zoals hij is, en na een wijziging biedt
-  JigSwap aan de originele foto te uploaden.
+  JigSwap aan de originele foto te uploaden. Automatisch bijsnijden is daar
+  verborgen, omdat het de foto niet kan lezen.

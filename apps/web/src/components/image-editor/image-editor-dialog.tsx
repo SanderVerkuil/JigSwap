@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { canvasCanBeTrusted, sniffedType } from "@/lib/prepare-photo";
 import { RotateCw } from "lucide-react";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Cropper, type CropperRef } from "react-advanced-cropper";
 import "react-advanced-cropper/dist/style.css";
 import { toast } from "sonner";
@@ -65,6 +65,11 @@ export function ImageEditorDialog({
   const [cropChanged, setCropChanged] = useState(false);
   // An edit the browser can't bake (scrambled canvas): offer the original.
   const [blocked, setBlocked] = useState(false);
+  // Auto-crop reads canvas pixels, so where read-back is scrambled it would
+  // analyse noise: hide it. Probed once per opening, during render (no flash);
+  // never while closed, so server rendering doesn't touch the DOM.
+  const open = src !== null;
+  const canAutoCrop = useMemo(() => open && canvasCanBeTrusted(), [open]);
 
   const reset = () => {
     setRotation(0);
@@ -233,17 +238,19 @@ export function ImageEditorDialog({
           </Button>
         </div>
 
-        <div className="flex justify-end">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={!loaded || baking}
-            onClick={() => void runAutoCrop()}
-          >
-            {t("autoCrop")}
-          </Button>
-        </div>
+        {canAutoCrop && (
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={!loaded || baking}
+              onClick={() => void runAutoCrop()}
+            >
+              {t("autoCrop")}
+            </Button>
+          </div>
+        )}
 
         {blocked && (
           <div

@@ -73,7 +73,9 @@ When you add a photo, an editor opens where you can crop and rotate it before
 it's uploaded. Some browsers block photo editing to protect your privacy (for
 example Firefox with fingerprinting protection turned on). There, a photo you
 didn't change is uploaded as it is. If you did change it, JigSwap tells you the
-changes can't be applied and offers to upload the original photo instead.
+changes can't be applied and offers to upload the original photo instead. The
+**Auto crop** button isn't shown in those browsers, because it can't read the
+photo there.
 
 ### Photos waiting for review
 

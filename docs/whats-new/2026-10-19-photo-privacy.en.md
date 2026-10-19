@@ -25,3 +25,4 @@ JigSwap now removes them from every photo you add, wherever you add it.
   messages. Photos now work there too, without the hidden details. Cropping
   or rotating a photo is blocked in those browsers: an unchanged photo is
   uploaded as it is, and after a change JigSwap offers to upload the original.
+  Auto crop is hidden there, as it can't read the photo.
