@@ -324,7 +324,7 @@ opslaan, zoals de plek waar de foto is gemaakt. Sommige browsers blokkeren deze
 stap om je privacy te beschermen (bijvoorbeeld Firefox met bescherming tegen
 fingerprinting). Dan wordt de originele foto verstuurd en haalt JigSwap die
 verborgen informatie op zijn servers weg voordat iemand de foto kan zien. Zo'n
-foto moet een JPEG of PNG van maximaal 10 MB zijn.
+foto moet een JPEG, PNG of WebP van maximaal 10 MB zijn.
 
 Een puzzel en foto's gaan in aparte berichten. Staat **Foto** niet in het menu,
 dan kunnen er op dit moment geen foto's worden verstuurd.

@@ -38,10 +38,15 @@ export const MESSAGE_IMAGE_MAX_BYTES = 10 * 1024 * 1024;
 export const MESSAGE_IMAGE_CLAIM_WINDOW_MS = 15 * 60_000;
 /** The client-reported pixel size must lie within 1..this on each side. */
 export const MESSAGE_IMAGE_MAX_DIMENSION = 10_000;
-/** The content types a message photo may be uploaded as (jimp decodes both). */
+/**
+ * The content types a message photo may be uploaded as. jimp re-encodes JPEG and PNG; a WebP
+ * (an original sent by a browser that blocks the client-side re-encode) is stored as its
+ * metadata-stripped bytes, like other photo uploads.
+ */
 export const MESSAGE_IMAGE_TYPES: readonly string[] = [
   "image/jpeg",
   "image/png",
+  "image/webp",
 ];
 /** Photos per send (spec R.3). */
 export const MAX_PHOTOS_PER_SEND = 4;
