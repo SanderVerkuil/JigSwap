@@ -195,6 +195,26 @@ describe("MessageComposer photo staging", () => {
     expect(screen.queryByText("This photo is too large.")).toBeNull();
   });
 
+  it("uploads the original when the browser can't re-encode it (scrambled canvas)", async () => {
+    const original = new Blob(["original"], { type: "image/png" });
+    mocks.prepare.mockResolvedValue({
+      file: original,
+      width: 3024,
+      height: 4032,
+      reencoded: false,
+    });
+    renderComposer();
+    await pick([new File(["original"], "IMG_1.png", { type: "image/png" })]);
+    expect(await screen.findByText("Ready")).toBeTruthy();
+    expect(mocks.upload.mock.calls[0][1]).toBe(original);
+    expect(mocks.mutation).toHaveBeenCalledWith(STAGE, {
+      threadId: "thread_1",
+      storageId: "storage_1",
+      width: 3024,
+      height: 4032,
+    });
+  });
+
   it("refuses a file the browser can't convert", async () => {
     mocks.prepare.mockRejectedValue(new Error("decode failed"));
     renderComposer();

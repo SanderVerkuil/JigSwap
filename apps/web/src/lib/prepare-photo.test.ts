@@ -137,10 +137,45 @@ describe("preparePhoto", () => {
     });
   });
 
-  it("rejects instead of sending noise when canvas read-back is scrambled", async () => {
+  it("hands back the original, never noise, when canvas read-back is scrambled", async () => {
     readBack = scrambled;
-    await expect(preparePhoto(file("image/jpeg"))).rejects.toThrow();
+    decoded = { width: 3024, height: 4032 };
+    const picked = file("image/png", "IMG_0001.png");
+
+    const prepared = await preparePhoto(picked);
+
     expect(drawn).toBeUndefined();
+    expect(prepared.reencoded).toBe(false);
+    // The original bytes at their decoded (upright, unscaled) size; the server strips them.
+    expect(new Uint8Array(await prepared.file.arrayBuffer())).toEqual(
+      new Uint8Array([1, 2, 3]),
+    );
+    expect(prepared.file.type).toBe("image/png");
+    expect(prepared).toMatchObject({ width: 3024, height: 4032 });
+  });
+
+  it("types the original by its magic bytes, not the picker's claim", async () => {
+    readBack = scrambled;
+    const bytes = (...b: number[]) => new Uint8Array([...b, 0, 0, 0, 0]);
+    const named = (content: Uint8Array, type: string) =>
+      new File([content as BlobPart], "photo", { type });
+
+    const cases: [Uint8Array, string, string][] = [
+      [bytes(0xff, 0xd8, 0xff, 0xe0), "", "image/jpeg"],
+      [bytes(0xff, 0xd8, 0xff, 0xe1), "image/jpg", "image/jpeg"],
+      [bytes(0x89, 0x50, 0x4e, 0x47), "image/jpeg", "image/png"],
+      [new TextEncoder().encode("RIFF\0\0\0\0WEBPVP8 "), "", "image/webp"],
+    ];
+    for (const [content, claimed, expected] of cases) {
+      const prepared = await preparePhoto(named(content, claimed));
+      expect(prepared.file.type).toBe(expected);
+    }
+  });
+
+  it("re-encoded photos say so", async () => {
+    await expect(preparePhoto(file("image/png"))).resolves.toMatchObject({
+      reencoded: true,
+    });
   });
 
   it("rejects a file the browser cannot decode", async () => {
@@ -148,8 +183,12 @@ describe("preparePhoto", () => {
     await expect(preparePhoto(file("image/heic"))).rejects.toThrow();
   });
 
-  it("rejects when the canvas yields no JPEG", async () => {
+  it("hands back the original when the canvas yields no JPEG", async () => {
     toBlobType = null;
-    await expect(preparePhoto(file("image/png"))).rejects.toThrow();
+    await expect(preparePhoto(file("image/png"))).resolves.toMatchObject({
+      reencoded: false,
+      width: 800,
+      height: 600,
+    });
   });
 });

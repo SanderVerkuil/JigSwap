@@ -320,7 +320,11 @@ de leden die hem kunnen zien:
 
 Voordat een foto je apparaat verlaat, verkleint JigSwap hem en slaat hem op als
 nieuwe JPEG. Zo verdwijnt de verborgen informatie die camera's in foto's
-opslaan, zoals de plek waar de foto is gemaakt.
+opslaan, zoals de plek waar de foto is gemaakt. Sommige browsers blokkeren deze
+stap om je privacy te beschermen (bijvoorbeeld Firefox met bescherming tegen
+fingerprinting). Dan wordt de originele foto verstuurd en haalt JigSwap die
+verborgen informatie op zijn servers weg voordat iemand de foto kan zien. Zo'n
+foto moet een JPEG of PNG van maximaal 10 MB zijn.
 
 Een puzzel en foto's gaan in aparte berichten. Staat **Foto** niet in het menu,
 dan kunnen er op dit moment geen foto's worden verstuurd.
