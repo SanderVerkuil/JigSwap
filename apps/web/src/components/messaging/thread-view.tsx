@@ -637,6 +637,8 @@ function ThreadItemView({
             authorId={id}
             hideMedia={hideMedia}
             onMediaLoad={onMediaLoad}
+            // Another member's puzzle may be visible to only some of the circle.
+            copyUnavailableLabel={t("circle.copyUnavailable")}
           />
         )}
       </CircleRun>
@@ -752,6 +754,7 @@ function GroupBody({
   authorId,
   hideMedia,
   onMediaLoad,
+  copyUnavailableLabel,
 }: {
   item: GroupItem;
   locale: string;
@@ -759,6 +762,8 @@ function GroupBody({
   authorId: Id<"users"> | undefined;
   hideMedia: boolean;
   onMediaLoad: () => void;
+  /** The unavailable-puzzle placeholder's text, when not the default. */
+  copyUnavailableLabel?: string;
 }) {
   const t = useTranslations("messages");
   const otherAuthor = authorName;
@@ -822,7 +827,10 @@ function GroupBody({
           />
         )}
         {message.copyUnavailable && (
-          <CopyUnavailableCard className={cn(pending && "opacity-70")} />
+          <CopyUnavailableCard
+            label={copyUnavailableLabel}
+            className={cn(pending && "opacity-70")}
+          />
         )}
         {message.removed ? (
           <RemovedMessage
@@ -949,7 +957,13 @@ function CollapsedMedia({ label }: { label: string }) {
 
 // Placeholder in the copy card's slot when the referenced copy is gone or no
 // longer visible to the reader: same geometry, not a link.
-function CopyUnavailableCard({ className }: { className?: string }) {
+function CopyUnavailableCard({
+  label,
+  className,
+}: {
+  label?: string;
+  className?: string;
+}) {
   const t = useTranslations("messages");
   return (
     <div
@@ -961,7 +975,7 @@ function CopyUnavailableCard({ className }: { className?: string }) {
       <span className="bg-muted flex size-12 shrink-0 items-center justify-center rounded-md">
         <PuzzleIcon className="size-5" aria-hidden />
       </span>
-      <span className="text-sm">{t("copyUnavailable")}</span>
+      <span className="text-sm">{label ?? t("copyUnavailable")}</span>
     </div>
   );
 }

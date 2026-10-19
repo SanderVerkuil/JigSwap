@@ -901,7 +901,9 @@
       "recipientFallback": "de ander"
     },
     "circle": {
-      "attachHint": "Alleen je puzzels die iedereen in {circle} kan zien. Deel een puzzel met de kring om hem hier toe te voegen.",
+      "attachHint": "Je puzzels die leden van {circle} kunnen zien. Deel een puzzel met de kring zodat iedereen hem kan zien.",
+      "copyUnavailable": "Deze puzzel is niet beschikbaar voor jou",
+      "limitedAudience": "Niet iedereen in de kring kan deze zien",
       "authorPrefix": "{name}: {body}",
       "memberCount": "{count, plural, one {# lid} other {# leden}}",
       "members": "Leden",

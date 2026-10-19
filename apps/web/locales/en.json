@@ -901,7 +901,9 @@
       "recipientFallback": "the other member"
     },
     "circle": {
-      "attachHint": "Only your puzzles that everyone in {circle} can see. Share a puzzle with the circle to add it here.",
+      "attachHint": "Your puzzles that members of {circle} can see. Share a puzzle with the circle so everyone can see it.",
+      "copyUnavailable": "This puzzle isn't available to you",
+      "limitedAudience": "Not everyone in the circle can see this",
       "authorPrefix": "{name}: {body}",
       "memberCount": "{count, plural, one {# member} other {# members}}",
       "members": "Members",

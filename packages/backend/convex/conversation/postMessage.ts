@@ -16,7 +16,7 @@ import { convexThreadRepository } from "./adapters/convexThreadRepository";
 import { messageIdGenerator } from "./adapters/idGenerators";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
 import { systemClock } from "./adapters/systemClock";
-import { circleAttachableCopies } from "./circleAttachableCopy";
+import { circleCopyAudience } from "./circleAttachableCopy";
 import { toConvexError } from "./errors";
 import { threadRowByAggregateId } from "./readModelHelpers";
 import { isCurrentCircleMember } from "./threadMemberProjection";
@@ -27,8 +27,8 @@ import { deleteTypingRowOf } from "./typingIndicators";
 // attachment never shows the other side a copy they could not open, and nobody can drop a third
 // party's copy into a conversation. The OTHER participant's copy is also refused while they are
 // anonymous to the author: otherwise success vs CopyNotFound would reveal whether the hidden
-// partner owns a copy the author can see (#154). A circle thread uses circleAttachableCopies
-// instead: only the author's own copy that the whole circle can see.
+// partner owns a copy the author can see (#154). A circle thread uses circleCopyAudience instead:
+// only the author's own copy that at least one co-member may see.
 const isAttachable = async (
   ctx: QueryCtx,
   thread: Doc<"threads">,
@@ -38,7 +38,7 @@ const isAttachable = async (
   const copy = await ctx.db.get(copyId);
   if (!copy) return false;
   if (thread.subjectKind === "circle") {
-    return circleAttachableCopies(ctx, thread, authorId)(copy);
+    return (await circleCopyAudience(ctx, thread, authorId)(copy)) !== null;
   }
   if (!thread.participants.includes(copy.ownerId)) return false;
   if (
