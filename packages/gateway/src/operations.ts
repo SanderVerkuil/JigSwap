@@ -14,6 +14,8 @@ export const gateway = {
     // land as `pending` and must be approved (moderation) before appearing publicly.
     extractPuzzleFromUrl: api.catalog.extractFromUrl.extractFromUrl,
     importPuzzleImage: api.catalog.importPuzzleImage.importPuzzleImage,
+    // Strip an uploaded box art's metadata server-side; returns the clean storage id.
+    sanitizeBoxArt: api.catalog.sanitizeBoxArt.sanitizeBoxArt,
     createPuzzle: api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
     updatePuzzle: api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
     approve: api.catalog.approvePuzzleDefinition.approvePuzzleDefinition,

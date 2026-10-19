@@ -1,13 +1,19 @@
 import { makeEditChangeProposal, toChangeProposalId } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
+import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { convexChangeProposalRepository } from "./adapters/convexChangeProposalRepository";
 import { convexPuzzleDefinitionRepository } from "./adapters/convexPuzzleDefinitionRepository";
 import { catalogEventPublisher } from "./adapters/eventPublisher";
 import { systemClock } from "./adapters/systemClock";
+import { assertBoxArtImage } from "./boxArtUploads";
 import { toConvexError } from "./errors";
-import { proposalFieldArgs, toChanges } from "./proposeDefinitionChange";
+import {
+  currentBoxArt,
+  proposalFieldArgs,
+  toChanges,
+} from "./proposeDefinitionChange";
 
 // Composition root: the proposer replaces their PENDING proposal's diff/comment in place.
 // Ownership ACL here (like updatePuzzleDefinition); the pending-only rule is the aggregate's.
@@ -31,6 +37,17 @@ export const editChangeProposal = mutation({
     ) {
       throw new ConvexError("Forbidden");
     }
+    // A new image must be box art the server stripped of its metadata for this member; the
+    // proposal's own image (restated by the edit form) and the definition's stay allowed.
+    await assertBoxArtImage(
+      ctx,
+      args.image,
+      actingMember as unknown as Id<"users">,
+      [
+        existing.changes.image,
+        await currentBoxArt(ctx, existing.puzzleDefinitionId as string),
+      ],
+    );
 
     const edit = makeEditChangeProposal({
       proposals,

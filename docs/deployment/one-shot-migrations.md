@@ -410,3 +410,50 @@ totals. Follow it with `npx convex logs` (add `--prod` for prod) or in the dashb
    `unreadCount` and `lastActivityAt` (and `lastReadAt` where the thread row has a receipt
    for that member), and threads with messages carry `lastMessage`. The inbox shows the
    same unread counts and snippets as before the run.
+
+## `lib/imageModeration/backfillStripMetadata` — strip metadata from images stored before
+
+**When:** once per deployment, after the server-side metadata strip (box art through
+`catalog/sanitizeBoxArt`, WebP in the photo pipeline) is deployed there. Before it, box art
+was stored exactly as uploaded, and copy or completion photos in WebP (and rows older than
+the moderation pipeline) kept their EXIF, so some stored images still carry GPS
+coordinates, camera details or editor comments.
+
+**What it does:** pages through one table, 25 rows per batch (`batchSize` overrides this),
+downloads each image and looks for metadata blocks (Exif incl. GPS, XMP, IPTC, comments,
+PNG text chunks, WebP EXIF/XMP). An image that carries any is stripped at byte level (the
+pixels are untouched; a JPEG keeps only its Orientation tag), stored as a new blob, every
+row that pointed at the old blob is switched to it, and the old blob is deleted once
+nothing references it. Clean images, GIFs and images whose structure can't be parsed are
+left alone and counted.
+
+- `"table":"boxArt"`: `puzzles.image`, plus the proposals of that definition whose
+  `baseline.image` or `changes.image` is the same blob.
+- `"table":"proposals"`: `puzzleChangeProposals.changes.image` (proposed box art).
+- `"table":"copy"` / `"table":"completion"`: `ownedPuzzleImages` / `completionImages`
+  (a completion's `photos` entry is switched too). Pending and quarantined rows are
+  skipped: the moderation pipeline owns them.
+
+`dryRun` defaults to **true**: without `"dryRun":false` it only counts.
+
+```bash
+# dev: dry run per table (counts only), then the real runs
+npx convex run lib/imageModeration/backfillStripMetadata:backfillStripMetadata '{"table":"boxArt"}'
+npx convex run lib/imageModeration/backfillStripMetadata:backfillStripMetadata '{"table":"proposals"}'
+npx convex run lib/imageModeration/backfillStripMetadata:backfillStripMetadata '{"table":"copy"}'
+npx convex run lib/imageModeration/backfillStripMetadata:backfillStripMetadata '{"table":"completion"}'
+npx convex run lib/imageModeration/backfillStripMetadata:backfillStripMetadata '{"table":"boxArt","dryRun":false}'
+# ...and the same for proposals, copy and completion
+
+# prod: same, after dev looks right (add --prod to each command)
+```
+
+The command returns the FIRST batch's counts (`scanned`, `withMetadata`, `stripped`,
+`clean`, `skipped`); the remaining batches run as scheduled functions. Each batch logs one
+JSON line with `"event":"imageModeration.backfillStripMetadata"`, the table, `dry_run` and
+the running totals; the line with `"done":true` carries the whole run's totals.
+
+**Verify:** the real run's final `stripped` matches the dry run's `withMetadata`, and a
+second dry run reports `"withMetadata":0`. Download a few switched images from the
+dashboard and check them with `exiv2 -pa` or `exiftool`: nothing but `Orientation` on a
+JPEG, nothing at all on PNG and WebP.

@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway, Id } from "@/gateway";
+import { useUploadBoxArt } from "@/hooks/use-upload-box-art";
 import { pageTitle } from "@/lib/page-title";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -173,9 +174,7 @@ function SuggestEditForm({
     };
   }, [coverPreview]);
 
-  const generateUploadUrl = useConvexMutation(
-    gateway.library.generateUploadUrl,
-  );
+  const uploadBoxArt = useUploadBoxArt();
   const propose = useConvexMutation(gateway.catalog.proposeChange);
   const editProposal = useConvexMutation(gateway.catalog.editChangeProposal);
 
@@ -201,15 +200,7 @@ function SuggestEditForm({
       // Busy-state rule: the upload happens inside the mutation so isPending spans it.
       let imageId = form.newImageStorageId;
       if (coverFile) {
-        const uploadUrl = await generateUploadUrl({});
-        const res = await fetch(uploadUrl, {
-          method: "POST",
-          headers: { "Content-Type": coverFile.type },
-          body: coverFile,
-        });
-        if (!res.ok) throw new Error("Image upload failed");
-        const { storageId } = (await res.json()) as { storageId: string };
-        imageId = storageId;
+        imageId = await uploadBoxArt(coverFile);
       }
       const args = buildProposalArgs(
         baseline,

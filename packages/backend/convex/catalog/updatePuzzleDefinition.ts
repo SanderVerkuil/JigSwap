@@ -13,6 +13,7 @@ import { requireMember } from "../identity/requireMember";
 import { convexPuzzleDefinitionRepository } from "./adapters/convexPuzzleDefinitionRepository";
 import { catalogEventPublisher } from "./adapters/eventPublisher";
 import { systemClock } from "./adapters/systemClock";
+import { assertBoxArtImage } from "./boxArtUploads";
 import { toConvexError } from "./errors";
 
 // Composition root for patching a definition's descriptive fields. Each supplied field replaces
@@ -77,6 +78,13 @@ export const updatePuzzleDefinition = mutation({
     // guaranteed that a non-submitter actor IS an admin.
     const isAdminEditingOthers =
       submittedBy !== (actingMember as unknown as string);
+    // A new image must be box art the server stripped of its metadata for this member.
+    await assertBoxArtImage(
+      ctx,
+      args.image,
+      actingMember as unknown as Id<"users">,
+      [existing.toState().image],
+    );
 
     const update = makeUpdatePuzzleDefinition({
       definitions,

@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { gateway, Id } from "@/gateway";
+import { useUploadBoxArt } from "@/hooks/use-upload-box-art";
 import { pageTitle } from "@/lib/page-title";
 import {
   convexQuery,
@@ -108,9 +109,7 @@ function ContributePuzzlePage() {
 
   // Convex mutations & actions, called inside the contribute wrapper below.
   const createPuzzle = useConvexMutation(gateway.catalog.createPuzzle);
-  const generateUploadUrl = useConvexMutation(
-    gateway.library.generateUploadUrl,
-  );
+  const uploadBoxArt = useUploadBoxArt();
   const importImage = useConvexAction(gateway.catalog.importPuzzleImage);
 
   // Maker-field autocomplete suggestion pools
@@ -176,15 +175,7 @@ function ContributePuzzlePage() {
       let imageId: Id<"_storage"> | undefined;
       if (form.coverMode === "photo") {
         if (form.coverFile) {
-          const uploadUrl = await generateUploadUrl({});
-          const res = await fetch(uploadUrl, {
-            method: "POST",
-            headers: { "Content-Type": form.coverFile.type },
-            body: form.coverFile,
-          });
-          if (!res.ok) throw new Error("Image upload failed");
-          const { storageId } = (await res.json()) as { storageId: string };
-          imageId = storageId as Id<"_storage">;
+          imageId = await uploadBoxArt(form.coverFile);
         } else if (form.selectedImageUrl) {
           try {
             imageId = await importImage({ url: form.selectedImageUrl });

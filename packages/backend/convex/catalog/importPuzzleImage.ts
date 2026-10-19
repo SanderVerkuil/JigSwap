@@ -1,22 +1,15 @@
 "use node";
 
 import { lookup as dnsLookup } from "node:dns/promises";
-import { isPrivateIp, sniffImageType } from "@jigswap/domain";
+import { isPrivateIp } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
+import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { action } from "../_generated/server";
+import { cleanBoxArt } from "./boxArtUploads";
 
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 const MAX_REDIRECTS = 5;
-// Raster formats only. SVG is intentionally excluded — it can carry scripts (stored-XSS vector).
-const ALLOWED_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-  "image/avif",
-];
-
 // Reject any hostname that resolves to a private/loopback/link-local address (SSRF guard).
 //
 // RESIDUAL RISK — DNS-rebinding TOCTOU (finding #14, accepted): this resolves DNS, then the fetch()
@@ -32,7 +25,9 @@ const assertPublicHost = async (hostname: string): Promise<void> => {
   }
 };
 
-// Public Node action: fetch a remote image (no hotlinking) and store it in Convex storage.
+// Public Node action: fetch a remote image (no hotlinking) and store it in Convex storage as box
+// art: only a JPEG, PNG or WebP by its magic bytes (never SVG, which can carry scripts), with its
+// metadata stripped and listed for the member like an uploaded one (boxArtUploads).
 // Carries its OWN SSRF guard — ogie protects only the page fetch, not this raw image fetch.
 // Redirects are followed MANUALLY so every hop is re-validated against the private-IP guard
 // (redirect:"follow" would let a public->private redirect bypass the pre-flight DNS check).
@@ -43,6 +38,10 @@ export const importPuzzleImage = action({
     if ((await ctx.auth.getUserIdentity()) === null) {
       throw new ConvexError("Unauthenticated");
     }
+    const uploaderId = await ctx.runQuery(
+      internal.catalog.boxArtUploads.currentMember,
+      {},
+    );
 
     const signal = AbortSignal.timeout(10000); // shared deadline across all hops
     let currentUrl = url;
@@ -89,17 +88,18 @@ export const importPuzzleImage = action({
     const buffer = await response.arrayBuffer();
     if (buffer.byteLength > MAX_BYTES) throw new ConvexError("Image too large");
 
-    // Effective type: trust an allowed content-type header; otherwise fall back to magic-byte
-    // sniffing — CDNs routinely serve real JPEGs as application/octet-stream (or nothing). The
-    // sniffer only ever yields the allowed raster formats, so a mislabeled SVG/HTML body can
-    // never smuggle through: it sniffs to null and is rejected.
-    const contentType = response.headers.get("content-type") ?? "";
-    const headerAllowed = ALLOWED_TYPES.some((t) => contentType.startsWith(t));
-    const effectiveType = headerAllowed
-      ? contentType
-      : sniffImageType(new Uint8Array(buffer));
-    if (!effectiveType) throw new ConvexError("Unsupported image type");
+    // The content-type header is not trusted: CDNs serve real JPEGs as octet-stream, and a
+    // mislabeled SVG/HTML body must never be stored. The magic bytes decide.
+    const clean = cleanBoxArt(new Uint8Array(buffer));
+    if (!clean.ok) throw new ConvexError("Unsupported image type");
 
-    return await ctx.storage.store(new Blob([buffer], { type: effectiveType }));
+    const storageId = await ctx.storage.store(
+      new Blob([clean.bytes as BlobPart], { type: clean.mime }),
+    );
+    await ctx.runMutation(internal.catalog.boxArtUploads.register, {
+      storageId,
+      uploaderId,
+    });
+    return storageId;
   },
 });

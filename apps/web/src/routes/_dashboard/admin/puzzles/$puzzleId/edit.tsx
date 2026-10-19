@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway, Id } from "@/gateway";
+import { useUploadBoxArt } from "@/hooks/use-upload-box-art";
 import { pageTitle } from "@/lib/page-title";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -132,9 +133,7 @@ function AdminEditForm({
     };
   }, [coverPreview]);
 
-  const generateUploadUrl = useConvexMutation(
-    gateway.library.generateUploadUrl,
-  );
+  const uploadBoxArt = useUploadBoxArt();
   const updatePuzzle = useConvexMutation(gateway.catalog.updatePuzzle);
 
   // Maker-field autocomplete suggestion pools
@@ -158,15 +157,7 @@ function AdminEditForm({
     mutationFn: async () => {
       let imageId = form.newImageStorageId;
       if (coverFile) {
-        const uploadUrl = await generateUploadUrl({});
-        const res = await fetch(uploadUrl, {
-          method: "POST",
-          headers: { "Content-Type": coverFile.type },
-          body: coverFile,
-        });
-        if (!res.ok) throw new Error("Image upload failed");
-        const { storageId } = (await res.json()) as { storageId: string };
-        imageId = storageId;
+        imageId = await uploadBoxArt(coverFile);
       }
       const args = buildProposalArgs(
         baseline,

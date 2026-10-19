@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway, Id } from "@/gateway";
+import { useUploadBoxArt } from "@/hooks/use-upload-box-art";
 import { pageTitle } from "@/lib/page-title";
 import { safeReturnTo } from "@/lib/return-to";
 import {
@@ -166,9 +167,7 @@ function AddPuzzlePage() {
   const createPuzzle = useConvexMutation(gateway.catalog.createPuzzle);
   const createOwned = useConvexMutation(gateway.library.createOwned);
   const updateSharing = useConvexMutation(gateway.library.updateSharing);
-  const generateUploadUrl = useConvexMutation(
-    gateway.library.generateUploadUrl,
-  );
+  const uploadBoxArt = useUploadBoxArt();
   const importImage = useConvexAction(gateway.catalog.importPuzzleImage);
 
   // puzzleId from URL — pre-select an existing definition (copy mode).
@@ -278,15 +277,7 @@ function AddPuzzlePage() {
   const buildImageId = async (): Promise<Id<"_storage"> | undefined> => {
     if (form.coverMode !== "photo") return undefined;
     if (form.coverFile) {
-      const uploadUrl = await generateUploadUrl({});
-      const res = await fetch(uploadUrl, {
-        method: "POST",
-        headers: { "Content-Type": form.coverFile.type },
-        body: form.coverFile,
-      });
-      if (!res.ok) throw new Error("Image upload failed");
-      const { storageId } = (await res.json()) as { storageId: string };
-      return storageId as Id<"_storage">;
+      return await uploadBoxArt(form.coverFile);
     } else if (form.selectedImageUrl) {
       try {
         return await importImage({ url: form.selectedImageUrl });
