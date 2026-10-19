@@ -2,7 +2,7 @@
 id: messages-improvements-2026-10-19
 publishedAt: "2026-10-19T09:00:00Z"
 title: "Improvements to messages"
-summary: "The attach button is now a paperclip next to Send, and you can share a puzzle in a circle chat."
+summary: "The attach button is now a paperclip next to Send, you can share a puzzle in a circle chat, and messages support formatting, links and emoji."
 category: improvement
 notify: false
 cta:
@@ -18,3 +18,8 @@ A few changes to make writing messages easier.
 - **Share a puzzle in a circle chat.** In a circle's group chat you can now
   attach one of your own puzzles that everyone in the circle can see, such as
   one you've shared with the circle.
+- **Formatting, links and emoji.** Write `**bold**`, `*italic*`,
+  `__underline__`, `~~strikethrough~~` or `` `code` ``, or select text and
+  press Ctrl+B, Ctrl+I or Ctrl+U (⌘ on a Mac). Web addresses become links, and
+  on a computer the smiley button next to the message box adds an emoji. See
+  [Messages](/docs/staying-informed/messages#format-your-messages).

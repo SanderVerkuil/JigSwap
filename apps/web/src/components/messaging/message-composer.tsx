@@ -30,7 +30,9 @@ import { AttachMenu } from "./attach-menu";
 import { AttachPicker } from "./attach-picker";
 import { COMPOSER_SLOT_CLASS, ComposerClosed } from "./composer-closed";
 import type { MessageCopy } from "./copy-card";
+import { EmojiButton } from "./emoji-button";
 import { LocationPicker } from "./location-picker";
+import { handleMarkupShortcut, MARKUP_KEYSHORTCUTS } from "./markup-shortcuts";
 import { sendState } from "./photo-staging";
 import { PHOTO_ACCEPT } from "./prepare-photo";
 import { StagedCopyChip } from "./staged-copy-chip";
@@ -215,7 +217,15 @@ export function MessageComposer({
     }
   };
 
+  // Text the composer changes itself (a shortcut, an emoji): the same as typing.
+  const onValue = (value: string) => {
+    setBody(value);
+    typing.onInput(value);
+    if (error) setError(null);
+  };
+
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (handleMarkupShortcut(event, MAX_MESSAGE_LENGTH, onValue)) return;
     // Enter sends; Shift+Enter inserts a newline.
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
@@ -270,12 +280,9 @@ export function MessageComposer({
         <Textarea
           ref={textareaRef}
           value={body}
-          onChange={(event) => {
-            setBody(event.target.value);
-            typing.onInput(event.target.value);
-            if (error) setError(null);
-          }}
+          onChange={(event) => onValue(event.target.value)}
           onKeyDown={handleKeyDown}
+          aria-keyshortcuts={MARKUP_KEYSHORTCUTS}
           placeholder={placeholder ?? t("typeMessage")}
           aria-label={
             recipientName
@@ -298,7 +305,12 @@ export function MessageComposer({
           // muted-foreground lifts the outline to ≥3:1 (--input is ~1.3:1).
           className="border-muted-foreground/80 dark:border-muted-foreground/60 max-h-40 min-h-11 flex-1 resize-none rounded-[20px] px-4 py-2.5 md:min-h-10"
         />
-        {/* [ Message ] [ paperclip ] [ Send ]: DOM order is the tab order. */}
+        {/* [ Message ] [ emoji (md+) ] [ paperclip ] [ Send ]: DOM order is the tab order. */}
+        <EmojiButton
+          textareaRef={textareaRef}
+          maxLength={MAX_MESSAGE_LENGTH}
+          onValue={onValue}
+        />
         <AttachMenu
           triggerRef={attachButtonRef}
           photosAvailable={photosAvailable}

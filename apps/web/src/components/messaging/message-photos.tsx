@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { gateway, type Id } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { useConvexMutation } from "@convex-dev/react-query";
+import { stripFormatting } from "@jigswap/contracts";
 import { useMutation } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
 import { EyeOff, Flag, ImageOff } from "lucide-react";
@@ -93,7 +94,7 @@ export function MessagePhotos({
 
   const views = messages.map((message) => effectiveView(message, revealed));
   const alt = (message: PhotoMessage) => {
-    const caption = message.body.trim();
+    const caption = stripFormatting(message.body).trim();
     const base = own ? t("altOwn") : t("alt", { name: authorName });
     return caption ? `${base}: ${caption}` : base;
   };

@@ -2,7 +2,7 @@
 id: messages-improvements-2026-10-19
 publishedAt: "2026-10-19T09:00:00Z"
 title: "Verbeteringen in Berichten"
-summary: "De knop om iets bij te voegen is nu een paperclip naast Versturen, en je kunt een puzzel delen in een kringchat."
+summary: "De knop om iets bij te voegen is nu een paperclip naast Versturen, je kunt een puzzel delen in een kringchat, en berichten ondersteunen opmaak, links en emoji."
 category: improvement
 notify: false
 cta:
@@ -18,3 +18,8 @@ Een paar aanpassingen die het schrijven van berichten makkelijker maken.
 - **Een puzzel delen in een kringchat.** In de groepschat van een kring kun je
   nu een van je eigen puzzels bijvoegen die iedereen in de kring kan zien,
   zoals een puzzel die je met de kring deelt.
+- **Opmaak, links en emoji.** Schrijf `**vet**`, `*cursief*`,
+  `__onderstreept__`, `~~doorgehaald~~` of `` `code` ``, of selecteer tekst en
+  druk op Ctrl+B, Ctrl+I of Ctrl+U (⌘ op een Mac). Webadressen worden links, en
+  op een computer voegt de smileyknop naast het berichtvak een emoji toe. Zie
+  [Berichten](/docs/staying-informed/messages#je-berichten-opmaken).

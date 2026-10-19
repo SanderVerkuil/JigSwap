@@ -1,7 +1,7 @@
 ---
 title: Messages
 order: 2
-summary: "Chat with other members and your circles, attach puzzles, photos and locations, see who's typing or online, and find older messages."
+summary: "Chat with other members and your circles, format text and add emoji, attach puzzles, photos and locations, see who's typing or online, and find older messages."
 ---
 
 # Messages
@@ -221,6 +221,38 @@ The conversation header has shortcuts to what the conversation is about:
 
 On a phone, **View profile** and **View exchange** are in the
 **Conversation options** menu.
+
+## Format your messages
+
+You can format text in a message by typing a few characters around it. The
+formatting shows in the conversation; previews in the inbox and notifications
+show the plain text.
+
+| Type this                | To get            |
+| ------------------------ | ----------------- |
+| `**bold**`               | **bold**          |
+| `*italic*` or `_italic_` | _italic_          |
+| `__underline__`          | underlined text   |
+| `~~strikethrough~~`      | ~~strikethrough~~ |
+| `` `code` ``             | `code`            |
+
+- Formatting works within one line. To format several lines, mark each line.
+- Characters inside a word stay as you typed them, so `snake_case` and
+  `2*3*4` aren't formatted.
+- To show a character such as `*` as it is, put a backslash before it: `\*`.
+
+**Shortcuts:** select text in the message box and press **Ctrl+B** for bold,
+**Ctrl+I** for italic or **Ctrl+U** for underline (**⌘** instead of **Ctrl**
+on a Mac). Press the same shortcut again to remove it. Without a selection,
+the shortcut adds the characters with the cursor between them.
+
+**Links:** web addresses that start with `https://`, `http://` or `www.`
+become links, which open in a new tab. The link always shows the full
+address.
+
+**Emoji:** on a computer, click the smiley button next to the message box to
+pick an emoji; it's added where the cursor is. On a phone, use your
+keyboard's emoji key.
 
 ## Attach a puzzle
 

@@ -443,4 +443,21 @@ describe("messagePreviewOf", () => {
     expect(preview?.endsWith("…")).toBe(true);
     expect(messagePreviewOf("b".repeat(80))).toBe("b".repeat(80));
   });
+
+  test("strips message formatting markers", () => {
+    expect(messagePreviewOf("**hi** _there_")).toBe("hi there");
+    expect(messagePreviewOf("`code` ~~gone~~ \\*literal\\*")).toBe(
+      "code gone *literal*",
+    );
+    expect(messagePreviewOf("snake_case 2*3*4")).toBe("snake_case 2*3*4");
+  });
+
+  test("treats a body of only markers as its literal text", () => {
+    expect(messagePreviewOf("****")).toBe("****");
+  });
+
+  test("truncates after stripping", () => {
+    const preview = messagePreviewOf(`**${"c".repeat(100)}**`);
+    expect(preview).toBe(`${"c".repeat(79)}…`);
+  });
 });

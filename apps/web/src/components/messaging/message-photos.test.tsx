@@ -91,6 +91,19 @@ describe("MessagePhotos", () => {
     expect(img?.getAttribute("src")).toBe(READY.url);
   });
 
+  it("names the photo with its caption as plain text, without markers", () => {
+    wrap(
+      <MessagePhotos
+        messages={[photo("m1", READY, "Look at **this**   _sky_")]}
+        own={false}
+        authorName="Mara"
+      />,
+    );
+    expect(
+      screen.getByRole("button", { name: "Photo from Mara: Look at this sky" }),
+    ).toBeTruthy();
+  });
+
   it("opens the lightbox with Report photo, which reports the attachment", async () => {
     wrap(
       <MessagePhotos

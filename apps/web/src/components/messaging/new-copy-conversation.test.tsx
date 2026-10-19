@@ -1,5 +1,11 @@
 // @vitest-environment happy-dom
-import { cleanup, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import type { ReactNode } from "react";
 import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -10,12 +16,13 @@ import { NewCopyConversation } from "./new-copy-conversation";
 const mocks = vi.hoisted(() => ({
   view: undefined as unknown,
   navigate: vi.fn(),
+  start: vi.fn(),
 }));
 
 // The pane's data comes from getCopyConversation; the test feeds the view directly.
 vi.mock("@tanstack/react-query", () => ({
   useQuery: () => ({ data: mocks.view, isError: false }),
-  useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useMutation: () => ({ mutateAsync: mocks.start, isPending: false }),
 }));
 vi.mock("@convex-dev/react-query", () => ({
   convexQuery: () => ({}),
@@ -80,5 +87,49 @@ describe("NewCopyConversation — ownerHidden", () => {
       ),
     ).toBeTruthy();
     expect(screen.queryByRole("textbox")).toBeNull();
+  });
+});
+
+describe("NewCopyConversation — composer", () => {
+  it("wraps the selection on Ctrl+B and Enter still sends", async () => {
+    vi.spyOn(navigator, "platform", "get").mockReturnValue("Linux x86_64");
+    mocks.start.mockResolvedValue("thread_1");
+    mocks.view = {
+      status: "new",
+      canMessage: true,
+      owner: {
+        anonymous: false,
+        member: {
+          _id: "u_mara",
+          _creationTime: 0,
+          name: "Mara",
+          isActive: true,
+          createdAt: 0,
+          updatedAt: 0,
+        },
+      },
+      copy: {
+        copyId: "copy1",
+        title: "Harbour Lights",
+        brand: "Ravensburger",
+        pieceCount: 1000,
+        coverUrl: null,
+      },
+    };
+    renderPane();
+    const input = screen.getByRole("textbox") as HTMLTextAreaElement;
+    expect(input.getAttribute("aria-keyshortcuts")).toContain("Control+B");
+    fireEvent.change(input, { target: { value: "is it free" } });
+    input.setSelectionRange(6, 10);
+    fireEvent.keyDown(input, { key: "b", ctrlKey: true });
+    expect(input.value).toBe("is it **free**");
+    fireEvent.keyDown(input, { key: "Enter" });
+    await waitFor(() =>
+      expect(mocks.start).toHaveBeenCalledWith({
+        copyId: "copy1",
+        body: "is it **free**",
+      }),
+    );
+    vi.restoreAllMocks();
   });
 });

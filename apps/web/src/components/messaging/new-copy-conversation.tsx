@@ -18,7 +18,9 @@ import { useNavigate } from "@tanstack/react-router";
 import { Send } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "use-intl";
+import { EmojiButton } from "./emoji-button";
 import { conversationErrorCode, threadSubjectTitle } from "./format";
+import { handleMarkupShortcut, MARKUP_KEYSHORTCUTS } from "./markup-shortcuts";
 import { StagedCopyChip } from "./staged-copy-chip";
 import { ThreadSubjectAvatar } from "./thread-list";
 import { BackToInboxLink } from "./thread-view";
@@ -71,6 +73,11 @@ export function NewCopyConversation({ copyId }: { copyId: string }) {
   const start = useMutation({
     mutationFn: useConvexMutation(gateway.conversation.startCopyConversation),
   });
+
+  const onValue = (value: string) => {
+    setBody(value);
+    if (error) setError(null);
+  };
 
   const send = async () => {
     const trimmed = body.trim();
@@ -178,11 +185,12 @@ export function NewCopyConversation({ copyId }: { copyId: string }) {
             <Textarea
               ref={textareaRef}
               value={body}
-              onChange={(event) => {
-                setBody(event.target.value);
-                if (error) setError(null);
-              }}
+              onChange={(event) => onValue(event.target.value)}
+              aria-keyshortcuts={MARKUP_KEYSHORTCUTS}
               onKeyDown={(event) => {
+                if (handleMarkupShortcut(event, MAX_MESSAGE_LENGTH, onValue)) {
+                  return;
+                }
                 // Enter sends; Shift+Enter inserts a newline (same as the thread composer).
                 if (event.key === "Enter" && !event.shiftKey) {
                   event.preventDefault();
@@ -195,6 +203,11 @@ export function NewCopyConversation({ copyId }: { copyId: string }) {
               rows={1}
               // muted-foreground lifts the outline to ≥3:1 (--input is ~1.3:1).
               className="border-muted-foreground/80 dark:border-muted-foreground/60 max-h-40 min-h-11 flex-1 resize-none rounded-[20px] px-4 py-2.5 md:min-h-10"
+            />
+            <EmojiButton
+              textareaRef={textareaRef}
+              maxLength={MAX_MESSAGE_LENGTH}
+              onValue={onValue}
             />
             <Button
               onClick={() => void send()}

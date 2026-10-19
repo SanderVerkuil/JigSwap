@@ -127,6 +127,17 @@ describe("circleSnippet", () => {
     ).toBe(expected);
   });
 
+  it("strips formatting markers from the snippet", () => {
+    expect(
+      snippet(
+        last({
+          author: member("u_bas", "Bas"),
+          body: "**Who** has\n_the_ `Wasgij`?",
+        }),
+      ),
+    ).toBe("Bas: Who has the Wasgij?");
+  });
+
   it("labels an anonymised author without a name", () => {
     expect(snippet(last({ author: anon("ref") }))).toBe(
       "Anonymous user: Who has the Wasgij?",
