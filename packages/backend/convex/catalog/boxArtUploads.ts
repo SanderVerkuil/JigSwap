@@ -1,22 +1,19 @@
-import { ConvexError, v } from "convex/values";
+import { ConvexError } from "convex/values";
 import type { Id } from "../_generated/dataModel";
-import {
-  internalMutation,
-  internalQuery,
-  type QueryCtx,
-} from "../_generated/server";
+import { internalQuery, type QueryCtx } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
-import { isReferenced } from "../lib/imageModeration/blobReferences";
 
-// Box art (a puzzle definition's `image`, or a proposed one) is served to everyone, so it must
-// never carry the uploader's EXIF/GPS. The client uploads the file, then calls
-// catalog/sanitizeBoxArt, which strips the metadata and turns the pixels upright
-// (catalog/cleanBoxArt), stores the clean bytes as a new blob, deletes the upload and lists the
-// clean blob in `boxArtUploads` for that member (catalog/importPuzzleImage does the same for a
-// fetched shop image). The catalog mutations only take a NEW image listed there for the acting
-// member (assertBoxArtImage).
+// Box art (a puzzle definition's `image`, or a proposed one) is served to everyone, so it gets
+// exactly the checks every uploaded photo gets: the shared image-moderation pipeline
+// (lib/imageModeration/pipeline: input guards, metadata strip + turned upright, CSAM hash check,
+// content classification). The client uploads the file, then calls catalog/sanitizeBoxArt, which
+// lists the upload in `boxArtUploads` for that member and runs the pipeline on it at once
+// (catalog/moderateBoxArt; catalog/importPuzzleImage does the same for a fetched shop image). The
+// catalog mutations only take a NEW image listed there for the acting member
+// (assertBoxArtImage), and no read path serves it until it is approved with its hash check
+// passed (lib/imageModeration/boxArtUrl).
 
-/** An upload must be cleaned within this long of its creation. */
+/** An upload must be claimed within this long of its creation. */
 export const BOX_ART_CLAIM_WINDOW_MS = 15 * 60_000;
 
 /** Why box art was refused (the ConvexError code is "InvalidImage"). */
@@ -25,7 +22,11 @@ export type BoxArtRefusal =
   | "unsupported_format"
   | "unreadable_header"
   | "too_many_pixels"
-  | "malformed";
+  | "malformed"
+  // Refused by the content check, or a CSAM hash match: deliberately the same answer, so the
+  // uploader is never told that known abuse material was recognised (lib/imageModeration/
+  // quarantine).
+  | "not_allowed";
 
 export const boxArtRefused = (reason: BoxArtRefusal) =>
   new ConvexError({
@@ -41,36 +42,9 @@ export const currentMember = internalQuery({
 });
 
 /**
- * Whether the upload may be cleaned: it exists, is fresh, and nothing references it yet (so the
- * strip, which deletes it, can never destroy another photo). Returns its size, or null.
- */
-export const claimableUpload = internalQuery({
-  args: { storageId: v.id("_storage") },
-  handler: async (ctx, { storageId }) => {
-    const blob = await ctx.db.system.get(storageId);
-    if (!blob || Date.now() - blob._creationTime > BOX_ART_CLAIM_WINDOW_MS) {
-      return null;
-    }
-    if (await isReferenced(ctx, storageId)) return null;
-    return { size: blob.size };
-  },
-});
-
-/** List a clean blob as box art the member may use. */
-export const register = internalMutation({
-  args: { storageId: v.id("_storage"), uploaderId: v.id("users") },
-  handler: async (ctx, { storageId, uploaderId }) => {
-    await ctx.db.insert("boxArtUploads", {
-      storageId,
-      uploaderId,
-      createdAt: Date.now(),
-    });
-  },
-});
-
-/**
  * A catalog mutation's `image` arg must be unchanged (one of `current`: the definition's image,
- * or the proposal's) or box art cleaned for the acting member. Anything else, such as a raw
+ * or the proposal's) or box art listed for the acting member and not refused (pending or
+ * unscored box art is accepted: boxArtUrl keeps it unserved until it is approved). Anything else, such as a raw
  * upload straight from generateUploadUrl, is refused.
  */
 export const assertBoxArtImage = async (
@@ -87,7 +61,12 @@ export const assertBoxArtImage = async (
       .query("boxArtUploads")
       .withIndex("by_storage", (q) => q.eq("storageId", storageId))
       .first());
-  if (!row || row.uploaderId !== member) {
+  if (
+    !row ||
+    row.uploaderId !== member ||
+    row.moderationStatus === "rejected" ||
+    row.moderationStatus === "quarantined"
+  ) {
     throw new ConvexError({
       code: "InvalidImage",
       message: "This image can't be used",

@@ -57,6 +57,7 @@ import type * as catalog_adapters_systemClock from "../catalog/adapters/systemCl
 import type * as catalog_approveChangeProposal from "../catalog/approveChangeProposal.js";
 import type * as catalog_approvePuzzleDefinition from "../catalog/approvePuzzleDefinition.js";
 import type * as catalog_backfillCategories from "../catalog/backfillCategories.js";
+import type * as catalog_boxArtModerationStore from "../catalog/boxArtModerationStore.js";
 import type * as catalog_boxArtUploads from "../catalog/boxArtUploads.js";
 import type * as catalog_browsePublicCatalog from "../catalog/browsePublicCatalog.js";
 import type * as catalog_createCatalogCategory from "../catalog/createCatalogCategory.js";
@@ -87,6 +88,7 @@ import type * as catalog_listProposalsForDefinition from "../catalog/listProposa
 import type * as catalog_listSitemapEntries from "../catalog/listSitemapEntries.js";
 import type * as catalog_mappers from "../catalog/mappers.js";
 import type * as catalog_migratePublishers from "../catalog/migratePublishers.js";
+import type * as catalog_moderateBoxArt from "../catalog/moderateBoxArt.js";
 import type * as catalog_myFavoritePuzzleIds from "../catalog/myFavoritePuzzleIds.js";
 import type * as catalog_proposalReadModel from "../catalog/proposalReadModel.js";
 import type * as catalog_proposeDefinitionChange from "../catalog/proposeDefinitionChange.js";
@@ -590,6 +592,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/approveChangeProposal": typeof catalog_approveChangeProposal;
   "catalog/approvePuzzleDefinition": typeof catalog_approvePuzzleDefinition;
   "catalog/backfillCategories": typeof catalog_backfillCategories;
+  "catalog/boxArtModerationStore": typeof catalog_boxArtModerationStore;
   "catalog/boxArtUploads": typeof catalog_boxArtUploads;
   "catalog/browsePublicCatalog": typeof catalog_browsePublicCatalog;
   "catalog/createCatalogCategory": typeof catalog_createCatalogCategory;
@@ -620,6 +623,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/listSitemapEntries": typeof catalog_listSitemapEntries;
   "catalog/mappers": typeof catalog_mappers;
   "catalog/migratePublishers": typeof catalog_migratePublishers;
+  "catalog/moderateBoxArt": typeof catalog_moderateBoxArt;
   "catalog/myFavoritePuzzleIds": typeof catalog_myFavoritePuzzleIds;
   "catalog/proposalReadModel": typeof catalog_proposalReadModel;
   "catalog/proposeDefinitionChange": typeof catalog_proposeDefinitionChange;

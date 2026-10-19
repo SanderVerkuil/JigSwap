@@ -4271,7 +4271,8 @@
         "table": {
           "ownedPuzzleImages": "Copy photo",
           "completionImages": "Completion photo",
-          "messageAttachments": "Message photo"
+          "messageAttachments": "Message photo",
+          "boxArtUploads": "Box art"
         },
         "matched": "Matched {time} via {provider}",
         "uploader": "Uploaded by {name}",

@@ -4271,7 +4271,8 @@
         "table": {
           "ownedPuzzleImages": "Foto bij exemplaar",
           "completionImages": "Foto bij voltooiing",
-          "messageAttachments": "Foto in bericht"
+          "messageAttachments": "Foto in bericht",
+          "boxArtUploads": "Catalogusafbeelding"
         },
         "matched": "Match {time} via {provider}",
         "uploader": "Geüpload door {name}",

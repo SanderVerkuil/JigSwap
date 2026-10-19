@@ -72,6 +72,7 @@ export const listCsamEscalations = query({
       "ownedPuzzleImages",
       "completionImages",
       "messageAttachments",
+      "boxArtUploads",
     ] as const) {
       const rows = await ctx.db
         .query(table)
