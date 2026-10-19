@@ -139,11 +139,14 @@ export default defineSchema({
     moderationAttempts: v.optional(v.number()),
     // When the pipeline swapped the row to its re-encoded blob (absent = still the upload).
     reencodedAt: v.optional(v.number()),
+    // The admin who decided it by hand (admin/decideUncheckedPhoto); a manual decision is final.
+    moderatedBy: v.optional(v.id("users")),
     // CSAM hash-check bookkeeping + publication gate (lib/imageModeration/hashCheckFields).
     ...hashCheckFields,
     createdAt: v.number(),
   })
     .index("by_storage", ["storageId"])
+    .index("by_moderation_status", ["moderationStatus"])
     .index("by_hash_check_pending", ["hashCheckPendingSince"]),
 
   // Puzzles  - the actual puzzle designs that exist in the world

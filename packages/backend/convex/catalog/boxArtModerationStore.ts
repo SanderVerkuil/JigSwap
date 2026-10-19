@@ -89,8 +89,12 @@ export const setFile = internalMutation({
 });
 
 // Detach rejected box art from whatever holds it and delete its blob (unless an escalation
-// preserves it), like a rejected completion photo. The row survives as the audit record.
-const detachRejected = async (ctx: MutationCtx, row: Doc<"boxArtUploads">) => {
+// preserves it), like a rejected completion photo. The row survives as the audit record. Also
+// used by an admin's manual rejection (admin/decideUncheckedPhoto).
+export const detachRejectedBoxArt = async (
+  ctx: MutationCtx,
+  row: Doc<"boxArtUploads">,
+) => {
   await repointBoxArt(
     ctx,
     await boxArtHolders(ctx, row.storageId),
@@ -126,7 +130,7 @@ export const setVerdict = internalMutation({
     if (!row || row.moderationStatus !== "pending") return;
     await ctx.db.patch(imageId, verdict);
     if (verdict.moderationStatus !== "rejected") return;
-    await detachRejected(ctx, row);
+    await detachRejectedBoxArt(ctx, row);
     await stampModerationAction(ctx, {
       kind: "photo_auto_rejected",
       targetLabel: "Box art",

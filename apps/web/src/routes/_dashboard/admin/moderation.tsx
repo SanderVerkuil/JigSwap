@@ -62,7 +62,7 @@ export const Route = createFileRoute("/_dashboard/admin/moderation")({
 // the live queue (list+detail split with approve / edit&approve / reject),
 // Flagged Images reviews the auto-rejected photos (restore / confirm removal),
 // Unchecked Photos lets an admin approve or reject photos the classifier has
-// not decided (pending / unscored), Hash matches lists the CSAM hash-list matches to report
+// not decided (pending / unscored), or check unscored box art again, Hash matches lists the CSAM hash-list matches to report
 // (metadata only, never an image), and Activity Log lists the recent moderation stamps.
 function ModerationPage() {
   const t = useTranslations("admin.moderation");
@@ -79,6 +79,9 @@ function ModerationPage() {
   );
   const decideUnchecked = useMutation({
     mutationFn: useConvexMutation(gateway.admin.decideUncheckedPhoto),
+  });
+  const recheckBoxArt = useMutation({
+    mutationFn: useConvexMutation(gateway.admin.recheckBoxArt),
   });
   const { data: csam } = useQuery(
     convexQuery(gateway.admin.listCsamEscalations, {}),
@@ -117,6 +120,7 @@ function ModerationPage() {
     confirmRemoval.isPending ||
     restorePhoto.isPending ||
     decideUnchecked.isPending ||
+    recheckBoxArt.isPending ||
     markCsam.isPending;
 
   // A pre-domain pending row has no aggregateId; it still lists (keyed by _id)
@@ -247,6 +251,17 @@ function ModerationPage() {
       const index = unchecked.findIndex((p) => p.key === photo.key);
       const next = unchecked[index + 1] ?? unchecked[index - 1];
       setSelectedUncheckedKey(next ? next.key : null);
+    } catch {
+      toast.error(t("error"));
+    }
+  };
+
+  // Unscored box art back through the pipeline: it turns "pending" and stays in the queue until
+  // the check decides it, so the selection stays put.
+  const recheck = async (photo: UncheckedPhoto) => {
+    try {
+      await recheckBoxArt.mutateAsync({ imageId: photo.imageId });
+      toast.success(t("toast.recheckQueued", { title: photo.puzzleTitle }));
     } catch {
       toast.error(t("error"));
     }
@@ -445,6 +460,7 @@ function ModerationPage() {
                     busy={busy}
                     onApprove={() => decide(selectedUnchecked, "approve")}
                     onReject={() => decide(selectedUnchecked, "reject")}
+                    onRecheck={() => recheck(selectedUnchecked)}
                   />
                 )
               }

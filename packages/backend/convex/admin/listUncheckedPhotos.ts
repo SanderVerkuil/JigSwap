@@ -4,6 +4,7 @@ import { query, type QueryCtx } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { adminMemberLabelOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
+import { boxArtTitle } from "../lib/imageModeration/boxArtReferences";
 import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 
 // Per status and table: the queue shows at most this many rows (oldest first); the rest follow as
@@ -21,9 +22,11 @@ const uploaderLabel = async (
 };
 
 // The admin queue of photos the classifier has not decided: "unscored" (it could not check them)
-// and "pending" (still being checked or waiting for a retry), for both copy photos and completion
-// photos. Admin-only, gated like listRejectedPhotos. The admin sees the real image (behind the
-// console's blur guard) to decide it by hand via decideUncheckedPhoto.
+// and "pending" (still being checked or waiting for a retry), for copy photos, completion photos
+// and box art (boxArtUploads; served to no one until approved, lib/imageModeration/boxArtUrl).
+// Admin-only, gated like listRejectedPhotos. The admin sees the real image (behind the console's
+// blur guard) to decide it by hand via decideUncheckedPhoto; unscored box art can also be sent
+// through the pipeline again (admin/recheckBoxArt, `canRecheck`).
 export const listUncheckedPhotos = query({
   args: {},
   handler: async (ctx) => {
@@ -56,6 +59,7 @@ export const listUncheckedPhotos = query({
           puzzleTitle: title ?? (row._id as string),
           uploaderName: await uploaderLabel(ctx, row.uploaderId),
           uploadedAt: row.createdAt,
+          canRecheck: false,
         });
       }
       const completionRows = await ctx.db
@@ -83,6 +87,32 @@ export const listUncheckedPhotos = query({
           puzzleTitle: completion?.copySnapshot?.title ?? row.completionId,
           uploaderName: await uploaderLabel(ctx, row.uploaderId),
           uploadedAt: row.createdAt,
+          canRecheck: false,
+        });
+      }
+      const boxArtRows = await ctx.db
+        .query("boxArtUploads")
+        .withIndex("by_moderation_status", (q) =>
+          q.eq("moderationStatus", status),
+        )
+        .take(UNCHECKED_QUEUE_LIMIT);
+      for (const row of boxArtRows) {
+        items.push({
+          key: `boxArt:${row._id}`,
+          source: "boxArt" as const,
+          imageId: row._id as string,
+          status,
+          reason: row.moderationReason ?? null,
+          attempts: row.moderationAttempts ?? null,
+          // No URL before the CSAM hash check has passed (hashCheckFields).
+          url: isHashCleared(row)
+            ? await ctx.storage.getUrl(row.storageId)
+            : null,
+          puzzleTitle:
+            (await boxArtTitle(ctx, row.storageId)) ?? (row._id as string),
+          uploaderName: await uploaderLabel(ctx, row.uploaderId),
+          uploadedAt: row.createdAt,
+          canRecheck: status === "unscored",
         });
       }
     }

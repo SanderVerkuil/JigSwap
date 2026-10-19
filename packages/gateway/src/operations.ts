@@ -613,6 +613,8 @@ export const gateway = {
     // Manual review of photos the classifier has not decided (pending / unscored).
     listUncheckedPhotos: api.admin.listUncheckedPhotos.listUncheckedPhotos,
     decideUncheckedPhoto: api.admin.decideUncheckedPhoto.decideUncheckedPhoto,
+    // Unscored box art back through the pipeline (once the classifier works again).
+    recheckBoxArt: api.admin.recheckBoxArt.recheckBoxArt,
     // CSAM hash matches (metadata only, never an image) and the operator's "reported" mark.
     listCsamEscalations: api.admin.listCsamEscalations.listCsamEscalations,
     markCsamEscalation: api.admin.markCsamEscalation.markCsamEscalation,
