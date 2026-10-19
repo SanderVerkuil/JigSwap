@@ -1830,7 +1830,8 @@
     "empty": {
       "title": "Je zit nog niet in een huishouden",
       "sub": "Maak een huishouden aan om je puzzelbibliotheek te delen met de mensen met wie je samenwoont, en nodig ze daarna uit.",
-      "create": "Huishouden aanmaken"
+      "create": "Huishouden aanmaken",
+      "orCreate": "Of begin je eigen huishouden"
     },
     "invites": {
       "title": "Uitnodigingen voor een huishouden",
@@ -1839,20 +1840,26 @@
       "decline": "Weigeren"
     },
     "members": {
-      "title": "Leden",
       "you": "(jij)",
       "admin": "Beheerder",
       "remove": "Verwijderen",
       "removeTitle": "{name} uit het huishouden verwijderen?",
-      "removeBody": "Hun puzzels verlaten het huishouden met hen mee, en ze zien die van jou niet meer."
+      "removeBody": "Hun puzzels verlaten het huishouden met hen mee, en ze zien die van jou niet meer.",
+      "member": "Lid",
+      "adminOnlyInvite": "Alleen de beheerder van het huishouden kan mensen uitnodigen.",
+      "menuLabel": "Acties voor {name}",
+      "removeAction": "Uit het huishouden verwijderen"
     },
     "invite": {
-      "title": "Iemand uitnodigen",
       "searchPlaceholder": "Zoek leden op naam",
       "action": "Uitnodigen",
       "sent": "Uitnodiging verstuurd",
       "pending": "Wacht op antwoord",
-      "pendingBadge": "Uitgenodigd"
+      "pendingBadge": "Uitgenodigd",
+      "dialogTitle": "Uitnodigen voor je huishouden",
+      "dialogSub": "Kies wat het makkelijkst is. Ze doen pas mee zodra ze accepteren.",
+      "searchHeading": "Zoek een lid",
+      "emailHeading": "Uitnodigen per e-mail"
     },
     "leave": {
       "action": "Huishouden verlaten",
@@ -1918,6 +1925,22 @@
       "confirmBody": "{count, plural, =0 {Er volgen nu geen exemplaren de standaard, dus er verandert nog niets.} one {Dit geldt meteen voor # exemplaar dat de standaard van het huishouden volgt.} other {Dit geldt meteen voor # exemplaren die de standaard van het huishouden volgen.}} Puzzels met een eigen toegangsinstelling houden die.",
       "confirm": "Standaard wijzigen",
       "saved": "Standaard van het huishouden bijgewerkt"
+    },
+    "tabs": {
+      "members": "Leden",
+      "puzzles": "Mijn puzzels",
+      "puzzlesShort": "Puzzels",
+      "settings": "Instellingen"
+    },
+    "header": {
+      "memberCount": "{count, plural, one {# lid} other {# leden}}",
+      "stackName": "je huishouden"
+    },
+    "puzzles": {
+      "defaultLabel": "Standaard van het huishouden:"
+    },
+    "danger": {
+      "title": "Dit huishouden verlaten"
     }
   },
   "circles": {
@@ -4560,11 +4583,11 @@
         },
         "invite": {
           "title": "Nodig je huisgenoten uit",
-          "body": "Zoek een lid en stuur een uitnodiging; ze doen mee zodra ze accepteren. Beheerders van het huishouden versturen de uitnodigingen."
+          "body": "Gebruik Uitnodigen om een lid te zoeken, een link te delen of een e-mail te sturen; ze doen mee zodra ze accepteren. Beheerders van het huishouden versturen de uitnodigingen."
         },
         "copy-access": {
           "title": "Jij kiest per puzzel",
-          "body": "Je puzzels blijven van jou. Hier kies je per puzzel wat het huishouden ermee mag: met Mag beheren kunnen huisgenoten hem bewerken, uitlenen en ruilen; met Alleen bekijken zien ze hem alleen. Selecteer er meerdere om ze in één keer aan te passen."
+          "body": "Je puzzels blijven van jou. Onder Mijn puzzels kies je per puzzel wat het huishouden ermee mag: met Mag beheren kunnen huisgenoten hem bewerken, uitlenen en ruilen; met Alleen bekijken zien ze hem alleen. Selecteer er meerdere om ze in één keer aan te passen."
         }
       }
     },

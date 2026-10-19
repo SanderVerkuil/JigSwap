@@ -1830,7 +1830,8 @@
     "empty": {
       "title": "You're not in a household yet",
       "sub": "Create a household to share your puzzle library with the people you live with, then invite them.",
-      "create": "Create household"
+      "create": "Create household",
+      "orCreate": "Or start your own household"
     },
     "invites": {
       "title": "Household invites",
@@ -1839,20 +1840,26 @@
       "decline": "Decline"
     },
     "members": {
-      "title": "Members",
       "you": "(you)",
       "admin": "Admin",
       "remove": "Remove",
       "removeTitle": "Remove {name} from the household?",
-      "removeBody": "Their puzzles leave the household with them, and they will no longer see yours."
+      "removeBody": "Their puzzles leave the household with them, and they will no longer see yours.",
+      "member": "Member",
+      "adminOnlyInvite": "Only the household admin can invite people.",
+      "menuLabel": "Actions for {name}",
+      "removeAction": "Remove from household"
     },
     "invite": {
-      "title": "Invite someone",
       "searchPlaceholder": "Search members by name",
       "action": "Invite",
       "sent": "Invite sent",
       "pending": "Waiting for a response",
-      "pendingBadge": "Invited"
+      "pendingBadge": "Invited",
+      "dialogTitle": "Invite to your household",
+      "dialogSub": "Pick whichever is easiest. They join only once they accept.",
+      "searchHeading": "Find a member",
+      "emailHeading": "Invite by email"
     },
     "leave": {
       "action": "Leave household",
@@ -1918,6 +1925,22 @@
       "confirmBody": "{count, plural, =0 {No copies use the household default right now, so nothing changes yet.} one {This applies right away to # copy that uses the household default.} other {This applies right away to # copies that use the household default.}} Puzzles with their own access setting keep it.",
       "confirm": "Change default",
       "saved": "Household default updated"
+    },
+    "tabs": {
+      "members": "Members",
+      "puzzles": "My puzzles",
+      "puzzlesShort": "Puzzles",
+      "settings": "Settings"
+    },
+    "header": {
+      "memberCount": "{count, plural, one {# member} other {# members}}",
+      "stackName": "your household"
+    },
+    "puzzles": {
+      "defaultLabel": "Household default:"
+    },
+    "danger": {
+      "title": "Leave this household"
     }
   },
   "circles": {
@@ -4560,11 +4583,11 @@
         },
         "invite": {
           "title": "Invite your housemates",
-          "body": "Search for a member and send an invite; they join once they accept. Household admins send the invites."
+          "body": "Use Invite to find a member, share a link or send an email; they join once they accept. Household admins send the invites."
         },
         "copy-access": {
           "title": "You decide per puzzle",
-          "body": "Your puzzles stay yours. Here you choose what the household may do with each one: Can manage lets housemates edit, lend and swap it; View only lets them see it. Select several to change them at once."
+          "body": "Your puzzles stay yours. In My puzzles you choose what the household may do with each one: Can manage lets housemates edit, lend and swap it; View only lets them see it. Select several to change them at once."
         }
       }
     },
