@@ -238,7 +238,7 @@ menu **Gespreksopties**.
 
 Je kunt het andere lid op elke puzzel wijzen, van jou of van hen:
 
-1. Klik in het berichtvak op **Bijvoegen** (de knop **+**).
+1. Klik op **Bijvoegen** (de knop met de paperclip naast de verzendknop).
 2. Kies **Puzzel bijvoegen**.
 3. Kies uit het tabblad **Mijn puzzels**, of uit het tabblad van het andere lid
    (bijvoorbeeld **Puzzels van Mara**). Gebruik **Zoek puzzels** om te filteren
@@ -253,7 +253,7 @@ beschikbaar**.
 
 ## Foto's sturen
 
-1. Klik op **Bijvoegen** (de knop **+**) en kies **Foto**.
+1. Klik op **Bijvoegen** (de knop met de paperclip) en kies **Foto**.
 2. Kies maximaal 4 foto's (JPEG, PNG, HEIC of WebP; HEIC en WebP werken als je
    browser ze kan openen).
 3. Typ eventueel een bijschrift in het berichtvak.
@@ -308,7 +308,7 @@ Klik op een foto om hem op volledige grootte te openen. In de viewer kun je:
 
 Gebruik dit om een ontmoetingsplek af te spreken voor een ruil of uitlening.
 
-1. Klik op **Bijvoegen** (de knop **+**) en kies **Locatie**.
+1. Klik op **Bijvoegen** (de knop met de paperclip) en kies **Locatie**.
 2. Lees de opmerking en kies een plek:
    - **Zoek een plek** en kies een resultaat, of
    - **Gebruik mijn huidige locatie** (je browser vraagt om toestemming).

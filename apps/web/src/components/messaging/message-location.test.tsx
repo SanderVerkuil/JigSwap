@@ -93,7 +93,7 @@ describe("MessageLocation bubble", () => {
   });
 });
 
-describe("Location in the composer's + menu", () => {
+describe("Location in the composer's attach menu", () => {
   const renderComposer = (available: boolean | undefined) => {
     const client = new QueryClient();
     if (available !== undefined) {

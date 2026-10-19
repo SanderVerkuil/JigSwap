@@ -118,7 +118,25 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("MessageComposer attach menu", () => {
-  it("is a + menu with Puzzle and Photo, and a hidden multi-file input", async () => {
+  it("sits between the text field and Send: textarea, attach, send", () => {
+    renderComposer();
+    const textarea = screen.getByRole("textbox", { name: "Message Mara" });
+    const attach = screen.getByRole("button", { name: "Attach" });
+    const send = sendButton();
+    // DOM order is the tab order and matches the visual order.
+    expect(
+      textarea.compareDocumentPosition(attach) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      attach.compareDocumentPosition(send) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    // A paperclip, not a "+".
+    expect(attach.querySelector("svg.lucide-paperclip")).not.toBeNull();
+    expect(attach.querySelector("svg.lucide-plus")).toBeNull();
+  });
+
+  it("is a menu with Puzzle and Photo, and a hidden multi-file input", async () => {
     renderComposer();
     const trigger = screen.getByRole("button", { name: "Attach" });
     expect(trigger.getAttribute("aria-haspopup")).toBe("menu");

@@ -16,6 +16,12 @@ export const WHATS_NEW_MANIFEST: readonly WhatsNewManifestEntry[] = [
     "notify": false
   },
   {
+    "id": "messages-improvements-2026-10-19",
+    "publishedAt": 1792400400000,
+    "highlight": false,
+    "notify": false
+  },
+  {
     "id": "more-messages-improvements",
     "publishedAt": 1792355400000,
     "highlight": true,

@@ -1,7 +1,8 @@
 "use client";
 
-// The composer's "+" (spec 3): a Radix menu opening upward on desktop, a short
-// bottom sheet of tiles on phones. The "+" turns into an X while open. Photo
+// The composer's paperclip, between the text field and Send: a Radix menu
+// opening upward (aligned to its right edge) on desktop, a short bottom sheet
+// of tiles on phones. The paperclip stays highlighted while open. Photo
 // is left out when photos are unavailable, Location when location sharing is
 // (no map key configured, or a thread probe still loading). The file input itself lives in the
 // composer, outside this menu, so iOS keeps the user gesture.
@@ -20,7 +21,13 @@ import {
 } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import { ImageIcon, MapPin, Plus, Puzzle, type LucideIcon } from "lucide-react";
+import {
+  ImageIcon,
+  MapPin,
+  Paperclip,
+  Puzzle,
+  type LucideIcon,
+} from "lucide-react";
 import { useState, type Ref } from "react";
 import { useTranslations } from "use-intl";
 
@@ -85,7 +92,7 @@ export function AttachMenu({
       : []),
   ];
 
-  // Nothing to attach in this thread: no "+" at all.
+  // Nothing to attach in this thread: no paperclip at all.
   if (options.length === 0) return null;
 
   const trigger = (
@@ -93,19 +100,16 @@ export function AttachMenu({
       ref={triggerRef}
       variant="ghost"
       size="icon"
-      className="text-muted-foreground size-11 rounded-full md:size-10"
+      className={cn(
+        "text-muted-foreground size-11 shrink-0 rounded-full md:size-10",
+        open && "bg-accent text-accent-foreground",
+      )}
       aria-label={t("attach")}
       aria-haspopup={isMobile ? "dialog" : "menu"}
       aria-expanded={open}
       onClick={isMobile ? () => setOpen(true) : undefined}
     >
-      <Plus
-        aria-hidden
-        className={cn(
-          "size-5 transition-transform duration-200 motion-reduce:transition-none",
-          open && "rotate-45",
-        )}
-      />
+      <Paperclip aria-hidden className="size-5" />
     </Button>
   );
 
@@ -150,7 +154,7 @@ export function AttachMenu({
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
-      <DropdownMenuContent side="top" align="start" aria-label={t("attach")}>
+      <DropdownMenuContent side="top" align="end" aria-label={t("attach")}>
         {options.map(({ key, label, icon: Icon, onSelect }) => (
           <DropdownMenuItem key={key} onSelect={onSelect}>
             <Icon aria-hidden />
