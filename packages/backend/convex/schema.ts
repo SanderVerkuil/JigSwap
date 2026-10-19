@@ -1633,6 +1633,42 @@ export default defineSchema({
     // Account deletion (conversation/purgeMemberMessagingData householdInvitesOut).
     .index("by_inviter", ["inviterId"]),
 
+  // A member's request to join a household, asked from an expired or used household invite link
+  // (HouseholdJoinRequest aggregate). One per (requester, link), ever; lapses 14 days after
+  // createdAt (expiresAt, read lazily: no cron). `dropped` requests (household gone, link owner no
+  // longer its admin, or the pair blocked) are kept so the requester's answer never differs, but no
+  // admin ever sees them. leaveHouseholdId + leaveConsequence are the requester's consent to leave
+  // the household they were in when they asked (both absent when they were in none).
+  householdJoinRequests: defineTable({
+    aggregateId: v.string(), // HouseholdJoinRequestId
+    householdId: v.string(), // HouseholdId the link was minted for
+    requesterId: v.id("users"),
+    // The link's owner, who is told (and whose notification about it goes on withdraw / purge).
+    adminId: v.id("users"),
+    linkId: v.id("inviteLinks"),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("approved"),
+      v.literal("declined"),
+      v.literal("withdrawn"),
+      v.literal("void"),
+    ),
+    dropped: v.boolean(),
+    leaveHouseholdId: v.optional(v.string()),
+    leaveConsequence: v.optional(
+      v.union(v.literal("deleted"), v.literal("handover"), v.literal("leave")),
+    ),
+    createdAt: v.number(),
+    expiresAt: v.number(),
+    respondedAt: v.optional(v.number()),
+  })
+    .index("by_aggregate_id", ["aggregateId"])
+    // The requester's open request; account deletion (householdJoinRequestsOut).
+    .index("by_requester", ["requesterId", "status"])
+    // The admin's list (getMyHousehold).
+    .index("by_household_status", ["householdId", "status"])
+    .index("by_link_requester", ["linkId", "requesterId"]),
+
   // Email invitations (#222, invitations/): the inviter's local reference for one invitation sent by
   // email to someone who is not on JigSwap yet. It stores NO email address, so the pending list
   // reads "Invitation sent {createdAt}" whether or not the address had an account. aggregateId is

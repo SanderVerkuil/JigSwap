@@ -13,7 +13,10 @@ export type HouseholdErrorCode =
   | "InviteNotPending"
   | "NotCopyOwner"
   | "PermissionBatchTooLarge"
-  | "InvalidHouseholdName";
+  | "InvalidHouseholdName"
+  | "SelfJoinRequest"
+  | "NotRequester"
+  | "JoinRequestNotPending";
 
 export class HouseholdError extends DomainError {
   override readonly name = "HouseholdError";
@@ -89,6 +92,27 @@ export class HouseholdError extends DomainError {
     return new HouseholdError(
       "InvalidHouseholdName",
       "A household name must be between 1 and 100 characters",
+    );
+  }
+
+  static selfJoinRequest(): HouseholdError {
+    return new HouseholdError(
+      "SelfJoinRequest",
+      "You cannot ask to join through your own link",
+    );
+  }
+
+  static notRequester(): HouseholdError {
+    return new HouseholdError(
+      "NotRequester",
+      "Only the member who asked may withdraw this request",
+    );
+  }
+
+  static joinRequestNotPending(): HouseholdError {
+    return new HouseholdError(
+      "JoinRequestNotPending",
+      "This request to join is no longer open",
     );
   }
 }

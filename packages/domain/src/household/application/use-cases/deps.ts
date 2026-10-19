@@ -3,6 +3,8 @@ import {
   HouseholdIdGenerator,
   HouseholdInviteIdGenerator,
   HouseholdInviteRepository,
+  HouseholdJoinRequestIdGenerator,
+  HouseholdJoinRequestRepository,
   HouseholdRepository,
 } from "../ports/out";
 
@@ -12,6 +14,8 @@ export interface HouseholdDeps {
   readonly invites: HouseholdInviteRepository;
   readonly householdIds: HouseholdIdGenerator;
   readonly inviteIds: HouseholdInviteIdGenerator;
+  readonly joinRequests: HouseholdJoinRequestRepository;
+  readonly joinRequestIds: HouseholdJoinRequestIdGenerator;
   readonly events: DomainEventPublisher;
   readonly clock: Clock;
 }

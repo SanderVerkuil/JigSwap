@@ -4,18 +4,23 @@ import {
   DomainEventPublisher,
   toHouseholdId,
   toHouseholdInviteId,
+  toHouseholdJoinRequestId,
 } from "../../../shared-kernel";
 import {
   Household,
   HouseholdId,
   HouseholdInvite,
   HouseholdInviteId,
+  HouseholdJoinRequest,
+  HouseholdJoinRequestId,
   MemberId,
 } from "../../domain";
 import {
   HouseholdIdGenerator,
   HouseholdInviteIdGenerator,
   HouseholdInviteRepository,
+  HouseholdJoinRequestIdGenerator,
+  HouseholdJoinRequestRepository,
   HouseholdRepository,
 } from "../ports/out";
 
@@ -95,6 +100,48 @@ export class InMemoryHouseholdInviteRepository implements HouseholdInviteReposit
   }
 }
 
+export class InMemoryHouseholdJoinRequestRepository implements HouseholdJoinRequestRepository {
+  private readonly store = new Map<
+    HouseholdJoinRequestId,
+    ReturnType<HouseholdJoinRequest["toState"]>
+  >();
+
+  async findById(
+    id: HouseholdJoinRequestId,
+  ): Promise<HouseholdJoinRequest | null> {
+    const state = this.store.get(id);
+    return state ? HouseholdJoinRequest.rehydrate(state) : null;
+  }
+
+  async findByRequesterAndLink(
+    requesterId: MemberId,
+    linkId: string,
+  ): Promise<HouseholdJoinRequest | null> {
+    for (const state of this.store.values()) {
+      if (state.requesterId === requesterId && state.linkId === linkId) {
+        return HouseholdJoinRequest.rehydrate(state);
+      }
+    }
+    return null;
+  }
+
+  async listWaitingByRequester(
+    requesterId: MemberId,
+  ): Promise<readonly HouseholdJoinRequest[]> {
+    return [...this.store.values()]
+      .filter(
+        (state) =>
+          state.requesterId === requesterId &&
+          (state.status === "pending" || state.status === "declined"),
+      )
+      .map((state) => HouseholdJoinRequest.rehydrate(state));
+  }
+
+  async save(request: HouseholdJoinRequest): Promise<void> {
+    this.store.set(request.id, request.toState());
+  }
+}
+
 export class SequentialHouseholdIdGenerator implements HouseholdIdGenerator {
   private counter = 0;
 
@@ -113,11 +160,25 @@ export class SequentialHouseholdInviteIdGenerator implements HouseholdInviteIdGe
   }
 }
 
+export class SequentialHouseholdJoinRequestIdGenerator implements HouseholdJoinRequestIdGenerator {
+  private counter = 0;
+
+  next(): HouseholdJoinRequestId {
+    this.counter += 1;
+    return toHouseholdJoinRequestId(`household-join-request-${this.counter}`);
+  }
+}
+
 export class FixedClock implements Clock {
   constructor(private instant: Date) {}
 
   now(): Date {
     return this.instant;
+  }
+
+  // Move the clock (e.g. past a request's lapse).
+  set(instant: Date): void {
+    this.instant = instant;
   }
 }
 

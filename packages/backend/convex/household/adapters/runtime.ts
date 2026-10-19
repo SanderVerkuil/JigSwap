@@ -1,12 +1,14 @@
 import {
   toHouseholdId,
   toHouseholdInviteId,
+  toHouseholdJoinRequestId,
   type Clock,
   type DomainEventPublisher,
   type HouseholdId,
   type HouseholdIdGenerator,
   type HouseholdInviteId,
   type HouseholdInviteIdGenerator,
+  type HouseholdJoinRequestIdGenerator,
 } from "@jigswap/domain";
 import type { MutationCtx } from "../../_generated/server";
 import { makeEventPublisher } from "../../events/makeEventPublisher";
@@ -23,6 +25,11 @@ export const householdIdGenerator: HouseholdIdGenerator = {
 export const householdInviteIdGenerator: HouseholdInviteIdGenerator = {
   next: (): HouseholdInviteId => toHouseholdInviteId(crypto.randomUUID()),
 };
+
+export const householdJoinRequestIdGenerator: HouseholdJoinRequestIdGenerator =
+  {
+    next: () => toHouseholdJoinRequestId(crypto.randomUUID()),
+  };
 
 export const householdEventPublisher = (
   ctx: MutationCtx,

@@ -1,5 +1,10 @@
 import { DomainEvent } from "../../shared-kernel";
-import { HouseholdId, HouseholdInviteId, MemberId } from "./ids";
+import {
+  HouseholdId,
+  HouseholdInviteId,
+  HouseholdJoinRequestId,
+  MemberId,
+} from "./ids";
 
 // Household domain events: plain immutable records the aggregates record and the publisher
 // serialises into the durable event log (Notifications subscribes to the invite events).
@@ -80,6 +85,32 @@ export class HouseholdInviteDeclined implements DomainEvent {
     readonly householdId: HouseholdId,
     readonly inviterId: MemberId,
     readonly inviteeId: MemberId,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+// A member asked to join a household; `adminId` is the admin who minted the link it was asked from
+// (the one told). A request dropped for privacy (household gone, owner no longer its admin,
+// blocked) records no event, so nobody is told.
+export class HouseholdJoinRequested implements DomainEvent {
+  readonly name = "HouseholdJoinRequested";
+  constructor(
+    readonly requestId: HouseholdJoinRequestId,
+    readonly householdId: HouseholdId,
+    readonly requesterId: MemberId,
+    readonly adminId: MemberId,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+// The admin let the requester in. Decline, withdraw and void are deliberately silent (no event).
+export class HouseholdJoinRequestApproved implements DomainEvent {
+  readonly name = "HouseholdJoinRequestApproved";
+  constructor(
+    readonly requestId: HouseholdJoinRequestId,
+    readonly householdId: HouseholdId,
+    readonly requesterId: MemberId,
+    readonly approverId: MemberId,
     readonly occurredAt: Date,
   ) {}
 }

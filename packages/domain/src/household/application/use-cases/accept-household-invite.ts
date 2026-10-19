@@ -2,6 +2,7 @@ import { err, ok } from "../../../shared-kernel";
 import { HouseholdApplicationError } from "../errors";
 import { AcceptHouseholdInvite } from "../ports/in";
 import { HouseholdDeps } from "./deps";
+import { switchHousehold } from "./switch-household";
 
 // The invitee accepts: the authoritative at-most-one-household check happens here (they may have
 // joined or founded another household since the invite was sent), and the household must still
@@ -31,22 +32,14 @@ export const makeAcceptHouseholdInvite =
     const household = await deps.households.findById(invite.householdId);
     if (!household) return err(HouseholdApplicationError.householdNotFound());
 
-    const admitted = household.admit(cmd.actorId, now);
-    if (admitted.isErr) return err(admitted.error);
-
-    // Only now, with the join certain, leave the current household.
-    if (current) {
-      const left = current.leave(cmd.actorId, now);
-      if (left.isErr) return err(left.error);
-      if (left.value.dissolved) {
-        await deps.invites.removePendingForHousehold(current.id);
-        await deps.households.remove(current.id);
-      } else {
-        await deps.households.save(current);
-      }
-    }
+    const switched = await switchHousehold(deps, {
+      memberId: cmd.actorId,
+      current,
+      target: household,
+      now,
+    });
+    if (switched.isErr) return err(switched.error);
     await deps.invites.save(invite);
-    await deps.households.save(household);
     await deps.events.publish([
       ...(current?.pullEvents() ?? []),
       ...invite.pullEvents(),

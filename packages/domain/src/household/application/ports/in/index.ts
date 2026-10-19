@@ -4,6 +4,7 @@ import {
   HouseholdError,
   HouseholdId,
   HouseholdInviteId,
+  HouseholdJoinRequestId,
   MemberId,
 } from "../../../domain";
 import { HouseholdApplicationError } from "../../errors";
@@ -95,3 +96,43 @@ export interface RenameHouseholdCommand {
   readonly name: string | null;
 }
 export type RenameHousehold = (cmd: RenameHouseholdCommand) => Outcome<void>;
+
+// A member asks to join the household an expired or used invite link was minted for. The
+// composition root resolves the link server-side: `householdId` and `adminId` (its owner) are never
+// client-supplied. `blocked` is whether the requester and the admin are blocked either way. The
+// answer never says whether the request reached anyone: a request to a household that is gone, an
+// owner who is no longer its admin, or a blocked pair is stored as dropped and told to no one.
+export interface RequestToJoinHouseholdCommand {
+  readonly actorId: MemberId;
+  readonly householdId: HouseholdId;
+  readonly adminId: MemberId;
+  readonly linkId: string;
+  readonly blocked: boolean;
+  // Required (true) when the actor is in a household now: approval would make them leave it.
+  readonly leaveCurrentHousehold?: boolean;
+}
+export type RequestToJoinHousehold = (
+  cmd: RequestToJoinHouseholdCommand,
+) => Outcome<HouseholdJoinRequestId>;
+
+export interface RespondToHouseholdJoinRequestCommand {
+  readonly actorId: MemberId;
+  readonly requestId: HouseholdJoinRequestId;
+}
+// `blocked`: the approver and the requester are blocked either way (approval then closes).
+export interface ApproveHouseholdJoinRequestCommand extends RespondToHouseholdJoinRequestCommand {
+  readonly blocked: boolean;
+}
+// "closed" is one answer for every request that can no longer be approved (withdrawn, declined,
+// lapsed, or the requester's household situation no longer matches their consent), so the admin
+// never learns which.
+export type HouseholdJoinRequestOutcome = "joined" | "closed";
+export type ApproveHouseholdJoinRequest = (
+  cmd: ApproveHouseholdJoinRequestCommand,
+) => Outcome<HouseholdJoinRequestOutcome>;
+export type DeclineHouseholdJoinRequest = (
+  cmd: RespondToHouseholdJoinRequestCommand,
+) => Outcome<void>;
+export type WithdrawHouseholdJoinRequest = (
+  cmd: RespondToHouseholdJoinRequestCommand,
+) => Outcome<void>;
