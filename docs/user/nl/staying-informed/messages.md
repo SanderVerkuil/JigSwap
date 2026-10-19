@@ -251,6 +251,23 @@ wat tekst nodig, ook met een puzzel erbij. Wordt een puzzel later privé gemaakt
 of verwijderd, dan toont de kaart in het gesprek **Deze puzzel is niet meer
 beschikbaar**.
 
+### In een kringchat
+
+In de groepschat van een kring kun je een van je eigen puzzels bijvoegen,
+zodat de hele kring hem ziet:
+
+- Het venster heeft alleen het tabblad **Mijn puzzels**, en toont alleen
+  puzzels die iedereen in de kring kan zien: puzzels die je
+  [met de kring deelt](/docs/sharing-and-exchanges/friend-circles#een-exemplaar-delen-met-een-kring)
+  terwijl je ze aanbiedt om te ruilen, uit te lenen of te verkopen, of, als je
+  profiel openbaar is, elke puzzel die je aanbiedt.
+- Je kunt in een kringchat geen puzzel van een ander lid bijvoegen.
+- Elk lid ziet de kaart alleen zolang die de puzzel mag zien. Kan dat niet
+  meer, bijvoorbeeld omdat je hem verwijderde, niet meer deelt of aanbiedt, of
+  de kring verliet, dan toont de kaart voor dat lid **Deze puzzel is niet meer
+  beschikbaar**. Dat ziet ook een lid dat jou blokkeerde of dat jij
+  blokkeerde.
+
 ## Foto's sturen
 
 1. Klik op **Bijvoegen** (de knop met de paperclip) en kies **Foto**.

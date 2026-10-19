@@ -50,6 +50,9 @@ Elke kring heeft een groepschat voor zijn leden. Klik bij de kring op
   chat. De berichten die je stuurde, blijven er staan voor de anderen.
 - Heb je iemand in de kring geblokkeerd, dan worden diens berichten voor jou
   ingeklapt. Diegene ziet die van jou gewoon en krijgt niets te horen.
+- Je kunt een van je puzzels bijvoegen die de hele kring kan zien, zoals een
+  puzzel die je met de kring deelt. Zie
+  [Een puzzel bijvoegen](/docs/staying-informed/messages#in-een-kringchat).
 
 Over dempen, typen, online status en meldingen lees je meer bij
 [Berichten](/docs/staying-informed/messages#groepschats-in-kringen).

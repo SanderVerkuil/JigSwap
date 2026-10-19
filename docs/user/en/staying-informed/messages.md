@@ -238,6 +238,23 @@ needs some text, even with a puzzle attached. If a puzzle is later made private
 or removed, its card in the conversation shows **This puzzle is no longer
 available**.
 
+### In a circle chat
+
+In a circle's group chat you can attach one of your own puzzles, so the whole
+circle can see it:
+
+- The picker has only the **My puzzles** tab, and lists only puzzles that
+  everyone in the circle can see: puzzles you've
+  [shared with the circle](/docs/sharing-and-exchanges/friend-circles#share-a-copy-with-a-circle)
+  while you offer them for swap, lend or sale, or, if your profile is public,
+  any puzzle you offer.
+- You can't attach another member's puzzle in a circle chat.
+- Each member sees the card only while they're allowed to see the puzzle.
+  Once they can't, for example because you removed it, stopped sharing or
+  offering it, or left the circle, the card shows **This puzzle is no longer
+  available** for them. A member who blocked you, or whom you blocked, sees
+  that too.
+
 ## Send photos
 
 1. Click **Attach** (the paperclip button) and choose **Photo**.
