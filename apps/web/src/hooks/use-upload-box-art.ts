@@ -3,10 +3,10 @@ import { preparePhoto } from "@/lib/prepare-photo";
 import { useConvexAction, useConvexMutation } from "@convex-dev/react-query";
 
 // Box art upload: re-encode the file in the browser (lib/prepare-photo: JPEG, long edge
-// ≤ 1600 px, no EXIF), POST it to a one-shot upload URL, then have the server strip any
-// metadata left (EXIF incl. GPS, XMP, IPTC, comments). Resolves with the CLEAN storage id,
-// the only kind the catalog mutations accept as `image`. The server refuses anything that is
-// not a JPEG, PNG or WebP of at most 10 MB.
+// ≤ 1600 px, no EXIF), POST it to a one-shot upload URL, then have the server check it like
+// every uploaded photo (catalog/sanitizeBoxArt: metadata strip, CSAM hash check, content
+// check). Resolves with the CLEAN storage id, the only kind the catalog mutations accept as
+// `image`; rejects with "InvalidImage" when the server refuses the image.
 export function useUploadBoxArt() {
   const generateUploadUrl = useConvexMutation(
     gateway.library.generateUploadUrl,

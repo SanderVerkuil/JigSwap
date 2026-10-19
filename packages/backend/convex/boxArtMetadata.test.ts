@@ -9,9 +9,10 @@ import { findMetadata } from "./lib/imageModeration/stripMetadata";
 import schema from "./schema";
 
 // Box art never keeps the uploader's metadata: an upload goes through catalog/sanitizeBoxArt
-// (strip, turned upright, new blob, upload deleted), a fetched shop image through
-// importPuzzleImage (same clean), and the catalog mutations only take a NEW image that the server cleaned for the
-// acting member. Fixtures: see stripMetadata.test.ts.
+// (the shared moderation pipeline: strip, turned upright, new blob, upload deleted), a fetched
+// shop image through importPuzzleImage (same), and the catalog mutations only take a NEW image
+// that the server checked for the acting member. Fixtures: see stripMetadata.test.ts. The
+// hash check and the classifier are covered in boxArtModeration.test.ts.
 
 vi.mock("node:dns/promises", () => ({
   lookup: async () => [{ address: "93.184.216.34", family: 4 }],
@@ -21,8 +22,13 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 beforeEach(() => {
   vi.spyOn(console, "log").mockImplementation(() => {});
+  // Classification off (approves unchecked), hash check off: this file is about the metadata.
+  vi.stubEnv("AXIOM_API_KEY", "");
+  vi.stubEnv("MODERATION_PROVIDER", "none");
+  vi.stubEnv("CSAM_HASHCHECK_PROVIDER", "");
 });
 afterEach(() => {
+  vi.unstubAllEnvs();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -148,12 +154,6 @@ describe("sanitizeBoxArt", () => {
       "unsupported_format",
     ],
     [
-      "a GIF",
-      "GIF89a\x01\x00\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;",
-      "image/gif",
-      "unsupported_format",
-    ],
-    [
       "a truncated JPEG",
       fixture("gps.jpg").subarray(0, 3300),
       "image/jpeg",
@@ -171,11 +171,27 @@ describe("sanitizeBoxArt", () => {
         reason,
       });
       expect(await stored(t, uploadId)).toBeNull();
+      // The listing survives as the audit record, refused: no catalog mutation takes it.
       expect(
         await t.run((ctx) => ctx.db.query("boxArtUploads").collect()),
-      ).toEqual([]);
+      ).toMatchObject([{ moderationStatus: "rejected" }]);
     },
   );
+
+  test("a GIF is accepted like any uploaded photo: re-encoded, so no GIF extension survives", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const uploadId = await upload(
+      t,
+      "GIF89a\x01\x00\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;",
+      "image/gif",
+    );
+
+    const cleanId = await sanitize(t, uploadId);
+
+    expect(await stored(t, uploadId)).toBeNull();
+    expect((await stored(t, cleanId))?.type).toMatch(/^image\/(png|jpeg)$/);
+  });
 
   test("a blob something already uses (e.g. another member's box art) is never read or deleted", async () => {
     const t = convexTest(schema, modules);
@@ -260,9 +276,15 @@ describe("importPuzzleImage", () => {
       asAlice(t).action(api.catalog.importPuzzleImage.importPuzzleImage, {
         url: "https://shop.example/box.png",
       }),
-    ).rejects.toThrow(/Unsupported image type/);
+    ).rejects.toThrow(/InvalidImage/);
     expect(
       await t.run((ctx) => ctx.db.query("boxArtUploads").collect()),
+    ).toMatchObject([
+      { moderationStatus: "rejected", moderationReason: "unsupported_format" },
+    ]);
+    // Nothing left in storage: the fetched body was deleted.
+    expect(
+      await t.run((ctx) => ctx.db.system.query("_storage").collect()),
     ).toEqual([]);
   });
 });

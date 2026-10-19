@@ -1323,11 +1323,12 @@
     },
     "photos": {
       "title": "Foto's die je uploadt",
-      "description": "Foto's die je aan je bibliotheek of aan een gelegde puzzel toevoegt doorlopen een automatisch proces voordat andere leden ze kunnen zien:",
+      "description": "Foto's die je aan je bibliotheek of aan een gelegde puzzel toevoegt, en afbeeldingen die je uploadt als catalogusafbeelding van een puzzel, doorlopen een automatisch proces voordat andere leden ze kunnen zien:",
       "steps": [
         "De afbeelding wordt opnieuw gecodeerd, waardoor verborgen metadata zoals EXIF-gegevens — inclusief een eventuele locatie — wordt verwijderd",
         "Een automatische veiligheidscontrole beoordeelt de afbeelding; hiervoor gebruiken we een van de controlediensten hierboven (Hugging Face of Sightengine), die de afbeelding uitsluitend voor dit doel verwerkt",
-        "Totdat dit klaar is, is de foto alleen voor jou zichtbaar. Als de controle niet kan worden uitgevoerd (bijvoorbeeld omdat de controledienst niet bereikbaar is), blijft de foto alleen voor jou zichtbaar totdat hij is gecontroleerd"
+        "Totdat dit klaar is, is de foto alleen voor jou zichtbaar. Als de controle niet kan worden uitgevoerd (bijvoorbeeld omdat de controledienst niet bereikbaar is), blijft de foto alleen voor jou zichtbaar totdat hij is gecontroleerd",
+        "Een catalogusafbeelding wordt aan niemand getoond, ook niet aan jou, totdat hij de controle heeft doorstaan; tot dan toont de puzzel zijn standaardafbeelding"
       ]
     },
     "messaging": {
@@ -1509,7 +1510,7 @@
   "terms": {
     "title": "Algemene Voorwaarden",
     "lastUpdated": "Laatst bijgewerkt",
-    "effectiveDate": "18 oktober 2026",
+    "effectiveDate": "19 oktober 2026",
     "introduction": "Deze algemene voorwaarden ('Voorwaarden') zijn van toepassing op je gebruik van JigSwap, een communityplatform voor legpuzzelliefhebbers, beheerd door Sander Verkuil. JigSwap is een hobbyproject, geen commerciële marktplaats. Door een account aan te maken of JigSwap te gebruiken ga je akkoord met deze Voorwaarden.",
     "acceptance": {
       "title": "Akkoord met de Voorwaarden",
@@ -1562,7 +1563,7 @@
       "title": "Moderatie",
       "description": "Dit onderdeel legt uit hoe we JigSwap veilig houden en hoe we omgaan met inhoud en leden die deze Voorwaarden schenden.",
       "screeningTitle": "Automatische controle",
-      "screening": "Elke foto die je uploadt — naar je bibliotheek, een gelegde puzzel of een bericht — wordt automatisch gecontroleerd door een veiligheidsdienst voordat anderen hem kunnen zien. Een foto die de controle tegenhoudt wordt niet gepubliceerd of bezorgd; een foto die als mogelijk gevoelig wordt aangemerkt, of die niet gecontroleerd kon worden, wordt vervaagd getoond totdat de kijker ervoor kiest hem te zien. Denk je dat de controle zich vergist, dan kun je vragen of een mens hem beoordeelt (zie hieronder).",
+      "screening": "Elke foto die je uploadt — naar je bibliotheek, een gelegde puzzel, een bericht of als catalogusafbeelding van een puzzel — wordt automatisch gecontroleerd door een veiligheidsdienst voordat anderen hem kunnen zien. Een foto die de controle tegenhoudt wordt niet gepubliceerd of bezorgd; een foto die als mogelijk gevoelig wordt aangemerkt, of die niet gecontroleerd kon worden, wordt vervaagd getoond totdat de kijker ervoor kiest hem te zien. Denk je dat de controle zich vergist, dan kun je vragen of een mens hem beoordeelt (zie hieronder).",
       "reportingTitle": "Melden",
       "reporting": "Gebruik Melden bij een bericht, foto, profiel of puzzel om ons te wijzen op inhoud of gedrag dat deze Voorwaarden schendt. Om illegale inhoud te melden kies je die reden en geef je je naam, je e-mailadres en een verklaring dat je de melding te goeder trouw doet. Het lid dat je meldt hoort niet wie de melding heeft gedaan.",
       "decisionsTitle": "Onze besluiten",
@@ -4271,7 +4272,8 @@
         "table": {
           "ownedPuzzleImages": "Foto bij exemplaar",
           "completionImages": "Foto bij voltooiing",
-          "messageAttachments": "Foto in bericht"
+          "messageAttachments": "Foto in bericht",
+          "boxArtUploads": "Catalogusafbeelding"
         },
         "matched": "Match {time} via {provider}",
         "uploader": "Geüpload door {name}",

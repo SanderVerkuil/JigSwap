@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import type { Id } from "../../_generated/dataModel";
 import { internalMutation, internalQuery } from "../../_generated/server";
 import { isReferenced } from "./blobReferences";
+import { boxArtHolders, repointBoxArt } from "./boxArtReferences";
 
 // The database side of the one-shot lib/imageModeration/backfillStripMetadata (a Node action,
 // for the decoder): page through a table, switch everything holding a blob to its clean copy,
@@ -115,42 +116,15 @@ export const swapBlob = internalMutation({
     }
 
     // Box art: every definition and proposal (its change or its baseline) holding `from`.
-    const definitions = await ctx.db
-      .query("puzzles")
-      .withIndex("by_image", (q) => q.eq("image", from))
-      .collect();
-    const proposals = await ctx.db
-      .query("puzzleChangeProposals")
-      .withIndex("by_changes_image", (q) => q.eq("changes.image", from))
-      .collect();
+    const holders = await boxArtHolders(ctx, from);
     if (table === "boxArt") {
-      if (!definitions.some((d) => d._id === id)) return false;
-    } else if (!proposals.some((p) => p._id === id)) {
+      if (!holders.definitions.some((d) => d._id === id)) return false;
+    } else if (
+      !holders.proposals.some((p) => p._id === id && p.changes.image === from)
+    ) {
       return false;
     }
-    for (const definition of definitions) {
-      await ctx.db.patch(definition._id, { image: to });
-      const aggregateId = definition.aggregateId;
-      if (!aggregateId) continue;
-      const ofDefinition = await ctx.db
-        .query("puzzleChangeProposals")
-        .withIndex("by_definition", (q) =>
-          q.eq("puzzleDefinitionId", aggregateId),
-        )
-        .collect();
-      proposals.push(...ofDefinition.filter((p) => p.baseline.image === from));
-    }
-    for (const proposal of new Map(proposals.map((p) => [p._id, p])).values()) {
-      await ctx.db.patch(proposal._id, {
-        changes:
-          proposal.changes.image === from
-            ? { ...proposal.changes, image: to }
-            : proposal.changes,
-        ...(proposal.baseline.image === from && {
-          baseline: { ...proposal.baseline, image: to },
-        }),
-      });
-    }
+    await repointBoxArt(ctx, holders, from, to);
     return true;
   },
 });

@@ -699,6 +699,7 @@ export default defineSchema({
       v.literal("ownedPuzzleImages"),
       v.literal("completionImages"),
       v.literal("messageAttachments"),
+      v.literal("boxArtUploads"),
     ),
     rowId: v.string(),
     uploaderId: v.id("users"),

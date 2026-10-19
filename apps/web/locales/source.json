@@ -1323,11 +1323,12 @@
     },
     "photos": {
       "title": "Photos You Upload",
-      "description": "Photos you add to your library or to a finished puzzle go through an automatic pipeline before other members can see them:",
+      "description": "Photos you add to your library or to a finished puzzle, and images you upload as a puzzle's catalogue image, go through an automatic pipeline before other members can see them:",
       "steps": [
         "The image is re-encoded, which strips hidden metadata such as EXIF data — including any embedded location",
         "An automated content-safety check screens the image; for this we use one of the screening services listed above (Hugging Face or Sightengine), which processes the image for this purpose only",
-        "Until this finishes, the photo is visible only to you. If the check cannot be completed (for example because the screening service is unavailable), the photo stays visible only to you until it has been checked"
+        "Until this finishes, the photo is visible only to you. If the check cannot be completed (for example because the screening service is unavailable), the photo stays visible only to you until it has been checked",
+        "A catalogue image is shown to no one, you included, until it has passed the check; until then the puzzle shows its placeholder"
       ]
     },
     "messaging": {
@@ -1509,7 +1510,7 @@
   "terms": {
     "title": "Terms of Service",
     "lastUpdated": "Last Updated",
-    "effectiveDate": "18 October 2026",
+    "effectiveDate": "19 October 2026",
     "introduction": "These Terms of Service ('Terms') govern your use of JigSwap, a community platform for jigsaw puzzle enthusiasts, run by Sander Verkuil. JigSwap is a hobby project, not a commercial marketplace. By creating an account or using JigSwap, you agree to these Terms.",
     "acceptance": {
       "title": "Acceptance of Terms",
@@ -1562,7 +1563,7 @@
       "title": "Moderation",
       "description": "This section explains how we keep JigSwap safe and how we handle content and members that break these Terms.",
       "screeningTitle": "Automated screening",
-      "screening": "Every photo you upload — to your library, a finished puzzle or a message — is checked automatically by a content-safety service before others can see it. A photo the check flags is not published or delivered; a photo it marks as possibly sensitive, or could not check, is shown blurred until the viewer chooses to see it. If you think the check got it wrong, you can ask for a person to review it (see below).",
+      "screening": "Every photo you upload — to your library, a finished puzzle, a message or as a puzzle's catalogue image — is checked automatically by a content-safety service before others can see it. A photo the check flags is not published or delivered; a photo it marks as possibly sensitive, or could not check, is shown blurred until the viewer chooses to see it. If you think the check got it wrong, you can ask for a person to review it (see below).",
       "reportingTitle": "Reporting",
       "reporting": "Use Report on a message, photo, profile or puzzle to tell us about content or behaviour that breaks these Terms. To report illegal content, choose that reason and give your name, your email address and a statement that your report is made in good faith. The member you report is not told who reported them.",
       "decisionsTitle": "Our decisions",
@@ -4271,7 +4272,8 @@
         "table": {
           "ownedPuzzleImages": "Copy photo",
           "completionImages": "Completion photo",
-          "messageAttachments": "Message photo"
+          "messageAttachments": "Message photo",
+          "boxArtUploads": "Box art"
         },
         "matched": "Matched {time} via {provider}",
         "uploader": "Uploaded by {name}",

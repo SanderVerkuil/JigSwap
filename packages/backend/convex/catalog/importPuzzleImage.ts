@@ -6,7 +6,7 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { action } from "../_generated/server";
-import { cleanBoxArt } from "./cleanBoxArt";
+import { checkBoxArt } from "./moderateBoxArt";
 
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 const MAX_REDIRECTS = 5;
@@ -26,8 +26,9 @@ const assertPublicHost = async (hostname: string): Promise<void> => {
 };
 
 // Public Node action: fetch a remote image (no hotlinking) and store it in Convex storage as box
-// art: only a JPEG, PNG or WebP by its magic bytes (never SVG, which can carry scripts), with its
-// metadata stripped and listed for the member like an uploaded one (boxArtUploads).
+// art, through exactly the checks an uploaded one gets (catalog/moderateBoxArt): only an image by
+// its magic bytes (never SVG, which can carry scripts), metadata stripped, CSAM hash check,
+// content check, listed for the member (boxArtUploads).
 // Carries its OWN SSRF guard — ogie protects only the page fetch, not this raw image fetch.
 // Redirects are followed MANUALLY so every hop is re-validated against the private-IP guard
 // (redirect:"follow" would let a public->private redirect bypass the pre-flight DNS check).
@@ -38,10 +39,7 @@ export const importPuzzleImage = action({
     if ((await ctx.auth.getUserIdentity()) === null) {
       throw new ConvexError("Unauthenticated");
     }
-    const uploaderId = await ctx.runQuery(
-      internal.catalog.boxArtUploads.currentMember,
-      {},
-    );
+    await ctx.runQuery(internal.catalog.boxArtUploads.currentMember, {});
 
     const signal = AbortSignal.timeout(10000); // shared deadline across all hops
     let currentUrl = url;
@@ -88,18 +86,12 @@ export const importPuzzleImage = action({
     const buffer = await response.arrayBuffer();
     if (buffer.byteLength > MAX_BYTES) throw new ConvexError("Image too large");
 
-    // The content-type header is not trusted: CDNs serve real JPEGs as octet-stream, and a
-    // mislabeled SVG/HTML body must never be stored. The magic bytes decide.
-    const clean = await cleanBoxArt(new Uint8Array(buffer));
-    if (!clean.ok) throw new ConvexError("Unsupported image type");
-
-    const storageId = await ctx.storage.store(
-      new Blob([clean.bytes as BlobPart], { type: clean.mime }),
+    // Checked like an uploaded file (catalog/moderateBoxArt.checkBoxArt): the content-type
+    // header is not trusted (CDNs serve real JPEGs as octet-stream); the pipeline's guards decide
+    // by the magic bytes, and a refused body (an SVG, HTML) is deleted, never served.
+    const uploadId = await ctx.storage.store(
+      new Blob([buffer], { type: "application/octet-stream" }),
     );
-    await ctx.runMutation(internal.catalog.boxArtUploads.register, {
-      storageId,
-      uploaderId,
-    });
-    return storageId;
+    return checkBoxArt(ctx, uploadId);
   },
 });
