@@ -39,8 +39,9 @@ Each row in the inbox shows:
 - A count of unread messages, if there are any.
 - The cover of the latest puzzle the conversation is about, when there is one.
 
-A circle's group chat shows the circle name with up to two member avatars, and
-its preview starts with the name of whoever wrote last (for example
+A circle's group chat shows the circle name with a member's avatar and the
+purple circle icon (two people), so you can tell it from a chat with one
+person. Its preview starts with the name of whoever wrote last (for example
 "Bas: Who has the Wasgij?"). A muted conversation shows a bell with a line
 through it, and its unread count is grey.
 
@@ -94,7 +95,8 @@ circles and inviting people.
 
 ### Members and options
 
-Click the member count under the circle name (for example **6 members**) to
+Under the circle name the header says **Circle chat** and the member count.
+Click the member count (for example **6 members**) to
 open the members panel. It lists everyone in the circle with their role, with
 a report button next to each member, plus **Mute conversation** and
 **Leave circle**.
@@ -140,12 +142,13 @@ If you'd rather not be in the group with them, you can leave the circle.
 ### Notifications from circle chats
 
 - New messages in a conversation are combined into one notification, such as
-  "**Anna** and 2 others wrote in **Puzzle Club**."
+  "**Anna** and 2 others wrote in your circle **Puzzle Club**."
 - Push notifications for circle messages are off by default. Turn on push for
   **Circle messages** in your
   [notification preferences](/docs/staying-informed/notifications) (and enable
   push on this device) to get them. They arrive at most once every 2 minutes
-  per chat, and don't show the message text.
+  per chat, are titled **Circle:** followed by the circle's name, and don't
+  show the message text.
 - Circle chats never send an email per message. If you turn on email for
   **Circle messages** in your
   [notification preferences](/docs/staying-informed/notifications), you get
@@ -189,7 +192,7 @@ doesn't keep a history of when you were online.
 **Where it shows:** a green dot on a member's avatar means online, a
 half-filled dot means away. You see it on conversations in your inbox, in the
 conversation header, and in a circle's members panel, where the header also
-counts who's online, such as "6 members · 2 online". The count includes only
+counts who's online, such as "Circle chat · 6 members · 2 online". The count includes only
 members who are online (not away) and whose status you can see.
 
 **Set your status:** open your account menu and choose your status:

@@ -42,8 +42,9 @@ Elke rij in het overzicht toont:
 - Het aantal ongelezen berichten, als die er zijn.
 - De omslag van de laatste puzzel waar het gesprek over gaat, als die er is.
 
-De groepschat van een kring toont de naam van de kring met maximaal twee
-avatars van leden, en het voorbeeld begint met de naam van wie het laatst
+De groepschat van een kring toont de naam van de kring met de avatar van een
+lid en het paarse kringicoon (twee mensen), zodat je hem niet verwart met een
+gesprek met één persoon. Het voorbeeld begint met de naam van wie het laatst
 schreef (bijvoorbeeld "Bas: Wie heeft de Wasgij?"). Een gedempt gesprek toont
 een doorgestreepte bel, en het aantal ongelezen berichten is grijs.
 
@@ -98,8 +99,8 @@ maakt en mensen uitnodigt, lees je bij
 
 ### Leden en opties
 
-Klik op het aantal leden onder de naam van de kring (bijvoorbeeld
-**6 leden**) om het ledenpaneel te openen. Daarin staat iedereen in de kring
+Onder de naam van de kring staat **Kringchat** en het aantal leden. Klik op
+het aantal leden (bijvoorbeeld **6 leden**) om het ledenpaneel te openen. Daarin staat iedereen in de kring
 met zijn rol, met een meldknop naast elk lid, en verder **Gesprek dempen** en
 **Kring verlaten**.
 
@@ -148,12 +149,13 @@ Wil je liever niet samen in de groep zitten, dan kun je de kring verlaten.
 ### Meldingen van kringchats
 
 - Nieuwe berichten in een gesprek worden samengevoegd tot één melding, zoals
-  "**Anna** en 2 anderen schreven in **Puzzelclub**."
+  "**Anna** en 2 anderen schreven in je kring **Puzzelclub**."
 - Pushmeldingen voor kringberichten staan standaard uit. Zet push aan voor
   **Kringberichten** in je
   [meldingsvoorkeuren](/docs/staying-informed/notifications) (en zet push op
   dit apparaat aan) om ze te krijgen. Ze komen hoogstens één keer per 2 minuten
-  per chat en tonen de tekst van het bericht niet.
+  per chat, hun titel begint met **Circle:** en de naam van de kring, en ze
+  tonen de tekst van het bericht niet.
 - Kringchats sturen nooit een e-mail per bericht. Zet je in je
   [meldingsvoorkeuren](/docs/staying-informed/notifications) e-mail aan voor
   **Kringberichten**, dan krijg je ongeveer 30 minuten na een bericht dat je
@@ -199,7 +201,7 @@ online was, en houdt niet bij wanneer je online was.
 **Waar je het ziet:** een groene stip op de avatar van een lid betekent
 online, een half gevulde stip betekent afwezig. Je ziet dit bij gesprekken in
 je overzicht, in de kop van een gesprek en in het ledenpaneel van een kring,
-waar de kop ook telt wie er online is, zoals "6 leden · 2 online". Daarin tellen
+waar de kop ook telt wie er online is, zoals "Kringchat · 6 leden · 2 online". Daarin tellen
 alleen leden die online zijn (niet afwezig) en van wie je de status mag zien.
 
 **Je status instellen:** open je accountmenu en kies je status:
