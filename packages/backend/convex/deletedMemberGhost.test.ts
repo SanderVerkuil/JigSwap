@@ -297,5 +297,19 @@ describe.each(Object.keys(departures) as (keyof typeof departures)[])(
       expect(review.reviewerDeparted).toBe(true);
       expectNoIdentity(partner.reviews);
     });
+
+    test("activity feed entries are marked departed, unnamed and unlinked", async () => {
+      const { asViewer, dora } = await setup();
+      const feed = await asViewer.query(
+        api.social.getActivityFeed.getActivityFeed,
+        {},
+      );
+      const entry = feed.find((e) => e.memberId === (dora as string));
+      expect(entry).toBeDefined();
+      expect(entry!.actorName).toBeUndefined();
+      expect(entry!.actor).toBeUndefined();
+      expect(entry!.actorDeparted).toBe(true);
+      expectNoIdentity(feed);
+    });
   },
 );

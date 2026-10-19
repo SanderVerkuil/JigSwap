@@ -376,21 +376,29 @@ const resolveTarget = async (
 // Prefer the actor's Social profile display name, falling back to their account name (mirrors
 // `toFollowEdgeView`'s counterparty-name resolution) so an actor without a profile still renders.
 // `linkable` mirrors resolveMemberByHandle: the profile page only resolves an active member.
+// A departed actor (users row gone or deactivated) is the ghost: no name, even while their profile
+// row still waits for the account purge, and no link.
 const resolveActor = async (
   ctx: QueryCtx,
   memberId: string,
-): Promise<{ name: string | undefined; linkable: boolean }> => {
+): Promise<{
+  name: string | undefined;
+  linkable: boolean;
+  departed: boolean;
+}> => {
   const id = memberId as unknown as Id<"users">;
-  const [profile, user] = await Promise.all([
-    ctx.db
-      .query("profiles")
-      .withIndex("by_member", (q) => q.eq("memberId", id))
-      .unique(),
-    ctx.db.get(id),
-  ]);
+  const user = await ctx.db.get(id);
+  if (!user || !user.isActive) {
+    return { name: undefined, linkable: false, departed: true };
+  }
+  const profile = await ctx.db
+    .query("profiles")
+    .withIndex("by_member", (q) => q.eq("memberId", id))
+    .unique();
   return {
     name: memberDisplayNameOf(user, profile),
-    linkable: user?.isActive === true,
+    linkable: true,
+    departed: false,
   };
 };
 
@@ -481,7 +489,9 @@ const loadExchange = (
 
 const toActivityEntryView = (
   entry: ActivityEntry,
-  actor: { name: string | undefined; linkable: boolean } | undefined,
+  actor:
+    | { name: string | undefined; linkable: boolean; departed: boolean }
+    | undefined,
   batch: ActivityEntryView["batch"],
   target: ActivityTargetView | undefined,
 ): ActivityEntryView => ({
@@ -490,6 +500,7 @@ const toActivityEntryView = (
   occurredAt: entry.occurredAt.getTime(),
   ref: entry.ref,
   actorName: actor?.name,
+  ...(actor?.departed ? { actorDeparted: true as const } : {}),
   ...(batch ? { batch } : {}),
   ...(actor?.linkable ? { actor: { handle: entry.memberId as string } } : {}),
   ...(target ? { target } : {}),
