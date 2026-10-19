@@ -159,6 +159,10 @@ own say **You**, a housemate's show their picture and name.
 - Click a person above the puzzles to see only theirs, or **Everyone** for all.
 - Use **Available**, **For Trade** or **For Lend** to see only puzzles on offer.
 - Click a puzzle to open it.
+- Click **⋯** on a card for the same actions as in **My Puzzles**: start,
+  finish or log a solve on any puzzle; on your own also edit, delete and add
+  to a collection. A housemate's puzzle can be edited only when its owner set
+  it to **Can manage**.
 
 ## What household members can see and do
 

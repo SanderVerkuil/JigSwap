@@ -1,6 +1,10 @@
 import { Link } from "@/compat/link";
 import { CopyOwnerLine } from "@/components/household/copy-owner-line";
 import type { HouseholdData } from "@/components/household/household-page";
+import {
+  useCopyCardActions,
+  useSolveStateByCopyId,
+} from "@/components/library/copy-card-actions";
 import { EmptyState } from "@/components/library/empty-state";
 import { FilterBar, type FilterOption } from "@/components/library/filter-bar";
 import { MemberInitial } from "@/components/members/member-initial";
@@ -44,8 +48,8 @@ export function filterHouseholdPuzzles<
 
 // The household's default tab: every puzzle in the household, the viewer's own and every
 // housemate's, each card saying whose it is. Filter by owner (chips with faces) and by
-// availability. Cards open the copy's page, where its actions live (a housemate's copy is managed
-// there only when its owner left it at "manage").
+// availability. Each card has the same ⋯ actions as on My Puzzles, limited to what the viewer
+// may do with that copy (useCopyCardActions; the server enforces the same rules).
 export function HouseholdPuzzles({
   household,
   onInvite,
@@ -94,6 +98,16 @@ export function HouseholdPuzzles({
       availability: copy.availability,
     })),
   ];
+
+  const householdAccessById = new Map(
+    (matesCopies ?? []).map((copy) => [copy._id, copy.household]),
+  );
+  const solveStateByCopyId = useSolveStateByCopyId(true);
+  const { cardActions, dialogs } = useCopyCardActions({
+    copies: copies.map(({ copy }) => copy),
+    householdAccessById,
+    solveStateByCopyId,
+  });
 
   if (own === undefined || matesCopies === undefined || !viewer) {
     return (
@@ -260,9 +274,9 @@ export function HouseholdPuzzles({
                 key={copy._id}
                 puzzle={copy}
                 variant="default"
-                showActions={false}
                 viewBasePath="/my-puzzles"
                 imageFit="contain"
+                {...cardActions(copy._id)}
                 owner={
                   access ? (
                     <CopyOwnerLine
@@ -278,6 +292,7 @@ export function HouseholdPuzzles({
           </PuzzleViewProvider>
         </div>
       )}
+      {dialogs}
     </div>
   );
 }

@@ -175,6 +175,11 @@ zijn of haar foto en naam.
 - Kies **Beschikbaar**, **Te Ruilen** of **Te Leen** om alleen puzzels te zien
   die worden aangeboden.
 - Klik op een puzzel om hem te openen.
+- Klik op **⋯** op een kaart voor dezelfde acties als in **Mijn Puzzels**: een
+  puzzelsessie starten, afronden of vastleggen op elke puzzel; bij je eigen
+  puzzels ook bewerken, verwijderen en aan een collectie toevoegen. De puzzel
+  van een huisgenoot kun je alleen bewerken als de eigenaar hem op
+  **Mag beheren** heeft gezet.
 
 ## Wat leden van een huishouden kunnen zien en doen
 
