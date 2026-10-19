@@ -68,6 +68,7 @@ function HouseholdPage() {
   return (
     <HouseholdDetails
       household={household}
+      invites={invites ?? []}
       activeTab={tab ?? "members"}
       onTabChange={onTabChange}
       onError={fail}
