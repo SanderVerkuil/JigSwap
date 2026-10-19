@@ -35,6 +35,7 @@ export const convexHouseholdRepository = (
       id,
       createdAt: new Date(row.createdAt),
       defaultCopyPermission: row.defaultCopyPermission,
+      ...(row.name !== undefined && { name: row.name }),
       members: members.map((m) => ({
         memberId: toMemberId(m.memberId),
         role: m.role,
@@ -64,10 +65,15 @@ export const convexHouseholdRepository = (
           aggregateId: state.id as string,
           createdAt: state.createdAt.getTime(),
           defaultCopyPermission: state.defaultCopyPermission,
+          name: state.name,
         });
-      } else if (row.defaultCopyPermission !== state.defaultCopyPermission) {
+      } else if (
+        row.defaultCopyPermission !== state.defaultCopyPermission ||
+        row.name !== state.name
+      ) {
         await ctx.db.patch(row._id, {
           defaultCopyPermission: state.defaultCopyPermission,
+          name: state.name,
         });
       }
       // Sync member rows to the aggregate: drop departed, update roles, add newcomers.

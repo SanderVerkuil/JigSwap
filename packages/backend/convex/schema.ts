@@ -1584,6 +1584,9 @@ export default defineSchema({
     defaultCopyPermission: v.optional(
       v.union(v.literal("manage"), v.literal("view")),
     ),
+    // The members' own name for the household (normalised, 1-100 chars); absent = unnamed. Only
+    // ever returned to members of this household (household/getMyHousehold).
+    name: v.optional(v.string()),
   }).index("by_aggregate_id", ["aggregateId"]),
 
   householdMembers: defineTable({

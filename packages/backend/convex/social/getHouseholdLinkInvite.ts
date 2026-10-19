@@ -10,7 +10,8 @@ import {
 
 // The signed-in landing for a household invite link: "<inviter> invited you to their household"
 // with Accept / Decline, or why the member can't join. The inviter's name is returned only while
-// the link is live (can-accept, already-in-household); households have no name of their own.
+// the link is live (can-accept, already-in-household). The household's own name is never returned:
+// only its members see it (household/getMyHousehold).
 export const getHouseholdLinkInvite = query({
   args: { token: v.string() },
   handler: async (
