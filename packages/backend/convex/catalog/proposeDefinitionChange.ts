@@ -6,13 +6,15 @@ import {
   type PuzzleDefinitionChanges,
 } from "@jigswap/domain";
 import { v } from "convex/values";
-import { mutation } from "../_generated/server";
+import type { Id } from "../_generated/dataModel";
+import { mutation, type QueryCtx } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { catalogIdGenerator } from "./adapters/catalogIdGenerator";
 import { convexChangeProposalRepository } from "./adapters/convexChangeProposalRepository";
 import { convexPuzzleDefinitionRepository } from "./adapters/convexPuzzleDefinitionRepository";
 import { catalogEventPublisher } from "./adapters/eventPublisher";
 import { systemClock } from "./adapters/systemClock";
+import { assertBoxArtImage } from "./boxArtUploads";
 import { toConvexError } from "./errors";
 
 // The proposable field args, shared verbatim by proposeDefinitionChange and editChangeProposal.
@@ -102,6 +104,20 @@ export const toChanges = (args: ProposalFieldArgs): PuzzleDefinitionChanges => {
   };
 };
 
+/** The definition's current box art (a proposal may restate it). */
+export const currentBoxArt = async (
+  ctx: QueryCtx,
+  puzzleDefinitionId: string,
+): Promise<string | undefined> =>
+  (
+    await ctx.db
+      .query("puzzles")
+      .withIndex("by_aggregate_id", (q) =>
+        q.eq("aggregateId", puzzleDefinitionId),
+      )
+      .unique()
+  )?.image;
+
 // Composition root: any signed-in member proposes a field diff against an APPROVED definition.
 // Cross-aggregate rules (approved-only, one open proposal per member+definition) live in the
 // use case; this root only authenticates and adapts transport ⇄ domain.
@@ -113,6 +129,13 @@ export const proposeDefinitionChange = mutation({
   },
   handler: async (ctx, args) => {
     const actingMember = await requireMember(ctx);
+    // A new image must be box art the server stripped of its metadata for this member.
+    await assertBoxArtImage(
+      ctx,
+      args.image,
+      actingMember as unknown as Id<"users">,
+      [await currentBoxArt(ctx, args.puzzleDefinitionId)],
+    );
 
     const file = makeFileChangeProposal({
       proposals: convexChangeProposalRepository(ctx),

@@ -100,6 +100,15 @@ export default defineSchema({
       searchField: "searchableName",
     }),
 
+  // Box art that went through the server's metadata strip (catalog/boxArtUploads): a clean blob
+  // and the member it was cleaned for. A definition or proposal only takes a NEW image that is
+  // listed here for the acting member, so no box art is stored with its EXIF/GPS.
+  boxArtUploads: defineTable({
+    storageId: v.id("_storage"),
+    uploaderId: v.id("users"),
+    createdAt: v.number(),
+  }).index("by_storage", ["storageId"]),
+
   // Puzzles  - the actual puzzle designs that exist in the world
   puzzles: defineTable({
     // Catalog PuzzleDefinitionId. Optional so legacy rows still validate; the domain-driven

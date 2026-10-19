@@ -57,6 +57,7 @@ import type * as catalog_adapters_systemClock from "../catalog/adapters/systemCl
 import type * as catalog_approveChangeProposal from "../catalog/approveChangeProposal.js";
 import type * as catalog_approvePuzzleDefinition from "../catalog/approvePuzzleDefinition.js";
 import type * as catalog_backfillCategories from "../catalog/backfillCategories.js";
+import type * as catalog_boxArtUploads from "../catalog/boxArtUploads.js";
 import type * as catalog_browsePublicCatalog from "../catalog/browsePublicCatalog.js";
 import type * as catalog_createCatalogCategory from "../catalog/createCatalogCategory.js";
 import type * as catalog_disablePuzzleDefinition from "../catalog/disablePuzzleDefinition.js";
@@ -94,6 +95,7 @@ import type * as catalog_rejectChangeProposal from "../catalog/rejectChangePropo
 import type * as catalog_rejectPuzzleDefinition from "../catalog/rejectPuzzleDefinition.js";
 import type * as catalog_reorderCatalogCategories from "../catalog/reorderCatalogCategories.js";
 import type * as catalog_runDefinitionAction from "../catalog/runDefinitionAction.js";
+import type * as catalog_sanitizeBoxArt from "../catalog/sanitizeBoxArt.js";
 import type * as catalog_searchCatalog from "../catalog/searchCatalog.js";
 import type * as catalog_setCatalogCategoryActive from "../catalog/setCatalogCategoryActive.js";
 import type * as catalog_submitPuzzleDefinition from "../catalog/submitPuzzleDefinition.js";
@@ -575,6 +577,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/approveChangeProposal": typeof catalog_approveChangeProposal;
   "catalog/approvePuzzleDefinition": typeof catalog_approvePuzzleDefinition;
   "catalog/backfillCategories": typeof catalog_backfillCategories;
+  "catalog/boxArtUploads": typeof catalog_boxArtUploads;
   "catalog/browsePublicCatalog": typeof catalog_browsePublicCatalog;
   "catalog/createCatalogCategory": typeof catalog_createCatalogCategory;
   "catalog/disablePuzzleDefinition": typeof catalog_disablePuzzleDefinition;
@@ -612,6 +615,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/rejectPuzzleDefinition": typeof catalog_rejectPuzzleDefinition;
   "catalog/reorderCatalogCategories": typeof catalog_reorderCatalogCategories;
   "catalog/runDefinitionAction": typeof catalog_runDefinitionAction;
+  "catalog/sanitizeBoxArt": typeof catalog_sanitizeBoxArt;
   "catalog/searchCatalog": typeof catalog_searchCatalog;
   "catalog/setCatalogCategoryActive": typeof catalog_setCatalogCategoryActive;
   "catalog/submitPuzzleDefinition": typeof catalog_submitPuzzleDefinition;

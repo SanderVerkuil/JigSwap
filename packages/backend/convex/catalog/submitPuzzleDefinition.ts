@@ -4,6 +4,7 @@ import {
   type SubmitterId,
 } from "@jigswap/domain";
 import { v } from "convex/values";
+import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
@@ -11,6 +12,7 @@ import { catalogIdGenerator } from "./adapters/catalogIdGenerator";
 import { convexPuzzleDefinitionRepository } from "./adapters/convexPuzzleDefinitionRepository";
 import { catalogEventPublisher } from "./adapters/eventPublisher";
 import { systemClock } from "./adapters/systemClock";
+import { assertBoxArtImage } from "./boxArtUploads";
 import { toConvexError } from "./errors";
 
 // Composition root for submitting a puzzle definition: authenticate -> wire adapters -> call
@@ -61,6 +63,12 @@ export const submitPuzzleDefinition = mutation({
   handler: async (ctx, args) => {
     const submittedBy = await requireMember(ctx); // submitter derived from auth, never the client
     const autoApprove = await isAdmin(ctx); // admins skip the moderation queue
+    // Only box art the server stripped of its metadata for this member.
+    await assertBoxArtImage(
+      ctx,
+      args.image,
+      submittedBy as unknown as Id<"users">,
+    );
 
     const submit = makeSubmitPuzzleDefinition({
       definitions: convexPuzzleDefinitionRepository(ctx),
