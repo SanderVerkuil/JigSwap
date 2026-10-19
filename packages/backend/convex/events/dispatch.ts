@@ -8,7 +8,7 @@ import {
 } from "../conversation/circleSubscriber";
 import {
   handleDomainEvent as handleConversationEvent,
-  LIFECYCLE_BODIES,
+  LIFECYCLE_TRADE_EVENTS,
 } from "../conversation/subscriber";
 import { handleDomainEvent as handleCustodyEvent } from "../custody/subscriber";
 import { handleDomainEvent as handleTradeRevealEvent } from "../exchange/tradeRevealSubscriber";
@@ -57,8 +57,9 @@ const HANDLERS: readonly {
     name: "conversation",
     run: handleConversationEvent,
     retry: false,
-    // Derived from the handler's own LIFECYCLE_BODIES table, so it tracks new lifecycle events.
-    events: Object.keys(LIFECYCLE_BODIES),
+    // Derived from the handler's own LIFECYCLE_TRADE_EVENTS table, so it tracks new lifecycle
+    // events.
+    events: Object.keys(LIFECYCLE_TRADE_EVENTS),
   },
   // Mirrors circle membership into the circle's thread (participants + join/leave rows).
   // Convergent: it applies a change only while it is still true of the circle, so a retry, or a

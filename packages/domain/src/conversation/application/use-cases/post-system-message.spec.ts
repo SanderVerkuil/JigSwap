@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { toExchangeId, toMemberId, toThreadId } from "../../../shared-kernel";
-import { MemberId, Thread } from "../../domain";
+import { MemberId, Thread, TRADE_EVENT_BODY } from "../../domain";
 import {
   FixedClock,
   InMemoryThreadRepository,
@@ -49,6 +49,19 @@ describe("makePostSystemMessage", () => {
 
     const reloaded = await threads.findById(threadId);
     expect(reloaded?.messages[0]?.authorId).toBeNull();
+  });
+
+  it("stores a trade lifecycle row's tradeEvent alongside its body token", async () => {
+    const result = await post({
+      threadId,
+      body: TRADE_EVENT_BODY.proposed,
+      tradeEvent: { kind: "proposed" },
+    });
+
+    expect(result.isOk).toBe(true);
+    const reloaded = await threads.findById(threadId);
+    expect(reloaded?.messages[0]?.tradeEvent).toEqual({ kind: "proposed" });
+    expect(reloaded?.messages[0]?.body).toBe("exchange_proposed");
   });
 
   it("rejects ThreadNotFound and writes nothing", async () => {

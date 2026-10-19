@@ -285,7 +285,7 @@ describe("dispatch failure visibility + retry policy", () => {
     expect(event?.failedHandlers).toEqual(["tradeReveal"]);
     // Successful handlers ran exactly once — retries only re-run the failing one.
     expect(await notesFor(t, alice, "trade_accepted")).toHaveLength(1);
-    expect(await systemMessages(t, "Exchange accepted")).toHaveLength(1);
+    expect(await systemMessages(t, "exchange_accepted")).toHaveLength(1);
   });
 
   test("a transient idempotent failure recovers on retry and the event is stamped processed", async () => {
@@ -310,7 +310,7 @@ describe("dispatch failure visibility + retry policy", () => {
       ctx.db.query("tradeReveals").collect(),
     );
     expect(reveals).toHaveLength(1);
-    expect(await systemMessages(t, "Exchange accepted")).toHaveLength(1);
+    expect(await systemMessages(t, "exchange_accepted")).toHaveLength(1);
   });
 
   test("a non-idempotent failure is logged and marked failed without a retry", async () => {
@@ -345,7 +345,7 @@ describe("dispatch failure visibility + retry policy", () => {
       message: "conversation exploded",
     });
     // The failed handler's partial writes rolled back; the others committed.
-    expect(await systemMessages(t, "Exchange proposed")).toHaveLength(1); // the auto one only
+    expect(await systemMessages(t, "exchange_proposed")).toHaveLength(1); // the auto one only
     expect(await tradeRequestsFor(t, bob)).toHaveLength(2);
   });
 
@@ -395,7 +395,7 @@ describe("dispatch failure visibility + retry policy", () => {
     // The real notification handler inserted a trade_request, then threw: rolled back.
     expect(await tradeRequestsFor(t, bob)).toHaveLength(1); // the auto one only
     // Conversation's system message for this event committed.
-    expect(await systemMessages(t, "Exchange proposed")).toHaveLength(2);
+    expect(await systemMessages(t, "exchange_proposed")).toHaveLength(2);
     const event = await t.run((ctx) => ctx.db.get(eventId));
     expect(event?.failedHandlers).toEqual(["notifications"]);
     expect(event?.lastError).toEqual({

@@ -9,6 +9,20 @@ const systemEventValidator = v.object({
   memberId: v.id("users"),
 });
 
+// An exchange thread's trade lifecycle fact (threadMessages.tradeEvent and its lastMessage summary),
+// rendered in the reader's language. Rows written before it existed carry only an English body;
+// the read models map those (conversation/readModelHelpers tradeEventOf).
+const tradeEventValidator = v.object({
+  kind: v.union(
+    v.literal("proposed"),
+    v.literal("accepted"),
+    v.literal("rejected"),
+    v.literal("cancelled"),
+    v.literal("completed"),
+    v.literal("cancelled_member_deleted"),
+  ),
+});
+
 // The proposable field diff, shared by puzzleChangeProposals.changes and .baseline. Mirrors the
 // domain PuzzleDefinitionChanges shape exactly (barcodes grouped: supplying the group replaces
 // all three values, same as updatePuzzleDefinition).
@@ -885,6 +899,8 @@ export default defineSchema({
         removed: v.optional(v.literal(true)),
         // A circle thread's join/leave row: who joined or left (rendered per viewer).
         systemEvent: v.optional(systemEventValidator),
+        // An exchange thread's lifecycle row: which trade step it records.
+        tradeEvent: v.optional(tradeEventValidator),
       }),
     ),
     createdAt: v.number(),
@@ -924,6 +940,9 @@ export default defineSchema({
     // alike; the remover is never stored). Each viewer's read projects the member through their
     // own identity rules, so no name is snapshotted. Absent on every other message.
     systemEvent: v.optional(systemEventValidator),
+    // An exchange thread's lifecycle row (proposed, accepted, …): the step, rendered in each
+    // reader's language. Absent on every other message and on rows written before it existed.
+    tradeEvent: v.optional(tradeEventValidator),
   })
     .index("by_thread_sent", ["threadAggregateId", "sentAt"])
     // Copy-referencing messages of a thread, grouped per copy (rows without a copyId sort first

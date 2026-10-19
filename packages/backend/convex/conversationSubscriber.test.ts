@@ -115,7 +115,8 @@ describe("conversation subscriber", () => {
     const messages = await messagesOf(t, threads[0].aggregateId);
     expect(messages).toHaveLength(1);
     expect(messages[0].kind).toBe("system");
-    expect(messages[0].body).toBe("Exchange proposed");
+    expect(messages[0].body).toBe("exchange_proposed");
+    expect(messages[0].tradeEvent).toEqual({ kind: "proposed" });
     expect(messages[0].authorId).toBeUndefined();
   });
 
@@ -138,13 +139,13 @@ describe("conversation subscriber", () => {
   });
 
   test.each([
-    ["ExchangeAccepted", "Exchange accepted"],
-    ["ExchangeRejected", "Exchange rejected"],
-    ["ExchangeCancelled", "Exchange cancelled"],
-    ["ExchangeCompleted", "Exchange completed"],
+    ["ExchangeAccepted", "accepted"],
+    ["ExchangeRejected", "rejected"],
+    ["ExchangeCancelled", "cancelled"],
+    ["ExchangeCompleted", "completed"],
   ])(
-    "%s appends the %j system message to the existing thread",
-    async (name, body) => {
+    "%s appends the %j trade system message to the existing thread",
+    async (name, kind) => {
       const t = convexTest(schema, modules);
       const { exchangeAggregateId } = await seed(t);
       await dispatchEvent(t, "ExchangeProposed", {
@@ -156,7 +157,11 @@ describe("conversation subscriber", () => {
       const threads = await threadsOf(t);
       expect(threads).toHaveLength(1);
       const messages = await messagesOf(t, threads[0].aggregateId);
-      expect(messages.map((m) => m.body)).toEqual(["Exchange proposed", body]);
+      expect(messages.map((m) => m.tradeEvent?.kind)).toEqual([
+        "proposed",
+        kind,
+      ]);
+      expect(messages[1].body).toBe(`exchange_${kind}`);
       expect(messages[1].kind).toBe("system");
       expect(messages[1].authorId).toBeUndefined();
     },
@@ -173,7 +178,7 @@ describe("conversation subscriber", () => {
     const threads = await threadsOf(t);
     expect(threads).toHaveLength(1);
     const messages = await messagesOf(t, threads[0].aggregateId);
-    expect(messages.map((m) => m.body)).toEqual(["Exchange accepted"]);
+    expect(messages.map((m) => m.tradeEvent)).toEqual([{ kind: "accepted" }]);
   });
 
   test("an unrelated event touches no threads and no messages", async () => {
