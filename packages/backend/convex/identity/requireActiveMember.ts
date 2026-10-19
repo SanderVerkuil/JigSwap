@@ -14,7 +14,8 @@ export const isActiveMember = async (
 // requireMember plus an isActive check, for surfaces that must stay closed to a deactivated or
 // tombstoned account whose session is still valid (presence: a heartbeat after the account
 // purge would recreate component rows with a lastDisconnected, spec 5.6). Refuses with the same
-// generic error as a missing user row.
+// generic error as a missing user row. requireMember itself now refuses inactive members too
+// (#275), so this check is a redundant belt-and-braces for the presence surfaces.
 export const requireActiveMember = async (ctx: QueryCtx): Promise<MemberId> => {
   const memberId = await requireMember(ctx);
   if (!(await isActiveMember(ctx, memberId)))

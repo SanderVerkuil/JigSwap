@@ -498,9 +498,11 @@ describe("inactive (tombstoned) members", () => {
     ).toEqual([]);
   });
 
-  test("see nobody", async () => {
+  test("see nobody: refused like a missing member", async () => {
     const { t, alice, bob } = await seed();
     await deactivate(t, alice);
-    expect(await presenceOf(t, "alice", [bob])).toEqual([]);
+    await expect(presenceOf(t, "alice", [bob])).rejects.toThrow(
+      /Member not found/,
+    );
   });
 });
