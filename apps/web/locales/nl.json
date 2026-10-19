@@ -900,6 +900,7 @@
       "recipientFallback": "de ander"
     },
     "circle": {
+      "attachHint": "Alleen je puzzels die iedereen in {circle} kan zien. Deel een puzzel met de kring om hem hier toe te voegen.",
       "authorPrefix": "{name}: {body}",
       "memberCount": "{count, plural, one {# lid} other {# leden}}",
       "members": "Leden",

@@ -532,8 +532,9 @@ export function ThreadView({
               placeholder: t("circle.composerPlaceholder", {
                 circle: circleThread.subject.name,
               }),
-              // listAttachableCopies has nothing for circle threads yet.
-              canAttachCopy: false,
+              attachHint: t("circle.attachHint", {
+                circle: circleThread.subject.name,
+              }),
               locationGroup: {
                 circle: circleThread.subject.name,
                 // Everyone but the sender sees the spot.

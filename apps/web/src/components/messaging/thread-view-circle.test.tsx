@@ -157,6 +157,14 @@ const CIRCLE_MESSAGES = [
   },
 ];
 
+const SHARED_COPY = {
+  copyId: "copy_1",
+  title: "Harbour Lights",
+  brand: "Ravensburger",
+  pieceCount: 1000,
+  coverUrl: null,
+};
+
 const circleThread: AnyInboxThread = {
   threadId: "thread_c",
   subject: {
@@ -235,6 +243,13 @@ const renderThread = (
   queryClient.setQueryData(
     convexQuery(gateway.sharing.circle, { circleId: "circle_1" }).queryKey,
     CIRCLE_DETAIL,
+  );
+  queryClient.setQueryData(
+    convexQuery(gateway.conversation.listAttachableCopies, {
+      threadId: thread.threadId,
+      side: "mine",
+    }).queryKey,
+    [SHARED_COPY],
   );
   if (presence) {
     // The viewer shares; one batched read for the members other than "me".
@@ -356,13 +371,75 @@ describe("ThreadView in a circle thread", () => {
     expect(screen.getByPlaceholderText("Write to Puzzle Club…")).toBeTruthy();
   });
 
-  it("doesn't offer a puzzle to attach", () => {
+  it("offers a puzzle to attach: only my puzzles, with who can see them", async () => {
     renderThread(circleThread, CIRCLE_MESSAGES);
-    const attach = screen.queryByRole("button", { name: "Attach" });
-    if (attach) fireEvent.keyDown(attach, { key: "Enter" });
+    fireEvent.keyDown(screen.getByRole("button", { name: "Attach" }), {
+      key: "Enter",
+    });
+    fireEvent.click(
+      await screen.findByRole("menuitem", { name: "Attach a puzzle" }),
+    );
+    const picker = await screen.findByRole("dialog", {
+      name: "Attach a puzzle",
+    });
     expect(
-      screen.queryByRole("menuitem", { name: "Attach a puzzle" }),
-    ).toBeNull();
+      within(picker)
+        .getAllByRole("tab")
+        .map((tab) => tab.textContent),
+    ).toEqual(["My puzzles"]);
+    expect(
+      within(picker).getByText(
+        "Only your puzzles that everyone in Puzzle Club can see. Share a puzzle with the circle to add it here.",
+      ),
+    ).toBeTruthy();
+    expect(within(picker).getByText("Harbour Lights")).toBeTruthy();
+  });
+
+  it("shows a shared puzzle's card, or that it is no longer available", () => {
+    renderThread(circleThread, [
+      ...CIRCLE_MESSAGES,
+      {
+        id: "c1",
+        isMine: false,
+        kind: "text",
+        body: "Anyone want this?",
+        sentAt: minute(8),
+        author: anna,
+        copy: SHARED_COPY,
+      },
+      {
+        id: "c2",
+        isMine: false,
+        kind: "text",
+        body: "And this one",
+        sentAt: minute(9),
+        author: anna,
+        copyUnavailable: true,
+      },
+    ]);
+    expect(screen.getByText("Harbour Lights")).toBeTruthy();
+    expect(screen.getByText("This puzzle is no longer available")).toBeTruthy();
+  });
+
+  it("says the puzzle is no longer available in Dutch", () => {
+    renderThread(
+      circleThread,
+      [
+        {
+          id: "c2",
+          isMine: false,
+          kind: "text",
+          body: "En deze",
+          sentAt: minute(9),
+          author: anna,
+          copyUnavailable: true,
+        },
+      ],
+      "nl",
+    );
+    expect(
+      screen.getByText(nl.messages.copyUnavailable as string),
+    ).toBeTruthy();
   });
 });
 
