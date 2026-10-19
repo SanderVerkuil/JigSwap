@@ -12,7 +12,8 @@ puzzelbibliotheek. Iedereen in het huishouden ziet elkaars puzzels in
 puzzelsessies blijven persoonlijk.
 
 **Waar:** **Mijn Bibliotheek** → **Huishouden** (`/household`). De pagina heeft
-drie tabbladen: **Leden**, **Mijn puzzels** en **Instellingen**.
+vier tabbladen: **Puzzels**, **Leden**, **Delen** en **Instellingen**. Hij
+opent op **Puzzels**.
 
 ## Een huishouden aanmaken
 
@@ -118,10 +119,28 @@ huishouden en verandert er niets.
 Geen interesse? Klik op **Weigeren**. Bij het uitnodigen zie je nooit of
 iemand al in een huishouden zit.
 
+## Alle puzzels in het huishouden bekijken
+
+Het tabblad **Puzzels** toont elke puzzel in het huishouden: die van jou en
+die van elke huisgenoot, ook exemplaren die op privé staan. Op elke kaart
+staat van wie hij is: op die van jou staat **Jij**, op die van een huisgenoot
+zijn of haar foto en naam.
+
+- Klik op een persoon boven de puzzels om alleen diens puzzels te zien, of op
+  **Iedereen** voor alle.
+- Kies **Beschikbaar**, **Te Ruilen** of **Te Leen** om alleen puzzels te zien
+  die worden aangeboden.
+- Klik op een puzzel om hem te openen.
+
 ## Wat leden van een huishouden kunnen zien en doen
 
-- Iedereen ziet ieders puzzels in **Mijn Puzzels**, met het label
-  **Huishouden · _naam_**, ook exemplaren die op privé staan.
+- Iedereen ziet ieders puzzels op het tabblad **Puzzels** van het huishouden
+  en in **Mijn Puzzels**, ook exemplaren die op privé staan. In
+  **Mijn Puzzels** staat bij de puzzel van een huisgenoot zijn of haar foto en
+  naam; puzzels zonder naam zijn van jou. Kies in het menu naast de
+  weergaveknoppen **Alles**, alleen **Van mij** of alleen
+  **Van huisgenoten**. De link **Alle puzzels in je huishouden** opent het
+  tabblad **Puzzels** van het huishouden.
 - Elk lid kan eigen puzzelsessies vastleggen op een puzzel van het huishouden.
 - Wat een lid verder met jouw puzzel mag doen, hangt af van de
   **Toegang huishouden**.
@@ -131,8 +150,8 @@ iemand al in een huishouden zit.
 Elke puzzel heeft een van twee toegangsniveaus:
 
 - **Mag beheren** — huisgenoten kunnen hem bewerken, uitlenen en ruilen.
-- **Alleen bekijken** — huisgenoten kunnen hem zien. In **Mijn Puzzels** heeft
-  hij het label **Huishouden · _naam_ · alleen bekijken**.
+- **Alleen bekijken** — huisgenoten kunnen hem zien. Op de kaart staat
+  **Alleen bekijken** naast jouw naam.
 
 Sommige acties blijven bij de eigenaar, wat het toegangsniveau ook is: de
 puzzel verwijderen, de toegang voor het huishouden wijzigen, hem in een
@@ -149,7 +168,7 @@ Alleen de eigenaar kan de toegang voor het huishouden van een puzzel wijzigen.
 
 ## Meerdere puzzels tegelijk wijzigen
 
-1. Open op **Huishouden** het tabblad **Mijn puzzels**.
+1. Open op **Huishouden** het tabblad **Delen**.
 2. Filter de lijst eventueel op toegang voor het huishouden.
 3. Vink de puzzels aan die je wilt wijzigen, of gebruik **Alles selecteren**.
 4. Klik op **Instellen op Mag beheren**, **Instellen op Alleen bekijken** of

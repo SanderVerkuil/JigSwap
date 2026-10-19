@@ -2,7 +2,7 @@
 id: household-improvements
 publishedAt: "2026-10-19T12:00:00Z"
 title: "Verbeteringen aan huishoudens"
-summary: "Een overzichtelijkere pagina Huishouden met tabbladen en één knop Uitnodigen, een naam voor je huishouden, en in één stap overstappen."
+summary: "Alle puzzels van je huishouden op één tabblad, een overzichtelijkere pagina Huishouden met één knop Uitnodigen, een naam voor je huishouden, en in één stap overstappen."
 category: improvement
 cta:
   label: "Huishouden openen"
@@ -14,10 +14,16 @@ meteen vindt waarvoor je kwam.
 
 ## Wat is er veranderd
 
-- **Drie tabbladen.** **Leden** laat zien wie er in je huishouden zit en wie
-  nog is uitgenodigd. Bij **Mijn puzzels** kies je wat je huishouden met elk
-  van je puzzels mag doen. **Instellingen** bevat de standaard van het
-  huishouden en de optie om te vertrekken.
+- **Eerst alle puzzels van het huishouden.** De pagina opent op **Puzzels**:
+  elke puzzel in je huishouden, van jou en van je huisgenoten, met bij elke
+  puzzel van wie hij is. Toon alleen die van één persoon, of alleen puzzels
+  om te ruilen of te lenen. In **Mijn Puzzels** staat bij de puzzel van een
+  huisgenoot nu zijn of haar foto en naam, en kun je alleen die van jou of
+  alleen die van hen tonen.
+- **Vier tabbladen.** Naast **Puzzels** laat **Leden** zien wie er in je
+  huishouden zit en wie nog is uitgenodigd. Bij **Delen** kies je wat je
+  huishouden met elk van je puzzels mag doen. **Instellingen** bevat de
+  standaard van het huishouden en de optie om te vertrekken.
 - **Eén knop Uitnodigen.** Beheerders van een huishouden vinden alle manieren
   om uit te nodigen op één plek: een lid zoeken, een link delen of een e-mail
   sturen.
