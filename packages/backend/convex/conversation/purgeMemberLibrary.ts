@@ -3,8 +3,8 @@ import type { MutationCtx } from "../_generated/server";
 import { isPreservedBlob } from "../lib/imageModeration/quarantine";
 
 // Phase bodies of the account-deletion purge (conversation/purgeMemberMessagingData) for what the
-// member left outside messaging: their open trades and loans, their library copies, photos and
-// completions. Each takes one page of the member's rows and returns the page, so runPhase keeps the
+// member left outside messaging: their open trades and loans, their library copies, photos,
+// completions, goals, collections and personal categories. Each takes one page of the member's rows and returns the page, so runPhase keeps the
 // one-phase-per-run, cursor-reschedule contract.
 
 type PageOpts = { cursor: string | null; numItems: number };
@@ -278,6 +278,47 @@ export const purgeCompletions = async (
       continue;
     }
     await deleteCompletion(ctx, completion);
+  }
+  return page;
+};
+
+/** Their goals and personal categories: own rows nothing else references. */
+export const deleteOwnRows = async (
+  ctx: MutationCtx,
+  memberId: Id<"users">,
+  table: "goals" | "categories",
+  opts: PageOpts,
+): Promise<Page> => {
+  const page = await (
+    table === "goals"
+      ? ctx.db
+          .query("goals")
+          .withIndex("by_user", (q) => q.eq("userId", memberId))
+      : ctx.db
+          .query("categories")
+          .withIndex("by_user", (q) => q.eq("userId", memberId))
+  ).paginate(opts);
+  for (const row of page.page) await ctx.db.delete(row._id);
+  return page;
+};
+
+/** Their collections and wishlists, with whatever memberships their deleted copies left. */
+export const deleteCollections = async (
+  ctx: MutationCtx,
+  memberId: Id<"users">,
+  opts: PageOpts,
+): Promise<Page> => {
+  const page = await ctx.db
+    .query("collections")
+    .withIndex("by_user", (q) => q.eq("userId", memberId))
+    .paginate(opts);
+  for (const collection of page.page) {
+    const members = await ctx.db
+      .query("collectionMembers")
+      .withIndex("by_collection", (q) => q.eq("collectionId", collection._id))
+      .collect();
+    for (const row of members) await ctx.db.delete(row._id);
+    await ctx.db.delete(collection._id);
   }
   return page;
 };

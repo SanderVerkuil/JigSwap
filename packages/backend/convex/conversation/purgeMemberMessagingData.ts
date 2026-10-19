@@ -13,7 +13,9 @@ import { removeForDeletedMember } from "./messageAttachments";
 import {
   cancelOpenExchanges,
   closeOpenLoans,
+  deleteCollections,
   deleteOwnCopies,
+  deleteOwnRows,
   deleteUploadedCopyPhotos,
   purgeCompletions,
 } from "./purgeMemberLibrary";
@@ -80,6 +82,7 @@ import {
 //                History) without its photos; any other goes, photos and blobs included
 //                Photos keep the attachments' rule: a quarantined one (CSAM hash match) stays whole
 //                and a blob a CSAM escalation preserves is never deleted.
+//   goals, collections (with their memberships, wishlists included), categories (personal)
 // One phase at a time, PURGE_BATCH_SIZE rows per run: a run that did not finish its phase
 // schedules the next run with the page cursor, so each run stays well inside Convex's per-mutation
 // limits whatever the member's history. Rows a phase keeps (a quarantined or evidence-held photo)
@@ -128,6 +131,9 @@ const PHASES = [
   "copies",
   "copyPhotos",
   "completions",
+  "goals",
+  "collections",
+  "categories",
 ] as const;
 type Phase = (typeof PHASES)[number];
 
@@ -171,6 +177,9 @@ const phaseValidator = v.union(
   v.literal("copies"),
   v.literal("copyPhotos"),
   v.literal("completions"),
+  v.literal("goals"),
+  v.literal("collections"),
+  v.literal("categories"),
 );
 
 type Page = { isDone: boolean; continueCursor: string };
@@ -651,6 +660,11 @@ const runPhase = async (
       return deleteUploadedCopyPhotos(ctx, memberId, opts);
     case "completions":
       return purgeCompletions(ctx, memberId, opts);
+    case "goals":
+    case "categories":
+      return deleteOwnRows(ctx, memberId, phase, opts);
+    case "collections":
+      return deleteCollections(ctx, memberId, opts);
   }
 };
 

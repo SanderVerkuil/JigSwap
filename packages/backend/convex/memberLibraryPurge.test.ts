@@ -724,3 +724,68 @@ describe("account deletion: batching", () => {
     expect(rest.bobs).not.toBeNull();
   });
 });
+
+describe("account deletion: goals, collections, categories", () => {
+  test("hers are deleted, Bob's stay", async () => {
+    const t = newT();
+    const s = await seedMembers(t);
+    const bobsCopy = await insertCopy(t, s.puzzleId, s.bob);
+    const insertRows = (userId: Id<"users">) =>
+      t.run(async (ctx) => {
+        const now = Date.now();
+        await ctx.db.insert("goals", {
+          userId,
+          title: "Ten this year",
+          targetCompletions: 10,
+          currentCompletions: 2,
+          isActive: true,
+          createdAt: now,
+          updatedAt: now,
+        });
+        await ctx.db.insert("categories", {
+          userId,
+          name: "Landscapes",
+          isDefault: false,
+          createdAt: now,
+          updatedAt: now,
+        });
+        const collectionId = await ctx.db.insert("collections", {
+          userId,
+          name: "Wishlist",
+          visibility: "public",
+          isDefault: false,
+          isWishlist: true,
+          wishedDefinitions: ["def-1"],
+          createdAt: now,
+          updatedAt: now,
+        });
+        // A membership left pointing at a copy (a legacy row; normally only own copies).
+        await ctx.db.insert("collectionMembers", {
+          collectionId,
+          ownedPuzzleId: bobsCopy,
+          addedAt: now,
+        });
+      });
+    await insertRows(s.alice);
+    await insertRows(s.bob);
+
+    await deleteMember(t, "alice");
+
+    const owners = await t.run(async (ctx) => ({
+      goals: (await ctx.db.query("goals").collect()).map((r) => r.userId),
+      categories: (await ctx.db.query("categories").collect()).map(
+        (r) => r.userId,
+      ),
+      collections: (await ctx.db.query("collections").collect()).map(
+        (r) => r.userId,
+      ),
+      memberships: (await ctx.db.query("collectionMembers").collect()).length,
+      bobsCopy: await ctx.db.get(bobsCopy),
+    }));
+    expect(owners.goals).toEqual([s.bob]);
+    expect(owners.categories).toEqual([s.bob]);
+    expect(owners.collections).toEqual([s.bob]);
+    expect(owners.memberships).toBe(1);
+    expect(owners.bobsCopy).not.toBeNull();
+  });
+});
