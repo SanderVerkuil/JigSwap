@@ -1,10 +1,21 @@
+import {
+  makeDeleteCircle,
+  makeLeaveHousehold,
+  toCircleId,
+  toMemberId,
+} from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
+import { householdDeps } from "../household/adapters/deps";
 import { isPreservedBlob } from "../lib/imageModeration/quarantine";
+import { convexCircleRepository } from "../sharing/adapters/convexCircleRepository";
+import { inProcessEventPublisher as sharingEventPublisher } from "../sharing/adapters/inProcessEventPublisher";
+import { systemClock } from "../sharing/adapters/systemClock";
 
 // Phase bodies of the account-deletion purge (conversation/purgeMemberMessagingData) for what the
 // member left outside messaging: their open trades and loans, their library copies, photos,
-// completions, goals, collections and personal categories. Each takes one page of the member's rows and returns the page, so runPhase keeps the
+// completions, goals, collections and personal categories, the circles they own and their
+// household. Each takes one page of the member's rows and returns the page, so runPhase keeps the
 // one-phase-per-run, cursor-reschedule contract.
 
 type PageOpts = { cursor: string | null; numItems: number };
@@ -321,4 +332,103 @@ export const deleteCollections = async (
     await ctx.db.delete(collection._id);
   }
   return page;
+};
+
+// Whether the member can still take something over: their users row exists and is active (a
+// tombstoned account is inactive).
+const isActiveMember = async (ctx: MutationCtx, memberId: Id<"users">) =>
+  (await ctx.db.get(memberId))?.isActive === true;
+
+/**
+ * Who takes a circle over from its departing owner: the longest-standing active Admin, else the
+ * longest-standing active member, else nobody. A departed member's seat is skipped.
+ */
+const successorOf = async (
+  ctx: MutationCtx,
+  circle: Doc<"circles">,
+): Promise<Id<"users"> | null> => {
+  const seats = circle.memberships
+    .filter((seat) => seat.memberId !== circle.ownerId)
+    .sort(
+      (a, b) =>
+        Number(b.permission === "Admin") - Number(a.permission === "Admin") ||
+        a.joinedAt - b.joinedAt,
+    );
+  for (const seat of seats) {
+    if (await isActiveMember(ctx, seat.memberId)) return seat.memberId;
+  }
+  return null;
+};
+
+/**
+ * The circles they own: each goes to its successor (Circle.handOverOwnership; the repository save
+ * keeps the circleMembers projection in step), their own seat staying as a departed seat. A circle
+ * nobody active is left in is deleted through the owner's own delete path (makeDeleteCircle, as
+ * them, confirming its name), whose CircleDeleted reaction schedules sharing/purgeDeletedCircle.
+ */
+export const handOverOwnedCircles = async (
+  ctx: MutationCtx,
+  memberId: Id<"users">,
+  opts: PageOpts,
+): Promise<Page> => {
+  const page = await ctx.db
+    .query("circles")
+    .withIndex("by_owner", (q) => q.eq("ownerId", memberId))
+    .paginate(opts);
+  const circles = convexCircleRepository(ctx);
+  for (const row of page.page) {
+    // Every circle is written by the domain repository, which keys on aggregateId.
+    if (!row.aggregateId) continue;
+    const circleId = toCircleId(row.aggregateId);
+    const successor = await successorOf(ctx, row);
+    if (successor) {
+      const circle = await circles.findById(circleId);
+      if (!circle) continue;
+      // The successor is a seat of this circle, so the hand-over cannot be refused.
+      if (circle.handOverOwnership(toMemberId(successor)).isOk) {
+        await circles.save(circle);
+      }
+      continue;
+    }
+    const result = await makeDeleteCircle({
+      circles,
+      events: sharingEventPublisher(ctx),
+      clock: systemClock,
+    })({
+      circleId,
+      actorId: toMemberId(memberId),
+      confirmName: row.name,
+    });
+    // Refused only if the circle changed under us; the purge carries on rather than stall.
+    if (result.isErr) {
+      console.warn("purge: circle not deleted", circleId, result.error.code);
+    }
+  }
+  return page;
+};
+
+/**
+ * Take them out of their household through the leave use case: when they were its admin the
+ * longest-standing remaining member is promoted, and when they were its last member it is
+ * dissolved. The household model has no adult/child distinction, so "another adult takes over" is
+ * exactly that promotion rule.
+ */
+export const leaveHousehold = async (
+  ctx: MutationCtx,
+  memberId: Id<"users">,
+): Promise<Page> => {
+  const seat = await ctx.db
+    .query("householdMembers")
+    .withIndex("by_member", (q) => q.eq("memberId", memberId))
+    .first();
+  if (seat) {
+    const result = await makeLeaveHousehold(householdDeps(ctx))({
+      actorId: toMemberId(memberId),
+    });
+    // Refused only if the household changed under us; the purge carries on rather than stall.
+    if (result.isErr) {
+      console.warn("purge: household not left", result.error.code);
+    }
+  }
+  return { isDone: true, continueCursor: "" };
 };

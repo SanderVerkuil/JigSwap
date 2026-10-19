@@ -789,3 +789,193 @@ describe("account deletion: goals, collections, categories", () => {
     expect(owners.bobsCopy).not.toBeNull();
   });
 });
+
+describe("account deletion: circles she owns", () => {
+  type Seat = [Id<"users">, "ViewOnly" | "Exchange" | "Admin"];
+  let circleSeq = 0;
+  // A circle owned by `owner`, seated in the given order (earlier = longer-standing).
+  const insertCircle = (t: T, owner: Id<"users">, seats: Seat[]) =>
+    t.run(async (ctx) => {
+      circleSeq += 1;
+      const aggregateId = `circle-${circleSeq}`;
+      const base = Date.now() - 100_000;
+      const all: Seat[] = [[owner, "Admin"], ...seats];
+      await ctx.db.insert("circles", {
+        aggregateId,
+        ownerId: owner,
+        name: `Circle ${circleSeq}`,
+        memberships: all.map(([memberId, permission], i) => ({
+          id: `${aggregateId}-m${i}`,
+          memberId,
+          permission,
+          joinedAt: base + i * 1000,
+        })),
+        createdAt: base,
+      });
+      for (const [memberId] of all) {
+        await ctx.db.insert("circleMembers", {
+          circleAggregateId: aggregateId,
+          memberId,
+        });
+      }
+      return aggregateId;
+    });
+
+  const circleOf = (t: T, aggregateId: string) =>
+    t.run(async (ctx) => ({
+      row: await ctx.db
+        .query("circles")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", aggregateId))
+        .unique(),
+      links: (
+        await ctx.db
+          .query("circleMembers")
+          .withIndex("by_circle", (q) => q.eq("circleAggregateId", aggregateId))
+          .collect()
+      ).map((l) => l.memberId),
+    }));
+
+  const permissionOf = (row: Doc<"circles"> | null, memberId: Id<"users">) =>
+    row?.memberships.find((m) => m.memberId === memberId)?.permission;
+
+  test("an Admin takes over before a longer-standing plain member; her seat stays", async () => {
+    const t = newT();
+    const s = await seedMembers(t);
+    const circle = await insertCircle(t, s.alice, [
+      [s.carol, "Exchange"],
+      [s.bob, "Admin"],
+    ]);
+
+    await deleteMember(t, "alice");
+
+    const { row, links } = await circleOf(t, circle);
+    expect(row?.ownerId).toBe(s.bob);
+    expect(permissionOf(row, s.bob)).toBe("Admin");
+    expect(permissionOf(row, s.carol)).toBe("Exchange");
+    // Her seat stays, as a departed seat.
+    expect(row?.memberships.map((m) => m.memberId)).toContain(s.alice);
+    expect(links).toEqual(expect.arrayContaining([s.alice, s.bob, s.carol]));
+  });
+
+  test("a departed Admin is skipped; with no active Admin the longest-standing member takes over", async () => {
+    const t = newT();
+    const s = await seedMembers(t);
+    await t.run((ctx) => ctx.db.patch(s.dave, { isActive: false }));
+    const circle = await insertCircle(t, s.alice, [
+      [s.dave, "Admin"],
+      [s.carol, "ViewOnly"],
+      [s.bob, "Exchange"],
+    ]);
+
+    await deleteMember(t, "alice");
+
+    const { row } = await circleOf(t, circle);
+    expect(row?.ownerId).toBe(s.carol);
+    expect(permissionOf(row, s.carol)).toBe("Admin");
+    expect(permissionOf(row, s.bob)).toBe("Exchange");
+  });
+
+  test("a circle with nobody active left is deleted", async () => {
+    const t = newT();
+    const s = await seedMembers(t);
+    await t.run((ctx) => ctx.db.patch(s.dave, { isActive: false }));
+    const circle = await insertCircle(t, s.alice, [[s.dave, "Admin"]]);
+    const kept = await insertCircle(t, s.bob, [[s.alice, "Exchange"]]);
+
+    await deleteMember(t, "alice");
+
+    expect(await circleOf(t, circle)).toEqual({ row: null, links: [] });
+    // Her seat in Bob's circle stays as a departed seat.
+    const bobs = await circleOf(t, kept);
+    expect(bobs.row?.ownerId).toBe(s.bob);
+    expect(bobs.links).toContain(s.alice);
+  });
+
+  test("the new owner can act as owner", async () => {
+    const t = newT();
+    const s = await seedMembers(t);
+    const circle = await insertCircle(t, s.alice, [[s.bob, "Exchange"]]);
+    await deleteMember(t, "alice");
+
+    await as(t, "bob").mutation(api.sharing.removeMember.removeMember, {
+      circleId: circle,
+      memberId: s.alice,
+    });
+    const { row } = await circleOf(t, circle);
+    expect(row?.memberships.map((m) => m.memberId)).toEqual([s.bob]);
+  });
+});
+
+describe("account deletion: household", () => {
+  let householdSeq = 0;
+  const insertHousehold = (
+    t: T,
+    seats: Array<[Id<"users">, "admin" | "member"]>,
+  ) =>
+    t.run(async (ctx) => {
+      householdSeq += 1;
+      const householdId = `household-${householdSeq}`;
+      const base = Date.now() - 100_000;
+      await ctx.db.insert("households", {
+        aggregateId: householdId,
+        createdAt: base,
+      });
+      for (const [i, [memberId, role]] of seats.entries()) {
+        await ctx.db.insert("householdMembers", {
+          householdId,
+          memberId,
+          role,
+          joinedAt: base + i * 1000,
+        });
+      }
+      return householdId;
+    });
+
+  const seatsOf = (t: T, householdId: string) =>
+    t.run(async (ctx) =>
+      (
+        await ctx.db
+          .query("householdMembers")
+          .withIndex("by_household", (q) => q.eq("householdId", householdId))
+          .collect()
+      ).map((m) => [m.memberId, m.role]),
+    );
+
+  test("her admin seat goes to the longest-standing member", async () => {
+    const t = newT();
+    const s = await seedMembers(t);
+    const household = await insertHousehold(t, [
+      [s.alice, "admin"],
+      [s.carol, "member"],
+      [s.bob, "member"],
+    ]);
+
+    await deleteMember(t, "alice");
+
+    expect(await seatsOf(t, household)).toEqual(
+      expect.arrayContaining([
+        [s.carol, "admin"],
+        [s.bob, "member"],
+      ]),
+    );
+    expect(await seatsOf(t, household)).toHaveLength(2);
+  });
+
+  test("as its sole member, her household is dissolved", async () => {
+    const t = newT();
+    const s = await seedMembers(t);
+    const household = await insertHousehold(t, [[s.alice, "admin"]]);
+
+    await deleteMember(t, "alice");
+
+    expect(await seatsOf(t, household)).toEqual([]);
+    expect(
+      await t.run((ctx) =>
+        ctx.db
+          .query("households")
+          .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", household))
+          .unique(),
+      ),
+    ).toBeNull();
+  });
+});

@@ -17,6 +17,8 @@ import {
   deleteOwnCopies,
   deleteOwnRows,
   deleteUploadedCopyPhotos,
+  handOverOwnedCircles,
+  leaveHousehold,
   purgeCompletions,
 } from "./purgeMemberLibrary";
 
@@ -83,6 +85,12 @@ import {
 //                Photos keep the attachments' rule: a quarantined one (CSAM hash match) stays whole
 //                and a blob a CSAM escalation preserves is never deleted.
 //   goals, collections (with their memberships, wishlists included), categories (personal)
+//   circlesOwned  each circle they own goes to its longest-standing active Admin, else its
+//                longest-standing active member (users row present and active); their seat stays
+//                as a departed seat. With nobody active left it is deleted (purgeDeletedCircle).
+//                Their seats in other members' circles stay too, as departed seats.
+//   household    they leave it through the leave use case: an admin's household promotes its
+//                longest-standing member, a sole member's is dissolved
 // One phase at a time, PURGE_BATCH_SIZE rows per run: a run that did not finish its phase
 // schedules the next run with the page cursor, so each run stays well inside Convex's per-mutation
 // limits whatever the member's history. Rows a phase keeps (a quarantined or evidence-held photo)
@@ -134,6 +142,8 @@ const PHASES = [
   "goals",
   "collections",
   "categories",
+  "circlesOwned",
+  "household",
 ] as const;
 type Phase = (typeof PHASES)[number];
 
@@ -180,6 +190,8 @@ const phaseValidator = v.union(
   v.literal("goals"),
   v.literal("collections"),
   v.literal("categories"),
+  v.literal("circlesOwned"),
+  v.literal("household"),
 );
 
 type Page = { isDone: boolean; continueCursor: string };
@@ -665,6 +677,10 @@ const runPhase = async (
       return deleteOwnRows(ctx, memberId, phase, opts);
     case "collections":
       return deleteCollections(ctx, memberId, opts);
+    case "circlesOwned":
+      return handOverOwnedCircles(ctx, memberId, opts);
+    case "household":
+      return leaveHousehold(ctx, memberId);
   }
 };
 
