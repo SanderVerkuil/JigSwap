@@ -646,9 +646,11 @@ describe("deferred append", () => {
       const blob = await ctx.storage.get(row.fileId);
       return blob && { type: blob.type, bytes: await blob.arrayBuffer() };
     });
-    expect(clean!.type).toBe("image/webp");
+    // The fixture's EXIF held Orientation 6: turned upright, it is re-encoded (opaque, so
+    // JPEG: there is no WebP encoder on the server).
+    expect(clean!.type).toBe("image/jpeg");
     const bytes = new Uint8Array(clean!.bytes);
-    expect(findMetadata(bytes, "webp")).toEqual([]);
+    expect(findMetadata(bytes, "jpeg")).toEqual([]);
     const text = Array.from(bytes, (b) => String.fromCharCode(b)).join("");
     for (const secret of [
       "Kerkstraat",
