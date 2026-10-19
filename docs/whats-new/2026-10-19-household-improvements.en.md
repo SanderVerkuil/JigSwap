@@ -26,8 +26,9 @@ find what you came for straight away.
 - **One Invite button.** Household admins find every way to invite in one
   place: search for a member, share a link, or send an email.
 - **All pending invitations in one list.** The **Members** tab lists every
-  invitation still waiting for an answer, in the app and by email, and you
-  can revoke any of them.
+  invitation still waiting for an answer: in the app, by email (also those an
+  earlier admin sent) and invite links that haven't been used yet. You can
+  revoke any of them.
 - **Ask to join.** Got a household invite link that expired or was already
   used? Open it and ask to be let in. The admin approves or declines on the
   **Members** tab.
