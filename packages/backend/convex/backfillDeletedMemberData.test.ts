@@ -6,8 +6,9 @@ import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
 // conversation/backfillDeletedMemberData: for accounts deleted before the purge covered their
-// library, it finds the member ids behind copies, circles and household seats whose users row is
-// gone or inactive. A dry run (the default) only reports them; a real run purges them from the
+// library, it finds the member ids behind the rows the later purge phases clean up (exchanges,
+// loans, copies, photos, completions, goals, collections, categories, circles, household seats)
+// whose users row is gone or inactive. A dry run (the default) only reports them; a real run purges them from the
 // exchangesOpen phase on.
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
@@ -60,8 +61,9 @@ const reportedIds = (): string[] => {
 };
 
 // Alice was hard-deleted (no users row) and left two copies; Dave is tombstoned (inactive) and
-// still owns a circle Bob is in; Erin was hard-deleted and still sits in Bob's household. Bob is
-// active and has a copy of his own.
+// still owns a circle Bob is in; Erin was hard-deleted and still sits in Bob's household; Fred
+// was hard-deleted and left only a goal and an open loan of Bob's copy. Bob is active and has a
+// copy of his own.
 const seed = (t: T) =>
   t.run(async (ctx) => {
     const now = Date.now();
@@ -77,6 +79,7 @@ const seed = (t: T) =>
     const bob = await mk("bob");
     const dave = await mk("dave", false);
     const erin = await mk("erin");
+    const fred = await mk("fred");
     const puzzleId = await ctx.db.insert("puzzles", {
       title: "Lighthouse",
       pieceCount: 1000,
@@ -98,6 +101,23 @@ const seed = (t: T) =>
     await copy(alice, "copy-a1");
     await copy(alice, "copy-a2");
     const bobsCopy = await copy(bob, "copy-b1");
+    await ctx.db.insert("goals", {
+      userId: fred,
+      title: "Ten this year",
+      targetCompletions: 10,
+      currentCompletions: 0,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    });
+    await ctx.db.insert("loans", {
+      aggregateId: "loan-f",
+      copyId: "copy-b1",
+      lenderId: bob,
+      borrowerId: fred,
+      status: "open",
+      openedAt: now,
+    });
     await ctx.db.insert("circles", {
       aggregateId: "circle-d",
       ownerId: dave,
@@ -129,7 +149,8 @@ const seed = (t: T) =>
     });
     await ctx.db.delete(alice);
     await ctx.db.delete(erin);
-    return { alice, bob, dave, erin, bobsCopy };
+    await ctx.db.delete(fred);
+    return { alice, bob, dave, erin, fred, bobsCopy };
   });
 
 const snapshot = (t: T) =>
@@ -141,6 +162,8 @@ const snapshot = (t: T) =>
     seats: (await ctx.db.query("householdMembers").collect()).map(
       (m) => m.memberId,
     ),
+    goals: (await ctx.db.query("goals").collect()).map((g) => g.userId),
+    loans: (await ctx.db.query("loans").collect()).map((l) => l.status),
   }));
 
 describe("conversation.backfillDeletedMemberData", () => {
@@ -156,7 +179,9 @@ describe("conversation.backfillDeletedMemberData", () => {
     await settleDueJobs(t);
 
     expect(await snapshot(t)).toEqual(before);
-    expect(reportedIds().sort()).toEqual([s.alice, s.dave, s.erin].sort());
+    expect(reportedIds().sort()).toEqual(
+      [s.alice, s.dave, s.erin, s.fred].sort(),
+    );
     // Nothing was scheduled beyond the backfill's own batches.
     const jobs = await t.run((ctx) =>
       ctx.db.system.query("_scheduled_functions").collect(),
@@ -186,7 +211,7 @@ describe("conversation.backfillDeletedMemberData", () => {
         job.args[0].phase === "exchangesOpen",
     );
     expect(purges.map((job) => job.args[0].memberId).sort()).toEqual(
-      [s.alice, s.dave, s.erin].sort(),
+      [s.alice, s.dave, s.erin, s.fred].sort(),
     );
 
     const after = await snapshot(t);
@@ -195,5 +220,8 @@ describe("conversation.backfillDeletedMemberData", () => {
     // Dave's circle went to Bob; Erin left Bob's household.
     expect(after.circles).toEqual([s.bob]);
     expect(after.seats).toEqual([s.bob]);
+    // Fred's goal is gone and the copy he borrowed is back with Bob.
+    expect(after.goals).toEqual([]);
+    expect(after.loans).toEqual(["returned"]);
   });
 });

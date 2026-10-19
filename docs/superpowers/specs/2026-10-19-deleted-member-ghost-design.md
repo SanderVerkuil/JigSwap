@@ -77,9 +77,11 @@ phase per run, at most `PURGE_BATCH_SIZE` rows, reschedule with the cursor until
 
 Order matters: open trades and loans are settled before copies go, copies before photos.
 
-1. `exchangesOpen`: their `proposed` / `accepted` / `disputed` exchanges (both sides) are cancelled,
-   so nothing references a copy that is about to go. Completed / rejected / cancelled stay (trade
-   history).
+1. `exchangesOpen`: their `proposed` / `accepted` exchanges (both sides) are cancelled, so nothing
+   reserves a copy that is about to go. Completed / rejected / cancelled / `disputed` stay (trade
+   history): `disputed` is terminal and can follow a settlement whose copies already moved, so it
+   is not cancelled. The cancellation is silent: no event, so the other party gets no notification
+   or thread message; they see the exchange as cancelled.
 2. `loansOpen`: open loans where they lend or borrow are closed (`returned`, `closedAt`), and a
    borrowed copy's `heldBy` is cleared so it is back with its owner. Loan rows stay as history.
 3. `copies`: `ownedPuzzles.by_owner = memberId`: each copy goes with its collection memberships,
@@ -94,7 +96,9 @@ Order matters: open trades and loans are settled before copies go, copies before
    the longest-standing active member (an active member is one whose `users` row exists and is
    active), else delete it through the existing delete path (`purgeDeletedCircle` cleans up). Their
    own seat stays as a departed seat (historical trace).
-8. `household`: run the household leave use case for them (promotes / dissolves).
+8. `household`: run the household leave use case for them (promotes / dissolves). Co-members whose
+   accounts are already gone leave first through the same use case, so the promotion never lands
+   on a departed member and a household with nobody active left is dissolved.
 9. `domainEvents` (last): page through `domainEvents`, rewrite every payload that mentions them:
    their id becomes `"deleted-member"`, and personal fields copied into such a payload (names,
    usernames, avatars, emails) are removed. Only events that have finished dispatch
@@ -106,9 +110,10 @@ must be a current member; the old owner's seat stays). The household leave rule 
 
 ## Already-deleted accounts (backfill, not run here)
 
-`backfillDeletedMemberData` (internal mutation, `dryRun` default `true`): pages through
-`ownedPuzzles`, `circles` and `householdMembers`, collects member ids whose `users` row is missing or
-inactive, and returns them (dry run) or schedules `purgeMemberMessagingData` for each starting at
+`backfillDeletedMemberData` (internal mutation, `dryRun` default `true`): pages through every table
+the phases above clean up (`exchanges`, `loans`, `ownedPuzzles`, `ownedPuzzleImages`, `completions`,
+`goals`, `collections`, `categories`, `circles`, `householdMembers`), collects member ids whose
+`users` row is missing or inactive, and returns them (dry run) or schedules `purgeMemberMessagingData` for each starting at
 `exchangesOpen` (real run). It must be run by an operator with approval; nothing in these PRs runs
 it.
 

@@ -1,3 +1,4 @@
+import type { PaginationResult } from "convex/server";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
@@ -8,47 +9,101 @@ import { internalMutation, type MutationCtx } from "../_generated/server";
 export const BACKFILL_DELETED_MEMBER_DATA_BATCH = 200;
 export const BACKFILL_DELETED_MEMBER_DATA_MAX_BATCH = 1000;
 
-// The tables that hold what the later purge phases clean up, walked in this order. Each names the
-// member it belongs to in one column.
-const TABLES = ["ownedPuzzles", "circles", "householdMembers"] as const;
+// The tables that hold what the later purge phases clean up, walked in this order. Each row names
+// the member(s) it belongs to; an exchange or a loan names both parties.
+const TABLES = [
+  "exchanges",
+  "loans",
+  "ownedPuzzles",
+  "ownedPuzzleImages",
+  "completions",
+  "goals",
+  "collections",
+  "categories",
+  "circles",
+  "householdMembers",
+] as const;
 type Table = (typeof TABLES)[number];
 const tableValidator = v.union(
+  v.literal("exchanges"),
+  v.literal("loans"),
   v.literal("ownedPuzzles"),
+  v.literal("ownedPuzzleImages"),
+  v.literal("completions"),
+  v.literal("goals"),
+  v.literal("collections"),
+  v.literal("categories"),
   v.literal("circles"),
   v.literal("householdMembers"),
 );
 
-// One page of `table`, as the member id each row belongs to.
-const pageOf = async (
-  ctx: MutationCtx,
-  table: Table,
-  opts: { cursor: string | null; numItems: number },
-): Promise<{
+type PageOpts = { cursor: string | null; numItems: number };
+type MemberPage = {
   memberIds: Id<"users">[];
   isDone: boolean;
   continueCursor: string;
-}> => {
+};
+
+const idsOf = async <R>(
+  query: { paginate(opts: PageOpts): Promise<PaginationResult<R>> },
+  opts: PageOpts,
+  members: (row: R) => Array<Id<"users"> | undefined>,
+): Promise<MemberPage> => {
+  const page = await query.paginate(opts);
+  return {
+    isDone: page.isDone,
+    continueCursor: page.continueCursor,
+    memberIds: page.page
+      .flatMap(members)
+      .filter((id): id is Id<"users"> => id !== undefined),
+  };
+};
+
+// One page of `table`, as the member ids its rows belong to.
+const pageOf = (
+  ctx: MutationCtx,
+  table: Table,
+  opts: PageOpts,
+): Promise<MemberPage> => {
   switch (table) {
-    case "ownedPuzzles": {
-      const page = await ctx.db.query("ownedPuzzles").paginate(opts);
-      return { ...page, memberIds: page.page.map((row) => row.ownerId) };
-    }
-    case "circles": {
-      const page = await ctx.db.query("circles").paginate(opts);
-      return { ...page, memberIds: page.page.map((row) => row.ownerId) };
-    }
-    case "householdMembers": {
-      const page = await ctx.db.query("householdMembers").paginate(opts);
-      return { ...page, memberIds: page.page.map((row) => row.memberId) };
-    }
+    case "exchanges":
+      return idsOf(ctx.db.query("exchanges"), opts, (row) => [
+        row.initiatorId,
+        row.recipientId,
+      ]);
+    case "loans":
+      return idsOf(ctx.db.query("loans"), opts, (row) => [
+        row.lenderId,
+        row.borrowerId,
+      ]);
+    case "ownedPuzzles":
+      return idsOf(ctx.db.query("ownedPuzzles"), opts, (row) => [row.ownerId]);
+    case "ownedPuzzleImages":
+      return idsOf(ctx.db.query("ownedPuzzleImages"), opts, (row) => [
+        row.uploaderId,
+      ]);
+    case "completions":
+      return idsOf(ctx.db.query("completions"), opts, (row) => [row.userId]);
+    case "goals":
+      return idsOf(ctx.db.query("goals"), opts, (row) => [row.userId]);
+    case "collections":
+      return idsOf(ctx.db.query("collections"), opts, (row) => [row.userId]);
+    case "categories":
+      return idsOf(ctx.db.query("categories"), opts, (row) => [row.userId]);
+    case "circles":
+      return idsOf(ctx.db.query("circles"), opts, (row) => [row.ownerId]);
+    case "householdMembers":
+      return idsOf(ctx.db.query("householdMembers"), opts, (row) => [
+        row.memberId,
+      ]);
   }
 };
 
 /**
  * One-shot backfill for accounts deleted before the purge covered their library (spec 2026-10-19
- * deleted member ghost, "Already-deleted accounts"). Pages through `ownedPuzzles`, `circles` and
- * `householdMembers` and collects every member id whose `users` row is missing or inactive (deleted
- * or tombstoned). A dry run (the DEFAULT) only reports them; a real run (`dryRun: false`) schedules
+ * deleted member ghost, "Already-deleted accounts"). Pages through every table the later purge
+ * phases clean up (TABLES) and collects every member id whose `users` row is missing or inactive
+ * (deleted or tombstoned). A dry run (the DEFAULT) only reports them; a real run (`dryRun: false`) schedules
  * conversation/purgeMemberMessagingData for each, starting at its `exchangesOpen` phase (the
  * earlier phases already ran when the account was deleted, and are safe to skip). Reschedules
  * itself page by page and table by table; `found` carries the ids seen so far, so each is reported
