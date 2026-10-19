@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import en from "../../locales/en.json";
 import nl from "../../locales/nl.json";
 import {
+  useAuthorDisplayName,
   useMemberDisplayName,
   usePartyDisplayName,
   useProjectedMemberName,
@@ -117,6 +118,32 @@ describe("useProjectedMemberName", () => {
         "nl",
       ),
     ).toBe("Verwijderd lid");
+  });
+});
+
+function AuthorName({
+  author,
+}: {
+  author: MemberNameSource & { isActive?: boolean };
+}) {
+  const authorName = useAuthorDisplayName();
+  return <>{authorName(author)}</>;
+}
+
+describe("useAuthorDisplayName", () => {
+  it("renders an active author's name", () => {
+    expect(
+      render(<AuthorName author={{ name: "Mara Jansen", isActive: true }} />),
+    ).toBe("Mara Jansen");
+  });
+
+  it('renders "Deleted member" for a departed author (isActive: false)', () => {
+    expect(render(<AuthorName author={{ isActive: false }} />)).toBe(
+      "Deleted member",
+    );
+    expect(render(<AuthorName author={{ isActive: false }} />, "nl")).toBe(
+      "Verwijderd lid",
+    );
   });
 });
 

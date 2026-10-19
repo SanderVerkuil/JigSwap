@@ -11,7 +11,8 @@ import { blockedEitherWaySet } from "./blocks";
 // newest first — NOT the shared community reviews (those live on the catalog page via
 // listPuzzleReviews). Each comment joins its REAL author (comments are voluntary public posts —
 // never anonymised). A missing copy returns []. The author join falls back to a synthetic, nameless
-// view if the user row vanished, so an orphaned comment never breaks the list.
+// view (`isActive: false`, the web's "Deleted member") if the user row vanished or is deactivated,
+// so an orphaned comment never breaks the list and a tombstone's leftover fields never show.
 //
 // SECURITY: auth-gated, and the copy is run through the SAME reachability gate as getCopyInstanceView
 // (canViewCopy) before any comment is returned — a private/unreachable copy of another member yields
@@ -40,7 +41,7 @@ export const listPuzzleComments = query({
           const author = await ctx.db.get(row.authorId);
           return {
             id: row.aggregateId ?? row._id,
-            author: author
+            author: author?.isActive
               ? toMemberView(author)
               : {
                   _id: row.authorId,

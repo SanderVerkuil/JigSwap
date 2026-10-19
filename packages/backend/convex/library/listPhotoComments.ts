@@ -10,7 +10,8 @@ import { canViewCopy } from "./canViewCopy";
 // Read side: the discussion comments on a single shared PHOTO, newest first. Keyed by the
 // `ownedPuzzleImages` _id the lightbox shows. Each comment joins its REAL author (photo comments are
 // voluntary public posts — never anonymised). The author join falls back to a synthetic, nameless
-// view if the user row vanished, so an orphaned comment never breaks the list.
+// view (`isActive: false`, the web's "Deleted member") if the user row vanished or is deactivated,
+// so an orphaned comment never breaks the list and a tombstone's leftover fields never show.
 //
 // SECURITY: auth-gated, and the photo's parent copy is run through the SAME reachability gate as
 // getCopyInstanceView (canViewCopy) before any comment is returned — a missing photo, missing copy,
@@ -41,7 +42,7 @@ export const listPhotoComments = query({
           const author = await ctx.db.get(row.authorId);
           return {
             id: row.aggregateId ?? row._id,
-            author: author
+            author: author?.isActive
               ? toMemberView(author)
               : {
                   _id: row.authorId,

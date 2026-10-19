@@ -51,6 +51,23 @@ export function usePartyDisplayName(): (
 }
 
 /**
+ * Returns a formatter for an author's member view (reviews and comments): "Deleted member" when the
+ * account is gone or deactivated (the server sends `isActive: false` and nothing identifying), else
+ * the member's resolved name.
+ */
+export function useAuthorDisplayName(): (
+  author: MemberNameSource & { isActive?: boolean },
+) => string {
+  const t = useTranslations("notifications.rich");
+  const displayName = useMemberDisplayName();
+  return useCallback(
+    (author) =>
+      author.isActive === false ? t("deletedMember") : displayName(author),
+    [t, displayName],
+  );
+}
+
+/**
  * A privacy-projected member (the server's `ProjectedMember`), structurally: revealed members carry
  * their name source; hidden ones carry nothing identifying, plus `departed` when the account is
  * gone or deactivated.

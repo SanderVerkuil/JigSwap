@@ -10,8 +10,9 @@ import { blockedEitherWaySet } from "./blocks";
 // row per (member, puzzle), keyed by puzzleId directly (the catalog detail page has no copyId).
 // Most-recently-updated first: the `by_puzzle` index orders by _creationTime, so rows are sorted by
 // `updatedAt` in JS after collect. Each review joins its REAL author (reviews are voluntary public
-// posts — never anonymised); the author join falls back to a synthetic, nameless view if the user
-// row vanished, so an orphaned review never breaks the list.
+// posts — never anonymised); the author join falls back to a synthetic, nameless view (`isActive:
+// false`, the web's "Deleted member") if the user row vanished or is deactivated, so an orphaned
+// review never breaks the list and a tombstone's leftover fields never show.
 //
 // SECURITY: auth-gated. Each review is projected through `toMemberView`, which exposes member
 // identity (name/username/bio/location) intended only for OTHER AUTHENTICATED MEMBERS — so the
@@ -39,7 +40,7 @@ export const listPuzzleReviews = query({
         const author = await ctx.db.get(row.userId);
         return {
           id: row._id,
-          author: author
+          author: author?.isActive
             ? toMemberView(author)
             : {
                 _id: row.userId,
