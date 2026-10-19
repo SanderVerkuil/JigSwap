@@ -151,6 +151,8 @@ export const gateway = {
     declineInvite: api.household.declineHouseholdInvite.declineHouseholdInvite,
     leave: api.household.leaveHousehold.leaveHousehold,
     removeMember: api.household.removeHouseholdMember.removeHouseholdMember,
+    // Admin-only: name the household (null clears it). Only members ever see the name (mine).
+    rename: api.household.renameHousehold.renameHousehold,
     // Admin-only: the household-wide permission for member copies without an explicit value.
     setDefaultCopyPermission:
       api.household.setDefaultCopyPermission.setDefaultCopyPermission,

@@ -1859,7 +1859,8 @@
       "dialogTitle": "Uitnodigen voor je huishouden",
       "dialogSub": "Kies wat het makkelijkst is. Ze doen pas mee zodra ze accepteren.",
       "searchHeading": "Zoek een lid",
-      "emailHeading": "Uitnodigen per e-mail"
+      "emailHeading": "Uitnodigen per e-mail",
+      "dialogTitleNamed": "Uitnodigen voor {name}"
     },
     "leave": {
       "action": "Huishouden verlaten",
@@ -1889,7 +1890,8 @@
       "MemberNotFound": "Dit lid kon niet worden gevonden.",
       "NotCopyOwner": "Alleen de eigenaar kan de toegang voor het huishouden van een puzzel wijzigen.",
       "PermissionBatchTooLarge": "Je kunt maximaal 200 puzzels tegelijk wijzigen.",
-      "CopyNotFound": "Een van deze puzzels bestaat niet meer."
+      "CopyNotFound": "Een van deze puzzels bestaat niet meer.",
+      "InvalidHouseholdName": "Een naam voor een huishouden moet 1 tot 100 tekens lang zijn."
     },
     "bulkPermission": {
       "title": "Mijn puzzels in dit huishouden",
@@ -1924,7 +1926,13 @@
       "confirmTitle": "Standaard van het huishouden wijzigen naar {permission, select, view {Alleen bekijken} other {Mag beheren}}?",
       "confirmBody": "{count, plural, =0 {Er volgen nu geen exemplaren de standaard, dus er verandert nog niets.} one {Dit geldt meteen voor # exemplaar dat de standaard van het huishouden volgt.} other {Dit geldt meteen voor # exemplaren die de standaard van het huishouden volgen.}} Puzzels met een eigen toegangsinstelling houden die.",
       "confirm": "Standaard wijzigen",
-      "saved": "Standaard van het huishouden bijgewerkt"
+      "saved": "Standaard van het huishouden bijgewerkt",
+      "nameLabel": "Naam van het huishouden",
+      "namePlaceholder": "Bijvoorbeeld: De familie Jansen",
+      "nameHelp": "Alleen leden van dit huishouden zien de naam. Laat het veld leeg om de naam te verwijderen.",
+      "nameSave": "Naam opslaan",
+      "nameSaved": "Naam van het huishouden opgeslagen",
+      "nameNone": "Nog geen naam"
     },
     "tabs": {
       "members": "Leden",

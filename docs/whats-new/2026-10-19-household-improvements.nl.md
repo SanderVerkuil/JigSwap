@@ -2,7 +2,7 @@
 id: household-improvements
 publishedAt: "2026-10-19T12:00:00Z"
 title: "Verbeteringen aan huishoudens"
-summary: "Een overzichtelijkere pagina Huishouden: leden, je puzzels en instellingen hebben elk een eigen tabblad, en uitnodigen zit achter één knop."
+summary: "Een overzichtelijkere pagina Huishouden met eigen tabbladen en één knop Uitnodigen, en je huishouden kan nu een naam krijgen."
 category: improvement
 cta:
   label: "Huishouden openen"
@@ -21,5 +21,7 @@ meteen vindt waarvoor je kwam.
 - **Eén knop Uitnodigen.** Beheerders van een huishouden vinden alle manieren
   om uit te nodigen op één plek: een lid zoeken, een link delen of een e-mail
   sturen.
+- **Een naam voor je huishouden.** De beheerder geeft het huishouden een naam
+  op het tabblad **Instellingen**. Alleen de leden zien die naam.
 - **Uitnodigingen eerst.** Heeft iemand je uitgenodigd en zit je nog niet in
   een huishouden, dan zie je die uitnodiging als eerste.

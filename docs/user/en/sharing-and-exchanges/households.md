@@ -20,6 +20,19 @@ tabs: **Members**, **My puzzles** and **Settings**.
 
 You become the household's **Admin**. You can be in one household at a time.
 
+## Name your household
+
+The admin can give the household a name, for example "The Smiths". It shows
+at the top of **Household**. Only members of the household see it; people you
+invite don't.
+
+1. On **Household**, open the **Settings** tab.
+2. Under **Household name**, type a name of up to 100 characters.
+3. Click **Save name**.
+
+To remove the name, clear the field and click **Save name**. Other members see
+the name on **Settings** but can't change it.
+
 ## Invite someone
 
 Only the household admin can invite. The person joins only after they accept.

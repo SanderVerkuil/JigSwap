@@ -18,6 +18,7 @@ const useSignedOut = () => ({
 const render = (
   props: {
     isAdmin: boolean;
+    name?: string;
     defaultCopyPermission: "manage" | "view";
     copiesUsingDefault: number;
   },
@@ -36,7 +37,7 @@ const render = (
           messages={locale === "en" ? en : nl}
           timeZone="Europe/Amsterdam"
         >
-          <HouseholdSettings {...props} onError={() => {}} />
+          <HouseholdSettings name={undefined} {...props} onError={() => {}} />
         </IntlProvider>
       </QueryClientProvider>
     </ConvexProviderWithAuth>,
@@ -122,5 +123,37 @@ describe("HouseholdSettings", () => {
     );
     expect(texts(html)).toContain("Instellingen huishouden");
     expect(texts(html)).toContain("Alleen bekijken");
+  });
+
+  it("lets the admin edit the household name", () => {
+    const html = render({
+      isAdmin: true,
+      name: "The Smiths",
+      defaultCopyPermission: "manage",
+      copiesUsingDefault: 0,
+    });
+    const els = elementsOf(html);
+    const label = els.find((e) => textOf(e) === "Household name");
+    const input = els.find((e) => e.tagName === "input");
+    expect(label && attr(label, "for")).toBe(input && attr(input, "id"));
+    expect(input && attr(input, "value")).toBe("The Smiths");
+    expect(input && attr(input, "maxlength")).toBe("100");
+  });
+
+  it("shows members the name read-only, or that it has none", () => {
+    const named = render({
+      isAdmin: false,
+      name: "The Smiths",
+      defaultCopyPermission: "manage",
+      copiesUsingDefault: 0,
+    });
+    expect(elementsOf(named).some((e) => e.tagName === "input")).toBe(false);
+    expect(texts(named)).toContain("The Smiths");
+    const unnamed = render({
+      isAdmin: false,
+      defaultCopyPermission: "manage",
+      copiesUsingDefault: 0,
+    });
+    expect(texts(unnamed)).toContain("Not named yet");
   });
 });

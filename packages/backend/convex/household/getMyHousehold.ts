@@ -88,8 +88,17 @@ export const getMyHousehold = query({
       ).length;
     }
 
+    const household = await ctx.db
+      .query("households")
+      .withIndex("by_aggregate_id", (q) =>
+        q.eq("aggregateId", membership.householdId),
+      )
+      .unique();
+
     return {
       householdId: membership.householdId,
+      // Only here, behind the viewer's own membership: no other read returns a household's name.
+      ...(household?.name !== undefined && { name: household.name }),
       viewerRole: membership.role,
       members,
       pendingInvites,

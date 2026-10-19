@@ -7,6 +7,7 @@ import {
   makeJoinHouseholdByLink,
   makeLeaveHousehold,
   makeRemoveHouseholdMember,
+  makeRenameHousehold,
   makeSetHouseholdDefaultCopyPermission,
 } from ".";
 import { toMemberId } from "../../../shared-kernel";
@@ -376,6 +377,51 @@ describe("setHouseholdDefaultCopyPermission", () => {
 
   it("rejects an actor without a household", async () => {
     const result = await setDefault(cat, "view");
+    expect(result.isErr && result.error.code).toBe("NotInHousehold");
+  });
+});
+
+describe("renameHousehold", () => {
+  const rename = (actorId: MemberId, name: string | null) =>
+    makeRenameHousehold(deps)({ actorId, name });
+  const nameOf = async (id: HouseholdId) =>
+    (await households.findById(id))?.toState().name;
+
+  it("lets the admin name the household, normalised, without events", async () => {
+    const id = await create();
+    const publishedBefore = events.published.length;
+    expect((await rename(ann, "  The\t Smiths\u200B ")).isOk).toBe(true);
+    expect(await nameOf(id)).toBe("The Smiths");
+    expect(events.published.length).toBe(publishedBefore);
+  });
+
+  it("clears the name with null", async () => {
+    const id = await create();
+    await rename(ann, "Home");
+    expect((await rename(ann, null)).isOk).toBe(true);
+    expect(await nameOf(id)).toBeUndefined();
+  });
+
+  it("accepts 100 characters and rejects 101 or an invisible name", async () => {
+    const id = await create();
+    expect((await rename(ann, "a".repeat(100))).isOk).toBe(true);
+    for (const bad of ["a".repeat(101), "   ", "\u200B\u200B", ""]) {
+      const result = await rename(ann, bad);
+      expect(result.isErr && result.error.code).toBe("InvalidHouseholdName");
+    }
+    expect(await nameOf(id)).toBe("a".repeat(100));
+  });
+
+  it("rejects a non-admin member without saving", async () => {
+    const id = await create();
+    await accept(bob, await invite());
+    const result = await rename(bob, "Bob's place");
+    expect(result.isErr && result.error.code).toBe("NotHouseholdAdmin");
+    expect(await nameOf(id)).toBeUndefined();
+  });
+
+  it("rejects an actor without a household", async () => {
+    const result = await rename(cat, "Home");
     expect(result.isErr && result.error.code).toBe("NotInHousehold");
   });
 });

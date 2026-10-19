@@ -23,17 +23,20 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import type { HouseholdPermission } from "./bulk-permission";
+import { HouseholdNameSetting } from "./household-name-setting";
 
-// "Household settings": the household-wide default access for member copies without their own
+// "Household settings": the household's name (HouseholdNameSetting), then the household-wide default access for member copies without their own
 // choice. Every member sees it and how many copies follow it (counted server-side across all
 // members); only the admin can change it, after confirming how many copies it affects.
 export function HouseholdSettings({
   isAdmin,
+  name,
   defaultCopyPermission,
   copiesUsingDefault,
   onError,
 }: {
   isAdmin: boolean;
+  name: string | undefined;
   defaultCopyPermission: HouseholdPermission;
   copiesUsingDefault: number;
   onError: (error: unknown) => void;
@@ -55,6 +58,12 @@ export function HouseholdSettings({
         <Settings className="h-4 w-4" />
         {t("title")}
       </h2>
+      <HouseholdNameSetting
+        key={name ?? ""}
+        isAdmin={isAdmin}
+        name={name}
+        onError={onError}
+      />
       <div className="flex flex-wrap items-center gap-3">
         <span id="household-default-label" className="text-sm font-medium">
           {t("defaultLabel")}

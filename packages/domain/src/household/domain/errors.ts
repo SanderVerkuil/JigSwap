@@ -12,7 +12,8 @@ export type HouseholdErrorCode =
   | "NotInvitee"
   | "InviteNotPending"
   | "NotCopyOwner"
-  | "PermissionBatchTooLarge";
+  | "PermissionBatchTooLarge"
+  | "InvalidHouseholdName";
 
 export class HouseholdError extends DomainError {
   override readonly name = "HouseholdError";
@@ -81,6 +82,13 @@ export class HouseholdError extends DomainError {
     return new HouseholdError(
       "PermissionBatchTooLarge",
       `At most ${max} copies can be changed at once`,
+    );
+  }
+
+  static invalidHouseholdName(): HouseholdError {
+    return new HouseholdError(
+      "InvalidHouseholdName",
+      "A household name must be between 1 and 100 characters",
     );
   }
 }

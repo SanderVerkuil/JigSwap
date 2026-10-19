@@ -31,6 +31,8 @@ export interface HouseholdSentInviteView {
 /** `household.mine`: the viewer's household, or null when they are in none. */
 export interface HouseholdView {
   householdId: string;
+  /** The members' own name for the household; absent when unnamed. Members only. */
+  name?: string;
   viewerRole: HouseholdRole;
   members: HouseholdMemberView[];
   pendingInvites: HouseholdSentInviteView[];
