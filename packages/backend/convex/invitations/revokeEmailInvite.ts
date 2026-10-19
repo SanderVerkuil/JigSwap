@@ -6,8 +6,9 @@ import { action } from "../_generated/server";
 import { revokeInvitationBestEffort } from "./revokeClerkInvitation";
 
 /**
- * The inviter withdraws one of their email invitations (spec E.1). Any ref that isn't theirs, or
- * no longer exists, gets the same EmailInviteUnavailable. The row and a pending in-app fallback go
+ * The inviter withdraws one of their email invitations (spec E.1), or the household's admin one
+ * to their household. Any other ref, or one that no longer exists, gets the same
+ * EmailInviteUnavailable. The row and a pending in-app fallback go
  * at once; the Clerk invitation is revoked best-effort afterwards.
  */
 export const revokeEmailInvite = action({

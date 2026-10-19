@@ -56,11 +56,13 @@ antwoord is. Wil je de uitnodiging intrekken, klik dan ernaast op
 ### Openstaande uitnodigingen bekijken en intrekken
 
 Op het tabblad **Leden** ziet de beheerder onder **Wacht op antwoord** elke
-uitnodiging die nog op antwoord wacht: uitnodigingen aan leden op naam, en
+uitnodiging die nog op antwoord wacht: uitnodigingen aan leden op naam,
 uitnodigingen per e-mail als **Uitnodiging per e-mail** (het adres zie je
-nooit). Bij elke regel staat hoe en wanneer hij is verstuurd. Klik op
-**Intrekken** en bevestig om er een in te trekken; diegene kan hem dan niet
-meer accepteren.
+nooit) en nog niet gebruikte uitnodigingslinks als **Uitnodigingslink**. Bij
+elke regel staat hoe en wanneer hij is verstuurd. De lijst bevat ook
+e-mailuitnodigingen van een eerdere beheerder, zodat een nieuwe beheerder ze
+ook kan beheren. Klik op **Intrekken** en bevestig om er een in te trekken;
+er kan dan niemand meer mee lid worden.
 
 ### Uitnodigen met een link
 
@@ -73,8 +75,10 @@ Nodig iemand uit met een link, bijvoorbeeld iemand die nog niet op JigSwap zit.
    **Link kopiëren**, **E-mail** of **WhatsApp** gebruiken.
 
 Elke link werkt één keer en verloopt na 14 dagen. JigSwap ziet en bewaart niet
-naar wie je hem stuurt. Wil je links annuleren die nog niet zijn gebruikt,
-klik dan op **Open links intrekken**.
+naar wie je hem stuurt. Links die nog niet zijn gebruikt, staan als
+**Uitnodigingslink** onder **Wacht op antwoord** op het tabblad **Leden**,
+waar je er een kunt intrekken. Wil je ze allemaal tegelijk annuleren, klik dan
+op **Open links intrekken**.
 
 Wie de link opent, kan de uitnodiging accepteren of weigeren. Een nieuw lid dat
 zich via de link aanmeldt, vindt de uitnodiging op de eigen pagina

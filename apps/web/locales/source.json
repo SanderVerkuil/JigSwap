@@ -2015,7 +2015,12 @@
       "approved": "{name} joined your household",
       "declined": "Request declined",
       "requestClosed": "This request is no longer open.",
-      "requestsDot": "{count, plural, one {# request to join} other {# requests to join}}"
+      "requestsDot": "{count, plural, one {# request to join} other {# requests to join}}",
+      "linkTitle": "Invite link",
+      "linkMeta": "Created {when} · expires {date}",
+      "revokeLinkLabel": "Revoke the invite link created {when}",
+      "revokeLinkBody": "The link stops working. Anyone you shared it with can no longer use it to join.",
+      "linkRevoked": "Invite link revoked"
     }
   },
   "circles": {

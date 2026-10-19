@@ -28,8 +28,9 @@ meteen vindt waarvoor je kwam.
   om uit te nodigen op één plek: een lid zoeken, een link delen of een e-mail
   sturen.
 - **Alle openstaande uitnodigingen in één lijst.** Het tabblad **Leden** toont
-  elke uitnodiging die nog op antwoord wacht, in de app en per e-mail, en je
-  kunt ze allemaal intrekken.
+  elke uitnodiging die nog op antwoord wacht: in de app, per e-mail (ook die
+  van een eerdere beheerder) en nog niet gebruikte uitnodigingslinks. Je kunt
+  ze allemaal intrekken.
 - **Vragen om lid te worden.** Een uitnodigingslink voor een huishouden die
   verlopen of al gebruikt is? Open hem en vraag of je erbij mag. De beheerder
   laat je toe of weigert op het tabblad **Leden**.

@@ -1697,7 +1697,9 @@ export default defineSchema({
     expiresAt: v.number(),
   })
     .index("by_aggregate_id", ["aggregateId"])
-    .index("by_inviter", ["inviterId", "kind", "createdAt"]),
+    .index("by_inviter", ["inviterId", "kind", "createdAt"])
+    // The household admin's pending list: every pending household invitation, whoever sent it.
+    .index("by_household", ["householdId", "createdAt"]),
 
   // The per-address cap for invitation emails (1 per 30 days across all inviters). The address is
   // kept only as HMAC-SHA256(INVITE_EMAIL_HMAC_KEY, address), with no member id; each row is

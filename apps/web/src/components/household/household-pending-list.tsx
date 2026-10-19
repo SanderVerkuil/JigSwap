@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { gateway } from "@/gateway";
+import { gateway, Id } from "@/gateway";
 import { useRelativeTime } from "@/hooks/use-relative-time";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import {
@@ -22,24 +22,28 @@ import {
 } from "@convex-dev/react-query";
 import type {
   EmailInviteView,
+  HouseholdInviteLinkView,
   HouseholdJoinRequestView,
   HouseholdSentInviteView,
 } from "@jigswap/contracts";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Check, Mail, Send, Undo2, UserPlus, X } from "lucide-react";
+import { Check, Link2, Mail, Send, Undo2, UserPlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "use-intl";
 
-// One pending row on the Members tab: an in-app invite (by name) or an email invitation (never
-// the address: "Email invitation", when it was sent and when it expires).
+// One pending row on the Members tab: an in-app invite (by name), an email invitation (never the
+// address: "Email invitation", when it was sent and when it expires) or an open single-use invite
+// link (never the token: when it was made and when it expires).
 export type PendingInvite =
   | { kind: "inApp"; createdAt: number; invite: HouseholdSentInviteView }
-  | { kind: "email"; createdAt: number; invite: EmailInviteView };
+  | { kind: "email"; createdAt: number; invite: EmailInviteView }
+  | { kind: "link"; createdAt: number; invite: HouseholdInviteLinkView };
 
-// In-app and email invitations together, newest first.
+// In-app invitations, email invitations and open invite links together, newest first.
 export function mergePendingInvites(
   inApp: readonly HouseholdSentInviteView[],
   email: readonly EmailInviteView[],
+  links: readonly HouseholdInviteLinkView[] = [],
 ): PendingInvite[] {
   return [
     ...inApp.map((invite) => ({
@@ -52,16 +56,21 @@ export function mergePendingInvites(
       createdAt: invite.createdAt,
       invite,
     })),
+    ...links.map((invite) => ({
+      kind: "link" as const,
+      createdAt: invite.createdAt,
+      invite,
+    })),
   ].sort((a, b) => b.createdAt - a.createdAt);
 }
 
 // The admin's "Waiting for a response" on the Members tab: requests to join first (they need an
 // answer: Approve, confirmed, runs the requester's join; Decline is silent to them), then every
-// invitation the household is still waiting on, in-app and by email, each with its kind and a
-// confirmed Revoke. Rendered only once both invitation lists have loaded (so rows don't jump),
-// and not at all when nothing is pending.
-// Email rows are the admin's own email invitations (invitations.listMine), absent when the
-// deployment has email invites switched off.
+// invitation the household is still waiting on, in-app, by email and open invite links, each with
+// its kind and a confirmed Revoke. Rendered only once the invitation lists have loaded (so rows
+// don't jump), and not at all when nothing is pending.
+// Email rows are every pending email invitation to the household, whoever of its admins sent it
+// (invitations.listForHousehold), absent when the deployment has email invites switched off.
 export function HouseholdPendingList({
   requests,
   inApp,
@@ -78,14 +87,22 @@ export function HouseholdPendingList({
   );
   const { data: email } = useQuery(
     convexQuery(
-      gateway.invitations.listMine,
-      emailAvailable === true ? { kind: "household" } : "skip",
+      gateway.invitations.listForHousehold,
+      emailAvailable === true ? {} : "skip",
     ),
+  );
+  const { data: links } = useQuery(
+    convexQuery(gateway.household.openInviteLinks, {}),
   );
 
   const revokeInApp = useMutation({
     mutationFn: useConvexMutation(gateway.household.revokeInvite),
     onSuccess: () => toast.success(t("revoked")),
+    onError,
+  });
+  const revokeLink = useMutation({
+    mutationFn: useConvexMutation(gateway.household.revokeInviteLink),
+    onSuccess: () => toast.success(t("linkRevoked")),
     onError,
   });
   const revokeEmail = useMutation({
@@ -94,9 +111,9 @@ export function HouseholdPendingList({
     onError: () => toast.error(tEmail("revokeFailed")),
   });
 
-  if (emailAvailable === undefined) return null;
+  if (emailAvailable === undefined || links === undefined) return null;
   if (emailAvailable && email === undefined) return null;
-  const rows = mergePendingInvites(inApp, email ?? []);
+  const rows = mergePendingInvites(inApp, email ?? [], links);
   if (rows.length === 0 && requests.length === 0) return null;
 
   return (
@@ -134,13 +151,24 @@ export function HouseholdPendingList({
                     revokeInApp.mutate({ inviteId: row.invite.inviteId })
                   }
                 />
-              ) : (
+              ) : row.kind === "email" ? (
                 <EmailRow
                   key={row.invite.inviteRef}
                   invite={row.invite}
                   busy={revokeEmail.isPending}
                   onRevoke={() =>
                     revokeEmail.mutate({ inviteRef: row.invite.inviteRef })
+                  }
+                />
+              ) : (
+                <LinkRow
+                  key={row.invite.linkId}
+                  link={row.invite}
+                  busy={revokeLink.isPending}
+                  onRevoke={() =>
+                    revokeLink.mutate({
+                      linkId: row.invite.linkId as Id<"inviteLinks">,
+                    })
                   }
                 />
               ),
@@ -322,7 +350,46 @@ function EmailRow({
   );
 }
 
-// Revoke with the same confirmation for both kinds; icon-only on phones (44px), labelled.
+function LinkRow({
+  link,
+  busy,
+  onRevoke,
+}: {
+  link: HouseholdInviteLinkView;
+  busy: boolean;
+  onRevoke: () => void;
+}) {
+  const t = useTranslations("household.pending");
+  const format = useFormatter();
+  const relativeTime = useRelativeTime();
+  const when = relativeTime(link.createdAt);
+  return (
+    <li className="flex items-center justify-between gap-3 py-2">
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full">
+          <Link2 aria-hidden className="size-4" />
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium">{t("linkTitle")}</p>
+          <p className="text-muted-foreground text-xs">
+            {t("linkMeta", {
+              when,
+              date: format.dateTime(link.expiresAt, { dateStyle: "medium" }),
+            })}
+          </p>
+        </div>
+      </div>
+      <RevokeButton
+        label={t("revokeLinkLabel", { when })}
+        body={t("revokeLinkBody")}
+        busy={busy}
+        onRevoke={onRevoke}
+      />
+    </li>
+  );
+}
+
+// Revoke with the same confirmation for every kind; icon-only on phones (44px), labelled.
 function RevokeButton({
   label,
   body,

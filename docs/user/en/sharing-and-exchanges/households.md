@@ -52,10 +52,12 @@ answer. To withdraw the invitation, click **Revoke** next to them and confirm.
 ### See and revoke pending invitations
 
 On the **Members** tab, the admin sees every invitation still waiting for an
-answer under **Waiting for a response**: invitations to members by name, and
-email invitations as **Email invitation** (the address is never shown). Each
-row says how it was sent and when. Click **Revoke** and confirm to withdraw
-one; the person can no longer accept it.
+answer under **Waiting for a response**: invitations to members by name, email
+invitations as **Email invitation** (the address is never shown) and invite
+links that haven't been used yet as **Invite link**. Each row says how it was
+sent and when. The list includes email invitations an earlier admin sent, so
+a new admin can manage them too. Click **Revoke** and confirm to withdraw one;
+it can no longer be used to join.
 
 ### Invite with a link
 
@@ -67,8 +69,9 @@ Use a link to invite someone, for example a person who isn't on JigSwap yet.
    your device's share sheet. You can also use **Copy link**, **Email** or **WhatsApp**.
 
 Each link works once and expires in 14 days. JigSwap doesn't see or store who
-you send it to. To cancel links you haven't used yet, click
-**Revoke open links**.
+you send it to. Links that haven't been used yet show as **Invite link** under
+**Waiting for a response** on the **Members** tab, where you can revoke one.
+To cancel all of them at once, click **Revoke open links**.
 
 When someone opens the link, they can accept or decline the invitation. A new
 member who signs up through the link finds the invitation on their
