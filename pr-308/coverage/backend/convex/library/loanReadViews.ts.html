@@ -30,9 +30,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">42.85% </span>
+                <span class="strong">64.28% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>6/14</span>
+                <span class='fraction'>9/14</span>
             </div>
         
             
@@ -115,36 +115,29 @@
 <a name='L50'></a><a href='#L50'>50</a>
 <a name='L51'></a><a href='#L51'>51</a>
 <a name='L52'></a><a href='#L52'>52</a>
-<a name='L53'></a><a href='#L53'>53</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -154,7 +147,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -192,14 +194,15 @@ export const toLoanView = async (
     loanId: loan.aggregateId as string,
     copyId: loan.copyId,
     copyDocId: (copy?._id ?? <span class="branch-1 cbranch-no" title="branch not covered" >"") as string,</span>
-    puzzleTitle: copy?.snapshot?.title ?? <span class="branch-1 cbranch-no" title="branch not covered" >puzzle?.title ?? <span class="branch-2 cbranch-no" title="branch not covered" >"</span>Unknown Puzzle",</span>
-    pieceCount: copy?.snapshot?.pieceCount ?? <span class="branch-1 cbranch-no" title="branch not covered" >puzzle?.pieceCount ?? <span class="branch-2 cbranch-no" title="branch not covered" >0</span>,</span>
+    puzzleTitle: copy?.snapshot?.title ?? puzzle?.title ?? <span class="branch-2 cbranch-no" title="branch not covered" >"Unknown Puzzle",</span>
+    pieceCount: copy?.snapshot?.pieceCount ?? puzzle?.pieceCount ?? <span class="branch-2 cbranch-no" title="branch not covered" >0,</span>
     status: loan.status,
     openedAt: loan.openedAt,
     expectedReturn: loan.expectedReturn,
     closedAt: loan.closedAt,
-    lender: lender ? toMemberView(lender) : <span class="branch-1 cbranch-no" title="branch not covered" >null,</span>
-    borrower: borrower ? toMemberView(borrower) : <span class="branch-1 cbranch-no" title="branch not covered" >null,</span>
+    // A departed (deleted or deactivated) party is null: the web renders "Deleted member".
+    lender: lender?.isActive ? toMemberView(lender) : null,
+    borrower: borrower?.isActive ? toMemberView(borrower) : <span class="branch-1 cbranch-no" title="branch not covered" >null,</span>
   };
 };
 &nbsp;
@@ -226,7 +229,7 @@ export const toProjectedLoanView = async (
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-19T08:20:53.444Z
+                at 2026-10-19T08:28:09.284Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
