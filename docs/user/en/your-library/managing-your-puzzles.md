@@ -49,6 +49,8 @@ The detail page is the rich record of a single owned copy. It includes:
   **Anonymous user**.
 - A **photo strip** with a lightbox. As the owner you can upload photos, set a cover image, and leave per-photo comments.
 - A two-column **history**: your completion timeline (with ratings), lending history (with status pills), and swap/transfer history.
+  If someone in that history has deleted their account, their entries stay
+  and show **Deleted member**, without a name, picture or link.
 - A **community rating breakdown** and a comment area.
 
 **Owner actions** on this page include toggling _for-trade_ / _for-lend_, logging a completion, and editing.

@@ -133,6 +133,12 @@ opnieuw uitnodigen; je ziet dan alleen berichten van na het moment dat je
 opnieuw meedeed. De eigenaar kan een kring niet verlaten;
 die kan hem wel verwijderen.
 
+Verwijdert de eigenaar zijn account, dan gaat de kring over naar de beheerder
+die er het langst in zit, of, als er geen beheerder is, naar het lid dat er het
+langst in zit. De nieuwe eigenaar wordt beheerder. Zit er verder niemand meer
+in de kring, dan wordt hij verwijderd. De plek van de vorige eigenaar staat er
+als **Verwijderd lid**; de nieuwe eigenaar kan die verwijderen.
+
 ## Een kring verwijderen
 
 Alleen de eigenaar kan een kring verwijderen.

@@ -48,6 +48,8 @@ De detailpagina is het uitgebreide overzicht van één eigen kopie. Het bevat:
   eigenaar het profiel voor jou verborgen, dan staat er **Anonieme gebruiker**.
 - Een **fotostrook** met een lightbox. Als eigenaar kun je foto's uploaden, een omslagafbeelding instellen en per foto opmerkingen achterlaten.
 - Een **geschiedenis** in twee kolommen: je voltooiingstijdlijn (met beoordelingen), uitleengeschiedenis (met statuspillen) en ruil-/overdrachtsgeschiedenis.
+  Heeft iemand uit die geschiedenis zijn account verwijderd, dan blijven diens
+  regels staan, als **Verwijderd lid**, zonder naam, foto of link.
 - Een **opbouw van de communitybeoordeling** en een opmerkingengebied.
 
 **Eigenaarsacties** op deze pagina zijn onder meer het in-/uitschakelen van _te ruil_ / _te leen_, een voltooiing vastleggen en bewerken.
