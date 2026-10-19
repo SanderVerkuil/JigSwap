@@ -66,13 +66,26 @@ const subscribe = (t: T, userId: Id<"users">) =>
     }),
   );
 
-// Alice owns "Puzzle Club"; Bob and Carol are members; Dave is outside it. Everyone has push.
-const seed = async (t: T) => {
+// Circle message push is off by default; opt a member in explicitly.
+const enableCirclePush = (t: T, clerkId: string) =>
+  as(t, clerkId).mutation(
+    api.notifications.updateNotificationPreference.updateNotificationPreference,
+    { type: "circle_message_received", channel: "push", enabled: true },
+  );
+
+// Alice owns "Puzzle Club"; Bob and Carol are members; Dave is outside it. Everyone has push, and
+// (unless `circlePush` is false) has switched circle message push on.
+const seed = async (t: T, { circlePush = true } = {}) => {
   const alice = await mkUser(t, "alice");
   const bob = await mkUser(t, "bob");
   const carol = await mkUser(t, "carol");
   const dave = await mkUser(t, "dave");
   for (const member of [alice, bob, carol, dave]) await subscribe(t, member);
+  if (circlePush) {
+    for (const clerkId of ["alice", "bob", "carol", "dave"]) {
+      await enableCirclePush(t, clerkId);
+    }
+  }
   const circleId = (await as(t, "alice").mutation(
     api.sharing.createCircle.createCircle,
     { name: "Puzzle Club" },
@@ -175,6 +188,14 @@ describe("circle_message_received", () => {
         ) === false,
     );
     expect(perMessage).toEqual([]);
+  });
+
+  test("circle message push is off for a member who never switched it on", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, threadId } = await seed(t, { circlePush: false });
+    await post(t, "alice", threadId, "hello club");
+    expect(await rowsOf(t, bob)).toHaveLength(1);
+    expect(await pushesTo(t, bob)).toEqual([]);
   });
 
   test("a DM keeps message_received", async () => {

@@ -141,9 +141,11 @@ If you'd rather not be in the group with them, you can leave the circle.
 
 - New messages in a conversation are combined into one notification, such as
   "**Anna** and 2 others wrote in **Puzzle Club**."
-- Push notifications for circle messages are on by default (once you've
-  enabled push on this device), and arrive at most once every 2 minutes per
-  chat. They don't show the message text.
+- Push notifications for circle messages are off by default. Turn on push for
+  **Circle messages** in your
+  [notification preferences](/docs/staying-informed/notifications) (and enable
+  push on this device) to get them. They arrive at most once every 2 minutes
+  per chat, and don't show the message text.
 - Circle chats never send an email per message. If you turn on email for
   **Circle messages** in your
   [notification preferences](/docs/staying-informed/notifications), you get

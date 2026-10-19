@@ -69,8 +69,7 @@ also see **Admin**). Use **Jump to** to go to a category.
 - Turn each notification type on or off for each channel: **In-app**,
   **Email** and **Push**.
 - By default, every type is on for **In-app**; email and push are off until
-  you turn them on. **Circle messages** is the exception: push is on for it by
-  default.
+  you turn them on.
 - Email isn't offered for every type.
 - A few safety notices, such as when a moderator removes your content or warns
   you, are marked **Always on: legally required notices**. They always appear

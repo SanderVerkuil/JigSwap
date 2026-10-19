@@ -61,11 +61,11 @@ describe("getMyPreferences", () => {
       email: false,
       push: false,
     });
-    // Circle messages are the one type whose push is on by default.
+    // Circle messages push off by default, the same as direct messages.
     expect(prefs.circle_message_received).toEqual({
       inApp: true,
       email: false,
-      push: true,
+      push: false,
     });
   });
 });
