@@ -40,7 +40,8 @@ Rules, applied in this order:
 3. **Code spans:** a single `` ` `` opens a span that runs to the next single `` ` `` on the same line. Its content is fully literal: no formatting, no escapes, no links. A run of two or more backticks is plain text, so ` ``` ` blocks are not supported and show as typed. An unclosed `` ` `` is literal.
 4. **Links** are atomic tokens, found before any delimiter matching, so `https://x.nl/a_b_c` never gets formatted.
    - A link starts at `http://`, `https://` or `www.` (case-insensitive), only at the start of the line or after a character that is not a letter or digit.
-   - It runs to the next whitespace. Trailing `.,:;!?'"` are then trimmed, plus any trailing `)` that has no opening `(` inside the URL (the GFM rule).
+   - It runs to the next whitespace. Trailing `.,:;!?'"` are then trimmed, plus any trailing `)` that has no opening `(` inside the URL (the GFM rule). Trailing `*`, `_` and `~` are trimmed too, so `**https://x.nl**` gives a bold link (added during implementation).
+   - A candidate that fails the URL check stays literal as a whole and is not rescanned, which keeps the scan linear.
    - `www.` gets the href `https://www.…`.
    - The href must pass `new URL()` with `protocol` equal to `http:` or `https:`. Otherwise the text stays literal.
    - Only those literal prefixes are ever matched, so `javascript:`, `data:` and the like are never links. There is no `[text](url)` syntax (that is a phishing vector), and the text shown is always the URL itself.
