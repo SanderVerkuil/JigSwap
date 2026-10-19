@@ -4,6 +4,8 @@ import type { QueryCtx } from "../_generated/server";
 
 // Identity ACL: resolve the acting member from Clerk auth instead of trusting a client-supplied
 // id. The Clerk subject maps to a user via `by_clerk_id`; the user's _id is the domain MemberId.
+// A deactivated (tombstoned, users.deleteUser) row is refused with the same generic error as a
+// missing one: its Clerk session may still be valid until the token expires (#275).
 export const requireMember = async (ctx: QueryCtx): Promise<MemberId> => {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) throw new ConvexError("Unauthenticated");
@@ -12,7 +14,7 @@ export const requireMember = async (ctx: QueryCtx): Promise<MemberId> => {
     .query("users")
     .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
     .unique();
-  if (!user) throw new ConvexError("Member not found");
+  if (!user || !user.isActive) throw new ConvexError("Member not found");
 
   return toMemberId(user._id);
 };
