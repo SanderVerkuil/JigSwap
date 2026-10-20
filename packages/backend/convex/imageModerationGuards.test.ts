@@ -2,6 +2,10 @@ import { readFileSync } from "node:fs";
 import { convexTest, type TestConvex } from "convex-test";
 import { Jimp } from "jimp";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import {
+  settleDueScheduled,
+  withModerationPool,
+} from "../test-fixtures/moderationPool";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { MAX_IMAGE_UPLOAD_BYTES } from "./lib/imageModeration/guards";
@@ -82,22 +86,7 @@ const asAlice = (t: TestConvex<typeof schema>) =>
 const asAdmin = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice", metadata: { role: "admin" } });
 
-const settleDueJobs = async (t: TestConvex<typeof schema>) => {
-  for (let i = 0; i < 200; i++) {
-    await t.finishInProgressScheduledFunctions();
-    const jobs = await t.run((ctx) =>
-      ctx.db.system.query("_scheduled_functions").collect(),
-    );
-    const busy = jobs.some(
-      (job) =>
-        job.state.kind === "inProgress" ||
-        (job.state.kind === "pending" && job.scheduledTime <= Date.now()),
-    );
-    if (!busy) return;
-    await new Promise((resolve) => setTimeout(resolve, 5));
-  }
-  throw new Error("scheduled functions did not settle");
-};
+const settleDueJobs = (t: TestConvex<typeof schema>) => settleDueScheduled(t);
 
 const store = (
   t: TestConvex<typeof schema>,
@@ -176,7 +165,7 @@ describe("input guards (copy photos)", () => {
     async (_name, bytes, type, reason) => {
       const fetchMock = cleanReply();
       vi.stubGlobal("fetch", fetchMock);
-      const t = convexTest(schema, modules);
+      const t = withModerationPool(convexTest(schema, modules));
       const { copy } = await seed(t);
       const fileId = await store(t, bytes, type);
 
@@ -194,7 +183,7 @@ describe("input guards (copy photos)", () => {
   test("more than 10 MB is refused from the storage metadata", async () => {
     const fetchMock = cleanReply();
     vi.stubGlobal("fetch", fetchMock);
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
     const big = new Uint8Array(MAX_IMAGE_UPLOAD_BYTES + 1);
     big.set([0xff, 0xd8, 0xff]);
@@ -210,7 +199,7 @@ describe("input guards (copy photos)", () => {
 
   test("an admin can still confirm the removal of a refused upload (its blob is already gone)", async () => {
     vi.stubGlobal("fetch", cleanReply());
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
     const row = await addCopyPhoto(
       t,
@@ -292,7 +281,7 @@ describe("metadata stripped before anything is stored or classified (copy photos
     async (_name, file, uploadType, storedType, format, size) => {
       const fetchMock = cleanReply();
       vi.stubGlobal("fetch", fetchMock);
-      const t = convexTest(schema, modules);
+      const t = withModerationPool(convexTest(schema, modules));
       const { copy } = await seed(t);
       const fileId = await store(t, fixture(file), uploadType);
 
@@ -322,7 +311,7 @@ describe("metadata stripped before anything is stored or classified (copy photos
   test("a JPEG whose segments run past the end is refused, never stored or classified", async () => {
     const fetchMock = cleanReply();
     vi.stubGlobal("fetch", fetchMock);
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
     const jpeg = fixture("gps.jpg");
     // Keep the header (SOF0 with the dimensions) but cut the file before the scan ends.
@@ -343,7 +332,7 @@ describe("metadata stripped before anything is stored or classified (copy photos
   test("when the swap to the clean blob fails, the gate stays closed: no URL for the upload as sent", async () => {
     const fetchMock = cleanReply();
     vi.stubGlobal("fetch", fetchMock);
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
     const fileId = await store(t, fixture("gps.jpg"), "image/jpeg");
     // Storing the clean blob fails: make every storage write in the pipeline throw.
@@ -379,7 +368,7 @@ describe("re-encode on a retry (EXIF/GPS never kept)", () => {
   test("after an attempt-1 download error, attempt 2 re-encodes and swaps before classifying", async () => {
     const fetchMock = cleanReply();
     vi.stubGlobal("fetch", fetchMock);
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
     const jpeg = new Uint8Array(
       await new Jimp({ width: 8, height: 8, color: 0x336699ff }).getBuffer(
@@ -416,7 +405,7 @@ describe("decode failures and polyglots (copy photos)", () => {
   test("a PNG header over an undecodable body is refused as decode_failed", async () => {
     const fetchMock = cleanReply();
     vi.stubGlobal("fetch", fetchMock);
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
     const png = new Uint8Array([
       0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48,
@@ -439,7 +428,7 @@ describe("decode failures and polyglots (copy photos)", () => {
 
   test("WebP claimed as another type is stored again as image/webp and the original deleted", async () => {
     vi.stubGlobal("fetch", cleanReply());
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
     const fileId = await store(t, WEBP_BYTES, "text/html");
 
@@ -459,7 +448,7 @@ describe("input guards (completion photos)", () => {
   test("a refused completion photo is rejected and detached from the completion", async () => {
     const fetchMock = cleanReply();
     vi.stubGlobal("fetch", fetchMock);
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
     const { completionId } = await asAlice(t).mutation(
       api.solving.recordCompletion.recordCompletion,

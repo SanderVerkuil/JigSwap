@@ -49,7 +49,10 @@ export type UnscoredReason =
   // Pipeline-side reasons (set by the moderation actions, not the adapter):
   | "missing_file" // the stored blob is gone
   | "download_error" // reading the blob threw
-  | "internal_error"; // the classify step threw unexpectedly
+  | "internal_error" // the classify step threw unexpectedly
+  // Set outside the pipeline (lib/imageModeration/moderationPool, stalledSweep):
+  | "check_failed" // the check never completed: it crashed, timed out or was canceled
+  | "stalled"; // the row was still "pending" 24 hours after it was last touched
 
 /**
  * What happened, for logs and metrics: "scored" (the classifier produced an nsfw score), "unscored"
@@ -114,18 +117,12 @@ export const sanitizeToken = (raw: string | undefined): string | undefined => {
 export const HF_TIMEOUT_MS = 30_000;
 
 /**
- * Backoff between classification attempts for a retryable unscored result: attempt 1 runs on
- * upload, then 1 min, 5 min and 30 min later. After the last attempt the photo stays "unscored".
+ * Attempts per moderation check, the first one included (counted on the row as
+ * `moderationAttempts`). A retryable unscored result with attempts left is retried by the
+ * moderation Workpool (lib/imageModeration/moderationPool: about 1, 5 and 25 minutes later, with
+ * jitter). After the last attempt the photo stays "unscored".
  */
-export const MODERATION_RETRY_DELAYS_MS: readonly number[] = [
-  60_000,
-  5 * 60_000,
-  30 * 60_000,
-];
-
-/** The delay before attempt `attempt + 1`, or null when `attempt` was the last one. */
-export const nextRetryDelayMs = (attempt: number): number | null =>
-  MODERATION_RETRY_DELAYS_MS[attempt - 1] ?? null;
+export const MODERATION_MAX_ATTEMPTS = 4;
 
 export const unscoredResult = (
   reason: UnscoredReason,
@@ -615,19 +612,24 @@ export const needsRescreen = (row: {
 
 /**
  * What the pipeline does with a classification result on attempt `attempt` (1-based): write the
- * verdict, or — for a retryable unscored result with attempts left — schedule another attempt.
+ * verdict, or — for a retryable unscored result with attempts left — have the check retried (the
+ * moderation Workpool's backoff decides when).
  */
 export type ModerationStep =
   | { kind: "verdict"; result: ModerationResult }
-  | { kind: "retry"; delayMs: number };
+  | { kind: "retry"; reason: UnscoredReason };
 
 export const planModerationStep = (
   result: ModerationResult,
   attempt: number,
 ): ModerationStep => {
-  if (result.status === "unscored" && result.retryable) {
-    const delayMs = nextRetryDelayMs(attempt);
-    if (delayMs !== null) return { kind: "retry", delayMs };
+  if (
+    result.status === "unscored" &&
+    result.retryable &&
+    result.reason !== null &&
+    attempt < MODERATION_MAX_ATTEMPTS
+  ) {
+    return { kind: "retry", reason: result.reason };
   }
   return { kind: "verdict", result };
 };

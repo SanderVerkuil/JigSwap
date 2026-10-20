@@ -1,9 +1,9 @@
 import { ConvexError, v } from "convex/values";
-import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { canManageCopy } from "../household/copyAccess";
 import { requireMember } from "../identity/requireMember";
+import { enqueueImageModeration } from "../lib/imageModeration/moderationPool";
 import { isPreservedBlob } from "../lib/imageModeration/quarantine";
 
 // Composition root for attaching an uploaded photo to an owned copy, keyed by the copy's Convex id.
@@ -63,12 +63,8 @@ export const addCopyPhoto = mutation({
       updatedAt: now,
     });
 
-    // Kick the async moderation pipeline (runAfter 0 = as soon as this mutation commits). Scheduling
-    // is transactional with the insert, so the job is only enqueued if the row is actually written.
-    await ctx.scheduler.runAfter(
-      0,
-      internal.library.moderatePhoto.moderatePhoto,
-      { imageId },
-    );
+    // Kick the async moderation pipeline on the moderation Workpool (as soon as this mutation
+    // commits). Enqueueing is transactional with the insert, so the job only exists if the row does.
+    await enqueueImageModeration(ctx, "copy", imageId);
   },
 });

@@ -1,5 +1,9 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
+import {
+  settleDueScheduled,
+  withModerationPool,
+} from "../test-fixtures/moderationPool";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
@@ -136,24 +140,8 @@ const moderationActions = (t: TestConvex<typeof schema>) =>
 // Wait until every scheduled job reaches a terminal state. convex-test starts runAfter(0) jobs
 // via real setTimeout; finishInProgressScheduledFunctions only awaits jobs whose timer already
 // fired, so yield through the macrotask queue between rounds to let pending timers fire too.
-const settleScheduledJobs = async (t: TestConvex<typeof schema>) => {
-  for (let i = 0; i < 100; i++) {
-    await t.finishInProgressScheduledFunctions();
-    const jobs = await t.run((ctx) =>
-      ctx.db.system.query("_scheduled_functions").collect(),
-    );
-    if (
-      jobs.every(
-        (job) =>
-          job.state.kind !== "pending" && job.state.kind !== "inProgress",
-      )
-    ) {
-      return;
-    }
-    await new Promise((resolve) => setTimeout(resolve, 0));
-  }
-  throw new Error("scheduled functions did not settle");
-};
+const settleScheduledJobs = (t: TestConvex<typeof schema>) =>
+  settleDueScheduled(t);
 
 // Attach one photo and return its sidecar row, reset to "pending": the background-drained
 // action marks it unscored (verdict-only — the WebP path, so no file swap), so settle that job first, then re-open the sidecar so each test exercises the FIRST
@@ -179,7 +167,7 @@ const attachOne = async (
 
 describe("completionModerationStore.setModerationFile (approve-with-swap)", () => {
   test("swaps the sidecar fileId AND the completions.photos entry, bumping updatedAt", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
     const completionId = await recordForAlice(t, copyAggregateId);
     const { sidecar } = await attachOne(t, completionId);
@@ -210,7 +198,7 @@ describe("completionModerationStore.setModerationFile (approve-with-swap)", () =
   });
 
   test("a vanished sidecar is a no-op", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
     const completionId = await recordForAlice(t, copyAggregateId);
     const { fileId, sidecar } = await attachOne(t, completionId);
@@ -229,7 +217,7 @@ describe("completionModerationStore.setModerationFile (approve-with-swap)", () =
 
 describe("completionModerationStore.setModerationVerdict", () => {
   test("approved records the verdict + score on the sidecar; photos untouched, no stamp", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
     const completionId = await recordForAlice(t, copyAggregateId);
     const { fileId, sidecar } = await attachOne(t, completionId);
@@ -258,7 +246,7 @@ describe("completionModerationStore.setModerationVerdict", () => {
   });
 
   test("rejected drops the id from photos, deletes the blob, keeps the sidecar, stamps photo_auto_rejected", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
     const completionId = await recordForAlice(t, copyAggregateId);
     const { fileId: rejectedFileId, sidecar } = await attachOne(
@@ -305,7 +293,7 @@ describe("completionModerationStore.setModerationVerdict", () => {
   });
 
   test("a re-run rejected verdict does not double-stamp", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
     const completionId = await recordForAlice(t, copyAggregateId);
     const { sidecar } = await attachOne(t, completionId);
@@ -377,7 +365,7 @@ describe("rejected-photo read filtering", () => {
   };
 
   test("listMyCompletions excludes rejected only — pending flagged, legacy-absent included", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { expectedItems } = await seedStatuses(t);
 
     const mine = await asAlice(t).query(
@@ -389,7 +377,7 @@ describe("rejected-photo read filtering", () => {
   });
 
   test("getCompletionHistory excludes rejected only — pending flagged, legacy-absent included", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId, expectedItems } = await seedStatuses(t);
 
     const history = await asAlice(t).query(
@@ -401,7 +389,7 @@ describe("rejected-photo read filtering", () => {
   });
 
   test("a legacy completion without aggregateId keeps all photos", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice } = await seed(t);
     const fileId = (await storeBlob(t)) as Id<"_storage">;
     await t.run(async (ctx) => {

@@ -3,6 +3,10 @@ import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { Jimp } from "jimp";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import {
+  settleDueScheduled,
+  withModerationPool,
+} from "../test-fixtures/moderationPool";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
@@ -107,22 +111,7 @@ const asBob = (t: TestConvex<typeof schema>) =>
 const asAdmin = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_bob", metadata: { role: "admin" } });
 
-const settleDueJobs = async (t: TestConvex<typeof schema>) => {
-  for (let i = 0; i < 200; i++) {
-    await t.finishInProgressScheduledFunctions();
-    const jobs = await t.run((ctx) =>
-      ctx.db.system.query("_scheduled_functions").collect(),
-    );
-    const busy = jobs.some(
-      (job) =>
-        job.state.kind === "inProgress" ||
-        (job.state.kind === "pending" && job.scheduledTime <= Date.now()),
-    );
-    if (!busy) return;
-    await new Promise((resolve) => setTimeout(resolve, 5));
-  }
-  throw new Error("scheduled functions did not settle");
-};
+const settleDueJobs = (t: TestConvex<typeof schema>) => settleDueScheduled(t);
 
 // A real (unique) JPEG so the re-encode runs; returns its id and the bytes' hashes.
 const storeJpeg = async (t: TestConvex<typeof schema>) => {
@@ -171,7 +160,7 @@ describe("hash match on a copy photo", () => {
   test("quarantines before classification, preserves the bytes under a NEW blob and raises an escalation", async () => {
     const fetchMock = routedFetch("match");
     vi.stubGlobal("fetch", fetchMock);
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, copy } = await seed(t);
 
     const { row, upload } = await addCopyPhoto(t, copy);
@@ -224,7 +213,7 @@ describe("hash match on a copy photo", () => {
 
   test("the photo is never served to anyone: not the uploader, not other members, not admins", async () => {
     vi.stubGlobal("fetch", routedFetch("match"));
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
     const { row } = await addCopyPhoto(t, copy);
     await t.run((ctx) => ctx.db.patch(copy, { coverImageId: row._id }));
@@ -298,7 +287,7 @@ describe("hash match on a copy photo", () => {
 
   test("the uploader removing it succeeds silently and destroys nothing", async () => {
     vi.stubGlobal("fetch", routedFetch("match"));
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
     const { row, upload } = await addCopyPhoto(t, copy);
 
@@ -318,7 +307,7 @@ describe("hash check outcomes that continue", () => {
   test("unavailable (HCS 503) continues to classification", async () => {
     const fetchMock = routedFetch(503);
     vi.stubGlobal("fetch", fetchMock);
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
 
     const { row } = await addCopyPhoto(t, copy);
@@ -332,7 +321,7 @@ describe("hash check outcomes that continue", () => {
   test("no_match checks the original and the re-encode, then classifies", async () => {
     const fetchMock = routedFetch("no_match");
     vi.stubGlobal("fetch", fetchMock);
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
 
     const { row, upload } = await addCopyPhoto(t, copy);
@@ -362,7 +351,7 @@ describe("hash check outcomes that continue", () => {
     vi.stubEnv("CSAM_HASHCHECK_PROVIDER", "");
     const fetchMock = routedFetch("match");
     vi.stubGlobal("fetch", fetchMock);
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
 
     const { row } = await addCopyPhoto(t, copy);
@@ -376,7 +365,7 @@ describe("hash match on a completion photo", () => {
   test("quarantined, dropped from the completion, never served, and kept when the completion is deleted", async () => {
     const fetchMock = routedFetch("match");
     vi.stubGlobal("fetch", fetchMock);
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, copyAggregateId } = await seed(t);
     const { completionId } = await asAlice(t).mutation(
       api.solving.recordCompletion.recordCompletion,
@@ -442,7 +431,7 @@ describe("hash match on a completion photo", () => {
 describe("admin escalation functions", () => {
   test("list and mark are admin-only", async () => {
     vi.stubGlobal("fetch", routedFetch("match"));
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
     await addCopyPhoto(t, copy);
     const [escalation] = await escalations(t);
@@ -461,7 +450,7 @@ describe("admin escalation functions", () => {
 
   test("open -> reported -> closed only; notes are append-only; every update is stamped with the admin (L1)", async () => {
     vi.stubGlobal("fetch", routedFetch("match"));
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { bob, copy } = await seed(t);
     await addCopyPhoto(t, copy);
     const [escalation] = await escalations(t);
@@ -547,7 +536,7 @@ const seedUncheckedRow = async (
 describe("publication gate: no URL before the hash check has passed (C1)", () => {
   test("hash service unreachable: classified and approved, but served to nobody, the uploader included", async () => {
     vi.stubGlobal("fetch", routedFetch(503));
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
     const { row } = await addCopyPhoto(t, copy);
     expect(row.moderationStatus).toBe("approved");
@@ -572,7 +561,7 @@ describe("publication gate: no URL before the hash check has passed (C1)", () =>
 
   test("no_match opens the gate: hashCheckedAt is set and other members see the photo", async () => {
     vi.stubGlobal("fetch", routedFetch("no_match"));
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
     const { row } = await addCopyPhoto(t, copy);
     expect(row.hashCheckedAt).toBeGreaterThan(0);
@@ -585,7 +574,7 @@ describe("publication gate: no URL before the hash check has passed (C1)", () =>
   });
 
   test("admins get no URL for an unchecked photo and cannot decide it", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, copy } = await seed(t);
     const { imageId } = await seedUncheckedRow(t, copy, alice, {
       moderationStatus: "unscored",
@@ -611,7 +600,7 @@ describe("publication gate: no URL before the hash check has passed (C1)", () =>
 
   test("an unchecked completion photo is not served to its uploader", async () => {
     vi.stubGlobal("fetch", routedFetch(503));
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
     const { completionId } = await asAlice(t).mutation(
       api.solving.recordCompletion.recordCompletion,
@@ -658,7 +647,7 @@ describe("a match is never lost when the row changed meanwhile (H2)", () => {
   };
 
   test("a row an admin already approved is forced to quarantined, and its cover cleared (L4)", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, copy } = await seed(t);
     const { imageId } = await seedUncheckedRow(t, copy, alice, {
       moderationStatus: "approved",
@@ -677,7 +666,7 @@ describe("a match is never lost when the row changed meanwhile (H2)", () => {
   });
 
   test("a row the uploader removed meanwhile still gets its escalation", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, copy } = await seed(t);
     const { imageId } = await seedUncheckedRow(t, copy, alice);
     await t.run((ctx) => ctx.db.delete(imageId));
@@ -699,7 +688,7 @@ describe("refused uploads are hash-checked first (M2)", () => {
   test("a match on bytes the input guards would refuse is quarantined, not deleted", async () => {
     const fetchMock = routedFetch("match");
     vi.stubGlobal("fetch", fetchMock);
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
     const fileId = (await t.run((ctx) =>
       ctx.storage.store(new Blob(["<svg></svg>"], { type: "image/svg+xml" })),
@@ -724,7 +713,7 @@ describe("refused uploads are hash-checked first (M2)", () => {
 
   test("without a match the refusal stands", async () => {
     vi.stubGlobal("fetch", routedFetch("no_match"));
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
     const fileId = (await t.run((ctx) =>
       ctx.storage.store(new Blob(["<svg></svg>"], { type: "image/svg+xml" })),
@@ -749,7 +738,7 @@ describe("refused uploads are hash-checked first (M2)", () => {
 describe("logging on a match (L2)", () => {
   test("the wide event carries the escalation id and nothing that identifies the row or uploader", async () => {
     vi.stubGlobal("fetch", routedFetch("match"));
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, copy } = await seed(t);
     const { row } = await addCopyPhoto(t, copy);
     const [escalation] = await escalations(t);
@@ -782,7 +771,7 @@ describe("preserved blobs can never be re-used (H1)", () => {
   };
 
   test("addCopyPhoto and attachCompletionPhotos refuse a preserved storage id with a generic not-found", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy, copyAggregateId, preservedId } = await quarantineOne(t);
 
     await expect(
@@ -810,7 +799,7 @@ describe("preserved blobs can never be re-used (H1)", () => {
   });
 
   test("a row that already points at a preserved blob is quarantined at once and joins its escalation", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, copy, preservedId } = await quarantineOne(t);
     const now = Date.now();
     const imageId = await t.run((ctx) =>
@@ -835,7 +824,7 @@ describe("preserved blobs can never be re-used (H1)", () => {
   });
 
   test("the owner's copy-detail read never lists a quarantined photo's storage id", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy, preservedId } = await quarantineOne(t);
     const detail = await asAlice(t).query(
       api.library.getOwnedPuzzleWithCollectionStatus
@@ -856,7 +845,7 @@ describe("unavailable hash check: stored hashes, re-checks, held unpublished (M1
   };
 
   test("the hashes of the original and the re-encode are stored and a re-check is scheduled in ~15 min", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { row, upload } = await unavailableUpload(t);
 
     expect(row.hashCheckedAt).toBeUndefined();
@@ -886,7 +875,7 @@ describe("unavailable hash check: stored hashes, re-checks, held unpublished (M1
   });
 
   test("a later match quarantines the re-encode, records the discarded original, and stops waiting", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { row } = await unavailableUpload(t);
     vi.stubGlobal("fetch", routedFetch("match"));
 
@@ -913,7 +902,7 @@ describe("unavailable hash check: stored hashes, re-checks, held unpublished (M1
   });
 
   test("a later no_match publishes the photo", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { row, copy } = await unavailableUpload(t);
     vi.stubGlobal("fetch", routedFetch("no_match"));
 
@@ -933,7 +922,7 @@ describe("unavailable hash check: stored hashes, re-checks, held unpublished (M1
   });
 
   test("still unavailable: backs off (doubling, capped at 24 h)", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { row } = await unavailableUpload(t);
 
     await t.action(internal.library.moderatePhoto.recheckHashes, {
@@ -959,7 +948,7 @@ describe("unavailable hash check: stored hashes, re-checks, held unpublished (M1
   test("provider none: hashCheckedAt is set at once, nothing waits", async () => {
     vi.stubEnv("CSAM_HASHCHECK_PROVIDER", "none");
     vi.stubGlobal("fetch", routedFetch("match"));
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
     const { row } = await addCopyPhoto(t, copy);
     expect(row.hashCheckedAt).toBeGreaterThan(0);
@@ -971,7 +960,7 @@ describe("re-screen hash-checks legacy and unscored photos (M6)", () => {
   test("a legacy photo that matches is quarantined and never classified", async () => {
     const fetchMock = routedFetch("match");
     vi.stubGlobal("fetch", fetchMock);
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, copy } = await seed(t);
     const upload = await storeJpeg(t);
     const now = Date.now();
@@ -1004,7 +993,7 @@ describe("re-screen hash-checks legacy and unscored photos (M6)", () => {
   test("unavailable does not hold up the re-screen", async () => {
     const fetchMock = routedFetch(503);
     vi.stubGlobal("fetch", fetchMock);
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, copy } = await seed(t);
     const upload = await storeJpeg(t);
     const now = Date.now();
@@ -1029,7 +1018,7 @@ describe("re-screen hash-checks legacy and unscored photos (M6)", () => {
 describe("uploader identity survives account deletion (M5)", () => {
   test("the escalation snapshots the uploader; deleting the account tombstones it while the escalation is open", async () => {
     vi.stubGlobal("fetch", routedFetch("match"));
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, copy } = await seed(t);
     await addCopyPhoto(t, copy);
     const [escalation] = await escalations(t);
@@ -1056,7 +1045,7 @@ describe("uploader identity survives account deletion (M5)", () => {
 
   test("once every escalation is closed the account is deleted as usual", async () => {
     vi.stubGlobal("fetch", routedFetch("match"));
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, copy } = await seed(t);
     await addCopyPhoto(t, copy);
     const [escalation] = await escalations(t);

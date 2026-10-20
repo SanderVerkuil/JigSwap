@@ -1,5 +1,9 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
+import {
+  settleDueScheduled,
+  withModerationPool,
+} from "../test-fixtures/moderationPool";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
@@ -50,7 +54,7 @@ const seed = async (t: TestConvex<typeof schema>) =>
 
 describe("addCopyImage", () => {
   test("a new photo is inserted pending behind the hash-check gate and schedules moderation", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, copy, copyAggregateId } = await seed(t);
     const fileId = (await t.run((ctx) =>
       ctx.storage.store(new Blob(["img"], { type: "image/png" })),
@@ -79,12 +83,9 @@ describe("addCopyImage", () => {
     expect(images[0].hashCheckPendingSince).toBeGreaterThan(0);
     expect(images[0].hashCheckedAt).toBeUndefined();
 
-    const jobs = await t.run((ctx) =>
-      ctx.db.system.query("_scheduled_functions").collect(),
-    );
-    const job = jobs.find((s) => s.name.includes("moderatePhoto"));
-    expect((job?.args[0] as { imageId?: string })?.imageId).toBe(
-      images[0]._id as string,
-    );
+    // The moderation check was enqueued on the pool for this exact image: it ran once.
+    await settleDueScheduled(t);
+    const checked = await t.run((ctx) => ctx.db.get(images[0]._id));
+    expect(checked?.moderationAttempts).toBe(1);
   });
 });

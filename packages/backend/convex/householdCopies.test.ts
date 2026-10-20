@@ -1,6 +1,7 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError, type Value } from "convex/values";
 import { beforeEach, describe, expect, test } from "vitest";
+import { withModerationPool } from "../test-fixtures/moderationPool";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
@@ -147,7 +148,7 @@ let t: T;
 let w: World;
 
 beforeEach(async () => {
-  t = convexTest(schema, modules);
+  t = withModerationPool(convexTest(schema, modules));
   w = await seed(t);
 });
 

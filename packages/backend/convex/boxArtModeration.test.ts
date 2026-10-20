@@ -3,6 +3,7 @@ import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { Jimp } from "jimp";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { withModerationPool } from "../test-fixtures/moderationPool";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
@@ -192,7 +193,7 @@ describe("box art: hash match at upload", () => {
   test("an upload is refused like refused content, quarantined, preserved and escalated, never classified", async () => {
     const fetchMock = routedFetch("match");
     vi.stubGlobal("fetch", fetchMock);
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice } = await seed(t);
     const upload = await uploadJpeg(t);
 
@@ -225,7 +226,7 @@ describe("box art: hash match at upload", () => {
   test("a fetched shop image is checked the same way", async () => {
     const art = await jpeg();
     vi.stubGlobal("fetch", routedFetch("match", 0.01, art.bytes));
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     await seed(t);
 
     expect(
@@ -272,7 +273,7 @@ describe("box art: hash check unavailable, then a match on re-check", () => {
   };
 
   test("a definition's box art: not served while waiting, detached and escalated on the match", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     await seed(t);
     const { image, listing } = await acceptedUnchecked(t);
     const definitionId = await asAlice(t).mutation(
@@ -306,7 +307,7 @@ describe("box art: hash check unavailable, then a match on re-check", () => {
   });
 
   test("a proposal's box art: not shown to the reviewer while waiting, detached and escalated on the match", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { definitionId } = await seed(t);
     const { image, listing } = await acceptedUnchecked(t);
     const proposalId = await asAlice(t).mutation(
@@ -335,7 +336,7 @@ describe("box art: hash check unavailable, then a match on re-check", () => {
   });
 
   test("a no_match on re-check publishes the box art", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { definitionId, puzzleId } = await seed(t);
     const { image, listing } = await acceptedUnchecked(t, asAdmin);
     await asAdmin(t).mutation(
@@ -358,7 +359,7 @@ describe("box art: hash check unavailable, then a match on re-check", () => {
 describe("box art: the content check", () => {
   test("content the classifier refuses is refused, deleted and stamped", async () => {
     vi.stubGlobal("fetch", routedFetch("no_match", 0.99));
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     await seed(t);
     const upload = await uploadJpeg(t);
 
@@ -385,7 +386,7 @@ describe("box art: the content check", () => {
 
   test("clean box art is approved, hash-checked and served at once", async () => {
     vi.stubGlobal("fetch", routedFetch("no_match"));
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { definitionId, puzzleId } = await seed(t);
     const upload = await uploadJpeg(t);
 
@@ -404,7 +405,7 @@ describe("box art: the content check", () => {
 
   test("a classifier outage: accepted but unserved, then published by the retry", async () => {
     vi.stubGlobal("fetch", routedFetch("no_match", 503));
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { definitionId, puzzleId } = await seed(t);
     const upload = await uploadJpeg(t);
 

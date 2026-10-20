@@ -141,6 +141,9 @@ export default defineSchema({
     reencodedAt: v.optional(v.number()),
     // The admin who decided it by hand (admin/decideUncheckedPhoto); a manual decision is final.
     moderatedBy: v.optional(v.id("users")),
+    // When an admin last sent it back to "pending" (admin/recheckPhoto). The stalled-check sweep
+    // (lib/imageModeration/stalledSweep) counts from here, else from createdAt.
+    recheckedAt: v.optional(v.number()),
     // CSAM hash-check bookkeeping + publication gate (lib/imageModeration/hashCheckFields).
     ...hashCheckFields,
     createdAt: v.number(),

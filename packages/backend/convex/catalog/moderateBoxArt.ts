@@ -6,9 +6,14 @@ import type { Id } from "../_generated/dataModel";
 import { internalAction, type ActionCtx } from "../_generated/server";
 import { INVALID_IMAGE_LABEL } from "../lib/imageModeration/guards";
 import {
+  enqueueImageModeration,
+  MODERATION_HANDOFF_DELAY_MS,
+} from "../lib/imageModeration/moderationPool";
+import {
   imageModerationSteps,
   runHashRecheck,
   runImageModeration,
+  runModerationJob,
 } from "../lib/imageModeration/pipeline";
 import { boxArtRefused, type BoxArtRefusal } from "./boxArtUploads";
 
@@ -22,8 +27,9 @@ import { boxArtRefused, type BoxArtRefusal } from "./boxArtUploads";
 // so a refused image is refused on the spot, and the form only gets an id it may use. When that
 // attempt cannot decide (the classifier or the hash service is unavailable), the id is handed out
 // anyway and the box art stays unserved (lib/imageModeration/boxArtUrl: the placeholder, for
-// everyone) until the scheduled retries approve it, the way a copy photo stays unpublished.
+// everyone) until the moderation Workpool's retries approve it, the way a copy photo stays unpublished.
 const steps = imageModerationSteps({
+  table: "boxArt",
   event: "catalog.moderateBoxArt",
   load: internal.catalog.boxArtModerationStore.getForModeration,
   describe: (row) => ({ uploader_id: row.uploaderId }),
@@ -31,15 +37,22 @@ const steps = imageModerationSteps({
   setVerdict: internal.catalog.boxArtModerationStore.setVerdict,
   quarantine: internal.catalog.boxArtModerationStore.quarantine,
   setHashCheck: internal.catalog.boxArtModerationStore.setHashCheck,
-  retry: internal.catalog.moderateBoxArt.moderateBoxArt,
   recheck: internal.catalog.moderateBoxArt.recheckHashes,
 });
 
-// A later attempt (the pipeline's retry backoff).
+// A later attempt: the check handed to the moderation Workpool after the inline one, or an admin's
+// "Check again".
 export const moderateBoxArt = internalAction({
-  args: { imageId: v.id("boxArtUploads"), attempt: v.optional(v.number()) },
-  handler: async (ctx, { imageId, attempt }): Promise<void> =>
-    runImageModeration(ctx, steps, { imageId, attempt: attempt ?? 1 }),
+  // `pooled`: run by the moderation Workpool (lib/imageModeration/moderationPool), which retries.
+  // `attempt` is no longer read (the row counts attempts); it is accepted so a retry scheduled
+  // before the pool existed still runs, and hands its retries to the pool.
+  args: {
+    imageId: v.id("boxArtUploads"),
+    pooled: v.optional(v.boolean()),
+    attempt: v.optional(v.number()),
+  },
+  handler: async (ctx, { imageId, pooled }): Promise<void> =>
+    runModerationJob(ctx, steps, { imageId, pooled: pooled ?? false }),
 });
 
 // Re-check the stored hashes of box art whose CSAM hash check was unavailable (backoff).
@@ -88,7 +101,14 @@ export const checkBoxArt = async (
       message: "This upload can't be used",
     });
   }
-  await runImageModeration(ctx, steps, { imageId, attempt: 1 });
+  const outcome = await runImageModeration(ctx, steps, { imageId });
+  // Undecided (the classifier or the hash service is unavailable): the moderation Workpool takes
+  // the retries over, while the form already gets its id.
+  if (outcome.kind === "retry") {
+    await enqueueImageModeration(ctx, "boxArt", imageId, {
+      runAfter: MODERATION_HANDOFF_DELAY_MS,
+    });
+  }
   const row = await ctx.runQuery(
     internal.catalog.boxArtModerationStore.getForModeration,
     { imageId },

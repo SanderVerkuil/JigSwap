@@ -6,6 +6,10 @@ import type {
 import { convexTest, type TestConvex } from "convex-test";
 import { Jimp } from "jimp";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import {
+  settleDueScheduled,
+  withModerationPool,
+} from "../test-fixtures/moderationPool";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { asImage } from "./conversation/messageAttachments";
@@ -135,22 +139,7 @@ const openThread = async (t: T) => {
   return { alice, bob, carol, threadId };
 };
 
-const settleDueJobs = async (t: T) => {
-  for (let i = 0; i < 200; i++) {
-    await t.finishInProgressScheduledFunctions();
-    const jobs = await t.run((ctx) =>
-      ctx.db.system.query("_scheduled_functions").collect(),
-    );
-    const busy = jobs.some(
-      (job) =>
-        job.state.kind === "inProgress" ||
-        (job.state.kind === "pending" && job.scheduledTime <= Date.now()),
-    );
-    if (!busy) return;
-    await new Promise((resolve) => setTimeout(resolve, 5));
-  }
-  throw new Error("scheduled functions did not settle");
-};
+const settleDueJobs = (t: T) => settleDueScheduled(t);
 
 // Store bytes as an upload. convex-test does not record an upload's content type on the
 // `_storage` row (the real upload endpoint does), so set it the way an HTTP upload would.
@@ -258,7 +247,7 @@ const store = internal.conversation.attachmentModerationStore;
 
 describe("staging a photo", () => {
   test("a participant stages a fresh JPEG: pending, unpublished, pipeline and expiry scheduled", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, threadId } = await openThread(t);
     const id = await stage(t, threadId);
     const row = await attachment(t, id);
@@ -275,15 +264,17 @@ describe("staging a photo", () => {
     const jobs = await t.run((ctx) =>
       ctx.db.system.query("_scheduled_functions").collect(),
     );
-    expect(jobs.map((job) => job.name).sort()).toEqual([
+    // The pipeline runs on the moderation pool (its jobs live in the component), the expiry on
+    // the scheduler.
+    expect(jobs.map((job) => job.name)).toEqual([
       "conversation/attachmentModerationStore:expireStaged",
-      "conversation/moderateMessageImage:moderateMessageImage",
     ]);
     await settleDueJobs(t);
+    expect((await attachment(t, id))?.moderationAttempts).toBe(1);
   });
 
   test("a non-participant can't get an upload URL or stage", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { threadId } = await openThread(t);
     await expect(
       asCarol(t).mutation(
@@ -307,7 +298,7 @@ describe("staging a photo", () => {
   test.each(["alice blocks bob", "bob blocks alice"])(
     "%s: no upload URL, no staging (CannotReply)",
     async (direction) => {
-      const t = convexTest(schema, modules);
+      const t = withModerationPool(convexTest(schema, modules));
       const { alice, bob, threadId } = await openThread(t);
       const [blockerId, blockedId] =
         direction === "alice blocks bob" ? [alice, bob] : [bob, alice];
@@ -325,7 +316,7 @@ describe("staging a photo", () => {
   );
 
   test("staging is rate limited (imageStage hourly), and so are upload URLs (imageUploadUrl)", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, threadId } = await openThread(t);
     await t.run((ctx) =>
       ctx.db.insert("rateLimits", {
@@ -338,7 +329,7 @@ describe("staging a photo", () => {
   });
 
   test("staging has a daily cap too (imageStageDaily, 100/day)", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, threadId } = await openThread(t);
     await t.run(async (ctx) => {
       for (const name of ["imageStageDaily", "imageUploadUrl"] as const) {
@@ -359,7 +350,7 @@ describe("staging a photo", () => {
   });
 
   test("refuses an upload over 10 MB, of another type, or older than 15 minutes", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { threadId } = await openThread(t);
     const big = await storeUpload(
       t,
@@ -390,7 +381,7 @@ describe("staging a photo", () => {
   });
 
   test("a blob held as report evidence or proposed as box art is refused and never deleted", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, bob, threadId } = await openThread(t);
     // Wrong type, so an unreferenced blob would be deleted by the refusal.
     const evidence = await storeJpeg(t, "image/gif");
@@ -427,7 +418,7 @@ describe("staging a photo", () => {
   });
 
   test("a blob another image table references is refused and never deleted", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, threadId } = await openThread(t);
     const copyPhoto = await storeJpeg(t, "image/gif");
     const completionPhoto = await storeJpeg(t);
@@ -473,7 +464,7 @@ describe("staging a photo", () => {
   });
 
   test("refuses bad sizes, an already-claimed blob and a CSAM-preserved blob", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, threadId } = await openThread(t);
     await expect(
       asAlice(t).mutation(
@@ -517,7 +508,7 @@ describe("staging a photo", () => {
     "photos are off with %s (ImagesUnavailable)",
     async (_label, name, value) => {
       vi.stubEnv(name, value);
-      const t = convexTest(schema, modules);
+      const t = withModerationPool(convexTest(schema, modules));
       const { threadId } = await openThread(t);
       await expect(
         asAlice(t).mutation(
@@ -534,7 +525,7 @@ describe("deferred append", () => {
   test("the recipient sees nothing until the photo is deliverable AND sent, then exactly one message", async () => {
     // HCS unreachable: the classifier approves, but the hash gate stays closed.
     fakes.hcs = 503;
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, bob, threadId } = await openThread(t);
     const id = await stage(t, threadId);
     await settleDueJobs(t);
@@ -593,7 +584,7 @@ describe("deferred append", () => {
   });
 
   test("only the re-encoded (EXIF-free) blob is ever delivered", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, threadId } = await openThread(t);
     // The pipeline marks the swap: a staged photo ends up re-encoded.
     const staged = await stage(t, threadId);
@@ -625,7 +616,7 @@ describe("deferred append", () => {
   });
 
   test("a WebP original (a browser that blocks the re-encode) is accepted and delivered without its metadata", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { threadId } = await openThread(t);
     const fixture = new Uint8Array(
       readFileSync(
@@ -664,7 +655,7 @@ describe("deferred append", () => {
   });
 
   test("a photo that is deliverable but not sent stays out of the thread", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { bob, threadId } = await openThread(t);
     const id = await stage(t, threadId);
     await settleDueJobs(t);
@@ -679,7 +670,7 @@ describe("deferred append", () => {
   });
 
   test("a batch arrives in send order; the caption rides on the last photo", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { threadId } = await openThread(t);
     const first = await stage(t, threadId);
     const second = await stage(t, threadId);
@@ -693,7 +684,7 @@ describe("deferred append", () => {
   });
 
   test("a rejected last photo: the others are delivered, its caption never is", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { threadId } = await openThread(t);
     const ok = await stage(t, threadId);
     await settleDueJobs(t);
@@ -710,7 +701,7 @@ describe("deferred append", () => {
 
   test("a block before delivery drops the undelivered photo", async () => {
     fakes.hcs = 503;
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, bob, threadId } = await openThread(t);
     const id = await stage(t, threadId);
     await settleDueJobs(t);
@@ -733,7 +724,7 @@ describe("deferred append", () => {
 describe("blocking", () => {
   test("a block drops the pair's sent, undelivered photos, so an unblock can't resurrect them", async () => {
     fakes.hcs = 503;
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, threadId } = await openThread(t);
     const id = await stage(t, threadId);
     await settleDueJobs(t);
@@ -751,7 +742,7 @@ describe("blocking", () => {
   });
 
   test("a quarantined or evidence-held photo survives the block", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, threadId } = await openThread(t);
     fakes.hcs = "match";
     const matched = await stage(t, threadId);
@@ -774,7 +765,7 @@ describe("blocking", () => {
 describe("never delivered", () => {
   test("rejected: no message; the sender gets an automated statement of reasons; audit stamped", async () => {
     fakes.score = 0.97;
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, bob, threadId } = await openThread(t);
     const id = await stage(t, threadId);
     await settleDueJobs(t);
@@ -809,7 +800,7 @@ describe("never delivered", () => {
   });
 
   test("quarantined: no message; the sender's notice and outbox are exactly those of a flagged photo", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, threadId } = await openThread(t);
     fakes.score = 0.97;
     const flagged = await stage(t, threadId);
@@ -847,7 +838,7 @@ describe("never delivered", () => {
 
   test("a hash match found after the send (re-check) still sends the generic notice", async () => {
     fakes.hcs = 503;
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, threadId } = await openThread(t);
     const id = await stage(t, threadId);
     await settleDueJobs(t);
@@ -869,7 +860,7 @@ describe("never delivered", () => {
   });
 
   test("an unreadable upload is rejected as unreadable, never delivered", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { threadId } = await openThread(t);
     const garbage = await storeUpload(
       t,
@@ -889,7 +880,7 @@ describe("never delivered", () => {
 describe("blur, per viewer", () => {
   test("the 0.5-0.85 band is blurred for the recipient, unblurred for the sender", async () => {
     fakes.score = 0.6;
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { threadId } = await openThread(t);
     const id = await stage(t, threadId);
     await settleDueJobs(t);
@@ -909,7 +900,7 @@ describe("blur, per viewer", () => {
 
   test("unscored after the retries is delivered blurred and labelled not checked", async () => {
     fakes.hcs = 503; // keep the row pending while we stand in for the last retry
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { threadId } = await openThread(t);
     const id = await t.run(async (ctx) =>
       ctx.db.insert("messageAttachments", {
@@ -947,7 +938,7 @@ describe("blur, per viewer", () => {
   });
 
   test("a sender who is not the viewer's mutual follower is blurred at read time", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, bob, threadId } = await openThread(t);
     const id = await stage(t, threadId);
     await settleDueJobs(t);
@@ -997,7 +988,7 @@ describe("revealing a blurred photo", () => {
     });
 
   test("a tap returns the URL, and the reveal sticks for that viewer only", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { id, threadId } = await blurredPhoto(t);
     const { url } = await reveal(asBob, t, id);
     expect(url).toEqual(expect.any(String));
@@ -1021,7 +1012,7 @@ describe("revealing a blurred photo", () => {
   test.each(["attachment", "message"] as const)(
     "refused while the viewer has an open %s report on the photo",
     async (targetKind) => {
-      const t = convexTest(schema, modules);
+      const t = withModerationPool(convexTest(schema, modules));
       const { id } = await blurredPhoto(t);
       const targetId =
         targetKind === "attachment"
@@ -1037,7 +1028,7 @@ describe("revealing a blurred photo", () => {
   );
 
   test("participants only, delivered photos only, not in a blocked pair, rate limited", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, bob, id, threadId } = await blurredPhoto(t);
     await expect(reveal(asCarol, t, id)).rejects.toThrow(/AttachmentNotFound/);
     const staged = await stage(t, threadId);
@@ -1066,7 +1057,7 @@ describe("revealing a blurred photo", () => {
 
 describe("sending", () => {
   test("only the uploader's unsent photos of this thread, 1 to 4, caption at most 1000", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { threadId } = await openThread(t);
     const id = await stage(t, threadId);
     await settleDueJobs(t);
@@ -1106,7 +1097,7 @@ describe("review appeal", () => {
     );
 
   test("admins see a rejected photo only after the sender asks; non-admins never", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { id, threadId } = await rejectedPhoto(t);
     expect(await reviewQueue(t)).toEqual([]);
     await expect(
@@ -1142,7 +1133,7 @@ describe("review appeal", () => {
   });
 
   test("restore delivers the photo and stamps message_image_restored", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { id, threadId } = await rejectedPhoto(t);
     await asAlice(t).mutation(
       api.conversation.requestImageReview.requestImageReview,
@@ -1175,7 +1166,7 @@ describe("review appeal", () => {
   test("restoring a photo that was never re-encoded re-runs the pipeline, then delivers it", async () => {
     // The classifier would reject it again: the admin's restore is final all the same.
     fakes.score = 0.97;
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, threadId } = await openThread(t);
     const fileId = await storeJpeg(t);
     const id = await t.run((ctx) =>
@@ -1212,7 +1203,7 @@ describe("review appeal", () => {
   });
 
   test("uphold deletes the blob and the outbox shows the review upheld", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { id, threadId } = await rejectedPhoto(t);
     await asAlice(t).mutation(
       api.conversation.requestImageReview.requestImageReview,
@@ -1232,7 +1223,7 @@ describe("review appeal", () => {
 
   test("the quarantine review flip spreads over 24 h to 7 days", async () => {
     fakes.hcs = "match";
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { threadId } = await openThread(t);
     const id = await stage(t, threadId);
     await settleDueJobs(t);
@@ -1257,7 +1248,7 @@ describe("review appeal", () => {
 
   test("a quarantined photo takes the request like a rejected one but never reaches admins", async () => {
     fakes.hcs = "match";
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { threadId } = await openThread(t);
     const id = await stage(t, threadId);
     await settleDueJobs(t);
@@ -1311,7 +1302,7 @@ describe("reporting a photo", () => {
   };
 
   test("a participant's attachment report holds the photo and snapshots its id", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, id, threadId } = await deliveredPhoto(t);
     const { reportId } = await asBob(t).mutation(
       api.reports.fileReport.fileReport,
@@ -1350,7 +1341,7 @@ describe("reporting a photo", () => {
   });
 
   test("an undelivered photo can't be reported", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { threadId } = await openThread(t);
     const id = await stage(t, threadId);
     await settleDueJobs(t);
@@ -1364,7 +1355,7 @@ describe("reporting a photo", () => {
   });
 
   test("content_removed removes the photo, tombstones its message and moves the bytes to an admin-only evidence blob", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, id, threadId } = await deliveredPhoto(t);
     const { reportId } = await asBob(t).mutation(
       api.reports.fileReport.fileReport,
@@ -1411,7 +1402,7 @@ describe("reporting a photo", () => {
   });
 
   test("the evidence copy holds the same bytes as the photo", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { id } = await deliveredPhoto(t);
     const fileId = (await attachment(t, id))!.fileId;
     const bytesOf = (id: Id<"_storage">) =>
@@ -1436,7 +1427,7 @@ describe("reporting a photo", () => {
   });
 
   test("dismissing releases the hold unless another open report still references the photo", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { id } = await deliveredPhoto(t);
     const messageId = (await attachment(t, id))!.messageId!;
     const first = await asBob(t).mutation(api.reports.fileReport.fileReport, {
@@ -1462,7 +1453,7 @@ describe("reporting a photo", () => {
   });
 
   test("an admin sees the photo of a reported image message, only once hash-cleared", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { id } = await deliveredPhoto(t);
     const messageId = (await attachment(t, id))!.messageId!;
     const { reportId } = await asBob(t).mutation(
@@ -1478,7 +1469,7 @@ describe("reporting a photo", () => {
   });
 
   test("a message report on an image message holds and, on removal, removes its photo", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { id, threadId } = await deliveredPhoto(t);
     const messageId = (await attachment(t, id))!.messageId!;
     const { reportId } = await asBob(t).mutation(
@@ -1501,7 +1492,7 @@ describe("reporting a photo", () => {
 
 describe("expiry", () => {
   test("a never-sent photo is deleted with its blob after 24 h; sent, rejected and held ones stay", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { threadId } = await openThread(t);
     const unsent = await stage(t, threadId);
     const sent = await stage(t, threadId);
@@ -1544,7 +1535,7 @@ describe("purging undelivered photos", () => {
 
   test("a rejected photo is purged 30 days on unless appealed", async () => {
     fakes.score = 0.97;
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { threadId } = await openThread(t);
     const id = await stage(t, threadId);
     const appealed = await stage(t, threadId);
@@ -1571,7 +1562,7 @@ describe("purging undelivered photos", () => {
 
   test("a sent photo still undelivered after 7 days is purged; held ones stay", async () => {
     fakes.hcs = 503;
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { threadId } = await openThread(t);
     const id = await stage(t, threadId);
     const held = await stage(t, threadId);
@@ -1593,7 +1584,7 @@ describe("purging undelivered photos", () => {
   });
 
   test("a quarantined photo is hidden from the outbox where a rejected one is deleted, and kept", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, bob, threadId } = await openThread(t);
     fakes.hcs = "match";
     const purged = await stage(t, threadId);
@@ -1647,7 +1638,7 @@ describe("a hidden quarantined photo is gone for its sender", () => {
   };
 
   test("review", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { rejected, quarantined } = await hiddenAndDeleted(t);
     for (const attachmentId of [rejected, quarantined]) {
       await expect(
@@ -1660,7 +1651,7 @@ describe("a hidden quarantined photo is gone for its sender", () => {
   });
 
   test("send", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { rejected, quarantined, threadId } = await hiddenAndDeleted(t);
     for (const id of [rejected, quarantined]) {
       await expect(send(t, threadId, [id])).rejects.toThrow(
@@ -1670,13 +1661,13 @@ describe("a hidden quarantined photo is gone for its sender", () => {
   });
 
   test("outbox", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { threadId } = await hiddenAndDeleted(t);
     expect(await outbox(t, threadId)).toEqual([]);
   });
 
   test("reveal", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { rejected, quarantined } = await hiddenAndDeleted(t);
     for (const attachmentId of [rejected, quarantined]) {
       await expect(
@@ -1689,7 +1680,7 @@ describe("a hidden quarantined photo is gone for its sender", () => {
   });
 
   test("report", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { rejected, quarantined } = await hiddenAndDeleted(t);
     for (const targetId of [rejected, quarantined]) {
       await expect(
@@ -1730,7 +1721,7 @@ describe("removal evidence", () => {
     t.run(async (ctx) => (await ctx.db.get(id))!);
 
   test("the evidence copy lands on every report on the photo or its message", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { attachmentReport, messageReport, remove } = await removedPhoto(t);
     await remove();
     await settleDueJobs(t);
@@ -1744,7 +1735,7 @@ describe("removal evidence", () => {
   });
 
   test("the evidence copy is purged at its retention date, from every report", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { attachmentReport, messageReport, remove } = await removedPhoto(t);
     await remove();
     await settleDueJobs(t);
@@ -1777,7 +1768,7 @@ describe("removal evidence", () => {
   });
 
   test("a removed photo's reveal rows are deleted", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { id, carol, remove } = await removedPhoto(t);
     // A reveal recorded before the removal.
     await t.run((ctx) =>
@@ -1796,7 +1787,7 @@ describe("removal evidence", () => {
   });
 
   test("a missing source blob is recorded as missing, and the hold is released", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { id, row, attachmentReport, remove } = await removedPhoto(t);
     await t.run((ctx) => ctx.storage.delete(row.fileId));
     await remove();
@@ -1809,7 +1800,7 @@ describe("removal evidence", () => {
   });
 
   test("a failing copy retries with backoff, and the last attempt kills the served blob anyway", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { id, row, attachmentReport, remove } = await removedPhoto(t);
     vi.spyOn(Blob.prototype, "arrayBuffer").mockRejectedValue(
       new Error("storage down"),

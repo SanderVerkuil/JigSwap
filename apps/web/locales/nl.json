@@ -4249,6 +4249,8 @@
           "missing_file": "Bestand ontbreekt",
           "download_error": "Bestand kon niet worden gelezen",
           "internal_error": "Interne fout",
+          "check_failed": "De controle is niet afgerond",
+          "stalled": "Na 24 uur nog niet gecontroleerd",
           "unknown": "Onbekend"
         },
         "onPuzzle": "Op puzzel",
