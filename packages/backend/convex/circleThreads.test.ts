@@ -1187,6 +1187,34 @@ describe("media in circle threads", () => {
     });
   });
 
+  test("a stopped photo's caption is withheld from every other member, in the thread and the inbox; its sender keeps it", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    const photo = await seedPhoto(t, threadId, alice);
+    await t.run(async (ctx) => {
+      await ctx.db.patch(photo, { caption: "for the club" });
+      await settleSendBatch(ctx, photo);
+    });
+    const snippet = async (viewer: string) =>
+      (await inboxOf(t, viewer)).find((row) => row.threadId === threadId)
+        ?.lastMessage?.body;
+    expect((await messagesOf(t, "bob", threadId))[0].body).toBe("for the club");
+    await t.run((ctx) => ctx.db.patch(photo, { moderationStatus: "rejected" }));
+    for (const viewer of ["bob", "carol"]) {
+      const [message] = await messagesOf(t, viewer, threadId);
+      expect(message).toMatchObject({
+        body: "",
+        attachment: { status: "removed" },
+      });
+      expect(await snippet(viewer)).toBe("");
+    }
+    expect((await messagesOf(t, "alice", threadId))[0].body).toBe(
+      "for the club",
+    );
+    expect(await snippet("alice")).toBe("for the club");
+  });
+
   test("Show on a photo: the uploader's block on the viewer is never told; the viewer's own block, a non-member and the floor refuse", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob, dave, circleId } = await seed(t);

@@ -358,7 +358,7 @@ describe("MessagePhotos", () => {
     expect(screen.getByRole("button", { name: "Your photo" })).toBeTruthy();
     expect(
       screen.getByText(
-        "This photo wasn't sent: our automated check flagged it.",
+        "This photo was removed: our automated check flagged it.",
       ),
     ).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Ask for a review" }));
@@ -508,7 +508,7 @@ describe("PhotoOutbox", () => {
     );
     expect(
       screen.getByText(
-        "This photo wasn't sent: our automated check flagged it.",
+        "This photo was removed: our automated check flagged it.",
       ),
     ).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Ask for a review" }));
@@ -586,7 +586,7 @@ describe("PhotoOutbox", () => {
       </ul>,
     );
     expect(
-      screen.getByText("This photo wasn't sent: it couldn't be read."),
+      screen.getByText("This photo was removed: it couldn't be read."),
     ).toBeTruthy();
     expect(screen.queryByRole("button")).toBeNull();
   });

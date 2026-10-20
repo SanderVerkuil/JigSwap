@@ -280,9 +280,9 @@ const COPY: Record<NotificationType, (p: Params) => NotificationText> = {
       : `A moderator removed your ${p["restricted"] === "photo" ? "photo" : "message"}`,
   }),
   message_image_rejected: () => ({
-    title: "Photo not sent",
+    title: "Photo removed",
     message:
-      "Our automated check flagged a photo you sent, so it wasn't delivered. You can ask for a review in the conversation.",
+      "Our automated check flagged a photo you sent, so it was removed. You can ask for a review in the conversation.",
   }),
   member_warned: (p) => ({
     title: "Warning from a moderator",

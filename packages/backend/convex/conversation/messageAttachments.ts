@@ -142,6 +142,25 @@ const STOPPED: ReadonlySet<Status> = new Set([
 ]);
 
 /**
+ * Whether an image message's caption is withheld from a reader other than its sender: its photo
+ * is gone, hidden, or stopped (rejected, quarantined, removed by a moderator), exactly the photos
+ * that read "Removed by moderation" for them (messageAttachmentViews). Rejected and quarantined
+ * alike. A deleted sender's photo ("no longer available") keeps its caption, like their text
+ * messages. Every recipient read of a caption checks this: the thread read model and the inbox
+ * snippet. The sender always keeps their own caption.
+ */
+export const isCaptionWithheld = (
+  row: Doc<"messageAttachments"> | null,
+): boolean => {
+  const image = asImage(row);
+  if (!image || image.hiddenFromSender) return true;
+  return (
+    STOPPED.has(image.moderationStatus) &&
+    image.removedReason !== "account_deleted"
+  );
+};
+
+/**
  * Whether the photo may be served to a reader other than its sender: an approving verdict (incl.
  * the sensitive "blurred" band, which still needs Show), a passed CSAM hash check, and its blob
  * swapped to the pipeline's re-encode (never the upload as sent, with its EXIF/GPS). THE gate of
@@ -248,8 +267,10 @@ export const releaseEvidenceHold = async (
  *   an open report holds it;
  * - a delivered one stays as a "removed" row (`removedReason: "account_deleted"`): a photo keeps
  *   its blurhash and size for the "Photo no longer available" placeholder, a location loses its
- *   coordinates and label. Its blobs are deleted, unless an open report holds them: then
- *   releaseEvidenceHold (or the evidence copy, reports/attachmentEvidence) finishes the purge.
+ *   coordinates and label (a rejected photo is also hidden, so it still reads "Removed by
+ *   moderation" and its caption stays withheld). Its blobs are deleted, unless an open report
+ *   holds them: then releaseEvidenceHold (or the evidence copy, reports/attachmentEvidence)
+ *   finishes the purge.
  * A photo a moderator already removed keeps its reason. Idempotent.
  */
 export const removeForDeletedMember = async (
@@ -271,16 +292,22 @@ export const removeForDeletedMember = async (
       // The "no longer available" placeholder keeps the blurhash only of a photo recipients could
       // already see; one still pending or stopped never shows a derivative of its image.
       const blurhash = isServable(row) ? row.blurhash : undefined;
+      // A rejected photo stays hidden: "Removed by moderation" with its caption withheld
+      // (isCaptionWithheld), exactly like a quarantined one, which is left whole above.
+      const hidden =
+        row.moderationStatus === "rejected" || row.hiddenFromSender;
       removed = {
         ...row,
         moderationStatus: "removed",
         removedReason: "account_deleted",
         blurhash,
+        ...(hidden && { hiddenFromSender: true }),
       };
       await ctx.db.patch(row._id, {
         moderationStatus: "removed",
         removedReason: "account_deleted",
         blurhash,
+        ...(hidden && { hiddenFromSender: true }),
         updatedAt: now,
       });
     }
@@ -451,8 +478,7 @@ const notifyRejection = async (ctx: MutationCtx, row: Attachment) => {
     type: "message_image_rejected",
     relatedId: row.threadAggregateId,
     params: {
-      reason:
-        "Our automated check flagged this photo, so it was not delivered.",
+      reason: "Our automated check flagged this photo, so it was removed.",
       automated: "true",
       redress: "Open the conversation and choose Ask for a review",
     },

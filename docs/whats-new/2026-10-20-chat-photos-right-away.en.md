@@ -13,8 +13,8 @@ sent them. They no longer turn up later, after the conversation has moved on.
   until the photo has passed the automatic check. Then the photo appears in
   the same place.
 - **You** see your own photo with **Checking photo…** in the meantime.
-- **If the check stops a photo**, the other member sees **Removed by
-  moderation** and never sees the photo itself. You can still ask for a
-  review.
+- **If the check stops a photo**, it's removed. The other member sees
+  **Removed by moderation** and never sees the photo itself, or its caption.
+  You see **This photo was removed** and can still ask for a review.
 - **If the check can't run**, a moderator looks at the photo, instead of it
   being shown blurred as "Not checked".

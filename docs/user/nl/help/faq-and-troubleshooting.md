@@ -85,9 +85,11 @@ op **Tonen** om de foto te zien.
 <details>
 <summary>Het andere lid heeft mijn foto niet ontvangen.</summary>
 
-Foto's worden automatisch gecontroleerd voordat ze worden bezorgd; zolang dat
-bezig is, zie je **Foto wordt gecontroleerd…**. Keurt de controle een foto af,
-dan wordt hij niet verstuurd en kun je op **Vraag om een beoordeling** klikken.
+Foto's staan in het gesprek zodra je ze verstuurt, maar worden eerst
+automatisch gecontroleerd. Zolang dat bezig is, zie jij **Foto wordt
+gecontroleerd…** en ziet het andere lid **Wacht op controle**. Keurt de
+controle een foto af, dan wordt hij verwijderd en kun je op **Vraag om een
+beoordeling** klikken.
 Zie [Berichten](/docs/staying-informed/messages#fotocontrole).
 
 </details>

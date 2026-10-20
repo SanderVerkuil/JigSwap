@@ -54,28 +54,41 @@ A photo is **servable** only when all of these hold (`isServable`):
 `revealMessageImage` and attachment reports use the same predicate. `unscored` is **not**
 servable any more.
 
-| Row state                                                                     | Recipient sees                                                                       | Sender sees                                                                                                        |
-| ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
-| `pending` / `unscored`, or a servable status whose gates have not all passed  | `pending`: blurhash once hash-cleared and re-encoded, else neutral; "Pending review" | `pending`: own image once its hash check passed (as the outbox did), else blurhash; "Checking photo…"              |
-| `approved` / `blurred`, servable                                              | as today (blur bands, non-mutual blur, reveal, open-report blur)                     | as today (own photo, unblurred)                                                                                    |
-| `rejected` / `quarantined`                                                    | `removed`: "Removed by moderation", no image, no blurhash                            | `rejected`: the refusal card the outbox showed ("…our automated check flagged it", Ask for a review, review state) |
-| `hiddenFromSender` (quarantined or rejected at the 30-day point), row missing | `removed`                                                                            | `removed`                                                                                                          |
-| `removed` by a moderator (unchecked-queue reject, D5)                         | `removed`                                                                            | `removed`                                                                                                          |
-| `removed`, `account_deleted`                                                  | `removed` + `unavailable` + blurhash (as today)                                      | n/a                                                                                                                |
+| Row state                                                                     | Recipient sees                                                                       | Sender sees                                                                                                                               |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `pending` / `unscored`, or a servable status whose gates have not all passed  | `pending`: blurhash once hash-cleared and re-encoded, else neutral; "Pending review" | `pending`: own image once its hash check passed (as the outbox did), else blurhash; "Checking photo…"                                     |
+| `approved` / `blurred`, servable                                              | as today (blur bands, non-mutual blur, reveal, open-report blur)                     | as today (own photo, unblurred)                                                                                                           |
+| `rejected` / `quarantined`                                                    | `removed`: "Removed by moderation", no image, no blurhash, no caption                | `rejected`: the refusal card ("This photo was removed: our automated check flagged it", Ask for a review, review state), own caption kept |
+| `hiddenFromSender` (quarantined or rejected at the 30-day point), row missing | `removed`, no caption                                                                | `removed`, own caption kept                                                                                                               |
+| `removed` by a moderator (unchecked-queue reject, D5)                         | `removed`, no caption                                                                | `removed`, own caption kept                                                                                                               |
+| `removed`, `account_deleted`                                                  | `removed` + `unavailable` + blurhash (as today)                                      | n/a                                                                                                                                       |
 
 - **No URL** (`url`/`thumbUrl`) for a recipient in any state but servable. The contract allows a
   URL on `pending` only for the uploader's own photo.
+- **No caption of a stopped photo** for a recipient (`isCaptionWithheld`, added 2026-10-20 after
+  review): when the photo carrying the caption is rejected, quarantined, removed by a moderator,
+  hidden at the 30-day point or gone, the recipient's message has an empty body. Rejected and
+  quarantined alike. A caption is shown while the photo is pending (it is text, like a text
+  message), and disappears in place when the check stops the photo. The sender keeps their own
+  caption under the refusal card: it is their own text, and hiding it would only confuse them.
+  A deleted sender's photo ("no longer available") keeps its caption like their text messages;
+  account deletion marks a rejected photo `hiddenFromSender`, so it stays "Removed by
+  moderation" with its caption withheld, exactly like a quarantined one (left whole).
 - A report removal tombstones the whole message ("Message removed") as before.
 - **Other read paths:**
-  - Inbox snippets (`threads.lastMessage`) and notification and push previews carry no URL and no
-    caption. A photo is described by its kind ("… sent a photo"), unchanged.
-  - Report evidence snapshots hold attachment ids only. The reporter is never served a URL, and
-    `admin/getReport` is admin-only.
-  - Circle threads use the same read model.
+  - Inbox snippets (`threads.lastMessage`) carry no URL. The stored summary holds the caption as
+    its body; `getMyInbox` blanks it for a reader other than the sender once the photo is stopped
+    (`isCaptionWithheld`), so the snippet falls back to "… sent a photo".
+  - Notification and push previews carry no URL and no caption. A photo is described by its kind
+    ("… sent a photo"), unchanged.
+  - Report evidence snapshots hold attachment ids and the caption. The reporter is never served
+    a URL or the snapshot, and `admin/getReport` is admin-only (the admin view keeps the caption).
+  - Circle threads use the same read model and inbox path.
 
 ### D3. No tip-off (CSAM quarantine): unchanged guarantees
 
 - The recipient sees **the same** `removed` state for rejected and quarantined photos.
+- The recipient loses the caption of both alike.
 - The sender sees **the same** refusal card, the same `message_image_rejected` notice, the same
   "Ask for a review" with the randomised "upheld" flip for quarantine, and the same disappearance
   at the 30-day point.
@@ -157,6 +170,14 @@ never moves.
   - **rejected** (own only): the outbox's refusal card, rendered below the gallery and out of the
     grid.
 - `removed` reads "Removed by moderation".
+- **Sender copy (2026-10-20, after review)**: since a sent photo is now a message, the refusal card
+  says the photo was **removed**, not "wasn't sent": "This photo was removed: our automated check
+  flagged it." (nl "Deze foto is verwijderd: onze automatische controle heeft hem afgekeurd."),
+  and "This photo was removed: it couldn't be read." for an unreadable one. The same text for
+  rejected and quarantined, and for a photo stopped before Send (still in the outbox). The
+  `message_image_rejected` notice follows: "Photo removed" / "…so it was removed", category
+  "Automatically removed photos". The moderator variant (`content_removed`) already says
+  "removed".
 - A recipient can report the image message (its caption) but not a photo that is not servable.
 - The outbox now holds only photos stopped before Send.
 - Locale strings for en/nl/source, What's new, the user docs messages page, and the privacy

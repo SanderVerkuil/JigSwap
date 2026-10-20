@@ -345,10 +345,11 @@ Meestal duurt dat een paar seconden. Kan de automatische controle niet worden
 uitgevoerd, dan blijft de foto op **Wacht op controle** staan tot een moderator
 hem heeft bekeken.
 
-Keurt de controle een foto af, dan ziet het andere lid hem nooit: bij diegene
-staat er **Verwijderd door moderatie**. Jij ziet op die plek een opmerking en
-krijgt een melding **Foto niet verstuurd**. Denk je dat de controle zich
-vergist?
+Keurt de controle een foto af, dan wordt hij verwijderd. Het andere lid ziet
+hem nooit: bij diegene staat er **Verwijderd door moderatie**, en een
+bijschrift dat je erbij stuurde is voor diegene ook verborgen. Jij ziet je
+bijschrift nog wel, met op de plek van de foto een opmerking, en krijgt een
+melding **Foto verwijderd**. Denk je dat de controle zich vergist?
 
 1. Zoek de foto op in het gesprek.
 2. Klik op **Vraag om een beoordeling**. Dit verandert in **Beoordeling
@@ -357,7 +358,8 @@ vergist?
    hem zien. Zo niet, dan zie je **Beoordeeld: de beslissing blijft staan.**
 
 Verwijdert een moderator een foto, dan zien jullie allebei **Verwijderd door
-moderatie** en krijg jij een melding.
+moderatie** en krijg jij een melding. Het bijschrift is dan voor het andere lid
+verborgen.
 
 ### Vervaagde foto's
 

@@ -862,9 +862,9 @@
       "revealFailed": "Deze foto kon niet worden getoond. Probeer het opnieuw.",
       "pendingReview": "Wacht op controle",
       "checking": "Foto wordt gecontroleerd…",
-      "notSentLabel": "Foto niet verstuurd",
-      "rejected": "Deze foto is niet verstuurd: onze automatische controle heeft hem tegengehouden.",
-      "unreadable": "Deze foto is niet verstuurd: hij kon niet worden gelezen.",
+      "notSentLabel": "Foto verwijderd",
+      "rejected": "Deze foto is verwijderd: onze automatische controle heeft hem afgekeurd.",
+      "unreadable": "Deze foto is verwijderd: hij kon niet worden gelezen.",
       "askReview": "Vraag om een beoordeling",
       "reviewRequested": "Beoordeling aangevraagd",
       "reviewUpheld": "Beoordeeld: de beslissing blijft staan.",
@@ -1338,7 +1338,7 @@
       "items": [
         "Foto's in berichten doorlopen hetzelfde proces als andere foto's: ze worden opnieuw gecodeerd, waardoor verborgen metadata zoals EXIF-gegevens (inclusief een eventuele locatie) wordt verwijderd, en ze worden automatisch gecontroleerd. Een foto die je stuurt staat meteen in het gesprek, maar het andere lid ziet alleen een vervaagde plaatshouder (een paar gemiddelde kleuren die onze servers uit de opnieuw gecodeerde foto berekenen) met \"Wacht op controle\" totdat de foto door de controle is gekomen; de foto zelf wordt pas daarna naar diens apparaat gestuurd",
         "Een foto die de controle als mogelijk gevoelig aanmerkt en een foto van iemand die niet je wederzijdse volger is, worden vervaagd getoond totdat de ontvanger op Tonen tikt",
-        "Een foto die de controle tegenhoudt, krijgt het andere lid nooit te zien: diegene ziet \"Verwijderd door moderatie\". Je krijgt daar bericht over en kunt om een herbeoordeling vragen. Kan de automatische controle niet worden uitgevoerd, dan bekijkt een moderator de foto (zonder het gesprek te zien waarin hij is verstuurd) en keurt hem goed of verwijdert hem",
+        "Een foto die de controle tegenhoudt, krijgt het andere lid nooit te zien, en het bijschrift ook niet: diegene ziet \"Verwijderd door moderatie\". Je krijgt daar bericht over en kunt om een herbeoordeling vragen. Kan de automatische controle niet worden uitgevoerd, dan bekijkt een moderator de foto (zonder het gesprek te zien waarin hij is verstuurd) en keurt hem goed of verwijdert hem",
         "Een locatie delen gebeurt eenmalig: je stuurt één plek, nooit je actuele positie",
         "Een speld die je op de kaart zet wordt precies daar verstuurd. \"Mijn huidige locatie gebruiken\" wordt afgerond op een gebied van ongeveer 1 km; je exacte huidige positie versturen wordt alleen aangeboden aan leden die je wederzijdse volgers zijn, en alleen als je daarvoor kiest. Terwijl je de kaart rond je huidige positie bekijkt, onthouden we het midden ervan (afgerond op ongeveer 100 m) 15 minuten lang, zodat ook een speld die je precies op je eigen plek zet als een gebied bij benadering wordt verstuurd",
         "De kaartweergave van een gedeelde locatie wordt eenmalig op onze servers gemaakt als je hem verstuurt (zie MapTiler hierboven)"
@@ -2326,7 +2326,7 @@
       "report_decided": "Uitkomst van meldingen",
       "content_removed": "Inhoud verwijderd",
       "member_warned": "Waarschuwingen van moderators",
-      "message_image_rejected": "Niet verstuurde foto's"
+      "message_image_rejected": "Automatisch verwijderde foto's"
     },
     "categories": {
       "trades": {
@@ -2500,8 +2500,8 @@
         "message": "Een moderator heeft je een waarschuwing gestuurd.{hasReason, select, yes { Reden: {reason}} other {}}"
       },
       "message_image_rejected": {
-        "title": "Foto niet verstuurd",
-        "message": "Onze automatische controle heeft een foto die je stuurde tegengehouden, dus hij is niet bezorgd."
+        "title": "Foto verwijderd",
+        "message": "Onze automatische controle heeft een foto die je stuurde afgekeurd, dus hij is verwijderd."
       }
     },
     "pushDeviceTitle": "Push op dit apparaat",
@@ -2553,7 +2553,7 @@
       "report_decided": "Wanneer een moderator een besluit neemt over een melding die je hebt gedaan.",
       "content_removed": "Wanneer een moderator na een melding een bericht of foto van je verwijdert.",
       "member_warned": "Wanneer een moderator je na een melding waarschuwt.",
-      "message_image_rejected": "Wanneer onze automatische controle een foto tegenhoudt die je in een bericht stuurde."
+      "message_image_rejected": "Wanneer onze automatische controle een foto verwijdert die je in een bericht stuurde."
     },
     "pushServiceUnreachable": "Je browser kon zijn pushdienst niet bereiken. Sommige privacybrowsers blokkeren of verwijderen die — Brave schakelt het standaard uit (zet 'Google-services voor pushberichten gebruiken' aan in Instellingen), en de-Googled Chromium-browsers zoals Helium verwijderen het. Firefox, Chrome of Edge werkt wel.",
     "rich": {
@@ -2740,7 +2740,7 @@
         "sentence": "Een moderator heeft je gewaarschuwd wegens {ground, select, spam_scam {spam of oplichting} harassment_hate {intimidatie of haat} sexual {seksuele of ongepaste inhoud} fake_trade {een nepruil of niet komen opdagen} illegal {illegale inhoud} other {het overtreden van de communityregels}}. Dit besluit is door een mens genomen, niet automatisch. Reageer via de contactpagina om een herbeoordeling te vragen."
       },
       "message_image_rejected": {
-        "sentence": "Een foto die je stuurde is niet bezorgd: onze automatische controle heeft hem tegengehouden. Dit is automatisch besloten, niet door een mens. Open het gesprek en kies Vraag om herbeoordeling als je denkt dat dit een vergissing is."
+        "sentence": "Een foto die je stuurde is verwijderd: onze automatische controle heeft hem afgekeurd. Dit is automatisch besloten, niet door een mens. Open het gesprek en kies Vraag om herbeoordeling als je denkt dat dit een vergissing is."
       }
     },
     "mandatoryInApp": "Altijd aan: wettelijk verplichte meldingen"

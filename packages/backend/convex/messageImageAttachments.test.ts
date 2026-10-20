@@ -826,6 +826,118 @@ describe("append at send", () => {
   });
 });
 
+describe("a stopped photo's caption", () => {
+  // A photo sent with a caption while its hash check can't run (pending), then stopped.
+  const sendCaptioned = async (t: T, threadId: string, caption: string) => {
+    const id = await stage(t, threadId);
+    await settleDueJobs(t);
+    await send(t, threadId, [id], caption);
+    return id;
+  };
+  const reject = async (t: T, id: Id<"messageAttachments">) => {
+    await t.run((ctx) => ctx.db.patch(id, { moderationStatus: "pending" }));
+    await t.mutation(store.setModerationVerdict, {
+      imageId: id,
+      moderationStatus: "rejected",
+      moderationScore: 0.97,
+    });
+  };
+  const snippetOf = async (t: T, as: (t: T) => ReturnType<T["withIdentity"]>) =>
+    (await as(t).query(api.conversation.getMyInbox.getMyInbox, {}))[0]
+      .lastMessage?.body;
+
+  test("the recipient reads it while pending; once rejected it is withheld from the thread and the inbox, the sender keeps it", async () => {
+    fakes.hcs = 503;
+    const t = withModerationPool(convexTest(schema, modules));
+    const { threadId } = await openThread(t);
+    const id = await sendCaptioned(t, threadId, "look at this");
+    expect((await threadOf(t, asBob, threadId))[0].body).toBe("look at this");
+    expect(await snippetOf(t, asBob)).toBe("look at this");
+
+    await reject(t, id);
+    const [forBob] = await threadOf(t, asBob, threadId);
+    expect(forBob).toMatchObject({
+      body: "",
+      attachment: { status: "removed" },
+    });
+    expect(await snippetOf(t, asBob)).toBe("");
+    const [forAlice] = await threadOf(t, asAlice, threadId);
+    expect(forAlice).toMatchObject({
+      body: "look at this",
+      attachment: { status: "rejected" },
+    });
+    expect(await snippetOf(t, asAlice)).toBe("look at this");
+  });
+
+  test("a quarantined photo's caption is withheld exactly like a rejected one's", async () => {
+    fakes.hcs = 503;
+    const t = withModerationPool(convexTest(schema, modules));
+    const { alice, threadId } = await openThread(t);
+    const rejected = await sendCaptioned(t, threadId, "first");
+    const quarantined = await sendCaptioned(t, threadId, "second");
+    await reject(t, rejected);
+    const row = (await attachment(t, quarantined))!;
+    await t.mutation(store.quarantineImage, {
+      imageId: quarantined,
+      fileId: row.fileId,
+      uploaderId: alice,
+      md5: "m",
+      sha1: "s",
+      provider: "offlimits",
+      originalDiscarded: true,
+    });
+    const forBob = await threadOf(t, asBob, threadId);
+    const shape = (m: ThreadMessageView) => ({
+      body: m.body,
+      attachment: m.attachment,
+    });
+    expect(forBob.map(shape)).toEqual([
+      { body: "", attachment: { status: "removed" } },
+      { body: "", attachment: { status: "removed" } },
+    ]);
+    expect(await snippetOf(t, asBob)).toBe("");
+    expect((await threadOf(t, asAlice, threadId)).map((m) => m.body)).toEqual([
+      "first",
+      "second",
+    ]);
+  });
+
+  test("a moderator's removal withholds it too", async () => {
+    fakes.hcs = 503;
+    const t = withModerationPool(convexTest(schema, modules));
+    const { threadId } = await openThread(t);
+    const id = await sendCaptioned(t, threadId, "look at this");
+    await t.run((ctx) => ctx.db.patch(id, { moderationStatus: "pending" }));
+    await t.mutation(store.setModerationVerdict, {
+      imageId: id,
+      moderationStatus: "unscored",
+      moderationReason: "network",
+      moderationAttempts: 4,
+    });
+    await asAdmin(t).mutation(
+      api.admin.decideUncheckedPhoto.decideUncheckedPhoto,
+      { source: "message", imageId: id, decision: "reject" },
+    );
+    expect(await attachment(t, id)).toMatchObject({
+      moderationStatus: "removed",
+    });
+    expect((await threadOf(t, asBob, threadId))[0].body).toBe("");
+    expect(await snippetOf(t, asBob)).toBe("");
+    expect((await threadOf(t, asAlice, threadId))[0].body).toBe("look at this");
+  });
+
+  test("a servable photo keeps its caption", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { threadId } = await openThread(t);
+    await sendCaptioned(t, threadId, "look at this");
+    expect((await threadOf(t, asBob, threadId))[0]).toMatchObject({
+      body: "look at this",
+      attachment: { status: "ready" },
+    });
+    expect(await snippetOf(t, asBob)).toBe("look at this");
+  });
+});
+
 describe("blocking", () => {
   test("a block drops photos held from before append-at-send, so an unblock can't resurrect them", async () => {
     const t = withModerationPool(convexTest(schema, modules));
