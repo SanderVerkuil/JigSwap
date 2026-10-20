@@ -111,6 +111,25 @@ describe("UncheckedDetail", () => {
     expect(onReject).not.toHaveBeenCalled();
   });
 
+  it("offers Check again on a copy or completion photo that can be re-checked", () => {
+    const onRecheck = vi.fn();
+    render({ photo: { ...photo, canRecheck: true }, onRecheck });
+    act(() => button("Check again").click());
+    render({
+      photo: {
+        ...photo,
+        key: "completion:c1",
+        source: "completion",
+        imageId: "c1",
+        canRecheck: true,
+      },
+      onRecheck,
+    });
+    expect(container.textContent).toContain("Completion photo");
+    act(() => button("Check again").click());
+    expect(onRecheck).toHaveBeenCalledTimes(2);
+  });
+
   it("offers Check again only for box art that can be re-checked (en/nl)", () => {
     render();
     expect(button("Check again")).toBeUndefined();

@@ -25,8 +25,8 @@ const uploaderLabel = async (
 // and "pending" (still being checked or waiting for a retry), for copy photos, completion photos
 // and box art (boxArtUploads; served to no one until approved, lib/imageModeration/boxArtUrl).
 // Admin-only, gated like listRejectedPhotos. The admin sees the real image (behind the console's
-// blur guard) to decide it by hand via decideUncheckedPhoto; unscored box art can also be sent
-// through the pipeline again (admin/recheckBoxArt, `canRecheck`).
+// blur guard) to decide it by hand via decideUncheckedPhoto; an unscored photo of any table can
+// also be sent through the pipeline again (admin/recheckPhoto, `canRecheck`).
 export const listUncheckedPhotos = query({
   args: {},
   handler: async (ctx) => {
@@ -59,7 +59,7 @@ export const listUncheckedPhotos = query({
           puzzleTitle: title ?? (row._id as string),
           uploaderName: await uploaderLabel(ctx, row.uploaderId),
           uploadedAt: row.createdAt,
-          canRecheck: false,
+          canRecheck: status === "unscored",
         });
       }
       const completionRows = await ctx.db
@@ -87,7 +87,7 @@ export const listUncheckedPhotos = query({
           puzzleTitle: completion?.copySnapshot?.title ?? row.completionId,
           uploaderName: await uploaderLabel(ctx, row.uploaderId),
           uploadedAt: row.createdAt,
-          canRecheck: false,
+          canRecheck: status === "unscored",
         });
       }
       const boxArtRows = await ctx.db

@@ -4138,7 +4138,7 @@
         "restored": "Foto hersteld bij “{title}” — nog {count} in de wachtrij.",
         "manualApproved": "Foto goedgekeurd bij “{title}” — nog {count} in de wachtrij.",
         "manualRejected": "Foto afgewezen bij “{title}” — nog {count} in de wachtrij.",
-        "recheckQueued": "De catalogusafbeelding bij “{title}” wordt opnieuw gecontroleerd."
+        "recheckQueued": "De foto bij “{title}” wordt opnieuw gecontroleerd."
       },
       "banner": {
         "pill": "ADMIN",
@@ -4259,7 +4259,7 @@
         "reject": "Foto afwijzen",
         "rejectArm": "Weet je het zeker?",
         "recheck": "Opnieuw controleren",
-        "hint": "Goedkeuren publiceert de foto voor andere leden. Afwijzen verbergt hem; een afgewezen foto van een exemplaar gaat naar Gemarkeerde afbeeldingen, een afgewezen foto van een gelegde puzzel wordt verwijderd, en een afgewezen catalogusafbeelding wordt van de puzzel gehaald en verwijderd. Opnieuw controleren laat de automatische controle nog een keer op een catalogusafbeelding los, bijvoorbeeld als de controledienst weer werkt."
+        "hint": "Goedkeuren publiceert de foto voor andere leden. Afwijzen verbergt hem; een afgewezen foto van een exemplaar gaat naar Gemarkeerde afbeeldingen, een afgewezen foto van een gelegde puzzel wordt verwijderd, en een afgewezen catalogusafbeelding wordt van de puzzel gehaald en verwijderd. Opnieuw controleren laat de automatische controle nog een keer los op een foto die niet gecontroleerd kon worden, bijvoorbeeld als de controledienst weer werkt."
       },
       "csam": {
         "loading": "Hash-matches laden…",

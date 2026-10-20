@@ -62,7 +62,7 @@ export const Route = createFileRoute("/_dashboard/admin/moderation")({
 // the live queue (list+detail split with approve / edit&approve / reject),
 // Flagged Images reviews the auto-rejected photos (restore / confirm removal),
 // Unchecked Photos lets an admin approve or reject photos the classifier has
-// not decided (pending / unscored), or check unscored box art again, Hash matches lists the CSAM hash-list matches to report
+// not decided (pending / unscored), or check an unscored one again, Hash matches lists the CSAM hash-list matches to report
 // (metadata only, never an image), and Activity Log lists the recent moderation stamps.
 function ModerationPage() {
   const t = useTranslations("admin.moderation");
@@ -80,8 +80,8 @@ function ModerationPage() {
   const decideUnchecked = useMutation({
     mutationFn: useConvexMutation(gateway.admin.decideUncheckedPhoto),
   });
-  const recheckBoxArt = useMutation({
-    mutationFn: useConvexMutation(gateway.admin.recheckBoxArt),
+  const recheckPhoto = useMutation({
+    mutationFn: useConvexMutation(gateway.admin.recheckPhoto),
   });
   const { data: csam } = useQuery(
     convexQuery(gateway.admin.listCsamEscalations, {}),
@@ -120,7 +120,7 @@ function ModerationPage() {
     confirmRemoval.isPending ||
     restorePhoto.isPending ||
     decideUnchecked.isPending ||
-    recheckBoxArt.isPending ||
+    recheckPhoto.isPending ||
     markCsam.isPending;
 
   // A pre-domain pending row has no aggregateId; it still lists (keyed by _id)
@@ -256,11 +256,14 @@ function ModerationPage() {
     }
   };
 
-  // Unscored box art back through the pipeline: it turns "pending" and stays in the queue until
+  // An unscored photo back through the pipeline: it turns "pending" and stays in the queue until
   // the check decides it, so the selection stays put.
   const recheck = async (photo: UncheckedPhoto) => {
     try {
-      await recheckBoxArt.mutateAsync({ imageId: photo.imageId });
+      await recheckPhoto.mutateAsync({
+        source: photo.source,
+        imageId: photo.imageId,
+      });
       toast.success(t("toast.recheckQueued", { title: photo.puzzleTitle }));
     } catch {
       toast.error(t("error"));

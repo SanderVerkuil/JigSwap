@@ -8,7 +8,7 @@ import schema from "./schema";
 
 // Admin review of box art whose check never completed: it shows in the unchecked-photos queue
 // (admin/listUncheckedPhotos), an admin approves or rejects it (admin/decideUncheckedPhoto) or
-// sends it through the pipeline again (admin/recheckBoxArt). The box art reaches "unscored" the
+// sends it through the pipeline again (admin/recheckPhoto). The box art reaches "unscored" the
 // real way: the classifier is misconfigured (no token) when it is uploaded.
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
@@ -158,7 +158,10 @@ describe("unchecked queue: box art", () => {
       }),
     ).rejects.toThrow("Forbidden");
     await expect(
-      asAlice(t).mutation(api.admin.recheckBoxArt.recheckBoxArt, { imageId }),
+      asAlice(t).mutation(api.admin.recheckPhoto.recheckPhoto, {
+        source: "boxArt",
+        imageId,
+      }),
     ).rejects.toThrow("Forbidden");
     expect((await rowOf(t, imageId))?.moderationStatus).toBe("unscored");
   });
@@ -260,13 +263,14 @@ describe("decideUncheckedPhoto: box art", () => {
   });
 });
 
-describe("recheckBoxArt", () => {
+describe("recheckPhoto: box art", () => {
   test("puts unscored box art back to pending and the pipeline approves it once the classifier works", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
     const { imageId, puzzleId } = await unscoredBoxArt(t);
 
-    await asAdmin(t).mutation(api.admin.recheckBoxArt.recheckBoxArt, {
+    await asAdmin(t).mutation(api.admin.recheckPhoto.recheckPhoto, {
+      source: "boxArt",
       imageId,
     });
     const pending = await rowOf(t, imageId);
@@ -316,10 +320,11 @@ describe("recheckBoxArt", () => {
     );
     expect(
       await errorOf(
-        asAdmin(t).mutation(api.admin.recheckBoxArt.recheckBoxArt, {
+        asAdmin(t).mutation(api.admin.recheckPhoto.recheckPhoto, {
+          source: "boxArt",
           imageId,
         }),
       ),
-    ).toBe("Only unchecked box art can be checked again");
+    ).toBe("Only unchecked photos can be checked again");
   });
 });
