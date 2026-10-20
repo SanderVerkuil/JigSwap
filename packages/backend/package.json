@@ -8,6 +8,7 @@
     "@axiomhq/js": "^2.0.0",
     "@clerk/backend": "^3.25.0",
     "@convex-dev/presence": "^0.4.0",
+    "@convex-dev/workpool": "0.4.13",
     "@jigswap/contracts": "workspace:^",
     "@jigswap/domain": "workspace:^",
     "@jigswap/email": "workspace:^",

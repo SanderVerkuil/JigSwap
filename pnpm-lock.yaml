@@ -547,6 +547,9 @@ importers:
       '@convex-dev/presence':
         specifier: ^0.4.0
         version: 0.4.0(convex@1.47.0(@clerk/clerk-react@5.61.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@clerk/react@6.17.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@convex-dev/workpool':
+        specifier: 0.4.13
+        version: 0.4.13(convex-helpers@0.1.128(@standard-schema/spec@1.1.0)(convex@1.47.0(@clerk/clerk-react@5.61.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@clerk/react@6.17.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1))(react@19.3.1)(typescript@7.0.2)(zod@4.6.7))(convex@1.47.0(@clerk/clerk-react@5.61.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@clerk/react@6.17.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1))(react@19.3.1)
       '@jigswap/contracts':
         specifier: workspace:^
         version: link:../contracts
@@ -1017,6 +1020,12 @@ packages:
     peerDependencies:
       '@tanstack/react-query': ^5.0.0
       convex: ^1.29.3
+
+  '@convex-dev/workpool@0.4.13':
+    resolution: {integrity: sha512-mGJ6mfeI0sY6MEW5f61jkgXBtdUxYZxA3AJCvn53oT6uPGPY0HpGwo/u0qzKoBAiE6ppZWyIR1tzJfX++hVF5Q==}
+    peerDependencies:
+      convex: ^1.36.1
+      convex-helpers: ^0.1.94
 
   '@dimforge/rapier3d-compat@0.12.0':
     resolution: {integrity: sha512-uekIGetywIgopfD97oDL5PfeezkFpNhwlzlaEYNOA0N6ghdsOvh/HYjSMek5Q2O1PYvRSDFcqFVJl4r4ZBwOow==}
@@ -7868,6 +7877,14 @@ snapshots:
     dependencies:
       '@tanstack/react-query': 5.104.3(react@19.3.1)
       convex: 1.47.0(@clerk/clerk-react@5.61.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@clerk/react@6.17.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)
+
+  '@convex-dev/workpool@0.4.13(convex-helpers@0.1.128(@standard-schema/spec@1.1.0)(convex@1.47.0(@clerk/clerk-react@5.61.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@clerk/react@6.17.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1))(react@19.3.1)(typescript@7.0.2)(zod@4.6.7))(convex@1.47.0(@clerk/clerk-react@5.61.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@clerk/react@6.17.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1))(react@19.3.1)':
+    dependencies:
+      '@convex-dev/batch-worker': 0.2.2(convex@1.47.0(@clerk/clerk-react@5.61.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@clerk/react@6.17.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1))(react@19.3.1)
+      convex: 1.47.0(@clerk/clerk-react@5.61.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@clerk/react@6.17.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)
+      convex-helpers: 0.1.128(@standard-schema/spec@1.1.0)(convex@1.47.0(@clerk/clerk-react@5.61.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@clerk/react@6.17.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1))(react@19.3.1)(typescript@7.0.2)(zod@4.6.7)
+    transitivePeerDependencies:
+      - react
 
   '@dimforge/rapier3d-compat@0.12.0': {}
 
