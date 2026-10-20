@@ -769,6 +769,13 @@ export const runHashRecheck = async <R extends ModerationRow>(
       event.result = "skipped";
       return;
     }
+    // A photo approved without a hash check is checked only against a configured service: the
+    // "none" adapter answers no_match, which would clear its stored hashes unchecked.
+    if (row.hashCheckWaivedBy !== undefined && hashConfig.status !== "ok") {
+      event.outcome = "error";
+      event.result = "skipped_unconfigured";
+      return;
+    }
     // Exactly one current re-check per row: a superseded job (a later attempt was armed, or the
     // sweep re-armed the row) must not check, quarantine or arm anything.
     const current = await ctx.runQuery(

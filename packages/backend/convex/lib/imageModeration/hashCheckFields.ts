@@ -18,7 +18,9 @@ import { v } from "convex/values";
 // - `hashCheckWaivedBy`: the admin who approved a timed-out photo WITHOUT a hash check
 //   (admin/decideUncheckedPhoto). That approval sets `hashCheckedAt` (it opens the gate) but keeps
 //   `pendingHashes`, so a re-check that still runs can match and quarantine it: a match always
-//   wins, an admin approval included (lib/imageModeration/pipeline.runHashRecheck).
+//   wins, an admin approval included (lib/imageModeration/pipeline.runHashRecheck). Cleared, with
+//   `pendingHashes`, once a hash check returns no_match after all (the one-shot
+//   lib/imageModeration/recheckWaivedHashes): the photo is then hash-checked like any other.
 //
 // GATE: no read model issues a storage URL for a row until its hash check has passed. Convex
 // storage URLs do not expire, so a URL handed out before a match would keep serving the image.
@@ -52,3 +54,18 @@ export const isHashCheckTimedOut = (row: {
   hashCheckTimedOutAt?: number;
 }): boolean =>
   row.hashCheckTimedOutAt !== undefined && row.hashCheckedAt === undefined;
+
+/**
+ * Whether the photo was approved WITHOUT a hash check (an admin waived it after a timeout) and its
+ * stored hashes still wait for that check: the one-shot lib/imageModeration/recheckWaivedHashes
+ * checks them once the hash service is configured. A no_match clears both fields, a match
+ * quarantines the photo, so neither is a candidate again.
+ */
+export const isWaivedHashRecheckCandidate = (row: {
+  hashCheckWaivedBy?: unknown;
+  pendingHashes?: unknown;
+  moderationStatus?: string;
+}): boolean =>
+  row.hashCheckWaivedBy !== undefined &&
+  row.pendingHashes !== undefined &&
+  row.moderationStatus !== "quarantined";

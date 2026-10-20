@@ -106,9 +106,16 @@ Who wins when answers cross (every step is one Convex transaction, so the first 
 - A **no_match** that arrives before the admin decides publishes the photo as usual and takes it
   out of the queue. After an admin decision it changes nothing (an approved photo is already
   public; a rejected one stays rejected).
-- Nothing re-checks a timed-out photo on purpose: once the hash service is back, photos approved
+- Nothing re-checks a timed-out photo on its own: once the hash service is back, photos approved
   without a hash check are **not** re-checked automatically. They carry `hashCheckWaivedBy` and
-  their `pendingHashes`, so they can be found and checked by hand if needed.
+  their `pendingHashes`, and the one-shot `lib/imageModeration/recheckWaivedHashes` checks them
+  (one re-check each on the hash re-check pool; a match quarantines and escalates over the
+  approval, a no_match is recorded and clears `hashCheckWaivedBy` and `pendingHashes`). **Run it
+  right after configuring Offlimits** on a deployment (dry run first); see
+  [one-shot-migrations.md](one-shot-migrations.md#libimagemoderationrecheckwaivedhashes--hash-check-of-photos-approved-without-one).
+  A re-check of a waived photo never runs against an unconfigured service (it is skipped,
+  `result: "skipped_unconfigured"`): the "none" adapter's no_match would clear its hashes
+  unchecked.
 
 What admins see: a photo waiting on its hash check is counted on **Admin → Moderation → Hash
 matches** ("Hash check unreachable: N photos waiting, unpublished", with the oldest wait). While it
@@ -119,8 +126,8 @@ rejected until its hash check has passed or timed out. A timed-out photo is list
 "Hash check timed out" with its image (read through the `by_hash_check_timed_out` index, with the
 already-decided ones filtered out before the queue limit, so rejected timed-out rows never crowd
 out undecided ones, and timed-out rows never take the place of ordinary unscored ones), counted
-in the tab badge, and counted apart on **Hash
-matches** ("Hash check timed out: N photos ... need an admin decision"). No notification is sent:
+in the tab badge, and counted apart on **Hash matches** ("Hash check timed out: N photos ...
+need an admin decision"). No notification is sent:
 the admin notifications are built on member-facing domain events, so the tab count plus the
 `imageModeration.hashCheckTimedOut` error event (below) are the alert. The 24-hour stalled sweep
 only looks at photos whose classifier check is still `pending`, so it leaves a photo that is only
@@ -128,6 +135,8 @@ waiting on its hash check alone.
 
 The hash check is not configured on dev or prod today (`CSAM_HASHCHECK_PROVIDER` unset means
 "none", which answers no_match at once), so no photo waits and none of this runs until it is.
+When it is configured, run `lib/imageModeration/recheckWaivedHashes` right after (above), and
+`lib/imageModeration/backfillBoxArtHashCheck` for older box art (one-shot-migrations.md).
 
 ## Rollout: checks in flight at deploy time
 

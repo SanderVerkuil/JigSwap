@@ -145,8 +145,9 @@ export const hashCheckResultArgs = {
 };
 
 /**
- * Record a hash-check outcome on a row: no_match clears the publication gate; unavailable keeps
- * it closed and stores the hashes for a later re-check. A quarantined row is left alone.
+ * Record a hash-check outcome on a row: no_match clears the publication gate (and the marker of
+ * an admin's waiver, hashCheckWaivedBy); unavailable keeps it closed and stores the hashes for a
+ * later re-check. A quarantined row is left alone.
  */
 export const applyHashCheckResult = async (
   ctx: MutationCtx,
@@ -169,6 +170,8 @@ export const applyHashCheckResult = async (
       hashCheckedAt: Date.now(),
       hashCheckPendingSince: undefined,
       pendingHashes: undefined,
+      // A photo an admin approved without a hash check has now passed one (hashCheckFields).
+      hashCheckWaivedBy: undefined,
     });
     return;
   }

@@ -9,6 +9,7 @@ import {
   type QueryCtx,
 } from "../../_generated/server";
 import { logEvent } from "../logEvent";
+import { isWaivedHashRecheckCandidate } from "./hashCheckFields";
 import {
   moderationTableValidator,
   TABLE_NAME,
@@ -228,6 +229,50 @@ export const armHashRecheck = async (
       onCompleteExcludeKinds: ["success"],
       context: { table, imageId, attempt: next },
       runAfter,
+    },
+  );
+  return true;
+};
+
+/**
+ * Re-check, once and at once, the stored hashes of a photo an admin approved WITHOUT a hash check
+ * after its check timed out (isWaivedHashRecheckCandidate; the one-shot
+ * lib/imageModeration/recheckWaivedHashes). Such a row is not "waiting", so armHashRecheck refuses
+ * it: this bumps the row's attempt (an older job of it turns stale) and enqueues that attempt on
+ * the pool in the same transaction. The answer is runHashRecheck's: a match quarantines and
+ * escalates over the approval; no_match records the check (hashCheckedAt, and the stored hashes
+ * and the waiver cleared); "unavailable" or a failure arms nothing more (the row is not waiting),
+ * so the photo stays a candidate for the next run. Returns whether it enqueued.
+ */
+export const enqueueWaivedHashRecheck = async (
+  ctx: MutationCtx,
+  table: ModerationTable,
+  imageId: string,
+): Promise<boolean> => {
+  const id = ctx.db.normalizeId(TABLE_NAME[table], imageId);
+  const row = id ? await ctx.db.get(id) : null;
+  if (
+    !id ||
+    !row ||
+    !("pendingHashes" in row) ||
+    !isWaivedHashRecheckCandidate(row)
+  ) {
+    return false;
+  }
+  const next = (row.hashRecheckAttempt ?? 0) + 1;
+  await ctx.db.patch(id, {
+    hashRecheckAttempt: next,
+    hashRecheckDueAt: Date.now(),
+  });
+  await hashRecheckPool.enqueueAction(
+    ctx,
+    hashRecheckAction(table),
+    { imageId, attempt: next, pooled: true },
+    {
+      onComplete:
+        internal.lib.imageModeration.hashRecheckPool.onHashRecheckComplete,
+      onCompleteExcludeKinds: ["success"],
+      context: { table, imageId, attempt: next },
     },
   );
   return true;

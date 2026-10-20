@@ -286,6 +286,7 @@ import type * as lib_imageModeration_blobMetadata from "../lib/imageModeration/b
 import type * as lib_imageModeration_hashRecheckPool from "../lib/imageModeration/hashRecheckPool.js";
 import type * as lib_imageModeration_moderationPool from "../lib/imageModeration/moderationPool.js";
 import type * as lib_imageModeration_quarantine from "../lib/imageModeration/quarantine.js";
+import type * as lib_imageModeration_recheckWaivedHashes from "../lib/imageModeration/recheckWaivedHashes.js";
 import type * as lib_imageModeration_rescreenStore from "../lib/imageModeration/rescreenStore.js";
 import type * as lib_imageModeration_stalledSweep from "../lib/imageModeration/stalledSweep.js";
 import type * as lib_logEvent from "../lib/logEvent.js";
@@ -831,6 +832,7 @@ declare const fullApi: ApiFromModules<{
   "lib/imageModeration/hashRecheckPool": typeof lib_imageModeration_hashRecheckPool;
   "lib/imageModeration/moderationPool": typeof lib_imageModeration_moderationPool;
   "lib/imageModeration/quarantine": typeof lib_imageModeration_quarantine;
+  "lib/imageModeration/recheckWaivedHashes": typeof lib_imageModeration_recheckWaivedHashes;
   "lib/imageModeration/rescreenStore": typeof lib_imageModeration_rescreenStore;
   "lib/imageModeration/stalledSweep": typeof lib_imageModeration_stalledSweep;
   "lib/logEvent": typeof lib_logEvent;
