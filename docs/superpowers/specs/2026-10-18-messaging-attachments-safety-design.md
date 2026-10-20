@@ -12,6 +12,7 @@ User request: "In the messages, ideally it should also be possible (similar to w
 ## R. Resolved decisions (user, 2026-10-18). These supersede anything below that conflicts.
 
 1. **Checker unavailable:** retry for about 10 minutes, then deliver blurred and labelled "not checked". Never approve silently.
+   **Superseded 2026-10-20** (`2026-10-20-chat-photo-immediate-delivery.md`): an unscored photo is never served to the recipient; it stays "Pending review" and goes to the admin "Unchecked photos" queue.
 2. **Non-mutual sender:** their images arrive blurred (tap to show). Yes.
 3. **Photos:** up to 4 per send. Each is its own message; the thread groups them into a gallery.
 4. **GIFs:** out of v1 (PR 15 dropped).
@@ -139,7 +140,7 @@ The messaging gates touch `conversation/postMessage.ts`, which #140 and #145 als
   5. delete the original;
   6. classify.
      The original upload is never served.
-- **Visibility:** **screen before the recipient sees it.**
+- **Visibility (superseded 2026-10-20, see `2026-10-20-chat-photo-immediate-delivery.md`):** every photo is now a message at send time; the recipient sees a "Pending review" placeholder (server-side blurhash once hash-cleared) until it is approved, and "Removed by moderation" when it is rejected or quarantined. The original rule was: **screen before the recipient sees it.**
   - The sender sees their own image at full colour with a "Checking photo…" badge.
   - The recipient's query hides a message whose image is `pending`: no row, no unread count, no notification. The `MessagePosted` notification fires when the image reaches a deliverable state (the posting use case emits on link; the subscriber defers media messages until approved). Normally this takes seconds.
 - **Verdict bands** (threshold env-configurable):
@@ -147,7 +148,7 @@ The messaging gates touch `conversation/postMessage.ts`, which #140 and #145 als
   - 0.5 ≤ score < 0.85 → `blurred`: delivered blurred with "Sensitive content · Show" and a Report button. This band exists because fine-art puzzles (classical nudes, Klimt) will produce false positives on a puzzle site.
   - < 0.5 → `approved`.
   - Images from someone who is not a mutual follower are also delivered blurred-by-default (tap to show) whatever their score. This is the cheap cyberflashing control, since exchange threads let strangers in.
-- **Classifier unavailable: fail closed to a delay, then blurred.** Retry 3× with backoff (as built: 4 attempts on the moderation Workpool, about 1, 5 and 25 minutes apart; a check that never completes is stamped `unscored` too, see `docs/deployment/photo-moderation.md`). After that, deliver as `unscored`, rendered like `blurred` ("Not checked · Show"), and log it. Never silently approve. Unscored images are not held for an admin (that would mean admins browsing private DMs). **Feature-level fail-closed:** if `MODERATION_PROVIDER=none` or the token is unset, `stageMessageImage` refuses and the composer hides "Photo". Copy and completion photos keep failing open, but now record `unscored`, and alerting is added.
+- **Classifier unavailable: fail closed to a delay, then blurred.** Retry 3× with backoff (as built: 4 attempts on the moderation Workpool, about 1, 5 and 25 minutes apart; a check that never completes is stamped `unscored` too, see `docs/deployment/photo-moderation.md`). After that, deliver as `unscored`, rendered like `blurred` ("Not checked · Show"), and log it. Never silently approve. Unscored images are not held for an admin (that would mean admins browsing private DMs). **Superseded 2026-10-20:** unscored chat photos stay "Pending review" for the recipient and are listed (sent ones only, no conversation context) in the admin "Unchecked photos" queue to approve, remove or check again. **Feature-level fail-closed:** if `MODERATION_PROVIDER=none` or the token is unset, `stageMessageImage` refuses and the composer hides "Photo". Copy and completion photos keep failing open, but now record `unscored`, and alerting is added.
 - **Positive screen follow-up:**
   - Stamp `moderationActions` kind `message_image_auto_rejected` (no actor).
   - The image enters the admin queue **only if the sender asks for a review**. An admin can restore it (`message_image_restored`).
@@ -329,8 +330,8 @@ Add `@convex-dev/rate-limiter` (second component), with a shared `lib/rateLimits
     | ------------------------------- | ---------------------------------------------------------------- |
     | Sender, pending                 | "Checking photo…"                                                |
     | Sender, rejected                | Dashed frame: "This photo wasn't sent…", plus "Ask for a review" |
-    | Recipient, pending              | Nothing                                                          |
-    | Blurred / unscored / non-mutual | Blurred, with "Show"                                             |
+    | Recipient, pending              | Nothing (2026-10-20: "Pending review" placeholder)               |
+    | Blurred / unscored / non-mutual | Blurred, with "Show" (2026-10-20: unscored is "Pending review")  |
     | Removed                         | "Photo removed" for both sides                                   |
 - **a11y:**
   - Long-press is never the only path.
