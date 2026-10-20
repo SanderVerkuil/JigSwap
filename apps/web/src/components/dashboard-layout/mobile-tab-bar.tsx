@@ -12,9 +12,11 @@ import { useCurrentMember } from "@/components/dashboard-home/use-current-member
 import { UnreadDot } from "@/components/whats-new/badges";
 import { useWhatsNewUnreadCount } from "@/components/whats-new/use-whats-new-state";
 import { gateway } from "@/gateway";
+import { scrollToTopIfCurrent } from "@/lib/scroll-restoration";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "@tanstack/react-router";
 import {
   ArrowLeftRight,
   BookOpen,
@@ -156,11 +158,15 @@ function TabLink({
   badge?: number;
 }) {
   const t = useTranslations("shell.mobile");
+  const router = useRouter();
   const on = active === tab.key;
 
   return (
     <Link
       href={tab.href}
+      onClick={(event) =>
+        scrollToTopIfCurrent(event, router.latestLocation.href, tab.href)
+      }
       aria-label={t(`tabs.${tab.key}`)}
       aria-current={on ? "page" : undefined}
       className={cn(
