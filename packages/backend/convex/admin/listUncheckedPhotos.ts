@@ -1,3 +1,8 @@
+import type {
+  Expression,
+  FilterBuilder,
+  GenericTableInfo,
+} from "convex/server";
 import { ConvexError } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
@@ -9,10 +14,7 @@ import { isAdmin } from "../identity/isAdmin";
 import { adminMemberLabelOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
 import { boxArtTitle } from "../lib/imageModeration/boxArtReferences";
-import {
-  isHashCheckTimedOut,
-  isHashCleared,
-} from "../lib/imageModeration/hashCheckFields";
+import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 
 // Per status and table: the queue shows at most this many rows (oldest first); the rest follow as
 // earlier ones are decided.
@@ -28,16 +30,33 @@ const uploaderLabel = async (
   return uploader ? adminMemberLabelOf(uploader) : null;
 };
 
-// A timed-out photo the admin can still decide: not already rejected, quarantined or removed.
-const awaitsTimeoutDecision = (row: {
-  hashCheckedAt?: number;
-  hashCheckTimedOutAt?: number;
-  moderationStatus?: string;
-}) =>
-  isHashCheckTimedOut(row) &&
-  row.moderationStatus !== "rejected" &&
-  row.moderationStatus !== "quarantined" &&
-  row.moderationStatus !== "removed";
+// Query filters over the hash-check fields every photo table shares (hashCheckFields). They run
+// BEFORE `.take`, so rows the queue skips never use up its UNCHECKED_QUEUE_LIMIT.
+const hashField = <T extends GenericTableInfo>(
+  q: FilterBuilder<T>,
+  name: "hashCheckedAt" | "hashCheckTimedOutAt" | "moderationStatus",
+) =>
+  q.field(name as unknown as T["fieldPaths"]) as unknown as Expression<
+    string | number | undefined
+  >;
+
+// Not a timed-out hash check that is still closed (the negation of isHashCheckTimedOut).
+const notTimedOut = <T extends GenericTableInfo>(q: FilterBuilder<T>) =>
+  q.or(
+    q.eq(hashField(q, "hashCheckTimedOutAt"), undefined),
+    q.neq(hashField(q, "hashCheckedAt"), undefined),
+  );
+
+// On a by_hash_check_timed_out row (timed out, gate closed): the admin can still decide it, i.e.
+// it is not already rejected, quarantined or removed.
+const awaitsTimeoutDecision = <T extends GenericTableInfo>(
+  q: FilterBuilder<T>,
+) =>
+  q.and(
+    q.neq(hashField(q, "moderationStatus"), "rejected"),
+    q.neq(hashField(q, "moderationStatus"), "quarantined"),
+    q.neq(hashField(q, "moderationStatus"), "removed"),
+  );
 
 // The image an admin sees: once the hash check has passed, or once it timed out (an admin decides
 // it then). Never before, to anyone.
@@ -147,9 +166,9 @@ export const listUncheckedPhotos = query({
         .withIndex("by_moderation_status", (q) =>
           q.eq("moderationStatus", status),
         )
+        .filter(notTimedOut)
         .take(UNCHECKED_QUEUE_LIMIT);
       for (const row of copyRows) {
-        if (isHashCheckTimedOut(row)) continue;
         items.push(await copyItem(ctx, row, status));
       }
       const completionRows = await ctx.db
@@ -157,9 +176,9 @@ export const listUncheckedPhotos = query({
         .withIndex("by_moderation_status", (q) =>
           q.eq("moderationStatus", status),
         )
+        .filter(notTimedOut)
         .take(UNCHECKED_QUEUE_LIMIT);
       for (const row of completionRows) {
-        if (isHashCheckTimedOut(row)) continue;
         items.push(await completionItem(ctx, row, status));
       }
       const boxArtRows = await ctx.db
@@ -167,9 +186,9 @@ export const listUncheckedPhotos = query({
         .withIndex("by_moderation_status", (q) =>
           q.eq("moderationStatus", status),
         )
+        .filter(notTimedOut)
         .take(UNCHECKED_QUEUE_LIMIT);
       for (const row of boxArtRows) {
-        if (isHashCheckTimedOut(row)) continue;
         items.push(await boxArtItem(ctx, row, status));
       }
     }
@@ -178,10 +197,12 @@ export const listUncheckedPhotos = query({
       .withIndex("by_moderation_status", (q) =>
         q.eq("moderationStatus", "unscored"),
       )
-      .filter((q) => q.neq(q.field("messageId"), undefined))
+      .filter((q) =>
+        q.and(q.neq(q.field("messageId"), undefined), notTimedOut(q)),
+      )
       .take(UNCHECKED_QUEUE_LIMIT);
     for (const row of messageRows) {
-      if (row.kind !== "image" || isHashCheckTimedOut(row)) continue;
+      if (row.kind !== "image") continue;
       items.push({
         key: `message:${row._id}`,
         source: "message" as const,
@@ -200,53 +221,53 @@ export const listUncheckedPhotos = query({
       });
     }
 
-    // Timed-out hash checks: still held in the by_hash_check_pending index (oldest first).
+    // Timed-out hash checks: the by_hash_check_timed_out range holds exactly the timed-out rows
+    // whose hash gate is still closed; the ones an admin can still decide are filtered BEFORE the
+    // take, so rejected (or quarantined) timed-out rows never crowd them out of the queue.
     const timedOut = "hashTimedOut" as const;
     const copyWaiting = await ctx.db
       .query("ownedPuzzleImages")
-      .withIndex("by_hash_check_pending", (q) =>
-        q.gt("hashCheckPendingSince", 0),
+      .withIndex("by_hash_check_timed_out", (q) =>
+        q.eq("hashCheckedAt", undefined).gt("hashCheckTimedOutAt", 0),
       )
+      .filter(awaitsTimeoutDecision)
       .take(UNCHECKED_QUEUE_LIMIT);
     for (const row of copyWaiting) {
-      if (awaitsTimeoutDecision(row)) {
-        items.push(await copyItem(ctx, row, timedOut));
-      }
+      items.push(await copyItem(ctx, row, timedOut));
     }
     const completionWaiting = await ctx.db
       .query("completionImages")
-      .withIndex("by_hash_check_pending", (q) =>
-        q.gt("hashCheckPendingSince", 0),
+      .withIndex("by_hash_check_timed_out", (q) =>
+        q.eq("hashCheckedAt", undefined).gt("hashCheckTimedOutAt", 0),
       )
+      .filter(awaitsTimeoutDecision)
       .take(UNCHECKED_QUEUE_LIMIT);
     for (const row of completionWaiting) {
-      if (awaitsTimeoutDecision(row)) {
-        items.push(await completionItem(ctx, row, timedOut));
-      }
+      items.push(await completionItem(ctx, row, timedOut));
     }
     const boxArtWaiting = await ctx.db
       .query("boxArtUploads")
-      .withIndex("by_hash_check_pending", (q) =>
-        q.gt("hashCheckPendingSince", 0),
+      .withIndex("by_hash_check_timed_out", (q) =>
+        q.eq("hashCheckedAt", undefined).gt("hashCheckTimedOutAt", 0),
       )
+      .filter(awaitsTimeoutDecision)
       .take(UNCHECKED_QUEUE_LIMIT);
     for (const row of boxArtWaiting) {
-      if (awaitsTimeoutDecision(row)) {
-        items.push(await boxArtItem(ctx, row, timedOut));
-      }
+      items.push(await boxArtItem(ctx, row, timedOut));
     }
     // Message photos: only sent ones (a staged photo expires within a day).
     const messageWaiting = await ctx.db
       .query("messageAttachments")
-      .withIndex("by_hash_check_pending", (q) =>
-        q.gt("hashCheckPendingSince", 0),
+      .withIndex("by_hash_check_timed_out", (q) =>
+        q.eq("hashCheckedAt", undefined).gt("hashCheckTimedOutAt", 0),
+      )
+      .filter((q) =>
+        q.and(q.neq(q.field("messageId"), undefined), awaitsTimeoutDecision(q)),
       )
       .take(UNCHECKED_QUEUE_LIMIT);
     for (const attachment of messageWaiting) {
       const row = asImage(attachment);
-      if (!row || row.messageId === undefined || !awaitsTimeoutDecision(row)) {
-        continue;
-      }
+      if (!row) continue;
       items.push({
         key: `message:${row._id}`,
         source: "message" as const,

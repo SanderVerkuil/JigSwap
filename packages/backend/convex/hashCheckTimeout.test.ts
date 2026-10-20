@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { withModerationPool } from "../test-fixtures/moderationPool";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { UNCHECKED_QUEUE_LIMIT } from "./admin/listUncheckedPhotos";
 import type {
   CsamHashCheckPort,
   CsamHashCheckResult,
@@ -629,6 +630,185 @@ describe("a re-check after the timeout", () => {
     );
     expect(listed.map((item) => item.imageId)).not.toContain(
       undecided.copyPhoto,
+    );
+  });
+});
+
+describe("a rejected timed-out copy photo in Flagged Images", () => {
+  test("is listed with its image for the admin, and restoring it returns it to Unchecked photos, still unpublished", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const s = await seed(t, { waitedMs: pastTimeout, timedOut: true });
+    const admin = asAdmin(t);
+    await admin.mutation(api.admin.decideUncheckedPhoto.decideUncheckedPhoto, {
+      source: "copy",
+      imageId: s.copyPhoto,
+      decision: "reject",
+    });
+
+    const flagged = await admin.query(
+      api.admin.listRejectedPhotos.listRejectedPhotos,
+      {},
+    );
+    expect(flagged).toEqual([
+      expect.objectContaining({
+        imageId: s.copyPhoto,
+        url: expect.any(String),
+        hashTimedOut: true,
+      }),
+    ]);
+    // Members never get it: Flagged Images is admin-only.
+    await expect(
+      t
+        .withIdentity({ subject: "clerk_member" })
+        .query(api.admin.listRejectedPhotos.listRejectedPhotos, {}),
+    ).rejects.toThrow();
+
+    await admin.mutation(api.admin.restorePhoto.restorePhoto, {
+      imageId: s.copyPhoto,
+    });
+
+    const { copy } = await rowsOf(t, s);
+    expect(copy?.moderationStatus).toBe("approved");
+    // The gate stays closed: restoring is not a waiver.
+    expect(copy?.hashCheckedAt).toBeUndefined();
+    expect(copy?.hashCheckWaivedBy).toBeUndefined();
+    const listed = await admin.query(
+      api.admin.listUncheckedPhotos.listUncheckedPhotos,
+      {},
+    );
+    expect(
+      listed
+        .filter((item) => item.source === "copy")
+        .map((item) => [item.imageId, item.status]),
+    ).toEqual([[s.copyPhoto, "hashTimedOut"]]);
+  });
+
+  test("an ordinary rejected photo is not marked timed out", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const s = await seed(t, { waitedMs: 60_000, attempt: 1 });
+    await t.run((ctx) =>
+      ctx.db.patch(s.copyPhoto, {
+        moderationStatus: "rejected",
+        hashCheckedAt: Date.now(),
+        hashCheckPendingSince: undefined,
+        pendingHashes: undefined,
+      }),
+    );
+
+    const flagged = await asAdmin(t).query(
+      api.admin.listRejectedPhotos.listRejectedPhotos,
+      {},
+    );
+    expect(flagged).toEqual([
+      expect.objectContaining({ imageId: s.copyPhoto, hashTimedOut: false }),
+    ]);
+  });
+});
+
+describe("the queue limit", () => {
+  // Copy photo rows inserted straight into the table, oldest first.
+  const insertCopyPhotos = (
+    t: T,
+    s: Seeded,
+    count: number,
+    fields: {
+      moderationStatus: "unscored" | "rejected" | "approved";
+      timedOut: boolean;
+    },
+  ) =>
+    t.run(async (ctx) => {
+      const template = (await ctx.db.get(s.copyPhoto))!;
+      const ids: Id<"ownedPuzzleImages">[] = [];
+      for (let i = 0; i < count; i++) {
+        const now = Date.now();
+        ids.push(
+          await ctx.db.insert("ownedPuzzleImages", {
+            ownedPuzzleId: template.ownedPuzzleId,
+            uploaderId: template.uploaderId,
+            fileId: template.fileId,
+            moderationStatus: fields.moderationStatus,
+            reencodedAt: now,
+            ...(fields.timedOut
+              ? {
+                  hashCheckPendingSince: now - pastTimeout,
+                  pendingHashes: HASHES,
+                  hashCheckTimedOutAt: now,
+                }
+              : { hashCheckedAt: now }),
+            createdAt: now,
+            updatedAt: now,
+          }),
+        );
+      }
+      return ids;
+    });
+
+  const copyItems = async (t: T) =>
+    (
+      await asAdmin(t).query(
+        api.admin.listUncheckedPhotos.listUncheckedPhotos,
+        {},
+      )
+    ).filter((item) => item.source === "copy");
+
+  test("more than UNCHECKED_QUEUE_LIMIT rejected timed-out rows do not hide an undecided one", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const s = await seed(t, { waitedMs: 60_000, attempt: 1 });
+    await insertCopyPhotos(t, s, UNCHECKED_QUEUE_LIMIT + 5, {
+      moderationStatus: "rejected",
+      timedOut: true,
+    });
+    const [undecided] = await insertCopyPhotos(t, s, 1, {
+      moderationStatus: "approved",
+      timedOut: true,
+    });
+
+    expect(
+      (await copyItems(t)).map((item) => [item.imageId, item.status]),
+    ).toEqual([[undecided, "hashTimedOut"]]);
+  });
+
+  test("more than UNCHECKED_QUEUE_LIMIT timed-out unscored rows do not hide an ordinary unscored one", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const s = await seed(t, { waitedMs: 60_000, attempt: 1 });
+    await insertCopyPhotos(t, s, UNCHECKED_QUEUE_LIMIT + 5, {
+      moderationStatus: "unscored",
+      timedOut: true,
+    });
+    const [ordinary] = await insertCopyPhotos(t, s, 1, {
+      moderationStatus: "unscored",
+      timedOut: false,
+    });
+
+    const items = await copyItems(t);
+    expect(items.filter((item) => item.status === "unscored")).toEqual([
+      expect.objectContaining({ imageId: ordinary }),
+    ]);
+    expect(items.filter((item) => item.status === "hashTimedOut")).toHaveLength(
+      UNCHECKED_QUEUE_LIMIT,
+    );
+  });
+
+  test("a timed-out unscored row is listed behind more than UNCHECKED_QUEUE_LIMIT ordinary unscored rows", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const s = await seed(t, { waitedMs: 60_000, attempt: 1 });
+    await insertCopyPhotos(t, s, UNCHECKED_QUEUE_LIMIT + 5, {
+      moderationStatus: "unscored",
+      timedOut: false,
+    });
+    const [timedOutRow] = await insertCopyPhotos(t, s, 1, {
+      moderationStatus: "unscored",
+      timedOut: true,
+    });
+
+    const items = await copyItems(t);
+    expect(
+      items
+        .filter((item) => item.status === "hashTimedOut")
+        .map((item) => item.imageId),
+    ).toEqual([timedOutRow]);
+    expect(items.filter((item) => item.status === "unscored")).toHaveLength(
+      UNCHECKED_QUEUE_LIMIT,
     );
   });
 });

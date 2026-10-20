@@ -152,7 +152,9 @@ export default defineSchema({
     .index("by_moderation_status", ["moderationStatus"])
     // The uploader's own box art still being checked (catalog/boxArtInCheck).
     .index("by_uploader_status", ["uploaderId", "moderationStatus"])
-    .index("by_hash_check_pending", ["hashCheckPendingSince"]),
+    .index("by_hash_check_pending", ["hashCheckPendingSince"])
+    // Timed-out hash checks still closed (admin/listUncheckedPhotos): hashCheckedAt undefined.
+    .index("by_hash_check_timed_out", ["hashCheckedAt", "hashCheckTimedOutAt"]),
 
   // Puzzles  - the actual puzzle designs that exist in the world
   puzzles: defineTable({
@@ -441,6 +443,8 @@ export default defineSchema({
     .index("by_owned_puzzle", ["ownedPuzzleId"])
     .index("by_moderation_status", ["moderationStatus"])
     .index("by_hash_check_pending", ["hashCheckPendingSince"])
+    // Timed-out hash checks still closed (admin/listUncheckedPhotos): hashCheckedAt undefined.
+    .index("by_hash_check_timed_out", ["hashCheckedAt", "hashCheckTimedOutAt"])
     // Whether a blob is already a copy photo (message-photo claims refuse it).
     .index("by_file", ["fileId"])
     // Account deletion: the photos a member uploaded (conversation/purgeMemberMessagingData).
@@ -582,6 +586,8 @@ export default defineSchema({
     .index("by_completion", ["completionId"])
     .index("by_moderation_status", ["moderationStatus"])
     .index("by_hash_check_pending", ["hashCheckPendingSince"])
+    // Timed-out hash checks still closed (admin/listUncheckedPhotos): hashCheckedAt undefined.
+    .index("by_hash_check_timed_out", ["hashCheckedAt", "hashCheckTimedOutAt"])
     // Whether a blob is already a completion photo (message-photo claims refuse it).
     .index("by_file", ["fileId"]),
 
@@ -1109,6 +1115,8 @@ export default defineSchema({
     .index("by_message", ["messageId"])
     .index("by_review_requested", ["reviewRequestedAt"])
     .index("by_hash_check_pending", ["hashCheckPendingSince"])
+    // Timed-out hash checks still closed (admin/listUncheckedPhotos): hashCheckedAt undefined.
+    .index("by_hash_check_timed_out", ["hashCheckedAt", "hashCheckTimedOutAt"])
     // A member's own attachments, for the account-deletion purge.
     .index("by_uploader", ["uploaderId"]),
 

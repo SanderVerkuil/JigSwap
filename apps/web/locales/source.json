@@ -4131,6 +4131,7 @@
         "rejected": "Rejected “{title}” — {count} left in queue.",
         "removed": "Removed image on “{title}” — {count} left in queue.",
         "restored": "Restored photo on “{title}” — {count} left in queue.",
+        "restoredToUnchecked": "Moved the photo on “{title}” back to Unchecked Photos — {count} left in queue.",
         "manualApproved": "Approved photo on “{title}” — {count} left in queue.",
         "manualRejected": "Rejected photo on “{title}” — {count} left in queue.",
         "hashCheckWaived": "Approved photo on “{title}” without a hash check — {count} left in queue.",
@@ -4185,7 +4186,8 @@
         "score": "Score",
         "confirm": "Confirm Removal",
         "confirmArm": "Are you sure?",
-        "restore": "Restore Photo"
+        "restore": "Restore Photo",
+        "hashTimedOutHint": "This photo's hash check against known abuse material timed out before it was rejected. Restoring it does not publish it: it goes back to Unchecked Photos, where only Approve without hash check publishes it."
       },
       "flaggedEmpty": "No flagged images. The community's happy.",
       "activity": {
