@@ -3,14 +3,23 @@
 // Detail pane for a photo nobody has decided (pending / unscored, or its hash check timed out): the image behind
 // the same blur-until-reveal guard as the flagged pane, a metadata grid (status, why it could not
 // be checked, puzzle, uploader) and the two manual decisions, plus "Check again" for an unscored
-// photo (`canRecheck`). Mutations live in the route; reject uses the app's two-step inline confirm
-// (first click arms, second fires, disarms after 3s).
+// photo (`canRecheck`). A photo whose hash check timed out gets "Approve without hash check" in
+// place of Approve (the server refuses a plain approval for it). Mutations live in the route; reject
+// and the waiver use the app's two-step inline confirm (first click arms, second fires, disarms
+// after 3s).
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
 import type { FunctionReturnType } from "convex/server";
-import { Check, EyeOff, ImageOff, RotateCw, X } from "lucide-react";
+import {
+  Check,
+  EyeOff,
+  ImageOff,
+  RotateCw,
+  ShieldAlert,
+  X,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "use-intl";
 
@@ -37,32 +46,36 @@ export function UncheckedDetail({
   photo,
   busy,
   onApprove,
+  onWaive,
   onReject,
   onRecheck,
 }: {
   photo: UncheckedPhoto;
   busy: boolean;
   onApprove: () => void;
+  onWaive: () => void;
   onReject: () => void;
   onRecheck: () => void;
 }) {
   const t = useTranslations("admin.moderation.unchecked");
   // NOTE: the caller keys this pane by photo, so reveal/armed state never carries over.
   const [revealed, setRevealed] = useState(false);
-  const [armed, setArmed] = useState(false);
+  // Which two-step action is armed (at most one at a time).
+  const [armed, setArmed] = useState<"reject" | "waive" | null>(null);
   const disarmTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(disarmTimer.current), []);
 
-  const rejectClick = () => {
+  const twoStep = (action: "reject" | "waive", fire: () => void) => () => {
     clearTimeout(disarmTimer.current);
-    if (armed) {
-      setArmed(false);
-      onReject();
+    if (armed === action) {
+      setArmed(null);
+      fire();
       return;
     }
-    setArmed(true);
-    disarmTimer.current = setTimeout(() => setArmed(false), 3000);
+    setArmed(action);
+    disarmTimer.current = setTimeout(() => setArmed(null), 3000);
   };
+  const timedOut = photo.status === "hashTimedOut";
 
   const reason =
     photo.reason == null
@@ -121,17 +134,28 @@ export function UncheckedDetail({
       </div>
 
       <p className="text-xs text-muted-foreground">
-        {photo.status === "hashTimedOut" ? t("hashTimedOutHint") : t("hint")}
+        {timedOut ? t("hashTimedOutHint") : t("hint")}
       </p>
 
       <div className="flex flex-wrap items-center gap-2.5">
-        <Button onClick={onApprove} disabled={busy}>
-          <Check aria-hidden />
-          {t("approve")}
-        </Button>
-        <Button variant="destructive" onClick={rejectClick} disabled={busy}>
+        {timedOut ? (
+          <Button onClick={twoStep("waive", onWaive)} disabled={busy}>
+            <ShieldAlert aria-hidden />
+            {armed === "waive" ? t("waiveArm") : t("waive")}
+          </Button>
+        ) : (
+          <Button onClick={onApprove} disabled={busy}>
+            <Check aria-hidden />
+            {t("approve")}
+          </Button>
+        )}
+        <Button
+          variant="destructive"
+          onClick={twoStep("reject", onReject)}
+          disabled={busy}
+        >
           <X aria-hidden />
-          {armed ? t("rejectArm") : t("reject")}
+          {armed === "reject" ? t("rejectArm") : t("reject")}
         </Button>
         {photo.canRecheck && (
           <Button variant="outline" onClick={onRecheck} disabled={busy}>
