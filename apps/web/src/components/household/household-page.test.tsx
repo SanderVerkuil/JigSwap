@@ -1,11 +1,15 @@
 import { ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ConvexProviderWithAuth, ConvexReactClient } from "convex/react";
-import { parseFragment, type DefaultTreeAdapterMap } from "parse5";
+import {
+  parseFragment,
+  serializeOuter as serializeOuterHtml,
+  type DefaultTreeAdapterMap,
+} from "parse5";
 import type { ComponentProps, ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { IntlProvider } from "use-intl";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
 import {
   HouseholdDetails,
@@ -13,6 +17,10 @@ import {
   type HouseholdData,
   type HouseholdTab,
 } from "./household-page";
+
+// Server rendering always reads useIsMobile's server snapshot (false); phones are opted in per test.
+const viewport = vi.hoisted(() => ({ mobile: false }));
+vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => viewport.mobile }));
 
 const useSignedOut = () => ({
   isLoading: false,
@@ -65,6 +73,7 @@ const textOf = (el: Element): string =>
     )
     .join("");
 const texts = (html: string) => elementsOf(html).map(textOf);
+const serializeOuter = (el: Element) => serializeOuterHtml(el);
 
 const household = (viewerRole: "admin" | "member"): HouseholdData => ({
   householdId: "hh_1",
@@ -116,7 +125,11 @@ const details = (
   );
 
 describe("HouseholdDetails", () => {
-  it("shows the identity strip and four tabs, Puzzles first", () => {
+  afterEach(() => {
+    viewport.mobile = false;
+  });
+
+  it("shows four tabs, Puzzles first, with no identity strip above them", () => {
     const html = details("admin", "puzzles");
     const tabs = elementsOf(html).filter((e) => attr(e, "role") === "tab");
     expect(tabs.map(textOf)).toEqual([
@@ -126,12 +139,49 @@ describe("HouseholdDetails", () => {
       "Settings",
     ]);
     expect(attr(tabs[0], "aria-selected")).toBe("true");
-    expect(texts(html)).toContain("2 members");
-    // The tour steps target always-mounted elements: the identity strip and the Sharing trigger.
+    // The member count lives on the Members tab; no avatar row or "2 members" line.
+    expect(texts(html)).not.toContain("2 members");
+    // The tour steps target always-mounted elements: the tab bar and the Sharing trigger.
     expect(attr(tabs[2], "data-tour")).toBe("household-my-copies");
+    const main = elementsOf(html).filter(
+      (e) => attr(e, "data-tour") === "household-main",
+    );
+    expect(main).toHaveLength(1);
     expect(
-      elementsOf(html).filter((e) => attr(e, "data-tour") === "household-main"),
-    ).toHaveLength(1);
+      elementsOf(serializeOuter(main[0])).some(
+        (e) => attr(e, "role") === "tablist",
+      ),
+    ).toBe(true);
+  });
+
+  const inviteButtons = (html: string) =>
+    elementsOf(html).filter(
+      (e) => e.tagName === "button" && textOf(e) === "Invite",
+    );
+
+  it("keeps the admin's Invite out of the Members list from md (it's in the page head)", () => {
+    const html = details("admin", "members");
+    expect(inviteButtons(html)).toHaveLength(0);
+    const tabs = elementsOf(html).filter((e) => attr(e, "role") === "tab");
+    expect(attr(tabs[1], "data-tour")).toBeUndefined();
+  });
+
+  it("puts the admin's Invite at the top of the Members list on phones", () => {
+    viewport.mobile = true;
+    const html = details("admin", "members");
+    const [invite] = inviteButtons(html);
+    expect(invite).toBeDefined();
+    // Above the first member.
+    const all = texts(html);
+    expect(all.indexOf("Invite")).toBeLessThan(all.indexOf("Ann"));
+    // The Invite button lives in the (not always mounted) Members tab: the tour targets its trigger.
+    const tabs = elementsOf(html).filter((e) => attr(e, "role") === "tab");
+    expect(attr(tabs[1], "data-tour")).toBe("household-invite");
+  });
+
+  it("gives a member on a phone no Invite", () => {
+    viewport.mobile = true;
+    expect(inviteButtons(details("member", "members"))).toHaveLength(0);
   });
 
   it("gives the admin a per-member actions menu", () => {

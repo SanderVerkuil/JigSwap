@@ -1,4 +1,3 @@
-import { CircleAvatarStack } from "@/components/circles/circle-avatar-stack";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { HouseholdInviteDialog } from "@/components/household/household-invite-dialog";
 import { HouseholdPendingList } from "@/components/household/household-pending-list";
@@ -37,6 +36,7 @@ import {
   UNDERLINE_TABS_LIST_CLASS,
 } from "@/components/ui/underline-tabs";
 import { gateway, Id } from "@/gateway";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { useConvexMutation } from "@convex-dev/react-query";
@@ -58,7 +58,8 @@ import { useTranslations } from "use-intl";
 // The household page's views (the route in routes/_dashboard/household.tsx only loads the data
 // and owns the ?tab= search param). Puzzles (default: every puzzle in the household), Members,
 // Sharing (the viewer's own puzzles' household access) and Settings tabs; the admin's single
-// Invite action lives in the shell page head and opens HouseholdInviteDialog.
+// Invite action opens HouseholdInviteDialog. It sits in the shell page head beside the title from
+// md, and on phones at the top of the Members list (see HouseholdDetails).
 
 export type HouseholdTab = "puzzles" | "members" | "sharing" | "settings";
 
@@ -212,6 +213,7 @@ export function HouseholdDetails({
   const [inviteOpen, setInviteOpen] = useState(false);
   const [removeTarget, setRemoveTarget] = useState<Person | null>(null);
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const isMobile = useIsMobile();
 
   const remove = useMutation({
     mutationFn: useConvexMutation(gateway.household.removeMember),
@@ -222,25 +224,29 @@ export function HouseholdDetails({
     onError,
   });
 
-  // The one primary action, in the shell page head: the admin's Invite (icon-only on phones).
+  // The one primary action, the admin's Invite. From md it sits in the shell page head, on the
+  // title's line. On phones the shell would give page actions a row of their own above the page
+  // (the top bar already carries the title), so there it heads the Members list instead, like
+  // "add participants" in a phone's group chat. A household of one is also nudged to invite from
+  // the default Puzzles tab. Only one Invite button exists at a time, so the tour finds the right one.
+  const inviteInMembers = isAdmin && isMobile;
   usePageHeader(
     () => ({
       // The household's own name, when the members gave it one, replaces the static title.
       title: household.name,
-      actions: isAdmin ? (
-        <Button
-          variant="brand"
-          data-tour="household-invite"
-          aria-label={t("invite.action")}
-          className="size-11 p-0 sm:h-9 sm:w-auto sm:px-3"
-          onClick={() => setInviteOpen(true)}
-        >
-          <UserPlus aria-hidden className="size-4" />
-          <span className="hidden sm:inline">{t("invite.action")}</span>
-        </Button>
-      ) : undefined,
+      actions:
+        isAdmin && !isMobile ? (
+          <Button
+            variant="brand"
+            data-tour="household-invite"
+            onClick={() => setInviteOpen(true)}
+          >
+            <UserPlus aria-hidden className="size-4" />
+            {t("invite.action")}
+          </Button>
+        ) : undefined,
     }),
-    [household.name, isAdmin, t],
+    [household.name, isAdmin, isMobile, t],
   );
 
   // Never offer someone who is already a member or already has a pending invite.
@@ -261,32 +267,13 @@ export function HouseholdDetails({
         />
       ))}
 
-      <div
-        data-tour="household-main"
-        className="flex flex-wrap items-center gap-x-3 gap-y-2"
-      >
-        <CircleAvatarStack
-          circleName={household.name ?? t("header.stackName")}
-          members={household.members.map((member) => ({
-            key: member.memberId,
-            name: displayName(member),
-            avatar: member.avatar,
-            fallback: <MemberInitial source={member} />,
-          }))}
-        />
-        <span className="text-muted-foreground text-sm">
-          {t("header.memberCount", { count: household.members.length })}
-        </span>
-        <Badge variant="secondary">
-          {isAdmin ? t("members.admin") : t("members.member")}
-        </Badge>
-      </div>
-
       <Tabs
         value={activeTab}
         onValueChange={(value) => onTabChange(value as HouseholdTab)}
       >
-        <StickyTabsBar>
+        {/* No identity strip above the tabs: the name is the page title, the members and their
+            roles are on the Members tab. The tab bar is the tour's "your household" anchor. */}
+        <StickyTabsBar data-tour="household-main">
           <TabsList className={UNDERLINE_TABS_LIST_CLASS}>
             <TabsTrigger value="puzzles" className={HOUSEHOLD_TAB_CLASS}>
               {t("tabs.puzzles")}
@@ -295,8 +282,8 @@ export function HouseholdDetails({
               value="members"
               className={HOUSEHOLD_TAB_CLASS}
               // For members, the tour's invite step explains who invites; the note itself sits in
-              // this (unmounted until opened) tab.
-              data-tour={isAdmin ? undefined : "household-invite"}
+              // this (unmounted until opened) tab. On phones the admin's Invite is in there too.
+              data-tour={isAdmin && !isMobile ? undefined : "household-invite"}
             >
               {t("tabs.members")}
               <TabCount count={household.members.length} />
@@ -334,6 +321,18 @@ export function HouseholdDetails({
         <TabsContent value="members" className="mt-4 flex flex-col gap-6">
           <section>
             <div className="divide-y rounded-lg border px-4">
+              {inviteInMembers && (
+                <button
+                  type="button"
+                  className="text-primary flex min-h-14 w-full items-center gap-3 py-2 text-left text-sm font-semibold"
+                  onClick={() => setInviteOpen(true)}
+                >
+                  <span className="bg-primary/10 flex size-9 shrink-0 items-center justify-center rounded-full">
+                    <UserPlus aria-hidden className="size-4" />
+                  </span>
+                  {t("invite.action")}
+                </button>
+              )}
               {household.members.map((member) => (
                 <PersonRow
                   key={member.memberId}

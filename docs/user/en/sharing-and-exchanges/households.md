@@ -38,7 +38,8 @@ the name on **Settings** but can't change it.
 
 Only the household admin can invite. The person joins only after they accept.
 
-Click **Invite** at the top of **Household**. The dialog offers three ways to
+Click **Invite** at the top of **Household**. On a phone, open the **Members**
+tab and tap **Invite** at the top of the list. The dialog offers three ways to
 invite: find a member, share a link, or send an email.
 
 ### Invite a member

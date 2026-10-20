@@ -41,8 +41,10 @@ Andere leden zien de naam bij **Instellingen**, maar kunnen hem niet wijzigen.
 Alleen de beheerder van het huishouden kan uitnodigen. De persoon doet pas mee
 nadat diegene heeft geaccepteerd.
 
-Klik bovenaan **Huishouden** op **Uitnodigen**. Het venster biedt drie manieren
-om uit te nodigen: een lid zoeken, een link delen of een e-mail sturen.
+Klik bovenaan **Huishouden** op **Uitnodigen**. Op een telefoon open je het
+tabblad **Leden** en tik je bovenaan de lijst op **Uitnodigen**. Het venster
+biedt drie manieren om uit te nodigen: een lid zoeken, een link delen of een
+e-mail sturen.
 
 ### Een lid uitnodigen
 
