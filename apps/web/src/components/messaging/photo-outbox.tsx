@@ -1,11 +1,14 @@
 "use client";
 
 // The sender's outbox at the end of a thread (spec 2.2, 3): photos they sent
-// that are not messages yet. "Checking photo…" while the automated check
-// runs; once stopped, the in-app statement of reasons ("…our automated check
-// flagged it.") with "Ask for a review", then its progress. Shown exactly as
-// listMyPendingAttachments reports it: the backend makes every stopped photo
-// look alike. Staged-but-unsent photos belong to the composer, not here.
+// that are not messages. Since photos become messages at Send (spec
+// 2026-10-20), that is a photo the check stopped before Send: the in-app
+// statement of reasons ("…our automated check flagged it.") with "Ask for a
+// review", then its progress (StoppedPhoto, also used in the thread for a
+// photo stopped after Send), or one held from before that change ("Checking
+// photo…"). Shown exactly as listMyPendingAttachments reports it: the backend
+// makes every stopped photo look alike. Staged-but-unsent photos belong to the
+// composer, not here.
 import { blurhashToDataUrl } from "@/components/photos/pending-photo-placeholder";
 import { Button } from "@/components/ui/button";
 import { gateway, type Id } from "@/gateway";
@@ -98,11 +101,17 @@ function CheckingPhoto({
   );
 }
 
-function StoppedPhoto({
+/** What the refusal card needs: the outbox row or a thread message's view. */
+export type StoppedPhotoView = Pick<
+  PendingPhoto,
+  "attachmentId" | "reason" | "review"
+>;
+
+export function StoppedPhoto({
   photo,
   onGone,
 }: {
-  photo: PendingPhoto;
+  photo: StoppedPhotoView;
   onGone: () => void;
 }) {
   const t = useTranslations("messages.photos");

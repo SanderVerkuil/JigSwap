@@ -10,9 +10,15 @@
 // - blurred (sensitive, a non-mutual sender, or reported): the
 //   blurhash only, with "… · Show" (revealMessageImage, then the photo) and
 //   Report; nothing in it describes the content;
-// - removed: a "Photo removed" placeholder of the same geometry; when its
-//   sender deleted their account (`unavailable`), the blurhash behind "Photo
-//   no longer available".
+// - pending (spec 2026-10-20: sent, not reviewed yet): for the recipient the
+//   server-side blurhash (or a neutral fill) behind "Pending review", no
+//   Show, no Report; the server never sends them its URL. The sender sees
+//   their own photo (once the server serves it) with "Checking photo…";
+// - rejected (the sender's own photo the check stopped): the refusal card
+//   with "Ask for a review" (StoppedPhoto), below the gallery;
+// - removed: a "Removed by moderation" placeholder of the same geometry; when
+//   its sender deleted their account (`unavailable`), the blurhash behind
+//   "Photo no longer available".
 import { blurhashToDataUrl } from "@/components/photos/pending-photo-placeholder";
 import { ReportDialog } from "@/components/safety/report-dialog";
 import { Button } from "@/components/ui/button";
@@ -22,7 +28,7 @@ import { useConvexMutation } from "@convex-dev/react-query";
 import { stripFormatting } from "@jigswap/contracts";
 import { useMutation } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
-import { EyeOff, Flag, ImageOff } from "lucide-react";
+import { Clock, EyeOff, Flag, ImageOff } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
@@ -31,6 +37,7 @@ import {
   MessagePhotoLightbox,
   type LightboxPhoto,
 } from "./message-photo-lightbox";
+import { StoppedPhoto } from "./photo-outbox";
 import { photoAspect } from "./photo-staging";
 
 type ThreadMessage = FunctionReturnType<
@@ -92,14 +99,24 @@ export function MessagePhotos({
     mutationFn: useConvexMutation(gateway.conversation.revealMessageImage),
   });
 
-  const views = messages.map((message) => effectiveView(message, revealed));
+  const allViews = messages.map((message) => effectiveView(message, revealed));
+  // The sender's stopped photos leave the gallery: each gets its refusal card.
+  const stopped = messages.flatMap((message, index) =>
+    allViews[index].status === "rejected" && message.attachmentId
+      ? [{ message, view: allViews[index] }]
+      : [],
+  );
+  const shown = messages.filter(
+    (_, index) => allViews[index].status !== "rejected",
+  );
+  const views = allViews.filter((view) => view.status !== "rejected");
   const alt = (message: PhotoMessage) => {
     const caption = stripFormatting(message.body).trim();
     const base = own ? t("altOwn") : t("alt", { name: authorName });
     return caption ? `${base}: ${caption}` : base;
   };
   // The lightbox pages through this segment's viewable photos.
-  const viewable: LightboxPhoto[] = messages.flatMap((message, index) => {
+  const viewable: LightboxPhoto[] = shown.flatMap((message, index) => {
     const view = views[index];
     return view.status === "ready" && view.url && message.attachmentId
       ? [
@@ -127,62 +144,78 @@ export function MessagePhotos({
     }
   };
 
-  const count = messages.length;
+  const count = shown.length;
   const grid = count > 1;
   return (
     <>
-      <div
-        className={cn(
-          MEDIA_WIDTH,
-          "overflow-hidden rounded-2xl",
-          grid && "grid grid-cols-2 gap-0.5",
-        )}
-      >
-        {messages.map((message, index) => {
-          const view = views[index];
-          const spans = count === 3 && index === 0;
-          const aspect = grid ? (spans ? 2 : 1) : photoAspect(view.w, view.h);
-          return (
-            <PhotoTile
-              key={message.id}
-              view={view}
-              aspect={aspect}
-              className={cn(spans && "col-span-2")}
-              compact={grid}
-              label={
-                grid
-                  ? t("tileLabel", { index: index + 1, count })
-                  : alt(message)
-              }
-              onOpen={(trigger) => {
-                openerRef.current = trigger;
-                const at = viewable.findIndex(
-                  (photo) => photo.attachmentId === message.attachmentId,
-                );
-                if (at >= 0) setLightbox(at);
-              }}
-              onShow={
-                message.attachmentId
-                  ? () => void showPhoto(message.attachmentId!)
-                  : undefined
-              }
-              showing={
-                reveal.isPending &&
-                reveal.variables?.attachmentId === message.attachmentId
-              }
-              onReport={
-                !own && message.attachmentId
-                  ? (trigger) => {
-                      reportReturnRef.current = trigger;
-                      setReporting(message.attachmentId!);
-                    }
-                  : undefined
-              }
-              onLoad={onMediaLoad}
-            />
-          );
-        })}
-      </div>
+      {count > 0 && (
+        <div
+          className={cn(
+            MEDIA_WIDTH,
+            "overflow-hidden rounded-2xl",
+            grid && "grid grid-cols-2 gap-0.5",
+          )}
+        >
+          {shown.map((message, index) => {
+            const view = views[index];
+            const spans = count === 3 && index === 0;
+            const aspect = grid ? (spans ? 2 : 1) : photoAspect(view.w, view.h);
+            return (
+              <PhotoTile
+                key={message.id}
+                view={view}
+                own={own}
+                aspect={aspect}
+                className={cn(spans && "col-span-2")}
+                compact={grid}
+                label={
+                  grid
+                    ? t("tileLabel", { index: index + 1, count })
+                    : alt(message)
+                }
+                onOpen={(trigger) => {
+                  openerRef.current = trigger;
+                  const at = viewable.findIndex(
+                    (photo) => photo.attachmentId === message.attachmentId,
+                  );
+                  if (at >= 0) setLightbox(at);
+                }}
+                onShow={
+                  message.attachmentId
+                    ? () => void showPhoto(message.attachmentId!)
+                    : undefined
+                }
+                showing={
+                  reveal.isPending &&
+                  reveal.variables?.attachmentId === message.attachmentId
+                }
+                onReport={
+                  !own &&
+                  message.attachmentId &&
+                  (view.status === "ready" || view.status === "blurred")
+                    ? (trigger) => {
+                        reportReturnRef.current = trigger;
+                        setReporting(message.attachmentId!);
+                      }
+                    : undefined
+                }
+                onLoad={onMediaLoad}
+              />
+            );
+          })}
+        </div>
+      )}
+      {stopped.map(({ message, view }) => (
+        <StoppedPhoto
+          key={message.id}
+          photo={{
+            attachmentId: message.attachmentId!,
+            reason: view.reason,
+            review: view.review,
+          }}
+          onGone={() => {}}
+        />
+      ))}
       <MessagePhotoLightbox
         photos={viewable}
         index={lightbox ?? 0}
@@ -210,6 +243,7 @@ export function MessagePhotos({
 
 function PhotoTile({
   view,
+  own,
   aspect,
   className,
   compact,
@@ -221,6 +255,8 @@ function PhotoTile({
   onLoad,
 }: {
   view: AttachmentView;
+  /** The reader sent it (their own pending photo says "Checking photo…"). */
+  own: boolean;
   aspect: number;
   className?: string;
   /** A gallery cell: smaller controls. */
@@ -262,6 +298,44 @@ function PhotoTile({
         <span className="relative flex items-center gap-1 rounded-full bg-black/45 px-2 py-1 text-center text-xs text-white">
           <ImageOff className="size-4 shrink-0" aria-hidden />
           {t("noLongerAvailable")}
+        </span>
+      </div>
+    );
+  }
+
+  if (view.status === "pending") {
+    // The recipient never has a URL here; the sender may have their own.
+    const src = view.thumbUrl ?? blurSrc;
+    return (
+      <div
+        style={style}
+        className={cn("bg-muted relative overflow-hidden", className)}
+      >
+        {src && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={src}
+            alt=""
+            aria-hidden
+            onLoad={view.thumbUrl ? onLoad : undefined}
+            className="absolute inset-0 size-full object-cover opacity-80"
+          />
+        )}
+        {/* A gallery cell is too narrow for the pill: the label wraps,
+            centred at the bottom. */}
+        <span
+          role="status"
+          className={cn(
+            "absolute flex items-center gap-1 bg-black/60 font-semibold text-white",
+            compact
+              ? "inset-x-1 bottom-1 justify-center rounded-xl px-1.5 py-1 text-center text-[11px] leading-tight"
+              : "bottom-2 left-2 max-w-[calc(100%-1rem)] rounded-full px-2 py-1 text-xs",
+          )}
+        >
+          <Clock className="size-3.5 shrink-0" aria-hidden />
+          <span className={compact ? "line-clamp-2" : "truncate"}>
+            {own ? t("checking") : t("pendingReview")}
+          </span>
         </span>
       </div>
     );
