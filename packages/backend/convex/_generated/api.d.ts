@@ -170,6 +170,7 @@ import type * as conversation_startCopyConversation from "../conversation/startC
 import type * as conversation_subscriber from "../conversation/subscriber.js";
 import type * as conversation_threadMemberProjection from "../conversation/threadMemberProjection.js";
 import type * as conversation_typingIndicators from "../conversation/typingIndicators.js";
+import type * as crons from "../crons.js";
 import type * as custody_getCopyCustodyTimeline from "../custody/getCopyCustodyTimeline.js";
 import type * as custody_subscriber from "../custody/subscriber.js";
 import type * as docs_listDocFeedback from "../docs/listDocFeedback.js";
@@ -284,6 +285,7 @@ import type * as lib_imageModeration_blobMetadata from "../lib/imageModeration/b
 import type * as lib_imageModeration_moderationPool from "../lib/imageModeration/moderationPool.js";
 import type * as lib_imageModeration_quarantine from "../lib/imageModeration/quarantine.js";
 import type * as lib_imageModeration_rescreenStore from "../lib/imageModeration/rescreenStore.js";
+import type * as lib_imageModeration_stalledSweep from "../lib/imageModeration/stalledSweep.js";
 import type * as lib_logEvent from "../lib/logEvent.js";
 import type * as lib_rateLimits from "../lib/rateLimits.js";
 import type * as library_acquireCopies from "../library/acquireCopies.js";
@@ -711,6 +713,7 @@ declare const fullApi: ApiFromModules<{
   "conversation/subscriber": typeof conversation_subscriber;
   "conversation/threadMemberProjection": typeof conversation_threadMemberProjection;
   "conversation/typingIndicators": typeof conversation_typingIndicators;
+  crons: typeof crons;
   "custody/getCopyCustodyTimeline": typeof custody_getCopyCustodyTimeline;
   "custody/subscriber": typeof custody_subscriber;
   "docs/listDocFeedback": typeof docs_listDocFeedback;
@@ -825,6 +828,7 @@ declare const fullApi: ApiFromModules<{
   "lib/imageModeration/moderationPool": typeof lib_imageModeration_moderationPool;
   "lib/imageModeration/quarantine": typeof lib_imageModeration_quarantine;
   "lib/imageModeration/rescreenStore": typeof lib_imageModeration_rescreenStore;
+  "lib/imageModeration/stalledSweep": typeof lib_imageModeration_stalledSweep;
   "lib/logEvent": typeof lib_logEvent;
   "lib/rateLimits": typeof lib_rateLimits;
   "library/acquireCopies": typeof library_acquireCopies;

@@ -69,7 +69,7 @@ export const recheckPhoto = mutation({
     const row = id ? await ctx.db.get(id) : null;
     if (!id || !row) throw notFound();
     if (!shouldRecheck(row.moderationStatus)) return;
-    await ctx.db.patch(id, backToPending);
+    await ctx.db.patch(id, { ...backToPending, recheckedAt: Date.now() });
     await enqueueImageModeration(ctx, "boxArt", id);
   },
 });

@@ -282,6 +282,7 @@ describe("recheckPhoto: box art", () => {
     const pending = await rowOf(t, imageId);
     expect(pending).toMatchObject({ moderationStatus: "pending" });
     expect(pending?.moderationReason).toBeUndefined();
+    expect(pending?.recheckedAt).toEqual(expect.any(Number));
     expect(
       enqueued.mock.calls.map((call) => [getFunctionName(call[1]), call[2]]),
     ).toEqual([

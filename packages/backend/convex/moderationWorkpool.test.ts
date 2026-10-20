@@ -2,7 +2,10 @@ import type { WorkId } from "@convex-dev/workpool";
 import { convexTest, type TestConvex } from "convex-test";
 import { Jimp } from "jimp";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { withModerationPool } from "../test-fixtures/moderationPool";
+import {
+  settleDueScheduled,
+  withModerationPool,
+} from "../test-fixtures/moderationPool";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import {
@@ -10,12 +13,14 @@ import {
   moderationPool,
   unscoredReasonOfFailure,
 } from "./lib/imageModeration/moderationPool";
+import { STALLED_AFTER_MS } from "./lib/imageModeration/stalledSweep";
 import schema from "./schema";
 
-// The moderation Workpool (lib/imageModeration/moderationPool): a retryable failure throws inside
-// the pool so the pool retries it, a definite verdict never does, and a check that never completes
-// ends "unscored" through the pool's onComplete. The classifier is a stubbed global `fetch`
-// (Hugging Face).
+// The moderation Workpool (lib/imageModeration/moderationPool) and its backstop sweep
+// (lib/imageModeration/stalledSweep): a retryable failure throws inside the pool so the pool
+// retries it, a definite verdict never does, a check that never completes ends "unscored" through
+// the pool's onComplete, and a row left "pending" for 24 hours is stamped "stalled". The classifier
+// is a stubbed global `fetch` (Hugging Face).
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 type T = TestConvex<typeof schema>;
@@ -329,5 +334,166 @@ describe("onModerationComplete", () => {
     const row = await copyRow(t, imageId);
     expect(row?.moderationStatus).toBe("unscored");
     expect(row?.moderationReason).toBe("check_failed");
+  });
+});
+
+describe("the stalled sweep", () => {
+  const sweep = (t: T, cutoff?: number) =>
+    t.mutation(
+      internal.lib.imageModeration.stalledSweep.sweepStalledModeration,
+      cutoff === undefined ? {} : { cutoff },
+    );
+
+  // One pending row in every moderated table, last touched `touchedAt`.
+  const pendingEverywhere = async (t: T, touchedAt: number) => {
+    const { alice, copy } = await seed(t);
+    return t.run(async (ctx) => {
+      const fileId = await ctx.storage.store(new Blob(["x"]));
+      const base = {
+        uploaderId: alice,
+        fileId,
+        moderationStatus: "pending" as const,
+        createdAt: touchedAt,
+        updatedAt: touchedAt,
+      };
+      return {
+        copy: await ctx.db.insert("ownedPuzzleImages", {
+          ...base,
+          ownedPuzzleId: copy,
+        }),
+        completion: await ctx.db.insert("completionImages", {
+          ...base,
+          completionId: crypto.randomUUID(),
+        }),
+        boxArt: await ctx.db.insert("boxArtUploads", {
+          storageId: fileId,
+          uploaderId: alice,
+          moderationStatus: "pending",
+          createdAt: touchedAt,
+        }),
+        message: await ctx.db.insert("messageAttachments", {
+          ...base,
+          kind: "image",
+          threadAggregateId: crypto.randomUUID(),
+          byteSize: 1,
+          contentType: "image/jpeg",
+        }),
+      };
+    });
+  };
+
+  const statuses = (t: T, ids: Awaited<ReturnType<typeof pendingEverywhere>>) =>
+    t.run(async (ctx) => {
+      const rows = [
+        await ctx.db.get(ids.copy),
+        await ctx.db.get(ids.completion),
+        await ctx.db.get(ids.boxArt),
+        await ctx.db.get(ids.message),
+      ];
+      return rows.map((row) =>
+        row && "moderationStatus" in row
+          ? [row.moderationStatus, row.moderationReason ?? null]
+          : null,
+      );
+    });
+
+  // A run 24 hours from now uses a cutoff after these rows were created (so the index range
+  // reads them all); each row's touch timestamp then decides.
+  const laterCutoff = () => Date.now() + 1000;
+
+  test("stamps rows pending for over 24 hours in every table, leaves fresh ones", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const cutoff = laterCutoff();
+    const stale = await pendingEverywhere(t, cutoff - 60_000);
+    const fresh = await pendingEverywhere(t, cutoff + 60_000);
+
+    await sweep(t, cutoff);
+    await settleDueScheduled(t);
+
+    expect(await statuses(t, stale)).toEqual([
+      ["unscored", "stalled"],
+      ["unscored", "stalled"],
+      ["unscored", "stalled"],
+      ["unscored", "stalled"],
+    ]);
+    expect(await statuses(t, fresh)).toEqual([
+      ["pending", null],
+      ["pending", null],
+      ["pending", null],
+      ["pending", null],
+    ]);
+    const pages = eventsNamed("imageModeration.stalledSweep");
+    expect(pages.map((page) => [page.table, page.stamped])).toEqual([
+      ["copy", 1],
+      ["completion", 1],
+      ["boxArt", 1],
+      ["message", 1],
+    ]);
+    expect(pages[pages.length - 1]?.is_done).toBe(true);
+  });
+
+  test("a row touched since (an admin re-check) is left for a later run", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const cutoff = laterCutoff();
+    const ids = await pendingEverywhere(t, cutoff - 60_000);
+    await t.run(async (ctx) => {
+      await ctx.db.patch(ids.copy, { updatedAt: cutoff + 1 });
+      await ctx.db.patch(ids.boxArt, { recheckedAt: cutoff + 1 });
+    });
+
+    await sweep(t, cutoff);
+    await settleDueScheduled(t);
+
+    expect(await statuses(t, ids)).toEqual([
+      ["pending", null],
+      ["unscored", "stalled"],
+      ["pending", null],
+      ["unscored", "stalled"],
+    ]);
+  });
+
+  test("decided rows are untouched and a second run changes nothing (idempotent)", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const cutoff = laterCutoff();
+    const ids = await pendingEverywhere(t, cutoff - 60_000);
+    await t.run((ctx) =>
+      ctx.db.patch(ids.copy, {
+        moderationStatus: "approved",
+        moderationScore: 0.01,
+      }),
+    );
+
+    await sweep(t, cutoff);
+    await settleDueScheduled(t);
+    const after = await statuses(t, ids);
+    await sweep(t, cutoff);
+    await settleDueScheduled(t);
+
+    expect(after).toEqual([
+      ["approved", null],
+      ["unscored", "stalled"],
+      ["unscored", "stalled"],
+      ["unscored", "stalled"],
+    ]);
+    expect(await statuses(t, ids)).toEqual(after);
+    expect(
+      eventsNamed("imageModeration.stalledSweep").map((page) => page.stamped),
+    ).toEqual([0, 1, 1, 1, 0, 0, 0, 0]);
+  });
+
+  test("the cron's own run (no cutoff) leaves rows created within the last day alone", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const ids = await pendingEverywhere(t, Date.now() - 2 * STALLED_AFTER_MS);
+
+    await sweep(t);
+    await settleDueScheduled(t);
+
+    // Their touch timestamps are old, but they were CREATED just now (_creationTime).
+    expect(await statuses(t, ids)).toEqual([
+      ["pending", null],
+      ["pending", null],
+      ["pending", null],
+      ["pending", null],
+    ]);
   });
 });
