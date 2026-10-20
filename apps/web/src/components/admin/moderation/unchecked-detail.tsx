@@ -2,8 +2,8 @@
 
 // Detail pane for a photo the classifier has not decided (pending / unscored): the image behind
 // the same blur-until-reveal guard as the flagged pane, a metadata grid (status, why it could not
-// be checked, puzzle, uploader) and the two manual decisions, plus "Check again" for unscored box
-// art (`canRecheck`). Mutations live in the route; reject uses the app's two-step inline confirm
+// be checked, puzzle, uploader) and the two manual decisions, plus "Check again" for an unscored
+// photo (`canRecheck`). Mutations live in the route; reject uses the app's two-step inline confirm
 // (first click arms, second fires, disarms after 3s).
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

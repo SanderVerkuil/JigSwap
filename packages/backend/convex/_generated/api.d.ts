@@ -33,7 +33,7 @@ import type * as admin_listUncheckedPhotos from "../admin/listUncheckedPhotos.js
 import type * as admin_listUsers from "../admin/listUsers.js";
 import type * as admin_markCsamEscalation from "../admin/markCsamEscalation.js";
 import type * as admin_probePhotoScreening from "../admin/probePhotoScreening.js";
-import type * as admin_recheckBoxArt from "../admin/recheckBoxArt.js";
+import type * as admin_recheckPhoto from "../admin/recheckPhoto.js";
 import type * as admin_reportViews from "../admin/reportViews.js";
 import type * as admin_restorePhoto from "../admin/restorePhoto.js";
 import type * as admin_roleChange from "../admin/roleChange.js";
@@ -573,7 +573,7 @@ declare const fullApi: ApiFromModules<{
   "admin/listUsers": typeof admin_listUsers;
   "admin/markCsamEscalation": typeof admin_markCsamEscalation;
   "admin/probePhotoScreening": typeof admin_probePhotoScreening;
-  "admin/recheckBoxArt": typeof admin_recheckBoxArt;
+  "admin/recheckPhoto": typeof admin_recheckPhoto;
   "admin/reportViews": typeof admin_reportViews;
   "admin/restorePhoto": typeof admin_restorePhoto;
   "admin/roleChange": typeof admin_roleChange;

@@ -4138,7 +4138,7 @@
         "restored": "Restored photo on “{title}” — {count} left in queue.",
         "manualApproved": "Approved photo on “{title}” — {count} left in queue.",
         "manualRejected": "Rejected photo on “{title}” — {count} left in queue.",
-        "recheckQueued": "Checking the box art on “{title}” again."
+        "recheckQueued": "Checking the photo on “{title}” again."
       },
       "banner": {
         "pill": "ADMIN",
@@ -4259,7 +4259,7 @@
         "reject": "Reject Photo",
         "rejectArm": "Are you sure?",
         "recheck": "Check again",
-        "hint": "Approving publishes the photo to other members. Rejecting hides it; a rejected copy photo moves to Flagged Images, a rejected completion photo is deleted, and rejected box art is removed from its puzzle and deleted. Check again runs the automated check on box art once more, for example after the screening service is working again."
+        "hint": "Approving publishes the photo to other members. Rejecting hides it; a rejected copy photo moves to Flagged Images, a rejected completion photo is deleted, and rejected box art is removed from its puzzle and deleted. Check again runs the automated check once more on a photo it could not check, for example after the screening service is working again."
       },
       "csam": {
         "loading": "Loading hash matches…",
