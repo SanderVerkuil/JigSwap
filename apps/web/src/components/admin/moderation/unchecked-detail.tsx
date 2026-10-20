@@ -29,6 +29,8 @@ const KNOWN_REASONS = new Set([
   "missing_file",
   "download_error",
   "internal_error",
+  "check_failed",
+  "stalled",
 ]);
 
 export function UncheckedDetail({

@@ -4249,6 +4249,8 @@
           "missing_file": "File missing",
           "download_error": "File could not be read",
           "internal_error": "Internal error",
+          "check_failed": "The check did not complete",
+          "stalled": "Still unchecked after 24 hours",
           "unknown": "Unknown"
         },
         "onPuzzle": "On puzzle",

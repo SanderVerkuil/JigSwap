@@ -81,6 +81,13 @@ describe("UncheckedDetail", () => {
     expect(container.textContent).toContain("Kon niet worden gecontroleerd");
   });
 
+  it("a check that never completed or stalled says so (en/nl)", () => {
+    render({ photo: { ...photo, reason: "check_failed" } });
+    expect(container.textContent).toContain("The check did not complete");
+    render({ photo: { ...photo, reason: "stalled" } }, "nl");
+    expect(container.textContent).toContain("Na 24 uur nog niet gecontroleerd");
+  });
+
   it("an unknown reason falls back to a generic label", () => {
     render({ photo: { ...photo, reason: "something_new" } });
     expect(container.textContent).toContain("Unknown");
