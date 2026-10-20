@@ -332,26 +332,38 @@ dan kunnen er op dit moment geen foto's worden verstuurd.
 
 ### Fotocontrole
 
-Elke foto wordt automatisch gecontroleerd voordat het andere lid hem krijgt.
-Zolang dat bezig is, zie je in jouw weergave van het gesprek **Foto wordt
-gecontroleerd…**; het andere lid ziet nog niets.
+Elke foto wordt automatisch gecontroleerd. Je foto's staan in het gesprek
+zodra je ze verstuurt, in de volgorde waarin je ze stuurde:
 
-Keurt de controle een foto af, dan wordt hij niet bezorgd. Je ziet een
-opmerking in het gesprek en krijgt een melding **Foto niet verstuurd**. Denk je
-dat de controle zich vergist?
+- **Jij** ziet je eigen foto met **Foto wordt gecontroleerd…** tot de controle
+  klaar is.
+- **Het andere lid** ziet een vervaagde plaatshouder met **Wacht op controle**.
+  Diegene kan de foto pas openen als hij door de controle is gekomen. Zodra dat
+  zo is, verschijnt de foto op dezelfde plek in het gesprek.
+
+Meestal duurt dat een paar seconden. Kan de automatische controle niet worden
+uitgevoerd, dan blijft de foto op **Wacht op controle** staan tot een moderator
+hem heeft bekeken.
+
+Keurt de controle een foto af, dan ziet het andere lid hem nooit: bij diegene
+staat er **Verwijderd door moderatie**. Jij ziet op die plek een opmerking en
+krijgt een melding **Foto niet verstuurd**. Denk je dat de controle zich
+vergist?
 
 1. Zoek de foto op in het gesprek.
 2. Klik op **Vraag om een beoordeling**. Dit verandert in **Beoordeling
    aangevraagd**.
-3. Een moderator bekijkt de foto. Wordt hij hersteld, dan wordt de foto
-   bezorgd. Zo niet, dan zie je **Beoordeeld: de beslissing blijft staan.**
+3. Een moderator bekijkt de foto. Wordt hij hersteld, dan kan het andere lid
+   hem zien. Zo niet, dan zie je **Beoordeeld: de beslissing blijft staan.**
+
+Verwijdert een moderator een foto, dan zien jullie allebei **Verwijderd door
+moderatie** en krijg jij een melding.
 
 ### Vervaagde foto's
 
 Sommige foto's die je ontvangt, zijn eerst vervaagd:
 
 - **Gevoelige inhoud**: de automatische controle wist het niet zeker.
-- **Niet gecontroleerd**: de automatische controle kon niet worden uitgevoerd.
 - **Jullie volgen elkaar niet**: de foto is door de controle gekomen, maar de
   afzender is iemand met wie je elkaar niet volgt.
 

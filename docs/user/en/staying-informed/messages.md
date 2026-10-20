@@ -317,25 +317,34 @@ menu, photos can't be sent right now.
 
 ### Photo checks
 
-Every photo is checked automatically before the other member receives it. While
-that happens, you see **Checking photo…** in your own view of the conversation;
-the other member doesn't see anything yet.
+Every photo is checked automatically. Your photos appear in the conversation
+as soon as you send them, in the order you sent them:
 
-If the check flags a photo, it isn't delivered. You see a note in the
-conversation and get a **Photo not sent** notification. If you think the check
-got it wrong:
+- **You** see your own photo with **Checking photo…** until the check is done.
+- **The other member** sees a blurred placeholder labelled **Pending review**.
+  They can't open the photo until it has passed the check. As soon as it has,
+  the photo appears in the same place in the conversation.
+
+Usually this takes a few seconds. If the automatic check can't run, the photo
+stays **Pending review** until a moderator has looked at it.
+
+If the check flags a photo, the other member never sees it: in their view it
+reads **Removed by moderation**. You see a note in its place and get a **Photo
+not sent** notification. If you think the check got it wrong:
 
 1. Find the photo in the conversation.
 2. Click **Ask for a review**. It changes to **Review requested**.
-3. A moderator looks at it. If they restore it, the photo is delivered. If not,
-   you see **Reviewed: the decision stands.**
+3. A moderator looks at it. If they restore it, the other member can see it.
+   If not, you see **Reviewed: the decision stands.**
+
+If a moderator removes a photo, both of you see **Removed by moderation**, and
+you get a notification.
 
 ### Blurred photos
 
 Some photos you receive appear blurred at first:
 
 - **Sensitive content**: the automatic check wasn't sure about the photo.
-- **Not checked**: the automatic check couldn't run.
 - **You don't follow each other**: the photo passed the check, but the sender
   is someone you don't follow each other with.
 
