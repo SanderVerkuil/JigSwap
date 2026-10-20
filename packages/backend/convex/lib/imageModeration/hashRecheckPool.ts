@@ -20,9 +20,14 @@ import {
 // (`pendingHashes`) and keeps the photo unpublished (hashCheckFields: no URL before the check has
 // passed). Those STORED hashes are checked again on HASH_RECHECK_DELAYS_MS, each re-check one job
 // on its own Workpool (the `hashRecheckWorkpool` component, convex.config.ts), until the service
-// answers: no_match publishes, a match quarantines and escalates (pipeline.runHashRecheck). There
-// is no last re-check: a photo keeps waiting, re-checked every 24 hours, for as long as the
-// service is unavailable.
+// answers: no_match publishes, a match quarantines and escalates (pipeline.runHashRecheck).
+//
+// TIMEOUT: once a photo has waited HASH_CHECK_TIMEOUT_MS on its hash check, the next arm stops the
+// chain instead: the row is stamped `hashCheckTimedOutAt`, stays unpublished, and goes to the admin
+// queue (admin/listUncheckedPhotos), where an admin approves or rejects it by hand
+// (admin/decideUncheckedPhoto). Nothing re-checks it after that. Should a re-check still run (a
+// job lost and found again), its answer counts: a match quarantines and escalates even over an
+// admin approval, a no_match publishes an undecided photo.
 //
 // Why a pool of its own, not the moderation pool: the re-checks talk to the hash service, whose
 // limits are not the classifier's; after a hash-service outage every waiting photo's re-check
@@ -81,6 +86,13 @@ export const HASH_RECHECK_RETRY = {
  */
 export const HASH_RECHECK_POOL_PARALLELISM = 2;
 
+/**
+ * How long a photo waits on its hash check before the re-checks stop and an admin decides it:
+ * counted from `hashCheckPendingSince` (the upload), checked whenever the next re-check would be
+ * armed. With HASH_RECHECK_DELAYS_MS the last re-check runs a little over 7 days in.
+ */
+export const HASH_CHECK_TIMEOUT_MS = 7 * 24 * 60 * 60 * 1000;
+
 /** A waiting row whose current re-check was due this long ago and never re-armed is lost. */
 export const HASH_RECHECK_LOST_AFTER_MS = 24 * 60 * 60 * 1000;
 
@@ -117,10 +129,11 @@ const hashRecheckActionOf = (table: ModerationTable) => {
 };
 
 type RecheckState = {
-  /** Still waiting on its hash check: stored hashes, no pass, not quarantined. */
+  /** Still waiting on its hash check: stored hashes, no pass, not quarantined, not timed out. */
   waiting: boolean;
   attempt?: number;
   dueAt?: number;
+  pendingSince?: number;
 };
 
 const recheckStateOf = (row: {
@@ -129,13 +142,17 @@ const recheckStateOf = (row: {
   moderationStatus?: string;
   hashRecheckAttempt?: number;
   hashRecheckDueAt?: number;
+  hashCheckPendingSince?: number;
+  hashCheckTimedOutAt?: number;
 }): RecheckState => ({
   waiting:
     row.pendingHashes !== undefined &&
     row.hashCheckedAt === undefined &&
-    row.moderationStatus !== "quarantined",
+    row.moderationStatus !== "quarantined" &&
+    row.hashCheckTimedOutAt === undefined,
   attempt: row.hashRecheckAttempt,
   dueAt: row.hashRecheckDueAt,
+  pendingSince: row.hashCheckPendingSince,
 });
 
 // The re-check bookkeeping of a row; null when it is gone or is not a photo (a message location).
@@ -155,7 +172,8 @@ const loadRecheckState = async (
 /**
  * Arm re-check `next` of a waiting row, `runAfter` ms from now, but only while the row's current
  * attempt is still `expected` (null: none armed yet). Records the attempt and its due time on the
- * row and enqueues the job in the same transaction. Returns whether it armed.
+ * row and enqueues the job in the same transaction. Returns whether it armed. A row that has
+ * waited HASH_CHECK_TIMEOUT_MS is timed out instead (stamped, nothing armed; one wide event).
  */
 export const armHashRecheck = async (
   ctx: MutationCtx,
@@ -175,9 +193,29 @@ export const armHashRecheck = async (
   if (!state?.waiting || (state.attempt ?? null) !== expected) return false;
   const id = ctx.db.normalizeId(TABLE_NAME[table], imageId);
   if (!id) return false;
+  const now = Date.now();
+  if (
+    state.pendingSince !== undefined &&
+    now - state.pendingSince >= HASH_CHECK_TIMEOUT_MS
+  ) {
+    await ctx.db.patch(id, {
+      hashCheckTimedOutAt: now,
+      hashRecheckDueAt: undefined,
+    });
+    // Error level: a photo now needs an admin (Admin → Moderation → Unchecked photos).
+    logEvent({
+      event: "imageModeration.hashCheckTimedOut",
+      outcome: "error",
+      table,
+      image_id: imageId,
+      attempt: state.attempt ?? null,
+      waited_ms: now - state.pendingSince,
+    });
+    return false;
+  }
   await ctx.db.patch(id, {
     hashRecheckAttempt: next,
-    hashRecheckDueAt: Date.now() + runAfter,
+    hashRecheckDueAt: now + runAfter,
   });
   await hashRecheckPool.enqueueAction(
     ctx,
@@ -352,7 +390,8 @@ const waitingPage = async (
  * whose re-check is lost: none armed (a chain from before the pool, or a pipeline attempt that
  * crashed after storing the hashes), or the current one due over HASH_RECHECK_LOST_AFTER_MS ago
  * (the pool lost the job and never called back). The re-arm supersedes whatever was armed, so a
- * job that turns up late is stale and does nothing. One page per run, re-scheduling itself through
+ * job that turns up late is stale and does nothing. A lost row that has waited HASH_CHECK_TIMEOUT_MS
+ * times out instead (armHashRecheck). One page per run, re-scheduling itself through
  * the tables; `now` is fixed for the whole run.
  */
 export const sweepLostHashRechecks = internalMutation({

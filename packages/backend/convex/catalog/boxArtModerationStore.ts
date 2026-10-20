@@ -67,6 +67,7 @@ export const getForModeration = internalQuery({
       reencodedAt: row.reencodedAt,
       hashCheckedAt: row.hashCheckedAt,
       pendingHashes: row.pendingHashes,
+      hashCheckWaivedBy: row.hashCheckWaivedBy,
       uploaderId: row.uploaderId,
     };
   },
