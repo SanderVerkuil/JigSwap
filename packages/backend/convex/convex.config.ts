@@ -8,8 +8,12 @@ import { defineApp } from "convex/server";
 // - moderationWorkpool runs every photo-moderation check (lib/imageModeration/moderationPool.ts):
 //   bounded parallelism toward the classifier, retries with backoff, and a completion callback
 //   that also fires when an attempt crashed (timeout, restart, deploy).
+// - hashRecheckWorkpool runs the CSAM hash re-checks of photos whose hash check was unavailable
+//   (lib/imageModeration/hashRecheckPool.ts): its own pool, so the hash service's limits and a
+//   re-check backlog never take slots from the classifier checks, and the other way round.
 const app = defineApp();
 app.use(presence);
 app.use(workpool, { name: "moderationWorkpool" });
+app.use(workpool, { name: "hashRecheckWorkpool" });
 
 export default app;

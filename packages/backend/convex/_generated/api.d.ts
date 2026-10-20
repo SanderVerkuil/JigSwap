@@ -1128,4 +1128,5 @@ export declare const internal: FilterApi<
 export declare const components: {
   presence: import("@convex-dev/presence/_generated/component.js").ComponentApi<"presence">;
   moderationWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"moderationWorkpool">;
+  hashRecheckWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"hashRecheckWorkpool">;
 };
