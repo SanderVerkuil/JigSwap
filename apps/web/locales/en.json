@@ -862,9 +862,9 @@
       "revealFailed": "Couldn't show this photo. Please try again.",
       "pendingReview": "Pending review",
       "checking": "Checking photo…",
-      "notSentLabel": "Photo not sent",
-      "rejected": "This photo wasn't sent: our automated check flagged it.",
-      "unreadable": "This photo wasn't sent: it couldn't be read.",
+      "notSentLabel": "Photo removed",
+      "rejected": "This photo was removed: our automated check flagged it.",
+      "unreadable": "This photo was removed: it couldn't be read.",
       "askReview": "Ask for a review",
       "reviewRequested": "Review requested",
       "reviewUpheld": "Reviewed: the decision stands.",
@@ -1338,7 +1338,7 @@
       "items": [
         "Photos in messages go through the same pipeline as other photos: they are re-encoded, which strips hidden metadata such as EXIF data (including any embedded location), and screened by the automated content-safety check. A photo you send appears in the conversation straight away, but the other member sees only a blurred placeholder (a few average colours computed on our servers from the re-encoded photo) labelled \"Pending review\" until the photo has passed the check; the photo itself is not sent to their device before that",
         "A photo the check marks as possibly sensitive, and a photo from someone who is not your mutual follower, are shown blurred until the recipient taps Show",
-        "A photo the check stops is never shown to the other member: they see \"Removed by moderation\". You are told, and you can ask for a review. If the automated check cannot be completed, a moderator looks at the photo (without seeing the conversation it was sent in) and approves or removes it",
+        "A photo the check stops is never shown to the other member, and neither is its caption: they see \"Removed by moderation\". You are told, and you can ask for a review. If the automated check cannot be completed, a moderator looks at the photo (without seeing the conversation it was sent in) and approves or removes it",
         "Sharing a location is one-shot: it sends a single place, never your live position",
         "A pin you place on the map is sent exactly where you put it. \"Use my current location\" is rounded to an area of about 1 km; sending your exact current position is only offered to members who are your mutual followers, and only when you choose it. While you look at the map around your current position, its centre (rounded to about 100 m) is remembered for 15 minutes, so that a pin placed right where you are is sent as an approximate area too",
         "The map preview of a shared location is rendered once, on our servers, when you send it (see MapTiler above)"
@@ -2321,7 +2321,7 @@
       "report_decided": "Report outcomes",
       "content_removed": "Content removed",
       "member_warned": "Moderator warnings",
-      "message_image_rejected": "Photos not sent"
+      "message_image_rejected": "Automatically removed photos"
     },
     "categories": {
       "trades": {
@@ -2495,8 +2495,8 @@
         "message": "A moderator sent you a warning.{hasReason, select, yes { Reason: {reason}} other {}}"
       },
       "message_image_rejected": {
-        "title": "Photo not sent",
-        "message": "Our automated check flagged a photo you sent, so it wasn't delivered."
+        "title": "Photo removed",
+        "message": "Our automated check flagged a photo you sent, so it was removed."
       }
     },
     "pushDeviceTitle": "Push on this device",
@@ -2548,7 +2548,7 @@
       "report_decided": "When a moderator decides on a report you filed.",
       "content_removed": "When a moderator removes one of your messages or photos after a report.",
       "member_warned": "When a moderator warns you after a report.",
-      "message_image_rejected": "When our automated check stops a photo you sent in a message."
+      "message_image_rejected": "When our automated check removes a photo you sent in a message."
     },
     "pushServiceUnreachable": "Your browser couldn't reach its push service. Some privacy browsers block or remove it — Brave disables it by default (enable 'Use Google services for push messaging' in Settings), and de-Googled Chromium builds like Helium strip it out. Firefox, Chrome, or Edge will work.",
     "rich": {
@@ -2735,7 +2735,7 @@
         "sentence": "A moderator warned you for {ground, select, spam_scam {spam or scam} harassment_hate {harassment or hate} sexual {sexual or inappropriate content} fake_trade {a fake trade or no-show} illegal {illegal content} other {breaking the community rules}}. This was decided by a person, not automatically. Reply via the contact page to request a review."
       },
       "message_image_rejected": {
-        "sentence": "A photo you sent wasn't delivered: our automated check flagged it. This was decided automatically, not by a person. Open the conversation and choose Ask for a review if you think this is a mistake."
+        "sentence": "A photo you sent was removed: our automated check flagged it. This was decided automatically, not by a person. Open the conversation and choose Ask for a review if you think this is a mistake."
       }
     },
     "mandatoryInApp": "Always on: legally required notices"

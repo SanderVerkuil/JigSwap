@@ -14,8 +14,9 @@ is.
   tot de foto door de automatische controle is gekomen. Daarna verschijnt de
   foto op dezelfde plek.
 - **Jij** ziet ondertussen je eigen foto met **Foto wordt gecontroleerd…**.
-- **Houdt de controle een foto tegen**, dan ziet het andere lid **Verwijderd
-  door moderatie** en krijgt de foto zelf nooit te zien. Je kunt nog steeds om
-  een beoordeling vragen.
+- **Houdt de controle een foto tegen**, dan wordt hij verwijderd. Het andere
+  lid ziet **Verwijderd door moderatie** en krijgt de foto zelf en het
+  bijschrift nooit te zien. Jij ziet **Deze foto is verwijderd** en kunt nog
+  steeds om een beoordeling vragen.
 - **Kan de controle niet worden uitgevoerd**, dan bekijkt een moderator de
   foto. Hij wordt dan niet meer vervaagd getoond als "Niet gecontroleerd".

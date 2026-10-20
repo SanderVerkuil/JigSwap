@@ -15,6 +15,7 @@ import { blockStateBetween } from "../social/blocks";
 import { anonymousMemberOf, projectMemberIdentity } from "../social/privacy";
 import { toLastMessage } from "./adapters/threadMapper";
 import { viewableContextCopies } from "./copyCard";
+import { isCaptionWithheld } from "./messageAttachments";
 import {
   circleDecorations,
   circleFloorOf,
@@ -268,6 +269,33 @@ const contextCopiesOf = async (
   return contextCopies;
 };
 
+// The summary stores a photo message's caption as its body (it carries no attachment ref). A
+// reader other than the sender never gets the caption of a photo that was stopped
+// (isCaptionWithheld, as in the thread): the snippet then names the photo by its kind.
+const withholdStoppedCaption = async (
+  ctx: QueryCtx,
+  me: Id<"users">,
+  last: LastMessageSummary | null,
+): Promise<LastMessageSummary | null> => {
+  if (
+    !last ||
+    last.kind !== "image" ||
+    last.body === "" ||
+    last.removed ||
+    last.authorId === me
+  ) {
+    return last;
+  }
+  const message = await ctx.db
+    .query("threadMessages")
+    .withIndex("by_message_id", (q) => q.eq("messageId", last.messageId))
+    .first();
+  if (message?.attachmentId === undefined) return last;
+  return isCaptionWithheld(await ctx.db.get(message.attachmentId))
+    ? { ...last, body: "" }
+    : last;
+};
+
 const toInboxThreadView = async (
   ctx: QueryCtx,
   thread: Doc<"threads">,
@@ -293,10 +321,14 @@ const toInboxThreadView = async (
       ? await circleFloorOf(ctx, thread, me)
       : undefined;
   if (floor === null) return null;
-  const last = visibleLastMessage(
-    thread.lastMessage ?? (newestRow ? toLastMessage(newestRow) : null),
+  const last = await withholdStoppedCaption(
+    ctx,
     me,
-    floor,
+    visibleLastMessage(
+      thread.lastMessage ?? (newestRow ? toLastMessage(newestRow) : null),
+      me,
+      floor,
+    ),
   );
   if (thread.subjectKind === "circle") {
     if (!circleRowShows(membership, last)) return null;

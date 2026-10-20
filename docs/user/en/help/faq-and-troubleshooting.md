@@ -84,9 +84,10 @@ the photo.
 <details>
 <summary>The other member hasn't received my photo.</summary>
 
-Photos are checked automatically before they're delivered; while that happens
-you see **Checking photo…**. If the check flags a photo, it isn't sent and you
-can click **Ask for a review**. See
+Photos appear in the conversation as soon as you send them, but they're
+checked automatically first. Until the check is done you see **Checking
+photo…** and the other member sees **Pending review**. If the check flags a
+photo, it's removed and you can click **Ask for a review**. See
 [Messages](/docs/staying-informed/messages#photo-checks).
 
 </details>

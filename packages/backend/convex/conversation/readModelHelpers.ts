@@ -4,7 +4,10 @@ import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { isUnattachedMedia } from "./adapters/threadMapper";
 import { viewableCopyCards } from "./copyCard";
-import { messageAttachmentViews } from "./messageAttachments";
+import {
+  isCaptionWithheld,
+  messageAttachmentViews,
+} from "./messageAttachments";
 import { locationAttachmentViewOf } from "./sharedLocations";
 import { threadMemberProjector } from "./threadMemberProjection";
 
@@ -393,9 +396,15 @@ export const threadMessageViewOf = (
       row.kind === "location" && attached
         ? await locationAttachmentViewOf(ctx, attached)
         : null;
+    // A recipient never gets the caption of a stopped photo (isCaptionWithheld); its sender does.
     const view =
       row.kind === "image" && attached
-        ? { ...base, attachment: await attachmentOf(attached) }
+        ? {
+            ...base,
+            ...(!base.isMine &&
+              isCaptionWithheld(await ctx.db.get(attached)) && { body: "" }),
+            attachment: await attachmentOf(attached),
+          }
         : location
           ? { ...base, attachment: location }
           : base;

@@ -106,7 +106,7 @@ catalogus gaan deze meldingen over nieuwere functies:
   melding die jij hebt gedaan.
 - **Inhoud verwijderd** en **Waarschuwingen van moderators**: een moderator
   heeft na een melding actie ondernomen tegen een van je berichten of foto's.
-- **Niet verstuurde foto's**: de automatische controle heeft een foto
-  tegengehouden die je in een bericht stuurde. Zie
+- **Automatisch verwijderde foto's**: de automatische controle heeft een foto
+  verwijderd die je in een bericht stuurde. Zie
   [Berichten](/docs/staying-informed/messages).
 - **Wat is er nieuw**: een nieuwe functie of wijziging in JigSwap.

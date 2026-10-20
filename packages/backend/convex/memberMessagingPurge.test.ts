@@ -339,6 +339,32 @@ describe("account deletion: attachments", () => {
     }
   });
 
+  test("a rejected photo message stays removed by moderation with its caption withheld; a servable one keeps its caption", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, threadId } = await seed(t);
+    await deliveredPhoto(t, threadId, alice, { moderationStatus: "rejected" });
+    await deliveredPhoto(t, threadId, alice);
+    await t.run(async (ctx) => {
+      for (const message of await ctx.db.query("threadMessages").collect()) {
+        if (message.kind === "image") {
+          await ctx.db.patch(message._id, { body: "a caption" });
+        }
+      }
+    });
+    await deleteAlice(t);
+    // Newest first.
+    const [servable, stopped] = await bobThread(t, threadId);
+    expect(stopped).toMatchObject({
+      body: "",
+      attachment: { status: "removed" },
+    });
+    expect(stopped.attachment).not.toHaveProperty("unavailable");
+    expect(servable).toMatchObject({
+      body: "a caption",
+      attachment: { status: "removed", unavailable: true },
+    });
+  });
+
   test("held and quarantined photos are untouched; staged photos are deleted", async () => {
     const t = convexTest(schema, modules);
     const { alice, threadId } = await seed(t);

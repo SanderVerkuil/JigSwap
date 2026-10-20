@@ -144,7 +144,7 @@ The messaging gates touch `conversation/postMessage.ts`, which #140 and #145 als
   - The sender sees their own image at full colour with a "Checking photo…" badge.
   - The recipient's query hides a message whose image is `pending`: no row, no unread count, no notification. The `MessagePosted` notification fires when the image reaches a deliverable state (the posting use case emits on link; the subscriber defers media messages until approved). Normally this takes seconds.
 - **Verdict bands** (threshold env-configurable):
-  - score ≥ 0.85 → `rejected`. Never shown to the recipient. The sender sees "This photo wasn't sent: our automated check flagged it" plus "Ask for a review". That text is the DSA Art. 17 statement of reasons and must name automation.
+  - score ≥ 0.85 → `rejected`. Never shown to the recipient. The sender sees "This photo was removed: our automated check flagged it" (wording updated by the 2026-10-20 spec) plus "Ask for a review". That text is the DSA Art. 17 statement of reasons and must name automation.
   - 0.5 ≤ score < 0.85 → `blurred`: delivered blurred with "Sensitive content · Show" and a Report button. This band exists because fine-art puzzles (classical nudes, Klimt) will produce false positives on a puzzle site.
   - < 0.5 → `approved`.
   - Images from someone who is not a mutual follower are also delivered blurred-by-default (tap to show) whatever their score. This is the cheap cyberflashing control, since exchange threads let strangers in.
@@ -329,7 +329,7 @@ Add `@convex-dev/rate-limiter` (second component), with a shared `lib/rateLimits
     | State                           | Rendering                                                        |
     | ------------------------------- | ---------------------------------------------------------------- |
     | Sender, pending                 | "Checking photo…"                                                |
-    | Sender, rejected                | Dashed frame: "This photo wasn't sent…", plus "Ask for a review" |
+    | Sender, rejected                | Dashed frame: "This photo was removed…", plus "Ask for a review" |
     | Recipient, pending              | Nothing (2026-10-20: "Pending review" placeholder)               |
     | Blurred / unscored / non-mutual | Blurred, with "Show" (2026-10-20: unscored is "Pending review")  |
     | Removed                         | "Photo removed" for both sides                                   |
@@ -343,7 +343,7 @@ Add `@convex-dev/rate-limiter` (second component), with a shared `lib/rateLimits
 - **Copy strings** (en/nl) for the block confirm, report submitted, photo rejected, can't reply and the blocked banner are in the UX consult and are reproduced here:
   - Block confirm: "{name} won't be able to message you, follow you or propose trades. They won't be notified, but they'll see they can't reply. Accepted trades can still be completed. Shared circles or households aren't changed." / "{name} kan je geen berichten meer sturen, je niet volgen en geen ruil voorstellen. Diegene krijgt geen melding, maar ziet wel dat reageren niet meer kan. Geaccepteerde ruilen kunnen nog worden afgerond. Gedeelde kringen of huishoudens veranderen niet."
   - Report submitted: "Thanks — we've received your report. {name} won't know who reported them. We'll review it and let you know what we decided." / "Bedankt, we hebben je melding ontvangen. {name} weet niet wie de melding heeft gedaan. We bekijken het en laten je weten wat we besluiten."
-  - Photo rejected: "This photo wasn't sent: our automated check flagged it." / "Deze foto is niet verstuurd: onze automatische controle heeft hem tegengehouden."
+  - Photo rejected: "This photo was removed: our automated check flagged it." / "Deze foto is verwijderd: onze automatische controle heeft hem afgekeurd." (updated 2026-10-20)
   - Can't reply: "You can't reply to this conversation." / "Je kunt niet meer reageren in dit gesprek."
   - Blocked banner: "You blocked {name}." [Unblock] / "Je hebt {name} geblokkeerd." [Deblokkeren]
 

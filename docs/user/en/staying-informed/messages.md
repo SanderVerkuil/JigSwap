@@ -328,9 +328,11 @@ as soon as you send them, in the order you sent them:
 Usually this takes a few seconds. If the automatic check can't run, the photo
 stays **Pending review** until a moderator has looked at it.
 
-If the check flags a photo, the other member never sees it: in their view it
-reads **Removed by moderation**. You see a note in its place and get a **Photo
-not sent** notification. If you think the check got it wrong:
+If the check flags a photo, it's removed. The other member never sees it: in
+their view it reads **Removed by moderation**, and a caption you sent with it is
+hidden from them too. You still see your caption, with a note in the photo's
+place, and get a **Photo removed** notification. If you think the check got it
+wrong:
 
 1. Find the photo in the conversation.
 2. Click **Ask for a review**. It changes to **Review requested**.
@@ -338,7 +340,7 @@ not sent** notification. If you think the check got it wrong:
    If not, you see **Reviewed: the decision stands.**
 
 If a moderator removes a photo, both of you see **Removed by moderation**, and
-you get a notification.
+you get a notification. Its caption is hidden from the other member.
 
 ### Blurred photos
 

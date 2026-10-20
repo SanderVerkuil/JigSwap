@@ -101,6 +101,6 @@ notifications cover newer features:
 - **Report outcomes**: a moderator decided on a report you filed.
 - **Content removed** and **Moderator warnings**: a moderator acted on one of
   your messages or photos after a report.
-- **Photos not sent**: the automatic check stopped a photo you sent in a
-  message. See [Messages](/docs/staying-informed/messages).
+- **Automatically removed photos**: the automatic check removed a photo you
+  sent in a message. See [Messages](/docs/staying-informed/messages).
 - **What's new**: a new feature or change to JigSwap.
