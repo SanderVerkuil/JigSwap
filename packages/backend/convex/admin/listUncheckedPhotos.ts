@@ -1,6 +1,7 @@
 import { ConvexError } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
+import { MESSAGE_PHOTO_LABEL } from "../conversation/messageAttachments";
 import { isAdmin } from "../identity/isAdmin";
 import { adminMemberLabelOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
@@ -27,6 +28,12 @@ const uploaderLabel = async (
 // Admin-only, gated like listRejectedPhotos. The admin sees the real image (behind the console's
 // blur guard) to decide it by hand via decideUncheckedPhoto; an unscored photo of any table can
 // also be sent through the pipeline again (admin/recheckPhoto, `canRecheck`).
+//
+// Message photos (source "message", spec 2026-10-20 D5): only "unscored" ones that were SENT (are
+// a message, so a recipient is waiting on "Pending review"). Pending ones are in flight for
+// seconds and stay private; the stalled sweep turns a stuck one unscored. Nothing about the
+// conversation or the recipient is listed, only the uploader. URL only once hash-cleared AND
+// re-encoded (the served blob is the metadata-free one; one never re-encoded needs "Check again").
 export const listUncheckedPhotos = query({
   args: {},
   handler: async (ctx) => {
@@ -115,6 +122,32 @@ export const listUncheckedPhotos = query({
           canRecheck: status === "unscored",
         });
       }
+    }
+    const messageRows = await ctx.db
+      .query("messageAttachments")
+      .withIndex("by_moderation_status", (q) =>
+        q.eq("moderationStatus", "unscored"),
+      )
+      .filter((q) => q.neq(q.field("messageId"), undefined))
+      .take(UNCHECKED_QUEUE_LIMIT);
+    for (const row of messageRows) {
+      if (row.kind !== "image") continue;
+      items.push({
+        key: `message:${row._id}`,
+        source: "message" as const,
+        imageId: row._id as string,
+        status: "unscored" as const,
+        reason: row.moderationReason ?? null,
+        attempts: row.moderationAttempts ?? null,
+        url:
+          row.hashCheckedAt !== undefined && row.reencodedAt !== undefined
+            ? await ctx.storage.getUrl(row.fileId)
+            : null,
+        puzzleTitle: MESSAGE_PHOTO_LABEL,
+        uploaderName: await uploaderLabel(ctx, row.uploaderId),
+        uploadedAt: row.createdAt,
+        canRecheck: true,
+      });
     }
     return items.sort((a, b) => a.uploadedAt - b.uploadedAt);
   },
