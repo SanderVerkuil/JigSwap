@@ -13,6 +13,7 @@ import {
 import { QrDialog } from "@/components/social/qr-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  StickyTabsBar,
   TAB_TRIGGER_CLASS,
   TabCount,
   UNDERLINE_TABS_LIST_CLASS,
@@ -238,25 +239,27 @@ function PeoplePage() {
       <DiscoverabilityNotice />
 
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className={UNDERLINE_TABS_LIST_CLASS}>
-          <TabsTrigger
-            value="network"
-            className={TAB_TRIGGER_CLASS}
-            data-tour="people-network"
-          >
-            <Users aria-hidden />
-            {t("tabs.network")}
-            <TabCount count={pendingCount > 0 ? pendingCount : undefined} />
-          </TabsTrigger>
-          <TabsTrigger value="find" className={TAB_TRIGGER_CLASS}>
-            <Search aria-hidden />
-            {t("tabs.find")}
-          </TabsTrigger>
-          <TabsTrigger value="activity" className={TAB_TRIGGER_CLASS}>
-            <Bell aria-hidden />
-            {t("tabs.activity")}
-          </TabsTrigger>
-        </TabsList>
+        <StickyTabsBar>
+          <TabsList className={UNDERLINE_TABS_LIST_CLASS}>
+            <TabsTrigger
+              value="network"
+              className={TAB_TRIGGER_CLASS}
+              data-tour="people-network"
+            >
+              <Users aria-hidden />
+              {t("tabs.network")}
+              <TabCount count={pendingCount > 0 ? pendingCount : undefined} />
+            </TabsTrigger>
+            <TabsTrigger value="find" className={TAB_TRIGGER_CLASS}>
+              <Search aria-hidden />
+              {t("tabs.find")}
+            </TabsTrigger>
+            <TabsTrigger value="activity" className={TAB_TRIGGER_CLASS}>
+              <Bell aria-hidden />
+              {t("tabs.activity")}
+            </TabsTrigger>
+          </TabsList>
+        </StickyTabsBar>
 
         <TabsContent value="network" className="mt-4">
           <NetworkTab members={members} loading={loading} />
