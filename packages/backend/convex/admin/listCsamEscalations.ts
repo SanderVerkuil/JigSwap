@@ -4,6 +4,7 @@ import { isAdmin } from "../identity/isAdmin";
 import { adminMemberLabelOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
 import { readCsamHashCheckConfig } from "../lib/imageModeration/csamHashCheck";
+import { isHashCheckTimedOut } from "../lib/imageModeration/hashCheckFields";
 
 // At most this many escalations per status are listed (newest first).
 export const CSAM_ESCALATION_LIST_LIMIT = 100;
@@ -65,8 +66,10 @@ export const listCsamEscalations = query({
       }
     }
     // Photos held unpublished because the hash check was unavailable (stored hashes awaiting a
-    // re-check), across the image tables: a count (capped) and the oldest wait.
+    // re-check), across the image tables: a count (capped) and the oldest wait. Photos whose
+    // check timed out are counted apart: they wait on an admin (Unchecked photos), not a re-check.
     let waitingPhotos = 0;
+    let timedOutPhotos = 0;
     let oldestWaitingSince: number | null = null;
     for (const table of [
       "ownedPuzzleImages",
@@ -86,6 +89,15 @@ export const listCsamEscalations = query({
         if (!row.pendingHashes || row.moderationStatus === "quarantined") {
           continue;
         }
+        if (isHashCheckTimedOut(row)) {
+          if (
+            row.moderationStatus !== "rejected" &&
+            row.moderationStatus !== "removed"
+          ) {
+            timedOutPhotos += 1;
+          }
+          continue;
+        }
         waitingPhotos += 1;
         const since = row.hashCheckPendingSince ?? null;
         if (
@@ -101,6 +113,7 @@ export const listCsamEscalations = query({
         ...readCsamHashCheckConfig(process.env),
         waitingPhotos,
         oldestWaitingSince,
+        timedOutPhotos,
         waitingCap: HASH_CHECK_WAITING_CAP,
       },
       escalations,

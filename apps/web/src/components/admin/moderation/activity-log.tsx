@@ -46,6 +46,7 @@ const KIND_META: Record<ActivityRow["kind"], [LucideIcon, string]> = {
   photo_restored: [Undo2, "text-muted-foreground"],
   photo_manually_approved: [CheckCircle, "text-jigsaw-success"],
   photo_manually_rejected: [ImageOff, "text-destructive"],
+  photo_hash_check_waived: [ShieldAlert, "text-jigsaw-warning"],
   image_quarantined: [ShieldAlert, "text-destructive"],
   csam_escalation_updated: [ShieldCheck, "text-muted-foreground"],
   role_granted: [ShieldCheck, "text-jigsaw-success"],

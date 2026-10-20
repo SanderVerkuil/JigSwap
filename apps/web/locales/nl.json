@@ -4210,6 +4210,7 @@
         "role_revoked": "<strong>{actor}</strong> trok de beheerdersrol van <strong>{target}</strong> in",
         "photo_manually_approved": "<strong>{actor}</strong> keurde een niet-gecontroleerde foto goed bij <strong>{target}</strong>",
         "photo_manually_rejected": "<strong>{actor}</strong> wees een niet-gecontroleerde foto af bij <strong>{target}</strong>",
+        "photo_hash_check_waived": "<strong>{actor}</strong> keurde een foto zonder hash-check goed bij <strong>{target}</strong>",
         "image_quarantined": "<strong>{actor}</strong> zette een foto in quarantaine na een hash-match met bekend misbruikmateriaal (<strong>{target}</strong>)",
         "csam_escalation_updated": "<strong>{actor}</strong> werkte een hash-match-escalatie bij (<strong>{target}</strong>)",
         "report_dismissed": "<strong>{actor}</strong> wees een melding over <strong>{target}</strong> af",
@@ -4231,7 +4232,8 @@
         "reveal": "Beweeg eroverheen of tik om de foto te tonen",
         "status": {
           "pending": "Wordt gecontroleerd",
-          "unscored": "Kon niet worden gecontroleerd"
+          "unscored": "Kon niet worden gecontroleerd",
+          "hashTimedOut": "Hash-check verlopen"
         },
         "source": {
           "copy": "Foto van exemplaar",
@@ -4262,7 +4264,8 @@
         "reject": "Foto afwijzen",
         "rejectArm": "Weet je het zeker?",
         "recheck": "Opnieuw controleren",
-        "hint": "Goedkeuren publiceert de foto voor andere leden. Afwijzen verbergt hem; een afgewezen foto van een exemplaar gaat naar Gemarkeerde afbeeldingen, een afgewezen foto van een gelegde puzzel wordt verwijderd, en een afgewezen catalogusafbeelding wordt van de puzzel gehaald en verwijderd. Opnieuw controleren laat de automatische controle nog een keer los op een foto die niet gecontroleerd kon worden, bijvoorbeeld als de controledienst weer werkt. Een foto in een bericht wordt na goedkeuring in het gesprek getoond; afwijzen verwijdert hem voor beide leden en laat de afzender dat weten."
+        "hint": "Goedkeuren publiceert de foto voor andere leden. Afwijzen verbergt hem; een afgewezen foto van een exemplaar gaat naar Gemarkeerde afbeeldingen, een afgewezen foto van een gelegde puzzel wordt verwijderd, en een afgewezen catalogusafbeelding wordt van de puzzel gehaald en verwijderd. Opnieuw controleren laat de automatische controle nog een keer los op een foto die niet gecontroleerd kon worden, bijvoorbeeld als de controledienst weer werkt. Een foto in een bericht wordt na goedkeuring in het gesprek getoond; afwijzen verwijdert hem voor beide leden en laat de afzender dat weten.",
+        "hashTimedOutHint": "De hash-check op bekend misbruikmateriaal kon niet binnen 7 dagen worden gedaan, dus de automatische hercontroles zijn gestopt. Goedkeuren publiceert de foto zonder die controle (een hash-match die later wordt gevonden, zet hem alsnog in quarantaine); afwijzen verbergt hem zoals elke afwijzing."
       },
       "csam": {
         "loading": "Hash-matches laden…",
@@ -4290,9 +4293,10 @@
         "markReported": "Markeer als gemeld",
         "close": "Sluiten",
         "updated": "Escalatie bijgewerkt.",
-        "waiting": "Hash-check onbereikbaar: {countLabel} {count, plural, one {foto wacht} other {foto's wachten}}, niet gepubliceerd (oudste {since}). Ze worden automatisch opnieuw gecontroleerd.",
+        "waiting": "Hash-check onbereikbaar: {countLabel} {count, plural, one {foto wacht} other {foto's wachten}}, niet gepubliceerd (oudste {since}). Ze worden tot 7 dagen lang automatisch opnieuw gecontroleerd en daarna aan een beheerder overgedragen.",
         "noteBy": "{name}, {time}",
-        "addNote": "Notitie toevoegen"
+        "addNote": "Notitie toevoegen",
+        "timedOut": "Hash-check verlopen: {count, plural, one {# foto wacht} other {# foto's wachten}} al meer dan 7 dagen op een beslissing van een beheerder in Niet-gecontroleerde foto's."
       },
       "reports": {
         "statusFilter": "Status van melding",

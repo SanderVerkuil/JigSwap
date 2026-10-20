@@ -1,6 +1,6 @@
 "use client";
 
-// Detail pane for a photo the classifier has not decided (pending / unscored): the image behind
+// Detail pane for a photo nobody has decided (pending / unscored, or its hash check timed out): the image behind
 // the same blur-until-reveal guard as the flagged pane, a metadata grid (status, why it could not
 // be checked, puzzle, uploader) and the two manual decisions, plus "Check again" for an unscored
 // photo (`canRecheck`). Mutations live in the route; reject uses the app's two-step inline confirm
@@ -120,7 +120,9 @@ export function UncheckedDetail({
         ))}
       </div>
 
-      <p className="text-xs text-muted-foreground">{t("hint")}</p>
+      <p className="text-xs text-muted-foreground">
+        {photo.status === "hashTimedOut" ? t("hashTimedOutHint") : t("hint")}
+      </p>
 
       <div className="flex flex-wrap items-center gap-2.5">
         <Button onClick={onApprove} disabled={busy}>

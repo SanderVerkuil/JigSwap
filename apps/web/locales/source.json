@@ -4210,6 +4210,7 @@
         "role_revoked": "<strong>{actor}</strong> removed the admin role from <strong>{target}</strong>",
         "photo_manually_approved": "<strong>{actor}</strong> approved an unchecked photo on <strong>{target}</strong>",
         "photo_manually_rejected": "<strong>{actor}</strong> rejected an unchecked photo on <strong>{target}</strong>",
+        "photo_hash_check_waived": "<strong>{actor}</strong> approved a photo without a hash check on <strong>{target}</strong>",
         "image_quarantined": "<strong>{actor}</strong> quarantined a photo after a known-abuse hash match (<strong>{target}</strong>)",
         "csam_escalation_updated": "<strong>{actor}</strong> updated a hash-match escalation (<strong>{target}</strong>)",
         "report_dismissed": "<strong>{actor}</strong> dismissed a report about <strong>{target}</strong>",
@@ -4231,7 +4232,8 @@
         "reveal": "Hover or tap to reveal the photo",
         "status": {
           "pending": "Being checked",
-          "unscored": "Could not be checked"
+          "unscored": "Could not be checked",
+          "hashTimedOut": "Hash check timed out"
         },
         "source": {
           "copy": "Copy photo",
@@ -4262,7 +4264,8 @@
         "reject": "Reject Photo",
         "rejectArm": "Are you sure?",
         "recheck": "Check again",
-        "hint": "Approving publishes the photo to other members. Rejecting hides it; a rejected copy photo moves to Flagged Images, a rejected completion photo is deleted, and rejected box art is removed from its puzzle and deleted. Check again runs the automated check once more on a photo it could not check, for example after the screening service is working again. A message photo is sent to its conversation when approved; rejecting removes it for both members and tells the sender."
+        "hint": "Approving publishes the photo to other members. Rejecting hides it; a rejected copy photo moves to Flagged Images, a rejected completion photo is deleted, and rejected box art is removed from its puzzle and deleted. Check again runs the automated check once more on a photo it could not check, for example after the screening service is working again. A message photo is sent to its conversation when approved; rejecting removes it for both members and tells the sender.",
+        "hashTimedOutHint": "The hash check against known abuse material could not be done within 7 days, so the automatic re-checks stopped. Approving publishes the photo without that check (a hash match found later still quarantines it); rejecting hides it like any rejection."
       },
       "csam": {
         "loading": "Loading hash matches…",
@@ -4290,9 +4293,10 @@
         "markReported": "Mark reported",
         "close": "Close",
         "updated": "Escalation updated.",
-        "waiting": "Hash check unreachable: {countLabel} {count, plural, one {photo} other {photos}} waiting, unpublished (oldest {since}). They are re-checked automatically.",
+        "waiting": "Hash check unreachable: {countLabel} {count, plural, one {photo} other {photos}} waiting, unpublished (oldest {since}). They are re-checked automatically for up to 7 days, then handed to an admin.",
         "noteBy": "{name}, {time}",
-        "addNote": "Add note"
+        "addNote": "Add note",
+        "timedOut": "Hash check timed out: {count, plural, one {# photo} other {# photos}} waited over 7 days and {count, plural, one {needs} other {need}} an admin decision in Unchecked photos."
       },
       "reports": {
         "statusFilter": "Report status",

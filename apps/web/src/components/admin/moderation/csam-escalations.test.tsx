@@ -45,6 +45,7 @@ const data = (overrides: Partial<CsamEscalations> = {}): CsamEscalations => ({
     waitingPhotos: 0,
     oldestWaitingSince: null,
     waitingCap: 200,
+    timedOutPhotos: 0,
   },
   escalations: [escalation()],
   ...overrides,
@@ -160,6 +161,7 @@ describe("CsamEscalationsPanel", () => {
           waitingPhotos: 0,
           oldestWaitingSince: null,
           waitingCap: 200,
+          timedOutPhotos: 0,
         },
         escalations: [],
       }),
@@ -178,6 +180,7 @@ describe("CsamEscalationsPanel", () => {
           waitingPhotos: 3,
           oldestWaitingSince: NOW - 2 * 3_600_000,
           waitingCap: 200,
+          timedOutPhotos: 0,
         },
       }),
     });
@@ -185,5 +188,24 @@ describe("CsamEscalationsPanel", () => {
       "Hash check unreachable: 3 photos waiting",
     );
     expect(container.textContent).toContain("2 hours ago");
+  });
+
+  it("points to the admin queue when hash checks timed out", () => {
+    render({
+      data: data({
+        hashCheck: {
+          provider: "offlimits",
+          status: "ok",
+          missingVars: [],
+          waitingPhotos: 0,
+          oldestWaitingSince: null,
+          waitingCap: 200,
+          timedOutPhotos: 2,
+        },
+      }),
+    });
+    expect(container.textContent).toContain(
+      "Hash check timed out: 2 photos waited over 7 days and need an admin decision in Unchecked photos.",
+    );
   });
 });

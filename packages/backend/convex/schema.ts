@@ -676,6 +676,7 @@ export default defineSchema({
       v.literal("photo_auto_rejected"),
       v.literal("photo_manually_approved"),
       v.literal("photo_manually_rejected"),
+      v.literal("photo_hash_check_waived"),
       v.literal("image_quarantined"),
       v.literal("csam_escalation_updated"),
       v.literal("role_granted"),
