@@ -88,6 +88,25 @@ describe("UncheckedDetail", () => {
     expect(container.textContent).toContain("Na 24 uur nog niet gecontroleerd");
   });
 
+  it("a timed-out hash check says so and warns that approving skips it (en/nl)", () => {
+    const timedOut: UncheckedPhoto = {
+      ...photo,
+      key: "message:m1",
+      source: "message",
+      status: "hashTimedOut",
+      reason: null,
+      puzzleTitle: "Message photo",
+    };
+    render({ photo: timedOut });
+    const text = container.textContent ?? "";
+    expect(text).toContain("Hash check timed out");
+    expect(text).toContain("Message photo");
+    expect(text).toContain("Approving publishes the photo without that check");
+    render({ photo: timedOut }, "nl");
+    expect(container.textContent).toContain("Hash-check verlopen");
+    expect(container.textContent).toContain("Foto in bericht");
+  });
+
   it("an unknown reason falls back to a generic label", () => {
     render({ photo: { ...photo, reason: "something_new" } });
     expect(container.textContent).toContain("Unknown");

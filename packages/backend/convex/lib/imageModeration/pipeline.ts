@@ -150,6 +150,8 @@ export type ModerationRow = {
   uploaderId: Id<"users">;
   hashCheckedAt?: number;
   pendingHashes?: ImageHashes[];
+  /** An admin approved the photo after its hash check timed out (hashCheckFields). */
+  hashCheckWaivedBy?: Id<"users">;
 };
 
 /** The verdict the pipeline writes through a table's `setVerdict`. */
@@ -727,7 +729,8 @@ const runAttempt = async <R extends ModerationRow>(
  * current re-check does nothing (isCurrentHashRecheck). no_match opens the publication gate;
  * unavailable arms the next attempt on HASH_RECHECK_DELAYS_MS; a match quarantines exactly like
  * the live pipeline, preserving the blob the row holds now (the re-encode: the original was
- * deleted after the swap, which the escalation records as `originalDiscarded`). An error THROWS
+ * deleted after the swap, which the escalation records as `originalDiscarded`), also when an admin
+ * approved the photo after its hash check timed out (`hashCheckWaivedBy`). An error THROWS
  * inside the pool (after its wide event), so the pool retries it and, once it gives up, arms the
  * next attempt (onHashRecheckComplete). Outside the pool (a re-check scheduled before the pool
  * existed) it never throws: the next attempt is armed on the pool, and an error is left to the
@@ -755,10 +758,12 @@ export const runHashRecheck = async <R extends ModerationRow>(
   };
   try {
     const row = await ctx.runQuery(steps.load, { imageId });
+    // An admin approval after a timeout does not end the check: a match still wins.
     if (
       !row ||
       row.moderationStatus === "quarantined" ||
-      row.hashCheckedAt !== undefined ||
+      (row.hashCheckedAt !== undefined &&
+        row.hashCheckWaivedBy === undefined) ||
       !row.pendingHashes
     ) {
       event.result = "skipped";

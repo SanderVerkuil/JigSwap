@@ -34,6 +34,7 @@ export const getImageForModeration = internalQuery({
       moderationStatus: row.moderationStatus,
       hashCheckedAt: row.hashCheckedAt,
       pendingHashes: row.pendingHashes,
+      hashCheckWaivedBy: row.hashCheckWaivedBy,
       reencodedAt: row.reencodedAt,
       uploaderId: row.uploaderId,
       // Business context for the wide event: never the thread's content or the other member.

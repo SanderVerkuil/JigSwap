@@ -35,6 +35,7 @@ export const getImageForModeration = internalQuery({
       reencodedAt: row.reencodedAt,
       hashCheckedAt: row.hashCheckedAt,
       pendingHashes: row.pendingHashes,
+      hashCheckWaivedBy: row.hashCheckWaivedBy,
       // Business context for the wide event (which completion / who uploaded).
       completionId: row.completionId,
       uploaderId: row.uploaderId,

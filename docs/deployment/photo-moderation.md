@@ -49,10 +49,16 @@ the photo unpublished: no URL is issued, to anyone, until a hash check has passe
 hashes are then checked again by `lib/imageModeration/hashRecheckPool.ts`:
 
 - **Schedule:** 15 and 30 minutes, 1, 2, 4, 8 and 16 hours, then every 24 hours
-  (`HASH_RECHECK_DELAYS_MS`). There is no last re-check: a photo keeps waiting, and keeps being
-  re-checked daily, for as long as the service is unavailable. no_match publishes it; a match
+  (`HASH_RECHECK_DELAYS_MS`), until the photo times out (below). no_match publishes it; a match
   quarantines it and raises a CSAM escalation exactly like a match on upload (the bytes are
   preserved under a new blob, and the uploader is told nothing).
+- **Timeout after 7 days** (`HASH_CHECK_TIMEOUT_MS`, counted from `hashCheckPendingSince`): when a
+  re-check would be armed for a photo that has waited that long, the chain stops instead. The row
+  is stamped `hashCheckTimedOutAt`, stays unpublished, keeps its stored hashes, and goes to
+  **Unchecked photos** as "Hash check timed out" (all four tables: copy photos, completion
+  photos, box art and sent message photos). The last re-check runs a little over 7 days in. This
+  happens wherever a re-check would be armed: after an "unavailable" answer, after the pool gives
+  up, and in the daily sweep (a lost photo past 7 days times out rather than being re-armed).
 - **Its own Workpool**, the `hashRecheckWorkpool` component, separate from the moderation pool: at
   most 2 re-checks at once (`HASH_RECHECK_POOL_PARALLELISM`). The re-checks talk to the hash
   service, whose limits are not the classifier's. After an outage every waiting photo's re-check
@@ -68,14 +74,46 @@ hashes are then checked again by `lib/imageModeration/hashRecheckPool.ts`:
 - **Backstop:** a daily cron (03:45 UTC) runs `hashRecheckPool.sweepLostHashRechecks` over all four
   tables (the `by_hash_check_pending` index, 100 rows per run). It re-arms, to run at once, a
   waiting photo that has no re-check armed, or whose current one was due more than 24 hours ago.
+  A timed-out photo is not waiting any more and is left alone.
+
+### A timed-out photo: the admin decides
+
+The admin sees the photo (behind the usual blur-until-reveal guard, admins only, as for any
+unchecked photo) and decides it with `admin/decideUncheckedPhoto`, whatever the classifier said:
+
+- **Approve** publishes it **without a hash check**: `hashCheckedAt` is set (the gate opens),
+  `hashCheckWaivedBy` records the admin, and the audit trail stamps `photo_hash_check_waived`
+  ("approved a photo without a hash check"), not the usual manual approval. A message photo the
+  classifier blurred stays blurred.
+- **Reject** is the table's usual manual rejection (a copy photo moves to Flagged Images, a
+  completion photo and box art are detached and deleted, a message photo is removed by moderation
+  and its sender told).
+
+Who wins when answers cross (every step is one Convex transaction, so the first to commit wins):
+
+- **A match always wins.** The stored hashes are kept after an approval, and a re-check that still
+  runs (a lost job that turns up, a pool retry) is honoured: a match quarantines the photo and
+  raises the escalation even after an admin approved it. The approval cannot stop that, and once
+  the photo is quarantined the admin can no longer decide it.
+- A **no_match** that arrives before the admin decides publishes the photo as usual and takes it
+  out of the queue. After an admin decision it changes nothing (an approved photo is already
+  public; a rejected one stays rejected).
+- Nothing re-checks a timed-out photo on purpose: once the hash service is back, photos approved
+  without a hash check are **not** re-checked automatically. They carry `hashCheckWaivedBy` and
+  their `pendingHashes`, so they can be found and checked by hand if needed.
 
 What admins see: a photo waiting on its hash check is counted on **Admin → Moderation → Hash
-matches** ("Hash check unreachable: N photos waiting, unpublished", with the oldest wait). It is not in **Unchecked photos** when the
-classifier approved it: there is nothing for an admin to decide, and nobody can publish it before
-the hash check passes. A waiting photo that the classifier could not score does appear there,
-without a preview, and cannot be approved or rejected until its hash check has passed. The 24-hour
-stalled sweep only looks at photos whose classifier check is still `pending`, so it leaves a
-photo that is only waiting on its hash check alone.
+matches** ("Hash check unreachable: N photos waiting, unpublished", with the oldest wait). While it
+waits it is not in **Unchecked photos** when the classifier approved it: there is nothing for an
+admin to decide yet, and nobody can publish it before the hash check passes. A waiting photo that
+the classifier could not score does appear there, without a preview, and cannot be approved or
+rejected until its hash check has passed or timed out. A timed-out photo is listed there once, as
+"Hash check timed out" with its image, counted in the tab badge, and counted apart on **Hash
+matches** ("Hash check timed out: N photos ... need an admin decision"). No notification is sent:
+the admin notifications are built on member-facing domain events, so the tab count plus the
+`imageModeration.hashCheckTimedOut` error event (below) are the alert. The 24-hour stalled sweep
+only looks at photos whose classifier check is still `pending`, so it leaves a photo that is only
+waiting on its hash check alone.
 
 The hash check is not configured on dev or prod today (`CSAM_HASHCHECK_PROVIDER` unset means
 "none", which answers no_match at once), so no photo waits and none of this runs until it is.
@@ -108,6 +146,9 @@ row:
   `result_kind`, `error`, `rearmed`, `next_recheck_in_ms`).
 - `imageModeration.hashRecheckSweep`: one per sweep page (`table`, `scanned`, `waiting`,
   `rearmed`, `rearmed_image_ids`).
+- `imageModeration.hashCheckTimedOut`: a photo's re-checks stopped after
+  `HASH_CHECK_TIMEOUT_MS` and it needs an admin (`table`, `image_id`, `attempt`, `waited_ms`).
+  Always error level: each one is a photo waiting in **Unchecked photos**.
 
 Each hash re-check logs `<table event>.hashRecheck` (for example `library.moderatePhoto.hashRecheck`)
 with `attempt`, `pooled` and `csam_hashcheck_status`, or `result: "skipped_stale"` for a job that
@@ -118,5 +159,5 @@ periodic `{"component":"workpool","event":"report"}` line with its backlog and f
 `@convex-dev/workpool` README has ready-made Axiom queries for it.
 
 ```
-['jigswap'] | where event in ("imageModeration.checkFailed","imageModeration.stalledSweep","imageModeration.hashRecheckFailed","imageModeration.hashRecheckSweep") and outcome == "error" | summarize count() by event, bin(_time, 1d)
+['jigswap'] | where event in ("imageModeration.checkFailed","imageModeration.stalledSweep","imageModeration.hashRecheckFailed","imageModeration.hashRecheckSweep","imageModeration.hashCheckTimedOut") and outcome == "error" | summarize count() by event, bin(_time, 1d)
 ```

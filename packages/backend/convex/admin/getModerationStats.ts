@@ -36,7 +36,8 @@ export const getModerationStats = query({
         row.kind === "photo_removal_confirmed" ||
         row.kind === "photo_auto_rejected" ||
         row.kind === "photo_manually_approved" ||
-        row.kind === "photo_manually_rejected"
+        row.kind === "photo_manually_rejected" ||
+        row.kind === "photo_hash_check_waived"
       ) {
         flagsCleared += 1;
       }

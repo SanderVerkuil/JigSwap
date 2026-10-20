@@ -62,7 +62,7 @@ export const Route = createFileRoute("/_dashboard/admin/moderation")({
 // the live queue (list+detail split with approve / edit&approve / reject),
 // Flagged Images reviews the auto-rejected photos (restore / confirm removal),
 // Unchecked Photos lets an admin approve or reject photos the classifier has
-// not decided (pending / unscored), or check an unscored one again, Hash matches lists the CSAM hash-list matches to report
+// not decided (pending / unscored) or whose hash check timed out, or check an unscored one again, Hash matches lists the CSAM hash-list matches to report
 // (metadata only, never an image), and Activity Log lists the recent moderation stamps.
 function ModerationPage() {
   const t = useTranslations("admin.moderation");
@@ -435,9 +435,11 @@ function ModerationPage() {
                       <span
                         className={cn(
                           "size-2 shrink-0 rounded-full",
-                          photo.status === "unscored"
-                            ? "bg-jigsaw-warning"
-                            : "bg-muted-foreground",
+                          photo.status === "hashTimedOut"
+                            ? "bg-destructive"
+                            : photo.status === "unscored"
+                              ? "bg-jigsaw-warning"
+                              : "bg-muted-foreground",
                         )}
                         aria-hidden
                       />
