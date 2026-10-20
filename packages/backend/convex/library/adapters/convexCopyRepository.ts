@@ -1,7 +1,7 @@
 import type { Copy, CopyId, CopyRepository, OwnerId } from "@jigswap/domain";
-import { internal } from "../../_generated/api";
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
+import { enqueueImageModeration } from "../../lib/imageModeration/moderationPool";
 import { toDomain, toRow } from "./copyMapper";
 
 // Driven adapter for the CopyRepository port over `ctx.db`. The only place `ownedPuzzles` (and
@@ -77,7 +77,7 @@ export const convexCopyRepository = (ctx: MutationCtx): CopyRepository => {
         if (persistedFileIds.has(fileId)) continue;
         // A new photo goes through the shared image-moderation pipeline exactly like one added
         // via addCopyPhoto: "pending", unpublished until the CSAM hash check has passed
-        // (lib/imageModeration/hashCheckFields), and the moderatePhoto job scheduled.
+        // (lib/imageModeration/hashCheckFields), and the moderatePhoto job enqueued.
         const imageId = await ctx.db.insert("ownedPuzzleImages", {
           ownedPuzzleId,
           // The uploader is the owner of the copy (the domain has no separate uploader concept).
@@ -92,11 +92,7 @@ export const convexCopyRepository = (ctx: MutationCtx): CopyRepository => {
           createdAt: now,
           updatedAt: now,
         });
-        await ctx.scheduler.runAfter(
-          0,
-          internal.library.moderatePhoto.moderatePhoto,
-          { imageId },
-        );
+        await enqueueImageModeration(ctx, "copy", imageId);
       }
     },
 

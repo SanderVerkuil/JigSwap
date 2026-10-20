@@ -8,9 +8,8 @@ import {
   makeHuggingFaceModerationPort,
   makeModerationPortFromEnv,
   makeNoopModerationPort,
-  MODERATION_RETRY_DELAYS_MS,
+  MODERATION_MAX_ATTEMPTS,
   needsRescreen,
-  nextRetryDelayMs,
   planModerationStep,
   readModel,
   readScreeningConfig,
@@ -371,18 +370,19 @@ describe("readScreeningConfig", () => {
 });
 
 describe("retry planning", () => {
-  test("backoff schedule: 1 min, 5 min, 30 min, then give up", () => {
-    expect(MODERATION_RETRY_DELAYS_MS).toEqual([60_000, 300_000, 1_800_000]);
-    expect(nextRetryDelayMs(1)).toBe(60_000);
-    expect(nextRetryDelayMs(3)).toBe(1_800_000);
-    expect(nextRetryDelayMs(4)).toBeNull();
+  test("four attempts per check, the first one included", () => {
+    expect(MODERATION_MAX_ATTEMPTS).toBe(4);
   });
 
   test("a retryable unscored result retries while attempts remain, then becomes the verdict", () => {
     const transient = unscoredResult("provider_error", true, 503);
     expect(planModerationStep(transient, 1)).toEqual({
       kind: "retry",
-      delayMs: 60_000,
+      reason: transient.reason,
+    });
+    expect(planModerationStep(transient, 3)).toEqual({
+      kind: "retry",
+      reason: transient.reason,
     });
     expect(planModerationStep(transient, 4)).toEqual({
       kind: "verdict",

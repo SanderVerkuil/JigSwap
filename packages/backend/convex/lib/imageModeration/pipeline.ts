@@ -7,7 +7,7 @@ import type { Id } from "../../_generated/dataModel";
 import type { ActionCtx } from "../../_generated/server";
 import {
   makeModerationPortFromEnv,
-  nextRetryDelayMs,
+  MODERATION_MAX_ATTEMPTS,
   planModerationStep,
   readScreeningConfig,
   screeningLogFields,
@@ -30,16 +30,24 @@ import {
   type ImageFormat,
   type ImageGuardFailure,
 } from "./guards";
+import {
+  enqueueImageModeration,
+  MODERATION_HANDOFF_DELAY_MS,
+  moderationRetryError,
+  type ModerationTable,
+} from "./moderationPool";
 import { decodeUpright, hasTransparency } from "./normaliseImage";
 import { findMetadata, stripImageMetadata } from "./stripMetadata";
 
 // The shared image-moderation pipeline behind every table of uploaded photos (copy photos,
-// completion photos, and later message attachments). Each table keeps a thin store module of
+// completion photos, box art and message photos). Each table keeps a thin store module of
 // internal functions (load / setFile / setVerdict) and a one-line Node action that calls
-// `runImageModeration` with references to them; the pipeline itself knows no table.
+// `runModerationJob` with references to them; the pipeline itself knows no table. Every check is
+// a job on the moderation Workpool (./moderationPool), which retries and bounds parallelism.
 //
 // Per attempt:
-//   1. Load the row (skip when gone or no longer pending: first verdict wins, re-runs are no-ops).
+//   1. Load the row (skip when gone or no longer pending: first verdict wins, re-runs are no-ops),
+//      then count the attempt on the row (moderationPool.beginAttempt: `moderationAttempts`).
 //   2. Download the blob (an upload over HASH_MAX_BYTES is refused unread) and run the input
 //      guards (lib/imageModeration/guards): size, magic bytes, the header's pixel count, all
 //      before any decode. Then (on any attempt until the row is marked `reencodedAt`) strip the
@@ -64,8 +72,8 @@ import { findMetadata, stripImageMetadata } from "./stripMetadata";
 //      moderationReason), never classified, and its blob is deleted. Never fails open.
 //   5. Swap the row to the clean blob (setFile) and delete the original.
 //   6. Classify the clean bytes via the configured PhotoModerationPort.
-//   7. Record the verdict (setVerdict), or re-schedule `retry` with backoff for a retryable
-//      unscored result with attempts left.
+//   7. Record the verdict (setVerdict), or, for a retryable unscored result with attempts left
+//      (MODERATION_MAX_ATTEMPTS), return "retry" so the Workpool runs the check again with backoff.
 //
 // Why jimp (not sharp): Convex's Node runtime bundles the action; sharp ships a platform-specific
 // native binary (libvips) that is NOT reliably bundled/loadable there, so it would fail at runtime.
@@ -73,10 +81,13 @@ import { findMetadata, stripImageMetadata } from "./stripMetadata";
 // Trade-off: jimp is slower/larger in memory than sharp, which is fine for one-off upload moderation.
 //
 // NEVER FAILS OPEN: when the photo cannot be checked (provider error, missing token, missing blob,
-// unexpected throw) it is NOT approved. A retryable failure keeps it "pending" and re-schedules
-// with backoff (MODERATION_RETRY_DELAYS_MS); otherwise, or once the retries run out, it is stamped
-// "unscored" (with the reason), which keeps it visible to the uploader only. Every attempt emits
-// one wide event (screening_outcome / unscored_reason) to the logs and Axiom. NEVER throws.
+// unexpected throw) it is NOT approved. A retryable failure keeps it "pending" and is retried by the
+// Workpool with backoff; otherwise, or on the last attempt, it is stamped "unscored" (with the
+// reason), which keeps it visible to the uploader only. Every attempt emits one wide event
+// (screening_outcome / unscored_reason) to the logs and Axiom. `runImageModeration` NEVER throws:
+// it returns "retry" or "done". `runModerationJob` (the pool's action) throws ONLY for "retry", so
+// a definite verdict is never retried. An attempt that crashes outright (timeout, restart) is
+// retried by the pool too, and its final failure stamped "unscored" (moderationPool).
 //
 // ENV: see `library/adapters/photoModeration.ts` (MODERATION_PROVIDER, HF_MODERATION_TOKEN,
 // HF_MODERATION_MODEL, MODERATION_NSFW_THRESHOLD, SIGHTENGINE_*) and `./csamHashCheck.ts`
@@ -206,13 +217,8 @@ export interface ImageModerationSteps<R extends ModerationRow> {
     },
     unknown
   >;
-  /** The calling action itself, re-scheduled for a retry. */
-  retry: FunctionReference<
-    "action",
-    "internal",
-    { imageId: string; attempt?: number },
-    unknown
-  >;
+  /** Which moderation table this is (the pool job and the attempt counter use it). */
+  table: ModerationTable;
   /** The table's hash re-check action (runs `runHashRecheck`), scheduled while unavailable. */
   recheck: FunctionReference<
     "action",
@@ -300,11 +306,51 @@ export const preserveAndQuarantine = async (
   event.escalation_id = escalationId;
 };
 
-/** Run one moderation attempt (1-based `attempt`) for `imageId`. Never throws. */
+/**
+ * What one attempt left to do: nothing ("done": a verdict, a refusal, a quarantine, or a row that
+ * was gone or decided already), or try again later ("retry", with the reason for the logs and for
+ * the row should the retries run out).
+ */
+export type ModerationRunOutcome =
+  { kind: "done" } | { kind: "retry"; reason: string };
+
+/** Run one moderation attempt for `imageId`. Never throws. */
 export const runImageModeration = async <R extends ModerationRow>(
   ctx: ActionCtx,
   steps: ImageModerationSteps<R>,
-  { imageId, attempt }: { imageId: string; attempt: number },
+  { imageId }: { imageId: string },
+): Promise<ModerationRunOutcome> => {
+  const state: { outcome: ModerationRunOutcome } = {
+    outcome: { kind: "done" },
+  };
+  await runAttempt(ctx, steps, imageId, state);
+  return state.outcome;
+};
+
+/**
+ * The pool's moderation job for `imageId` (each table's Node action): one attempt, then THROW when
+ * it should be retried (only inside the pool, `pooled`), so the Workpool backs off and runs it
+ * again. Outside the pool (a retry scheduled before the pool existed), a retry is handed to the
+ * pool instead.
+ */
+export const runModerationJob = async <R extends ModerationRow>(
+  ctx: ActionCtx,
+  steps: ImageModerationSteps<R>,
+  { imageId, pooled }: { imageId: string; pooled: boolean },
+): Promise<void> => {
+  const outcome = await runImageModeration(ctx, steps, { imageId });
+  if (outcome.kind === "done") return;
+  if (pooled) throw moderationRetryError(outcome.reason);
+  await enqueueImageModeration(ctx, steps.table, imageId, {
+    runAfter: MODERATION_HANDOFF_DELAY_MS,
+  });
+};
+
+const runAttempt = async <R extends ModerationRow>(
+  ctx: ActionCtx,
+  steps: ImageModerationSteps<R>,
+  imageId: string,
+  state: { outcome: ModerationRunOutcome },
 ): Promise<void> => {
   const startedAt = Date.now();
   const config = readScreeningConfig(process.env);
@@ -317,7 +363,7 @@ export const runImageModeration = async <R extends ModerationRow>(
     event: steps.event,
     outcome: "success",
     image_id: imageId,
-    attempt,
+    attempt: null,
     provider: config.provider,
     model: config.provider === "none" ? null : config.model,
     nsfw_threshold: config.threshold,
@@ -332,19 +378,24 @@ export const runImageModeration = async <R extends ModerationRow>(
     await ingestToAxiom(line);
   };
 
-  // Record a classification result: schedule another attempt for a retryable unscored result
-  // with attempts left, otherwise write the verdict (first verdict wins in the store).
+  // The attempt number, counted on the row once it is known to be pending (beginAttempt).
+  let attempt = 0;
+
+  // Leave the decision to a later attempt (the Workpool's backoff).
+  const retryLater = (reason: string) => {
+    event.decision = "retry";
+    event.retry_reason = reason;
+    state.outcome = { kind: "retry", reason };
+  };
+
+  // Record a classification result: retry a retryable unscored result with attempts left,
+  // otherwise write the verdict (first verdict wins in the store).
   const finish = async (result: ModerationResult) => {
     Object.assign(event, screeningLogFields(result));
     if (result.status === "unscored") event.outcome = "error";
     const step = planModerationStep(result, attempt);
     if (step.kind === "retry") {
-      event.decision = "retry_scheduled";
-      event.retry_in_ms = step.delayMs;
-      await ctx.scheduler.runAfter(step.delayMs, steps.retry, {
-        imageId,
-        attempt: attempt + 1,
-      });
+      retryLater(step.reason);
       return;
     }
     event.decision = result.status;
@@ -388,6 +439,16 @@ export const runImageModeration = async <R extends ModerationRow>(
       event.prior_status = row.moderationStatus ?? null;
       return;
     }
+    const counted = await ctx.runMutation(
+      internal.lib.imageModeration.moderationPool.beginAttempt,
+      { table: steps.table, imageId },
+    );
+    if (counted === null) {
+      event.result = "skipped_not_pending";
+      return;
+    }
+    attempt = counted;
+    event.attempt = attempt;
 
     // A row that references a blob already preserved for an escalation (a re-used storage id)
     // is quarantined at once and joins that escalation; the blob is never read, swapped or
@@ -646,14 +707,8 @@ export const runImageModeration = async <R extends ModerationRow>(
         }
         // Never classify (and so never publish) the original: retry the whole attempt, and
         // once the retries are spent refuse it rather than approve it.
-        const delayMs = nextRetryDelayMs(attempt);
-        if (delayMs !== null) {
-          event.decision = "retry_scheduled";
-          event.retry_in_ms = delayMs;
-          await ctx.scheduler.runAfter(delayMs, steps.retry, {
-            imageId,
-            attempt: attempt + 1,
-          });
+        if (attempt < MODERATION_MAX_ATTEMPTS) {
+          retryLater("swap_failed");
         } else {
           await refuse("decode_failed");
         }
@@ -680,9 +735,11 @@ export const runImageModeration = async <R extends ModerationRow>(
     }
     await finish(result);
   } catch (error) {
-    // A store/scheduler call failed; the row stays pending (visible to the uploader only).
+    // A store/scheduler call failed; the row stays pending (visible to the uploader only) and the
+    // check is retried. Should the retries run out, the pool stamps it "unscored".
     event.outcome = "error";
     event.error = { stage: "record", message: errMsg(error) };
+    retryLater("internal_error");
   } finally {
     await flush();
   }

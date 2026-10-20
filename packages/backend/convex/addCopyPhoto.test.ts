@@ -1,6 +1,10 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
+import {
+  settleDueScheduled,
+  withModerationPool,
+} from "../test-fixtures/moderationPool";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
@@ -55,7 +59,7 @@ const storeBlob = (t: TestConvex<typeof schema>) =>
 
 describe("addCopyPhoto", () => {
   test("the owner can add a photo: a row appears in ownedPuzzleImages", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, aliceCopy } = await seed(t);
     const fileId = (await storeBlob(t)) as Id<"_storage">;
 
@@ -92,7 +96,7 @@ describe("addCopyPhoto", () => {
   });
 
   test("a new photo is inserted pending and schedules the moderation job", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { aliceCopy } = await seed(t);
     const fileId = (await storeBlob(t)) as Id<"_storage">;
 
@@ -113,19 +117,14 @@ describe("addCopyPhoto", () => {
     expect(images[0].moderationStatus).toBe("pending");
     expect(images[0].moderationScore).toBeUndefined();
 
-    // A moderatePhoto job was scheduled for this exact image (runAfter 0).
-    const scheduled = await t.run((ctx) =>
-      ctx.db.system.query("_scheduled_functions").collect(),
-    );
-    const job = scheduled.find((s) => s.name.includes("moderatePhoto"));
-    expect(job).toBeDefined();
-    expect((job?.args[0] as { imageId?: string })?.imageId).toBe(
-      images[0]._id as string,
-    );
+    // The moderation check was enqueued on the pool for this exact image: it ran once.
+    await settleDueScheduled(t);
+    const checked = await t.run((ctx) => ctx.db.get(images[0]._id));
+    expect(checked?.moderationAttempts).toBe(1);
   });
 
   test("a non-owner is rejected and nothing is written", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { aliceCopy } = await seed(t);
     const fileId = (await storeBlob(t)) as Id<"_storage">;
 
@@ -143,7 +142,7 @@ describe("addCopyPhoto", () => {
   });
 
   test("auth is required", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { aliceCopy } = await seed(t);
     const fileId = (await storeBlob(t)) as Id<"_storage">;
 

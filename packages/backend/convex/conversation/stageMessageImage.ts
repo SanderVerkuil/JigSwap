@@ -4,6 +4,7 @@ import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { isReferenced } from "../lib/imageModeration/blobReferences";
+import { enqueueImageModeration } from "../lib/imageModeration/moderationPool";
 import { enforceRateLimit } from "../lib/rateLimits";
 import { assertThreadNotBlocked } from "../social/blocks";
 import {
@@ -91,11 +92,7 @@ export const stageMessageImage = mutation({
       createdAt: now,
       updatedAt: now,
     });
-    await ctx.scheduler.runAfter(
-      0,
-      internal.conversation.moderateMessageImage.moderateMessageImage,
-      { imageId: attachmentId },
-    );
+    await enqueueImageModeration(ctx, "message", attachmentId);
     await ctx.scheduler.runAfter(
       STAGED_ATTACHMENT_TTL_MS,
       internal.conversation.attachmentModerationStore.expireStaged,

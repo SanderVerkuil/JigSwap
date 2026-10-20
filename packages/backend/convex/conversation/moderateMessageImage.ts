@@ -6,13 +6,15 @@ import { internalAction } from "../_generated/server";
 import {
   imageModerationSteps,
   runHashRecheck,
-  runImageModeration,
+  runModerationJob,
 } from "../lib/imageModeration/pipeline";
 
-// Screening for a staged message photo, on the shared image pipeline. Scheduled (runAfter 0) by
-// stageMessageImage, which inserts the row as "pending". The message specifics (bands, the
-// deferred append) live in conversation/attachmentModerationStore.
+// Screening for a staged message photo, on the shared image pipeline. Enqueued on the moderation
+// Workpool (lib/imageModeration/moderationPool) by stageMessageImage, which inserts the row as
+// "pending". The message specifics (bands, the deferred append) live in
+// conversation/attachmentModerationStore.
 const steps = imageModerationSteps({
+  table: "message",
   event: "conversation.moderateMessageImage",
   load: internal.conversation.attachmentModerationStore.getImageForModeration,
   describe: (row) => ({
@@ -24,17 +26,20 @@ const steps = imageModerationSteps({
     internal.conversation.attachmentModerationStore.setModerationVerdict,
   quarantine: internal.conversation.attachmentModerationStore.quarantineImage,
   setHashCheck: internal.conversation.attachmentModerationStore.setHashCheck,
-  retry: internal.conversation.moderateMessageImage.moderateMessageImage,
   recheck: internal.conversation.moderateMessageImage.recheckHashes,
 });
 
 export const moderateMessageImage = internalAction({
+  // `pooled`: run by the moderation Workpool (lib/imageModeration/moderationPool), which retries.
+  // `attempt` is no longer read (the row counts attempts); it is accepted so a retry scheduled
+  // before the pool existed still runs, and hands its retries to the pool.
   args: {
     imageId: v.id("messageAttachments"),
+    pooled: v.optional(v.boolean()),
     attempt: v.optional(v.number()),
   },
-  handler: async (ctx, { imageId, attempt }): Promise<void> =>
-    runImageModeration(ctx, steps, { imageId, attempt: attempt ?? 1 }),
+  handler: async (ctx, { imageId, pooled }): Promise<void> =>
+    runModerationJob(ctx, steps, { imageId, pooled: pooled ?? false }),
 });
 
 export const recheckHashes = internalAction({

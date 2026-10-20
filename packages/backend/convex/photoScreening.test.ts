@@ -2,6 +2,10 @@ import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { Jimp } from "jimp";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import {
+  settleDueScheduled,
+  withModerationPool,
+} from "../test-fixtures/moderationPool";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
@@ -115,22 +119,7 @@ const storeJpeg = async (t: TestConvex<typeof schema>) => {
 };
 
 // Settle every scheduled job that is DUE (a backoff retry minutes away stays pending).
-const settleDueJobs = async (t: TestConvex<typeof schema>) => {
-  for (let i = 0; i < 200; i++) {
-    await t.finishInProgressScheduledFunctions();
-    const jobs = await t.run((ctx) =>
-      ctx.db.system.query("_scheduled_functions").collect(),
-    );
-    const busy = jobs.some(
-      (job) =>
-        job.state.kind === "inProgress" ||
-        (job.state.kind === "pending" && job.scheduledTime <= Date.now()),
-    );
-    if (!busy) return jobs;
-    await new Promise((resolve) => setTimeout(resolve, 5));
-  }
-  throw new Error("scheduled functions did not settle");
-};
+const settleDueJobs = (t: TestConvex<typeof schema>) => settleDueScheduled(t);
 
 const addPhoto = async (
   t: TestConvex<typeof schema>,
@@ -169,7 +158,7 @@ describe("moderatePhoto (copy photos)", () => {
     vi.stubEnv("HF_MODERATION_TOKEN", "hf_test");
     const fetchMock = hfReplies({ nsfw: 0.01 });
     vi.stubGlobal("fetch", fetchMock);
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
 
     const { row } = await addPhoto(t, copy);
@@ -191,7 +180,7 @@ describe("moderatePhoto (copy photos)", () => {
   test("a high score rejects and stamps the audit trail", async () => {
     vi.stubEnv("HF_MODERATION_TOKEN", "hf_test");
     vi.stubGlobal("fetch", hfReplies({ nsfw: 0.99 }));
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
 
     const { row } = await addPhoto(t, copy);
@@ -206,7 +195,7 @@ describe("moderatePhoto (copy photos)", () => {
   test("no token: unscored (missing_token), never approved, no HTTP call", async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
 
     const { row } = await addPhoto(t, copy);
@@ -220,7 +209,7 @@ describe("moderatePhoto (copy photos)", () => {
   test("401: unscored (auth) straight away, no retry scheduled", async () => {
     vi.stubEnv("HF_MODERATION_TOKEN", "hf_bad");
     vi.stubGlobal("fetch", hfReplies({ status: 401 }));
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
 
     const { row, jobs } = await addPhoto(t, copy);
@@ -230,20 +219,45 @@ describe("moderatePhoto (copy photos)", () => {
     expect(jobs.filter((j) => j.state.kind === "pending")).toHaveLength(0);
   });
 
-  test("5xx: stays pending and schedules attempt 2 with backoff", async () => {
+  test("5xx: stays pending while the pool backs off before attempt 2", async () => {
     vi.stubEnv("HF_MODERATION_TOKEN", "hf_test");
-    vi.stubGlobal("fetch", hfReplies({ status: 503 }));
-    const t = convexTest(schema, modules);
+    const fetchMock = hfReplies({ status: 503 });
+    vi.stubGlobal("fetch", fetchMock);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
 
-    const { row, jobs } = await addPhoto(t, copy);
+    const { row } = await addPhoto(t, copy);
 
     expect(row.moderationStatus).toBe("pending");
-    const retry = jobs.find(
-      (j) => j.state.kind === "pending" && j.name.includes("moderatePhoto"),
+    expect(row.moderationAttempts).toBe(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  test("5xx on every attempt: the pool retries it, the last attempt ends unscored (provider_error)", async () => {
+    vi.stubEnv("HF_MODERATION_TOKEN", "hf_test");
+    vi.stubGlobal("fetch", hfReplies({ status: 503 }));
+    const t = withModerationPool(convexTest(schema, modules));
+    const { copy } = await seed(t);
+    vi.useFakeTimers();
+    try {
+      await asAlice(t).mutation(api.library.addCopyPhoto.addCopyPhoto, {
+        copyId: copy,
+        fileId: await storeJpeg(t),
+        tag: "box_front",
+      });
+      // Every backoff elapses: attempts 1-3 are retried, attempt 4 records the verdict.
+      await t.finishAllScheduledFunctions(vi.runAllTimers);
+    } finally {
+      vi.useRealTimers();
+    }
+    const [row] = await t.run((ctx) =>
+      ctx.db.query("ownedPuzzleImages").collect(),
     );
-    expect(retry?.args[0]).toEqual({ imageId: row._id, attempt: 2 });
-    expect(retry!.scheduledTime).toBeGreaterThan(Date.now() + 50_000);
+    expect(row.moderationStatus).toBe("unscored");
+    expect(row.moderationReason).toBe("provider_error");
+    // Counted on this test's own row: an earlier test's job waiting on its backoff may wake under
+    // the fake clock too (convex-test reuses ids), so the shared fetch stub is not counted.
+    expect(row.moderationAttempts).toBe(4);
   });
 
   test("a network error on the last attempt ends unscored (network) with the attempt count", async () => {
@@ -254,14 +268,17 @@ describe("moderatePhoto (copy photos)", () => {
         throw new TypeError("fetch failed");
       }),
     );
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
     const { row } = await addPhoto(t, copy);
     expect(row.moderationStatus).toBe("pending");
+    // Three attempts are spent already: this one is the last.
+    await t.run((ctx) => ctx.db.patch(row._id, { moderationAttempts: 3 }));
 
+    // The last attempt records the verdict and returns normally: nothing left to retry.
     await t.action(internal.library.moderatePhoto.moderatePhoto, {
       imageId: row._id,
-      attempt: 4,
+      pooled: true,
     });
 
     const after = await t.run((ctx) => ctx.db.get(row._id));
@@ -274,7 +291,7 @@ describe("moderatePhoto (copy photos)", () => {
     vi.stubEnv("MODERATION_PROVIDER", "none");
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
 
     const { row } = await addPhoto(t, copy);
@@ -309,7 +326,7 @@ describe("moderatePhoto with the Sightengine provider", () => {
     vi.stubEnv("SIGHTENGINE_SECRET_KEY", "fake-secret");
     const fetchMock = sightengineReplies(0.02);
     vi.stubGlobal("fetch", fetchMock);
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
 
     const { row } = await addPhoto(t, copy);
@@ -321,7 +338,7 @@ describe("moderatePhoto with the Sightengine provider", () => {
     );
 
     vi.stubGlobal("fetch", sightengineReplies(0.96));
-    const t2 = convexTest(schema, modules);
+    const t2 = withModerationPool(convexTest(schema, modules));
     const second = await seed(t2);
     expect((await addPhoto(t2, second.copy)).row.moderationStatus).toBe(
       "rejected",
@@ -333,7 +350,7 @@ describe("moderatePhoto with the Sightengine provider", () => {
     vi.stubEnv("SIGHTENGINE_SECRET_KEY", "fake-secret");
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
 
     const { row } = await addPhoto(t, copy);
@@ -356,7 +373,7 @@ describe("moderatePhoto with the Sightengine provider", () => {
 
 describe("visibility of unscored photos", () => {
   test("the owner sees an unscored copy photo as pending; other members do not see it", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
     const { row } = await addPhoto(t, copy); // no token => unscored
     expect(row.moderationStatus).toBe("unscored");
@@ -368,7 +385,7 @@ describe("visibility of unscored photos", () => {
   });
 
   test("other members get a blurhash placeholder only: no URL, storage id or row id", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
     const { row } = await addPhoto(t, copy); // no token => unscored
     // Computed during the re-encode: a 4x3 blurhash (size flag "L").
@@ -400,7 +417,7 @@ describe("visibility of unscored photos", () => {
   test("a rejected photo leaves no placeholder for anyone", async () => {
     vi.stubEnv("HF_MODERATION_TOKEN", "hf_test");
     vi.stubGlobal("fetch", hfReplies({ nsfw: 0.99 }));
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
     const { row } = await addPhoto(t, copy);
     expect(row.moderationStatus).toBe("rejected");
@@ -415,7 +432,7 @@ describe("visibility of unscored photos", () => {
   });
 
   test("an unscored cover does not render as the copy's cover", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
     const { row } = await addPhoto(t, copy);
     await t.run((ctx) => ctx.db.patch(copy, { coverImageId: row._id }));
@@ -428,7 +445,7 @@ describe("visibility of unscored photos", () => {
   });
 
   test("an unscored completion photo is pending for its owner and absent from the profile", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, copyAggregateId } = await seed(t);
     const { completionId } = await asAlice(t).mutation(
       api.solving.recordCompletion.recordCompletion,
@@ -519,7 +536,7 @@ describe("rescreenPhotos", () => {
   test("a dry run counts candidates and writes nothing", async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { ids } = await seedRows(t);
     const before = await rowsOf(t, ids);
 
@@ -547,7 +564,7 @@ describe("rescreenPhotos", () => {
         ),
     );
     vi.stubGlobal("fetch", fetchMock);
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { ids } = await seedRows(t);
 
     const batch = await t.action(
@@ -572,7 +589,7 @@ describe("rescreenPhotos", () => {
   test("a provider failure leaves rows untouched (a legacy photo is never hidden by a hiccup)", async () => {
     vi.stubEnv("HF_MODERATION_TOKEN", "hf_test");
     vi.stubGlobal("fetch", hfReplies({ status: 401 }));
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { ids } = await seedRows(t);
     const before = await rowsOf(t, ids);
 
@@ -596,7 +613,7 @@ describe("rescreenPhotos", () => {
   test("a real run refuses up front without a token", async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     await seedRows(t);
     const batch = await t.action(
       internal.library.rescreenPhotos.rescreenPhotos,
@@ -612,7 +629,7 @@ describe("rescreenPhotos", () => {
 
 describe("rescreenPhotos (completion sidecars)", () => {
   test("an unscored completion photo scored nsfw is rejected: detached from the completion and stamped", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
     const { completionId } = await asAlice(t).mutation(
       api.solving.recordCompletion.recordCompletion,
@@ -653,7 +670,7 @@ describe("rescreenPhotos (completion sidecars)", () => {
 
 describe("getPhotoScreeningHealth", () => {
   test("admin only", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     await seed(t);
     await expect(
       asAlice(t).query(
@@ -664,7 +681,7 @@ describe("getPhotoScreeningHealth", () => {
   });
 
   test("reports missing_token and the unscored counts, never the token", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
     await addPhoto(t, copy); // no token => unscored
     const health = await asAdmin(t).query(

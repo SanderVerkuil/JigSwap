@@ -5,10 +5,10 @@ import {
   type MemberId,
 } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
-import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { enqueueImageModeration } from "../lib/imageModeration/moderationPool";
 import { isPreservedBlob } from "../lib/imageModeration/quarantine";
 import { convexCompletionRepository } from "./adapters/convexCompletionRepository";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
@@ -74,11 +74,7 @@ export const attachCompletionPhotos = mutation({
         createdAt: now,
         updatedAt: now,
       });
-      await ctx.scheduler.runAfter(
-        0,
-        internal.solving.moderateCompletionPhoto.moderateCompletionPhoto,
-        { imageId },
-      );
+      await enqueueImageModeration(ctx, "completion", imageId);
     }
   },
 });

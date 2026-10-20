@@ -1,5 +1,4 @@
 import { ConvexError, v } from "convex/values";
-import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import {
@@ -10,6 +9,7 @@ import {
 } from "../conversation/messageAttachments";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
+import { enqueueImageModeration } from "../lib/imageModeration/moderationPool";
 import { stampModerationAction } from "./stampModerationAction";
 
 // An admin's decision on a sender's review request (listImageReviewRequests). "restore" approves
@@ -61,11 +61,7 @@ export const decideImageReview = mutation({
         updatedAt: now,
       });
       if (!reencoded) {
-        await ctx.scheduler.runAfter(
-          0,
-          internal.conversation.moderateMessageImage.moderateMessageImage,
-          { imageId: attachmentId },
-        );
+        await enqueueImageModeration(ctx, "message", attachmentId);
       }
       await stampModerationAction(ctx, {
         actorId: adminId,

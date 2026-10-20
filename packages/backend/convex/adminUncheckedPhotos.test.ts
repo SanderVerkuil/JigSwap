@@ -1,7 +1,18 @@
 import { convexTest, type TestConvex } from "convex-test";
+import { getFunctionName } from "convex/server";
 import { ConvexError } from "convex/values";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+  type MockInstance,
+} from "vitest";
+import { withModerationPool } from "../test-fixtures/moderationPool";
 import { api, internal } from "./_generated/api";
+import { moderationPool } from "./lib/imageModeration/moderationPool";
 import schema from "./schema";
 
 // Admin manual review of photos the classifier has not decided (pending / unscored):
@@ -130,7 +141,7 @@ const stamps = (t: TestConvex<typeof schema>) =>
 
 describe("admin gating", () => {
   test("members cannot list or decide unchecked photos", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { unscoredCopy } = await seed(t);
     await expect(
       asAlice(t).query(api.admin.listUncheckedPhotos.listUncheckedPhotos, {}),
@@ -150,7 +161,7 @@ describe("admin gating", () => {
 
 describe("listUncheckedPhotos", () => {
   test("lists pending and unscored copy and completion photos, oldest first", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { unscoredCopy, pendingCopy, unscoredCompletion } = await seed(t);
     const items = await asAdmin(t).query(
       api.admin.listUncheckedPhotos.listUncheckedPhotos,
@@ -172,7 +183,7 @@ describe("listUncheckedPhotos", () => {
 
 describe("decideUncheckedPhoto", () => {
   test("approving a copy photo publishes it, records the admin and stamps the decision", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { admin, copy, unscoredCopy } = await seed(t);
 
     await asAdmin(t).mutation(
@@ -201,7 +212,7 @@ describe("decideUncheckedPhoto", () => {
   });
 
   test("a manual decision is final: a late pipeline verdict is a no-op and the re-screen skips it", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { pendingCopy } = await seed(t);
     await asAdmin(t).mutation(
       api.admin.decideUncheckedPhoto.decideUncheckedPhoto,
@@ -227,7 +238,7 @@ describe("decideUncheckedPhoto", () => {
   });
 
   test("rejecting a copy photo moves it to the Flagged Images queue", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { admin, unscoredCopy } = await seed(t);
     await asAdmin(t).mutation(
       api.admin.decideUncheckedPhoto.decideUncheckedPhoto,
@@ -250,7 +261,7 @@ describe("decideUncheckedPhoto", () => {
   });
 
   test("rejecting a completion photo detaches it and deletes the blob", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { completionId, completionFile, unscoredCompletion } = await seed(t);
     await asAdmin(t).mutation(
       api.admin.decideUncheckedPhoto.decideUncheckedPhoto,
@@ -280,7 +291,7 @@ describe("decideUncheckedPhoto", () => {
   });
 
   test("an already decided or unknown photo is refused", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { unscoredCopy } = await seed(t);
     const decide = (imageId: string) =>
       asAdmin(t).mutation(api.admin.decideUncheckedPhoto.decideUncheckedPhoto, {
@@ -296,18 +307,17 @@ describe("decideUncheckedPhoto", () => {
   });
 });
 
-const moderationJobs = (t: TestConvex<typeof schema>) =>
-  t.run(async (ctx) =>
-    (await ctx.db.system.query("_scheduled_functions").collect())
-      .filter((job) => /moderate(Photo|CompletionPhoto)$/.test(job.name))
-      .map((job) => [job.name, job.args]),
-  );
+// The moderation checks enqueued on the moderation pool, as [action, args].
+let enqueued: MockInstance<typeof moderationPool.enqueueAction>;
+const moderationJobs = () =>
+  enqueued.mock.calls.map((call) => [getFunctionName(call[1]), call[2]]);
 
 describe("recheckPhoto", () => {
   // Hold the scheduled check (convex-test would otherwise run it on a timer) so the row is seen
   // as the mutation left it.
   beforeEach(() => {
     vi.useFakeTimers();
+    enqueued = vi.spyOn(moderationPool, "enqueueAction");
   });
   afterEach(() => {
     vi.useRealTimers();
@@ -324,7 +334,7 @@ describe("recheckPhoto", () => {
     });
 
   test("members cannot check a photo again", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { unscoredCopy } = await seed(t);
     await expect(
       asAlice(t).mutation(api.admin.recheckPhoto.recheckPhoto, {
@@ -335,52 +345,52 @@ describe("recheckPhoto", () => {
     expect(
       (await t.run((ctx) => ctx.db.get(unscoredCopy)))?.moderationStatus,
     ).toBe("unscored");
-    expect(await moderationJobs(t)).toEqual([]);
+    expect(moderationJobs()).toEqual([]);
   });
 
   test("an unscored copy photo goes back to pending and its upload's moderation action is scheduled", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { unscoredCopy } = await seed(t);
     await recheck(t, "copy", unscoredCopy);
     const row = await t.run((ctx) => ctx.db.get(unscoredCopy));
     expect(row?.moderationStatus).toBe("pending");
     expect(row?.moderationReason).toBeUndefined();
     expect(row?.moderationAttempts).toBeUndefined();
-    expect(await moderationJobs(t)).toEqual([
+    expect(moderationJobs()).toEqual([
       [
         "library/moderatePhoto:moderatePhoto",
-        [{ imageId: unscoredCopy, attempt: 1 }],
+        { imageId: unscoredCopy, pooled: true },
       ],
     ]);
   });
 
   test("an unscored completion photo goes back to pending and its upload's moderation action is scheduled", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { unscoredCompletion } = await seed(t);
     await recheck(t, "completion", unscoredCompletion);
     const row = await t.run((ctx) => ctx.db.get(unscoredCompletion));
     expect(row?.moderationStatus).toBe("pending");
     expect(row?.moderationReason).toBeUndefined();
-    expect(await moderationJobs(t)).toEqual([
+    expect(moderationJobs()).toEqual([
       [
         "solving/moderateCompletionPhoto:moderateCompletionPhoto",
-        [{ imageId: unscoredCompletion, attempt: 1 }],
+        { imageId: unscoredCompletion, pooled: true },
       ],
     ]);
   });
 
   test("a double click schedules one check; a pending photo is left to the check it is waiting for", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { unscoredCopy, pendingCopy } = await seed(t);
     await Promise.all([
       recheck(t, "copy", unscoredCopy),
       recheck(t, "copy", unscoredCopy),
     ]);
     await recheck(t, "copy", pendingCopy);
-    expect(await moderationJobs(t)).toEqual([
+    expect(moderationJobs()).toEqual([
       [
         "library/moderatePhoto:moderatePhoto",
-        [{ imageId: unscoredCopy, attempt: 1 }],
+        { imageId: unscoredCopy, pooled: true },
       ],
     ]);
     expect(
@@ -389,7 +399,7 @@ describe("recheckPhoto", () => {
   });
 
   test("a decided, unknown or mismatched photo is refused", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { unscoredCopy, unscoredCompletion } = await seed(t);
     await asAdmin(t).mutation(
       api.admin.decideUncheckedPhoto.decideUncheckedPhoto,
@@ -406,6 +416,6 @@ describe("recheckPhoto", () => {
     expect(
       (await t.run((ctx) => ctx.db.get(unscoredCopy)))?.moderationStatus,
     ).toBe("approved");
-    expect(await moderationJobs(t)).toEqual([]);
+    expect(moderationJobs()).toEqual([]);
   });
 });

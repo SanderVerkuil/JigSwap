@@ -1,9 +1,12 @@
 import { convexTest, type TestConvex } from "convex-test";
+import { getFunctionName } from "convex/server";
 import { ConvexError } from "convex/values";
 import { Jimp } from "jimp";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { api, internal } from "./_generated/api";
+import { withModerationPool } from "../test-fixtures/moderationPool";
+import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { moderationPool } from "./lib/imageModeration/moderationPool";
 import schema from "./schema";
 
 // Admin review of box art whose check never completed: it shows in the unchecked-photos queue
@@ -120,7 +123,7 @@ const errorOf = async (promise: Promise<unknown>) => {
 
 describe("unchecked queue: box art", () => {
   test("lists unscored box art with its puzzle title, image and the re-check option", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     await seed(t);
     const { imageId } = await unscoredBoxArt(t);
 
@@ -144,7 +147,7 @@ describe("unchecked queue: box art", () => {
   });
 
   test("members are refused", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     await seed(t);
     const { imageId } = await unscoredBoxArt(t);
     await expect(
@@ -169,7 +172,7 @@ describe("unchecked queue: box art", () => {
 
 describe("decideUncheckedPhoto: box art", () => {
   test("approve serves the box art, records the admin and stamps the decision", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { admin } = await seed(t);
     const { imageId, puzzleId } = await unscoredBoxArt(t);
     expect(await servedImage(t, puzzleId)).toBeNull();
@@ -201,7 +204,7 @@ describe("decideUncheckedPhoto: box art", () => {
   });
 
   test("reject detaches the box art from the puzzle and deletes its file", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { admin } = await seed(t);
     const { image, imageId, puzzleId } = await unscoredBoxArt(t);
 
@@ -225,7 +228,7 @@ describe("decideUncheckedPhoto: box art", () => {
   });
 
   test("box art whose hash check has not passed cannot be decided", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     await seed(t);
     const { imageId } = await unscoredBoxArt(t);
     await t.run((ctx) =>
@@ -245,7 +248,7 @@ describe("decideUncheckedPhoto: box art", () => {
   });
 
   test("decided box art cannot be decided again", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     await seed(t);
     const { imageId } = await unscoredBoxArt(t);
     await asAdmin(t).mutation(
@@ -265,9 +268,12 @@ describe("decideUncheckedPhoto: box art", () => {
 
 describe("recheckPhoto: box art", () => {
   test("puts unscored box art back to pending and the pipeline approves it once the classifier works", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     await seed(t);
     const { imageId, puzzleId } = await unscoredBoxArt(t);
+    const enqueued = vi.spyOn(moderationPool, "enqueueAction");
+    // Hold the pool's check (it would otherwise run on a timer) to see the row as recheck left it.
+    vi.useFakeTimers();
 
     await asAdmin(t).mutation(api.admin.recheckPhoto.recheckPhoto, {
       source: "boxArt",
@@ -276,19 +282,13 @@ describe("recheckPhoto: box art", () => {
     const pending = await rowOf(t, imageId);
     expect(pending).toMatchObject({ moderationStatus: "pending" });
     expect(pending?.moderationReason).toBeUndefined();
-    const scheduled = await t.run((ctx) =>
-      ctx.db.system.query("_scheduled_functions").collect(),
-    );
     expect(
-      scheduled.filter((job) => job.name.startsWith("catalog/moderateBoxArt")),
+      enqueued.mock.calls.map((call) => [getFunctionName(call[1]), call[2]]),
     ).toEqual([
-      expect.objectContaining({
-        name: "catalog/moderateBoxArt:moderateBoxArt",
-        args: [{ imageId, attempt: 1 }],
-      }),
+      ["catalog/moderateBoxArt:moderateBoxArt", { imageId, pooled: true }],
     ]);
 
-    // The classifier is configured again: run the scheduled attempt.
+    // The classifier is configured again: let the pool run the check.
     vi.stubEnv("HF_MODERATION_TOKEN", "hf_test");
     vi.stubGlobal(
       "fetch",
@@ -299,19 +299,18 @@ describe("recheckPhoto: box art", () => {
           }),
       ),
     );
-    await t.action(internal.catalog.moderateBoxArt.moderateBoxArt, {
-      imageId,
-      attempt: 1,
-    });
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    vi.useRealTimers();
 
     expect(await rowOf(t, imageId)).toMatchObject({
       moderationStatus: "approved",
+      moderationAttempts: 1,
     });
     expect(await servedImage(t, puzzleId)).toEqual(expect.any(String));
   });
 
   test("only unscored box art can be checked again", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     await seed(t);
     const { imageId } = await unscoredBoxArt(t);
     await asAdmin(t).mutation(

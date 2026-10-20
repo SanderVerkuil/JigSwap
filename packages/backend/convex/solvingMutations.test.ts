@@ -1,9 +1,15 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError, type Value } from "convex/values";
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
+import { withModerationPool } from "../test-fixtures/moderationPool";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { moderationPool } from "./lib/imageModeration/moderationPool";
 import schema from "./schema";
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
@@ -148,7 +154,7 @@ const recordForAlice = async (
 
 describe("solving.recordCompletion — borrowing, snapshot, pieces", () => {
   test("the current holder (borrower) can log a solve on a copy they do not own", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { bob, copyAggregateId, ownedPuzzleId } = await seed(t);
     await lendToBob(t, ownedPuzzleId, bob);
     const { completionId } = await asBob(t).mutation(
@@ -166,7 +172,7 @@ describe("solving.recordCompletion — borrowing, snapshot, pieces", () => {
   });
 
   test("a non-owner who is not the holder is still rejected", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId, ownedPuzzleId } = await seed(t);
     await expect(
       asBob(t).mutation(api.solving.recordCompletion.recordCompletion, {
@@ -187,7 +193,7 @@ describe("solving.recordCompletion — borrowing, snapshot, pieces", () => {
   });
 
   test("an owner's completion gets a copy snapshot and a populated puzzleId anchor", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId, puzzleId } = await seed(t);
     const completionId = await recordForAlice(t, copyAggregateId, {
       allPiecesPresent: false,
@@ -201,7 +207,7 @@ describe("solving.recordCompletion — borrowing, snapshot, pieces", () => {
   });
 
   test("deleting the copy keeps puzzleId + snapshot; only the live link is affected", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId, puzzleId, ownedPuzzleId } = await seed(t);
     const completionId = await recordForAlice(t, copyAggregateId);
     await t.run(async (ctx) => {
@@ -213,7 +219,7 @@ describe("solving.recordCompletion — borrowing, snapshot, pieces", () => {
   });
 
   test("finishing a copy-only in-progress completion preserves the puzzleId anchor + snapshot", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId, puzzleId } = await seed(t);
     // Start (no endDate, no puzzleDefinitionId): the composition root denormalizes puzzleId + snapshot.
     const { completionId } = await asAlice(t).mutation(
@@ -236,7 +242,7 @@ describe("solving.recordCompletion — borrowing, snapshot, pieces", () => {
 
 describe("solving.recordCompletion", () => {
   test("requires authentication", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
     await expect(
       t.mutation(api.solving.recordCompletion.recordCompletion, {
@@ -248,7 +254,7 @@ describe("solving.recordCompletion", () => {
   });
 
   test("records a finished completion: owner from auth, FK resolved, returns aggregateId + doc ids", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, copyAggregateId, puzzleId, ownedPuzzleId } = await seed(t);
     const result = await asAlice(t).mutation(
       api.solving.recordCompletion.recordCompletion,
@@ -273,7 +279,7 @@ describe("solving.recordCompletion", () => {
   });
 
   test("a non-owner cannot record a completion against someone else's copy, and nothing is written", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId, ownedPuzzleId } = await seed(t);
 
     await expect(
@@ -298,7 +304,7 @@ describe("solving.recordCompletion", () => {
   });
 
   test("a non-owner cannot start a completion against someone else's copy, and nothing is written", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId, ownedPuzzleId } = await seed(t);
 
     await expect(
@@ -324,7 +330,7 @@ describe("solving.recordCompletion", () => {
   });
 
   test("records against a puzzle definition, resolving the puzzles._id FK", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { puzzleAggregateId, puzzleId } = await seed(t);
     const result = await asAlice(t).mutation(
       api.solving.recordCompletion.recordCompletion,
@@ -342,7 +348,7 @@ describe("solving.recordCompletion", () => {
   });
 
   test("an end before the start => InvalidTimeRange", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
     await expectConvexCode(
       asAlice(t).mutation(api.solving.recordCompletion.recordCompletion, {
@@ -355,7 +361,7 @@ describe("solving.recordCompletion", () => {
   });
 
   test("starting (no endDate) leaves the completion in progress", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
     const { completionId } = await asAlice(t).mutation(
       api.solving.recordCompletion.recordCompletion,
@@ -367,7 +373,7 @@ describe("solving.recordCompletion", () => {
   });
 
   test("same-day completion (startDate == endDate, no explicit time) counts one day (1440 minutes)", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
     const today = Date.now();
     const { completionId } = await asAlice(t).mutation(
@@ -382,7 +388,7 @@ describe("solving.recordCompletion", () => {
 
 describe("solving.finishCompletion", () => {
   test("finishes an in-progress completion and returns the same id shape as record", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId, puzzleId, ownedPuzzleId } = await seed(t);
     const { completionId } = await asAlice(t).mutation(
       api.solving.recordCompletion.recordCompletion,
@@ -405,7 +411,7 @@ describe("solving.finishCompletion", () => {
 
 describe("solving.editCompletion", () => {
   test("edits notes within the 24h window", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
     const completionId = await recordForAlice(t, copyAggregateId);
     await asAlice(t).mutation(api.solving.editCompletion.editCompletion, {
@@ -418,7 +424,7 @@ describe("solving.editCompletion", () => {
   });
 
   test("editing after the 24h window => EditWindowClosed", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
     // A completion finished two days ago is past the edit window.
     const twoDays = 48 * HOUR;
@@ -436,7 +442,7 @@ describe("solving.editCompletion", () => {
   });
 
   test("a non-owner cannot edit => NotCompletionOwner", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
     const completionId = await recordForAlice(t, copyAggregateId);
     await expectConvexCode(
@@ -451,7 +457,8 @@ describe("solving.editCompletion", () => {
 
 describe("solving.attachCompletionPhotos", () => {
   test("the author attaches 2 photos: photos grows, sidecars pending, jobs scheduled", async () => {
-    const t = convexTest(schema, modules);
+    const enqueued = vi.spyOn(moderationPool, "enqueueAction");
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
     const completionId = await recordForAlice(t, copyAggregateId);
     const fileId1 = (await storeBlob(t)) as Id<"_storage">;
@@ -471,17 +478,14 @@ describe("solving.attachCompletionPhotos", () => {
       expect(img.moderationStatus).toBe("pending");
     }
 
-    const scheduled = await t.run((ctx) =>
-      ctx.db.system.query("_scheduled_functions").collect(),
+    // One moderation check per photo, enqueued on the moderation pool.
+    expect(enqueued.mock.calls.map((call) => call[2])).toEqual(
+      images.map((img) => ({ imageId: img._id, pooled: true })),
     );
-    const jobs = scheduled.filter((s) =>
-      s.name.includes("moderateCompletionPhoto"),
-    );
-    expect(jobs).toHaveLength(2);
   });
 
   test("a non-author is rejected", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
     const completionId = await recordForAlice(t, copyAggregateId);
     const fileId = (await storeBlob(t)) as Id<"_storage">;
@@ -496,7 +500,8 @@ describe("solving.attachCompletionPhotos", () => {
   });
 
   test("duplicate ids within a call and an already-attached id are deduped", async () => {
-    const t = convexTest(schema, modules);
+    const enqueued = vi.spyOn(moderationPool, "enqueueAction");
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
     const completionId = await recordForAlice(t, copyAggregateId);
     const fileId1 = (await storeBlob(t)) as Id<"_storage">;
@@ -517,18 +522,13 @@ describe("solving.attachCompletionPhotos", () => {
     const images = await completionImagesFor(t, completionId);
     expect(images).toHaveLength(2);
 
-    // Deduped ids must not schedule extra moderation jobs: exactly 2 across BOTH calls
+    // Deduped ids must not enqueue extra moderation checks: exactly 2 across BOTH calls
     // (fileId1 from the first, fileId2 from the second).
-    const scheduled = await t.run((ctx) =>
-      ctx.db.system.query("_scheduled_functions").collect(),
-    );
-    expect(
-      scheduled.filter((s) => s.name.includes("moderateCompletionPhoto")),
-    ).toHaveLength(2);
+    expect(enqueued).toHaveBeenCalledTimes(2);
   });
 
   test("existing 4 plus 2 new exceeds the cap => TooManyPhotos", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
     const completionId = await recordForAlice(t, copyAggregateId);
     const existing: Id<"_storage">[] = [];
@@ -554,7 +554,7 @@ describe("solving.attachCompletionPhotos", () => {
   });
 
   test("a backdated completion (endDate 10 days ago) can still attach photos", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
     const tenDays = 10 * 24 * HOUR;
     const completionId = await recordForAlice(t, copyAggregateId, {
@@ -575,7 +575,7 @@ describe("solving.attachCompletionPhotos", () => {
 
 describe("solving.createGoal", () => {
   test("creates a goal and returns its aggregateId", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice } = await seed(t);
     const goalId = (await asAlice(t).mutation(
       api.solving.createGoal.createGoal,
@@ -590,7 +590,7 @@ describe("solving.createGoal", () => {
   });
 
   test("a non-positive target => InvalidGoalTarget", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     await seed(t);
     await expectConvexCode(
       asAlice(t).mutation(api.solving.createGoal.createGoal, {
@@ -604,7 +604,7 @@ describe("solving.createGoal", () => {
 
 describe("goal progress reacts to completions", () => {
   test("recording completions advances the goal and fires achievement once at the target", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { puzzleAggregateId, copyAggregateId } = await seed(t);
     const goalId = (await asAlice(t).mutation(
       api.solving.createGoal.createGoal,
@@ -634,7 +634,7 @@ describe("goal progress reacts to completions", () => {
   });
 
   test("listMyGoals surfaces the derived isAchieved", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
     await asAlice(t).mutation(api.solving.createGoal.createGoal, {
       title: "Solve 1 puzzle",
@@ -652,7 +652,7 @@ describe("goal progress reacts to completions", () => {
 
 describe("solving.deleteCompletion", () => {
   test("owner can delete their own completion — row is gone", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
     const completionId = await recordForAlice(t, copyAggregateId);
 
@@ -665,7 +665,7 @@ describe("solving.deleteCompletion", () => {
   });
 
   test("non-owner is rejected with NotCompletionOwner — row remains", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
     const completionId = await recordForAlice(t, copyAggregateId);
 
@@ -681,7 +681,7 @@ describe("solving.deleteCompletion", () => {
   });
 
   test("deleting a completion recomputes goal progress back to 0", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
 
     // Create a goal with target 1.
@@ -704,7 +704,7 @@ describe("solving.deleteCompletion", () => {
   });
 
   test("deleting a completion removes photo sidecars and best-effort deletes their blobs", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
     const completionId = await recordForAlice(t, copyAggregateId);
     const fileId1 = (await storeBlob(t)) as Id<"_storage">;
@@ -728,7 +728,7 @@ describe("solving.deleteCompletion", () => {
   });
 
   test("delete cascades the UNION of photos and sidecar fileIds when they diverge", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
     const completionId = await recordForAlice(t, copyAggregateId);
     const photoFileId = (await storeBlob(t)) as Id<"_storage">;
@@ -761,7 +761,7 @@ describe("solving.deleteCompletion", () => {
 
 describe("solving read queries", () => {
   test("listMyCompletions returns the member's completions only", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
     await recordForAlice(t, copyAggregateId);
     const mine = await asAlice(t).query(
@@ -777,7 +777,7 @@ describe("solving read queries", () => {
   });
 
   test("getCompletionHistory filters by copy", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
     await recordForAlice(t, copyAggregateId);
     const history = await asAlice(t).query(
@@ -793,7 +793,7 @@ describe("solving read queries", () => {
 
 describe("solving.startCompletion — first-class start", () => {
   test("creates an in-progress row with the copy snapshot and puzzleId denormalized", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId, puzzleId } = await seed(t);
 
     const completionId = (await asAlice(t).mutation(
@@ -816,7 +816,7 @@ describe("solving.startCompletion — first-class start", () => {
   });
 
   test("accepts backdated and future start dates", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
 
     const past = (await asAlice(t).mutation(
@@ -832,7 +832,7 @@ describe("solving.startCompletion — first-class start", () => {
   });
 
   test("rejects a member who neither owns nor holds the copy", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
     await expect(
       asBob(t).mutation(api.solving.startCompletion.startCompletion, {
@@ -843,7 +843,7 @@ describe("solving.startCompletion — first-class start", () => {
   });
 
   test("rejects an unknown copyId", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     await seed(t);
     await expect(
       asAlice(t).mutation(api.solving.startCompletion.startCompletion, {
@@ -854,7 +854,7 @@ describe("solving.startCompletion — first-class start", () => {
   });
 
   test("allows the borrower (current holder) and marks the snapshot borrowed", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { bob, copyAggregateId, ownedPuzzleId } = await seed(t);
     await lendToBob(t, ownedPuzzleId, bob);
 
@@ -867,7 +867,7 @@ describe("solving.startCompletion — first-class start", () => {
   });
 
   test("the started solve can be finished via the existing finish flow", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
     const completionId = (await asAlice(t).mutation(
       api.solving.startCompletion.startCompletion,
@@ -884,7 +884,7 @@ describe("solving.startCompletion — first-class start", () => {
 
 describe("solving.listMyInProgress", () => {
   test("returns only the caller's in-progress solves as DTOs, newest-started first", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
 
     // One finished, two in-progress (started at different times).
@@ -920,7 +920,7 @@ describe("solving.listMyInProgress", () => {
   });
 
   test("falls back to the catalog puzzle when the snapshot lacks display data", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId, ownedPuzzleId } = await seed(t);
     const completionId = (await asAlice(t).mutation(
       api.solving.startCompletion.startCompletion,
@@ -953,7 +953,7 @@ describe("solving.listMyInProgress", () => {
   });
 
   test("drops legacy in-progress rows that have no aggregateId", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice } = await seed(t);
     await t.run(async (ctx) => {
       const now = Date.now();
@@ -1033,7 +1033,7 @@ describe("solving.listMyCompletions — row enrichment", () => {
   };
 
   test("own copy: myCopy link + cover photo preferred over box art", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, copyAggregateId, ownedPuzzleId } = await seed(t);
     await recordForAlice(t, copyAggregateId);
     const { photoId, url } = await addCoverPhoto(t, ownedPuzzleId, alice);
@@ -1054,7 +1054,7 @@ describe("solving.listMyCompletions — row enrichment", () => {
   });
 
   test("two completions sharing one copy get the same link/thumbnailUrl (pins the distinct-map fan-out)", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, copyAggregateId, ownedPuzzleId } = await seed(t);
     await recordForAlice(t, copyAggregateId);
     await recordForAlice(t, copyAggregateId);
@@ -1075,7 +1075,7 @@ describe("solving.listMyCompletions — row enrichment", () => {
   });
 
   test("pending/rejected cover is never used; falls back to box art", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, copyAggregateId, ownedPuzzleId, puzzleId } = await seed(t);
     await recordForAlice(t, copyAggregateId);
 
@@ -1106,7 +1106,7 @@ describe("solving.listMyCompletions — row enrichment", () => {
   });
 
   test("borrowed now (current holder): copy link, pins the heldBy clause through the enrichment", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, bob, puzzleAggregateId, puzzleId } = await seed(t);
     const { aggregateId, id: bobCopyId } = await insertBobCopyHeldByAlice(
       t,
@@ -1135,7 +1135,7 @@ describe("solving.listMyCompletions — row enrichment", () => {
   });
 
   test("returned + viewable (public profile + open): copy link", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, bob, puzzleAggregateId, puzzleId } = await seed(t);
     const { aggregateId, id: bobCopyId } = await insertBobCopyHeldByAlice(
       t,
@@ -1165,7 +1165,7 @@ describe("solving.listMyCompletions — row enrichment", () => {
   });
 
   test("returned + unviewable (private profile, fully closed): definition link + box art, never bob's cover", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice, bob, puzzleAggregateId, puzzleId } = await seed(t);
     const { aggregateId, id: bobCopyId } = await insertBobCopyHeldByAlice(
       t,
@@ -1220,7 +1220,7 @@ describe("solving.listMyCompletions — row enrichment", () => {
   });
 
   test("copy deleted: definition link; puzzle also deleted: no link, no thumbnail (regression pins)", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId, ownedPuzzleId, puzzleId } = await seed(t);
     await recordForAlice(t, copyAggregateId);
 
@@ -1245,7 +1245,7 @@ describe("solving.listMyCompletions — row enrichment", () => {
   });
 
   test("orphaned row (no copy, no puzzle anchor): no link, no thumbnail, row still returned (regression pin)", async () => {
-    const t = convexTest(schema, modules);
+    const t = withModerationPool(convexTest(schema, modules));
     const { alice } = await seed(t);
     await t.run(async (ctx) => {
       const now = Date.now();
