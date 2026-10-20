@@ -55,6 +55,7 @@ const render = (
           photo={photo}
           busy={false}
           onApprove={() => {}}
+          onWaive={() => {}}
           onReject={() => {}}
           onRecheck={() => {}}
           {...props}
@@ -101,10 +102,56 @@ describe("UncheckedDetail", () => {
     const text = container.textContent ?? "";
     expect(text).toContain("Hash check timed out");
     expect(text).toContain("Message photo");
-    expect(text).toContain("Approving publishes the photo without that check");
+    expect(text).toContain(
+      "Approve without hash check publishes the photo without that check",
+    );
     render({ photo: timedOut }, "nl");
     expect(container.textContent).toContain("Hash-check verlopen");
     expect(container.textContent).toContain("Foto in bericht");
+    expect(button("Goedkeuren zonder hash-check")).toBeDefined();
+  });
+
+  it("a timed-out photo offers only the waiver, which needs a second click (no plain Approve)", () => {
+    const onApprove = vi.fn();
+    const onWaive = vi.fn();
+    render({
+      photo: { ...photo, status: "hashTimedOut", reason: null },
+      onApprove,
+      onWaive,
+    });
+    expect(button("Approve Photo")).toBeUndefined();
+
+    act(() => button("Approve without hash check").click());
+    expect(onWaive).not.toHaveBeenCalled();
+    act(() => button("Yes, publish without hash check").click());
+    expect(onWaive).toHaveBeenCalledTimes(1);
+    expect(onApprove).not.toHaveBeenCalled();
+  });
+
+  it("an ordinary unchecked photo offers no waiver", () => {
+    render();
+    expect(button("Approve without hash check")).toBeUndefined();
+    expect(button("Approve Photo")).toBeDefined();
+  });
+
+  it("an armed waiver disarms after 3 seconds, and arming reject disarms it", () => {
+    vi.useFakeTimers();
+    const onWaive = vi.fn();
+    const onReject = vi.fn();
+    render({
+      photo: { ...photo, status: "hashTimedOut", reason: null },
+      onWaive,
+      onReject,
+    });
+    act(() => button("Approve without hash check").click());
+    act(() => {
+      vi.advanceTimersByTime(3100);
+    });
+    act(() => button("Approve without hash check").click());
+    act(() => button("Reject Photo").click());
+    expect(button("Approve without hash check")).toBeDefined();
+    expect(onWaive).not.toHaveBeenCalled();
+    expect(onReject).not.toHaveBeenCalled();
   });
 
   it("an unknown reason falls back to a generic label", () => {

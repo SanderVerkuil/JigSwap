@@ -229,7 +229,7 @@ function ModerationPage() {
 
   const decide = async (
     photo: UncheckedPhoto,
-    decision: "approve" | "reject",
+    decision: "approve" | "waive_hash_check" | "reject",
   ) => {
     if (!unchecked) return;
     try {
@@ -242,7 +242,9 @@ function ModerationPage() {
         t(
           decision === "approve"
             ? "toast.manualApproved"
-            : "toast.manualRejected",
+            : decision === "waive_hash_check"
+              ? "toast.hashCheckWaived"
+              : "toast.manualRejected",
           {
             title: photo.puzzleTitle,
             count: unchecked.length - 1,
@@ -467,6 +469,9 @@ function ModerationPage() {
                     photo={selectedUnchecked}
                     busy={busy}
                     onApprove={() => decide(selectedUnchecked, "approve")}
+                    onWaive={() =>
+                      decide(selectedUnchecked, "waive_hash_check")
+                    }
                     onReject={() => decide(selectedUnchecked, "reject")}
                     onRecheck={() => recheck(selectedUnchecked)}
                   />

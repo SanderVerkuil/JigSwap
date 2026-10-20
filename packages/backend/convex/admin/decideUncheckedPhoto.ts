@@ -34,9 +34,29 @@ const heldByTimeout = (row: DecidableRow): boolean =>
   row.moderationStatus !== "quarantined" &&
   row.moderationStatus !== "removed";
 
-// The guard of copy photos, completion photos and box art: the row is in the admin queue.
-const assertDecidable = (row: DecidableRow): void => {
-  if (heldByTimeout(row)) return;
+type Decision = "approve" | "waive_hash_check" | "reject";
+
+// A timed-out photo is published only through the explicit waiver, and the waiver is offered for
+// nothing else: "approve" never skips a hash check by accident.
+const assertDecisionFits = (row: DecidableRow, decision: Decision): void => {
+  const timedOut = heldByTimeout(row);
+  if (decision === "approve" && timedOut) {
+    throw new ConvexError(
+      "Photo's hash check timed out: approve it without a hash check instead",
+    );
+  }
+  if (decision === "waive_hash_check" && !timedOut) {
+    throw new ConvexError("Photo's hash check has not timed out");
+  }
+};
+
+// The guard of copy photos, completion photos and box art: the row is in the admin queue, and the
+// decision fits it (assertDecisionFits).
+const assertDecidable = (row: DecidableRow, decision: Decision): void => {
+  if (heldByTimeout(row)) {
+    assertDecisionFits(row, decision);
+    return;
+  }
   if (
     row.moderationStatus !== "pending" &&
     row.moderationStatus !== "unscored"
@@ -47,6 +67,7 @@ const assertDecidable = (row: DecidableRow): void => {
   if (!isHashCleared(row)) {
     throw new ConvexError("Photo has not passed the hash check yet");
   }
+  assertDecisionFits(row, decision);
 };
 
 // Manual review of a photo nobody has decided: the classifier left it "pending" or "unscored", or
@@ -56,10 +77,12 @@ const assertDecidable = (row: DecidableRow): void => {
 // verdict wins on pending only) and the re-screen backfill skips the row. Stamped on the audit
 // trail as photo_manually_approved / photo_manually_rejected with the admin as actor.
 //
-// A TIMED-OUT photo approved here is published without a hash check: the approval opens the gate
-// (`hashCheckedAt`), records the admin (`hashCheckWaivedBy`) and is stamped
-// photo_hash_check_waived instead. Its stored hashes stay, so a re-check that still runs can match
-// it, and a match then quarantines and escalates over the approval (a match always wins).
+// A TIMED-OUT photo is approved only with the explicit decision "waive_hash_check" ("Approve
+// without hash check"; plain "approve" is refused for it, and the waiver for any other photo): it
+// is published without a hash check, the approval opens the gate (`hashCheckedAt`), records the
+// admin (`hashCheckWaivedBy`) and is stamped photo_hash_check_waived. Its stored hashes stay, so a
+// re-check that still runs can match it, and a match then quarantines and escalates over the
+// approval (a match always wins).
 //
 // A rejected COPY photo moves to the Flagged Images queue (status "rejected"), where it can be
 // restored or its removal confirmed (which deletes it and notifies the uploader), exactly like an
@@ -85,23 +108,28 @@ export const decideUncheckedPhoto = mutation({
       v.literal("message"),
     ),
     imageId: v.string(),
-    decision: v.union(v.literal("approve"), v.literal("reject")),
+    decision: v.union(
+      v.literal("approve"),
+      v.literal("waive_hash_check"),
+      v.literal("reject"),
+    ),
   },
   handler: async (ctx, { source, imageId, decision }) => {
     const memberId = (await requireMember(ctx)) as unknown as Id<"users">;
     if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
 
     const now = Date.now();
-    const status = decision === "approve" ? "approved" : "rejected";
-    const kindFor = (row: DecidableRow) =>
+    const status = decision === "reject" ? "rejected" : "approved";
+    const kind =
       decision === "reject"
         ? "photo_manually_rejected"
-        : heldByTimeout(row)
+        : decision === "waive_hash_check"
           ? "photo_hash_check_waived"
           : "photo_manually_approved";
-    // An approval of a timed-out photo opens the hash gate (and leaves the waiting index).
-    const releaseFor = (row: DecidableRow) =>
-      decision === "approve" && heldByTimeout(row)
+    // The waiver (a timed-out photo, assertDecisionFits) opens the hash gate and leaves the
+    // waiting index.
+    const release =
+      decision === "waive_hash_check"
         ? {
             hashCheckedAt: now,
             hashCheckPendingSince: undefined,
@@ -119,15 +147,15 @@ export const decideUncheckedPhoto = mutation({
       const id = ctx.db.normalizeId("ownedPuzzleImages", imageId);
       const row = id ? await ctx.db.get(id) : null;
       if (!id || !row) throw new ConvexError("Photo not found");
-      assertDecidable(row);
-      await ctx.db.patch(id, { ...decided, ...releaseFor(row) });
+      assertDecidable(row, decision);
+      await ctx.db.patch(id, { ...decided, ...release });
       const copy = await ctx.db.get(row.ownedPuzzleId);
       const title =
         copy?.snapshot?.title ??
         (copy ? (await ctx.db.get(copy.puzzleId))?.title : undefined);
       await stampModerationAction(ctx, {
         actorId: memberId,
-        kind: kindFor(row),
+        kind,
         targetLabel: title ?? imageId,
         targetId: imageId,
       });
@@ -144,7 +172,8 @@ export const decideUncheckedPhoto = mutation({
       if (!timedOut && row.moderationStatus !== "unscored") {
         throw new ConvexError("Photo is already decided");
       }
-      if (decision === "approve") {
+      assertDecisionFits(row, decision);
+      if (decision !== "reject") {
         if (!timedOut && row.hashCheckedAt === undefined) {
           throw new ConvexError("Photo has not passed the hash check yet");
         }
@@ -157,7 +186,7 @@ export const decideUncheckedPhoto = mutation({
           moderationReason: undefined,
           moderatedBy: memberId,
           updatedAt: now,
-          ...releaseFor(row),
+          ...release,
         });
       } else {
         await ctx.db.patch(id, {
@@ -185,7 +214,7 @@ export const decideUncheckedPhoto = mutation({
       }
       await stampModerationAction(ctx, {
         actorId: memberId,
-        kind: kindFor(row),
+        kind,
         targetLabel: MESSAGE_PHOTO_LABEL,
         targetId: imageId,
       });
@@ -196,18 +225,18 @@ export const decideUncheckedPhoto = mutation({
       const id = ctx.db.normalizeId("boxArtUploads", imageId);
       const row = id ? await ctx.db.get(id) : null;
       if (!id || !row) throw new ConvexError("Photo not found");
-      assertDecidable(row);
+      assertDecidable(row, decision);
       const title = (await boxArtTitle(ctx, row.storageId)) ?? "Box art";
       await ctx.db.patch(id, {
         moderationStatus: status,
         moderationReason: undefined,
         moderatedBy: memberId,
-        ...releaseFor(row),
+        ...release,
       });
       if (decision === "reject") await detachRejectedBoxArt(ctx, row);
       await stampModerationAction(ctx, {
         actorId: memberId,
-        kind: kindFor(row),
+        kind,
         targetLabel: title,
         targetId: imageId,
       });
@@ -217,8 +246,8 @@ export const decideUncheckedPhoto = mutation({
     const id = ctx.db.normalizeId("completionImages", imageId);
     const row = id ? await ctx.db.get(id) : null;
     if (!id || !row) throw new ConvexError("Photo not found");
-    assertDecidable(row);
-    await ctx.db.patch(id, { ...decided, ...releaseFor(row) });
+    assertDecidable(row, decision);
+    await ctx.db.patch(id, { ...decided, ...release });
     const title =
       decision === "reject"
         ? await detachRejectedCompletionPhoto(ctx, row)
@@ -232,7 +261,7 @@ export const decideUncheckedPhoto = mutation({
           )?.copySnapshot?.title ?? "Completion photo");
     await stampModerationAction(ctx, {
       actorId: memberId,
-      kind: kindFor(row),
+      kind,
       targetLabel: title,
       targetId: row.completionId,
     });

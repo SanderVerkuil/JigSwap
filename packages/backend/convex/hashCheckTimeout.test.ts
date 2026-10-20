@@ -387,7 +387,82 @@ describe("the admin queue", () => {
 });
 
 describe("deciding a timed-out photo", () => {
-  test("approve publishes it without a hash check, records the admin and stamps the waiver", async () => {
+  test("plain approve is refused for a timed-out photo of every table: only the explicit waiver publishes it", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const s = await seed(t, { waitedMs: pastTimeout, timedOut: true });
+    const admin = asAdmin(t);
+
+    for (const [source, imageId] of [
+      ["copy", s.copyPhoto],
+      ["completion", s.completionPhoto],
+      ["boxArt", s.boxArt],
+      ["message", s.messagePhoto],
+    ] as const) {
+      await expect(
+        admin.mutation(api.admin.decideUncheckedPhoto.decideUncheckedPhoto, {
+          source,
+          imageId,
+          decision: "approve",
+        }),
+      ).rejects.toThrow("approve it without a hash check instead");
+    }
+    for (const row of Object.values(await rowsOf(t, s))) {
+      expect(row?.hashCheckedAt).toBeUndefined();
+      expect(row?.moderatedBy).toBeUndefined();
+    }
+    expect(
+      await t.run((ctx) => ctx.db.query("moderationActions").collect()),
+    ).toEqual([]);
+  });
+
+  test("the waiver is refused for a photo whose hash check did not time out", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    // Still waiting on its hash check.
+    const waiting = await seed(t, {
+      waitedMs: 60_000,
+      attempt: 1,
+      moderationStatus: "unscored",
+    });
+    const admin = asAdmin(t);
+    const waive = (source: ModerationTable, imageId: string) =>
+      admin.mutation(api.admin.decideUncheckedPhoto.decideUncheckedPhoto, {
+        source,
+        imageId,
+        decision: "waive_hash_check",
+      });
+
+    await expect(waive("copy", waiting.copyPhoto)).rejects.toThrow(
+      "has not passed the hash check",
+    );
+    // Hash-cleared and unscored: an ordinary unchecked photo, approved the usual way.
+    await t.run(async (ctx) => {
+      for (const id of [
+        waiting.copyPhoto,
+        waiting.completionPhoto,
+        waiting.boxArt,
+        waiting.messagePhoto,
+      ]) {
+        await ctx.db.patch(id, {
+          hashCheckedAt: Date.now(),
+          hashCheckPendingSince: undefined,
+          pendingHashes: undefined,
+        });
+      }
+    });
+    for (const [source, imageId] of [
+      ["copy", waiting.copyPhoto],
+      ["completion", waiting.completionPhoto],
+      ["boxArt", waiting.boxArt],
+      ["message", waiting.messagePhoto],
+    ] as const) {
+      await expect(waive(source, imageId)).rejects.toThrow(
+        "hash check has not timed out",
+      );
+    }
+    expect((await rowsOf(t, waiting)).copy?.moderationStatus).toBe("unscored");
+  });
+
+  test("the waiver publishes it without a hash check, records the admin and stamps the waiver", async () => {
     const t = withModerationPool(convexTest(schema, modules));
     const s = await seed(t, { waitedMs: pastTimeout, timedOut: true });
     const admin = asAdmin(t);
@@ -395,7 +470,7 @@ describe("deciding a timed-out photo", () => {
       admin.mutation(api.admin.decideUncheckedPhoto.decideUncheckedPhoto, {
         source,
         imageId,
-        decision: "approve",
+        decision: "waive_hash_check",
       });
 
     await decide("copy", s.copyPhoto);
@@ -499,7 +574,7 @@ describe("a re-check after the timeout", () => {
     });
     await asAdmin(t).mutation(
       api.admin.decideUncheckedPhoto.decideUncheckedPhoto,
-      { source: "copy", imageId: s.copyPhoto, decision: "approve" },
+      { source: "copy", imageId: s.copyPhoto, decision: "waive_hash_check" },
     );
 
     // A job of the row's current attempt that turns up late.

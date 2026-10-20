@@ -4133,6 +4133,7 @@
         "restored": "Foto hersteld bij “{title}” — nog {count} in de wachtrij.",
         "manualApproved": "Foto goedgekeurd bij “{title}” — nog {count} in de wachtrij.",
         "manualRejected": "Foto afgewezen bij “{title}” — nog {count} in de wachtrij.",
+        "hashCheckWaived": "Foto bij “{title}” goedgekeurd zonder hash-check — nog {count} in de wachtrij.",
         "recheckQueued": "De foto bij “{title}” wordt opnieuw gecontroleerd."
       },
       "banner": {
@@ -4259,8 +4260,10 @@
         "reject": "Foto afwijzen",
         "rejectArm": "Weet je het zeker?",
         "recheck": "Opnieuw controleren",
+        "waive": "Goedkeuren zonder hash-check",
+        "waiveArm": "Ja, publiceren zonder hash-check",
         "hint": "Goedkeuren publiceert de foto voor andere leden. Afwijzen verbergt hem; een afgewezen foto van een exemplaar gaat naar Gemarkeerde afbeeldingen, een afgewezen foto van een gelegde puzzel wordt verwijderd, en een afgewezen catalogusafbeelding wordt van de puzzel gehaald en verwijderd. Opnieuw controleren laat de automatische controle nog een keer los op een foto die niet gecontroleerd kon worden, bijvoorbeeld als de controledienst weer werkt. Een foto in een bericht wordt na goedkeuring in het gesprek getoond; afwijzen verwijdert hem voor beide leden en laat de afzender dat weten.",
-        "hashTimedOutHint": "De hash-check op bekend misbruikmateriaal kon niet binnen 7 dagen worden gedaan, dus de automatische hercontroles zijn gestopt. Goedkeuren publiceert de foto zonder die controle (een hash-match die later wordt gevonden, zet hem alsnog in quarantaine); afwijzen verbergt hem zoals elke afwijzing."
+        "hashTimedOutHint": "De hash-check op bekend misbruikmateriaal kon niet binnen 7 dagen worden gedaan, dus de automatische hercontroles zijn gestopt. Goedkeuren zonder hash-check publiceert de foto zonder die controle, na een tweede klik ter bevestiging (een hash-match die later wordt gevonden, zet hem alsnog in quarantaine); afwijzen verbergt hem zoals elke afwijzing."
       },
       "csam": {
         "loading": "Hash-matches laden…",

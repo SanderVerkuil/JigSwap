@@ -81,10 +81,14 @@ hashes are then checked again by `lib/imageModeration/hashRecheckPool.ts`:
 The admin sees the photo (behind the usual blur-until-reveal guard, admins only, as for any
 unchecked photo) and decides it with `admin/decideUncheckedPhoto`, whatever the classifier said:
 
-- **Approve** publishes it **without a hash check**: `hashCheckedAt` is set (the gate opens),
-  `hashCheckWaivedBy` records the admin, and the audit trail stamps `photo_hash_check_waived`
-  ("approved a photo without a hash check"), not the usual manual approval. A message photo the
-  classifier blurred stays blurred.
+- **Approve without hash check** (decision `waive_hash_check`; a button of its own that takes a
+  second click to confirm) publishes it **without a hash check**: `hashCheckedAt` is set (the gate
+  opens), `hashCheckWaivedBy` records the admin, and the audit trail stamps
+  `photo_hash_check_waived` ("approved a photo without a hash check"), not the usual manual
+  approval. A message photo the classifier blurred stays blurred. The normal **Approve** is not
+  offered for a timed-out photo, and the server refuses it (`approve` on a timed-out row, and
+  `waive_hash_check` on any row that did not time out, both throw), so a hash check is never
+  skipped by the ordinary approval.
 - **Reject** is the table's usual manual rejection (a copy photo moves to Flagged Images, a
   completion photo and box art are detached and deleted, a message photo is removed by moderation
   and its sender told).
