@@ -874,6 +874,16 @@ function GroupBody({
         const single = segment.messages.length === 1;
         const reportable = (message: ThreadMessage) =>
           !own && !message.removed && message.attachmentId !== undefined;
+        // A photo may be reported as such only once the reader could see it;
+        // a pending or removed one reports its message (the caption).
+        const photoId = (message: ThreadMessage) => {
+          const view = message.attachment;
+          return view &&
+            !("kind" in view) &&
+            (view.status === "ready" || view.status === "blurred")
+            ? message.attachmentId
+            : undefined;
+        };
         const media = hideMedia ? (
           <CollapsedMedia label={t("circle.blockedPhoto")} />
         ) : (
@@ -895,7 +905,7 @@ function GroupBody({
                 body={first.body}
                 authorName={otherAuthor}
                 authorId={otherAuthorId}
-                attachmentId={first.attachmentId}
+                attachmentId={photoId(first)}
               >
                 {media}
               </MessageActions>
@@ -930,7 +940,7 @@ function GroupBody({
                   body={message.body}
                   authorName={otherAuthor}
                   authorId={otherAuthorId}
-                  attachmentId={message.attachmentId}
+                  attachmentId={photoId(message)}
                 >
                   {bubble}
                 </MessageActions>

@@ -261,7 +261,7 @@ describe("MessagePhotos", () => {
         authorName="Mara"
       />,
     );
-    expect(screen.getAllByText("Photo removed")).toHaveLength(2);
+    expect(screen.getAllByText("Removed by moderation")).toHaveLength(2);
     expect(screen.queryAllByRole("button")).toHaveLength(0);
     expect(container.querySelector("img")).toBeNull();
   });
@@ -283,11 +283,91 @@ describe("MessagePhotos", () => {
       />,
     );
     expect(screen.getByText("Photo no longer available")).toBeTruthy();
-    expect(screen.queryByText("Photo removed")).toBeNull();
+    expect(screen.queryByText("Removed by moderation")).toBeNull();
     expect(screen.queryAllByRole("button")).toHaveLength(0);
     const images = container.querySelectorAll("img");
     expect(images).toHaveLength(1);
     expect(images[0].getAttribute("src")).toBe("data:image/png;base64,BLUR");
+  });
+
+  it("pending, for the recipient: the blurhash behind 'Pending review', no image, no Show, no Report", () => {
+    const { container } = wrap(
+      <MessagePhotos
+        messages={[
+          photo("m1", {
+            status: "pending",
+            blurhash: "LEHV6nWB2yk8pyo0adR*.7kCMdnj",
+            w: 1600,
+            h: 1200,
+          }),
+        ]}
+        own={false}
+        authorName="Mara"
+      />,
+    );
+    expect(screen.getByRole("status").textContent).toBe("Pending review");
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
+    const images = container.querySelectorAll("img");
+    expect(images).toHaveLength(1);
+    expect(images[0].getAttribute("src")).toBe("data:image/png;base64,BLUR");
+  });
+
+  it("pending without a blurhash yet: a neutral placeholder with the same label", () => {
+    const { container } = wrap(
+      <MessagePhotos
+        messages={[photo("m1", { status: "pending" })]}
+        own={false}
+        authorName="Mara"
+      />,
+    );
+    expect(screen.getByText("Pending review")).toBeTruthy();
+    expect(container.querySelector("img")).toBeNull();
+  });
+
+  it("pending, the sender's own: their photo with 'Checking photo…'", () => {
+    const { container } = wrap(
+      <MessagePhotos
+        messages={[
+          photo("m1", {
+            status: "pending",
+            thumbUrl: "https://files.test/own.jpg",
+          }),
+        ]}
+        own
+        authorName="Mara"
+      />,
+    );
+    expect(screen.getByText("Checking photo…")).toBeTruthy();
+    expect(container.querySelector("img")?.getAttribute("src")).toBe(
+      "https://files.test/own.jpg",
+    );
+  });
+
+  it("rejected (own): the refusal card leaves the gallery; Ask for a review calls requestImageReview", async () => {
+    wrap(
+      <MessagePhotos
+        messages={[
+          photo("m1", READY),
+          photo("m2", { status: "rejected", reason: "flagged" }),
+        ]}
+        own
+        authorName="Mara"
+      />,
+    );
+    // One photo left in the gallery: no grid tile labels.
+    expect(screen.getByRole("button", { name: "Your photo" })).toBeTruthy();
+    expect(
+      screen.getByText(
+        "This photo wasn't sent: our automated check flagged it.",
+      ),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Ask for a review" }));
+    await waitFor(() =>
+      expect(mocks.mutation).toHaveBeenCalledWith(
+        "conversation/requestImageReview:requestImageReview",
+        { attachmentId: "att-m2" },
+      ),
+    );
   });
 
   it("groups photos into a grid: tiles named 'Photo n of 3, open', the first spanning the row", () => {
