@@ -1867,7 +1867,6 @@
       "remove": "Remove",
       "removeTitle": "Remove {name} from the household?",
       "removeBody": "Their puzzles leave the household with them, and they will no longer see yours.",
-      "member": "Member",
       "adminOnlyInvite": "Only the household admin can invite people.",
       "menuLabel": "Actions for {name}",
       "removeAction": "Remove from household"
@@ -1966,10 +1965,6 @@
       "members": "Members",
       "sharing": "Sharing",
       "settings": "Settings"
-    },
-    "header": {
-      "memberCount": "{count, plural, one {# member} other {# members}}",
-      "stackName": "your household"
     },
     "puzzles": {
       "defaultLabel": "Household default:",

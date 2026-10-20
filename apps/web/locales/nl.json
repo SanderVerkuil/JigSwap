@@ -1867,7 +1867,6 @@
       "remove": "Verwijderen",
       "removeTitle": "{name} uit het huishouden verwijderen?",
       "removeBody": "Hun puzzels verlaten het huishouden met hen mee, en ze zien die van jou niet meer.",
-      "member": "Lid",
       "adminOnlyInvite": "Alleen de beheerder van het huishouden kan mensen uitnodigen.",
       "menuLabel": "Acties voor {name}",
       "removeAction": "Uit het huishouden verwijderen"
@@ -1966,10 +1965,6 @@
       "members": "Leden",
       "sharing": "Delen",
       "settings": "Instellingen"
-    },
-    "header": {
-      "memberCount": "{count, plural, one {# lid} other {# leden}}",
-      "stackName": "je huishouden"
     },
     "puzzles": {
       "defaultLabel": "Standaard van het huishouden:",
