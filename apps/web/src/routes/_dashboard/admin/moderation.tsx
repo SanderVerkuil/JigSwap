@@ -28,6 +28,7 @@ import { QueueEmpty } from "@/components/admin/queue-empty";
 import { PageLoading } from "@/components/ui/loading";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  StickyTabsBar,
   TAB_TRIGGER_CLASS,
   TabCount,
   UNDERLINE_TABS_LIST_CLASS,
@@ -277,40 +278,42 @@ function ModerationPage() {
       <KpiRow />
 
       <Tabs defaultValue="submissions" className="gap-4">
-        <TabsList className={UNDERLINE_TABS_LIST_CLASS}>
-          <TabsTrigger value="submissions" className={TAB_TRIGGER_CLASS}>
-            <Inbox aria-hidden />
-            {t("tabs.submissions")}
-            <TabCount count={pending?.length} />
-          </TabsTrigger>
-          <TabsTrigger value="flagged" className={TAB_TRIGGER_CLASS}>
-            <Flag aria-hidden />
-            {t("tabs.flagged")}
-            <TabCount count={flagged?.length} />
-          </TabsTrigger>
-          <TabsTrigger value="unchecked" className={TAB_TRIGGER_CLASS}>
-            <ScanEye aria-hidden />
-            {t("tabs.unchecked")}
-            <TabCount count={unchecked?.length} />
-          </TabsTrigger>
-          <TabsTrigger value="hashMatches" className={TAB_TRIGGER_CLASS}>
-            <ShieldAlert aria-hidden />
-            {t("tabs.hashMatches")}
-            <TabCount
-              count={
-                csam?.escalations.filter((e) => e.status === "open").length
-              }
-            />
-          </TabsTrigger>
-          <TabsTrigger value="reports" className={TAB_TRIGGER_CLASS}>
-            <MessageSquareWarning aria-hidden />
-            {t("tabs.reports")}
-          </TabsTrigger>
-          <TabsTrigger value="activity" className={TAB_TRIGGER_CLASS}>
-            <History aria-hidden />
-            {t("tabs.activity")}
-          </TabsTrigger>
-        </TabsList>
+        <StickyTabsBar>
+          <TabsList className={UNDERLINE_TABS_LIST_CLASS}>
+            <TabsTrigger value="submissions" className={TAB_TRIGGER_CLASS}>
+              <Inbox aria-hidden />
+              {t("tabs.submissions")}
+              <TabCount count={pending?.length} />
+            </TabsTrigger>
+            <TabsTrigger value="flagged" className={TAB_TRIGGER_CLASS}>
+              <Flag aria-hidden />
+              {t("tabs.flagged")}
+              <TabCount count={flagged?.length} />
+            </TabsTrigger>
+            <TabsTrigger value="unchecked" className={TAB_TRIGGER_CLASS}>
+              <ScanEye aria-hidden />
+              {t("tabs.unchecked")}
+              <TabCount count={unchecked?.length} />
+            </TabsTrigger>
+            <TabsTrigger value="hashMatches" className={TAB_TRIGGER_CLASS}>
+              <ShieldAlert aria-hidden />
+              {t("tabs.hashMatches")}
+              <TabCount
+                count={
+                  csam?.escalations.filter((e) => e.status === "open").length
+                }
+              />
+            </TabsTrigger>
+            <TabsTrigger value="reports" className={TAB_TRIGGER_CLASS}>
+              <MessageSquareWarning aria-hidden />
+              {t("tabs.reports")}
+            </TabsTrigger>
+            <TabsTrigger value="activity" className={TAB_TRIGGER_CLASS}>
+              <History aria-hidden />
+              {t("tabs.activity")}
+            </TabsTrigger>
+          </TabsList>
+        </StickyTabsBar>
 
         <TabsContent value="submissions">
           {pending === undefined ? (

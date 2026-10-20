@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  StickyTabsBar,
   TAB_TRIGGER_CLASS,
   TabCount,
   UNDERLINE_TABS_LIST_CLASS,
@@ -285,41 +286,43 @@ export function HouseholdDetails({
         value={activeTab}
         onValueChange={(value) => onTabChange(value as HouseholdTab)}
       >
-        <TabsList className={UNDERLINE_TABS_LIST_CLASS}>
-          <TabsTrigger value="puzzles" className={HOUSEHOLD_TAB_CLASS}>
-            {t("tabs.puzzles")}
-          </TabsTrigger>
-          <TabsTrigger
-            value="members"
-            className={HOUSEHOLD_TAB_CLASS}
-            // For members, the tour's invite step explains who invites; the note itself sits in
-            // this (unmounted until opened) tab.
-            data-tour={isAdmin ? undefined : "household-invite"}
-          >
-            {t("tabs.members")}
-            <TabCount count={household.members.length} />
-            {/* Requests to join wait on this (not default) tab: a dot tells the admin. */}
-            {isAdmin && household.joinRequests.length > 0 && (
-              <span className="bg-jigsaw-primary size-2 rounded-full">
-                <span className="sr-only">
-                  {t("pending.requestsDot", {
-                    count: household.joinRequests.length,
-                  })}
+        <StickyTabsBar>
+          <TabsList className={UNDERLINE_TABS_LIST_CLASS}>
+            <TabsTrigger value="puzzles" className={HOUSEHOLD_TAB_CLASS}>
+              {t("tabs.puzzles")}
+            </TabsTrigger>
+            <TabsTrigger
+              value="members"
+              className={HOUSEHOLD_TAB_CLASS}
+              // For members, the tour's invite step explains who invites; the note itself sits in
+              // this (unmounted until opened) tab.
+              data-tour={isAdmin ? undefined : "household-invite"}
+            >
+              {t("tabs.members")}
+              <TabCount count={household.members.length} />
+              {/* Requests to join wait on this (not default) tab: a dot tells the admin. */}
+              {isAdmin && household.joinRequests.length > 0 && (
+                <span className="bg-jigsaw-primary size-2 rounded-full">
+                  <span className="sr-only">
+                    {t("pending.requestsDot", {
+                      count: household.joinRequests.length,
+                    })}
+                  </span>
                 </span>
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger
-            value="sharing"
-            className={HOUSEHOLD_TAB_CLASS}
-            data-tour="household-my-copies"
-          >
-            {t("tabs.sharing")}
-          </TabsTrigger>
-          <TabsTrigger value="settings" className={HOUSEHOLD_TAB_CLASS}>
-            {t("tabs.settings")}
-          </TabsTrigger>
-        </TabsList>
+              )}
+            </TabsTrigger>
+            <TabsTrigger
+              value="sharing"
+              className={HOUSEHOLD_TAB_CLASS}
+              data-tour="household-my-copies"
+            >
+              {t("tabs.sharing")}
+            </TabsTrigger>
+            <TabsTrigger value="settings" className={HOUSEHOLD_TAB_CLASS}>
+              {t("tabs.settings")}
+            </TabsTrigger>
+          </TabsList>
+        </StickyTabsBar>
 
         <TabsContent value="puzzles" className="mt-4">
           <HouseholdPuzzles

@@ -55,9 +55,13 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               {/* ONE scroll region holds the page head + content, so content scrolls UNDER the
                   glass head (sticky top-0). Clipped to the card's rounded corners by SidebarInset's
                   overflow-hidden. */}
+              {/* --app-sticky-top: where sticky page content (tab bars) sticks — below the mobile
+                  top bar on phones, below the page head from md (see sticky-offset.ts). Phones
+                  clip rather than hide x-overflow: `hidden` would make this a scroll container
+                  that never scrolls (the document does), and sticky children would never stick. */}
               <div
                 data-scroll-restoration-id={APP_SCROLL_REGION_ID}
-                className="flex-1 overflow-x-hidden md:min-h-0 md:overflow-y-auto md:[scrollbar-gutter:stable]"
+                className="flex-1 overflow-x-clip [--app-sticky-top:var(--mobile-top-bar-height,0px)] md:min-h-0 md:overflow-x-hidden md:overflow-y-auto md:[scrollbar-gutter:stable] md:[--app-sticky-top:var(--page-head-height,0px)]"
               >
                 <PageHead />
                 <ContentArea>{children}</ContentArea>

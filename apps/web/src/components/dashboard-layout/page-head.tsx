@@ -15,6 +15,7 @@ import { ChevronRight } from "lucide-react";
 import { useTranslations } from "use-intl";
 import { usePageHeaderContent } from "./page-header-slot";
 import { getNavGroup, getRouteMeta } from "./route-meta";
+import { PAGE_HEAD_HEIGHT_VAR, useHeightCssVar } from "./sticky-offset";
 
 export function PageHead() {
   const pathname = usePathname();
@@ -26,6 +27,8 @@ export function PageHead() {
     crumbs,
     actions: headerActions,
   } = usePageHeaderContent();
+  // Sticky page content (tab bars) sticks just below this head.
+  const measureRef = useHeightCssVar(PAGE_HEAD_HEIGHT_VAR);
 
   if (!meta) {
     return null;
@@ -58,7 +61,10 @@ export function PageHead() {
     // Glass head: sticks to the top of the shared scroll region and frosts the content scrolling
     // beneath it. Solid bg is the fallback; where backdrop-filter is supported the bg goes
     // translucent so the blur reads. z-20 keeps it above the scrolling content.
-    <div className="bg-background supports-[backdrop-filter]:bg-background/70 sticky top-0 z-20 hidden border-b px-4 pt-3.5 pb-3 backdrop-blur-md md:block md:px-7">
+    <div
+      ref={measureRef}
+      className="bg-background supports-[backdrop-filter]:bg-background/70 sticky top-0 z-20 hidden border-b px-4 pt-3.5 pb-3 backdrop-blur-md md:block md:px-7"
+    >
       {crumbs && crumbs.length > 0 ? (
         // Explicit trail published by the page (deep routes).
         <nav

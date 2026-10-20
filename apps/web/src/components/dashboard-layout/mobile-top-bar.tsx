@@ -24,6 +24,7 @@ import {
   isImmersiveMobileRoute,
 } from "./route-meta";
 import { ShellUserButton } from "./shell-user-button";
+import { MOBILE_TOP_BAR_HEIGHT_VAR, useHeightCssVar } from "./sticky-offset";
 
 // Shared 44px touch target for every control in the bar.
 const tapTarget =
@@ -55,12 +56,17 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   const title =
     publishedTitle ??
     (meta && !isHome ? t(`pages.${meta.pageKey}.title`) : undefined);
+  // Sticky page content (tab bars) sticks just below this bar.
+  const measureRef = useHeightCssVar(MOBILE_TOP_BAR_HEIGHT_VAR);
 
   // The thread header (with its own back link) replaces this bar there.
   if (isImmersiveMobileRoute(pathname)) return null;
 
   return (
-    <header className="sticky top-0 z-30 shrink-0 border-b bg-card pt-[env(safe-area-inset-top)] md:hidden">
+    <header
+      ref={measureRef}
+      className="sticky top-0 z-30 shrink-0 border-b bg-card pt-[env(safe-area-inset-top)] md:hidden"
+    >
       <div className="flex h-14 items-center gap-1 pr-2 pl-1.5">
         {group ? (
           <Link
