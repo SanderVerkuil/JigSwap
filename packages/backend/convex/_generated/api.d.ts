@@ -282,6 +282,7 @@ import type * as lib_imageModeration_backfillBoxArtHashCheckStore from "../lib/i
 import type * as lib_imageModeration_backfillStripMetadata from "../lib/imageModeration/backfillStripMetadata.js";
 import type * as lib_imageModeration_backfillStripMetadataStore from "../lib/imageModeration/backfillStripMetadataStore.js";
 import type * as lib_imageModeration_blobMetadata from "../lib/imageModeration/blobMetadata.js";
+import type * as lib_imageModeration_hashRecheckPool from "../lib/imageModeration/hashRecheckPool.js";
 import type * as lib_imageModeration_moderationPool from "../lib/imageModeration/moderationPool.js";
 import type * as lib_imageModeration_quarantine from "../lib/imageModeration/quarantine.js";
 import type * as lib_imageModeration_rescreenStore from "../lib/imageModeration/rescreenStore.js";
@@ -825,6 +826,7 @@ declare const fullApi: ApiFromModules<{
   "lib/imageModeration/backfillStripMetadata": typeof lib_imageModeration_backfillStripMetadata;
   "lib/imageModeration/backfillStripMetadataStore": typeof lib_imageModeration_backfillStripMetadataStore;
   "lib/imageModeration/blobMetadata": typeof lib_imageModeration_blobMetadata;
+  "lib/imageModeration/hashRecheckPool": typeof lib_imageModeration_hashRecheckPool;
   "lib/imageModeration/moderationPool": typeof lib_imageModeration_moderationPool;
   "lib/imageModeration/quarantine": typeof lib_imageModeration_quarantine;
   "lib/imageModeration/rescreenStore": typeof lib_imageModeration_rescreenStore;

@@ -2,39 +2,45 @@ import type { WorkId } from "@convex-dev/workpool";
 import workpoolTest from "@convex-dev/workpool/test";
 import type { TestConvex } from "convex-test";
 import type { GenericSchema, SchemaDefinition } from "convex/server";
+import { hashRecheckPool } from "../convex/lib/imageModeration/hashRecheckPool";
 import { moderationPool } from "../convex/lib/imageModeration/moderationPool";
 
 type AnyTestConvex = TestConvex<SchemaDefinition<GenericSchema, boolean>>;
 
-// The pool jobs enqueued since the current test's withModerationPool, with when each is due.
+// The pool jobs enqueued since the current test's withModerationPool (on either pool), with when
+// each is due.
 // Tests in a file run one after another, so one list (reset per test instance) is enough.
-let enqueued: { id: WorkId; dueAt: number }[] = [];
+type Pool = typeof moderationPool;
+let enqueued: { pool: Pool; id: WorkId; dueAt: number }[] = [];
 let tracking = false;
 
-// Record every enqueue on the moderation pool, so settleDueScheduled can ask the pool about it.
+// Record every enqueue on both pools, so settleDueScheduled can ask the pool about it.
 const trackEnqueues = () => {
   if (tracking) return;
   tracking = true;
-  const enqueue = moderationPool.enqueueAction.bind(moderationPool);
-  moderationPool.enqueueAction = (async (
-    ...args: Parameters<typeof enqueue>
-  ) => {
-    const id = await enqueue(...args);
-    const runAfter = (args[3] as { runAfter?: number } | undefined)?.runAfter;
-    enqueued.push({ id, dueAt: Date.now() + (runAfter ?? 0) });
-    return id;
-  }) as typeof moderationPool.enqueueAction;
+  for (const pool of [moderationPool, hashRecheckPool]) {
+    const enqueue = pool.enqueueAction.bind(pool);
+    pool.enqueueAction = (async (...args: Parameters<typeof enqueue>) => {
+      const id = await enqueue(...args);
+      const runAfter = (args[3] as { runAfter?: number } | undefined)?.runAfter;
+      enqueued.push({ pool, id, dueAt: Date.now() + (runAfter ?? 0) });
+      return id;
+    }) as Pool["enqueueAction"];
+  }
 };
 
 // Every photo-moderation check runs on the moderationWorkpool component
-// (convex/lib/imageModeration/moderationPool.ts), so a convex-test instance that uploads, re-checks
-// or restores a photo needs it registered under the name convex.config.ts gives it.
+// (convex/lib/imageModeration/moderationPool.ts), and every CSAM hash re-check on the
+// hashRecheckWorkpool component (hashRecheckPool.ts), so a convex-test instance that uploads,
+// re-checks or restores a photo needs both registered under the names convex.config.ts gives them.
 //
-// The pool runs one check at a time here: convex-test serialises transactions globally, and two
+// Each pool runs one job at a time here: convex-test serialises transactions globally, and two
 // moderation actions storing blobs at once trip its "Write outside of transaction" guard.
 export const withModerationPool = <T extends AnyTestConvex>(t: T): T => {
   workpoolTest.register(t, "moderationWorkpool");
+  workpoolTest.register(t, "hashRecheckWorkpool");
   moderationPool.options.maxParallelism = 1;
+  hashRecheckPool.options.maxParallelism = 1;
   trackEnqueues();
   enqueued = [];
   return t;
@@ -45,11 +51,8 @@ export const withModerationPool = <T extends AnyTestConvex>(t: T): T => {
 const poolBusy = async (t: AnyTestConvex): Promise<boolean> => {
   if (enqueued.length === 0) return false;
   const jobs = [...enqueued];
-  const statuses = await t.run((ctx) =>
-    moderationPool.statusBatch(
-      ctx,
-      jobs.map((job) => job.id),
-    ),
+  const statuses = await t.run(async (ctx) =>
+    Promise.all(jobs.map((job) => job.pool.status(ctx, job.id))),
   );
   return statuses.some(
     (status, i) =>

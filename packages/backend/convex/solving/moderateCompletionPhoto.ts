@@ -28,7 +28,6 @@ const steps = imageModerationSteps({
   setVerdict: internal.solving.completionModerationStore.setModerationVerdict,
   quarantine: internal.solving.completionModerationStore.quarantineImage,
   setHashCheck: internal.solving.completionModerationStore.setHashCheck,
-  recheck: internal.solving.moderateCompletionPhoto.recheckHashes,
 });
 
 export const moderateCompletionPhoto = internalAction({
@@ -44,9 +43,20 @@ export const moderateCompletionPhoto = internalAction({
     runModerationJob(ctx, steps, { imageId, pooled: pooled ?? false }),
 });
 
-// Re-check the stored hashes of a photo whose CSAM hash check was unavailable (backoff).
+// Re-check the stored hashes of a photo whose CSAM hash check was unavailable: a job on the hash
+// re-check Workpool (lib/imageModeration/hashRecheckPool), armed with its 1-based `attempt`.
+// Without `pooled` it is a re-check scheduled before the pool existed: it still runs, and hands
+// the next attempt to the pool.
 export const recheckHashes = internalAction({
-  args: { imageId: v.id("completionImages"), attempt: v.optional(v.number()) },
-  handler: async (ctx, { imageId, attempt }): Promise<void> =>
-    runHashRecheck(ctx, steps, { imageId, attempt: attempt ?? 1 }),
+  args: {
+    imageId: v.id("completionImages"),
+    attempt: v.optional(v.number()),
+    pooled: v.optional(v.boolean()),
+  },
+  handler: async (ctx, { imageId, attempt, pooled }): Promise<void> =>
+    runHashRecheck(ctx, steps, {
+      imageId,
+      attempt: attempt ?? 1,
+      pooled: pooled ?? false,
+    }),
 });

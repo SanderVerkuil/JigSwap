@@ -40,7 +40,7 @@ export const moderationTableValidator = v.union(
 export type ModerationTable = Infer<typeof moderationTableValidator>;
 
 /** The Convex table behind each moderation table name. */
-const TABLE_NAME = {
+export const TABLE_NAME = {
   copy: "ownedPuzzleImages",
   completion: "completionImages",
   boxArt: "boxArtUploads",

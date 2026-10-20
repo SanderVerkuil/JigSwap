@@ -844,7 +844,7 @@ describe("unavailable hash check: stored hashes, re-checks, held unpublished (M1
     return { ...seeded, row, upload };
   };
 
-  test("the hashes of the original and the re-encode are stored and a re-check is scheduled in ~15 min", async () => {
+  test("the hashes of the original and the re-encode are stored and a re-check is armed in ~15 min", async () => {
     const t = withModerationPool(convexTest(schema, modules));
     const { row, upload } = await unavailableUpload(t);
 
@@ -857,14 +857,9 @@ describe("unavailable hash check: stored hashes, re-checks, held unpublished (M1
     });
     // The original was still replaced by its re-encode (no indefinite retention).
     expect(await blobExists(t, upload.fileId)).toBe(false);
-    const jobs = await t.run((ctx) =>
-      ctx.db.system.query("_scheduled_functions").collect(),
-    );
-    const recheck = jobs.find(
-      (j) => j.state.kind === "pending" && j.name.includes("recheckHashes"),
-    );
-    expect(recheck?.args[0]).toEqual({ imageId: row._id, attempt: 1 });
-    expect(recheck!.scheduledTime - Date.now()).toBeGreaterThan(14 * 60_000);
+    // The first re-check is armed on the hash re-check Workpool (hashRecheckPool).
+    expect(row.hashRecheckAttempt).toBe(1);
+    expect(row.hashRecheckDueAt! - Date.now()).toBeGreaterThan(14 * 60_000);
 
     const listed = await asAdmin(t).query(
       api.admin.listCsamEscalations.listCsamEscalations,
@@ -882,6 +877,7 @@ describe("unavailable hash check: stored hashes, re-checks, held unpublished (M1
     await t.action(internal.library.moderatePhoto.recheckHashes, {
       imageId: row._id,
       attempt: 1,
+      pooled: true,
     });
 
     const after = await t.run((ctx) => ctx.db.get(row._id));
@@ -909,6 +905,7 @@ describe("unavailable hash check: stored hashes, re-checks, held unpublished (M1
     await t.action(internal.library.moderatePhoto.recheckHashes, {
       imageId: row._id,
       attempt: 1,
+      pooled: true,
     });
 
     const after = await t.run((ctx) => ctx.db.get(row._id));
@@ -924,25 +921,20 @@ describe("unavailable hash check: stored hashes, re-checks, held unpublished (M1
   test("still unavailable: backs off (doubling, capped at 24 h)", async () => {
     const t = withModerationPool(convexTest(schema, modules));
     const { row } = await unavailableUpload(t);
+    await t.run((ctx) => ctx.db.patch(row._id, { hashRecheckAttempt: 9 }));
 
     await t.action(internal.library.moderatePhoto.recheckHashes, {
       imageId: row._id,
       attempt: 9,
+      pooled: true,
     });
 
-    const jobs = await t.run((ctx) =>
-      ctx.db.system.query("_scheduled_functions").collect(),
-    );
-    const next = jobs.find(
-      (j) =>
-        j.state.kind === "pending" &&
-        j.name.includes("recheckHashes") &&
-        (j.args[0] as { attempt: number }).attempt === 10,
-    );
-    expect(next).toBeDefined();
-    const delay = next!.scheduledTime - Date.now();
+    const after = await t.run((ctx) => ctx.db.get(row._id));
+    expect(after?.hashRecheckAttempt).toBe(10);
+    const delay = after!.hashRecheckDueAt! - Date.now();
     expect(delay).toBeGreaterThan(23 * 3_600_000);
     expect(delay).toBeLessThanOrEqual(24 * 3_600_000);
+    expect(after?.hashCheckedAt).toBeUndefined();
   });
 
   test("provider none: hashCheckedAt is set at once, nothing waits", async () => {

@@ -8,6 +8,9 @@ import { v } from "convex/values";
 //   pipeline runs).
 // - `pendingHashes`: MD5 + SHA-1 of the original and the re-encode, kept only while the check is
 //   "unavailable" so it can be retried after the original is gone (lib/imageModeration).
+// - `hashRecheckAttempt` / `hashRecheckDueAt`: the one re-check of those hashes that is current
+//   (1-based) and when it is due (lib/imageModeration/hashRecheckPool). A re-check job whose
+//   attempt is not the row's is stale and does nothing.
 //
 // GATE: no read model issues a storage URL for a row until its hash check has passed. Convex
 // storage URLs do not expire, so a URL handed out before a match would keep serving the image.
@@ -19,6 +22,8 @@ export const hashCheckFields = {
   hashCheckedAt: v.optional(v.number()),
   hashCheckPendingSince: v.optional(v.number()),
   pendingHashes: v.optional(v.array(imageHashPair)),
+  hashRecheckAttempt: v.optional(v.number()),
+  hashRecheckDueAt: v.optional(v.number()),
 };
 
 /** Whether the row's hash check has passed (or the row predates the gate): it may be served. */
