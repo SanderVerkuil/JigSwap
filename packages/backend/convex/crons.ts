@@ -12,4 +12,13 @@ crons.daily(
   {},
 );
 
+// Photos held for their CSAM hash check whose re-check was lost (none armed, or overdue by a day):
+// re-armed on the hash re-check Workpool (lib/imageModeration/hashRecheckPool).
+crons.daily(
+  "re-arm lost hash re-checks",
+  { hourUTC: 3, minuteUTC: 45 },
+  internal.lib.imageModeration.hashRecheckPool.sweepLostHashRechecks,
+  {},
+);
+
 export default crons;

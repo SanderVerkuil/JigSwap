@@ -30,6 +30,7 @@ import {
   type ImageFormat,
   type ImageGuardFailure,
 } from "./guards";
+import { hashRecheckDelayMs } from "./hashRecheckPool";
 import {
   enqueueImageModeration,
   MODERATION_HANDOFF_DELAY_MS,
@@ -217,37 +218,12 @@ export interface ImageModerationSteps<R extends ModerationRow> {
     },
     unknown
   >;
-  /** Which moderation table this is (the pool job and the attempt counter use it). */
+  /**
+   * Which moderation table this is (the pool jobs, the attempt counter and the hash re-check use
+   * it; each table's `recheckHashes` action is the hash re-check pool's job, hashRecheckPool).
+   */
   table: ModerationTable;
-  /** The table's hash re-check action (runs `runHashRecheck`), scheduled while unavailable. */
-  recheck: FunctionReference<
-    "action",
-    "internal",
-    { imageId: string; attempt?: number },
-    unknown
-  >;
 }
-
-/**
- * Backoff for re-checking the STORED hashes of a photo whose hash check was "unavailable": 15
- * minutes after the upload, doubling up to 24 hours, then every 24 hours for as long as the row
- * is still waiting. Meanwhile the photo stays unpublished (no hashCheckedAt => no URL).
- */
-export const HASH_RECHECK_DELAYS_MS: readonly number[] = [
-  15 * 60_000,
-  30 * 60_000,
-  60 * 60_000,
-  2 * 60 * 60_000,
-  4 * 60 * 60_000,
-  8 * 60 * 60_000,
-  16 * 60 * 60_000,
-  24 * 60 * 60_000,
-];
-
-/** The delay before re-check `attempt` (1-based). */
-export const hashRecheckDelayMs = (attempt: number): number =>
-  HASH_RECHECK_DELAYS_MS[attempt - 1] ??
-  HASH_RECHECK_DELAYS_MS[HASH_RECHECK_DELAYS_MS.length - 1];
 
 /** Declare a table's steps once (typed, so `describe` sees the row type), for both actions. */
 export const imageModerationSteps = <R extends ModerationRow>(
@@ -607,8 +583,8 @@ const runAttempt = async <R extends ModerationRow>(
 
     // CSAM hash check until the row has passed one, BEFORE any refusal, swap or classification.
     // Only the outcome is logged, never the hashes. Once "unavailable" has stored the hashes,
-    // the scheduled re-check (runHashRecheck) owns the outcome. A no_match opens the gate only
-    // after the swap below, so the upload as sent is never served.
+    // the hash re-check (runHashRecheck, on its own Workpool: hashRecheckPool) owns the outcome.
+    // A no_match opens the gate only after the swap below, so the upload as sent is never served.
     let openGate = false;
     if (row.hashCheckedAt === undefined && row.pendingHashes === undefined) {
       const variants = encoded
@@ -644,12 +620,12 @@ const runAttempt = async <R extends ModerationRow>(
             status: "unavailable",
             hashes: variants,
           });
-          const delayMs = hashRecheckDelayMs(1);
-          await ctx.scheduler.runAfter(delayMs, steps.recheck, {
-            imageId,
-            attempt: 1,
-          });
-          event.hash_recheck_in_ms = delayMs;
+          // A crash before this lands is caught by the daily sweep (sweepLostHashRechecks).
+          await ctx.runMutation(
+            internal.lib.imageModeration.hashRecheckPool.startHashRecheck,
+            { table: steps.table, imageId },
+          );
+          event.hash_recheck_in_ms = hashRecheckDelayMs(1);
         }
       }
     }
@@ -746,16 +722,25 @@ const runAttempt = async <R extends ModerationRow>(
 };
 
 /**
- * Re-check the STORED hashes of a photo whose hash check was "unavailable" (1-based `attempt`).
- * no_match opens the publication gate; unavailable re-schedules with HASH_RECHECK_DELAYS_MS; a
- * match quarantines exactly like the live pipeline, preserving the blob the row holds now (the
- * re-encode: the original was deleted after the swap, which the escalation records as
- * `originalDiscarded`). Never throws.
+ * Re-check the STORED hashes of a photo whose hash check was "unavailable" (1-based `attempt`),
+ * as a job on the hash re-check Workpool (`pooled`; hashRecheckPool). A job that is not the row's
+ * current re-check does nothing (isCurrentHashRecheck). no_match opens the publication gate;
+ * unavailable arms the next attempt on HASH_RECHECK_DELAYS_MS; a match quarantines exactly like
+ * the live pipeline, preserving the blob the row holds now (the re-encode: the original was
+ * deleted after the swap, which the escalation records as `originalDiscarded`). An error THROWS
+ * inside the pool (after its wide event), so the pool retries it and, once it gives up, arms the
+ * next attempt (onHashRecheckComplete). Outside the pool (a re-check scheduled before the pool
+ * existed) it never throws: the next attempt is armed on the pool, and an error is left to the
+ * daily sweep.
  */
 export const runHashRecheck = async <R extends ModerationRow>(
   ctx: ActionCtx,
   steps: ImageModerationSteps<R>,
-  { imageId, attempt }: { imageId: string; attempt: number },
+  {
+    imageId,
+    attempt,
+    pooled,
+  }: { imageId: string; attempt: number; pooled: boolean },
 ): Promise<void> => {
   const startedAt = Date.now();
   const hashConfig = readCsamHashCheckConfig(process.env);
@@ -766,6 +751,7 @@ export const runHashRecheck = async <R extends ModerationRow>(
     attempt,
     csam_hashcheck_provider: hashConfig.provider,
     csam_hashcheck_config: hashConfig.status,
+    pooled,
   };
   try {
     const row = await ctx.runQuery(steps.load, { imageId });
@@ -776,6 +762,16 @@ export const runHashRecheck = async <R extends ModerationRow>(
       !row.pendingHashes
     ) {
       event.result = "skipped";
+      return;
+    }
+    // Exactly one current re-check per row: a superseded job (a later attempt was armed, or the
+    // sweep re-armed the row) must not check, quarantine or arm anything.
+    const current = await ctx.runQuery(
+      internal.lib.imageModeration.hashRecheckPool.isCurrentHashRecheck,
+      { table: steps.table, imageId, attempt, pooled },
+    );
+    if (!current) {
+      event.result = "skipped_stale";
       return;
     }
     const hashCheck = await checkAllHashes(
@@ -825,15 +821,16 @@ export const runHashRecheck = async <R extends ModerationRow>(
       return;
     }
     event.outcome = "error";
-    const delayMs = hashRecheckDelayMs(attempt + 1);
-    await ctx.scheduler.runAfter(delayMs, steps.recheck, {
-      imageId,
-      attempt: attempt + 1,
-    });
-    event.hash_recheck_in_ms = delayMs;
+    const armed = await ctx.runMutation(
+      internal.lib.imageModeration.hashRecheckPool.continueHashRecheck,
+      { table: steps.table, imageId, attempt, legacy: !pooled },
+    );
+    event.hash_recheck_in_ms = armed ? hashRecheckDelayMs(attempt + 1) : null;
   } catch (error) {
     event.outcome = "error";
     event.error = { stage: "recheck", message: errMsg(error) };
+    // Inside the pool: let it retry this attempt (and, when it gives up, arm the next one).
+    if (pooled) throw error;
   } finally {
     event.duration_ms = Date.now() - startedAt;
     await ingestToAxiom(logEvent(event));

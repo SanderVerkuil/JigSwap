@@ -26,7 +26,6 @@ const steps = imageModerationSteps({
     internal.conversation.attachmentModerationStore.setModerationVerdict,
   quarantine: internal.conversation.attachmentModerationStore.quarantineImage,
   setHashCheck: internal.conversation.attachmentModerationStore.setHashCheck,
-  recheck: internal.conversation.moderateMessageImage.recheckHashes,
 });
 
 export const moderateMessageImage = internalAction({
@@ -42,11 +41,20 @@ export const moderateMessageImage = internalAction({
     runModerationJob(ctx, steps, { imageId, pooled: pooled ?? false }),
 });
 
+// Re-check the stored hashes of a photo whose CSAM hash check was unavailable: a job on the hash
+// re-check Workpool (lib/imageModeration/hashRecheckPool), armed with its 1-based `attempt`.
+// Without `pooled` it is a re-check scheduled before the pool existed: it still runs, and hands
+// the next attempt to the pool.
 export const recheckHashes = internalAction({
   args: {
     imageId: v.id("messageAttachments"),
     attempt: v.optional(v.number()),
+    pooled: v.optional(v.boolean()),
   },
-  handler: async (ctx, { imageId, attempt }): Promise<void> =>
-    runHashRecheck(ctx, steps, { imageId, attempt: attempt ?? 1 }),
+  handler: async (ctx, { imageId, attempt, pooled }): Promise<void> =>
+    runHashRecheck(ctx, steps, {
+      imageId,
+      attempt: attempt ?? 1,
+      pooled: pooled ?? false,
+    }),
 });

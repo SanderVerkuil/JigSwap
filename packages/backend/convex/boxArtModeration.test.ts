@@ -269,6 +269,7 @@ describe("box art: hash check unavailable, then a match on re-check", () => {
     await t.action(internal.catalog.moderateBoxArt.recheckHashes, {
       imageId,
       attempt: 1,
+      pooled: true,
     });
   };
 
@@ -349,6 +350,7 @@ describe("box art: hash check unavailable, then a match on re-check", () => {
     await t.action(internal.catalog.moderateBoxArt.recheckHashes, {
       imageId: listing._id,
       attempt: 1,
+      pooled: true,
     });
 
     expect(await imageOf(t, puzzleId)).toMatch(/^https?:\/\//);

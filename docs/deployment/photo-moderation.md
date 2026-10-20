@@ -41,8 +41,44 @@ photos** with its reason ("The check did not complete", "Still unchecked after 2
 classifier's reason), where an admin can **Check again**, approve or reject it. An `unscored`
 message photo is delivered blurred and labelled "Not checked", as before.
 
-The CSAM hash re-check (`HASH_RECHECK_DELAYS_MS`, when the hash service was unavailable) is a
-separate chain and still runs on the Convex scheduler.
+## CSAM hash re-checks
+
+When the CSAM hash service cannot answer ("unavailable"), the pipeline stores the MD5 + SHA-1 of the
+original and the re-encode on the row (`pendingHashes`), carries on with classification, and keeps
+the photo unpublished: no URL is issued, to anyone, until a hash check has passed. Those stored
+hashes are then checked again by `lib/imageModeration/hashRecheckPool.ts`:
+
+- **Schedule:** 15 and 30 minutes, 1, 2, 4, 8 and 16 hours, then every 24 hours
+  (`HASH_RECHECK_DELAYS_MS`). There is no last re-check: a photo keeps waiting, and keeps being
+  re-checked daily, for as long as the service is unavailable. no_match publishes it; a match
+  quarantines it and raises a CSAM escalation exactly like a match on upload (the bytes are
+  preserved under a new blob, and the uploader is told nothing).
+- **Its own Workpool**, the `hashRecheckWorkpool` component, separate from the moderation pool: at
+  most 2 re-checks at once (`HASH_RECHECK_POOL_PARALLELISM`). The re-checks talk to the hash
+  service, whose limits are not the classifier's. After an outage every waiting photo's re-check
+  comes due together, and that backlog must not take the 4 classifier slots that uploads need.
+- **One current re-check per photo:** the row records the current attempt and when it is due
+  (`hashRecheckAttempt`, `hashRecheckDueAt`). A re-check is armed with a compare-and-set on that
+  attempt, in the same transaction as the enqueue, so a re-check that runs twice arms only one
+  next attempt. A job whose attempt is no longer the row's does nothing.
+- **Crashes:** a re-check that throws or crashes (timeout, restart, deploy) is retried by the pool
+  about 1 and 5 minutes later (`HASH_RECHECK_RETRY`, 3 tries). When the pool gives up,
+  `onHashRecheckComplete` arms the next attempt on the schedule, as if the service had answered
+  "unavailable". The photo stays waiting and is never left without a re-check.
+- **Backstop:** a daily cron (03:45 UTC) runs `hashRecheckPool.sweepLostHashRechecks` over all four
+  tables (the `by_hash_check_pending` index, 100 rows per run). It re-arms, to run at once, a
+  waiting photo that has no re-check armed, or whose current one was due more than 24 hours ago.
+
+What admins see: a photo waiting on its hash check is counted on **Admin → Moderation → Hash
+matches** ("Hash check unreachable: N photos waiting, unpublished", with the oldest wait). It is not in **Unchecked photos** when the
+classifier approved it: there is nothing for an admin to decide, and nobody can publish it before
+the hash check passes. A waiting photo that the classifier could not score does appear there,
+without a preview, and cannot be approved or rejected until its hash check has passed. The 24-hour
+stalled sweep only looks at photos whose classifier check is still `pending`, so it leaves a
+photo that is only waiting on its hash check alone.
+
+The hash check is not configured on dev or prod today (`CSAM_HASHCHECK_PROVIDER` unset means
+"none", which answers no_match at once), so no photo waits and none of this runs until it is.
 
 ## Rollout: checks in flight at deploy time
 
@@ -50,6 +86,12 @@ Retries scheduled by the previous code (`moderatePhoto` and friends with an `att
 still run after the deploy: the actions keep accepting `attempt`, ignore it, and hand a retry to
 the pool instead of scheduling one. A row whose old retry chain was lost before the deploy is
 stamped `stalled` by the first daily sweep after it is 24 hours old. Nothing to run by hand.
+
+Hash re-checks scheduled by the previous code (`recheckHashes` with an `attempt` and no `pooled`)
+also still run: while the photo has no re-check armed on the pool, such a re-check checks the
+hashes and hands the next attempt to the pool; once the pool owns the photo, it does nothing. A
+waiting photo whose old chain was lost is re-armed by the first daily sweep. Nothing to run by
+hand.
 
 ## Monitoring
 
@@ -62,11 +104,19 @@ row:
   `unscored_reason`, `stamped`).
 - `imageModeration.stalledSweep`: one per sweep page (`table`, `scanned`, `stamped`,
   `stamped_image_ids`).
+- `imageModeration.hashRecheckFailed`: the pool gave up on a hash re-check (`attempt`,
+  `result_kind`, `error`, `rearmed`, `next_recheck_in_ms`).
+- `imageModeration.hashRecheckSweep`: one per sweep page (`table`, `scanned`, `waiting`,
+  `rearmed`, `rearmed_image_ids`).
+
+Each hash re-check logs `<table event>.hashRecheck` (for example `library.moderatePhoto.hashRecheck`)
+with `attempt`, `pooled` and `csam_hashcheck_status`, or `result: "skipped_stale"` for a job that
+was superseded. On a match it carries the escalation id only.
 
 A steady trickle of either means checks are being lost and is worth a look. The pool itself logs a
 periodic `{"component":"workpool","event":"report"}` line with its backlog and failure rate; the
 `@convex-dev/workpool` README has ready-made Axiom queries for it.
 
 ```
-['jigswap'] | where event in ("imageModeration.checkFailed","imageModeration.stalledSweep") and outcome == "error" | summarize count() by event, bin(_time, 1d)
+['jigswap'] | where event in ("imageModeration.checkFailed","imageModeration.stalledSweep","imageModeration.hashRecheckFailed","imageModeration.hashRecheckSweep") and outcome == "error" | summarize count() by event, bin(_time, 1d)
 ```
