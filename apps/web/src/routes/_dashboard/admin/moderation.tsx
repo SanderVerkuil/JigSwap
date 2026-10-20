@@ -210,10 +210,17 @@ function ModerationPage() {
       const run = action === "remove" ? confirmRemoval : restorePhoto;
       await run.mutateAsync({ imageId: selectedFlag.imageId });
       toast.success(
-        t(action === "remove" ? "toast.removed" : "toast.restored", {
-          title: selectedFlag.puzzleTitle,
-          count: flagged.length - 1,
-        }),
+        t(
+          action === "remove"
+            ? "toast.removed"
+            : selectedFlag.hashTimedOut
+              ? "toast.restoredToUnchecked"
+              : "toast.restored",
+          {
+            title: selectedFlag.puzzleTitle,
+            count: flagged.length - 1,
+          },
+        ),
       );
       selectNextFlag(selectedFlag);
     } catch {

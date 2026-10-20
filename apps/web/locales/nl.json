@@ -4136,6 +4136,7 @@
         "rejected": "“{title}” afgewezen — nog {count} in de wachtrij.",
         "removed": "Afbeelding verwijderd bij “{title}” — nog {count} in de wachtrij.",
         "restored": "Foto hersteld bij “{title}” — nog {count} in de wachtrij.",
+        "restoredToUnchecked": "Foto bij “{title}” terug naar Niet-gecontroleerde foto's — nog {count} in de wachtrij.",
         "manualApproved": "Foto goedgekeurd bij “{title}” — nog {count} in de wachtrij.",
         "manualRejected": "Foto afgewezen bij “{title}” — nog {count} in de wachtrij.",
         "hashCheckWaived": "Foto bij “{title}” goedgekeurd zonder hash-check — nog {count} in de wachtrij.",
@@ -4190,7 +4191,8 @@
         "score": "Score",
         "confirm": "Verwijdering bevestigen",
         "confirmArm": "Weet je het zeker?",
-        "restore": "Foto herstellen"
+        "restore": "Foto herstellen",
+        "hashTimedOutHint": "De hash-check van deze foto op bekend misbruikmateriaal was verlopen voordat hij werd afgewezen. Herstellen publiceert hem niet: hij gaat terug naar Niet-gecontroleerde foto's, waar alleen Goedkeuren zonder hash-check hem publiceert."
       },
       "flaggedEmpty": "Geen gemarkeerde afbeeldingen. De community is tevreden.",
       "activity": {

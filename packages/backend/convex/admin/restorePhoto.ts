@@ -6,7 +6,10 @@ import { requireMember } from "../identity/requireMember";
 import { stampModerationAction } from "./stampModerationAction";
 
 // Review-queue decision: the auto-rejection was a false positive, so the photo goes back to
-// "approved" (visible in the gallery again). Only a rejected row can be restored.
+// "approved" (visible in the gallery again). Only a rejected row can be restored. A photo whose
+// hash check timed out is NOT published by this: its hash gate stays closed (no hashCheckedAt), so
+// it goes back to the Unchecked photos queue as "Hash check timed out", where only the explicit
+// "Approve without hash check" (decideUncheckedPhoto, waive_hash_check) publishes it.
 export const restorePhoto = mutation({
   args: { imageId: v.id("ownedPuzzleImages") },
   handler: async (ctx, { imageId }) => {

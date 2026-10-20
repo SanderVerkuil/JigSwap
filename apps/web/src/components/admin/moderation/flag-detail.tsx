@@ -5,7 +5,8 @@
 // the two review decisions. Mutations live in the route; this pane only
 // renders and calls back. The destructive action uses the app's two-step
 // inline confirm (see photo-lightbox): first click arms, second fires, and an
-// armed button disarms itself after 3s.
+// armed button disarms itself after 3s. A photo rejected after its hash check
+// timed out (`hashTimedOut`) says that restoring it does not publish it.
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
@@ -126,6 +127,10 @@ export function FlagDetail({
           </div>
         ))}
       </div>
+
+      {photo.hashTimedOut && (
+        <p className="text-xs text-muted-foreground">{t("hashTimedOutHint")}</p>
+      )}
 
       <div className="flex flex-wrap items-center gap-2.5 pt-1">
         <Button variant="destructive" onClick={confirmClick} disabled={busy}>

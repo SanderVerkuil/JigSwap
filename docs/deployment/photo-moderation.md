@@ -91,7 +91,11 @@ unchecked photo) and decides it with `admin/decideUncheckedPhoto`, whatever the 
   skipped by the ordinary approval.
 - **Reject** is the table's usual manual rejection (a copy photo moves to Flagged Images, a
   completion photo and box art are detached and deleted, a message photo is removed by moderation
-  and its sender told).
+  and its sender told). A rejected timed-out copy photo shows its image in **Flagged Images** to
+  admins (behind the same blur-until-reveal guard; `listRejectedPhotos` is admin-only), marked as
+  timed out. **Restore Photo** there does not publish it: the hash gate stays closed, so it turns
+  "approved" but unchecked and goes back to **Unchecked photos** as "Hash check timed out", where
+  only Approve without hash check publishes it (the console says so before and after restoring).
 
 Who wins when answers cross (every step is one Convex transaction, so the first to commit wins):
 
@@ -112,7 +116,10 @@ waits it is not in **Unchecked photos** when the classifier approved it: there i
 admin to decide yet, and nobody can publish it before the hash check passes. A waiting photo that
 the classifier could not score does appear there, without a preview, and cannot be approved or
 rejected until its hash check has passed or timed out. A timed-out photo is listed there once, as
-"Hash check timed out" with its image, counted in the tab badge, and counted apart on **Hash
+"Hash check timed out" with its image (read through the `by_hash_check_timed_out` index, with the
+already-decided ones filtered out before the queue limit, so rejected timed-out rows never crowd
+out undecided ones, and timed-out rows never take the place of ordinary unscored ones), counted
+in the tab badge, and counted apart on **Hash
 matches** ("Hash check timed out: N photos ... need an admin decision"). No notification is sent:
 the admin notifications are built on member-facing domain events, so the tab count plus the
 `imageModeration.hashCheckTimedOut` error event (below) are the alert. The 24-hour stalled sweep
