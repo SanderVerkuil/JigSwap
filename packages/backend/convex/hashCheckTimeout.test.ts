@@ -219,6 +219,15 @@ const continueRecheck = (
 
 const pastTimeout = HASH_CHECK_TIMEOUT_MS + 60_000;
 
+// A configured hash service (the port itself is the fake above): a photo approved without a hash
+// check is only re-checked against one.
+const configureHashService = () => {
+  vi.stubEnv("CSAM_HASHCHECK_PROVIDER", "offlimits");
+  vi.stubEnv("OFFLIMITS_HCS_BASE_URL", "https://hcs.example.test");
+  vi.stubEnv("OFFLIMITS_HCS_USERNAME", "user");
+  vi.stubEnv("OFFLIMITS_HCS_PASSWORD", "secret");
+};
+
 describe("the timeout", () => {
   test("still unavailable after HASH_CHECK_TIMEOUT_MS: the re-checks stop and every table's photo is timed out, still unpublished", async () => {
     const t = withModerationPool(convexTest(schema, modules));
@@ -567,6 +576,7 @@ describe("a re-check after the timeout", () => {
 
   test("a match wins over an admin approval: the photo is quarantined and escalated", async () => {
     hcs.fallback = "match";
+    configureHashService();
     const t = withModerationPool(convexTest(schema, modules));
     const s = await seed(t, {
       waitedMs: pastTimeout,
