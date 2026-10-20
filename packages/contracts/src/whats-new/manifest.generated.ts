@@ -4,6 +4,12 @@ import type { WhatsNewManifestEntry } from "./types";
 
 export const WHATS_NEW_MANIFEST: readonly WhatsNewManifestEntry[] = [
   {
+    "id": "tab-bars",
+    "publishedAt": 1792519200000,
+    "highlight": false,
+    "notify": false
+  },
+  {
     "id": "chat-photos-right-away",
     "publishedAt": 1792508400000,
     "highlight": false,

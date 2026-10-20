@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import * as React from "react";
+import { useScrollableTabsList } from "./tabs-scroll";
 
 function Tabs({
   className,
@@ -17,15 +18,29 @@ function Tabs({
   );
 }
 
+// A list wider than its container scrolls sideways (no visible scrollbar) and fades the edge(s)
+// with more tabs behind them; see tabs-scroll.ts for the wheel and active-tab behaviour.
+const TABS_LIST_OVERFLOW_CLASS =
+  "max-w-full overflow-x-auto overflow-y-hidden overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [--fade-start:0px] [--fade-end:0px] data-[overflow-start]:[--fade-start:2rem] data-[overflow-end]:[--fade-end:2rem] [mask-image:linear-gradient(to_right,transparent,#000_var(--fade-start),#000_calc(100%_-_var(--fade-end)),transparent)]";
+
 function TabsList({
   className,
+  ref,
   ...props
 }: React.ComponentProps<typeof TabsPrimitive.List>) {
+  const listRef = React.useRef<HTMLDivElement | null>(null);
+  useScrollableTabsList(listRef);
   return (
     <TabsPrimitive.List
+      ref={(node) => {
+        listRef.current = node;
+        if (typeof ref === "function") ref(node);
+        else if (ref) ref.current = node;
+      }}
       data-slot="tabs-list"
       className={cn(
-        "bg-muted text-muted-foreground inline-flex h-9 w-fit items-center justify-center rounded-lg p-[3px]",
+        "bg-muted text-muted-foreground inline-flex h-9 w-fit items-center justify-center-safe rounded-lg p-[3px]",
+        TABS_LIST_OVERFLOW_CLASS,
         className,
       )}
       {...props}

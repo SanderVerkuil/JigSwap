@@ -5,11 +5,15 @@
 // Used by the moderation console and the People page so both underline tab bars
 // stay visually identical — extracted here rather than duplicated.
 
+// The bottom rule is an inset shadow rather than a border: the list scrolls sideways when it
+// overflows (see tabs.tsx), and a scroll box clips its children to inside its border, so the
+// active underline could no longer cover a real border. Triggers paint over an inset shadow.
 export const UNDERLINE_TABS_LIST_CLASS =
-  "h-auto w-full justify-start gap-1 rounded-none border-b bg-transparent p-0";
+  "h-auto w-full justify-start gap-1 rounded-none bg-transparent p-0 shadow-[inset_0_-1px_0_var(--border)]";
 
+// Inset focus ring: an outset one would be clipped by the scrolling list.
 export const TAB_TRIGGER_CLASS =
-  "group -mb-px flex-none gap-2 rounded-none border-0 border-b-2 border-transparent px-4 py-2.5 font-semibold text-muted-foreground data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none dark:data-[state=active]:border-primary dark:data-[state=active]:bg-transparent";
+  "group flex-none gap-2 focus-visible:ring-inset rounded-none border-0 border-b-2 border-transparent px-4 py-2.5 font-semibold text-muted-foreground data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none dark:data-[state=active]:border-primary dark:data-[state=active]:bg-transparent";
 
 export function TabCount({ count }: { count: number | undefined }) {
   if (count === undefined) return null;
