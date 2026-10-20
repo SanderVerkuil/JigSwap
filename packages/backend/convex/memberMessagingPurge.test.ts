@@ -316,6 +316,29 @@ describe("account deletion: attachments", () => {
     });
   });
 
+  test("a photo message that was never servable keeps no blurhash", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, threadId } = await seed(t);
+    const pending = await deliveredPhoto(t, threadId, alice, {
+      moderationStatus: "unscored",
+    });
+    const rejected = await deliveredPhoto(t, threadId, alice, {
+      moderationStatus: "rejected",
+    });
+    await deleteAlice(t);
+    for (const photo of [pending, rejected]) {
+      const after = await row(t, photo.id);
+      expect(after).toMatchObject({
+        moderationStatus: "removed",
+        removedReason: "account_deleted",
+      });
+      expect(after).not.toHaveProperty("blurhash");
+    }
+    for (const message of await bobThread(t, threadId)) {
+      expect(message.attachment).not.toHaveProperty("blurhash");
+    }
+  });
+
   test("held and quarantined photos are untouched; staged photos are deleted", async () => {
     const t = convexTest(schema, modules);
     const { alice, threadId } = await seed(t);

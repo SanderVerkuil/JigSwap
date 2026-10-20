@@ -220,19 +220,6 @@ describe("MessagePhotos", () => {
     expect(screen.queryByRole("button", { name: /Photo from/ })).toBeNull();
   });
 
-  it("blurred and not checked says so", () => {
-    wrap(
-      <MessagePhotos
-        messages={[photo("m1", { status: "blurred", notChecked: true })]}
-        own={false}
-        authorName="Mara"
-      />,
-    );
-    expect(
-      screen.getByRole("button", { name: "Not checked · Show" }),
-    ).toBeTruthy();
-  });
-
   it("blurred because the sender isn't a mutual follower says so, not sensitive", () => {
     wrap(
       <MessagePhotos

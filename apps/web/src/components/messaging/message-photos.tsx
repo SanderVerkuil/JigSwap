@@ -7,7 +7,7 @@
 //
 // Per photo, as this reader may see it:
 // - ready: a button that opens the lightbox;
-// - blurred (sensitive, not checked, a non-mutual sender, or reported): the
+// - blurred (sensitive, a non-mutual sender, or reported): the
 //   blurhash only, with "… · Show" (revealMessageImage, then the photo) and
 //   Report; nothing in it describes the content;
 // - removed: a "Photo removed" placeholder of the same geometry; when its
@@ -283,11 +283,7 @@ function PhotoTile({
   }
 
   if (view.status === "blurred" || !view.url) {
-    const blurLabel = view.notChecked
-      ? t("notChecked")
-      : view.notMutual
-        ? t("notMutual")
-        : t("sensitive");
+    const blurLabel = view.notMutual ? t("notMutual") : t("sensitive");
     return (
       <div
         style={style}

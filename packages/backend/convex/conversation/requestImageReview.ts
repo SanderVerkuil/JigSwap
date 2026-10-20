@@ -5,8 +5,9 @@ import { internalMutation, mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { asImage } from "./messageAttachments";
 
-// "Ask for a review" on one of the caller's photos the automated check stopped (spec 2.2, R.10):
-// only now may an admin see it (admin/listImageReviewRequests). Idempotent. A quarantined photo
+// "Ask for a review" on one of the caller's photos the automated check stopped (spec 2.2, R.10),
+// whether it was stopped before Send (outbox) or after (its message shows the refusal card to the
+// sender only): only now may an admin see it (admin/listImageReviewRequests). Idempotent. A quarantined photo
 // takes the request exactly like a rejected one (the sender can't tell them apart), but it never
 // reaches the admin queue: nobody may view it. So that it also ENDS like a rejected one, a flip
 // after a randomised 24 h - 7 d shows the sender "upheld" (showQuarantinedReviewUpheld).
@@ -19,7 +20,6 @@ export const requestImageReview = mutation({
       !row ||
       row.hiddenFromSender ||
       row.uploaderId !== me ||
-      row.messageId !== undefined ||
       (row.moderationStatus !== "rejected" &&
         row.moderationStatus !== "quarantined")
     ) {

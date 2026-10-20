@@ -22,7 +22,7 @@ import {
 // The `messageAttachments` store for the shared image pipeline (lib/imageModeration/pipeline),
 // driven by conversation/moderateMessageImage. Thin like the library and completion stores, plus
 // the two message-specific steps: verdicts map onto the message bands, and every verdict or
-// hash-check clear advances the photo's send batch (the deferred append, messageAttachments.ts).
+// hash-check clear settles the photo's send batch (the sender's refusal notice; messageAttachments.ts).
 
 export const getImageForModeration = internalQuery({
   args: { imageId: v.id("messageAttachments") },
@@ -43,7 +43,7 @@ export const getImageForModeration = internalQuery({
 });
 
 // Point the row at the re-encoded (EXIF-free) blob, store its blurhash and mark it re-encoded
-// (the pipeline stops re-encoding, and the photo may now be delivered).
+// (the pipeline stops re-encoding; with a passed hash check the blurhash may now be shown).
 export const setModerationFile = internalMutation({
   args: {
     imageId: v.id("messageAttachments"),
@@ -63,9 +63,10 @@ export const setModerationFile = internalMutation({
 });
 
 // Record the classifier verdict, FIRST VERDICT WINS (pending rows only, so a double verdict is a
-// no-op). Bands: an approval scored at or above MESSAGE_IMAGE_BLUR_THRESHOLD is delivered
-// "blurred"; "unscored" (the retries ran out) is delivered blurred as "not checked"; "rejected" is
-// never delivered: it is stamped for the audit trail and its blob is kept for an appeal.
+// no-op). Bands: an approval scored at or above MESSAGE_IMAGE_BLUR_THRESHOLD is served
+// "blurred"; "unscored" (the retries ran out) is never served: it stays "pending review" for the
+// recipient and waits in the admin unchecked queue; "rejected" is never served: it is stamped for
+// the audit trail and its blob is kept for an appeal.
 export const setModerationVerdict = internalMutation({
   args: {
     imageId: v.id("messageAttachments"),
@@ -114,9 +115,10 @@ export const setModerationVerdict = internalMutation({
   },
 });
 
-// A CSAM hash match: FORCE "quarantined" on the preserved blob and always escalate. The photo was
-// never appended (appending needs a passed hash check), so no message references it. Its send
-// batch is advanced like after a verdict (the sender's generic "not sent" notice).
+// A CSAM hash match: FORCE "quarantined" on the preserved blob and always escalate. A photo sent
+// while still being checked is a message: its recipient reads "removed" exactly as for a
+// rejection, and nothing of it was ever served to them (the read gate needs a passed hash check).
+// Its send batch is settled like after a verdict (the sender's generic "not sent" notice).
 export const quarantineImage = internalMutation({
   args: { imageId: v.id("messageAttachments"), ...quarantineArgs },
   handler: async (ctx, { imageId, ...match }) => {
@@ -145,7 +147,7 @@ export const quarantineImage = internalMutation({
   },
 });
 
-// Record the hash-check outcome; a clear may complete a delivery that only waited on it.
+// Record the hash-check outcome; a clear settles the batch (a photo held before append-at-send).
 export const setHashCheck = internalMutation({
   args: { imageId: v.id("messageAttachments"), ...hashCheckResultArgs },
   handler: async (ctx, { imageId, ...result }) => {
@@ -154,7 +156,7 @@ export const setHashCheck = internalMutation({
   },
 });
 
-// Scheduled at a verdict / the send request: purge a photo that was never delivered.
+// Scheduled at a verdict (and, before append-at-send, at the send request): purge a stopped photo.
 export const purgeUndelivered = internalMutation({
   args: {
     attachmentId: v.id("messageAttachments"),

@@ -130,35 +130,47 @@ export interface LocationAvailabilityView {
 }
 
 /**
- * A delivered message photo for one reader. `ready`: show it. `blurred`: show the blurhash behind
- * "Show" (sensitive band, not checked, a sender who is not the reader's mutual follower, or a
- * photo the reader reported); decided per reader, and carrying NO url: the tap calls
- * conversation.revealMessageImage. Once revealed it comes back `ready` with `revealed: true`.
- * `removed`: a moderator removed it (placeholder only), or with `unavailable` its sender deleted
- * their account (the blurhash placeholder, "Photo no longer available"). `url`/`thumbUrl` only
- * when `ready`.
+ * A message photo for one reader (spec 2026-10-20: every photo is a message from send time on).
+ * - `ready`: show it (`url`/`thumbUrl`).
+ * - `blurred`: show the blurhash behind "Show" (sensitive band, a sender who is not the reader's
+ *   mutual follower, or a photo the reader reported); decided per reader, and carrying NO url:
+ *   the tap calls conversation.revealMessageImage. Once revealed it comes back `ready` with
+ *   `revealed: true`.
+ * - `pending`: not reviewed yet (being checked, or the check could not run and it waits for a
+ *   moderator). The recipient gets the blurhash at most (once the photo passed the CSAM hash
+ *   check and was re-encoded), never a url: render "Pending review". The sender's own photo may
+ *   carry its `thumbUrl` (render "Checking photo…").
+ * - `rejected`: the sender's own photo the check stopped (never sent to anyone else): the refusal
+ *   card with `reason` and `review`, exactly as the outbox shows it. A recipient never gets this
+ *   status: they see `removed`.
+ * - `removed`: removed by moderation (the check stopped it, or a moderator removed it):
+ *   placeholder only. With `unavailable` its sender deleted their account (the blurhash
+ *   placeholder, "Photo no longer available").
  */
 export interface MessageAttachmentView {
-  readonly status: "ready" | "blurred" | "removed";
+  readonly status: "ready" | "blurred" | "pending" | "rejected" | "removed";
   readonly url?: string;
   readonly thumbUrl?: string;
   /** Pixel size, for the aspect-ratio box (absent when unknown). */
   readonly w?: number;
   readonly h?: number;
   readonly blurhash?: string;
-  /** The automated check could not run: label the blur "Not checked". */
-  readonly notChecked?: true;
   /** Passed the check, blurred because the sender isn't the reader's mutual follower: label it so. */
   readonly notMutual?: true;
   /** A photo that would be blurred, shown because this reader tapped Show earlier. */
   readonly revealed?: true;
   /** `removed` because the sender deleted their account, not by a moderator. */
   readonly unavailable?: true;
+  /** `rejected` only: why (see PendingAttachmentView). */
+  readonly reason?: "unreadable" | "flagged";
+  /** `rejected` only: the "Ask for a review" progress. */
+  readonly review?: "requested" | "upheld";
 }
 
 /**
- * One of the caller's own photos in a thread that is not (yet) a message: staged, or sent and
- * still being checked (`pending`), or stopped (`rejected`). A rejection's `reason` is
+ * One of the caller's own photos in a thread that is not a message: staged (`pending`), or
+ * stopped by the check before it was sent (`rejected`; a photo sent while still being checked is
+ * a message, see MessageAttachmentView). A rejection's `reason` is
  * `unreadable` (the file could not be decoded) or `flagged` (the automated check stopped it);
  * `review` tracks "Ask for a review". Own image only once it may be served (`thumbUrl`), else a
  * `blurhash` placeholder; a rejected photo carries neither.

@@ -4,12 +4,13 @@ import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { enforceRateLimit } from "../lib/rateLimits";
 import { blockStateBetween, isBlockedEitherWay } from "../social/blocks";
-import { asImage, hasOpenReport, isDeliverable } from "./messageAttachments";
+import { asImage, hasOpenReport, isServable } from "./messageAttachments";
 import { circleFloorOf, threadRowByAggregateId } from "./readModelHelpers";
 
 // "Show" on a blurred message photo (spec R.2): the thread read carries no URL for a blurred
 // photo, so the tap fetches it here. Same gates as serving it at all: a participant of its thread,
-// a delivered, deliverable, hash-cleared photo whose message wasn't removed, the pair not blocked
+// a servable photo (isServable: approved or blurred, hash-cleared, re-encoded; never one still
+// pending review) whose message wasn't removed, the pair not blocked
 // either way, and no open report by the viewer on the photo or its message (it stays blurred for
 // them); anything else is the same generic AttachmentNotFound. In a circle thread: the viewer must
 // hold a current seat and the message must be past their floor (circleFloorOf); and only the
@@ -26,7 +27,7 @@ export const revealMessageImage = mutation({
         message: "Photo not found",
       });
     const row = asImage(await ctx.db.get(attachmentId));
-    if (!row?.messageId || row.hiddenFromSender || !isDeliverable(row)) {
+    if (!row?.messageId || row.hiddenFromSender || !isServable(row)) {
       throw notFound();
     }
     const messageId = row.messageId;

@@ -25,12 +25,15 @@ import { isCurrentCircleMember } from "./threadMemberProjection";
 // (attachmentModerationStore), the sender's outbox (listMyPendingAttachments), the appeal
 // (requestImageReview, admin/decideImageReview) and the thread read model.
 //
-// DEFERRED APPEND: a photo becomes a thread message only once it is deliverable (approved,
-// blurred or unscored-after-retries, AND its CSAM hash check has passed) AND its send was
-// requested. Then exactly one image message is appended per photo through the domain's
-// PostMessage use case, with the uploader as author and `sentAt` = the delivery time. So
-// threads.lastMessage, unread counts and the MessagePosted notification only ever see delivered
-// photos, with no per-viewer filtering, and rejected or quarantined photos never become messages.
+// APPEND AT SEND (spec 2026-10-20-chat-photo-immediate-delivery): on Send, every photo of the
+// batch that the check has not already stopped becomes one image message right away, in send
+// order, through the domain's PostMessage use case (uploader as author, `sentAt` = the send time).
+// So threads.lastMessage, unread counts and the MessagePosted notification see a photo when it is
+// sent, like a text message. What a reader may SEE of it is decided per read
+// (messageAttachmentViews): no recipient is ever served the image before it is servable
+// (isServable: approved or blurred, hash-cleared, re-encoded); until then it is "pending", and a
+// photo the check stops reads "removed" for them. A photo already stopped before Send is never
+// appended (the sender's outbox keeps its refusal card).
 
 /** Largest upload accepted for a message photo. */
 export const MESSAGE_IMAGE_MAX_BYTES = 10 * 1024 * 1024;
@@ -54,8 +57,6 @@ export const MAX_PHOTOS_PER_SEND = 4;
 export const STAGED_ATTACHMENT_TTL_MS = 24 * 60 * 60_000;
 /** A rejected photo nobody appealed is purged after this long (spec 2.8: 30 days for appeals). */
 export const REJECTED_ATTACHMENT_TTL_MS = 30 * 24 * 60 * 60_000;
-/** A sent photo that was never delivered (still being checked) is purged after this long. */
-export const UNDELIVERED_ATTACHMENT_TTL_MS = 7 * 24 * 60 * 60_000;
 /**
  * Scores from here up to the reject threshold (MODERATION_NSFW_THRESHOLD, default 0.85) deliver
  * the photo blurred ("sensitive content"): fine-art puzzles produce false positives (spec 2.2).
@@ -129,24 +130,25 @@ export const participantThreadOf = async (
   return thread;
 };
 
-const DELIVERABLE: ReadonlySet<Status> = new Set([
-  "approved",
-  "blurred",
-  "unscored",
-]);
-// States a photo never leaves on its own: it will not be delivered (an admin restore aside).
-const UNDELIVERABLE: ReadonlySet<Status> = new Set([
+// The verdicts that let a photo be shown to someone other than its sender. "unscored" (the check
+// could not run) is NOT one: it waits for a moderator (admin/listUncheckedPhotos).
+const SERVABLE: ReadonlySet<Status> = new Set(["approved", "blurred"]);
+// States a photo never leaves on its own: never appended at Send, and "removed" for recipients
+// (an admin restore aside).
+const STOPPED: ReadonlySet<Status> = new Set([
   "rejected",
   "quarantined",
   "removed",
 ]);
 
 /**
- * Whether the photo may be delivered and served: a deliverable verdict, a passed hash check, and
- * its blob swapped to the pipeline's re-encode (never the upload as sent, with its EXIF/GPS).
+ * Whether the photo may be served to a reader other than its sender: an approving verdict (incl.
+ * the sensitive "blurred" band, which still needs Show), a passed CSAM hash check, and its blob
+ * swapped to the pipeline's re-encode (never the upload as sent, with its EXIF/GPS). THE gate of
+ * every recipient-facing read: the thread read model, revealMessageImage and attachment reports.
  */
-export const isDeliverable = (row: Attachment): boolean =>
-  DELIVERABLE.has(row.moderationStatus) &&
+export const isServable = (row: Attachment): boolean =>
+  SERVABLE.has(row.moderationStatus) &&
   row.hashCheckedAt !== undefined &&
   row.reencodedAt !== undefined;
 
@@ -266,14 +268,19 @@ export const removeForDeletedMember = async (
   let removed: Doc<"messageAttachments"> = row;
   if (row.kind === "image") {
     if (row.moderationStatus !== "removed") {
+      // The "no longer available" placeholder keeps the blurhash only of a photo recipients could
+      // already see; one still pending or stopped never shows a derivative of its image.
+      const blurhash = isServable(row) ? row.blurhash : undefined;
       removed = {
         ...row,
         moderationStatus: "removed",
         removedReason: "account_deleted",
+        blurhash,
       };
       await ctx.db.patch(row._id, {
         moderationStatus: "removed",
         removedReason: "account_deleted",
+        blurhash,
         updatedAt: now,
       });
     }
@@ -346,12 +353,16 @@ const discardAttachment = async (ctx: MutationCtx, row: Attachment) => {
 };
 
 /**
- * The scheduled purge of an undelivered photo (spec 2.8), scheduled when the state is reached:
+ * The scheduled purge of a photo nobody will see (spec 2.8):
  * - "rejected" (at the verdict, REJECTED_ATTACHMENT_TTL_MS): a rejected or quarantined photo
  *   nobody asked a review for. An appealed one is left to the review (uphold deletes the blob).
- * - "undelivered" (at the send request, UNDELIVERED_ATTACHMENT_TTL_MS): a sent photo still not
- *   delivered; a rejected/quarantined one is left to its own rule.
- * Never touches a delivered or evidence-held photo; a quarantined one is only hidden.
+ *   One that is a message (sent while it was still being checked) keeps its row, which the
+ *   message references: a rejected one loses its blobs and reveals and is hidden from its sender
+ *   exactly as a quarantined one is (both then read "removed" for everyone, so the two can't be
+ *   told apart at this point either). One that is not a message is deleted (discardAttachment).
+ * - "undelivered": scheduled at Send before photos were appended at send time; a no-op for any
+ *   photo that is a message now (every sent one), kept for jobs scheduled before.
+ * Never touches an evidence-held photo; a quarantined one is only hidden.
  */
 export const purgeUndeliveredAttachment = async (
   ctx: MutationCtx,
@@ -359,19 +370,31 @@ export const purgeUndeliveredAttachment = async (
   rule: "rejected" | "undelivered",
 ): Promise<void> => {
   const row = asImage(await ctx.db.get(attachmentId));
-  if (!row || row.messageId !== undefined) return;
+  if (!row) return;
   const stopped =
     row.moderationStatus === "rejected" ||
     row.moderationStatus === "quarantined";
-  if (
-    rule === "rejected" &&
-    (!stopped || row.reviewRequestedAt !== undefined)
-  ) {
+  if (rule === "rejected") {
+    if (!stopped || row.reviewRequestedAt !== undefined) return;
+    if (row.messageId === undefined) {
+      await discardAttachment(ctx, row);
+      return;
+    }
+    if (row.evidenceHold) return;
+    if (row.moderationStatus === "rejected") {
+      await deleteAttachmentBlobs(ctx, row);
+      await deleteReveals(ctx, row._id);
+    }
+    await ctx.db.patch(row._id, {
+      hiddenFromSender: true,
+      updatedAt: Date.now(),
+    });
     return;
   }
   if (
-    rule === "undelivered" &&
-    (stopped || row.moderationStatus === "removed")
+    row.messageId !== undefined ||
+    stopped ||
+    row.moderationStatus === "removed"
   ) {
     return;
   }
@@ -438,14 +461,15 @@ const notifyRejection = async (ctx: MutationCtx, row: Attachment) => {
 };
 
 /**
- * Advance the send batch `row` belongs to. Called after every state change of a photo (staging
- * verdicts, hash-check clears, the send request, an admin restore); a photo whose send was not
- * requested yet is left alone. In batch order: delivered photos are skipped, undeliverable ones
- * (rejected / quarantined / removed) are passed over, a deliverable one is appended, and the walk
- * stops at the first photo still being checked, so photos arrive in the order they were sent. The
- * first appender wins (`messageId`), which makes repeated calls no-ops. A caption is delivered only
- * with its photo: the caption of a photo that never delivers never reaches anyone. A blocked pair
- * gets nothing: undelivered photos are dropped.
+ * Settle the send batch `row` belongs to. Called on Send and after every state change of a photo
+ * (verdicts, hash-check clears, an admin decision); a photo whose send was not requested yet is
+ * left alone. It tells the sender of a stopped photo (once), then appends, in batch order, every
+ * photo without a message that the check has not stopped (rejected / quarantined / removed are
+ * passed over), whatever its check state: at Send that is the whole batch, in send order. Later
+ * calls only append photos held before this rule existed (backfillHeldPhotos). The first appender
+ * wins (`messageId`), which makes repeated calls no-ops. A caption rides on its photo: the caption
+ * of a photo stopped before Send never reaches anyone. A blocked pair gets nothing: held photos
+ * are dropped.
  */
 export const settleSendBatch = async (
   ctx: MutationCtx,
@@ -496,8 +520,7 @@ export const settleSendBatch = async (
 
   for (const row of batch) {
     if (row.messageId !== undefined) continue;
-    if (UNDELIVERABLE.has(row.moderationStatus)) continue;
-    if (!isDeliverable(row)) return;
+    if (STOPPED.has(row.moderationStatus)) continue;
     const messageId = await appendMessage(ctx, row, row.caption ?? "");
     if (messageId === null) return;
     await ctx.db.patch(row._id, { messageId, updatedAt: Date.now() });
@@ -570,15 +593,22 @@ export const expireStagedAttachment = async (
 };
 
 /**
- * Per-request resolver from an image message's attachment id to the viewer's attachment view.
- * URLs only for a deliverable, hash-cleared photo; never for a quarantined, rejected or removed
- * one. "blurred" is per viewer: the sensitive band, "not checked" (unscored), a sender who is not
- * the viewer's mutual follower (spec R.2), or a photo (or its message) the viewer has an open
- * report on. A blurred
- * view carries NO URL (only the blurhash and size): the viewer gets it by tapping Show
- * (revealMessageImage), after which the photo is served to them directly (`revealed`), except
- * while they have an open report on it. The uploader sees their own photo unblurred. Callers have
- * already checked participation.
+ * Per-request resolver from an image message's attachment id to the viewer's attachment view
+ * (spec 2026-10-20 D2). Callers have already checked participation.
+ *
+ * A reader other than the uploader is served a URL ONLY for a servable photo (isServable), and
+ * then per viewer: "blurred" (no URL) for the sensitive band, a sender who is not the viewer's
+ * mutual follower (spec R.2), or a photo (or its message) the viewer has an open report on; the
+ * viewer gets it by tapping Show (revealMessageImage), after which it is served to them directly
+ * (`revealed`), except while they have an open report on it. A photo not servable yet (being
+ * checked, "unscored" and waiting for a moderator, or a gate still closed) is "pending" with the
+ * blurhash only once the photo passed the CSAM hash check and was re-encoded. A stopped photo
+ * (rejected, quarantined, removed by a moderator, hidden, gone) is "removed" with no blurhash:
+ * rejected and quarantined read exactly alike.
+ *
+ * The uploader sees their own photo: unblurred once servable; while pending, the image once its
+ * hash check passed (as the outbox did), else the blurhash; once stopped, the refusal card
+ * (`rejected`, rejectionFieldsOf: identical for a quarantined photo) until it is hidden from them.
  */
 export const messageAttachmentViews = (ctx: QueryCtx, viewer: Id<"users">) => {
   const mutualWith = new Map<Id<"users">, Promise<boolean>>();
@@ -594,34 +624,63 @@ export const messageAttachmentViews = (ctx: QueryCtx, viewer: Id<"users">) => {
     attachmentId: Id<"messageAttachments">,
   ): Promise<MessageAttachmentView> => {
     const row = asImage(await ctx.db.get(attachmentId));
-    if (!row) return { status: "removed" };
+    if (!row || row.hiddenFromSender) return { status: "removed" };
     const size = {
       ...(row.width !== undefined && { w: row.width }),
       ...(row.height !== undefined && { h: row.height }),
     };
-    if (!isDeliverable(row)) {
-      // Removed keeps its placeholder (a deleted sender's photo says so: `unavailable`);
-      // rejected/quarantined (never appended, so only reachable through corrupt data) show
-      // nothing at all.
-      return row.moderationStatus === "removed"
+    const own = row.uploaderId === viewer;
+    if (row.moderationStatus === "removed") {
+      // A deleted sender's photo keeps its placeholder ("no longer available"); a moderator's
+      // removal shows nothing of the image.
+      return row.removedReason === "account_deleted"
         ? {
             status: "removed",
             ...size,
             ...(row.blurhash !== undefined && { blurhash: row.blurhash }),
-            ...(row.removedReason === "account_deleted" && {
-              unavailable: true as const,
-            }),
+            unavailable: true as const,
           }
         : { status: "removed" };
     }
-    const notChecked = row.moderationStatus === "unscored";
+    if (
+      row.moderationStatus === "rejected" ||
+      row.moderationStatus === "quarantined"
+    ) {
+      return own
+        ? { status: "rejected", ...size, ...rejectionFieldsOf(row) }
+        : { status: "removed" };
+    }
+    if (!isServable(row)) {
+      if (own) {
+        const url =
+          row.hashCheckedAt !== undefined
+            ? await ctx.storage.getUrl(row.thumbFileId ?? row.fileId)
+            : null;
+        return {
+          status: "pending",
+          ...size,
+          ...(url !== null
+            ? { thumbUrl: url }
+            : row.blurhash !== undefined && { blurhash: row.blurhash }),
+        };
+      }
+      // Never a URL; the blurhash only from the hash-cleared re-encode.
+      const blurhashShown =
+        row.blurhash !== undefined &&
+        row.hashCheckedAt !== undefined &&
+        row.reencodedAt !== undefined;
+      return {
+        status: "pending",
+        ...size,
+        ...(blurhashShown && { blurhash: row.blurhash }),
+      };
+    }
     const placeholder = {
       ...size,
       ...(row.blurhash !== undefined && { blurhash: row.blurhash }),
-      ...(notChecked && { notChecked: true as const }),
     };
     let revealed = false;
-    if (row.uploaderId !== viewer) {
+    if (!own) {
       // Passed screening, blurred only because the sender isn't a mutual follower: labelled as such.
       const notMutual =
         row.moderationStatus === "approved" &&
@@ -648,6 +707,31 @@ export const messageAttachmentViews = (ctx: QueryCtx, viewer: Id<"users">) => {
       ...placeholder,
       ...(revealed && { revealed: true as const }),
     };
+  };
+};
+
+/**
+ * What the sender's refusal card says of a photo the check stopped, in the outbox and in the
+ * thread alike. A quarantined photo reads exactly like a photo the classifier flagged (reason
+ * "flagged", the same review progress): nothing tells them apart.
+ */
+const rejectionFieldsOf = (
+  row: Attachment,
+): Pick<PendingAttachmentView, "reason" | "review"> => {
+  // An admin upheld it, or (quarantined: never shown to an admin) its sender-view flip ran.
+  const reviewDecided =
+    row.moderationStatus === "rejected"
+      ? row.reviewDecidedAt !== undefined
+      : row.senderReviewUpheldAt !== undefined;
+  return {
+    reason:
+      row.moderationStatus === "rejected" &&
+      row.moderationLabel === "invalid_image"
+        ? "unreadable"
+        : "flagged",
+    ...(row.reviewRequestedAt !== undefined && {
+      review: reviewDecided ? ("upheld" as const) : ("requested" as const),
+    }),
   };
 };
 
@@ -713,23 +797,7 @@ export const pendingAttachmentViewOf = async (
     row.moderationStatus === "quarantined" ||
     row.moderationStatus === "removed"
   ) {
-    // An admin upheld it, or (quarantined: never shown to an admin) its sender-view flip ran.
-    const reviewDecided =
-      row.moderationStatus === "rejected"
-        ? row.reviewDecidedAt !== undefined
-        : row.senderReviewUpheldAt !== undefined;
-    return {
-      ...base,
-      status: "rejected",
-      reason:
-        row.moderationStatus === "rejected" &&
-        row.moderationLabel === "invalid_image"
-          ? "unreadable"
-          : "flagged",
-      ...(row.reviewRequestedAt !== undefined && {
-        review: reviewDecided ? ("upheld" as const) : ("requested" as const),
-      }),
-    };
+    return { ...base, status: "rejected", ...rejectionFieldsOf(row) };
   }
   const url =
     row.hashCheckedAt !== undefined

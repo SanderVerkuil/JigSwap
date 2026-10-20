@@ -6,7 +6,7 @@ import {
   isUnattachedMedia,
   participantsKeyOf,
 } from "../conversation/adapters/threadMapper";
-import { asImage, isDeliverable } from "../conversation/messageAttachments";
+import { asImage, isServable } from "../conversation/messageAttachments";
 import { circleFloorOf } from "../conversation/readModelHelpers";
 import { requireMember } from "../identity/requireMember";
 import { enforceRateLimit } from "../lib/rateLimits";
@@ -271,9 +271,10 @@ const canReportMember = async (
 };
 
 // A delivered message photo or shared location the reporter can see (a participant of its
-// thread): its message's evidence, with the attachment id in the snapshot. Undelivered, removed,
-// rejected and quarantined photos, and locations not delivered or already removed, are not
-// reportable (the reporter never saw them).
+// thread): its message's evidence, with the attachment id in the snapshot. A photo that is not
+// servable (still pending review, removed, rejected, quarantined), and a location not delivered
+// or already removed, is not reportable as such (the reporter never saw it); its image message
+// (the caption) still is.
 const attachmentTarget = async (
   ctx: MutationCtx,
   reporterId: Id<"users">,
@@ -285,7 +286,7 @@ const attachmentTarget = async (
   const reportable =
     row?.kind === "location"
       ? row.removedAt === undefined
-      : image !== null && !image.hiddenFromSender && isDeliverable(image);
+      : image !== null && !image.hiddenFromSender && isServable(image);
   if (!row?.messageId || !reportable) return null;
   const target = await messageTarget(ctx, reporterId, row.messageId);
   if (!target || target.reportedUserId !== row.uploaderId) return null;

@@ -521,44 +521,28 @@ describe("staging a photo", () => {
   );
 });
 
-describe("deferred append", () => {
-  test("the recipient sees nothing until the photo is deliverable AND sent, then exactly one message", async () => {
+describe("append at send", () => {
+  test("Send appends the message at once; the recipient gets no URL until the photo may be served", async () => {
     // HCS unreachable: the classifier approves, but the hash gate stays closed.
     fakes.hcs = 503;
     const t = withModerationPool(convexTest(schema, modules));
-    const { alice, bob, threadId } = await openThread(t);
+    const { bob, threadId } = await openThread(t);
     const id = await stage(t, threadId);
     await settleDueJobs(t);
     await send(t, threadId, [id], "  Look!  ");
     await settleDueJobs(t);
 
     expect((await attachment(t, id))!.moderationStatus).toBe("approved");
-    expect(await threadOf(t, asBob, threadId)).toEqual([]);
-    const [inboxBefore] = await asBob(t).query(
-      api.conversation.getMyInbox.getMyInbox,
-      {},
-    );
-    expect(inboxBefore).toMatchObject({ lastMessage: null, unreadCount: 0 });
-    expect(await notificationsOf(t, bob)).toEqual([]);
-    // The sender's outbox: pending, no image yet (not hash-cleared), the blurhash instead.
-    const [pending] = await outbox(t, threadId);
-    expect(pending).toMatchObject({ status: "pending", sendRequested: true });
-    expect(pending).not.toHaveProperty("thumbUrl");
-    expect(typeof pending.blurhash).toBe("string");
-
-    // The scheduled re-check clears the gate: delivered now.
-    await t.mutation(store.setHashCheck, { imageId: id, status: "no_match" });
-    await settleDueJobs(t);
-    const messages = await threadOf(t, asBob, threadId);
-    expect(messages).toHaveLength(1);
-    expect(messages[0]).toMatchObject({
+    const [pending] = await threadOf(t, asBob, threadId);
+    expect(pending).toMatchObject({
       isMine: false,
       kind: "image",
       body: "Look!",
       attachmentId: id,
-      attachment: { status: "ready", w: 800, h: 600 },
     });
-    expect(photoOf(messages[0])!.url).toEqual(expect.any(String));
+    // Not hash-cleared: no URL, and not even the blurhash.
+    expect(pending.attachment).toEqual({ status: "pending", w: 800, h: 600 });
+    // The message counts and notifies like a text message, without the image.
     const [inbox] = await asBob(t).query(
       api.conversation.getMyInbox.getMyInbox,
       {},
@@ -568,10 +552,30 @@ describe("deferred append", () => {
       unreadCount: 1,
     });
     expect(inbox.lastMessage).not.toHaveProperty("attachmentId");
+    expect(JSON.stringify(inbox)).not.toContain("http");
     expect((await notificationsOf(t, bob)).map((n) => n.type)).toEqual([
       "message_received",
     ]);
+    // The sender: their own photo pending, no image yet (not hash-cleared), the blurhash instead;
+    // it is a message, so not in the outbox.
+    const [own] = await threadOf(t, asAlice, threadId);
+    expect(own.attachment).toMatchObject({ status: "pending" });
+    expect(own.attachment).not.toHaveProperty("thumbUrl");
+    expect(typeof photoOf(own)!.blurhash).toBe("string");
     expect(await outbox(t, threadId)).toEqual([]);
+
+    // The scheduled re-check clears the gate: the same message now serves the photo.
+    await t.mutation(store.setHashCheck, { imageId: id, status: "no_match" });
+    await settleDueJobs(t);
+    const messages = await threadOf(t, asBob, threadId);
+    expect(messages).toHaveLength(1);
+    expect(messages[0].id).toBe(pending.id);
+    expect(messages[0].attachment).toMatchObject({
+      status: "ready",
+      w: 800,
+      h: 600,
+    });
+    expect(photoOf(messages[0])!.url).toEqual(expect.any(String));
 
     // Double verdict / double clear: still exactly one message.
     await t.mutation(store.setModerationVerdict, {
@@ -581,9 +585,64 @@ describe("deferred append", () => {
     });
     await t.mutation(store.setHashCheck, { imageId: id, status: "no_match" });
     expect(await messageRows(t, threadId)).toHaveLength(1);
+    expect((await notificationsOf(t, bob)).map((n) => n.type)).toEqual([
+      "message_received",
+    ]);
   });
 
-  test("only the re-encoded (EXIF-free) blob is ever delivered", async () => {
+  test("while being checked the recipient sees the hash-cleared blurhash, never a URL", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { alice, threadId } = await openThread(t);
+    const fileId = await t.run((ctx) => ctx.storage.store(new Blob(["x"])));
+    const id = await t.run((ctx) =>
+      ctx.db.insert("messageAttachments", {
+        kind: "image",
+        threadAggregateId: threadId,
+        uploaderId: alice,
+        fileId,
+        width: 4,
+        height: 3,
+        byteSize: 1,
+        contentType: "image/jpeg",
+        moderationStatus: "pending",
+        blurhash: "LKO2?U%2Tw=w]~RBVZRi};RPxuwH",
+        hashCheckedAt: 1,
+        reencodedAt: 1,
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    await send(t, threadId, [id]);
+    const [forBob] = await threadOf(t, asBob, threadId);
+    expect(forBob.attachment).toEqual({
+      status: "pending",
+      w: 4,
+      h: 3,
+      blurhash: "LKO2?U%2Tw=w]~RBVZRi};RPxuwH",
+    });
+    // The sender sees their own (hash-cleared) photo while it is checked.
+    const [forAlice] = await threadOf(t, asAlice, threadId);
+    expect(forAlice.attachment).toMatchObject({
+      status: "pending",
+      thumbUrl: expect.any(String),
+    });
+    // No back door: Show refuses a pending photo, and it can't be reported as a photo.
+    await expect(
+      asBob(t).mutation(
+        api.conversation.revealMessageImage.revealMessageImage,
+        { attachmentId: id },
+      ),
+    ).rejects.toThrow(/AttachmentNotFound/);
+    await expect(
+      asBob(t).mutation(api.reports.fileReport.fileReport, {
+        targetKind: "attachment",
+        targetId: id,
+        reason: "spam_scam",
+      }),
+    ).rejects.toThrow();
+  });
+
+  test("only the re-encoded (EXIF-free) blob is ever served", async () => {
     const t = withModerationPool(convexTest(schema, modules));
     const { alice, threadId } = await openThread(t);
     // The pipeline marks the swap: a staged photo ends up re-encoded.
@@ -592,7 +651,7 @@ describe("deferred append", () => {
     expect((await attachment(t, staged))!.reencodedAt).toEqual(
       expect.any(Number),
     );
-    // Approved and hash-cleared, but still the upload as sent: never delivered.
+    // Approved and hash-cleared, but still the upload as sent: a message, never served.
     const id = await t.run(async (ctx) =>
       ctx.db.insert("messageAttachments", {
         kind: "image",
@@ -602,17 +661,53 @@ describe("deferred append", () => {
         byteSize: 1,
         contentType: "image/jpeg",
         moderationStatus: "approved",
+        blurhash: "LKO2?U%2Tw=w]~RBVZRi};RPxuwH",
         hashCheckedAt: 1,
         createdAt: 1,
         updatedAt: 1,
       }),
     );
     await send(t, threadId, [id]);
-    expect(await messageRows(t, threadId)).toEqual([]);
+    expect(await messageRows(t, threadId)).toHaveLength(1);
+    const [before] = await threadOf(t, asBob, threadId);
+    expect(before.attachment).toEqual({ status: "pending" });
     const clean = await t.run((ctx) => ctx.storage.store(new Blob(["y"])));
     await t.mutation(store.setModerationFile, { imageId: id, fileId: clean });
     await t.mutation(store.setHashCheck, { imageId: id, status: "no_match" });
     expect(await messageRows(t, threadId)).toHaveLength(1);
+    const [after] = await threadOf(t, asBob, threadId);
+    expect(after.attachment).toMatchObject({ status: "ready" });
+  });
+
+  test("a photo stuck before its re-encode no longer holds back the rest of its batch", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { alice, threadId } = await openThread(t);
+    const stuck = await t.run(async (ctx) =>
+      ctx.db.insert("messageAttachments", {
+        kind: "image",
+        threadAggregateId: threadId,
+        uploaderId: alice,
+        fileId: await ctx.storage.store(new Blob(["x"])),
+        byteSize: 1,
+        contentType: "image/jpeg",
+        moderationStatus: "unscored",
+        moderationReason: "stalled",
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    const ok = await stage(t, threadId);
+    await settleDueJobs(t);
+    await send(t, threadId, [stuck, ok], "both");
+    const messages = await threadOf(t, asBob, threadId);
+    expect(messages.map((m) => [m.attachmentId, m.body])).toEqual([
+      [stuck, ""],
+      [ok, "both"],
+    ]);
+    expect(messages.map((m) => photoOf(m)!.status)).toEqual([
+      "pending",
+      "ready",
+    ]);
   });
 
   test("a WebP original (a browser that blocks the re-encode) is accepted and delivered without its metadata", async () => {
@@ -699,37 +794,58 @@ describe("deferred append", () => {
     );
   });
 
-  test("a block before delivery drops the undelivered photo", async () => {
-    fakes.hcs = 503;
-    const t = withModerationPool(convexTest(schema, modules));
-    const { alice, bob, threadId } = await openThread(t);
-    const id = await stage(t, threadId);
-    await settleDueJobs(t);
-    await send(t, threadId, [id]);
-    await t.run((ctx) =>
-      ctx.db.insert("blocks", {
-        blockerId: bob,
-        blockedId: alice,
-        createdAt: 1,
-      }),
-    );
-    const fileId = (await attachment(t, id))!.fileId;
-    await t.mutation(store.setHashCheck, { imageId: id, status: "no_match" });
-    expect(await attachment(t, id)).toBeNull();
-    expect(await blobExists(t, fileId)).toBe(false);
-    expect(await messageRows(t, threadId)).toEqual([]);
-  });
-});
-
-describe("blocking", () => {
-  test("a block drops the pair's sent, undelivered photos, so an unblock can't resurrect them", async () => {
+  test("a photo message sent before a block stays in the history", async () => {
     fakes.hcs = 503;
     const t = withModerationPool(convexTest(schema, modules));
     const { alice, threadId } = await openThread(t);
     const id = await stage(t, threadId);
     await settleDueJobs(t);
     await send(t, threadId, [id]);
-    const fileId = (await attachment(t, id))!.fileId;
+    await asBob(t).mutation(api.social.blockMember.blockMember, {
+      memberId: alice,
+    });
+    await t.mutation(store.setHashCheck, { imageId: id, status: "no_match" });
+    expect(await attachment(t, id)).not.toBeNull();
+    expect(await messageRows(t, threadId)).toHaveLength(1);
+    // Nothing new can be sent in the blocked pair.
+    const next = await t.run(async (ctx) =>
+      ctx.db.insert("messageAttachments", {
+        kind: "image",
+        threadAggregateId: threadId,
+        uploaderId: alice,
+        fileId: await ctx.storage.store(new Blob(["x"])),
+        byteSize: 1,
+        contentType: "image/jpeg",
+        moderationStatus: "approved",
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    await expect(send(t, threadId, [next])).rejects.toThrow();
+    expect(await messageRows(t, threadId)).toHaveLength(1);
+  });
+});
+
+describe("blocking", () => {
+  test("a block drops photos held from before append-at-send, so an unblock can't resurrect them", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { alice, threadId } = await openThread(t);
+    const fileId = await t.run((ctx) => ctx.storage.store(new Blob(["x"])));
+    const id = await t.run((ctx) =>
+      ctx.db.insert("messageAttachments", {
+        kind: "image",
+        threadAggregateId: threadId,
+        uploaderId: alice,
+        fileId,
+        byteSize: 1,
+        contentType: "image/jpeg",
+        moderationStatus: "pending",
+        sendRequestedAt: 1,
+        sendIndex: 0,
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
     await asBob(t).mutation(api.social.blockMember.blockMember, {
       memberId: alice,
     });
@@ -836,13 +952,24 @@ describe("never delivered", () => {
     });
   });
 
-  test("a hash match found after the send (re-check) still sends the generic notice", async () => {
+  test("a hash match found after the send: the generic notice, and the recipient reads it like a rejection", async () => {
     fakes.hcs = 503;
     const t = withModerationPool(convexTest(schema, modules));
     const { alice, threadId } = await openThread(t);
+    const flaggedAfterSend = await stage(t, threadId);
     const id = await stage(t, threadId);
     await settleDueJobs(t);
-    await send(t, threadId, [id]);
+    await send(t, threadId, [flaggedAfterSend, id]);
+    expect(await messageRows(t, threadId)).toHaveLength(2);
+    // One is rejected by the classifier after Send, the other matches the hash list.
+    await t.run((ctx) =>
+      ctx.db.patch(flaggedAfterSend, { moderationStatus: "pending" }),
+    );
+    await t.mutation(store.setModerationVerdict, {
+      imageId: flaggedAfterSend,
+      moderationStatus: "rejected",
+      moderationScore: 0.97,
+    });
     const row = (await attachment(t, id))!;
     await t.mutation(store.quarantineImage, {
       imageId: id,
@@ -853,10 +980,51 @@ describe("never delivered", () => {
       provider: "offlimits",
       originalDiscarded: true,
     });
-    expect((await notificationsOf(t, alice)).map((n) => n.type)).toEqual([
+    const notices = await notificationsOf(t, alice);
+    expect(notices.map((n) => n.type)).toEqual([
+      "message_image_rejected",
       "message_image_rejected",
     ]);
-    expect(await messageRows(t, threadId)).toEqual([]);
+    expect(notices[1].params).toEqual(notices[0].params);
+    // Recipient: the same "removed" for both, nothing of either image.
+    const forBob = await threadOf(t, asBob, threadId);
+    expect(forBob.map((m) => m.attachment)).toEqual([
+      { status: "removed" },
+      { status: "removed" },
+    ]);
+    // Sender: the same refusal card for both.
+    const forAlice = await threadOf(t, asAlice, threadId);
+    expect(forAlice[1].attachment).toEqual(forAlice[0].attachment);
+    expect(forAlice[0].attachment).toEqual({
+      status: "rejected",
+      reason: "flagged",
+      w: 800,
+      h: 600,
+    });
+    // Both can be appealed from the thread, identically.
+    for (const target of [flaggedAfterSend, id]) {
+      await asAlice(t).mutation(
+        api.conversation.requestImageReview.requestImageReview,
+        { attachmentId: target },
+      );
+    }
+    const appealed = await threadOf(t, asAlice, threadId);
+    expect(appealed.map((m) => m.attachment)).toEqual([
+      {
+        status: "rejected",
+        reason: "flagged",
+        review: "requested",
+        w: 800,
+        h: 600,
+      },
+      {
+        status: "rejected",
+        reason: "flagged",
+        review: "requested",
+        w: 800,
+        h: 600,
+      },
+    ]);
   });
 
   test("an unreadable upload is rejected as unreadable, never delivered", async () => {
@@ -898,7 +1066,7 @@ describe("blur, per viewer", () => {
     expect(forAlice.attachment).toMatchObject({ status: "ready" });
   });
 
-  test("unscored after the retries is delivered blurred and labelled not checked", async () => {
+  test("unscored after the retries is never served: pending review for the recipient", async () => {
     fakes.hcs = 503; // keep the row pending while we stand in for the last retry
     const t = withModerationPool(convexTest(schema, modules));
     const { threadId } = await openThread(t);
@@ -916,6 +1084,7 @@ describe("blur, per viewer", () => {
         byteSize: 1,
         contentType: "image/jpeg",
         moderationStatus: "pending",
+        blurhash: "LKO2?U%2Tw=w]~RBVZRi};RPxuwH",
         hashCheckedAt: 1,
         reencodedAt: 1,
         createdAt: 1,
@@ -923,7 +1092,6 @@ describe("blur, per viewer", () => {
       }),
     );
     await send(t, threadId, [id]);
-    expect(await threadOf(t, asBob, threadId)).toEqual([]);
     await t.mutation(store.setModerationVerdict, {
       imageId: id,
       moderationStatus: "unscored",
@@ -931,10 +1099,18 @@ describe("blur, per viewer", () => {
       moderationAttempts: 4,
     });
     const [forBob] = await threadOf(t, asBob, threadId);
-    expect(forBob.attachment).toMatchObject({
-      status: "blurred",
-      notChecked: true,
+    expect(forBob.attachment).toEqual({
+      status: "pending",
+      w: 4,
+      h: 3,
+      blurhash: "LKO2?U%2Tw=w]~RBVZRi};RPxuwH",
     });
+    await expect(
+      asBob(t).mutation(
+        api.conversation.revealMessageImage.revealMessageImage,
+        { attachmentId: id },
+      ),
+    ).rejects.toThrow(/AttachmentNotFound/);
   });
 
   test("a sender who is not the viewer's mutual follower is blurred at read time", async () => {
@@ -961,7 +1137,6 @@ describe("blur, per viewer", () => {
     expect(blurred.attachment).not.toHaveProperty("url");
     // It passed the check, so it's labelled for the follow, not as sensitive or not checked.
     expect(blurred.attachment).toMatchObject({ notMutual: true });
-    expect(blurred.attachment).not.toHaveProperty("notChecked");
     expect((await attachment(t, id))!.moderationStatus).toBe("approved");
     expect(photoOf((await threadOf(t, asAlice, threadId))[0])!.status).toBe(
       "ready",
@@ -1163,7 +1338,7 @@ describe("review appeal", () => {
     ).rejects.toThrow(/NotAwaitingReview/);
   });
 
-  test("restoring a photo that was never re-encoded re-runs the pipeline, then delivers it", async () => {
+  test("restoring a held photo that was never re-encoded appends it pending, re-runs the pipeline, then serves it", async () => {
     // The classifier would reject it again: the admin's restore is final all the same.
     fakes.score = 0.97;
     const t = withModerationPool(convexTest(schema, modules));
@@ -1193,13 +1368,19 @@ describe("review appeal", () => {
       decision: "restore",
     });
     expect((await attachment(t, id))!.moderationStatus).toBe("pending");
-    expect(await messageRows(t, threadId)).toEqual([]);
+    expect(await messageRows(t, threadId)).toHaveLength(1);
+    expect((await threadOf(t, asBob, threadId))[0].attachment).toMatchObject({
+      status: "pending",
+    });
     await settleDueJobs(t);
     const row = (await attachment(t, id))!;
     expect(row.moderationStatus).toBe("approved");
     expect(row.reencodedAt).toEqual(expect.any(Number));
     expect(row.fileId).not.toBe(fileId);
     expect(await messageRows(t, threadId)).toHaveLength(1);
+    expect((await threadOf(t, asBob, threadId))[0].attachment).toMatchObject({
+      status: "ready",
+    });
   });
 
   test("uphold deletes the blob and the outbox shows the review upheld", async () => {
@@ -1560,27 +1741,67 @@ describe("purging undelivered photos", () => {
     expect(await attachment(t, appealed)).not.toBeNull();
   });
 
-  test("a sent photo still undelivered after 7 days is purged; held ones stay", async () => {
+  test("Send schedules no 7-day purge, and an old one is a no-op for a photo message", async () => {
     fakes.hcs = 503;
     const t = withModerationPool(convexTest(schema, modules));
     const { threadId } = await openThread(t);
     const id = await stage(t, threadId);
-    const held = await stage(t, threadId);
     await settleDueJobs(t);
-    await send(t, threadId, [id, held]);
-    const jobs = (await purgeJobs(t)).filter(
-      (job) => (job.args[0] as { rule: string }).rule === "undelivered",
-    );
-    expect(jobs).toHaveLength(2);
+    await send(t, threadId, [id]);
     expect(
-      jobs[0].scheduledTime - jobs[0]._creationTime,
-    ).toBeGreaterThanOrEqual(7 * DAY - 1000);
-    await t.run((ctx) => ctx.db.patch(held, { evidenceHold: true }));
+      (await purgeJobs(t)).filter(
+        (job) => (job.args[0] as { rule: string }).rule === "undelivered",
+      ),
+    ).toEqual([]);
     await purge(t, id, "undelivered");
-    await purge(t, held, "undelivered");
-    expect(await attachment(t, id)).toBeNull();
-    expect(await attachment(t, held)).not.toBeNull();
-    expect(await outbox(t, threadId)).toHaveLength(1);
+    expect(await attachment(t, id)).not.toBeNull();
+    expect(await messageRows(t, threadId)).toHaveLength(1);
+  });
+
+  test("30 days on, a rejected photo message loses its blobs and reads removed, exactly like a quarantined one", async () => {
+    fakes.hcs = 503;
+    const t = withModerationPool(convexTest(schema, modules));
+    const { alice, threadId } = await openThread(t);
+    const rejected = await stage(t, threadId);
+    const quarantined = await stage(t, threadId);
+    await settleDueJobs(t);
+    await send(t, threadId, [rejected, quarantined]);
+    await t.run((ctx) =>
+      ctx.db.patch(rejected, { moderationStatus: "pending" }),
+    );
+    await t.mutation(store.setModerationVerdict, {
+      imageId: rejected,
+      moderationStatus: "rejected",
+      moderationScore: 0.97,
+    });
+    const quarantinedFile = (await attachment(t, quarantined))!.fileId;
+    await t.mutation(store.quarantineImage, {
+      imageId: quarantined,
+      fileId: quarantinedFile,
+      uploaderId: alice,
+      md5: "m",
+      sha1: "s",
+      provider: "offlimits",
+      originalDiscarded: true,
+    });
+    const rejectedFile = (await attachment(t, rejected))!.fileId;
+    await purge(t, rejected, "rejected");
+    await purge(t, quarantined, "rejected");
+    expect(await blobExists(t, rejectedFile)).toBe(false);
+    expect(await blobExists(t, quarantinedFile)).toBe(true);
+    for (const as of [asAlice, asBob]) {
+      expect(
+        (await threadOf(t, as, threadId)).map((m) => m.attachment),
+      ).toEqual([{ status: "removed" }, { status: "removed" }]);
+    }
+    for (const target of [rejected, quarantined]) {
+      await expect(
+        asAlice(t).mutation(
+          api.conversation.requestImageReview.requestImageReview,
+          { attachmentId: target },
+        ),
+      ).rejects.toThrow(/AttachmentNotFound/);
+    }
   });
 
   test("a quarantined photo is hidden from the outbox where a rejected one is deleted, and kept", async () => {
@@ -1836,5 +2057,65 @@ describe("removal evidence", () => {
     expect(report).toMatchObject({ evidenceMissing: true });
     expect(report.evidencePendingSince).toBeUndefined();
     expect((await attachment(t, id))!.evidenceHold).toBeUndefined();
+  });
+});
+
+describe("backfillHeldPhotos (the append-at-send transition)", () => {
+  // A batch held under the old rule: sent, no message, the first photo stuck before its
+  // re-encode (never deliverable), the second approved and waiting behind it.
+  const heldBatch = async (t: T) => {
+    const { alice, bob, threadId } = await openThread(t);
+    const insert = (status: "unscored" | "approved", sendIndex: number) =>
+      t.run(async (ctx) =>
+        ctx.db.insert("messageAttachments", {
+          kind: "image",
+          threadAggregateId: threadId,
+          uploaderId: alice,
+          fileId: await ctx.storage.store(new Blob(["x"])),
+          byteSize: 1,
+          contentType: "image/jpeg",
+          moderationStatus: status,
+          ...(status === "approved" && { hashCheckedAt: 1, reencodedAt: 1 }),
+          sendRequestedAt: 5,
+          sendIndex,
+          ...(sendIndex === 1 && { caption: "held" }),
+          createdAt: 1,
+          updatedAt: 1,
+        }),
+      );
+    const stuck = await insert("unscored", 0);
+    const waiting = await insert("approved", 1);
+    return { bob, threadId, stuck, waiting };
+  };
+  const run = (t: T, dryRun?: boolean) =>
+    t.mutation(internal.conversation.backfillHeldPhotos.backfillHeldPhotos, {
+      ...(dryRun !== undefined && { dryRun }),
+    });
+
+  test("defaults to a dry run: counts, writes nothing", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { threadId } = await heldBatch(t);
+    await expect(run(t)).resolves.toEqual({
+      rowsScanned: 2,
+      batchesSettled: 1,
+      photosAppended: 2,
+    });
+    expect(await messageRows(t, threadId)).toEqual([]);
+  });
+
+  test("dryRun false appends the held batch in send order, pending until servable", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { threadId, stuck, waiting } = await heldBatch(t);
+    await run(t, false);
+    const messages = await threadOf(t, asBob, threadId);
+    expect(
+      messages.map((m) => [m.attachmentId, m.body, photoOf(m)!.status]),
+    ).toEqual([
+      [stuck, "", "pending"],
+      [waiting, "held", "ready"],
+    ]);
+    // Idempotent.
+    await run(t, false);
+    expect(await messageRows(t, threadId)).toHaveLength(2);
   });
 });

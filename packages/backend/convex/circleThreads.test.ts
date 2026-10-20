@@ -1167,6 +1167,26 @@ describe("media in circle threads", () => {
     }
   });
 
+  test("a photo still pending review reaches the circle as a message, with no URL for anyone but its sender", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    const photo = await seedPhoto(t, threadId, alice);
+    await t.run(async (ctx) => {
+      await ctx.db.patch(photo, { moderationStatus: "unscored" });
+      await settleSendBatch(ctx, photo);
+    });
+    for (const viewer of ["bob", "carol"]) {
+      const [message] = await messagesOf(t, viewer, threadId);
+      expect(message.attachment).toEqual({ status: "pending" });
+    }
+    const [own] = await messagesOf(t, "alice", threadId);
+    expect(own.attachment).toMatchObject({
+      status: "pending",
+      thumbUrl: expect.any(String),
+    });
+  });
+
   test("Show on a photo: the uploader's block on the viewer is never told; the viewer's own block, a non-member and the floor refuse", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob, dave, circleId } = await seed(t);
