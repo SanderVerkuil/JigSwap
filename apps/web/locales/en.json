@@ -4236,7 +4236,8 @@
         "source": {
           "copy": "Copy photo",
           "completion": "Completion photo",
-          "boxArt": "Box art"
+          "boxArt": "Box art",
+          "message": "Message photo"
         },
         "reason": {
           "missing_token": "Screening not configured",
@@ -4261,7 +4262,7 @@
         "reject": "Reject Photo",
         "rejectArm": "Are you sure?",
         "recheck": "Check again",
-        "hint": "Approving publishes the photo to other members. Rejecting hides it; a rejected copy photo moves to Flagged Images, a rejected completion photo is deleted, and rejected box art is removed from its puzzle and deleted. Check again runs the automated check once more on a photo it could not check, for example after the screening service is working again."
+        "hint": "Approving publishes the photo to other members. Rejecting hides it; a rejected copy photo moves to Flagged Images, a rejected completion photo is deleted, and rejected box art is removed from its puzzle and deleted. Check again runs the automated check once more on a photo it could not check, for example after the screening service is working again. A message photo is sent to its conversation when approved; rejecting removes it for both members and tells the sender."
       },
       "csam": {
         "loading": "Loading hash matches…",

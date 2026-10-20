@@ -12,6 +12,7 @@ import {
 } from "vitest";
 import { withModerationPool } from "../test-fixtures/moderationPool";
 import { api, internal } from "./_generated/api";
+import { asImage } from "./conversation/messageAttachments";
 import { moderationPool } from "./lib/imageModeration/moderationPool";
 import schema from "./schema";
 
@@ -417,5 +418,198 @@ describe("recheckPhoto", () => {
       (await t.run((ctx) => ctx.db.get(unscoredCopy)))?.moderationStatus,
     ).toBe("approved");
     expect(moderationJobs()).toEqual([]);
+  });
+});
+
+describe("message photos (spec 2026-10-20 D5)", () => {
+  // Alice sent Bob a photo the check could not decide (a message, "unscored"), plus rows that
+  // must stay out of the queue: one still pending, one unscored but never sent.
+  const seedMessagePhotos = async (t: TestConvex<typeof schema>) => {
+    const ids = await seed(t);
+    const bob = await t.run(
+      async (ctx) =>
+        (await ctx.db
+          .query("users")
+          .withIndex("by_clerk_id", (q) => q.eq("clerkId", "clerk_bob"))
+          .unique())!._id,
+    );
+    await t.run((ctx) =>
+      ctx.db.insert("follows", {
+        followerId: ids.alice,
+        followeeId: bob,
+        createdAt: 1,
+      }),
+    );
+    await t.run((ctx) =>
+      ctx.db.insert("follows", {
+        followerId: bob,
+        followeeId: ids.alice,
+        createdAt: 1,
+      }),
+    );
+    const threadId = await asAlice(t).mutation(
+      api.conversation.openDmThread.openDmThread,
+      { recipientId: bob },
+    );
+    const photo = (
+      status: "unscored" | "pending",
+      extra: { sent?: boolean; reencoded?: boolean } = {},
+    ) =>
+      t.run(async (ctx) =>
+        ctx.db.insert("messageAttachments", {
+          kind: "image",
+          threadAggregateId: threadId,
+          uploaderId: ids.alice,
+          fileId: await ctx.storage.store(new Blob(["x"])),
+          byteSize: 1,
+          contentType: "image/jpeg",
+          moderationStatus: status,
+          moderationReason: status === "unscored" ? "stalled" : undefined,
+          blurhash: "LKO2?U%2Tw=w]~RBVZRi};RPxuwH",
+          hashCheckedAt: 1,
+          ...(extra.reencoded !== false && { reencodedAt: 1 }),
+          ...(extra.sent !== false && { messageId: crypto.randomUUID() }),
+          createdAt: 4000,
+          updatedAt: 4000,
+        }),
+      );
+    const sent = await photo("unscored");
+    await photo("pending");
+    await photo("unscored", { sent: false });
+    return { ...ids, bob, threadId, sent, photo };
+  };
+  const decide = (
+    t: TestConvex<typeof schema>,
+    imageId: string,
+    decision: "approve" | "reject",
+  ) =>
+    asAdmin(t).mutation(api.admin.decideUncheckedPhoto.decideUncheckedPhoto, {
+      source: "message",
+      imageId,
+      decision,
+    });
+
+  test("only a sent, unscored message photo is listed, with no conversation context", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { sent } = await seedMessagePhotos(t);
+    const items = (
+      await asAdmin(t).query(
+        api.admin.listUncheckedPhotos.listUncheckedPhotos,
+        {},
+      )
+    ).filter((item) => item.source === "message");
+    expect(items).toEqual([
+      {
+        key: `message:${sent}`,
+        source: "message",
+        imageId: sent,
+        status: "unscored",
+        reason: "stalled",
+        attempts: null,
+        url: expect.any(String),
+        puzzleTitle: "Message photo",
+        uploaderName: expect.any(String),
+        uploadedAt: 4000,
+        canRecheck: true,
+      },
+    ]);
+  });
+
+  test("approve serves it to the recipient; a photo not re-encoded must be checked again first", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { sent, photo, admin } = await seedMessagePhotos(t);
+    const raw = await photo("unscored", { reencoded: false });
+    await expect(decide(t, raw, "approve")).rejects.toThrow(/re-encoded/);
+    expect(
+      (
+        await asAdmin(t).query(
+          api.admin.listUncheckedPhotos.listUncheckedPhotos,
+          {},
+        )
+      ).find((item) => item.imageId === raw)?.url,
+    ).toBeNull();
+
+    await decide(t, sent, "approve");
+    const row = await t.run(async (ctx) => asImage(await ctx.db.get(sent)));
+    expect(row).toMatchObject({
+      moderationStatus: "approved",
+      moderatedBy: admin,
+    });
+    expect((await stamps(t)).map((s) => [s.kind, s.targetLabel])).toEqual([
+      ["photo_manually_approved", "Message photo"],
+    ]);
+    await expect(decide(t, sent, "reject")).rejects.toThrow(/already decided/);
+  });
+
+  test("reject removes it for both sides and tells the sender a person decided", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { sent, alice } = await seedMessagePhotos(t);
+    const fileId = (await t.run(async (ctx) =>
+      asImage(await ctx.db.get(sent)),
+    ))!.fileId;
+    await decide(t, sent, "reject");
+    const row = await t.run(async (ctx) => asImage(await ctx.db.get(sent)));
+    expect(row?.moderationStatus).toBe("removed");
+    expect(await t.run((ctx) => ctx.db.system.get(fileId))).toBeNull();
+    const notices = await t.run((ctx) =>
+      ctx.db
+        .query("notifications")
+        .filter((q) => q.eq(q.field("userId"), alice))
+        .collect(),
+    );
+    expect(notices).toEqual([
+      expect.objectContaining({
+        type: "content_removed",
+        params: expect.objectContaining({
+          restricted: "photo",
+          automated: "false",
+        }),
+      }),
+    ]);
+    expect((await stamps(t)).map((s) => s.kind)).toEqual([
+      "photo_manually_rejected",
+    ]);
+  });
+
+  test("members can't decide or re-check a message photo; a pending one is refused", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { sent, photo } = await seedMessagePhotos(t);
+    await expect(
+      asAlice(t).mutation(api.admin.decideUncheckedPhoto.decideUncheckedPhoto, {
+        source: "message",
+        imageId: sent,
+        decision: "approve",
+      }),
+    ).rejects.toThrow("Forbidden");
+    await expect(
+      asAlice(t).mutation(api.admin.recheckPhoto.recheckPhoto, {
+        source: "message",
+        imageId: sent,
+      }),
+    ).rejects.toThrow("Forbidden");
+    await expect(decide(t, await photo("pending"), "approve")).rejects.toThrow(
+      /already decided/,
+    );
+  });
+
+  test("Check again sends it back through the pipeline", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { sent } = await seedMessagePhotos(t);
+    const spy = vi.spyOn(moderationPool, "enqueueAction");
+    vi.useFakeTimers();
+    try {
+      await asAdmin(t).mutation(api.admin.recheckPhoto.recheckPhoto, {
+        source: "message",
+        imageId: sent,
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+    const row = await t.run(async (ctx) => asImage(await ctx.db.get(sent)));
+    expect(row?.moderationStatus).toBe("pending");
+    expect(row?.moderationReason).toBeUndefined();
+    expect(spy.mock.calls.map((call) => getFunctionName(call[1]))).toEqual([
+      "conversation/moderateMessageImage:moderateMessageImage",
+    ]);
   });
 });

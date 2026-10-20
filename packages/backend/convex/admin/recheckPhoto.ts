@@ -38,6 +38,7 @@ export const recheckPhoto = mutation({
       v.literal("copy"),
       v.literal("completion"),
       v.literal("boxArt"),
+      v.literal("message"),
     ),
     imageId: v.string(),
   },
@@ -62,6 +63,18 @@ export const recheckPhoto = mutation({
       if (!shouldRecheck(row.moderationStatus)) return;
       await ctx.db.patch(id, { ...backToPending, updatedAt: Date.now() });
       await enqueueImageModeration(ctx, "completion", id);
+      return;
+    }
+
+    if (source === "message") {
+      // A message photo (spec 2026-10-20 D5): its recipient keeps seeing "Pending review" until
+      // the verdict lands through conversation/attachmentModerationStore.
+      const id = ctx.db.normalizeId("messageAttachments", imageId);
+      const row = id ? await ctx.db.get(id) : null;
+      if (!id || row?.kind !== "image") throw notFound();
+      if (!shouldRecheck(row.moderationStatus)) return;
+      await ctx.db.patch(id, { ...backToPending, updatedAt: Date.now() });
+      await enqueueImageModeration(ctx, "message", id);
       return;
     }
 
