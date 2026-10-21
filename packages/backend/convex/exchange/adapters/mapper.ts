@@ -41,6 +41,7 @@ export const toDomain = (row: Doc<"exchanges">): Exchange => {
     status: row.status as ExchangeStatus,
     initiatorConfirmationTimestamp: toDate(row.initiatorConfirmationTimestamp),
     recipientConfirmationTimestamp: toDate(row.recipientConfirmationTimestamp),
+    eligibleVia: row.eligibleVia,
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt),
   };
@@ -102,6 +103,7 @@ export const toRow = (exchange: Exchange): ExchangeRow => {
       state.initiatorConfirmationTimestamp?.getTime(),
     recipientConfirmationTimestamp:
       state.recipientConfirmationTimestamp?.getTime(),
+    eligibleVia: state.eligibleVia,
     createdAt: state.createdAt.getTime(),
     updatedAt: state.updatedAt.getTime(),
   };

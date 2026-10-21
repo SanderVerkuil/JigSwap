@@ -114,9 +114,11 @@ still request a puzzle when you also reach it another way: you have **Can
 exchange** or **Admin** in another circle where it's shared, you and the owner
 follow each other, you share a household, or the owner's profile is public.
 
-If your permission drops to **View only** after you sent a request, the owner
-can no longer accept it. You can still cancel it. Exchanges that were already
-accepted can still be completed.
+If you could only send a request through a circle, and after that your
+permission there drops to **View only** or you leave the circle, the owner can
+no longer accept it. You can still cancel it. Exchanges that were already
+accepted can still be completed. A request you could send another way stays
+open to accept, even if the owner later makes their profile private.
 
 ## Share a copy with a circle
 

@@ -121,9 +121,12 @@ puzzel toch aanvragen als je hem ook op een andere manier bereikt: je hebt
 en de eigenaar volgen elkaar, jullie delen een huishouden, of het profiel van
 de eigenaar is openbaar.
 
-Daalt je recht naar **Alleen bekijken** nadat je een aanvraag stuurde, dan kan
-de eigenaar die niet meer accepteren. Je kunt hem nog wel annuleren. Ruilen die
-al geaccepteerd waren, kunnen gewoon worden afgerond.
+Kon je een aanvraag alleen via een kring sturen, en daalt je recht daar daarna
+naar **Alleen bekijken** of verlaat je de kring, dan kan de eigenaar hem niet
+meer accepteren. Je kunt hem nog wel annuleren. Ruilen die al geaccepteerd
+waren, kunnen gewoon worden afgerond. Een aanvraag die je ook op een andere
+manier kon sturen, blijft te accepteren, ook als de eigenaar zijn profiel later
+privé maakt.
 
 ## Een exemplaar delen met een kring
 

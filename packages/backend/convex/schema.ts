@@ -852,6 +852,12 @@ export default defineSchema({
     // Timestamp for when the recipient confirms they have received their item.
     recipientConfirmationTimestamp: v.optional(v.number()),
 
+    // What made the initiator eligible to ask, set by propose: "direct" (a route through the owner:
+    // public profile, household, mutual follow) or "circle" (only their own Exchange/Admin circle
+    // seats). Accept re-checks the circle standing only for "circle". Absent on older rows, where
+    // accept falls back to the live routes. No backfill.
+    eligibleVia: v.optional(v.union(v.literal("direct"), v.literal("circle"))),
+
     // --- Timestamps ---
     createdAt: v.number(),
     updatedAt: v.number(),
