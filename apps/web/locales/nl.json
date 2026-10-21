@@ -2048,7 +2048,6 @@
   },
   "circles": {
     "yourCircles": "Jouw Kringen",
-    "meta": "Besloten groepen om binnen te ruilen",
     "createCircle": "Kring Aanmaken",
     "roleOwner": "Eigenaar",
     "roleMember": "Lid",
@@ -2150,7 +2149,7 @@
       "members": "Leden",
       "owner": "Eigenaar",
       "shareCopy": "Een exemplaar delen",
-      "shareDescription": "Gedeelde exemplaren worden zichtbaar voor kringleden op het zichtbaarheidsniveau <scope>friendCircle</scope>. Een exemplaar dat je op privé hebt gezet, blijft privé.",
+      "shareDescription": "Gedeelde exemplaren worden zichtbaar voor leden van deze kring. Een exemplaar dat je op privé hebt gezet, blijft privé.",
       "chooseCopy": "Kies een van je exemplaren…",
       "copyFallback": "Exemplaar",
       "share": "Delen",
@@ -4113,6 +4112,7 @@
   "imageEditor": {
     "title": "Foto bewerken",
     "description": "Sleep om te verplaatsen, scroll of knijp om te zoomen en versleep het kader om bij te snijden. De bewerkte foto vervangt het origineel zodra je het formulier opslaat.",
+    "descriptionIcon": "Sleep om te verplaatsen, scroll of knijp om te zoomen en versleep het kader om bij te snijden. Het bijgesneden vierkant wordt het pictogram van de kring zodra onze automatische controle het heeft goedgekeurd.",
     "rotation": "Rotatie",
     "rotate90": "90° draaien",
     "autoCrop": "Automatisch bijsnijden",

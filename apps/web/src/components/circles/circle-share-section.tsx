@@ -52,9 +52,7 @@ export function CircleShareSection({
     <section className="space-y-3">
       <h3 className="font-medium">{t("manage.shareCopy")}</h3>
       <p className="text-xs text-muted-foreground">
-        {t.rich("manage.shareDescription", {
-          scope: (chunks) => <span className="font-medium">{chunks}</span>,
-        })}
+        {t("manage.shareDescription")}
       </p>
       <div className="flex items-center gap-2">
         <Select value={shareCopyId} onValueChange={setShareCopyId}>

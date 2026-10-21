@@ -108,15 +108,12 @@ function CirclesPage() {
     }
   };
 
-  // The page title lives in the shell page head; publish the meta + primary
-  // action there too so the body carries no duplicate section header.
+  // The page title and subtitle live in the shell page head; publish the guide
+  // and primary action there too so the body carries no duplicate section header.
   const { startTour } = useTourLauncher();
   usePageHeaderActions(
     () => (
       <>
-        <span className="text-muted-foreground hidden text-sm sm:inline">
-          {t("meta")}
-        </span>
         <GuideHelpButton tourId="circles" startTour={startTour} />
         <Button
           variant="brand"

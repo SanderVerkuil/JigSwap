@@ -2048,7 +2048,6 @@
   },
   "circles": {
     "yourCircles": "Your Circles",
-    "meta": "Private groups to swap within",
     "createCircle": "Create Circle",
     "roleOwner": "Owner",
     "roleMember": "Member",
@@ -2150,7 +2149,7 @@
       "members": "Members",
       "owner": "Owner",
       "shareCopy": "Share a copy",
-      "shareDescription": "Shared copies become visible to circle members at the <scope>friendCircle</scope> visibility scope. A copy you've marked private stays private.",
+      "shareDescription": "Shared copies become visible to members of this circle. A copy you've marked private stays private.",
       "chooseCopy": "Choose one of your copies…",
       "copyFallback": "Copy",
       "share": "Share",
@@ -4113,6 +4112,7 @@
   "imageEditor": {
     "title": "Edit photo",
     "description": "Drag to move, scroll or pinch to zoom, and resize the frame to crop. The edited photo replaces the original when you save the form.",
+    "descriptionIcon": "Drag to move, scroll or pinch to zoom, and resize the frame to crop. The cropped square becomes the circle's icon once it has passed our automated check.",
     "rotation": "Rotation",
     "rotate90": "Rotate 90°",
     "autoCrop": "Auto crop",

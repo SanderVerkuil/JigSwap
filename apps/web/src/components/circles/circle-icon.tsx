@@ -103,6 +103,7 @@ export function useCircleIconPicker(circleId: string): {
         src={editing?.src ?? null}
         fileName={editing?.fileName ?? "icon.jpg"}
         aspectRatio={1}
+        variant="icon"
         onApply={(file) => {
           upload.mutate(file);
           closeEditor();

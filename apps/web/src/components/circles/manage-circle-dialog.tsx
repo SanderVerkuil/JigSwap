@@ -156,7 +156,7 @@ export function ManageCircleDialog({
                         handlePermission(member, value)
                       }
                     >
-                      <SelectTrigger className="w-32">
+                      <SelectTrigger className="w-40">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>

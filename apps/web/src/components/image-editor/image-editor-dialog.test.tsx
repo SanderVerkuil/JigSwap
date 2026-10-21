@@ -160,4 +160,21 @@ describe("ImageEditorDialog Auto crop", () => {
     );
     expect(mocks.trusted).not.toHaveBeenCalled();
   });
+
+  it("describes the icon use instead of the form save for the icon variant", () => {
+    render(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <ImageEditorDialog
+          src="blob:picked"
+          fileName="icon.png"
+          aspectRatio={1}
+          variant="icon"
+          onApply={vi.fn()}
+          onClose={() => {}}
+        />
+      </IntlProvider>,
+    );
+    expect(screen.getByText(en.imageEditor.descriptionIcon)).toBeTruthy();
+    expect(screen.queryByText(en.imageEditor.description)).toBeNull();
+  });
 });
