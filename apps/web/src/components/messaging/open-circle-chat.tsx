@@ -19,12 +19,15 @@ export function useOpenCircleChat() {
   const openCircleThread = useMutation({
     mutationFn: useConvexMutation(gateway.conversation.openCircleThread),
   });
+  // Resolves true once the thread is open, false after an error toast.
   const open = async (circleId: string) => {
     try {
       const threadId = await openCircleThread.mutateAsync({ circleId });
       await navigate({ to: "/messages/$threadId", params: { threadId } });
+      return true;
     } catch {
       toast.error(t("circle.openGroupChatError"));
+      return false;
     }
   };
   return { open, pending: openCircleThread.isPending };
