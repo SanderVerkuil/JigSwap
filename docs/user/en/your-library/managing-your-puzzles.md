@@ -41,6 +41,8 @@ From a puzzle card you can:
 The detail page is the rich record of a single owned copy. It includes:
 
 - A **hero image** with the availability badge and condition/difficulty chips.
+  On a phone or tablet, pinch it to zoom in and drag to look around;
+  double-tap to zoom back out.
 - **Acquisition details** (how/when you got it) and your private notes.
 - A **stats strip**: times completed, fastest finish, times lent out, and average rating.
 - The **Owner**: their avatar and name, which links to their profile when you're

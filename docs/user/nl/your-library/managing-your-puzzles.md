@@ -41,6 +41,8 @@ Vanaf een puzzelkaart kun je:
 De detailpagina is het uitgebreide overzicht van één eigen kopie. Het bevat:
 
 - Een **hero-afbeelding** met de beschikbaarheidsbadge en chips voor conditie/moeilijkheid.
+  Op een telefoon of tablet knijp je erin om in te zoomen en sleep je om rond
+  te kijken; dubbeltik om weer uit te zoomen.
 - **Verwervingsgegevens** (hoe/wanneer je hem kreeg) en je privénotities.
 - Een **statistiekenstrook**: aantal keer voltooid, snelste tijd, aantal keer uitgeleend en gemiddelde beoordeling.
 - De **Eigenaar**: avatar en naam, met een link naar het profiel als je dat
