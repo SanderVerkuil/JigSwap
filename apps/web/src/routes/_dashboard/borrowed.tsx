@@ -1,4 +1,5 @@
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
+import { BorrowedEmptyState } from "@/components/exchange/borrowed-empty-state";
 import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
 import { StartSolveDialog } from "@/components/solving/start-solve-dialog";
@@ -14,7 +15,7 @@ import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
-import { HandHelping, Package, User } from "lucide-react";
+import { Package, User } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslations } from "use-intl";
 
@@ -122,17 +123,7 @@ function BorrowedPage() {
   return (
     <div className="flex w-full flex-col gap-6">
       {borrowed.length === 0 ? (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <div className="text-muted-foreground">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                <HandHelping className="h-8 w-8" />
-              </div>
-              <h3 className="text-lg font-medium mb-2">{t("noBorrowed")}</h3>
-              <p className="text-sm">{t("noBorrowedDescription")}</p>
-            </div>
-          </CardContent>
-        </Card>
+        <BorrowedEmptyState />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {borrowed.map((loan) => (

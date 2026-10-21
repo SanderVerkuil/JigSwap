@@ -95,7 +95,10 @@ const dmThread: AnyInboxThread = {
   updatedAt: 1,
 };
 
-const renderList = (inbox: AnyInboxThread[], locale: "en" | "nl" = "en") => {
+const renderList = (
+  inbox: AnyInboxThread[] | undefined,
+  locale: "en" | "nl" = "en",
+) => {
   const convexQueryClient = new ConvexQueryClient(
     new ConvexReactClient("https://example.convex.cloud"),
   );
@@ -109,10 +112,13 @@ const renderList = (inbox: AnyInboxThread[], locale: "en" | "nl" = "en") => {
       },
     },
   });
-  queryClient.setQueryData(
-    convexQuery(gateway.conversation.getMyInbox, {}).queryKey,
-    inbox,
-  );
+  // Leaving the inbox unset keeps it loading (the queryFn never resolves).
+  if (inbox) {
+    queryClient.setQueryData(
+      convexQuery(gateway.conversation.getMyInbox, {}).queryKey,
+      inbox,
+    );
+  }
   render(
     <QueryClientProvider client={queryClient}>
       <IntlProvider
@@ -271,5 +277,26 @@ describe("ThreadList trade lifecycle rows", () => {
     );
     expect(screen.getByText("Uitwisseling voorgesteld")).toBeTruthy();
     expect(screen.queryByText("exchange_proposed")).toBeNull();
+  });
+});
+
+describe("ThreadList empty inbox", () => {
+  it.each([
+    ["en", "No conversations yet", "Message a member"],
+    ["nl", "Nog geen gesprekken", "Bericht aan een lid"],
+  ] as const)(
+    "explains how conversations start and links to People (%s)",
+    (locale, title, action) => {
+      renderList([], locale);
+      expect(screen.getByText(title)).toBeTruthy();
+      const link = screen.getByRole("link", { name: action });
+      expect(link.getAttribute("href")).toBe("/people");
+    },
+  );
+
+  it("shows no hint while the inbox is loading", () => {
+    renderList(undefined);
+    expect(screen.queryByText("No conversations yet")).toBeNull();
+    expect(screen.queryByRole("link", { name: "Message a member" })).toBeNull();
   });
 });

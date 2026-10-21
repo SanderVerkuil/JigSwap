@@ -304,7 +304,7 @@ function CollectionsPage() {
         {collections.length === 0 ? (
           <EmptyState
             title={t("noCollections")}
-            sub={t("createFirstCollection")}
+            sub={t("emptyHint")}
             action={
               <Button
                 variant="brand"
