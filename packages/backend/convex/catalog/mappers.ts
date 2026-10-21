@@ -59,6 +59,14 @@ export const toPuzzleSummaryView = (
 });
 
 /** The localized category taxonomy view. */
+/** Public taxonomy order: sortOrder ascending, ties broken by English name (case-insensitive). */
+export const byCategoryOrder = (
+  a: Pick<Doc<"adminCategories">, "sortOrder" | "name">,
+  b: Pick<Doc<"adminCategories">, "sortOrder" | "name">,
+): number =>
+  a.sortOrder - b.sortOrder ||
+  a.name.en.localeCompare(b.name.en, "en", { sensitivity: "base" });
+
 export const toPuzzleCategoryView = (
   row: Doc<"adminCategories">,
 ): PuzzleCategoryView => ({

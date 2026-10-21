@@ -177,6 +177,38 @@ describe("catalog reads", () => {
     expect(categories.map((c) => c.name.en)).toEqual(["Landscapes"]);
   });
 
+  test("public category reads follow sortOrder, ties by English name, not creation order", async () => {
+    const t = convexTest(schema, modules);
+    await t.run(async (ctx) => {
+      const rows: [string, number, boolean][] = [
+        ["Zebra", 2, true],
+        ["beta", 1, true],
+        ["Hidden", 0, false],
+        ["Alpha", 1, true],
+      ];
+      for (const [en, sortOrder, isActive] of rows) {
+        await ctx.db.insert("adminCategories", {
+          name: { en, nl: en },
+          isActive,
+          sortOrder,
+          createdAt: 1,
+          updatedAt: 1,
+        });
+      }
+    });
+
+    const catalog = await t.query(
+      api.catalog.getPuzzleCategories.getPuzzleCategories,
+      {},
+    );
+    const legacy = await t.query(
+      api.adminCategories.getActiveAdminCategories,
+      {},
+    );
+    expect(catalog.map((c) => c.name.en)).toEqual(["Alpha", "beta", "Zebra"]);
+    expect(legacy.map((c) => c.name.en)).toEqual(["Alpha", "beta", "Zebra"]);
+  });
+
   test("getAllBrands returns approved brands only (pending brand excluded)", async () => {
     const t = convexTest(schema, modules);
     await seed(t);

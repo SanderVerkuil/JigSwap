@@ -7,6 +7,7 @@ import {
 } from "@jigswap/domain";
 import type { Doc } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
+import { byCategoryOrder } from "../mappers";
 
 // ACL between an `adminCategories` row and the CatalogCategory aggregate.
 type CategoryRow = Omit<Doc<"adminCategories">, "_id" | "_creationTime">;
@@ -59,7 +60,7 @@ export const convexCatalogCategoryRepository = (
     else await ctx.db.insert("adminCategories", row);
   },
 
-  // Public taxonomy: only domain-written, active rows (legacy rows lack an aggregateId).
+  // Public taxonomy: only domain-written, active rows (legacy rows lack an aggregateId), in order.
   async listActive(): Promise<readonly CatalogCategory[]> {
     const rows = await ctx.db
       .query("adminCategories")
@@ -67,6 +68,7 @@ export const convexCatalogCategoryRepository = (
       .collect();
     return rows
       .filter((row) => row.aggregateId !== undefined)
+      .sort(byCategoryOrder)
       .map((row) => toDomain(row));
   },
 });

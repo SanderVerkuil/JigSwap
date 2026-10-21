@@ -1,5 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { query } from "./_generated/server";
+import { byCategoryOrder } from "./catalog/mappers";
 import { isAdmin } from "./identity/isAdmin";
 import { requireMember } from "./identity/requireMember";
 
@@ -15,15 +16,15 @@ export const getAllAdminCategories = query({
   },
 });
 
-// Get active admin categories (for public use)
+// Get active admin categories (for public use), in the admin-set sortOrder (ties by English name)
 export const getActiveAdminCategories = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db
+    const categories = await ctx.db
       .query("adminCategories")
       .withIndex("by_active", (q) => q.eq("isActive", true))
-      .order("asc")
       .collect();
+    return categories.sort(byCategoryOrder);
   },
 });
 
