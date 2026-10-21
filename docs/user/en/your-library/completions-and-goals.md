@@ -69,6 +69,9 @@ Set personal challenges and track them automatically against your solve log.
 
 **Where:** **Goals** (`/goals`).
 
+Until you have a goal, the page explains what a goal is and offers
+**New Goal**.
+
 ### Create a goal
 
 1. Open **Goals**.

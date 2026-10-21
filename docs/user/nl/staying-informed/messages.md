@@ -34,6 +34,9 @@ Op desktop staat het overzicht van gesprekken links en het geopende gesprek
 rechts. Op een telefoon zie je eerst het overzicht; een geopend gesprek vult
 het hele scherm, en met de terugknop ga je terug naar het overzicht.
 
+Is het overzicht nog leeg, dan legt het uit hoe een gesprek begint en biedt
+het **Bericht aan een lid** aan, dat **Mensen** opent.
+
 Elke rij in het overzicht toont:
 
 - De naam van het lid en hoe lang geleden het laatste bericht is verstuurd

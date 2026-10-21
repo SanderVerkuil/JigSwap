@@ -5,6 +5,7 @@
 // All data access lives in the messaging components; routes stay thin.
 import { Link } from "@/compat/link";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
+import { EmptyState } from "@/components/library/empty-state";
 import { MemberInitial } from "@/components/members/member-initial";
 import { PresenceDot } from "@/components/presence/presence-dot";
 import { PresenceSharePrompt } from "@/components/presence/presence-sharing";
@@ -21,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { stripFormatting } from "@jigswap/contracts";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeftRight, BellOff, MessageSquare, User } from "lucide-react";
+import { ArrowLeftRight, BellOff, User, UserRound } from "lucide-react";
 import { useState } from "react";
 import { useLocale, useNow, useTranslations } from "use-intl";
 import { CircleThreadAvatar } from "./circle-thread-avatar";
@@ -173,12 +174,19 @@ function ThreadListBody({ activeThreadId }: { activeThreadId?: string }) {
 
   if (inbox.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-2 px-4 py-16 text-center">
-        <div className="bg-muted flex size-12 items-center justify-center rounded-full">
-          <MessageSquare className="text-muted-foreground size-6" />
-        </div>
-        <p className="text-sm font-medium">{t("empty")}</p>
-        <p className="text-muted-foreground text-xs">{t("emptyHint")}</p>
+      <div className="px-4">
+        <EmptyState
+          title={t("empty")}
+          sub={t("emptyHint")}
+          action={
+            <Button asChild variant="brand">
+              <Link href="/people">
+                <UserRound className="h-4 w-4" />
+                {t("circle.messageMember")}
+              </Link>
+            </Button>
+          }
+        />
       </div>
     );
   }

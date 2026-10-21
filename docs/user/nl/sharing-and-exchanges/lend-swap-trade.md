@@ -76,7 +76,8 @@ De pagina **Uitwisselingen** ordent alles in tabbladen:
 - **Uitgaand** — verzoeken die jij hebt verstuurd.
 - **Voltooid**
 - **Geleend** — openstaande leningen waarbij jij momenteel iemand anders zijn
-  puzzel in bezit hebt.
+  puzzel in bezit hebt. Heb je er geen, dan legt het tabblad uit hoe lenen
+  werkt en linkt het naar **Puzzels Ontdekken**.
 
 Klik op **Bekijken** bij een uitwisseling om de details uit te klappen: beide
 puzzels, de ruilpartnerkaart en de acties voor de huidige stap van de

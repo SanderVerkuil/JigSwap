@@ -17,7 +17,7 @@ export function EmptyState({
         🧩
       </div>
       <div className="font-heading text-lg font-bold">{title}</div>
-      {sub && <p className="text-muted-foreground text-sm">{sub}</p>}
+      {sub && <p className="text-muted-foreground max-w-md text-sm">{sub}</p>}
       {action && <div className="mt-3">{action}</div>}
     </div>
   );

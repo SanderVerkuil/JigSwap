@@ -70,6 +70,9 @@ Stel persoonlijke uitdagingen in en volg ze automatisch aan de hand van je oplos
 
 **Waar:** **Doelen** (`/goals`).
 
+Zolang je nog geen doel hebt, legt de pagina uit wat een doel is en biedt
+hij **Nieuw Doel** aan.
+
 ### Een doel aanmaken
 
 1. Open **Doelen**.

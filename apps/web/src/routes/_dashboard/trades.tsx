@@ -5,6 +5,7 @@ import {
   FilterBar,
 } from "@/components/community/primitives";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
+import { BorrowedEmptyState } from "@/components/exchange/borrowed-empty-state";
 import { TradePartnerCard } from "@/components/exchange/trade-partner-card";
 import { ThreadView } from "@/components/messaging/thread-view";
 import { LeaveReviewDialog } from "@/components/reputation/leave-review-dialog";
@@ -585,9 +586,7 @@ function BorrowedList({ borrowed }: { borrowed: BorrowedLoan[] | undefined }) {
   }
 
   if (borrowed.length === 0) {
-    return (
-      <EmptyState title={t("noBorrowed")} sub={t("noBorrowedDescription")} />
-    );
+    return <BorrowedEmptyState />;
   }
 
   return (
