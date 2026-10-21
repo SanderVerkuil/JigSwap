@@ -5232,5 +5232,11 @@
     "promptBody": "People who follow you back will see when you're online or away, and you'll see theirs. You can change this anytime in Privacy & safety.",
     "promptShare": "Share",
     "promptNotNow": "Not now"
+  },
+  "appUpdate": {
+    "available": "A new version of JigSwap is available",
+    "description": "Reload to get it. Finish what you're typing first.",
+    "reload": "Reload",
+    "notNow": "Not now"
   }
 }
