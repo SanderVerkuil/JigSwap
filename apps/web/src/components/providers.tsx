@@ -1,6 +1,5 @@
 import { PostHogPageView } from "@/components/analytics-page-view";
 import { initPostHog, PostHogProvider } from "@/components/analytics-provider";
-import { AppUpdatePrompt } from "@/components/app-update-prompt";
 import CookieConsent from "@/components/blocks/cookie-consent";
 import { Toaster } from "@/components/ui/sonner";
 import { timeZone, type Messages } from "@/lib/i18n";
@@ -58,7 +57,6 @@ export function Providers({
           <CookieConsent variant="mini" onAcceptCallback={initPostHog} />
           <PostHogPageView />
           <Toaster />
-          <AppUpdatePrompt />
         </PostHogProvider>
       </ThemeProvider>
     </IntlProvider>

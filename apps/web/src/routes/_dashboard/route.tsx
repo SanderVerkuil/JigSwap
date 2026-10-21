@@ -1,3 +1,4 @@
+import { AppUpdatePrompt } from "@/components/app-update-prompt";
 import { DashboardShell } from "@/components/dashboard-layout/shell";
 import { AppNotFound } from "@/components/NotFound";
 import { AppPresence } from "@/components/presence/app-presence";
@@ -51,6 +52,8 @@ function DashboardLayout() {
             <InviteRedeemer />
             {/* Online/away heartbeats for opted-in members (renders nothing). */}
             <AppPresence />
+            {/* Offers a reload after a deploy; only signed-in pages, not the marketing or docs pages. */}
+            <AppUpdatePrompt />
             {/* Inside both prompt providers: it yields to their prompts (surface-busy signal). */}
             <WhatsNewHighlight />
             <Outlet />

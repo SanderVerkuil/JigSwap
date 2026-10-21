@@ -12,7 +12,8 @@ import { useTranslations } from "use-intl";
 // Offers a reload when a newer build is deployed while JigSwap is open: checks /version.json when
 // the tab becomes visible again and every few minutes while it's visible, and treats a failed
 // chunk load (stale chunks after a deploy) as the same signal. Never reloads by itself, so nothing
-// half-typed is lost. Off on the dev server, which has no version.json.
+// half-typed is lost. Off on the dev server, which has no version.json. Mounted in the dashboard
+// layout only; the marketing and docs pages don't need it.
 export function AppUpdatePrompt() {
   const t = useTranslations("appUpdate");
   const prompted = useRef<string | null>(null);
