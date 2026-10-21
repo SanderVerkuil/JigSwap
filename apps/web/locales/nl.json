@@ -787,6 +787,21 @@
     "goToExchange": "Uitwisseling bekijken",
     "goToProfile": "Profiel bekijken",
     "goToPuzzleNamed": "{title} bekijken",
+    "guide": {
+      "startTitle": "Begin een gesprek",
+      "member": {
+        "title": "Bericht aan een lid",
+        "text": "Gebruik Bericht op iemands profiel of bij een puzzel van die persoon."
+      },
+      "exchange": {
+        "title": "Chats bij uitwisselingen",
+        "text": "Elk verzoek om te ruilen, lenen of kopen krijgt een eigen chat."
+      },
+      "circle": {
+        "title": "Kringchat",
+        "text": "Elke kring heeft er één. Open hem via Nieuw of op de pagina van de kring."
+      }
+    },
     "inboxError": "Je gesprekken konden niet worden geladen.",
     "loadEarlier": "Eerdere berichten laden",
     "loadingEarlier": "Eerdere berichten laden…",
@@ -808,7 +823,6 @@
     "retry": "Opnieuw proberen",
     "searchPuzzles": "Zoek puzzels",
     "selectConversation": "Selecteer een gesprek",
-    "selectConversationHint": "Kies een gesprek uit de lijst om te beginnen met chatten",
     "sendError": "Je bericht kon niet worden verzonden. Probeer het opnieuw.",
     "sendMessage": "Bericht versturen",
     "startOfConversation": "Begin van het gesprek",

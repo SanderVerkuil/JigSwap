@@ -102,7 +102,13 @@ function MobilePageActions() {
   // An immersive route (an open thread) owns the whole phone screen.
   if (!actions || isImmersiveMobileRoute(pathname)) return null;
   return (
-    <div className="mb-4 flex items-center justify-end gap-2 md:hidden">
+    <div
+      className={cn(
+        "flex items-center justify-end gap-2 md:hidden",
+        // The inbox list pads its own rows, so on /messages New sits tight above it.
+        isFullBleedRoute(pathname) ? "-mt-2" : "mb-4",
+      )}
+    >
       {actions}
     </div>
   );

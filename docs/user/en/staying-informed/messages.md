@@ -32,6 +32,8 @@ On desktop, the inbox sits on the left and the open conversation on the right,
 together filling the page. On a phone, you see the inbox first; opening a
 conversation fills the whole screen, and the back button returns you to the
 inbox. **New**, for starting a conversation, sits at the top right of the page.
+On desktop, until you open a conversation, the right side lists the ways
+conversations start: messaging a member, exchange chats, and circle chats.
 
 An empty inbox explains how conversations start and offers
 **Message a member**, which opens **People**.

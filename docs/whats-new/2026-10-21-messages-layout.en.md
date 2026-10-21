@@ -13,4 +13,6 @@ inbox and the open conversation now run to the edges of the page.
 - **One scroll each.** The inbox and the conversation scroll on their own; the
   page itself stays put.
 - **New** moved to the top right of the page.
+- **Before you pick a conversation**, the right side shows the ways a
+  conversation starts.
 - **Switching conversations** slides the highlight to the one you opened.

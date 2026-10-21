@@ -34,7 +34,9 @@ Op desktop staat het overzicht van gesprekken links en het geopende gesprek
 rechts, samen over de hele pagina. Op een telefoon zie je eerst het overzicht;
 een geopend gesprek vult het hele scherm, en met de terugknop ga je terug naar
 het overzicht. **Nieuw**, om een gesprek te beginnen, staat rechtsboven op de
-pagina.
+pagina. Zolang je op desktop geen gesprek hebt geopend, zie je rechts hoe een
+gesprek begint: een bericht aan een lid, chats bij uitwisselingen en de
+kringchat.
 
 Is het overzicht nog leeg, dan legt het uit hoe een gesprek begint en biedt
 het **Bericht aan een lid** aan, dat **Mensen** opent.

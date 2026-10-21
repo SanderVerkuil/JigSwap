@@ -101,20 +101,37 @@ export function ThreadSubjectAvatar({
 
 // The list pane: loading / error / empty / rows. The page head titles the
 // page and carries the New menu (published by the /messages layout).
-export function ThreadList({ activeThreadId }: { activeThreadId?: string }) {
+// `guideBeside`: the page shows InboxGuide next to the list from md, so the
+// empty state leaves its how-to hint to that pane there.
+export function ThreadList({
+  activeThreadId,
+  guideBeside = false,
+}: {
+  activeThreadId?: string;
+  guideBeside?: boolean;
+}) {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {/* Desktop scrolls inside the frame; mobile scrolls the document. */}
       <div className="md:min-h-0 md:flex-1 md:overflow-y-auto">
         {/* One-time "show when you're online?" card, until the member chooses. */}
         <PresenceSharePrompt />
-        <ThreadListBody activeThreadId={activeThreadId} />
+        <ThreadListBody
+          activeThreadId={activeThreadId}
+          guideBeside={guideBeside}
+        />
       </div>
     </div>
   );
 }
 
-function ThreadListBody({ activeThreadId }: { activeThreadId?: string }) {
+function ThreadListBody({
+  activeThreadId,
+  guideBeside,
+}: {
+  activeThreadId?: string;
+  guideBeside: boolean;
+}) {
   const t = useTranslations("messages");
   const locale = useLocale();
   // One clock for every row, ticking each minute so "now"/"5m" stay fresh.
@@ -171,6 +188,7 @@ function ThreadListBody({ activeThreadId }: { activeThreadId?: string }) {
         <EmptyState
           title={t("empty")}
           sub={t("emptyHint")}
+          subClassName={guideBeside ? "md:hidden" : undefined}
           action={
             <Button asChild variant="brand">
               <Link href="/people">
