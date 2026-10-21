@@ -25,6 +25,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeftRight, BellOff, User, UserRound } from "lucide-react";
 import { useState } from "react";
 import { useLocale, useNow, useTranslations } from "use-intl";
+import { ActiveRowIndicator } from "./active-row-indicator";
 import { CircleThreadAvatar } from "./circle-thread-avatar";
 import { CoverTooltipProvider, RowCover } from "./cover-stack";
 import {
@@ -183,7 +184,12 @@ function ThreadListBody({ activeThreadId }: { activeThreadId?: string }) {
 
   return (
     <CoverTooltipProvider>
-      <nav aria-label={t("conversationsLabel")}>
+      {/* Positioned so the rows and the active indicator share one origin. */}
+      <nav aria-label={t("conversationsLabel")} className="relative">
+        <ActiveRowIndicator
+          activeKey={activeThreadId}
+          layoutKey={inbox.map((thread) => thread.threadId).join()}
+        />
         <ul role="list" className="flex flex-col gap-0.5 p-2 max-md:-mx-2">
           {inbox.map((thread) => (
             <li key={thread.threadId}>
@@ -261,17 +267,10 @@ function ThreadRow({
       onBlur={() => setKeyboardFocused(false)}
       className={cn(
         "group focus-visible:ring-ring relative flex h-[68px] items-center gap-3 rounded-lg px-3 outline-none transition-colors focus-visible:ring-2",
-        selected
-          ? "bg-jigsaw-primary-tint hover:bg-jigsaw-primary-tint"
-          : "hover:bg-muted/60",
+        // The selected tint is the list's sliding ActiveRowIndicator.
+        !selected && "hover:bg-muted/60",
       )}
     >
-      {selected && (
-        <span
-          aria-hidden
-          className="bg-primary absolute inset-y-3 left-0 w-[3px] rounded-full"
-        />
-      )}
       <span className="relative flex shrink-0">
         <ThreadSubjectAvatar subject={subject} />
         <PresenceDot status={presence} />
