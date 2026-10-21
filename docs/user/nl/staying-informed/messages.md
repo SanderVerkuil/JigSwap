@@ -31,8 +31,10 @@ meer sturen.
 ## Het overzicht van gesprekken
 
 Op desktop staat het overzicht van gesprekken links en het geopende gesprek
-rechts. Op een telefoon zie je eerst het overzicht; een geopend gesprek vult
-het hele scherm, en met de terugknop ga je terug naar het overzicht.
+rechts, samen over de hele pagina. Op een telefoon zie je eerst het overzicht;
+een geopend gesprek vult het hele scherm, en met de terugknop ga je terug naar
+het overzicht. **Nieuw**, om een gesprek te beginnen, staat rechtsboven op de
+pagina.
 
 Is het overzicht nog leeg, dan legt het uit hoe een gesprek begint en biedt
 het **Bericht aan een lid** aan, dat **Mensen** opent.

@@ -25,6 +25,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeftRight, BellOff, User, UserRound } from "lucide-react";
 import { useState } from "react";
 import { useLocale, useNow, useTranslations } from "use-intl";
+import { ActiveRowIndicator } from "./active-row-indicator";
 import { CircleThreadAvatar } from "./circle-thread-avatar";
 import { CoverTooltipProvider, RowCover } from "./cover-stack";
 import {
@@ -41,7 +42,6 @@ import {
   type InboxThread,
   type Translator,
 } from "./format";
-import { NewConversationMenu } from "./new-conversation-menu";
 
 // The revealed partner of a DM row, the only rows that carry a presence dot
 // (exchange rows show an exchange chip, circle rows their members).
@@ -97,20 +97,11 @@ export function ThreadSubjectAvatar({
   );
 }
 
-// The list pane: a md+ header ("Conversations", aligned with the thread
-// header's rule, and the New menu), then loading / error / empty / rows.
-// Mobile shows just the New menu above the rows — the shell top bar already
-// titles the page.
+// The list pane: loading / error / empty / rows. The page head titles the
+// page and carries the New menu (published by the /messages layout).
 export function ThreadList({ activeThreadId }: { activeThreadId?: string }) {
-  const t = useTranslations("messages");
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex shrink-0 items-center justify-end pb-1 md:h-14 md:justify-between md:border-b md:pr-2 md:pb-0 md:pl-4">
-        <h2 className="font-heading hidden text-base font-bold md:block">
-          {t("conversationsLabel")}
-        </h2>
-        <NewConversationMenu />
-      </div>
       {/* Desktop scrolls inside the frame; mobile scrolls the document. */}
       <div className="md:min-h-0 md:flex-1 md:overflow-y-auto">
         {/* One-time "show when you're online?" card, until the member chooses. */}
@@ -193,7 +184,12 @@ function ThreadListBody({ activeThreadId }: { activeThreadId?: string }) {
 
   return (
     <CoverTooltipProvider>
-      <nav aria-label={t("conversationsLabel")}>
+      {/* Positioned so the rows and the active indicator share one origin. */}
+      <nav aria-label={t("conversationsLabel")} className="relative">
+        <ActiveRowIndicator
+          activeKey={activeThreadId}
+          layoutKey={inbox.map((thread) => thread.threadId).join()}
+        />
         <ul role="list" className="flex flex-col gap-0.5 p-2 max-md:-mx-2">
           {inbox.map((thread) => (
             <li key={thread.threadId}>
@@ -271,17 +267,10 @@ function ThreadRow({
       onBlur={() => setKeyboardFocused(false)}
       className={cn(
         "group focus-visible:ring-ring relative flex h-[68px] items-center gap-3 rounded-lg px-3 outline-none transition-colors focus-visible:ring-2",
-        selected
-          ? "bg-jigsaw-primary-tint hover:bg-jigsaw-primary-tint"
-          : "hover:bg-muted/60",
+        // The selected tint is the list's sliding ActiveRowIndicator.
+        !selected && "hover:bg-muted/60",
       )}
     >
-      {selected && (
-        <span
-          aria-hidden
-          className="bg-primary absolute inset-y-3 left-0 w-[3px] rounded-full"
-        />
-      )}
       <span className="relative flex shrink-0">
         <ThreadSubjectAvatar subject={subject} />
         <PresenceDot status={presence} />

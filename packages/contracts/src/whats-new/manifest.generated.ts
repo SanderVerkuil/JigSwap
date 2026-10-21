@@ -10,6 +10,12 @@ export const WHATS_NEW_MANIFEST: readonly WhatsNewManifestEntry[] = [
     "notify": false
   },
   {
+    "id": "messages-layout",
+    "publishedAt": 1792594800000,
+    "highlight": false,
+    "notify": false
+  },
+  {
     "id": "empty-page-hints",
     "publishedAt": 1792584000000,
     "highlight": false,

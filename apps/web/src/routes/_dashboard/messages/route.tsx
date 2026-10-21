@@ -1,8 +1,10 @@
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
+import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import {
   threadSubjectTitle,
   type Translator,
 } from "@/components/messaging/format";
+import { NewConversationMenu } from "@/components/messaging/new-conversation-menu";
 import { gateway } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import usePresence from "@convex-dev/presence/react";
@@ -29,6 +31,8 @@ export const Route = createFileRoute("/_dashboard/messages")({
 
 function MessagesLayout() {
   const { member } = useCurrentMember();
+  // "New" lives in the page head (and the phone actions row), not in the list.
+  usePageHeaderActions(() => <NewConversationMenu />, []);
   return (
     <>
       {member ? <MessagesPresence memberId={member._id} /> : null}

@@ -229,3 +229,12 @@ export function getRouteMeta(pathname: string): ShellRouteMeta | undefined {
 export function isImmersiveMobileRoute(pathname: string): boolean {
   return /^\/messages\/[^/]+/.test(pathname);
 }
+
+/**
+ * Routes whose page fills the desktop content card edge to edge (/messages and its children): from
+ * md the shell drops the content padding and its own scroll, so the page's panes (the thread list,
+ * the message log) do the scrolling and run to the card's edges.
+ */
+export function isFullBleedRoute(pathname: string): boolean {
+  return /^\/messages(\/|$)/.test(pathname);
+}

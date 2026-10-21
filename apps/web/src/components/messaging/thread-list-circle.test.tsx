@@ -236,11 +236,11 @@ describe("ThreadList circle rows", () => {
     expect(within(row("Mara")).getByText("You: Sounds good!")).toBeTruthy();
   });
 
-  it("offers a New menu above the list", () => {
+  it("leaves the New menu to the page head", () => {
     renderList([dmThread]);
     expect(
-      screen.getByRole("button", { name: "New conversation" }),
-    ).toBeTruthy();
+      screen.queryByRole("button", { name: "New conversation" }),
+    ).toBeNull();
   });
 });
 
