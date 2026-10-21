@@ -60,6 +60,30 @@ export const isCircleSharedWithViewer = async (
 ): Promise<boolean> => {
   const copyId = row.aggregateId;
   if (copyId === undefined) return false;
+  const qualifying = (await circlesSharingCopyWith(ctx, viewerId, row)).map(
+    (circle) => circle.aggregateId as CircleId,
+  );
+  if (qualifying.length === 0) return false;
+  const copy = await convexCopyRepository(
+    ctx as unknown as MutationCtx,
+  ).findById(toCopyId(copyId));
+  if (!copy) return false;
+  return makeCircleAwareVisibilityPolicy(() => qualifying).canView(
+    toOwnerId(viewerId),
+    copy,
+  );
+};
+
+// The circles behind the clause above: every circle that holds a share of this copy and that the
+// viewer and the copy's owner are both currently members of (same bounded reads). Exchange
+// eligibility reads the viewer's permission level from these rows.
+export const circlesSharingCopyWith = async (
+  ctx: QueryCtx,
+  viewerId: Id<"users">,
+  row: Doc<"ownedPuzzles">,
+): Promise<Doc<"circles">[]> => {
+  const copyId = row.aggregateId;
+  if (copyId === undefined) return [];
   const shares = await ctx.db
     .query("circleCopyShares")
     .withIndex("by_copy", (q) => q.eq("copyId", copyId))
@@ -72,7 +96,7 @@ export const isCircleSharedWithViewer = async (
       .query("circleMembers")
       .withIndex("by_member", (q) => q.eq("memberId", viewerId))
       .take(MAX_VIEWER_CIRCLES_READ + 1);
-    if (links.length > MAX_VIEWER_CIRCLES_READ) return false;
+    if (links.length > MAX_VIEWER_CIRCLES_READ) return [];
     candidateCircles = (
       await Promise.all(
         links.map(async ({ circleAggregateId }) =>
@@ -88,31 +112,24 @@ export const isCircleSharedWithViewer = async (
       )
     ).filter((c) => c !== null);
   }
-  const qualifying = (
+  return (
     await Promise.all(
       candidateCircles.map(async (circleId) => {
         // The collector only sees circles listForMember resolves: a viewer junction row AND an
         // existing circles row.
-        const counts =
-          (await isMemberOf(ctx, circleId, viewerId)) &&
-          (await isMemberOf(ctx, circleId, row.ownerId)) &&
-          (await ctx.db
-            .query("circles")
-            .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", circleId))
-            .unique()) !== null;
-        return counts ? (circleId as CircleId) : null;
+        if (
+          !(await isMemberOf(ctx, circleId, viewerId)) ||
+          !(await isMemberOf(ctx, circleId, row.ownerId))
+        ) {
+          return null;
+        }
+        return ctx.db
+          .query("circles")
+          .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", circleId))
+          .unique();
       }),
     )
   ).filter((c) => c !== null);
-  if (qualifying.length === 0) return false;
-  const copy = await convexCopyRepository(
-    ctx as unknown as MutationCtx,
-  ).findById(toCopyId(copyId));
-  if (!copy) return false;
-  return makeCircleAwareVisibilityPolicy(() => qualifying).canView(
-    toOwnerId(viewerId),
-    copy,
-  );
 };
 
 export const collectCircleSharedCopies = async (

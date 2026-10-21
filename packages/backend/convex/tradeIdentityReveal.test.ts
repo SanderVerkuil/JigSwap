@@ -108,17 +108,16 @@ const seed = async (t: T): Promise<World> => {
   return world;
 };
 
-// Propose reaches only a copy the requester can see. With every profile private here, that models
-// an owner who was public when the request was made and has gone private since: the owner is public
-// for the propose call only, and back to what it was before anything else runs.
-const propose = async (
+// Propose reaches only a copy the requester can see, and accept checks the requester's route
+// again. With every profile private here, that models an owner who was public when the request was
+// made (and accepted) and is private otherwise: the owner is public for that one call only, and
+// back to what it was before anything else runs.
+const whileOwnerPublic = async <R>(
   t: T,
-  who: string,
-  requestedPuzzleId: Id<"ownedPuzzles">,
-  recipientId?: Id<"users">,
-): Promise<string> => {
-  const ownerId = (await t.run((ctx) => ctx.db.get(requestedPuzzleId)))!
-    .ownerId;
+  copyId: Id<"ownedPuzzles">,
+  run: () => Promise<R>,
+): Promise<R> => {
+  const ownerId = (await t.run((ctx) => ctx.db.get(copyId)))!.ownerId;
   const visibility = await t.run(
     async (ctx) =>
       (
@@ -129,18 +128,28 @@ const propose = async (
       )?.visibility ?? "public",
   );
   await setVisibility(t, ownerId, "public");
-  let id: string;
   try {
-    id = await as(t, who).mutation(api.exchange.propose.propose, {
+    return await run();
+  } finally {
+    await setVisibility(t, ownerId, visibility);
+  }
+};
+
+const propose = async (
+  t: T,
+  who: string,
+  requestedPuzzleId: Id<"ownedPuzzles">,
+  recipientId?: Id<"users">,
+): Promise<string> => {
+  const id = await whileOwnerPublic(t, requestedPuzzleId, () =>
+    as(t, who).mutation(api.exchange.propose.propose, {
       ...(recipientId ? { recipientId } : {}),
       // A sale needs no offered copy, keeping the fixtures small; the reveal is kind-agnostic.
       type: "sale",
       salePrice: 10,
       requestedPuzzleId,
-    });
-  } finally {
-    await setVisibility(t, ownerId, visibility);
-  }
+    }),
+  );
   await flush(t);
   return id;
 };
@@ -157,7 +166,18 @@ const act = async (
     cancel: api.exchange.cancel.cancel,
     confirmCompletion: api.exchange.confirmCompletion.confirmCompletion,
   }[action];
-  await as(t, who).mutation(fn, { exchangeId });
+  const run = () => as(t, who).mutation(fn, { exchangeId });
+  if (action === "accept") {
+    const exchange = await t.run((ctx) =>
+      ctx.db
+        .query("exchanges")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", exchangeId))
+        .unique(),
+    );
+    await whileOwnerPublic(t, exchange!.requestedPuzzleId, run);
+  } else {
+    await run();
+  }
   await flush(t);
 };
 

@@ -1,0 +1,258 @@
+import { convexTest, type TestConvex } from "convex-test";
+import { ConvexError, type Value } from "convex/values";
+import { describe, expect, test } from "vitest";
+import { api } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
+import type { MutationCtx } from "./_generated/server";
+import schema from "./schema";
+
+// Circle permission levels gate exchange requests. The REQUESTER's level counts, and any route that
+// allows it is enough: a public profile with an open copy, household, mutual follow, or a circle
+// holding the share where the requester is Exchange or Admin. A ViewOnly seat on its own lets them
+// see the copy but not request it. Accept re-checks the requester; the other actions stay open.
+
+const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
+
+type T = TestConvex<typeof schema>;
+type Level = "ViewOnly" | "Exchange" | "Admin";
+
+const NOW = 1_000_000;
+
+const mkUser = (ctx: MutationCtx, clerkId: string) =>
+  ctx.db.insert("users", {
+    clerkId,
+    email: `${clerkId}@example.com`,
+    name: clerkId,
+    isActive: true,
+    createdAt: NOW,
+    updatedAt: NOW,
+  });
+
+// A PRIVATE owner with one copy for sale (aggregateId "copy-1") and a requester with no route yet.
+const seed = (t: T) =>
+  t.run(async (ctx) => {
+    const owner = await mkUser(ctx, "clerk_owner");
+    const requester = await mkUser(ctx, "clerk_requester");
+    await ctx.db.insert("profiles", {
+      memberId: owner,
+      displayName: "Owner",
+      visibility: "private",
+      updatedAt: NOW,
+    });
+    const puzzle = await ctx.db.insert("puzzles", {
+      title: "Lighthouse",
+      pieceCount: 1000,
+      status: "approved",
+      submittedBy: owner,
+      createdAt: NOW,
+      updatedAt: NOW,
+    });
+    const copy = await ctx.db.insert("ownedPuzzles", {
+      aggregateId: "copy-1",
+      puzzleId: puzzle,
+      ownerId: owner,
+      condition: "good",
+      availability: { forTrade: false, forSale: true, forLend: false },
+      createdAt: NOW,
+      updatedAt: NOW,
+    });
+    return { owner, requester, copy };
+  });
+
+type Seeded = Awaited<ReturnType<typeof seed>>;
+
+// A circle owned by the copy's owner, with the requester seated at `level`, holding the copy share.
+const shareInCircle = (t: T, s: Seeded, circleId: string, level: Level) =>
+  t.run(async (ctx) => {
+    await ctx.db.insert("circles", {
+      aggregateId: circleId,
+      ownerId: s.owner,
+      name: circleId,
+      memberships: [
+        {
+          id: `${circleId}-m0`,
+          memberId: s.owner,
+          permission: "Admin",
+          joinedAt: NOW,
+        },
+        {
+          id: `${circleId}-m1`,
+          memberId: s.requester,
+          permission: level,
+          joinedAt: NOW,
+        },
+      ],
+      createdAt: NOW,
+    });
+    for (const memberId of [s.owner, s.requester]) {
+      await ctx.db.insert("circleMembers", {
+        circleAggregateId: circleId,
+        memberId,
+      });
+    }
+    await ctx.db.insert("circleCopyShares", {
+      circleId,
+      copyId: "copy-1",
+      sharedAt: NOW,
+    });
+  });
+
+const setLevel = (t: T, s: Seeded, circleId: string, level: Level) =>
+  t.run(async (ctx) => {
+    const circle = await ctx.db
+      .query("circles")
+      .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", circleId))
+      .unique();
+    await ctx.db.patch(circle!._id, {
+      memberships: circle!.memberships.map((m) =>
+        m.memberId === s.requester ? { ...m, permission: level } : m,
+      ),
+    });
+  });
+
+const followMutually = (t: T, s: Seeded) =>
+  t.run(async (ctx) => {
+    await ctx.db.insert("follows", {
+      followerId: s.owner,
+      followeeId: s.requester,
+      createdAt: NOW,
+    });
+    await ctx.db.insert("follows", {
+      followerId: s.requester,
+      followeeId: s.owner,
+      createdAt: NOW,
+    });
+  });
+
+const shareHousehold = (t: T, s: Seeded) =>
+  t.run(async (ctx) => {
+    await ctx.db.insert("households", { aggregateId: "hh-1", createdAt: NOW });
+    for (const [memberId, role] of [
+      [s.owner, "admin"],
+      [s.requester, "member"],
+    ] as const) {
+      await ctx.db.insert("householdMembers", {
+        householdId: "hh-1",
+        memberId,
+        role,
+        joinedAt: NOW,
+      });
+    }
+  });
+
+const asRequester = (t: T) => t.withIdentity({ subject: "clerk_requester" });
+const asOwner = (t: T) => t.withIdentity({ subject: "clerk_owner" });
+
+const propose = (t: T, s: Seeded) =>
+  asRequester(t).mutation(api.exchange.propose.propose, {
+    type: "sale",
+    requestedPuzzleId: s.copy,
+    salePrice: 10,
+  });
+
+const dataOf = (e: unknown): { code?: string } => {
+  const data = (e as ConvexError<Value>).data;
+  return typeof data === "string"
+    ? JSON.parse(data)
+    : (data as { code?: string });
+};
+
+const expectCode = async (p: Promise<unknown>, code: string) => {
+  const error = await p.then(
+    () => undefined,
+    (e: unknown) => e,
+  );
+  expect(error).toBeInstanceOf(ConvexError);
+  expect(dataOf(error).code).toBe(code);
+};
+
+const statusOf = (t: T, exchangeId: string) =>
+  t.run(
+    async (ctx) =>
+      (
+        await ctx.db
+          .query("exchanges")
+          .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", exchangeId))
+          .unique()
+      )?.status,
+  );
+
+describe("propose by circle level", () => {
+  test("ViewOnly is refused", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await shareInCircle(t, s, "c1", "ViewOnly");
+    await expectCode(propose(t, s), "NotPermittedInCircle");
+    expect(await t.run((ctx) => ctx.db.query("exchanges").collect())).toEqual(
+      [],
+    );
+  });
+
+  test.each(["Exchange", "Admin"] as const)("%s is allowed", async (level) => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await shareInCircle(t, s, "c1", level);
+    await expect(propose(t, s)).resolves.toEqual(expect.any(String));
+  });
+
+  test("ViewOnly in one circle and Exchange in another is allowed", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await shareInCircle(t, s, "c1", "ViewOnly");
+    await shareInCircle(t, s, "c2", "Exchange");
+    await expect(propose(t, s)).resolves.toEqual(expect.any(String));
+  });
+
+  test("ViewOnly plus a mutual follow is allowed", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await shareInCircle(t, s, "c1", "ViewOnly");
+    await followMutually(t, s);
+    await expect(propose(t, s)).resolves.toEqual(expect.any(String));
+  });
+
+  test("ViewOnly plus a household is allowed", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await shareInCircle(t, s, "c1", "ViewOnly");
+    await shareHousehold(t, s);
+    await expect(propose(t, s)).resolves.toEqual(expect.any(String));
+  });
+});
+
+describe("a downgrade after proposing", () => {
+  test("blocks accept, leaves the proposal open and lets the requester cancel", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await shareInCircle(t, s, "c1", "Exchange");
+    const id = await propose(t, s);
+    await setLevel(t, s, "c1", "ViewOnly");
+
+    await expectCode(
+      asOwner(t).mutation(api.exchange.accept.accept, { exchangeId: id }),
+      "NotPermittedInCircle",
+    );
+    expect(await statusOf(t, id)).toBe("proposed");
+
+    await asRequester(t).mutation(api.exchange.cancel.cancel, {
+      exchangeId: id,
+    });
+    expect(await statusOf(t, id)).toBe("cancelled");
+  });
+
+  test("does not stop an accepted exchange from completing", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await shareInCircle(t, s, "c1", "Exchange");
+    const id = await propose(t, s);
+    await asOwner(t).mutation(api.exchange.accept.accept, { exchangeId: id });
+    await setLevel(t, s, "c1", "ViewOnly");
+
+    for (const who of [asRequester(t), asOwner(t)]) {
+      await who.mutation(api.exchange.confirmCompletion.confirmCompletion, {
+        exchangeId: id,
+      });
+    }
+    expect(await statusOf(t, id)).toBe("completed");
+  });
+});

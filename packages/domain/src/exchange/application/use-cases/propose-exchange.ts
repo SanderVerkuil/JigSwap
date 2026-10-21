@@ -19,12 +19,14 @@ import {
   ProposeExchangeCommand,
 } from "../ports/in/propose-exchange.port";
 import { CopyPort, CopyView } from "../ports/out/copy.port";
+import { ExchangeEligibilityPort } from "../ports/out/exchange-eligibility.port";
 import { ExchangeIdGenerator } from "../ports/out/exchange-id-generator";
 import { ExchangeRepository } from "../ports/out/exchange.repository";
 
 export interface ProposeExchangeDeps {
   readonly exchanges: ExchangeRepository;
   readonly copies: CopyPort;
+  readonly eligibility: ExchangeEligibilityPort;
   readonly ids: ExchangeIdGenerator;
   readonly events: DomainEventPublisher;
   readonly clock: Clock;
@@ -42,7 +44,8 @@ const availableFor = (copy: CopyView, kind: ExchangeKind): boolean => {
   }
 };
 
-// Transaction script: cross-aggregate read checks (dedup, copy existence/availability/ownership)
+// Transaction script: cross-aggregate read checks (dedup, copy existence/availability/ownership,
+// the initiator's exchange eligibility)
 // then delegate the entity rules (self-exchange, term validity, state) to Exchange.propose.
 // Copy reservation/locking is a Phase-2 (Library) concern and is intentionally not done here.
 export const makeProposeExchange =
@@ -85,6 +88,18 @@ export const makeProposeExchange =
       now: deps.clock.now(),
     });
     if (exchange.isErr) return err(exchange.error);
+
+    // The initiator's own permission counts: a route that only runs through ViewOnly circle seats
+    // lets them see the copy but not ask for it. Asked after the entity rules, so a self-exchange
+    // or bad terms keep their own errors.
+    if (
+      !(await deps.eligibility.mayExchange(
+        cmd.initiatorId,
+        cmd.requestedCopyId,
+      ))
+    ) {
+      return err(ApplicationError.notPermittedInCircle(cmd.requestedCopyId));
+    }
 
     await deps.exchanges.save(exchange.value);
     await deps.events.publish(exchange.value.pullEvents());

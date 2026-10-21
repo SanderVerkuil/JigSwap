@@ -24,6 +24,14 @@ describe("ApplicationError factories", () => {
     expect(e.message).toBe("Copy copy1 is not available for lend");
   });
 
+  it("notPermittedInCircle interpolates the copy id", () => {
+    const e = ApplicationError.notPermittedInCircle(copy);
+    expect(e.code).toBe("NotPermittedInCircle");
+    expect(e.message).toBe(
+      "The initiator may view copy copy1 but not request an exchange on it",
+    );
+  });
+
   it("offeredCopyNotOwned interpolates the copy id", () => {
     const e = ApplicationError.offeredCopyNotOwned(copy);
     expect(e.code).toBe("OfferedCopyNotOwned");
