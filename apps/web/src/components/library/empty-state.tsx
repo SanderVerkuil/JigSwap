@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
 // Warm 🧩 empty state: the one sanctioned emoji, a friendly heading and a
@@ -6,9 +7,11 @@ export function EmptyState({
   title,
   sub,
   action,
+  subClassName,
 }: {
   title: string;
   sub?: string;
+  subClassName?: string;
   action?: ReactNode;
 }) {
   return (
@@ -17,7 +20,13 @@ export function EmptyState({
         🧩
       </div>
       <div className="font-heading text-lg font-bold">{title}</div>
-      {sub && <p className="text-muted-foreground max-w-md text-sm">{sub}</p>}
+      {sub && (
+        <p
+          className={cn("text-muted-foreground max-w-md text-sm", subClassName)}
+        >
+          {sub}
+        </p>
+      )}
       {action && <div className="mt-3">{action}</div>}
     </div>
   );

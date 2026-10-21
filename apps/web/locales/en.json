@@ -787,6 +787,21 @@
     "goToExchange": "View exchange",
     "goToProfile": "View profile",
     "goToPuzzleNamed": "View {title}",
+    "guide": {
+      "startTitle": "Start a conversation",
+      "member": {
+        "title": "Message a member",
+        "text": "Use Message on their profile, or on a puzzle they own."
+      },
+      "exchange": {
+        "title": "Exchange chats",
+        "text": "Every swap, loan or sale request gets its own chat."
+      },
+      "circle": {
+        "title": "Circle chat",
+        "text": "Each circle has one. Open it under New, or from the circle's page."
+      }
+    },
     "inboxError": "Couldn't load your conversations.",
     "loadEarlier": "Load earlier messages",
     "loadingEarlier": "Loading earlier messages…",
@@ -808,7 +823,6 @@
     "retry": "Try again",
     "searchPuzzles": "Search puzzles",
     "selectConversation": "Select a conversation",
-    "selectConversationHint": "Choose a conversation from the list to start messaging",
     "sendError": "Your message couldn't be sent. Please try again.",
     "sendMessage": "Send message",
     "startOfConversation": "Start of the conversation",
