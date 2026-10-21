@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { toCopyId, toExchangeId, toMemberId } from "../../../shared-kernel";
 import { Exchange } from "../../domain";
 import {
+  FakeExchangeEligibilityPort,
   FixedClock,
   InMemoryExchangeRepository,
   RecordingEventPublisher,
@@ -52,7 +53,8 @@ const harness = () => {
   const repo = new InMemoryExchangeRepository();
   const events = new RecordingEventPublisher();
   const clock = new FixedClock(NOW);
-  return { repo, events, clock, exchanges: repo };
+  const eligibility = new FakeExchangeEligibilityPort();
+  return { repo, events, clock, eligibility, exchanges: repo };
 };
 
 describe("makeAcceptExchange", () => {
@@ -88,6 +90,30 @@ describe("makeAcceptExchange", () => {
     expect(result.isErr).toBe(true);
     if (result.isErr) expect(result.error.code).toBe("WrongParty");
     expect(h.events.published).toHaveLength(0);
+  });
+
+  it("refuses with NotPermittedInCircle when the initiator is no longer eligible, saving nothing", async () => {
+    await seedProposed(h.repo);
+    h.eligibility.deny();
+    const result = await makeAcceptExchange(h)({
+      exchangeId: exId,
+      actingMemberId: bob,
+    });
+    expect(result.isErr).toBe(true);
+    if (result.isErr) expect(result.error.code).toBe("NotPermittedInCircle");
+    expect(h.events.published).toHaveLength(0);
+    expect((await h.repo.findById(exId))?.status).toBe("proposed");
+  });
+
+  it("answers a wrong party with WrongParty before asking about eligibility", async () => {
+    await seedProposed(h.repo);
+    h.eligibility.deny();
+    const result = await makeAcceptExchange(h)({
+      exchangeId: exId,
+      actingMemberId: eve,
+    });
+    expect(result.isErr).toBe(true);
+    if (result.isErr) expect(result.error.code).toBe("WrongParty");
   });
 
   it("delegates illegal-transition rejection to the aggregate", async () => {

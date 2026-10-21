@@ -184,6 +184,7 @@ import type * as events_makeEventPublisher from "../events/makeEventPublisher.js
 import type * as events_recordAndSchedule from "../events/recordAndSchedule.js";
 import type * as exchange_accept from "../exchange/accept.js";
 import type * as exchange_adapters_convexCopyPort from "../exchange/adapters/convexCopyPort.js";
+import type * as exchange_adapters_convexExchangeEligibility from "../exchange/adapters/convexExchangeEligibility.js";
 import type * as exchange_adapters_convexExchangeRepository from "../exchange/adapters/convexExchangeRepository.js";
 import type * as exchange_adapters_inProcessEventPublisher from "../exchange/adapters/inProcessEventPublisher.js";
 import type * as exchange_adapters_mapper from "../exchange/adapters/mapper.js";
@@ -326,6 +327,7 @@ import type * as library_definitionAggregates from "../library/definitionAggrega
 import type * as library_deleteCollection from "../library/deleteCollection.js";
 import type * as library_deleteCopy from "../library/deleteCopy.js";
 import type * as library_errors from "../library/errors.js";
+import type * as library_exchangeRoutes from "../library/exchangeRoutes.js";
 import type * as library_getBorrowedLoans from "../library/getBorrowedLoans.js";
 import type * as library_getCollectionById from "../library/getCollectionById.js";
 import type * as library_getCollectionsForOwnedPuzzle from "../library/getCollectionsForOwnedPuzzle.js";
@@ -732,6 +734,7 @@ declare const fullApi: ApiFromModules<{
   "events/recordAndSchedule": typeof events_recordAndSchedule;
   "exchange/accept": typeof exchange_accept;
   "exchange/adapters/convexCopyPort": typeof exchange_adapters_convexCopyPort;
+  "exchange/adapters/convexExchangeEligibility": typeof exchange_adapters_convexExchangeEligibility;
   "exchange/adapters/convexExchangeRepository": typeof exchange_adapters_convexExchangeRepository;
   "exchange/adapters/inProcessEventPublisher": typeof exchange_adapters_inProcessEventPublisher;
   "exchange/adapters/mapper": typeof exchange_adapters_mapper;
@@ -874,6 +877,7 @@ declare const fullApi: ApiFromModules<{
   "library/deleteCollection": typeof library_deleteCollection;
   "library/deleteCopy": typeof library_deleteCopy;
   "library/errors": typeof library_errors;
+  "library/exchangeRoutes": typeof library_exchangeRoutes;
   "library/getBorrowedLoans": typeof library_getBorrowedLoans;
   "library/getCollectionById": typeof library_getCollectionById;
   "library/getCollectionsForOwnedPuzzle": typeof library_getCollectionsForOwnedPuzzle;

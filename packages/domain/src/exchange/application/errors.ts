@@ -9,6 +9,7 @@ export type ApplicationErrorCode =
   | "CopyNotFound"
   | "CopyNotReachable"
   | "CopyNotAvailable"
+  | "NotPermittedInCircle"
   | "OfferedCopyNotOwned"
   | "RecipientNotOwner"
   | "DuplicateProposal"
@@ -49,6 +50,15 @@ export class ApplicationError extends DomainError {
     return new ApplicationError(
       "CopyNotAvailable",
       `Copy ${copyId} is not available for ${kind}`,
+    );
+  }
+
+  // The initiator reaches the copy only through circles where they are ViewOnly, so they may see it
+  // but not ask for an exchange on it.
+  static notPermittedInCircle(copyId: CopyId): ApplicationError {
+    return new ApplicationError(
+      "NotPermittedInCircle",
+      `The initiator may view copy ${copyId} but not request an exchange on it`,
     );
   }
 

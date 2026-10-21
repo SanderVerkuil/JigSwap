@@ -4,6 +4,7 @@ import { ExchangeTermsInput, Money } from "../../domain";
 import { CopyView } from "../ports/out/copy.port";
 import {
   FakeCopyPort,
+  FakeExchangeEligibilityPort,
   FixedClock,
   InMemoryExchangeRepository,
   RecordingEventPublisher,
@@ -35,15 +36,18 @@ describe("makeProposeExchange", () => {
   let repo: InMemoryExchangeRepository;
   let copies: FakeCopyPort;
   let events: RecordingEventPublisher;
+  let eligibility: FakeExchangeEligibilityPort;
   let propose: ReturnType<typeof makeProposeExchange>;
 
   beforeEach(() => {
     repo = new InMemoryExchangeRepository();
     copies = new FakeCopyPort();
     events = new RecordingEventPublisher();
+    eligibility = new FakeExchangeEligibilityPort();
     propose = makeProposeExchange({
       exchanges: repo,
       copies,
+      eligibility,
       ids: new SequentialIdGenerator(),
       events,
       clock: new FixedClock(NOW),
@@ -154,6 +158,7 @@ describe("makeProposeExchange", () => {
       const proposeOk = makeProposeExchange({
         exchanges: new InMemoryExchangeRepository(),
         copies: available,
+        eligibility: new FakeExchangeEligibilityPort(),
         ids: new SequentialIdGenerator(),
         events: okEvents,
         clock: new FixedClock(NOW),
@@ -175,6 +180,7 @@ describe("makeProposeExchange", () => {
       const proposeReject = makeProposeExchange({
         exchanges: new InMemoryExchangeRepository(),
         copies: unavailable,
+        eligibility: new FakeExchangeEligibilityPort(),
         ids: new SequentialIdGenerator(),
         events: new RecordingEventPublisher(),
         clock: new FixedClock(NOW),
@@ -190,6 +196,30 @@ describe("makeProposeExchange", () => {
       if (rejectRes.isErr)
         expect(rejectRes.error.code).toBe("CopyNotAvailable");
     });
+  });
+
+  it("rejects with NotPermittedInCircle when the eligibility port refuses", async () => {
+    copies.seed(
+      copy({
+        id: requestedId,
+        ownerId: bob,
+        availability: { forTrade: false, forSale: true, forLend: false },
+      }),
+    );
+    eligibility.deny();
+
+    const result = await propose({
+      initiatorId: alice,
+      recipientId: bob,
+      kind: "sale",
+      requestedCopyId: requestedId,
+      terms: saleTerms(),
+    });
+
+    expect(result.isErr).toBe(true);
+    if (result.isErr) expect(result.error.code).toBe("NotPermittedInCircle");
+    expect(repo.size()).toBe(0);
+    expect(events.published).toHaveLength(0);
   });
 
   it("rejects a swap whose offered copy is not owned by the initiator", async () => {

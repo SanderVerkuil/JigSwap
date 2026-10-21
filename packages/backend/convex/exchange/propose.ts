@@ -14,6 +14,7 @@ import { requireMember } from "../identity/requireMember";
 import { canViewCopy } from "../library/canViewCopy";
 import { assertPairNotBlocked } from "../social/blocks";
 import { convexCopyPort } from "./adapters/convexCopyPort";
+import { convexExchangeEligibility } from "./adapters/convexExchangeEligibility";
 import { convexExchangeRepository } from "./adapters/convexExchangeRepository";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
 import { systemClock } from "./adapters/systemClock";
@@ -75,6 +76,7 @@ export const propose = mutation({
     const proposeExchange = makeProposeExchange({
       exchanges: convexExchangeRepository(ctx),
       copies: convexCopyPort(ctx),
+      eligibility: convexExchangeEligibility(ctx),
       ids: uuidExchangeIdGenerator,
       events: inProcessEventPublisher(ctx),
       clock: systemClock,
