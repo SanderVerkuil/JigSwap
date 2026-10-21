@@ -19,7 +19,7 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
-import { resolveStartIndex, TourController } from "./controller";
+import { firstStepOn, resolveStartIndex, TourController } from "./controller";
 import { TOURS } from "./definitions";
 import { TourLayer } from "./tour-layer";
 
@@ -122,7 +122,11 @@ export function TourProvider({ children }: { children: ReactNode }) {
         const saved = progress?.find((p) => p.tourId === tourId);
         controller.start(
           tourId,
-          options?.restart ? 0 : resolveStartIndex(saved, tour.steps.length),
+          options?.fromRoute !== undefined
+            ? firstStepOn(tour.steps, options.fromRoute)
+            : options?.restart
+              ? 0
+              : resolveStartIndex(saved, tour.steps.length),
         );
       },
     }),

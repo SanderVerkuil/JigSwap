@@ -54,6 +54,9 @@ Some updates also come with a short tour of the feature. Click
   also resumes from the update, and the tour from Quick setup from Quick
   setup.
 - **Replay the tour** runs a finished tour again.
+- On **Exchanges**, **Circles**, **Completions** and **Add Puzzle**, the
+  **?** button in the page header (**Show me how**) starts that page's guide
+  at its step on that page.
 
 ## Install JigSwap on your phone
 

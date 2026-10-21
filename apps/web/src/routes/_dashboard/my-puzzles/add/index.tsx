@@ -3,9 +3,11 @@ import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-
 import { EmptyState } from "@/components/library/empty-state";
 import { PuzzleCard } from "@/components/puzzles/puzzle-card";
 import { PuzzleViewProvider } from "@/components/puzzles/puzzle-view-provider";
+import { GuideHelpButton } from "@/components/tour/guide-help-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLoading } from "@/components/ui/loading";
+import { useTourLauncher } from "@/components/whats-new/tour-launcher";
 import { gateway } from "@/gateway";
 import { catalogueSearchKey, detectBarcode } from "@/lib/catalogue-search";
 import { pageTitle } from "@/lib/page-title";
@@ -120,9 +122,11 @@ function AddPuzzleChooserPage() {
 
   // Publish the primary "Create new" action into the shared shell page head;
   // the title/subtitle come from route-meta (shell.pages.addPuzzle).
+  const { startTour } = useTourLauncher();
   usePageHeaderActions(
     () => (
       <>
+        <GuideHelpButton tourId="add-puzzle" startTour={startTour} />
         <Button variant="outline" size="sm" asChild>
           <Link href="/my-puzzles/add/quick" data-tour="add-puzzle-several">
             <ListPlus className="h-4 w-4" />
@@ -137,7 +141,7 @@ function AddPuzzleChooserPage() {
         </Button>
       </>
     ),
-    [],
+    [startTour],
   );
 
   const filteredSubmissions = barcode

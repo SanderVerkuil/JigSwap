@@ -4737,7 +4737,8 @@
     "paused": "Rondleiding gepauzeerd. Je kunt verder gaan via Wat is er nieuw, onder Rondleidingen.",
     "resumeAction": "Hervatten",
     "completedTitle": "Je bent er klaar voor",
-    "completed": "Rondleiding afgerond. Veel plezier met de nieuwe functie!"
+    "completed": "Rondleiding afgerond. Veel plezier met de nieuwe functie!",
+    "help": "Laat me zien hoe"
   },
   "tours": {
     "households": {

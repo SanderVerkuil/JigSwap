@@ -105,6 +105,14 @@ export function waitFor(
   });
 }
 
+/** The first step on `path` (a page's "?" help starts there), or 0 when no step lives there. */
+export function firstStepOn(steps: readonly TourStep[], path: string): number {
+  return Math.max(
+    0,
+    steps.findIndex((step) => samePath(step.route, path)),
+  );
+}
+
 /** Where "Take the tour" starts: the saved step of a paused tour, else the beginning. */
 export function resolveStartIndex(
   progress: WhatsNewTourProgressView | undefined,

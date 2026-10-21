@@ -60,6 +60,9 @@ te stoppen.
   De rondleiding van een update hervat je ook bij die update, en die uit Snel
   instellen via Snel instellen.
 - **Rondleiding opnieuw bekijken** speelt een afgeronde rondleiding opnieuw af.
+- Op **Uitwisselingen**, **Kringen**, **Voltooiingen** en **Puzzel Toevoegen**
+  start de knop **?** in de paginakop (**Laat me zien hoe**) de rondleiding van
+  die pagina, bij de stap op die pagina.
 
 ## JigSwap op je telefoon installeren
 
