@@ -37,6 +37,8 @@ export interface ImageEditorDialogProps {
   onClose: () => void;
   /** Fix the crop frame to this width/height ratio (1 = square); free-form when absent. */
   aspectRatio?: number;
+  /** What the edited image is for; picks the dialog's description. Default "photo". */
+  variant?: "photo" | "icon";
 }
 
 // Load an image element for pixel analysis (auto-crop only — the cropper itself loads
@@ -58,6 +60,7 @@ export function ImageEditorDialog({
   onApply,
   onClose,
   aspectRatio,
+  variant = "photo",
 }: ImageEditorDialogProps) {
   const t = useTranslations("imageEditor");
   const cropperRef = useRef<CropperRef>(null);
@@ -198,7 +201,9 @@ export function ImageEditorDialog({
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl lg:max-w-4xl">
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
-          <DialogDescription>{t("description")}</DialogDescription>
+          <DialogDescription>
+            {variant === "icon" ? t("descriptionIcon") : t("description")}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="bg-muted overflow-hidden rounded-lg">

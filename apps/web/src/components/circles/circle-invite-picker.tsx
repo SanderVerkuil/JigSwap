@@ -68,7 +68,7 @@ export function CircleInvitePicker({ circleId }: { circleId: string }) {
           onValueChange={(value: CirclePermissionLevel) => setPermission(value)}
         >
           <SelectTrigger
-            className="w-full sm:w-32"
+            className="w-full sm:w-40"
             aria-label={t("invite.permissionLabel")}
           >
             <SelectValue />
