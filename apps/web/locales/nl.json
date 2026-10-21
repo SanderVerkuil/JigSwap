@@ -1247,7 +1247,7 @@
   "privacy": {
     "title": "Privacybeleid",
     "lastUpdated": "Laatst bijgewerkt",
-    "effectiveDate": "20 oktober 2026",
+    "effectiveDate": "21 oktober 2026",
     "introduction": "Dit privacybeleid legt uit welke persoonsgegevens JigSwap verzamelt, waarom we dat doen en welke rechten je hebt. JigSwap wordt beheerd door Sander Verkuil, die de verwerkingsverantwoordelijke is voor de verwerking die hier wordt beschreven. We willen zo min mogelijk verzamelen en transparant zijn over de rest.",
     "informationWeCollect": {
       "title": "Welke gegevens we verzamelen",
@@ -1326,12 +1326,13 @@
     },
     "photos": {
       "title": "Foto's die je uploadt",
-      "description": "Foto's die je aan je bibliotheek of aan een gelegde puzzel toevoegt, en afbeeldingen die je uploadt als catalogusafbeelding van een puzzel, doorlopen een automatisch proces voordat andere leden ze kunnen zien:",
+      "description": "Foto's die je aan je bibliotheek of aan een gelegde puzzel toevoegt, afbeeldingen die je uploadt als catalogusafbeelding van een puzzel, en het pictogram van een kring doorlopen een automatisch proces voordat andere leden ze kunnen zien:",
       "steps": [
         "De afbeelding wordt opnieuw gecodeerd, waardoor verborgen metadata zoals EXIF-gegevens — inclusief een eventuele locatie — wordt verwijderd",
         "Sightengine (zie hierboven) controleert de afbeelding automatisch op expliciete inhoud en verwerkt hem uitsluitend voor dit doel. Een afbeelding die de controle tegenhoudt, wordt niet aan andere leden getoond",
         "Totdat dit klaar is, is de foto alleen voor jou zichtbaar. Als de controle niet kan worden uitgevoerd (bijvoorbeeld omdat de controledienst niet bereikbaar is), blijft de foto alleen voor jou zichtbaar totdat hij is gecontroleerd",
         "Een catalogusafbeelding wordt aan niemand getoond, ook niet aan jou, totdat hij de controle heeft doorstaan; tot dan toont de puzzel zijn standaardafbeelding",
+        "Het pictogram van een kring wordt alleen aan de leden van de kring getoond, en pas als het de controle heeft doorstaan; tot dan zien ze het vorige pictogram van de kring, of geen",
         "Als een afbeelding wordt gemeld als illegale inhoud, bijvoorbeeld beeldmateriaal van seksueel misbruik van kinderen, verwijdert een moderator hem en melden we hem bij de autoriteiten als de wet dat vereist"
       ]
     },

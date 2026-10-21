@@ -1,6 +1,7 @@
 # Photo moderation: retries, crashed checks and stalled photos (runbook)
 
-Every uploaded photo (copy photos, completion photos, box art and message photos) is checked by
+Every uploaded photo (copy photos, completion photos, box art, message photos and circle icons) is
+checked by
 the shared pipeline in `packages/backend/convex/lib/imageModeration/pipeline.ts`. This page covers
 how a check is retried, what happens when one never finishes, and what to watch. No manual step is
 needed when this ships.
@@ -30,13 +31,13 @@ needed when this ships.
   was one of ours, or `check_failed` (crash, timeout, cancel). A photo that already has a verdict
   is left alone.
 - **Backstop:** a daily cron (`convex/crons.ts`, 03:30 UTC) runs
-  `lib/imageModeration/stalledSweep.sweepStalledModeration` over all four tables. A photo still
+  `lib/imageModeration/stalledSweep.sweepStalledModeration` over every moderated table. A photo still
   `pending` 24 hours after it was last touched (`updatedAt`; box art: `recheckedAt`, else
   `createdAt`) is stamped `unscored` with reason `stalled`. It reads only rows created before the
   cutoff, through the `by_moderation_status` index, one page of 100 per run, and stamps through
   each table's own verdict mutation, so re-running it changes nothing.
 
-An `unscored` copy photo, completion photo or box art appears in **Admin → Moderation → Unchecked
+An `unscored` copy photo, completion photo, box art or circle icon appears in **Admin → Moderation → Unchecked
 photos** with its reason ("The check did not complete", "Still unchecked after 24 hours", or the
 classifier's reason), where an admin can **Check again**, approve or reject it. An `unscored`
 message photo is delivered blurred and labelled "Not checked", as before.
@@ -55,8 +56,8 @@ hashes are then checked again by `lib/imageModeration/hashRecheckPool.ts`:
 - **Timeout after 7 days** (`HASH_CHECK_TIMEOUT_MS`, counted from `hashCheckPendingSince`): when a
   re-check would be armed for a photo that has waited that long, the chain stops instead. The row
   is stamped `hashCheckTimedOutAt`, stays unpublished, keeps its stored hashes, and goes to
-  **Unchecked photos** as "Hash check timed out" (all four tables: copy photos, completion
-  photos, box art and sent message photos). The last re-check runs a little over 7 days in. This
+  **Unchecked photos** as "Hash check timed out" (every table: copy photos, completion
+  photos, box art, sent message photos and circle icons). The last re-check runs a little over 7 days in. This
   happens wherever a re-check would be armed: after an "unavailable" answer, after the pool gives
   up, and in the daily sweep (a lost photo past 7 days times out rather than being re-armed).
 - **Its own Workpool**, the `hashRecheckWorkpool` component, separate from the moderation pool: at
@@ -71,8 +72,8 @@ hashes are then checked again by `lib/imageModeration/hashRecheckPool.ts`:
   about 1 and 5 minutes later (`HASH_RECHECK_RETRY`, 3 tries). When the pool gives up,
   `onHashRecheckComplete` arms the next attempt on the schedule, as if the service had answered
   "unavailable". The photo stays waiting and is never left without a re-check.
-- **Backstop:** a daily cron (03:45 UTC) runs `hashRecheckPool.sweepLostHashRechecks` over all four
-  tables (the `by_hash_check_pending` index, 100 rows per run). It re-arms, to run at once, a
+- **Backstop:** a daily cron (03:45 UTC) runs `hashRecheckPool.sweepLostHashRechecks` over every
+  moderated table (the `by_hash_check_pending` index, 100 rows per run). It re-arms, to run at once, a
   waiting photo that has no re-check armed, or whose current one was due more than 24 hours ago.
   A timed-out photo is not waiting any more and is left alone.
 
@@ -90,8 +91,8 @@ unchecked photo) and decides it with `admin/decideUncheckedPhoto`, whatever the 
   `waive_hash_check` on any row that did not time out, both throw), so a hash check is never
   skipped by the ordinary approval.
 - **Reject** is the table's usual manual rejection (a copy photo moves to Flagged Images, a
-  completion photo and box art are detached and deleted, a message photo is removed by moderation
-  and its sender told). A rejected timed-out copy photo shows its image in **Flagged Images** to
+  completion photo and box art are detached and deleted, a circle icon is deleted and the circle
+  keeps its previous icon, a message photo is removed by moderation and its sender told). A rejected timed-out copy photo shows its image in **Flagged Images** to
   admins (behind the same blur-until-reveal guard; `listRejectedPhotos` is admin-only), marked as
   timed out. **Restore Photo** there does not publish it: the hash gate stays closed, so it turns
   "approved" but unchecked and goes back to **Unchecked photos** as "Hash check timed out", where
@@ -154,7 +155,8 @@ hand.
 ## Monitoring
 
 Each attempt still logs `library.moderatePhoto`, `solving.moderateCompletionPhoto`,
-`catalog.moderateBoxArt` or `conversation.moderateMessageImage`, now with `decision: "retry"` and
+`catalog.moderateBoxArt`, `conversation.moderateMessageImage` or `sharing.moderateCircleIcon`, now
+with `decision: "retry"` and
 `retry_reason` when the pool will try again. Two new events, both at error level when they change a
 row:
 
