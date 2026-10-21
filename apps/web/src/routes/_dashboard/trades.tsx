@@ -5,13 +5,16 @@ import {
   FilterBar,
 } from "@/components/community/primitives";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
+import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { BorrowedEmptyState } from "@/components/exchange/borrowed-empty-state";
 import { TradePartnerCard } from "@/components/exchange/trade-partner-card";
 import { ThreadView } from "@/components/messaging/thread-view";
 import { LeaveReviewDialog } from "@/components/reputation/leave-review-dialog";
 import { ExchangeReportMenu } from "@/components/safety/exchange-report-menu";
+import { GuideHelpButton } from "@/components/tour/guide-help-button";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
+import { useTourLauncher } from "@/components/whats-new/tour-launcher";
 import { gateway, Id } from "@/gateway";
 import { useRelativeTime } from "@/hooks/use-relative-time";
 import {
@@ -100,6 +103,13 @@ function ExchangesPage() {
   const { exchange: focusedExchange } = Route.useSearch();
 
   const [tab, setTab] = useState<ExchangeTab>("all");
+
+  // The page head's "?" starts the exchanges guide at its step on this page.
+  const { startTour } = useTourLauncher();
+  usePageHeaderActions(
+    () => <GuideHelpButton tourId="exchanges" startTour={startTour} />,
+    [startTour],
+  );
   const [statusFilter, setStatusFilter] = useState<ExchangeStatus | "all">(
     "all",
   );

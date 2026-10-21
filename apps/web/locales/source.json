@@ -4737,7 +4737,8 @@
     "paused": "Tour paused. Pick it up again from What's new, under Guides.",
     "resumeAction": "Resume",
     "completedTitle": "You're all set",
-    "completed": "Tour finished. Enjoy the new feature!"
+    "completed": "Tour finished. Enjoy the new feature!",
+    "help": "Show me how"
   },
   "tours": {
     "households": {

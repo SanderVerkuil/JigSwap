@@ -23,6 +23,7 @@ import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-
 import { MemberInitial } from "@/components/members/member-initial";
 import { circleHref } from "@/components/messaging/format";
 import { OpenCircleChatButton } from "@/components/messaging/open-circle-chat";
+import { GuideHelpButton } from "@/components/tour/guide-help-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -38,6 +39,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageLoading } from "@/components/ui/loading";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTourLauncher } from "@/components/whats-new/tour-launcher";
 import { gateway } from "@/gateway";
 import { pageTitle } from "@/lib/page-title";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -106,12 +108,14 @@ function CirclesPage() {
 
   // The page title lives in the shell page head; publish the meta + primary
   // action there too so the body carries no duplicate section header.
+  const { startTour } = useTourLauncher();
   usePageHeaderActions(
     () => (
       <>
         <span className="text-muted-foreground hidden text-sm sm:inline">
           {t("meta")}
         </span>
+        <GuideHelpButton tourId="circles" startTour={startTour} />
         <Button
           variant="brand"
           size="sm"
@@ -123,7 +127,7 @@ function CirclesPage() {
         </Button>
       </>
     ),
-    [t],
+    [t, startTour],
   );
 
   if (!user || circlesPending || circles === undefined) {

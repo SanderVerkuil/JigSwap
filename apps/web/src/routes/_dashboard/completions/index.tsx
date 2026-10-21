@@ -9,6 +9,7 @@ import { StatRow } from "@/components/library/stat-row";
 import { EditCompletionDialog } from "@/components/solving/edit-completion-dialog";
 import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { ReviewPuzzleDialog } from "@/components/solving/review-puzzle-dialog";
+import { GuideHelpButton } from "@/components/tour/guide-help-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +27,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useTourLauncher } from "@/components/whats-new/tour-launcher";
 import { gateway, Id } from "@/gateway";
 import {
   countsTowardThisYear,
@@ -134,12 +136,14 @@ function CompletionsPage() {
 
   // The page title lives in the shell page head; publish the log meta + the Log
   // Completion action there so the body carries no duplicate section header.
+  const { startTour } = useTourLauncher();
   usePageHeaderActions(
     () => (
       <>
         <span className="text-muted-foreground hidden text-sm sm:inline">
           {t("mostRecent")}
         </span>
+        <GuideHelpButton tourId="track-your-solves" startTour={startTour} />
         <Button variant="brand" size="sm" asChild>
           <Link href="/completions/new" data-tour="completions-log">
             <Plus className="h-4 w-4" />
@@ -148,7 +152,7 @@ function CompletionsPage() {
         </Button>
       </>
     ),
-    [t],
+    [t, startTour],
   );
 
   if (

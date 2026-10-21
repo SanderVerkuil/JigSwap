@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   ANCHOR_TIMEOUT_MS,
   dockSide,
+  firstStepOn,
   resolveStartIndex,
   SAME_PAGE_GRACE_MS,
   tourButtonState,
@@ -249,6 +250,19 @@ describe("TourController: progress, resume and restart", () => {
     });
     controller.pause(); // idempotent
     expect(onEnd).toHaveBeenCalledTimes(1);
+  });
+
+  it("starts a page's help at the tour's first step on that page", () => {
+    const steps = [
+      { id: "a", route: "/one" },
+      { id: "b", route: "/two" },
+      { id: "c", route: "/two/" },
+    ];
+    expect(firstStepOn(steps, "/two")).toBe(1);
+    expect(firstStepOn(steps, "/two/")).toBe(1);
+    expect(firstStepOn(steps, "/one")).toBe(0);
+    // No step on the page: from the beginning.
+    expect(firstStepOn(steps, "/elsewhere")).toBe(0);
   });
 
   it("resumes at the saved step and restarts at the first", () => {
