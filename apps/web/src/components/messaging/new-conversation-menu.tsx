@@ -86,7 +86,12 @@ export function NewConversationMenu() {
                 : t("circle.newConversationLabel")}
             </SheetDescription>
             {pickerOpen ? (
-              <CirclePicker />
+              <CirclePicker
+                onOpened={() => {
+                  setMenuOpen(false);
+                  setPickerOpen(false);
+                }}
+              />
             ) : (
               <div className="flex flex-col gap-1">
                 <Link href="/people" className={OPTION_CLASS}>
@@ -134,15 +139,16 @@ export function NewConversationMenu() {
               {t("circle.pickCircleDescription")}
             </DialogDescription>
           </DialogHeader>
-          <CirclePicker />
+          <CirclePicker onOpened={() => setPickerOpen(false)} />
         </DialogContent>
       </Dialog>
     </>
   );
 }
 
-// The viewer's circles; picking one opens its group chat.
-function CirclePicker() {
+// The viewer's circles; picking one opens its group chat, then onOpened closes
+// the dialog or sheet (it stays open on error, beside the toast).
+function CirclePicker({ onOpened }: { onOpened: () => void }) {
   const t = useTranslations("messages");
   const { open, pending } = useOpenCircleChat();
   const { data: circles } = useQuery(
@@ -177,7 +183,9 @@ function CirclePicker() {
             type="button"
             className={OPTION_CLASS}
             disabled={pending}
-            onClick={() => void open(circle.aggregateId!)}
+            onClick={async () => {
+              if (await open(circle.aggregateId!)) onOpened();
+            }}
           >
             <CircleThreadAvatar
               members={[]}
