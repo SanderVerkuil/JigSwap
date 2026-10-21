@@ -20,7 +20,7 @@ import {
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import { resolveStartIndex, TourController } from "./controller";
-import { isStandaloneTour, TOURS } from "./definitions";
+import { TOURS } from "./definitions";
 import { TourLayer } from "./tour-layer";
 
 /** The first rendered (non-zero box) element with `data-tour="<anchor>"`: responsive layouts mount
@@ -93,8 +93,8 @@ export function TourProvider({ children }: { children: ReactNode }) {
               description: t("completed"),
             });
           } else {
-            // A standalone tour has no What's new entry to resume it from.
-            toast(t(isStandaloneTour(tourId) ? "pausedStandalone" : "paused"), {
+            // Every tour is listed on What's new's Guides tab, so it resumes from there.
+            toast(t("paused"), {
               action: {
                 label: t("resumeAction"),
                 onClick: () => controller.start(tourId, index),

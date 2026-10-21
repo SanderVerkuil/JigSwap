@@ -2,9 +2,16 @@
 // listed in STANDALONE_TOUR_IDS (@jigswap/contracts), or the backend rejects its progress with
 // `unknown_tour`; definitions.test.ts checks both ways. Step copy lives in the locale files under
 // `tours.<tourId>.steps.<stepId>.title|body`; targets are `data-tour="<anchor>"` attributes on
-// existing components.
+// existing components. Every tour is also a guide on the What's new page's Guides tab: its title
+// and one-line description live under `tours.<tourId>.guide.title|description`.
 
-import { STANDALONE_TOUR_IDS } from "@jigswap/contracts";
+import {
+  CalendarCheck,
+  Compass,
+  House,
+  UserRound,
+  type LucideIcon,
+} from "lucide-react";
 
 export type TourSide = "top" | "right" | "bottom" | "left";
 export type TourAlign = "start" | "center" | "end";
@@ -24,15 +31,22 @@ export interface TourStep {
   align?: TourAlign;
 }
 
+/** The Guides tab groups guides by area, in this order. */
+export const GUIDE_AREAS = ["basics", "puzzles", "people", "solving"] as const;
+export type GuideArea = (typeof GUIDE_AREAS)[number];
+
 export interface TourDefinition {
   id: string;
   steps: readonly TourStep[];
+  /** How the tour is listed on the Guides tab. */
+  guide: { area: GuideArea; icon: LucideIcon };
 }
 
 const tours: readonly TourDefinition[] = [
   // Standalone: the quick start's "Show me around" hand-off (quick start spec §2.8).
   {
     id: "getting-started",
+    guide: { area: "basics", icon: Compass },
     steps: [
       { id: "shelf", route: "/dashboard", target: "dashboard-shelf" },
       { id: "solving-now", route: "/dashboard", target: "solving-now" },
@@ -48,6 +62,7 @@ const tours: readonly TourDefinition[] = [
   },
   {
     id: "households",
+    guide: { area: "people", icon: House },
     steps: [
       { id: "start", route: "/household", target: "household-main" },
       { id: "invite", route: "/household", target: "household-invite" },
@@ -57,6 +72,7 @@ const tours: readonly TourDefinition[] = [
   },
   {
     id: "member-profiles",
+    guide: { area: "people", icon: UserRound },
     steps: [
       { id: "network", route: "/people", target: "people-network" },
       { id: "your-profile", route: "/profile", target: "profile-edit" },
@@ -64,6 +80,7 @@ const tours: readonly TourDefinition[] = [
   },
   {
     id: "in-progress-solves",
+    guide: { area: "solving", icon: CalendarCheck },
     steps: [
       { id: "solving-now", route: "/dashboard", target: "solving-now" },
       {
@@ -86,13 +103,14 @@ export const TOURS: ReadonlyMap<string, TourDefinition> = new Map(
   tours.map((tour) => [tour.id, tour]),
 );
 
-/** A tour started outside What's new, so a paused one is resumed from elsewhere. */
-export function isStandaloneTour(tourId: string): boolean {
-  return (STANDALONE_TOUR_IDS as readonly string[]).includes(tourId);
-}
-
 /** i18n keys for a step's copy, relative to the root namespace. */
 export function stepMessageKeys(tourId: string, stepId: string) {
   const base = `tours.${tourId}.steps.${stepId}`;
   return { title: `${base}.title`, body: `${base}.body` };
+}
+
+/** i18n keys for a tour's Guides-tab card, relative to the root namespace. */
+export function guideMessageKeys(tourId: string) {
+  const base = `tours.${tourId}.guide`;
+  return { title: `${base}.title`, description: `${base}.description` };
 }

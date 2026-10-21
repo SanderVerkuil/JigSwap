@@ -9,11 +9,11 @@ import {
   tourKeyAction,
   tourNextLabel,
   waitFor,
+  type RunnableTour,
   type TourProgressWrite,
 } from "./controller";
-import type { TourDefinition } from "./definitions";
 
-const TOUR: TourDefinition = {
+const TOUR: RunnableTour = {
   id: "demo",
   steps: [
     { id: "a", route: "/one", target: "one-a" },
@@ -373,7 +373,7 @@ describe("TourController: action steps", () => {
     const { world, record, onEnd } = setup("/two");
     world.anchors.add("two-c");
     world.actions.add("two-c");
-    const tour: TourDefinition = {
+    const tour: RunnableTour = {
       id: "demo",
       steps: [{ id: "c", route: "/two", target: "two-c" }],
     };
@@ -443,7 +443,7 @@ describe("TourController: action steps", () => {
 
   it("walks back past steps whose anchors also depend on that action", async () => {
     const { world } = actionSetup();
-    const tour: TourDefinition = {
+    const tour: RunnableTour = {
       id: "deep",
       steps: [
         { id: "a", route: "/one", target: "one-a" },
