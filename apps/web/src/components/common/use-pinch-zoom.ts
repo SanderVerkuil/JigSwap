@@ -11,7 +11,7 @@ import {
   type Size,
   type ZoomState,
 } from "@/lib/zoom-math";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const TAP_SLOP = 10; // px a tap may wander before it counts as a drag
 const DOUBLE_TAP_MS = 300;
@@ -34,6 +34,10 @@ type Gesture =
 // (`surfaceRef`), which must contain the <img> and clip it; apply `zoom` as
 // `translate(x, y) scale(scale)` on the image (or a centred box around it). A mouse at 1x is left
 // alone (the hover lens); a mouse drag only pans once zoomed.
+//
+// CSS touch-action alone doesn't keep a pinch off the page everywhere (iOS Safari can still zoom the
+// page), so two-finger moves, moves while zoomed, and WebKit's gesture events are also cancelled
+// natively on the surface.
 export function usePinchZoom({
   onSwipe,
 }: {
@@ -48,6 +52,23 @@ export function usePinchZoom({
   const lastTap = useRef<{ at: number; point: Point } | null>(null);
 
   const zoomed = zoom.scale > MIN_SCALE;
+
+  useEffect(() => {
+    const surface = surfaceRef.current;
+    if (!surface) return;
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.cancelable && (zoomed || e.touches.length > 1)) e.preventDefault();
+    };
+    const onGesture = (e: Event) => e.preventDefault();
+    surface.addEventListener("touchmove", onTouchMove, { passive: false });
+    surface.addEventListener("gesturestart", onGesture);
+    surface.addEventListener("gesturechange", onGesture);
+    return () => {
+      surface.removeEventListener("touchmove", onTouchMove);
+      surface.removeEventListener("gesturestart", onGesture);
+      surface.removeEventListener("gesturechange", onGesture);
+    };
+  }, [zoomed]);
 
   // Viewport = the surface; content = the <img>'s layout box (its fitted 1x size — offset sizes
   // ignore our transform).
