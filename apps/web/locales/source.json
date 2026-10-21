@@ -2098,6 +2098,26 @@
       "RateLimited": "You've sent a lot of invites today. Please try again tomorrow.",
       "generic": "Something went wrong. Please try again."
     },
+    "icon": {
+      "title": "Icon",
+      "hint": "One icon for the circle: on its card, its page and its group chat. Members see it once our automated check has approved it.",
+      "upload": "Upload icon",
+      "change": "Change icon",
+      "remove": "Remove icon",
+      "uploading": "Uploading…",
+      "checking": "Being checked",
+      "checkingHint": "The new icon shows to members once our automated check has approved it. Until then they see the current one.",
+      "removed": "The new icon was removed: our automated check flagged it.",
+      "dismiss": "Dismiss",
+      "uploaded": "Icon uploaded. Members see it once it has been checked.",
+      "removedToast": "Icon removed",
+      "failed": "Couldn't upload this icon. Please try again.",
+      "removeFailed": "Couldn't remove the icon. Please try again.",
+      "tooLarge": "This image is too large: 10 MB at most.",
+      "unsupported": "Use a JPEG, PNG or WebP image.",
+      "expired": "The upload took too long. Please try again.",
+      "rateLimited": "You've changed the icon many times just now. Please try again later."
+    },
     "manage": {
       "createTitle": "Create Circle",
       "createDescription": "A circle is private. You become its first member and admin.",

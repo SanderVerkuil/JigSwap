@@ -21,6 +21,7 @@ import {
 } from "@/components/community/primitives";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { MemberInitial } from "@/components/members/member-initial";
+import { CircleThreadAvatar } from "@/components/messaging/circle-thread-avatar";
 import { circleHref } from "@/components/messaging/format";
 import { OpenCircleChatButton } from "@/components/messaging/open-circle-chat";
 import { GuideHelpButton } from "@/components/tour/guide-help-button";
@@ -59,6 +60,7 @@ interface CircleSummaryView {
   isOwnedByViewer: boolean;
   viewerPermission: CirclePermissionLevel;
   createdAt: number;
+  iconUrl?: string;
 }
 
 export const Route = createFileRoute("/_dashboard/circles/")({
@@ -227,7 +229,8 @@ function CirclesPage() {
   );
 }
 
-// One circle as a full-width row tile. The identity half (gradient icon chip,
+// One circle as a full-width row tile. The identity half (the circle's icon,
+// else a gradient icon chip,
 // heading-font name with the viewer's role badge, a one-line blurb) links to
 // the circle's page; the member avatar stack, the members stat and the actions
 // sit beside it from xl up and wrap onto their own line below that, so the
@@ -244,7 +247,15 @@ function CircleRow({
   const t = useTranslations("circles");
   const identity = (
     <>
-      <CoverChip icon={Users} size={52} gradientIndex={gradientIndex} />
+      {circle.iconUrl ? (
+        <CircleThreadAvatar
+          members={[]}
+          iconUrl={circle.iconUrl}
+          className="size-[52px]"
+        />
+      ) : (
+        <CoverChip icon={Users} size={52} gradientIndex={gradientIndex} />
+      )}
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 items-center gap-2.5">
           <span className="font-heading min-w-0 truncate text-lg font-bold">

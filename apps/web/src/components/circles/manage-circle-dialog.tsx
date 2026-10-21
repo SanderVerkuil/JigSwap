@@ -1,9 +1,11 @@
 import {
+  canManageCircle,
   canShareInCircle,
   CircleDeleteSection,
   CircleInviteSection,
   memberRowControls,
 } from "@/components/circles/circle-admin-sections";
+import { CircleIconSection } from "@/components/circles/circle-icon";
 import {
   useCircleSeatName,
   type CircleMemberView,
@@ -186,6 +188,15 @@ export function ManageCircleDialog({
                 </div>
               ))}
             </section>
+
+            {/* Admins only; the server checks it too */}
+            {canManageCircle(detail.viewerPermission) && (
+              <CircleIconSection
+                circleId={circleId}
+                iconUrl={detail.iconUrl}
+                iconStatus={detail.iconStatus}
+              />
+            )}
 
             <CircleInviteSection
               circleId={circleId}

@@ -54,7 +54,8 @@ function dmPartnerId(thread: AnyInboxThread): string | undefined {
 
 // Avatar chip for a thread subject: the member's avatar/initials for a
 // revealed DM partner, a generic person glyph for an anonymised one, an
-// exchange icon chip for exchange threads, and the members for a circle.
+// exchange icon chip for exchange threads, and the circle's icon or members
+// for a circle.
 export function ThreadSubjectAvatar({
   subject,
   className = "size-10",
@@ -66,6 +67,7 @@ export function ThreadSubjectAvatar({
     return (
       <CircleThreadAvatar
         members={subject.memberPreview}
+        iconUrl={subject.iconUrl}
         className={className}
       />
     );

@@ -181,6 +181,7 @@ function CirclePicker() {
           >
             <CircleThreadAvatar
               members={[]}
+              iconUrl={circle.iconUrl}
               className="ring-background size-9 ring-2"
             />
             <span className="min-w-0 flex-1 truncate">{circle.name}</span>

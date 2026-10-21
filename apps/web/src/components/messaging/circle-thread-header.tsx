@@ -3,8 +3,8 @@
 // A circle thread's header (spec §6.2, §6.6): the circle avatar, the circle's
 // name and a muted second line "Circle chat · 6 members" whose members part
 // opens the members panel, the
-// "Circle" quick link (md+), and one ⋯ menu: Mute/Unmute, Members, Open
-// circle, Leave circle, Report a member. The members panel is a 360px
+// "Circle" quick link (md+), and one ⋯ menu: Mute/Unmute, Members, Change
+// icon (Admins), Open circle, Leave circle, Report a member. The members panel is a 360px
 // right-side sheet on desktop and a bottom sheet on phones; it lists the
 // circle's members (getCircle: members only, projected by the circle rule),
 // with Mute and Leave at the bottom. Leave uses the circles page's confirm.
@@ -12,6 +12,8 @@
 // feeds both the "· N online" count and the members' dots; the backend returns
 // only members the viewer may see (mutual followers who both share).
 import { Link } from "@/compat/link";
+import { canManageCircle } from "@/components/circles/circle-admin-sections";
+import { useCircleIconPicker } from "@/components/circles/circle-icon";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { MemberInitial } from "@/components/members/member-initial";
 import { PresenceDot } from "@/components/presence/presence-dot";
@@ -55,7 +57,15 @@ import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Bell, BellOff, Flag, LogOut, MoreVertical, Users } from "lucide-react";
+import {
+  Bell,
+  BellOff,
+  Flag,
+  ImagePlus,
+  LogOut,
+  MoreVertical,
+  Users,
+} from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
@@ -103,6 +113,11 @@ export function CircleThreadHeader({
   const { data: detail } = useCircleDetail(subject.circleId);
   // The owner can't leave their own circle (they delete it instead).
   const canLeave = detail ? !detail.isOwnedByViewer : false;
+  // Admins only (the server checks it too): the same uploader as the manage dialog.
+  const canChangeIcon = detail
+    ? canManageCircle(detail.viewerPermission)
+    : false;
+  const iconPicker = useCircleIconPicker(subject.circleId);
   const presence = usePresenceOf(
     detail?.members
       .map((member) => member.memberId)
@@ -116,7 +131,11 @@ export function CircleThreadHeader({
 
   return (
     <>
-      <CircleThreadAvatar members={subject.memberPreview} className="size-9" />
+      <CircleThreadAvatar
+        members={subject.memberPreview}
+        iconUrl={subject.iconUrl}
+        className="size-9"
+      />
       <div className="flex min-w-0 flex-col">
         {heading}
         {/* "Circle chat · 6 members · 2 online": the prefix names the chat a
@@ -172,6 +191,16 @@ export function CircleThreadHeader({
               <Users aria-hidden />
               {t("circle.members")}
             </DropdownMenuItem>
+            {canChangeIcon && (
+              <DropdownMenuItem
+                className="min-h-11 md:min-h-0"
+                disabled={iconPicker.uploading}
+                onSelect={iconPicker.pick}
+              >
+                <ImagePlus aria-hidden />
+                {tCircles("icon.change")}
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem asChild className="min-h-11 md:min-h-0">
               <Link href={circleHref(subject.circleId)}>
                 <Users aria-hidden />
@@ -216,6 +245,7 @@ export function CircleThreadHeader({
         open={leaveOpen}
         onOpenChange={setLeaveOpen}
       />
+      {iconPicker.dialogs}
     </>
   );
 }

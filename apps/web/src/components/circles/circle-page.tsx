@@ -23,6 +23,7 @@ import { CoverChip } from "@/components/community/primitives";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { MemberInitial } from "@/components/members/member-initial";
+import { CircleThreadAvatar } from "@/components/messaging/circle-thread-avatar";
 import { MessageCopyCard } from "@/components/messaging/copy-card";
 import {
   circleSnippet,
@@ -42,7 +43,7 @@ import { useMemberDisplayName } from "@/lib/member-display-name";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Settings, Users } from "lucide-react";
+import { Clock, Settings, Users } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useLocale, useNow, useTranslations } from "use-intl";
 
@@ -73,7 +74,15 @@ export function CirclePage({ circleId }: { circleId: string }) {
     <div className="flex min-w-0 flex-col gap-4">
       <Card className="flex flex-col gap-4 p-4 sm:p-6">
         <div className="flex min-w-0 items-center gap-4">
-          <CoverChip icon={Users} size={52} gradientIndex={0} />
+          {detail.iconUrl ? (
+            <CircleThreadAvatar
+              members={[]}
+              iconUrl={detail.iconUrl}
+              className="size-[52px]"
+            />
+          ) : (
+            <CoverChip icon={Users} size={52} gradientIndex={0} />
+          )}
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
               <h2 className="font-heading min-w-0 text-xl font-bold break-words">
@@ -86,6 +95,13 @@ export function CirclePage({ circleId }: { circleId: string }) {
             <p className="text-muted-foreground mt-0.5 text-sm">
               {t("page.memberCount", { count: detail.memberCount })}
             </p>
+            {/* To its uploader and the Admins only (getCircle). */}
+            {detail.iconStatus === "checking" && (
+              <p className="text-muted-foreground mt-1 flex items-center gap-1.5 text-xs">
+                <Clock aria-hidden className="size-3.5" />
+                {t("icon.checking")}
+              </p>
+            )}
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
