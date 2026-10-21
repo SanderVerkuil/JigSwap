@@ -18,7 +18,11 @@ import {
 } from "./events";
 import { CircleId, CopyId, MemberId, MembershipId } from "./ids";
 import { Membership } from "./membership";
-import { canManageMembers, PermissionLevel } from "./permission-level";
+import {
+  canExchangeWithin,
+  canManageMembers,
+  PermissionLevel,
+} from "./permission-level";
 
 // The most seats a circle may hold, the owner's included.
 export const MAX_CIRCLE_MEMBERS = 50;
@@ -212,16 +216,22 @@ export class Circle {
     return ok(undefined);
   }
 
-  // Share a copy into this circle, making it visible to the circle's members. Only an Admin actor
-  // may share. Emits CopySharedToCircle; the aggregate holds no copy state (the link lives in a
-  // read model fed by the event), so this is a pure authorisation + announcement.
+  // Share a copy into this circle, making it visible to the circle's members. A member whose seat
+  // may exchange (Exchange or Admin) may share; ViewOnly may not. That the copy is the actor's own
+  // is checked by the caller (the aggregate never loads copies). The level counts only at the
+  // moment of sharing: a member later moved to ViewOnly keeps the shares they made, just as a
+  // share ends only when its owner leaves the circle or the copy changes hands. Emits
+  // CopySharedToCircle; the aggregate holds no copy state (the link lives in a read model fed by
+  // the event), so this is a pure authorisation + announcement.
   shareCopy(
     actor: MemberId,
     copyId: CopyId,
     now: Date,
   ): Result<void, SharingError> {
-    const gate = this.requireAdmin(actor);
-    if (gate.isErr) return err(gate.error);
+    const seat = this.memberships.find((m) => m.memberId === actor);
+    if (!seat || !canExchangeWithin(seat.permission)) {
+      return err(SharingError.cannotShareCopy());
+    }
 
     this.record(new CopySharedToCircle(this.state.id, copyId, now));
     return ok(undefined);

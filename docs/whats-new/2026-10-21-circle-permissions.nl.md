@@ -2,7 +2,7 @@
 id: circle-permissions
 publishedAt: "2026-10-21T15:00:00Z"
 title: "Rechten in een kring doen nu wat ze zeggen"
-summary: "Leden met Alleen bekijken zien de gedeelde puzzels van een kring, maar kunnen ze niet aanvragen. Leden met Mag ruilen en Beheerder wel."
+summary: "Leden met Alleen bekijken zien de gedeelde puzzels van een kring, maar kunnen ze niet aanvragen. Leden met Mag ruilen kunnen ze aanvragen en ook hun eigen puzzels delen."
 category: improvement
 ---
 
@@ -13,6 +13,9 @@ puzzels kan.
   aanvragen. De pagina van het exemplaar vertelt waarom.
 - Leden met **Mag ruilen** en **Beheerder** kunnen gedeelde puzzels aanvragen,
   zoals altijd.
+- Leden met **Mag ruilen** kunnen nu ook hun eigen puzzels in de kring delen,
+  op de pagina van de kring onder **Gedeelde puzzels**. Eerst konden alleen
+  beheerders dat.
 - De uitnodigingskiezer en het beheervenster tonen onder elk niveau een korte
   samenvatting.
 

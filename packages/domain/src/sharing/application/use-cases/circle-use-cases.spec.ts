@@ -405,7 +405,7 @@ describe("Sharing circle use cases", () => {
       expect(events.names()).toEqual(["CopySharedToCircle"]);
     });
 
-    it("rejects a non-admin actor", async () => {
+    it("shares a copy by an Exchange member", async () => {
       const circleId = await openCircle();
       await addMember({
         circleId,
@@ -417,8 +417,24 @@ describe("Sharing circle use cases", () => {
 
       const result = await shareCopy({ circleId, actorId: alice, copyId });
 
+      expect(result.isOk).toBe(true);
+      expect(events.names()).toEqual(["CopySharedToCircle"]);
+    });
+
+    it("rejects a ViewOnly actor", async () => {
+      const circleId = await openCircle();
+      await addMember({
+        circleId,
+        actorId: owner,
+        memberId: alice,
+        permission: "ViewOnly",
+      });
+      events.published.length = 0;
+
+      const result = await shareCopy({ circleId, actorId: alice, copyId });
+
       expect(result.isErr).toBe(true);
-      if (result.isErr) expect(result.error.code).toBe("NotCircleAdmin");
+      if (result.isErr) expect(result.error.code).toBe("CannotShareCopy");
       expect(events.published).toHaveLength(0);
     });
 

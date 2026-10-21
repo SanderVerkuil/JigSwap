@@ -9,6 +9,7 @@ import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
 import {
   canManageCircle,
+  canShareInCircle,
   CircleDeleteSection,
   CircleInviteSection,
   memberRowControls,
@@ -155,6 +156,14 @@ describe("canManageCircle", () => {
     expect(canManageCircle("Admin")).toBe(true);
     expect(canManageCircle("Exchange")).toBe(false);
     expect(canManageCircle("ViewOnly")).toBe(false);
+  });
+});
+
+describe("canShareInCircle", () => {
+  it("lets Exchange and Admin share their own copies, not View only", () => {
+    expect(canShareInCircle("Admin")).toBe(true);
+    expect(canShareInCircle("Exchange")).toBe(true);
+    expect(canShareInCircle("ViewOnly")).toBe(false);
   });
 });
 

@@ -96,7 +96,7 @@ In het beheervenster kan elke beheerder:
   **Beheerder**;
 - een lid verwijderen;
 - leden uitnodigen en openstaande uitnodigingen intrekken;
-- exemplaren in de kring delen.
+- eigen exemplaren in de kring delen.
 
 De plek van de eigenaar kan niet worden gewijzigd of verwijderd.
 
@@ -105,11 +105,11 @@ De plek van de eigenaar kan niet worden gewijzigd of verwijderd.
 De uitnodigingskiezer en het beheervenster tonen onder elk niveau een korte
 samenvatting van één regel.
 
-| Recht               | Wat het lid kan                                                                                                      |
-| ------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| **Alleen bekijken** | De kring, de groepschat en de puzzels die erin gedeeld zijn bekijken. Een puzzel uit de kring aanvragen kan niet.    |
-| **Mag ruilen**      | Alles wat Alleen bekijken mag, en een ruil-, leen- of koopaanvraag sturen voor puzzels die in de kring gedeeld zijn. |
-| **Beheerder**       | Alles wat Mag ruilen mag, en exemplaren delen, mensen uitnodigen, rechten wijzigen en leden verwijderen.             |
+| Recht               | Wat het lid kan                                                                                                                                   |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Alleen bekijken** | De kring, de groepschat en de puzzels die erin gedeeld zijn bekijken. Een puzzel uit de kring aanvragen kan niet.                                 |
+| **Mag ruilen**      | Alles wat Alleen bekijken mag, een ruil-, leen- of koopaanvraag sturen voor puzzels die in de kring gedeeld zijn, en eigen exemplaren erin delen. |
+| **Beheerder**       | Alles wat Mag ruilen mag, en mensen uitnodigen, rechten wijzigen en leden verwijderen.                                                            |
 
 Heb je **Alleen bekijken**, dan is de knop **Ruil aanvragen** op een gedeelde
 puzzel grijs, met "Je mag in deze kring alleen bekijken", en toont
@@ -127,17 +127,27 @@ al geaccepteerd waren, kunnen gewoon worden afgerond.
 
 ## Een exemplaar delen met een kring
 
-1. Open het beheervenster van de kring.
-2. Kies onder **Een exemplaar delen** een van je exemplaren.
+Leden met **Mag ruilen** of **Beheerder** kunnen hun eigen exemplaren delen.
+Met **Alleen bekijken** kun je niet delen. Je kunt alleen exemplaren delen die
+van jou zijn.
+
+1. Open de pagina van de kring. Beheerders kunnen ook het beheervenster
+   gebruiken.
+2. Kies onder **Gedeelde puzzels**, bij **Een exemplaar delen**, een van je
+   exemplaren.
 3. Klik op **Delen**.
 
 Kringleden kunnen een gedeeld exemplaar zien zolang je het aanbiedt om te
 ruilen, uit te lenen of te verkopen, en je nog lid bent van de kring.
 
+Daalt je recht later naar **Alleen bekijken**, dan blijven de exemplaren die je
+al deelde gedeeld. Je kunt alleen geen nieuwe meer delen.
+
 Delen stopt automatisch:
 
 - **Als je de kring verlaat of wordt verwijderd**, zijn de exemplaren die je in
-  die kring hebt gedeeld daar niet meer gedeeld.
+  die kring hebt gedeeld daar niet meer gedeeld. Een beheerder die een lid
+  verwijdert, beëindigt ook diens gedeelde exemplaren.
 - **Als een exemplaar van eigenaar wisselt**, bijvoorbeeld na een ruil of
   verkoop, is het in geen enkele kring meer gedeeld. De nieuwe eigenaar kan het
   opnieuw delen.

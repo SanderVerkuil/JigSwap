@@ -1,5 +1,5 @@
 import {
-  canManageCircle,
+  canShareInCircle,
   CircleDeleteSection,
   CircleInviteSection,
   memberRowControls,
@@ -9,6 +9,7 @@ import {
   type CircleMemberView,
   type CirclePermissionLevel,
 } from "@/components/circles/circle-seat";
+import { CircleShareSection } from "@/components/circles/circle-share-section";
 import { MemberInitial } from "@/components/members/member-initial";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -29,11 +30,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { gateway, Id } from "@/gateway";
+import { gateway } from "@/gateway";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Trash2 } from "lucide-react";
-import { useState } from "react";
 import { useTranslations } from "use-intl";
 
 const PERMISSIONS: CirclePermissionLevel[] = ["ViewOnly", "Exchange", "Admin"];
@@ -62,25 +62,11 @@ export function ManageCircleDialog({
     ),
   );
 
-  const [shareCopyId, setShareCopyId] = useState<string>("");
-
-  const { data: myCopies } = useQuery(
-    convexQuery(
-      gateway.library.ownedByOwner,
-      convexUser?._id
-        ? { ownerId: convexUser._id as Id<"users">, includeUnavailable: true }
-        : "skip",
-    ),
-  );
-
   const removeMember = useMutation({
     mutationFn: useConvexMutation(gateway.sharing.removeMember),
   });
   const changePermission = useMutation({
     mutationFn: useConvexMutation(gateway.sharing.changePermission),
-  });
-  const shareCopy = useMutation({
-    mutationFn: useConvexMutation(gateway.sharing.shareCopyToCircle),
   });
 
   const handleRemove = async (member: CircleMemberView) => {
@@ -106,16 +92,6 @@ export function ManageCircleDialog({
       });
     } catch (error) {
       console.error("Failed to change permission:", error);
-    }
-  };
-
-  const handleShare = async () => {
-    if (!shareCopyId) return;
-    try {
-      await shareCopy.mutateAsync({ circleId, copyId: shareCopyId });
-      setShareCopyId("");
-    } catch (error) {
-      console.error("Failed to share copy:", error);
     }
   };
 
@@ -216,43 +192,12 @@ export function ManageCircleDialog({
               viewerPermission={detail.viewerPermission}
             />
 
-            {/* Share a copy — surface the friend-circle VisibilityScope */}
-            {/* Admin only, read live: a viewer who loses Admin loses it at once */}
-            {canManageCircle(detail.viewerPermission) && (
-              <section className="space-y-3">
-                <h3 className="font-medium">{t("manage.shareCopy")}</h3>
-                <p className="text-xs text-muted-foreground">
-                  {t.rich("manage.shareDescription", {
-                    scope: (chunks) => (
-                      <span className="font-medium">{chunks}</span>
-                    ),
-                  })}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Select value={shareCopyId} onValueChange={setShareCopyId}>
-                    <SelectTrigger className="flex-1">
-                      <SelectValue placeholder={t("manage.chooseCopy")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(myCopies ?? [])
-                        .filter((copy) => copy.aggregateId)
-                        .map((copy) => (
-                          <SelectItem
-                            key={copy._id}
-                            value={copy.aggregateId as string}
-                          >
-                            {copy.puzzle?.title ??
-                              copy.snapshot?.title ??
-                              t("manage.copyFallback")}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                  <Button onClick={handleShare} disabled={!shareCopyId}>
-                    {t("manage.share")}
-                  </Button>
-                </div>
-              </section>
+            {/* Read live: a viewer who drops to View only loses it at once */}
+            {canShareInCircle(detail.viewerPermission) && (
+              <CircleShareSection
+                circleId={circleId}
+                memberId={convexUser?._id}
+              />
             )}
 
             <CircleDeleteSection

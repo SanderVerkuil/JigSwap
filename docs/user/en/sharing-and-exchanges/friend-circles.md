@@ -90,7 +90,7 @@ In the manage dialog, every Admin can:
 - change a member's permission level: **View only**, **Can exchange** or **Admin**;
 - remove a member;
 - invite members and revoke pending invites;
-- share copies into the circle.
+- share their own copies into the circle.
 
 The owner's seat can't be changed or removed.
 
@@ -99,11 +99,11 @@ The owner's seat can't be changed or removed.
 The invite picker and the manage dialog show a one-line summary under each
 level.
 
-| Permission       | What the member can do                                                                                                      |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| **View only**    | See the circle, its group chat and the puzzles shared in it. They can't send a request for a puzzle they see in the circle. |
-| **Can exchange** | Everything View only allows, and send swap, lend or buy requests for puzzles shared in the circle.                          |
-| **Admin**        | Everything Can exchange allows, and share copies, invite people, change permissions and remove members.                     |
+| Permission       | What the member can do                                                                                                             |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **View only**    | See the circle, its group chat and the puzzles shared in it. They can't send a request for a puzzle they see in the circle.        |
+| **Can exchange** | Everything View only allows, send swap, lend or buy requests for puzzles shared in the circle, and share their own copies into it. |
+| **Admin**        | Everything Can exchange allows, and invite people, change permissions and remove members.                                          |
 
 For a View only member, the **Request swap** button on a shared puzzle is
 greyed out with "You have view-only access in this circle", and **Browse**
@@ -120,17 +120,24 @@ accepted can still be completed.
 
 ## Share a copy with a circle
 
-1. Open the circle's manage dialog.
-2. Under **Share a copy**, choose one of your copies.
+Members with **Can exchange** or **Admin** can share their own copies. With
+**View only** you can't share. You can only share copies you own.
+
+1. Open the circle's page. Admins can also use the manage dialog.
+2. Under **Shared puzzles**, in **Share a copy**, choose one of your copies.
 3. Click **Share**.
 
 Circle members can see a shared copy while you offer it for swap, lend or
 sale and you're still a member of the circle.
 
+If your permission later drops to **View only**, the copies you already
+shared stay shared. You just can't share new ones.
+
 Shares end automatically:
 
 - **When you leave or are removed**, the copies you shared into that circle
-  are no longer shared there.
+  are no longer shared there. An admin who removes a member also ends that
+  member's shares.
 - **When a copy changes owner**, for example after a swap or sale, it is no
   longer shared in any circle. The new owner can share it again.
 
