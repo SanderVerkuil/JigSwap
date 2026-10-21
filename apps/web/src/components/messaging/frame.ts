@@ -1,9 +1,11 @@
 // Shared geometry for the /messages routes (message-center redesign spec §2):
-// one framed two-pane surface on desktop whose pane headers share a rule.
+// one two-pane surface on desktop that fills the content card edge to edge.
 
-// Desktop frame around list + thread panes, sized to the content card.
+// Desktop list + thread panes: no frame of their own; they fill the shell's
+// full-bleed content area (isFullBleedRoute) and scroll inside themselves.
+// 480px is a floor for short windows; `md:h-auto` undoes the immersive h-dvh.
 export const MESSAGES_FRAME_CLASS =
-  "md:flex md:h-[calc(100svh-12.25rem)] md:min-h-[480px] md:overflow-hidden md:rounded-xl md:border md:bg-card";
+  "md:flex md:h-auto md:min-h-[480px] md:flex-1 md:overflow-hidden";
 
 // Immersive thread page below md: cancel the shell's content padding and take
 // the full dynamic viewport (shrinks with the keyboard, so the composer stays

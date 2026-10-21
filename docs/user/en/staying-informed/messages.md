@@ -28,9 +28,10 @@ either direction, also stops new messages between you.
 
 ## The inbox
 
-On desktop, the inbox sits on the left and the open conversation on the right.
-On a phone, you see the inbox first; opening a conversation fills the whole
-screen, and the back button returns you to the inbox.
+On desktop, the inbox sits on the left and the open conversation on the right,
+together filling the page. On a phone, you see the inbox first; opening a
+conversation fills the whole screen, and the back button returns you to the
+inbox. **New**, for starting a conversation, sits at the top right of the page.
 
 An empty inbox explains how conversations start and offers
 **Message a member**, which opens **People**.

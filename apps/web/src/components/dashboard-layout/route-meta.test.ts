@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isImmersiveMobileRoute } from "./route-meta";
+import { isFullBleedRoute, isImmersiveMobileRoute } from "./route-meta";
 
 describe("isImmersiveMobileRoute", () => {
   it.each(["/messages/seed-thread-esther", "/messages/new", "/messages/abc/"])(
@@ -13,6 +13,24 @@ describe("isImmersiveMobileRoute", () => {
     "is not immersive on %s",
     (pathname) => {
       expect(isImmersiveMobileRoute(pathname)).toBe(false);
+    },
+  );
+});
+
+describe("isFullBleedRoute", () => {
+  it.each([
+    "/messages",
+    "/messages/",
+    "/messages/seed-thread-esther",
+    "/messages/new",
+  ])("is full-bleed on %s", (pathname) => {
+    expect(isFullBleedRoute(pathname)).toBe(true);
+  });
+
+  it.each(["/dashboard", "/trades", "/messagesx", "/circles/messages"])(
+    "is not full-bleed on %s",
+    (pathname) => {
+      expect(isFullBleedRoute(pathname)).toBe(false);
     },
   );
 });

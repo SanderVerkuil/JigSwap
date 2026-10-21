@@ -41,7 +41,6 @@ import {
   type InboxThread,
   type Translator,
 } from "./format";
-import { NewConversationMenu } from "./new-conversation-menu";
 
 // The revealed partner of a DM row, the only rows that carry a presence dot
 // (exchange rows show an exchange chip, circle rows their members).
@@ -97,20 +96,11 @@ export function ThreadSubjectAvatar({
   );
 }
 
-// The list pane: a md+ header ("Conversations", aligned with the thread
-// header's rule, and the New menu), then loading / error / empty / rows.
-// Mobile shows just the New menu above the rows — the shell top bar already
-// titles the page.
+// The list pane: loading / error / empty / rows. The page head titles the
+// page and carries the New menu (published by the /messages layout).
 export function ThreadList({ activeThreadId }: { activeThreadId?: string }) {
-  const t = useTranslations("messages");
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex shrink-0 items-center justify-end pb-1 md:h-14 md:justify-between md:border-b md:pr-2 md:pb-0 md:pl-4">
-        <h2 className="font-heading hidden text-base font-bold md:block">
-          {t("conversationsLabel")}
-        </h2>
-        <NewConversationMenu />
-      </div>
       {/* Desktop scrolls inside the frame; mobile scrolls the document. */}
       <div className="md:min-h-0 md:flex-1 md:overflow-y-auto">
         {/* One-time "show when you're online?" card, until the member chooses. */}
