@@ -109,7 +109,12 @@ function GoalsPage() {
         <span className="text-muted-foreground hidden text-sm sm:inline">
           {headerMeta}
         </span>
-        <Button variant="brand" size="sm" onClick={() => setOpen(true)}>
+        <Button
+          variant="brand"
+          size="sm"
+          onClick={() => setOpen(true)}
+          data-tour="goals-create"
+        >
           <Plus className="h-4 w-4" />
           {t("create")}
         </Button>

@@ -141,7 +141,7 @@ function CompletionsPage() {
           {t("mostRecent")}
         </span>
         <Button variant="brand" size="sm" asChild>
-          <Link href="/completions/new">
+          <Link href="/completions/new" data-tour="completions-log">
             <Plus className="h-4 w-4" />
             {t("logAction")}
           </Link>

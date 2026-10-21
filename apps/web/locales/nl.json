@@ -4895,6 +4895,70 @@
           "body": "Wil je één puzzel verbergen, open hem dan, druk op Bewerken en kies Privé onder Wie kan dit exemplaar zien. Dan zien alleen jij en je huishouden hem. Een puzzel die je aanbiedt om te ruilen, lenen of verkopen kan niet privé zijn."
         }
       }
+    },
+    "circles": {
+      "guide": {
+        "title": "Vriendenkringen",
+        "description": "Begin een besloten groep, reageer op uitnodigingen en chat met de mensen die je vertrouwt."
+      },
+      "steps": {
+        "create": {
+          "title": "Begin een kring",
+          "body": "Een kring is een besloten groep voor mensen die je vertrouwt. Druk op Kring Aanmaken en geef hem een naam; jij bent de eigenaar."
+        },
+        "invitations": {
+          "title": "Uitnodigingen",
+          "body": "Nodigt iemand je uit voor een kring, dan staat de uitnodiging bovenaan Kringen en in je meldingen. Accepteer om mee te doen, of wijs af. Niemand doet mee zonder ja te zeggen."
+        },
+        "permissions": {
+          "title": "Rechten en groepschat",
+          "body": "Beheerders nodigen mensen met wie ze elkaar volgen uit via de instellingenknop van een kring, als Alleen bekijken, Mag ruilen of Beheerder. Elke kring heeft een groepschat: druk op Groepschat openen."
+        }
+      }
+    },
+    "track-your-solves": {
+      "guide": {
+        "title": "Houd je puzzels bij",
+        "description": "Rond puzzels af, leg eerdere vast, stel doelen en zie je cijfers groeien."
+      },
+      "steps": {
+        "in-progress": {
+          "title": "Maak af waar je aan begon",
+          "body": "Puzzels waar je mee bezig bent staan onder Bezig. Druk op Voltooiing afronden als het laatste stukje erin zit, dan gaat hij naar Geschiedenis."
+        },
+        "log-past": {
+          "title": "Leg een eerdere puzzel vast",
+          "body": "Al eerder een puzzel afgemaakt? Druk op Voltooiing Loggen, kies de puzzel en vul in wanneer je hem maakte en hoe lang je erover deed."
+        },
+        "goals": {
+          "title": "Stel een doel",
+          "body": "Druk op Nieuw Doel en kies hoeveel puzzels je wilt afmaken, als je wilt voor een bepaalde datum. Je afgeronde puzzels tellen mee."
+        },
+        "insights": {
+          "title": "Je cijfers",
+          "body": "Inzichten telt alles op: voltooiingen, totale oplostijd, puzzels in bezit en ruilen, met daaronder je puzzels per maand."
+        }
+      }
+    },
+    "catalogue-edits": {
+      "guide": {
+        "title": "Verbeter de catalogus",
+        "description": "Stel een correctie voor op elke puzzel in de catalogus en volg wat ermee gebeurt."
+      },
+      "steps": {
+        "suggest": {
+          "title": "Stel een wijziging voor op elke puzzel in de catalogus",
+          "body": "Klopt het aantal stukjes, de barcode of de foto niet? Open de puzzel in de Puzzelcatalogus en druk op Wijziging voorstellen. Een beheerder bekijkt het voordat de catalogus verandert."
+        },
+        "find": {
+          "title": "Later terugvinden",
+          "body": "Mijn voorstellen toont alles wat je hebt voorgesteld."
+        },
+        "follow": {
+          "title": "Volg je voorstellen",
+          "body": "Bij elk voorstel zie je of het in behandeling, goedgekeurd of afgewezen is, met de reden van de beheerder. Zolang het in behandeling is, kun je het bewerken of intrekken."
+        }
+      }
     }
   },
   "quickStart": {

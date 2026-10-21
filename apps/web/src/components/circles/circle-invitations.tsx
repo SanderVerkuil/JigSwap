@@ -100,7 +100,11 @@ export function CircleInvitationList({
 }) {
   const t = useTranslations("circles");
   return (
-    <section aria-labelledby="circle-invitations-title" className="mb-6">
+    <section
+      aria-labelledby="circle-invitations-title"
+      className="mb-6"
+      data-tour="circles-invitations"
+    >
       <h2
         id="circle-invitations-title"
         className="font-heading mb-2 text-lg font-bold"
