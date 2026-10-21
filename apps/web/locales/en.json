@@ -1247,7 +1247,7 @@
   "privacy": {
     "title": "Privacy Policy",
     "lastUpdated": "Last Updated",
-    "effectiveDate": "20 October 2026",
+    "effectiveDate": "21 October 2026",
     "introduction": "This Privacy Policy explains what personal data JigSwap collects, why we collect it, and what your rights are. JigSwap is run by Sander Verkuil, who is the controller for the processing described here. We aim to collect as little as possible and to be transparent about the rest.",
     "informationWeCollect": {
       "title": "Information We Collect",
@@ -1326,12 +1326,13 @@
     },
     "photos": {
       "title": "Photos You Upload",
-      "description": "Photos you add to your library or to a finished puzzle, and images you upload as a puzzle's catalogue image, go through an automatic pipeline before other members can see them:",
+      "description": "Photos you add to your library or to a finished puzzle, images you upload as a puzzle's catalogue image, and a circle's icon, go through an automatic pipeline before other members can see them:",
       "steps": [
         "The image is re-encoded, which strips hidden metadata such as EXIF data — including any embedded location",
         "Sightengine (see above) screens the image automatically for explicit content and processes it for this purpose only. An image the check refuses is not shown to other members",
         "Until this finishes, the photo is visible only to you. If the check cannot be completed (for example because the screening service is unavailable), the photo stays visible only to you until it has been checked",
         "A catalogue image is shown to no one, you included, until it has passed the check; until then the puzzle shows its placeholder",
+        "A circle's icon is shown only to the circle's members, and only once it has passed the check; until then they see the circle's previous icon, or none",
         "If an image is reported as illegal content, for example child sexual abuse material, a moderator removes it and, where the law requires it, we report it to the authorities"
       ]
     },

@@ -89,10 +89,34 @@ In the manage dialog, every Admin can:
 
 - change a member's permission level: **View only**, **Can exchange** or **Admin**;
 - remove a member;
+- set, change or remove the circle's icon (see [The circle's icon](#the-circles-icon));
 - invite members and revoke pending invites;
 - share their own copies into the circle.
 
 The owner's seat can't be changed or removed.
+
+## The circle's icon
+
+A circle can have one icon. Members see it on the circle's card on
+**Circles**, at the top of the circle's page, and as the picture of its group
+chat, with a small circle badge so it never looks like a chat with one person.
+Without an icon, a circle shows its usual picture.
+
+Only **Admins** can set, change or remove it:
+
+1. Open the manage dialog and go to **Icon**, or choose **Change icon** in the
+   group chat's **⋯** menu.
+2. Pick a JPEG, PNG or WebP image of at most 10 MB.
+3. Crop it to a square and click **Apply**.
+
+Every icon goes through the same automatic check as other photos. Members see
+the new icon once the check has approved it; until then they keep seeing the
+previous one. You and the other Admins see **Being checked** in the meantime.
+If the check stops the icon, the circle keeps its previous one, and you see
+"The new icon was removed: our automated check flagged it."
+
+To go back to the usual picture, click **Remove icon**. Leaving a circle
+doesn't change its icon; deleting the circle deletes it.
 
 ## What each permission allows
 

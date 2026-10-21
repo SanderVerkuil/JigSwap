@@ -95,10 +95,37 @@ In het beheervenster kan elke beheerder:
 - het rechtenniveau van een lid wijzigen: **Alleen bekijken**, **Mag ruilen** of
   **Beheerder**;
 - een lid verwijderen;
+- het pictogram van de kring instellen, wijzigen of verwijderen (zie
+  [Het pictogram van de kring](#het-pictogram-van-de-kring));
 - leden uitnodigen en openstaande uitnodigingen intrekken;
 - eigen exemplaren in de kring delen.
 
 De plek van de eigenaar kan niet worden gewijzigd of verwijderd.
+
+## Het pictogram van de kring
+
+Een kring kan één pictogram hebben. Leden zien het op de kaart van de kring
+op **Kringen**, bovenaan de pagina van de kring en als afbeelding van de
+groepschat, met een klein kringlabel zodat het nooit lijkt op een chat met één
+persoon. Zonder pictogram toont een kring zijn gewone afbeelding.
+
+Alleen **Beheerders** kunnen het instellen, wijzigen of verwijderen:
+
+1. Open het beheervenster en ga naar **Pictogram**, of kies **Pictogram
+   wijzigen** in het **⋯**-menu van de groepschat.
+2. Kies een JPEG-, PNG- of WebP-afbeelding van maximaal 10 MB.
+3. Snijd hem vierkant bij en klik op **Toepassen**.
+
+Elk pictogram doorloopt dezelfde automatische controle als andere foto's.
+Leden zien het nieuwe pictogram zodra de controle het heeft goedgekeurd; tot
+die tijd blijven ze het vorige zien. Jij en de andere beheerders zien intussen
+**Wordt gecontroleerd**. Houdt de controle het pictogram tegen, dan houdt de
+kring zijn vorige, en zie je "Het nieuwe pictogram is verwijderd: onze
+automatische controle heeft het afgekeurd."
+
+Klik op **Pictogram verwijderen** om terug te gaan naar de gewone afbeelding.
+Een kring verlaten verandert het pictogram niet; de kring verwijderen
+verwijdert het.
 
 ## Wat elk rechtenniveau toestaat
 
