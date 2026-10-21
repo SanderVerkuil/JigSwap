@@ -4819,6 +4819,82 @@
         "title": "Je weg vinden",
         "description": "Je plank, waar je nu aan puzzelt, je netwerk en het accountmenu."
       }
+    },
+    "add-puzzle": {
+      "guide": {
+        "title": "Je puzzels toevoegen",
+        "description": "Zoek een puzzel in de catalogus, voeg er meerdere tegelijk toe, of maak er een aan met een winkellink."
+      },
+      "steps": {
+        "add": {
+          "title": "Een puzzel toevoegen",
+          "body": "Druk op Puzzel Toevoegen om een puzzel die je hebt op je plank te zetten."
+        },
+        "search": {
+          "title": "Zoek hem in de catalogus",
+          "body": "Zoek op titel, merk of barcode en kies de puzzel om jouw exemplaar toe te voegen."
+        },
+        "several": {
+          "title": "Meerdere tegelijk",
+          "body": "Met Meerdere toevoegen kies je zoveel puzzels uit de catalogus als je wilt en voeg je ze in één keer toe."
+        },
+        "import": {
+          "title": "Staat hij er niet tussen?",
+          "body": "Nieuwe aanmaken opent dit formulier. Plak een link van een puzzelwinkel en wij vullen de gegevens in, of typ ze zelf."
+        }
+      }
+    },
+    "exchanges": {
+      "guide": {
+        "title": "Ruilen, lenen en kopen",
+        "description": "Vind een puzzel, vraag de eigenaar erom en volg de ruil tot hij klaar is."
+      },
+      "steps": {
+        "browse": {
+          "title": "Vind een puzzel",
+          "body": "Puzzels Ontdekken toont puzzels die andere leden delen. Voeg een filter toe, zoals Beschikbaarheid, om puzzels te vinden die je kunt ruilen, lenen of kopen."
+        },
+        "request": {
+          "title": "Vraag het de eigenaar",
+          "body": "Open een puzzel en druk op Ruil aanvragen. Kies Ruilen, Lenen of Kopen, wat de eigenaar aanbiedt, en verstuur het verzoek. Je kunt de eigenaar ook een bericht sturen."
+        },
+        "trades": {
+          "title": "Je ruilen",
+          "body": "Verzoeken die je stuurde staan onder Uitgaand, verzoeken voor jouw puzzels onder Inkomend. Druk bij een ruil op Bekijken om hem te accepteren, af te wijzen of te annuleren, of om het andere lid een bericht te sturen."
+        },
+        "complete": {
+          "title": "Jullie bevestigen allebei",
+          "body": "Heeft de puzzel van hand gewisseld, dan drukken jullie allebei op Markeren als Voltooid. De ruil is voltooid zodra jullie dat allebei gedaan hebben."
+        },
+        "borrowed": {
+          "title": "Wat je geleend hebt",
+          "body": "Puzzels die je geleend hebt staan hier tot je ze teruggeeft. Begin hier aan een puzzel, en druk op Teruggeven zodra hij weer bij de eigenaar is."
+        }
+      }
+    },
+    "who-sees-what": {
+      "guide": {
+        "title": "Wie ziet wat",
+        "description": "Wat je huishouden, je kringen en andere leden van jou en je puzzels zien."
+      },
+      "steps": {
+        "household": {
+          "title": "Je huishouden",
+          "body": "Mensen in je huishouden zien al je puzzels. Op het tabblad Delen van het huishouden kies je per puzzel of ze hem mogen beheren of alleen bekijken."
+        },
+        "circles": {
+          "title": "Je kringen",
+          "body": "Leden van een kring zien je naam en avatar, ook als je profiel privé is, en de puzzels die je in de kring deelt zolang je ze aanbiedt."
+        },
+        "profile": {
+          "title": "Openbaar of privé",
+          "body": "Met een openbaar profiel ziet elk lid jou en de puzzels die je aanbiedt. Zet Privéprofiel aan via Profiel Bewerken, dan zien alleen mensen met wie je elkaar volgt je plank; anderen zien Anonieme gebruiker."
+        },
+        "per-copy": {
+          "title": "Eén puzzel tegelijk",
+          "body": "Wil je één puzzel verbergen, open hem dan, druk op Bewerken en kies Privé onder Wie kan dit exemplaar zien. Dan zien alleen jij en je huishouden hem. Een puzzel die je aanbiedt om te ruilen, lenen of verkopen kan niet privé zijn."
+        }
+      }
     }
   },
   "quickStart": {

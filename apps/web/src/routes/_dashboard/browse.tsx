@@ -145,7 +145,10 @@ function BrowsePage() {
           AND-combined conditions (one of them the free-text filter); the global
           ⌘K palette stays the quick known-item lookup. The shell owns the page
           title and width — no boxed card, no container wrapper here. */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div
+        className="flex flex-wrap items-start justify-between gap-3"
+        data-tour="browse-filters"
+      >
         <QueryBuilder
           value={query}
           onChange={setQuery}

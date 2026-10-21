@@ -246,7 +246,7 @@ function PuzzlesPage() {
           </Link>
         </Button>
         <Button variant="brand" size="sm" asChild>
-          <Link href="/my-puzzles/add">
+          <Link href="/my-puzzles/add" data-tour="my-puzzles-add">
             <Plus className="h-4 w-4" />
             {t("addPuzzle")}
           </Link>

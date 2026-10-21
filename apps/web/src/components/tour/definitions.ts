@@ -6,8 +6,11 @@
 // and one-line description live under `tours.<tourId>.guide.title|description`.
 
 import {
+  ArrowLeftRight,
+  BookPlus,
   CalendarCheck,
   Compass,
+  Eye,
   House,
   UserRound,
   type LucideIcon,
@@ -58,6 +61,44 @@ const tours: readonly TourDefinition[] = [
         side: "right",
         align: "end",
       },
+    ],
+  },
+  // Guides for older features (no What's new entry): registered in STANDALONE_TOUR_IDS.
+  {
+    id: "add-puzzle",
+    guide: { area: "puzzles", icon: BookPlus },
+    steps: [
+      { id: "add", route: "/my-puzzles", target: "my-puzzles-add" },
+      { id: "search", route: "/my-puzzles/add", target: "add-puzzle-search" },
+      { id: "several", route: "/my-puzzles/add", target: "add-puzzle-several" },
+      {
+        id: "import",
+        route: "/my-puzzles/add/new",
+        target: "add-puzzle-import",
+      },
+    ],
+  },
+  {
+    id: "exchanges",
+    guide: { area: "people", icon: ArrowLeftRight },
+    steps: [
+      { id: "browse", route: "/browse", target: "browse-filters" },
+      // Requesting happens on a copy's page (a dynamic route): told, not shown.
+      { id: "request", route: "/browse" },
+      { id: "trades", route: "/trades", target: "trades-tabs" },
+      { id: "complete", route: "/trades" },
+      { id: "borrowed", route: "/borrowed" },
+    ],
+  },
+  {
+    id: "who-sees-what",
+    guide: { area: "people", icon: Eye },
+    steps: [
+      { id: "household", route: "/household", target: "household-my-copies" },
+      { id: "circles", route: "/circles", target: "circles-list" },
+      { id: "profile", route: "/profile", target: "profile-edit" },
+      // Per-copy visibility is set on a copy's page (a dynamic route).
+      { id: "per-copy", route: "/my-puzzles" },
     ],
   },
   {
