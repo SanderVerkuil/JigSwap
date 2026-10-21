@@ -13,7 +13,7 @@ export const WHATS_NEW_MANIFEST: readonly WhatsNewManifestEntry[] = [
     "id": "guides",
     "publishedAt": 1792573200000,
     "highlight": true,
-    "notify": false
+    "notify": true
   },
   {
     "id": "tab-bars",
