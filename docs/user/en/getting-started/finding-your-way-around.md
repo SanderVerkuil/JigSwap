@@ -33,17 +33,26 @@ how many there are, for example **What's new (2)**.
 When there's something new, JigSwap may also show it in a short dialog. Click
 **Read more** to open the full entry, or **Maybe later** to close it.
 
-### Guided tours
+The page has two tabs: **Updates** (the list above) and **Guides**.
 
-Some updates come with a short tour of the feature. Click **Take the tour** on
-the update, then use **Next** and **Back** to move through it, or
-**End tour** to stop.
+### Guides
+
+The **Guides** tab (`/whats-new?tab=guides`) lists every guided tour in one
+place, grouped by area, with how many you've finished. Each guide shows how
+many steps it has and where you are: **Step 2 of 3** when you stopped partway,
+**Done** when you finished it. A guide that came with an update links back to
+it with **Introduced** and the month.
+
+Some updates also come with a short tour of the feature. Click
+**Take the tour** on the update or on its guide, then use **Next** and
+**Back** to move through it, or **End tour** to stop.
 
 - Some steps ask you to try the feature. They show "Press the highlighted
   button to continue." Press the highlighted button and the tour moves on.
-- If you leave a tour partway, you can resume it from What's new, with
-  **Resume tour** (or **Start over**). The tour from Quick setup resumes from
-  Quick setup.
+- If you leave a tour partway, you can resume it from its guide on the
+  **Guides** tab, with **Resume tour** (or **Start over**). An update's tour
+  also resumes from the update, and the tour from Quick setup from Quick
+  setup.
 - **Replay the tour** runs a finished tour again.
 
 ## Install JigSwap on your phone

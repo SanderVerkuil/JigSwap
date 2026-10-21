@@ -35,18 +35,30 @@ Is er iets nieuws, dan kan JigSwap het ook in een kort venster tonen. Klik op
 **Lees meer** om het volledige bericht te openen, of op **Misschien later** om
 het te sluiten.
 
+De pagina heeft twee tabbladen: **Updates** (de lijst hierboven) en
+**Rondleidingen**.
+
 ### Rondleidingen
 
-Bij sommige updates hoort een korte rondleiding door de functie. Klik bij de
-update op **Doe de rondleiding** en gebruik dan **Volgende** en **Terug** om
-erdoorheen te gaan, of **Rondleiding stoppen** om te stoppen.
+Het tabblad **Rondleidingen** (`/whats-new?tab=guides`) toont alle
+rondleidingen op één plek, per onderwerp gegroepeerd, met hoeveel je er hebt
+afgerond. Bij elke rondleiding staat hoeveel stappen hij heeft en waar je bent:
+**Stap 2 van 3** als je halverwege stopte, **Klaar** als je hem hebt afgerond.
+Hoort een rondleiding bij een update, dan linkt **Verschenen in** met de maand
+terug naar die update.
+
+Bij sommige updates hoort ook een korte rondleiding door de functie. Klik bij
+de update of bij de rondleiding op **Doe de rondleiding** en gebruik dan
+**Volgende** en **Terug** om erdoorheen te gaan, of **Rondleiding stoppen** om
+te stoppen.
 
 - Bij sommige stappen moet je de functie zelf proberen. Daar staat "Druk op de
   gemarkeerde knop om verder te gaan." Druk op de gemarkeerde knop en de
   rondleiding gaat verder.
-- Stop je halverwege, dan kun je de rondleiding hervatten via Wat is er nieuw,
-  met **Rondleiding hervatten** (of **Opnieuw beginnen**). De rondleiding uit
-  Snel instellen hervat je via Snel instellen.
+- Stop je halverwege, dan kun je de rondleiding hervatten op het tabblad
+  **Rondleidingen**, met **Rondleiding hervatten** (of **Opnieuw beginnen**).
+  De rondleiding van een update hervat je ook bij die update, en die uit Snel
+  instellen via Snel instellen.
 - **Rondleiding opnieuw bekijken** speelt een afgeronde rondleiding opnieuw af.
 
 ## JigSwap op je telefoon installeren
