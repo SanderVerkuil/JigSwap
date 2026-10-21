@@ -33,6 +33,7 @@ const TABLES: readonly ModerationTable[] = [
   "completion",
   "boxArt",
   "message",
+  "circleIcon",
 ];
 
 type Page = {
@@ -83,9 +84,10 @@ const pendingPage = async (
         continueCursor: page.continueCursor,
       };
     }
-    case "message": {
+    case "message":
+    case "circleIcon": {
       const page = await ctx.db
-        .query("messageAttachments")
+        .query(table === "message" ? "messageAttachments" : "circleIcons")
         .withIndex("by_moderation_status", (q) =>
           q.eq("moderationStatus", "pending").lt("_creationTime", cutoff),
         )

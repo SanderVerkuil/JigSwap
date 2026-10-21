@@ -573,6 +573,15 @@ export const gateway = {
     myInvites: api.sharing.listMyCircleInvites.listMyCircleInvites,
     circleInvites: api.sharing.listCircleInvites.listCircleInvites,
     invitableMembers: api.sharing.listInvitableMembers.listInvitableMembers,
+    // The circle's icon (Admins only, server-side): an upload URL, then setCircleIcon claims the
+    // upload and runs the shared image check; members see it once approved (`iconUrl`).
+    // dismissIconNotice closes the uploader's "removed" notice.
+    generateIconUploadUrl:
+      api.sharing.generateCircleIconUploadUrl.generateCircleIconUploadUrl,
+    setIcon: api.sharing.setCircleIcon.setCircleIcon,
+    removeIcon: api.sharing.removeCircleIcon.removeCircleIcon,
+    dismissIconNotice:
+      api.sharing.dismissCircleIconNotice.dismissCircleIconNotice,
   },
 
   // Global search: the single read behind the ⌘K command palette. One query returns a grouped,

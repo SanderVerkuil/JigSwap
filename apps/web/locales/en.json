@@ -4247,7 +4247,8 @@
           "copy": "Copy photo",
           "completion": "Completion photo",
           "boxArt": "Box art",
-          "message": "Message photo"
+          "message": "Message photo",
+          "circleIcon": "Circle icon"
         },
         "reason": {
           "missing_token": "Screening not configured",
@@ -4274,7 +4275,7 @@
         "recheck": "Check again",
         "waive": "Approve without hash check",
         "waiveArm": "Yes, publish without hash check",
-        "hint": "Approving publishes the photo to other members. Rejecting hides it; a rejected copy photo moves to Flagged Images, a rejected completion photo is deleted, and rejected box art is removed from its puzzle and deleted. Check again runs the automated check once more on a photo it could not check, for example after the screening service is working again. A message photo is sent to its conversation when approved; rejecting removes it for both members and tells the sender.",
+        "hint": "Approving publishes the photo to other members. Rejecting hides it; a rejected copy photo moves to Flagged Images, a rejected completion photo is deleted, and rejected box art is removed from its puzzle and deleted. Check again runs the automated check once more on a photo it could not check, for example after the screening service is working again. A message photo is sent to its conversation when approved; rejecting removes it for both members and tells the sender. A circle icon becomes the circle's icon when approved; rejecting deletes it and the circle keeps its previous icon.",
         "hashTimedOutHint": "The hash check against known abuse material could not be done within 7 days, so the automatic re-checks stopped. Approve without hash check publishes the photo without that check, after a second click to confirm (a hash match found later still quarantines it); rejecting hides it like any rejection."
       },
       "csam": {
@@ -4293,7 +4294,8 @@
           "ownedPuzzleImages": "Copy photo",
           "completionImages": "Completion photo",
           "messageAttachments": "Message photo",
-          "boxArtUploads": "Box art"
+          "boxArtUploads": "Box art",
+          "circleIcons": "Circle icon"
         },
         "matched": "Matched {time} via {provider}",
         "uploader": "Uploaded by {name}",

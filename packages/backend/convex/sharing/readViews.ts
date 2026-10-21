@@ -6,6 +6,7 @@ import type {
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { projectCircleMember } from "../conversation/threadMemberProjection";
+import { circleIconFields } from "./circleIcons";
 
 // Shared row->DTO mapping for the Sharing reads, so every sharing adapter emits typed view DTOs
 // (faithful supersets of the joined rows) rather than leaking raw documents.
@@ -67,5 +68,10 @@ export const toCircleDetail = async (
     }),
   );
 
-  return { ...toCircleSummary(row, viewerId), members };
+  // The icon after the membership gate the callers apply (circleIconFields checks it again).
+  return {
+    ...toCircleSummary(row, viewerId),
+    ...(await circleIconFields(ctx, row, viewerId)),
+    members,
+  };
 };

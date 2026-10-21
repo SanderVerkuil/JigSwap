@@ -126,6 +126,8 @@ const hashRecheckActionOf = (table: ModerationTable) => {
       return internal.catalog.moderateBoxArt.recheckHashes;
     case "message":
       return internal.conversation.moderateMessageImage.recheckHashes;
+    case "circleIcon":
+      return internal.sharing.moderateCircleIcon.recheckHashes;
   }
 };
 
@@ -373,6 +375,7 @@ const TABLES: readonly ModerationTable[] = [
   "completion",
   "boxArt",
   "message",
+  "circleIcon",
 ];
 
 type WaitingRow = { id: string } & RecheckState;
@@ -416,6 +419,13 @@ const waitingPage = async (
       case "message":
         return ctx.db
           .query("messageAttachments")
+          .withIndex("by_hash_check_pending", (q) =>
+            q.gt("hashCheckPendingSince", 0),
+          )
+          .paginate(paginationOpts);
+      case "circleIcon":
+        return ctx.db
+          .query("circleIcons")
           .withIndex("by_hash_check_pending", (q) =>
             q.gt("hashCheckPendingSince", 0),
           )

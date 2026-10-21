@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalMutation } from "../_generated/server";
 import { purgeCircleThreadBatch } from "../conversation/purgeCircleThread";
+import { dropCircleIcons } from "./circleIcons";
 
 // How many rows (copy-share links, then invites, then the circle thread's rows) one purge run
 // deletes before rescheduling itself.
@@ -9,7 +10,7 @@ export const PURGE_BATCH_SIZE = 200;
 
 // Scheduled by the sharing publisher on CircleDeleted. The circle, its memberships and its pending
 // invites went in the deleting transaction; what is left (its circleCopyShares links, its decided
-// invites, and the circle's group thread) can be large, so it goes here in batches that reschedule
+// invites, its icon uploads, and the circle's group thread) can be large, so it goes here in batches that reschedule
 // themselves until none remain. It is hygiene, not access control: every reader gates on
 // membership, which is already gone, so these rows are unreachable while they wait.
 //
@@ -46,7 +47,16 @@ export const purgeDeletedCircle = internalMutation({
         : [];
     for (const invite of invites) await ctx.db.delete(invite._id);
 
-    const linked = shares.length + invites.length;
+    // Its icon uploads, rows and blobs (a quarantined one stays, for its escalation).
+    const icons =
+      shares.length + invites.length < PURGE_BATCH_SIZE
+        ? await dropCircleIcons(
+            ctx,
+            args.circleId,
+            PURGE_BATCH_SIZE - shares.length - invites.length,
+          )
+        : 0;
+    const linked = shares.length + invites.length + icons;
     const deleted =
       linked +
       (await purgeCircleThreadBatch(

@@ -35,7 +35,8 @@ export type QuarantinedTable =
   | "ownedPuzzleImages"
   | "completionImages"
   | "messageAttachments"
-  | "boxArtUploads";
+  | "boxArtUploads"
+  | "circleIcons";
 
 // Audit-trail label per table: no puzzle title or other content, just which kind of photo.
 const TABLE_LABEL: Record<QuarantinedTable, string> = {
@@ -43,6 +44,7 @@ const TABLE_LABEL: Record<QuarantinedTable, string> = {
   completionImages: "Completion photo",
   messageAttachments: "Message photo",
   boxArtUploads: "Box art",
+  circleIcons: "Circle icon",
 };
 
 /** Insert the escalation row and stamp `image_quarantined` (no actor: the automated pipeline). */
@@ -155,7 +157,8 @@ export const applyHashCheckResult = async (
     | Id<"ownedPuzzleImages">
     | Id<"completionImages">
     | Id<"messageAttachments">
-    | Id<"boxArtUploads">,
+    | Id<"boxArtUploads">
+    | Id<"circleIcons">,
   result: {
     status: "no_match" | "unavailable";
     hashes?: { md5: string; sha1: string }[];

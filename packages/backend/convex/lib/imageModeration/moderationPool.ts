@@ -14,7 +14,7 @@ import {
 import { logEvent } from "../logEvent";
 
 // Every photo-moderation check runs on ONE Workpool (the `moderationWorkpool` component,
-// convex.config.ts): copy photos, completion photos, box art and message photos, from the upload,
+// convex.config.ts): copy photos, completion photos, box art, message photos and circle icons, from the upload,
 // an admin "Check again" or an admin restore. The pool gives three things ctx.scheduler did not:
 //
 // - Bounded parallelism toward the classifier (MODERATION_POOL_PARALLELISM): an upload burst or a
@@ -36,6 +36,7 @@ export const moderationTableValidator = v.union(
   v.literal("completion"),
   v.literal("boxArt"),
   v.literal("message"),
+  v.literal("circleIcon"),
 );
 export type ModerationTable = Infer<typeof moderationTableValidator>;
 
@@ -45,6 +46,7 @@ export const TABLE_NAME = {
   completion: "completionImages",
   boxArt: "boxArtUploads",
   message: "messageAttachments",
+  circleIcon: "circleIcons",
 } as const;
 
 /**
@@ -125,6 +127,8 @@ const moderationActionOf = (table: ModerationTable) => {
       return internal.catalog.moderateBoxArt.moderateBoxArt;
     case "message":
       return internal.conversation.moderateMessageImage.moderateMessageImage;
+    case "circleIcon":
+      return internal.sharing.moderateCircleIcon.moderateCircleIcon;
   }
 };
 
@@ -213,6 +217,12 @@ export const stampUnscored = async (
     case "message":
       await ctx.runMutation(
         internal.conversation.attachmentModerationStore.setModerationVerdict,
+        { imageId: imageId as never, ...verdict },
+      );
+      break;
+    case "circleIcon":
+      await ctx.runMutation(
+        internal.sharing.circleIconModerationStore.setVerdict,
         { imageId: imageId as never, ...verdict },
       );
       break;

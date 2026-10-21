@@ -49,11 +49,16 @@ export interface CircleSummaryView {
   // manage control only where this level lets the viewer use it.
   viewerPermission: CirclePermissionLevel;
   createdAt: number;
+  // The circle's icon (approved by the image check), when it has one. Members only.
+  iconUrl?: string;
 }
 
 // A circle with its resolved members, returned by `sharing.getCircle`.
 export interface CircleDetailView extends CircleSummaryView {
   members: CircleMemberView[];
+  // A newer icon upload that is not shown yet: "checking" (to its uploader and the circle's
+  // Admins) while the image check runs, "removed" (to its uploader) once the check refused it.
+  iconStatus?: "checking" | "removed";
 }
 
 // A pending, unexpired circle invite as its INVITEE sees it (`sharing.listMyCircleInvites`): what

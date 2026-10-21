@@ -715,6 +715,7 @@ export default defineSchema({
       v.literal("completionImages"),
       v.literal("messageAttachments"),
       v.literal("boxArtUploads"),
+      v.literal("circleIcons"),
     ),
     rowId: v.string(),
     uploaderId: v.id("users"),
@@ -1429,6 +1430,49 @@ export default defineSchema({
   })
     .index("by_owner", ["ownerId"])
     .index("by_aggregate_id", ["aggregateId"]),
+
+  // A circle's icon uploads (sharing/circleIcons.ts), one row per upload, through the shared image
+  // moderation pipeline (sharing/moderateCircleIcon). Kept apart from `circles`, which the Circle
+  // aggregate's repository saves as a whole. The icon members see is the newest row that is
+  // "approved" with its hash check passed; a newer upload still being checked leaves it in place.
+  // Once a newer row is servable the older ones go (row and blob), as do the others on remove.
+  circleIcons: defineTable({
+    // The circle's CircleId aggregateId (outlives the circles row, for the purge).
+    circleId: v.string(),
+    uploaderId: v.id("users"),
+    fileId: v.id("_storage"),
+    // The clean image's blurhash (lib/blurhash), set with the re-encode.
+    blurhash: v.optional(v.string()),
+    // The image-table lifecycle of the shared moderation pipeline (lib/imageModeration).
+    moderationStatus: v.union(
+      v.literal("pending"),
+      v.literal("approved"),
+      v.literal("rejected"),
+      v.literal("unscored"),
+      // A CSAM hash-list match: never served to anyone; row and blob are kept.
+      v.literal("quarantined"),
+    ),
+    moderationScore: v.optional(v.number()),
+    moderationLabel: v.optional(v.string()),
+    moderationReason: v.optional(v.string()),
+    moderationAttempts: v.optional(v.number()),
+    // When the pipeline swapped the row to its re-encoded blob (absent = still the upload).
+    reencodedAt: v.optional(v.number()),
+    // The admin who decided it by hand (admin/decideUncheckedPhoto); a manual decision is final.
+    moderatedBy: v.optional(v.id("users")),
+    // When the uploader closed the "removed" notice of a rejected icon.
+    noticeDismissedAt: v.optional(v.number()),
+    // CSAM hash-check bookkeeping + publication gate (lib/imageModeration/hashCheckFields).
+    ...hashCheckFields,
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_circle", ["circleId"])
+    .index("by_file", ["fileId"])
+    .index("by_moderation_status", ["moderationStatus"])
+    .index("by_hash_check_pending", ["hashCheckPendingSince"])
+    // Timed-out hash checks still closed (admin/listUncheckedPhotos): hashCheckedAt undefined.
+    .index("by_hash_check_timed_out", ["hashCheckedAt", "hashCheckTimedOutAt"]),
 
   // Member-lookup projection of `circles.memberships`, kept in sync by the repository on every save.
   // Lets "every circle a member belongs to" be an indexed read (Convex can't index embedded arrays).
