@@ -126,7 +126,7 @@ function CirclesPage() {
   }
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col" data-tour="circles-list">
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <DialogContent>
           <DialogHeader>

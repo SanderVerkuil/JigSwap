@@ -4819,6 +4819,82 @@
         "title": "Find your way around",
         "description": "Your shelf, what you're solving, your network and the account menu."
       }
+    },
+    "add-puzzle": {
+      "guide": {
+        "title": "Add your puzzles",
+        "description": "Find a puzzle in the catalogue, add several at once, or create one from a shop link."
+      },
+      "steps": {
+        "add": {
+          "title": "Add a puzzle",
+          "body": "Press Add Puzzle to put a puzzle you own on your shelf."
+        },
+        "search": {
+          "title": "Find it in the catalogue",
+          "body": "Search by title, brand or barcode, then pick the puzzle to add your copy of it."
+        },
+        "several": {
+          "title": "Add several at once",
+          "body": "Add several lets you pick as many puzzles from the catalogue as you like and add them in one go."
+        },
+        "import": {
+          "title": "Not in the catalogue?",
+          "body": "Create new opens this form. Paste a link from a puzzle shop and we'll fill in the details, or type them in yourself."
+        }
+      }
+    },
+    "exchanges": {
+      "guide": {
+        "title": "Swap, borrow and buy",
+        "description": "Find a puzzle, ask its owner for it, and follow the exchange until it's done."
+      },
+      "steps": {
+        "browse": {
+          "title": "Find a puzzle",
+          "body": "Browse Puzzles shows puzzles other members share. Add a filter, such as Availability, to find ones you can swap, borrow or buy."
+        },
+        "request": {
+          "title": "Ask the owner",
+          "body": "Open a puzzle and press Request swap. Choose Swap, Borrow or Buy, whichever the owner offers, and send the request. You can message the owner too."
+        },
+        "trades": {
+          "title": "Your exchanges",
+          "body": "Requests you sent are under Outgoing, requests for your puzzles under Incoming. Press View on one to accept, decline or cancel it, or to message the other member."
+        },
+        "complete": {
+          "title": "Both of you confirm",
+          "body": "Once the puzzle has changed hands, you both press Mark Complete. The exchange is completed when both of you have."
+        },
+        "borrowed": {
+          "title": "What you've borrowed",
+          "body": "Puzzles lent to you are listed here until you give them back. Start a solve from here, and press Return once it's back with its owner."
+        }
+      }
+    },
+    "who-sees-what": {
+      "guide": {
+        "title": "Who sees what",
+        "description": "What your household, your circles and other members see of you and your puzzles."
+      },
+      "steps": {
+        "household": {
+          "title": "Your household",
+          "body": "People in your household see all your puzzles. On the household's Sharing tab you choose per puzzle whether they can manage it or only view it."
+        },
+        "circles": {
+          "title": "Your circles",
+          "body": "Members of a circle see your name and avatar, even if your profile is private, and the puzzles you share into the circle while you offer them."
+        },
+        "profile": {
+          "title": "Public or private",
+          "body": "With a public profile, any member can see you and the puzzles you offer. Turn on Private profile under Edit Profile, and only people you follow each other with see your shelf; others see Anonymous user."
+        },
+        "per-copy": {
+          "title": "One puzzle at a time",
+          "body": "To hide a single puzzle, open it, press Edit and, under Who can see this copy, choose Private. Then only you and your household see it. A puzzle you offer for swap, lend or sale can't be private."
+        }
+      }
     }
   },
   "quickStart": {

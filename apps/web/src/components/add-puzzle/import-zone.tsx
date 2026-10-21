@@ -40,7 +40,10 @@ export function ImportZone({
   }, [draftKey, matchKey]);
 
   return (
-    <section className="rounded-xl border border-primary/25 bg-jigsaw-primary-tint p-5">
+    <section
+      className="rounded-xl border border-primary/25 bg-jigsaw-primary-tint p-5"
+      data-tour="add-puzzle-import"
+    >
       <div className="mb-1 flex items-center gap-2.5">
         <span className="inline-flex size-[30px] items-center justify-center rounded-md bg-primary text-primary-foreground">
           <Link className="size-4" />

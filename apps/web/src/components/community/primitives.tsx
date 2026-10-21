@@ -22,6 +22,7 @@ export function FilterBar<T extends string>({
   count,
   extra,
   className,
+  "data-tour": dataTour,
 }: {
   filters: ReadonlyArray<{ value: T; label: string }>;
   value: T;
@@ -29,6 +30,8 @@ export function FilterBar<T extends string>({
   count?: ReactNode;
   extra?: ReactNode;
   className?: string;
+  /** Tour anchor (components/tour). */
+  "data-tour"?: string;
 }) {
   return (
     <div
@@ -36,6 +39,7 @@ export function FilterBar<T extends string>({
         "flex flex-wrap items-center justify-between gap-3",
         className,
       )}
+      data-tour={dataTour}
     >
       <div className="flex flex-wrap items-center gap-2">
         {filters.map((filter) => {

@@ -169,6 +169,7 @@ function ExchangesPage() {
   return (
     <div className="flex flex-col gap-[18px]">
       <FilterBar
+        data-tour="trades-tabs"
         filters={tabs}
         value={tab}
         onChange={setTab}

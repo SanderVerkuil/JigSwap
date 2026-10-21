@@ -124,7 +124,7 @@ function AddPuzzleChooserPage() {
     () => (
       <>
         <Button variant="outline" size="sm" asChild>
-          <Link href="/my-puzzles/add/quick">
+          <Link href="/my-puzzles/add/quick" data-tour="add-puzzle-several">
             <ListPlus className="h-4 w-4" />
             {tPicker("openPicker")}
           </Link>
@@ -176,7 +176,7 @@ function AddPuzzleChooserPage() {
   return (
     <div className="flex flex-col gap-8">
       {/* Search */}
-      <div className="relative w-full max-w-sm">
+      <div className="relative w-full max-w-sm" data-tour="add-puzzle-search">
         <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
         <Input
           type="text"
