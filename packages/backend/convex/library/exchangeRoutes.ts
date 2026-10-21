@@ -37,16 +37,30 @@ export const exchangeRoutesFor = async (
   ) {
     routes.push({ kind: "public" });
   }
-  if (isOpen(copy)) {
-    for (const circle of await circlesSharingCopyWith(ctx, memberId, copy)) {
-      const seat = circle.memberships.find((m) => m.memberId === memberId);
-      if (seat) routes.push({ kind: "circle", level: seat.permission });
-    }
-  }
+  if (isOpen(copy))
+    routes.push(...(await circleRoutesFor(ctx, memberId, copy)));
   if (await areMutualFollowers(ctx, memberId, copy.ownerId)) {
     routes.push({ kind: "mutualFollow" });
   }
   return routes;
+};
+
+// The member's circle routes alone: one per circle that holds the share and that both the member
+// and the owner are current members of, carrying the member's level there. Nothing on the owner's
+// side (profile, follows, household, copy availability) is looked at, so accept can re-check the
+// requester's own standing without the owner's later changes getting in the way.
+export const circleRoutesFor = async (
+  ctx: QueryCtx,
+  memberId: Id<"users">,
+  copy: Doc<"ownedPuzzles">,
+): Promise<ExchangeRoute[]> => {
+  if (copy.ownerId === memberId) return [];
+  return (await circlesSharingCopyWith(ctx, memberId, copy)).flatMap(
+    (circle) => {
+      const seat = circle.memberships.find((m) => m.memberId === memberId);
+      return seat ? [{ kind: "circle" as const, level: seat.permission }] : [];
+    },
+  );
 };
 
 // Whether the viewer may send a request for this copy right now, for the UI to mirror propose's

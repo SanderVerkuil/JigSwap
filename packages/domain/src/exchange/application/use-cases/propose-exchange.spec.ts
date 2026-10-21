@@ -222,6 +222,33 @@ describe("makeProposeExchange", () => {
     expect(events.published).toHaveLength(0);
   });
 
+  it.each(["direct", "circle"] as const)(
+    "records that the initiator was eligible via %s",
+    async (via) => {
+      copies.seed(
+        copy({
+          id: requestedId,
+          ownerId: bob,
+          availability: { forTrade: false, forSale: true, forLend: false },
+        }),
+      );
+      eligibility.allowVia(via);
+
+      const result = await propose({
+        initiatorId: alice,
+        recipientId: bob,
+        kind: "sale",
+        requestedCopyId: requestedId,
+        terms: saleTerms(),
+      });
+
+      if (!result.isOk) throw new Error("expected ok");
+      expect((await repo.findById(result.value))?.toState().eligibleVia).toBe(
+        via,
+      );
+    },
+  );
+
   it("rejects a swap whose offered copy is not owned by the initiator", async () => {
     copies
       .seed(

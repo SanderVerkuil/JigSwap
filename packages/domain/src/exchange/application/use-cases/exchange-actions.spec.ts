@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { toCopyId, toExchangeId, toMemberId } from "../../../shared-kernel";
-import { Exchange } from "../../domain";
+import { EligibleVia, Exchange } from "../../domain";
 import {
   FakeExchangeEligibilityPort,
   FixedClock,
@@ -22,8 +22,10 @@ const NOW = new Date("2026-06-08T10:00:00Z");
 const LATER = new Date("2026-06-09T10:00:00Z");
 
 // A proposed swap exchange, persisted, ready for a lifecycle action.
+// `eligibleVia` left out: a row proposed before the route kind was recorded.
 const seedProposed = async (
   repo: InMemoryExchangeRepository,
+  eligibleVia?: EligibleVia,
 ): Promise<void> => {
   const result = Exchange.propose({
     id: exId,
@@ -31,6 +33,7 @@ const seedProposed = async (
     recipient: bob,
     requestedCopyId: requestedId,
     terms: { kind: "lend", returnDate: LATER },
+    eligibleVia,
     now: NOW,
   });
   if (!result.isOk) throw new Error("setup");
@@ -103,6 +106,45 @@ describe("makeAcceptExchange", () => {
     if (result.isErr) expect(result.error.code).toBe("NotPermittedInCircle");
     expect(h.events.published).toHaveLength(0);
     expect((await h.repo.findById(exId))?.status).toBe("proposed");
+  });
+
+  describe("re-checks only what the request rested on", () => {
+    const accept = () =>
+      makeAcceptExchange(h)({ exchangeId: exId, actingMemberId: bob });
+    const codeOf = async () => {
+      const result = await accept();
+      return result.isErr ? result.error.code : "ok";
+    };
+
+    it("direct: accepts even when no route is left at all", async () => {
+      await seedProposed(h.repo, "direct");
+      h.eligibility.deny();
+      expect(await codeOf()).toBe("ok");
+    });
+
+    it("circle: refuses once the circle seat is gone, whatever the direct routes", async () => {
+      await seedProposed(h.repo, "circle");
+      h.eligibility.allowVia("direct").withCircleSeat(false);
+      expect(await codeOf()).toBe("NotPermittedInCircle");
+    });
+
+    it("circle: accepts while a circle seat remains", async () => {
+      await seedProposed(h.repo, "circle");
+      h.eligibility.allowVia(null).withCircleSeat(true);
+      expect(await codeOf()).toBe("ok");
+    });
+
+    it("legacy: accepts on a direct route now, without a circle seat", async () => {
+      await seedProposed(h.repo);
+      h.eligibility.allowVia("direct").withCircleSeat(false);
+      expect(await codeOf()).toBe("ok");
+    });
+
+    it("legacy: otherwise falls back to the circle check", async () => {
+      await seedProposed(h.repo);
+      h.eligibility.allowVia("circle").withCircleSeat(true);
+      expect(await codeOf()).toBe("ok");
+    });
   });
 
   it("answers a wrong party with WrongParty before asking about eligibility", async () => {

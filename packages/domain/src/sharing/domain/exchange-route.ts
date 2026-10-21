@@ -17,6 +17,18 @@ export type ExchangeRoute =
 // and a circle route does when the requester's level there is Exchange or Admin. A ViewOnly seat in
 // one circle never cancels another route. No route at all means no.
 export const mayExchangeVia = (routes: readonly ExchangeRoute[]): boolean =>
-  routes.some(
-    (route) => route.kind !== "circle" || canExchangeWithin(route.level),
-  );
+  exchangeAllowedVia(routes) !== null;
+
+// WHICH kind of route allows the request: "direct" when a non-circle route does (they all do),
+// "circle" when only Exchange/Admin circle seats do, null when nothing does. Recorded on the request
+// so accept knows whether the requester's circle standing is what it rested on.
+export const exchangeAllowedVia = (
+  routes: readonly ExchangeRoute[],
+): "direct" | "circle" | null => {
+  if (routes.some((route) => route.kind !== "circle")) return "direct";
+  return routes.some(
+    (route) => route.kind === "circle" && canExchangeWithin(route.level),
+  )
+    ? "circle"
+    : null;
+};

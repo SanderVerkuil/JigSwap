@@ -9,7 +9,9 @@ import schema from "./schema";
 // Circle permission levels gate exchange requests. The REQUESTER's level counts, and any route that
 // allows it is enough: a public profile with an open copy, household, mutual follow, or a circle
 // holding the share where the requester is Exchange or Admin. A ViewOnly seat on its own lets them
-// see the copy but not request it. Accept re-checks the requester; the other actions stay open.
+// see the copy but not request it. Accept re-checks only the requester's circle standing, and only
+// when the request rested on it; the owner's own later changes never block it. The other actions
+// stay open.
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
@@ -254,6 +256,166 @@ describe("a downgrade after proposing", () => {
       });
     }
     expect(await statusOf(t, id)).toBe("completed");
+  });
+});
+
+const rowOf = (t: T, exchangeId: string) =>
+  t.run(async (ctx) =>
+    ctx.db
+      .query("exchanges")
+      .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", exchangeId))
+      .unique(),
+  );
+
+const setOwnerVisibility = (
+  t: T,
+  s: Seeded,
+  visibility: "public" | "private",
+) =>
+  t.run(async (ctx) => {
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_member", (q) => q.eq("memberId", s.owner))
+      .unique();
+    await ctx.db.patch(profile!._id, { visibility });
+  });
+
+// The requester leaves: both the circle's membership list and the junction row go.
+const leaveCircle = (t: T, s: Seeded, circleId: string) =>
+  t.run(async (ctx) => {
+    const circle = await ctx.db
+      .query("circles")
+      .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", circleId))
+      .unique();
+    await ctx.db.patch(circle!._id, {
+      memberships: circle!.memberships.filter(
+        (m) => m.memberId !== s.requester,
+      ),
+    });
+    const link = await ctx.db
+      .query("circleMembers")
+      .withIndex("by_circle_member", (q) =>
+        q.eq("circleAggregateId", circleId).eq("memberId", s.requester),
+      )
+      .unique();
+    await ctx.db.delete(link!._id);
+  });
+
+// A row proposed before `eligibleVia` was recorded.
+const dropEligibleVia = (t: T, exchangeId: string) =>
+  t.run(async (ctx) => {
+    const row = await ctx.db
+      .query("exchanges")
+      .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", exchangeId))
+      .unique();
+    await ctx.db.patch(row!._id, { eligibleVia: undefined });
+  });
+
+const accept = (t: T, id: string) =>
+  asOwner(t).mutation(api.exchange.accept.accept, { exchangeId: id });
+
+describe("eligibleVia recorded on propose", () => {
+  test("direct for a public owner, even with an Exchange circle seat too", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await setOwnerVisibility(t, s, "public");
+    await shareInCircle(t, s, "c1", "Exchange");
+    const id = await propose(t, s);
+    expect((await rowOf(t, id))?.eligibleVia).toBe("direct");
+  });
+
+  test("circle when only a circle seat allows it", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await shareInCircle(t, s, "c1", "Exchange");
+    const id = await propose(t, s);
+    expect((await rowOf(t, id))?.eligibleVia).toBe("circle");
+  });
+});
+
+describe("accept after the owner changes their side", () => {
+  test("a direct-route request stays acceptable after the owner goes private", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await setOwnerVisibility(t, s, "public");
+    const id = await propose(t, s);
+    await setOwnerVisibility(t, s, "private");
+
+    await accept(t, id);
+    expect(await statusOf(t, id)).toBe("accepted");
+  });
+});
+
+describe("accept on a circle-route request", () => {
+  test("is refused once the requester left the circle", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await shareInCircle(t, s, "c1", "Exchange");
+    const id = await propose(t, s);
+    await leaveCircle(t, s, "c1");
+
+    await expectCode(accept(t, id), "NotPermittedInCircle");
+    expect(await statusOf(t, id)).toBe("proposed");
+  });
+
+  test("is refused on a ViewOnly demotion even if the owner turned public since", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await shareInCircle(t, s, "c1", "Exchange");
+    const id = await propose(t, s);
+    await setLevel(t, s, "c1", "ViewOnly");
+    await setOwnerVisibility(t, s, "public");
+
+    await expectCode(accept(t, id), "NotPermittedInCircle");
+  });
+
+  test("succeeds when demoted in one circle but still Exchange in another holding the share", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await shareInCircle(t, s, "c1", "Exchange");
+    await shareInCircle(t, s, "c2", "Exchange");
+    const id = await propose(t, s);
+    await setLevel(t, s, "c1", "ViewOnly");
+
+    await accept(t, id);
+    expect(await statusOf(t, id)).toBe("accepted");
+  });
+});
+
+describe("accept on a request without eligibleVia (proposed before it was recorded)", () => {
+  test("succeeds on a non-circle route now, without any circle seat", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await shareInCircle(t, s, "c1", "Exchange");
+    const id = await propose(t, s);
+    await dropEligibleVia(t, id);
+    await leaveCircle(t, s, "c1");
+    await followMutually(t, s);
+
+    await accept(t, id);
+    expect(await statusOf(t, id)).toBe("accepted");
+  });
+
+  test("falls back to the circle check: refused after a demotion", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await shareInCircle(t, s, "c1", "Exchange");
+    const id = await propose(t, s);
+    await dropEligibleVia(t, id);
+    await setLevel(t, s, "c1", "ViewOnly");
+
+    await expectCode(accept(t, id), "NotPermittedInCircle");
+  });
+
+  test("falls back to the circle check: accepted while the seat holds", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await shareInCircle(t, s, "c1", "Exchange");
+    const id = await propose(t, s);
+    await dropEligibleVia(t, id);
+
+    await accept(t, id);
+    expect(await statusOf(t, id)).toBe("accepted");
   });
 });
 

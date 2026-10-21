@@ -45,7 +45,7 @@ const availableFor = (copy: CopyView, kind: ExchangeKind): boolean => {
 };
 
 // Transaction script: cross-aggregate read checks (dedup, copy existence/availability/ownership,
-// the initiator's exchange eligibility)
+// the initiator's exchange eligibility, recorded as `eligibleVia`)
 // then delegate the entity rules (self-exchange, term validity, state) to Exchange.propose.
 // Copy reservation/locking is a Phase-2 (Library) concern and is intentionally not done here.
 export const makeProposeExchange =
@@ -79,25 +79,26 @@ export const makeProposeExchange =
       if (offered.isErr) return offered;
     }
 
+    // The initiator's own permission counts: a route that only runs through ViewOnly circle seats
+    // lets them see the copy but not ask for it. The kind of route is recorded so accept re-checks
+    // only what the request rested on. Refused after the entity rules, so a self-exchange or bad
+    // terms keep their own errors.
+    const eligibleVia = await deps.eligibility.eligibleVia(
+      cmd.initiatorId,
+      cmd.requestedCopyId,
+    );
+
     const exchange = Exchange.propose({
       id: deps.ids.next(),
       initiator: cmd.initiatorId,
       recipient: cmd.recipientId,
       requestedCopyId: cmd.requestedCopyId,
       terms: cmd.terms,
+      eligibleVia: eligibleVia ?? undefined,
       now: deps.clock.now(),
     });
     if (exchange.isErr) return err(exchange.error);
-
-    // The initiator's own permission counts: a route that only runs through ViewOnly circle seats
-    // lets them see the copy but not ask for it. Asked after the entity rules, so a self-exchange
-    // or bad terms keep their own errors.
-    if (
-      !(await deps.eligibility.mayExchange(
-        cmd.initiatorId,
-        cmd.requestedCopyId,
-      ))
-    ) {
+    if (eligibleVia === null) {
       return err(ApplicationError.notPermittedInCircle(cmd.requestedCopyId));
     }
 

@@ -33,6 +33,11 @@ const ALLOWED_TRANSITIONS: Readonly<
   disputed: [],
 };
 
+// What made the initiator eligible to ask, recorded at propose time: "direct" when a route through
+// the owner (public profile, household, mutual follow) allowed it, "circle" when only their own
+// Exchange/Admin circle seats did. Rows proposed before it was recorded have none.
+export type EligibleVia = "direct" | "circle";
+
 // Input to propose(): the requested copy plus kind-tagged (still-unvalidated) terms.
 export interface ProposeProps {
   readonly id: ExchangeId;
@@ -40,6 +45,7 @@ export interface ProposeProps {
   readonly recipient: MemberId;
   readonly requestedCopyId: CopyId;
   readonly terms: ExchangeTermsInput;
+  readonly eligibleVia?: EligibleVia;
   readonly now: Date;
 }
 
@@ -57,6 +63,7 @@ export interface ExchangeState {
   readonly status: ExchangeStatus;
   readonly initiatorConfirmationTimestamp?: Date;
   readonly recipientConfirmationTimestamp?: Date;
+  readonly eligibleVia?: EligibleVia;
   readonly createdAt: Date;
   readonly updatedAt: Date;
 }
@@ -305,6 +312,7 @@ export class Exchange {
       recipientId: props.recipient,
       requestedCopyId: props.requestedCopyId,
       status: "proposed",
+      ...(props.eligibleVia ? { eligibleVia: props.eligibleVia } : {}),
       createdAt: props.now,
       updatedAt: props.now,
     };
