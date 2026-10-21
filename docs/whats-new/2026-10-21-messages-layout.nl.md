@@ -13,5 +13,6 @@ overzicht en het geopende gesprek lopen nu door tot de randen van de pagina.
 - **Elk een eigen scroll.** Het overzicht en het gesprek scrollen los van
   elkaar; de pagina zelf blijft staan.
 - **Nieuw** staat nu rechtsboven op de pagina.
+- **Nog geen gesprek gekozen?** Rechts zie je hoe een gesprek begint.
 - **Wissel je van gesprek**, dan schuift de markering mee naar het gesprek dat
   je opent.
