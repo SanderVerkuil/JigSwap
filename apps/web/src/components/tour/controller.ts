@@ -50,7 +50,7 @@ export interface TourProgressWrite {
 export type TourEndReason = "paused" | "completed";
 
 export interface TourControllerDeps<T> {
-  tours: ReadonlyMap<string, TourDefinition>;
+  tours: ReadonlyMap<string, RunnableTour>;
   currentPath: () => string;
   navigate: (route: string) => void;
   /** The visible element carrying `data-tour="<anchor>"`, if any. */
@@ -71,6 +71,9 @@ export interface TourIO {
 }
 
 const NO_IO: TourIO = { record: () => {}, onEnd: () => {} };
+
+/** What the runner needs of a tour (the Guides-tab metadata is not its concern). */
+export type RunnableTour = Pick<TourDefinition, "id" | "steps">;
 
 const IDLE = { status: "idle" } as const;
 
@@ -244,7 +247,7 @@ export class TourController<T> {
     return action !== null;
   }
 
-  private enter(tour: TourDefinition, index: number): void {
+  private enter(tour: RunnableTour, index: number): void {
     const generation = ++this.generation;
     const step = tour.steps[index];
     this.io.record({ tourId: tour.id, status: "in_progress", step: index });

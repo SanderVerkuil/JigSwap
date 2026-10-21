@@ -6,7 +6,12 @@ import { describe, expect, it } from "vitest";
 import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
 import source from "../../../locales/source.json";
-import { isStandaloneTour, stepMessageKeys, TOURS } from "./definitions";
+import {
+  GUIDE_AREAS,
+  guideMessageKeys,
+  stepMessageKeys,
+  TOURS,
+} from "./definitions";
 
 // Static checks that keep tours, the What's new manifest, the locale files and the data-tour
 // anchors in agreement: each of these fails silently at runtime (unknown_tour, a raw key on the
@@ -61,11 +66,7 @@ describe("tour definitions", () => {
   });
 
   it("keep standalone tours out of the manifest", () => {
-    for (const id of standalone) {
-      expect(referenced.has(id), id).toBe(false);
-      expect(isStandaloneTour(id)).toBe(true);
-    }
-    for (const id of referenced) expect(isStandaloneTour(id)).toBe(false);
+    for (const id of standalone) expect(referenced.has(id), id).toBe(false);
   });
 
   it("include the quick start's getting-started tour on existing anchors", () => {
@@ -111,6 +112,25 @@ describe("tour definitions", () => {
         // source mirrors en.
         expect(lookup(source, keys.body)).toBe(lookup(en, keys.body));
       }
+    }
+  });
+
+  it("are each listed as a guide in a known area, with a title and description", () => {
+    for (const tour of TOURS.values()) {
+      expect(GUIDE_AREAS, tour.id).toContain(tour.guide.area);
+      const keys = guideMessageKeys(tour.id);
+      for (const [name, messages] of Object.entries({ en, nl, source })) {
+        for (const key of [keys.title, keys.description]) {
+          const value = lookup(messages, key);
+          expect(
+            typeof value === "string" && value.length > 0,
+            `${name}: ${key}`,
+          ).toBe(true);
+        }
+      }
+      expect(lookup(source, keys.description)).toBe(
+        lookup(en, keys.description),
+      );
     }
   });
 

@@ -4702,6 +4702,26 @@
       "replay": "Rondleiding opnieuw bekijken",
       "resume": "Rondleiding hervatten (stap {step} van {total})",
       "restart": "Opnieuw beginnen"
+    },
+    "tabs": {
+      "updates": "Updates",
+      "guides": "Rondleidingen"
+    },
+    "guides": {
+      "progress": "{done} van {total} rondleidingen gedaan",
+      "steps": "{count, plural, one {# stap} other {# stappen}}",
+      "done": "Klaar",
+      "introduced": "Verschenen in {month}",
+      "areas": {
+        "basics": "Aan de slag",
+        "puzzles": "Je puzzels",
+        "people": "Delen en mensen",
+        "solving": "Puzzelen"
+      },
+      "empty": {
+        "title": "Nog geen rondleidingen",
+        "body": "Korte rondleidingen langs de functies van JigSwap verschijnen hier."
+      }
     }
   },
   "tour": {
@@ -4714,8 +4734,7 @@
     "end": "Rondleiding stoppen",
     "opening": "{page} openen…",
     "actionHint": "Druk op de gemarkeerde knop om verder te gaan.",
-    "paused": "Rondleiding gepauzeerd. Je kunt verder gaan via Wat is er nieuw.",
-    "pausedStandalone": "Rondleiding gepauzeerd. Je kunt verder gaan via Snel instellen.",
+    "paused": "Rondleiding gepauzeerd. Je kunt verder gaan via Wat is er nieuw, onder Rondleidingen.",
     "resumeAction": "Hervatten",
     "completedTitle": "Je bent er klaar voor",
     "completed": "Rondleiding afgerond. Veel plezier met de nieuwe functie!"
@@ -4735,6 +4754,10 @@
           "title": "Jij kiest per puzzel",
           "body": "Je puzzels blijven van jou. Op het tabblad Delen kies je per puzzel wat het huishouden ermee mag: met Mag beheren kunnen huisgenoten hem bewerken, uitlenen en ruilen; met Alleen bekijken zien ze hem alleen. Selecteer er meerdere om ze in één keer aan te passen."
         }
+      },
+      "guide": {
+        "title": "Huishoudens",
+        "description": "Deel één plank met je huisgenoten en kies per puzzel wat zij mogen."
       }
     },
     "member-profiles": {
@@ -4747,6 +4770,10 @@
           "title": "Wie het jouwe ziet",
           "body": "Je puzzels en afgemaakte puzzels staan op je profiel voor ingelogde leden die het mogen zien: iedereen als het openbaar is, wederzijdse volgers als het privé is. Je wijzigt dit via Profiel Bewerken."
         }
+      },
+      "guide": {
+        "title": "Ledenprofielen",
+        "description": "Bekijk de puzzels en oplossingen van mensen in je netwerk, en kies wie de jouwe ziet."
       }
     },
     "in-progress-solves": {
@@ -4763,6 +4790,10 @@
           "title": "Deel het met vrienden, als je wilt",
           "body": "Delen staat standaard uit. Open je accountmenu, kies Account beheren en dan Voorkeuren, en zet Deel puzzels waar je mee bezig bent met vrienden aan."
         }
+      },
+      "guide": {
+        "title": "Puzzels waar je mee bezig bent",
+        "description": "Houd bij aan welke puzzels je begonnen bent en rond ze af met één klik."
       }
     },
     "getting-started": {
@@ -4783,6 +4814,10 @@
           "title": "Instellingen en snel instellen",
           "body": "Je profiel, meldingen en Snel instellen vind je hier."
         }
+      },
+      "guide": {
+        "title": "Je weg vinden",
+        "description": "Je plank, waar je nu aan puzzelt, je netwerk en het accountmenu."
       }
     }
   },

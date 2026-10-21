@@ -1,6 +1,9 @@
 "use client";
 
-import { tourButtonState } from "@/components/tour/controller";
+import {
+  tourButtonState,
+  type TourButtonState,
+} from "@/components/tour/controller";
 import { TOURS } from "@/components/tour/definitions";
 import type { WhatsNewTourProgressView } from "@jigswap/contracts";
 import { useTranslations } from "use-intl";
@@ -8,12 +11,12 @@ import { useTranslations } from "use-intl";
 /**
  * The entry's tour button state and label (spec Part B §1.7): "Take the tour", "Replay the tour"
  * after completing it, or "Resume tour (step 3 of 5)" when it was paused. `resumable` means a
- * "Start over" action makes sense next to it.
+ * "Start over" action makes sense next to it. `state` is the underlying button state.
  */
 export function useTourButton(
   tourId: string,
   progress: readonly WhatsNewTourProgressView[] | undefined,
-): { label: string; resumable: boolean } {
+): { label: string; resumable: boolean; state: TourButtonState } {
   const t = useTranslations("whatsNew.tour");
   const state = tourButtonState(
     progress?.find((p) => p.tourId === tourId),
@@ -24,10 +27,11 @@ export function useTourButton(
       return {
         label: t("resume", { step: state.step, total: state.total }),
         resumable: true,
+        state,
       };
     case "replay":
-      return { label: t("replay"), resumable: false };
+      return { label: t("replay"), resumable: false, state };
     default:
-      return { label: t("take"), resumable: false };
+      return { label: t("take"), resumable: false, state };
   }
 }
