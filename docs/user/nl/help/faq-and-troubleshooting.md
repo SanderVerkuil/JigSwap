@@ -119,6 +119,16 @@ JigSwap houdt je sessie gesynchroniseerd; als je in een ander tabblad uitlogt of
 </details>
 
 <details>
+<summary>Ik zie "Er is een nieuwe versie van JigSwap". Wat moet ik doen?</summary>
+
+We hebben JigSwap bijgewerkt terwijl je het open had. Klik op **Opnieuw
+laden** om de nieuwe versie te gebruiken; maak eerst af wat je aan het typen
+bent, want opnieuw laden wist dat. **Niet nu** verbergt het bericht tot de
+volgende update.
+
+</details>
+
+<details>
 <summary>Hoe exporteer ik mijn gegevens?</summary>
 
 Ga naar **Inzichten** en gebruik de knop voor **gegevensexport** om je persoonlijke gegevens te downloaden.
