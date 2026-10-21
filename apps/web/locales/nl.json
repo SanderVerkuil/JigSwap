@@ -2098,6 +2098,26 @@
       "RateLimited": "Je hebt vandaag veel uitnodigingen verstuurd. Probeer het morgen opnieuw.",
       "generic": "Er ging iets mis. Probeer het opnieuw."
     },
+    "icon": {
+      "title": "Pictogram",
+      "hint": "Eén pictogram voor de kring: op de kaart, de kringpagina en de groepschat. Leden zien het zodra onze automatische controle het heeft goedgekeurd.",
+      "upload": "Pictogram uploaden",
+      "change": "Pictogram wijzigen",
+      "remove": "Pictogram verwijderen",
+      "uploading": "Uploaden…",
+      "checking": "Wordt gecontroleerd",
+      "checkingHint": "Leden zien het nieuwe pictogram zodra onze automatische controle het heeft goedgekeurd. Tot die tijd zien ze het huidige.",
+      "removed": "Het nieuwe pictogram is verwijderd: onze automatische controle heeft het afgekeurd.",
+      "dismiss": "Sluiten",
+      "uploaded": "Pictogram geüpload. Leden zien het zodra het is gecontroleerd.",
+      "removedToast": "Pictogram verwijderd",
+      "failed": "Dit pictogram kon niet worden geüpload. Probeer het opnieuw.",
+      "removeFailed": "Het pictogram kon niet worden verwijderd. Probeer het opnieuw.",
+      "tooLarge": "Deze afbeelding is te groot: maximaal 10 MB.",
+      "unsupported": "Gebruik een JPEG-, PNG- of WebP-afbeelding.",
+      "expired": "Het uploaden duurde te lang. Probeer het opnieuw.",
+      "rateLimited": "Je hebt het pictogram net heel vaak gewijzigd. Probeer het later opnieuw."
+    },
     "manage": {
       "createTitle": "Kring Aanmaken",
       "createDescription": "Een kring is besloten. Je wordt het eerste lid en de beheerder.",

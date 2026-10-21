@@ -35,6 +35,8 @@ export interface ImageEditorDialogProps {
   fileName: string;
   onApply: (file: File) => void;
   onClose: () => void;
+  /** Fix the crop frame to this width/height ratio (1 = square); free-form when absent. */
+  aspectRatio?: number;
 }
 
 // Load an image element for pixel analysis (auto-crop only — the cropper itself loads
@@ -55,6 +57,7 @@ export function ImageEditorDialog({
   fileName,
   onApply,
   onClose,
+  aspectRatio,
 }: ImageEditorDialogProps) {
   const t = useTranslations("imageEditor");
   const cropperRef = useRef<CropperRef>(null);
@@ -204,6 +207,9 @@ export function ImageEditorDialog({
               ref={cropperRef}
               src={src}
               crossOrigin="anonymous"
+              stencilProps={
+                aspectRatio === undefined ? undefined : { aspectRatio }
+              }
               className="h-[min(65vh,600px)] w-full"
               onReady={() => setLoaded(true)}
               onInteractionEnd={() => setCropChanged(true)}

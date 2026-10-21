@@ -3,8 +3,9 @@
 // A circle thread's avatar (circle-chat identity spec §2): the most recent
 // other member's avatar top-left with the circle mark (a violet Users disc)
 // bottom-right, inside the same square a DM avatar takes, or a full-size
-// circle mark when there is nobody to show. It never shows a lone person, so
-// a circle can't pass for a DM. Decorative: the circle's name always sits
+// circle mark when there is nobody to show. A circle with its own icon shows
+// that instead, full size, with the circle mark as a small badge. It never
+// shows a lone person, so a circle can't pass for a DM. Decorative: the circle's name always sits
 // beside it. Static on purpose: it lives inside the row's link, so
 // the interactive CircleAvatarStack (buttons with tooltips) doesn't fit here.
 import { MemberInitial } from "@/components/members/member-initial";
@@ -40,11 +41,30 @@ function PreviewAvatar({
 
 export function CircleThreadAvatar({
   members,
+  iconUrl,
   className = "size-10",
 }: {
   members: readonly PreviewMember[];
+  /** The circle's own icon (approved by the image check): shown full size. */
+  iconUrl?: string;
   className?: string;
 }) {
+  if (iconUrl) {
+    // The icon fills the square; the small circle mark stays at the bottom
+    // right, so a circle with a face for an icon still never looks like a DM.
+    return (
+      <span aria-hidden className={cn("relative shrink-0", className)}>
+        <img
+          src={iconUrl}
+          alt=""
+          className="bg-muted size-full rounded-full object-cover"
+        />
+        <span className="bg-accent text-primary-text ring-card absolute -right-0.5 -bottom-0.5 flex size-[42%] items-center justify-center rounded-full ring-2">
+          <Users className="size-[60%]" />
+        </span>
+      </span>
+    );
+  }
   const [first] = members;
   if (!first) {
     return (
