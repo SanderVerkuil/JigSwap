@@ -3,7 +3,7 @@ import type { QueryCtx } from "../../_generated/server";
 import { isPreservedBlob } from "./quarantine";
 
 // Whether any table already references the blob (a copy photo, a completion photo, a message
-// photo, a puzzle's box art or a proposed one, cleaned box art not yet used, a report's evidence
+// photo, a circle icon, a puzzle's box art or a proposed one, cleaned box art not yet used, a report's evidence
 // copy) or a CSAM escalation preserves it: such a blob is never claimed and never deleted by an
 // upload flow (message photo staging, the box-art strip). Known residual: legacy
 // completion photos that predate their completionImages sidecar live only in the unindexable
@@ -14,7 +14,11 @@ export const isReferenced = async (
   storageId: Id<"_storage">,
 ): Promise<boolean> => {
   const byFile = (
-    table: "ownedPuzzleImages" | "completionImages" | "messageAttachments",
+    table:
+      | "ownedPuzzleImages"
+      | "completionImages"
+      | "messageAttachments"
+      | "circleIcons",
   ) =>
     ctx.db
       .query(table)
@@ -24,6 +28,7 @@ export const isReferenced = async (
     (await byFile("messageAttachments")) !== null ||
     (await byFile("ownedPuzzleImages")) !== null ||
     (await byFile("completionImages")) !== null ||
+    (await byFile("circleIcons")) !== null ||
     (await ctx.db
       .query("puzzles")
       .withIndex("by_image", (q) => q.eq("image", storageId))

@@ -11,6 +11,7 @@ import {
   tradePartyMemberView,
 } from "../exchange/tradeParty";
 import { requireMember } from "../identity/requireMember";
+import { circleIconFields } from "../sharing/circleIcons";
 import { blockStateBetween } from "../social/blocks";
 import { anonymousMemberOf, projectMemberIdentity } from "../social/privacy";
 import { toLastMessage } from "./adapters/threadMapper";
@@ -72,12 +73,15 @@ const circleSubjectOf = async (
     if (previewIds.length >= CIRCLE_MEMBER_PREVIEW) break;
     if (id !== me && !previewIds.includes(id)) previewIds.push(id);
   }
+  // The icon only for a current member (circleIconFields gates on the seat).
+  const { iconUrl } = await circleIconFields(ctx, circle, me);
   return {
     kind: "circle",
     circleId: thread.circleId,
     name: circle.name,
     memberCount: circle.memberships.length,
     memberPreview: await Promise.all(previewIds.map(project)),
+    ...(iconUrl ? { iconUrl } : {}),
   };
 };
 

@@ -5,8 +5,8 @@ import { requireMember } from "../identity/requireMember";
 import { enqueueImageModeration } from "../lib/imageModeration/moderationPool";
 
 // Send an "unscored" photo through the shared moderation pipeline again: a copy photo
-// (library/moderatePhoto), a completion photo (solving/moderateCompletionPhoto) or box art
-// (catalog/moderateBoxArt), enqueued on the moderation Workpool like an upload's check. A photo whose check never
+// (library/moderatePhoto), a completion photo (solving/moderateCompletionPhoto), box art
+// (catalog/moderateBoxArt), a message photo or a circle icon (sharing/moderateCircleIcon), enqueued on the moderation Workpool like an upload's check. A photo whose check never
 // completed (the retries ran out, or the classifier was unavailable or misconfigured) stays
 // unpublished until it is decided; once the classifier works again, an admin can re-check it
 // instead of deciding it by hand (admin/decideUncheckedPhoto). Admin-only (isAdmin, server-side).
@@ -39,6 +39,7 @@ export const recheckPhoto = mutation({
       v.literal("completion"),
       v.literal("boxArt"),
       v.literal("message"),
+      v.literal("circleIcon"),
     ),
     imageId: v.string(),
   },
@@ -75,6 +76,16 @@ export const recheckPhoto = mutation({
       if (!shouldRecheck(row.moderationStatus)) return;
       await ctx.db.patch(id, { ...backToPending, updatedAt: Date.now() });
       await enqueueImageModeration(ctx, "message", id);
+      return;
+    }
+
+    if (source === "circleIcon") {
+      const id = ctx.db.normalizeId("circleIcons", imageId);
+      const row = id ? await ctx.db.get(id) : null;
+      if (!id || !row) throw notFound();
+      if (!shouldRecheck(row.moderationStatus)) return;
+      await ctx.db.patch(id, { ...backToPending, updatedAt: Date.now() });
+      await enqueueImageModeration(ctx, "circleIcon", id);
       return;
     }
 

@@ -15,6 +15,7 @@ import { adminMemberLabelOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
 import { boxArtTitle } from "../lib/imageModeration/boxArtReferences";
 import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
+import { CIRCLE_ICON_LABEL } from "../sharing/circleIconModerationStore";
 
 // Per status and table: the queue shows at most this many rows (oldest first); the rest follow as
 // earlier ones are decided.
@@ -136,9 +137,29 @@ const boxArtItem = async (
   canRecheck: status === "unscored",
 });
 
+// A circle icon: only which kind of photo and who uploaded it, never the circle's name or members.
+const circleIconItem = async (
+  ctx: QueryCtx,
+  row: Doc<"circleIcons">,
+  status: Status,
+) => ({
+  key: `circleIcon:${row._id}`,
+  source: "circleIcon" as const,
+  imageId: row._id as string,
+  status,
+  reason: row.moderationReason ?? null,
+  attempts: row.moderationAttempts ?? null,
+  url: await adminUrl(ctx, row, status, row.fileId),
+  puzzleTitle: CIRCLE_ICON_LABEL,
+  uploaderName: await uploaderLabel(ctx, row.uploaderId),
+  uploadedAt: row.createdAt,
+  canRecheck: status === "unscored",
+});
+
 // The admin queue of photos the classifier has not decided: "unscored" (it could not check them)
-// and "pending" (still being checked or waiting for a retry), for copy photos, completion photos
-// and box art (boxArtUploads; served to no one until approved, lib/imageModeration/boxArtUrl).
+// and "pending" (still being checked or waiting for a retry), for copy photos, completion photos,
+// box art (boxArtUploads; served to no one until approved, lib/imageModeration/boxArtUrl) and
+// circle icons (circleIcons; likewise, sharing/circleIcons).
 // Admin-only, gated like listRejectedPhotos. The admin sees the real image (behind the console's
 // blur guard) to decide it by hand via decideUncheckedPhoto; an unscored photo of any table can
 // also be sent through the pipeline again (admin/recheckPhoto, `canRecheck`).
@@ -190,6 +211,16 @@ export const listUncheckedPhotos = query({
         .take(UNCHECKED_QUEUE_LIMIT);
       for (const row of boxArtRows) {
         items.push(await boxArtItem(ctx, row, status));
+      }
+      const circleIconRows = await ctx.db
+        .query("circleIcons")
+        .withIndex("by_moderation_status", (q) =>
+          q.eq("moderationStatus", status),
+        )
+        .filter(notTimedOut)
+        .take(UNCHECKED_QUEUE_LIMIT);
+      for (const row of circleIconRows) {
+        items.push(await circleIconItem(ctx, row, status));
       }
     }
     const messageRows = await ctx.db
@@ -254,6 +285,16 @@ export const listUncheckedPhotos = query({
       .take(UNCHECKED_QUEUE_LIMIT);
     for (const row of boxArtWaiting) {
       items.push(await boxArtItem(ctx, row, timedOut));
+    }
+    const circleIconWaiting = await ctx.db
+      .query("circleIcons")
+      .withIndex("by_hash_check_timed_out", (q) =>
+        q.eq("hashCheckedAt", undefined).gt("hashCheckTimedOutAt", 0),
+      )
+      .filter(awaitsTimeoutDecision)
+      .take(UNCHECKED_QUEUE_LIMIT);
+    for (const row of circleIconWaiting) {
+      items.push(await circleIconItem(ctx, row, timedOut));
     }
     // Message photos: only sent ones (a staged photo expires within a day).
     const messageWaiting = await ctx.db

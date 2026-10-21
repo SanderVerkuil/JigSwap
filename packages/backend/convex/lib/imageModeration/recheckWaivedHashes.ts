@@ -29,7 +29,7 @@ import {
 // is never called). A real run (`dryRun: false`) refuses to start unless the hash check is
 // configured ("ok"): the "none" adapter answers no_match to everything, which would clear the
 // stored hashes unchecked. Paginated: `batchSize` rows per run (default 50); it re-schedules itself
-// through the page, then the next table (all four in turn, or only `table` when given), and logs
+// through the page, then the next table (every table in turn, or only `table` when given), and logs
 // the running totals (event "imageModeration.recheckWaivedHashes") per page, the last with
 // `done: true`. Each re-check logs its own `<table event>.hashRecheck` event.
 
@@ -38,6 +38,7 @@ const TABLES: readonly ModerationTable[] = [
   "completion",
   "boxArt",
   "message",
+  "circleIcon",
 ];
 
 const totalsValidator = v.object({
@@ -70,6 +71,8 @@ const candidatePage = async (
         return ctx.db.query("boxArtUploads").paginate(paginationOpts);
       case "message":
         return ctx.db.query("messageAttachments").paginate(paginationOpts);
+      case "circleIcon":
+        return ctx.db.query("circleIcons").paginate(paginationOpts);
     }
   })();
   const ids: string[] = [];
@@ -89,7 +92,7 @@ const candidatePage = async (
 
 export const recheckWaivedHashes = internalMutation({
   args: {
-    /** Only this table; omitted: all four in turn. */
+    /** Only this table; omitted: every table in turn. */
     table: v.optional(moderationTableValidator),
     dryRun: v.optional(v.boolean()),
     batchSize: v.optional(v.number()),

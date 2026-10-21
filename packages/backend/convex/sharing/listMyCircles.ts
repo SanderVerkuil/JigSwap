@@ -2,6 +2,7 @@ import type { CircleSummaryView } from "@jigswap/contracts";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { circleIconFields } from "./circleIcons";
 import { toCircleSummary } from "./readViews";
 
 // Sharing read: the signed-in member's circles (every circle they belong to), newest first. Member
@@ -27,9 +28,17 @@ export const listMyCircles = query({
       ),
     );
 
-    return rows
-      .filter((row) => row !== null)
-      .sort((a, b) => b.createdAt - a.createdAt)
-      .map((row) => toCircleSummary(row, memberId));
+    return Promise.all(
+      rows
+        .filter((row) => row !== null)
+        .sort((a, b) => b.createdAt - a.createdAt)
+        .map(async (row) => {
+          const { iconUrl } = await circleIconFields(ctx, row, memberId);
+          return {
+            ...toCircleSummary(row, memberId),
+            ...(iconUrl ? { iconUrl } : {}),
+          };
+        }),
+    );
   },
 });

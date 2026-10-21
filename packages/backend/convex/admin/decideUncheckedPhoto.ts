@@ -15,7 +15,10 @@ import {
   isHashCheckTimedOut,
   isHashCleared,
 } from "../lib/imageModeration/hashCheckFields";
+import { isPreservedBlob } from "../lib/imageModeration/quarantine";
 import { makeNotify } from "../notifications/adapters/makeNotify";
+import { CIRCLE_ICON_LABEL } from "../sharing/circleIconModerationStore";
+import { settleCircleIcon } from "../sharing/circleIcons";
 import { detachRejectedCompletionPhoto } from "../solving/completionModerationStore";
 import { REDRESS } from "./decideReport";
 import { stampModerationAction } from "./stampModerationAction";
@@ -89,7 +92,9 @@ const assertDecidable = (row: DecidableRow, decision: Decision): void => {
 // automatic rejection. A rejected COMPLETION photo gets the same side effects as an automatic
 // rejection: it is detached from the completion and its blob deleted. Rejected BOX ART likewise
 // (catalog/boxArtModerationStore.detachRejectedBoxArt): detached from every definition and
-// proposal holding it and its blob deleted; approved box art is served (boxArtUrl).
+// proposal holding it and its blob deleted; approved box art is served (boxArtUrl). A CIRCLE ICON
+// likewise: a rejected one's blob is deleted (its uploader is told it was removed), an approved
+// one becomes the circle's icon (sharing/circleIcons.settleCircleIcon).
 //
 // A MESSAGE photo (spec 2026-10-20 D5; only a sent, "unscored" one): approve serves it to the
 // thread (its message updates in place; the non-mutual blur still applies), which needs a passed
@@ -106,6 +111,7 @@ export const decideUncheckedPhoto = mutation({
       v.literal("completion"),
       v.literal("boxArt"),
       v.literal("message"),
+      v.literal("circleIcon"),
     ),
     imageId: v.string(),
     decision: v.union(
@@ -238,6 +244,32 @@ export const decideUncheckedPhoto = mutation({
         actorId: memberId,
         kind,
         targetLabel: title,
+        targetId: imageId,
+      });
+      return;
+    }
+
+    if (source === "circleIcon") {
+      const id = ctx.db.normalizeId("circleIcons", imageId);
+      const row = id ? await ctx.db.get(id) : null;
+      if (!id || !row) throw new ConvexError("Photo not found");
+      assertDecidable(row, decision);
+      await ctx.db.patch(id, { ...decided, ...release });
+      if (decision === "reject") {
+        if (!(await isPreservedBlob(ctx, row.fileId))) {
+          try {
+            await ctx.storage.delete(row.fileId);
+          } catch {
+            // Already gone.
+          }
+        }
+      } else {
+        await settleCircleIcon(ctx, id);
+      }
+      await stampModerationAction(ctx, {
+        actorId: memberId,
+        kind,
+        targetLabel: CIRCLE_ICON_LABEL,
         targetId: imageId,
       });
       return;

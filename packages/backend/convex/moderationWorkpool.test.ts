@@ -378,6 +378,10 @@ describe("the stalled sweep", () => {
           byteSize: 1,
           contentType: "image/jpeg",
         }),
+        circleIcon: await ctx.db.insert("circleIcons", {
+          ...base,
+          circleId: crypto.randomUUID(),
+        }),
       };
     });
   };
@@ -389,6 +393,7 @@ describe("the stalled sweep", () => {
         await ctx.db.get(ids.completion),
         await ctx.db.get(ids.boxArt),
         await ctx.db.get(ids.message),
+        await ctx.db.get(ids.circleIcon),
       ];
       return rows.map((row) =>
         row && "moderationStatus" in row
@@ -415,8 +420,10 @@ describe("the stalled sweep", () => {
       ["unscored", "stalled"],
       ["unscored", "stalled"],
       ["unscored", "stalled"],
+      ["unscored", "stalled"],
     ]);
     expect(await statuses(t, fresh)).toEqual([
+      ["pending", null],
       ["pending", null],
       ["pending", null],
       ["pending", null],
@@ -428,6 +435,7 @@ describe("the stalled sweep", () => {
       ["completion", 1],
       ["boxArt", 1],
       ["message", 1],
+      ["circleIcon", 1],
     ]);
     expect(pages[pages.length - 1]?.is_done).toBe(true);
   });
@@ -439,6 +447,7 @@ describe("the stalled sweep", () => {
     await t.run(async (ctx) => {
       await ctx.db.patch(ids.copy, { updatedAt: cutoff + 1 });
       await ctx.db.patch(ids.boxArt, { recheckedAt: cutoff + 1 });
+      await ctx.db.patch(ids.circleIcon, { updatedAt: cutoff + 1 });
     });
 
     await sweep(t, cutoff);
@@ -449,6 +458,7 @@ describe("the stalled sweep", () => {
       ["unscored", "stalled"],
       ["pending", null],
       ["unscored", "stalled"],
+      ["pending", null],
     ]);
   });
 
@@ -474,11 +484,12 @@ describe("the stalled sweep", () => {
       ["unscored", "stalled"],
       ["unscored", "stalled"],
       ["unscored", "stalled"],
+      ["unscored", "stalled"],
     ]);
     expect(await statuses(t, ids)).toEqual(after);
     expect(
       eventsNamed("imageModeration.stalledSweep").map((page) => page.stamped),
-    ).toEqual([0, 1, 1, 1, 0, 0, 0, 0]);
+    ).toEqual([0, 1, 1, 1, 1, 0, 0, 0, 0, 0]);
   });
 
   test("the cron's own run (no cutoff) leaves rows created within the last day alone", async () => {
@@ -490,6 +501,7 @@ describe("the stalled sweep", () => {
 
     // Their touch timestamps are old, but they were CREATED just now (_creationTime).
     expect(await statuses(t, ids)).toEqual([
+      ["pending", null],
       ["pending", null],
       ["pending", null],
       ["pending", null],

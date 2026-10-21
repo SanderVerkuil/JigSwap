@@ -21,6 +21,9 @@ export const RATE_LIMITS = {
   imageReveal: { windowMs: HOUR, max: 120 },
   locationSend: { windowMs: DAY, max: 20 },
   circleInvite: { windowMs: DAY, max: 30 },
+  // Circle icons (sharing/setCircleIcon): upload URLs, and the uploads an Admin sets.
+  circleIconUploadUrl: { windowMs: HOUR, max: 20 },
+  circleIcon: { windowMs: HOUR, max: 10 },
   // Place searches in the location picker (each proxies one MapTiler Geocoding request).
   locationSearch: { windowMs: HOUR, max: 60 },
   // Picker map views (each pan, zoom or tap re-renders the view from MapTiler tiles).

@@ -286,6 +286,8 @@ export type InboxThreadSubjectView =
        * the viewer may see that message), then other current members. Privacy-projected.
        */
       readonly memberPreview: readonly ProjectedMember[];
+      /** The circle's icon (approved by the image check), when it has one. Members only. */
+      readonly iconUrl?: string;
     };
 
 /**
