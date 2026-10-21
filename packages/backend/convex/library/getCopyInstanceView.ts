@@ -23,6 +23,7 @@ import { projectMemberIdentity } from "../social/privacy";
 import { canViewCopy } from "./canViewCopy";
 import { effectiveCopyVisibility } from "./copyVisibility";
 import { ratingBreakdownOf } from "./definitionAggregates";
+import { viewerMayRequestCopy } from "./exchangeRoutes";
 
 // Solve duration in whole MINUTES: the stored, explicit `completionTimeMinutes` ALWAYS wins (it's
 // the domain's resolved duration — mirrors `Completion.resolveDuration`, which already picked
@@ -406,6 +407,7 @@ export const getCopyInstanceView = query({
       aggregateId: copy.aggregateId ?? null,
       viewerIsOwner,
       viewerCanManage,
+      viewerMayRequest: await viewerMayRequestCopy(ctx, viewerId, copy),
       household,
       owner,
       snapshot: {

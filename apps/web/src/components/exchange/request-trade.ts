@@ -22,21 +22,30 @@ export const allowedProposeTypes = (
 ];
 
 /**
- * Whether to offer "Request trade": a known viewer who isn't the owner, on an available copy. An
- * absent `ownerId` means the owner is anonymous to the viewer, so never the viewer themselves.
+ * Whether to offer "Request trade": a known viewer who isn't the owner, on an available copy, and
+ * the server says the viewer may request it (`viewerMayRequest` is false when their only route is
+ * a view-only circle seat). An absent `ownerId` means the owner is anonymous to the viewer, so
+ * never the viewer themselves.
  */
 export const canRequestTrade = (
-  copy: { ownerId?: string; availability: Availability },
+  copy: {
+    ownerId?: string;
+    availability: Availability;
+    viewerMayRequest?: boolean;
+  },
   viewerId: string | undefined,
 ): boolean =>
   viewerId !== undefined &&
   copy.ownerId !== viewerId &&
+  copy.viewerMayRequest !== false &&
   allowedProposeTypes(copy.availability).length > 0;
 
 /** Message keys under `tradeRequest.errors`. */
 export type ProposeErrorKey =
   | "notAvailable"
   | "notFound"
+  | "notReachable"
+  | "viewOnly"
   | "offeredNotOwned"
   | "duplicate"
   | "ownCopy"
@@ -46,6 +55,8 @@ export type ProposeErrorKey =
 const CODE_TO_KEY: Record<string, ProposeErrorKey> = {
   CopyNotAvailable: "notAvailable",
   CopyNotFound: "notFound",
+  CopyNotReachable: "notReachable",
+  NotPermittedInCircle: "viewOnly",
   // The copy changed hands since the page loaded — to the requester it reads as "gone".
   RecipientNotOwner: "notFound",
   OfferedCopyNotOwned: "offeredNotOwned",
@@ -54,7 +65,8 @@ const CODE_TO_KEY: Record<string, ProposeErrorKey> = {
   MissingTerms: "missingTerms",
 };
 
-const codeOf = (error: unknown): string | undefined => {
+/** The stable `code` of a ConvexError (its data may arrive JSON-encoded), else undefined. */
+export const convexErrorCode = (error: unknown): string | undefined => {
   if (!(error instanceof ConvexError)) return undefined;
   let data: unknown = error.data;
   if (typeof data === "string") {
@@ -71,7 +83,7 @@ const codeOf = (error: unknown): string | undefined => {
 
 /** Map a propose failure to its localized message key; unknown failures are "generic". */
 export const proposeErrorKey = (error: unknown): ProposeErrorKey =>
-  CODE_TO_KEY[codeOf(error) ?? ""] ?? "generic";
+  CODE_TO_KEY[convexErrorCode(error) ?? ""] ?? "generic";
 
 /** Parse a euro amount ("12", "12.5", "12,99") into positive integer cents, else undefined. */
 export const parsePriceCents = (input: string): number | undefined => {

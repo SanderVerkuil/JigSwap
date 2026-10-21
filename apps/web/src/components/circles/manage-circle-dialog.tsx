@@ -183,7 +183,11 @@ export function ManageCircleDialog({
                       </SelectTrigger>
                       <SelectContent>
                         {PERMISSIONS.map((p) => (
-                          <SelectItem key={p} value={p}>
+                          <SelectItem
+                            key={p}
+                            value={p}
+                            description={t(`permissionDescriptions.${p}`)}
+                          >
                             {t(`permissions.${p}`)}
                           </SelectItem>
                         ))}

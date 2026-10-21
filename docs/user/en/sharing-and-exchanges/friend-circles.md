@@ -94,6 +94,30 @@ In the manage dialog, every Admin can:
 
 The owner's seat can't be changed or removed.
 
+## What each permission allows
+
+The invite picker and the manage dialog show a one-line summary under each
+level.
+
+| Permission       | What the member can do                                                                                                      |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **View only**    | See the circle, its group chat and the puzzles shared in it. They can't send a request for a puzzle they see in the circle. |
+| **Can exchange** | Everything View only allows, and send swap, lend or buy requests for puzzles shared in the circle.                          |
+| **Admin**        | Everything Can exchange allows, and share copies, invite people, change permissions and remove members.                     |
+
+For a View only member, the **Request swap** button on a shared puzzle is
+greyed out with "You have view-only access in this circle", and **Browse**
+shows the puzzle without a request button.
+
+Your permission only counts for puzzles you reach through that circle. You can
+still request a puzzle when you also reach it another way: you have **Can
+exchange** or **Admin** in another circle where it's shared, you and the owner
+follow each other, you share a household, or the owner's profile is public.
+
+If your permission drops to **View only** after you sent a request, the owner
+can no longer accept it. You can still cancel it. Exchanges that were already
+accepted can still be completed.
+
 ## Share a copy with a circle
 
 1. Open the circle's manage dialog.

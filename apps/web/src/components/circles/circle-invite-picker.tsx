@@ -75,7 +75,11 @@ export function CircleInvitePicker({ circleId }: { circleId: string }) {
           </SelectTrigger>
           <SelectContent>
             {PERMISSIONS.map((p) => (
-              <SelectItem key={p} value={p}>
+              <SelectItem
+                key={p}
+                value={p}
+                description={t(`permissionDescriptions.${p}`)}
+              >
                 {t(`permissions.${p}`)}
               </SelectItem>
             ))}

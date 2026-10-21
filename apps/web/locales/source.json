@@ -618,6 +618,7 @@
     "cancelled": "Cancelled",
     "newRequest": "New Exchange Request",
     "acceptExchange": "Accept Exchange",
+    "acceptNotPermitted": "This request can't be accepted any more: the requester may no longer exchange this puzzle.",
     "declineExchange": "Decline Exchange",
     "completeExchange": "Complete Exchange",
     "cancelExchange": "Cancel Exchange",
@@ -693,6 +694,8 @@
     "errors": {
       "notAvailable": "This puzzle is no longer available for that exchange.",
       "notFound": "This puzzle is no longer available.",
+      "notReachable": "This puzzle isn't available to you.",
+      "viewOnly": "You have view-only access in this circle, so you can't request this puzzle.",
       "offeredNotOwned": "You can't offer that puzzle in this swap.",
       "duplicate": "You already have an open request for this puzzle.",
       "ownCopy": "You can't request your own puzzle.",
@@ -2056,6 +2059,11 @@
       "ViewOnly": "View only",
       "Exchange": "Can exchange",
       "Admin": "Admin"
+    },
+    "permissionDescriptions": {
+      "ViewOnly": "Sees the puzzles shared here, can't request them",
+      "Exchange": "Can also send requests for shared puzzles",
+      "Admin": "Can also share puzzles, invite people and manage members"
     },
     "invitations": {
       "title": "Invitations",
@@ -3879,6 +3887,7 @@
       "logSolve": "Log solve",
       "delete": "Delete",
       "requestSwap": "Request swap",
+      "requestViewOnly": "You have view-only access in this circle",
       "message": "Message",
       "proposeSwap": "Propose a Swap",
       "offerToLend": "Offer to Lend",

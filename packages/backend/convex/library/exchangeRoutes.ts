@@ -1,4 +1,4 @@
-import type { ExchangeRoute } from "@jigswap/domain";
+import { mayExchangeVia, type ExchangeRoute } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { householdMateIds } from "../household/memberships";
@@ -48,3 +48,14 @@ export const exchangeRoutesFor = async (
   }
   return routes;
 };
+
+// Whether the viewer may send a request for this copy right now, for the UI to mirror propose's
+// server-side gate: not their own copy, open for some exchange, and a route that allows it.
+export const viewerMayRequestCopy = async (
+  ctx: QueryCtx,
+  viewerId: Id<"users">,
+  copy: Doc<"ownedPuzzles">,
+): Promise<boolean> =>
+  copy.ownerId !== viewerId &&
+  isOpen(copy) &&
+  mayExchangeVia(await exchangeRoutesFor(ctx, viewerId, copy));

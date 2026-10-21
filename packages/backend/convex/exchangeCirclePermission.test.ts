@@ -256,3 +256,45 @@ describe("a downgrade after proposing", () => {
     expect(await statusOf(t, id)).toBe("completed");
   });
 });
+
+describe("viewerMayRequest on the copy and browse views", () => {
+  const views = async (t: T, s: Seeded) => {
+    const instance = await asRequester(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: s.copy },
+    );
+    const browse = await asRequester(t).query(
+      api.library.browseOwnedPuzzles.browseOwnedPuzzles,
+      {},
+    );
+    return {
+      instance: instance?.viewerMayRequest,
+      browse: browse.ownedPuzzles.find((c) => c._id === s.copy)
+        ?.viewerMayRequest,
+    };
+  };
+
+  test("false for a ViewOnly seat", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await shareInCircle(t, s, "c1", "ViewOnly");
+    expect(await views(t, s)).toEqual({ instance: false, browse: false });
+  });
+
+  test("true for an Exchange seat", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await shareInCircle(t, s, "c1", "Exchange");
+    expect(await views(t, s)).toEqual({ instance: true, browse: true });
+  });
+
+  test("false for the owner", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    const instance = await asOwner(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: s.copy },
+    );
+    expect(instance?.viewerMayRequest).toBe(false);
+  });
+});

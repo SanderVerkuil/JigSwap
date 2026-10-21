@@ -49,7 +49,9 @@ tells you which of your details the owner will see. See
 
 > **Note:** You can't request your own puzzle, or send a second open request
 > for the same puzzle. You can't request puzzles from a member who blocked you,
-> or whom you blocked.
+> or whom you blocked. A puzzle you only see through a circle where you have
+> **View only** can't be requested either; see
+> [What each permission allows](/docs/sharing-and-exchanges/friend-circles#what-each-permission-allows).
 
 ## Message the owner about a copy
 

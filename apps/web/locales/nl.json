@@ -618,6 +618,7 @@
     "cancelled": "Geannuleerd",
     "newRequest": "Nieuw Uitwisselingsverzoek",
     "acceptExchange": "Uitwisseling Accepteren",
+    "acceptNotPermitted": "Dit verzoek kan niet meer worden geaccepteerd: de aanvrager mag deze puzzel niet meer ruilen.",
     "declineExchange": "Uitwisseling Afwijzen",
     "completeExchange": "Uitwisseling Voltooien",
     "cancelExchange": "Uitwisseling Annuleren",
@@ -693,6 +694,8 @@
     "errors": {
       "notAvailable": "Deze puzzel is niet meer beschikbaar voor die uitwisseling.",
       "notFound": "Deze puzzel is niet meer beschikbaar.",
+      "notReachable": "Deze puzzel is niet beschikbaar voor jou.",
+      "viewOnly": "Je mag in deze kring alleen bekijken, dus je kunt deze puzzel niet aanvragen.",
       "offeredNotOwned": "Je kunt die puzzel niet aanbieden in deze ruil.",
       "duplicate": "Je hebt al een openstaande aanvraag voor deze puzzel.",
       "ownCopy": "Je kunt je eigen puzzel niet aanvragen.",
@@ -2056,6 +2059,11 @@
       "ViewOnly": "Alleen bekijken",
       "Exchange": "Mag ruilen",
       "Admin": "Beheerder"
+    },
+    "permissionDescriptions": {
+      "ViewOnly": "Ziet de puzzels die hier gedeeld zijn, kan ze niet aanvragen",
+      "Exchange": "Kan ook gedeelde puzzels aanvragen",
+      "Admin": "Kan ook puzzels delen, mensen uitnodigen en leden beheren"
     },
     "invitations": {
       "title": "Uitnodigingen",
@@ -3879,6 +3887,7 @@
       "logSolve": "Voltooiing vastleggen",
       "delete": "Verwijderen",
       "requestSwap": "Ruil aanvragen",
+      "requestViewOnly": "Je mag in deze kring alleen bekijken",
       "message": "Bericht",
       "proposeSwap": "Ruil voorstellen",
       "offerToLend": "Aanbieden om uit te lenen",

@@ -52,6 +52,9 @@ Het venster vertelt je welke van je gegevens de eigenaar te zien krijgt. Zie
 > **Let op:** Je kunt je eigen puzzel niet aanvragen, en je kunt geen tweede
 > openstaande aanvraag voor dezelfde puzzel versturen. Je kunt geen puzzels
 > aanvragen van een lid dat jou heeft geblokkeerd, of dat jij hebt geblokkeerd.
+> Een puzzel die je alleen ziet via een kring waarin je **Alleen bekijken**
+> hebt, kun je ook niet aanvragen; zie
+> [Wat elk rechtenniveau toestaat](/docs/sharing-and-exchanges/friend-circles#wat-elk-rechtenniveau-toestaat).
 
 ## De eigenaar een bericht sturen over een exemplaar
 
