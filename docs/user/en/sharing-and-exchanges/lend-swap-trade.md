@@ -73,7 +73,8 @@ The **Exchanges** page organizes everything into tabs:
 - **Outgoing** — requests you sent.
 - **Completed**
 - **Borrowed** — open loans where you're currently holding someone else's
-  puzzle.
+  puzzle. When you have none, it explains how borrowing works and links to
+  **Browse Puzzles**.
 
 Click **View** on any exchange to expand its details: both puzzles, the
 trade-partner card and the actions for the exchange's current step.

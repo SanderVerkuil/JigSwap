@@ -10,6 +10,9 @@ Collecties zijn benoemde planken die je aanmaakt om je kopieën te organiseren.
 
 **Waar:** **Collecties** (`/collections`).
 
+Zolang je nog geen collectie hebt, legt de pagina uit wat een collectie is
+en biedt hij **Nieuwe Collectie** aan.
+
 ## Een collectie aanmaken
 
 1. Open **Collecties**.

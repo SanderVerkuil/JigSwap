@@ -10,6 +10,9 @@ Collections are named shelves you create to organize your copies.
 
 **Where:** **Collections** (`/collections`).
 
+Until you have a collection, the page explains what one is and offers
+**New Collection**.
+
 ## Create a collection
 
 1. Open **Collections**.

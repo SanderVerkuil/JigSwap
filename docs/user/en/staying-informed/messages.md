@@ -32,6 +32,9 @@ On desktop, the inbox sits on the left and the open conversation on the right.
 On a phone, you see the inbox first; opening a conversation fills the whole
 screen, and the back button returns you to the inbox.
 
+An empty inbox explains how conversations start and offers
+**Message a member**, which opens **People**.
+
 Each row in the inbox shows:
 
 - The member's name and how long ago the last message was sent (for example
