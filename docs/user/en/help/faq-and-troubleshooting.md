@@ -118,6 +118,15 @@ JigSwap keeps your session in sync; if you sign out in another tab or your sessi
 </details>
 
 <details>
+<summary>It says "A new version of JigSwap is available". What should I do?</summary>
+
+We updated JigSwap while you had it open. Click **Reload** to switch to the
+new version; finish anything you're typing first, because reloading clears
+it. **Not now** hides the message until there's another update.
+
+</details>
+
+<details>
 <summary>How do I export my data?</summary>
 
 Go to **Insights** and use the **data export** button to download your personal data.

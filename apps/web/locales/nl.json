@@ -5232,5 +5232,11 @@
     "promptBody": "Mensen die je volgt en die jou terugvolgen zien wanneer je online of afwezig bent, en jij ziet dat van hen. Je kunt dit altijd wijzigen bij Privacy en veiligheid.",
     "promptShare": "Delen",
     "promptNotNow": "Niet nu"
+  },
+  "appUpdate": {
+    "available": "Er is een nieuwe versie van JigSwap",
+    "description": "Laad opnieuw om hem te krijgen. Maak eerst af wat je aan het typen bent.",
+    "reload": "Opnieuw laden",
+    "notNow": "Niet nu"
   }
 }

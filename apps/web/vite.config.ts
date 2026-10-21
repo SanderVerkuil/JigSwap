@@ -5,6 +5,7 @@ import { nitro } from "nitro/vite";
 import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig } from "vite";
 import tsConfigPaths from "vite-tsconfig-paths";
+import { appVersionPlugin } from "./vite-plugin-app-version";
 import { docsPlugin } from "./vite-plugin-docs";
 import { whatsNewPlugin } from "./vite-plugin-whats-new";
 
@@ -18,6 +19,7 @@ export default defineConfig({
     tailwindcss(),
     docsPlugin(),
     whatsNewPlugin(),
+    appVersionPlugin(),
     // Statically prerender the public docs to HTML at build time. We seed the
     // crawler at /docs and let it follow the sidebar/TOC links; the filter keeps
     // prerendering scoped to /docs/* so the authenticated app is never rendered
@@ -45,6 +47,9 @@ export default defineConfig({
           proxy: { to: "https://eu-assets.i.posthog.com/static/**" },
         },
         "/ingest/**": { proxy: { to: "https://eu.i.posthog.com/**" } },
+        // The deployed build id open tabs poll (vite-plugin-app-version.ts); never cached, or
+        // a tab would keep seeing the old id after a deploy.
+        "/version.json": { headers: { "cache-control": "no-store" } },
       },
     }),
     // Bundle treemap for CI reports, opt-in via ANALYZE=1 so dev/prod builds
