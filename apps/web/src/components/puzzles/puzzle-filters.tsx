@@ -13,10 +13,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { gateway } from "@/gateway";
+import type { Locale } from "@/lib/i18n";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
-import { useTranslations } from "use-intl";
+import { useLocale, useTranslations } from "use-intl";
+import { categoryOptions } from "./category-options";
 
 interface Filters {
   searchTerm: string;
@@ -49,9 +51,12 @@ export function PuzzleFilters({
   // Extract unique brands and categories from puzzles
   const { data: brands } = useQuery(convexQuery(gateway.catalog.allBrands, {}));
 
+  // The public taxonomy: active categories only, readable by every member (the admin listAll
+  // read is admin-only and includes deactivated rows).
   const { data: categories } = useQuery(
-    convexQuery(gateway.adminCatalog.listAll, {}),
+    convexQuery(gateway.catalog.puzzleCategories, {}),
   );
+  const locale = useLocale() as Locale;
 
   // Extract all unique tags
   const { data: allTags } = useQuery(convexQuery(gateway.catalog.allTags, {}));
@@ -171,9 +176,9 @@ export function PuzzleFilters({
             <SelectValue placeholder={t("filters.allCategories")} />
           </SelectTrigger>
           <SelectContent>
-            {categories.map(({ _id, name }) => (
-              <SelectItem key={_id} value={_id}>
-                {name.en}
+            {categoryOptions(categories, locale).map(({ value, label }) => (
+              <SelectItem key={value} value={value}>
+                {label}
               </SelectItem>
             ))}
           </SelectContent>
