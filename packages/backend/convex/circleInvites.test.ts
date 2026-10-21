@@ -421,8 +421,14 @@ describe("sharing.inviteToCircle", () => {
     const t = convexTest(schema, modules);
     const { alice, carol, circleId } = await seed(t);
     // Carol offers a copy for sale; Alice proposes on it, which opens a thread with no connection.
+    // Carol's profile is public so the copy is reachable for Alice (propose's reachability gate).
     const copy = await t.run(async (ctx) => {
       const now = Date.now();
+      const profile = await ctx.db
+        .query("profiles")
+        .withIndex("by_member", (q) => q.eq("memberId", carol))
+        .unique();
+      if (profile) await ctx.db.patch(profile._id, { visibility: "public" });
       const puzzleId = await ctx.db.insert("puzzles", {
         aggregateId: crypto.randomUUID(),
         title: "Harbour",

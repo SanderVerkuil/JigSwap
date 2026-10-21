@@ -1,4 +1,5 @@
 import {
+  ApplicationError,
   makeProposeExchange,
   Money,
   toCopyId,
@@ -7,8 +8,10 @@ import {
   type ExchangeTermsInput,
 } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
+import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { canViewCopy } from "../library/canViewCopy";
 import { assertPairNotBlocked } from "../social/blocks";
 import { convexCopyPort } from "./adapters/convexCopyPort";
 import { convexExchangeRepository } from "./adapters/convexExchangeRepository";
@@ -40,15 +43,30 @@ export const propose = mutation({
   handler: async (ctx, args) => {
     const initiatorId = await requireMember(ctx); // initiator derived from auth, never the client
 
-    const recipientId = (await ctx.db.get(args.requestedPuzzleId))?.ownerId;
-    if (recipientId === undefined) {
+    const requested = await ctx.db.get(args.requestedPuzzleId);
+    if (requested === null) {
       throw new ConvexError({
         code: "CopyNotFound",
         message: `Copy ${args.requestedPuzzleId} could not be found`,
       });
     }
+    const recipientId = requested.ownerId;
     // Against the derived owner, never the ignored client `recipientId`.
     await assertPairNotBlocked(ctx, initiatorId, recipientId);
+    // Reachability: the initiator may only propose on a copy they could see (the same gate every
+    // copy read uses). Without it any member who learns a copy id could target an owner they have
+    // no route to (private profile, no shared circle, not friends).
+    if (
+      !(await canViewCopy(
+        ctx,
+        initiatorId as unknown as Id<"users">,
+        requested,
+      ))
+    ) {
+      throw toConvexError(
+        ApplicationError.copyNotReachable(toCopyId(args.requestedPuzzleId)),
+      );
+    }
 
     const kind: ExchangeKind = TYPE_TO_KIND[args.type];
     const terms = buildTerms(kind, args);

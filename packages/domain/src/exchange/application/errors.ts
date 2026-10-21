@@ -7,6 +7,7 @@ import { CopyId, ExchangeId, ExchangeKind } from "../domain";
 // the message is for logs/tests only.
 export type ApplicationErrorCode =
   | "CopyNotFound"
+  | "CopyNotReachable"
   | "CopyNotAvailable"
   | "OfferedCopyNotOwned"
   | "RecipientNotOwner"
@@ -28,6 +29,15 @@ export class ApplicationError extends DomainError {
     return new ApplicationError(
       "CopyNotFound",
       `Copy ${copyId} could not be found`,
+    );
+  }
+
+  // The initiator has no route to the requested copy (they could not see it), so they may not
+  // propose on it. Distinct from CopyNotFound so callers can tell "gone" from "out of reach".
+  static copyNotReachable(copyId: CopyId): ApplicationError {
+    return new ApplicationError(
+      "CopyNotReachable",
+      `Copy ${copyId} is not reachable for the initiator`,
     );
   }
 

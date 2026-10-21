@@ -148,7 +148,11 @@ describe("exchange.propose", () => {
   test("availability FALSE for the kind => CopyNotAvailable", async () => {
     const t = convexTest(schema, modules);
     const { bob, puzzleId } = await seed(t);
-    const copy = await addCopy(t, puzzleId, bob, ALL_FALSE);
+    // Open for trade (so a public owner's copy stays reachable) but not for sale.
+    const copy = await addCopy(t, puzzleId, bob, {
+      ...ALL_FALSE,
+      forTrade: true,
+    });
     await expectConvexCode(
       asAlice(t).mutation(api.exchange.propose.propose, {
         recipientId: bob,
