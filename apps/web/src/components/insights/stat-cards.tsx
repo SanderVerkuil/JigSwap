@@ -43,7 +43,7 @@ export function StatCards({ stats }: { stats: PersonalStats }) {
     rating != null && rating > 0 ? rating.toFixed(1) : t("ratingNone");
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8" data-tour="insights-stats">
       <StatRow
         stats={[
           {

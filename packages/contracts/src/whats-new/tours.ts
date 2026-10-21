@@ -6,5 +6,8 @@ export const STANDALONE_TOUR_IDS = [
   "add-puzzle",
   "exchanges",
   "who-sees-what",
+  "circles",
+  "track-your-solves",
+  "catalogue-edits",
 ] as const;
 export type StandaloneTourId = (typeof STANDALONE_TOUR_IDS)[number];

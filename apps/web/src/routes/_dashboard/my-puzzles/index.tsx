@@ -240,7 +240,10 @@ function PuzzlesPage() {
           {headerMeta}
         </span>
         <Button variant="outline" size="sm" asChild>
-          <Link href="/my-puzzles/suggestions">
+          <Link
+            href="/my-puzzles/suggestions"
+            data-tour="my-puzzles-suggestions"
+          >
             <Lightbulb className="h-4 w-4" />
             {t("mySuggestions")}
           </Link>

@@ -4895,6 +4895,70 @@
           "body": "To hide a single puzzle, open it, press Edit and, under Who can see this copy, choose Private. Then only you and your household see it. A puzzle you offer for swap, lend or sale can't be private."
         }
       }
+    },
+    "circles": {
+      "guide": {
+        "title": "Friend circles",
+        "description": "Start a private group, answer invitations, and chat with the people you trust."
+      },
+      "steps": {
+        "create": {
+          "title": "Start a circle",
+          "body": "A circle is a private group for people you trust. Press Create Circle and give it a name; you're its owner."
+        },
+        "invitations": {
+          "title": "Invitations",
+          "body": "When someone invites you to a circle, the invitation shows up at the top of Circles and in your notifications. Accept to join, or decline. Nobody joins without saying yes."
+        },
+        "permissions": {
+          "title": "Permissions and group chat",
+          "body": "Admins invite people they follow each other with from a circle's settings button, as View only, Can exchange or Admin. Every circle has a group chat: press Open group chat."
+        }
+      }
+    },
+    "track-your-solves": {
+      "guide": {
+        "title": "Track your solves",
+        "description": "Finish solves, log ones from the past, set goals and see your numbers add up."
+      },
+      "steps": {
+        "in-progress": {
+          "title": "Finish what you started",
+          "body": "Solves you've started are listed under In progress. Press Finish solve when the last piece is in, and it moves to History."
+        },
+        "log-past": {
+          "title": "Log a past solve",
+          "body": "Finished one before? Press Log Completion, pick the puzzle, and fill in when you did it and how long it took."
+        },
+        "goals": {
+          "title": "Set a goal",
+          "body": "Press New Goal and choose how many puzzles you want to finish, by a date if you like. Your finished solves count toward it."
+        },
+        "insights": {
+          "title": "Your numbers",
+          "body": "Insights adds it all up: completions, total solve time, puzzles owned and exchanges, with your solves per month below."
+        }
+      }
+    },
+    "catalogue-edits": {
+      "guide": {
+        "title": "Improve the catalogue",
+        "description": "Suggest a correction to any catalogue puzzle and follow what happens to it."
+      },
+      "steps": {
+        "suggest": {
+          "title": "Suggest an edit on any catalogue puzzle",
+          "body": "Spotted a wrong piece count, barcode or photo? Open the puzzle in the Puzzles catalogue and press Suggest an edit. An admin reviews it before the catalogue changes."
+        },
+        "find": {
+          "title": "Find them later",
+          "body": "My suggestions lists everything you've suggested."
+        },
+        "follow": {
+          "title": "Follow your suggestions",
+          "body": "Each suggestion shows whether it's pending, approved or declined, with the admin's reason. While it's pending, you can edit or withdraw it."
+        }
+      }
     }
   },
   "quickStart": {

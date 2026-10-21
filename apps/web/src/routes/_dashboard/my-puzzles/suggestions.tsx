@@ -71,7 +71,7 @@ function MySuggestionsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4" data-tour="my-suggestions-list">
       {rows.length === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed px-6 py-12 text-center">
           <Lightbulb className="text-muted-foreground size-8" aria-hidden />

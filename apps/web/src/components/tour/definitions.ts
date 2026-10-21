@@ -9,10 +9,13 @@ import {
   ArrowLeftRight,
   BookPlus,
   CalendarCheck,
+  ChartLine,
   Compass,
   Eye,
   House,
+  PencilLine,
   UserRound,
+  UsersRound,
   type LucideIcon,
 } from "lucide-react";
 
@@ -99,6 +102,44 @@ const tours: readonly TourDefinition[] = [
       { id: "profile", route: "/profile", target: "profile-edit" },
       // Per-copy visibility is set on a copy's page (a dynamic route).
       { id: "per-copy", route: "/my-puzzles" },
+    ],
+  },
+  {
+    id: "circles",
+    guide: { area: "people", icon: UsersRound },
+    steps: [
+      { id: "create", route: "/circles", target: "circles-create" },
+      { id: "invitations", route: "/circles", target: "circles-invitations" },
+      // Permissions and the group chat live on a circle (dynamic) and its manage dialog.
+      { id: "permissions", route: "/circles" },
+    ],
+  },
+  {
+    id: "catalogue-edits",
+    guide: { area: "puzzles", icon: PencilLine },
+    steps: [
+      // "Suggest an edit" is on a catalogue puzzle's page (a dynamic route).
+      { id: "suggest", route: "/puzzles" },
+      { id: "find", route: "/my-puzzles", target: "my-puzzles-suggestions" },
+      {
+        id: "follow",
+        route: "/my-puzzles/suggestions",
+        target: "my-suggestions-list",
+      },
+    ],
+  },
+  {
+    id: "track-your-solves",
+    guide: { area: "solving", icon: ChartLine },
+    steps: [
+      {
+        id: "in-progress",
+        route: "/completions",
+        target: "completions-in-progress",
+      },
+      { id: "log-past", route: "/completions", target: "completions-log" },
+      { id: "goals", route: "/goals", target: "goals-create" },
+      { id: "insights", route: "/insights", target: "insights-stats" },
     ],
   },
   {

@@ -112,7 +112,12 @@ function CirclesPage() {
         <span className="text-muted-foreground hidden text-sm sm:inline">
           {t("meta")}
         </span>
-        <Button variant="brand" size="sm" onClick={() => setIsCreateOpen(true)}>
+        <Button
+          variant="brand"
+          size="sm"
+          onClick={() => setIsCreateOpen(true)}
+          data-tour="circles-create"
+        >
           <Plus className="h-4 w-4" />
           {t("createCircle")}
         </Button>
