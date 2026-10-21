@@ -134,6 +134,17 @@ describe("tour definitions", () => {
     }
   });
 
+  // Every tour is a guide, most of them for features that aren't new: the shared end-of-tour toast
+  // must not call the feature new.
+  it("end with a completion toast that fits every tour", () => {
+    for (const [name, messages] of Object.entries({ en, nl, source })) {
+      const value = lookup(messages, "tour.completed");
+      expect(typeof value === "string" && value.length > 0, name).toBe(true);
+      expect(value as string, name).not.toMatch(/new feature|nieuwe functie/i);
+    }
+    expect(lookup(source, "tour.completed")).toBe(lookup(en, "tour.completed"));
+  });
+
   it("point at data-tour anchors that exist in the app", async () => {
     const root = path.resolve(__dirname, "../..");
     const files = (await sourceFiles(root)).filter(
