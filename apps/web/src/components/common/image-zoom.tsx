@@ -1,5 +1,6 @@
 "use client";
 
+import { usePinchZoom } from "@/components/common/use-pinch-zoom";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -11,7 +12,9 @@ import { createPortal } from "react-dom";
 //   - "lens": an in-place magnifying glass — a circle follows the cursor over the image and shows
 //     that spot magnified under it, with no separate panel. Good when the image is already large
 //     (e.g. a lightbox) and a side panel would just get in the way.
-// Pointer-only: on coarse pointers (touch) it degrades to a plain <img>.
+// The hover zoom is pointer-only. On touch the image instead pinch-zooms and pans inside its own box
+// (double-tap toggles 2x), so a pinch never zooms the whole page; at 1x a one-finger drag still
+// scrolls the page. The image must sit centred in the wrapper (as `fill` does).
 //
 // object-contain aware: geometry is computed from the image's *rendered* (letterboxed) rect, so it
 // works both for a `fill` cover in a square box and for an intrinsically-sized image in a lightbox.
@@ -44,6 +47,7 @@ export function ImageZoom({
   lensSize = 200,
   fill = false,
   disabled = false,
+  pinchZoom = true,
   className,
   wrapperClassName,
 }: {
@@ -61,12 +65,20 @@ export function ImageZoom({
   fill?: boolean;
   /** Turn the hover zoom off (e.g. while the image is already zoomed by other means). */
   disabled?: boolean;
+  /** Touch pinch-zoom/pan inside the wrapper. Off when a parent already handles it (PhotoZoom). */
+  pinchZoom?: boolean;
   /** Extra classes on the <img>. */
   className?: string;
   /** Extra classes on the wrapper. */
   wrapperClassName?: string;
 }) {
-  const wrapperRef = useRef<HTMLDivElement>(null);
+  const {
+    surfaceRef: wrapperRef,
+    zoom: touchZoom,
+    zoomed,
+    gesturing,
+    handlers,
+  } = usePinchZoom();
   const imgRef = useRef<HTMLImageElement>(null);
   const [active, setActive] = useState<Active | null>(null);
 
@@ -80,7 +92,7 @@ export function ImageZoom({
     mq.addEventListener("change", sync);
     return () => mq.removeEventListener("change", sync);
   }, []);
-  const hoverZoom = finePointer && !disabled;
+  const hoverZoom = finePointer && !disabled && !zoomed;
 
   const clear = () => setActive(null);
 
@@ -173,7 +185,17 @@ export function ImageZoom({
   return (
     <div
       ref={wrapperRef}
-      className={cn(fill ? "absolute inset-0" : "relative", wrapperClassName)}
+      className={cn(
+        fill ? "absolute inset-0" : "relative",
+        // Zoomed: every touch is ours (pan). At 1x the browser may pan the page but never pinch it.
+        pinchZoom &&
+          cn(
+            "overflow-hidden select-none",
+            zoomed ? "touch-none" : "touch-pan-x touch-pan-y",
+          ),
+        wrapperClassName,
+      )}
+      {...(pinchZoom ? handlers : {})}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -184,8 +206,19 @@ export function ImageZoom({
         className={cn(
           fill && "h-full w-full object-contain",
           hoverZoom && cursorClass,
+          // Animate double-tap changes, never live gestures; reduced motion → no animation.
+          pinchZoom &&
+            !gesturing &&
+            "motion-safe:transition-transform motion-safe:duration-200",
           className,
         )}
+        style={
+          pinchZoom && zoomed
+            ? {
+                transform: `translate(${touchZoom.x}px, ${touchZoom.y}px) scale(${touchZoom.scale})`,
+              }
+            : undefined
+        }
         onMouseMove={hoverZoom ? onMove : undefined}
         onMouseLeave={clear}
       />

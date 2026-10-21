@@ -27,6 +27,6 @@ Bladeren doorzoekt alle kopieën in bezit van de community die momenteel **besch
 De catalogus is de door de community samengestelde lijst met goedgekeurde puzzeldefinities (niet de afzonderlijke kopieën).
 
 - Blader door het raster met oneindig scrollen en filters.
-- Open een definitie (`/puzzles/<id>`) om de omslag te zien, de beoordeling met opbouw, de moeilijkheid, pillen voor categorie/tags, communitystatistieken (eigenaren, voltooiingen, gemiddeld aantal oplosdagen, kopieën beschikbaar om te ruilen) en een lijst met beschikbare kopieën en hun eigenaren.
+- Open een definitie (`/puzzles/<id>`) om de omslag te zien, de beoordeling met opbouw, de moeilijkheid, pillen voor categorie/tags, communitystatistieken (eigenaren, voltooiingen, gemiddeld aantal oplosdagen, kopieën beschikbaar om te ruilen) en een lijst met beschikbare kopieën en hun eigenaren. Op een telefoon of tablet knijp je in de omslag om in te zoomen en sleep je om rond te kijken; dubbeltik om weer uit te zoomen.
 - Bezit je hem, dan zie je een eigendomsbanner met een link naar je kopie.
 - Je kunt hem vanaf deze pagina **toevoegen aan je bibliotheek**, een **beoordeling schrijven** of een **nieuwe definitie bijdragen**.

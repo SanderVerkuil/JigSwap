@@ -27,6 +27,6 @@ Browse searches all community-owned copies that are currently **available** (for
 The catalogue is the community-curated list of approved puzzle definitions (not individual copies).
 
 - Browse the infinite-scroll grid with filters.
-- Open a definition (`/puzzles/<id>`) to see the cover, rating with breakdown, difficulty, category/tag pills, community stats (owners, completions, average solve days, copies available to swap), and a list of available copies with their owners.
+- Open a definition (`/puzzles/<id>`) to see the cover, rating with breakdown, difficulty, category/tag pills, community stats (owners, completions, average solve days, copies available to swap), and a list of available copies with their owners. On a phone or tablet, pinch the cover to zoom in on it and drag to look around; double-tap to zoom back out.
 - If you own it, you'll see an ownership banner linking to your copy.
 - You can **add it to your library** from this page, **write a review**, or **contribute a new definition**.
