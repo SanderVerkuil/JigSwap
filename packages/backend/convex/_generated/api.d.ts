@@ -62,6 +62,7 @@ import type * as catalog_boxArtInCheck from "../catalog/boxArtInCheck.js";
 import type * as catalog_boxArtModerationStore from "../catalog/boxArtModerationStore.js";
 import type * as catalog_boxArtUploads from "../catalog/boxArtUploads.js";
 import type * as catalog_browsePublicCatalog from "../catalog/browsePublicCatalog.js";
+import type * as catalog_categoryFixture from "../catalog/categoryFixture.js";
 import type * as catalog_createCatalogCategory from "../catalog/createCatalogCategory.js";
 import type * as catalog_disablePuzzleDefinition from "../catalog/disablePuzzleDefinition.js";
 import type * as catalog_editChangeProposal from "../catalog/editChangeProposal.js";
@@ -101,6 +102,7 @@ import type * as catalog_reorderCatalogCategories from "../catalog/reorderCatalo
 import type * as catalog_runDefinitionAction from "../catalog/runDefinitionAction.js";
 import type * as catalog_sanitizeBoxArt from "../catalog/sanitizeBoxArt.js";
 import type * as catalog_searchCatalog from "../catalog/searchCatalog.js";
+import type * as catalog_seedCategories from "../catalog/seedCategories.js";
 import type * as catalog_setCatalogCategoryActive from "../catalog/setCatalogCategoryActive.js";
 import type * as catalog_submitPuzzleDefinition from "../catalog/submitPuzzleDefinition.js";
 import type * as catalog_toggleFavorite from "../catalog/toggleFavorite.js";
@@ -608,6 +610,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/boxArtModerationStore": typeof catalog_boxArtModerationStore;
   "catalog/boxArtUploads": typeof catalog_boxArtUploads;
   "catalog/browsePublicCatalog": typeof catalog_browsePublicCatalog;
+  "catalog/categoryFixture": typeof catalog_categoryFixture;
   "catalog/createCatalogCategory": typeof catalog_createCatalogCategory;
   "catalog/disablePuzzleDefinition": typeof catalog_disablePuzzleDefinition;
   "catalog/editChangeProposal": typeof catalog_editChangeProposal;
@@ -647,6 +650,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/runDefinitionAction": typeof catalog_runDefinitionAction;
   "catalog/sanitizeBoxArt": typeof catalog_sanitizeBoxArt;
   "catalog/searchCatalog": typeof catalog_searchCatalog;
+  "catalog/seedCategories": typeof catalog_seedCategories;
   "catalog/setCatalogCategoryActive": typeof catalog_setCatalogCategoryActive;
   "catalog/submitPuzzleDefinition": typeof catalog_submitPuzzleDefinition;
   "catalog/toggleFavorite": typeof catalog_toggleFavorite;
