@@ -13,7 +13,7 @@ import { systemClock } from "./adapters/systemClock";
 import { toConvexError } from "./errors";
 
 // Composition root for sharing a copy into a circle. The actor is derived from auth; the aggregate
-// gates the share on Admin. `copyId` is the Library CopyId aggregateId — Sharing only announces the
+// gates the share on the actor's seat (Exchange or Admin). `copyId` is the Library CopyId aggregateId — Sharing only announces the
 // link (the CopySharedToCircle projection materialises it), it never loads the Copy.
 export const shareCopyToCircle = mutation({
   args: {
@@ -23,8 +23,8 @@ export const shareCopyToCircle = mutation({
   handler: async (ctx, args) => {
     const actorId = await requireMember(ctx);
 
-    // Sharing's aggregate only gates on circle Admin — it never loads the Copy, so a circle Admin
-    // could otherwise share a copy they do NOT own. Verify ownership here: resolve the copy by its
+    // Sharing's aggregate only gates on the actor's circle level — it never loads the Copy, so a
+    // member could otherwise share a copy they do NOT own. Verify ownership here: resolve the copy by its
     // aggregateId (the Library CopyId) and require the actor to be its owner.
     const copy = await ctx.db
       .query("ownedPuzzles")

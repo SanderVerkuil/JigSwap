@@ -2062,8 +2062,8 @@
     },
     "permissionDescriptions": {
       "ViewOnly": "Sees the puzzles shared here, can't request them",
-      "Exchange": "Can also send requests for shared puzzles",
-      "Admin": "Can also share puzzles, invite people and manage members"
+      "Exchange": "Can also request shared puzzles and share their own",
+      "Admin": "Can also invite people and manage members"
     },
     "invitations": {
       "title": "Invitations",

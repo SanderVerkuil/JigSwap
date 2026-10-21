@@ -606,15 +606,36 @@ describe("Circle", () => {
       expect(events.map((e) => e.name)).toEqual(["CopySharedToCircle"]);
     });
 
-    it("rejects a non-admin actor", () => {
+    it("lets an Exchange member share", () => {
       const circle = newCircle();
       circle.addMember(owner, membershipId(), alice, "Exchange", NOW);
       circle.pullEvents();
 
       const result = circle.shareCopy(alice, copyId, NOW);
+      expect(result.isOk).toBe(true);
+      expect(circle.pullEvents().map((e) => e.name)).toEqual([
+        "CopySharedToCircle",
+      ]);
+    });
+
+    it("rejects a ViewOnly member", () => {
+      const circle = newCircle();
+      circle.addMember(owner, membershipId(), alice, "ViewOnly", NOW);
+      circle.pullEvents();
+
+      const result = circle.shareCopy(alice, copyId, NOW);
       expect(result.isErr).toBe(true);
-      if (result.isErr) expect(result.error.code).toBe("NotCircleAdmin");
+      if (result.isErr) expect(result.error.code).toBe("CannotShareCopy");
       expect(circle.pullEvents()).toHaveLength(0);
+    });
+
+    it("rejects a non-member", () => {
+      const circle = newCircle();
+      circle.pullEvents();
+
+      const result = circle.shareCopy(stranger, copyId, NOW);
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("CannotShareCopy");
     });
   });
 

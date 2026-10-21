@@ -8,10 +8,15 @@ import { useTranslations } from "use-intl";
 
 type CirclePermissionLevel = "ViewOnly" | "Exchange" | "Admin";
 
-// Whether the viewer gets the manage dialog at all: membership changes, invites and copy sharing
-// are all Admin-only in the domain (the owner's seat is always Admin).
+// Whether the viewer gets the manage dialog at all: membership changes and invites are Admin-only
+// in the domain (the owner's seat is always Admin).
 export const canManageCircle = (viewerPermission: CirclePermissionLevel) =>
   viewerPermission === "Admin";
+
+// Whether the viewer may share their own copies into the circle: Exchange or Admin (the domain's
+// Circle.shareCopy rule). ViewOnly may not.
+export const canShareInCircle = (viewerPermission: CirclePermissionLevel) =>
+  viewerPermission === "Exchange" || viewerPermission === "Admin";
 
 // The controls on one member's row in the manage dialog. Read off the live viewerPermission, so a
 // viewer who loses Admin while the dialog is open loses them at once. The owner's seat is never

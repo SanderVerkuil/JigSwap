@@ -2062,8 +2062,8 @@
     },
     "permissionDescriptions": {
       "ViewOnly": "Ziet de puzzels die hier gedeeld zijn, kan ze niet aanvragen",
-      "Exchange": "Kan ook gedeelde puzzels aanvragen",
-      "Admin": "Kan ook puzzels delen, mensen uitnodigen en leden beheren"
+      "Exchange": "Kan ook gedeelde puzzels aanvragen en eigen puzzels delen",
+      "Admin": "Kan ook mensen uitnodigen en leden beheren"
     },
     "invitations": {
       "title": "Uitnodigingen",

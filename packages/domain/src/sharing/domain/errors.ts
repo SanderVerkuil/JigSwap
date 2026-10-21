@@ -7,6 +7,7 @@ import { DomainError } from "../../shared-kernel";
 // circle-not-found) are orchestration concerns and live in the application layer, not here.
 export type SharingErrorCode =
   | "NotCircleAdmin"
+  | "CannotShareCopy"
   | "AlreadyMember"
   | "NotAMember"
   | "CannotRemoveOwner"
@@ -39,6 +40,14 @@ export class SharingError extends DomainError {
     return new SharingError(
       "NotCircleAdmin",
       "Only a circle admin may manage members or permissions",
+    );
+  }
+
+  // Sharing a copy into a circle needs a seat that may exchange there (Exchange or Admin).
+  static cannotShareCopy(): SharingError {
+    return new SharingError(
+      "CannotShareCopy",
+      "Only a member with Can exchange or Admin may share a copy into this circle",
     );
   }
 

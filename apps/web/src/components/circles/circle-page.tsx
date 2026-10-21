@@ -7,12 +7,16 @@
 // and an unknown id all get the same in-shell 404 (getCircle returns null), so
 // the page never tells whether a circle exists.
 import { useUser } from "@/compat/clerk";
-import { canManageCircle } from "@/components/circles/circle-admin-sections";
+import {
+  canManageCircle,
+  canShareInCircle,
+} from "@/components/circles/circle-admin-sections";
 import { CircleAvatarStack } from "@/components/circles/circle-avatar-stack";
 import {
   useCircleSeatName,
   type CircleMemberView,
 } from "@/components/circles/circle-seat";
+import { CircleShareSection } from "@/components/circles/circle-share-section";
 import { LeaveCircleAction } from "@/components/circles/leave-circle-action";
 import { ManageCircleDialog } from "@/components/circles/manage-circle-dialog";
 import { CoverChip } from "@/components/community/primitives";
@@ -122,7 +126,10 @@ export function CirclePage({ circleId }: { circleId: string }) {
 
       <div className="grid min-w-0 gap-4 lg:grid-cols-2">
         <ChatPreview circleId={circleId} circleName={detail.name} />
-        <SharedPuzzles circleId={circleId} />
+        <SharedPuzzles
+          circleId={circleId}
+          canShare={canShareInCircle(detail.viewerPermission)}
+        />
       </div>
 
       {manageOpen && user && (
@@ -266,8 +273,16 @@ function ChatPreview({
 
 // The circle's shared copies (members only, canViewCopy per copy, private
 // copies left out), each linking to its copy page.
-function SharedPuzzles({ circleId }: { circleId: string }) {
+function SharedPuzzles({
+  circleId,
+  canShare,
+}: {
+  circleId: string;
+  // Exchange and Admin may share their own copies here (read live from viewerPermission).
+  canShare: boolean;
+}) {
   const t = useTranslations("circles");
+  const { member } = useCurrentMember();
   const {
     data: copies,
     isPending,
@@ -297,5 +312,18 @@ function SharedPuzzles({ circleId }: { circleId: string }) {
     );
   }
 
-  return <Section title={t("page.sharedTitle")}>{body}</Section>;
+  return (
+    <Section
+      title={t("page.sharedTitle")}
+      footer={
+        canShare && (
+          <div className="mt-1 border-t pt-4">
+            <CircleShareSection circleId={circleId} memberId={member?._id} />
+          </div>
+        )
+      }
+    >
+      {body}
+    </Section>
+  );
 }
