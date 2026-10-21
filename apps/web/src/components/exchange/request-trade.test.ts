@@ -49,6 +49,15 @@ describe("canRequestTrade", () => {
   it("is false before the viewer is known", () => {
     expect(canRequestTrade(copy, undefined)).toBe(false);
   });
+
+  it("is false when the server says the viewer may not request it", () => {
+    expect(
+      canRequestTrade({ ...copy, viewerMayRequest: false }, "viewer"),
+    ).toBe(false);
+    expect(canRequestTrade({ ...copy, viewerMayRequest: true }, "viewer")).toBe(
+      true,
+    );
+  });
 });
 
 describe("proposeErrorKey", () => {
@@ -57,6 +66,8 @@ describe("proposeErrorKey", () => {
   it.each([
     ["CopyNotAvailable", "notAvailable"],
     ["CopyNotFound", "notFound"],
+    ["CopyNotReachable", "notReachable"],
+    ["NotPermittedInCircle", "viewOnly"],
     ["OfferedCopyNotOwned", "offeredNotOwned"],
     ["RecipientNotOwner", "notFound"],
     ["DuplicateProposal", "duplicate"],

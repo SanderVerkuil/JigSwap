@@ -7,6 +7,7 @@ import {
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { BorrowedEmptyState } from "@/components/exchange/borrowed-empty-state";
+import { convexErrorCode } from "@/components/exchange/request-trade";
 import { TradePartnerCard } from "@/components/exchange/trade-partner-card";
 import { ThreadView } from "@/components/messaging/thread-view";
 import { LeaveReviewDialog } from "@/components/reputation/leave-review-dialog";
@@ -37,6 +38,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
 type ExchangeStatus =
@@ -391,6 +393,10 @@ function ExchangeDetail({
         await mutate({ exchangeId: exchange.aggregateId });
       } catch (error) {
         console.error("Exchange action failed:", error);
+        // Accept re-checks the requester's circle permission; say why it was refused.
+        if (convexErrorCode(error) === "NotPermittedInCircle") {
+          toast.error(t("acceptNotPermitted"));
+        }
       }
     };
 

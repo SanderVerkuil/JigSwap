@@ -6,6 +6,7 @@ import { requireMember } from "../identity/requireMember";
 import { blockedEitherWaySet } from "../social/blocks";
 import { profileVisibilityOf, projectMemberIdentity } from "../social/privacy";
 import { collectCircleSharedCopies } from "./circleSharedCopies";
+import { viewerMayRequestCopy } from "./exchangeRoutes";
 import { toOwnedCopyView } from "./mappers";
 import { resolveCopyCoverUrl } from "./resolveCoverUrl";
 
@@ -215,7 +216,18 @@ export const browseOwnedPuzzles = query({
           copy.ownerId,
           copy._id as string,
         );
-        return { ...view, ...(owner.anonymous ? {} : { ownerId }), owner };
+        // A public owner's open copy is always requestable; otherwise the copy is here through a
+        // circle, and the viewer's routes (circle level, household, mutual follow) decide.
+        const viewerMayRequest =
+          copy.ownerId !== memberId &&
+          ((await ownerIsPublic(copy.ownerId)) ||
+            (await viewerMayRequestCopy(ctx, memberId, copy)));
+        return {
+          ...view,
+          ...(owner.anonymous ? {} : { ownerId }),
+          owner,
+          viewerMayRequest,
+        };
       }),
     );
 

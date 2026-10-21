@@ -101,6 +101,11 @@ export interface BrowseOwnedCopyView extends Omit<
 > {
   ownerId?: DocId;
   owner: ProjectedMember;
+  /**
+   * Whether the viewer may send an exchange request for this copy (false when their only route is
+   * a ViewOnly circle seat). Mirrors propose's server-side check; the card hides Request when false.
+   */
+  viewerMayRequest: boolean;
 }
 
 /** The paginated wrapper `library.browseOwned` returns (offset/limit paging, not Convex cursors). */
@@ -437,6 +442,12 @@ export interface CopyInstanceView {
    * the owner left at "manage". Gates the edit controls; delete/household permission stay owner-only.
    */
   viewerCanManage: boolean;
+  /**
+   * Whether the viewer may send an exchange request for this copy: not the owner, the copy is open,
+   * and at least one route allows it (a ViewOnly circle seat on its own does not). Mirrors propose's
+   * server-side check; the UI only uses it to disable the Request action.
+   */
+  viewerMayRequest: boolean;
   /**
    * Household facts, present when the viewer is the owner AND in a household, or a member of the
    * owner's household; null otherwise. `permission` is the effective permission (the copy's explicit

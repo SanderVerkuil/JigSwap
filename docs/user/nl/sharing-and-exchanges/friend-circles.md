@@ -100,6 +100,31 @@ In het beheervenster kan elke beheerder:
 
 De plek van de eigenaar kan niet worden gewijzigd of verwijderd.
 
+## Wat elk rechtenniveau toestaat
+
+De uitnodigingskiezer en het beheervenster tonen onder elk niveau een korte
+samenvatting van één regel.
+
+| Recht               | Wat het lid kan                                                                                                      |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| **Alleen bekijken** | De kring, de groepschat en de puzzels die erin gedeeld zijn bekijken. Een puzzel uit de kring aanvragen kan niet.    |
+| **Mag ruilen**      | Alles wat Alleen bekijken mag, en een ruil-, leen- of koopaanvraag sturen voor puzzels die in de kring gedeeld zijn. |
+| **Beheerder**       | Alles wat Mag ruilen mag, en exemplaren delen, mensen uitnodigen, rechten wijzigen en leden verwijderen.             |
+
+Heb je **Alleen bekijken**, dan is de knop **Ruil aanvragen** op een gedeelde
+puzzel grijs, met "Je mag in deze kring alleen bekijken", en toont
+**Bladeren** de puzzel zonder aanvraagknop.
+
+Je recht telt alleen voor puzzels die je via die kring bereikt. Je kunt een
+puzzel toch aanvragen als je hem ook op een andere manier bereikt: je hebt
+**Mag ruilen** of **Beheerder** in een andere kring waarin hij gedeeld is, jij
+en de eigenaar volgen elkaar, jullie delen een huishouden, of het profiel van
+de eigenaar is openbaar.
+
+Daalt je recht naar **Alleen bekijken** nadat je een aanvraag stuurde, dan kan
+de eigenaar die niet meer accepteren. Je kunt hem nog wel annuleren. Ruilen die
+al geaccepteerd waren, kunnen gewoon worden afgerond.
+
 ## Een exemplaar delen met een kring
 
 1. Open het beheervenster van de kring.

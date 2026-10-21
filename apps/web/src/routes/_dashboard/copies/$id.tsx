@@ -611,6 +611,10 @@ function CopyInstanceDetail({
                 {isAvailable && (
                   <Button
                     variant="brand"
+                    disabled={!copy.viewerMayRequest}
+                    aria-describedby={
+                      copy.viewerMayRequest ? undefined : "request-view-only"
+                    }
                     onClick={() => {
                       setRequestCopy({
                         copyId: copy.copyId,
@@ -628,6 +632,15 @@ function CopyInstanceDetail({
                     <ArrowLeftRight className="h-4 w-4" />
                     {t("actions.requestSwap")}
                   </Button>
+                )}
+                {isAvailable && !copy.viewerMayRequest && (
+                  // The server refuses a request through a view-only circle seat (propose); say why.
+                  <p
+                    id="request-view-only"
+                    className="text-muted-foreground self-center text-sm"
+                  >
+                    {t("actions.requestViewOnly")}
+                  </p>
                 )}
                 {copy.owner.anonymous ? (
                   // No conversation with a hidden owner (getCopyConversation: ownerHidden).
