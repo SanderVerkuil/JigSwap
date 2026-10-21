@@ -12,6 +12,12 @@ describe("ApplicationError factories", () => {
     expect(e.message).toBe("Copy copy1 could not be found");
   });
 
+  it("copyNotReachable interpolates the copy id", () => {
+    const e = ApplicationError.copyNotReachable(copy);
+    expect(e.code).toBe("CopyNotReachable");
+    expect(e.message).toBe("Copy copy1 is not reachable for the initiator");
+  });
+
   it("copyNotAvailable interpolates copy id and kind", () => {
     const e = ApplicationError.copyNotAvailable(copy, "lend");
     expect(e.code).toBe("CopyNotAvailable");

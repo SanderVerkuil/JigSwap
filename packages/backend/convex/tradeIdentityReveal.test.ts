@@ -108,19 +108,39 @@ const seed = async (t: T): Promise<World> => {
   return world;
 };
 
+// Propose reaches only a copy the requester can see. With every profile private here, that models
+// an owner who was public when the request was made and has gone private since: the owner is public
+// for the propose call only, and back to what it was before anything else runs.
 const propose = async (
   t: T,
   who: string,
   requestedPuzzleId: Id<"ownedPuzzles">,
   recipientId?: Id<"users">,
 ): Promise<string> => {
-  const id = await as(t, who).mutation(api.exchange.propose.propose, {
-    ...(recipientId ? { recipientId } : {}),
-    // A sale needs no offered copy, keeping the fixtures small; the reveal is kind-agnostic.
-    type: "sale",
-    salePrice: 10,
-    requestedPuzzleId,
-  });
+  const ownerId = (await t.run((ctx) => ctx.db.get(requestedPuzzleId)))!
+    .ownerId;
+  const visibility = await t.run(
+    async (ctx) =>
+      (
+        await ctx.db
+          .query("profiles")
+          .withIndex("by_member", (q) => q.eq("memberId", ownerId))
+          .unique()
+      )?.visibility ?? "public",
+  );
+  await setVisibility(t, ownerId, "public");
+  let id: string;
+  try {
+    id = await as(t, who).mutation(api.exchange.propose.propose, {
+      ...(recipientId ? { recipientId } : {}),
+      // A sale needs no offered copy, keeping the fixtures small; the reveal is kind-agnostic.
+      type: "sale",
+      salePrice: 10,
+      requestedPuzzleId,
+    });
+  } finally {
+    await setVisibility(t, ownerId, visibility);
+  }
   await flush(t);
   return id;
 };
@@ -573,6 +593,8 @@ describe("proposing never works as an ownership oracle", () => {
     for (const guess of ["owner", "third"] as const) {
       const t = convexTest(schema, modules);
       const w = await seed(t);
+      // The owner is public so the copy is reachable and propose gets as far as availability.
+      await setVisibility(t, w.owner, "public");
       // A swap of a sale-only copy fails the same way whoever the caller names.
       const error = await as(t, "requester")
         .mutation(api.exchange.propose.propose, {
