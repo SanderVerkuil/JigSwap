@@ -1,4 +1,4 @@
-import coverSand from "@/components/marketing/assets/cover-sand.webp";
+import coverVillageStreet from "@/components/marketing/assets/cover-village-street.webp";
 import { MkBadge, type MkBadgeTone } from "@/components/marketing/badge";
 import { Container } from "@/components/marketing/container";
 import { FitToWidth } from "@/components/marketing/fit-to-width";
@@ -36,7 +36,7 @@ export function FeatureRows() {
                 c2: "var(--mk-violet-600)",
                 width: 96,
               },
-              { cover: coverSand, title: "Zandsculpturen", width: 128 },
+              { cover: coverVillageStreet, title: "Dorpsstraat", width: 128 },
               {
                 series: "Kunst",
                 title: "Sterrennacht",

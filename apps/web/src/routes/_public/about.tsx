@@ -1,5 +1,5 @@
 import { Link } from "@/compat/link";
-import coverSand from "@/components/marketing/assets/cover-sand.webp";
+import coverVillageStreet from "@/components/marketing/assets/cover-village-street.webp";
 import { Container } from "@/components/marketing/container";
 import { FitToWidth } from "@/components/marketing/fit-to-width";
 import { PageHero } from "@/components/marketing/page-hero";
@@ -60,7 +60,11 @@ function AboutPage() {
                         c2: "var(--mk-violet-600)",
                         width: 100,
                       },
-                      { cover: coverSand, title: "Zandsculpturen", width: 132 },
+                      {
+                        cover: coverVillageStreet,
+                        title: "Dorpsstraat",
+                        width: 132,
+                      },
                       {
                         series: "Samen",
                         title: "Eerste ruil",

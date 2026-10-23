@@ -1,5 +1,5 @@
 import { Link } from "@/compat/link";
-import coverSand from "@/components/marketing/assets/cover-sand.webp";
+import coverVillageStreet from "@/components/marketing/assets/cover-village-street.webp";
 import { type PlankBox } from "@/components/marketing/plank";
 import { JigPlank3D } from "@/components/marketing/plank-3d";
 import { Reveal } from "@/components/marketing/reveal";
@@ -37,7 +37,7 @@ const PLANK_WIDE: PlankBox[] = [
   // The real-cover box: index 2 deals onto the central anchor row
   // (2 % SHELF_ROWS), where the gallery spots and contact shadows keep it
   // prominent and it sits in the framed part of the bookcase.
-  { cover: coverSand, title: "Zandsculpturen", width: 134 },
+  { cover: coverVillageStreet, title: "Dorpsstraat", width: 134 },
   {
     series: "Kunst",
     title: "Sterrennacht",
