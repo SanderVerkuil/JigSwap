@@ -80,3 +80,6 @@ vitest.config.*.timestamp*
 
 # Turborepo local cache
 .turbo
+
+# /brag launch videos and their render workspace (local only)
+brag-output/
