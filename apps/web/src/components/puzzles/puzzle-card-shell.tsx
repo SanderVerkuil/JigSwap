@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Puzzle } from "lucide-react";
 import type { ReactNode } from "react";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTranslations } from "use-intl";
 import { BoxArtCheckingLabel } from "./box-art-checking";
 import { difficultyClasses } from "./catalog-detail-parts";
 import { usePuzzleView } from "./puzzle-view-provider";
@@ -83,6 +83,7 @@ export function PuzzleCardShell({
   const t = useTranslations("puzzles");
   // Difficulty labels live under the nested `puzzles.puzzles.*` namespace.
   const tCat = useTranslations("puzzles.puzzles");
+  const format = useFormatter();
   const { viewMode } = usePuzzleView();
   // Grid cards drop to a compact density below sm, where a phone grid leaves
   // each card little room: a 4:3 cover (most box art is landscape), tighter
@@ -181,7 +182,7 @@ export function PuzzleCardShell({
         )}
         <div className="flex flex-wrap items-center gap-2 mb-2">
           <Badge variant="secondary" className="text-xs">
-            {puzzle.pieceCount ?? 0} {t("pieces")}
+            {format.number(puzzle.pieceCount ?? 0)} {t("pieces")}
           </Badge>
           {puzzle.difficulty && (
             <Badge

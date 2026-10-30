@@ -30,7 +30,7 @@ import { cn } from "@/lib/utils";
 import type { FunctionReturnType } from "convex/server";
 import { CircleCheck, Clock, MoreHorizontal, Star, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTranslations } from "use-intl";
 
 // One of the member's solves as listMyCompletions returns it.
 export type CompletionRowData = FunctionReturnType<
@@ -84,6 +84,7 @@ export function CompletionRow({
   ) => void;
 }) {
   const t = useTranslations("solving.completions");
+  const format = useFormatter();
   // Borrowed copies aren't in the viewer's library, so fall back to the durable
   // copySnapshot for the title and piece count.
   const snapshot =
@@ -94,7 +95,7 @@ export function CompletionRow({
   const done = completion.isCompleted;
   // "1,000 pieces · 3h 20m" (a typed time), "· over 3 days" or "· in one day"; "Started {date}"
   // while in progress. Year-only and undated solves never get a duration.
-  const metaLine = formatCompletionMeta(t, completion, pieceCount);
+  const metaLine = formatCompletionMeta(t, format, completion, pieceCount);
 
   // The solve's photos open full size in the photo viewer (zoom, swipe, arrow keys), and focus
   // returns to the thumbnail that opened it.
@@ -298,7 +299,7 @@ export function CompletionRow({
       {/* From sm up the wrapper dissolves and the date sits in the row like before. */}
       <div className="flex flex-col items-end gap-1 sm:contents">
         <span className="text-muted-foreground w-[78px] text-right text-xs whitespace-nowrap">
-          {formatCompletionDate(t, completion)}
+          {formatCompletionDate(t, format, completion)}
         </span>
         {/* Below sm: the row's actions in one 44px menu under the date, so they never take a
             line of their own (Finish stays a visible button). */}

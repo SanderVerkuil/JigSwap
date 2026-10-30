@@ -65,7 +65,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useMemo, useRef, useState, type ComponentProps } from "react";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTranslations } from "use-intl";
 
 // The web tier derives Convex view types from the gateway (not @jigswap/contracts directly).
 export type PublicProfileView = NonNullable<
@@ -562,6 +562,7 @@ function StorySection({
 // ── Stat strip ───────────────────────────────────────────────────────────────
 function StatStrip({ stats }: { stats: UnlockedProfile["stats"] }) {
   const t = useTranslations("members.profile");
+  const format = useFormatter();
   const cells = [
     { value: stats.puzzlesOwned, label: t("statOwned") },
     { value: stats.completions, label: t("statCompletions") },
@@ -576,7 +577,7 @@ function StatStrip({ stats }: { stats: UnlockedProfile["stats"] }) {
           className={cn("px-3 text-center", i > 0 && "sm:border-l")}
         >
           <div className="font-heading text-primary-text text-4xl leading-none font-bold">
-            {cell.value.toLocaleString()}
+            {format.number(cell.value)}
           </div>
           <div className="text-muted-foreground mt-2 text-sm">{cell.label}</div>
         </div>

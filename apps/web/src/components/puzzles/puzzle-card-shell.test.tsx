@@ -5,6 +5,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
+import nl from "../../../locales/nl.json";
 import { PuzzleCardShell, type PuzzleCardView } from "./puzzle-card-shell";
 import { PuzzleViewProvider } from "./puzzle-view-provider";
 
@@ -172,6 +173,31 @@ describe("PuzzleCardShell density", () => {
     expect(renderDensity("list", "contain").cover).toContain("bg-muted");
     expect(renderDensity("grid", "cover").cover).not.toContain("bg-muted");
   });
+});
+
+describe("PuzzleCardShell piece count", () => {
+  // The count follows the app locale, never the server's or browser's (UX-63).
+  it.each([
+    ["en", "1,000"],
+    ["nl", "1.000"],
+  ] as const)(
+    "formats the piece count with the %s app locale",
+    (locale, expected) => {
+      const html = renderToStaticMarkup(
+        <IntlProvider
+          locale={locale}
+          timeZone="UTC"
+          messages={locale === "nl" ? nl : en}
+        >
+          <PuzzleViewProvider viewMode="grid">
+            <PuzzleCardShell puzzle={puzzle({ pieceCount: 1000 })} />
+          </PuzzleViewProvider>
+        </IntlProvider>,
+      );
+      const label = locale === "nl" ? nl.puzzles.pieces : en.puzzles.pieces;
+      expect(html).toContain(`${expected} ${label}`);
+    },
+  );
 });
 
 describe("PuzzleCardShell difficulty pill", () => {

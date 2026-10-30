@@ -1,5 +1,5 @@
 import { formatDateOnly } from "@/lib/date-input";
-import type { useTranslations } from "use-intl";
+import type { useFormatter, useTranslations } from "use-intl";
 
 // Shared by the member's own completion log and the profile completions list.
 
@@ -42,9 +42,11 @@ type DatedCompletion = {
 
 // A finished solve's date: the date itself, "In 2023" for a year-only solve, or "Date unknown".
 // Year-only and undated solves hold sentinel dates, so those are never shown as dates. A dated
-// solve is a calendar date stored as UTC midnight, so it is formatted in UTC (lib/date-input).
+// solve is a calendar date stored as UTC midnight, so it is formatted in UTC (lib/date-input),
+// through the app's formatter so it follows the app locale (UX-63).
 export function formatCompletionDate(
   t: ReturnType<typeof useTranslations<"solving.completions">>,
+  format: ReturnType<typeof useFormatter>,
   completion: DatedCompletion,
 ): string {
   const at = completion.endDate ?? completion.startDate;
@@ -53,7 +55,7 @@ export function formatCompletionDate(
   if (completion.datePrecision === "year") {
     return t("inYear", { year: String(new Date(at).getUTCFullYear()) });
   }
-  return formatDateOnly(at);
+  return formatDateOnly(format, at);
 }
 
 const MINUTES_PER_DAY = 1440;
@@ -97,6 +99,7 @@ export function solveDuration(
 // the piece count (or "Completed") and the duration, e.g. "1,000 pieces · 3h 20m".
 export function formatCompletionMeta(
   t: ReturnType<typeof useTranslations<"solving.completions">>,
+  format: ReturnType<typeof useFormatter>,
   completion: DatedCompletion & {
     isCompleted: boolean;
     completionTimeMinutes?: number;
@@ -104,7 +107,9 @@ export function formatCompletionMeta(
   pieceCount?: number,
 ): string {
   if (!completion.isCompleted) {
-    return t("started", { date: formatDateOnly(completion.startDate) });
+    return t("started", {
+      date: formatDateOnly(format, completion.startDate),
+    });
   }
   const parts = [
     pieceCount ? t("pieces", { pieces: pieceCount }) : t("completed"),

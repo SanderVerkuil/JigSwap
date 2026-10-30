@@ -22,7 +22,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useRef } from "react";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTranslations } from "use-intl";
 import type { GoalRow } from "./goal-row";
 
 // What the member can do with a goal from its tile. Absent for a goal the goal mutations can't
@@ -72,6 +72,7 @@ export function GoalTile({
   actions?: GoalTileActions;
 }) {
   const t = useTranslations("solving.goals");
+  const format = useFormatter();
   const look = STATUS_LOOK[status];
   const Icon = look.icon;
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
@@ -88,10 +89,10 @@ export function GoalTile({
 
   // The period the goal counts solves in. Without a start date it counts from the (UTC) day it
   // was created, like the server does; dates are calendar dates, shown in UTC.
-  const from = formatDateOnly(goal.startDate ?? goal.createdAt);
+  const from = formatDateOnly(format, goal.startDate ?? goal.createdAt);
   const period =
     goal.targetDate !== undefined
-      ? t("periodRange", { from, to: formatDateOnly(goal.targetDate) })
+      ? t("periodRange", { from, to: formatDateOnly(format, goal.targetDate) })
       : t("periodFrom", { from });
 
   const progressCount = t("progressShort", {

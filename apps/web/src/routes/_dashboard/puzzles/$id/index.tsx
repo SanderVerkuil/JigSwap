@@ -140,6 +140,7 @@ function PuzzleDefinitionDetail({
   const tCatalog = useTranslations("puzzles.puzzles");
   const tDifficulty = useTranslations("puzzles.puzzles.difficulty");
   const conditionLabel = useConditionLabel();
+  const format = useFormatter();
 
   const { isFavorite, toggleFavorite } = useFavorites();
   const favorited = isFavorite(puzzleId);
@@ -229,7 +230,7 @@ function PuzzleDefinitionDetail({
           <p className="text-muted-foreground mt-1 text-base">
             {definition.brand ? `${definition.brand} · ` : ""}
             <span className="font-mono">
-              {definition.pieceCount.toLocaleString()}
+              {format.number(definition.pieceCount)}
             </span>{" "}
             {tPuzzles("pieces")}
           </p>

@@ -1,3 +1,4 @@
+import { createFormatter } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   calendarDaysAgo,
@@ -43,8 +44,10 @@ describe.each(ZONES)("date inputs in %s", (zone) => {
 
   it("formats a stored date as its calendar date, never the day before or after", () => {
     const stored = Date.UTC(2026, 9, 30);
-    expect(formatDateOnly(stored, "en-GB")).toBe("30/10/2026");
-    expect(formatDateOnly(stored, "nl-NL")).toBe("30-10-2026");
+    const format = (locale: string) =>
+      createFormatter({ locale, timeZone: zone });
+    expect(formatDateOnly(format("en"), stored)).toBe("Oct 30, 2026");
+    expect(formatDateOnly(format("nl"), stored)).toBe("30 okt 2026");
   });
 
   it("counts calendar days from a stored date to the local today", () => {

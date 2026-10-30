@@ -441,7 +441,7 @@ function CopyInstanceDetail({
           <p className="text-muted-foreground mt-1 text-base md:mt-0">
             {snapshot.brand ? `${snapshot.brand} · ` : ""}
             <span className="font-mono">
-              {snapshot.pieceCount.toLocaleString()}
+              {format.number(snapshot.pieceCount)}
             </span>{" "}
             {tPuzzles("pieces")}
             {/* Only when the definition page would open for this viewer (not for a definition that
@@ -785,7 +785,7 @@ function CopyInstanceDetail({
                 }
                 sub={
                   (c.datePrecision ?? "day") !== "day"
-                    ? formatCompletionDate(tCompletions, {
+                    ? formatCompletionDate(tCompletions, format, {
                         startDate: c.occurredAt,
                         datePrecision: c.datePrecision,
                       })

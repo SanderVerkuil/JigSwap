@@ -45,7 +45,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/collections/$id/")({
   head: ({ match }) => ({
@@ -68,6 +68,7 @@ function CollectionDetailPage() {
   const t = useTranslations("collections");
   const tCommon = useTranslations("common");
   const tPuzzles = useTranslations("puzzles");
+  const format = useFormatter();
 
   const { data: collection, isPending: collectionPending } = useQuery(
     convexQuery(gateway.collections.byId, {
@@ -348,7 +349,7 @@ function CollectionDetailPage() {
           cells={[
             { value: String(stats.puzzleCount), label: t("puzzles") },
             {
-              value: stats.piecesTotal.toLocaleString(),
+              value: format.number(stats.piecesTotal),
               label: t("piecesTotal"),
             },
             {

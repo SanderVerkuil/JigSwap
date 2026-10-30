@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import * as React from "react";
 import * as RechartsPrimitive from "recharts";
+import { useFormatter } from "use-intl";
 
 // Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = { light: "", dark: ".dark" } as const;
@@ -160,6 +161,7 @@ function ChartTooltipContent({
   labelKey?: string;
 }) {
   const { config } = useChart();
+  const format = useFormatter();
 
   const tooltipLabel = React.useMemo(() => {
     if (hideLabel || !payload?.length) {
@@ -267,7 +269,9 @@ function ChartTooltipContent({
                     </div>
                     {item.value && (
                       <span className="text-foreground font-mono font-medium tabular-nums">
-                        {item.value.toLocaleString()}
+                        {typeof item.value === "number"
+                          ? format.number(item.value)
+                          : item.value}
                       </span>
                     )}
                   </div>
