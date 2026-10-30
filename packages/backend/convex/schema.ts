@@ -698,6 +698,15 @@ export default defineSchema({
       v.literal("report_warned"),
       v.literal("message_image_auto_rejected"),
       v.literal("message_image_restored"),
+      // Admin writes outside the moderation queues (review 2026-10-29, SEC-56). None feeds a
+      // KPI (admin/getModerationStats). Labels never carry a member's personal data.
+      v.literal("photo_recheck_requested"),
+      v.literal("category_created"),
+      v.literal("category_updated"),
+      v.literal("category_deactivated"),
+      v.literal("category_reactivated"),
+      v.literal("categories_reordered"),
+      v.literal("contact_message_handled"),
     ),
     targetLabel: v.string(), // denormalized display title at decision time
     targetId: v.string(),

@@ -4279,7 +4279,14 @@
         "report_content_removed": "<strong>{actor}</strong> removed reported content from <strong>{target}</strong>",
         "report_warned": "<strong>{actor}</strong> warned <strong>{target}</strong> after a report",
         "message_image_auto_rejected": "<strong>{actor}</strong> auto-flagged a <strong>{target}</strong>",
-        "message_image_restored": "<strong>{actor}</strong> restored a <strong>{target}</strong> after a review request"
+        "message_image_restored": "<strong>{actor}</strong> restored a <strong>{target}</strong> after a review request",
+        "photo_recheck_requested": "<strong>{actor}</strong> had an unchecked photo checked again (<strong>{target}</strong>)",
+        "category_created": "<strong>{actor}</strong> created the category <strong>{target}</strong>",
+        "category_updated": "<strong>{actor}</strong> edited the category <strong>{target}</strong>",
+        "category_deactivated": "<strong>{actor}</strong> deactivated the category <strong>{target}</strong>",
+        "category_reactivated": "<strong>{actor}</strong> reactivated the category <strong>{target}</strong>",
+        "categories_reordered": "<strong>{actor}</strong> reordered the catalog categories",
+        "contact_message_handled": "<strong>{actor}</strong> marked a contact message as handled"
       },
       "activityEmpty": "No moderation activity yet.",
       "screening": {

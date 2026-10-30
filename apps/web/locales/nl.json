@@ -4279,7 +4279,14 @@
         "report_content_removed": "<strong>{actor}</strong> verwijderde gemelde inhoud van <strong>{target}</strong>",
         "report_warned": "<strong>{actor}</strong> waarschuwde <strong>{target}</strong> na een melding",
         "message_image_auto_rejected": "<strong>{actor}</strong> heeft een <strong>{target}</strong> automatisch gemarkeerd",
-        "message_image_restored": "<strong>{actor}</strong> heeft een <strong>{target}</strong> hersteld na een verzoek om herbeoordeling"
+        "message_image_restored": "<strong>{actor}</strong> heeft een <strong>{target}</strong> hersteld na een verzoek om herbeoordeling",
+        "photo_recheck_requested": "<strong>{actor}</strong> liet een niet-gecontroleerde foto opnieuw controleren (<strong>{target}</strong>)",
+        "category_created": "<strong>{actor}</strong> maakte de categorie <strong>{target}</strong> aan",
+        "category_updated": "<strong>{actor}</strong> bewerkte de categorie <strong>{target}</strong>",
+        "category_deactivated": "<strong>{actor}</strong> deactiveerde de categorie <strong>{target}</strong>",
+        "category_reactivated": "<strong>{actor}</strong> reactiveerde de categorie <strong>{target}</strong>",
+        "categories_reordered": "<strong>{actor}</strong> zette de cataloguscategorieën in een nieuwe volgorde",
+        "contact_message_handled": "<strong>{actor}</strong> markeerde een contactbericht als afgehandeld"
       },
       "activityEmpty": "Nog geen moderatieactiviteit.",
       "screening": {

@@ -1,8 +1,13 @@
 import { ConvexError, v } from "convex/values";
-import { mutation } from "../_generated/server";
+import type { Id } from "../_generated/dataModel";
+import { mutation, type MutationCtx } from "../_generated/server";
+import { MESSAGE_PHOTO_LABEL } from "../conversation/messageAttachments";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
+import { boxArtTitle } from "../lib/imageModeration/boxArtReferences";
 import { enqueueImageModeration } from "../lib/imageModeration/moderationPool";
+import { CIRCLE_ICON_LABEL } from "../sharing/circleIconModerationStore";
+import { stampModerationAction } from "./stampModerationAction";
 
 // Send an "unscored" photo through the shared moderation pipeline again: a copy photo
 // (library/moderatePhoto), a completion photo (solving/moderateCompletionPhoto), box art
@@ -17,6 +22,9 @@ import { enqueueImageModeration } from "../lib/imageModeration/moderationPool";
 // a no-op: it is still being checked (another run could race the pool's retry), which also
 // makes a double click harmless, as the first click already turned the row pending. A decided
 // row (approved, rejected, quarantined, or legacy without a status) is final and refused.
+//
+// A re-check that queues a check is stamped on the audit trail (photo_recheck_requested, labelled
+// like admin/decideUncheckedPhoto labels its decisions); a no-op or a refusal is not (SEC-56).
 const shouldRecheck = (status: string | undefined): boolean => {
   if (status === "unscored") return true;
   if (status === "pending") return false;
@@ -32,6 +40,20 @@ const backToPending = {
   moderationAttempts: undefined,
 } as const;
 
+// One audit row per re-check that queued a check.
+const stampRecheck = (
+  ctx: MutationCtx,
+  actorId: Id<"users">,
+  imageId: string,
+  targetLabel: string,
+) =>
+  stampModerationAction(ctx, {
+    actorId,
+    kind: "photo_recheck_requested",
+    targetLabel,
+    targetId: imageId,
+  });
+
 export const recheckPhoto = mutation({
   args: {
     source: v.union(
@@ -44,7 +66,7 @@ export const recheckPhoto = mutation({
     imageId: v.string(),
   },
   handler: async (ctx, { source, imageId }) => {
-    await requireMember(ctx);
+    const adminId = (await requireMember(ctx)) as unknown as Id<"users">;
     if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
 
     if (source === "copy") {
@@ -54,6 +76,11 @@ export const recheckPhoto = mutation({
       if (!shouldRecheck(row.moderationStatus)) return;
       await ctx.db.patch(id, { ...backToPending, updatedAt: Date.now() });
       await enqueueImageModeration(ctx, "copy", id);
+      const copy = await ctx.db.get(row.ownedPuzzleId);
+      const title =
+        copy?.snapshot?.title ??
+        (copy ? (await ctx.db.get(copy.puzzleId))?.title : undefined);
+      await stampRecheck(ctx, adminId, imageId, title ?? imageId);
       return;
     }
 
@@ -64,6 +91,18 @@ export const recheckPhoto = mutation({
       if (!shouldRecheck(row.moderationStatus)) return;
       await ctx.db.patch(id, { ...backToPending, updatedAt: Date.now() });
       await enqueueImageModeration(ctx, "completion", id);
+      const completion = await ctx.db
+        .query("completions")
+        .withIndex("by_aggregate_id", (q) =>
+          q.eq("aggregateId", row.completionId),
+        )
+        .unique();
+      await stampRecheck(
+        ctx,
+        adminId,
+        imageId,
+        completion?.copySnapshot?.title ?? "Completion photo",
+      );
       return;
     }
 
@@ -76,6 +115,7 @@ export const recheckPhoto = mutation({
       if (!shouldRecheck(row.moderationStatus)) return;
       await ctx.db.patch(id, { ...backToPending, updatedAt: Date.now() });
       await enqueueImageModeration(ctx, "message", id);
+      await stampRecheck(ctx, adminId, imageId, MESSAGE_PHOTO_LABEL);
       return;
     }
 
@@ -86,6 +126,7 @@ export const recheckPhoto = mutation({
       if (!shouldRecheck(row.moderationStatus)) return;
       await ctx.db.patch(id, { ...backToPending, updatedAt: Date.now() });
       await enqueueImageModeration(ctx, "circleIcon", id);
+      await stampRecheck(ctx, adminId, imageId, CIRCLE_ICON_LABEL);
       return;
     }
 
@@ -95,5 +136,11 @@ export const recheckPhoto = mutation({
     if (!shouldRecheck(row.moderationStatus)) return;
     await ctx.db.patch(id, { ...backToPending, recheckedAt: Date.now() });
     await enqueueImageModeration(ctx, "boxArt", id);
+    await stampRecheck(
+      ctx,
+      adminId,
+      imageId,
+      (await boxArtTitle(ctx, row.storageId)) ?? "Box art",
+    );
   },
 });
