@@ -65,10 +65,12 @@ export const Route = createFileRoute("/members/$handle")({
     const profile =
       fullProfile ?? (teaser ? lockedProfileFromTeaser(teaser) : null);
     if (!profile) throw notFound();
-    // Canonical display URL prefers the slug, then username; id URLs (QR/share
-    // links) redirect. When neither exists the id URL is already canonical.
-    const canonical =
-      profile.hero.slug ?? profile.hero.username ?? profile.hero.memberId;
+    // The server's canonical handle (slug, else a username that resolves back
+    // to this member, else the id); id URLs (QR/share links) redirect to it.
+    // Never rebuild it from `username`: another member may hold that string as
+    // a slug (SEC-07). The memberId fallback covers a backend that predates
+    // `handle`, so the redirect never targets undefined.
+    const canonical = profile.hero.handle ?? profile.hero.memberId;
     if (canonical !== params.handle) {
       throw redirect({
         to: "/members/$handle",

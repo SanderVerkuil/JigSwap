@@ -2,7 +2,10 @@ import type { PublicMemberTeaserView } from "@jigswap/contracts";
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { optionalActingMember } from "../identity/optionalActingMember";
-import { resolveMemberByHandle } from "../identity/resolveMemberByHandle";
+import {
+  canonicalHandleOf,
+  resolveMemberByHandle,
+} from "../identity/resolveMemberByHandle";
 import { isCopyPrivate, seesPrivateCopiesOf } from "../library/copyVisibility";
 import { blockStateBetween } from "./blocks";
 import {
@@ -25,6 +28,7 @@ export const getPublicMemberTeaser = query({
     if (!user) return null;
 
     const memberId = user._id;
+    const handle = await canonicalHandleOf(ctx, user);
     const [visibility, profile, viewer] = await Promise.all([
       profileVisibilityOf(ctx, memberId),
       ctx.db
@@ -48,6 +52,7 @@ export const getPublicMemberTeaser = query({
       }
       return {
         ...memberTeaserIdentityOf(user, profile, true),
+        handle,
         memberSince: user.createdAt,
         visibility,
         puzzleCount: null,
@@ -56,6 +61,7 @@ export const getPublicMemberTeaser = query({
     if (block === "byMe") {
       return {
         ...memberTeaserIdentityOf(user, profile, true),
+        handle,
         memberSince: user.createdAt,
         visibility,
         puzzleCount: null,
@@ -83,6 +89,7 @@ export const getPublicMemberTeaser = query({
 
     return {
       ...memberTeaserIdentityOf(user, profile, viewer !== null),
+      handle,
       memberSince: user.createdAt,
       visibility,
       puzzleCount,

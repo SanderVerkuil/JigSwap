@@ -214,12 +214,13 @@ describe("circle links", () => {
 
   it("links a revealed author's profile, never an anonymised one", () => {
     expect(memberProfileHref(member("u_bas", "Bas"))).toBe("/members/u_bas");
+    // By id even with a username: another member may hold it as a slug (SEC-07).
     expect(
       memberProfileHref({
         anonymous: false,
         member: { ...member("u_bas", "Bas").member, username: "bas" },
       }),
-    ).toBe("/members/bas");
+    ).toBe("/members/u_bas");
     expect(memberProfileHref(anon("ref"))).toBeNull();
   });
 });

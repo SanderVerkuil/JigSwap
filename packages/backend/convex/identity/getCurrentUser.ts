@@ -1,5 +1,6 @@
 import type { CurrentMemberView } from "@jigswap/contracts";
 import { query } from "../_generated/server";
+import { canonicalHandleOf } from "./resolveMemberByHandle";
 import { toCurrentMemberView } from "./toMemberView";
 
 // Identity read (thin adapter): the signed-in member, or null when unauthenticated. Returns the
@@ -15,6 +16,8 @@ export const getCurrentUser = query({
       .query("users")
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
       .unique();
-    return user ? toCurrentMemberView(user) : null;
+    return user
+      ? toCurrentMemberView(user, await canonicalHandleOf(ctx, user))
+      : null;
   },
 });

@@ -154,9 +154,10 @@ describe("TradePartnerCard", () => {
 
   it("links the profile only when it is viewable", () => {
     renderCard(revealed({ profileViewable: true }));
+    // By id, never by username (SEC-07).
     expect(
       screen.getByRole("link", { name: "Mara" }).getAttribute("href"),
-    ).toBe("/members/mara");
+    ).toBe("/members/user_mara");
     cleanup();
     renderCard(revealed({ profileViewable: false }));
     expect(screen.queryByRole("link", { name: "Mara" })).toBeNull();

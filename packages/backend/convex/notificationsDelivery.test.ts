@@ -162,7 +162,8 @@ describe("resolveForDelivery: actor", () => {
     expect(content).toEqual({
       params: { actorName: "Mara Display" },
       actorAnonymous: false,
-      href: "/members/mara_u",
+      // Slug, else id; never the username (SEC-07).
+      href: `/members/${s.mara}`,
     });
   });
 

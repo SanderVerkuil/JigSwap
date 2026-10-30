@@ -101,9 +101,8 @@ export function FollowRequestsStrip() {
                 </Avatar>
                 <Link
                   to="/members/$handle"
-                  params={{
-                    handle: request.requester.username ?? request.requester._id,
-                  }}
+                  // The id, never the username (SEC-07); the route redirects to the canonical handle.
+                  params={{ handle: request.requester._id }}
                   className="truncate font-medium hover:underline"
                 >
                   {displayName(request.requester)}

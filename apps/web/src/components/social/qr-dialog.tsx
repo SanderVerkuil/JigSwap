@@ -18,7 +18,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "use-intl";
 
 // Fullscreen "show my QR" dialog. The QR encodes the STABLE member-id URL (rename-proof) with the
-// invite token; the mono caption shows the human-readable username URL. The QR card is always
+// invite token; the mono caption shows the member's canonical profile URL. The QR card is always
 // white — dark mode must never invert the modules or phone cameras stop reading it.
 const DIALOG_CONTENT_CLASS =
   "flex h-svh max-h-svh w-full max-w-full flex-col items-center justify-center gap-6 rounded-none sm:h-auto sm:max-h-[90svh] sm:max-w-md sm:rounded-lg";
@@ -29,6 +29,9 @@ type QrDialogProps = {
   // username fallback — never the email, since the QR card is shown to other people.
   displayName?: string;
   username: string | null | undefined;
+  // The member's canonical /members/<handle> (CurrentMemberView.handle), for the caption. Never
+  // built from `username`: another member may hold that string as a slug (SEC-07).
+  handle: string | undefined;
   avatarUrl?: string | null;
 };
 
@@ -57,8 +60,8 @@ function QrDialogContent(props: QrDialogProps & { onNavigate?: () => void }) {
   const qrUrl = link
     ? `${origin}/members/${props.memberId}?invite=${link.token}`
     : null;
-  const displayUrl = props.username
-    ? `${origin.replace(/^https?:\/\//, "")}/members/${props.username}`
+  const displayUrl = props.handle
+    ? `${origin.replace(/^https?:\/\//, "")}/members/${encodeURIComponent(props.handle)}`
     : null;
 
   const copy = () => {

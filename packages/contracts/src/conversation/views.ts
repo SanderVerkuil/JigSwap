@@ -268,7 +268,7 @@ export type InboxThreadSubjectView =
       readonly kind: "dm";
       readonly otherMember: ProjectedMember;
       /**
-       * The `/members/<handle>` handle (slug ?? username ?? member id) of the other member; null
+       * The `/members/<handle>` handle (slug ?? member id, never the username) of the other member; null
        * when they are anonymised to the viewer (their profile would be locked to them) or their
        * account is inactive.
        */

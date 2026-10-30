@@ -70,7 +70,8 @@ export function TradePartnerCard({
         {partner.state === "revealed" && partner.profileViewable ? (
           <Link
             to="/members/$handle"
-            params={{ handle: partner.username ?? partner.memberId }}
+            // The id, never the username (SEC-07); the route redirects to the canonical handle.
+            params={{ handle: partner.memberId }}
             className="font-semibold hover:underline"
           >
             {name}

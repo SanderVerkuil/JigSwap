@@ -19,6 +19,7 @@ export function lockedProfileFromTeaser(teaser: Teaser): PublicProfileView {
       displayName: teaser.displayName,
       username: teaser.username,
       slug: teaser.slug,
+      handle: teaser.handle,
       avatar: teaser.avatar,
       memberSince: teaser.memberSince,
       rating: 0,

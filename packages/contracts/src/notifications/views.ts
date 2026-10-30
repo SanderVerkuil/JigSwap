@@ -62,7 +62,7 @@ export type NotificationActorView =
       name?: string;
       /** Never present when `tradeRevealed`. */
       avatar?: string;
-      /** The /members/$handle param (slug, else username, else the member id). */
+      /** The /members/$handle param: the slug, else the member id (never the username, SEC-07). */
       handle: string;
       /**
        * Set on a trade notification whose actor is revealed by THAT trade only (not public, not a

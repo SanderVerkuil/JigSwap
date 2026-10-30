@@ -31,6 +31,8 @@ export interface CurrentMemberView extends MemberView {
   /** Verified primary Clerk email; absent until the member has one. */
   email?: string;
   slug?: string;
+  /** The member's own canonical /members/$handle param; see PublicProfileHero.handle. */
+  handle: string;
 }
 
 /**

@@ -213,7 +213,7 @@ export interface EmailInviteView {
  * mutual followers. Personalized (the read is requireMember-gated) and one direction only.
  * `total` is the full intersection size; `members` is a short preview (capped, currently 8) with
  * just enough identity to render an avatar stack + name and link to /members/$handle
- * (slug ?? username ?? memberId).
+ * (slug ?? memberId, never the username: see PublicProfileHero.handle).
  */
 export interface FollowersYouKnowView {
   total: number;
@@ -246,7 +246,7 @@ export interface BlockedMemberView {
   /** Raw account name; may be absent. Render via resolveMemberDisplayName / useMemberDisplayName. */
   name?: string;
   avatar?: string;
-  /** The /members/$handle param (slug, else username, else the member id). */
+  /** The /members/$handle param: the slug, else the member id (never the username, SEC-07). */
   handle: string;
   /** When the block was made (ms). */
   blockedAt: number;
@@ -267,6 +267,8 @@ export interface PublicMemberTeaserView {
   username?: string;
   /** The member's Convex-owned profile handle (identity/setSlug), if they've chosen one. */
   slug?: string;
+  /** The canonical /members/$handle param; see PublicProfileHero.handle. */
+  handle: string;
   avatar?: string;
   /** users.createdAt (ms). */
   memberSince: number;
@@ -290,7 +292,7 @@ export interface FollowRequesterPreviewView {
   memberId: string;
   /** Resolved server-side (profile displayName → account name → username, never email); absent = render the generic member label. */
   displayName?: string;
-  /** The /members/$handle param (slug, else username, else the member id). */
+  /** The /members/$handle param: the slug, else the member id (never the username, SEC-07). */
   handle: string;
   avatar?: string;
   /** users.createdAt (ms). */
@@ -315,6 +317,12 @@ export interface PublicProfileHero {
   displayName?: string;
   username?: string;
   slug?: string;
+  /**
+   * The canonical /members/$handle param, server-computed (identity/canonicalHandleOf): the slug,
+   * else the username when it resolves back to this member, else the member id. Always resolves
+   * back to `memberId`, so the route may redirect to it; never rebuild it from `username`.
+   */
+  handle: string;
   avatar?: string;
   /** users.createdAt (ms). */
   memberSince: number;

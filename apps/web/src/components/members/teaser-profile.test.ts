@@ -8,6 +8,7 @@ describe("lockedProfileFromTeaser", () => {
       displayName: "Bobby",
       username: "bob",
       slug: "bobby",
+      handle: "bobby",
       avatar: "https://example.com/a.png",
       memberSince: 5,
       visibility: "private",
@@ -20,6 +21,8 @@ describe("lockedProfileFromTeaser", () => {
         displayName: "Bobby",
         username: "bob",
         slug: "bobby",
+        // The server's canonical handle carries over, so the route redirects to it (SEC-07).
+        handle: "bobby",
         avatar: "https://example.com/a.png",
         memberSince: 5,
         rating: 0,

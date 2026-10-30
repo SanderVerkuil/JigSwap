@@ -164,7 +164,7 @@ describe("the offer", () => {
     expect(view.state).toBe("informational");
     // Identity only, exactly like the landing: never bio or location.
     expect(view.actors).toEqual([
-      { anonymous: false, memberId: alice, name: "Alice", handle: "alice" },
+      { anonymous: false, memberId: alice, name: "Alice", handle: alice },
     ]);
   });
 

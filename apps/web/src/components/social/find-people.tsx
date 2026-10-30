@@ -55,6 +55,7 @@ export function FindPeople() {
       memberId={me._id}
       displayName={me.name}
       username={me.username}
+      handle={me.handle}
       avatarUrl={me.avatar}
     />
   ) : null;

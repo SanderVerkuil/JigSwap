@@ -49,10 +49,11 @@ export function projectedMemberLabel(
 }
 
 // The /members/<handle> link of a message author in a circle thread: a revealed, active member
-// only (an anonymised member has no handle; the route resolves a username or an id).
+// only (an anonymised member has no handle). Always the member id, never the username, which
+// another member may hold as a slug (SEC-07); the route redirects to the canonical handle.
 export function memberProfileHref(member: ProjectedMember): string | null {
   if (member.anonymous || !member.member.isActive) return null;
-  return `/members/${encodeURIComponent(member.member.username ?? member.member._id)}`;
+  return `/members/${encodeURIComponent(member.member._id)}`;
 }
 
 type SystemEvent = NonNullable<AnyInboxThread["lastMessage"]>["systemEvent"];

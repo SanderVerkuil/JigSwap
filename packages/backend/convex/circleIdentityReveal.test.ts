@@ -681,7 +681,7 @@ describe("conversation surfaces for a circle-mate", () => {
 
   test("getMyInbox reveals the circle-mate with a profileHandle, but their profile stays locked", async () => {
     const t = convexTest(schema, modules);
-    const { threadId } = await dmWithPrivy(t);
+    const { threadId, privy } = await dmWithPrivy(t);
 
     const inbox = await asViewer(t).query(
       api.conversation.getMyInbox.getMyInbox,
@@ -691,7 +691,8 @@ describe("conversation surfaces for a circle-mate", () => {
     expect(row.subject.kind).toBe("dm");
     if (row.subject.kind !== "dm") return;
     expect(nameOf(row.subject.otherMember)).toBe("Privy");
-    expect(row.subject.profileHandle).toBe("privy_handle");
+    // Slug, else id; never the username (SEC-07).
+    expect(row.subject.profileHandle).toBe(privy);
 
     const profile = await asViewer(t).query(
       api.social.getPublicProfile.getPublicProfile,

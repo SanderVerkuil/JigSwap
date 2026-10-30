@@ -35,7 +35,8 @@ export const getFollowRequesterPreview = query({
     return {
       memberId: user._id,
       ...(displayName !== undefined ? { displayName } : {}),
-      handle: user.slug ?? user.username ?? user._id,
+      // Never the username, which another member may hold as a slug (SEC-07).
+      handle: user.slug ?? user._id,
       ...(user.avatar !== undefined ? { avatar: user.avatar } : {}),
       memberSince: user.createdAt,
       visibility: profile?.visibility ?? "public",

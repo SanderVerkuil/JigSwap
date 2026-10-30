@@ -18,10 +18,15 @@ export const toMemberView = (user: Doc<"users">): MemberView => ({
 });
 
 // Self-only projection: the signed-in member's own view, with email + clerkId re-added. Only the
-// `getCurrentUser` ("me") query may use this — never a member-to-other read.
-export const toCurrentMemberView = (user: Doc<"users">): CurrentMemberView => ({
+// `getCurrentUser` ("me") query may use this — never a member-to-other read. `handle` is the
+// member's canonical handle (identity/canonicalHandleOf), which needs a read the mapper can't do.
+export const toCurrentMemberView = (
+  user: Doc<"users">,
+  handle: string,
+): CurrentMemberView => ({
   ...toMemberView(user),
   clerkId: user.clerkId,
   email: user.email,
   slug: user.slug,
+  handle,
 });

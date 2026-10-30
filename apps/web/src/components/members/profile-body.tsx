@@ -191,7 +191,9 @@ function HeroSection({
   const displayName = useMemberDisplayName();
   const name = displayName({ name: hero.displayName });
   const memberSinceYear = new Date(hero.memberSince).getFullYear();
-  const handle = hero.slug ?? hero.username;
+  // The server's canonical handle, shown only when it reads as a name (not the bare id). Never
+  // rebuilt from `username`: another member may hold that string as a slug (SEC-07).
+  const handle = hero.handle !== hero.memberId ? hero.handle : undefined;
 
   return (
     <section className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
@@ -455,7 +457,8 @@ function FollowersYouKnowListItem({
     <li>
       <Link
         to="/members/$handle"
-        params={{ handle: member.slug ?? member.username ?? member.memberId }}
+        // Slug, else id: never the username (SEC-07); the route redirects to the canonical handle.
+        params={{ handle: member.slug ?? member.memberId }}
         onClick={onNavigate}
         className="flex items-center gap-3 hover:underline"
       >

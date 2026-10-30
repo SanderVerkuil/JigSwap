@@ -14,8 +14,8 @@ type CopyInstanceView = NonNullable<
 >;
 
 // The copy's owner: avatar + display name. The server projects `owner` per the viewer's
-// connection; only a revealed owner links to their profile (handle = username, else id; the
-// profile route redirects to the canonical slug). An anonymised owner who is the viewer's
+// connection; only a revealed owner links to their profile (by id, never the username, which
+// another member may hold as a slug, SEC-07; the profile route redirects to the canonical handle). An anonymised owner who is the viewer's
 // housemate is still named from the household view, as the library's household badge does, but
 // without a link. The viewer's own copy gets the page's existing "· you" marker.
 export function CopyOwner({
@@ -50,7 +50,7 @@ export function CopyOwner({
       {revealed ? (
         <Link
           to="/members/$handle"
-          params={{ handle: revealed.username ?? revealed._id }}
+          params={{ handle: revealed._id }}
           className="truncate hover:underline"
         >
           {name}

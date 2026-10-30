@@ -7,7 +7,10 @@ import { query } from "../_generated/server";
 import { computeMemberStats } from "../identity/getUserStats";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { optionalActingMember } from "../identity/optionalActingMember";
-import { resolveMemberByHandle } from "../identity/resolveMemberByHandle";
+import {
+  canonicalHandleOf,
+  resolveMemberByHandle,
+} from "../identity/resolveMemberByHandle";
 import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { seesPrivateCopiesOf } from "../library/copyVisibility";
 import { blockStateBetween } from "./blocks";
@@ -34,6 +37,7 @@ export const getPublicProfile = query({
     if (!user) return null;
 
     const memberId = user._id;
+    const handle = await canonicalHandleOf(ctx, user);
     const [visibility, profile, viewerId] = await Promise.all([
       profileVisibilityOf(ctx, memberId),
       ctx.db
@@ -59,6 +63,7 @@ export const getPublicProfile = query({
           displayName: memberDisplayNameOf(user, profile),
           username: user.username,
           slug: user.slug,
+          handle,
           avatar: user.avatar,
           memberSince: user.createdAt,
           rating: 0,
@@ -107,6 +112,7 @@ export const getPublicProfile = query({
       displayName: memberDisplayNameOf(user, profile),
       username: user.username,
       slug: user.slug,
+      handle,
       avatar,
       memberSince: user.createdAt,
       rating: averageRating,
