@@ -3,6 +3,7 @@ import { useRouter } from "@/compat/navigation";
 import { ImageZoom } from "@/components/common/image-zoom";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { convexErrorCode } from "@/components/exchange/request-trade";
+import { useConditionLabel } from "@/components/library/condition";
 import { EmptyState } from "@/components/library/empty-state";
 import {
   difficultyClasses,
@@ -138,8 +139,7 @@ function PuzzleDefinitionDetail({
   const tPuzzles = useTranslations("puzzles");
   const tCatalog = useTranslations("puzzles.puzzles");
   const tDifficulty = useTranslations("puzzles.puzzles.difficulty");
-  const tCondition = useTranslations("puzzles.puzzles.condition");
-  const tCopyCondition = useTranslations("copyInstance.conditionLabel");
+  const conditionLabel = useConditionLabel();
 
   const { isFavorite, toggleFavorite } = useFavorites();
   const favorited = isFavorite(puzzleId);
@@ -198,19 +198,6 @@ function PuzzleDefinitionDetail({
 
   const difficultyLabel = (difficulty?: string) =>
     difficulty ? tDifficulty(difficulty) : tDifficulty("unknown");
-
-  // Viewer-copy condition spans the ownedPuzzles union; new_sealed/like_new live
-  // in copyInstance.conditionLabel, the rest in puzzles.puzzles.condition.
-  const conditionLabel = (condition: string) => {
-    switch (condition) {
-      case "new_sealed":
-        return tCopyCondition("new_sealed");
-      case "like_new":
-        return tCopyCondition("like_new");
-      default:
-        return tCondition(condition);
-    }
-  };
 
   // The "topics" pills: the category name first (if any), then each tag.
   const topics = [

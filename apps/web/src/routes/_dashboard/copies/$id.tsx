@@ -5,6 +5,7 @@ import { CopyOfferSwitches } from "@/components/copies/copy-offer-switches";
 import { CopyOwner } from "@/components/copies/copy-owner";
 import { copyPhotoError } from "@/components/copies/copy-photo-error";
 import { CopyStatusLine } from "@/components/copies/copy-status-line";
+import { formatCopyTenure } from "@/components/copies/copy-tenure";
 import { EditCopyDialog } from "@/components/copies/edit-copy-dialog";
 import { PhotoLightbox } from "@/components/copies/photo-lightbox";
 import {
@@ -19,6 +20,10 @@ import {
 } from "@/components/exchange/request-trade-dialog";
 import { HouseholdAccess } from "@/components/household/household-access";
 import { ImageEditorDialog } from "@/components/image-editor/image-editor-dialog";
+import {
+  conditionDotClass,
+  useConditionLabel,
+} from "@/components/library/condition";
 import { EmptyState } from "@/components/library/empty-state";
 import { MemberInitial } from "@/components/members/member-initial";
 import { copyMessageRoute } from "@/components/messaging/copy-conversation";
@@ -203,21 +208,6 @@ function difficultyClasses(difficulty?: string) {
   }
 }
 
-// Condition dot colour, by copy condition.
-function conditionDotClass(condition: string) {
-  switch (condition) {
-    case "new_sealed":
-    case "like_new":
-      return "bg-jigsaw-secondary";
-    case "good":
-      return "bg-jigsaw-primary";
-    case "fair":
-      return "bg-amber-400";
-    default:
-      return "bg-destructive";
-  }
-}
-
 function CopyInstanceDetail({
   copy,
   copyId,
@@ -236,9 +226,11 @@ function CopyInstanceDetail({
   const tOwner = useTranslations("copyOwner");
   const tConversation = useTranslations("copyConversation");
   const tPuzzles = useTranslations("puzzles");
+  const tLogSolve = useTranslations("solving.logSolve");
   const tStart = useTranslations("solving.startSolve");
   const tCompletions = useTranslations("solving.completions");
   const tDifficulty = useTranslations("puzzles.puzzles.difficulty");
+  const conditionLabel = useConditionLabel();
   const format = useFormatter();
   const projectedName = useProjectedMemberName();
   // A stable "now" captured once per mount, so duration/relative-time renders are
@@ -393,31 +385,6 @@ function CopyInstanceDetail({
     return format.number(value, { style: "unit", unit, unitDisplay: "long" });
   };
 
-  const conditionLabel = (condition: string) => {
-    // Reuse the puzzles condition namespace where it exists; map the copy union.
-    switch (condition) {
-      case "new_sealed":
-        return t("conditionLabel.new_sealed");
-      case "like_new":
-        return t("conditionLabel.like_new");
-      default:
-        return tPuzzles(`puzzles.condition.${condition}`);
-    }
-  };
-
-  // "In your library" duration: whole years + months from acquisition to now,
-  // formatted like "1y 5m" (or "5m" / "<1m"). Owner-only context.
-  const ownedDuration = (since: number): string => {
-    let months = Math.floor((now - since) / (1000 * 60 * 60 * 24 * 30.4375));
-    if (months < 1) return t("durationLessThanMonth");
-    const years = Math.floor(months / 12);
-    months = months % 12;
-    const parts: string[] = [];
-    if (years > 0) parts.push(t("durationYears", { years }));
-    if (months > 0) parts.push(t("durationMonths", { months }));
-    return parts.join(" ");
-  };
-
   return (
     <div className="flex w-full flex-col gap-10">
       {/* Hero */}
@@ -535,7 +502,7 @@ function CopyInstanceDetail({
                     onClick={() => setLogOpen(true)}
                   >
                     <CircleCheck className="h-4 w-4" />
-                    {t("actions.logCompletion")}
+                    {tLogSolve("trigger")}
                   </Button>
                 )}
                 {myInProgress ? (
@@ -670,7 +637,7 @@ function CopyInstanceDetail({
               <MetaItem
                 icon={<Clock className="h-3.5 w-3.5" />}
                 label={t("inYourLibrary")}
-                value={ownedDuration(copy.acquiredByViewerAt)}
+                value={formatCopyTenure(copy.acquiredByViewerAt, now, t)}
               />
             )}
             {snapshot.tags.length > 0 && (

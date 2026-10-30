@@ -671,7 +671,7 @@ export interface PuzzleDefinitionDetailView {
     /** The viewer's owning copy's `ownedPuzzles` _id, or null when they own none. */
     copyId: string | null;
     /** The viewer's owning copy's condition, or null when they own none. */
-    condition: string | null;
+    condition: CopyCondition | null;
   };
   /** Up to 5 reachable available copies, newest first. */
   availableCopies: CopyOfferView[];

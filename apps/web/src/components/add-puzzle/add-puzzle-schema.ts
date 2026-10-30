@@ -10,17 +10,6 @@ export const CONDITION_VALUES = [
 ] as const;
 export type ConditionValue = (typeof CONDITION_VALUES)[number];
 
-// The four condition pills shown in the design, in order, each mapped to a backend value.
-export const CONDITION_OPTIONS: ReadonlyArray<{
-  label: string;
-  value: ConditionValue;
-}> = [
-  { label: "Excellent", value: "like_new" },
-  { label: "Good", value: "good" },
-  { label: "Fair", value: "fair" },
-  { label: "Poor", value: "poor" },
-];
-
 export const DIFFICULTY_OPTIONS = [
   { value: "easy", label: "Easy", dot: "bg-jigsaw-secondary" },
   { value: "medium", label: "Medium", dot: "bg-amber-400" },

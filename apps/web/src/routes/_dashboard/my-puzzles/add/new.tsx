@@ -5,7 +5,6 @@ import {
   AvailabilityChips,
   availabilityToSharing,
   CATALOG_TEXT_LIMITS,
-  CONDITION_OPTIONS,
   contributeError,
   CopyStepError,
   CoverColourField,
@@ -24,6 +23,7 @@ import {
   TagInput,
 } from "@/components/add-puzzle";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
+import { useConditionOptions } from "@/components/library/condition";
 import type { ImportedDraft } from "@/components/puzzle-import/draft-to-form-defaults";
 import type { ImportedMatch } from "@/components/puzzle-import/use-puzzle-import";
 import { Button } from "@/components/ui/button";
@@ -457,10 +457,7 @@ function AddPuzzlePage() {
     ...o,
     label: t(`difficulty_${o.value}`),
   }));
-  const conditionOptions = CONDITION_OPTIONS.map((o) => ({
-    value: o.value,
-    label: t(`condition_${o.value}`),
-  }));
+  const conditionOptions = useConditionOptions();
 
   // The chosen definition shown read-only at the top of copy mode.
   const chosenDefinition = isCopyMode ? (

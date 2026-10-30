@@ -3,11 +3,11 @@
 import {
   AvailabilityChips,
   availabilityToSharing,
-  CONDITION_OPTIONS,
   SegmentedPills,
   type ConditionValue,
 } from "@/components/add-puzzle";
 import { convexErrorCode } from "@/components/exchange/request-trade";
+import { useConditionOptions } from "@/components/library/condition";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -95,7 +95,6 @@ function EditCopyDialogForm({
   focus,
 }: EditCopyDialogProps) {
   const t = useTranslations("copyInstance");
-  const tPuzzles = useTranslations("puzzles");
   const format = useFormatter();
   const timeZone = useTimeZone() ?? "UTC";
   const acquiredMonthRef = useRef<HTMLSelectElement>(null);
@@ -165,10 +164,7 @@ function EditCopyDialogForm({
     updateDetails.isPending ||
     setCopyCover.isPending;
 
-  const conditionOptions = CONDITION_OPTIONS.map((o) => ({
-    value: o.value,
-    label: tPuzzles(`condition_${o.value}`),
-  }));
+  const conditionOptions = useConditionOptions();
 
   const save = async () => {
     try {

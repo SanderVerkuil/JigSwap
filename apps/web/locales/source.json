@@ -391,9 +391,6 @@
     "selectPieceCount": "Select piece count",
     "customPieceCountPlaceholder": "Enter custom piece count",
     "excellent": "Excellent",
-    "good": "Good",
-    "fair": "Fair",
-    "poor": "Poor",
     "statusInformation": "Status Information",
     "statusInformationDescription": "Track your puzzle completion and acquisition details",
     "puzzleCompleted": "I have completed this puzzle",
@@ -467,12 +464,6 @@
         "expert": "Expert",
         "unknown": "Unknown"
       },
-      "condition": {
-        "excellent": "Excellent",
-        "good": "Good",
-        "fair": "Fair",
-        "poor": "Poor"
-      },
       "filters": {
         "brand": "Brand",
         "selectBrand": "Select brand",
@@ -527,8 +518,6 @@
     "deleteConfirmAction": "Delete",
     "deleteReserved": "You can't delete this puzzle while it's part of an exchange in progress or out on loan. You can once the exchange is completed, declined or cancelled, or once the puzzle is back.",
     "loadingPuzzles": "Loading puzzles…",
-    "new_sealed": "New (Sealed)",
-    "like_new": "Like New",
     "importFromUrl": "Import from a store link",
     "importUrlPlaceholder": "Paste a puzzle product URL",
     "importFetch": "Fetch details",
@@ -599,10 +588,6 @@
     "difficulty_hard": "Hard",
     "difficulty_expert": "Expert",
     "difficultyNotSure": "Not sure",
-    "condition_like_new": "Excellent",
-    "condition_good": "Good",
-    "condition_fair": "Fair",
-    "condition_poor": "Poor",
     "availTrade": "For Trade",
     "availLend": "For Loan",
     "availSale": "For Sale",
@@ -4112,26 +4097,21 @@
       "requestViewOnly": "You have view-only access in this circle",
       "message": "Message",
       "proposeSwap": "Propose a Swap",
-      "offerToLend": "Offer to Lend",
-      "logCompletion": "Log a Completion"
+      "offerToLend": "Offer to Lend"
     },
     "acquired": "Acquired",
     "source": "Source",
     "inYourLibrary": "In your library",
     "tags": "Tags",
     "addDetails": "Add details",
-    "durationLessThanMonth": "<1m",
-    "durationYears": "{years}y",
-    "durationMonths": "{months}m",
+    "durationLessThanMonth": "Less than a month",
+    "durationYears": "{years, plural, one {# year} other {# years}}",
+    "durationMonths": "{months, plural, one {# month} other {# months}}",
     "acquisitionSourceLabel": {
       "bought_new": "Bought new",
       "bought_used": "Bought used",
       "trade": "Trade",
       "gift": "Gift"
-    },
-    "conditionLabel": {
-      "new_sealed": "New (sealed)",
-      "like_new": "Like new"
     },
     "statTimesCompleted": "times completed",
     "statFastestFinish": "fastest finish",
@@ -4255,6 +4235,13 @@
     },
     "photoCover": "Cover",
     "photoPending": "Pending review"
+  },
+  "condition": {
+    "new_sealed": "New (sealed)",
+    "like_new": "Like new",
+    "good": "Good",
+    "fair": "Fair",
+    "poor": "Poor"
   },
   "copyOwner": {
     "label": "Owner",

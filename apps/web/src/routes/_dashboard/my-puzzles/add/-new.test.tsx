@@ -212,6 +212,24 @@ describe("adding a copy of a catalogue puzzle", () => {
   });
 });
 
+describe("condition", () => {
+  it("offers all five conditions, by the words the copy shows later, and adds the one picked", async () => {
+    renderPage({ puzzleId: PUZZLE_DOC_ID });
+    const picker = screen.getByRole("radiogroup", { name: "Condition" });
+    expect(
+      Array.from(picker.querySelectorAll('[role="radio"]')).map(
+        (r) => r.textContent,
+      ),
+    ).toEqual(["New (sealed)", "Like new", "Good", "Fair", "Poor"]);
+
+    fireEvent.click(screen.getByRole("radio", { name: "New (sealed)" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add to Library" }));
+
+    await waitFor(() => expect(callsTo(ACQUIRE)).toHaveLength(1));
+    expect(callsTo(ACQUIRE)[0]).toMatchObject({ condition: "new_sealed" });
+  });
+});
+
 describe("creating a new puzzle", () => {
   it("starts with every offer off and does not list availability as a step", () => {
     renderPage();

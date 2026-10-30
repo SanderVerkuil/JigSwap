@@ -103,6 +103,25 @@ beforeEach(() => {
 });
 afterEach(() => cleanup());
 
+describe("EditCopyDialog condition", () => {
+  it("names the stored condition by the same word as the add form and can pick New (sealed)", async () => {
+    renderDialog(copyOf(CLOSED, "visible", "visible"));
+    const picker = screen.getByRole("radiogroup", { name: "Condition" });
+    expect(
+      Array.from(picker.querySelectorAll('[role="radio"]')).map(
+        (r) => r.textContent,
+      ),
+    ).toEqual(["New (sealed)", "Like new", "Good", "Fair", "Poor"]);
+    expect(radio("Good").getAttribute("aria-checked")).toBe("true");
+
+    fireEvent.click(radio("New \\(sealed\\)"));
+    await save();
+    expect(calls.byMutation.changeCondition).toEqual([
+      { copyId: "agg1", condition: "new_sealed" },
+    ]);
+  });
+});
+
 describe("EditCopyDialog visibility", () => {
   it("an offered copy the owner keeps private shows Private, selectable, with the reason it is visible", () => {
     renderDialog(copyOf({ ...CLOSED, forTrade: true }, "visible", "private"));

@@ -391,9 +391,6 @@
     "selectPieceCount": "Selecteer aantal stukken",
     "customPieceCountPlaceholder": "Voer aangepast aantal stukken in",
     "excellent": "Uitstekend",
-    "good": "Goed",
-    "fair": "Redelijk",
-    "poor": "Slecht",
     "statusInformation": "Statusinformatie",
     "statusInformationDescription": "Volg je puzzelvoltooiing en verwervingsdetails",
     "puzzleCompleted": "Ik heb deze puzzel voltooid",
@@ -467,12 +464,6 @@
         "expert": "Expert",
         "unknown": "Onbekend"
       },
-      "condition": {
-        "excellent": "Uitstekend",
-        "good": "Goed",
-        "fair": "Redelijk",
-        "poor": "Slecht"
-      },
       "filters": {
         "brand": "Merk",
         "selectBrand": "Selecteer merk",
@@ -527,8 +518,6 @@
     "deleteConfirmAction": "Verwijderen",
     "deleteReserved": "Je kunt deze puzzel niet verwijderen zolang hij bij een lopende uitwisseling hoort of is uitgeleend. Dat kan wel zodra de uitwisseling is afgerond, afgewezen of geannuleerd, of zodra de puzzel terug is.",
     "loadingPuzzles": "Puzzels laden…",
-    "new_sealed": "Nieuw (Verzegeld)",
-    "like_new": "Zo Goed Als Nieuw",
     "importFromUrl": "Importeer via een winkellink",
     "importUrlPlaceholder": "Plak een product-URL van een puzzel",
     "importFetch": "Gegevens ophalen",
@@ -599,10 +588,6 @@
     "difficulty_hard": "Moeilijk",
     "difficulty_expert": "Expert",
     "difficultyNotSure": "Weet ik niet",
-    "condition_like_new": "Uitstekend",
-    "condition_good": "Goed",
-    "condition_fair": "Redelijk",
-    "condition_poor": "Slecht",
     "availTrade": "Voor ruil",
     "availLend": "Voor uitlenen",
     "availSale": "Te koop",
@@ -4112,26 +4097,21 @@
       "requestViewOnly": "Je mag in deze kring alleen bekijken",
       "message": "Bericht",
       "proposeSwap": "Ruil voorstellen",
-      "offerToLend": "Aanbieden om uit te lenen",
-      "logCompletion": "Voltooiing vastleggen"
+      "offerToLend": "Aanbieden om uit te lenen"
     },
     "acquired": "Verworven",
     "source": "Bron",
     "inYourLibrary": "In jouw bibliotheek",
     "tags": "Labels",
     "addDetails": "Details toevoegen",
-    "durationLessThanMonth": "<1m",
-    "durationYears": "{years}j",
-    "durationMonths": "{months}m",
+    "durationLessThanMonth": "Minder dan een maand",
+    "durationYears": "{years} jaar",
+    "durationMonths": "{months, plural, one {# maand} other {# maanden}}",
     "acquisitionSourceLabel": {
       "bought_new": "Nieuw gekocht",
       "bought_used": "Tweedehands gekocht",
       "trade": "Ruil",
       "gift": "Cadeau"
-    },
-    "conditionLabel": {
-      "new_sealed": "Nieuw (verzegeld)",
-      "like_new": "Zo goed als nieuw"
     },
     "statTimesCompleted": "keer voltooid",
     "statFastestFinish": "snelste tijd",
@@ -4255,6 +4235,13 @@
     },
     "photoCover": "Omslag",
     "photoPending": "Wacht op controle"
+  },
+  "condition": {
+    "new_sealed": "Nieuw (verzegeld)",
+    "like_new": "Zo goed als nieuw",
+    "good": "Goed",
+    "fair": "Redelijk",
+    "poor": "Slecht"
   },
   "copyOwner": {
     "label": "Eigenaar",

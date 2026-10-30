@@ -1,5 +1,6 @@
 "use client";
 
+import { useConditionLabel } from "@/components/library/condition";
 import {
   PuzzleCardShell,
   type PuzzleCardView,
@@ -309,6 +310,7 @@ export function PuzzleCard({
   const tCompletions = useTranslations("solving.completions");
   const tCard = useTranslations("browse.card");
   const tCatalog = useTranslations("puzzles.puzzles");
+  const conditionLabel = useConditionLabel();
   const boxArtInCheck = useBoxArtInCheck();
   const { viewMode } = usePuzzleView();
 
@@ -348,7 +350,7 @@ export function PuzzleCard({
         }
         className="text-xs"
       >
-        {t(puzzle.condition)}
+        {conditionLabel(puzzle.condition)}
       </Badge>
       {/* Only the owner and their household ever receive a private copy. */}
       {puzzle.visibility === "private" ? (
