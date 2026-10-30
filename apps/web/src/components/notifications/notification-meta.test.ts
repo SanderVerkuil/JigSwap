@@ -132,6 +132,25 @@ describe("notificationCopy", () => {
     expect(message("en", "proposal_rejected")).toBe(
       "Your suggested edit was declined.",
     );
+    expect(
+      message("en", "puzzle_rejected", {
+        puzzleTitle: "Sterrennacht",
+        reason: "Not a jigsaw puzzle",
+      }),
+    ).toBe(
+      "Your puzzle submission “Sterrennacht” was rejected. Reason: Not a jigsaw puzzle",
+    );
+    expect(
+      message("nl", "puzzle_rejected", {
+        puzzleTitle: "Sterrennacht",
+        reason: "Geen legpuzzel",
+      }),
+    ).toBe(
+      "Je puzzelinzending “Sterrennacht” is afgewezen. Reden: Geen legpuzzel",
+    );
+    expect(message("nl", "puzzle_rejected", { reason: "  " })).toBe(
+      "Je puzzelinzending is afgewezen.",
+    );
   });
 
   it.each(["en", "nl"] as const)(

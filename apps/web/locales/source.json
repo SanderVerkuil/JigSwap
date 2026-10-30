@@ -2841,7 +2841,7 @@
       },
       "puzzle_rejected": {
         "title": "Puzzle rejected",
-        "message": "{hasPuzzleTitle, select, yes {Your puzzle submission “{puzzleTitle}” was rejected.} other {Your puzzle submission was rejected.}}"
+        "message": "{hasPuzzleTitle, select, yes {Your puzzle submission “{puzzleTitle}” was rejected.} other {Your puzzle submission was rejected.}}{hasReason, select, yes { Reason: {reason}} other {}}"
       },
       "proposal_approved": {
         "title": "Suggestion approved",

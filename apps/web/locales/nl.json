@@ -2841,7 +2841,7 @@
       },
       "puzzle_rejected": {
         "title": "Puzzel afgewezen",
-        "message": "{hasPuzzleTitle, select, yes {Je puzzelinzending “{puzzleTitle}” is afgewezen.} other {Je puzzelinzending is afgewezen.}}"
+        "message": "{hasPuzzleTitle, select, yes {Je puzzelinzending “{puzzleTitle}” is afgewezen.} other {Je puzzelinzending is afgewezen.}}{hasReason, select, yes { Reden: {reason}} other {}}"
       },
       "proposal_approved": {
         "title": "Wijzigingsvoorstel goedgekeurd",
