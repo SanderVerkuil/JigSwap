@@ -809,6 +809,7 @@
     "attached": "Bijgevoegd: {title}",
     "backToInbox": "Terug naar berichten",
     "conversationsLabel": "Gesprekken",
+    "conversationCount": "{count, plural, one {# gesprek} other {# gesprekken}}",
     "copyOwnerNamed": "Exemplaar van {name}",
     "copyOwnerOther": "Exemplaar van de ander",
     "copyOwnerYou": "Jouw exemplaar",
@@ -820,6 +821,12 @@
     "empty": "Nog geen gesprekken",
     "emptyHint": "Begin er een met Bericht op het profiel van een lid of bij een puzzel; elke uitwisseling krijgt ook een eigen chat. Elke kring heeft een groepschat, te vinden via Nieuw.",
     "exchangeThread": "{type}: {title}",
+    "filterKind": {
+      "all": "Alle",
+      "dm": "Mensen",
+      "exchange": "Uitwisselingen",
+      "circle": "Kringen"
+    },
     "exchangeType": {
       "trade": "Ruil",
       "sale": "Verkoop",
@@ -864,6 +871,8 @@
     "newMessagesPill": "{count, plural, one {# nieuw bericht} other {# nieuwe berichten}}",
     "noMessages": "Nog geen berichten",
     "noMessagesHint": "Zeg hallo om het gesprek op gang te brengen.",
+    "noConversationsMatch": "Geen gesprekken gevonden",
+    "clearSearch": "Wissen",
     "noPuzzleResults": "Geen puzzels gevonden voor \"{query}\"",
     "noPuzzles": "Geen puzzels om te tonen",
     "noThreadYet": "Nog geen gesprek voor deze uitwisseling.",
@@ -875,6 +884,8 @@
     "removeAttachment": "{title} verwijderen",
     "replyRevealHint": "Als je reageert, ziet {name} je naam, gebruikersnaam en de reviews die je hebt gekregen, alleen voor deze ruil. Je e-mailadres blijft privé.",
     "retry": "Opnieuw proberen",
+    "searchConversations": "Zoek gesprekken",
+    "searchConversationsPlaceholder": "Zoek gesprekken…",
     "searchPuzzles": "Zoek puzzels",
     "selectConversation": "Selecteer een gesprek",
     "sendError": "Je bericht kon niet worden verzonden. Probeer het opnieuw.",

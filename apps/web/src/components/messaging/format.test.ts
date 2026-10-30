@@ -11,12 +11,14 @@ import {
   copyOwnerHint,
   countOthersAfter,
   coverStackSummary,
+  filterInbox,
   firstUnreadId,
   formatCompactTime,
   formatDayLabel,
   formatFullDateTime,
   formatUnreadCount,
   groupThreadMessages,
+  matchesSearch,
   newestOtherId,
   newestSentId,
   threadQuickLinks,
@@ -619,6 +621,68 @@ describe("copyOwnerHint", () => {
     expect(
       copyOwnerHint("other", anonymised, translators.en, () => "Leaked Name"),
     ).not.toContain("Leaked");
+  });
+});
+
+// UX-116: the inbox's client-side search and kind chips.
+describe("matchesSearch", () => {
+  it.each([
+    ["Mara", "mara", true],
+    ["Mara", "  MAR ", true],
+    ["Zoë", "zoe", true],
+    ["Zoe", "Zoë", true],
+    ["Crème brûlée", "creme BRU", true],
+    ["Mara", "anna", false],
+    ["Mara", "", true],
+    ["Mara", "   ", true],
+  ])("%s with %j: %s", (text, query, expected) => {
+    expect(matchesSearch(text, query)).toBe(expected);
+  });
+});
+
+describe("filterInbox", () => {
+  const thread = (threadId: string, kind: "dm" | "exchange" | "circle") => ({
+    threadId,
+    subject: { kind },
+  });
+  const threads = [
+    thread("zoe", "dm"),
+    thread("harbour", "exchange"),
+    thread("club", "circle"),
+    thread("anna", "dm"),
+  ];
+  const text: Record<string, string> = {
+    zoe: "Zoë",
+    harbour: "Trade: Night Harbour Mara",
+    club: "Puzzle Club",
+    anna: "Anna",
+  };
+  const ids = (list: readonly { threadId: string }[]) =>
+    list.map((item) => item.threadId);
+  const filter = (
+    query: string,
+    kind: Parameters<typeof filterInbox>[1]["kind"],
+  ) =>
+    ids(filterInbox(threads, { query, kind }, (item) => text[item.threadId]));
+
+  it("keeps every thread, in inbox order, without a query or kind", () => {
+    expect(filter("", "all")).toEqual(["zoe", "harbour", "club", "anna"]);
+  });
+
+  it("keeps one kind of thread", () => {
+    expect(filter("", "dm")).toEqual(["zoe", "anna"]);
+    expect(filter("", "exchange")).toEqual(["harbour"]);
+    expect(filter("", "circle")).toEqual(["club"]);
+  });
+
+  it("matches the thread's text ignoring case and accents", () => {
+    expect(filter("ZOE", "all")).toEqual(["zoe"]);
+    expect(filter("mara", "all")).toEqual(["harbour"]);
+  });
+
+  it("combines the query with the kind", () => {
+    expect(filter("a", "dm")).toEqual(["anna"]);
+    expect(filter("club", "dm")).toEqual([]);
   });
 });
 

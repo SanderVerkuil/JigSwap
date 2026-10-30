@@ -7,6 +7,7 @@
 import { Link } from "@/compat/link";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { EmptyState } from "@/components/library/empty-state";
+import { FilterBar } from "@/components/library/filter-bar";
 import { MemberInitial } from "@/components/members/member-initial";
 import { PresenceDot } from "@/components/presence/presence-dot";
 import { PresenceSharePrompt } from "@/components/presence/presence-sharing";
@@ -16,6 +17,7 @@ import {
 } from "@/components/presence/use-presence";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
@@ -27,6 +29,7 @@ import {
   ArrowLeftRight,
   BellOff,
   Loader2,
+  Search,
   User,
   UserRound,
 } from "lucide-react";
@@ -40,12 +43,15 @@ import {
   circleSnippet,
   copyOwnerHint,
   coverStackSummary,
+  filterInbox,
   formatCompactTime,
   formatFullDateTime,
   formatUnreadCount,
+  projectedMemberLabel,
   threadSubjectTitle,
   tradeEventText,
   type AnyInboxThread,
+  type InboxKindFilter,
   type InboxThread,
   type Translator,
 } from "./format";
@@ -113,6 +119,16 @@ export function ThreadSubjectAvatar({
   );
 }
 
+// A longer inbox gets a search box and kind chips above its rows (UX-116).
+const SEARCHABLE_FROM = 11;
+
+const KIND_FILTERS: readonly InboxKindFilter[] = [
+  "all",
+  "dm",
+  "exchange",
+  "circle",
+];
+
 // The list pane: loading / error / empty / rows. The page head titles the
 // page and carries the New menu (published by the /messages layout).
 // `guideBeside`: the page shows InboxGuide next to the list once the frame
@@ -149,8 +165,11 @@ function ThreadListBody({
 }) {
   const t = useTranslations("messages");
   const locale = useLocale();
+  const displayName = useMemberDisplayName();
   // One clock for every row, ticking each minute so "now"/"5m" stay fresh.
   const now = useNow({ updateInterval: 60_000 }).getTime();
+  const [query, setQuery] = useState("");
+  const [kind, setKind] = useState<InboxKindFilter>("all");
   const { member } = useCurrentMember();
   const me = member?._id;
   // The newest `limit` conversations; "Show older conversations" grows it.
@@ -246,20 +265,85 @@ function ThreadListBody({
     );
   }
 
+  // The search and chips only exist for a longer inbox, and only filter
+  // while they're shown: a shrinking inbox never hides threads behind them.
+  const searchable = inbox.length >= SEARCHABLE_FROM;
+  const filtering = searchable && (query.trim() !== "" || kind !== "all");
+  const threads = filtering
+    ? filterInbox(inbox, { query, kind }, (thread) => {
+        const title = threadSubjectTitle(thread.subject, t, displayName);
+        // An exchange is titled by its puzzle; its partner finds it too.
+        return thread.subject.kind === "exchange"
+          ? `${title} ${projectedMemberLabel(thread.subject.otherMember, t, displayName)}`
+          : title;
+      })
+    : inbox;
+  const clear = () => {
+    setQuery("");
+    setKind("all");
+  };
+
   return (
     <CoverTooltipProvider>
+      {searchable && (
+        // Sticks under the phone top bar, and to the top of the list pane's
+        // own scroll from md.
+        <div className="bg-background sticky top-[var(--app-sticky-top,0px)] z-10 flex flex-col gap-2 px-2 pt-2 max-md:-mx-2 md:top-0">
+          <div className="relative">
+            <Search
+              aria-hidden
+              className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
+            />
+            <Input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t("searchConversationsPlaceholder")}
+              aria-label={t("searchConversations")}
+              className="h-11 pl-9 md:h-9"
+            />
+          </div>
+          <FilterBar
+            options={KIND_FILTERS.map((value) => ({
+              value,
+              label: t(`filterKind.${value}`),
+            }))}
+            value={kind}
+            onChange={setKind}
+          />
+          {/* The result count for screen readers while a filter is on. */}
+          <p role="status" className="sr-only">
+            {filtering ? t("conversationCount", { count: threads.length }) : ""}
+          </p>
+        </div>
+      )}
+      {filtering && threads.length === 0 && (
+        <div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
+          <p className="text-muted-foreground text-sm">
+            {t("noConversationsMatch")}
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="max-md:min-h-11"
+            onClick={clear}
+          >
+            {t("clearSearch")}
+          </Button>
+        </div>
+      )}
       {/* Positioned so the rows and the active indicator share one origin. */}
       <nav aria-label={t("conversationsLabel")} className="relative">
         <ActiveRowIndicator
           activeKey={activeThreadId}
-          layoutKey={inbox.map((thread) => thread.threadId).join()}
+          layoutKey={threads.map((thread) => thread.threadId).join()}
         />
         <ul
           ref={listRef}
           role="list"
           className="flex flex-col gap-0.5 p-2 max-md:-mx-2"
         >
-          {inbox.map((thread) => (
+          {threads.map((thread) => (
             <li key={thread.threadId}>
               <ThreadRow
                 thread={thread}
@@ -287,7 +371,7 @@ function ThreadListBody({
                 loadingOlder
                   ? undefined
                   : () => {
-                      focusRowRef.current = inbox.length;
+                      focusRowRef.current = threads.length;
                       setLimit(
                         Math.min(limit + INBOX_PAGE_SIZE, INBOX_MAX_SIZE),
                       );

@@ -152,6 +152,32 @@ describe("ThreadList paging", () => {
     expect(document.activeElement).toBe(rowLinks()[30]);
   });
 
+  it("with a search on, lands focus on the first match the window added", () => {
+    setup({ 30: threads(30), 60: threads(45) });
+    fireEvent.change(screen.getByRole("searchbox"), {
+      target: { value: "Member 3" },
+    });
+    // Member 3 and Member 30.
+    expect(rowLinks()).toHaveLength(2);
+
+    fireEvent.click(showOlder()!);
+    // Plus Member 31 to 39.
+    expect(rowLinks()).toHaveLength(11);
+    expect(document.activeElement).toBe(rowLinks()[2]);
+  });
+
+  it("keeps offering older conversations when the search matches nothing loaded", () => {
+    setup({ 30: threads(30), 60: threads(45) });
+    fireEvent.change(screen.getByRole("searchbox"), {
+      target: { value: "Member 44" },
+    });
+    expect(screen.getByText("No conversations match")).toBeTruthy();
+
+    fireEvent.click(showOlder()!);
+    expect(rowLinks()).toHaveLength(1);
+    expect(screen.queryByText("No conversations match")).toBeNull();
+  });
+
   it("offers nothing when the inbox fits one page", () => {
     setup({ 30: threads(12) });
     expect(rowLinks()).toHaveLength(12);

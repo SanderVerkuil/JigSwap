@@ -149,6 +149,37 @@ export function threadSubjectTitle(
   });
 }
 
+// Text folded for a forgiving search: "Zoë" and "ZOE" both read "zoe".
+function foldForSearch(text: string): string {
+  return text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+}
+
+// Whether `text` contains `query`, ignoring case, accents and the spaces
+// around the query. An empty query matches everything.
+export function matchesSearch(text: string, query: string): boolean {
+  const needle = foldForSearch(query.trim());
+  return needle === "" || foldForSearch(text).includes(needle);
+}
+
+// The inbox's kind chips: every thread, or one subject kind.
+export type InboxKindFilter = "all" | AnyInboxThread["subject"]["kind"];
+
+// The inbox rows the search and kind chips keep, in inbox order. `textOf`
+// is what a thread is found by (its title, plus the partner of an exchange).
+export function filterInbox<
+  T extends { subject: { kind: AnyInboxThread["subject"]["kind"] } },
+>(
+  threads: readonly T[],
+  { query, kind }: { query: string; kind: InboxKindFilter },
+  textOf: (thread: T) => string,
+): T[] {
+  return threads.filter(
+    (thread) =>
+      (kind === "all" || thread.subject.kind === kind) &&
+      matchesSearch(textOf(thread), query),
+  );
+}
+
 // A circle thread row's snippet (spec §6.1): the newest visible message with its
 // projected author ("Bas: …", "You: …"), a photo or location named by its
 // sender, a join/leave row as its system text, and a blocked author's message
