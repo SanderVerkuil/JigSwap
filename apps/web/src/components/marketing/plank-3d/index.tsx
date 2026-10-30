@@ -1,3 +1,4 @@
+import { useCanLoad3D } from "@/components/common/three-gate";
 import { JigPlank, type PlankBox } from "@/components/marketing/plank";
 import { useTheme } from "next-themes";
 import * as React from "react";
@@ -5,30 +6,6 @@ import { resolveCssColor, resolveHeadingFont } from "./palette";
 import type { SceneProps } from "./scene";
 
 const PlankScene = React.lazy(() => import("./scene"));
-
-// Probed once per page load: useSyncExternalStore calls the snapshot on every
-// render, and each probe would otherwise allocate a canvas + GL context.
-let webGLSupport: boolean | undefined;
-function supportsWebGL(): boolean {
-  if (webGLSupport !== undefined) return webGLSupport;
-  try {
-    const canvas = document.createElement("canvas");
-    webGLSupport = !!(
-      canvas.getContext("webgl2") || canvas.getContext("webgl")
-    );
-  } catch {
-    webGLSupport = false;
-  }
-  return webGLSupport;
-}
-
-const noopSubscribe = () => () => {};
-
-// False on the server and during hydration (CSS fallback only), the real
-// WebGL support on the client.
-function useSupportsWebGL(): boolean {
-  return React.useSyncExternalStore(noopSubscribe, supportsWebGL, () => false);
-}
 
 const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
 
@@ -71,11 +48,15 @@ export function JigPlank3D({ rows = [] }: { rows?: PlankBox[][] }) {
     null,
   );
   const [headingFont, setHeadingFont] = React.useState("system-ui, sans-serif");
-  // `mounted` = client-side with WebGL available; gates every 3D path.
-  const mounted = useSupportsWebGL();
+  // `mounted` = idle client on a capable device (see three-gate); gates every
+  // 3D path. Phones, Save-Data and low-memory devices keep the CSS planks.
+  const mounted = useCanLoad3D();
   const reducedMotion = usePrefersReducedMotion();
   const { resolvedTheme } = useTheme();
   const theme: "light" | "dark" = resolvedTheme === "dark" ? "dark" : "light";
+  // The gate can close again (viewport narrowed below 768 px): the scene
+  // unmounts, so the CSS planks must come back rather than stay faded out.
+  if (sceneReady && !mounted) setSceneReady(false);
 
   // Resolve CSS-var colors + font from the live DOM; re-resolve when the
   // theme flips (the whole --mk-* ramp changes under .dark).

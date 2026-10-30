@@ -4,6 +4,7 @@ import {
   PuzzlePlank,
   type PuzzlePlankBox,
 } from "@/components/common/puzzle-plank";
+import { useCanLoad3D } from "@/components/common/three-gate";
 import {
   resolveCssColor,
   resolveHeadingFont,
@@ -18,30 +19,6 @@ import type { PlankSceneProps } from "./scene";
 
 const PlankScene = React.lazy(() => import("./scene"));
 const PlankScenePhysics = React.lazy(() => import("./scene-physics"));
-
-// Probed once per page load: useSyncExternalStore calls the snapshot on every
-// render, and each probe would otherwise allocate a canvas + GL context.
-let webGLSupport: boolean | undefined;
-function supportsWebGL(): boolean {
-  if (webGLSupport !== undefined) return webGLSupport;
-  try {
-    const canvas = document.createElement("canvas");
-    webGLSupport = !!(
-      canvas.getContext("webgl2") || canvas.getContext("webgl")
-    );
-  } catch {
-    webGLSupport = false;
-  }
-  return webGLSupport;
-}
-
-const noopSubscribe = () => () => {};
-
-// False on the server and during hydration (CSS fallback only), the real
-// WebGL support on the client.
-function useSupportsWebGL(): boolean {
-  return React.useSyncExternalStore(noopSubscribe, supportsWebGL, () => false);
-}
 
 const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
 
@@ -102,11 +79,15 @@ export function PuzzlePlank3D({
   // Bumped by the Reset button to snap the physics boxes back to their layout.
   const [resetNonce, setResetNonce] = React.useState(0);
   const t = useTranslations("shell");
-  // `mounted` = client-side with WebGL available; gates every 3D path.
-  const mounted = useSupportsWebGL();
+  // `mounted` = idle client on a capable device (see three-gate); gates every
+  // 3D path. Otherwise the CSS plank stays.
+  const mounted = useCanLoad3D();
   const reducedMotion = usePrefersReducedMotion();
   const { resolvedTheme } = useTheme();
   const theme: "light" | "dark" = resolvedTheme === "dark" ? "dark" : "light";
+  // The gate can close again (viewport narrowed below 768 px): the scene
+  // unmounts, so the CSS plank must come back rather than stay faded out.
+  if (sceneReady && !mounted) setSceneReady(false);
 
   // Resolve CSS-var colors + font from the live DOM; re-resolve when the
   // theme flips so box colors match the page's current palette.
@@ -153,7 +134,7 @@ export function PuzzlePlank3D({
 
   const showScene = mounted && resolved !== null;
   // Use physics scene only when explicitly opted in, WebGL is available, and
-  // reduced-motion is not active. `mounted` already gates on WebGL.
+  // reduced-motion is not active. `mounted` already gates on WebGL and device.
   const usePhysics = interactive && mounted && !reducedMotion;
 
   const sceneProps: PlankSceneProps = {
