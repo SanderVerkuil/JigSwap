@@ -113,7 +113,7 @@ Who wins when answers cross (every step is one Convex transaction, so the first 
   (one re-check each on the hash re-check pool; a match quarantines and escalates over the
   approval, a no_match is recorded and clears `hashCheckWaivedBy` and `pendingHashes`). **Run it
   right after configuring Offlimits** on a deployment (dry run first); see
-  [one-shot-migrations.md](one-shot-migrations.md#libimagemoderationrecheckwaivedhashes--hash-check-of-photos-approved-without-one).
+  [one-shot-migrations.md](one-shot-migrations.md#libimagemoderationrecheckwaivedhashes--hash-check-of-photos-published-without-one).
   A re-check of a waived photo never runs against an unconfigured service (it is skipped,
   `result: "skipped_unconfigured"`): an unconfigured service cannot answer.
 
