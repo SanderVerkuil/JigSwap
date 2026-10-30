@@ -10,7 +10,8 @@ import { logEvent } from "./logEvent";
 // the page were due, how many it acted on (always 0 in a dry run) and whether it was a dry run.
 
 /** The sweeps RETENTION_ENFORCE can name. */
-export type RetentionSweep = "reports" | "sentPhotos" | "copyPhotos";
+export type RetentionSweep =
+  "reports" | "sentPhotos" | "copyPhotos" | "domainEvents";
 
 /** Rows a sweep reads per run; it re-schedules itself for the next page. */
 export const RETENTION_SWEEP_PAGE = 100;

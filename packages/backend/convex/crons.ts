@@ -70,4 +70,14 @@ crons.daily(
   {},
 );
 
+// Domain events dispatched more than the activity feed's 90 days plus a week ago are deleted with
+// their member lookup rows (dry run unless RETENTION_ENFORCE names "domainEvents"); events in
+// flight or failed are kept (events/retention).
+crons.daily(
+  "domain event retention",
+  { hourUTC: 4, minuteUTC: 45 },
+  internal.events.retention.sweepEventRetention,
+  {},
+);
+
 export default crons;
