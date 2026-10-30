@@ -291,11 +291,15 @@
   "activity": {
     "completion": {
       "you": "You finished a puzzle",
-      "other": "<strong>{name}</strong> finished a puzzle"
+      "other": "<strong>{name}</strong> finished a puzzle",
+      "youTitled": "You finished <puzzle>{title}</puzzle>",
+      "otherTitled": "<strong>{name}</strong> finished <puzzle>{title}</puzzle>"
     },
     "acquisition": {
       "you": "You added a puzzle to your shelf",
-      "other": "<strong>{name}</strong> added a puzzle to their shelf"
+      "other": "<strong>{name}</strong> added a puzzle to their shelf",
+      "youTitled": "You added <puzzle>{title}</puzzle> to your shelf",
+      "otherTitled": "<strong>{name}</strong> added <puzzle>{title}</puzzle> to their shelf"
     },
     "acquisitionBatch": {
       "you": "You added {count, plural, one {# puzzle} other {# puzzles}} to your shelf",
@@ -308,10 +312,13 @@
     },
     "started": {
       "you": "You started a puzzle",
-      "other": "<strong>{name}</strong> started a puzzle"
+      "other": "<strong>{name}</strong> started a puzzle",
+      "youTitled": "You started <puzzle>{title}</puzzle>",
+      "otherTitled": "<strong>{name}</strong> started <puzzle>{title}</puzzle>"
     },
     "open": {
       "puzzle": "View the puzzle",
+      "puzzleNamed": "View {title}",
       "trades": "View your exchanges"
     },
     "empty": "No recent activity yet",

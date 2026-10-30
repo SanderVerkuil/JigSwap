@@ -35,16 +35,17 @@ type _LocalCoversContract = ActivityKind extends FeedEntryKind ? true : never;
 const _exhaustive: [_ContractCoversLocal, _LocalCoversContract] = [true, true];
 void _exhaustive;
 
-// Icon + accent per kind; labels are translated at render time (activity.<kind>.*).
+// Icon + accent per kind; labels are translated at render time (activity.<kind>.*). `titled`
+// kinds also have activity.<kind>.{youTitled,otherTitled}, used when the entry names its puzzle.
 export const ACTIVITY_META: Record<
   ActivityKind,
-  { icon: LucideIcon; accent: string }
+  { icon: LucideIcon; accent: string; titled: boolean }
 > = {
-  completion: { icon: CircleCheck, accent: "text-green-500" },
-  acquisition: { icon: Package, accent: "text-blue-500" },
-  acquisitionBatch: { icon: Boxes, accent: "text-blue-500" },
-  exchange: { icon: ArrowRightLeft, accent: "text-amber-500" },
-  started: { icon: Puzzle, accent: "text-sky-500" },
+  completion: { icon: CircleCheck, accent: "text-green-500", titled: true },
+  acquisition: { icon: Package, accent: "text-blue-500", titled: true },
+  acquisitionBatch: { icon: Boxes, accent: "text-blue-500", titled: false },
+  exchange: { icon: ArrowRightLeft, accent: "text-amber-500", titled: false },
+  started: { icon: Puzzle, accent: "text-sky-500", titled: true },
 };
 
 // Deploy-order safety: Convex deploys before web bundles, so an already-open client can receive a

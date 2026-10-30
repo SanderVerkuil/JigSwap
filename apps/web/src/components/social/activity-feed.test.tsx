@@ -310,3 +310,82 @@ describe("ActivityFeed — a departed actor", () => {
     expect(links(elementsOf(html))).toHaveLength(0);
   });
 });
+
+describe("ActivityFeed — the puzzle an entry is about", () => {
+  const subject = {
+    title: "Mountain Vista",
+    coverUrl: "https://example.com/mv.jpg",
+  };
+  const titled = (overrides: Partial<Feed[number]>): Feed[number] => ({
+    memberId: SANDER,
+    kind: "acquisition",
+    occurredAt: Date.now() - 60_000,
+    ref: "copy-x",
+    actorName: "Sander",
+    subject,
+    ...overrides,
+  });
+
+  it.each([
+    ["acquisition", SANDER, "en", "Sander added Mountain Vista to their shelf"],
+    ["acquisition", ME, "en", "You added Mountain Vista to your shelf"],
+    ["completion", SANDER, "en", "Sander finished Mountain Vista"],
+    ["completion", ME, "en", "You finished Mountain Vista"],
+    ["started", SANDER, "en", "Sander started Mountain Vista"],
+    ["started", ME, "en", "You started Mountain Vista"],
+    [
+      "acquisition",
+      SANDER,
+      "nl",
+      "Sander heeft Mountain Vista op de plank gezet",
+    ],
+    ["acquisition", ME, "nl", "Je hebt Mountain Vista op je plank gezet"],
+    ["completion", SANDER, "nl", "Sander heeft Mountain Vista afgemaakt"],
+    ["completion", ME, "nl", "Je hebt Mountain Vista afgemaakt"],
+    ["started", SANDER, "nl", "Sander is aan Mountain Vista begonnen"],
+    ["started", ME, "nl", "Je bent aan Mountain Vista begonnen"],
+  ] as const)(
+    "names the puzzle in a %s by %s (%s)",
+    (kind, memberId, locale, sentence) => {
+      const html = render([titled({ kind, memberId })], locale);
+      expect(sentences(html)).toContain(sentence);
+    },
+  );
+
+  it("names the row's link after the puzzle", () => {
+    const els = elementsOf(
+      render([titled({ target: { kind: "copy", id: "c1" } })]),
+    );
+    expect(attr(links(els)[0]!, "aria-label")).toBe("View Mountain Vista");
+    const nlEls = elementsOf(
+      render([titled({ target: { kind: "definition", id: "p1" } })], "nl"),
+    );
+    expect(attr(links(nlEls)[0]!, "aria-label")).toBe("Bekijk Mountain Vista");
+  });
+
+  it("shows the cover as a decorative 40px image", () => {
+    const els = elementsOf(render([titled({})]));
+    const img = els.find((el) => el.tagName === "img");
+    expect(attr(img!, "src")).toBe("https://example.com/mv.jpg");
+    expect(attr(img!, "alt")).toBe("");
+    expect(attr(img!, "aria-hidden")).toBe("true");
+    expect(attr(img!, "class")).toContain("size-10");
+  });
+
+  it("shows no image when the puzzle has no cover", () => {
+    const els = elementsOf(
+      render([
+        titled({ subject: { title: "Mountain Vista", coverUrl: null } }),
+      ]),
+    );
+    expect(els.some((el) => el.tagName === "img")).toBe(false);
+    expect(sentences(render([titled({})]))).toContain(
+      "Sander added Mountain Vista to their shelf",
+    );
+  });
+
+  it("keeps the untitled sentence for a kind that has no titled form", () => {
+    const html = render([titled({ kind: "exchange" })]);
+    expect(sentences(html)).toContain("Sander completed a swap");
+  });
+});

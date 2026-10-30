@@ -291,11 +291,15 @@
   "activity": {
     "completion": {
       "you": "Je hebt een puzzel afgemaakt",
-      "other": "<strong>{name}</strong> heeft een puzzel afgemaakt"
+      "other": "<strong>{name}</strong> heeft een puzzel afgemaakt",
+      "youTitled": "Je hebt <puzzle>{title}</puzzle> afgemaakt",
+      "otherTitled": "<strong>{name}</strong> heeft <puzzle>{title}</puzzle> afgemaakt"
     },
     "acquisition": {
       "you": "Je hebt een puzzel op je plank gezet",
-      "other": "<strong>{name}</strong> heeft een puzzel op de plank gezet"
+      "other": "<strong>{name}</strong> heeft een puzzel op de plank gezet",
+      "youTitled": "Je hebt <puzzle>{title}</puzzle> op je plank gezet",
+      "otherTitled": "<strong>{name}</strong> heeft <puzzle>{title}</puzzle> op de plank gezet"
     },
     "acquisitionBatch": {
       "you": "Je hebt {count, plural, one {# puzzel} other {# puzzels}} op je plank gezet",
@@ -308,10 +312,13 @@
     },
     "started": {
       "you": "Je bent aan een puzzel begonnen",
-      "other": "<strong>{name}</strong> is aan een puzzel begonnen"
+      "other": "<strong>{name}</strong> is aan een puzzel begonnen",
+      "youTitled": "Je bent aan <puzzle>{title}</puzzle> begonnen",
+      "otherTitled": "<strong>{name}</strong> is aan <puzzle>{title}</puzzle> begonnen"
     },
     "open": {
       "puzzle": "Bekijk de puzzel",
+      "puzzleNamed": "Bekijk {title}",
       "trades": "Bekijk je uitwisselingen"
     },
     "empty": "Nog geen recente activiteit",
