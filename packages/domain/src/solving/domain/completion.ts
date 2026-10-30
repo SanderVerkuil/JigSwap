@@ -89,9 +89,10 @@ export interface CompletionChanges {
 // references the puzzle by id (a PuzzleDefinitionId and/or a CopyId) and never loads those
 // aggregates. It can be in-progress (no end, isCompleted=false) or done (end + duration).
 //
-// Invariants: endDate ≥ startDate; the duration is consistent with the recorded end; at most
-// five photos; edits only within 24h of completion (photo attachment is exempt — see
-// attachPhotos).
+// Invariants: a new completion names a puzzle definition or a copy (at least one, so a solve
+// can't be logged against nothing; SEC-30); endDate ≥ startDate; the duration is consistent with
+// the recorded end; at most five photos; edits only within 24h of completion (photo attachment is
+// exempt — see attachPhotos).
 export class Completion {
   private events: DomainEvent[] = [];
 
@@ -115,6 +116,9 @@ export class Completion {
 
   // Begin an in-progress solve. No end/duration yet; records CompletionStarted.
   static start(props: StartCompletionProps): Result<Completion, SolvingError> {
+    if (!props.puzzleDefinitionId && !props.copyId) {
+      return err(SolvingError.targetRequired());
+    }
     const photos = props.photos ?? [];
     if (photos.length > MAX_PHOTOS) {
       return err(SolvingError.tooManyPhotos(MAX_PHOTOS));
@@ -154,6 +158,9 @@ export class Completion {
   static record(
     props: RecordCompletionProps,
   ): Result<Completion, SolvingError> {
+    if (!props.puzzleDefinitionId && !props.copyId) {
+      return err(SolvingError.targetRequired());
+    }
     const dates = Completion.resolveRecordDates(props);
     if (dates.isErr) return err(dates.error);
     const { startDate, endDate } = dates.value;

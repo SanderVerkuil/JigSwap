@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { toCompletionId, toMemberId } from "../../shared-kernel";
+import {
+  toCompletionId,
+  toMemberId,
+  toPuzzleDefinitionId,
+} from "../../shared-kernel";
 import { Completion } from "./completion";
 import { CompletionRecorded } from "./events";
 
@@ -8,6 +12,7 @@ import { CompletionRecorded } from "./events";
 
 const ID = toCompletionId("completion-1");
 const ALICE = toMemberId("alice");
+const PUZZLE = toPuzzleDefinitionId("puzzle-1");
 const NOW = new Date("2026-10-17T08:00:00Z");
 const DAY_START = new Date("2026-10-10T10:00:00Z");
 const DAY_END = new Date("2026-10-10T11:00:00Z");
@@ -18,6 +23,7 @@ const record = (overrides: Partial<RecordProps>) =>
   Completion.record({
     id: ID,
     userId: ALICE,
+    puzzleDefinitionId: PUZZLE,
     datePrecision: "day",
     now: NOW,
     ...overrides,
@@ -183,6 +189,7 @@ describe("start and finish always produce 'day'", () => {
     const started = Completion.start({
       id: ID,
       userId: ALICE,
+      puzzleDefinitionId: PUZZLE,
       startDate: DAY_START,
       now: NOW,
     });

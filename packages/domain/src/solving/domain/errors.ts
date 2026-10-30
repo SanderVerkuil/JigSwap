@@ -17,7 +17,8 @@ export type SolvingErrorCode =
   | "PuzzleNotReviewable"
   | "InvalidDatePrecision"
   | "InvalidYear"
-  | "DurationNotAllowed";
+  | "DurationNotAllowed"
+  | "CompletionTargetRequired";
 
 export class SolvingError extends DomainError {
   override readonly name = "SolvingError";
@@ -123,6 +124,14 @@ export class SolvingError extends DomainError {
     return new SolvingError(
       "InvalidYear",
       `A solve year must be a whole year from 1900 to this year (got ${year})`,
+    );
+  }
+
+  // A solve must name what was solved: a puzzle definition, a copy, or both.
+  static targetRequired(): SolvingError {
+    return new SolvingError(
+      "CompletionTargetRequired",
+      "A completion must name the puzzle or the copy that was solved",
     );
   }
 

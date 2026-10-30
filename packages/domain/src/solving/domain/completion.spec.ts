@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { toCompletionId, toFileId, toMemberId } from "../../shared-kernel";
+import {
+  toCompletionId,
+  toCopyId,
+  toFileId,
+  toMemberId,
+  toPuzzleDefinitionId,
+} from "../../shared-kernel";
 import { Completion, EDIT_WINDOW_MS } from "./completion";
 import { Photo } from "./photo";
 
@@ -9,6 +15,8 @@ const BOB = toMemberId("bob");
 const START = new Date("2026-06-01T10:00:00Z");
 const END = new Date("2026-06-01T11:30:00Z");
 const NOW = new Date("2026-06-01T11:30:00Z");
+const PUZZLE = toPuzzleDefinitionId("puzzle-1");
+const COPY = toCopyId("copy-1");
 
 const photos = (n: number): Photo[] =>
   Array.from({ length: n }, (_, i) => Photo.of(toFileId(`file-${i}`)));
@@ -19,6 +27,7 @@ const recordValid = (
   Completion.record({
     id: ID,
     userId: ALICE,
+    puzzleDefinitionId: PUZZLE,
     datePrecision: "day",
     startDate: START,
     endDate: END,
@@ -33,6 +42,7 @@ describe("Completion.start", () => {
     const result = Completion.start({
       id: ID,
       userId: ALICE,
+      puzzleDefinitionId: PUZZLE,
       startDate: START,
       now: NOW,
     });
@@ -47,6 +57,7 @@ describe("Completion.start", () => {
     const result = Completion.start({
       id: ID,
       userId: ALICE,
+      puzzleDefinitionId: PUZZLE,
       startDate: START,
       photos: photos(6),
       now: NOW,
@@ -59,11 +70,51 @@ describe("Completion.start", () => {
     const result = Completion.start({
       id: ID,
       userId: ALICE,
+      puzzleDefinitionId: PUZZLE,
       startDate: START,
       photos: photos(5),
       now: NOW,
     });
     expect(result.isOk).toBe(true);
+  });
+});
+
+describe("a completion names what was solved (SEC-30)", () => {
+  it("start() refuses a solve that names neither a puzzle nor a copy", () => {
+    const result = Completion.start({
+      id: ID,
+      userId: ALICE,
+      startDate: START,
+      now: NOW,
+    });
+    expect(result.isErr).toBe(true);
+    if (result.isErr) {
+      expect(result.error.code).toBe("CompletionTargetRequired");
+    }
+  });
+
+  it("record() refuses a solve that names neither a puzzle nor a copy", () => {
+    const result = recordValid({ puzzleDefinitionId: undefined });
+    expect(result.isErr).toBe(true);
+    if (result.isErr) {
+      expect(result.error.code).toBe("CompletionTargetRequired");
+    }
+  });
+
+  it("accepts a puzzle or a copy on its own", () => {
+    expect(
+      Completion.start({
+        id: ID,
+        userId: ALICE,
+        copyId: COPY,
+        startDate: START,
+        now: NOW,
+      }).isOk,
+    ).toBe(true);
+    expect(
+      recordValid({ puzzleDefinitionId: undefined, copyId: COPY }).isOk,
+    ).toBe(true);
+    expect(recordValid({ puzzleDefinitionId: PUZZLE }).isOk).toBe(true);
   });
 });
 
@@ -147,6 +198,7 @@ describe("Completion.finish", () => {
     const started = Completion.start({
       id: ID,
       userId: ALICE,
+      puzzleDefinitionId: PUZZLE,
       startDate: START,
       now: NOW,
     });
@@ -174,6 +226,7 @@ describe("Completion.finish", () => {
     const started = Completion.start({
       id: ID,
       userId: ALICE,
+      puzzleDefinitionId: PUZZLE,
       startDate: START,
       now: NOW,
     });
@@ -187,6 +240,7 @@ describe("Completion.finish", () => {
     const started = Completion.start({
       id: ID,
       userId: ALICE,
+      puzzleDefinitionId: PUZZLE,
       startDate: START,
       now: NOW,
     });
@@ -202,6 +256,7 @@ describe("Completion.finish", () => {
     const started = Completion.start({
       id: ID,
       userId: ALICE,
+      puzzleDefinitionId: PUZZLE,
       startDate: START,
       now: NOW,
     });
@@ -215,6 +270,7 @@ describe("Completion.finish", () => {
     const started = Completion.start({
       id: ID,
       userId: ALICE,
+      puzzleDefinitionId: PUZZLE,
       startDate: START,
       now: NOW,
     });
@@ -258,6 +314,7 @@ describe("Completion.edit", () => {
     const started = Completion.start({
       id: ID,
       userId: ALICE,
+      puzzleDefinitionId: PUZZLE,
       startDate: START,
       now: NOW,
     });
@@ -421,6 +478,7 @@ describe("Completion.edit", () => {
       const started = Completion.start({
         id: ID,
         userId: ALICE,
+        puzzleDefinitionId: PUZZLE,
         startDate: START,
         now: NOW,
       });
@@ -524,6 +582,7 @@ describe("Completion.allPiecesPresent", () => {
     const result = Completion.start({
       id: ID,
       userId: ALICE,
+      puzzleDefinitionId: PUZZLE,
       startDate: START,
       now: NOW,
       allPiecesPresent: true,
@@ -537,6 +596,7 @@ describe("Completion.allPiecesPresent", () => {
     const started = Completion.start({
       id: ID,
       userId: ALICE,
+      puzzleDefinitionId: PUZZLE,
       startDate: START,
       now: NOW,
     });

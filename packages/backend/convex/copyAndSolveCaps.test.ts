@@ -230,3 +230,43 @@ describe("daily copy cap (SEC-29)", () => {
     expect(await copiesOf(t, bob)).toHaveLength(1);
   });
 });
+
+describe("a logged solve names a copy or a puzzle (SEC-30)", () => {
+  const completionCount = (t: T) =>
+    t.run(async (ctx) => (await ctx.db.query("completions").collect()).length);
+
+  test("a copy-less, puzzle-less solve is refused and writes nothing", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+
+    // The flood vector: a far-future in-progress solve against nothing, hidden from every feed.
+    await expectConvexCode(
+      as(t, "alice").mutation(api.solving.recordCompletion.recordCompletion, {
+        startDate: Date.now() + 10 * 365 * DAY,
+      }),
+      "CompletionTargetRequired",
+    );
+    await expectConvexCode(
+      as(t, "alice").mutation(api.solving.recordCompletion.recordCompletion, {
+        datePrecision: "unknown",
+      }),
+      "CompletionTargetRequired",
+    );
+    expect(await completionCount(t)).toBe(0);
+    expect(await eventCount(t, "CompletionStarted")).toBe(0);
+    expect(await eventCount(t, "CompletionRecorded")).toBe(0);
+  });
+
+  test("a solve that names only a puzzle is still accepted", async () => {
+    const t = convexTest(schema, modules);
+    const { definitions } = await seed(t);
+    await as(t, "alice").mutation(
+      api.solving.recordCompletion.recordCompletion,
+      {
+        puzzleDefinitionId: definitions[0]!,
+        datePrecision: "unknown",
+      },
+    );
+    expect(await completionCount(t)).toBe(1);
+  });
+});
