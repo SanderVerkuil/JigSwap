@@ -3,7 +3,7 @@ import { paginationOptsValidator, type PaginationResult } from "convex/server";
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
-import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
+import { boxArtImage } from "../lib/imageModeration/boxArtUrl";
 import { clampPaginationOpts } from "../lib/pageSize";
 import {
   publicAvailabilityFromByType,
@@ -129,13 +129,15 @@ export const browsePublicCatalog = query({
     const page: PublicCatalogCardView[] = await Promise.all(
       rows.map(async (puzzle) => {
         const { rating, availability } = await cardAggregatesOf(puzzle._id);
+        const image = await boxArtImage(ctx, puzzle.image);
         return {
           _id: puzzle._id,
           title: puzzle.title,
           brand: puzzle.brand,
           pieceCount: puzzle.pieceCount,
           difficulty: puzzle.difficulty,
-          image: puzzle.image ? await boxArtUrl(ctx, puzzle.image) : null,
+          image: image?.url ?? null,
+          ...(image?.srcSet !== undefined && { imageSrcSet: image.srcSet }),
           rating: { value: rating.rating, count: rating.count },
           availableToSwap: availability.total,
         };

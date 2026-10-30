@@ -7,6 +7,8 @@ export interface PlankPuzzleView {
   brand?: string;
   /** Resolved cover URL, if the puzzle has box art. */
   image: string | null;
+  /** The cover's 480 px rendition, once it exists; prefer it over `image` (a small texture). */
+  thumbUrl?: string;
 }
 
 /** Privacy-minimal public view of a community member for marketing surfaces.
