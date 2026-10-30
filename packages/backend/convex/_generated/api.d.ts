@@ -188,6 +188,7 @@ import type * as events_dispatch from "../events/dispatch.js";
 import type * as events_ingestDispatchFailure from "../events/ingestDispatchFailure.js";
 import type * as events_makeEventPublisher from "../events/makeEventPublisher.js";
 import type * as events_recordAndSchedule from "../events/recordAndSchedule.js";
+import type * as events_redactPayloads from "../events/redactPayloads.js";
 import type * as exchange_accept from "../exchange/accept.js";
 import type * as exchange_adapters_convexCopyPort from "../exchange/adapters/convexCopyPort.js";
 import type * as exchange_adapters_convexExchangeEligibility from "../exchange/adapters/convexExchangeEligibility.js";
@@ -763,6 +764,7 @@ declare const fullApi: ApiFromModules<{
   "events/ingestDispatchFailure": typeof events_ingestDispatchFailure;
   "events/makeEventPublisher": typeof events_makeEventPublisher;
   "events/recordAndSchedule": typeof events_recordAndSchedule;
+  "events/redactPayloads": typeof events_redactPayloads;
   "exchange/accept": typeof exchange_accept;
   "exchange/adapters/convexCopyPort": typeof exchange_adapters_convexCopyPort;
   "exchange/adapters/convexExchangeEligibility": typeof exchange_adapters_convexExchangeEligibility;
