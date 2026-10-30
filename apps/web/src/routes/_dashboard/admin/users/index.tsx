@@ -1,6 +1,8 @@
 import { QueueEmpty } from "@/components/admin/queue-empty";
 import { CommunityProfileAction } from "@/components/admin/users/community-profile-action";
+import { useUrlSearchInput } from "@/components/admin/users/use-url-search-input";
 import { UserRoleAction } from "@/components/admin/users/user-role-action";
+import { validateAdminUsersSearch } from "@/components/admin/users/users-search";
 import { MemberInitial } from "@/components/members/member-initial";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -10,14 +12,16 @@ import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery } from "convex/react";
 import { Search, UserX } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback } from "react";
 import { useFormatter, useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/admin/users/")({
+  // `?q=` is the search, so Back from a member's page restores the filtered list.
+  validateSearch: validateAdminUsersSearch,
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "adminUsers") }],
   }),
@@ -36,14 +40,22 @@ function AdminUsersPage() {
   const displayName = useMemberDisplayName();
   const format = useFormatter();
 
-  const [searchInput, setSearchInput] = useState("");
-  // Debounced server search: usePaginatedQuery restarts pagination whenever its args change,
-  // so only push the term once the admin stops typing.
-  const [search, setSearch] = useState("");
-  useEffect(() => {
-    const handle = setTimeout(() => setSearch(searchInput.trim()), 300);
-    return () => clearTimeout(handle);
-  }, [searchInput]);
+  const { q: search } = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+  // Debounced server search: usePaginatedQuery restarts pagination whenever its args change, so
+  // the term only reaches `?q=` (replacing the entry) once the admin stops typing.
+  const [searchInput, setSearchInput] = useUrlSearchInput(
+    search,
+    useCallback(
+      (term: string | undefined) =>
+        void navigate({
+          search: (prev) => ({ ...prev, q: term }),
+          replace: true,
+          resetScroll: false,
+        }),
+      [navigate],
+    ),
+  );
 
   const {
     results: users,
