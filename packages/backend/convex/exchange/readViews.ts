@@ -9,6 +9,7 @@ import type {
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { copyShowsCatalogFacts } from "../catalog/definitionVisibility";
+import { effectiveCopyVisibility } from "../library/copyVisibility";
 import { toCopySnapshotView } from "../library/mappers";
 import {
   projectTradeParty,
@@ -230,7 +231,9 @@ export const toOwnedPuzzleView = (
     // Owner-only personal fields: only surfaced when the viewer owns this copy.
     notes: viewerIsOwner ? c.notes : undefined,
     availability: c.availability,
-    visibility: c.visibility,
+    // The effective value, never the raw column: that holds the owner's choice, which may be
+    // "private" on an offered copy and is not the counterparty's business.
+    visibility: effectiveCopyVisibility(c),
     // Public asking price for a copy listed for sale — always carried.
     salePrice: c.salePrice,
     acquisitionDate: viewerIsOwner ? c.acquisitionDate : undefined,

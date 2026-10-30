@@ -12,7 +12,7 @@ import {
   type CopyState,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
-import { effectiveCopyVisibility } from "../copyVisibility";
+import { copyVisibilityPreference } from "../copyVisibility";
 import { isOpenAvailability } from "../openListing";
 
 // ACL between the persisted `ownedPuzzles` (+ `ownedPuzzleImages`) rows and the Copy aggregate.
@@ -120,8 +120,9 @@ export const toRow = (copy: Copy): OwnedPuzzleRow => {
     availability,
     // The listing flag Browse reads by index, kept in step with `availability` on every save.
     isOpen: isOpenAvailability(availability),
-    // The domain value is authoritative (a load already resolved it through
-    // effectiveCopyVisibility), so every save stamps the rollout marker with it.
+    // The owner's choice, which may be "private" on an offered copy (library/copyVisibility derives
+    // what others see). It is authoritative (a load already resolved it through
+    // copyVisibilityPreference), so every save stamps the rollout marker with it.
     visibility: sharing.visibility,
     visibilityAuthoritative: true,
     salePrice: sharing.salePrice
@@ -146,15 +147,16 @@ export const toRow = (copy: Copy): OwnedPuzzleRow => {
 };
 
 // The SharingSetting consolidates the availability flags + the (optional) visibility column. The
-// visibility is the EFFECTIVE one (library/copyVisibility): a legacy row's untrusted stored
-// "private" (the old domain default, never an owner's choice) loads as "visible", so a later save
-// can't resurrect it as an authoritative private.
+// visibility is the OWNER'S CHOICE (library/copyVisibility.copyVisibilityPreference), kept even
+// while the copy is offered so withdrawing restores it; a legacy row's untrusted stored "private"
+// (the old domain default, never an owner's choice) loads as "visible", so a later save can't
+// resurrect it as an authoritative private.
 const sharingFromRow = (
   row: Doc<"ownedPuzzles">,
   salePrice: Price | undefined,
 ): SharingSetting =>
   SharingSetting.create({
-    visibility: effectiveCopyVisibility(row),
+    visibility: copyVisibilityPreference(row),
     forTrade: row.availability.forTrade,
     forSale: row.availability.forSale,
     forLend: row.availability.forLend,

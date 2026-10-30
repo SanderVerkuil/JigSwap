@@ -9,10 +9,13 @@ export type ExchangeAvailabilityKind = "trade" | "sale" | "lend";
 // (private / friend-circle / visible / lendable / swappable / tradeable). This VO
 // consolidates today's fragmented availability into ONE place by splitting that model into
 // two orthogonal axes:
-//   - `visibility`  -> who can SEE the copy: "private" (only the owner, plus whoever physically
-//     holds it and the owner's household — enforced by the read-side gate) | "visible".
+//   - `visibility`  -> the OWNER'S CHOICE of who can see the copy: "private" (only the owner, plus
+//     whoever physically holds it and the owner's household — enforced by the read-side gate) |
+//     "visible". It is kept as chosen while the copy is offered, so withdrawing every offer
+//     restores it.
 //   - the exchange-availability flags below -> what it can be USED for (lendable/swappable/
-//     tradeable), each of which also implies the copy is at least visible.
+//     tradeable), each of which makes the copy visible for as long as it is offered.
+// effectiveVisibility() combines the two: what others actually get.
 // NOTE: the "friend-circle" level is Phase 6 (Friend Circles); it plugs in later as a third
 // visibility value plus a scoping predicate in the VisibilityPolicy port, without changing
 // this VO's shape.
@@ -68,10 +71,10 @@ export class SharingSetting {
     return new SharingSetting(this.visibility, false, false, false);
   }
 
-  // A copy offered for exchange must be visible: an offer nobody can see is meaningless. Checked
-  // on write by Copy.updateSharing (CopyMustBeVisibleToOffer).
-  offersWhilePrivate(): boolean {
-    return this.visibility === "private" && this.isAvailableForAnyExchange();
+  // What others actually get: "visible" while the copy is offered for any exchange (an offer
+  // nobody can see is meaningless), otherwise the owner's choice.
+  effectiveVisibility(): Visibility {
+    return this.isAvailableForAnyExchange() ? "visible" : this.visibility;
   }
 
   // Offered for at least one kind of exchange.
@@ -80,9 +83,8 @@ export class SharingSetting {
   }
 
   // Anyone other than the owner may see this copy when it is public or offered for exchange
-  // (an exchange offer is meaningless if the copy is invisible). Friend-circle scoping is
-  // layered on top of this in Phase 6.
+  // (effectiveVisibility). Friend-circle scoping is layered on top of this in Phase 6.
   isPubliclyVisible(): boolean {
-    return this.visibility === "visible" || this.isAvailableForAnyExchange();
+    return this.effectiveVisibility() === "visible";
   }
 }

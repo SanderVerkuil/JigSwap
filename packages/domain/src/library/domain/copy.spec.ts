@@ -172,20 +172,21 @@ describe("updateSharing", () => {
     expect(names(copy.pullEvents())).toEqual(["CopyMadeUnavailable"]);
   });
 
-  it("rejects offering a private copy (CopyMustBeVisibleToOffer) and changes nothing", () => {
+  it("offers a private copy: keeps the owner's private choice and is visible while offered", () => {
     const copy = acquire();
     copy.pullEvents();
     const result = copy.updateSharing(
-      SharingSetting.create({ visibility: "private", forLend: true }),
+      SharingSetting.create({ visibility: "private", forTrade: true }),
       LATER,
     );
-    expect(result.isErr).toBe(true);
-    if (result.isErr)
-      expect(result.error.code).toBe("CopyMustBeVisibleToOffer");
-    expect(copy.sharing.visibility).toBe("visible");
-    expect(copy.sharing.isAvailableForAnyExchange()).toBe(false);
-    expect(copy.toState().updatedAt).toBe(NOW);
-    expect(copy.pullEvents()).toHaveLength(0);
+    expect(result.isOk).toBe(true);
+    expect(copy.sharing.visibility).toBe("private");
+    expect(copy.sharing.effectiveVisibility()).toBe("visible");
+    expect(copy.sharing.isAvailableFor("trade")).toBe(true);
+    expect(copy.toState().updatedAt).toBe(LATER);
+    const events = copy.pullEvents();
+    expect(names(events)).toEqual(["CopyMadeAvailable"]);
+    expect(events[0]).toBeInstanceOf(CopyMadeAvailable);
   });
 });
 
@@ -334,6 +335,17 @@ describe("Copy possession (lend / return)", () => {
     const carol = toOwnerId("carol");
     expect(copy.lendOut(carol, LATER).isOk).toBe(true);
     expect(copy.heldBy).toBe(carol);
+  });
+
+  it("lendOut of a private copy that was offered makes it private again", () => {
+    const copy = acquire();
+    copy.updateSharing(
+      SharingSetting.create({ visibility: "private", forLend: true }),
+      NOW,
+    );
+    copy.lendOut(borrower, LATER);
+    expect(copy.sharing.isAvailableForAnyExchange()).toBe(false);
+    expect(copy.sharing.effectiveVisibility()).toBe("private");
   });
 
   it("returnToOwner restores possession to the owner", () => {

@@ -1,5 +1,4 @@
 import { convexTest, type TestConvex } from "convex-test";
-import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
@@ -465,37 +464,6 @@ describe("collections, definition aggregates and completion links", () => {
 });
 
 describe("writes: updateCopySharing and the repository marker", () => {
-  const dataOf = (e: unknown) =>
-    (e as ConvexError<{ code: string; message: string }>).data;
-
-  test.each([{ forTrade: true }, { forSale: true }, { forLend: true }])(
-    "a private setting with an offer (%o) is rejected with CopyMustBeVisibleToOffer",
-    async (flags) => {
-      const t = convexTest(schema, modules);
-      const cast = await seedCast(t);
-      const copyId = await as(t, "alice").mutation(
-        api.library.acquireCopy.acquireCopy,
-        { puzzleDefinitionId: cast.puzzleAggregateId, condition: "good" },
-      );
-      const attempt = as(t, "alice").mutation(
-        api.library.updateCopySharing.updateCopySharing,
-        { copyId, visibility: "private", ...flags },
-      );
-      await expect(attempt).rejects.toBeInstanceOf(ConvexError);
-      await attempt.catch((e: unknown) =>
-        expect(dataOf(e).code).toBe("CopyMustBeVisibleToOffer"),
-      );
-      const row = await t.run((ctx) =>
-        ctx.db
-          .query("ownedPuzzles")
-          .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", copyId))
-          .unique(),
-      );
-      expect(row?.visibility).toBe("visible");
-      expect(row?.availability).toEqual(CLOSED);
-    },
-  );
-
   test("making a copy private writes private + marker", async () => {
     const t = convexTest(schema, modules);
     const cast = await seedCast(t);
@@ -598,4 +566,231 @@ describe("rule P: the other party of an exchange may see a private copy", () => 
       },
     );
   }
+});
+
+describe("an offer keeps the owner's private choice (UX-20)", () => {
+  // Drain the async dispatch chain (settle -> PossessionTransferred -> openLoan ...).
+  const flush = async (t: TestConvex<typeof schema>) => {
+    for (let i = 0; i < 12; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      await t.finishInProgressScheduledFunctions();
+    }
+  };
+
+  // Alice acquires a copy and makes it private; returns its aggregateId and row _id.
+  const privateCopy = async (t: TestConvex<typeof schema>, cast: Cast) => {
+    const copyId = await as(t, "alice").mutation(
+      api.library.acquireCopy.acquireCopy,
+      { puzzleDefinitionId: cast.puzzleAggregateId, condition: "good" },
+    );
+    await as(t, "alice").mutation(
+      api.library.updateCopySharing.updateCopySharing,
+      { copyId, visibility: "private" },
+    );
+    const row = await rowOf(t, copyId);
+    if (!row) throw new Error("setup: copy row missing");
+    return { copyId, rowId: row._id };
+  };
+
+  const rowOf = (t: TestConvex<typeof schema>, copyId: string) =>
+    t.run((ctx) =>
+      ctx.db
+        .query("ownedPuzzles")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", copyId))
+        .unique(),
+    );
+
+  // Offer toggles from the copy page send only the flags, never a visibility.
+  const offer = (
+    t: TestConvex<typeof schema>,
+    copyId: string,
+    flags: Partial<typeof CLOSED>,
+  ) =>
+    as(t, "alice").mutation(api.library.updateCopySharing.updateCopySharing, {
+      copyId,
+      ...flags,
+    });
+
+  test.each([{ forTrade: true }, { forSale: true }, { forLend: true }])(
+    "offering a private copy (%o) shows it to others while offered and keeps the stored choice private",
+    async (flags) => {
+      const t = convexTest(schema, modules);
+      const cast = await seedCast(t);
+      const { copyId, rowId } = await privateCopy(t, cast);
+
+      await offer(t, copyId, flags);
+
+      const row = await rowOf(t, copyId);
+      expect(row?.availability).toEqual({ ...CLOSED, ...flags });
+      expect(row?.visibility).toBe("private");
+      expect(row?.visibilityAuthoritative).toBe(true);
+      expect(row && effectiveCopyVisibility(row)).toBe("visible");
+      for (const name of ["bob", "erin", "frank"]) {
+        const view = await viewCopy(t, name, rowId);
+        expect(view).not.toBeNull();
+        expect(view?.snapshot.visibility).toBe("visible");
+      }
+    },
+  );
+
+  test("withdrawing without a visibility makes the copy private again", async () => {
+    const t = convexTest(schema, modules);
+    const cast = await seedCast(t);
+    const { copyId, rowId } = await privateCopy(t, cast);
+    await offer(t, copyId, { forTrade: true });
+
+    await offer(t, copyId, {});
+
+    const row = await rowOf(t, copyId);
+    expect(row?.availability).toEqual(CLOSED);
+    expect(row?.visibility).toBe("private");
+    for (const name of ["bob", "erin", "frank"]) {
+      expect(await viewCopy(t, name, rowId)).toBeNull();
+    }
+    expect((await viewCopy(t, "alice", rowId))?.snapshot.visibility).toBe(
+      "private",
+    );
+  });
+
+  test("an explicit visibility still replaces the choice", async () => {
+    const t = convexTest(schema, modules);
+    const cast = await seedCast(t);
+    const { copyId, rowId } = await privateCopy(t, cast);
+    await offer(t, copyId, { forLend: true });
+
+    await as(t, "alice").mutation(
+      api.library.updateCopySharing.updateCopySharing,
+      { copyId, visibility: "visible" },
+    );
+
+    expect((await rowOf(t, copyId))?.visibility).toBe("visible");
+    expect(await viewCopy(t, "bob", rowId)).not.toBeNull();
+  });
+
+  test("changing the condition while offered keeps the private choice", async () => {
+    const t = convexTest(schema, modules);
+    const cast = await seedCast(t);
+    const { copyId, rowId } = await privateCopy(t, cast);
+    await offer(t, copyId, { forTrade: true });
+
+    await as(t, "alice").mutation(
+      api.library.changeCopyCondition.changeCopyCondition,
+      { copyId, condition: "fair" },
+    );
+    const row = await rowOf(t, copyId);
+    expect(row?.condition).toBe("fair");
+    expect(row?.visibility).toBe("private");
+
+    await offer(t, copyId, {});
+    expect(await viewCopy(t, "bob", rowId)).toBeNull();
+  });
+
+  test("a settled lend of an offered private copy leaves it private: only the borrower and household see it", async () => {
+    const t = convexTest(schema, modules);
+    const cast = await seedCast(t);
+    const { copyId, rowId } = await privateCopy(t, cast);
+    await offer(t, copyId, { forLend: true });
+
+    const exchangeId = await as(t, "frank").mutation(
+      api.exchange.propose.propose,
+      { recipientId: cast.alice, type: "loan", requestedPuzzleId: rowId },
+    );
+    await as(t, "alice").mutation(api.exchange.accept.accept, { exchangeId });
+    for (const name of ["frank", "alice"]) {
+      await as(t, name).mutation(
+        api.exchange.confirmCompletion.confirmCompletion,
+        { exchangeId },
+      );
+    }
+    await flush(t);
+
+    const row = await rowOf(t, copyId);
+    expect(row?.heldBy).toBe(cast.frank);
+    expect(row?.availability).toEqual(CLOSED);
+    expect(row && effectiveCopyVisibility(row)).toBe("private");
+    for (const name of ["alice", "dave", "frank"]) {
+      expect(await viewCopy(t, name, rowId)).not.toBeNull();
+    }
+    for (const name of ["bob", "erin"]) {
+      expect(await viewCopy(t, name, rowId)).toBeNull();
+    }
+  });
+
+  test("getCopyInstanceView carries visibilityPreference to managers only", async () => {
+    const t = convexTest(schema, modules);
+    const cast = await seedCast(t);
+    const { copyId, rowId } = await privateCopy(t, cast);
+    await offer(t, copyId, { forTrade: true });
+
+    const preferenceFor = async (name: string) =>
+      (await viewCopy(t, name, rowId))?.snapshot.visibilityPreference;
+    expect(await preferenceFor("alice")).toBe("private");
+    // dave is alice's household mate; the copy's default household permission is "manage".
+    expect(await preferenceFor("dave")).toBe("private");
+    for (const name of ["bob", "erin", "frank"]) {
+      const view = await viewCopy(t, name, rowId);
+      expect(view).not.toBeNull();
+      expect(view?.snapshot.visibilityPreference).toBeUndefined();
+    }
+
+    await t.run((ctx) => ctx.db.patch(rowId, { householdPermission: "view" }));
+    const viewOnly = await viewCopy(t, "dave", rowId);
+    expect(viewOnly?.viewerCanManage).toBe(false);
+    expect(viewOnly?.snapshot.visibilityPreference).toBeUndefined();
+  });
+
+  test("visibilityPreference falls back to the effective value for unmarked and visible rows", async () => {
+    const t = convexTest(schema, modules);
+    const cast = await seedCast(t);
+    const { legacy, visible, privateClosed } = await t.run(async (ctx) => ({
+      legacy: await insertCopy(ctx, cast, {
+        aggregateId: "legacy-copy",
+        visibility: "private",
+      }),
+      visible: await insertCopy(ctx, cast, {
+        aggregateId: "visible-copy",
+        ...VISIBLE,
+      }),
+      privateClosed: await insertCopy(ctx, cast, {
+        aggregateId: "private-copy",
+        ...PRIVATE,
+      }),
+    }));
+    const preferenceOf = async (rowId: Id<"ownedPuzzles">) =>
+      (await viewCopy(t, "alice", rowId))?.snapshot.visibilityPreference;
+    expect(await preferenceOf(legacy)).toBe("visible");
+    expect(await preferenceOf(visible)).toBe("visible");
+    expect(await preferenceOf(privateClosed)).toBe("private");
+
+    // Offering the legacy row through the domain stamps the marker with "visible", not the old
+    // untrusted stored "private".
+    await offer(t, "legacy-copy", { forTrade: true });
+    await offer(t, "legacy-copy", {});
+    expect(await viewCopy(t, "bob", legacy)).not.toBeNull();
+  });
+
+  test("an exchange party sees the offered copy's effective visibility, never the owner's choice", async () => {
+    const t = convexTest(schema, modules);
+    const cast = await seedCast(t);
+    const { copyId, rowId } = await privateCopy(t, cast);
+    await offer(t, copyId, { forLend: true });
+
+    const aggregateId = await as(t, "frank").mutation(
+      api.exchange.propose.propose,
+      { recipientId: cast.alice, type: "loan", requestedPuzzleId: rowId },
+    );
+    const exchange = await t.run((ctx) =>
+      ctx.db
+        .query("exchanges")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", aggregateId))
+        .unique(),
+    );
+    if (!exchange) throw new Error("setup: exchange row missing");
+    const view = await as(t, "frank").query(
+      api.exchange.getExchangeById.getExchangeById,
+      { exchangeId: exchange._id },
+    );
+    expect(view?.ownerPuzzle?._id).toBe(rowId);
+    expect(view?.ownerPuzzle?.visibility).toBe("visible");
+  });
 });

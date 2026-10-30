@@ -18,7 +18,6 @@ export type LibraryErrorCode =
   | "NotLender"
   | "EmptyAcquireBatch"
   | "AcquireBatchTooLarge"
-  | "CopyMustBeVisibleToOffer"
   | "OwnershipChanged"
   | "AlreadyLentOut"
   | "TooManyImages"
@@ -136,14 +135,6 @@ export class LibraryError extends DomainError {
     return new LibraryError(
       "AlreadyLentOut",
       "The copy is already out on loan",
-    );
-  }
-
-  // A copy offered for swap, lend or sale must be visible to the community.
-  static copyMustBeVisibleToOffer(): LibraryError {
-    return new LibraryError(
-      "CopyMustBeVisibleToOffer",
-      "A copy offered for swap, lend or sale must be visible",
     );
   }
 

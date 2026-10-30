@@ -72,12 +72,4 @@ describe("LibraryError factories", () => {
     expect(e.code).toBe("ImageTextTooLong");
     expect(e.message).toBe("A photo title can be at most 200 characters");
   });
-
-  it("copyMustBeVisibleToOffer", () => {
-    const e = LibraryError.copyMustBeVisibleToOffer();
-    expect(e.code).toBe("CopyMustBeVisibleToOffer");
-    expect(e.message).toBe(
-      "A copy offered for swap, lend or sale must be visible",
-    );
-  });
 });

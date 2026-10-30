@@ -356,11 +356,12 @@ export default defineSchema({
     // A reader still re-checks the owner's visibility: a lagging flag can cost a slot, never leak.
     ownerPrivate: v.optional(v.literal(true)),
     listedAt: v.optional(v.number()),
-    // The SharingSetting's visibility axis (who can SEE the copy), orthogonal to the
-    // availability flags (what it can be USED for). Optional; legacy rows are unset. Convex has no
-    // column defaults: the "visible" default lives in the create paths (domain SharingSetting.newCopy)
-    // and in library/copyVisibility.effectiveCopyVisibility. NEVER read this column directly to
-    // decide who may see a copy — always go through effectiveCopyVisibility.
+    // The SharingSetting's visibility axis: the OWNER'S CHOICE of who can see the copy, orthogonal
+    // to the availability flags (what it can be USED for). It stays "private" while a private copy
+    // is offered (the offer makes it visible only while it lasts), so withdrawing restores it.
+    // Optional; legacy rows are unset. Convex has no column defaults: the "visible" default lives in
+    // the create paths (domain SharingSetting.newCopy) and in library/copyVisibility. NEVER read
+    // this column directly to decide who may see a copy — always go through effectiveCopyVisibility.
     visibility: v.optional(v.union(v.literal("private"), v.literal("visible"))),
     // Rollout marker: true when `visibility` was written by an authoritative source (the domain
     // repository on any save, or the one-shot backfill library/backfillCopyVisibility). Rows without

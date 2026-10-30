@@ -20,10 +20,11 @@ import {
 // synchronous function of those precomputed facts.
 
 // Map a Library Copy's SharingSetting to a Sharing VisibilityScope. The copy's visibility is the
-// EFFECTIVE one (copyMapper -> effectiveCopyVisibility): a legacy row's untrusted stored "private"
-// loads as "visible", so "private" here is always the owner's per-copy choice. That maps to the
-// "private" scope — no circle visibility — matching canViewCopy's isCopyPrivate early return.
-// Public/availability behaviour is preserved exactly.
+// owner's choice (copyMapper -> copyVisibilityPreference): a legacy row's untrusted stored "private"
+// loads as "visible", so "private" here is always the owner's per-copy choice. An offer is checked
+// first (an offered copy is visible whatever the choice), so "private" maps to the "private" scope
+// — no circle visibility — only when nothing is offered, matching canViewCopy's isCopyPrivate early
+// return. Public/availability behaviour is preserved exactly.
 const scopeOf = (copy: Copy): VisibilityScope => {
   const sharing = copy.sharing;
   if (sharing.isAvailableFor("trade")) return "tradeable";

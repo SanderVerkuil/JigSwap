@@ -1,4 +1,4 @@
-import { DomainEvent, err, ok, Result } from "../../shared-kernel";
+import { DomainEvent, ok, Result } from "../../shared-kernel";
 import { Acquisition } from "./acquisition";
 import { CatalogSnapshot } from "./catalog-snapshot";
 import { Condition } from "./condition";
@@ -129,15 +129,13 @@ export class Copy {
   }
 
   // Replace the whole sharing setting. Emits CopyMadeAvailable/Unavailable so subscribers
-  // (and the Exchange context's read model) can react to availability changes. Rejects a private
-  // setting that offers the copy for any exchange (CopyMustBeVisibleToOffer), leaving it unchanged.
+  // (and the Exchange context's read model) can react to availability changes. A private copy may
+  // be offered: it is visible while offered (SharingSetting.effectiveVisibility) and the owner's
+  // private choice is kept for when the offers are withdrawn.
   updateSharing(
     setting: SharingSetting,
     now: Date,
   ): Result<void, LibraryError> {
-    if (setting.offersWhilePrivate()) {
-      return err(LibraryError.copyMustBeVisibleToOffer());
-    }
     this.state = { ...this.state, sharing: setting, updatedAt: now };
     if (setting.isAvailableForAnyExchange()) {
       this.record(
