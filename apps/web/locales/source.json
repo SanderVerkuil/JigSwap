@@ -1071,6 +1071,11 @@
     "locationNotSet": "Location not set",
     "language": "Language",
     "memberSince": "Member since",
+    "visibilityBadge": {
+      "public": "Public · findable",
+      "private": "Private"
+    },
+    "viewPublicProfile": "View public profile",
     "interests": "Interests",
     "recentActivity": "Recent Activity",
     "recentActivityDescription": "Your latest actions on JigSwap",

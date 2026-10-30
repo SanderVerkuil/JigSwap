@@ -4,6 +4,7 @@ import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
 import { ConvexReactClient } from "convex/react";
+import type { ReactNode } from "react";
 import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
@@ -12,6 +13,32 @@ import type { Member } from "./member-view";
 
 vi.mock("@/compat/clerk", () => ({
   useUser: () => ({ user: { imageUrl: undefined } }),
+}));
+
+// Router-free links: the test asserts the rendered href, not routing.
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({
+    to,
+    params,
+    hash,
+    children,
+    ...rest
+  }: {
+    to: string;
+    params?: Record<string, string>;
+    hash?: string;
+    children?: ReactNode;
+  }) => (
+    <a
+      href={`${Object.entries(params ?? {}).reduce(
+        (path, [key, value]) => path.replace(`$${key}`, value),
+        to,
+      )}${hash ? `#${hash}` : ""}`}
+      {...rest}
+    >
+      {children}
+    </a>
+  ),
 }));
 
 const member: Member = {
@@ -24,7 +51,13 @@ const member: Member = {
   updatedAt: Date.UTC(2026, 0, 1),
 };
 
-const renderHeader = () => {
+const renderHeader = ({
+  memberOverrides = {},
+  profile = {},
+}: {
+  memberOverrides?: Partial<Member>;
+  profile?: { visibility?: "public" | "private"; displayName?: string };
+} = {}) => {
   const convexQueryClient = new ConvexQueryClient(
     new ConvexReactClient("https://example.convex.cloud"),
   );
@@ -57,12 +90,13 @@ const renderHeader = () => {
     memberId: member._id,
     visibility: "public",
     updatedAt: 0,
+    ...profile,
   });
   render(
     <QueryClientProvider client={queryClient}>
       <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
         <IdentityHeader
-          member={member}
+          member={{ ...member, ...memberOverrides }}
           isEditing={false}
           onToggleEdit={() => {}}
         />
@@ -103,5 +137,44 @@ describe("IdentityHeader on a phone", () => {
     expect(actions?.classList).toContain("flex-wrap");
     expect(actions?.classList).toContain("basis-full");
     expect(actions?.classList).toContain("sm:basis-auto");
+  });
+});
+
+// Your own profile says who can see it and how others see you (UX-120).
+describe("IdentityHeader visibility and public view", () => {
+  it("shows a public profile as findable, linking to the Privacy section", () => {
+    renderHeader();
+    const badge = screen.getByRole("link", { name: "Public · findable" });
+    expect(badge.getAttribute("href")).toBe("/profile#privacy");
+  });
+
+  it("shows a private profile as Private, linking to the Privacy section", () => {
+    renderHeader({ profile: { visibility: "private" } });
+    const badge = screen.getByRole("link", { name: "Private" });
+    expect(badge.getAttribute("href")).toBe("/profile#privacy");
+    expect(
+      screen.queryByRole("link", { name: "Public · findable" }),
+    ).toBeNull();
+  });
+
+  it("links to the public profile by slug, then username, then id", () => {
+    const href = () =>
+      screen
+        .getByRole("link", { name: "View public profile" })
+        .getAttribute("href");
+
+    renderHeader({ memberOverrides: { slug: "henk-p", username: "henk" } });
+    expect(href()).toBe("/members/henk-p");
+    cleanup();
+    renderHeader({ memberOverrides: { username: "henk" } });
+    expect(href()).toBe("/members/henk");
+    cleanup();
+    renderHeader();
+    expect(href()).toBe("/members/member_henk");
+  });
+
+  it("names the member the way other members see them", () => {
+    renderHeader({ profile: { displayName: "Puzzelhenk" } });
+    expect(screen.getByRole("heading", { name: "Puzzelhenk" })).toBeTruthy();
   });
 });

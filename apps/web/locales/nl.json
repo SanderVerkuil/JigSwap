@@ -1071,6 +1071,11 @@
     "locationNotSet": "Locatie niet ingesteld",
     "language": "Taal",
     "memberSince": "Lid sinds",
+    "visibilityBadge": {
+      "public": "Openbaar · vindbaar",
+      "private": "Privé"
+    },
+    "viewPublicProfile": "Openbaar profiel bekijken",
     "interests": "Interesses",
     "recentActivity": "Recente Activiteit",
     "recentActivityDescription": "Je laatste acties op JigSwap",
