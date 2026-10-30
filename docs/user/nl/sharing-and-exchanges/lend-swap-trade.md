@@ -103,11 +103,33 @@ Een uitwisseling doorloopt duidelijke stappen:
    of bezit (leen) over, en kun je **Laat een review achter** gebruiken om je
    partner te beoordelen.
 
+### Eén puzzel, één afspraak
+
+Als je een verzoek accepteert, is de puzzel gereserveerd voor die uitwisseling.
+Tot de uitwisseling is afgerond of geannuleerd, kun je geen ander verzoek voor
+dezelfde puzzel accepteren, of het nu om ruilen, kopen of lenen gaat. Andere
+leden kunnen je nog steeds verzoeken sturen, en je kunt er een accepteren zodra
+de puzzel weer vrij is.
+
+**Accepteren** lukt niet zolang een puzzel in de uitwisseling gereserveerd is
+voor een andere uitwisseling. **Accepteren** en **Markeren als Voltooid** lukken
+niet zolang een puzzel in de uitwisseling is uitgeleend, en ook niet meer als
+een puzzel sinds het verzoek van eigenaar is gewisseld of niet meer bestaat.
+Zo'n uitwisseling kan niet meer worden afgerond. Je krijgt een melding waarom.
+
 ## Een geleende puzzel teruggeven
 
 Heb je een puzzel geleend (hij staat op het tabblad **Geleend**), gebruik dan
 de actie **Teruggeven** om hem terug te geven. Ben je de uitlener, dan kun je
 een uitgeleend exemplaar **Terugvragen** vanuit je bibliotheek.
+
+Een puzzel kan maar aan één lid tegelijk uitgeleend zijn. Zolang hij is
+uitgeleend, is hij niet beschikbaar: niemand kan hem aanvragen, je kunt hem niet
+opnieuw of in een ruil aanbieden, en je kunt hem niet verwijderen. Een
+uitwisseling waarmee hij van eigenaar of van plek zou wisselen, kan pas worden
+geaccepteerd of afgerond als hij terug is. Is hij teruggegeven of teruggevraagd,
+zet dan **Aanbieden voor ruil** of **Aanbieden om uit te lenen** aan op de
+pagina van de puzzel om hem weer aan te bieden.
 
 Je kunt je uitwisselingspartner ook vanuit de uitwisseling een **Bericht**
 sturen om details af te stemmen. Wil je een probleem met een ruil melden, open
