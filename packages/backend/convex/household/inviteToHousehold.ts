@@ -1,9 +1,11 @@
 import { makeInviteToHousehold, toMemberId } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
+import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { deleteNotificationsAbout } from "../invitations/fallbacks";
 import { isBlockedEitherWay } from "../social/blocks";
+import { isRevealedByOrdinaryRules } from "../social/privacy";
 import { householdDeps } from "./adapters/deps";
 import { toConvexError } from "./errors";
 
@@ -11,14 +13,27 @@ import { toConvexError } from "./errors";
 // The inviter is ALWAYS the authenticated member; the use case enforces admin-only, invitee not
 // already in THIS household, and one pending invite per invitee. An invitee in another household
 // still gets the invite (they can leave theirs on accept); the inviter is not told either way. Returns the HouseholdInviteId.
+//
+// Contact rule (SEC-10): only a member the invite picker (identity/searchUsers) could show the
+// inviter may be invited: a public profile, or a mutual follower. Anyone else, like a missing id
+// or a pair blocked either way, reads as MemberNotFound, so an id taken from a locked profile
+// can't be used to send invites (and so to learn how household reads name that member).
 export const inviteToHousehold = mutation({
   args: { inviteeId: v.id("users") },
   handler: async (ctx, args): Promise<string> => {
     const actorId = await requireMember(ctx);
-    // A pair blocked either way reads as a missing member (spec 2.6: generic, never block-specific).
+    // A pair blocked either way reads as a missing member (spec 2.6: generic, never block-specific),
+    // and so does a member the inviter could not find in the picker (SEC-10). Inviting oneself is
+    // left to the use case's own error.
     if (
       !(await ctx.db.get(args.inviteeId)) ||
-      (await isBlockedEitherWay(ctx, actorId, args.inviteeId))
+      (await isBlockedEitherWay(ctx, actorId, args.inviteeId)) ||
+      (args.inviteeId !== (actorId as string) &&
+        !(await isRevealedByOrdinaryRules(
+          ctx,
+          actorId as unknown as Id<"users">,
+          args.inviteeId,
+        )))
     ) {
       throw new ConvexError({
         code: "MemberNotFound",

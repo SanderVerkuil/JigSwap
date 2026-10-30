@@ -22,9 +22,15 @@ export const personView = async (
   memberId: Id<"users">,
 ): Promise<HouseholdPersonView> => {
   const user = await ctx.db.get(memberId);
-  // Shared resolver (account name, else username — never the email); absent when the member has
-  // no identifiable name, and the web renders its localized generic label.
-  const name = memberDisplayNameOf(user);
+  const profile = await ctx.db
+    .query("profiles")
+    .withIndex("by_member", (q) => q.eq("memberId", memberId))
+    .unique();
+  // Shared resolver (profile display name, else account name, else username — never the email):
+  // the name other members see everywhere else, so a pending invitee, a requester or an inviter
+  // is never named by the account name their chosen display name hides (SEC-10). Absent when the
+  // member has no identifiable name, and the web renders its localized generic label.
+  const name = memberDisplayNameOf(user, profile);
   return {
     memberId: memberId as string,
     ...(name ? { name } : {}),
