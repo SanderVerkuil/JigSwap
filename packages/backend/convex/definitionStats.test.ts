@@ -653,3 +653,158 @@ describe("every write that changes a definition's aggregates marks it", () => {
     expect((await expectInStep(t, w.desert.id)).completedCount).toBe(0);
   });
 });
+
+describe("the public catalog reads definitionStats", () => {
+  const publicView = (t: T, puzzleId: Id<"puzzles">) =>
+    t.query(api.catalog.getPublicDefinitionView.getPublicDefinitionView, {
+      puzzleId,
+    });
+  const catalogPage = (t: T, numItems = 20) =>
+    t.query(api.catalog.browsePublicCatalog.browsePublicCatalog, {
+      paginationOpts: { numItems, cursor: null },
+    });
+
+  test("the detail page and the catalog cards show the same numbers as the live aggregates", async () => {
+    const t = newT();
+    const w = await seedWorld(t);
+    await seedScenario(t, w);
+    const liveDetail = await publicView(t, w.vista.id);
+    const livePage = await catalogPage(t);
+
+    await reconcile(t);
+
+    expect(await publicView(t, w.vista.id)).toEqual(liveDetail);
+    expect(await catalogPage(t)).toEqual(livePage);
+    expect(liveDetail?.stats).toEqual({
+      communityOwners: 3,
+      totalCompletions: 2,
+      avgCompletionDays: 3,
+    });
+    expect(liveDetail?.availability.total).toBe(2);
+  });
+
+  test("the detail page reads one row, however many copies the definition has", async () => {
+    const t = newT({ documentsRead: 100 });
+    const w = await seedWorld(t);
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 500; i++) {
+        await ctx.db.insert("ownedPuzzles", {
+          aggregateId: crypto.randomUUID(),
+          puzzleId: w.vista.id,
+          ownerId: w.bob,
+          condition: "good",
+          availability: { forTrade: true, forSale: false, forLend: false },
+          createdAt: BASE + i,
+          updatedAt: BASE + i,
+        });
+      }
+    });
+    // Without totals the page computes them from all 500 copies, past the read limit.
+    await expect(publicView(t, w.vista.id)).rejects.toThrow(
+      /too many documents/,
+    );
+
+    await t.run((ctx) =>
+      ctx.db.insert("definitionStats", {
+        puzzleId: w.vista.id,
+        totals: {
+          ratingCount: 4,
+          ratingSum: 18,
+          breakdown: [2, 2, 0, 0, 0],
+          completedCount: 7,
+          finishDaysSum: 21,
+          finishDaysCount: 6,
+          communityOwners: 1,
+          publicAvailable: { swap: 500, lend: 0, sale: 0 },
+        },
+        computedAt: BASE,
+      }),
+    );
+
+    const view = await publicView(t, w.vista.id);
+    expect(view?.rating).toEqual({
+      rating: 4.5,
+      count: 4,
+      breakdown: [2, 2, 0, 0, 0],
+      percentages: [50, 50, 0, 0, 0],
+    });
+    expect(view?.stats).toEqual({
+      communityOwners: 1,
+      totalCompletions: 7,
+      avgCompletionDays: 3.5,
+    });
+    expect(view?.availability).toEqual({
+      total: 500,
+      byType: { swap: 500, lend: 0, sale: 0 },
+    });
+  });
+
+  test("a catalog page of 20 definitions with 120 copies each stays within the read limit", async () => {
+    // Enough for one definition's recompute (its 120 copies), far below the page's 2,400 copies.
+    const t = newT({ documentsRead: 200 });
+    const w = await seedWorld(t);
+    const owners = [w.alice, w.bob, w.noah];
+    for (let d = 0; d < 20; d++) {
+      await t.run(async (ctx) => {
+        const puzzleId = await ctx.db.insert("puzzles", {
+          aggregateId: crypto.randomUUID(),
+          title: `Popular ${d}`,
+          pieceCount: 1000,
+          status: "approved",
+          submittedBy: w.alice,
+          createdAt: BASE,
+          updatedAt: BASE,
+        });
+        for (let i = 0; i < 120; i++) {
+          await ctx.db.insert("ownedPuzzles", {
+            aggregateId: crypto.randomUUID(),
+            puzzleId,
+            ownerId: owners[i % 3]!,
+            condition: "good",
+            availability: {
+              forTrade: i % 2 === 0,
+              forSale: false,
+              forLend: false,
+            },
+            createdAt: BASE + i,
+            updatedAt: BASE + i,
+          });
+        }
+      });
+    }
+    // Live, the page reads all 2,400 copies.
+    await expect(catalogPage(t)).rejects.toThrow(/too many documents/);
+
+    await reconcile(t);
+
+    const page = await catalogPage(t);
+    expect(page.page).toHaveLength(20);
+    // Even-numbered copies are open: 60, of which noah's (private profile) 20 don't count.
+    expect(page.page.map((card) => card.availableToSwap)).toEqual(
+      Array.from({ length: 20 }, () => 40),
+    );
+  });
+
+  test("a catalog page holds at most 40 definitions, whatever the client asks for", async () => {
+    const t = newT();
+    const w = await seedWorld(t);
+    await t.run(async (ctx) => {
+      for (let d = 0; d < 50; d++) {
+        await ctx.db.insert("puzzles", {
+          aggregateId: crypto.randomUUID(),
+          title: `Puzzle ${d}`,
+          pieceCount: 500,
+          status: "approved",
+          submittedBy: w.alice,
+          createdAt: BASE,
+          updatedAt: BASE,
+        });
+      }
+    });
+
+    const page = await catalogPage(t, 1000);
+    expect(page.page).toHaveLength(40);
+    expect(page.isDone).toBe(false);
+    expect((await catalogPage(t, 0)).page).toHaveLength(1);
+  });
+});

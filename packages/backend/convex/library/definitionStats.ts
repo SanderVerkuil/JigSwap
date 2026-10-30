@@ -90,6 +90,14 @@ export const definitionTotalsOf = async (
   return { ...totals, breakdown: [five, four, three, two, one] };
 };
 
+/** The definition's totals: stored, or computed live (at the old cost) until its first recompute. */
+export const definitionTotalsOrLive = async (
+  ctx: QueryCtx,
+  puzzleId: Id<"puzzles">,
+): Promise<DefinitionTotals> =>
+  (await definitionTotalsOf(ctx, puzzleId)) ??
+  (await computeDefinitionTotals(ctx, puzzleId));
+
 // Every field, in a fixed order: the stored object comes back with its keys sorted.
 const totalsKey = (t: StoredTotals | DefinitionTotals): string =>
   JSON.stringify([
