@@ -261,9 +261,12 @@
   --color-mk-diff-expert-bg: var(--mk-diff-expert-bg);
 
   /* Marketing type: Baloo 2 rounded headings (shared with the app for one warm,
-     consistent brand voice across marketing and product), crisp system-sans body. */
+     consistent brand voice across marketing and product), crisp system-sans body.
+     Safari keeps its rounded system face as the stand-in; elsewhere the
+     metric-matched "Baloo 2 Fallback" (globals.css) holds Baloo's layout. */
   --font-mk-heading:
-    "Baloo 2 Variable", ui-rounded, "Segoe UI", system-ui, sans-serif;
+    "Baloo 2 Variable", ui-rounded, "Baloo 2 Fallback", "Segoe UI", system-ui,
+    sans-serif;
   --font-mk-sans:
     ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica,
     Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";

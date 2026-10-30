@@ -13,6 +13,70 @@
 @import "./marketing.css";
 @import "./docs.css";
 
+/* Metric-matched fallbacks for the swap period: until a web-font file
+   arrives, latin text is set in the local Arial scaled to the web font's
+   average glyph width and line metrics, so swapping in Poppins or Baloo 2
+   barely moves the layout. Values use next/font's formula on the capsize
+   metrics: size-adjust = font xWidthAvg / Arial xWidthAvg (913/2048, bold
+   983/2048); each override = font metric / size-adjust (per 1000 units:
+   Poppins 500, bold 515, ascent 1050, descent 350, gap 100; Baloo 2 427,
+   bold 450, ascent 1078, descent 524). The 700 faces pair bold with Arial
+   Bold, so 600+ text keeps real bold glyphs. unicode-range is fontsource's
+   latin subset, so other scripts fall through to the system stack as before.
+   Where Arial is missing (Android, Linux) these faces are simply skipped. */
+@font-face {
+  font-family: "Poppins Fallback";
+  src: local("Arial"), local("ArialMT");
+  font-weight: 400;
+  size-adjust: 112.16%;
+  ascent-override: 93.62%;
+  descent-override: 31.21%;
+  line-gap-override: 8.92%;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Poppins Fallback";
+  src: local("Arial Bold"), local("Arial-BoldMT");
+  font-weight: 700;
+  size-adjust: 107.3%;
+  ascent-override: 97.86%;
+  descent-override: 32.62%;
+  line-gap-override: 9.32%;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Baloo 2 Fallback";
+  src: local("Arial"), local("ArialMT");
+  font-weight: 400;
+  size-adjust: 95.78%;
+  ascent-override: 112.55%;
+  descent-override: 54.71%;
+  line-gap-override: 0%;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Baloo 2 Fallback";
+  src: local("Arial Bold"), local("Arial-BoldMT");
+  font-weight: 700;
+  size-adjust: 93.75%;
+  ascent-override: 114.98%;
+  descent-override: 55.89%;
+  line-gap-override: 0%;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -172,16 +236,16 @@
   --color-jigsaw-primary-tint: var(--jigsaw-primary-tint);
   --color-jigsaw-secondary-tint: var(--jigsaw-secondary-tint);
 
-  /* "Poppins" (self-hosted, imported at the top of this file) first; the
-     system stack stays as fallback. */
+  /* "Poppins" (self-hosted, imported at the top of this file) first, then its
+     metric-matched Arial fallback; the system stack stays as fallback. */
   --font-sans:
-    "Poppins", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
-    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    "Poppins", "Poppins Fallback", ui-sans-serif, system-ui, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --font-mono:
     ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo,
     monospace;
   /* Fontsource names its variable build "Baloo 2 Variable". */
-  --font-heading: "Baloo 2 Variable", var(--font-sans);
+  --font-heading: "Baloo 2 Variable", "Baloo 2 Fallback", var(--font-sans);
 
   --radius: var(--radius);
 
