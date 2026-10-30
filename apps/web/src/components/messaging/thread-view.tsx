@@ -35,6 +35,8 @@ import {
 } from "lucide-react";
 import {
   Fragment,
+  memo,
+  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -389,12 +391,13 @@ export function ThreadView({
     });
   };
 
-  const onMediaLoad = () => {
+  // Stable (it only reads refs), so the memoized bubbles don't re-render for it.
+  const onMediaLoad = useCallback(() => {
     const scroller = scrollerRef.current;
     if (scroller && pinnedRef.current) {
       scroller.scrollTop = scroller.scrollHeight;
     }
-  };
+  }, []);
 
   useEffect(() => {
     // Scroll rule. On first load, open at the "New messages" divider when
@@ -550,16 +553,31 @@ export function ThreadView({
     return () => cancelAnimationFrame(frame);
   }, [messages, newest, threadId, title, circleThread, displayName, t]);
 
-  const items =
-    messages === undefined || unread?.threadId !== threadId || !unread.runLoaded
-      ? undefined
-      : groupThreadMessages(
-          messages,
-          now,
-          locale,
-          t,
-          firstUnreadId(messages, unread.count, unread.upToId),
-        );
+  // Day labels only depend on which local day it is, so the items (and the memoized bubbles they
+  // feed) are rebuilt when the messages, the day or the language change, not on every minute
+  // tick, inbox update or presence change. `unread` is a snapshot taken once per thread, so none
+  // of those change it either.
+  const nowDate = new Date(now);
+  const today = new Date(
+    nowDate.getFullYear(),
+    nowDate.getMonth(),
+    nowDate.getDate(),
+  ).getTime();
+  const items = useMemo(
+    () =>
+      messages === undefined ||
+      unread?.threadId !== threadId ||
+      !unread.runLoaded
+        ? undefined
+        : groupThreadMessages(
+            messages,
+            today,
+            locale,
+            t,
+            firstUnreadId(messages, unread.count, unread.upToId),
+          ),
+    [messages, unread, threadId, today, locale, t],
+  );
   const newCount =
     messages !== undefined &&
     position?.threadId === threadId &&
@@ -823,8 +841,10 @@ function UnreadDivider({ ref }: { ref: Ref<HTMLLIElement> }) {
 // author group of bubbles (copy cards sit beside — never inside — a bubble)
 // with the group's time once under the last bubble. In a circle thread a run
 // of others' messages is headed by its author (avatar + name), and a run from
-// a member the viewer blocked is collapsed until they choose Show.
-function ThreadItemView({
+// a member the viewer blocked is collapsed until they choose Show. Memoized: the
+// thread view re-renders on minute ticks, inbox and presence updates, which
+// leave every item's props unchanged.
+const ThreadItemView = memo(function ThreadItemView({
   item,
   locale,
   otherAuthor,
@@ -916,7 +936,7 @@ function ThreadItemView({
       />
     </li>
   );
-}
+});
 
 type GroupItem = Extract<ThreadItem<ThreadMessage>, { type: "group" }>;
 
