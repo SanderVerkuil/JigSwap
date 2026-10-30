@@ -40,6 +40,7 @@ import { StartSolveDialog } from "@/components/solving/start-solve-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { FilePickButton } from "@/components/ui/file-pick-button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StarRating } from "@/components/ui/star-rating";
@@ -1064,9 +1065,6 @@ function PhotoStrip({
           : t(refusal.key, { max: photoLimit }),
       );
     },
-    onSettled: () => {
-      if (inputRef.current) inputRef.current.value = "";
-    },
   });
   const uploading = uploadPhoto.isPending;
   // Every photo shown here, placeholders included, takes one of the copy's places; once they are
@@ -1075,7 +1073,8 @@ function PhotoStrip({
   const full = gallery.length + pendingPhotos.length >= photoLimit;
 
   return (
-    <div className="flex gap-3.5 overflow-x-auto pb-1.5">
+    // -m-1 p-1: room inside the scroll box so the tiles' focus rings aren't clipped (same layout).
+    <div className="-m-1 flex gap-3.5 overflow-x-auto p-1 pb-2.5">
       {gallery.map((photo, i) => (
         <button
           key={photo.id}
@@ -1132,32 +1131,26 @@ function PhotoStrip({
         </p>
       )}
       {canAdd && !full && (
-        <label
-          className={cn(
-            "border-border text-muted-foreground flex aspect-[4/3] w-[150px] shrink-0 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed text-xs font-semibold",
-            uploading && "pointer-events-none opacity-60",
-          )}
+        // A real button (keyboard-reachable), styled as the dashed "add" tile. Edit copy's "Add
+        // photos" opens the same input through inputRef.
+        <FilePickButton
+          variant="ghost"
+          accept="image/*"
+          inputRef={inputRef}
+          disabled={uploading}
+          onFiles={([file]) => {
+            if (file) {
+              setEditing({
+                src: URL.createObjectURL(file),
+                fileName: file.name,
+              });
+            }
+          }}
+          className="border-border text-muted-foreground flex aspect-[4/3] h-auto w-[150px] shrink-0 flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed text-xs font-semibold"
         >
-          <ImagePlus className="h-5 w-5" />
+          <ImagePlus className="size-5" />
           {uploading ? t("uploading") : t("addPhoto")}
-          <input
-            ref={inputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            disabled={uploading}
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                setEditing({
-                  src: URL.createObjectURL(file),
-                  fileName: file.name,
-                });
-              }
-              e.target.value = "";
-            }}
-          />
-        </label>
+        </FilePickButton>
       )}
       {gallery.length === 0 && pendingPhotos.length === 0 && !canAdd && (
         <p className="text-muted-foreground text-sm">{t("noPhotos")}</p>

@@ -1,4 +1,5 @@
 // apps/web/src/components/add-puzzle/cover-colour-field.tsx
+import { FilePickButton } from "@/components/ui/file-pick-button";
 import {
   Tooltip,
   TooltipContent,
@@ -239,22 +240,20 @@ export function CoverColourField({
           );
         })}
 
-        {/* Upload photo */}
-        <label className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-md border border-dashed border-border px-3.5 text-sm font-semibold text-muted-foreground hover:bg-accent">
+        {/* Upload photo: a real button (keyboard-reachable), styled as the dashed chip. */}
+        <FilePickButton
+          variant="ghost"
+          accept="image/*"
+          onFiles={([file]) => {
+            if (!file) return;
+            // Uploading is a manual pick: auto-select never replaces the member's own photo.
+            userPicked.current = true;
+            onUploadPhoto(file);
+          }}
+          className="gap-1.5 border border-dashed border-border px-3.5 font-semibold text-muted-foreground has-[>svg]:px-3.5"
+        >
           <Upload className="size-3.5" /> {t("uploadPhoto")}
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              // Uploading is a manual pick: auto-select never replaces the member's own photo.
-              userPicked.current = true;
-              onUploadPhoto(file);
-            }}
-          />
-        </label>
+        </FilePickButton>
       </div>
     </TooltipProvider>
   );

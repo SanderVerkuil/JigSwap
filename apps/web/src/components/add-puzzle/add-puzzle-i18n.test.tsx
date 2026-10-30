@@ -5,6 +5,7 @@ import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it } from "vitest";
 import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
+import { CoverColourField } from "./cover-colour-field";
 import { LivePreviewCard, ReadinessChecklist } from "./live-preview-card";
 import { TagInput } from "./tag-input";
 
@@ -79,5 +80,28 @@ describe.each(["en", "nl"] as const)("add-puzzle strings in %s", (locale) => {
     const open = screen.getByText("Brand");
     expect(within(done).getByText(messages.puzzles.checkDone)).toBeTruthy();
     expect(within(open).getByText(messages.puzzles.checkNotDone)).toBeTruthy();
+  });
+});
+
+// The cover's own-photo upload must work from the keyboard (UX-11): a real button that opens the
+// file input, never a <label> wrapped around a display:none input.
+describe("cover photo upload", () => {
+  it("is a keyboard-reachable button, not a label around a hidden input", () => {
+    render(
+      <CoverColourField
+        photoOptions={[]}
+        onSelectPhoto={() => {}}
+        onUploadPhoto={() => {}}
+      />,
+      { wrapper: inLocale("en") },
+    );
+    const upload = screen.getByRole("button", {
+      name: en.puzzles.uploadPhoto,
+    });
+    expect(upload.closest("label")).toBeNull();
+    const input =
+      document.querySelector<HTMLInputElement>("input[type='file']")!;
+    expect(input.closest("label")).toBeNull();
+    expect(input.className.split(" ")).not.toContain("hidden");
   });
 });

@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { FilePickButton } from "@/components/ui/file-pick-button";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useReportSurfaceBusy } from "@/components/whats-new/surface-busy";
@@ -184,9 +185,8 @@ export function CompletionFollowUpProvider({
     setTarget(null);
   };
 
-  const pickFiles = (list: FileList | null) => {
+  const pickFiles = (files: File[]) => {
     const session = completionId; // pin the session the pick belongs to
-    const files = Array.from(list ?? []);
     // Flat cap: only re-encode what still fits (see MAX_PHOTOS note above).
     const remaining = MAX_PHOTOS - photos.length;
     for (const file of files.slice(0, remaining)) {
@@ -442,34 +442,26 @@ export function CompletionFollowUpProvider({
                         type="button"
                         onClick={() => removePhoto(photo.id)}
                         aria-label={t("removePhoto")}
-                        className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white"
+                        className="absolute right-1 top-1 flex size-7 items-center justify-center rounded-full bg-black/60 text-white pointer-coarse:size-9"
                       >
-                        <X className="h-3 w-3" />
+                        <X className="size-4" />
                       </button>
                     )}
                   </div>
                 ))}
                 {photos.length < MAX_PHOTOS && (
-                  <label
-                    className={cn(
-                      "border-border text-muted-foreground flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-md border border-dashed text-[10px] font-semibold",
-                      saving && "pointer-events-none opacity-60",
-                    )}
+                  // A real button (keyboard-reachable), styled as the dashed "add" tile.
+                  <FilePickButton
+                    variant="ghost"
+                    accept="image/*"
+                    multiple
+                    disabled={saving}
+                    onFiles={pickFiles}
+                    className="border-border text-muted-foreground flex aspect-square h-auto flex-col items-center justify-center gap-1 whitespace-normal rounded-md border border-dashed p-1 text-center text-xs font-semibold has-[>svg]:px-1"
                   >
-                    <ImagePlus className="h-4 w-4" />
+                    <ImagePlus className="size-4" />
                     {t("addPhotos")}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      className="hidden"
-                      disabled={saving}
-                      onChange={(e) => {
-                        pickFiles(e.target.files);
-                        e.target.value = "";
-                      }}
-                    />
-                  </label>
+                  </FilePickButton>
                 )}
               </div>
               <p className="text-muted-foreground text-xs">{t("photosHint")}</p>

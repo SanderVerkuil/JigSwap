@@ -72,7 +72,8 @@ afterEach(cleanup);
 describe("CoverColourField", () => {
   it("offers photos and an upload, and no colour swatches", () => {
     renderField("small.jpg");
-    expect(screen.getAllByRole("button")).toHaveLength(2);
+    // The two photos and the upload (a real button, UX-11).
+    expect(screen.getAllByRole("button")).toHaveLength(3);
     expect(screen.queryByRole("button", { name: /colour/i })).toBeNull();
     expect(screen.getByText(en.puzzles.uploadPhoto)).toBeTruthy();
   });

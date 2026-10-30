@@ -234,4 +234,25 @@ describe("completion follow-up photos", () => {
     );
     expect(screen.queryByRole("button", { name: "Remove photo" })).toBeNull();
   });
+
+  // The only UI that attaches solve photos must work from the keyboard (UX-11): a real button,
+  // not a <label> around a display:none input, and a remove button big enough to hit.
+  it("offers Add photos as a keyboard-reachable button and a 28px+ remove button", async () => {
+    renderProvider();
+    const add = await screen.findByRole("button", { name: "Add photos" });
+    expect(add.closest("label")).toBeNull();
+    const input =
+      document.querySelector<HTMLInputElement>("input[type='file']")!;
+    expect(input.closest("label")).toBeNull();
+    expect(input.className.split(" ")).not.toContain("hidden");
+    const click = vi.spyOn(input, "click");
+    fireEvent.click(add);
+    expect(click).toHaveBeenCalledTimes(1);
+
+    await pick(new File(["x"], "IMG_2.jpg", { type: "image/jpeg" }));
+    const remove = await screen.findByRole("button", { name: "Remove photo" });
+    expect(remove.className.split(" ")).toEqual(
+      expect.arrayContaining(["size-7", "pointer-coarse:size-9"]),
+    );
+  });
 });
