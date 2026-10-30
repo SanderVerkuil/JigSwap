@@ -126,7 +126,19 @@ describe("projectMemberIdentity", () => {
     });
   });
 
-  test("the blocker still sees who they blocked, even when that profile is private", async () => {
+  test("the blocker still sees who they blocked when that profile is public", async () => {
+    const t = convexTest(schema, modules);
+    const u = await seed(t);
+    await insertBlock(t, u.alice, u.bob);
+    await t.run(async (ctx) => {
+      const other = await projectMemberIdentity(ctx, u.alice, u.bob, "salt");
+      expect(other.anonymous).toBe(false);
+    });
+  });
+
+  // SEC-40: a block never names a member the viewer could not see, or blocking a candidate would
+  // confirm who an anonymous entry is. listMyBlocks still names them.
+  test("a private member the blocker can't see stays anonymous", async () => {
     const t = convexTest(schema, modules);
     const u = await seed(t);
     await t.run(async (ctx) => {
@@ -139,7 +151,8 @@ describe("projectMemberIdentity", () => {
     await insertBlock(t, u.alice, u.bob);
     await t.run(async (ctx) => {
       const other = await projectMemberIdentity(ctx, u.alice, u.bob, "salt");
-      expect(other.anonymous).toBe(false);
+      expect(other.anonymous).toBe(true);
+      expect(other).not.toHaveProperty("member");
     });
   });
 
