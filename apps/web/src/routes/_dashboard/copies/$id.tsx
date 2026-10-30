@@ -4,6 +4,7 @@ import { ImageZoom } from "@/components/common/image-zoom";
 import { CopyOfferSwitches } from "@/components/copies/copy-offer-switches";
 import { CopyOwner } from "@/components/copies/copy-owner";
 import { copyPhotoError } from "@/components/copies/copy-photo-error";
+import { CopyStatusLine } from "@/components/copies/copy-status-line";
 import { EditCopyDialog } from "@/components/copies/edit-copy-dialog";
 import { PhotoLightbox } from "@/components/copies/photo-lightbox";
 import {
@@ -169,7 +170,7 @@ function CopyInstanceSkeleton() {
   return (
     <div className="w-full space-y-8">
       <div className="grid gap-7 lg:grid-cols-[300px_minmax(0,1fr)]">
-        <Skeleton className="aspect-square w-full rounded-2xl" />
+        <Skeleton className="mx-auto aspect-square w-full max-w-[40vh] rounded-2xl lg:mx-0 lg:max-w-none" />
         <div className="space-y-4">
           <Skeleton className="h-9 w-2/3 rounded-lg" />
           <Skeleton className="h-5 w-1/3 rounded-lg" />
@@ -239,6 +240,7 @@ function CopyInstanceDetail({
   const tCompletions = useTranslations("solving.completions");
   const tDifficulty = useTranslations("puzzles.puzzles.difficulty");
   const format = useFormatter();
+  const projectedName = useProjectedMemberName();
   // A stable "now" captured once per mount, so duration/relative-time renders are
   // idempotent (calling Date.now() during render is an impure-render violation).
   const [now] = useState(() => Date.now());
@@ -281,6 +283,25 @@ function CopyInstanceDetail({
   const myInProgress = (myHistory ?? [])
     .filter((c) => !c.isCompleted && c.aggregateId)
     .sort((a, b) => b.startDate - a.startDate)[0];
+
+  // Custody for the status line: the copy's open loan, and (for managers, who may recall it) its
+  // loan id from lending.lentOut, which lists the open loans the caller may manage.
+  const openLoanEntry = copy.loans.find((loan) => loan.status === "open");
+  const { data: lentOut } = useQuery(
+    convexQuery(
+      gateway.lending.lentOut,
+      copy.viewerCanManage && openLoanEntry ? {} : "skip",
+    ),
+  );
+  const openLoan = openLoanEntry
+    ? {
+        borrowerName: projectedName(openLoanEntry.borrower, t("anonymousUser")),
+        openedAt: openLoanEntry.openedAt,
+        loanId:
+          lentOut?.find((loan) => loan.copyDocId === copy.copyId)?.loanId ??
+          null,
+      }
+    : null;
 
   // When the arriving link carried `?from=collection:<id>`, resolve that collection so the
   // page head can show contextual breadcrumbs instead of the canonical trail below. Skipped
@@ -395,28 +416,20 @@ function CopyInstanceDetail({
     return parts.join(" ");
   };
 
-  const difficultyLabel = (difficulty?: string) =>
-    difficulty ? tDifficulty(difficulty) : tDifficulty("unknown");
-
   return (
     <div className="flex w-full flex-col gap-10">
       {/* Hero */}
       <section className="grid items-start gap-7 lg:grid-cols-[300px_minmax(0,1fr)]">
-        {/* Cover — full width on mobile, capped beside the info column at lg. Hovering opens a side
-            panel that magnifies where the cursor points. */}
-        <div className="bg-muted relative aspect-square w-full overflow-hidden rounded-2xl shadow-sm lg:max-w-[300px]">
+        {/* Cover — capped at 40vh and centred below lg so the title, status and actions start on the
+            first screen of a phone; beside the info column at lg. Hovering opens a side panel that
+            magnifies where the cursor points. */}
+        <div className="bg-muted relative mx-auto aspect-square w-full max-w-[40vh] overflow-hidden rounded-2xl shadow-sm lg:mx-0 lg:max-w-[300px]">
           {snapshot.image ? (
             <ImageZoom src={snapshot.image} alt={snapshot.title} fill />
           ) : (
             <div className="from-jigsaw-primary/20 to-jigsaw-primary text-jigsaw-primary-foreground/70 absolute inset-0 flex items-center justify-center bg-gradient-to-br">
               <Puzzle className="h-1/3 w-1/3" />
             </div>
-          )}
-          {isAvailable && (
-            <span className="bg-jigsaw-secondary absolute left-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold text-white shadow-sm">
-              <span className="h-1.5 w-1.5 rounded-full bg-white" />
-              {t("available")}
-            </span>
           )}
         </div>
 
@@ -449,16 +462,28 @@ function CopyInstanceDetail({
             )}
           </p>
 
+          {/* Status: custody, offers and who can see it, in one line (offers only for visitors). */}
+          <CopyStatusLine
+            detailed={copy.viewerCanManage}
+            availability={availability}
+            visibilityPreference={
+              snapshot.visibilityPreference ?? snapshot.visibility
+            }
+            openLoan={openLoan}
+          />
+
           {/* Badges */}
           <div className="mt-3.5 flex flex-wrap items-center gap-2">
-            <Badge
-              className={cn(
-                "rounded-full border-transparent px-2.5 py-0.5 text-xs font-semibold",
-                difficultyClasses(snapshot.difficulty),
-              )}
-            >
-              {difficultyLabel(snapshot.difficulty)}
-            </Badge>
+            {snapshot.difficulty && (
+              <Badge
+                className={cn(
+                  "rounded-full border-transparent px-2.5 py-0.5 text-xs font-semibold",
+                  difficultyClasses(snapshot.difficulty),
+                )}
+              >
+                {tDifficulty(snapshot.difficulty)}
+              </Badge>
+            )}
             <span className="border-border text-foreground inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold">
               <span
                 className={cn(
@@ -468,21 +493,6 @@ function CopyInstanceDetail({
               />
               {conditionLabel(snapshot.condition)}
             </span>
-            {availability.forTrade && (
-              <Badge variant="secondary" className="rounded-full text-xs">
-                {t("forTrade")}
-              </Badge>
-            )}
-            {availability.forLend && (
-              <Badge variant="secondary" className="rounded-full text-xs">
-                {t("forLend")}
-              </Badge>
-            )}
-            {availability.forSale && (
-              <Badge variant="secondary" className="rounded-full text-xs">
-                {t("forSale")}
-              </Badge>
-            )}
             {myInProgress && (
               <Badge variant="secondary" className="rounded-full text-xs">
                 <Clock className="mr-1 h-3 w-3" />
@@ -498,51 +508,6 @@ function CopyInstanceDetail({
             </p>
           )}
 
-          {/* Meta row */}
-          <div className="mt-4 flex flex-wrap gap-x-8 gap-y-4">
-            <MetaItem
-              icon={<UserRound className="h-3.5 w-3.5" />}
-              label={tOwner("label")}
-              value={
-                <CopyOwner
-                  owner={copy.owner}
-                  householdOwner={copy.household?.owner}
-                  viewerIsOwner={copy.viewerIsOwner}
-                />
-              }
-            />
-            <MetaItem
-              icon={<Calendar className="h-3.5 w-3.5" />}
-              label={t("acquired")}
-              value={
-                snapshot.acquisitionDate
-                  ? formatMonth(snapshot.acquisitionDate)
-                  : "—"
-              }
-            />
-            <MetaItem
-              icon={<Gift className="h-3.5 w-3.5" />}
-              label={t("source")}
-              value={acquisitionSourceLabel(snapshot.acquisitionSource)}
-            />
-            <MetaItem
-              icon={<Clock className="h-3.5 w-3.5" />}
-              label={t("inYourLibrary")}
-              value={
-                copy.acquiredByViewerAt !== null
-                  ? ownedDuration(copy.acquiredByViewerAt)
-                  : "—"
-              }
-            />
-            {snapshot.tags.length > 0 && (
-              <MetaItem
-                icon={<Tag className="h-3.5 w-3.5" />}
-                label={t("tags")}
-                value={snapshot.tags.join(", ")}
-              />
-            )}
-          </div>
-
           {/* Offers (managers): labelled switches that never change the owner's visibility choice. */}
           {copy.viewerCanManage && (
             <div className="mt-5">
@@ -552,6 +517,7 @@ function CopyInstanceDetail({
                 visibilityPreference={
                   snapshot.visibilityPreference ?? snapshot.visibility
                 }
+                onLoan={openLoanEntry !== undefined}
               />
             </div>
           )}
@@ -647,6 +613,52 @@ function CopyInstanceDetail({
               </>
             )}
           </div>
+
+          {/* Meta row: after the actions, so they start on the first screen of a phone. */}
+          <div className="mt-5 flex flex-wrap gap-x-8 gap-y-4">
+            <MetaItem
+              icon={<UserRound className="h-3.5 w-3.5" />}
+              label={tOwner("label")}
+              value={
+                <CopyOwner
+                  owner={copy.owner}
+                  householdOwner={copy.household?.owner}
+                  viewerIsOwner={copy.viewerIsOwner}
+                />
+              }
+            />
+            <MetaItem
+              icon={<Calendar className="h-3.5 w-3.5" />}
+              label={t("acquired")}
+              value={
+                snapshot.acquisitionDate
+                  ? formatMonth(snapshot.acquisitionDate)
+                  : "—"
+              }
+            />
+            <MetaItem
+              icon={<Gift className="h-3.5 w-3.5" />}
+              label={t("source")}
+              value={acquisitionSourceLabel(snapshot.acquisitionSource)}
+            />
+            <MetaItem
+              icon={<Clock className="h-3.5 w-3.5" />}
+              label={t("inYourLibrary")}
+              value={
+                copy.acquiredByViewerAt !== null
+                  ? ownedDuration(copy.acquiredByViewerAt)
+                  : "—"
+              }
+            />
+            {snapshot.tags.length > 0 && (
+              <MetaItem
+                icon={<Tag className="h-3.5 w-3.5" />}
+                label={t("tags")}
+                value={snapshot.tags.join(", ")}
+              />
+            )}
+          </div>
+
           {copy.household && (
             <HouseholdAccess copyId={copyId} household={copy.household} />
           )}

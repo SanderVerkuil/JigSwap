@@ -90,6 +90,8 @@ export function EditCopyDialog({
     useState<CopyVisibility>(initialVisibility);
   const offered =
     availability.forTrade || availability.forLend || availability.forSale;
+  // Lending a copy out withdraws its offers; it can't be offered again until it is back.
+  const onLoan = copy.loans.some((loan) => loan.status === "open");
   const [notes, setNotes] = useState(snapshot.notes ?? "");
   // `null` => catalogue/global image; otherwise a gallery image id.
   const [coverImageId, setCoverImageId] = useState<string | null>(
@@ -196,7 +198,13 @@ export function EditCopyDialog({
             <AvailabilityChips
               value={availability}
               onChange={setAvailability}
+              disabled={onLoan}
             />
+            {onLoan && (
+              <p className="text-muted-foreground text-xs">
+                {t("offers.lockedOnLoan")}
+              </p>
+            )}
           </div>
 
           {/* Visibility */}

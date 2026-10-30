@@ -56,11 +56,13 @@ const copyOf = (
   availability: typeof CLOSED,
   visibility: "private" | "visible",
   visibilityPreference?: "private" | "visible",
+  loans: Array<{ status: "open" | "returned" | "recalled" }> = [],
 ) =>
   ({
     copyId: "row1",
     aggregateId: "agg1",
     gallery: [],
+    loans,
     snapshot: {
       title: "Secret Garden",
       pieceCount: 1000,
@@ -293,5 +295,29 @@ describe("EditCopyDialog cover picker without photos", () => {
       </IntlProvider>,
     );
     expect(screen.queryByRole("button", { name: "Add photo" })).toBeNull();
+  });
+});
+
+describe("EditCopyDialog offers during a loan", () => {
+  it("an open loan disables the offer chips and says why", () => {
+    renderDialog(copyOf(CLOSED, "visible", "visible", [{ status: "open" }]));
+    for (const name of ["For Trade", "For Loan", "For Sale"]) {
+      expect(
+        (screen.getByRole("button", { name }) as HTMLButtonElement).disabled,
+      ).toBe(true);
+    }
+    expect(
+      screen.getByText("It's on loan. You can offer it again once it's back."),
+    ).toBeTruthy();
+  });
+
+  it("a returned loan leaves the offer chips usable", () => {
+    renderDialog(
+      copyOf(CLOSED, "visible", "visible", [{ status: "returned" }]),
+    );
+    expect(
+      (screen.getByRole("button", { name: "For Trade" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(false);
   });
 });

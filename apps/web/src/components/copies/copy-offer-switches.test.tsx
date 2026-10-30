@@ -187,6 +187,15 @@ describe("CopyOfferSwitches", () => {
     );
   });
 
+  it("an open loan disables both switches and says why", () => {
+    renderSwitches({ onLoan: true });
+    expect((swapSwitch() as HTMLButtonElement).disabled).toBe(true);
+    expect((lendSwitch() as HTMLButtonElement).disabled).toBe(true);
+    expect(
+      screen.getByText("It's on loan. You can offer it again once it's back."),
+    ).toBeTruthy();
+  });
+
   it("a copy without a domain id cannot be changed", () => {
     renderSwitches({ copyId: null });
     expect((swapSwitch() as HTMLButtonElement).disabled).toBe(true);

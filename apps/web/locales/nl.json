@@ -3460,6 +3460,11 @@
     "onLoanTo": "Uitgeleend aan {name}",
     "recallAction": "Terugvragen",
     "recalling": "Terugvragen…",
+    "recallConfirmTitle": "Deze puzzel terugvragen?",
+    "recallConfirmBody": "Hiermee beëindig je de lening en staat de puzzel weer bij jou. Laat {name} weten dat je hem terug wilt.",
+    "recallConfirm": "Puzzel terugvragen",
+    "recalled": "Lening beëindigd. De puzzel staat weer bij jou.",
+    "recallFailed": "Terugvragen is niet gelukt. Probeer het opnieuw.",
     "historyTitle": "Leengeschiedenis",
     "historyDescription": "Elke keer dat dit exemplaar is uitgeleend.",
     "noHistory": "Dit exemplaar is nooit uitgeleend.",
@@ -4110,10 +4115,6 @@
       "offerToLend": "Aanbieden om uit te lenen",
       "logCompletion": "Voltooiing vastleggen"
     },
-    "available": "Beschikbaar",
-    "forTrade": "Te ruilen",
-    "forLend": "Uit te lenen",
-    "forSale": "Te koop",
     "acquired": "Verworven",
     "source": "Bron",
     "inYourLibrary": "In jouw bibliotheek",
@@ -4204,6 +4205,7 @@
       "swapHint": "Leden kunnen een ruil voorstellen.",
       "lendLabel": "Aanbieden om uit te lenen",
       "lendHint": "Leden kunnen vragen of ze hem mogen lenen.",
+      "lockedOnLoan": "Hij is uitgeleend. Zodra je hem terug hebt, kun je hem weer aanbieden.",
       "swapOn": "Aangeboden voor ruil",
       "swapOff": "Niet meer aangeboden voor ruil",
       "lendOn": "Aangeboden om uit te lenen",
@@ -4211,6 +4213,15 @@
       "visibleWhileOffered": "Zolang je hem aanbiedt, is hij zichtbaar. Trek je elk aanbod in, dan is hij weer privé.",
       "privateAgain": "Hij is weer privé.",
       "undo": "Ongedaan maken"
+    },
+    "status": {
+      "onLoan": "Uitgeleend aan {name} sinds {date}",
+      "offered": "Aangeboden voor {offers}",
+      "offerSwap": "ruil",
+      "offerLend": "uitlenen",
+      "offerSale": "verkoop",
+      "visibleWhileOffered": "Zichtbaar zolang je hem aanbiedt, daarna weer privé",
+      "notOffered": "Niet aangeboden"
     },
     "editCopy": {
       "title": "Exemplaar bewerken",

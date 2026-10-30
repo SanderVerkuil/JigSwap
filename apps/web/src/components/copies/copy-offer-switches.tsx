@@ -43,17 +43,21 @@ const OFFERS: ReadonlyArray<{
 // A flip writes the offers ONLY, never a visibility, so the backend keeps the owner's own choice
 // (a private copy is visible while offered and private again once every offer is withdrawn).
 // Each change is confirmed with an Undo toast; failures toast an error and the live query keeps
-// showing the stored state.
+// showing the stored state. While the copy is out on loan the switches are disabled with the reason:
+// lending it out withdrew its offers, and it can't be offered until it is back.
 export function CopyOfferSwitches({
   copyId,
   availability,
   visibilityPreference,
+  onLoan = false,
 }: {
   /** The copy's domain id (aggregateId); null for legacy rows, which can't be changed here. */
   copyId: string | null;
   availability: Availability;
   /** The owner's own visibility choice (CopyInstanceView visibilityPreference ?? visibility). */
   visibilityPreference: "private" | "visible";
+  /** The copy has an open loan (CopyInstanceView loans: status "open"). */
+  onLoan?: boolean;
 }) {
   const t = useTranslations("copyInstance.offers");
   const tCopy = useTranslations("copyInstance");
@@ -132,12 +136,22 @@ export function CopyOfferSwitches({
           <Switch
             id={`${id}-${flag}`}
             checked={availability[flag]}
-            disabled={copyId == null || update.isPending}
-            aria-describedby={`${id}-${flag}-hint`}
+            disabled={copyId == null || onLoan || update.isPending}
+            aria-describedby={
+              onLoan ? `${id}-${flag}-hint ${id}-locked` : `${id}-${flag}-hint`
+            }
             onCheckedChange={(on) => void change(flag, on)}
           />
         </div>
       ))}
+      {onLoan && (
+        <p
+          id={`${id}-locked`}
+          className="text-muted-foreground px-4 py-2.5 text-xs"
+        >
+          {t("lockedOnLoan")}
+        </p>
+      )}
     </div>
   );
 }

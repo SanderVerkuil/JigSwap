@@ -14,9 +14,11 @@ const CHIP_KEYS: ReadonlyArray<{ key: ChipKey; tKey: string }> = [
 export function AvailabilityChips({
   value,
   onChange,
+  disabled = false,
 }: {
   value: Availability;
   onChange: (v: Availability) => void;
+  disabled?: boolean;
 }) {
   const t = useTranslations("puzzles");
   return (
@@ -28,9 +30,10 @@ export function AvailabilityChips({
             key={key}
             type="button"
             aria-pressed={on}
+            disabled={disabled}
             onClick={() => onChange({ ...value, [key]: !on })}
             className={[
-              "inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold cursor-pointer border transition-colors",
+              "inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold cursor-pointer border transition-colors disabled:cursor-not-allowed disabled:opacity-50",
               on
                 ? "bg-jigsaw-secondary-tint text-jigsaw-secondary border-jigsaw-secondary/40"
                 : "bg-card text-foreground border-border hover:bg-accent",

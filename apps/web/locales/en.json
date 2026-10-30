@@ -3460,6 +3460,11 @@
     "onLoanTo": "On loan to {name}",
     "recallAction": "Recall",
     "recalling": "Recalling…",
+    "recallConfirmTitle": "Recall this puzzle?",
+    "recallConfirmBody": "This ends the loan and marks the puzzle as back with you. Let {name} know so they can return it.",
+    "recallConfirm": "Recall puzzle",
+    "recalled": "Loan ended. The puzzle is marked as back with you.",
+    "recallFailed": "Couldn't recall the puzzle. Please try again.",
     "historyTitle": "Loan history",
     "historyDescription": "Every time this copy has been lent out.",
     "noHistory": "This copy has never been lent out.",
@@ -4110,10 +4115,6 @@
       "offerToLend": "Offer to Lend",
       "logCompletion": "Log a Completion"
     },
-    "available": "Available",
-    "forTrade": "For Trade",
-    "forLend": "For Loan",
-    "forSale": "For Sale",
     "acquired": "Acquired",
     "source": "Source",
     "inYourLibrary": "In your library",
@@ -4204,6 +4205,7 @@
       "swapHint": "Members can propose a swap for it.",
       "lendLabel": "Offer to lend",
       "lendHint": "Members can ask to borrow it.",
+      "lockedOnLoan": "It's on loan. You can offer it again once it's back.",
       "swapOn": "Offered for swap",
       "swapOff": "No longer offered for swap",
       "lendOn": "Offered to lend",
@@ -4211,6 +4213,15 @@
       "visibleWhileOffered": "It's visible while it's on offer and private again once you withdraw every offer.",
       "privateAgain": "It's private again.",
       "undo": "Undo"
+    },
+    "status": {
+      "onLoan": "On loan to {name} since {date}",
+      "offered": "Offered for {offers}",
+      "offerSwap": "swap",
+      "offerLend": "lending",
+      "offerSale": "sale",
+      "visibleWhileOffered": "Visible while offered, private again when you withdraw",
+      "notOffered": "Not offered"
     },
     "editCopy": {
       "title": "Edit copy",
