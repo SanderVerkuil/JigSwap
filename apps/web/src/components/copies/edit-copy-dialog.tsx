@@ -82,9 +82,12 @@ export function EditCopyDialog({
     snapshot.condition as ConditionValue,
   );
   const [availability, setAvailability] = useState(snapshot.availability);
-  const [visibility, setVisibility] = useState<CopyVisibility>(
-    snapshot.visibility,
-  );
+  // The owner's own choice, kept while the copy is offered (it is visible only while an offer is
+  // on). A backend without visibilityPreference falls back to the effective visibility.
+  const initialVisibility: CopyVisibility =
+    snapshot.visibilityPreference ?? snapshot.visibility;
+  const [visibility, setVisibility] =
+    useState<CopyVisibility>(initialVisibility);
   const offered =
     availability.forTrade || availability.forLend || availability.forSale;
   const [notes, setNotes] = useState(snapshot.notes ?? "");
@@ -117,17 +120,17 @@ export function EditCopyDialog({
         availability.forTrade !== snapshot.availability.forTrade ||
         availability.forLend !== snapshot.availability.forLend ||
         availability.forSale !== snapshot.availability.forSale;
-      // One write for the sharing setting (availability + visibility); availabilityToSharing
-      // forces "visible" whenever an offer is on.
-      if (domainEditable) {
-        const sharing = availabilityToSharing(
-          aggregateId,
-          availability,
-          visibility,
+      // One write for the sharing setting: the offers plus the owner's own visibility choice,
+      // which may stay "private" while an offer is on.
+      if (
+        domainEditable &&
+        (availabilityChanged || visibility !== initialVisibility)
+      ) {
+        ops.push(
+          updateSharing.mutateAsync(
+            availabilityToSharing(aggregateId, availability, visibility),
+          ),
         );
-        if (availabilityChanged || sharing.visibility !== snapshot.visibility) {
-          ops.push(updateSharing.mutateAsync(sharing));
-        }
       }
 
       const trimmedNotes = notes.trim();
@@ -192,13 +195,7 @@ export function EditCopyDialog({
             <Label>{t("availability")}</Label>
             <AvailabilityChips
               value={availability}
-              onChange={(next) => {
-                setAvailability(next);
-                // An offer makes the copy visible: reflect it in the form right away.
-                if (next.forTrade || next.forLend || next.forSale) {
-                  setVisibility("visible");
-                }
-              }}
+              onChange={setAvailability}
             />
           </div>
 
@@ -206,7 +203,7 @@ export function EditCopyDialog({
           <div className="space-y-2">
             <Label>{t("editCopy.visibility.label")}</Label>
             <CopyVisibilityControl
-              value={offered ? "visible" : visibility}
+              value={visibility}
               onChange={setVisibility}
               offered={offered}
               disabled={!domainEditable}

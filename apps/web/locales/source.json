@@ -4199,10 +4199,19 @@
       "resetZoom": "Reset zoom",
       "zoomLevel": "Zoom {percent}%"
     },
-    "offerForSwap": "Offer for Swap",
-    "offeredForSwap": "Offered for Swap",
-    "offerForLend": "Offer to Lend",
-    "offeredForLend": "Offered for Lend",
+    "offers": {
+      "swapLabel": "Offer for swap",
+      "swapHint": "Members can propose a swap for it.",
+      "lendLabel": "Offer to lend",
+      "lendHint": "Members can ask to borrow it.",
+      "swapOn": "Offered for swap",
+      "swapOff": "No longer offered for swap",
+      "lendOn": "Offered to lend",
+      "lendOff": "No longer offered to lend",
+      "visibleWhileOffered": "It's visible while it's on offer and private again once you withdraw every offer.",
+      "privateAgain": "It's private again.",
+      "undo": "Undo"
+    },
     "editCopy": {
       "title": "Edit copy",
       "save": "Save",
@@ -4221,8 +4230,8 @@
         "visibleHint": "Your friends can see it in your library.",
         "private": "Private — only you and your household",
         "privateHint": "Hidden from everyone else, friends included.",
-        "offerNote": "Offering a puzzle for swap, lend or sale makes it visible.",
-        "privateDisabled": "This copy is on offer, so it is visible. Withdraw the offer to make it private."
+        "offerNote": "Offering a puzzle for swap, lend or sale makes it visible while the offer lasts.",
+        "privateWhileOffered": "On offer, so it's visible for now. It goes back to private when you withdraw every offer."
       }
     },
     "photoCover": "Cover",

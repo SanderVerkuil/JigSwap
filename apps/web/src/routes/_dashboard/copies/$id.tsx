@@ -1,7 +1,7 @@
 import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
-import { availabilityToSharing } from "@/components/add-puzzle";
 import { ImageZoom } from "@/components/common/image-zoom";
+import { CopyOfferSwitches } from "@/components/copies/copy-offer-switches";
 import { CopyOwner } from "@/components/copies/copy-owner";
 import { copyPhotoError } from "@/components/copies/copy-photo-error";
 import { EditCopyDialog } from "@/components/copies/edit-copy-dialog";
@@ -282,35 +282,6 @@ function CopyInstanceDetail({
     .filter((c) => !c.isCompleted && c.aggregateId)
     .sort((a, b) => b.startDate - a.startDate)[0];
 
-  const updateSharing = useMutation({
-    mutationFn: useConvexMutation(gateway.library.updateSharing),
-  });
-
-  // Toggle a single sharing flag on the copy. Optimistic from the user's view via Convex
-  // reactivity; on failure we surface a toast and the next query refresh restores the real state.
-  const toggleSharing = async (flag: "forTrade" | "forLend") => {
-    if (!copy.viewerCanManage || copy.aggregateId == null) return;
-    try {
-      await updateSharing.mutateAsync(
-        availabilityToSharing(
-          copy.aggregateId,
-          { ...availability, [flag]: !availability[flag] },
-          // Keep the owner's visibility choice; turning an offer on makes it visible.
-          snapshot.visibility,
-        ),
-      );
-    } catch (error) {
-      // Refused while an exchange in progress reserves the copy or it is out on loan: say so.
-      toast.error(
-        t(
-          convexErrorCode(error) === "CopyReserved"
-            ? "editCopy.copyReserved"
-            : "editCopy.editFailed",
-        ),
-      );
-    }
-  };
-
   // When the arriving link carried `?from=collection:<id>`, resolve that collection so the
   // page head can show contextual breadcrumbs instead of the canonical trail below. Skipped
   // (no query) when there's no context; unreadable/missing collections resolve to null and
@@ -572,36 +543,23 @@ function CopyInstanceDetail({
             )}
           </div>
 
+          {/* Offers (managers): labelled switches that never change the owner's visibility choice. */}
+          {copy.viewerCanManage && (
+            <div className="mt-5">
+              <CopyOfferSwitches
+                copyId={copy.aggregateId}
+                availability={availability}
+                visibilityPreference={
+                  snapshot.visibilityPreference ?? snapshot.visibility
+                }
+              />
+            </div>
+          )}
+
           {/* Actions */}
           <div className="mt-5 flex flex-wrap gap-2.5">
             {canSolve ? (
               <>
-                {copy.viewerCanManage && (
-                  <>
-                    <Button
-                      variant={availability.forTrade ? "brand" : "outline"}
-                      aria-pressed={availability.forTrade}
-                      disabled={copy.aggregateId == null}
-                      onClick={() => void toggleSharing("forTrade")}
-                    >
-                      <ArrowLeftRight className="h-4 w-4" />
-                      {availability.forTrade
-                        ? t("offeredForSwap")
-                        : t("offerForSwap")}
-                    </Button>
-                    <Button
-                      variant={availability.forLend ? "brand" : "outline"}
-                      aria-pressed={availability.forLend}
-                      disabled={copy.aggregateId == null}
-                      onClick={() => void toggleSharing("forLend")}
-                    >
-                      <Package className="h-4 w-4" />
-                      {availability.forLend
-                        ? t("offeredForLend")
-                        : t("offerForLend")}
-                    </Button>
-                  </>
-                )}
                 {!myInProgress && (
                   <Button
                     variant="outline"

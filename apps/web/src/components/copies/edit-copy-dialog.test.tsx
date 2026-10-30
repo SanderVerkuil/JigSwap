@@ -9,7 +9,8 @@ import source from "../../../locales/source.json";
 import { EditCopyDialog } from "./edit-copy-dialog";
 
 // The owner's copy editor: the visibility control writes through the same updateSharing call as
-// the availability chips, and an offered copy can't be made private.
+// the availability chips. Visibility is the owner's own choice (visibilityPreference): it stays
+// selectable while the copy is offered, and an offer never rewrites it.
 
 const calls = vi.hoisted(() => ({
   byMutation: {} as Record<string, Array<Record<string, unknown>>>,
@@ -54,6 +55,7 @@ const CLOSED = { forTrade: false, forLend: false, forSale: false };
 const copyOf = (
   availability: typeof CLOSED,
   visibility: "private" | "visible",
+  visibilityPreference?: "private" | "visible",
 ) =>
   ({
     copyId: "row1",
@@ -67,6 +69,7 @@ const copyOf = (
       notes: undefined,
       availability,
       visibility,
+      visibilityPreference,
       tags: [],
     },
   }) as never;
@@ -94,27 +97,25 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 describe("EditCopyDialog visibility", () => {
-  it("an offered copy shows Visible and disables Private with the reason", () => {
-    renderDialog(copyOf({ ...CLOSED, forTrade: true }, "visible"));
-    expect(radio("Visible to the community").getAttribute("aria-checked")).toBe(
-      "true",
-    );
-    expect(
-      (radio("Private — only you and your household") as HTMLButtonElement)
-        .disabled,
-    ).toBe(true);
+  it("an offered copy the owner keeps private shows Private, selectable, with the reason it is visible", () => {
+    renderDialog(copyOf({ ...CLOSED, forTrade: true }, "visible", "private"));
+    const privateOption = radio(
+      "Private — only you and your household",
+    ) as HTMLButtonElement;
+    expect(privateOption.getAttribute("aria-checked")).toBe("true");
+    expect(privateOption.disabled).toBe(false);
     expect(
       screen.getByText(
-        "This copy is on offer, so it is visible. Withdraw the offer to make it private.",
+        "On offer, so it's visible for now. It goes back to private when you withdraw every offer.",
       ),
     ).toBeTruthy();
   });
 
   it("making a closed copy private sends one updateSharing with visibility private", async () => {
-    renderDialog(copyOf(CLOSED, "visible"));
+    renderDialog(copyOf(CLOSED, "visible", "visible"));
     expect(
       screen.getByText(
-        "Offering a puzzle for swap, lend or sale makes it visible.",
+        "Offering a puzzle for swap, lend or sale makes it visible while the offer lasts.",
       ),
     ).toBeTruthy();
     fireEvent.click(radio("Private — only you and your household"));
@@ -124,25 +125,46 @@ describe("EditCopyDialog visibility", () => {
     ]);
   });
 
-  it("turning on an offer for a private copy switches the form to Visible and saves visible", async () => {
+  it("turning on an offer for a private copy keeps Private and saves the private choice", async () => {
+    renderDialog(copyOf(CLOSED, "private", "private"));
+    fireEvent.click(screen.getByRole("button", { name: "For Trade" }));
+    expect(
+      radio("Private — only you and your household").getAttribute(
+        "aria-checked",
+      ),
+    ).toBe("true");
+    await save();
+    expect(calls.byMutation.updateSharing).toEqual([
+      { copyId: "agg1", visibility: "private", ...CLOSED, forTrade: true },
+    ]);
+  });
+
+  it("an offered copy can be made private without withdrawing the offer", async () => {
+    renderDialog(copyOf({ ...CLOSED, forLend: true }, "visible", "visible"));
+    fireEvent.click(radio("Private — only you and your household"));
+    await save();
+    expect(calls.byMutation.updateSharing).toEqual([
+      { copyId: "agg1", visibility: "private", ...CLOSED, forLend: true },
+    ]);
+  });
+
+  it("saving an offered private copy unchanged sends no sharing write", async () => {
+    renderDialog(copyOf({ ...CLOSED, forTrade: true }, "visible", "private"));
+    await save();
+    expect(calls.byMutation.updateSharing).toBeUndefined();
+  });
+
+  it("without a preference (older backend) it starts from the effective visibility", () => {
     renderDialog(copyOf(CLOSED, "private"));
     expect(
       radio("Private — only you and your household").getAttribute(
         "aria-checked",
       ),
     ).toBe("true");
-    fireEvent.click(screen.getByRole("button", { name: "For Trade" }));
-    expect(radio("Visible to the community").getAttribute("aria-checked")).toBe(
-      "true",
-    );
-    await save();
-    expect(calls.byMutation.updateSharing).toEqual([
-      { copyId: "agg1", visibility: "visible", ...CLOSED, forTrade: true },
-    ]);
   });
 
   it("saving without changes sends no sharing write", async () => {
-    renderDialog(copyOf(CLOSED, "private"));
+    renderDialog(copyOf(CLOSED, "private", "private"));
     await save();
     expect(calls.byMutation.updateSharing).toBeUndefined();
   });

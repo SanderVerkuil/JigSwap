@@ -33,14 +33,14 @@ describe("availabilityToSharing visibility", () => {
     ).toBe("private");
   });
 
-  it("forces visible when any offer is on", () => {
+  it("keeps a private choice while an offer is on (visible only while offered)", () => {
     for (const flags of [
       { forTrade: true, forLend: false, forSale: false },
       { forTrade: false, forLend: true, forSale: false },
       { forTrade: false, forLend: false, forSale: true },
     ]) {
       expect(availabilityToSharing("copy1", flags, "private").visibility).toBe(
-        "visible",
+        "private",
       );
     }
   });
