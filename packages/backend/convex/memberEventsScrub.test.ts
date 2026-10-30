@@ -140,6 +140,34 @@ describe("scrubPayload", () => {
     });
   });
 
+  test("drops the free text a log row may still hold: older comment text, a deleted circle's name", () => {
+    expect(
+      scrubPayload(
+        {
+          commentId: "c1",
+          authorId: "m1",
+          text: "my private thoughts",
+        },
+        "m1",
+      ),
+    ).toEqual({ commentId: "c1", authorId: "deleted-member" });
+    expect(
+      scrubPayload(
+        {
+          circleId: "circle-1",
+          ownerId: "m1",
+          memberIds: ["m2"],
+          circleName: "Book club",
+        },
+        "m1",
+      ),
+    ).toEqual({
+      circleId: "circle-1",
+      ownerId: "deleted-member",
+      memberIds: ["m2"],
+    });
+  });
+
   test("a payload that does not name the member is left alone", () => {
     expect(
       scrubPayload({ memberId: "m2", displayName: "Bo" }, "m1"),

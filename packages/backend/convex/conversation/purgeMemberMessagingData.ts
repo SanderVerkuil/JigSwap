@@ -125,8 +125,8 @@ import { threadRowByAggregateId } from "./readModelHelpers";
 //                them: their own activity-feed events (solves started and recorded, copies
 //                acquired) are deleted; in every other one their id becomes "deleted-member" and
 //                copied personal fields (email, clerkId, names, avatar, bio, location, notes,
-//                collection/category names) are dropped. Their event lookup rows
-//                (domainEventMembers) go with it. Once the lookup backfill has run
+//                comment text, collection/category/circle names) are dropped. Their event
+//                lookup rows (domainEventMembers) go with it. Once the lookup backfill has run
 //                (events/eventMembers) the phase reads only their events, by index,
 //                EVENT_INDEX_BATCH_SIZE per run. Before that it pages the whole log,
 //                EVENT_SCRUB_BATCH_SIZE events per run, and an event keyed by a copy alone

@@ -4,6 +4,7 @@ import {
   deleteEventMembers,
   eventMembersBackfilled,
 } from "../events/eventMembers";
+import { REDACTED_EVENT_FIELDS } from "../events/recordAndSchedule";
 
 // The last phase of the account-deletion purge (conversation/purgeMemberMessagingData; spec
 // 2026-10-19 deleted member ghost, phase 9): the durable event log (`domainEvents`) keeps no trace
@@ -17,19 +18,18 @@ import {
 export const DELETED_MEMBER = "deleted-member";
 
 // Personal data an event may have copied from the member (identity, profile, their own library
-// labels and notes). Dropped from a payload that names them, wherever it sits in the payload.
+// labels and notes, comment text, a circle's name). Dropped from a payload that names them,
+// wherever it sits in the payload. Includes every REDACTED_EVENT_FIELDS name, so a row recorded
+// before events/recordAndSchedule left those out (and not yet stripped by events/redactPayloads)
+// loses them with the member; a dispatched CircleDeleted no longer needs its circleName.
 const PERSONAL_FIELDS = new Set([
-  "email",
-  "clerkId",
+  ...REDACTED_EVENT_FIELDS,
   "name",
-  "displayName",
   "username",
   "avatar",
   "bio",
   "location",
-  "notes",
-  "collectionName",
-  "categoryName",
+  "circleName",
 ]);
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
