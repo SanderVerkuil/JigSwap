@@ -1,0 +1,23 @@
+# Dependabot keeps the SHA-pinned GitHub Actions current.
+#
+# Every `uses:` in .github/workflows is pinned to a full commit SHA with a `# vX.Y.Z` comment,
+# so a moved or hijacked tag cannot change what runs in jobs that hold deploy keys. Dependabot
+# reads the comment and bumps the SHA and the comment together. Minor and patch releases arrive
+# as one grouped PR a week; each major release gets its own PR, because a major can change
+# inputs or defaults and needs its own check.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    # Leave a new release a week to be pulled or fixed before it is proposed here (a hijacked
+    # release is usually caught within days).
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    commit-message:
+      prefix: ci
