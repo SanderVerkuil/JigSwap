@@ -39,6 +39,12 @@ export type ShellNavItem = {
   key: string;
   href: string;
   icon: LucideIcon;
+  /**
+   * Extra words the ⌘K palette matches besides the localized title: the other language's title
+   * and common synonyms, in English AND Dutch, so a member finds the page in either language.
+   * Lower case; never shown.
+   */
+  keywords?: readonly string[];
 };
 
 export type ShellNavGroup = {
@@ -46,6 +52,8 @@ export type ShellNavGroup = {
   /** The group label links to this landing page. */
   href: string;
   icon: LucideIcon;
+  /** Palette keywords for the landing page; see ShellNavItem.keywords. */
+  keywords?: readonly string[];
   items: ShellNavItem[];
 };
 
@@ -53,6 +61,7 @@ export const DASHBOARD_ITEM: ShellNavItem = {
   key: "dashboard",
   href: "/dashboard",
   icon: LayoutDashboard,
+  keywords: ["home", "overview", "overzicht", "start"],
 };
 
 // Deduplicated IA per the design handoff: Dashboard ungrouped, then
@@ -63,28 +72,116 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     key: "library",
     href: "/library",
     icon: BookOpen,
+    keywords: ["library", "bibliotheek", "shelf", "plank"],
     items: [
-      { key: "myPuzzles", href: "/my-puzzles", icon: Puzzle },
-      { key: "collections", href: "/collections", icon: FolderOpen },
-      { key: "household", href: "/household", icon: House },
-      { key: "completions", href: "/completions", icon: CircleCheck },
-      { key: "goals", href: "/goals", icon: Target },
-      { key: "insights", href: "/insights", icon: BarChart3 },
+      {
+        key: "myPuzzles",
+        href: "/my-puzzles",
+        icon: Puzzle,
+        keywords: ["my puzzles", "mijn puzzels", "copies", "exemplaren"],
+      },
+      {
+        key: "collections",
+        href: "/collections",
+        icon: FolderOpen,
+        keywords: ["collections", "collecties", "lists", "lijsten"],
+      },
+      {
+        key: "household",
+        href: "/household",
+        icon: House,
+        keywords: ["household", "huishouden", "family", "gezin"],
+      },
+      {
+        key: "completions",
+        href: "/completions",
+        icon: CircleCheck,
+        keywords: [
+          "completions",
+          "voltooiingen",
+          "solves",
+          "solved",
+          "voltooid",
+        ],
+      },
+      {
+        key: "goals",
+        href: "/goals",
+        icon: Target,
+        keywords: ["goals", "doelen", "challenge", "uitdaging"],
+      },
+      {
+        key: "insights",
+        href: "/insights",
+        icon: BarChart3,
+        keywords: ["insights", "inzichten", "stats", "statistieken"],
+      },
     ],
   },
   {
     key: "community",
     href: "/community",
     icon: Users,
+    keywords: ["community", "gemeenschap"],
     items: [
-      { key: "browse", href: "/browse", icon: Search },
+      {
+        key: "browse",
+        href: "/browse",
+        icon: Search,
+        keywords: [
+          "browse",
+          "ontdekken",
+          "discover",
+          "available",
+          "beschikbaar",
+        ],
+      },
       // The shared puzzle catalogue is discovery, not personal library — it lives
       // alongside Browse under Community.
-      { key: "puzzles", href: "/puzzles", icon: Shapes },
-      { key: "circles", href: "/circles", icon: Users },
-      { key: "exchanges", href: "/trades", icon: ArrowLeftRight },
-      { key: "messages", href: "/messages", icon: MessageSquare },
-      { key: "people", href: "/people", icon: Globe },
+      {
+        key: "puzzles",
+        href: "/puzzles",
+        icon: Shapes,
+        keywords: ["catalogue", "catalog", "catalogus", "puzzels"],
+      },
+      {
+        key: "circles",
+        href: "/circles",
+        icon: Users,
+        keywords: ["circles", "kringen", "groups", "groepen"],
+      },
+      {
+        key: "exchanges",
+        href: "/trades",
+        icon: ArrowLeftRight,
+        keywords: [
+          "exchanges",
+          "uitwisselingen",
+          "swap",
+          "trade",
+          "lend",
+          "borrow",
+          "loan",
+          "sell",
+          "ruil",
+          "ruilen",
+          "lenen",
+          "uitlenen",
+          "verkopen",
+        ],
+      },
+      {
+        key: "messages",
+        href: "/messages",
+        icon: MessageSquare,
+        keywords: ["messages", "berichten", "chat", "inbox", "gesprekken"],
+      },
+      {
+        key: "people",
+        href: "/people",
+        icon: Globe,
+        keywords: ["people", "mensen", "members", "leden", "follow", "volgen"],
+      },
     ],
   },
 ];
@@ -96,11 +193,32 @@ export const ADMIN_GROUP: ShellNavGroup = {
   key: "admin",
   href: "/admin",
   icon: Shield,
+  keywords: ["admin", "beheer"],
   items: [
-    { key: "adminModeration", href: "/admin/moderation", icon: Gavel },
-    { key: "adminPuzzles", href: "/admin/puzzles", icon: Puzzle },
-    { key: "adminCategories", href: "/admin/categories", icon: Tags },
-    { key: "adminUsers", href: "/admin/users", icon: Users },
+    {
+      key: "adminModeration",
+      href: "/admin/moderation",
+      icon: Gavel,
+      keywords: ["moderation", "moderatie", "reports"],
+    },
+    {
+      key: "adminPuzzles",
+      href: "/admin/puzzles",
+      icon: Puzzle,
+      keywords: ["admin puzzles", "proposals", "voorstellen"],
+    },
+    {
+      key: "adminCategories",
+      href: "/admin/categories",
+      icon: Tags,
+      keywords: ["categories", "categorieën"],
+    },
+    {
+      key: "adminUsers",
+      href: "/admin/users",
+      icon: Users,
+      keywords: ["users", "gebruikers"],
+    },
     { key: "adminContact", href: "/admin/contact", icon: Mail },
     { key: "adminFeedback", href: "/admin/feedback", icon: ThumbsUp },
   ],
