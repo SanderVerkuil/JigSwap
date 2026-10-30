@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 import { PuzzleCard as CopyCard } from "@/components/ui/puzzle-card";
+import { screen } from "@testing-library/react";
 import type { ComponentProps, ReactNode } from "react";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
@@ -30,15 +31,14 @@ vi.mock("@/components/ui/collection-dropdown", () => ({
 }));
 vi.mock("@/compat/link", () => ({
   Link: ({
-    children,
     href,
-    className,
+    children,
+    ...rest
   }: {
-    children?: ReactNode;
     href: string;
-    className?: string;
+    children?: ReactNode;
   }) => (
-    <a href={href} className={className}>
+    <a href={href} {...rest}>
       {children}
     </a>
   ),
@@ -184,12 +184,35 @@ describe("catalogue PuzzleCard on phones", () => {
           a.textContent === "Lam Gelegd",
       ),
     ).toBe(true);
-    // Hidden below sm (or gone altogether): two ~170px columns leave it "V…".
-    const details = links.filter((a) =>
-      a.textContent?.includes("View Details"),
-    );
-    expect(details.every((a) => a.classList.contains("max-sm:hidden"))).toBe(
-      true,
-    );
+    // Gone at every width: two ~170px columns left it "V…".
+    expect(
+      links.filter((a) => a.textContent?.includes("View Details")),
+    ).toEqual([]);
+  });
+});
+
+describe("catalogue PuzzleCard", () => {
+  it("links to the puzzle once, through its title", () => {
+    render(<CatalogCard puzzle={summary()} />);
+    const detailLinks = container.querySelectorAll('a[href="/puzzles/p1"]');
+    expect(detailLinks).toHaveLength(1);
+    expect(detailLinks[0]?.textContent).toBe("Harbour at dusk");
+  });
+
+  it("keeps the named favourite and add actions", () => {
+    render(<CatalogCard puzzle={summary()} />);
+    expect(
+      screen
+        .getByRole("button", { name: "Add to Favorites" })
+        .getAttribute("aria-pressed"),
+    ).toBe("false");
+    expect(
+      screen
+        .getAllByRole("link")
+        .some(
+          (link) =>
+            link.getAttribute("href") === "/my-puzzles/add/new?puzzleId=p1",
+        ),
+    ).toBe(true);
   });
 });

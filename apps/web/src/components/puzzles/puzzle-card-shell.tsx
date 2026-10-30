@@ -178,9 +178,11 @@ export function PuzzleCardShell({
           {imageHref ? (
             // Stretched link: the ::after overlay spans the whole (relative) card, so
             // clicking the image, title or any empty area navigates. Action buttons
-            // sit above it via `relative z-10` and stay pressable.
+            // sit above it via `relative z-10` and stay pressable. Its focus is shown
+            // as a ring around the whole card (see `data-card-link` on the Card).
             <Link
               href={imageHref}
+              data-card-link=""
               className="after:absolute after:inset-0 after:z-[1] after:content-[''] hover:underline focus-visible:underline focus-visible:outline-none"
             >
               {puzzle.title}
@@ -277,6 +279,10 @@ export function PuzzleCardShell({
         // `group` so the cover zooms on hover of the WHOLE card (the stretched-link
         // overlay covers the image, so image-only :hover no longer fires).
         "group relative h-full gap-0 overflow-hidden p-0",
+        // The stretched title link stands for the whole card, so keyboard focus on it rings the
+        // card (its underline alone is too faint a cue). Focus on an action button keeps that
+        // button's own ring instead.
+        "has-[[data-card-link]:focus-visible]:ring-2 has-[[data-card-link]:focus-visible]:ring-ring",
         selected && "ring-2 ring-primary",
         (href || selectable) && "cursor-pointer",
         className,
