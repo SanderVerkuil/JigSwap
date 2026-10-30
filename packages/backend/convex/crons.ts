@@ -21,6 +21,16 @@ crons.daily(
   {},
 );
 
+// The moderation backlog (pending photos per table, the oldest wait, photos waiting on a hash
+// re-check) next to both pools' parallelism: one wide event to the log and Axiom
+// (lib/imageModeration/queueDepth), so the owner can tell whether the pools keep up.
+crons.interval(
+  "log moderation queue depth",
+  { minutes: 15 },
+  internal.lib.imageModeration.queueDepth.logModerationQueueDepth,
+  {},
+);
+
 // Blobs nothing holds (older than a day) and box art only its listing holds (older than a week):
 // a DRY RUN that only logs `storage.sweep`, unless the deployment env STORAGE_GC_MODE is "delete"
 // (lib/storage/storageSweep; preconditions in docs/deployment/photo-moderation.md).
