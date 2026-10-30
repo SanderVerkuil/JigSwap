@@ -13,9 +13,9 @@ import { isPrivateIp } from "@jigswap/domain";
 // checks every address inside the socket's own DNS lookup, on every redirect hop:
 //   - browserStorePageFetcher: the only page tier that follows redirects (at most five).
 //   - catalog/importPuzzleImage: the box-art image fetch.
-//   - ogieStorePageFetcher: the primary tier still uses ogie's own fetch, with
-//     allowPrivateUrls:false (a lexical check only) and no redirect-following; a redirecting
-//     store URL surfaces as a retryable FetchFailed and falls through to the browser tier.
+//   - ogieStorePageFetcher: the primary tier; one GET of the entry URL, no redirect-following (a
+//     redirecting store URL surfaces as a retryable FetchFailed and falls through to the browser
+//     tier), parsed with ogie.
 //   - firecrawlStorePageFetcher: our egress only reaches api.firecrawl.dev (a public host); the
 //     target page is fetched by Firecrawl's infra, not ours, so it is not an SSRF vector here.
 export type PublicUrlCheck =
