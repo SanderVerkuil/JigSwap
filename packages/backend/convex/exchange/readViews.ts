@@ -11,6 +11,7 @@ import type { QueryCtx } from "../_generated/server";
 import { copyShowsCatalogFacts } from "../catalog/definitionVisibility";
 import { effectiveCopyVisibility } from "../library/copyVisibility";
 import { toCopySnapshotView } from "../library/mappers";
+import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
 import {
   projectTradeParty,
   tradePartyMemberView,
@@ -311,9 +312,9 @@ export const toPuzzleViewFor = (
 };
 
 // Enrich one exchange row into a list-item view: project both parties (projectExchangeParties), the
-// requested/offered owned copies and their catalog definitions (copy.puzzleId -> puzzles). Mirrors
-// the legacy two-step join in getUserExchanges/getExchangesByOwner/getExchangesByRequester.
-// `userRole` is set by the caller.
+// requested/offered owned copies, their catalog definitions (copy.puzzleId -> puzzles) and their
+// card covers. Mirrors the legacy two-step join in getUserExchanges/getExchangesByOwner/
+// getExchangesByRequester. `userRole` is set by the caller.
 export const enrichExchangeSummary = async (
   ctx: QueryCtx,
   e: Doc<"exchanges">,
@@ -331,6 +332,16 @@ export const enrichExchangeSummary = async (
   const [requestedPuzzle, offeredPuzzle] = await Promise.all([
     requestedOwnedPuzzle ? ctx.db.get(requestedOwnedPuzzle.puzzleId) : null,
     offeredOwnedPuzzle ? ctx.db.get(offeredOwnedPuzzle.puzzleId) : null,
+  ]);
+  // Both copies are already shown to both parties above, so their card covers are too. Resolved
+  // like every library card (approved cover photo, else box art) and always as URLs.
+  const [requestedCoverUrl, offeredCoverUrl] = await Promise.all([
+    requestedOwnedPuzzle
+      ? resolveCopyCoverUrl(ctx, requestedOwnedPuzzle, requestedPuzzle)
+      : null,
+    offeredOwnedPuzzle
+      ? resolveCopyCoverUrl(ctx, offeredOwnedPuzzle, offeredPuzzle)
+      : null,
   ]);
 
   return {
@@ -357,5 +368,7 @@ export const enrichExchangeSummary = async (
       parties.visible,
     ),
     offeredPuzzle: toPuzzleViewFor(offeredPuzzle, offeredOwnedPuzzle, viewerId),
+    requestedCoverUrl,
+    offeredCoverUrl,
   };
 };

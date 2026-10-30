@@ -101,6 +101,41 @@ describe("loan lifecycle", () => {
     expect(lentOut).toHaveLength(1);
   });
 
+  test("both loan lists carry the copy's cover as a URL (null without one)", async () => {
+    const t = convexTest(schema, modules);
+    const { copy, owner } = await seed(t);
+    await settleLend(t, copy, owner);
+    await flush(t);
+
+    // No cover photo and no box art yet: null, so the web shows its placeholder.
+    const before = await asBorrower(t).query(
+      api.library.getBorrowedLoans.getBorrowedLoans,
+      {},
+    );
+    expect(before[0].coverUrl).toBeNull();
+
+    const boxArt = await t.run(async (ctx) => {
+      const row = await ctx.db.get(copy);
+      const blob = await ctx.storage.store(
+        new Blob(["box-art"], { type: "image/png" }),
+      );
+      await ctx.db.patch(row!.puzzleId, { image: blob });
+      return blob;
+    });
+    const borrowed = await asBorrower(t).query(
+      api.library.getBorrowedLoans.getBorrowedLoans,
+      {},
+    );
+    const lentOut = await asOwner(t).query(
+      api.library.getLentOutLoans.getLentOutLoans,
+      {},
+    );
+    for (const loan of [borrowed[0], lentOut[0]]) {
+      expect(loan.coverUrl).toMatch(/^https?:\/\//);
+      expect(loan.coverUrl).not.toContain(boxArt);
+    }
+  });
+
   test("the borrower returns the loan -> possession back to the owner, no open loans", async () => {
     const t = convexTest(schema, modules);
     const { copy, owner } = await seed(t);

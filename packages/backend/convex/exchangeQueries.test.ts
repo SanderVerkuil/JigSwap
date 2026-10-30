@@ -96,7 +96,7 @@ const seed = async (t: TestConvex<typeof schema>) =>
       updatedAt: now,
     });
 
-    return { alice, bob, older, newer };
+    return { alice, bob, older, newer, mountain, alicesCopy };
   });
 
 const asAlice = (t: TestConvex<typeof schema>) =>
@@ -357,5 +357,64 @@ describe("exchange.getExchangesByOwner / getExchangesByRequester", () => {
         {},
       ),
     ).toEqual([]);
+  });
+});
+
+describe("exchange summary covers", () => {
+  // Each copy's cover resolves like every library card (resolveCopyCoverUrl): its approved cover
+  // photo, else the puzzle's box art. The row carries URLs, never the raw storage ids.
+  test("both parties get each copy's cover as a URL: box art for one, the cover photo for the other", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, mountain, alicesCopy } = await seed(t);
+    const { boxArt, photoBlob } = await t.run(async (ctx) => {
+      const boxArt = await ctx.storage.store(
+        new Blob(["box-art"], { type: "image/png" }),
+      );
+      await ctx.db.patch(mountain, { image: boxArt });
+      const photoBlob = await ctx.storage.store(
+        new Blob(["cover-photo"], { type: "image/png" }),
+      );
+      const photo = await ctx.db.insert("ownedPuzzleImages", {
+        ownedPuzzleId: alicesCopy,
+        uploaderId: alice,
+        fileId: photoBlob,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      await ctx.db.patch(alicesCopy, { coverImageId: photo });
+      return { boxArt, photoBlob };
+    });
+
+    const asRequester = await asAlice(t).query(
+      api.exchange.getUserExchanges.getUserExchanges,
+      {},
+    );
+    const asRecipient = await asBob(t).query(
+      api.exchange.getExchangesByOwner.getExchangesByOwner,
+      {},
+    );
+    for (const list of [asRequester, asRecipient]) {
+      const row = list.find((e) => e.aggregateId === "exch-1");
+      expect(row?.requestedCoverUrl).toMatch(/^https?:\/\//);
+      expect(row?.offeredCoverUrl).toMatch(/^https?:\/\//);
+      expect(row?.requestedCoverUrl).not.toContain(boxArt);
+      expect(row?.offeredCoverUrl).not.toContain(photoBlob);
+      expect(row?.offeredCoverUrl).not.toBe(row?.requestedCoverUrl);
+    }
+  });
+
+  test("a copy without cover photo or box art, and a missing offered copy, give null", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const list = await asAlice(t).query(
+      api.exchange.getUserExchanges.getUserExchanges,
+      {},
+    );
+    const swap = list.find((e) => e.aggregateId === "exch-1");
+    expect(swap?.requestedCoverUrl).toBeNull();
+    expect(swap?.offeredCoverUrl).toBeNull();
+    // exch-2 offers nothing in return.
+    const oneSided = list.find((e) => e.aggregateId === "exch-2");
+    expect(oneSided?.offeredCoverUrl).toBeNull();
   });
 });
