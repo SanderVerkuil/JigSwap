@@ -2,6 +2,7 @@ import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError, type Value } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
@@ -153,5 +154,91 @@ describe("comment and review text caps (SEC-28)", () => {
       ),
     ).toBe("ReviewTextTooLong");
     expect(await countRows(t, "puzzleReviews")).toBe(0);
+  });
+});
+
+describe("photo discussion only on published photos, newest 100 shown (SEC-28)", () => {
+  const setPhoto = (
+    t: T,
+    photoId: Id<"ownedPuzzleImages">,
+    patch: {
+      moderationStatus?: "pending" | "rejected" | "unscored" | "quarantined";
+      hashCheckPendingSince?: number;
+    },
+  ) => t.run((ctx) => ctx.db.patch(photoId, patch));
+
+  const seedComments = (
+    t: T,
+    photoId: Id<"ownedPuzzleImages">,
+    authorId: Id<"users">,
+    count: number,
+  ) =>
+    t.run(async (ctx) => {
+      for (let i = 0; i < count; i++) {
+        await ctx.db.insert("photoComments", {
+          photoId,
+          authorId,
+          text: `comment ${i}`,
+          createdAt: i,
+        });
+      }
+    });
+
+  const list = (t: T, photoId: Id<"ownedPuzzleImages">) =>
+    asBob(t).query(api.library.listPhotoComments.listPhotoComments, {
+      photoId,
+    });
+
+  test.each(["pending", "unscored", "rejected", "quarantined"] as const)(
+    "nobody may comment on a %s photo, the uploader included",
+    async (moderationStatus) => {
+      const t = convexTest(schema, modules);
+      const { photoId } = await seed(t);
+      await setPhoto(t, photoId, { moderationStatus });
+
+      for (const as of [asAlice, asBob]) {
+        await expect(
+          as(t).mutation(api.library.postPhotoComment.postPhotoComment, {
+            photoId,
+            text: "hello",
+          }),
+        ).rejects.toThrow("Photo not found");
+      }
+      expect(await countRows(t, "photoComments")).toBe(0);
+    },
+  );
+
+  test("a photo whose hash check has not passed takes no comments", async () => {
+    const t = convexTest(schema, modules);
+    const { photoId } = await seed(t);
+    await setPhoto(t, photoId, { hashCheckPendingSince: Date.now() });
+
+    await expect(
+      asAlice(t).mutation(api.library.postPhotoComment.postPhotoComment, {
+        photoId,
+        text: "hello",
+      }),
+    ).rejects.toThrow("Photo not found");
+  });
+
+  test("an unpublished photo's earlier comments are not listed", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, photoId } = await seed(t);
+    await seedComments(t, photoId, alice, 2);
+    expect(await list(t, photoId)).toHaveLength(2);
+
+    await setPhoto(t, photoId, { moderationStatus: "rejected" });
+    expect(await list(t, photoId)).toEqual([]);
+  });
+
+  test("the list returns only the newest 100 comments", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, photoId } = await seed(t);
+    await seedComments(t, photoId, alice, 120);
+
+    const comments = await list(t, photoId);
+    expect(comments).toHaveLength(100);
+    expect(comments[0].text).toBe("comment 119");
+    expect(comments[99].text).toBe("comment 20");
   });
 });

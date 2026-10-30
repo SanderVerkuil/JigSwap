@@ -47,6 +47,10 @@ type PhotoComment = FunctionReturnType<
   typeof gateway.library.listPhotoComments
 >[number];
 
+// Mirrors listPhotoComments' PHOTO_COMMENTS_LIMIT: the server returns at most the newest 100
+// comments, so a full list means there may be more.
+const PHOTO_COMMENTS_LIMIT = 100;
+
 // A modal gallery viewer: shows the active photo near-full-size (object-contain on a dark
 // backdrop), prev/next navigation across the copy's photos, the photo's metadata, and a
 // per-photo discussion (composer + list). The comments query keys on the ACTIVE photo's id, so
@@ -347,7 +351,10 @@ export function PhotoLightbox({
           </div>
 
           <div className="border-border border-t px-5 py-4">
-            <PhotoComments photoId={photo.id as Id<"ownedPuzzleImages">} />
+            <PhotoComments
+              photoId={photo.id as Id<"ownedPuzzleImages">}
+              open={photo.moderationStatus === "approved"}
+            />
           </div>
         </div>
         {/* Inside the content so Radix treats it as a nested layer: interacting
@@ -364,7 +371,16 @@ export function PhotoLightbox({
   );
 }
 
-function PhotoComments({ photoId }: { photoId: Id<"ownedPuzzleImages"> }) {
+// `open`: the photo is published (approved). Only then does it have a discussion; the server
+// refuses comments on, and lists none for, a photo still being checked (only its uploader sees
+// one here).
+function PhotoComments({
+  photoId,
+  open,
+}: {
+  photoId: Id<"ownedPuzzleImages">;
+  open: boolean;
+}) {
   const t = useTranslations("copyInstance.photoLightbox");
   const displayName = useMemberDisplayName();
   const format = useFormatter();
@@ -372,7 +388,7 @@ function PhotoComments({ photoId }: { photoId: Id<"ownedPuzzleImages"> }) {
   // Keyed on the ACTIVE photo's id: navigating in the lightbox swaps `photoId`, which re-runs
   // this Convex query and re-renders the list for the newly shown photo.
   const { data: comments } = useQuery(
-    convexQuery(gateway.library.listPhotoComments, { photoId }),
+    convexQuery(gateway.library.listPhotoComments, open ? { photoId } : "skip"),
   );
   const { data: me } = useQuery(convexQuery(gateway.identity.currentUser, {}));
   const postComment = useMutation({
@@ -402,12 +418,30 @@ function PhotoComments({ photoId }: { photoId: Id<"ownedPuzzleImages"> }) {
     }
   };
 
+  if (!open) {
+    return (
+      <section>
+        <div className="text-muted-foreground mb-3 flex items-center gap-2 text-sm font-semibold">
+          <MessageCircle className="h-4 w-4" />
+          {t("comments")}
+        </div>
+        <p className="text-muted-foreground text-sm">
+          {t("commentsAfterReview")}
+        </p>
+      </section>
+    );
+  }
+
   return (
     <section>
       <div className="text-muted-foreground mb-3 flex items-center gap-2 text-sm font-semibold">
         <MessageCircle className="h-4 w-4" />
         {t("comments")}
-        <span className="font-mono text-xs">{list.length}</span>
+        <span className="font-mono text-xs">
+          {list.length >= PHOTO_COMMENTS_LIMIT
+            ? `${PHOTO_COMMENTS_LIMIT}+`
+            : list.length}
+        </span>
       </div>
 
       {/* Composer */}

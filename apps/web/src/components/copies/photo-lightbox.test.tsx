@@ -216,6 +216,11 @@ describe("PhotoLightbox remove", () => {
 // SEC-11: comment authors arrive privacy-projected. A hidden author shows the anonymous label and
 // a person icon (no avatar, no initial); a departed one "Deleted member".
 describe("PhotoLightbox comments", () => {
+  // Only a published photo has a discussion.
+  const approved = gallery.map((p) => ({
+    ...p,
+    moderationStatus: "approved" as const,
+  }));
   type Comment = {
     id: string;
     author: unknown;
@@ -240,7 +245,7 @@ describe("PhotoLightbox comments", () => {
         member: { name: "Mara Jansen", avatar: "https://example.test/m.png" },
       }),
     ];
-    render();
+    render({ gallery: approved });
     const [row] = rows();
     expect(row.textContent).toContain("Mara Jansen");
     // The avatar fallback is the initial, not the anonymous person icon.
@@ -249,7 +254,7 @@ describe("PhotoLightbox comments", () => {
 
   it("labels a hidden author 'Anonymous user' with the person icon", () => {
     stub.photoComments = [comment("c1", { anonymous: true, anonRef: "abc" })];
-    render();
+    render({ gallery: approved });
     const [row] = rows();
     expect(row.textContent).toContain("Anonymous user");
     expect(row.querySelector("svg")).not.toBeNull();
@@ -259,15 +264,15 @@ describe("PhotoLightbox comments", () => {
     stub.photoComments = [
       comment("c1", { anonymous: true, anonRef: "abc", departed: true }),
     ];
-    render();
+    render({ gallery: approved });
     expect(rows()[0].textContent).toContain("Deleted member");
-    render({}, "nl");
+    render({ gallery: approved }, "nl");
     expect(rows()[0].textContent).toContain("Verwijderd lid");
   });
 
   it("uses the Dutch anonymous label", () => {
     stub.photoComments = [comment("c1", { anonymous: true, anonRef: "abc" })];
-    render({}, "nl");
+    render({ gallery: approved }, "nl");
     expect(rows()[0].textContent).toContain("Anonieme gebruiker");
   });
 
@@ -277,7 +282,7 @@ describe("PhotoLightbox comments", () => {
     stub.photoComments = [
       comment("c1", { _id: "u1", name: "Mara Jansen", isActive: true }),
     ];
-    render();
+    render({ gallery: approved });
     const [row] = rows();
     expect(row.textContent).toContain("Mara Jansen");
     expect(row.querySelector("svg")).toBeNull();
@@ -285,7 +290,7 @@ describe("PhotoLightbox comments", () => {
 
   it("labels a departed legacy author 'Deleted member'", () => {
     stub.photoComments = [comment("c1", { _id: "u1", isActive: false })];
-    render();
+    render({ gallery: approved });
     expect(rows()[0].textContent).toContain("Deleted member");
   });
 });
@@ -335,6 +340,39 @@ describe("PhotoLightbox comment composer", () => {
     expect(toast.error).toHaveBeenCalledWith(
       "That comment is too long (1,000 characters max).",
     );
+  });
+
+  it("offers no composer on a photo still being checked, and says why", () => {
+    render({
+      gallery: gallery.map((p) => ({
+        ...p,
+        moderationStatus: "pending" as const,
+      })),
+    });
+    expect(composer()).toBeNull();
+    expect(document.body.textContent).toContain(
+      "Comments open once this photo has been checked.",
+    );
+  });
+
+  it("shows 100+ when the server's newest-100 list is full", () => {
+    const comment = (i: number) => ({
+      id: `c${i}`,
+      author: { _id: "u1", isActive: true, name: "Sam" },
+      text: `comment ${i}`,
+      createdAt: 1,
+    });
+    stub.photoComments = Array.from({ length: 100 }, (_, i) => comment(i));
+    render({ gallery: approved });
+    const count = () =>
+      [...document.querySelectorAll("span.font-mono")].map(
+        (el) => el.textContent,
+      );
+    expect(count()).toContain("100+");
+
+    stub.photoComments = Array.from({ length: 99 }, (_, i) => comment(i));
+    render({ gallery: approved, index: 1 });
+    expect(count()).toContain("99");
   });
 
   it("keeps the generic message for other failures", async () => {
