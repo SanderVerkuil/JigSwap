@@ -247,6 +247,21 @@ describe("LoansTab", () => {
     expect(within(lent).queryAllByText(/Due |overdue/)).toHaveLength(1);
   });
 
+  it("shows each loan's cover, and the loan chip for a copy without one", () => {
+    renderTab({
+      borrowed: [loan({ coverUrl: "https://cdn.example/harbour.jpg" })],
+      lentOut: [{ ...lentLoan, coverUrl: null }],
+    });
+    const images = (name: string) =>
+      [...section(name).querySelectorAll("img")].map((img) =>
+        img.getAttribute("src"),
+      );
+    expect(images("Borrowed by you 1")).toEqual([
+      "https://cdn.example/harbour.jpg",
+    ]);
+    expect(images("Lent out 1")).toEqual([]);
+  });
+
   it("names a departed member instead of leaving a blank", () => {
     renderTab({
       borrowed: [loan({ lender: null })],

@@ -7,7 +7,6 @@
 // Each title links to the copy. Each section loads and empties on its own, and an empty one says
 // what belongs there and where to go next.
 import { Link } from "@/compat/link";
-import { CoverChip } from "@/components/community/primitives";
 import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
 import { StartSolveDialog } from "@/components/solving/start-solve-dialog";
@@ -19,9 +18,10 @@ import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import type { LoanView } from "@jigswap/contracts";
 import { useQuery } from "@tanstack/react-query";
-import { Library, Package, Search } from "lucide-react";
+import { Library, Search } from "lucide-react";
 import { useId, useMemo, useState, type ReactNode } from "react";
 import { useTranslations } from "use-intl";
+import { ExchangeCover } from "./exchange-cover";
 import { LoanDueChip } from "./exchange-pills";
 import { RecallLoanButton } from "./recall-loan-button";
 import { ReturnLoanButton } from "./return-loan-button";
@@ -94,8 +94,9 @@ function LoanSection({
   );
 }
 
-// One loan as an open divided row: chip, the title (linking to the copy) with its piece count, a
-// meta line, when it is due back (only when the loan has a return date), and the row's actions.
+// One loan as an open divided row: the copy's cover (the loan chip without one), the title (linking
+// to the copy) with its piece count, a meta line, when it is due back (only when the loan has a
+// return date), and the row's actions.
 // Below lg the actions sit under the text (a row of up to three buttons would squeeze the title on
 // a tablet), full width on phones so they wrap at most once.
 function LoanRow({
@@ -122,7 +123,13 @@ function LoanRow({
       )}
     >
       <div className="flex min-w-0 flex-1 items-center gap-3.5">
-        <CoverChip icon={Package} size={44} gradientIndex={index} />
+        {/* Every row here is a loan, so the cover needs no kind badge. */}
+        <ExchangeCover
+          kind="loan"
+          covers={[loan.coverUrl]}
+          gradientIndex={index}
+          showKind={false}
+        />
         <div className="min-w-0 flex-1">
           <div className="line-clamp-2 text-base font-semibold">
             {href ? (

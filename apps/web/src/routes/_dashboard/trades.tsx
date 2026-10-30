@@ -3,6 +3,7 @@ import { FilterBar } from "@/components/community/primitives";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { ExchangeActions } from "@/components/exchange/exchange-actions";
+import { CoverTile } from "@/components/exchange/exchange-cover";
 import {
   splitNeedsYou,
   visibleExchanges,
@@ -36,7 +37,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
-import { MessageCircle, Package } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { useId, useState, type ReactNode } from "react";
 import { useTranslations } from "use-intl";
 
@@ -330,12 +331,14 @@ function ExchangeDetail({
           label={incoming ? t("theyWant") : t("youWant")}
           title={exchange.requestedPuzzle?.title}
           pieceCount={exchange.requestedPuzzle?.pieceCount}
+          coverUrl={exchange.requestedCoverUrl}
         />
         {exchange.offeredPuzzle && (
           <PuzzleSummary
             label={incoming ? t("theyOffer") : t("youOffer")}
             title={exchange.offeredPuzzle?.title}
             pieceCount={exchange.offeredPuzzle?.pieceCount}
+            coverUrl={exchange.offeredCoverUrl}
           />
         )}
       </div>
@@ -431,22 +434,25 @@ function ExchangeChat({ exchangeId }: { exchangeId: string }) {
   );
 }
 
+// One side of the exchange in the detail: its cover (a puzzle glyph without one), title and size.
 function PuzzleSummary({
   label,
   title,
   pieceCount,
+  coverUrl,
 }: {
   label: string;
   title?: string;
   pieceCount?: number;
+  coverUrl?: string | null;
 }) {
   const tLending = useTranslations("lending");
   return (
     <div>
       <h4 className="text-muted-foreground text-sm font-medium">{label}</h4>
       <div className="bg-muted/50 mt-1.5 flex items-center gap-3 rounded-lg p-3">
-        <Package className="text-muted-foreground h-7 w-7" />
-        <div>
+        <CoverTile url={coverUrl} />
+        <div className="min-w-0">
           <p className="text-sm font-medium">{title}</p>
           {pieceCount != null && (
             <p className="text-muted-foreground text-xs">

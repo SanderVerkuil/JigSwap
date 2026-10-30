@@ -126,6 +126,51 @@ describe("ExchangeListRow: one toggle for the whole row", () => {
   });
 });
 
+describe("ExchangeListRow: covers", () => {
+  const HARBOUR = "https://cdn.example/harbour.jpg";
+  const TULIPS = "https://cdn.example/tulips.jpg";
+  const covers = () =>
+    [...toggle().querySelectorAll("img")].map((img) => img.getAttribute("src"));
+
+  it("shows both covers of a swap, the viewer's own puzzle in front", () => {
+    // Incoming: the requested copy (Harbour Lights) is the viewer's, the headline's first title.
+    renderRow({
+      fields: { requestedCoverUrl: HARBOUR, offeredCoverUrl: TULIPS },
+    });
+    // Back first in DOM order, so the front one paints over it.
+    expect(covers()).toEqual([TULIPS, HARBOUR]);
+  });
+
+  it("puts the viewer's offered puzzle in front on a swap they asked for", () => {
+    renderRow({
+      direction: "outgoing",
+      fields: { requestedCoverUrl: HARBOUR, offeredCoverUrl: TULIPS },
+    });
+    expect(covers()).toEqual([HARBOUR, TULIPS]);
+  });
+
+  it("shows the one cover of a lend or sale", () => {
+    renderRow({
+      fields: {
+        type: "loan",
+        offeredPuzzle: null,
+        requestedCoverUrl: HARBOUR,
+        offeredCoverUrl: null,
+      },
+    });
+    expect(covers()).toEqual([HARBOUR]);
+  });
+
+  it("keeps the kind chip when there is no cover, or the backend sends none", () => {
+    renderRow({ fields: { requestedCoverUrl: null, offeredCoverUrl: null } });
+    expect(covers()).toEqual([]);
+    cleanup();
+    renderRow();
+    expect(covers()).toEqual([]);
+    expect(toggle().querySelector("svg")).not.toBeNull();
+  });
+});
+
 describe("ExchangeListRow: phone layout", () => {
   it("wraps the title over two lines instead of cutting it", () => {
     renderRow();

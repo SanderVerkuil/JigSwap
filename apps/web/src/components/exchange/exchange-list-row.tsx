@@ -1,17 +1,17 @@
-// One exchange on /trades as an open divided row. The whole summary (kind chip, "Kind · Mine ↔
-// Theirs" headline, "direction · with who · when" meta, status pill, chevron) is ONE disclosure
-// button that expands the detail under it; its name is the row's own text, so a speech user can
-// say what they see, and it announces expanded/collapsed. On phones the status pill joins the Your
+// One exchange on /trades as an open divided row. The whole summary (the puzzles' covers with a
+// kind badge, "Kind · Mine ↔ Theirs" headline, "direction · with who · when" meta, status pill,
+// chevron) is ONE disclosure button that expands the detail under it; its name is the row's own
+// text, so a speech user can say what they see, and it announces expanded/collapsed. On phones the status pill joins the Your
 // turn / offer chips under the meta line, so the title and partner get the row's full width; from
 // sm it sits at the row's end. The detail (`children`) is indented under the text only from sm.
-import { CoverChip } from "@/components/community/primitives";
 import { useRelativeTime } from "@/hooks/use-relative-time";
 import { usePartyDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import type { ExchangeSummaryView } from "@jigswap/contracts";
-import { ArrowLeftRight, ChevronDown, Package, Tag } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useTranslations } from "use-intl";
+import { ExchangeCover } from "./exchange-cover";
 import { ExchangeStatusPill, OfferChip, YourTurnPill } from "./exchange-pills";
 import {
   confirmationState,
@@ -31,16 +31,12 @@ export type ListRowExchange = Pick<
   | "ownerState"
   | "requestedPuzzle"
   | "offeredPuzzle"
+  | "requestedCoverUrl"
+  | "offeredCoverUrl"
   | "salePrice"
   | "initiatorConfirmationTimestamp"
   | "recipientConfirmationTimestamp"
 >;
-
-const KIND_ICONS = {
-  trade: ArrowLeftRight,
-  sale: Tag,
-  loan: Package,
-} as const;
 
 export function ExchangeListRow({
   exchange,
@@ -86,7 +82,13 @@ export function ExchangeListRow({
     incoming ? exchange.requesterState : exchange.ownerState,
   );
 
-  const KindIcon = KIND_ICONS[exchange.type] ?? ArrowLeftRight;
+  // The covers in the headline's order: a swap shows the viewer's own puzzle in front of theirs;
+  // a lend or sale shows its one (requested) copy.
+  const covers = exchange.offeredPuzzle
+    ? incoming
+      ? [exchange.requestedCoverUrl, exchange.offeredCoverUrl]
+      : [exchange.offeredCoverUrl, exchange.requestedCoverUrl]
+    : [exchange.requestedCoverUrl];
   // Only the partner has confirmed completion: the viewer's confirmation settles it.
   const yourTurn =
     exchange.status === "accepted" &&
@@ -112,7 +114,11 @@ export function ExchangeListRow({
         onClick={() => setOpen((value) => !value)}
         className="group hover:bg-muted/50 focus-visible:ring-ring/50 -mx-2 flex w-[calc(100%+1rem)] items-center gap-3.5 rounded-lg px-2 py-1.5 text-left transition-colors outline-none focus-visible:ring-[3px]"
       >
-        <CoverChip icon={KindIcon} size={44} gradientIndex={gradientIndex} />
+        <ExchangeCover
+          kind={exchange.type}
+          covers={covers}
+          gradientIndex={gradientIndex}
+        />
         <span data-row-text className="min-w-0 flex-1">
           <span className="line-clamp-2 text-base font-semibold">
             {t(`kind.${exchange.type}`)} · {primary}
