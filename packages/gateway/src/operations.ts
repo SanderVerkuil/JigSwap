@@ -544,6 +544,9 @@ export const gateway = {
     // Downstream read-model: ranks approved catalog puzzles the member doesn't own from their taste.
     recommendations: api.insights.getRecommendations.getRecommendations,
     exportUserData: api.insights.exportUserData.exportUserData,
+    // The member's data export, one page of one section (@jigswap/contracts EXPORT_SECTIONS) at a
+    // time: walk every section from cursor null until isDone.
+    exportUserDataPage: api.insights.exportUserDataPage.exportUserDataPage,
     // Public query — returns a random seed-stable sample of catalog puzzles for
     // the marketing hero plank. Args: { limit: number; seed: number }.
     plankPuzzles: api.insights.getPlankPuzzles.getPlankPuzzles,

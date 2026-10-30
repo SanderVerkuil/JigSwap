@@ -597,21 +597,22 @@ describe("onboarding.recordQuickStart", () => {
   });
 });
 
-describe("insights.exportUserData: quick start", () => {
+describe("insights.exportUserDataPage: quick start", () => {
   test("includes the member's own onboarding row, or null", async () => {
     const t = convexTest(schema, modules);
     await insertUser(t, "ann");
     await insertUser(t, "bob");
     await record(t, "ann", { kind: "skipStep", step: "household" });
-    const ann = await as(t, "ann").query(
-      api.insights.exportUserData.exportUserData,
-      {},
-    );
-    expect(ann.quickStart).toMatchObject({ skippedSteps: ["household"] });
-    const bob = await as(t, "bob").query(
-      api.insights.exportUserData.exportUserData,
-      {},
-    );
-    expect(bob.quickStart).toBeNull();
+    const accountOf = async (who: string) =>
+      (
+        await as(t, who).query(
+          api.insights.exportUserDataPage.exportUserDataPage,
+          { section: "account", cursor: null },
+        )
+      ).rows[0];
+    expect((await accountOf("ann"))?.quickStart).toMatchObject({
+      skippedSteps: ["household"],
+    });
+    expect((await accountOf("bob"))?.quickStart).toBeNull();
   });
 });

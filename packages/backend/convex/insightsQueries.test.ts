@@ -1,3 +1,4 @@
+import type { ExportSection } from "@jigswap/contracts";
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
@@ -296,25 +297,33 @@ describe("insights.getCompletionTrends / getTradeActivity", () => {
   });
 });
 
-describe("insights.exportUserData", () => {
+describe("insights.exportUserDataPage", () => {
+  const sectionOf = async (
+    t: TestConvex<typeof schema>,
+    section: ExportSection,
+  ) =>
+    (
+      await asAlice(t).query(
+        api.insights.exportUserDataPage.exportUserDataPage,
+        { section, cursor: null },
+      )
+    ).rows;
+
   test("bundles the member's own data with resolved puzzle titles", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
-    const data = await asAlice(t).query(
-      api.insights.exportUserData.exportUserData,
-      {},
-    );
-    expect(data.user?.email).toBe("alice@example.com");
-    expect(data.completions).toHaveLength(3);
-    expect(data.ownedPuzzles).toHaveLength(2);
-    expect(data.collections).toHaveLength(1);
-    expect(data.goals).toHaveLength(1);
-    expect(data.exchanges).toHaveLength(1);
-    expect(data.limitPerCollection).toBeGreaterThan(0);
-    expect(data.ownedPuzzles.map((c) => c.puzzleTitle).sort()).toEqual([
+    expect((await sectionOf(t, "account"))[0]).toMatchObject({
+      user: { email: "alice@example.com" },
+    });
+    expect(await sectionOf(t, "completions")).toHaveLength(3);
+    const copies = await sectionOf(t, "copies");
+    expect(copies.map((c) => c.title).sort()).toEqual([
       "Mountain Vista",
       "Ocean Calm",
     ]);
+    expect(await sectionOf(t, "collections")).toHaveLength(1);
+    expect(await sectionOf(t, "goals")).toHaveLength(1);
+    expect(await sectionOf(t, "exchangesProposed")).toHaveLength(1);
   });
 
   test("includes the member's puzzle and copy reviews; other members' rows absent", async () => {
@@ -347,15 +356,11 @@ describe("insights.exportUserData", () => {
       });
     });
 
-    const data = await asAlice(t).query(
-      api.insights.exportUserData.exportUserData,
-      {},
-    );
     // The seed gives Alice two puzzleReviews (ratings 4 and 2).
-    expect(data.puzzleReviews).toHaveLength(2);
-    expect(data.puzzleReviews.every((r) => r.userId === alice)).toBe(true);
-    expect(data.copyReviews).toHaveLength(1);
-    expect(data.copyReviews[0].userId).toBe(alice);
-    expect(data.copyReviews[0].rating).toBe(4);
+    const puzzleReviews = await sectionOf(t, "puzzleReviews");
+    expect(puzzleReviews.map((r) => r.rating).sort()).toEqual([2, 4]);
+    const copyReviews = await sectionOf(t, "copyReviews");
+    expect(copyReviews).toHaveLength(1);
+    expect(copyReviews[0]!.rating).toBe(4);
   });
 });

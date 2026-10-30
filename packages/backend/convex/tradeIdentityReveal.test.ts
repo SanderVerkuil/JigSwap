@@ -880,26 +880,33 @@ describe("backfillTradeReveals", () => {
 });
 
 describe("per-trade reveal: data export", () => {
-  test("the requester's export omits a hidden owner's id until the owner accepts", async () => {
+  test("the requester's export hides a hidden owner until the owner accepts", async () => {
     const t = convexTest(schema, modules);
     const w = await seed(t);
     const ex = await propose(t, "requester", w.copy);
-    const exportOf = (who: string) =>
-      as(t, who).query(api.insights.exportUserData.exportUserData, {});
+    const exchangesOf = async (
+      who: string,
+      section: "exchangesProposed" | "exchangesReceived",
+    ) =>
+      (
+        await as(t, who).query(
+          api.insights.exportUserDataPage.exportUserDataPage,
+          { section, cursor: null },
+        )
+      ).rows;
 
-    const before = await exportOf("requester");
-    expect(before.exchanges).toHaveLength(1);
-    expect(before.exchanges[0]).not.toHaveProperty("recipientId");
-    expect(before.exchanges[0]!.initiatorId).toBe(w.requester);
-    expect(JSON.stringify(before.exchanges)).not.toContain(w.owner);
+    const before = await exchangesOf("requester", "exchangesProposed");
+    expect(before).toHaveLength(1);
+    expect(before[0]!.counterparty).toEqual({ hidden: true });
+    expect(JSON.stringify(before)).not.toContain(w.owner);
     // The owner's own export always names the requester.
-    expect((await exportOf("owner")).exchanges[0]!.initiatorId).toBe(
-      w.requester,
-    );
+    expect(
+      (await exchangesOf("owner", "exchangesReceived"))[0]!.counterparty,
+    ).toMatchObject({ memberId: w.requester });
 
     await act(t, "owner", "accept", ex);
-    const after = await exportOf("requester");
-    expect(after.exchanges[0]!.recipientId).toBe(w.owner);
+    const after = await exchangesOf("requester", "exchangesProposed");
+    expect(after[0]!.counterparty).toMatchObject({ memberId: w.owner });
   });
 });
 

@@ -1052,7 +1052,9 @@ export default defineSchema({
     // Copy-referencing messages of a thread, grouped per copy (rows without a copyId sort first
     // as undefined and are excluded by a range on copyId). Backs the inbox's context copies.
     .index("by_thread_copy_sent", ["threadAggregateId", "copyId", "sentAt"])
-    .index("by_message_id", ["messageId"]),
+    .index("by_message_id", ["messageId"])
+    // The messages one member wrote, for their data export (insights/exportUserDataPage).
+    .index("by_author", ["authorId", "sentAt"]),
 
   // A message's attachment (spec 2.1/2.2), staged BEFORE its message exists: the uploader stages
   // a photo (conversation/stageMessageImage), the shared image pipeline screens it
