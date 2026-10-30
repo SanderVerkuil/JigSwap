@@ -577,36 +577,47 @@ escalation id.
 
 ---
 
-## `lib/imageModeration/recheckWaivedHashes` — hash check of photos approved without one
+## `lib/imageModeration/recheckWaivedHashes` — hash check of photos published without one
 
 **When:** on each deployment, **right after the CSAM hash check is configured there**
 (`CSAM_HASHCHECK_PROVIDER=offlimits` plus the `OFFLIMITS_HCS_*` variables), and again whenever
-admins have approved photos without a hash check during a later hash-service outage. A photo
-whose hash check could not be done within 7 days goes to Admin → Moderation → Unchecked photos;
-an admin who publishes it with **Approve without hash check** leaves it marked
-`hashCheckWaivedBy` with its stored hashes (`pendingHashes`), and nothing re-checks it on its
-own (photo-moderation.md, "A timed-out photo: the admin decides"). Without a configured hash
-service a real run refuses to start (a dry run still counts).
+admins have approved photos without a hash check during a later hash-service outage. It checks
+two kinds of photo, and nothing re-checks either on its own:
 
-**What it does:** pages through copy photos, completion photos, box art and message photos
-(`ownedPuzzleImages`, `completionImages`, `boxArtUploads`, `messageAttachments`; 50 rows per
-batch, `batchSize` overrides this, max 100), in that order, or only `table` (`"copy"`,
-`"completion"`, `"boxArt"` or `"message"`) when given. For every photo with `hashCheckWaivedBy`
-and `pendingHashes` that is not quarantined, it enqueues ONE re-check of the stored hashes on
-the hash re-check Workpool (`hashRecheckWorkpool`, at most 2 at once, so the hash service gets
-a gentle stream). Each re-check is decided exactly like a live one:
+- A photo whose hash check could not be done within 7 days goes to Admin → Moderation →
+  Unchecked photos; an admin who publishes it with **Approve without hash check** leaves it
+  marked `hashCheckWaivedBy` with its stored hashes (`pendingHashes`) (photo-moderation.md, "A
+  timed-out photo: the admin decides").
+- A photo uploaded while no hash matching was configured (provider unset or `none`, or
+  `offlimits` with a credential missing) is published marked `hashCheckSkippedAt`, with its
+  stored hashes (photo-moderation.md, "CSAM hash re-checks"). Photos published before that
+  marker existed kept no hashes and cannot be checked.
+
+Without a configured hash service a real run refuses to start (a dry run still counts).
+
+**What it does:** pages through copy photos, completion photos, box art, message photos and
+circle icons (`ownedPuzzleImages`, `completionImages`, `boxArtUploads`, `messageAttachments`,
+`circleIcons`; 50 rows per batch, `batchSize` overrides this, max 100), in that order, or only
+`table` (`"copy"`, `"completion"`, `"boxArt"`, `"message"` or `"circleIcon"`) when given. For
+every photo with `hashCheckWaivedBy` or `hashCheckSkippedAt`, and `pendingHashes`, that is not
+quarantined, it enqueues ONE re-check of the stored hashes on the hash re-check Workpool
+(`hashRecheckWorkpool`, at most 2 at once, so the hash service gets a gentle stream). Each
+re-check is decided exactly like a live one:
 
 - **match:** quarantined and escalated like a match on upload, overriding the admin's
   approval: the bytes are preserved, the photo is quarantined (for a message photo: removed for
   both members), and a `csamEscalations` row plus an `image_quarantined` stamp are raised. The
   operator reports it from Admin → Moderation → Hash matches as usual; the uploader is not told.
-- **no_match:** recorded (`hashCheckedAt`), and `pendingHashes` and `hashCheckWaivedBy`
-  cleared: the photo counts as hash-checked and is not a candidate again. It stays published.
+- **no_match:** recorded (`hashCheckedAt`), and `pendingHashes` and `hashCheckWaivedBy` or
+  `hashCheckSkippedAt` cleared: the photo counts as hash-checked and is not a candidate again.
+  It stays published.
 - **unavailable** or an error: nothing changes and nothing is re-armed; the photo stays a
   candidate for the next run.
 
-`dryRun` defaults to **true**: without `"dryRun":false` it only counts the candidates (`waived`)
-and enqueues nothing; the hash service is never called. **Safe to re-run:** yes; checked and
+`dryRun` defaults to **true**: without `"dryRun":false` it only counts the candidates (`waived`,
+both kinds together) and enqueues nothing; the hash service is never called. On prod, where
+hash matching is off, every photo uploaded since the marker shipped is a candidate, so expect
+the first run to take a while; the pool drains it two re-checks at a time. **Safe to re-run:** yes; checked and
 quarantined photos are no longer candidates. Let the pool drain before re-running (a re-run
 re-enqueues a photo whose check is still queued; the older job then does nothing).
 

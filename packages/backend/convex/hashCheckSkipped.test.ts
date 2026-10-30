@@ -8,6 +8,7 @@ import {
 } from "../test-fixtures/moderationPool";
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
+import { HASH_CHECK_WAITING_CAP } from "./admin/listCsamEscalations";
 import { asImage } from "./conversation/messageAttachments";
 import { isHashCleared } from "./lib/imageModeration/hashCheckFields";
 import schema from "./schema";
@@ -16,7 +17,8 @@ import schema from "./schema";
 // "none", or "offlimits" with a credential missing), nothing ever records a photo as hash-checked.
 // The photo is still published as before (the gate opens), but it is marked "not hash-checked"
 // (`hashCheckSkippedAt`) and KEEPS the hashes of the original and the re-encode, so a check can
-// run once matching is configured. The hash service is never called. The classifier (Hugging
+// run once matching is configured: the one-shot lib/imageModeration/recheckWaivedHashes checks
+// them then. The hash service is never called while matching is off. The classifier (Hugging
 // Face) and the hash service (Offlimits HCS) are a routed fake `fetch` that records every call.
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
@@ -31,11 +33,15 @@ const HF_HOST = "router.huggingface.co";
 const realSetTimeout = globalThis.setTimeout;
 const MAX_TIMEOUT_MS = 2 ** 31 - 1;
 
+// HCS's verdict once it is configured.
+const fakes: { hcs: "match" | "no_match" } = { hcs: "no_match" };
+
 let calls: string[] = [];
 let logs: string[] = [];
 beforeEach(() => {
   calls = [];
   logs = [];
+  fakes.hcs = "no_match";
   vi.spyOn(globalThis, "setTimeout").mockImplementation(((
     handler: () => void,
     ms?: number,
@@ -63,8 +69,9 @@ beforeEach(() => {
       const url = String(input);
       calls.push(url);
       if (url === HCS_URL) {
-        // A real answer would be no_match; the test fails on any call to it anyway.
-        return new Response(JSON.stringify({ match: false }), { status: 200 });
+        return new Response(JSON.stringify({ match: fakes.hcs === "match" }), {
+          status: 200,
+        });
       }
       if (url.includes(HF_HOST)) {
         return new Response(
@@ -90,6 +97,12 @@ const stubMissingConfig = () => {
   vi.stubEnv("CSAM_HASHCHECK_PROVIDER", "offlimits");
   vi.stubEnv("OFFLIMITS_HCS_BASE_URL", HCS_URL);
   vi.stubEnv("OFFLIMITS_HCS_USERNAME", "jigswap");
+};
+
+// Offlimits fully configured (the fake `fetch` answers for it).
+const configureHashService = () => {
+  stubMissingConfig();
+  vi.stubEnv("OFFLIMITS_HCS_PASSWORD", "s3cret-pass");
 };
 
 const eventsNamed = (name: string) =>
@@ -431,5 +444,166 @@ describe("recording the skip", () => {
     expect(c!.hashCheckSkippedAt).toBeUndefined();
     expect(c!.hashCheckedAt).toBe(2_000);
     expect(c!.pendingHashes).toBeUndefined();
+  });
+});
+
+describe("once hash matching is configured, the one-shot checks the photos published unchecked", () => {
+  const recheck = (t: T, dryRun: boolean) =>
+    t.mutation(
+      internal.lib.imageModeration.recheckWaivedHashes.recheckWaivedHashes,
+      { dryRun },
+    );
+
+  test("no_match records a real check: the marker and the stored hashes go", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { copy } = await seed(t);
+    const { row } = await addCopyPhoto(t, copy);
+    expect(row.hashCheckSkippedAt).toEqual(expect.any(Number));
+
+    configureHashService();
+    expect(await recheck(t, true)).toMatchObject({ waived: 1, enqueued: 0 });
+    expect(hcsCalls()).toEqual([]);
+    expect(await recheck(t, false)).toMatchObject({ waived: 1, enqueued: 1 });
+    await settleDueScheduled(t);
+
+    const after = await t.run((ctx) => ctx.db.get(row._id));
+    // The original and the re-encode were both checked.
+    expect(hcsCalls()).toHaveLength(2);
+    expect(after!.moderationStatus).toBe("approved");
+    expect(after!.hashCheckedAt).toEqual(expect.any(Number));
+    expect(after!.hashCheckSkippedAt).toBeUndefined();
+    expect(after!.pendingHashes).toBeUndefined();
+    expect(await recheck(t, true)).toMatchObject({ waived: 0 });
+  });
+
+  test("a match quarantines it, raises the escalation and closes the gate", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { copy } = await seed(t);
+    const { row, upload } = await addCopyPhoto(t, copy);
+
+    configureHashService();
+    fakes.hcs = "match";
+    await recheck(t, false);
+    await settleDueScheduled(t);
+
+    const after = await t.run((ctx) => ctx.db.get(row._id));
+    expect(after!.moderationStatus).toBe("quarantined");
+    expect(isHashCleared(after!)).toBe(false);
+    const [escalation] = await t.run((ctx) =>
+      ctx.db.query("csamEscalations").collect(),
+    );
+    // The first pair checked is the original upload's.
+    expect(escalation).toMatchObject({
+      rowId: row._id,
+      md5: upload.md5,
+      originalDiscarded: true,
+    });
+    expect(await recheck(t, true)).toMatchObject({ waived: 0 });
+  });
+
+  test.each([
+    ["provider none", () => {}],
+    ["offlimits with a credential missing", stubMissingConfig],
+  ])(
+    "%s: a re-check of a photo published unchecked asks nothing and changes nothing",
+    async (_label, stubEnv) => {
+      const t = withModerationPool(convexTest(schema, modules));
+      const { copy } = await seed(t);
+      const { row } = await addCopyPhoto(t, copy);
+      stubEnv();
+
+      await t.action(internal.library.moderatePhoto.recheckHashes, {
+        imageId: row._id,
+        attempt: 1,
+        pooled: true,
+      });
+
+      expect(hcsCalls()).toEqual([]);
+      expect(await t.run((ctx) => ctx.db.get(row._id))).toEqual(row);
+      expect(
+        eventsNamed("library.moderatePhoto.hashRecheck").map((e) => e.result),
+      ).toEqual(["skipped_unconfigured"]);
+    },
+  );
+});
+
+describe("the admin count of photos published without a hash check", () => {
+  test("counts every table's unchecked photos, but not a quarantined one, with the oldest", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, copy } = await seed(t);
+    const HASHES = [{ md5: "a".repeat(32), sha1: "b".repeat(40) }];
+    await t.run(async (ctx) => {
+      const fileId = await ctx.storage.store(new Blob(["x"]));
+      const copyPhoto = (skippedAt: number, quarantined = false) =>
+        ctx.db.insert("ownedPuzzleImages", {
+          ownedPuzzleId: copy,
+          uploaderId: alice,
+          fileId,
+          moderationStatus: quarantined ? "quarantined" : "approved",
+          hashCheckedAt: skippedAt,
+          hashCheckSkippedAt: skippedAt,
+          pendingHashes: quarantined ? undefined : HASHES,
+          createdAt: skippedAt,
+          updatedAt: skippedAt,
+        });
+      await copyPhoto(1_000, true);
+      await copyPhoto(3_000);
+      await copyPhoto(4_000);
+      await ctx.db.insert("boxArtUploads", {
+        storageId: fileId,
+        uploaderId: alice,
+        moderationStatus: "approved",
+        hashCheckedAt: 2_000,
+        hashCheckSkippedAt: 2_000,
+        pendingHashes: HASHES,
+        createdAt: 2_000,
+      });
+      // Really checked: not counted.
+      await ctx.db.insert("boxArtUploads", {
+        storageId: fileId,
+        uploaderId: alice,
+        moderationStatus: "approved",
+        hashCheckedAt: 500,
+        createdAt: 500,
+      });
+    });
+
+    const { hashCheck } = await t
+      .withIdentity({ subject: "clerk_alice", metadata: { role: "admin" } })
+      .query(api.admin.listCsamEscalations.listCsamEscalations, {});
+
+    expect(hashCheck).toMatchObject({
+      uncheckedPhotos: 3,
+      uncheckedSince: 2_000,
+      uncheckedCapped: false,
+    });
+  });
+
+  test("says when a table's count hit the cap", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    await t.run(async (ctx) => {
+      const storageId = await ctx.storage.store(new Blob(["x"]));
+      for (let i = 0; i < HASH_CHECK_WAITING_CAP + 1; i++) {
+        await ctx.db.insert("boxArtUploads", {
+          storageId,
+          uploaderId: alice,
+          moderationStatus: "approved",
+          hashCheckedAt: 1_000 + i,
+          hashCheckSkippedAt: 1_000 + i,
+          createdAt: 1_000,
+        });
+      }
+    });
+
+    const { hashCheck } = await t
+      .withIdentity({ subject: "clerk_alice", metadata: { role: "admin" } })
+      .query(api.admin.listCsamEscalations.listCsamEscalations, {});
+
+    expect(hashCheck).toMatchObject({
+      uncheckedPhotos: HASH_CHECK_WAITING_CAP,
+      uncheckedSince: 1_000,
+      uncheckedCapped: true,
+    });
   });
 });

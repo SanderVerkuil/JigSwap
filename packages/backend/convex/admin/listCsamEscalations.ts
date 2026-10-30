@@ -9,13 +9,23 @@ import { isHashCheckTimedOut } from "../lib/imageModeration/hashCheckFields";
 // At most this many escalations per status are listed (newest first).
 export const CSAM_ESCALATION_LIST_LIMIT = 100;
 
-// Per table, the waiting-for-hash-check count stops here (the tab then shows "N+").
+// Per table, the waiting-for-hash-check count stops here (the tab then shows "N+"), and so does
+// the count of photos published without a hash check.
 export const HASH_CHECK_WAITING_CAP = 200;
+
+const IMAGE_TABLES = [
+  "ownedPuzzleImages",
+  "completionImages",
+  "messageAttachments",
+  "boxArtUploads",
+  "circleIcons",
+] as const;
 
 // Admin-only list of CSAM hash matches for the operator to report (lib/imageModeration/
 // quarantine). METADATA ONLY: never an image URL, thumbnail, blurhash or storage id. The image is
 // never shown to anyone, admins included. Also reports whether hash matching is configured on
-// this deployment (provider + the NAMES of missing env vars, never values).
+// this deployment (provider + the NAMES of missing env vars, never values), and how many photos
+// were published without a hash check while it was not (SEC-03).
 export const listCsamEscalations = query({
   args: {},
   handler: async (ctx) => {
@@ -75,13 +85,7 @@ export const listCsamEscalations = query({
     let waitingPhotos = 0;
     let timedOutPhotos = 0;
     let oldestWaitingSince: number | null = null;
-    for (const table of [
-      "ownedPuzzleImages",
-      "completionImages",
-      "messageAttachments",
-      "boxArtUploads",
-      "circleIcons",
-    ] as const) {
+    for (const table of IMAGE_TABLES) {
       const rows = await ctx.db
         .query(table)
         .withIndex("by_hash_check_pending", (q) =>
@@ -120,6 +124,37 @@ export const listCsamEscalations = query({
         }
       }
     }
+    // Photos published WITHOUT a hash check because none was configured (hashCheckSkippedAt),
+    // still awaiting one (the one-shot recheckWaivedHashes checks them once it is): a count, capped
+    // per table (`uncheckedCapped` says whether any table hit the cap), and the oldest. Counting
+    // started when the marker shipped: photos published before carry nothing and are not counted.
+    // A quarantined one (a later check matched) is filtered out before the cap.
+    let uncheckedPhotos = 0;
+    let uncheckedCapped = false;
+    let uncheckedSince: number | null = null;
+    for (const table of IMAGE_TABLES) {
+      const rows = await ctx.db
+        .query(table)
+        .withIndex("by_hash_check_skipped", (q) =>
+          q.gt("hashCheckSkippedAt", 0),
+        )
+        .filter((q) => q.neq(q.field("moderationStatus"), "quarantined"))
+        .take(HASH_CHECK_WAITING_CAP);
+      uncheckedPhotos += rows.length;
+      if (rows.length >= HASH_CHECK_WAITING_CAP) uncheckedCapped = true;
+      // The index is in skip order: the first row is the table's oldest.
+      const first = rows[0];
+      const since =
+        first && "hashCheckSkippedAt" in first
+          ? (first.hashCheckSkippedAt ?? null)
+          : null;
+      if (
+        since !== null &&
+        (uncheckedSince === null || since < uncheckedSince)
+      ) {
+        uncheckedSince = since;
+      }
+    }
     return {
       hashCheck: {
         ...readCsamHashCheckConfig(process.env),
@@ -127,6 +162,9 @@ export const listCsamEscalations = query({
         oldestWaitingSince,
         timedOutPhotos,
         waitingCap: HASH_CHECK_WAITING_CAP,
+        uncheckedPhotos,
+        uncheckedSince,
+        uncheckedCapped,
       },
       escalations,
     };

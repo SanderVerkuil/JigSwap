@@ -10,10 +10,14 @@ import {
   type ModerationTable,
 } from "./moderationPool";
 
-// One-shot: the CSAM hash check of photos an admin approved WITHOUT one ("Approve without hash
-// check", admin/decideUncheckedPhoto) after their check timed out (HASH_CHECK_TIMEOUT_MS). Such a
-// row carries `hashCheckWaivedBy` and kept its `pendingHashes` (hashCheckFields); nothing re-checks
-// it automatically. Run it right after the hash service (Offlimits) is configured on a deployment.
+// One-shot: the CSAM hash check of photos published WITHOUT one. Two kinds (hashCheckFields), and
+// nothing re-checks either automatically:
+// - an admin approved it ("Approve without hash check", admin/decideUncheckedPhoto) after its
+//   check timed out (HASH_CHECK_TIMEOUT_MS): it carries `hashCheckWaivedBy`;
+// - no hash matching was configured when it was uploaded (provider "none", or "offlimits" with a
+//   credential missing; csamHashCheck.skipsHashCheck): it carries `hashCheckSkippedAt`.
+// Both kept their `pendingHashes`. Run it right after the hash service (Offlimits) is configured
+// on a deployment.
 //
 // For every candidate (isWaivedHashRecheckCandidate) of copy photos, completion photos, box art
 // and message photos, one re-check of the STORED hashes is enqueued on the hash re-check Workpool
@@ -21,16 +25,20 @@ import {
 // the pool's job decides it exactly like a live re-check (pipeline.runHashRecheck):
 // - match: the photo is quarantined and a CSAM escalation + image_quarantined stamp raised, over
 //   the admin's approval (a match always wins);
-// - no_match: recorded (`hashCheckedAt`), and `pendingHashes` and `hashCheckWaivedBy` cleared, so
-//   the photo is hash-checked like any other and never a candidate again;
+// - no_match: recorded (`hashCheckedAt`), and `pendingHashes` and `hashCheckWaivedBy` or
+//   `hashCheckSkippedAt` cleared, so the photo is hash-checked like any other and never a
+//   candidate again;
 // - unavailable or an error: nothing changes; the photo stays a candidate for the next run.
+//
+// The run's `waived` total counts both kinds of candidate.
 //
 // `dryRun` defaults to TRUE: it only counts the candidates and enqueues nothing (the hash service
 // is never called). A real run (`dryRun: false`) refuses to start unless the hash check is
-// configured ("ok"): without one there is nothing to check against. Paginated: `batchSize` rows per run (default 50); it re-schedules itself
-// through the page, then the next table (every table in turn, or only `table` when given), and logs
-// the running totals (event "imageModeration.recheckWaivedHashes") per page, the last with
-// `done: true`. Each re-check logs its own `<table event>.hashRecheck` event.
+// configured ("ok"): without one there is nothing to check against. Paginated: `batchSize` rows
+// per run (default 50); it re-schedules itself through the page, then the next table (every
+// table in turn, or only `table` when given), and logs the running totals (event
+// "imageModeration.recheckWaivedHashes") per page, the last with `done: true`. Each re-check logs
+// its own `<table event>.hashRecheck` event.
 
 const TABLES: readonly ModerationTable[] = [
   "copy",

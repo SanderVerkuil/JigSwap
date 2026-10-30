@@ -143,7 +143,13 @@ credential missing behaves the same and logs at error level (`csam_hashcheck_con
 "missing_config"`); whether it should hold photos unpublished instead is an open decision, made
 in one place (`csamHashCheck.skipsHashCheck`). A photo still waiting on a re-check when matching
 is switched off is published the same way by that re-check. Photos published before this marker
-existed kept no hashes and cannot be checked after the fact.
+existed kept no hashes and cannot be checked after the fact. Once the service is configured,
+`lib/imageModeration/recheckWaivedHashes` checks these photos as well as the waived ones (a match
+quarantines and escalates, a no_match clears the marker); a re-check of one never runs against
+an unconfigured service (`result: "skipped_unconfigured"`). The admin escalations query
+(`admin/listCsamEscalations`, `hashCheck.uncheckedPhotos`, `uncheckedSince`, `uncheckedCapped`)
+counts them per table through the `by_hash_check_skipped` index, capped at 200 per table. The
+index needs no backfill: only rows published after this change carry the marker.
 When it is configured, run `lib/imageModeration/recheckWaivedHashes` right after (above), and
 `lib/imageModeration/backfillBoxArtHashCheck` for older box art (one-shot-migrations.md).
 

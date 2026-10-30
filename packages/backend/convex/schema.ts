@@ -154,7 +154,9 @@ export default defineSchema({
     .index("by_uploader_status", ["uploaderId", "moderationStatus"])
     .index("by_hash_check_pending", ["hashCheckPendingSince"])
     // Timed-out hash checks still closed (admin/listUncheckedPhotos): hashCheckedAt undefined.
-    .index("by_hash_check_timed_out", ["hashCheckedAt", "hashCheckTimedOutAt"]),
+    .index("by_hash_check_timed_out", ["hashCheckedAt", "hashCheckTimedOutAt"])
+    // Published without a hash check, none configured (admin/listCsamEscalations counts them).
+    .index("by_hash_check_skipped", ["hashCheckSkippedAt"]),
 
   // Puzzles  - the actual puzzle designs that exist in the world
   puzzles: defineTable({
@@ -445,6 +447,8 @@ export default defineSchema({
     .index("by_hash_check_pending", ["hashCheckPendingSince"])
     // Timed-out hash checks still closed (admin/listUncheckedPhotos): hashCheckedAt undefined.
     .index("by_hash_check_timed_out", ["hashCheckedAt", "hashCheckTimedOutAt"])
+    // Published without a hash check, none configured (admin/listCsamEscalations counts them).
+    .index("by_hash_check_skipped", ["hashCheckSkippedAt"])
     // Whether a blob is already a copy photo (message-photo claims refuse it).
     .index("by_file", ["fileId"])
     // Account deletion: the photos a member uploaded (conversation/purgeMemberMessagingData).
@@ -588,6 +592,8 @@ export default defineSchema({
     .index("by_hash_check_pending", ["hashCheckPendingSince"])
     // Timed-out hash checks still closed (admin/listUncheckedPhotos): hashCheckedAt undefined.
     .index("by_hash_check_timed_out", ["hashCheckedAt", "hashCheckTimedOutAt"])
+    // Published without a hash check, none configured (admin/listCsamEscalations counts them).
+    .index("by_hash_check_skipped", ["hashCheckSkippedAt"])
     // Whether a blob is already a completion photo (message-photo claims refuse it).
     .index("by_file", ["fileId"]),
 
@@ -1144,6 +1150,8 @@ export default defineSchema({
     .index("by_hash_check_pending", ["hashCheckPendingSince"])
     // Timed-out hash checks still closed (admin/listUncheckedPhotos): hashCheckedAt undefined.
     .index("by_hash_check_timed_out", ["hashCheckedAt", "hashCheckTimedOutAt"])
+    // Published without a hash check, none configured (admin/listCsamEscalations counts them).
+    .index("by_hash_check_skipped", ["hashCheckSkippedAt"])
     // A member's own attachments, for the account-deletion purge.
     .index("by_uploader", ["uploaderId"]),
 
@@ -1492,7 +1500,9 @@ export default defineSchema({
     .index("by_moderation_status", ["moderationStatus"])
     .index("by_hash_check_pending", ["hashCheckPendingSince"])
     // Timed-out hash checks still closed (admin/listUncheckedPhotos): hashCheckedAt undefined.
-    .index("by_hash_check_timed_out", ["hashCheckedAt", "hashCheckTimedOutAt"]),
+    .index("by_hash_check_timed_out", ["hashCheckedAt", "hashCheckTimedOutAt"])
+    // Published without a hash check, none configured (admin/listCsamEscalations counts them).
+    .index("by_hash_check_skipped", ["hashCheckSkippedAt"]),
 
   // Member-lookup projection of `circles.memberships`, kept in sync by the repository on every save.
   // Lets "every circle a member belongs to" be an indexed read (Convex can't index embedded arrays).
