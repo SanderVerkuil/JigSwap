@@ -54,18 +54,22 @@ export const listMyBoxArtInCheck = query({
           .take(LIMIT)),
       );
     }
-    // Approved but its hash check has not passed (the hash service was unreachable).
-    const waitingOnHash = await ctx.db
-      .query("boxArtUploads")
-      .withIndex("by_hash_check_pending", (q) =>
-        q.gt("hashCheckPendingSince", 0),
-      )
-      .take(LIMIT);
+    // Approved but its hash check has not passed (the hash service was unreachable). The index
+    // holds every member's box art, so the member's own rows are picked out BEFORE the limit:
+    // other members' waiting box art never takes their place.
     rows.push(
-      ...waitingOnHash.filter(
-        (row) =>
-          row.uploaderId === member && row.moderationStatus === "approved",
-      ),
+      ...(await ctx.db
+        .query("boxArtUploads")
+        .withIndex("by_hash_check_pending", (q) =>
+          q.gt("hashCheckPendingSince", 0),
+        )
+        .filter((q) =>
+          q.and(
+            q.eq(q.field("uploaderId"), member),
+            q.eq(q.field("moderationStatus"), "approved"),
+          ),
+        )
+        .take(LIMIT)),
     );
 
     const puzzleIds = new Set<Id<"puzzles">>();

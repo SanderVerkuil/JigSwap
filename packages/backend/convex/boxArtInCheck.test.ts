@@ -133,6 +133,37 @@ describe("box art still being checked", () => {
     ).toEqual([puzzleId]);
   });
 
+  test("other members' box art waiting on its hash check never crowds out the uploader's own", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const { puzzleId, rowId } = await submitWithBoxArt(t);
+    await t.run(async (ctx) => {
+      const bob = (await ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", "clerk_bob"))
+        .unique())!._id;
+      const blob = await ctx.storage.store(new Blob(["x"]));
+      // More than a page of Bob's held box art, all waiting longer than Alice's.
+      for (let i = 0; i < 60; i++) {
+        await ctx.db.insert("boxArtUploads", {
+          storageId: blob,
+          uploaderId: bob,
+          moderationStatus: "approved",
+          hashCheckPendingSince: 1_000 + i,
+          createdAt: 1_000,
+        });
+      }
+      await ctx.db.patch(rowId, {
+        moderationStatus: "approved",
+        hashCheckedAt: undefined,
+        hashCheckPendingSince: Date.now(),
+      });
+    });
+    expect(
+      await asAlice(t).query(api.catalog.boxArtInCheck.listMyBoxArtInCheck, {}),
+    ).toEqual([puzzleId]);
+  });
+
   test("served box art, and garbage ids, are not reported", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
