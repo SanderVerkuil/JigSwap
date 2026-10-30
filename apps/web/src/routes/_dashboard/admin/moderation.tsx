@@ -37,6 +37,7 @@ import {
   usePinnedSelection,
   type PinnedSelection,
 } from "@/components/admin/moderation/use-pinned-selection";
+import { uncheckedQueueCount } from "@/components/admin/pending-counts";
 import { QueueEmpty } from "@/components/admin/queue-empty";
 import { convexErrorCode } from "@/components/exchange/request-trade";
 import { PageLoading } from "@/components/ui/loading";
@@ -160,6 +161,11 @@ function ModerationPage() {
   const markCsam = useMutation({
     mutationFn: useConvexMutation(gateway.admin.markCsamEscalation),
   });
+  // Bounded counts (admin/getPendingCounts) for the queues whose tab does not load the whole
+  // queue: Reports.
+  const { data: pendingCounts } = useQuery(
+    convexQuery(gateway.admin.pendingCounts, {}),
+  );
   const approve = useMutation({
     mutationFn: useConvexMutation(gateway.catalog.approve),
   });
@@ -488,6 +494,8 @@ function ModerationPage() {
 
   const selectedSubmission = submissions.item;
   const uncheckedPhoto = uncheckedSelection.item;
+  // The unchecked list stops at a per-source limit, so its length alone could look exact.
+  const uncheckedCount = unchecked && uncheckedQueueCount(unchecked);
 
   return (
     <div className="space-y-6">
@@ -512,7 +520,10 @@ function ModerationPage() {
             <TabsTrigger value="unchecked" className={TAB_TRIGGER_CLASS}>
               <ScanEye aria-hidden />
               {t("tabs.unchecked")}
-              <TabCount count={unchecked?.length} />
+              <TabCount
+                count={uncheckedCount?.count}
+                capped={uncheckedCount?.capped}
+              />
             </TabsTrigger>
             <TabsTrigger value="appeals" className={TAB_TRIGGER_CLASS}>
               <Scale aria-hidden />
@@ -531,6 +542,10 @@ function ModerationPage() {
             <TabsTrigger value="reports" className={TAB_TRIGGER_CLASS}>
               <MessageSquareWarning aria-hidden />
               {t("tabs.reports")}
+              <TabCount
+                count={pendingCounts?.reports.count}
+                capped={pendingCounts?.reports.capped}
+              />
             </TabsTrigger>
             <TabsTrigger value="activity" className={TAB_TRIGGER_CLASS}>
               <History aria-hidden />
