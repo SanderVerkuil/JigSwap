@@ -633,7 +633,9 @@
       "barcodeNotFoundHint": "Register it so you, and everyone else, can add it.",
       "registerIt": "Register it",
       "chosenPuzzle": "Adding a copy of",
-      "copyDetails": "Your copy"
+      "copyDetails": "Your copy",
+      "addYourCopy": "Add your copy",
+      "addYourCopyHint": "Record its condition and how you'd like to share it."
     },
     "removeFromCollection": "Remove from this collection",
     "private": "Private",
@@ -3757,6 +3759,7 @@
     "addPuzzle": "Add puzzle — JigSwap",
     "contributePuzzle": "Contribute a puzzle — JigSwap",
     "createPuzzle": "Create puzzle — JigSwap",
+    "addCopy": "Add your copy — JigSwap",
     "quickAddPuzzles": "Add several puzzles — JigSwap",
     "puzzles": "Puzzles catalogue — JigSwap",
     "puzzle": "Puzzle details — JigSwap",

@@ -23,6 +23,7 @@ import {
   SuggestInput,
   TagInput,
 } from "@/components/add-puzzle";
+import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import type { ImportedDraft } from "@/components/puzzle-import/draft-to-form-defaults";
 import type { ImportedMatch } from "@/components/puzzle-import/use-puzzle-import";
 import { Button } from "@/components/ui/button";
@@ -63,8 +64,16 @@ import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/my-puzzles/add/new")({
+  // Copy mode (?puzzleId) adds a copy of a catalogue puzzle; it creates nothing.
   head: ({ match }) => ({
-    meta: [{ title: pageTitle(match.context, "createPuzzle") }],
+    meta: [
+      {
+        title: pageTitle(
+          match.context,
+          match.search.puzzleId ? "addCopy" : "createPuzzle",
+        ),
+      },
+    ],
   }),
   // The page reads ?puzzleId off the URL via the next/navigation compat
   // (useSearchParams -> useSearch({ strict: false })); validate it so the
@@ -150,6 +159,7 @@ function AddPuzzlePage() {
   const tf = useTranslations("forms.puzzle-form");
   const tCommon = useTranslations("common");
   const relativeTime = useRelativeTime();
+  const tShell = useTranslations("shell");
 
   const navigate = useNavigate();
   const convex = useConvex();
@@ -231,6 +241,25 @@ function AddPuzzlePage() {
   // chrome doesn't flicker between the loading and resolved states.
   const isCopyMode = !!puzzleIdFromUrl;
   const copyLoading = isCopyMode && specificPuzzle === undefined;
+
+  // The route's static head is "Create a Puzzle", which copy mode is not: there the page titles
+  // itself "Add your copy" under My Library › Add Puzzle (the chooser it came from).
+  usePageHeader(
+    () =>
+      isCopyMode
+        ? {
+            title: t("chooser.addYourCopy"),
+            crumbs: [
+              { label: tShell("groups.library.label"), href: "/library" },
+              {
+                label: tShell("pages.addPuzzle.title"),
+                href: "/my-puzzles/add",
+              },
+            ],
+          }
+        : {},
+    [isCopyMode, t, tShell],
+  );
 
   // Object URL for the cover file preview — derived from the file; the effect only revokes the
   // previous URL when the file changes (or on unmount), so no setState runs inside an effect.
@@ -613,11 +642,16 @@ function AddPuzzlePage() {
   // copy-specific fields. No import zone, no definition editing.
   const copyColumn = (
     <>
-      {copyLoading ? (
-        <div className="h-24 animate-pulse rounded-xl bg-muted" />
-      ) : (
-        chosenDefinition
-      )}
+      <div className="flex flex-col gap-3">
+        <p className="text-sm text-muted-foreground">
+          {t("chooser.addYourCopyHint")}
+        </p>
+        {copyLoading ? (
+          <div className="h-24 animate-pulse rounded-xl bg-muted" />
+        ) : (
+          chosenDefinition
+        )}
+      </div>
       <SectionDivider label={t("chooser.copyDetails")} />
       {copyFields}
       <SectionDivider label={t("dividerCover")} />

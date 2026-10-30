@@ -633,7 +633,9 @@
       "barcodeNotFoundHint": "Registreer hem, zodat jij en iedereen hem kunnen toevoegen.",
       "registerIt": "Registreer hem",
       "chosenPuzzle": "Een exemplaar toevoegen van",
-      "copyDetails": "Jouw exemplaar"
+      "copyDetails": "Jouw exemplaar",
+      "addYourCopy": "Exemplaar toevoegen",
+      "addYourCopyHint": "Geef aan in welke staat het is en hoe je het wilt delen."
     },
     "removeFromCollection": "Uit deze collectie verwijderen",
     "private": "Privé",
@@ -3757,6 +3759,7 @@
     "addPuzzle": "Puzzel toevoegen — JigSwap",
     "contributePuzzle": "Een puzzel bijdragen — JigSwap",
     "createPuzzle": "Puzzel aanmaken — JigSwap",
+    "addCopy": "Exemplaar toevoegen — JigSwap",
     "quickAddPuzzles": "Meerdere puzzels toevoegen — JigSwap",
     "puzzles": "Puzzelcatalogus — JigSwap",
     "puzzle": "Puzzeldetails — JigSwap",

@@ -1,5 +1,9 @@
 // @vitest-environment happy-dom
 // The "-" prefix keeps the TanStack route generator from treating this file as a route.
+import {
+  PageHeaderSlotProvider,
+  usePageHeaderContent,
+} from "@/components/dashboard-layout/page-header-slot";
 import { gateway, type Id } from "@/gateway";
 import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import type { PuzzleDefinitionView } from "@jigswap/contracts";
@@ -104,16 +108,43 @@ const renderPage = (search: Record<string, unknown> = {}) => {
       .queryKey,
     PUZZLE,
   );
-  const Page = (Route as unknown as { options: { component: ComponentType } })
-    .options.component;
+  const Page = routeOptions.component;
   render(
     <QueryClientProvider client={queryClient}>
       <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
-        <Page />
+        <PageHeaderSlotProvider>
+          <Page />
+          <PublishedHeader />
+        </PageHeaderSlotProvider>
       </IntlProvider>
     </QueryClientProvider>,
   );
 };
+
+const routeOptions = (
+  Route as unknown as {
+    options: {
+      component: ComponentType;
+      head: (ctx: {
+        match: { context: unknown; search: Record<string, unknown> };
+      }) => { meta: Array<{ title: string }> };
+    };
+  }
+).options;
+
+// What the page published into the shell's page head (title + crumb trail), as text.
+function PublishedHeader() {
+  const { title, crumbs } = usePageHeaderContent();
+  return (
+    <output data-testid="published-header">
+      {[...(crumbs ?? []).map((c) => `${c.label}@${c.href}`), title]
+        .filter(Boolean)
+        .join(" > ")}
+    </output>
+  );
+}
+const publishedHeader = () =>
+  screen.getByTestId("published-header").textContent;
 
 const offerChip = (name: string) => screen.getByRole("button", { name });
 
@@ -231,5 +262,33 @@ describe("cancelling", () => {
     renderPage();
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(mocks.navigate).toHaveBeenCalledWith({ to: "/my-puzzles/add" });
+  });
+});
+
+describe("page title", () => {
+  it("calls copy mode 'Add your copy', under My Library > Add Puzzle", async () => {
+    renderPage({ puzzleId: PUZZLE_DOC_ID });
+    await waitFor(() =>
+      expect(publishedHeader()).toBe(
+        "My Library@/library > Add Puzzle@/my-puzzles/add > Add your copy",
+      ),
+    );
+    expect(
+      screen.getByText("Record its condition and how you'd like to share it."),
+    ).toBeTruthy();
+  });
+
+  it("keeps the route's own title on the full form", () => {
+    renderPage();
+    expect(publishedHeader()).toBe("");
+  });
+
+  it("names the document after the mode", () => {
+    const title = (search: Record<string, unknown>) =>
+      routeOptions.head({
+        match: { context: { intl: { messages: en } }, search },
+      }).meta[0]?.title;
+    expect(title({ puzzleId: PUZZLE_DOC_ID })).toBe("Add your copy — JigSwap");
+    expect(title({})).toBe(en.titles.createPuzzle);
   });
 });
