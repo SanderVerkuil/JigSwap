@@ -179,9 +179,12 @@ export function PuzzlesClient({
       {/* Filters and Search */}
       <Card>
         <CardContent>
-          <div className="flex flex-col lg:flex-row gap-4">
+          {/* Wraps by the toolbar's own width, not the viewport (the sidebar narrows the column on
+              a tablet): the search and the buttons share a row while the search keeps 18rem,
+              enough for its hint; otherwise the buttons move together to a second row. */}
+          <div className="flex flex-wrap gap-4">
             {/* Search */}
-            <div className="flex-1 relative">
+            <div className="relative flex-1 basis-72">
               <Search
                 aria-hidden="true"
                 className="pointer-events-none absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground"
@@ -196,45 +199,47 @@ export function PuzzlesClient({
               />
             </div>
 
-            {/* Favorites Toggle */}
-            <Button
-              variant={favoritesOnly ? "default" : "outline"}
-              aria-pressed={favoritesOnly}
-              onClick={() =>
-                onSearchChange((prev) => ({
-                  ...prev,
-                  fav: prev.fav ? undefined : true,
-                }))
-              }
-              className="flex items-center gap-2"
-            >
-              <Heart className="h-4 w-4" />
-              {t("favoritesOnly")}
-            </Button>
-
-            {/* Filter Toggle */}
-            <Button
-              variant="outline"
-              aria-expanded={showFilters}
-              aria-controls={filtersPanelId}
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2"
-            >
-              <Filter className="h-4 w-4" />
-              {t("filtersLabel")}
-            </Button>
-
-            {/* Clear Filters */}
-            {hasActiveFilters && (
+            <div className="flex flex-wrap gap-4">
+              {/* Favorites Toggle */}
               <Button
-                variant="ghost"
-                onClick={clearFilters}
+                variant={favoritesOnly ? "default" : "outline"}
+                aria-pressed={favoritesOnly}
+                onClick={() =>
+                  onSearchChange((prev) => ({
+                    ...prev,
+                    fav: prev.fav ? undefined : true,
+                  }))
+                }
                 className="flex items-center gap-2"
               >
-                <X className="h-4 w-4" />
-                {t("clearFilters")}
+                <Heart className="h-4 w-4" />
+                {t("favoritesOnly")}
               </Button>
-            )}
+
+              {/* Filter Toggle */}
+              <Button
+                variant="outline"
+                aria-expanded={showFilters}
+                aria-controls={filtersPanelId}
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2"
+              >
+                <Filter className="h-4 w-4" />
+                {t("filtersLabel")}
+              </Button>
+
+              {/* Clear Filters */}
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  onClick={clearFilters}
+                  className="flex items-center gap-2"
+                >
+                  <X className="h-4 w-4" />
+                  {t("clearFilters")}
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Advanced Filters: the wrapper always exists so the toggle's aria-controls resolves */}
