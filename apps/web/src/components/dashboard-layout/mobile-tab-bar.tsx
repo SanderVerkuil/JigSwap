@@ -5,7 +5,7 @@
 // sheet. The tab highlight derives from the current route's parent section —
 // library pages light Library, community pages light Community — except
 // /trades, which lights its dedicated Swaps tab. Safe-area padded for
-// home-indicator phones.
+// home-indicator phones only in the installed app (see the nav's comment).
 import { Link } from "@/compat/link";
 import { usePathname } from "@/compat/navigation";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
@@ -29,6 +29,7 @@ import { useState } from "react";
 import { useTranslations } from "use-intl";
 import { MobileQuickSheet } from "./mobile-quick-sheet";
 import { getRouteMeta, isImmersiveMobileRoute } from "./route-meta";
+import { MOBILE_TAB_BAR_HEIGHT_VAR, useHeightCssVar } from "./sticky-offset";
 
 type TabKey = "home" | "library" | "swaps" | "community";
 
@@ -73,6 +74,8 @@ export function MobileTabBar() {
     (exchange) =>
       exchange.userRole === "owner" && exchange.status === "proposed",
   ).length;
+  // Toasts, the install tip and the quick-start footer dock above this bar.
+  const measureRef = useHeightCssVar(MOBILE_TAB_BAR_HEIGHT_VAR);
 
   // The open thread / new-conversation pane owns the phone screen (composer above the keyboard).
   if (isImmersiveMobileRoute(pathname)) return null;
@@ -80,6 +83,7 @@ export function MobileTabBar() {
   return (
     <>
       <nav
+        ref={measureRef}
         aria-label={t("tabsLabel")}
         // position:sticky (not fixed) — it's the last flex child of the shell
         // column with the content row (flex-1) above it, so it lands at the
@@ -89,10 +93,13 @@ export function MobileTabBar() {
         // it scrolls smoothly and stays flush as the address bar shows/hides —
         // unlike fixed, which the browser re-snaps to the layout viewport after
         // the toolbar animation (the jitter + the gap when the address bar
-        // appears). No env(safe-area-inset-bottom) pad: the mobile browser's
-        // bottom chrome already clears the home indicator, and on this target it
-        // reports a non-zero inset even with the address bar up, which showed as
-        // a standing gap below the bar. z-30 + overflow-visible keep the raised
+        // appears). No env(safe-area-inset-bottom) pad in a browser tab: the
+        // mobile browser's bottom chrome already clears the home indicator, and
+        // on this target it reports a non-zero inset even with the address bar
+        // up, which showed as a standing gap below the bar. The installed app
+        // (display-mode: standalone, viewport-fit=cover) has no browser chrome,
+        // so there the bar does pad the inset or the home indicator would sit
+        // on the tab row. z-30 + overflow-visible keep the raised
         // center button (which rises above the bar via -mt) painted above page
         // content and unclipped.
         //
@@ -108,7 +115,7 @@ export function MobileTabBar() {
         // transition. Helps the gap most on Firefox for Android, whose Gecko
         // compositor otherwise lets a sticky bottom bar trail/detach more than
         // Blink does.
-        className="sticky bottom-0 z-30 grid shrink-0 grid-cols-5 items-stretch overflow-visible border-t bg-card shadow-[0_24px_0_0_var(--card)] [will-change:transform] md:hidden"
+        className="sticky bottom-0 z-30 grid shrink-0 grid-cols-5 items-stretch overflow-visible border-t bg-card shadow-[0_24px_0_0_var(--card)] [will-change:transform] md:hidden [@media(display-mode:standalone)]:pb-[env(safe-area-inset-bottom)]"
       >
         {TABS.slice(0, 2).map((tab) => (
           <TabLink key={tab.key} tab={tab} active={active} />

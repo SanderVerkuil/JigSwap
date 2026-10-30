@@ -34,7 +34,7 @@ function useFocusOnChange<T extends HTMLElement>(key: string) {
 /**
  * One /welcome step (spec §2.2, §5.3): the stepper, the step's h2 (PageHead owns the h1), its body
  * and the sticky footer with Skip and Continue, last in the DOM. On phones the footer docks above
- * the MobileTabBar, and it hides while a text field in the step has focus (B11), so the keyboard,
+ * the MobileTabBar (at its measured height, which grows in the installed app), and it hides while a text field in the step has focus (B11), so the keyboard,
  * the footer and the tab bar never cover the step together.
  */
 export function QuickStartFlowView({
@@ -124,7 +124,7 @@ export function QuickStartFlowView({
 
       <div
         className={cn(
-          "bg-card sticky bottom-14 z-20 flex items-center gap-3 border-t px-4 py-3 pb-[30px] md:bottom-0 md:justify-between md:pb-3",
+          "bg-card sticky bottom-[var(--mobile-tab-bar-height,3.5rem)] z-20 flex items-center gap-3 border-t px-4 py-3 pb-[30px] md:bottom-0 md:justify-between md:pb-3",
           typing && "max-md:hidden",
         )}
       >
