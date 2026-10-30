@@ -14,9 +14,13 @@ import schema from "./schema";
 // Box art the first attempt could not decide is accepted by the catalog but not served until
 // it is approved with its hash check passed. HCS and the classifier are a routed fake `fetch`.
 
-vi.mock("node:dns/promises", () => ({
-  lookup: async () => [{ address: "93.184.216.34", family: 4 }],
-}));
+// importPuzzleImage's shop fetch answers through the stubbed global fetch (the transport itself is
+// covered by publicFetch.test.ts).
+vi.mock("./catalog/adapters/publicFetch", async (importOriginal) =>
+  (
+    await import("../test-fixtures/publicFetchViaGlobalFetch")
+  ).publicFetchViaGlobalFetch(importOriginal),
+);
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 

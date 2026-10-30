@@ -3,32 +3,19 @@
 import { lookup as dnsLookup } from "node:dns/promises";
 import { isPrivateIp } from "@jigswap/domain";
 
-// Centralised SSRF pre-flight for the import pipeline's INITIAL url. Enforces an http(s) scheme and
-// a DNS-resolved public host ONCE, so every fetcher tier only ever sees a pre-validated public host.
-// Reuses the domain `isPrivateIp` rule rather than re-implementing it.
+// SSRF pre-flight for the import pipeline's INITIAL url: an http(s) scheme and a DNS-resolved
+// public host (the domain `isPrivateIp` rule), checked once before the import cache and every
+// fetcher tier. It is an early refusal, not the guard that makes our own fetches safe:
 //
-// RESIDUAL RISK — DNS-rebinding TOCTOU on the initial request (finding #14, accepted):
-//   This guard resolves the hostname and validates the addresses, but the subsequent fetch() does
-//   its OWN independent DNS resolution. An attacker controlling authoritative DNS for an attacker-
-//   owned hostname can return a public IP here and a private/loopback IP (e.g. 169.254.169.254
-//   metadata) for the fetch's resolution, with a low TTL between the two. The redirect-hop case is
-//   re-validated per hop (see below), but this single-request rebind is NOT closed by re-validation.
-//   Fully closing it requires pinning the validated IP into the connection (a custom undici
-//   Dispatcher whose `lookup` returns ONLY the already-validated address, preserving Host/SNI) — a
-//   non-trivial change in the "use node" runtime, deferred rather than shipped as a risky partial.
-//   Defense-in-depth that IS in place: isPrivateIp blocks loopback/RFC-1918/link-local/CGNAT
-//   (100.64/10)/192.0.0.0/24 including the 169.254.169.254 metadata IP, so a rebind can only reach
-//   genuinely public IPs that happen to front internal services.
-//
-// Redirect-hop coverage (this guards the ENTRY url only; redirect-following is concentrated in the
-// single tier that DNS-validates every hop):
-//   - browserStorePageFetcher: the ONLY tier that follows redirects. It re-runs a DNS-resolving
-//     guard on EVERY hop (redirect:"manual"), so a public hostname that DNS-resolves to a private
-//     IP on a redirect hop is caught here. The DNS-rebinding-on-redirect case is fully covered.
-//   - ogieStorePageFetcher: the primary tier does NOT follow redirects (maxRedirects:1 = fetch
-//     entry, follow zero hops). A redirecting store URL surfaces as a retryable FetchFailed and
-//     falls through to browserStorePageFetcher above. allowPrivateUrls:false is pinned so a literal
-//     private/loopback/link-local entry URL is rejected by ogie before any egress.
+// The connection is what is checked. A separate resolve-then-fetch check cannot stop a DNS rebind
+// (fetch() resolves the name again, and a low-TTL record can answer public here and private there).
+// So the tiers that fetch from our own network go through catalog/adapters/publicFetch, which
+// checks every address inside the socket's own DNS lookup, on every redirect hop:
+//   - browserStorePageFetcher: the only page tier that follows redirects (at most five).
+//   - catalog/importPuzzleImage: the box-art image fetch.
+//   - ogieStorePageFetcher: the primary tier still uses ogie's own fetch, with
+//     allowPrivateUrls:false (a lexical check only) and no redirect-following; a redirecting
+//     store URL surfaces as a retryable FetchFailed and falls through to the browser tier.
 //   - firecrawlStorePageFetcher: our egress only reaches api.firecrawl.dev (a public host); the
 //     target page is fetched by Firecrawl's infra, not ours, so it is not an SSRF vector here.
 export type PublicUrlCheck =
