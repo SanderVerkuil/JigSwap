@@ -3,7 +3,11 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
-import { blockedEitherWaySet, blockStateBetween } from "../social/blocks";
+import {
+  blockStateBetween,
+  droppedForBlock,
+  viewerBlocksOf,
+} from "../social/blocks";
 import {
   isRevealedByOrdinaryRules,
   projectMemberIdentity,
@@ -14,11 +18,13 @@ import {
 // block is mutual) shows no reviews, and a private member's received reviews reach only themself
 // and their mutual followers ([] for anyone else). A private member's list names their trade
 // partners, so a stranger reading it would learn who the anonymous reviewer on each public
-// partner's list is. Reviews written by a member the viewer blocked or was blocked by are left
-// out. Each row is an explicit ReceivedReviewView: never the exchange, the reviewee or the stored
-// row ids, which would let two members' lists be joined on the exchange and name an anonymous
-// reviewer. The reviewer is projected through the privacy chokepoint (salted per review) instead
-// of being returned as a raw id.
+// partner's list is. Reviews by a member who blocked the viewer are left out, and so are reviews
+// by a member the viewer blocked when the viewer can see who they are; one the viewer blocked but
+// can't see stays the same anonymous entry, so a block never confirms who wrote it (SEC-40). Each
+// row is an explicit ReceivedReviewView: never the exchange, the reviewee or the stored row ids,
+// which would let two members' lists be joined on the exchange and name an anonymous reviewer.
+// The reviewer is projected through the privacy chokepoint (salted per review) instead of being
+// returned as a raw id.
 export const listReviewsForMember = query({
   args: { memberId: v.id("users") },
   handler: async (ctx, args): Promise<ReceivedReviewView[]> => {
@@ -32,19 +38,19 @@ export const listReviewsForMember = query({
     ) {
       return [];
     }
-    const blocked = await blockedEitherWaySet(ctx, me);
+    const blocks = await viewerBlocksOf(ctx, me);
 
     const rows = await ctx.db
       .query("reviews")
       .withIndex("by_reviewee", (q) => q.eq("revieweeId", reviewee))
       .order("desc")
       .collect();
-    return Promise.all(
+    const views = await Promise.all(
       rows
-        .filter((row) => !blocked.has(row.reviewerId))
-        .map(async (row): Promise<ReceivedReviewView> => {
+        .filter((row) => !blocks.byThem.has(row.reviewerId))
+        .map(async (row) => {
           const id = row.aggregateId ?? row._id;
-          return {
+          const view: ReceivedReviewView = {
             id,
             rating: row.rating,
             categories: {
@@ -57,7 +63,14 @@ export const listReviewsForMember = query({
             createdAt: row.createdAt,
             reviewer: await projectMemberIdentity(ctx, me, row.reviewerId, id),
           };
+          return { reviewerId: row.reviewerId, view };
         }),
     );
+    return views
+      .filter(
+        ({ reviewerId, view }) =>
+          !droppedForBlock(blocks, reviewerId, !view.reviewer.anonymous),
+      )
+      .map(({ view }) => view);
   },
 });

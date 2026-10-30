@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
-import { blockedEitherWaySet } from "../social/blocks";
+import { droppedForBlock, viewerBlocksOf } from "../social/blocks";
 import { projectMemberIdentity } from "../social/privacy";
 import { canViewCopy } from "./canViewCopy";
 
@@ -32,8 +32,10 @@ export const listPhotoComments = query({
       .withIndex("by_photo", (q) => q.eq("photoId", args.photoId))
       .order("desc")
       .collect();
-    // Authors blocked either way with the viewer drop out (spec 2.6).
-    const blockedIds = await blockedEitherWaySet(ctx, viewerId);
+    // Authors who blocked the viewer drop out (spec 2.6), and so do authors the viewer blocked
+    // when the viewer can see who they are. One the viewer blocked but can't see keeps their
+    // anonymous entry unchanged, so a block never confirms who wrote it (SEC-40).
+    const blocks = await viewerBlocksOf(ctx, viewerId);
 
     // One projection per author: a member who commented twice reads as one person.
     const authors = new Map<Id<"users">, Promise<ProjectedMember>>();
@@ -51,15 +53,24 @@ export const listPhotoComments = query({
       return projected;
     };
 
-    return Promise.all(
+    const views = await Promise.all(
       rows
-        .filter((row) => !blockedIds.has(row.authorId))
-        .map(async (row): Promise<PhotoCommentView> => ({
-          id: row.aggregateId ?? row._id,
-          author: await authorOf(row.authorId),
-          text: row.text,
-          createdAt: row.createdAt,
+        .filter((row) => !blocks.byThem.has(row.authorId))
+        .map(async (row) => ({
+          authorId: row.authorId,
+          view: {
+            id: row.aggregateId ?? row._id,
+            author: await authorOf(row.authorId),
+            text: row.text,
+            createdAt: row.createdAt,
+          } satisfies PhotoCommentView,
         })),
     );
+    return views
+      .filter(
+        ({ authorId, view }) =>
+          !droppedForBlock(blocks, authorId, !view.author.anonymous),
+      )
+      .map(({ view }) => view);
   },
 });

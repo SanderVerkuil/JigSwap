@@ -42,11 +42,17 @@ export const blockStateBetween = async (
   return undefined;
 };
 
-/** Every member the viewer blocked or was blocked by, for filtering lists. */
-export const blockedEitherWaySet = async (
+/** The viewer's blocks by direction: members they blocked, and members who blocked them. */
+export type ViewerBlocks = {
+  byMe: Set<Id<"users">>;
+  byThem: Set<Id<"users">>;
+};
+
+/** Every member the viewer blocked, and every member who blocked the viewer. */
+export const viewerBlocksOf = async (
   ctx: QueryCtx,
   viewer: Member,
-): Promise<Set<Id<"users">>> => {
+): Promise<ViewerBlocks> => {
   const mine = await ctx.db
     .query("blocks")
     .withIndex("by_blocker", (q) => q.eq("blockerId", asUserId(viewer)))
@@ -55,11 +61,34 @@ export const blockedEitherWaySet = async (
     .query("blocks")
     .withIndex("by_blocked", (q) => q.eq("blockedId", asUserId(viewer)))
     .collect();
-  return new Set([
-    ...mine.map((row) => row.blockedId),
-    ...theirs.map((row) => row.blockerId),
-  ]);
+  return {
+    byMe: new Set(mine.map((row) => row.blockedId)),
+    byThem: new Set(theirs.map((row) => row.blockerId)),
+  };
 };
+
+/** Every member the viewer blocked or was blocked by, for filtering lists. */
+export const blockedEitherWaySet = async (
+  ctx: QueryCtx,
+  viewer: Member,
+): Promise<Set<Id<"users">>> => {
+  const { byMe, byThem } = await viewerBlocksOf(ctx, viewer);
+  return new Set([...byMe, ...byThem]);
+};
+
+/**
+ * Whether a list entry by `authorId` drops out for the viewer because of a block (spec 2.6),
+ * given `revealed`: whether the privacy chokepoint names the author to this viewer. A block by the
+ * author always drops it (the viewer can't trigger that). A block by the viewer drops it only when
+ * the author is revealed: a hidden author's entry is anonymous, and if blocking a candidate made it
+ * vanish the block would confirm who wrote it (SEC-40). Such an entry stays exactly as it was.
+ */
+export const droppedForBlock = (
+  blocks: ViewerBlocks,
+  authorId: Id<"users">,
+  revealed: boolean,
+): boolean =>
+  blocks.byThem.has(authorId) || (blocks.byMe.has(authorId) && revealed);
 
 /** Throw openDmThread's own NotConnected refusal when the pair is blocked either way. */
 export const assertPairNotBlocked = async (

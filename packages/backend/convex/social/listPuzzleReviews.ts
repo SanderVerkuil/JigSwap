@@ -4,7 +4,7 @@ import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
-import { blockedEitherWaySet } from "./blocks";
+import { droppedForBlock, viewerBlocksOf } from "./blocks";
 import { projectMemberIdentity } from "./privacy";
 
 // Read side: the community reviews on a catalog puzzle DEFINITION — the `puzzleReviews` table, one
@@ -19,7 +19,9 @@ import { projectMemberIdentity } from "./privacy";
 //     id): a private author the viewer is not connected with is anonymous, a circle mate sees
 //     identity only, and a departed author is anonymous + `departed` (the web's "Deleted
 //     member"). Bio, location and language never reach a viewer the ordinary rules don't reveal.
-//   - Authors blocked either way with the viewer drop out (spec 2.6).
+//   - Authors who blocked the viewer drop out (spec 2.6), and so do authors the viewer blocked
+//     when the viewer can see who they are. An author the viewer blocked but can't see keeps
+//     their anonymous entry unchanged, so a block never confirms who wrote it (SEC-40).
 // There is no copy here (these are catalog-definition reviews), so the `canViewCopy` reachability
 // gate that listPuzzleComments uses does NOT apply.
 export const listPuzzleReviews = query({
@@ -35,7 +37,7 @@ export const listPuzzleReviews = query({
     ) {
       return [];
     }
-    const blockedIds = await blockedEitherWaySet(ctx, viewerId);
+    const blocks = await viewerBlocksOf(ctx, viewerId);
 
     const rows = (
       await ctx.db
@@ -43,23 +45,32 @@ export const listPuzzleReviews = query({
         .withIndex("by_puzzle", (q) => q.eq("puzzleId", args.puzzleId))
         .collect()
     )
-      .filter((row) => !blockedIds.has(row.userId))
+      .filter((row) => !blocks.byThem.has(row.userId))
       .sort((a, b) => b.updatedAt - a.updatedAt);
 
     // One review per member, so every author is projected once.
-    return Promise.all(
-      rows.map(async (row): Promise<PuzzleReviewView> => ({
-        id: row._id,
-        author: await projectMemberIdentity(
-          ctx,
-          viewerId,
-          row.userId,
-          args.puzzleId as string,
-        ),
-        rating: row.rating ?? null,
-        text: row.text ?? null,
-        updatedAt: row.updatedAt,
+    const views = await Promise.all(
+      rows.map(async (row) => ({
+        authorId: row.userId,
+        view: {
+          id: row._id,
+          author: await projectMemberIdentity(
+            ctx,
+            viewerId,
+            row.userId,
+            args.puzzleId as string,
+          ),
+          rating: row.rating ?? null,
+          text: row.text ?? null,
+          updatedAt: row.updatedAt,
+        } satisfies PuzzleReviewView,
       })),
     );
+    return views
+      .filter(
+        ({ authorId, view }) =>
+          !droppedForBlock(blocks, authorId, !view.author.anonymous),
+      )
+      .map(({ view }) => view);
   },
 });
