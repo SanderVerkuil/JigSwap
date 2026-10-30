@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 // The "-" prefix keeps the TanStack route generator from treating this file as a route.
-import { gateway } from "@/gateway";
+import { gateway, type Id } from "@/gateway";
 import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import type { PuzzleDefinitionView } from "@jigswap/contracts";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -64,7 +64,7 @@ vi.mock("sonner", () => ({
 const ACQUIRE = getFunctionName(gateway.library.createOwned);
 const UPDATE_SHARING = getFunctionName(gateway.library.updateSharing);
 
-const PUZZLE_DOC_ID = "puzzle_doc_1";
+const PUZZLE_DOC_ID = "puzzle_doc_1" as Id<"puzzles">;
 const PUZZLE: PuzzleDefinitionView = {
   _id: PUZZLE_DOC_ID,
   _creationTime: 0,
