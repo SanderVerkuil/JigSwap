@@ -11,8 +11,10 @@ import {
 import {
   checkImageBytes,
   checkImageSize,
+  jpegDecodeInput,
   MAX_IMAGE_PIXELS,
   MAX_IMAGE_UPLOAD_BYTES,
+  MAX_JPEG_BLOCKS,
   readImageDimensions,
   sniffImageFormat,
 } from "./lib/imageModeration/guards";
@@ -52,21 +54,43 @@ const pngHeader = (width: number, height: number) =>
     [8, 6, 0, 0, 0],
   );
 
-// A JPEG with an APP0 segment before the baseline frame header (SOF0).
-const jpegHeader = (width: number, height: number) =>
+// A JPEG frame header (SOF0 unless `marker` says otherwise) with one component per sampling
+// factor byte (horizontal << 4 | vertical): [0x22, 0x11, 0x11] is 4:2:0, [0x11, 0x11, 0x11] 4:4:4.
+const sof = (
+  width: number,
+  height: number,
+  sampling: number[],
+  marker = 0xc0,
+) =>
   bytesOf(
-    [0xff, 0xd8],
-    [0xff, 0xe0],
-    u16be(16),
-    "JFIF",
-    [0, 1, 1, 0, 0, 1, 0, 1, 0, 0],
-    [0xff, 0xc0],
-    u16be(17),
+    [0xff, marker],
+    u16be(8 + 3 * sampling.length),
     [8],
     u16be(height),
     u16be(width),
-    [3, 1, 0x22, 0, 2, 0x11, 1, 3, 0x11, 1],
+    [sampling.length],
+    sampling.flatMap((hv, c) => [c + 1, hv, 0]),
   );
+
+// A JPEG marker segment: marker, length, payload.
+const segment = (marker: number, ...payload: (number[] | string)[]) => {
+  const body = bytesOf(...payload);
+  return bytesOf([0xff, marker], u16be(body.length + 2), Array.from(body));
+};
+
+const APP0_JFIF = segment(0xe0, "JFIF", [0, 1, 1, 0, 0, 1, 0, 1, 0, 0]);
+
+// A JPEG with an APP0 segment before a 4:2:0 baseline frame header (SOF0).
+const jpegHeader = (width: number, height: number) =>
+  bytesOf(
+    [0xff, 0xd8],
+    Array.from(APP0_JFIF),
+    Array.from(sof(width, height, [0x22, 0x11, 0x11])),
+  );
+
+// SOI, then the given segments.
+const jpegOf = (...segments: Uint8Array[]) =>
+  bytesOf([0xff, 0xd8], ...segments.map((s) => Array.from(s)));
 
 // A GIF with a 2-colour global table, a graphic-control extension and a first frame at
 // (left, top) of the given size (default: the full screen).
@@ -239,11 +263,18 @@ describe("readImageDimensions", () => {
 
 describe("checkImageBytes", () => {
   test("accepts a supported image within the pixel budget", () => {
-    expect(checkImageBytes(jpegHeader(5000, 5000))).toEqual({
+    // A 12 MP phone photo (4:2:0), and an image of exactly MAX_IMAGE_PIXELS.
+    expect(checkImageBytes(jpegHeader(4032, 3024))).toEqual({
       ok: true,
       format: "jpeg",
-      width: 5000,
-      height: 5000,
+      width: 4032,
+      height: 3024,
+    });
+    expect(checkImageBytes(pngHeader(4000, 3050))).toEqual({
+      ok: true,
+      format: "png",
+      width: 4000,
+      height: 3050,
     });
   });
 
@@ -258,12 +289,15 @@ describe("checkImageBytes", () => {
     });
   });
 
-  test("refuses a decompression bomb from the header alone (> 25 MP)", () => {
-    expect(MAX_IMAGE_PIXELS).toBe(25_000_000);
-    // 5001 x 5000 is just over the budget; the file itself is a few dozen bytes.
+  test("refuses a decompression bomb from the header alone (> 12.2 MP)", () => {
+    // Measured: re-encoding a 12.2 MP image peaks under 512 MiB; a 25 MP one does not (SEC-18).
+    expect(MAX_IMAGE_PIXELS).toBe(12_200_000);
+    // 4067 x 3000 is just over the budget; the file itself is a few dozen bytes. So is the
+    // review's 5000 x 5000 JPEG, which was OOM-killed on every attempt.
     for (const bomb of [
-      pngHeader(5001, 5000),
-      jpegHeader(5001, 5000),
+      pngHeader(4067, 3000),
+      jpegHeader(4067, 3000),
+      jpegHeader(5000, 5000),
       gifHeader(65535, 65535),
       webpVp8x(16383, 16383),
     ]) {
@@ -278,6 +312,125 @@ describe("checkImageBytes", () => {
     expect(checkImageBytes(bytesOf(PNG_SIG))).toEqual({
       ok: false,
       reason: "unreadable_header",
+    });
+  });
+
+  // jpeg-js (jimp's JPEG decoder) allocates its 8x8 blocks as soon as it meets a frame header,
+  // for every frame header it meets, at about 800 bytes each in V8: the pixel count alone does
+  // not bound a JPEG's decode. The guard counts the blocks of the one frame header the decoder
+  // can meet, and refuses a JPEG in which it could meet two (SEC-18).
+  describe("a JPEG is bounded by the blocks its one frame header makes the decoder allocate", () => {
+    test("a 4:4:4 frame needs twice the blocks of a 4:2:0 one of the same size", () => {
+      expect(MAX_JPEG_BLOCKS).toBe(292_000);
+      expect(
+        checkImageBytes(jpegOf(sof(4032, 3024, [0x11, 0x11, 0x11]))),
+      ).toEqual({ ok: false, reason: "too_many_pixels" });
+      expect(
+        checkImageBytes(jpegOf(sof(2880, 2160, [0x11, 0x11, 0x11]))),
+      ).toEqual({ ok: true, format: "jpeg", width: 2880, height: 2160 });
+      // Four components (CMYK) at 4:4:4.
+      expect(
+        checkImageBytes(jpegOf(sof(2496, 1872, [0x11, 0x11, 0x11, 0x11]))),
+      ).toEqual({ ok: false, reason: "too_many_pixels" });
+    });
+
+    test("a narrow frame counts the blocks its sampling pads it to", () => {
+      // Sampled 4x4, every 32 x 32 pixels take 16 blocks per component, however few of them
+      // the image covers: 96 x 65535 is 6.3 MP but 393,216 blocks.
+      expect(
+        checkImageBytes(jpegOf(sof(96, 65535, [0x44, 0x44, 0x44, 0x44]))),
+      ).toEqual({ ok: false, reason: "too_many_pixels" });
+      expect(
+        checkImageBytes(jpegOf(sof(32, 65535, [0x44, 0x44, 0x44, 0x44]))),
+      ).toEqual({ ok: true, format: "jpeg", width: 32, height: 65535 });
+    });
+
+    test("more than four components, or a sampling factor outside 1..4, is refused", () => {
+      // A 779-byte file of 1 x 65535 pixels whose 255 components, sampled 15x15 each, make
+      // jpeg-js allocate over 1 GiB before it gives up: it passed the pixel guard and was
+      // OOM-killed on every attempt.
+      const crash = jpegOf(
+        sof(1, 65535, new Array<number>(255).fill(0xff)),
+        bytesOf([0xff, 0xd9]),
+      );
+      expect(crash.length).toBe(779);
+      for (const bytes of [
+        crash,
+        jpegOf(sof(64, 64, [0x11, 0x11, 0x11, 0x11, 0x11])),
+        jpegOf(sof(64, 64, [0x51, 0x11, 0x11])),
+        jpegOf(sof(64, 64, [0x10, 0x11, 0x11])),
+        jpegOf(sof(64, 64, [])),
+      ]) {
+        expect(checkImageBytes(bytes)).toEqual({
+          ok: false,
+          reason: "unreadable_header",
+        });
+      }
+    });
+
+    test("a second frame header is refused, wherever it sits", () => {
+      const frame = sof(64, 64, [0x22, 0x11, 0x11]);
+      const big = sof(4000, 3000, [0x11, 0x11, 0x11], 0xc2);
+      const sos = segment(0xda, [3, 1, 0, 2, 0x11, 3, 0x11, 0, 63, 0]);
+      for (const bytes of [
+        jpegOf(frame, big),
+        // Inside a table segment: jpeg-js reads tables by their content, not their length.
+        jpegOf(
+          segment(0xdb, [0], new Array<number>(64).fill(1), Array.from(big)),
+          frame,
+        ),
+        // After a scan.
+        jpegOf(frame, sos, bytesOf([0x12, 0x34]), big),
+      ]) {
+        expect(checkImageBytes(bytes)).toEqual({
+          ok: false,
+          reason: "unreadable_header",
+        });
+      }
+    });
+
+    test("a frame header inside an APPn or COM segment is not part of the decode", () => {
+      // An Exif thumbnail is a whole JPEG, frame header included. The decoder is never given
+      // APPn or COM segments (jpegDecodeInput).
+      const thumbnail = jpegOf(sof(160, 120, [0x22, 0x11, 0x11]));
+      const exif = segment(0xe1, "Exif\0\0", Array.from(thumbnail));
+      const icc = segment(
+        0xe2,
+        "ICC_PROFILE\0",
+        [1, 1, 0xff, 0xc0, 0xff, 0xc2],
+      );
+      const comment = segment(0xfe, [0xff, 0xc1]);
+      const frame = sof(640, 480, [0x22, 0x11, 0x11]);
+
+      expect(
+        checkImageBytes(jpegOf(APP0_JFIF, exif, icc, comment, frame)),
+      ).toEqual({ ok: true, format: "jpeg", width: 640, height: 480 });
+    });
+
+    test("the decoder is given the frame, tables and scans, and Adobe's colour transform only", () => {
+      const adobe = segment(0xee, "Adobe", [0, 100, 0, 0, 0, 0, 1]);
+      const dqt = segment(0xdb, [0], new Array<number>(64).fill(1));
+      const frame = sof(16, 16, [0x11]);
+      const sos = segment(0xda, [1, 1, 0, 0, 63, 0]);
+      // Entropy-coded data: a stuffed 0xFF00 and a restart marker are part of it.
+      const scan = bytesOf([0x12, 0xff, 0x00, 0x34, 0xff, 0xd0, 0x56]);
+      const eoi = bytesOf([0xff, 0xd9]);
+      const file = jpegOf(
+        APP0_JFIF,
+        segment(0xe1, "Exif\0\0", [1, 2]),
+        adobe,
+        segment(0xfe, "hi"),
+        dqt,
+        frame,
+        sos,
+        scan,
+        eoi,
+        bytesOf("appended"),
+      );
+
+      expect(Array.from(jpegDecodeInput(file))).toEqual(
+        Array.from(jpegOf(adobe, dqt, frame, sos, scan, eoi)),
+      );
     });
   });
 

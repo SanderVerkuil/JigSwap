@@ -9,7 +9,12 @@ import {
   transparentIdat,
   transparentPng,
 } from "../test-fixtures/craftPng";
-import { readImageDimensions } from "./lib/imageModeration/guards";
+import {
+  JPEG_DECODER_MEMORY_MB,
+  jpegDecodeInput,
+  MAX_IMAGE_PIXELS,
+  readImageDimensions,
+} from "./lib/imageModeration/guards";
 import {
   decodeUpright,
   stripAndNormalise,
@@ -242,6 +247,28 @@ describe("decodeUpright decodes only what the guards checked", () => {
     // Stored 3 wide and 2 tall with Orientation 6: the header's size, upright 2x3.
     const image = await decodeUpright(transparentPng(3, 2), "png", 6);
     expect([image.bitmap.width, image.bitmap.height]).toEqual([2, 3]);
+  });
+
+  // The guards bound jpeg-js by the one frame header in the bytes they checked; the decoder must
+  // get exactly those bytes, with its own allocation caps as a backstop (SEC-18).
+  test("a JPEG is decoded from the bytes the guards checked, under jpeg-js's own caps", async () => {
+    const decode = vi.spyOn(Jimp, "fromBuffer");
+    const original = fixture("1.jpg");
+
+    await decodeUpright(original, "jpeg", 1);
+
+    expect(decode).toHaveBeenCalledTimes(1);
+    const [input, options] = decode.mock.calls[0];
+    expect(new Uint8Array(input)).toEqual(jpegDecodeInput(original));
+    // Its JFIF and Exif segments are not.
+    expect(input.byteLength).toBeLessThan(original.length);
+    expect(options).toEqual({
+      "image/jpeg": {
+        maxResolutionInMP: MAX_IMAGE_PIXELS / 1e6,
+        maxMemoryUsageInMB: JPEG_DECODER_MEMORY_MB,
+      },
+    });
+    expect(JPEG_DECODER_MEMORY_MB).toBe(193);
   });
 });
 

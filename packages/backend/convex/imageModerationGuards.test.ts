@@ -143,6 +143,25 @@ const DUAL_IHDR_PNG = craftPng(
   iendChunk(),
 );
 
+// SOI, a baseline frame header (SOF0) of the given size with one component per sampling byte
+// (horizontal << 4 | vertical), and EOI.
+const jpegFrame = (width: number, height: number, sampling: number[]) => {
+  const length = 8 + 3 * sampling.length;
+  return new Uint8Array([
+    ...[0xff, 0xd8, 0xff, 0xc0, length >> 8, length & 0xff, 8],
+    ...[height >> 8, height & 0xff, width >> 8, width & 0xff, sampling.length],
+    ...sampling.flatMap((hv, c) => [c + 1, hv, 0]),
+    ...[0xff, 0xd9],
+  ]);
+};
+
+// The review's 25 MP JPEG (SEC-18): a 5000 x 5000 frame, OOM-killed on every attempt.
+const JPEG_25MP = jpegFrame(5000, 5000, [0x22, 0x11, 0x11]);
+
+// 779 bytes and 1 x 65535 pixels, but 255 components sampled 15x15: jpeg-js allocates over
+// 1 GiB of blocks for it before it gives up (SEC-18).
+const JPEG_BLOCK_BOMB = jpegFrame(1, 65535, new Array<number>(255).fill(0xff));
+
 // A lossless 2x2 WebP header (VP8L) with an undecodable body: jimp has no WebP decoder anyway.
 const WEBP_BYTES = new Uint8Array([
   ...new TextEncoder().encode("RIFF"),
@@ -189,11 +208,19 @@ describe("input guards (copy photos)", () => {
       "image/png",
       "interlaced",
     ],
+    ["the review's 25 MP JPEG", JPEG_25MP, "image/jpeg", "too_many_pixels"],
+    [
+      "a 779-byte JPEG whose frame header makes jpeg-js allocate over 1 GiB",
+      JPEG_BLOCK_BOMB,
+      "image/jpeg",
+      "unreadable_header",
+    ],
   ] as const)(
-    "%s is rejected as invalid_image, never classified, and its blob deleted",
+    "%s is rejected as invalid_image, never decoded or classified, and its blob deleted",
     async (_name, bytes, type, reason) => {
       const fetchMock = cleanReply();
       vi.stubGlobal("fetch", fetchMock);
+      const decode = vi.spyOn(Jimp, "fromBuffer");
       const t = withModerationPool(convexTest(schema, modules));
       const { copy } = await seed(t);
       const fileId = await store(t, bytes, type);
@@ -204,6 +231,7 @@ describe("input guards (copy photos)", () => {
       expect(row.moderationLabel).toBe("invalid_image");
       expect(row.moderationReason).toBe(reason);
       expect(row.moderationScore).toBeUndefined();
+      expect(decode).not.toHaveBeenCalled();
       expect(fetchMock).not.toHaveBeenCalled();
       expect(await blobExists(t, fileId)).toBe(false);
     },
@@ -470,6 +498,27 @@ describe("decode failures and polyglots (copy photos)", () => {
     expect(row.moderationStatus).toBe("rejected");
     expect(row.moderationLabel).toBe("invalid_image");
     expect(row.moderationReason).toBe("decode_failed");
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(await blobExists(t, fileId)).toBe(false);
+  });
+
+  test("a JPEG that hits jpeg-js's own allocation cap is refused as decode_failed, not retried", async () => {
+    const fetchMock = cleanReply();
+    vi.stubGlobal("fetch", fetchMock);
+    const t = withModerationPool(convexTest(schema, modules));
+    const { copy } = await seed(t);
+    const fileId = await store(t, fixture("gps.jpg"), "image/jpeg");
+    // What jpeg-js throws instead of allocating past maxMemoryUsageInMB.
+    vi.spyOn(Jimp, "fromBuffer").mockRejectedValue(
+      new Error("maxMemoryUsageInMB limit exceeded by at least 13MB"),
+    );
+
+    const row = await addCopyPhoto(t, copy, fileId);
+
+    expect(row.moderationStatus).toBe("rejected");
+    expect(row.moderationLabel).toBe("invalid_image");
+    expect(row.moderationReason).toBe("decode_failed");
+    expect(row.moderationAttempts).toBe(1);
     expect(fetchMock).not.toHaveBeenCalled();
     expect(await blobExists(t, fileId)).toBe(false);
   });

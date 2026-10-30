@@ -11,6 +11,27 @@
 //   decoder could read differently is refused too, and the decode itself checks the bitmap it
 //   got against the header (normaliseImage.decodeUpright).
 //
+// Memory: a Node action has 512 MiB, and a decode that runs past it kills the attempt before
+// anything is refused, so the upload is retried and crashes again. MAX_IMAGE_PIXELS and
+// MAX_JPEG_BLOCKS come from measuring the pipeline's decode, re-encode and blurhash (Node 26,
+// jimp 1.6.1, 2026-10-30) as the smallest cgroup (no swap) each image completes in:
+//   JPEG 4:2:0 4032x3024 (285,768 blocks)  373 MiB   the largest accepted; 8 MP 268, 14 MP 436
+//   JPEG 4:2:0 5000x5000                   OOM-killed at 512 MiB, now refused
+//   JPEG 4:4:4 4032x3024 (571,536 blocks)  611 MiB   now refused; 4:4:4 2880x2160: 324 MiB
+//   JPEG CMYK 3264x2448                    499 MiB   now refused; CMYK 2488x1872: 317 MiB
+//   JPEG of 779 bytes, 1x65535, 255 components sampled 15x15: 1.4 GiB, now refused
+//   JPEG of 111 bytes, CMYK 64x65535 sampled 4x4 (262,144 blocks): 331 MiB
+//   PNG RGBA 16-bit 4032x3024 324 MiB; WebP lossless 4032x3024 338 MiB; GIF 4032x3024 184 MiB
+// jpeg-js's memory follows its blocks (about 800 bytes each), not the pixels, so a JPEG is
+// bounded by both. A deployed action carries more than this measurement, hence the headroom.
+//
+// JPEG: jpeg-js (jimp's decoder) allocates the blocks of every frame header it meets, as many as
+// the components and their sampling ask for, whatever the pixel count. A JPEG is accepted only
+// when the bytes the decoder is given (jpegDecodeInput: without APPn and COM segments) hold
+// exactly one frame header, of 1 to 4 components sampled 1..4, whose blocks fit MAX_JPEG_BLOCKS.
+// jpeg-js's own caps (maxResolutionInMP, maxMemoryUsageInMB: JPEG_DECODER_MEMORY_MB) back that
+// up in decodeUpright.
+//
 // PNG: pngjs (jimp's decoder) takes the size from EVERY IHDR it meets, so the last one decides
 // the bitmap, and it inflates an interlaced (Adam7) image with no bound on the output. A PNG is
 // accepted only with exactly one IHDR, as its first chunk, and not interlaced ("interlaced");
@@ -30,8 +51,26 @@
 /** Largest accepted upload, in bytes (10 MB). */
 export const MAX_IMAGE_UPLOAD_BYTES = 10 * 1024 * 1024;
 
-/** Largest accepted image, in pixels (25 MP). */
-export const MAX_IMAGE_PIXELS = 25_000_000;
+/** Largest accepted image, in pixels: 12.2 MP, a 4032 x 3024 phone photo (see the header). */
+export const MAX_IMAGE_PIXELS = 12_200_000;
+
+/**
+ * Most 8x8 blocks jpeg-js may allocate for a JPEG's frame (see jpegHeader): what a 4:2:0 photo
+ * of MAX_IMAGE_PIXELS needs (285,768 for 4032 x 3024), with room for MCU padding. A 4:4:4 JPEG
+ * fits up to about 6.2 MP, a CMYK one up to about 4.6 MP.
+ */
+export const MAX_JPEG_BLOCKS = 292_000;
+
+/**
+ * jpeg-js's own cap on what it allocates (its `maxMemoryUsageInMB`, which counts MiB), a backstop
+ * behind the frame check: for the largest frame the guards accept, its blocks as jpeg-js counts
+ * them (256 bytes each) and their sample lines (64 bytes per block), its colour and RGBA pixels
+ * (8 bytes per pixel), plus 10 MiB for tables.
+ */
+export const JPEG_DECODER_MEMORY_MB =
+  Math.ceil(
+    (MAX_JPEG_BLOCKS * (256 + 64) + MAX_IMAGE_PIXELS * 8) / (1024 * 1024),
+  ) + 10;
 
 export type ImageFormat = "jpeg" | "png" | "webp" | "gif";
 
@@ -40,7 +79,7 @@ export type ImageGuardFailure =
   | "too_large" // more than MAX_IMAGE_UPLOAD_BYTES
   | "unsupported_format" // the magic bytes are not JPEG / PNG / WebP / GIF
   | "unreadable_header" // a supported format whose header has no usable dimensions
-  | "too_many_pixels" // more than MAX_IMAGE_PIXELS
+  | "too_many_pixels" // more than MAX_IMAGE_PIXELS, or (JPEG) more than MAX_JPEG_BLOCKS
   | "interlaced" // an interlaced (Adam7) PNG, whose decode has no output bound
   | "decode_failed"; // a header over a body that does not decode (set by the pipeline)
 
@@ -68,8 +107,16 @@ const u32be = (b: Uint8Array, i: number): number =>
 
 const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 
-/** What a header says about the decode: its size, and (PNG) whether it is interlaced. */
-type Header = { width: number; height: number; interlaced?: boolean };
+/**
+ * What a header says about the decode: its size, (PNG) whether it is interlaced, and (JPEG) the
+ * 8x8 blocks the decoder allocates for it.
+ */
+type Header = {
+  width: number;
+  height: number;
+  interlaced?: boolean;
+  jpegBlocks?: number;
+};
 
 /** The image format the magic bytes announce, or null for anything else. */
 export const sniffImageFormat = (bytes: Uint8Array): ImageFormat | null => {
@@ -92,42 +139,108 @@ export const sniffImageFormat = (bytes: Uint8Array): ImageFormat | null => {
   return null;
 };
 
-// JPEG: walk the marker segments up to the first start-of-frame (SOF0..SOF15, except DHT C4,
-// JPG C8 and DAC CC), whose payload is [precision][height u16][width u16].
-const jpegDimensions = (
-  b: Uint8Array,
-): { width: number; height: number } | null => {
+/**
+ * The bytes the JPEG decoder is given: the image without its APPn and COM segments, except
+ * APP14 "Adobe" (it says how to convert the colours). None of the others changes a pixel, and
+ * an Exif thumbnail or an ICC profile may hold bytes that read as a frame header. Walked by the
+ * segment lengths up to EOI (anything after it is dropped) or to where the structure stops
+ * holding together (the rest is dropped too, and the decode fails).
+ */
+export const jpegDecodeInput = (b: Uint8Array): Uint8Array => {
+  const parts = [b.subarray(0, 2)];
   let i = 2;
-  while (i + 3 < b.length) {
-    if (b[i] !== 0xff) return null;
+  while (i + 1 < b.length && b[i] === 0xff) {
     const marker = b[i + 1];
-    // Fill bytes: a run of 0xFF before the marker.
     if (marker === 0xff) {
-      i += 1;
+      i += 1; // fill byte
       continue;
+    }
+    if (marker === 0xd9) {
+      parts.push(b.subarray(i, i + 2));
+      break;
     }
     // Stand-alone markers carry no length.
     if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) {
+      parts.push(b.subarray(i, i + 2));
       i += 2;
       continue;
     }
-    // End of image / start of scan before any frame header: no dimensions.
-    if (marker === 0xd9 || marker === 0xda) return null;
-    const length = u16be(b, i + 2);
-    if (length < 2) return null;
-    const isSof =
-      marker >= 0xc0 &&
-      marker <= 0xcf &&
-      marker !== 0xc4 &&
-      marker !== 0xc8 &&
-      marker !== 0xcc;
-    if (isSof) {
-      if (i + 9 > b.length) return null;
-      return { height: u16be(b, i + 5), width: u16be(b, i + 7) };
+    if (i + 4 > b.length) break;
+    const end = i + 2 + u16be(b, i + 2);
+    if (end < i + 4 || end > b.length) break;
+    const app = (marker >= 0xe0 && marker <= 0xef) || marker === 0xfe;
+    if (!app || (marker === 0xee && ascii(b, i + 4, "Adobe"))) {
+      parts.push(b.subarray(i, end));
     }
-    i += 2 + length;
+    i = end;
+    if (marker === 0xda) {
+      // Entropy-coded data runs to the next marker that is not a stuffed 0xFF00 or a restart.
+      let j = i;
+      while (j + 1 < b.length) {
+        const next = b[j + 1];
+        if (b[j] === 0xff && next !== 0x00 && next !== 0xff) {
+          if (next < 0xd0 || next > 0xd7) break;
+        }
+        j += 1;
+      }
+      if (j + 1 >= b.length) j = b.length;
+      parts.push(b.subarray(i, j));
+      i = j;
+    }
   }
-  return null;
+  const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
+  let offset = 0;
+  for (const part of parts) {
+    out.set(part, offset);
+    offset += part.length;
+  }
+  return out;
+};
+
+// JPEG: jpeg-js (jimp's decoder) allocates its 8x8 blocks (an Int32Array(64) each, about 800
+// bytes in V8) the moment it meets a frame header, SOF0, SOF1 or SOF2 (the only ones it
+// decodes), for every one it meets, and checks there was only one at the very end. How many
+// depends on the components and their sampling, not on the pixel count: a 1 x 65535 header with
+// 255 components sampled 15x15 allocates over 1 GiB. So in the bytes the decoder is given
+// (jpegDecodeInput) the two bytes of a frame header (FF C0..C2) must occur exactly once, at any
+// offset (wherever the decoder's own walk could take it), and that frame header must hold
+// together: 1 to 4 components (what jpeg-js turns into pixels), each sampled 1..4 (the JPEG
+// standard's range). Its block count is what jpeg-js allocates for it: per component, its
+// sampled blocks in every MCU, the image padded to whole MCUs.
+const jpegHeader = (b: Uint8Array): Header | null => {
+  const input = jpegDecodeInput(b);
+  let at = -1;
+  for (let i = 0; i + 1 < input.length; i++) {
+    if (input[i] === 0xff && input[i + 1] >= 0xc0 && input[i + 1] <= 0xc2) {
+      if (at !== -1) return null;
+      at = i;
+    }
+  }
+  // [marker][length u16][precision][height u16][width u16][n], then n x [id][h << 4 | v][table].
+  if (at === -1 || at + 10 > input.length) return null;
+  const components = input[at + 9];
+  if (components < 1 || components > 4) return null;
+  if (u16be(input, at + 2) !== 8 + 3 * components) return null;
+  if (at + 10 + 3 * components > input.length) return null;
+  const sampling: { h: number; v: number }[] = [];
+  for (let c = 0; c < components; c++) {
+    const hv = input[at + 11 + 3 * c];
+    const h = hv >> 4;
+    const v = hv & 0x0f;
+    if (h < 1 || h > 4 || v < 1 || v > 4) return null;
+    sampling.push({ h, v });
+  }
+  const height = u16be(input, at + 5);
+  const width = u16be(input, at + 7);
+  const maxH = Math.max(...sampling.map((s) => s.h));
+  const maxV = Math.max(...sampling.map((s) => s.v));
+  const mcusPerLine = Math.ceil(width / 8 / maxH);
+  const mcusPerColumn = Math.ceil(height / 8 / maxV);
+  const jpegBlocks = sampling.reduce(
+    (sum, { h, v }) => sum + mcusPerLine * h * mcusPerColumn * v,
+    0,
+  );
+  return { width, height, jpegBlocks };
 };
 
 // PNG: the chunk list, walked by its lengths up to IEND (pngjs refuses anything after it), must
@@ -218,7 +331,7 @@ const webpDimensions = (
 const readHeader = (bytes: Uint8Array, format: ImageFormat): Header | null => {
   const header =
     format === "jpeg"
-      ? jpegDimensions(bytes)
+      ? jpegHeader(bytes)
       : format === "png"
         ? pngHeader(bytes)
         : format === "gif"
@@ -246,8 +359,8 @@ export const checkImageSize = (
     : { ok: true };
 
 /**
- * Every guard on the downloaded bytes: size, magic bytes, then the header: its pixel count, and
- * (PNG) no interlacing.
+ * Every guard on the downloaded bytes: size, magic bytes, then the header: its pixel count,
+ * (JPEG) the blocks its frame makes the decoder allocate, and (PNG) no interlacing.
  */
 export const checkImageBytes = (bytes: Uint8Array): ImageGuardResult => {
   const size = checkImageSize(bytes.length);
@@ -257,7 +370,10 @@ export const checkImageBytes = (bytes: Uint8Array): ImageGuardResult => {
   const header = readHeader(bytes, format);
   if (!header) return { ok: false, reason: "unreadable_header" };
   const { width, height } = header;
-  if (width * height > MAX_IMAGE_PIXELS) {
+  if (
+    width * height > MAX_IMAGE_PIXELS ||
+    (header.jpegBlocks ?? 0) > MAX_JPEG_BLOCKS
+  ) {
     return { ok: false, reason: "too_many_pixels" };
   }
   if (header.interlaced) return { ok: false, reason: "interlaced" };

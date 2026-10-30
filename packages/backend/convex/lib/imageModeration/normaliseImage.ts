@@ -4,7 +4,12 @@ import decodeWebpBytes, {
   init as initWebpDecoder,
 } from "@jsquash/webp/decode.js";
 import { Jimp } from "jimp";
-import { checkImageBytes } from "./guards";
+import {
+  checkImageBytes,
+  JPEG_DECODER_MEMORY_MB,
+  jpegDecodeInput,
+  MAX_IMAGE_PIXELS,
+} from "./guards";
 import { applyOrientation, type Bitmap } from "./orientation";
 import {
   jpegIccSegments,
@@ -66,13 +71,16 @@ const decodeWebp = async (bytes: Uint8Array): Promise<Bitmap> => {
  * not decode, when the input guards (lib/imageModeration/guards) refuse them, and when the
  * decoded bitmap is not the size the header announced: the guards bound the decode by the
  * header alone, so a decoder that reads a bigger image from the same bytes is never let through
- * (SEC-17).
+ * (SEC-17). A JPEG is decoded from exactly the bytes its frame was checked in
+ * (jpegDecodeInput), under jpeg-js's own caps on resolution and allocation as a backstop
+ * (SEC-18); hitting one is a throw like any other decode failure.
  */
 export const decodeUpright = async (
-  bytes: Uint8Array,
+  input: Uint8Array,
   format: StrippableFormat | "gif",
   orientation: number,
 ) => {
+  const bytes = format === "jpeg" ? jpegDecodeInput(input) : input;
   const header = checkImageBytes(bytes);
   if (!header.ok) throw new Error(`refused before decode: ${header.reason}`);
   if (header.format !== format) {
@@ -90,7 +98,12 @@ export const decodeUpright = async (
     assertHeaderSize(bitmap);
     return Jimp.fromBitmap(applyOrientation(bitmap, orientation));
   }
-  const image = await Jimp.fromBuffer(Buffer.from(bytes));
+  const image = await Jimp.fromBuffer(Buffer.from(bytes), {
+    "image/jpeg": {
+      maxResolutionInMP: MAX_IMAGE_PIXELS / 1e6,
+      maxMemoryUsageInMB: JPEG_DECODER_MEMORY_MB,
+    },
+  });
   assertHeaderSize(image.bitmap);
   if (orientation < 2 || orientation > 8) return image;
   const bitmap = image.bitmap;
