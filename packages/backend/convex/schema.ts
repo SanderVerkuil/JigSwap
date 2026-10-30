@@ -244,12 +244,8 @@ export default defineSchema({
     // the uniqueness rule only the statuses that hold a barcode (a rejected row releases it).
     .index("by_ean_status", ["ean", "status"])
     .index("by_upc_status", ["upc", "status"])
-    .index("by_artist", ["artist"])
     .index("by_series", ["series"])
     // Existing indexes are great!
-    .index("by_piece_count", ["pieceCount"])
-    .index("by_category", ["category"])
-    .index("by_difficulty", ["difficulty"])
     .index("by_brand", ["brand"])
     .index("by_publisher", ["publisher"])
     .index("by_tags", ["tags"])
@@ -389,8 +385,6 @@ export default defineSchema({
   })
     .index("by_owner", ["ownerId"])
     .index("by_puzzle", ["puzzleId"])
-    // You might want a more complex index for finding available puzzles
-    .index("by_owner_and_availability", ["ownerId", "availability"])
     .index("by_aggregate_id", ["aggregateId"]),
 
   // This is a table for storing images of owned puzzles
@@ -511,8 +505,7 @@ export default defineSchema({
     addedAt: v.number(),
   })
     .index("by_collection", ["collectionId"])
-    .index("by_owned_puzzle", ["ownedPuzzleId"])
-    .index("by_collection_owned_puzzle", ["collectionId", "ownedPuzzleId"]),
+    .index("by_owned_puzzle", ["ownedPuzzleId"]),
 
   // Completion records for puzzles (can reference either puzzles or ownedPuzzles)
   completions: defineTable({
@@ -567,7 +560,6 @@ export default defineSchema({
     .index("by_owned_puzzle", ["ownedPuzzleId"])
     .index("by_user_puzzle", ["userId", "puzzleId"])
     .index("by_user_owned_puzzle", ["userId", "ownedPuzzleId"])
-    .index("by_completion_date", ["endDate"])
     .index("by_aggregate_id", ["aggregateId"])
     .index("by_user_completed", ["userId", "isCompleted"]),
 
@@ -688,7 +680,6 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_active", ["isActive"])
-    .index("by_sort_order", ["sortOrder"])
     .index("by_aggregate_id", ["aggregateId"]),
 
   // Admin moderation audit trail: one row per decision, stamped directly by the admin
@@ -849,7 +840,6 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_user", ["userId"])
-    .index("by_user_active", ["userId", "isActive"])
     .index("by_aggregate_id", ["aggregateId"]),
 
   // Exchanges are the core of the app. They are the way users can trade, buy, and sell puzzles.
@@ -1320,7 +1310,6 @@ export default defineSchema({
     .index("by_reviewer", ["reviewerId"])
     .index("by_reviewee", ["revieweeId"])
     .index("by_exchange", ["exchangeId"])
-    .index("by_rating", ["rating"])
     .index("by_aggregate_id", ["aggregateId"])
     // Backs the one-review-per-reviewer-per-exchange uniqueness lookup.
     .index("by_exchange_reviewer", ["exchangeId", "reviewerId"]),
@@ -1450,7 +1439,6 @@ export default defineSchema({
     // purged invite or offer (conversation/purgeMemberMessagingData).
     .index("by_user_type", ["userId", "type"])
     .index("by_type", ["type"])
-    .index("by_read_status", ["isRead"])
     .index("by_created_at", ["createdAt"])
     .index("by_aggregate_id", ["aggregateId"]),
 

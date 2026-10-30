@@ -568,8 +568,6 @@ The following indexes are available for efficient querying:
 - `completions.by_user` - Get all completions for a user
 - `completions.by_puzzle` - Get all completions for a puzzle
 - `completions.by_user_puzzle` - Get specific user-puzzle completions
-- `completions.by_completion_date` - Sort by completion date
 - `categories.by_user` - Get all categories for a user
 - `categories.by_user_name` - Get specific category by name
 - `goals.by_user` - Get all goals for a user
-- `goals.by_user_active` - Get active goals for a user
