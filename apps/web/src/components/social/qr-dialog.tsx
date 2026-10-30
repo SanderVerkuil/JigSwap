@@ -14,12 +14,14 @@ import { useMutation } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Check, Copy, QrCode, Share2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
 // Fullscreen "show my QR" dialog. The QR encodes the STABLE member-id URL (rename-proof) with the
-// invite token; the mono caption shows the member's canonical profile URL. The QR card is always
-// white — dark mode must never invert the modules or phone cameras stop reading it.
+// invite token; the mono caption shows the member's canonical profile URL, and a hint says that the
+// code, Copy link and Share carry the personal invite link rather than that address. The QR card
+// is always white — dark mode must never invert the modules or phone cameras stop reading it.
 const DIALOG_CONTENT_CLASS =
   "flex h-svh max-h-svh w-full max-w-full flex-col items-center justify-center gap-6 rounded-none sm:h-auto sm:max-h-[90svh] sm:max-w-md sm:rounded-lg";
 
@@ -35,44 +37,12 @@ type QrDialogProps = {
   avatarUrl?: string | null;
 };
 
-// Shared body: the username-gate prompt, OR avatar + name, the QR card, the mono caption, and the
-// copy/share actions. Fetches (and caches for the lifetime of this mount) the member's invite
-// token — mounted fresh each time the dialog opens (Radix unmounts DialogContent while closed), so
-// a plain mount effect is enough; no `open` prop needed here.
+// Shared body: the username-gate prompt, OR the QR card. The gate comes first so a member without
+// a username never mints an invite token; the fetch lives in QrCard, which mounts only past it.
 // `onNavigate` closes the enclosing dialog when the username-gate link routes away — otherwise the
 // dialog lingers open over the settings page (whose route can be the same one it navigates to).
 function QrDialogContent(props: QrDialogProps & { onNavigate?: () => void }) {
   const t = useTranslations("invite");
-  const displayName = useMemberDisplayName();
-  const nameSource = { name: props.displayName, username: props.username };
-  const [copied, setCopied] = useState(false);
-
-  const { mutate: fetchLink, data: link } = useMutation({
-    mutationFn: useConvexMutation(gateway.social.myInviteLink),
-  });
-
-  useEffect(() => {
-    fetchLink({});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const origin = typeof window === "undefined" ? "" : window.location.origin;
-  const qrUrl = link
-    ? `${origin}/members/${props.memberId}?invite=${link.token}`
-    : null;
-  const displayUrl = props.handle
-    ? `${origin.replace(/^https?:\/\//, "")}/members/${encodeURIComponent(props.handle)}`
-    : null;
-
-  const copy = () => {
-    if (!qrUrl) return;
-    void navigator.clipboard.writeText(qrUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const canShare =
-    typeof navigator !== "undefined" && typeof navigator.share === "function";
 
   if (props.username == null) {
     return (
@@ -87,6 +57,60 @@ function QrDialogContent(props: QrDialogProps & { onNavigate?: () => void }) {
       </div>
     );
   }
+
+  return <QrCard {...props} username={props.username} />;
+}
+
+// Avatar + name, the QR card, the mono caption, the copy/share actions and what they send. Fetches
+// (and caches for the lifetime of this mount) the member's invite token — mounted fresh each time
+// the dialog opens (Radix unmounts DialogContent while closed), so a plain mount effect is enough;
+// no `open` prop needed here.
+function QrCard(props: QrDialogProps & { username: string }) {
+  const t = useTranslations("invite");
+  const displayName = useMemberDisplayName();
+  const nameSource = { name: props.displayName, username: props.username };
+  const [copied, setCopied] = useState(false);
+  const copiedTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  const { mutate: fetchLink, data: link } = useMutation({
+    mutationFn: useConvexMutation(gateway.social.myInviteLink),
+  });
+
+  useEffect(() => {
+    fetchLink({});
+  }, [fetchLink]);
+
+  // No "Copied" reset may fire after the dialog closed.
+  useEffect(() => {
+    const timer = copiedTimer;
+    return () => clearTimeout(timer.current);
+  }, []);
+
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
+  const qrUrl = link
+    ? `${origin}/members/${props.memberId}?invite=${link.token}`
+    : null;
+  const displayUrl = props.handle
+    ? `${origin.replace(/^https?:\/\//, "")}/members/${encodeURIComponent(props.handle)}`
+    : null;
+
+  // "Copied" only once the clipboard accepted the link; a refusal (permissions, insecure context,
+  // no clipboard API) says so instead.
+  const copy = async () => {
+    if (!qrUrl) return;
+    try {
+      await navigator.clipboard.writeText(qrUrl);
+    } catch {
+      toast.error(t("copyError"));
+      return;
+    }
+    setCopied(true);
+    clearTimeout(copiedTimer.current);
+    copiedTimer.current = setTimeout(() => setCopied(false), 2000);
+  };
+
+  const canShare =
+    typeof navigator !== "undefined" && typeof navigator.share === "function";
 
   return (
     <>
@@ -120,7 +144,7 @@ function QrDialogContent(props: QrDialogProps & { onNavigate?: () => void }) {
       ) : null}
       <p className="text-muted-foreground text-sm">{t("scanHint")}</p>
       <div className="flex gap-3">
-        <Button variant="outline" onClick={copy} disabled={!qrUrl}>
+        <Button variant="outline" onClick={() => void copy()} disabled={!qrUrl}>
           {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
           {copied ? t("copied") : t("copyLink")}
         </Button>
@@ -137,6 +161,13 @@ function QrDialogContent(props: QrDialogProps & { onNavigate?: () => void }) {
           </Button>
         ) : null}
       </div>
+      <p className="text-muted-foreground max-w-sm text-center text-xs">
+        {t("inviteLinkHint")}
+      </p>
+      {/* The button label swaps to "Copied!"; this live region announces it. */}
+      <span role="status" aria-live="polite" className="sr-only">
+        {copied ? t("copied") : ""}
+      </span>
     </>
   );
 }

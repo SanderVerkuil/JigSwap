@@ -3156,6 +3156,8 @@
     "scanHint": "Laat een vriend dit scannen om elkaar te volgen",
     "copyLink": "Link kopiëren",
     "copied": "Gekopieerd!",
+    "copyError": "Link kopiëren is niet gelukt. Probeer het opnieuw.",
+    "inviteLinkHint": "De code en deze knoppen delen je persoonlijke uitnodigingslink, niet alleen je profieladres, zodat jullie elkaar kunnen volgen.",
     "share": "Delen",
     "resetLink": "Uitnodigingslink resetten",
     "needUsernameTitle": "Stel eerst een gebruikersnaam in",

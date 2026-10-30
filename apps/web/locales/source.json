@@ -3156,6 +3156,8 @@
     "scanHint": "Have a friend scan this to follow each other",
     "copyLink": "Copy link",
     "copied": "Copied!",
+    "copyError": "Couldn't copy the link. Please try again.",
+    "inviteLinkHint": "The code and these buttons share your personal invite link, not just your profile address, so you can follow each other.",
     "share": "Share",
     "resetLink": "Reset invite link",
     "needUsernameTitle": "Set a username first",
