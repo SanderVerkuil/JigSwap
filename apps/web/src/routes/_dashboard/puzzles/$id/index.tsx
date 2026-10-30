@@ -188,8 +188,11 @@ function PuzzleDefinitionDetail({
   // focus its first control, the required star rating (its single tab stop).
   const composerRef = useRef<HTMLDivElement>(null);
   const focusComposer = () => {
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
     composerRef.current?.scrollIntoView({
-      behavior: "smooth",
+      behavior: reduceMotion ? "auto" : "smooth",
       block: "center",
     });
     composerRef.current

@@ -155,6 +155,8 @@ const CORNER_CHIP_CLASS = [
 
 interface PuzzleOverflowMenuProps {
   ownedId: Id<"ownedPuzzles">;
+  /** The card's puzzle title: names the trigger so each card's menu is distinguishable. */
+  title: string;
   onLogSolve?: (id: Id<"ownedPuzzles">) => void;
   onStartSolve?: (id: Id<"ownedPuzzles">) => void;
   solveInProgress?: boolean;
@@ -173,6 +175,7 @@ interface PuzzleOverflowMenuProps {
 
 function PuzzleOverflowMenu({
   ownedId,
+  title,
   onLogSolve,
   onStartSolve,
   solveInProgress = false,
@@ -210,7 +213,7 @@ function PuzzleOverflowMenu({
           <button
             ref={triggerRef}
             type="button"
-            aria-label={t("overflowMenu.ariaLabel")}
+            aria-label={t("overflowMenu.ariaLabelFor", { title })}
             onClick={(e) => e.stopPropagation()}
             // `data-[state=open]` pins opacity + a subtle bg while the menu is open.
             className={`${CORNER_CHIP_CLASS} text-foreground data-[state=open]:opacity-100 data-[state=open]:bg-accent`}
@@ -491,6 +494,7 @@ export function PuzzleCard({
       {showOverflowMenu && (
         <PuzzleOverflowMenu
           ownedId={ownedId}
+          title={view.title}
           onLogSolve={onLogSolve}
           onStartSolve={onStartSolve}
           solveInProgress={solveInProgress}

@@ -422,6 +422,7 @@ function PuzzlesPage() {
             variant={viewMode === "grid" ? "secondary" : "ghost"}
             size="icon"
             aria-label={t("gridView")}
+            aria-pressed={viewMode === "grid"}
             onClick={() => setSearch({ view: undefined })}
           >
             <Grid className="h-4 w-4" />
@@ -430,6 +431,7 @@ function PuzzlesPage() {
             variant={viewMode === "list" ? "secondary" : "ghost"}
             size="icon"
             aria-label={t("listView")}
+            aria-pressed={viewMode === "list"}
             onClick={() => setSearch({ view: "list" })}
           >
             <List className="h-4 w-4" />

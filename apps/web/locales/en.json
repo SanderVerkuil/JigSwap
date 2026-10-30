@@ -601,7 +601,7 @@
     "notesPlaceholderLong": "Anything worth mentioning — missing pieces, special edition, where you got it…",
     "optional": "Optional",
     "overflowMenu": {
-      "ariaLabel": "Puzzle actions",
+      "ariaLabelFor": "Actions for {title}",
       "edit": "Edit",
       "delete": "Delete",
       "collection": "Add to collection"

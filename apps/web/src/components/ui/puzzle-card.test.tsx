@@ -231,9 +231,14 @@ const ownedCopy = (extra: Partial<CardCopy> = {}): CardCopy => ({
 
 const renderOwnedCard = (
   props: Partial<ComponentProps<typeof PuzzleCard>> = {},
+  locale: "en" | "nl" = "en",
 ) =>
   render(
-    <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+    <IntlProvider
+      locale={locale}
+      messages={locale === "en" ? en : nl}
+      timeZone="Europe/Amsterdam"
+    >
       <PuzzleViewProvider viewMode="grid">
         <PuzzleCard
           puzzle={ownedCopy()}
@@ -287,7 +292,7 @@ describe("copy card badges", () => {
 describe("copy card menu", () => {
   const openMenu = () =>
     fireEvent.pointerDown(
-      screen.getByRole("button", { name: "Puzzle actions" }),
+      screen.getByRole("button", { name: "Actions for De Kattenshow" }),
       {
         button: 0,
         ctrlKey: false,
@@ -313,7 +318,7 @@ describe("copy card menu", () => {
 
   it("shows no menu on a collection card the viewer can't change", () => {
     renderOwnedCard({ variant: "collection" });
-    expect(screen.queryByRole("button", { name: "Puzzle actions" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Actions for/ })).toBeNull();
   });
 
   it("marks Start puzzle with a play icon, unlike Log a solve", () => {
@@ -323,6 +328,24 @@ describe("copy card menu", () => {
     const start = screen.getByRole("menuitem", { name: "Start puzzle" });
     expect(log.querySelector("svg.lucide-circle-check")).toBeTruthy();
     expect(start.querySelector("svg.lucide-play")).toBeTruthy();
+  });
+});
+
+// Each card's ⋯ menu names the puzzle it acts on, so a screen-reader user listing the page's
+// buttons can tell the menus apart (UX-161).
+describe("puzzle card overflow menu", () => {
+  it("names the trigger after the card's puzzle", () => {
+    renderOwnedCard({ onEdit: () => {} });
+    expect(
+      screen.getByRole("button", { name: "Actions for De Kattenshow" }),
+    ).toBeTruthy();
+  });
+
+  it("names it in Dutch too", () => {
+    renderOwnedCard({ onEdit: () => {} }, "nl");
+    expect(
+      screen.getByRole("button", { name: "Acties voor De Kattenshow" }),
+    ).toBeTruthy();
   });
 });
 

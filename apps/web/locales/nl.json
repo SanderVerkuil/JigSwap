@@ -601,7 +601,7 @@
     "notesPlaceholderLong": "Iets vermeldenswaards — ontbrekende stukjes, speciale editie, waar je hem vandaan hebt…",
     "optional": "Optioneel",
     "overflowMenu": {
-      "ariaLabel": "Puzzelacties",
+      "ariaLabelFor": "Acties voor {title}",
       "edit": "Bewerken",
       "delete": "Verwijderen",
       "collection": "Aan collectie toevoegen"
