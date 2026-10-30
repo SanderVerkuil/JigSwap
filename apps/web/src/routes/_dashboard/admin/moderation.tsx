@@ -427,6 +427,8 @@ function ModerationPage() {
               items={pending}
               selectedId={submissions.selectedId}
               onSelect={selectItem("submissions")}
+              detailTitle={t("detail.sheetTitle.submissions")}
+              defaultDetailOpen={itemFor("submissions") !== undefined}
               getId={(submission) => submission._id}
               renderRow={(submission) => (
                 <>
@@ -491,6 +493,8 @@ function ModerationPage() {
               items={flagged}
               selectedId={flaggedSelection.selectedId}
               onSelect={selectItem("flagged")}
+              detailTitle={t("detail.sheetTitle.flagged")}
+              defaultDetailOpen={itemFor("flagged") !== undefined}
               getId={(photo) => photo.imageId}
               renderRow={(photo) => (
                 <>
@@ -556,6 +560,8 @@ function ModerationPage() {
               items={unchecked}
               selectedId={uncheckedSelection.selectedId}
               onSelect={selectItem("unchecked")}
+              detailTitle={t("detail.sheetTitle.unchecked")}
+              defaultDetailOpen={itemFor("unchecked") !== undefined}
               getId={(photo) => photo.key}
               renderRow={(photo) => (
                 <>

@@ -4799,7 +4799,12 @@
       "detail": {
         "submitted": "Ingezonden",
         "difficulty": "Moeilijkheid",
-        "note": "Notitie van inzender"
+        "note": "Notitie van inzender",
+        "sheetTitle": {
+          "submissions": "Inzending",
+          "flagged": "Gemarkeerde afbeelding",
+          "unchecked": "Niet-gecontroleerde foto"
+        }
       },
       "handledElsewhere": {
         "title": "Al elders afgehandeld",

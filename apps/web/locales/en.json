@@ -4799,7 +4799,12 @@
       "detail": {
         "submitted": "Submitted",
         "difficulty": "Difficulty",
-        "note": "Submitter note"
+        "note": "Submitter note",
+        "sheetTitle": {
+          "submissions": "Submission",
+          "flagged": "Flagged image",
+          "unchecked": "Unchecked photo"
+        }
       },
       "handledElsewhere": {
         "title": "Already handled elsewhere",
