@@ -173,6 +173,12 @@ patterns:
   5 passes; the rest give up at once. A given-up event gets `failedAt` (index `by_failed`),
   `failedHandlers` and `lastError`, and needs an operator. Alert on it in Axiom with
   `['jigswap'] | where event == "events.dispatch" and outcome == "error" and will_retry == false`.
+  A payload never keeps free text a member typed or the identity they registered with
+  (`REDACTED_EVENT_FIELDS` in `events/recordAndSchedule.ts`): a subscriber that needs such a field
+  reads the source row. Each event's member ids are indexed in `domainEventMembers` (the account
+  purge reads a member's events through it), and the daily `events/retention` sweep deletes events
+  dispatched more than 97 days ago (the activity feed's 90 days plus a week; a dry run unless
+  `RETENTION_ENFORCE` names `domainEvents`). In-flight and `failedAt` events are never deleted.
 
   **Replaying a `failedAt` event (manual).** Every handler in `failedHandlers` rolled back in full
   (its own sub-transaction), so re-running it cannot duplicate its own writes; handlers in
