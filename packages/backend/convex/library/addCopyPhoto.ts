@@ -4,13 +4,14 @@ import { mutation } from "../_generated/server";
 import { canManageCopy } from "../household/copyAccess";
 import { requireMember } from "../identity/requireMember";
 import { enqueueImageModeration } from "../lib/imageModeration/moderationPool";
-import { isPreservedBlob } from "../lib/imageModeration/quarantine";
+import { assertClaimableUpload } from "../lib/storage/claimFreshUpload";
 
 // Composition root for attaching an uploaded photo to an owned copy, keyed by the copy's Convex id.
 // Pairs with `generateUploadUrl`: the client uploads the blob, then calls this with the returned
 // storageId. A plain Convex mutation that writes the `ownedPuzzleImages` read-model directly (the
 // gallery in getCopyInstanceView reads the same table). Only the copy's owner (or a household member
-// with manage permission) may add a photo to it.
+// with manage permission) may add a photo to it, and only a fresh upload nothing holds yet
+// (lib/storage/claimFreshUpload).
 export const addCopyPhoto = mutation({
   args: {
     copyId: v.id("ownedPuzzles"),
@@ -36,14 +37,9 @@ export const addCopyPhoto = mutation({
       throw new ConvexError("Only the owner can add a photo to this copy");
     }
 
-    // A blob preserved for a CSAM escalation can never be attached again; the error is the same
-    // generic one a missing file gives, so nothing about the escalation is revealed.
-    if (
-      !(await ctx.db.system.get(args.fileId)) ||
-      (await isPreservedBlob(ctx, args.fileId))
-    ) {
-      throw new ConvexError("File not found");
-    }
+    // A storage id someone learned (box art, another photo), a blob used once, a stale upload or
+    // a CSAM-preserved blob is refused and left alone (SEC-01, SEC-18).
+    await assertClaimableUpload(ctx, args.fileId);
 
     const now = Date.now();
     // Inserted as "pending": the async moderatePhoto pipeline re-encodes (strips EXIF) and

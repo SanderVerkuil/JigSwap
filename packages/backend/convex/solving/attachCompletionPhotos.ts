@@ -9,7 +9,7 @@ import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { enqueueImageModeration } from "../lib/imageModeration/moderationPool";
-import { isPreservedBlob } from "../lib/imageModeration/quarantine";
+import { assertClaimableUpload } from "../lib/storage/claimFreshUpload";
 import { convexCompletionRepository } from "./adapters/convexCompletionRepository";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
 import { systemClock } from "./adapters/systemClock";
@@ -26,10 +26,10 @@ export const attachCompletionPhotos = mutation({
   handler: async (ctx, args) => {
     const memberId = await requireMember(ctx);
 
-    // Dedupe within the call and against already-attached photos. This checks `row.photos` only,
-    // so a previously REJECTED fileId (removed from photos by moderation) could be re-attached,
-    // creating a fresh sidecar — acceptable: it re-enters moderation as pending and is
-    // re-screened.
+    // Dedupe within the call and against already-attached photos, so re-sending an attached id is
+    // a no-op. Every other id must be a fresh upload nothing holds yet: a REJECTED photo's id
+    // (dropped from `photos` by moderation) is still held by its sidecar or already deleted, so
+    // it can never re-enter moderation (SEC-18).
     const row = await ctx.db
       .query("completions")
       .withIndex("by_aggregate_id", (q) =>
@@ -42,12 +42,10 @@ export const attachCompletionPhotos = mutation({
       (id) => !attached.has(id),
     );
     if (newIds.length === 0) return;
-    // A blob preserved for a CSAM escalation can never be attached again (generic not-found, so
-    // nothing about the escalation is revealed).
+    // A storage id someone learned (box art, another photo), a blob used once, a stale upload or
+    // a CSAM-preserved blob refuses the whole call and is left alone (SEC-01, SEC-18).
     for (const id of newIds) {
-      if (await isPreservedBlob(ctx, id as Id<"_storage">)) {
-        throw new ConvexError("Photo not found");
-      }
+      await assertClaimableUpload(ctx, id as Id<"_storage">);
     }
 
     const attachUseCase = makeAttachCompletionPhotos({

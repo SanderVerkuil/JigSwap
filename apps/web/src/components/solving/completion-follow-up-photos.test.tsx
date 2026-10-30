@@ -10,6 +10,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { getFunctionName } from "convex/server";
+import { ConvexError } from "convex/values";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { IntlProvider } from "use-intl";
@@ -130,6 +131,48 @@ describe("completion follow-up photos", () => {
     );
     expect(await (init.body as Blob).text()).toBe("re-encoded jpeg");
   });
+
+  it.each(["UploadExpired", "InvalidUpload"])(
+    "an attach refused as %s makes Retry upload the photo again",
+    async (code) => {
+      let attaches = 0;
+      mocks.mutation.mockImplementation(async (name) => {
+        if (name === UPLOAD_URL) return "https://upload.test";
+        if (name === ATTACH && attaches++ === 0) {
+          throw new ConvexError({ code, message: "refused" });
+        }
+        return null;
+      });
+      fetchMock
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ storageId: "storage_1" }), {
+            status: 200,
+          }),
+        )
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ storageId: "storage_2" }), {
+            status: 200,
+          }),
+        );
+      renderProvider();
+      await pick(new File(["x"], "x.jpg", { type: "image/jpeg" }));
+      await screen.findByRole("button", { name: "Remove photo" });
+
+      fireEvent.click(screen.getByRole("button", { name: "Save" }));
+      // The refused upload is marked failed, so the button offers a retry.
+      const retry = await screen.findByRole("button", { name: "Retry" });
+      expect(toast.error).toHaveBeenCalledWith(en.solving.followUp.saveError);
+
+      fireEvent.click(retry);
+      await waitFor(() =>
+        expect(mocks.mutation).toHaveBeenLastCalledWith(ATTACH, {
+          completionId: "c1",
+          storageIds: ["storage_2"],
+        }),
+      );
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    },
+  );
 
   it("a photo the browser cannot prepare is not added", async () => {
     mocks.prepare.mockRejectedValue(new Error("EncodingError"));

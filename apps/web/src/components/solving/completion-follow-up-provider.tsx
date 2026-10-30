@@ -314,10 +314,16 @@ export function CompletionFollowUpProvider({
       closeAndReset();
     } catch (error) {
       console.error("Failed to save completion follow-up:", error);
+      const code = solvingErrorCode(error);
+      // The server only takes a fresh upload once (expired after 15 minutes, or refused): drop
+      // the storageIds and mark the photos failed, so Retry uploads them again.
+      if (code === "UploadExpired" || code === "InvalidUpload") {
+        setPhotos((prev) =>
+          prev.map((p) => ({ ...p, storageId: undefined, failed: true })),
+        );
+      }
       toast.error(
-        solvingErrorCode(error) === "TooManyPhotos"
-          ? t("tooManyPhotos")
-          : t("saveError"),
+        code === "TooManyPhotos" ? t("tooManyPhotos") : t("saveError"),
       );
     } finally {
       setSaving(false);

@@ -770,7 +770,7 @@ describe("preserved blobs can never be re-used (H1)", () => {
     return { alice, copy, copyAggregateId, preservedId: row.fileId };
   };
 
-  test("addCopyPhoto and attachCompletionPhotos refuse a preserved storage id with a generic not-found", async () => {
+  test("addCopyPhoto and attachCompletionPhotos refuse a preserved storage id with the generic InvalidUpload", async () => {
     const t = withModerationPool(convexTest(schema, modules));
     const { copy, copyAggregateId, preservedId } = await quarantineOne(t);
 
@@ -780,7 +780,7 @@ describe("preserved blobs can never be re-used (H1)", () => {
         fileId: preservedId,
         tag: "box_front",
       }),
-    ).rejects.toThrow("File not found");
+    ).rejects.toThrow(/InvalidUpload/);
     const { completionId } = await asAlice(t).mutation(
       api.solving.recordCompletion.recordCompletion,
       {
@@ -794,7 +794,7 @@ describe("preserved blobs can never be re-used (H1)", () => {
         api.solving.attachCompletionPhotos.attachCompletionPhotos,
         { completionId, storageIds: [preservedId] },
       ),
-    ).rejects.toThrow("Photo not found");
+    ).rejects.toThrow(/InvalidUpload/);
     expect(await blobExists(t, preservedId)).toBe(true);
   });
 
