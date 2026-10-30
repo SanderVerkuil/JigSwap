@@ -172,6 +172,7 @@ describe("UncheckedDetail", () => {
         ...photo,
         key: "message:m1",
         source: "message",
+        status: "unscored",
         canRecheck: true,
       },
     });
