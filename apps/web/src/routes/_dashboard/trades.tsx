@@ -470,14 +470,27 @@ function ExchangeDetail({
         )}
 
         {exchange.status === "accepted" && (
-          <Button
-            size="sm"
-            disabled={!exchange.aggregateId}
-            onClick={run((args) => completeExchange.mutateAsync(args))}
-          >
-            <CheckCircle className="h-4 w-4" />
-            {t("markComplete")}
-          </Button>
+          <>
+            <Button
+              size="sm"
+              disabled={!exchange.aggregateId}
+              onClick={run((args) => completeExchange.mutateAsync(args))}
+            >
+              <CheckCircle className="h-4 w-4" />
+              {t("markComplete")}
+            </Button>
+            {/* Accepting sets the puzzle aside for this one exchange, so either side can call it
+                off (a pending request is only the requester's to cancel). */}
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!exchange.aggregateId}
+              onClick={run((args) => cancelExchange.mutateAsync(args))}
+            >
+              <XCircle className="h-4 w-4" />
+              {t("cancel")}
+            </Button>
+          </>
         )}
 
         {/* Review the partner once completed; the dialog hides itself when the
