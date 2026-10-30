@@ -2,6 +2,7 @@ import { SectionHead } from "@/components/dashboard-home/section-head";
 import { Button } from "@/components/ui/button";
 import { BellOff, BellRing, Smartphone } from "lucide-react";
 import { useTranslations } from "use-intl";
+import { OtherPushDevices } from "./other-push-devices";
 import { usePushSubscription } from "./use-push-subscription";
 
 // Per-device Web Push control: a browser subscription is global to this device, separate from the
@@ -9,6 +10,7 @@ import { usePushSubscription } from "./use-push-subscription";
 // section owns the "does this browser receive any push at all" decision: request permission,
 // subscribe via the PushManager with the server's VAPID public key, and register/unregister the
 // subscription. The UI follows the ACTUAL browser subscription; the server sync is best-effort.
+// Below it, the member's other push devices can be removed from here (SEC-54).
 export function PushDeviceSection() {
   const t = useTranslations("notifications");
   const {
@@ -18,6 +20,7 @@ export function PushDeviceSection() {
     loading,
     configured,
     enabled,
+    endpoint,
     busy,
     enable,
     disable,
@@ -68,6 +71,11 @@ export function PushDeviceSection() {
       <p className="text-muted-foreground mt-2 text-xs">
         {t("pushDeviceSubtitle")}
       </p>
+      {/* A browser without push has no endpoint to wait for. */}
+      <OtherPushDevices
+        currentEndpoint={endpoint}
+        ready={mounted && (!supported || endpoint !== undefined)}
+      />
     </section>
   );
 }

@@ -2636,6 +2636,20 @@
     },
     "pushRateLimited": "Je hebt push net heel vaak ingeschakeld. Probeer het later opnieuw.",
     "pushServiceUnreachable": "Je browser kon zijn pushdienst niet bereiken. Sommige privacybrowsers blokkeren of verwijderen die — Brave schakelt het standaard uit (zet 'Google-services voor pushberichten gebruiken' aan in Instellingen), en de-Googled Chromium-browsers zoals Helium verwijderen het. Firefox, Chrome of Edge werkt wel.",
+    "pushOtherDevicesTitle": "Andere apparaten met push",
+    "pushOtherDevicesHint": "Deze browsers krijgen ook je pushmeldingen. Verwijder de browsers die je niet meer gebruikt.",
+    "pushDeviceAdded": "Toegevoegd op {date}",
+    "pushDeviceRemove": "Verwijderen",
+    "pushDeviceRemoveLabel": "{device} verwijderen, toegevoegd op {date}",
+    "pushDeviceRemoved": "Dat apparaat krijgt geen pushmeldingen meer",
+    "pushDeviceRemoveError": "Kon dat apparaat niet verwijderen",
+    "pushServices": {
+      "chrome": "Chrome of vergelijkbare browser",
+      "firefox": "Firefox",
+      "safari": "Safari (Mac, iPhone of iPad)",
+      "edge": "Microsoft Edge",
+      "other": "Andere browser"
+    },
     "pushServiceUnsupported": "JigSwap kan geen pushmeldingen versturen via de pushdienst van deze browser. Firefox, Chrome, Edge of Safari werkt wel.",
     "rich": {
       "deletedMember": "Verwijderd lid",

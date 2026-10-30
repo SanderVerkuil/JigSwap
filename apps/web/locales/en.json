@@ -2636,6 +2636,20 @@
     },
     "pushRateLimited": "You've turned on push many times just now. Try again later.",
     "pushServiceUnreachable": "Your browser couldn't reach its push service. Some privacy browsers block or remove it — Brave disables it by default (enable 'Use Google services for push messaging' in Settings), and de-Googled Chromium builds like Helium strip it out. Firefox, Chrome, or Edge will work.",
+    "pushOtherDevicesTitle": "Other devices with push",
+    "pushOtherDevicesHint": "These browsers also get your push notifications. Remove any you no longer use.",
+    "pushDeviceAdded": "Added {date}",
+    "pushDeviceRemove": "Remove",
+    "pushDeviceRemoveLabel": "Remove {device}, added {date}",
+    "pushDeviceRemoved": "That device no longer gets push notifications",
+    "pushDeviceRemoveError": "Couldn't remove that device",
+    "pushServices": {
+      "chrome": "Chrome or similar browser",
+      "firefox": "Firefox",
+      "safari": "Safari (Mac, iPhone or iPad)",
+      "edge": "Microsoft Edge",
+      "other": "Other browser"
+    },
     "pushServiceUnsupported": "JigSwap can't send push notifications through this browser's push service. Firefox, Chrome, Edge, or Safari will work.",
     "rich": {
       "deletedMember": "Deleted member",
