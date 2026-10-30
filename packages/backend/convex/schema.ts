@@ -263,6 +263,7 @@ export default defineSchema({
     .index("by_submitted_by", ["submittedBy"])
     // Catalog lists read by status (the approved catalogue, the pending queue) through these
     // instead of scanning the table; the implicit _creationTime suffix keeps newest-first order.
+    // by_status is also the bounded pending-submissions count (admin/getPendingCounts).
     .index("by_status", ["status"])
     .index("by_status_brand", ["status", "brand"])
     .searchIndex("by_searchable_text", {
@@ -1281,9 +1282,11 @@ export default defineSchema({
     .index("by_map_file", ["mapFileId"])
     .index("by_moderation_status", ["moderationStatus"])
     .index("by_message", ["messageId"])
-    // Open review requests (admin/listImageReviewRequests): rejected, reviewDecidedAt undefined,
-    // reviewRequestedAt set; oldest request first. Any other reader of the open requests (such as
-    // an admin pending count) uses this index rather than another one with the same fields.
+    // Open review requests (admin/listImageReviewRequests, and the bounded count in
+    // admin/getPendingCounts): rejected, reviewDecidedAt undefined, reviewRequestedAt set; oldest
+    // request first. Decided requests keep reviewRequestedAt and quarantined ones never reach an
+    // admin, so this range holds only what still waits. Any other reader of the open requests uses
+    // this index rather than another one with the same fields.
     .index("by_review_awaiting", [
       "moderationStatus",
       "reviewDecidedAt",

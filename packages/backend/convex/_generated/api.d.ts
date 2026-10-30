@@ -22,6 +22,7 @@ import type * as admin_decideUncheckedPhoto from "../admin/decideUncheckedPhoto.
 import type * as admin_deleteCopyPhoto from "../admin/deleteCopyPhoto.js";
 import type * as admin_getModerationActivity from "../admin/getModerationActivity.js";
 import type * as admin_getModerationStats from "../admin/getModerationStats.js";
+import type * as admin_getPendingCounts from "../admin/getPendingCounts.js";
 import type * as admin_getPhotoScreeningHealth from "../admin/getPhotoScreeningHealth.js";
 import type * as admin_getPuzzleDefinitionDetail from "../admin/getPuzzleDefinitionDetail.js";
 import type * as admin_getReport from "../admin/getReport.js";
@@ -630,6 +631,7 @@ declare const fullApi: ApiFromModules<{
   "admin/deleteCopyPhoto": typeof admin_deleteCopyPhoto;
   "admin/getModerationActivity": typeof admin_getModerationActivity;
   "admin/getModerationStats": typeof admin_getModerationStats;
+  "admin/getPendingCounts": typeof admin_getPendingCounts;
   "admin/getPhotoScreeningHealth": typeof admin_getPhotoScreeningHealth;
   "admin/getPuzzleDefinitionDetail": typeof admin_getPuzzleDefinitionDetail;
   "admin/getReport": typeof admin_getReport;

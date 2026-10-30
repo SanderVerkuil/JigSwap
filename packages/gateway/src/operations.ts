@@ -678,6 +678,9 @@ export const gateway = {
     listRejectedPhotos: api.admin.listRejectedPhotos.listRejectedPhotos,
     restorePhoto: api.admin.restorePhoto.restorePhoto,
     confirmPhotoRemoval: api.admin.confirmPhotoRemoval.confirmPhotoRemoval,
+    // How much work waits in each admin queue (bounded counts with a `capped` flag), for the
+    // moderation tab pills, the admin sidebar badges and the /admin hub tiles.
+    pendingCounts: api.admin.getPendingCounts.getPendingCounts,
     // Photo-screening health (configured? how many photos are waiting unscored?).
     getPhotoScreeningHealth:
       api.admin.getPhotoScreeningHealth.getPhotoScreeningHealth,
