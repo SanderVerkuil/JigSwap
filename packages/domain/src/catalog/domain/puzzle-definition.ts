@@ -1,6 +1,7 @@
 import { DomainEvent, err, ok, Result } from "../../shared-kernel";
 import { ALLOWED_APPROVAL_TRANSITIONS, ApprovalStatus } from "./approval";
 import { BarcodesInput, validateBarcodes } from "./barcode";
+import { CatalogText, checkCatalogText } from "./catalog-text-limits";
 import { CatalogError } from "./errors";
 import {
   PuzzleDefinitionApproved,
@@ -96,12 +97,26 @@ export class PuzzleDefinition {
   }
 
   // Submit a brand-new definition. Validates from its own data only: non-blank title,
-  // positive piece count, well-formed barcodes; starts `pending`. Barcode UNIQUENESS is a
-  // cross-aggregate rule (a repository lookup) enforced in the application layer, not here.
+  // positive piece count, well-formed barcodes, text within CATALOG_TEXT_LIMITS; starts
+  // `pending`. Barcode UNIQUENESS is a cross-aggregate rule (a repository lookup) enforced in
+  // the application layer, not here.
   static submit(
     props: SubmitPuzzleDefinitionProps,
   ): Result<PuzzleDefinition, CatalogError> {
     if (props.title.trim().length === 0) return err(CatalogError.emptyTitle());
+
+    const text = checkCatalogText({
+      title: props.title.trim(),
+      description: props.description,
+      brand: props.brand,
+      publisher: props.publisher,
+      artist: props.artist,
+      series: props.series,
+      modelNumber: props.barcodes?.modelNumber?.trim(),
+      category: props.category,
+      tags: props.tags,
+    });
+    if (text.isErr) return text;
 
     const pieceCount = PieceCount.create(props.pieceCount);
     if (pieceCount.isErr) return err(pieceCount.error);
@@ -180,7 +195,9 @@ export class PuzzleDefinition {
   }
 
   // Patch descriptive fields. Re-validates any field with an invariant (title, pieceCount,
-  // barcodes). Approval status is untouched. Records one PuzzleDefinitionUpdated.
+  // barcodes, the text bounds). Approval status is untouched. Records one
+  // PuzzleDefinitionUpdated. The text bounds apply only to text the patch changes, so a
+  // definition stored before they existed can be saved with its long fields restated as-is.
   update(
     changes: PuzzleDefinitionChanges,
     now: Date,
@@ -191,6 +208,9 @@ export class PuzzleDefinition {
         return err(CatalogError.emptyTitle());
       title = changes.title.trim();
     }
+
+    const text = checkCatalogText(this.changedText(changes));
+    if (text.isErr) return text;
 
     let pieceCount = this.state.pieceCount;
     if (changes.pieceCount !== undefined) {
@@ -263,6 +283,32 @@ export class PuzzleDefinition {
   }
 
   // --- internals ---
+
+  // The text a patch would change: a field restated with its stored value is not new text.
+  private changedText(changes: PuzzleDefinitionChanges): CatalogText {
+    const state = this.state;
+    const changed = (next: string | undefined, current: string | undefined) =>
+      next !== current ? next : undefined;
+    const sameTags =
+      changes.tags !== undefined &&
+      state.tags !== undefined &&
+      changes.tags.length === state.tags.length &&
+      changes.tags.every((tag, i) => tag === state.tags?.[i]);
+    return {
+      title: changed(changes.title?.trim(), state.title),
+      description: changed(changes.description, state.description),
+      brand: changed(changes.brand, state.brand),
+      publisher: changed(changes.publisher, state.publisher),
+      artist: changed(changes.artist, state.artist),
+      series: changed(changes.series, state.series),
+      modelNumber: changed(
+        changes.barcodes?.modelNumber?.trim(),
+        state.modelNumber,
+      ),
+      category: changed(changes.category, state.category),
+      tags: sameTags ? undefined : changes.tags,
+    };
+  }
 
   // The ONLY place approval status changes. Rejects any move not in the allow-list.
   private transition(

@@ -106,6 +106,53 @@ describe("PuzzleDefinition.submit", () => {
     expect(state.publisher).toBe("Jumbo");
     expect(state.brand).toBe("Jan van Haasteren");
   });
+
+  // Every field a submission writes is bounded (SEC-26): a definition is read by public browse,
+  // the facet streams and the admin queue.
+  it.each([
+    ["title", { title: "x".repeat(201) }],
+    ["description", { description: "x".repeat(5_001) }],
+    ["brand", { brand: "x".repeat(101) }],
+    ["publisher", { publisher: "x".repeat(101) }],
+    ["artist", { artist: "x".repeat(101) }],
+    ["series", { series: "x".repeat(101) }],
+    ["modelNumber", { barcodes: { modelNumber: "x".repeat(101) } }],
+    ["category", { category: toCatalogCategoryId("x".repeat(65)) }],
+    ["tags", { tags: Array.from({ length: 21 }, (_, i) => `t${i}`) }],
+    ["tag", { tags: ["x".repeat(51)] }],
+  ] as const)("refuses an over-long %s with TextTooLong", (_field, extra) => {
+    const r = PuzzleDefinition.submit({
+      id,
+      title: "Ok",
+      pieceCount: 500,
+      submittedBy: submitter,
+      now: NOW,
+      ...extra,
+    });
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("TextTooLong");
+  });
+
+  it("bounds the title after trimming, as it is stored", () => {
+    const state = submit({ title: `  ${"x".repeat(200)}  ` }).toState();
+    expect(state.title).toHaveLength(200);
+  });
+
+  it("accepts every field at its limit", () => {
+    const state = submit({
+      title: "x".repeat(200),
+      description: "x".repeat(5_000),
+      brand: "x".repeat(100),
+      publisher: "x".repeat(100),
+      artist: "x".repeat(100),
+      series: "x".repeat(100),
+      barcodes: { modelNumber: "x".repeat(100) },
+      category: toCatalogCategoryId("x".repeat(64)),
+      tags: Array.from({ length: 20 }, () => "x".repeat(50)),
+    }).toState();
+    expect(state.description).toHaveLength(5_000);
+    expect(state.tags).toHaveLength(20);
+  });
 });
 
 describe("approval lifecycle", () => {
@@ -348,6 +395,73 @@ describe("update", () => {
 
     def.update({ title: "Renamed" }, LATER);
     expect(def.toState().publisher).toBe("Jumbo");
+  });
+
+  it("refuses new over-long text with TextTooLong and leaves the definition unchanged", () => {
+    const def = submit({ brand: "Jumbo" });
+    def.pullEvents();
+    for (const changes of [
+      { title: "x".repeat(201) },
+      { description: "x".repeat(5_001) },
+      { brand: "x".repeat(101) },
+      { barcodes: { modelNumber: "x".repeat(101) } },
+      { category: toCatalogCategoryId("x".repeat(65)) },
+      { tags: Array.from({ length: 21 }, (_, i) => `t${i}`) },
+      { tags: ["x".repeat(51)] },
+    ]) {
+      const r = def.update(changes, LATER);
+      expect(r.isErr).toBe(true);
+      if (r.isErr) expect(r.error.code).toBe("TextTooLong");
+    }
+    expect(def.toState().brand).toBe("Jumbo");
+    expect(def.pullEvents()).toHaveLength(0);
+  });
+
+  // Rows stored before the bounds existed are grandfathered: an update is only refused for text
+  // it changes, so restating a stored over-long value (as the edit forms do) still saves.
+  describe("a definition stored before the text bounds", () => {
+    const legacy = () =>
+      PuzzleDefinition.rehydrate({
+        ...submit().toState(),
+        title: "t".repeat(300),
+        description: "d".repeat(10_000),
+        brand: "b".repeat(150),
+        tags: Array.from({ length: 30 }, (_, i) => `tag${i}`),
+        modelNumber: "m".repeat(150),
+      });
+
+    it("updates another field and keeps its long text", () => {
+      const def = legacy();
+      const r = def.update({ pieceCount: 2000 }, LATER);
+      expect(r.isOk).toBe(true);
+      expect(def.toState().pieceCount).toBe(2000);
+      expect(def.toState().description).toHaveLength(10_000);
+    });
+
+    it("accepts its stored long values restated unchanged", () => {
+      const def = legacy();
+      const state = def.toState();
+      const r = def.update(
+        {
+          title: state.title,
+          description: state.description,
+          brand: state.brand,
+          tags: [...(state.tags ?? [])],
+          barcodes: { modelNumber: state.modelNumber },
+          series: "Short series",
+        },
+        LATER,
+      );
+      expect(r.isOk).toBe(true);
+      expect(def.toState().series).toBe("Short series");
+    });
+
+    it("refuses a changed value that is still too long", () => {
+      const def = legacy();
+      const r = def.update({ description: "e".repeat(10_000) }, LATER);
+      expect(r.isErr).toBe(true);
+      if (r.isErr) expect(r.error.code).toBe("TextTooLong");
+    });
   });
 });
 

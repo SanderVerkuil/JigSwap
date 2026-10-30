@@ -1,5 +1,6 @@
 import { DomainError } from "../../shared-kernel";
 import { ApprovalStatus } from "./approval";
+import type { CatalogTextField } from "./catalog-text-limits";
 import { ProposalStatus } from "./proposal-status";
 
 // A closed set of reasons a Catalog operation can fail. The `code` is the stable,
@@ -14,7 +15,8 @@ export type CatalogErrorCode =
   | "EmptyCategoryName"
   | "IllegalProposalTransition"
   | "EmptyProposal"
-  | "ProposalNotPending";
+  | "ProposalNotPending"
+  | "TextTooLong";
 
 export class CatalogError extends DomainError {
   override readonly name = "CatalogError";
@@ -90,6 +92,16 @@ export class CatalogError extends DomainError {
     return new CatalogError(
       "ProposalNotPending",
       `Only a pending proposal can be edited, got ${status}`,
+    );
+  }
+
+  // A catalogue text field is longer than its bound (CATALOG_TEXT_LIMITS); for the tag list the
+  // bound is its number of entries.
+  static textTooLong(field: CatalogTextField, max: number): CatalogError {
+    const unit = field === "tags" ? "entries" : "characters";
+    return new CatalogError(
+      "TextTooLong",
+      `The ${field} can be at most ${max} ${unit}`,
     );
   }
 }

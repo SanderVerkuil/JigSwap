@@ -1,5 +1,6 @@
 import { DomainEvent, err, ok, Result } from "../../shared-kernel";
 import { validateBarcodes } from "./barcode";
+import { checkCatalogText } from "./catalog-text-limits";
 import { CatalogError } from "./errors";
 import {
   ChangeProposalApproved,
@@ -48,15 +49,31 @@ const hasAnyChange = (changes: PuzzleDefinitionChanges): boolean =>
   Object.values(changes).some((value) => value !== undefined);
 
 // The same invariants PuzzleDefinition.update() enforces (non-blank title, positive integer
-// piece count, well-formed barcodes), run at file/edit time so an invalid proposal can never
-// sit in the review queue and then fail at approval.
+// piece count, well-formed barcodes, text within CATALOG_TEXT_LIMITS), plus the comment's bound,
+// run at file/edit time so an invalid proposal can never sit in the review queue and then fail
+// at approval. Every proposed field is bounded, restated ones included: a proposal stores its
+// whole diff.
 const validateChanges = (
   changes: PuzzleDefinitionChanges,
+  comment: string | undefined,
 ): Result<void, CatalogError> => {
   if (!hasAnyChange(changes)) return err(CatalogError.emptyProposal());
   if (changes.title !== undefined && changes.title.trim().length === 0) {
     return err(CatalogError.emptyTitle());
   }
+  const text = checkCatalogText({
+    title: changes.title?.trim(),
+    description: changes.description,
+    brand: changes.brand,
+    publisher: changes.publisher,
+    artist: changes.artist,
+    series: changes.series,
+    modelNumber: changes.barcodes?.modelNumber?.trim(),
+    category: changes.category,
+    tags: changes.tags,
+    comment,
+  });
+  if (text.isErr) return text;
   if (changes.pieceCount !== undefined) {
     const validated = PieceCount.create(changes.pieceCount);
     if (validated.isErr) return err(validated.error);
@@ -99,7 +116,7 @@ export class PuzzleChangeProposal {
   static file(
     props: FileChangeProposalProps,
   ): Result<PuzzleChangeProposal, CatalogError> {
-    const validated = validateChanges(props.changes);
+    const validated = validateChanges(props.changes, props.comment);
     if (validated.isErr) return err(validated.error);
 
     const state: PuzzleChangeProposalState = {
@@ -136,7 +153,7 @@ export class PuzzleChangeProposal {
     if (this.state.status !== "pending") {
       return err(CatalogError.proposalNotPending(this.state.status));
     }
-    const validated = validateChanges(changes);
+    const validated = validateChanges(changes, comment);
     if (validated.isErr) return err(validated.error);
 
     this.state = { ...this.state, changes, baseline, comment, updatedAt: now };

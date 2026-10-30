@@ -38,4 +38,16 @@ describe("CatalogError factories", () => {
       "A catalog category requires a non-empty name in each locale",
     );
   });
+
+  it("textTooLong names the field and its limit in characters", () => {
+    const e = CatalogError.textTooLong("description", 5000);
+    expect(e.code).toBe("TextTooLong");
+    expect(e.message).toBe("The description can be at most 5000 characters");
+  });
+
+  it("textTooLong counts the tag list in entries", () => {
+    const e = CatalogError.textTooLong("tags", 20);
+    expect(e.code).toBe("TextTooLong");
+    expect(e.message).toBe("The tags can be at most 20 entries");
+  });
 });
