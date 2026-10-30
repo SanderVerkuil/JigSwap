@@ -47,6 +47,10 @@ export const RATE_LIMITS = {
   // runs the same paid moderation pipeline.
   photoAttach: { windowMs: HOUR, max: 40 },
   photoAttachDaily: { windowMs: DAY, max: 150 },
+  // Box-art checks (catalog/boxArtUploads.chargeBoxArtCheck: an upload's sanitizeBoxArt, or a shop
+  // image's importPuzzleImage), each running the paid moderation pipeline inline. Admins exempt.
+  boxArtCheck: { windowMs: HOUR, max: 20 },
+  boxArtCheckDaily: { windowMs: DAY, max: 60 },
 } as const satisfies Record<string, { windowMs: number; max: number }>;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;
