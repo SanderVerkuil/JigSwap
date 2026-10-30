@@ -159,7 +159,9 @@
   --secondary: oklch(0.33 0.05 285);
   --secondary-foreground: oklch(0.965 0.01 286);
   --muted: oklch(0.33 0.05 285);
-  --muted-foreground: oklch(0.72 0.04 286);
+  /* L 0.74 (was 0.72): muted text in a hovered or highlighted row sits on --accent, where 0.72
+     was 4.41:1. Now 4.78:1 on --accent and 5.31:1 on --muted. */
+  --muted-foreground: oklch(0.74 0.04 286);
   --accent: oklch(0.36 0.06 285);
   --accent-foreground: oklch(0.965 0.01 286);
   --destructive: oklch(0.704 0.191 22.216);
