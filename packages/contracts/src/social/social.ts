@@ -287,6 +287,19 @@ export interface PublicMemberTeaserView {
 }
 
 /**
+ * One of the viewer's pending incoming follow requests (social.listIncomingFollowRequests), newest
+ * first. The requester is shown with exactly what their own link (/members/$handle) discloses:
+ * name, handle and avatar, never bio, location or counts (SEC-11). `alreadyFollowing` drives the
+ * "Approve & follow back" affordance.
+ */
+export interface IncomingFollowRequestView {
+  requestId: string;
+  requestedAt: number;
+  requester: MemberTeaserIdentity;
+  alreadyFollowing: boolean;
+}
+
+/**
  * Who is asking to follow the viewer: the minimal identity the target of a PENDING follow request
  * may see to decide Approve/Decline, even when the requester's profile is private. Identity only —
  * never email, bio, location, counts or follower lists. Null unless the requester has a pending

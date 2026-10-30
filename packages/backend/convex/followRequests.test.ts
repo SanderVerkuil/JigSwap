@@ -299,7 +299,10 @@ describe("follow request lifecycle", () => {
     );
     expect(incoming).toHaveLength(2);
     // Newest first: Carol requested after Alice, so she must lead the list.
-    expect(incoming.map((r) => r.requester.name)).toEqual(["Carol", "Alice"]);
+    expect(incoming.map((r) => r.requester.displayName)).toEqual([
+      "Carol",
+      "Alice",
+    ]);
     expect(incoming[0].requestedAt).toBeGreaterThanOrEqual(
       incoming[1].requestedAt,
     );

@@ -92,20 +92,28 @@ export function FollowRequestsStrip() {
                   {request.requester.avatar && (
                     <AvatarImage
                       src={request.requester.avatar}
-                      alt={displayName(request.requester)}
+                      alt={displayName({ name: request.requester.displayName })}
                     />
                   )}
                   <AvatarFallback>
-                    <MemberInitial source={request.requester} />
+                    <MemberInitial
+                      source={{ name: request.requester.displayName }}
+                    />
                   </AvatarFallback>
                 </Avatar>
                 <Link
                   to="/members/$handle"
-                  // The id, never the username (SEC-07); the route redirects to the canonical handle.
-                  params={{ handle: request.requester._id }}
+                  // Slug, else the id, never the username (SEC-07); the route redirects to the
+                  // canonical handle.
+                  params={{
+                    handle:
+                      request.requester.slug ?? request.requester.memberId,
+                  }}
                   className="truncate font-medium hover:underline"
                 >
-                  {displayName(request.requester)}
+                  {/* Teaser identity (SEC-11): displayName is resolved server-side; absent
+                      renders the generic member label. */}
+                  {displayName({ name: request.requester.displayName })}
                 </Link>
               </div>
               <span className="flex gap-2">

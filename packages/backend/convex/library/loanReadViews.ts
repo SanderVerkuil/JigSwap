@@ -1,10 +1,14 @@
 import type { LoanView, ProjectedLoanView } from "@jigswap/contracts";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
-import { toMemberView } from "../identity/toMemberView";
+import { toMemberIdentityView } from "../identity/toMemberView";
 import { projectMemberIdentity } from "../social/privacy";
 
-// Resolve a loan row into a typed LoanView: join the copy (title/pieces) and both members.
+// Resolve a loan row into a typed LoanView: join the copy (title/pieces) and both members. The
+// parties are identity only (SEC-11): a member's own loan names the other party whatever their
+// profile visibility or a block (it is a physical copy changing hands), but never with their bio,
+// location or language. Household co-managers who see the loan through getLentOutLoans get the
+// same identity-only view.
 export const toLoanView = async (
   ctx: QueryCtx,
   loan: Doc<"loans">,
@@ -30,8 +34,8 @@ export const toLoanView = async (
     expectedReturn: loan.expectedReturn,
     closedAt: loan.closedAt,
     // A departed (deleted or deactivated) party is null: the web renders "Deleted member".
-    lender: lender?.isActive ? toMemberView(lender) : null,
-    borrower: borrower?.isActive ? toMemberView(borrower) : null,
+    lender: lender?.isActive ? toMemberIdentityView(lender) : null,
+    borrower: borrower?.isActive ? toMemberIdentityView(borrower) : null,
   };
 };
 

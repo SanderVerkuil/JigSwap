@@ -268,3 +268,94 @@ describe("SEC-11: reviews of a definition that is not approved", () => {
     expect(reviews).toHaveLength(1);
   });
 });
+
+// SEC-11 (SOC-3, LIB-9): the people behind a follow request and a loan are shown identity only:
+// name, handle and avatar, never bio, location or language. A follow request shows what the
+// requester's own link (/members/$handle) would show; a loan party stays named (it is the
+// member's own loan of a physical copy), also across a block, but never with profile details.
+describe("SEC-11: follow requests and loans are identity only", () => {
+  test("an incoming follow request from a private member carries no profile details", async () => {
+    const t = convexTest(schema, modules);
+    const u = await seed(t);
+    await t.run((ctx) =>
+      ctx.db.insert("followRequests", {
+        aggregateId: crypto.randomUUID(),
+        requesterId: u.priv,
+        targetId: u.stranger,
+        status: "pending",
+        createdAt: Date.now(),
+      }),
+    );
+    const requests = await as(t, "stranger").query(
+      api.social.listIncomingFollowRequests.listIncomingFollowRequests,
+      {},
+    );
+    expect(requests).toHaveLength(1);
+    expect(requests[0].requester).toEqual({
+      memberId: u.priv,
+      displayName: "Pseudonym",
+      username: "priv",
+      avatar: "https://img.example.com/priv.png",
+    });
+    expectNoProfileDetails(requests);
+  });
+
+  test("the lender never sees the borrower's profile details, also after a block", async () => {
+    const t = convexTest(schema, modules);
+    const u = await seed(t);
+    const copyAggregateId = crypto.randomUUID();
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("ownedPuzzles", {
+        aggregateId: copyAggregateId,
+        puzzleId: u.approved,
+        ownerId: u.stranger,
+        condition: "good",
+        heldBy: u.priv,
+        availability: { forTrade: false, forSale: false, forLend: true },
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("loans", {
+        aggregateId: crypto.randomUUID(),
+        copyId: copyAggregateId,
+        lenderId: u.stranger,
+        borrowerId: u.priv,
+        status: "open",
+        openedAt: now,
+      });
+      // The borrower blocks the lender.
+      await ctx.db.insert("blocks", {
+        blockerId: u.priv,
+        blockedId: u.stranger,
+        createdAt: now,
+      });
+    });
+    const lent = await as(t, "stranger").query(
+      api.library.getLentOutLoans.getLentOutLoans,
+      {},
+    );
+    expect(lent).toHaveLength(1);
+    expect(lent[0].borrower).toMatchObject({ _id: u.priv, username: "priv" });
+    expectNoProfileDetails(lent);
+
+    // The borrower's own list names the lender identity only as well.
+    await t.run((ctx) =>
+      ctx.db.patch(u.stranger, {
+        bio: "lender bio",
+        location: "Lender Town",
+        preferredLanguage: "de",
+      }),
+    );
+    const borrowed = await as(t, "priv").query(
+      api.library.getBorrowedLoans.getBorrowedLoans,
+      {},
+    );
+    expect(borrowed).toHaveLength(1);
+    expect(borrowed[0].lender).toMatchObject({ _id: u.stranger });
+    const json = JSON.stringify(borrowed);
+    for (const leak of ["lender bio", "Lender Town", '"de"']) {
+      expect(json).not.toContain(leak);
+    }
+  });
+});

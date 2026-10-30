@@ -2,7 +2,7 @@
 // borrower while ownership stays with the lender; it closes on return or recall. The gateway's
 // `lending.*` reads return these. Ids are opaque strings (the web app re-casts at the edge).
 
-import type { MemberView } from "../identity/member";
+import type { MemberIdentityView } from "../identity/member";
 import type { ProjectedMember } from "../social/social";
 
 /**
@@ -26,10 +26,13 @@ export interface LoanView {
   expectedReturn?: number;
   /** Epoch millis the loan closed (returned/recalled), if it has. */
   closedAt?: number;
-  /** The owner who lent the copy out. Null if unresolved. */
-  lender: MemberView | null;
-  /** The borrower holding the copy. Null if unresolved. */
-  borrower: MemberView | null;
+  /**
+   * The owner who lent the copy out, identity only (SEC-11). Null if unresolved or departed. The
+   * parties of the caller's own loan stay named, a block included; profile details never show.
+   */
+  lender: MemberIdentityView | null;
+  /** The borrower holding the copy, identity only like `lender`. Null if unresolved or departed. */
+  borrower: MemberIdentityView | null;
 }
 
 /**
