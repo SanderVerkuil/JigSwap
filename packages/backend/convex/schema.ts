@@ -1186,6 +1186,19 @@ export default defineSchema({
     ),
   )
     .index("by_thread_uploader", ["threadAggregateId", "uploaderId"])
+    // A sender's per-thread reads, bounded to what they need instead of their whole photo
+    // history: the undelivered rows (messageId undefined: the outbox, a block's drop) and one
+    // send batch (its sendRequestedAt: settleSendBatch and Send's batch-instant collision check).
+    .index("by_thread_uploader_message", [
+      "threadAggregateId",
+      "uploaderId",
+      "messageId",
+    ])
+    .index("by_thread_uploader_batch", [
+      "threadAggregateId",
+      "uploaderId",
+      "sendRequestedAt",
+    ])
     .index("by_file", ["fileId"])
     // Whether a blob is a photo's smaller rendition or a location's map preview
     // (lib/imageModeration/blobReferences: a claim refuses it, a delete keeps it).

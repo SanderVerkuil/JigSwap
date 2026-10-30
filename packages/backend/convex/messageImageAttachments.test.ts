@@ -1368,6 +1368,133 @@ describe("sending", () => {
   });
 });
 
+// The sender's per-thread reads (outbox, batch settle, the batch-instant collision check) read
+// only undelivered rows or one send batch through their own indexes, never the whole photo
+// history (PERF-B12, SEC-48). These pin the results those reads must keep.
+describe("per-thread reads with a photo history", () => {
+  // An image row inserted directly (no pipeline): approved, unsent and undelivered unless the
+  // overrides say otherwise.
+  const insertImage = (
+    t: T,
+    threadId: string,
+    uploaderId: Id<"users">,
+    fields: {
+      createdAt: number;
+      sendRequestedAt?: number;
+      sendIndex?: number;
+      messageId?: string;
+      hiddenFromSender?: boolean;
+    },
+  ) =>
+    t.run(async (ctx) =>
+      ctx.db.insert("messageAttachments", {
+        kind: "image",
+        threadAggregateId: threadId,
+        uploaderId,
+        fileId: await ctx.storage.store(new Blob(["x"])),
+        byteSize: 1,
+        contentType: "image/jpeg",
+        moderationStatus: "approved",
+        updatedAt: fields.createdAt,
+        ...fields,
+      }),
+    );
+
+  // Delivered photos of earlier sends, one batch each.
+  const insertHistory = async (
+    t: T,
+    threadId: string,
+    uploaderId: Id<"users">,
+    count: number,
+  ) => {
+    for (let i = 1; i <= count; i++) {
+      await insertImage(t, threadId, uploaderId, {
+        createdAt: i,
+        sendRequestedAt: i,
+        sendIndex: 0,
+        messageId: `delivered-${i}`,
+      });
+    }
+  };
+
+  test("the outbox lists only the sender's undelivered photos in this thread, oldest first", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { alice, bob, threadId } = await openThread(t);
+    await insertHistory(t, threadId, alice, 25);
+    const later = await insertImage(t, threadId, alice, { createdAt: 300 });
+    const earlier = await insertImage(t, threadId, alice, { createdAt: 100 });
+    await insertImage(t, threadId, alice, {
+      createdAt: 200,
+      hiddenFromSender: true,
+    });
+    await insertImage(t, threadId, bob, { createdAt: 150 });
+    // A location still rendering is undelivered too, but it is no photo.
+    await t.run((ctx) =>
+      ctx.db.insert("messageAttachments", {
+        kind: "location",
+        threadAggregateId: threadId,
+        uploaderId: alice,
+        precision: "exact",
+        mapStatus: "pending",
+        createdAt: 120,
+        updatedAt: 120,
+      }),
+    );
+
+    expect((await outbox(t, threadId)).map((p) => p.attachmentId)).toEqual([
+      earlier,
+      later,
+    ]);
+  });
+
+  test("settling a send touches only its own batch: an older held or delivered batch is left alone", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { alice, threadId } = await openThread(t);
+    await insertHistory(t, threadId, alice, 3);
+    // Held from before append-at-send: sent, never delivered (backfillHeldPhotos' job).
+    const held = await insertImage(t, threadId, alice, {
+      createdAt: 10,
+      sendRequestedAt: 10,
+      sendIndex: 0,
+    });
+    const fresh = await insertImage(t, threadId, alice, { createdAt: 20 });
+
+    await send(t, threadId, [fresh]);
+
+    expect(
+      (await threadOf(t, asAlice, threadId)).map((m) => m.attachmentId),
+    ).toEqual([fresh]);
+    expect((await attachment(t, held))!.messageId).toBeUndefined();
+  });
+
+  test("sends within one millisecond get distinct batch instants, each delivered once in order", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { alice, threadId } = await openThread(t);
+    const [a, b, c] = [
+      await insertImage(t, threadId, alice, { createdAt: 1 }),
+      await insertImage(t, threadId, alice, { createdAt: 2 }),
+      await insertImage(t, threadId, alice, { createdAt: 3 }),
+    ];
+    const instant = Date.now();
+    const clock = vi.spyOn(Date, "now").mockReturnValue(instant);
+    try {
+      await send(t, threadId, [a]);
+      await send(t, threadId, [b]);
+      await send(t, threadId, [c]);
+    } finally {
+      clock.mockRestore();
+    }
+
+    const stamps = await Promise.all(
+      [a, b, c].map(async (id) => (await attachment(t, id))!.sendRequestedAt),
+    );
+    expect(stamps).toEqual([instant, instant + 1, instant + 2]);
+    expect(
+      (await threadOf(t, asAlice, threadId)).map((m) => m.attachmentId),
+    ).toEqual([a, b, c]);
+  });
+});
+
 describe("review appeal", () => {
   const rejectedPhoto = async (t: T) => {
     fakes.score = 0.97;

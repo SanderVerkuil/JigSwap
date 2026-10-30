@@ -17,19 +17,21 @@ export const listMyPendingAttachments = query({
   handler: async (ctx, { threadId }): Promise<PendingAttachmentView[]> => {
     const me = (await requireMember(ctx)) as unknown as Id<"users">;
     await participantThreadOf(ctx, threadId, me);
+    // Only the undelivered rows: a delivered photo is a message and is never read here.
     const rows = await ctx.db
       .query("messageAttachments")
-      .withIndex("by_thread_uploader", (q) =>
-        q.eq("threadAggregateId", threadId).eq("uploaderId", me),
+      .withIndex("by_thread_uploader_message", (q) =>
+        q
+          .eq("threadAggregateId", threadId)
+          .eq("uploaderId", me)
+          .eq("messageId", undefined),
       )
       .collect();
     return Promise.all(
       rows
         .filter(
           (row): row is ImageAttachment =>
-            row.kind === "image" &&
-            row.messageId === undefined &&
-            !row.hiddenFromSender,
+            row.kind === "image" && !row.hiddenFromSender,
         )
         .sort((a, b) => a.createdAt - b.createdAt)
         .map((row) => pendingAttachmentViewOf(ctx, row)),

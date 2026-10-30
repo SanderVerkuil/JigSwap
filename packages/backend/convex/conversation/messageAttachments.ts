@@ -535,20 +535,19 @@ export const settleSendBatch = async (
 ): Promise<void> => {
   const anchor = asImage(await ctx.db.get(attachmentId));
   if (!anchor || anchor.sendRequestedAt === undefined) return;
+  // Only this batch's rows (at most MAX_PHOTOS_PER_SEND), never the sender's whole history.
   const batch = (
     await ctx.db
       .query("messageAttachments")
-      .withIndex("by_thread_uploader", (q) =>
+      .withIndex("by_thread_uploader_batch", (q) =>
         q
           .eq("threadAggregateId", anchor.threadAggregateId)
-          .eq("uploaderId", anchor.uploaderId),
+          .eq("uploaderId", anchor.uploaderId)
+          .eq("sendRequestedAt", anchor.sendRequestedAt),
       )
       .collect()
   )
-    .filter(
-      (row): row is Attachment =>
-        row.kind === "image" && row.sendRequestedAt === anchor.sendRequestedAt,
-    )
+    .filter((row): row is Attachment => row.kind === "image")
     .sort((a, b) => (a.sendIndex ?? 0) - (b.sendIndex ?? 0));
 
   const thread = await threadRowByAggregateId(ctx, anchor.threadAggregateId);
@@ -606,16 +605,17 @@ export const dropUndeliveredPairAttachments = async (
     .collect();
   for (const thread of threads) {
     for (const uploaderId of [a, b]) {
+      // Only the undelivered rows: a delivered photo or location stays in the history.
       const rows = await ctx.db
         .query("messageAttachments")
-        .withIndex("by_thread_uploader", (q) =>
+        .withIndex("by_thread_uploader_message", (q) =>
           q
             .eq("threadAggregateId", thread.aggregateId)
-            .eq("uploaderId", uploaderId),
+            .eq("uploaderId", uploaderId)
+            .eq("messageId", undefined),
         )
         .collect();
       for (const row of rows) {
-        if (row.messageId !== undefined) continue;
         if (row.kind === "location") {
           // Its map is still rendering: never appended (renderLocationMap re-checks the block).
           await deleteAttachmentBlobs(ctx, row);
