@@ -204,3 +204,15 @@ describe("MarketingHeader mobile menu", () => {
     expect(screen.getByRole("navigation", { name: "Menu" })).toBeTruthy();
   });
 });
+
+describe("MarketingHeader translations", () => {
+  it("names the theme toggle in the visitor's language", () => {
+    renderHeader("nl");
+    expect(
+      screen.getByRole("button", { name: "Donkere modus aan/uit" }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: "Toggle dark mode" }),
+    ).toBeNull();
+  });
+});

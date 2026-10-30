@@ -3827,6 +3827,7 @@
       "openMenu": "Open menu",
       "closeMenu": "Close menu",
       "switchLanguage": "Switch language",
+      "toggleTheme": "Toggle dark mode",
       "menuLabel": "Menu",
       "primaryNav": "Main"
     },

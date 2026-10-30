@@ -220,12 +220,13 @@ function LangToggle({ className }: { className?: string }) {
 // Single round light/dark toggle (the marketing chrome skips the "system"
 // dropdown; next-themes still persists the choice app-wide).
 function ModeToggle({ className }: { className?: string }) {
+  const t = useTranslations("marketing.nav");
   const { resolvedTheme, setTheme } = useTheme();
   return (
     <button
       type="button"
       onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-      aria-label="Toggle dark mode"
+      aria-label={t("toggleTheme")}
       className={cn(
         "inline-flex items-center justify-center w-10 h-10 rounded-full border border-mk-border bg-mk-card text-mk-text-body",
         className,
