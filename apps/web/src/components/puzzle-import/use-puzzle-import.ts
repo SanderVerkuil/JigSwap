@@ -1,3 +1,4 @@
+import { CATALOG_TEXT_LIMITS } from "@/components/add-puzzle/catalog-text-limits";
 import { gateway } from "@/gateway";
 import { rateLimitedRetryAt } from "@/lib/convex-error-code";
 import { useConvexAction } from "@convex-dev/react-query";
@@ -26,6 +27,15 @@ export type ImportState =
   | { status: "error"; reason: "rateLimited"; retryAt: number }
   | { status: "ready"; draft: ImportedDraft; match: ImportedMatch | null };
 
+// A store page's text clipped to what the catalogue takes: the forms' maxLength doesn't shorten
+// a value set in code, and createPuzzle refuses longer text with TextTooLong.
+const clipToCatalogLimits = (draft: ImportedDraft): ImportedDraft => ({
+  ...draft,
+  title: draft.title.slice(0, CATALOG_TEXT_LIMITS.title),
+  brand: draft.brand?.slice(0, CATALOG_TEXT_LIMITS.brand),
+  description: draft.description?.slice(0, CATALOG_TEXT_LIMITS.description),
+});
+
 export const usePuzzleImport = () => {
   const extract = useMutation({
     mutationFn: useConvexAction(gateway.catalog.extractPuzzleFromUrl),
@@ -40,7 +50,11 @@ export const usePuzzleImport = () => {
         setState({ status: "error", reason: "failed" });
         return;
       }
-      setState({ status: "ready", draft: result.draft, match: result.match });
+      setState({
+        status: "ready",
+        draft: clipToCatalogLimits(result.draft),
+        match: result.match,
+      });
     } catch (error) {
       const retryAt = rateLimitedRetryAt(error, Date.now());
       setState(
