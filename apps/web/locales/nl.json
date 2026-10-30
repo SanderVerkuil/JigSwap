@@ -10,6 +10,11 @@
     "delete": "Verwijderen",
     "edit": "Bewerken",
     "view": "Bekijken",
+    "viewToggle": {
+      "label": "Weergave",
+      "grid": "Rasterweergave",
+      "list": "Lijstweergave"
+    },
     "search": "Zoeken",
     "filter": "Filter",
     "sort": "Sorteren",
@@ -433,6 +438,7 @@
       "subtitle": "Blader en ontdek puzzels van de community",
       "addPuzzle": "Puzzel Toevoegen",
       "searchPlaceholder": "Titel, merk, kunstenaar of tag…",
+      "searchLabel": "Zoek in de catalogus",
       "filtersLabel": "Filters",
       "clearFilters": "Filters Wissen",
       "puzzlesFound": "{count, plural, one {# puzzel gevonden} other {# puzzels gevonden}}",
@@ -477,6 +483,7 @@
         "categoriesUnavailable": "Categorieën konden niet worden geladen",
         "tags": "Tags",
         "tagsUnavailable": "Tags konden niet worden geladen",
+        "removeTag": "Tag {tag} verwijderen",
         "customRange": "Aangepast Bereik",
         "min": "Min",
         "max": "Max"
@@ -1274,9 +1281,7 @@
     "removeFilter": "Filter verwijderen",
     "fieldText": "Tekst",
     "fieldAvailability": "Beschikbaarheid",
-    "textPlaceholder": "Titel, merk of thema…",
-    "gridView": "Rasterweergave",
-    "listView": "Lijstweergave"
+    "textPlaceholder": "Titel, merk of thema…"
   },
   "browsePuzzleFilter": {
     "label": "Puzzel",

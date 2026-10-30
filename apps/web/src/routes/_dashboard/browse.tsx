@@ -16,7 +16,7 @@ import {
   copyMessageRoute,
   isOwnCopy,
 } from "@/components/messaging/copy-conversation";
-import { Button } from "@/components/ui/button";
+import { ViewModeToggle } from "@/components/puzzles/view-mode-toggle";
 import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { gateway, Id } from "@/gateway";
@@ -26,7 +26,6 @@ import { pageTitle } from "@/lib/page-title";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Grid, List } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
@@ -160,24 +159,7 @@ function BrowsePage() {
           <span className="text-muted-foreground text-sm">
             {tBrowse("resultsCount", { count: shownPuzzles.length })}
           </span>
-          <div className="flex items-center gap-1">
-            <Button
-              variant={viewMode === "grid" ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("grid")}
-              aria-label={tBrowse("gridView")}
-            >
-              <Grid className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === "list" ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("list")}
-              aria-label={tBrowse("listView")}
-            >
-              <List className="h-4 w-4" />
-            </Button>
-          </div>
+          <ViewModeToggle value={viewMode} onChange={setViewMode} />
         </div>
       </div>
 

@@ -4,6 +4,7 @@ import { Link } from "@/compat/link";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
 import {
@@ -20,13 +21,14 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery } from "convex/react";
-import { Filter, Grid, Heart, List, Plus, Search, X } from "lucide-react";
+import { Filter, Heart, Plus, Search, X } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useTranslations } from "use-intl";
 import { PuzzleCard } from "./puzzle-card";
 import { PuzzleCardSkeleton } from "./puzzle-card-skeleton";
 import { PuzzleFilters } from "./puzzle-filters";
 import { PuzzleViewProvider } from "./puzzle-view-provider";
+import { ViewModeToggle } from "./view-mode-toggle";
 
 const PAGE_SIZE = 20;
 const SEARCH_DEBOUNCE_MS = 300;
@@ -173,13 +175,17 @@ export function PuzzlesClient({
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Search */}
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <input
-                type="text"
+              <Search
+                aria-hidden="true"
+                className="pointer-events-none absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground"
+              />
+              <Input
+                type="search"
+                aria-label={t("searchLabel")}
                 placeholder={t("searchPlaceholder")}
                 value={searchDraft}
                 onChange={(e) => onSearchInput(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                className="pl-10"
               />
             </div>
 
@@ -241,26 +247,15 @@ export function PuzzlesClient({
 
       {/* View Mode Toggle */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Button
-            variant={viewMode === "grid" ? "default" : "outline"}
-            size="sm"
-            onClick={() =>
-              onSearchChange((prev) => ({ ...prev, view: undefined }))
-            }
-          >
-            <Grid className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={viewMode === "list" ? "default" : "outline"}
-            size="sm"
-            onClick={() =>
-              onSearchChange((prev) => ({ ...prev, view: "list" }))
-            }
-          >
-            <List className="h-4 w-4" />
-          </Button>
-        </div>
+        <ViewModeToggle
+          value={viewMode}
+          onChange={(mode) =>
+            onSearchChange((prev) => ({
+              ...prev,
+              view: mode === "list" ? "list" : undefined,
+            }))
+          }
+        />
         {/* One count, on every screen size: final once every match is in, "so far" while more
             can still load. */}
         {listState === "loading" ? (

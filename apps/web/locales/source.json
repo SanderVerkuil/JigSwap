@@ -10,6 +10,11 @@
     "delete": "Delete",
     "edit": "Edit",
     "view": "View",
+    "viewToggle": {
+      "label": "Layout",
+      "grid": "Grid view",
+      "list": "List view"
+    },
     "search": "Search",
     "filter": "Filter",
     "sort": "Sort",
@@ -433,6 +438,7 @@
       "subtitle": "Browse and discover puzzles from the community",
       "addPuzzle": "Add Puzzle",
       "searchPlaceholder": "Title, brand, artist or tag…",
+      "searchLabel": "Search the catalogue",
       "filtersLabel": "Filters",
       "clearFilters": "Clear Filters",
       "puzzlesFound": "{count, plural, one {# puzzle found} other {# puzzles found}}",
@@ -477,6 +483,7 @@
         "categoriesUnavailable": "Couldn't load categories",
         "tags": "Tags",
         "tagsUnavailable": "Couldn't load tags",
+        "removeTag": "Remove tag {tag}",
         "customRange": "Custom Range",
         "min": "Min",
         "max": "Max"
@@ -1274,9 +1281,7 @@
     "removeFilter": "Remove filter",
     "fieldText": "Text",
     "fieldAvailability": "Availability",
-    "textPlaceholder": "Title, brand or theme…",
-    "gridView": "Grid View",
-    "listView": "List View"
+    "textPlaceholder": "Title, brand or theme…"
   },
   "browsePuzzleFilter": {
     "label": "Puzzle",

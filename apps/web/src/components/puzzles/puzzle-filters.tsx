@@ -235,6 +235,7 @@ export function PuzzleFilters({
                 <Button
                   variant="ghost"
                   size="sm"
+                  aria-label={t("filters.removeTag", { tag })}
                   className="h-auto p-0 has-[>svg]:p-0 hover:text-destructive"
                   onClick={() => removeTag(tag)}
                 >
