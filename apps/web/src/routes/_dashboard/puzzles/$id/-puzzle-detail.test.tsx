@@ -256,3 +256,103 @@ describe("puzzle detail page: available copies link", () => {
     ).toBeTruthy();
   });
 });
+
+describe("puzzle detail page: actions", () => {
+  const tCatalog = en.puzzles.puzzles;
+  // The brand (primary) button variant paints a gradient background.
+  const isPrimary = (el: HTMLElement) =>
+    el.className.includes("linear-gradient");
+
+  it("leads with the member's own copy when they already own the puzzle", () => {
+    setView({
+      ...emptyView(),
+      ownership: { viewerOwns: true, copyId: "copy_9", condition: "good" },
+    });
+    renderPage();
+
+    const viewCopy = screen.getByRole("link", { name: t.viewYourCopy });
+    expect(viewCopy.getAttribute("href")).toBe("/copies/copy_9");
+    // It is the primary action, ahead of adding another copy, and the only link to the copy.
+    const addAnother = screen.getByRole("button", {
+      name: en.puzzles.addToLibrary,
+    });
+    expect(isPrimary(viewCopy)).toBe(true);
+    expect(isPrimary(addAnother)).toBe(false);
+    expect(
+      viewCopy.compareDocumentPosition(addAnother) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(screen.getAllByRole("link", { name: t.viewYourCopy })).toHaveLength(
+      1,
+    );
+  });
+
+  it("leads with adding the puzzle when the member does not own it", () => {
+    setView(emptyView());
+    renderPage();
+
+    expect(screen.queryByRole("link", { name: t.viewYourCopy })).toBeNull();
+    expect(
+      isPrimary(screen.getByRole("button", { name: en.puzzles.addToLibrary })),
+    ).toBe(true);
+  });
+
+  it("disables finding a copy, and says why, when nobody offers one", () => {
+    setView(emptyView());
+    renderPage();
+
+    const find = screen.getByRole("button", { name: t.findCopyToSwap });
+    expect((find as HTMLButtonElement).disabled).toBe(true);
+    const hintId = find.getAttribute("aria-describedby");
+    expect(hintId).toBeTruthy();
+    expect(document.getElementById(hintId!)?.textContent).toBe(
+      t.noCopiesOffered,
+    );
+  });
+
+  it("lets the member find a copy when one is offered", () => {
+    setView({
+      ...emptyView(),
+      availableCopies: [offeredCopy("copy_1", null)],
+      totalAvailable: 1,
+    });
+    renderPage();
+
+    const find = screen.getByRole("button", { name: t.findCopyToSwap });
+    expect((find as HTMLButtonElement).disabled).toBe(false);
+    expect(find.getAttribute("aria-describedby")).toBeNull();
+    expect(screen.queryByText(t.noCopiesOffered)).toBeNull();
+  });
+
+  it("makes favourite a named toggle that reports its state", () => {
+    setView(emptyView());
+    renderPage();
+    expect(
+      screen
+        .getByRole("button", { name: t.favorite })
+        .getAttribute("aria-pressed"),
+    ).toBe("false");
+    cleanup();
+
+    mocks.favorited = true;
+    renderPage();
+    expect(
+      screen
+        .getByRole("button", { name: t.favorite })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+    // The old labelled button is gone; its wording now only lives in the tooltip.
+    expect(
+      screen.queryByRole("button", { name: tCatalog.removeFromFavorites }),
+    ).toBeNull();
+  });
+
+  it("links to suggesting an edit", () => {
+    setView(emptyView());
+    renderPage();
+
+    expect(
+      screen.getByRole("link", { name: t.suggestEdit }).getAttribute("href"),
+    ).toBe(`/puzzles/${PUZZLE_ID}/suggest-edit`);
+  });
+});

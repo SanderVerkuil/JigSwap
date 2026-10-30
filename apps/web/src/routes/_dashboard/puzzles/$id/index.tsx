@@ -19,6 +19,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StarRating } from "@/components/ui/star-rating";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { gateway, Id } from "@/gateway";
 import { useBoxArtInCheck } from "@/hooks/use-box-art-check";
 import { useFavorites } from "@/hooks/use-favorites";
@@ -49,7 +54,7 @@ import {
   Plus,
   Star,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "use-intl";
 
@@ -148,6 +153,13 @@ function PuzzleDefinitionDetail({
     availableCopies,
     totalAvailable,
   } = view;
+  // The member's own copy, when they have one, is the page's primary destination.
+  const ownCopyHref =
+    ownership.viewerOwns && ownership.copyId
+      ? `/copies/${ownership.copyId}`
+      : null;
+  const noCopiesOffered = totalAvailable === 0;
+  const noCopiesHintId = useId();
 
   // Publish the puzzle name so the breadcrumb becomes "Community › Puzzles catalogue › <name>"
   // (the route's pageKey "puzzles" matches the catalogue nav item, which renders the middle
@@ -265,9 +277,9 @@ function PuzzleDefinitionDetail({
             ))}
           </div>
 
-          {/* Ownership banner */}
+          {/* Ownership banner (status only: the primary action below opens the copy) */}
           {ownership.viewerOwns && (
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 dark:border-green-900/50 dark:bg-green-900/20">
+            <div className="mt-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 dark:border-green-900/50 dark:bg-green-900/20">
               <span className="text-sm font-medium text-green-800 dark:text-green-200">
                 {t("youOwnACopy")}
                 {ownership.condition
@@ -276,23 +288,22 @@ function PuzzleDefinitionDetail({
                     })}`
                   : ""}
               </span>
-              {ownership.copyId && (
-                <Link
-                  href={`/copies/${ownership.copyId}`}
-                  className="text-sm font-semibold text-green-800 hover:underline dark:text-green-200"
-                >
-                  {t("viewYourCopy")}
-                </Link>
-              )}
             </div>
           )}
 
-          {/* Actions */}
-          <div className="mt-5 flex flex-wrap gap-2.5">
+          {/* Actions in three tiers: one brand primary (the member's own copy when they have
+              one, otherwise adding it), outline secondaries with the favourite icon toggle, then
+              link-style extras. */}
+          <div className="mt-5 flex flex-wrap items-center gap-2.5">
+            {ownCopyHref && (
+              <Button variant="brand" asChild>
+                <Link href={ownCopyHref}>{t("viewYourCopy")}</Link>
+              </Button>
+            )}
             {/* Opens the copy-mode add form (definition pre-filled; the member
                 fills in condition/availability/cover/notes for their copy). */}
             <Button
-              variant="brand"
+              variant={ownCopyHref ? "outline" : "brand"}
               onClick={() =>
                 router.push(`/my-puzzles/add/new?puzzleId=${puzzleId}`)
               }
@@ -300,8 +311,11 @@ function PuzzleDefinitionDetail({
               <Plus className="h-4 w-4" />
               {tPuzzles("addToLibrary")}
             </Button>
+            {/* Nothing to find while nobody offers a copy: disabled, with the reason below. */}
             <Button
               variant="outline"
+              disabled={noCopiesOffered}
+              aria-describedby={noCopiesOffered ? noCopiesHintId : undefined}
               onClick={() =>
                 navigate({ to: "/browse", search: { puzzle: puzzleId } })
               }
@@ -309,31 +323,57 @@ function PuzzleDefinitionDetail({
               <ArrowLeftRight className="h-4 w-4" />
               {t("findCopyToSwap")}
             </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label={t("favorite")}
+                  aria-pressed={favorited}
+                  onClick={() => void toggleFavorite(puzzleId)}
+                >
+                  <Heart
+                    className={cn(
+                      "h-4 w-4",
+                      favorited && "fill-red-500 text-red-500",
+                    )}
+                    aria-hidden
+                  />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{favoriteLabel}</TooltipContent>
+            </Tooltip>
+          </div>
+          {noCopiesOffered && (
+            <p
+              id={noCopiesHintId}
+              className="text-muted-foreground mt-2 text-sm"
+            >
+              {t("noCopiesOffered")}
+            </p>
+          )}
+          <div className="mt-2 flex flex-wrap items-center gap-x-5">
             {canReview && (
-              <Button variant="outline" onClick={focusComposer}>
+              <Button
+                variant="link"
+                size="sm"
+                className="px-0 has-[>svg]:px-0"
+                onClick={focusComposer}
+              >
                 <Star className="h-4 w-4" />
                 {t("writeReview")}
               </Button>
             )}
             <Button
-              variant="outline"
-              aria-pressed={favorited}
-              onClick={() => void toggleFavorite(puzzleId)}
+              variant="link"
+              size="sm"
+              className="px-0 has-[>svg]:px-0"
+              asChild
             >
-              <Heart
-                className={cn(
-                  "h-4 w-4",
-                  favorited && "fill-red-500 text-red-500",
-                )}
-              />
-              {favoriteLabel}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => router.push(`/puzzles/${puzzleId}/suggest-edit`)}
-            >
-              <Pencil className="h-4 w-4" />
-              {t("suggestEdit")}
+              <Link href={`/puzzles/${puzzleId}/suggest-edit`}>
+                <Pencil className="h-4 w-4" />
+                {t("suggestEdit")}
+              </Link>
             </Button>
           </div>
         </div>
