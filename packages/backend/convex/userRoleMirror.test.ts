@@ -1,12 +1,15 @@
+import { ClerkAPIResponseError } from "@clerk/backend/errors";
 import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
 // backfillUserRoles pages the Clerk Backend API; no test reaches Clerk.
 const clerk = vi.hoisted(() => ({
   createClerkClient: vi.fn(),
   getUserList: vi.fn(),
+  getUser: vi.fn(),
 }));
 vi.mock("@clerk/backend", () => ({
   createClerkClient: clerk.createClerkClient,
@@ -173,7 +176,7 @@ describe("backfillUserRoles/run (daily role reconcile)", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     clerk.createClerkClient.mockReturnValue({
-      users: { getUserList: clerk.getUserList },
+      users: { getUserList: clerk.getUserList, getUser: clerk.getUser },
     });
   });
 
@@ -215,7 +218,8 @@ describe("backfillUserRoles/run (daily role reconcile)", () => {
 
     const result = await t.action(internal.backfillUserRoles.run, {});
 
-    expect(result).toEqual({ scanned: 4, patched: 2 });
+    expect(result).toEqual({ scanned: 4, patched: 2, cleared: 0 });
+    expect(clerk.getUser).not.toHaveBeenCalled();
     const roles = await t.run(async (ctx) =>
       Promise.all(
         [revoked, granted, kept, inactive].map(
@@ -226,13 +230,94 @@ describe("backfillUserRoles/run (daily role reconcile)", () => {
     expect(roles).toEqual([null, "admin", "admin", null]);
   });
 
+  const clerkError = (status: number) =>
+    new ClerkAPIResponseError("Clerk refused", {
+      data: [
+        { code: "resource_not_found", message: "nope", long_message: "nope" },
+      ],
+      status,
+    });
+  const rolesOf = (t: TestConvex<typeof schema>, ids: Id<"users">[]) =>
+    t.run(async (ctx) =>
+      Promise.all(ids.map(async (id) => (await ctx.db.get(id))?.role ?? null)),
+    );
+
+  // A user.deleted webhook lost for good leaves an active row Clerk no longer lists; its role
+  // mirror would keep it on admin-only email and push (SEC-32). Only the role is cleared.
+  test("clears the role of a member Clerk no longer has, and nothing else", async () => {
+    vi.stubEnv("CLERK_SECRET_KEY", "sk_test_reconcile");
+    const t = convexTest(schema, modules);
+    const gone = await seedMember(t, "clerk_gone", { role: "admin" });
+    const kept = await seedMember(t, "clerk_kept", { role: "admin" });
+    // Also gone from Clerk, but with no role there is nothing to clear: never looked up.
+    await seedMember(t, "clerk_plain");
+    const before = await t.run((ctx) => ctx.db.get(gone));
+    clerk.getUserList.mockResolvedValue({
+      data: [{ id: "clerk_kept", publicMetadata: { role: "admin" } }],
+      totalCount: 1,
+    });
+    clerk.getUser.mockRejectedValue(clerkError(404));
+
+    const result = await t.action(internal.backfillUserRoles.run, {});
+
+    expect(result).toEqual({ scanned: 1, patched: 0, cleared: 1 });
+    expect(clerk.getUser.mock.calls).toEqual([["clerk_gone"]]);
+    expect(await rolesOf(t, [gone, kept])).toEqual([null, "admin"]);
+    const after = await t.run((ctx) => ctx.db.get(gone));
+    const { role: _role, ...rest } = before!;
+    expect(after).toEqual(rest);
+  });
+
+  // Offset paging can skip a user when Clerk's list shifts mid-scan: a role-holder missing from
+  // the pages is asked for directly, and only a 404 counts as gone.
+  test("asks Clerk directly about a role-holder the paging missed", async () => {
+    vi.stubEnv("CLERK_SECRET_KEY", "sk_test_reconcile");
+    const t = convexTest(schema, modules);
+    const skipped = await seedMember(t, "clerk_skipped", { role: "admin" });
+    const revoked = await seedMember(t, "clerk_revoked", { role: "admin" });
+    const flaky = await seedMember(t, "clerk_flaky", { role: "admin" });
+    clerk.getUserList.mockResolvedValue({ data: [], totalCount: 0 });
+    clerk.getUser.mockImplementation(async (id: string) => {
+      if (id === "clerk_skipped") {
+        return { id, publicMetadata: { role: "admin" } };
+      }
+      if (id === "clerk_revoked") return { id, publicMetadata: {} };
+      throw clerkError(503);
+    });
+
+    const result = await t.action(internal.backfillUserRoles.run, {});
+
+    expect(result).toEqual({ scanned: 0, patched: 1, cleared: 0 });
+    expect(await rolesOf(t, [skipped, revoked, flaky])).toEqual([
+      "admin",
+      null,
+      "admin",
+    ]);
+  });
+
+  test("never looks up a deactivated row", async () => {
+    vi.stubEnv("CLERK_SECRET_KEY", "sk_test_reconcile");
+    const t = convexTest(schema, modules);
+    const inactive = await seedMember(t, "clerk_inactive", {
+      role: "admin",
+      isActive: false,
+    });
+    clerk.getUserList.mockResolvedValue({ data: [], totalCount: 0 });
+
+    const result = await t.action(internal.backfillUserRoles.run, {});
+
+    expect(result).toEqual({ scanned: 0, patched: 0, cleared: 0 });
+    expect(clerk.getUser).not.toHaveBeenCalled();
+    expect(await rolesOf(t, [inactive])).toEqual(["admin"]);
+  });
+
   test("does nothing without CLERK_SECRET_KEY (preview deployments)", async () => {
     vi.stubEnv("CLERK_SECRET_KEY", undefined);
     const t = convexTest(schema, modules);
 
     const result = await t.action(internal.backfillUserRoles.run, {});
 
-    expect(result).toEqual({ scanned: 0, patched: 0 });
+    expect(result).toEqual({ scanned: 0, patched: 0, cleared: 0 });
     expect(clerk.createClerkClient).not.toHaveBeenCalled();
   });
 });

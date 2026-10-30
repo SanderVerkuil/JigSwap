@@ -354,6 +354,23 @@ export const patchUserRole = internalMutation({
   },
 });
 
+// Far more rows than any deployment has admins; it only keeps the read bounded.
+const ROLE_HOLDER_LIMIT = 500;
+
+// For backfillUserRoles: the clerkIds of the active members whose mirror carries a role (a
+// handful, read through by_role), so the reconcile can check the ones Clerk's user list did not
+// return. Internal-only.
+export const listRoleHolderClerkIds = internalQuery({
+  args: {},
+  async handler(ctx): Promise<string[]> {
+    const rows = await ctx.db
+      .query("users")
+      .withIndex("by_role", (q) => q.gte("role", ""))
+      .take(ROLE_HOLDER_LIMIT);
+    return rows.filter((row) => row.isActive).map((row) => row.clerkId);
+  },
+});
+
 /** Delete a user by clerk user ID. */
 export const deleteUser = internalMutation({
   args: { id: v.string() },
