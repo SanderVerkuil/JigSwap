@@ -1,6 +1,9 @@
 "use client";
 
-import { useConditionLabel } from "@/components/library/condition";
+import {
+  conditionDotClass,
+  useConditionLabel,
+} from "@/components/library/condition";
 import {
   PuzzleCardShell,
   type PuzzleCardView,
@@ -46,8 +49,12 @@ import {
   Lock,
   MessageCircle,
   MoreHorizontal,
+  Package,
+  Play,
+  Tag,
   Trash2,
   User,
+  type LucideIcon,
 } from "lucide-react";
 import { ReactNode } from "react";
 import { useTranslations } from "use-intl";
@@ -109,6 +116,17 @@ interface PuzzleCardProps {
   loanBadge?: ReactNode;
   className?: string;
 }
+
+// What a copy is offered for, each with its own icon, in the card's offer chips.
+const OFFERS: ReadonlyArray<{
+  flag: "forTrade" | "forLend" | "forSale";
+  label: "trade" | "lend" | "sale";
+  Icon: LucideIcon;
+}> = [
+  { flag: "forTrade", label: "trade", Icon: ArrowLeftRight },
+  { flag: "forLend", label: "lend", Icon: Package },
+  { flag: "forSale", label: "sale", Icon: Tag },
+];
 
 // ---------------------------------------------------------------------------
 // Persistent top-right "⋯" overflow menu chip (owner-management actions).
@@ -194,7 +212,11 @@ function PuzzleOverflowMenu({
                 onStartSolve(ownedId);
               }}
             >
-              <CircleCheck className="h-4 w-4 mr-2 shrink-0" />
+              {solveInProgress ? (
+                <CircleCheck className="h-4 w-4 mr-2 shrink-0" />
+              ) : (
+                <Play className="h-4 w-4 mr-2 shrink-0" />
+              )}
               {solveInProgress ? tStart("finishTrigger") : tStart("trigger")}
             </DropdownMenuItem>
           )}
@@ -338,20 +360,28 @@ export function PuzzleCard({
   };
   const imageChecking = !view.imageUrl && boxArtInCheck.has(puzzle.puzzleId);
 
+  const offers = OFFERS.filter(({ flag }) => puzzle.availability[flag]);
+
   // Context badges: condition, availability flags, and the owner — the
   // owned-copy specifics that the shared shell deliberately doesn't know about.
+  // Each kind of fact has its own look: condition is a coloured dot and its word, offers are
+  // tinted chips with an icon, and the shell shows tags as plain "#tag" text.
   const conditionRow = (
     <div className="flex flex-wrap items-center gap-2 mb-2">
-      <Badge
-        variant={
-          puzzle.condition === "new_sealed" || puzzle.condition === "like_new"
-            ? "default"
-            : "secondary"
-        }
-        className="text-xs"
+      <span
+        data-testid="copy-condition"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground"
       >
+        <span
+          aria-hidden
+          className={cn(
+            "size-2 shrink-0 rounded-sm",
+            conditionDotClass(puzzle.condition),
+          )}
+        />
+        <span className="sr-only">{t("condition")}: </span>
         {conditionLabel(puzzle.condition)}
-      </Badge>
+      </span>
       {/* Only the owner and their household ever receive a private copy. */}
       {puzzle.visibility === "private" ? (
         <Badge variant="outline" className="gap-1 text-xs">
@@ -362,24 +392,21 @@ export function PuzzleCard({
     </div>
   );
 
-  const availabilityRow = showAvailability && (
+  const availabilityRow = showAvailability && offers.length > 0 && (
     // Wraps: all three offers do not fit one row of a compact phone card.
-    <div className="flex flex-wrap items-center gap-2 mb-2">
-      {puzzle.availability.forLend ? (
-        <Badge variant="outline" className="text-xs">
-          {t("lend")}
-        </Badge>
-      ) : null}
-      {puzzle.availability.forTrade ? (
-        <Badge variant="outline" className="text-xs">
-          {t("trade")}
-        </Badge>
-      ) : null}
-      {puzzle.availability.forSale ? (
-        <Badge variant="outline" className="text-xs">
-          {t("sale")}
-        </Badge>
-      ) : null}
+    <div
+      data-testid="copy-offers"
+      className="flex flex-wrap items-center gap-1.5 mb-2"
+    >
+      {offers.map(({ flag, label, Icon }) => (
+        <span
+          key={flag}
+          className="inline-flex items-center gap-1 rounded-full border border-jigsaw-secondary/40 bg-jigsaw-secondary-tint px-2 py-0.5 text-xs font-medium text-green-800 dark:text-green-300"
+        >
+          <Icon className="size-3 shrink-0" aria-hidden />
+          {t(label)}
+        </span>
+      ))}
     </div>
   );
 
