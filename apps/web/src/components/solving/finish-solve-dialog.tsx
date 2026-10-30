@@ -48,6 +48,7 @@ export function FinishSolveDialog({
   onSuccess,
 }: FinishSolveDialogProps) {
   const t = useTranslations("solving.logSolve");
+  const tCommon = useTranslations("common");
   const finishCompletion = useMutation({
     mutationFn: useConvexMutation(gateway.solving.finishCompletion),
   });
@@ -153,6 +154,13 @@ export function FinishSolveDialog({
         </div>
 
         <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={submitting}
+          >
+            {tCommon("cancel")}
+          </Button>
           <Button onClick={handleSubmit} disabled={submitting || !endDate}>
             {t("submit")}
           </Button>

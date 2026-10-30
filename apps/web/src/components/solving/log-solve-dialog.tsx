@@ -60,6 +60,7 @@ export function LogSolveDialog({
   onSuccess,
 }: LogSolveDialogProps) {
   const t = useTranslations("solving.logSolve");
+  const tCommon = useTranslations("common");
   const recordCompletion = useMutation({
     mutationFn: useConvexMutation(gateway.solving.recordCompletion),
   });
@@ -282,6 +283,13 @@ export function LogSolveDialog({
           </div>
 
           <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={recordCompletion.isPending}
+            >
+              {tCommon("cancel")}
+            </Button>
             <Button
               onClick={handleSubmit}
               disabled={recordCompletion.isPending || !startDate}

@@ -42,6 +42,7 @@ export const Route = createFileRoute("/_dashboard/goals")({
 function GoalsPage() {
   const { user } = useUser();
   const t = useTranslations("solving.goals");
+  const tCommon = useTranslations("common");
 
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -190,6 +191,13 @@ function GoalsPage() {
           </div>
 
           <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={createGoal.isPending}
+            >
+              {tCommon("cancel")}
+            </Button>
             <Button
               onClick={handleCreate}
               disabled={createGoal.isPending || !title.trim() || !target}
