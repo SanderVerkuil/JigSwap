@@ -1,18 +1,27 @@
 import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
+import { internal } from "../_generated/api";
 import type { Doc, Id } from "../_generated/dataModel";
 import {
   internalMutation,
   internalQuery,
   type MutationCtx,
 } from "../_generated/server";
+import { deleteCopyPhoto } from "../admin/deleteCopyPhoto";
 import { stampModerationAction } from "../admin/stampModerationAction";
+import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 import {
   applyHashCheckResult,
   hashCheckResultArgs,
   quarantineArgs,
   recordCsamEscalation,
 } from "../lib/imageModeration/quarantine";
+import {
+  DAY_MS,
+  logRetentionSweep,
+  RETENTION_SWEEP_PAGE,
+  retentionEnforced,
+} from "../lib/retention";
 import { needsRescreen } from "./adapters/photoModeration";
 
 // DB-facing helpers for the moderatePhoto Node action. A Node action (`"use node"`) has no direct
@@ -206,5 +215,88 @@ export const applyRescreenVerdict = internalMutation({
       moderationAttempts: (row.moderationAttempts ?? 0) + 1,
     });
     return true;
+  },
+});
+
+/**
+ * A copy photo the automated check rejected is deleted this long after the rejection (spec 2.8,
+ * the privacy policy's "kept for 30 days so you can ask for a review ..., then deleted").
+ */
+export const REJECTED_COPY_PHOTO_TTL_MS = 30 * DAY_MS;
+
+/**
+ * The daily retention sweep of auto-rejected copy photos (crons.ts; lib/retention, sweep
+ * "copyPhotos"): a photo the automated check rejected (no `moderatedBy`) and nobody decided
+ * since, rejected (last touched, `updatedAt`) more than REJECTED_COPY_PHOTO_TTL_MS ago, is
+ * deleted with its blob (admin/deleteCopyPhoto: clears the copy's cover, keeps a blob preserved
+ * for a CSAM escalation), only when RETENTION_ENFORCE names the sweep; otherwise it is counted
+ * and nothing changes. Until then it stays in the admin's Flagged Images queue (restore / confirm
+ * removal). A person's rejection (admin/decideUncheckedPhoto, `moderatedBy`) is not the check's
+ * and is left to that queue. Never touched, only counted: a photo an open report is about, and
+ * one whose CSAM hash check has not finished (a late match must still find the bytes to
+ * preserve). One page of the by_moderation_status range per run (rows created before the
+ * cutoff), re-scheduling itself.
+ */
+export const sweepRejectedCopyPhotos = internalMutation({
+  args: {
+    cursor: v.optional(v.union(v.string(), v.null())),
+    now: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const now = args.now ?? Date.now();
+    const cutoff = now - REJECTED_COPY_PHOTO_TTL_MS;
+    const enforce = retentionEnforced("copyPhotos");
+    const page = await ctx.db
+      .query("ownedPuzzleImages")
+      .withIndex("by_moderation_status", (q) =>
+        q.eq("moderationStatus", "rejected").lt("_creationTime", cutoff),
+      )
+      .paginate({
+        numItems: RETENTION_SWEEP_PAGE,
+        cursor: args.cursor ?? null,
+      });
+    let due = 0;
+    let acted = 0;
+    let heldReport = 0;
+    let heldHashCheck = 0;
+    for (const row of page.page) {
+      if (row.moderatedBy !== undefined || row.updatedAt > cutoff) continue;
+      if (!isHashCleared(row)) {
+        heldHashCheck++;
+        continue;
+      }
+      const openReport = await ctx.db
+        .query("reports")
+        .withIndex("by_target", (q) =>
+          q.eq("targetKind", "photo").eq("targetId", row._id),
+        )
+        .filter((q) => q.eq(q.field("status"), "open"))
+        .first();
+      if (openReport) {
+        heldReport++;
+        continue;
+      }
+      due++;
+      if (!enforce) continue;
+      await deleteCopyPhoto(ctx, row, await ctx.db.get(row.ownedPuzzleId));
+      acted++;
+    }
+
+    if (!page.isDone) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.library.moderationStore.sweepRejectedCopyPhotos,
+        { cursor: page.continueCursor, now },
+      );
+    }
+    logRetentionSweep({
+      sweep: "copyPhotos",
+      due,
+      acted,
+      dryRun: !enforce,
+      isDone: page.isDone,
+      held_report: heldReport,
+      held_hash_check: heldHashCheck,
+    });
   },
 });

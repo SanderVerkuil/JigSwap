@@ -7,14 +7,17 @@ import {
   UNCHECKED_SENT_PHOTO_TTL_MS,
 } from "./conversation/messageAttachments";
 import { DAY_MS, RETENTION_SWEEP_PAGE } from "./lib/retention";
+import { REJECTED_COPY_PHOTO_TTL_MS } from "./library/moderationStore";
 import schema from "./schema";
 
-// The stated photo retention (privacy policy, "How long we keep data"; SEC-67), enforced by daily
-// sweeps that are DRY-RUN unless RETENTION_ENFORCE names them (lib/retention):
+// The stated photo retention (privacy policy, "How long we keep data"; SEC-67), enforced by two
+// daily sweeps that are DRY-RUN unless RETENTION_ENFORCE names them (lib/retention):
 // - "sentPhotos" (conversation/attachmentModerationStore.sweepUncheckedSentPhotos): a photo sent
 //   while still being checked that is still being checked a week later is deleted; its message
 //   then reads "Photo no longer available" for both members.
-// A sweep never touches a photo an open report holds, or one whose CSAM hash check has not
+// - "copyPhotos" (library/moderationStore.sweepRejectedCopyPhotos): a copy photo the automated
+//   check rejected is deleted 30 days after the rejection.
+// Neither ever touches a photo an open report holds, or one whose CSAM hash check has not
 // finished (a late match must still find the bytes to preserve).
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
@@ -380,5 +383,171 @@ describe("sent photos still being checked a week later", () => {
         .filter((e) => e.phase === "unscored")
         .map((e) => e.acted),
     ).toEqual([RETENTION_SWEEP_PAGE, 3]);
+  });
+});
+
+describe("copy photos the automated check rejected, 30 days on", () => {
+  const seedCopy = (t: T) =>
+    t.run(async (ctx) => {
+      const mkUser = (clerkId: string) =>
+        ctx.db.insert("users", {
+          clerkId,
+          email: `${clerkId}@example.com`,
+          name: clerkId,
+          isActive: true,
+          createdAt: 1,
+          updatedAt: 1,
+        });
+      const alice = await mkUser("clerk_alice");
+      const bob = await mkUser("clerk_bob");
+      const puzzleId = await ctx.db.insert("puzzles", {
+        title: "Starry Night",
+        pieceCount: 1000,
+        status: "approved",
+        submittedBy: alice,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const copyId = await ctx.db.insert("ownedPuzzles", {
+        puzzleId,
+        ownerId: alice,
+        condition: "good",
+        availability: { forTrade: false, forSale: false, forLend: false },
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      return { alice, bob, copyId };
+    });
+
+  // A copy photo rejected `rejectedAt` (default: now), by the check unless `moderatedBy` is set.
+  const seedPhoto = (
+    t: T,
+    world: { alice: Id<"users">; copyId: Id<"ownedPuzzles"> },
+    opts: {
+      status?: "rejected" | "approved";
+      rejectedAt?: number;
+      moderatedBy?: Id<"users">;
+      hashCleared?: boolean;
+    } = {},
+  ) =>
+    t.run(async (ctx) => {
+      const fileId = await ctx.storage.store(new Blob([new Uint8Array(4)]));
+      const imageId = await ctx.db.insert("ownedPuzzleImages", {
+        ownedPuzzleId: world.copyId,
+        uploaderId: world.alice,
+        fileId,
+        moderationStatus: opts.status ?? "rejected",
+        moderationScore: 0.97,
+        moderationLabel: "nsfw",
+        ...(opts.moderatedBy && { moderatedBy: opts.moderatedBy }),
+        ...(opts.hashCleared === false
+          ? { hashCheckPendingSince: 1 }
+          : { hashCheckedAt: 1 }),
+        createdAt: 1,
+        updatedAt: opts.rejectedAt ?? Date.now(),
+      });
+      return { imageId, fileId };
+    });
+
+  const thirtyOneDaysLater = () =>
+    Date.now() + REJECTED_COPY_PHOTO_TTL_MS + DAY_MS;
+  const sweep = async (t: T, now = thirtyOneDaysLater()) => {
+    await t.mutation(internal.library.moderationStore.sweepRejectedCopyPhotos, {
+      now,
+    });
+    await flush(t);
+  };
+
+  test("dry run: counted, nothing changes", async () => {
+    const t = convexTest(schema, modules);
+    const world = await seedCopy(t);
+    const { imageId, fileId } = await seedPhoto(t, world);
+
+    await sweep(t);
+
+    expect(await t.run((ctx) => ctx.db.get(imageId))).not.toBeNull();
+    expect(await blobExists(t, fileId)).toBe(true);
+    expect(
+      sweepEvents("copyPhotos").map((e) => [e.due, e.acted, e.dry_run]),
+    ).toEqual([[1, 0, true]]);
+  });
+
+  test("enforced: the row and its blob go, and the copy loses it as its cover", async () => {
+    vi.stubEnv("RETENTION_ENFORCE", "copyPhotos");
+    const t = convexTest(schema, modules);
+    const world = await seedCopy(t);
+    const { imageId, fileId } = await seedPhoto(t, world);
+    await t.run((ctx) => ctx.db.patch(world.copyId, { coverImageId: imageId }));
+
+    await sweep(t);
+
+    expect(await t.run((ctx) => ctx.db.get(imageId))).toBeNull();
+    expect(await blobExists(t, fileId)).toBe(false);
+    expect(await t.run((ctx) => ctx.db.get(world.copyId))).not.toHaveProperty(
+      "coverImageId",
+    );
+    expect(sweepEvents("copyPhotos")).toEqual([
+      expect.objectContaining({ due: 1, acted: 1, dry_run: false }),
+    ]);
+  });
+
+  test("kept: inside 30 days, a person's rejection, an approved photo, an open report, hash check not done", async () => {
+    vi.stubEnv("RETENTION_ENFORCE", "copyPhotos");
+    const t = convexTest(schema, modules);
+    const world = await seedCopy(t);
+    const now = thirtyOneDaysLater();
+    const kept = [
+      await seedPhoto(t, world, { rejectedAt: now - DAY_MS }),
+      await seedPhoto(t, world, { moderatedBy: world.bob }),
+      await seedPhoto(t, world, { status: "approved" }),
+      await seedPhoto(t, world, { hashCleared: false }),
+    ];
+    const reported = await seedPhoto(t, world);
+    await t.run((ctx) =>
+      ctx.db.insert("reports", {
+        reporterId: world.bob,
+        targetKind: "photo",
+        targetId: reported.imageId,
+        reportedUserId: world.alice,
+        reason: "sexual",
+        evidence: {},
+        status: "open",
+        createdAt: 1,
+      }),
+    );
+
+    await sweep(t, now);
+
+    for (const { imageId, fileId } of [...kept, reported]) {
+      expect(await t.run((ctx) => ctx.db.get(imageId))).not.toBeNull();
+      expect(await blobExists(t, fileId)).toBe(true);
+    }
+    expect(sweepEvents("copyPhotos")).toEqual([
+      expect.objectContaining({
+        due: 0,
+        acted: 0,
+        held_report: 1,
+        held_hash_check: 1,
+      }),
+    ]);
+  });
+
+  test("pages past the page size", async () => {
+    vi.stubEnv("RETENTION_ENFORCE", "copyPhotos");
+    const t = convexTest(schema, modules);
+    const world = await seedCopy(t);
+    for (let i = 0; i < RETENTION_SWEEP_PAGE + 2; i++) {
+      await seedPhoto(t, world);
+    }
+
+    await sweep(t);
+
+    expect(
+      await t.run((ctx) => ctx.db.query("ownedPuzzleImages").collect()),
+    ).toEqual([]);
+    expect(sweepEvents("copyPhotos").map((e) => e.acted)).toEqual([
+      RETENTION_SWEEP_PAGE,
+      2,
+    ]);
   });
 });

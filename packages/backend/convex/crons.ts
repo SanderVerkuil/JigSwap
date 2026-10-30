@@ -61,4 +61,13 @@ crons.daily(
   {},
 );
 
+// Copy photos the automated check rejected are deleted 30 days after the rejection, unless an
+// open report is about one or its hash check has not finished (library/moderationStore).
+crons.daily(
+  "rejected copy photo retention",
+  { hourUTC: 4, minuteUTC: 30 },
+  internal.library.moderationStore.sweepRejectedCopyPhotos,
+  {},
+);
+
 export default crons;
