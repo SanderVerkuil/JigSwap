@@ -82,19 +82,31 @@ your profile stays locked.
 
 Trades show the other member's details only inside that one trade.
 
-- **When you request a puzzle**, the owner sees your name, handle, email
-  address and the reviews you've received, for that trade only. The request
-  dialog tells you this before you send. If your profile is private, it adds
-  "Your profile itself stays private."
+- **When you request a puzzle**, the owner sees your name, handle and the
+  reviews you've received, for that trade only. The request dialog tells you
+  this before you send. If your profile is private, it adds "Your profile
+  itself stays private."
 - **The owner stays hidden from you** until they accept your request or reply
   in the trade's conversation. Until then, the trade shows "Their details
   appear once they accept or reply."
 - If the owner declines without replying, they stay hidden.
 
+Your email address is never shared just because you request, reply or accept.
+
 On **Exchanges** (`/trades`), open a trade with **View** to see the
-**trade-partner card**: name, handle, email, rating and the reviews they've
-received. A link to their profile appears only if you could see that profile
-anyway.
+**trade-partner card**: name, handle, rating and the reviews they've received.
+A link to their profile appears only if you could see that profile anyway.
+
+### Share your email address
+
+Once a trade is accepted, the trade-partner card shows a **Share my email with
+_name_** switch. Turn it on to show your email address to the other member,
+for that trade only. You can turn it off at any time. Their email address
+appears on your card only when they turned on their own switch.
+
+You can share while the trade is accepted, completed or disputed. If the
+trade is declined or cancelled, or one of you blocks the other, a shared email
+address is hidden again.
 
 The details you see in one trade don't unlock the other member's profile,
 library or activity. A second trade with the same member starts hidden again.
