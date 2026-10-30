@@ -14,7 +14,7 @@ const BOX_ART_HOLDERS = new Set<BlobReferenceKind>([
 // Read-only, one-off forensics for SEC-01 (box-art storage ids reached members, who could attach
 // one as their own photo and have it deleted). Pages over `puzzles` and reports:
 //   missingImage     - definitions whose `image` blob no longer exists: the art was destroyed and
-//                      has to be uploaded again (the admin list marks these "Missing cover").
+//                      has to be uploaded again (Admin → Puzzles marks these "Box art missing").
 //   heldByMemberRows - box art that another kind of row also holds (a copy or completion photo,
 //                      a message photo, another definition, ...): attached, not yet destroyed.
 // Legacy completion photos without a completionImages sidecar are only seen after
