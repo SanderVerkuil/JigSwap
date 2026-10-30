@@ -3845,7 +3845,7 @@
     "home": {
       "eyebrow": "Lend • Swap • Share",
       "heroTitle": "Share jigsaw puzzles with fellow enthusiasts",
-      "heroLead": "Build your own puzzle library, lend or swap puzzles, and always see who has your lent-out boxes. Connect with puzzlers across the country.",
+      "heroLead": "Build your own puzzle library, lend or swap puzzles, and always see who has your lent-out boxes. Connect with puzzlers across the Netherlands.",
       "seeFeatures": "See the features",
       "trustRow": "{count} puzzlers are already swapping",
       "trustRowEarly": "Be one of our first puzzlers",
@@ -3864,7 +3864,7 @@
         "step2Body": "Browse the community, filter by difficulty and piece count, and request a puzzle to borrow or swap.",
         "step3Title": "Lend & track",
         "step3Body": "Lend out for a while or indefinitely, and always see who has your puzzle.",
-        "link": "See how it works"
+        "link": "See the full five-step tour"
       },
       "rows": {
         "libraryEyebrow": "Your library",
@@ -4019,7 +4019,7 @@
       "tl2Body": "The tactile puzzle plank was born — a digital shelf that feels like home.",
       "tl3Year": "2026",
       "tl3Title": "A growing community",
-      "tl3Body": "Puzzlers now share, lend and swap across the country.",
+      "tl3Body": "Puzzlers now share, lend and swap across the Netherlands.",
       "cta": "Get in touch"
     },
     "contactPage": {
