@@ -22,7 +22,7 @@ export const timeZone = "Europe/Amsterdam";
 // (nested string maps, no `unknown`) and accepted directly by IntlProvider.
 export type Messages = AbstractIntlMessages;
 
-function isLocale(value: string | undefined): value is Locale {
+export function isLocale(value: string | undefined): value is Locale {
   return !!value && (locales as readonly string[]).includes(value);
 }
 

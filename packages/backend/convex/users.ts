@@ -10,6 +10,7 @@ import {
   QueryCtx,
 } from "./_generated/server";
 import { requireMember } from "./identity/requireMember";
+import { normalizeLocation } from "./identity/setLocation";
 
 // The lowercased text backing the `by_searchable_name` people-search index. Kept in sync on every
 // user write so member search is an index lookup, not a full-table scan + in-memory filter.
@@ -103,23 +104,30 @@ export const createOrUpdateUser = internalMutation({
 // were cut over to thin driving adapters under convex/identity/* and convex/insights/getGlobalStats
 // (returning typed view DTOs from @jigswap/contracts). Only writes + internal helpers remain here.
 
-// Update the Convex-only profile fields (bio / location / preferredLanguage).
-// Username is intentionally NOT writable here: Clerk is its source of truth
-// (uniqueness + validation), mirrored into this `users` row by the user.updated
-// webhook (see updateOrCreateUser).
+// Update the Convex-only account fields the profile editor and the language sync write: location
+// (same rules as identity/setLocation, via normalizeLocation) and preferredLanguage (a supported
+// locale only). An omitted field is left as it is. users.bio is not writable: the public bio is
+// profiles.bio (social/editProfile). Username is intentionally NOT writable here either: Clerk is
+// its source of truth (uniqueness + validation), mirrored into this `users` row by the
+// user.updated webhook (see updateOrCreateUser).
 export const updateUserProfile = mutation({
   args: {
-    bio: v.optional(v.string()),
     location: v.optional(v.string()),
-    preferredLanguage: v.optional(v.string()),
+    preferredLanguage: v.optional(v.union(v.literal("en"), v.literal("nl"))),
   },
   handler: async (ctx, args) => {
     // Ownership: the patched row is the authenticated member, never a client-supplied id (IDOR).
     const memberId = await requireMember(ctx);
-    await ctx.db.patch(memberId as unknown as Id<"users">, {
-      ...args,
-      updatedAt: Date.now(),
-    });
+    const userId = memberId as unknown as Id<"users">;
+    const patch: Partial<Doc<"users">> = { updatedAt: Date.now() };
+    if (args.location !== undefined) {
+      const current = (await ctx.db.get(userId))?.location;
+      patch.location = normalizeLocation(args.location, current);
+    }
+    if (args.preferredLanguage !== undefined) {
+      patch.preferredLanguage = args.preferredLanguage;
+    }
+    await ctx.db.patch(userId, patch);
   },
 });
 

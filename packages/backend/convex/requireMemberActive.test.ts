@@ -46,7 +46,9 @@ describe("requireMember refuses deactivated members", () => {
       as(t, "alice").query(api.settings.getMyUserSettings.getMyUserSettings),
     ).resolves.toBeDefined();
     await expect(
-      as(t, "alice").mutation(api.users.updateUserProfile, { bio: "hi" }),
+      as(t, "alice").mutation(api.users.updateUserProfile, {
+        location: "Utrecht",
+      }),
     ).resolves.toBeNull();
   });
 
@@ -65,7 +67,9 @@ describe("requireMember refuses deactivated members", () => {
     ).toBe(missing);
     expect(
       await rejection(
-        as(t, "tomb").mutation(api.users.updateUserProfile, { bio: "hi" }),
+        as(t, "tomb").mutation(api.users.updateUserProfile, {
+          location: "Utrecht",
+        }),
       ),
     ).toBe(missing);
   });
