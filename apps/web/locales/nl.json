@@ -819,7 +819,7 @@
     "dayToday": "Vandaag",
     "dayYesterday": "Gisteren",
     "empty": "Nog geen gesprekken",
-    "emptyHint": "Begin er een met Bericht op het profiel van een lid of bij een puzzel; elke uitwisseling krijgt ook een eigen chat. Elke kring heeft een groepschat, te vinden via Nieuw.",
+    "emptyHint": "Begin er een via Nieuw, of met Bericht op het profiel van een lid of bij een puzzel. Elke uitwisseling krijgt een eigen chat en elke kring heeft een groepschat.",
     "exchangeThread": "{type}: {title}",
     "filterKind": {
       "all": "Alle",
@@ -847,7 +847,7 @@
       "startTitle": "Begin een gesprek",
       "member": {
         "title": "Bericht aan een lid",
-        "text": "Gebruik Bericht op iemands profiel of bij een puzzel van die persoon."
+        "text": "Kies iemand via Nieuw, of gebruik Bericht op iemands profiel of bij een puzzel van die persoon."
       },
       "exchange": {
         "title": "Chats bij uitwisselingen",

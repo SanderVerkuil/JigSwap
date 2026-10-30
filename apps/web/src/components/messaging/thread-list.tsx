@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { stripFormatting } from "@jigswap/contracts";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { Link as RouterLink } from "@tanstack/react-router";
 import {
   ArrowLeftRight,
   BellOff,
@@ -253,11 +254,13 @@ function ThreadListBody({
           sub={t("emptyHint")}
           subClassName={guideBeside ? NO_SPLIT_ONLY_CLASS : undefined}
           action={
+            // Straight to finding someone: with no conversations yet, the
+            // New menu's member picker would mostly be empty (UX-114).
             <Button asChild variant="brand">
-              <Link href="/people">
+              <RouterLink to="/people" search={{ tab: "find" }}>
                 <UserRound className="h-4 w-4" />
                 {t("circle.messageMember")}
-              </Link>
+              </RouterLink>
             </Button>
           }
         />

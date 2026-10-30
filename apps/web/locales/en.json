@@ -819,7 +819,7 @@
     "dayToday": "Today",
     "dayYesterday": "Yesterday",
     "empty": "No conversations yet",
-    "emptyHint": "Start one with Message on a member's profile or a puzzle; every exchange gets its own chat too. Each of your circles has a group chat, under New.",
+    "emptyHint": "Start one under New, or with Message on a member's profile or a puzzle. Every exchange gets its own chat, and each of your circles has a group chat.",
     "exchangeThread": "{type}: {title}",
     "filterKind": {
       "all": "All",
@@ -847,7 +847,7 @@
       "startTitle": "Start a conversation",
       "member": {
         "title": "Message a member",
-        "text": "Use Message on their profile, or on a puzzle they own."
+        "text": "Pick someone under New, or use Message on their profile or on a puzzle they own."
       },
       "exchange": {
         "title": "Exchange chats",
