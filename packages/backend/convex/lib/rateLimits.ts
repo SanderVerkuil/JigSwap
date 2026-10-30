@@ -98,6 +98,10 @@ export const RATE_LIMITS = {
   // the invite and a decline closes it, so without this an invite/revoke loop would notify the
   // invitee without end; it is also the household's re-invite cooldown after a revoke or decline.
   householdInvitePair: { windowMs: WEEK, max: 3 },
+  // Push subscription registrations (notifications/pushSubscriptions), new or refreshed. The web
+  // registers only when a member turns push on for a device; each new endpoint can evict an older
+  // one past the per-member cap, so this also bounds that churn.
+  pushSubscribe: { windowMs: HOUR, max: 10 },
 } as const satisfies Record<string, { windowMs: number; max: number }>;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;

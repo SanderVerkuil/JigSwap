@@ -1,5 +1,6 @@
 import { convexTest, type TestConvex } from "convex-test";
-import { describe, expect, test } from "vitest";
+import { ConvexError } from "convex/values";
+import { describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
 import schema from "./schema";
 
@@ -22,11 +23,26 @@ const seedUser = async (
     });
   });
 
-const SUB = {
-  endpoint: "https://push.example/abc",
-  p256dh: "pkey",
-  auth: "akey",
-};
+// Base64url without padding, as PushSubscription.toJSON() emits it.
+const b64url = (bytes: readonly number[]): string =>
+  btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+// A key set: p256dh a 65-byte uncompressed point (0x04 first), auth 16 bytes.
+const keysOf = (seed: number) => ({
+  p256dh: b64url(Array.from({ length: 65 }, (_, i) => (i === 0 ? 4 : seed))),
+  auth: b64url(Array.from({ length: 16 }, () => seed)),
+});
+const KEYS = keysOf(1);
+const ROTATED = keysOf(2);
+
+const fcm = (token: string) => `https://fcm.googleapis.com/fcm/send/${token}`;
+
+const SUB = { endpoint: fcm("abc"), ...KEYS };
+
+const subscriptionsOf = (t: TestConvex<typeof schema>) =>
+  t.run((ctx) => ctx.db.query("pushSubscriptions").collect());
 
 describe("push subscription registration", () => {
   test("registers a subscription owned by the authed member", async () => {
@@ -46,7 +62,7 @@ describe("push subscription registration", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].userId).toBe(alice);
     expect(rows[0].endpoint).toBe(SUB.endpoint);
-    expect(rows[0].p256dh).toBe("pkey");
+    expect(rows[0].p256dh).toBe(KEYS.p256dh);
   });
 
   test("re-registering the same endpoint updates keys in place (no duplicate)", async () => {
@@ -60,15 +76,15 @@ describe("push subscription registration", () => {
     );
     await asAlice.mutation(
       api.notifications.pushSubscriptions.registerPushSubscription,
-      { ...SUB, p256dh: "rotated", auth: "rotated-auth" },
+      { ...SUB, ...ROTATED },
     );
 
     const rows = await t.run((ctx) =>
       ctx.db.query("pushSubscriptions").collect(),
     );
     expect(rows).toHaveLength(1);
-    expect(rows[0].p256dh).toBe("rotated");
-    expect(rows[0].auth).toBe("rotated-auth");
+    expect(rows[0].p256dh).toBe(ROTATED.p256dh);
+    expect(rows[0].auth).toBe(ROTATED.auth);
   });
 
   test("unregister removes only the caller's own subscription", async () => {
@@ -139,5 +155,220 @@ describe("push subscription registration", () => {
     expect(
       await t.run((ctx) => ctx.db.query("pushSubscriptions").collect()),
     ).toHaveLength(0);
+  });
+});
+
+describe("push subscription safety (SEC-16)", () => {
+  const codeOf = async (promise: Promise<unknown>) => {
+    try {
+      await promise;
+    } catch (error) {
+      return error instanceof ConvexError
+        ? (error.data as { code: string }).code
+        : String(error);
+    }
+    return "ok";
+  };
+
+  test("refuses endpoints off the push services, and keeps nothing (NOTIF-1)", async () => {
+    const t = convexTest(schema, modules);
+    await seedUser(t, "clerk_alice", "alice@example.com");
+    const asAlice = t.withIdentity({ subject: "clerk_alice" });
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    for (const endpoint of [
+      "https://10.0.0.1:8443/internal",
+      "https://169.254.169.254/latest/meta-data",
+      "file:///etc/passwd",
+      `https://tarpit.attacker.example/${"x".repeat(20_000)}`,
+      // An allowlisted host doesn't excuse a 20 KB path.
+      fcm("x".repeat(20_000)),
+    ]) {
+      expect(
+        await codeOf(
+          asAlice.mutation(
+            api.notifications.pushSubscriptions.registerPushSubscription,
+            { endpoint, ...KEYS },
+          ),
+        ),
+        endpoint.slice(0, 60),
+      ).toBe("InvalidPushSubscription");
+    }
+    expect(await subscriptionsOf(t)).toHaveLength(0);
+
+    // The refusal logs the host, never the path (it would carry a device token).
+    const lines = error.mock.calls.map((call) => String(call[0]));
+    const refusal = lines.find((line) => line.includes("10.0.0.1"));
+    expect(refusal).toContain('"endpoint_host":"10.0.0.1"');
+    expect(refusal).not.toContain("internal");
+    expect(lines.join("\n")).not.toContain("x".repeat(100));
+    error.mockRestore();
+  });
+
+  test("refuses keys a push service could not encrypt to", async () => {
+    const t = convexTest(schema, modules);
+    await seedUser(t, "clerk_alice", "alice@example.com");
+    const asAlice = t.withIdentity({ subject: "clerk_alice" });
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    for (const keys of [
+      { p256dh: "pkey", auth: KEYS.auth },
+      { p256dh: KEYS.p256dh, auth: "akey" },
+      { p256dh: "x".repeat(100_000), auth: KEYS.auth },
+    ]) {
+      expect(
+        await codeOf(
+          asAlice.mutation(
+            api.notifications.pushSubscriptions.registerPushSubscription,
+            { endpoint: fcm("abc"), ...keys },
+          ),
+        ),
+      ).toBe("InvalidPushSubscription");
+    }
+    expect(await subscriptionsOf(t)).toHaveLength(0);
+    error.mockRestore();
+  });
+
+  test("an eleventh subscription evicts the member's oldest", async () => {
+    const t = convexTest(schema, modules);
+    const alice = await seedUser(t, "clerk_alice", "alice@example.com");
+    const bob = await seedUser(t, "clerk_bob", "bob@example.com");
+    // Ten devices already registered (seeded directly: the hourly limit is also ten).
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 10; i += 1) {
+        await ctx.db.insert("pushSubscriptions", {
+          userId: alice,
+          endpoint: fcm(`device-${i}`),
+          ...KEYS,
+          createdAt: 1_000 + i,
+        });
+      }
+      await ctx.db.insert("pushSubscriptions", {
+        userId: bob,
+        endpoint: fcm("bob-device"),
+        ...KEYS,
+        createdAt: 500,
+      });
+    });
+
+    await t
+      .withIdentity({ subject: "clerk_alice" })
+      .mutation(api.notifications.pushSubscriptions.registerPushSubscription, {
+        endpoint: fcm("device-new"),
+        ...KEYS,
+      });
+
+    const rows = await subscriptionsOf(t);
+    const alices = rows
+      .filter((row) => row.userId === alice)
+      .map((row) => row.endpoint)
+      .sort();
+    expect(alices).toHaveLength(10);
+    expect(alices).not.toContain(fcm("device-0"));
+    expect(alices).toContain(fcm("device-new"));
+    expect(alices).toContain(fcm("device-1"));
+    // Another member's subscriptions are never counted or evicted.
+    expect(rows.filter((row) => row.userId === bob)).toHaveLength(1);
+  });
+
+  test("re-registering a device at the cap evicts nothing", async () => {
+    const t = convexTest(schema, modules);
+    const alice = await seedUser(t, "clerk_alice", "alice@example.com");
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 10; i += 1) {
+        await ctx.db.insert("pushSubscriptions", {
+          userId: alice,
+          endpoint: fcm(`device-${i}`),
+          ...KEYS,
+          createdAt: 1_000 + i,
+        });
+      }
+    });
+
+    // The oldest device re-subscribes (e.g. after a key rotation): it is kept, nothing is evicted.
+    await t
+      .withIdentity({ subject: "clerk_alice" })
+      .mutation(api.notifications.pushSubscriptions.registerPushSubscription, {
+        endpoint: fcm("device-0"),
+        ...ROTATED,
+      });
+
+    const rows = await subscriptionsOf(t);
+    expect(rows).toHaveLength(10);
+    expect(rows.find((row) => row.endpoint === fcm("device-0"))?.p256dh).toBe(
+      ROTATED.p256dh,
+    );
+  });
+
+  test("a device taken over from another member counts toward the new owner's cap", async () => {
+    const t = convexTest(schema, modules);
+    const alice = await seedUser(t, "clerk_alice", "alice@example.com");
+    const bob = await seedUser(t, "clerk_bob", "bob@example.com");
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 10; i += 1) {
+        await ctx.db.insert("pushSubscriptions", {
+          userId: alice,
+          endpoint: fcm(`device-${i}`),
+          ...KEYS,
+          createdAt: 1_000 + i,
+        });
+      }
+      // The shared device was registered (by Bob) before all of Alice's.
+      await ctx.db.insert("pushSubscriptions", {
+        userId: bob,
+        endpoint: fcm("shared"),
+        ...KEYS,
+        createdAt: 1,
+      });
+    });
+
+    await t
+      .withIdentity({ subject: "clerk_alice" })
+      .mutation(api.notifications.pushSubscriptions.registerPushSubscription, {
+        endpoint: fcm("shared"),
+        ...KEYS,
+      });
+
+    const alices = (await subscriptionsOf(t))
+      .filter((row) => row.userId === alice)
+      .map((row) => row.endpoint);
+    expect(alices).toHaveLength(10);
+    // The device just registered stays, however old its row; her oldest other device goes.
+    expect(alices).toContain(fcm("shared"));
+    expect(alices).not.toContain(fcm("device-0"));
+  });
+
+  test("registrations are rate limited per member", async () => {
+    const t = convexTest(schema, modules);
+    await seedUser(t, "clerk_alice", "alice@example.com");
+    await seedUser(t, "clerk_bob", "bob@example.com");
+    const asAlice = t.withIdentity({ subject: "clerk_alice" });
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    for (let i = 0; i < 10; i += 1) {
+      await asAlice.mutation(
+        api.notifications.pushSubscriptions.registerPushSubscription,
+        { endpoint: fcm(`device-${i}`), ...KEYS },
+      );
+    }
+    expect(
+      await codeOf(
+        asAlice.mutation(
+          api.notifications.pushSubscriptions.registerPushSubscription,
+          { endpoint: fcm("device-10"), ...KEYS },
+        ),
+      ),
+    ).toBe("RateLimited");
+    expect(await subscriptionsOf(t)).toHaveLength(10);
+
+    // Another member has their own budget.
+    await t
+      .withIdentity({ subject: "clerk_bob" })
+      .mutation(api.notifications.pushSubscriptions.registerPushSubscription, {
+        endpoint: fcm("bob"),
+        ...KEYS,
+      });
+    expect(await subscriptionsOf(t)).toHaveLength(11);
+    error.mockRestore();
   });
 });

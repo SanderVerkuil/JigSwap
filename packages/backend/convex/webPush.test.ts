@@ -1,7 +1,9 @@
 import { describe, expect, test, vi } from "vitest";
 import {
   DEFAULT_SUBJECT,
+  isAllowedPushEndpoint,
   isGoneStatus,
+  isValidPushKeys,
   noopWebPushSender,
   notificationUrl,
   toWebPushPayload,
@@ -176,5 +178,105 @@ describe("toWebPushPayload", () => {
       "/messages/thread-1",
     );
     expect(toWebPushPayload({ ...base, url: null }).url).toBe("/messages");
+  });
+});
+
+// Base64url without padding, as PushSubscription.toJSON() emits it.
+const b64url = (bytes: readonly number[]): string =>
+  btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+const bytes = (length: number, first = 7): number[] =>
+  Array.from({ length }, (_, i) => (i === 0 ? first : (i * 37) % 256));
+
+describe("isAllowedPushEndpoint", () => {
+  test("accepts the browser push services", () => {
+    for (const endpoint of [
+      "https://fcm.googleapis.com/fcm/send/dXk3:APA91bH",
+      "https://fcm.googleapis.com/wp/dXk3:APA91bH",
+      "https://android.googleapis.com/gcm/send/abc",
+      "https://updates.push.services.mozilla.com/wpush/v2/gAAAAABk",
+      "https://web.push.apple.com/QGuQyavXutnMx",
+      "https://api.push.apple.com/QGuQyavXutnMx",
+      "https://wns2-par02p.notify.windows.com/w/?token=BQYAAAD%2b",
+    ]) {
+      expect(isAllowedPushEndpoint(endpoint), endpoint).toBe(true);
+    }
+  });
+
+  test("refuses other schemes, hosts, ports and the NOTIF-1 targets", () => {
+    for (const endpoint of [
+      "file:///etc/passwd",
+      "http://fcm.googleapis.com/fcm/send/abc",
+      "https://10.0.0.1:8443/internal",
+      "https://169.254.169.254/latest/meta-data",
+      "https://127.0.0.1/",
+      "https://tarpit.attacker.example/x",
+      "https://push.example/abc",
+      // Lookalikes: the allowlisted name must be the host, not a label or a prefix of it.
+      "https://fcm.googleapis.com.attacker.example/x",
+      "https://attacker-fcm.googleapis.com.example/x",
+      "https://notify.windows.com.attacker.example/w",
+      "https://evilpush.apple.com/x",
+      // An explicit port, userinfo, or an authority a laxer parser could read differently.
+      "https://fcm.googleapis.com:8443/fcm/send/abc",
+      "https://user@fcm.googleapis.com/fcm/send/abc",
+      "https://attacker.example\\@fcm.googleapis.com/x",
+      "https://FCM.googleapis.com/fcm/send/abc",
+      "https://fcm.googleapis.com",
+      " https://fcm.googleapis.com/fcm/send/abc",
+      "https://fcm.googleapis.com/fcm/send/a b",
+      "https://fcm.googleapis.com/fcm/send/\u00e9",
+      "not a url",
+      "",
+    ]) {
+      expect(isAllowedPushEndpoint(endpoint), endpoint).toBe(false);
+    }
+  });
+
+  test("caps the endpoint at 2048 characters", () => {
+    const base = "https://fcm.googleapis.com/fcm/send/";
+    expect(isAllowedPushEndpoint(base + "x".repeat(2048 - base.length))).toBe(
+      true,
+    );
+    expect(isAllowedPushEndpoint(base + "x".repeat(2049 - base.length))).toBe(
+      false,
+    );
+    expect(isAllowedPushEndpoint(base + "x".repeat(20_000))).toBe(false);
+  });
+});
+
+describe("isValidPushKeys", () => {
+  const p256dh = b64url(bytes(65, 0x04));
+  const auth = b64url(bytes(16));
+
+  test("accepts a 65-byte uncompressed P-256 key and a 16-byte auth secret", () => {
+    expect(isValidPushKeys({ p256dh, auth })).toBe(true);
+    // Padded base64url decodes to the same bytes.
+    expect(isValidPushKeys({ p256dh: `${p256dh}=`, auth: `${auth}==` })).toBe(
+      true,
+    );
+  });
+
+  test("refuses keys of the wrong length, encoding or point format", () => {
+    for (const keys of [
+      { p256dh: "pkey", auth },
+      { p256dh, auth: "akey" },
+      { p256dh: b64url(bytes(64, 0x04)), auth },
+      { p256dh: b64url(bytes(66, 0x04)), auth },
+      // A compressed point (0x02/0x03) or anything not starting 0x04.
+      { p256dh: b64url(bytes(65, 0x02)), auth },
+      { p256dh, auth: b64url(bytes(15)) },
+      { p256dh, auth: b64url(bytes(32)) },
+      // Standard base64 alphabet, whitespace, or junk.
+      { p256dh: `+${p256dh.slice(1)}`, auth },
+      { p256dh, auth: `/${auth.slice(1)}` },
+      { p256dh: ` ${p256dh}`, auth },
+      { p256dh, auth: `${auth}!` },
+      { p256dh: "", auth: "" },
+    ]) {
+      expect(isValidPushKeys(keys), JSON.stringify(keys)).toBe(false);
+    }
   });
 });
