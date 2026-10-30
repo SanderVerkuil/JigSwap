@@ -341,6 +341,7 @@ import type * as library_createPersonalCategory from "../library/createPersonalC
 import type * as library_definitionAggregates from "../library/definitionAggregates.js";
 import type * as library_deleteCollection from "../library/deleteCollection.js";
 import type * as library_deleteCopy from "../library/deleteCopy.js";
+import type * as library_deletePhotoComment from "../library/deletePhotoComment.js";
 import type * as library_errors from "../library/errors.js";
 import type * as library_exchangeRoutes from "../library/exchangeRoutes.js";
 import type * as library_getBorrowedLoans from "../library/getBorrowedLoans.js";
@@ -503,6 +504,7 @@ import type * as social_createHouseholdInviteLink from "../social/createHousehol
 import type * as social_declineConnection from "../social/declineConnection.js";
 import type * as social_declineFollowRequest from "../social/declineFollowRequest.js";
 import type * as social_declineHouseholdLinkInvite from "../social/declineHouseholdLinkInvite.js";
+import type * as social_deletePuzzleComment from "../social/deletePuzzleComment.js";
 import type * as social_editProfile from "../social/editProfile.js";
 import type * as social_errors from "../social/errors.js";
 import type * as social_establishMutualFollow from "../social/establishMutualFollow.js";
@@ -919,6 +921,7 @@ declare const fullApi: ApiFromModules<{
   "library/definitionAggregates": typeof library_definitionAggregates;
   "library/deleteCollection": typeof library_deleteCollection;
   "library/deleteCopy": typeof library_deleteCopy;
+  "library/deletePhotoComment": typeof library_deletePhotoComment;
   "library/errors": typeof library_errors;
   "library/exchangeRoutes": typeof library_exchangeRoutes;
   "library/getBorrowedLoans": typeof library_getBorrowedLoans;
@@ -1081,6 +1084,7 @@ declare const fullApi: ApiFromModules<{
   "social/declineConnection": typeof social_declineConnection;
   "social/declineFollowRequest": typeof social_declineFollowRequest;
   "social/declineHouseholdLinkInvite": typeof social_declineHouseholdLinkInvite;
+  "social/deletePuzzleComment": typeof social_deletePuzzleComment;
   "social/editProfile": typeof social_editProfile;
   "social/errors": typeof social_errors;
   "social/establishMutualFollow": typeof social_establishMutualFollow;

@@ -11,7 +11,9 @@ export type SocialApplicationErrorCode =
   | "ProfileNotFound"
   | "RequestNotFound"
   | "NotRequestTarget"
-  | "NotRequestOwner";
+  | "NotRequestOwner"
+  | "CommentNotFound"
+  | "NotCommentAuthor";
 
 export class SocialApplicationError extends DomainError {
   override readonly name = "SocialApplicationError";
@@ -74,6 +76,19 @@ export class SocialApplicationError extends DomainError {
     return new SocialApplicationError(
       "NotRequestOwner",
       "Only the requesting member can cancel this follow request",
+    );
+  }
+
+  // No comment (puzzle-copy or photo comment) exists with the given id.
+  static commentNotFound(): SocialApplicationError {
+    return new SocialApplicationError("CommentNotFound", "No such comment");
+  }
+
+  // Only the member who wrote a comment may delete it.
+  static notCommentAuthor(): SocialApplicationError {
+    return new SocialApplicationError(
+      "NotCommentAuthor",
+      "Only the author can delete this comment",
     );
   }
 }

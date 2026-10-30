@@ -1640,7 +1640,8 @@ export default defineSchema({
     .index("by_aggregate_id", ["aggregateId"]),
 
   // Social: a community comment on a PUZZLE DEFINITION (shared across every owned copy of that
-  // puzzle). A lightweight, append-only post: trimmed text + author + when.
+  // puzzle). A lightweight post: trimmed text + author + when; never edited, and only its author
+  // may delete it (social/deletePuzzleComment, SEC-70).
   // aggregateId is the CommentId; `by_puzzle` backs the newest-first read keyed on puzzleId.
   puzzleComments: defineTable({
     aggregateId: v.optional(v.string()),
@@ -1654,13 +1655,15 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_puzzle", ["puzzleId"])
-    .index("by_copy", ["copyId"]),
+    .index("by_copy", ["copyId"])
+    // The author's delete finds the comment by the id the read side shows (its aggregateId).
+    .index("by_aggregate_id", ["aggregateId"]),
 
   // Social: a text-only discussion comment on a single shared PHOTO (an `ownedPuzzleImages` row),
   // surfaced in the photo lightbox. Keyed by the photo _id (not a puzzle definition); aggregateId is
-  // the PhotoCommentId (the id the web holds, and a photoComment report's target). Append-only for
-  // members; a moderator deletes a reported one (admin/decideReport). The read side projects this
-  // table directly into view DTOs.
+  // the PhotoCommentId (the id the web holds, and a photoComment report's target). Never edited.
+  // Only its author may delete it (library/deletePhotoComment, SEC-70), and a moderator deletes a
+  // reported one (admin/decideReport). The read side projects this table directly into view DTOs.
   photoComments: defineTable({
     aggregateId: v.optional(v.string()),
     photoId: v.id("ownedPuzzleImages"),
@@ -1669,6 +1672,8 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_photo", ["photoId"])
+    // The author's delete and a report's target find the comment by the id the read side shows
+    // (its aggregateId).
     .index("by_aggregate_id", ["aggregateId"]),
 
   // Social: a directed follow edge (followerId -> followeeId). Indexed both ways so the read side

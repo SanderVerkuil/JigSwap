@@ -9,7 +9,8 @@ import { projectMemberIdentity } from "./privacy";
 
 // Read side: the COPY-scoped comments on the given owned copy (the owner's own plain-text notes),
 // newest first — NOT the shared community reviews (those live on the catalog page via
-// listPuzzleReviews). A missing copy returns [].
+// listPuzzleReviews). A missing copy returns []. `canDelete` marks the viewer's own comments: only
+// the author may delete one (SEC-70).
 //
 // SECURITY: auth-gated, and the copy is run through the SAME reachability gate as getCopyInstanceView
 // (canViewCopy) before any comment is returned — a private/unreachable copy of another member yields
@@ -62,6 +63,7 @@ export const listPuzzleComments = query({
             author: await authorOf(row.authorId),
             text: row.text,
             createdAt: row.createdAt,
+            canDelete: row.authorId === viewerId,
           } satisfies PuzzleCommentView,
         })),
     );

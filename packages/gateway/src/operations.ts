@@ -124,6 +124,8 @@ export const gateway = {
     // Photo metadata itself flows through getCopyInstanceView's gallery.
     postPhotoComment: api.library.postPhotoComment.postPhotoComment,
     listPhotoComments: api.library.listPhotoComments.listPhotoComments,
+    // Author-only: a member deletes a photo comment they wrote (the view's `canDelete`).
+    deletePhotoComment: api.library.deletePhotoComment.deletePhotoComment,
     // Image upload is storage infra, not a domain op; keep it on the legacy function. The URL is
     // used for copy photos.
     generateUploadUrl: api.puzzles.generateUploadUrl,
@@ -492,6 +494,8 @@ export const gateway = {
     // SEC-11), as are the review authors below.
     postPuzzleComment: api.social.postPuzzleComment.postPuzzleComment,
     listPuzzleComments: api.social.listPuzzleComments.listPuzzleComments,
+    // Author-only: a member deletes a copy comment they wrote (the view's `canDelete`).
+    deletePuzzleComment: api.social.deletePuzzleComment.deletePuzzleComment,
     // Community reviews keyed by the puzzle DEFINITION (the catalog detail page has no copy id).
     // Same `puzzleComments` table + post-comment use case as the copy-keyed variants above.
     postPuzzleReview: api.social.postPuzzleReview.postPuzzleReview,

@@ -23,6 +23,7 @@ export const isPhotoOpenForComments = (
 
 // Read side: the discussion comments on a single shared PHOTO, newest first, at most
 // PHOTO_COMMENTS_LIMIT of them. Keyed by the `ownedPuzzleImages` _id the lightbox shows.
+// `canDelete` marks the viewer's own comments: only the author may delete one (SEC-70).
 //
 // SECURITY: auth-gated, and the photo's parent copy is run through the SAME reachability gate as
 // getCopyInstanceView (canViewCopy) before any comment is returned — a missing or unpublished
@@ -78,6 +79,7 @@ export const listPhotoComments = query({
             author: await authorOf(row.authorId),
             text: row.text,
             createdAt: row.createdAt,
+            canDelete: row.authorId === viewerId,
           } satisfies PhotoCommentView,
         })),
     );
