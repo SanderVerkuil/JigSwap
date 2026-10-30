@@ -35,6 +35,7 @@ import {
   formatSolveTime,
   hrefForLink,
 } from "@/lib/completion-format";
+import { formatDateOnly } from "@/lib/date-input";
 import { pageTitle } from "@/lib/page-title";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -167,7 +168,8 @@ function CompletionsPage() {
 
   const formatTime = (minutes?: number): string => formatSolveTime(t, minutes);
 
-  const formatDate = (ms: number) => new Date(ms).toLocaleDateString();
+  // Solve dates are calendar dates stored as UTC midnight, so they format in UTC.
+  const formatDate = (ms: number) => formatDateOnly(ms);
 
   // Top stats, computed from the real solve log: total finished, pieces placed
   // across those (via the library join) and finishes within the current year.
@@ -182,7 +184,8 @@ function CompletionsPage() {
       "copySnapshot" in completion ? completion.copySnapshot : undefined;
     return sum + (info?.pieceCount ?? snapshot?.pieceCount ?? 0);
   }, 0);
-  const yearStart = new Date(new Date().getFullYear(), 0, 1).getTime();
+  // 1 January of the member's local year, at UTC midnight like the stored solve dates.
+  const yearStart = Date.UTC(new Date().getFullYear(), 0, 1);
   // Undated solves never count toward "this year"; year-only ones do when the year is this one.
   const thisYear = finished.filter((completion) =>
     countsTowardThisYear(completion, yearStart),

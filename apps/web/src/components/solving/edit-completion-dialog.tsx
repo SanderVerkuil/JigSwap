@@ -13,24 +13,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
+import { dateInputToMs, msToDateInput } from "@/lib/date-input";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import { solvingErrorCode } from "./solving-error";
-
-// Epoch ms -> `yyyy-mm-dd` for a date input (empty for undefined).
-function msToDateInput(ms?: number): string {
-  if (ms === undefined) return "";
-  return new Date(ms).toISOString().slice(0, 10);
-}
-
-function dateInputToMs(value: string): number | undefined {
-  if (!value) return undefined;
-  const ms = new Date(value).getTime();
-  return Number.isNaN(ms) ? undefined : ms;
-}
 
 interface EditCompletionDialogProps {
   open: boolean;

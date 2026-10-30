@@ -1,3 +1,4 @@
+import { formatDateOnly } from "@/lib/date-input";
 import type { useTranslations } from "use-intl";
 
 // Shared by the member's own completion log and the profile completions list.
@@ -40,7 +41,8 @@ type DatedCompletion = {
 };
 
 // A finished solve's date: the date itself, "In 2023" for a year-only solve, or "Date unknown".
-// Year-only and undated solves hold sentinel dates, so those are never shown as dates.
+// Year-only and undated solves hold sentinel dates, so those are never shown as dates. A dated
+// solve is a calendar date stored as UTC midnight, so it is formatted in UTC (lib/date-input).
 export function formatCompletionDate(
   t: ReturnType<typeof useTranslations<"solving.completions">>,
   completion: DatedCompletion,
@@ -51,11 +53,12 @@ export function formatCompletionDate(
   if (completion.datePrecision === "year") {
     return t("inYear", { year: String(new Date(at).getUTCFullYear()) });
   }
-  return new Date(at).toLocaleDateString();
+  return formatDateOnly(at);
 }
 
 // Whether a finished solve counts toward the "This year" stat: dated and year-only solves in the
-// year count; undated ones never do (their sentinel is the day they were logged).
+// year count; undated ones never do (their sentinel is the day they were logged). `yearStart` is
+// 1 January of the member's year at UTC midnight, matching how solve dates are stored.
 export function countsTowardThisYear(
   completion: DatedCompletion,
   yearStart: number,

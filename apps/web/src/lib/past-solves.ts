@@ -1,3 +1,5 @@
+import { dateInputToMs } from "@/lib/date-input";
+
 // Pure helpers behind the bulk "I've solved these" rows (quick start step 2, PastSolvesForm).
 
 // The earliest year the "Which year" select offers (spec 2026-10-17 §2.4).
@@ -44,12 +46,9 @@ export function toPastCompletionItem(
   if (choice.when === "year") {
     return { copyId, datePrecision: "year", year: choice.year };
   }
-  if (!choice.date) return null;
-  return {
-    copyId,
-    datePrecision: "day",
-    date: new Date(choice.date).getTime(),
-  };
+  const date = dateInputToMs(choice.date);
+  if (date === undefined) return null;
+  return { copyId, datePrecision: "day", date };
 }
 
 // The "Which year" options: this year down to 1950.

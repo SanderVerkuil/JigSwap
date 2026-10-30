@@ -17,26 +17,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
 import { useUserSettings } from "@/hooks/use-user-settings";
+import { dateInputToMs, localTodayInput } from "@/lib/date-input";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import { solveSaveErrorKey } from "./solving-error";
-
-// Today as a `yyyy-mm-dd` string for the native date inputs (the dialog defaults the start date
-// to today so the common "I just finished" case is one fewer field).
-function todayInputValue(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-// A date input value (`yyyy-mm-dd`) -> epoch ms at local midnight, or undefined when empty so an
-// omitted end date keeps the solve in progress.
-function dateInputToMs(value: string): number | undefined {
-  if (!value) return undefined;
-  const ms = new Date(value).getTime();
-  return Number.isNaN(ms) ? undefined : ms;
-}
 
 interface LogSolveDialogProps {
   open: boolean;
@@ -71,8 +58,9 @@ export function LogSolveDialog({
   const { requestPrompt } = useDurationPrompt();
   const { requestFollowUp } = useCompletionFollowUp();
 
-  const [startDate, setStartDate] = useState(todayInputValue);
-  const [endDate, setEndDate] = useState(todayInputValue);
+  // Both dates default to the member's local today, so "I just finished" is one tap.
+  const [startDate, setStartDate] = useState(() => localTodayInput());
+  const [endDate, setEndDate] = useState(() => localTodayInput());
   const [hours, setHours] = useState("");
   const [minutes, setMinutes] = useState("");
   const [notes, setNotes] = useState("");
@@ -100,8 +88,8 @@ export function LogSolveDialog({
   );
 
   const reset = () => {
-    setStartDate(todayInputValue());
-    setEndDate(todayInputValue());
+    setStartDate(localTodayInput());
+    setEndDate(localTodayInput());
     setHours("");
     setMinutes("");
     setNotes("");

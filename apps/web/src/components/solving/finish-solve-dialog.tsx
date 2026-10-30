@@ -15,16 +15,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { gateway } from "@/gateway";
 import { useUserSettings } from "@/hooks/use-user-settings";
+import {
+  dateInputToMs,
+  localTodayInput,
+  msToDateInput,
+} from "@/lib/date-input";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import { solvingErrorCode } from "./solving-error";
-
-function todayInputValue(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 
 interface FinishSolveDialogProps {
   open: boolean;
@@ -55,7 +56,7 @@ export function FinishSolveDialog({
   const { trackCompletionDuration } = useUserSettings();
   const { requestFollowUp } = useCompletionFollowUp();
 
-  const [endDate, setEndDate] = useState(todayInputValue);
+  const [endDate, setEndDate] = useState(() => localTodayInput());
   const [hours, setHours] = useState("");
   const [minutes, setMinutes] = useState("");
   const [allPiecesPresent, setAllPiecesPresent] = useState(true);
@@ -64,8 +65,8 @@ export function FinishSolveDialog({
   const showDuration = trackCompletionDuration === true;
 
   const handleSubmit = async () => {
-    const end = new Date(endDate).getTime();
-    if (Number.isNaN(end)) return;
+    const end = dateInputToMs(endDate);
+    if (end === undefined) return;
     const totalMinutes =
       (Number(hours) || 0) * 60 + (Number(minutes) || 0) || undefined;
 
@@ -106,9 +107,7 @@ export function FinishSolveDialog({
               type="date"
               value={endDate}
               min={
-                minEndDate !== undefined
-                  ? new Date(minEndDate).toISOString().slice(0, 10)
-                  : undefined
+                minEndDate !== undefined ? msToDateInput(minEndDate) : undefined
               }
               onChange={(e) => setEndDate(e.target.value)}
             />

@@ -1,5 +1,5 @@
 import { createTranslator } from "use-intl";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../locales/en.json";
 import nl from "../../locales/nl.json";
 import {
@@ -20,12 +20,15 @@ const tNl = createTranslator({
   namespace: "solving.completions",
 }) as unknown as T;
 
-const MARCH = new Date(2025, 2, 14).getTime();
+// A stored solve date: the calendar date at UTC midnight (lib/date-input).
+const MARCH = Date.UTC(2025, 2, 14);
+const inUtc = (ms: number) =>
+  new Date(ms).toLocaleDateString(undefined, { timeZone: "UTC" });
 const SENTINEL_2023 = Date.UTC(2023, 6, 1, 12);
 
 describe("formatCompletionDate", () => {
   it("shows the date for a dated solve, absent precision included", () => {
-    const expected = new Date(MARCH).toLocaleDateString();
+    const expected = inUtc(MARCH);
     expect(formatCompletionDate(tEn, { startDate: 0, endDate: MARCH })).toBe(
       expected,
     );
@@ -39,10 +42,28 @@ describe("formatCompletionDate", () => {
   });
 
   it("falls back to the start date when there is no end", () => {
-    expect(formatCompletionDate(tEn, { startDate: MARCH })).toBe(
-      new Date(MARCH).toLocaleDateString(),
-    );
+    expect(formatCompletionDate(tEn, { startDate: MARCH })).toBe(inUtc(MARCH));
   });
+
+  describe.each(["America/Los_Angeles", "Europe/Amsterdam"])(
+    "in %s",
+    (zone) => {
+      afterEach(() => {
+        vi.unstubAllEnvs();
+      });
+
+      it("shows the calendar date the member picked, not the day before", () => {
+        vi.stubEnv("TZ", zone);
+        // Noon UTC is the same calendar day in both zones, so its local date is the expected one.
+        const sameDayLocal = new Date(
+          Date.UTC(2025, 2, 14, 12),
+        ).toLocaleDateString();
+        expect(
+          formatCompletionDate(tEn, { startDate: MARCH, endDate: MARCH }),
+        ).toBe(sameDayLocal);
+      });
+    },
+  );
 
   it("labels a year-only solve with its year, never the sentinel date", () => {
     const solve = {
@@ -66,9 +87,9 @@ describe("formatCompletionDate", () => {
 });
 
 describe("countsTowardThisYear", () => {
-  const yearStart = new Date(2026, 0, 1).getTime();
-  const thisYear = new Date(2026, 4, 2).getTime();
-  const lastYear = new Date(2025, 4, 2).getTime();
+  const yearStart = Date.UTC(2026, 0, 1);
+  const thisYear = Date.UTC(2026, 4, 2);
+  const lastYear = Date.UTC(2025, 4, 2);
 
   it("counts dated and year-only solves inside the year", () => {
     expect(
@@ -84,6 +105,21 @@ describe("countsTowardThisYear", () => {
         yearStart,
       ),
     ).toBe(true);
+  });
+
+  it("counts a solve on 1 January and skips one on 31 December", () => {
+    expect(
+      countsTowardThisYear(
+        { startDate: 0, endDate: Date.UTC(2026, 0, 1) },
+        yearStart,
+      ),
+    ).toBe(true);
+    expect(
+      countsTowardThisYear(
+        { startDate: 0, endDate: Date.UTC(2025, 11, 31) },
+        yearStart,
+      ),
+    ).toBe(false);
   });
 
   it("skips solves from earlier years", () => {
