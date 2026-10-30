@@ -59,10 +59,11 @@ export function QuickStartFlowView({
   const headingRef = useFocusOnChange<HTMLHeadingElement>(step);
   const [typing, setTyping] = useState(false);
   const position = stepPosition(step);
+  // Position only: the h2 below carries the title, so the eyebrow never repeats or truncates it.
   const eyebrow =
     position.kind === "optional"
-      ? `${t("optionalStep")} · ${title(step)}`
-      : `${t("stepOf", { step: position.index, total: view.requiredTotal })} · ${title(step)}`;
+      ? t("optionalStep")
+      : t("stepOf", { step: position.index, total: view.requiredTotal });
 
   const finishLater = (
     <Button
@@ -76,7 +77,7 @@ export function QuickStartFlowView({
   );
 
   return (
-    <div className="flex flex-col">
+    <div className="mx-auto flex w-full max-w-2xl flex-col">
       {/* Phones: one sticky eyebrow line and the segmented bar, docked under the top bar. */}
       <div className="bg-background sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-20 flex flex-col gap-2 py-2 md:hidden">
         <div className="flex items-center justify-between gap-3">
@@ -93,20 +94,16 @@ export function QuickStartFlowView({
           labelledBy={eyebrowId}
         />
       </div>
-      {/* md and up: the checklist's markers with the step titles. Not sticky. */}
+      {/* md and up: the checklist's markers with the step titles. Every other step is a link to
+          its own URL; the current one is plain text marked aria-current="step". Not sticky. */}
       <div className="hidden items-start justify-between gap-3 md:flex">
-        <ol className="flex flex-wrap gap-x-5 gap-y-2">
+        <ol className="flex flex-wrap gap-x-5 gap-y-2 pointer-coarse:gap-y-0">
           {view.steps.map((s) => {
             const at = stepPosition(s.id);
-            return (
-              <li
-                key={s.id}
-                aria-current={s.id === step ? "step" : undefined}
-                className={cn(
-                  "flex items-center gap-2 text-sm",
-                  s.id === step ? "font-semibold" : "text-muted-foreground",
-                )}
-              >
+            const item =
+              "flex items-center gap-2 rounded-md text-sm pointer-coarse:min-h-11";
+            const label = (
+              <>
                 <StepMarker
                   state={rowState(s)}
                   number={at.kind === "required" ? at.index : undefined}
@@ -114,6 +111,29 @@ export function QuickStartFlowView({
                 {title(s.id)}
                 {at.kind === "optional" && (
                   <Badge variant="secondary">{tCard("optional")}</Badge>
+                )}
+              </>
+            );
+            return (
+              <li key={s.id}>
+                {s.id === step ? (
+                  <span
+                    aria-current="step"
+                    className={cn(item, "font-semibold")}
+                  >
+                    {label}
+                  </span>
+                ) : (
+                  <Link
+                    to="/welcome"
+                    search={{ step: s.id }}
+                    className={cn(
+                      item,
+                      "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {label}
+                  </Link>
                 )}
               </li>
             );

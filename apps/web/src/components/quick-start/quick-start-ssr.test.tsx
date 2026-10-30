@@ -365,19 +365,32 @@ describe("QuickStartFlowView", () => {
       locale,
     );
 
-  it("titles the step with a focusable h2 and an eyebrow", () => {
+  // The phone eyebrow is the element that labels the progress bar.
+  const eyebrow = (html: string) => {
+    const bar = all(html).find((el) => attr(el, "role") === "progressbar")!;
+    return all(html).find(
+      (el) => attr(el, "id") === attr(bar, "aria-labelledby"),
+    )!;
+  };
+
+  it("titles the step with a focusable h2 and a short eyebrow", () => {
     const html = renderFlow("solves");
     const [h2] = byTag(html, "h2");
     expect(text(h2!)).toBe("Log puzzles you finished");
     expect(attr(h2!, "tabindex")).toBe("-1");
-    expect(text(parseFragment(html))).toContain(
-      "Step 2 of 4 · Log puzzles you finished",
-    );
+    // The h2 carries the title; the eyebrow only gives the position.
+    expect(text(eyebrow(html))).toBe("Step 2 of 4");
   });
 
   it("marks household as the optional step", () => {
-    expect(text(parseFragment(renderFlow("household")))).toContain(
-      "Optional step · Household",
+    expect(text(eyebrow(renderFlow("household")))).toBe("Optional step");
+  });
+
+  it("keeps the flow in one readable column", () => {
+    const html = renderFlow("solves");
+    const root = all(html)[0]!;
+    expect(attr(root, "class")?.split(/\s+/)).toEqual(
+      expect.arrayContaining(["mx-auto", "w-full", "max-w-2xl"]),
     );
   });
 
@@ -387,6 +400,26 @@ describe("QuickStartFlowView", () => {
       (el) => attr(el, "aria-current") === "step",
     );
     expect(current.map((el) => text(el))).toEqual(["3Find your people"]);
+    // Not a link: it would only reload the step on screen (and the router would
+    // overwrite aria-current with "page").
+    expect(isInteractive(current[0]!)).toBe(false);
+  });
+
+  it("links every other stepper item to its step", () => {
+    const [ol] = byTag(renderFlow("people"), "ol");
+    const links = elements(ol!).filter((el) => el.tagName === "a");
+    expect(links.map((a) => attr(a, "href"))).toEqual([
+      "/welcome?step=puzzles",
+      "/welcome?step=solves",
+      "/welcome?step=household",
+      "/welcome?step=profile",
+    ]);
+    expect(links.map((a) => nameOf(a))).toEqual([
+      "Add your puzzles",
+      "Log puzzles you finished",
+      "HouseholdOptional",
+      "Make it yours",
+    ]);
   });
 
   it("numbers the stepper 1 to 4 like the eyebrow, household unnumbered and optional", () => {
@@ -457,7 +490,8 @@ describe("QuickStartFlowView", () => {
         .map((el) => text(el))
         .slice(-2),
     ).toEqual(["Overslaan", "Doorgaan"]);
-    expect(text(parseFragment(html))).toContain("Stap 3 van 4");
+    expect(text(eyebrow(html))).toBe("Stap 3 van 4");
+    expect(text(eyebrow(renderFlow("household", "nl")))).toBe("Optionele stap");
   });
 });
 
