@@ -2,7 +2,14 @@ import { readFileSync } from "node:fs";
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { transparentPng } from "../test-fixtures/craftPng";
+import {
+  craftPng,
+  iendChunk,
+  ihdrChunk,
+  pngChunk,
+  transparentIdat,
+  transparentPng,
+} from "../test-fixtures/craftPng";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { readImageDimensions } from "./lib/imageModeration/guards";
@@ -165,6 +172,17 @@ describe("sanitizeBoxArt", () => {
       transparentPng(5, 5, { interlaced: true }),
       "image/png",
       "interlaced",
+    ],
+    [
+      "an APNG",
+      craftPng(
+        ihdrChunk(2, 2),
+        pngChunk("acTL", new Uint8Array([0, 0, 0, 1, 0, 0, 0, 0])),
+        transparentIdat(2, 2),
+        iendChunk(),
+      ),
+      "image/png",
+      "animated",
     ],
   ] as const)(
     "%s is refused and the upload deleted",

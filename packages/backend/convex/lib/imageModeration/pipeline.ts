@@ -54,7 +54,8 @@ import { findMetadata, stripImageMetadata } from "./stripMetadata";
 //   2. Download the blob (an upload over HASH_MAX_BYTES is refused unread) and run the input
 //      guards (lib/imageModeration/guards): size, magic bytes, the header's pixel count (PNG:
 //      one IHDR, not interlaced; JPEG: one frame header, whose blocks fit the decoder's
-//      budget), all before any decode; the decode must match the header.
+//      budget; PNG and WebP: one still image, not an animation), all before any decode; the
+//      decode must match the header.
 //      Then (on any attempt until the row is marked `reencodedAt`) strip the
 //      metadata at byte level (lib/imageModeration/stripMetadata: Exif incl. GPS, XMP, IPTC,
 //      comments, PNG text chunks, WebP EXIF/XMP, Orientation included) and re-encode that in

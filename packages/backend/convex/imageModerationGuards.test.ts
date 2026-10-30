@@ -6,6 +6,7 @@ import {
   craftPng,
   iendChunk,
   ihdrChunk,
+  pngChunk,
   transparentIdat,
   transparentPng,
 } from "../test-fixtures/craftPng";
@@ -20,9 +21,10 @@ import { findMetadata } from "./lib/imageModeration/stripMetadata";
 import schema from "./schema";
 
 // The shared moderation pipeline's input guards, end to end: an upload that is not a supported
-// image, is too large, announces too many pixels, or has a header a decoder could read
-// differently (a PNG with a second IHDR, or interlaced) is rejected as "invalid_image" before any
-// decode or classifier call, and its blob is deleted. Every accepted upload has its metadata
+// image, is too large, announces too many pixels, has a header a decoder could read
+// differently (a PNG with a second IHDR, or interlaced), or is an animation (an animated WebP, an
+// APNG) is rejected as "invalid_image" before any decode or classifier call, and its blob is
+// deleted. Every accepted upload has its metadata
 // (EXIF incl. GPS, XMP, IPTC, comments, PNG text chunks, WebP EXIF/XMP) stripped before it is
 // stored, served or sent to the classifier; WebP, which jimp cannot decode, keeps its stripped
 // bytes.
@@ -162,6 +164,76 @@ const JPEG_25MP = jpegFrame(5000, 5000, [0x22, 0x11, 0x11]);
 // 1 GiB of blocks for it before it gives up (SEC-18).
 const JPEG_BLOCK_BOMB = jpegFrame(1, 65535, new Array<number>(255).fill(0xff));
 
+const ascii = (text: string) => Array.from(text, (ch) => ch.charCodeAt(0));
+// `n` as `bytes` little-endian bytes.
+const le = (n: number, bytes: number) =>
+  Array.from({ length: bytes }, (_, k) => (n >>> (8 * k)) & 0xff);
+// A RIFF chunk: FourCC, size, payload, padded to an even length.
+const riffChunk = (type: string, payload: number[]) => [
+  ...ascii(type),
+  ...le(payload.length, 4),
+  ...payload,
+  ...(payload.length % 2 ? [0] : []),
+];
+// The chunks of a WebP after "RIFF....WEBP", by FourCC, each with its header and padding.
+const webpChunks = (webp: Uint8Array) => {
+  const chunks = new Map<string, number[]>();
+  for (let i = 12; i + 8 <= webp.length;) {
+    const size =
+      (webp[i + 4] | (webp[i + 5] << 8) | (webp[i + 6] << 16)) +
+      webp[i + 7] * 2 ** 24;
+    const end = i + 8 + size + (size % 2);
+    chunks.set(
+      String.fromCharCode(...webp.subarray(i, i + 4)),
+      Array.from(webp.subarray(i, end)),
+    );
+    i = end;
+  }
+  return chunks;
+};
+
+// The review's animated WebP (SEC-72, SEC-76): a VP8X canvas flagged as an animation, and one
+// frame (ANMF) that carries, after its bitstream, the EXIF (with a GPS position) and XMP chunks
+// of gps.webp. The byte-level stripper keeps an ANMF chunk as it is, without looking inside.
+const ANIMATED_GPS_WEBP = (() => {
+  const gps = webpChunks(
+    new Uint8Array(
+      readFileSync(
+        new URL("../test-fixtures/images/gps.webp", import.meta.url),
+      ),
+    ),
+  );
+  const canvas = [...le(40 - 1, 3), ...le(30 - 1, 3)];
+  const body = [
+    ...riffChunk("VP8X", [0x02, 0, 0, 0, ...canvas]),
+    ...riffChunk("ANIM", [0, 0, 0, 0, 0, 0]),
+    ...riffChunk("ANMF", [
+      ...le(0, 3),
+      ...le(0, 3),
+      ...canvas,
+      ...le(100, 3),
+      0,
+      ...gps.get("VP8 ")!,
+      ...gps.get("EXIF")!,
+      ...gps.get("XMP ")!,
+    ]),
+  ];
+  return new Uint8Array([
+    ...ascii("RIFF"),
+    ...le(4 + body.length, 4),
+    ...ascii("WEBP"),
+    ...body,
+  ]);
+})();
+
+// An APNG: a still PNG plus an animation control chunk (acTL).
+const APNG = craftPng(
+  ihdrChunk(2, 2),
+  pngChunk("acTL", new Uint8Array([0, 0, 0, 1, 0, 0, 0, 0])),
+  transparentIdat(2, 2),
+  iendChunk(),
+);
+
 // A lossless 2x2 WebP header (VP8L) with an undecodable body: jimp has no WebP decoder anyway.
 const WEBP_BYTES = new Uint8Array([
   ...new TextEncoder().encode("RIFF"),
@@ -215,6 +287,8 @@ describe("input guards (copy photos)", () => {
       "image/jpeg",
       "unreadable_header",
     ],
+    ["an animated WebP", ANIMATED_GPS_WEBP, "image/webp", "animated"],
+    ["an APNG", APNG, "image/png", "animated"],
   ] as const)(
     "%s is rejected as invalid_image, never decoded or classified, and its blob deleted",
     async (_name, bytes, type, reason) => {
@@ -236,6 +310,24 @@ describe("input guards (copy photos)", () => {
       expect(await blobExists(t, fileId)).toBe(false);
     },
   );
+
+  test("an animated WebP with EXIF and GPS inside a frame never reaches storage or the classifier", async () => {
+    const fetchMock = cleanReply();
+    vi.stubGlobal("fetch", fetchMock);
+    const t = withModerationPool(convexTest(schema, modules));
+    const { copy } = await seed(t);
+    const fileId = await store(t, ANIMATED_GPS_WEBP, "image/webp");
+
+    const row = await addCopyPhoto(t, copy, fileId);
+
+    expect(row.moderationStatus).toBe("rejected");
+    expect(row.moderationReason).toBe("animated");
+    expect(fetchMock).not.toHaveBeenCalled();
+    const stored = await t.run((ctx) =>
+      ctx.db.system.query("_storage").collect(),
+    );
+    expect(stored).toEqual([]);
+  });
 
   test("more than 10 MB is refused from the storage metadata", async () => {
     const fetchMock = cleanReply();

@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { Jimp } from "jimp";
 import { describe, expect, test } from "vitest";
 import {
@@ -42,6 +43,7 @@ const u32be = (n: number) => [
   (n >> 8) & 0xff,
   n & 0xff,
 ];
+const u32le = (n: number) => [...u16le(n & 0xffff), ...u16le(n >>> 16)];
 
 const PNG_SIG = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 const pngHeader = (width: number, height: number) =>
@@ -145,15 +147,43 @@ const webpVp8l = (width: number, height: number) => {
   );
 };
 
-const webpVp8x = (width: number, height: number) =>
-  bytesOf(
-    "RIFF",
-    [0, 0, 0, 0],
-    "WEBPVP8X",
-    [0, 0, 0, 0],
-    [0, 0, 0, 0],
+// A WebP chunk: its FourCC, size and payload, padded to an even length.
+const webpChunk = (type: string, ...payload: (number[] | string)[]) => {
+  const body = Array.from(bytesOf(...payload));
+  return bytesOf(type, u32le(body.length), body, body.length % 2 ? [0] : []);
+};
+// "RIFF", its size, "WEBP", then the chunks.
+const webpOf = (...chunks: Uint8Array[]) => {
+  const body = chunks.flatMap((chunk) => Array.from(chunk));
+  return bytesOf("RIFF", u32le(4 + body.length), "WEBP", body);
+};
+// A VP8X header (flags 0x02: animation) for a canvas of the given size.
+const vp8x = (width: number, height: number, flags = 0) =>
+  webpChunk("VP8X", [flags, 0, 0, 0], u24le(width - 1), u24le(height - 1));
+// The start of a VP8L (lossless) bitstream of the given size.
+const vp8l = (width: number, height: number) =>
+  webpChunk("VP8L", [0x2f], u32le(((width - 1) | ((height - 1) << 14)) >>> 0));
+// An animation frame of the given size at (0, 0), its bitstream and any chunks after it.
+const anmf = (width: number, height: number, ...inner: Uint8Array[]) =>
+  webpChunk(
+    "ANMF",
+    u24le(0),
+    u24le(0),
     u24le(width - 1),
     u24le(height - 1),
+    u24le(100),
+    [0],
+    ...[vp8l(width, height), ...inner].map((chunk) => Array.from(chunk)),
+  );
+const anim = () => webpChunk("ANIM", [0, 0, 0, 0], u16le(0));
+
+// An extended (VP8X) WebP with a lossless bitstream of its canvas size.
+const webpVp8x = (width: number, height: number) =>
+  webpOf(vp8x(width, height), vp8l(width, height));
+
+const fixture = (name: string) =>
+  new Uint8Array(
+    readFileSync(new URL(`../test-fixtures/images/${name}`, import.meta.url)),
   );
 
 describe("sniffImageFormat", () => {
@@ -504,6 +534,93 @@ describe("checkImageBytes", () => {
         height: 2,
       });
     });
+  });
+
+  // libwebp (the WASM decoder) decodes one still image: the bitstream that is the first chunk,
+  // or behind a VP8X header the first one after it, which must be the VP8X canvas size. It has
+  // no animation support, and an animation is not what a still decode of it would show (SEC-76).
+  describe("a WebP is one still image, the size of its canvas", () => {
+    test("real WebP files pass: lossless and lossy, behind a VP8X header", () => {
+      expect(checkImageBytes(fixture("orientation/1.webp"))).toEqual({
+        ok: true,
+        format: "webp",
+        width: 24,
+        height: 16,
+      });
+      expect(checkImageBytes(fixture("gps.webp"))).toEqual({
+        ok: true,
+        format: "webp",
+        width: 40,
+        height: 30,
+      });
+    });
+
+    test.each([
+      [
+        "the VP8X animation flag, ANIM and ANMF",
+        webpOf(vp8x(8, 6, 0x02), anim(), anmf(8, 6), anmf(8, 6)),
+      ],
+      ["the VP8X animation flag alone", webpOf(vp8x(8, 6, 0x02), vp8l(8, 6))],
+      [
+        "an ANMF frame behind a still VP8X header",
+        webpOf(vp8x(8, 6), vp8l(8, 6), anmf(8, 6)),
+      ],
+      [
+        "an ANMF frame after a simple lossless image",
+        webpOf(vp8l(8, 6), anim(), anmf(8, 6)),
+      ],
+    ])("an animation is refused: %s", (_name, bytes) => {
+      expect(checkImageBytes(bytes)).toEqual({
+        ok: false,
+        reason: "animated",
+      });
+    });
+
+    test("a VP8X canvas over a bitstream of another size has no usable header", () => {
+      for (const bytes of [
+        // A small canvas over a big bitstream: the decoder allocates the bitstream's size.
+        webpOf(vp8x(16, 16), vp8l(4000, 3000)),
+        webpOf(vp8x(4000, 3000), vp8l(16, 16)),
+        // No bitstream at all.
+        webpOf(vp8x(16, 16)),
+        webpOf(vp8x(16, 16), webpChunk("ICCP", "profile")),
+        // A VP8X chunk of the wrong size.
+        webpOf(
+          webpChunk("VP8X", [0, 0, 0, 0], u24le(15), u24le(15), [0, 0]),
+          vp8l(16, 16),
+        ),
+      ]) {
+        expect(checkImageBytes(bytes)).toEqual({
+          ok: false,
+          reason: "unreadable_header",
+        });
+      }
+    });
+
+    test("chunks before the bitstream (ICCP, ALPH) are skipped like the decoder skips them", () => {
+      expect(
+        checkImageBytes(
+          webpOf(
+            vp8x(16, 16, 0x20),
+            webpChunk("ICCP", "profile"),
+            webpChunk("ALPH", [0]),
+            vp8l(16, 16),
+          ),
+        ),
+      ).toEqual({ ok: true, format: "webp", width: 16, height: 16 });
+    });
+  });
+
+  // jimp has no APNG decoder (it failed such an upload as decode_failed), and a still decode
+  // would not show the animation either.
+  test("an APNG (an acTL chunk) is refused as animated", () => {
+    const apng = craftPng(
+      ihdrChunk(2, 2),
+      pngChunk("acTL", new Uint8Array([0, 0, 0, 2, 0, 0, 0, 0])),
+      transparentIdat(2, 2),
+      iendChunk(),
+    );
+    expect(checkImageBytes(apng)).toEqual({ ok: false, reason: "animated" });
   });
 
   test("refuses more than 10 MB", () => {

@@ -35,9 +35,15 @@
 // PNG: pngjs (jimp's decoder) takes the size from EVERY IHDR it meets, so the last one decides
 // the bitmap, and it inflates an interlaced (Adam7) image with no bound on the output. A PNG is
 // accepted only with exactly one IHDR, as its first chunk, and not interlaced ("interlaced");
-// the non-interlaced inflate is bounded by that IHDR's size.
+// the non-interlaced inflate is bounded by that IHDR's size. An APNG (an acTL chunk) is refused
+// ("animated"): jimp has no APNG decoder, and its frames are not what a still decode shows.
 //
-// WebP: jimp 1.x has no WebP codec, so the pipeline does not re-encode an upright WebP. It strips
+// WebP: libwebp (the WASM decoder, normaliseImage) decodes one still image, the VP8 (lossy) or
+// VP8L (lossless) bitstream that is the first chunk or, behind a VP8X (extended) header, the
+// first one after it. A WebP is accepted only as such a still: an animation (the VP8X animation
+// flag, or an ANIM or ANMF chunk anywhere) is refused ("animated"), and behind a VP8X header the
+// bitstream must be exactly the canvas size, so the size checked is the size decoded.
+// jimp 1.x has no WebP codec, so the pipeline does not re-encode an upright WebP. It strips
 // the WebP's EXIF/XMP chunks at byte level instead (stripMetadata) and stores those bytes (no
 // blurhash). One whose EXIF held an Orientation is decoded (WASM, normaliseImage), turned
 // upright and re-encoded like JPEG/PNG.
@@ -46,7 +52,7 @@
 //
 // GIF: jimp decodes the first frame into a bitmap of the logical screen size (omggif), so the
 // screen size bounds the decode, and the first frame must fit inside the screen; the re-encode
-// keeps that one frame.
+// keeps that one frame, so an animated GIF is stored (and classified) as its first frame.
 
 /** Largest accepted upload, in bytes (10 MB). */
 export const MAX_IMAGE_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -81,6 +87,7 @@ export type ImageGuardFailure =
   | "unreadable_header" // a supported format whose header has no usable dimensions
   | "too_many_pixels" // more than MAX_IMAGE_PIXELS, or (JPEG) more than MAX_JPEG_BLOCKS
   | "interlaced" // an interlaced (Adam7) PNG, whose decode has no output bound
+  | "animated" // an animated WebP or an APNG: only a still image is decoded
   | "decode_failed"; // a header over a body that does not decode (set by the pipeline)
 
 /** The verdict label a refused upload is recorded with. */
@@ -104,17 +111,20 @@ const u24le = (b: Uint8Array, i: number): number =>
   b[i] | (b[i + 1] << 8) | (b[i + 2] << 16);
 const u32be = (b: Uint8Array, i: number): number =>
   ((b[i] << 24) >>> 0) + ((b[i + 1] << 16) | (b[i + 2] << 8) | b[i + 3]);
+const u32le = (b: Uint8Array, i: number): number =>
+  (b[i] | (b[i + 1] << 8) | (b[i + 2] << 16) | (b[i + 3] << 24)) >>> 0;
 
 const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 
 /**
- * What a header says about the decode: its size, (PNG) whether it is interlaced, and (JPEG) the
- * 8x8 blocks the decoder allocates for it.
+ * What a header says about the decode: its size, (PNG) whether it is interlaced, (PNG, WebP)
+ * whether it is an animation, and (JPEG) the 8x8 blocks the decoder allocates for it.
  */
 type Header = {
   width: number;
   height: number;
   interlaced?: boolean;
+  animated?: boolean;
   jpegBlocks?: number;
 };
 
@@ -246,20 +256,23 @@ const jpegHeader = (b: Uint8Array): Header | null => {
 // PNG: the chunk list, walked by its lengths up to IEND (pngjs refuses anything after it), must
 // hold exactly one IHDR, and it must be the first chunk, 13 bytes long: width u32, height u32,
 // bit depth, colour type, compression, filter, interlace method. A chunk that runs past the end
-// of the file ends the walk (pngjs cannot read past it either).
+// of the file ends the walk (pngjs cannot read past it either). An acTL chunk makes it an APNG.
 const pngHeader = (b: Uint8Array): Header | null => {
   if (b.length < 8 + 8 + 13) return null;
   if (u32be(b, 8) !== 13 || !ascii(b, 12, "IHDR")) return null;
+  let animated = false;
   let i = 8 + 12 + 13;
   while (i + 8 <= b.length) {
     if (ascii(b, i + 4, "IHDR")) return null;
     if (ascii(b, i + 4, "IEND")) break;
+    if (ascii(b, i + 4, "acTL")) animated = true;
     i += 12 + u32be(b, i);
   }
   return {
     width: u32be(b, 16),
     height: u32be(b, 20),
     interlaced: b[28] !== 0,
+    animated,
   };
 };
 
@@ -303,29 +316,77 @@ const gifDimensions = (
   return null;
 };
 
-// WebP: the first chunk after "RIFF....WEBP" is VP8 (lossy), VP8L (lossless) or VP8X (extended).
-const webpDimensions = (
+/** The VP8X flag bit that marks an animation. */
+const VP8X_ANIMATION = 0x02;
+
+// The size a VP8 (lossy) or VP8L (lossless) bitstream chunk starting at `at` announces.
+const webpBitstreamSize = (
   b: Uint8Array,
+  at: number,
 ): { width: number; height: number } | null => {
-  if (ascii(b, 12, "VP8 ")) {
-    // Frame tag (3 bytes) at 20, start code 9D 01 2A at 23, then 14-bit width / height.
-    if (b.length < 30 || b[23] !== 0x9d || b[24] !== 0x01 || b[25] !== 0x2a) {
+  const data = at + 8;
+  if (ascii(b, at, "VP8 ")) {
+    // Frame tag (3 bytes), start code 9D 01 2A, then 14-bit width / height.
+    if (
+      b.length < data + 10 ||
+      b[data + 3] !== 0x9d ||
+      b[data + 4] !== 0x01 ||
+      b[data + 5] !== 0x2a
+    ) {
       return null;
     }
-    return { width: u16le(b, 26) & 0x3fff, height: u16le(b, 28) & 0x3fff };
+    return {
+      width: u16le(b, data + 6) & 0x3fff,
+      height: u16le(b, data + 8) & 0x3fff,
+    };
   }
-  if (ascii(b, 12, "VP8L")) {
-    // Signature 0x2F at 20, then (width - 1) and (height - 1) as two 14-bit fields.
-    if (b.length < 25 || b[20] !== 0x2f) return null;
-    const bits = (b[21] | (b[22] << 8) | (b[23] << 16) | (b[24] << 24)) >>> 0;
+  if (ascii(b, at, "VP8L")) {
+    // Signature 0x2F, then (width - 1) and (height - 1) as two 14-bit fields.
+    if (b.length < data + 5 || b[data] !== 0x2f) return null;
+    const bits = u32le(b, data + 1);
     return { width: (bits & 0x3fff) + 1, height: ((bits >>> 14) & 0x3fff) + 1 };
   }
-  if (ascii(b, 12, "VP8X")) {
-    // Flags (4 bytes) at 20, then canvas (width - 1) and (height - 1) as u24 LE.
-    if (b.length < 30) return null;
-    return { width: u24le(b, 24) + 1, height: u24le(b, 27) + 1 };
-  }
   return null;
+};
+
+// WebP: the chunks after "RIFF....WEBP", walked by their sizes (padded to even) over the bytes
+// there, so the walk sees every chunk libwebp's own walk could reach. The first is VP8 (lossy) or
+// VP8L (lossless), a simple still, or VP8X (extended): flags, 3 reserved bytes, then the canvas
+// (width - 1) and (height - 1) as u24 LE, 10 bytes in all, followed by optional chunks (ICCP,
+// ALPH, ...) and the bitstream libwebp decodes, the first VP8 or VP8L chunk, which must be the
+// canvas size. The VP8X animation flag or an ANIM or ANMF chunk anywhere makes it an animation.
+const webpHeader = (b: Uint8Array): Header | null => {
+  const chunks: number[] = [];
+  for (let i = 12; i + 8 <= b.length;) {
+    chunks.push(i);
+    const size = u32le(b, i + 4);
+    i += 8 + size + (size & 1);
+  }
+  if (chunks.length === 0) return null;
+  const animated = chunks.some(
+    (at) => ascii(b, at, "ANIM") || ascii(b, at, "ANMF"),
+  );
+  const [first] = chunks;
+  if (!ascii(b, first, "VP8X")) {
+    const size = webpBitstreamSize(b, first);
+    return size && { ...size, animated };
+  }
+  if (u32le(b, first + 4) !== 10 || b.length < first + 18) return null;
+  const canvas = {
+    width: u24le(b, first + 12) + 1,
+    height: u24le(b, first + 15) + 1,
+  };
+  if (animated || b[first + 8] & VP8X_ANIMATION) {
+    return { ...canvas, animated: true };
+  }
+  const bitstream = chunks.find(
+    (at) => ascii(b, at, "VP8 ") || ascii(b, at, "VP8L"),
+  );
+  const size = bitstream === undefined ? null : webpBitstreamSize(b, bitstream);
+  if (!size || size.width !== canvas.width || size.height !== canvas.height) {
+    return null;
+  }
+  return canvas;
 };
 
 const readHeader = (bytes: Uint8Array, format: ImageFormat): Header | null => {
@@ -336,7 +397,7 @@ const readHeader = (bytes: Uint8Array, format: ImageFormat): Header | null => {
         ? pngHeader(bytes)
         : format === "gif"
           ? gifDimensions(bytes)
-          : webpDimensions(bytes);
+          : webpHeader(bytes);
   if (!header || header.width <= 0 || header.height <= 0) return null;
   return header;
 };
@@ -360,7 +421,8 @@ export const checkImageSize = (
 
 /**
  * Every guard on the downloaded bytes: size, magic bytes, then the header: its pixel count,
- * (JPEG) the blocks its frame makes the decoder allocate, and (PNG) no interlacing.
+ * (JPEG) the blocks its frame makes the decoder allocate, (PNG) no interlacing, and (PNG, WebP)
+ * one still image, no animation.
  */
 export const checkImageBytes = (bytes: Uint8Array): ImageGuardResult => {
   const size = checkImageSize(bytes.length);
@@ -377,5 +439,6 @@ export const checkImageBytes = (bytes: Uint8Array): ImageGuardResult => {
     return { ok: false, reason: "too_many_pixels" };
   }
   if (header.interlaced) return { ok: false, reason: "interlaced" };
+  if (header.animated) return { ok: false, reason: "animated" };
   return { ok: true, format, width, height };
 };

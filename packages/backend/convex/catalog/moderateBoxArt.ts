@@ -78,6 +78,7 @@ const GUARD_REFUSALS: ReadonlySet<string> = new Set<BoxArtRefusal>([
   "unreadable_header",
   "too_many_pixels",
   "interlaced",
+  "animated",
 ]);
 
 /** Why a rejected row was refused, as the box-art error reports it. */
