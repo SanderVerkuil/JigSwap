@@ -5184,12 +5184,11 @@
       "reenable": "Re-enable",
       "disableConfirmTitle": "Disable “{title}”?",
       "disableConfirmBody": "The puzzle disappears from browse and search and can no longer be added to collections. Existing copies are not affected. You can re-enable it at any time.",
-      "reenableConfirmTitle": "Re-enable “{title}”?",
-      "reenableConfirmBody": "The puzzle becomes publicly visible and acquirable again.",
       "disableSuccess": "“{title}” disabled",
       "disableError": "Could not disable the puzzle. Please try again.",
       "reenableSuccess": "“{title}” re-enabled",
       "reenableError": "Could not re-enable the puzzle. Please try again.",
+      "undo": "Undo",
       "loadMore": "Load more",
       "edit": {
         "button": "Edit",

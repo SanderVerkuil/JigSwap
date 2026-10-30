@@ -5184,12 +5184,11 @@
       "reenable": "Weer inschakelen",
       "disableConfirmTitle": "“{title}” uitschakelen?",
       "disableConfirmBody": "De puzzel verdwijnt uit bladeren en zoeken en kan niet meer aan collecties worden toegevoegd. Bestaande exemplaren blijven onaangetast. Je kunt de puzzel altijd weer inschakelen.",
-      "reenableConfirmTitle": "“{title}” weer inschakelen?",
-      "reenableConfirmBody": "De puzzel wordt weer openbaar zichtbaar en kan weer worden toegevoegd.",
       "disableSuccess": "“{title}” uitgeschakeld",
       "disableError": "Kon de puzzel niet uitschakelen. Probeer het opnieuw.",
       "reenableSuccess": "“{title}” weer ingeschakeld",
       "reenableError": "Kon de puzzel niet weer inschakelen. Probeer het opnieuw.",
+      "undo": "Ongedaan maken",
       "loadMore": "Meer laden",
       "edit": {
         "button": "Bewerken",

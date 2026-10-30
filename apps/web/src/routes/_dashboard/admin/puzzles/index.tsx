@@ -39,7 +39,7 @@ const STATUS_VARIANT: Record<
 
 // Admin console over EVERY catalog definition (all moderation statuses), newest first with
 // load-more pagination. Approved rows can be reversibly disabled and disabled rows re-enabled
-// via the shared PuzzleLifecycleAction (button + AlertDialog confirm); the audit trail lands
+// via the shared PuzzleLifecycleAction (disable confirms; both toast with Undo); the audit trail lands
 // in the moderation Activity Log via the mutations' moderationActions stamps.
 function AdminPuzzlesPage() {
   const t = useTranslations("admin.puzzles");
