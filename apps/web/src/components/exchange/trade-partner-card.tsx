@@ -1,13 +1,17 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { StarRating } from "@/components/ui/star-rating";
+import { Switch } from "@/components/ui/switch";
 import { gateway, type Id } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
-import { convexQuery } from "@convex-dev/react-query";
-import { useQuery } from "@tanstack/react-query";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Mail, Star } from "lucide-react";
+import { useId } from "react";
+import { toast } from "sonner";
 import { useFormatter, useTranslations } from "use-intl";
 
 interface TradePartnerCardProps {
@@ -19,8 +23,10 @@ interface TradePartnerCardProps {
 }
 
 // The counterparty of ONE exchange, as `exchange.tradePartner` discloses it: a revealed partner's
-// trade card (name, handle, email when allowed, reviews received), else the generic or
-// former-member label. Their normal profile is linked only when it is viewable by the usual rules.
+// trade card (name, handle, their email once THEY chose to share it, reviews received), else the
+// generic or former-member label. Their normal profile is linked only when it is viewable by the
+// usual rules. Once sharing is open (accepted, completed, disputed) the viewer gets their own
+// "Share my email" switch: an email is never shown without its owner's choice.
 export function TradePartnerCard({
   exchangeId,
   label,
@@ -31,11 +37,16 @@ export function TradePartnerCard({
   const tRich = useTranslations("notifications.rich");
   const displayName = useMemberDisplayName();
   const format = useFormatter();
+  const shareSwitchId = useId();
   const { data: partner } = useQuery(
     convexQuery(gateway.exchange.tradePartner, {
       exchangeId: exchangeId as Id<"exchanges">,
     }),
   );
+  const setSharing = useMutation({
+    mutationFn: useConvexMutation(gateway.exchange.setContactSharing),
+    onError: () => toast.error(t("shareEmailError")),
+  });
 
   if (partner === undefined) {
     return <div className="bg-muted h-16 animate-pulse rounded-xl" />;
@@ -87,6 +98,35 @@ export function TradePartnerCard({
           </div>
         )}
       </div>
+
+      {/* `?.`: skew-safe while a web deploy runs ahead of the Convex one (no emailSharing yet). */}
+      {partner.state === "revealed" && partner.emailSharing?.open && (
+        <div className="flex items-start justify-between gap-4 rounded-lg border p-3">
+          <div className="min-w-0 space-y-0.5">
+            <Label htmlFor={shareSwitchId} className="leading-snug">
+              {t("shareEmail", { name })}
+            </Label>
+            <p className="text-muted-foreground text-xs">
+              {t("shareEmailHint")}
+            </p>
+          </div>
+          <Switch
+            id={shareSwitchId}
+            checked={
+              setSharing.isPending
+                ? setSharing.variables.share
+                : partner.emailSharing.youShare
+            }
+            disabled={setSharing.isPending}
+            onCheckedChange={(share) =>
+              setSharing.mutate({
+                exchangeId: exchangeId as Id<"exchanges">,
+                share,
+              })
+            }
+          />
+        </div>
+      )}
 
       {partner.state === "revealed" && (
         <div className="space-y-2">

@@ -3,14 +3,36 @@ import { gateway } from "@/gateway";
 import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import type { TradePartnerView } from "@jigswap/contracts";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { ConvexReactClient } from "convex/react";
+import { getFunctionName } from "convex/server";
 import type { ReactNode } from "react";
+import { toast } from "sonner";
 import { IntlProvider } from "use-intl";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
 import { TradePartnerCard } from "./trade-partner-card";
+
+const mocks = vi.hoisted(() => ({
+  mutation: vi.fn<(name: string, args: unknown) => Promise<unknown>>(),
+}));
+
+vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+vi.mock("@convex-dev/react-query", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@convex-dev/react-query")>()),
+  useConvexMutation:
+    (ref: Parameters<typeof getFunctionName>[0]) => (args: unknown) =>
+      mocks.mutation(getFunctionName(ref), args),
+}));
+
+const SET_SHARING = getFunctionName(gateway.exchange.setContactSharing);
 
 // Router-free links: the test asserts the card's DOM, not routing.
 vi.mock("@tanstack/react-router", () => ({
@@ -102,6 +124,11 @@ const renderCard = (
   );
 };
 
+beforeEach(() => {
+  mocks.mutation.mockReset();
+  mocks.mutation.mockResolvedValue(null);
+  vi.mocked(toast.error).mockClear();
+});
 afterEach(cleanup);
 
 describe("TradePartnerCard", () => {
@@ -191,5 +218,62 @@ describe("TradePartnerCard", () => {
     cleanup();
     const empty = renderCard(null);
     expect(empty.container.textContent).toBe("");
+  });
+  it("offers no email switch while sharing is closed", () => {
+    renderCard(revealed({ emailSharing: { youShare: false, open: false } }));
+    expect(screen.queryByRole("switch")).toBeNull();
+  });
+
+  it.each([
+    ["en", "Share my email with Mara"],
+    ["nl", "Deel mijn e-mailadres met Mara"],
+  ] as const)(
+    "offers the email switch, reflecting the viewer's own choice, once sharing is open (%s)",
+    (locale, label) => {
+      renderCard(revealed({ emailSharing: { youShare: false, open: true } }), {
+        locale,
+      });
+      const toggle = screen.getByRole("switch", { name: label });
+      expect(toggle.getAttribute("aria-checked")).toBe("false");
+      cleanup();
+      renderCard(revealed({ emailSharing: { youShare: true, open: true } }), {
+        locale,
+      });
+      expect(
+        screen
+          .getByRole("switch", { name: label })
+          .getAttribute("aria-checked"),
+      ).toBe("true");
+    },
+  );
+
+  it("turns sharing on and off for this exchange", async () => {
+    renderCard(revealed({ emailSharing: { youShare: false, open: true } }));
+    fireEvent.click(screen.getByRole("switch"));
+    await waitFor(() => expect(mocks.mutation).toHaveBeenCalledOnce());
+    expect(mocks.mutation).toHaveBeenCalledWith(SET_SHARING, {
+      exchangeId: "exchange_1",
+      share: true,
+    });
+    cleanup();
+    mocks.mutation.mockClear();
+    renderCard(revealed({ emailSharing: { youShare: true, open: true } }));
+    fireEvent.click(screen.getByRole("switch"));
+    await waitFor(() => expect(mocks.mutation).toHaveBeenCalledOnce());
+    expect(mocks.mutation).toHaveBeenCalledWith(SET_SHARING, {
+      exchangeId: "exchange_1",
+      share: false,
+    });
+  });
+
+  it("says so when the change fails", async () => {
+    mocks.mutation.mockRejectedValue(new Error("ContactSharingClosed"));
+    renderCard(revealed({ emailSharing: { youShare: false, open: true } }));
+    fireEvent.click(screen.getByRole("switch"));
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "Couldn't change your email sharing. Please try again.",
+      ),
+    );
   });
 });

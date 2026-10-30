@@ -258,6 +258,10 @@ function RequestTradeForm({
             <Eye className="text-primary mt-0.5 h-4 w-4 shrink-0" aria-hidden />
             <div className="space-y-1">
               <p className="font-medium">{t("revealNotice.title")}</p>
+              {/* The email is never part of the trade card: only the member's own share shows it. */}
+              <p className="text-muted-foreground">
+                {t("revealNotice.emailPrivate")}
+              </p>
               {disclosure?.profilePrivate && (
                 <p className="text-muted-foreground">
                   {t("revealNotice.profilePrivate")}
