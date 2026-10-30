@@ -26,6 +26,12 @@ updates:
   # `npm ci --ignore-scripts` from .github/vercel-cli/package-lock.json (outside the pnpm
   # workspace). A bump rewrites that lockfile; a major bump can change the deploy flags, so
   # run one labelled preview before merging it.
+  #
+  # This entry only bumps `vercel` itself. Because the lockfile is committed, GitHub also
+  # raises Dependabot alerts for the CLI's transitive packages (when it landed, npm audit
+  # counted 33 vulnerable packages: tar critical, 20 high, 12 moderate). Almost all sit behind
+  # exact pins inside Vercel's own packages, so a security update cannot resolve them; they
+  # clear when a CLI release moves those pins. audit.yml lists the same tree in every run.
   - package-ecosystem: npm
     directory: /.github/vercel-cli
     schedule:
