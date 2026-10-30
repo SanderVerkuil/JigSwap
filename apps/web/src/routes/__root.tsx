@@ -193,6 +193,11 @@ const clerkAppearance = {
     colorSuccess: "var(--jigsaw-success)",
     colorWarning: "var(--jigsaw-warning)",
   },
+  // Clerk's fields are 13px, and iOS zooms the page into any field under 16px on focus. On touch,
+  // only the input text goes to 16px (not Clerk's global fontSize, which would scale every label).
+  elements: {
+    formFieldInput: { "@media (pointer: coarse)": { fontSize: "16px" } },
+  },
 } as const;
 
 function RootComponent() {

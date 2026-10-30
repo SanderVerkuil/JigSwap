@@ -86,7 +86,7 @@ export function TagInput({
           placeholder={
             value.length ? "" : (placeholder ?? t("tagsPlaceholder"))
           }
-          className="min-w-[120px] flex-1 border-none bg-transparent px-0.5 py-0.5 text-base text-foreground outline-none md:text-sm"
+          className="min-w-[120px] flex-1 border-none bg-transparent px-0.5 py-0.5 text-base text-foreground outline-none md:not-pointer-coarse:text-sm"
         />
       </div>
       <p

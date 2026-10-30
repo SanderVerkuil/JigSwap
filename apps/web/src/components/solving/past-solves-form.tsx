@@ -267,7 +267,7 @@ export function PastSolveRow({
               onChange={(e) =>
                 onChange({ ...choice, year: Number(e.target.value) })
               }
-              className="bg-card focus:ring-primary h-9 rounded-md border px-2 text-sm focus:ring-2 focus:outline-none"
+              className="bg-card focus:ring-primary h-9 rounded-md border px-2 text-base focus:ring-2 focus:outline-none md:not-pointer-coarse:text-sm"
             >
               {years.map((year) => (
                 <option key={year} value={year}>
