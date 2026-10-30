@@ -893,6 +893,7 @@ function CopyInstanceDetail({
               onOpenChange={(open) => !open && setFinishTarget(null)}
               completionId={finishTarget.completionId}
               minEndDate={finishTarget.startDate}
+              puzzleTitle={snapshot.title}
             />
           )}
           {copy.viewerCanManage && (

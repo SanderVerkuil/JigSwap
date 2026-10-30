@@ -46,10 +46,16 @@ import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
 type DialogState =
-  | { kind: "finish"; completionId: string; startDate: number }
+  | {
+      kind: "finish";
+      completionId: string;
+      startDate: number;
+      puzzleTitle?: string;
+    }
   | {
       kind: "edit";
       completionId: string;
+      inProgress: boolean;
       startDate: number;
       endDate?: number;
       timeMinutes?: number;
@@ -210,7 +216,8 @@ function CompletionsPage() {
     // copySnapshot for the title and piece count.
     const snapshot =
       "copySnapshot" in completion ? completion.copySnapshot : undefined;
-    const title = info?.title ?? snapshot?.title ?? t("title");
+    const puzzleTitle = info?.title ?? snapshot?.title;
+    const title = puzzleTitle ?? t("title");
     const pieceCount = info?.pieceCount ?? snapshot?.pieceCount;
     const done = completion.isCompleted;
     // "1,000 pieces · 3h 20m" (a typed time), "· over 3 days" or "· in one day"; "Started {date}"
@@ -373,6 +380,7 @@ function CompletionsPage() {
                   kind: "finish",
                   completionId: completion.aggregateId!,
                   startDate: completion.startDate,
+                  puzzleTitle,
                 })
               }
             >
@@ -409,6 +417,7 @@ function CompletionsPage() {
                 setDialog({
                   kind: "edit",
                   completionId: completion.aggregateId!,
+                  inProgress: !done,
                   startDate: completion.startDate,
                   endDate: completion.endDate,
                   timeMinutes: completion.completionTimeMinutes,
@@ -507,6 +516,7 @@ function CompletionsPage() {
           onOpenChange={(open) => !open && setDialog(null)}
           completionId={dialog.completionId}
           minEndDate={dialog.startDate}
+          puzzleTitle={dialog.puzzleTitle}
         />
       )}
       {dialog?.kind === "review" && (
@@ -527,6 +537,7 @@ function CompletionsPage() {
           initialTimeMinutes={dialog.timeMinutes}
           initialNotes={dialog.notes}
           datePrecision={dialog.datePrecision}
+          inProgress={dialog.inProgress}
         />
       )}
       {dialog?.kind === "delete" && (

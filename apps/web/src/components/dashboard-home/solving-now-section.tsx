@@ -26,6 +26,7 @@ export function SolvingNowSection() {
   const [finishTarget, setFinishTarget] = useState<{
     completionId: string;
     startDate: number;
+    title?: string;
   } | null>(null);
   // Calling Date.now() during render is an impure-render violation; capture it once at mount
   // (matches the codebase's existing `useState(() => Date.now())` idiom).
@@ -106,6 +107,7 @@ export function SolvingNowSection() {
                   setFinishTarget({
                     completionId: solve.completionId,
                     startDate: solve.startDate,
+                    title: solve.title,
                   })
                 }
               >
@@ -123,6 +125,7 @@ export function SolvingNowSection() {
           onOpenChange={(open) => !open && setFinishTarget(null)}
           completionId={finishTarget.completionId}
           minEndDate={finishTarget.startDate}
+          puzzleTitle={finishTarget.title}
         />
       )}
     </section>

@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { gateway } from "@/gateway";
 import { useUserSettings } from "@/hooks/use-user-settings";
 import {
+  DATE_ONLY_TIME_ZONE,
   dateInputToMs,
   localTodayInput,
   msToDateInput,
@@ -24,7 +25,7 @@ import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTranslations } from "use-intl";
 import { solvingErrorCode } from "./solving-error";
 
 interface FinishSolveDialogProps {
@@ -32,8 +33,12 @@ interface FinishSolveDialogProps {
   onOpenChange: (open: boolean) => void;
   completionId: string;
   /** The solve's startDate (epoch ms); floors the end-date input so a future-dated start can't
-   * produce an opaque domain rejection. Optional — call sites without the row omit it. */
+   * produce an opaque domain rejection, and is shown as "You started on {date}". Optional — call
+   * sites without the row omit it. */
   minEndDate?: number;
+  // Names the puzzle in the question ("When did you finish {puzzle}?"); a generic question
+  // without it.
+  puzzleTitle?: string;
   // Called after a successful finish (before the dialog closes, after the follow-up is
   // requested). Useful for post-save navigation.
   onSuccess?: () => void;
@@ -46,10 +51,12 @@ export function FinishSolveDialog({
   onOpenChange,
   completionId,
   minEndDate,
+  puzzleTitle,
   onSuccess,
 }: FinishSolveDialogProps) {
   const t = useTranslations("solving.logSolve");
   const tCommon = useTranslations("common");
+  const format = useFormatter();
   const finishCompletion = useMutation({
     mutationFn: useConvexMutation(gateway.solving.finishCompletion),
   });
@@ -95,8 +102,12 @@ export function FinishSolveDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("finished")}</DialogTitle>
-          <DialogDescription>{t("endDateHint")}</DialogDescription>
+          <DialogTitle>{t("finishTitle")}</DialogTitle>
+          <DialogDescription>
+            {puzzleTitle
+              ? t("finishDescription", { puzzle: puzzleTitle })
+              : t("finishDescriptionGeneric")}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -109,8 +120,28 @@ export function FinishSolveDialog({
               min={
                 minEndDate !== undefined ? msToDateInput(minEndDate) : undefined
               }
+              aria-describedby={
+                minEndDate !== undefined ? "finish-started-on" : undefined
+              }
               onChange={(e) => setEndDate(e.target.value)}
             />
+            {/* Says why this dialog opened (e.g. from /completions/new) and why earlier dates
+                are refused. The start is a calendar date, so it formats in UTC. */}
+            {minEndDate !== undefined && (
+              <p
+                id="finish-started-on"
+                className="text-muted-foreground text-xs"
+              >
+                {t("startedOn", {
+                  date: format.dateTime(new Date(minEndDate), {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    timeZone: DATE_ONLY_TIME_ZONE,
+                  }),
+                })}
+              </p>
+            )}
           </div>
 
           {showDuration && (

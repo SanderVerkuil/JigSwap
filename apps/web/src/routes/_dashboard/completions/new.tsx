@@ -39,6 +39,7 @@ function NewCompletionPage() {
   const [finishTarget, setFinishTarget] = useState<{
     completionId: string;
     startDate: number;
+    title: string;
   } | null>(null);
 
   const { data: convexUser, isPending: convexUserPending } = useQuery(
@@ -153,6 +154,7 @@ function NewCompletionPage() {
       setFinishTarget({
         completionId: state.inProgressCompletionId,
         startDate: state.inProgressStartDate,
+        title: copy.puzzle?.title ?? "",
       });
       return;
     }
@@ -215,6 +217,7 @@ function NewCompletionPage() {
           onOpenChange={(open) => !open && setFinishTarget(null)}
           completionId={finishTarget.completionId}
           minEndDate={finishTarget.startDate}
+          puzzleTitle={finishTarget.title}
           onSuccess={() => router.push("/completions")}
         />
       )}
