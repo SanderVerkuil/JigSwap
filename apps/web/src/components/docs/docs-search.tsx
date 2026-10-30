@@ -13,13 +13,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { pagesForLocale } from "@/docs/nav";
-import { buildSearchDocs, createDocsIndex } from "@/docs/search";
+import { createDocsSearchStore } from "@/docs/search-store";
 import { useNavigate } from "@tanstack/react-router";
 import { FileText } from "lucide-react";
 import * as React from "react";
 import { useLocale, useTranslations } from "use-intl";
-import { pages } from "virtual:docs";
+import { searchLoaders } from "virtual:docs/search";
+
+// Each locale's corpus is its own chunk (en fills untranslated pages); a
+// locale without docs searches the English ones, as the nav shows them.
+const searchStore = createDocsSearchStore(async (locale) => {
+  const load = searchLoaders[locale] ?? searchLoaders.en;
+  return load ? (await load()).docs : [];
+});
 
 // Docs command palette. We disable cmdk's own filtering (`shouldFilter={false}`)
 // and feed it MiniSearch results for our controlled query, so ranking/snippets
@@ -37,15 +43,20 @@ export function DocsSearch({
   "onOpenAutoFocus" | "onCloseAutoFocus"
 >) {
   const t = useTranslations("marketing.docs");
+  const tCommon = useTranslations("common");
   const locale = useLocale();
   const navigate = useNavigate();
   const [query, setQuery] = React.useState("");
-  // Rebuilt per locale (en + locale overrides); the corpus is otherwise static.
-  const index = React.useMemo(
-    () => createDocsIndex(buildSearchDocs(pagesForLocale(pages, locale))),
-    [locale],
+  // The search corpus and MiniSearch load on the first open, not with the page.
+  React.useEffect(() => {
+    if (open) void searchStore.load(locale);
+  }, [open, locale]);
+  const index = React.useSyncExternalStore(
+    searchStore.subscribe,
+    () => searchStore.get(locale),
+    () => undefined,
   );
-  const hits = React.useMemo(() => index.search(query), [index, query]);
+  const hits = React.useMemo(() => index?.search(query) ?? [], [index, query]);
 
   const go = (slug: string) => {
     onOpenChange(false);
@@ -78,7 +89,9 @@ export function DocsSearch({
           />
           <CommandList>
             {query.trim() !== "" && hits.length === 0 && (
-              <CommandEmpty>{t("searchEmpty")}</CommandEmpty>
+              <CommandEmpty>
+                {index ? t("searchEmpty") : tCommon("loading")}
+              </CommandEmpty>
             )}
             {hits.length > 0 && (
               <CommandGroup heading={t("searchPagesHeading")}>

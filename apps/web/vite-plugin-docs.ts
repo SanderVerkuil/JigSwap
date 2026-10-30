@@ -6,9 +6,11 @@ import fg from "fast-glob"; // fast-glob ships with vite's deps; if unresolved, 
 import type { Plugin } from "vite";
 import { compileMarkdown } from "./src/docs/markdown";
 import type { DocPage } from "./src/docs/types";
-
-const VIRTUAL_ID = "virtual:docs";
-const RESOLVED_ID = "\0" + VIRTUAL_ID;
+import {
+  docPageFromFile,
+  isDocsModule,
+  renderDocsModule,
+} from "./src/docs/virtual-modules";
 
 const ROOT = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -20,55 +22,49 @@ async function loadPages(): Promise<DocPage[]> {
   const pages: DocPage[] = [];
   for (const rel of files) {
     const raw = await fs.readFile(path.join(ROOT, rel), "utf8");
-    const compiled = await compileMarkdown(raw);
-    // Path layout is locale-first: <locale>/<...slug>.md (POSIX separators
-    // since fast-glob emits forward slashes). First segment selects the locale;
-    // the remainder forms the locale-agnostic slug.
-    const parts = rel.replace(/\.md$/, "").split("/");
-    const locale = parts[0];
-    const rest = parts.slice(1);
-    const isIndex = rest[rest.length - 1] === "index";
-    const slugParts = isIndex ? rest.slice(0, -1) : rest;
-    const slug = slugParts.join("/");
-    const group = slug.includes("/") ? slug.split("/")[0] : slug;
-    pages.push({
-      locale,
-      slug,
-      group,
-      isIndex,
-      frontmatter: compiled.frontmatter,
-      html: compiled.html,
-      headings: compiled.headings,
-      text: compiled.text,
-    });
+    pages.push(docPageFromFile(rel, await compileMarkdown(raw)));
   }
   return pages;
 }
 
+// Compiles docs/user/**/*.md into the `virtual:docs*` modules described in
+// src/docs/virtual-modules.ts: page metadata, a lazy body per page and a lazy
+// search corpus per locale. Compiled once and shared by every module.
 export function docsPlugin(): Plugin {
+  let cache: Promise<DocPage[]> | null = null;
   return {
     name: "jigswap-docs",
     resolveId(id) {
-      if (id === VIRTUAL_ID) return RESOLVED_ID;
+      if (isDocsModule(id)) return "\0" + id;
     },
     async load(id) {
-      if (id !== RESOLVED_ID) return;
-      const pages = await loadPages();
-      return `export const pages = ${JSON.stringify(pages)};`;
+      if (!id.startsWith("\0") || !isDocsModule(id.slice(1))) return;
+      const source = renderDocsModule(
+        id.slice(1),
+        await (cache ??= loadPages()),
+      );
+      if (source === null) this.error(`Unknown docs module: ${id.slice(1)}`);
+      return source;
     },
     configureServer(server) {
       const dir = ROOT;
       server.watcher.add(dir);
-      const invalidate = () => {
-        const mod = server.moduleGraph.getModuleById(RESOLVED_ID);
-        if (mod) {
-          server.moduleGraph.invalidateModule(mod);
-          server.ws.send({ type: "full-reload" });
+      const invalidate = (file: string) => {
+        if (!file.startsWith(dir)) return;
+        cache = null;
+        for (const environment of Object.values(server.environments)) {
+          const graph = environment.moduleGraph;
+          for (const [id, mod] of graph.idToModuleMap) {
+            if (id.startsWith("\0") && isDocsModule(id.slice(1))) {
+              graph.invalidateModule(mod);
+            }
+          }
         }
+        server.ws.send({ type: "full-reload" });
       };
-      server.watcher.on("add", (f) => f.startsWith(dir) && invalidate());
-      server.watcher.on("change", (f) => f.startsWith(dir) && invalidate());
-      server.watcher.on("unlink", (f) => f.startsWith(dir) && invalidate());
+      server.watcher.on("add", invalidate);
+      server.watcher.on("change", invalidate);
+      server.watcher.on("unlink", invalidate);
     },
   };
 }

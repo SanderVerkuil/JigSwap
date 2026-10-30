@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { DocsSearchProvider } from "@/components/docs/docs-search-context";
-import type { DocPage } from "@/docs/types";
+import type { DocMeta, DocPage } from "@/docs/types";
 import {
   cleanup,
   fireEvent,
@@ -10,14 +10,22 @@ import {
 } from "@testing-library/react";
 import type { ComponentProps, ComponentType } from "react";
 import { IntlProvider } from "use-intl";
-import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import en from "../../../../locales/en.json";
 import nl from "../../../../locales/nl.json";
 import { Route as DocPageRoute } from "./$";
 import { Route as DocsIndexRoute } from "./index";
 
 const NOT_FOUND = vi.hoisted(() => ({ isNotFound: true }));
-const params = vi.hoisted(() => ({ _splat: "getting-started/first" }));
+const loaderData = vi.hoisted(() => ({ current: undefined as unknown }));
 
 // The head reads the strings from the loaded catalog of the context's locale.
 vi.mock("@/lib/i18n-catalog", () => ({
@@ -27,7 +35,7 @@ vi.mock("@/lib/i18n-catalog", () => ({
 vi.mock("@tanstack/react-router", () => ({
   createFileRoute: () => (options: { component: ComponentType }) => ({
     options,
-    useParams: () => params,
+    useLoaderData: () => loaderData.current,
   }),
   notFound: () => NOT_FOUND,
   Link: ({
@@ -53,6 +61,7 @@ vi.mock("virtual:docs", () => {
     title: string,
     extra: Partial<DocPage> = {},
   ): DocPage => ({
+    id: `${locale}/${slug}${extra.isIndex ? "/index" : ""}`,
     locale,
     slug,
     group,
@@ -86,16 +95,35 @@ vi.mock("virtual:docs", () => {
   };
 });
 
+vi.mock("virtual:docs/content", async () => {
+  const { pages } = (await import("virtual:docs")) as unknown as {
+    pages: DocPage[];
+  };
+  return {
+    pageLoaders: Object.fromEntries(
+      pages.map(({ id, html, headings }) => [
+        id,
+        async () => ({ html, headings }),
+      ]),
+    ),
+  };
+});
+
+type DocLoaderData = {
+  page: Pick<DocMeta, "frontmatter">;
+  html: string;
+  headings: unknown[];
+};
 type Options = {
   component: ComponentType;
   head: (ctx: {
-    loaderData?: { title: string; summary?: string };
+    loaderData?: Pick<DocLoaderData, "page">;
     match: { context: unknown; pathname: string };
   }) => { meta: Array<Record<string, string>> };
   loader: (ctx: {
     params: { _splat: string };
     context: { intl: { locale: string } };
-  }) => Promise<{ title: string; summary?: string }>;
+  }) => Promise<DocLoaderData>;
 };
 const docPage = (DocPageRoute as unknown as { options: Options }).options;
 const DocsIndex = (DocsIndexRoute as unknown as { options: Options }).options
@@ -145,19 +173,31 @@ describe("docs page loader", () => {
   });
 
   it("hands the head the page's own title and summary, in the visitor's language", async () => {
-    await expect(
-      docPage.loader({
-        params: { _splat: "getting-started/first" },
-        context: { intl: { locale: "nl" } },
-      }),
-    ).resolves.toEqual({ title: "Eerste stappen", summary: "Begin hier" });
+    const { page } = await docPage.loader({
+      params: { _splat: "getting-started/first" },
+      context: { intl: { locale: "nl" } },
+    });
+    expect(page.frontmatter).toEqual({
+      title: "Eerste stappen",
+      summary: "Begin hier",
+    });
+  });
+
+  it("loads that page's own body, in the visitor's language", async () => {
+    const { html } = await docPage.loader({
+      params: { _splat: "getting-started/first" },
+      context: { intl: { locale: "nl" } },
+    });
+    expect(html).toBe("<p>Eerste stappen</p>");
   });
 });
 
 describe("docs page head", () => {
   it("titles and describes the page from its frontmatter", () => {
     const { meta } = docPage.head({
-      loaderData: { title: "First steps", summary: "Begin here" },
+      loaderData: {
+        page: { frontmatter: { title: "First steps", summary: "Begin here" } },
+      },
       match: headMatch("en"),
     });
     expect(meta).toContainEqual({ title: "First steps — JigSwap" });
@@ -175,6 +215,13 @@ describe("docs page head", () => {
 });
 
 describe("docs page landmarks", () => {
+  beforeEach(async () => {
+    loaderData.current = await docPage.loader({
+      params: { _splat: "getting-started/first" },
+      context: { intl: { locale: "en" } },
+    });
+  });
+
   it("names the pager and the on-page contents so screen readers can tell them apart", () => {
     render(withIntl(<docPage.component />));
 

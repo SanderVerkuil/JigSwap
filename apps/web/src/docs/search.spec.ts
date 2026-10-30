@@ -4,6 +4,7 @@ import type { DocPage } from "./types";
 
 const pages: DocPage[] = [
   {
+    id: "en/your-library/collections",
     locale: "en",
     slug: "your-library/collections",
     group: "your-library",
@@ -14,6 +15,7 @@ const pages: DocPage[] = [
     text: "Create a collection to group puzzles together.",
   },
   {
+    id: "en/sharing-and-exchanges/visibility-and-privacy",
     locale: "en",
     slug: "sharing-and-exchanges/visibility-and-privacy",
     group: "sharing-and-exchanges",
@@ -24,6 +26,7 @@ const pages: DocPage[] = [
     text: "Control who can see your puzzles with visibility settings.",
   },
   {
+    id: "en/your-library/index",
     locale: "en",
     slug: "your-library",
     group: "your-library",
