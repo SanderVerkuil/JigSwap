@@ -7,9 +7,9 @@ import { projectPublicAuthor } from "./privacy";
 
 // UNAUTHENTICATED read of the community reviews on a catalog definition (the `puzzleReviews`
 // table, one row per member), for the public /catalog/$id page. Sibling of listPuzzleReviews (the
-// auth-gated member read, which always names authors via toMemberView); this one projects each
-// author through projectPublicAuthor instead — named iff their profile is public, null (rendered
-// as "A JigSwap member") otherwise.
+// auth-gated member read, which projects authors per viewer via projectMemberIdentity); this one
+// projects each author through projectPublicAuthor instead — named iff their profile is public,
+// null (rendered as "A JigSwap member") otherwise.
 //
 // Leak gate: reviews of a non-approved definition return [] (mirrors every public catalog read).
 // Most-recently-updated first: the `by_puzzle` index orders by _creationTime, so rows are sorted

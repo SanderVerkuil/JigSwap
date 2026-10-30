@@ -4088,6 +4088,7 @@
     "updateReview": "Beoordeling bijwerken",
     "reviewFailed": "Kon review niet plaatsen",
     "noReviews": "Nog geen reviews. Wees de eerste.",
+    "anonymousReviewer": "Anonieme gebruiker",
     "swapType": {
       "swap": "Ruilen",
       "lend": "Lenen",

@@ -34,7 +34,6 @@ import { gateway, Id } from "@/gateway";
 import { formatCompletionDate } from "@/lib/completion-format";
 import { durationParts } from "@/lib/humanize-duration";
 import {
-  useAuthorDisplayName,
   useMemberDisplayName,
   useProjectedMemberName,
 } from "@/lib/member-display-name";
@@ -1451,16 +1450,18 @@ function CommentRow({
   relative: (timestamp: number) => string;
   last: boolean;
 }) {
-  const authorName = useAuthorDisplayName();
-  const name = authorName(comment.author);
+  const t = useTranslations("copyInstance");
+  const projectedName = useProjectedMemberName();
+  // A private author the viewer isn't connected with arrives anonymous (SEC-11): label only, and
+  // the avatar and initial show only for a revealed author.
+  const name = projectedName(comment.author, t("anonymousUser"));
+  const member = comment.author.anonymous ? null : comment.author.member;
   return (
     <div className={cn("flex gap-3 py-3.5", !last && "border-border border-b")}>
       <Avatar className="h-8 w-8">
-        {comment.author.avatar && (
-          <AvatarImage src={comment.author.avatar} alt={name} />
-        )}
+        {member?.avatar && <AvatarImage src={member.avatar} alt={name} />}
         <AvatarFallback className="text-xs font-medium">
-          <MemberInitial source={comment.author} />
+          <MemberInitial source={member} />
         </AvatarFallback>
       </Avatar>
       <div className="min-w-0 flex-1">

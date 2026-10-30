@@ -4088,6 +4088,7 @@
     "updateReview": "Update review",
     "reviewFailed": "Couldn't post review",
     "noReviews": "No reviews yet. Be the first.",
+    "anonymousReviewer": "Anonymous user",
     "swapType": {
       "swap": "Swap",
       "lend": "Lend",

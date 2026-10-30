@@ -67,7 +67,7 @@ const asBob = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_bob" });
 
 describe("postPhotoComment / listPhotoComments", () => {
-  test("posts a comment on a photo; list returns it with the real author", async () => {
+  test("posts a comment on a photo; list returns it with the projected author", async () => {
     const t = convexTest(schema, modules);
     const { alice, photoId } = await seed(t);
 
@@ -90,9 +90,12 @@ describe("postPhotoComment / listPhotoComments", () => {
     );
     expect(list).toHaveLength(1);
     expect(list[0].text).toBe("Love this shot");
-    // Real author identity — never anonymised. No rating on photo comments.
-    expect(list[0].author._id).toBe(alice as string);
-    expect(list[0].author.name).toBe("Alice");
+    // The author is projected (SEC-11); the viewer is the author, so revealed. No rating on photo
+    // comments.
+    expect(list[0].author).toMatchObject({
+      anonymous: false,
+      member: { _id: alice, name: "Alice" },
+    });
     expect("rating" in list[0]).toBe(false);
   });
 
@@ -111,7 +114,10 @@ describe("postPhotoComment / listPhotoComments", () => {
       { photoId },
     );
     expect(list).toHaveLength(1);
-    expect(list[0].author._id).toBe(bob as string);
+    expect(list[0].author).toMatchObject({
+      anonymous: false,
+      member: { _id: bob },
+    });
   });
 
   test("comments are returned newest-first", async () => {

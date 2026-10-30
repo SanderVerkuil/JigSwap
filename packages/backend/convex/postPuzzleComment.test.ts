@@ -56,7 +56,7 @@ const asBob = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_bob" });
 
 describe("postPuzzleComment / listPuzzleComments", () => {
-  test("posts a plain-text comment; list returns it with the real author and NO rating", async () => {
+  test("posts a plain-text comment; list returns it with the projected author and NO rating", async () => {
     const t = convexTest(schema, modules);
     const { alice, puzzleId, aliceCopy } = await seed(t);
 
@@ -82,9 +82,11 @@ describe("postPuzzleComment / listPuzzleComments", () => {
     expect(list[0].text).toBe("Beautiful cut");
     // The projection carries no rating key at all — the DTO is plain text.
     expect(list[0]).not.toHaveProperty("rating");
-    // Real author identity — never anonymised.
-    expect(list[0].author._id).toBe(alice as string);
-    expect(list[0].author.name).toBe("Alice");
+    // The author is projected (SEC-11); the viewer is the author, so revealed.
+    expect(list[0].author).toMatchObject({
+      anonymous: false,
+      member: { _id: alice, name: "Alice" },
+    });
   });
 
   test("comments are scoped to each copy (two copies of the same puzzle do NOT share)", async () => {

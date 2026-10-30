@@ -743,17 +743,23 @@ describe("comments and reviews", () => {
         api.social.listPuzzleComments.listPuzzleComments,
         { copyId: copy },
       );
-      expect(comments.map((c) => c.author._id)).toEqual([u.carol]);
+      expect(comments.map((c) => c.author)).toMatchObject([
+        { anonymous: false, member: { _id: u.carol } },
+      ]);
       const photoComments = await alice.query(
         api.library.listPhotoComments.listPhotoComments,
         { photoId },
       );
-      expect(photoComments.map((c) => c.author._id)).toEqual([u.carol]);
+      expect(photoComments.map((c) => c.author)).toMatchObject([
+        { anonymous: false, member: { _id: u.carol } },
+      ]);
       const reviews = await alice.query(
         api.social.listPuzzleReviews.listPuzzleReviews,
         { puzzleId },
       );
-      expect(reviews.map((r) => r.author._id)).toEqual([u.carol]);
+      expect(reviews.map((r) => r.author)).toMatchObject([
+        { anonymous: false, member: { _id: u.carol } },
+      ]);
       // Public reviews: filtered when signed in, untouched for an anonymous visitor.
       expect(
         await alice.query(
