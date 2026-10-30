@@ -168,6 +168,8 @@ function CatalogListPage() {
         <div className="relative flex-1">
           <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
           <Input
+            type="search"
+            aria-label={t("searchLabel")}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder={t("searchPlaceholder")}
@@ -178,7 +180,10 @@ function CatalogListPage() {
           value={brand ?? "all"}
           onValueChange={(v) => setBrand(v === "all" ? undefined : v)}
         >
-          <SelectTrigger className="w-full sm:w-44">
+          <SelectTrigger
+            aria-label={t("brandLabel")}
+            className="w-full sm:w-44"
+          >
             <SelectValue placeholder={t("allBrands")} />
           </SelectTrigger>
           <SelectContent>
@@ -198,7 +203,10 @@ function CatalogListPage() {
             setBucket(v === "all" ? undefined : (v as PieceBucket))
           }
         >
-          <SelectTrigger className="w-full sm:w-48">
+          <SelectTrigger
+            aria-label={t("piecesLabel")}
+            className="w-full sm:w-48"
+          >
             <SelectValue placeholder={t("allPieces")} />
           </SelectTrigger>
           <SelectContent>
@@ -211,8 +219,9 @@ function CatalogListPage() {
         </Select>
       </div>
 
-      {/* Grid */}
+      {/* Grid. The sr-only h2 keeps the heading outline h1 > h2 > card h3. */}
       <div className="mt-8">
+        <h2 className="sr-only">{t("resultsHeading")}</h2>
         {firstPage === undefined ? (
           <div className="grid grid-cols-2 gap-[18px] md:grid-cols-3 lg:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (
