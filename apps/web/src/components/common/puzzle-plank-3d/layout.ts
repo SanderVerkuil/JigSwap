@@ -4,6 +4,16 @@ import { BOX_SCALE, PX } from "@/components/marketing/plank-3d/box";
 /** World-space gap between neighbouring boxes on the shelf row. */
 export const GAP = 0.12;
 
+// Headroom added above the tallest box when computing the framed height. Kept
+// generous so the gentle downward camera tilt never clips the top of a tall
+// (portrait) cover.
+export const CONTENT_HEADROOM = 0.6;
+// Minimum visible world width so a 1-2 box row isn't hugely zoomed.
+export const MIN_VIS_W = 2.0;
+// World width kept free beside the row (split over both ends) so the outer
+// covers, their nearer front faces and the parallax sway stay in frame.
+export const ROW_SIDE_MARGIN = 0.3;
+
 export interface RowSlot {
   /** World-space x of the box center. */
   x: number;
@@ -35,4 +45,26 @@ export function layoutRow(boxes: PuzzlePlankBox[]): RowLayout {
     cursor += wb + GAP;
   }
   return { slots, rowWidth };
+}
+
+/**
+ * World height the camera must frame so the whole shelf row is visible on a
+ * canvas of the given aspect (width / height): the tallest box plus headroom,
+ * the row plus its side margin (on near-square phone and tablet canvases the
+ * width binds), and never less than MIN_VIS_W across. Pure.
+ */
+export function framedContentHeight({
+  maxBoxH,
+  rowWidth,
+  aspect,
+}: {
+  maxBoxH: number;
+  rowWidth: number;
+  aspect: number;
+}): number {
+  return Math.max(
+    maxBoxH + CONTENT_HEADROOM,
+    (rowWidth + ROW_SIDE_MARGIN) / aspect,
+    MIN_VIS_W / aspect,
+  );
 }

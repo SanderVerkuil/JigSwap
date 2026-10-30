@@ -19,7 +19,7 @@ import { Canvas, events, useFrame, useThree } from "@react-three/fiber";
 import { easing } from "maath";
 import * as React from "react";
 import * as THREE from "three";
-import { layoutRow } from "./layout";
+import { framedContentHeight, layoutRow } from "./layout";
 import { DEFAULT_WOOD_PARAMS, useWoodTexture } from "./wood-texture";
 
 // ——— shelf constants ———
@@ -28,12 +28,6 @@ const SHELF_DEPTH = 0.6;
 
 // ——— camera constants ———
 const FOV = 38;
-// Headroom added above the tallest box when computing the framed height. Kept
-// generous so the gentle downward camera tilt never clips the top of a tall
-// (portrait) cover.
-const CONTENT_HEADROOM = 0.6;
-// Minimum visible world width so a 1-2 box row isn't hugely zoomed.
-const MIN_VIS_W = 2.0;
 // Camera sits slightly above the look-at point for a gentle downward gaze.
 const CAMERA_Y_LIFT = 0.3;
 // In-app planks render FACE-ON (no yaw) — the angled, depth-y look is reserved
@@ -209,13 +203,12 @@ function Arrangement({
     [boxes, boxHeights],
   );
 
-  // ——— cover-fit camera: frame the row with headroom ———
+  // ——— cover-fit camera: frame the whole row with headroom ———
   const vFov = (FOV * Math.PI) / 180;
   const aspect = size.width / size.height;
-  // Framed height = tallest box + headroom; clamped so narrow viewports
-  // don't zoom in beyond MIN_VIS_W world units.
-  const framedH = maxBoxH + CONTENT_HEADROOM;
-  const contentH = Math.max(framedH, MIN_VIS_W / aspect);
+  // Fits both axes: the tallest box + headroom and the row's full width, so a
+  // near-square phone or tablet canvas never cuts the outer covers.
+  const contentH = framedContentHeight({ maxBoxH, rowWidth, aspect });
   const dist = contentH / 2 / Math.tan(vFov / 2);
 
   // Camera y: look at the vertical center of the row (half maxBoxH above shelf),

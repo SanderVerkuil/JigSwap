@@ -29,7 +29,7 @@ import * as React from "react";
 import * as THREE from "three";
 import { reconcileBodyRefs } from "./body-refs";
 import { clampThrowVelocity } from "./drag-math";
-import { layoutRow } from "./layout";
+import { framedContentHeight, layoutRow } from "./layout";
 import type { PlankSceneProps } from "./scene";
 import { DEFAULT_WOOD_PARAMS, useWoodTexture } from "./wood-texture";
 
@@ -45,10 +45,6 @@ const SHELF_DEPTH = 0.6;
 
 // ——— camera constants (mirrors scene.tsx) ———
 const FOV = 38;
-// Generous headroom so the downward camera tilt never clips the top of a tall
-// (portrait) cover. Mirrors scene.tsx.
-const CONTENT_HEADROOM = 0.6;
-const MIN_VIS_W = 2.0;
 const CAMERA_Y_LIFT = 0.3;
 // In-app planks render FACE-ON (no yaw) — the camera looks straight on. The
 // angled, depth-y look is reserved for the marketing hero background.
@@ -416,8 +412,8 @@ function PhysicsArrangement({
   // as in the static scene while physics bodies live in world space.
   const vFov = (FOV * Math.PI) / 180;
   const aspect = size.width / size.height;
-  const framedH = maxBoxH + CONTENT_HEADROOM;
-  const contentH = Math.max(framedH, MIN_VIS_W / aspect);
+  // Same framing as scene.tsx: height and row width both fit.
+  const contentH = framedContentHeight({ maxBoxH, rowWidth, aspect });
   const dist = contentH / 2 / Math.tan(vFov / 2);
   const lookAtY = maxBoxH / 2;
   const cameraY = lookAtY + CAMERA_Y_LIFT;
