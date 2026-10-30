@@ -32,6 +32,16 @@ export const memberTeaserIdentityOf = (
   avatar: viewerSignedIn || user.shareAvatarPublicly ? user.avatar : undefined,
 });
 
+/**
+ * A member's visibility as they explicitly chose it: "public" only when their profile row says so,
+ * else "private" (no row, or a row opened lazily without a choice). For LOGGED-OUT surfaces, which
+ * fail closed like projectPublicAuthor (SEC-44); in-app reads keep profileVisibilityOf's
+ * absent-is-public default.
+ */
+export const explicitVisibilityOf = (
+  profile: Doc<"profiles"> | null,
+): "public" | "private" => profile?.visibility ?? "private";
+
 /** A member's profile visibility, defaulting to "public" when they have no profile row. */
 export const profileVisibilityOf = async (
   ctx: QueryCtx,

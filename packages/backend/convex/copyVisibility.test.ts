@@ -28,6 +28,16 @@ type Cast = {
   puzzleAggregateId: string;
 };
 
+// An explicit public profile choice: logged-out reads treat a missing row as private (SEC-44).
+const choosePublic = (t: TestConvex<typeof schema>, memberId: Id<"users">) =>
+  t.run((ctx) =>
+    ctx.db.insert("profiles", {
+      memberId,
+      visibility: "public",
+      updatedAt: Date.now(),
+    }),
+  );
+
 const as = (t: TestConvex<typeof schema>, name: string) =>
   t.withIdentity({ subject: `clerk_${name}` });
 
@@ -244,7 +254,8 @@ describe("profile listings and counts drop private copies for non-household view
 
   test("getPublicProfile stats.puzzlesOwned excludes private copies for non-self/household viewers", async () => {
     const t = convexTest(schema, modules);
-    await seedTwo(t);
+    const { cast } = await seedTwo(t);
+    await choosePublic(t, cast.alice);
     const owned = async (viewer: string | null) => {
       const query = viewer ? as(t, viewer) : t;
       const view = await query.query(
@@ -263,6 +274,7 @@ describe("profile listings and counts drop private copies for non-household view
   test("getPublicMemberTeaser puzzleCount and getUserStats exclude private copies for others", async () => {
     const t = convexTest(schema, modules);
     const { cast } = await seedTwo(t);
+    await choosePublic(t, cast.alice);
     const teaser = api.social.getPublicMemberTeaser.getPublicMemberTeaser;
     const args = { handle: "alice" };
     expect((await t.query(teaser, args))?.puzzleCount).toBe(2);

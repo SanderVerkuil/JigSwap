@@ -272,6 +272,7 @@ export interface PublicMemberTeaserView {
   avatar?: string;
   /** users.createdAt (ms). */
   memberSince: number;
+  /** Logged out, "public" only when the member explicitly chose it; no choice reads "private" (SEC-44). */
   visibility: "public" | "private";
   /** Owned-copy count; null for private profiles. */
   puzzleCount: number | null;
@@ -330,6 +331,7 @@ export interface PublicProfileHero {
   reviewCount: number;
   followerCount: number;
   followingCount: number;
+  /** Logged out, "public" only when the member explicitly chose it; no choice reads "private" (SEC-44). */
   visibility: "public" | "private";
   /** Only present when visibility === "public" — see class doc. */
   location?: string;

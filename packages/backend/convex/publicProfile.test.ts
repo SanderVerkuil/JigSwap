@@ -1,6 +1,7 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
@@ -332,9 +333,10 @@ describe("getPublicProfile", () => {
       api.social.getPublicProfile.getPublicProfile,
       { handle: "frank" },
     );
-    expect(frankView).not.toBeNull();
-    if (!frankView || frankView.locked) throw new Error("expected unlocked");
-    expect(frankView.hero.avatar).toBeUndefined();
+    // Frank never chose a visibility, so this logged-out read is locked (SEC-44); either way the
+    // hero carries no unconsented avatar.
+    expect(frankView?.locked).toBe(true);
+    expect(frankView?.hero.avatar).toBeUndefined();
   });
 
   test("private profile, logged-out: locked, hero present but location undefined, no story/stats/records", async () => {
@@ -455,13 +457,13 @@ describe("getPublicProfile", () => {
       return { target, shadower };
     });
 
+    // (Locked: the target never chose a visibility, SEC-44. Resolution is what matters here.)
     const byId = await t.query(api.social.getPublicProfile.getPublicProfile, {
       handle: target,
     });
     expect(byId).not.toBeNull();
-    if (!byId || byId.locked) throw new Error("expected unlocked");
-    expect(byId.hero.memberId).toBe(target);
-    expect(byId.hero.memberId).not.toBe(shadower);
+    expect(byId!.hero.memberId).toBe(target);
+    expect(byId!.hero.memberId).not.toBe(shadower);
   });
 
   test("leak assertion: a locked payload never contains location, bio, or gated stat numbers", async () => {
@@ -768,5 +770,90 @@ describe("getPublicProfile — currentlySolving gating", () => {
     );
     expect(view?.locked).toBe(true);
     expect(view).not.toHaveProperty("currentlySolving");
+  });
+});
+
+// SEC-44: a member who never chose a visibility has no profile row. Signed-in reads keep treating
+// that as public, but the logged-out (indexable) read fails closed, like projectPublicAuthor:
+// locked, reported as private (so the route emits noindex), no location, stats or records.
+describe("getPublicProfile — logged out, no visibility chosen (SEC-44)", () => {
+  const giveFrankALife = (t: TestConvex<typeof schema>, frank: Id<"users">) =>
+    t.run(async (ctx) => {
+      await ctx.db.patch(frank, { location: "Rotterdam" });
+      const puzzle = await ctx.db.insert("puzzles", {
+        title: "Frank Unlisted Record",
+        pieceCount: 2718,
+        status: "approved",
+        submittedBy: frank,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+      await ctx.db.insert("completions", {
+        userId: frank,
+        puzzleId: puzzle,
+        startDate: Date.now() - HOUR,
+        endDate: Date.now(),
+        completionTimeMinutes: 27,
+        photos: [],
+        isCompleted: true,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    });
+
+  test("anonymous + no profile row: locked, private, no location, stats or records", async () => {
+    const t = convexTest(schema, modules);
+    const { frank } = await seed(t);
+    await giveFrankALife(t, frank);
+
+    const view = await t.query(api.social.getPublicProfile.getPublicProfile, {
+      handle: "frank",
+    });
+    expect(view?.locked).toBe(true);
+    expect(view?.hero.memberId).toBe(frank);
+    expect(view?.hero.visibility).toBe("private");
+    expect(view?.hero.location).toBeUndefined();
+    expect(view).not.toHaveProperty("stats");
+    expect(view).not.toHaveProperty("records");
+    const json = JSON.stringify(view);
+    expect(json).not.toContain("Rotterdam");
+    expect(json).not.toContain("2718");
+    expect(json).not.toContain("Frank Unlisted Record");
+  });
+
+  test("anonymous + an explicit public row: unlocked as before", async () => {
+    const t = convexTest(schema, modules);
+    const { frank } = await seed(t);
+    await giveFrankALife(t, frank);
+    await t.run((ctx) =>
+      ctx.db.insert("profiles", {
+        memberId: frank,
+        visibility: "public",
+        updatedAt: Date.now(),
+      }),
+    );
+
+    const view = await t.query(api.social.getPublicProfile.getPublicProfile, {
+      handle: "frank",
+    });
+    if (!view || view.locked) throw new Error("expected unlocked");
+    expect(view.hero.visibility).toBe("public");
+    expect(view.hero.location).toBe("Rotterdam");
+    expect(view.stats.piecesPlaced).toBe(2718);
+  });
+
+  test("signed in + no profile row: unchanged, still public and unlocked", async () => {
+    const t = convexTest(schema, modules);
+    const { frank } = await seed(t);
+    await giveFrankALife(t, frank);
+
+    const view = await asEve(t).query(
+      api.social.getPublicProfile.getPublicProfile,
+      { handle: "frank" },
+    );
+    if (!view || view.locked) throw new Error("expected unlocked");
+    expect(view.hero.visibility).toBe("public");
+    expect(view.hero.location).toBe("Rotterdam");
+    expect(view.stats.piecesPlaced).toBe(2718);
   });
 });

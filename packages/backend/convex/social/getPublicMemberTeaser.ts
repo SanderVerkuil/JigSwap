@@ -9,6 +9,7 @@ import {
 import { isCopyPrivate, seesPrivateCopiesOf } from "../library/copyVisibility";
 import { blockStateBetween } from "./blocks";
 import {
+  explicitVisibilityOf,
   memberTeaserIdentityOf,
   profileVisibilityOf,
   shareACircle,
@@ -29,7 +30,7 @@ export const getPublicMemberTeaser = query({
 
     const memberId = user._id;
     const handle = await canonicalHandleOf(ctx, user);
-    const [visibility, profile, viewer] = await Promise.all([
+    const [signedInVisibility, profile, viewer] = await Promise.all([
       profileVisibilityOf(ctx, memberId),
       ctx.db
         .query("profiles")
@@ -37,6 +38,10 @@ export const getPublicMemberTeaser = query({
         .unique(),
       optionalActingMember(ctx),
     ]);
+    // Logged out (indexable), only an explicit public choice counts (SEC-44): no puzzleCount and
+    // a private label (the route's noindex) for a member who never chose.
+    const visibility =
+      viewer === null ? explicitVisibilityOf(profile) : signedInVisibility;
 
     // Blocked (spec 2.6): the blocked side reads not-found; the blocker gets the identity only.
     // Except inside a shared circle: the circle names its members to each other even across a
