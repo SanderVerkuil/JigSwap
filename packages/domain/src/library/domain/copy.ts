@@ -1,5 +1,5 @@
 import { DomainEvent, ok, Result } from "../../shared-kernel";
-import { Acquisition } from "./acquisition";
+import { Acquisition, AcquisitionSource } from "./acquisition";
 import { CatalogSnapshot } from "./catalog-snapshot";
 import { Condition } from "./condition";
 import { CopyImage } from "./copy-image";
@@ -218,10 +218,16 @@ export class Copy {
 
   // Patch the descriptive fields the condition/sharing methods don't cover. An undefined field
   // in `changes` leaves the current value untouched; only the supplied fields are overwritten.
+  // A supplied `acquisition` replaces when and how the copy was acquired as a pair (an omitted date
+  // or source is cleared, so the owner can unset one); the paid price is kept.
   updateDetails(
     changes: {
       readonly missingPiecesCount?: number;
       readonly notes?: string;
+      readonly acquisition?: {
+        readonly date?: Date;
+        readonly source?: AcquisitionSource;
+      };
     },
     now: Date,
   ): Result<void, LibraryError> {
@@ -230,6 +236,13 @@ export class Copy {
       missingPiecesCount:
         changes.missingPiecesCount ?? this.state.missingPiecesCount,
       notes: changes.notes ?? this.state.notes,
+      acquisition: changes.acquisition
+        ? Acquisition.create({
+            date: changes.acquisition.date,
+            source: changes.acquisition.source,
+            price: this.state.acquisition.price,
+          })
+        : this.state.acquisition,
       updatedAt: now,
     };
     this.record(

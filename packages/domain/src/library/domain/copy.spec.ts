@@ -190,6 +190,58 @@ describe("updateSharing", () => {
   });
 });
 
+describe("updateDetails", () => {
+  const MARCH = new Date("2025-03-01T12:00:00Z");
+
+  it("records when and how the copy was acquired, keeping the paid price and other details", () => {
+    const price = Price.create(1500, "EUR");
+    if (!price.isOk) throw new Error("setup failed");
+    const result = Copy.acquire({
+      id: copyId,
+      ownerId: owner,
+      snapshot: snapshot(),
+      condition: "good",
+      acquisition: Acquisition.create({ price: price.value }),
+      notes: "corner bent",
+      now: NOW,
+    });
+    if (!result.isOk) throw new Error("setup failed");
+    const copy = result.value;
+    copy.pullEvents();
+
+    const updated = copy.updateDetails(
+      { acquisition: { date: MARCH, source: "bought_used" } },
+      LATER,
+    );
+    expect(updated.isOk).toBe(true);
+    const state = copy.toState();
+    expect(state.acquisition.date).toEqual(MARCH);
+    expect(state.acquisition.source).toBe("bought_used");
+    expect(state.acquisition.price).toBe(price.value);
+    expect(state.notes).toBe("corner bent");
+    expect(state.updatedAt).toBe(LATER);
+    expect(names(copy.pullEvents())).toEqual(["CopyDetailsUpdated"]);
+  });
+
+  it("a supplied acquisition replaces both date and source, so an omitted one is cleared", () => {
+    const copy = acquire();
+    copy.updateDetails({ acquisition: { date: MARCH, source: "gift" } }, NOW);
+    copy.updateDetails({ acquisition: { source: "trade" } }, LATER);
+    expect(copy.toState().acquisition.date).toBeUndefined();
+    expect(copy.toState().acquisition.source).toBe("trade");
+    copy.updateDetails({ acquisition: {} }, LATER);
+    expect(copy.toState().acquisition.source).toBeUndefined();
+  });
+
+  it("leaves the acquisition alone when none is supplied", () => {
+    const copy = acquire();
+    copy.updateDetails({ acquisition: { date: MARCH, source: "gift" } }, NOW);
+    copy.updateDetails({ notes: "lovely" }, LATER);
+    expect(copy.toState().acquisition.date).toEqual(MARCH);
+    expect(copy.toState().acquisition.source).toBe("gift");
+  });
+});
+
 describe("changeCover", () => {
   it("sets the cover to one of the copy's photos and records CopyCoverChanged", () => {
     const copy = acquire();

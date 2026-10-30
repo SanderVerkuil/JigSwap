@@ -433,6 +433,20 @@ describe("copy mutation use cases", () => {
       expect(saved?.toState().notes).toBe("corner piece missing");
     });
 
+    it("records the acquisition date and source", async () => {
+      const march = new Date("2025-03-01T12:00:00Z");
+      const result = await run()({
+        actingMemberId: alice,
+        copyId,
+        acquisition: { date: march, source: "bought_new" },
+      });
+      expect(result.isOk).toBe(true);
+      expect(events.names()).toEqual(["CopyDetailsUpdated"]);
+      const saved = (await copies.findById(copyId))?.toState();
+      expect(saved?.acquisition.date).toEqual(march);
+      expect(saved?.acquisition.source).toBe("bought_new");
+    });
+
     it("rejects a non-owner", async () => {
       const result = await run()({
         actingMemberId: bob,
