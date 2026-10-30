@@ -66,7 +66,7 @@ function WelcomeDialogContent({ onClose }: { onClose: () => void }) {
   return (
     <DialogContent
       ref={contentRef}
-      className="max-w-[calc(100%-2rem)] gap-0 overflow-hidden p-0 motion-reduce:animate-none sm:max-w-md"
+      className="max-w-[calc(100%-2rem)] gap-0 overflow-x-hidden p-0 motion-reduce:animate-none sm:max-w-md"
       onOpenAutoFocus={(event) => {
         // Focus the primary action, not the close X Radix would pick first.
         event.preventDefault();
@@ -118,8 +118,9 @@ export function WelcomeDialogBody({ onClose }: { onClose: () => void }) {
         </ol>
         <p className="text-muted-foreground mt-1 text-sm">{t("time")}</p>
       </div>
-      {/* flex-col-reverse on mobile: the primary ends up on top. */}
-      <DialogFooter className="bg-muted/40 border-t px-6 py-4">
+      {/* flex-col-reverse on mobile: the primary ends up on top. The muted tint is mixed opaque:
+          the footer is sticky, so a translucent one would let the scrolled body show through. */}
+      <DialogFooter className="border-t bg-[color-mix(in_srgb,var(--muted)_40%,var(--background))] px-6 py-4">
         <Button
           variant="ghost"
           className={cn(fullWidth, "pointer-coarse:min-h-11")}

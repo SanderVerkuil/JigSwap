@@ -143,7 +143,7 @@ function HighlightContent({
     <DialogContent
       ref={contentRef}
       className={cn(
-        "max-w-[calc(100%-2rem)] gap-0 overflow-hidden p-0 [&>*]:min-w-0 motion-reduce:animate-none sm:max-w-md",
+        "max-w-[calc(100%-2rem)] gap-0 overflow-x-hidden p-0 [&>*]:min-w-0 motion-reduce:animate-none sm:max-w-md",
         entry.image &&
           "[&>[data-slot=dialog-close]]:bg-background/80 [&>[data-slot=dialog-close]]:rounded-full [&>[data-slot=dialog-close]]:p-1 [&>[data-slot=dialog-close]]:backdrop-blur-sm",
       )}
@@ -188,8 +188,9 @@ function HighlightContent({
       </div>
       {/* Two rows so up to four actions never outgrow the dialog (long labels in nl): the actions
           on top (flex-col-reverse puts the primary first on mobile), "See all" and "Maybe later"
-          below. */}
-      <DialogFooter className="bg-muted/40 flex-col gap-3 border-t px-6 py-4 sm:flex-col">
+          below. The muted tint is mixed opaque: the footer is sticky, so a translucent one would
+          let the scrolled body show through. */}
+      <DialogFooter className="flex-col gap-3 border-t bg-[color-mix(in_srgb,var(--muted)_40%,var(--background))] px-6 py-4 sm:flex-col">
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           {tour && cta && (
             <Button asChild variant="outline" className={fullWidth}>
