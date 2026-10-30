@@ -138,7 +138,8 @@ export interface PuzzleCommentView {
  * text) and `text` their optional write-up (null when they left only stars). The `author` is
  * privacy-projected (salt = the puzzle id): a private author the viewer is not connected with is
  * anonymous (SEC-11), as on the public catalog; `updatedAt` is when the review was last written.
- * Newest reviews are returned first.
+ * Newest reviews are returned first. `canDelete` is true only for the viewer's own review (the
+ * author may delete it).
  */
 export interface PuzzleReviewView {
   id: string;
@@ -146,6 +147,7 @@ export interface PuzzleReviewView {
   rating: number | null;
   text: string | null;
   updatedAt: number;
+  canDelete: boolean;
 }
 
 /**

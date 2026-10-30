@@ -505,6 +505,7 @@ import type * as social_declineConnection from "../social/declineConnection.js";
 import type * as social_declineFollowRequest from "../social/declineFollowRequest.js";
 import type * as social_declineHouseholdLinkInvite from "../social/declineHouseholdLinkInvite.js";
 import type * as social_deletePuzzleComment from "../social/deletePuzzleComment.js";
+import type * as social_deletePuzzleReview from "../social/deletePuzzleReview.js";
 import type * as social_editProfile from "../social/editProfile.js";
 import type * as social_errors from "../social/errors.js";
 import type * as social_establishMutualFollow from "../social/establishMutualFollow.js";
@@ -1085,6 +1086,7 @@ declare const fullApi: ApiFromModules<{
   "social/declineFollowRequest": typeof social_declineFollowRequest;
   "social/declineHouseholdLinkInvite": typeof social_declineHouseholdLinkInvite;
   "social/deletePuzzleComment": typeof social_deletePuzzleComment;
+  "social/deletePuzzleReview": typeof social_deletePuzzleReview;
   "social/editProfile": typeof social_editProfile;
   "social/errors": typeof social_errors;
   "social/establishMutualFollow": typeof social_establishMutualFollow;

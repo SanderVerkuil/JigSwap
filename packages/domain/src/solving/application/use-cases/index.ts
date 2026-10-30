@@ -1,6 +1,7 @@
 export * from "./attach-completion-photos";
 export * from "./create-goal";
 export * from "./delete-completion";
+export * from "./delete-puzzle-review";
 export * from "./edit-completion";
 export * from "./finish-completion";
 export * from "./get-solving-preferences";

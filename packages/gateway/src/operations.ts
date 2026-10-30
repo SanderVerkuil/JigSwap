@@ -500,6 +500,8 @@ export const gateway = {
     // Same `puzzleComments` table + post-comment use case as the copy-keyed variants above.
     postPuzzleReview: api.social.postPuzzleReview.postPuzzleReview,
     listPuzzleReviews: api.social.listPuzzleReviews.listPuzzleReviews,
+    // Author-only: "Delete my review" removes the caller's own review of the puzzle.
+    deletePuzzleReview: api.social.deletePuzzleReview.deletePuzzleReview,
     listPublicPuzzleReviews:
       api.social.listPublicPuzzleReviews.listPublicPuzzleReviews,
     // Presence (opt-in, mutual-only, reciprocal): the caller's own share/override settings and

@@ -13,7 +13,8 @@ import type { MutationCtx, QueryCtx } from "../../_generated/server";
 // port CARRY Convex doc `_id`s: composition roots brand `v.id(...)` args / row FK values via
 // `toPuzzleDefinitionId`/`toCopyId` (the postPuzzleReview.ts idiom), so the adapters just cast
 // back — no resolution. This mirrors the social-context branding, NOT
-// convexCompletionRepository (which resolves aggregateIds).
+// convexCompletionRepository (which resolves aggregateIds). `remove` deletes the member's own
+// puzzle review row (the author's delete, SEC-70).
 
 // The facts makeUpsertPuzzleReview checks before a puzzle review (null: no such puzzle). Read
 // once per review by the composition roots (social/postPuzzleReview, solving/submitReviews).
@@ -69,6 +70,20 @@ export const convexPuzzleReviewRepository = (
       createdAt: now,
       updatedAt: now,
     });
+  },
+
+  async remove(memberId, definitionId): Promise<boolean> {
+    const userId = memberId as unknown as Id<"users">;
+    const puzzleId = definitionId as unknown as Id<"puzzles">;
+    const existing = await ctx.db
+      .query("puzzleReviews")
+      .withIndex("by_user_puzzle", (q) =>
+        q.eq("userId", userId).eq("puzzleId", puzzleId),
+      )
+      .unique();
+    if (!existing) return false;
+    await ctx.db.delete(existing._id);
+    return true;
   },
 });
 

@@ -38,6 +38,9 @@ class RecordingPuzzleReviewRepository implements PuzzleReviewRepository {
   async storedText(): Promise<string | undefined> {
     return this.stored;
   }
+  async remove(): Promise<boolean> {
+    return false;
+  }
 }
 
 class RecordingCopyReviewRepository implements CopyReviewRepository {
