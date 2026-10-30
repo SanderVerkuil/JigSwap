@@ -31,11 +31,25 @@ export const browsePublicCatalog = query({
     const term = args.searchTerm?.toLowerCase().trim() ?? "";
 
     // brand/piece narrowing shared by both branches (status is handled per-branch: at the search
-    // index for the search branch, as a filter for the plain branch).
+    // index for the search branch, at the by_status / by_status_brand index for the plain branch).
     const matchesFacets = (p: Doc<"puzzles">): boolean =>
       (args.brand === undefined || p.brand === args.brand) &&
       (args.pieceMin === undefined || p.pieceCount >= args.pieceMin) &&
       (args.pieceMax === undefined || p.pieceCount <= args.pieceMax);
+
+    // Plain browse: only approved rows are read (one brand's when filtered), newest first by the
+    // indexes' implicit _creationTime suffix. The piece range stays a filter so that order holds.
+    const brand = args.brand;
+    const approved =
+      brand === undefined
+        ? ctx.db
+            .query("puzzles")
+            .withIndex("by_status", (q) => q.eq("status", "approved"))
+        : ctx.db
+            .query("puzzles")
+            .withIndex("by_status_brand", (q) =>
+              q.eq("status", "approved").eq("brand", brand),
+            );
 
     const result =
       term.length > 0
@@ -58,15 +72,10 @@ export const browsePublicCatalog = query({
               ),
             )
             .paginate(args.paginationOpts)
-        : await ctx.db
-            .query("puzzles")
+        : await approved
             .order("desc") // newest first by _creationTime
             .filter((q) =>
               q.and(
-                q.eq(q.field("status"), "approved"),
-                args.brand === undefined
-                  ? q.eq(q.field("status"), "approved")
-                  : q.eq(q.field("brand"), args.brand),
                 args.pieceMin === undefined
                   ? q.eq(q.field("status"), "approved")
                   : q.gte(q.field("pieceCount"), args.pieceMin),

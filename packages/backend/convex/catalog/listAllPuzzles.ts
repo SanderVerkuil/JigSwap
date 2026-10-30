@@ -5,14 +5,15 @@ import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { toPuzzleSummaryView } from "./mappers";
 
 // Catalog read: the public, browsable puzzle list (paginated). Pending/rejected submissions must
-// not leak, so we filter to approved — identical to legacy puzzles.listAllpuzzles. Each page row is
-// mapped to a typed summary DTO (box-art URL resolved) rather than the raw Convex row.
+// not leak, so only approved rows are read (by_status index, oldest first as legacy
+// puzzles.listAllpuzzles). Each page row is mapped to a typed summary DTO (box-art URL resolved)
+// rather than the raw Convex row.
 export const listAllPuzzles = query({
   args: { paginationOpts: paginationOptsValidator },
   handler: async (ctx, args): Promise<PaginationResult<PuzzleSummaryView>> => {
     const puzzles = await ctx.db
       .query("puzzles")
-      .filter((q) => q.eq(q.field("status"), "approved"))
+      .withIndex("by_status", (q) => q.eq("status", "approved"))
       .paginate(args.paginationOpts);
 
     const page = await Promise.all(

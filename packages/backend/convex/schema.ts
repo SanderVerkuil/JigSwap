@@ -258,6 +258,10 @@ export default defineSchema({
     .index("by_aggregate_id", ["aggregateId"])
     // Lets a contributor list their own submissions (e.g. own not-yet-approved puzzles).
     .index("by_submitted_by", ["submittedBy"])
+    // Catalog lists read by status (the approved catalogue, the pending queue) through these
+    // instead of scanning the table; the implicit _creationTime suffix keeps newest-first order.
+    .index("by_status", ["status"])
+    .index("by_status_brand", ["status", "brand"])
     .searchIndex("by_searchable_text", {
       searchField: "searchableText",
       // Lets public suggestions exclude pending/rejected submissions at the index level.

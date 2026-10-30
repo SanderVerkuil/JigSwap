@@ -12,8 +12,8 @@ export const getRecentPuzzles = query({
     const limit = args.limit ?? 8;
     const puzzles = await ctx.db
       .query("puzzles")
+      .withIndex("by_status", (q) => q.eq("status", "approved"))
       .order("desc")
-      .filter((q) => q.eq(q.field("status"), "approved"))
       .take(limit);
 
     return Promise.all(

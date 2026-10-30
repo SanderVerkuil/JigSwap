@@ -8,7 +8,8 @@ import { toPuzzleSummaryView } from "./mappers";
 
 // Catalog read for the member add-copy picker: the approved catalogue, paginated, narrowed
 // server-side by the search index when a term is given (so matches beyond the loaded page are
-// found). Approved-only: at the search index for a term, as a filter for the plain browse.
+// found). Approved-only: at the search index for a term, at the by_status index for the plain
+// browse.
 export const searchCatalog = query({
   args: {
     paginationOpts: paginationOptsValidator,
@@ -28,7 +29,7 @@ export const searchCatalog = query({
             .paginate(args.paginationOpts)
         : await ctx.db
             .query("puzzles")
-            .filter((q) => q.eq(q.field("status"), "approved"))
+            .withIndex("by_status", (q) => q.eq("status", "approved"))
             .paginate(args.paginationOpts);
 
     const page = await Promise.all(

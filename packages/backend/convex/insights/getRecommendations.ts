@@ -69,8 +69,8 @@ export const getRecommendations = query({
     // over-fetch then drop owned rows so the post-filter pool still fills the recommendation window.
     const approved = await ctx.db
       .query("puzzles")
+      .withIndex("by_status", (q) => q.eq("status", "approved"))
       .order("desc")
-      .filter((q) => q.eq(q.field("status"), "approved"))
       .take(CANDIDATE_SCAN_LIMIT);
     const candidatePool = approved.filter((p) => !ownedPuzzleIds.has(p._id));
 

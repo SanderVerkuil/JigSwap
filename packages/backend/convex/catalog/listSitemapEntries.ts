@@ -9,7 +9,7 @@ export const listSitemapEntries = query({
   handler: async (ctx): Promise<{ id: string; updatedAt: number }[]> => {
     const puzzles = await ctx.db
       .query("puzzles")
-      .filter((q) => q.eq(q.field("status"), "approved"))
+      .withIndex("by_status", (q) => q.eq("status", "approved"))
       .collect();
     return puzzles.map((p) => ({ id: p._id, updatedAt: p.updatedAt }));
   },

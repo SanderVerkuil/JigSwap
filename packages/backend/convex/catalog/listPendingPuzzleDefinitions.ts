@@ -14,7 +14,7 @@ export const listPendingPuzzleDefinitions = query({
 
     const pending = await ctx.db
       .query("puzzles")
-      .filter((q) => q.eq(q.field("status"), "pending"))
+      .withIndex("by_status", (q) => q.eq("status", "pending"))
       .order("desc")
       .collect();
 
