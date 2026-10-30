@@ -24,7 +24,7 @@ import { safeStorage } from "@/lib/safe-storage";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Bell, Mail, Search, Users, X } from "lucide-react";
+import { Activity, Mail, Search, Users, X } from "lucide-react";
 import { useState, useSyncExternalStore } from "react";
 import { useTranslations } from "use-intl";
 
@@ -255,7 +255,7 @@ function PeoplePage() {
               {t("tabs.find")}
             </TabsTrigger>
             <TabsTrigger value="activity" className={PEOPLE_TAB_TRIGGER_CLASS}>
-              <Bell aria-hidden className="max-sm:hidden" />
+              <Activity aria-hidden className="max-sm:hidden" />
               {t("tabs.activity")}
             </TabsTrigger>
           </TabsList>
