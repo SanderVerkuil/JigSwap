@@ -7,7 +7,9 @@ export type FileId = Id<"FileId">;
 
 // Bounds on a copy's photos: every photo runs the paid moderation pipeline and is read with the
 // copy's gallery. Checked when a photo is added (the backend's addCopyPhoto, the only path that
-// adds one), never on rehydrate, so photos stored before the bounds existed stay.
+// adds one), never on rehydrate, so photos stored before the bounds existed stay. Rejected and
+// quarantined photos don't count toward MAX_COPY_IMAGES; the member's photo buckets bound how many
+// of those can pile up.
 export const MAX_COPY_IMAGES = 20;
 export const MAX_COPY_IMAGE_TITLE_LENGTH = 200;
 export const MAX_COPY_IMAGE_DESCRIPTION_LENGTH = 2_000;

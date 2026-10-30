@@ -174,6 +174,8 @@ describe("addCopyPhoto: per-copy bounds", () => {
     copy: Id<"ownedPuzzles">,
     uploaderId: Id<"users">,
     count: number,
+    moderationStatus:
+      "approved" | "pending" | "rejected" | "quarantined" = "approved",
   ) =>
     t.run(async (ctx) => {
       for (let i = 0; i < count; i++) {
@@ -181,7 +183,7 @@ describe("addCopyPhoto: per-copy bounds", () => {
           ownedPuzzleId: copy,
           uploaderId,
           fileId: await ctx.storage.store(new Blob([`img${i}`])),
-          moderationStatus: "approved",
+          moderationStatus,
           createdAt: Date.now(),
           updatedAt: Date.now(),
         });
@@ -223,6 +225,49 @@ describe("addCopyPhoto: per-copy bounds", () => {
     });
     expect(await photoCount(t)).toBe(MAX_COPY_IMAGES);
     await settleDueScheduled(t);
+  });
+
+  // Rejected and quarantined photos are hidden from everyone, the owner included, so the owner
+  // could never remove them to make room: they take none of the copy's places.
+  test("rejected and quarantined photos don't take one of the copy's places", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { alice, aliceCopy } = await seed(t);
+    await seedPhotos(t, aliceCopy, alice, MAX_COPY_IMAGES - 1);
+    await seedPhotos(t, aliceCopy, alice, 3, "rejected");
+    await seedPhotos(t, aliceCopy, alice, 2, "quarantined");
+
+    await asAlice(t).mutation(api.library.addCopyPhoto.addCopyPhoto, {
+      copyId: aliceCopy,
+      fileId: (await storeBlob(t)) as Id<"_storage">,
+    });
+    expect(await photoCount(t)).toBe(MAX_COPY_IMAGES + 5);
+
+    // The new photo is still pending, so it takes the last place.
+    expect(
+      await codeOf(
+        asAlice(t).mutation(api.library.addCopyPhoto.addCopyPhoto, {
+          copyId: aliceCopy,
+          fileId: (await storeBlob(t)) as Id<"_storage">,
+        }),
+      ),
+    ).toBe("TooManyImages");
+    await settleDueScheduled(t);
+  });
+
+  test("photos still being checked take a place", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { alice, aliceCopy } = await seed(t);
+    await seedPhotos(t, aliceCopy, alice, MAX_COPY_IMAGES - 1);
+    await seedPhotos(t, aliceCopy, alice, 1, "pending");
+
+    expect(
+      await codeOf(
+        asAlice(t).mutation(api.library.addCopyPhoto.addCopyPhoto, {
+          copyId: aliceCopy,
+          fileId: (await storeBlob(t)) as Id<"_storage">,
+        }),
+      ),
+    ).toBe("TooManyImages");
   });
 
   test("an over-long title is refused", async () => {
