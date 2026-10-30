@@ -72,27 +72,13 @@ import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import { CircleThreadAvatar } from "./circle-thread-avatar";
 import { circleHref, type CircleThread } from "./format";
+import { useThreadMute } from "./use-thread-mute";
 
 type CircleDetail = NonNullable<ReturnType<typeof useCircleDetail>["data"]>;
 type CircleMember = CircleDetail["members"][number];
 
 function useCircleDetail(circleId: string) {
   return useQuery(convexQuery(gateway.sharing.circle, { circleId }));
-}
-
-// Mute or unmute this thread for the viewer only.
-function useThreadMute(thread: CircleThread) {
-  const t = useTranslations("messages");
-  const setThreadMuted = useMutation({
-    mutationFn: useConvexMutation(gateway.conversation.setThreadMuted),
-  });
-  const muted = thread.muted === true;
-  const toggle = () => {
-    setThreadMuted
-      .mutateAsync({ threadId: thread.threadId, muted: !muted })
-      .catch(() => toast.error(t("circle.muteError")));
-  };
-  return { muted, toggle, pending: setThreadMuted.isPending };
 }
 
 export function CircleThreadHeader({

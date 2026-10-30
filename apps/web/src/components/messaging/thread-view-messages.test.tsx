@@ -292,8 +292,8 @@ describe("ThreadView message actions", () => {
     ).toBeTruthy();
   });
 
-  it("byMe: the header menu stays, with Report {name} only, and the report has no Also block", async () => {
-    // No quick links (profileHandle null), so Report is the menu's only item.
+  it("byMe: the header menu stays, with Report {name} as its only safety item, and the report has no Also block", async () => {
+    // No quick links (profileHandle null): Mute, then Report, and no Block.
     renderThread({
       ...threadOf({
         kind: "dm",
@@ -309,7 +309,7 @@ describe("ThreadView message actions", () => {
     await screen.findByRole("menuitem", { name: "Report Mara" });
     expect(
       screen.getAllByRole("menuitem").map((item) => item.textContent),
-    ).toEqual(["Report Mara"]);
+    ).toEqual(["Mute conversation", "Report Mara"]);
     fireEvent.click(screen.getByRole("menuitem", { name: "Report Mara" }));
     expect(
       await screen.findByRole("dialog", { name: "Report Mara" }),
@@ -328,9 +328,86 @@ describe("ThreadView message actions", () => {
     await screen.findByRole("menuitem", { name: "Block Mara" });
     expect(
       screen.getAllByRole("menuitem").map((item) => item.textContent),
-    ).toEqual(["View profile", "Report Mara", "Block Mara"]);
+    ).toEqual([
+      "Mute conversation",
+      "View profile",
+      "Report Mara",
+      "Block Mara",
+    ]);
     fireEvent.click(screen.getByRole("menuitem", { name: "Report Mara" }));
     expect(await screen.findByText("Reporting Mara")).toBeTruthy();
+  });
+});
+
+// UX-116: any thread can be muted, not only a circle's: a noisy DM or
+// exchange is silenced from its ⋯ menu instead of by blocking.
+describe("ThreadView mute", () => {
+  const openMenu = async () => {
+    fireEvent.keyDown(
+      screen.getByRole("button", { name: "Conversation options" }),
+      { key: "Enter" },
+    );
+    return screen.findByRole("menuitem", { name: /mute conversation/i });
+  };
+
+  it("mutes a DM from its menu", async () => {
+    renderThread(dmThread());
+    fireEvent.click(await openMenu());
+    await waitFor(() =>
+      expect(mocks.mutation).toHaveBeenCalledWith(
+        "conversation/setThreadMuted:setThreadMuted",
+        { threadId: "thread_1", muted: true },
+      ),
+    );
+  });
+
+  it("offers Unmute for a muted exchange thread, and unmutes it", async () => {
+    renderThread({ ...exchangeThread(), muted: true });
+    const item = await openMenu();
+    expect(item.textContent).toBe("Unmute conversation");
+    fireEvent.click(item);
+    await waitFor(() =>
+      expect(mocks.mutation).toHaveBeenCalledWith(
+        "conversation/setThreadMuted:setThreadMuted",
+        { threadId: "thread_1", muted: false },
+      ),
+    );
+  });
+
+  it("keeps the menu, with Mute, for an anonymised partner at every width", async () => {
+    // No profile link and no one to report: Mute is the menu's only item.
+    renderThread(
+      threadOf({
+        kind: "dm",
+        otherMember: { anonymous: true, anonRef: "anon_1" },
+        profileHandle: null,
+      }),
+    );
+    const trigger = screen.getByRole("button", {
+      name: "Conversation options",
+    });
+    expect(trigger.closest(".md\\:hidden")).toBeNull();
+    await openMenu();
+    expect(
+      screen.getAllByRole("menuitem").map((item) => item.textContent),
+    ).toEqual(["Mute conversation"]);
+  });
+
+  it("shows the toast when muting fails", async () => {
+    const { toast } = await import("sonner");
+    mocks.mutation.mockImplementation(async (name) => {
+      if (name.startsWith("conversation/setThreadMuted")) {
+        throw new Error("offline");
+      }
+      return null;
+    });
+    renderThread(dmThread());
+    fireEvent.click(await openMenu());
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "Couldn't change the mute setting. Please try again.",
+      ),
+    );
   });
 });
 
