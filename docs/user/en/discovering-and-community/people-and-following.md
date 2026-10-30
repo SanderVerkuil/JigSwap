@@ -65,8 +65,9 @@ details, see
 3. They're asked whether you two should follow each other. Nobody follows
    anyone until they confirm.
 
-> **Note:** You need a username before you can share your QR code or invite
-> link. JigSwap asks you to set one if you haven't yet.
+> **Note:** **Show my QR** needs a username, because your profile address is
+> printed under the code. JigSwap asks you to set one if you haven't yet. The
+> **Find your people** step of Quick setup shares your invite link without one.
 
 ### By email
 

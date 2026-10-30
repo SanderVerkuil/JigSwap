@@ -7,12 +7,10 @@ import { FindPeople } from "@/components/social/find-people";
 import { inviteLandingUrl } from "@/components/social/invite-share";
 import { InviteShareActions } from "@/components/social/invite-share-actions";
 import { MemberTile } from "@/components/social/member-tile";
-import { Button } from "@/components/ui/button";
 import { gateway, type Id } from "@/gateway";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import type { QuickStartStepStatus } from "@jigswap/contracts";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTranslations } from "use-intl";
 import { PushPrompt } from "./push-prompt";
@@ -58,15 +56,12 @@ export function PeopleStep({ status }: { status: QuickStartStepStatus }) {
           {t("inviteTitle")}
         </h3>
         <p className="text-muted-foreground text-sm">{t("inviteBody")}</p>
+        {/* No username needed: the link is the stable member-id URL (unlike the QR caption). */}
         {member ? (
-          member.username == null ? (
-            <NeedUsername />
-          ) : (
-            <NetworkInvite
-              memberId={member._id}
-              onShared={() => setShared(true)}
-            />
-          )
+          <NetworkInvite
+            memberId={member._id}
+            onShared={() => setShared(true)}
+          />
         ) : null}
         <EmailInvite kind="follow" />
         <PushPrompt triggered={triggered} />
@@ -127,18 +122,4 @@ function NetworkInvite({
     ? inviteLandingUrl(window.location.origin, memberId, link.token)
     : null;
   return <InviteShareActions url={url} kind="network" onShared={onShared} />;
-}
-
-// The existing QR dialog's "Set a username first" state: the link needs a username.
-function NeedUsername() {
-  const t = useTranslations("invite");
-  return (
-    <div className="flex flex-col items-start gap-2 rounded-xl border p-4">
-      <p className="font-medium">{t("needUsernameTitle")}</p>
-      <p className="text-muted-foreground text-sm">{t("needUsernameBody")}</p>
-      <Button asChild variant="outline" className="pointer-coarse:min-h-11">
-        <Link to="/profile">{t("openSettings")}</Link>
-      </Button>
-    </div>
-  );
 }
