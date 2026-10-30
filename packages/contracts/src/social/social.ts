@@ -214,10 +214,12 @@ export interface EmailInviteView {
 /**
  * "Followers you know" social proof for a member profile: accounts the VIEWER follows who also
  * follow the target member (viewer's following ∩ target's followers) — deliberately NOT plain
- * mutual followers. Personalized (the read is requireMember-gated) and one direction only.
- * `total` is the full intersection size; `members` is a short preview (capped, currently 8) with
- * just enough identity to render an avatar stack + name and link to /members/$handle
- * (slug ?? memberId, never the username: see PublicProfileHero.handle).
+ * mutual followers. Personalized (the read is requireMember-gated) and one direction only. Only
+ * members whose own follow graph the viewer may see count (a public profile, or a mutual follower
+ * of the viewer), since each entry discloses that they follow the target (SEC-41). `total` is the
+ * size of that filtered intersection; `members` is a short preview (capped, currently 8) with just
+ * enough identity to render an avatar stack + name and link to /members/$handle (slug ?? memberId,
+ * never the username: see PublicProfileHero.handle).
  */
 export interface FollowersYouKnowView {
   total: number;
