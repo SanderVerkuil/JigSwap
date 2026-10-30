@@ -4514,6 +4514,7 @@
       "pieces": "{count} pieces",
       "submittedBy": "by {name}",
       "ownerCount": "{count, plural, one {# owner} other {# owners}}",
+      "imageMissing": "Box art missing",
       "status": {
         "pending": "Pending",
         "approved": "Approved",

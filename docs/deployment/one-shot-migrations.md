@@ -637,3 +637,45 @@ run's totals. Every re-check logs its own `<table event>.hashRecheck` line (for 
    later).
 3. Any match shows up as an open escalation under Admin → Moderation → Hash matches, and in the
    Activity Log as `image_quarantined`.
+
+---
+
+## `catalog/findDanglingBoxArt` — was box art already destroyed? (SEC-01, read-only)
+
+**When:** once per deployment, after the SEC-01 fixes (claim-once photo attach, reference-aware
+deletes, no storage ids in responses) are deployed there. Before those fixes any member could
+read a definition's box-art storage id, attach it as their own copy or completion photo and
+have it deleted. This check tells whether that already happened. For the fullest picture, run
+`solving/backfillLegacyCompletionSidecars` first: completion photos that predate their
+`completionImages` sidecar are only seen once they have one.
+
+**What it does:** pages through `puzzles` (you pass the page size and cursor) and reports, per
+page:
+
+- `missingImage`: definitions whose `image` names a blob that no longer exists. The art was
+  destroyed and has to be uploaded again. Admin → Puzzles marks these rows **Box art missing**;
+  open the row, then edit the definition and upload the art.
+- `heldByMemberRows`: box art that another kind of row also holds (`heldBy`: for example
+  `copyPhoto`, `completionPhoto`, `messagePhoto`, or `definitionBoxArt` when a second definition
+  names the same blob). The art still exists; the holding row was attached before the claim
+  rule existed. Since the reference-aware deletes, removing that photo no longer deletes the
+  box art, so the art is safe; note the member if the pattern looks deliberate.
+
+It writes nothing. **Safe to re-run:** yes.
+
+```bash
+cd packages/backend
+
+# dev, then prod: repeat with the returned continueCursor until "isDone":true
+npx convex run catalog/findDanglingBoxArt:findDanglingBoxArt '{"paginationOpts":{"numItems":100,"cursor":null}}'
+npx convex run catalog/findDanglingBoxArt:findDanglingBoxArt '{"paginationOpts":{"numItems":100,"cursor":"<continueCursor>"}}'
+
+npx convex run --prod catalog/findDanglingBoxArt:findDanglingBoxArt '{"paginationOpts":{"numItems":100,"cursor":null}}'
+```
+
+Each page returns `{ scanned, missingImage, heldByMemberRows, isDone, continueCursor }`.
+
+**Verify:** the pages' `scanned` add up to the number of `puzzles` rows. Both lists empty on
+every page means SEC-01 was never used on that deployment. After restoring art for every
+`missingImage` hit, a second run reports none, and no row in Admin → Puzzles shows **Box art
+missing**.

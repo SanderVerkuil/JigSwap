@@ -11,7 +11,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
-import { Lightbulb, Puzzle as PuzzleIcon } from "lucide-react";
+import { ImageOff, Lightbulb, Puzzle as PuzzleIcon } from "lucide-react";
 import { useFormatter, useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/admin/puzzles/")({
@@ -121,6 +121,16 @@ function AdminPuzzlesPage() {
                     <Badge variant={STATUS_VARIANT[row.status]}>
                       {t(`status.${row.status}`)}
                     </Badge>
+                    {/* The box art's file is gone (SEC-01): re-upload it from the detail page. */}
+                    {row.imageMissing === true && (
+                      <Badge
+                        variant="outline"
+                        className="border-destructive/40 text-destructive"
+                      >
+                        <ImageOff aria-hidden />
+                        {t("imageMissing")}
+                      </Badge>
+                    )}
                   </div>
                   <p className="truncate text-xs text-muted-foreground">
                     {row.brand && `${row.brand} · `}

@@ -134,6 +134,33 @@ describe("admin.listPuzzleDefinitions", () => {
     expect(approved?.ownerCount).toBe(2);
   });
 
+  // SEC-01: box art destroyed through a member's photo row leaves puzzles.image pointing at a
+  // deleted blob. The row says so, so an admin can find it and upload the art again.
+  test("marks a definition whose box-art blob is gone as imageMissing", async () => {
+    const t = convexTest(schema, modules);
+    const alice = await seedMember(t);
+    const [approvedId, pendingId] = await seedPuzzles(t, alice);
+    await t.run(async (ctx) => {
+      const store = () =>
+        ctx.storage.store(new Blob(["art"], { type: "image/jpeg" }));
+      const kept = await store();
+      const gone = await store();
+      await ctx.db.patch(approvedId, { image: kept });
+      await ctx.db.patch(pendingId, { image: gone });
+      await ctx.storage.delete(gone);
+    });
+
+    const result = await listPage(t, { numItems: 10, cursor: null });
+    const byStatus = Object.fromEntries(
+      result.page.map((row) => [row.status, row]),
+    );
+    expect(byStatus.pending).toMatchObject({ image: null, imageMissing: true });
+    expect(byStatus.approved?.imageMissing).toBe(false);
+    expect(byStatus.approved?.image).toEqual(expect.any(String));
+    // No box art at all is not "missing": nothing was there to lose.
+    expect(byStatus.rejected?.imageMissing).toBe(false);
+  });
+
   test("paginates with a continue cursor", async () => {
     const t = convexTest(schema, modules);
     const alice = await seedMember(t);

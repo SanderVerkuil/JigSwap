@@ -96,6 +96,11 @@ export interface AdminPuzzleDefinitionRowView {
   createdAt: number;
   submitterName: string | null;
   image: string | null;
+  /**
+   * True when the definition names box art whose blob no longer exists (destroyed, SEC-01), so
+   * `image` is null and the art has to be uploaded again. False when there is no box art at all.
+   */
+  imageMissing: boolean;
   ownerCount: number;
 }
 

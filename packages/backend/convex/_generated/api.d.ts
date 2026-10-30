@@ -68,6 +68,7 @@ import type * as catalog_disablePuzzleDefinition from "../catalog/disablePuzzleD
 import type * as catalog_editChangeProposal from "../catalog/editChangeProposal.js";
 import type * as catalog_errors from "../catalog/errors.js";
 import type * as catalog_extractFromUrl from "../catalog/extractFromUrl.js";
+import type * as catalog_findDanglingBoxArt from "../catalog/findDanglingBoxArt.js";
 import type * as catalog_findPuzzleByBarcode from "../catalog/findPuzzleByBarcode.js";
 import type * as catalog_getAllBrands from "../catalog/getAllBrands.js";
 import type * as catalog_getAllPublishers from "../catalog/getAllPublishers.js";
@@ -625,6 +626,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/editChangeProposal": typeof catalog_editChangeProposal;
   "catalog/errors": typeof catalog_errors;
   "catalog/extractFromUrl": typeof catalog_extractFromUrl;
+  "catalog/findDanglingBoxArt": typeof catalog_findDanglingBoxArt;
   "catalog/findPuzzleByBarcode": typeof catalog_findPuzzleByBarcode;
   "catalog/getAllBrands": typeof catalog_getAllBrands;
   "catalog/getAllPublishers": typeof catalog_getAllPublishers;
