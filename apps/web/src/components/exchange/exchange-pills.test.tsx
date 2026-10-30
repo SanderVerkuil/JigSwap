@@ -5,7 +5,13 @@ import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it } from "vitest";
 import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
-import { LoanDueChip, OfferChip, ReturnBy, SaleOffer } from "./exchange-pills";
+import {
+  ExchangeStatusPill,
+  LoanDueChip,
+  OfferChip,
+  ReturnBy,
+  SaleOffer,
+} from "./exchange-pills";
 
 const PRICE = { amount: 1500, currency: "EUR" };
 
@@ -27,6 +33,112 @@ const renderIn = (locale: "en" | "nl", ui: ReactNode) =>
   );
 
 afterEach(cleanup);
+
+describe("ExchangeStatusPill", () => {
+  const opened = midday(9, 1);
+
+  it("names an exchange's status", () => {
+    renderIn("en", <ExchangeStatusPill status="proposed" />);
+    expect(screen.getByText("Pending")).toBeTruthy();
+  });
+
+  it("says a settled lend's puzzle is still on loan", () => {
+    renderIn(
+      "en",
+      <ExchangeStatusPill
+        status="completed"
+        loan={{ status: "open", openedAt: opened }}
+      />,
+    );
+    const pill = screen.getByText("On loan");
+    // Ongoing, like an accepted exchange; not the green of a finished one.
+    expect(pill.className).toContain("text-jigsaw-primary");
+    expect(screen.queryByText("Completed")).toBeNull();
+  });
+
+  it("says when a lent puzzle came back", () => {
+    renderIn(
+      "en",
+      <ExchangeStatusPill
+        status="completed"
+        loan={{ status: "returned", openedAt: opened, closedAt: midday(9, 28) }}
+      />,
+    );
+    expect(screen.getByText("Returned Oct 28").className).toContain("green");
+    cleanup();
+    renderIn(
+      "en",
+      <ExchangeStatusPill
+        status="completed"
+        loan={{ status: "recalled", openedAt: opened, closedAt: midday(9, 28) }}
+      />,
+    );
+    expect(screen.getByText("Recalled Oct 28").className).toContain("green");
+  });
+
+  it("adds the year to a return in another year", () => {
+    renderIn(
+      "en",
+      <ExchangeStatusPill
+        status="completed"
+        loan={{
+          status: "returned",
+          openedAt: new Date(2025, 10, 1).getTime(),
+          closedAt: new Date(2025, 11, 3, 12).getTime(),
+        }}
+      />,
+    );
+    expect(screen.getByText("Returned Dec 3, 2025")).toBeTruthy();
+  });
+
+  it("still says it came back when the closing date is missing", () => {
+    renderIn(
+      "en",
+      <ExchangeStatusPill
+        status="completed"
+        loan={{ status: "recalled", openedAt: opened }}
+      />,
+    );
+    expect(screen.getByText("Recalled")).toBeTruthy();
+  });
+
+  it("keeps Completed when the loan is unknown or the backend sends none", () => {
+    renderIn("en", <ExchangeStatusPill status="completed" loan={null} />);
+    expect(screen.getByText("Completed")).toBeTruthy();
+    cleanup();
+    renderIn("en", <ExchangeStatusPill status="completed" />);
+    expect(screen.getByText("Completed")).toBeTruthy();
+  });
+
+  it("is translated (nl)", () => {
+    renderIn(
+      "nl",
+      <ExchangeStatusPill
+        status="completed"
+        loan={{ status: "open", openedAt: opened }}
+      />,
+    );
+    expect(screen.getByText("In bruikleen")).toBeTruthy();
+    cleanup();
+    renderIn(
+      "nl",
+      <ExchangeStatusPill
+        status="completed"
+        loan={{ status: "returned", openedAt: opened, closedAt: midday(9, 28) }}
+      />,
+    );
+    expect(screen.getByText("Teruggegeven op 28 okt")).toBeTruthy();
+    cleanup();
+    renderIn(
+      "nl",
+      <ExchangeStatusPill
+        status="completed"
+        loan={{ status: "recalled", openedAt: opened, closedAt: midday(9, 28) }}
+      />,
+    );
+    expect(screen.getByText("Teruggevraagd op 28 okt")).toBeTruthy();
+  });
+});
 
 describe("OfferChip", () => {
   it("shows the offered price from cents in the row's currency", () => {

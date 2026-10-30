@@ -36,6 +36,7 @@ export type ListRowExchange = Pick<
   | "salePrice"
   | "initiatorConfirmationTimestamp"
   | "recipientConfirmationTimestamp"
+  | "loan"
 >;
 
 export function ExchangeListRow({
@@ -145,6 +146,7 @@ export function ExchangeListRow({
           >
             <ExchangeStatusPill
               status={exchange.status}
+              loan={exchange.loan}
               className="sm:hidden"
             />
             {yourTurn && <YourTurnPill />}
@@ -153,6 +155,7 @@ export function ExchangeListRow({
         </span>
         <ExchangeStatusPill
           status={exchange.status}
+          loan={exchange.loan}
           className="hidden sm:inline-flex"
         />
         <ChevronDown

@@ -822,6 +822,11 @@
       "cancelled": "Cancelled",
       "disputed": "Disputed"
     },
+    "loanState": {
+      "open": "On loan",
+      "returned": "Returned {date}",
+      "recalled": "Recalled {date}"
+    },
     "partner": {
       "hiddenNote": "Their details appear once they accept or reply.",
       "reviewsHeading": "Reviews received",

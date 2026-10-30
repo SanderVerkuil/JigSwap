@@ -136,7 +136,9 @@ Een uitwisseling doorloopt duidelijke stappen:
    veranderen of het andere lid niet meer reageert.
 4. **Afgerond** — wanneer beiden bevestigen, gaat het eigendom (ruil/verkoop)
    of bezit (leen) over, en kun je **Laat een review achter** gebruiken om je
-   partner te beoordelen.
+   partner te beoordelen. Bij een afgeronde lening laat de status zien waar de
+   puzzel is: **In bruikleen** zolang de lener hem heeft, daarna
+   **Teruggegeven op** of **Teruggevraagd op** met de datum waarop hij terugkwam.
 
 ### Eén puzzel, één afspraak
 

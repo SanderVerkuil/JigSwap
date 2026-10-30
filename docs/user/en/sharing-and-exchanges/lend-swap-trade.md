@@ -126,7 +126,10 @@ An exchange moves through clear steps:
    then, either of you can still **Cancel** the exchange, for example if plans
    change or the other member stops responding.
 4. **Completed** — when both confirm, ownership (swap/sale) or possession
-   (loan) transfers, and you can **Leave a review** of your partner.
+   (loan) transfers, and you can **Leave a review** of your partner. For a
+   completed loan, the status shows where the puzzle is: **On loan** while the
+   borrower has it, then **Returned** or **Recalled** with the date it came
+   back.
 
 ### One puzzle, one deal
 

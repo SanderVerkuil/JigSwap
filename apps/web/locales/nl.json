@@ -822,6 +822,11 @@
       "cancelled": "Geannuleerd",
       "disputed": "In geschil"
     },
+    "loanState": {
+      "open": "In bruikleen",
+      "returned": "Teruggegeven op {date}",
+      "recalled": "Teruggevraagd op {date}"
+    },
     "partner": {
       "hiddenNote": "Hun gegevens verschijnen zodra ze accepteren of reageren.",
       "reviewsHeading": "Ontvangen reviews",

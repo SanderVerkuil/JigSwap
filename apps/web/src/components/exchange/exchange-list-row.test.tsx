@@ -217,6 +217,20 @@ describe("ExchangeListRow: phone layout", () => {
     expect(offer.parentElement).toBe(phonePill.parentElement);
   });
 
+  it("says a settled lend's puzzle is still on loan instead of Completed", () => {
+    renderRow({
+      fields: {
+        type: "loan",
+        status: "completed",
+        offeredPuzzle: null,
+        loan: { status: "open", openedAt: NOW - HOUR },
+      },
+    });
+    // Once on phones (in the chip line), once from sm (at the row's end).
+    expect(screen.getAllByText("On loan")).toHaveLength(2);
+    expect(screen.queryByText("Completed")).toBeNull();
+  });
+
   it("is translated (nl)", () => {
     renderRow({ locale: "nl" });
     const name = toggle().textContent ?? "";

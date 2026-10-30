@@ -1,7 +1,11 @@
 // Small status chips shared by the exchange row and its expanded detail, and the loan rows.
 import { RELATIVE_TIME_UPDATE_INTERVAL_MS } from "@/hooks/use-relative-time";
 import { cn } from "@/lib/utils";
-import type { ExchangeFields, ExchangeStatus } from "@jigswap/contracts";
+import type {
+  ExchangeFields,
+  ExchangeLoanState,
+  ExchangeStatus,
+} from "@jigswap/contracts";
 import { CalendarClock, Tag } from "lucide-react";
 import { useFormatter, useNow, useTranslations } from "use-intl";
 import type { Direction } from "./exchange-state";
@@ -21,26 +25,48 @@ const STATUS_TONES: Partial<Record<ExchangeStatus, string>> = {
   completed: "bg-green-500/15 text-green-700 dark:text-green-400",
 };
 
-/** An exchange's status on its row: Pending, Accepted, Completed, … */
+/**
+ * An exchange's status on its row: Pending, Accepted, Completed, … A lend completes when the
+ * puzzle is handed over, so a completed lend says where the puzzle is instead: On loan (violet,
+ * like an exchange still in progress), or Returned / Recalled with the date (green, done). Without
+ * a known loan it stays Completed.
+ */
 export function ExchangeStatusPill({
   status,
+  loan,
   className,
 }: {
   status: ExchangeStatus;
+  /** The loan a completed lend opened (ExchangeSummaryView.loan). */
+  loan?: ExchangeLoanState | null;
   className?: string;
 }) {
-  const t = useTranslations("trades.status");
-  return (
-    <span
-      className={cn(
-        CHIP,
-        STATUS_TONES[status] ?? "bg-muted text-muted-foreground",
-        className,
-      )}
-    >
-      {t(status)}
-    </span>
-  );
+  const t = useTranslations("trades");
+  const tLending = useTranslations("lending");
+  const format = useFormatter();
+  const now = useNow();
+  let label: string = t(`status.${status}`);
+  let tone = STATUS_TONES[status] ?? "bg-muted text-muted-foreground";
+  if (status === "completed" && loan) {
+    if (loan.status === "open") {
+      label = t("loanState.open");
+      tone = STATUS_TONES.accepted ?? tone;
+    } else if (loan.closedAt === undefined) {
+      label = tLending(
+        loan.status === "returned" ? "statusReturned" : "statusRecalled",
+      );
+    } else {
+      const sameYear =
+        new Date(loan.closedAt).getFullYear() === now.getFullYear();
+      const date = format.dateTime(loan.closedAt, {
+        day: "numeric",
+        month: "short",
+        ...(sameYear ? {} : { year: "numeric" }),
+      });
+      label = t(`loanState.${loan.status}`, { date });
+    }
+  }
+  return <span className={cn(CHIP, tone, className)}>{label}</span>;
 }
 
 /** The partner has confirmed completion; the viewer's confirmation settles the exchange. */
