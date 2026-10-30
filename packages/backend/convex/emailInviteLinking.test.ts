@@ -707,6 +707,37 @@ describe("sign-up through an email invitation", () => {
     expect(await offers(t)).toEqual([]);
   });
 
+  // A deactivated row (e.g. a CSAM tombstone) keeps its clerkId, so a redelivered user.created
+  // still finds it; updateOrCreateUser leaves it alone, and so must the invite (SEC-32).
+  test.each(["follow", "household"] as const)(
+    "%s: a redelivered user.created for a deactivated account applies nothing",
+    async (kind) => {
+      const t = convexTest(schema, modules);
+      const s = await seed(t);
+      await seedHousehold(t, s.alice, s.bob);
+      const row = await inviteNewbie(t, kind);
+      await t.run((ctx) =>
+        ctx.db.insert("users", {
+          clerkId: "clerk_newbie",
+          email: "",
+          name: "",
+          isActive: false,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        }),
+      );
+
+      await postUserEvent(t, "user.created", {
+        jsInvite: { kind, ref: row.aggregateId },
+      });
+
+      expect(await offers(t)).toEqual([]);
+      expect(await householdInvites(t)).toEqual([]);
+      expect(await emailInviteRows(t)).toHaveLength(1);
+      expect(gateway.cleared).toEqual([]);
+    },
+  );
+
   test("only user.created applies it, and a redelivery makes no second offer", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
