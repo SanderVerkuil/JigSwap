@@ -109,6 +109,7 @@ import type * as catalog_submitPuzzleDefinition from "../catalog/submitPuzzleDef
 import type * as catalog_toggleFavorite from "../catalog/toggleFavorite.js";
 import type * as catalog_updateCatalogCategory from "../catalog/updateCatalogCategory.js";
 import type * as catalog_updatePuzzleDefinition from "../catalog/updatePuzzleDefinition.js";
+import type * as catalog_urlImportGate from "../catalog/urlImportGate.js";
 import type * as catalog_withdrawChangeProposal from "../catalog/withdrawChangeProposal.js";
 import type * as contact_listContactMessages from "../contact/listContactMessages.js";
 import type * as contact_markContactMessageHandled from "../contact/markContactMessageHandled.js";
@@ -673,6 +674,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/toggleFavorite": typeof catalog_toggleFavorite;
   "catalog/updateCatalogCategory": typeof catalog_updateCatalogCategory;
   "catalog/updatePuzzleDefinition": typeof catalog_updatePuzzleDefinition;
+  "catalog/urlImportGate": typeof catalog_urlImportGate;
   "catalog/withdrawChangeProposal": typeof catalog_withdrawChangeProposal;
   "contact/listContactMessages": typeof contact_listContactMessages;
   "contact/markContactMessageHandled": typeof contact_markContactMessageHandled;

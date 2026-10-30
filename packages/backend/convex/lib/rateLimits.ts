@@ -39,6 +39,10 @@ export const RATE_LIMITS = {
   // Presence heartbeats across all rooms and tabs: a tab sends ~4/min (app room + messages at
   // 30 s), so 30/min covers several tabs while capping heartbeat cost abuse.
   presenceHeartbeat: { windowMs: MINUTE, max: 30 },
+  // Store-page imports (catalog/extractFromUrl): each runs outbound fetches and may fall through
+  // to a paid Firecrawl scrape. Admins, who seed the catalogue, are exempt.
+  urlImport: { windowMs: HOUR, max: 30 },
+  urlImportDaily: { windowMs: DAY, max: 150 },
 } as const satisfies Record<string, { windowMs: number; max: number }>;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;
@@ -279,6 +283,29 @@ export const DOC_FEEDBACK_BUDGET = [
   { key: "docFeedback:global:hour", windowMs: HOUR, cap: 60 },
   { key: "docFeedback:global:day", windowMs: DAY, cap: 300 },
 ] as const satisfies readonly BudgetWindow[];
+
+// The deployment-wide Firecrawl budget: every paid scrape the URL import falls through to
+// (catalog/extractFromUrl) is charged here first, whoever imports. Caps from env (positive
+// integers), with defaults:
+//   FIRECRAWL_HOURLY_CAP - default 20 scrapes per fixed hour
+//   FIRECRAWL_DAILY_CAP  - default 100 scrapes per fixed day
+export const FIRECRAWL_HOURLY_CAP_DEFAULT = 20;
+export const FIRECRAWL_DAILY_CAP_DEFAULT = 100;
+
+export const firecrawlBudget = (
+  env: Record<string, string | undefined>,
+): BudgetWindow[] => [
+  {
+    key: "firecrawl:global:hour",
+    windowMs: HOUR,
+    cap: positiveIntOr(env.FIRECRAWL_HOURLY_CAP, FIRECRAWL_HOURLY_CAP_DEFAULT),
+  },
+  {
+    key: "firecrawl:global:day",
+    windowMs: DAY,
+    cap: positiveIntOr(env.FIRECRAWL_DAILY_CAP, FIRECRAWL_DAILY_CAP_DEFAULT),
+  },
+];
 
 // One invite link's landing counter (social/recordInviteLanding, public): at most 20 counted
 // landings per hour per link, so an anonymous loop cannot keep patching the link row (SEC-82).
