@@ -30,6 +30,10 @@ import { useTranslations } from "use-intl";
 
 type PeopleTab = "network" | "find" | "activity";
 
+// Below sm the three tabs must fit a 390px phone without scrolling, in Dutch too ("Mensen
+// vinden"): the icons go and the triggers tighten. Scoped to this page, not the shared class.
+const PEOPLE_TAB_TRIGGER_CLASS = `${TAB_TRIGGER_CLASS} max-sm:px-2.5`;
+
 export const Route = createFileRoute("/_dashboard/people")({
   // URL-addressable tabs: /people?tab=find deep-links straight into discovery
   // (used by notifications and QR empty states). `tab` is optional so the
@@ -239,19 +243,19 @@ function PeoplePage() {
           <TabsList className={UNDERLINE_TABS_LIST_CLASS}>
             <TabsTrigger
               value="network"
-              className={TAB_TRIGGER_CLASS}
+              className={PEOPLE_TAB_TRIGGER_CLASS}
               data-tour="people-network"
             >
-              <Users aria-hidden />
+              <Users aria-hidden className="max-sm:hidden" />
               {t("tabs.network")}
               <TabCount count={pendingCount > 0 ? pendingCount : undefined} />
             </TabsTrigger>
-            <TabsTrigger value="find" className={TAB_TRIGGER_CLASS}>
-              <Search aria-hidden />
+            <TabsTrigger value="find" className={PEOPLE_TAB_TRIGGER_CLASS}>
+              <Search aria-hidden className="max-sm:hidden" />
               {t("tabs.find")}
             </TabsTrigger>
-            <TabsTrigger value="activity" className={TAB_TRIGGER_CLASS}>
-              <Bell aria-hidden />
+            <TabsTrigger value="activity" className={PEOPLE_TAB_TRIGGER_CLASS}>
+              <Bell aria-hidden className="max-sm:hidden" />
               {t("tabs.activity")}
             </TabsTrigger>
           </TabsList>

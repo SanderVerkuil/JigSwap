@@ -3,9 +3,11 @@
 // The Find-people tab: search-first member discovery. A debounced search box
 // (2-character minimum, mirrored server-side in identity/searchUsers) over the
 // privacy-gated member search; while idle, a small "Recently joined" seed of
-// public profiles. Both empty states route to the QR fallback — the answer to
-// "can't find them" is always "ask for their link or QR". Discovery tiles hide
-// location (stats build trust with strangers; street-level context doesn't).
+// public profiles. Both empty states offer the member's own QR — the answer to
+// "can't find them" is "ask for their profile link, or let them scan your QR". The
+// page head already carries "Show my QR", so the search row holds only the search
+// box. Discovery tiles hide location (stats build trust with strangers;
+// street-level context doesn't).
 import { EmptyState } from "@/components/community/primitives";
 import { SectionHead } from "@/components/dashboard-home/section-head";
 import {
@@ -48,8 +50,8 @@ export function FindPeople() {
   );
   const { data: me } = useQuery(convexQuery(gateway.identity.currentUser, {}));
 
-  // Phase 3's self-contained trigger-button + fullscreen dialog; reused at all
-  // three "can't find them" surfaces below.
+  // Phase 3's self-contained trigger-button + fullscreen dialog; reused by both
+  // "can't find them" empty states below.
   const qrButton = me ? (
     <QrDialog
       memberId={me._id}
@@ -73,7 +75,6 @@ export function FindPeople() {
             aria-label={t("searchPlaceholder")}
           />
         </div>
-        {qrButton}
       </div>
 
       {term.trim().length > 0 && !searching ? (

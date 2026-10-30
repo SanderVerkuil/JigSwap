@@ -2321,9 +2321,9 @@
       "resultsLabel": "Zoekresultaten",
       "recentlyJoined": "Recent lid geworden",
       "recentlyJoinedEmptyTitle": "Nog geen nieuwe leden om te tonen",
-      "recentlyJoinedEmptySub": "Ken je een medepuzzelaar? Laat je QR-code zien.",
+      "recentlyJoinedEmptySub": "Ken je een medepuzzelaar? Laat ze je QR-code scannen, dan kunnen jullie elkaar volgen.",
       "noResultsTitle": "Kun je ze niet vinden?",
-      "noResultsSub": "Vraag om hun profiellink — of scan hun QR-code.",
+      "noResultsSub": "Vraag om hun profiellink, of laat ze je QR-code scannen, dan kunnen jullie elkaar volgen.",
       "emailInviteTitle": "Nog niet op JigSwap?"
     },
     "discoverableNotice": {

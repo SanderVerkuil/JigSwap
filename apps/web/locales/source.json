@@ -2321,9 +2321,9 @@
       "resultsLabel": "Search results",
       "recentlyJoined": "Recently joined",
       "recentlyJoinedEmptyTitle": "No new members to show yet",
-      "recentlyJoinedEmptySub": "Know a fellow puzzler? Show them your QR code.",
+      "recentlyJoinedEmptySub": "Know a fellow puzzler? Let them scan your QR code so you can follow each other.",
       "noResultsTitle": "Can't find them?",
-      "noResultsSub": "Ask for their profile link — or scan their QR.",
+      "noResultsSub": "Ask for their profile link, or let them scan your QR code so you can follow each other.",
       "emailInviteTitle": "Not on JigSwap yet?"
     },
     "discoverableNotice": {
