@@ -14,13 +14,19 @@ import {
 // The database side of the location actions (searchPlaces, renderPickerMap, renderLocationMap):
 // actions can't read or write the database themselves.
 
+// Each picker action's daily cap, enforced next to its hourly limit.
+const DAILY_LIMIT = {
+  locationSearch: "locationSearchDaily",
+  locationPicker: "locationPickerDaily",
+} as const;
+
 /**
  * The gate every picker action passes before calling MapTiler, as the calling member (the
  * action's auth carries over): location sharing configured, a participant of the thread, the pair
- * not blocked, within the action's own rate limit, and `upstreamRequests` charged to the global
- * MapTiler budget (exhausted: LocationUnavailable, for now). A picker view rendered around the
- * device position (`gpsView`) is remembered for the precision guardrail. Returns the member's
- * preferred language for the place search.
+ * not blocked, within the action's own hourly and daily rate limits, and `upstreamRequests`
+ * charged to the global MapTiler budget (exhausted: LocationUnavailable, for now). A picker view
+ * rendered around the device position (`gpsView`) is remembered for the precision guardrail.
+ * Returns the member's preferred language for the place search.
  */
 export const gateLocationCall = internalMutation({
   args: {
@@ -35,6 +41,7 @@ export const gateLocationCall = internalMutation({
     await participantThreadOf(ctx, threadId, me);
     await assertThreadNotBlocked(ctx, threadId, me);
     await enforceRateLimit(ctx, limit, me);
+    await enforceRateLimit(ctx, DAILY_LIMIT[limit], me);
     if (!(await chargeMapTilerBudget(ctx, upstreamRequests))) {
       throw new ConvexError({
         code: "LocationUnavailable",

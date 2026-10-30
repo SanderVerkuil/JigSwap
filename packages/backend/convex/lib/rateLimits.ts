@@ -29,9 +29,14 @@ export const RATE_LIMITS = {
   circleIconUploadUrl: { windowMs: HOUR, max: 20 },
   circleIcon: { windowMs: HOUR, max: 10 },
   // Place searches in the location picker (each proxies one MapTiler Geocoding request).
-  locationSearch: { windowMs: HOUR, max: 60 },
-  // Picker map views (each pan, zoom or tap re-renders the view from MapTiler tiles).
-  locationPicker: { windowMs: HOUR, max: 60 },
+  locationSearch: { windowMs: HOUR, max: 30 },
+  // Picker map views (each pan, zoom or tap re-renders the view from MapTiler tiles, about 4-6
+  // upstream requests each).
+  locationPicker: { windowMs: HOUR, max: 30 },
+  // The daily caps next to them, so a handful of members can't spend the global MapTiler budget
+  // (conversation/locationStore.gateLocationCall enforces both of a pair).
+  locationSearchDaily: { windowMs: DAY, max: 100 },
+  locationPickerDaily: { windowMs: DAY, max: 100 },
   // Email invitations (invitations/sendEmailInvite), follow and household together.
   emailInvite: { windowMs: DAY, max: 10 },
   // A new account's email invitations (younger than invitations/config NEW_ACCOUNT_AGE_MS, or
