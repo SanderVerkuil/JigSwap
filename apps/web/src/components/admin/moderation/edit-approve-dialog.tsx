@@ -4,7 +4,11 @@
 // description / brand / pieceCount / difficulty / tags — validation reused
 // from the puzzle form schema) that saves the update mutation and then
 // approves with `edited: true` so the audit stamp records
-// definition_edited_approved.
+// definition_edited_approved. The form is seeded once, when the dialog mounts:
+// the route keys each opening by the submission it was opened for, so a live
+// update (or a new arrival in the queue) never re-seeds it and wipes the
+// admin's edits. If that submission leaves the queue meanwhile
+// (`handledElsewhere`), the dialog says so and Save is disabled.
 import { SuggestInput } from "@/components/add-puzzle";
 import { puzzleFormSchema } from "@/components/forms/puzzle-form/puzzle-form-schema";
 import { Button } from "@/components/ui/button";
@@ -38,7 +42,6 @@ import { gateway } from "@/gateway";
 import { convexQuery } from "@convex-dev/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslations } from "use-intl";
 import { z } from "zod";
@@ -74,12 +77,16 @@ export function EditApproveDialog({
   onOpenChange,
   onSave,
   busy,
+  handledElsewhere,
 }: {
+  /** The submission the dialog was opened for; only read when the dialog mounts. */
   submission: PendingSubmission;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (values: EditApproveValues) => Promise<void>;
   busy: boolean;
+  /** That submission is no longer pending (decided by someone else): nothing to save. */
+  handledElsewhere: boolean;
 }) {
   const t = useTranslations("admin.moderation.editDialog");
   const tForm = useTranslations("forms.puzzle-form");
@@ -89,11 +96,6 @@ export function EditApproveDialog({
     resolver: zodResolver(editApproveSchema),
     defaultValues: toDefaults(submission),
   });
-
-  // Re-seed when the dialog opens for a (possibly different) submission.
-  useEffect(() => {
-    if (open) form.reset(toDefaults(submission));
-  }, [open, submission, form]);
 
   // Maker-field autocomplete suggestion pools
   const { data: publisherSuggestions } = useQuery(
@@ -110,6 +112,14 @@ export function EditApproveDialog({
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
+        {handledElsewhere && (
+          <p
+            role="alert"
+            className="rounded-lg border border-jigsaw-warning/30 bg-jigsaw-warning/10 px-3.5 py-3 text-sm"
+          >
+            {t("handledElsewhere")}
+          </p>
+        )}
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSave)}
@@ -277,7 +287,11 @@ export function EditApproveDialog({
           >
             {tCommon("cancel")}
           </Button>
-          <Button type="submit" form="edit-approve-form" disabled={busy}>
+          <Button
+            type="submit"
+            form="edit-approve-form"
+            disabled={busy || handledElsewhere}
+          >
             {t("save")}
           </Button>
         </DialogFooter>

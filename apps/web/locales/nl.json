@@ -4814,7 +4814,8 @@
       "editDialog": {
         "title": "Bewerken & goedkeuren",
         "description": "Corrigeer de gegevens van de inzending en sla op om deze in één stap goed te keuren en te publiceren.",
-        "save": "Opslaan & goedkeuren"
+        "save": "Opslaan & goedkeuren",
+        "handledElsewhere": "Deze inzending is elders afgehandeld terwijl je aan het bewerken was. Goedkeuren kan hier niet meer."
       },
       "flag": {
         "loading": "Gemarkeerde afbeeldingen laden…",

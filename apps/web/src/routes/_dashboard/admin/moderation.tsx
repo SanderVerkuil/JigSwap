@@ -25,6 +25,7 @@ import { severityBand } from "@/components/admin/moderation/severity";
 import {
   SubmissionCover,
   SubmissionDetail,
+  type PendingSubmission,
 } from "@/components/admin/moderation/submission-detail";
 import {
   UncheckedDetail,
@@ -154,7 +155,25 @@ function ModerationPage() {
     mutationFn: useConvexMutation(gateway.admin.restorePhoto),
   });
 
-  const [editOpen, setEditOpen] = useState(false);
+  // Edit & Approve works on the submission it was opened for, captured here: each opening is its
+  // own session (the dialog's key), so the form is seeded once per opening and Save can only ever
+  // approve that submission, whatever happens to the queue meanwhile.
+  const [edit, setEdit] = useState<{
+    submission: PendingSubmission;
+    open: boolean;
+    session: number;
+  } | null>(null);
+  const openEdit = (submission: PendingSubmission) =>
+    setEdit((prev) => ({
+      submission,
+      open: true,
+      session: (prev?.session ?? 0) + 1,
+    }));
+  const closeEdit = () => setEdit((prev) => prev && { ...prev, open: false });
+  const editTargetPending =
+    edit !== null &&
+    pending?.some((submission) => submission._id === edit.submission._id) ===
+      true;
   // The old code shared one busy flag across every moderation action to
   // disable the group; compose the mutations' pending states instead.
   const busy =
@@ -190,28 +209,30 @@ function ModerationPage() {
   const nextIn = (queue: ModerationTab, nextId: string | null) =>
     nextId === null ? undefined : () => selectItem(queue)(nextId);
 
-  // Decides the selected row of `queue` here. Its leaving the queue moves the selection to its
-  // neighbour (rather than reporting it handled elsewhere) and the URL follows, so the reviewer
-  // keeps flowing down the queue; a failure keeps the row selected. Resolves whether it succeeded.
-  const decideSelected = async (
+  // Decides row `id` of `queue` here. When it is the selected row, its leaving the queue moves
+  // the selection to its neighbour (rather than reporting it handled elsewhere) and the URL
+  // follows, so the reviewer keeps flowing down the queue; a failure keeps the row selected.
+  // Resolves whether it succeeded.
+  const decideRow = async (
     queue: ModerationTab,
     selection: Pick<
       PinnedSelection<unknown>,
       "selectedId" | "nextId" | "expectRemoval"
     >,
+    id: string,
     run: () => Promise<unknown>,
   ): Promise<boolean> => {
-    const { selectedId, nextId } = selection;
-    if (selectedId === null) return false;
-    selection.expectRemoval(selectedId);
+    const isSelected = selection.selectedId === id;
+    const { nextId } = selection;
+    if (isSelected) selection.expectRemoval(id);
     try {
       await run();
     } catch {
-      selection.expectRemoval(null);
+      if (isSelected) selection.expectRemoval(null);
       toast.error(t("error"));
       return false;
     }
-    selectItem(queue)(nextId);
+    if (isSelected) selectItem(queue)(nextId);
     return true;
   };
 
@@ -220,8 +241,11 @@ function ModerationPage() {
     if (!submission?.aggregateId || !pending || submissions.gone) return;
     const puzzleDefinitionId = submission.aggregateId;
     const run = action === "approve" ? approve : reject;
-    const done = await decideSelected("submissions", submissions, () =>
-      run.mutateAsync({ puzzleDefinitionId }),
+    const done = await decideRow(
+      "submissions",
+      submissions,
+      submission._id,
+      () => run.mutateAsync({ puzzleDefinitionId }),
     );
     if (!done) return;
     toast.success(
@@ -233,22 +257,28 @@ function ModerationPage() {
   };
 
   const editApprove = async (values: EditApproveValues) => {
-    const submission = submissions.item;
-    if (!submission?.aggregateId || !pending || submissions.gone) return;
+    // Always the submission the dialog was opened for, and only while it is still pending.
+    const submission = edit?.submission;
+    if (!submission?.aggregateId || !pending || !editTargetPending) return;
     const puzzleDefinitionId = submission.aggregateId;
-    const done = await decideSelected("submissions", submissions, async () => {
-      await update.mutateAsync({
-        puzzleDefinitionId,
-        title: values.title,
-        description: values.description || undefined,
-        brand: values.brand || undefined,
-        publisher: values.publisher || undefined,
-        pieceCount: values.pieceCount,
-        difficulty: values.difficulty,
-        tags: values.tags,
-      });
-      await approve.mutateAsync({ puzzleDefinitionId, edited: true });
-    });
+    const done = await decideRow(
+      "submissions",
+      submissions,
+      submission._id,
+      async () => {
+        await update.mutateAsync({
+          puzzleDefinitionId,
+          title: values.title,
+          description: values.description || undefined,
+          brand: values.brand || undefined,
+          publisher: values.publisher || undefined,
+          pieceCount: values.pieceCount,
+          difficulty: values.difficulty,
+          tags: values.tags,
+        });
+        await approve.mutateAsync({ puzzleDefinitionId, edited: true });
+      },
+    );
     if (!done) return;
     toast.success(
       t("toast.edited", {
@@ -256,7 +286,7 @@ function ModerationPage() {
         count: pending.length - 1,
       }),
     );
-    setEditOpen(false);
+    closeEdit();
   };
 
   // The flagged queue mirrors the submissions flow: act on the selection and toast with the
@@ -265,8 +295,11 @@ function ModerationPage() {
     const photo = flaggedSelection.item;
     if (!photo || !flagged || flaggedSelection.gone) return;
     const run = action === "remove" ? confirmRemoval : restorePhoto;
-    const done = await decideSelected("flagged", flaggedSelection, () =>
-      run.mutateAsync({ imageId: photo.imageId }),
+    const done = await decideRow(
+      "flagged",
+      flaggedSelection,
+      photo.imageId,
+      () => run.mutateAsync({ imageId: photo.imageId }),
     );
     if (!done) return;
     toast.success(
@@ -290,12 +323,16 @@ function ModerationPage() {
     decision: "approve" | "waive_hash_check" | "reject",
   ) => {
     if (!unchecked || uncheckedSelection.gone) return;
-    const done = await decideSelected("unchecked", uncheckedSelection, () =>
-      decideUnchecked.mutateAsync({
-        source: photo.source,
-        imageId: photo.imageId,
-        decision,
-      }),
+    const done = await decideRow(
+      "unchecked",
+      uncheckedSelection,
+      photo.key,
+      () =>
+        decideUnchecked.mutateAsync({
+          source: photo.source,
+          imageId: photo.imageId,
+          decision,
+        }),
     );
     if (!done) return;
     toast.success(
@@ -327,6 +364,7 @@ function ModerationPage() {
     }
   };
 
+  const selectedSubmission = submissions.item;
   const uncheckedPhoto = uncheckedSelection.item;
 
   return (
@@ -416,16 +454,16 @@ function ModerationPage() {
                   gone={submissions.gone}
                   onNext={nextIn("submissions", submissions.nextId)}
                 >
-                  {submissions.item && (
+                  {selectedSubmission && (
                     <SubmissionDetail
-                      submission={submissions.item}
+                      submission={selectedSubmission}
                       busy={
                         busy ||
                         submissions.gone ||
-                        !submissions.item.aggregateId
+                        !selectedSubmission.aggregateId
                       }
                       onApprove={() => moderate("approve")}
-                      onEditApprove={() => setEditOpen(true)}
+                      onEditApprove={() => openEdit(selectedSubmission)}
                       onReject={() => moderate("reject")}
                     />
                   )}
@@ -620,13 +658,15 @@ function ModerationPage() {
         </TabsContent>
       </Tabs>
 
-      {submissions.item && (
+      {edit && (
         <EditApproveDialog
-          submission={submissions.item}
-          open={editOpen}
-          onOpenChange={setEditOpen}
+          key={edit.session}
+          submission={edit.submission}
+          open={edit.open}
+          onOpenChange={(open) => !open && closeEdit()}
           onSave={editApprove}
           busy={busy}
+          handledElsewhere={pending !== undefined && !editTargetPending}
         />
       )}
     </div>

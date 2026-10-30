@@ -4814,7 +4814,8 @@
       "editDialog": {
         "title": "Edit & Approve",
         "description": "Fix the submission's details, then save to approve and publish it in one step.",
-        "save": "Save & Approve"
+        "save": "Save & Approve",
+        "handledElsewhere": "This submission was handled elsewhere while you were editing it, so it can no longer be approved from here."
       },
       "flag": {
         "loading": "Loading flagged images…",
