@@ -14,7 +14,9 @@ export function SegmentedPills<T extends string>({
   ariaLabel,
 }: {
   options: ReadonlyArray<SegmentedOption<T>>;
-  value: T;
+  // May match no option (an unknown value): then nothing is checked, and the first pill is the
+  // group's Tab stop so the group stays keyboard-reachable.
+  value: T | undefined;
   onChange: (v: T) => void;
   ariaLabel?: string;
 }) {
@@ -24,6 +26,7 @@ export function SegmentedPills<T extends string>({
     onChange(options[next].value);
     refs.current[next]?.focus();
   };
+  const noneChecked = !options.some((o) => o.value === value);
   return (
     <div
       role="radiogroup"
@@ -41,7 +44,7 @@ export function SegmentedPills<T extends string>({
             type="button"
             role="radio"
             aria-checked={on}
-            tabIndex={on ? 0 : -1}
+            tabIndex={on || (noneChecked && i === 0) ? 0 : -1}
             onClick={() => onChange(o.value)}
             onKeyDown={(e) => {
               if (e.key === "ArrowRight" || e.key === "ArrowDown") {
