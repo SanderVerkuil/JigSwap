@@ -1,4 +1,3 @@
-import { enUS } from "@clerk/localizations";
 import { ClerkProvider, useAuth } from "@clerk/tanstack-react-start";
 import { auth } from "@clerk/tanstack-react-start/server";
 import { ConvexQueryClient } from "@convex-dev/react-query";
@@ -20,7 +19,7 @@ import { DefaultCatchBoundary } from "../components/DefaultCatchBoundary";
 import { NotFound } from "../components/NotFound";
 import { Providers } from "../components/providers";
 import { ErrorBoundary } from "../components/ui/error-boundary";
-import { nlNLLocalization } from "../lib/clerk-localization";
+import { useClerkLocalization } from "../lib/clerk-localization";
 import { getIntlCached, seedIntlCache } from "../lib/i18n";
 import { defaultDocumentTitle } from "../lib/page-title";
 import { ZOD_JITLESS_SCRIPT } from "../lib/zod-jitless";
@@ -216,10 +215,12 @@ function RootComponent() {
   }, []);
 
   // Render Clerk's own UI (UserButton, UserProfile, sign-in/up) in the active
-  // app locale. Reactive to intl.locale so a language switch re-localizes Clerk.
+  // app locale. Reactive to intl.locale so a language switch re-localizes Clerk;
+  // the Dutch strings load on demand instead of riding in the entry chunk.
+  const clerkLocalization = useClerkLocalization(intl.locale);
   return (
     <ClerkProvider
-      localization={intl.locale === "nl" ? nlNLLocalization : enUS}
+      localization={clerkLocalization}
       appearance={clerkAppearance}
       nonce={cspNonce}
     >

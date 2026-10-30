@@ -1,6 +1,6 @@
 import { enUS, nlNL } from "@clerk/localizations";
 import { describe, expect, it } from "vitest";
-import { nlNLLocalization } from "./clerk-localization";
+import { nlNLLocalization } from "./clerk-localization-nl";
 
 // Dot-path → leaf value, so two localization trees can be compared key by key.
 function flatten(value: unknown, prefix = ""): Map<string, unknown> {
