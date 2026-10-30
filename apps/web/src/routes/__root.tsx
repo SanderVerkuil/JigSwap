@@ -22,6 +22,7 @@ import { ErrorBoundary } from "../components/ui/error-boundary";
 import { useClerkLocalization } from "../lib/clerk-localization";
 import { getIntlCached, seedIntlCache } from "../lib/i18n";
 import { defaultDocumentTitle } from "../lib/page-title";
+import { preconnectLinks } from "../lib/preconnect";
 import { ZOD_JITLESS_SCRIPT } from "../lib/zod-jitless";
 // Side effect: start listening for beforeinstallprompt before any route chunk loads.
 import "../lib/install-prompt";
@@ -121,6 +122,13 @@ export const Route = createRootRouteWithContext<{
       // Makes the site installable (Android/Chromium "Install app"). No
       // service-worker caching is involved; /sw.js stays push-only.
       { rel: "manifest", href: "/manifest.webmanifest" },
+      // Clerk and Convex gate every page's first useful paint (clerk-js, then the
+      // session, then the Convex socket), so open those connections early.
+      ...preconnectLinks({
+        clerkPublishableKey: import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as
+          string | undefined,
+        convexUrl: import.meta.env.VITE_CONVEX_URL as string | undefined,
+      }),
       { rel: "stylesheet", href: appCss },
       // The fonts are self-hosted: globals.css imports their @font-face rules.
       // Preload the latin files of the faces every page shows (Baloo 2
