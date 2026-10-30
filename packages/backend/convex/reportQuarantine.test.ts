@@ -160,6 +160,14 @@ const storePreserved = (t: T) =>
 const urlOf = (t: T, id: Id<"_storage">) =>
   t.run((ctx) => ctx.storage.getUrl(id));
 
+const blobExists = (t: T, id: Id<"_storage">) =>
+  t.run(async (ctx) => (await ctx.db.system.get(id)) !== null);
+
+const blobCount = (t: T) =>
+  t.run(
+    async (ctx) => (await ctx.db.system.query("_storage").collect()).length,
+  );
+
 const photoUrlOf = async (t: T, reportId: Id<"reports">) =>
   (await asAdmin(t).query(api.admin.getReport.getReport, { reportId }))
     .photoUrl;
@@ -427,5 +435,126 @@ describe("fileReport: a copy photo is reportable only as others saw it", () => {
       { targetKind: "photo", targetId: photoId, reason: "sexual" },
     );
     expect((await reportRow(t, reportId)).targetId).toBe(photoId);
+  });
+});
+
+describe("decideReport: removing content never rewrites or copies a quarantined photo", () => {
+  test("an image message reported while its hash check was pending, then matched: stays quarantined, no evidence copy", async () => {
+    fakes.hcs = 503;
+    const t = withModerationPool(convexTest(schema, modules));
+    const { alice, id, messageId, threadId } = await sendPhoto(t);
+    const { reportId } = await asBob(t).mutation(
+      api.reports.fileReport.fileReport,
+      { targetKind: "message", targetId: messageId, reason: "harassment_hate" },
+    );
+    expect((await attachment(t, id)).evidenceHold).toBe(true);
+
+    // The re-check matches: the pipeline preserves the bytes as a new blob and quarantines.
+    const preserved = await storePreserved(t);
+    await t.mutation(store.quarantineImage, {
+      imageId: id,
+      fileId: preserved,
+      uploaderId: alice,
+      md5: "m",
+      sha1: "s",
+      provider: "offlimits",
+      originalDiscarded: true,
+    });
+    expect(await photoUrlOf(t, reportId)).toBeNull();
+
+    // The admin, who sees no photo, removes the message for its caption.
+    const blobsBefore = await blobCount(t);
+    await decide(t, reportId, "content_removed");
+    await settleDueScheduled(t);
+
+    const row = await attachment(t, id);
+    expect(row.moderationStatus).toBe("quarantined");
+    expect(row.fileId).toBe(preserved);
+    expect(row.evidenceHold).toBeUndefined();
+    expect(await blobExists(t, preserved)).toBe(true);
+    expect(await blobCount(t)).toBe(blobsBefore);
+    const report = await reportRow(t, reportId);
+    expect(report.evidenceFileId).toBeUndefined();
+    expect(report.evidencePendingSince).toBeUndefined();
+    expect(await photoUrlOf(t, reportId)).toBeNull();
+    // The message itself is still removed: its caption is gone for both participants.
+    const messages = await t.run((ctx) =>
+      ctx.db
+        .query("threadMessages")
+        .withIndex("by_thread_sent", (q) => q.eq("threadAggregateId", threadId))
+        .collect(),
+    );
+    expect(messages.find((m) => m.messageId === messageId)).toMatchObject({
+      body: "",
+      removedAt: expect.any(Number),
+    });
+  });
+
+  test("a photo quarantined after the decision, before its evidence is copied: nothing is copied", async () => {
+    fakes.hcs = 503;
+    const t = withModerationPool(convexTest(schema, modules));
+    const { alice, id, messageId } = await sendPhoto(t);
+    const { reportId } = await asBob(t).mutation(
+      api.reports.fileReport.fileReport,
+      { targetKind: "message", targetId: messageId, reason: "harassment_hate" },
+    );
+    const preserved = await storePreserved(t);
+    await t.mutation(store.quarantineImage, {
+      imageId: id,
+      fileId: preserved,
+      uploaderId: alice,
+      md5: "m",
+      sha1: "s",
+      provider: "offlimits",
+      originalDiscarded: true,
+    });
+    // The evidence job that the decision scheduled runs only now.
+    await t.run((ctx) =>
+      ctx.db.patch(reportId, { evidencePendingSince: Date.now() }),
+    );
+    const blobsBefore = await blobCount(t);
+    await t.action(internal.reports.attachmentEvidence.preserveEvidence, {
+      reportId,
+      attachmentId: id,
+    });
+    expect(await blobCount(t)).toBe(blobsBefore);
+    const report = await reportRow(t, reportId);
+    expect(report.evidenceFileId).toBeUndefined();
+    expect(report.evidencePendingSince).toBeUndefined();
+    const row = await attachment(t, id);
+    expect(row.moderationStatus).toBe("quarantined");
+    expect(row.evidenceHold).toBeUndefined();
+    expect(await blobExists(t, preserved)).toBe(true);
+  });
+
+  test("a reported copy photo quarantined before the decision is kept whole", async () => {
+    const t = convexTest(schema, modules);
+    const people = await seed(t);
+    const photoId = await insertCopyPhoto(t, people, {
+      moderationStatus: "approved",
+      hashCheckedAt: 1,
+    });
+    const { reportId } = await asBob(t).mutation(
+      api.reports.fileReport.fileReport,
+      { targetKind: "photo", targetId: photoId, reason: "sexual" },
+    );
+    const preserved = await storePreserved(t);
+    await t.mutation(internal.library.moderationStore.quarantineImage, {
+      imageId: photoId,
+      fileId: preserved,
+      uploaderId: people.alice,
+      md5: "m",
+      sha1: "s",
+      provider: "offlimits",
+      originalDiscarded: true,
+    });
+    await decide(t, reportId, "content_removed");
+    const row = await t.run((ctx) => ctx.db.get(photoId));
+    expect(row).toMatchObject({
+      moderationStatus: "quarantined",
+      fileId: preserved,
+    });
+    expect(await blobExists(t, preserved)).toBe(true);
+    expect((await reportRow(t, reportId)).decision).toBe("content_removed");
   });
 });
