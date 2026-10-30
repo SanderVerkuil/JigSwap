@@ -117,7 +117,7 @@ export function UncheckedDetail({
           <EyeOff className="size-5" aria-hidden />
           <span className="text-xs font-semibold">{t("reveal")}</span>
         </button>
-        <Badge className="absolute top-3 left-3 border-transparent bg-jigsaw-warning text-white">
+        <Badge className="absolute top-3 left-3 border-transparent bg-jigsaw-warning text-amber-950">
           {t(`source.${photo.source}`)}
         </Badge>
       </div>

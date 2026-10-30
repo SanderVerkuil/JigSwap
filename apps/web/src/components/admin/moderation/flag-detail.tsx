@@ -22,10 +22,13 @@ export type FlaggedPhoto = FunctionReturnType<
 >[number];
 
 // Semantic tones per severity band: the badge over the image here, and the
-// little dot in the queue rows (used by the route's renderRow).
+// little dot in the queue rows (used by the route's renderRow). The badge
+// colours are fixed rather than theme tokens so the small text keeps AA
+// contrast in both themes: white on the dark-mode destructive red and on
+// amber fails it.
 const SEVERITY_BADGE: Record<SeverityBand, string> = {
-  high: "border-transparent bg-destructive text-white",
-  medium: "border-transparent bg-jigsaw-warning text-white",
+  high: "border-transparent bg-red-700 text-white",
+  medium: "border-transparent bg-jigsaw-warning text-amber-950",
   low: "border-transparent bg-muted text-muted-foreground",
 };
 
