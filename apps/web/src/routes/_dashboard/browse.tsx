@@ -19,6 +19,7 @@ import {
   copyMessageRoute,
   isOwnCopy,
 } from "@/components/messaging/copy-conversation";
+import { categoryOptions } from "@/components/puzzles/category-options";
 import { PuzzleCardSkeleton } from "@/components/puzzles/puzzle-card-skeleton";
 import { ViewModeToggle } from "@/components/puzzles/view-mode-toggle";
 import { Button } from "@/components/ui/button";
@@ -34,13 +35,14 @@ import {
   validateBrowseSearch,
   type BrowseSearch,
 } from "@/lib/browse-search";
+import type { Locale } from "@/lib/i18n";
 import { useProjectedMemberName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useTranslations } from "use-intl";
+import { useLocale, useTranslations } from "use-intl";
 
 // The Text condition reaches the URL (and so the server) after this pause in typing.
 const TEXT_DEBOUNCE_MS = 200;
@@ -73,6 +75,7 @@ function BrowsePage() {
   const tBrowse = useTranslations("browse");
   const tCopyOwner = useTranslations("copyOwner");
   const projectedName = useProjectedMemberName();
+  const locale = useLocale() as Locale;
   const { isFavorite, toggleFavorite } = useFavorites();
 
   const [requestCopy, setRequestCopy] = useState<RequestableCopy | null>(null);
@@ -123,13 +126,15 @@ function BrowsePage() {
     convexQuery(gateway.catalog.puzzleCategories, {}),
   );
 
+  // Category names follow the UI locale (English when a name has no translation), like the
+  // catalogue's own category filter.
   const categories: CategoryOption[] = useMemo(
     () =>
-      (categoriesRaw ?? []).map((category) => ({
-        id: category._id,
-        name: category.name.en,
+      categoryOptions(categoriesRaw ?? [], locale).map(({ value, label }) => ({
+        id: value,
+        name: label,
       })),
-    [categoriesRaw],
+    [categoriesRaw, locale],
   );
 
   // Only the member lookup gates the page. Results load inside it, so the query builder stays
