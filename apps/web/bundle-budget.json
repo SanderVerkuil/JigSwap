@@ -1,0 +1,45 @@
+{
+  "tolerance": 0.05,
+  "forbiddenInInitial": {
+    "three.js": "isWebGLRenderer",
+    "the rapier physics engine": "RigidBodyDesc"
+  },
+  "routes": {
+    "__root__": {
+      "jsGzKB": 266,
+      "cssGzKB": 30
+    },
+    "/": {
+      "jsGzKB": 277,
+      "cssGzKB": 30
+    },
+    "/_dashboard/dashboard": {
+      "jsGzKB": 414,
+      "cssGzKB": 30
+    },
+    "/_dashboard/profile": {
+      "jsGzKB": 410,
+      "cssGzKB": 30
+    },
+    "/members/$handle": {
+      "jsGzKB": 406,
+      "cssGzKB": 30
+    },
+    "/_public/catalog/": {
+      "jsGzKB": 283,
+      "cssGzKB": 30
+    },
+    "/_public/docs/$": {
+      "jsGzKB": 291,
+      "cssGzKB": 30
+    },
+    "/_dashboard/copies/$id": {
+      "jsGzKB": 460,
+      "cssGzKB": 31
+    },
+    "/_dashboard/messages": {
+      "jsGzKB": 393,
+      "cssGzKB": 30
+    }
+  }
+}
