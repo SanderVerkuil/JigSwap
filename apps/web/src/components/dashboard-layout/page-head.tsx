@@ -15,11 +15,11 @@
 // to their own line rather than squeezing the title or running off the card.
 // Desktop-only: below md the mobile top bar owns the title and the back
 // affordance, and the shell's MobilePageActions row carries the actions.
-import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
 import { usePathname } from "@/compat/navigation";
 import { ChevronRight } from "lucide-react";
 import { useTranslations } from "use-intl";
+import { useDashboardGreeting } from "./greeting";
 import { usePageHeaderContent } from "./page-header-slot";
 import { getNavGroup, getRouteMeta } from "./route-meta";
 import { PAGE_HEAD_HEIGHT_VAR, useHeightCssVar } from "./sticky-offset";
@@ -28,7 +28,7 @@ export function PageHead() {
   const pathname = usePathname();
   const meta = getRouteMeta(pathname);
   const t = useTranslations("shell");
-  const { user } = useUser();
+  const greeting = useDashboardGreeting();
   const {
     title: titleOverride,
     titleInContent,
@@ -45,12 +45,7 @@ export function PageHead() {
 
   const pageTitle = t(`pages.${meta.pageKey}.title`);
   const subtitle = t(`pages.${meta.pageKey}.subtitle`);
-  const baseTitle =
-    meta.variant === "dashboard"
-      ? user?.firstName
-        ? t("welcome", { name: user.firstName })
-        : t("welcomeAnonymous")
-      : pageTitle;
+  const baseTitle = meta.variant === "dashboard" ? greeting : pageTitle;
   // A published title (dynamic route) overrides the static route title.
   const title = titleOverride ?? baseTitle;
   const group =

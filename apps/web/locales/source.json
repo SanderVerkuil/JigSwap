@@ -4166,6 +4166,8 @@
     },
     "welcome": "Welcome back, {name}! 🧩",
     "welcomeAnonymous": "Welcome back! 🧩",
+    "welcomeNew": "Welcome, {name}! 🧩",
+    "welcomeNewAnonymous": "Welcome! 🧩",
     "groups": {
       "library": {
         "label": "My Library",
