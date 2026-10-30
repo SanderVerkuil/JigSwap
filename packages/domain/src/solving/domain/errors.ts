@@ -10,6 +10,7 @@ export type SolvingErrorCode =
   | "EditWindowClosed"
   | "NotCompletionOwner"
   | "InvalidGoalTarget"
+  | "InvalidGoalPeriod"
   | "InvalidRating"
   | "ReviewTextTooLong"
   | "InvalidDuration"
@@ -67,6 +68,15 @@ export class SolvingError extends DomainError {
     return new SolvingError(
       "InvalidGoalTarget",
       "A goal's target completions must be a positive integer",
+    );
+  }
+
+  // A goal's period is empty: its start date (or, without one, the day it was created) falls after
+  // its target date.
+  static invalidGoalPeriod(): SolvingError {
+    return new SolvingError(
+      "InvalidGoalPeriod",
+      "A goal's start date must be on or before its target date",
     );
   }
 

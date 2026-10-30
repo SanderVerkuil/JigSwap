@@ -28,6 +28,8 @@ export const convexGoalRepository = (ctx: MutationCtx): GoalRepository => {
       description: row.description,
       targetCompletions: row.targetCompletions,
       currentCompletions: row.currentCompletions,
+      startDate:
+        row.startDate === undefined ? undefined : new Date(row.startDate),
       targetDate:
         row.targetDate === undefined ? undefined : new Date(row.targetDate),
       isActive: row.isActive,
@@ -46,6 +48,7 @@ export const convexGoalRepository = (ctx: MutationCtx): GoalRepository => {
       description: state.description,
       targetCompletions: state.targetCompletions,
       currentCompletions: state.currentCompletions,
+      startDate: state.startDate?.getTime(),
       targetDate: state.targetDate?.getTime(),
       isActive: state.isActive,
       createdAt: state.createdAt.getTime(),

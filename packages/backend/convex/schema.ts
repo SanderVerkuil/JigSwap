@@ -895,6 +895,10 @@ export default defineSchema({
     description: v.optional(v.string()),
     targetCompletions: v.number(),
     currentCompletions: v.number(),
+    // The first calendar day (UTC midnight) the goal counts solves on. Optional: goals without it
+    // (every goal set before periods existed) count from the UTC day of `createdAt`.
+    startDate: v.optional(v.number()),
+    // The last calendar day (UTC midnight) the goal counts solves on, inclusive.
     targetDate: v.optional(v.number()),
     isActive: v.boolean(),
     createdAt: v.number(),

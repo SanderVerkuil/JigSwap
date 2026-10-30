@@ -3,6 +3,7 @@ export * from "./date-precision";
 export * from "./errors";
 export * from "./events";
 export * from "./goal";
+export * from "./goal-progress";
 export * from "./ids";
 export * from "./photo";
 export * from "./solve-duration";

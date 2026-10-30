@@ -1,4 +1,4 @@
-import { Clock, DomainEventPublisher, err, ok } from "../../../shared-kernel";
+import { Clock, DomainEventPublisher, ok } from "../../../shared-kernel";
 import {
   RecomputeGoalProgress,
   RecomputeGoalProgressCommand,
@@ -13,21 +13,20 @@ export interface RecomputeGoalProgressDeps {
   readonly clock: Clock;
 }
 
-// Transaction script driven by CompletionRecorded: read the AUTHORITATIVE completion count for
-// the member and push it into each of their active goals (the count is never hand-set — it is
-// always derived here). Each goal emits GoalProgressed on a change and GoalAchieved once on the
-// crossing. Publishes the union of every touched goal's events.
+// Transaction script driven by a completion being recorded, edited or deleted: read the member's
+// finished solves once and let each ACTIVE goal count the ones inside its own period (the count is
+// never hand-set — it is always derived here). Each goal emits GoalProgressed on a change and
+// GoalAchieved once on the crossing. Publishes the union of every touched goal's events.
 export const makeRecomputeGoalProgress =
   (deps: RecomputeGoalProgressDeps): RecomputeGoalProgress =>
   async (cmd: RecomputeGoalProgressCommand) => {
-    const count = await deps.completions.countCompletedByUser(cmd.userId);
+    const solves = await deps.completions.listGoalSolves(cmd.userId);
     const goals = await deps.goals.listByUser(cmd.userId);
 
     const now = deps.clock.now();
     for (const goal of goals) {
       if (!goal.isActive) continue;
-      const outcome = goal.progressTo(count, now);
-      if (outcome.isErr) return err(outcome.error);
+      goal.progressFrom(solves, now);
 
       const events = goal.pullEvents();
       if (events.length > 0) {

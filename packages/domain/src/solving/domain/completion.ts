@@ -339,7 +339,7 @@ export class Completion {
       datePrecision: datesChanged ? "day" : this.state.datePrecision,
       updatedAt: now,
     };
-    this.record(new CompletionEdited(this.state.id, now));
+    this.record(new CompletionEdited(this.state.id, this.state.userId, now));
     return ok(undefined);
   }
 
@@ -359,9 +359,9 @@ export class Completion {
       return err(SolvingError.tooManyPhotos(MAX_PHOTOS));
     }
     this.state = { ...this.state, photos: combined, updatedAt: now };
-    // Reuse CompletionEdited (verified consumer-safe: no feed/notification/goal reactions);
-    // recorded exactly the way edit() records it (see edit()).
-    this.record(new CompletionEdited(this.state.id, now));
+    // Reuse CompletionEdited (no feed/notification reactions; the goal reactor's recompute is a
+    // no-op here because photos never move a solve); recorded exactly the way edit() records it.
+    this.record(new CompletionEdited(this.state.id, this.state.userId, now));
     return ok(undefined);
   }
 

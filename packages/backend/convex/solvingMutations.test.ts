@@ -1,6 +1,6 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError, type Value } from "convex/values";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { withModerationPool } from "../test-fixtures/moderationPool";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -9,7 +9,15 @@ import schema from "./schema";
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.useRealTimers();
 });
+
+// Goals count solves by UTC calendar day from the day they are created, and these tests log
+// solves an hour before "now": pin the clock to midday UTC so that hour never crosses midnight.
+const pinClockToMidday = () => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(Date.UTC(2026, 5, 15, 12));
+};
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
@@ -574,6 +582,8 @@ describe("solving.attachCompletionPhotos", () => {
 });
 
 describe("solving.createGoal", () => {
+  beforeEach(pinClockToMidday);
+
   test("creates a goal and returns its aggregateId", async () => {
     const t = withModerationPool(convexTest(schema, modules));
     const { alice } = await seed(t);
@@ -603,6 +613,8 @@ describe("solving.createGoal", () => {
 });
 
 describe("goal progress reacts to completions", () => {
+  beforeEach(pinClockToMidday);
+
   test("recording completions advances the goal and fires achievement once at the target", async () => {
     const t = withModerationPool(convexTest(schema, modules));
     const { puzzleAggregateId, copyAggregateId } = await seed(t);
@@ -681,6 +693,7 @@ describe("solving.deleteCompletion", () => {
   });
 
   test("deleting a completion recomputes goal progress back to 0", async () => {
+    pinClockToMidday();
     const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
 
