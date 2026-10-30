@@ -5662,6 +5662,7 @@
       "household": {
         "title": "Household",
         "done": "You're in a household",
+        "justYou": "Just you so far",
         "pending": "Invitation waiting"
       },
       "profile": {

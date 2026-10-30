@@ -257,6 +257,37 @@ describe("QuickSetupCardView (active)", () => {
     );
   });
 
+  it("says just you for a household of one, in English and Dutch", () => {
+    const withHousehold = (count: number, locale: Locale = "en") =>
+      nameOf(
+        byTag(
+          render(
+            <QuickSetupCardView
+              view={{
+                ...VIEW,
+                steps: VIEW.steps.map((s) =>
+                  s.id === "household"
+                    ? step("household", "done", { count, pendingInvite: false })
+                    : s,
+                ),
+              }}
+              mode="active"
+              onHide={() => {}}
+            />,
+            locale,
+          ),
+          "a",
+        )[3]!,
+      );
+    expect(withHousehold(1)).toBe("HouseholdOptional, done, Just you so far");
+    expect(withHousehold(2)).toBe(
+      "HouseholdOptional, done, You're in a household",
+    );
+    expect(withHousehold(1, "nl")).toBe(
+      "HuishoudenOptioneel, klaar, Voorlopig alleen jij",
+    );
+  });
+
   it("renders in Dutch", () => {
     const nlHtml = render(
       <QuickSetupCardView view={VIEW} mode="active" onHide={() => {}} />,

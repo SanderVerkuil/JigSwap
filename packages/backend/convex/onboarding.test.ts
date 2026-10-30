@@ -118,10 +118,14 @@ const insertFollowRequest = (
     });
   });
 
-const insertHouseholdMember = (t: T, memberId: Id<"users">) =>
+const insertHouseholdMember = (
+  t: T,
+  memberId: Id<"users">,
+  householdId = "hh-1",
+) =>
   t.run(async (ctx) => {
     await ctx.db.insert("householdMembers", {
-      householdId: "hh-1",
+      householdId,
       memberId,
       role: "admin",
       joinedAt: Date.now(),
@@ -238,6 +242,7 @@ describe("onboarding.getQuickStart: a fresh member", () => {
           id: "household",
           status: "todo",
           optional: true,
+          count: 0,
           pendingInvite: false,
         },
         { id: "profile", status: "todo", optional: false },
@@ -384,6 +389,26 @@ describe("onboarding.getQuickStart: derived steps", () => {
     });
     await insertHouseholdMember(t, ann);
     expect((await stepOf(t, "ann", "household"))?.status).toBe("done");
+  });
+
+  test("household: counts the members of my household, me included", async () => {
+    const t = convexTest(schema, modules);
+    const ann = await insertUser(t, "ann");
+    const bob = await insertUser(t, "bob");
+    const cat = await insertUser(t, "cat");
+    // Someone else's household never adds to mine.
+    await insertHouseholdMember(t, cat, "hh-2");
+    await insertHouseholdMember(t, ann);
+    expect(await stepOf(t, "ann", "household")).toMatchObject({
+      status: "done",
+      count: 1,
+    });
+    await insertHouseholdMember(t, bob);
+    expect(await stepOf(t, "ann", "household")).toMatchObject({
+      status: "done",
+      count: 2,
+    });
+    expect((await stepOf(t, "cat", "household"))?.count).toBe(1);
   });
 
   test("household: another member's household doesn't count", async () => {

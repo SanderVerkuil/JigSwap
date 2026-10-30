@@ -5662,6 +5662,7 @@
       "household": {
         "title": "Huishouden",
         "done": "Je zit in een huishouden",
+        "justYou": "Voorlopig alleen jij",
         "pending": "Uitnodiging wacht op je"
       },
       "profile": {

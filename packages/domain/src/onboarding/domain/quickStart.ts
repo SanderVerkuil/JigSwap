@@ -29,6 +29,7 @@ export interface QuickStartFacts {
   follows: number; // members I follow
   pendingFollowRequests: number; // my pending requests to private profiles
   inHousehold: boolean;
+  householdMembers: number; // people in my household, me included; 0 when in none
   pendingHouseholdInvite: boolean;
   hasLocation: boolean;
   visibilitySet: boolean; // profile visibility explicitly chosen
@@ -83,8 +84,11 @@ const stepDetails = (
         count: f.follows,
       };
     case "household":
+      // A household of one is still done (the step is optional); the count lets the UI say
+      // "just you so far" instead of claiming a shared shelf.
       return {
         done: f.inHousehold,
+        count: f.householdMembers,
         pendingInvite: f.pendingHouseholdInvite,
       };
     case "profile":

@@ -141,7 +141,10 @@ export function useStepText() {
           // Done through a pending follow request alone: there is no follow to count yet.
           return step.count ? t("steps.people.count", { count }) : undefined;
         case "household":
-          return t("steps.household.done");
+          // A household of one is done (the step is optional), but nobody shares the shelf yet.
+          return step.count === 1
+            ? t("steps.household.justYou")
+            : t("steps.household.done");
         case "profile":
           return t("steps.profile.done");
       }

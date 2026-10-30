@@ -12,7 +12,10 @@ export interface QuickStartStepView {
   status: QuickStartStepStatus;
   /** Only household is optional; it never counts toward `requiredDone`. */
   optional: boolean;
-  /** puzzles: copies, solves: finished solves, people: members followed. Capped at 51 ("50+"). */
+  /**
+   * puzzles: copies, solves: finished solves, people: members followed, household: people in the
+   * member's household, themselves included (0 when in none). Capped at 51 ("50+").
+   */
   count?: number;
   /** household only: an invite to a household is waiting for the member. */
   pendingInvite?: boolean;
