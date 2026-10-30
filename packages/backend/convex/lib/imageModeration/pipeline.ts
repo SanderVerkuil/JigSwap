@@ -27,6 +27,7 @@ import {
 } from "./csamHashCheck";
 import {
   checkImageBytes,
+  checkImageSize,
   INVALID_IMAGE_LABEL,
   type ImageFormat,
   type ImageGuardFailure,
@@ -61,8 +62,9 @@ import { findMetadata, stripImageMetadata } from "./stripMetadata";
 //      transparency, else JPEG — plus the blurhash. A malformed block structure or a decode
 //      failure is refused as "decode_failed". An upright WebP (no Orientation, or 1) is not
 //      re-encoded: its stripped bytes are stored (as "image/webp"); one that needs turning is
-//      decoded (WASM) and re-encoded like the rest. Whatever is stored must show no metadata
-//      left (findMetadata), or it is refused too.
+//      decoded (WASM) and re-encoded like the rest. Whatever is stored must be within the
+//      upload limit ("too_large") and show no metadata left (findMetadata), or it is refused
+//      too.
 //   3. CSAM hash check (lib/imageModeration/csamHashCheck), until the row has passed one: MD5 +
 //      SHA-1 of the ORIGINAL bytes (what hash lists match) and of the re-encode (what is stored,
 //      upright), BEFORE any refusal, swap or classification. A match stores the matched bytes
@@ -588,6 +590,14 @@ const runAttempt = async <R extends ModerationRow>(
           event.reencode_error = errMsg(error);
           refusal = "decode_failed";
         }
+      }
+      if (encoded && !checkImageSize(encoded.bytes.length).ok) {
+        // What is stored is held to the upload limit too: a small upload (a flat image with
+        // transparency, a WebP) can re-encode to many times its size.
+        event.reencoded_mime = encoded.mime;
+        event.reencoded_bytes = encoded.bytes.length;
+        encoded = null;
+        refusal = "too_large";
       }
       if (encoded) {
         event.reencoded_mime = encoded.mime;

@@ -523,6 +523,31 @@ describe("decode failures and polyglots (copy photos)", () => {
     expect(await blobExists(t, fileId)).toBe(false);
   });
 
+  test("a re-encode over 10 MB is refused as too_large, never stored or classified", async () => {
+    const fetchMock = cleanReply();
+    vi.stubGlobal("fetch", fetchMock);
+    const t = withModerationPool(convexTest(schema, modules));
+    const { copy } = await seed(t);
+    const fileId = await store(t, fixture("gps.jpg"), "image/jpeg");
+    vi.spyOn(Jimp.prototype, "getBuffer").mockResolvedValue(
+      Buffer.alloc(MAX_IMAGE_UPLOAD_BYTES + 1),
+    );
+
+    const row = await addCopyPhoto(t, copy, fileId);
+
+    expect(row.moderationStatus).toBe("rejected");
+    expect(row.moderationLabel).toBe("invalid_image");
+    expect(row.moderationReason).toBe("too_large");
+    expect(row.fileId).toBe(fileId);
+    expect(row.reencodedAt).toBeUndefined();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(await blobExists(t, fileId)).toBe(false);
+    const stored = await t.run((ctx) =>
+      ctx.db.system.query("_storage").collect(),
+    );
+    expect(stored).toEqual([]);
+  });
+
   test("WebP claimed as another type is stored again as image/webp and the original deleted", async () => {
     vi.stubGlobal("fetch", cleanReply());
     const t = withModerationPool(convexTest(schema, modules));
