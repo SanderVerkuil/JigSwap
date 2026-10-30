@@ -8,6 +8,7 @@ import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
+import { enforceRateLimit } from "../lib/rateLimits";
 import { catalogIdGenerator } from "./adapters/catalogIdGenerator";
 import { convexPuzzleDefinitionRepository } from "./adapters/convexPuzzleDefinitionRepository";
 import { catalogEventPublisher } from "./adapters/eventPublisher";
@@ -63,6 +64,12 @@ export const submitPuzzleDefinition = mutation({
   handler: async (ctx, args) => {
     const submittedBy = await requireMember(ctx); // submitter derived from auth, never the client
     const autoApprove = await isAdmin(ctx); // admins skip the moderation queue
+    // Each pending submission notifies every admin: bound them per member (admins, who seed the
+    // catalogue, are exempt). A refusal, or any later throw, rolls the charge back.
+    if (!autoApprove) {
+      await enforceRateLimit(ctx, "catalogSubmit", submittedBy);
+      await enforceRateLimit(ctx, "catalogSubmitDaily", submittedBy);
+    }
     // Only box art the server stripped of its metadata for this member.
     await assertBoxArtImage(
       ctx,

@@ -51,6 +51,13 @@ export const RATE_LIMITS = {
   // image's importPuzzleImage), each running the paid moderation pipeline inline. Admins exempt.
   boxArtCheck: { windowMs: HOUR, max: 20 },
   boxArtCheckDaily: { windowMs: DAY, max: 60 },
+  // Catalogue submissions (catalog/submitPuzzleDefinition) and filed change proposals
+  // (catalog/proposeDefinitionChange): each one notifies every admin and joins the review
+  // queue, and withdraw/re-file could otherwise cycle forever. Admins are exempt.
+  catalogSubmit: { windowMs: HOUR, max: 10 },
+  catalogSubmitDaily: { windowMs: DAY, max: 20 },
+  proposalFile: { windowMs: HOUR, max: 10 },
+  proposalFileDaily: { windowMs: DAY, max: 30 },
 } as const satisfies Record<string, { windowMs: number; max: number }>;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;
