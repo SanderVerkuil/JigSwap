@@ -28,3 +28,15 @@ export function convexRetryAfterMs(error: unknown): number | undefined {
   const wait = refusalData(error)?.retryAfterMs;
   return typeof wait === "number" ? wait : undefined;
 }
+
+// When a RateLimited refusal lets the caller try again: `now` plus its retryAfterMs. Undefined for
+// any other error, and for a RateLimited that doesn't say how long, so a caller never shows a
+// limit message without a time (it falls back to its generic failure).
+export function rateLimitedRetryAt(
+  error: unknown,
+  now: number,
+): number | undefined {
+  if (convexErrorCode(error) !== "RateLimited") return undefined;
+  const wait = convexRetryAfterMs(error);
+  return wait === undefined ? undefined : now + wait;
+}

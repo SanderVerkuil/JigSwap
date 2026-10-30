@@ -1,6 +1,10 @@
 import { ConvexError } from "convex/values";
 import { describe, expect, it } from "vitest";
-import { convexErrorCode, convexRetryAfterMs } from "./convex-error-code";
+import {
+  convexErrorCode,
+  convexRetryAfterMs,
+  rateLimitedRetryAt,
+} from "./convex-error-code";
 
 describe("convexErrorCode", () => {
   it("reads the code of a structured refusal", () => {
@@ -55,5 +59,32 @@ describe("convexRetryAfterMs", () => {
     ["a plain error", new Error("RateLimited")],
   ])("is undefined for %s", (_label, error) => {
     expect(convexRetryAfterMs(error)).toBeUndefined();
+  });
+});
+
+describe("rateLimitedRetryAt", () => {
+  const now = 1_000_000;
+
+  it("is now plus the wait of a RateLimited refusal", () => {
+    expect(
+      rateLimitedRetryAt(
+        new ConvexError({ code: "RateLimited", retryAfterMs: 90_000 }),
+        now,
+      ),
+    ).toBe(now + 90_000);
+  });
+
+  it.each([
+    [
+      "a RateLimited refusal without a wait",
+      new ConvexError({ code: "RateLimited" }),
+    ],
+    [
+      "another refusal with a wait",
+      new ConvexError({ code: "EmailInvitesBusy", retryAfterMs: 90_000 }),
+    ],
+    ["a plain error", new Error("RateLimited")],
+  ])("is undefined for %s", (_label, error) => {
+    expect(rateLimitedRetryAt(error, now)).toBeUndefined();
   });
 });

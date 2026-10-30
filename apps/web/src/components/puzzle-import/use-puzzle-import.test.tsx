@@ -38,14 +38,20 @@ describe("usePuzzleImport", () => {
     expect(await runImport()).toEqual({ status: "error", reason: "failed" });
   });
 
-  it("a refusal for importing too much is reported as rate-limited", async () => {
-    mocks.extract.mockRejectedValue(
-      new ConvexError({ code: "RateLimited", retryAfterMs: 60_000 }),
-    );
-    expect(await runImport()).toEqual({
-      status: "error",
-      reason: "rateLimited",
-    });
+  it("a refusal for importing too much is reported as rate-limited, with when to try again", async () => {
+    vi.useFakeTimers({ now: 1_000_000, toFake: ["Date"] });
+    try {
+      mocks.extract.mockRejectedValue(
+        new ConvexError({ code: "RateLimited", retryAfterMs: 60_000 }),
+      );
+      expect(await runImport()).toEqual({
+        status: "error",
+        reason: "rateLimited",
+        retryAt: 1_000_000 + 60_000,
+      });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("any other thrown error is a plain failure", async () => {

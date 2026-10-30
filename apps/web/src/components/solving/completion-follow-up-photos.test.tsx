@@ -197,7 +197,10 @@ describe("completion follow-up photos", () => {
     mocks.mutation.mockImplementation(async (name) => {
       if (name === UPLOAD_URL) return "https://upload.test";
       if (name === ATTACH) {
-        throw new ConvexError({ code: "RateLimited", retryAfterMs: 60_000 });
+        throw new ConvexError({
+          code: "RateLimited",
+          retryAfterMs: 3 * 3_600_000,
+        });
       }
       return null;
     });
@@ -210,7 +213,7 @@ describe("completion follow-up photos", () => {
 
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith(
-        "You've added a lot of photos just now. Try again later.",
+        "You've added the most photos allowed for now. Try again in 3 hours.",
       ),
     );
     // The attach's own refusal is not the upload-URL limit.

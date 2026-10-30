@@ -512,7 +512,7 @@
     "importFetch": "Gegevens ophalen",
     "importFetching": "Bezig met ophalen…",
     "importFailed": "Kon die pagina niet lezen — vul de gegevens handmatig in.",
-    "importRateLimited": "Je hebt net veel pagina's geïmporteerd. Probeer het later opnieuw, of vul de gegevens hieronder zelf in.",
+    "importRateLimited": "Je hebt voorlopig het maximale aantal pagina's geïmporteerd. Probeer het {when} opnieuw, of vul de gegevens hieronder zelf in.",
     "importAlreadyExists": "Deze puzzel staat al op JigSwap — toevoegen aan je collectie?",
     "importAddToCollection": "Aan collectie toevoegen",
     "importCreateAnyway": "Toch nieuw aanmaken",
@@ -2934,7 +2934,7 @@
       "saved": "Bedankt! Alles is opgeslagen.",
       "saveError": "Kon niet alles opslaan. Probeer het opnieuw.",
       "tooManyPhotos": "Een voltooiing kan maximaal 5 foto's hebben.",
-      "photosRateLimited": "Je hebt net veel foto's toegevoegd. Probeer het later opnieuw."
+      "photosRateLimited": "Je hebt voorlopig het maximale aantal foto's toegevoegd. Probeer het {when} opnieuw."
     },
     "goals": {
       "title": "Doelen",
@@ -3985,7 +3985,7 @@
     "uploading": "Uploaden…",
     "photoAdded": "Foto toegevoegd",
     "photoFailed": "Kon foto niet toevoegen",
-    "photoRateLimited": "Je hebt net veel foto's toegevoegd. Probeer het later opnieuw.",
+    "photoRateLimited": "Je hebt voorlopig het maximale aantal foto's toegevoegd. Probeer het {when} opnieuw.",
     "photoLimitReached": "Een exemplaar kan maximaal {max} foto's hebben.",
     "photoLimitTile": "Maximum van {max} foto's bereikt",
     "noPhotos": "Nog geen foto's.",

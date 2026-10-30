@@ -3,7 +3,7 @@ import { useRouter } from "@/compat/navigation";
 import { availabilityToSharing } from "@/components/add-puzzle";
 import { ImageZoom } from "@/components/common/image-zoom";
 import { CopyOwner } from "@/components/copies/copy-owner";
-import { copyPhotoErrorKey } from "@/components/copies/copy-photo-error";
+import { copyPhotoError } from "@/components/copies/copy-photo-error";
 import { EditCopyDialog } from "@/components/copies/edit-copy-dialog";
 import { PhotoLightbox } from "@/components/copies/photo-lightbox";
 import {
@@ -32,6 +32,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StarRating } from "@/components/ui/star-rating";
 import { gateway, Id } from "@/gateway";
+import { useRelativeTime } from "@/hooks/use-relative-time";
 import { formatCompletionDate } from "@/lib/completion-format";
 import { durationParts } from "@/lib/humanize-duration";
 import {
@@ -960,6 +961,7 @@ function PhotoStrip({
 }) {
   const t = useTranslations("copyInstance");
   const tCommon = useTranslations("common");
+  const relativeTime = useRelativeTime();
   const inputRef = useRef<HTMLInputElement>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -1007,14 +1009,20 @@ function PhotoStrip({
       });
     },
     onSuccess: () => toast.success(t("photoAdded")),
-    // An upload URL refused by the member's upload limit says to wait (SEC-20); the attach's own
-    // refusals (the photo limit, a full copy) name their reason (SEC-19).
-    onError: (error) =>
+    onError: (error) => {
+      // An upload URL refused by the member's upload limit says to wait (SEC-20); the attach's own
+      // refusals (the photo limit, a full copy) name their reason (SEC-19).
+      if (isUploadRateLimited(error)) {
+        toast.error(tCommon("photoUploadRateLimited"));
+        return;
+      }
+      const refusal = copyPhotoError(error, Date.now());
       toast.error(
-        isUploadRateLimited(error)
-          ? tCommon("photoUploadRateLimited")
-          : t(copyPhotoErrorKey(error), { max: photoLimit }),
-      ),
+        refusal.key === "photoRateLimited"
+          ? t(refusal.key, { when: relativeTime(refusal.retryAt) })
+          : t(refusal.key, { max: photoLimit }),
+      );
+    },
     onSettled: () => {
       if (inputRef.current) inputRef.current.value = "";
     },

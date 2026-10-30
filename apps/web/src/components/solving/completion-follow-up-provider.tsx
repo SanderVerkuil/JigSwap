@@ -13,6 +13,8 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useReportSurfaceBusy } from "@/components/whats-new/surface-busy";
 import { gateway, type Id } from "@/gateway";
+import { useRelativeTime } from "@/hooks/use-relative-time";
+import { rateLimitedRetryAt } from "@/lib/convex-error-code";
 import { preparePhoto } from "@/lib/prepare-photo";
 import { isUploadRateLimited, mintUploadUrl } from "@/lib/upload-rate-limit";
 import { cn } from "@/lib/utils";
@@ -75,6 +77,7 @@ export function CompletionFollowUpProvider({
   const t = useTranslations("solving.followUp");
   const tReview = useTranslations("solving.review");
   const tCommon = useTranslations("common");
+  const relativeTime = useRelativeTime();
 
   const generateUploadUrl = useConvexMutation(
     gateway.library.generateUploadUrl,
@@ -334,11 +337,14 @@ export function CompletionFollowUpProvider({
           prev.map((p) => ({ ...p, storageId: undefined, failed: true })),
         );
       }
+      const retryAt = attaching
+        ? rateLimitedRetryAt(error, Date.now())
+        : undefined;
       toast.error(
         code === "TooManyPhotos"
           ? t("tooManyPhotos")
-          : code === "RateLimited" && attaching
-            ? t("photosRateLimited")
+          : retryAt !== undefined
+            ? t("photosRateLimited", { when: relativeTime(retryAt) })
             : t("saveError"),
       );
     } finally {
