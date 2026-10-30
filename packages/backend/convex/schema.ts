@@ -1657,7 +1657,9 @@ export default defineSchema({
     .index("by_puzzle", ["puzzleId"])
     .index("by_copy", ["copyId"])
     // The author's delete finds the comment by the id the read side shows (its aggregateId).
-    .index("by_aggregate_id", ["aggregateId"]),
+    .index("by_aggregate_id", ["aggregateId"])
+    // Everything one member wrote (social/removeMemberContent).
+    .index("by_author", ["authorId", "createdAt"]),
 
   // Social: a text-only discussion comment on a single shared PHOTO (an `ownedPuzzleImages` row),
   // surfaced in the photo lightbox. Keyed by the photo _id (not a puzzle definition); aggregateId is
@@ -1674,7 +1676,9 @@ export default defineSchema({
     .index("by_photo", ["photoId"])
     // The author's delete and a report's target find the comment by the id the read side shows
     // (its aggregateId).
-    .index("by_aggregate_id", ["aggregateId"]),
+    .index("by_aggregate_id", ["aggregateId"])
+    // Everything one member wrote (social/removeMemberContent).
+    .index("by_author", ["authorId", "createdAt"]),
 
   // Social: a directed follow edge (followerId -> followeeId). Indexed both ways so the read side
   // can list a member's followers and the people they follow; aggregateId is the FollowId.

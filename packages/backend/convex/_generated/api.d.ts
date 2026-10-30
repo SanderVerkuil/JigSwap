@@ -545,6 +545,7 @@ import type * as social_privacy from "../social/privacy.js";
 import type * as social_readViews from "../social/readViews.js";
 import type * as social_recordInviteLanding from "../social/recordInviteLanding.js";
 import type * as social_redeemInvite from "../social/redeemInvite.js";
+import type * as social_removeMemberContent from "../social/removeMemberContent.js";
 import type * as social_resetInviteLink from "../social/resetInviteLink.js";
 import type * as social_revokeHouseholdInviteLinks from "../social/revokeHouseholdInviteLinks.js";
 import type * as social_setPresencePreferences from "../social/setPresencePreferences.js";
@@ -1127,6 +1128,7 @@ declare const fullApi: ApiFromModules<{
   "social/readViews": typeof social_readViews;
   "social/recordInviteLanding": typeof social_recordInviteLanding;
   "social/redeemInvite": typeof social_redeemInvite;
+  "social/removeMemberContent": typeof social_removeMemberContent;
   "social/resetInviteLink": typeof social_resetInviteLink;
   "social/revokeHouseholdInviteLinks": typeof social_revokeHouseholdInviteLinks;
   "social/setPresencePreferences": typeof social_setPresencePreferences;
