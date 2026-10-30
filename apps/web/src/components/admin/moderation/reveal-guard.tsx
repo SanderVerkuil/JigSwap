@@ -34,7 +34,7 @@ export function RevealGuard({ children }: { children: ReactNode }) {
           type="button"
           size="sm"
           variant="secondary"
-          className="absolute right-3 bottom-3 h-11 shadow-md md:h-8"
+          className="absolute right-3 bottom-3 h-8 shadow-md pointer-coarse:h-11"
           onClick={() => toggle(false)}
         >
           <EyeOff aria-hidden />
