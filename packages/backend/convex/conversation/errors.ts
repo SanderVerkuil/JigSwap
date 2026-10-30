@@ -13,8 +13,9 @@ export const toConvexError = (
 
 /**
  * The refusal for posting to an existing thread that can't take replies, whatever the reason.
- * Today that means the pair is blocked (either way); it is deliberately generic so it can also
- * cover future states (a deleted partner, a closed thread) without telling them apart.
+ * Today that means the pair is blocked (either way) or the other participant's account is gone
+ * (deleted or deactivated); it is deliberately generic so it never tells those apart, and can
+ * also cover future states (a closed thread).
  */
 export const cannotReplyError = (): ConvexError<{
   code: string;

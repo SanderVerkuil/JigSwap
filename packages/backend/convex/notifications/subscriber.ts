@@ -9,6 +9,7 @@ import {
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
+import { isActiveMember } from "../identity/requireActiveMember";
 import { blockStateBetween, isBlockedEitherWay } from "../social/blocks";
 import { makeNotify } from "./adapters/makeNotify";
 import { isViewingMessages } from "./presenceGate";
@@ -29,6 +30,9 @@ export const handleDomainEvent = async (
   const commands = await translate(ctx, event);
   const circleThreads = new Map<string, Promise<boolean>>();
   for (const cmd of commands) {
+    // Only an active member is notified: a deleted or deactivated account gets no bell row,
+    // email or push (makeNotify refuses them too), and no circle digest is armed for them.
+    if (!(await isActiveMember(ctx, cmd.memberId))) continue;
     // Blocks are silent (spec 2.6): nothing a member blocked either way with the recipient does
     // reaches them. The one place every notification type passes through. Exception: the
     // lifecycle of an exchange that was already under way continues after a block, so its

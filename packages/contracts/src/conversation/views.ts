@@ -334,9 +334,9 @@ export interface InboxThreadView {
    */
   readonly blocked?: "byMe";
   /**
-   * Set when the caller can't reply here for a reason the client must not tell apart: today,
-   * the other participant blocked the caller. Also meant for future states such as a deleted
-   * partner. Render it as the neutral "You can't reply to this conversation".
+   * Set when the caller can't reply here for a reason the client must not tell apart: the other
+   * participant blocked the caller, or their account is gone (deleted or deactivated). Render it
+   * as the neutral "You can't reply to this conversation".
    */
   readonly readOnly?: true;
 }

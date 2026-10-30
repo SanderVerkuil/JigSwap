@@ -10,6 +10,7 @@ import {
   projectTradeParty,
   tradePartyMemberView,
 } from "../exchange/tradeParty";
+import { isActiveMember } from "../identity/requireActiveMember";
 import { requireMember } from "../identity/requireMember";
 import { circleIconFields } from "../sharing/circleIcons";
 import { blockStateBetween } from "../social/blocks";
@@ -369,6 +370,9 @@ const toInboxThreadView = async (
   const blocked = otherId
     ? await blockStateBetween(ctx, me, otherId)
     : undefined;
+  // The other participant's account is gone (deleted or deactivated): posting is refused with
+  // CannotReply (assertThreadNotBlocked), so the composer closes up front.
+  const departed = !otherId || !(await isActiveMember(ctx, otherId));
   return {
     threadId: thread.aggregateId,
     subject,
@@ -377,9 +381,10 @@ const toInboxThreadView = async (
     contextCopies,
     updatedAt: thread.lastMessageAt ?? thread.createdAt,
     ...(membership.muted === true && { muted: true as const }),
-    // Only the blocker learns of the block; the blocked side just sees a read-only thread.
+    // Only the blocker learns of the block; the blocked side just sees a read-only thread, as
+    // does anyone whose partner left.
     ...(blocked === "byMe" ? { blocked } : {}),
-    ...(blocked === "byThem" ? { readOnly: true as const } : {}),
+    ...(blocked === "byThem" || departed ? { readOnly: true as const } : {}),
   };
 };
 
