@@ -11,7 +11,7 @@ import type {
 } from "@jigswap/contracts";
 import { Link as RouterLink } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
-import { Check } from "lucide-react";
+import { Check, CircleSlash } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslations } from "use-intl";
 import { NotificationActions } from "./notification-action-row";
@@ -113,8 +113,15 @@ export function NotificationItem({
   );
 
   const contextParts: ReactNode[] = [];
+  // Unavailable is said with an icon and text, not by fading the row: faded muted text fell
+  // below contrast (UX-119). Only the decorative thumbnail is dimmed.
   if (unavailable) {
-    contextParts.push(<span key="unavailable">{t("rich.unavailable")}</span>);
+    contextParts.push(
+      <span key="unavailable" className="inline-flex items-center gap-1">
+        <CircleSlash className="size-3.5 shrink-0" aria-hidden="true" />
+        {t("rich.unavailable")}
+      </span>,
+    );
   } else if (context.exchangeStatus) {
     contextParts.push(
       <ExchangeStatusChip key="status" status={context.exchangeStatus} />,
@@ -162,7 +169,6 @@ export function NotificationItem({
         "group relative flex items-start gap-3 px-4 py-3 transition-colors motion-reduce:transition-none",
         "has-[[data-row-link]:hover]:bg-accent/60",
         unread && "bg-accent/40 dark:bg-accent/60",
-        unavailable && "opacity-70",
       )}
     >
       {unread && (
@@ -217,7 +223,7 @@ export function NotificationItem({
             {contextParts}
           </div>
         )}
-        <p className="text-muted-foreground flex items-center gap-2 text-[11px]">
+        <p className="text-muted-foreground flex items-center gap-2 text-xs">
           <time dateTime={new Date(view.createdAt).toISOString()}>
             {formatDistanceToNow(new Date(view.createdAt), {
               addSuffix: true,
@@ -225,7 +231,7 @@ export function NotificationItem({
             })}
           </time>
           {categoryLabel && (
-            <Badge variant="outline" className="text-[10px]">
+            <Badge variant="outline" className="text-[11px]">
               {categoryLabel}
             </Badge>
           )}
