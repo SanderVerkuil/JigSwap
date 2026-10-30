@@ -306,6 +306,8 @@ import type * as lib_imageModeration_quarantine from "../lib/imageModeration/qua
 import type * as lib_imageModeration_queueDepth from "../lib/imageModeration/queueDepth.js";
 import type * as lib_imageModeration_queueDepthStore from "../lib/imageModeration/queueDepthStore.js";
 import type * as lib_imageModeration_recheckWaivedHashes from "../lib/imageModeration/recheckWaivedHashes.js";
+import type * as lib_imageModeration_renditions from "../lib/imageModeration/renditions.js";
+import type * as lib_imageModeration_renditionsStore from "../lib/imageModeration/renditionsStore.js";
 import type * as lib_imageModeration_rescreenStore from "../lib/imageModeration/rescreenStore.js";
 import type * as lib_imageModeration_stalledSweep from "../lib/imageModeration/stalledSweep.js";
 import type * as lib_logEvent from "../lib/logEvent.js";
@@ -902,6 +904,8 @@ declare const fullApi: ApiFromModules<{
   "lib/imageModeration/queueDepth": typeof lib_imageModeration_queueDepth;
   "lib/imageModeration/queueDepthStore": typeof lib_imageModeration_queueDepthStore;
   "lib/imageModeration/recheckWaivedHashes": typeof lib_imageModeration_recheckWaivedHashes;
+  "lib/imageModeration/renditions": typeof lib_imageModeration_renditions;
+  "lib/imageModeration/renditionsStore": typeof lib_imageModeration_renditionsStore;
   "lib/imageModeration/rescreenStore": typeof lib_imageModeration_rescreenStore;
   "lib/imageModeration/stalledSweep": typeof lib_imageModeration_stalledSweep;
   "lib/logEvent": typeof lib_logEvent;

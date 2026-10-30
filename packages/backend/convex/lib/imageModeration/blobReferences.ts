@@ -15,6 +15,8 @@ export type BlobReferenceKind =
   | "proposedBoxArt" // puzzleChangeProposals.changes.image
   | "boxArtListing" // boxArtUploads.storageId: checked box art, attached or not (yet)
   | "reportEvidence" // reports.evidenceFileId
+  | "renditionSmall" // imageRenditions.small.fileId
+  | "renditionMedium" // imageRenditions.medium.fileId
   | "preserved"; // csamEscalations.fileId: kept for the escalation, never deleted by the app
 
 type Holder = { _id: string };
@@ -75,6 +77,17 @@ const LOOKUPS: Record<
       .query("reports")
       .withIndex("by_evidence_file", (q) => q.eq("evidenceFileId", id))
       .take(2),
+  // A rendition of a served image (lib/imageModeration/renditionsStore), one kind per slot.
+  renditionSmall: (ctx, id) =>
+    ctx.db
+      .query("imageRenditions")
+      .withIndex("by_small_file", (q) => q.eq("small.fileId", id))
+      .take(2),
+  renditionMedium: (ctx, id) =>
+    ctx.db
+      .query("imageRenditions")
+      .withIndex("by_medium_file", (q) => q.eq("medium.fileId", id))
+      .take(2),
   preserved: (ctx, id) =>
     ctx.db
       .query("csamEscalations")
@@ -100,10 +113,12 @@ const heldBy = async (
  * Deliberately NOT references (string-typed records, so the storage sweep may delete the blob
  * once nothing above holds it): `puzzleChangeProposals.baseline.image` (the definition's image
  * when the proposal was made: compared for conflicts, and its URL is sent only while the blob
- * exists) and `ownedPuzzles.snapshot.thumbnail` (a cache of `puzzles.image`, never served). Known
- * residual: a legacy completion photo that predates its completionImages sidecar lives only in
- * the unindexable `completions.photos` array until solving/backfillLegacyCompletionSidecars gives
- * it one (a completion without an aggregateId never can; that run counts them).
+ * exists) and `ownedPuzzles.snapshot.thumbnail` (a cache of `puzzles.image`, never served). Nor
+ * does `imageRenditions.sourceId` hold its source: the row follows the source, and whatever
+ * deletes the source calls renditionsStore.deleteRenditions. Known residual: a legacy completion
+ * photo that predates its completionImages sidecar lives only in the unindexable
+ * `completions.photos` array until solving/backfillLegacyCompletionSidecars gives it one (a
+ * completion without an aggregateId never can; that run counts them).
  * blobReferences.test.ts fails when the schema gains a `v.id("_storage")` field that is not
  * registered here.
  */

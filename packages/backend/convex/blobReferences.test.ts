@@ -101,6 +101,11 @@ const STORAGE_ID_FIELDS: Record<string, BlobReferenceKind | { not: string }> = {
   "messageAttachments.mapFileId": "locationMap",
   "circleIcons.fileId": "circleIcon",
   "reports.evidenceFileId": "reportEvidence",
+  "imageRenditions.small.fileId": "renditionSmall",
+  "imageRenditions.medium.fileId": "renditionMedium",
+  "imageRenditions.sourceId": {
+    not: "names the image the row was made from, which the row follows: whatever deletes that image calls renditionsStore.deleteRenditions",
+  },
 };
 
 // Storage ids kept in plain strings (domain-owned shapes), which the walk cannot tell from other

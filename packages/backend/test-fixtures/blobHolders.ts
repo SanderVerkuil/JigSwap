@@ -166,6 +166,23 @@ export const BLOB_HOLDER_SEEDS: Record<
       evidenceFileId: blob,
       createdAt: 0,
     }),
+  // The source is another blob: only the rendition is `blob`.
+  renditionSmall: (ctx, { spare }, blob) =>
+    ctx.db.insert("imageRenditions", {
+      sourceId: spare,
+      width: 2000,
+      height: 1500,
+      small: { fileId: blob, width: 480, height: 360 },
+      createdAt: 0,
+    }),
+  renditionMedium: (ctx, { spare }, blob) =>
+    ctx.db.insert("imageRenditions", {
+      sourceId: spare,
+      width: 2000,
+      height: 1500,
+      medium: { fileId: blob, width: 960, height: 720 },
+      createdAt: 0,
+    }),
   preserved: (ctx, { member }, blob) =>
     ctx.db.insert("csamEscalations", {
       table: "ownedPuzzleImages",

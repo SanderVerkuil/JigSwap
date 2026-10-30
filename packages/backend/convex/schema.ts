@@ -69,6 +69,13 @@ const proposalFields = v.object({
   image: v.optional(v.string()), // _storage id as plain string (domain-owned shape)
 });
 
+// One stored rendition of an image (imageRenditions): its blob and its size in px.
+const renditionSlotValidator = v.object({
+  fileId: v.id("_storage"),
+  width: v.number(),
+  height: v.number(),
+});
+
 export default defineSchema({
   users: defineTable({
     clerkId: v.string(),
@@ -821,6 +828,25 @@ export default defineSchema({
     .index("by_status", ["status", "matchedAt"])
     .index("by_file", ["fileId"])
     .index("by_uploader", ["uploaderId"]),
+
+  // Smaller WebP copies of a served image blob (lib/imageModeration/renditions) for the places
+  // that show it small (cards, thumbnails). One row per SOURCE blob, made once the image may be
+  // shown (renditionsStore.isRenditionSource); `width`/`height` are the source's. A slot is
+  // absent when the source is no wider than its width, so a row with neither slot means "the
+  // source is already small". Every slot blob counts as referenced (blobReferences), and the
+  // row and its blobs are deleted with the source (renditionsStore.deleteRenditions). Read
+  // models serve them only through the source's own publication gate, and only as URLs.
+  imageRenditions: defineTable({
+    sourceId: v.id("_storage"),
+    width: v.number(),
+    height: v.number(),
+    small: v.optional(renditionSlotValidator), // 480 px wide
+    medium: v.optional(renditionSlotValidator), // 960 px wide
+    createdAt: v.number(),
+  })
+    .index("by_source", ["sourceId"])
+    .index("by_small_file", ["small.fileId"])
+    .index("by_medium_file", ["medium.fileId"]),
 
   // Community change proposals against APPROVED catalog definitions. `changes` is the exact
   // patch the definition receives on approval; `baseline` snapshots the changed fields' values
