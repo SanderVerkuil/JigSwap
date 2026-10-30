@@ -89,7 +89,8 @@ export function ConnectionOfferList({
       <CardContent className="space-y-3 py-4">
         <div className="flex items-center gap-2">
           <UserPlus className="h-4 w-4 text-primary-text" />
-          <span className="font-medium">{t("title")}</span>
+          {/* A section of the page: the strip sits right under the page h1. */}
+          <h2 className="font-medium">{t("title")}</h2>
         </div>
         <ul className="space-y-3">
           {offers.map((offer) => {

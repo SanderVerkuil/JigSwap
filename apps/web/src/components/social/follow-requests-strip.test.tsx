@@ -69,37 +69,50 @@ const render = () =>
 type Node = DefaultTreeAdapterMap["childNode"];
 type Element = DefaultTreeAdapterMap["element"];
 const isElement = (node: Node): node is Element => "tagName" in node;
-const links = (html: string) => {
-  const out: { href?: string; text: string }[] = [];
-  const textOf = (el: Element): string =>
-    el.childNodes
-      .map((n) =>
-        "value" in n && n.nodeName === "#text"
-          ? n.value
-          : isElement(n)
-            ? textOf(n)
-            : "",
-      )
-      .join("");
+const elementsOf = (html: string): Element[] => {
+  const out: Element[] = [];
   const walk = (nodes: Node[]) => {
     for (const node of nodes) {
       if (!isElement(node)) continue;
-      if (node.tagName === "a") {
-        out.push({
-          href: node.attrs.find((a) => a.name === "href")?.value,
-          text: textOf(node),
-        });
-      }
+      out.push(node);
       walk(node.childNodes);
     }
   };
   walk(parseFragment(html).childNodes);
   return out;
 };
+const textOf = (el: Element): string =>
+  el.childNodes
+    .map((n) =>
+      "value" in n && n.nodeName === "#text"
+        ? n.value
+        : isElement(n)
+          ? textOf(n)
+          : "",
+    )
+    .join("");
+const links = (html: string) =>
+  elementsOf(html)
+    .filter((el) => el.tagName === "a")
+    .map((el) => ({
+      href: el.attrs.find((a) => a.name === "href")?.value,
+      text: textOf(el),
+    }));
 
 // SEC-11: a requester arrives as a teaser identity (display name, handle, avatar), never a full
 // member view; the link uses the slug, else the id, never the username (SEC-07).
 describe("FollowRequestsStrip", () => {
+  // The strip sits right under the People page h1, so its title is an h2 (UX-66).
+  it("titles the strip with an h2", () => {
+    data.requests = [request({ memberId: "u1", displayName: "Ann" })];
+    const headings = elementsOf(render()).filter((el) =>
+      /^h[1-6]$/.test(el.tagName),
+    );
+    expect(headings.map((h) => [h.tagName, textOf(h)])).toEqual([
+      ["h2", "Follow requests"],
+    ]);
+  });
+
   it("names each requester by display name and links their slug, else their id", () => {
     data.requests = [
       request({
