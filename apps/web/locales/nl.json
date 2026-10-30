@@ -4985,6 +4985,8 @@
         "openCount": "{count, plural, one {# open melding tegen dit lid} other {# open meldingen tegen dit lid}}",
         "detailTitle": "Melding",
         "detailDescription": "Het bewijs bij deze melding en het beslisformulier.",
+        "notFoundTitle": "Deze melding bestaat niet meer",
+        "notFound": "Misschien is de melding verwijderd, of is de link verouderd.",
         "reason": "Reden",
         "targetKind": "Onderwerp",
         "reporter": "Melder",
@@ -5243,6 +5245,11 @@
     },
     "queueEmpty": {
       "title": "Alles afgehandeld"
+    },
+    "queryError": {
+      "title": "Er ging iets mis",
+      "description": "Dit kon niet worden geladen. Probeer het opnieuw, of herlaad de pagina als het blijft gebeuren.",
+      "retry": "Opnieuw proberen"
     },
     "users": {
       "loading": "Leden laden…",

@@ -1,3 +1,4 @@
+import { AdminQueryError } from "@/components/admin/admin-query-error";
 import { QueueEmpty } from "@/components/admin/queue-empty";
 import { Badge } from "@/components/ui/badge";
 import { PageLoading } from "@/components/ui/loading";
@@ -22,10 +23,18 @@ function DocFeedbackPage() {
   const t = useTranslations("admin.docFeedback");
   const tAdmin = useTranslations("admin");
   const format = useFormatter();
-  const { data: feedback } = useQuery(
-    convexQuery(gateway.adminTriage.docFeedback, {}),
-  );
+  const {
+    data: feedback,
+    isError,
+    refetch,
+    isFetching,
+  } = useQuery(convexQuery(gateway.adminTriage.docFeedback, {}));
 
+  if (isError) {
+    return (
+      <AdminQueryError onRetry={() => void refetch()} retrying={isFetching} />
+    );
+  }
   if (feedback === undefined) {
     return <PageLoading message={t("loading")} />;
   }

@@ -6,7 +6,9 @@
 // the reported member has, and age. A row opens the decision drawer
 // (admin.getReport + the decide form). Admin-only: the route group already
 // gates the page, and every admin function re-checks isAdmin.
+import { AdminQueryError } from "@/components/admin/admin-query-error";
 import { QueueEmpty } from "@/components/admin/queue-empty";
+import { convexErrorCode } from "@/components/exchange/request-trade";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import {
@@ -23,7 +25,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery } from "convex/react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, FileX } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "use-intl";
 import { ReportDetail } from "./report-detail";
@@ -168,9 +170,29 @@ export function ReportsQueue({ emptyTitle }: { emptyTitle: string }) {
 
 function ReportDetailLoader({ reportId }: { reportId: Id<"reports"> }) {
   const t = useTranslations("admin.moderation.reports");
-  const { data: report } = useQuery(
-    convexQuery(gateway.admin.getReport, { reportId }),
-  );
+  const {
+    data: report,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useQuery(convexQuery(gateway.admin.getReport, { reportId }));
+  // getReport throws ConvexError NotFound for a report that is gone (a stale
+  // link); any other failure gets the retryable error state, never a spinner.
+  if (isError && convexErrorCode(error) === "NotFound") {
+    return (
+      <QueueEmpty
+        icon={FileX}
+        title={t("notFoundTitle")}
+        label={t("notFound")}
+      />
+    );
+  }
+  if (isError) {
+    return (
+      <AdminQueryError onRetry={() => void refetch()} retrying={isFetching} />
+    );
+  }
   if (report === undefined) return <PageLoading message={t("loading")} />;
   // Keyed so a half-filled decide form never carries over to another report.
   return <ReportDetail key={report.reportId} report={report} />;

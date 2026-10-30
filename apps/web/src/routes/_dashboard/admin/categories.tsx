@@ -1,3 +1,4 @@
+import { AdminQueryError } from "@/components/admin/admin-query-error";
 import { CategoryDialog } from "@/components/admin/category-dialog";
 import { CategoryList, type Category } from "@/components/admin/category-list";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
@@ -33,9 +34,12 @@ type DialogState = { mode: "create" } | { mode: "edit"; category: Category };
 
 function CategoriesPage() {
   const t = useTranslations("admin.categories");
-  const { data: categories } = useQuery(
-    convexQuery(gateway.adminCatalog.listAll, {}),
-  );
+  const {
+    data: categories,
+    isError,
+    refetch,
+    isFetching,
+  } = useQuery(convexQuery(gateway.adminCatalog.listAll, {}));
 
   const [dialog, setDialog] = useState<DialogState | null>(null);
 
@@ -67,6 +71,11 @@ function CategoriesPage() {
     [t],
   );
 
+  if (isError) {
+    return (
+      <AdminQueryError onRetry={() => void refetch()} retrying={isFetching} />
+    );
+  }
   if (categories === undefined) {
     return <PageLoading message={t("loading")} />;
   }

@@ -6,6 +6,7 @@
 // pipeline's rows (photo_auto_rejected has no actorId). A targeted member whose
 // account is gone reads the localized "Deleted member" (the backend stores no
 // name for them, SEC-57).
+import { AdminQueryError } from "@/components/admin/admin-query-error";
 import { QueueEmpty } from "@/components/admin/queue-empty";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
@@ -81,12 +82,23 @@ export const MODERATION_ACTIVITY_KINDS: readonly string[] =
 export function ActivityLog({ emptyTitle }: { emptyTitle: string }) {
   const t = useTranslations("admin.moderation");
   const relativeTime = useRelativeTime();
-  const { data: activity, isPending } = useQuery(
-    convexQuery(gateway.admin.getModerationActivity, {}),
-  );
+  const {
+    data: activity,
+    isPending,
+    isError,
+    refetch,
+    isFetching,
+  } = useQuery(convexQuery(gateway.admin.getModerationActivity, {}));
 
-  // The undefined check narrows `activity` for TypeScript (TanStack's result union
-  // still allows undefined data in the error branch); isPending is the loading signal.
+  // A failed query leaves `activity` undefined too: show the retryable error
+  // first so it never reads as an endless spinner.
+  if (isError) {
+    return (
+      <AdminQueryError onRetry={() => void refetch()} retrying={isFetching} />
+    );
+  }
+  // The undefined check narrows `activity` for TypeScript; isPending is the
+  // loading signal.
   if (isPending || activity === undefined) {
     return <PageLoading message={t("activity.loading")} />;
   }

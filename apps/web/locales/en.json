@@ -4985,6 +4985,8 @@
         "openCount": "{count, plural, one {# open report against this member} other {# open reports against this member}}",
         "detailTitle": "Report",
         "detailDescription": "The evidence for this report and the decision form.",
+        "notFoundTitle": "This report no longer exists",
+        "notFound": "It may have been removed, or the link is out of date.",
         "reason": "Reason",
         "targetKind": "Target",
         "reporter": "Reporter",
@@ -5243,6 +5245,11 @@
     },
     "queueEmpty": {
       "title": "All clear"
+    },
+    "queryError": {
+      "title": "Something went wrong",
+      "description": "This couldn't be loaded. Try again, or reload the page if it keeps happening.",
+      "retry": "Try again"
     },
     "users": {
       "loading": "Loading members…",

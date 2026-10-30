@@ -1,3 +1,4 @@
+import { AdminQueryError } from "@/components/admin/admin-query-error";
 import { QueueEmpty } from "@/components/admin/queue-empty";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,9 +28,12 @@ function ContactTriagePage() {
   const t = useTranslations("admin.contact");
   const tAdmin = useTranslations("admin");
   const format = useFormatter();
-  const { data: messages } = useQuery(
-    convexQuery(gateway.adminTriage.contactMessages, {}),
-  );
+  const {
+    data: messages,
+    isError,
+    refetch,
+    isFetching,
+  } = useQuery(convexQuery(gateway.adminTriage.contactMessages, {}));
   const markHandled = useMutation({
     mutationFn: useConvexMutation(gateway.adminTriage.markContactHandled),
   });
@@ -48,6 +52,11 @@ function ContactTriagePage() {
     }
   };
 
+  if (isError) {
+    return (
+      <AdminQueryError onRetry={() => void refetch()} retrying={isFetching} />
+    );
+  }
   if (messages === undefined) {
     return <PageLoading message={t("loading")} />;
   }

@@ -1,5 +1,6 @@
 import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
+import { AdminQueryError } from "@/components/admin/admin-query-error";
 import { approveErrorKey } from "@/components/admin/proposals/approve-error";
 import {
   fieldDiffRows,
@@ -54,15 +55,30 @@ export const Route = createFileRoute(
 function ProposalReviewPage() {
   const { proposalId } = Route.useParams();
   const t = useTranslations("admin.proposals");
-  const { data: proposal } = useQuery(
+  const proposalQuery = useQuery(
     convexQuery(gateway.admin.getChangeProposal, {
       changeProposalId: proposalId,
     }),
   );
-  const { data: categories } = useQuery(
+  const categoriesQuery = useQuery(
     convexQuery(gateway.catalog.puzzleCategories, {}),
   );
+  const proposal = proposalQuery.data;
+  const categories = categoriesQuery.data;
 
+  // A failed read leaves its data undefined too: show the retryable error
+  // rather than the loading state forever.
+  if (proposalQuery.isError || categoriesQuery.isError) {
+    return (
+      <AdminQueryError
+        onRetry={() => {
+          void proposalQuery.refetch();
+          void categoriesQuery.refetch();
+        }}
+        retrying={proposalQuery.isFetching || categoriesQuery.isFetching}
+      />
+    );
+  }
   if (proposal === undefined || categories === undefined) {
     return <PageLoading message={t("title")} />;
   }

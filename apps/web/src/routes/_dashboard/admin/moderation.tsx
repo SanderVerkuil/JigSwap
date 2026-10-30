@@ -1,3 +1,4 @@
+import { AdminQueryError } from "@/components/admin/admin-query-error";
 import { ActivityLog } from "@/components/admin/moderation/activity-log";
 import { AdminBanner } from "@/components/admin/moderation/admin-banner";
 import { CsamEscalationsPanel } from "@/components/admin/moderation/csam-escalations";
@@ -71,23 +72,29 @@ function ModerationPage() {
   const tAdmin = useTranslations("admin");
   const relativeTime = useRelativeTime();
 
-  const { data: pending } = useQuery(convexQuery(gateway.catalog.pending, {}));
+  // Each queue's query result is kept whole so its tab can tell a failure
+  // (AdminQueryError + Retry) from loading; `data` alone is undefined in both.
+  const pendingQuery = useQuery(convexQuery(gateway.catalog.pending, {}));
+  const pending = pendingQuery.data;
   // One subscription serves both the tab's count pill and the tab body.
-  const { data: flagged } = useQuery(
+  const flaggedQuery = useQuery(
     convexQuery(gateway.admin.listRejectedPhotos, {}),
   );
-  const { data: unchecked } = useQuery(
+  const flagged = flaggedQuery.data;
+  const uncheckedQuery = useQuery(
     convexQuery(gateway.admin.listUncheckedPhotos, {}),
   );
+  const unchecked = uncheckedQuery.data;
   const decideUnchecked = useMutation({
     mutationFn: useConvexMutation(gateway.admin.decideUncheckedPhoto),
   });
   const recheckPhoto = useMutation({
     mutationFn: useConvexMutation(gateway.admin.recheckPhoto),
   });
-  const { data: csam } = useQuery(
+  const csamQuery = useQuery(
     convexQuery(gateway.admin.listCsamEscalations, {}),
   );
+  const csam = csamQuery.data;
   const markCsam = useMutation({
     mutationFn: useConvexMutation(gateway.admin.markCsamEscalation),
   });
@@ -327,7 +334,12 @@ function ModerationPage() {
         </StickyTabsBar>
 
         <TabsContent value="submissions">
-          {pending === undefined ? (
+          {pendingQuery.isError ? (
+            <AdminQueryError
+              onRetry={() => void pendingQuery.refetch()}
+              retrying={pendingQuery.isFetching}
+            />
+          ) : pending === undefined ? (
             <PageLoading message={t("loading")} />
           ) : pending.length === 0 ? (
             <QueueEmpty title={tAdmin("queueEmpty.title")} label={t("empty")} />
@@ -374,7 +386,12 @@ function ModerationPage() {
         </TabsContent>
 
         <TabsContent value="flagged">
-          {flagged === undefined ? (
+          {flaggedQuery.isError ? (
+            <AdminQueryError
+              onRetry={() => void flaggedQuery.refetch()}
+              retrying={flaggedQuery.isFetching}
+            />
+          ) : flagged === undefined ? (
             <PageLoading message={t("flag.loading")} />
           ) : flagged.length === 0 ? (
             <QueueEmpty
@@ -429,7 +446,12 @@ function ModerationPage() {
         </TabsContent>
 
         <TabsContent value="unchecked">
-          {unchecked === undefined ? (
+          {uncheckedQuery.isError ? (
+            <AdminQueryError
+              onRetry={() => void uncheckedQuery.refetch()}
+              retrying={uncheckedQuery.isFetching}
+            />
+          ) : unchecked === undefined ? (
             <PageLoading message={t("unchecked.loading")} />
           ) : unchecked.length === 0 ? (
             <QueueEmpty
@@ -491,7 +513,12 @@ function ModerationPage() {
         </TabsContent>
 
         <TabsContent value="hashMatches">
-          {csam === undefined ? (
+          {csamQuery.isError ? (
+            <AdminQueryError
+              onRetry={() => void csamQuery.refetch()}
+              retrying={csamQuery.isFetching}
+            />
+          ) : csam === undefined ? (
             <PageLoading message={t("csam.loading")} />
           ) : (
             <CsamEscalationsPanel
