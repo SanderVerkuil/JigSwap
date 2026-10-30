@@ -1,5 +1,6 @@
 import { csrfSymbol } from "@tanstack/react-start";
 import { describe, expect, it, vi } from "vitest";
+import { cspMiddleware } from "./lib/csp";
 import { privateResponseMiddleware } from "./lib/response-cache";
 import { startInstance } from "./start";
 
@@ -53,6 +54,11 @@ describe("request middleware", () => {
     const chain: unknown[] = await requestMiddleware();
     // CSRF first, Clerk second; the cache rule needs Clerk's auth context.
     expect(chain.indexOf(privateResponseMiddleware)).toBeGreaterThan(1);
+  });
+
+  it("gives every page render its CSP nonce", async () => {
+    const chain: unknown[] = await requestMiddleware();
+    expect(chain).toContain(cspMiddleware);
   });
 
   it("refuses a cross-site server-function call", async () => {

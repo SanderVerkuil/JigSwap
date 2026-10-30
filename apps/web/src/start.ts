@@ -1,5 +1,6 @@
 import { clerkMiddleware } from "@clerk/tanstack-react-start/server";
 import { createCsrfMiddleware, createStart } from "@tanstack/react-start";
+import { cspMiddleware } from "./lib/csp";
 import { privateResponseMiddleware } from "./lib/response-cache";
 
 // Server functions are same-origin RPC endpoints. Refuse (403) a call whose
@@ -24,6 +25,12 @@ const clerk = clerkMiddleware(({ url }) => ({
 
 // privateResponseMiddleware reads Clerk's session, so it runs after clerk:
 // `private, no-store` on server-fn responses and signed-in pages.
+// cspMiddleware gives each page render its CSP nonce (lib/csp.ts).
 export const startInstance = createStart(() => ({
-  requestMiddleware: [csrfMiddleware, clerk, privateResponseMiddleware],
+  requestMiddleware: [
+    csrfMiddleware,
+    clerk,
+    privateResponseMiddleware,
+    cspMiddleware,
+  ],
 }));

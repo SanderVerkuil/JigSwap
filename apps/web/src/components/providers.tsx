@@ -17,11 +17,14 @@ export function Providers({
   locale,
   messages,
   now: serverNow,
+  cspNonce,
   children,
 }: {
   locale: string;
   messages: Messages;
   now: number;
+  // For next-themes' inline theme script (lib/csp.ts).
+  cspNonce?: string;
   children: React.ReactNode;
 }) {
   // Global `now` from the server render, so SSR and hydration agree on relative
@@ -50,6 +53,7 @@ export function Providers({
         defaultTheme="system"
         enableSystem
         disableTransitionOnChange
+        nonce={cspNonce}
       >
         <PostHogProvider>
           {children}

@@ -187,6 +187,8 @@ const clerkAppearance = {
 function RootComponent() {
   const context = useRouteContext({ from: Route.id });
   const { intl, userId } = context;
+  // This page's CSP nonce (router.tsx), for the scripts Clerk and next-themes add.
+  const cspNonce = useRouter().options.ssr?.nonce;
 
   // Seed the client caches from the SSR-dehydrated context so the first
   // client-side navigation re-runs beforeLoad without any server round-trip.
@@ -203,6 +205,7 @@ function RootComponent() {
     <ClerkProvider
       localization={intl.locale === "nl" ? nlNL : enUS}
       appearance={clerkAppearance}
+      nonce={cspNonce}
     >
       <ConvexProviderWithClerk client={context.convexClient} useAuth={useAuth}>
         <AuthCacheSync />
@@ -211,6 +214,7 @@ function RootComponent() {
             locale={intl.locale}
             messages={intl.messages}
             now={intl.now}
+            cspNonce={cspNonce}
           >
             <ErrorBoundary>
               <Outlet />
