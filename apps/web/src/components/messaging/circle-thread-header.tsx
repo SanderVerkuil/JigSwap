@@ -3,7 +3,8 @@
 // A circle thread's header (spec §6.2, §6.6): the circle avatar, the circle's
 // name and a muted second line "Circle chat · 6 members" whose members part
 // opens the members panel, the
-// "Circle" quick link (md+), and one ⋯ menu: Mute/Unmute, Members, Change
+// "Circle" quick link (md+; only its icon in a narrow thread pane), and one
+// ⋯ menu: Mute/Unmute, Members, Change
 // icon (Admins), Open circle, Leave circle, Report a member. The members panel is a 360px
 // right-side sheet on desktop and a bottom sheet on phones; it lists the
 // circle's members (getCircle: members only, projected by the circle rule),
@@ -159,9 +160,16 @@ export function CircleThreadHeader({
       </div>
       <div className="ml-auto flex shrink-0 items-center gap-1">
         <Button asChild variant="ghost" size="sm" className="hidden md:flex">
-          <Link href={circleHref(subject.circleId)}>
+          <Link
+            href={circleHref(subject.circleId)}
+            title={t("circle.circleLink")}
+          >
             <Users aria-hidden />
-            {t("circle.circleLink")}
+            {/* Icon-only while the thread pane is narrow (ThreadView's
+                `thread` container; UX-02); still the link's name. */}
+            <span className="sr-only @min-[36rem]/thread:not-sr-only">
+              {t("circle.circleLink")}
+            </span>
           </Link>
         </Button>
         <DropdownMenu>

@@ -2,9 +2,11 @@
 
 // Thread header quick links (message-center redesign spec §5): the partner's
 // profile and the exchange, each only when the server marks it reachable.
-// Inline ghost buttons from md up. The header's one overflow menu lists the
-// links below md and, at every width, the actions on the partner (Report,
-// Block) when the viewer may know who they are. Once the viewer blocked them
+// Inline ghost buttons from md up, only their icons while the thread pane is
+// narrower than 36rem (ThreadView's `thread` container; UX-02) so they never
+// squeeze the title or push the menu off the card. The header's one overflow
+// menu lists the links below md and, at every width, the actions on the
+// partner (Report, Block) when the viewer may know who they are. Once the viewer blocked them
 // only Report stays (the composer slot's banner offers Unblock). The puzzles
 // are the header's cover stack
 // (thread-puzzle-stack.tsx).
@@ -89,10 +91,15 @@ export function ThreadQuickLinks({
               <Link
                 href={href}
                 aria-label={compact ? t(label) : undefined}
-                title={compact ? t(label) : undefined}
+                title={t(label)}
               >
                 <Icon aria-hidden />
-                {!compact && t(label)}
+                {!compact && (
+                  // Still the link's name when only the icon shows.
+                  <span className="sr-only @min-[36rem]/thread:not-sr-only">
+                    {t(label)}
+                  </span>
+                )}
               </Link>
             </Button>
           );

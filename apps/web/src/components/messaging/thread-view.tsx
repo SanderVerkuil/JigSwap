@@ -404,7 +404,9 @@ export function ThreadView({
 
   return (
     // ph-no-capture: PostHog never autocaptures or records private messages.
-    <div className="ph-no-capture flex min-h-0 flex-1 flex-col">
+    // From md the thread pane is the `thread` container the header's quick
+    // links query, so they shrink to icons when the pane is narrow (UX-02).
+    <div className="ph-no-capture flex min-h-0 flex-1 flex-col md:@container/thread">
       {!hideHeader && (
         <div className="bg-card sticky top-0 z-10 shrink-0 border-b pt-[env(safe-area-inset-top)] md:static md:pt-0">
           <div className="flex h-14 items-center gap-3 px-2 md:px-4">

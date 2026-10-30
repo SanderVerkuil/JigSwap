@@ -304,6 +304,14 @@ describe("ThreadView in a circle thread", () => {
     );
   });
 
+  // UX-02: a narrow thread pane shows the Circle link as its icon only; the
+  // label stays its accessible name and its tooltip.
+  it("keeps the Circle link named, with a tooltip, when it shows only its icon", () => {
+    renderThread(circleThread, CIRCLE_MESSAGES);
+    const link = screen.getByRole("link", { name: "Circle" });
+    expect(link.getAttribute("title")).toBe("Circle");
+  });
+
   it("says the member count in Dutch", () => {
     renderThread(circleThread, CIRCLE_MESSAGES, "nl");
     expect(screen.getByRole("button", { name: "6 leden" })).toBeTruthy();

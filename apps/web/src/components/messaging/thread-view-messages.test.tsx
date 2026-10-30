@@ -334,6 +334,17 @@ describe("ThreadView message actions", () => {
   });
 });
 
+describe("ThreadView header", () => {
+  // UX-02: a narrow thread pane shows the quick link as its icon only; the
+  // label stays its accessible name and its tooltip.
+  it("keeps the inline quick link named, with a tooltip, when it shows only its icon", () => {
+    renderThread(dmThread());
+    const link = screen.getByRole("link", { name: "View profile" });
+    expect(link.getAttribute("href")).toBe("/members/mara");
+    expect(link.getAttribute("title")).toBe("View profile");
+  });
+});
+
 describe("ThreadView photos", () => {
   const img = (id: string, sentAt: number, body = "") => ({
     id,
