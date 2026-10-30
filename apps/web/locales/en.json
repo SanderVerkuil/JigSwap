@@ -1617,7 +1617,7 @@
       "title": "Moderation",
       "description": "This section explains how we keep JigSwap safe and how we handle content and members that break these Terms.",
       "screeningTitle": "Automated screening",
-      "screening": "Every photo you upload — to your library, a finished puzzle, a message or as a puzzle's catalogue image — is checked automatically by a content-safety service before others can see it. A photo the check flags is not published or delivered; a photo it marks as possibly sensitive, or could not check, is shown blurred until the viewer chooses to see it. If you think the check got it wrong, you can ask for a person to review it (see below).",
+      "screening": "Every photo you upload — to your library, a finished puzzle, a message or as a puzzle's catalogue image — is checked automatically by a content-safety service before others can see it. A photo the check flags is not published or delivered; a photo it marks as possibly sensitive is shown blurred until the viewer chooses to see it. A photo it could not check is not shown to others until it has been checked after all. If you think the check got it wrong, you can ask for a person to review it (see below).",
       "reportingTitle": "Reporting",
       "reporting": "Use Report on a message, photo, profile or puzzle to tell us about content or behaviour that breaks these Terms. To report illegal content, choose that reason and give your name, your email address and a statement that your report is made in good faith. The member you report is not told who reported them.",
       "decisionsTitle": "Our decisions",
