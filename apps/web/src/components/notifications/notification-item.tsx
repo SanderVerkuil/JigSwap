@@ -223,8 +223,12 @@ export function NotificationItem({
             {contextParts}
           </div>
         )}
-        <p className="text-muted-foreground flex items-center gap-2 text-xs">
-          <time dateTime={new Date(view.createdAt).toISOString()}>
+        {/* The time never breaks mid-phrase ("9 dagen / geleden"): the badge wraps instead. */}
+        <p className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+          <time
+            dateTime={new Date(view.createdAt).toISOString()}
+            className="whitespace-nowrap"
+          >
             {formatDistanceToNow(new Date(view.createdAt), {
               addSuffix: true,
               locale: dateLocale,
