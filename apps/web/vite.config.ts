@@ -5,6 +5,7 @@ import { nitro } from "nitro/vite";
 import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig } from "vite";
 import tsConfigPaths from "vite-tsconfig-paths";
+import { SECURITY_HEADERS } from "./src/lib/security-headers";
 import { appVersionPlugin } from "./vite-plugin-app-version";
 import { docsPlugin } from "./vite-plugin-docs";
 import { whatsNewPlugin } from "./vite-plugin-whats-new";
@@ -47,9 +48,14 @@ export default defineConfig({
           proxy: { to: "https://eu-assets.i.posthog.com/static/**" },
         },
         "/ingest/**": { proxy: { to: "https://eu.i.posthog.com/**" } },
+        // Security headers on every response: SSR, server functions and static files alike.
+        "/**": { headers: SECURITY_HEADERS },
         // The deployed build id open tabs poll (vite-plugin-app-version.ts); never cached, or
-        // a tab would keep seeing the old id after a deploy.
-        "/version.json": { headers: { "cache-control": "no-store" } },
+        // a tab would keep seeing the old id after a deploy. Vercel applies only the first
+        // matching headers rule, so this one repeats the security headers.
+        "/version.json": {
+          headers: { ...SECURITY_HEADERS, "cache-control": "no-store" },
+        },
       },
       // Run SSR and server functions in Dublin, next to the Convex deployment (AWS eu-west-1).
       // Unpinned, Vercel ran them in Washington (iad1): every SSR query crossed the Atlantic and
