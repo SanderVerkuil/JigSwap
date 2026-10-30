@@ -20,6 +20,7 @@ import { NotFound } from "../components/NotFound";
 import { Providers } from "../components/providers";
 import { ErrorBoundary } from "../components/ui/error-boundary";
 import { getIntlCached, seedIntlCache } from "../lib/i18n";
+import { ZOD_JITLESS_SCRIPT } from "../lib/zod-jitless";
 // Side effect: start listening for beforeinstallprompt before any route chunk loads.
 import "../lib/install-prompt";
 // Self-hosted font files to preload (see head below).
@@ -252,10 +253,18 @@ function RootDocument({
   children: React.ReactNode;
   locale?: string;
 }) {
+  const cspNonce = useRouter().options.ssr?.nonce;
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
         <HeadContent />
+        {/* Runs before every module: zod must parse without eval
+            (lib/zod-jitless.ts). */}
+        <script
+          nonce={cspNonce}
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{ __html: ZOD_JITLESS_SCRIPT }}
+        />
         {/* Tints the browser / installed-app status bar to the mobile top
             bar's surface (bg-card) per OS colour scheme; the manifest carries
             the light value. */}
