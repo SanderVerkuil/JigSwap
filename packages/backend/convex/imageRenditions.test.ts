@@ -19,6 +19,7 @@ import schema from "./schema";
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 const generate = internal.lib.imageModeration.renditions.generateRenditions;
+const backfill = internal.lib.imageModeration.renditions.backfillRenditions;
 const record = internal.lib.imageModeration.renditionsStore.recordRenditions;
 
 let logged: string[] = [];
@@ -430,5 +431,118 @@ describe("references and deletion", () => {
     await t.finishAllScheduledFunctions(vi.runAllTimers);
 
     expect(await renditionsOf(t, sourceId)).toHaveLength(1);
+  });
+});
+
+describe("backfillRenditions", () => {
+  // Six definitions: legacy box art without a listing; approved, pending and rejected box art;
+  // approved box art already recorded (too small for any rendition); and one without an image.
+  const seedCatalogue = async (t: T) => {
+    const image = await jpeg(1000, 800);
+    const legacy = await seedBoxArt(t, image, "none");
+    const approved = await seedBoxArt(t, image, "approved");
+    const pending = await seedBoxArt(t, image, "pending");
+    const rejected = await seedBoxArt(t, image, "rejected");
+    const done = await seedBoxArt(t, await jpeg(400, 300), "approved");
+    await t.action(generate, { sourceId: done });
+    await t.run(async (ctx) => {
+      await ctx.db.insert("puzzles", {
+        title: "No image",
+        pieceCount: 500,
+        status: "approved",
+        submittedBy: (await ctx.db.query("users").first())!._id,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+    });
+    return { legacy, approved, pending, rejected, done };
+  };
+
+  const finalTotals = () =>
+    logged
+      .map((line) => JSON.parse(line) as Record<string, unknown>)
+      .filter(
+        (line) =>
+          line.event === "imageModeration.backfillRenditions" && line.done,
+      )
+      .pop();
+
+  test("is a dry run by default: counts the box art that would get renditions, writes nothing", async () => {
+    const t = convexTest(schema, modules);
+    const seeded = await seedCatalogue(t);
+    const before = await storageCount(t);
+
+    expect(await t.action(backfill, {})).toEqual({
+      scanned: 6,
+      candidates: 2,
+      recorded: 0,
+      refused: 0,
+      failed: 0,
+      skipped: 0,
+    });
+
+    expect(await storageCount(t)).toBe(before);
+    expect(await renditionsOf(t, seeded.legacy)).toEqual([]);
+    expect(await renditionsOf(t, seeded.approved)).toEqual([]);
+    expect(finalTotals()).toMatchObject({ dry_run: true, candidates: 2 });
+  });
+
+  test("a real run covers legacy and approved box art, skips the rest, and continues page by page", async () => {
+    const t = convexTest(schema, modules);
+    const seeded = await seedCatalogue(t);
+    vi.useFakeTimers();
+
+    await t.action(backfill, { dryRun: false, batchSize: 1 });
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+
+    expect(await renditionsOf(t, seeded.legacy)).toHaveLength(1);
+    expect(await renditionsOf(t, seeded.approved)).toHaveLength(1);
+    expect(await renditionsOf(t, seeded.pending)).toEqual([]);
+    expect(await renditionsOf(t, seeded.rejected)).toEqual([]);
+    expect(finalTotals()).toMatchObject({
+      dry_run: false,
+      scanned: 6,
+      candidates: 2,
+      recorded: 2,
+      refused: 0,
+      failed: 0,
+      skipped: 0,
+    });
+
+    // Idempotent: a second run finds nothing left to do.
+    const after = await storageCount(t);
+    vi.useRealTimers();
+    expect(await t.action(backfill, { dryRun: false })).toMatchObject({
+      candidates: 0,
+      recorded: 0,
+    });
+    expect(await storageCount(t)).toBe(after);
+  });
+
+  test("a storage failure is counted, not retried in the background; a re-run picks it up", async () => {
+    const t = convexTest(schema, modules);
+    const seeded = await seedCatalogue(t);
+    vi.spyOn(Blob.prototype, "arrayBuffer").mockRejectedValueOnce(
+      new Error("storage unavailable"),
+    );
+
+    expect(await t.action(backfill, { dryRun: false })).toMatchObject({
+      candidates: 2,
+      recorded: 1,
+      failed: 1,
+    });
+    expect(
+      await t.run((ctx) =>
+        ctx.db.system.query("_scheduled_functions").collect(),
+      ),
+    ).toEqual([]);
+
+    expect(await t.action(backfill, { dryRun: false })).toMatchObject({
+      candidates: 1,
+      recorded: 1,
+      failed: 0,
+    });
+    expect(await renditionsOf(t, seeded.legacy)).toHaveLength(1);
+    expect(await renditionsOf(t, seeded.approved)).toHaveLength(1);
   });
 });

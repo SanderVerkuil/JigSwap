@@ -11,6 +11,12 @@ import {
   RENDITION_WIDTHS,
   type RenditionSet,
 } from "./renditionEncode";
+import {
+  backfillTotalsValidator,
+  NO_TOTALS,
+  renditionTableValidator,
+  type BackfillTotals,
+} from "./renditionsStore";
 
 // Make and store the renditions of an image blob (PERF-C1, P-42): its 480 and 960 px WebP
 // copies (lib/imageModeration/renditionEncode), recorded against the source blob in
@@ -25,6 +31,15 @@ import {
 // retry (the source is served as it is). Each run emits ONE wide event
 // ("imageModeration.renditions": ids, sizes in px and bytes, timing; never image data) to the
 // logs and Axiom.
+//
+// backfillRenditions: the one-shot for images stored before renditions existed. `dryRun`
+// defaults to TRUE: it only counts. Pass `dryRun: false` to write. Paginated: `batchSize`
+// definitions per run (default 10), their candidates made ONE AFTER ANOTHER in the same action
+// (one decoded image in memory at a time); the action re-schedules itself with the next cursor
+// and logs the running totals ("imageModeration.backfillRenditions") on every page and the
+// final ones with `done: true`. Create-only (it never deletes a stored image) and idempotent: a
+// source that has its renditions is no longer a candidate, so a re-run picks up only what
+// failed.
 
 /** Runs per source, the first included, when storage or the database fails. */
 export const RENDITION_MAX_ATTEMPTS = 3;
@@ -150,16 +165,18 @@ const render = async (
   }
 };
 
-// One source, with its wide event. A transient failure is retried later (renditionRetryDelayMs).
+// One source, with its wide event. A scheduled run retries a transient failure later
+// (renditionRetryDelayMs); the backfill counts it as failed instead (a re-run picks it up).
 const renderAndLog = async (
   ctx: ActionCtx,
   sourceId: Id<"_storage">,
-  attempt: number,
+  { attempt, trigger }: { attempt: number; trigger: "scheduled" | "backfill" },
 ): Promise<RenditionResult> => {
   const startedAt = Date.now();
   const event: WideEvent = {
     event: "imageModeration.renditions",
     outcome: "success",
+    trigger,
     source_id: sourceId,
     attempt,
   };
@@ -173,7 +190,9 @@ const renderAndLog = async (
       message: errMsg(error),
     };
     const delay =
-      error instanceof TransientError ? renditionRetryDelayMs(attempt) : null;
+      error instanceof TransientError && trigger === "scheduled"
+        ? renditionRetryDelayMs(attempt)
+        : null;
     if (delay !== null) {
       await ctx.scheduler.runAfter(
         delay,
@@ -194,5 +213,80 @@ const renderAndLog = async (
 export const generateRenditions = internalAction({
   args: { sourceId: v.id("_storage"), attempt: v.optional(v.number()) },
   handler: (ctx, { sourceId, attempt }): Promise<RenditionResult> =>
-    renderAndLog(ctx, sourceId, attempt ?? 1),
+    renderAndLog(ctx, sourceId, {
+      attempt: attempt ?? 1,
+      trigger: "scheduled",
+    }),
+});
+
+export const backfillRenditions = internalAction({
+  args: {
+    table: v.optional(renditionTableValidator),
+    dryRun: v.optional(v.boolean()),
+    cursor: v.optional(v.union(v.string(), v.null())),
+    batchSize: v.optional(v.number()),
+    totals: v.optional(backfillTotalsValidator),
+  },
+  handler: async (ctx, args): Promise<BackfillTotals> => {
+    const table = args.table ?? "boxArt";
+    const dryRun = args.dryRun ?? true;
+    const batchSize = Math.max(1, Math.min(25, args.batchSize ?? 10));
+    const page = await ctx.runQuery(
+      internal.lib.imageModeration.renditionsStore.listRenditionCandidates,
+      {
+        table,
+        paginationOpts: { numItems: batchSize, cursor: args.cursor ?? null },
+      },
+    );
+    const batch: BackfillTotals = {
+      ...NO_TOTALS,
+      scanned: page.scanned,
+      candidates: page.candidates.length,
+    };
+    if (!dryRun) {
+      for (const sourceId of page.candidates) {
+        const result = await renderAndLog(ctx, sourceId, {
+          attempt: 1,
+          trigger: "backfill",
+        });
+        if (result === "recorded") batch.recorded += 1;
+        else if (result === "refused") batch.refused += 1;
+        else if (result === "not_eligible" || result === "already_done") {
+          batch.skipped += 1;
+        } else batch.failed += 1;
+      }
+    }
+
+    const prior = args.totals ?? NO_TOTALS;
+    const totals: BackfillTotals = {
+      scanned: prior.scanned + batch.scanned,
+      candidates: prior.candidates + batch.candidates,
+      recorded: prior.recorded + batch.recorded,
+      refused: prior.refused + batch.refused,
+      failed: prior.failed + batch.failed,
+      skipped: prior.skipped + batch.skipped,
+    };
+    logEvent({
+      event: "imageModeration.backfillRenditions",
+      outcome: "success",
+      table,
+      dry_run: dryRun,
+      done: page.isDone,
+      ...totals,
+    });
+    if (!page.isDone) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.lib.imageModeration.renditions.backfillRenditions,
+        {
+          table,
+          dryRun,
+          cursor: page.continueCursor,
+          batchSize,
+          totals,
+        },
+      );
+    }
+    return batch;
+  },
 });

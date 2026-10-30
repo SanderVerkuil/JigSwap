@@ -1,3 +1,4 @@
+import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { internal } from "../../_generated/api";
 import type { Id } from "../../_generated/dataModel";
@@ -29,6 +30,35 @@ const slotValidator = v.object({
   width: v.number(),
   height: v.number(),
 });
+
+/** What the backfill covers: "boxArt" = every definition's `image`. */
+export const renditionTableValidator = v.literal("boxArt");
+
+export const backfillTotalsValidator = v.object({
+  // Rows read.
+  scanned: v.number(),
+  // Eligible sources without renditions yet (all a dry run counts).
+  candidates: v.number(),
+  // Recorded (a source no wider than 480 px gets a row without renditions).
+  recorded: v.number(),
+  // Bytes the input guards refused, or that did not decode.
+  refused: v.number(),
+  // Storage, database or encoder failures, or the source was deleted meanwhile; a re-run
+  // tries them again.
+  failed: v.number(),
+  // No longer a candidate when its turn came (decided or recorded meanwhile).
+  skipped: v.number(),
+});
+export type BackfillTotals = typeof backfillTotalsValidator.type;
+
+export const NO_TOTALS: BackfillTotals = {
+  scanned: 0,
+  candidates: 0,
+  recorded: 0,
+  refused: 0,
+  failed: 0,
+  skipped: 0,
+};
 
 /**
  * Whether the blob may get renditions: box art that may be shown. Its boxArtUploads row is
@@ -155,3 +185,35 @@ export const deleteRenditions = async (
     }
   }
 };
+
+/**
+ * One page of the backfill (lib/imageModeration/renditions.backfillRenditions): the distinct
+ * stored, eligible sources on the page that have no renditions yet.
+ */
+export const listRenditionCandidates = internalQuery({
+  args: {
+    table: renditionTableValidator,
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, { paginationOpts }) => {
+    const page = await ctx.db.query("puzzles").paginate(paginationOpts);
+    const candidates: Id<"_storage">[] = [];
+    for (const puzzle of page.page) {
+      const sourceId = puzzle.image;
+      if (!sourceId || candidates.includes(sourceId)) continue;
+      if (
+        (await ctx.db.system.get(sourceId)) !== null &&
+        (await isRenditionSource(ctx, sourceId)) &&
+        (await renditionsRow(ctx, sourceId)) === null
+      ) {
+        candidates.push(sourceId);
+      }
+    }
+    return {
+      scanned: page.page.length,
+      candidates,
+      isDone: page.isDone,
+      continueCursor: page.continueCursor,
+    };
+  },
+});
