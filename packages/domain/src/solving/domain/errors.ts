@@ -48,11 +48,11 @@ export class SolvingError extends DomainError {
     );
   }
 
-  // Edits are only allowed within 24h of completion (the documented rule).
+  // Edits are only allowed until completionEditableUntil: 24h after the solve's end date.
   static editWindowClosed(): SolvingError {
     return new SolvingError(
       "EditWindowClosed",
-      "A completion can only be edited within 24 hours of being recorded",
+      "A completion can only be edited within 24 hours of its end date",
     );
   }
 

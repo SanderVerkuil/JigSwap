@@ -13,7 +13,9 @@ import { SolveDuration } from "./solve-duration";
 // A completion may hold at most five photos (§1.4).
 export const MAX_PHOTOS = 5;
 
-// Edits are only allowed within this window after the completion was recorded (documented rule).
+// Edits are only allowed within this window. It is anchored on the solve's end date (see
+// completionEditableUntil), which is a calendar date stored as UTC midnight, so a back-dated or
+// year-only solve is closed as soon as it is logged.
 export const EDIT_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 // A date-only same-day completion (start == end, no explicit duration) counts as one day.
@@ -85,6 +87,17 @@ export interface CompletionChanges {
   readonly completionTimeMinutes?: number;
 }
 
+// The last instant a completion may still be edited, or undefined when it has no deadline (a
+// solve in progress is always editable). The single source of the edit-window rule: edit()
+// enforces it and the read side reports it, so the UI never offers an edit the server refuses.
+export function completionEditableUntil(
+  state: Pick<CompletionState, "isCompleted" | "endDate" | "updatedAt">,
+): Date | undefined {
+  if (!state.isCompleted) return undefined;
+  const reference = state.endDate ?? state.updatedAt;
+  return new Date(reference.getTime() + EDIT_WINDOW_MS);
+}
+
 // The Completion aggregate root (a SolveSession): a member's record of solving one puzzle. It
 // references the puzzle by id (a PuzzleDefinitionId and/or a CopyId) and never loads those
 // aggregates. It can be in-progress (no end, isCompleted=false) or done (end + duration).
@@ -112,6 +125,11 @@ export class Completion {
 
   get photos(): readonly Photo[] {
     return this.state.photos;
+  }
+
+  // See completionEditableUntil: undefined while in progress.
+  get editableUntil(): Date | undefined {
+    return completionEditableUntil(this.state);
   }
 
   // Begin an in-progress solve. No end/duration yet; records CompletionStarted.
@@ -269,13 +287,11 @@ export class Completion {
     if (actingMemberId !== this.state.userId) {
       return err(SolvingError.notCompletionOwner());
     }
-    // The edit window is anchored on the recorded completion. An in-progress completion has no
-    // completion instant yet, so it is always editable.
-    if (this.state.isCompleted) {
-      const reference = this.state.endDate ?? this.state.updatedAt;
-      if (now.getTime() - reference.getTime() > EDIT_WINDOW_MS) {
-        return err(SolvingError.editWindowClosed());
-      }
+    // The edit window (completionEditableUntil) is anchored on the recorded completion. An
+    // in-progress completion has no completion instant yet, so it is always editable.
+    const editableUntil = this.editableUntil;
+    if (editableUntil && now.getTime() > editableUntil.getTime()) {
+      return err(SolvingError.editWindowClosed());
     }
 
     // A "year"/"unknown" row's dates are sentinels, not facts. Setting a real date upgrades it to

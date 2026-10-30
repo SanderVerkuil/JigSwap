@@ -789,6 +789,41 @@ describe("solving read queries", () => {
     expect(bobs).toHaveLength(0);
   });
 
+  test("listMyCompletions says until when each solve can be edited", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { copyAggregateId } = await seed(t);
+    // A back-dated solve (ended 10 January 2026): editing closed long before it was logged.
+    const backDatedEnd = Date.UTC(2026, 0, 10);
+    const backDated = await recordForAlice(t, copyAggregateId, {
+      startDate: Date.UTC(2026, 0, 8),
+      endDate: backDatedEnd,
+    });
+    const started = (await asAlice(t).mutation(
+      api.solving.startCompletion.startCompletion,
+      { copyId: copyAggregateId, startDate: Date.now() - HOUR },
+    )) as string;
+
+    const mine = await asAlice(t).query(
+      api.solving.listMyCompletions.listMyCompletions,
+      {},
+    );
+    const byId = new Map(mine.map((row) => [row.aggregateId, row]));
+    // The domain's rule (completionEditableUntil): 24 hours after the end date.
+    expect(byId.get(backDated)?.editableUntil).toBe(backDatedEnd + 24 * HOUR);
+    expect(byId.get(backDated)!.editableUntil! < Date.now()).toBe(true);
+    // A solve in progress has no deadline.
+    expect(byId.get(started)?.editableUntil).toBeNull();
+
+    // The reported deadline is the one the server enforces.
+    await expectConvexCode(
+      asAlice(t).mutation(api.solving.editCompletion.editCompletion, {
+        completionId: backDated,
+        notes: "too late",
+      }),
+      "EditWindowClosed",
+    );
+  });
+
   test("getCompletionHistory filters by copy", async () => {
     const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
