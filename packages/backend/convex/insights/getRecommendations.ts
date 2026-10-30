@@ -7,6 +7,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
+import { INSIGHTS_READ_CAP } from "./getPersonalStats";
 
 // Bounded candidate scan: Insights is read-only and must never run an unbounded table scan, so we
 // take at most this many of the most-recent approved catalog definitions as the candidate pool. The
@@ -40,14 +41,14 @@ export const getRecommendations = query({
     const copies = await ctx.db
       .query("ownedPuzzles")
       .withIndex("by_owner", (q) => q.eq("ownerId", userId))
-      .collect();
+      .take(INSIGHTS_READ_CAP);
     const ownedPuzzleIds = new Set(copies.map((c) => c.puzzleId));
 
     // Completions reference the puzzle (general) or owned copy; pull their puzzle ids for signals.
     const completions = await ctx.db
       .query("completions")
       .withIndex("by_user", (q) => q.eq("userId", userId))
-      .collect();
+      .take(INSIGHTS_READ_CAP);
     const completedPuzzleIds = new Set(
       completions
         .map((c) => c.puzzleId)
