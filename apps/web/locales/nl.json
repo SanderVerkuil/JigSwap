@@ -620,6 +620,10 @@
     "newRequest": "Nieuw Uitwisselingsverzoek",
     "acceptExchange": "Uitwisseling Accepteren",
     "acceptNotPermitted": "Dit verzoek kan niet meer worden geaccepteerd: de aanvrager mag deze puzzel niet meer ruilen.",
+    "errors": {
+      "copyReserved": "Een van de puzzels in deze uitwisseling is al gereserveerd voor een andere uitwisseling of is uitgeleend. Je kunt verder zodra die uitwisseling is afgerond of geannuleerd, of zodra de puzzel terug is.",
+      "copyChangedHands": "Deze uitwisseling kan niet meer doorgaan: een van de puzzels is van eigenaar gewisseld of niet meer beschikbaar."
+    },
     "declineExchange": "Uitwisseling Afwijzen",
     "completeExchange": "Uitwisseling Voltooien",
     "cancelExchange": "Uitwisseling Annuleren",

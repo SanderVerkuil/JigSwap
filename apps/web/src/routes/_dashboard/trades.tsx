@@ -7,7 +7,7 @@ import {
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { BorrowedEmptyState } from "@/components/exchange/borrowed-empty-state";
-import { convexErrorCode } from "@/components/exchange/request-trade";
+import { exchangeErrorKey } from "@/components/exchange/exchange-error";
 import { TradePartnerCard } from "@/components/exchange/trade-partner-card";
 import { ThreadView } from "@/components/messaging/thread-view";
 import { LeaveReviewDialog } from "@/components/reputation/leave-review-dialog";
@@ -393,10 +393,11 @@ function ExchangeDetail({
         await mutate({ exchangeId: exchange.aggregateId });
       } catch (error) {
         console.error("Exchange action failed:", error);
-        // Accept re-checks the requester's circle permission; say why it was refused.
-        if (convexErrorCode(error) === "NotPermittedInCircle") {
-          toast.error(t("acceptNotPermitted"));
-        }
+        // Say why a refusal the member can make sense of happened: accept re-checks the requester's
+        // circle permission, and accept and complete refuse while a puzzle is set aside elsewhere or
+        // on loan, or once one changed hands (exchange-error).
+        const key = exchangeErrorKey(error);
+        if (key) toast.error(t(key));
       }
     };
 

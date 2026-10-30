@@ -620,6 +620,10 @@
     "newRequest": "New Exchange Request",
     "acceptExchange": "Accept Exchange",
     "acceptNotPermitted": "This request can't be accepted any more: the requester may no longer exchange this puzzle.",
+    "errors": {
+      "copyReserved": "One of the puzzles in this exchange is already set aside for another exchange or is out on loan. You can go ahead once that exchange is completed or cancelled, or the puzzle is back.",
+      "copyChangedHands": "This exchange can't go ahead any more: one of its puzzles has changed hands or is no longer available."
+    },
     "declineExchange": "Decline Exchange",
     "completeExchange": "Complete Exchange",
     "cancelExchange": "Cancel Exchange",
