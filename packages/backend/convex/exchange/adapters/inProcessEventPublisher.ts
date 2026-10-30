@@ -35,6 +35,7 @@ export const inProcessEventPublisher = (
 
 // Availability handler: mirrors today's "mark unavailable on completion" — a transferred copy
 // leaves the market. Emitted per transferred copy (requested->initiator, swap offered->recipient).
+// The listing flag (`isOpen`) is cleared with it, or Browse would keep listing the copy.
 const markCopyUnavailable = async (
   ctx: MutationCtx,
   copyId: Id<"ownedPuzzles">,
@@ -43,5 +44,6 @@ const markCopyUnavailable = async (
   if (!copy) return;
   await ctx.db.patch(copyId, {
     availability: { forTrade: false, forSale: false, forLend: false },
+    isOpen: false,
   });
 };

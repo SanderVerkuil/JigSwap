@@ -330,6 +330,13 @@ export default defineSchema({
       forSale: v.boolean(),
       forLend: v.boolean(),
     }),
+    // Denormalized listing flag: true iff at least one availability flag above is set
+    // (library/openListing.isOpenAvailability). Every availability write keeps it in step: the copy
+    // repository's mapper on every save, and exchange's markCopyUnavailable. It lets Browse read open
+    // copies from `by_open` / `by_puzzle_open` without scanning closed ones. Absent on rows written
+    // before it existed until library/backfillCopyOpenFlag has run, so a reader must decide a row
+    // without it from `availability`.
+    isOpen: v.optional(v.boolean()),
     // The SharingSetting's visibility axis (who can SEE the copy), orthogonal to the
     // availability flags (what it can be USED for). Optional; legacy rows are unset. Convex has no
     // column defaults: the "visible" default lives in the create paths (domain SharingSetting.newCopy)
@@ -385,7 +392,10 @@ export default defineSchema({
   })
     .index("by_owner", ["ownerId"])
     .index("by_puzzle", ["puzzleId"])
-    .index("by_aggregate_id", ["aggregateId"]),
+    .index("by_aggregate_id", ["aggregateId"])
+    // Browse's candidate sources: open copies newest-first, platform-wide or for one definition.
+    .index("by_open", ["isOpen", "createdAt"])
+    .index("by_puzzle_open", ["puzzleId", "isOpen", "createdAt"]),
 
   // This is a table for storing images of owned puzzles
   ownedPuzzleImages: defineTable({

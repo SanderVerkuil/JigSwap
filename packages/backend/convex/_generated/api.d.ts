@@ -332,6 +332,7 @@ import type * as library_adapters_visibilityPolicy from "../library/adapters/vis
 import type * as library_addCopyPhoto from "../library/addCopyPhoto.js";
 import type * as library_addCopyToCollection from "../library/addCopyToCollection.js";
 import type * as library_backfill from "../library/backfill.js";
+import type * as library_backfillCopyOpenFlag from "../library/backfillCopyOpenFlag.js";
 import type * as library_backfillCopyVisibility from "../library/backfillCopyVisibility.js";
 import type * as library_browseOwnedPuzzles from "../library/browseOwnedPuzzles.js";
 import type * as library_canViewCopy from "../library/canViewCopy.js";
@@ -362,6 +363,7 @@ import type * as library_loanReadViews from "../library/loanReadViews.js";
 import type * as library_mappers from "../library/mappers.js";
 import type * as library_moderatePhoto from "../library/moderatePhoto.js";
 import type * as library_moderationStore from "../library/moderationStore.js";
+import type * as library_openListing from "../library/openListing.js";
 import type * as library_openLoanOnSettlement from "../library/openLoanOnSettlement.js";
 import type * as library_postPhotoComment from "../library/postPhotoComment.js";
 import type * as library_recallLoan from "../library/recallLoan.js";
@@ -920,6 +922,7 @@ declare const fullApi: ApiFromModules<{
   "library/addCopyPhoto": typeof library_addCopyPhoto;
   "library/addCopyToCollection": typeof library_addCopyToCollection;
   "library/backfill": typeof library_backfill;
+  "library/backfillCopyOpenFlag": typeof library_backfillCopyOpenFlag;
   "library/backfillCopyVisibility": typeof library_backfillCopyVisibility;
   "library/browseOwnedPuzzles": typeof library_browseOwnedPuzzles;
   "library/canViewCopy": typeof library_canViewCopy;
@@ -950,6 +953,7 @@ declare const fullApi: ApiFromModules<{
   "library/mappers": typeof library_mappers;
   "library/moderatePhoto": typeof library_moderatePhoto;
   "library/moderationStore": typeof library_moderationStore;
+  "library/openListing": typeof library_openListing;
   "library/openLoanOnSettlement": typeof library_openLoanOnSettlement;
   "library/postPhotoComment": typeof library_postPhotoComment;
   "library/recallLoan": typeof library_recallLoan;

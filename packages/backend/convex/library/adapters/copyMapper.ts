@@ -13,6 +13,7 @@ import {
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 import { effectiveCopyVisibility } from "../copyVisibility";
+import { isOpenAvailability } from "../openListing";
 
 // ACL between the persisted `ownedPuzzles` (+ `ownedPuzzleImages`) rows and the Copy aggregate.
 // Schema shape stops here and never ripples into the domain.
@@ -97,6 +98,11 @@ export const toDomain = (
 export const toRow = (copy: Copy): OwnedPuzzleRow => {
   const state: CopyState = copy.toState();
   const sharing = state.sharing;
+  const availability = {
+    forTrade: sharing.forTrade,
+    forSale: sharing.forSale,
+    forLend: sharing.forLend,
+  };
   return {
     aggregateId: state.id as string,
     puzzleDefinitionId: state.puzzleDefinitionId as string,
@@ -111,11 +117,9 @@ export const toRow = (copy: Copy): OwnedPuzzleRow => {
     condition: state.condition,
     missingPiecesCount: state.missingPiecesCount,
     notes: state.notes,
-    availability: {
-      forTrade: sharing.forTrade,
-      forSale: sharing.forSale,
-      forLend: sharing.forLend,
-    },
+    availability,
+    // The listing flag Browse reads by index, kept in step with `availability` on every save.
+    isOpen: isOpenAvailability(availability),
     // The domain value is authoritative (a load already resolved it through
     // effectiveCopyVisibility), so every save stamps the rollout marker with it.
     visibility: sharing.visibility,

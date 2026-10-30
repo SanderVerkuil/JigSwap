@@ -7,6 +7,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { profileVisibilityOf } from "../social/privacy";
 import { isCopyPrivate } from "./copyVisibility";
+import { isOpenAvailability } from "./openListing";
 
 const MS_PER_DAY = 86_400_000;
 
@@ -34,11 +35,9 @@ export const finishDaysOf = (c: {
   return null;
 };
 
-/** A copy is "open" iff at least one exchange-availability flag is set (identical to browseOwnedPuzzles). */
+/** A copy is "open" iff at least one exchange-availability flag is set (library/openListing). */
 export const isOpen = (copy: Doc<"ownedPuzzles">): boolean =>
-  copy.availability.forTrade ||
-  copy.availability.forSale ||
-  copy.availability.forLend;
+  isOpenAvailability(copy.availability);
 
 /** Distinct owners of a definition's copies, counting a PRIVATE copy (library/copyVisibility) only
  * when `seesPrivateOf(ownerId)` — the viewer is that owner or in their household. The unauthenticated
