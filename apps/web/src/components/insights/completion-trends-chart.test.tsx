@@ -14,8 +14,8 @@ import {
   type CompletionTrendPoint,
 } from "./completion-trends-chart";
 
-// "Completions / month" with its count/minutes toggle: the caption and the screen-reader table
-// describe whichever metric is showing.
+// "Completions / month" with its count/minutes toggle: the title, the caption and the
+// screen-reader table describe whichever metric is showing.
 
 const DATA: CompletionTrendPoint[] = [
   { month: "2026-09", count: 0, totalMinutes: 0 },
@@ -64,6 +64,21 @@ describe("CompletionTrendsChart", () => {
       "September 20260",
       "October 2026300",
     ]);
+  });
+
+  it("names the chart after the metric it shows", () => {
+    renderChart();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Completions / month" }),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Solve minutes" }));
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Solve minutes / month" }),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Completions" }));
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Completions / month" }),
+    ).toBeTruthy();
   });
 
   it("says there are no solves yet instead of drawing an empty chart", () => {

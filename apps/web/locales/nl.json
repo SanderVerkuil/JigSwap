@@ -3468,6 +3468,7 @@
     },
     "charts": {
       "completionsPerMonth": "Voltooiingen / maand",
+      "minutesPerMonth": "Oplosminuten / maand",
       "swapsPerMonth": "Ruilacties / maand",
       "month": "Maand"
     }

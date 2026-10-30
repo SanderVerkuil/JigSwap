@@ -3468,6 +3468,7 @@
     },
     "charts": {
       "completionsPerMonth": "Completions / month",
+      "minutesPerMonth": "Solve minutes / month",
       "swapsPerMonth": "Swaps / month",
       "month": "Month"
     }

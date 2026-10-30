@@ -17,6 +17,7 @@ type Metric = "count" | "minutes";
 
 // "Completions / month" as a minimal sparkbar chart (design language), with the
 // existing count/minutes metric toggle kept as small pills in the section head.
+// The title, caption and table follow the metric that is showing.
 export function CompletionTrendsChart({
   data,
 }: {
@@ -34,7 +35,11 @@ export function CompletionTrendsChart({
   return (
     <section className="min-w-0">
       <SectionHead
-        title={t("charts.completionsPerMonth")}
+        title={t(
+          metric === "count"
+            ? "charts.completionsPerMonth"
+            : "charts.minutesPerMonth",
+        )}
         icon={BarChart3}
         action={
           <div className="flex gap-1.5">
