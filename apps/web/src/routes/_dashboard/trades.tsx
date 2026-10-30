@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { useTourLauncher } from "@/components/whats-new/tour-launcher";
 import { gateway, Id } from "@/gateway";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useRelativeTime } from "@/hooks/use-relative-time";
 import {
   useMemberDisplayName,
@@ -123,11 +124,17 @@ function ExchangesPage() {
       resetScroll: false,
     });
 
-  // The page head's "?" starts the exchanges guide at its step on this page.
+  // The "?" starts the exchanges guide at its step on this page. From md it sits in the shell's
+  // page head. On phones the shell would give it a row of its own above the page (the top bar
+  // already carries the title), so there it ends the filter bar's controls row instead.
   const { startTour } = useTourLauncher();
+  const isMobile = useIsMobile();
   usePageHeaderActions(
-    () => <GuideHelpButton tourId="exchanges" startTour={startTour} />,
-    [startTour],
+    () =>
+      isMobile ? null : (
+        <GuideHelpButton tourId="exchanges" startTour={startTour} />
+      ),
+    [startTour, isMobile],
   );
 
   const { data: convexUser } = useQuery(
@@ -224,30 +231,41 @@ function ExchangesPage() {
         filters={tabs}
         value={tab}
         onChange={(next) => showView({ tab: next, status: statusFilter })}
-        count={count}
+        // On phones the count moves into `extra` so the "?" can follow it.
+        count={isMobile ? undefined : count}
         extra={
-          tab !== "loans" && (
-            <select
-              value={statusFilter ?? "all"}
-              onChange={(e) =>
-                showView({
-                  tab,
-                  status: EXCHANGE_STATUSES.find(
-                    (status) => status === e.target.value,
-                  ),
-                })
-              }
-              className="bg-card focus:ring-primary h-8 rounded-md border px-2 text-sm focus:ring-2 focus:outline-none"
-              aria-label={t("statusFilter")}
-            >
-              <option value="all">{t("allStatuses")}</option>
-              {EXCHANGE_STATUSES.map((status) => (
-                <option key={status} value={status}>
-                  {t(`status.${status}`)}
-                </option>
-              ))}
-            </select>
-          )
+          <>
+            {tab !== "loans" && (
+              <select
+                value={statusFilter ?? "all"}
+                onChange={(e) =>
+                  showView({
+                    tab,
+                    status: EXCHANGE_STATUSES.find(
+                      (status) => status === e.target.value,
+                    ),
+                  })
+                }
+                className="bg-card focus:ring-primary h-8 rounded-md border px-2 text-sm focus:ring-2 focus:outline-none"
+                aria-label={t("statusFilter")}
+              >
+                <option value="all">{t("allStatuses")}</option>
+                {EXCHANGE_STATUSES.map((status) => (
+                  <option key={status} value={status}>
+                    {t(`status.${status}`)}
+                  </option>
+                ))}
+              </select>
+            )}
+            {isMobile && (
+              <>
+                {count != null && (
+                  <span className="text-muted-foreground text-sm">{count}</span>
+                )}
+                <GuideHelpButton tourId="exchanges" startTour={startTour} />
+              </>
+            )}
+          </>
         }
       />
 
