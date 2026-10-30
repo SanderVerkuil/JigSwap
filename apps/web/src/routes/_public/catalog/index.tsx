@@ -39,6 +39,12 @@ const PIECE_BUCKETS = {
 } as const;
 type PieceBucket = keyof typeof PIECE_BUCKETS;
 
+// A card cover's rendered width in the grid below (2/3/4 columns at base/md/lg, 18px gaps, inside
+// the 1200px main with 24px padding, minus the card's 1px borders), so the browser fetches the
+// smallest box-art rendition that is still sharp. Keep it in step with the grid's classes.
+const CARD_IMAGE_SIZES =
+  "(min-width: 1200px) 273px, (min-width: 1024px) calc((100vw - 110px) / 4), (min-width: 768px) calc((100vw - 90px) / 3), calc((100vw - 70px) / 2)";
+
 export const Route = createFileRoute("/_public/catalog/")({
   head: () => ({
     meta: [
@@ -234,7 +240,11 @@ function CatalogListPage() {
               className="grid grid-cols-2 gap-[18px] md:grid-cols-3 lg:grid-cols-4"
             >
               {cards.map((card) => (
-                <DefinitionCard key={card._id} card={card} />
+                <DefinitionCard
+                  key={card._id}
+                  card={card}
+                  imageSizes={CARD_IMAGE_SIZES}
+                />
               ))}
             </PuzzleViewProvider>
             {lastPage && !lastPage.isDone && (

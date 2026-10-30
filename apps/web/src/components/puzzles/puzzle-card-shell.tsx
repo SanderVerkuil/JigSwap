@@ -24,6 +24,9 @@ export type PuzzleCardView = {
   description?: string | null;
   tags?: readonly string[] | null;
   imageUrl?: string | null;
+  /** `srcset` for the cover (its renditions plus the original, as URLs), when the read offers
+   *  one. Without it the card shows `imageUrl` alone. */
+  imageSrcSet?: string | null;
 };
 
 export interface PuzzleCardShellProps {
@@ -49,8 +52,16 @@ export interface PuzzleCardShellProps {
   imageFit?: "cover" | "contain";
   /** The viewer's own box art for this puzzle is still being checked: label the placeholder. */
   imageChecking?: boolean;
+  /** `sizes` for the cover in grid view: the cover's rendered width in the caller's grid, so the
+   *  browser picks the smallest rendition that is still sharp. Only used with
+   *  `puzzle.imageSrcSet`; without it the browser assumes the full viewport width. List view
+   *  always uses the fixed 128px cover column. */
+  imageSizes?: string;
   className?: string;
 }
+
+// The list view's cover column is `w-32` (8rem); keep the two in step.
+const LIST_COVER_SIZES = "128px";
 
 // Difficulty colour swatch, shared with the catalog card's original helper.
 function difficultyColor(difficulty?: string | null) {
@@ -81,6 +92,7 @@ export function PuzzleCardShell({
   imageHref,
   imageFit = "cover",
   imageChecking = false,
+  imageSizes,
   className,
 }: PuzzleCardShellProps) {
   const t = useTranslations("puzzles");
@@ -112,6 +124,14 @@ export function PuzzleCardShell({
         {puzzle.imageUrl ? (
           <Image
             src={puzzle.imageUrl}
+            srcSet={puzzle.imageSrcSet ?? undefined}
+            sizes={
+              puzzle.imageSrcSet
+                ? viewMode === "list"
+                  ? LIST_COVER_SIZES
+                  : imageSizes
+                : undefined
+            }
             alt={puzzle.title || "Puzzle"}
             fill
             className={cn(

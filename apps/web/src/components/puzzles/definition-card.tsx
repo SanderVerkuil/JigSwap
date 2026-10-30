@@ -15,7 +15,14 @@ type CatalogCard = FunctionReturnType<
   typeof gateway.catalog.publicBrowse
 >["page"][number];
 
-export function DefinitionCard({ card }: { card: CatalogCard }) {
+export function DefinitionCard({
+  card,
+  imageSizes,
+}: {
+  card: CatalogCard;
+  /** The cover's `sizes` in the caller's grid (see PuzzleCardShell's imageSizes). */
+  imageSizes?: string;
+}) {
   const t = useTranslations("publicCatalog");
 
   const badges = (
@@ -43,7 +50,9 @@ export function DefinitionCard({ card }: { card: CatalogCard }) {
         pieceCount: card.pieceCount,
         difficulty: card.difficulty,
         imageUrl: card.image,
+        imageSrcSet: card.imageSrcSet,
       }}
+      imageSizes={imageSizes}
       badges={badges}
       imageHref={`/catalog/${card._id}`}
       imageFit="contain"
