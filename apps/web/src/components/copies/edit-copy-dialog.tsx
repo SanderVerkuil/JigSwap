@@ -62,13 +62,12 @@ const selectClass =
 //
 // "Acquired" is a month and year (stored as acquisition-month instants); "Source" how the copy was
 // acquired. `focus="acquisition"` opens the dialog on those fields (the page's "Add details").
-export function EditCopyDialog({
-  open,
-  onOpenChange,
-  copy,
-  onAddPhotos,
-  focus,
-}: {
+//
+// Every opening starts from the copy as it is NOW: the page keeps this dialog mounted while its
+// offer switches change the copy, and form state kept from page load would write those offers back
+// on an unrelated save. So each opening remounts the form (a new key), while closing keeps it
+// mounted for the exit animation.
+type EditCopyDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   copy: CopyInstanceView;
@@ -76,7 +75,25 @@ export function EditCopyDialog({
   // the dialog closes as it hands over.
   onAddPhotos?: () => void;
   focus?: "acquisition";
-}) {
+};
+
+export function EditCopyDialog(props: EditCopyDialogProps) {
+  const [opening, setOpening] = useState(0);
+  const [wasOpen, setWasOpen] = useState(props.open);
+  if (props.open !== wasOpen) {
+    setWasOpen(props.open);
+    if (props.open) setOpening((n) => n + 1);
+  }
+  return <EditCopyDialogForm key={opening} {...props} />;
+}
+
+function EditCopyDialogForm({
+  open,
+  onOpenChange,
+  copy,
+  onAddPhotos,
+  focus,
+}: EditCopyDialogProps) {
   const t = useTranslations("copyInstance");
   const tPuzzles = useTranslations("puzzles");
   const format = useFormatter();

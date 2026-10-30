@@ -412,3 +412,57 @@ describe("EditCopyDialog acquisition", () => {
     ]);
   });
 });
+
+describe("EditCopyDialog starts from the copy as it is when opened", () => {
+  const dialogFor = (open: boolean, copy: never) => (
+    <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+      <EditCopyDialog open={open} onOpenChange={() => {}} copy={copy} />
+    </IntlProvider>
+  );
+
+  it("an offer switched on after the page loaded is not withdrawn by saving the dialog", async () => {
+    const { rerender } = render(
+      dialogFor(false, copyOf(CLOSED, "visible", "visible")),
+    );
+    // The page's offer switch turned "For Trade" on; the live query re-renders the closed dialog.
+    rerender(
+      dialogFor(
+        false,
+        copyOf({ ...CLOSED, forTrade: true }, "visible", "visible"),
+      ),
+    );
+    rerender(
+      dialogFor(
+        true,
+        copyOf({ ...CLOSED, forTrade: true }, "visible", "visible"),
+      ),
+    );
+
+    expect(
+      screen
+        .getByRole("button", { name: "For Trade" })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+    fireEvent.change(screen.getByLabelText("Notes"), {
+      target: { value: "Box a bit dented" },
+    });
+    await save();
+    expect(calls.byMutation.updateSharing).toBeUndefined();
+    expect(calls.byMutation.updateDetails).toEqual([
+      { copyId: "agg1", notes: "Box a bit dented" },
+    ]);
+  });
+
+  it("reopening drops edits that were cancelled", () => {
+    const copy = copyOf(CLOSED, "visible", "visible");
+    const { rerender } = render(dialogFor(true, copy));
+    fireEvent.click(screen.getByRole("button", { name: "For Lend" }));
+    rerender(dialogFor(false, copy));
+    rerender(dialogFor(true, copy));
+    expect(
+      screen
+        .getByRole("button", { name: "For Lend" })
+        .getAttribute("aria-pressed"),
+    ).toBe("false");
+  });
+});
