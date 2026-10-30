@@ -146,6 +146,30 @@ const expectCode = async (p: Promise<unknown>, code: string) => {
   expect(dataOf(error).code).toBe(code);
 };
 
+// The whole error payload a refused call answers with (code AND message), to compare refusals.
+const refusalOf = async (p: Promise<unknown>) => {
+  const error = await p.then(
+    () => undefined,
+    (e: unknown) => e,
+  );
+  expect(error).toBeInstanceOf(ConvexError);
+  return dataOf(error);
+};
+
+// A block row written directly (blockMember's side effects are not under test here).
+const insertBlock = (
+  t: TestConvex<typeof schema>,
+  s: Seeded,
+  blocker: "owner" | "requester",
+) =>
+  t.run((ctx) =>
+    ctx.db.insert("blocks", {
+      blockerId: blocker === "owner" ? s.owner : s.requester,
+      blockedId: blocker === "owner" ? s.requester : s.owner,
+      createdAt: NOW,
+    }),
+  );
+
 describe("exchange.propose reachability", () => {
   test("a stranger with no route to a private owner's copy is refused", async () => {
     const t = convexTest(schema, modules);
@@ -180,6 +204,50 @@ describe("exchange.propose reachability", () => {
     const s = await seed(t);
     await shareHousehold(t, s);
     await expect(propose(t, s)).resolves.toEqual(expect.any(String));
+  });
+
+  // A block must not be distinguishable from having no route (SEC-85): the blocked member gets the
+  // very same refusal a stranger gets, never a block-specific one.
+  describe("a pair blocked either way gets exactly the stranger's refusal", () => {
+    for (const blocker of ["owner", "requester"] as const) {
+      test(`blocked by the ${blocker}`, async () => {
+        const t = convexTest(schema, modules);
+        const s = await seed(t);
+        // A shared circle is a route a block does not sever, so only the block stands between
+        // the requester and the copy.
+        await shareViaCircle(t, s);
+        await insertBlock(t, s, blocker);
+        await t.run((ctx) => mkUser(ctx, "clerk_stranger"));
+
+        const blocked = await refusalOf(propose(t, s));
+        const stranger = await refusalOf(
+          t
+            .withIdentity({ subject: "clerk_stranger" })
+            .mutation(api.exchange.propose.propose, {
+              type: "sale",
+              requestedPuzzleId: s.copy,
+              salePrice: 10,
+            }),
+        );
+        expect(stranger.code).toBe("CopyNotReachable");
+        expect(blocked).toEqual(stranger);
+        const rows = await t.run((ctx) => ctx.db.query("exchanges").collect());
+        expect(rows).toHaveLength(0);
+      });
+    }
+
+    // The member holding the copy passes canViewCopy whatever the block, so propose checks the
+    // block separately after it, and answers it the same way.
+    test("even for the member holding the copy", async () => {
+      const t = convexTest(schema, modules);
+      const s = await seed(t);
+      await t.run((ctx) => ctx.db.patch(s.copy, { heldBy: s.requester }));
+      await insertBlock(t, s, "owner");
+
+      await expectCode(propose(t, s), "CopyNotReachable");
+      const rows = await t.run((ctx) => ctx.db.query("exchanges").collect());
+      expect(rows).toHaveLength(0);
+    });
   });
 });
 

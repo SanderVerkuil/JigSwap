@@ -12,7 +12,7 @@ import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { canViewCopy } from "../library/canViewCopy";
-import { assertPairNotBlocked } from "../social/blocks";
+import { isBlockedEitherWay } from "../social/blocks";
 import { convexCopyPort } from "./adapters/convexCopyPort";
 import { convexExchangeEligibility } from "./adapters/convexExchangeEligibility";
 import { convexExchangeRepository } from "./adapters/convexExchangeRepository";
@@ -52,17 +52,20 @@ export const propose = mutation({
       });
     }
     const recipientId = requested.ownerId;
-    // Against the derived owner, never the ignored client `recipientId`.
-    await assertPairNotBlocked(ctx, initiatorId, recipientId);
     // Reachability: the initiator may only propose on a copy they could see (the same gate every
     // copy read uses). Without it any member who learns a copy id could target an owner they have
     // no route to (private profile, no shared circle, not friends).
+    // A block either way (against the derived owner, never the ignored client `recipientId`) gets
+    // the SAME answer: a block-specific error would tell the blocked member that a block exists.
+    // canViewCopy already refuses a blocked pair, except for the member holding the copy, so the
+    // block is checked separately after it.
     if (
       !(await canViewCopy(
         ctx,
         initiatorId as unknown as Id<"users">,
         requested,
-      ))
+      )) ||
+      (await isBlockedEitherWay(ctx, initiatorId, recipientId))
     ) {
       throw toConvexError(
         ApplicationError.copyNotReachable(toCopyId(args.requestedPuzzleId)),

@@ -6,7 +6,8 @@ import { cannotReplyError, toConvexError } from "../conversation/errors";
 // Member blocks (spec 2.6): the read-side helpers every gate shares. A block is silent and works
 // both ways, so gates ask "blocked either way" and refuse with the SAME generic error a lost
 // connection gets (NotConnected), never a block-specific one. Posting to an existing thread
-// refuses with the generic CannotReply instead (see assertThreadNotBlocked).
+// refuses with the generic CannotReply instead (see assertThreadNotBlocked), and proposing an
+// exchange with the CopyNotReachable a copy without a route gets (exchange/propose.ts).
 
 type Member = Id<"users"> | MemberId;
 const asUserId = (m: Member) => m as unknown as Id<"users">;
