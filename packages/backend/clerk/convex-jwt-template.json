@@ -1,0 +1,7 @@
+{
+  "name": "convex",
+  "claims": {
+    "aud": "convex",
+    "metadata": "{{user.public_metadata}}"
+  }
+}
