@@ -545,7 +545,7 @@ describe("ThreadView in a DM stays as it was", () => {
     renderThread(dmThread, DM_MESSAGES);
     expect(screen.queryByRole("button", { name: /members/ })).toBeNull();
     expect(screen.queryByRole("link", { name: "Mara" })).toBeNull();
-    expect(screen.getByPlaceholderText("Type your message...")).toBeTruthy();
+    expect(screen.getByPlaceholderText("Type your message…")).toBeTruthy();
     // One group for both messages, announced once as Mara's.
     const list = screen.getByRole("list", { name: "Mara" });
     expect(within(list).getAllByText("Mara:")).toHaveLength(1);

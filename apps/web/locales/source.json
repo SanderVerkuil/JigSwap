@@ -889,7 +889,7 @@
       "hours": "{count}h"
     },
     "tooLong": "That message is too long (4,000 characters max).",
-    "typeMessage": "Type your message...",
+    "typeMessage": "Type your message…",
     "typing": {
       "one": "{name} is typing…",
       "two": "{a} and {b} are typing…",
