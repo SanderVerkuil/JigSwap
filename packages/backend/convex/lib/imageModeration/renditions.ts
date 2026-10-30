@@ -32,9 +32,10 @@ import {
 // ("imageModeration.renditions": ids, sizes in px and bytes, timing; never image data) to the
 // logs and Axiom.
 //
-// backfillRenditions: the one-shot for images stored before renditions existed. `dryRun`
+// backfillRenditions: the one-shot for images stored before renditions existed, per `table`:
+// "boxArt" (the default: every definition's box art) or "copy" (copy photos). `dryRun`
 // defaults to TRUE: it only counts. Pass `dryRun: false` to write. Paginated: `batchSize`
-// definitions per run (default 10), their candidates made ONE AFTER ANOTHER in the same action
+// rows per run (default 10), their candidates made ONE AFTER ANOTHER in the same action
 // (one decoded image in memory at a time); the action re-schedules itself with the next cursor
 // and logs the running totals ("imageModeration.backfillRenditions") on every page and the
 // final ones with `done: true`. Create-only (it never deletes a stored image) and idempotent: a

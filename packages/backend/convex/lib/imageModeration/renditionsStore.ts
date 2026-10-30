@@ -16,14 +16,15 @@ import { isPreservedBlob } from "./quarantine";
 //
 // Invariants:
 // - A rendition exists only for an ELIGIBLE source blob that is still stored (isRenditionSource,
-//   checked again when recording): box art that may be shown, never one that is pending,
-//   unscored, rejected, quarantined, preserved for an escalation, or not box art at all.
+//   checked again when recording): box art or a copy photo that may be shown, never one that is
+//   pending, unscored, rejected, quarantined, preserved for an escalation, or neither at all.
 // - Every rendition blob counts as referenced (blobReferences.isReferenced), so no upload flow
 //   can claim it and a storage sweep keeps it.
 // - ANY code that deletes or quarantines a source image blob calls `deleteRenditions` for it, so
 //   no rendition outlives its source.
 // - Responses never carry a rendition's storage id: read models turn it into a URL, and only
-//   behind the source's own publication gate (boxArtUrl for box art).
+//   behind the source's own publication gate (boxArtUrl for box art; approved and hash-cleared
+//   for a copy photo, library/resolveCoverUrl and getCopyInstanceView).
 
 const slotValidator = v.object({
   fileId: v.id("_storage"),
@@ -31,8 +32,11 @@ const slotValidator = v.object({
   height: v.number(),
 });
 
-/** What the backfill covers: "boxArt" = every definition's `image`. */
-export const renditionTableValidator = v.literal("boxArt");
+/** What the backfill covers: "boxArt" = every definition's `image`; "copy" = copy photos. */
+export const renditionTableValidator = v.union(
+  v.literal("boxArt"),
+  v.literal("copy"),
+);
 
 export const backfillTotalsValidator = v.object({
   // Rows read.
@@ -61,17 +65,24 @@ export const NO_TOTALS: BackfillTotals = {
 };
 
 /**
- * Whether the blob may get renditions: box art that may be shown. Its boxArtUploads row is
+ * Whether the blob may get renditions: an image that may be shown. A copy photo whose row is
+ * "approved" or from before photos were moderated (no status). Box art whose boxArtUploads row is
  * "approved" or from before box art was moderated (no status); with no row at all, a definition
  * holds it (box art from before the listing existed). Not a blob preserved for an escalation.
  * The hash check is not required: renditions are no more exposed than the stored source, and
- * read models serve them only through the source's gate (boxArtUrl).
+ * read models serve them only through the source's gate (boxArtUrl; a copy photo's approved and
+ * hash-cleared check).
  */
 export const isRenditionSource = async (
   ctx: QueryCtx,
   sourceId: Id<"_storage">,
 ): Promise<boolean> => {
   if (await isPreservedBlob(ctx, sourceId)) return false;
+  const photo = await ctx.db
+    .query("ownedPuzzleImages")
+    .withIndex("by_file", (q) => q.eq("fileId", sourceId))
+    .first();
+  if (photo) return (photo.moderationStatus ?? "approved") === "approved";
   const listing = await ctx.db
     .query("boxArtUploads")
     .withIndex("by_storage", (q) => q.eq("storageId", sourceId))
@@ -188,18 +199,22 @@ export const deleteRenditions = async (
 
 /**
  * One page of the backfill (lib/imageModeration/renditions.backfillRenditions): the distinct
- * stored, eligible sources on the page that have no renditions yet.
+ * stored, eligible sources on the page (the definitions' box art, or the copy photos) that have
+ * no renditions yet.
  */
 export const listRenditionCandidates = internalQuery({
   args: {
     table: renditionTableValidator,
     paginationOpts: paginationOptsValidator,
   },
-  handler: async (ctx, { paginationOpts }) => {
-    const page = await ctx.db.query("puzzles").paginate(paginationOpts);
+  handler: async (ctx, { table, paginationOpts }) => {
+    const page =
+      table === "copy"
+        ? await ctx.db.query("ownedPuzzleImages").paginate(paginationOpts)
+        : await ctx.db.query("puzzles").paginate(paginationOpts);
     const candidates: Id<"_storage">[] = [];
-    for (const puzzle of page.page) {
-      const sourceId = puzzle.image;
+    for (const row of page.page) {
+      const sourceId = "fileId" in row ? row.fileId : row.image;
       if (!sourceId || candidates.includes(sourceId)) continue;
       if (
         (await ctx.db.system.get(sourceId)) !== null &&

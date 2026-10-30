@@ -1,6 +1,7 @@
 import type { Copy, CopyId, CopyRepository, OwnerId } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
+import { deleteRenditions } from "../../lib/imageModeration/renditionsStore";
 import { deleteBlobUnlessReferenced } from "../../lib/storage/blobLifecycle";
 import { profileVisibilityOf } from "../../social/privacy";
 import { markCopyStatsChange } from "../definitionStats";
@@ -106,8 +107,12 @@ export const convexCopyRepository = (ctx: MutationCtx): CopyRepository => {
         .collect();
       for (const review of reviews) await ctx.db.delete(review._id);
 
+      // A photo's renditions go with it (lib/imageModeration/renditionsStore).
       const images = await loadImages(row._id);
-      for (const image of images) await ctx.db.delete(image._id);
+      for (const image of images) {
+        await ctx.db.delete(image._id);
+        await deleteRenditions(ctx, image.fileId);
+      }
       // The photos' blobs go with their rows (SEC-81), so their issued URLs stop working, unless
       // something else still holds one: a CSAM escalation preserves it, or a row written before
       // the claim rule holds the same id, such as catalogue box art (SEC-01).

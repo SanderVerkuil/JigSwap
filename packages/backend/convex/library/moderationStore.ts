@@ -17,6 +17,10 @@ import {
   recordCsamEscalation,
 } from "../lib/imageModeration/quarantine";
 import {
+  deleteRenditions,
+  scheduleRenditions,
+} from "../lib/imageModeration/renditionsStore";
+import {
   DAY_MS,
   logRetentionSweep,
   RETENTION_SWEEP_PAGE,
@@ -26,6 +30,10 @@ import { needsRescreen } from "./adapters/photoModeration";
 
 // DB-facing helpers for the moderatePhoto Node action. A Node action (`"use node"`) has no direct
 // `ctx.db` access, so it reads/writes the `ownedPuzzleImages` row through these internal functions.
+//
+// Renditions (lib/imageModeration/renditionsStore): an approval (writeVerdict, so the pipeline's
+// verdict and a re-screen's) schedules them in the background; a rejection (the photo waits in
+// Flagged Images, unserved) and a quarantine delete them.
 
 // Load the minimal row fields the moderation pipeline needs. Returns null when the row vanished.
 export const getImageForModeration = internalQuery({
@@ -95,10 +103,10 @@ type Verdict = {
   moderationAttempts?: number;
 };
 
-// Write a verdict onto a row the caller has already decided may take it. On a transition INTO
-// rejected it also stamps the automated decision on the audit trail (no actorId = system); the
-// label is the puzzle title via the copy's cached snapshot (falling back to the puzzle row, then
-// the image id).
+// Write a verdict onto a row the caller has already decided may take it. An approval schedules
+// the photo's renditions and a rejection deletes any it has. On a transition INTO rejected it
+// also stamps the automated decision on the audit trail (no actorId = system); the label is the
+// puzzle title via the copy's cached snapshot (falling back to the puzzle row, then the image id).
 const writeVerdict = async (
   ctx: MutationCtx,
   row: Doc<"ownedPuzzleImages">,
@@ -112,7 +120,11 @@ const writeVerdict = async (
     moderationAttempts: args.moderationAttempts,
     updatedAt: Date.now(),
   });
+  if (args.moderationStatus === "approved") {
+    await scheduleRenditions(ctx, row.fileId);
+  }
   if (args.moderationStatus === "rejected") {
+    await deleteRenditions(ctx, row.fileId);
     const copy = await ctx.db.get(row.ownedPuzzleId);
     const title =
       copy?.snapshot?.title ??
@@ -140,14 +152,16 @@ export const setModerationVerdict = internalMutation({
 });
 
 // A CSAM hash match (lib/imageModeration/quarantine). FORCES the row to "quarantined" whatever
-// its status now (an admin decision or a retry may have landed while the check ran), points it at
-// the preserved blob, clears the copy's cover when it is this photo, and ALWAYS raises the
-// escalation, even when the row is gone (the uploader removed it meanwhile). The blob stays.
+// its status now (an admin decision or a retry may have landed while the check ran), deletes the
+// renditions of the blob it held, points it at the preserved blob, clears the copy's cover when
+// it is this photo, and ALWAYS raises the escalation, even when the row is gone (the uploader
+// removed it meanwhile). The blob stays.
 export const quarantineImage = internalMutation({
   args: { imageId: v.id("ownedPuzzleImages"), ...quarantineArgs },
   handler: async (ctx, { imageId, ...match }) => {
     const row = await ctx.db.get(imageId);
     if (row) {
+      await deleteRenditions(ctx, row.fileId);
       await ctx.db.patch(imageId, {
         moderationStatus: "quarantined",
         ...(match.fileId ? { fileId: match.fileId } : {}),
