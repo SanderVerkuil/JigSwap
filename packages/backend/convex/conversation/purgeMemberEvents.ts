@@ -236,7 +236,9 @@ export const scrubMemberEvents = async (
       const event = await ctx.db.get(row.eventId);
       if (event && !isDispatched(event)) continue;
       if (!event || !(await takeMemberOut(ctx, event, memberId))) {
-        await ctx.db.delete(row._id); // its event is gone or no longer names them
+        // Its event is gone or no longer names them. Through the index, not row._id: a duplicate
+        // row an earlier iteration already removed is not deleted twice.
+        await deleteEventMembers(ctx, row.eventId, memberId);
       }
     }
     return { isDone: page.isDone, continueCursor: INDEX + page.continueCursor };

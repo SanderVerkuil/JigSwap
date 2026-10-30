@@ -585,6 +585,46 @@ describe("the event lookup (domainEventMembers)", () => {
     });
   });
 
+  test("by index, stale and duplicate lookup rows are cleared without failing the run", async () => {
+    const t = newT();
+    const s = await seedMembers(t);
+    await markBackfilled(t);
+    const named = await insertIndexed(t, "CopyMadeAvailable", {
+      copyId: "copy-1",
+      ownerId: s.alice,
+    });
+    // A second row for the same event and member, and one whose event is already gone.
+    await t.run(async (ctx) => {
+      await ctx.db.insert("domainEventMembers", {
+        eventId: named,
+        memberId: s.alice,
+      });
+      const gone = await ctx.db.insert("domainEvents", {
+        name: "CopyMadeAvailable",
+        payload: { copyId: "copy-2", ownerId: s.alice },
+        context: "test",
+        occurredAt: Date.now(),
+        processedAt: Date.now(),
+      });
+      await ctx.db.insert("domainEventMembers", {
+        eventId: gone,
+        memberId: s.alice,
+      });
+      await ctx.db.delete(gone);
+    });
+
+    const page = await t.run((ctx) =>
+      scrubMemberEvents(ctx, s.alice, { cursor: null, numItems: 10 }),
+    );
+
+    expect(page.isDone).toBe(true);
+    expect(await payloadOf(t, named)).toEqual({
+      copyId: "copy-1",
+      ownerId: "deleted-member",
+    });
+    expect(await lookupOf(t)).toEqual([]);
+  });
+
   test("a purge that started paging the log finishes paging it when the backfill completes meanwhile", async () => {
     const t = newT();
     const s = await seedMembers(t);
