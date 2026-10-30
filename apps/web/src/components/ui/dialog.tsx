@@ -1,5 +1,6 @@
 "use client";
 
+import { useReturnFocus } from "@/components/ui/use-return-focus";
 import { cn } from "@/lib/utils";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { XIcon } from "lucide-react";
@@ -49,10 +50,14 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  onOpenAutoFocus,
+  onCloseAutoFocus,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean;
 }) {
+  // Most dialogs open from state, not a DialogTrigger: give focus back to what opened them.
+  const returnFocus = useReturnFocus({ onOpenAutoFocus, onCloseAutoFocus });
   return (
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay />
@@ -68,6 +73,7 @@ function DialogContent({
           className,
         )}
         {...props}
+        {...returnFocus}
       >
         {children}
         {/* A 36px target (44px on touch) centred on where the 16px icon always sat: 24px from
