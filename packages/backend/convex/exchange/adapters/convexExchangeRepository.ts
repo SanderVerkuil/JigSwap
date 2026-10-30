@@ -55,4 +55,26 @@ export const convexExchangeRepository = (
       .first();
     return row ? toDomain(row) : null;
   },
+
+  async findReferencing(copyId: CopyId): Promise<readonly Exchange[]> {
+    const ownedPuzzleId = copyId as unknown as Id<"ownedPuzzles">;
+    const [asRequested, asOffered] = await Promise.all([
+      ctx.db
+        .query("exchanges")
+        .withIndex("by_requested_copy", (q) =>
+          q.eq("requestedPuzzleId", ownedPuzzleId),
+        )
+        .collect(),
+      ctx.db
+        .query("exchanges")
+        .withIndex("by_offered_copy", (q) =>
+          q.eq("offeredPuzzleId", ownedPuzzleId),
+        )
+        .collect(),
+    ]);
+    // Only domain-written rows are exchanges the lifecycle can act on.
+    return [...asRequested, ...asOffered]
+      .filter((row) => row.aggregateId !== undefined)
+      .map((row) => toDomain(row));
+  },
 });

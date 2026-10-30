@@ -10,4 +10,7 @@ export interface ExchangeRepository {
     initiatorId: MemberId,
     requestedCopyId: CopyId,
   ): Promise<Exchange | null>;
+  // Every exchange naming the copy, as requested or offered copy, whatever its status. Backs the
+  // one-accepted-deal-per-copy rule on accept.
+  findReferencing(copyId: CopyId): Promise<readonly Exchange[]>;
 }

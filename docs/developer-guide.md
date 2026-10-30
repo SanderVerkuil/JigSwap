@@ -341,6 +341,8 @@ useMutation(gateway.exchange.propose)(...)
   → accept and every confirmation run the domain's settlementGuard first: refused, nothing saved,
     once the requested copy no longer belongs to the recipient or a swap's offered copy changed
     owner or can no longer be offered by the initiator
+  → accept also sets the deal's copies aside: refused (CopyReserved) while either copy is in another
+    accepted deal that could still settle (proposals set nothing aside)
   → confirmCompletion detects dual confirmation → emits ExchangeCompleted + OwnershipTransferred,
     which names expectedPreviousOwner (the owner the deal was made with)
     → SYNC handler marks the copy unavailable in the same transaction

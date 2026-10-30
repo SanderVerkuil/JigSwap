@@ -47,9 +47,10 @@ const availableFor = (copy: CopyView, kind: ExchangeKind): boolean => {
 // Transaction script: cross-aggregate read checks (dedup, copy existence/availability/ownership,
 // the initiator's exchange eligibility, recorded as `eligibleVia`)
 // then delegate the entity rules (self-exchange, term validity, state) to Exchange.propose.
-// Proposing reserves nothing: several members may ask for the same copy. What a proposal found
-// (the recipient owning the requested copy, the offered copy's owner, recorded) is checked again
-// on accept and confirm by settlement-guard, so a deal never settles once a copy changed hands.
+// Proposing reserves nothing: several members may ask for the same copy; accepting sets it aside
+// (accept-exchange). What a proposal found (the recipient owning the requested copy, the offered
+// copy's owner, recorded) is checked again on accept and confirm by settlement-guard, so a deal
+// never settles once a copy changed hands.
 export const makeProposeExchange =
   (deps: ProposeExchangeDeps): ProposeExchange =>
   async (

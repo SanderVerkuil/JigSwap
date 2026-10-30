@@ -34,6 +34,15 @@ export class InMemoryExchangeRepository implements ExchangeRepository {
     return null;
   }
 
+  async findReferencing(copyId: CopyId): Promise<readonly Exchange[]> {
+    return [...this.store.values()]
+      .filter(
+        (state) =>
+          state.requestedCopyId === copyId || state.offeredCopyId === copyId,
+      )
+      .map((state) => Exchange.rehydrate(state));
+  }
+
   // Test helper: how many exchanges are currently stored.
   size(): number {
     return this.store.size;

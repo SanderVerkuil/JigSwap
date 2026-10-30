@@ -187,8 +187,8 @@ Each context lists: **purpose**, **ubiquitous language** (and any homonym disamb
   ```
 
   Invariants: only legal transitions; kind-specific terms (loan ⇒ `returnDate`; sale ⇒ `price`);
-  **a copy may be reserved by at most one active Exchange**; `Completed` requires _both_ parties'
-  confirmation; settlement emits exactly one `OwnershipTransferred` per transferred copy.
+  **a copy may be set aside by at most one accepted Exchange that could still settle** (proposals
+  set nothing aside); `Completed` requires _both_ parties' confirmation; settlement emits exactly one `OwnershipTransferred` per transferred copy.
 
 - **Uses (ports):** `CopyAvailability` (Library), `VisibilityPolicy` (Sharing — can the recipient even
   see/transact this copy?), `Clock`.

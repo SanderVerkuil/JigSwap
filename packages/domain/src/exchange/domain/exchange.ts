@@ -238,8 +238,9 @@ export class Exchange {
   // moves only POSSESSION (the borrower holds it open-endedly, the owner keeps ownership). For a
   // swap the offered copy's ownership also moves to the recipient. Each move names the owner the
   // deal was made with (the recipient; the recorded owner of the offered copy), so Library never
-  // moves or lends a copy away from anyone else. (Cross-aggregate "a copy is reserved by at most
-  // one active exchange" is an APPLICATION-layer rule, not enforced here.)
+  // moves or lends a copy away from anyone else. (Cross-aggregate "a copy is set aside for at most
+  // one accepted exchange that could still settle" is an APPLICATION-layer rule, checked on accept
+  // by accept-exchange, not enforced here.)
   private settle(now: Date): Result<void, ExchangeError> {
     const moved = this.transition("completed", now);
     if (moved.isErr) return moved;

@@ -38,6 +38,12 @@ describe("ApplicationError factories", () => {
     expect(e.message).toBe("Offered copy copy1 is not owned by the initiator");
   });
 
+  it("copyReserved interpolates the copy id", () => {
+    const e = ApplicationError.copyReserved(copy);
+    expect(e.code).toBe("CopyReserved");
+    expect(e.message).toBe("Copy copy1 is set aside for another deal");
+  });
+
   it("duplicateProposal interpolates the copy id", () => {
     const e = ApplicationError.duplicateProposal(copy);
     expect(e.code).toBe("DuplicateProposal");

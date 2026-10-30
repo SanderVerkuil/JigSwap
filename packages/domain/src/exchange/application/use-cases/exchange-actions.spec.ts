@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { toCopyId, toExchangeId, toMemberId } from "../../../shared-kernel";
-import { EligibleVia, Exchange, MemberId } from "../../domain";
+import { EligibleVia, Exchange, ExchangeStatus, MemberId } from "../../domain";
 import { CopyView } from "../ports/out/copy.port";
 import {
   FakeCopyPort,
@@ -244,6 +244,139 @@ describe("makeAcceptExchange", () => {
       h.copies.seed(copyView(requestedId, eve));
       const result = await accept();
       expect(result.isErr && result.error.code).toBe("NotPermittedInCircle");
+    });
+  });
+
+  // One copy, one deal: accepting sets the deal's copies aside for it.
+  describe("refuses while a copy is set aside for another accepted deal", () => {
+    const otherId = toExchangeId("ex-other");
+    const elsewhereId = toCopyId("elsewhere");
+    const accept = () =>
+      makeAcceptExchange(h)({ exchangeId: exId, actingMemberId: bob });
+
+    // Another exchange on the copy, stored with the given status (accepted unless said otherwise).
+    const seedOther = async (
+      props: {
+        initiator: MemberId;
+        recipient: MemberId;
+        requestedCopyId: CopyView["id"];
+        offered?: { copyId: CopyView["id"]; ownerId: MemberId };
+      },
+      status: ExchangeStatus = "accepted",
+    ) => {
+      const result = Exchange.propose({
+        id: otherId,
+        initiator: props.initiator,
+        recipient: props.recipient,
+        requestedCopyId: props.requestedCopyId,
+        terms: props.offered
+          ? { kind: "swap", offeredCopyId: props.offered.copyId }
+          : { kind: "lend", returnDate: LATER },
+        offeredCopyOwnerId: props.offered?.ownerId,
+        now: NOW,
+      });
+      if (!result.isOk) throw new Error("setup");
+      await h.repo.save(
+        Exchange.rehydrate({ ...result.value.toState(), status }),
+      );
+    };
+
+    it("CopyReserved while the requested copy is in another accepted deal, saving nothing", async () => {
+      await seedProposed(h.repo);
+      await seedOther({
+        initiator: eve,
+        recipient: bob,
+        requestedCopyId: requestedId,
+      });
+
+      const result = await accept();
+
+      expect(result.isErr && result.error.code).toBe("CopyReserved");
+      expect(result.isErr && result.error.message).toContain(requestedId);
+      expect(h.events.published).toHaveLength(0);
+      expect((await h.repo.findById(exId))?.status).toBe("proposed");
+    });
+
+    it("CopyReserved while the requested copy is the offered copy of another accepted swap", async () => {
+      await seedProposed(h.repo);
+      h.copies.seed(copyView(elsewhereId, eve));
+      await seedOther({
+        initiator: bob,
+        recipient: eve,
+        requestedCopyId: elsewhereId,
+        offered: { copyId: requestedId, ownerId: bob },
+      });
+      const result = await accept();
+      expect(result.isErr && result.error.code).toBe("CopyReserved");
+    });
+
+    it("CopyReserved while the swap's offered copy is in another accepted deal", async () => {
+      await seedProposedSwap(h.repo, alice);
+      h.copies.seed(copyView(offeredId, alice));
+      await seedOther({
+        initiator: eve,
+        recipient: alice,
+        requestedCopyId: offeredId,
+      });
+
+      const result = await accept();
+
+      expect(result.isErr && result.error.code).toBe("CopyReserved");
+      expect(result.isErr && result.error.message).toContain(offeredId);
+    });
+
+    it.each<ExchangeStatus>([
+      "proposed",
+      "rejected",
+      "cancelled",
+      "completed",
+      "disputed",
+    ])(
+      "accepts while the other deal is %s: only an accepted one sets a copy aside",
+      async (status) => {
+        await seedProposed(h.repo);
+        await seedOther(
+          { initiator: eve, recipient: bob, requestedCopyId: requestedId },
+          status,
+        );
+        expect((await accept()).isOk).toBe(true);
+        expect((await h.repo.findById(exId))?.status).toBe("accepted");
+      },
+    );
+
+    it("accepts when the other accepted deal was made with a former owner and can no longer settle", async () => {
+      await seedProposed(h.repo);
+      await seedOther({
+        initiator: eve,
+        recipient: carol,
+        requestedCopyId: requestedId,
+      });
+      expect((await accept()).isOk).toBe(true);
+    });
+
+    it("accepts when the other accepted deal can no longer settle because of its other copy", async () => {
+      // Eve offered a housemate's copy and has left the household since: that deal is dead.
+      await seedProposed(h.repo);
+      h.copies.seed(copyView(elsewhereId, carol, []));
+      await seedOther({
+        initiator: eve,
+        recipient: bob,
+        requestedCopyId: requestedId,
+        offered: { copyId: elsewhereId, ownerId: carol },
+      });
+      expect((await accept()).isOk).toBe(true);
+    });
+
+    it("answers a moved copy before a reserved one", async () => {
+      await seedProposed(h.repo);
+      h.copies.seed(copyView(requestedId, eve));
+      await seedOther({
+        initiator: carol,
+        recipient: eve,
+        requestedCopyId: requestedId,
+      });
+      const result = await accept();
+      expect(result.isErr && result.error.code).toBe("RecipientNotOwner");
     });
   });
 });

@@ -9,6 +9,7 @@ export type ApplicationErrorCode =
   | "CopyNotFound"
   | "CopyNotReachable"
   | "CopyNotAvailable"
+  | "CopyReserved"
   | "NotPermittedInCircle"
   | "OfferedCopyNotOwned"
   | "RecipientNotOwner"
@@ -50,6 +51,14 @@ export class ApplicationError extends DomainError {
     return new ApplicationError(
       "CopyNotAvailable",
       `Copy ${copyId} is not available for ${kind}`,
+    );
+  }
+
+  // The copy is set aside for another deal: an accepted exchange that could still settle on it.
+  static copyReserved(copyId: CopyId): ApplicationError {
+    return new ApplicationError(
+      "CopyReserved",
+      `Copy ${copyId} is set aside for another deal`,
     );
   }
 
