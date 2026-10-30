@@ -3,6 +3,7 @@ import { ConvexError, type Value } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { RATE_LIMITS } from "./lib/rateLimits";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
@@ -353,5 +354,131 @@ describe("reviews only on approved definitions or your own submission (SEC-28)",
     });
     const rows = await t.run((ctx) => ctx.db.query("copyReviews").collect());
     expect(rows.map((r) => [r.userId, r.rating])).toEqual([[alice, 4]]);
+  });
+});
+
+describe("comment and review rate limits (SEC-28)", () => {
+  // Move every window of `name` back by its length, as if it had run out.
+  const expireWindow = (t: T, name: "commentPost" | "reviewPost") =>
+    t.run(async (ctx) => {
+      for (const row of await ctx.db.query("rateLimits").collect()) {
+        if (row.key.startsWith(`${name}:`)) {
+          await ctx.db.patch(row._id, {
+            windowStart: row.windowStart - RATE_LIMITS[name].windowMs,
+          });
+        }
+      }
+    });
+
+  test("the 31st comment in an hour is refused, photo and copy comments together", async () => {
+    const t = convexTest(schema, modules);
+    const { copyId, photoId } = await seed(t);
+    expect(RATE_LIMITS.commentPost).toEqual({ windowMs: 3_600_000, max: 30 });
+
+    for (let i = 0; i < 29; i++) {
+      await asAlice(t).mutation(api.library.postPhotoComment.postPhotoComment, {
+        photoId,
+        text: `comment ${i}`,
+      });
+    }
+    await asAlice(t).mutation(api.social.postPuzzleComment.postPuzzleComment, {
+      copyId,
+      text: "note 30",
+    });
+    expect(
+      await codeOf(
+        asAlice(t).mutation(api.library.postPhotoComment.postPhotoComment, {
+          photoId,
+          text: "comment 31",
+        }),
+      ),
+    ).toBe("RateLimited");
+    expect(
+      await codeOf(
+        asAlice(t).mutation(api.social.postPuzzleComment.postPuzzleComment, {
+          copyId,
+          text: "note 31",
+        }),
+      ),
+    ).toBe("RateLimited");
+    expect(await countRows(t, "photoComments")).toBe(29);
+    expect(await countRows(t, "puzzleComments")).toBe(1);
+
+    // Another member's budget is their own.
+    await asBob(t).mutation(api.library.postPhotoComment.postPhotoComment, {
+      photoId,
+      text: "from bob",
+    });
+
+    // An hour later Alice may comment again.
+    await expireWindow(t, "commentPost");
+    await asAlice(t).mutation(api.library.postPhotoComment.postPhotoComment, {
+      photoId,
+      text: "next hour",
+    });
+    expect(await countRows(t, "photoComments")).toBe(31);
+  });
+
+  test("a refused comment (too long, unpublished photo) does not spend the budget", async () => {
+    const t = convexTest(schema, modules);
+    const { photoId } = await seed(t);
+    for (let i = 0; i < 40; i++) {
+      await expect(
+        asBob(t).mutation(api.library.postPhotoComment.postPhotoComment, {
+          photoId,
+          text: "A".repeat(1001),
+        }),
+      ).rejects.toThrow();
+    }
+    await asBob(t).mutation(api.library.postPhotoComment.postPhotoComment, {
+      photoId,
+      text: "still allowed",
+    });
+  });
+
+  test("the 21st review in an hour is refused, both review forms together", async () => {
+    const t = convexTest(schema, modules);
+    const { puzzleId, copyId } = await seed(t);
+    expect(RATE_LIMITS.reviewPost).toEqual({ windowMs: 3_600_000, max: 20 });
+
+    for (let i = 0; i < 10; i++) {
+      await asBob(t).mutation(api.social.postPuzzleReview.postPuzzleReview, {
+        puzzleId,
+        rating: (i % 5) + 1,
+      });
+      await asBob(t).mutation(api.solving.submitReviews.submitReviews, {
+        puzzleId,
+        puzzle: { rating: (i % 5) + 1, text: `edit ${i}` },
+      });
+    }
+    expect(
+      await codeOf(
+        asBob(t).mutation(api.social.postPuzzleReview.postPuzzleReview, {
+          puzzleId,
+          rating: 5,
+        }),
+      ),
+    ).toBe("RateLimited");
+    expect(
+      await codeOf(
+        asBob(t).mutation(api.solving.submitReviews.submitReviews, {
+          puzzleId,
+          puzzle: { rating: 5 },
+        }),
+      ),
+    ).toBe("RateLimited");
+
+    // A copy-only rating is not a puzzle review and is not counted.
+    await asAlice(t).mutation(api.solving.submitReviews.submitReviews, {
+      puzzleId,
+      copyId,
+      copy: { rating: 4 },
+    });
+
+    await expireWindow(t, "reviewPost");
+    await asBob(t).mutation(api.social.postPuzzleReview.postPuzzleReview, {
+      puzzleId,
+      rating: 5,
+    });
   });
 });

@@ -259,6 +259,9 @@ export function CompletionFollowUpProvider({
     setSaving(true);
     // Whether the failure below came from the attach call (its RateLimited is the photo limit).
     let attaching = false;
+    // Set while the review is being saved, so a RateLimited refusal is explained as the review
+    // limit only when it came from submitReviews.
+    let savingReview = false;
     try {
       // 1. Upload in parallel — only photos without a storageId (Retry re-runs failures
       //    only; earlier successes keep their storageIds).
@@ -303,6 +306,7 @@ export function CompletionFollowUpProvider({
         !reviewDoneRef.current &&
         (puzzleDirty || copyDirty)
       ) {
+        savingReview = true;
         await submitReviews({
           puzzleId: target.puzzleId as Id<"puzzles">,
           copyId: (target.copyId ?? undefined) as
@@ -312,6 +316,7 @@ export function CompletionFollowUpProvider({
             : undefined,
           copy: copyDirty ? { rating: copyRating } : undefined,
         });
+        savingReview = false;
         reviewDoneRef.current = true;
       }
 
@@ -347,9 +352,11 @@ export function CompletionFollowUpProvider({
           ? t("tooManyPhotos")
           : code === "ReviewTextTooLong"
             ? tReview("textTooLong")
-            : retryAt !== undefined
-              ? t("photosRateLimited", { when: relativeTime(retryAt) })
-              : t("saveError"),
+            : savingReview && code === "RateLimited"
+              ? tReview("rateLimited")
+              : retryAt !== undefined
+                ? t("photosRateLimited", { when: relativeTime(retryAt) })
+                : t("saveError"),
       );
     } finally {
       setSaving(false);

@@ -2,6 +2,7 @@ import { makeUpsertPuzzleReview, toPuzzleDefinitionId } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { enforceRateLimit } from "../lib/rateLimits";
 import {
   convexPuzzleReviewRepository,
   reviewedDefinitionOf,
@@ -17,6 +18,7 @@ import { toConvexError } from "../solving/errors";
 // is required; text optional — the 1–5 validation, the text cap, whitespace normalisation and the
 // "approved definition, or your own submission" rule live in the domain use case (fed the
 // definition's facts by reviewedDefinitionOf). The author is derived from auth, never the client.
+// Each save (new or edited) counts against the member's reviewPost limit.
 export const postPuzzleReview = mutation({
   args: {
     puzzleId: v.id("puzzles"),
@@ -25,6 +27,7 @@ export const postPuzzleReview = mutation({
   },
   handler: async (ctx, args) => {
     const memberId = await requireMember(ctx);
+    await enforceRateLimit(ctx, "reviewPost", memberId);
 
     const upsertPuzzleReviewUseCase = makeUpsertPuzzleReview({
       puzzleReviews: convexPuzzleReviewRepository(ctx),

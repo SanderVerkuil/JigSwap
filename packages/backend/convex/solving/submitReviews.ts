@@ -9,6 +9,7 @@ import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { enforceRateLimit } from "../lib/rateLimits";
 import {
   convexCopyReviewRepository,
   convexPuzzleReviewRepository,
@@ -43,6 +44,11 @@ export const submitReviews = mutation({
     }
     if (args.copy !== undefined && args.copyId === undefined) {
       throw new ConvexError("A copy review requires a copyId");
+    }
+    // A puzzle review (new or edited) counts against the member's reviewPost limit, shared with
+    // social/postPuzzleReview; a copy-only star rating does not.
+    if (args.puzzle !== undefined) {
+      await enforceRateLimit(ctx, "reviewPost", memberId);
     }
 
     // Resolve the copy + permission facts once, before any write.

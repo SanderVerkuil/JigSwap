@@ -102,6 +102,12 @@ export const RATE_LIMITS = {
   // registers only when a member turns push on for a device; each new endpoint can evict an older
   // one past the per-member cap, so this also bounds that churn.
   pushSubscribe: { windowMs: HOUR, max: 10 },
+  // Comments posted, all targets together: on shared photos (library/postPhotoComment) and on
+  // the member's own copies (social/postPuzzleComment).
+  commentPost: { windowMs: HOUR, max: 30 },
+  // Puzzle reviews written or edited, all puzzles together: social/postPuzzleReview and the
+  // puzzle part of solving/submitReviews (a copy-only star rating is not counted).
+  reviewPost: { windowMs: HOUR, max: 20 },
 } as const satisfies Record<string, { windowMs: number; max: number }>;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;

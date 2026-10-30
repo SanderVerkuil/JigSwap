@@ -1404,8 +1404,12 @@ function CommentsSection({ copyId }: { copyId: string }) {
         text: trimmed,
       });
       setText("");
-    } catch {
-      toast.error(t("commentFailed"));
+    } catch (error) {
+      toast.error(
+        convexErrorCode(error) === "RateLimited"
+          ? t("commentRateLimited")
+          : t("commentFailed"),
+      );
     }
   };
 

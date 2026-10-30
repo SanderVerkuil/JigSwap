@@ -548,10 +548,13 @@ function ReviewsSection({
       });
     } catch (error) {
       // A review stored before the length cap can be longer than the field allows: say why.
+      const code = convexErrorCode(error);
       toast.error(
-        convexErrorCode(error) === "ReviewTextTooLong"
-          ? t("reviewTooLong")
-          : t("reviewFailed"),
+        code === "RateLimited"
+          ? t("reviewRateLimited")
+          : code === "ReviewTextTooLong"
+            ? t("reviewTooLong")
+            : t("reviewFailed"),
       );
     }
   };

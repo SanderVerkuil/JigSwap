@@ -375,6 +375,19 @@ describe("PhotoLightbox comment composer", () => {
     expect(count()).toContain("99");
   });
 
+  it("explains the comment rate limit", async () => {
+    stub.mutateAsync = () =>
+      Promise.reject(
+        new ConvexError({ code: "RateLimited", retryAfterMs: 60_000 }),
+      );
+    render({ gallery: approved });
+    type(composer()!, "Nice");
+    await post();
+    expect(toast.error).toHaveBeenCalledWith(
+      "You've posted a lot of comments lately. Try again later.",
+    );
+  });
+
   it("keeps the generic message for other failures", async () => {
     stub.mutateAsync = () => Promise.reject(new Error("offline"));
     render({ gallery: approved });

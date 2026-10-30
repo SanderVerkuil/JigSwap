@@ -2924,6 +2924,7 @@
       "saved": "Review opgeslagen",
       "saveError": "Kon de review niet opslaan. Probeer het opnieuw.",
       "textTooLong": "Die review is te lang (maximaal 2.000 tekens).",
+      "rateLimited": "Je hebt de laatste tijd veel reviews opgeslagen. Probeer het later opnieuw.",
       "ratingRequired": "Kies eerst een beoordeling.",
       "puzzleQuestion": "Wat vond je van deze puzzel?",
       "copyQuestion": "Wat vond je van dit exemplaar?",
@@ -4019,6 +4020,7 @@
     "post": "Plaatsen",
     "noComments": "Nog geen reacties. Wees de eerste.",
     "commentFailed": "Kon reactie niet plaatsen",
+    "commentRateLimited": "Je hebt de laatste tijd veel reacties geplaatst. Probeer het later opnieuw.",
     "photoLightbox": {
       "uploadedBy": "Geüpload door {name}",
       "takenOn": "Gemaakt op {date}",
@@ -4033,6 +4035,7 @@
       "counter": "{current} / {total}",
       "commentFailed": "Je reactie kon niet worden geplaatst. Probeer het opnieuw.",
       "commentTooLong": "Die reactie is te lang (maximaal 1.000 tekens).",
+      "commentRateLimited": "Je hebt de laatste tijd veel reacties geplaatst. Probeer het later opnieuw.",
       "setAsCover": "Als omslag instellen",
       "currentCover": "Huidige omslag",
       "coverUpdated": "Omslag bijgewerkt",
@@ -4113,6 +4116,7 @@
     "updateReview": "Beoordeling bijwerken",
     "reviewFailed": "Kon review niet plaatsen",
     "reviewTooLong": "Die review is te lang (maximaal 2.000 tekens).",
+    "reviewRateLimited": "Je hebt de laatste tijd veel reviews opgeslagen. Probeer het later opnieuw.",
     "noReviews": "Nog geen reviews. Wees de eerste.",
     "anonymousReviewer": "Anonieme gebruiker",
     "swapType": {

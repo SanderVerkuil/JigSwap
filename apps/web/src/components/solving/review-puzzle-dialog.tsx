@@ -141,10 +141,13 @@ function ReviewForm({
     } catch (error) {
       console.error("Failed to save review:", error);
       // A review stored before the length cap can be longer than the field allows: say why.
+      const code = solvingErrorCode(error);
       toast.error(
-        solvingErrorCode(error) === "ReviewTextTooLong"
-          ? t("textTooLong")
-          : t("saveError"),
+        code === "RateLimited"
+          ? t("rateLimited")
+          : code === "ReviewTextTooLong"
+            ? t("textTooLong")
+            : t("saveError"),
       );
     }
   };

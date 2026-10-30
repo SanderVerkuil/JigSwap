@@ -410,10 +410,13 @@ function PhotoComments({
       await postComment.mutateAsync({ photoId, text: trimmed });
       setText("");
     } catch (error) {
+      const code = convexErrorCode(error);
       toast.error(
-        convexErrorCode(error) === "CommentTextTooLong"
-          ? t("commentTooLong")
-          : t("commentFailed"),
+        code === "RateLimited"
+          ? t("commentRateLimited")
+          : code === "CommentTextTooLong"
+            ? t("commentTooLong")
+            : t("commentFailed"),
       );
     }
   };

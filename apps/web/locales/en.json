@@ -2924,6 +2924,7 @@
       "saved": "Review saved",
       "saveError": "Could not save the review. Please try again.",
       "textTooLong": "That review is too long (2,000 characters max).",
+      "rateLimited": "You've saved a lot of reviews lately. Try again later.",
       "ratingRequired": "Please pick a rating first.",
       "puzzleQuestion": "What did you think of this puzzle?",
       "copyQuestion": "What did you think of this copy?",
@@ -4019,6 +4020,7 @@
     "post": "Post",
     "noComments": "No comments yet. Be the first.",
     "commentFailed": "Couldn't post comment",
+    "commentRateLimited": "You've posted a lot of comments lately. Try again later.",
     "photoLightbox": {
       "uploadedBy": "Uploaded by {name}",
       "takenOn": "Taken on {date}",
@@ -4033,6 +4035,7 @@
       "counter": "{current} / {total}",
       "commentFailed": "Couldn’t post your comment. Please try again.",
       "commentTooLong": "That comment is too long (1,000 characters max).",
+      "commentRateLimited": "You've posted a lot of comments lately. Try again later.",
       "setAsCover": "Set as cover",
       "currentCover": "Current cover",
       "coverUpdated": "Cover updated",
@@ -4113,6 +4116,7 @@
     "updateReview": "Update review",
     "reviewFailed": "Couldn't post review",
     "reviewTooLong": "That review is too long (2,000 characters max).",
+    "reviewRateLimited": "You've saved a lot of reviews lately. Try again later.",
     "noReviews": "No reviews yet. Be the first.",
     "anonymousReviewer": "Anonymous user",
     "swapType": {

@@ -10,6 +10,7 @@ import {
 import { ConvexError, v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { enforceRateLimit } from "../lib/rateLimits";
 import { convexCommentRepository } from "./adapters/convexCommentRepository";
 import { commentIdGenerator } from "./adapters/idGenerators";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
@@ -21,7 +22,8 @@ import { toConvexError } from "./errors";
 // copy -> copy.puzzleId for context. Copy-scoped comments are listed only on that copy and are
 // excluded from the puzzle definition's community reviews/rating. The author is derived from auth;
 // the aggregate validates the text. Comments are PLAIN TEXT — copy-level star opinions live in
-// `copyReviews`, so no rating is accepted or written here.
+// `copyReviews`, so no rating is accepted or written here. Counts against the member's
+// commentPost limit, shared with photo comments.
 export const postPuzzleComment = mutation({
   args: {
     copyId: v.id("ownedPuzzles"),
@@ -29,6 +31,7 @@ export const postPuzzleComment = mutation({
   },
   handler: async (ctx, args) => {
     const authorId = (await requireMember(ctx)) as unknown as MemberId;
+    await enforceRateLimit(ctx, "commentPost", authorId);
 
     const copy = await ctx.db.get(args.copyId);
     if (!copy) throw new ConvexError("Copy not found");
