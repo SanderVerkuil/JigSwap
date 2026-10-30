@@ -3265,7 +3265,10 @@
       "endDate": "End date",
       "hours": "Hours",
       "minutes": "Minutes",
-      "timeLabel": "Completion time",
+      "timeQuestion": "How long did it take? (optional)",
+      "dontTrackTimes": "Don't track times",
+      "timesOff": "Solve times are off. You can turn them back on in Preferences.",
+      "timesOffError": "Could not change this setting. Please try again.",
       "notes": "Notes",
       "notesPlaceholder": "Anything memorable about this solve?",
       "submit": "Save solve",
@@ -3297,13 +3300,6 @@
       "finishTrigger": "Finish solve",
       "saveError": "Could not save the solve. Please try again.",
       "rateLimited": "You've started or logged a lot of solves today. Try again tomorrow."
-    },
-    "durationPrompt": {
-      "title": "Track how long puzzles take you?",
-      "body": "Some solvers like recording solve times; others prefer to keep it simple. You can change this anytime in Settings.",
-      "imageAlt": "Where to change duration tracking in Settings",
-      "yes": "Track duration",
-      "no": "Keep it simple"
     },
     "settings": {
       "sectionTitle": "Solving",

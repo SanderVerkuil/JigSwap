@@ -3265,7 +3265,10 @@
       "endDate": "Einddatum",
       "hours": "Uren",
       "minutes": "Minuten",
-      "timeLabel": "Oplostijd",
+      "timeQuestion": "Hoelang heb je erover gedaan? (optioneel)",
+      "dontTrackTimes": "Tijden niet bijhouden",
+      "timesOff": "Tijden bijhouden staat uit. Je zet het weer aan bij Voorkeuren.",
+      "timesOffError": "Kon deze instelling niet wijzigen. Probeer het opnieuw.",
       "notes": "Notities",
       "notesPlaceholder": "Iets memorabels over deze voltooiing?",
       "submit": "Voltooiing opslaan",
@@ -3297,13 +3300,6 @@
       "finishTrigger": "Puzzel afronden",
       "saveError": "Kon de sessie niet opslaan. Probeer het opnieuw.",
       "rateLimited": "Je hebt vandaag al veel puzzels gestart of vastgelegd. Probeer het morgen opnieuw."
-    },
-    "durationPrompt": {
-      "title": "Bijhouden hoelang puzzels duren?",
-      "body": "Sommige puzzelaars houden hun tijd graag bij, anderen houden het liever simpel. Je kunt dit altijd wijzigen in Instellingen.",
-      "imageAlt": "Waar je het bijhouden van tijd wijzigt in Instellingen",
-      "yes": "Tijd bijhouden",
-      "no": "Houd het simpel"
     },
     "settings": {
       "sectionTitle": "Puzzelen",

@@ -13,6 +13,7 @@ import { useAppActivity } from "@/components/presence/app-presence";
 import { PresenceDot } from "@/components/presence/presence-dot";
 import { usePresenceSettings } from "@/components/presence/use-presence";
 import { PrivacySafetyPanel } from "@/components/social/privacy-safety-panel";
+import { showsSolveTime } from "@/components/solving/solve-time-fields";
 import { Switch } from "@/components/ui/switch";
 import { UnreadDot } from "@/components/whats-new/badges";
 import { useWhatsNewUnreadCount } from "@/components/whats-new/use-whats-new-state";
@@ -337,7 +338,8 @@ function PreferencesPage() {
           </label>
           <Switch
             id="track-completion-duration"
-            checked={trackCompletionDuration === true}
+            // On by default: the solve dialogs ask for a time until the member turns it off.
+            checked={showsSolveTime(trackCompletionDuration)}
             onCheckedChange={(checked) => void setTrackDuration(checked)}
           />
         </div>

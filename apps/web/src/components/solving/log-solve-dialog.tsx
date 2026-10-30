@@ -2,7 +2,10 @@
 
 import { SegmentedPills } from "@/components/add-puzzle/segmented-pills";
 import { useCompletionFollowUp } from "@/components/solving/completion-follow-up-provider";
-import { useDurationPrompt } from "@/components/solving/duration-prompt-provider";
+import {
+  showsSolveTime,
+  SolveTimeFields,
+} from "@/components/solving/solve-time-fields";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -59,8 +62,11 @@ export function LogSolveDialog({
   const updateDetails = useMutation({
     mutationFn: useConvexMutation(gateway.library.updateDetails),
   });
-  const { trackCompletionDuration } = useUserSettings();
-  const { requestPrompt } = useDurationPrompt();
+  const {
+    isLoading: settingsLoading,
+    trackCompletionDuration,
+    setTrackDuration,
+  } = useUserSettings();
   const { requestFollowUp } = useCompletionFollowUp();
 
   // Both dates default to the member's local today, so "I just finished" is one tap. "Still
@@ -78,7 +84,9 @@ export function LogSolveDialog({
   // unmounts first (e.g. navigation on /completions/new), from the unmount cleanup below.
   const followUpAfterUpdateCopyRef = useRef<(() => void) | null>(null);
 
-  const showDuration = trackCompletionDuration === true;
+  // The time question is part of the dialog (not asked after saving), so a member's first solve
+  // can carry its time. It shows unless they turned solve times off.
+  const showDuration = showsSolveTime(trackCompletionDuration);
   const isFinished = status === "finished";
 
   // Unmount safety valve: onOpenChange(false) can synchronously unmount this component (e.g.
@@ -113,8 +121,6 @@ export function LogSolveDialog({
     // Combine hours+minutes into the single minutes value the domain stores; omit when blank.
     const totalMinutes =
       (Number(hours) || 0) * 60 + (Number(minutes) || 0) || undefined;
-
-    const wasFirstChoice = trackCompletionDuration === undefined;
 
     try {
       // { completionId (aggregate id), puzzleId, copyId } — the review targets for the follow-up.
@@ -151,10 +157,7 @@ export function LogSolveDialog({
           followUp();
         }
       };
-      // First-time duration question (secondary modal) still comes first when applicable; its
-      // onDone chains into the offer-or-follow-up step either way.
-      if (wasFirstChoice) requestPrompt(offerOrFollowUp);
-      else offerOrFollowUp();
+      offerOrFollowUp();
     } catch (error) {
       console.error("Failed to log solve:", error);
       toast.error(t(solveSaveErrorKey(error)));
@@ -179,6 +182,20 @@ export function LogSolveDialog({
     } finally {
       setOfferUpdateCopy(false);
       fireFollowUpAfterUpdateCopy();
+    }
+  };
+
+  // "Don't track times": stores the choice (the fields hide once the setting updates) and says
+  // where to turn it back on.
+  const optOutOfTimes = async () => {
+    try {
+      await setTrackDuration(false);
+      setHours("");
+      setMinutes("");
+      toast.success(t("timesOff"));
+    } catch (error) {
+      console.error("Failed to turn off solve times:", error);
+      toast.error(t("timesOffError"));
     }
   };
 
@@ -239,34 +256,18 @@ export function LogSolveDialog({
             </div>
 
             {isFinished && showDuration && (
-              <div className="space-y-2">
-                <Label>{t("timeLabel")}</Label>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <Input
-                      type="number"
-                      min={0}
-                      inputMode="numeric"
-                      placeholder={t("hours")}
-                      aria-label={t("hours")}
-                      value={hours}
-                      onChange={(e) => setHours(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Input
-                      type="number"
-                      min={0}
-                      max={59}
-                      inputMode="numeric"
-                      placeholder={t("minutes")}
-                      aria-label={t("minutes")}
-                      value={minutes}
-                      onChange={(e) => setMinutes(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
+              <SolveTimeFields
+                idPrefix="solve-time"
+                hours={hours}
+                minutes={minutes}
+                onHoursChange={setHours}
+                onMinutesChange={setMinutes}
+                onOptOut={
+                  !settingsLoading && trackCompletionDuration === undefined
+                    ? () => void optOutOfTimes()
+                    : undefined
+                }
+              />
             )}
 
             {isFinished && (

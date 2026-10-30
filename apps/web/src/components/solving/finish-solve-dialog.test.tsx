@@ -33,8 +33,15 @@ vi.mock("@tanstack/react-query", () => ({
   }) => ({ mutateAsync: mutationFn, isPending: false }),
 }));
 
+// The member's "track solve times" preference: undefined until they choose.
+const settings = vi.hoisted(() => ({
+  trackCompletionDuration: true as boolean | undefined,
+}));
+
 vi.mock("@/hooks/use-user-settings", () => ({
-  useUserSettings: () => ({ trackCompletionDuration: true }),
+  useUserSettings: () => ({
+    trackCompletionDuration: settings.trackCompletionDuration,
+  }),
 }));
 
 vi.mock("@/components/solving/completion-follow-up-provider", () => ({
@@ -66,6 +73,7 @@ const renderDialog = (
 
 beforeEach(() => {
   calls.finish = [];
+  settings.trackCompletionDuration = true;
 });
 afterEach(() => cleanup());
 
@@ -104,6 +112,29 @@ describe("FinishSolveDialog", () => {
       completionId: "c1",
       endDate: Date.UTC(2026, 9, 30),
     });
+  });
+
+  it("asks how long it took, with visible labels, until the member turns times off", async () => {
+    settings.trackCompletionDuration = undefined;
+    renderDialog({ puzzleTitle: "Mountain Lake" });
+    expect(
+      screen.getByRole("group", { name: "How long did it take? (optional)" }),
+    ).toBeDefined();
+    expect(screen.getByText("Hours").tagName).toBe("LABEL");
+    expect(screen.getByText("Minutes").tagName).toBe("LABEL");
+    fireEvent.change(screen.getByLabelText("Hours"), {
+      target: { value: "2" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save solve" }));
+    await vi.waitFor(() => expect(calls.finish).toHaveLength(1));
+    expect(calls.finish[0]).toMatchObject({ completionTimeMinutes: 120 });
+  });
+
+  it("asks no time once the member turned times off", () => {
+    settings.trackCompletionDuration = false;
+    renderDialog({ puzzleTitle: "Mountain Lake" });
+    expect(screen.queryByLabelText("Hours")).toBeNull();
+    expect(screen.queryByLabelText("Minutes")).toBeNull();
   });
 
   it("reads naturally in Dutch", () => {

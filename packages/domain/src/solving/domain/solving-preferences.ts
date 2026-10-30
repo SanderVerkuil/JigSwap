@@ -2,7 +2,8 @@ import { MemberId } from "./ids";
 
 // A member's Solving-context preferences. Identified by memberId (one per member). Eventless:
 // settings carry no domain events that other contexts react to. `trackCompletionDuration`
-// undefined means the member has never chosen — the UI uses that to drive the first-time prompt.
+// undefined means the member has never chosen: the UI asks for solve times unless it is false,
+// and offers to turn them off while it is undefined.
 export interface SolvingPreferencesState {
   readonly memberId: MemberId;
   readonly trackCompletionDuration?: boolean;

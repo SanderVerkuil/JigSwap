@@ -4,7 +4,6 @@ import { AppNotFound } from "@/components/NotFound";
 import { AppPresence } from "@/components/presence/app-presence";
 import { InviteRedeemer } from "@/components/social/invite-redeemer";
 import { CompletionFollowUpProvider } from "@/components/solving/completion-follow-up-provider";
-import { DurationPromptProvider } from "@/components/solving/duration-prompt-provider";
 import { TourProvider } from "@/components/tour/tour-provider";
 import { PageLoading } from "@/components/ui/loading";
 import { WhatsNewHighlight } from "@/components/whats-new/highlight-dialog";
@@ -54,21 +53,19 @@ function DashboardLayout() {
   const sidebarWide = Route.useRouteContext({ select: (c) => c.sidebar.wide });
   return (
     <DashboardShell sidebar={{ open: sidebarOpen, wide: sidebarWide }}>
-      <DurationPromptProvider>
-        <CompletionFollowUpProvider>
-          {/* Above the Outlet so a running tour survives its own page changes. */}
-          <TourProvider>
-            <InviteRedeemer />
-            {/* Online/away heartbeats for opted-in members (renders nothing). */}
-            <AppPresence />
-            {/* Offers a reload after a deploy; only signed-in pages, not the marketing or docs pages. */}
-            <AppUpdatePrompt />
-            {/* Inside both prompt providers: it yields to their prompts (surface-busy signal). */}
-            <WhatsNewHighlight />
-            <Outlet />
-          </TourProvider>
-        </CompletionFollowUpProvider>
-      </DurationPromptProvider>
+      <CompletionFollowUpProvider>
+        {/* Above the Outlet so a running tour survives its own page changes. */}
+        <TourProvider>
+          <InviteRedeemer />
+          {/* Online/away heartbeats for opted-in members (renders nothing). */}
+          <AppPresence />
+          {/* Offers a reload after a deploy; only signed-in pages, not the marketing or docs pages. */}
+          <AppUpdatePrompt />
+          {/* Inside the follow-up provider: it yields to its prompt (surface-busy signal). */}
+          <WhatsNewHighlight />
+          <Outlet />
+        </TourProvider>
+      </CompletionFollowUpProvider>
     </DashboardShell>
   );
 }

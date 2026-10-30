@@ -25,10 +25,6 @@ vi.mock("@/hooks/use-user-settings", () => ({
   useUserSettings: () => ({ trackCompletionDuration: true }),
 }));
 
-vi.mock("@/components/solving/duration-prompt-provider", () => ({
-  useDurationPrompt: () => ({ requestPrompt: vi.fn() }),
-}));
-
 vi.mock("@/components/solving/completion-follow-up-provider", () => ({
   useCompletionFollowUp: () => ({ requestFollowUp: vi.fn() }),
 }));

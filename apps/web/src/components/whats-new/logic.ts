@@ -72,7 +72,7 @@ export function canOpenHighlight(state: {
   pathname: string;
   shownThisSession: boolean;
   hasCandidate: boolean;
-  /** A task-flow prompt (duration prompt, completion follow-up) or a tour is active. */
+  /** A task-flow prompt (e.g. the completion follow-up) or a tour is active. */
   surfaceBusy: boolean;
   /** Any Radix dialog or sheet is open. */
   dialogOpen: boolean;

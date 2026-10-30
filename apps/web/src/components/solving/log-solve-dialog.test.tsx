@@ -13,6 +13,12 @@ import { LogSolveDialog } from "./log-solve-dialog";
 const calls = vi.hoisted(() => ({
   record: [] as Array<Record<string, unknown>>,
   followUp: [] as unknown[],
+  trackDuration: [] as boolean[],
+}));
+
+// The member's "track solve times" preference: undefined until they choose.
+const settings = vi.hoisted(() => ({
+  trackCompletionDuration: true as boolean | undefined,
 }));
 
 vi.mock("@/gateway", () => ({
@@ -38,7 +44,13 @@ vi.mock("@tanstack/react-query", () => ({
 }));
 
 vi.mock("@/hooks/use-user-settings", () => ({
-  useUserSettings: () => ({ trackCompletionDuration: true }),
+  useUserSettings: () => ({
+    isLoading: false,
+    trackCompletionDuration: settings.trackCompletionDuration,
+    setTrackDuration: async (enabled: boolean) => {
+      calls.trackDuration.push(enabled);
+    },
+  }),
 }));
 
 vi.mock("@/components/solving/completion-follow-up-provider", () => ({
@@ -68,6 +80,8 @@ const renderDialog = (locale: "en" | "nl" = "en") =>
 beforeEach(() => {
   calls.record = [];
   calls.followUp = [];
+  calls.trackDuration = [];
+  settings.trackCompletionDuration = true;
 });
 afterEach(() => cleanup());
 
@@ -140,5 +154,85 @@ describe("LogSolveDialog: finished or still solving", () => {
     ).toBeDefined();
     expect(screen.getByRole("radio", { name: "Afgerond" })).toBeDefined();
     expect(screen.getByRole("radio", { name: "Nog bezig" })).toBeDefined();
+  });
+});
+
+describe("LogSolveDialog: solve time", () => {
+  it("asks how long it took right away for a member who hasn't chosen yet", () => {
+    settings.trackCompletionDuration = undefined;
+    renderDialog();
+    const group = screen.getByRole("group", {
+      name: "How long did it take? (optional)",
+    });
+    expect(group).toBeDefined();
+    // Visible labels, not placeholders.
+    expect(screen.getByText("Hours").tagName).toBe("LABEL");
+    expect(screen.getByText("Minutes").tagName).toBe("LABEL");
+    expect(screen.getByLabelText("Hours").getAttribute("placeholder")).toBe(
+      null,
+    );
+    expect(
+      screen.getByRole("button", { name: "Don't track times" }),
+    ).toBeDefined();
+  });
+
+  it("records the first solve's time and goes straight to the follow-up", async () => {
+    settings.trackCompletionDuration = undefined;
+    renderDialog();
+    fireEvent.change(screen.getByLabelText("Hours"), {
+      target: { value: "1" },
+    });
+    fireEvent.change(screen.getByLabelText("Minutes"), {
+      target: { value: "20" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save solve" }));
+    await vi.waitFor(() => expect(calls.record).toHaveLength(1));
+    expect(calls.record[0]).toMatchObject({ completionTimeMinutes: 80 });
+    // No "track times?" question after saving: the follow-up opens directly.
+    await vi.waitFor(() => expect(calls.followUp).toHaveLength(1));
+    expect(screen.queryByText("Track how long puzzles take you?")).toBeNull();
+  });
+
+  it("lets a member opt out of solve times from the dialog", () => {
+    settings.trackCompletionDuration = undefined;
+    renderDialog();
+    fireEvent.click(screen.getByRole("button", { name: "Don't track times" }));
+    expect(calls.trackDuration).toEqual([false]);
+  });
+
+  it("keeps the time fields without the opt-out once times are on", () => {
+    settings.trackCompletionDuration = true;
+    renderDialog();
+    expect(screen.getByLabelText("Hours")).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Don't track times" })).toBe(
+      null,
+    );
+  });
+
+  it("asks no time once the member turned times off", async () => {
+    settings.trackCompletionDuration = false;
+    renderDialog();
+    expect(
+      screen.queryByRole("group", { name: "How long did it take? (optional)" }),
+    ).toBeNull();
+    expect(screen.queryByLabelText("Hours")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Save solve" }));
+    await vi.waitFor(() => expect(calls.record).toHaveLength(1));
+    expect(calls.record[0]).toMatchObject({ completionTimeMinutes: undefined });
+  });
+
+  it("asks it in Dutch", () => {
+    settings.trackCompletionDuration = undefined;
+    renderDialog("nl");
+    expect(
+      screen.getByRole("group", {
+        name: "Hoelang heb je erover gedaan? (optioneel)",
+      }),
+    ).toBeDefined();
+    expect(screen.getByLabelText("Uren")).toBeDefined();
+    expect(screen.getByLabelText("Minuten")).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: "Tijden niet bijhouden" }),
+    ).toBeDefined();
   });
 });

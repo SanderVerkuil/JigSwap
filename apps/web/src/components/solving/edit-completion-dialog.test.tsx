@@ -74,6 +74,15 @@ describe("EditCompletionDialog", () => {
     expect((screen.getByLabelText("Hours") as HTMLInputElement).value).toBe(
       "3",
     );
+    expect((screen.getByLabelText("Minutes") as HTMLInputElement).value).toBe(
+      "20",
+    );
+    // Hours and minutes are labelled visibly, not by placeholder alone.
+    expect(
+      screen.getByRole("group", { name: "How long did it take? (optional)" }),
+    ).toBeDefined();
+    expect(screen.getByText("Hours").tagName).toBe("LABEL");
+    expect(screen.getByText("Minutes").tagName).toBe("LABEL");
   });
 
   it("hides the end date and time of a solve still in progress", async () => {

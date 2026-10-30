@@ -1546,7 +1546,8 @@ export default defineSchema({
   }).index("by_member", ["memberId"]),
 
   // Solving-context member preferences (federated settings: each context owns its settings).
-  // Keyed by member; `trackCompletionDuration` undefined = never asked → first-time prompt.
+  // Keyed by member; `trackCompletionDuration` undefined = never chosen: the solve dialogs still
+  // ask for a time (only `false` hides it) and offer to turn it off.
   solvingPreferences: defineTable({
     memberId: v.id("users"),
     trackCompletionDuration: v.optional(v.boolean()),
