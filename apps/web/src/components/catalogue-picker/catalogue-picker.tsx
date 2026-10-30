@@ -10,13 +10,13 @@ import { useTranslations } from "use-intl";
 import { addErrorKey } from "./add-error";
 import { CataloguePickerView } from "./catalogue-picker-view";
 import {
+  acquireInChunks,
   buildPickerRows,
   pickerSearchQuery,
   pickerSearchResults,
   removeLastPick,
   removePick,
   setPickForTrade,
-  toAcquireItems,
   togglePick,
   type Pick,
 } from "./selection";
@@ -47,9 +47,11 @@ function useCatalogueSearch(term: string) {
   };
 }
 
-// The multi-select catalogue picker: search, pick many, optionally offer each for swap, and add
-// them all with one `library.acquireCopies` call (all or nothing). `returnTo` is where
-// "Register" comes back to after the full add form.
+// The multi-select catalogue picker: search, pick many (up to PICK_LIMIT), optionally offer each
+// for swap, and add them with `library.acquireCopies` calls of at most 25 each, one after the
+// other. Each call is all or nothing; if one is refused, the picks already added leave the tray
+// and the rest stay picked to retry. `returnTo` is where "Register" comes back to after the full
+// add form.
 export function CataloguePicker({
   returnTo,
   onAdded,
@@ -98,12 +100,26 @@ export function CataloguePicker({
 
   const acquireCopies = useConvexMutation(gateway.library.acquireCopies);
   const submit = useMutation({
-    mutationFn: () => acquireCopies({ items: toAcquireItems(picks) }),
-    onSuccess: ({ copyIds }) => {
-      toast.success(t("added", { count: copyIds.length }));
-      setPicks([]);
-      setTerm("");
-      onAdded?.(copyIds);
+    mutationFn: (tray: Pick[]) =>
+      acquireInChunks(tray, (items) => acquireCopies({ items })),
+    onSuccess: ({ copyIds, added, remaining, error }, tray) => {
+      // Only the picks that were added leave the tray (anything picked meanwhile stays).
+      const addedIds = new Set(added);
+      setPicks((current) =>
+        current.filter((p) => !addedIds.has(p.definitionId)),
+      );
+      if (remaining.length === 0) {
+        toast.success(t("added", { count: copyIds.length }));
+        setTerm("");
+        onAdded?.(copyIds);
+        return;
+      }
+      console.error("Batch add failed:", error);
+      toast.error(
+        copyIds.length === 0
+          ? t("addFailed")
+          : t("addedPartly", { added: copyIds.length, total: tray.length }),
+      );
     },
     onError: (error) => {
       console.error("Batch add failed:", error);
@@ -127,7 +143,7 @@ export function CataloguePicker({
       onForTradeChange={(id, forTrade) =>
         setPicks((current) => setPickForTrade(current, id, forTrade))
       }
-      onSubmit={() => submit.mutate()}
+      onSubmit={() => submit.mutate(picks)}
     />
   );
 }

@@ -3,8 +3,11 @@
 
 import { catalogueSearchKey, detectBarcode } from "@/lib/catalogue-search";
 
+// The most puzzles the tray holds. A submit sends them in chunks of ACQUIRE_BATCH_SIZE.
+export const PICK_LIMIT = 100;
+
 // Mirrors the backend's MAX_ACQUIRE_BATCH: one `library.acquireCopies` call takes at most 25.
-export const PICK_LIMIT = 25;
+export const ACQUIRE_BATCH_SIZE = 25;
 
 export interface PickerRow {
   definitionId: string;
@@ -68,6 +71,53 @@ export const toAcquireItems = (picks: readonly Pick[]) =>
     puzzleDefinitionId: p.definitionId,
     forTrade: p.forTrade,
   }));
+
+// The tray in `library.acquireCopies`-sized chunks, in pick order.
+export const chunkPicks = (
+  picks: readonly Pick[],
+  size = ACQUIRE_BATCH_SIZE,
+): Pick[][] => {
+  const chunks: Pick[][] = [];
+  for (let i = 0; i < picks.length; i += size) {
+    chunks.push(picks.slice(i, i + size));
+  }
+  return chunks;
+};
+
+export interface ChunkedAcquireResult {
+  // The copies created, in pick order.
+  copyIds: string[];
+  // The definition ids of the picks that were added.
+  added: string[];
+  // The picks not added: the failing chunk and every one after it.
+  remaining: Pick[];
+  // Why the failing chunk was refused, when one was.
+  error?: unknown;
+}
+
+// Add the tray one chunk at a time (each chunk is all or nothing on the server). A refused chunk
+// stops the run: the chunks before it stay added and it, with everything after, is returned as
+// `remaining` so the member can retry just those. Never throws.
+export const acquireInChunks = async (
+  picks: readonly Pick[],
+  acquire: (
+    items: ReturnType<typeof toAcquireItems>,
+  ) => Promise<{ copyIds: string[] }>,
+): Promise<ChunkedAcquireResult> => {
+  const chunks = chunkPicks(picks);
+  const copyIds: string[] = [];
+  const added: string[] = [];
+  for (const [index, chunk] of chunks.entries()) {
+    try {
+      const result = await acquire(toAcquireItems(chunk));
+      copyIds.push(...result.copyIds);
+      added.push(...chunk.map((p) => p.definitionId));
+    } catch (error) {
+      return { copyIds, added, remaining: chunks.slice(index).flat(), error };
+    }
+  }
+  return { copyIds, added, remaining: [] };
+};
 
 interface SourceRow {
   aggregateId?: string;

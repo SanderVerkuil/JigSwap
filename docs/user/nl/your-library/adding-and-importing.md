@@ -67,8 +67,10 @@ Gebruik dit om je plank snel te vullen, bijvoorbeeld als je net lid bent.
    keuzes niet aangeboden om te ruilen of uit te lenen.
 5. Klik op **N puzzels toevoegen** (bijvoorbeeld **4 puzzels toevoegen**).
 
-Je kunt maximaal 25 puzzels tegelijk kiezen. Ze worden allemaal toegevoegd, of,
-als er iets misgaat, geen enkele, zodat je het veilig opnieuw kunt proberen.
+Je kunt maximaal 100 puzzels tegelijk kiezen. Ze worden in groepjes van 25
+toegevoegd. Gaat er iets mis, dan blijven de groepjes die al zijn toegevoegd op
+je plank staan en blijft de rest gekozen, zodat je het veilig opnieuw kunt
+proberen.
 
 > **Niet gevonden?** Klik op **Een nieuwe puzzel registreren** (of op je
 > zoekterm gevolgd door **registreren**) om hem aan te maken. Als je klaar bent,

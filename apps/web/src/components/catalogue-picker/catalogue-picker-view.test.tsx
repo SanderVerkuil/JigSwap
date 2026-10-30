@@ -239,7 +239,7 @@ describe("CataloguePickerView", () => {
       attr(byLabel(buttons(els), "Remove Puzzle p0")[0], "disabled"),
     ).toBeUndefined();
     expect(
-      els.some((el) => text(el) === "You can add up to 25 puzzles at once."),
+      els.some((el) => text(el) === "You can add up to 100 puzzles at once."),
     ).toBe(true);
   });
 

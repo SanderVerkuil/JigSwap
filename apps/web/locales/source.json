@@ -1921,6 +1921,7 @@
     "limitReached": "You can add up to {max} puzzles at once.",
     "submit": "{count, plural, one {Add # puzzle} other {Add # puzzles}}",
     "added": "{count, plural, one {# puzzle added to your shelf} other {# puzzles added to your shelf}}",
+    "addedPartly": "Added {added} of {total} puzzles. The rest are still picked, so you can try again.",
     "addFailed": "Couldn't add these puzzles, so nothing was added. Please try again.",
     "rateLimited": "You've added a lot of puzzles today. Try again tomorrow."
   },

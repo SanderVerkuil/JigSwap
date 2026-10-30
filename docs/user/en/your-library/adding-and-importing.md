@@ -62,8 +62,9 @@ Use this to fill your shelf quickly, for example when you first join.
    **Available to swap**. Picks aren't offered for swap or loan unless you do.
 5. Click **Add N puzzles** (for example, **Add 4 puzzles**).
 
-You can pick up to 25 puzzles at a time. Either all of them are added, or, if
-something goes wrong, none are, so you can safely try again.
+You can pick up to 100 puzzles at a time. They're added in groups of 25. If
+something goes wrong, the groups already added stay on your shelf and the rest
+stay picked, so you can safely try again.
 
 > **Can't find it?** Click **Register a new puzzle** (or **Register** followed
 > by your search) to create it. When you're done, you return to the picker,

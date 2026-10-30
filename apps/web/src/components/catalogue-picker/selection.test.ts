@@ -1,6 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
+  ACQUIRE_BATCH_SIZE,
+  acquireInChunks,
   buildPickerRows,
+  chunkPicks,
   PICK_LIMIT,
   pickerSearchQuery,
   pickerSearchResults,
@@ -39,7 +42,7 @@ describe("togglePick", () => {
 
   it("does not add past the limit, but still removes at the limit", () => {
     const full = Array.from({ length: PICK_LIMIT }, (_, i) => pick(`p${i}`));
-    expect(PICK_LIMIT).toBe(25);
+    expect(PICK_LIMIT).toBe(100);
     expect(togglePick(full, pick("extra"))).toBe(full);
     expect(togglePick(full, pick("p3"))).toHaveLength(PICK_LIMIT - 1);
   });
@@ -74,6 +77,83 @@ describe("toAcquireItems", () => {
       { puzzleDefinitionId: "a", forTrade: false },
       { puzzleDefinitionId: "b", forTrade: true },
     ]);
+  });
+});
+
+describe("chunkPicks", () => {
+  const picks = (n: number) =>
+    Array.from({ length: n }, (_, i) => pick(`p${i}`));
+
+  it("splits the tray into acquireCopies-sized chunks, in order", () => {
+    expect(ACQUIRE_BATCH_SIZE).toBe(25);
+    expect(chunkPicks([])).toEqual([]);
+    expect(chunkPicks(picks(25)).map((c) => c.length)).toEqual([25]);
+    expect(chunkPicks(picks(26)).map((c) => c.length)).toEqual([25, 1]);
+    expect(chunkPicks(picks(PICK_LIMIT)).map((c) => c.length)).toEqual([
+      25, 25, 25, 25,
+    ]);
+    expect(chunkPicks(picks(60)).flat()).toEqual(picks(60));
+  });
+});
+
+describe("acquireInChunks", () => {
+  const picks = (n: number) =>
+    Array.from({ length: n }, (_, i) => pick(`p${i}`, i % 2 === 0));
+  const copiesFor = (items: { puzzleDefinitionId: string }[]) => ({
+    copyIds: items.map((item) => `copy_${item.puzzleDefinitionId}`),
+  });
+
+  it("sends one chunk at a time and collects every copy id", async () => {
+    let inFlight = 0;
+    const acquire = vi.fn(async (items: ReturnType<typeof toAcquireItems>) => {
+      inFlight += 1;
+      expect(inFlight).toBe(1);
+      await Promise.resolve();
+      inFlight -= 1;
+      return copiesFor(items);
+    });
+    const result = await acquireInChunks(picks(30), acquire);
+    expect(acquire.mock.calls.map(([items]) => items.length)).toEqual([25, 5]);
+    expect(acquire.mock.calls[0][0][0]).toEqual({
+      puzzleDefinitionId: "p0",
+      forTrade: true,
+    });
+    expect(result.copyIds).toEqual(
+      picks(30).map((p) => `copy_${p.definitionId}`),
+    );
+    expect(result.added).toEqual(picks(30).map((p) => p.definitionId));
+    expect(result.remaining).toEqual([]);
+    expect(result.error).toBeUndefined();
+  });
+
+  it("stops at a failing chunk: earlier chunks stay added, the rest are returned", async () => {
+    const failure = new Error("rate limited");
+    const acquire = vi
+      .fn<
+        (
+          items: ReturnType<typeof toAcquireItems>,
+        ) => Promise<{ copyIds: string[] }>
+      >()
+      .mockImplementationOnce(async (items) => copiesFor(items))
+      .mockRejectedValueOnce(failure);
+    const all = picks(60);
+    const result = await acquireInChunks(all, acquire);
+    expect(acquire).toHaveBeenCalledTimes(2);
+    expect(result.copyIds).toHaveLength(25);
+    expect(result.added).toEqual(all.slice(0, 25).map((p) => p.definitionId));
+    expect(result.remaining).toEqual(all.slice(25));
+    expect(result.error).toBe(failure);
+  });
+
+  it("adds nothing when the first chunk fails", async () => {
+    const acquire = vi.fn(async () => {
+      throw new Error("offline");
+    });
+    const all = picks(3);
+    const result = await acquireInChunks(all, acquire);
+    expect(result.copyIds).toEqual([]);
+    expect(result.added).toEqual([]);
+    expect(result.remaining).toEqual(all);
   });
 });
 
