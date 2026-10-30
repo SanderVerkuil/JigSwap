@@ -1456,6 +1456,7 @@
         "all": "Alles",
         "done": "{current}/{target} gedaan",
         "empty": "Nog geen doelen — stel jezelf een doel en zie de ring vollopen. 🧩",
+        "noCurrent": "Geen lopende doelen — stel een nieuw doel en zie de ring vollopen. 🧩",
         "setGoal": "Stel een Doel"
       },
       "latest": {
@@ -3362,9 +3363,29 @@
       "progress": "{current} van {target} voltooiingen",
       "active": "Actief",
       "achieved": "Behaald",
-      "dueBy": "Vóór {date}",
       "activeCount": "{count} actief",
-      "progressShort": "{current}/{target} voltooid"
+      "progressShort": "{current}/{target} voltooid",
+      "periodRange": "{from} – {to}",
+      "periodFrom": "Vanaf {from}",
+      "ended": "Afgelopen",
+      "archived": "Gearchiveerd",
+      "past": "Eerdere doelen",
+      "goalCount": "{count, plural, one {# doel} other {# doelen}}",
+      "showPast": "Eerdere doelen tonen",
+      "hidePast": "Eerdere doelen verbergen",
+      "menuLabel": "Acties voor {title}",
+      "edit": "Bewerken",
+      "archive": "Archiveren",
+      "restore": "Terugzetten",
+      "delete": "Verwijderen",
+      "archiveDone": "Doel gearchiveerd",
+      "restoreDone": "Doel teruggezet",
+      "deleteDone": "Doel verwijderd",
+      "archiveError": "Kon het doel niet archiveren. Probeer het opnieuw.",
+      "restoreError": "Kon het doel niet terugzetten. Probeer het opnieuw.",
+      "deleteError": "Kon het doel niet verwijderen. Probeer het opnieuw.",
+      "deleteTitle": "“{title}” verwijderen?",
+      "deleteBody": "Het doel en de voortgang worden definitief verwijderd. Je voltooiingen blijven bewaard. Wil je het alleen uit het zicht hebben? Archiveer het dan."
     }
   },
   "insights": {

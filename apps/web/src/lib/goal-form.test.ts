@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  currentGoals,
   defaultGoalPeriod,
   goalFormErrorsFromCode,
   goalFormValues,
+  goalStatus,
   minGoalEndDate,
   parseTarget,
   validateGoalForm,
@@ -73,6 +75,17 @@ describe.each(ZONES)("goal dates in %s", (zone) => {
     });
   });
 
+  it("keeps a goal active through the whole of its last day, then ends it", () => {
+    const goal = {
+      isActive: true,
+      isAchieved: false,
+      targetDate: Date.UTC(2026, 11, 31),
+    };
+    expect(goalStatus(goal, new Date(2026, 11, 31, 0, 5))).toBe("active");
+    expect(goalStatus(goal, new Date(2026, 11, 31, 23, 55))).toBe("active");
+    expect(goalStatus(goal, new Date(2027, 0, 1, 0, 5))).toBe("ended");
+  });
+
   it("refuses an end date before today when creating, but allows today", () => {
     const now = new Date(2026, 9, 30, 0, 30);
     expect(
@@ -115,6 +128,48 @@ describe.each(ZONES)("goal dates in %s", (zone) => {
     expect(minGoalEndDate(valid({ from: "" }), "create", now)).toBe(
       "2026-10-30",
     );
+  });
+});
+
+describe("goalStatus", () => {
+  const now = new Date(2026, 9, 30, 12);
+  const past = Date.UTC(2026, 0, 31);
+
+  it("is active while the goal is live, unmet and not past its end", () => {
+    expect(goalStatus({ isActive: true, isAchieved: false }, now)).toBe(
+      "active",
+    );
+    expect(
+      goalStatus(
+        {
+          isActive: true,
+          isAchieved: false,
+          targetDate: Date.UTC(2026, 11, 31),
+        },
+        now,
+      ),
+    ).toBe("active");
+  });
+
+  it("is ended once the last day has passed without reaching the target", () => {
+    expect(
+      goalStatus({ isActive: true, isAchieved: false, targetDate: past }, now),
+    ).toBe("ended");
+  });
+
+  it("stays achieved after its end date: reaching it is what counts", () => {
+    expect(
+      goalStatus({ isActive: true, isAchieved: true, targetDate: past }, now),
+    ).toBe("achieved");
+  });
+
+  it("is archived whenever the member archived it, achieved or not", () => {
+    expect(goalStatus({ isActive: false, isAchieved: true }, now)).toBe(
+      "archived",
+    );
+    expect(
+      goalStatus({ isActive: false, isAchieved: false, targetDate: past }, now),
+    ).toBe("archived");
   });
 });
 
@@ -262,5 +317,40 @@ describe("goalFormErrorsFromCode", () => {
   it("leaves anything else to a generic message", () => {
     expect(goalFormErrorsFromCode("NotGoalOwner")).toBeUndefined();
     expect(goalFormErrorsFromCode(undefined)).toBeUndefined();
+  });
+});
+
+describe("currentGoals", () => {
+  const now = new Date(2026, 9, 30, 12);
+  const goal = (
+    id: string,
+    over: { isActive?: boolean; isAchieved?: boolean; targetDate?: number },
+  ) => ({ id, isActive: true, isAchieved: false, ...over });
+
+  it("leads with the goals still being chased, then achieved ones, never ended or archived ones", () => {
+    const goals = [
+      goal("achieved", { isAchieved: true }),
+      goal("archived", { isActive: false }),
+      goal("ended", { targetDate: Date.UTC(2026, 0, 31) }),
+      goal("chasing", { targetDate: Date.UTC(2026, 11, 31) }),
+      goal("open", {}),
+    ];
+    expect(currentGoals(goals, now).map((g) => g.id)).toEqual([
+      "chasing",
+      "open",
+      "achieved",
+    ]);
+  });
+
+  it("is empty when every goal is in the past", () => {
+    expect(
+      currentGoals(
+        [
+          goal("archived", { isActive: false, isAchieved: true }),
+          goal("ended", { targetDate: Date.UTC(2026, 0, 31) }),
+        ],
+        now,
+      ),
+    ).toEqual([]);
   });
 });

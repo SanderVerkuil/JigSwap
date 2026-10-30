@@ -1456,6 +1456,7 @@
         "all": "All",
         "done": "{current}/{target} done",
         "empty": "No goals yet — set yourself a target and watch the ring fill up. 🧩",
+        "noCurrent": "No current goals — set a new target and watch the ring fill up. 🧩",
         "setGoal": "Set a Goal"
       },
       "latest": {
@@ -3362,9 +3363,29 @@
       "progress": "{current} of {target} completions",
       "active": "Active",
       "achieved": "Achieved",
-      "dueBy": "Due by {date}",
       "activeCount": "{count} active",
-      "progressShort": "{current}/{target} completions"
+      "progressShort": "{current}/{target} completions",
+      "periodRange": "{from} – {to}",
+      "periodFrom": "From {from}",
+      "ended": "Ended",
+      "archived": "Archived",
+      "past": "Past goals",
+      "goalCount": "{count, plural, one {# goal} other {# goals}}",
+      "showPast": "Show past goals",
+      "hidePast": "Hide past goals",
+      "menuLabel": "Actions for {title}",
+      "edit": "Edit",
+      "archive": "Archive",
+      "restore": "Restore",
+      "delete": "Delete",
+      "archiveDone": "Goal archived",
+      "restoreDone": "Goal restored",
+      "deleteDone": "Goal deleted",
+      "archiveError": "Could not archive the goal. Please try again.",
+      "restoreError": "Could not restore the goal. Please try again.",
+      "deleteError": "Could not delete the goal. Please try again.",
+      "deleteTitle": "Delete “{title}”?",
+      "deleteBody": "The goal and its progress are removed for good. Your solves stay in your log. To only put it out of the way, archive it instead."
     }
   },
   "insights": {

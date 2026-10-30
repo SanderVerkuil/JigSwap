@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
 import { useRelativeTime } from "@/hooks/use-relative-time";
+import { currentGoals } from "@/lib/goal-form";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
@@ -231,9 +232,7 @@ export function BriefingHero() {
     (e) => e.userRole === "owner" && e.status === "proposed",
   );
 
-  const activeGoal =
-    (goals ?? []).find((g) => g.isActive && !g.isAchieved) ??
-    (goals ?? []).find((g) => g.isActive);
+  const activeGoal = currentGoals(goals ?? [])[0];
   const goal =
     activeGoal && activeGoal.targetCompletions > 0
       ? {

@@ -1,10 +1,40 @@
 import { dateInputToMs, localTodayInput, msToDateInput } from "./date-input";
 
-// The goal form's rules, kept pure so they can be tested: what the form accepts and what it
-// sends. Goal dates follow lib/date-input: a calendar date stored as
+// The goals page's rules, kept pure so they can be tested: what the form accepts, what it sends,
+// and which section a goal belongs in. Goal dates follow lib/date-input: a calendar date stored as
 // UTC midnight, with "today" taken from the member's local calendar. The server re-checks the
 // target and the period (solving/domain/goal.ts); these rules only make the form say why it
 // refuses before anything is sent.
+
+const DAY_MS = 86_400_000;
+
+// Where a goal sits on the goals page. "ended" = its last day has passed without reaching the
+// target; reaching the target always wins over ending, and archiving wins over both.
+export type GoalStatus = "active" | "achieved" | "ended" | "archived";
+
+export function goalStatus(
+  goal: { isActive: boolean; isAchieved: boolean; targetDate?: number },
+  now: Date = new Date(),
+): GoalStatus {
+  if (!goal.isActive) return "archived";
+  if (goal.isAchieved) return "achieved";
+  if (goal.targetDate !== undefined) {
+    const lastDay = Math.floor(goal.targetDate / DAY_MS) * DAY_MS;
+    const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    if (lastDay < today) return "ended";
+  }
+  return "active";
+}
+
+// The goals worth showing as "your goal" outside the goals page (the dashboard ring and briefing):
+// the ones still being chased first, then achieved ones; ended and archived goals never.
+export function currentGoals<
+  G extends { isActive: boolean; isAchieved: boolean; targetDate?: number },
+>(goals: readonly G[], now: Date = new Date()): G[] {
+  const chasing = goals.filter((goal) => goalStatus(goal, now) === "active");
+  const achieved = goals.filter((goal) => goalStatus(goal, now) === "achieved");
+  return [...chasing, ...achieved];
+}
 
 // A new goal's period: this calendar year, so "10 this year" means what it says.
 export function defaultGoalPeriod(now: Date = new Date()): {
