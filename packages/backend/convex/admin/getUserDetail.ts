@@ -14,8 +14,9 @@ import { toAuditEntry } from "./auditEntry";
 // trail split into actions they PERFORMED as admin (by_actor) and actions
 // TARGETING them (receivedActions). Admin-only, gated exactly like listUsers.
 // Every list/count is an indexed, bounded read: counts stop at
-// ADMIN_USER_STATS_CAP + 1, lists are capped, newest first (no pagination in v1). The profile's `role` is the
-// DISPLAY-ONLY Clerk mirror — authorization never reads it.
+// ADMIN_USER_STATS_CAP + 1, lists are capped, newest first (no pagination in
+// v1). The profile's `role` is the DISPLAY-ONLY Clerk mirror — authorization
+// never reads it.
 
 const SUBMISSIONS_CAP = 50;
 const AUDIT_CAP = 20;

@@ -223,8 +223,9 @@ export const NOTIFYING_EVENT_NAMES: readonly string[] = [
 ];
 
 // Map a recorded event to zero or more NotifyMember commands. Unmapped events are a no-op (most
-// events have no member-facing notification yet); add a new case's name to NOTIFYING_EVENT_NAMES. The `payload` carries the event's data fields
-// (branded id strings + epoch-millis dates) as serialised by recordAndSchedule.
+// events have no member-facing notification yet); add a new case's name to NOTIFYING_EVENT_NAMES.
+// The `payload` carries the event's data fields (branded id strings + epoch-millis dates) as
+// serialised by recordAndSchedule.
 const translate = async (
   ctx: MutationCtx,
   event: Doc<"domainEvents">,
