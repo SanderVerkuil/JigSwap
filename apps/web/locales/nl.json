@@ -5319,6 +5319,32 @@
       }
     }
   },
+  "ownContent": {
+    "comment": {
+      "action": "Reactie verwijderen",
+      "title": "Deze reactie verwijderen?",
+      "body": "De reactie verdwijnt voor iedereen. Dit kun je niet ongedaan maken.",
+      "confirm": "Verwijderen",
+      "done": "Reactie verwijderd",
+      "error": "De reactie kon niet worden verwijderd. Probeer het opnieuw."
+    },
+    "review": {
+      "action": "Mijn review verwijderen",
+      "title": "Je review verwijderen?",
+      "body": "Je sterren en tekst verdwijnen bij deze puzzel, hier en in de openbare puzzelcatalogus. Je kunt later een nieuwe review schrijven.",
+      "confirm": "Review verwijderen",
+      "done": "Review verwijderd",
+      "error": "Je review kon niet worden verwijderd. Probeer het opnieuw."
+    },
+    "reviewComment": {
+      "action": "Opmerking verwijderen",
+      "title": "Je opmerking verwijderen?",
+      "body": "Je geschreven opmerking verdwijnt uit deze review. Je sterren blijven staan, want die tellen mee voor de reputatie van je ruilpartner.",
+      "confirm": "Opmerking verwijderen",
+      "done": "Opmerking verwijderd",
+      "error": "Je opmerking kon niet worden verwijderd. Probeer het opnieuw."
+    }
+  },
   "presence": {
     "online": "Online",
     "away": "Afwezig",

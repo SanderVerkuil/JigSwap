@@ -22,6 +22,7 @@ import { EmptyState } from "@/components/library/empty-state";
 import { MemberInitial } from "@/components/members/member-initial";
 import { copyMessageRoute } from "@/components/messaging/copy-conversation";
 import { PendingPhotoPlaceholder } from "@/components/photos/pending-photo-placeholder";
+import { DeleteOwnContentButton } from "@/components/social/delete-own-content-button";
 import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
 import { StartSolveDialog } from "@/components/solving/start-solve-dialog";
@@ -1514,6 +1515,14 @@ function CommentRow({
           {comment.text}
         </p>
       </div>
+      {comment.canDelete && (
+        <DeleteOwnContentButton
+          kind="comment"
+          mutation={gateway.social.deletePuzzleComment}
+          args={{ commentId: comment.id }}
+          iconOnly
+        />
+      )}
     </div>
   );
 }

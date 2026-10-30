@@ -5319,6 +5319,32 @@
       }
     }
   },
+  "ownContent": {
+    "comment": {
+      "action": "Delete comment",
+      "title": "Delete this comment?",
+      "body": "It disappears for everyone. You can't undo this.",
+      "confirm": "Delete",
+      "done": "Comment deleted",
+      "error": "Couldn't delete the comment. Please try again."
+    },
+    "review": {
+      "action": "Delete my review",
+      "title": "Delete your review?",
+      "body": "Your stars and text disappear from this puzzle, here and in the public puzzle catalogue. You can write a new review later.",
+      "confirm": "Delete review",
+      "done": "Review deleted",
+      "error": "Couldn't delete your review. Please try again."
+    },
+    "reviewComment": {
+      "action": "Remove comment",
+      "title": "Remove your comment?",
+      "body": "Your written comment disappears from this review. Your star ratings stay, because they count towards your exchange partner's reputation.",
+      "confirm": "Remove comment",
+      "done": "Comment removed",
+      "error": "Couldn't remove your comment. Please try again."
+    }
+  },
   "presence": {
     "online": "Online",
     "away": "Away",
