@@ -352,6 +352,8 @@
     "puzzleCreated": "Puzzle created successfully",
     "puzzleSubmittedForReview": "Puzzle submitted for review",
     "puzzleCreationFailed": "Failed to create puzzle",
+    "rateLimited": "You've added a lot of puzzles just now. Try again later.",
+    "textTooLong": "One of the fields is too long. Shorten it and try again.",
     "noPuzzleSelected": "Please select a puzzle first",
     "puzzleAdded": "Puzzle added to your collection",
     "puzzleAdditionFailed": "Failed to add puzzle to collection",
@@ -4130,6 +4132,8 @@
       "notPending": "This suggestion was already decided — file a new one.",
       "empty": "Change at least one field to suggest an edit",
       "invalidBarcode": "One of the barcodes is not valid",
+      "rateLimited": "You've sent a lot of suggestions just now. Try again later.",
+      "textTooLong": "One of the fields is too long. Shorten it and try again.",
       "generic": "Couldn't submit your suggestion"
     }
   },
@@ -4583,7 +4587,8 @@
         "errors": {
           "emptyTitle": "The title can't be empty",
           "invalidBarcode": "One of the barcodes is not valid",
-          "invalidPieceCount": "The piece count must be a positive number"
+          "invalidPieceCount": "The piece count must be a positive number",
+          "textTooLong": "One of the fields is too long. Shorten it and try again."
         },
         "cancel": "Cancel"
       },

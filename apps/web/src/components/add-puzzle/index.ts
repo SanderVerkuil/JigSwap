@@ -2,6 +2,8 @@ export * from "./add-puzzle-layout";
 export * from "./add-puzzle-mappers";
 export * from "./add-puzzle-schema";
 export * from "./availability-chips";
+export * from "./catalog-text-limits";
+export * from "./contribute-error";
 export * from "./cover-colour-field";
 export * from "./filter-suggestions";
 export * from "./import-zone";

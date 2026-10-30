@@ -1,5 +1,5 @@
 import { useRouter } from "@/compat/navigation";
-import { SectionDivider } from "@/components/add-puzzle";
+import { CATALOG_TEXT_LIMITS, SectionDivider } from "@/components/add-puzzle";
 import { FormContextPanel } from "@/components/catalog/form-context-panel";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { EmptyState } from "@/components/library/empty-state";
@@ -59,6 +59,11 @@ const errorKeyFor = (error: unknown): string => {
       return "errors.empty";
     case "InvalidBarcode":
       return "errors.invalidBarcode";
+    // The member's proposal limit, or their box-art check limit when a new cover was uploaded.
+    case "RateLimited":
+      return "errors.rateLimited";
+    case "TextTooLong":
+      return "errors.textTooLong";
     default:
       return "errors.generic";
   }
@@ -313,6 +318,7 @@ function SuggestEditForm({
           onChange={(e) => set("comment", e.target.value)}
           placeholder={t("comment.placeholder")}
           rows={2}
+          maxLength={CATALOG_TEXT_LIMITS.comment}
         />
 
         <div className="lg:hidden">{actionsRow}</div>

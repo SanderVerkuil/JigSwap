@@ -352,6 +352,8 @@
     "puzzleCreated": "Puzzel succesvol aangemaakt",
     "puzzleSubmittedForReview": "Puzzel ingediend ter beoordeling",
     "puzzleCreationFailed": "Puzzel aanmaken mislukt",
+    "rateLimited": "Je hebt net veel puzzels toegevoegd. Probeer het later opnieuw.",
+    "textTooLong": "Een van de velden is te lang. Maak het korter en probeer het opnieuw.",
     "noPuzzleSelected": "Selecteer eerst een puzzel",
     "puzzleAdded": "Puzzel toegevoegd aan je collectie",
     "puzzleAdditionFailed": "Puzzel toevoegen aan collectie mislukt",
@@ -4130,6 +4132,8 @@
       "notPending": "Dit voorstel is al beoordeeld — dien een nieuw voorstel in.",
       "empty": "Wijzig minstens één veld om een voorstel in te dienen",
       "invalidBarcode": "Een van de barcodes is ongeldig",
+      "rateLimited": "Je hebt net veel voorstellen ingediend. Probeer het later opnieuw.",
+      "textTooLong": "Een van de velden is te lang. Maak het korter en probeer het opnieuw.",
       "generic": "Voorstel indienen mislukt"
     }
   },
@@ -4583,7 +4587,8 @@
         "errors": {
           "emptyTitle": "De titel mag niet leeg zijn",
           "invalidBarcode": "Een van de barcodes is ongeldig",
-          "invalidPieceCount": "Het aantal stukjes moet een positief getal zijn"
+          "invalidPieceCount": "Het aantal stukjes moet een positief getal zijn",
+          "textTooLong": "Een van de velden is te lang. Maak het korter en probeer het opnieuw."
         },
         "cancel": "Annuleren"
       },

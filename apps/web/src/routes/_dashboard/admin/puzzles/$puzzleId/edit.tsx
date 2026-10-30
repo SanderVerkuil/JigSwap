@@ -53,6 +53,8 @@ const errorKeyFor = (error: unknown): string => {
       return "edit.errors.invalidBarcode";
     case "InvalidPieceCount":
       return "edit.errors.invalidPieceCount";
+    case "TextTooLong":
+      return "edit.errors.textTooLong";
     default:
       return "edit.failed";
   }

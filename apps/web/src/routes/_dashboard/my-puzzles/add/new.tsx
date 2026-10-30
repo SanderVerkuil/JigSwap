@@ -3,7 +3,9 @@ import {
   AddPuzzleLayout,
   AvailabilityChips,
   availabilityToSharing,
+  CATALOG_TEXT_LIMITS,
   CONDITION_OPTIONS,
+  contributeErrorKey,
   COVER_SWATCHES,
   CoverColourField,
   DIFFICULTY_OPTIONS,
@@ -356,11 +358,12 @@ function AddPuzzlePage() {
     },
     onError: (error) => {
       console.error("Add to library failed:", error);
-      // A box-art upload URL refused by the member's upload limit says to wait (SEC-20).
+      // A box-art upload URL refused by the member's upload limit says to wait (SEC-20); the
+      // filing's own refusals (its limit, a text bound) name their reason (SEC-26).
       toast.error(
         isUploadRateLimited(error)
           ? tCommon("photoUploadRateLimited")
-          : t("puzzleCreationFailed"),
+          : t(contributeErrorKey(error)),
       );
     },
   });
@@ -628,6 +631,7 @@ function AddPuzzlePage() {
               setForm((f) => ({ ...f, title: e.target.value }));
             }}
             placeholder={t("fieldTitlePlaceholder")}
+            maxLength={CATALOG_TEXT_LIMITS.title}
           />
         </div>
 
@@ -649,6 +653,7 @@ function AddPuzzlePage() {
               }}
               suggestions={publisherSuggestions ?? []}
               placeholder={t("fieldPublisherPlaceholder")}
+              maxLength={CATALOG_TEXT_LIMITS.publisher}
             />
           </div>
           <div className="flex flex-col gap-1.5">
@@ -684,6 +689,7 @@ function AddPuzzlePage() {
                 brandSuggestions?.filter((b): b is string => !!b) ?? []
               }
               placeholder={t("fieldBrandPlaceholder")}
+              maxLength={CATALOG_TEXT_LIMITS.brand}
             />
             <p className="text-xs text-muted-foreground">
               {t("brandOptionalHint")}
@@ -700,6 +706,7 @@ function AddPuzzlePage() {
               }}
               suggestions={seriesSuggestions ?? []}
               placeholder={tf("series.placeholder")}
+              maxLength={CATALOG_TEXT_LIMITS.series}
             />
           </div>
         </div>
@@ -880,6 +887,7 @@ function AddPuzzlePage() {
                   setForm((f) => ({ ...f, modelNumber: e.target.value }))
                 }
                 placeholder={tf("modelNumber.placeholder")}
+                maxLength={CATALOG_TEXT_LIMITS.modelNumber}
               />
             </div>
 
@@ -893,6 +901,7 @@ function AddPuzzlePage() {
                   setForm((f) => ({ ...f, artist: e.target.value }))
                 }
                 placeholder={tf("artist.placeholder")}
+                maxLength={CATALOG_TEXT_LIMITS.artist}
               />
             </div>
 
