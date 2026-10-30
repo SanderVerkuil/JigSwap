@@ -87,6 +87,15 @@ const PAGE_SIZE = 20;
 // Live-region announcements quote at most this much of the message body.
 const ANNOUNCE_MAX = 140;
 
+// The thread title takes focus when a thread opens (keyboard and screen-reader
+// users land in it), so :focus-visible matches on load. A tinted background
+// marks that focus; an underline made the plain name look like a profile
+// link (UX-177). -mx-1/px-1 pad the tint without moving the text; w-fit keeps
+// it to the name, and the max width (the column plus that 0.5rem of bleed)
+// keeps a long name truncating instead of overflowing.
+const HEADING_FOCUS_CLASS =
+  "font-heading -mx-1 w-fit max-w-[calc(100%+0.5rem)] min-w-0 truncate rounded-sm px-1 text-base font-bold outline-none focus-visible:bg-accent";
+
 export function ThreadView({
   threadId,
   // Task 11 (trades panel) embeds the view without the subject header/back
@@ -423,7 +432,7 @@ export function ThreadView({
                   <Heading
                     ref={headingRef}
                     tabIndex={-1}
-                    className="font-heading decoration-primary-text/60 min-w-0 truncate text-base leading-5 font-bold underline-offset-4 outline-none focus-visible:underline"
+                    className={cn(HEADING_FOCUS_CLASS, "leading-5")}
                   >
                     {title}
                     <span className="sr-only">, {t("circle.circleChat")}</span>
@@ -448,7 +457,7 @@ export function ThreadView({
                   <Heading
                     ref={headingRef}
                     tabIndex={-1}
-                    className="font-heading decoration-primary-text/60 min-w-0 truncate text-base font-bold underline-offset-4 outline-none focus-visible:underline"
+                    className={HEADING_FOCUS_CLASS}
                   >
                     {title ?? t("threadFallbackTitle")}
                   </Heading>

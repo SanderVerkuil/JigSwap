@@ -343,6 +343,15 @@ describe("ThreadView header", () => {
     expect(link.getAttribute("href")).toBe("/members/mara");
     expect(link.getAttribute("title")).toBe("View profile");
   });
+
+  // UX-177: focus lands on the title when the thread opens; its focus style
+  // must not be an underline, or the plain name reads as a profile link.
+  it("focuses the title on open without styling it like a link", async () => {
+    renderThread(dmThread());
+    const heading = screen.getByRole("heading", { name: "Mara" });
+    await waitFor(() => expect(document.activeElement).toBe(heading));
+    expect(heading.className).not.toMatch(/underline/);
+  });
 });
 
 describe("ThreadView photos", () => {
