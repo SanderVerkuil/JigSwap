@@ -28,8 +28,10 @@ permissions:
 # with `npm ci --ignore-scripts`: only the locked, integrity-checked tarballs, and no
 # lifecycle scripts. That project sits outside the pnpm workspace, so pnpm-lock.yaml and the
 # workspace install never see it, and Dependabot proposes CLI bumps
-# (.github/dependabot.yml). The upload leaves node_modules out at any depth, so the
-# installed CLI is not sent to Vercel.
+# (.github/dependabot.yml). The lockfile is read from the commit this workflow runs from
+# (github.sha), not from the branch being deployed, and installed in RUNNER_TEMP: a branch
+# that predates .github/vercel-cli still deploys, a dispatched branch cannot swap the CLI,
+# and the installed CLI is outside the checkout, so it is never sent to Vercel.
 #
 # The Vercel build and convex-preview.yml push to the same Convex preview at the same time;
 # both go through scripts/convex-deploy-retry.sh, which retries only on that race. They
@@ -72,6 +74,25 @@ jobs:
         if: env.HAS_VERCEL != 'true'
         run: echo "::notice::VERCEL_TOKEN / VERCEL_ORG_ID / VERCEL_PROJECT_ID not configured — skipping Vercel preview (see docs/deployment/convex-preview-deployments.md)"
 
+      # Only .github/vercel-cli of the commit this workflow file came from (the PR's merge
+      # commit, or the ref a dispatch ran from). It moves to RUNNER_TEMP before the branch
+      # checkout below, which would otherwise wipe it, and stays out of the upload.
+      - name: Check out the Vercel CLI project from this workflow's commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        if: env.HAS_VERCEL == 'true'
+        with:
+          ref: ${{ github.sha }}
+          path: vercel-cli-src
+          sparse-checkout: .github/vercel-cli
+          filter: blob:none
+          persist-credentials: false
+
+      - name: Move the Vercel CLI project out of the workspace
+        if: env.HAS_VERCEL == 'true'
+        run: |
+          mv vercel-cli-src/.github/vercel-cli "$RUNNER_TEMP/vercel-cli"
+          rm -rf vercel-cli-src
+
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         if: env.HAS_VERCEL == 'true'
         with:
@@ -79,16 +100,16 @@ jobs:
           # metadata from the checkout, and a detached merge commit has no branch.
           ref: ${{ env.BRANCH_NAME }}
 
+      # No npm cache: setup-node only hashes lockfiles inside the workspace, and the install
+      # takes seconds next to the remote build.
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         if: env.HAS_VERCEL == 'true'
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: .github/vercel-cli/package-lock.json
 
       - name: Install the Vercel CLI from its lockfile
         if: env.HAS_VERCEL == 'true'
-        working-directory: .github/vercel-cli
+        working-directory: ${{ runner.temp }}/vercel-cli
         run: npm ci --ignore-scripts --no-audit --no-fund
 
       - name: Deploy preview to Vercel
@@ -103,7 +124,7 @@ jobs:
         # Call the lockfile-installed binary by path, never a `vercel` found on PATH.
         # The deployment URL is the last line of stdout (progress and logs go to stderr).
         run: |
-          url="$(.github/vercel-cli/node_modules/.bin/vercel deploy --target=preview --yes --logs \
+          url="$("$RUNNER_TEMP/vercel-cli/node_modules/.bin/vercel" deploy --target=preview --yes --logs \
             --token "$VERCEL_TOKEN" \
             --build-env "JIGSWAP_PREVIEW_BRANCH=$BRANCH_NAME" \
             --meta githubDeployment=1 \
