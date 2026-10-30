@@ -3,13 +3,19 @@ import { useTranslations } from "use-intl";
 /** Id of the dashboard shell's <main>; the skip link moves focus there. */
 export const MAIN_CONTENT_ID = "main-content";
 
+/** The page's main content: the shell's #main-content, else the first <main> (public pages). */
+export function mainContentElement(): HTMLElement | null {
+  return (
+    document.getElementById(MAIN_CONTENT_ID) ?? document.querySelector("main")
+  );
+}
+
 /**
- * Focuses the page's main content: the shell's #main-content, else the first <main> (public pages
- * render their own), made script-focusable when it isn't already. Returns whether it found one.
+ * Focuses the page's main content (see mainContentElement), made script-focusable when it isn't
+ * already. Returns whether it found one.
  */
 export function focusMainContent(options?: FocusOptions): boolean {
-  const main =
-    document.getElementById(MAIN_CONTENT_ID) ?? document.querySelector("main");
+  const main = mainContentElement();
   if (!main) return false;
   if (!main.hasAttribute("tabindex")) main.setAttribute("tabindex", "-1");
   main.focus(options);

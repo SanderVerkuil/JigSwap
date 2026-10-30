@@ -15,6 +15,7 @@ import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import type { ConvexReactClient } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import * as React from "react";
+import { RouteAnnouncer } from "../components/a11y/route-announcer";
 import { DefaultCatchBoundary } from "../components/DefaultCatchBoundary";
 import { NotFound } from "../components/NotFound";
 import { Providers } from "../components/providers";
@@ -226,6 +227,8 @@ function RootComponent() {
             now={intl.now}
             cspNonce={cspNonce}
           >
+            {/* Speaks each new page title and moves focus to its main content (UX-68). */}
+            <RouteAnnouncer />
             <ErrorBoundary>
               <Outlet />
             </ErrorBoundary>
