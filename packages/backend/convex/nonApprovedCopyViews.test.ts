@@ -277,3 +277,57 @@ describe("copies of non-approved definitions show only snapshot facts (SEC-34)",
     expect(puzzle?.tags).toBeUndefined();
   });
 });
+
+describe("exchange views of a copy of a non-approved definition (SEC-34)", () => {
+  test("the counterparty sees only the snapshot; the copy's owner keeps the full definition", async () => {
+    const t = convexTest(schema, modules);
+    const { submitter, other, definitions, copies } = await seed(t);
+    await t.run(async (ctx) => {
+      await ctx.db.patch(definitions.pending, {
+        ean: "4005556000001",
+        searchableText: "row title pending secretword pending",
+      });
+      await ctx.db.insert("exchanges", {
+        aggregateId: "exch-1",
+        initiatorId: other,
+        recipientId: submitter,
+        type: "trade",
+        requestedPuzzleId: copies.pending,
+        status: "proposed",
+        createdAt: 2_000_000,
+        updatedAt: 2_000_000,
+      });
+    });
+    const requestedPuzzleFor = async (caller: ReturnType<typeof asOther>) =>
+      (
+        await caller.query(api.exchange.getUserExchanges.getUserExchanges, {})
+      )[0]?.requestedPuzzle;
+
+    const seen = await requestedPuzzleFor(asOther(t));
+    expect(seen).toMatchObject({
+      title: "Snapshot title pending",
+      brand: "Ravensburger",
+      pieceCount: 500,
+    });
+    for (const hidden of [
+      "description",
+      "publisher",
+      "difficulty",
+      "category",
+      "tags",
+      "ean",
+      "searchableText",
+    ] as const) {
+      expect(seen).not.toHaveProperty(hidden);
+    }
+    expect(JSON.stringify(seen)).not.toContain("secretword");
+
+    const own = await requestedPuzzleFor(asSubmitter(t));
+    expect(own).toMatchObject({
+      title: "Row title pending",
+      description: "secretword pending",
+      tags: ["hiddentag-pending"],
+      ean: "4005556000001",
+    });
+  });
+});

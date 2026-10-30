@@ -167,6 +167,37 @@ export const toPuzzleView = (
       }
     : null;
 
+/**
+ * The definition behind `copy` as `viewerId` sees it on an exchange. For a definition that is not
+ * approved, a party who does not own the copy gets only the copy's snapshot facts (title, brand,
+ * pieces; the row's for a legacy copy without a snapshot) plus toPuzzleView's box art, status and
+ * timestamps, as library/mappers' toCopyPuzzleView does for every other copy view. The definition's
+ * unmoderated text, identifiers and searchable text are left out. Approved definitions, and the
+ * copy's own owner, get toPuzzleView unchanged.
+ */
+export const toPuzzleViewFor = (
+  p: Doc<"puzzles"> | null,
+  copy: Doc<"ownedPuzzles"> | null,
+  viewerId: Id<"users">,
+): ExchangePuzzleView | null => {
+  const full = toPuzzleView(p);
+  if (!full || full.status === "approved" || copy?.ownerId === viewerId) {
+    return full;
+  }
+  return {
+    _id: full._id,
+    _creationTime: full._creationTime,
+    aggregateId: full.aggregateId,
+    title: copy?.snapshot?.title ?? full.title,
+    brand: copy?.snapshot?.brand ?? full.brand,
+    pieceCount: copy?.snapshot?.pieceCount ?? full.pieceCount,
+    image: full.image,
+    status: full.status,
+    createdAt: full.createdAt,
+    updatedAt: full.updatedAt,
+  };
+};
+
 // Enrich one exchange row into a list-item view: project both parties (projectExchangeParties), the
 // requested/offered owned copies and their catalog definitions (copy.puzzleId -> puzzles). Mirrors
 // the legacy two-step join in getUserExchanges/getExchangesByOwner/getExchangesByRequester.
@@ -203,12 +234,16 @@ export const enrichExchangeSummary = async (
       viewerId,
       parties.visible,
     ),
-    requestedPuzzle: toPuzzleView(requestedPuzzle),
+    requestedPuzzle: toPuzzleViewFor(
+      requestedPuzzle,
+      requestedOwnedPuzzle,
+      viewerId,
+    ),
     offeredOwnedPuzzle: toOwnedPuzzleView(
       offeredOwnedPuzzle,
       viewerId,
       parties.visible,
     ),
-    offeredPuzzle: toPuzzleView(offeredPuzzle),
+    offeredPuzzle: toPuzzleViewFor(offeredPuzzle, offeredOwnedPuzzle, viewerId),
   };
 };
