@@ -418,14 +418,30 @@ describe("renderEmail with resolved delivery content", () => {
     expect(email.text).toContain("View people");
   });
 
+  it("keeps a same-origin deep link with a query string", async () => {
+    const email = await renderEmail({
+      type: "trade_request",
+      params: {},
+      locale: "en",
+      baseUrl: BASE,
+      href: "/trades?x=1",
+    });
+    expect(email.html).toContain(`href="${BASE}/trades?x=1"`);
+  });
+
   it.each([
     null,
     undefined,
     "https://evil.example/x",
     "//evil.example/x",
+    // Root-relative by prefix, yet the WHATWG URL parser resolves each one off-site.
+    "/\\evil.example/x",
+    "/\\\\evil.example/x",
+    "/\t/evil.example/x",
+    "/\n/evil.example/x",
     "members/x",
     "",
-  ])("falls back to the legacy CTA path for href %s", async (href) => {
+  ])("falls back to the legacy CTA path for href %j", async (href) => {
     const email = await renderEmail({
       type: "new_follower",
       params: {},

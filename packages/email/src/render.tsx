@@ -22,7 +22,8 @@ export interface RenderEmailInput {
   readonly relatedId?: string;
   /**
    * The notification's resolved in-app deep link (a root-relative path from the backend read
-   * model). Absent, null or not root-relative falls back to the legacy per-type ctaPath.
+   * model). Absent, null, not root-relative or resolving off the baseUrl origin falls back to the
+   * legacy per-type ctaPath.
    */
   readonly href?: string | null;
   /** The resolved actor is a deleted or deactivated member: label them FORMER_MEMBER, never by name. */
@@ -53,10 +54,21 @@ const hasValues = (
 ): boolean =>
   tokensOf(template).every((key) => key === ignore || !!params[key]);
 
-// Only a root-relative path may become the CTA: an absolute or protocol-relative href would let the
-// link leave the configured base URL.
-const isRootRelative = (href: string | null | undefined): href is string =>
-  !!href && href.startsWith("/") && !href.startsWith("//");
+// Only a root-relative path that stays on the base URL's origin may become the CTA. The origin is
+// checked by resolving the href with the WHATWG URL parser (the one browsers use on the link), so
+// "/\host", "/<tab>/host" and other forms that pass a "/"-prefix test but resolve off-site fall
+// back too.
+const isSameOriginPath = (
+  href: string | null | undefined,
+  baseUrl: string,
+): href is string => {
+  if (!href || !href.startsWith("/")) return false;
+  try {
+    return new URL(href, baseUrl).origin === new URL(baseUrl).origin;
+  } catch {
+    return false;
+  }
+};
 
 export const renderEmail = async (
   input: RenderEmailInput,
@@ -82,7 +94,9 @@ export const renderEmail = async (
       ? interpolate(copy.detail, values)
       : undefined;
   const fallbackPath = ctaPath(input.type, input.relatedId);
-  const path = isRootRelative(input.href) ? input.href : fallbackPath;
+  const path = isSameOriginPath(input.href, input.baseUrl)
+    ? input.href
+    : fallbackPath;
 
   const element = (
     <NotificationEmail
