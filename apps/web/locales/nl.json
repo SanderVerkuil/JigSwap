@@ -1917,7 +1917,7 @@
     "registerNew": "Een nieuwe puzzel registreren",
     "forTrade": "Beschikbaar om te ruilen",
     "forTradeLabel": "{title} beschikbaar om te ruilen",
-    "availabilityNote": "Toegevoegde puzzels worden niet aangeboden om te ruilen of uit te lenen, tenzij je hieronder ruilen aanzet. Dat kun je later per puzzel aanpassen.",
+    "availabilityNote": "Toegevoegde puzzels worden niet aangeboden om te ruilen of uit te lenen. Na het kiezen kun je elke puzzel apart aanbieden om te ruilen, en dat later per puzzel aanpassen.",
     "limitReached": "Je kunt maximaal {max} puzzels tegelijk toevoegen.",
     "submit": "{count, plural, one {# puzzel toevoegen} other {# puzzels toevoegen}}",
     "added": "{count, plural, one {# puzzel aan je plank toegevoegd} other {# puzzels aan je plank toegevoegd}}",

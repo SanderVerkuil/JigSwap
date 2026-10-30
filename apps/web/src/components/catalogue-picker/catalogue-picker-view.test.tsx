@@ -1,8 +1,15 @@
+// @vitest-environment happy-dom
+import {
+  cleanup,
+  fireEvent,
+  render as renderDom,
+  screen,
+} from "@testing-library/react";
 import { parseFragment, type DefaultTreeAdapterMap } from "parse5";
 import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { IntlProvider } from "use-intl";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
 import {
@@ -236,6 +243,17 @@ describe("CataloguePickerView", () => {
     ).toBe(true);
   });
 
+  it("says how to offer a pick for swap, after picking it", () => {
+    const els = render({});
+    expect(
+      els.some(
+        (el) =>
+          text(el) ===
+          "Added puzzles aren't offered for swap or loan. You can offer each one for swap after picking it, and change that per puzzle later.",
+      ),
+    ).toBe(true);
+  });
+
   it("states that added puzzles are not offered by default, in Dutch too", () => {
     const els = render({}, "nl");
     expect(
@@ -247,5 +265,80 @@ describe("CataloguePickerView", () => {
       (el) => attr(el, "data-picker-submit") !== undefined,
     )!;
     expect(text(submit)).toBe("0 puzzels toevoegen");
+  });
+});
+
+// The quick-add page docks the submit on phones (stickyFooter); /welcome has its own flow footer.
+describe("CataloguePickerView stickyFooter", () => {
+  afterEach(cleanup);
+
+  const classOf = (els: Element[], predicate: (el: Element) => boolean) =>
+    attr(els.find(predicate)!, "class") ?? "";
+  const toggle = (els: Element[]) =>
+    buttons(els).find((el) => attr(el, "aria-expanded") !== undefined);
+  const footer = (els: Element[]) =>
+    els.find((el) => attr(el, "data-picker-footer") !== undefined);
+
+  it("docks the submit and a 'Picked (n)' tray toggle above the tab bar on phones", () => {
+    const els = render({ stickyFooter: true, picks: [pick("a"), pick("b")] });
+    const chip = toggle(els)!;
+    expect(text(chip)).toBe("Picked (2)");
+    expect(attr(chip, "aria-expanded")).toBe("false");
+    expect(attr(chip, "class")).toContain("sm:hidden");
+    const tray = els.find(
+      (el) => attr(el, "id") === attr(chip, "aria-controls"),
+    );
+    expect(tray?.tagName).toBe("section");
+    expect(attr(tray!, "class")).toContain("max-sm:hidden");
+    const dock = attr(footer(els)!, "class");
+    expect(dock).toContain("max-sm:sticky");
+    expect(dock).toContain("max-sm:bottom-14");
+  });
+
+  it("stays in the flow while nothing is picked", () => {
+    const els = render({ stickyFooter: true });
+    expect(toggle(els)).toBeUndefined();
+    expect(attr(footer(els)!, "class")).not.toContain("sticky");
+  });
+
+  it("never docks without the prop (the /welcome flow has its own footer)", () => {
+    const els = render({ picks: [pick("a")] });
+    expect(toggle(els)).toBeUndefined();
+    expect(attr(footer(els)!, "class")).not.toContain("sticky");
+    expect(classOf(els, (el) => el.tagName === "section")).not.toContain(
+      "max-sm:hidden",
+    );
+  });
+
+  it("opens and closes the tray from the chip", () => {
+    renderDom(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <CataloguePickerView
+          term=""
+          rows={[]}
+          picks={[pick("a"), pick("b"), pick("c")]}
+          isSearching={false}
+          isSubmitting={false}
+          stickyFooter
+          onTermChange={noop}
+          onToggle={noop}
+          onRemove={noop}
+          onRemoveLast={noop}
+          onForTradeChange={noop}
+          onSubmit={noop}
+        />
+      </IntlProvider>,
+    );
+    const chip = screen.getByRole("button", { name: "Picked (3)" });
+    const tray = document.getElementById(chip.getAttribute("aria-controls")!)!;
+    expect(tray.className).toContain("max-sm:hidden");
+
+    fireEvent.click(chip);
+    expect(chip.getAttribute("aria-expanded")).toBe("true");
+    expect(tray.className).not.toContain("max-sm:hidden");
+
+    fireEvent.click(chip);
+    expect(chip.getAttribute("aria-expanded")).toBe("false");
+    expect(tray.className).toContain("max-sm:hidden");
   });
 });

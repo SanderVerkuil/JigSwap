@@ -17,6 +17,7 @@ function QuickAddPuzzlesPage() {
       <CataloguePicker
         returnTo="/my-puzzles/add/quick"
         onAdded={() => void navigate({ to: "/my-puzzles" })}
+        stickyFooter
       />
     </div>
   );

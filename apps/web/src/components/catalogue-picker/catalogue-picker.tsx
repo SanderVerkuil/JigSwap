@@ -53,9 +53,12 @@ function useCatalogueSearch(term: string) {
 export function CataloguePicker({
   returnTo,
   onAdded,
+  stickyFooter,
 }: {
   returnTo?: string;
   onAdded?: (copyIds: string[]) => void;
+  // See CataloguePickerView: dock the submit on phones (not inside /welcome's flow footer).
+  stickyFooter?: boolean;
 }) {
   const t = useTranslations("cataloguePicker");
   const [term, setTerm] = useState("");
@@ -116,6 +119,7 @@ export function CataloguePicker({
       isSearching={isSearching}
       isSubmitting={submit.isPending}
       returnTo={returnTo}
+      stickyFooter={stickyFooter}
       onTermChange={setTerm}
       onToggle={(row) => setPicks((current) => togglePick(current, row))}
       onRemove={(id) => setPicks((current) => removePick(current, id))}

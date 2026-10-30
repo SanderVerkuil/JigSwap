@@ -1917,7 +1917,7 @@
     "registerNew": "Register a new puzzle",
     "forTrade": "Available to swap",
     "forTradeLabel": "{title} available to swap",
-    "availabilityNote": "Added puzzles are not offered for swap or loan unless you switch on swapping below. You can change that per puzzle later.",
+    "availabilityNote": "Added puzzles aren't offered for swap or loan. You can offer each one for swap after picking it, and change that per puzzle later.",
     "limitReached": "You can add up to {max} puzzles at once.",
     "submit": "{count, plural, one {Add # puzzle} other {Add # puzzles}}",
     "added": "{count, plural, one {# puzzle added to your shelf} other {# puzzles added to your shelf}}",
