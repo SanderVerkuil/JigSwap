@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  catalogueEmptyState,
   catalogueSearchArgs,
   EMPTY_CATALOGUE_FILTERS,
   favouritesInCatalogue,
@@ -117,5 +118,28 @@ describe("hasActiveCatalogueFilters", () => {
         searchTerm: "lake",
       }),
     ).toBe(true);
+  });
+});
+
+describe("catalogueEmptyState", () => {
+  it("blames the filters only when a term or filter is set", () => {
+    expect(
+      catalogueEmptyState({ favoritesOnly: false, hasFilters: true }),
+    ).toBe("filtered");
+    expect(catalogueEmptyState({ favoritesOnly: true, hasFilters: true })).toBe(
+      "filtered",
+    );
+  });
+
+  it("says there are no favourites yet when only favourites is on", () => {
+    expect(
+      catalogueEmptyState({ favoritesOnly: true, hasFilters: false }),
+    ).toBe("noFavourites");
+  });
+
+  it("says the catalogue is empty when nothing narrows it", () => {
+    expect(
+      catalogueEmptyState({ favoritesOnly: false, hasFilters: false }),
+    ).toBe("emptyCatalogue");
   });
 });

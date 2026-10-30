@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
 import {
+  catalogueEmptyState,
   catalogueSearchArgs,
   favouritesInCatalogue,
   hasActiveCatalogueFilters,
@@ -54,6 +55,7 @@ export function PuzzlesClient({
   className = "",
 }: PuzzlesClientProps) {
   const t = useTranslations("puzzles.puzzles");
+  const tPuzzles = useTranslations("puzzles");
 
   const viewMode = search.view ?? "grid";
   const favoritesOnly = search.fav === true;
@@ -151,6 +153,11 @@ export function PuzzlesClient({
     favoritesOnly ||
     searchDraft.trim() !== "" ||
     hasActiveCatalogueFilters(filters);
+  // What an exhausted, empty result says: only a term or filter is worth blaming.
+  const emptyState = catalogueEmptyState({
+    favoritesOnly,
+    hasFilters: hasActiveCatalogueFilters(filters),
+  });
 
   // The title/subtitle live in the shared shell page head (via route-meta); publish only the
   // "contribute to catalogue" action there so the body carries no own header. The result count
@@ -282,12 +289,57 @@ export function PuzzlesClient({
           <CardContent className="p-12 text-center">
             <div className="text-muted-foreground">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                <Search className="h-8 w-8" />
+                {emptyState === "noFavourites" ? (
+                  <Heart className="h-8 w-8" />
+                ) : (
+                  <Search className="h-8 w-8" />
+                )}
               </div>
-              <h3 className="text-lg font-medium mb-2">
-                {t("noPuzzlesFound")}
-              </h3>
-              <p className="text-sm">{t("tryDifferentFilters")}</p>
+              {emptyState === "filtered" ? (
+                <>
+                  <h3 className="text-lg font-medium mb-2">
+                    {t("noPuzzlesFound")}
+                  </h3>
+                  <p className="text-sm">{t("tryDifferentFilters")}</p>
+                  <Button
+                    variant="outline"
+                    onClick={clearFilters}
+                    className="mt-4 text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                    {t("clearFilters")}
+                  </Button>
+                </>
+              ) : emptyState === "noFavourites" ? (
+                <>
+                  <h3 className="text-lg font-medium mb-2">
+                    {t("noFavoritesTitle")}
+                  </h3>
+                  <p className="text-sm">{t("noFavoritesHint")}</p>
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      onSearchChange((prev) => ({ ...prev, fav: undefined }))
+                    }
+                    className="mt-4 text-foreground"
+                  >
+                    {t("showAllPuzzles")}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <h3 className="text-lg font-medium mb-2">
+                    {t("emptyCatalogueTitle")}
+                  </h3>
+                  <p className="text-sm">{t("emptyCatalogueHint")}</p>
+                  <Button asChild className="mt-4">
+                    <Link href="/puzzles/add">
+                      <Plus className="h-4 w-4" />
+                      {tPuzzles("contributePuzzle")}
+                    </Link>
+                  </Button>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>

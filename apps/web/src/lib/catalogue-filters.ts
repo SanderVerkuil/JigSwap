@@ -116,3 +116,20 @@ export function favouritesInCatalogue<
       puzzle.status === "approved" && matchesCatalogueSearch(puzzle, args),
   );
 }
+
+export type CatalogueEmptyState =
+  "filtered" | "noFavourites" | "emptyCatalogue";
+
+// Which "nothing here" message an exhausted, empty catalogue shows. Only a term or filter is
+// worth blaming; favourites on its own means there are none yet; with nothing set, the catalogue
+// itself is empty.
+export function catalogueEmptyState({
+  favoritesOnly,
+  hasFilters,
+}: {
+  favoritesOnly: boolean;
+  hasFilters: boolean;
+}): CatalogueEmptyState {
+  if (hasFilters) return "filtered";
+  return favoritesOnly ? "noFavourites" : "emptyCatalogue";
+}
