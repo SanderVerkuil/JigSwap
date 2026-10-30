@@ -107,9 +107,9 @@ hij blijft hetzelfde als je terugkomt.
 Uitwisselingen die op jou wachten (een verzoek om te beantwoorden of een
 overdracht om te bevestigen) staan bovenaan, onder **Wacht op jou**.
 
-Klik op **Bekijken** bij een uitwisseling om de details uit te klappen: beide
-puzzels, de ruilpartnerkaart en de acties voor de huidige stap van de
-uitwisseling.
+Klik of tik op een uitwisseling om de details uit te klappen: beide puzzels,
+de ruilpartnerkaart en de acties voor de huidige stap van de uitwisseling.
+Klik er nog een keer op om de details weer in te klappen.
 
 Open je een melding over een uitwisseling, dan opent de pagina
 **Uitwisselingen** met die uitwisseling uitgeklapt en gemarkeerd.

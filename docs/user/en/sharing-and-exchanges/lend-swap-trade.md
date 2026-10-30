@@ -99,8 +99,9 @@ same when you come back to the page.
 Exchanges that wait on you (a request to answer, or a handover to confirm) are
 listed first, under **Needs you**.
 
-Click **View** on any exchange to expand its details: both puzzles, the
-trade-partner card and the actions for the exchange's current step.
+Click or tap an exchange to expand its details: both puzzles, the trade-partner
+card and the actions for the exchange's current step. Click it again to fold
+the details away.
 
 When you open a notification about an exchange, the **Exchanges** page opens
 with that exchange expanded and highlighted.

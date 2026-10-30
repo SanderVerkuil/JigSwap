@@ -5365,7 +5365,7 @@
         },
         "trades": {
           "title": "Your exchanges",
-          "body": "Requests you sent are under Outgoing, requests for your puzzles under Incoming. Press View on one to accept, decline or cancel it, or to message the other member."
+          "body": "Requests you sent are under Outgoing, requests for your puzzles under Incoming. Open one to accept, decline or cancel it, or to message the other member."
         },
         "complete": {
           "title": "Both of you confirm",

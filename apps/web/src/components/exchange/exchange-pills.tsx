@@ -1,7 +1,7 @@
 // Small status chips shared by the exchange row and its expanded detail, and the loan rows.
 import { RELATIVE_TIME_UPDATE_INTERVAL_MS } from "@/hooks/use-relative-time";
 import { cn } from "@/lib/utils";
-import type { ExchangeFields } from "@jigswap/contracts";
+import type { ExchangeFields, ExchangeStatus } from "@jigswap/contracts";
 import { CalendarClock, Tag } from "lucide-react";
 import { useFormatter, useNow, useTranslations } from "use-intl";
 import type { Direction } from "./exchange-state";
@@ -11,6 +11,37 @@ type SalePrice = NonNullable<ExchangeFields["salePrice"]>;
 
 const CHIP =
   "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold whitespace-nowrap";
+
+// Soft status pill tones (same mapping as the dashboard pulse): Pending and
+// Disputed amber, Accepted violet, Completed green, the rest muted.
+const STATUS_TONES: Partial<Record<ExchangeStatus, string>> = {
+  proposed: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+  accepted: "bg-jigsaw-primary/10 text-jigsaw-primary",
+  disputed: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+  completed: "bg-green-500/15 text-green-700 dark:text-green-400",
+};
+
+/** An exchange's status on its row: Pending, Accepted, Completed, … */
+export function ExchangeStatusPill({
+  status,
+  className,
+}: {
+  status: ExchangeStatus;
+  className?: string;
+}) {
+  const t = useTranslations("trades.status");
+  return (
+    <span
+      className={cn(
+        CHIP,
+        STATUS_TONES[status] ?? "bg-muted text-muted-foreground",
+        className,
+      )}
+    >
+      {t(status)}
+    </span>
+  );
+}
 
 /** The partner has confirmed completion; the viewer's confirmation settles the exchange. */
 export function YourTurnPill({ className }: { className?: string }) {

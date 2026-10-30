@@ -1,5 +1,5 @@
 import { useUser } from "@/compat/clerk";
-import { CoverChip, FilterBar } from "@/components/community/primitives";
+import { FilterBar } from "@/components/community/primitives";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { ExchangeActions } from "@/components/exchange/exchange-actions";
@@ -8,17 +8,9 @@ import {
   visibleExchanges,
   type ListedExchange,
 } from "@/components/exchange/exchange-list";
-import {
-  OfferChip,
-  ReturnBy,
-  SaleOffer,
-  YourTurnPill,
-} from "@/components/exchange/exchange-pills";
-import {
-  confirmationState,
-  viewerSide,
-  type Direction,
-} from "@/components/exchange/exchange-state";
+import { ExchangeListRow } from "@/components/exchange/exchange-list-row";
+import { ReturnBy, SaleOffer } from "@/components/exchange/exchange-pills";
+import type { Direction } from "@/components/exchange/exchange-state";
 import { ExchangesEmptyState } from "@/components/exchange/exchanges-empty-state";
 import { LoansTab } from "@/components/exchange/loans-tab";
 import { TradePartnerCard } from "@/components/exchange/trade-partner-card";
@@ -31,11 +23,7 @@ import { PageLoading } from "@/components/ui/loading";
 import { useTourLauncher } from "@/components/whats-new/tour-launcher";
 import { gateway, Id } from "@/gateway";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useRelativeTime } from "@/hooks/use-relative-time";
-import {
-  useMemberDisplayName,
-  usePartyDisplayName,
-} from "@/lib/member-display-name";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
 import {
   EXCHANGE_STATUSES,
@@ -44,13 +32,12 @@ import {
   type TradesSearch,
   type TradesTab,
 } from "@/lib/trades-search";
-import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
-import { ArrowLeftRight, MessageCircle, Package, Tag } from "lucide-react";
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { MessageCircle, Package } from "lucide-react";
+import { useId, useState, type ReactNode } from "react";
 import { useTranslations } from "use-intl";
 
 type ExchangeRow = FunctionReturnType<typeof gateway.exchange.incoming>[number];
@@ -73,35 +60,6 @@ function TradesPending() {
   const tCommon = useTranslations("common");
   return <PageLoading message={tCommon("loading")} />;
 }
-
-// Soft status pill tones (same mapping as the dashboard pulse): Pending and
-// Disputed amber, Accepted violet, Completed green, the rest muted.
-const PILL_TONES: Record<string, string> = {
-  proposed: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  accepted: "bg-jigsaw-primary/10 text-jigsaw-primary",
-  disputed: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  completed: "bg-green-500/15 text-green-700 dark:text-green-400",
-};
-
-function StatusPill({ status }: { status: ExchangeStatus }) {
-  const t = useTranslations("trades.status");
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold whitespace-nowrap",
-        PILL_TONES[status] ?? "bg-muted text-muted-foreground",
-      )}
-    >
-      {t(status)}
-    </span>
-  );
-}
-
-const KIND_ICONS = {
-  trade: ArrowLeftRight,
-  sale: Tag,
-  loan: Package,
-} as const;
 
 function ExchangesPage() {
   const { user } = useUser();
@@ -217,9 +175,17 @@ function ExchangesPage() {
             exchange={exchange}
             direction={direction}
             gradientIndex={offset + index}
-            viewerId={convexUser?._id}
             isLast={index === group.length - 1}
-          />
+          >
+            {(who) => (
+              <ExchangeDetail
+                exchange={exchange}
+                direction={direction}
+                who={who}
+                viewerId={convexUser?._id}
+              />
+            )}
+          </ExchangeListRow>
         );
       })}
     </div>
@@ -324,126 +290,12 @@ function ExchangeGroup({
   );
 }
 
-/* -------------------------------------------------------------- Exchange row */
-
-// One exchange as an open divided row: gradient kind chip, "Kind · Mine ↔
-// Theirs" headline, "direction · with who · when" meta, status pill, and an
-// outline View toggle that expands the full detail (puzzles, partner trust,
-// and every lifecycle action the old card offered).
-function ExchangeListRow({
-  exchange,
-  direction,
-  gradientIndex,
-  viewerId,
-  isLast,
-  focused = false,
-}: {
-  focused?: boolean;
-  exchange: ExchangeRow;
-  direction: Direction;
-  gradientIndex: number;
-  viewerId?: string;
-  isLast: boolean;
-}) {
-  const t = useTranslations("trades");
-  const partyName = usePartyDisplayName();
-  const tCommon = useTranslations("common");
-  const relativeTime = useRelativeTime();
-  const [open, setOpen] = useState(focused);
-  const rowRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (focused) rowRef.current?.scrollIntoView({ block: "center" });
-  }, [focused]);
-
-  const incoming = direction === "incoming";
-  // On an exchange the REQUESTED puzzle belongs to the owner, the OFFERED one
-  // to the requester — so "mine" depends on which side the viewer is on.
-  const mineTitle = incoming
-    ? exchange.requestedPuzzle?.title
-    : exchange.offeredPuzzle?.title;
-  const theirsTitle = incoming
-    ? exchange.offeredPuzzle?.title
-    : exchange.requestedPuzzle?.title;
-  const primary = mineTitle ?? theirsTitle;
-  const secondary = mineTitle ? theirsTitle : undefined;
-  const counterparty = incoming ? exchange.requester : exchange.owner;
-  const who = partyName(
-    counterparty,
-    incoming ? exchange.requesterState : exchange.ownerState,
-  );
-
-  const KindIcon = KIND_ICONS[exchange.type] ?? ArrowLeftRight;
-  // Only the partner has confirmed completion: the viewer's confirmation settles it.
-  const yourTurn =
-    exchange.status === "accepted" &&
-    confirmationState(exchange, viewerSide(direction)).mySettles;
-  const offer = exchange.type === "sale" ? exchange.salePrice : undefined;
-
-  return (
-    <div
-      ref={rowRef}
-      data-focused={focused || undefined}
-      className={cn(
-        "py-3",
-        !isLast && "border-b",
-        focused &&
-          "bg-jigsaw-primary/5 ring-jigsaw-primary/40 -mx-3 rounded-lg px-3 ring-2",
-      )}
-    >
-      <div className="flex items-center gap-3.5">
-        <CoverChip icon={KindIcon} size={44} gradientIndex={gradientIndex} />
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-base font-semibold">
-            {t(`kind.${exchange.type}`)} · {primary}
-            {secondary && (
-              <span className="text-muted-foreground font-medium">
-                {" "}
-                ↔ {secondary}
-              </span>
-            )}
-          </div>
-          <div className="text-muted-foreground mt-0.5 truncate text-xs">
-            {t("rowMeta", {
-              direction: t(`direction.${direction}`),
-              who,
-              when: relativeTime(exchange.createdAt),
-            })}
-          </div>
-          {(yourTurn || offer) && (
-            <div className="mt-1.5 flex flex-wrap gap-1.5">
-              {yourTurn && <YourTurnPill />}
-              {offer && <OfferChip price={offer} />}
-            </div>
-          )}
-        </div>
-        <StatusPill status={exchange.status} />
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setOpen((value) => !value)}
-        >
-          {tCommon("view")}
-        </Button>
-      </div>
-
-      {open && (
-        <ExchangeDetail
-          exchange={exchange}
-          direction={direction}
-          who={who}
-          viewerId={viewerId}
-        />
-      )}
-    </div>
-  );
-}
-
 /* ----------------------------------------------------------- Exchange detail */
 
-// The expanded detail under a row — the full content of the old exchange card:
-// requested/offered puzzles, the partner with their trust badge, and the
-// status-appropriate lifecycle actions (accept/decline, cancel, complete,
-// review, message).
+// The expanded detail under a row (ExchangeListRow places and indents it) — the
+// full content of the old exchange card: requested/offered puzzles, the partner
+// with their trust badge, and the status-appropriate lifecycle actions
+// (accept/decline, cancel, complete, review, message).
 function ExchangeDetail({
   exchange,
   direction,
@@ -472,7 +324,7 @@ function ExchangeDetail({
   const partnerName = partner ? displayName(partner) : undefined;
 
   return (
-    <div className="mt-3 ml-[60px] flex flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <PuzzleSummary
           label={incoming ? t("theyWant") : t("youWant")}
