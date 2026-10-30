@@ -107,8 +107,8 @@ export interface AdminPuzzleDefinitionRowView {
   ownerCount: number;
 }
 
-/** A distinct brand name from the Catalog. Optional because the underlying column is optional. */
-export type BrandView = string | undefined;
+/** A distinct, non-blank brand name from the Catalog (brand-less definitions are left out). */
+export type BrandView = string;
 
 /** A distinct publisher (company) name suggestion from the Catalog + curated allowlist. */
 export type PublisherView = string;
