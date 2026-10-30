@@ -4291,6 +4291,10 @@
       "flags": "Flags"
     }
   },
+  "starRating": {
+    "outOf": "{value} out of 5 stars",
+    "star": "{count, plural, one {# star} other {# stars}}"
+  },
   "admin": {
     "moderation": {
       "loading": "Loading submissions…",

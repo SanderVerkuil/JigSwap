@@ -4291,6 +4291,10 @@
       "flags": "Vlaggen"
     }
   },
+  "starRating": {
+    "outOf": "{value} van 5 sterren",
+    "star": "{count, plural, one {# ster} other {# sterren}}"
+  },
   "admin": {
     "moderation": {
       "loading": "Inzendingen laden…",
