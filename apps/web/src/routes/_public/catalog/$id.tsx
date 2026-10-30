@@ -118,6 +118,7 @@ function PublicPuzzleDetail({
   puzzleId: string;
 }) {
   const t = useTranslations("publicCatalog");
+  const tDifficulty = useTranslations("puzzles.puzzles.difficulty");
   const { definition, rating, stats, availability } = view;
   const topics = [
     ...(definition.categoryName ? [definition.categoryName] : []),
@@ -154,10 +155,10 @@ function PublicPuzzleDetail({
               .filter(Boolean)
               .map((part) => `${part} · `)
               .join("")}
-            <span className="font-mono">
-              {definition.pieceCount.toLocaleString()}
-            </span>{" "}
-            pieces
+            {t.rich("piecesCount", {
+              count: definition.pieceCount,
+              num: (chunks) => <span className="font-mono">{chunks}</span>,
+            })}
           </p>
           <div className="mt-3.5 flex flex-wrap items-center gap-2.5">
             {rating.count > 0 && (
@@ -175,7 +176,7 @@ function PublicPuzzleDetail({
                   difficultyClasses(definition.difficulty),
                 )}
               >
-                {definition.difficulty}
+                {tDifficulty(definition.difficulty)}
               </Badge>
             )}
             {topics.map((topic, i) => (
@@ -310,35 +311,42 @@ function PublicPuzzleDetail({
       <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
         <section>
           <SectionHead icon={<StarGlyph />} title={t("communityRating")} />
-          <div className="mb-3.5 flex items-end gap-3.5">
-            <div className="font-heading text-foreground text-4xl font-bold leading-none">
-              {rating.rating}
-            </div>
-            <div className="pb-0.5">
-              <StarRating value={Math.round(rating.rating)} size="sm" />
-              <div className="text-muted-foreground mt-1 text-xs">
-                {t("ratingsCount", { count: rating.count })}
+          {rating.count === 0 ? (
+            // Unrated: say so rather than show a 0 score, empty stars and 0% bars.
+            <p className="text-muted-foreground text-sm">{t("noRatings")}</p>
+          ) : (
+            <>
+              <div className="mb-3.5 flex items-end gap-3.5">
+                <div className="font-heading text-foreground text-4xl font-bold leading-none">
+                  {rating.rating}
+                </div>
+                <div className="pb-0.5">
+                  <StarRating value={Math.round(rating.rating)} size="sm" />
+                  <div className="text-muted-foreground mt-1 text-xs">
+                    {t("ratingsCount", { count: rating.count })}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            {[5, 4, 3, 2, 1].map((star, i) => (
-              <div key={star} className="flex items-center gap-2.5">
-                <span className="text-muted-foreground inline-flex w-7 items-center justify-end gap-0.5 text-xs">
-                  {star}★
-                </span>
-                <span className="bg-muted h-1.5 flex-1 overflow-hidden rounded-full">
-                  <span
-                    className="block h-full rounded-full bg-amber-400"
-                    style={{ width: `${rating.percentages[i]}%` }}
-                  />
-                </span>
-                <span className="text-muted-foreground w-9 text-right font-mono text-xs">
-                  {rating.percentages[i]}%
-                </span>
+              <div className="flex flex-col gap-1.5">
+                {[5, 4, 3, 2, 1].map((star, i) => (
+                  <div key={star} className="flex items-center gap-2.5">
+                    <span className="text-muted-foreground inline-flex w-7 items-center justify-end gap-0.5 text-xs">
+                      {star}★
+                    </span>
+                    <span className="bg-muted h-1.5 flex-1 overflow-hidden rounded-full">
+                      <span
+                        className="block h-full rounded-full bg-amber-400"
+                        style={{ width: `${rating.percentages[i]}%` }}
+                      />
+                    </span>
+                    <span className="text-muted-foreground w-9 text-right font-mono text-xs">
+                      {rating.percentages[i]}%
+                    </span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </>
+          )}
         </section>
         <PublicReviews puzzleId={puzzleId} />
       </div>
