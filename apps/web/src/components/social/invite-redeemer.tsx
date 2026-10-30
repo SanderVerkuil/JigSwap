@@ -3,16 +3,23 @@ import {
   INVITE_KEY,
   NEW_MEMBER_WINDOW_MS,
 } from "@/components/social/invite-landing";
-import { QrDialogAutoOpen } from "@/components/social/qr-dialog";
 import { gateway } from "@/gateway";
 import { safeStorage } from "@/lib/safe-storage";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
+
+// The dashboard layout mounts this on every page, but the QR dialog (and its QR encoder) is only
+// needed once, right after an invite is redeemed: load it then.
+const QrDialogAutoOpen = lazy(() =>
+  import("@/components/social/qr-dialog").then((module) => ({
+    default: module.QrDialogAutoOpen,
+  })),
+);
 
 const LOOP_SHOWN_KEY = "jigswap.inviteLoopShown";
 const FALLBACK_SHOWN_KEY = "jigswap.inviteFallbackShown";
@@ -116,15 +123,17 @@ export function InviteRedeemer() {
 
   // Loop closure: the new member's own QR, shown once, skippable (Dialog close = skip).
   return (
-    <QrDialogAutoOpen
-      memberId={me._id}
-      displayName={me.name}
-      username={me.username}
-      handle={me.handle}
-      avatarUrl={me.avatar}
-      title={t("loopTitle")}
-      body={t("loopBody")}
-      onClose={() => setShowLoopQr(false)}
-    />
+    <Suspense fallback={null}>
+      <QrDialogAutoOpen
+        memberId={me._id}
+        displayName={me.name}
+        username={me.username}
+        handle={me.handle}
+        avatarUrl={me.avatar}
+        title={t("loopTitle")}
+        body={t("loopBody")}
+        onClose={() => setShowLoopQr(false)}
+      />
+    </Suspense>
   );
 }
