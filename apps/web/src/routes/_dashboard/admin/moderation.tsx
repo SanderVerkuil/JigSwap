@@ -13,6 +13,11 @@ import {
 } from "@/components/admin/moderation/flag-detail";
 import { HashCheckHealth } from "@/components/admin/moderation/hash-check-health";
 import { KpiRow } from "@/components/admin/moderation/kpi-row";
+import {
+  validateModerationSearch,
+  type ModerationTab,
+  type ReportStatus,
+} from "@/components/admin/moderation/moderation-search";
 import { QueueList } from "@/components/admin/moderation/queue-list";
 import { ReportsQueue } from "@/components/admin/moderation/reports-queue";
 import { ScreeningHealth } from "@/components/admin/moderation/screening-health";
@@ -41,7 +46,7 @@ import { pageTitle } from "@/lib/page-title";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   Flag,
   History,
@@ -55,6 +60,9 @@ import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/admin/moderation")({
+  // The open tab, the selected queue item and the Reports tab's filter and drawer live in the
+  // URL (moderation-search.ts), so Back, a reload, a shared link and a notification restore them.
+  validateSearch: validateModerationSearch,
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "adminModeration") }],
   }),
@@ -71,6 +79,35 @@ function ModerationPage() {
   const t = useTranslations("admin.moderation");
   const tAdmin = useTranslations("admin");
   const relativeTime = useRelativeTime();
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const tab: ModerationTab = search.tab ?? "submissions";
+  // The URL's `item` belongs to the open tab's queue; the other queues see no selection.
+  const itemFor = (queue: ModerationTab) =>
+    tab === queue ? search.item : undefined;
+
+  // Every console state change replaces the history entry and keeps the scroll position: it is a
+  // view change on the same page, not a new page.
+  const replaceSearch = (
+    update: (prev: typeof search) => typeof search,
+  ): void => {
+    void navigate({ search: update, replace: true, resetScroll: false });
+  };
+  // Selects a row of `queue`. A no-op once the reviewer has moved to another tab (a decision that
+  // resolves after a tab switch must not plant its next item in the new tab).
+  const selectItem = (queue: ModerationTab) => (id: string | null) =>
+    replaceSearch((prev) =>
+      (prev.tab ?? "submissions") === queue
+        ? { ...prev, item: id ?? undefined }
+        : prev,
+    );
+  // A tab switch starts the new tab clean: the item, report and filter belong to the old one.
+  const changeTab = (value: string) => {
+    const next = validateModerationSearch({ tab: value }).tab;
+    replaceSearch(() => ({
+      tab: next === "submissions" ? undefined : next,
+    }));
+  };
 
   // Each queue's query result is kept whole so its tab can tell a failure
   // (AdminQueryError + Retry) from loading; `data` alone is undefined in both.
@@ -114,11 +151,6 @@ function ModerationPage() {
     mutationFn: useConvexMutation(gateway.admin.restorePhoto),
   });
 
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [selectedFlagId, setSelectedFlagId] = useState<string | null>(null);
-  const [selectedUncheckedKey, setSelectedUncheckedKey] = useState<
-    string | null
-  >(null);
   const [editOpen, setEditOpen] = useState(false);
   // The old code shared one busy flag across every moderation action to
   // disable the group; compose the mutations' pending states instead.
@@ -132,13 +164,14 @@ function ModerationPage() {
     recheckPhoto.isPending ||
     markCsam.isPending;
 
-  // A pre-domain pending row has no aggregateId; it still lists (keyed by _id)
-  // but its actions stay disabled — same rule as the previous queue.
-  const getId = (submission: PendingSubmission) =>
-    submission.aggregateId ?? submission._id;
+  // Submissions are selected (and deep-linked) by their Convex `_id`, which every row has; the
+  // aggregateId is only for the mutations. A pre-domain pending row has no aggregateId: it still
+  // lists, but its actions stay disabled — same rule as the previous queue.
+  const getId = (submission: PendingSubmission) => submission._id;
   const selected =
-    pending?.find((submission) => getId(submission) === selectedId) ??
-    pending?.[0];
+    pending?.find(
+      (submission) => getId(submission) === itemFor("submissions"),
+    ) ?? pending?.[0];
 
   // After a decision the query refetches reactively and the row disappears;
   // pre-select its neighbour so the reviewer keeps flowing down the queue.
@@ -148,7 +181,7 @@ function ModerationPage() {
       (submission) => getId(submission) === getId(current),
     );
     const next = pending[index + 1] ?? pending[index - 1];
-    setSelectedId(next ? getId(next) : null);
+    selectItem("submissions")(next ? getId(next) : null);
   };
 
   const moderate = async (action: "approve" | "reject") => {
@@ -202,7 +235,8 @@ function ModerationPage() {
   // toast with the remaining count, and pre-select the neighbour so the
   // reviewer keeps flowing down the queue after the row disappears.
   const selectedFlag =
-    flagged?.find((photo) => photo.imageId === selectedFlagId) ?? flagged?.[0];
+    flagged?.find((photo) => photo.imageId === itemFor("flagged")) ??
+    flagged?.[0];
 
   const selectNextFlag = (current: FlaggedPhoto) => {
     if (!flagged) return;
@@ -210,7 +244,7 @@ function ModerationPage() {
       (photo) => photo.imageId === current.imageId,
     );
     const next = flagged[index + 1] ?? flagged[index - 1];
-    setSelectedFlagId(next ? next.imageId : null);
+    selectItem("flagged")(next ? next.imageId : null);
   };
 
   const moderateFlag = async (action: "remove" | "restore") => {
@@ -239,7 +273,7 @@ function ModerationPage() {
 
   // The unchecked-photos queue: same flow (act, toast the remaining count, select the neighbour).
   const selectedUnchecked =
-    unchecked?.find((photo) => photo.key === selectedUncheckedKey) ??
+    unchecked?.find((photo) => photo.key === itemFor("unchecked")) ??
     unchecked?.[0];
 
   const decide = async (
@@ -268,7 +302,7 @@ function ModerationPage() {
       );
       const index = unchecked.findIndex((p) => p.key === photo.key);
       const next = unchecked[index + 1] ?? unchecked[index - 1];
-      setSelectedUncheckedKey(next ? next.key : null);
+      selectItem("unchecked")(next ? next.key : null);
     } catch {
       toast.error(t("error"));
     }
@@ -295,7 +329,7 @@ function ModerationPage() {
       <HashCheckHealth hashCheck={csam?.hashCheck} />
       <KpiRow />
 
-      <Tabs defaultValue="submissions" className="gap-4">
+      <Tabs value={tab} onValueChange={changeTab} className="gap-4">
         <StickyTabsBar>
           <TabsList className={UNDERLINE_TABS_LIST_CLASS}>
             <TabsTrigger value="submissions" className={TAB_TRIGGER_CLASS}>
@@ -347,7 +381,7 @@ function ModerationPage() {
             <QueueList
               items={pending}
               selectedId={selected ? getId(selected) : null}
-              onSelect={setSelectedId}
+              onSelect={selectItem("submissions")}
               getId={getId}
               renderRow={(submission) => (
                 <>
@@ -402,7 +436,7 @@ function ModerationPage() {
             <QueueList
               items={flagged}
               selectedId={selectedFlag ? selectedFlag.imageId : null}
-              onSelect={setSelectedFlagId}
+              onSelect={selectItem("flagged")}
               getId={(photo) => photo.imageId}
               renderRow={(photo) => (
                 <>
@@ -462,7 +496,7 @@ function ModerationPage() {
             <QueueList
               items={unchecked}
               selectedId={selectedUnchecked ? selectedUnchecked.key : null}
-              onSelect={setSelectedUncheckedKey}
+              onSelect={selectItem("unchecked")}
               getId={(photo) => photo.key}
               renderRow={(photo) => (
                 <>
@@ -538,7 +572,23 @@ function ModerationPage() {
         </TabsContent>
 
         <TabsContent value="reports">
-          <ReportsQueue emptyTitle={tAdmin("queueEmpty.title")} />
+          <ReportsQueue
+            emptyTitle={tAdmin("queueEmpty.title")}
+            status={search.status ?? "open"}
+            openId={search.report ?? null}
+            onStatusChange={(status: ReportStatus) =>
+              replaceSearch((prev) => ({
+                ...prev,
+                status: status === "open" ? undefined : status,
+              }))
+            }
+            onOpen={(reportId) =>
+              replaceSearch((prev) => ({
+                ...prev,
+                report: reportId ?? undefined,
+              }))
+            }
+          />
         </TabsContent>
 
         <TabsContent value="activity">

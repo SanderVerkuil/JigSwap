@@ -4,8 +4,10 @@
 // admin.listReports (paginated, newest first) filtered by status. Each row
 // shows reason, target summary, reporter → reported, how many open reports
 // the reported member has, and age. A row opens the decision drawer
-// (admin.getReport + the decide form). Admin-only: the route group already
-// gates the page, and every admin function re-checks isAdmin.
+// (admin.getReport + the decide form). The status filter and the open report
+// are the route's (URL search `status` / `report`), so a reload, Back or a
+// shared link restores them. Admin-only: the route group already gates the
+// page, and every admin function re-checks isAdmin.
 import { AdminQueryError } from "@/components/admin/admin-query-error";
 import { QueueEmpty } from "@/components/admin/queue-empty";
 import { convexErrorCode } from "@/components/exchange/request-trade";
@@ -26,20 +28,30 @@ import { useQuery } from "@tanstack/react-query";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery } from "convex/react";
 import { ArrowRight, FileX } from "lucide-react";
-import { useState } from "react";
 import { useTranslations } from "use-intl";
+import { REPORT_STATUSES, type ReportStatus } from "./moderation-search";
 import { ReportDetail } from "./report-detail";
 
-const STATUSES = ["open", "actioned", "dismissed"] as const;
-type Status = (typeof STATUSES)[number];
 const PAGE_SIZE = 25;
 
-export function ReportsQueue({ emptyTitle }: { emptyTitle: string }) {
+export function ReportsQueue({
+  emptyTitle,
+  status,
+  openId,
+  onStatusChange,
+  onOpen,
+}: {
+  emptyTitle: string;
+  status: ReportStatus;
+  /** The report whose drawer is open (from the URL); null when closed. */
+  openId: string | null;
+  onStatusChange: (status: ReportStatus) => void;
+  /** Opens a report's drawer, or closes it with null. */
+  onOpen: (reportId: string | null) => void;
+}) {
   const t = useTranslations("admin.moderation.reports");
   const tReasons = useTranslations("safety.report.reasons");
   const relativeTime = useRelativeTime();
-  const [status, setStatus] = useState<Status>("open");
-  const [openId, setOpenId] = useState<Id<"reports"> | null>(null);
 
   const {
     results,
@@ -58,14 +70,14 @@ export function ReportsQueue({ emptyTitle }: { emptyTitle: string }) {
         aria-label={t("statusFilter")}
         className="flex flex-wrap gap-2"
       >
-        {STATUSES.map((value) => (
+        {REPORT_STATUSES.map((value) => (
           <Button
             key={value}
             variant={status === value ? "default" : "outline"}
             size="sm"
             className="h-11 md:h-8"
             aria-pressed={status === value}
-            onClick={() => setStatus(value)}
+            onClick={() => onStatusChange(value)}
           >
             {t(`statuses.${value}`)}
           </Button>
@@ -82,7 +94,7 @@ export function ReportsQueue({ emptyTitle }: { emptyTitle: string }) {
             <button
               key={report.reportId}
               type="button"
-              onClick={() => setOpenId(report.reportId)}
+              onClick={() => onOpen(report.reportId)}
               className="flex min-h-11 w-full items-center gap-3 border-b px-3 py-3 text-left last:border-b-0 hover:bg-accent/50"
             >
               <span className="min-w-0 flex-1">
@@ -150,7 +162,7 @@ export function ReportsQueue({ emptyTitle }: { emptyTitle: string }) {
 
       <Sheet
         open={openId !== null}
-        onOpenChange={(open) => !open && setOpenId(null)}
+        onOpenChange={(open) => !open && onOpen(null)}
       >
         <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
           <SheetHeader className="px-5 pb-0">
@@ -160,7 +172,10 @@ export function ReportsQueue({ emptyTitle }: { emptyTitle: string }) {
             </SheetDescription>
           </SheetHeader>
           <div className="px-5 pb-5">
-            {openId && <ReportDetailLoader reportId={openId} />}
+            {openId && (
+              // The id comes from the URL; getReport validates it server-side.
+              <ReportDetailLoader reportId={openId as Id<"reports">} />
+            )}
           </div>
         </SheetContent>
       </Sheet>

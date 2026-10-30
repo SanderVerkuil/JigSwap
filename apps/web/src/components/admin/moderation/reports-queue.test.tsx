@@ -1,9 +1,11 @@
 // @vitest-environment happy-dom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { ConvexError } from "convex/values";
+import { useState } from "react";
 import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../../locales/en.json";
+import type { ReportStatus } from "./moderation-search";
 import { ReportsQueue } from "./reports-queue";
 
 // The drawer's getReport result: still loading unless a test sets an error.
@@ -44,6 +46,8 @@ const NOW = new Date("2026-10-18T12:00:00Z");
 afterEach(() => {
   cleanup();
   mocks.reportQuery.mockReset();
+  changes.status = [];
+  changes.open = [];
 });
 
 const OPEN_REPORT = {
@@ -60,7 +64,36 @@ const OPEN_REPORT = {
   openReportsAgainstReported: 3,
 };
 
-const renderQueue = () =>
+// The route owns the status filter and the open report (both live in the URL); this harness
+// stands in for it with local state and records what the queue asked for.
+const changes = { status: [] as ReportStatus[], open: [] as (string | null)[] };
+function Harness({
+  initialStatus = "open",
+  initialOpen = null,
+}: {
+  initialStatus?: ReportStatus;
+  initialOpen?: string | null;
+}) {
+  const [status, setStatus] = useState<ReportStatus>(initialStatus);
+  const [openId, setOpenId] = useState<string | null>(initialOpen);
+  return (
+    <ReportsQueue
+      emptyTitle="All clear"
+      status={status}
+      openId={openId}
+      onStatusChange={(next) => {
+        changes.status.push(next);
+        setStatus(next);
+      }}
+      onOpen={(id) => {
+        changes.open.push(id);
+        setOpenId(id);
+      }}
+    />
+  );
+}
+
+const renderQueue = (props: Parameters<typeof Harness>[0] = {}) =>
   render(
     <IntlProvider
       locale="en"
@@ -68,7 +101,7 @@ const renderQueue = () =>
       timeZone="Europe/Amsterdam"
       now={NOW}
     >
-      <ReportsQueue emptyTitle="All clear" />
+      <Harness {...props} />
     </IntlProvider>,
   );
 
@@ -104,12 +137,38 @@ describe("ReportsQueue", () => {
     expect(row.textContent).toContain("2 hours ago");
 
     fireEvent.click(screen.getByRole("button", { name: "Dismissed" }));
+    expect(changes.status).toEqual(["dismissed"]);
     expect(mocks.paginated).toHaveBeenLastCalledWith(expect.anything(), {
       status: "dismissed",
     });
 
     fireEvent.click(row);
+    expect(changes.open).toEqual(["r1"]);
     expect(screen.getByRole("dialog", { name: "Report" })).toBeTruthy();
+  });
+
+  it("follows the status and open report it is given (a shared link), and reports a close", () => {
+    mocks.reportQuery.mockReturnValue(loadingReport());
+    mocks.paginated.mockReturnValue({
+      results: [],
+      status: "Exhausted",
+      loadMore: vi.fn(),
+    });
+    renderQueue({ initialStatus: "actioned", initialOpen: "r9" });
+
+    expect(mocks.paginated).toHaveBeenLastCalledWith(expect.anything(), {
+      status: "actioned",
+    });
+    expect(
+      screen
+        // The open drawer hides the page behind it from the accessibility tree.
+        .getByRole("button", { name: "Actioned", hidden: true })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+    // The drawer opens for the linked report even when it is not on the loaded page.
+    const drawer = screen.getByRole("dialog", { name: "Report" });
+    fireEvent.keyDown(drawer, { key: "Escape" });
+    expect(changes.open).toEqual([null]);
   });
 
   it("says the report no longer exists when getReport throws NotFound", () => {
