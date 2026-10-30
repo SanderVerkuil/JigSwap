@@ -47,6 +47,14 @@ export default defineConfig({
       routeRules: {
         // Security headers on every response: SSR, server functions and static files alike.
         "/**": { headers: SECURITY_HEADERS },
+        // Hashed build assets. Nitro would add only this cache-control rule for them, which on
+        // Vercel would shadow the /** headers; spelled out so they keep both.
+        "/assets/**": {
+          headers: {
+            ...SECURITY_HEADERS,
+            "cache-control": "public, max-age=31536000, immutable",
+          },
+        },
         // The deployed build id open tabs poll (vite-plugin-app-version.ts); never cached, or
         // a tab would keep seeing the old id after a deploy. Vercel applies only the first
         // matching headers rule, so this one repeats the security headers.
