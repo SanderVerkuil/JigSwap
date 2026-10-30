@@ -29,6 +29,12 @@
     "removeOptionButton": "button to remove option",
     "inputTag": "input tag",
     "photoPendingReview": "Pending review",
+    "errorBoundary": {
+      "title": "Something went wrong",
+      "description": "An unexpected error occurred. Please try again, or contact us if the problem persists.",
+      "tryAgain": "Try again",
+      "reload": "Reload page"
+    },
     "photoUploadRateLimited": "You've uploaded a lot of photos. Try again later."
   },
   "notFound": {

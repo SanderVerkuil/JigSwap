@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import React from "react";
+import { useTranslations } from "use-intl";
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -73,6 +74,9 @@ function DefaultErrorFallback({
   error?: Error;
   resetError: () => void;
 }) {
+  // A function component so the fallback can read the catalogue; the boundary sits inside
+  // Providers (__root.tsx), so IntlProvider is always above it.
+  const t = useTranslations("common.errorBoundary");
   return (
     <div className="min-h-[400px] flex items-center justify-center p-6">
       <Card className="w-full max-w-md">
@@ -80,11 +84,8 @@ function DefaultErrorFallback({
           <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-destructive/10 flex items-center justify-center">
             <AlertTriangle className="h-6 w-6 text-destructive" />
           </div>
-          <CardTitle>Something went wrong</CardTitle>
-          <CardDescription>
-            An unexpected error occurred. Please try again or contact support if
-            the problem persists.
-          </CardDescription>
+          <CardTitle>{t("title")}</CardTitle>
+          <CardDescription>{t("description")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {error && process.env.NODE_ENV === "development" && (
@@ -97,14 +98,14 @@ function DefaultErrorFallback({
           <div className="flex gap-2">
             <Button onClick={resetError} className="flex-1">
               <RefreshCw className="h-4 w-4 mr-2" />
-              Try Again
+              {t("tryAgain")}
             </Button>
             <Button
               variant="outline"
               onClick={() => window.location.reload()}
               className="flex-1"
             >
-              Reload Page
+              {t("reload")}
             </Button>
           </div>
         </CardContent>

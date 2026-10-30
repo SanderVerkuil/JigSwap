@@ -29,6 +29,12 @@
     "removeOptionButton": "knop om optie te verwijderen",
     "inputTag": "invoertag",
     "photoPendingReview": "Wacht op controle",
+    "errorBoundary": {
+      "title": "Er ging iets mis",
+      "description": "Er is een onverwachte fout opgetreden. Probeer het opnieuw, of neem contact met ons op als het probleem blijft.",
+      "tryAgain": "Opnieuw proberen",
+      "reload": "Pagina opnieuw laden"
+    },
     "photoUploadRateLimited": "Je hebt veel foto's geüpload. Probeer het later opnieuw."
   },
   "notFound": {
