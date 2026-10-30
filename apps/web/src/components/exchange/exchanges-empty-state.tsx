@@ -14,7 +14,7 @@ export function ExchangesEmptyState({
   status,
   onShowAllStatuses,
 }: {
-  tab: Exclude<TradesTab, "borrowed">;
+  tab: Exclude<TradesTab, "loans">;
   status?: ExchangeStatus;
   onShowAllStatuses: () => void;
 }) {

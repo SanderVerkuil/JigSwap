@@ -74,14 +74,17 @@ The **Exchanges** page organizes everything into tabs:
 - **All**
 - **Incoming** — requests sent to you.
 - **Outgoing** — requests you sent.
-- **Borrowed** — open loans where you're currently holding someone else's
-  puzzle. When you have none, it explains how borrowing works and links to
-  **Browse Puzzles**.
+- **Loans** — every open loan you're part of, in two sections:
+  - **Borrowed by you** — puzzles you're currently holding. Start or finish a
+    solve, or log one, right from the row. When you have none, it links to
+    **Browse Puzzles**.
+  - **Lent out** — your puzzles (and household puzzles you may manage) that
+    are out on loan, and who has them.
 
-Use the status filter next to the tabs to show only exchanges with one status,
-such as **Pending** or **Completed**. The tab and the filter are part of the
-page's address, so you can bookmark or share a view, and it stays the same when
-you come back to the page.
+On the other tabs, use the status filter to show only exchanges with one
+status, such as **Pending** or **Completed**. The tab and the filter are part
+of the page's address, so you can bookmark or share a view, and it stays the
+same when you come back to the page.
 
 Exchanges that wait on you (a request to answer, or a handover to confirm) are
 listed first, under **Needs you**.
@@ -131,10 +134,14 @@ request, or cancel it if it was accepted.
 
 ## Returning a borrowed puzzle
 
-If you've borrowed a puzzle (it's on the **Borrowed** tab), use the **Return**
-action to give it back. You're asked to confirm first: only return it once the
-lender has the puzzle back, because the loan then closes for good. If you're the lender, you can **Recall** a lent-out copy
-from your library.
+If you've borrowed a puzzle (it's under **Loans › Borrowed by you**), use the
+**Return** action to give it back. You're asked to confirm first: only return
+it once the lender has the puzzle back, because the loan then closes for good.
+
+If you're the lender, use **Recall** under **Loans › Lent out**, or on the
+puzzle's card in **My Puzzles**, once you have the puzzle back. The loan then
+closes for good, and the borrower doesn't get a notification. Under **Loans**
+you're asked to confirm first.
 
 A puzzle can be on loan to one member at a time. While it's out on loan, it
 isn't available: nobody can request it, you can't offer it again or offer it in

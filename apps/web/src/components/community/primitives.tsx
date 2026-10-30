@@ -15,6 +15,7 @@ import type { ReactNode } from "react";
 
 // A row of rounded-full filter pills (active pill in the brand color) with an
 // optional muted count on the right and an extra slot for secondary controls.
+// A pill may carry its own tour anchor (`data-tour`) for a guide step about it.
 export function FilterBar<T extends string>({
   filters,
   value,
@@ -24,7 +25,7 @@ export function FilterBar<T extends string>({
   className,
   "data-tour": dataTour,
 }: {
-  filters: ReadonlyArray<{ value: T; label: string }>;
+  filters: ReadonlyArray<{ value: T; label: string; "data-tour"?: string }>;
   value: T;
   onChange: (value: T) => void;
   count?: ReactNode;
@@ -51,6 +52,7 @@ export function FilterBar<T extends string>({
               size="sm"
               variant={active ? "default" : "outline"}
               aria-pressed={active}
+              data-tour={filter["data-tour"]}
               onClick={() => onChange(filter.value)}
               className={cn(
                 "rounded-full",

@@ -316,8 +316,11 @@ export const ROUTE_META: Record<string, ShellRouteMeta> = {
   "/admin/contact": { pageKey: "adminContact", group: "admin" },
   "/admin/feedback": { pageKey: "adminFeedback", group: "admin" },
 
+  // Old path that redirects to Exchanges › Loans (/trades?tab=loans); it resolves to the Exchanges
+  // head so nothing flashes untitled while it does.
+  "/borrowed": { pageKey: "exchanges", group: "community" },
+
   // Routes removed from the nav but still alive.
-  "/borrowed": { pageKey: "borrowed", group: "library" },
   "/notifications": { pageKey: "notifications" },
   // Ungrouped like its parent (no ShellGroupKey fits); the page itself publishes
   // an explicit "Notifications" crumb via usePageHeader.

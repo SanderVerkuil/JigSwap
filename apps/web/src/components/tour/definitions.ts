@@ -90,7 +90,8 @@ const tours: readonly TourDefinition[] = [
       { id: "request", route: "/browse" },
       { id: "trades", route: "/trades", target: "trades-tabs" },
       { id: "complete", route: "/trades" },
-      { id: "borrowed", route: "/borrowed" },
+      // Borrowed and lent-out loans live on the Exchanges page's Loans tab.
+      { id: "borrowed", route: "/trades", target: "trades-loans" },
     ],
   },
   {

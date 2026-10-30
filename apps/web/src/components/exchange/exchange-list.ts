@@ -19,7 +19,7 @@ export interface ListedExchange<E extends ListedFields> {
 /** The rows an exchange tab shows: one direction (or both on All), optionally one status. */
 export const visibleExchanges = <E extends ListedFields>(
   rows: readonly ListedExchange<E>[],
-  tab: Exclude<TradesTab, "borrowed">,
+  tab: Exclude<TradesTab, "loans">,
   status?: ExchangeStatus,
 ): ListedExchange<E>[] =>
   rows.filter(

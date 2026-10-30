@@ -789,6 +789,17 @@
         "action": "Alle statussen tonen"
       }
     },
+    "loans": {
+      "tab": "Leningen",
+      "count": "{count, plural, one {# lopende lening} other {# lopende leningen}}",
+      "borrowedTitle": "Door jou geleend",
+      "lentTitle": "Uitgeleend",
+      "lentEmpty": {
+        "title": "Niets uitgeleend",
+        "sub": "Leen je een puzzel uit, dan staat hij hier tot je hem terug hebt. Op Mijn Puzzels kies je welke puzzels anderen mogen lenen.",
+        "action": "Naar Mijn Puzzels"
+      }
+    },
     "kind": {
       "trade": "Ruil",
       "sale": "Verkoop",
@@ -3587,10 +3598,8 @@
     "loading": "Eigendomsketen laden…"
   },
   "lending": {
-    "borrowedTitle": "Geleend",
     "borrowedSubtitle": "Exemplaren die je momenteel in bruikleen hebt.",
     "borrowedFrom": "Geleend van {name}",
-    "openedRelative": "Geleend {when}",
     "returnAction": "Teruggeven",
     "returning": "Teruggeven…",
     "noBorrowed": "Niets geleend",
@@ -3614,14 +3623,18 @@
     "borrowedBy": "Geleend door {name}",
     "deletedMember": "Verwijderd lid",
     "anonymousMember": "Anonieme gebruiker",
-    "borrowedCount": "{count, plural, one {# geleende puzzel} other {# geleende puzzels}}",
     "pieceCount": "{count, plural, one {# stuk} other {# stukken}}",
     "returnConfirm": {
       "title": "{title} teruggeven?",
       "body": "Doe dit pas als {name} de puzzel terug heeft. De lening wordt afgesloten en dat kun je niet ongedaan maken."
     },
+    "recallDialog": {
+      "title": "{title} terugvragen?",
+      "body": "Doe dit pas als je de puzzel terug hebt van {name}. De lening wordt afgesloten en dat kun je niet ongedaan maken."
+    },
     "toast": {
-      "returned": "{title} teruggegeven aan {name}"
+      "returned": "{title} teruggegeven aan {name}",
+      "recalled": "{title} teruggevraagd van {name}"
     },
     "errors": {
       "LoanNotFound": "Deze lening bestaat niet meer.",
@@ -3947,7 +3960,6 @@
     "completionNew": "Voltooiing vastleggen — JigSwap",
     "community": "Community — JigSwap",
     "circles": "Kringen — JigSwap",
-    "borrowed": "Geleend — JigSwap",
     "admin": "Beheer — JigSwap",
     "adminCategories": "Categoriebeheer — JigSwap",
     "adminUsers": "Gebruikers — JigSwap",
@@ -4108,10 +4120,6 @@
         "title": "Puzzelcatalogus",
         "subtitle": "Alle puzzels in JigSwap.",
         "description": "Alle puzzels in JigSwap, aangeboden of niet"
-      },
-      "borrowed": {
-        "title": "Geleend",
-        "subtitle": "Puzzels die je van anderen hebt geleend."
       },
       "notifications": {
         "title": "Meldingen",
@@ -5333,8 +5341,8 @@
           "body": "Heeft de puzzel van hand gewisseld, dan drukken jullie allebei op Markeren als Voltooid. De ruil is voltooid zodra jullie dat allebei gedaan hebben."
         },
         "borrowed": {
-          "title": "Wat je geleend hebt",
-          "body": "Puzzels die je geleend hebt staan hier tot je ze teruggeeft. Begin hier aan een puzzel, en druk op Teruggeven zodra hij weer bij de eigenaar is."
+          "title": "Je leningen",
+          "body": "Onder Leningen staan de puzzels die je geleend hebt en die je hebt uitgeleend. Begin aan een geleende puzzel, en druk op Teruggeven zodra hij weer bij de eigenaar is."
         }
       }
     },

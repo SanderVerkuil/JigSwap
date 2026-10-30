@@ -43,10 +43,16 @@ describe("/trades search params", () => {
     expect(garbled.status).toBeUndefined();
   });
 
-  it("has no status filter on the Borrowed tab", () => {
-    expect(
-      validateTradesSearch({ tab: "borrowed", status: "accepted" }),
-    ).toEqual({ tab: "borrowed" });
+  it("has no status filter on the Loans tab", () => {
+    expect(validateTradesSearch({ tab: "loans", status: "accepted" })).toEqual({
+      tab: "loans",
+    });
+  });
+
+  it("opens Loans for the old Borrowed tab", () => {
+    expect(validateTradesSearch({ tab: "borrowed" })).toEqual({
+      tab: "loans",
+    });
   });
 
   // The router merges the raw query with the validator's result, so a key left out of the result
@@ -55,7 +61,7 @@ describe("/trades search params", () => {
     for (const search of [
       {},
       { exchange: "ex_123", tab: "incoming", status: "rejected" },
-      { tab: "borrowed", status: "accepted" },
+      { tab: "loans", status: "accepted" },
     ]) {
       expect(Object.keys(validateTradesSearch(search)).sort()).toEqual([
         "exchange",

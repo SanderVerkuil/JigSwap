@@ -2,7 +2,6 @@ import { useUser } from "@/compat/clerk";
 import { CoverChip, FilterBar } from "@/components/community/primitives";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
-import { BorrowedEmptyState } from "@/components/exchange/borrowed-empty-state";
 import { ExchangeActions } from "@/components/exchange/exchange-actions";
 import {
   splitNeedsYou,
@@ -20,7 +19,7 @@ import {
   type Direction,
 } from "@/components/exchange/exchange-state";
 import { ExchangesEmptyState } from "@/components/exchange/exchanges-empty-state";
-import { ReturnLoanButton } from "@/components/exchange/return-loan-button";
+import { LoansTab } from "@/components/exchange/loans-tab";
 import { TradePartnerCard } from "@/components/exchange/trade-partner-card";
 import { ThreadView } from "@/components/messaging/thread-view";
 import { LeaveReviewDialog } from "@/components/reputation/leave-review-dialog";
@@ -53,11 +52,11 @@ import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useTranslations } from "use-intl";
 
 type ExchangeRow = FunctionReturnType<typeof gateway.exchange.incoming>[number];
-type BorrowedLoan = FunctionReturnType<typeof gateway.lending.borrowed>[number];
 
 // The pill tabs pick one kind of filter, the direction: All / Incoming / Outgoing map onto the
-// owner/requester reads; Borrowed folds the old /borrowed page in as a tab (open loans where the
-// viewer is the borrower). The status is a separate select. Both live in the URL (trades-search).
+// owner/requester reads; Loans is the one home for open loans, borrowed and lent out (the old
+// /borrowed page redirects there). The status is a separate select. Both live in the URL
+// (trades-search).
 
 export const Route = createFileRoute("/_dashboard/trades")({
   validateSearch: validateTradesSearch,
@@ -106,7 +105,6 @@ function ExchangesPage() {
   const { user } = useUser();
   const t = useTranslations("trades");
   const tCommon = useTranslations("common");
-  const tLending = useTranslations("lending");
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const focusedExchange = search.exchange;
@@ -119,7 +117,7 @@ function ExchangesPage() {
     void navigate({
       search: {
         tab: next.tab === "all" ? undefined : next.tab,
-        status: next.tab === "borrowed" ? undefined : next.status,
+        status: next.tab === "loans" ? undefined : next.status,
       } satisfies TradesSearch,
       replace: true,
       resetScroll: false,
@@ -146,9 +144,12 @@ function ExchangesPage() {
   const { data: outgoingExchanges } = useQuery(
     convexQuery(gateway.exchange.outgoing, {}),
   );
-  // Open loans the viewer is holding, only fetched once the tab is opened.
+  // Open loans the viewer holds and the ones they lent out, only fetched on the Loans tab.
   const { data: borrowed } = useQuery(
-    convexQuery(gateway.lending.borrowed, tab === "borrowed" ? {} : "skip"),
+    convexQuery(gateway.lending.borrowed, tab === "loans" ? {} : "skip"),
+  );
+  const { data: lentOut } = useQuery(
+    convexQuery(gateway.lending.lentOut, tab === "loans" ? {} : "skip"),
   );
 
   if (
@@ -173,22 +174,24 @@ function ExchangesPage() {
   ].sort((a, b) => b.exchange.updatedAt - a.exchange.updatedAt);
 
   const rows =
-    tab === "borrowed" ? [] : visibleExchanges(tagged, tab, statusFilter);
+    tab === "loans" ? [] : visibleExchanges(tagged, tab, statusFilter);
   // What waits on the viewer (answer a request, confirm a handover) is listed first.
   const { needsYou, others } = splitNeedsYou(rows);
 
-  const tabs: Array<{ value: TradesTab; label: string }> = [
-    { value: "all", label: t("all") },
-    { value: "incoming", label: t("incoming") },
-    { value: "outgoing", label: t("outgoing") },
-    { value: "borrowed", label: tLending("borrowedTitle") },
-  ];
+  const tabs: Array<{ value: TradesTab; label: string; "data-tour"?: string }> =
+    [
+      { value: "all", label: t("all") },
+      { value: "incoming", label: t("incoming") },
+      { value: "outgoing", label: t("outgoing") },
+      // The exchanges guide's loans step points at this pill.
+      { value: "loans", label: t("loans.tab"), "data-tour": "trades-loans" },
+    ];
 
   const count =
-    tab === "borrowed"
-      ? borrowed === undefined
+    tab === "loans"
+      ? borrowed === undefined || lentOut === undefined
         ? undefined
-        : tLending("borrowedCount", { count: borrowed.length })
+        : t("loans.count", { count: borrowed.length + lentOut.length })
       : t("exchangesCount", { count: rows.length });
 
   const renderRows = (group: typeof rows, offset: number) => (
@@ -223,7 +226,7 @@ function ExchangesPage() {
         onChange={(next) => showView({ tab: next, status: statusFilter })}
         count={count}
         extra={
-          tab !== "borrowed" && (
+          tab !== "loans" && (
             <select
               value={statusFilter ?? "all"}
               onChange={(e) =>
@@ -248,8 +251,8 @@ function ExchangesPage() {
         }
       />
 
-      {tab === "borrowed" ? (
-        <BorrowedList borrowed={borrowed} />
+      {tab === "loans" ? (
+        <LoansTab borrowed={borrowed} lentOut={lentOut} />
       ) : rows.length === 0 ? (
         <ExchangesEmptyState
           tab={tab}
@@ -576,63 +579,6 @@ function PuzzleSummary({
           )}
         </div>
       </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------- Borrowed tab */
-
-// The old /borrowed page folded in as a tab: open loans the viewer holds, as
-// divided rows with a Return action. Same lending reads and mutation as the
-// standalone page.
-function BorrowedList({ borrowed }: { borrowed: BorrowedLoan[] | undefined }) {
-  const t = useTranslations("lending");
-  const displayName = useMemberDisplayName();
-  const relativeTime = useRelativeTime();
-  const lenderName = (loan: BorrowedLoan) =>
-    loan.lender ? displayName(loan.lender) : t("deletedMember");
-
-  if (borrowed === undefined) {
-    return <PageLoading message={t("loading")} />;
-  }
-
-  if (borrowed.length === 0) {
-    return <BorrowedEmptyState />;
-  }
-
-  return (
-    <div className="flex flex-col">
-      {borrowed.map((loan, index) => (
-        <div
-          key={loan.loanId}
-          className={cn(
-            "flex items-center gap-3.5 py-3",
-            index < borrowed.length - 1 && "border-b",
-          )}
-        >
-          <CoverChip icon={Package} size={44} gradientIndex={index} />
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-base font-semibold">
-              {loan.puzzleTitle}
-              <span className="text-muted-foreground font-medium">
-                {" "}
-                · {t("pieceCount", { count: loan.pieceCount })}
-              </span>
-            </div>
-            <div className="text-muted-foreground mt-0.5 truncate text-xs">
-              {t("borrowedFrom", { name: lenderName(loan) })} ·{" "}
-              {t("openedRelative", {
-                when: relativeTime(loan.openedAt),
-              })}
-            </div>
-          </div>
-          <ReturnLoanButton
-            loanId={loan.loanId}
-            puzzleTitle={loan.puzzleTitle}
-            lenderName={lenderName(loan)}
-          />
-        </div>
-      ))}
     </div>
   );
 }

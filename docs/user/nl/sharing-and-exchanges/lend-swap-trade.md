@@ -78,12 +78,15 @@ De pagina **Uitwisselingen** ordent alles in tabbladen:
 - **Alle**
 - **Inkomend** — verzoeken die naar jou zijn gestuurd.
 - **Uitgaand** — verzoeken die jij hebt verstuurd.
-- **Geleend** — openstaande leningen waarbij jij momenteel iemand anders zijn
-  puzzel in bezit hebt. Heb je er geen, dan legt het tabblad uit hoe lenen
-  werkt en linkt het naar **Puzzels Ontdekken**.
+- **Leningen** — al je lopende leningen, in twee delen:
+  - **Door jou geleend** — puzzels die jij nu in bezit hebt. Begin of rond
+    vanaf de rij een puzzel af, of leg een voltooiing vast. Heb je er geen,
+    dan linkt het naar **Puzzels Ontdekken**.
+  - **Uitgeleend** — jouw puzzels (en puzzels uit je huishouden die je mag
+    beheren) die zijn uitgeleend, en bij wie ze zijn.
 
-Met het statusfilter naast de tabbladen toon je alleen uitwisselingen met één
-status, zoals **In afwachting** of **Afgerond**. Het tabblad en het filter
+Op de andere tabbladen toon je met het statusfilter alleen uitwisselingen met
+één status, zoals **In afwachting** of **Afgerond**. Het tabblad en het filter
 staan in het adres van de pagina, dus je kunt een weergave bewaren of delen, en
 hij blijft hetzelfde als je terugkomt.
 
@@ -140,11 +143,16 @@ is, of annuleer hem als hij al geaccepteerd was.
 
 ## Een geleende puzzel teruggeven
 
-Heb je een puzzel geleend (hij staat op het tabblad **Geleend**), gebruik dan
-de actie **Teruggeven** om hem terug te geven. We vragen je eerst om te
-bevestigen: geef hem pas terug als de uitlener de puzzel echt terug heeft,
-want daarna is de lening definitief afgesloten. Ben je de uitlener, dan kun je
-een uitgeleend exemplaar **Terugvragen** vanuit je bibliotheek.
+Heb je een puzzel geleend (hij staat onder **Leningen › Door jou geleend**),
+gebruik dan de actie **Teruggeven** om hem terug te geven. We vragen je eerst
+om te bevestigen: geef hem pas terug als de uitlener de puzzel echt terug
+heeft, want daarna is de lening definitief afgesloten.
+
+Ben je de uitlener, gebruik dan **Terugvragen** onder **Leningen ›
+Uitgeleend**, of op de kaart van de puzzel in **Mijn Puzzels**, zodra je de
+puzzel terug hebt. De lening is dan definitief afgesloten, en wie de puzzel
+leende krijgt daar geen melding van. Onder **Leningen** vragen we je eerst om
+te bevestigen.
 
 Een puzzel kan maar aan één lid tegelijk uitgeleend zijn. Zolang hij is
 uitgeleend, is hij niet beschikbaar: niemand kan hem aanvragen, je kunt hem niet

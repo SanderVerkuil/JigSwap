@@ -789,6 +789,17 @@
         "action": "Show all statuses"
       }
     },
+    "loans": {
+      "tab": "Loans",
+      "count": "{count, plural, one {# open loan} other {# open loans}}",
+      "borrowedTitle": "Borrowed by you",
+      "lentTitle": "Lent out",
+      "lentEmpty": {
+        "title": "Nothing lent out",
+        "sub": "When you lend a puzzle, it shows up here until you have it back. Choose which puzzles others may borrow on My Puzzles.",
+        "action": "Go to My Puzzles"
+      }
+    },
     "kind": {
       "trade": "Trade",
       "sale": "Sale",
@@ -3587,10 +3598,8 @@
     "loading": "Loading custody timeline…"
   },
   "lending": {
-    "borrowedTitle": "Borrowed",
     "borrowedSubtitle": "Copies you are currently holding on loan.",
     "borrowedFrom": "Borrowed from {name}",
-    "openedRelative": "Borrowed {when}",
     "returnAction": "Return",
     "returning": "Returning…",
     "noBorrowed": "Nothing borrowed",
@@ -3614,14 +3623,18 @@
     "borrowedBy": "Borrowed by {name}",
     "deletedMember": "Deleted member",
     "anonymousMember": "Anonymous user",
-    "borrowedCount": "{count, plural, one {# borrowed puzzle} other {# borrowed puzzles}}",
     "pieceCount": "{count, plural, one {# piece} other {# pieces}}",
     "returnConfirm": {
       "title": "Return {title}?",
       "body": "Only do this once {name} has the puzzle back. The loan closes, and you can't undo this."
     },
+    "recallDialog": {
+      "title": "Recall {title}?",
+      "body": "Only do this once you have the puzzle back from {name}. The loan closes, and you can't undo this."
+    },
     "toast": {
-      "returned": "{title} returned to {name}"
+      "returned": "{title} returned to {name}",
+      "recalled": "{title} recalled from {name}"
     },
     "errors": {
       "LoanNotFound": "This loan no longer exists.",
@@ -3947,7 +3960,6 @@
     "completionNew": "Log a completion — JigSwap",
     "community": "Community — JigSwap",
     "circles": "Circles — JigSwap",
-    "borrowed": "Borrowed — JigSwap",
     "admin": "Admin — JigSwap",
     "adminCategories": "Category management — JigSwap",
     "adminUsers": "Users — JigSwap",
@@ -4108,10 +4120,6 @@
         "title": "Puzzles catalogue",
         "subtitle": "Every puzzle in JigSwap.",
         "description": "Every puzzle in JigSwap, offered or not"
-      },
-      "borrowed": {
-        "title": "Borrowed",
-        "subtitle": "Puzzles you've borrowed from others."
       },
       "notifications": {
         "title": "Notifications",
@@ -5333,8 +5341,8 @@
           "body": "Once the puzzle has changed hands, you both press Mark Complete. The exchange is completed when both of you have."
         },
         "borrowed": {
-          "title": "What you've borrowed",
-          "body": "Puzzles lent to you are listed here until you give them back. Start a solve from here, and press Return once it's back with its owner."
+          "title": "Your loans",
+          "body": "Loans lists the puzzles you've borrowed and the ones you've lent out. Start a solve on a borrowed puzzle, and press Return once it's back with its owner."
         }
       }
     },
