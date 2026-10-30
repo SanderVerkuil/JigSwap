@@ -20,6 +20,7 @@ import { easing } from "maath";
 import * as React from "react";
 import * as THREE from "three";
 import { framedContentHeight, layoutRow } from "./layout";
+import { useCoarsePointer } from "./use-coarse-pointer";
 import { DEFAULT_WOOD_PARAMS, useWoodTexture } from "./wood-texture";
 
 // ——— shelf constants ———
@@ -176,6 +177,9 @@ function Arrangement({
 }) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const size = useThree((s) => s.size);
+  // Parallax follows a hovering pointer; a finger never hovers, so on touch
+  // screens it would only sway the row now and then after a tap.
+  const coarsePointer = useCoarsePointer();
 
   // Wood-grain texture for the shelf board, tinted from the theme shelf colour.
   const woodTexture = useWoodTexture(lightingPreset.shelfColor);
@@ -228,7 +232,7 @@ function Arrangement({
   return (
     <>
       <FirstFrame onFirstFrame={onFirstFrame} />
-      <Parallax enabled={!reducedMotion}>
+      <Parallax enabled={!reducedMotion && !coarsePointer}>
         {/* Fixed yaw so boxes read as 3D without pointer-driven rotation */}
         <group rotation={[0, FIXED_YAW, 0]}>
           {/* Shelf board sits just below y=0 (box bases are at y=0) */}
@@ -262,7 +266,13 @@ function Arrangement({
             />
           ))}
 
+          {/* The boxes stand still, so the shadow is baked once instead of a
+              depth render plus blur passes every frame. drei restarts its
+              frame count on every re-render, so a box resolving its cover
+              height or a theme change re-bakes it; parallax rotates the
+              shadow camera together with the boxes. */}
           <ContactShadows
+            frames={1}
             position={[0, 0.001, 0]}
             opacity={lightingPreset.shadowOpacity}
             scale={rowWidth + 1}
