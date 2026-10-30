@@ -20,7 +20,12 @@ import { NotFound } from "../components/NotFound";
 import { Providers } from "../components/providers";
 import { ErrorBoundary } from "../components/ui/error-boundary";
 import { useClerkLocalization } from "../lib/clerk-localization";
-import { getIntlCached, seedIntlCache } from "../lib/i18n";
+import { contextLocale, getIntlCached, seedIntlCache } from "../lib/i18n";
+import {
+  catalogPreloadLinks,
+  loadCatalog,
+  messagesFor,
+} from "../lib/i18n-catalog";
 import { defaultDocumentTitle } from "../lib/page-title";
 import { preconnectLinks } from "../lib/preconnect";
 import { ZOD_JITLESS_SCRIPT } from "../lib/zod-jitless";
@@ -129,6 +134,9 @@ export const Route = createRootRouteWithContext<{
           string | undefined,
         convexUrl: import.meta.env.VITE_CONVEX_URL as string | undefined,
       }),
+      // Hydration waits for the page's message catalog (router.tsx), so fetch
+      // it alongside the document instead of after the scripts have run.
+      ...catalogPreloadLinks(contextLocale(match.context)),
       { rel: "stylesheet", href: appCss },
       // The fonts are self-hosted: globals.css imports their @font-face rules.
       // Preload the latin files of the faces every page shows (Baloo 2
@@ -159,7 +167,14 @@ export const Route = createRootRouteWithContext<{
     const isBrowser = typeof window !== "undefined";
     const [auth, intl, ssrToken] = await Promise.all([
       (isBrowser && clientAuthCache) || fetchClerkUserId(),
-      getIntlCached(),
+      // The catalog stays out of this context (it is dehydrated into every
+      // document); it is loaded into lib/i18n-catalog before the context
+      // exists, so messagesFor(intl.locale) is ready whenever the root renders.
+      // A no-op after the first load of a locale in the browser.
+      getIntlCached().then(async (payload) => {
+        await loadCatalog(payload.locale);
+        return payload;
+      }),
       isBrowser ? null : getSsrConvexToken(),
     ]);
     if (isBrowser) {
@@ -237,7 +252,7 @@ function RootComponent() {
         <RootDocument locale={intl.locale}>
           <Providers
             locale={intl.locale}
-            messages={intl.messages}
+            messages={messagesFor(intl.locale) ?? {}}
             now={intl.now}
             cspNonce={cspNonce}
           >

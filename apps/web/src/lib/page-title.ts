@@ -4,16 +4,20 @@
 // router rebuilds the match's merged context (including the root beforeLoad's
 // intl payload) when the match loads. Note that head's `matches` array and
 // `loaderData` are NOT reliable for this — they can be stale/pre-load
-// snapshots — so always pass `match.context` here.
+// snapshots — so always pass `match.context` here. The context carries only
+// the locale; the strings come from that locale's catalog, which the root
+// beforeLoad (and hydration) loaded before any head runs.
 
-import type { IntlPayload } from "@/lib/i18n";
+import { contextLocale } from "@/lib/i18n";
+import { messagesFor } from "@/lib/i18n-catalog";
 
 const FALLBACK = "JigSwap";
 
 export function pageTitle(context: unknown, key: string): string {
-  const intl = (context as { intl?: IntlPayload } | undefined)?.intl;
-  const titles = intl?.messages?.titles as Record<string, string> | undefined;
-  const marketing = intl?.messages?.marketing as
+  const locale = contextLocale(context);
+  const messages = locale ? messagesFor(locale) : undefined;
+  const titles = messages?.titles as Record<string, string> | undefined;
+  const marketing = messages?.marketing as
     { titles?: Record<string, string> } | undefined;
   return titles?.[key] ?? marketing?.titles?.[key] ?? FALLBACK;
 }

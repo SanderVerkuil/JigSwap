@@ -19,6 +19,11 @@ import { Route as DocsIndexRoute } from "./index";
 const NOT_FOUND = vi.hoisted(() => ({ isNotFound: true }));
 const params = vi.hoisted(() => ({ _splat: "getting-started/first" }));
 
+// The head reads the strings from the loaded catalog of the context's locale.
+vi.mock("@/lib/i18n-catalog", () => ({
+  messagesFor: (locale: string) => (locale === "nl" ? nl : en),
+}));
+
 vi.mock("@tanstack/react-router", () => ({
   createFileRoute: () => (options: { component: ComponentType }) => ({
     options,
@@ -110,7 +115,6 @@ const headMatch = (locale: "en" | "nl") => ({
   context: {
     intl: {
       locale,
-      messages: locale === "nl" ? nl : en,
       timeZone: "Europe/Amsterdam",
       now: 0,
     },

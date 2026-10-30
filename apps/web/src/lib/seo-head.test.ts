@@ -3,9 +3,13 @@ import en from "../../locales/en.json";
 import nl from "../../locales/nl.json";
 import { headMessage, seoHead } from "./seo-head";
 
+// The head reads the strings from the loaded catalog of the context's locale.
+vi.mock("@/lib/i18n-catalog", () => ({
+  messagesFor: (locale: string) => (locale === "nl" ? nl : en),
+}));
+
 const intl = (locale: "en" | "nl") => ({
   locale,
-  messages: locale === "en" ? en : nl,
   timeZone: "Europe/Amsterdam",
   now: 0,
 });

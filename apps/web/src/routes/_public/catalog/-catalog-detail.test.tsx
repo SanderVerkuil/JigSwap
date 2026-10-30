@@ -16,6 +16,11 @@ const PUZZLE_ID = "puzzle1";
 // What the mocked router's notFound() returns, so a test can tell a 404 from any other throw.
 const NOT_FOUND = { isNotFound: true } as const;
 
+// The head reads the strings from the loaded catalog of the context's locale.
+vi.mock("@/lib/i18n-catalog", () => ({
+  messagesFor: (locale: string) => (locale === "nl" ? nl : en),
+}));
+
 vi.mock("@/compat/link", () => ({
   Link: ({
     href,
@@ -172,7 +177,6 @@ const headMatch = (locale: "en" | "nl") => ({
   context: {
     intl: {
       locale,
-      messages: locale === "en" ? en : nl,
       timeZone: "Europe/Amsterdam",
       now: 0,
     },

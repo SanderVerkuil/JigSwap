@@ -32,6 +32,9 @@ const mocks = vi.hoisted(() => ({
   search: {} as Record<string, unknown>,
 }));
 
+// The head reads the title from the loaded catalog of the context's locale.
+vi.mock("@/lib/i18n-catalog", () => ({ messagesFor: () => en }));
+
 vi.mock("@tanstack/react-router", () => ({
   createFileRoute: () => (options: object) => ({ options }),
   useNavigate: () => mocks.navigate,
@@ -451,7 +454,7 @@ describe("page title", () => {
   it("names the document after the mode", () => {
     const title = (search: Record<string, unknown>) =>
       routeOptions.head({
-        match: { context: { intl: { messages: en } }, search },
+        match: { context: { intl: { locale: "en" } }, search },
       }).meta[0]?.title;
     expect(title({ puzzleId: PUZZLE_DOC_ID })).toBe("Add your copy — JigSwap");
     expect(title({})).toBe(en.titles.createPuzzle);

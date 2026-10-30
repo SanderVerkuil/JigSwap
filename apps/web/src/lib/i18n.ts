@@ -40,18 +40,40 @@ function isMessageMap(value: unknown): value is Messages {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-// Root beforeLoad calls this so SSR has locale + messages before first paint.
-// `now` is the server's clock at render time; it travels with the dehydrated
-// payload so SSR and hydration format relative times against the same instant.
+function parseLocale(data: unknown): Locale {
+  if (!isLocale(data as string)) {
+    throw new Error(`Invalid locale: ${String(data)}`);
+  }
+  return data as Locale;
+}
+
+// Root beforeLoad calls this so SSR has the locale before first paint. The
+// messages are not part of it: this payload is dehydrated into every document,
+// so the catalog travels separately (lib/i18n-catalog.ts). `now` is the
+// server's clock at render time; it travels with the dehydrated payload so SSR
+// and hydration format relative times against the same instant.
 export const getIntl = createServerFn({ method: "GET" }).handler(async () => {
   const locale = detectLocale();
-  const messages = await loadMessages(locale);
-  return { locale, messages, timeZone, now: Date.now() };
+  return { locale, timeZone, now: Date.now() };
 });
+
+// One locale's catalog. SSR loads it in-process through this; the browser only
+// calls it when the hashed catalog file fails to load, or in dev (where it adds
+// the source.json fallback). See lib/i18n-catalog.ts.
+export const getMessages = createServerFn({ method: "GET" })
+  .validator(parseLocale)
+  .handler(async ({ data }) => loadMessages(data));
 
 export type IntlPayload = Awaited<ReturnType<typeof getIntl>>;
 
-// The catalog only changes via setLocale, so client-side navigations reuse the
+// The locale the root beforeLoad put in a route context; undefined when it did
+// not run (e.g. it failed). Takes `unknown` so the root route can read its own
+// context without its types referring to themselves.
+export function contextLocale(context: unknown): Locale | undefined {
+  return (context as { intl?: IntlPayload } | undefined)?.intl?.locale;
+}
+
+// The locale only changes via setLocale, so client-side navigations reuse the
 // payload instead of re-fetching it from the root beforeLoad on every click.
 // Module state is only used in the browser — on the server it would leak
 // between concurrent requests.
@@ -65,13 +87,13 @@ export async function getIntlCached(): Promise<IntlPayload> {
 }
 
 // Seeds the cache from the SSR-dehydrated root context at hydration, so the
-// first client-side navigation doesn't refetch the catalog.
+// first client-side navigation doesn't refetch the locale.
 export function seedIntlCache(value: IntlPayload) {
   if (typeof window !== "undefined") intlCache ??= value;
 }
 
 // Language switchers call this before router.invalidate() so the re-run
-// beforeLoad fetches the freshly selected catalog.
+// beforeLoad picks up the freshly selected locale (and loads its catalog).
 export function clearIntlCache() {
   intlCache = null;
 }
@@ -79,12 +101,7 @@ export function clearIntlCache() {
 // Persists the chosen locale; the language switcher invalidates the router after
 // calling this so the new catalog is re-fetched.
 export const setLocale = createServerFn({ method: "POST" })
-  .validator((data: unknown): Locale => {
-    if (!isLocale(data as string)) {
-      throw new Error(`Invalid locale: ${String(data)}`);
-    }
-    return data as Locale;
-  })
+  .validator(parseLocale)
   .handler(async ({ data }) => {
     writeLocaleCookie(data);
     return { locale: data };
