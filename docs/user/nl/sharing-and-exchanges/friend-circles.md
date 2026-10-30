@@ -20,16 +20,19 @@ ja te zeggen: leden worden uitgenodigd en doen pas mee als ze accepteren.
 3. Klik op **Aanmaken**.
 
 Je bent de **Eigenaar** van de kring en de eerste beheerder. Elke kring op de
-pagina toont je rol (**Eigenaar** of **Lid**), het aantal leden en hun avatars.
-Beheerders krijgen ook een instellingenknop die het beheervenster opent.
+pagina toont jouw plek erin: **Eigenaar**, of je recht (**Alleen bekijken**,
+**Mag ruilen** of **Beheerder**). Wijs het aan om te zien wat je ermee kunt.
+Elke kring toont ook het aantal leden en hun avatars. Beheerders krijgen ook
+een instellingenknop die het beheervenster opent.
 
 ## De pagina van een kring
 
 Klik op **Kringen** op een kring om de eigen pagina ervan te openen. Daarop
 staan:
 
-- de naam van de kring, je rol en de avatars van de leden, met **Beheren** voor
-  beheerders en **Kring verlaten** voor leden;
+- de naam van de kring, jouw plek erin (**Eigenaar** of je recht; tik erop of
+  wijs het aan om te zien wat je ermee kunt) en de avatars van de leden, met
+  **Beheren** voor beheerders en **Kring verlaten** voor leden;
 - **Groepschat**: de nieuwste berichten, en **Groepschat openen** om mee te
   praten;
 - **Gedeelde puzzels**: de puzzels die het laatst in de kring zijn gedeeld.
@@ -132,7 +135,8 @@ verwijdert het.
 ## Wat elk rechtenniveau toestaat
 
 De uitnodigingskiezer en het beheervenster tonen onder elk niveau een korte
-samenvatting van één regel.
+samenvatting van één regel. Je eigen recht staat bij elke kring op **Kringen**
+en op de pagina van de kring.
 
 | Recht               | Wat het lid kan                                                                                                                                   |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -160,8 +164,9 @@ privé maakt.
 ## Een exemplaar delen met een kring
 
 Leden met **Mag ruilen** of **Beheerder** kunnen hun eigen exemplaren delen.
-Met **Alleen bekijken** kun je niet delen. Je kunt alleen exemplaren delen die
-van jou zijn.
+Met **Alleen bekijken** kun je niet delen: dat staat op de pagina van de kring
+onder **Gedeelde puzzels**, en een beheerder kan je **Mag ruilen** geven. Je
+kunt alleen exemplaren delen die van jou zijn.
 
 1. Open de pagina van de kring. Beheerders kunnen ook het beheervenster
    gebruiken.

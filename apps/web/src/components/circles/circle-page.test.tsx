@@ -3,6 +3,7 @@ import { gateway } from "@/gateway";
 import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -219,6 +220,38 @@ describe("CirclePage", () => {
       screen.getByRole("button", { name: "Manage Puzzle Club" }),
     ).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Leave circle" })).toBeNull();
+  });
+
+  it("shows a member their own permission, with what it allows", () => {
+    renderPage({ circle: detail({ viewerPermission: "Exchange" }) });
+    const badge = screen.getByRole("button", { name: "Can exchange" });
+    act(() => badge.focus());
+    expect(screen.getAllByRole("tooltip")[0].textContent).toBe(
+      en.circles.roleHints.Exchange,
+    );
+    expect(screen.queryByText("Member")).toBeNull();
+  });
+
+  it("tells a view-only member why they can't share, instead of a share control", () => {
+    renderPage({ circle: detail({ viewerPermission: "ViewOnly" }) });
+    expect(screen.getByRole("button", { name: "View only" })).toBeTruthy();
+    expect(screen.getByText(en.circles.page.viewOnlyHint)).toBeTruthy();
+    expect(screen.queryByText(en.circles.manage.shareCopy)).toBeNull();
+  });
+
+  it("gives a member who may share the share control and no view-only note", () => {
+    renderPage({ circle: detail({ viewerPermission: "Exchange" }) });
+    expect(screen.getByText(en.circles.manage.shareCopy)).toBeTruthy();
+    expect(screen.queryByText(en.circles.page.viewOnlyHint)).toBeNull();
+  });
+
+  it("names the owner's seat Owner (nl)", () => {
+    renderPage({
+      circle: detail({ isOwnedByViewer: true, viewerPermission: "Admin" }),
+      locale: "nl",
+    });
+    expect(screen.getByRole("button", { name: "Eigenaar" })).toBeTruthy();
+    expect(screen.queryByText(nl.circles.page.viewOnlyHint)).toBeNull();
   });
 
   it("renders the generic not-found page for a non-member or an unknown circle", () => {

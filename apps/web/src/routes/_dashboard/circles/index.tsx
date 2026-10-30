@@ -7,6 +7,7 @@ import {
   isInvalidCircleName,
   MAX_CIRCLE_NAME_LENGTH,
 } from "@/components/circles/circle-name";
+import { CircleRoleBadge } from "@/components/circles/circle-role-badge";
 import {
   useCircleSeatName,
   type CircleMemberView,
@@ -25,7 +26,6 @@ import { CircleThreadAvatar } from "@/components/messaging/circle-thread-avatar"
 import { circleHref } from "@/components/messaging/format";
 import { OpenCircleChatButton } from "@/components/messaging/open-circle-chat";
 import { GuideHelpButton } from "@/components/tour/guide-help-button";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -241,11 +241,11 @@ function CirclesPage() {
 }
 
 // One circle as a full-width row tile. The identity half (the circle's icon,
-// else a gradient icon chip,
-// heading-font name with the viewer's role badge, a one-line blurb) links to
-// the circle's page; the member avatar stack, the members stat and the actions
-// sit beside it from xl up and wrap onto their own line below that, so the
-// name always keeps the room it needs.
+// else a gradient icon chip, heading-font name with the viewer's seat badge —
+// Owner or their permission — and a one-line blurb) links to the circle's
+// page; the member avatar stack, the members stat and the actions sit beside
+// it from xl up and wrap onto their own line below that, so the name always
+// keeps the room it needs.
 function CircleRow({
   circle,
   gradientIndex,
@@ -272,9 +272,10 @@ function CircleRow({
           <span className="font-heading min-w-0 truncate text-lg font-bold">
             {circle.name}
           </span>
-          <Badge variant="secondary" className="shrink-0">
-            {circle.isOwnedByViewer ? t("roleOwner") : t("roleMember")}
-          </Badge>
+          <CircleRoleBadge
+            isOwner={circle.isOwnedByViewer}
+            permission={circle.viewerPermission}
+          />
         </div>
         <p className="text-muted-foreground mt-0.5 truncate text-sm">
           {circle.isOwnedByViewer ? t("ownedByYou") : t("sharedWithYou")}

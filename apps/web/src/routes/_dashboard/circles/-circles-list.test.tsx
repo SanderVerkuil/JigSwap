@@ -48,7 +48,14 @@ vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => mocks.navigate,
 }));
 
-const circle = (aggregateId: string | undefined, name: string) => ({
+const circle = (
+  aggregateId: string | undefined,
+  name: string,
+  fields: {
+    isOwnedByViewer?: boolean;
+    viewerPermission?: "ViewOnly" | "Exchange" | "Admin";
+  } = {},
+) => ({
   _id: `row_${name}`,
   aggregateId,
   name,
@@ -56,6 +63,7 @@ const circle = (aggregateId: string | undefined, name: string) => ({
   isOwnedByViewer: false,
   viewerPermission: "ViewOnly" as const,
   createdAt: 0,
+  ...fields,
 });
 
 const renderList = (circles: ReturnType<typeof circle>[]) => {
@@ -104,6 +112,24 @@ describe("circles list rows", () => {
       name: "Open group chat: Puzzle Club",
     });
     expect(link?.contains(chat)).toBe(false);
+  });
+
+  it("shows the viewer's own permission on each row, not just 'Member'", () => {
+    renderList([
+      circle("c1", "Puzzle Club"),
+      circle("c2", "Family", { viewerPermission: "Exchange" }),
+      circle("c3", "Mine", {
+        isOwnedByViewer: true,
+        viewerPermission: "Admin",
+      }),
+    ]);
+    const rowOf = (name: string) => screen.getByText(name).closest("a");
+    expect(rowOf("Puzzle Club")?.textContent).toContain("View only");
+    expect(rowOf("Family")?.textContent).toContain("Can exchange");
+    expect(rowOf("Mine")?.textContent).toContain("Owner");
+    expect(screen.queryByText("Member")).toBeNull();
+    // Inside the row's link the badge is text, never a nested control.
+    expect(rowOf("Family")?.querySelector("button")).toBeNull();
   });
 
   it("renders a legacy circle without an id as plain text", () => {

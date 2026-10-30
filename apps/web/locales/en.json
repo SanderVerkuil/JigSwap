@@ -2365,7 +2365,12 @@
     "yourCircles": "Your Circles",
     "createCircle": "Create Circle",
     "roleOwner": "Owner",
-    "roleMember": "Member",
+    "roleHints": {
+      "Owner": "You own this circle: you can do everything an admin can, and delete it.",
+      "ViewOnly": "You see the puzzles shared here, but can't request them or share your own.",
+      "Exchange": "You can request the puzzles shared here and share your own.",
+      "Admin": "You can request and share puzzles, invite people and manage members."
+    },
     "ownedByYou": "Owned by you",
     "sharedWithYou": "Shared with you",
     "membersLabel": "{count, plural, one {member} other {members}}",
@@ -2479,7 +2484,8 @@
       "chatError": "Couldn't load the latest messages.",
       "sharedTitle": "Shared puzzles",
       "sharedEmpty": "No puzzles have been shared in this circle yet.",
-      "sharedError": "Couldn't load the shared puzzles."
+      "sharedError": "Couldn't load the shared puzzles.",
+      "viewOnlyHint": "You have view-only access in this circle. Ask an admin for “Can exchange” to share your puzzles here and request theirs."
     }
   },
   "people": {

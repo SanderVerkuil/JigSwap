@@ -12,6 +12,7 @@ import {
   canShareInCircle,
 } from "@/components/circles/circle-admin-sections";
 import { CircleAvatarStack } from "@/components/circles/circle-avatar-stack";
+import { CircleRoleBadge } from "@/components/circles/circle-role-badge";
 import {
   useCircleSeatName,
   type CircleMemberView,
@@ -33,7 +34,6 @@ import {
 } from "@/components/messaging/format";
 import { OpenCircleChatButton } from "@/components/messaging/open-circle-chat";
 import { AppNotFound } from "@/components/NotFound";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
@@ -88,9 +88,11 @@ export function CirclePage({ circleId }: { circleId: string }) {
               <h2 className="font-heading min-w-0 text-xl font-bold break-words">
                 {detail.name}
               </h2>
-              <Badge variant="secondary">
-                {detail.isOwnedByViewer ? t("roleOwner") : t("roleMember")}
-              </Badge>
+              <CircleRoleBadge
+                isOwner={detail.isOwnedByViewer}
+                permission={detail.viewerPermission}
+                interactive
+              />
             </div>
             <p className="text-muted-foreground mt-0.5 text-sm">
               {t("page.memberCount", { count: detail.memberCount })}
@@ -289,7 +291,8 @@ function ChatPreview({
 }
 
 // The circle's shared copies (members only, canViewCopy per copy, private
-// copies left out), each linking to its copy page.
+// copies left out), each linking to its copy page. A member who may share gets
+// the share control; a View only member is told why there is none.
 function SharedPuzzles({
   circleId,
   canShare,
@@ -333,11 +336,15 @@ function SharedPuzzles({
     <Section
       title={t("page.sharedTitle")}
       footer={
-        canShare && (
-          <div className="mt-1 border-t pt-4">
+        <div className="mt-1 border-t pt-4">
+          {canShare ? (
             <CircleShareSection circleId={circleId} memberId={member?._id} />
-          </div>
-        )
+          ) : (
+            <p className="text-muted-foreground text-sm">
+              {t("page.viewOnlyHint")}
+            </p>
+          )}
+        </div>
       }
     >
       {body}

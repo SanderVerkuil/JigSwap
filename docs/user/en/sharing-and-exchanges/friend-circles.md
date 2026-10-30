@@ -20,15 +20,18 @@ yes: members are invited and join only when they accept.
 3. Click **Create**.
 
 You are the circle's **Owner** and its first admin. Each circle on the page
-shows your role (**Owner** or **Member**), the member count and avatars. Admins
-also get a settings button that opens the manage dialog.
+shows your place in it: **Owner**, or your permission (**View only**, **Can
+exchange** or **Admin**). Point at it to see what it lets you do. Each circle
+also shows the member count and avatars. Admins also get a settings button
+that opens the manage dialog.
 
 ## The circle page
 
 Click a circle on **Circles** to open its own page. It shows:
 
-- the circle's name, your role and the members' avatars, with **Manage** for
-  admins and **Leave circle** for members;
+- the circle's name, your place in it (**Owner** or your permission; tap or
+  point at it to see what it lets you do) and the members' avatars, with
+  **Manage** for admins and **Leave circle** for members;
 - **Group chat**: the latest messages, and **Open group chat** to join the
   conversation;
 - **Shared puzzles**: the most recent puzzles shared in the circle. Click one
@@ -123,7 +126,8 @@ doesn't change its icon; deleting the circle deletes it.
 ## What each permission allows
 
 The invite picker and the manage dialog show a one-line summary under each
-level.
+level. Your own permission shows on each circle on **Circles** and on the
+circle's page.
 
 | Permission       | What the member can do                                                                                                             |
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
@@ -149,7 +153,9 @@ open to accept, even if the owner later makes their profile private.
 ## Share a copy with a circle
 
 Members with **Can exchange** or **Admin** can share their own copies. With
-**View only** you can't share. You can only share copies you own.
+**View only** you can't share: the circle's page says so under **Shared
+puzzles**, and an admin can give you **Can exchange**. You can only share
+copies you own.
 
 1. Open the circle's page. Admins can also use the manage dialog.
 2. Under **Shared puzzles**, in **Share a copy**, choose one of your copies.
