@@ -3,12 +3,22 @@ import { v } from "convex/values";
 // Hash-check bookkeeping on every image table (schema), and the publication gate built on it.
 //
 // - `hashCheckPendingSince`: set when the upload is inserted (and kept while the hash service is
-//   unreachable); cleared once the CSAM hash check returns no_match.
-// - `hashCheckedAt`: when the hash check returned no_match (with provider "none": as soon as the
-//   pipeline runs), or when an admin approved the photo after its hash check timed out.
-// - `pendingHashes`: MD5 + SHA-1 of the original and the re-encode, kept only while the check is
-//   "unavailable" so it can be retried after the original is gone (lib/imageModeration), and
-//   after an admin approved a timed-out photo (below).
+//   unreachable); cleared once the CSAM hash check returns no_match, once the check is skipped
+//   (below), or once the pipeline refused the upload and its blob is gone.
+// - `hashCheckedAt`: when the publication gate OPENED, which is not always a hash check: the
+//   check returned no_match, or an admin approved the photo after its check timed out
+//   (`hashCheckWaivedBy`), or no hash matching was configured (`hashCheckSkippedAt`). Only a row
+//   with `hashCheckedAt` and neither marker has passed a hash check.
+// - `hashCheckSkippedAt`: when the pipeline published the photo WITHOUT a hash check because none
+//   is configured on the deployment (csamHashCheck.skipsHashCheck: provider "none", or
+//   "offlimits" with a credential missing). Nothing ever records such a photo as checked: it
+//   keeps its `pendingHashes`, so it can still be checked once matching is configured. Cleared,
+//   with `pendingHashes`, when a check returns no_match; a match quarantines it (a quarantined
+//   row keeps the marker: it was served unchecked until the match). Photos published before this
+//   marker existed carry nothing: their hashes were never kept, so they cannot be checked later.
+// - `pendingHashes`: MD5 + SHA-1 of the original and the re-encode, kept while the check is
+//   "unavailable" so it can be retried after the original is gone (lib/imageModeration), after
+//   an admin approved a timed-out photo (below), and on a photo published unchecked (above).
 // - `hashRecheckAttempt` / `hashRecheckDueAt`: the one re-check of those hashes that is current
 //   (1-based) and when it is due (lib/imageModeration/hashRecheckPool). A re-check job whose
 //   attempt is not the row's is stale and does nothing.
@@ -39,6 +49,7 @@ export const hashCheckFields = {
   hashRecheckDueAt: v.optional(v.number()),
   hashCheckTimedOutAt: v.optional(v.number()),
   hashCheckWaivedBy: v.optional(v.id("users")),
+  hashCheckSkippedAt: v.optional(v.number()),
 };
 
 /**

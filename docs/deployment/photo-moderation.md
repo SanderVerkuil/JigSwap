@@ -115,8 +115,7 @@ Who wins when answers cross (every step is one Convex transaction, so the first 
   right after configuring Offlimits** on a deployment (dry run first); see
   [one-shot-migrations.md](one-shot-migrations.md#libimagemoderationrecheckwaivedhashes--hash-check-of-photos-approved-without-one).
   A re-check of a waived photo never runs against an unconfigured service (it is skipped,
-  `result: "skipped_unconfigured"`): the "none" adapter's no_match would clear its hashes
-  unchecked.
+  `result: "skipped_unconfigured"`): an unconfigured service cannot answer.
 
 What admins see: a photo waiting on its hash check is counted on **Admin → Moderation → Hash
 matches** ("Hash check unreachable: N photos waiting, unpublished", with the oldest wait). While it
@@ -135,7 +134,16 @@ only looks at photos whose classifier check is still `pending`, so it leaves a p
 waiting on its hash check alone.
 
 The hash check is not configured on dev or prod today (`CSAM_HASHCHECK_PROVIDER` unset means
-"none", which answers no_match at once), so no photo waits and none of this runs until it is.
+"none"), so no photo waits and none of this runs until it is. Without it the hash service is
+never asked and **nothing is recorded as hash-checked**: the pipeline publishes each photo as
+before, but marks it "not hash-checked" (`hashCheckSkippedAt`; the wide event says
+`csam_hashcheck_status: "skipped"`) and keeps the hashes of the original and the re-encode
+(`pendingHashes`), so it can still be checked once the service is configured. `offlimits` with a
+credential missing behaves the same and logs at error level (`csam_hashcheck_config:
+"missing_config"`); whether it should hold photos unpublished instead is an open decision, made
+in one place (`csamHashCheck.skipsHashCheck`). A photo still waiting on a re-check when matching
+is switched off is published the same way by that re-check. Photos published before this marker
+existed kept no hashes and cannot be checked after the fact.
 When it is configured, run `lib/imageModeration/recheckWaivedHashes` right after (above), and
 `lib/imageModeration/backfillBoxArtHashCheck` for older box art (one-shot-migrations.md).
 

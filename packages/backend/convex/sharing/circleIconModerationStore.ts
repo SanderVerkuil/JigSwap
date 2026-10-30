@@ -32,6 +32,7 @@ export const getForModeration = internalQuery({
       hashCheckedAt: row.hashCheckedAt,
       pendingHashes: row.pendingHashes,
       hashCheckWaivedBy: row.hashCheckWaivedBy,
+      hashCheckSkippedAt: row.hashCheckSkippedAt,
       uploaderId: row.uploaderId,
       circleId: row.circleId,
     };

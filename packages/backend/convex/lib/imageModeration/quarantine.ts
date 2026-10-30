@@ -141,19 +141,23 @@ export const hashCheckResultArgs = {
     v.literal("no_match"),
     v.literal("unavailable"),
     v.literal("refused"),
+    v.literal("skipped"),
   ),
   hashes: v.optional(v.array(imageHashPair)),
 };
 
 /**
- * Record a hash-check outcome on a row: no_match clears the publication gate (and the marker of
- * an admin's waiver, hashCheckWaivedBy); unavailable keeps it closed and stores the hashes for a
- * later re-check. "refused" is the pipeline's word that it refused the upload (an input guard;
- * "rejected" with label invalid_image) and its blob is gone: such a row is never published and
- * owes no hash check, so it leaves the hash-pending index (`hashCheckPendingSince` cleared).
- * Nothing else changes: `hashCheckedAt` stays unset, and a row that still holds stored hashes
- * keeps waiting on their re-check (a match escalates even a refused upload). A quarantined row is
- * left alone.
+ * Record a hash-check outcome on a row: no_match clears the publication gate (and the markers of
+ * a gate opened without a check, hashCheckWaivedBy and hashCheckSkippedAt); unavailable keeps it
+ * closed and stores the hashes for a later re-check. "skipped" means no hash matching is
+ * configured (csamHashCheck.skipsHashCheck): the gate opens as before, but the row is marked
+ * "not hash-checked" (`hashCheckSkippedAt`) and KEEPS the hashes, never recorded as a pass; a row
+ * whose gate already opened is left as it is. "refused" is the pipeline's word that it refused
+ * the upload (an input guard; "rejected" with label invalid_image) and its blob is gone: such a
+ * row is never published and owes no hash check, so it leaves the hash-pending index
+ * (`hashCheckPendingSince` cleared). Nothing else changes: `hashCheckedAt` stays unset, and a row
+ * that still holds stored hashes keeps waiting on their re-check (a match escalates even a
+ * refused upload). A quarantined row is left alone.
  */
 export const applyHashCheckResult = async (
   ctx: MutationCtx,
@@ -164,7 +168,7 @@ export const applyHashCheckResult = async (
     | Id<"boxArtUploads">
     | Id<"circleIcons">,
   result: {
-    status: "no_match" | "unavailable" | "refused";
+    status: "no_match" | "unavailable" | "refused" | "skipped";
     hashes?: { md5: string; sha1: string }[];
   },
 ) => {
@@ -182,13 +186,26 @@ export const applyHashCheckResult = async (
     }
     return;
   }
+  if (result.status === "skipped") {
+    if (row.hashCheckedAt !== undefined) return;
+    const now = Date.now();
+    await ctx.db.patch(imageId, {
+      hashCheckedAt: now,
+      hashCheckSkippedAt: now,
+      hashCheckPendingSince: undefined,
+      pendingHashes: result.hashes ?? row.pendingHashes,
+    });
+    return;
+  }
   if (result.status === "no_match") {
     await ctx.db.patch(imageId, {
       hashCheckedAt: Date.now(),
       hashCheckPendingSince: undefined,
       pendingHashes: undefined,
-      // A photo an admin approved without a hash check has now passed one (hashCheckFields).
+      // A photo published without a hash check (an admin's waiver, or none configured) has now
+      // passed one (hashCheckFields).
       hashCheckWaivedBy: undefined,
+      hashCheckSkippedAt: undefined,
     });
     return;
   }

@@ -5,6 +5,7 @@ import {
   makeOfflimitsCsamHashCheckPort,
   offlimitsHcsWireFormat,
   readCsamHashCheckConfig,
+  skipsHashCheck,
   type CsamHashCheckPort,
 } from "./lib/imageModeration/csamHashCheck";
 
@@ -163,26 +164,41 @@ describe("offlimits adapter", () => {
 });
 
 describe("configuration", () => {
-  test("unconfigured defaults to none: always no_match, no HTTP call", async () => {
+  // SEC-03: no configuration ever answers no_match without a real hash list behind it.
+  test("unconfigured defaults to none: never no_match, only unavailable, no HTTP call", async () => {
     const fetchImpl = vi.fn();
     const port = makeCsamHashCheckPortFromEnv({}, { fetchImpl });
     expect(port.provider).toBe("none");
-    expect(await port.check(HASHES)).toEqual({ status: "no_match" });
+    expect(await port.check(HASHES)).toEqual({
+      status: "unavailable",
+      reason: "disabled",
+    });
+    expect(await checkAllHashes(port, [HASHES])).toEqual({
+      status: "unavailable",
+      reason: "disabled",
+    });
     expect(fetchImpl).not.toHaveBeenCalled();
-    expect(readCsamHashCheckConfig({})).toEqual({
+    const config = readCsamHashCheckConfig({});
+    expect(config).toEqual({
       provider: "none",
       status: "disabled",
       missingVars: [],
     });
+    expect(skipsHashCheck(config)).toBe(true);
   });
 
-  test("offlimits with missing config is inert (none) and names the missing vars, never values", async () => {
+  test("offlimits with missing config never answers no_match, and names the missing vars, never values", async () => {
     const fetchImpl = vi.fn();
     const env = { ...ENV, OFFLIMITS_HCS_PASSWORD: " " };
     const port = makeCsamHashCheckPortFromEnv(env, { fetchImpl });
-    expect(port.provider).toBe("none");
-    expect(await port.check(HASHES)).toEqual({ status: "no_match" });
+    expect(port.provider).toBe("offlimits");
+    expect(await port.check(HASHES)).toEqual({
+      status: "unavailable",
+      reason: "missing_config",
+    });
     expect(fetchImpl).not.toHaveBeenCalled();
+    // Stage 1a: the pipeline skips the check (published, marked not hash-checked).
+    expect(skipsHashCheck(readCsamHashCheckConfig(env))).toBe(true);
     const config = readCsamHashCheckConfig(env);
     expect(config).toEqual({
       provider: "offlimits",
@@ -192,6 +208,10 @@ describe("configuration", () => {
     expect(JSON.stringify(readCsamHashCheckConfig(ENV))).not.toContain(
       "s3cret-pass",
     );
+  });
+
+  test("a complete offlimits config is never skipped", () => {
+    expect(skipsHashCheck(readCsamHashCheckConfig(ENV))).toBe(false);
   });
 
   test("an unknown provider name means none", () => {

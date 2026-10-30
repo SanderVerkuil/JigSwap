@@ -22,6 +22,7 @@ import {
   checkAllHashes,
   makeCsamHashCheckPortFromEnv,
   readCsamHashCheckConfig,
+  skipsHashCheck,
   type ImageHashes,
 } from "./csamHashCheck";
 import {
@@ -68,7 +69,9 @@ import { findMetadata, stripImageMetadata } from "./stripMetadata";
 //      opens the publication gate (setHashCheck; lib/imageModeration/hashCheckFields), but only
 //      once the row holds the clean blob (after step 5): no read model serves the row before,
 //      so no URL is ever issued for the upload as sent. "unavailable" is logged at error level
-//      and the gate stays closed.
+//      and the gate stays closed. With no hash matching configured (skipsHashCheck) nothing is
+//      asked and nothing is recorded as checked: after step 5 the gate opens with the row marked
+//      "not hash-checked" and its hashes kept (setHashCheck "skipped"; hashCheckFields).
 //   4. A refused upload is "rejected" with label "invalid_image" (the reason in
 //      moderationReason), never classified, and its blob is deleted; then it leaves the
 //      hash-pending index (setHashCheck "refused"). Never fails open.
@@ -154,6 +157,8 @@ export type ModerationRow = {
   pendingHashes?: ImageHashes[];
   /** An admin approved the photo after its hash check timed out (hashCheckFields). */
   hashCheckWaivedBy?: Id<"users">;
+  /** Published without a hash check because none was configured (hashCheckFields). */
+  hashCheckSkippedAt?: number;
 };
 
 /** The verdict the pipeline writes through a table's `setVerdict`. */
@@ -213,15 +218,17 @@ export interface ImageModerationSteps<R extends ModerationRow> {
   quarantine: FunctionReference<"mutation", "internal", QuarantineArgs, string>;
   /**
    * Record a hash-check outcome: no_match (opens the publication gate), unavailable (keeps it
-   * closed, stores the hashes), or refused (the upload was refused and its blob is gone: it leaves
-   * the hash-pending index; lib/imageModeration/quarantine.applyHashCheckResult).
+   * closed, stores the hashes), refused (the upload was refused and its blob is gone: it leaves
+   * the hash-pending index), or skipped (no hash matching configured: the gate opens, the row is
+   * marked "not hash-checked" and keeps the hashes; lib/imageModeration/quarantine
+   * .applyHashCheckResult).
    */
   setHashCheck: FunctionReference<
     "mutation",
     "internal",
     {
       imageId: string;
-      status: "no_match" | "unavailable" | "refused";
+      status: "no_match" | "unavailable" | "refused" | "skipped";
       hashes?: ImageHashes[];
     },
     unknown
@@ -601,47 +608,60 @@ const runAttempt = async <R extends ModerationRow>(
     // Only the outcome is logged, never the hashes. Once "unavailable" has stored the hashes,
     // the hash re-check (runHashRecheck, on its own Workpool: hashRecheckPool) owns the outcome.
     // A no_match opens the gate only after the swap below, so the upload as sent is never served.
+    // With no hash matching configured (skipsHashCheck) nothing is asked: the photo is published
+    // as before, but after the swap it is marked "not hash-checked" and keeps the hashes of the
+    // original and the re-encode (`skippedHashes`), so it can be checked once matching is
+    // configured. Never a no_match without a real answer (SEC-03).
     let openGate = false;
+    let skippedHashes: ImageHashes[] | null = null;
     if (row.hashCheckedAt === undefined && row.pendingHashes === undefined) {
       const variants = encoded
         ? [hashImageBytes(bytes), hashImageBytes(encoded.bytes)]
         : [hashImageBytes(bytes)];
-      const hashCheck = await checkAllHashes(
-        makeCsamHashCheckPortFromEnv(process.env),
-        variants,
-      );
-      event.csam_hashcheck_status = hashCheck.status;
-      event.csam_hashcheck_reason = hashCheck.reason ?? null;
-      if (hashCheck.status === "match" && hashCheck.matched) {
-        await preserveAndQuarantine(ctx, steps.quarantine, event, {
-          imageId,
-          bytes,
-          uploadedFileId: row.fileId,
-          uploaderId: row.uploaderId,
-          matched: hashCheck.matched,
-          provider: hashConfig.provider,
-          originalDiscarded: false,
-        });
-        return;
-      }
-      openGate = hashCheck.status === "no_match" && refusal === null;
-      // Unavailable: the gate stays closed. Keep the hashes (of the original AND the re-encode,
-      // since the original is deleted after the swap below) and re-check them later. Surface it
-      // at error level for alerting.
-      if (hashCheck.status === "unavailable") {
-        event.outcome = "error";
-        if (refusal === null) {
-          await ctx.runMutation(steps.setHashCheck, {
+      if (skipsHashCheck(hashConfig)) {
+        event.csam_hashcheck_status = "skipped";
+        event.csam_hashcheck_reason = hashConfig.status;
+        // Offlimits selected but incomplete is a mistake to fix: error level, for alerting.
+        if (hashConfig.status === "missing_config") event.outcome = "error";
+        if (refusal === null) skippedHashes = variants;
+      } else {
+        const hashCheck = await checkAllHashes(
+          makeCsamHashCheckPortFromEnv(process.env),
+          variants,
+        );
+        event.csam_hashcheck_status = hashCheck.status;
+        event.csam_hashcheck_reason = hashCheck.reason ?? null;
+        if (hashCheck.status === "match" && hashCheck.matched) {
+          await preserveAndQuarantine(ctx, steps.quarantine, event, {
             imageId,
-            status: "unavailable",
-            hashes: variants,
+            bytes,
+            uploadedFileId: row.fileId,
+            uploaderId: row.uploaderId,
+            matched: hashCheck.matched,
+            provider: hashConfig.provider,
+            originalDiscarded: false,
           });
-          // A crash before this lands is caught by the daily sweep (sweepLostHashRechecks).
-          await ctx.runMutation(
-            internal.lib.imageModeration.hashRecheckPool.startHashRecheck,
-            { table: steps.table, imageId },
-          );
-          event.hash_recheck_in_ms = hashRecheckDelayMs(1);
+          return;
+        }
+        openGate = hashCheck.status === "no_match" && refusal === null;
+        // Unavailable: the gate stays closed. Keep the hashes (of the original AND the re-encode,
+        // since the original is deleted after the swap below) and re-check them later. Surface it
+        // at error level for alerting.
+        if (hashCheck.status === "unavailable") {
+          event.outcome = "error";
+          if (refusal === null) {
+            await ctx.runMutation(steps.setHashCheck, {
+              imageId,
+              status: "unavailable",
+              hashes: variants,
+            });
+            // A crash before this lands is caught by the daily sweep (sweepLostHashRechecks).
+            await ctx.runMutation(
+              internal.lib.imageModeration.hashRecheckPool.startHashRecheck,
+              { table: steps.table, imageId },
+            );
+            event.hash_recheck_in_ms = hashRecheckDelayMs(1);
+          }
         }
       }
     }
@@ -708,11 +728,18 @@ const runAttempt = async <R extends ModerationRow>(
       }
     }
 
-    // The row holds the clean blob now: open the publication gate.
+    // The row holds the clean blob now: open the publication gate (marked "not hash-checked"
+    // when no hash matching is configured).
     if (openGate) {
       await ctx.runMutation(steps.setHashCheck, {
         imageId,
         status: "no_match",
+      });
+    } else if (skippedHashes !== null) {
+      await ctx.runMutation(steps.setHashCheck, {
+        imageId,
+        status: "skipped",
+        hashes: skippedHashes,
       });
     }
 
@@ -783,8 +810,8 @@ export const runHashRecheck = async <R extends ModerationRow>(
       event.result = "skipped";
       return;
     }
-    // A photo approved without a hash check is checked only against a configured service: the
-    // "none" adapter answers no_match, which would clear its stored hashes unchecked.
+    // A photo approved without a hash check is checked only against a configured service: asking
+    // an unconfigured one tells nothing.
     if (row.hashCheckWaivedBy !== undefined && hashConfig.status !== "ok") {
       event.outcome = "error";
       event.result = "skipped_unconfigured";
@@ -798,6 +825,20 @@ export const runHashRecheck = async <R extends ModerationRow>(
     );
     if (!current) {
       event.result = "skipped_stale";
+      return;
+    }
+    // Hash matching was switched off (or broken) while the photo waited: publish it as the
+    // upload pipeline would now, marked "not hash-checked" with its stored hashes kept. Never a
+    // no_match without a real answer (SEC-03).
+    if (skipsHashCheck(hashConfig)) {
+      event.csam_hashcheck_status = "skipped";
+      event.csam_hashcheck_reason = hashConfig.status;
+      if (hashConfig.status === "missing_config") event.outcome = "error";
+      await ctx.runMutation(steps.setHashCheck, {
+        imageId,
+        status: "skipped",
+        hashes: row.pendingHashes,
+      });
       return;
     }
     const hashCheck = await checkAllHashes(

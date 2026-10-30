@@ -27,8 +27,7 @@ import {
 //
 // `dryRun` defaults to TRUE: it only counts the candidates and enqueues nothing (the hash service
 // is never called). A real run (`dryRun: false`) refuses to start unless the hash check is
-// configured ("ok"): the "none" adapter answers no_match to everything, which would clear the
-// stored hashes unchecked. Paginated: `batchSize` rows per run (default 50); it re-schedules itself
+// configured ("ok"): without one there is nothing to check against. Paginated: `batchSize` rows per run (default 50); it re-schedules itself
 // through the page, then the next table (every table in turn, or only `table` when given), and logs
 // the running totals (event "imageModeration.recheckWaivedHashes") per page, the last with
 // `done: true`. Each re-check logs its own `<table event>.hashRecheck` event.
