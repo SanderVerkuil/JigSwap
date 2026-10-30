@@ -181,6 +181,14 @@ describe("MarketingHeader mobile menu", () => {
     ).toBeTruthy();
   });
 
+  it("labels the desktop navigation apart from the menu", () => {
+    renderHeader();
+    const desktopNav = screen.getByRole("navigation", { name: "Main" });
+    expect(
+      within(desktopNav).getByRole("link", { name: "How it works" }),
+    ).toBeTruthy();
+  });
+
   it("leaves an Escape that another layer already handled alone", () => {
     renderHeader();
     fireEvent.click(menuToggle());

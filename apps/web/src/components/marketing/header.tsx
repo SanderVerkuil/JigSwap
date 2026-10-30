@@ -99,7 +99,10 @@ export function MarketingHeader() {
         <Link href="/" aria-label="JigSwap">
           <Wordmark textClassName="max-[375px]:hidden" />
         </Link>
-        <nav className="hidden min-[1200px]:flex items-center gap-4 ml-2">
+        <nav
+          aria-label={t("primaryNav")}
+          className="hidden min-[1200px]:flex items-center gap-4 ml-2"
+        >
           {NAV.map((item) => navLink(item))}
         </nav>
         <div className="ml-auto flex items-center gap-2.5">

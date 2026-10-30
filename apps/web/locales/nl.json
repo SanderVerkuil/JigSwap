@@ -3827,7 +3827,8 @@
       "openMenu": "Menu openen",
       "closeMenu": "Menu sluiten",
       "switchLanguage": "Taal wijzigen",
-      "menuLabel": "Menu"
+      "menuLabel": "Menu",
+      "primaryNav": "Hoofdmenu"
     },
     "footer": {
       "tagline": "Legpuzzels ruilen, lenen en delen — toegankelijk en duurzaam, voor de hele gemeenschap.",
