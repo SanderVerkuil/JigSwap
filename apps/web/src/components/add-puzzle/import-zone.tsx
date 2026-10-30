@@ -54,10 +54,10 @@ export function ImportZone({
           {t("importFromUrl")}
         </span>
       </div>
-      <p className="mb-3 ml-10 text-sm text-foreground/80">
+      <p className="mb-3 text-sm text-foreground/80 sm:ml-10">
         {t("importUrlBlurb")}
       </p>
-      <div className="ml-10 flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 sm:ml-10">
         <div className="relative min-w-[220px] flex-1">
           <Link2 className="pointer-events-none absolute left-3 top-1/2 size-[15px] -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -89,7 +89,7 @@ export function ImportZone({
           )}
         </Button>
       </div>
-      <div className="ml-10 mt-2 min-h-[18px]">
+      <div className="mt-2 min-h-[18px] sm:ml-10">
         {state.status === "ready" && !state.match && (
           <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-jigsaw-secondary">
             <CircleCheck className="size-3.5" /> {t("importImported")}

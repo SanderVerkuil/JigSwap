@@ -360,6 +360,36 @@ describe("the box photo", () => {
   });
 });
 
+describe("on phones and tablets", () => {
+  it("recaps what the submit adds right above the submit buttons", () => {
+    renderPage();
+    expect(screen.queryByTestId("add-summary")).toBeNull();
+    fireEvent.change(screen.getByLabelText(en.puzzles.fieldTitle), {
+      target: { value: "Café" },
+    });
+    fireEvent.change(screen.getByLabelText(en.puzzles.fieldPieceCount), {
+      target: { value: "1000" },
+    });
+    fireEvent.click(offerChip("For Trade"));
+
+    const summary = screen.getByTestId("add-summary");
+    expect(summary.textContent).toContain("Café");
+    expect(summary.textContent).toContain("1000 pieces");
+    expect(summary.textContent).toContain("For Trade");
+    const submit = screen.getByRole("button", { name: "Add Puzzle" });
+    expect(
+      summary.compareDocumentPosition(submit) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("shows no look-alike buttons in the live preview", () => {
+    renderPage({ puzzleId: PUZZLE_DOC_ID });
+    expect(screen.queryByRole("button", { name: "View" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Add" })).toBeNull();
+  });
+});
+
 describe("cancelling", () => {
   it("returns to the add chooser from the full form", () => {
     renderPage();

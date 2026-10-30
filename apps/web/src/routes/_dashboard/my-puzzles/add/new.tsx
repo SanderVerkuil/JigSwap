@@ -1,6 +1,7 @@
 import { useSearchParams } from "@/compat/navigation";
 import {
   AddPuzzleLayout,
+  AddPuzzleSummary,
   AvailabilityChips,
   availabilityToSharing,
   CATALOG_TEXT_LIMITS,
@@ -674,7 +675,7 @@ function AddPuzzlePage() {
         </div>
 
         {/* Publisher + Piece Count */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="ap-publisher">
               {t("fieldPublisher")}{" "}
@@ -708,7 +709,7 @@ function AddPuzzlePage() {
         </div>
 
         {/* Brand (product line) + Series — both optional */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="ap-brand">
               {t("fieldBrand")}{" "}
@@ -893,7 +894,7 @@ function AddPuzzlePage() {
           </CollapsibleTrigger>
           <CollapsibleContent className="mt-4 flex flex-col gap-4">
             {/* EAN + UPC */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="ap-ean">{tf("ean.label")}</Label>
                 <Input
@@ -1036,6 +1037,17 @@ function AddPuzzlePage() {
         </Collapsible>
       </div>
 
+      <AddPuzzleSummary
+        title={form.title}
+        brand={form.brand || form.publisher}
+        pieceCount={form.pieceCount}
+        coverPhotoUrl={selectedDefinitionId ? undefined : previewPhotoUrl}
+        offers={[
+          form.availability.forTrade ? t("availTrade") : "",
+          form.availability.forLend ? t("availLend") : "",
+          form.availability.forSale ? t("availSale") : "",
+        ]}
+      />
       {footerButtons}
     </>
   );
