@@ -9,6 +9,7 @@ import type {
   OwnedCopyView,
 } from "@jigswap/contracts";
 import type { Doc } from "../_generated/dataModel";
+import { copyShowsCatalogFacts } from "../catalog/definitionVisibility";
 import { effectiveCopyVisibility } from "./copyVisibility";
 
 // Row -> view DTO mappers for the Personal Library reads. Pure functions so the mapping is
@@ -51,10 +52,12 @@ export const toCopySnapshotView = (
 
 /**
  * The catalogue facts joined onto a copy for this caller. An approved definition's facts are
- * public catalogue data. For a pending, rejected or disabled definition only the copy's owner
- * (`includeOwnerOnly`) gets them; everyone else gets just the facts the copy itself carries, its
- * snapshot title, brand and piece count (the row's, for a legacy copy without a snapshot), and
- * never the unmoderated description, publisher, difficulty, category or tags.
+ * public catalogue data. For a definition that is not approved, only the copy's owner
+ * (`includeOwnerOnly`) gets them, and only for a disabled definition or their own pending or
+ * rejected submission (catalog/definitionVisibility's copyShowsCatalogFacts). Everyone else gets
+ * just the facts the copy itself carries, its snapshot title, brand and piece count (the row's, for
+ * a legacy copy without a snapshot), and never the unmoderated description, publisher, difficulty,
+ * category or tags.
  */
 export const toCopyPuzzleView = (
   copy: Doc<"ownedPuzzles">,
@@ -62,7 +65,7 @@ export const toCopyPuzzleView = (
   opts?: { includeOwnerOnly?: boolean },
 ): OwnedCopyPuzzleView | null => {
   if (!puzzle) return null;
-  if (puzzle.status === "approved" || opts?.includeOwnerOnly) {
+  if (copyShowsCatalogFacts(copy, puzzle, opts?.includeOwnerOnly === true)) {
     return toOwnedCopyPuzzleView(puzzle);
   }
   return {

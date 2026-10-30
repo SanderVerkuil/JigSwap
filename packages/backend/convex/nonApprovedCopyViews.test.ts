@@ -331,3 +331,84 @@ describe("exchange views of a copy of a non-approved definition (SEC-34)", () =>
     });
   });
 });
+
+describe("a copy's owner who did not submit its definition (SEC-34)", () => {
+  // The copy changed hands (e.g. through an exchange): its owner is no longer the submitter, so a
+  // pending or rejected definition's text is as hidden from them as from anyone else. A disabled
+  // definition was moderated once and keeps rendering for its copies' owners.
+  const handOver = async (
+    t: TestConvex<typeof schema>,
+    copies: Record<Status, Id<"ownedPuzzles">>,
+    to: Id<"users">,
+  ) =>
+    t.run(async (ctx) => {
+      for (const copyId of Object.values(copies)) {
+        await ctx.db.patch(copyId, { ownerId: to });
+      }
+    });
+  const UNMODERATED = ["pending", "rejected"] as const;
+
+  test("their library shows a pending or rejected definition's snapshot only", async () => {
+    const t = convexTest(schema, modules);
+    const { other, copies } = await seed(t);
+    await handOver(t, copies, other);
+
+    const own = byAggregate(
+      await asOther(t).query(
+        api.library.getOwnedPuzzlesByOwner.getOwnedPuzzlesByOwner,
+        { ownerId: other, includeUnavailable: true },
+      ),
+    );
+    for (const status of UNMODERATED) {
+      expectSnapshotOnly(own.get(`copy-${status}`)?.puzzle ?? null, status);
+    }
+    expectFullFacts(own.get("copy-disabled")?.puzzle ?? null, "disabled");
+    expectFullFacts(own.get("copy-approved")?.puzzle ?? null, "approved");
+  });
+
+  test("their copy page omits a pending or rejected definition's difficulty and tags", async () => {
+    const t = convexTest(schema, modules);
+    const { other, copies } = await seed(t);
+    await handOver(t, copies, other);
+    const view = (copyId: Id<"ownedPuzzles">) =>
+      asOther(t).query(api.library.getCopyInstanceView.getCopyInstanceView, {
+        copyId,
+      });
+
+    for (const status of UNMODERATED) {
+      const seen = await view(copies[status]);
+      expect(seen?.viewerIsOwner).toBe(true);
+      expect(seen?.snapshot.tags).toEqual([]);
+      expect(seen?.snapshot.difficulty).toBeUndefined();
+    }
+    expect((await view(copies.disabled))?.snapshot).toMatchObject({
+      difficulty: "hard",
+      tags: ["hiddentag-disabled"],
+    });
+  });
+
+  test("their exchange view shows a pending definition's snapshot only", async () => {
+    const t = convexTest(schema, modules);
+    const { submitter, other, copies } = await seed(t);
+    await handOver(t, copies, other);
+    await t.run((ctx) =>
+      ctx.db.insert("exchanges", {
+        aggregateId: "exch-2",
+        initiatorId: submitter,
+        recipientId: other,
+        type: "trade",
+        requestedPuzzleId: copies.pending,
+        status: "proposed",
+        createdAt: 2_000_000,
+        updatedAt: 2_000_000,
+      }),
+    );
+
+    const seen = (
+      await asOther(t).query(api.exchange.getUserExchanges.getUserExchanges, {})
+    )[0]?.requestedPuzzle;
+    expect(seen).toMatchObject({ title: "Snapshot title pending" });
+    expect(JSON.stringify(seen)).not.toContain("secretword");
+    expect(JSON.stringify(seen)).not.toContain("hiddentag");
+  });
+});

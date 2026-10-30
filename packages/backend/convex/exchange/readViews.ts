@@ -8,6 +8,7 @@ import type {
 } from "@jigswap/contracts";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
+import { copyShowsCatalogFacts } from "../catalog/definitionVisibility";
 import { toCopySnapshotView } from "../library/mappers";
 import {
   projectTradeParty,
@@ -169,11 +170,13 @@ export const toPuzzleView = (
 
 /**
  * The definition behind `copy` as `viewerId` sees it on an exchange. For a definition that is not
- * approved, a party who does not own the copy gets only the copy's snapshot facts (title, brand,
- * pieces; the row's for a legacy copy without a snapshot) plus toPuzzleView's box art, status and
- * timestamps, as library/mappers' toCopyPuzzleView does for every other copy view. The definition's
- * unmoderated text, identifiers and searchable text are left out. Approved definitions, and the
- * copy's own owner, get toPuzzleView unchanged.
+ * approved, a viewer the copy does not show catalogue facts to (catalog/definitionVisibility's
+ * copyShowsCatalogFacts: anyone but the copy's owner, and the owner too unless the definition is
+ * disabled or their own submission) gets only the copy's snapshot facts (title, brand, pieces; the
+ * row's for a legacy copy without a snapshot) plus toPuzzleView's box art, status and timestamps,
+ * as library/mappers' toCopyPuzzleView does for every other copy view. The definition's unmoderated
+ * text, identifiers and searchable text are left out. Approved definitions get toPuzzleView
+ * unchanged.
  */
 export const toPuzzleViewFor = (
   p: Doc<"puzzles"> | null,
@@ -181,9 +184,11 @@ export const toPuzzleViewFor = (
   viewerId: Id<"users">,
 ): ExchangePuzzleView | null => {
   const full = toPuzzleView(p);
-  if (!full || full.status === "approved" || copy?.ownerId === viewerId) {
-    return full;
-  }
+  if (!p || !full) return full;
+  const showsFacts = copy
+    ? copyShowsCatalogFacts(copy, p, copy.ownerId === viewerId)
+    : p.status === "approved";
+  if (showsFacts) return full;
   return {
     _id: full._id,
     _creationTime: full._creationTime,

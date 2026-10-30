@@ -312,9 +312,9 @@ describe("social.getActivityFeed — single adds respect copy visibility", () =>
 // definition that is not approved shows a follower the copy's snapshot title, never the live,
 // unmoderated one; an approved definition shows its current title, as before.
 describe("social.getActivityFeed — batch cover titles of non-approved definitions", () => {
-  test("a follower sees the snapshot title, the owner and approved definitions the live one", async () => {
+  test("only the owner who submitted a non-approved definition sees its live title", async () => {
     const t = convexTest(schema, modules);
-    const { definitions } = await seed(t);
+    const { alice, definitions } = await seed(t);
     await addBatch(t, definitions.slice(0, 2));
     await t.run(async (ctx) => {
       for (const [index, patch] of [
@@ -333,10 +333,28 @@ describe("social.getActivityFeed — batch cover titles of non-approved definiti
 
     const titles = async (viewer: string) =>
       (await batchEntries(t, viewer))[0].batch?.covers.map((c) => c.title);
+    // Approved definitions show their live title to everyone; the pending one shows its snapshot
+    // title to the follower, and to alice too: she owns the copy but bob submitted the definition.
     expect(await titles("bob")).toEqual(["Puzzle 0", "Puzzle 1 (2nd edition)"]);
+    expect(await titles("alice")).toEqual([
+      "Puzzle 0",
+      "Puzzle 1 (2nd edition)",
+    ]);
+
+    // Once it is alice's own submission, she sees its live title; the follower still does not.
+    await t.run(async (ctx) => {
+      const row = await ctx.db
+        .query("puzzles")
+        .withIndex("by_aggregate_id", (q) =>
+          q.eq("aggregateId", definitions[0]),
+        )
+        .unique();
+      await ctx.db.patch(row!._id, { submittedBy: alice });
+    });
     expect(await titles("alice")).toEqual([
       "Unmoderated title",
       "Puzzle 1 (2nd edition)",
     ]);
+    expect(await titles("bob")).toEqual(["Puzzle 0", "Puzzle 1 (2nd edition)"]);
   });
 });

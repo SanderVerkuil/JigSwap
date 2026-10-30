@@ -305,8 +305,9 @@ const visibleAcquiredCopies = async (
 
 // The grouped entry's payload: the visible count and the first few covers. Covers are resolved
 // only for the entries that made the page. A cover's title follows the copy views' rule
-// (toCopyPuzzleView): the definition's current title when it is approved or the viewer owns the
-// copy, otherwise the copy's snapshot title, never a non-approved definition's live one.
+// (toCopyPuzzleView): the definition's current title when it is approved, or when the viewer owns
+// the copy and it is disabled or their own submission; otherwise the copy's snapshot title, never a
+// non-approved definition's live one.
 const toBatchView = async (
   ctx: QueryCtx,
   viewerId: Id<"users">,
