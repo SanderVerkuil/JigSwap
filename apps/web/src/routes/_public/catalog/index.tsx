@@ -189,9 +189,11 @@ function CatalogListPage() {
       </h1>
       <p className="text-muted-foreground mt-1">{t("subtitle")}</p>
 
-      {/* Toolbar: search + brand + piece bucket. One row on >=sm, stacked on mobile. The
-          triggers render their label themselves so a filtered link shows its filters in the
-          server HTML too. */}
+      {/* Toolbar: search + brand + piece bucket. One row on >=sm; on phones the search gets
+          its own row and the two selects share the next, so results start sooner. The piece
+          column is wider because its labels are. The triggers render their label themselves:
+          it shows in the server HTML for a filtered link, and a long one ends in an ellipsis
+          instead of being clipped. */}
       <div className="mt-6 flex flex-col gap-2.5 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
@@ -204,54 +206,60 @@ function CatalogListPage() {
             className="pl-9"
           />
         </div>
-        <Select
-          value={brand ?? "all"}
-          onValueChange={(v) =>
-            updateSearch({ brand: v === "all" ? undefined : v })
-          }
-        >
-          <SelectTrigger
-            aria-label={t("brandLabel")}
-            className="w-full sm:w-44"
+        <div className="grid grid-cols-[minmax(0,4fr)_minmax(0,5fr)] gap-2.5 sm:flex">
+          <Select
+            value={brand ?? "all"}
+            onValueChange={(v) =>
+              updateSearch({ brand: v === "all" ? undefined : v })
+            }
           >
-            <SelectValue>{brand ?? t("allBrands")}</SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("allBrands")}</SelectItem>
-            {(brands ?? [])
-              .filter((b): b is string => !!b)
-              .map((b) => (
-                <SelectItem key={b} value={b}>
-                  {b}
+            <SelectTrigger
+              aria-label={t("brandLabel")}
+              className="w-full sm:w-44"
+            >
+              <SelectValue>
+                <span className="truncate">{brand ?? t("allBrands")}</span>
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("allBrands")}</SelectItem>
+              {(brands ?? [])
+                .filter((b): b is string => !!b)
+                .map((b) => (
+                  <SelectItem key={b} value={b}>
+                    {b}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+          <Select
+            value={pieces ?? "all"}
+            onValueChange={(v) =>
+              updateSearch({ pieces: isPieceBucket(v) ? v : undefined })
+            }
+          >
+            <SelectTrigger
+              aria-label={t("piecesLabel")}
+              className="w-full sm:w-56"
+            >
+              <SelectValue>
+                <span className="truncate">
+                  {pieces ? t(PIECE_BUCKET_LABELS[pieces]) : t("allPieces")}
+                </span>
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("allPieces")}</SelectItem>
+              {(
+                Object.entries(PIECE_BUCKET_LABELS) as [PieceBucket, string][]
+              ).map(([bucket, label]) => (
+                <SelectItem key={bucket} value={bucket}>
+                  {t(label)}
                 </SelectItem>
               ))}
-          </SelectContent>
-        </Select>
-        <Select
-          value={pieces ?? "all"}
-          onValueChange={(v) =>
-            updateSearch({ pieces: isPieceBucket(v) ? v : undefined })
-          }
-        >
-          <SelectTrigger
-            aria-label={t("piecesLabel")}
-            className="w-full sm:w-48"
-          >
-            <SelectValue>
-              {pieces ? t(PIECE_BUCKET_LABELS[pieces]) : t("allPieces")}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("allPieces")}</SelectItem>
-            {(
-              Object.entries(PIECE_BUCKET_LABELS) as [PieceBucket, string][]
-            ).map(([bucket, label]) => (
-              <SelectItem key={bucket} value={bucket}>
-                {t(label)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Grid. The sr-only h2 keeps the heading outline h1 > h2 > card h3. */}
