@@ -21,9 +21,14 @@ Adding a puzzle is a two-step flow:
    catalogue by title or brand.
 4. To look a puzzle up by its **barcode**, type or paste the 12- or 13-digit
    number from the box. If no puzzle has that barcode yet, click
-   **Register it** to create one with the barcode already filled in.
-5. If your puzzle already exists in the catalogue, select it to add a copy of
-   it to your library. If it's new, click **Create new**.
+   **Register it** to create one with the barcode already filled in. On a
+   phone or tablet whose browser can read barcodes (such as Chrome on
+   Android), you can also tap **Scan a barcode** next to the search box and
+   point your camera at the box.
+5. If your puzzle already exists in the catalogue, click it (or its
+   **Add to Library** button) to add a copy of it to your library. **Details**
+   opens its catalogue page instead. Puzzles you already own are marked
+   **On your shelf**. If it's new, click **Create new**.
 
 ## Step 2 — Create or copy
 
@@ -60,6 +65,9 @@ Use this to fill your shelf quickly, for example when you first join.
    you already own are marked **On your shelf**.
 4. Review your picks under **Picked**. For each one, you can switch on
    **Available to swap**. Picks aren't offered for swap or loan unless you do.
+   On a phone, the **Add N puzzles** button stays at the bottom of the screen
+   once you've picked something; tap **Picked (N)** next to it to see your
+   picks.
 5. Click **Add N puzzles** (for example, **Add 4 puzzles**).
 
 You can pick up to 100 puzzles at a time. They're added in groups of 25. If

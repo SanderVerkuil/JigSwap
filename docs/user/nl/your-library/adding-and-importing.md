@@ -22,10 +22,15 @@ Een puzzel toevoegen gaat in twee stappen:
    catalogus op titel of merk.
 4. Wil je een puzzel opzoeken op zijn **barcode**, typ of plak dan het nummer
    van 12 of 13 cijfers van de doos. Heeft nog geen puzzel die barcode, klik dan
-   op **Registreer hem** om er een aan te maken met de barcode al ingevuld.
-5. Staat je puzzel al in de catalogus, selecteer hem dan om er een kopie van
-   toe te voegen aan je bibliotheek. Is hij nieuw, klik dan op
-   **Nieuwe aanmaken**.
+   op **Registreer hem** om er een aan te maken met de barcode al ingevuld. Op
+   een telefoon of tablet waarvan de browser barcodes kan lezen (zoals Chrome
+   op Android), kun je ook op **Barcode scannen** naast het zoekveld tikken en
+   je camera op de doos richten.
+5. Staat je puzzel al in de catalogus, klik er dan op (of op
+   **Toevoegen aan bibliotheek**) om er een kopie van toe te voegen aan je
+   bibliotheek. Met **Details** open je in plaats daarvan de cataloguspagina.
+   Puzzels die je al bezit, zijn gemarkeerd met **Op je plank**. Is hij nieuw,
+   klik dan op **Nieuwe aanmaken**.
 
 ## Stap 2 — Aanmaken of kopiëren
 
@@ -64,7 +69,9 @@ Gebruik dit om je plank snel te vullen, bijvoorbeeld als je net lid bent.
    **Op je plank**.
 4. Bekijk je keuzes onder **Gekozen**. Per puzzel kun je
    **Beschikbaar om te ruilen** aanzetten. Doe je dat niet, dan worden je
-   keuzes niet aangeboden om te ruilen of uit te lenen.
+   keuzes niet aangeboden om te ruilen of uit te lenen. Op een telefoon blijft
+   de knop **N puzzels toevoegen** onderaan het scherm staan zodra je iets hebt
+   gekozen; tik op **Gekozen (N)** ernaast om je keuzes te zien.
 5. Klik op **N puzzels toevoegen** (bijvoorbeeld **4 puzzels toevoegen**).
 
 Je kunt maximaal 100 puzzels tegelijk kiezen. Ze worden in groepjes van 25
