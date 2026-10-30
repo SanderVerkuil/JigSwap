@@ -178,3 +178,13 @@ describe("IdentityHeader visibility and public view", () => {
     expect(screen.getByRole("heading", { name: "Puzzelhenk" })).toBeTruthy();
   });
 });
+
+// The rating badge reads the way /members shows it, not "{rating} Trust"
+// (UX-181).
+describe("IdentityHeader rating badge", () => {
+  it("shows the rating and review count like the public profile", () => {
+    renderHeader();
+    expect(screen.getByText("4.5 · 2 reviews")).toBeTruthy();
+    expect(screen.queryByText(/Trust/)).toBeNull();
+  });
+});

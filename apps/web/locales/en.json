@@ -1095,7 +1095,6 @@
     "trustLevelDescriptionNext": "Based on completed exchanges · {count} more to {level}",
     "trustLevelValueText": "{level}, {count, plural, one {# completed exchange} other {# completed exchanges}}",
     "notFound": "User not found",
-    "trustBadge": "{rating} Trust",
     "save": "Save",
     "saving": "Saving…",
     "saved": "Profile saved",
@@ -3890,7 +3889,7 @@
       },
       "people": {
         "title": "People",
-        "subtitle": "Members and profiles near you.",
+        "subtitle": "Your network, member search and invites.",
         "description": "Members and profiles"
       },
       "profile": {

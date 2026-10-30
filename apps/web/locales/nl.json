@@ -1095,7 +1095,6 @@
     "trustLevelDescriptionNext": "Gebaseerd op voltooide uitwisselingen · nog {count} tot {level}",
     "trustLevelValueText": "{level}, {count, plural, one {# voltooide uitwisseling} other {# voltooide uitwisselingen}}",
     "notFound": "Gebruiker niet gevonden",
-    "trustBadge": "{rating} Vertrouwen",
     "save": "Opslaan",
     "saving": "Opslaan…",
     "saved": "Profiel opgeslagen",
@@ -3890,7 +3889,7 @@
       },
       "people": {
         "title": "Mensen",
-        "subtitle": "Leden en profielen bij jou in de buurt.",
+        "subtitle": "Je netwerk, leden zoeken en mensen uitnodigen.",
         "description": "Leden en profielen"
       },
       "profile": {

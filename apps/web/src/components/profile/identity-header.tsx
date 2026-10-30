@@ -30,9 +30,10 @@ import { PRIVACY_SECTION_ID } from "./privacy-section";
 // account name) at h1 size (the chrome already owns the page's "Profile" h1),
 // a muted icon meta row (@username · location · member-since year) showing only
 // the fields the member actually has plus who can see the profile (a badge that
-// jumps to the Privacy section), and — on the right — a green trust badge when
-// reviews exist, a link to the public profile page (the owner preview, i.e.
-// what visitors see) and the outline Edit Profile toggle.
+// jumps to the Privacy section), and — on the right — a green rating badge
+// worded like the public profile's ("★ 4.5 · 2 reviews") when reviews exist, a
+// link to the public profile page (the owner preview, i.e. what visitors see)
+// and the outline Edit Profile toggle.
 export function IdentityHeader({
   member,
   isEditing,
@@ -43,6 +44,7 @@ export function IdentityHeader({
   onToggleEdit: () => void;
 }) {
   const t = useTranslations("profile");
+  const tPublic = useTranslations("members.profile");
   const displayName = useMemberDisplayName();
   const { user } = useUser();
   const { data: reputation } = useQuery(
@@ -124,7 +126,10 @@ export function IdentityHeader({
         {reputation && reputation.reviewCount > 0 && (
           <Badge className="bg-jigsaw-success border-transparent text-white">
             <Star aria-hidden className="fill-current" />
-            {t("trustBadge", { rating: reputation.averageRating.toFixed(1) })}
+            {tPublic("ratingPill", {
+              rating: reputation.averageRating.toFixed(1),
+              reviewCount: reputation.reviewCount,
+            })}
           </Badge>
         )}
         <Button asChild variant="ghost">
