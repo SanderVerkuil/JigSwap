@@ -4,8 +4,9 @@ import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { INSIGHTS_READ_CAP } from "./getPersonalStats";
 
-// Insights read query: the member's exchange activity (counts by status and by month) for the trade
-// chart. The member is a party as either initiator or recipient, so both indexes are unioned.
+// Insights read query: the member's exchange activity (counts by status, and by month over the last
+// 12 months) for the trade chart. The member is a party as either initiator or recipient, so both
+// indexes are unioned.
 export const getTradeActivity = query({
   args: {},
   handler: async (ctx) => {

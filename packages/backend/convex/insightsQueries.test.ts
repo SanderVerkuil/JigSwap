@@ -293,7 +293,9 @@ describe("insights.getCompletionTrends / getTradeActivity", () => {
     expect(activity.byStatus.find((s) => s.status === "completed")?.count).toBe(
       1,
     );
-    expect(activity.byMonth).toHaveLength(1);
+    // The same zero-filled 12-month window as the trends, so quiet months stay in the chart.
+    expect(activity.byMonth).toHaveLength(12);
+    expect(activity.byMonth.reduce((acc, m) => acc + m.count, 0)).toBe(1);
   });
 });
 
