@@ -9,7 +9,6 @@ import {
 import {
   FlagDetail,
   SEVERITY_DOT,
-  type FlaggedPhoto,
 } from "@/components/admin/moderation/flag-detail";
 import { HashCheckHealth } from "@/components/admin/moderation/hash-check-health";
 import { KpiRow } from "@/components/admin/moderation/kpi-row";
@@ -18,6 +17,7 @@ import {
   type ModerationTab,
   type ReportStatus,
 } from "@/components/admin/moderation/moderation-search";
+import { PinnedDetail } from "@/components/admin/moderation/pinned-detail";
 import { QueueList } from "@/components/admin/moderation/queue-list";
 import { ReportsQueue } from "@/components/admin/moderation/reports-queue";
 import { ScreeningHealth } from "@/components/admin/moderation/screening-health";
@@ -25,12 +25,15 @@ import { severityBand } from "@/components/admin/moderation/severity";
 import {
   SubmissionCover,
   SubmissionDetail,
-  type PendingSubmission,
 } from "@/components/admin/moderation/submission-detail";
 import {
   UncheckedDetail,
   type UncheckedPhoto,
 } from "@/components/admin/moderation/unchecked-detail";
+import {
+  usePinnedSelection,
+  type PinnedSelection,
+} from "@/components/admin/moderation/use-pinned-selection";
 import { QueueEmpty } from "@/components/admin/queue-empty";
 import { PageLoading } from "@/components/ui/loading";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -164,48 +167,78 @@ function ModerationPage() {
     recheckPhoto.isPending ||
     markCsam.isPending;
 
-  // Submissions are selected (and deep-linked) by their Convex `_id`, which every row has; the
-  // aggregateId is only for the mutations. A pre-domain pending row has no aggregateId: it still
-  // lists, but its actions stay disabled — same rule as the previous queue.
-  const getId = (submission: PendingSubmission) => submission._id;
-  const selected =
-    pending?.find(
-      (submission) => getId(submission) === itemFor("submissions"),
-    ) ?? pending?.[0];
+  // Each list+detail queue pins its selection (use-pinned-selection.ts): a new arrival never
+  // replaces it, and a row that leaves the queue without this reviewer deciding it stays on screen
+  // as "handled elsewhere" with its actions disabled. Submissions are selected (and deep-linked)
+  // by their Convex `_id`, which every row has; the aggregateId is only for the mutations. A
+  // pre-domain pending row has no aggregateId: it still lists, but its actions stay disabled.
+  const submissions = usePinnedSelection(
+    pending,
+    (submission) => submission._id,
+    itemFor("submissions"),
+  );
+  const flaggedSelection = usePinnedSelection(
+    flagged,
+    (photo) => photo.imageId,
+    itemFor("flagged"),
+  );
+  const uncheckedSelection = usePinnedSelection(
+    unchecked,
+    (photo) => photo.key,
+    itemFor("unchecked"),
+  );
+  const nextIn = (queue: ModerationTab, nextId: string | null) =>
+    nextId === null ? undefined : () => selectItem(queue)(nextId);
 
-  // After a decision the query refetches reactively and the row disappears;
-  // pre-select its neighbour so the reviewer keeps flowing down the queue.
-  const selectNext = (current: PendingSubmission) => {
-    if (!pending) return;
-    const index = pending.findIndex(
-      (submission) => getId(submission) === getId(current),
-    );
-    const next = pending[index + 1] ?? pending[index - 1];
-    selectItem("submissions")(next ? getId(next) : null);
+  // Decides the selected row of `queue` here. Its leaving the queue moves the selection to its
+  // neighbour (rather than reporting it handled elsewhere) and the URL follows, so the reviewer
+  // keeps flowing down the queue; a failure keeps the row selected. Resolves whether it succeeded.
+  const decideSelected = async (
+    queue: ModerationTab,
+    selection: Pick<
+      PinnedSelection<unknown>,
+      "selectedId" | "nextId" | "expectRemoval"
+    >,
+    run: () => Promise<unknown>,
+  ): Promise<boolean> => {
+    const { selectedId, nextId } = selection;
+    if (selectedId === null) return false;
+    selection.expectRemoval(selectedId);
+    try {
+      await run();
+    } catch {
+      selection.expectRemoval(null);
+      toast.error(t("error"));
+      return false;
+    }
+    selectItem(queue)(nextId);
+    return true;
   };
 
   const moderate = async (action: "approve" | "reject") => {
-    if (!selected?.aggregateId || !pending) return;
-    try {
-      const run = action === "approve" ? approve : reject;
-      await run.mutateAsync({ puzzleDefinitionId: selected.aggregateId });
-      toast.success(
-        t(action === "approve" ? "toast.approved" : "toast.rejected", {
-          title: selected.title,
-          count: pending.length - 1,
-        }),
-      );
-      selectNext(selected);
-    } catch {
-      toast.error(t("error"));
-    }
+    const submission = submissions.item;
+    if (!submission?.aggregateId || !pending || submissions.gone) return;
+    const puzzleDefinitionId = submission.aggregateId;
+    const run = action === "approve" ? approve : reject;
+    const done = await decideSelected("submissions", submissions, () =>
+      run.mutateAsync({ puzzleDefinitionId }),
+    );
+    if (!done) return;
+    toast.success(
+      t(action === "approve" ? "toast.approved" : "toast.rejected", {
+        title: submission.title,
+        count: pending.length - 1,
+      }),
+    );
   };
 
   const editApprove = async (values: EditApproveValues) => {
-    if (!selected?.aggregateId || !pending) return;
-    try {
+    const submission = submissions.item;
+    if (!submission?.aggregateId || !pending || submissions.gone) return;
+    const puzzleDefinitionId = submission.aggregateId;
+    const done = await decideSelected("submissions", submissions, async () => {
       await update.mutateAsync({
-        puzzleDefinitionId: selected.aggregateId,
+        puzzleDefinitionId,
         title: values.title,
         description: values.description || undefined,
         brand: values.brand || undefined,
@@ -214,98 +247,70 @@ function ModerationPage() {
         difficulty: values.difficulty,
         tags: values.tags,
       });
-      await approve.mutateAsync({
-        puzzleDefinitionId: selected.aggregateId,
-        edited: true,
-      });
-      toast.success(
-        t("toast.edited", {
-          title: values.title,
-          count: pending.length - 1,
-        }),
-      );
-      setEditOpen(false);
-      selectNext(selected);
-    } catch {
-      toast.error(t("error"));
-    }
-  };
-
-  // The flagged queue mirrors the submissions flow: act on the selection,
-  // toast with the remaining count, and pre-select the neighbour so the
-  // reviewer keeps flowing down the queue after the row disappears.
-  const selectedFlag =
-    flagged?.find((photo) => photo.imageId === itemFor("flagged")) ??
-    flagged?.[0];
-
-  const selectNextFlag = (current: FlaggedPhoto) => {
-    if (!flagged) return;
-    const index = flagged.findIndex(
-      (photo) => photo.imageId === current.imageId,
+      await approve.mutateAsync({ puzzleDefinitionId, edited: true });
+    });
+    if (!done) return;
+    toast.success(
+      t("toast.edited", {
+        title: values.title,
+        count: pending.length - 1,
+      }),
     );
-    const next = flagged[index + 1] ?? flagged[index - 1];
-    selectItem("flagged")(next ? next.imageId : null);
+    setEditOpen(false);
   };
 
+  // The flagged queue mirrors the submissions flow: act on the selection and toast with the
+  // remaining count.
   const moderateFlag = async (action: "remove" | "restore") => {
-    if (!selectedFlag || !flagged) return;
-    try {
-      const run = action === "remove" ? confirmRemoval : restorePhoto;
-      await run.mutateAsync({ imageId: selectedFlag.imageId });
-      toast.success(
-        t(
-          action === "remove"
-            ? "toast.removed"
-            : selectedFlag.hashTimedOut
-              ? "toast.restoredToUnchecked"
-              : "toast.restored",
-          {
-            title: selectedFlag.puzzleTitle,
-            count: flagged.length - 1,
-          },
-        ),
-      );
-      selectNextFlag(selectedFlag);
-    } catch {
-      toast.error(t("error"));
-    }
+    const photo = flaggedSelection.item;
+    if (!photo || !flagged || flaggedSelection.gone) return;
+    const run = action === "remove" ? confirmRemoval : restorePhoto;
+    const done = await decideSelected("flagged", flaggedSelection, () =>
+      run.mutateAsync({ imageId: photo.imageId }),
+    );
+    if (!done) return;
+    toast.success(
+      t(
+        action === "remove"
+          ? "toast.removed"
+          : photo.hashTimedOut
+            ? "toast.restoredToUnchecked"
+            : "toast.restored",
+        {
+          title: photo.puzzleTitle,
+          count: flagged.length - 1,
+        },
+      ),
+    );
   };
 
-  // The unchecked-photos queue: same flow (act, toast the remaining count, select the neighbour).
-  const selectedUnchecked =
-    unchecked?.find((photo) => photo.key === itemFor("unchecked")) ??
-    unchecked?.[0];
-
+  // The unchecked-photos queue: same flow (act on the selection, toast the remaining count).
   const decide = async (
     photo: UncheckedPhoto,
     decision: "approve" | "waive_hash_check" | "reject",
   ) => {
-    if (!unchecked) return;
-    try {
-      await decideUnchecked.mutateAsync({
+    if (!unchecked || uncheckedSelection.gone) return;
+    const done = await decideSelected("unchecked", uncheckedSelection, () =>
+      decideUnchecked.mutateAsync({
         source: photo.source,
         imageId: photo.imageId,
         decision,
-      });
-      toast.success(
-        t(
-          decision === "approve"
-            ? "toast.manualApproved"
-            : decision === "waive_hash_check"
-              ? "toast.hashCheckWaived"
-              : "toast.manualRejected",
-          {
-            title: photo.puzzleTitle,
-            count: unchecked.length - 1,
-          },
-        ),
-      );
-      const index = unchecked.findIndex((p) => p.key === photo.key);
-      const next = unchecked[index + 1] ?? unchecked[index - 1];
-      selectItem("unchecked")(next ? next.key : null);
-    } catch {
-      toast.error(t("error"));
-    }
+      }),
+    );
+    if (!done) return;
+    toast.success(
+      t(
+        decision === "approve"
+          ? "toast.manualApproved"
+          : decision === "waive_hash_check"
+            ? "toast.hashCheckWaived"
+            : "toast.manualRejected",
+        {
+          title: photo.puzzleTitle,
+          count: unchecked.length - 1,
+        },
+      ),
+    );
   };
 
   // An unscored photo back through the pipeline: it turns "pending" and stays in the queue until
@@ -321,6 +326,8 @@ function ModerationPage() {
       toast.error(t("error"));
     }
   };
+
+  const uncheckedPhoto = uncheckedSelection.item;
 
   return (
     <div className="space-y-6">
@@ -380,9 +387,9 @@ function ModerationPage() {
           ) : (
             <QueueList
               items={pending}
-              selectedId={selected ? getId(selected) : null}
+              selectedId={submissions.selectedId}
               onSelect={selectItem("submissions")}
-              getId={getId}
+              getId={(submission) => submission._id}
               renderRow={(submission) => (
                 <>
                   <SubmissionCover
@@ -405,15 +412,24 @@ function ModerationPage() {
                 </>
               )}
               detail={
-                selected && (
-                  <SubmissionDetail
-                    submission={selected}
-                    busy={busy || !selected.aggregateId}
-                    onApprove={() => moderate("approve")}
-                    onEditApprove={() => setEditOpen(true)}
-                    onReject={() => moderate("reject")}
-                  />
-                )
+                <PinnedDetail
+                  gone={submissions.gone}
+                  onNext={nextIn("submissions", submissions.nextId)}
+                >
+                  {submissions.item && (
+                    <SubmissionDetail
+                      submission={submissions.item}
+                      busy={
+                        busy ||
+                        submissions.gone ||
+                        !submissions.item.aggregateId
+                      }
+                      onApprove={() => moderate("approve")}
+                      onEditApprove={() => setEditOpen(true)}
+                      onReject={() => moderate("reject")}
+                    />
+                  )}
+                </PinnedDetail>
               }
             />
           )}
@@ -435,7 +451,7 @@ function ModerationPage() {
           ) : (
             <QueueList
               items={flagged}
-              selectedId={selectedFlag ? selectedFlag.imageId : null}
+              selectedId={flaggedSelection.selectedId}
               onSelect={selectItem("flagged")}
               getId={(photo) => photo.imageId}
               renderRow={(photo) => (
@@ -464,16 +480,21 @@ function ModerationPage() {
                 </>
               )}
               detail={
-                selectedFlag && (
-                  // Keyed so reveal/armed state never carries over to another photo.
-                  <FlagDetail
-                    key={selectedFlag.imageId}
-                    photo={selectedFlag}
-                    busy={busy}
-                    onConfirmRemoval={() => moderateFlag("remove")}
-                    onRestore={() => moderateFlag("restore")}
-                  />
-                )
+                <PinnedDetail
+                  gone={flaggedSelection.gone}
+                  onNext={nextIn("flagged", flaggedSelection.nextId)}
+                >
+                  {flaggedSelection.item && (
+                    // Keyed so reveal/armed state never carries over to another photo.
+                    <FlagDetail
+                      key={flaggedSelection.item.imageId}
+                      photo={flaggedSelection.item}
+                      busy={busy || flaggedSelection.gone}
+                      onConfirmRemoval={() => moderateFlag("remove")}
+                      onRestore={() => moderateFlag("restore")}
+                    />
+                  )}
+                </PinnedDetail>
               }
             />
           )}
@@ -495,7 +516,7 @@ function ModerationPage() {
           ) : (
             <QueueList
               items={unchecked}
-              selectedId={selectedUnchecked ? selectedUnchecked.key : null}
+              selectedId={uncheckedSelection.selectedId}
               onSelect={selectItem("unchecked")}
               getId={(photo) => photo.key}
               renderRow={(photo) => (
@@ -528,19 +549,22 @@ function ModerationPage() {
                 </>
               )}
               detail={
-                selectedUnchecked && (
-                  <UncheckedDetail
-                    key={selectedUnchecked.key}
-                    photo={selectedUnchecked}
-                    busy={busy}
-                    onApprove={() => decide(selectedUnchecked, "approve")}
-                    onWaive={() =>
-                      decide(selectedUnchecked, "waive_hash_check")
-                    }
-                    onReject={() => decide(selectedUnchecked, "reject")}
-                    onRecheck={() => recheck(selectedUnchecked)}
-                  />
-                )
+                <PinnedDetail
+                  gone={uncheckedSelection.gone}
+                  onNext={nextIn("unchecked", uncheckedSelection.nextId)}
+                >
+                  {uncheckedPhoto && (
+                    <UncheckedDetail
+                      key={uncheckedPhoto.key}
+                      photo={uncheckedPhoto}
+                      busy={busy || uncheckedSelection.gone}
+                      onApprove={() => decide(uncheckedPhoto, "approve")}
+                      onWaive={() => decide(uncheckedPhoto, "waive_hash_check")}
+                      onReject={() => decide(uncheckedPhoto, "reject")}
+                      onRecheck={() => recheck(uncheckedPhoto)}
+                    />
+                  )}
+                </PinnedDetail>
               }
             />
           )}
@@ -596,9 +620,9 @@ function ModerationPage() {
         </TabsContent>
       </Tabs>
 
-      {selected && (
+      {submissions.item && (
         <EditApproveDialog
-          submission={selected}
+          submission={submissions.item}
           open={editOpen}
           onOpenChange={setEditOpen}
           onSave={editApprove}

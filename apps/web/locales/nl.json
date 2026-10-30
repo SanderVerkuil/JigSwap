@@ -4801,6 +4801,11 @@
         "difficulty": "Moeilijkheid",
         "note": "Notitie van inzender"
       },
+      "handledElsewhere": {
+        "title": "Al elders afgehandeld",
+        "body": "Dit item is uit de wachtrij verdwenen terwijl je het open had, dus de acties staan uit.",
+        "next": "Volgend item"
+      },
       "dupWarning": "Mogelijk duplicaat van <strong>{title}</strong> dat al in de catalogus staat. Controleer voor het goedkeuren.",
       "actions": {
         "approve": "Goedkeuren & publiceren",

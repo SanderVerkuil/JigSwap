@@ -4801,6 +4801,11 @@
         "difficulty": "Difficulty",
         "note": "Submitter note"
       },
+      "handledElsewhere": {
+        "title": "Already handled elsewhere",
+        "body": "This item left the queue while you had it open, so its actions are switched off.",
+        "next": "Next item"
+      },
       "dupWarning": "Possible duplicate of <strong>{title}</strong> already in the catalog. Review before approving.",
       "actions": {
         "approve": "Approve & Publish",
