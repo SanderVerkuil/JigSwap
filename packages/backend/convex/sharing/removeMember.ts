@@ -9,8 +9,9 @@ import { seatMemberId } from "./circleAccess";
 import { toConvexError } from "./errors";
 
 // Composition root for removing a member from a circle. The actor is derived from auth; the
-// aggregate gates the removal on Admin and refuses to remove the owner. The seat is named by
-// `memberId` or by `membershipId` (a departed seat's view has no user id).
+// aggregate gates the removal on Admin, refuses to remove the owner, and leaves another Admin's
+// seat to the owner alone. The seat is named by `memberId` or by `membershipId` (a departed seat's
+// view has no user id).
 export const removeMember = mutation({
   args: {
     circleId: v.string(),

@@ -53,8 +53,9 @@ export interface CircleState {
 
 // The Circle aggregate root: a private group of members, each at a PermissionLevel. The owner is
 // implicitly Admin and always a member. Membership operations are gated on the ACTOR holding Admin
-// (so authorisation is a domain rule, not an app-layer afterthought); content is only visible to
-// members, which the VisibilityPolicy reads off `isMember`.
+// (so authorisation is a domain rule, not an app-layer afterthought), and only the owner may remove
+// or demote another Admin; content is only visible to members, which the VisibilityPolicy reads off
+// `isMember`.
 export class Circle {
   private events: DomainEvent[] = [];
 
@@ -151,7 +152,9 @@ export class Circle {
   }
 
   // Remove a member. Only an Admin actor may do so; the target must be a member and must not be the
-  // owner (the owner's seat is permanent). Emits MemberLeftCircle with reason "removed".
+  // owner (the owner's seat is permanent). Another Admin's seat is the owner's alone to remove
+  // (NotCircleOwner for anyone else), so Admins below the owner can't push each other out. Emits
+  // MemberLeftCircle with reason "removed".
   removeMember(
     actor: MemberId,
     memberId: MemberId,
@@ -161,7 +164,10 @@ export class Circle {
     if (gate.isErr) return err(gate.error);
     if (memberId === this.state.ownerId)
       return err(SharingError.cannotRemoveOwner());
-    if (!this.isMember(memberId)) return err(SharingError.notAMember());
+    const target = this.memberships.find((m) => m.memberId === memberId);
+    if (!target) return err(SharingError.notAMember());
+    const mayManage = this.requireMayManageSeat(actor, target);
+    if (mayManage.isErr) return err(mayManage.error);
 
     this.dropMember(memberId, "removed", now);
     return ok(undefined);
@@ -179,7 +185,9 @@ export class Circle {
   }
 
   // Change a member's permission. Only an Admin actor may do so; the target must be a member, must
-  // not be the owner (the owner stays Admin), and the change must be a real one.
+  // not be the owner (the owner stays Admin), and the change must be a real one. Any Admin may
+  // promote a member to Admin and step down themselves, but only the owner may change another
+  // Admin's level (NotCircleOwner for anyone else).
   changePermission(
     actor: MemberId,
     memberId: MemberId,
@@ -192,6 +200,8 @@ export class Circle {
 
     const current = this.memberships.find((m) => m.memberId === memberId);
     if (!current) return err(SharingError.notAMember());
+    const mayManage = this.requireMayManageSeat(actor, current);
+    if (mayManage.isErr) return err(mayManage.error);
     if (current.permission === permission) {
       return err(SharingError.duplicatePermission());
     }
@@ -292,6 +302,22 @@ export class Circle {
     const seat = this.memberships.find((m) => m.memberId === actor);
     if (!seat || !canManageMembers(seat.permission)) {
       return err(SharingError.notCircleAdmin());
+    }
+    return ok(undefined);
+  }
+
+  // An Admin's seat is managed by the owner, or by that Admin themselves (stepping down); another
+  // Admin may not touch it. Seats below Admin are open to any Admin (requireAdmin runs first).
+  private requireMayManageSeat(
+    actor: MemberId,
+    target: Membership,
+  ): Result<void, SharingError> {
+    if (
+      target.permission === "Admin" &&
+      actor !== this.state.ownerId &&
+      actor !== target.memberId
+    ) {
+      return err(SharingError.notCircleOwner());
     }
     return ok(undefined);
   }

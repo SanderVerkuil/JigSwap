@@ -169,41 +169,80 @@ describe("canShareInCircle", () => {
 
 describe("memberRowControls", () => {
   const ME = "u-me";
-  const owner = { memberId: "u-owner", isOwner: true };
-  const other = { memberId: "u-other", isOwner: false };
-  const self = { memberId: ME, isOwner: false };
+  const owner = {
+    memberId: "u-owner",
+    isOwner: true,
+    permission: "Admin" as const,
+  };
+  const other = {
+    memberId: "u-other",
+    isOwner: false,
+    permission: "Exchange" as const,
+  };
+  const otherAdmin = {
+    memberId: "u-admin",
+    isOwner: false,
+    permission: "Admin" as const,
+  };
+  // A departed Admin's seat carries no user id.
+  const departedAdmin = { isOwner: false, permission: "Admin" as const };
+  const self = { memberId: ME, isOwner: false, permission: "Admin" as const };
+  const LOCKED = { canChangePermission: false, canRemove: false };
+  const OPEN = { canChangePermission: true, canRemove: true };
 
-  it("lets an Admin change and remove another non-owner member", () => {
-    expect(memberRowControls("Admin", other, ME)).toEqual({
-      canChangePermission: true,
-      canRemove: true,
+  describe.each([
+    ["the owner", true],
+    ["a non-owner Admin", false],
+  ] as const)("for %s", (_viewer, isOwnedByViewer) => {
+    it("lets them change and remove a member below Admin", () => {
+      expect(memberRowControls("Admin", other, ME, isOwnedByViewer)).toEqual(
+        OPEN,
+      );
     });
-  });
 
-  it("never edits the owner's seat", () => {
-    expect(memberRowControls("Admin", owner, ME)).toEqual({
-      canChangePermission: false,
-      canRemove: false,
+    it("never edits the owner's seat", () => {
+      expect(memberRowControls("Admin", owner, ME, isOwnedByViewer)).toEqual(
+        LOCKED,
+      );
     });
-  });
 
-  it("offers no remove on the viewer's own row (that is Leave)", () => {
-    expect(memberRowControls("Admin", self, ME)).toEqual({
-      canChangePermission: true,
-      canRemove: false,
-    });
-  });
-
-  it("offers no remove until the viewer's id is known", () => {
-    expect(memberRowControls("Admin", other, undefined).canRemove).toBe(false);
-  });
-
-  it("drops every control once the viewer is no longer an Admin", () => {
-    for (const level of ["Exchange", "ViewOnly"] as const) {
-      expect(memberRowControls(level, other, ME)).toEqual({
-        canChangePermission: false,
+    it("offers a level change but no remove on the viewer's own row (that is Leave)", () => {
+      expect(memberRowControls("Admin", self, ME, isOwnedByViewer)).toEqual({
+        canChangePermission: true,
         canRemove: false,
       });
-    }
+    });
+
+    it("offers no remove until the viewer's id is known", () => {
+      expect(
+        memberRowControls("Admin", other, undefined, isOwnedByViewer).canRemove,
+      ).toBe(false);
+    });
+
+    it("drops every control once the viewer is no longer an Admin", () => {
+      for (const level of ["Exchange", "ViewOnly"] as const) {
+        for (const member of [other, otherAdmin]) {
+          expect(memberRowControls(level, member, ME, isOwnedByViewer)).toEqual(
+            LOCKED,
+          );
+        }
+      }
+    });
+  });
+
+  it("lets the owner change and remove another Admin, departed or not", () => {
+    expect(memberRowControls("Admin", otherAdmin, ME, true)).toEqual(OPEN);
+    expect(memberRowControls("Admin", departedAdmin, ME, true)).toEqual(OPEN);
+  });
+
+  it("locks another Admin's row for a non-owner Admin, departed or not", () => {
+    expect(memberRowControls("Admin", otherAdmin, ME, false)).toEqual(LOCKED);
+    expect(memberRowControls("Admin", departedAdmin, ME, false)).toEqual(
+      LOCKED,
+    );
+  });
+
+  it("keeps a non-owner Admin's own row locked until their id is known", () => {
+    expect(memberRowControls("Admin", self, undefined, false)).toEqual(LOCKED);
   });
 });

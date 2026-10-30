@@ -93,7 +93,9 @@ In the manage dialog, every Admin can:
 - invite members and revoke pending invites;
 - share their own copies into the circle.
 
-The owner's seat can't be changed or removed.
+The owner's seat can't be changed or removed. Only the owner can change
+another Admin's permission or remove them; an Admin can still lower their own
+permission.
 
 ## The circle's icon
 

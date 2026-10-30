@@ -1,6 +1,6 @@
 // The manage-circle dialog's permission-gated sections, each shown only where the backend lets
 // this viewer use it: any Admin may invite and see/revoke pending invites; only the owner may
-// delete the circle.
+// delete the circle or change and remove other Admins.
 import { CircleInvitePicker } from "@/components/circles/circle-invite-picker";
 import { CirclePendingInvites } from "@/components/circles/circle-pending-invites";
 import { DeleteCircleAction } from "@/components/circles/delete-circle-action";
@@ -21,17 +21,27 @@ export const canShareInCircle = (viewerPermission: CirclePermissionLevel) =>
 // The controls on one member's row in the manage dialog. Read off the live viewerPermission, so a
 // viewer who loses Admin while the dialog is open loses them at once. The owner's seat is never
 // editable, and the viewer's own row has no remove: walking out is Leave (recorded as "left"), not
-// a removal. Until the viewer's id is known, no row offers remove.
+// a removal. Another Admin's row is the owner's to change or remove (the domain's Circle rule), so
+// a non-owner Admin sees it locked; they may still change their own level (step down). Until the
+// viewer's id is known, no row offers remove and no Admin row opens to a non-owner.
 export const memberRowControls = (
   viewerPermission: CirclePermissionLevel,
-  member: { memberId?: string; isOwner: boolean },
+  member: {
+    memberId?: string;
+    isOwner: boolean;
+    permission: CirclePermissionLevel;
+  },
   viewerId: string | undefined,
+  isOwnedByViewer: boolean,
 ) => {
-  const canEdit = canManageCircle(viewerPermission) && !member.isOwner;
+  const isSelf = viewerId !== undefined && member.memberId === viewerId;
+  const ownerOnlySeat =
+    member.permission === "Admin" && !isOwnedByViewer && !isSelf;
+  const canEdit =
+    canManageCircle(viewerPermission) && !member.isOwner && !ownerOnlySeat;
   return {
     canChangePermission: canEdit,
-    canRemove:
-      canEdit && viewerId !== undefined && member.memberId !== viewerId,
+    canRemove: canEdit && viewerId !== undefined && !isSelf,
   };
 };
 

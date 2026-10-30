@@ -833,8 +833,9 @@ describe("an inviter who leaves, is removed or loses Admin", () => {
   });
 });
 
-// The web shows a non-owner Admin the same manage controls as the owner, except Delete; these pin
-// that the server still refuses what only the owner's seat allows.
+// The web shows a non-owner Admin the owner's manage controls for seats below Admin and for their
+// own seat, but not Delete and not other Admins' seats; these pin that the server refuses what only
+// the owner's seat allows.
 describe("a non-owner Admin", () => {
   test("can't remove the owner, demote the owner or delete the circle", async () => {
     const t = convexTest(schema, modules);
@@ -873,24 +874,99 @@ describe("a non-owner Admin", () => {
     );
   });
 
-  test("demotes another Admin, whose pending invites are then withdrawn", async () => {
+  // SEC-86: Admins below the owner are peers; only the owner removes or demotes an Admin.
+  test("can't remove or demote another Admin, whose invites then stay pending", async () => {
     const t = convexTest(schema, modules);
     const { carol, dave, circleId } = await seed(t);
-    await as(t, "alice").mutation(
-      api.sharing.changePermission.changePermission,
-      { circleId, memberId: dave, permission: "Admin" },
-    );
+    await as(t, "bob").mutation(api.sharing.changePermission.changePermission, {
+      circleId,
+      memberId: dave,
+      permission: "Admin",
+    });
     await mutualFollow(t, dave, carol);
     const fromDave = await invite(t, "dave", circleId, carol);
+
+    for (const permission of ["Exchange", "ViewOnly"] as const) {
+      await expectConvexCode(
+        as(t, "bob").mutation(api.sharing.changePermission.changePermission, {
+          circleId,
+          memberId: dave,
+          permission,
+        }),
+        "NotCircleOwner",
+      );
+    }
+    await expectConvexCode(
+      as(t, "bob").mutation(api.sharing.removeMember.removeMember, {
+        circleId,
+        memberId: dave,
+      }),
+      "NotCircleOwner",
+    );
+
+    expect((await isSeated(t, circleId, dave)).seat?.permission).toBe("Admin");
+    expect((await isSeated(t, circleId, dave)).link).toBe(true);
+    expect((await inviteRow(t, fromDave))?.status).toBe("pending");
+  });
+
+  test("still changes and removes members below Admin", async () => {
+    const t = convexTest(schema, modules);
+    const { dave, circleId } = await seed(t);
 
     await as(t, "bob").mutation(api.sharing.changePermission.changePermission, {
       circleId,
       memberId: dave,
       permission: "Exchange",
     });
+    expect((await isSeated(t, circleId, dave)).seat?.permission).toBe(
+      "Exchange",
+    );
+    await as(t, "bob").mutation(api.sharing.removeMember.removeMember, {
+      circleId,
+      memberId: dave,
+    });
+    expect(await isSeated(t, circleId, dave)).toEqual({
+      seat: null,
+      link: false,
+    });
+  });
 
-    expect((await inviteRow(t, fromDave))?.status).toBe("revoked");
-    await expectConvexCode(accept(t, "carol", fromDave), "InviteNotPending");
+  test("steps down themselves, whose pending invites are then withdrawn", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, carol, circleId } = await seed(t);
+    await mutualFollow(t, bob, carol);
+    const fromBob = await invite(t, "bob", circleId, carol);
+
+    await as(t, "bob").mutation(api.sharing.changePermission.changePermission, {
+      circleId,
+      memberId: bob,
+      permission: "Exchange",
+    });
+
+    expect((await isSeated(t, circleId, bob)).seat?.permission).toBe(
+      "Exchange",
+    );
+    expect((await inviteRow(t, fromBob))?.status).toBe("revoked");
+    await expectConvexCode(accept(t, "carol", fromBob), "InviteNotPending");
+  });
+
+  test("the owner demotes and removes an Admin", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, circleId } = await seed(t);
+
+    await as(t, "alice").mutation(
+      api.sharing.changePermission.changePermission,
+      { circleId, memberId: bob, permission: "ViewOnly" },
+    );
+    await as(t, "alice").mutation(
+      api.sharing.changePermission.changePermission,
+      { circleId, memberId: bob, permission: "Admin" },
+    );
+    await as(t, "alice").mutation(api.sharing.removeMember.removeMember, {
+      circleId,
+      memberId: bob,
+    });
+    expect((await isSeated(t, circleId, bob)).seat).toBeNull();
   });
 });
 
