@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 // UX-58: every quick-sheet row opens what it promises. "Log a Completion" opens the log flow, not
 // the list, and "Find a swap" opens Browse (where swaps start) instead of the exchanges list.
+// UX-06: Messages has a row of its own, with the unread count as a pill and in its name.
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -20,14 +21,19 @@ vi.mock("@/components/install-app/use-install-app", () => ({
   runInstallPrompt: vi.fn(),
 }));
 
-const renderSheet = (locale: "en" | "nl" = "en") =>
+const renderSheet = (locale: "en" | "nl" = "en", unreadMessages = 0) =>
   render(
     <IntlProvider
       locale={locale}
       messages={locale === "nl" ? nl : en}
       timeZone="Europe/Amsterdam"
     >
-      <MobileQuickSheet open onOpenChange={() => {}} whatsNewCount={0} />
+      <MobileQuickSheet
+        open
+        onOpenChange={() => {}}
+        whatsNewCount={0}
+        unreadMessages={unreadMessages}
+      />
     </IntlProvider>,
   );
 
@@ -48,6 +54,7 @@ describe("MobileQuickSheet", () => {
     ["Add a Puzzle", "/my-puzzles/add"],
     ["Log a Completion", "/completions/new"],
     ["Find a swap", "/browse"],
+    ["Messages", "/messages"],
     ["Profile", "/profile"],
     ["What's new", "/whats-new"],
   ])("“%s” goes to %s", (name, href) => {
@@ -62,6 +69,7 @@ describe("MobileQuickSheet", () => {
       "Add a Puzzle",
       "Log a Completion",
       "Find a swap",
+      "Messages",
       "Profile",
       "What's new",
     ]);
@@ -70,5 +78,13 @@ describe("MobileQuickSheet", () => {
   it("names the swap row in Dutch", () => {
     renderSheet("nl");
     expect(screen.getByRole("button", { name: /Zoek een ruil/ })).toBeTruthy();
+  });
+
+  it("shows the unread messages on the Messages row and in its name", () => {
+    renderSheet("en", 3);
+    const row = screen.getByRole("button", { name: /3 unread messages/ });
+    expect(row.textContent).toContain("Messages");
+    const pill = row.querySelector("[aria-hidden]:not(svg)");
+    expect(pill?.textContent).toBe("3");
   });
 });

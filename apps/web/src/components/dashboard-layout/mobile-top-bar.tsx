@@ -3,9 +3,10 @@
 // Slim mobile top bar (replaces the desktop chrome below the md breakpoint):
 // brand lockup on the dashboard, a back chevron to the parent section landing
 // on deep pages (instead of breadcrumbs), just the title on landings/profile;
-// then search (command palette), notifications and the profile avatar on the
-// right. Every control is a 44px touch target and the bar is safe-area padded
-// for notched phones.
+// then search (command palette), Messages (with the unread count: Messages has
+// no tab of its own), notifications and the profile avatar on the right. Every
+// control is a 44px touch target and the bar is safe-area padded for notched
+// phones.
 import { useUser } from "@/compat/clerk";
 import { Image } from "@/compat/image";
 import { Link } from "@/compat/link";
@@ -15,8 +16,9 @@ import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { Bell, ChevronLeft, Search } from "lucide-react";
+import { Bell, ChevronLeft, MessageSquare, Search } from "lucide-react";
 import { useTranslations } from "use-intl";
+import { useUnreadMessageCount } from "./nav-counts";
 import { usePageHeaderContent } from "./page-header-slot";
 import {
   getNavGroup,
@@ -41,6 +43,8 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
     convexQuery(gateway.notifications.unreadCount, user?.id ? {} : "skip"),
   );
   const unread = unreadCount ?? 0;
+  const unreadMessages = useUnreadMessageCount();
+  const messagesTitle = t("pages.messages.title");
 
   const meta = getRouteMeta(pathname);
   const isHome = meta?.variant === "dashboard";
@@ -116,6 +120,29 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
         >
           <Search className="size-5" />
         </button>
+        <Link
+          href="/messages"
+          aria-label={
+            unreadMessages > 0
+              ? t("mobile.withUnreadMessages", {
+                  name: messagesTitle,
+                  count: unreadMessages,
+                })
+              : messagesTitle
+          }
+          aria-current={pathname === "/messages" ? "page" : undefined}
+          className={cn(tapTarget, "relative text-muted-foreground")}
+        >
+          <MessageSquare className="size-5" />
+          {unreadMessages > 0 && (
+            <span
+              aria-hidden
+              className="bg-jigsaw-primary-accent ring-card absolute top-1.5 right-0.5 inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-full px-1 text-[10px] leading-none font-bold text-white ring-2"
+            >
+              {unreadMessages > 9 ? "9+" : unreadMessages}
+            </span>
+          )}
+        </Link>
         <Link
           href="/notifications"
           aria-label={tNotifications("bell")}

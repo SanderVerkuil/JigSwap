@@ -17,6 +17,7 @@ import {
   ChevronRight,
   CircleCheck,
   Download,
+  MessageSquare,
   Plus,
   Sparkles,
   UserRound,
@@ -52,6 +53,13 @@ const ACTIONS: Array<{
     href: "/browse",
     icon: ArrowLeftRight,
   },
+  // Messages has no tab of its own: this row (and the top-bar icon) carries the unread count.
+  {
+    titleKey: "pages.messages.title",
+    subKey: "pages.messages.description",
+    href: "/messages",
+    icon: MessageSquare,
+  },
   // A clear, labelled route to the member's own profile (the top-bar avatar
   // also links here, but it's an unlabelled icon). Reuses the existing
   // shell.pages.profile strings — no new translations.
@@ -74,17 +82,28 @@ export function MobileQuickSheet({
   open,
   onOpenChange,
   whatsNewCount,
+  unreadMessages,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   whatsNewCount: number;
+  unreadMessages: number;
 }) {
   const t = useTranslations("shell");
   const tWhatsNew = useTranslations("whatsNew");
+  const tMessages = useTranslations("messages");
   const tInstall = useTranslations("installApp");
   const router = useRouter();
   const countFor = (href: string) =>
-    href === "/whats-new" ? whatsNewCount : 0;
+    href === "/whats-new"
+      ? whatsNewCount
+      : href === "/messages"
+        ? unreadMessages
+        : 0;
+  const countLabel = (href: string, count: number) =>
+    href === "/messages"
+      ? tMessages("unreadCount", { count })
+      : tWhatsNew("unreadCount", { count });
 
   const go = (href: string) => {
     onOpenChange(false);
@@ -133,9 +152,7 @@ export function MobileQuickSheet({
                   </span>
                   {countFor(action.href) > 0 && (
                     <span className="sr-only">
-                      {tWhatsNew("unreadCount", {
-                        count: countFor(action.href),
-                      })}
+                      {countLabel(action.href, countFor(action.href))}
                     </span>
                   )}
                 </span>

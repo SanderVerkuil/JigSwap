@@ -6,16 +6,14 @@
 // library pages light Library, community pages light Community — except
 // /trades, which lights its dedicated Swaps tab. Safe-area padded for
 // home-indicator phones only in the installed app (see the nav's comment).
+// Swaps carries a badge for requests waiting for the member's answer and
+// Community a dot for unread messages; each count is part of the tab's name.
 import { Link } from "@/compat/link";
 import { usePathname } from "@/compat/navigation";
-import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { UnreadDot } from "@/components/whats-new/badges";
 import { useWhatsNewUnreadCount } from "@/components/whats-new/use-whats-new-state";
-import { gateway } from "@/gateway";
 import { scrollToTopIfCurrent } from "@/lib/scroll-restoration";
 import { cn } from "@/lib/utils";
-import { convexQuery } from "@convex-dev/react-query";
-import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import {
   ArrowLeftRight,
@@ -28,6 +26,7 @@ import {
 import { useState } from "react";
 import { useTranslations } from "use-intl";
 import { MobileQuickSheet } from "./mobile-quick-sheet";
+import { usePendingRequestCount, useUnreadMessageCount } from "./nav-counts";
 import { getRouteMeta, isImmersiveMobileRoute } from "./route-meta";
 import { MOBILE_TAB_BAR_HEIGHT_VAR, useHeightCssVar } from "./sticky-offset";
 
@@ -64,16 +63,28 @@ export function MobileTabBar() {
   // No room for a fifth tab: What's new lives in the quick sheet, flagged by a dot on the "+".
   const whatsNewCount = useWhatsNewUnreadCount();
 
-  // Incoming swap requests still awaiting an answer — the same definition the
-  // dashboard's pending banner uses; Convex dedupes the shared subscription.
-  const { member } = useCurrentMember();
-  const { data: exchanges } = useQuery(
-    convexQuery(gateway.exchange.forUser, member?._id ? {} : "skip"),
-  );
-  const pending = (exchanges ?? []).filter(
-    (exchange) =>
-      exchange.userRole === "owner" && exchange.status === "proposed",
-  ).length;
+  // Incoming swap requests still awaiting an answer (Swaps badge) and unread
+  // messages (Community dot, quick-sheet row): Messages lives under Community.
+  const pending = usePendingRequestCount();
+  const unreadMessages = useUnreadMessageCount();
+  const counts: Partial<Record<TabKey, TabCount>> = {
+    swaps: {
+      value: pending,
+      indicator: "badge",
+      label: t("withPendingRequests", {
+        name: t("tabs.swaps"),
+        count: pending,
+      }),
+    },
+    community: {
+      value: unreadMessages,
+      indicator: "dot",
+      label: t("withUnreadMessages", {
+        name: t("tabs.community"),
+        count: unreadMessages,
+      }),
+    },
+  };
   // Toasts, the install tip and the quick-start footer dock above this bar.
   const measureRef = useHeightCssVar(MOBILE_TAB_BAR_HEIGHT_VAR);
 
@@ -144,7 +155,7 @@ export function MobileTabBar() {
             key={tab.key}
             tab={tab}
             active={active}
-            badge={tab.key === "swaps" ? pending : 0}
+            count={counts[tab.key]}
           />
         ))}
       </nav>
@@ -152,23 +163,33 @@ export function MobileTabBar() {
         open={sheetOpen}
         onOpenChange={setSheetOpen}
         whatsNewCount={whatsNewCount}
+        unreadMessages={unreadMessages}
       />
     </>
   );
 }
 
+// A tab's live count: shown as a capped badge or a plain dot, both aria-hidden;
+// while it is above 0, `label` (the tab's name with the full count) names the tab.
+type TabCount = {
+  value: number;
+  indicator: "badge" | "dot";
+  label: string;
+};
+
 function TabLink({
   tab,
   active,
-  badge = 0,
+  count,
 }: {
   tab: { key: TabKey; href: string; icon: LucideIcon };
   active: TabKey | null;
-  badge?: number;
+  count?: TabCount;
 }) {
   const t = useTranslations("shell.mobile");
   const router = useRouter();
   const on = active === tab.key;
+  const value = count?.value ?? 0;
 
   return (
     <Link
@@ -176,7 +197,7 @@ function TabLink({
       onClick={(event) =>
         scrollToTopIfCurrent(event, router.latestLocation.href, tab.href)
       }
-      aria-label={t(`tabs.${tab.key}`)}
+      aria-label={count && value > 0 ? count.label : t(`tabs.${tab.key}`)}
       aria-current={on ? "page" : undefined}
       className={cn(
         "flex min-h-14 flex-col items-center justify-center",
@@ -185,11 +206,17 @@ function TabLink({
     >
       <span className="relative">
         <tab.icon className="size-[21px]" />
-        {badge > 0 && (
-          <span className="bg-jigsaw-primary-accent absolute -top-1 -right-2 inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-full px-1 text-[10px] leading-none font-bold text-white">
-            {badge > 9 ? "9+" : badge}
-          </span>
-        )}
+        {value > 0 &&
+          (count?.indicator === "dot" ? (
+            <UnreadDot className="ring-card -top-0.5 -right-1 size-2.5" />
+          ) : (
+            <span
+              aria-hidden
+              className="bg-jigsaw-primary-accent absolute -top-1 -right-2 inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-full px-1 text-[10px] leading-none font-bold text-white"
+            >
+              {value > 9 ? "9+" : value}
+            </span>
+          ))}
       </span>
     </Link>
   );

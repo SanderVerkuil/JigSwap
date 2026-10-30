@@ -3946,7 +3946,9 @@
         "findSwapSub": "See what other puzzlers offer",
         "whatsNewSub": "Latest features and fixes"
       },
-      "openQuickActionsUnread": "{count, plural, one {Quick actions, # update} other {Quick actions, # updates}}"
+      "openQuickActionsUnread": "{count, plural, one {Quick actions, # update} other {Quick actions, # updates}}",
+      "withUnreadMessages": "{count, plural, one {{name}, # unread message} other {{name}, # unread messages}}",
+      "withPendingRequests": "{count, plural, one {{name}, # request waiting for your reply} other {{name}, # requests waiting for your reply}}"
     },
     "breadcrumbLabel": "Breadcrumb",
     "crumbs": {

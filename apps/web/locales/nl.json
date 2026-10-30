@@ -3946,7 +3946,9 @@
         "findSwapSub": "Bekijk wat andere puzzelaars aanbieden",
         "whatsNewSub": "De nieuwste functies en oplossingen"
       },
-      "openQuickActionsUnread": "{count, plural, one {Snelle acties, # update} other {Snelle acties, # updates}}"
+      "openQuickActionsUnread": "{count, plural, one {Snelle acties, # update} other {Snelle acties, # updates}}",
+      "withUnreadMessages": "{count, plural, one {{name}, # ongelezen bericht} other {{name}, # ongelezen berichten}}",
+      "withPendingRequests": "{count, plural, one {{name}, # verzoek wacht op je antwoord} other {{name}, # verzoeken wachten op je antwoord}}"
     },
     "breadcrumbLabel": "Broodkruimel",
     "crumbs": {
