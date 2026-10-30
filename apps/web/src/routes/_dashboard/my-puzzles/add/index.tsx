@@ -1,4 +1,5 @@
 import { Link } from "@/compat/link";
+import { BarcodeScanButton } from "@/components/catalogue-picker/barcode-scan-button";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { EmptyState } from "@/components/library/empty-state";
@@ -209,16 +210,22 @@ function AddPuzzleChooserPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Search */}
-      <div className="relative w-full max-w-sm" data-tour="add-puzzle-search">
-        <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-        <Input
-          type="text"
-          placeholder={t("chooser.searchPlaceholder")}
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          className="pl-9"
-        />
+      {/* Search, with a camera scan where the browser can read barcodes. */}
+      <div
+        className="flex w-full max-w-sm items-center gap-2"
+        data-tour="add-puzzle-search"
+      >
+        <div className="relative min-w-0 flex-1">
+          <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+          <Input
+            type="text"
+            placeholder={t("chooser.searchPlaceholder")}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <BarcodeScanButton onScan={setSearchInput} />
       </div>
 
       {/* Your submissions */}

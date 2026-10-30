@@ -1905,6 +1905,13 @@
     "noResults": "Geen puzzels gevonden voor \"{query}\".",
     "keepTypingBarcode": "Typ de barcode verder…",
     "barcodeLength": "Barcodes op puzzeldozen hebben 12 of 13 cijfers.",
+    "scan": {
+      "open": "Barcode scannen",
+      "title": "Barcode scannen",
+      "description": "Richt je camera op de barcode op de doos.",
+      "denied": "Cameratoegang is geblokkeerd. Sta die toe in je browserinstellingen, of typ de barcode in.",
+      "failed": "De camera kon niet starten. Typ de barcode in."
+    },
     "notListed": "Niet gevonden?",
     "register": "\"{query}\" registreren",
     "registerNew": "Een nieuwe puzzel registreren",

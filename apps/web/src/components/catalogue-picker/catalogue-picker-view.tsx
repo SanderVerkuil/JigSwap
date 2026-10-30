@@ -8,6 +8,7 @@ import { Link } from "@tanstack/react-router";
 import { Check, Plus, Search, X } from "lucide-react";
 import { useId } from "react";
 import { useTranslations } from "use-intl";
+import { BarcodeScanButton } from "./barcode-scan-button";
 import {
   isPicked,
   PICK_LIMIT,
@@ -62,25 +63,28 @@ export function CataloguePickerView({
         <label htmlFor={searchId} className="sr-only">
           {t("searchLabel")}
         </label>
-        <div className="relative">
-          <Search
-            aria-hidden
-            className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2"
-          />
-          <Input
-            id={searchId}
-            type="search"
-            autoComplete="off"
-            placeholder={t("searchPlaceholder")}
-            value={term}
-            onChange={(e) => onTermChange(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Backspace" && term === "" && picks.length > 0) {
-                onRemoveLast();
-              }
-            }}
-            className="pl-9"
-          />
+        <div className="flex items-center gap-2">
+          <div className="relative min-w-0 flex-1">
+            <Search
+              aria-hidden
+              className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2"
+            />
+            <Input
+              id={searchId}
+              type="search"
+              autoComplete="off"
+              placeholder={t("searchPlaceholder")}
+              value={term}
+              onChange={(e) => onTermChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Backspace" && term === "" && picks.length > 0) {
+                  onRemoveLast();
+                }
+              }}
+              className="pl-9"
+            />
+          </div>
+          <BarcodeScanButton onScan={onTermChange} />
         </div>
         {!trimmed && rows.length === 0 && (
           <p className="text-muted-foreground text-sm">{t("searchHint")}</p>

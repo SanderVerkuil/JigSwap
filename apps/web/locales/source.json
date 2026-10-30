@@ -1905,6 +1905,13 @@
     "noResults": "No puzzles match \"{query}\".",
     "keepTypingBarcode": "Keep typing the barcode…",
     "barcodeLength": "Barcodes on puzzle boxes have 12 or 13 digits.",
+    "scan": {
+      "open": "Scan a barcode",
+      "title": "Scan a barcode",
+      "description": "Point your camera at the barcode on the box.",
+      "denied": "Camera access is blocked. Allow it in your browser settings, or type the barcode.",
+      "failed": "Couldn't start the camera. Type the barcode instead."
+    },
     "notListed": "Can't find it?",
     "register": "Register \"{query}\"",
     "registerNew": "Register a new puzzle",
