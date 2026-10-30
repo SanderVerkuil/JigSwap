@@ -1,11 +1,11 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { gateway, Id } from "@/gateway";
+import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTranslations } from "use-intl";
 import type { Member } from "./member-view";
 
 // Map completed trades onto the coarse trust levels the old profile used.
@@ -19,17 +19,21 @@ function trustLevelKey(
 
 // The profile's key numbers as four centered, hairline-divided columns — big
 // font-heading figures in the brand primary over muted labels, straight on the
-// page ground (no stat cards). The old trust-level meter survives below as a
-// slim centered strip.
+// page ground (no stat cards). They are the same four numbers, from the same
+// read and with the same labels, that visitors see on /members/<handle>, so
+// the owner's /profile never disagrees with their public page. The old
+// trust-level meter survives below as a slim centered strip.
 export function ProfileStatsSection({ member }: { member: Member }) {
   const t = useTranslations("profile");
-  const { data: stats } = useQuery(
-    convexQuery(gateway.identity.userStats, {
-      userId: member._id as Id<"users">,
-    }),
+  const tStats = useTranslations("members.profile");
+  const format = useFormatter();
+  // By id, never by slug/username: the id is the one handle that can only
+  // resolve to this member. The member's own profile is always unlocked.
+  const { data: profile } = useQuery(
+    convexQuery(gateway.social.publicProfile, { handle: member._id }),
   );
 
-  if (stats === undefined) {
+  if (profile === undefined) {
     return (
       <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
@@ -38,24 +42,23 @@ export function ProfileStatsSection({ member }: { member: Member }) {
       </div>
     );
   }
-  // A private, non-mutual member's stats are hidden server-side (null). Degrade
-  // gracefully — render no stats rather than crashing on a missing card.
-  if (stats === null) {
+  // Not found or locked can't happen for the member themself; degrade to no
+  // stats rather than crash if it ever does.
+  if (profile === null || profile.locked) {
     return null;
   }
 
+  const { stats } = profile;
   const items = [
-    { value: stats.puzzlesOwned, label: t("puzzlesOwned") },
-    { value: stats.tradesCompleted, label: t("completedExchanges") },
-    {
-      value: stats.averageRating > 0 ? stats.averageRating.toFixed(1) : "—",
-      label: t("averageRating"),
-    },
-    { value: stats.puzzlesAvailable, label: t("availablePuzzles") },
+    { value: stats.puzzlesOwned, label: tStats("statOwned") },
+    { value: stats.completions, label: tStats("statCompletions") },
+    { value: stats.piecesPlaced, label: tStats("statPieces") },
+    { value: stats.swaps, label: tStats("statSwaps") },
   ];
 
-  const trustKey = trustLevelKey(stats.tradesCompleted);
-  const trustProgress = Math.min((stats.tradesCompleted / 10) * 100, 100);
+  // Swaps are completed exchanges (tradesCompleted server-side).
+  const trustKey = trustLevelKey(stats.swaps);
+  const trustProgress = Math.min((stats.swaps / 10) * 100, 100);
 
   return (
     <section className="flex flex-col gap-10">
@@ -70,7 +73,7 @@ export function ProfileStatsSection({ member }: { member: Member }) {
             )}
           >
             <div className="font-heading text-jigsaw-primary text-4xl leading-none font-bold">
-              {item.value}
+              {format.number(item.value)}
             </div>
             <div className="text-muted-foreground mt-2 text-sm">
               {item.label}
