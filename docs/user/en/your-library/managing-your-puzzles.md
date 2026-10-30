@@ -40,11 +40,20 @@ From a puzzle card you can:
 
 The detail page is the rich record of a single owned copy. It includes:
 
-- A **hero image** with the availability badge and condition/difficulty chips.
-  On a phone or tablet, pinch it to zoom in and drag to look around;
-  double-tap to zoom back out.
-- **Acquisition details** (how/when you got it) and your private notes.
-- A **stats strip**: times completed, fastest finish, times lent out, and average rating.
+- A **hero image** with condition and difficulty chips. On a phone or tablet,
+  pinch it to zoom in and drag to look around; double-tap to zoom back out.
+- A **status line** under the title. On your own copy it says where the copy
+  is and who can see it: "On loan to _name_ since _date_" (with **Recall**),
+  or what it's offered for and whether it's visible to the community, visible
+  only while offered, or private. Other members only see what it's offered
+  for.
+- **Acquisition details** (when and how you got it) and your private notes.
+  Only you (and household members who can manage the copy) see them. If
+  nothing is recorded yet, click **Add details** to fill in the month, year
+  and source.
+- A **stats strip**: times completed, fastest finish, times lent out, and your
+  own rating of the copy (shown to you and your household, or to anyone who
+  rated it).
 - The **Owner**: their avatar and name, which links to their profile when you're
   allowed to see it. On your own copy it reads your name followed by "· you".
   If the owner keeps their profile hidden from you, it shows
@@ -55,8 +64,16 @@ The detail page is the rich record of a single owned copy. It includes:
   and show **Deleted member**, without a name, picture or link.
 - A **community rating breakdown** and a comment area.
 
-**Owner actions** on this page include toggling _for-trade_ / _for-lend_, logging a completion, and editing.
+**Owner actions** on this page include the **Offer for swap** and **Offer to
+lend** switches, logging a completion, and editing. Each switch change is
+confirmed with an **Undo**, and it never changes who can see the copy (see
+below). While the copy is out on loan the switches are off and disabled until
+it's back. **Recall** asks you to confirm first: it ends the loan and marks
+the puzzle as back with you.
 **Visitors** (other members) see a public version with _Request Swap_ and _Message_ actions instead.
+
+**Copy reviews** are star ratings of this physical copy. Anyone who logs a
+solve of the copy is asked to rate it.
 
 ## Photos
 
@@ -99,8 +116,9 @@ under **Who can see this copy**:
 - **Private — only you and your household**: hidden from everyone else,
   friends included.
 
-A copy you offer for swap, lend or sale is always visible. For the full
-picture, see
+A copy you offer for swap, lend or sale is visible while the offer lasts. If
+you chose **Private**, it stays your choice: once you withdraw every offer the
+copy is private again. For the full picture, see
 [Visibility & Privacy](/docs/sharing-and-exchanges/visibility-and-privacy).
 
 ## Household copies

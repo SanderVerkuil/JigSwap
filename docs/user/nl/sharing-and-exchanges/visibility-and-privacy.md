@@ -63,10 +63,11 @@ Een privé-exemplaar blijft zichtbaar voor:
   de ruil af of wordt hij geannuleerd, dan is het exemplaar weer privé voor
   diegene.
 
-> **Let op:** Je kunt alleen een zichtbaar exemplaar aanbieden. Zolang een
-> exemplaar wordt aangeboden om te ruilen, uit te lenen of te verkopen, is de
-> privé-optie uitgeschakeld. Trek eerst het aanbod in. Zet je een aanbod aan,
-> dan wordt een privé-exemplaar weer zichtbaar.
+> **Let op:** Bied je een privé-exemplaar aan, dan is het zichtbaar zolang het
+> aanbod loopt: leden moeten een exemplaar kunnen zien om erom te vragen. Je
+> keuze voor **Privé** blijft bewaard, dus trek je elk aanbod in, dan is het
+> exemplaar weer privé. Je kunt ook **Privé** kiezen terwijl een exemplaar
+> wordt aangeboden.
 
 ## Je profiel openbaar of privé maken
 

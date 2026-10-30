@@ -40,11 +40,21 @@ Vanaf een puzzelkaart kun je:
 
 De detailpagina is het uitgebreide overzicht van één eigen kopie. Het bevat:
 
-- Een **hero-afbeelding** met de beschikbaarheidsbadge en chips voor conditie/moeilijkheid.
-  Op een telefoon of tablet knijp je erin om in te zoomen en sleep je om rond
-  te kijken; dubbeltik om weer uit te zoomen.
-- **Verwervingsgegevens** (hoe/wanneer je hem kreeg) en je privénotities.
-- Een **statistiekenstrook**: aantal keer voltooid, snelste tijd, aantal keer uitgeleend en gemiddelde beoordeling.
+- Een **hero-afbeelding** met chips voor conditie en moeilijkheid. Op een
+  telefoon of tablet knijp je erin om in te zoomen en sleep je om rond te
+  kijken; dubbeltik om weer uit te zoomen.
+- Een **statusregel** onder de titel. Op je eigen kopie staat daar waar de
+  kopie is en wie hem kan zien: "Uitgeleend aan _naam_ sinds _datum_" (met
+  **Terugvragen**), of waarvoor hij wordt aangeboden en of hij zichtbaar is
+  voor de community, alleen zichtbaar zolang je hem aanbiedt, of privé. Andere
+  leden zien alleen waarvoor hij wordt aangeboden.
+- **Verwervingsgegevens** (wanneer en hoe je hem kreeg) en je privénotities.
+  Alleen jij (en leden van je huishouden die de kopie mogen beheren) zien ze.
+  Staat er nog niets, klik dan op **Details toevoegen** om de maand, het jaar
+  en de bron in te vullen.
+- Een **statistiekenstrook**: aantal keer voltooid, snelste tijd, aantal keer
+  uitgeleend en je eigen beoordeling van de kopie (te zien voor jou en je
+  huishouden, of voor wie hem beoordeeld heeft).
 - De **Eigenaar**: avatar en naam, met een link naar het profiel als je dat
   mag zien. Op je eigen kopie staat je naam gevolgd door "· jij". Houdt de
   eigenaar het profiel voor jou verborgen, dan staat er **Anonieme gebruiker**.
@@ -54,8 +64,17 @@ De detailpagina is het uitgebreide overzicht van één eigen kopie. Het bevat:
   regels staan, als **Verwijderd lid**, zonder naam, foto of link.
 - Een **opbouw van de communitybeoordeling** en een opmerkingengebied.
 
-**Eigenaarsacties** op deze pagina zijn onder meer het in-/uitschakelen van _te ruil_ / _te leen_, een voltooiing vastleggen en bewerken.
+**Eigenaarsacties** op deze pagina zijn onder meer de schakelaars
+**Aanbieden voor ruil** en **Aanbieden om uit te lenen**, een voltooiing
+vastleggen en bewerken. Elke wijziging met een schakelaar bevestigen we met
+**Ongedaan maken**, en hij verandert nooit wie de kopie kan zien (zie
+hieronder). Is de kopie uitgeleend, dan staan de schakelaars uit en kun je ze
+pas weer gebruiken als hij terug is. Bij **Terugvragen** vragen we eerst om
+bevestiging: je beëindigt dan de lening en de puzzel staat weer bij jou.
 **Bezoekers** (andere leden) zien een openbare versie met in plaats daarvan de acties _Ruil Aanvragen_ en _Bericht_.
+
+**Beoordelingen van dit exemplaar** zijn sterren voor deze fysieke kopie. Wie
+een voltooiing van de kopie vastlegt, krijgt de vraag hem te beoordelen.
 
 ## Foto's
 
@@ -102,8 +121,10 @@ onder **Wie kan dit exemplaar zien**:
 - **Privé — alleen jij en je huishouden**: verborgen voor alle anderen, ook
   voor je vrienden.
 
-Een kopie die je aanbiedt om te ruilen, uit te lenen of te verkopen, is altijd
-zichtbaar. Zie voor het volledige overzicht
+Een kopie die je aanbiedt om te ruilen, uit te lenen of te verkopen, is
+zichtbaar zolang het aanbod loopt. Koos je **Privé**, dan blijft dat je keuze:
+trek je elk aanbod in, dan is de kopie weer privé. Zie voor het volledige
+overzicht
 [Zichtbaarheid & Privacy](/docs/sharing-and-exchanges/visibility-and-privacy).
 
 ## Kopieën van je huishouden
