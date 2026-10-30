@@ -364,6 +364,24 @@ describe("a copy's owner who did not submit its definition (SEC-34)", () => {
     }
     expectFullFacts(own.get("copy-disabled")?.puzzle ?? null, "disabled");
     expectFullFacts(own.get("copy-approved")?.puzzle ?? null, "approved");
+
+    // The owner-only copy detail read applies the same rule.
+    const detail = (ownedPuzzleId: Id<"ownedPuzzles">) =>
+      asOther(t).query(
+        api.library.getOwnedPuzzleWithCollectionStatus
+          .getOwnedPuzzleWithCollectionStatus,
+        { ownedPuzzleId },
+      );
+    for (const status of UNMODERATED) {
+      expectSnapshotOnly(
+        (await detail(copies[status]))?.puzzle ?? null,
+        status,
+      );
+    }
+    expectFullFacts(
+      (await detail(copies.disabled))?.puzzle ?? null,
+      "disabled",
+    );
   });
 
   test("their copy page omits a pending or rejected definition's difficulty and tags", async () => {
