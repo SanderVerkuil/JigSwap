@@ -6,6 +6,7 @@ import {
 } from "@/components/messaging/format";
 import { InboxWindowProvider } from "@/components/messaging/inbox-window";
 import { NewConversationMenu } from "@/components/messaging/new-conversation-menu";
+import { threadsToToast } from "@/components/messaging/new-message-toasts";
 import { gateway } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import usePresence from "@convex-dev/presence/react";
@@ -57,9 +58,10 @@ function MessagesPresence({ memberId }: { memberId: string }) {
 
 // Toasts "new message from X" for inbox threads whose latest message advanced
 // since the last render, when that message wasn't authored by the viewer and
-// the thread isn't the one currently open. Skips the very first load (nothing
-// to compare against yet) so opening /messages never toast-storms the
-// existing inbox.
+// the thread isn't the one currently open (threadsToToast). Skips the very
+// first load (nothing to compare against yet) so opening /messages never
+// toast-storms the existing inbox. It watches the inbox's newest page (the
+// default getMyInbox window), which a new message always lifts its thread into.
 function MessageToastWatcher() {
   const t = useTranslations("notifications");
   const tMessages = useTranslations("messages");
@@ -74,47 +76,35 @@ function MessageToastWatcher() {
 
   React.useEffect(() => {
     if (!inbox || !member) return;
-    const previous = lastSeen.current;
-    const next = new Map<string, number>();
-    for (const thread of inbox) {
-      const stamp = thread.lastMessage?.sentAt ?? 0;
-      next.set(thread.threadId, stamp);
-      if (
-        previous &&
-        thread.lastMessage &&
-        // System/lifecycle messages never notify — mirror the backend's MessagePosted guard.
-        thread.lastMessage.kind !== "system" &&
-        !thread.lastMessage.isMine &&
-        // A muted thread stays quiet; a member the viewer blocked never pings them.
-        !thread.muted &&
-        !thread.lastMessage.authorBlockedByMe &&
-        thread.threadId !== activeThreadId &&
-        stamp > (previous.get(thread.threadId) ?? 0)
-      ) {
-        const name = threadSubjectTitle(
-          thread.subject,
-          tMessages as Translator,
-          displayName,
-        );
-        toast(
-          thread.subject.kind === "circle"
-            ? t("newCircleMessageToast", { circle: name })
-            : t("newMessageToast", { name }),
-          {
-            action: {
-              label: t("newMessageToastOpen"),
-              onClick: () => {
-                void navigate({
-                  to: "/messages/$threadId",
-                  params: { threadId: thread.threadId },
-                });
-              },
+    const { toToast, seen } = threadsToToast(
+      inbox,
+      lastSeen.current,
+      activeThreadId,
+    );
+    for (const thread of toToast) {
+      const name = threadSubjectTitle(
+        thread.subject,
+        tMessages as Translator,
+        displayName,
+      );
+      toast(
+        thread.subject.kind === "circle"
+          ? t("newCircleMessageToast", { circle: name })
+          : t("newMessageToast", { name }),
+        {
+          action: {
+            label: t("newMessageToastOpen"),
+            onClick: () => {
+              void navigate({
+                to: "/messages/$threadId",
+                params: { threadId: thread.threadId },
+              });
             },
           },
-        );
-      }
+        },
+      );
     }
-    lastSeen.current = next;
+    lastSeen.current = seen;
   }, [inbox, member, activeThreadId, navigate, t, tMessages, displayName]);
 
   return null;
