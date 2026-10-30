@@ -2330,6 +2330,7 @@
     "subtitle": "Stay on top of trades, reviews, and milestones.",
     "bell": "Notifications",
     "unreadCount": "{count, plural, =0 {No unread notifications} one {# unread notification} other {# unread notifications}}",
+    "unreadCountCapped": "99+ unread notifications",
     "recent": "Recent",
     "markAllRead": "Mark all as read",
     "markRead": "Mark as read",

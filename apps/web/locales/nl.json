@@ -2330,6 +2330,7 @@
     "subtitle": "Blijf op de hoogte van ruilen, beoordelingen en mijlpalen.",
     "bell": "Meldingen",
     "unreadCount": "{count, plural, =0 {Geen ongelezen meldingen} one {# ongelezen melding} other {# ongelezen meldingen}}",
+    "unreadCountCapped": "99+ ongelezen meldingen",
     "recent": "Recent",
     "markAllRead": "Alles markeren als gelezen",
     "markRead": "Markeren als gelezen",
