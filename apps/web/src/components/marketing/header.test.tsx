@@ -3,7 +3,14 @@
 // flag renders as the letters "US" on Windows), is named with the current language and the visible
 // code (WCAG 2.5.3), and its menu marks the current language as a checked radio with each name
 // tagged in its own language. The nav folds into the burger before it can push the CTA off the bar.
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import type { ReactNode } from "react";
 import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -12,15 +19,31 @@ import nl from "../../../locales/nl.json";
 import { MarketingHeader } from "./header";
 
 vi.mock("@/compat/link", () => ({
-  Link: ({ href, children }: { href: string; children?: ReactNode }) => (
-    <a href={href}>{children}</a>
+  Link: ({
+    href,
+    children,
+    ...rest
+  }: {
+    href: string;
+    children?: ReactNode;
+  }) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
   ),
 }));
 vi.mock("@/components/marketing/wordmark", () => ({ Wordmark: () => null }));
+
+// Signed out: the header's auth-gated actions render their Unauthenticated branch.
 vi.mock("convex/react", () => ({
   Authenticated: () => null,
-  Unauthenticated: () => null,
+  Unauthenticated: ({ children }: { children: ReactNode }) => children,
 }));
+
+vi.mock("next-themes", () => ({
+  useTheme: () => ({ resolvedTheme: "light", setTheme: vi.fn() }),
+}));
+
 vi.mock("@tanstack/react-router", () => ({
   useLocation: () => ({ pathname: "/" }),
   useRouter: () => ({ invalidate: vi.fn() }),
@@ -42,6 +65,9 @@ const renderHeader = (locale: "en" | "nl" = "en") =>
       <MarketingHeader />
     </IntlProvider>,
   );
+
+const menuToggle = () =>
+  screen.getByRole("button", { name: /^(Open|Close) menu$/ });
 
 describe("MarketingHeader language pill", () => {
   it("shows the SVG flag and code of the current language, no emoji", () => {
@@ -97,5 +123,54 @@ describe("MarketingHeader breakpoints", () => {
     const panel = closeMenu.closest("header")?.lastElementChild ?? null;
     expect(classesOf(panel)).toContain("min-[1200px]:hidden");
     expect(panel?.querySelector("a[href='/how-it-works']")).toBeTruthy();
+  });
+});
+
+describe("MarketingHeader mobile menu", () => {
+  it("announces whether the menu is open and which panel it controls", () => {
+    renderHeader();
+    const toggle = menuToggle();
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(toggle.getAttribute("aria-controls")).toBe("mk-mobile-nav");
+    expect(screen.queryByRole("navigation", { name: "Menu" })).toBeNull();
+
+    fireEvent.click(toggle);
+
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    const panel = screen.getByRole("navigation", { name: "Menu" });
+    expect(panel.id).toBe("mk-mobile-nav");
+    expect(
+      within(panel).getByRole("link", { name: "How it works" }),
+    ).toBeTruthy();
+  });
+
+  it("closes on Escape and hands focus back to the toggle", () => {
+    renderHeader();
+    fireEvent.click(menuToggle());
+    const firstLink = within(
+      screen.getByRole("navigation", { name: "Menu" }),
+    ).getByRole("link", { name: "How it works" });
+    act(() => firstLink.focus());
+
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    expect(screen.queryByRole("navigation", { name: "Menu" })).toBeNull();
+    expect(menuToggle().getAttribute("aria-expanded")).toBe("false");
+    expect(document.activeElement).toBe(menuToggle());
+  });
+
+  it("leaves an Escape that another layer already handled alone", () => {
+    renderHeader();
+    fireEvent.click(menuToggle());
+    const event = new KeyboardEvent("keydown", {
+      key: "Escape",
+      bubbles: true,
+      cancelable: true,
+    });
+    event.preventDefault();
+    act(() => {
+      document.dispatchEvent(event);
+    });
+    expect(screen.getByRole("navigation", { name: "Menu" })).toBeTruthy();
   });
 });

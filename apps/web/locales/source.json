@@ -3826,7 +3826,8 @@
       "dashboard": "Dashboard",
       "openMenu": "Open menu",
       "closeMenu": "Close menu",
-      "switchLanguage": "Switch language"
+      "switchLanguage": "Switch language",
+      "menuLabel": "Menu"
     },
     "footer": {
       "tagline": "Swap, lend and share jigsaw puzzles — accessible and sustainable, for the whole community.",

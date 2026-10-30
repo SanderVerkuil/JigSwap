@@ -39,6 +39,21 @@ export function MarketingHeader() {
   const { pathname } = useLocation();
   const [scrolled, setScrolled] = React.useState(false);
   const [open, setOpen] = React.useState(false);
+  const toggleRef = React.useRef<HTMLButtonElement>(null);
+
+  // Escape closes the open menu and hands focus back to its toggle. An Escape
+  // another layer already consumed (e.g. the language dropdown inside the
+  // menu) is left alone.
+  React.useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      setOpen(false);
+      toggleRef.current?.focus();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open]);
 
   React.useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -109,9 +124,12 @@ export function MarketingHeader() {
             </Button>
           </Authenticated>
           <button
+            ref={toggleRef}
             type="button"
             onClick={() => setOpen((o) => !o)}
             aria-label={open ? t("closeMenu") : t("openMenu")}
+            aria-expanded={open}
+            aria-controls="mk-mobile-nav"
             className="min-[1200px]:hidden inline-flex items-center justify-center w-10 h-10 rounded-[10px] border border-mk-border bg-mk-card text-mk-text-body"
           >
             {open ? <X size={20} /> : <Menu size={20} />}
@@ -119,7 +137,11 @@ export function MarketingHeader() {
         </div>
       </div>
       {open && (
-        <div className="min-[1200px]:hidden border-t border-mk-border bg-mk-card">
+        <nav
+          id="mk-mobile-nav"
+          aria-label={t("menuLabel")}
+          className="min-[1200px]:hidden border-t border-mk-border bg-mk-card"
+        >
           <div className="w-full max-w-[1200px] mx-auto flex flex-col gap-1 px-6 pt-3 pb-[18px]">
             {NAV.map((item) => navLink(item, true))}
             {/* From 861px these sit in the bar itself. */}
@@ -153,7 +175,7 @@ export function MarketingHeader() {
               </Button>
             </Authenticated>
           </div>
-        </div>
+        </nav>
       )}
     </header>
   );
