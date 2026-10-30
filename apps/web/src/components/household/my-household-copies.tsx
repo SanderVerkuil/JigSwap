@@ -12,6 +12,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -22,8 +28,8 @@ import { gateway, Id } from "@/gateway";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
-import { Puzzle } from "lucide-react";
-import { useState } from "react";
+import { ChevronDown, Puzzle, X } from "lucide-react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import {
@@ -44,6 +50,9 @@ type OwnCopy = FunctionReturnType<
 // grants, with multi-select, a permission filter and a confirmed bulk change. Other members'
 // copies are deliberately not listed here — only an owner can change a copy's permission, and
 // those copies already show in My puzzles with the viewer's access.
+//
+// Above the list sit only the filter and Select all. The count and the bulk change live in a
+// selection bar that exists only while something is selected (see SelectionBar).
 export function MyHouseholdCopies({
   householdDefault,
   onError,
@@ -58,6 +67,10 @@ export function MyHouseholdCopies({
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [confirmTarget, setConfirmTarget] =
     useState<HouseholdPermissionChoice | null>(null);
+  // Clearing the selection removes the bar; focus then goes back to Select all, not the page body.
+  const selectAllRef = useRef<HTMLButtonElement>(null);
+  // Set by the confirm dialog's action, so closing it moves focus to Select all (onCloseAutoFocus).
+  const confirmedRef = useRef(false);
 
   const { data: copies } = useQuery(
     convexQuery(gateway.household.myCopyPermissions, {}),
@@ -105,52 +118,13 @@ export function MyHouseholdCopies({
               </SelectContent>
             </Select>
             <Button
+              ref={selectAllRef}
               size="sm"
               variant="ghost"
               disabled={visible.length === 0}
               onClick={() => setSelected(selectAll(visible))}
             >
               {t("selectAll")}
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              disabled={selected.size === 0}
-              onClick={() => setSelected(new Set())}
-            >
-              {t("selectNone")}
-            </Button>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-muted-foreground text-sm" aria-live="polite">
-              {t("selectedCount", { count: targetIds.length })}
-            </span>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={targetIds.length === 0 || setMany.isPending}
-              onClick={() => setConfirmTarget("manage")}
-            >
-              {t("setManage")}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={targetIds.length === 0 || setMany.isPending}
-              onClick={() => setConfirmTarget("view")}
-            >
-              {t("setView")}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              // The longest label: let it wrap on phones instead of running off the page.
-              className="h-auto min-h-8 max-w-full shrink whitespace-normal text-left"
-              disabled={targetIds.length === 0 || setMany.isPending}
-              onClick={() => setConfirmTarget("default")}
-            >
-              {t("setDefault", { permission: householdDefault })}
             </Button>
           </div>
 
@@ -178,6 +152,25 @@ export function MyHouseholdCopies({
               ))}
             </ul>
           )}
+
+          {/* Always mounted, so screen readers hear the count change as boxes are ticked. */}
+          <p role="status" className="sr-only">
+            {targetIds.length > 0
+              ? t("selectedCount", { count: targetIds.length })
+              : ""}
+          </p>
+          {targetIds.length > 0 && (
+            <SelectionBar
+              count={targetIds.length}
+              householdDefault={householdDefault}
+              busy={setMany.isPending}
+              onChoose={setConfirmTarget}
+              onClear={() => {
+                setSelected(new Set());
+                selectAllRef.current?.focus();
+              }}
+            />
+          )}
         </>
       )}
 
@@ -185,7 +178,16 @@ export function MyHouseholdCopies({
         open={confirmTarget !== null}
         onOpenChange={(open) => !open && setConfirmTarget(null)}
       >
-        <AlertDialogContent>
+        <AlertDialogContent
+          // After a confirmed change the bar goes away with the selection: focus Select all
+          // instead of returning it to the bar's (soon gone) trigger. Cancel returns it there.
+          onCloseAutoFocus={(event) => {
+            if (!confirmedRef.current) return;
+            confirmedRef.current = false;
+            event.preventDefault();
+            selectAllRef.current?.focus();
+          }}
+        >
           <AlertDialogHeader>
             <AlertDialogTitle>
               {t("confirmTitle", { count: targetIds.length })}
@@ -206,6 +208,7 @@ export function MyHouseholdCopies({
             <AlertDialogAction
               onClick={() => {
                 if (confirmTarget) {
+                  confirmedRef.current = true;
                   setMany.mutate({
                     copyIds: targetIds as Id<"ownedPuzzles">[],
                     permission: confirmTarget,
@@ -220,6 +223,78 @@ export function MyHouseholdCopies({
         </AlertDialogContent>
       </AlertDialog>
     </section>
+  );
+}
+
+// The count and the bulk change, shown only while something is selected. It sits after the list,
+// so ticking the first box never pushes the rows down, and sticks to the bottom of the screen
+// while the list runs past it: on phones just above the tab bar (57px = its 56px row + 1px border,
+// keep in sync with MobileTabBar; the 34px padding clears the raised "+", as InstallAppTip does),
+// from md near the bottom of the page card. One "Set access" menu instead of three buttons keeps
+// it a single row on a 390px phone in English and Dutch.
+function SelectionBar({
+  count,
+  householdDefault,
+  busy,
+  onChoose,
+  onClear,
+}: {
+  count: number;
+  householdDefault: HouseholdPermission;
+  busy: boolean;
+  onChoose: (choice: HouseholdPermissionChoice) => void;
+  onClear: () => void;
+}) {
+  const t = useTranslations("household.bulkPermission");
+  const tAccess = useTranslations("household.copyAccess");
+  return (
+    <div className="pointer-events-none sticky bottom-[57px] z-20 pb-[34px] md:bottom-4 md:pb-0">
+      {/* On a narrower screen the menu button wraps to a row of its own rather than truncating
+          the count. */}
+      <div className="bg-card pointer-events-auto flex flex-wrap items-center gap-2 rounded-xl border p-2 shadow-lg md:w-fit">
+        <Button
+          size="icon"
+          variant="ghost"
+          className="pointer-coarse:size-11 shrink-0"
+          aria-label={t("clearSelection")}
+          onClick={onClear}
+        >
+          <X aria-hidden />
+        </Button>
+        {/* The sr-only status above announces the count; this is its visible twin. */}
+        <span
+          aria-hidden
+          className="flex-1 text-sm font-medium whitespace-nowrap md:pr-2"
+        >
+          {t("selectedCount", { count })}
+        </span>
+        {/* Non-modal: a modal menu locks the page scroll, and on phones that drops this sticky bar
+            back into the flow under the finger, so lifting it picked whichever item slid there. */}
+        <DropdownMenu modal={false}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              size="sm"
+              className="pointer-coarse:min-h-11 ml-auto shrink-0"
+              disabled={busy}
+            >
+              {t("setAccess")}
+              <ChevronDown aria-hidden />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="max-w-[calc(100vw-2rem)]">
+            <DropdownMenuItem onSelect={() => onChoose("manage")}>
+              {tAccess("manage")}
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onChoose("view")}>
+              {tAccess("view")}
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onChoose("default")}>
+              {tAccess("useDefault", { permission: householdDefault })}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </div>
   );
 }
 

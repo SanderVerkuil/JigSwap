@@ -204,10 +204,14 @@ Only the owner can change a puzzle's household access.
 
 1. On **Household**, open the **Sharing** tab.
 2. Optionally filter the list by household access.
-3. Tick the puzzles you want to change, or use **Select all**.
-4. Click **Set to Can manage**, **Set to View only** or
-   **Use household default**.
+3. Tick the puzzles you want to change, or use **Select all**. A bar with
+   the number selected appears below the list. On a phone it stays at the
+   bottom of the screen while you scroll.
+4. In the bar, click **Set access** and choose **Can manage**, **View only**
+   or **Use household default**.
 5. Confirm with **Change access**.
+
+To start again, click **✕** (**Clear selection**) in the bar.
 
 You can change up to 200 puzzles at once. This list shows only your own
 puzzles.

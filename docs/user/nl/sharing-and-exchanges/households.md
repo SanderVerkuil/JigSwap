@@ -223,9 +223,13 @@ Alleen de eigenaar kan de toegang voor het huishouden van een puzzel wijzigen.
 1. Open op **Huishouden** het tabblad **Delen**.
 2. Filter de lijst eventueel op toegang voor het huishouden.
 3. Vink de puzzels aan die je wilt wijzigen, of gebruik **Alles selecteren**.
-4. Klik op **Instellen op Mag beheren**, **Instellen op Alleen bekijken** of
-   **Standaard van het huishouden gebruiken**.
+   Onder de lijst verschijnt een balk met het aantal geselecteerde puzzels. Op
+   een telefoon blijft die onderaan het scherm staan terwijl je scrolt.
+4. Klik in de balk op **Toegang kiezen** en kies **Mag beheren**,
+   **Alleen bekijken** of **Standaard van het huishouden gebruiken**.
 5. Bevestig met **Toegang wijzigen**.
+
+Wil je opnieuw beginnen, klik dan in de balk op **✕** (**Selectie wissen**).
 
 Je kunt maximaal 200 puzzels tegelijk wijzigen. Deze lijst toont alleen je
 eigen puzzels.
