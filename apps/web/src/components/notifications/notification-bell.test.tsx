@@ -1,8 +1,16 @@
 // @vitest-environment happy-dom
 import { gateway } from "@/gateway";
 import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
+import type { NotificationView } from "@jigswap/contracts";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { ConvexReactClient } from "convex/react";
 import type { ReactNode } from "react";
 import { IntlProvider } from "use-intl";
@@ -30,6 +38,15 @@ vi.mock("@/compat/link", () => ({
   ),
 }));
 
+// A plain row link: these tests are about the popover's focus order, not the row itself.
+vi.mock("./notification-item", () => ({
+  NotificationItem: ({ view }: { view: NotificationView }) => (
+    <li>
+      <a href={view.href ?? undefined}>Row {view.id}</a>
+    </li>
+  ),
+}));
+
 // The badge is read-only here; the bell's mutations are never fired.
 vi.mock("@convex-dev/react-query", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@convex-dev/react-query")>()),
@@ -38,8 +55,25 @@ vi.mock("@convex-dev/react-query", async (importOriginal) => ({
 
 afterEach(cleanup);
 
+const row = (id: string): NotificationView => ({
+  id,
+  type: "new_follower",
+  isRead: false,
+  createdAt: 0,
+  actors: [],
+  actorCount: 1,
+  context: {},
+  href: `/members/${id}`,
+  state: "informational",
+  availableActions: [],
+});
+
 // Render the closed bell with the unread count seeded in the query cache; nothing reaches a server.
-const renderBell = (unread: number, locale: "en" | "nl" = "en") => {
+const renderBell = (
+  unread: number,
+  locale: "en" | "nl" = "en",
+  rows?: NotificationView[],
+) => {
   const convexQueryClient = new ConvexQueryClient(
     new ConvexReactClient("https://example.convex.cloud"),
   );
@@ -57,6 +91,15 @@ const renderBell = (unread: number, locale: "en" | "nl" = "en") => {
     convexQuery(gateway.notifications.unreadCount, {}).queryKey,
     unread,
   );
+  // Leaving the rows unset keeps the preview loading (the queryFn never resolves).
+  if (rows) {
+    queryClient.setQueryData(
+      convexQuery(gateway.notifications.listViews, {
+        paginationOpts: { numItems: 6, cursor: null },
+      }).queryKey,
+      { page: rows, isDone: true, continueCursor: "" },
+    );
+  }
   return render(
     <QueryClientProvider client={queryClient}>
       <IntlProvider
@@ -100,4 +143,39 @@ describe("NotificationBell trigger name", () => {
       expect(badge?.hasAttribute("aria-label")).toBe(false);
     },
   );
+});
+
+describe("NotificationBell popover", () => {
+  const open = async (rows?: NotificationView[]) => {
+    renderBell(2, "en", rows);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /Notifications/ }));
+    });
+    return screen.getByRole("dialog", { name: "Recent" });
+  };
+
+  it("is a dialog named 'Recent' that takes focus itself, not its first button", async () => {
+    const dialog = await open();
+    expect(document.activeElement).toBe(dialog);
+  });
+
+  it("puts the rows before 'Mark all as read', so Tab reaches a row first", async () => {
+    const dialog = await open([row("a"), row("b")]);
+    const tabbables = within(dialog)
+      .getAllByRole("link")
+      .concat(within(dialog).getAllByRole("button"));
+    const ordered = tabbables
+      .sort((x, y) =>
+        x.compareDocumentPosition(y) & Node.DOCUMENT_POSITION_FOLLOWING
+          ? -1
+          : 1,
+      )
+      .map((el) => el.textContent);
+    expect(ordered).toEqual([
+      "Row a",
+      "Row b",
+      "See all notifications",
+      "Mark all as read",
+    ]);
+  });
 });

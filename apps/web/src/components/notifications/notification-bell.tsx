@@ -15,7 +15,7 @@ import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import type { NotificationView } from "@jigswap/contracts";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Bell, CheckCheck } from "lucide-react";
-import { useState } from "react";
+import { useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import { NotificationItem } from "./notification-item";
@@ -28,6 +28,8 @@ export function NotificationBell({ className }: { className?: string }) {
   const { user } = useUser();
   const t = useTranslations("notifications");
   const [open, setOpen] = useState(false);
+  const titleId = useId();
+  const contentRef = useRef<HTMLDivElement>(null);
 
   // Both reactive: the badge and the preview update live as events land. Gated on a signed-in
   // member so we never fire the query unauthenticated (and to mirror the existing "skip" pattern).
@@ -101,20 +103,22 @@ export function NotificationBell({ className }: { className?: string }) {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-80 p-0 sm:w-96">
-        <div className="flex items-center justify-between border-b px-4 py-3">
-          <p className="text-sm font-semibold">{t("recent")}</p>
-          {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-auto px-2 py-1 text-xs"
-              onClick={handleMarkAll}
-            >
-              <CheckCheck className="mr-1 h-3.5 w-3.5" />
-              {t("markAllRead")}
-            </Button>
-          )}
+      <PopoverContent
+        ref={contentRef}
+        align="end"
+        aria-labelledby={titleId}
+        // Focus the dialog itself rather than its first tabbable: the rows load only after
+        // opening, so that would be a footer action. Tab then walks the rows first.
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          contentRef.current?.focus();
+        }}
+        className="w-80 p-0 sm:w-96"
+      >
+        <div className="border-b px-4 py-3">
+          <p id={titleId} className="text-sm font-semibold">
+            {t("recent")}
+          </p>
         </div>
 
         <div className="max-h-96 overflow-y-auto">
@@ -152,16 +156,30 @@ export function NotificationBell({ className }: { className?: string }) {
           )}
         </div>
 
-        <div className="border-t p-2">
+        {/* The bulk action comes after the rows, so a keyboard user can't mark everything read
+            by pressing Enter right after opening. Both actions share the row, or stack when the
+            labels are too long for one line (Dutch). */}
+        <div className="flex flex-wrap items-center gap-1 border-t p-2">
           <Button
             asChild
             variant="ghost"
             size="sm"
-            className="w-full justify-center text-sm"
+            className="flex-1 justify-center text-sm"
             onClick={() => setOpen(false)}
           >
             <Link href="/notifications">{t("seeAll")}</Link>
           </Button>
+          {unreadCount > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex-1 justify-center text-xs"
+              onClick={handleMarkAll}
+            >
+              <CheckCheck className="mr-1 h-3.5 w-3.5" />
+              {t("markAllRead")}
+            </Button>
+          )}
         </div>
       </PopoverContent>
     </Popover>
