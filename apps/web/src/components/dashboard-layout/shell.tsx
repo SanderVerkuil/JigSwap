@@ -95,16 +95,19 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
 // Mobile-only row carrying the page's registered header actions; the desktop
 // page head is hidden below md, so without this the primary action (New Goal,
-// Create Circle…) would be unreachable on phones.
-function MobilePageActions() {
+// Create Circle…) would be unreachable on phones. The row wraps: overflow in a
+// right-aligned row would run off the left edge, where it can't be scrolled to.
+// The page's meta line stays in the desktop head only.
+export function MobilePageActions() {
   const { actions } = usePageHeaderContent();
   const pathname = useLocation({ select: (location) => location.pathname });
   // An immersive route (an open thread) owns the whole phone screen.
   if (!actions || isImmersiveMobileRoute(pathname)) return null;
   return (
     <div
+      data-slot="mobile-page-actions"
       className={cn(
-        "flex items-center justify-end gap-2 md:hidden",
+        "flex flex-wrap items-center justify-end gap-2 md:hidden",
         // The inbox list pads its own rows, so on /messages New sits tight above it.
         isFullBleedRoute(pathname) ? "-mt-2" : "mb-4",
       )}

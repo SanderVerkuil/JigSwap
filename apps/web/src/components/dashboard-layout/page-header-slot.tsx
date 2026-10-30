@@ -1,11 +1,12 @@
 "use client";
 
 // Lets a page publish contextual content into the shell page head: its primary
-// action(s) (the count/meta line + buttons) and, for dynamic routes, a title
-// override (e.g. a collection's name). The same content is rendered in two
+// action(s), a short meta line (a count or status) and, for dynamic routes, a
+// title override (e.g. a collection's name). The actions render in two
 // CSS-exclusive places — the desktop page head (title + actions) and a slim
 // mobile actions row — so a page registers once and never renders its own
-// duplicate header.
+// duplicate header. The meta line is the shell's to place: it sits at a fixed
+// spot in the desktop head, on wide screens only, and never on phones.
 //
 // When a page publishes a `title`, the page head treats the route's own static
 // title as a middle breadcrumb (linking to the route's base page) and shows the
@@ -31,8 +32,14 @@ export type PageHeaderContent = {
    * add-puzzles page (My Library › Collections › <name> › Add Puzzles).
    */
   crumbs?: PageHeaderCrumb[];
-  /** Meta + primary action node shown to the right of the title. */
+  /** Primary action node(s) (buttons, links) shown to the right of the title. */
   actions?: ReactNode;
+  /**
+   * Short page meta (e.g. "2 unread notifications"), plain text. The shell
+   * renders it first in the head's action cluster on wide screens only; it is
+   * supplementary, so it never competes with the actions for room.
+   */
+  meta?: ReactNode;
   /** Overrides the sidebar's pathname-based highlight with this nav item key. */
   activeNavKey?: string;
 };
@@ -72,7 +79,7 @@ export function usePageHeaderActions(
 }
 
 /**
- * Publish a full header config (title override + actions) for the current page.
+ * Publish a full header config (title override, meta, actions…) for the current page.
  * `factory` returns the config; `deps` work like useEffect deps. Cleared on
  * unmount. Use for dynamic routes that need a runtime title (and crumb).
  */
