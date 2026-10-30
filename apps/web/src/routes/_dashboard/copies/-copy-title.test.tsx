@@ -2,6 +2,7 @@
 // The "-" prefix keeps the TanStack route generator from treating this file as a route.
 // UX-157: the copy page publishes its title to the shell page head, so the body's h1 shows only
 // below md, where that head is hidden.
+import { CopyInstanceScreen } from "@/components/copies/copy-instance-screen";
 import type { CopyInstanceView } from "@jigswap/contracts";
 import { cleanup, render, screen } from "@testing-library/react";
 import { getFunctionName, type FunctionReference } from "convex/server";
@@ -9,7 +10,6 @@ import type { ReactNode } from "react";
 import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../../locales/en.json";
-import { CopyInstanceScreen } from "./$id";
 
 const mocks = vi.hoisted(() => ({
   header: undefined as { title?: unknown } | undefined,

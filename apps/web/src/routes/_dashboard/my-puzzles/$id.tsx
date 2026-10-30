@@ -1,6 +1,6 @@
+import { CopyInstanceScreen } from "@/components/copies/copy-instance-screen";
 import { parseNavContext } from "@/components/dashboard-layout/nav-context";
 import { pageTitle } from "@/lib/page-title";
-import { CopyInstanceScreen } from "@/routes/_dashboard/copies/$id";
 import { createFileRoute } from "@tanstack/react-router";
 
 // The owner's view of their own copy. Same screen as /copies/$id but framed as
