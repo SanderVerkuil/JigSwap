@@ -17,6 +17,12 @@ describe("approveErrorKey", () => {
     ).toBe("approveTextTooLong");
   });
 
+  it("explains a suggestion whose barcode another puzzle holds", () => {
+    expect(approveErrorKey(new ConvexError({ code: "DuplicateBarcode" }))).toBe(
+      "duplicateBarcode",
+    );
+  });
+
   it.each([
     ["a network failure", new Error("fetch failed")],
     ["a message-only refusal", new ConvexError("Forbidden")],
@@ -26,7 +32,11 @@ describe("approveErrorKey", () => {
   });
 
   it("every key it returns exists in English, Dutch and the source catalogue", () => {
-    for (const key of ["approveTextTooLong", "actionFailed"] as const) {
+    for (const key of [
+      "approveTextTooLong",
+      "duplicateBarcode",
+      "actionFailed",
+    ] as const) {
       expect(en.admin.proposals[key]).toBeTruthy();
       expect(nl.admin.proposals[key]).toBeTruthy();
       expect(source.admin.proposals[key]).toBe(en.admin.proposals[key]);
