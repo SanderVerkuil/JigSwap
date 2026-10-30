@@ -20,7 +20,9 @@ export type LibraryErrorCode =
   | "AcquireBatchTooLarge"
   | "CopyMustBeVisibleToOffer"
   | "OwnershipChanged"
-  | "AlreadyLentOut";
+  | "AlreadyLentOut"
+  | "TooManyImages"
+  | "ImageTextTooLong";
 
 export class LibraryError extends DomainError {
   override readonly name = "LibraryError";
@@ -142,6 +144,25 @@ export class LibraryError extends DomainError {
     return new LibraryError(
       "CopyMustBeVisibleToOffer",
       "A copy offered for swap, lend or sale must be visible",
+    );
+  }
+
+  // A copy already holds the most photos it may have.
+  static tooManyImages(max: number): LibraryError {
+    return new LibraryError(
+      "TooManyImages",
+      `A copy can have at most ${max} photos`,
+    );
+  }
+
+  // A photo's title or description is longer than its limit.
+  static imageTextTooLong(
+    field: "title" | "description",
+    max: number,
+  ): LibraryError {
+    return new LibraryError(
+      "ImageTextTooLong",
+      `A photo ${field} can be at most ${max} characters`,
     );
   }
 }

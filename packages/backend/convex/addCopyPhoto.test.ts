@@ -1,5 +1,6 @@
+import { MAX_COPY_IMAGE_TITLE_LENGTH, MAX_COPY_IMAGES } from "@jigswap/domain";
 import { convexTest, type TestConvex } from "convex-test";
-import { ConvexError } from "convex/values";
+import { ConvexError, type Value } from "convex/values";
 import { describe, expect, test } from "vitest";
 import {
   settleDueScheduled,
@@ -152,5 +153,91 @@ describe("addCopyPhoto", () => {
         fileId,
       }),
     ).rejects.toThrow(ConvexError);
+  });
+});
+
+describe("addCopyPhoto: per-copy bounds", () => {
+  // convex-test may hand ConvexError.data over as a JSON string; normalise.
+  const codeOf = async (promise: Promise<unknown>) => {
+    try {
+      await promise;
+    } catch (error) {
+      if (!(error instanceof ConvexError)) throw error;
+      const data = (error as ConvexError<Value>).data;
+      return (typeof data === "string" ? JSON.parse(data) : data).code;
+    }
+    throw new Error("expected a refusal");
+  };
+
+  const seedPhotos = (
+    t: TestConvex<typeof schema>,
+    copy: Id<"ownedPuzzles">,
+    uploaderId: Id<"users">,
+    count: number,
+  ) =>
+    t.run(async (ctx) => {
+      for (let i = 0; i < count; i++) {
+        await ctx.db.insert("ownedPuzzleImages", {
+          ownedPuzzleId: copy,
+          uploaderId,
+          fileId: await ctx.storage.store(new Blob([`img${i}`])),
+          moderationStatus: "approved",
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        });
+      }
+    });
+
+  const photoCount = (t: TestConvex<typeof schema>) =>
+    t.run(
+      async (ctx) => (await ctx.db.query("ownedPuzzleImages").collect()).length,
+    );
+
+  test(`a copy with ${MAX_COPY_IMAGES} photos takes no more, and nothing is charged or written`, async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { alice, aliceCopy } = await seed(t);
+    await seedPhotos(t, aliceCopy, alice, MAX_COPY_IMAGES);
+
+    expect(
+      await codeOf(
+        asAlice(t).mutation(api.library.addCopyPhoto.addCopyPhoto, {
+          copyId: aliceCopy,
+          fileId: (await storeBlob(t)) as Id<"_storage">,
+        }),
+      ),
+    ).toBe("TooManyImages");
+    expect(await photoCount(t)).toBe(MAX_COPY_IMAGES);
+    expect(await t.run((ctx) => ctx.db.query("rateLimits").collect())).toEqual(
+      [],
+    );
+  });
+
+  test("the photo before the cap is still taken", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { alice, aliceCopy } = await seed(t);
+    await seedPhotos(t, aliceCopy, alice, MAX_COPY_IMAGES - 1);
+
+    await asAlice(t).mutation(api.library.addCopyPhoto.addCopyPhoto, {
+      copyId: aliceCopy,
+      fileId: (await storeBlob(t)) as Id<"_storage">,
+    });
+    expect(await photoCount(t)).toBe(MAX_COPY_IMAGES);
+    await settleDueScheduled(t);
+  });
+
+  test("an over-long title is refused", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { aliceCopy } = await seed(t);
+
+    expect(
+      await codeOf(
+        asAlice(t).mutation(api.library.addCopyPhoto.addCopyPhoto, {
+          copyId: aliceCopy,
+          fileId: (await storeBlob(t)) as Id<"_storage">,
+          title: "x".repeat(MAX_COPY_IMAGE_TITLE_LENGTH + 1),
+        }),
+      ),
+    ).toBe("ImageTextTooLong");
+    expect(await photoCount(t)).toBe(0);
   });
 });
