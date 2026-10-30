@@ -1282,7 +1282,6 @@
     "loadMore": "Load more",
     "loadFailed": "Couldn't load puzzles",
     "loadFailedHint": "Check your connection and reload the page.",
-    "favoritesComingSoon": "Favorites are coming soon",
     "searchHint": "Press ⌘K to search by title or brand",
     "addFilter": "Add Filter",
     "addFilterSearch": "Filter by…",
@@ -1290,7 +1289,13 @@
     "removeFilter": "Remove filter",
     "fieldText": "Text",
     "fieldAvailability": "Availability",
-    "textPlaceholder": "Title, brand or theme…"
+    "textPlaceholder": "Title, brand or theme…",
+    "card": {
+      "request": "Request",
+      "messageOwner": "Message the owner",
+      "messageOwnerName": "Message {name}",
+      "favorite": "Favorite"
+    }
   },
   "browsePuzzleFilter": {
     "label": "Puzzle",

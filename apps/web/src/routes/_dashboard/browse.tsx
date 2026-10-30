@@ -26,6 +26,7 @@ import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
+import { useFavorites } from "@/hooks/use-favorites";
 import { useUrlTextDraft } from "@/hooks/use-url-text-draft";
 import {
   browseFiltersFromSearch,
@@ -39,7 +40,6 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
 // The Text condition reaches the URL (and so the server) after this pause in typing.
@@ -73,6 +73,7 @@ function BrowsePage() {
   const tBrowse = useTranslations("browse");
   const tCopyOwner = useTranslations("copyOwner");
   const projectedName = useProjectedMemberName();
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   const [requestCopy, setRequestCopy] = useState<RequestableCopy | null>(null);
 
@@ -261,7 +262,10 @@ function BrowsePage() {
                       : (ownedPuzzleId) =>
                           navigate(copyMessageRoute(ownedPuzzleId))
                   }
-                  onFavorite={() => toast(tBrowse("favoritesComingSoon"))}
+                  // The heart is the catalogue favourite of the copy's puzzle, the same list
+                  // the catalogue's hearts and its Favorites filter use.
+                  favorited={isFavorite(puzzle.puzzleId)}
+                  onFavorite={() => void toggleFavorite(puzzle.puzzleId)}
                 />
               );
             })}
