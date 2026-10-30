@@ -4,6 +4,7 @@ import { mutation } from "../_generated/server";
 import { canManageCopy } from "../household/copyAccess";
 import { requireMember } from "../identity/requireMember";
 import { enqueueImageModeration } from "../lib/imageModeration/moderationPool";
+import { chargePhotoAttach } from "../lib/rateLimits";
 import { assertClaimableUpload } from "../lib/storage/claimFreshUpload";
 
 // Composition root for attaching an uploaded photo to an owned copy, keyed by the copy's Convex id.
@@ -40,6 +41,10 @@ export const addCopyPhoto = mutation({
     // A storage id someone learned (box art, another photo), a blob used once, a stale upload or
     // a CSAM-preserved blob is refused and left alone (SEC-01, SEC-18).
     await assertClaimableUpload(ctx, args.fileId);
+
+    // The photo runs the paid moderation pipeline: charged to the acting member's photo bucket
+    // before the row and its job exist.
+    await chargePhotoAttach(ctx, memberId);
 
     const now = Date.now();
     // Inserted as "pending": the async moderatePhoto pipeline re-encodes (strips EXIF) and

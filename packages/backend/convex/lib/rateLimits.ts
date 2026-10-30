@@ -43,6 +43,10 @@ export const RATE_LIMITS = {
   // to a paid Firecrawl scrape. Admins, who seed the catalogue, are exempt.
   urlImport: { windowMs: HOUR, max: 30 },
   urlImportDaily: { windowMs: DAY, max: 150 },
+  // Copy and completion photos (chargePhotoAttach): one bucket for all of them, since each photo
+  // runs the same paid moderation pipeline.
+  photoAttach: { windowMs: HOUR, max: 40 },
+  photoAttachDaily: { windowMs: DAY, max: 150 },
 } as const satisfies Record<string, { windowMs: number; max: number }>;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;
@@ -88,6 +92,23 @@ export const enforceRateLimit = async (
     retry_after_ms: retryAfterMs,
   });
   throw new ConvexError({ code: "RateLimited", retryAfterMs });
+};
+
+/**
+ * Charge `photos` newly attached copy or completion photos (library/addCopyPhoto,
+ * solving/attachCompletionPhotos) to the acting member's photoAttach and photoAttachDaily
+ * buckets, one each. Throws RateLimited like enforceRateLimit, and the throw rolls back the whole
+ * mutation, so a batch is attached whole or not at all.
+ */
+export const chargePhotoAttach = async (
+  ctx: MutationCtx,
+  memberId: string,
+  photos = 1,
+): Promise<void> => {
+  for (let i = 0; i < photos; i++) {
+    await enforceRateLimit(ctx, "photoAttach", memberId);
+    await enforceRateLimit(ctx, "photoAttachDaily", memberId);
+  }
 };
 
 // The deployment-wide MapTiler budget: every upstream request (a tile, a Static Maps image, a
