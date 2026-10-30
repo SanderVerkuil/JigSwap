@@ -55,8 +55,10 @@ export function PageHead() {
       ? group.items.find((item) => item.key === meta.pageKey)
       : undefined;
 
+  // On touch the crumb's hit box grows to 40px tall; the matching negative margin keeps the
+  // breadcrumb row's height unchanged.
   const crumbLink =
-    "transition-colors hover:text-sidebar-accent-foreground hover:underline";
+    "transition-colors hover:text-sidebar-accent-foreground hover:underline pointer-coarse:-my-3 pointer-coarse:py-3";
 
   const crumbTrail =
     crumbs && crumbs.length > 0 ? (

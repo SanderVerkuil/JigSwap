@@ -139,7 +139,7 @@ function ActionsCoachmark() {
         size="icon"
         aria-label={t("dismiss")}
         onClick={handleDismiss}
-        className="-my-1.5 -mr-2 size-9 shrink-0 hover:text-foreground"
+        className="-my-1.5 -mr-2 size-9 shrink-0 hover:text-foreground pointer-coarse:-my-2.5 pointer-coarse:-mr-3 pointer-coarse:size-11"
       >
         <X aria-hidden />
       </Button>

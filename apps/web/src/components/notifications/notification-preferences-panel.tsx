@@ -106,12 +106,12 @@ export function NotificationPreferencesPanel() {
             <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
               {t("jumpTo")}
             </p>
-            <ul className="flex flex-col gap-1.5">
+            <ul className="flex flex-col gap-1.5 pointer-coarse:gap-0">
               {visibleCategories.map((category) => (
                 <li key={category.key}>
                   <a
                     href={`#category-${category.key}`}
-                    className="text-muted-foreground hover:text-foreground text-sm hover:underline"
+                    className="text-muted-foreground hover:text-foreground text-sm hover:underline pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center"
                   >
                     {t(`categories.${category.key}.title`)}
                   </a>
