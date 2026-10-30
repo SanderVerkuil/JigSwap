@@ -87,3 +87,15 @@ describe("sidebar touch sizing", () => {
     );
   });
 });
+
+describe("sidebar group label on the icon rail", () => {
+  // UX-159: a group label that links to its hub must not stay a Tab stop while the rail hides it.
+  it("is hidden from focus and assistive tech, not just faded, while collapsed", () => {
+    renderSidebar();
+    const classes = classesOf(screen.getByText("My Library"));
+    expect(classes).toContain("group-data-[collapsible=icon]:opacity-0");
+    expect(classes).toContain("group-data-[collapsible=icon]:invisible");
+    // Visibility transitions with the fade, so it only switches once the label has faded out.
+    expect(classes).toContain("transition-[margin,opacity,visibility]");
+  });
+});

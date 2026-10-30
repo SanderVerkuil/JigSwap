@@ -2,9 +2,10 @@
 
 // Grouped navigation sidebar. It sits transparently on the tinted chrome
 // surface below the global top bar — no brand lockup (that lives in the top
-// bar) and no border walls. Group labels are small uppercase mono labels
-// that link to their landing pages (/library, /community, /admin — the admin
-// group renders only for backend-confirmed admins).
+// bar) and no border walls. Group labels are uppercase mono rows that link to
+// their landing pages (/library, /community, /admin — the admin group renders
+// only for backend-confirmed admins), the hubs the phone tabs open; they show
+// a row background and a chevron on hover and focus so they read as links.
 import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
 import { usePathname } from "@/compat/navigation";
@@ -26,9 +27,9 @@ import {
 import { WhatsNewNavItem } from "@/components/whats-new/badges";
 import { useWhatsNewUnreadCount } from "@/components/whats-new/use-whats-new-state";
 import { gateway } from "@/gateway";
-import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
+import { ChevronRight } from "lucide-react";
 import { useTranslations } from "use-intl";
 import {
   ADMIN_GROUP,
@@ -97,12 +98,18 @@ function NavGroup({ group }: { group: ShellNavGroup }) {
       <SidebarGroupLabel asChild>
         <Link
           href={group.href}
-          className={cn(
-            "font-mono text-[10px] font-medium tracking-[0.09em] uppercase transition-colors hover:text-sidebar-accent-foreground",
-            groupActive && "text-sidebar-accent-foreground",
-          )}
+          aria-current={groupActive ? "page" : undefined}
+          // Slot concatenates these after the primitive's classes without merging them, so the
+          // active look is an aria-current variant, which wins over the base text colour.
+          className="group/hub gap-2 font-mono tracking-[0.08em] uppercase hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:bg-sidebar-accent focus-visible:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:text-sidebar-accent-foreground"
         >
-          {t(`groups.${group.key}.label`)}
+          <span className="min-w-0 flex-1 truncate">
+            {t(`groups.${group.key}.label`)}
+          </span>
+          <ChevronRight
+            aria-hidden
+            className="opacity-0 transition-opacity group-hover/hub:opacity-100 group-focus-visible/hub:opacity-100"
+          />
         </Link>
       </SidebarGroupLabel>
       <SidebarMenu>
