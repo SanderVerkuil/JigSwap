@@ -12,6 +12,8 @@ import {
   proposeErrorKey,
   REQUEST_ACTION_ICONS,
   requestActionKey,
+  returnByDate,
+  tomorrowInputValue,
 } from "./request-trade";
 
 const none = { forTrade: false, forSale: false, forLend: false };
@@ -163,6 +165,67 @@ describe("convexErrorCode re-export", () => {
     expect(convexErrorCode).toBe(sharedConvexErrorCode);
     expect(convexErrorCode(new ConvexError({ code: "CopyNotFound" }))).toBe(
       "CopyNotFound",
+    );
+  });
+});
+
+describe("returnByDate", () => {
+  // 30 Oct 2026, mid-afternoon local time. Dates are built from local parts so the
+  // expectations hold in any time zone the tests run in.
+  const now = new Date(2026, 9, 30, 15, 30);
+  const midday = (year: number, month: number, day: number) =>
+    new Date(year, month, day, 12).getTime();
+
+  it("sends no date unless the requester picks one", () => {
+    expect(returnByDate("none", now)).toBeUndefined();
+  });
+
+  it("counts the presets in calendar days from today, at local midday", () => {
+    expect(returnByDate("2w", now)).toBe(midday(2026, 10, 13));
+    expect(returnByDate("3w", now)).toBe(midday(2026, 10, 20));
+    expect(returnByDate("1m", now)).toBe(midday(2026, 10, 30));
+  });
+
+  it("keeps whole days across a daylight-saving change", () => {
+    // Europe's clocks go back on 25 Oct 2026.
+    expect(returnByDate("2w", new Date(2026, 9, 20, 23, 30))).toBe(
+      midday(2026, 10, 3),
+    );
+  });
+
+  it("ends a month on the last day of a shorter month", () => {
+    expect(returnByDate("1m", new Date(2027, 0, 31, 9))).toBe(
+      midday(2027, 1, 28),
+    );
+    expect(returnByDate("1m", new Date(2026, 11, 15, 9))).toBe(
+      midday(2027, 0, 15),
+    );
+  });
+
+  it("takes a picked date from tomorrow on", () => {
+    expect(returnByDate("custom", now, "2026-10-31")).toBe(midday(2026, 9, 31));
+    expect(returnByDate("custom", now, "2027-01-15")).toBe(midday(2027, 0, 15));
+  });
+
+  it("refuses an empty, past, today's or impossible picked date", () => {
+    for (const value of [
+      "",
+      "2026-10-30",
+      "2026-10-01",
+      "2027-02-30",
+      "2026-13-01",
+      "31-10-2026",
+    ]) {
+      expect(returnByDate("custom", now, value)).toBeUndefined();
+    }
+  });
+});
+
+describe("tomorrowInputValue", () => {
+  it("is the next local calendar day as a date input value", () => {
+    expect(tomorrowInputValue(new Date(2026, 9, 30, 15))).toBe("2026-10-31");
+    expect(tomorrowInputValue(new Date(2026, 11, 31, 23, 59))).toBe(
+      "2027-01-01",
     );
   });
 });

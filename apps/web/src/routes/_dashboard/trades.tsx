@@ -10,6 +10,7 @@ import {
 } from "@/components/exchange/exchange-list";
 import {
   OfferChip,
+  ReturnBy,
   SaleOffer,
   YourTurnPill,
 } from "@/components/exchange/exchange-pills";
@@ -499,6 +500,11 @@ function ExchangeDetail({
           direction={direction}
           partnerName={who}
         />
+      )}
+
+      {/* A loan's agreed return date (or that there is none), before it is accepted and after. */}
+      {exchange.type === "loan" && (
+        <ReturnBy loanReturnDate={exchange.loanReturnDate} />
       )}
 
       <ExchangeActions

@@ -43,7 +43,10 @@ can see it. If the owner's profile is hidden from you, it shows
      a household, puzzles you can manage there are listed too.
    - **Buy** — enter **Your offer (EUR)**. The owner sees your offer on the
      request before accepting or declining it.
-   - **Borrow** — no extra details.
+   - **Borrow** — optionally choose when you'll bring it back under
+     **Return by**: **No fixed date** (the default), **In 2 weeks**, **In 3
+     weeks**, **In 1 month**, or **Pick a date…** from tomorrow on. The owner
+     sees the date on the request before accepting or declining it.
 3. Click **Send request**.
 
 The owner receives the request, and you land on **Exchanges**. The dialog
@@ -82,6 +85,10 @@ The **Exchanges** page organizes everything into tabs:
     **Browse Puzzles**.
   - **Lent out** — your puzzles (and household puzzles you may manage) that
     are out on loan, and who has them.
+
+A loan with a return date shows when it's due back, such as **Due in 5 days**.
+Once it's due, it shows **Due today** or, after that, how many days it's
+overdue.
 
 On the other tabs, use the status filter to show only exchanges with one
 status, such as **Pending** or **Completed**. The tab and the filter are part

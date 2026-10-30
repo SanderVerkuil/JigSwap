@@ -46,7 +46,11 @@ verborgen, dan staat er **Anonieme gebruiker**.
      bij.
    - **Kopen** — vul **Jouw bod (EUR)** in. De eigenaar ziet je bod bij het
      verzoek voordat die het accepteert of afwijst.
-   - **Lenen** — geen extra gegevens nodig.
+   - **Lenen** — kies eventueel bij **Uiterlijk terug** wanneer je hem
+     terugbrengt: **Geen vaste datum** (standaard), **Over 2 weken**, **Over 3
+     weken**, **Over 1 maand**, of **Kies een datum…** vanaf morgen. De
+     eigenaar ziet de datum bij het verzoek voordat die het accepteert of
+     afwijst.
 3. Klik op **Aanvraag versturen**.
 
 De eigenaar ontvangt de aanvraag, en jij komt op **Uitwisselingen** terecht.
@@ -87,6 +91,10 @@ De pagina **Uitwisselingen** ordent alles in tabbladen:
     dan linkt het naar **Puzzels Ontdekken**.
   - **Uitgeleend** — jouw puzzels (en puzzels uit je huishouden die je mag
     beheren) die zijn uitgeleend, en bij wie ze zijn.
+
+Heeft een lening een terugbrengdatum, dan zie je wanneer de puzzel terug moet,
+zoals **Moet over 5 dagen terug**. Is het zover, dan staat er **Moet vandaag
+terug** en daarna hoeveel dagen hij te laat is.
 
 Op de andere tabbladen toon je met het statusfilter alleen uitwisselingen met
 één status, zoals **In afwachting** of **Afgerond**. Het tabblad en het filter

@@ -120,3 +120,70 @@ export const parsePriceCents = (input: string): number | undefined => {
     Number(match[1]) * 100 + Number((match[2] ?? "").padEnd(2, "0"));
   return cents > 0 ? cents : undefined;
 };
+
+/** "Return by" choices on a borrow request; "none" sends no date (the loan stays open-ended). */
+export const RETURN_BY_PRESETS = ["none", "2w", "3w", "1m", "custom"] as const;
+export type ReturnByPreset = (typeof RETURN_BY_PRESETS)[number];
+
+// Local midday of a calendar day. A return date is a calendar day, not an instant: midday keeps
+// the same day when it's shown in the app's fixed time zone (Europe/Amsterdam) from a browser in
+// any zone within ±11 hours, where the end of the day would show the next day west of Amsterdam.
+// Read it back as a calendar day (loan-due.ts), never as a deadline instant.
+const middayOf = (year: number, month: number, day: number): number =>
+  new Date(year, month, day, 12).getTime();
+
+/** A Date as a date input value (yyyy-mm-dd), in local time. */
+const dateInputValue = (date: Date): string =>
+  [
+    String(date.getFullYear()).padStart(4, "0"),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
+
+/** Tomorrow as a date input value: the earliest date a borrower can pick. */
+export const tomorrowInputValue = (now: Date): string =>
+  dateInputValue(
+    new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1),
+  );
+
+/**
+ * The `loanReturnDate` (epoch ms, local midday) a "Return by" choice sends: 2 or 3 weeks or one
+ * calendar month from today (the 31st becomes the last day of a shorter month), or the picked
+ * date. Undefined for "none", and for a picked date that is empty, impossible or before tomorrow.
+ */
+export const returnByDate = (
+  preset: ReturnByPreset,
+  now: Date,
+  pickedDate = "",
+): number | undefined => {
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const day = now.getDate();
+  switch (preset) {
+    case "none":
+      return undefined;
+    case "2w":
+      return middayOf(year, month, day + 14);
+    case "3w":
+      return middayOf(year, month, day + 21);
+    case "1m": {
+      const lastDayNextMonth = new Date(year, month + 2, 0).getDate();
+      return middayOf(year, month + 1, Math.min(day, lastDayNextMonth));
+    }
+    case "custom": {
+      const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(pickedDate);
+      if (!match) return undefined;
+      const [y, m, d] = [
+        Number(match[1]),
+        Number(match[2]) - 1,
+        Number(match[3]),
+      ];
+      const picked = new Date(y, m, d, 12);
+      // Reject dates the Date constructor rolled over (31 Feb) and anything before tomorrow.
+      if (picked.getMonth() !== m || picked.getDate() !== d) return undefined;
+      return dateInputValue(picked) >= tomorrowInputValue(now)
+        ? picked.getTime()
+        : undefined;
+    }
+  }
+};

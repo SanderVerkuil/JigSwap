@@ -22,6 +22,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Library, Package, Search } from "lucide-react";
 import { useId, useMemo, useState, type ReactNode } from "react";
 import { useTranslations } from "use-intl";
+import { LoanDueChip } from "./exchange-pills";
 import { RecallLoanButton } from "./recall-loan-button";
 import { ReturnLoanButton } from "./return-loan-button";
 
@@ -94,8 +95,9 @@ function LoanSection({
 }
 
 // One loan as an open divided row: chip, the title (linking to the copy) with its piece count, a
-// meta line, and the row's actions. Below lg the actions sit under the text (a row of up to three
-// buttons would squeeze the title on a tablet), full width on phones so they wrap at most once.
+// meta line, when it is due back (only when the loan has a return date), and the row's actions.
+// Below lg the actions sit under the text (a row of up to three buttons would squeeze the title on
+// a tablet), full width on phones so they wrap at most once.
 function LoanRow({
   loan,
   href,
@@ -136,6 +138,11 @@ function LoanRow({
             </span>
           </div>
           <div className="text-muted-foreground mt-0.5 text-xs">{meta}</div>
+          {loan.expectedReturn !== undefined && (
+            <div className="mt-1.5 flex">
+              <LoanDueChip expectedReturn={loan.expectedReturn} />
+            </div>
+          )}
         </div>
       </div>
       <div className="flex flex-wrap gap-2 sm:pl-[58px] lg:justify-end lg:pl-0">

@@ -735,6 +735,10 @@
       "incoming": "{name} biedt {price}",
       "outgoing": "Jij biedt {price}"
     },
+    "returnBy": {
+      "date": "Uiterlijk terug op {date}",
+      "none": "Geen vaste terugbrengdatum"
+    },
     "declineExchange": "Uitwisseling Afwijzen",
     "completeExchange": "Uitwisseling Voltooien",
     "cancelExchange": "Uitwisseling Annuleren",
@@ -898,6 +902,19 @@
       "swap": "Ruil aanvragen",
       "buy": "Vragen om te kopen",
       "mixed": "Aanvragen…"
+    },
+    "returnBy": {
+      "label": "Uiterlijk terug",
+      "presets": {
+        "none": "Geen vaste datum",
+        "2w": "Over 2 weken",
+        "3w": "Over 3 weken",
+        "1m": "Over 1 maand",
+        "custom": "Kies een datum…"
+      },
+      "dateLabel": "Terugbrengdatum",
+      "summary": "Uiterlijk terug op {date}",
+      "invalid": "Kies een datum vanaf morgen."
     }
   },
   "reputation": {
@@ -3652,6 +3669,10 @@
       "NotBorrower": "Alleen wie de puzzel leent, kan hem teruggeven.",
       "NotLender": "Alleen de eigenaar kan deze puzzel terugvragen.",
       "generic": "Er ging iets mis. Probeer het opnieuw."
+    },
+    "due": {
+      "upcoming": "{days, plural, =0 {Moet vandaag terug} =1 {Moet morgen terug} other {Moet over # dagen terug}}",
+      "overdue": "{days, plural, one {# dag te laat} other {# dagen te laat}}"
     }
   },
   "marketing": {

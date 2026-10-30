@@ -735,6 +735,10 @@
       "incoming": "{name} offers {price}",
       "outgoing": "You offer {price}"
     },
+    "returnBy": {
+      "date": "Return by {date}",
+      "none": "No fixed return date"
+    },
     "declineExchange": "Decline Exchange",
     "completeExchange": "Complete Exchange",
     "cancelExchange": "Cancel Exchange",
@@ -898,6 +902,19 @@
       "swap": "Request swap",
       "buy": "Ask to buy",
       "mixed": "Request…"
+    },
+    "returnBy": {
+      "label": "Return by",
+      "presets": {
+        "none": "No fixed date",
+        "2w": "In 2 weeks",
+        "3w": "In 3 weeks",
+        "1m": "In 1 month",
+        "custom": "Pick a date…"
+      },
+      "dateLabel": "Return date",
+      "summary": "Return by {date}",
+      "invalid": "Pick a date from tomorrow on."
     }
   },
   "reputation": {
@@ -3652,6 +3669,10 @@
       "NotBorrower": "Only the borrower can return this puzzle.",
       "NotLender": "Only the owner can recall this puzzle.",
       "generic": "Something went wrong. Please try again."
+    },
+    "due": {
+      "upcoming": "{days, plural, =0 {Due today} =1 {Due tomorrow} other {Due in # days}}",
+      "overdue": "{days, plural, one {# day overdue} other {# days overdue}}"
     }
   },
   "marketing": {

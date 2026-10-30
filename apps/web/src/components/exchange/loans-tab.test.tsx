@@ -231,6 +231,22 @@ describe("LoansTab", () => {
     );
   });
 
+  it("says when each loan is due back, and nothing for an open-ended one", () => {
+    renderTab({
+      borrowed: [loan({ expectedReturn: NOW + 5 * DAY })],
+      lentOut: [
+        { ...lentLoan, expectedReturn: NOW - 2 * DAY },
+        loan({ loanId: "loan-3", puzzleTitle: "Open Sea" }),
+      ],
+    });
+    expect(
+      within(section("Borrowed by you 1")).getByText("Due in 5 days"),
+    ).toBeTruthy();
+    const lent = section("Lent out 2");
+    expect(within(lent).getByText("2 days overdue")).toBeTruthy();
+    expect(within(lent).queryAllByText(/Due |overdue/)).toHaveLength(1);
+  });
+
   it("names a departed member instead of leaving a blank", () => {
     renderTab({
       borrowed: [loan({ lender: null })],
