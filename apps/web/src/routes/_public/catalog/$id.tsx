@@ -134,9 +134,10 @@ function PublicPuzzleDetail({
 
   return (
     <main className="mx-auto flex w-full max-w-[1200px] flex-col gap-10 px-6 py-10">
-      {/* Hero — mirrors the dashboard detail skeleton, minus member actions. */}
-      <section className="grid items-start gap-7 lg:grid-cols-[300px_minmax(0,1fr)]">
-        <div className="bg-muted relative aspect-square w-full overflow-hidden rounded-2xl shadow-sm lg:max-w-[300px]">
+      {/* Hero — mirrors the dashboard detail skeleton, minus member actions. Two columns from md
+          and a shorter 4:3 cover on phones, so the cover never fills the first screen on its own. */}
+      <section className="grid items-start gap-7 md:grid-cols-[260px_minmax(0,1fr)] lg:grid-cols-[300px_minmax(0,1fr)]">
+        <div className="bg-muted relative aspect-[4/3] w-full overflow-hidden rounded-2xl shadow-sm md:aspect-square lg:max-w-[300px]">
           {definition.image ? (
             <ImageZoom src={definition.image} alt={definition.title} fill />
           ) : (
