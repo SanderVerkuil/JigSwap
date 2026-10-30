@@ -5,6 +5,11 @@ name: Dependency audit
 # warning annotation and in the run summary. Fix them with a selective override in
 # pnpm-workspace.yaml (vulnerable range -> first patched release).
 #
+# A second step audits the Vercel CLI that vercel-preview.yml runs with VERCEL_TOKEN, read from
+# .github/vercel-cli/package-lock.json (also no install). Most of its advisories sit behind
+# exact pins inside Vercel's own packages, so the fix is a CLI release that moves them
+# (Dependabot proposes one monthly), not an override that the CLI was never tested against.
+#
 # Kept out of ci.yml on purpose. convex-deploy.yml deploys Convex production only after the
 # CI workflow concludes with success, so an advisory published against an unchanged lockfile
 # would block every production deploy. For the same reason, NEVER make this a required
@@ -17,6 +22,7 @@ on:
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
       - "**/package.json"
+      - .github/vercel-cli/package-lock.json
       - .github/workflows/audit.yml
   push:
     branches: [main]
@@ -24,6 +30,7 @@ on:
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
       - "**/package.json"
+      - .github/vercel-cli/package-lock.json
       - .github/workflows/audit.yml
   schedule:
     - cron: "41 5 * * 1" # Mondays 05:41 UTC
@@ -38,7 +45,7 @@ concurrency:
 
 jobs:
   audit:
-    name: Audit production dependencies (non-blocking)
+    name: Audit dependencies (non-blocking)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -73,5 +80,29 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           if [ "$status" -ne 0 ]; then
             echo "::warning title=Dependency audit::pnpm audit --prod reported advisories at moderate or above, or could not reach the registry (exit $status). See the run summary."
+          fi
+          exit 0
+
+      # Same contract as above, for the npm tree in .github/vercel-cli. setup-node's npm reads
+      # the lockfile; nothing is installed and no install script runs.
+      - name: npm audit (Vercel CLI)
+        working-directory: .github/vercel-cli
+        run: |
+          set +e
+          npm audit --package-lock-only --audit-level=moderate > audit.txt 2>&1
+          status=$?
+          set -e
+          cat audit.txt
+          {
+            echo "## Dependency audit (Vercel CLI, .github/vercel-cli)"
+            echo
+            echo "Advisories at moderate or above raise a warning; low ones are listed only."
+            echo
+            echo '```'
+            cat audit.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$status" -ne 0 ]; then
+            echo "::warning title=Vercel CLI audit::npm audit reported advisories at moderate or above in .github/vercel-cli, or could not reach the registry (exit $status). See the run summary."
           fi
           exit 0
