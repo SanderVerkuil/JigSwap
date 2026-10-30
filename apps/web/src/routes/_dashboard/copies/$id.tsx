@@ -769,7 +769,7 @@ function CopyInstanceDetail({
                 key={i}
                 icon={<CircleCheck className="h-4 w-4" />}
                 iconClass={
-                  c.isYou ? "bg-jigsaw-secondary" : "bg-jigsaw-primary"
+                  c.isYou ? "bg-jigsaw-secondary-strong" : "bg-jigsaw-primary"
                 }
                 last={i === copy.completions.length - 1}
                 title={
@@ -838,7 +838,7 @@ function CopyInstanceDetail({
               <TimelineRow
                 key={i}
                 icon={<ArrowLeftRight className="h-4 w-4" />}
-                iconClass="bg-jigsaw-secondary"
+                iconClass="bg-jigsaw-secondary-strong"
                 last={i === copy.transfers.length - 1}
                 title={
                   tr.from.anonymous ? (

@@ -59,7 +59,7 @@ const DOT_TONES: Record<string, string> = {
   proposed: "bg-jigsaw-warning",
   accepted: "bg-jigsaw-primary",
   disputed: "bg-jigsaw-warning",
-  completed: "bg-jigsaw-secondary",
+  completed: "bg-jigsaw-secondary-strong",
 };
 
 function StatusPill({ status }: { status: ExchangeRow["status"] }) {
