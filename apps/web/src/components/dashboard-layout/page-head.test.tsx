@@ -155,6 +155,20 @@ describe("PageHead title and actions", () => {
     expect(actions?.textContent).toContain("Mark all as read");
   });
 
+  it("pins the title to the top of the row so taller actions cannot move the h1", () => {
+    const { container } = renderShellHead(
+      "/household",
+      <PublishActions actions={<button type="button">Invite</button>} />,
+    );
+    const row = slot(container, "page-head-row");
+    expect(row?.className).toMatch(/\bitems-start\b/);
+    expect(row?.className).not.toMatch(/\bitems-center\b/);
+    // At least one h1 line tall, so short content (a lone meta line) still centres on the title.
+    const actions = slot(container, "page-head-actions");
+    expect(actions?.className).toMatch(/\bmin-h-8\b/);
+    expect(actions?.className).toMatch(/\bitems-center\b/);
+  });
+
   it("never truncates the subtitle", () => {
     renderShellHead("/my-puzzles");
     const subtitle = screen.getByText(en.shell.pages.myPuzzles.subtitle);

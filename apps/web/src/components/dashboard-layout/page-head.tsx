@@ -124,9 +124,11 @@ export function PageHead() {
       >
         {crumbTrail}
       </div>
+      {/* Top-aligned, so an action taller than the h1 line (a default-size button, a 44px
+          touch target) never pushes the title down: the h1 sits at the same y on every page. */}
       <div
         data-slot="page-head-row"
-        className="flex flex-wrap items-center gap-x-4 gap-y-2"
+        className="flex flex-wrap items-start gap-x-4 gap-y-2"
       >
         {/* Keeps at least 16rem (or the full row) for the title, so actions that don't fit
             beside it wrap onto their own line instead of crushing it. */}
@@ -144,7 +146,7 @@ export function PageHead() {
         {headerMeta || headerActions ? (
           <div
             data-slot="page-head-actions"
-            className="ml-auto flex flex-wrap items-center justify-end gap-2.5"
+            className="ml-auto flex min-h-8 flex-wrap items-center justify-end gap-2.5"
           >
             {/* Supplementary, so only where there is room for it next to the actions. */}
             {headerMeta ? (
