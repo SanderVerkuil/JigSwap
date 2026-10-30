@@ -1,5 +1,6 @@
 import { clerkMiddleware } from "@clerk/tanstack-react-start/server";
 import { createCsrfMiddleware, createStart } from "@tanstack/react-start";
+import { privateResponseMiddleware } from "./lib/response-cache";
 
 // Server functions are same-origin RPC endpoints. Refuse (403) a call whose
 // Sec-Fetch-Site, else Origin, else Referer shows another site, or that carries
@@ -21,6 +22,8 @@ const clerk = clerkMiddleware(({ url }) => ({
   authorizedParties: [url.origin],
 }));
 
+// privateResponseMiddleware reads Clerk's session, so it runs after clerk:
+// `private, no-store` on server-fn responses and signed-in pages.
 export const startInstance = createStart(() => ({
-  requestMiddleware: [csrfMiddleware, clerk],
+  requestMiddleware: [csrfMiddleware, clerk, privateResponseMiddleware],
 }));

@@ -1,5 +1,6 @@
 import { csrfSymbol } from "@tanstack/react-start";
 import { describe, expect, it, vi } from "vitest";
+import { privateResponseMiddleware } from "./lib/response-cache";
 import { startInstance } from "./start";
 
 type ServerCtx = {
@@ -46,6 +47,12 @@ describe("request middleware", () => {
     const [first, ...rest] = await requestMiddleware();
     expect(csrfSymbol in first).toBe(true);
     expect(rest.length).toBeGreaterThan(0);
+  });
+
+  it("decides response caching after Clerk has read the session", async () => {
+    const chain: unknown[] = await requestMiddleware();
+    // CSRF first, Clerk second; the cache rule needs Clerk's auth context.
+    expect(chain.indexOf(privateResponseMiddleware)).toBeGreaterThan(1);
   });
 
   it("refuses a cross-site server-function call", async () => {
