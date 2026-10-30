@@ -101,7 +101,9 @@ const heldBy = async (
  * `puzzleChangeProposals.baseline.image` (the definition's image when the proposal was made) and
  * `ownedPuzzles.snapshot.thumbnail` (a cache of `puzzles.image`). Known residual: a legacy
  * completion photo that predates its completionImages sidecar lives only in the unindexable
- * `completions.photos` array. blobReferences.test.ts fails when the schema gains a
+ * `completions.photos` array until solving/backfillLegacyCompletionSidecars gives it one (a
+ * completion without an aggregateId never can; that run counts them). blobReferences.test.ts
+ * fails when the schema gains a
  * `v.id("_storage")` field that is not registered here.
  */
 export const blobReferenceKinds = async (

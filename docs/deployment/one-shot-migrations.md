@@ -640,6 +640,59 @@ run's totals. Every re-check logs its own `<table event>.hashRecheck` line (for 
 
 ---
 
+## `solving/backfillLegacyCompletionSidecars` — make legacy completion photos visible as blob references (SEC-92)
+
+**When:** once per deployment, any time after this code is deployed there. Run it before
+`catalog/findDanglingBoxArt` (below) and before the storage sweep is ever switched to delete
+mode. Until it has run, a completion photo stored before the `completionImages` sidecars existed
+lives only in its completion's `photos` array, which no index reaches: the claim rule, the
+reference-aware deletes and the storage sweep cannot see that its blob is in use.
+
+**What it does:** pages through `completions` (50 rows per batch, each batch its own
+transaction, rescheduling itself until the table is exhausted). For every photo of a completion
+that has an `aggregateId` and no `completionImages` row for that photo, it inserts the sidecar
+the re-screen would create (`completionId`, `uploaderId` = the completion's member, `fileId`,
+`createdAt`, `updatedAt`; no moderation status and no hash-check fields). Every read model serves
+such a row exactly like the photo without one, so nothing changes for members; the re-screen
+still classifies the photo. Photos that already have a sidecar are left alone. A completion
+without an `aggregateId` cannot have a sidecar: its photos are only counted.
+
+`dryRun` **defaults to true**: without `"dryRun":false` it only counts.
+
+**Safe to re-run:** yes. A second real run creates 0 sidecars.
+
+**Commands:**
+
+```bash
+cd packages/backend
+
+# dev: dry run (counts only), then the real run
+npx convex run solving/backfillLegacyCompletionSidecars:backfillLegacyCompletionSidecars '{}'
+npx convex run solving/backfillLegacyCompletionSidecars:backfillLegacyCompletionSidecars '{"dryRun":false}'
+
+# prod: same, after dev looks right
+npx convex run --prod solving/backfillLegacyCompletionSidecars:backfillLegacyCompletionSidecars '{}'
+npx convex run --prod solving/backfillLegacyCompletionSidecars:backfillLegacyCompletionSidecars '{"dryRun":false}'
+```
+
+The command returns the FIRST batch's running totals; the remaining batches run as scheduled
+functions. Every batch logs a `solving.backfillLegacyCompletionSidecars` wide event with
+`dry_run`, `done` and the running totals `completions`, `photos`, `created`, `existing`,
+`without_aggregate_id` and `photos_without_aggregate_id`; the event with `"done":true` carries
+the whole run. Follow it with `npx convex logs` (add `--prod` for prod) or in the dashboard Logs.
+
+**Verify:**
+
+1. The real run's final `created` matches the dry run's (give or take photos attached in
+   between, which get their sidecar at attach time).
+2. Run the dry run again: its final event shows `"created":0`.
+3. Note `without_aggregate_id` and `photos_without_aggregate_id`. Both must be 0 before the
+   storage sweep may delete blobs; anything else needs a decision about those completions first.
+4. Spot-check an old completion with photos: its photos still show on the member's profile and
+   in their completion history.
+
+---
+
 ## `catalog/findDanglingBoxArt` — was box art already destroyed? (SEC-01, read-only)
 
 **When:** once per deployment, after the SEC-01 fixes (claim-once photo attach, reference-aware

@@ -4,6 +4,7 @@ import type { Id } from "../../_generated/dataModel";
 import {
   internalMutation,
   internalQuery,
+  type MutationCtx,
   type QueryCtx,
 } from "../../_generated/server";
 import { needsRescreen } from "../../library/adapters/photoModeration";
@@ -89,6 +90,43 @@ export const listBoxArtCandidates = internalQuery({
   },
 });
 
+/** The completionImages sidecar that holds this completion photo, if any. */
+export const completionSidecarOf = (ctx: QueryCtx, fileId: Id<"_storage">) =>
+  ctx.db
+    .query("completionImages")
+    .withIndex("by_file", (q) => q.eq("fileId", fileId))
+    .first();
+
+/**
+ * Insert the sidecar for a legacy completion photo (one without a completionImages row), in the
+ * one shape such a row gets: no moderation status and no hash-check fields, so every reader
+ * serves it exactly as it served the photo without a sidecar (absent status = legacy approved,
+ * no hash fields = predates the gate), and the re-screen still classifies it (needsRescreen).
+ * Shared by ensureLegacyCompletionSidecar (re-screen) and solving/backfillLegacyCompletionSidecars.
+ * The caller checks completionSidecarOf first.
+ */
+export const insertLegacyCompletionSidecar = (
+  ctx: MutationCtx,
+  {
+    completionId,
+    fileId,
+    uploaderId,
+  }: {
+    completionId: string;
+    fileId: Id<"_storage">;
+    uploaderId: Id<"users">;
+  },
+) => {
+  const now = Date.now();
+  return ctx.db.insert("completionImages", {
+    completionId,
+    uploaderId,
+    fileId,
+    createdAt: now,
+    updatedAt: now,
+  });
+};
+
 /**
  * One page of completions and their photos that have no completionImages sidecar: stored
  * before the sidecars existed, so never screened and served as legacy photos.
@@ -101,11 +139,7 @@ export const listLegacyCompletionCandidates = internalQuery({
     for (const completion of page.page) {
       if (!completion.aggregateId) continue;
       for (const fileId of completion.photos ?? []) {
-        const sidecar = await ctx.db
-          .query("completionImages")
-          .withIndex("by_file", (q) => q.eq("fileId", fileId))
-          .first();
-        if (sidecar) continue;
+        if (await completionSidecarOf(ctx, fileId)) continue;
         candidates.push({
           imageId: null,
           fileId,
@@ -134,19 +168,7 @@ export const ensureLegacyCompletionSidecar = internalMutation({
     fileId: v.id("_storage"),
     uploaderId: v.id("users"),
   },
-  handler: async (ctx, { completionId, fileId, uploaderId }) => {
-    const existing = await ctx.db
-      .query("completionImages")
-      .withIndex("by_file", (q) => q.eq("fileId", fileId))
-      .first();
-    if (existing) return existing._id;
-    const now = Date.now();
-    return ctx.db.insert("completionImages", {
-      completionId,
-      uploaderId,
-      fileId,
-      createdAt: now,
-      updatedAt: now,
-    });
-  },
+  handler: async (ctx, args) =>
+    (await completionSidecarOf(ctx, args.fileId))?._id ??
+    insertLegacyCompletionSidecar(ctx, args),
 });
