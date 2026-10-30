@@ -126,7 +126,8 @@
   /* ---- Text ---- */
   --mk-text-strong: #1f1b2e;
   --mk-text-body: #3a3548;
-  --mk-text-muted: #7c7689;
+  /* >= 4.5:1 on every marketing surface (marketing-contrast.test.tsx). */
+  --mk-text-muted: #5f596d;
 
   /* ---- Lines & focus ---- */
   --mk-border: color-mix(in oklab, var(--mk-seed-primary) 16%, #e7e3f0);

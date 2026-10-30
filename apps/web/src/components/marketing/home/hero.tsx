@@ -1,5 +1,6 @@
 import { Link } from "@/compat/link";
 import coverVillageStreet from "@/components/marketing/assets/cover-village-street.webp";
+import { MK_AVATAR_TONES } from "@/components/marketing/avatar-colors";
 import { type PlankBox } from "@/components/marketing/plank";
 import { JigPlank3D } from "@/components/marketing/plank-3d";
 import { Reveal } from "@/components/marketing/reveal";
@@ -180,11 +181,10 @@ export function toPlankBox(p: PlankPuzzleView, i: number): PlankBox {
 // from @jigswap/contracts without importing the package directly.
 type CommunityAvatar = { initials: string; image: string | null };
 
-const AVATAR_COLORS = [
-  "var(--mk-violet-400)",
-  "var(--mk-green-500)",
-  "var(--mk-pink-400)",
-  "var(--mk-violet-600)",
+const AVATAR_TONES = [
+  MK_AVATAR_TONES.violet,
+  MK_AVATAR_TONES.green,
+  MK_AVATAR_TONES.pink,
 ] as const;
 
 const noopSubscribe = () => () => {};
@@ -253,9 +253,10 @@ function TrustRow() {
             ) : (
               <span
                 key={i}
-                className="w-[38px] h-[38px] rounded-full text-white font-mk-heading font-semibold text-[13px] inline-flex items-center justify-center border-2 border-mk-card"
+                className="w-[38px] h-[38px] rounded-full font-mk-heading font-semibold text-[13px] inline-flex items-center justify-center border-2 border-mk-card"
                 style={{
-                  background: AVATAR_COLORS[i % AVATAR_COLORS.length],
+                  background: AVATAR_TONES[i % AVATAR_TONES.length].bg,
+                  color: AVATAR_TONES[i % AVATAR_TONES.length].fg,
                   marginLeft: i ? -11 : 0,
                 }}
               >

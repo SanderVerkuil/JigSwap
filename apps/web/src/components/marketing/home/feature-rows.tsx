@@ -1,4 +1,8 @@
 import coverVillageStreet from "@/components/marketing/assets/cover-village-street.webp";
+import {
+  MK_AVATAR_TONES,
+  type MkAvatarTone,
+} from "@/components/marketing/avatar-colors";
 import { MkBadge, type MkBadgeTone } from "@/components/marketing/badge";
 import { Container } from "@/components/marketing/container";
 import { FitToWidth } from "@/components/marketing/fit-to-width";
@@ -131,7 +135,7 @@ function LendTrackVisual() {
   const t = useTranslations("marketing.home.visual");
   const rows: Array<{
     initial: string;
-    color: string;
+    avatar: MkAvatarTone;
     title: string;
     sub: string;
     status: string;
@@ -139,7 +143,7 @@ function LendTrackVisual() {
   }> = [
     {
       initial: "MI",
-      color: "var(--mk-green-500)",
+      avatar: MK_AVATAR_TONES.green,
       title: "Boslicht",
       sub: t("onYourShelf"),
       status: t("available"),
@@ -147,7 +151,7 @@ function LendTrackVisual() {
     },
     {
       initial: "TK",
-      color: "var(--mk-violet-400)",
+      avatar: MK_AVATAR_TONES.violet,
       title: "Sterrennacht",
       sub: t("withName", { name: "Tom" }),
       status: t("lentOut"),
@@ -155,7 +159,7 @@ function LendTrackVisual() {
     },
     {
       initial: "RJ",
-      color: "var(--mk-pink-400)",
+      avatar: MK_AVATAR_TONES.pink,
       title: "Amsterdam",
       sub: t("notificationSent"),
       status: t("recalled"),
@@ -182,8 +186,8 @@ function LendTrackVisual() {
             }
           >
             <span
-              className="w-[34px] h-[34px] shrink-0 rounded-full text-white font-mk-heading font-semibold text-xs inline-flex items-center justify-center"
-              style={{ background: r.color }}
+              className="w-[34px] h-[34px] shrink-0 rounded-full font-mk-heading font-semibold text-xs inline-flex items-center justify-center"
+              style={{ background: r.avatar.bg, color: r.avatar.fg }}
             >
               {r.initial}
             </span>

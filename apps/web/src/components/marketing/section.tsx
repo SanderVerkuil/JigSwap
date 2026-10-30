@@ -41,7 +41,7 @@ export function Eyebrow({
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-2 font-mono text-xs font-semibold tracking-[.12em] uppercase text-mk-violet-600",
+        "inline-flex items-center gap-2 font-mono text-xs font-semibold tracking-[.12em] uppercase text-mk-violet-600 dark:text-mk-violet-700",
         center && "justify-center",
         className,
       )}

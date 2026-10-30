@@ -212,7 +212,7 @@ export function drawBoxArt(
     ctx.textAlign = "center";
     ctx.textBaseline = "alphabetic";
     ctx.fillText(String(spec.pieceCount), cx, cy + 1 * s);
-    ctx.fillStyle = "#7c7689";
+    ctx.fillStyle = "#5f596d";
     ctx.font = `${5.5 * s}px ${fonts.heading}`;
     ctx.fillText("PCS", cx, cy + 8 * s);
     ctx.textAlign = "start";

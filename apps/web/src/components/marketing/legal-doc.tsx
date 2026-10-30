@@ -118,7 +118,7 @@ export function LegalDoc({
                           {b.items.map((li) => (
                             <li
                               key={li}
-                              className="text-[15.5px] leading-relaxed text-mk-text-muted"
+                              className="text-[15.5px] leading-relaxed text-mk-text-body"
                             >
                               {li}
                             </li>
@@ -138,7 +138,7 @@ export function LegalDoc({
                       return (
                         <p
                           key={j}
-                          className="text-[15.5px] leading-[1.7] text-mk-text-muted mb-3.5"
+                          className="text-[15.5px] leading-[1.7] text-mk-text-body mb-3.5"
                         >
                           {b.text}
                         </p>

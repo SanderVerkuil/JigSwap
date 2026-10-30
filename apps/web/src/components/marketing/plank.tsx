@@ -263,7 +263,7 @@ function JigBox({
                       fontSize: 5.5,
                       letterSpacing: ".06em",
                       textTransform: "uppercase",
-                      color: "#7c7689",
+                      color: "#5f596d",
                     }}
                   >
                     pcs
