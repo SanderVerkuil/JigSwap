@@ -3438,6 +3438,7 @@
       "title": "Collectie-uitsplitsing",
       "pieceCount": "Op aantal stukjes",
       "difficulty": "Op moeilijkheid",
+      "difficultyTotal": "{count, plural, one {# puzzel} other {# puzzels}} in totaal",
       "brands": "Topmerken",
       "condition": "Op conditie",
       "count": "Puzzels",

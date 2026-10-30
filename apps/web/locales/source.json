@@ -3438,6 +3438,7 @@
       "title": "Collection breakdown",
       "pieceCount": "By piece count",
       "difficulty": "By difficulty",
+      "difficultyTotal": "{count, plural, one {# puzzle} other {# puzzles}} in total",
       "brands": "Top brands",
       "condition": "By condition",
       "count": "Puzzles",
