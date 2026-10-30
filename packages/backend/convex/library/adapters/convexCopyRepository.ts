@@ -2,6 +2,7 @@ import type { Copy, CopyId, CopyRepository, OwnerId } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
 import { enqueueImageModeration } from "../../lib/imageModeration/moderationPool";
+import { deleteBlobUnlessReferenced } from "../../lib/storage/blobLifecycle";
 import { toDomain, toRow } from "./copyMapper";
 
 // Driven adapter for the CopyRepository port over `ctx.db`. The only place `ownedPuzzles` (and
@@ -117,6 +118,12 @@ export const convexCopyRepository = (ctx: MutationCtx): CopyRepository => {
 
       const images = await loadImages(row._id);
       for (const image of images) await ctx.db.delete(image._id);
+      // The photos' blobs go with their rows (SEC-81), so their issued URLs stop working, unless
+      // something else still holds one: a CSAM escalation preserves it, or a row written before
+      // the claim rule holds the same id, such as catalogue box art (SEC-01).
+      for (const image of images) {
+        await deleteBlobUnlessReferenced(ctx, image.fileId);
+      }
 
       await ctx.db.delete(row._id);
     },
