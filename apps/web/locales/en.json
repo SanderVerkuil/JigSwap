@@ -3843,6 +3843,7 @@
       "heroLead": "Build your own puzzle library, lend or swap puzzles, and always see who has your lent-out boxes. Connect with puzzlers across the country.",
       "seeFeatures": "See the features",
       "trustRow": "{count} puzzlers are already swapping",
+      "trustRowEarly": "Be one of our first puzzlers",
       "stats": {
         "puzzlers": "Puzzlers signed up",
         "catalog": "Puzzles in the catalog",

@@ -1,21 +1,24 @@
 import { Container } from "@/components/marketing/container";
 import { Reveal } from "@/components/marketing/reveal";
 import { Section } from "@/components/marketing/section";
-import { globalStatsQuery } from "@/lib/marketing-queries";
+import { globalStatsQuery, hasSocialProof } from "@/lib/marketing-queries";
 import { useQuery } from "@tanstack/react-query";
 import { useFormatter, useTranslations } from "use-intl";
 
 // Stats strip — real platform numbers from gateway.insights.globalStats (prefetched in the home
-// route loader; the prototype's invented totals would overclaim).
+// route loader; the prototype's invented totals would overclaim). Hidden until the community is
+// big enough for the numbers to read as social proof (hasSocialProof).
 export function Stats() {
   const t = useTranslations("marketing.home.stats");
   const format = useFormatter();
   const { data: stats } = useQuery(globalStatsQuery);
 
-  const items: Array<[string, number | undefined]> = [
-    [t("puzzlers"), stats?.totalUsers],
-    [t("catalog"), stats?.totalPuzzles],
-    [t("shelves"), stats?.totalOwnedPuzzles],
+  if (!hasSocialProof(stats)) return null;
+
+  const items: Array<[string, number]> = [
+    [t("puzzlers"), stats.totalUsers],
+    [t("catalog"), stats.totalPuzzles],
+    [t("shelves"), stats.totalOwnedPuzzles],
   ];
 
   return (
@@ -25,7 +28,7 @@ export function Stats() {
           {items.map(([label, value], i) => (
             <Reveal key={label} delay={i * 70} className="text-center">
               <div className="font-mk-heading font-bold text-[clamp(30px,4vw,42px)] text-mk-violet-600 leading-none">
-                {value != null ? format.number(value) : "—"}
+                {format.number(value)}
               </div>
               <div className="text-sm text-mk-text-muted mt-2">{label}</div>
             </Reveal>

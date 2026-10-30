@@ -8,7 +8,7 @@ import { Eyebrow } from "@/components/marketing/section";
 import { useStartHref } from "@/components/marketing/use-start-href";
 import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
-import { globalStatsQuery } from "@/lib/marketing-queries";
+import { globalStatsQuery, hasSocialProof } from "@/lib/marketing-queries";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight } from "lucide-react";
@@ -209,7 +209,9 @@ export function useHourlySeed(): number | null {
   return isClient ? seed : null;
 }
 
-// Real member count instead of the prototype's invented "4.200+".
+// Real member count instead of the prototype's invented "4.200+" — shown only
+// once it is big enough to reassure; before that, an invitation to be among
+// the first members.
 function TrustRow() {
   const t = useTranslations("marketing.home");
   const format = useFormatter();
@@ -268,7 +270,9 @@ function TrustRow() {
       )}
       {stats != null && (
         <div className="text-[14.5px] text-mk-text-muted leading-snug">
-          {t("trustRow", { count: format.number(stats.totalUsers) })}
+          {hasSocialProof(stats)
+            ? t("trustRow", { count: format.number(stats.totalUsers) })
+            : t("trustRowEarly")}
         </div>
       )}
     </div>
