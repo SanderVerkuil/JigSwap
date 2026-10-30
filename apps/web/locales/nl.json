@@ -3205,6 +3205,7 @@
       "editDescription": "Pas de datums, de tijd of de notities van deze voltooiing aan.",
       "editInProgressDescription": "Pas je startdatum of je notities aan. Rond de voltooiing af als je klaar bent.",
       "editWindowClosed": "Deze voltooiing kan niet meer worden bewerkt (het venster van 24 uur is gesloten).",
+      "editClosed": "Bewerken was mogelijk tot {when}. Je kunt een voltooiing tot 24 uur na de einddatum bewerken.",
       "review": "Beoordelen",
       "stats": {
         "completed": "Puzzels voltooid",

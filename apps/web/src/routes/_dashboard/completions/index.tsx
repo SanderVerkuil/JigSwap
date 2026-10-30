@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/library/empty-state";
 import { chipColor } from "@/components/library/palette";
 import { StatRow } from "@/components/library/stat-row";
 import { EditCompletionDialog } from "@/components/solving/edit-completion-dialog";
+import { EditSolveButton } from "@/components/solving/edit-solve-button";
 import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { ReviewPuzzleDialog } from "@/components/solving/review-puzzle-dialog";
 import { GuideHelpButton } from "@/components/tour/guide-help-button";
@@ -40,7 +41,7 @@ import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { CircleCheck, Clock, Pencil, Plus, Star, Trash2 } from "lucide-react";
+import { CircleCheck, Clock, Plus, Star, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
@@ -407,13 +408,10 @@ function CompletionsPage() {
             </Button>
           )}
           {completion.aggregateId && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-8"
-              title={t("edit")}
-              aria-label={t("edit")}
-              onClick={() =>
+            // Unavailable (with the reason) once the server's edit window has closed.
+            <EditSolveButton
+              editableUntil={completion.editableUntil}
+              onEdit={() =>
                 setDialog({
                   kind: "edit",
                   completionId: completion.aggregateId!,
@@ -425,9 +423,7 @@ function CompletionsPage() {
                   datePrecision: completion.datePrecision,
                 })
               }
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
+            />
           )}
           {completion.aggregateId && (
             <Button
