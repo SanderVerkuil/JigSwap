@@ -306,6 +306,7 @@ import type * as lib_imageModeration_recheckWaivedHashes from "../lib/imageModer
 import type * as lib_imageModeration_rescreenStore from "../lib/imageModeration/rescreenStore.js";
 import type * as lib_imageModeration_stalledSweep from "../lib/imageModeration/stalledSweep.js";
 import type * as lib_logEvent from "../lib/logEvent.js";
+import type * as lib_pageSize from "../lib/pageSize.js";
 import type * as lib_rateLimits from "../lib/rateLimits.js";
 import type * as lib_storage_blobLifecycle from "../lib/storage/blobLifecycle.js";
 import type * as lib_storage_storageSweep from "../lib/storage/storageSweep.js";
@@ -890,6 +891,7 @@ declare const fullApi: ApiFromModules<{
   "lib/imageModeration/rescreenStore": typeof lib_imageModeration_rescreenStore;
   "lib/imageModeration/stalledSweep": typeof lib_imageModeration_stalledSweep;
   "lib/logEvent": typeof lib_logEvent;
+  "lib/pageSize": typeof lib_pageSize;
   "lib/rateLimits": typeof lib_rateLimits;
   "lib/storage/blobLifecycle": typeof lib_storage_blobLifecycle;
   "lib/storage/storageSweep": typeof lib_storage_storageSweep;

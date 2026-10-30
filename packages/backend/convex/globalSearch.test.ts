@@ -109,3 +109,36 @@ describe("search.global people results", () => {
     expect(res.people).toHaveLength(0);
   });
 });
+
+// SEC-49: each group is clamped server-side, whatever `limit` the client sends.
+describe("search.global limit", () => {
+  test("an oversized limit returns at most 10 puzzles", async () => {
+    const t = convexTest(schema, modules);
+    const searcher = await insertUser(
+      t,
+      "clerk_searcher",
+      "Sam Searcher",
+      "sam",
+    );
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      for (let i = 0; i < 15; i++) {
+        await ctx.db.insert("puzzles", {
+          title: `Vista ${i}`,
+          pieceCount: 1000,
+          searchableText: `vista ${i}`,
+          status: "approved",
+          submittedBy: searcher,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    });
+
+    const res = await asUser(t, "clerk_searcher").query(
+      api.search.globalSearch.global,
+      { term: "vista", limit: 1e6 },
+    );
+    expect(res.puzzles).toHaveLength(10);
+  });
+});

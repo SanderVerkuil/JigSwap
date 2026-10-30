@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { clampLimit, clampOffset } from "../lib/pageSize";
 import { blockedEitherWaySet } from "../social/blocks";
 import { profileVisibilityOf, projectMemberIdentity } from "../social/privacy";
 import { collectCircleSharedCopies } from "./circleSharedCopies";
@@ -16,6 +17,10 @@ const isOpen = (copy: Doc<"ownedPuzzles">): boolean =>
   copy.availability.forTrade ||
   copy.availability.forSale ||
   copy.availability.forLend;
+
+// A page holds 1 to MAX_LIMIT copies whatever the client asks for; the offset is never negative.
+const DEFAULT_LIMIT = 20;
+const MAX_LIMIT = 50;
 
 // Library read: browse OTHER members' available owned copies with filters. Auth gating, the
 // availability prefilter, every puzzle-based filter (category/pieces/difficulty/search), the
@@ -53,8 +58,11 @@ export const browseOwnedPuzzles = query({
     offset: v.optional(v.number()),
   },
   handler: async (ctx, args): Promise<BrowseOwnedCopiesView> => {
-    const limit = args.limit ?? 20;
-    const offset = args.offset ?? 0;
+    const limit = clampLimit(args.limit, {
+      fallback: DEFAULT_LIMIT,
+      max: MAX_LIMIT,
+    });
+    const offset = clampOffset(args.offset);
 
     // Resolve the acting member (auth-gated, identical to legacy). The domain MemberId is the
     // user's Convex _id.

@@ -6,6 +6,7 @@ import { canViewDefinition } from "../catalog/definitionVisibility";
 import { requireMember } from "../identity/requireMember";
 import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
+import { clampPaginationOpts } from "../lib/pageSize";
 import {
   buildCopyViewContext,
   canViewCopyWithContext,
@@ -19,6 +20,9 @@ type ProfileCompletionLink = {
   kind: "myCopy" | "copy" | "definition";
   id: string;
 };
+
+// A page holds 1 to MAX_PAGE_SIZE solves whatever the client asks for.
+const MAX_PAGE_SIZE = 50;
 
 // Social read: a member's FINISHED solves for their profile page, newest first, paginated.
 // Auth-gated; gated by the profile unlock rule (canSeeProfileContent) — otherwise an empty,
@@ -45,7 +49,7 @@ export const listProfileCompletions = query({
     const result = await pageDatedThenUndated(
       ctx,
       args.memberId,
-      args.paginationOpts,
+      clampPaginationOpts(args.paginationOpts, MAX_PAGE_SIZE),
     );
 
     // Sequential: the lazily built copy-view context and its memo aren't Promise.all-safe.

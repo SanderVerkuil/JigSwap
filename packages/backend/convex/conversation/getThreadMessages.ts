@@ -3,13 +3,16 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { clampLimit } from "../lib/pageSize";
 import {
   ownJoinRowsAt,
   readableThreadOf,
   threadMessageViewOf,
 } from "./readModelHelpers";
 
+// A page holds 1 to MAX_PAGE_SIZE messages whatever the client asks for (as listThreadMessages).
 const DEFAULT_PAGE_SIZE = 50;
+const MAX_PAGE_SIZE = 100;
 
 // One page of a thread's messages, participants only. Cursor semantics: a page is the `limit`
 // NEWEST messages strictly older than `before` (all messages when absent), returned ascending by
@@ -28,7 +31,10 @@ export const getThreadMessages = query({
     const { thread, floor } = await readableThreadOf(ctx, args.threadId, me);
 
     const { before } = args;
-    const limit = args.limit ?? DEFAULT_PAGE_SIZE;
+    const limit = clampLimit(args.limit, {
+      fallback: DEFAULT_PAGE_SIZE,
+      max: MAX_PAGE_SIZE,
+    });
     const page = await ctx.db
       .query("threadMessages")
       .withIndex("by_thread_sent", (q) => {

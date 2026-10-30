@@ -343,3 +343,56 @@ describe("profile listings — completions", () => {
     }
   });
 });
+
+// SEC-49: a page holds at most 50 rows, whatever numItems the client sends.
+describe("profile listings — page size", () => {
+  const HUGE_PAGE = { numItems: 1e6, cursor: null };
+
+  test("copies: an oversized numItems returns a 50-row page that is not done", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    await t.run(async (ctx) => {
+      const puzzle = (await ctx.db.query("puzzles").first())!;
+      for (let i = 0; i < 60; i++) {
+        await ctx.db.insert("ownedPuzzles", {
+          puzzleId: puzzle._id,
+          ownerId: alice,
+          condition: "good",
+          availability: OPEN,
+          createdAt: i,
+          updatedAt: i,
+        });
+      }
+    });
+    const result = await as(t, "bob").query(
+      api.social.listProfileCopies.listProfileCopies,
+      { memberId: alice, paginationOpts: HUGE_PAGE },
+    );
+    expect(result.page).toHaveLength(50);
+    expect(result.isDone).toBe(false);
+  });
+
+  test("completions: an oversized numItems returns a 50-row page", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 60; i++) {
+        await ctx.db.insert("completions", {
+          userId: alice,
+          startDate: i,
+          endDate: i + 1,
+          photos: [],
+          isCompleted: true,
+          createdAt: i,
+          updatedAt: i,
+        });
+      }
+    });
+    const result = await as(t, "bob").query(
+      api.social.listProfileCompletions.listProfileCompletions,
+      { memberId: alice, paginationOpts: HUGE_PAGE },
+    );
+    expect(result.page).toHaveLength(50);
+    expect(result.isDone).toBe(false);
+  });
+});

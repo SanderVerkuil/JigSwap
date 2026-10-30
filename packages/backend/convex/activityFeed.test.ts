@@ -218,3 +218,35 @@ describe("social.getActivityFeed — started entries", () => {
     expect(feed.every((e) => e.memberId === alice)).toBe(true);
   });
 });
+
+// SEC-49: the feed page is clamped server-side, whatever `limit` the client sends.
+describe("social.getActivityFeed — page size", () => {
+  test("an oversized limit returns at most 50 entries; a non-finite one the default 50", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      for (let i = 0; i < 60; i++) {
+        await ctx.db.insert("domainEvents", {
+          name: "CompletionRecorded",
+          context: "solving",
+          payload: { userId: alice, completionId: `cmp-${i}` },
+          occurredAt: now - HOUR + i,
+        });
+      }
+    });
+
+    const huge = await asUser(t, "alice").query(
+      api.social.getActivityFeed.getActivityFeed,
+      { limit: 1e6 },
+    );
+    expect(huge).toHaveLength(50);
+    expect(huge[0].ref).toBe("cmp-59");
+
+    const nan = await asUser(t, "alice").query(
+      api.social.getActivityFeed.getActivityFeed,
+      { limit: Number.NaN },
+    );
+    expect(nan).toHaveLength(50);
+  });
+});
