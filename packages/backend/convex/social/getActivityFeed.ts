@@ -24,22 +24,35 @@ import {
 import { toCopyPuzzleView } from "../library/mappers";
 import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
 import {
+  ACTIVITY_READ_MODEL,
   activityRowsOf,
   FEED_EVENT_NAMES,
   FEED_WINDOW_MS,
+  type ActivityRow,
 } from "./activityEntries";
 import { blockedEitherWaySet } from "./blocks";
 import { areMutualFollowers, canSeeProfileContent } from "./privacy";
 
 // The activity-feed read: the acting member's own activity plus the activity of everyone they
-// follow, newest-first. It reads the DURABLE `domainEvents` log, maps FOREIGN events into Social's
-// anti-corruption ActivityEntry shape through social/activityEntries.activityRowsOf (the one
-// event-to-entry mapping, shared with the activity read model), keeps those of the audience, then
-// folds them through the pure buildActivityFeed projection. "started" entries are opt-in and
-// mutual-followers-only, and acquisitions (single or a grouped batch) are gated per copy on what
-// the viewer may see; both filtered below.
-// Whatever the kind, an entry of another member shows only while the viewer may see that member's
-// profile content (canSeeProfileContent, SEC-43); the per-kind rules above only narrow that.
+// follow, newest-first, folded through the pure buildActivityFeed projection. Activity comes from
+// one of two sources, mapped by the same anti-corruption layer (social/activityEntries):
+//
+//   the read model (once social/backfillActivityEntries has finished: its readModelStatus row
+//     exists) — each audience member's own `activityEntries` range (by_actor_time), merged
+//     newest-first. One member's activity can never crowd out another's (SEC-30), and a new row
+//     only touches the feeds of its actor's followers, never every feed (PERF-B3m). The read is
+//     bounded: it stops once `limit` entries pass the gates, after FEED_READ_BUDGET rows, and
+//     takes at most PER_ACTOR_READ_CAP rows of any one member, so a followee's hidden entries
+//     (unshared starts, copies the viewer can't see) use only their own share of it.
+//   the event log (before that) — a GLOBAL newest-PER_NAME_CAP-per-event-name window of
+//     `domainEvents`, filtered to the audience in memory. On a busy platform that window can be
+//     all strangers' events; this path only covers deployments the backfill has not run on yet.
+//
+// Both paths run the SAME viewer gates (gateCandidates), before the limit slice so pages are never
+// short: another member's entry only while the viewer may see their profile content
+// (canSeeProfileContent, SEC-43); one entry per (kind, ref); a start only once it has begun, and
+// from someone else only when they opted in and are a mutual follower; an acquisition only with the
+// copies this viewer may see (canViewCopy). Blocked members are out of the audience.
 
 // A page holds 1 to MAX_LIMIT entries whatever the client asks for.
 const DEFAULT_LIMIT = 50;
@@ -48,32 +61,46 @@ const MAX_LIMIT = 50;
 // How many covers a grouped batch entry shows.
 const BATCH_COVER_COUNT = 4;
 
-// Time window (FEED_WINDOW_MS, 90 days) + per-name cap so the feed reads a bounded slice of
-// `domainEvents` (via the `by_name` index) instead of scanning the whole log.
+// The event-log path: per event name, the newest PER_NAME_CAP events in FEED_WINDOW_MS (90 days),
+// via the `by_name` index.
 // Event retention (events/retention) keeps dispatched events longer than this window.
 const PER_NAME_CAP = 500;
 
-// KNOWN SCALE LIMITATION (finding #7, tracked as a follow-up):
-//   This query pulls a GLOBAL newest-`PER_NAME_CAP`-per-event-name window (keyed on event name +
-//   time, NOT on member) and only THEN filters down to the viewer's audience in memory. On a busy
-//   platform the newest 500 events of a given name can all belong to members the viewer does not
-//   follow, so a viewer following only a few people could see a stale/empty feed even when their
-//   followees have recent activity that fell outside the global window. The 90-day window does not
-//   help — the cap, not the window, is the binding constraint under load.
-//
-//   The correct fix is a per-actor read path, NOT a bigger cap (which only defers the problem and
-//   inflates every read): either (a) add an `actorId` column to `domainEvents` populated at record
-//   time with a `by_actor_and_time` index and query per audience member, or (b) maintain a
-//   denormalized per-member activity table written by the event dispatcher. Both require changes
-//   across the emitting domains (and a backfill), and ExchangeCompleted carries no member today
-//   (parties are resolved from the exchange row), so this is deliberately left as a follow-up
-//   rather than a risky partial. Raising PER_NAME_CAP is an accepted stopgap if needed.
+// The read-model path: rows read per feed, at most, and from any one member.
+const FEED_READ_BUDGET = 500;
+const PER_ACTOR_READ_CAP = 2 * MAX_LIMIT;
+
+// A feed entry plus what the read-time gates and the link target need.
+type Candidate = {
+  entry: ActivityEntry;
+  // An acquisition's copies (ownedPuzzles.aggregateId): the copy itself, or a batch's copies.
+  copyIds: string[];
+  startDate?: number;
+  partyIds?: Id<"users">[];
+};
+
+// What the gates remember across the chunks of one read.
+type Gates = {
+  viewerId: Id<"users">;
+  audience: Set<string>;
+  now: number;
+  seen: Set<string>;
+  startedAllowed: Map<string, boolean>;
+  profileUnlocked: Map<string, boolean>;
+  copyView: CopyViewContext | null;
+  // Acquisition ref -> the copies the viewer may see, in pick order.
+  acquiredCopies: Map<string, Doc<"ownedPuzzles">[]>;
+};
 
 export const getActivityFeed = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args): Promise<ActivityEntryView[]> => {
     const me = await requireMember(ctx);
     const meId = me as unknown as Id<"users">;
+    const limit = clampLimit(args.limit, {
+      fallback: DEFAULT_LIMIT,
+      max: MAX_LIMIT,
+    });
 
     // Audience = the acting member + everyone they follow.
     const followRows = await ctx.db
@@ -87,140 +114,31 @@ export const getActivityFeed = query({
       audience.delete(id as string);
     }
 
-    // Pull the activity-bearing events. Convex has no OR over `name`, so query per-name via the
-    // `by_name` index, bounded to a recent window and capped (newest-first) to avoid a full scan.
     const since = Date.now() - FEED_WINDOW_MS;
-    const eventBatches = await Promise.all(
-      FEED_EVENT_NAMES.map((name) =>
-        ctx.db
-          .query("domainEvents")
-          .withIndex("by_name", (q) =>
-            q.eq("name", name).gte("occurredAt", since),
-          )
-          .order("desc")
-          .take(PER_NAME_CAP),
-      ),
-    );
-
-    // Acquisition entry ref (copyId, or batchId for a grouped batch) -> the copy ids its
-    // CopyAcquired events name, collected while mapping.
-    const entryCopyIds = new Map<string, string[]>();
-    const entries: ActivityEntry[] = [];
-    const now = Date.now();
-    for (const batch of eventBatches) {
-      for (const event of batch) {
-        for (const row of await activityRowsOf(ctx, event)) {
-          if (!audience.has(row.actorId)) continue;
-          // A future-dated start hasn't begun; don't announce it (spec §2).
-          if (row.startDate !== undefined && row.startDate > now) continue;
-          entries.push({
-            memberId: asMember(row.actorId),
-            kind: row.kind,
-            occurredAt: new Date(row.occurredAt),
-            ref: row.ref,
-          });
-          if (row.kind === "acquisition") entryCopyIds.set(row.ref, [row.ref]);
-          if (row.kind === "acquisitionBatch") {
-            entryCopyIds.set(row.ref, [
-              ...(entryCopyIds.get(row.ref) ?? []),
-              ...(row.copyIds ?? []),
-            ]);
-          }
-        }
-      }
-    }
-
-    // Every entry of ANOTHER member needs the profile-content unlock (SEC-43): the viewer sees an
-    // actor's completions, exchanges, adds and starts only while canSeeProfileContent holds (a
-    // public profile or mutual followers; never across a block), so following a private member
-    // one way unlocks nothing. The kind-specific rules below (opt-in starts, per-copy acquisitions)
-    // only narrow this further. Checked once per distinct actor, and BEFORE the (kind, ref) dedupe:
-    // an exchange is attributed to both parties, and the viewer's own party entry must survive
-    // when the counterparty's is dropped.
-    const actorUnlocked = new Map<string, boolean>();
-    const permitted: ActivityEntry[] = [];
-    for (const e of entries) {
-      const actor = e.memberId as string;
-      if (actor === (meId as string)) {
-        permitted.push(e);
-        continue;
-      }
-      let unlocked = actorUnlocked.get(actor);
-      if (unlocked === undefined) {
-        unlocked = await canSeeProfileContent(
+    const gates: Gates = {
+      viewerId: meId,
+      audience,
+      now: Date.now(),
+      seen: new Set(),
+      startedAllowed: new Map(),
+      profileUnlocked: new Map(),
+      copyView: null,
+      acquiredCopies: new Map(),
+    };
+    const shown = (await readModelReady(ctx))
+      ? await fromReadModel(ctx, audience, since, limit, gates)
+      : await gateCandidates(
           ctx,
-          meId,
-          actor as unknown as Id<"users">,
+          await fromEventLog(ctx, audience, since),
+          gates,
         );
-        actorUnlocked.set(actor, unlocked);
-      }
-      if (unlocked) permitted.push(e);
-    }
 
-    // One activity per (kind, ref): an ExchangeCompleted is attributed to BOTH parties, so a viewer
-    // who is a party AND follows the counterparty would otherwise see the same exchange twice, and
-    // a batch add maps one entry per CopyAcquired event. buildActivityFeed only sorts/slices, so
-    // dedupe here, keeping the first occurrence: events are read newest-first, so a grouped batch
-    // keeps its newest event's time (the batch time).
-    const deduped = [
-      ...new Map(permitted.map((e) => [`${e.kind}:${e.ref}`, e])).values(),
-    ];
-
-    // "started" is OPT-IN and FRIENDS-ONLY (spec §4): the actor must have shareInProgress === true
-    // (tri-state; absent = off) AND be a mutual follower of the viewer. The viewer's own starts are
-    // exempt. Checked once per distinct actor — bounded by the audience-filtered entries, not the
-    // raw event batch — and BEFORE buildActivityFeed's limit slice so pages are never short.
-    const startedActorIds = [
-      ...new Set(
-        deduped
-          .filter(
-            (e) =>
-              e.kind === "started" &&
-              (e.memberId as string) !== (meId as string),
-          )
-          .map((e) => e.memberId as string),
-      ),
-    ];
-    const startedActorAllowed = new Map(
-      await Promise.all(
-        startedActorIds.map(async (id) => {
-          const actorId = id as unknown as Id<"users">;
-          const prefs = await ctx.db
-            .query("solvingPreferences")
-            .withIndex("by_member", (q) => q.eq("memberId", actorId))
-            .unique();
-          if (prefs?.shareInProgress !== true) return [id, false] as const;
-          return [id, await areMutualFollowers(ctx, meId, actorId)] as const;
-        }),
-      ),
+    const feed = buildActivityFeed(
+      shown.map((c) => c.entry),
+      { limit },
     );
-    const visible = deduped.filter(
-      (e) =>
-        e.kind !== "started" ||
-        (e.memberId as string) === (meId as string) ||
-        startedActorAllowed.get(e.memberId as string) === true,
-    );
-
-    // An acquisition (single or grouped batch) shows only the copies THIS viewer may see; one with
-    // none is dropped. Resolved BEFORE the limit slice (like "started") so pages are never short.
-    const isAcquisition = (e: ActivityEntry) =>
-      e.kind === "acquisition" || e.kind === "acquisitionBatch";
-    const acquiredCopies = await visibleAcquiredCopies(
-      ctx,
-      meId,
-      visible.filter(isAcquisition),
-      entryCopyIds,
-    );
-    const shown = visible.filter(
-      (e) => !isAcquisition(e) || (acquiredCopies.get(e.ref)?.length ?? 0) > 0,
-    );
-
-    const feed = buildActivityFeed(shown, {
-      limit: clampLimit(args.limit, {
-        fallback: DEFAULT_LIMIT,
-        max: MAX_LIMIT,
-      }),
-    });
+    const candidates = new Map(shown.map((c) => [keyOf(c.entry), c]));
+    const acquiredCopies = gates.acquiredCopies;
 
     // Resolve each distinct actor's display name once (not per-entry) so a feed with repeat actors
     // doesn't re-query the same profile/user rows.
@@ -247,6 +165,7 @@ export const getActivityFeed = query({
           ctx,
           meId,
           entry,
+          candidates.get(keyOf(entry))?.partyIds,
           acquiredCopies,
           actors.get(entry.memberId as string)?.linkable === true,
           targetContext,
@@ -269,29 +188,252 @@ export const getActivityFeed = query({
   },
 });
 
-// The copies of each acquisition entry (a single add or a grouped batch) that `viewerId` may see,
-// in pick order. Same two gates as the member's profile puzzles (listProfileCopies), which the entry
-// links to: the profile unlock rule (self, public profile, or mutual follower), then the per-copy
+const keyOf = (entry: ActivityEntry) => `${entry.kind}:${entry.ref}`;
+
+const readModelReady = async (ctx: QueryCtx): Promise<boolean> =>
+  (await ctx.db
+    .query("readModelStatus")
+    .withIndex("by_name", (q) => q.eq("name", ACTIVITY_READ_MODEL))
+    .first()) !== null;
+
+// One row as a feed candidate, under its actor until gateCandidates decides who it shows under.
+const toCandidate = (row: ActivityRow): Candidate => ({
+  entry: {
+    memberId: asMember(row.actorId),
+    kind: row.kind,
+    occurredAt: new Date(row.occurredAt),
+    ref: row.ref,
+  },
+  copyIds: row.kind === "acquisition" ? [row.ref] : [...(row.copyIds ?? [])],
+  startDate: row.startDate,
+  partyIds: row.partyIds,
+});
+
+// The read model: candidates newest-first, gated a chunk at a time, until `limit` pass the gates or
+// the merged read stops (see newestActivityFirst).
+const fromReadModel = async (
+  ctx: QueryCtx,
+  audience: Set<string>,
+  since: number,
+  limit: number,
+  gates: Gates,
+): Promise<Candidate[]> => {
+  const shown: Candidate[] = [];
+  let pending: Candidate[] = [];
+  for await (const row of newestActivityFirst(ctx, [...audience], since)) {
+    pending.push(toCandidate(row));
+    if (shown.length + pending.length < limit) continue;
+    shown.push(...(await gateCandidates(ctx, pending, gates)));
+    pending = [];
+    if (shown.length >= limit) return shown;
+  }
+  shown.push(...(await gateCandidates(ctx, pending, gates)));
+  return shown;
+};
+
+// A k-way merge of the actors' by_actor_time ranges (occurredAt >= since), newest first. Yields at
+// most FEED_READ_BUDGET rows in all and PER_ACTOR_READ_CAP of any one actor; it reads one row
+// ahead per actor, so its reads grow with the audience (one per member followed), never with
+// anyone else's activity.
+async function* newestActivityFirst(
+  ctx: QueryCtx,
+  actorIds: string[],
+  since: number,
+): AsyncGenerator<Doc<"activityEntries">> {
+  const sources = actorIds.map((actorId) => ({
+    rows: ctx.db
+      .query("activityEntries")
+      .withIndex("by_actor_time", (q) =>
+        q.eq("actorId", actorId as Id<"users">).gte("occurredAt", since),
+      )
+      .order("desc")
+      [Symbol.asyncIterator](),
+    head: null as Doc<"activityEntries"> | null,
+    taken: 0,
+  }));
+  const advance = async (source: (typeof sources)[number]) => {
+    const next =
+      source.taken < PER_ACTOR_READ_CAP ? await source.rows.next() : null;
+    source.head = next === null || next.done ? null : next.value;
+  };
+  await Promise.all(sources.map(advance));
+  for (let read = 0; read < FEED_READ_BUDGET; read++) {
+    let newest: (typeof sources)[number] | null = null;
+    for (const source of sources) {
+      if (
+        source.head !== null &&
+        (newest === null || source.head.occurredAt > newest.head!.occurredAt)
+      ) {
+        newest = source;
+      }
+    }
+    if (newest === null) return;
+    yield newest.head!;
+    newest.taken++;
+    await advance(newest);
+  }
+}
+
+// The event log: the audience's activity in each event name's global window. A batch add maps one
+// row per CopyAcquired event; they fold into the first, which collects every copy of the batch.
+const fromEventLog = async (
+  ctx: QueryCtx,
+  audience: Set<string>,
+  since: number,
+): Promise<Candidate[]> => {
+  // Convex has no OR over `name`, so query per-name via the `by_name` index, bounded to a recent
+  // window and capped (newest-first) to avoid a full scan.
+  const eventBatches = await Promise.all(
+    FEED_EVENT_NAMES.map((name) =>
+      ctx.db
+        .query("domainEvents")
+        .withIndex("by_name", (q) =>
+          q.eq("name", name).gte("occurredAt", since),
+        )
+        .order("desc")
+        .take(PER_NAME_CAP),
+    ),
+  );
+  const candidates = new Map<string, Candidate>();
+  for (const batch of eventBatches) {
+    for (const event of batch) {
+      for (const row of await activityRowsOf(ctx, event)) {
+        if (!audience.has(row.actorId)) continue;
+        const known = candidates.get(`${row.kind}:${row.ref}`);
+        if (known) known.copyIds.push(...(row.copyIds ?? []));
+        else candidates.set(`${row.kind}:${row.ref}`, toCandidate(row));
+      }
+    }
+  }
+  return [...candidates.values()];
+};
+
+// Whether the viewer may see this actor's entries: their own, or another member's profile content
+// (a public profile or mutual followers; never across a block). Checked once per distinct actor.
+const actorUnlocked = async (
+  ctx: QueryCtx,
+  actor: string,
+  gates: Gates,
+): Promise<boolean> => {
+  if (actor === (gates.viewerId as string)) return true;
+  let unlocked = gates.profileUnlocked.get(actor);
+  if (unlocked === undefined) {
+    unlocked = await canSeeProfileContent(
+      ctx,
+      gates.viewerId,
+      actor as unknown as Id<"users">,
+    );
+    gates.profileUnlocked.set(actor, unlocked);
+  }
+  return unlocked;
+};
+
+// The viewer gates, the same for both sources. Applied to each chunk of candidates in turn; `gates`
+// carries what earlier chunks decided.
+const gateCandidates = async (
+  ctx: QueryCtx,
+  candidates: Candidate[],
+  gates: Gates,
+): Promise<Candidate[]> => {
+  const viewer = gates.viewerId as string;
+  // Every entry of ANOTHER member needs the profile-content unlock (SEC-43): the viewer sees an
+  // actor's completions, exchanges, adds and starts only while canSeeProfileContent holds, so
+  // following a private member one way unlocks nothing. The kind-specific rules below only narrow
+  // this further. An exchange is the activity of both parties: it shows under the first party of
+  // the audience the viewer may see (the initiator when that is both), so it must be decided BEFORE
+  // the (kind, ref) dedupe, and the viewer's own side survives when the counterparty's is hidden.
+  const permitted: Candidate[] = [];
+  for (const c of candidates) {
+    const actors: string[] = c.partyIds?.filter((id) =>
+      gates.audience.has(id),
+    ) ?? [c.entry.memberId as string];
+    for (const actor of actors) {
+      if (!(await actorUnlocked(ctx, actor, gates))) continue;
+      permitted.push({
+        ...c,
+        entry: { ...c.entry, memberId: asMember(actor) },
+      });
+      break;
+    }
+  }
+
+  // One activity per (kind, ref): an exchange is attributed to BOTH parties, so a viewer who is a
+  // party AND follows the counterparty would otherwise see it twice. Keep the first occurrence.
+  // A future-dated start hasn't begun; don't announce it (spec §2).
+  const fresh = permitted.filter((c) => {
+    const key = keyOf(c.entry);
+    if (gates.seen.has(key)) return false;
+    gates.seen.add(key);
+    return c.startDate === undefined || c.startDate <= gates.now;
+  });
+
+  // "started" is OPT-IN and FRIENDS-ONLY (spec §4): the actor must have shareInProgress === true
+  // (tri-state; absent = off) AND be a mutual follower of the viewer. The viewer's own starts are
+  // exempt. Checked once per distinct actor.
+  const startedActorIds = [
+    ...new Set(
+      fresh
+        .map((c) => c.entry)
+        .filter(
+          (e) =>
+            e.kind === "started" &&
+            (e.memberId as string) !== viewer &&
+            !gates.startedAllowed.has(e.memberId as string),
+        )
+        .map((e) => e.memberId as string),
+    ),
+  ];
+  for (const [id, allowed] of await Promise.all(
+    startedActorIds.map(async (id) => {
+      const actorId = id as unknown as Id<"users">;
+      const prefs = await ctx.db
+        .query("solvingPreferences")
+        .withIndex("by_member", (q) => q.eq("memberId", actorId))
+        .unique();
+      if (prefs?.shareInProgress !== true) return [id, false] as const;
+      return [
+        id,
+        await areMutualFollowers(ctx, gates.viewerId, actorId),
+      ] as const;
+    }),
+  )) {
+    gates.startedAllowed.set(id, allowed);
+  }
+  const visible = fresh.filter(
+    (c) =>
+      c.entry.kind !== "started" ||
+      (c.entry.memberId as string) === viewer ||
+      gates.startedAllowed.get(c.entry.memberId as string) === true,
+  );
+
+  // An acquisition (single or grouped batch) shows only the copies THIS viewer may see; one with
+  // none is dropped.
+  await visibleAcquiredCopies(ctx, visible.filter(isAcquisition), gates);
+  return visible.filter(
+    (c) =>
+      !isAcquisition(c) ||
+      (gates.acquiredCopies.get(c.entry.ref)?.length ?? 0) > 0,
+  );
+};
+
+const isAcquisition = (c: Candidate) =>
+  c.entry.kind === "acquisition" || c.entry.kind === "acquisitionBatch";
+
+// The copies of each acquisition entry (a single add or a grouped batch) that the viewer may see,
+// in pick order (a batch's copies are created in the order they were picked). Same two gates as the
+// member's profile puzzles (listProfileCopies), which the entry links to: the profile unlock rule
+// (self, public profile, or mutual follower; already passed in gateCandidates), then the per-copy
 // canViewCopy gate. A copy that was deleted or has since changed hands no longer counts toward the
 // actor's entry.
 const visibleAcquiredCopies = async (
   ctx: QueryCtx,
-  viewerId: Id<"users">,
-  acquisitionEntries: ActivityEntry[],
-  entryCopyIds: Map<string, string[]>,
-): Promise<Map<string, Doc<"ownedPuzzles">[]>> => {
-  const result = new Map<string, Doc<"ownedPuzzles">[]>();
+  acquisitions: Candidate[],
+  gates: Gates,
+): Promise<void> => {
   // Sequential: the context's ownerVisibility memo isn't safe to share across a Promise.all.
-  let context: CopyViewContext | null = null;
-  for (const entry of acquisitionEntries) {
+  for (const { entry, copyIds } of acquisitions) {
     const actorId = entry.memberId as unknown as Id<"users">;
-    const isSelf = actorId === viewerId;
-    if (!isSelf && !(await canSeeProfileContent(ctx, viewerId, actorId))) {
-      result.set(entry.ref, []);
-      continue;
-    }
-    // Collected newest-first from the event read; reverse for the order they were picked in.
-    const copyIds = [...(entryCopyIds.get(entry.ref) ?? [])].reverse();
+    const isSelf = actorId === gates.viewerId;
     const copies: Doc<"ownedPuzzles">[] = [];
     for (const copyId of copyIds) {
       const copy = await ctx.db
@@ -300,14 +442,15 @@ const visibleAcquiredCopies = async (
         .unique();
       if (!copy || copy.ownerId !== actorId) continue;
       if (!isSelf) {
-        context ??= await buildCopyViewContext(ctx, viewerId);
-        if (!(await canViewCopyWithContext(ctx, copy, context))) continue;
+        gates.copyView ??= await buildCopyViewContext(ctx, gates.viewerId);
+        if (!(await canViewCopyWithContext(ctx, copy, gates.copyView)))
+          continue;
       }
       copies.push(copy);
     }
-    result.set(entry.ref, copies);
+    copies.sort((a, b) => a._creationTime - b._creationTime);
+    gates.acquiredCopies.set(entry.ref, copies);
   }
-  return result;
 };
 
 // The grouped entry's payload: the visible count and the first few covers. Covers are resolved
@@ -354,6 +497,7 @@ const resolveTarget = async (
   ctx: QueryCtx,
   viewerId: Id<"users">,
   entry: ActivityEntry,
+  partyIds: Id<"users">[] | undefined,
   acquiredCopies: Map<string, Doc<"ownedPuzzles">[]>,
   actorLinkable: boolean,
   context: { copyView: CopyViewContext | null },
@@ -407,13 +551,8 @@ const resolveTarget = async (
         ? { kind: "definition", id: puzzle._id as string }
         : undefined;
     }
-    case "exchange": {
-      const row = await loadExchange(ctx, entry.ref);
-      const isParty =
-        row !== null &&
-        (row.initiatorId === viewerId || row.recipientId === viewerId);
-      return isParty ? { kind: "trades" } : undefined;
-    }
+    case "exchange":
+      return partyIds?.includes(viewerId) ? { kind: "trades" } : undefined;
     default:
       return undefined;
   }
@@ -449,16 +588,6 @@ const resolveActor = async (
 };
 
 const asMember = (id: string): MemberId => toMemberId(id);
-
-// Resolve a persisted exchange from its ExchangeId aggregateId so we can attribute the parties.
-const loadExchange = (
-  ctx: QueryCtx,
-  aggregateId: string,
-): Promise<Doc<"exchanges"> | null> =>
-  ctx.db
-    .query("exchanges")
-    .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", aggregateId))
-    .unique();
 
 const toActivityEntryView = (
   entry: ActivityEntry,

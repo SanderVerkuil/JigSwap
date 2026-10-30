@@ -30,8 +30,8 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-const newT = (): T => {
-  const t = convexTest(schema, modules);
+const newT = (transactionLimits?: { documentsRead: number }): T => {
+  const t = convexTest({ schema, modules, transactionLimits });
   presenceTest.register(t);
   return t;
 };
@@ -93,6 +93,15 @@ const seed = (t: T) =>
       definitions.push(aggregateId);
     }
     return { alice, bob, carol, definitions, puzzleIds };
+  });
+
+const follow = (t: T, follower: Id<"users">, followee: Id<"users">) =>
+  t.run(async (ctx) => {
+    await ctx.db.insert("follows", {
+      followerId: follower,
+      followeeId: followee,
+      createdAt: Date.now(),
+    });
   });
 
 // One acquireCopy call; `open` lists it for trade so a non-owner may view it (canViewCopy).
@@ -184,6 +193,32 @@ const eventsNamed = (t: T, name: string) =>
       .withIndex("by_name", (q) => q.eq("name", name))
       .collect(),
   );
+
+type BackfillLine = {
+  dry_run: boolean;
+  is_done: boolean;
+  totals: { events: number; inserted: number; updated: number };
+};
+// The backfill's log lines, oldest first.
+const backfillLines = (): BackfillLine[] =>
+  logs
+    .filter((line) => line.includes('"social.backfillActivityEntries"'))
+    .map((line) => JSON.parse(line.slice(line.indexOf("{"))) as BackfillLine);
+
+const runBackfill = async (
+  t: T,
+  args: { dryRun?: boolean; batchSize?: number } = {},
+) => {
+  await t.mutation(
+    internal.social.backfillActivityEntries.backfillActivityEntries,
+    args,
+  );
+  await settleDueJobs(t);
+  const lines = backfillLines();
+  const last = lines[lines.length - 1];
+  expect(last?.is_done).toBe(true);
+  return last!.totals;
+};
 
 describe("activity projection — written by the event dispatcher", () => {
   test("each feed event becomes one row per actor; backfill-style solves never do", async () => {
@@ -507,32 +542,6 @@ describe("activity projection — account purge", () => {
 });
 
 describe("activity projection — backfill", () => {
-  type BackfillLine = {
-    dry_run: boolean;
-    is_done: boolean;
-    totals: { events: number; inserted: number; updated: number };
-  };
-  // The backfill's log lines, oldest first.
-  const backfillLines = (): BackfillLine[] =>
-    logs
-      .filter((line) => line.includes('"social.backfillActivityEntries"'))
-      .map((line) => JSON.parse(line.slice(line.indexOf("{"))) as BackfillLine);
-
-  const runBackfill = async (
-    t: T,
-    args: { dryRun?: boolean; batchSize?: number } = {},
-  ) => {
-    await t.mutation(
-      internal.social.backfillActivityEntries.backfillActivityEntries,
-      args,
-    );
-    await settleDueJobs(t);
-    const lines = backfillLines();
-    const last = lines[lines.length - 1];
-    expect(last?.is_done).toBe(true);
-    return last!.totals;
-  };
-
   const readyFlag = (t: T) =>
     t.run((ctx) =>
       ctx.db
@@ -691,5 +700,539 @@ describe("activity projection — backfill", () => {
     });
     await runBackfill(t);
     expect(await projectedRows(t)).toEqual(dispatched);
+  });
+});
+
+// ---- The feed's read of the projection ----
+
+const feedOf = (t: T, viewer: string, limit?: number) =>
+  asUser(t, viewer).query(
+    api.social.getActivityFeed.getActivityFeed,
+    limit === undefined ? {} : { limit },
+  );
+type Feed = Awaited<ReturnType<typeof feedOf>>;
+
+// The readModelStatus flag the backfill's last batch writes; set or cleared directly here.
+const setReady = (t: T, ready: boolean) =>
+  t.run(async (ctx) => {
+    const row = await ctx.db
+      .query("readModelStatus")
+      .withIndex("by_name", (q) => q.eq("name", "activityEntries"))
+      .unique();
+    if (ready && !row) {
+      await ctx.db.insert("readModelStatus", {
+        name: "activityEntries",
+        completedAt: Date.now(),
+      });
+    }
+    if (!ready && row) await ctx.db.delete(row._id);
+  });
+
+// Entries that share a millisecond may come out in either order; compare them in a fixed one.
+const canonical = (feed: Feed) =>
+  [...feed].sort(
+    (a, b) =>
+      b.occurredAt - a.occurredAt ||
+      a.kind.localeCompare(b.kind) ||
+      a.ref.localeCompare(b.ref),
+  );
+
+// `viewer`'s feed read the legacy way (domainEvents) and from the read model; they must agree.
+const compareBothWays = async (t: T, viewer: string, limit?: number) => {
+  await setReady(t, false);
+  const legacy = await feedOf(t, viewer, limit);
+  await setReady(t, true);
+  const projected = await feedOf(t, viewer, limit);
+  expect(canonical(projected)).toEqual(canonical(legacy));
+  expect(projected.map((e) => e.occurredAt)).toEqual(
+    [...projected.map((e) => e.occurredAt)].sort((a, b) => b - a),
+  );
+  return projected;
+};
+
+// The same, once the dispatcher has projected every event.
+const feedBothWays = async (t: T, viewer: string, limit?: number) => {
+  await settleDueJobs(t);
+  return compareBothWays(t, viewer, limit);
+};
+
+const refsOf = (feed: Feed, kind: string) =>
+  feed.filter((e) => e.kind === kind).map((e) => e.ref);
+
+const addMallory = (t: T) =>
+  t.run((ctx) =>
+    ctx.db.insert("users", {
+      clerkId: "clerk_mallory",
+      email: "mallory@example.com",
+      name: "mallory",
+      isActive: true,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }),
+  );
+
+describe("activity feed — reads the projection once backfilled (SEC-30)", () => {
+  test("a flood of another member's events no longer hides a followee's activity", async () => {
+    const t = newT();
+    const { alice, bob, carol, definitions, puzzleIds } = await seed(t);
+    const mallory = await addMallory(t);
+    await follow(t, alice, bob);
+    await follow(t, bob, alice);
+    await asUser(t, "bob").mutation(
+      api.solving.setShareInProgress.setShareInProgress,
+      { enabled: true },
+    );
+    const copy = await addCopy(t, "bob", definitions[0], true);
+    const { completionId } = await asUser(t, "bob").mutation(
+      api.solving.recordCompletion.recordCompletion,
+      {
+        copyId: copy,
+        startDate: Date.now() - 2 * HOUR,
+        endDate: Date.now() - HOUR,
+      },
+    );
+    const started = await asUser(t, "bob").mutation(
+      api.solving.startCompletion.startCompletion,
+      { copyId: copy, startDate: Date.now() - HOUR },
+    );
+    const exchange = await completeExchange(t, bob, carol, puzzleIds[5]);
+    await settleDueJobs(t);
+    const bobs = [
+      ["acquisition", copy],
+      ["completion", completionId],
+      ["exchange", exchange],
+      ["started", started],
+    ];
+    const bobsIn = (feed: Feed) =>
+      feed
+        .filter((e) => e.memberId === bob)
+        .map((e) => [e.kind, e.ref])
+        .sort((a, b) => a[0].localeCompare(b[0]));
+    expect(bobsIn(await feedOf(t, "alice"))).toEqual(bobs);
+
+    // Mallory, whom Alice does not follow, logs 500 newer events of every feed name. Inserted
+    // directly: the daily caps would stop a real client sooner, which is not the point here.
+    const floodAt = Date.now() + 1000;
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 500; i++) {
+        const occurredAt = floodAt + i;
+        const payloads: [string, Record<string, unknown>][] = [
+          ["CompletionRecorded", { userId: mallory, completionId: `fc-${i}` }],
+          [
+            "CompletionStarted",
+            { userId: mallory, completionId: `fs-${i}`, startDate: 0 },
+          ],
+          ["CopyAcquired", { ownerId: mallory, copyId: `fa-${i}` }],
+          ["ExchangeCompleted", { exchangeId: `fx-${i}` }],
+        ];
+        for (const [name, payload] of payloads) {
+          await ctx.db.insert("domainEvents", {
+            name,
+            payload,
+            occurredAt,
+            context: "test",
+            processedAt: occurredAt,
+          });
+        }
+      }
+    });
+    // Before the backfill the feed still reads the global window: Bob's activity is gone.
+    expect(bobsIn(await feedOf(t, "alice"))).toEqual([]);
+
+    await runBackfill(t);
+    expect(bobsIn(await feedOf(t, "alice"))).toEqual(bobs);
+  });
+
+  test("a followee's hidden entries take only their own share of the read", async () => {
+    const t = newT();
+    const { alice, bob, definitions } = await seed(t);
+    const mallory = await addMallory(t);
+    await follow(t, alice, bob);
+    await follow(t, alice, mallory);
+    const copy = await addCopy(t, "bob", definitions[0], true);
+    await settleDueJobs(t);
+    // 600 newer acquisitions of copies Alice cannot see (they no longer exist).
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 600; i++) {
+        await ctx.db.insert("activityEntries", {
+          actorId: mallory,
+          kind: "acquisition",
+          ref: `gone-${i}`,
+          occurredAt: Date.now() + 1000 + i,
+        });
+      }
+    });
+    await setReady(t, true);
+
+    expect(refsOf(await feedOf(t, "alice"), "acquisition")).toEqual([copy]);
+  });
+
+  test("the feed's reads do not grow with other members' activity", async () => {
+    const t = newT({ documentsRead: 300 });
+    const { alice, bob, definitions } = await seed(t);
+    await follow(t, alice, bob);
+    const copy = await addCopy(t, "bob", definitions[0], true);
+    await settleDueJobs(t);
+    // 40 members Alice does not follow, 75 events and projected rows each.
+    await t.run(async (ctx) => {
+      for (let m = 0; m < 40; m++) {
+        const actorId = await ctx.db.insert("users", {
+          clerkId: `clerk_other_${m}`,
+          name: `other ${m}`,
+          isActive: true,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        });
+        for (let i = 0; i < 75; i++) {
+          const occurredAt = Date.now() + 1000 + i;
+          await ctx.db.insert("domainEvents", {
+            name: "CompletionRecorded",
+            payload: { userId: actorId, completionId: `o-${m}-${i}` },
+            occurredAt,
+            context: "test",
+            processedAt: occurredAt,
+          });
+          await ctx.db.insert("activityEntries", {
+            actorId,
+            kind: "completion",
+            ref: `o-${m}-${i}`,
+            occurredAt,
+          });
+        }
+      }
+    });
+
+    await setReady(t, true);
+    expect(refsOf(await feedOf(t, "alice"), "acquisition")).toEqual([copy]);
+    // The legacy path reads the global window and runs out of reads.
+    await setReady(t, false);
+    await expect(feedOf(t, "alice")).rejects.toThrow(/too many documents/);
+  });
+
+  test("the limit is clamped to 1..50 on both paths", async () => {
+    const t = newT();
+    const { alice } = await seed(t);
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 60; i++) {
+        const occurredAt = Date.now() - i * 1000;
+        await ctx.db.insert("domainEvents", {
+          name: "CompletionRecorded",
+          payload: { userId: alice, completionId: `c-${i}` },
+          occurredAt,
+          context: "test",
+          processedAt: occurredAt,
+        });
+      }
+    });
+    await runBackfill(t);
+
+    for (const [limit, expected] of [
+      [1000, 50],
+      [0, 1],
+      [-5, 1],
+      [2.7, 2],
+    ]) {
+      const feed = await compareBothWays(t, "alice", limit);
+      expect(feed).toHaveLength(expected);
+    }
+    expect(await compareBothWays(t, "alice")).toHaveLength(50);
+  });
+});
+
+describe("activity feed — the projection shows what the legacy read showed", () => {
+  test("single adds: a follower sees the open ones, the owner all", async () => {
+    const t = newT();
+    const { alice, bob, definitions } = await seed(t);
+    await follow(t, bob, alice);
+    const open = await addCopy(t, "alice", definitions[0], true);
+    const closed = await addCopy(t, "alice", definitions[1], false);
+
+    expect(refsOf(await feedBothWays(t, "bob"), "acquisition")).toEqual([open]);
+    expect(
+      refsOf(await feedBothWays(t, "alice"), "acquisition").sort(),
+    ).toEqual([open, closed].sort());
+  });
+
+  test("a batch is one entry counting the copies the viewer may see, covers in pick order", async () => {
+    const t = newT();
+    const { alice, bob, definitions } = await seed(t);
+    await follow(t, bob, alice);
+    const { copyIds } = await asUser(t, "alice").mutation(
+      api.library.acquireCopies.acquireCopies,
+      {
+        items: definitions.slice(0, 5).map((puzzleDefinitionId, index) => ({
+          puzzleDefinitionId,
+          forTrade: index < 2,
+        })),
+      },
+    );
+
+    const [theirs] = (await feedBothWays(t, "bob")).filter(
+      (e) => e.kind === "acquisitionBatch",
+    );
+    expect(theirs.batch?.count).toBe(2);
+    expect(theirs.batch?.covers.map((c) => c.copyId)).toEqual(
+      copyIds.slice(0, 2),
+    );
+    const mine = (await feedBothWays(t, "alice")).filter(
+      (e) => e.kind === "acquisitionBatch",
+    );
+    expect(mine).toHaveLength(1);
+    expect(mine[0].batch?.count).toBe(5);
+    expect(mine[0].batch?.covers.map((c) => c.copyId)).toEqual(
+      copyIds.slice(0, 4),
+    );
+  });
+
+  test("dated solves show; year-only and past-solves batches never do", async () => {
+    const t = newT();
+    const { alice, bob, definitions } = await seed(t);
+    await follow(t, bob, alice);
+    const copy = await addCopy(t, "alice", definitions[0], true);
+    const { completionId: dated } = await asUser(t, "alice").mutation(
+      api.solving.recordCompletion.recordCompletion,
+      {
+        copyId: copy,
+        startDate: Date.now() - 2 * HOUR,
+        endDate: Date.now() - HOUR,
+      },
+    );
+    await asUser(t, "alice").mutation(
+      api.solving.recordCompletion.recordCompletion,
+      { copyId: copy, datePrecision: "year", year: 2020 },
+    );
+    await asUser(t, "alice").mutation(
+      api.solving.recordPastCompletions.recordPastCompletions,
+      {
+        items: [{ copyId: copy, datePrecision: "day", date: Date.now() - DAY }],
+      },
+    );
+
+    for (const viewer of ["bob", "alice"]) {
+      expect(refsOf(await feedBothWays(t, viewer), "completion")).toEqual([
+        dated,
+      ]);
+    }
+  });
+
+  test("a start shows to mutual followers of an opted-in actor, once its day has come", async () => {
+    const t = newT();
+    const { alice, bob, definitions } = await seed(t);
+    await follow(t, bob, alice);
+    const copy = await addCopy(t, "alice", definitions[0], true);
+    const past = await asUser(t, "alice").mutation(
+      api.solving.startCompletion.startCompletion,
+      { copyId: copy, startDate: Date.now() - HOUR },
+    );
+    const future = await asUser(t, "alice").mutation(
+      api.solving.startCompletion.startCompletion,
+      { copyId: copy, startDate: Date.now() + DAY },
+    );
+
+    // Not opted in.
+    expect(refsOf(await feedBothWays(t, "bob"), "started")).toEqual([]);
+    // Opted in, but Bob only follows Alice one way.
+    await asUser(t, "alice").mutation(
+      api.solving.setShareInProgress.setShareInProgress,
+      { enabled: true },
+    );
+    expect(refsOf(await feedBothWays(t, "bob"), "started")).toEqual([]);
+    // Mutual: the start that has begun shows, to Bob and to Alice herself.
+    await follow(t, alice, bob);
+    expect(refsOf(await feedBothWays(t, "bob"), "started")).toEqual([past]);
+    expect(refsOf(await feedBothWays(t, "alice"), "started")).toEqual([past]);
+
+    // Two days on, the other start has begun too.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(Date.now() + 2 * DAY);
+    expect(refsOf(await compareBothWays(t, "bob"), "started").sort()).toEqual(
+      [past, future].sort(),
+    );
+  });
+
+  test("pages stay full when newer entries are gated out", async () => {
+    const t = newT();
+    const { alice, bob, carol, definitions } = await seed(t);
+    // Bob follows Carol one way (she never opts in) and is mutual with opted-in Alice.
+    await follow(t, bob, carol);
+    await follow(t, bob, alice);
+    await follow(t, alice, bob);
+    await asUser(t, "alice").mutation(
+      api.solving.setShareInProgress.setShareInProgress,
+      { enabled: true },
+    );
+    // Their copies, seeded without an acquisition entry: only starts are in the feed.
+    const [alicesCopy, carolsCopy] = await t.run(async (ctx) => {
+      const puzzleId = (await ctx.db.query("puzzles").first())!._id;
+      return Promise.all(
+        [alice, carol].map(async (ownerId) => {
+          const aggregateId = crypto.randomUUID();
+          await ctx.db.insert("ownedPuzzles", {
+            aggregateId,
+            puzzleDefinitionId: definitions[0],
+            puzzleId,
+            ownerId,
+            condition: "good",
+            availability: { forTrade: false, forSale: false, forLend: false },
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          });
+          return aggregateId;
+        }),
+      );
+    });
+    const start = (who: string, copyId: string, at: number) =>
+      asUser(t, who).mutation(api.solving.startCompletion.startCompletion, {
+        copyId,
+        startDate: at,
+      });
+    for (const hours of [5, 4, 3]) {
+      await start("alice", alicesCopy, Date.now() - hours * HOUR);
+    }
+    // Carol's two starts are the newest entries in Bob's feed, and both are hidden from him.
+    await start("carol", carolsCopy, Date.now() - 2 * HOUR);
+    await start("carol", carolsCopy, Date.now() - HOUR);
+    await settleDueJobs(t);
+    // One millisecond apart, in the order they were logged, in the log and in the read model, so
+    // the page boundary is unambiguous.
+    await t.run(async (ctx) => {
+      const base = Date.now() - 10_000;
+      const events = await ctx.db
+        .query("domainEvents")
+        .withIndex("by_name", (q) => q.eq("name", "CompletionStarted"))
+        .collect();
+      const rows = await ctx.db.query("activityEntries").collect();
+      for (const [i, event] of events.entries()) {
+        const ref = (event.payload as { completionId: string }).completionId;
+        const row = rows.find((r) => r.kind === "started" && r.ref === ref)!;
+        await ctx.db.patch(event._id, { occurredAt: base + i });
+        await ctx.db.patch(row._id, { occurredAt: base + i });
+      }
+    });
+
+    const feed = await compareBothWays(t, "bob", 3);
+    expect(feed.map((e) => [e.kind, e.memberId])).toEqual([
+      ["started", alice],
+      ["started", alice],
+      ["started", alice],
+    ]);
+  });
+
+  test("an exchange shows once, under its initiator, and links only a party", async () => {
+    const t = newT();
+    const { alice, bob, carol, puzzleIds } = await seed(t);
+    await follow(t, bob, alice);
+    await follow(t, carol, alice);
+    const byAlice = await completeExchange(t, alice, bob, puzzleIds[5]);
+    const byBob = await completeExchange(
+      t,
+      bob,
+      alice,
+      puzzleIds[4],
+      Date.now() - HOUR,
+    );
+
+    const exchanges = async (viewer: string) =>
+      (await feedBothWays(t, viewer))
+        .filter((e) => e.kind === "exchange")
+        .map((e) => [e.ref, e.memberId, e.target]);
+    expect(await exchanges("bob")).toEqual([
+      [byAlice, alice, { kind: "trades" }],
+      [byBob, bob, { kind: "trades" }],
+    ]);
+    // Carol follows only Alice and is no party.
+    expect(await exchanges("carol")).toEqual([
+      [byAlice, alice, undefined],
+      [byBob, alice, undefined],
+    ]);
+  });
+
+  test("a private member's entries need the profile unlock, and a viewer's own side of their exchange survives (SEC-43)", async () => {
+    const t = newT();
+    const { alice, bob, carol, definitions, puzzleIds } = await seed(t);
+    await t.run(async (ctx) => {
+      await ctx.db.insert("profiles", {
+        memberId: alice,
+        visibility: "private",
+        updatedAt: Date.now(),
+      });
+    });
+    await follow(t, bob, alice);
+    await follow(t, carol, alice);
+    await follow(t, carol, bob);
+    const trade = await completeExchange(t, alice, bob, puzzleIds[5]);
+    await addCopy(t, "alice", definitions[0], true);
+
+    const entries = async (viewer: string) =>
+      (await feedBothWays(t, viewer)).map((e) => [
+        e.kind,
+        e.ref,
+        e.memberId,
+        e.target,
+      ]);
+    // Bob follows Alice one way: only his own side of their trade, under himself.
+    expect(await entries("bob")).toEqual([
+      ["exchange", trade, bob, { kind: "trades" }],
+    ]);
+    // Carol follows both and is no party: it shows under the party she may see.
+    expect(await entries("carol")).toEqual([
+      ["exchange", trade, bob, undefined],
+    ]);
+    // Mutual following unlocks Alice: the trade is back under its initiator.
+    await follow(t, alice, bob);
+    expect(
+      (await entries("bob")).filter(([kind]) => kind === "exchange"),
+    ).toEqual([["exchange", trade, alice, { kind: "trades" }]]);
+  });
+
+  test("a blocked actor drops out", async () => {
+    const t = newT();
+    const { alice, bob, carol, definitions } = await seed(t);
+    await follow(t, bob, alice);
+    await follow(t, bob, carol);
+    await addCopy(t, "alice", definitions[0], true);
+    const carols = await addCopy(t, "carol", definitions[1], true);
+    await t.run(async (ctx) => {
+      await ctx.db.insert("blocks", {
+        blockerId: alice,
+        blockedId: bob,
+        createdAt: Date.now(),
+      });
+    });
+
+    const feed = await feedBothWays(t, "bob");
+    expect(feed.map((e) => e.memberId)).toEqual([carol]);
+    expect(refsOf(feed, "acquisition")).toEqual([carols]);
+  });
+
+  test("deleted and transferred copies drop out of their acquisition", async () => {
+    const t = newT();
+    const { alice, bob, carol, definitions } = await seed(t);
+    await follow(t, bob, alice);
+    const single = await addCopy(t, "alice", definitions[0], true);
+    const { copyIds } = await asUser(t, "alice").mutation(
+      api.library.acquireCopies.acquireCopies,
+      {
+        items: definitions.slice(1, 4).map((puzzleDefinitionId) => ({
+          puzzleDefinitionId,
+          forTrade: true,
+        })),
+      },
+    );
+    await t.run(async (ctx) => {
+      const row = (aggregateId: string) =>
+        ctx.db
+          .query("ownedPuzzles")
+          .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", aggregateId))
+          .unique();
+      await ctx.db.delete((await row(single))!._id);
+      await ctx.db.patch((await row(copyIds[0]))!._id, { ownerId: carol });
+    });
+
+    const feed = await feedBothWays(t, "bob");
+    expect(refsOf(feed, "acquisition")).toEqual([]);
+    const [batch] = feed.filter((e) => e.kind === "acquisitionBatch");
+    expect(batch.batch?.count).toBe(2);
+    expect(batch.batch?.covers.map((c) => c.copyId)).toEqual(copyIds.slice(1));
   });
 });
