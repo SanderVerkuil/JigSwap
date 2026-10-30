@@ -292,7 +292,7 @@ function EditProfileFormLoaded({
   };
 
   return (
-    <div className="grid gap-x-6 gap-y-4 border-b pb-6 sm:grid-cols-2">
+    <div className="grid grid-cols-1 gap-x-6 gap-y-4 border-b pb-6 sm:grid-cols-2">
       <div className="space-y-2">
         <Label htmlFor="profile-username">{t("username")}</Label>
         <Input
@@ -341,9 +341,9 @@ function EditProfileFormLoaded({
           {slugServerError ??
             (slugFormatError ? t("slug.formatError") : t("slug.hint"))}
         </p>
-        <p className="text-muted-foreground truncate text-xs">
+        <p className="text-muted-foreground text-xs">
           {t("slug.preview")}{" "}
-          <span className="font-mono">
+          <span className="font-mono break-all">
             {origin}/members/{slugPreviewHandle}
           </span>
         </p>
@@ -367,7 +367,7 @@ function EditProfileFormLoaded({
         </p>
       </div>
       <div className="flex items-start justify-between gap-4 rounded-lg border p-4 sm:col-span-2">
-        <div className="space-y-1">
+        <div className="min-w-0 space-y-1">
           <Label>{t("displayName.label")}</Label>
           <p className="text-muted-foreground text-sm">
             {t("displayName.helper", {
@@ -381,7 +381,7 @@ function EditProfileFormLoaded({
         <ProfileEditDialog />
       </div>
       <div className="flex items-start justify-between gap-4 rounded-lg border p-4 sm:col-span-2">
-        <div className="space-y-1">
+        <div className="min-w-0 space-y-1">
           <Label htmlFor="profile-visibility">{t("visibility.label")}</Label>
           <p className="text-muted-foreground text-sm">
             {t("visibility.helper")}
