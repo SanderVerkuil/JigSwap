@@ -122,12 +122,17 @@ import { threadRowByAggregateId } from "./readModelHelpers";
 //                longest-standing member, a sole member's is dissolved. Co-members already
 //                deleted leave first, so the promotion only lands on an active member.
 //   domainEvents (last; conversation/purgeMemberEvents) every finished event whose payload names
-//                them: their id becomes "deleted-member" and copied personal fields (email,
-//                clerkId, names, avatar, bio, location, notes, collection/category names) are
-//                dropped. An event keyed by a copy alone (CopyDetailsUpdated, with the owner's
-//                notes) loses those personal fields once its copy is gone, theirs (deleted by the
-//                copies phase) or anyone's. Pages EVENT_SCRUB_BATCH_SIZE events per run: it walks
-//                the whole log.
+//                them: their own activity-feed events (solves started and recorded, copies
+//                acquired) are deleted; in every other one their id becomes "deleted-member" and
+//                copied personal fields (email, clerkId, names, avatar, bio, location, notes,
+//                collection/category names) are dropped. Their event lookup rows
+//                (domainEventMembers) go with it. Once the lookup backfill has run
+//                (events/eventMembers) the phase reads only their events, by index,
+//                EVENT_INDEX_BATCH_SIZE per run. Before that it pages the whole log,
+//                EVENT_SCRUB_BATCH_SIZE events per run, and an event keyed by a copy alone
+//                (CopyDetailsUpdated with the owner's notes, recorded before
+//                events/recordAndSchedule left notes out) loses those personal fields once its
+//                copy is gone, theirs (deleted by the copies phase) or anyone's.
 //                Starts EVENT_SCRUB_DELAY_MS after the household phase, once the events the
 //                purge itself emitted have been dispatched.
 //                Admin, CSAM and moderation records are separate tables and stay unchanged.
@@ -140,7 +145,8 @@ import { threadRowByAggregateId } from "./readModelHelpers";
 
 /** Rows handled per run. */
 export const PURGE_BATCH_SIZE = 100;
-// The domainEvents phase reads the whole log and writes only the events that name the member.
+// The domainEvents phase, before the event lookup backfill has run, reads the whole log and writes
+// only the events that name the member (conversation/purgeMemberEvents).
 export const EVENT_SCRUB_BATCH_SIZE = 1000;
 // It starts this long after the phase before it, so events the earlier phases emitted (leaving the
 // household, deleting a circle) have finished dispatching, retries included (events/dispatch: 1 +

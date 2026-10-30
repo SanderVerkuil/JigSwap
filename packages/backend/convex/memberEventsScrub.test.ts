@@ -1,13 +1,20 @@
 import presenceTest from "@convex-dev/presence/test";
+import { CircleDeleted, toCircleId, toMemberId } from "@jigswap/domain";
 import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import {
   scrubDeletedCopyEvent,
+  scrubMemberEvents,
   scrubPayload,
 } from "./conversation/purgeMemberEvents";
 import { EVENT_SCRUB_DELAY_MS } from "./conversation/purgeMemberMessagingData";
+import {
+  EVENT_MEMBERS_BACKFILL,
+  recordEventMembers,
+} from "./events/eventMembers";
+import { recordAndSchedule } from "./events/recordAndSchedule";
 import schema from "./schema";
 
 // Account deletion, last phase (spec 2026-10-19 deleted member ghost, phase 9): every finished
@@ -225,7 +232,7 @@ describe("account deletion: domainEvents", () => {
     const ids: Id<"domainEvents">[] = [];
     for (let i = 0; i < 5; i++) {
       ids.push(
-        await insertEvent(t, "CopyAcquired", {
+        await insertEvent(t, "CopyMadeAvailable", {
           copyId: `copy-${i}`,
           ownerId: s.alice,
           notes: "from Jan",
@@ -360,5 +367,257 @@ describe("account deletion: events keyed by a copy alone", () => {
     });
     expect(outcome).toEqual({ dry: true, cached: [["copy-gone", false]] });
     expect(await payloadOf(t, id)).toEqual(details("copy-gone", "old note"));
+  });
+});
+
+describe("the event lookup (domainEventMembers)", () => {
+  const lookupOf = (t: T) =>
+    t.run(async (ctx) =>
+      (await ctx.db.query("domainEventMembers").collect()).map((row) => ({
+        eventId: row.eventId,
+        memberId: row.memberId,
+      })),
+    );
+
+  const markBackfilled = (t: T) =>
+    t.run((ctx) =>
+      ctx.db.insert("backfillMarkers", {
+        name: EVENT_MEMBERS_BACKFILL,
+        completedAt: Date.now(),
+      }),
+    );
+
+  // An event as recordAndSchedule leaves it: the row and one lookup row per member it names.
+  const insertIndexed = async (
+    t: T,
+    name: string,
+    payload: Record<string, unknown>,
+    dispatch: Dispatch = "processed",
+  ) => {
+    const id = await insertEvent(t, name, payload, dispatch);
+    await t.run((ctx) => recordEventMembers(ctx, id, payload));
+    return id;
+  };
+
+  const sorted = <R extends { eventId: string; memberId: string }>(rows: R[]) =>
+    [...rows].sort((a, b) =>
+      `${a.eventId}${a.memberId}`.localeCompare(`${b.eventId}${b.memberId}`),
+    );
+
+  test("recordAndSchedule writes one row per member the payload names", async () => {
+    const t = newT();
+    const s = await seedMembers(t);
+    await t.run(async (ctx) => {
+      await recordAndSchedule(ctx, "test", [
+        new CircleDeleted(
+          toCircleId("circle-1"),
+          toMemberId(s.alice),
+          [toMemberId(s.bob), toMemberId(s.alice)],
+          "Book club",
+          new Date(),
+        ),
+      ]);
+      // Only the lookup matters here, not the dispatch.
+      const jobs = await ctx.db.system.query("_scheduled_functions").collect();
+      for (const job of jobs) await ctx.scheduler.cancel(job._id);
+    });
+    const [event] = await t.run((ctx) =>
+      ctx.db.query("domainEvents").collect(),
+    );
+
+    expect(sorted(await lookupOf(t))).toEqual(
+      sorted([
+        { eventId: event._id, memberId: s.alice },
+        { eventId: event._id, memberId: s.bob },
+      ]),
+    );
+  });
+
+  test("the backfill adds the missing rows once, then marks itself done; a dry run writes nothing", async () => {
+    const t = newT();
+    const s = await seedMembers(t);
+    const legacy = await insertEvent(t, "CopyOwnershipTransferred", {
+      copyId: "copy-1",
+      previousOwner: s.alice,
+      newOwner: s.bob,
+    });
+    const unnamed = await insertEvent(t, "CopyMadeAvailable", {
+      copyId: "copy-1",
+    });
+    const recorded = await insertIndexed(t, "MemberFollowed", {
+      followId: "f-1",
+      followerId: s.bob,
+      followeeId: s.alice,
+    });
+    const before = await lookupOf(t);
+
+    const dry = await t.mutation(
+      internal.events.eventMembers.backfillEventMembers,
+      {},
+    );
+    expect(dry).toEqual({ scanned: 3, added: 2 });
+    expect(await lookupOf(t)).toEqual(before);
+    expect(
+      await t.run((ctx) => ctx.db.query("backfillMarkers").collect()),
+    ).toEqual([]);
+
+    await t.mutation(internal.events.eventMembers.backfillEventMembers, {
+      dryRun: false,
+      batchSize: 1,
+    });
+    await settleDueJobs(t);
+
+    expect(sorted(await lookupOf(t))).toEqual(
+      sorted([
+        { eventId: legacy, memberId: s.alice },
+        { eventId: legacy, memberId: s.bob },
+        { eventId: recorded, memberId: s.bob },
+        { eventId: recorded, memberId: s.alice },
+      ]),
+    );
+    expect((await lookupOf(t)).some((row) => row.eventId === unnamed)).toBe(
+      false,
+    );
+    const markers = await t.run((ctx) =>
+      ctx.db.query("backfillMarkers").collect(),
+    );
+    expect(markers.map((m) => m.name)).toEqual([EVENT_MEMBERS_BACKFILL]);
+
+    const again = await t.mutation(
+      internal.events.eventMembers.backfillEventMembers,
+      { dryRun: false },
+    );
+    expect(again).toEqual({ scanned: 3, added: 0 });
+    expect(
+      await t.run((ctx) => ctx.db.query("backfillMarkers").collect()),
+    ).toHaveLength(1);
+  });
+
+  describe.each([
+    ["before the lookup backfill (paging the log)", false],
+    ["after the lookup backfill (by index)", true],
+  ])("account deletion %s", (_label, backfilled) => {
+    test("her own feed events go, the rest is scrubbed, and her lookup rows go with them", async () => {
+      const t = newT();
+      const s = await seedMembers(t);
+      if (backfilled) await markBackfilled(t);
+      const solved = await insertIndexed(t, "CompletionRecorded", {
+        completionId: "c-1",
+        userId: s.alice,
+      });
+      const started = await insertIndexed(t, "CompletionStarted", {
+        completionId: "c-2",
+        userId: s.alice,
+      });
+      const acquired = await insertIndexed(t, "CopyAcquired", {
+        copyId: "copy-a",
+        ownerId: s.alice,
+      });
+      const bobsAcquired = await insertIndexed(t, "CopyAcquired", {
+        copyId: "copy-b",
+        ownerId: s.bob,
+      });
+      const transfer = await insertIndexed(t, "CopyOwnershipTransferred", {
+        copyId: "copy-c",
+        previousOwner: s.alice,
+        newOwner: s.bob,
+      });
+      const inFlight = await insertIndexed(
+        t,
+        "CompletionRecorded",
+        { completionId: "c-3", userId: s.alice },
+        "pending",
+      );
+
+      await t.mutation(internal.users.deleteUser, { id: "clerk_alice" });
+      await settleDueJobs(t);
+      expect(await runDelayedScrubs(t)).toBe(1);
+
+      const events = await t.run((ctx) =>
+        ctx.db.query("domainEvents").collect(),
+      );
+      const ids = events.map((e) => e._id);
+      expect(ids).not.toContain(solved);
+      expect(ids).not.toContain(started);
+      expect(ids).not.toContain(acquired);
+      expect(ids).toContain(bobsAcquired);
+      expect(ids).toContain(inFlight);
+      expect(await payloadOf(t, transfer)).toEqual({
+        copyId: "copy-c",
+        previousOwner: "deleted-member",
+        newOwner: s.bob,
+      });
+      // Bob's rows stay; of hers, only the in-flight event's, for a later run.
+      expect(sorted(await lookupOf(t))).toEqual(
+        sorted([
+          { eventId: bobsAcquired, memberId: s.bob },
+          { eventId: transfer, memberId: s.bob },
+          { eventId: inFlight, memberId: s.alice },
+        ]),
+      );
+    });
+  });
+
+  test("after the backfill the purge reads only her events: one the lookup misses is not visited", async () => {
+    const t = newT();
+    const s = await seedMembers(t);
+    await markBackfilled(t);
+    const indexed = await insertIndexed(t, "CopyMadeAvailable", {
+      copyId: "copy-1",
+      ownerId: s.alice,
+    });
+    const missed = await insertEvent(t, "CopyMadeAvailable", {
+      copyId: "copy-2",
+      ownerId: s.alice,
+    });
+
+    await t.mutation(internal.users.deleteUser, { id: "clerk_alice" });
+    await settleDueJobs(t);
+    await runDelayedScrubs(t);
+
+    expect(await payloadOf(t, indexed)).toEqual({
+      copyId: "copy-1",
+      ownerId: "deleted-member",
+    });
+    expect(await payloadOf(t, missed)).toEqual({
+      copyId: "copy-2",
+      ownerId: s.alice,
+    });
+  });
+
+  test("a purge that started paging the log finishes paging it when the backfill completes meanwhile", async () => {
+    const t = newT();
+    const s = await seedMembers(t);
+    const first = await insertEvent(t, "CopyMadeAvailable", {
+      copyId: "copy-1",
+      ownerId: s.alice,
+    });
+    const second = await insertEvent(t, "CopyMadeAvailable", {
+      copyId: "copy-2",
+      ownerId: s.alice,
+    });
+
+    const page1 = await t.run((ctx) =>
+      scrubMemberEvents(ctx, s.alice, { cursor: null, numItems: 1 }),
+    );
+    expect(page1.continueCursor.startsWith("scan:")).toBe(true);
+    await markBackfilled(t);
+    const page2 = await t.run((ctx) =>
+      scrubMemberEvents(ctx, s.alice, {
+        cursor: page1.continueCursor,
+        numItems: 1,
+      }),
+    );
+    expect(page2.continueCursor.startsWith("scan:")).toBe(true);
+
+    for (const [id, copyId] of [
+      [first, "copy-1"],
+      [second, "copy-2"],
+    ] as const) {
+      expect(await payloadOf(t, id)).toEqual({
+        copyId,
+        ownerId: "deleted-member",
+      });
+    }
   });
 });

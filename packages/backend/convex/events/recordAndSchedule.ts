@@ -1,6 +1,7 @@
 import type { DomainEvent } from "@jigswap/domain";
 import { internal } from "../_generated/api";
 import type { MutationCtx } from "../_generated/server";
+import { recordEventMembers } from "./eventMembers";
 
 /**
  * Event fields the durable log never keeps (SEC-71): free text a member typed (comment text, copy
@@ -48,19 +49,22 @@ const serializePayload = (event: DomainEvent): Record<string, unknown> => {
 // fan it out to subscribers. WHY split record + schedule: the row is written in the SAME
 // transaction as the emitting mutation (so an event is never lost if the mutation commits), while
 // the heavier subscriber work runs out-of-band via the scheduler — keeping the mutation fast and
-// the contexts decoupled.
+// the contexts decoupled. Each event's member lookup rows (events/eventMembers) are written in the
+// same transaction, so the account purge can find it by member.
 export const recordAndSchedule = async (
   ctx: MutationCtx,
   context: string,
   events: readonly DomainEvent[],
 ): Promise<void> => {
   for (const event of events) {
+    const payload = serializePayload(event);
     const eventId = await ctx.db.insert("domainEvents", {
       name: event.name,
-      payload: serializePayload(event),
+      payload,
       occurredAt: event.occurredAt.getTime(),
       context,
     });
+    await recordEventMembers(ctx, eventId, payload);
     await ctx.scheduler.runAfter(0, internal.events.dispatch.dispatch, {
       eventId,
     });

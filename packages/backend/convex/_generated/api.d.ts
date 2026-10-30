@@ -185,6 +185,7 @@ import type * as custody_subscriber from "../custody/subscriber.js";
 import type * as docs_listDocFeedback from "../docs/listDocFeedback.js";
 import type * as docs_submitDocFeedback from "../docs/submitDocFeedback.js";
 import type * as events_dispatch from "../events/dispatch.js";
+import type * as events_eventMembers from "../events/eventMembers.js";
 import type * as events_ingestDispatchFailure from "../events/ingestDispatchFailure.js";
 import type * as events_makeEventPublisher from "../events/makeEventPublisher.js";
 import type * as events_recordAndSchedule from "../events/recordAndSchedule.js";
@@ -761,6 +762,7 @@ declare const fullApi: ApiFromModules<{
   "docs/listDocFeedback": typeof docs_listDocFeedback;
   "docs/submitDocFeedback": typeof docs_submitDocFeedback;
   "events/dispatch": typeof events_dispatch;
+  "events/eventMembers": typeof events_eventMembers;
   "events/ingestDispatchFailure": typeof events_ingestDispatchFailure;
   "events/makeEventPublisher": typeof events_makeEventPublisher;
   "events/recordAndSchedule": typeof events_recordAndSchedule;

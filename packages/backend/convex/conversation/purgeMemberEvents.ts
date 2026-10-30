@@ -1,12 +1,17 @@
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
+import {
+  deleteEventMembers,
+  eventMembersBackfilled,
+} from "../events/eventMembers";
 
 // The last phase of the account-deletion purge (conversation/purgeMemberMessagingData; spec
 // 2026-10-19 deleted member ghost, phase 9): the durable event log (`domainEvents`) keeps no trace
-// that points at the deleted member. Admin, CSAM and moderation records live in their own tables
-// and are not touched here. Some events name no member at all, only a copy (CopyDetailsUpdated
-// carries the copy's free-text notes): those lose their personal fields once the copy is gone
-// (scrubDeletedCopyEvent).
+// that points at the deleted member. Their own activity-feed events go; every other event that
+// names them is scrubbed. Admin, CSAM and moderation records live in their own tables and are not
+// touched here. Some events name no member at all, only a copy (CopyDetailsUpdated carried the
+// copy's free-text notes before events/recordAndSchedule stopped recording them): those lose
+// their personal fields once the copy is gone (scrubDeletedCopyEvent).
 
 // What a scrubbed payload says where it named the member.
 export const DELETED_MEMBER = "deleted-member";
@@ -132,24 +137,119 @@ export const scrubDeletedCopyEvent = async (
   return true;
 };
 
+// The activity-feed events a member's own action recorded (social/getActivityFeed reads them by
+// name), with the payload field that names the acting member. They are deleted with the member, so
+// a departed member's solves and acquisitions leave their followers' feeds instead of lingering
+// there as a "deleted member" entry. ExchangeCompleted names no member (the feed reads its
+// parties from the exchange row) and stays.
+const OWN_FEED_EVENTS: Readonly<Record<string, string>> = {
+  CompletionRecorded: "userId",
+  CompletionStarted: "userId",
+  CopyAcquired: "ownerId",
+};
+
+const isOwnFeedEvent = (event: Doc<"domainEvents">, memberId: string) => {
+  const field = OWN_FEED_EVENTS[event.name];
+  const payload: unknown = event.payload;
+  return (
+    field !== undefined && isPlainObject(payload) && payload[field] === memberId
+  );
+};
+
 /**
- * One page of `domainEvents`: rewrite every payload that names the member, and drop the personal
- * fields of copy-keyed events whose copy is gone (scrubDeletedCopyEvent). Only dispatched events
- * are rewritten; an event still in flight is dispatched within seconds, and the backfill
- * (conversation/backfillDeletedMemberData) picks up such a straggler later.
+ * Take the member out of one dispatched event: their own feed event is deleted with its lookup
+ * rows; any other event that names them is scrubbed (scrubPayload) and loses their lookup row.
+ * Returns false, changing nothing, when the payload does not name them.
+ */
+const takeMemberOut = async (
+  ctx: MutationCtx,
+  event: Doc<"domainEvents">,
+  memberId: Id<"users">,
+): Promise<boolean> => {
+  const scrubbed = scrubPayload(event.payload, memberId);
+  if (scrubbed === null) return false;
+  if (isOwnFeedEvent(event, memberId)) {
+    await deleteEventMembers(ctx, event._id);
+    await ctx.db.delete(event._id);
+  } else {
+    await ctx.db.patch(event._id, { payload: scrubbed });
+    await deleteEventMembers(ctx, event._id, memberId);
+  }
+  return true;
+};
+
+// Lookup rows read per run in index mode: each costs the event read plus a few index reads and
+// writes, so a run takes fewer of them than events in a scan page.
+export const EVENT_INDEX_BATCH_SIZE = 200;
+
+// The phase's cursor says which walk it belongs to, so a purge that started paging the whole log
+// finishes that way even if the lookup backfill completes meanwhile. A cursor without a prefix is a
+// scan cursor from before the lookup existed.
+const SCAN = "scan:";
+const INDEX = "index:";
+
+const resume = async (
+  ctx: MutationCtx,
+  cursor: string | null,
+): Promise<{ mode: typeof SCAN | typeof INDEX; cursor: string | null }> => {
+  if (cursor === null) {
+    return {
+      mode: (await eventMembersBackfilled(ctx)) ? INDEX : SCAN,
+      cursor: null,
+    };
+  }
+  if (cursor.startsWith(INDEX)) {
+    return { mode: INDEX, cursor: cursor.slice(INDEX.length) };
+  }
+  if (cursor.startsWith(SCAN)) {
+    return { mode: SCAN, cursor: cursor.slice(SCAN.length) };
+  }
+  return { mode: SCAN, cursor };
+};
+
+/**
+ * One page of the member's events: their own feed events are deleted, every other payload that
+ * names them is scrubbed (takeMemberOut). Once the domainEventMembers backfill has finished
+ * (events/eventMembers), the page is the member's lookup rows (by_member), so the run touches only
+ * their events. Before that it is a page of the whole log, which also drops the personal fields of
+ * copy-keyed events whose copy is gone (scrubDeletedCopyEvent; such fields are no longer recorded,
+ * and events/redactPayloads strips older ones, so the index walk needs no such pass). Only
+ * dispatched events are rewritten; an event still in flight (with its lookup row) is dispatched
+ * within seconds, and the backfill (conversation/backfillDeletedMemberData) picks up such a
+ * straggler later.
  */
 export const scrubMemberEvents = async (
   ctx: MutationCtx,
   memberId: Id<"users">,
   opts: { cursor: string | null; numItems: number },
 ): Promise<{ isDone: boolean; continueCursor: string }> => {
-  const page = await ctx.db.query("domainEvents").paginate(opts);
+  const { mode, cursor } = await resume(ctx, opts.cursor);
+  if (mode === INDEX) {
+    const page = await ctx.db
+      .query("domainEventMembers")
+      .withIndex("by_member", (q) => q.eq("memberId", memberId))
+      .paginate({
+        cursor,
+        numItems: Math.min(opts.numItems, EVENT_INDEX_BATCH_SIZE),
+      });
+    for (const row of page.page) {
+      const event = await ctx.db.get(row.eventId);
+      if (event && !isDispatched(event)) continue;
+      if (!event || !(await takeMemberOut(ctx, event, memberId))) {
+        await ctx.db.delete(row._id); // its event is gone or no longer names them
+      }
+    }
+    return { isDone: page.isDone, continueCursor: INDEX + page.continueCursor };
+  }
+  const page = await ctx.db
+    .query("domainEvents")
+    .paginate({ cursor, numItems: opts.numItems });
   const copyExists: CopyExists = new Map();
   for (const event of page.page) {
     if (!isDispatched(event)) continue;
-    const payload = scrubPayload(event.payload, memberId);
-    if (payload !== null) await ctx.db.patch(event._id, { payload });
-    else await scrubDeletedCopyEvent(ctx, event, copyExists);
+    if (!(await takeMemberOut(ctx, event, memberId))) {
+      await scrubDeletedCopyEvent(ctx, event, copyExists);
+    }
   }
-  return page;
+  return { isDone: page.isDone, continueCursor: SCAN + page.continueCursor };
 };

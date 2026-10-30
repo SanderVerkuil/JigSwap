@@ -1940,6 +1940,26 @@ export default defineSchema({
     // a full-table scan-and-filter.
     .index("by_name", ["name", "occurredAt"]),
 
+  // Which members a domainEvents payload names: one row per (event, users id anywhere in the
+  // payload), written with the event by events/recordAndSchedule. The account purge finds a
+  // member's events through by_member instead of paging the whole log; rows recorded before this
+  // table existed are added by events/eventMembers backfillEventMembers, which writes the
+  // "domainEventMembers" backfill marker when done (until then the purge pages the log). A row
+  // goes with its event, or once the purge has scrubbed the member out of the payload.
+  domainEventMembers: defineTable({
+    eventId: v.id("domainEvents"),
+    memberId: v.id("users"),
+  })
+    .index("by_member", ["memberId"])
+    .index("by_event", ["eventId", "memberId"]),
+
+  // One row per finished one-shot backfill that code waits on before it relies on the data the
+  // backfill writes (name = the backfill, e.g. "domainEventMembers").
+  backfillMarkers: defineTable({
+    name: v.string(),
+    completedAt: v.number(),
+  }).index("by_name", ["name"]),
+
   // Chain-of-Custody projection: one row per OwnershipTransferred event, folded by the custody
   // subscriber off the durable event log. WHY a dedicated table: domainEvents.payload is v.any()
   // with no per-copy index, so transfer history is not queryable by copyId; this read-model makes
