@@ -55,8 +55,8 @@ export function IdentityHeader({
         </AvatarFallback>
       </Avatar>
 
-      <div className="min-w-0 flex-1">
-        <h2 className="font-heading text-3xl font-bold tracking-tight">
+      <div className="min-w-0 grow basis-48">
+        <h2 className="font-heading text-2xl font-bold tracking-tight [overflow-wrap:anywhere] sm:text-3xl">
           {displayName(member)}
         </h2>
         <div className="text-muted-foreground mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
@@ -84,7 +84,7 @@ export function IdentityHeader({
         )}
       </div>
 
-      <div className="flex items-center gap-2.5">
+      <div className="flex basis-full flex-wrap items-center gap-2.5 sm:basis-auto">
         {reputation && reputation.reviewCount > 0 && (
           <Badge className="bg-jigsaw-success border-transparent text-white">
             <Star aria-hidden className="fill-current" />
