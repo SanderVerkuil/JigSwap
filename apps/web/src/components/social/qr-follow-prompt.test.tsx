@@ -1,6 +1,8 @@
-import { ConvexQueryClient } from "@convex-dev/react-query";
+import { gateway, type Id } from "@/gateway";
+import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ConvexProviderWithAuth, ConvexReactClient } from "convex/react";
+import type { FunctionReturnType } from "convex/server";
 import { parseFragment, type DefaultTreeAdapterMap } from "parse5";
 import { renderToStaticMarkup } from "react-dom/server";
 import { IntlProvider } from "use-intl";
@@ -15,17 +17,33 @@ const useSignedIn = () => ({
   fetchAccessToken: async () => null,
 });
 
-const render = (locked: boolean, locale: "en" | "nl") => {
+type Relation = FunctionReturnType<typeof gateway.social.followRelation>;
+
+const memberId = "owner1" as Id<"users">;
+const none: Relation = {
+  following: false,
+  followsYou: false,
+  targetIsPrivate: false,
+  pendingRequest: null,
+};
+const privateOwner: Relation = { ...none, targetIsPrivate: true };
+
+// No network: SSR never runs effects, so the prompt only reads the seeded relation (`undefined`
+// leaves it unresolved, as while the query loads).
+const render = (relation: Relation | undefined, locale: "en" | "nl" = "en") => {
   const convex = new ConvexReactClient("https://example.convex.cloud");
   const convexQueryClient = new ConvexQueryClient(convex);
   const queryClient = new QueryClient({
     defaultOptions: {
-      queries: {
-        queryKeyHashFn: convexQueryClient.hashFn(),
-        queryFn: convexQueryClient.queryFn(),
-      },
+      queries: { queryKeyHashFn: convexQueryClient.hashFn() },
     },
   });
+  if (relation !== undefined) {
+    queryClient.setQueryData(
+      convexQuery(gateway.social.followRelation, { memberId }).queryKey,
+      relation,
+    );
+  }
   return renderToStaticMarkup(
     <ConvexProviderWithAuth client={convex} useAuth={useSignedIn}>
       <QueryClientProvider client={queryClient}>
@@ -34,7 +52,7 @@ const render = (locked: boolean, locale: "en" | "nl") => {
           messages={locale === "en" ? en : nl}
           timeZone="Europe/Amsterdam"
         >
-          <QrFollowPrompt token="tok" name="Ann" locked={locked} />
+          <QrFollowPrompt token="tok" name="Ann" memberId={memberId} />
         </IntlProvider>
       </QueryClientProvider>
     </ConvexProviderWithAuth>,
@@ -72,30 +90,67 @@ const textsOf = (html: string, tagName: string) =>
     .filter((el) => el.tagName === tagName)
     .map(textOf);
 
+const MUTUAL_PROMPT = "Ann shared their code with you — follow each other?";
+const REQUEST_PROMPT =
+  "Ann shared their code with you. Their profile is private, so this sends them a follow request.";
+
+// The copy must promise what social/acceptQrFollow will do for this viewer, so it follows the
+// server's rule (private owner who doesn't follow the viewer -> request, else mutual follow), and
+// the prompt stays away when a tap would change nothing.
 describe("QrFollowPrompt", () => {
   it("public profile: offers to follow each other", () => {
-    const html = render(false, "en");
-    expect(textsOf(html, "p")).toEqual([
-      "Ann shared their code with you — follow each other?",
-    ]);
+    const html = render(none);
+    expect(textsOf(html, "p")).toEqual([MUTUAL_PROMPT]);
+    expect(textsOf(html, "button")).toEqual(["Follow each other"]);
+  });
+
+  it("public profile the viewer already follows: the tap still follows each other", () => {
+    const html = render({ ...none, following: true });
     expect(textsOf(html, "button")).toEqual(["Follow each other"]);
   });
 
   it("private profile: says the tap only sends a follow request", () => {
-    const html = render(true, "en");
-    expect(textsOf(html, "p")).toEqual([
-      "Ann shared their code with you. Their profile is private, so this sends them a follow request.",
-    ]);
+    const html = render(privateOwner);
+    expect(textsOf(html, "p")).toEqual([REQUEST_PROMPT]);
     expect(textsOf(html, "button")).toEqual(["Request to follow"]);
   });
 
+  it("private owner who already follows the viewer: offers to follow each other", () => {
+    const html = render({ ...privateOwner, followsYou: true });
+    expect(textsOf(html, "p")).toEqual([MUTUAL_PROMPT]);
+    expect(textsOf(html, "button")).toEqual(["Follow each other"]);
+  });
+
+  it("stays away when a tap would change nothing", () => {
+    // The viewer already follows a private owner who doesn't follow back: the server does nothing.
+    expect(render({ ...privateOwner, following: true })).toBe("");
+    // A request (or a masked decline) is already waiting on the owner.
+    expect(
+      render({
+        ...privateOwner,
+        pendingRequest: { requestId: "r1", requestedAt: 1 },
+      }),
+    ).toBe("");
+    // Already following each other.
+    expect(render({ ...none, following: true, followsYou: true })).toBe("");
+    expect(render({ ...privateOwner, following: true, followsYou: true })).toBe(
+      "",
+    );
+    // The viewer blocked the owner: every token path is refused.
+    expect(render({ ...none, blockedByMe: true })).toBe("");
+  });
+
+  it("renders nothing until the relation is known", () => {
+    expect(render(undefined)).toBe("");
+  });
+
   it("speaks Dutch for both states", () => {
-    expect(textsOf(render(false, "nl"), "button")).toEqual(["Elkaar volgen"]);
-    const locked = render(true, "nl");
-    expect(textsOf(locked, "p")).toEqual([
+    expect(textsOf(render(none, "nl"), "button")).toEqual(["Elkaar volgen"]);
+    const request = render(privateOwner, "nl");
+    expect(textsOf(request, "p")).toEqual([
       "Ann heeft hun code met je gedeeld. Hun profiel is privé, dus hiermee stuur je een volgverzoek.",
     ]);
-    expect(textsOf(locked, "button")).toEqual(["Volgverzoek sturen"]);
+    expect(textsOf(request, "button")).toEqual(["Volgverzoek sturen"]);
   });
 });
 

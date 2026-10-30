@@ -282,7 +282,7 @@ function AuthedMemberPage({
     <>
       {isSelf && <OwnerPreviewBanner locked={profile.locked} />}
       {!isSelf && invite && inviteValid && inviteKind === "network" && (
-        <QrFollowPrompt token={invite} name={name} locked={profile.locked} />
+        <QrFollowPrompt token={invite} name={name} memberId={memberId} />
       )}
       {!isSelf && !handingOff && invite && inviteKind === "household" && (
         <HouseholdLinkInvite token={invite} fallbackName={name} />
