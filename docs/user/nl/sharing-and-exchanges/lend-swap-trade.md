@@ -98,7 +98,9 @@ Een uitwisseling doorloopt duidelijke stappen:
    inkomend verzoek gebruik je **Accepteren** of **Afwijzen**. Als verzender
    van een uitgaand verzoek kun je **Annuleren**.)
 3. **Afronding** — eenmaal geaccepteerd moeten **beide partijen** de afronding
-   bevestigen. Gebruik **Markeren als Voltooid**.
+   bevestigen. Gebruik **Markeren als Voltooid**. Tot dan kunnen jullie
+   allebei de uitwisseling nog **Annuleren**, bijvoorbeeld als de plannen
+   veranderen of het andere lid niet meer reageert.
 4. **Afgerond** — wanneer beiden bevestigen, gaat het eigendom (ruil/verkoop)
    of bezit (leen) over, en kun je **Laat een review achter** gebruiken om je
    partner te beoordelen.
@@ -109,13 +111,16 @@ Als je een verzoek accepteert, is de puzzel gereserveerd voor die uitwisseling.
 Tot de uitwisseling is afgerond of geannuleerd, kun je geen ander verzoek voor
 dezelfde puzzel accepteren, of het nu om ruilen, kopen of lenen gaat. Andere
 leden kunnen je nog steeds verzoeken sturen, en je kunt er een accepteren zodra
-de puzzel weer vrij is.
+de puzzel weer vrij is. Loopt de uitwisseling vast, dan kunnen jullie hem
+allebei **Annuleren**. De puzzel is dan weer vrij.
 
 **Accepteren** lukt niet zolang een puzzel in de uitwisseling gereserveerd is
 voor een andere uitwisseling. **Accepteren** en **Markeren als Voltooid** lukken
 niet zolang een puzzel in de uitwisseling is uitgeleend, en ook niet meer als
-een puzzel sinds het verzoek van eigenaar is gewisseld of niet meer bestaat.
-Zo'n uitwisseling kan niet meer worden afgerond. Je krijgt een melding waarom.
+een puzzel sinds het verzoek van eigenaar is gewisseld of niet meer bestaat. Je
+krijgt een melding waarom. Een uitwisseling waarvan een puzzel van eigenaar is
+gewisseld, kan niet meer worden afgerond: wijs hem af als het nog een verzoek
+is, of annuleer hem als hij al geaccepteerd was.
 
 ## Een geleende puzzel teruggeven
 
