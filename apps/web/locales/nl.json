@@ -31,12 +31,14 @@
     "photoUploadRateLimited": "Je hebt veel foto's geüpload. Probeer het later opnieuw."
   },
   "notFound": {
-    "title": "Pagina Niet Gevonden",
+    "title": "Pagina niet gevonden",
     "description": "Oeps! De pagina die je zoekt bestaat niet.",
     "message": "De pagina die je probeert te openen is mogelijk verplaatst, verwijderd, of je hebt een verkeerde URL ingevoerd.",
-    "backToHome": "Terug naar Home",
-    "browsePuzzles": "Puzzels Bladeren",
-    "backToDashboard": "Terug naar dashboard"
+    "backToHome": "Terug naar de homepage",
+    "browsePuzzles": "Puzzels bladeren",
+    "backToDashboard": "Terug naar dashboard",
+    "browseCatalogue": "Bekijk de catalogus",
+    "helpLinks": "Hulp nodig? Lees de <docs>documentatie</docs> of <contact>neem contact met ons op</contact>."
   },
   "navigation": {
     "home": "Home",

@@ -1,6 +1,6 @@
 import { MarketingFooter } from "@/components/marketing/footer";
 import { MarketingHeader } from "@/components/marketing/header";
-import { NotFoundContent } from "@/components/NotFound";
+import { MarketingNotFound } from "@/components/NotFound";
 import { PageLoading } from "@/components/ui/loading";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 
@@ -11,7 +11,7 @@ import { createFileRoute, Outlet } from "@tanstack/react-router";
 export const Route = createFileRoute("/_public")({
   pendingComponent: () => <PageLoading message="Loading..." />,
   // 404 under a marketing route renders within this marketing shell (its Outlet).
-  notFoundComponent: () => <NotFoundContent />,
+  notFoundComponent: MarketingNotFound,
   component: PublicLayout,
 });
 

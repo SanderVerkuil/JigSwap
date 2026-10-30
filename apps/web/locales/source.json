@@ -31,12 +31,14 @@
     "photoUploadRateLimited": "You've uploaded a lot of photos. Try again later."
   },
   "notFound": {
-    "title": "Page Not Found",
+    "title": "Page not found",
     "description": "Oops! The page you're looking for doesn't exist.",
     "message": "The page you're trying to access might have been moved, deleted, or you entered the wrong URL.",
-    "backToHome": "Back to Home",
-    "browsePuzzles": "Browse Puzzles",
-    "backToDashboard": "Back to Dashboard"
+    "backToHome": "Back to home",
+    "browsePuzzles": "Browse puzzles",
+    "backToDashboard": "Back to dashboard",
+    "browseCatalogue": "Browse the catalogue",
+    "helpLinks": "Need a hand? Read the <docs>docs</docs> or <contact>get in touch</contact>."
   },
   "navigation": {
     "home": "Home",
