@@ -500,11 +500,12 @@ describe("follow lists", () => {
     async (_, pair) => {
       const t = convexTest(schema, modules);
       const u = await seed(t);
-      // Both follow carol and carol follows both; bob has a pending request to alice.
+      // Alice and carol follow each other, alice and bob follow each other (the block is inserted
+      // directly, so the edges stay); bob also has a pending request to alice.
       await follow(t, u.alice, u.carol);
-      await follow(t, u.bob, u.carol);
       await follow(t, u.carol, u.alice);
-      await follow(t, u.carol, u.bob);
+      await follow(t, u.alice, u.bob);
+      await follow(t, u.bob, u.alice);
       await t.run((ctx) =>
         ctx.db.insert("followRequests", {
           aggregateId: "req-1",
@@ -516,22 +517,24 @@ describe("follow lists", () => {
       );
       await insertBlock(t, ...pair(u));
       const alice = as(t, "alice");
+      const bob = as(t, "bob");
 
+      // Each member reads only their own lists (SEC-13); the other side of the block drops out.
       const followers = await alice.query(
         api.social.listFollowers.listFollowers,
-        { memberId: u.carol },
+        {},
       );
-      expect(followers.map((f) => f.memberId)).toEqual([u.alice]);
+      expect(followers.map((f) => f.memberId)).toEqual([u.carol]);
       const followees = await alice.query(
         api.social.listFollowees.listFollowees,
-        { memberId: u.carol },
+        {},
       );
-      expect(followees.map((f) => f.memberId)).toEqual([u.alice]);
-      // The blocked member's own lists read as empty.
+      expect(followees.map((f) => f.memberId)).toEqual([u.carol]);
       expect(
-        await alice.query(api.social.listFollowers.listFollowers, {
-          memberId: u.bob,
-        }),
+        await bob.query(api.social.listFollowers.listFollowers, {}),
+      ).toEqual([]);
+      expect(
+        await bob.query(api.social.listFollowees.listFollowees, {}),
       ).toEqual([]);
       expect(
         await alice.query(

@@ -164,7 +164,6 @@ describe("identity.getUserStats", () => {
 
 // The profile-visibility chokepoint (social/privacy.ts) must also gate the identity reads, so a
 // private member's identity and stats can't be enumerated id-by-id by any authenticated member.
-// Mirrors the listFollowers/listFollowees visibility tests in socialMutations.test.ts.
 describe("identity.getUserById / getUserStats profile-visibility gating", () => {
   test("a private, non-mutual member's identity and stats are hidden (null)", async () => {
     const t = convexTest(schema, modules);

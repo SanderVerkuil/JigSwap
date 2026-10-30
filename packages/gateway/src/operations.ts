@@ -458,6 +458,8 @@ export const gateway = {
     profileCopies: api.social.listProfileCopies.listProfileCopies,
     profileCompletions:
       api.social.listProfileCompletions.listProfileCompletions,
+    // The caller's OWN followers / following (no member id: another member's lists would name
+    // private members, SEC-13).
     followers: api.social.listFollowers.listFollowers,
     following: api.social.listFollowees.listFollowees,
     isFollowing: api.social.isFollowing.isFollowing,

@@ -1,39 +1,26 @@
 import type { FollowEdgeView } from "@jigswap/contracts";
-import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { blockedEitherWaySet } from "./blocks";
-import { areMutualFollowers, profileVisibilityOf } from "./privacy";
 import { toFollowEdgeView } from "./readViews";
 
-// Read side: the members who follow the target (defaults to the acting member). Each entry resolves
-// the FOLLOWER's display name. Returns typed FollowEdgeView DTOs.
+// Read side: the members who follow the CALLER. Each entry resolves the FOLLOWER's display name.
+// Returns typed FollowEdgeView DTOs.
 //
-// SECURITY: always auth-gated — the acting member is resolved UNCONDITIONALLY (passing a `memberId`
-// must not bypass authentication via `??` short-circuit). The follow graph follows the SAME
-// visibility model as getProfile: a member whose profile is "private" exposes their follower list
-// only to themselves and to mutual followers; everyone else gets [].
+// SECURITY (SEC-13): a member reads only their own followers, so the query takes no member id.
+// Another member's list would name every member who follows them, private members included, to any
+// signed-in caller (the edge view projects no counterparty). Members blocked either way are left
+// out (spec 2.6).
 export const listFollowers = query({
-  args: { memberId: v.optional(v.id("users")) },
-  handler: async (ctx, args): Promise<FollowEdgeView[]> => {
+  args: {},
+  handler: async (ctx): Promise<FollowEdgeView[]> => {
     const viewer = (await requireMember(ctx)) as unknown as Id<"users">;
-    const target = args.memberId ?? viewer;
-    // Blocked either way (spec 2.6): neither side sees the other, nor the other's follow graph.
     const blockedIds = await blockedEitherWaySet(ctx, viewer);
-    if (blockedIds.has(target)) return [];
-
-    if (
-      target !== viewer &&
-      (await profileVisibilityOf(ctx, target)) === "private" &&
-      !(await areMutualFollowers(ctx, viewer, target))
-    ) {
-      return [];
-    }
 
     const rows = await ctx.db
       .query("follows")
-      .withIndex("by_followee", (q) => q.eq("followeeId", target))
+      .withIndex("by_followee", (q) => q.eq("followeeId", viewer))
       .collect();
     return Promise.all(
       rows

@@ -39,9 +39,10 @@ export type BlockedProfileStub = Pick<
 };
 
 /**
- * One party of a follow relationship as surfaced in a followers/following list: the other member's
- * id, their display name (from their profile, falling back to their account name), and when the
- * edge formed. `followId` is the Follow aggregateId so the UI can act on the specific edge.
+ * One party of a follow relationship as surfaced in the CALLER's own followers/following list (the
+ * lists take no member id, SEC-13): the other member's id, their display name (from their profile,
+ * falling back to their account name), and when the edge formed. `followId` is the Follow
+ * aggregateId so the UI can act on the specific edge.
  */
 export interface FollowEdgeView {
   followId?: string;
