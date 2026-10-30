@@ -4337,8 +4337,17 @@
         "empty": "Geen hash-matches.",
         "operatorNoteTitle": "Wat te doen bij een hash-match",
         "operatorNote": "Deze uploads kwamen overeen met een lijst van bekend beeldmateriaal van seksueel misbruik van kinderen. Ze staan in quarantaine: niemand kan ze zien, ook beheerders niet, en het bestand blijft bewaard. Meld elke match bij Meldpunt Offlimits (<link>meldpunt.offlimits.nl</link>) of de politie en markeer hem daarna als gemeld. Probeer de afbeelding niet te openen, te downloaden of te delen.",
-        "notConfigured": "Hash-matching staat uit op deze omgeving (CSAM_HASHCHECK_PROVIDER is niet \"offlimits\").",
-        "missingConfig": "Hash-matching is gekozen maar niet ingesteld (ontbreekt: {vars}), dus het draait niet.",
+        "health": {
+          "offTitle": "CSAM-hash-matching staat UIT op deze omgeving",
+          "off": "Uploads worden niet vergeleken met lijsten van bekend beeldmateriaal van seksueel misbruik van kinderen (CSAM_HASHCHECK_PROVIDER is niet \"offlimits\") en foto's worden zonder die controle gepubliceerd.",
+          "missingConfigTitle": "CSAM-hash-matching staat UIT: gekozen maar niet ingesteld",
+          "missingConfig": "Offlimits is gekozen, maar dit ontbreekt: {vars}. Uploads worden niet vergeleken met lijsten van bekend beeldmateriaal van seksueel misbruik van kinderen.",
+          "unreachableTitle": "CSAM-hash-matching is onbereikbaar",
+          "unreachable": "{countLabel} {count, plural, one {foto wordt} other {foto's worden}} pas gepubliceerd als er antwoord komt (oudste {since}). Details staan onder Hash-matches.",
+          "uncheckedTitle": "Foto's gepubliceerd zonder CSAM-hash-check",
+          "unchecked": "{countLabel} {count, plural, one {foto is} other {foto's zijn}} sinds {since} zonder hash-check gepubliceerd. Foto's van vóór het begin van deze telling tellen niet mee: hun hashes zijn niet bewaard.",
+          "recheck": "Hash-matching werkt nu: controleer deze foto's met de eenmalige recheckWaivedHashes (zie het runbook voor eenmalige migraties)."
+        },
         "status": {
           "open": "Open",
           "reported": "Gemeld",

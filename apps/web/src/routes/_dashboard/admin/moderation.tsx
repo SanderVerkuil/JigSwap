@@ -10,6 +10,7 @@ import {
   SEVERITY_DOT,
   type FlaggedPhoto,
 } from "@/components/admin/moderation/flag-detail";
+import { HashCheckHealth } from "@/components/admin/moderation/hash-check-health";
 import { KpiRow } from "@/components/admin/moderation/kpi-row";
 import { QueueList } from "@/components/admin/moderation/queue-list";
 import { ReportsQueue } from "@/components/admin/moderation/reports-queue";
@@ -284,6 +285,7 @@ function ModerationPage() {
     <div className="space-y-6">
       <AdminBanner />
       <ScreeningHealth />
+      <HashCheckHealth hashCheck={csam?.hashCheck} />
       <KpiRow />
 
       <Tabs defaultValue="submissions" className="gap-4">

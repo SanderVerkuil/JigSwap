@@ -150,7 +150,11 @@ an unconfigured service (`result: "skipped_unconfigured"`). The admin escalation
 (`admin/listCsamEscalations`, `hashCheck.uncheckedPhotos`, `uncheckedSince`, `uncheckedCapped`)
 counts them per table through the `by_hash_check_skipped` index, capped at 200 per table. The
 index needs no backfill: only rows published after this change carry the marker.
-When it is configured, run `lib/imageModeration/recheckWaivedHashes` right after (above), and
+**Admin → Moderation** shows this state in a red banner at the top of the page
+(`HashCheckHealth`): "CSAM hash matching is OFF" (provider unset), "OFF: selected but not
+configured" (with the missing variable names), or "unreachable" (photos held unpublished), plus
+the count of photos published without a hash check and the date of the oldest. Once matching
+works and that count reaches zero, the banner disappears. When it is configured, run `lib/imageModeration/recheckWaivedHashes` right after (above), and
 `lib/imageModeration/backfillBoxArtHashCheck` for older box art (one-shot-migrations.md).
 
 ## Storage sweep: blobs nothing holds (dry run until the owner enables it)

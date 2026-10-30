@@ -154,7 +154,7 @@ describe("CsamEscalationsPanel", () => {
     expect(container.querySelectorAll("button")).toHaveLength(0);
   });
 
-  it("warns when hash matching is not running", () => {
+  it("leaves 'hash matching is not running' to the page banner (HashCheckHealth)", () => {
     render({
       data: data({
         hashCheck: {
@@ -172,7 +172,8 @@ describe("CsamEscalationsPanel", () => {
         escalations: [],
       }),
     });
-    expect(container.textContent).toContain("OFFLIMITS_HCS_PASSWORD");
+    expect(container.textContent).not.toContain("OFFLIMITS_HCS_PASSWORD");
+    expect(container.querySelector('[role="status"]')).toBeNull();
     expect(container.textContent).toContain("No hash matches.");
   });
 

@@ -4337,8 +4337,17 @@
         "empty": "No hash matches.",
         "operatorNoteTitle": "What to do with a hash match",
         "operatorNote": "These uploads matched a list of known child sexual abuse material. They are quarantined: nobody can see them, admins included, and the file is kept. Report each one to Meldpunt Offlimits (<link>meldpunt.offlimits.nl</link>) or the police, then mark it reported. Do not try to open, download or share the image.",
-        "notConfigured": "Hash matching is off on this deployment (CSAM_HASHCHECK_PROVIDER is not \"offlimits\").",
-        "missingConfig": "Hash matching is selected but not configured (not set: {vars}), so it is not running.",
+        "health": {
+          "offTitle": "CSAM hash matching is OFF on this deployment",
+          "off": "Uploads are not compared with lists of known child sexual abuse material (CSAM_HASHCHECK_PROVIDER is not \"offlimits\"), and photos are published without that check.",
+          "missingConfigTitle": "CSAM hash matching is OFF: selected but not configured",
+          "missingConfig": "Offlimits is selected, but not set: {vars}. Uploads are not compared with lists of known child sexual abuse material.",
+          "unreachableTitle": "CSAM hash matching is unreachable",
+          "unreachable": "{countLabel} {count, plural, one {photo is} other {photos are}} held unpublished until it answers (oldest {since}). Details are under Hash matches.",
+          "uncheckedTitle": "Photos published without a CSAM hash check",
+          "unchecked": "{countLabel} {count, plural, one {photo was} other {photos were}} published without a hash check since {since}. Photos published before this count started are not included: their hashes were not kept.",
+          "recheck": "Hash matching works now: check these photos with the one-shot recheckWaivedHashes (see the one-shot migrations runbook)."
+        },
         "status": {
           "open": "Open",
           "reported": "Reported",
