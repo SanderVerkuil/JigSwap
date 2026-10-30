@@ -1,4 +1,5 @@
 import { Link } from "@/compat/link";
+import { SkipLink } from "@/components/a11y/skip-link";
 import { Wordmark } from "@/components/marketing/wordmark";
 import { Button } from "@/components/ui/button";
 import {
@@ -97,6 +98,8 @@ export function MarketingHeader() {
           : "bg-transparent border-transparent",
       )}
     >
+      {/* First Tab stop on every marketing page: jumps to the page's <main>. */}
+      <SkipLink />
       <div className="w-full max-w-[1200px] mx-auto px-6 flex items-center gap-3 sm:gap-5 h-[70px]">
         <Link href="/" aria-label="JigSwap">
           <Wordmark textClassName="max-[375px]:hidden" />

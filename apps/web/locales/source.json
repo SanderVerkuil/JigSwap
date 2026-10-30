@@ -21,6 +21,7 @@
     "next": "Next",
     "previous": "Previous",
     "close": "Close",
+    "skipToContent": "Skip to content",
     "back": "Back",
     "to": "to",
     "backToHome": "← Back to Home",
@@ -4423,6 +4424,7 @@
       "withPendingRequests": "{count, plural, one {{name}, # request waiting for your reply} other {{name}, # requests waiting for your reply}}"
     },
     "breadcrumbLabel": "Breadcrumb",
+    "primaryNav": "Primary",
     "waitingCount": "{capped, select, yes {{count} or more waiting} other {{count} waiting}}",
     "plankReset": "Reset"
   },

@@ -21,6 +21,7 @@
     "next": "Volgende",
     "previous": "Vorige",
     "close": "Sluiten",
+    "skipToContent": "Naar inhoud springen",
     "back": "Terug",
     "to": "naar",
     "backToHome": "← Terug naar Home",
@@ -4423,6 +4424,7 @@
       "withPendingRequests": "{count, plural, one {{name}, # verzoek wacht op je antwoord} other {{name}, # verzoeken wachten op je antwoord}}"
     },
     "breadcrumbLabel": "Broodkruimel",
+    "primaryNav": "Hoofdnavigatie",
     "waitingCount": "{capped, select, yes {{count} of meer te behandelen} other {{count} te behandelen}}",
     "plankReset": "Herstellen"
   },

@@ -311,3 +311,11 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* The main landmark is focused by script only (skip link, focusMainContent): a focus ring around
+   the whole page body would read as a bug, and it is not an interactive control. */
+@layer base {
+  main[tabindex="-1"]:focus {
+    outline: none;
+  }
+}

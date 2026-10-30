@@ -49,6 +49,7 @@ import {
 import { UserFooter } from "./user-footer";
 
 export function AppSidebar() {
+  const t = useTranslations("shell");
   const { user } = useUser();
   const pathname = usePathname();
   const whatsNewCount = useWhatsNewUnreadCount();
@@ -66,32 +67,39 @@ export function AppSidebar() {
       // Slot the fixed desktop sidebar below the 56px global top bar.
       className="top-14 h-[calc(100svh-3.5rem)]"
     >
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarMenu>
-            <NavLink item={DASHBOARD_ITEM} />
-          </SidebarMenu>
-        </SidebarGroup>
-        {NAV_GROUPS.map((group) => (
-          <NavGroup key={group.key} group={group} />
-        ))}
-        {isAdmin && (
-          <>
-            <SidebarSeparator />
-            <NavGroup group={ADMIN_GROUP} />
-          </>
-        )}
-      </SidebarContent>
+      {/* One navigation landmark for the whole sidebar (groups, What's new, account), so
+          screen-reader users can jump to it and no sidebar content sits outside a landmark. */}
+      <nav
+        aria-label={t("primaryNav")}
+        className="flex min-h-0 flex-1 flex-col"
+      >
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarMenu>
+              <NavLink item={DASHBOARD_ITEM} />
+            </SidebarMenu>
+          </SidebarGroup>
+          {NAV_GROUPS.map((group) => (
+            <NavGroup key={group.key} group={group} />
+          ))}
+          {isAdmin && (
+            <>
+              <SidebarSeparator />
+              <NavGroup group={ADMIN_GROUP} />
+            </>
+          )}
+        </SidebarContent>
 
-      <SidebarFooter>
-        <SidebarMenu>
-          <WhatsNewNavItem
-            count={whatsNewCount}
-            active={pathname === "/whats-new"}
-          />
-        </SidebarMenu>
-        <UserFooter />
-      </SidebarFooter>
+        <SidebarFooter>
+          <SidebarMenu>
+            <WhatsNewNavItem
+              count={whatsNewCount}
+              active={pathname === "/whats-new"}
+            />
+          </SidebarMenu>
+          <UserFooter />
+        </SidebarFooter>
+      </nav>
     </Sidebar>
   );
 }
