@@ -68,6 +68,10 @@ export const listCsamEscalations = query({
     // Photos held unpublished because the hash check was unavailable (stored hashes awaiting a
     // re-check), across the image tables: a count (capped) and the oldest wait. Photos whose
     // check timed out are counted apart: they wait on an admin (Unchecked photos), not a re-check.
+    // The index also holds rows neither count covers (a photo the pipeline has not reached yet, a
+    // quarantined one, a timed-out one an admin rejected, refused uploads from before they left
+    // the index): those are filtered out BEFORE the cap, so no number of them can hide a waiting
+    // photo (SEC-55). They are few, so the scan stays small.
     let waitingPhotos = 0;
     let timedOutPhotos = 0;
     let oldestWaitingSince: number | null = null;
@@ -83,20 +87,27 @@ export const listCsamEscalations = query({
         .withIndex("by_hash_check_pending", (q) =>
           q.gt("hashCheckPendingSince", 0),
         )
+        .filter((q) =>
+          q.and(
+            q.neq(q.field("pendingHashes"), undefined),
+            q.neq(q.field("moderationStatus"), "quarantined"),
+            // A timed-out photo counts only while an admin has not rejected it.
+            q.or(
+              q.eq(q.field("hashCheckTimedOutAt"), undefined),
+              q.neq(q.field("hashCheckedAt"), undefined),
+              q.and(
+                q.neq(q.field("moderationStatus"), "rejected"),
+                q.neq(q.field("moderationStatus"), "removed"),
+              ),
+            ),
+          ),
+        )
         .take(HASH_CHECK_WAITING_CAP);
       for (const row of rows) {
         // (A shared location is never hash-checked; the index holds only photos.)
         if ("kind" in row && row.kind === "location") continue;
-        if (!row.pendingHashes || row.moderationStatus === "quarantined") {
-          continue;
-        }
         if (isHashCheckTimedOut(row)) {
-          if (
-            row.moderationStatus !== "rejected" &&
-            row.moderationStatus !== "removed"
-          ) {
-            timedOutPhotos += 1;
-          }
+          timedOutPhotos += 1;
           continue;
         }
         waitingPhotos += 1;

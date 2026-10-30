@@ -70,7 +70,8 @@ import { findMetadata, stripImageMetadata } from "./stripMetadata";
 //      so no URL is ever issued for the upload as sent. "unavailable" is logged at error level
 //      and the gate stays closed.
 //   4. A refused upload is "rejected" with label "invalid_image" (the reason in
-//      moderationReason), never classified, and its blob is deleted. Never fails open.
+//      moderationReason), never classified, and its blob is deleted; then it leaves the
+//      hash-pending index (setHashCheck "refused"). Never fails open.
 //   5. Swap the row to the clean blob (setFile) and delete the original.
 //   6. Classify the clean bytes via the configured PhotoModerationPort.
 //   7. Record the verdict (setVerdict), or, for a retryable unscored result with attempts left
@@ -210,13 +211,17 @@ export interface ImageModerationSteps<R extends ModerationRow> {
    * Returns the escalation id.
    */
   quarantine: FunctionReference<"mutation", "internal", QuarantineArgs, string>;
-  /** Record a no_match (opens the publication gate) or unavailable hash-check outcome. */
+  /**
+   * Record a hash-check outcome: no_match (opens the publication gate), unavailable (keeps it
+   * closed, stores the hashes), or refused (the upload was refused and its blob is gone: it leaves
+   * the hash-pending index; lib/imageModeration/quarantine.applyHashCheckResult).
+   */
   setHashCheck: FunctionReference<
     "mutation",
     "internal",
     {
       imageId: string;
-      status: "no_match" | "unavailable";
+      status: "no_match" | "unavailable" | "refused";
       hashes?: ImageHashes[];
     },
     unknown
@@ -392,14 +397,20 @@ const runAttempt = async <R extends ModerationRow>(
   // it, or another row holds the same id (a row written before the claim rule may hold
   // catalogue box art; SEC-01). Checked and deleted in one transaction (lib/storage/
   // blobLifecycle); `original_delete` records the outcome: "deleted", "referenced" or "missing".
-  const deleteUnlessReferenced = async (fileId: Id<"_storage">) => {
+  // Returns whether the blob is gone: false when something still holds it or the delete failed.
+  const deleteUnlessReferenced = async (
+    fileId: Id<"_storage">,
+  ): Promise<boolean> => {
     try {
-      event.original_delete = await ctx.runMutation(
+      const outcome = await ctx.runMutation(
         internal.lib.storage.blobLifecycle.deleteUnlessReferenced,
         { storageId: fileId, except: imageId },
       );
+      event.original_delete = outcome;
+      return outcome !== "referenced";
     } catch (error) {
       event.delete_original_error = errMsg(error);
+      return false;
     }
   };
 
@@ -456,7 +467,11 @@ const runAttempt = async <R extends ModerationRow>(
     // Refuse an upload that fails an input guard: reject it (first verdict wins), then delete
     // the blob, but only when the row took this verdict and still points at it, so a blob a
     // concurrent attempt already decided on is never touched. A store's own reject side effects
-    // may have deleted it already (completion photos): the delete then reports "missing".
+    // may have deleted it already (completion photos): the delete then reports "missing". Once the
+    // blob is gone, the row owes no hash check and leaves the hash-pending index (setHashCheck
+    // "refused"), so refused uploads never pile up in front of the photos that do wait (SEC-55).
+    // A blob that survives (another row holds it, an escalation preserves it, or its delete
+    // failed) keeps the row in the index, its gate closed.
     const refuse = async (reason: ImageGuardFailure) => {
       event.input_guard = reason;
       event.decision = "rejected";
@@ -474,7 +489,12 @@ const runAttempt = async <R extends ModerationRow>(
       ) {
         return;
       }
-      await deleteUnlessReferenced(row.fileId);
+      if (await deleteUnlessReferenced(row.fileId)) {
+        await ctx.runMutation(steps.setHashCheck, {
+          imageId,
+          status: "refused",
+        });
+      }
     };
 
     // Too large to even read: refused without hashing (it cannot be held in memory). Anything

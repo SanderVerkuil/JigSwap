@@ -6,6 +6,7 @@ import {
   type QueryCtx,
 } from "../../_generated/server";
 import { stampModerationAction } from "../../admin/stampModerationAction";
+import { INVALID_IMAGE_LABEL } from "./guards";
 import { imageHashPair } from "./hashCheckFields";
 
 // Table-agnostic side of a CSAM hash match (lib/imageModeration/csamHashCheck). Each image
@@ -136,14 +137,23 @@ export const quarantineArgs = {
 
 /** The args every table's `setHashCheck` store mutation takes from the pipeline. */
 export const hashCheckResultArgs = {
-  status: v.union(v.literal("no_match"), v.literal("unavailable")),
+  status: v.union(
+    v.literal("no_match"),
+    v.literal("unavailable"),
+    v.literal("refused"),
+  ),
   hashes: v.optional(v.array(imageHashPair)),
 };
 
 /**
  * Record a hash-check outcome on a row: no_match clears the publication gate (and the marker of
  * an admin's waiver, hashCheckWaivedBy); unavailable keeps it closed and stores the hashes for a
- * later re-check. A quarantined row is left alone.
+ * later re-check. "refused" is the pipeline's word that it refused the upload (an input guard;
+ * "rejected" with label invalid_image) and its blob is gone: such a row is never published and
+ * owes no hash check, so it leaves the hash-pending index (`hashCheckPendingSince` cleared).
+ * Nothing else changes: `hashCheckedAt` stays unset, and a row that still holds stored hashes
+ * keeps waiting on their re-check (a match escalates even a refused upload). A quarantined row is
+ * left alone.
  */
 export const applyHashCheckResult = async (
   ctx: MutationCtx,
@@ -154,7 +164,7 @@ export const applyHashCheckResult = async (
     | Id<"boxArtUploads">
     | Id<"circleIcons">,
   result: {
-    status: "no_match" | "unavailable";
+    status: "no_match" | "unavailable" | "refused";
     hashes?: { md5: string; sha1: string }[];
   },
 ) => {
@@ -162,6 +172,16 @@ export const applyHashCheckResult = async (
   // (A shared location is never hash-checked.)
   if (!row || ("kind" in row && row.kind === "location")) return;
   if (row.moderationStatus === "quarantined") return;
+  if (result.status === "refused") {
+    if (
+      row.moderationStatus === "rejected" &&
+      row.moderationLabel === INVALID_IMAGE_LABEL &&
+      row.pendingHashes === undefined
+    ) {
+      await ctx.db.patch(imageId, { hashCheckPendingSince: undefined });
+    }
+    return;
+  }
   if (result.status === "no_match") {
     await ctx.db.patch(imageId, {
       hashCheckedAt: Date.now(),
