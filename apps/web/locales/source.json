@@ -3942,9 +3942,8 @@
       "quick": {
         "addPuzzleSub": "Put a new box on your shelf",
         "logCompletionSub": "Finished one? Record it",
-        "proposeSwap": "Propose a Swap",
-        "proposeSwapSub": "Trade with a fellow puzzler",
-        "browseCommunitySub": "Discover puzzles near you",
+        "findSwap": "Find a swap",
+        "findSwapSub": "See what other puzzlers offer",
         "whatsNewSub": "Latest features and fixes"
       },
       "openQuickActionsUnread": "{count, plural, one {Quick actions, # update} other {Quick actions, # updates}}"

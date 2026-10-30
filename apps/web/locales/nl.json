@@ -3942,9 +3942,8 @@
       "quick": {
         "addPuzzleSub": "Zet een nieuwe doos op je plank",
         "logCompletionSub": "Eentje af? Leg het vast",
-        "proposeSwap": "Een Ruil Voorstellen",
-        "proposeSwapSub": "Ruil met een mede-puzzelaar",
-        "browseCommunitySub": "Ontdek puzzels bij jou in de buurt",
+        "findSwap": "Zoek een ruil",
+        "findSwapSub": "Bekijk wat andere puzzelaars aanbieden",
         "whatsNewSub": "De nieuwste functies en oplossingen"
       },
       "openQuickActionsUnread": "{count, plural, one {Snelle acties, # update} other {Snelle acties, # updates}}"

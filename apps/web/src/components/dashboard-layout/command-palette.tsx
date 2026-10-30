@@ -54,13 +54,14 @@ const QUICK_ACTIONS = [
   },
   {
     key: "logCompletion",
-    href: "/completions",
+    href: "/completions/new",
     icon: CircleCheck,
     keywords: ["log", "solve", "finished", "vastleggen", "voltooiing"],
   },
   {
     key: "createCircle",
-    href: "/circles",
+    // Opens the create dialog on arrival (circles-search.ts).
+    href: "/circles?create=1",
     icon: Users,
     keywords: ["create", "new circle", "kring", "aanmaken"],
   },

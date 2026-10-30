@@ -1,7 +1,7 @@
 "use client";
 
 // Quick-action bottom sheet opened by the tab bar's raised center "+": the
-// four most-used actions as 56px rows — violet round icon chip, title with a
+// most-used actions as 56px rows — violet round icon chip, title with a
 // one-line sub, chevron — sliding up over the dimmed backdrop, with a drag
 // handle and safe-area bottom padding.
 import { useRouter } from "@/compat/navigation";
@@ -18,7 +18,6 @@ import {
   CircleCheck,
   Download,
   Plus,
-  Search,
   Sparkles,
   UserRound,
   type LucideIcon,
@@ -26,7 +25,9 @@ import {
 import { useTranslations } from "use-intl";
 
 // Titles reuse the command palette's quick-action strings where they exist;
-// the subs (and Propose a Swap) live under shell.mobile.quick.
+// the subs (and Find a swap) live under shell.mobile.quick. Every row opens what
+// it promises: the log flow rather than the completions list, and Browse (where
+// a swap starts) rather than the exchanges list.
 const ACTIONS: Array<{
   titleKey: string;
   subKey: string;
@@ -42,20 +43,14 @@ const ACTIONS: Array<{
   {
     titleKey: "actions.logCompletion",
     subKey: "mobile.quick.logCompletionSub",
-    href: "/completions",
+    href: "/completions/new",
     icon: CircleCheck,
   },
   {
-    titleKey: "mobile.quick.proposeSwap",
-    subKey: "mobile.quick.proposeSwapSub",
-    href: "/trades",
-    icon: ArrowLeftRight,
-  },
-  {
-    titleKey: "actions.browseCommunity",
-    subKey: "mobile.quick.browseCommunitySub",
+    titleKey: "mobile.quick.findSwap",
+    subKey: "mobile.quick.findSwapSub",
     href: "/browse",
-    icon: Search,
+    icon: ArrowLeftRight,
   },
   // A clear, labelled route to the member's own profile (the top-bar avatar
   // also links here, but it's an unlabelled icon). Reuses the existing
