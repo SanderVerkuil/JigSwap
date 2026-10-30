@@ -183,14 +183,17 @@ function PuzzleDefinitionDetail({
   );
   const canReview = myReviews?.puzzleReviewAllowed !== false;
 
-  // The review composer is focused by the "Write a Review" action.
-  const composerRef = useRef<HTMLInputElement>(null);
+  // "Write a Review" and "Be the first to rate it" take the member to the review composer and
+  // focus its first control, the required star rating (its single tab stop).
+  const composerRef = useRef<HTMLDivElement>(null);
   const focusComposer = () => {
     composerRef.current?.scrollIntoView({
       behavior: "smooth",
       block: "center",
     });
-    composerRef.current?.focus();
+    composerRef.current
+      ?.querySelector<HTMLElement>('[role="radio"][tabindex="0"]')
+      ?.focus();
   };
 
   const difficultyLabel = (difficulty?: string) =>
@@ -596,22 +599,18 @@ function ReviewsSection({
   canReview,
 }: {
   puzzleId: string;
-  composerRef: React.RefObject<HTMLInputElement | null>;
+  composerRef: React.RefObject<HTMLDivElement | null>;
   canReview: boolean;
 }) {
   const t = useTranslations("puzzleDefinition");
   const format = useFormatter();
+  const ratingHintId = useId();
   const { data: reviews } = useQuery(
     convexQuery(gateway.social.listPuzzleReviews, {
       puzzleId: puzzleId as Id<"puzzles">,
     }),
   );
   const { data: me } = useQuery(convexQuery(gateway.identity.currentUser, {}));
-  const { data: view } = useQuery(
-    convexQuery(gateway.library.getPuzzleDefinitionView, {
-      puzzleId: puzzleId as Id<"puzzles">,
-    }),
-  );
   // The caller's own puzzle review (if any) drives the update-mode affordance:
   // prefill the composer and relabel the submit button.
   const { data: myReviews } = useQuery(
@@ -648,14 +647,16 @@ function ReviewsSection({
   const hasExistingReview = myReviews?.puzzle != null;
 
   const list = reviews ?? [];
-  const title = view?.definition.title ?? "";
+  // Posting needs a rating (only the text is optional); until one is chosen, a hint says so and
+  // describes both the stars and the disabled Post button.
+  const needsRating = rating < 1;
 
   const relative = (timestamp: number) =>
     format.relativeTime(new Date(timestamp), now);
 
   const submit = async () => {
     // isPending guard: the Enter-key path bypasses the disabled button and could double-fire.
-    if (postReview.isPending || rating < 1) return;
+    if (postReview.isPending || needsRating) return;
     const trimmed = text.trim();
     try {
       await postReview.mutateAsync({
@@ -663,6 +664,7 @@ function ReviewsSection({
         rating,
         ...(trimmed ? { text: trimmed } : {}),
       });
+      toast.success(hasExistingReview ? t("reviewUpdated") : t("reviewPosted"));
     } catch (error) {
       // A review stored before the length cap can be longer than the field allows: say why.
       const code = convexErrorCode(error);
@@ -684,19 +686,41 @@ function ReviewsSection({
         meta={String(list.length)}
       />
 
-      {/* Composer */}
+      {/* Composer: the required rating first, then the optional text, then Post. */}
       {!canReview ? (
         <p className="text-muted-foreground mb-4 text-sm">
           {t("reviewNotOpen")}
         </p>
       ) : (
-        <div className="mb-4 flex gap-2.5">
+        <div ref={composerRef} className="mb-4 flex gap-2.5">
           <MemberAvatar source={me} avatar={me?.avatar} />
-          <div className="flex flex-1 flex-col gap-2">
-            <div className="flex gap-2">
+          <div className="flex min-w-0 flex-1 flex-col gap-2">
+            <div>
+              <p className="text-foreground text-sm font-medium">
+                {t("yourRating")}
+                <span aria-hidden="true" className="text-destructive ml-0.5">
+                  *
+                </span>
+              </p>
+              <StarRating
+                value={rating}
+                onChange={setRating}
+                size="lg"
+                label={t("yourRating")}
+                required
+                clearable
+                describedBy={needsRating ? ratingHintId : undefined}
+              />
+              {needsRating && (
+                <p id={ratingHintId} className="text-muted-foreground text-xs">
+                  {t("chooseRatingToPost")}
+                </p>
+              )}
+            </div>
+            {/* Phones stack the text above Post so the placeholder is not cut off. */}
+            <div className="flex flex-col gap-2 sm:flex-row">
               <Input
-                ref={composerRef}
-                placeholder={t("reviewPlaceholder", { title })}
+                placeholder={t("reviewPlaceholder")}
                 value={text}
                 maxLength={REVIEW_TEXT_MAX_LENGTH}
                 onChange={(e) => setText(e.target.value)}
@@ -710,18 +734,14 @@ function ReviewsSection({
               />
               <Button
                 variant="brand"
+                className="self-end sm:self-auto"
                 onClick={() => void submit()}
-                disabled={postReview.isPending || rating < 1}
+                disabled={postReview.isPending || needsRating}
+                aria-describedby={needsRating ? ratingHintId : undefined}
               >
                 {hasExistingReview ? t("updateReview") : t("post")}
               </Button>
             </div>
-            <StarRating
-              value={rating}
-              onChange={setRating}
-              size="sm"
-              label={t("rateRequired")}
-            />
             <p className="text-muted-foreground text-xs">
               {t("reviewPublicNote")}
             </p>

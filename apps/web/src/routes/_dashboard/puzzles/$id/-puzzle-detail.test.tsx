@@ -1,7 +1,13 @@
 // @vitest-environment happy-dom
 // The "-" prefix keeps the TanStack route generator from treating this file as a route.
 import { gateway } from "@/gateway";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { getFunctionName, type FunctionReturnType } from "convex/server";
 import type { ReactNode } from "react";
 import { IntlProvider } from "use-intl";
@@ -21,6 +27,9 @@ const mocks = vi.hoisted(() => ({
   data: new Map<string, unknown>(),
   favorited: false,
   push: vi.fn<(href: string) => void>(),
+  postReview: vi.fn<(args: unknown) => Promise<unknown>>(),
+  toastSuccess: vi.fn<(message: string) => void>(),
+  toastError: vi.fn<(message: string) => void>(),
 }));
 
 vi.mock("@tanstack/react-router", () => ({
@@ -65,7 +74,8 @@ vi.mock("@tanstack/react-query", () => ({
     data: mocks.data.get(queryKey[0]),
     isError: false,
   }),
-  useMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
+  // The only mutation on the page is posting a review.
+  useMutation: () => ({ isPending: false, mutateAsync: mocks.postReview }),
 }));
 vi.mock("@convex-dev/react-query", async () => {
   const { getFunctionName: name } = await import("convex/server");
@@ -82,6 +92,9 @@ vi.mock("@/hooks/use-favorites", () => ({
     isFavorite: () => mocks.favorited,
     toggleFavorite: () => Promise.resolve(null),
   }),
+}));
+vi.mock("sonner", () => ({
+  toast: { success: mocks.toastSuccess, error: mocks.toastError },
 }));
 vi.mock("@/hooks/use-box-art-check", () => ({
   useBoxArtInCheck: () => new Set<string>(),
@@ -157,6 +170,9 @@ const renderPage = (locale: "en" | "nl" = "en") => {
 beforeEach(() => {
   mocks.data.clear();
   mocks.favorited = false;
+  mocks.postReview.mockReset().mockResolvedValue(null);
+  mocks.toastSuccess.mockReset();
+  mocks.toastError.mockReset();
   mocks.data.set(getFunctionName(gateway.social.listPuzzleReviews), []);
   mocks.data.set(getFunctionName(gateway.identity.currentUser), null);
   mocks.data.set(getFunctionName(gateway.solving.getMyReviews), {
@@ -194,7 +210,10 @@ describe("puzzle detail page: missing data", () => {
 
     expect(screen.getAllByText(t.noRatingsYet).length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: t.beFirstToRate }));
-    expect(document.activeElement).toBe(screen.getByRole("textbox"));
+    // The rating comes first in the composer and is the part a review needs.
+    expect(document.activeElement).toBe(
+      screen.getByRole("radio", { name: "1 star" }),
+    );
   });
 
   it("shows the score, histogram, average and owner rating once they exist", () => {
@@ -364,5 +383,112 @@ describe("puzzle detail page: wording", () => {
 
     expect(document.body.textContent).not.toMatch(/definition/i);
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Café");
+  });
+});
+
+describe("puzzle detail page: review composer", () => {
+  const post = () => screen.getByRole("button", { name: t.post });
+  const group = () => screen.getByRole("radiogroup", { name: t.yourRating });
+
+  it("asks for the required rating first, then the optional text, then Post", () => {
+    setView(emptyView());
+    renderPage();
+
+    const stars = group();
+    const text = screen.getByRole("textbox");
+    expect(stars.getAttribute("aria-required")).toBe("true");
+    // A visible label, not only the group's accessible name.
+    expect(screen.getByText(t.yourRating)).toBeTruthy();
+    expect(text.getAttribute("placeholder")).toBe(t.reviewPlaceholder);
+    expect(
+      stars.compareDocumentPosition(text) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      text.compareDocumentPosition(post()) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("says a rating is needed to post until one is chosen", () => {
+    setView(emptyView());
+    renderPage();
+
+    expect((post() as HTMLButtonElement).disabled).toBe(true);
+    const hintId = group().getAttribute("aria-describedby");
+    expect(hintId).toBeTruthy();
+    expect(document.getElementById(hintId!)?.textContent).toBe(
+      t.chooseRatingToPost,
+    );
+    expect(post().getAttribute("aria-describedby")).toBe(hintId);
+
+    fireEvent.click(screen.getByRole("radio", { name: "4 stars" }));
+    expect((post() as HTMLButtonElement).disabled).toBe(false);
+    expect(screen.queryByText(t.chooseRatingToPost)).toBeNull();
+    expect(group().getAttribute("aria-describedby")).toBeNull();
+    expect(post().getAttribute("aria-describedby")).toBeNull();
+  });
+
+  it("confirms a posted review", async () => {
+    setView(emptyView());
+    renderPage();
+
+    fireEvent.click(screen.getByRole("radio", { name: "4 stars" }));
+    fireEvent.click(post());
+    await waitFor(() =>
+      expect(mocks.toastSuccess).toHaveBeenCalledWith(t.reviewPosted),
+    );
+    expect(mocks.postReview).toHaveBeenCalledWith({
+      puzzleId: PUZZLE_ID,
+      rating: 4,
+    });
+    expect(mocks.toastError).not.toHaveBeenCalled();
+  });
+
+  it("confirms an updated review", async () => {
+    mocks.data.set(getFunctionName(gateway.solving.getMyReviews), {
+      puzzle: { rating: 3, text: "Lovely" },
+    });
+    setView(emptyView());
+    renderPage();
+
+    const update = screen.getByRole("button", { name: t.updateReview });
+    expect(
+      screen
+        .getByRole("radio", { name: "3 stars" })
+        .getAttribute("aria-checked"),
+    ).toBe("true");
+    fireEvent.click(update);
+    await waitFor(() =>
+      expect(mocks.toastSuccess).toHaveBeenCalledWith(t.reviewUpdated),
+    );
+    expect(mocks.postReview).toHaveBeenCalledWith({
+      puzzleId: PUZZLE_ID,
+      rating: 3,
+      text: "Lovely",
+    });
+  });
+
+  it("does not confirm a review that failed to post", async () => {
+    mocks.postReview.mockRejectedValue(new Error("offline"));
+    setView(emptyView());
+    renderPage();
+
+    fireEvent.click(screen.getByRole("radio", { name: "2 stars" }));
+    fireEvent.click(post());
+    await waitFor(() =>
+      expect(mocks.toastError).toHaveBeenCalledWith(t.reviewFailed),
+    );
+    expect(mocks.toastSuccess).not.toHaveBeenCalled();
+  });
+
+  it("reads naturally in Dutch", () => {
+    setView(emptyView());
+    renderPage("nl");
+
+    const tNl = nl.puzzleDefinition;
+    expect(
+      screen.getByRole("radiogroup", { name: tNl.yourRating }),
+    ).toBeTruthy();
+    expect(screen.getByText(tNl.chooseRatingToPost)).toBeTruthy();
+    expect(screen.getByRole("radio", { name: "3 sterren" })).toBeTruthy();
   });
 });
