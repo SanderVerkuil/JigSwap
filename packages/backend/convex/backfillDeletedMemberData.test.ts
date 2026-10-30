@@ -416,6 +416,95 @@ describe("conversation.backfillDeletedMemberData: the legacy exchange chat", () 
   });
 });
 
+describe("conversation.backfillDeletedMemberData: a DM nobody is left in", () => {
+  // Kim and Lou were both deleted before the purge dropped a thread nobody is left in: their DM,
+  // its participant rows and its messages are still there. Bob's DM with Kim stays.
+  const seedThreads = (t: T) =>
+    t.run(async (ctx) => {
+      const now = Date.now();
+      const mk = (who: string) =>
+        ctx.db.insert("users", {
+          clerkId: `clerk_${who}`,
+          name: who,
+          isActive: true,
+          createdAt: now,
+          updatedAt: now,
+        });
+      const bob = await mk("bob");
+      const kim = await mk("kim");
+      const lou = await mk("lou");
+      const dm = async (aggregateId: string, pair: Id<"users">[]) => {
+        await ctx.db.insert("threads", {
+          aggregateId,
+          subjectKind: "dm",
+          participants: pair,
+          participantsKey: pair.map(String).sort().join("|"),
+          createdAt: now,
+        });
+        for (const memberId of pair) {
+          await ctx.db.insert("threadParticipants", {
+            threadAggregateId: aggregateId,
+            memberId,
+          });
+          await ctx.db.insert("threadMessages", {
+            threadAggregateId: aggregateId,
+            messageId: `${aggregateId}-${memberId}`,
+            authorId: memberId,
+            kind: "text",
+            body: "Hi",
+            sentAt: now,
+          });
+        }
+      };
+      await dm("dm-kim-lou", [kim, lou]);
+      await dm("dm-bob-kim", [bob, kim]);
+      await ctx.db.delete(kim);
+      await ctx.db.delete(lou);
+      return { kim, lou };
+    });
+
+  const threadIds = (t: T) =>
+    t.run(async (ctx) =>
+      (await ctx.db.query("threads").collect()).map((row) => row.aggregateId),
+    );
+
+  test("a dry run reports them and keeps the thread", async () => {
+    const t = newT();
+    const s = await seedThreads(t);
+    await t.mutation(
+      internal.conversation.backfillDeletedMemberData.backfillDeletedMemberData,
+      { table: "threadParticipants" },
+    );
+    await settleDueJobs(t);
+    expect(reportedIds().sort()).toEqual([s.kim, s.lou].sort());
+    expect((await threadIds(t)).sort()).toEqual(["dm-bob-kim", "dm-kim-lou"]);
+  });
+
+  test("a real run purges their DM and keeps Bob's", async () => {
+    const t = newT();
+    await seedThreads(t);
+    await t.mutation(
+      internal.conversation.backfillDeletedMemberData.backfillDeletedMemberData,
+      { dryRun: false, table: "threadParticipants" },
+    );
+    await settleDueJobs(t);
+    await runDelayedScrubs(t);
+    expect(await threadIds(t)).toEqual(["dm-bob-kim"]);
+    const left = await t.run(async (ctx) => ({
+      participants: (await ctx.db.query("threadParticipants").collect()).map(
+        (row) => row.threadAggregateId,
+      ),
+      messages: (await ctx.db.query("threadMessages").collect()).map(
+        (row) => row.threadAggregateId,
+      ),
+    }));
+    expect(left).toEqual({
+      participants: ["dm-bob-kim", "dm-bob-kim"],
+      messages: ["dm-bob-kim", "dm-bob-kim"],
+    });
+  });
+});
+
 describe("conversation.backfillDeletedMemberData: events keyed by a deleted copy", () => {
   // An earlier deletion removed Hana's copy but left its CopyDetailsUpdated (no member id, her
   // notes) in the log. Bob's copy still exists.

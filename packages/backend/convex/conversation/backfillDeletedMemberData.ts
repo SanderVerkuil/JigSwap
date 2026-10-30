@@ -25,6 +25,7 @@ const TABLES = [
   "categories",
   "circles",
   "householdMembers",
+  "threadParticipants",
   "messages",
   "domainEvents",
 ] as const;
@@ -40,6 +41,7 @@ const tableValidator = v.union(
   v.literal("categories"),
   v.literal("circles"),
   v.literal("householdMembers"),
+  v.literal("threadParticipants"),
   v.literal("messages"),
   v.literal("domainEvents"),
 );
@@ -116,6 +118,12 @@ const pageOf = async (
       return idsOf(ctx.db.query("householdMembers"), opts, (row) => [
         row.memberId,
       ]);
+    // A DM or exchange seat stays after an account deletion (circle seats go), so a member with
+    // a conversation left is found here and their purge can drop a thread nobody is left in.
+    case "threadParticipants":
+      return idsOf(ctx.db.query("threadParticipants"), opts, (row) => [
+        row.memberId,
+      ]);
     case "messages":
       return idsOf(ctx.db.query("messages"), opts, (row) => [
         row.senderId,
@@ -158,7 +166,9 @@ const pageOf = async (
  * and scheduled once. Its domainEvents walk also drops the personal fields (a copy's notes) from
  * events keyed by a copy that no longer exists, or only counts them on a dry run
  * (`deletedCopyEvents`). Each batch logs its findings; the last logs the whole list. Re-running is
- * harmless: a purged member leaves nothing behind to find. Run by an operator, with approval.
+ * harmless: the purge is idempotent. A purged member can still be found (their seat in a DM an
+ * active member still has, a legacy chat row never copied) and is then purged again, changing
+ * nothing. Run by an operator, with approval.
  */
 export const backfillDeletedMemberData = internalMutation({
   args: {

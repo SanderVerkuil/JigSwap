@@ -8,6 +8,7 @@ import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
+import { PURGE_BATCH_SIZE } from "./conversation/purgeMemberMessagingData";
 import schema from "./schema";
 
 // Account deletion for messaging data (spec R.9, 2.8): users.deleteUser schedules
@@ -851,5 +852,232 @@ describe("account deletion: the legacy exchange chat", () => {
       cursor = page.continueCursor;
     }
     expect({ scanned, unmigrated }).toEqual({ scanned: 5, unmigrated: 2 });
+  });
+});
+
+describe("account deletion: a DM or exchange thread nobody is left in", () => {
+  const deleteMember = async (t: T, clerkId: string) => {
+    await t.mutation(internal.users.deleteUser, { id: clerkId });
+    await settleDueJobs(t);
+  };
+
+  // Everything a thread holds, by thread.
+  const threadData = (t: T, threadId: string) =>
+    t.run(async (ctx) => ({
+      thread: await ctx.db
+        .query("threads")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", threadId))
+        .unique(),
+      messages: await ctx.db
+        .query("threadMessages")
+        .withIndex("by_thread_sent", (q) => q.eq("threadAggregateId", threadId))
+        .collect(),
+      attachments: await ctx.db
+        .query("messageAttachments")
+        .withIndex("by_thread_uploader", (q) =>
+          q.eq("threadAggregateId", threadId),
+        )
+        .collect(),
+      participants: await ctx.db
+        .query("threadParticipants")
+        .withIndex("by_thread", (q) => q.eq("threadAggregateId", threadId))
+        .collect(),
+      typing: await ctx.db
+        .query("typingIndicators")
+        .withIndex("by_thread", (q) => q.eq("threadAggregateId", threadId))
+        .collect(),
+    }));
+
+  // Alice and Carol's exchange thread, as the conversation subscriber writes it.
+  const exchangeThread = (
+    t: T,
+    s: { alice: Id<"users">; carol: Id<"users"> },
+  ) =>
+    t.run(async (ctx) => {
+      const puzzleId = await ctx.db.insert("puzzles", {
+        title: "Lighthouse",
+        pieceCount: 1000,
+        status: "approved",
+        submittedBy: s.carol,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const copy = await ctx.db.insert("ownedPuzzles", {
+        puzzleId,
+        ownerId: s.carol,
+        condition: "good",
+        availability: { forTrade: true, forSale: false, forLend: false },
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const exchangeId = await ctx.db.insert("exchanges", {
+        initiatorId: s.alice,
+        recipientId: s.carol,
+        type: "trade",
+        requestedPuzzleId: copy,
+        status: "completed",
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const aggregateId = "thread-exchange-ac";
+      const participants = [s.alice, s.carol];
+      await ctx.db.insert("threads", {
+        aggregateId,
+        subjectKind: "exchange",
+        exchangeId,
+        participants,
+        participantsKey: participants.map(String).sort().join("|"),
+        createdAt: 1,
+      });
+      for (const memberId of participants) {
+        await ctx.db.insert("threadParticipants", {
+          threadAggregateId: aggregateId,
+          memberId,
+        });
+      }
+      for (const [i, authorId] of participants.entries()) {
+        await ctx.db.insert("threadMessages", {
+          threadAggregateId: aggregateId,
+          messageId: `msg-ac-${i}`,
+          authorId,
+          kind: "text",
+          body: "Swap on Saturday?",
+          sentAt: 10 + i,
+        });
+      }
+      return aggregateId;
+    });
+
+  const post = (t: T, who: "alice" | "bob", threadId: string, body: string) =>
+    (who === "alice" ? asAlice(t) : asBob(t)).mutation(
+      api.conversation.postMessage.postMessage,
+      { threadId, kind: "text", body },
+    );
+
+  test("the DM stays while Bob is here and goes, whole, once he is deleted too", async () => {
+    const t = newPurgeT();
+    const s = await seed(t);
+    await post(t, "alice", s.threadId, "See you Saturday");
+    await post(t, "bob", s.threadId, "Great");
+    const bobsPhoto = await deliveredPhoto(t, s.threadId, s.bob);
+    await asBob(t).mutation(api.conversation.setTyping.setTyping, {
+      threadId: s.threadId,
+    });
+
+    await deleteAlice(t);
+    const kept = await threadData(t, s.threadId);
+    expect(kept.thread).not.toBeNull();
+    expect(kept.messages.map((m) => m.body).sort()).toEqual([
+      "",
+      "Great",
+      "See you Saturday",
+    ]);
+    expect(kept.participants).toHaveLength(2);
+    expect(await blobExists(t, bobsPhoto.fileId)).toBe(true);
+
+    await deleteMember(t, "clerk_bob");
+    expect(await threadData(t, s.threadId)).toEqual({
+      thread: null,
+      messages: [],
+      attachments: [],
+      participants: [],
+      typing: [],
+    });
+    expect(await blobExists(t, bobsPhoto.fileId)).toBe(false);
+  });
+
+  test("an exchange thread goes once both parties are deleted", async () => {
+    const t = newPurgeT();
+    const s = await seed(t);
+    const threadId = await exchangeThread(t, s);
+    await deleteAlice(t);
+    expect((await threadData(t, threadId)).messages).toHaveLength(2);
+    await deleteMember(t, "clerk_carol");
+    expect(await threadData(t, threadId)).toMatchObject({
+      thread: null,
+      messages: [],
+      participants: [],
+    });
+  });
+
+  test.each(["before", "after"] as const)(
+    "a thread with a tombstoned participant (open CSAM escalation) is kept: Bob tombstoned %s Alice is deleted",
+    async (bobGoes) => {
+      const t = newPurgeT();
+      const s = await seed(t);
+      await post(t, "bob", s.threadId, "Hello");
+      await t.run((ctx) =>
+        ctx.db.insert("csamEscalations", {
+          table: "messageAttachments",
+          rowId: "x",
+          uploaderId: s.bob,
+          md5: "m",
+          sha1: "s",
+          provider: "offlimits",
+          matchedAt: 1,
+          status: "open",
+        }),
+      );
+      if (bobGoes === "before") await deleteMember(t, "clerk_bob");
+      await deleteAlice(t);
+      if (bobGoes === "after") await deleteMember(t, "clerk_bob");
+      expect((await t.run((ctx) => ctx.db.get(s.bob)))?.isActive).toBe(false);
+
+      const kept = await threadData(t, s.threadId);
+      expect(kept.thread).not.toBeNull();
+      expect(kept.messages.map((m) => m.body)).toEqual(["Hello"]);
+    },
+  );
+
+  test("a photo an open report holds survives the thread, blobs included", async () => {
+    const t = newPurgeT();
+    const s = await seed(t);
+    const held = await deliveredPhoto(t, s.threadId, s.bob, {
+      evidenceHold: true,
+    });
+    const quarantined = await undeliveredPhoto(
+      t,
+      s.threadId,
+      s.bob,
+      "quarantined",
+    );
+    await deleteAlice(t);
+    await deleteMember(t, "clerk_bob");
+
+    const after = await threadData(t, s.threadId);
+    expect(after.thread).toBeNull();
+    expect(after.messages).toEqual([]);
+    expect(after.attachments.map((a) => a._id).sort()).toEqual(
+      [held.id, quarantined.id].sort(),
+    );
+    expect(await blobExists(t, held.fileId)).toBe(true);
+    expect(await blobExists(t, quarantined.fileId)).toBe(true);
+  });
+
+  test("a long thread goes over several runs", async () => {
+    const t = newPurgeT();
+    const s = await seed(t);
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 2 * PURGE_BATCH_SIZE + 10; i++) {
+        await ctx.db.insert("threadMessages", {
+          threadAggregateId: s.threadId,
+          messageId: `msg-long-${i}`,
+          authorId: i % 2 === 0 ? s.alice : s.bob,
+          kind: "text",
+          body: `message ${i}`,
+          sentAt: 100 + i,
+        });
+      }
+    });
+    await deleteAlice(t);
+    await deleteMember(t, "clerk_bob");
+
+    expect((await threadData(t, s.threadId)).thread).toBeNull();
+    const runs = await t.run(async (ctx) =>
+      (await ctx.db.system.query("_scheduled_functions").collect()).filter(
+        (job) => job.name.includes("purgeOrphanThread"),
+      ),
+    );
+    expect(runs.length).toBeGreaterThanOrEqual(3);
   });
 });
