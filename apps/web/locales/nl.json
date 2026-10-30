@@ -1127,8 +1127,8 @@
     },
     "privacy": {
       "title": "Privacy",
-      "publicStatus": "Leden kunnen je vinden via Mensen vinden, en iedereen met je link ziet je volledige profiel.",
-      "privateStatus": "Alleen leden die je wederzijds volgt, kunnen je vinden via Mensen vinden en je volledige profiel zien. Anderen zien een afgeschermd profiel.",
+      "publicStatus": "Leden kunnen je vinden via Mensen vinden en Zoeken, en elk ingelogd lid dat je link opent, ziet je volledige profiel.",
+      "privateStatus": "Alleen leden met wie je elkaar volgt, kunnen je vinden via Mensen vinden en Zoeken, en je volledige profiel zien. Anderen zien een afgeschermd profiel.",
       "nowPublic": "Je profiel is nu openbaar",
       "nowPrivate": "Je profiel is nu privé",
       "undo": "Ongedaan maken",
