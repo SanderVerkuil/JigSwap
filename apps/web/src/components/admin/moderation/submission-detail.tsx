@@ -75,7 +75,8 @@ export function SubmissionDetail({
   busy: boolean;
   onApprove: () => void;
   onEditApprove: () => void;
-  onReject: () => void;
+  /** Opens the reject dialog, with the duplicate the check matched (if any) preselected. */
+  onReject: (duplicateTitle?: string) => void;
 }) {
   const t = useTranslations("admin.moderation");
   const tDifficulty = useTranslations("puzzles.puzzles.difficulty");
@@ -182,7 +183,7 @@ export function SubmissionDetail({
         </Button>
         <Button
           variant="ghost"
-          onClick={onReject}
+          onClick={() => onReject(dup?.title)}
           disabled={busy}
           className="ml-auto text-destructive hover:text-destructive"
         >

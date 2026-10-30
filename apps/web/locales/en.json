@@ -4826,6 +4826,23 @@
         "save": "Save & Approve",
         "handledElsewhere": "This submission was handled elsewhere while you were editing it, so it can no longer be approved from here."
       },
+      "rejectDialog": {
+        "title": "Reject this submission?",
+        "description": "“{title}” will be rejected for good: it can't be approved later. The member who submitted it is told the reason you give here.",
+        "handledElsewhere": "This submission was handled elsewhere, so it can no longer be rejected from here.",
+        "reasonLegend": "Reason",
+        "presets": {
+          "duplicate": "{hasTitle, select, yes {Duplicate of “{title}”} other {Already in the catalogue}}",
+          "incomplete": "Incomplete or wrong details",
+          "notJigsaw": "Not a jigsaw puzzle",
+          "other": "Other reason"
+        },
+        "noteLabel": "Note for the member",
+        "noteHint": "{required, select, yes {Required: the member sees only this note.} other {Optional: added after the reason.}}",
+        "noteCounter": "{count}/{max}",
+        "previewLabel": "The member reads",
+        "confirm": "Reject submission"
+      },
       "flag": {
         "loading": "Loading flagged images…",
         "unlabeled": "Flagged image",

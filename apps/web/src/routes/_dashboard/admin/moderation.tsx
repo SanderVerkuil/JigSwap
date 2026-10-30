@@ -19,6 +19,7 @@ import {
 } from "@/components/admin/moderation/moderation-search";
 import { PinnedDetail } from "@/components/admin/moderation/pinned-detail";
 import { QueueList } from "@/components/admin/moderation/queue-list";
+import { RejectSubmissionDialog } from "@/components/admin/moderation/reject-submission-dialog";
 import { ReportsQueue } from "@/components/admin/moderation/reports-queue";
 import { ScreeningHealth } from "@/components/admin/moderation/screening-health";
 import { severityBand } from "@/components/admin/moderation/severity";
@@ -77,7 +78,8 @@ export const Route = createFileRoute("/_dashboard/admin/moderation")({
 });
 
 // The moderation console: KPI week row + three underline tabs. Submissions is
-// the live queue (list+detail split with approve / edit&approve / reject),
+// the live queue (list+detail split with approve / edit&approve / reject with a
+// reason the submitter is told),
 // Flagged Images reviews the auto-rejected photos (restore / confirm removal),
 // Unchecked Photos lets an admin approve or reject photos the classifier has
 // not decided (pending / unscored) or whose hash check timed out, or check an unscored one again, Hash matches lists the CSAM hash-list matches to report
@@ -177,6 +179,28 @@ function ModerationPage() {
     edit !== null &&
     pending?.some((submission) => submission._id === edit.submission._id) ===
       true;
+  // Reject works the same way: the dialog asks for the reason the submitter is told, and rejects
+  // only the submission it was opened for (with the duplicate the check matched, if any).
+  const [rejecting, setRejecting] = useState<{
+    submission: PendingSubmission;
+    duplicateTitle?: string;
+    open: boolean;
+    session: number;
+  } | null>(null);
+  const openReject = (submission: PendingSubmission, duplicateTitle?: string) =>
+    setRejecting((prev) => ({
+      submission,
+      duplicateTitle,
+      open: true,
+      session: (prev?.session ?? 0) + 1,
+    }));
+  const closeReject = () =>
+    setRejecting((prev) => prev && { ...prev, open: false });
+  const rejectTargetPending =
+    rejecting !== null &&
+    pending?.some(
+      (submission) => submission._id === rejecting.submission._id,
+    ) === true;
   // The old code shared one busy flag across every moderation action to
   // disable the group; compose the mutations' pending states instead.
   const busy =
@@ -258,24 +282,44 @@ function ModerationPage() {
     return true;
   };
 
-  const moderate = async (action: "approve" | "reject") => {
+  const approveSelected = async () => {
     const submission = submissions.item;
     if (!submission?.aggregateId || !pending || submissions.gone) return;
     const puzzleDefinitionId = submission.aggregateId;
-    const run = action === "approve" ? approve : reject;
     const done = await decideRow(
       "submissions",
       submissions,
       submission._id,
-      () => run.mutateAsync({ puzzleDefinitionId }),
+      () => approve.mutateAsync({ puzzleDefinitionId }),
     );
     if (!done) return;
     toast.success(
-      t(action === "approve" ? "toast.approved" : "toast.rejected", {
+      t("toast.approved", {
         title: submission.title,
         count: pending.length - 1,
       }),
     );
+  };
+
+  const rejectWithReason = async (reason: string) => {
+    // Always the submission the dialog was opened for, and only while it is still pending.
+    const submission = rejecting?.submission;
+    if (!submission?.aggregateId || !pending || !rejectTargetPending) return;
+    const puzzleDefinitionId = submission.aggregateId;
+    const done = await decideRow(
+      "submissions",
+      submissions,
+      submission._id,
+      () => reject.mutateAsync({ puzzleDefinitionId, reason }),
+    );
+    if (!done) return;
+    toast.success(
+      t("toast.rejected", {
+        title: submission.title,
+        count: pending.length - 1,
+      }),
+    );
+    closeReject();
   };
 
   const editApprove = async (values: EditApproveValues) => {
@@ -488,9 +532,11 @@ function ModerationPage() {
                         submissions.gone ||
                         !selectedSubmission.aggregateId
                       }
-                      onApprove={() => moderate("approve")}
+                      onApprove={approveSelected}
                       onEditApprove={() => openEdit(selectedSubmission)}
-                      onReject={() => moderate("reject")}
+                      onReject={(duplicateTitle) =>
+                        openReject(selectedSubmission, duplicateTitle)
+                      }
                     />
                   )}
                 </PinnedDetail>
@@ -705,6 +751,25 @@ function ModerationPage() {
           // Edit button that opened the dialog now belongs to the next item: land on the detail.
           onCloseAutoFocus={(event) => {
             if (editTargetPending) return;
+            event.preventDefault();
+            focusDetail("submissions");
+          }}
+        />
+      )}
+      {rejecting && (
+        <RejectSubmissionDialog
+          key={rejecting.session}
+          submissionTitle={rejecting.submission.title}
+          duplicateTitle={rejecting.duplicateTitle}
+          open={rejecting.open}
+          onOpenChange={(open) => !open && closeReject()}
+          onReject={rejectWithReason}
+          busy={busy}
+          handledElsewhere={pending !== undefined && !rejectTargetPending}
+          // As for Edit & Approve: once its submission has left the queue, the Reject button
+          // that opened the dialog belongs to the next item, so land on the detail instead.
+          onCloseAutoFocus={(event) => {
+            if (rejectTargetPending) return;
             event.preventDefault();
             focusDetail("submissions");
           }}

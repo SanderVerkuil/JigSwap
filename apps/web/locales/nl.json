@@ -4826,6 +4826,23 @@
         "save": "Opslaan & goedkeuren",
         "handledElsewhere": "Deze inzending is elders afgehandeld terwijl je aan het bewerken was. Goedkeuren kan hier niet meer."
       },
+      "rejectDialog": {
+        "title": "Deze inzending afwijzen?",
+        "description": "“{title}” wordt definitief afgewezen en kan later niet meer worden goedgekeurd. Het lid dat de puzzel heeft ingediend, krijgt de reden te zien die je hier opgeeft.",
+        "handledElsewhere": "Deze inzending is elders afgehandeld. Afwijzen kan hier niet meer.",
+        "reasonLegend": "Reden",
+        "presets": {
+          "duplicate": "{hasTitle, select, yes {Duplicaat van “{title}”} other {Staat al in de catalogus}}",
+          "incomplete": "Onvolledige of onjuiste gegevens",
+          "notJigsaw": "Geen legpuzzel",
+          "other": "Andere reden"
+        },
+        "noteLabel": "Toelichting voor het lid",
+        "noteHint": "{required, select, yes {Verplicht: het lid ziet alleen deze toelichting.} other {Optioneel: komt na de reden.}}",
+        "noteCounter": "{count}/{max}",
+        "previewLabel": "Het lid leest",
+        "confirm": "Inzending afwijzen"
+      },
       "flag": {
         "loading": "Gemarkeerde afbeeldingen laden…",
         "unlabeled": "Gemarkeerde afbeelding",
