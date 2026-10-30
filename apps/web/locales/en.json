@@ -4423,6 +4423,7 @@
       "withPendingRequests": "{count, plural, one {{name}, # request waiting for your reply} other {{name}, # requests waiting for your reply}}"
     },
     "breadcrumbLabel": "Breadcrumb",
+    "waitingCount": "{capped, select, yes {{count} or more waiting} other {{count} waiting}}",
     "plankReset": "Reset"
   },
   "copyInstance": {

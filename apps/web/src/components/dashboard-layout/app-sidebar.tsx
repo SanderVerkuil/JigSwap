@@ -6,9 +6,15 @@
 // their landing pages (/library, /community, /admin — the admin group renders
 // only for backend-confirmed admins), the hubs the phone tabs open; they show
 // a row background and a chevron on hover and focus so they read as links.
+// Messages carries the unread count; Moderation, Puzzles and Contact carry the
+// work waiting in their admin queues.
 import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
 import { usePathname } from "@/compat/navigation";
+import {
+  ADMIN_COUNTED_NAV_KEYS,
+  adminNavCount,
+} from "@/components/admin/pending-counts";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { usePageHeaderContent } from "@/components/dashboard-layout/page-header-slot";
 import { formatUnreadCount } from "@/components/messaging/format";
@@ -27,6 +33,8 @@ import {
 import { UnreadDot, WhatsNewNavItem } from "@/components/whats-new/badges";
 import { useWhatsNewUnreadCount } from "@/components/whats-new/use-whats-new-state";
 import { gateway } from "@/gateway";
+import { formatQueueCount } from "@/lib/queue-count";
+import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight } from "lucide-react";
@@ -145,31 +153,67 @@ function NavLink({ item }: { item: ShellNavItem }) {
   );
   const unread = unreadTotal ?? 0;
 
+  // Work waiting in the item's admin queues (Moderation, Puzzles, Contact), subscribed for those
+  // items only. They render in the admin group, which only backend-confirmed admins get, and the
+  // query is admin-gated server-side; Convex dedupes the one subscription the items share. The
+  // backend stops each count at a cap, so a capped count renders "N+".
+  const { data: pendingCounts } = useQuery(
+    convexQuery(
+      gateway.admin.pendingCounts,
+      ADMIN_COUNTED_NAV_KEYS.has(item.key) ? {} : "skip",
+    ),
+  );
+  const waiting = pendingCounts && adminNavCount(item.key, pendingCounts);
+  // Unread messages keep the pink "new for you" pill; admin work waiting gets the primary one,
+  // which also keeps its small white text at AA contrast.
+  const badge =
+    unread > 0
+      ? {
+          label: formatUnreadCount(unread),
+          srText: tMessages("unreadCount", { count: unread }),
+          className: "bg-jigsaw-primary-accent text-white",
+        }
+      : waiting && waiting.count > 0
+        ? {
+            label: formatQueueCount(waiting.count, waiting.capped),
+            srText: t("waitingCount", {
+              count: waiting.count,
+              capped: waiting.capped ? "yes" : "no",
+            }),
+            className:
+              "bg-primary text-primary-foreground peer-hover/menu-button:text-primary-foreground peer-data-[active=true]/menu-button:text-primary-foreground",
+            dotClassName: "bg-primary",
+          }
+        : null;
+
   return (
     <SidebarMenuItem>
       <SidebarMenuButton asChild isActive={active} tooltip={title}>
         <Link href={item.href}>
           <item.icon />
           <span>{title}</span>
-          {unread > 0 && (
+          {badge && (
             // Inside the link so screen readers announce the count with it;
             // the visual pill below stays aria-hidden.
-            <span className="sr-only">
-              {tMessages("unreadCount", { count: unread })}
-            </span>
+            <span className="sr-only">{badge.srText}</span>
           )}
         </Link>
       </SidebarMenuButton>
-      {unread > 0 && (
+      {badge && (
         <>
           <SidebarMenuBadge
             aria-hidden
-            className="bg-jigsaw-primary-accent rounded-full text-white"
+            className={cn("rounded-full", badge.className)}
           >
-            {formatUnreadCount(unread)}
+            {badge.label}
           </SidebarMenuBadge>
           {/* The collapsed icon rail (the tablet default) hides SidebarMenuBadge. */}
-          <UnreadDot className="ring-sidebar top-1.5 right-1.5 hidden size-2 group-data-[collapsible=icon]:block" />
+          <UnreadDot
+            className={cn(
+              "ring-sidebar top-1.5 right-1.5 hidden size-2 group-data-[collapsible=icon]:block",
+              badge.dotClassName,
+            )}
+          />
         </>
       )}
     </SidebarMenuItem>
