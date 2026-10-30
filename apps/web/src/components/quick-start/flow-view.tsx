@@ -225,7 +225,7 @@ export function QuickStartDonePanel({
           following: displayCount(count("people")),
         })}
       </p>
-      <div className="flex flex-col gap-2 sm:flex-row">
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-center">
         {first && (
           <Button asChild className={PRIMARY_LOOK}>
             <Link to="/welcome" search={{ step: first.id }}>

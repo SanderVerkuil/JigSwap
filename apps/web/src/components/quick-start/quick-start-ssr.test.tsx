@@ -657,6 +657,13 @@ describe("QuickStartDonePanel: tour hand-off", () => {
       "Go to my shelf",
       "Show me around",
     ]);
+    // Three actions: the row wraps instead of overflowing a narrow column (NL on a tablet).
+    const row = all(html).find((el) =>
+      el.childNodes.some((c) => "tagName" in c && isInteractive(c as Element)),
+    )!;
+    expect(attr(row, "class")?.split(/\s+/)).toEqual(
+      expect.arrayContaining(["sm:flex-row", "sm:flex-wrap"]),
+    );
   });
 
   it("reads as a resume while the tour is paused, and in Dutch", () => {
