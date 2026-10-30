@@ -1,17 +1,42 @@
-import { convexErrorCode } from "@/lib/convex-error-code";
+import { convexErrorCode, rateLimitedRetryAt } from "@/lib/convex-error-code";
+import { isUploadRateLimited } from "@/lib/upload-rate-limit";
 
-// The puzzles.* message for a failed contribute flow (box-art upload, then createPuzzle): the
-// member's limit on submissions or box-art checks (RateLimited), a field the catalogue refuses
-// as too long (TextTooLong), else the generic failure.
-export function contributeErrorKey(
-  error: unknown,
-): "rateLimited" | "textTooLong" | "puzzleCreationFailed" {
-  switch (convexErrorCode(error)) {
-    case "RateLimited":
-      return "rateLimited";
-    case "TextTooLong":
-      return "textTooLong";
-    default:
-      return "puzzleCreationFailed";
+// A failed cover step of a contribute flow (an uploaded box art's check, or a shop image's
+// import), kept apart from the submission's own failure so a refusal names the right limit.
+export class CoverStepError extends Error {
+  constructor(readonly original: unknown) {
+    super("The cover step failed");
   }
+}
+
+// Runs a contribute flow's cover step; its failure is rethrown as a CoverStepError. A refused
+// upload URL stays as it is: it is the upload limit's refusal, with its own tag and message
+// (lib/upload-rate-limit), not the cover-photo limit.
+export async function coverStep<T>(step: () => Promise<T>): Promise<T> {
+  try {
+    return await step();
+  } catch (error) {
+    if (isUploadRateLimited(error)) throw error;
+    throw new CoverStepError(error);
+  }
+}
+
+// The puzzles.* message for a failed contribute flow (cover step, then createPuzzle): the
+// member's limit on submissions (rateLimited) or on cover photos (coverRateLimited), each with
+// when they can try again; a field the catalogue refuses as too long (textTooLong); else the
+// generic failure.
+export type ContributeError =
+  | { key: "rateLimited" | "coverRateLimited"; retryAt: number }
+  | { key: "textTooLong" | "puzzleCreationFailed" };
+
+export function contributeError(error: unknown, now: number): ContributeError {
+  const fromCover = error instanceof CoverStepError;
+  const cause = fromCover ? error.original : error;
+  const retryAt = rateLimitedRetryAt(cause, now);
+  if (retryAt !== undefined) {
+    return { key: fromCover ? "coverRateLimited" : "rateLimited", retryAt };
+  }
+  return convexErrorCode(cause) === "TextTooLong"
+    ? { key: "textTooLong" }
+    : { key: "puzzleCreationFailed" };
 }
