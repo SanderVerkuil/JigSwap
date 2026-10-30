@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
+import { useUrlTextDraft } from "@/hooks/use-url-text-draft";
 import {
   catalogueEmptyState,
   catalogueSearchArgs,
@@ -63,20 +64,15 @@ export function PuzzlesClient({
   const [showFilters, setShowFilters] = useState(false);
   const filtersPanelId = useId();
 
-  // The search box edits a draft, seeded from the URL; the URL (and so the server query) takes it
-  // over after a pause in typing, so every keystroke doesn't start a new search.
-  const [searchDraft, setSearchDraft] = useState(search.q ?? "");
-  const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  useEffect(() => () => clearTimeout(searchTimer.current), []);
-  const onSearchInput = (value: string) => {
-    setSearchDraft(value);
-    clearTimeout(searchTimer.current);
-    searchTimer.current = setTimeout(
-      () =>
-        onSearchChange((prev) => ({ ...prev, q: value.trim() || undefined })),
-      SEARCH_DEBOUNCE_MS,
-    );
-  };
+  // The search box edits a draft that follows the URL; the URL (and so the server query) takes it
+  // over after a pause in typing, so every keystroke doesn't start a new search. A term changed
+  // from elsewhere (the sidebar's link to the bare catalogue) replaces the draft.
+  const searchBox = useUrlTextDraft(
+    search.q,
+    (q) => onSearchChange((prev) => ({ ...prev, q })),
+    SEARCH_DEBOUNCE_MS,
+  );
+  const searchDraft = searchBox.draft;
 
   // The catalogue is searched and filtered on the server, so matches beyond the loaded pages are
   // found. Favourites are a short, complete list: the same facets apply to it on the client.
@@ -143,8 +139,7 @@ export function PuzzlesClient({
   }, [handleObserver]);
 
   const clearFilters = () => {
-    clearTimeout(searchTimer.current);
-    setSearchDraft("");
+    searchBox.change("");
     // Everything but the view mode.
     onSearchChange((prev) => ({ view: prev.view }));
   };
@@ -194,7 +189,7 @@ export function PuzzlesClient({
                 aria-label={t("searchLabel")}
                 placeholder={t("searchPlaceholder")}
                 value={searchDraft}
-                onChange={(e) => onSearchInput(e.target.value)}
+                onChange={(e) => searchBox.change(e.target.value)}
                 className="pl-10"
               />
             </div>
