@@ -38,9 +38,10 @@ export function PuzzlePickList({
       >
         {puzzles.map((puzzle) => (
           <li key={puzzle._id} className="flex items-center">
+            {/* Named by its visible text (title, shelf mark, meta) so the label is in the name,
+                followed by what it does. */}
             <Link
               href={addCopyHref(puzzle._id)}
-              aria-label={tPicker("add", { title: puzzle.title })}
               className="hover:bg-accent focus-visible:ring-ring/50 flex min-h-12 min-w-0 flex-1 items-center gap-3 py-2 pl-3 text-left transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-inset motion-reduce:transition-none"
             >
               <span className="bg-muted size-10 shrink-0 overflow-hidden rounded-md">
@@ -82,6 +83,7 @@ export function PuzzlePickList({
                 aria-hidden
                 className="text-muted-foreground size-5 shrink-0"
               />
+              <span className="sr-only">{t("addToLibrary")}</span>
             </Link>
             <Button
               variant="ghost"

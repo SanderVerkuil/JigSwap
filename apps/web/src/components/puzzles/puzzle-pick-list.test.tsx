@@ -143,7 +143,10 @@ describe("PuzzlePickList", () => {
     renderList();
     const rows = screen.getByTestId("pick-rows");
     expect(rows.className).toContain("sm:hidden");
-    const add = within(rows).getByRole("link", { name: "Add Puzzle a" });
+    // Named by what it shows (label in name), ending in what it does.
+    const add = within(rows).getByRole("link", {
+      name: "Puzzle a Ravensburger · 1000 pieces Add to Library",
+    });
     expect(add.getAttribute("href")).toBe("/my-puzzles/add/new?puzzleId=doc_a");
     expect(add.className).toContain("min-h-12");
     expect(
@@ -174,7 +177,9 @@ describe("PuzzlePickList", () => {
   it("speaks Dutch", () => {
     renderList("nl");
     expect(
-      screen.getByRole("link", { name: "Puzzle a toevoegen" }),
+      screen.getByRole("link", {
+        name: "Puzzle a Ravensburger · 1000 stukken Toevoegen aan bibliotheek",
+      }),
     ).toBeTruthy();
     expect(screen.getAllByText("Op je plank").length).toBeGreaterThan(0);
   });
