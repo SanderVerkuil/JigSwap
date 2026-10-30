@@ -2261,7 +2261,8 @@
     "toastUnfollowed": "Ontvolgd",
     "toastRequestCancelled": "Verzoek geannuleerd",
     "errorUpdate": "Kon de volgstatus niet bijwerken",
-    "errorCancel": "Kon het verzoek niet annuleren"
+    "errorCancel": "Kon het verzoek niet annuleren",
+    "errorRateLimited": "Je hebt vaak gevolgd en ontvolgd. Probeer het later opnieuw."
   },
   "members": {
     "memberSince": "Lid sinds {date}",

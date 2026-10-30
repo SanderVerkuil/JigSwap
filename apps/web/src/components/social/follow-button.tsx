@@ -1,5 +1,6 @@
 "use client";
 
+import { convexErrorCode } from "@/components/exchange/request-trade";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -85,6 +86,10 @@ export function FollowButton({
     );
   }
 
+  // The server rate limits follow, unfollow and cancel (RateLimited); anything else is generic.
+  const refusal = (error: unknown, fallback: string) =>
+    convexErrorCode(error) === "RateLimited" ? t("errorRateLimited") : fallback;
+
   const handleFollow = async () => {
     try {
       const result = await follow.mutateAsync({ followeeId: memberId });
@@ -93,8 +98,8 @@ export function FollowButton({
           ? t("toastRequestSent")
           : t("toastFollowing"),
       );
-    } catch {
-      toast.error(t("errorUpdate"));
+    } catch (error) {
+      toast.error(refusal(error, t("errorUpdate")));
     }
   };
 
@@ -102,8 +107,8 @@ export function FollowButton({
     try {
       await unfollow.mutateAsync({ followeeId: memberId });
       toast.success(t("toastUnfollowed"));
-    } catch {
-      toast.error(t("errorUpdate"));
+    } catch (error) {
+      toast.error(refusal(error, t("errorUpdate")));
     }
   };
 
@@ -114,8 +119,8 @@ export function FollowButton({
         requestId: relation.pendingRequest.requestId,
       });
       toast.success(t("toastRequestCancelled"));
-    } catch {
-      toast.error(t("errorCancel"));
+    } catch (error) {
+      toast.error(refusal(error, t("errorCancel")));
     }
   };
 

@@ -2120,8 +2120,10 @@ export default defineSchema({
     // The reports sharing one evidence copy (its purge; message-photo claims refuse it).
     .index("by_evidence_file", ["evidenceFileId"]),
 
-  // Fixed-window rate limit counters (lib/rateLimits). One row per key ("<limit>:<memberId>"),
-  // reset in place when its window has passed, so the table stays bounded without a cleanup job.
+  // Fixed-window rate limit counters (lib/rateLimits). One row per key ("<limit>:<memberId>", or
+  // "<limit>:<memberId>:<otherId>" for a per-pair limit such as followPair), reset in place when
+  // its window has passed. Member keys keep the table bounded by the member count; pair keys only
+  // by what each member's own limits let them touch, and nothing prunes expired rows yet.
   rateLimits: defineTable({
     key: v.string(),
     windowStart: v.number(),

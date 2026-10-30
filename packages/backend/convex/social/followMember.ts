@@ -8,6 +8,7 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation, type MutationCtx } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { enforceRateLimit } from "../lib/rateLimits";
 import { convexFollowRepository } from "./adapters/convexFollowRepository";
 import { convexFollowRequestRepository } from "./adapters/convexFollowRequestRepository";
 import {
@@ -26,12 +27,18 @@ import { profileVisibilityOf } from "./privacy";
 // contact; a follow-back completes mutuality and must not dead-end in a request).
 // The follower is derived from auth, never the client. The body is shared with notifications/act
 // (Follow back from a notification) so both paths run the exact same rules.
+// Rate limits (SEC-23): the member's followToggle bucket, then the per-pair followPair bucket. The
+// pair is charged before the public/private branch and before the request dedupe, so every
+// outcome (instant follow, new request, an idempotent repeat, a silently declined request) costs
+// the same and a refusal can't tell them apart.
 export const followMemberUseCase = async (
   ctx: MutationCtx,
   followerId: MemberId,
   args: { followeeId: Id<"users"> },
 ): Promise<{ kind: "followed" | "requested"; id: string }> => {
+  await enforceRateLimit(ctx, "followToggle", followerId);
   await assertPairNotBlocked(ctx, followerId, args.followeeId);
+  await enforceRateLimit(ctx, "followPair", `${followerId}:${args.followeeId}`);
   const visibility = await profileVisibilityOf(ctx, args.followeeId);
   const reverseEdge = await ctx.db
     .query("follows")

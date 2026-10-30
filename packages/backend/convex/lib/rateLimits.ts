@@ -67,6 +67,14 @@ export const RATE_LIMITS = {
   catalogSubmitDaily: { windowMs: DAY, max: 20 },
   proposalFile: { windowMs: HOUR, max: 10 },
   proposalFileDaily: { windowMs: DAY, max: 30 },
+  // Follow, unfollow and cancel-request taps, all targets together (social/followMember,
+  // unfollowMember, cancelFollowRequest; also the follow back on a notification).
+  followToggle: { windowMs: HOUR, max: 60 },
+  // Follows and follow requests from one member to one other, keyed "<follower>:<target>". Each can
+  // notify the target (new_follower, follow_request_received), so a follow/unfollow or
+  // request/cancel loop reaches them at most this often. Undoing (unfollow, cancel) isn't charged
+  // here, so a member can always withdraw.
+  followPair: { windowMs: DAY, max: 6 },
 } as const satisfies Record<string, { windowMs: number; max: number }>;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;

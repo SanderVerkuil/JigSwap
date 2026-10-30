@@ -568,6 +568,16 @@ const translate = async (
       ];
     }
     case "FollowRequested": {
+      // Only a request that is still pending is worth a notification. One cancelled before this
+      // event was dispatched is gone (a request/cancel loop would otherwise notify the target once
+      // per cycle, SEC-23), and one already approved or declined was acted on.
+      const request = await ctx.db
+        .query("followRequests")
+        .withIndex("by_aggregate_id", (q) =>
+          q.eq("aggregateId", p.requestId as string),
+        )
+        .unique();
+      if (request?.status !== "pending") return [];
       return [
         cmd(
           p.targetId as string,

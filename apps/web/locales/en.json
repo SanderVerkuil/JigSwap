@@ -2261,7 +2261,8 @@
     "toastUnfollowed": "Unfollowed",
     "toastRequestCancelled": "Request cancelled",
     "errorUpdate": "Could not update follow status",
-    "errorCancel": "Could not cancel the request"
+    "errorCancel": "Could not cancel the request",
+    "errorRateLimited": "You've followed and unfollowed a lot. Try again later."
   },
   "members": {
     "memberSince": "Member since {date}",

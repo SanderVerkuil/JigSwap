@@ -376,6 +376,8 @@ describe("silent-decline cooldown cannot be bypassed by cancel + re-request", ()
       api.social.followMember.followMember,
       { followeeId: bob },
     );
+    // Bob is notified while the request is pending, then declines it.
+    await flushScheduled(t);
     await asBob(t).mutation(
       api.social.declineFollowRequest.declineFollowRequest,
       { requestId: requested.id },
@@ -427,6 +429,8 @@ describe("silent-decline cooldown cannot be bypassed by cancel + re-request", ()
       api.social.followMember.followMember,
       { followeeId: bob },
     );
+    // Bob is notified while the request is pending, then declines it.
+    await flushScheduled(t);
     await asBob(t).mutation(
       api.social.declineFollowRequest.declineFollowRequest,
       { requestId: requested.id },
