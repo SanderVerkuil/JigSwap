@@ -11,6 +11,9 @@ export const PAGE_HEAD_HEIGHT_VAR = "--page-head-height";
 // instead of a hard-coded 57px. 0px from md up (the bar is display:none there) and unset where the
 // bar isn't rendered (an open thread, public pages), so `var(..., 0px)` means "no bar".
 export const MOBILE_TAB_BAR_HEIGHT_VAR = "--mobile-tab-bar-height";
+// How far the tab bar's raised "+" reaches above the bar's top edge: its -mt-[22px] lifts the
+// 52px button 8px out of the centred 56px row, plus its 4px ring. Keep in sync with MobileTabBar.
+export const MOBILE_TAB_BAR_RAISE = "12px";
 
 // A callback ref that keeps `name` equal to the element's border-box height while it is mounted,
 // and removes the variable when it unmounts (e.g. the mobile top bar on an immersive route).

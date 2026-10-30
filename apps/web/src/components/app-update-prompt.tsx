@@ -1,6 +1,7 @@
 import {
   parseVersion,
   STALE_BUILD,
+  updatePromptPosition,
   VERSION_CHECK_INTERVAL_MS,
   VERSION_URL,
   versionToPrompt,
@@ -14,6 +15,10 @@ import { useTranslations } from "use-intl";
 // chunk load (stale chunks after a deploy) as the same signal. Never reloads by itself, so nothing
 // half-typed is lost. Off on the dev server, which has no version.json. Mounted in the dashboard
 // layout only; the marketing and docs pages don't need it.
+//
+// It stays up until answered on purpose: versionToPrompt never offers the same version twice on
+// this page, so a prompt that timed out would drop the update silently. On phones it shows at the
+// top instead, so it never sits on the tab bar.
 export function AppUpdatePrompt() {
   const t = useTranslations("appUpdate");
   const prompted = useRef<string | null>(null);
@@ -31,6 +36,10 @@ export function AppUpdatePrompt() {
       prompted.current = version;
       toast(t("available"), {
         id: "app-update",
+        // The shell's phone layout (below md, as useIsMobile).
+        position: updatePromptPosition(
+          window.matchMedia("(max-width: 767px)").matches,
+        ),
         description: t("description"),
         duration: Infinity,
         action: { label: t("reload"), onClick: () => window.location.reload() },

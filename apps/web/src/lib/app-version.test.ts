@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { parseVersion, STALE_BUILD, versionToPrompt } from "./app-version";
+import {
+  parseVersion,
+  STALE_BUILD,
+  updatePromptPosition,
+  versionToPrompt,
+} from "./app-version";
 
 describe("versionToPrompt", () => {
   it("stays quiet while the deployed version is the one loaded", () => {
@@ -46,4 +51,14 @@ describe("parseVersion", () => {
       expect(parseVersion(body)).toBeNull();
     },
   );
+});
+
+describe("updatePromptPosition", () => {
+  it("shows at the top on phones, where the bottom belongs to the tab bar", () => {
+    expect(updatePromptPosition(true)).toBe("top-center");
+  });
+
+  it("keeps the toaster's bottom-right corner on wider screens", () => {
+    expect(updatePromptPosition(false)).toBe("bottom-right");
+  });
 });

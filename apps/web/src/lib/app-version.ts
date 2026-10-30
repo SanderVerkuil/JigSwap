@@ -40,3 +40,13 @@ export function parseVersion(body: unknown): string | null {
   const { version } = body as { version?: unknown };
   return typeof version === "string" && version.length > 0 ? version : null;
 }
+
+/**
+ * Where the update prompt shows. It stays up until answered, so on phones it goes to the top,
+ * clear of the tab bar and its "+" at the bottom; elsewhere it keeps the toaster's corner.
+ */
+export function updatePromptPosition(
+  phone: boolean,
+): "top-center" | "bottom-right" {
+  return phone ? "top-center" : "bottom-right";
+}

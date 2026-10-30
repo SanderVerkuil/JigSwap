@@ -120,6 +120,8 @@ export function MobileTabBar() {
         {TABS.slice(0, 2).map((tab) => (
           <TabLink key={tab.key} tab={tab} active={active} />
         ))}
+        {/* The raised "+" reaches 12px above the bar; toasts clear it (sticky-offset.ts
+            MOBILE_TAB_BAR_RAISE). */}
         <div className="flex items-center justify-center">
           <button
             type="button"
