@@ -9,19 +9,29 @@ import { internalMutation } from "../_generated/server";
 // for "ravensburger" keeps matching after the value leaves `brand`.
 // Idempotent: rows that already carry a publisher are skipped. `updatedAt` is deliberately NOT
 // stamped: this is a data-model cleanup, not a content edit (it would only shift sitemap
-// <lastmod>). Full-table collect is fine at catalog scale (same pattern as backfillCategories);
-// batch if this ever trips Convex read limits.
-// Run manually (dry run FIRST, eyeball `changes`, then for real):
+// <lastmod>). Pages the table in cursor batches (`batchSize` rows, default 100), one transaction
+// each; `changes` lists the moves of that page only.
+// Run manually (dry run FIRST over every page, eyeball `changes`, then for real), passing
+// `continueCursor` back as `cursor` until `isDone` is true:
 //   npx convex run catalog/migratePublishers:run
+//   npx convex run catalog/migratePublishers:run '{"cursor":"<continueCursor>"}'
 //   npx convex run catalog/migratePublishers:run '{"dryRun": false}'
+//   npx convex run catalog/migratePublishers:run '{"dryRun": false, "cursor":"<continueCursor>"}'
 export const run = internalMutation({
-  args: { dryRun: v.optional(v.boolean()) },
+  args: {
+    dryRun: v.optional(v.boolean()),
+    cursor: v.optional(v.union(v.string(), v.null())),
+    batchSize: v.optional(v.number()),
+  },
   handler: async (ctx, args) => {
     const dryRun = args.dryRun ?? true; // safe by default
-    const puzzles = await ctx.db.query("puzzles").collect();
+    const page = await ctx.db.query("puzzles").paginate({
+      cursor: args.cursor ?? null,
+      numItems: args.batchSize ?? 100,
+    });
 
     const changes: Array<{ title: string; from: string; to: string }> = [];
-    for (const puzzle of puzzles) {
+    for (const puzzle of page.page) {
       if (!puzzle.brand || puzzle.publisher) continue;
       const publisher = matchKnownPublisher(puzzle.brand);
       if (!publisher) continue;
@@ -41,6 +51,13 @@ export const run = internalMutation({
         }),
       });
     }
-    return { dryRun, total: puzzles.length, moved: changes.length, changes };
+    return {
+      dryRun,
+      scanned: page.page.length,
+      moved: changes.length,
+      changes,
+      isDone: page.isDone,
+      continueCursor: page.isDone ? null : page.continueCursor,
+    };
   },
 });

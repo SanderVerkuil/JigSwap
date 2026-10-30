@@ -1,6 +1,7 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError, type Value } from "convex/values";
 import { describe, expect, test } from "vitest";
+import { drainBatches } from "../test-fixtures/cursorBatches";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
@@ -382,6 +383,28 @@ describe("reputation read queries", () => {
 });
 
 describe("reputation.backfill", () => {
+  // Both phases, each paged to the end the way an operator runs them.
+  const backfill = async (t: TestConvex<typeof schema>, batchSize?: number) => {
+    const run = (phase: "stamp" | "rebuild") =>
+      drainBatches((cursor) =>
+        t.mutation(internal.reputation.backfill.backfillReputation, {
+          phase,
+          cursor,
+          batchSize,
+        }),
+      );
+    const total = (batches: { patched: number }[]) =>
+      batches.reduce((sum, batch) => sum + batch.patched, 0);
+    const stamp = await run("stamp");
+    const rebuild = await run("rebuild");
+    return {
+      reviewsStamped: total(stamp),
+      profilesUpserted: total(rebuild),
+      stampBatches: stamp.length,
+      rebuildBatches: rebuild.length,
+    };
+  };
+
   test("stamps aggregateId on legacy reviews and rebuilds profiles from history", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob, completed } = await seed(t);
@@ -404,10 +427,7 @@ describe("reputation.backfill", () => {
       await ctx.db.insert("reviews", { ...base, rating: 3 });
     });
 
-    const result = await t.mutation(
-      internal.reputation.backfill.backfillReputation,
-      {},
-    );
+    const result = await backfill(t);
     expect(result.reviewsStamped).toBe(2);
     expect(result.profilesUpserted).toBe(1);
 
@@ -417,13 +437,61 @@ describe("reputation.backfill", () => {
     expect(profile?.averageRating).toBe(4);
 
     // Idempotent: a second run stamps nothing new and recomputes the same projection.
-    const again = await t.mutation(
-      internal.reputation.backfill.backfillReputation,
-      {},
-    );
+    const again = await backfill(t);
     expect(again.reviewsStamped).toBe(0);
     const profileAgain = await profileRow(t, bob);
     expect(profileAgain?.reviewCount).toBe(2);
+  });
+
+  test("small batches take several calls and fold the same profiles", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, carol, completed } = await seed(t);
+    const review = (
+      reviewerId: Id<"users">,
+      revieweeId: Id<"users">,
+      rating: number,
+    ) =>
+      t.run((ctx) =>
+        ctx.db.insert("reviews", {
+          exchangeId: completed.id,
+          reviewerId,
+          revieweeId,
+          rating,
+          categories: {
+            communication: rating,
+            packaging: rating,
+            condition: rating,
+            timeliness: rating,
+          },
+          createdAt: Date.now(),
+        }),
+      );
+    await review(alice, bob, 5);
+    await review(carol, bob, 2);
+    await review(bob, alice, 4);
+    await review(carol, alice, 4);
+    await review(alice, carol, 1);
+
+    const result = await backfill(t, 2);
+    // 5 reviews in batches of 2, then 3 members in batches of 2.
+    expect(result.stampBatches).toBeGreaterThanOrEqual(3);
+    expect(result.rebuildBatches).toBeGreaterThanOrEqual(2);
+    expect(result.reviewsStamped).toBe(5);
+    expect(result.profilesUpserted).toBe(3);
+
+    const fold = async (memberId: Id<"users">) => {
+      const profile = await profileRow(t, memberId);
+      return [profile?.reviewCount, profile?.ratingSum, profile?.averageRating];
+    };
+    expect(await fold(bob)).toEqual([2, 7, 3.5]);
+    expect(await fold(alice)).toEqual([2, 8, 4]);
+    expect(await fold(carol)).toEqual([1, 1, 1]);
+    const stamped = await t.run(async (ctx) =>
+      (await ctx.db.query("reviews").collect()).every(
+        (row) => row.aggregateId !== undefined,
+      ),
+    );
+    expect(stamped).toBe(true);
   });
 });
 

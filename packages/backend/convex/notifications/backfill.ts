@@ -6,14 +6,23 @@ import { logEvent } from "../lib/logEvent";
 // One-shot migration: legacy notifications predate aggregateId + channel, so the domain path
 // (which keys saves on aggregateId and carries a channel) can't act on them. Stamp a fresh
 // NotificationId + the default "inApp" channel on every row still missing them. Idempotent: rows
-// already carrying both are skipped, so re-running is safe.
+// already carrying both are skipped, so re-running is safe. Pages the table in cursor batches
+// (`batchSize` rows, default 100), one transaction each: run it, then pass `continueCursor` back as
+// `cursor` until `isDone` is true:
+//   npx convex run notifications/backfill:backfillNotificationFields
+//   npx convex run notifications/backfill:backfillNotificationFields '{"cursor":"<continueCursor>"}'
 export const backfillNotificationFields = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    const notifications = await ctx.db.query("notifications").collect();
+  args: {
+    cursor: v.optional(v.union(v.string(), v.null())),
+    batchSize: v.optional(v.number()),
+  },
+  handler: async (ctx, { cursor, batchSize }) => {
+    const page = await ctx.db
+      .query("notifications")
+      .paginate({ cursor: cursor ?? null, numItems: batchSize ?? 100 });
 
     let patched = 0;
-    for (const notification of notifications) {
+    for (const notification of page.page) {
       const patch: { aggregateId?: string; channel?: string } = {};
       if (!notification.aggregateId) patch.aggregateId = crypto.randomUUID();
       if (!notification.channel) patch.channel = "inApp";
@@ -22,7 +31,12 @@ export const backfillNotificationFields = internalMutation({
       patched++;
     }
 
-    return { patched };
+    return {
+      scanned: page.page.length,
+      patched,
+      isDone: page.isDone,
+      continueCursor: page.isDone ? null : page.continueCursor,
+    };
   },
 });
 
