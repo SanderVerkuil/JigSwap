@@ -1,4 +1,7 @@
-import type { AdminUserDetailView } from "@jigswap/contracts";
+import {
+  ADMIN_USER_STATS_CAP,
+  type AdminUserDetailView,
+} from "@jigswap/contracts";
 import { ConvexError, v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
@@ -10,8 +13,8 @@ import { toAuditEntry } from "./auditEntry";
 // design), library/activity stats, catalog submissions, and the moderation/audit
 // trail split into actions they PERFORMED as admin (by_actor) and actions
 // TARGETING them (receivedActions). Admin-only, gated exactly like listUsers.
-// Every list/count is an indexed read; lists are
-// capped, newest first (no pagination in v1). The profile's `role` is the
+// Every list/count is an indexed, bounded read: counts stop at
+// ADMIN_USER_STATS_CAP + 1, lists are capped, newest first (no pagination in v1). The profile's `role` is the
 // DISPLAY-ONLY Clerk mirror — authorization never reads it.
 
 const SUBMISSIONS_CAP = 50;
@@ -47,18 +50,23 @@ export const getUserDetail = query({
     const user = await ctx.db.get(userId);
     if (!user) throw new ConvexError("User not found");
 
+    // Bounded (SEC-71): one row past the cap tells the page there are more.
     const copies = await ctx.db
       .query("ownedPuzzles")
       .withIndex("by_owner", (q) => q.eq("ownerId", userId))
-      .collect();
+      .take(ADMIN_USER_STATS_CAP + 1);
     const collections = await ctx.db
       .query("collections")
       .withIndex("by_user", (q) => q.eq("userId", userId))
-      .collect();
-    const completions = await ctx.db
+      .take(ADMIN_USER_STATS_CAP + 1);
+    // Solves = finished puzzles only; the table also holds in-progress sessions
+    // (isCompleted: false).
+    const solves = await ctx.db
       .query("completions")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .collect();
+      .withIndex("by_user_completed", (q) =>
+        q.eq("userId", userId).eq("isCompleted", true),
+      )
+      .take(ADMIN_USER_STATS_CAP + 1);
     const submissions = await ctx.db
       .query("puzzles")
       .withIndex("by_submitted_by", (q) => q.eq("submittedBy", userId))
@@ -95,9 +103,7 @@ export const getUserDetail = query({
           forLend: copies.filter((c) => c.availability.forLend).length,
         },
         collections: collections.length,
-        // Solves = finished puzzles only; the table also holds in-progress
-        // sessions (isCompleted: false).
-        completions: completions.filter((c) => c.isCompleted).length,
+        completions: solves.length,
       },
       submissions: submissions.map((p) => ({
         _id: p._id,

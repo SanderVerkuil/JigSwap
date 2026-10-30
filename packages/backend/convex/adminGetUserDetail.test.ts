@@ -1,3 +1,4 @@
+import { ADMIN_USER_STATS_CAP } from "@jigswap/contracts";
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
@@ -201,6 +202,60 @@ describe("admin/getUserDetail", () => {
       collections: 2,
       completions: 1,
     });
+  });
+
+  test("a heavy member's stats read at most ADMIN_USER_STATS_CAP + 1 rows each: above the cap means 'more'", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seed(t);
+    const extra = ADMIN_USER_STATS_CAP + 5;
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      const puzzle = await ctx.db.insert("puzzles", {
+        title: "Ocean",
+        pieceCount: 500,
+        status: "approved",
+        submittedBy: bob,
+        createdAt: now,
+        updatedAt: now,
+      });
+      for (let i = 0; i < extra; i++) {
+        await ctx.db.insert("ownedPuzzles", {
+          puzzleId: puzzle,
+          ownerId: bob,
+          condition: "good",
+          availability: { forTrade: false, forSale: false, forLend: false },
+          createdAt: now,
+          updatedAt: now,
+        });
+        await ctx.db.insert("collections", {
+          userId: bob,
+          name: `Shelf ${i}`,
+          visibility: "private",
+          isDefault: false,
+          createdAt: now,
+          updatedAt: now,
+        });
+        await ctx.db.insert("completions", {
+          userId: bob,
+          puzzleId: puzzle,
+          startDate: now - 5000,
+          endDate: now,
+          photos: [],
+          isCompleted: true,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    });
+
+    const result = await asAdmin(t).query(
+      api.admin.getUserDetail.getUserDetail,
+      { userId: bob },
+    );
+
+    expect(result.stats.copies.total).toBe(ADMIN_USER_STATS_CAP + 1);
+    expect(result.stats.collections).toBe(ADMIN_USER_STATS_CAP + 1);
+    expect(result.stats.completions).toBe(ADMIN_USER_STATS_CAP + 1);
   });
 
   test("lists the member's catalog submissions newest first with their statuses", async () => {

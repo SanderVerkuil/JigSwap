@@ -52,6 +52,14 @@ export interface AdminUserSubmissionView {
 }
 
 /**
+ * The admin user detail's stats read at most this many rows per stat, plus one, so a member with a
+ * huge library cannot push the read past Convex's limits. A count above it means "more than
+ * ADMIN_USER_STATS_CAP" (shown as `${ADMIN_USER_STATS_CAP}+`); the copies' availability breakdown
+ * then covers only the copies read.
+ */
+export const ADMIN_USER_STATS_CAP = 1000;
+
+/**
  * The admin user detail read model (`admin.getUserDetail`). Admin-only by
  * design: includes `email` and `clerkId`. `profile.role` mirrors the Clerk
  * publicMetadata.role claim and is DISPLAY-ONLY — authorization stays
@@ -74,6 +82,7 @@ export interface AdminUserDetailView {
     createdAt: number;
     updatedAt: number;
   };
+  /** Each count stops at ADMIN_USER_STATS_CAP + 1 (a value above the cap means "more"). */
   stats: {
     /** `ownedPuzzles.by_owner`, with the availability breakdown. */
     copies: {
@@ -84,7 +93,7 @@ export interface AdminUserDetailView {
     };
     /** `collections.by_user`. */
     collections: number;
-    /** `completions.by_user` (indexed — no table scan). */
+    /** Finished solves, `completions.by_user_completed` (indexed — no table scan). */
     completions: number;
   };
   /** Newest first, capped at 50. */

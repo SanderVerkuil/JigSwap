@@ -12,6 +12,7 @@ import { gateway, type Id } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
 import { convexQuery } from "@convex-dev/react-query";
+import { ADMIN_USER_STATS_CAP } from "@jigswap/contracts";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { UserX } from "lucide-react";
@@ -71,6 +72,13 @@ function AdminUserDetailPage() {
   }
 
   const { profile, stats, submissions, audit } = data;
+  // Counts stop one row past ADMIN_USER_STATS_CAP: above it a tile reads "1000+", and the copies'
+  // availability breakdown then counts only the copies read, so it reads "n+".
+  const capped = (count: number) => ({
+    value: Math.min(count, ADMIN_USER_STATS_CAP),
+    atLeast: count > ADMIN_USER_STATS_CAP,
+  });
+  const copiesCapped = stats.copies.total > ADMIN_USER_STATS_CAP;
 
   return (
     <div className="space-y-6">
@@ -153,24 +161,33 @@ function AdminUserDetailPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <StatTile label={t("detail.stats.copies")} value={stats.copies.total} />
+        <StatTile
+          label={t("detail.stats.copies")}
+          {...capped(stats.copies.total)}
+        />
         <StatTile
           label={t("detail.stats.forTrade")}
           value={stats.copies.forTrade}
+          atLeast={copiesCapped}
         />
         <StatTile
           label={t("detail.stats.forSale")}
           value={stats.copies.forSale}
+          atLeast={copiesCapped}
         />
         <StatTile
           label={t("detail.stats.forLend")}
           value={stats.copies.forLend}
+          atLeast={copiesCapped}
         />
         <StatTile
           label={t("detail.stats.collections")}
-          value={stats.collections}
+          {...capped(stats.collections)}
         />
-        <StatTile label={t("detail.stats.solves")} value={stats.completions} />
+        <StatTile
+          label={t("detail.stats.solves")}
+          {...capped(stats.completions)}
+        />
       </div>
 
       <section className="space-y-2">
