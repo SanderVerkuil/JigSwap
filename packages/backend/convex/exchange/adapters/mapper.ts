@@ -55,6 +55,9 @@ export const toDomain = (row: Doc<"exchanges">): Exchange => {
         offeredCopyId: row.offeredPuzzleId
           ? toCopyId(row.offeredPuzzleId)
           : undefined,
+        offeredCopyOwnerId: row.offeredPuzzleOwnerId
+          ? toMemberId(row.offeredPuzzleOwnerId)
+          : undefined,
       };
       break;
     case "sale": {
@@ -91,6 +94,9 @@ export const toRow = (exchange: Exchange): ExchangeRow => {
     type: KIND_TO_TYPE[state.kind],
     offeredPuzzleId: state.offeredCopyId
       ? (state.offeredCopyId as unknown as Id<"ownedPuzzles">)
+      : undefined,
+    offeredPuzzleOwnerId: state.offeredCopyOwnerId
+      ? (state.offeredCopyOwnerId as unknown as Id<"users">)
       : undefined,
     requestedPuzzleId: state.requestedCopyId as unknown as Id<"ownedPuzzles">,
     // No currency column for sale was a worry, but `salePrice` carries one; store cents+currency.

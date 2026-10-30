@@ -157,4 +157,34 @@ describe("an offered household-mate copy never discloses the mate", () => {
     await flush(t);
     await check();
   });
+
+  test("to the owner's data export, though the exchange records whose copy was offered", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    const aggregateId = await as(t, "requester").mutation(
+      api.exchange.propose.propose,
+      {
+        type: "trade",
+        requestedPuzzleId: w.ownerCopy,
+        offeredPuzzleId: w.mateCopy,
+      },
+    );
+    await flush(t);
+    // Settlement checks the offered copy still has this owner, so the row keeps it.
+    const row = await t.run((ctx) =>
+      ctx.db
+        .query("exchanges")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", aggregateId))
+        .unique(),
+    );
+    expect(row?.offeredPuzzleOwnerId).toBe(w.mate);
+
+    const exported = await as(t, "owner").query(
+      api.insights.exportUserData.exportUserData,
+      {},
+    );
+    expect(exported.exchanges).toHaveLength(1);
+    expect(exported.exchanges[0]!.offeredPuzzleId).toBe(w.mateCopy);
+    expect(JSON.stringify(exported.exchanges)).not.toContain(w.mate);
+  });
 });

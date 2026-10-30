@@ -1,26 +1,32 @@
 import { ExchangeState } from "../../domain";
 import { ApplicationError } from "../errors";
 import { AcceptExchange } from "../ports/in/accept-exchange.port";
+import { CopyPort } from "../ports/out/copy.port";
 import { ExchangeEligibilityPort } from "../ports/out/exchange-eligibility.port";
 import { ExchangeActionDeps, runExchangeAction } from "./run-exchange-action";
+import { settlementGuard } from "./settlement-guard";
 
 export interface AcceptExchangeDeps extends ExchangeActionDeps {
   readonly eligibility: ExchangeEligibilityPort;
+  readonly copies: CopyPort;
 }
 
 // The recipient accepts. Only the initiator's own circle standing is checked again, and only when
 // the request rested on it: what the owner changed since (profile, follows, household) never stops
-// them accepting a request they received. Confirm, cancel, decline and dispute are not re-checked,
-// so a trade already under way can finish.
+// them accepting a request they received. Confirm, cancel, decline and dispute don't re-check it, so
+// a trade already under way can finish. Separately, accept (after eligibility) and confirm refuse
+// once a copy the deal names is no longer where the deal found it (settlement-guard): such a deal
+// could never settle.
 export const makeAcceptExchange = (deps: AcceptExchangeDeps): AcceptExchange =>
   runExchangeAction(
     deps,
     (exchange, by, now) => exchange.accept(by, now),
     async (exchange) => {
       const state = exchange.toState();
-      return (await stillEligible(deps.eligibility, state))
-        ? null
-        : ApplicationError.notPermittedInCircle(state.requestedCopyId);
+      if (!(await stillEligible(deps.eligibility, state))) {
+        return ApplicationError.notPermittedInCircle(state.requestedCopyId);
+      }
+      return settlementGuard(deps.copies)(exchange);
     },
   );
 

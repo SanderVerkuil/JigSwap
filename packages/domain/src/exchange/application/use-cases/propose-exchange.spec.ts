@@ -293,6 +293,68 @@ describe("makeProposeExchange", () => {
     expect(result.isOk).toBe(true);
   });
 
+  // Settlement later checks the offered copy still has this owner (settlement-guard), so a swap
+  // can't move a copy that changed hands since, nor one whose owner is no longer the one offered.
+  it.each([
+    ["the initiator's own copy", "alice", []],
+    ["a housemate's co-managed copy", "carol", ["alice"]],
+  ])(
+    "records who owned the offered copy when the swap was proposed: %s",
+    async (_label, owner, coManagers) => {
+      copies
+        .seed(
+          copy({
+            id: requestedId,
+            ownerId: bob,
+            availability: { forTrade: true, forSale: false, forLend: false },
+          }),
+        )
+        .seed(
+          copy({
+            id: offeredId,
+            ownerId: toMemberId(owner),
+            coManagerIds: coManagers.map(toMemberId),
+          }),
+        );
+
+      const result = await propose({
+        initiatorId: alice,
+        recipientId: bob,
+        kind: "swap",
+        requestedCopyId: requestedId,
+        terms: swapTerms,
+      });
+
+      if (!result.isOk) throw new Error("expected ok");
+      expect(
+        (await repo.findById(result.value))?.toState().offeredCopyOwnerId,
+      ).toBe(toMemberId(owner));
+    },
+  );
+
+  it("records no offered owner for a sale", async () => {
+    copies.seed(
+      copy({
+        id: requestedId,
+        ownerId: bob,
+        availability: { forTrade: false, forSale: true, forLend: false },
+      }),
+    );
+
+    const result = await propose({
+      initiatorId: alice,
+      recipientId: bob,
+      kind: "sale",
+      requestedCopyId: requestedId,
+      terms: saleTerms(),
+    });
+
+    if (!result.isOk) throw new Error("expected ok");
+    expect((await repo.findById(result.value))?.toState()).not.toHaveProperty(
+      "offeredCopyOwnerId",
+    );
+  });
+
   it("rejects a swap offering a copy the initiator neither owns nor co-manages", async () => {
     const carol = toMemberId("carol");
     copies

@@ -16,8 +16,8 @@ export interface CopyView {
   };
 }
 
-// Outbound port: read access to a copy. Reservation/locking is deferred to Phase 2 (Library)
-// and is therefore intentionally absent here.
+// Outbound port: read access to a copy. Exchange reads it on propose and again on accept and
+// confirm (settlement-guard), so a deal settles only while its copies are where it found them.
 export interface CopyPort {
   getCopy(copyId: CopyId): Promise<CopyView | null>;
 }

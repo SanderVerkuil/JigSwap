@@ -822,6 +822,11 @@ export default defineSchema({
     // For a trade, this is the item being offered by the initiator.
     // For a loan or a sale, this is null.
     offeredPuzzleId: v.optional(v.id("ownedPuzzles")),
+    // Trade only: who owned the offered puzzle when it was offered (the initiator, or the household
+    // mate whose copy they co-manage), set by propose. Accept and completion refuse once the offered
+    // copy has another owner. Absent on older rows, which fall back to the live offer rule. No
+    // backfill, no index. Internal: never part of an exchange view or export (a mate is no party).
+    offeredPuzzleOwnerId: v.optional(v.id("users")),
     // The puzzle being requested from the recipient.
     // For a trade, this is the item being requested from the recipient.
     // For a loan, this is the item being borrowed.

@@ -46,6 +46,9 @@ export interface ProposeProps {
   readonly requestedCopyId: CopyId;
   readonly terms: ExchangeTermsInput;
   readonly eligibleVia?: EligibleVia;
+  // Swap only: who owned the offered copy when it was offered (the initiator, or the housemate whose
+  // copy they co-manage). Ignored for any other kind.
+  readonly offeredCopyOwnerId?: MemberId;
   readonly now: Date;
 }
 
@@ -58,6 +61,9 @@ export interface ExchangeState {
   readonly kind: ExchangeKind;
   readonly requestedCopyId: CopyId;
   readonly offeredCopyId?: CopyId; // swap only
+  // Swap only: the offered copy's owner at propose time; accept and confirm refuse once the copy has
+  // another owner (settlement-guard). Absent on swaps proposed before it was recorded.
+  readonly offeredCopyOwnerId?: MemberId;
   readonly price?: Money; // sale only
   readonly returnDate?: Date; // lend only
   readonly status: ExchangeStatus;
@@ -305,7 +311,7 @@ export class Exchange {
   ): ExchangeState {
     const base: Omit<
       ExchangeState,
-      "kind" | "offeredCopyId" | "price" | "returnDate"
+      "kind" | "offeredCopyId" | "offeredCopyOwnerId" | "price" | "returnDate"
     > = {
       id: props.id,
       initiatorId: props.initiator,
@@ -318,7 +324,14 @@ export class Exchange {
     };
     switch (terms.kind) {
       case "swap":
-        return { ...base, kind: "swap", offeredCopyId: terms.offeredCopyId };
+        return {
+          ...base,
+          kind: "swap",
+          offeredCopyId: terms.offeredCopyId,
+          ...(props.offeredCopyOwnerId
+            ? { offeredCopyOwnerId: props.offeredCopyOwnerId }
+            : {}),
+        };
       case "sale":
         return { ...base, kind: "sale", price: terms.price };
       case "lend":

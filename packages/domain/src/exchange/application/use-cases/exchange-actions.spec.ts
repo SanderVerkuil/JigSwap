@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { toCopyId, toExchangeId, toMemberId } from "../../../shared-kernel";
-import { EligibleVia, Exchange } from "../../domain";
+import { EligibleVia, Exchange, MemberId } from "../../domain";
+import { CopyView } from "../ports/out/copy.port";
 import {
+  FakeCopyPort,
   FakeExchangeEligibilityPort,
   FixedClock,
   InMemoryExchangeRepository,
@@ -16,7 +18,9 @@ import { makeRaiseDispute } from "./raise-dispute";
 const alice = toMemberId("alice"); // initiator
 const bob = toMemberId("bob"); // recipient
 const eve = toMemberId("eve"); // outsider
+const carol = toMemberId("carol"); // alice's housemate
 const requestedId = toCopyId("requested");
+const offeredId = toCopyId("offered");
 const exId = toExchangeId("ex-1");
 const NOW = new Date("2026-06-08T10:00:00Z");
 const LATER = new Date("2026-06-09T10:00:00Z");
@@ -41,10 +45,27 @@ const seedProposed = async (
   await repo.save(result.value);
 };
 
-const seedAccepted = async (
+// A proposed swap of Bob's requested copy for the offered copy, recorded as owned by
+// `offeredCopyOwnerId` when proposed (left out: a row proposed before the owner was recorded).
+const seedProposedSwap = async (
   repo: InMemoryExchangeRepository,
+  offeredCopyOwnerId?: MemberId,
 ): Promise<void> => {
-  await seedProposed(repo);
+  const result = Exchange.propose({
+    id: exId,
+    initiator: alice,
+    recipient: bob,
+    requestedCopyId: requestedId,
+    terms: { kind: "swap", offeredCopyId: offeredId },
+    offeredCopyOwnerId,
+    now: NOW,
+  });
+  if (!result.isOk) throw new Error("setup");
+  result.value.pullEvents();
+  await repo.save(result.value);
+};
+
+const acceptStored = async (repo: InMemoryExchangeRepository) => {
   const ex = await repo.findById(exId);
   if (!ex) throw new Error("setup");
   ex.accept(bob, NOW);
@@ -52,12 +73,32 @@ const seedAccepted = async (
   await repo.save(ex);
 };
 
+const seedAccepted = async (
+  repo: InMemoryExchangeRepository,
+): Promise<void> => {
+  await seedProposed(repo);
+  await acceptStored(repo);
+};
+
+const copyView = (
+  id: CopyView["id"],
+  ownerId: MemberId,
+  coManagerIds: readonly MemberId[] = [],
+): CopyView => ({
+  id,
+  ownerId,
+  coManagerIds,
+  availability: { forTrade: true, forSale: true, forLend: true },
+});
+
+// The requested copy starts with its recipient, as when the exchange was proposed.
 const harness = () => {
   const repo = new InMemoryExchangeRepository();
   const events = new RecordingEventPublisher();
   const clock = new FixedClock(NOW);
   const eligibility = new FakeExchangeEligibilityPort();
-  return { repo, events, clock, eligibility, exchanges: repo };
+  const copies = new FakeCopyPort().seed(copyView(requestedId, bob));
+  return { repo, events, clock, eligibility, copies, exchanges: repo };
 };
 
 describe("makeAcceptExchange", () => {
@@ -166,6 +207,44 @@ describe("makeAcceptExchange", () => {
     });
     expect(result.isErr).toBe(true);
     if (result.isErr) expect(result.error.code).toBe("IllegalTransition");
+  });
+
+  // The settlement guard: an exchange is accepted only while it could still settle.
+  describe("refuses once a copy is no longer where the deal was made", () => {
+    const accept = () =>
+      makeAcceptExchange(h)({ exchangeId: exId, actingMemberId: bob });
+
+    it("RecipientNotOwner once the requested copy changed hands, saving nothing", async () => {
+      await seedProposed(h.repo);
+      h.copies.seed(copyView(requestedId, eve));
+      const result = await accept();
+      expect(result.isErr && result.error.code).toBe("RecipientNotOwner");
+      expect(h.events.published).toHaveLength(0);
+      expect((await h.repo.findById(exId))?.status).toBe("proposed");
+    });
+
+    it("OfferedCopyNotOwned once the initiator no longer co-manages the offered copy", async () => {
+      await seedProposedSwap(h.repo, carol);
+      h.copies.seed(copyView(offeredId, carol, [])); // alice left carol's household
+      const result = await accept();
+      expect(result.isErr && result.error.code).toBe("OfferedCopyNotOwned");
+      expect((await h.repo.findById(exId))?.status).toBe("proposed");
+    });
+
+    it("accepts a swap while both copies are still in place", async () => {
+      await seedProposedSwap(h.repo, carol);
+      h.copies.seed(copyView(offeredId, carol, [alice]));
+      expect((await accept()).isOk).toBe(true);
+      expect((await h.repo.findById(exId))?.status).toBe("accepted");
+    });
+
+    it("answers a lost circle seat before a moved copy", async () => {
+      await seedProposed(h.repo, "circle");
+      h.eligibility.withCircleSeat(false);
+      h.copies.seed(copyView(requestedId, eve));
+      const result = await accept();
+      expect(result.isErr && result.error.code).toBe("NotPermittedInCircle");
+    });
   });
 });
 
@@ -295,5 +374,65 @@ describe("makeConfirmCompletion (dual confirmation)", () => {
     });
     expect(result.isErr).toBe(true);
     if (result.isErr) expect(result.error.code).toBe("IllegalTransition");
+  });
+
+  // The settlement guard: a stale exchange never settles, so no copy moves away from someone the
+  // deal wasn't made with.
+  describe("refuses once a copy is no longer where the deal was made", () => {
+    const confirm = (by: MemberId) =>
+      makeConfirmCompletion(h)({ exchangeId: exId, actingMemberId: by });
+
+    it("the settling confirmation: RecipientNotOwner, nothing saved or published", async () => {
+      await seedAccepted(h.repo);
+      expect((await confirm(alice)).isOk).toBe(true);
+      h.copies.seed(copyView(requestedId, eve)); // bob sold it to eve meanwhile
+      h.clock.set(LATER);
+
+      const result = await confirm(bob);
+
+      expect(result.isErr && result.error.code).toBe("RecipientNotOwner");
+      expect(h.events.published).toHaveLength(0);
+      const stored = (await h.repo.findById(exId))?.toState();
+      expect(stored?.status).toBe("accepted");
+      expect(stored?.recipientConfirmationTimestamp).toBeUndefined();
+    });
+
+    it("a lone confirmation too: it could never settle", async () => {
+      await seedAccepted(h.repo);
+      h.copies.seed(copyView(requestedId, eve));
+      const result = await confirm(alice);
+      expect(result.isErr && result.error.code).toBe("RecipientNotOwner");
+      expect(
+        (await h.repo.findById(exId))?.toState().initiatorConfirmationTimestamp,
+      ).toBeUndefined();
+    });
+
+    it("a swap whose offered copy has another owner than recorded: OfferedCopyNotOwned", async () => {
+      await seedProposedSwap(h.repo, carol);
+      h.copies.seed(copyView(offeredId, carol, [alice]));
+      await acceptStored(h.repo);
+      await confirm(alice);
+      h.copies.seed(copyView(offeredId, eve, [alice]));
+
+      const result = await confirm(bob);
+
+      expect(result.isErr && result.error.code).toBe("OfferedCopyNotOwned");
+      expect((await h.repo.findById(exId))?.status).toBe("accepted");
+      expect(h.events.published).toHaveLength(0);
+    });
+
+    it("settles a swap while both copies are still in place", async () => {
+      await seedProposedSwap(h.repo, alice);
+      h.copies.seed(copyView(offeredId, alice));
+      await acceptStored(h.repo);
+      await confirm(alice);
+      expect((await confirm(bob)).isOk).toBe(true);
+      expect((await h.repo.findById(exId))?.status).toBe("completed");
+      expect(h.events.names()).toEqual([
+        "ExchangeCompleted",
+        "OwnershipTransferred",
+        "OwnershipTransferred",
+      ]);
+    });
   });
 });

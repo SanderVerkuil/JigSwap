@@ -117,6 +117,23 @@ describe("Exchange.propose", () => {
     expect(lend.kind).toBe("lend");
     expect(lend.returnDate).toBe(LATER);
   });
+
+  it("records who owned the offered copy for a swap, and only for a swap", () => {
+    const carol = toMemberId("carol"); // alice's housemate, owner of the offered copy
+    expect(
+      propose(swapTerms, { offeredCopyOwnerId: carol }).toState()
+        .offeredCopyOwnerId,
+    ).toBe(carol);
+
+    const sale = propose(saleTerms(), { offeredCopyOwnerId: carol }).toState();
+    expect(sale).not.toHaveProperty("offeredCopyOwnerId");
+    const lend = propose(lendTerms, { offeredCopyOwnerId: carol }).toState();
+    expect(lend).not.toHaveProperty("offeredCopyOwnerId");
+    // Not supplied (as on a row proposed before it was recorded): absent, never a guess.
+    expect(propose(swapTerms).toState()).not.toHaveProperty(
+      "offeredCopyOwnerId",
+    );
+  });
 });
 
 describe("accept", () => {
