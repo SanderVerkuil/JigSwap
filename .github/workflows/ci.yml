@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
 
+# Read-only token: nothing in CI writes to GitHub (the pnpm and Turborepo caches use the
+# Actions runtime token, not GITHUB_TOKEN).
+permissions:
+  contents: read
+
 # A newer push to the same PR branch supersedes in-flight runs; pushes to main
 # always run to completion so every main commit has a CI result.
 concurrency:

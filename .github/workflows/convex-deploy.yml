@@ -48,6 +48,11 @@ on:
     types: [completed]
     branches: [main]
 
+# Read-only token: checkout and the stale-commit guard's `git ls-remote origin` only read this
+# repository; the deploys authenticate with the Convex deploy keys, not GITHUB_TOKEN.
+permissions:
+  contents: read
+
 jobs:
   dev:
     name: Deploy dev deployment
