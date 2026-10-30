@@ -1,5 +1,5 @@
 import { PostHogPageView } from "@/components/analytics-page-view";
-import { initPostHog, PostHogProvider } from "@/components/analytics-provider";
+import { PostHogProvider } from "@/components/analytics-provider";
 import CookieConsent from "@/components/blocks/cookie-consent";
 import { PushSignOutGuard } from "@/components/notifications/push-signout-guard";
 import { Toaster } from "@/components/ui/sonner";
@@ -57,9 +57,11 @@ export function Providers({
       >
         <PostHogProvider>
           {children}
-          {/* Accepting the notice starts analytics right away (no reload);
-              PostHogProvider only auto-inits when consent was already granted. */}
-          <CookieConsent variant="mini" onAcceptCallback={initPostHog} />
+          {/* The banner records the choice through lib/analytics-consent:
+              allowing starts analytics right away (no reload), declining
+              later stops it. PostHogProvider only auto-inits when consent
+              was already granted. */}
+          <CookieConsent variant="mini" />
           <PostHogPageView />
           {/* Drops a push subscription a signed-out browser still holds. */}
           <PushSignOutGuard />

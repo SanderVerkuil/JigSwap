@@ -1790,12 +1790,12 @@
       "control": "Analyse is opt-in: die draait alleen nadat je de cookiemelding hebt geaccepteerd, en weiger je, dan wordt die nooit geladen. Je kunt cookies ook blokkeren of verwijderen via je browserinstellingen; JigSwap blijft werken, al moet je dan opnieuw inloggen en kunnen je voorkeuren worden gereset."
     },
     "cookieConsent": {
-      "title": "We gebruiken cookies",
-      "description": "We gebruiken cookies om je de beste ervaring op onze website te geven. Lees ons cookiebeleid voor meer informatie over hoe we cookies gebruiken.",
-      "acceptText": "Accepteren",
-      "declineText": "Weigeren",
+      "title": "Cookie-instellingen",
+      "description": "We willen graag analyse gebruiken: PostHog, gehost in de EU, laat ons zien hoe JigSwap wordt gebruikt en welke fouten er optreden. Het draait alleen als je dat toestaat, en je kunt je keuze altijd wijzigen. Meer hierover in ons <link>cookiebeleid</link>.",
+      "acceptText": "Analyse toestaan",
+      "declineText": "Nee, bedankt",
       "learnMoreText": "Meer informatie",
-      "acceptanceText": "Door op \"Accepteren\" te klikken ga je akkoord met ons gebruik van cookies."
+      "acceptanceText": "Kies je \"Analyse toestaan\", dan ga je akkoord met analysecookies van PostHog."
     },
     "children": {
       "title": "Kinderen",

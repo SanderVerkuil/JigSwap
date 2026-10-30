@@ -1790,12 +1790,12 @@
       "control": "Analytics is opt-in: it only runs after you accept the cookie notice, and declining means it is never loaded. You can also block or delete cookies in your browser settings; JigSwap keeps working, though you will need to sign in again and your preferences may reset."
     },
     "cookieConsent": {
-      "title": "We use cookies",
-      "description": "We use cookies to ensure you get the best experience on our website. For more information on how we use cookies, please see our cookie policy.",
-      "acceptText": "Accept",
-      "declineText": "Decline",
+      "title": "Cookie settings",
+      "description": "We'd like to use analytics: PostHog, hosted in the EU, shows us how JigSwap is used and which errors occur. It only runs if you allow it, and you can change your mind at any time. More in our <link>cookie policy</link>.",
+      "acceptText": "Allow analytics",
+      "declineText": "No thanks",
       "learnMoreText": "Learn more",
-      "acceptanceText": "By clicking \"Accept\", you agree to our use of cookies."
+      "acceptanceText": "By choosing \"Allow analytics\", you agree to analytics cookies from PostHog."
     },
     "children": {
       "title": "Children",

@@ -9,15 +9,23 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { withdrawAnalyticsConsent } from "@/lib/analytics-client";
 import {
-  readAnalyticsConsent,
-  writeAnalyticsConsent,
+  getCookieBannerSnapshot,
+  grantAnalyticsConsent,
+  subscribeConsent,
+  withdrawAnalyticsConsent,
+  type CookieBannerState,
 } from "@/lib/analytics-consent";
 import { cn } from "@/lib/utils";
+import { Link } from "@tanstack/react-router";
 import { Cookie } from "lucide-react";
 import * as React from "react";
 import { useTranslations } from "use-intl";
+
+// Hidden in the server render and during hydration: whether to show depends on
+// the visitor's consent cookie, which is only read on the client. A visitor
+// who already chose never sees the banner flash.
+const hiddenOnServer = (): CookieBannerState => "hidden";
 
 // Define prop types
 interface CookieConsentProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -44,58 +52,86 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
     ref,
   ) => {
     const t = useTranslations("privacy.cookieConsent");
-    const [isOpen, setIsOpen] = React.useState(false);
-    const [hide, setHide] = React.useState(false);
+    // Shown while the visitor hasn't chosen, and again after "Cookie
+    // settings" (openCookieSettings) asks for it; `demo` always shows it.
+    const state = React.useSyncExternalStore(
+      subscribeConsent,
+      getCookieBannerSnapshot,
+      hiddenOnServer,
+    );
+    const visible = demo || state !== "hidden";
 
-    // Use provided description or fall back to translation
-    const consentDescription = description || t("description");
+    const regionRef = React.useRef<HTMLDivElement | null>(null);
+    const openerRef = React.useRef<HTMLElement | null>(null);
+    const setRegion = React.useCallback(
+      (node: HTMLDivElement | null) => {
+        regionRef.current = node;
+        if (typeof ref === "function") ref(node);
+        else if (ref) ref.current = node;
+      },
+      [ref],
+    );
 
-    const handleAccept = React.useCallback(() => {
-      setIsOpen(false);
-      writeAnalyticsConsent("granted");
-      setTimeout(() => {
-        setHide(true);
-      }, 700);
+    // Reopened from "Cookie settings": move focus onto the banner so keyboard
+    // and screen-reader users land on the choice, and remember the control
+    // that opened it so focus can go back there afterwards.
+    React.useEffect(() => {
+      if (state !== "settings") return;
+      const active = document.activeElement;
+      openerRef.current = active instanceof HTMLElement ? active : null;
+      regionRef.current?.focus();
+    }, [state]);
+
+    const returnFocus = () => {
+      const opener = openerRef.current;
+      openerRef.current = null;
+      if (opener?.isConnected) opener.focus();
+    };
+
+    // Use provided description or fall back to translation, which links to
+    // the cookie section of the privacy policy.
+    const consentDescription =
+      description ||
+      t.rich("description", {
+        link: (chunks) => (
+          <Link
+            to="/privacy"
+            hash="p-cookies"
+            className="font-medium text-foreground underline underline-offset-2 hover:no-underline"
+          >
+            {chunks}
+          </Link>
+        ),
+      });
+
+    const handleAccept = () => {
+      void grantAnalyticsConsent();
+      returnFocus();
       onAcceptCallback();
-    }, [onAcceptCallback]);
+    };
 
     // Declines are persisted too, so analytics stays off on every future visit
     // and the banner doesn't nag again (the privacy policy promises declined
     // analytics is never loaded). A decline is also a withdrawal: it stops a
     // PostHog already running in this page and clears what it stored.
-    const handleDecline = React.useCallback(() => {
-      setIsOpen(false);
-      void withdrawAnalyticsConsent();
-      setTimeout(() => {
-        setHide(true);
-      }, 700);
+    const handleDecline = () => {
+      withdrawAnalyticsConsent();
+      returnFocus();
       onDeclineCallback();
-    }, [onDeclineCallback]);
+    };
 
-    React.useEffect(() => {
-      try {
-        setIsOpen(true);
-        if (readAnalyticsConsent(document.cookie) !== "unset" && !demo) {
-          setIsOpen(false);
-          setTimeout(() => {
-            setHide(true);
-          }, 700);
-        }
-      } catch (error) {
-        console.warn("Cookie consent error:", error);
-      }
-    }, [demo]);
-
-    if (hide) return null;
+    if (!visible) return null;
 
     const containerClasses = cn(
-      "fixed z-50 transition-all duration-700",
-      !isOpen ? "translate-y-full opacity-0" : "translate-y-0 opacity-100",
+      "fixed z-50 outline-none animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out motion-reduce:animate-none",
       className,
     );
 
     const commonWrapperProps = {
-      ref,
+      ref: setRegion,
+      role: "region",
+      "aria-label": t("title"),
+      tabIndex: -1,
       className: cn(
         containerClasses,
         variant === "mini"
@@ -190,20 +226,13 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
               <div className="flex items-center gap-2 justify-end sm:gap-3">
                 <Button
                   onClick={handleDecline}
-                  size="sm"
                   variant="secondary"
-                  className="text-xs h-7"
+                  className="h-10 px-4 text-sm"
                 >
                   {t("declineText")}
-                  <span className="sr-only sm:hidden">{t("declineText")}</span>
                 </Button>
-                <Button
-                  onClick={handleAccept}
-                  size="sm"
-                  className="text-xs h-7"
-                >
+                <Button onClick={handleAccept} className="h-10 px-4 text-sm">
                   {t("acceptText")}
-                  <span className="sr-only sm:hidden">{t("acceptText")}</span>
                 </Button>
               </div>
             </CardContent>

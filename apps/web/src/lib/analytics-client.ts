@@ -16,10 +16,10 @@ let client: PostHog | null = null;
 let loading: Promise<PostHog | null> | null = null;
 const listeners = new Set<() => void>();
 
-// Called when consent is granted (the cookie banner's accept callback, or on
-// load when the consent cookie already says "granted"). Idempotent: the module
-// is imported and initialised at most once; granting again after a withdrawal
-// opts the same client back in.
+// Called only through lib/analytics-consent once consent is granted (the
+// cookie banner's "Allow analytics", or on load when the consent cookie already
+// says "granted"). Idempotent: the module is imported and initialised at most
+// once; granting again after a withdrawal opts the same client back in.
 export function initPostHog(): Promise<PostHog | null> {
   const key = import.meta.env.VITE_POSTHOG_KEY;
   if (!key || typeof window === "undefined") return Promise.resolve(null);

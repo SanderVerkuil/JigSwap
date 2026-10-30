@@ -1,13 +1,7 @@
-import {
-  getPostHog,
-  initPostHog,
-  subscribePostHog,
-} from "@/lib/analytics-client";
+import { getPostHog, subscribePostHog } from "@/lib/analytics-client";
 import { startAnalyticsIfGranted } from "@/lib/analytics-consent";
 import type { PostHog } from "posthog-js";
 import * as React from "react";
-
-export { initPostHog };
 
 // The web app inits PostHog in instrumentation-client.ts; Start has no such hook,
 // so we init lazily on the client inside the provider (same config as web).
