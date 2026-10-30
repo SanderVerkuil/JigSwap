@@ -11,7 +11,7 @@ import {
   useRouteContext,
   useRouter,
 } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
+import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import type { ConvexReactClient } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import * as React from "react";
@@ -25,30 +25,43 @@ import "../lib/install-prompt";
 // Tailwind 4 entry + theme tokens; CSS-based config travels with this import.
 import appCss from "../styles/globals.css?url";
 
-// Runs on the server during beforeLoad so the Convex HTTP client can be authed
-// for SSR reads; uses the "convex" JWT template configured in Clerk.
-const fetchClerkAuth = createServerFn({ method: "GET" }).handler(async () => {
+// The signed-in member's Clerk user id for route guards. Returns nothing else:
+// its result reaches the browser, as this server fn's response and through the
+// dehydrated beforeLoad context. SSR calls it in-process, the browser over HTTP
+// once per page load (see clientAuthCache).
+const fetchClerkUserId = createServerFn({ method: "GET" }).handler(async () => {
   try {
-    const { userId, getToken } = await auth();
-    const token = await getToken({ template: "convex" });
-    return { userId, token };
+    const { userId } = await auth();
+    return { userId };
   } catch {
     // During static prerender (and any context without a Clerk request) there
     // is no session, so `auth()` cannot resolve. Fall back to unauthenticated
     // so public routes like /docs can still be generated.
-    return { userId: null, token: null };
+    return { userId: null };
+  }
+});
+
+// Server only: the Convex JWT ("convex" template in Clerk) that authenticates
+// SSR loaders' reads. Never returned from a server fn or put in the route
+// context, which is dehydrated into the page HTML; in the browser,
+// ConvexProviderWithClerk fetches its own token from Clerk.
+const getSsrConvexToken = createServerOnlyFn(async () => {
+  try {
+    const { userId, getToken } = await auth();
+    return userId ? await getToken({ template: "convex" }) : null;
+  } catch {
+    return null;
   }
 });
 
 // beforeLoad re-runs on EVERY navigation (root always matches), which used to
-// fire a fetchClerkAuth round-trip per click. The SSR token only matters for
-// server loaders; on the client, Clerk's SDK owns live session state and
-// ConvexProviderWithClerk refreshes tokens itself. So fetch once per page
-// load and reuse across client-side navigations — sign-in/out flows end in a
-// full-page redirect, which naturally resets this cache. The cache is seeded
-// at hydration from the SSR-dehydrated beforeLoad context (see RootComponent),
-// so the first client navigation is request-free too.
-type AuthPayload = { userId: string | null; token: string | null };
+// fire a fetchClerkUserId round-trip per click. On the client, Clerk's SDK owns
+// live session state, so fetch once per page load and reuse across client-side
+// navigations — sign-in/out flows end in a full-page redirect, which naturally
+// resets this cache. The cache is seeded at hydration from the SSR-dehydrated
+// beforeLoad context (see RootComponent), so the first client navigation is
+// request-free too.
+type AuthPayload = { userId: string | null };
 let clientAuthCache: AuthPayload | null = null;
 
 export const Route = createRootRouteWithContext<{
@@ -118,18 +131,20 @@ export const Route = createRootRouteWithContext<{
   // time a child head runs, so this must live in context, not a loader).
   beforeLoad: async (ctx) => {
     const isBrowser = typeof window !== "undefined";
-    const [auth, intl] = await Promise.all([
-      (isBrowser && clientAuthCache) || fetchClerkAuth(),
+    const [auth, intl, ssrToken] = await Promise.all([
+      (isBrowser && clientAuthCache) || fetchClerkUserId(),
       getIntlCached(),
+      isBrowser ? null : getSsrConvexToken(),
     ]);
     if (isBrowser) {
-      clientAuthCache = { userId: auth.userId, token: auth.token };
+      clientAuthCache = { userId: auth.userId };
     }
-    if (auth.token) {
+    if (ssrToken) {
       // Hand the Clerk token to the server HTTP client so SSR loaders see the auth.
-      ctx.context.convexQueryClient.serverHttpClient?.setAuth(auth.token);
+      ctx.context.convexQueryClient.serverHttpClient?.setAuth(ssrToken);
     }
-    return { userId: auth.userId, token: auth.token, intl };
+    // No token here: this context is serialized into the HTML.
+    return { userId: auth.userId, intl };
   },
   errorComponent: (props) => (
     <RootDocument>
@@ -163,12 +178,12 @@ const clerkAppearance = {
 
 function RootComponent() {
   const context = useRouteContext({ from: Route.id });
-  const { intl, userId, token } = context;
+  const { intl, userId } = context;
 
   // Seed the client caches from the SSR-dehydrated context so the first
   // client-side navigation re-runs beforeLoad without any server round-trip.
   React.useEffect(() => {
-    clientAuthCache ??= { userId, token };
+    clientAuthCache ??= { userId };
     seedIntlCache(intl);
     // Seeding only — initial values are by definition the SSR ones.
     // eslint-disable-next-line react-hooks/exhaustive-deps
