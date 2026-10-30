@@ -40,14 +40,11 @@ export default defineConfig({
       },
     }),
     viteReact(),
-    // Reverse-proxy PostHog through /ingest (the paths analytics-client.ts targets),
-    // replacing the next.config rewrites; static assets first as the more specific rule.
+    // PostHog's /ingest proxy is a server route (src/routes/ingest/$.ts), not a proxy route rule:
+    // on Vercel those become CDN rewrites that forward the Clerk cookie and pass PostHog's
+    // credentialed CORS back.
     nitro({
       routeRules: {
-        "/ingest/static/**": {
-          proxy: { to: "https://eu-assets.i.posthog.com/static/**" },
-        },
-        "/ingest/**": { proxy: { to: "https://eu.i.posthog.com/**" } },
         // Security headers on every response: SSR, server functions and static files alike.
         "/**": { headers: SECURITY_HEADERS },
         // The deployed build id open tabs poll (vite-plugin-app-version.ts); never cached, or
