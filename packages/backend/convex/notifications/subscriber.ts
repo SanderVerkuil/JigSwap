@@ -187,8 +187,43 @@ const adminRecipients = async (
   return admins.filter((admin) => (admin._id as string) !== excludeUserId);
 };
 
+/**
+ * Every event name translate handles, one per `case` label. events/dispatch runs the
+ * Notifications handler only for these, so the many events no notification is about open no
+ * sub-transaction (PERF-B7). notificationEventNames.test.ts checks the list against translate's
+ * case labels: a case added without its name here fails the test.
+ */
+export const NOTIFYING_EVENT_NAMES: readonly string[] = [
+  "ExchangeProposed",
+  "ExchangeAccepted",
+  "ExchangeRejected",
+  "ExchangeCancelled",
+  "ExchangeCompleted",
+  "DisputeRaised",
+  "MessagePosted",
+  "GoalAchieved",
+  "PartnerReviewSubmitted",
+  "PuzzleDefinitionApproved",
+  "PuzzleDefinitionRejected",
+  "ChangeProposalApproved",
+  "ChangeProposalRejected",
+  "ChangeProposalFiled",
+  "PuzzleDefinitionSubmitted",
+  "MemberFollowed",
+  "FollowRequested",
+  "FollowRequestApproved",
+  "ConnectionOffered",
+  "HouseholdInviteSent",
+  "HouseholdInviteAccepted",
+  "HouseholdJoinRequested",
+  "HouseholdJoinRequestApproved",
+  "CircleInviteIssued",
+  "CircleInviteAccepted",
+  "CircleDeleted",
+];
+
 // Map a recorded event to zero or more NotifyMember commands. Unmapped events are a no-op (most
-// events have no member-facing notification yet). The `payload` carries the event's data fields
+// events have no member-facing notification yet); add a new case's name to NOTIFYING_EVENT_NAMES. The `payload` carries the event's data fields
 // (branded id strings + epoch-millis dates) as serialised by recordAndSchedule.
 const translate = async (
   ctx: MutationCtx,

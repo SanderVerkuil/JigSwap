@@ -373,8 +373,9 @@ describe("dispatch failure visibility + retry policy", () => {
     const event = await t.run((ctx) => ctx.db.get(eventId));
     expect(event?.failedAt).toBeDefined();
     expect(event?.failedHandlers).toEqual(["ownershipTransfer"]);
-    // The other handler that reacts to every event still completed.
-    expect(event?.completedHandlers).toEqual(["notifications"]);
+    // No other handler reacts to OwnershipTransferred (Notifications has nothing to say about it).
+    expect(event?.completedHandlers).toEqual([]);
+    expect(control.calls).not.toContain("notifications");
     expect(dispatchErrorLines()[0]).toMatchObject({
       handler: "ownershipTransfer",
       retryable: false,
@@ -436,15 +437,18 @@ describe("dispatch failure visibility + retry policy", () => {
     expect(event?.attempts).toBeUndefined();
     expect(event?.failedAt).toBeUndefined();
     expect(dispatchErrorLines()).toHaveLength(0);
-    // Only the handler without an event-name filter runs; the others open no sub-transaction.
-    expect(control.calls).toEqual(["notifications"]);
+    // No handler reacts to it, Notifications included (PERF-B7): none opens a sub-transaction.
+    expect(control.calls).toEqual([]);
   });
 
   test("a failed event is a no-op on re-dispatch", async () => {
     const t = convexTest(schema, modules);
     control.fail.set("notifications", 1);
-    const eventId = await recordEvent(t, "SomethingUnrelated", {});
+    // Only Notifications reacts to MemberFollowed.
+    const eventId = await recordEvent(t, "MemberFollowed", {});
     await t.mutation(internal.events.dispatch.dispatch, { eventId });
+    expect(control.calls).toEqual(["notifications"]);
+    expect((await t.run((ctx) => ctx.db.get(eventId)))?.failedAt).toBeDefined();
     control.calls.length = 0;
 
     await t.mutation(internal.events.dispatch.dispatch, { eventId });

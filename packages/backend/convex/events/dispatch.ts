@@ -15,7 +15,10 @@ import { handleDomainEvent as handleTradeRevealEvent } from "../exchange/tradeRe
 import { logEvent } from "../lib/logEvent";
 import { handleDomainEvent as handleOpenLoanEvent } from "../library/openLoanOnSettlement";
 import { handleDomainEvent as handleLibraryTransferEvent } from "../library/transferOnSettlement";
-import { handleDomainEvent as handleNotificationEvent } from "../notifications/subscriber";
+import {
+  handleDomainEvent as handleNotificationEvent,
+  NOTIFYING_EVENT_NAMES,
+} from "../notifications/subscriber";
 
 // The central async dispatcher. Scheduled once per recorded domain event; it loads the row, routes
 // it to every registered ASYNC subscriber that reacts to its name (trade reveal, Notifications,
@@ -32,8 +35,9 @@ import { handleDomainEvent as handleNotificationEvent } from "../notifications/s
 // A handler that gave up lands in failedHandlers; once nothing is left to retry the event gets
 // failedAt (queryable via by_failed) and needs an operator (replay: docs/developer-guide.md 1.5).
 // `events` lists the event names a handler reacts to, so dispatch opens no sub-transaction for the
-// rest; omitted = every event (Notifications translates ~20 names in its own switch, and a copied
-// list here would silently drop a newly added one).
+// rest; omitted = every event. Each handler derives or keeps its list next to its own switch
+// (Notifications: NOTIFYING_EVENT_NAMES, checked against its switch by
+// notificationEventNames.test.ts), so a newly handled event is not silently dropped.
 const HANDLERS: readonly {
   name: string;
   run: (ctx: MutationCtx, event: Doc<"domainEvents">) => Promise<void>;
@@ -50,8 +54,13 @@ const HANDLERS: readonly {
     events: ["ExchangeAccepted", "MessagePosted"],
   },
   // Inserts notification rows + schedules email/push with no dedupe key.
-  // No `events` list on purpose: its switch is the only list (see the HANDLERS comment).
-  { name: "notifications", run: handleNotificationEvent, retry: false },
+  {
+    name: "notifications",
+    run: handleNotificationEvent,
+    retry: false,
+    // Kept beside the handler's translate switch (PERF-B7).
+    events: NOTIFYING_EVENT_NAMES,
+  },
   // Opens the exchange thread (idempotent) but APPENDS a lifecycle system message.
   {
     name: "conversation",
