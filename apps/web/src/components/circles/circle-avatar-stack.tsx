@@ -35,12 +35,13 @@ export interface StackMember {
 const VISIBLE = 5;
 const VISIBLE_NARROW = 3;
 
-// Geometry (px) behind the reserved width: 32px avatars overlapping by 10px
-// (-ml-2.5); an opened gap turns that into 4px apart (ml-1), i.e. 14px wider;
-// the "+N" counter is 32px plus its 4px margin.
+// Geometry (px) behind the reserved width: 32px avatars overlapping by 8px
+// (-ml-2), so each stacked avatar keeps a 24px target (WCAG 2.5.8); an opened
+// gap turns that into 4px apart (ml-1), i.e. 12px wider; the "+N" counter is
+// 32px plus its 4px margin.
 const AVATAR_PX = 32;
-const OVERLAP_PX = 10;
-const GAP_GROWTH_PX = 14;
+const OVERLAP_PX = 8;
+const GAP_GROWTH_PX = 12;
 const COUNTER_PX = 36;
 
 // Stacking order, front to back (static classes so Tailwind sees them).
@@ -139,7 +140,7 @@ export function CircleAvatarStack({
                   className={cn(
                     "focus-visible:ring-ring relative flex shrink-0 rounded-full transition-[margin,translate] duration-200 ease-out outline-none focus-visible:ring-2 focus-visible:ring-offset-2 motion-reduce:transition-none motion-reduce:duration-0",
                     lifted ? "z-10 -translate-y-0.5" : Z_INDEX[index],
-                    index > 0 && (separated ? "ml-1" : "-ml-2.5"),
+                    index > 0 && (separated ? "ml-1" : "-ml-2"),
                     index >= VISIBLE_NARROW && "hidden lg:flex",
                   )}
                 >

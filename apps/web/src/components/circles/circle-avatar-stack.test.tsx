@@ -31,11 +31,11 @@ const tiles = () => [...screen.getByRole("group").querySelectorAll("button")];
 const tooltipText = () =>
   screen.queryAllByRole("tooltip").map((el) => el.textContent);
 
-// The margin class of each tile after the first: "-ml-2.5" stacked, "ml-1" apart.
+// The margin class of each tile after the first: "-ml-2" stacked, "ml-1" apart.
 const spacing = () =>
   tiles()
     .slice(1)
-    .map((el) => (el.className.includes("-ml-2.5") ? "stacked" : "apart"));
+    .map((el) => (el.classList.contains("-ml-2") ? "stacked" : "apart"));
 
 afterEach(() => {
   cleanup();
@@ -54,6 +54,21 @@ describe("CircleAvatarStack", () => {
       "Cleo",
     ]);
     expect(spacing()).toEqual(["stacked", "stacked"]);
+  });
+
+  it("overlaps avatars by 8px so each keeps a 24px target", () => {
+    renderStack(7);
+    // 32px avatars, 8px overlap (-ml-2): each stacked avatar shows 24px, the
+    // WCAG 2.5.8 minimum. A tighter overlap fails axe target-size.
+    for (const el of tiles().slice(1)) {
+      expect(el.classList.contains("-ml-2")).toBe(true);
+      expect(el.className).not.toContain("-ml-2.5");
+    }
+    // The reserved width matches that geometry: 32 + 4 × 24, two gaps of 12px
+    // (-ml-2 → ml-1) and the 36px "+N" counter.
+    expect(
+      screen.getByRole("group").style.getPropertyValue("--stack-reserve"),
+    ).toBe("188px");
   });
 
   it("draws five avatars and +N from lg up, three and +N below", () => {
