@@ -105,6 +105,10 @@ export const gateway = {
     // Reads go through the domain-driven library module (file.export namespacing); each is a thin
     // Convex query returning a typed @jigswap/contracts view DTO, not a raw row.
     ownedByOwner: api.library.getOwnedPuzzlesByOwner.getOwnedPuzzlesByOwner,
+    // The signed-in member's own shelf: library-wide counts plus only the newest few copies joined
+    // (dashboard Shelf/Fresh and the profile shelf). Use ownedByOwner only where the whole library
+    // is needed (My Puzzles, pickers, arrange-shelf).
+    myShelf: api.library.getMyShelf.getMyShelf,
     // Browse reads from the Library inventory (owned copies), not the Catalog.
     browseOwned: api.library.browseOwnedPuzzles.browseOwnedPuzzles,
     ownedWithCollectionStatus:

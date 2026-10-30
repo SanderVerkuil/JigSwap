@@ -25,8 +25,13 @@ const SHELF_HEADING_PROPS = {
 };
 
 type OwnedCopy = FunctionReturnType<
-  typeof gateway.library.ownedByOwner
->[number];
+  typeof gateway.library.myShelf
+>["recent"][number];
+
+// How many copies the dashboard shelf reads: the Fresh section below shows six, so both sections
+// share one library.myShelf subscription; the plank shows the first PLANK_SIZE of them.
+export const MY_SHELF_SIZE = 6;
+const PLANK_SIZE = 5;
 
 // Warm gradient pairs for boxes without cover art (violet / green / pink /
 // amber brand hues) — never an empty gray box.
@@ -103,12 +108,12 @@ export function ShelfSection() {
   const isMobile = useIsMobile();
   const { member, isMemberLoading } = useCurrentMember();
 
-  const { data: copies } = useQuery(
+  // The member's own shelf summary: counts over the whole library, but only the newest copies
+  // joined (never the whole joined library just to draw a few boxes).
+  const { data: shelf } = useQuery(
     convexQuery(
-      gateway.library.ownedByOwner,
-      member?._id
-        ? { ownerId: member._id as Id<"users">, includeUnavailable: true }
-        : "skip",
+      gateway.library.myShelf,
+      member?._id ? { limit: MY_SHELF_SIZE } : "skip",
     ),
   );
   const { data: stats } = useQuery(
@@ -125,16 +130,16 @@ export function ShelfSection() {
   // reactive re-render of this dashboard (only when the copies/viewport change).
   const plankBoxes = useMemo(
     () =>
-      (copies ?? [])
-        .slice(0, 5)
+      (shelf?.recent ?? [])
+        .slice(0, PLANK_SIZE)
         .map((copy, i) => toPlankBox(copy, i, isMobile)),
-    [copies, isMobile],
+    [shelf, isMobile],
   );
 
   const loading =
     isMemberLoading ||
     (member != null &&
-      (copies === undefined || stats === undefined || exchanges === undefined));
+      (shelf === undefined || stats === undefined || exchanges === undefined));
 
   if (loading) {
     return (
@@ -156,8 +161,8 @@ export function ShelfSection() {
     );
   }
 
-  const owned = copies ?? [];
-  const forTrade = owned.filter((c) => c.availability.forTrade).length;
+  const owned = shelf?.total ?? 0;
+  const forTrade = shelf?.forTrade ?? 0;
   const activeExchanges = (exchanges ?? []).filter(
     (e) =>
       e.status === "proposed" ||
@@ -168,7 +173,7 @@ export function ShelfSection() {
   const statRows = [
     {
       href: "/my-puzzles",
-      value: owned.length,
+      value: owned,
       label: t("stats.ownedLabel"),
       sub: t("stats.ownedSub", { count: forTrade }),
     },
@@ -198,18 +203,14 @@ export function ShelfSection() {
         title={t("title")}
         icon={BookOpen}
         headingProps={SHELF_HEADING_PROPS}
-        meta={
-          owned.length > 0
-            ? t("meta", { owned: owned.length, forTrade })
-            : undefined
-        }
+        meta={owned > 0 ? t("meta", { owned, forTrade }) : undefined}
         action={
           <Button variant="outline" size="sm" asChild>
             <Link href="/collections">{t("viewCollections")}</Link>
           </Button>
         }
       />
-      {owned.length === 0 ? (
+      {owned === 0 ? (
         <div className="flex flex-col items-center gap-3 py-10 text-center">
           <p className="text-muted-foreground max-w-md text-sm">{t("empty")}</p>
           <Button asChild>

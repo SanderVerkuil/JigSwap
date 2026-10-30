@@ -350,6 +350,7 @@ import type * as library_getCollectionsForOwnedPuzzle from "../library/getCollec
 import type * as library_getCopyInstanceView from "../library/getCopyInstanceView.js";
 import type * as library_getCopyLoanHistory from "../library/getCopyLoanHistory.js";
 import type * as library_getLentOutLoans from "../library/getLentOutLoans.js";
+import type * as library_getMyShelf from "../library/getMyShelf.js";
 import type * as library_getOwnedPuzzlesByOwner from "../library/getOwnedPuzzlesByOwner.js";
 import type * as library_getOwnedPuzzleWithCollectionStatus from "../library/getOwnedPuzzleWithCollectionStatus.js";
 import type * as library_getPuzzleDefinitionView from "../library/getPuzzleDefinitionView.js";
@@ -934,6 +935,7 @@ declare const fullApi: ApiFromModules<{
   "library/getCopyInstanceView": typeof library_getCopyInstanceView;
   "library/getCopyLoanHistory": typeof library_getCopyLoanHistory;
   "library/getLentOutLoans": typeof library_getLentOutLoans;
+  "library/getMyShelf": typeof library_getMyShelf;
   "library/getOwnedPuzzleWithCollectionStatus": typeof library_getOwnedPuzzleWithCollectionStatus;
   "library/getOwnedPuzzlesByOwner": typeof library_getOwnedPuzzlesByOwner;
   "library/getPuzzleDefinitionView": typeof library_getPuzzleDefinitionView;

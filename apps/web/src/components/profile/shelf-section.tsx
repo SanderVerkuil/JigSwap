@@ -3,6 +3,7 @@
 import { Link } from "@/compat/link";
 import { PuzzlePlank3D } from "@/components/common/puzzle-plank-3d";
 import { SectionHead } from "@/components/dashboard-home/section-head";
+import { MY_SHELF_SIZE } from "@/components/dashboard-home/shelf-section";
 import { toPlankBox } from "@/components/profile/to-plank-box";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,6 +22,9 @@ import type { Member } from "./member-view";
 // display shelf rather than a catalogue (My Puzzles is the catalogue).
 // When the viewer is the owner, an "Arrange shelf" button opens a dialog to
 // curate and reorder up to 6 copies (sub-project ④).
+// Rendered only on the signed-in member's own profile (routes/_dashboard/profile.tsx):
+// the uncurated fallback reads library.myShelf, which is always the caller's own
+// shelf. Another member's profile has its own shelf (members/profile-body.tsx).
 export function ProfileShelfSection({ member }: { member: Member }) {
   const t = useTranslations("profile.shelf");
   const displayName = useMemberDisplayName();
@@ -32,11 +36,10 @@ export function ProfileShelfSection({ member }: { member: Member }) {
   const { data: me } = useQuery(convexQuery(gateway.identity.currentUser, {}));
   const isOwner = me?._id === member._id;
 
-  const { data: copies } = useQuery(
-    convexQuery(gateway.library.ownedByOwner, {
-      ownerId: member._id as Id<"users">,
-      includeUnavailable: true,
-    }),
+  // Only the newest copies, for the uncurated fallback: the whole library is
+  // read by the arrange dialog, and only while it is open.
+  const { data: shelf } = useQuery(
+    convexQuery(gateway.library.myShelf, { limit: MY_SHELF_SIZE }),
   );
 
   // The curated shelf — empty list means uncurated (fall back to recent-6 below).
@@ -63,10 +66,10 @@ export function ProfileShelfSection({ member }: { member: Member }) {
     if (featuredCopies !== undefined && featuredCopies.length > 0) {
       return featuredCopies.slice(0, 6).map(toPlankBox);
     }
-    return (copies ?? []).slice(0, 6).map(toPlankBox);
-  }, [copies, featuredCopies]);
+    return (shelf?.recent ?? []).slice(0, 6).map(toPlankBox);
+  }, [shelf, featuredCopies]);
 
-  if (copies === undefined || featuredCopies === undefined) {
+  if (shelf === undefined || featuredCopies === undefined) {
     return (
       <section>
         <SectionHead title={title} icon={BookOpen} />

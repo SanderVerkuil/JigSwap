@@ -4,12 +4,13 @@ import { Link } from "@/compat/link";
 import { Button } from "@/components/ui/button";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { gateway, Id } from "@/gateway";
+import { gateway } from "@/gateway";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { Sparkles } from "lucide-react";
 import { useTranslations } from "use-intl";
 import { SectionHead } from "./section-head";
+import { MY_SHELF_SIZE } from "./shelf-section";
 import { useCurrentMember } from "./use-current-member";
 
 // "Fresh on the Shelf": the member's most recently added copies as a
@@ -19,16 +20,15 @@ export function FreshSection() {
   const t = useTranslations("dashboard.fresh");
   const { member, isMemberLoading } = useCurrentMember();
 
-  const { data: copies } = useQuery(
+  // Same arguments as the Shelf section above, so both share one subscription.
+  const { data: shelf } = useQuery(
     convexQuery(
-      gateway.library.ownedByOwner,
-      member?._id
-        ? { ownerId: member._id as Id<"users">, includeUnavailable: true }
-        : "skip",
+      gateway.library.myShelf,
+      member?._id ? { limit: MY_SHELF_SIZE } : "skip",
     ),
   );
 
-  const loading = isMemberLoading || (member != null && copies === undefined);
+  const loading = isMemberLoading || (member != null && shelf === undefined);
 
   if (loading) {
     return (
@@ -43,8 +43,8 @@ export function FreshSection() {
     );
   }
 
-  // The library read is already newest-first; take the freshest six.
-  const fresh = (copies ?? []).slice(0, 6);
+  // The shelf read is already newest-first; take the freshest six.
+  const fresh = (shelf?.recent ?? []).slice(0, 6);
   if (fresh.length === 0) return null;
 
   return (
