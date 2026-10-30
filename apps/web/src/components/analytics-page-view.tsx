@@ -52,15 +52,16 @@ export function PostHogPageView(): null {
 
   useEffect(() => {
     // Signed out, by the menu, session expiry or another tab: give this
-    // device a fresh anonymous identity so later events aren't linked to the
-    // member. Visitors who never signed in keep theirs.
+    // device a fresh anonymous identity, device id included (`true`), so
+    // later events aren't linked to the member. Visitors who never signed in
+    // keep theirs.
     if (
       isLoaded &&
       !isSignedIn &&
       posthog?.__loaded &&
       posthog.get_property("$user_state") === "identified"
     ) {
-      posthog.reset();
+      posthog.reset(true);
     }
   }, [isLoaded, isSignedIn, posthog]);
 

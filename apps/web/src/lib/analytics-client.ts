@@ -57,6 +57,7 @@ export function initPostHog(): Promise<PostHog | null> {
 function activate(posthog: PostHog | null): PostHog | null {
   if (!posthog) return null;
   if (posthog.has_opted_out_capturing()) {
+    posthog.set_config({ advanced_disable_flags: false });
     posthog.opt_in_capturing({ captureEventName: false });
   }
   if (client !== posthog) setClient(posthog);
@@ -72,10 +73,14 @@ export async function withdrawAnalyticsConsent(): Promise<void> {
   writeAnalyticsConsent("denied");
   const posthog = loading ? await loading : null;
   if (posthog) {
+    // No more requests at all: reset() would otherwise fetch feature flags
+    // for the fresh identity.
+    posthog.set_config({ advanced_disable_flags: true });
     // reset() also clears PostHog's own consent state, so it has to come
     // first: the opt-out after it is what sticks. It drops the member's
-    // identity, so nothing still queued can be linked to them.
-    posthog.reset();
+    // identity and (`true`) the device id, so nothing still queued can be
+    // linked to them.
+    posthog.reset(true);
     posthog.opt_out_capturing();
   }
   if (client) setClient(null);

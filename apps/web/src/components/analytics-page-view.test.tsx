@@ -101,7 +101,8 @@ describe("PostHogPageView identity", () => {
     state.convex = { isLoading: false, isAuthenticated: false };
     state.userState = "identified";
     await renderPageView();
-    expect(posthog.reset).toHaveBeenCalledTimes(1);
+    // `true`: a new device id too, so nothing links back to the member.
+    expect(posthog.reset).toHaveBeenCalledExactlyOnceWith(true);
     expect(posthog.identify).not.toHaveBeenCalled();
   });
 

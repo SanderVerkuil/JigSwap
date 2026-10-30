@@ -10,7 +10,12 @@ const consentCalls: string[] = [];
 const optedOut = { value: false };
 const fakePostHog = {
   init,
-  reset: vi.fn(() => consentCalls.push("reset")),
+  set_config: vi.fn((config: { advanced_disable_flags?: boolean }) =>
+    consentCalls.push(`flags ${config.advanced_disable_flags ? "off" : "on"}`),
+  ),
+  reset: vi.fn((resetDeviceId?: boolean) =>
+    consentCalls.push(resetDeviceId ? "reset with new device id" : "reset"),
+  ),
   opt_out_capturing: vi.fn(() => consentCalls.push("opt_out_capturing")),
   opt_in_capturing: vi.fn(() => consentCalls.push("opt_in_capturing")),
   has_opted_out_capturing: () => optedOut.value,
@@ -127,6 +132,7 @@ describe("withdrawAnalyticsConsent", () => {
   beforeEach(() => {
     init.mockReset();
     importSpy.mockReset();
+    fakePostHog.set_config.mockClear();
     fakePostHog.reset.mockClear();
     fakePostHog.opt_out_capturing.mockClear();
     fakePostHog.opt_in_capturing.mockClear();
@@ -175,8 +181,14 @@ describe("withdrawAnalyticsConsent", () => {
 
     await withdrawAnalyticsConsent();
 
-    // reset() clears PostHog's own consent state, so the opt-out must follow it.
-    expect(consentCalls).toEqual(["reset", "opt_out_capturing"]);
+    // Flags off first: reset() would otherwise fetch them again for the new
+    // identity. reset() clears PostHog's own consent state, so the opt-out
+    // must follow it.
+    expect(consentCalls).toEqual([
+      "flags off",
+      "reset with new device id",
+      "opt_out_capturing",
+    ]);
     expect(getPostHog()).toBeNull();
     expect(listener).toHaveBeenCalledTimes(1);
   });
@@ -188,7 +200,11 @@ describe("withdrawAnalyticsConsent", () => {
 
     await withdrawAnalyticsConsent();
 
-    expect(consentCalls).toEqual(["reset", "opt_out_capturing"]);
+    expect(consentCalls).toEqual([
+      "flags off",
+      "reset with new device id",
+      "opt_out_capturing",
+    ]);
     expect(getPostHog()).toBeNull();
   });
 
@@ -200,9 +216,11 @@ describe("withdrawAnalyticsConsent", () => {
     optedOut.value = true;
     document.cookie = "cookieConsent=true; path=/";
 
+    consentCalls.length = 0;
     await initPostHog();
 
     expect(init).toHaveBeenCalledTimes(1);
+    expect(consentCalls).toEqual(["flags on", "opt_in_capturing"]);
     expect(fakePostHog.opt_in_capturing).toHaveBeenCalledWith({
       captureEventName: false,
     });
