@@ -5,6 +5,13 @@ import { runInNewContext } from "node:vm";
 import { Jimp } from "jimp";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import {
+  craftGif,
+  gifComment,
+  gifControl,
+  gifFrame,
+  gifNetscapeLoop,
+} from "../test-fixtures/craftGif";
+import {
   craftPng,
   iendChunk,
   ihdrChunk,
@@ -271,6 +278,30 @@ describe("decodeUpright decodes only what the guards checked", () => {
       },
     });
     expect(JPEG_DECODER_MEMORY_MB).toBe(193);
+  });
+
+  // The guard walks a GIF as omggif does; even so, omggif is given only the frame it checked, so
+  // no block around it can make omggif decode another one (SEC-18).
+  test("a GIF is decoded from its checked first frame alone", async () => {
+    const decode = vi.spyOn(Jimp, "fromBuffer");
+    const animated = craftGif(
+      4,
+      3,
+      gifNetscapeLoop(),
+      gifComment("made by hand"),
+      gifControl(),
+      gifFrame(4, 3),
+      gifControl(),
+      gifFrame(2, 2),
+    );
+
+    const image = await decodeUpright(animated, "gif", 1);
+
+    expect(decode).toHaveBeenCalledTimes(1);
+    expect(new Uint8Array(decode.mock.calls[0][0])).toEqual(
+      craftGif(4, 3, gifControl(), gifFrame(4, 3)),
+    );
+    expect([image.bitmap.width, image.bitmap.height]).toEqual([4, 3]);
   });
 });
 

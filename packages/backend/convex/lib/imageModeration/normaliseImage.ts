@@ -5,6 +5,7 @@ import { initEmscriptenModule } from "@jsquash/webp/utils.js";
 import { Jimp } from "jimp";
 import {
   checkImageBytes,
+  gifDecodeInput,
   JPEG_DECODER_MEMORY_MB,
   jpegDecodeInput,
   MAX_IMAGE_PIXELS,
@@ -101,14 +102,21 @@ const decodeWebp = async (bytes: Uint8Array): Promise<Bitmap> => {
  * header alone, so a decoder that reads a bigger image from the same bytes is never let through
  * (SEC-17). A JPEG is decoded from exactly the bytes its frame was checked in
  * (jpegDecodeInput), under jpeg-js's own caps on resolution and allocation as a backstop
- * (SEC-18); hitting one is a throw like any other decode failure.
+ * (SEC-18); hitting one is a throw like any other decode failure. A GIF is decoded from its
+ * checked first frame alone (gifDecodeInput), so omggif cannot meet a block it reads differently
+ * from the guard and decode another, bigger frame (SEC-18).
  */
 export const decodeUpright = async (
   input: Uint8Array,
   format: StrippableFormat | "gif",
   orientation: number,
 ) => {
-  const bytes = format === "jpeg" ? jpegDecodeInput(input) : input;
+  const bytes =
+    format === "jpeg"
+      ? jpegDecodeInput(input)
+      : format === "gif"
+        ? gifDecodeInput(input)
+        : input;
   const header = checkImageBytes(bytes);
   if (!header.ok) throw new Error(`refused before decode: ${header.reason}`);
   if (header.format !== format) {

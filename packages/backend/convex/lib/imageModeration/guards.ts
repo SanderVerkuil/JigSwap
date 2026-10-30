@@ -53,7 +53,8 @@
 // screen size bounds the decode, and the first frame must fit inside the screen; the re-encode
 // keeps that one frame, so an animated GIF is stored (and classified) as its first frame. The
 // blocks before that frame are walked exactly as omggif walks them, so the frame checked is the
-// frame it decodes; a block omggif would read differently, or refuse, is refused here.
+// frame it decodes; a block omggif would read differently, or refuse, is refused here. As a
+// backstop the decoder is given that frame alone (gifDecodeInput), like JPEG's jpegDecodeInput.
 
 /** Largest accepted upload, in bytes (10 MB). */
 export const MAX_IMAGE_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -150,6 +151,16 @@ export const sniffImageFormat = (bytes: Uint8Array): ImageFormat | null => {
   return null;
 };
 
+const concatBytes = (parts: Uint8Array[]): Uint8Array => {
+  const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
+  let offset = 0;
+  for (const part of parts) {
+    out.set(part, offset);
+    offset += part.length;
+  }
+  return out;
+};
+
 /**
  * The bytes the JPEG decoder is given: the image without its APPn and COM segments, except
  * APP14 "Adobe" (it says how to convert the colours). None of the others changes a pixel, and
@@ -199,13 +210,7 @@ export const jpegDecodeInput = (b: Uint8Array): Uint8Array => {
       i = j;
     }
   }
-  const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
-  let offset = 0;
-  for (const part of parts) {
-    out.set(part, offset);
-    offset += part.length;
-  }
-  return out;
+  return concatBytes(parts);
 };
 
 // JPEG: jpeg-js (jimp's decoder) allocates its 8x8 blocks (an Int32Array(64) each, about 800
@@ -289,9 +294,17 @@ const pngHeader = (b: Uint8Array): Header | null => {
 // a GIF is accepted only with blocks both walks read alike: a graphic control extension of
 // exactly that shape, comments, and application extensions that open with the identifier.
 // The first frame's data must end inside the file. No image descriptor => no usable header.
-const gifDimensions = (
-  b: Uint8Array,
-): { width: number; height: number } | null => {
+type GifLayout = {
+  screen: { width: number; height: number };
+  /** Where the signature, logical screen descriptor and global colour table end. */
+  headerEnd: number;
+  /** The last graphic control extension before the first frame (its transparency), [from, to). */
+  control: [number, number] | null;
+  /** The first frame: image descriptor, local colour table and data, [from, to). */
+  frame: [number, number];
+};
+
+const gifLayout = (b: Uint8Array): GifLayout | null => {
   if (b.length < 13) return null;
   const screen = { width: u16le(b, 6), height: u16le(b, 8) };
   // Size-prefixed sub-blocks from `at` up to their 0 terminator: the index after it, or null
@@ -304,7 +317,9 @@ const gifDimensions = (
   // A colour table: 3 * 2^(n+1) bytes when the flag bit is set.
   const colourTable = (flags: number) =>
     flags & 0x80 ? 3 * (1 << ((flags & 0x07) + 1)) : 0;
-  let i = 13 + colourTable(b[10]);
+  const headerEnd = 13 + colourTable(b[10]);
+  let control: [number, number] | null = null;
+  let i = headerEnd;
   while (i < b.length) {
     const block = b[i];
     if (block === 0x2c) {
@@ -324,15 +339,18 @@ const gifDimensions = (
         return null;
       }
       const data = i + 10 + colourTable(b[i + 9]);
-      if (data >= b.length || subBlocksEnd(data + 1) === null) return null;
-      return screen;
+      const end = data < b.length ? subBlocksEnd(data + 1) : null;
+      if (end === null) return null;
+      return { screen, headerEnd, control, frame: [i, end] };
     }
     if (block !== 0x21) return null; // trailer (0x3B) or garbage before any frame
     const label = b[i + 1];
+    const from = i;
     i += 2;
     if (label === 0xf9) {
       if (b[i] !== 4 || b[i + 5] !== 0) return null;
       i += 6;
+      control = [from, i];
       continue;
     }
     if (label !== 0xfe && !(label === 0xff && b[i] === 0x0b)) return null;
@@ -341,6 +359,32 @@ const gifDimensions = (
     i = end;
   }
   return null;
+};
+
+const gifDimensions = (
+  b: Uint8Array,
+): { width: number; height: number } | null => gifLayout(b)?.screen ?? null;
+
+const GIF_TRAILER = new Uint8Array([0x3b]);
+
+/**
+ * The bytes the GIF decoder is given: the signature, logical screen and global colour table,
+ * the last graphic control extension before the first frame (it says which colour is
+ * transparent), that first frame, and the trailer. The frame is the one gifDimensions checked,
+ * and nothing is left around it that omggif could walk differently (application extensions,
+ * comments) or would parse but never draw (later frames). When the walk fails, nothing past the
+ * logical screen is kept, so the decode is refused.
+ */
+export const gifDecodeInput = (b: Uint8Array): Uint8Array => {
+  const layout = gifLayout(b);
+  if (!layout) return b.subarray(0, Math.min(b.length, 13));
+  const { headerEnd, control, frame } = layout;
+  return concatBytes([
+    b.subarray(0, headerEnd),
+    ...(control ? [b.subarray(...control)] : []),
+    b.subarray(...frame),
+    GIF_TRAILER,
+  ]);
 };
 
 /** The VP8X flag bit that marks an animation. */

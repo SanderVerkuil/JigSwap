@@ -21,6 +21,7 @@ import {
 import {
   checkImageBytes,
   checkImageSize,
+  gifDecodeInput,
   jpegDecodeInput,
   MAX_IMAGE_PIXELS,
   MAX_IMAGE_UPLOAD_BYTES,
@@ -515,6 +516,44 @@ describe("checkImageBytes", () => {
       expect(Array.from(jpegDecodeInput(file))).toEqual(
         Array.from(jpegOf(adobe, dqt, frame, sos, scan, eoi)),
       );
+    });
+  });
+
+  // omggif (jimp's GIF decoder) must decode the frame the guard checked, whatever it would make
+  // of the blocks around it: it is given only that frame (SEC-18).
+  describe("the GIF decoder is given the checked first frame alone", () => {
+    test("extensions and later frames are dropped; the last graphic control before the frame stays", () => {
+      const transparentControl = [0x21, 0xf9, 4, 0x01, 0, 0, 1, 0];
+      const file = craftGif(
+        4,
+        3,
+        gifNetscapeLoop(),
+        gifControl(),
+        gifApplication("XMP DataXMP", [1, 2, 3]),
+        transparentControl,
+        gifComment("made by hand"),
+        gifFrame(4, 3),
+        gifControl(),
+        gifFrame(2, 2),
+      );
+
+      expect(Array.from(gifDecodeInput(file))).toEqual(
+        Array.from(craftGif(4, 3, transparentControl, gifFrame(4, 3))),
+      );
+      expect(
+        Array.from(gifDecodeInput(craftGif(4, 3, gifFrame(4, 3)))),
+      ).toEqual(Array.from(craftGif(4, 3, gifFrame(4, 3))));
+    });
+
+    test("a GIF the guard cannot walk keeps no frame, so its decode is refused", () => {
+      const input = gifDecodeInput(
+        appExtensionDifferentialGif({ width: 65535, height: 16384 }),
+      );
+      expect(input.length).toBe(13);
+      expect(checkImageBytes(input)).toEqual({
+        ok: false,
+        reason: "unreadable_header",
+      });
     });
   });
 
