@@ -2453,7 +2453,7 @@
     },
     "manage": {
       "createTitle": "Create Circle",
-      "createDescription": "A circle is private. You become its first member and admin.",
+      "createDescription": "A circle is private. You become its first member and admin. You can invite people you follow each other with.",
       "nameLabel": "Name",
       "namePlaceholder": "e.g. Saturday Puzzlers",
       "nameCounter": "{count}/{max}",

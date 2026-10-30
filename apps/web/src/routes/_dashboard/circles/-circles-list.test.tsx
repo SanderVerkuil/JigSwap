@@ -199,6 +199,15 @@ describe("circles list rows", () => {
     expect(screen.getByRole("button", { name: "Manage Mine" })).toBeTruthy();
   });
 
+  it("says who can be invited before a circle is created", async () => {
+    renderList([]);
+    fireEvent.click(screen.getByRole("button", { name: "Create Circle" }));
+    const dialog = await screen.findByRole("dialog", { name: "Create Circle" });
+    expect(dialog.textContent).toContain(
+      "You can invite people you follow each other with.",
+    );
+  });
+
   it("renders a legacy circle without an id as plain text", () => {
     renderList([circle(undefined, "Old Club")]);
     expect(screen.getByText("Old Club").closest("a")).toBeNull();
