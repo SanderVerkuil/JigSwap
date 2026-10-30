@@ -549,6 +549,7 @@
     "availabilityHint": "How you'd like to share this puzzle. Pick any that apply.",
     "fieldTags": "Tags",
     "tagsHint": "Press Enter to add. Helps people discover your puzzle.",
+    "tagsLimit": "Up to {max} tags",
     "fieldNotes": "Notes",
     "notesPlaceholderLong": "Anything worth mentioning — missing pieces, special edition, where you got it…",
     "optional": "Optional",

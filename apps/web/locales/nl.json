@@ -549,6 +549,7 @@
     "availabilityHint": "Hoe je deze puzzel wilt delen. Kies wat van toepassing is.",
     "fieldTags": "Tags",
     "tagsHint": "Druk op Enter om toe te voegen — zo vinden anderen je puzzel.",
+    "tagsLimit": "Maximaal {max} tags",
     "fieldNotes": "Notities",
     "notesPlaceholderLong": "Iets vermeldenswaards — ontbrekende stukjes, speciale editie, waar je hem vandaan hebt…",
     "optional": "Optioneel",
