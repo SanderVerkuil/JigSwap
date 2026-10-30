@@ -4884,7 +4884,7 @@
         "title": "Fotocontrole vraagt aandacht",
         "missingToken": "Fotocontrole is niet ingesteld op deze deployment (aanbieder {provider}; ontbreekt: {vars}). Nieuwe foto's blijven alleen zichtbaar voor de uploader totdat ze gecontroleerd kunnen worden.",
         "disabled": "Fotocontrole staat uit op deze deployment (MODERATION_PROVIDER=none). Nieuwe foto's worden zonder controle gepubliceerd.",
-        "unscored": "{countLabel} {count, plural, one {foto kon} other {foto's konden}} nog niet worden gecontroleerd en {count, plural, one {is} other {zijn}} alleen zichtbaar voor de uploader. Voer de hercontrole uit het runbook voor eenmalige migraties uit zodra de controle werkt."
+        "unscored": "{countLabel} {count, plural, one {foto kon} other {foto's konden}} nog niet worden gecontroleerd en {count, plural, one {is} other {zijn}} alleen zichtbaar voor de uploader. Voer de hercontrole uit het <link>runbook voor eenmalige migraties</link> uit zodra de controle werkt."
       },
       "uncheckedEmpty": "Er wachten geen foto's op controle.",
       "unchecked": {
