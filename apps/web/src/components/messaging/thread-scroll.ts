@@ -1,5 +1,6 @@
-// Scroll anchoring for the thread view's infinite scroll-up: when an older
-// page is prepended, the content the reader was looking at must not move.
+// Scroll helpers for the thread view: anchoring for its infinite scroll-up
+// (when an older page is prepended, the content the reader was looking at must
+// not move), and where "at the bottom" begins.
 
 // The scroller as last recorded, before the next commit lands.
 export type ScrollSnapshot = {
@@ -24,4 +25,20 @@ export function anchoredScrollTop(
   if (ascending[0]?.id === oldestId) return undefined;
   if (!ascending.some((message) => message.id === oldestId)) return undefined;
   return previous.scrollTop + (scrollHeight - previous.scrollHeight);
+}
+
+// How far from the bottom still counts as having the newest messages in view.
+const NEAR_BOTTOM_PX = 120;
+
+// Whether the newest messages are in view: the scroller is at (or within
+// NEAR_BOTTOM_PX of) its bottom, or doesn't scroll at all.
+export function isNearBottom(scroller: {
+  scrollHeight: number;
+  scrollTop: number;
+  clientHeight: number;
+}): boolean {
+  return (
+    scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight <
+    NEAR_BOTTOM_PX
+  );
 }

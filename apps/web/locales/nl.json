@@ -896,6 +896,7 @@
       "several": "Meerdere mensen typen…"
     },
     "unreadCount": "{count, plural, one {# ongelezen bericht} other {# ongelezen berichten}}",
+    "unreadDivider": "Nieuwe berichten",
     "untitledPuzzle": "Naamloze puzzel",
     "you": "Jij",
     "youPrefix": "Jij: {body}",

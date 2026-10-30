@@ -3,9 +3,10 @@
 // Active-thread pane of /messages/$threadId: the listThreadMessages
 // paginated subscription (newest first, reversed to ascending for display;
 // older pages load on scroll-up with the scroll position anchored), read
-// receipts via markThreadRead, and the composer. The header subject is the
-// thread's own inbox row (getInboxThread), so a thread outside the list's
-// loaded window still gets its header.
+// receipts via markThreadRead once the newest messages are in view, and the
+// composer. The header subject and the unread count behind the "New messages"
+// divider come from the thread's own inbox row (getInboxThread), so a thread
+// outside the list's loaded window still gets both.
 // Messages render as author groups with day separators (message-center
 // redesign spec §5–§6, §9).
 import { Link } from "@/compat/link";
@@ -40,6 +41,8 @@ import {
   useRef,
   useState,
   type ReactNode,
+  type Ref,
+  type RefObject,
 } from "react";
 import { useLocale, useNow, useTranslations } from "use-intl";
 import { CircleThreadHeader } from "./circle-thread-header";
@@ -47,11 +50,13 @@ import { ComposerClosed } from "./composer-closed";
 import { MessageCopyCard } from "./copy-card";
 import {
   anonymousLabel,
+  firstUnreadId,
   formatFullDateTime,
   formatMessageTime,
   groupThreadMessages,
   isCircleThread,
   memberProfileHref,
+  newestOtherId,
   projectedMemberLabel,
   segmentMessages,
   systemEventText,
@@ -74,7 +79,11 @@ import { ThreadSubjectAvatar } from "./thread-list";
 import { threadPartner } from "./thread-partner";
 import { ThreadPuzzleStack } from "./thread-puzzle-stack";
 import { ThreadQuickLinks } from "./thread-quick-links";
-import { anchoredScrollTop, type ScrollSnapshot } from "./thread-scroll";
+import {
+  anchoredScrollTop,
+  isNearBottom,
+  type ScrollSnapshot,
+} from "./thread-scroll";
 import { TypingLine } from "./typing-line";
 
 type ThreadMessage = PaginatedQueryItem<
@@ -86,6 +95,10 @@ const PAGE_SIZE = 20;
 
 // Live-region announcements quote at most this much of the message body.
 const ANNOUNCE_MAX = 140;
+
+// A thread with unread messages opens with the "New messages" divider this far
+// below the top of the list, so a little of what was already read shows above.
+const UNREAD_DIVIDER_GAP = 16;
 
 // The thread title takes focus when a thread opens (keyboard and screen-reader
 // users land in it), so :focus-visible matches on load. A tinted background
@@ -202,53 +215,65 @@ export function ThreadView({
   const { mutateAsync: markThreadRead } = useMutation({
     mutationFn: useConvexMutation(gateway.conversation.markThreadRead),
   });
-  const loaded = messages !== undefined;
   const newestIsMine = messages?.at(-1)?.isMine;
   // Changes when a message arrives at the bottom and when a pending send is
   // confirmed (pending-… → real id: the confirmed group grows a time row, so
-  // follow again) — but not when an older page is prepended, so neither the
-  // receipt nor the follow-scroll below fires on scroll-up loads.
+  // follow again) — but not when an older page is prepended, so the
+  // follow-scroll below doesn't fire on scroll-up loads.
   const newestId = messages?.at(-1)?.id;
   const oldestId = messages?.[0]?.id;
+  // The newest message the reader didn't write: what a read receipt covers.
+  // Own sends don't move it, so they never send one.
+  const latestOtherId = messages && newestOtherId(messages);
 
-  // Per-thread one-shot flags, reset when navigating between threads.
-  const hasMarkedReadRef = useRef(false);
+  // The unread boundary (UX-115): the inbox row's unread count as the thread
+  // opens — taken once per thread, before this view's first read receipt
+  // clears it — and the newest of others' messages at that moment, where that
+  // unread run ends. Set during render, guarded to once per thread, so the
+  // first paint already has the divider.
+  const [unread, setUnread] = useState<{
+    threadId: string;
+    count: number;
+    upToId: string | undefined;
+  }>();
+  if (
+    messages !== undefined &&
+    headerRow !== undefined &&
+    unread?.threadId !== threadId
+  ) {
+    setUnread({
+      threadId,
+      count: thread?.unreadCount ?? 0,
+      upToId: newestOtherId(messages),
+    });
+  }
+  // The messages and their unread snapshot are both in: the thread lays out.
+  const ready = messages !== undefined && unread?.threadId === threadId;
+
+  // Per-thread one-shot flag, reset when navigating between threads.
   const hasScrolledRef = useRef(false);
   useEffect(() => {
-    hasMarkedReadRef.current = false;
     hasScrolledRef.current = false;
   }, [threadId]);
 
-  useEffect(() => {
-    // Mark read once the subscription has data — never while loading or
-    // unauthenticated. After the initial receipt, skip changes whose newest
-    // message is our own (optimistic) send: only others' messages (including
-    // system messages, never isMine) create unread state.
-    if (!me || !loaded) return;
-    if (hasMarkedReadRef.current && newestIsMine) return;
-    hasMarkedReadRef.current = true;
-    markThreadRead({ threadId }).catch(() => {
-      // Non-fatal: the receipt catches up on the next message.
-    });
-  }, [me, loaded, newestId, newestIsMine, threadId, markThreadRead]);
+  // The last read receipt sent: which thread, up to which message.
+  const receiptRef = useRef<Receipt | undefined>(undefined);
 
   const scrollerRef = useRef<HTMLOListElement>(null);
+  const dividerRef = useRef<HTMLLIElement>(null);
   // Scroll anchoring for prepended older pages: the scroller as it was before
   // the latest commit (refreshed on scroll and after every commit). When the
   // oldest rendered message changed because a page was prepended, restore the
   // position so the content the reader was looking at stays put. A layout
   // effect, so the corrected position is what gets painted.
   const scrollSnapshotRef = useRef<ScrollSnapshot | undefined>(undefined);
-  // Whether the reader is at the bottom, as of the last scroll or commit:
-  // a photo that finishes loading then keeps the newest message in view.
+  // Whether the newest message is in view: as of the reader's last scroll, or
+  // because the first-load jump or a followed arrival put it there. A photo
+  // that finishes loading then keeps the newest message in view, and the read
+  // receipt waits for it.
   const pinnedRef = useRef(true);
   const recordScroll = () => {
     const scroller = scrollerRef.current;
-    if (scroller) {
-      pinnedRef.current =
-        scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight <
-        120;
-    }
     scrollSnapshotRef.current = scroller
       ? {
           oldestId,
@@ -274,6 +299,23 @@ export function ThreadView({
     recordScroll();
   });
 
+  const onListScroll = () => {
+    recordScroll();
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+    pinnedRef.current = isNearBottom(scroller);
+    // Scrolling down to the newest messages reads them (UX-115).
+    if (
+      me &&
+      pinnedRef.current &&
+      claimReceipt(receiptRef, threadId, latestOtherId)
+    ) {
+      markThreadRead({ threadId }).catch(() => {
+        // Non-fatal: the receipt catches up on the next message.
+      });
+    }
+  };
+
   const onMediaLoad = () => {
     const scroller = scrollerRef.current;
     if (scroller && pinnedRef.current) {
@@ -282,20 +324,35 @@ export function ThreadView({
   };
 
   useEffect(() => {
-    // Scroll rule: jump instantly to the newest message on first load; after
-    // that, follow new messages only when the user is already near the bottom
-    // or the newest message is their own send — never yank someone who
-    // scrolled up to read history.
+    // Scroll rule. On first load, open at the "New messages" divider when
+    // there is one (a little above it; the browser clamps, so a short unread
+    // run still ends at the bottom), else jump to the newest message. After
+    // that, follow new messages only when the reader was at the bottom or the
+    // newest message is their own send — never yank someone who scrolled up to
+    // read history. Either way, record whether the newest message is now in
+    // view: the read receipt below waits for it.
+    if (!ready) return;
     const scroller = scrollerRef.current;
-    if (!scroller || !loaded) return;
-    if (!hasScrolledRef.current) {
-      hasScrolledRef.current = true;
-      scroller.scrollTop = scroller.scrollHeight;
+    if (!scroller) {
+      // An empty thread: nothing to scroll, nothing out of view.
+      pinnedRef.current = true;
       return;
     }
-    const nearBottom =
-      scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 120;
-    if (nearBottom || newestIsMine) {
+    if (!hasScrolledRef.current) {
+      hasScrolledRef.current = true;
+      const divider = dividerRef.current;
+      scroller.scrollTop = divider
+        ? scroller.scrollTop +
+          divider.getBoundingClientRect().top -
+          scroller.getBoundingClientRect().top -
+          UNREAD_DIVIDER_GAP
+        : scroller.scrollHeight;
+      pinnedRef.current = isNearBottom(scroller);
+      return;
+    }
+    // pinnedRef is still where the reader was before this message arrived; a
+    // tall one can land beyond the near-bottom band.
+    if (pinnedRef.current || isNearBottom(scroller) || newestIsMine) {
       const reduceMotion = window.matchMedia(
         "(prefers-reduced-motion: reduce)",
       ).matches;
@@ -303,18 +360,33 @@ export function ThreadView({
         top: scroller.scrollHeight,
         behavior: reduceMotion ? "auto" : "smooth",
       });
+      pinnedRef.current = true;
     }
-  }, [loaded, newestId, newestIsMine, outboxCount]);
+  }, [ready, newestId, newestIsMine, outboxCount]);
+
+  useEffect(() => {
+    // Read receipt (UX-115): only once the unread snapshot is taken (so the
+    // divider is placed before the inbox count clears), and only with the
+    // newest message in view — on open, and for each followed arrival from
+    // others. While the reader is scrolled up it waits; onListScroll sends it
+    // when they reach the bottom. Declared after the scroll rule, which
+    // decides what's in view.
+    if (!me || !ready || !pinnedRef.current) return;
+    if (!claimReceipt(receiptRef, threadId, latestOtherId)) return;
+    markThreadRead({ threadId }).catch(() => {
+      // Non-fatal: the receipt catches up on the next message.
+    });
+  }, [me, ready, threadId, latestOtherId, markThreadRead]);
 
   // Infinite scroll-up: load the next older page when the sentinel at the top
   // of the list comes into view (within 200px). Declared after the first-load
-  // jump above so the initial observation sees the list already scrolled to
-  // the bottom; re-observing on each status change keeps loading while a
-  // short thread still leaves the sentinel visible.
+  // jump above so the initial observation sees the list already scrolled into
+  // place; re-observing on each status change keeps loading while a short
+  // thread still leaves the sentinel visible.
   const sentinelRef = useRef<HTMLLIElement>(null);
   useEffect(() => {
     const sentinel = sentinelRef.current;
-    if (!sentinel || status !== "CanLoadMore") return;
+    if (!sentinel || !ready || status !== "CanLoadMore") return;
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries.some((entry) => entry.isIntersecting)) {
@@ -325,7 +397,7 @@ export function ThreadView({
     );
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [status, loadMore]);
+  }, [ready, status, loadMore]);
 
   // A keyboard user who pressed "Load earlier messages" keeps focus on it
   // while the page loads; when that was the last page the button gives way to
@@ -407,9 +479,15 @@ export function ThreadView({
   }, [messages, newest, threadId, title, circleThread, displayName, t]);
 
   const items =
-    messages === undefined
+    messages === undefined || unread?.threadId !== threadId
       ? undefined
-      : groupThreadMessages(messages, now, locale, t);
+      : groupThreadMessages(
+          messages,
+          now,
+          locale,
+          t,
+          firstUnreadId(messages, unread.count, unread.upToId),
+        );
 
   return (
     // ph-no-capture: PostHog never autocaptures or records private messages.
@@ -516,7 +594,7 @@ export function ThreadView({
           // Keyboard users can scroll the history without a mouse.
           tabIndex={0}
           aria-label={title ?? t("threadFallbackTitle")}
-          onScroll={recordScroll}
+          onScroll={onListScroll}
           className="focus-visible:ring-ring flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 py-4 outline-none focus-visible:ring-2 focus-visible:ring-inset md:px-6"
         >
           <OlderMessagesSlot
@@ -527,18 +605,22 @@ export function ThreadView({
               loadMore(PAGE_SIZE);
             }}
           />
-          {items.map((item) => (
-            <ThreadItemView
-              key={item.key}
-              item={item}
-              locale={locale}
-              otherAuthor={otherAuthor}
-              otherAuthorId={otherAuthorId as Id<"users"> | undefined}
-              circle={circleThread !== undefined}
-              meId={me}
-              onMediaLoad={onMediaLoad}
-            />
-          ))}
+          {items.map((item) =>
+            item.type === "unread" ? (
+              <UnreadDivider key={item.key} ref={dividerRef} />
+            ) : (
+              <ThreadItemView
+                key={item.key}
+                item={item}
+                locale={locale}
+                otherAuthor={otherAuthor}
+                otherAuthorId={otherAuthorId as Id<"users"> | undefined}
+                circle={circleThread !== undefined}
+                meId={me}
+                onMediaLoad={onMediaLoad}
+              />
+            ),
+          )}
           {pendingPhotos && (
             <PhotoOutbox pending={pendingPhotos} onMediaLoad={onMediaLoad} />
           )}
@@ -614,6 +696,38 @@ export function BackToInboxLink() {
   );
 }
 
+// The last read receipt a thread view sent: which thread, up to which message
+// (the newest one the reader didn't write).
+type Receipt = { threadId: string; upToId: string | undefined };
+
+// Claims the read receipt for `threadId` up to `upToId` when one is due: once
+// when the thread opens, then once per new message from others — never again
+// for the same messages, and never for the reader's own sends.
+function claimReceipt(
+  last: RefObject<Receipt | undefined>,
+  threadId: string,
+  upToId: string | undefined,
+): boolean {
+  const sent = last.current;
+  if (sent?.threadId === threadId && sent.upToId === upToId) return false;
+  last.current = { threadId, upToId };
+  return true;
+}
+
+// Where the messages that were unread when the thread opened begin (UX-115).
+function UnreadDivider({ ref }: { ref: Ref<HTMLLIElement> }) {
+  const t = useTranslations("messages");
+  return (
+    <li ref={ref} className="flex items-center gap-3 py-1">
+      <span aria-hidden className="bg-primary-text/40 h-px flex-1" />
+      <span className="text-primary-text text-xs font-semibold">
+        {t("unreadDivider")}
+      </span>
+      <span aria-hidden className="bg-primary-text/40 h-px flex-1" />
+    </li>
+  );
+}
+
 // One laid-out thread item: a day separator, a centered system line, or an
 // author group of bubbles (copy cards sit beside — never inside — a bubble)
 // with the group's time once under the last bubble. In a circle thread a run
@@ -628,7 +742,7 @@ function ThreadItemView({
   meId,
   onMediaLoad,
 }: {
-  item: ThreadItem<ThreadMessage>;
+  item: Exclude<ThreadItem<ThreadMessage>, { type: "unread" }>;
   locale: string;
   otherAuthor: string;
   otherAuthorId: Id<"users"> | undefined;

@@ -10,11 +10,13 @@ import {
   conversationErrorCode,
   copyOwnerHint,
   coverStackSummary,
+  firstUnreadId,
   formatCompactTime,
   formatDayLabel,
   formatFullDateTime,
   formatUnreadCount,
   groupThreadMessages,
+  newestOtherId,
   threadQuickLinks,
   threadSubjectTitle,
   tradeEventText,
@@ -225,9 +227,11 @@ describe("groupThreadMessages", () => {
     items.map((item) =>
       item.type === "day"
         ? `day:${item.label}`
-        : item.type === "system"
-          ? `system:${item.message.id}`
-          : `${item.own ? "own" : "other"}:${item.messages.map((m) => m.id).join(",")}`,
+        : item.type === "unread"
+          ? "unread"
+          : item.type === "system"
+            ? `system:${item.message.id}`
+            : `${item.own ? "own" : "other"}:${item.messages.map((m) => m.id).join(",")}`,
     );
 
   it("returns nothing for an empty thread", () => {
@@ -324,6 +328,116 @@ describe("groupThreadMessages", () => {
       tFor("en"),
     );
     expect(shape(items)).toEqual(["day:Today", "own:a", "other:b", "own:c"]);
+  });
+
+  // UX-115: the "New messages" divider.
+  it("puts the unread divider before the first unread message, splitting its group", () => {
+    const items = groupThreadMessages(
+      [
+        msg("a", "her", at(10, 0)),
+        msg("b", "her", at(10, 1)),
+        msg("c", "her", at(10, 2)),
+      ],
+      NOW,
+      "en",
+      tFor("en"),
+      "b",
+    );
+    expect(shape(items)).toEqual([
+      "day:Today",
+      "other:a",
+      "unread",
+      "other:b,c",
+    ]);
+  });
+
+  it("puts the unread divider after the day separator of a day's first message", () => {
+    const items = groupThreadMessages(
+      [msg("a", "her", at(23, 58, 18)), msg("b", "her", at(0, 1, 19))],
+      NOW,
+      "en",
+      tFor("en"),
+      "b",
+    );
+    expect(shape(items)).toEqual([
+      "day:Yesterday",
+      "other:a",
+      "day:Today",
+      "unread",
+      "other:b",
+    ]);
+  });
+
+  it("puts the unread divider before a system message", () => {
+    const items = groupThreadMessages(
+      [msg("a", "me", at(10, 0)), msg("sys", "system", at(10, 1))],
+      NOW,
+      "en",
+      tFor("en"),
+      "sys",
+    );
+    expect(shape(items)).toEqual([
+      "day:Today",
+      "own:a",
+      "unread",
+      "system:sys",
+    ]);
+  });
+
+  it("adds no unread divider for an id that isn't in the list", () => {
+    const items = groupThreadMessages(
+      [msg("a", "her", at(10, 0))],
+      NOW,
+      "en",
+      tFor("en"),
+      "gone",
+    );
+    expect(shape(items)).toEqual(["day:Today", "other:a"]);
+  });
+});
+
+describe("newestOtherId", () => {
+  const m = (id: string, isMine: boolean) => ({ id, isMine });
+
+  it("is the newest message the viewer didn't write", () => {
+    expect(newestOtherId([m("a", false), m("b", true)])).toBe("a");
+    expect(newestOtherId([m("a", true), m("b", false)])).toBe("b");
+  });
+
+  it("is undefined when every message is the viewer's", () => {
+    expect(newestOtherId([m("a", true)])).toBeUndefined();
+    expect(newestOtherId([])).toBeUndefined();
+  });
+});
+
+describe("firstUnreadId", () => {
+  const m = (id: string, isMine: boolean) => ({ id, isMine });
+  // Ascending: hers, mine, hers, hers.
+  const thread = [m("a", false), m("b", true), m("c", false), m("d", false)];
+
+  it("is undefined when nothing was unread", () => {
+    expect(firstUnreadId(thread, 0, "d")).toBeUndefined();
+  });
+
+  it("counts back from the anchor over others' messages only", () => {
+    expect(firstUnreadId(thread, 1, "d")).toBe("d");
+    expect(firstUnreadId(thread, 2, "d")).toBe("c");
+    // The viewer's own reply in between isn't counted.
+    expect(firstUnreadId(thread, 3, "d")).toBe("a");
+  });
+
+  it("ignores messages that arrived after the count was taken", () => {
+    expect(firstUnreadId(thread, 1, "c")).toBe("c");
+  });
+
+  it("starts a run longer than the loaded messages at the oldest one", () => {
+    expect(firstUnreadId(thread, 50, "d")).toBe("a");
+    expect(firstUnreadId([m("x", true), m("y", false)], 5, "y")).toBe("x");
+  });
+
+  it("is undefined without a loaded anchor", () => {
+    expect(firstUnreadId(thread, 2, undefined)).toBeUndefined();
+    expect(firstUnreadId(thread, 2, "gone")).toBeUndefined();
   });
 });
 

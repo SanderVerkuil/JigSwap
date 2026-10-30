@@ -896,6 +896,7 @@
       "several": "Several people are typing…"
     },
     "unreadCount": "{count, plural, one {# unread message} other {# unread messages}}",
+    "unreadDivider": "New messages",
     "untitledPuzzle": "Untitled puzzle",
     "you": "You",
     "youPrefix": "You: {body}",

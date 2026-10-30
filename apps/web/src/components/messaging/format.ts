@@ -291,6 +291,7 @@ function authorKey(message: GroupableMessage): string {
 
 export type ThreadItem<M extends GroupableMessage> =
   | { type: "day"; key: string; label: string }
+  | { type: "unread"; key: "unread" }
   | { type: "system"; key: string; message: M }
   | { type: "group"; key: string; own: boolean; messages: M[] };
 
@@ -301,11 +302,14 @@ const GROUP_GAP = 5 * MINUTE;
 // messages, and author groups: consecutive non-system messages by the same
 // author on the same local day, each ≤ 5 minutes after the previous one. In a
 // DM "the same author" is the same side; in a circle thread, the same member.
+// `unreadFromId` places the "New messages" divider right before that message
+// (after its day separator), so the unread run starts a group of its own.
 export function groupThreadMessages<M extends GroupableMessage>(
   messages: readonly M[],
   now: number,
   locale: string,
   t: Translator,
+  unreadFromId?: string,
 ): ThreadItem<M>[] {
   const items: ThreadItem<M>[] = [];
   let currentDay: number | undefined;
@@ -321,6 +325,10 @@ export function groupThreadMessages<M extends GroupableMessage>(
         key: `day-${message.id}`,
         label: formatDayLabel(message.sentAt, now, locale, t),
       });
+    }
+    if (message.id === unreadFromId) {
+      group = undefined;
+      items.push({ type: "unread", key: "unread" });
     }
     if (message.kind === "system") {
       group = undefined;
@@ -347,6 +355,43 @@ export function groupThreadMessages<M extends GroupableMessage>(
     items.push(group);
   }
   return items;
+}
+
+type ReadableMessage = { readonly id: string; readonly isMine: boolean };
+
+// The newest message the viewer didn't write (another member's, or a system
+// line): the inbox's unread count runs up to it, and a read receipt covers it.
+export function newestOtherId(
+  messages: readonly ReadableMessage[],
+): string | undefined {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (!messages[i].isMine) return messages[i].id;
+  }
+  return undefined;
+}
+
+// Where the "New messages" divider goes: the oldest of the `unreadCount` newest
+// messages the viewer didn't write, counted back from `anchorId` (the newest of
+// them when the count was taken, so later arrivals don't move it). The inbox
+// counts the same way: every message after the reader's receipt that they
+// didn't write, system lines included. A run longer than the loaded messages
+// starts at the oldest loaded one, and moves up as older pages load. Undefined
+// when nothing was unread or the anchor isn't loaded.
+export function firstUnreadId(
+  messages: readonly ReadableMessage[],
+  unreadCount: number,
+  anchorId: string | undefined,
+): string | undefined {
+  if (unreadCount <= 0 || anchorId === undefined) return undefined;
+  const anchor = messages.findIndex((message) => message.id === anchorId);
+  if (anchor === -1) return undefined;
+  let counted = 0;
+  for (let i = anchor; i >= 0; i--) {
+    if (messages[i].isMine) continue;
+    counted += 1;
+    if (counted === unreadCount) return messages[i].id;
+  }
+  return messages[0].id;
 }
 
 // Photos sent within this gap of each other (same author) share a gallery.
