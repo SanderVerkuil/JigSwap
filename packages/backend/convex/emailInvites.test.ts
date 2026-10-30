@@ -502,25 +502,30 @@ describe("sendEmailInvite", () => {
     expect(await rowsOf(t)).toHaveLength(1);
   });
 
-  test("the deployment-wide Clerk budget: over it, no Clerk call and no email, still sent", async () => {
+  test("the deployment-wide budget: every accepted invitation counts, whatever the address; once spent, EmailInvitesBusy", async () => {
     const t = convexTest(schema, modules);
-    await seed(t);
+    const s = await seed(t);
     expect(CLERK_INVITES_HOURLY_CAP_DEFAULT).toBe(60);
     vi.stubEnv("CLERK_INVITES_HOURLY_CAP", "2");
 
     await send(t, "alice", "one@example.org");
-    await send(t, "bob", "two@example.org");
-    // An existing member's address doesn't reach Clerk, so it costs nothing.
+    // An existing member's address costs the same, so the budget says nothing about addresses.
     await send(t, "bob", "carol@example.com");
-    expect(await send(t, "carol", "three@example.org")).toEqual({
-      status: "sent",
-    });
+
+    for (const address of ["three@example.org", "alice@example.com"]) {
+      const data = (await errorOf(send(t, "carol", address))) as {
+        code: string;
+        retryAfterMs: number;
+      };
+      expect(data.code).toBe("EmailInvitesBusy");
+      expect(data.retryAfterMs).toBeGreaterThan(0);
+      expect(data.retryAfterMs).toBeLessThanOrEqual(60 * 60_000);
+    }
 
     expect(gateway.created.map((input) => input.email)).toEqual([
       "one@example.org",
-      "two@example.org",
     ]);
-    expect(sentEmails()).toHaveLength(2);
+    expect(sentEmails()).toHaveLength(1);
     expect(
       logged.some(
         (line) =>
@@ -528,7 +533,66 @@ describe("sendEmailInvite", () => {
           line.includes('"clerkInvites:global:hour"'),
       ),
     ).toBe(true);
-    expect(await list(t, "carol")).toHaveLength(1);
+    // Carol was refused before anything of hers was written or charged.
+    expect(await list(t, "carol")).toEqual([]);
+    const keys = await t.run(async (ctx) =>
+      (await ctx.db.query("rateLimits").collect()).map((row) => row.key),
+    );
+    expect(keys.filter((key) => key.endsWith(s.carol))).toEqual([]);
+  });
+
+  test("a spent budget refuses at once, with no ref row and no member charge", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    const windowStart = Date.now() - 20 * 60_000;
+    await t.run((ctx) =>
+      ctx.db.insert("rateLimits", {
+        key: "clerkInvites:global:hour",
+        windowStart,
+        count: CLERK_INVITES_HOURLY_CAP_DEFAULT,
+      }),
+    );
+
+    const before = Date.now();
+    const data = (await errorOf(send(t, "alice", NEW_ADDRESS))) as {
+      code: string;
+      retryAfterMs: number;
+    };
+    expect(data.code).toBe("EmailInvitesBusy");
+    // Until the hour that started 20 minutes ago is over.
+    expect(data.retryAfterMs).toBeLessThanOrEqual(
+      windowStart + 60 * 60_000 - before,
+    );
+    expect(data.retryAfterMs).toBeGreaterThan(30 * 60_000);
+    expect(timing.waitUntil).not.toHaveBeenCalled();
+    expect(await rowsOf(t)).toEqual([]);
+    expect(gateway.created).toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+    const limits = await t.run((ctx) => ctx.db.query("rateLimits").collect());
+    expect(limits.map((row) => [row.key, row.count])).toEqual([
+      ["clerkInvites:global:hour", CLERK_INVITES_HOURLY_CAP_DEFAULT],
+    ]);
+    expect(limits.some((row) => row.key.endsWith(s.alice))).toBe(false);
+  });
+
+  test("a refusal by the inviter's own limit does not use up the deployment budget", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await t.run((ctx) =>
+      ctx.db.insert("rateLimits", {
+        key: `emailInvite:${s.alice}`,
+        windowStart: Date.now(),
+        count: RATE_LIMITS.emailInvite.max,
+      }),
+    );
+    expect(await codeOf(send(t, "alice", NEW_ADDRESS))).toBe("RateLimited");
+    const budget = await t.run((ctx) =>
+      ctx.db
+        .query("rateLimits")
+        .withIndex("by_key", (q) => q.eq("key", "clerkInvites:global:hour"))
+        .unique(),
+    );
+    expect(budget).toBeNull();
   });
 
   test("a Clerk failure still answers sent, and sends nothing", async () => {
@@ -939,15 +1003,6 @@ describe("the response floor", () => {
       "email unconfigured",
       async () => {
         vi.stubEnv("AHASEND_API_KEY", "");
-      },
-      NEW_ADDRESS,
-    ],
-    [
-      "clerk budget spent",
-      async (t) => {
-        vi.stubEnv("CLERK_INVITES_HOURLY_CAP", "1");
-        await send(t, "bob", "spends-it@example.org");
-        timing.waitUntil.mockClear();
       },
       NEW_ADDRESS,
     ],

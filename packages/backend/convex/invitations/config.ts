@@ -68,6 +68,19 @@ export const emailInvitesUnavailable = (): ConvexError<{
     message: "Email invitations are not available",
   });
 
+/**
+ * sendEmailInvite while the deployment-wide invitation budget (lib/rateLimits clerkInviteBudget)
+ * is spent: about the deployment, never the address, with when to try again.
+ */
+export const emailInvitesBusy = (
+  retryAfterMs: number,
+): ConvexError<{ code: string; message: string; retryAfterMs: number }> =>
+  new ConvexError({
+    code: "EmailInvitesBusy",
+    message: "Email invitations are paused for a while",
+    retryAfterMs,
+  });
+
 /** The one error for an unknown, foreign or already-resolved invitation ref. */
 export const emailInviteUnavailable = (): ConvexError<{
   code: string;

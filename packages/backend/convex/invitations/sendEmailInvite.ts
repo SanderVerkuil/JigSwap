@@ -52,7 +52,8 @@ const retireQuietly = async (
   if (errors.delete !== undefined) event.delete_error = errors.delete;
 };
 
-// Steps 5–8 of the spec, after the gate, the rate limit and the ref row have committed. Returns
+// Steps 5–8 of the spec, after the gate, the deployment budget (which keeps us inside Clerk's
+// application-wide invitation limit), the rate limits and the ref row have committed. Returns
 // the internal reason code for the wide event. The caller answers the same, after the same floor,
 // whatever this returns or throws.
 const deliver = async (
@@ -82,16 +83,6 @@ const deliver = async (
   // Without a mail provider there is nothing to send, so don't create a Clerk invitation either.
   if (!process.env["AHASEND_API_KEY"] || !process.env["AHASEND_ACCOUNT_ID"]) {
     return "email_unconfigured";
-  }
-
-  // Clerk's invitation limit is application-wide: stay inside our own share of it.
-  if (
-    !(await ctx.runMutation(
-      internal.invitations.emailInviteStore.chargeClerkInvite,
-      {},
-    ))
-  ) {
-    return "clerk_budget";
   }
 
   const gateway = makeInvitationGatewayFromEnv();
@@ -163,11 +154,12 @@ const deliver = async (
  * join the inviter's household. The answer is `{ status: "sent" }` for every well-formed address
  * within the limits, whether or not it belongs to a member, whether or not an email went out: an
  * existing member gets the in-app path instead, an address capped in the last 30 days gets
- * nothing. Refusals are about the inviter or the input only: Unauthenticated, the household
- * errors (NotInHousehold, NotHouseholdAdmin), InvalidEmail, RateLimited (with retryAfterMs) and
- * EmailInvitesUnavailable when the feature is switched off. Every other outcome, a failure
- * included, answers `sent` no sooner than the response floor (config.responseFloorFrom). The
- * address is never stored or logged.
+ * nothing. Refusals are about the inviter, the input or the deployment only, never the address:
+ * Unauthenticated, the household errors (NotInHousehold, NotHouseholdAdmin), InvalidEmail,
+ * RateLimited (with retryAfterMs), EmailInvitesBusy (with retryAfterMs) while the deployment-wide
+ * invitation budget is spent, and EmailInvitesUnavailable when the feature is switched off.
+ * Every other outcome, a failure included, answers `sent` no sooner than the response floor
+ * (config.responseFloorFrom). The address is never stored or logged.
  */
 export const sendEmailInvite = action({
   args: { kind: emailInviteKindValidator, email: v.string() },

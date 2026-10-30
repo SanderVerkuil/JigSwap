@@ -23,7 +23,7 @@ Sources: `@clerk/backend@3.25.0` (installed: `api/endpoints/InvitationApi.d.ts`,
 - On sign-up, the invitation's `publicMetadata` becomes the user's public metadata. Only the Backend API can write public metadata, so a client can't forge it.
 - Revoking blocks the link. It does not stop the person from signing up on their own.
 - There are **no webhooks for application invitations** (the `WebhookEvent` union only has `organizationInvitation.*`). Acceptance is seen through `user.created`, which carries `public_metadata`, in our svix-verified handler (`convex/http.ts`). We drive revoke and expiry ourselves.
-- Clerk rate-limits invitation creation (100/hour, application-wide). Our per-inviter limit is far below that, and a deployment-wide budget (`CLERK_INVITES_HOURLY_CAP`, default 60/hour) keeps all inviters together below it.
+- Clerk rate-limits invitation creation (100/hour, application-wide). Our per-inviter limit is far below that, and a deployment-wide budget (`CLERK_INVITES_HOURLY_CAP`, default 60/hour, charged per accepted invitation) keeps all inviters together below it.
 - `deleteInvitation(id)` exists (installed d.ts): it "permanently deletes the given invitation and the copies of the invitation email Clerk stored for its recipient", for any status. We revoke and then delete every invitation we retire.
 
 **TO VERIFY (open; the user tests this on the Clerk dev instance; agents never call the Clerk API):**
@@ -58,6 +58,7 @@ Setting the key on a deployment is a coordinator step, done after the TO VERIFY 
    - It uses the in-house limiter (`lib/rateLimits`) in its own mutation, before any other work, so it commits even when a later step fails.
    - A new account (younger than 7 days, or without a verified email) is also charged `emailInviteNewAccount`, 3 per day (SEC-33).
    - Refused: `RateLimited` with `retryAfterMs`.
+   - Before the per-inviter limit, in the same mutation: the deployment-wide Clerk budget, charged for every accepted invitation whatever its address (so it reveals nothing about one). Spent: `EmailInvitesBusy` with `retryAfterMs`, and nothing is charged or written (SEC-33).
 4. **One local reference row** is always written, whatever happens next, so the inviter's pending list looks the same in every case: `emailInvites { aggregateId, kind, inviterId, householdId?, clerkInvitationId?, fallback?, createdAt, expiresAt = +14 d }`.
    - It stores **no email address**. The pending list shows "Invitation sent {date}" without one.
 5. **Per-address cap:** 1 invitation email per 30 days across all inviters.
@@ -67,7 +68,6 @@ Setting the key on a deployment is a coordinator step, done after the TO VERIFY 
    - If one exists, take the kind's **in-app fallback** (E1/E2 below) and answer `sent`. No email goes to an existing member, and no Clerk call is made.
 7. **Otherwise call** `gateway.create({ email, redirectUrl: <EMAIL_BASE_URL>/sign-up, expiresInDays: 14, publicMetadata: { jsInvite: { kind, ref: aggregateId } } })`.
    - The metadata carries only our opaque row id, never names.
-   - First charge the deployment-wide Clerk budget. Spent: no Clerk call, no email, answer `sent`, and log `rateLimit.refused`.
    - "Already exists" or "already invited" from Clerk (a race with our mirror): no email, answer `sent`.
    - A missing `url`: revoke and delete best-effort, no email, answer `sent`, and log `emailInvite.no_url`.
 8. **Send one email** through `packages/email` with the new `invite` template:
