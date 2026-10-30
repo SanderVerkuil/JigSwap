@@ -4154,7 +4154,7 @@
     "circles": "Circles — JigSwap",
     "admin": "Admin — JigSwap",
     "adminCategories": "Category management — JigSwap",
-    "adminUsers": "Users — JigSwap",
+    "adminUsers": "Members — JigSwap",
     "adminModeration": "Moderation — JigSwap",
     "adminPuzzles": "Puzzles — JigSwap",
     "adminContact": "Contact messages — JigSwap",
@@ -4335,8 +4335,8 @@
       },
       "adminModeration": {
         "title": "Moderation",
-        "subtitle": "Review pending submissions before they appear in the public catalog.",
-        "description": "Approve or reject pending puzzle submissions"
+        "subtitle": "Review submissions, photos and member reports in one place.",
+        "description": "Review submissions, photos and reports"
       },
       "adminPuzzles": {
         "title": "Puzzles",
@@ -4349,7 +4349,7 @@
         "description": "Manage localized puzzle categories"
       },
       "adminUsers": {
-        "title": "Users",
+        "title": "Members",
         "subtitle": "Every member of JigSwap, newest first.",
         "description": "Browse and search all members"
       },
@@ -5287,7 +5287,7 @@
           "copies": "Copies",
           "forTrade": "For trade",
           "forSale": "For sale",
-          "forLend": "For lend",
+          "forLend": "For lending",
           "collections": "Collections",
           "solves": "Solves"
         },

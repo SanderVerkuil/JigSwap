@@ -4154,7 +4154,7 @@
     "circles": "Kringen — JigSwap",
     "admin": "Beheer — JigSwap",
     "adminCategories": "Categoriebeheer — JigSwap",
-    "adminUsers": "Gebruikers — JigSwap",
+    "adminUsers": "Leden — JigSwap",
     "adminModeration": "Moderatie — JigSwap",
     "adminPuzzles": "Puzzels — JigSwap",
     "adminContact": "Contactberichten — JigSwap",
@@ -4335,8 +4335,8 @@
       },
       "adminModeration": {
         "title": "Moderatie",
-        "subtitle": "Beoordeel openstaande inzendingen voordat ze in de openbare catalogus verschijnen.",
-        "description": "Keur ingediende puzzels goed of af"
+        "subtitle": "Beoordeel inzendingen, foto's en meldingen van leden op één plek.",
+        "description": "Beoordeel inzendingen, foto's en meldingen"
       },
       "adminPuzzles": {
         "title": "Puzzels",
@@ -4349,7 +4349,7 @@
         "description": "Beheer vertaalde puzzelcategorieën"
       },
       "adminUsers": {
-        "title": "Gebruikers",
+        "title": "Leden",
         "subtitle": "Alle leden van JigSwap, nieuwste eerst.",
         "description": "Bekijk en doorzoek alle leden"
       },
@@ -4763,7 +4763,7 @@
       "loading": "Inzendingen laden…",
       "empty": "Geen openstaande inzendingen.",
       "pieces": "{count} stukjes",
-      "reject": "Afkeuren",
+      "reject": "Afwijzen",
       "error": "Inzending bijwerken mislukt",
       "toast": {
         "approved": "“{title}” goedgekeurd — nog {count} in de wachtrij.",
@@ -4783,8 +4783,8 @@
       },
       "kpis": {
         "approved": "Goedgekeurd",
-        "rejected": "Afgekeurd",
-        "flagsCleared": "Meldingen afgehandeld",
+        "rejected": "Afgewezen",
+        "flagsCleared": "Markeringen afgehandeld",
         "avgReview": "Gem. beoordelingstijd",
         "thisWeek": "deze week"
       },
@@ -4794,7 +4794,7 @@
         "activity": "Activiteitenlog",
         "unchecked": "Niet-gecontroleerde foto's",
         "hashMatches": "Hash-matches",
-        "reports": "Meldingen"
+        "reports": "Gemeld"
       },
       "detail": {
         "submitted": "Ingezonden",
@@ -5263,7 +5263,7 @@
       "adminBadge": "Beheerder",
       "loadMore": "Meer laden",
       "makeAdmin": "Beheerder maken",
-      "removeAdmin": "Beheerder verwijderen",
+      "removeAdmin": "Beheerdersrol intrekken",
       "grantConfirmTitle": "{name} beheerder maken?",
       "grantConfirmBody": "Dit geeft volledige toegang tot de beheerconsole, inclusief moderatie en ledenbeheer. De wijziging wordt vastgelegd in het auditlogboek.",
       "revokeConfirmTitle": "Beheerdersrechten van {name} intrekken?",
