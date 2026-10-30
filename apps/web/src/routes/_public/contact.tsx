@@ -148,11 +148,18 @@ function ContactForm() {
       });
       setSent(true);
     } catch (error) {
+      const code = convexErrorCode(error);
+      // The server's address rule is stricter than the shape check above; name the field it
+      // refused rather than suggesting a retry.
+      if (code === "invalid_email") {
+        setErrors({ email: t("errorEmail") });
+        return;
+      }
       // The deployment-wide budget is spent: point at the inbox the form feeds.
       const email = t("emailValue");
       setErrors({
         submit:
-          convexErrorCode(error) === "RateLimited"
+          code === "RateLimited"
             ? t.rich("errorBusy", {
                 email,
                 mail: (chunks) => (
