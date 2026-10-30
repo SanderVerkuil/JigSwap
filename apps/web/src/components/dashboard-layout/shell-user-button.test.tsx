@@ -62,13 +62,42 @@ vi.mock("@/compat/clerk", () => {
       </button>
     </li>
   );
-  UserButton.UserProfilePage = () => null;
+  // Only the Preferences page renders (as a labelled region); the other custom pages have their own tests.
+  UserButton.UserProfilePage = ({
+    url,
+    label,
+    children,
+  }: {
+    url: string;
+    label: string;
+    children: ReactNode;
+  }) =>
+    url === "shell-preferences" ? (
+      <section aria-label={label}>{children}</section>
+    ) : null;
   return {
     UserButton,
     useUser: () => ({ user: { id: "user_me" } }),
     useClerk: () => ({ signOut: mocks.signOut }),
   };
 });
+
+vi.mock("./preferences", () => ({
+  useShellPreferences: () => ({
+    fullWidth: true,
+    hideEmail: true,
+    setPreference: vi.fn(),
+  }),
+}));
+
+vi.mock("@/hooks/use-user-settings", () => ({
+  useUserSettings: () => ({
+    trackCompletionDuration: false,
+    setTrackDuration: vi.fn(),
+    shareInProgress: false,
+    setShareInProgress: vi.fn(),
+  }),
+}));
 
 vi.mock("@/components/presence/use-presence", () => ({
   usePresenceSettings: () => mocks.settings,
@@ -78,7 +107,10 @@ vi.mock("@/components/whats-new/use-whats-new-state", () => ({
   useWhatsNewUnreadCount: () => 0,
 }));
 
-vi.mock("@tanstack/react-router", () => ({ useNavigate: () => vi.fn() }));
+vi.mock("@tanstack/react-router", () => ({
+  useNavigate: () => vi.fn(),
+  useRouter: () => ({ invalidate: vi.fn() }),
+}));
 
 vi.mock("@convex-dev/react-query", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@convex-dev/react-query")>()),
@@ -277,5 +309,30 @@ describe("ShellUserButton sign out (SEC-54)", () => {
   it("speaks Dutch", () => {
     renderButton("nl");
     expect(screen.getByRole("button", { name: "Uitloggen" })).toBeTruthy();
+  });
+});
+
+// UX-56: phones have no top-bar theme or language menus, so the account modal's Preferences page
+// opens with both, above the content-width choice.
+describe("ShellUserButton Preferences page", () => {
+  it("opens with the theme and language choices", () => {
+    mocks.settings = undefined;
+    renderButton();
+    const page = screen.getByRole("region", { name: "Preferences" });
+    const groups = Array.from(
+      page.querySelectorAll<HTMLElement>("[role=radiogroup]"),
+    ).map((group) => group.getAttribute("aria-label"));
+    expect(groups).toEqual(["Theme", "Language", "Content Width"]);
+  });
+
+  it("speaks Dutch", () => {
+    mocks.settings = undefined;
+    renderButton("nl");
+    const page = screen.getByRole("region", { name: "Voorkeuren" });
+    expect(
+      Array.from(page.querySelectorAll("[role=radiogroup]")).map((group) =>
+        group.getAttribute("aria-label"),
+      ),
+    ).toEqual(["Thema", "Taal", "Contentbreedte"]);
   });
 });

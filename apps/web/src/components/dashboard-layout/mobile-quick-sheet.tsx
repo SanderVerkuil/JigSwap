@@ -3,7 +3,8 @@
 // Quick-action bottom sheet opened by the tab bar's raised center "+": the
 // most-used actions as 56px rows — violet round icon chip, title with a
 // one-line sub, chevron — sliding up over the dimmed backdrop, with a drag
-// handle and safe-area bottom padding.
+// handle and safe-area bottom padding. Below the actions, the theme and
+// language choices: phones have no top-bar menus for them.
 import { useRouter } from "@/compat/navigation";
 import {
   requestInstallTip,
@@ -24,6 +25,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useTranslations } from "use-intl";
+import { LanguageRadios, ThemeRadios } from "./display-preferences";
 
 // Titles reuse the command palette's quick-action strings where they exist;
 // the subs (and Find a swap) live under shell.mobile.quick. Every row opens what
@@ -93,6 +95,8 @@ export function MobileQuickSheet({
   const tWhatsNew = useTranslations("whatsNew");
   const tMessages = useTranslations("messages");
   const tInstall = useTranslations("installApp");
+  const tTheme = useTranslations("shell.theme");
+  const tLanguage = useTranslations("shell.language");
   const router = useRouter();
   const countFor = (href: string) =>
     href === "/whats-new"
@@ -126,8 +130,10 @@ export function MobileQuickSheet({
         side="bottom"
         aria-describedby={undefined}
         // The drag handle replaces the default X close affordance (the only
-        // direct child <button> of the content is that close button).
-        className="gap-0 rounded-t-[20px] border-t-0 bg-card p-0 [&>button]:hidden"
+        // direct child <button> of the content is that close button). On short
+        // phones the sheet scrolls rather than running off the top, keeping a
+        // strip of the dimmed page in view.
+        className="max-h-[calc(100dvh-3rem)] gap-0 overflow-y-auto overscroll-contain rounded-t-[20px] border-t-0 bg-card p-0 [&>button]:hidden"
       >
         <SheetTitle className="sr-only">{t("search.quickActions")}</SheetTitle>
         <div className="px-3.5 pt-2.5 pb-[calc(18px+env(safe-area-inset-bottom))]">
@@ -180,6 +186,12 @@ export function MobileQuickSheet({
                 <ChevronRight className="text-muted-foreground size-4 shrink-0" />
               </button>
             )}
+          </div>
+          <div className="mx-2.5 mt-2 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 border-t pt-3">
+            <span className="text-sm font-medium">{tTheme("label")}</span>
+            <ThemeRadios />
+            <span className="text-sm font-medium">{tLanguage("label")}</span>
+            <LanguageRadios />
           </div>
         </div>
       </SheetContent>
