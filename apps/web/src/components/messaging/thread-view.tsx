@@ -60,6 +60,7 @@ import {
   type InboxThread,
   type ThreadItem,
 } from "./format";
+import { NO_SPLIT_ONLY_CLASS } from "./frame";
 import { MessageActions } from "./message-actions";
 import { MessageComposer } from "./message-composer";
 import { locationAttachmentOf, MessageLocation } from "./message-location";
@@ -583,15 +584,19 @@ export function ThreadView({
   );
 }
 
-// Back to the inbox — mobile only (desktop keeps the list beside). The
-// immersive thread routes hide the shell bars, so every state there needs it.
+// Back to the inbox whenever the list isn't beside the thread: on phones (the
+// immersive thread routes hide the shell bars, so every state there needs it)
+// and wherever the messages frame is too narrow to split (frame.ts).
 export function BackToInboxLink() {
   const t = useTranslations("messages");
   return (
     <Link
       href="/messages"
       aria-label={t("backToInbox")}
-      className="hover:bg-accent focus-visible:ring-ring -ml-1 inline-flex size-11 shrink-0 items-center justify-center rounded-lg outline-none transition-colors focus-visible:ring-2 md:hidden"
+      className={cn(
+        "hover:bg-accent focus-visible:ring-ring -ml-1 inline-flex size-11 shrink-0 items-center justify-center rounded-lg outline-none transition-colors focus-visible:ring-2",
+        NO_SPLIT_ONLY_CLASS,
+      )}
     >
       <ChevronLeft className="size-5" />
     </Link>

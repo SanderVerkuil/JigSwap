@@ -49,6 +49,7 @@ import {
   type InboxThread,
   type Translator,
 } from "./format";
+import { NO_SPLIT_ONLY_CLASS } from "./frame";
 import {
   INBOX_MAX_SIZE,
   INBOX_PAGE_SIZE,
@@ -114,8 +115,8 @@ export function ThreadSubjectAvatar({
 
 // The list pane: loading / error / empty / rows. The page head titles the
 // page and carries the New menu (published by the /messages layout).
-// `guideBeside`: the page shows InboxGuide next to the list from md, so the
-// empty state leaves its how-to hint to that pane there.
+// `guideBeside`: the page shows InboxGuide next to the list once the frame
+// splits, so the empty state leaves its how-to hint to that pane there.
 export function ThreadList({
   activeThreadId,
   guideBeside = false,
@@ -231,7 +232,7 @@ function ThreadListBody({
         <EmptyState
           title={t("empty")}
           sub={t("emptyHint")}
-          subClassName={guideBeside ? "md:hidden" : undefined}
+          subClassName={guideBeside ? NO_SPLIT_ONLY_CLASS : undefined}
           action={
             <Button asChild variant="brand">
               <Link href="/people">

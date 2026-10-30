@@ -3,6 +3,7 @@ import {
   LIST_PANE_CLASS,
   MESSAGES_FRAME_CLASS,
   MESSAGES_IMMERSIVE_CLASS,
+  NO_SPLIT_ONLY_CLASS,
 } from "@/components/messaging/frame";
 import { NewCopyConversation } from "@/components/messaging/new-copy-conversation";
 import { ThreadList } from "@/components/messaging/thread-list";
@@ -37,7 +38,12 @@ function NewMessagePage() {
           <NewCopyConversation key={copy} copyId={copy} />
         ) : (
           <>
-            <div className="flex h-14 shrink-0 items-center px-2 md:hidden">
+            <div
+              className={cn(
+                "flex h-14 shrink-0 items-center px-2",
+                NO_SPLIT_ONLY_CLASS,
+              )}
+            >
               <BackToInboxLink />
             </div>
             <div className="flex flex-1 items-center justify-center px-4 text-center">

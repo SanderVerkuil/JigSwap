@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { gateway, type Id } from "@/gateway";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMemberDisplayName } from "@/lib/member-display-name";
+import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
@@ -20,6 +21,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "use-intl";
 import { EmojiButton } from "./emoji-button";
 import { conversationErrorCode, threadSubjectTitle } from "./format";
+import { NO_SPLIT_ONLY_CLASS } from "./frame";
 import { handleMarkupShortcut, MARKUP_KEYSHORTCUTS } from "./markup-shortcuts";
 import { StagedCopyChip } from "./staged-copy-chip";
 import { ThreadSubjectAvatar } from "./thread-list";
@@ -115,7 +117,12 @@ export function NewCopyConversation({ copyId }: { copyId: string }) {
   ) {
     return (
       <div className="flex min-h-0 flex-1 flex-col">
-        <div className="flex h-14 shrink-0 items-center px-2 md:hidden">
+        <div
+          className={cn(
+            "flex h-14 shrink-0 items-center px-2",
+            NO_SPLIT_ONLY_CLASS,
+          )}
+        >
           {backLink}
         </div>
         <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 text-center">
