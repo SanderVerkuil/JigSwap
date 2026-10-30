@@ -119,8 +119,9 @@ export const gateway = {
     getPuzzleDefinitionView:
       api.library.getPuzzleDefinitionView.getPuzzleDefinitionView,
     // Per-photo discussion comments for the gallery lightbox, keyed by the `ownedPuzzleImages` _id.
-    // Text-only (no rating); anyone authenticated may post and authors are shown with their real
-    // identity. Photo metadata itself flows through getCopyInstanceView's gallery.
+    // Text-only (no rating); anyone authenticated may post. Authors are privacy-projected
+    // (ProjectedMember, SEC-11): a private author the viewer isn't connected with is anonymous.
+    // Photo metadata itself flows through getCopyInstanceView's gallery.
     postPhotoComment: api.library.postPhotoComment.postPhotoComment,
     listPhotoComments: api.library.listPhotoComments.listPhotoComments,
     // Image upload is storage infra, not a domain op; keep it on the legacy function. The URL is
@@ -476,7 +477,8 @@ export const gateway = {
     // The feed is scoped server-side to the acting member + the people they follow.
     activityFeed: api.social.getActivityFeed.getActivityFeed,
     // Community comments on a puzzle definition, keyed by a copy id for the UI's convenience
-    // (resolved to the shared puzzle internally). Authors are shown with their real identity.
+    // (resolved to the shared puzzle internally). Authors are privacy-projected (ProjectedMember,
+    // SEC-11), as are the review authors below.
     postPuzzleComment: api.social.postPuzzleComment.postPuzzleComment,
     listPuzzleComments: api.social.listPuzzleComments.listPuzzleComments,
     // Community reviews keyed by the puzzle DEFINITION (the catalog detail page has no copy id).
