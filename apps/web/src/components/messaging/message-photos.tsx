@@ -17,8 +17,9 @@
 // - rejected (the sender's own photo the check stopped): the refusal card
 //   with "Ask for a review" (StoppedPhoto), below the gallery;
 // - removed: a "Removed by moderation" placeholder of the same geometry; when
-//   its sender deleted their account (`unavailable`), the blurhash behind
-//   "Photo no longer available".
+//   its sender deleted their account, or it was still being checked a week
+//   after it was sent (`unavailable`), the blurhash (if any) behind "Photo no
+//   longer available".
 import { blurhashToDataUrl } from "@/components/photos/pending-photo-placeholder";
 import { ReportDialog } from "@/components/safety/report-dialog";
 import { Button } from "@/components/ui/button";

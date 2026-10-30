@@ -51,4 +51,14 @@ crons.daily(
   {},
 );
 
+// Photos still being checked a week after they were sent are deleted (their messages read "Photo
+// no longer available"); held by an open report or an unfinished hash check, they are kept
+// (conversation/attachmentModerationStore).
+crons.daily(
+  "sent photo retention",
+  { hourUTC: 4, minuteUTC: 15 },
+  internal.conversation.attachmentModerationStore.sweepUncheckedSentPhotos,
+  {},
+);
+
 export default crons;

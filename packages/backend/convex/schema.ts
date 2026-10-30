@@ -1131,9 +1131,14 @@ export default defineSchema({
         // read and mutation treats it as not found).
         hiddenFromSender: v.optional(v.boolean()),
         // Why a "removed" photo is gone when no moderator removed it: its sender deleted their
-        // account (users.purgeMemberMessagingData). Its blobs are deleted, the row keeps its
-        // blurhash and size, and the thread shows "Photo no longer available".
-        removedReason: v.optional(v.literal("account_deleted")),
+        // account (users.purgeMemberMessagingData), or it was still being checked a week after it
+        // was sent ("expired", conversation/attachmentModerationStore.sweepUncheckedSentPhotos).
+        // Its blobs are deleted, the row keeps its size (after an account deletion also the
+        // blurhash of a photo recipients could see), and the thread shows "Photo no longer
+        // available".
+        removedReason: v.optional(
+          v.union(v.literal("account_deleted"), v.literal("expired")),
+        ),
         createdAt: v.number(),
         updatedAt: v.number(),
       }),
