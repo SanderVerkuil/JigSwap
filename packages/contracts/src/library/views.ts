@@ -488,6 +488,12 @@ export interface CopyInstanceView {
   /** Whether the acting viewer currently owns this copy. */
   viewerIsOwner: boolean;
   /**
+   * Whether the acting viewer physically has the copy right now: the borrower while it is lent out,
+   * otherwise the owner. Lets a borrower log solves on the copy page (the solve mutations already
+   * allow the holder). Absent from backends that predate it; treat absent as false.
+   */
+  viewerHoldsCopy?: boolean;
+  /**
    * Whether the viewer may manage the copy as if they owned it: the owner, or a household member
    * the owner left at "manage". Gates the edit controls; delete/household permission stay owner-only.
    */

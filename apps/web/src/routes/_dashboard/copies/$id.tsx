@@ -272,9 +272,13 @@ function CopyInstanceDetail({
     startDate: number;
   } | null>(null);
 
-  // Who may log their own solves here: the owner and any household member (view or manage) —
-  // completions stay personal. Management (sharing toggles, edit, photos) needs viewerCanManage.
-  const canSolve = copy.viewerIsOwner || copy.household !== null;
+  // The copy is in the viewer's library: they own it, or a household member does.
+  const inLibrary = copy.viewerIsOwner || copy.household !== null;
+  // Who may log their own solves here: the owner, any household member (view or manage) and the
+  // borrower who has it right now (the solve mutations allow the holder) — completions stay
+  // personal. Management (sharing toggles, edit, photos) needs viewerCanManage. A backend without
+  // `viewerHoldsCopy` leaves the borrower out, as before.
+  const canSolve = inLibrary || copy.viewerHoldsCopy === true;
 
   // The caller's solve history on this copy (caller-scoped server-side), powering the
   // Start puzzle ↔ Finish solve swap below. Only for viewers who may solve here, so other
@@ -361,14 +365,14 @@ function CopyInstanceDetail({
       // arriving from one via the resolved nav context).
       activeNavKey: navCollection
         ? "collections"
-        : canSolve
+        : inLibrary
           ? "myPuzzles"
           : "browse",
     }),
     [
       snapshot.title,
       owned,
-      canSolve,
+      inLibrary,
       copy.viewerCanManage,
       t,
       tShell,
@@ -502,7 +506,7 @@ function CopyInstanceDetail({
 
           {/* Actions */}
           <div className="mt-5 flex flex-wrap gap-2.5">
-            {canSolve ? (
+            {canSolve && (
               <>
                 {!myInProgress && (
                   <Button
@@ -537,7 +541,9 @@ function CopyInstanceDetail({
                   </Button>
                 )}
               </>
-            ) : (
+            )}
+            {/* Someone else's copy (a borrower included): request it and/or message the owner. */}
+            {!inLibrary && (
               <>
                 {/* An anonymous (privacy-projected) owner goes unnamed: propose derives the recipient. */}
                 {isAvailable && (
@@ -840,8 +846,8 @@ function CopyInstanceDetail({
         </div>
       </div>
 
-      {/* Solve dialogs (owner + household members; keyed by aggregateId) + the inline copy editor
-          (managers only). */}
+      {/* Solve dialogs (owner, household members and the borrower; keyed by aggregateId) + the
+          inline copy editor (managers only). */}
       {canSolve && (
         <>
           <LogSolveDialog

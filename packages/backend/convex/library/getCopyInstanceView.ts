@@ -465,6 +465,9 @@ export const getCopyInstanceView = query({
       // key on this aggregateId, not the _id. Null for rows that predate the backfill.
       aggregateId: copy.aggregateId ?? null,
       viewerIsOwner,
+      // Possession, not ownership: the borrower while it is lent out, otherwise the owner (no
+      // heldBy means it never left). Only ever about the viewer themselves.
+      viewerHoldsCopy: (copy.heldBy ?? copy.ownerId) === viewerId,
       viewerCanManage,
       viewerMayRequest: await viewerMayRequestCopy(ctx, viewerId, copy),
       viewerMayOpenDefinition:
