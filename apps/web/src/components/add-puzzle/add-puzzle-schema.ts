@@ -30,17 +30,6 @@ export const DIFFICULTY_OPTIONS = [
 
 export const PIECE_PRESETS = [300, 500, 750, 1000, 1500, 2000] as const;
 
-export const COVER_SWATCHES = [
-  "var(--jigsaw-primary)",
-  "var(--jigsaw-secondary)",
-  "var(--jigsaw-puzzle)",
-  "var(--jigsaw-warning)",
-  "#f97316", // orange-500
-  "var(--jig-violet-700, #3a3f76)",
-  "#0d680c", // green-700
-  "#db2777", // pink-500
-] as const;
-
 // Flow A: add-to-library form (catalog + instance fields).
 export const addToLibrarySchema = z.object({
   title: z.string().min(1, "Title is required").max(100),
@@ -53,7 +42,6 @@ export const addToLibrarySchema = z.object({
     forLend: z.boolean(),
     forSale: z.boolean(),
   }),
-  coverColor: z.string(),
   tags: z.array(z.string()),
   notes: z.string().max(1000).optional(),
   ean: z.string().optional(),

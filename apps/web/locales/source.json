@@ -544,9 +544,8 @@
     "matchDifferent": "No, it's different",
     "importUrlBlurb": "Paste a link from any puzzle shop and we'll fill in the details for you.",
     "importImported": "Details imported",
-    "coverColour": "Cover colour",
-    "coverColourHint": "Pick a colour or upload a photo — this is how your puzzle appears on the shelf.",
-    "contributeCoverColourHint": "Pick a colour or upload a photo — this is how the puzzle appears in the catalogue.",
+    "boxPhoto": "Box photo",
+    "boxPhotoHint": "A photo of the box front. Once it has been checked, it becomes this puzzle's picture in the catalogue.",
     "addToLibrary": "Add to Library",
     "saveAndAddAnother": "Save & Add Another",
     "addReadyHint": "Fill in title and piece count to continue.",
@@ -635,7 +634,8 @@
       "chosenPuzzle": "Adding a copy of",
       "copyDetails": "Your copy",
       "addYourCopy": "Add your copy",
-      "addYourCopyHint": "Record its condition and how you'd like to share it."
+      "addYourCopyHint": "Record its condition and how you'd like to share it.",
+      "copyPhotosLater": "You can add photos of your own copy on its page once it's in your library."
     },
     "removeFromCollection": "Remove from this collection",
     "private": "Private",

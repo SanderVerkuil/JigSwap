@@ -34,7 +34,6 @@ vi.mock("@/components/add-puzzle", async () => ({
   ...(await vi.importActual("@/components/add-puzzle/contribute-error")),
   ...(await vi.importActual("@/components/add-puzzle/duplicate-check")),
   AddPuzzleLayout: ({ form }: { form: ReactNode }) => <>{form}</>,
-  COVER_SWATCHES: ["#123456"],
   DIFFICULTY_OPTIONS: [],
   CoverColourField: ({
     onUploadPhoto,

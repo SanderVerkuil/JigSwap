@@ -7,7 +7,6 @@ import {
   CONDITION_OPTIONS,
   contributeError,
   CopyStepError,
-  COVER_SWATCHES,
   CoverColourField,
   coverStep,
   CoverStepError,
@@ -108,8 +107,8 @@ interface FormState {
   difficulty: "easy" | "medium" | "hard" | "expert";
   condition: "new_sealed" | "like_new" | "good" | "fair" | "poor";
   availability: { forTrade: boolean; forLend: boolean; forSale: boolean };
-  coverColor: string;
-  coverMode: "color" | "photo";
+  // "photo" when a box photo is selected (the upload, else selectedImageUrl); "none" sends no image.
+  coverMode: "none" | "photo";
   coverFile: File | undefined;
   importedImages: string[];
   // Alt text per imported image URL (only HTML-scraped images carry it); shown in the cover picker.
@@ -136,8 +135,7 @@ const DEFAULT_FORM: FormState = {
   // Every offer starts off, like the catalogue picker and the domain default: a copy goes on the
   // market (Browse, swap/loan requests) only when the member switches an offer on.
   availability: { forTrade: false, forLend: false, forSale: false },
-  coverColor: COVER_SWATCHES[0],
-  coverMode: "color",
+  coverMode: "none",
   coverFile: undefined,
   importedImages: [],
   importedImageAlts: undefined,
@@ -274,7 +272,7 @@ function AddPuzzlePage() {
     [coverFileUrl],
   );
 
-  // The photo URL used for the live preview: uploaded file takes priority, else selected import
+  // The selected box photo: uploaded file takes priority, else the selected import.
   const previewPhotoUrl =
     form.coverMode === "photo"
       ? (coverFileUrl ?? form.selectedImageUrl)
@@ -300,7 +298,7 @@ function AddPuzzlePage() {
       importedImageAlts: draft.imageAlts ? { ...draft.imageAlts } : undefined,
       selectedImageUrl: imgs[0],
       coverFile: undefined,
-      coverMode: imgs.length ? "photo" : "color",
+      coverMode: imgs.length ? "photo" : "none",
     }));
   };
 
@@ -539,64 +537,29 @@ function AddPuzzlePage() {
     </div>
   );
 
-  // The cover-photo picker (kept for the copy too, so a member can attach their
-  // own shelf photo) and notes — shared between modes.
-  const coverAndNotes = (
-    <div className="flex flex-col gap-5">
-      {/* Cover colour / photo */}
-      <div className="flex flex-col gap-1.5">
-        <Label>{t("coverColour")}</Label>
-        <p className="text-xs text-muted-foreground">{t("coverColourHint")}</p>
-        <CoverColourField
-          color={form.coverColor}
-          mode={form.coverMode}
-          photoOptions={[
-            ...form.importedImages.map((url) => ({
-              url,
-              alt: form.importedImageAlts?.[url],
-            })),
-            ...(coverFileUrl ? [{ url: coverFileUrl, uploaded: true }] : []),
-          ]}
-          selectedPhotoUrl={
-            form.coverFile ? coverFileUrl : form.selectedImageUrl
-          }
-          onSelectColor={(c) =>
-            setForm((f) => ({ ...f, coverColor: c, coverMode: "color" }))
-          }
-          onSelectPhoto={(url) =>
-            setForm((f) =>
-              url === coverFileUrl
-                ? { ...f, coverMode: "photo" }
-                : {
-                    ...f,
-                    coverMode: "photo",
-                    coverFile: undefined,
-                    selectedImageUrl: url,
-                  },
-            )
-          }
-          onUploadPhoto={(file) =>
-            setForm((f) => ({ ...f, coverFile: file, coverMode: "photo" }))
-          }
-        />
-      </div>
+  // Copy mode saves no photo: the only image this form can store is a NEW catalogue puzzle's box
+  // art (createPuzzle's image). Photos of the member's own copy are added on the copy's page.
+  const copyPhotosLater = (
+    <p className="text-xs text-muted-foreground">
+      {t("chooser.copyPhotosLater")}
+    </p>
+  );
 
-      {/* Notes */}
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="ap-notes">
-          {t("fieldNotes")}{" "}
-          <span className="text-xs font-normal text-muted-foreground">
-            {t("optional")}
-          </span>
-        </Label>
-        <Textarea
-          id="ap-notes"
-          value={form.notes}
-          onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-          placeholder={t("notesPlaceholderLong")}
-          rows={3}
-        />
-      </div>
+  const copyNotes = (
+    <div className="flex flex-col gap-1.5">
+      <Label htmlFor="ap-notes">
+        {t("fieldNotes")}{" "}
+        <span className="text-xs font-normal text-muted-foreground">
+          {t("optional")}
+        </span>
+      </Label>
+      <Textarea
+        id="ap-notes"
+        value={form.notes}
+        onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+        placeholder={t("notesPlaceholderLong")}
+        rows={3}
+      />
     </div>
   );
 
@@ -654,8 +617,10 @@ function AddPuzzlePage() {
       </div>
       <SectionDivider label={t("chooser.copyDetails")} />
       {copyFields}
-      <SectionDivider label={t("dividerCover")} />
-      {coverAndNotes}
+      <div className="flex flex-col gap-2">
+        {copyNotes}
+        {copyPhotosLater}
+      </div>
       {footerButtons}
     </>
   );
@@ -832,45 +797,50 @@ function AddPuzzlePage() {
       <SectionDivider label={t("dividerCover")} />
 
       <div className="flex flex-col gap-5">
-        {/* Cover colour / photo */}
-        <div className="flex flex-col gap-1.5">
-          <Label>{t("coverColour")}</Label>
-          <p className="text-xs text-muted-foreground">
-            {t("coverColourHint")}
-          </p>
-          <CoverColourField
-            color={form.coverColor}
-            mode={form.coverMode}
-            photoOptions={[
-              ...form.importedImages.map((url) => ({
-                url,
-                alt: form.importedImageAlts?.[url],
-              })),
-              ...(coverFileUrl ? [{ url: coverFileUrl, uploaded: true }] : []),
-            ]}
-            selectedPhotoUrl={
-              form.coverFile ? coverFileUrl : form.selectedImageUrl
-            }
-            onSelectColor={(c) =>
-              setForm((f) => ({ ...f, coverColor: c, coverMode: "color" }))
-            }
-            onSelectPhoto={(url) =>
-              setForm((f) =>
-                url === coverFileUrl
-                  ? { ...f, coverMode: "photo" }
-                  : {
-                      ...f,
-                      coverMode: "photo",
-                      coverFile: undefined,
-                      selectedImageUrl: url,
-                    },
-              )
-            }
-            onUploadPhoto={(file) =>
-              setForm((f) => ({ ...f, coverFile: file, coverMode: "photo" }))
-            }
-          />
-        </div>
+        {/* Box photo: only a NEW catalogue puzzle stores one (createPuzzle's image). Once the
+            member picks an existing puzzle from an import match, nothing would save it. */}
+        {selectedDefinitionId ? (
+          copyPhotosLater
+        ) : (
+          <div className="flex flex-col gap-1.5">
+            <Label>
+              {t("boxPhoto")}{" "}
+              <span className="text-xs font-normal text-muted-foreground">
+                {t("optional")}
+              </span>
+            </Label>
+            <p className="text-xs text-muted-foreground">{t("boxPhotoHint")}</p>
+            <CoverColourField
+              photoOptions={[
+                ...form.importedImages.map((url) => ({
+                  url,
+                  alt: form.importedImageAlts?.[url],
+                })),
+                ...(coverFileUrl
+                  ? [{ url: coverFileUrl, uploaded: true }]
+                  : []),
+              ]}
+              selectedPhotoUrl={previewPhotoUrl}
+              onSelectPhoto={(url) =>
+                setForm((f) =>
+                  url === undefined
+                    ? { ...f, coverMode: "none" }
+                    : url === coverFileUrl
+                      ? { ...f, coverMode: "photo" }
+                      : {
+                          ...f,
+                          coverMode: "photo",
+                          coverFile: undefined,
+                          selectedImageUrl: url,
+                        },
+                )
+              }
+              onUploadPhoto={(file) =>
+                setForm((f) => ({ ...f, coverFile: file, coverMode: "photo" }))
+              }
+            />
+          </div>
+        )}
 
         {/* Tags */}
         <div className="flex flex-col gap-1.5">
@@ -1083,11 +1053,14 @@ function AddPuzzlePage() {
         }
         pieceCount={specificPuzzle?.pieceCount ?? form.pieceCount}
         difficulty={specificPuzzle?.difficulty ?? form.difficulty}
-        coverColor={form.coverColor}
+        // Only what the submit saves: the catalogue puzzle's own picture in copy mode, the selected
+        // box photo when the form creates a new catalogue puzzle, nothing for an import match.
         coverPhotoUrl={
           isCopyMode
-            ? (previewPhotoUrl ?? specificPuzzle?.image ?? undefined)
-            : previewPhotoUrl
+            ? (specificPuzzle?.image ?? undefined)
+            : selectedDefinitionId
+              ? undefined
+              : previewPhotoUrl
         }
         available={hasAnyAvailability(form.availability)}
       />

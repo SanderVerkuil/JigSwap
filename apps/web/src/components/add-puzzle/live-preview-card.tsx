@@ -1,7 +1,7 @@
 // apps/web/src/components/add-puzzle/live-preview-card.tsx
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Check } from "lucide-react";
+import { Check, Puzzle } from "lucide-react";
 import { useTranslations } from "use-intl";
 
 export interface LivePreviewProps {
@@ -9,7 +9,7 @@ export interface LivePreviewProps {
   brand: string;
   pieceCount: number | undefined;
   difficulty?: "easy" | "medium" | "hard" | "expert";
-  coverColor: string;
+  // Only a picture the submit will actually save; without one the card shows a neutral placeholder.
   coverPhotoUrl?: string;
   available: boolean;
 }
@@ -21,12 +21,16 @@ export function LivePreviewCard(props: LivePreviewProps) {
         backgroundImage: `url(${props.coverPhotoUrl})`,
         backgroundSize: "cover",
       }
-    : {
-        background: `linear-gradient(150deg, ${props.coverColor}, color-mix(in oklab, ${props.coverColor}, black 35%))`,
-      };
+    : undefined;
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-      <div className="relative aspect-square w-full" style={cover}>
+      <div className="relative aspect-square w-full bg-muted" style={cover}>
+        {!props.coverPhotoUrl && (
+          <Puzzle
+            aria-hidden
+            className="absolute left-1/2 top-[40%] size-14 -translate-x-1/2 -translate-y-1/2 text-muted-foreground/40"
+          />
+        )}
         {props.available && (
           <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-jigsaw-secondary px-2.5 py-1 text-xs font-semibold text-white">
             <span className="size-1.5 rounded-full bg-white" />{" "}

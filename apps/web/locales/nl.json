@@ -544,9 +544,8 @@
     "matchDifferent": "Nee, het is een andere",
     "importUrlBlurb": "Plak een link van een puzzelwinkel en wij vullen de details voor je in.",
     "importImported": "Details geïmporteerd",
-    "coverColour": "Omslagkleur",
-    "coverColourHint": "Kies een kleur of upload een foto — zo verschijnt je puzzel op de plank.",
-    "contributeCoverColourHint": "Kies een kleur of upload een foto — zo verschijnt de puzzel in de catalogus.",
+    "boxPhoto": "Foto van de doos",
+    "boxPhotoHint": "Een foto van de voorkant van de doos. Na de controle wordt dit de afbeelding van de puzzel in de catalogus.",
     "addToLibrary": "Toevoegen aan bibliotheek",
     "saveAndAddAnother": "Opslaan & nog een toevoegen",
     "addReadyHint": "Vul titel en aantal stukken in om door te gaan.",
@@ -635,7 +634,8 @@
       "chosenPuzzle": "Een exemplaar toevoegen van",
       "copyDetails": "Jouw exemplaar",
       "addYourCopy": "Exemplaar toevoegen",
-      "addYourCopyHint": "Geef aan in welke staat het is en hoe je het wilt delen."
+      "addYourCopyHint": "Geef aan in welke staat het is en hoe je het wilt delen.",
+      "copyPhotosLater": "Zodra het in je bibliotheek staat, kun je op de pagina ervan foto's van je eigen exemplaar toevoegen."
     },
     "removeFromCollection": "Uit deze collectie verwijderen",
     "private": "Privé",

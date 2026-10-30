@@ -66,9 +66,18 @@ vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
 
+// The box-art upload (re-encode, upload URL, server check) is its own hook; here it resolves with
+// the clean storage id the catalogue mutation accepts.
+vi.mock("@/hooks/use-upload-box-art", () => ({
+  useUploadBoxArt: () => (file: File) => mocks.call(UPLOAD_BOX_ART, file),
+}));
+
 const ACQUIRE = getFunctionName(gateway.library.createOwned);
 const UPDATE_SHARING = getFunctionName(gateway.library.updateSharing);
 const COPY_DOC_ID = getFunctionName(gateway.library.copyDocId);
+const CREATE_PUZZLE = getFunctionName(gateway.catalog.createPuzzle);
+const EXTRACT = getFunctionName(gateway.catalog.extractPuzzleFromUrl);
+const UPLOAD_BOX_ART = "uploadBoxArt";
 
 const PUZZLE_DOC_ID = "puzzle_doc_1" as Id<"puzzles">;
 const PUZZLE: PuzzleDefinitionView = {
@@ -161,7 +170,11 @@ beforeEach(() => {
       ? "copy_agg_1"
       : name === COPY_DOC_ID
         ? "copy_doc_1"
-        : null,
+        : name === CREATE_PUZZLE
+          ? "puzzle_agg_new"
+          : name === UPLOAD_BOX_ART
+            ? "storage_clean_1"
+            : null,
   );
   mocks.navigate.mockReset();
   vi.mocked(toast.success).mockReset();
@@ -254,6 +267,96 @@ describe("after adding", () => {
 
     expect(await landing()).toEqual({ href: "/welcome?step=puzzles" });
     expect(callsTo(COPY_DOC_ID)).toEqual([]);
+  });
+});
+
+describe("the box photo", () => {
+  const fileInput = () =>
+    document.querySelector<HTMLInputElement>('input[type="file"]');
+  const upload = () =>
+    fireEvent.change(fileInput()!, {
+      target: { files: [new File(["x"], "box.jpg", { type: "image/jpeg" })] },
+    });
+  const fillRequired = () => {
+    fireEvent.change(screen.getByLabelText(en.puzzles.fieldTitle), {
+      target: { value: "Café" },
+    });
+    fireEvent.change(screen.getByLabelText(en.puzzles.fieldPieceCount), {
+      target: { value: "1000" },
+    });
+  };
+
+  it("is not offered when adding a copy, since nothing would store it", () => {
+    renderPage({ puzzleId: PUZZLE_DOC_ID });
+    expect(fileInput()).toBeNull();
+    expect(screen.getByText(en.puzzles.chooser.copyPhotosLater)).toBeTruthy();
+  });
+
+  it("offers no colour swatches, which nothing stores", () => {
+    renderPage();
+    expect(screen.queryByRole("button", { name: /colour/i })).toBeNull();
+    expect(screen.getByText(en.puzzles.boxPhoto)).toBeTruthy();
+  });
+
+  it("sends an uploaded photo as the new catalogue puzzle's box art", async () => {
+    renderPage();
+    fillRequired();
+    upload();
+
+    fireEvent.click(screen.getByRole("button", { name: "Add Puzzle" }));
+
+    await waitFor(() => expect(callsTo(CREATE_PUZZLE)).toHaveLength(1));
+    expect(callsTo(CREATE_PUZZLE)[0]).toMatchObject({
+      title: "Café",
+      pieceCount: 1000,
+      image: "storage_clean_1",
+    });
+  });
+
+  it("sends no photo once the member deselects it", async () => {
+    renderPage();
+    fillRequired();
+    upload();
+    const thumb = screen.getByRole("button", { pressed: true });
+    fireEvent.click(thumb);
+    expect(thumb.getAttribute("aria-pressed")).toBe("false");
+
+    fireEvent.click(screen.getByRole("button", { name: "Add Puzzle" }));
+
+    await waitFor(() => expect(callsTo(CREATE_PUZZLE)).toHaveLength(1));
+    expect(callsTo(CREATE_PUZZLE)[0]).toMatchObject({ image: undefined });
+    expect(callsTo(UPLOAD_BOX_ART)).toEqual([]);
+  });
+
+  it("is withdrawn once an import match turns the form into adding a copy", async () => {
+    mocks.call.mockImplementation(async (name) =>
+      name === EXTRACT
+        ? {
+            ok: true,
+            draft: { title: "Café", sourceUrl: "https://shop.example/cafe" },
+            match: {
+              puzzleId: PUZZLE_DOC_ID,
+              aggregateId: "puzzle_agg_1",
+              title: "Café",
+              pieceCount: 1000,
+            },
+          }
+        : null,
+    );
+    renderPage();
+    expect(fileInput()).not.toBeNull();
+    fireEvent.change(
+      screen.getByPlaceholderText("https://www.ravensburger.com/…"),
+      { target: { value: "https://shop.example/cafe" } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Fetch details/ }));
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: en.puzzles.matchUseThis }),
+    );
+
+    expect(fileInput()).toBeNull();
+    expect(screen.getByText(en.puzzles.chooser.copyPhotosLater)).toBeTruthy();
   });
 });
 
