@@ -7,15 +7,20 @@ import { EVENT_SCRUB_DELAY_MS } from "./conversation/purgeMemberMessagingData";
 import schema from "./schema";
 
 // The activity feed's per-actor read model (SEC-30, PERF-B3m): social/activityEntries projects the
-// feed's events into one row per (actor, kind, ref), written by the event dispatcher.
+// feed's events into one row per (actor, kind, ref), written by the event dispatcher and, for the
+// events recorded before it existed, by social/backfillActivityEntries.
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 type T = TestConvex<typeof schema>;
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
 
+let logs: string[] = [];
 beforeEach(() => {
-  vi.spyOn(console, "log").mockImplementation(() => {});
+  logs = [];
+  vi.spyOn(console, "log").mockImplementation((...parts: unknown[]) => {
+    logs.push(parts.map(String).join(" "));
+  });
   vi.spyOn(console, "warn").mockImplementation(() => {});
   vi.stubEnv("AXIOM_API_KEY", "");
 });
@@ -498,5 +503,193 @@ describe("activity projection — account purge", () => {
 
     expect(await rowsOf(t, alice)).toEqual([]);
     expect(await rowsOf(t, bob)).toHaveLength(5);
+  });
+});
+
+describe("activity projection — backfill", () => {
+  type BackfillLine = {
+    dry_run: boolean;
+    is_done: boolean;
+    totals: { events: number; inserted: number; updated: number };
+  };
+  // The backfill's log lines, oldest first.
+  const backfillLines = (): BackfillLine[] =>
+    logs
+      .filter((line) => line.includes('"social.backfillActivityEntries"'))
+      .map((line) => JSON.parse(line.slice(line.indexOf("{"))) as BackfillLine);
+
+  const runBackfill = async (
+    t: T,
+    args: { dryRun?: boolean; batchSize?: number } = {},
+  ) => {
+    await t.mutation(
+      internal.social.backfillActivityEntries.backfillActivityEntries,
+      args,
+    );
+    await settleDueJobs(t);
+    const lines = backfillLines();
+    const last = lines[lines.length - 1];
+    expect(last?.is_done).toBe(true);
+    return last!.totals;
+  };
+
+  const readyFlag = (t: T) =>
+    t.run((ctx) =>
+      ctx.db
+        .query("readModelStatus")
+        .withIndex("by_name", (q) => q.eq("name", "activityEntries"))
+        .unique(),
+    );
+
+  // Feed events recorded before the projection existed: inserted, never dispatched.
+  const seedHistory = (t: T, alice: Id<"users">, bob: Id<"users">) =>
+    t.run(async (ctx) => {
+      const now = Date.now();
+      const copyId = await ctx.db.insert("ownedPuzzles", {
+        ownerId: bob,
+        puzzleId: (await ctx.db.query("puzzles").first())!._id,
+        condition: "good",
+        availability: { forTrade: false, forSale: false, forLend: false },
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("exchanges", {
+        aggregateId: "exch-1",
+        initiatorId: alice,
+        recipientId: bob,
+        type: "trade",
+        requestedPuzzleId: copyId,
+        status: "completed",
+        createdAt: now,
+        updatedAt: now,
+      });
+      const events: [string, Record<string, unknown>, number][] = [
+        [
+          "CompletionRecorded",
+          { userId: alice, completionId: "c-new" },
+          now - DAY,
+        ],
+        [
+          "CompletionRecorded",
+          { userId: alice, completionId: "c-old" },
+          now - 91 * DAY,
+        ],
+        [
+          "CompletionRecorded",
+          { userId: alice, completionId: "c-bulk", bulk: true },
+          now - DAY,
+        ],
+        [
+          "CompletionStarted",
+          { userId: bob, completionId: "s-1", startDate: now - DAY },
+          now - DAY,
+        ],
+        ["CopyAcquired", { ownerId: bob, copyId: "single-1" }, now - 2 * DAY],
+        [
+          "CopyAcquired",
+          { ownerId: alice, copyId: "b-copy-1", batchId: "b-1" },
+          now - 3 * DAY,
+        ],
+        [
+          "CopyAcquired",
+          { ownerId: alice, copyId: "b-copy-2", batchId: "b-1" },
+          now - 3 * DAY,
+        ],
+        ["CopyAcquired", { ownerId: alice, copyId: "old-1" }, now - 100 * DAY],
+        ["ExchangeCompleted", { exchangeId: "exch-1" }, now - HOUR],
+        // Not a feed event.
+        ["CopyConditionChanged", { copyId: "single-1" }, now - HOUR],
+      ];
+      for (const [name, payload, occurredAt] of events) {
+        await ctx.db.insert("domainEvents", {
+          name,
+          payload,
+          occurredAt,
+          context: "test",
+          processedAt: occurredAt,
+        });
+      }
+      return now;
+    });
+
+  test("projects the last 90 days of feed events, then marks the read model ready", async () => {
+    const t = newT();
+    const { alice, bob } = await seed(t);
+    const now = await seedHistory(t, alice, bob);
+
+    // Dry run: counts, writes nothing, sets no flag. It cannot see rows it did not write, so the
+    // batch's second copy counts as an insert there and as an update in the real run.
+    expect(await runBackfill(t, { dryRun: true })).toEqual({
+      events: 7,
+      inserted: 7,
+      updated: 0,
+    });
+    expect(await projectedRows(t)).toEqual([]);
+    expect(await readyFlag(t)).toBeNull();
+
+    // A small batch walks every feed event name over several runs.
+    expect(await runBackfill(t, { batchSize: 2 })).toEqual({
+      events: 7,
+      inserted: 6,
+      updated: 1,
+    });
+    expect(
+      (await projectedRows(t)).map((r) => [r.actorId, r.kind, r.ref]),
+    ).toEqual(
+      [
+        [alice, "acquisitionBatch", "b-1"],
+        [alice, "completion", "c-new"],
+        [alice, "exchange", "exch-1"],
+        [bob, "acquisition", "single-1"],
+        [bob, "exchange", "exch-1"],
+        [bob, "started", "s-1"],
+      ].sort((a, b) => a[0].localeCompare(b[0])),
+    );
+    expect(
+      (await projectedRows(t)).find((r) => r.kind === "acquisitionBatch")
+        ?.copyIds,
+    ).toEqual(["b-copy-1", "b-copy-2"]);
+    expect(
+      (await projectedRows(t)).find((r) => r.kind === "started")?.startDate,
+    ).toBe(now - DAY);
+    expect((await readyFlag(t))?.completedAt).toEqual(expect.any(Number));
+  });
+
+  test("a re-run writes nothing", async () => {
+    const t = newT();
+    const { alice, bob } = await seed(t);
+    await seedHistory(t, alice, bob);
+    await runBackfill(t);
+    const rows = await projectedRows(t);
+
+    expect(await runBackfill(t)).toEqual({
+      events: 7,
+      inserted: 0,
+      updated: 0,
+    });
+    expect(await projectedRows(t)).toEqual(rows);
+  });
+
+  test("replaying what the dispatcher already projected gives the same rows", async () => {
+    const t = newT();
+    const { alice, bob, definitions, puzzleIds } = await seed(t);
+    await addCopy(t, "alice", definitions[0], true);
+    await asUser(t, "alice").mutation(api.library.acquireCopies.acquireCopies, {
+      items: definitions
+        .slice(1, 3)
+        .map((puzzleDefinitionId) => ({ puzzleDefinitionId })),
+    });
+    await completeExchange(t, alice, bob, puzzleIds[5]);
+    await settleDueJobs(t);
+    const dispatched = await projectedRows(t);
+    expect(dispatched).toHaveLength(4);
+
+    await t.run(async (ctx) => {
+      for (const row of await ctx.db.query("activityEntries").collect()) {
+        await ctx.db.delete(row._id);
+      }
+    });
+    await runBackfill(t);
+    expect(await projectedRows(t)).toEqual(dispatched);
   });
 });

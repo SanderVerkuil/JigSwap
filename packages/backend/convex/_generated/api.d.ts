@@ -504,6 +504,7 @@ import type * as social_adapters_mappers from "../social/adapters/mappers.js";
 import type * as social_adapters_systemClock from "../social/adapters/systemClock.js";
 import type * as social_approveFollowRequest from "../social/approveFollowRequest.js";
 import type * as social_arrangeShelf from "../social/arrangeShelf.js";
+import type * as social_backfillActivityEntries from "../social/backfillActivityEntries.js";
 import type * as social_blockMember from "../social/blockMember.js";
 import type * as social_blocks from "../social/blocks.js";
 import type * as social_cancelFollowRequest from "../social/cancelFollowRequest.js";
@@ -1095,6 +1096,7 @@ declare const fullApi: ApiFromModules<{
   "social/adapters/systemClock": typeof social_adapters_systemClock;
   "social/approveFollowRequest": typeof social_approveFollowRequest;
   "social/arrangeShelf": typeof social_arrangeShelf;
+  "social/backfillActivityEntries": typeof social_backfillActivityEntries;
   "social/blockMember": typeof social_blockMember;
   "social/blocks": typeof social_blocks;
   "social/cancelFollowRequest": typeof social_cancelFollowRequest;

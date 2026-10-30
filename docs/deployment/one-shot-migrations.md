@@ -851,3 +851,58 @@ batches run as scheduled functions. Each batch logs one JSON line with
 3. In the dashboard data view, every `ownedPuzzles` row has `isOpen`, and it is `true`
    exactly when one of its availability flags is.
 4. Browse lists the newest open copies first, including copies added after the oldest 500.
+
+---
+
+## `social/backfillActivityEntries` — the activity feed's per-actor read model
+
+**When:** once per deployment, after the `activityEntries` and `readModelStatus` tables and
+the dispatcher's `activityFeed` handler (SEC-30, PERF-B3m) are deployed there. There is no
+ordering pressure: every feed event dispatched after the deploy is projected by the
+dispatcher, and until this backfill has finished the feed keeps reading `domainEvents` the
+old way (a global newest-500-per-event-name window, at the old cost and with the old
+crowding-out problem). The last batch of a real run writes the `readModelStatus` row
+`activityEntries`, which switches the feed to the read model; run it soon after the deploy.
+
+**What it does:** walks `domainEvents` through `by_name` for the feed's four events
+(`CompletionRecorded`, `CompletionStarted`, `CopyAcquired`, `ExchangeCompleted`) in turn,
+limited to the feed's 90-day window (fixed when the run starts; older events never reach a
+feed). 200 events per batch (`batchSize` overrides it, rounded down and clamped to 1..1000;
+each batch its own transaction, rescheduling itself until the last name is exhausted). Each
+event goes through the dispatcher's own projection: one `activityEntries` row per (actor,
+kind, ref), a batch add folded into one row, nothing for undated, year-only or bulk solves,
+and nothing for a deleted member.
+
+**Safe to re-run:** yes. Rows that already exist are left alone (a batch row only gains
+copies it does not list yet), so a second run reports `"inserted":0` and `"updated":0`. It
+also repairs rows the dispatcher missed, for example an event whose `activityFeed` handler
+gave up after its retries (it shows up in `failedHandlers`).
+
+**Commands:**
+
+```bash
+cd packages/backend
+
+# dev: dry run (counts only, writes nothing, does not switch the feed), then the real run
+npx convex run social/backfillActivityEntries:backfillActivityEntries '{"dryRun":true}'
+npx convex run social/backfillActivityEntries:backfillActivityEntries '{}'
+
+# prod: same, after dev looks right
+npx convex run --prod social/backfillActivityEntries:backfillActivityEntries '{"dryRun":true}'
+npx convex run --prod social/backfillActivityEntries:backfillActivityEntries '{}'
+```
+
+The command returns the FIRST batch's `{ events, inserted, updated }`; the remaining batches
+run as scheduled functions. Each batch logs one JSON line with
+`"event":"social.backfillActivityEntries"`, `dry_run`, `event_name`, the batch counts and the
+running `totals`; the line with `"is_done":true` carries the whole run's totals. A dry run
+cannot see rows it did not write, so it counts the later copies of a batch add as `inserted`
+where the real run counts them as `updated`; `inserted + updated` matches.
+
+**Verify:**
+
+1. The real run's final `totals.events` matches the dry run's (give or take events recorded
+   in between, which the dispatcher already projected).
+2. Run the dry run again: its final totals show `"inserted":0` and `"updated":0`.
+3. In the dashboard data view, `readModelStatus` has a row with `name` `activityEntries`.
+4. The dashboard pulse and /people feed show the same entries as before the run.

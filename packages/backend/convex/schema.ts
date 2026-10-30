@@ -2046,6 +2046,14 @@ export default defineSchema({
     .index("by_actor_time", ["actorId", "occurredAt"])
     .index("by_actor_kind_ref", ["actorId", "kind", "ref"]),
 
+  // One row per read model whose one-shot backfill has finished on this deployment. A read that
+  // depends on a backfilled model keeps its legacy path until the row exists. Written only by the
+  // backfill's last batch ("activityEntries": social/backfillActivityEntries).
+  readModelStatus: defineTable({
+    name: v.string(),
+    completedAt: v.number(),
+  }).index("by_name", ["name"]),
+
   // Open-ended loans: possession of a Copy held by a borrower while ownership stays with the
   // lender. Closed when the borrower returns it or the owner recalls it. aggregateId = LoanId;
   // copyId is the Library CopyId (ownedPuzzles.aggregateId). Status indexes back the borrowed/lent

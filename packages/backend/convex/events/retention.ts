@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalMutation } from "../_generated/server";
 import { DAY_MS, logRetentionSweep, retentionEnforced } from "../lib/retention";
-import { FEED_WINDOW_MS } from "../social/getActivityFeed";
+import { FEED_WINDOW_MS } from "../social/activityEntries";
 import { deleteEventMembers } from "./eventMembers";
 
 /**

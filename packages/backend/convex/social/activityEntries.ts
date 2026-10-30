@@ -27,6 +27,12 @@ export const FEED_EVENT_NAMES = [
   "ExchangeCompleted",
 ] as const;
 
+// The feed shows activity of the last 90 days; the backfill projects the same window.
+export const FEED_WINDOW_MS = 90 * 24 * 60 * 60 * 1000;
+
+// The readModelStatus row the backfill writes once every event in the window is projected.
+export const ACTIVITY_READ_MODEL = "activityEntries";
+
 export type ActivityRow = {
   actorId: string;
   kind: ActivityKind;

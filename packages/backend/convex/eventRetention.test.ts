@@ -6,7 +6,7 @@ import { recordEventMembers } from "./events/eventMembers";
 import { EVENT_RETENTION_MS, EVENT_RETENTION_PAGE } from "./events/retention";
 import { DAY_MS } from "./lib/retention";
 import schema from "./schema";
-import { FEED_WINDOW_MS } from "./social/getActivityFeed";
+import { FEED_WINDOW_MS } from "./social/activityEntries";
 
 // SEC-71 / PERF-B7: dispatched domain events are deleted once they are older than the activity
 // feed reads (FEED_WINDOW_MS) plus a week, by a daily sweep that is a dry run unless

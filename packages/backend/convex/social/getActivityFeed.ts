@@ -23,7 +23,11 @@ import {
 } from "../library/canViewCopy";
 import { toCopyPuzzleView } from "../library/mappers";
 import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
-import { activityRowsOf, FEED_EVENT_NAMES } from "./activityEntries";
+import {
+  activityRowsOf,
+  FEED_EVENT_NAMES,
+  FEED_WINDOW_MS,
+} from "./activityEntries";
 import { blockedEitherWaySet } from "./blocks";
 import { areMutualFollowers, canSeeProfileContent } from "./privacy";
 
@@ -44,10 +48,9 @@ const MAX_LIMIT = 50;
 // How many covers a grouped batch entry shows.
 const BATCH_COVER_COUNT = 4;
 
-// Time window + per-name cap so the feed reads a bounded slice of `domainEvents` (via the
-// `by_name` index) instead of scanning the whole log. 90 days comfortably covers a feed page.
+// Time window (FEED_WINDOW_MS, 90 days) + per-name cap so the feed reads a bounded slice of
+// `domainEvents` (via the `by_name` index) instead of scanning the whole log.
 // Event retention (events/retention) keeps dispatched events longer than this window.
-export const FEED_WINDOW_MS = 90 * 24 * 60 * 60 * 1000;
 const PER_NAME_CAP = 500;
 
 // KNOWN SCALE LIMITATION (finding #7, tracked as a follow-up):
