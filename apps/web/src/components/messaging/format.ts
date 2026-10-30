@@ -394,6 +394,36 @@ export function firstUnreadId(
   return messages[0].id;
 }
 
+// The newest message the server has, skipping the reader's sends that are
+// still pending (their `pending-…` id gives way to the real one).
+export function newestSentId(
+  messages: readonly ReadableMessage[],
+): string | undefined {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (!messages[i].id.startsWith("pending-")) return messages[i].id;
+  }
+  return undefined;
+}
+
+// How many messages the reader didn't write came after `seenId`: the thread's
+// "N new messages" pill. Every one of them when nothing was seen yet (an empty
+// thread), none when that message is gone.
+export function countOthersAfter(
+  messages: readonly ReadableMessage[],
+  seenId: string | undefined,
+): number {
+  const seen =
+    seenId === undefined
+      ? -1
+      : messages.findIndex((message) => message.id === seenId);
+  if (seenId !== undefined && seen === -1) return 0;
+  let count = 0;
+  for (let i = seen + 1; i < messages.length; i++) {
+    if (!messages[i].isMine) count += 1;
+  }
+  return count;
+}
+
 // Photos sent within this gap of each other (same author) share a gallery.
 const PHOTO_RUN_GAP = MINUTE;
 // A gallery is a 2x2 grid at most.

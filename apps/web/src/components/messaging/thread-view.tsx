@@ -26,6 +26,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery, type PaginatedQueryItem } from "convex/react";
 import {
+  ArrowDown,
   ChevronLeft,
   EyeOff,
   Info,
@@ -50,6 +51,7 @@ import { ComposerClosed } from "./composer-closed";
 import { MessageCopyCard } from "./copy-card";
 import {
   anonymousLabel,
+  countOthersAfter,
   firstUnreadId,
   formatFullDateTime,
   formatMessageTime,
@@ -57,6 +59,7 @@ import {
   isCircleThread,
   memberProfileHref,
   newestOtherId,
+  newestSentId,
   projectedMemberLabel,
   segmentMessages,
   systemEventText,
@@ -225,6 +228,7 @@ export function ThreadView({
   // The newest message the reader didn't write: what a read receipt covers.
   // Own sends don't move it, so they never send one.
   const latestOtherId = messages && newestOtherId(messages);
+  const latestSentId = messages && newestSentId(messages);
 
   // The unread boundary (UX-115): the inbox row's unread count as the thread
   // opens — taken once per thread, before this view's first read receipt
@@ -236,6 +240,15 @@ export function ThreadView({
     count: number;
     upToId: string | undefined;
   }>();
+  // Where the reader is, per thread, as of their last scroll: at the bottom or
+  // not, and the newest message they had in view there. Others' messages after
+  // it, arriving while they read history, count in the "N new messages" pill
+  // (UX-115); the unread run below the divider on open doesn't.
+  const [position, setPosition] = useState<{
+    threadId: string;
+    atBottom: boolean;
+    seenId: string | undefined;
+  }>();
   if (
     messages !== undefined &&
     headerRow !== undefined &&
@@ -246,6 +259,7 @@ export function ThreadView({
       count: thread?.unreadCount ?? 0,
       upToId: newestOtherId(messages),
     });
+    setPosition({ threadId, atBottom: true, seenId: newestSentId(messages) });
   }
   // The messages and their unread snapshot are both in: the thread lays out.
   const ready = messages !== undefined && unread?.threadId === threadId;
@@ -303,7 +317,18 @@ export function ThreadView({
     recordScroll();
     const scroller = scrollerRef.current;
     if (!scroller) return;
-    pinnedRef.current = isNearBottom(scroller);
+    const atBottom = isNearBottom(scroller);
+    pinnedRef.current = atBottom;
+    setPosition((previous) => {
+      if (previous?.threadId !== threadId) return previous;
+      // At the bottom, or just leaving it: everything up to the newest message
+      // has been in view.
+      const seenId =
+        atBottom || previous.atBottom ? latestSentId : previous.seenId;
+      return previous.atBottom === atBottom && previous.seenId === seenId
+        ? previous
+        : { threadId, atBottom, seenId };
+    });
     // Scrolling down to the newest messages reads them (UX-115).
     if (
       me &&
@@ -314,6 +339,22 @@ export function ThreadView({
         // Non-fatal: the receipt catches up on the next message.
       });
     }
+  };
+
+  // The pill's jump: down to the newest message, where onListScroll clears the
+  // pill and sends the read receipt. Focus moves to the list first, since the
+  // pill goes away under it.
+  const jumpToNewest = () => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+    scroller.focus({ preventScroll: true });
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    scroller.scrollTo({
+      top: scroller.scrollHeight,
+      behavior: reduceMotion ? "auto" : "smooth",
+    });
   };
 
   const onMediaLoad = () => {
@@ -488,6 +529,12 @@ export function ThreadView({
           t,
           firstUnreadId(messages, unread.count, unread.upToId),
         );
+  const newCount =
+    messages !== undefined &&
+    position?.threadId === threadId &&
+    !position.atBottom
+      ? countOthersAfter(messages, position.seenId)
+      : 0;
 
   return (
     // ph-no-capture: PostHog never autocaptures or records private messages.
@@ -589,42 +636,55 @@ export function ThreadView({
           <p className="text-muted-foreground text-xs">{t("noMessagesHint")}</p>
         </div>
       ) : (
-        <ol
-          ref={scrollerRef}
-          // Keyboard users can scroll the history without a mouse.
-          tabIndex={0}
-          aria-label={title ?? t("threadFallbackTitle")}
-          onScroll={onListScroll}
-          className="focus-visible:ring-ring flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 py-4 outline-none focus-visible:ring-2 focus-visible:ring-inset md:px-6"
-        >
-          <OlderMessagesSlot
-            status={status}
-            sentinelRef={sentinelRef}
-            onLoadMore={() => {
-              loadRequestedByButtonRef.current = true;
-              loadMore(PAGE_SIZE);
-            }}
-          />
-          {items.map((item) =>
-            item.type === "unread" ? (
-              <UnreadDivider key={item.key} ref={dividerRef} />
-            ) : (
-              <ThreadItemView
-                key={item.key}
-                item={item}
-                locale={locale}
-                otherAuthor={otherAuthor}
-                otherAuthorId={otherAuthorId as Id<"users"> | undefined}
-                circle={circleThread !== undefined}
-                meId={me}
-                onMediaLoad={onMediaLoad}
-              />
-            ),
+        // The pill floats over the bottom of the list, above the composer.
+        <div className="relative flex min-h-0 flex-1 flex-col">
+          <ol
+            ref={scrollerRef}
+            // Keyboard users can scroll the history without a mouse.
+            tabIndex={0}
+            aria-label={title ?? t("threadFallbackTitle")}
+            onScroll={onListScroll}
+            className="focus-visible:ring-ring flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 py-4 outline-none focus-visible:ring-2 focus-visible:ring-inset md:px-6"
+          >
+            <OlderMessagesSlot
+              status={status}
+              sentinelRef={sentinelRef}
+              onLoadMore={() => {
+                loadRequestedByButtonRef.current = true;
+                loadMore(PAGE_SIZE);
+              }}
+            />
+            {items.map((item) =>
+              item.type === "unread" ? (
+                <UnreadDivider key={item.key} ref={dividerRef} />
+              ) : (
+                <ThreadItemView
+                  key={item.key}
+                  item={item}
+                  locale={locale}
+                  otherAuthor={otherAuthor}
+                  otherAuthorId={otherAuthorId as Id<"users"> | undefined}
+                  circle={circleThread !== undefined}
+                  meId={me}
+                  onMediaLoad={onMediaLoad}
+                />
+              ),
+            )}
+            {pendingPhotos && (
+              <PhotoOutbox pending={pendingPhotos} onMediaLoad={onMediaLoad} />
+            )}
+          </ol>
+          {newCount > 0 && (
+            <button
+              type="button"
+              onClick={jumpToNewest}
+              className="bg-primary text-primary-foreground focus-visible:ring-ring absolute bottom-3 left-1/2 z-10 inline-flex h-11 -translate-x-1/2 items-center gap-1.5 rounded-full px-4 text-sm font-medium whitespace-nowrap shadow-md outline-none focus-visible:ring-2 focus-visible:ring-offset-2 md:h-9 md:px-3.5 pointer-coarse:min-h-11"
+            >
+              <ArrowDown aria-hidden className="size-4" />
+              {t("newMessagesPill", { count: newCount })}
+            </button>
           )}
-          {pendingPhotos && (
-            <PhotoOutbox pending={pendingPhotos} onMediaLoad={onMediaLoad} />
-          )}
-        </ol>
+        </div>
       )}
 
       <div

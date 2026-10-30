@@ -9,6 +9,7 @@ import {
   contextCopyHref,
   conversationErrorCode,
   copyOwnerHint,
+  countOthersAfter,
   coverStackSummary,
   firstUnreadId,
   formatCompactTime,
@@ -17,6 +18,7 @@ import {
   formatUnreadCount,
   groupThreadMessages,
   newestOtherId,
+  newestSentId,
   threadQuickLinks,
   threadSubjectTitle,
   tradeEventText,
@@ -438,6 +440,38 @@ describe("firstUnreadId", () => {
   it("is undefined without a loaded anchor", () => {
     expect(firstUnreadId(thread, 2, undefined)).toBeUndefined();
     expect(firstUnreadId(thread, 2, "gone")).toBeUndefined();
+  });
+});
+
+describe("newestSentId", () => {
+  const m = (id: string) => ({ id, isMine: true });
+
+  it("skips a send that is still pending", () => {
+    expect(newestSentId([m("a"), m("b"), m("pending-1")])).toBe("b");
+  });
+
+  it("is undefined when nothing has been sent yet", () => {
+    expect(newestSentId([m("pending-1")])).toBeUndefined();
+    expect(newestSentId([])).toBeUndefined();
+  });
+});
+
+describe("countOthersAfter", () => {
+  const m = (id: string, isMine: boolean) => ({ id, isMine });
+  const thread = [m("a", false), m("b", true), m("c", false), m("d", false)];
+
+  it("counts the messages after `seenId` that the reader didn't write", () => {
+    expect(countOthersAfter(thread, "a")).toBe(2);
+    expect(countOthersAfter(thread, "c")).toBe(1);
+    expect(countOthersAfter(thread, "d")).toBe(0);
+  });
+
+  it("counts every one of them when nothing was seen yet", () => {
+    expect(countOthersAfter(thread, undefined)).toBe(3);
+  });
+
+  it("counts nothing when the seen message is gone", () => {
+    expect(countOthersAfter(thread, "gone")).toBe(0);
   });
 });
 

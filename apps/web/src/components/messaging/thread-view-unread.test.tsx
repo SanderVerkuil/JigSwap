@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
 // UX-115: the unread boundary in a thread. The inbox's unread count, taken when
-// the thread opens, places a "New messages" divider, and the read receipt goes
-// out only once the reader has the newest messages in view.
+// the thread opens, places a "New messages" divider, the read receipt goes out
+// only once the reader has the newest messages in view, and messages arriving
+// while they read history show a "N new messages" pill.
 import { gateway } from "@/gateway";
 import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -11,6 +12,7 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
 } from "@testing-library/react";
 import { ConvexReactClient } from "convex/react";
 import { getFunctionName } from "convex/server";
@@ -281,5 +283,70 @@ describe("ThreadView unread boundary", () => {
     mocks.messages = [...MESSAGES, message("m4", true, 4_000)];
     rerender();
     expect(await receipts()).toHaveLength(0);
+  });
+});
+
+describe("ThreadView new-messages pill", () => {
+  const pill = () => screen.queryByRole("button", { name: /new message/ });
+
+  it("counts others' messages that arrive while the reader is scrolled up", async () => {
+    const { rerender } = renderThread(0);
+    scrollListTo(0);
+    expect(pill()).toBeNull();
+    mocks.messages = [...MESSAGES, message("m4", false, 4_000)];
+    rerender();
+    expect(pill()?.textContent).toBe("1 new message");
+    mocks.messages = [
+      ...MESSAGES,
+      message("m4", false, 4_000),
+      message("m5", false, 5_000),
+    ];
+    rerender();
+    expect(pill()?.textContent).toBe("2 new messages");
+  });
+
+  it("goes away, and the thread is marked read, once the reader reaches the bottom", async () => {
+    const { rerender } = renderThread(0);
+    expect(await receipts()).toHaveLength(1);
+    scrollListTo(0);
+    mocks.messages = [...MESSAGES, message("m4", false, 4_000)];
+    rerender();
+    expect(pill()).toBeTruthy();
+    expect(await receipts()).toHaveLength(1);
+    scrollListTo(maxScrollTop());
+    expect(pill()).toBeNull();
+    expect(await receipts()).toHaveLength(2);
+  });
+
+  it("scrolls to the newest message when pressed, keeping focus in the list", async () => {
+    const { rerender } = renderThread(0);
+    scrollListTo(0);
+    mocks.messages = [...MESSAGES, message("m4", false, 4_000)];
+    rerender();
+    fireEvent.click(screen.getByRole("button", { name: "1 new message" }));
+    expect(document.activeElement).toBe(list());
+    await waitFor(() => expect(list().scrollTop).toBe(maxScrollTop()));
+    fireEvent.scroll(list());
+    expect(pill()).toBeNull();
+  });
+
+  it("shows nothing for the reader's own send while scrolled up", () => {
+    const { rerender } = renderThread(0);
+    scrollListTo(0);
+    mocks.messages = [...MESSAGES, message("pending-1", true, 4_000)];
+    rerender();
+    expect(pill()).toBeNull();
+    // Confirmed: the pending id gives way to the real one.
+    mocks.messages = [...MESSAGES, message("m4", true, 4_000)];
+    rerender();
+    expect(pill()).toBeNull();
+  });
+
+  it("doesn't count the unread messages below the divider on open", () => {
+    renderThread(2);
+    // The open scrolled the list to the divider.
+    fireEvent.scroll(list());
+    expect(screen.getByText("New messages")).toBeTruthy();
+    expect(pill()).toBeNull();
   });
 });

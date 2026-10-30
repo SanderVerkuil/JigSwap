@@ -861,6 +861,7 @@
     "messageName": "Bericht sturen aan {name}",
     "moreCount": "nog {count}",
     "newMessageAnnouncement": "Nieuw bericht van {name}: {body}",
+    "newMessagesPill": "{count, plural, one {# nieuw bericht} other {# nieuwe berichten}}",
     "noMessages": "Nog geen berichten",
     "noMessagesHint": "Zeg hallo om het gesprek op gang te brengen.",
     "noPuzzleResults": "Geen puzzels gevonden voor \"{query}\"",

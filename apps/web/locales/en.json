@@ -861,6 +861,7 @@
     "messageName": "Message {name}",
     "moreCount": "{count} more",
     "newMessageAnnouncement": "New message from {name}: {body}",
+    "newMessagesPill": "{count, plural, one {# new message} other {# new messages}}",
     "noMessages": "No messages yet",
     "noMessagesHint": "Say hello to get the conversation going.",
     "noPuzzleResults": "No puzzles match \"{query}\"",
