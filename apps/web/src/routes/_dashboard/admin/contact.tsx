@@ -65,7 +65,9 @@ function ContactTriagePage() {
         >
           <div className="space-y-1">
             <div className="flex items-center justify-between gap-2">
-              <span className="font-semibold">{message.name}</span>
+              <span className="min-w-0 font-semibold [overflow-wrap:anywhere]">
+                {message.name}
+              </span>
               <div className="flex items-center gap-2">
                 <Badge variant="outline">
                   {t(`subject.${message.subject}`)}
@@ -77,7 +79,7 @@ function ContactTriagePage() {
                 )}
               </div>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
               {/* The address is typed by an anonymous visitor: encoded, it can never add
                   cc/bcc/body fields to the reply draft. */}
               <a href={mailtoHref(message.email)} className="underline">
@@ -91,7 +93,11 @@ function ContactTriagePage() {
               {message.locale && ` • ${message.locale}`}
             </p>
           </div>
-          <p className="text-sm whitespace-pre-wrap">{message.message}</p>
+          {/* Messages often carry long URLs: let them wrap anywhere instead of
+              overflowing the card. */}
+          <p className="text-sm whitespace-pre-wrap [overflow-wrap:anywhere]">
+            {message.message}
+          </p>
           {message.status === "new" && (
             <Button
               size="sm"

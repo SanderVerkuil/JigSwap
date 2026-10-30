@@ -43,7 +43,9 @@ function DocFeedbackPage() {
         >
           <div className="space-y-1">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-base font-semibold">{entry.slug}</span>
+              <span className="min-w-0 text-base font-semibold [overflow-wrap:anywhere]">
+                {entry.slug}
+              </span>
               {entry.helpful ? (
                 <Badge variant="default" className="flex items-center gap-1">
                   <ThumbsUp className="h-3 w-3" />
@@ -65,7 +67,9 @@ function DocFeedbackPage() {
             </p>
           </div>
           {entry.comment && (
-            <p className="text-sm whitespace-pre-wrap">{entry.comment}</p>
+            <p className="text-sm whitespace-pre-wrap [overflow-wrap:anywhere]">
+              {entry.comment}
+            </p>
           )}
         </div>
       ))}
