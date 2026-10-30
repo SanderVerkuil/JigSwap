@@ -4811,6 +4811,10 @@
         "body": "Dit item is uit de wachtrij verdwenen terwijl je het open had, dus de acties staan uit.",
         "next": "Volgend item"
       },
+      "revealGuard": {
+        "reveal": "Klik of tik om de foto te tonen",
+        "hide": "Weer verbergen"
+      },
       "dupWarning": "Mogelijk duplicaat van <strong>{title}</strong> dat al in de catalogus staat. Controleer voor het goedkeuren.",
       "actions": {
         "approve": "Goedkeuren & publiceren",
@@ -4825,7 +4829,6 @@
       "flag": {
         "loading": "Gemarkeerde afbeeldingen laden…",
         "unlabeled": "Gemarkeerde afbeelding",
-        "reveal": "Beweeg eroverheen of tik om de gemarkeerde afbeelding te tonen",
         "severity": {
           "high": "Hoge ernst",
           "medium": "Gemiddelde ernst",
@@ -4886,7 +4889,6 @@
       "uncheckedEmpty": "Er wachten geen foto's op controle.",
       "unchecked": {
         "loading": "Niet-gecontroleerde foto's laden…",
-        "reveal": "Beweeg eroverheen of tik om de foto te tonen",
         "status": {
           "pending": "Wordt gecontroleerd",
           "unscored": "Kon niet worden gecontroleerd",

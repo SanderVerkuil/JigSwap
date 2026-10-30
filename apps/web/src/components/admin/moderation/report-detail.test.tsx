@@ -241,6 +241,25 @@ describe("ReportDetail", () => {
     );
   });
 
+  it("shows a reported photo blurred until the admin reveals it", () => {
+    renderDetail(
+      report({
+        targetKind: "photo",
+        targetId: "photo_1",
+        photoUrl: "https://example.test/photo.jpg",
+        evidence: {},
+      } as Partial<ReportDetailView>),
+    );
+    const reveal = screen.getByRole("button", {
+      name: "Click or tap to reveal the photo",
+    });
+    expect(document.querySelector("img")?.getAttribute("src")).toBe(
+      "https://example.test/photo.jpg",
+    );
+    fireEvent.click(reveal);
+    expect(screen.getByRole("button", { name: "Hide again" })).toBeTruthy();
+  });
+
   it("shows the outcome instead of the form once decided", () => {
     renderDetail(
       report({

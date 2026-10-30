@@ -5,11 +5,11 @@
 // reported message highlighted; a message already removed by a moderator
 // shows as removed, never its body; a photo comment's or review's text as
 // filed), the Art. 16(2) notice when present, the photo when the target still
-// exists, and the member's other reports. An open report ends in the decide
-// form; a decided one shows its outcome. The server enforces isAdmin and
-// validates the decision; the form only mirrors those rules (Remove only for
-// message, photo, comment and review targets; a statement of reasons of
-// 1–2000 characters).
+// exists (behind the click-to-reveal RevealGuard), and the member's other
+// reports. An open report ends in the decide form; a decided one shows its
+// outcome. The server enforces isAdmin and validates the decision; the form
+// only mirrors those rules (Remove only for message, photo, comment and review
+// targets; a statement of reasons of 1–2000 characters).
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,6 +33,7 @@ import { ImageOff } from "lucide-react";
 import { useId, useState } from "react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "use-intl";
+import { RevealGuard } from "./reveal-guard";
 
 export type ReportDetailView = NonNullable<
   FunctionReturnType<typeof gateway.admin.getReport>
@@ -128,14 +129,18 @@ export function ReportDetail({ report }: { report: ReportDetailView }) {
           <h3 className="text-xs tracking-wider text-muted-foreground uppercase">
             {t("photo")}
           </h3>
-          <div className="aspect-[16/10] overflow-hidden rounded-xl bg-muted">
+          <div className="relative aspect-[16/10] overflow-hidden rounded-xl bg-muted">
             {report.photoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={report.photoUrl}
-                alt={report.targetSummary ?? t("photo")}
-                className="size-full object-contain"
-              />
+              // Blurred until the admin chooses to look, whatever the reported reason; keyed so
+              // another report's photo starts blurred again.
+              <RevealGuard key={report.reportId}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={report.photoUrl}
+                  alt={report.targetSummary ?? t("photo")}
+                  className="size-full object-contain"
+                />
+              </RevealGuard>
             ) : (
               <span className="flex size-full items-center justify-center gap-2 text-sm text-muted-foreground">
                 <ImageOff className="size-5" aria-hidden />

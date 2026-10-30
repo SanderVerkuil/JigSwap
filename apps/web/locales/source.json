@@ -4811,6 +4811,10 @@
         "body": "This item left the queue while you had it open, so its actions are switched off.",
         "next": "Next item"
       },
+      "revealGuard": {
+        "reveal": "Click or tap to reveal the photo",
+        "hide": "Hide again"
+      },
       "dupWarning": "Possible duplicate of <strong>{title}</strong> already in the catalog. Review before approving.",
       "actions": {
         "approve": "Approve & Publish",
@@ -4825,7 +4829,6 @@
       "flag": {
         "loading": "Loading flagged images…",
         "unlabeled": "Flagged image",
-        "reveal": "Hover or tap to reveal flagged image",
         "severity": {
           "high": "High severity",
           "medium": "Medium severity",
@@ -4886,7 +4889,6 @@
       "uncheckedEmpty": "No photos are waiting for a check.",
       "unchecked": {
         "loading": "Loading unchecked photos…",
-        "reveal": "Hover or tap to reveal the photo",
         "status": {
           "pending": "Being checked",
           "unscored": "Could not be checked",

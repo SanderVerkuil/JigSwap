@@ -59,8 +59,10 @@ describe("FlagDetail", () => {
     render({ ...photo, hashTimedOut: true });
     expect(container.querySelector("img")?.getAttribute("src")).toBe(photo.url);
     expect(
-      container.querySelector("button[aria-pressed='false']"),
-    ).not.toBeNull();
+      [...container.querySelectorAll("button")].some(
+        (b) => b.textContent === "Click or tap to reveal the photo",
+      ),
+    ).toBe(true);
     expect(container.textContent).toContain("Restoring it does not publish it");
     render({ ...photo, hashTimedOut: true }, "nl");
     expect(container.textContent).toContain("Herstellen publiceert hem niet");
