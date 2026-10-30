@@ -5,7 +5,11 @@ import { afterEach, describe, expect, it } from "vitest";
 import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
 import {
+  brandSeries,
+  bucketLabel,
   CollectionBreakdown,
+  OTHER_BUCKET,
+  UNKNOWN_BUCKET,
   type CollectionBreakdownData,
 } from "./collection-breakdown";
 
@@ -126,6 +130,23 @@ describe("CollectionBreakdown: by difficulty", () => {
     expect(bar?.querySelectorAll("[data-difficulty]")).toHaveLength(1);
   });
 
+  it("names the copies without a difficulty in the app's language, last", () => {
+    renderBreakdown(
+      breakdown({
+        byDifficulty: [
+          { label: "medium", value: 1 },
+          { label: UNKNOWN_BUCKET, value: 3 },
+        ],
+      }),
+      "nl",
+    );
+    expect(
+      within(screen.getByRole("list", { name: "Op moeilijkheid" }))
+        .getAllByRole("listitem")
+        .map((item) => item.textContent),
+    ).toEqual(["Gemiddeld125%", "Onbekend375%"]);
+  });
+
   it("shows a label it does not know as is, after the known difficulties", () => {
     // An older backend still sends the English word for copies without a difficulty.
     renderBreakdown(
@@ -137,5 +158,62 @@ describe("CollectionBreakdown: by difficulty", () => {
       }),
     );
     expect(legendRows()).toEqual(["Easy250%", "Unknown250%"]);
+  });
+});
+
+describe("CollectionBreakdown: buckets and brands", () => {
+  it("mirrors the domain's sentinel strings", () => {
+    // packages/domain/src/insights/collection-breakdown.ts UNKNOWN_BUCKET / OTHER_BUCKET.
+    expect(UNKNOWN_BUCKET).toBe("__unknown");
+    expect(OTHER_BUCKET).toBe("__other");
+  });
+
+  it("translates the sentinel buckets and leaves every other label alone", () => {
+    const names = { unknown: "Onbekend", other: "Overig" };
+    expect(bucketLabel(UNKNOWN_BUCKET, names)).toBe("Onbekend");
+    expect(bucketLabel(OTHER_BUCKET, names)).toBe("Overig");
+    expect(bucketLabel("500-999", names)).toBe("500-999");
+    expect(bucketLabel("Ravensburger", names)).toBe("Ravensburger");
+    // An older backend's English word still renders.
+    expect(bucketLabel("Unknown", names)).toBe("Unknown");
+  });
+
+  it("never draws copies without a brand as a brand bar, and keeps the query's order", () => {
+    expect(
+      brandSeries([
+        { label: "Ravensburger", value: 4 },
+        { label: "Clementoni", value: 2 },
+        { label: OTHER_BUCKET, value: 5 },
+        { label: UNKNOWN_BUCKET, value: 9 },
+      ]),
+    ).toEqual({
+      bars: [
+        { label: "Ravensburger", value: 4 },
+        { label: "Clementoni", value: 2 },
+        { label: OTHER_BUCKET, value: 5 },
+      ],
+      withoutBrand: 9,
+    });
+  });
+
+  it("counts the puzzles without a brand under the brand chart", () => {
+    renderBreakdown(
+      breakdown({
+        byBrand: [
+          { label: "Ravensburger", value: 1 },
+          { label: UNKNOWN_BUCKET, value: 2 },
+        ],
+      }),
+    );
+    expect(screen.getByText("2 puzzles without a brand")).toBeTruthy();
+  });
+
+  it("says it in Dutch in the Dutch app, also when no copy has a brand", () => {
+    const { container } = renderBreakdown(
+      breakdown({ byBrand: [{ label: UNKNOWN_BUCKET, value: 1 }] }),
+      "nl",
+    );
+    expect(screen.getByText("1 puzzel zonder merk")).toBeTruthy();
+    expect(container.textContent).not.toContain(UNKNOWN_BUCKET);
   });
 });

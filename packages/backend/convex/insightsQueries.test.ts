@@ -268,6 +268,49 @@ describe("insights.getCollectionBreakdown", () => {
       ]),
     );
   });
+
+  test("puts copies without a brand or difficulty in the __unknown bucket, after the real values", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    // Two copies of a catalogue puzzle with no brand and no difficulty: more than any real brand,
+    // yet they must not rank as a top brand. The web translates the sentinel.
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      const plain = await ctx.db.insert("puzzles", {
+        title: "Plain Box",
+        pieceCount: 300,
+        status: "approved",
+        submittedBy: alice,
+        createdAt: now,
+        updatedAt: now,
+      });
+      for (const definition of ["def-plain-1", "def-plain-2"]) {
+        await ctx.db.insert("ownedPuzzles", {
+          puzzleId: plain,
+          puzzleDefinitionId: definition,
+          ownerId: alice,
+          condition: "good",
+          availability: { forTrade: false, forSale: false, forLend: false },
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    });
+    const breakdown = await asAlice(t).query(
+      api.insights.getCollectionBreakdown.getCollectionBreakdown,
+      {},
+    );
+    expect(breakdown.byBrand).toEqual([
+      { label: "Clementoni", value: 1 },
+      { label: "Ravensburger", value: 1 },
+      { label: "__unknown", value: 2 },
+    ]);
+    expect(breakdown.byDifficulty).toEqual([
+      { label: "hard", value: 1 },
+      { label: "medium", value: 1 },
+      { label: "__unknown", value: 2 },
+    ]);
+  });
 });
 
 describe("insights.getCompletionTrends / getTradeActivity", () => {

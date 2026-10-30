@@ -3442,7 +3442,10 @@
       "brands": "Top brands",
       "condition": "By condition",
       "count": "Puzzles",
-      "empty": "Add a puzzle to your library to see breakdowns."
+      "empty": "Add a puzzle to your library to see breakdowns.",
+      "unknown": "Unknown",
+      "other": "Other",
+      "withoutBrand": "{count, plural, one {# puzzle} other {# puzzles}} without a brand"
     },
     "trades": {
       "title": "Trade activity",

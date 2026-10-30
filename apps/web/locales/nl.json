@@ -3442,7 +3442,10 @@
       "brands": "Topmerken",
       "condition": "Op conditie",
       "count": "Puzzels",
-      "empty": "Voeg een puzzel toe aan je bibliotheek om uitsplitsingen te zien."
+      "empty": "Voeg een puzzel toe aan je bibliotheek om uitsplitsingen te zien.",
+      "unknown": "Onbekend",
+      "other": "Overig",
+      "withoutBrand": "{count, plural, one {# puzzel} other {# puzzels}} zonder merk"
     },
     "trades": {
       "title": "Ruilactiviteit",
