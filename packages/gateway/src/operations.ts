@@ -348,6 +348,10 @@ export const gateway = {
     reviewsForMember: api.reputation.listReviewsForMember.listReviewsForMember,
     myReviewForExchange:
       api.reputation.getMyReviewForExchange.getMyReviewForExchange,
+    // The reviewer removes the written comment of their own review (exchangeId = aggregateId);
+    // the ratings stay. Offered when myReviewForExchange says canClearComment.
+    clearReviewComment:
+      api.reputation.clearPartnerReviewComment.clearPartnerReviewComment,
   },
 
   // Notifications: the per-member in-app inbox + delivery preferences. A pure subscriber context

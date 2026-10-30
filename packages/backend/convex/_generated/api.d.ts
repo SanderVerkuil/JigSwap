@@ -435,6 +435,7 @@ import type * as reputation_adapters_inProcessEventPublisher from "../reputation
 import type * as reputation_adapters_partnerReviewMapper from "../reputation/adapters/partnerReviewMapper.js";
 import type * as reputation_adapters_systemClock from "../reputation/adapters/systemClock.js";
 import type * as reputation_backfill from "../reputation/backfill.js";
+import type * as reputation_clearPartnerReviewComment from "../reputation/clearPartnerReviewComment.js";
 import type * as reputation_errors from "../reputation/errors.js";
 import type * as reputation_getMyReviewForExchange from "../reputation/getMyReviewForExchange.js";
 import type * as reputation_getReputationProfile from "../reputation/getReputationProfile.js";
@@ -1016,6 +1017,7 @@ declare const fullApi: ApiFromModules<{
   "reputation/adapters/partnerReviewMapper": typeof reputation_adapters_partnerReviewMapper;
   "reputation/adapters/systemClock": typeof reputation_adapters_systemClock;
   "reputation/backfill": typeof reputation_backfill;
+  "reputation/clearPartnerReviewComment": typeof reputation_clearPartnerReviewComment;
   "reputation/errors": typeof reputation_errors;
   "reputation/getMyReviewForExchange": typeof reputation_getMyReviewForExchange;
   "reputation/getReputationProfile": typeof reputation_getReputationProfile;

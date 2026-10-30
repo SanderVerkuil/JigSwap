@@ -89,3 +89,39 @@ describe("PartnerReview.submit", () => {
     expect(rehydrated.pullEvents()).toHaveLength(0);
   });
 });
+
+describe("PartnerReview.clearComment", () => {
+  const submitted = (): PartnerReview => {
+    const result = PartnerReview.submit(props());
+    if (!result.isOk) throw new Error("setup");
+    result.value.pullEvents();
+    return result.value;
+  };
+
+  it("lets the reviewer remove the written comment and keeps every rating", () => {
+    const review = submitted();
+    const before = review.toState();
+
+    const result = review.clearComment(reviewer);
+
+    expect(result.isOk).toBe(true);
+    expect(review.comment).toBeUndefined();
+    const after = review.toState();
+    expect(after.comment).toBeUndefined();
+    expect(after.rating).toEqual(before.rating);
+    expect(after.scores).toEqual(before.scores);
+    expect(after.createdAt).toBe(before.createdAt);
+    // Reputation folds ratings only, so nothing is recorded for subscribers.
+    expect(review.pullEvents()).toHaveLength(0);
+  });
+
+  it("refuses anyone but the reviewer, the reviewee included", () => {
+    const review = submitted();
+
+    const result = review.clearComment(reviewee);
+
+    expect(result.isErr).toBe(true);
+    if (result.isErr) expect(result.error.code).toBe("NotReviewAuthor");
+    expect(review.comment).toBe("Smooth trade");
+  });
+});
