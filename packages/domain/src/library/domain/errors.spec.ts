@@ -55,6 +55,12 @@ describe("LibraryError factories", () => {
     );
   });
 
+  it("alreadyLentOut", () => {
+    const e = LibraryError.alreadyLentOut();
+    expect(e.code).toBe("AlreadyLentOut");
+    expect(e.message).toBe("The copy is already out on loan");
+  });
+
   it("copyMustBeVisibleToOffer", () => {
     const e = LibraryError.copyMustBeVisibleToOffer();
     expect(e.code).toBe("CopyMustBeVisibleToOffer");

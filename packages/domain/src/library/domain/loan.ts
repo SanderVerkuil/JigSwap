@@ -90,6 +90,13 @@ export class Loan {
     return this.close("recalled", now);
   }
 
+  // The copy changed owner while the loan was open (a settled swap or sale moved it): possession
+  // went to the new owner with it, so the loan ends, closed on the owner's side (recalled).
+  endByTransfer(now: Date): Result<void, LibraryError> {
+    if (this.state.status !== "open") return err(LibraryError.loanNotOpen());
+    return this.close("recalled", now);
+  }
+
   pullEvents(): readonly DomainEvent[] {
     const drained = this.events;
     this.events = [];

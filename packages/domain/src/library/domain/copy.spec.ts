@@ -315,6 +315,27 @@ describe("Copy possession (lend / return)", () => {
     expect(copy.sharing.visibility).toBe("private");
   });
 
+  // One loan at a time: a copy someone else holds is not lent out again until it is back.
+  it("lendOut refuses with AlreadyLentOut while the copy is out, changing nothing", () => {
+    const copy = acquire();
+    copy.lendOut(borrower, NOW);
+    copy.pullEvents();
+    const before = copy.toState();
+    const result = copy.lendOut(toOwnerId("carol"), LATER);
+    expect(result.isErr && result.error.code).toBe("AlreadyLentOut");
+    expect(copy.toState()).toEqual(before);
+    expect(copy.pullEvents()).toHaveLength(0);
+  });
+
+  it("lendOut works again once the copy is back with its owner", () => {
+    const copy = acquire();
+    copy.lendOut(borrower, NOW);
+    copy.returnToOwner(NOW);
+    const carol = toOwnerId("carol");
+    expect(copy.lendOut(carol, LATER).isOk).toBe(true);
+    expect(copy.heldBy).toBe(carol);
+  });
+
   it("returnToOwner restores possession to the owner", () => {
     const copy = acquire();
     copy.lendOut(borrower, NOW);

@@ -18,7 +18,8 @@ export interface RecallLoanDeps {
 }
 
 // The owner asks for the copy back: close the loan (only the lender — or a household manager of the
-// copy acting for them — may) and return possession.
+// copy acting for them — may) and return possession, but only while this loan's borrower holds the
+// copy: closing an older loan never takes the copy away from whoever holds it now.
 export const makeRecallLoan =
   (deps: RecallLoanDeps): RecallLoan =>
   async (cmd: CloseLoanCommand) => {
@@ -39,15 +40,16 @@ export const makeRecallLoan =
     const closed = loan.recallByOwner(recaller, now);
     if (closed.isErr) return err(closed.error);
 
-    if (copy) {
-      const returned = copy.returnToOwner(now);
+    const heldUnderLoan = copy?.heldBy === loan.borrowerId ? copy : null;
+    if (heldUnderLoan) {
+      const returned = heldUnderLoan.returnToOwner(now);
       if (returned.isErr) return err(returned.error);
     }
     await deps.loans.save(loan);
-    if (copy) await deps.copies.save(copy);
+    if (heldUnderLoan) await deps.copies.save(heldUnderLoan);
     await deps.events.publish([
       ...loan.pullEvents(),
-      ...(copy?.pullEvents() ?? []),
+      ...(heldUnderLoan?.pullEvents() ?? []),
     ]);
     return ok(undefined);
   };

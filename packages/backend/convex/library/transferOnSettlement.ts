@@ -6,6 +6,7 @@ import {
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { convexCopyRepository } from "./adapters/convexCopyRepository";
+import { convexLoanRepository } from "./adapters/convexLoanRepository";
 import { libraryEventPublisher } from "./adapters/eventPublisher";
 import { systemClock } from "./adapters/systemClock";
 import { toConvexError } from "./errors";
@@ -16,6 +17,7 @@ import { toConvexError } from "./errors";
 // reaches here. Runs AFTER the custody subscriber in dispatch so custody records the pre-transfer owner.
 // The move is refused (OwnershipChanged) once the copy no longer belongs to the event's
 // expectedPreviousOwner, the owner the deal was made with; events stored without it transfer as before.
+// Possession moves with ownership, so a loan still open on the copy ends (recalled) with the move.
 export const handleDomainEvent = async (
   ctx: MutationCtx,
   event: Doc<"domainEvents">,
@@ -28,6 +30,7 @@ export const handleDomainEvent = async (
 
   const transfer = makeTransferCopyOwnership({
     copies: convexCopyRepository(ctx),
+    loans: convexLoanRepository(ctx),
     events: libraryEventPublisher(ctx),
     clock: systemClock,
   });

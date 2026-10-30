@@ -353,7 +353,9 @@ useMutation(gateway.exchange.propose)(...)
 
 For a `lend` kind, settlement emits `PossessionTransferred`; `library/openLoanOnSettlement.ts`
 opens a `Loan` and moves `heldBy` to the borrower (ownership never moves), only while the event's
-`lender` still owns the copy.
+`lender` still owns the copy and no other loan on it is open (one loan per copy, `AlreadyLentOut`).
+Returning or recalling a loan gives possession back only while that loan's borrower holds the copy,
+and a transfer (`transferOnSettlement`) ends any loan still open on the copy.
 
 ### 3.4 Image upload (Convex Storage)
 

@@ -16,8 +16,9 @@ export interface OpenLoanDeps {
 
 // Settlement reaction: open an open-ended loan and hand possession of the copy to the borrower.
 // The lender is the copy's current owner, and must be the owner the lend was agreed with
-// (OwnershipChanged otherwise): a copy is never lent out of someone else's library. Ownership is
-// untouched (only heldBy moves).
+// (OwnershipChanged otherwise): a copy is never lent out of someone else's library. One loan per
+// copy: while another loan on it is open, or anyone but the owner holds it, nothing opens
+// (AlreadyLentOut). Ownership is untouched (only heldBy moves).
 export const makeOpenLoan =
   (deps: OpenLoanDeps): OpenLoan =>
   async (cmd: OpenLoanCommand) => {
@@ -25,6 +26,9 @@ export const makeOpenLoan =
     if (!copy) return err(LibraryApplicationError.copyNotFound(cmd.copyId));
     if (cmd.lender !== undefined && copy.ownerId !== cmd.lender) {
       return err(LibraryError.ownershipChanged());
+    }
+    if ((await deps.loans.findOpenByCopy(cmd.copyId)).length > 0) {
+      return err(LibraryError.alreadyLentOut());
     }
 
     const now = deps.clock.now();
@@ -38,7 +42,8 @@ export const makeOpenLoan =
     });
     if (opened.isErr) return err(opened.error);
 
-    copy.lendOut(cmd.borrowerId, now);
+    const lent = copy.lendOut(cmd.borrowerId, now);
+    if (lent.isErr) return err(lent.error);
     await deps.loans.save(opened.value);
     await deps.copies.save(copy);
     await deps.events.publish([

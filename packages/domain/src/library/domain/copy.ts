@@ -191,8 +191,12 @@ export class Copy {
 
   // Lend the copy out: possession passes to the borrower (ownership unchanged) and it leaves the
   // market for the loan's duration (offers withdrawn, the owner's visibility choice kept). Driven by
-  // the loan use case; the owner stays this.state.ownerId.
+  // the loan use case; the owner stays this.state.ownerId. One loan at a time: while anyone but the
+  // owner holds the copy it is refused (AlreadyLentOut) and nothing changes.
   lendOut(borrower: OwnerId, now: Date): Result<void, LibraryError> {
+    if (this.state.heldBy !== this.state.ownerId) {
+      return err(LibraryError.alreadyLentOut());
+    }
     this.state = {
       ...this.state,
       heldBy: borrower,

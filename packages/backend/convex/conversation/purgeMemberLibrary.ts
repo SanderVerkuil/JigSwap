@@ -109,9 +109,11 @@ export const cancelOpenExchanges = async (
 
 /**
  * Close the member's open loans on one side (they lent the copy, or borrowed it) as returned, and
- * give the copy back to its owner (`heldBy` cleared: an unset holder is the owner). Written
- * directly: the Loan aggregate's returnByBorrower/recallByOwner are the parties' own moves. The
- * loan row stays as the copy's history. A copy the member lent is deleted by the copies phase.
+ * give the copy back to its owner (`heldBy` cleared: an unset holder is the owner) when that loan's
+ * borrower still holds it: closing an older loan never takes the copy away from whoever holds it
+ * now (the rule return-loan and recall-loan follow). Written directly: the Loan aggregate's
+ * returnByBorrower/recallByOwner are the parties' own moves. The loan row stays as the copy's
+ * history. A copy the member lent is deleted by the copies phase.
  */
 export const closeOpenLoans = async (
   ctx: MutationCtx,
@@ -139,7 +141,7 @@ export const closeOpenLoans = async (
       .query("ownedPuzzles")
       .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", loan.copyId))
       .unique();
-    if (copy && copy.heldBy !== undefined) {
+    if (copy && copy.heldBy === loan.borrowerId) {
       await ctx.db.patch(copy._id, { heldBy: undefined, updatedAt: now });
     }
   }

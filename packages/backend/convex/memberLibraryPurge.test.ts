@@ -416,6 +416,39 @@ describe("account deletion: open loans", () => {
     expect(carolCopy?.ownerId).toBe(s.carol);
     expect(carolCopy?.heldBy).toBeUndefined();
   });
+
+  // SEC-36: closing a loan gives the copy back only while that loan's borrower holds it.
+  test("an older loan she borrowed is returned, and the copy stays with Dave who holds it now", async () => {
+    const t = newT();
+    const s = await seedMembers(t);
+    const carolCopy = await insertCopy(t, s.puzzleId, s.carol, {
+      heldBy: s.dave,
+    });
+    const copyId = await aggregateIdOf(t, carolCopy);
+    // Her loan was left open beside Dave's current one (rows from before one loan per copy).
+    const hers = await insertLoan(t, {
+      copyId,
+      lenderId: s.carol,
+      borrowerId: s.alice,
+      status: "open",
+    });
+    const daves = await t.run((ctx) =>
+      ctx.db.insert("loans", {
+        aggregateId: "loan-dave-current",
+        copyId,
+        lenderId: s.carol,
+        borrowerId: s.dave,
+        status: "open",
+        openedAt: Date.now(),
+      }),
+    );
+
+    await deleteMember(t, "alice");
+
+    expect((await t.run((ctx) => ctx.db.get(hers)))?.status).toBe("returned");
+    expect((await t.run((ctx) => ctx.db.get(daves)))?.status).toBe("open");
+    expect((await t.run((ctx) => ctx.db.get(carolCopy)))?.heldBy).toBe(s.dave);
+  });
 });
 
 // A stored blob, standing in for an uploaded photo.
