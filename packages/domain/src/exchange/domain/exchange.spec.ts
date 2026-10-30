@@ -6,6 +6,7 @@ import {
   toMemberId,
 } from "../../shared-kernel";
 import {
+  ExchangeCancelled,
   ExchangeCompleted,
   ExchangeProposed,
   OwnershipTransferred,
@@ -219,7 +220,27 @@ describe("cancel", () => {
     expect(ex.status).toBe("cancelled");
   });
 
-  it("rejects cancel by the recipient (wrong party)", () => {
+  it("lets the recipient call off an accepted exchange", () => {
+    const ex = accepted();
+    const r = ex.cancel(bob, NOW);
+    expect(r.isOk).toBe(true);
+    expect(ex.status).toBe("cancelled");
+    expect(names(ex.pullEvents())).toEqual(["ExchangeCancelled"]);
+  });
+
+  it.each([
+    ["the initiator", alice],
+    ["the recipient", bob],
+  ])("names %s as the member who cancelled", (_, by) => {
+    const ex = accepted();
+    ex.cancel(by, NOW);
+    const [event] = ex.pullEvents();
+    expect(event).toBeInstanceOf(ExchangeCancelled);
+    expect((event as ExchangeCancelled).cancelledBy).toBe(by);
+    expect(event?.occurredAt).toBe(NOW);
+  });
+
+  it("rejects cancel of a pending request by the recipient (they decline it)", () => {
     const ex = propose(swapTerms);
     const r = ex.cancel(bob, NOW);
     expect(r.isErr).toBe(true);
@@ -227,6 +248,24 @@ describe("cancel", () => {
       expect(r.error.code).toBe("WrongParty");
       expect(r.error.message).toBe("Acting member may not cancel");
     }
+    expect(ex.status).toBe("proposed");
+  });
+
+  it("rejects cancel of an accepted exchange by a non-party", () => {
+    const ex = accepted();
+    const r = ex.cancel(toMemberId("eve"), NOW);
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("WrongParty");
+    expect(ex.status).toBe("accepted");
+  });
+
+  it("the recipient can't cancel a completed exchange", () => {
+    const ex = accepted();
+    ex.confirmCompletion(alice, NOW);
+    ex.confirmCompletion(bob, NOW);
+    const r = ex.cancel(bob, NOW);
+    expect(r.isErr).toBe(true);
+    expect(ex.status).toBe("completed");
   });
 
   it("cannot cancel a completed exchange", () => {

@@ -182,13 +182,14 @@ Each context lists: **purpose**, **ubiquitous language** (and any homonym disamb
   Proposed ──accept──► Accepted ──bothConfirm──► Completed
      │ │                  │
      │ └─decline─► Rejected│
-     └───cancel──► Cancelled (from Proposed/Accepted)
+     └───cancel──► Cancelled (initiator from Proposed; either party from Accepted)
                         └────raiseDispute──► Disputed
   ```
 
   Invariants: only legal transitions; kind-specific terms (loan ⇒ `returnDate`; sale ⇒ `price`);
   **a copy may be set aside by at most one accepted Exchange that could still settle** (proposals
-  set nothing aside); **a copy out on loan is set aside for its loan** (nothing on it is proposed,
+  set nothing aside), and either party may cancel an accepted Exchange, so a set-aside copy is never
+  stuck; **a copy out on loan is set aside for its loan** (nothing on it is proposed,
   accepted or settles until it is back); `Completed` requires _both_ parties' confirmation; settlement emits exactly one `OwnershipTransferred` per transferred copy.
 
 - **Uses (ports):** `CopyAvailability` (Library), `VisibilityPolicy` (Sharing — can the recipient even

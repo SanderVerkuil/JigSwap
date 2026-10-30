@@ -461,6 +461,18 @@ describe("makeCancelExchange", () => {
     expect(result.isErr).toBe(true);
     if (result.isErr) expect(result.error.code).toBe("WrongParty");
   });
+
+  // Accepting sets the copy aside, so the recipient needs a way out when the requester goes quiet.
+  it("lets the recipient call off an accepted exchange", async () => {
+    await seedAccepted(h.repo);
+    const result = await makeCancelExchange(h)({
+      exchangeId: exId,
+      actingMemberId: bob,
+    });
+    expect(result.isOk).toBe(true);
+    expect(h.events.names()).toEqual(["ExchangeCancelled"]);
+    expect((await h.repo.findById(exId))?.status).toBe("cancelled");
+  });
 });
 
 describe("makeRaiseDispute", () => {

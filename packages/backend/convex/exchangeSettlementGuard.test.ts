@@ -469,8 +469,8 @@ describe("a stale exchange never holds a copy against its current owner", () => 
   });
 });
 
-const cancel = (t: T, initiator: Name, exchangeId: string) =>
-  as(t, initiator).mutation(api.exchange.cancel.cancel, { exchangeId });
+const cancel = (t: T, party: Name, exchangeId: string) =>
+  as(t, party).mutation(api.exchange.cancel.cancel, { exchangeId });
 
 // One copy, one deal: accepting sets the deal's copies aside for it. Proposals set nothing aside.
 describe("an accepted deal sets its copies aside", () => {
@@ -490,6 +490,45 @@ describe("an accepted deal sets its copies aside", () => {
     await cancel(t, "sock", first);
     await settle(t, second, "vic", "bob");
     expect(await statusOf(t, second)).toBe("completed");
+    expect((await copyRow(t, y)).ownerId).toBe(ids.vic);
+  });
+
+  // Accepting must never trap the owner: a requester who goes quiet can't hold the copy forever.
+  test("the owner can call off an accepted deal the requester went quiet on, and accept another", async () => {
+    const t = convexTest(schema, modules);
+    const { ids, puzzleAggregateId } = await seed(t);
+    const y = await acquire(t, "bob", puzzleAggregateId);
+    await offer(t, "bob", y, { forSale: true });
+    const quiet = await proposeSale(t, "sock", y);
+    const second = await proposeSale(t, "vic", y);
+    await accept(t, "bob", quiet);
+    expect(await codeOf(accept(t, "bob", second))).toBe("CopyReserved");
+
+    await cancel(t, "bob", quiet);
+    expect(await statusOf(t, quiet)).toBe("cancelled");
+    await settle(t, second, "vic", "bob");
+    expect(await statusOf(t, second)).toBe("completed");
+    expect((await copyRow(t, y)).ownerId).toBe(ids.vic);
+  });
+
+  test("either party can clear away an accepted deal that can't settle any more", async () => {
+    const t = convexTest(schema, modules);
+    const { ids, puzzleAggregateId } = await seed(t);
+    const y = await acquire(t, "bob", puzzleAggregateId);
+    await offer(t, "bob", y, { forSale: true });
+    const stale = await proposeSale(t, "sock", y);
+    await accept(t, "bob", stale);
+    await settleAcceptedBeforeOneDealPerCopy(
+      t,
+      await proposeSale(t, "vic", y),
+      "vic",
+      "bob",
+    );
+    expect(await codeOf(confirm(t, "bob", stale))).toBe("RecipientNotOwner");
+
+    // Bob, the deal's recipient, no longer owns Y but can still call the dead deal off.
+    await cancel(t, "bob", stale);
+    expect(await statusOf(t, stale)).toBe("cancelled");
     expect((await copyRow(t, y)).ownerId).toBe(ids.vic);
   });
 

@@ -33,10 +33,14 @@ export class ExchangeRejected implements DomainEvent {
   ) {}
 }
 
+// `cancelledBy` is the party who called the deal off (the initiator, or either party once it was
+// accepted); the other party is the one to tell. Absent from events stored before it existed, which
+// only an initiator could cause.
 export class ExchangeCancelled implements DomainEvent {
   readonly name = "ExchangeCancelled";
   constructor(
     readonly exchangeId: ExchangeId,
+    readonly cancelledBy: MemberId,
     readonly occurredAt: Date,
   ) {}
 }

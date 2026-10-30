@@ -1,7 +1,7 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError, type Value } from "convex/values";
 import { describe, expect, test } from "vitest";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
@@ -336,9 +336,9 @@ describe("exchange.accept / decline / cancel", () => {
     expect(notes.map((n) => n.type)).toContain("trade_declined");
   });
 
-  test("only the initiator may cancel; recipient gets notified", async () => {
+  test("only the initiator may cancel a pending request; recipient gets notified", async () => {
     const t = convexTest(schema, modules);
-    const { id, bob } = await proposeSale(t);
+    const { id, alice, bob } = await proposeSale(t);
     await expectConvexCode(
       asBob(t).mutation(api.exchange.cancel.cancel, { exchangeId: id }),
       "WrongParty",
@@ -348,7 +348,51 @@ describe("exchange.accept / decline / cancel", () => {
     expect(row?.status).toBe("cancelled");
     await flushScheduled(t); // async Notifications subscriber
     const notes = await notificationsFor(t, bob);
-    expect(notes.map((n) => n.type)).toContain("trade_cancelled");
+    expect(notes.map((n) => [n.type, n.actorIds])).toContainEqual([
+      "trade_cancelled",
+      [alice],
+    ]);
+    expect((await notificationsFor(t, alice)).map((n) => n.type)).not.toContain(
+      "trade_cancelled",
+    );
+  });
+
+  // Accepting sets the copy aside for this one deal, so the owner needs a way out when the
+  // requester goes quiet: once accepted, either party may call the deal off.
+  test("the recipient may call off an accepted exchange; the initiator gets notified", async () => {
+    const t = convexTest(schema, modules);
+    const { id, alice, bob } = await proposeSale(t);
+    await asBob(t).mutation(api.exchange.accept.accept, { exchangeId: id });
+    await flushScheduled(t);
+    await asBob(t).mutation(api.exchange.cancel.cancel, { exchangeId: id });
+    expect((await exchangeRow(t, id))?.status).toBe("cancelled");
+    await flushScheduled(t);
+    const toAlice = (await notificationsFor(t, alice)).filter(
+      (n) => n.type === "trade_cancelled",
+    );
+    expect(toAlice.map((n) => n.actorIds)).toEqual([[bob]]);
+    expect((await notificationsFor(t, bob)).map((n) => n.type)).not.toContain(
+      "trade_cancelled",
+    );
+  });
+
+  test("a cancellation recorded before the canceller was carried still tells the recipient", async () => {
+    const t = convexTest(schema, modules);
+    const { id, alice, bob } = await proposeSale(t);
+    await flushScheduled(t);
+    const eventId = await t.run((ctx) =>
+      ctx.db.insert("domainEvents", {
+        name: "ExchangeCancelled",
+        payload: { exchangeId: id },
+        occurredAt: Date.now(),
+        context: "exchange",
+      }),
+    );
+    await t.mutation(internal.events.dispatch.dispatch, { eventId });
+    const toBob = (await notificationsFor(t, bob)).filter(
+      (n) => n.type === "trade_cancelled",
+    );
+    expect(toBob.map((n) => n.actorIds)).toEqual([[alice]]);
   });
 
   test("illegal transition rejected (accept an already-cancelled exchange)", async () => {

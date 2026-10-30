@@ -141,14 +141,20 @@ export class Exchange {
     );
   }
 
-  // Initiator withdraws a proposed or accepted deal.
+  // Call a deal off. The initiator may withdraw a proposed or an accepted deal. Once accepted, the
+  // recipient may call it off too: accepting sets their copy aside for this one deal (accept-exchange),
+  // so they need a way out when the other side goes quiet or the deal can't settle any more. A
+  // proposal the recipient doesn't want is declined, not cancelled.
   cancel(by: MemberId, now: Date): Result<void, ExchangeError> {
     return this.guarded(
       "cancelled",
-      () => this.requireParty(by, "initiator", "cancel"),
+      () =>
+        this.status === "accepted" && this.partyOf(by)
+          ? ok(undefined)
+          : this.requireParty(by, "initiator", "cancel"),
       now,
       () => {
-        this.record(new ExchangeCancelled(this.id, now));
+        this.record(new ExchangeCancelled(this.id, by, now));
       },
     );
   }
