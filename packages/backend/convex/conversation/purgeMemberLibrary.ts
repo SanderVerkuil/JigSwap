@@ -10,7 +10,7 @@ import {
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { householdDeps } from "../household/adapters/deps";
-import { isPreservedBlob } from "../lib/imageModeration/quarantine";
+import { deleteBlobUnlessReferenced } from "../lib/storage/blobLifecycle";
 import { makeNotify } from "../notifications/adapters/makeNotify";
 import { convexCircleRepository } from "../sharing/adapters/convexCircleRepository";
 import { inProcessEventPublisher as sharingEventPublisher } from "../sharing/adapters/inProcessEventPublisher";
@@ -146,15 +146,12 @@ export const closeOpenLoans = async (
   return page;
 };
 
-// Delete a stored blob unless a CSAM escalation preserves it (lib/imageModeration/quarantine).
-// Tolerates a blob that is already gone (a rejected photo's, or a re-encode swap's original).
+// Delete a stored blob unless anything else still holds it: a CSAM escalation preserves it, or a
+// row written before the claim rule holds the same id, such as catalogue box art (SEC-01;
+// lib/storage/blobLifecycle). Tolerates a blob that is already gone (a rejected photo's, or a
+// re-encode swap's original).
 const deleteBlob = async (ctx: MutationCtx, fileId: Id<"_storage">) => {
-  if (await isPreservedBlob(ctx, fileId)) return;
-  try {
-    await ctx.storage.delete(fileId);
-  } catch {
-    // Already gone; nothing references it.
-  }
+  await deleteBlobUnlessReferenced(ctx, fileId);
 };
 
 /**

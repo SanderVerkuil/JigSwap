@@ -119,12 +119,6 @@ export const getPreservedHashes = internalQuery({
   },
 });
 
-// For the Node pipeline (no ctx.db): check before deleting an original blob.
-export const isBlobPreserved = internalQuery({
-  args: { storageId: v.id("_storage") },
-  handler: (ctx, { storageId }) => isPreservedBlob(ctx, storageId),
-});
-
 /**
  * The args every table's `quarantineImage` store mutation takes from the pipeline: the new
  * preserved blob, the uploader (the row may be gone by now), the matched hashes, the provider,

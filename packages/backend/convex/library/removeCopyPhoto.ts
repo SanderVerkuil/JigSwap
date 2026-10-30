@@ -3,10 +3,10 @@ import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { canManageCopy } from "../household/copyAccess";
 import { requireMember } from "../identity/requireMember";
-import { isPreservedBlob } from "../lib/imageModeration/quarantine";
+import { deleteBlobUnlessReferenced } from "../lib/storage/blobLifecycle";
 
 // Owner (or household manage member) removal of an uploaded copy photo: deletes the `ownedPuzzleImages` row AND its storage
-// blob, and clears the copy's cover when this photo was the cover (so it falls back to the
+// blob (unless another row still holds it), and clears the copy's cover when this photo was the cover (so it falls back to the
 // catalogue image). Keyed by the image id; the gallery (getCopyInstanceView) reads the same table,
 // so Convex reactivity drops it from the UI. Mirrors addCopyPhoto's direct read-model write.
 export const removeCopyPhoto = mutation({
@@ -35,13 +35,9 @@ export const removeCopyPhoto = mutation({
     if (image.moderationStatus === "quarantined") return;
 
     await ctx.db.delete(imageId);
-    // Best-effort: drop the stored blob so it doesn't orphan. The row is already gone either way.
-    // A blob preserved for a CSAM escalation (the same file re-uploaded) is never deleted.
-    if (await isPreservedBlob(ctx, image.fileId)) return;
-    try {
-      await ctx.storage.delete(image.fileId);
-    } catch {
-      // A lingering blob is harmless; nothing references it.
-    }
+    // Drop the stored blob so it doesn't orphan, unless anything else holds it: a CSAM escalation
+    // preserves it, or a row written before the claim rule holds the same id, such as catalogue
+    // box art (SEC-01).
+    await deleteBlobUnlessReferenced(ctx, image.fileId);
   },
 });

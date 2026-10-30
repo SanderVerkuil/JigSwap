@@ -10,10 +10,10 @@ import { stampModerationAction } from "../admin/stampModerationAction";
 import {
   applyHashCheckResult,
   hashCheckResultArgs,
-  isPreservedBlob,
   quarantineArgs,
   recordCsamEscalation,
 } from "../lib/imageModeration/quarantine";
+import { deleteBlobUnlessReferenced } from "../lib/storage/blobLifecycle";
 import { needsRescreen } from "../library/adapters/photoModeration";
 
 // DB-facing helpers for the moderateCompletionPhoto Node action, mirroring
@@ -139,15 +139,11 @@ export const detachRejectedCompletionPhoto = async (
       photos: completion.photos.filter((id) => id !== row.fileId),
     });
   }
-  // Tolerate an already-deleted blob; don't fail the decision over a missing file. A blob
-  // preserved for a CSAM escalation (the same file re-attached) is never deleted.
-  if (!(await isPreservedBlob(ctx, row.fileId))) {
-    try {
-      await ctx.storage.delete(row.fileId);
-    } catch {
-      // Nothing references it either way.
-    }
-  }
+  // Tolerate an already-deleted blob; don't fail the decision over a missing file. The sidecar
+  // stays as the audit record, so it is left out of the check; anything else that holds the blob
+  // keeps it: a CSAM escalation preserves it, or a row written before the claim rule holds the
+  // same id, such as catalogue box art (SEC-01).
+  await deleteBlobUnlessReferenced(ctx, row.fileId, { except: row._id });
   return completion?.copySnapshot?.title ?? "Completion photo";
 };
 
