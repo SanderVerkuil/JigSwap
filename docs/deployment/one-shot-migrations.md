@@ -386,7 +386,10 @@ and unread counts on `threadParticipants`, `threads.lastMessage`) is deployed th
 reads work without it (rows without the fields fall back to the old receipt lookup and
 message scans), so there is no deploy ordering pressure: it removes those per-row scans
 from the inbox and the unread badge. It must have run before the follow-up PR that drops
-`threads.readReceipts`.
+`threads.readReceipts`. The paged inbox and the bounded unread badge (PERF-B6m) read rows
+without `lastActivityAt` or `unreadCount` from their own index range on every call (the
+inbox up to 100 of them, each with its thread): confirm the backfill has run, or run it,
+so those ranges are empty.
 
 **Legacy `conversation/backfill:run` (exchange chat → threads):** neither this runbook nor
 the code records whether that older one-shot has completed in production (the legacy

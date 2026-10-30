@@ -143,6 +143,7 @@ import type * as conversation_errors from "../conversation/errors.js";
 import type * as conversation_generateMessageUploadUrl from "../conversation/generateMessageUploadUrl.js";
 import type * as conversation_getCircleThreadId from "../conversation/getCircleThreadId.js";
 import type * as conversation_getCopyConversation from "../conversation/getCopyConversation.js";
+import type * as conversation_getInboxThread from "../conversation/getInboxThread.js";
 import type * as conversation_getMyInbox from "../conversation/getMyInbox.js";
 import type * as conversation_getThreadByExchange from "../conversation/getThreadByExchange.js";
 import type * as conversation_getThreadMessages from "../conversation/getThreadMessages.js";
@@ -735,6 +736,7 @@ declare const fullApi: ApiFromModules<{
   "conversation/generateMessageUploadUrl": typeof conversation_generateMessageUploadUrl;
   "conversation/getCircleThreadId": typeof conversation_getCircleThreadId;
   "conversation/getCopyConversation": typeof conversation_getCopyConversation;
+  "conversation/getInboxThread": typeof conversation_getInboxThread;
   "conversation/getMyInbox": typeof conversation_getMyInbox;
   "conversation/getThreadByExchange": typeof conversation_getThreadByExchange;
   "conversation/getThreadMessages": typeof conversation_getThreadMessages;

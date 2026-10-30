@@ -1,22 +1,31 @@
 import { convexTest, type TestConvex } from "convex-test";
-import { describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
 
-// The bounded unread badge (PERF-B6m, the read side of SEC-24): getUnreadTotal reads a member's
-// unmuted threads with unread messages from by_member_unread and stops early, so it never grows
-// with the number of threads a member holds (a flood of exchange proposals included).
+// Inbox paging and the bounded unread badge (PERF-B6m, the read side of SEC-24): getMyInbox and
+// getUnreadTotal read a member's threads newest-first from their threadParticipants indexes and
+// stop early, so neither grows with the number of threads a member holds (a flood of exchange
+// proposals included). getInboxThread serves the open thread's header wherever it sits.
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 type T = TestConvex<typeof schema>;
+
+beforeEach(() => {
+  // getMyInbox warns about dropped (corrupt) exchange threads; keep the run quiet.
+  vi.spyOn(console, "warn").mockImplementation(() => {});
+});
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 const BASE = 1_700_000_000_000;
 
 const asUser = (t: T, name: string) =>
   t.withIdentity({ subject: `clerk_${name}` });
 
-// victim (the inbox owner), mallory (the flooder), alice and carol, and a for-sale copy of victim's
-// that every seeded proposal requests.
+// victim (the inbox owner), mallory (the flooder), alice (a real counterparty), carol (outsider),
+// and a for-sale copy of victim's that every seeded proposal requests.
 const seedWorld = (t: T) =>
   t.run(async (ctx) => {
     const mkUser = (name: string) =>
@@ -48,7 +57,16 @@ const seedWorld = (t: T) =>
       createdAt: BASE,
       updatedAt: BASE,
     });
-    return { victim, mallory, alice, carol, copyId };
+    // A second copy for the one real proposal, so no seeded proposal stands in its way.
+    const liveCopyId = await ctx.db.insert("ownedPuzzles", {
+      puzzleId,
+      ownerId: victim,
+      condition: "good",
+      availability: { forTrade: false, forSale: true, forLend: false },
+      createdAt: BASE,
+      updatedAt: BASE,
+    });
+    return { victim, mallory, alice, carol, copyId, liveCopyId };
   });
 
 type World = Awaited<ReturnType<typeof seedWorld>>;
@@ -108,6 +126,8 @@ const seedThreads = (t: T, world: World, specs: ThreadSpec[]) =>
         kind: "text",
         body: `hello ${i}`,
         sentAt: spec.at,
+        // A copy reference, so each row also pays for its context-copy probe.
+        copyId: world.copyId,
       });
       await ctx.db.insert("threadParticipants", {
         threadAggregateId: aggregateId,
@@ -129,11 +149,137 @@ const seedThreads = (t: T, world: World, specs: ThreadSpec[]) =>
     return ids;
   });
 
+const inboxOf = (t: T, name: string, args: { limit?: number } = {}) =>
+  asUser(t, name).query(api.conversation.getMyInbox.getMyInbox, args);
 const unreadOf = (t: T, name: string) =>
   asUser(t, name).query(api.conversation.getUnreadTotal.getUnreadTotal, {});
+const headerOf = (t: T, name: string, threadId: string) =>
+  asUser(t, name).query(api.conversation.getInboxThread.getInboxThread, {
+    threadId,
+  });
 
 const specs = (count: number, from = BASE + 1_000): ThreadSpec[] =>
   Array.from({ length: count }, (_, i) => ({ at: from + i * 1_000 }));
+
+// Proposes a real exchange (alice -> victim) so the live write path (thread repository, participant
+// rows) is covered next to the seeded rows, and waits for the dispatcher to post its system row.
+const proposeForReal = async (t: T, world: World) => {
+  await asUser(t, "alice").mutation(api.exchange.propose.propose, {
+    recipientId: world.victim,
+    type: "sale",
+    requestedPuzzleId: world.liveCopyId,
+    salePrice: 1000,
+  });
+  for (let i = 0; i < 10; i++) {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await t.finishInProgressScheduledFunctions();
+  }
+  return t.run(async (ctx) => {
+    const thread = (await ctx.db.query("threads").collect()).find((row) =>
+      row.participants.includes(world.alice),
+    );
+    if (!thread) throw new Error("expected the proposal's thread");
+    return thread.aggregateId;
+  });
+};
+
+describe("getMyInbox pages by activity", () => {
+  test("the default window is the newest 30 threads; a larger limit shows older ones", async () => {
+    const t = convexTest(schema, modules);
+    const world = await seedWorld(t);
+    const seeded = await seedThreads(t, world, specs(60));
+    const live = await proposeForReal(t, world);
+    const newestFirst = [live, ...[...seeded].reverse()];
+
+    const page = await inboxOf(t, "victim");
+    expect(page.map((row) => row.threadId)).toEqual(newestFirst.slice(0, 30));
+
+    const all = await inboxOf(t, "victim", { limit: 61 });
+    expect(all.map((row) => row.threadId)).toEqual(newestFirst);
+    // The proposal's thread renders like any other row.
+    expect(all[0].subject.kind).toBe("exchange");
+    expect(all[0].unreadCount).toBe(1);
+  });
+
+  test("limit is clamped to 1..100", async () => {
+    const t = convexTest(schema, modules);
+    const world = await seedWorld(t);
+    await seedThreads(t, world, specs(105));
+
+    expect(await inboxOf(t, "victim", { limit: 0 })).toHaveLength(1);
+    expect(await inboxOf(t, "victim", { limit: -5 })).toHaveLength(1);
+    expect(await inboxOf(t, "victim", { limit: 2.5 })).toHaveLength(2);
+    expect(await inboxOf(t, "victim", { limit: 10_000 })).toHaveLength(100);
+    expect(await inboxOf(t, "victim", { limit: Number.NaN })).toHaveLength(30);
+  });
+
+  test("rows written before lastActivityAt existed are merged in by thread activity", async () => {
+    const t = convexTest(schema, modules);
+    const world = await seedWorld(t);
+    const ids = await seedThreads(t, world, [
+      { at: BASE + 1_000 },
+      { at: BASE + 2_000, legacy: true },
+      { at: BASE + 3_000 },
+      { at: BASE + 4_000, legacy: true },
+      { at: BASE + 5_000 },
+    ]);
+
+    const inbox = await inboxOf(t, "victim");
+    expect(inbox.map((row) => row.threadId)).toEqual([...ids].reverse());
+    // A legacy row's unread count comes from the message scan.
+    expect(inbox.map((row) => row.unreadCount)).toEqual([1, 1, 1, 1, 1]);
+    expect(
+      (await inboxOf(t, "victim", { limit: 2 })).map((row) => row.threadId),
+    ).toEqual([ids[4], ids[3]]);
+  });
+
+  test("threads that no longer render are skipped without shortening the page", async () => {
+    const t = convexTest(schema, modules);
+    const world = await seedWorld(t);
+    const ids = await seedThreads(t, world, specs(40));
+    // The five newest lose their exchange row (their subject no longer resolves).
+    await t.run(async (ctx) => {
+      for (const id of ids.slice(-5)) {
+        const thread = await ctx.db
+          .query("threads")
+          .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", id))
+          .unique();
+        if (thread?.exchangeId) await ctx.db.delete(thread.exchangeId);
+      }
+    });
+
+    const page = await inboxOf(t, "victim");
+    expect(page.map((row) => row.threadId)).toEqual(
+      ids.slice(0, 35).reverse().slice(0, 30),
+    );
+  });
+
+  test("a flood of threads does not grow the read", async () => {
+    const t = convexTest({
+      schema,
+      modules,
+      transactionLimits: { documentsRead: 1_000 },
+    });
+    const world = await seedWorld(t);
+    await seedThreads(t, world, specs(400));
+
+    expect(await inboxOf(t, "victim")).toHaveLength(30);
+  });
+
+  test("the largest page uses at most half of Convex's 4,096 queries per function", async () => {
+    // About 18 queries per row here (one copy reference each); 200 rows came to ~3,500, too close
+    // to the limit once threads reference a few copies, hence the cap of 100.
+    const t = convexTest({
+      schema,
+      modules,
+      transactionLimits: { databaseQueries: 2_048 },
+    });
+    const world = await seedWorld(t);
+    await seedThreads(t, world, specs(400));
+
+    expect(await inboxOf(t, "victim", { limit: 100 })).toHaveLength(100);
+  });
+});
 
 describe("getUnreadTotal is bounded", () => {
   test("stops at 50 (the badge reads 50+) without reading every thread", async () => {
@@ -199,5 +345,92 @@ describe("getUnreadTotal is bounded", () => {
       { at: BASE + 1_000, unread: 2 },
     ]);
     expect(await unreadOf(t, "victim")).toBe(2);
+  });
+});
+
+describe("getInboxThread", () => {
+  test("serves a thread outside the default window, as its inbox row", async () => {
+    const t = convexTest(schema, modules);
+    const world = await seedWorld(t);
+    const ids = await seedThreads(t, world, specs(45));
+    const oldest = ids[0];
+    expect(
+      (await inboxOf(t, "victim")).some((row) => row.threadId === oldest),
+    ).toBe(false);
+
+    const row = (await inboxOf(t, "victim", { limit: 45 })).find(
+      (view) => view.threadId === oldest,
+    );
+    expect(row).toBeDefined();
+    expect(await headerOf(t, "victim", oldest)).toEqual(row);
+    // The other party sees their own side of it.
+    expect((await headerOf(t, "mallory", oldest))?.threadId).toBe(oldest);
+  });
+
+  test("is null for a non-participant, an unknown thread and an unlisted circle thread", async () => {
+    const t = convexTest(schema, modules);
+    const world = await seedWorld(t);
+    const [threadId] = await seedThreads(t, world, specs(1));
+    expect(await headerOf(t, "carol", threadId)).toBeNull();
+    expect(await headerOf(t, "victim", "no_such_thread")).toBeNull();
+
+    // A circle thread the victim still has a row in, but whose circle no longer seats them
+    // (the participant sync after a removal has not run yet).
+    const circleThreadId = await t.run(async (ctx) => {
+      await ctx.db.insert("circles", {
+        aggregateId: "circle_1",
+        ownerId: world.alice,
+        name: "Puzzle Club",
+        memberships: [
+          {
+            id: "seat_alice",
+            memberId: world.alice,
+            permission: "Admin",
+            joinedAt: BASE,
+          },
+        ],
+        createdAt: BASE,
+      });
+      const participants = [world.alice, world.victim];
+      await ctx.db.insert("threads", {
+        aggregateId: "circle_thread_1",
+        subjectKind: "circle",
+        circleId: "circle_1",
+        participants,
+        participantsKey: "circle:circle_1",
+        lastMessageAt: BASE + 2_000,
+        lastMessage: {
+          messageId: "circle_m",
+          authorId: world.alice,
+          kind: "text",
+          body: "Welcome!",
+          sentAt: BASE + 2_000,
+        },
+        createdAt: BASE,
+      });
+      for (const memberId of participants) {
+        await ctx.db.insert("threadParticipants", {
+          threadAggregateId: "circle_thread_1",
+          memberId,
+          joinedAt: BASE,
+          unreadCount: memberId === world.victim ? 1 : 0,
+          lastActivityAt: BASE + 2_000,
+        });
+      }
+      return "circle_thread_1";
+    });
+    expect(await headerOf(t, "victim", circleThreadId)).toBeNull();
+    expect((await headerOf(t, "alice", circleThreadId))?.subject.kind).toBe(
+      "circle",
+    );
+  });
+
+  test("requires a signed-in member", async () => {
+    const t = convexTest(schema, modules);
+    const world = await seedWorld(t);
+    const [threadId] = await seedThreads(t, world, specs(1));
+    await expect(
+      t.query(api.conversation.getInboxThread.getInboxThread, { threadId }),
+    ).rejects.toThrow();
   });
 });
