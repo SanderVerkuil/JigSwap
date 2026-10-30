@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "@/compat/navigation";
+import { isImmersiveMobileRoute } from "@/components/dashboard-layout/route-meta";
 import { isTextEntry } from "@/components/quick-start/logic";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,8 +10,10 @@ import {
 } from "@/components/whats-new/surface-busy";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { safeStorage } from "@/lib/safe-storage";
+import { cn } from "@/lib/utils";
 import {
   Bell,
+  ChevronDown,
   Download,
   EllipsisVertical,
   Share,
@@ -20,6 +23,7 @@ import {
 import { useEffect, useId, useState, type ReactNode } from "react";
 import { useTranslations } from "use-intl";
 import {
+  installTipBlockedOn,
   neverShow,
   recordVisit,
   shouldAutoShow,
@@ -65,12 +69,13 @@ function useTextEntryFocused(): boolean {
   return focused;
 }
 
-// The mobile "Add JigSwap to your home screen" tip: a non-modal card stuck just above the tab bar.
-// It shows itself from the second session on this device, never when installed / unsupported /
-// on desktop, and only when no tour, dialog or prompt is on screen; the quick sheet's "Install
-// app" row can also open it on iOS, on Android Chrome when no install prompt was captured, and on
-// Firefox (Android and iOS), which never fires one. Mounted in the dashboard shell only, so public
-// and auth pages never see it.
+// The mobile "Add JigSwap to your home screen" tip: a non-modal row stuck just above the tab bar
+// that expands into the install steps. It shows itself from the second session on this device,
+// never when installed / unsupported / on desktop, never on the pages installTipBlockedOn lists
+// (an open thread, the quick start, forms), and only when no tour, dialog or prompt is on screen;
+// the quick sheet's "Install app" row can also open it (expanded) on iOS, on Android Chrome when
+// no install prompt was captured, and on Firefox (Android and iOS), which never fires one.
+// Mounted in the dashboard shell only, so public and auth pages never see it.
 export function InstallAppTip() {
   const pathname = usePathname();
   const mobile = useIsMobile();
@@ -78,6 +83,7 @@ export function InstallAppTip() {
   const requested = useInstallTipRequested();
   const textFocused = useTextEntryFocused();
   const [autoShown, setAutoShown] = useState(false);
+  const blocked = installTipBlockedOn(pathname);
 
   // Count this session once (the first visit is never shown the tip).
   useEffect(() => {
@@ -86,8 +92,9 @@ export function InstallAppTip() {
     writeTipState(recordVisit(readTipState()));
   }, []);
 
+  // Re-armed on every navigation, so a blocked page only postpones the tip to the next one.
   useEffect(() => {
-    if (autoShown || !method || !mobile) return;
+    if (autoShown || !method || !mobile || blocked) return;
     if (safeStorage.getItem("session", SHOWN_KEY) === "1") return;
     const timer = window.setTimeout(() => {
       const show = shouldAutoShow({
@@ -108,7 +115,7 @@ export function InstallAppTip() {
       trackInstall("install_tip_shown", { method, trigger: "auto" });
     }, SHOW_DELAY_MS);
     return () => window.clearTimeout(timer);
-  }, [pathname, method, mobile, autoShown]);
+  }, [pathname, method, mobile, autoShown, blocked]);
 
   useEffect(() => {
     if (requested && method) {
@@ -117,7 +124,11 @@ export function InstallAppTip() {
   }, [requested, method]);
 
   const open = (autoShown || requested) && method !== null && mobile;
-  if (!open || textFocused) return null;
+  // A tip that is up steps aside on blocked pages, and is back on the next one: nothing is
+  // dismissed. One the member asked for still shows there, except on an open thread, whose
+  // composer owns the bottom of the screen.
+  const hidden = requested ? isImmersiveMobileRoute(pathname) : blocked;
+  if (!open || textFocused || hidden) return null;
 
   const close = (action: "snooze" | "never" | "installed") => {
     // Focus first: the control that has it is about to unmount.
@@ -139,7 +150,10 @@ export function InstallAppTip() {
 
   return (
     <InstallAppTipView
+      // Asked for from the quick sheet: open on the steps (remounting a collapsed auto tip).
+      key={requested ? "requested" : "auto"}
       method={method}
+      defaultExpanded={requested}
       onInstall={() => {
         void runInstallPrompt("tip").then((accepted) => {
           if (accepted) close("installed");
@@ -155,66 +169,128 @@ const TIP_ID = "install-app-tip";
 
 export function InstallAppTipView({
   method,
+  defaultExpanded = false,
   onInstall,
   onSnooze,
   onNever,
 }: {
   method: InstallMethod;
+  /** Open on the steps (the member asked for them) instead of the one-row summary. */
+  defaultExpanded?: boolean;
   onInstall: () => void;
   onSnooze: () => void;
   onNever: () => void;
 }) {
   const t = useTranslations("installApp");
   const headingId = useId();
+  const bodyId = useId();
+  const [expanded, setExpanded] = useState(defaultExpanded);
 
   return (
-    // Sticky just above the tab bar (57px = its 56px row + 1px border; keep in sync with
-    // MobileTabBar). The bottom padding clears the raised "+" (22px overhang + 4px ring) with an
-    // 8px gap and, in normal flow, reserves room so the last content row never hides under it.
-    <div className="pointer-events-none sticky bottom-[57px] z-20 shrink-0 px-3 pb-[34px] md:hidden">
+    // Sticky just above the tab bar, at the height it publishes (it grows in the installed app;
+    // 57px = its 56px row + 1px border until it has measured). The bottom padding clears the
+    // raised "+" (12px, see MOBILE_TAB_BAR_RAISE) with an 8px gap and, in normal flow, reserves
+    // room so the last content row never hides under the tip.
+    <div className="pointer-events-none sticky bottom-[var(--mobile-tab-bar-height,57px)] z-20 shrink-0 px-3 pb-5 md:hidden">
       <section
         id={TIP_ID}
         aria-labelledby={headingId}
-        className="bg-card text-card-foreground border-jigsaw-primary/20 animate-in fade-in slide-in-from-bottom-3 pointer-events-auto rounded-2xl border p-4 shadow-[0_12px_32px_-12px_rgb(0_0_0/0.28)] duration-300 ease-out motion-reduce:animate-none dark:shadow-[0_12px_32px_-8px_rgb(0_0_0/0.6)]"
+        className="bg-card text-card-foreground border-jigsaw-primary/20 animate-in fade-in slide-in-from-bottom-3 pointer-events-auto rounded-2xl border p-1.5 pl-3 shadow-[0_12px_32px_-12px_rgb(0_0_0/0.28)] duration-300 ease-out motion-reduce:animate-none dark:shadow-[0_12px_32px_-8px_rgb(0_0_0/0.6)]"
       >
-        <div className="flex items-start gap-3">
+        {/* One row: the app icon, what this is, How? to expand, and ✕ for "not now". */}
+        <div className="flex items-center gap-2">
           <img
             src="/icon-192.png"
             alt=""
-            width={42}
-            height={42}
-            className="ring-border size-[42px] shrink-0 rounded-[10px] bg-white p-1 ring-1"
+            width={32}
+            height={32}
+            className="ring-border size-8 shrink-0 rounded-lg bg-white p-0.5 ring-1"
           />
-          <div className="min-w-0 flex-1">
-            <h2 id={headingId} className="text-sm font-semibold">
-              {t("title")}
-            </h2>
-            {method === "prompt" && (
-              <p className="text-muted-foreground mt-0.5 text-sm">
-                {t("promptBody")}
-              </p>
-            )}
-          </div>
+          {/* Wraps rather than truncates on narrow phones; two lines still fit the 44px row. */}
+          <h2
+            id={headingId}
+            className="line-clamp-2 min-w-0 flex-1 text-sm leading-tight font-semibold"
+          >
+            {t("collapsedTitle")}
+          </h2>
+          <Button
+            variant="ghost"
+            className="h-11 shrink-0 gap-1"
+            aria-expanded={expanded}
+            aria-controls={bodyId}
+            onClick={() => setExpanded((value) => !value)}
+          >
+            {t("how")}
+            <ChevronDown
+              aria-hidden
+              className={cn(
+                "transition-transform motion-reduce:transition-none",
+                expanded && "rotate-180",
+              )}
+            />
+          </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="-mt-2 -mr-2 size-11"
-            aria-label={t("dontShowAgain")}
-            title={t("dontShowAgain")}
-            onClick={onNever}
+            className="size-11 shrink-0"
+            aria-label={t("notNow")}
+            title={t("notNow")}
+            onClick={onSnooze}
           >
             <X aria-hidden />
           </Button>
         </div>
 
-        {(method === "ios" || method === "ios-firefox") && (
-          <>
-            <ol className="mt-3 space-y-2 text-sm">
+        <div id={bodyId} hidden={!expanded} className="pr-1.5 pb-1.5">
+          {method === "prompt" && (
+            <p className="text-muted-foreground mt-1 text-sm">
+              {t("promptBody")}
+            </p>
+          )}
+
+          {(method === "ios" || method === "ios-firefox") && (
+            <>
+              <ol className="mt-2 space-y-2 text-sm">
+                <Step number={1}>
+                  {t.rich(
+                    method === "ios" ? "iosStepShare" : "firefoxIosStepShare",
+                    {
+                      icon: () => <Glyph icon={<Share className="size-4" />} />,
+                      b: (chunks) => (
+                        <strong className="font-semibold">{chunks}</strong>
+                      ),
+                    },
+                  )}
+                </Step>
+                <Step number={2}>
+                  {t.rich("iosStepAdd", {
+                    icon: () => (
+                      <Glyph icon={<SquarePlus className="size-4" />} />
+                    ),
+                    b: (chunks) => (
+                      <strong className="font-semibold">{chunks}</strong>
+                    ),
+                  })}
+                </Step>
+              </ol>
+              <p className="text-muted-foreground mt-3 flex items-start gap-1.5 text-xs">
+                <Bell aria-hidden className="mt-px size-3.5 shrink-0" />
+                {t("iosPush")}
+              </p>
+            </>
+          )}
+
+          {(method === "android-menu" || method === "firefox-menu") && (
+            <ol className="mt-2 space-y-2 text-sm">
               <Step number={1}>
                 {t.rich(
-                  method === "ios" ? "iosStepShare" : "firefoxIosStepShare",
+                  method === "android-menu"
+                    ? "androidStepMenu"
+                    : "firefoxStepMenu",
                   {
-                    icon: () => <Glyph icon={<Share className="size-4" />} />,
+                    icon: () => (
+                      <Glyph icon={<EllipsisVertical className="size-4" />} />
+                    ),
                     b: (chunks) => (
                       <strong className="font-semibold">{chunks}</strong>
                     ),
@@ -222,69 +298,38 @@ export function InstallAppTipView({
                 )}
               </Step>
               <Step number={2}>
-                {t.rich("iosStepAdd", {
-                  icon: () => (
-                    <Glyph icon={<SquarePlus className="size-4" />} />
-                  ),
-                  b: (chunks) => (
-                    <strong className="font-semibold">{chunks}</strong>
-                  ),
-                })}
+                {t.rich(
+                  method === "android-menu"
+                    ? "androidStepInstall"
+                    : "firefoxStepAdd",
+                  {
+                    icon: () => (
+                      <Glyph icon={<Download className="size-4" />} />
+                    ),
+                    b: (chunks) => (
+                      <strong className="font-semibold">{chunks}</strong>
+                    ),
+                  },
+                )}
               </Step>
             </ol>
-            <p className="text-muted-foreground mt-3 flex items-start gap-1.5 text-xs">
-              <Bell aria-hidden className="mt-px size-3.5 shrink-0" />
-              {t("iosPush")}
-            </p>
-          </>
-        )}
-
-        {(method === "android-menu" || method === "firefox-menu") && (
-          <ol className="mt-3 space-y-2 text-sm">
-            <Step number={1}>
-              {t.rich(
-                method === "android-menu"
-                  ? "androidStepMenu"
-                  : "firefoxStepMenu",
-                {
-                  icon: () => (
-                    <Glyph icon={<EllipsisVertical className="size-4" />} />
-                  ),
-                  b: (chunks) => (
-                    <strong className="font-semibold">{chunks}</strong>
-                  ),
-                },
-              )}
-            </Step>
-            <Step number={2}>
-              {t.rich(
-                method === "android-menu"
-                  ? "androidStepInstall"
-                  : "firefoxStepAdd",
-                {
-                  icon: () => <Glyph icon={<Download className="size-4" />} />,
-                  b: (chunks) => (
-                    <strong className="font-semibold">{chunks}</strong>
-                  ),
-                },
-              )}
-            </Step>
-          </ol>
-        )}
-
-        <div className="mt-3 flex justify-end gap-2">
-          {method === "prompt" && (
-            <Button
-              className="bg-jigsaw-primary hover:bg-jigsaw-primary/90 h-11 flex-1 text-white"
-              onClick={onInstall}
-            >
-              <Download aria-hidden />
-              {t("install")}
-            </Button>
           )}
-          <Button variant="ghost" className="h-11" onClick={onSnooze}>
-            {t("notNow")}
-          </Button>
+
+          <div className="mt-3 flex justify-end gap-2">
+            {method === "prompt" && (
+              <Button
+                className="bg-jigsaw-primary hover:bg-jigsaw-primary/90 h-11 flex-1 text-white"
+                onClick={onInstall}
+              >
+                <Download aria-hidden />
+                {t("install")}
+              </Button>
+            )}
+            {/* ✕ only snoozes; turning the tip off for good is this explicit choice. */}
+            <Button variant="ghost" className="h-11" onClick={onNever}>
+              {t("dontShowAgain")}
+            </Button>
+          </div>
         </div>
       </section>
     </div>

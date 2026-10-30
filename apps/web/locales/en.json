@@ -5238,7 +5238,8 @@
     }
   },
   "installApp": {
-    "title": "Add JigSwap to your home screen",
+    "collapsedTitle": "Install JigSwap",
+    "how": "How?",
     "promptBody": "Open it like an app: full screen, one tap away.",
     "install": "Install app",
     "notNow": "Not now",

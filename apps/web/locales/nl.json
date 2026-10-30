@@ -5238,7 +5238,8 @@
     }
   },
   "installApp": {
-    "title": "Zet JigSwap op je beginscherm",
+    "collapsedTitle": "JigSwap installeren",
+    "how": "Hoe?",
     "promptBody": "Open het als een app: schermvullend, met één tik.",
     "install": "App installeren",
     "notNow": "Niet nu",

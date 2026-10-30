@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   EMPTY_TIP_STATE,
   installMethod,
+  installTipBlockedOn,
   iosCanAddToHomeScreen,
   isAndroidChrome,
   isAndroidFirefox,
@@ -289,5 +290,48 @@ describe("shouldAutoShow", () => {
       shouldAutoShow({ ...base, state: snoozed, now: now + SNOOZE_MS }),
     ).toBe(true);
     expect(shouldAutoShow({ ...base, state: neverShow(seasoned) })).toBe(false);
+  });
+});
+
+describe("installTipBlockedOn", () => {
+  it("blocks the open thread and the new-conversation pane, not the inbox", () => {
+    expect(installTipBlockedOn("/messages/abc123")).toBe(true);
+    expect(installTipBlockedOn("/messages/new")).toBe(true);
+    expect(installTipBlockedOn("/messages")).toBe(false);
+  });
+
+  it("blocks the quick start, whose footer docks above the tab bar", () => {
+    expect(installTipBlockedOn("/welcome")).toBe(true);
+    expect(installTipBlockedOn("/welcome/")).toBe(true);
+    expect(installTipBlockedOn("/welcome/puzzles")).toBe(true);
+    expect(installTipBlockedOn("/welcomeback")).toBe(false);
+  });
+
+  it("blocks the form routes", () => {
+    for (const path of [
+      "/my-puzzles/add/new",
+      "/my-puzzles/add/quick",
+      "/puzzles/add",
+      "/puzzles/k57abc/suggest-edit",
+      "/completions/new",
+      "/admin/puzzles/k57abc/edit",
+    ]) {
+      expect(installTipBlockedOn(path), path).toBe(true);
+    }
+  });
+
+  it("leaves ordinary pages alone", () => {
+    for (const path of [
+      "/dashboard",
+      "/my-puzzles",
+      "/my-puzzles/add",
+      "/puzzles",
+      "/puzzles/k57abc",
+      "/completions",
+      "/notifications",
+      "/trades",
+    ]) {
+      expect(installTipBlockedOn(path), path).toBe(false);
+    }
   });
 });
