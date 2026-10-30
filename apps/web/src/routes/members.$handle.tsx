@@ -14,6 +14,7 @@ import {
   INVITE_KEY,
   shouldHandOffInvite,
 } from "@/components/social/invite-landing";
+import { QrFollowPrompt } from "@/components/social/qr-follow-prompt";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway, Id } from "@/gateway";
@@ -30,10 +31,8 @@ import {
   useNavigate,
   useRouteContext,
 } from "@tanstack/react-router";
-import type { FunctionReturnType } from "convex/server";
 import { Eye } from "lucide-react";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
 // The canonical member page (spec Phase 1): one URL for every viewer tier.
@@ -283,7 +282,7 @@ function AuthedMemberPage({
     <>
       {isSelf && <OwnerPreviewBanner locked={profile.locked} />}
       {!isSelf && invite && inviteValid && inviteKind === "network" && (
-        <QrFollowPrompt token={invite} name={name} />
+        <QrFollowPrompt token={invite} name={name} locked={profile.locked} />
       )}
       {!isSelf && !handingOff && invite && inviteKind === "household" && (
         <HouseholdLinkInvite token={invite} fallbackName={name} />
@@ -295,36 +294,6 @@ function AuthedMemberPage({
         requestedHandle={handle}
       />
     </>
-  );
-}
-
-// Logged-in one-tap mutual follow, shown when a foreign viewer lands via a live
-// invite token (the meetup QR-scan case). acceptQrFollow no-ops silently for
-// own/invalid/cooldown tokens; on established === true both edges now exist.
-function QrFollowPrompt({ token, name }: { token: string; name: string }) {
-  const t = useTranslations("invite");
-  const { mutate, isPending } = useMutation({
-    mutationFn: useConvexMutation(gateway.social.acceptQrFollow),
-    onSuccess: (
-      result: FunctionReturnType<typeof gateway.social.acceptQrFollow>,
-    ) => {
-      if (result.established) toast.success(t("followEstablished", { name }));
-    },
-  });
-  return (
-    <div className="border-jigsaw-primary/20 bg-jigsaw-primary/5 mb-6 flex w-full flex-col gap-3 rounded-xl border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-      <p className="text-muted-foreground text-sm">
-        {t("followEachOther", { name })}
-      </p>
-      <Button
-        size="sm"
-        disabled={isPending}
-        onClick={() => mutate({ token })}
-        className="shrink-0"
-      >
-        {t("followEachOtherCta")}
-      </Button>
-    </div>
   );
 }
 

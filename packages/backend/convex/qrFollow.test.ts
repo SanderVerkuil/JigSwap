@@ -162,7 +162,7 @@ describe("acceptQrFollow", () => {
     expect(await followEdges(t, alice, bob)).toEqual({ ab: false, ba: false });
   });
 
-  test("auto-approves a pending follow request between the pair", async () => {
+  test("a public owner's scan approves a pending request left from when they were private", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob } = await seedUsers(t);
     const { token } = await asAlice(t).mutation(
@@ -170,7 +170,9 @@ describe("acceptQrFollow", () => {
       {},
     );
 
-    // Bob has a pending request to (private) Alice — Phase 2 shape
+    // Bob asked to follow Alice while she was private; she has since gone public (no profiles
+    // row reads as public). A public owner may be followed at once, so the stale request goes
+    // too. A PRIVATE owner's pending request is never approved by a scan: see the SEC-42 block.
     await t.run(async (ctx) => {
       await ctx.db.insert("followRequests", {
         aggregateId: crypto.randomUUID(),
@@ -328,7 +330,7 @@ describe("acceptQrFollow", () => {
       {},
     );
 
-    // Alice (private-profile owner) has a pending INCOMING request from Bob.
+    // Alice, now public, still has a pending INCOMING request from Bob from her private days.
     await t.run(async (ctx) => {
       await ctx.db.insert("followRequests", {
         aggregateId: crypto.randomUUID(),
@@ -349,6 +351,240 @@ describe("acceptQrFollow", () => {
     // new_follower: she gained Bob as a follower and deserves to learn it.
     const aliceNotifications = await notificationsFor(t, alice);
     expect(aliceNotifications.map((n) => n.type)).toEqual(["new_follower"]);
+  });
+});
+
+// SEC-42: a token is forwardable, so holding a private member's code is not their consent. A scan
+// of a private owner's code is exactly a follow request (what the Follow button would do), never
+// a forced mutual follow, unless the owner already follows the scanner.
+describe("acceptQrFollow on a private owner (SEC-42)", () => {
+  const makePrivate = (t: TestConvex<typeof schema>, memberId: Id<"users">) =>
+    t.run((ctx) =>
+      ctx.db.insert("profiles", {
+        aggregateId: crypto.randomUUID(),
+        memberId,
+        visibility: "private",
+        updatedAt: Date.now(),
+      }),
+    );
+
+  const requestRows = (
+    t: TestConvex<typeof schema>,
+    requesterId: Id<"users">,
+    targetId: Id<"users">,
+  ) =>
+    t.run((ctx) =>
+      ctx.db
+        .query("followRequests")
+        .withIndex("by_requester_target", (q) =>
+          q.eq("requesterId", requesterId).eq("targetId", targetId),
+        )
+        .collect(),
+    );
+
+  const followsEstablished = (t: TestConvex<typeof schema>, token: string) =>
+    t.run(async (ctx) => {
+      const link = await ctx.db
+        .query("inviteLinks")
+        .withIndex("by_token", (q) => q.eq("token", token))
+        .unique();
+      return link?.followsEstablished;
+    });
+
+  const privateAliceToken = async (t: TestConvex<typeof schema>) => {
+    const users = await seedUsers(t);
+    await makePrivate(t, users.alice);
+    const { token } = await asAlice(t).mutation(
+      api.social.getMyInviteLink.getMyInviteLink,
+      {},
+    );
+    return { ...users, token };
+  };
+
+  test("a scan sends a follow request: no edges, nothing approved, counter untouched", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, token } = await privateAliceToken(t);
+
+    const result = await asBob(t).mutation(
+      api.social.acceptQrFollow.acceptQrFollow,
+      { token },
+    );
+    expect(result).toEqual({ established: false, requested: true });
+    expect(await followEdges(t, alice, bob)).toEqual({ ab: false, ba: false });
+    expect((await requestRows(t, bob, alice)).map((r) => r.status)).toEqual([
+      "pending",
+    ]);
+    expect(await requestRows(t, alice, bob)).toEqual([]);
+    expect(await followsEstablished(t, token)).toBe(0);
+
+    // Alice decides: she hears about a request, not about a new follower.
+    await flushScheduled(t);
+    expect((await notificationsFor(t, alice)).map((n) => n.type)).toEqual([
+      "follow_request_received",
+    ]);
+  });
+
+  test("a repeat scan over a pending request leaves it pending (never auto-approved)", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, token } = await privateAliceToken(t);
+    await asBob(t).mutation(api.social.followMember.followMember, {
+      followeeId: alice,
+    });
+
+    const result = await asBob(t).mutation(
+      api.social.acceptQrFollow.acceptQrFollow,
+      { token },
+    );
+    expect(result).toEqual({ established: false, requested: true });
+    const rows = await requestRows(t, bob, alice);
+    expect(rows.map((r) => r.status)).toEqual(["pending"]);
+    expect(rows[0].approvedViaToken).toBeUndefined();
+    expect(await followEdges(t, alice, bob)).toEqual({ ab: false, ba: false });
+  });
+
+  test("when the private owner already follows the scanner, the scan completes the mutual follow", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, token } = await privateAliceToken(t);
+    await asAlice(t).mutation(api.social.followMember.followMember, {
+      followeeId: bob,
+    });
+
+    const result = await asBob(t).mutation(
+      api.social.acceptQrFollow.acceptQrFollow,
+      { token },
+    );
+    expect(result).toEqual({ established: true });
+    expect(await followEdges(t, alice, bob)).toEqual({ ab: true, ba: true });
+    expect(await requestRows(t, bob, alice)).toEqual([]);
+    expect(await followsEstablished(t, token)).toBe(1);
+  });
+
+  test("an owner's decline inside the cooldown stays silent: reads as requested, nothing changes", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, token } = await privateAliceToken(t);
+    const declinedAt = Date.now();
+    await t.run((ctx) =>
+      ctx.db.insert("followRequests", {
+        aggregateId: crypto.randomUUID(),
+        requesterId: bob,
+        targetId: alice,
+        status: "declined",
+        createdAt: declinedAt,
+        respondedAt: declinedAt,
+      }),
+    );
+
+    // Exactly what Bob's Follow button answers: the decline must not be probeable via a scan.
+    const result = await asBob(t).mutation(
+      api.social.acceptQrFollow.acceptQrFollow,
+      { token },
+    );
+    expect(result).toEqual({ established: false, requested: true });
+    const rows = await requestRows(t, bob, alice);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].status).toBe("declined");
+    expect(rows[0].respondedAt).toBe(declinedAt);
+    expect(await followEdges(t, alice, bob)).toEqual({ ab: false, ba: false });
+    await flushScheduled(t);
+    expect(await notificationsFor(t, alice)).toEqual([]);
+  });
+
+  test("a scanner who declined the owner may still ask, like their Follow button; the decline stands", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, token } = await privateAliceToken(t);
+    const declinedAt = Date.now();
+    await t.run((ctx) =>
+      ctx.db.insert("followRequests", {
+        aggregateId: crypto.randomUUID(),
+        requesterId: alice,
+        targetId: bob,
+        status: "declined",
+        createdAt: declinedAt,
+        respondedAt: declinedAt,
+      }),
+    );
+
+    const result = await asBob(t).mutation(
+      api.social.acceptQrFollow.acceptQrFollow,
+      { token },
+    );
+    expect(result).toEqual({ established: false, requested: true });
+    expect((await requestRows(t, bob, alice)).map((r) => r.status)).toEqual([
+      "pending",
+    ]);
+    const aliceRequest = await requestRows(t, alice, bob);
+    expect(aliceRequest.map((r) => [r.status, r.respondedAt])).toEqual([
+      ["declined", declinedAt],
+    ]);
+    expect(await followEdges(t, alice, bob)).toEqual({ ab: false, ba: false });
+  });
+
+  test("an existing one-way follow (scanner already follows) changes nothing", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, token } = await privateAliceToken(t);
+    await t.run((ctx) =>
+      ctx.db.insert("follows", {
+        aggregateId: crypto.randomUUID(),
+        followerId: bob,
+        followeeId: alice,
+        createdAt: Date.now(),
+      }),
+    );
+
+    const result = await asBob(t).mutation(
+      api.social.acceptQrFollow.acceptQrFollow,
+      { token },
+    );
+    expect(result).toEqual({ established: false });
+    expect(await followEdges(t, alice, bob)).toEqual({ ab: false, ba: true });
+    expect(await requestRows(t, bob, alice)).toEqual([]);
+  });
+
+  test.each([
+    ["the owner blocked the scanner", "owner"],
+    ["the scanner blocked the owner", "scanner"],
+  ] as const)("%s: refused quietly, no rows", async (_, blocker) => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, token } = await privateAliceToken(t);
+    await t.run((ctx) =>
+      ctx.db.insert("blocks", {
+        blockerId: blocker === "owner" ? alice : bob,
+        blockedId: blocker === "owner" ? bob : alice,
+        createdAt: Date.now(),
+      }),
+    );
+
+    const result = await asBob(t).mutation(
+      api.social.acceptQrFollow.acceptQrFollow,
+      { token },
+    );
+    expect(result).toEqual({ established: false });
+    expect(await followEdges(t, alice, bob)).toEqual({ ab: false, ba: false });
+    expect(await requestRows(t, bob, alice)).toEqual([]);
+  });
+
+  test("a public owner keeps the one-tap mutual follow", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seedUsers(t);
+    await t.run((ctx) =>
+      ctx.db.insert("profiles", {
+        aggregateId: crypto.randomUUID(),
+        memberId: alice,
+        visibility: "public",
+        updatedAt: Date.now(),
+      }),
+    );
+    const { token } = await asAlice(t).mutation(
+      api.social.getMyInviteLink.getMyInviteLink,
+      {},
+    );
+
+    const result = await asBob(t).mutation(
+      api.social.acceptQrFollow.acceptQrFollow,
+      { token },
+    );
+    expect(result).toEqual({ established: true });
+    expect(await followEdges(t, alice, bob)).toEqual({ ab: true, ba: true });
   });
 });
 

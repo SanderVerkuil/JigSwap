@@ -48,12 +48,14 @@ export async function inDeclineCooldownEitherWay(
 }
 
 // Establish follow edges in BOTH directions between two members, tolerating edges that already
-// exist, and resolve any RESOLVABLE follow request between the pair. Used by QR scan + accepting
-// an invite link's connection offer — these flows bypass the private-profile request gate that
-// the followMember ENDPOINT applies (Phase 2). Consent-verification (the decline cooldown) is enforced HERE, structurally,
-// so every caller is protected: Convex mutations are public endpoints, and a forwarded invite
-// token in an existing member's hands must not become a way to bypass a decline. It still goes
-// through the domain use case so MemberFollowed events reach the activity feed and notifications.
+// exist, and resolve any RESOLVABLE follow request between the pair. Used by accepting an invite
+// link's connection offer, which bypasses the private-profile request gate that the followMember
+// ENDPOINT applies (Phase 2), and by a QR scan only where that gate would not ask (a public owner,
+// or a private owner who already follows the scanner; SEC-42, acceptQrFollow).
+// Consent-verification (the decline cooldown) is enforced HERE, structurally, so every caller is
+// protected: Convex mutations are public endpoints, and a forwarded invite token in an existing
+// member's hands must not become a way to bypass a decline. It still goes through the domain use
+// case so MemberFollowed events reach the activity feed and notifications.
 export async function establishMutualFollow(
   ctx: MutationCtx,
   a: Id<"users">,
