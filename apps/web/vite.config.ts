@@ -51,6 +51,11 @@ export default defineConfig({
         // a tab would keep seeing the old id after a deploy.
         "/version.json": { headers: { "cache-control": "no-store" } },
       },
+      // Run SSR and server functions in Dublin, next to the Convex deployment (AWS eu-west-1).
+      // Unpinned, Vercel ran them in Washington (iad1): every SSR query crossed the Atlantic and
+      // signed-in member data was rendered outside the EU. Nitro writes this into the
+      // function's .vc-config.json.
+      vercel: { functions: { regions: ["dub1"] } },
     }),
     // Bundle treemap for CI reports, opt-in via ANALYZE=1 so dev/prod builds
     // are untouched. TanStack Start runs one Rollup build per environment;
