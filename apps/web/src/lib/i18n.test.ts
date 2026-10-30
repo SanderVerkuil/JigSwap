@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { defaultLocale, mergeMessages, negotiateLocale } from "./i18n";
+import { defaultLocale, mergeMessages } from "./i18n";
+import { negotiateLocale } from "./i18n.server";
 
 describe("negotiateLocale", () => {
   it("returns null when there is no Accept-Language header", () => {

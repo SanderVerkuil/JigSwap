@@ -1,16 +1,12 @@
-import { match } from "@formatjs/intl-localematcher";
 import { createServerFn } from "@tanstack/react-start";
-import {
-  getCookie,
-  getRequestHeader,
-  setCookie,
-} from "@tanstack/react-start/server";
-import Negotiator from "negotiator";
 import type { AbstractIntlMessages } from "use-intl";
+import { detectLocale, loadMessages, writeLocaleCookie } from "./i18n.server";
 
 // Mirrors apps/web/src/i18n/request.ts: same locales, cookie name, default, and
 // Accept-Language negotiation — adapted from next-intl/next-headers to TanStack
-// Start server primitives.
+// Start server primitives. The negotiation, cookie and catalog loading live in
+// i18n.server.ts and are only called from the server-function handlers below,
+// so none of that code (Negotiator, the locale matcher) reaches the browser.
 export const locales = ["en", "nl"] as const;
 export const defaultLocale = "en" as const;
 export type Locale = (typeof locales)[number];
@@ -26,47 +22,8 @@ export function isLocale(value: string | undefined): value is Locale {
   return !!value && (locales as readonly string[]).includes(value);
 }
 
-// A tag is safe to hand to match() only if Intl can canonicalize it. Negotiator
-// emits the wildcard "*" (meaning "any language") and passes through malformed
-// tags, both of which make Intl.getCanonicalLocales — and therefore match() —
-// throw RangeError("Incorrect locale information provided"). One bad tag throws
-// the whole list, so we filter per-tag before negotiating.
-function isCanonicalizableTag(tag: string): boolean {
-  if (tag === "*") return false;
-  try {
-    Intl.getCanonicalLocales(tag);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-// Pure (no server primitives) so it's unit-testable: pick the best supported
-// locale from an Accept-Language header, or null if none negotiate.
-export function negotiateLocale(
-  acceptLanguage: string | null | undefined,
-): Locale | null {
-  if (!acceptLanguage) return null;
-  const requested = new Negotiator({
-    headers: { "accept-language": acceptLanguage },
-  })
-    .languages()
-    .filter(isCanonicalizableTag);
-  if (requested.length === 0) return null;
-  const matched = match(requested, locales as readonly string[], defaultLocale);
-  return isLocale(matched) ? matched : null;
-}
-
-// Server-only: resolve the active locale from the jigswap-intl cookie, falling
-// back to Accept-Language negotiation, then the default.
-function detectLocale(): Locale {
-  const cookie = getCookie(INTL_COOKIE_NAME);
-  if (isLocale(cookie)) return cookie;
-  return negotiateLocale(getRequestHeader("accept-language")) ?? defaultLocale;
-}
-
 // Deep-merge `overlay` onto `base`: overlay wins per leaf, keys missing from the overlay keep the
-// base value. Pure, for loadMessages and its tests.
+// base value. Pure, for loadMessages (i18n.server.ts) and its tests.
 export function mergeMessages(base: Messages, overlay: Messages): Messages {
   const merged: Record<string, unknown> = { ...base };
   for (const [key, value] of Object.entries(overlay)) {
@@ -81,28 +38,6 @@ export function mergeMessages(base: Messages, overlay: Messages): Messages {
 
 function isMessageMap(value: unknown): value is Messages {
   return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-// Dev shows the locale's catalog over source.json, so translated keys appear in their language and
-// keys not yet translated (prod gets them from Crowdin) fall back to the source text instead of
-// the whole app staying in English; mirrors getCrowdinMessages in the web app.
-async function loadMessages(locale: Locale): Promise<Messages> {
-  // Catalogs contain arrays in places; cast through unknown since
-  // AbstractIntlMessages models only strings/nested maps (use-intl tolerates both).
-  try {
-    const catalog = (await import(`../../locales/${locale}.json`))
-      .default as unknown as Messages;
-    if (process.env.NODE_ENV === "development") {
-      const source = (await import("../../locales/source.json"))
-        .default as unknown as Messages;
-      return mergeMessages(source, catalog);
-    }
-    return catalog;
-  } catch (error) {
-    console.error(`Error loading translations for ${locale}:`, error);
-    return (await import("../../locales/source.json"))
-      .default as unknown as Messages;
-  }
 }
 
 // Root beforeLoad calls this so SSR has locale + messages before first paint.
@@ -151,10 +86,6 @@ export const setLocale = createServerFn({ method: "POST" })
     return data as Locale;
   })
   .handler(async ({ data }) => {
-    setCookie(INTL_COOKIE_NAME, data, {
-      path: "/",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 365,
-    });
+    writeLocaleCookie(data);
     return { locale: data };
   });
