@@ -13,5 +13,5 @@ Je persoonlijke analysedashboard toont:
 - Vier **statistiekkaarten**: totaal aantal puzzels, voltooiingen, ruilen en gemiddelde beoordeling.
 - Een lijngrafiek met **voltooiingstrends** (over de afgelopen 12 maanden).
 - Een grafiek met **ruilactiviteit**.
-- Een grafiek met de **collectie-opbouw** (op aantal stukken, merk, moeilijkheid, conditie).
+- De **collectie-opbouw**: je puzzels op aantal stukjes, op moeilijkheid (een balk met een legenda die elke moeilijkheid met aantal en aandeel noemt) en je topmerken. Puzzels zonder merk staan als aantal onder de merkengrafiek, niet als merk in de ranglijst.
 - Een knop voor **gegevensexport** om je persoonlijke gegevens te downloaden.
