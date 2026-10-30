@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
-import { canViewCopy } from "./canViewCopy";
+import { buildCopyViewContext, canViewCopyWithContext } from "./canViewCopy";
 import { toOwnedCopyView } from "./mappers";
 import { resolveCopyCoverUrl } from "./resolveCoverUrl";
 
@@ -39,10 +39,17 @@ export const getOwnedPuzzlesByOwner = query({
       // visibility, so available copies of a member with a PRIVATE profile were still enumerated to
       // any authenticated viewer. canViewCopy folds in owner-public AND circle-shared reachability,
       // closing that leak and keeping this read consistent with the rest of the library.
-      const visible = await Promise.all(
-        ownedPuzzles.map((copy) => canViewCopy(ctx, viewerId, copy)),
-      );
-      ownedPuzzles = ownedPuzzles.filter((_, i) => visible[i]);
+      // One context for the whole read (household mates, blocks, and the owner's profile
+      // visibility and mutual-follow memos), never rebuilt per copy. Sequential: the context's
+      // memos aren't safe to share across a Promise.all.
+      const context = await buildCopyViewContext(ctx, viewerId);
+      const visible: Doc<"ownedPuzzles">[] = [];
+      for (const copy of ownedPuzzles) {
+        if (await canViewCopyWithContext(ctx, copy, context)) {
+          visible.push(copy);
+        }
+      }
+      ownedPuzzles = visible;
     } else if (!args.includeUnavailable) {
       ownedPuzzles = ownedPuzzles.filter(isOpen);
     }
