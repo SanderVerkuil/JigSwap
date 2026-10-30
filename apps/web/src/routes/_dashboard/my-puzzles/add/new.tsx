@@ -123,7 +123,9 @@ const DEFAULT_FORM: FormState = {
   pieceCount: undefined,
   difficulty: "medium",
   condition: "good",
-  availability: { forTrade: true, forLend: false, forSale: false },
+  // Every offer starts off, like the catalogue picker and the domain default: a copy goes on the
+  // market (Browse, swap/loan requests) only when the member switches an offer on.
+  availability: { forTrade: false, forLend: false, forSale: false },
   coverColor: COVER_SWATCHES[0],
   coverMode: "color",
   coverFile: undefined,
@@ -141,13 +143,6 @@ const DEFAULT_FORM: FormState = {
   dimensions: { width: "", height: "", unit: "cm" },
 };
 
-// Reached from the catalogue picker (returnTo set): availability starts all off, like the picker
-// and the domain default, instead of pre-ticking swap.
-const QUICK_FLOW_FORM: FormState = {
-  ...DEFAULT_FORM,
-  availability: { forTrade: false, forLend: false, forSale: false },
-};
-
 function AddPuzzlePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -158,9 +153,8 @@ function AddPuzzlePage() {
 
   const navigate = useNavigate();
   const returnTo = searchParams.get("returnTo") ?? undefined;
-  const formDefaults = returnTo ? QUICK_FLOW_FORM : DEFAULT_FORM;
   const [form, setForm] = useState<FormState>(() => ({
-    ...formDefaults,
+    ...DEFAULT_FORM,
     title: searchParams.get("title") ?? "",
     ean: searchParams.get("ean") ?? "",
     upc: searchParams.get("upc") ?? "",
@@ -281,7 +275,7 @@ function AddPuzzlePage() {
   };
 
   const resetForm = () => {
-    setForm(formDefaults);
+    setForm(DEFAULT_FORM);
     setSelectedDefinitionId(null);
     setPendingMatch(null);
   };
@@ -1045,10 +1039,6 @@ function AddPuzzlePage() {
           items={[
             { ok: !!form.title.trim(), label: t("checkTitle") },
             { ok: !!form.pieceCount, label: t("checkPieces") },
-            {
-              ok: hasAnyAvailability(form.availability),
-              label: t("checkAvailability"),
-            },
           ]}
         />
       )}
