@@ -21,6 +21,10 @@ export class InMemoryGoalRepository implements GoalRepository {
       .map((state) => Goal.rehydrate(state));
   }
 
+  async delete(id: GoalId): Promise<void> {
+    this.store.delete(id);
+  }
+
   size(): number {
     return this.store.size;
   }

@@ -11,6 +11,7 @@ export type SolvingErrorCode =
   | "NotCompletionOwner"
   | "InvalidGoalTarget"
   | "InvalidGoalPeriod"
+  | "NotGoalOwner"
   | "InvalidRating"
   | "ReviewTextTooLong"
   | "InvalidDuration"
@@ -77,6 +78,14 @@ export class SolvingError extends DomainError {
     return new SolvingError(
       "InvalidGoalPeriod",
       "A goal's start date must be on or before its target date",
+    );
+  }
+
+  // The acting member does not own the goal they tried to change.
+  static notGoalOwner(): SolvingError {
+    return new SolvingError(
+      "NotGoalOwner",
+      "Acting member does not own this goal",
     );
   }
 

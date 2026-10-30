@@ -38,6 +38,8 @@ const seed = (t: TestConvex<typeof schema>) =>
 
 const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
+const asBob = (t: TestConvex<typeof schema>) =>
+  t.withIdentity({ subject: "clerk_bob" });
 
 // A finished solve stored the way the domain path stores it. `aggregateId: null` stores a legacy
 // row (written before the domain path, no aggregateId).
@@ -195,5 +197,200 @@ describe("goals count the solves inside their period", () => {
       endDate: lastMonth,
     });
     expect((await goalRow(t, goalId))?.currentCompletions).toBe(0);
+  });
+});
+
+describe("solving.updateGoal", () => {
+  test("replaces the definition and recounts for the new period, silently", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    await insertSolve(t, alice, utc(2026, 2, 1));
+    await insertSolve(t, alice, utc(2026, 3, 1));
+    const goalId = await createGoal(t, { targetCompletions: 5 });
+    expect((await goalRow(t, goalId))?.currentCompletions).toBe(0);
+
+    await asAlice(t).mutation(api.solving.updateGoal.updateGoal, {
+      goalId,
+      title: "Two this year",
+      targetCompletions: 2,
+      ...THIS_YEAR,
+    });
+    expect(await goalRow(t, goalId)).toMatchObject({
+      title: "Two this year",
+      targetCompletions: 2,
+      currentCompletions: 2,
+      ...THIS_YEAR,
+    });
+    expect(await eventNames(t)).toEqual(["GoalCreated"]);
+  });
+
+  test("clears what the new definition leaves out", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const goalId = await asAlice(t).mutation(
+      api.solving.createGoal.createGoal,
+      {
+        title: "With details",
+        description: "Notes",
+        targetCompletions: 3,
+        ...THIS_YEAR,
+      },
+    );
+    await asAlice(t).mutation(api.solving.updateGoal.updateGoal, {
+      goalId,
+      title: "Plain",
+      targetCompletions: 3,
+    });
+    const row = await goalRow(t, goalId);
+    expect(row?.description).toBeUndefined();
+    expect(row?.startDate).toBeUndefined();
+    expect(row?.targetDate).toBeUndefined();
+  });
+
+  test("another member's goal => NotGoalOwner, unchanged", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const goalId = await createGoal(t, { targetCompletions: 5 });
+    const before = await goalRow(t, goalId);
+    await expectConvexCode(
+      asBob(t).mutation(api.solving.updateGoal.updateGoal, {
+        goalId,
+        title: "Mine now",
+        targetCompletions: 1,
+      }),
+      "NotGoalOwner",
+    );
+    expect(await goalRow(t, goalId)).toEqual(before);
+  });
+
+  test("an unknown goal => GoalNotFound", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await expectConvexCode(
+      asAlice(t).mutation(api.solving.updateGoal.updateGoal, {
+        goalId: "no-such-goal",
+        title: "x",
+        targetCompletions: 1,
+      }),
+      "GoalNotFound",
+    );
+  });
+
+  test("an invalid target => InvalidGoalTarget", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const goalId = await createGoal(t, { targetCompletions: 5 });
+    await expectConvexCode(
+      asAlice(t).mutation(api.solving.updateGoal.updateGoal, {
+        goalId,
+        title: "x",
+        targetCompletions: 2.5,
+      }),
+      "InvalidGoalTarget",
+    );
+  });
+
+  test("requires a signed-in member", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const goalId = await createGoal(t, { targetCompletions: 5 });
+    await expect(
+      t.mutation(api.solving.updateGoal.updateGoal, {
+        goalId,
+        title: "x",
+        targetCompletions: 1,
+      }),
+    ).rejects.toThrow("Unauthenticated");
+  });
+});
+
+describe("solving.setGoalArchived", () => {
+  test("an archived goal stops following solves; restoring recounts it silently", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const goalId = await createGoal(t, { targetCompletions: 1 });
+
+    await asAlice(t).mutation(api.solving.setGoalArchived.setGoalArchived, {
+      goalId,
+      archived: true,
+    });
+    expect((await goalRow(t, goalId))?.isActive).toBe(false);
+
+    await asAlice(t).mutation(api.solving.recordCompletion.recordCompletion, {
+      startDate: NOW - 2 * 60 * 60 * 1000,
+      endDate: NOW - 60 * 60 * 1000,
+    });
+    expect((await goalRow(t, goalId))?.currentCompletions).toBe(0);
+
+    await asAlice(t).mutation(api.solving.setGoalArchived.setGoalArchived, {
+      goalId,
+      archived: false,
+    });
+    expect(await goalRow(t, goalId)).toMatchObject({
+      isActive: true,
+      currentCompletions: 1,
+    });
+    expect(await eventNames(t)).not.toContain("GoalAchieved");
+  });
+
+  test("another member's goal => NotGoalOwner, still active", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const goalId = await createGoal(t, { targetCompletions: 5 });
+    await expectConvexCode(
+      asBob(t).mutation(api.solving.setGoalArchived.setGoalArchived, {
+        goalId,
+        archived: true,
+      }),
+      "NotGoalOwner",
+    );
+    expect((await goalRow(t, goalId))?.isActive).toBe(true);
+  });
+
+  test("an unknown goal => GoalNotFound", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await expectConvexCode(
+      asAlice(t).mutation(api.solving.setGoalArchived.setGoalArchived, {
+        goalId: "no-such-goal",
+        archived: true,
+      }),
+      "GoalNotFound",
+    );
+  });
+});
+
+describe("solving.deleteGoal", () => {
+  test("the owner deletes the goal for good", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const goalId = await createGoal(t, { targetCompletions: 5 });
+    await asAlice(t).mutation(api.solving.deleteGoal.deleteGoal, { goalId });
+    expect(await goalRow(t, goalId)).toBeNull();
+    expect(
+      await asAlice(t).query(api.solving.listMyGoals.listMyGoals, {}),
+    ).toEqual([]);
+  });
+
+  test("another member's goal => NotGoalOwner, kept", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const goalId = await createGoal(t, { targetCompletions: 5 });
+    await expectConvexCode(
+      asBob(t).mutation(api.solving.deleteGoal.deleteGoal, { goalId }),
+      "NotGoalOwner",
+    );
+    expect(await goalRow(t, goalId)).not.toBeNull();
+  });
+
+  test("an unknown goal => GoalNotFound", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await expectConvexCode(
+      asAlice(t).mutation(api.solving.deleteGoal.deleteGoal, {
+        goalId: "no-such-goal",
+      }),
+      "GoalNotFound",
+    );
   });
 });

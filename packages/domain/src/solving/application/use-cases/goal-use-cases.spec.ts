@@ -14,8 +14,11 @@ import {
   SequentialGoalIdGenerator,
 } from "../testing";
 import { makeCreateGoal } from "./create-goal";
+import { makeDeleteGoal } from "./delete-goal";
 import { makeRecomputeGoalProgress } from "./recompute-goal-progress";
 import { makeRecordCompletion } from "./record-completion";
+import { makeSetGoalArchived } from "./set-goal-archived";
+import { makeUpdateGoal } from "./update-goal";
 
 const ALICE = toMemberId("alice");
 const BOB = toMemberId("bob");
@@ -23,6 +26,7 @@ const PUZZLE = toPuzzleDefinitionId("puzzle-1");
 const START = new Date("2026-06-01T10:00:00Z");
 const END = new Date("2026-06-01T11:30:00Z");
 const NOW = new Date("2026-06-01T12:00:00Z");
+const LATER = new Date("2026-06-03T12:00:00Z");
 const THIS_YEAR = {
   startDate: new Date("2026-01-01T00:00:00Z"),
   targetDate: new Date("2026-12-31T00:00:00Z"),
@@ -300,6 +304,203 @@ describe("Goal use cases", () => {
 
       await recompute()({ userId: ALICE });
       expect((await stored(goalId)).currentCompletions).toBe(2);
+    });
+  });
+
+  describe("updateGoal", () => {
+    const update = () => makeUpdateGoal({ goals, completions, clock });
+
+    it("replaces the definition and recounts for the new period without announcing anything", async () => {
+      await recordCompletion(
+        new Date("2026-02-01T10:00:00Z"),
+        new Date("2026-02-01T12:00:00Z"),
+      );
+      await recordCompletion(
+        new Date("2026-03-01T10:00:00Z"),
+        new Date("2026-03-01T12:00:00Z"),
+      );
+      const id = await seedGoal(5);
+      expect((await stored(id)).currentCompletions).toBe(0);
+      events.published.length = 0;
+      clock.set(LATER);
+
+      const result = await update()({
+        actingMemberId: ALICE,
+        goalId: id,
+        title: "Two this year",
+        targetCompletions: 2,
+        ...THIS_YEAR,
+      });
+      expect(result.isOk).toBe(true);
+      const goal = await stored(id);
+      expect(goal.toState()).toMatchObject({
+        title: "Two this year",
+        targetCompletions: 2,
+        currentCompletions: 2,
+        updatedAt: LATER,
+        ...THIS_YEAR,
+      });
+      expect(goal.isAchieved).toBe(true);
+      expect(events.published).toHaveLength(0);
+    });
+
+    it("recounts an archived goal without restoring it", async () => {
+      await recordCompletion(
+        new Date("2026-02-01T10:00:00Z"),
+        new Date("2026-02-01T12:00:00Z"),
+      );
+      const id = await seedGoal(5);
+      await makeSetGoalArchived({ goals, completions, clock })({
+        actingMemberId: ALICE,
+        goalId: id,
+        archived: true,
+      });
+
+      await update()({
+        actingMemberId: ALICE,
+        goalId: id,
+        title: "Five",
+        targetCompletions: 5,
+        ...THIS_YEAR,
+      });
+      const goal = await stored(id);
+      expect(goal.isActive).toBe(false);
+      expect(goal.currentCompletions).toBe(1);
+    });
+
+    it("refuses another member's goal with NotGoalOwner and keeps it", async () => {
+      const id = await seedGoal(5);
+      const before = (await stored(id)).toState();
+      const result = await update()({
+        actingMemberId: BOB,
+        goalId: id,
+        title: "Mine now",
+        targetCompletions: 1,
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("NotGoalOwner");
+      expect((await stored(id)).toState()).toEqual(before);
+    });
+
+    it("reports GoalNotFound for an unknown goal", async () => {
+      const result = await update()({
+        actingMemberId: ALICE,
+        goalId: toGoalId("missing"),
+        title: "x",
+        targetCompletions: 1,
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("GoalNotFound");
+    });
+
+    it("rejects an invalid target with InvalidGoalTarget and keeps the goal", async () => {
+      const id = await seedGoal(5);
+      const before = (await stored(id)).toState();
+      const result = await update()({
+        actingMemberId: ALICE,
+        goalId: id,
+        title: "x",
+        targetCompletions: 2.5,
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("InvalidGoalTarget");
+      expect((await stored(id)).toState()).toEqual(before);
+    });
+  });
+
+  describe("setGoalArchived", () => {
+    const setArchived = () =>
+      makeSetGoalArchived({ goals, completions, clock });
+
+    it("archives the goal, which then stops following new solves", async () => {
+      const id = await seedGoal(5);
+      clock.set(LATER);
+      const result = await setArchived()({
+        actingMemberId: ALICE,
+        goalId: id,
+        archived: true,
+      });
+      expect(result.isOk).toBe(true);
+      const goal = await stored(id);
+      expect(goal.isActive).toBe(false);
+      expect(goal.toState().updatedAt).toBe(LATER);
+
+      await recordCompletion();
+      await recompute()({ userId: ALICE });
+      expect((await stored(id)).currentCompletions).toBe(0);
+    });
+
+    it("restores the goal and silently counts the solves it missed", async () => {
+      const id = await seedGoal(1);
+      await setArchived()({
+        actingMemberId: ALICE,
+        goalId: id,
+        archived: true,
+      });
+      await recordCompletion();
+      await recompute()({ userId: ALICE });
+      events.published.length = 0;
+
+      const result = await setArchived()({
+        actingMemberId: ALICE,
+        goalId: id,
+        archived: false,
+      });
+      expect(result.isOk).toBe(true);
+      const goal = await stored(id);
+      expect(goal.isActive).toBe(true);
+      expect(goal.currentCompletions).toBe(1);
+      expect(events.published).toHaveLength(0);
+    });
+
+    it("refuses another member's goal with NotGoalOwner", async () => {
+      const id = await seedGoal(5);
+      const result = await setArchived()({
+        actingMemberId: BOB,
+        goalId: id,
+        archived: true,
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("NotGoalOwner");
+      expect((await stored(id)).isActive).toBe(true);
+    });
+
+    it("reports GoalNotFound for an unknown goal", async () => {
+      const result = await setArchived()({
+        actingMemberId: ALICE,
+        goalId: toGoalId("missing"),
+        archived: true,
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("GoalNotFound");
+    });
+  });
+
+  describe("deleteGoal", () => {
+    const remove = () => makeDeleteGoal({ goals });
+
+    it("deletes the owner's goal", async () => {
+      const id = await seedGoal(5);
+      const result = await remove()({ actingMemberId: ALICE, goalId: id });
+      expect(result.isOk).toBe(true);
+      expect(await goals.findById(id)).toBeNull();
+    });
+
+    it("refuses another member's goal with NotGoalOwner and keeps it", async () => {
+      const id = await seedGoal(5);
+      const result = await remove()({ actingMemberId: BOB, goalId: id });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("NotGoalOwner");
+      expect(goals.size()).toBe(1);
+    });
+
+    it("reports GoalNotFound for an unknown goal", async () => {
+      const result = await remove()({
+        actingMemberId: ALICE,
+        goalId: toGoalId("missing"),
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("GoalNotFound");
     });
   });
 });

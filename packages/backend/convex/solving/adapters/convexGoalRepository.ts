@@ -81,5 +81,11 @@ export const convexGoalRepository = (ctx: MutationCtx): GoalRepository => {
         .filter((row) => row.aggregateId !== undefined)
         .map((row) => toDomain(row));
     },
+
+    async delete(id: GoalId): Promise<void> {
+      const row = await rowById(id);
+      // No-op if the row is already gone (idempotent).
+      if (row) await ctx.db.delete(row._id);
+    },
   };
 };

@@ -50,10 +50,10 @@ export interface GoalState {
 // member's finished solves that fall inside the goal's counting window (see goal-progress), so a
 // goal never counts solves from before it started or after it ended. progressFrom() is the
 // announced path (driven by completion changes) and emits GoalAchieved exactly once, the moment
-// progress first crosses the target; recount() is the silent path (creating a goal), which never
-// announces anything. `targetCompletions` is a positive integer and the period is never empty
-// (start day on or before the target day). An inactive goal is left alone by progressFrom's
-// callers.
+// progress first crosses the target; recount() is the silent path (creating, editing or restoring
+// a goal), which never announces anything. `targetCompletions` is a positive integer and the
+// period is never empty (start day on or before the target day). An archived goal
+// (`isActive` false) is left alone by progressFrom's callers.
 export class Goal {
   private events: DomainEvent[] = [];
 
@@ -117,6 +117,38 @@ export class Goal {
     return ok(goal);
   }
 
+  // Replace what the member decided (title, description, target, period). Fields the new
+  // definition leaves out are cleared. Records nothing: the caller recounts silently, so changing
+  // a goal never announces an achievement.
+  edit(definition: GoalDefinition, now: Date): Result<void, SolvingError> {
+    const invalid = Goal.validate(definition, this.state.createdAt);
+    if (invalid) return err(invalid);
+
+    this.state = {
+      ...this.state,
+      title: definition.title,
+      description: definition.description,
+      targetCompletions: definition.targetCompletions,
+      startDate: definition.startDate,
+      targetDate: definition.targetDate,
+      updatedAt: now,
+    };
+    return ok(undefined);
+  }
+
+  // Retire the goal: it stops following new solves. A no-op when already archived.
+  archive(now: Date): void {
+    if (!this.state.isActive) return;
+    this.state = { ...this.state, isActive: false, updatedAt: now };
+  }
+
+  // Bring an archived goal back. A no-op when already active. The caller recounts it, since it
+  // missed every solve while archived.
+  restore(now: Date): void {
+    if (this.state.isActive) return;
+    this.state = { ...this.state, isActive: true, updatedAt: now };
+  }
+
   // Set the derived progress to the number of `solves` inside this goal's window, announcing it.
   // A no-op (same count) records nothing. Emits GoalProgressed whenever the count changes, and
   // GoalAchieved exactly once — only on the transition that first crosses the target (so a later
@@ -156,8 +188,8 @@ export class Goal {
   }
 
   // Silently correct the derived progress to the number of `solves` inside this goal's window:
-  // no GoalProgressed, no GoalAchieved. Used when the goal itself is set up (created), which is
-  // not a solve the member should be congratulated on.
+  // no GoalProgressed, no GoalAchieved. Used when the goal itself changes (created, edited,
+  // restored), which is not a solve the member should be congratulated on.
   recount(solves: readonly GoalSolve[], now: Date): void {
     const count = countTowardGoal(solves, this.countingWindow);
     if (count === this.state.currentCompletions) return;

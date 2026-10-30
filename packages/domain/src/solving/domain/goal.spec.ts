@@ -239,6 +239,121 @@ describe("Goal.recount", () => {
   });
 });
 
+describe("Goal.edit", () => {
+  const definition: GoalDefinition = {
+    title: "Solve 12 in 2026",
+    description: "One a month",
+    targetCompletions: 12,
+    startDate: new Date("2026-01-01T00:00:00Z"),
+    targetDate: new Date("2026-12-31T00:00:00Z"),
+  };
+
+  it("replaces the definition and records no event", () => {
+    const goal = fresh();
+    const outcome = goal.edit(definition, LATER);
+    expect(outcome.isOk).toBe(true);
+    expect(goal.toState()).toEqual({
+      ...definition,
+      id: ID,
+      userId: ALICE,
+      currentCompletions: 0,
+      isActive: true,
+      createdAt: NOW,
+      updatedAt: LATER,
+    });
+    expect(names(goal)).toEqual([]);
+  });
+
+  it("clears the fields the new definition leaves out", () => {
+    const goal = fresh(3, {
+      description: "old",
+      startDate: new Date("2026-01-01T00:00:00Z"),
+      targetDate: new Date("2026-12-31T00:00:00Z"),
+    });
+    goal.edit({ title: "Plain", targetCompletions: 3 }, LATER);
+    const state = goal.toState();
+    expect(state.title).toBe("Plain");
+    expect(state.description).toBeUndefined();
+    expect(state.startDate).toBeUndefined();
+    expect(state.targetDate).toBeUndefined();
+  });
+
+  it.each([0, -2, 1.5])(
+    "rejects target %p with InvalidGoalTarget and keeps the goal",
+    (target) => {
+      const goal = fresh();
+      const before = goal.toState();
+      const outcome = goal.edit(
+        { ...definition, targetCompletions: target },
+        LATER,
+      );
+      expect(outcome.isErr).toBe(true);
+      if (outcome.isErr) expect(outcome.error.code).toBe("InvalidGoalTarget");
+      expect(goal.toState()).toBe(before);
+    },
+  );
+
+  it("rejects a start date after the target date with InvalidGoalPeriod", () => {
+    const goal = fresh();
+    const before = goal.toState();
+    const outcome = goal.edit(
+      { ...definition, startDate: new Date("2027-01-01T00:00:00Z") },
+      LATER,
+    );
+    expect(outcome.isErr).toBe(true);
+    if (outcome.isErr) expect(outcome.error.code).toBe("InvalidGoalPeriod");
+    expect(goal.toState()).toBe(before);
+  });
+
+  it("measures a period without a start date from the day the goal was created", () => {
+    const goal = fresh();
+    const outcome = goal.edit(
+      {
+        title: "x",
+        targetCompletions: 1,
+        targetDate: new Date("2026-05-31T00:00:00Z"),
+      },
+      LATER,
+    );
+    expect(outcome.isErr).toBe(true);
+    if (outcome.isErr) expect(outcome.error.code).toBe("InvalidGoalPeriod");
+  });
+});
+
+describe("Goal.archive / restore", () => {
+  it("archives an active goal and records no event", () => {
+    const goal = fresh();
+    goal.archive(LATER);
+    expect(goal.isActive).toBe(false);
+    expect(goal.toState().updatedAt).toBe(LATER);
+    expect(names(goal)).toEqual([]);
+  });
+
+  it("archiving an archived goal changes nothing", () => {
+    const goal = fresh();
+    goal.archive(NOW);
+    const before = goal.toState();
+    goal.archive(LATER);
+    expect(goal.toState()).toBe(before);
+  });
+
+  it("restores an archived goal", () => {
+    const goal = fresh();
+    goal.archive(NOW);
+    goal.restore(LATER);
+    expect(goal.isActive).toBe(true);
+    expect(goal.toState().updatedAt).toBe(LATER);
+    expect(names(goal)).toEqual([]);
+  });
+
+  it("restoring an active goal changes nothing", () => {
+    const goal = fresh();
+    const before = goal.toState();
+    goal.restore(LATER);
+    expect(goal.toState()).toBe(before);
+  });
+});
+
 describe("Goal round-trip", () => {
   it("rehydrates from state without re-emitting events", () => {
     const r = create(3, { startDate: new Date("2026-01-01T00:00:00Z") });
