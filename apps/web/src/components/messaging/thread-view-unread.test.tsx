@@ -149,7 +149,12 @@ const receipts = async () => {
   return mocks.mutation.mock.calls.filter(([name]) => name === MARK_READ);
 };
 
-const renderThread = (unreadCount: number) => {
+// `null` stands for an inbox that failed to load; `noInboxThread` for a backend
+// without getInboxThread, whose inbox first page holds the row.
+const renderThread = (
+  unreadCount: number | null,
+  { noInboxThread = false } = {},
+) => {
   const convexQueryClient = new ConvexQueryClient(
     new ConvexReactClient("https://example.convex.cloud"),
   );
@@ -159,16 +164,26 @@ const renderThread = (unreadCount: number) => {
         queryKeyHashFn: convexQueryClient.hashFn(),
         staleTime: Infinity,
         retry: false,
-        queryFn: () => new Promise<never>(() => {}),
+        queryFn: () =>
+          unreadCount === null || noInboxThread
+            ? Promise.reject(new Error("Server Error"))
+            : new Promise<never>(() => {}),
       },
     },
   });
-  queryClient.setQueryData(
-    convexQuery(gateway.conversation.getInboxThread, {
-      threadId: "thread_1",
-    }).queryKey,
-    dmThread(unreadCount),
-  );
+  if (unreadCount !== null && !noInboxThread) {
+    queryClient.setQueryData(
+      convexQuery(gateway.conversation.getInboxThread, {
+        threadId: "thread_1",
+      }).queryKey,
+      dmThread(unreadCount),
+    );
+  } else if (unreadCount !== null) {
+    queryClient.setQueryData(
+      convexQuery(gateway.conversation.getMyInbox, {}).queryKey,
+      [dmThread(unreadCount)],
+    );
+  }
   const tree = () => (
     <QueryClientProvider client={queryClient}>
       <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
@@ -220,6 +235,22 @@ describe("ThreadView unread boundary", () => {
     // Opened at the bottom.
     expect(list().scrollTop).toBe(maxScrollTop());
     expect(await receipts()).toEqual([[MARK_READ, { threadId: "thread_1" }]]);
+  });
+
+  it("still lays out the thread, without a divider, when the inbox fails to load", async () => {
+    renderThread(null);
+    expect(await screen.findByText("Message m3")).toBeTruthy();
+    expect(screen.queryByText("New messages")).toBeNull();
+    expect(await receipts()).toHaveLength(1);
+    // The header settles on the generic title rather than loading forever.
+    expect(
+      screen.getByRole("heading", { name: en.messages.threadFallbackTitle }),
+    ).toBeTruthy();
+  });
+
+  it("places the divider from the inbox's first page on a backend without getInboxThread", async () => {
+    renderThread(2, { noInboxThread: true });
+    expect(await screen.findByText("New messages")).toBeTruthy();
   });
 
   it("marks it read on open when a short unread run fits on screen", async () => {

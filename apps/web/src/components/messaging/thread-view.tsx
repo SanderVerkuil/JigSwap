@@ -150,7 +150,8 @@ export function ThreadView({
     [newestFirst, status],
   );
   // This thread's inbox row: undefined while loading, null when the inbox
-  // wouldn't list it (e.g. a subject that no longer resolves).
+  // wouldn't list it (e.g. a subject that no longer resolves) or couldn't be
+  // read at all.
   const { data: inboxRow, isError: inboxRowFailed } = useQuery(
     convexQuery(
       gateway.conversation.getInboxThread,
@@ -159,7 +160,7 @@ export function ThreadView({
   );
   // A backend without getInboxThread (the web can deploy before it): find the
   // row in the inbox's first page instead, as before.
-  const { data: inboxPage } = useQuery(
+  const { data: inboxPage, isError: inboxPageFailed } = useQuery(
     convexQuery(
       gateway.conversation.getMyInbox,
       me && inboxRowFailed ? {} : "skip",
@@ -167,7 +168,9 @@ export function ThreadView({
   );
   const headerRow = inboxRowFailed
     ? inboxPage === undefined
-      ? undefined
+      ? inboxPageFailed
+        ? null
+        : undefined
       : (inboxPage.find((row) => row.threadId === threadId) ?? null)
     : inboxRow;
   // My photos here that aren't messages yet (being checked, or stopped).
@@ -234,7 +237,8 @@ export function ThreadView({
   // opens — taken once per thread, before this view's first read receipt
   // clears it — and the newest of others' messages at that moment, where that
   // unread run ends. Set during render, guarded to once per thread, so the
-  // first paint already has the divider.
+  // first paint already has the divider. An inbox that failed to load only
+  // costs the divider: the messages still lay out.
   const [unread, setUnread] = useState<{
     threadId: string;
     count: number;
