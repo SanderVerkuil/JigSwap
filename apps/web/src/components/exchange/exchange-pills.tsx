@@ -17,7 +17,8 @@ export function YourTurnPill({ className }: { className?: string }) {
     <span
       className={cn(
         CHIP,
-        "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+        // amber-800 keeps 12px bold text above 4.5:1 on the tinted chip in light mode.
+        "bg-amber-500/15 text-amber-800 dark:text-amber-400",
         className,
       )}
     >
