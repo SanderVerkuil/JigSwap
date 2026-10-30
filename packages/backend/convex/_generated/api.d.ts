@@ -600,6 +600,7 @@ import type * as solving_listMyInProgress from "../solving/listMyInProgress.js";
 import type * as solving_moderateCompletionPhoto from "../solving/moderateCompletionPhoto.js";
 import type * as solving_recordCompletion from "../solving/recordCompletion.js";
 import type * as solving_recordPastCompletions from "../solving/recordPastCompletions.js";
+import type * as solving_recountGoals from "../solving/recountGoals.js";
 import type * as solving_setShareInProgress from "../solving/setShareInProgress.js";
 import type * as solving_setTrackCompletionDuration from "../solving/setTrackCompletionDuration.js";
 import type * as solving_solvableCopy from "../solving/solvableCopy.js";
@@ -1204,6 +1205,7 @@ declare const fullApi: ApiFromModules<{
   "solving/moderateCompletionPhoto": typeof solving_moderateCompletionPhoto;
   "solving/recordCompletion": typeof solving_recordCompletion;
   "solving/recordPastCompletions": typeof solving_recordPastCompletions;
+  "solving/recountGoals": typeof solving_recountGoals;
   "solving/setShareInProgress": typeof solving_setShareInProgress;
   "solving/setTrackCompletionDuration": typeof solving_setTrackCompletionDuration;
   "solving/solvableCopy": typeof solving_solvableCopy;
