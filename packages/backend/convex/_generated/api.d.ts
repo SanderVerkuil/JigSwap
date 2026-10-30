@@ -54,6 +54,7 @@ import type * as catalog_adapters_mapper from "../catalog/adapters/mapper.js";
 import type * as catalog_adapters_ogieRawProductPage from "../catalog/adapters/ogieRawProductPage.js";
 import type * as catalog_adapters_ogieStorePageFetcher from "../catalog/adapters/ogieStorePageFetcher.js";
 import type * as catalog_adapters_proposalMapper from "../catalog/adapters/proposalMapper.js";
+import type * as catalog_adapters_publicFetch from "../catalog/adapters/publicFetch.js";
 import type * as catalog_adapters_systemClock from "../catalog/adapters/systemClock.js";
 import type * as catalog_approveChangeProposal from "../catalog/approveChangeProposal.js";
 import type * as catalog_approvePuzzleDefinition from "../catalog/approvePuzzleDefinition.js";
@@ -622,6 +623,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/adapters/ogieRawProductPage": typeof catalog_adapters_ogieRawProductPage;
   "catalog/adapters/ogieStorePageFetcher": typeof catalog_adapters_ogieStorePageFetcher;
   "catalog/adapters/proposalMapper": typeof catalog_adapters_proposalMapper;
+  "catalog/adapters/publicFetch": typeof catalog_adapters_publicFetch;
   "catalog/adapters/systemClock": typeof catalog_adapters_systemClock;
   "catalog/approveChangeProposal": typeof catalog_approveChangeProposal;
   "catalog/approvePuzzleDefinition": typeof catalog_approvePuzzleDefinition;
