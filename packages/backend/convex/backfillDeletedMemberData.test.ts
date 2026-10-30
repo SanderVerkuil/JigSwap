@@ -272,6 +272,82 @@ describe("conversation.backfillDeletedMemberData", () => {
   });
 });
 
+describe("conversation.backfillDeletedMemberData: a solve kept on someone else's copy", () => {
+  // Ivy was deleted before the purge cleared notes: her solve of Bob's copy still carries them.
+  const seedSolve = (t: T) =>
+    t.run(async (ctx) => {
+      const now = Date.now();
+      const mk = (who: string) =>
+        ctx.db.insert("users", {
+          clerkId: `clerk_${who}`,
+          name: who,
+          isActive: true,
+          createdAt: now,
+          updatedAt: now,
+        });
+      const bob = await mk("bob");
+      const ivy = await mk("ivy");
+      const puzzleId = await ctx.db.insert("puzzles", {
+        title: "Lighthouse",
+        pieceCount: 1000,
+        status: "approved",
+        submittedBy: bob,
+        createdAt: now,
+        updatedAt: now,
+      });
+      const bobsCopy = await ctx.db.insert("ownedPuzzles", {
+        aggregateId: "copy-b1",
+        puzzleId,
+        ownerId: bob,
+        condition: "good",
+        availability: { forTrade: false, forSale: false, forLend: false },
+        createdAt: now,
+        updatedAt: now,
+      });
+      const solve = await ctx.db.insert("completions", {
+        aggregateId: "completion-ivy",
+        userId: ivy,
+        ownedPuzzleId: bobsCopy,
+        startDate: now - 3_600_000,
+        endDate: now - 60_000,
+        notes: "Borrowed it while my knee healed",
+        photos: [],
+        isCompleted: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.delete(ivy);
+      return { solve };
+    });
+
+  const run = async (t: T, dryRun: boolean) => {
+    await t.mutation(
+      internal.conversation.backfillDeletedMemberData.backfillDeletedMemberData,
+      { dryRun, table: "completions" },
+    );
+    await settleDueJobs(t);
+    await runDelayedScrubs(t);
+  };
+
+  test("a dry run keeps her notes", async () => {
+    const t = newT();
+    const { solve } = await seedSolve(t);
+    await run(t, true);
+    expect((await t.run((ctx) => ctx.db.get(solve)))!.notes).toBe(
+      "Borrowed it while my knee healed",
+    );
+  });
+
+  test("a real run clears her notes and keeps the solve in Bob's copy's History", async () => {
+    const t = newT();
+    const { solve } = await seedSolve(t);
+    await run(t, false);
+    const row = await t.run((ctx) => ctx.db.get(solve));
+    expect(row).not.toBeNull();
+    expect(row!).not.toHaveProperty("notes");
+  });
+});
+
 describe("conversation.backfillDeletedMemberData: events keyed by a deleted copy", () => {
   // An earlier deletion removed Hana's copy but left its CopyDetailsUpdated (no member id, her
   // notes) in the log. Bob's copy still exists.

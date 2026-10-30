@@ -93,7 +93,8 @@ import {
 //                their own completions on it. Exchanges, loans and custody entries naming it stay.
 //   copyPhotos   their photos on copies other members own: row, blob and the photo's comments
 //   completions  their remaining completions: one on a copy someone else owns stays (that copy's
-//                History) without its photos; any other goes, photos and blobs included
+//                History) without its photos and their private notes; any other goes, photos and
+//                blobs included
 //                Photos keep the attachments' rule: a quarantined one (CSAM hash match) stays whole
 //                and a blob a CSAM escalation preserves is never deleted.
 //   goals, collections (with their memberships, wishlists included), categories (personal)
