@@ -2,7 +2,6 @@ import type { ProjectedMember } from "@jigswap/contracts";
 import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
 // SEC-11 (SOC-3, SURF-2): catalog reviews, copy comments and photo comments name their author
