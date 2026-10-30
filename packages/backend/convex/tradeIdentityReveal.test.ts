@@ -908,6 +908,11 @@ describe("getTradePartner", () => {
     as(t, who).query(api.exchange.getTradePartner.getTradePartner, {
       exchangeId: await docIdOf(t, exchangeId),
     });
+  const shareEmail = async (t: T, who: string, exchangeId: string) =>
+    as(t, who).mutation(api.exchange.setContactSharing.setContactSharing, {
+      exchangeId: await docIdOf(t, exchangeId),
+      share: true,
+    });
 
   const addReview = (
     t: T,
@@ -934,7 +939,7 @@ describe("getTradePartner", () => {
       }),
     );
 
-  test("the owner gets the requester's card with email and received reviews right after propose", async () => {
+  test("the owner gets the requester's card with received reviews right after propose, but no email", async () => {
     const t = convexTest(schema, modules);
     const w = await seed(t);
     const ex = await propose(t, "requester", w.copy);
@@ -950,10 +955,11 @@ describe("getTradePartner", () => {
       state: "revealed",
       memberId: w.requester,
       username: "requester",
-      email: "requester@example.com",
       profileViewable: false,
       reviews: { averageRating: 4.5, totalReviews: 2 },
     });
+    // Sending a request never shares the requester's email (SEC-08: only their own share does).
+    expect(view).not.toHaveProperty("email");
     if (view?.state !== "revealed") throw new Error("unreachable");
     expect(view.reviews.items.map((r) => r.rating)).toEqual([5, 4]);
     expect(view.reviews.items[0]).not.toHaveProperty("reviewerName");
@@ -963,6 +969,7 @@ describe("getTradePartner", () => {
       "avatars/requester",
       "requester bio",
       "requester town",
+      "requester@example.com",
     ]) {
       expect(json).not.toContain(leak);
     }
@@ -980,7 +987,7 @@ describe("getTradePartner", () => {
     expect(view.reviews.items[0]?.reviewerName).toBe("X");
   });
 
-  test("the requester gets { hidden } until the owner acts, then the card with email", async () => {
+  test("the requester gets { hidden } until the owner acts; a reply reveals the card but no email", async () => {
     const t = convexTest(schema, modules);
     const w = await seed(t);
     const ex = await propose(t, "requester", w.copy);
@@ -988,15 +995,16 @@ describe("getTradePartner", () => {
     expect(await card(t, "requester", ex)).toEqual({ state: "hidden" });
 
     await postInThread(t, "owner", ex, "Hi!");
-    expect(await card(t, "requester", ex)).toMatchObject({
+    const view = await card(t, "requester", ex);
+    expect(view).toMatchObject({
       state: "revealed",
       memberId: w.owner,
-      email: "owner@example.com",
       profileViewable: false,
     });
+    expect(view).not.toHaveProperty("email");
   });
 
-  test("a public owner is visible but their email waits for the owner to act", async () => {
+  test("a public owner is visible but their email waits for the owner's own share", async () => {
     const t = convexTest(schema, modules);
     const w = await seed(t);
     await setVisibility(t, w.owner, "public");
@@ -1011,17 +1019,21 @@ describe("getTradePartner", () => {
     expect(before).not.toHaveProperty("email");
 
     await act(t, "owner", "accept", ex);
+    expect(await card(t, "requester", ex)).not.toHaveProperty("email");
+
+    await shareEmail(t, "owner", ex);
     expect(await card(t, "requester", ex)).toMatchObject({
       email: "owner@example.com",
     });
   });
 
-  test("the email stays inside its trade: a second trade with no owner action shows none", async () => {
+  test("a shared email stays inside its trade: a second trade with the same owner shows none", async () => {
     const t = convexTest(schema, modules);
     const w = await seed(t);
     await setVisibility(t, w.owner, "public");
     const first = await propose(t, "requester", w.copy);
     await act(t, "owner", "accept", first);
+    await shareEmail(t, "owner", first);
     const second = await propose(t, "requester", w.copy2);
 
     expect(await card(t, "requester", first)).toHaveProperty("email");

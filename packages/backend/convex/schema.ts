@@ -879,13 +879,24 @@ export default defineSchema({
   // Exchange: per-trade owner reveal. One APPEND-ONLY row per exchange, written the first time the
   // OWNER (recipient) acts on it — accepts, or posts a member-authored message in its thread
   // (exchange/tradeRevealSubscriber). From then on the requester sees the owner's limited trade card
-  // (name, handle, email, reviews received) INSIDE THIS TRADE ONLY; it never unlocks the owner's
+  // (name, handle, reviews received) INSIDE THIS TRADE ONLY; it never unlocks the owner's
   // profile elsewhere. The owner seeing the requester needs no row (derived: the requester asked).
+  // A reveal never includes the email: that takes a tradeContactShares row (below).
   tradeReveals: defineTable({
     exchangeId: v.id("exchanges"),
     revealedAt: v.number(),
     reason: v.union(v.literal("accepted"), v.literal("owner_replied")),
   }).index("by_exchange", ["exchangeId"]),
+
+  // Exchange: one party's explicit consent to show their email to the other party of THIS trade
+  // (exchange/setContactSharing; read by exchange/getTradePartner through the domain rule
+  // tradeEmailVisible). At most one row per side; deleting it withdraws consent. No row = not
+  // shared (fail closed, no backfill). Holds no member id: the side resolves through the exchange.
+  tradeContactShares: defineTable({
+    exchangeId: v.id("exchanges"),
+    side: v.union(v.literal("initiator"), v.literal("recipient")),
+    sharedAt: v.number(),
+  }).index("by_exchange_side", ["exchangeId", "side"]),
 
   messages: defineTable({
     exchangeId: v.id("exchanges"),

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { toMemberId } from "../../shared-kernel";
 import {
+  tradeContactSharingOpen,
   tradeEmailVisible,
   tradePartyState,
   tradeRevealReasonFor,
@@ -157,56 +158,59 @@ describe("tradePartyState", () => {
   });
 });
 
+describe("tradeContactSharingOpen", () => {
+  it("is open only once the owner accepted, and never across a block", () => {
+    for (const status of ["accepted", "completed", "disputed"]) {
+      expect(tradeContactSharingOpen({ status, blocked: false })).toBe(true);
+      expect(tradeContactSharingOpen({ status, blocked: true })).toBe(false);
+    }
+    for (const status of ["proposed", "rejected", "cancelled"]) {
+      expect(tradeContactSharingOpen({ status, blocked: false })).toBe(false);
+    }
+  });
+});
+
 describe("tradeEmailVisible", () => {
-  const trade = { initiator: requester, recipient: owner };
+  const facts = {
+    viewer: requester,
+    party: owner,
+    status: "accepted",
+    partyShared: true,
+    blocked: false,
+  };
 
-  it("shows the requester's email to the owner always", () => {
+  it("shows the party's email once they shared it in an accepted, completed or disputed trade", () => {
+    for (const status of ["accepted", "completed", "disputed"]) {
+      expect(tradeEmailVisible({ ...facts, status })).toBe(true);
+    }
+    // Either side: the requester's email reaches the owner the same way.
     expect(
-      tradeEmailVisible({
-        ...trade,
-        viewer: owner,
-        party: requester,
-        ownerActed: false,
-      }),
+      tradeEmailVisible({ ...facts, viewer: owner, party: requester }),
     ).toBe(true);
   });
 
-  it("shows the owner's email to the requester only once the owner acted", () => {
-    expect(
-      tradeEmailVisible({
-        ...trade,
-        viewer: requester,
-        party: owner,
-        ownerActed: false,
-      }),
-    ).toBe(false);
-    expect(
-      tradeEmailVisible({
-        ...trade,
-        viewer: requester,
-        party: owner,
-        ownerActed: true,
-      }),
-    ).toBe(true);
+  it("never without the party's own share, whatever the status", () => {
+    for (const status of ["proposed", "accepted", "completed", "disputed"]) {
+      expect(tradeEmailVisible({ ...facts, status, partyShared: false })).toBe(
+        false,
+      );
+    }
   });
 
-  it("never for the viewer themself or a non-party", () => {
-    expect(
-      tradeEmailVisible({
-        ...trade,
-        viewer: owner,
-        party: owner,
-        ownerActed: true,
-      }),
-    ).toBe(false);
-    expect(
-      tradeEmailVisible({
-        ...trade,
-        viewer: stranger,
-        party: requester,
-        ownerActed: true,
-      }),
-    ).toBe(false);
+  it("hides a shared email before acceptance and after a decline or cancel", () => {
+    for (const status of ["proposed", "rejected", "cancelled"]) {
+      expect(tradeEmailVisible({ ...facts, status })).toBe(false);
+    }
+  });
+
+  it("hides a shared email across a block", () => {
+    expect(tradeEmailVisible({ ...facts, blocked: true })).toBe(false);
+  });
+
+  it("never shows a viewer their own email", () => {
+    expect(tradeEmailVisible({ ...facts, viewer: owner, party: owner })).toBe(
+      false,
+    );
   });
 });
 
@@ -222,19 +226,6 @@ describe("trade reveal edge cases", () => {
     };
     for (const viewer of [owner, requester]) {
       expect(tradePartyState({ ...trade, viewer })).toBe("hidden");
-      expect(tradeEmailVisible({ ...trade, viewer })).toBe(false);
     }
-  });
-
-  it("never shows a viewer their own email, even in a degenerate self-trade", () => {
-    expect(
-      tradeEmailVisible({
-        initiator: owner,
-        recipient: owner,
-        viewer: owner,
-        party: owner,
-        ownerActed: true,
-      }),
-    ).toBe(false);
   });
 });

@@ -2,14 +2,19 @@ import type {
   TradePartnerReviewView,
   TradePartnerView,
 } from "@jigswap/contracts";
-import { toMemberId, tradeEmailVisible } from "@jigswap/domain";
+import {
+  toMemberId,
+  tradeContactSharingOpen,
+  tradeEmailVisible,
+} from "@jigswap/domain";
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
+import { blockStateBetween } from "../social/blocks";
 import { projectMemberIdentity } from "../social/privacy";
-import { hasTradeReveal, projectTradeParty } from "./tradeParty";
+import { contactShareOf, projectTradeParty } from "./tradeParty";
 
 // Bound on the received reviews read for the average; matches computeMemberStats' cap.
 const REVIEWS_CAP = 5000;
@@ -18,9 +23,11 @@ export const TRADE_PARTNER_REVIEW_ITEMS = 10;
 
 // The counterparty card of ONE exchange, for one of its parties (null for anyone else). The
 // per-trade chokepoint (exchange/tradeParty) decides hidden / departed / revealed; a revealed card
-// carries ONLY display name, handle, email (domain rule tradeEmailVisible) and the reviews the
-// member RECEIVED — never avatar, bio, location, collection or activity, and it does not unlock the
-// member's profile anywhere else (`profileViewable` says whether the ordinary rules already do).
+// carries ONLY display name, handle, the reviews the member RECEIVED and, once that member chose to
+// share it in this trade (exchange/setContactSharing, domain rule tradeEmailVisible), their email —
+// never avatar, bio, location, collection or activity, and it does not unlock the member's profile
+// anywhere else (`profileViewable` says whether the ordinary rules already do). `emailSharing` is
+// the viewer's OWN consent and whether sharing is open, for the switch on the card.
 export const getTradePartner = query({
   args: { exchangeId: v.id("exchanges") },
   handler: async (ctx, args): Promise<TradePartnerView | null> => {
@@ -47,15 +54,20 @@ export const getTradePartner = query({
       .query("profiles")
       .withIndex("by_member", (q) => q.eq("memberId", partnerId))
       .unique();
-    // The email follows the trade only, never profile visibility (see TradePartnerView's doc).
+    // The email needs the partner's own share in THIS trade; no reveal and no profile visibility
+    // ever shows it (see TradePartnerView's doc).
+    const viewerSide =
+      viewerId === exchange.initiatorId ? "initiator" : "recipient";
+    const partnerSide = viewerSide === "initiator" ? "recipient" : "initiator";
+    const blocked =
+      (await blockStateBetween(ctx, viewerId, partnerId)) !== undefined;
     const emailVisible = tradeEmailVisible({
       viewer: toMemberId(viewerId),
       party: toMemberId(partnerId),
-      initiator: toMemberId(exchange.initiatorId),
-      recipient: toMemberId(exchange.recipientId),
-      ownerActed:
-        viewerId === exchange.initiatorId &&
-        (await hasTradeReveal(ctx, exchange._id)),
+      status: exchange.status,
+      partyShared:
+        (await contactShareOf(ctx, exchange._id, partnerSide)) !== null,
+      blocked,
     });
     const name = memberDisplayNameOf(user, profile);
 
@@ -67,6 +79,11 @@ export const getTradePartner = query({
       ...(emailVisible && user.email !== undefined
         ? { email: user.email }
         : {}),
+      emailSharing: {
+        youShare:
+          (await contactShareOf(ctx, exchange._id, viewerSide)) !== null,
+        open: tradeContactSharingOpen({ status: exchange.status, blocked }),
+      },
       profileViewable: party.state === "visible",
       reviews: await receivedReviews(ctx, viewerId, partnerId, exchange._id),
     };

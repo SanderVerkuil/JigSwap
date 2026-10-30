@@ -42,6 +42,32 @@ export const recordTradeReveal = async (
   return true;
 };
 
+export type TradeSide = "initiator" | "recipient";
+
+/** The member's side of the exchange, or null when they are not a party to it. */
+export const tradeSideOf = (
+  exchange: Doc<"exchanges">,
+  memberId: Id<"users">,
+): TradeSide | null =>
+  memberId === exchange.initiatorId
+    ? "initiator"
+    : memberId === exchange.recipientId
+      ? "recipient"
+      : null;
+
+/** One side's email-sharing consent row for this exchange, if they turned sharing on. */
+export const contactShareOf = (
+  ctx: QueryCtx,
+  exchangeId: Id<"exchanges">,
+  side: TradeSide,
+): Promise<Doc<"tradeContactShares"> | null> =>
+  ctx.db
+    .query("tradeContactShares")
+    .withIndex("by_exchange_side", (q) =>
+      q.eq("exchangeId", exchangeId).eq("side", side),
+    )
+    .first();
+
 export type ProjectedTradeParty = {
   readonly state: TradePartyState;
   /** Present for self / visible / tradeRevealed; absent for hidden / departed. */

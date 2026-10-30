@@ -217,8 +217,12 @@ export const gateway = {
     // The request-flow notice: whether the caller's own profile is private (the owner always gets
     // the requester's trade card). null = signed out / missing / own / unviewable copy.
     requestDisclosure: api.exchange.getRequestDisclosure.getRequestDisclosure,
-    // The counterparty card of one exchange (per-trade reveal: name, handle, email, reviews).
+    // The counterparty card of one exchange (per-trade reveal: name, handle, reviews; the email
+    // only when the partner shared it, plus the viewer's own sharing switch state).
     tradePartner: api.exchange.getTradePartner.getTradePartner,
+    // A party turns sharing their email with the other party of one exchange on or off
+    // ({ exchangeId: the Convex _id, share }); turning it on only once the exchange is accepted.
+    setContactSharing: api.exchange.setContactSharing.setContactSharing,
   },
 
   // Conversation: threads, DMs, exchange chat, inbox.

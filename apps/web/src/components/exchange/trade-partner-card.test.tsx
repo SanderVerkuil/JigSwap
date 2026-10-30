@@ -38,6 +38,7 @@ const revealed = (
   name: "Mara",
   username: "mara",
   email: "mara@example.test",
+  emailSharing: { youShare: false, open: false },
   profileViewable: false,
   reviews: {
     averageRating: 4.5,

@@ -210,6 +210,7 @@ import type * as exchange_propose from "../exchange/propose.js";
 import type * as exchange_raiseDispute from "../exchange/raiseDispute.js";
 import type * as exchange_readViews from "../exchange/readViews.js";
 import type * as exchange_runAction from "../exchange/runAction.js";
+import type * as exchange_setContactSharing from "../exchange/setContactSharing.js";
 import type * as exchange_tradeParty from "../exchange/tradeParty.js";
 import type * as exchange_tradeRevealSubscriber from "../exchange/tradeRevealSubscriber.js";
 import type * as household_acceptHouseholdInvite from "../household/acceptHouseholdInvite.js";
@@ -771,6 +772,7 @@ declare const fullApi: ApiFromModules<{
   "exchange/raiseDispute": typeof exchange_raiseDispute;
   "exchange/readViews": typeof exchange_readViews;
   "exchange/runAction": typeof exchange_runAction;
+  "exchange/setContactSharing": typeof exchange_setContactSharing;
   "exchange/tradeParty": typeof exchange_tradeParty;
   "exchange/tradeRevealSubscriber": typeof exchange_tradeRevealSubscriber;
   "household/acceptHouseholdInvite": typeof household_acceptHouseholdInvite;
