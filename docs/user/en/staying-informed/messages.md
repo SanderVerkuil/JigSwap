@@ -20,7 +20,8 @@ You can start a conversation with a member when at least one of these is true:
 
 - You follow each other.
 - You're both in the same friend circle.
-- You already have a conversation or an exchange together.
+- You already have a conversation or an exchange together, and their profile
+  is public.
 
 If none of these apply, the **Message** button is disabled and explains
 "You can only message members you're connected with". Blocking a member, in
