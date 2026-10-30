@@ -1,4 +1,4 @@
-import { useRouter, useSearchParams } from "@/compat/navigation";
+import { useSearchParams } from "@/compat/navigation";
 import {
   AddPuzzleLayout,
   AvailabilityChips,
@@ -56,6 +56,7 @@ import {
 } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useConvex } from "convex/react";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -144,7 +145,6 @@ const DEFAULT_FORM: FormState = {
 };
 
 function AddPuzzlePage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const t = useTranslations("puzzles");
   const tf = useTranslations("forms.puzzle-form");
@@ -152,6 +152,7 @@ function AddPuzzlePage() {
   const relativeTime = useRelativeTime();
 
   const navigate = useNavigate();
+  const convex = useConvex();
   const returnTo = searchParams.get("returnTo") ?? undefined;
   const [form, setForm] = useState<FormState>(() => ({
     ...DEFAULT_FORM,
@@ -324,12 +325,22 @@ function AddPuzzlePage() {
     image: imageId,
   });
 
+  // createOwned returns the copy's domain id; the copy page is keyed on its document id. The copy
+  // is already added when this runs, so a failed lookup only changes where the member lands.
+  const resolveCopyPageId = async (copyId: string) => {
+    try {
+      return await convex.query(gateway.library.copyDocId, { copyId });
+    } catch {
+      return null;
+    }
+  };
+
   // The WHOLE multi-step create — optional image upload/import, createPuzzle,
-  // createOwned, updateSharing — runs as ONE mutationFn so isPending spans the full
-  // sequence (busy-state rule v2). Both footer buttons share it; the `andAnother`
-  // variant only changes what happens after success (reset vs navigate).
+  // createOwned, updateSharing, resolving the landing page — runs as ONE mutationFn so
+  // isPending spans the full sequence (busy-state rule v2). Both footer buttons share it; the
+  // `andAnother` variant only changes what happens after success (reset vs navigate).
   const submitPuzzle = useMutation({
-    mutationFn: async (_variables: { andAnother: boolean }) => {
+    mutationFn: async ({ andAnother }: { andAnother: boolean }) => {
       // 1. Resolve the catalog definition id (existing match or create new).
       let definitionId = selectedDefinitionId;
       if (!definitionId) {
@@ -353,14 +364,29 @@ function AddPuzzlePage() {
       if (hasAnyAvailability(form.availability)) {
         await updateSharing(availabilityToSharing(copyId, form.availability));
       }
+
+      // 4. Land on the new copy, unless the member stays on the form or a flow takes them back.
+      return andAnother || returnTo ? null : await resolveCopyPageId(copyId);
     },
-    onSuccess: (_, { andAnother }) => {
-      toast.success(t("puzzleAdded"));
+    onSuccess: (copyPageId, { andAnother }) => {
       if (andAnother) {
+        toast.success(t("puzzleAdded"));
         resetForm();
+      } else if (returnTo) {
+        toast.success(t("puzzleAdded"));
+        void navigate({ href: returnTo });
       } else {
-        if (returnTo) void navigate({ href: returnTo });
-        else router.push("/puzzles");
+        toast.success(t("puzzleAdded"), {
+          action: {
+            label: t("addAnother"),
+            onClick: () => void navigate({ to: "/my-puzzles/add" }),
+          },
+        });
+        if (copyPageId) {
+          void navigate({ to: "/my-puzzles/$id", params: { id: copyPageId } });
+        } else {
+          void navigate({ to: "/my-puzzles" });
+        }
       }
     },
     onError: (error) => {
@@ -570,7 +596,7 @@ function AddPuzzlePage() {
         onClick={() =>
           returnTo
             ? void navigate({ href: returnTo })
-            : router.push(isCopyMode ? "/my-puzzles/add" : "/puzzles")
+            : void navigate({ to: "/my-puzzles/add" })
         }
       >
         {t("cancel")}

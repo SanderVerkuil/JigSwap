@@ -14,6 +14,7 @@ import {
 import { ConvexReactClient } from "convex/react";
 import { getFunctionName } from "convex/server";
 import type { ComponentType } from "react";
+import { toast } from "sonner";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../../../locales/en.json";
@@ -63,6 +64,7 @@ vi.mock("sonner", () => ({
 
 const ACQUIRE = getFunctionName(gateway.library.createOwned);
 const UPDATE_SHARING = getFunctionName(gateway.library.updateSharing);
+const COPY_DOC_ID = getFunctionName(gateway.library.copyDocId);
 
 const PUZZLE_DOC_ID = "puzzle_doc_1" as Id<"puzzles">;
 const PUZZLE: PuzzleDefinitionView = {
@@ -115,12 +117,24 @@ const renderPage = (search: Record<string, unknown> = {}) => {
 
 const offerChip = (name: string) => screen.getByRole("button", { name });
 
+// The resolved landing for a submit: what the page navigated to, once.
+const landing = async () => {
+  await waitFor(() => expect(mocks.navigate).toHaveBeenCalledTimes(1));
+  return mocks.navigate.mock.calls[0]?.[0];
+};
+
 beforeEach(() => {
   mocks.call.mockReset();
   mocks.call.mockImplementation(async (name) =>
-    name === ACQUIRE ? "copy_agg_1" : null,
+    name === ACQUIRE
+      ? "copy_agg_1"
+      : name === COPY_DOC_ID
+        ? "copy_doc_1"
+        : null,
   );
   mocks.navigate.mockReset();
+  vi.mocked(toast.success).mockReset();
+  vi.mocked(toast.error).mockReset();
 });
 afterEach(cleanup);
 
@@ -162,5 +176,60 @@ describe("creating a new puzzle", () => {
     }
     expect(screen.getByText(en.puzzles.checkTitle)).toBeTruthy();
     expect(screen.queryByText("Availability set")).toBeNull();
+  });
+});
+
+describe("after adding", () => {
+  it("lands on the new copy's page and offers to add another", async () => {
+    renderPage({ puzzleId: PUZZLE_DOC_ID });
+    fireEvent.click(screen.getByRole("button", { name: "Add to Library" }));
+
+    expect(await landing()).toEqual({
+      to: "/my-puzzles/$id",
+      params: { id: "copy_doc_1" },
+    });
+    expect(callsTo(COPY_DOC_ID)).toEqual([{ copyId: "copy_agg_1" }]);
+    expect(toast.error).not.toHaveBeenCalled();
+    const [message, options] = vi.mocked(toast.success).mock.calls[0] ?? [];
+    expect(message).toBe("Added to My Puzzles");
+    const action = (
+      options as { action?: { label: string; onClick: () => void } }
+    ).action;
+    expect(action?.label).toBe("Add another");
+
+    mocks.navigate.mockReset();
+    action?.onClick();
+    expect(mocks.navigate).toHaveBeenCalledWith({ to: "/my-puzzles/add" });
+  });
+
+  it("falls back to My Puzzles when the copy page can't be resolved", async () => {
+    mocks.call.mockImplementation(async (name) => {
+      if (name === ACQUIRE) return "copy_agg_1";
+      if (name === COPY_DOC_ID) throw new Error("offline");
+      return null;
+    });
+    renderPage({ puzzleId: PUZZLE_DOC_ID });
+    fireEvent.click(screen.getByRole("button", { name: "Add to Library" }));
+
+    expect(await landing()).toEqual({ to: "/my-puzzles" });
+    // The copy was added: no failure toast.
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(toast.success).toHaveBeenCalled();
+  });
+
+  it("goes back to the flow it came from when returnTo is set", async () => {
+    renderPage({ puzzleId: PUZZLE_DOC_ID, returnTo: "/welcome?step=puzzles" });
+    fireEvent.click(screen.getByRole("button", { name: "Add to Library" }));
+
+    expect(await landing()).toEqual({ href: "/welcome?step=puzzles" });
+    expect(callsTo(COPY_DOC_ID)).toEqual([]);
+  });
+});
+
+describe("cancelling", () => {
+  it("returns to the add chooser from the full form", () => {
+    renderPage();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(mocks.navigate).toHaveBeenCalledWith({ to: "/my-puzzles/add" });
   });
 });
