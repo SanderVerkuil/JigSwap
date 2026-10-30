@@ -8,7 +8,11 @@ import { useCurrentMember } from "@/components/dashboard-home/use-current-member
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { BorrowedEmptyState } from "@/components/exchange/borrowed-empty-state";
 import { ExchangeActions } from "@/components/exchange/exchange-actions";
-import { YourTurnPill } from "@/components/exchange/exchange-pills";
+import {
+  OfferChip,
+  SaleOffer,
+  YourTurnPill,
+} from "@/components/exchange/exchange-pills";
 import {
   confirmationState,
   viewerSide,
@@ -299,6 +303,7 @@ function ExchangeListRow({
   const yourTurn =
     exchange.status === "accepted" &&
     confirmationState(exchange, viewerSide(direction)).mySettles;
+  const offer = exchange.type === "sale" ? exchange.salePrice : undefined;
 
   return (
     <div
@@ -330,9 +335,10 @@ function ExchangeListRow({
               when: relativeTime(exchange.createdAt),
             })}
           </div>
-          {yourTurn && (
+          {(yourTurn || offer) && (
             <div className="mt-1.5 flex flex-wrap gap-1.5">
-              <YourTurnPill />
+              {yourTurn && <YourTurnPill />}
+              {offer && <OfferChip price={offer} />}
             </div>
           )}
         </div>
@@ -413,6 +419,14 @@ function ExchangeDetail({
         label={incoming ? t("from") : t("to")}
         viewerIsRequester={!incoming}
       />
+
+      {exchange.type === "sale" && exchange.salePrice && (
+        <SaleOffer
+          price={exchange.salePrice}
+          direction={direction}
+          partnerName={who}
+        />
+      )}
 
       <ExchangeActions
         exchange={exchange}

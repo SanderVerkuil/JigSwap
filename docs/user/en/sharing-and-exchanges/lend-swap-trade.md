@@ -39,7 +39,8 @@ can see it. If the owner's profile is hidden from you, it shows
    types the owner offers are listed:
    - **Swap** — choose the **Puzzle you offer** from your library. If you're in
      a household, puzzles you can manage there are listed too.
-   - **Buy** — enter **Your offer (EUR)**.
+   - **Buy** — enter **Your offer (EUR)**. The owner sees your offer on the
+     request before accepting or declining it.
    - **Borrow** — no extra details.
 3. Click **Send request**.
 

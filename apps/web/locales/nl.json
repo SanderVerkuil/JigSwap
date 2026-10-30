@@ -731,6 +731,11 @@
       "partnerConfirmed": "{name} heeft {when} bevestigd",
       "yourTurn": "Jouw beurt"
     },
+    "offer": {
+      "chip": "Bod: {price}",
+      "incoming": "{name} biedt {price}",
+      "outgoing": "Jij biedt {price}"
+    },
     "declineExchange": "Uitwisseling Afwijzen",
     "completeExchange": "Uitwisseling Voltooien",
     "cancelExchange": "Uitwisseling Annuleren",

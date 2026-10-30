@@ -731,6 +731,11 @@
       "partnerConfirmed": "{name} confirmed {when}",
       "yourTurn": "Your turn"
     },
+    "offer": {
+      "chip": "Offer: {price}",
+      "incoming": "{name} offers {price}",
+      "outgoing": "You offer {price}"
+    },
     "declineExchange": "Decline Exchange",
     "completeExchange": "Complete Exchange",
     "cancelExchange": "Cancel Exchange",

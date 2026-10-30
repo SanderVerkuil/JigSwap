@@ -41,7 +41,8 @@ verborgen, dan staat er **Anonieme gebruiker**.
    - **Ruilen** — kies de **Puzzel die je aanbiedt** uit je bibliotheek. Zit je
      in een huishouden, dan staan de puzzels die je daar mag beheren er ook
      bij.
-   - **Kopen** — vul **Jouw bod (EUR)** in.
+   - **Kopen** — vul **Jouw bod (EUR)** in. De eigenaar ziet je bod bij het
+     verzoek voordat die het accepteert of afwijst.
    - **Lenen** — geen extra gegevens nodig.
 3. Klik op **Aanvraag versturen**.
 
