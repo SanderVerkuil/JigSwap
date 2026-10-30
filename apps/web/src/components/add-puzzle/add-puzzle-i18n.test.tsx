@@ -1,5 +1,11 @@
 // @vitest-environment happy-dom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import type { ReactNode } from "react";
 import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it } from "vitest";
@@ -44,6 +50,38 @@ describe.each(["en", "nl"] as const)("add-puzzle strings in %s", (locale) => {
     expect(
       screen.getByRole("button", {
         name: fill(messages.common.removeTag, "ocean"),
+      }),
+    ).toBeTruthy();
+  });
+
+  it("names the cover photo options, uploaded and measured", () => {
+    render(
+      <CoverColourField
+        photoOptions={[
+          { url: "https://img.test/box.jpg" },
+          { url: "blob:mine", uploaded: true },
+        ]}
+        onSelectPhoto={noop}
+        onUploadPhoto={noop}
+      />,
+      { wrapper: inLocale(locale) },
+    );
+    expect(
+      screen.getByRole("button", { name: messages.puzzles.coverPhotoUploaded }),
+    ).toBeTruthy();
+
+    const thumb = document.querySelector<HTMLImageElement>(
+      "img[src='https://img.test/box.jpg']",
+    )!;
+    Object.defineProperty(thumb, "naturalWidth", { value: 1200 });
+    Object.defineProperty(thumb, "naturalHeight", { value: 800 });
+    fireEvent.load(thumb);
+    const size = messages.puzzles.coverPhotoSize
+      .replace("{width}", "1200")
+      .replace("{height}", "800");
+    expect(
+      screen.getByRole("button", {
+        name: `${messages.puzzles.coverPhoto}, ${size}`,
       }),
     ).toBeTruthy();
   });

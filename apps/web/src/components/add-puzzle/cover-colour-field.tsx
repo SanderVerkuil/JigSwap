@@ -173,17 +173,16 @@ export function CoverColourField({
           const isBest = !opt.uploaded && best === opt.url;
           const measured = d && d.w > 0;
 
+          const size = measured
+            ? `, ${t("coverPhotoSize", { width: d.w, height: d.h })}`
+            : "";
           let ariaLabel: string;
           if (opt.uploaded) {
-            ariaLabel = `${t("coverPhoto")} (uploaded)`;
+            ariaLabel = t("coverPhotoUploaded");
           } else if (isBest) {
-            ariaLabel = `${t("coverPhoto")}, ${t("coverBestQuality")}${
-              measured ? `, ${d.w} by ${d.h}` : ""
-            }`;
+            ariaLabel = `${t("coverPhoto")}, ${t("coverBestQuality")}${size}`;
           } else {
-            ariaLabel = `${t("coverPhoto")}${
-              measured ? `, ${d.w} by ${d.h}` : ""
-            }`;
+            ariaLabel = `${t("coverPhoto")}${size}`;
           }
 
           return (

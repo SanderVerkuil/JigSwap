@@ -625,6 +625,8 @@
     "previewBrandPlaceholder": "Merk",
     "uploadPhoto": "Foto uploaden",
     "coverPhoto": "Jouw foto",
+    "coverPhotoUploaded": "Jouw foto (geüpload)",
+    "coverPhotoSize": "{width} bij {height}",
     "coverBestQuality": "Beste kwaliteit",
     "coverBest": "Beste",
     "advancedDetails": "Meer details (optioneel)",

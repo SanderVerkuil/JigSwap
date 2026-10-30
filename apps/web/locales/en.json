@@ -625,6 +625,8 @@
     "previewBrandPlaceholder": "Brand",
     "uploadPhoto": "Upload photo",
     "coverPhoto": "Your photo",
+    "coverPhotoUploaded": "Your photo (uploaded)",
+    "coverPhotoSize": "{width} by {height}",
     "coverBestQuality": "Best quality",
     "coverBest": "Best",
     "advancedDetails": "More details (optional)",
