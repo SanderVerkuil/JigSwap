@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   toCopyId,
-  toFileId,
   toOwnerId,
   toPuzzleDefinitionId,
 } from "../../../shared-kernel";
@@ -16,7 +15,6 @@ import {
   SequentialCopyIdGenerator,
 } from "../testing";
 import { makeAcquireCopy } from "./acquire-copy";
-import { makeAddCopyImage } from "./add-copy-image";
 import { makeChangeCopyCondition } from "./change-copy-condition";
 import { makeDeleteCopy } from "./delete-copy";
 import { makeSetCopyCover } from "./set-copy-cover";
@@ -321,71 +319,6 @@ describe("copy mutation use cases", () => {
     });
   });
 
-  describe("makeAddCopyImage", () => {
-    const run = () =>
-      makeAddCopyImage({ copies, events, clock: new FixedClock(NOW) });
-
-    it("adds an image to the owner's copy and publishes CopyImageAdded", async () => {
-      const result = await run()({
-        actingMemberId: alice,
-        copyId,
-        fileId: toFileId("file1"),
-        tag: "box_front",
-      });
-      expect(result.isOk).toBe(true);
-      expect(events.names()).toEqual(["CopyImageAdded"]);
-    });
-
-    it("rejects a non-owner", async () => {
-      const result = await run()({
-        actingMemberId: bob,
-        copyId,
-        fileId: toFileId("file1"),
-      });
-      expect(result.isErr).toBe(true);
-      if (result.isErr) {
-        expect(result.error.code).toBe("NotOwner");
-        expect(result.error.message).toBe(
-          "Acting member may not add an image to this copy",
-        );
-      }
-    });
-
-    it("rejects an unknown copy", async () => {
-      const result = await run()({
-        actingMemberId: alice,
-        copyId: toCopyId("ghost"),
-        fileId: toFileId("file1"),
-      });
-      expect(result.isErr).toBe(true);
-      if (result.isErr) expect(result.error.code).toBe("CopyNotFound");
-      expect(events.published).toHaveLength(0);
-    });
-
-    it("forwards the image metadata fields onto the copy", async () => {
-      const takenAt = new Date("2026-01-01T00:00:00Z");
-      const result = await run()({
-        actingMemberId: alice,
-        copyId,
-        fileId: toFileId("file2"),
-        title: "Front of box",
-        description: "Pristine",
-        tag: "box_front",
-        takenAt,
-      });
-      expect(result.isOk).toBe(true);
-      const saved = await copies.findById(copyId);
-      const images = saved?.toState().images ?? [];
-      expect(images).toHaveLength(1);
-      expect(images[0]).toMatchObject({
-        title: "Front of box",
-        description: "Pristine",
-        tag: "box_front",
-        takenAt,
-      });
-    });
-  });
-
   describe("makeSetCopyCover", () => {
     const run = () =>
       makeSetCopyCover({ copies, events, clock: new FixedClock(NOW) });
@@ -621,15 +554,6 @@ describe("copy mutation use cases with a CopyManagerPolicy", () => {
           forTrade: false,
           forSale: false,
           forLend: true,
-        }),
-    ],
-    [
-      "addCopyImage",
-      (actor) =>
-        makeAddCopyImage({ copies, events, clock, managers })({
-          actingMemberId: actor,
-          copyId,
-          fileId: toFileId("file1"),
         }),
     ],
     [

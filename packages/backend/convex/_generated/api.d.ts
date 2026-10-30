@@ -312,7 +312,6 @@ import type * as library_adapters_loanMapper from "../library/adapters/loanMappe
 import type * as library_adapters_photoModeration from "../library/adapters/photoModeration.js";
 import type * as library_adapters_systemClock from "../library/adapters/systemClock.js";
 import type * as library_adapters_visibilityPolicy from "../library/adapters/visibilityPolicy.js";
-import type * as library_addCopyImage from "../library/addCopyImage.js";
 import type * as library_addCopyPhoto from "../library/addCopyPhoto.js";
 import type * as library_addCopyToCollection from "../library/addCopyToCollection.js";
 import type * as library_backfill from "../library/backfill.js";
@@ -870,7 +869,6 @@ declare const fullApi: ApiFromModules<{
   "library/adapters/photoModeration": typeof library_adapters_photoModeration;
   "library/adapters/systemClock": typeof library_adapters_systemClock;
   "library/adapters/visibilityPolicy": typeof library_adapters_visibilityPolicy;
-  "library/addCopyImage": typeof library_addCopyImage;
   "library/addCopyPhoto": typeof library_addCopyPhoto;
   "library/addCopyToCollection": typeof library_addCopyToCollection;
   "library/backfill": typeof library_backfill;

@@ -1,6 +1,5 @@
 import { DomainEvent } from "../../shared-kernel";
 import { Condition } from "./condition";
-import { CopyImageTag, FileId } from "./copy-image";
 import {
   CollectionId,
   CopyId,
@@ -52,16 +51,6 @@ export class CopyMadeUnavailable implements DomainEvent {
   readonly name = "CopyMadeUnavailable";
   constructor(
     readonly copyId: CopyId,
-    readonly occurredAt: Date,
-  ) {}
-}
-
-export class CopyImageAdded implements DomainEvent {
-  readonly name = "CopyImageAdded";
-  constructor(
-    readonly copyId: CopyId,
-    readonly fileId: FileId,
-    readonly tag: CopyImageTag | undefined,
     readonly occurredAt: Date,
   ) {}
 }
@@ -239,7 +228,6 @@ export type LibraryDomainEvent =
   | CopyConditionChanged
   | CopyMadeAvailable
   | CopyMadeUnavailable
-  | CopyImageAdded
   | CopyCoverChanged
   | CopyDetailsUpdated
   | CopyOwnershipTransferred

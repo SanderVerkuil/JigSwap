@@ -2,14 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   DomainEvent,
   toCopyId,
-  toFileId,
   toOwnerId,
   toPuzzleDefinitionId,
 } from "../../shared-kernel";
 import { Acquisition } from "./acquisition";
 import { CatalogSnapshot } from "./catalog-snapshot";
 import { Copy } from "./copy";
-import { CopyImage } from "./copy-image";
 import {
   CopyAcquired,
   CopyConditionChanged,
@@ -188,21 +186,6 @@ describe("updateSharing", () => {
     expect(copy.sharing.isAvailableForAnyExchange()).toBe(false);
     expect(copy.toState().updatedAt).toBe(NOW);
     expect(copy.pullEvents()).toHaveLength(0);
-  });
-});
-
-describe("addImage", () => {
-  it("attaches an image and records CopyImageAdded with the tag", () => {
-    const copy = acquire();
-    copy.pullEvents();
-    const image = CopyImage.create({
-      fileId: toFileId("file1"),
-      tag: "box_front",
-    });
-    copy.addImage(image, LATER);
-    expect(copy.toState().images).toHaveLength(1);
-    const events = copy.pullEvents();
-    expect(names(events)).toEqual(["CopyImageAdded"]);
   });
 });
 

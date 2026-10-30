@@ -84,7 +84,6 @@ export const gateway = {
     changeCondition: api.library.changeCopyCondition.changeCopyCondition,
     updateSharing: api.library.updateCopySharing.updateCopySharing,
     updateDetails: api.library.updateCopyDetails.updateCopyDetails,
-    addImage: api.library.addCopyImage.addCopyImage,
     // Owner-only photo upload keyed by the copy's Convex id; pairs with generateUploadUrl. Writes
     // the `ownedPuzzleImages` read-model the getCopyInstanceView gallery reads.
     addCopyPhoto: api.library.addCopyPhoto.addCopyPhoto,

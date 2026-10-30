@@ -1,5 +1,4 @@
 export * from "./acquire-copy";
-export * from "./add-copy-image";
 export * from "./add-copy-to-collection";
 export * from "./change-copy-condition";
 export * from "./create-collection";
