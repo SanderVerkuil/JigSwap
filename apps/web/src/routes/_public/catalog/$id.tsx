@@ -255,7 +255,9 @@ function PublicPuzzleDetail({
             <div className="font-heading text-4xl font-bold leading-none">
               {availability.total}
             </div>
-            <div className="min-w-0 flex-1">
+            {/* A 12rem flex basis makes the avatars and CTA wrap to their own line on phones instead
+                of squeezing this text to one word per line. */}
+            <div className="min-w-0 flex-[1_1_12rem]">
               <div className="text-sm font-medium">
                 {t("copiesAvailableNow", { count: availability.total })}
               </div>
