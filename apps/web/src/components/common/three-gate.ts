@@ -46,6 +46,21 @@ export function supportsWebGL(): boolean {
   return webGLSupport;
 }
 
+const noopSubscribe = () => () => {};
+const no = () => false;
+
+/**
+ * WebGL support on the client (false on the server and during hydration).
+ * Probes only when `enabled`, so callers that don't need it allocate nothing.
+ */
+export function useWebGLSupport(enabled: boolean): boolean {
+  return React.useSyncExternalStore(
+    noopSubscribe,
+    enabled ? supportsWebGL : no,
+    no,
+  );
+}
+
 interface NetworkInformationLike {
   saveData?: boolean;
 }

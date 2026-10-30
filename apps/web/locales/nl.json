@@ -4440,6 +4440,7 @@
       "withPendingRequests": "{count, plural, one {{name}, # verzoek wacht op je antwoord} other {{name}, # verzoeken wachten op je antwoord}}"
     },
     "breadcrumbLabel": "Broodkruimel",
+    "plankPlay": "Spelen",
     "primaryNav": "Hoofdnavigatie",
     "toggleSidebar": "Zijbalk in- of uitklappen",
     "sidebarTitle": "Menu",

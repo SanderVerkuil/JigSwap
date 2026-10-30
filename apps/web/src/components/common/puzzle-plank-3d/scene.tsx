@@ -167,6 +167,7 @@ function Arrangement({
   lightingPreset,
   reducedMotion,
   onFirstFrame,
+  wideShelf,
 }: {
   boxes: PuzzlePlankBox[];
   resolved: Array<{ c1: string; c2: string }>;
@@ -174,6 +175,7 @@ function Arrangement({
   lightingPreset: LightingPreset;
   reducedMotion: boolean;
   onFirstFrame: () => void;
+  wideShelf: boolean;
 }) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const size = useThree((s) => s.size);
@@ -227,7 +229,11 @@ function Arrangement({
   }, [camera, size, dist, cameraY, lookAtY]);
 
   // Shelf board width: row + margin so no bare board-ends are visible close up.
-  const shelfW = rowWidth + 0.4;
+  // wideShelf runs it across ~95% of the frame instead, like scene-physics.tsx
+  // (face-on, so the visible width at the shelf plane is contentH * aspect).
+  const shelfW = wideShelf
+    ? Math.max(contentH * aspect * 0.95, rowWidth + 0.4)
+    : rowWidth + 0.4;
 
   return (
     <>
@@ -299,6 +305,9 @@ export interface PlankSceneProps {
   /** Bumped to snap the physics boxes back to their resting layout (ignored by
    *  the static scene). */
   resetNonce?: number;
+  /** Static scene: run the board across the frame like the physics scene, so
+   *  an interactive shelf keeps its look when physics takes over. */
+  wideShelf?: boolean;
 }
 
 export default function PlankScene(props: PlankSceneProps) {
@@ -322,6 +331,7 @@ export default function PlankScene(props: PlankSceneProps) {
         lightingPreset={lightingPreset}
         reducedMotion={props.reducedMotion}
         onFirstFrame={props.onFirstFrame}
+        wideShelf={props.wideShelf ?? false}
       />
     </Canvas>
   );

@@ -4440,6 +4440,7 @@
       "withPendingRequests": "{count, plural, one {{name}, # request waiting for your reply} other {{name}, # requests waiting for your reply}}"
     },
     "breadcrumbLabel": "Breadcrumb",
+    "plankPlay": "Play",
     "primaryNav": "Primary",
     "toggleSidebar": "Toggle sidebar",
     "sidebarTitle": "Menu",
