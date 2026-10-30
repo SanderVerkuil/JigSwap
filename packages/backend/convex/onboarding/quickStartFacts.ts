@@ -1,5 +1,8 @@
-import type { QuickStartFacts } from "@jigswap/domain";
-import type { Doc } from "../_generated/dataModel";
+import {
+  readsAsPendingToRequester,
+  type QuickStartFacts,
+} from "@jigswap/domain";
+import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 
 // Counts are read with a cap so the query stays bounded; the UI shows 51 as "50+".
@@ -44,14 +47,10 @@ export const quickStartFactsOf = async (
         .unique(),
     ]);
   // Only needed when the member follows nobody yet (a request to a private profile also counts).
+  // A request counts as pending exactly when the member's own follow button says so: a silently
+  // declined one still does, so this step can't reveal a decline (SEC-39).
   const pendingRequest =
-    follows.length > 0
-      ? null
-      : await ctx.db
-          .query("followRequests")
-          .withIndex("by_requester", (q) => q.eq("requesterId", me))
-          .filter((q) => q.eq(q.field("status"), "pending"))
-          .first();
+    follows.length > 0 ? false : await hasRequestReadingAsPending(ctx, me);
 
   return {
     copies: copies.length,
@@ -63,4 +62,19 @@ export const quickStartFactsOf = async (
     hasLocation: (member.location ?? "").trim() !== "",
     visibilitySet: profile?.visibility !== undefined,
   };
+};
+
+// Whether any follow request the member sent reads to them as pending. Walks their requests
+// until the first match, like the status filter this replaced.
+const hasRequestReadingAsPending = async (
+  ctx: QueryCtx,
+  me: Id<"users">,
+): Promise<boolean> => {
+  const now = Date.now();
+  for await (const request of ctx.db
+    .query("followRequests")
+    .withIndex("by_requester", (q) => q.eq("requesterId", me))) {
+    if (readsAsPendingToRequester(request, now)) return true;
+  }
+  return false;
 };

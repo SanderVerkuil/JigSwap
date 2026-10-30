@@ -16,14 +16,18 @@ export interface CancelFollowRequestDeps {
 // immediately. A DECLINED-in-cooldown request must NOT be destroyed — that would defeat the
 // silent-decline cooldown — so instead it is stamped cancelledAt (row retained): the read side
 // stops masking it as pending, and a re-request inside the cooldown silently resumes the mask.
-// The aggregate's status guard decides which path applies.
+// The aggregate's status guard decides which path applies. A cancelled decline then answers
+// RequestNotFound, to anyone, exactly like a removed pending request, so a second cancel cannot
+// tell the requester which path the first one took (SEC-39).
 export const makeCancelFollowRequest =
   (deps: CancelFollowRequestDeps): CancelFollowRequest =>
   async (
     cmd: CancelFollowRequestCommand,
   ): Promise<Result<void, SocialApplicationError>> => {
     const request = await deps.requests.findById(cmd.requestId);
-    if (!request) return err(SocialApplicationError.requestNotFound());
+    if (!request || request.isCancelled) {
+      return err(SocialApplicationError.requestNotFound());
+    }
     if (request.requesterId !== cmd.actorId) {
       return err(SocialApplicationError.notRequestOwner());
     }

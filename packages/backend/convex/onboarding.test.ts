@@ -105,6 +105,7 @@ const insertFollowRequest = (
   requesterId: Id<"users">,
   targetId: Id<"users">,
   status: "pending" | "approved" | "declined",
+  times: { respondedAt?: number; cancelledAt?: number } = {},
 ) =>
   t.run(async (ctx) => {
     await ctx.db.insert("followRequests", {
@@ -113,6 +114,7 @@ const insertFollowRequest = (
       targetId,
       status,
       createdAt: Date.now(),
+      ...times,
     });
   });
 
@@ -332,10 +334,32 @@ describe("onboarding.getQuickStart: derived steps", () => {
     const ann = await insertUser(t, "ann");
     const bob = await insertUser(t, "bob");
     const carol = await insertUser(t, "carol");
-    await insertFollowRequest(t, ann, bob, "declined");
+    // A decline whose cooldown has run out, and one ann cancelled: neither reads as pending to her.
+    const longAgo = Date.now() - 8 * 24 * 60 * 60 * 1000;
+    await insertFollowRequest(t, ann, bob, "declined", {
+      respondedAt: longAgo,
+    });
+    await insertFollowRequest(t, ann, carol, "declined", {
+      respondedAt: Date.now(),
+      cancelledAt: Date.now(),
+    });
     await insertFollowRequest(t, bob, ann, "pending");
     expect((await stepOf(t, "ann", "people"))?.status).toBe("todo");
     await insertFollowRequest(t, ann, carol, "pending");
+    expect(await stepOf(t, "ann", "people")).toMatchObject({
+      status: "done",
+      count: 0,
+    });
+  });
+
+  test("people: a silently declined request still counts, exactly like a pending one (SEC-39)", async () => {
+    const t = convexTest(schema, modules);
+    const ann = await insertUser(t, "ann");
+    const bob = await insertUser(t, "bob");
+    // Bob declined just now: ann's follow button still shows "Requested", so this step must too.
+    await insertFollowRequest(t, ann, bob, "declined", {
+      respondedAt: Date.now(),
+    });
     expect(await stepOf(t, "ann", "people")).toMatchObject({
       status: "done",
       count: 0,

@@ -204,6 +204,49 @@ describe("resolving follow requests", () => {
     expect(events.published).toHaveLength(0);
   });
 
+  it("cancel: a second cancel answers RequestNotFound, pending or declined alike (SEC-39)", async () => {
+    // Pending path: the first cancel removes the row.
+    expect((await cancel({ requestId, actorId: alice })).isOk).toBe(true);
+    const pendingAgain = await cancel({ requestId, actorId: alice });
+
+    // Declined path: a fresh request, declined, then cancelled (the row is kept).
+    const requestIds = new SequentialFollowRequestIdGenerator();
+    requestIds.next(); // don't reuse the setup request's id
+    const request = makeRequestFollow({
+      requests,
+      follows,
+      requestIds,
+      events,
+      clock: new FixedClock(NOW),
+    });
+    const created = await request({ requesterId: carol, targetId: bob });
+    if (!created.isOk) throw new Error("setup");
+    await decline({ requestId: created.value, actorId: bob });
+    expect(
+      (await cancel({ requestId: created.value, actorId: carol })).isOk,
+    ).toBe(true);
+    const declinedAgain = await cancel({
+      requestId: created.value,
+      actorId: carol,
+    });
+
+    expect(pendingAgain.isErr && pendingAgain.error.code).toBe(
+      "RequestNotFound",
+    );
+    expect(declinedAgain.isErr && declinedAgain.error.code).toBe(
+      "RequestNotFound",
+    );
+    // The retained row still holds the decline (and its cooldown).
+    expect((await requests.findById(created.value))?.status).toBe("declined");
+  });
+
+  it("cancel: anyone asking about a cancelled decline gets RequestNotFound, like a removed request", async () => {
+    await decline({ requestId, actorId: bob });
+    await cancel({ requestId, actorId: alice });
+    const result = await cancel({ requestId, actorId: carol });
+    expect(result.isErr && result.error.code).toBe("RequestNotFound");
+  });
+
   it("cancel: only the requester may cancel", async () => {
     const result = await cancel({ requestId, actorId: bob });
     expect(result.isErr).toBe(true);

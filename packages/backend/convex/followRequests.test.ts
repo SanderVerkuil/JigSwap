@@ -1,4 +1,5 @@
 import { convexTest, type TestConvex } from "convex-test";
+import { ConvexError, type Value } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -50,6 +51,15 @@ const flushScheduled = async (t: TestConvex<typeof schema>) => {
     await new Promise((resolve) => setTimeout(resolve, 0));
     await t.finishInProgressScheduledFunctions();
   }
+};
+
+// convex-test serializes ConvexError.data to a JSON string at the function boundary; normalise.
+const errorCodeOf = (e: unknown): string | undefined => {
+  if (!(e instanceof ConvexError)) throw e;
+  const data = (e as ConvexError<Value>).data;
+  return (
+    (typeof data === "string" ? JSON.parse(data) : data) as { code?: string }
+  ).code;
 };
 
 const notificationsFor = (t: TestConvex<typeof schema>, userId: Id<"users">) =>
@@ -368,7 +378,7 @@ describe("silent-decline cooldown cannot be bypassed by cancel + re-request", ()
   const followRequestRows = (t: TestConvex<typeof schema>) =>
     t.run((ctx) => ctx.db.query("followRequests").collect());
 
-  test("cancel then re-request within the cooldown: mask resumes, one row, no new notification", async () => {
+  test("cancel then re-request within the cooldown: mask resumes under a fresh id, one row, no new notification", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob } = await seedMembers(t);
 
@@ -400,21 +410,28 @@ describe("silent-decline cooldown cannot be bypassed by cancel + re-request", ()
     );
     expect(afterCancel.pendingRequest).toBeNull();
 
-    // Re-request inside the cooldown: same id returned, mask resumes, still exactly one row.
+    // Re-request inside the cooldown: a fresh id (as after cancelling a pending request, SEC-39),
+    // the mask resumes, and the decline record is still the pair's only row.
     const reRequested = await asAlice(t).mutation(
       api.social.followMember.followMember,
       { followeeId: bob },
     );
-    expect(reRequested.id).toBe(requested.id);
+    expect(reRequested.id).not.toBe(requested.id);
     await flushScheduled(t);
 
-    expect(await followRequestRows(t)).toHaveLength(1);
+    const rows = await followRequestRows(t);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      aggregateId: reRequested.id,
+      status: "declined",
+    });
+    expect(rows[0]?.cancelledAt).toBeUndefined();
     const relation = await asAlice(t).query(
       api.social.getFollowRelation.getFollowRelation,
       { memberId: bob },
     );
     expect(relation.pendingRequest).not.toBeNull();
-    expect(relation.pendingRequest?.requestId).toBe(requested.id);
+    expect(relation.pendingRequest?.requestId).toBe(reRequested.id);
 
     // The whole point: Bob was NOT re-notified seconds after declining.
     const bobAfter = await notificationsFor(t, bob);
@@ -493,5 +510,113 @@ describe("silent-decline cooldown cannot be bypassed by cancel + re-request", ()
       { memberId: bob },
     );
     expect(unmasked.pendingRequest).toBeNull();
+  });
+});
+
+// SEC-39: everything the requester can observe about their own request (ids, the relation, a
+// repeated cancel, the quick start's "people" step) is the same whether the target declined it
+// or simply hasn't answered.
+describe("a silent decline is invisible to the requester", () => {
+  // Whether alice's quick start counts her as having reached out to someone.
+  const peopleStepDone = async (t: TestConvex<typeof schema>) =>
+    (
+      await asAlice(t).query(api.onboarding.getQuickStart.getQuickStart, {})
+    ).steps.find((step) => step.id === "people")?.status === "done";
+
+  const cancelCode = async (
+    t: TestConvex<typeof schema>,
+    requestId: string,
+  ) => {
+    try {
+      await asAlice(t).mutation(
+        api.social.cancelFollowRequest.cancelFollowRequest,
+        { requestId },
+      );
+      return "ok";
+    } catch (e) {
+      return errorCodeOf(e);
+    }
+  };
+
+  // Alice requests to follow Bob (private); Bob either declines or never answers. Then alice
+  // looks, cancels, cancels again, re-requests and looks again.
+  const observe = async (bobDeclines: boolean) => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seedMembers(t);
+    const relationOf = () =>
+      asAlice(t).query(api.social.getFollowRelation.getFollowRelation, {
+        memberId: bob,
+      });
+
+    const first = await asAlice(t).mutation(
+      api.social.followMember.followMember,
+      { followeeId: bob },
+    );
+    await flushScheduled(t);
+    if (bobDeclines) {
+      await asBob(t).mutation(
+        api.social.declineFollowRequest.declineFollowRequest,
+        { requestId: first.id },
+      );
+      await flushScheduled(t);
+    }
+
+    const beforeCancel = await relationOf();
+    const quickStartBeforeCancel = await peopleStepDone(t);
+    const firstCancel = await cancelCode(t, first.id);
+    const afterCancel = await relationOf();
+    const quickStartAfterCancel = await peopleStepDone(t);
+    const secondCancel = await cancelCode(t, first.id);
+
+    const reRequestedAt = Date.now();
+    const second = await asAlice(t).mutation(
+      api.social.followMember.followMember,
+      { followeeId: bob },
+    );
+    await flushScheduled(t);
+    const afterReRequest = await relationOf();
+    const staleCancel = await cancelCode(t, first.id);
+
+    return {
+      beforeCancel: {
+        pending: beforeCancel.pendingRequest?.requestId === first.id,
+        quickStartDone: quickStartBeforeCancel,
+      },
+      firstCancel,
+      afterCancel: {
+        pending: afterCancel.pendingRequest !== null,
+        quickStartDone: quickStartAfterCancel,
+      },
+      secondCancel,
+      reRequest: {
+        kind: second.kind,
+        freshId: second.id !== first.id,
+        pending: afterReRequest.pendingRequest?.requestId === second.id,
+        requestedNow:
+          (afterReRequest.pendingRequest?.requestedAt ?? 0) >= reRequestedAt,
+        quickStartDone: await peopleStepDone(t),
+      },
+      staleCancel,
+    };
+  };
+
+  test("cancel, cancel again, re-request: identical with and without a decline", async () => {
+    const unanswered = await observe(false);
+    const declined = await observe(true);
+    expect(declined).toEqual(unanswered);
+    expect(unanswered).toEqual({
+      beforeCancel: { pending: true, quickStartDone: true },
+      firstCancel: "ok",
+      afterCancel: { pending: false, quickStartDone: false },
+      secondCancel: "RequestNotFound",
+      reRequest: {
+        kind: "requested",
+        freshId: true,
+        pending: true,
+        requestedNow: true,
+        quickStartDone: true,
+      },
+      staleCancel: "RequestNotFound",
+    });
   });
 });
