@@ -9,6 +9,7 @@ import {
 import { asImage, isServable } from "../conversation/messageAttachments";
 import { circleFloorOf } from "../conversation/readModelHelpers";
 import { requireMember } from "../identity/requireMember";
+import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 import { enforceRateLimit } from "../lib/rateLimits";
 import { canViewCopy } from "../library/canViewCopy";
 import schema from "../schema";
@@ -190,11 +191,13 @@ const resolveTarget = async (
     case "photo": {
       const imageId = ctx.db.normalizeId("ownedPuzzleImages", targetId);
       const image = imageId ? await ctx.db.get(imageId) : null;
-      // Only photos others can see: approved (absent = legacy, approved), on a viewable copy.
+      // Only photos others can see: approved (absent = legacy, approved) and past the CSAM hash
+      // check, on a viewable copy. A pending, unscored, rejected or quarantined photo, or one
+      // still waiting for its hash check, was never shown to the reporter.
       if (
         !image ||
-        image.moderationStatus === "pending" ||
-        image.moderationStatus === "rejected"
+        (image.moderationStatus ?? "approved") !== "approved" ||
+        !isHashCleared(image)
       ) {
         return null;
       }

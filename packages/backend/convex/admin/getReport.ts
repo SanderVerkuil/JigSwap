@@ -1,15 +1,28 @@
 import { ConvexError, v } from "convex/values";
-import { query } from "../_generated/server";
+import type { Id } from "../_generated/dataModel";
+import { query, type QueryCtx } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
+import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
+import { isPreservedBlob } from "../lib/imageModeration/quarantine";
 import { adminLabelOf, reportsAgainst, targetSummaryOf } from "./reportViews";
 
 /** How many of the reported member's other reports (earlier or later) the detail lists. */
 export const OTHER_REPORTS_LIMIT = 50;
 
+// A storage URL for the report screen, never for a blob a CSAM escalation preserves: those bytes
+// are shown to nobody, admins included (lib/imageModeration/quarantine).
+const urlUnlessPreserved = async (
+  ctx: QueryCtx,
+  fileId: Id<"_storage">,
+): Promise<string | null> =>
+  (await isPreservedBlob(ctx, fileId)) ? null : ctx.storage.getUrl(fileId);
+
 // One report for the admin decision screen: the full evidence snapshot, the Art. 16(2) notice
 // when there is one, a storage URL for a photo or message-photo target that still exists, and the reported
 // member's other reports (count plus status/decision). Admin-only, gated like listRejectedPhotos.
+// No URL is ever issued for quarantined (CSAM-matched) bytes or for bytes whose hash check has not
+// passed: not for the photo, and not for a removed message photo's evidence copy (SEC-04).
 export const getReport = query({
   args: { reportId: v.id("reports") },
   handler: async (ctx, { reportId }) => {
@@ -25,7 +38,14 @@ export const getReport = query({
     if (report.targetKind === "photo") {
       const imageId = ctx.db.normalizeId("ownedPuzzleImages", report.targetId);
       const image = imageId ? await ctx.db.get(imageId) : null;
-      photoUrl = image ? await ctx.storage.getUrl(image.fileId) : null;
+      // Only as members saw it: approved (absent = legacy) and past the CSAM hash check. Never a
+      // quarantined one, whose fileId is the escalation's preserved blob.
+      photoUrl =
+        image &&
+        (image.moderationStatus ?? "approved") === "approved" &&
+        isHashCleared(image)
+          ? await urlUnlessPreserved(ctx, image.fileId)
+          : null;
     }
     // The reported message photo (an attachment report, or a report on its image message), while
     // its blob exists (an open report holds it). Never a quarantined one, and never before the
@@ -44,19 +64,24 @@ export const getReport = query({
             )?.attachmentId ?? null)
           : null;
     const attachment = attachmentId ? await ctx.db.get(attachmentId) : null;
+    // The gate covers the photo's evidence copy too: it holds the same bytes.
+    const photoWithheld =
+      attachment?.kind === "image" &&
+      (attachment.moderationStatus === "quarantined" ||
+        attachment.hashCheckedAt === undefined);
     if (attachment?.kind === "image") {
-      photoUrl =
-        attachment.moderationStatus !== "quarantined" &&
-        attachment.hashCheckedAt !== undefined
-          ? await ctx.storage.getUrl(attachment.fileId)
-          : null;
+      photoUrl = photoWithheld
+        ? null
+        : await urlUnlessPreserved(ctx, attachment.fileId);
     } else if (attachment?.mapFileId) {
       // A shared location: its rendered map preview (no third-party content, never screened).
-      photoUrl = await ctx.storage.getUrl(attachment.mapFileId);
+      photoUrl = await urlUnlessPreserved(ctx, attachment.mapFileId);
     }
-    // A removed message photo: its report-only evidence copy (the served blob is gone).
-    if (report.evidenceFileId) {
-      photoUrl = await ctx.storage.getUrl(report.evidenceFileId);
+    // A removed message photo: its report-only evidence copy (the served blob is gone). Not while
+    // the photo is withheld: a copy made before a later CSAM match, or before its hash check passed,
+    // is never shown.
+    if (report.evidenceFileId && !photoWithheld) {
+      photoUrl = await urlUnlessPreserved(ctx, report.evidenceFileId);
     }
 
     // The notice stores the notifier email only when it differs from the account's.
