@@ -312,6 +312,22 @@ function GoalsColumn({ goals }: { goals: GoalRow[] }) {
 
 /* -------------------------------------------------------------- Latest */
 
+// A single add, a solve or a start names its puzzle when the feed sent a title (the server only
+// sends one alongside a link the viewer may open); otherwise the generic sentence.
+function latestMessageKey(entry: ActivityEntry) {
+  if (!entry.title) return entry.kind;
+  switch (entry.kind) {
+    case "acquisition":
+      return "acquisitionTitled";
+    case "completion":
+      return "completionTitled";
+    case "started":
+      return "startedTitled";
+    default:
+      return entry.kind;
+  }
+}
+
 function ActivityRow({
   entry,
   me,
@@ -381,9 +397,13 @@ function ActivityRow({
         avatar
       )}
       <div className="text-muted-foreground min-w-0 flex-1 text-sm leading-snug">
-        {t.rich(entry.kind, {
+        {t.rich(latestMessageKey(entry), {
           name: displayName(actor),
           count,
+          title: entry.title ?? "",
+          puzzle: (chunks) => (
+            <span className="text-foreground font-medium">{chunks}</span>
+          ),
           strong: (chunks) =>
             entry.actor ? (
               <ActorLink actor={entry.actor} className="py-3">

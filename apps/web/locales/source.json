@@ -1468,6 +1468,9 @@
         "acquisitionBatch": "<strong>{name}</strong> added {count, plural, one {# puzzle} other {# puzzles}} to their shelf",
         "exchange": "<strong>{name}</strong> completed a swap",
         "started": "<strong>{name}</strong> started a puzzle",
+        "acquisitionTitled": "<strong>{name}</strong> added <puzzle>{title}</puzzle> to their shelf",
+        "completionTitled": "<strong>{name}</strong> finished <puzzle>{title}</puzzle>",
+        "startedTitled": "<strong>{name}</strong> started <puzzle>{title}</puzzle>",
         "empty": "All quiet for now — follow fellow puzzlers and their latest moves will show up here. 🧩"
       }
     },
