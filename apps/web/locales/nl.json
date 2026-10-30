@@ -5140,6 +5140,7 @@
           "content_removed": "Inhoud verwijderd"
         },
         "decidedBy": "Besloten door {name}",
+        "nextOpenReport": "Volgende open melding",
         "decisionLegend": "Besluit",
         "decide": {
           "dismissed": "Afwijzen",

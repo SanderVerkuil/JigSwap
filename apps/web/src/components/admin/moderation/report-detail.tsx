@@ -6,13 +6,15 @@
 // shows as removed, never its body; a photo comment's or review's text as
 // filed), the Art. 16(2) notice when present, the photo when the target still
 // exists (behind the click-to-reveal RevealGuard), and the member's other
-// reports. An open report ends in the decide form; a decided one shows its
-// outcome. Each decision has its own statement-of-reasons template
-// (DECISION_TEMPLATE), filled in on choosing the decision while the text is
-// still empty or a template; text the admin wrote is only replaced after they
-// confirm. The server enforces isAdmin and validates the decision; the form
-// only mirrors those rules (Remove only for message, photo, comment and review
-// targets; a statement of reasons of 1–2000 characters).
+// reports (each opens in this drawer). The reporter and the reported member
+// link to their admin pages. An open report ends in the decide form; a decided
+// one shows its outcome and offers the next open report of the queue. Each
+// decision has its own statement-of-reasons template (DECISION_TEMPLATE),
+// filled in on choosing the decision while the text is still empty or a
+// template; text the admin wrote is only replaced after they confirm. The
+// server enforces isAdmin and validates the decision; the form only mirrors
+// those rules (Remove only for message, photo, comment and review targets; a
+// statement of reasons of 1–2000 characters).
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,9 +33,10 @@ import { gateway } from "@/gateway";
 import { useRelativeTime } from "@/hooks/use-relative-time";
 import { cn } from "@/lib/utils";
 import { useConvexMutation } from "@convex-dev/react-query";
+import { Link } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
-import { ImageOff } from "lucide-react";
-import { useId, useRef, useState } from "react";
+import { ArrowRight, ImageOff } from "lucide-react";
+import { useId, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "use-intl";
 import { RevealGuard } from "./reveal-guard";
@@ -68,7 +71,17 @@ const DECISION_TEMPLATE: Record<Decision, Template> = {
   content_removed: "removal",
 };
 
-export function ReportDetail({ report }: { report: ReportDetailView }) {
+export function ReportDetail({
+  report,
+  nextReportId,
+  onOpenReport,
+}: {
+  report: ReportDetailView;
+  /** The queue's next open report, offered once this one is decided; null when there is none. */
+  nextReportId: string | null;
+  /** Opens another report in this drawer (another report against the member, or the next one). */
+  onOpenReport: (reportId: string) => void;
+}) {
   const t = useTranslations("admin.moderation.reports");
   const tReasons = useTranslations("safety.report.reasons");
   const tSafety = useTranslations("safety");
@@ -95,11 +108,23 @@ export function ReportDetail({ report }: { report: ReportDetailView }) {
         <Meta label={t("reason")}>{tReasons(report.reason)}</Meta>
         <Meta label={t("targetKind")}>{t(`kinds.${report.targetKind}`)}</Meta>
         <Meta label={t("reporter")}>
-          {report.reporterLabel ??
-            t(report.reporterId ? "deletedMember" : "anonymisedReporter")}
+          {report.reporterId && report.reporterLabel ? (
+            <MemberLink userId={report.reporterId}>
+              {report.reporterLabel}
+            </MemberLink>
+          ) : (
+            (report.reporterLabel ??
+            t(report.reporterId ? "deletedMember" : "anonymisedReporter"))
+          )}
         </Meta>
         <Meta label={t("reported")}>
-          {report.reportedLabel ?? t("deletedMember")}
+          {report.reportedLabel ? (
+            <MemberLink userId={report.reportedUserId}>
+              {report.reportedLabel}
+            </MemberLink>
+          ) : (
+            t("deletedMember")
+          )}
         </Meta>
         <Meta label={t("filed")}>{relativeTime(report.createdAt)}</Meta>
         <Meta label={t("status")}>{t(`statuses.${report.status}`)}</Meta>
@@ -239,20 +264,26 @@ export function ReportDetail({ report }: { report: ReportDetailView }) {
           {t("otherReports", { count: report.otherReportCount })}
         </h3>
         {report.otherReports.length > 0 && (
-          <ul className="flex flex-col gap-1 text-sm">
+          <ul className="-mx-2 flex flex-col text-sm">
             {report.otherReports.map((other) => (
-              <li key={other.reportId} className="flex flex-wrap gap-x-2">
-                <span>{tReasons(other.reason)}</span>
-                <span aria-hidden>·</span>
-                <span>{t(`kinds.${other.targetKind}`)}</span>
-                <span aria-hidden>·</span>
-                <span className="text-muted-foreground">
-                  {t(`statuses.${other.status}`)}
-                </span>
-                <span aria-hidden>·</span>
-                <span className="text-muted-foreground">
-                  {relativeTime(other.createdAt)}
-                </span>
+              <li key={other.reportId}>
+                <button
+                  type="button"
+                  onClick={() => onOpenReport(other.reportId)}
+                  className="flex min-h-11 w-full flex-wrap items-center gap-x-2 rounded-md px-2 py-1 text-left hover:bg-accent/50 md:min-h-9"
+                >
+                  <span className="font-medium">{tReasons(other.reason)}</span>
+                  <span aria-hidden>·</span>
+                  <span>{t(`kinds.${other.targetKind}`)}</span>
+                  <span aria-hidden>·</span>
+                  <span className="text-muted-foreground">
+                    {t(`statuses.${other.status}`)}
+                  </span>
+                  <span aria-hidden>·</span>
+                  <span className="text-muted-foreground">
+                    {relativeTime(other.createdAt)}
+                  </span>
+                </button>
               </li>
             ))}
           </ul>
@@ -262,29 +293,61 @@ export function ReportDetail({ report }: { report: ReportDetailView }) {
       {report.status === "open" ? (
         <DecideForm report={report} />
       ) : (
-        <section className="flex flex-col gap-1 rounded-md border p-3 text-sm">
-          <h3 className="font-semibold">
-            {report.decision
-              ? t(`decisions.${report.decision}`)
-              : t(`statuses.${report.status}`)}
-          </h3>
-          {report.statementOfReasons && (
-            <p className="break-words whitespace-pre-wrap">
-              {report.statementOfReasons}
-            </p>
+        <div className="flex flex-col gap-3">
+          <section className="flex flex-col gap-1 rounded-md border p-3 text-sm">
+            <h3 className="font-semibold">
+              {report.decision
+                ? t(`decisions.${report.decision}`)
+                : t(`statuses.${report.status}`)}
+            </h3>
+            {report.statementOfReasons && (
+              <p className="break-words whitespace-pre-wrap">
+                {report.statementOfReasons}
+              </p>
+            )}
+            {report.decidedByLabel && (
+              <p className="text-muted-foreground text-xs">
+                {t("decidedBy", { name: report.decidedByLabel })}
+              </p>
+            )}
+          </section>
+          {nextReportId && (
+            <Button
+              type="button"
+              className="h-11 self-start md:h-9"
+              onClick={() => onOpenReport(nextReportId)}
+            >
+              {t("nextOpenReport")}
+              <ArrowRight aria-hidden />
+            </Button>
           )}
-          {report.decidedByLabel && (
-            <p className="text-muted-foreground text-xs">
-              {t("decidedBy", { name: report.decidedByLabel })}
-            </p>
-          )}
-        </section>
+        </div>
       )}
     </div>
   );
 }
 
-function Meta({ label, children }: { label: string; children: string }) {
+// A member named in the report, linked to their admin page (leaves the console; Back reopens
+// this report from the URL).
+function MemberLink({
+  userId,
+  children,
+}: {
+  userId: string;
+  children: string;
+}) {
+  return (
+    <Link
+      to="/admin/users/$userId"
+      params={{ userId }}
+      className="inline-flex min-h-11 max-w-full items-center underline underline-offset-2 hover:no-underline md:min-h-0"
+    >
+      <span className="truncate">{children}</span>
+    </Link>
+  );
+}
+
+function Meta({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="min-w-0">
       <dt className="text-xs tracking-wider text-muted-foreground uppercase">

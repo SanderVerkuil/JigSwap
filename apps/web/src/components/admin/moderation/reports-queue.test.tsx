@@ -1,12 +1,12 @@
 // @vitest-environment happy-dom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { ConvexError } from "convex/values";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../../locales/en.json";
 import type { ReportStatus } from "./moderation-search";
-import { ReportsQueue } from "./reports-queue";
+import { nextOpenReportId, ReportsQueue } from "./reports-queue";
 
 // The drawer's getReport result: still loading unless a test sets an error.
 type ReportQueryResult = {
@@ -39,6 +39,10 @@ vi.mock("convex/react", async (importOriginal) => ({
 vi.mock("@tanstack/react-query", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@tanstack/react-query")>()),
   useQuery: () => mocks.reportQuery(),
+}));
+// The drawer's member links; routing itself is not under test.
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ children }: { children?: ReactNode }) => <a href="#">{children}</a>,
 }));
 
 const NOW = new Date("2026-10-18T12:00:00Z");
@@ -202,5 +206,86 @@ describe("ReportsQueue", () => {
     expect(drawer.textContent).not.toContain("Loading reports");
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("goes on to the next open report from a decided one", () => {
+    // Deciding took r2 out of the open list; r3 (older) took its place.
+    mocks.paginated.mockReturnValue({
+      results: [
+        { ...OPEN_REPORT, reportId: "r1", createdAt: 300 },
+        { ...OPEN_REPORT, reportId: "r3", createdAt: 100 },
+      ],
+      status: "Exhausted",
+      loadMore: vi.fn(),
+    });
+    mocks.reportQuery.mockReturnValue({
+      ...loadingReport(),
+      isPending: false,
+      isFetching: false,
+      data: {
+        ...OPEN_REPORT,
+        reportId: "r2",
+        createdAt: 200,
+        status: "actioned",
+        decision: "warned",
+        statementOfReasons: "Rude language.",
+        decidedByLabel: "Ada",
+        evidence: {},
+        reporterId: "u1",
+        photoUrl: null,
+        otherReportCount: 0,
+        otherReports: [],
+      },
+    });
+    renderQueue({ initialOpen: "r2" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Next open report" }));
+    expect(changes.open).toEqual(["r3"]);
+  });
+});
+
+describe("nextOpenReportId", () => {
+  const row = (reportId: string, createdAt: number, status = "open") => ({
+    reportId,
+    createdAt,
+    status,
+  });
+  // Newest first, as admin.listReports returns them.
+  const rows = [row("a", 500), row("b", 400), row("c", 300), row("d", 200)];
+
+  it("is the next row down while the current report is still listed", () => {
+    expect(nextOpenReportId(rows, { reportId: "b", createdAt: 400 })).toBe("c");
+  });
+
+  it("is the row that took the decided report's place once it left the list", () => {
+    const left = rows.filter((r) => r.reportId !== "b");
+    expect(nextOpenReportId(left, { reportId: "b", createdAt: 400 })).toBe("c");
+  });
+
+  it("wraps to the top after the last one", () => {
+    expect(nextOpenReportId(rows, { reportId: "d", createdAt: 200 })).toBe("a");
+    expect(
+      nextOpenReportId(rows.slice(0, 3), { reportId: "d", createdAt: 200 }),
+    ).toBe("a");
+  });
+
+  it("skips reports that are no longer open", () => {
+    const mixed = [row("a", 500), row("b", 400, "actioned"), row("c", 300)];
+    expect(nextOpenReportId(mixed, { reportId: "a", createdAt: 500 })).toBe(
+      "c",
+    );
+  });
+
+  it("is null when no other open report is listed", () => {
+    expect(
+      nextOpenReportId([row("a", 500)], { reportId: "a", createdAt: 500 }),
+    ).toBeNull();
+    expect(
+      nextOpenReportId([row("x", 500, "dismissed")], {
+        reportId: "a",
+        createdAt: 100,
+      }),
+    ).toBeNull();
+    expect(nextOpenReportId([], { reportId: "a", createdAt: 100 })).toBeNull();
   });
 });

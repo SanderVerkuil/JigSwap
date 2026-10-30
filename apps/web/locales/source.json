@@ -5140,6 +5140,7 @@
           "content_removed": "Content removed"
         },
         "decidedBy": "Decided by {name}",
+        "nextOpenReport": "Next open report",
         "decisionLegend": "Decision",
         "decide": {
           "dismissed": "Dismiss",

@@ -9,6 +9,7 @@ import {
   within,
 } from "@testing-library/react";
 import { getFunctionName } from "convex/server";
+import type { ReactNode } from "react";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../../locales/en.json";
@@ -26,6 +27,30 @@ vi.mock("@convex-dev/react-query", async (importOriginal) => ({
 }));
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+
+// Router-free Link: the test asserts the rendered href, not routing.
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({
+    to,
+    params,
+    children,
+    ...rest
+  }: {
+    to: string;
+    params?: Record<string, string>;
+    children?: ReactNode;
+  }) => (
+    <a
+      href={Object.entries(params ?? {}).reduce(
+        (path, [key, value]) => path.replace(`$${key}`, value),
+        to,
+      )}
+      {...rest}
+    >
+      {children}
+    </a>
+  ),
+}));
 
 const DECIDE = getFunctionName(gateway.admin.decideReport);
 const NOW = new Date("2026-10-18T12:00:00Z");
@@ -68,7 +93,11 @@ const report = (overrides: Partial<ReportDetailView> = {}) =>
     ...overrides,
   }) as unknown as ReportDetailView;
 
-const renderDetail = (view: ReportDetailView) =>
+const opened: string[] = [];
+const renderDetail = (
+  view: ReportDetailView,
+  nextReportId: string | null = null,
+) =>
   render(
     <IntlProvider
       locale="en"
@@ -76,7 +105,11 @@ const renderDetail = (view: ReportDetailView) =>
       timeZone="Europe/Amsterdam"
       now={NOW}
     >
-      <ReportDetail report={view} />
+      <ReportDetail
+        report={view}
+        nextReportId={nextReportId}
+        onOpenReport={(reportId) => opened.push(reportId)}
+      />
     </IntlProvider>,
   );
 
@@ -95,6 +128,7 @@ const NO_VIOLATION =
 
 beforeEach(() => {
   mocks.mutation.mockReset().mockResolvedValue(null);
+  opened.length = 0;
 });
 afterEach(cleanup);
 
@@ -323,6 +357,81 @@ describe("ReportDetail", () => {
     );
     fireEvent.click(reveal);
     expect(screen.getByRole("button", { name: "Hide again" })).toBeTruthy();
+  });
+
+  it("links the reporter and the reported member to their admin pages", () => {
+    renderDetail(report());
+    expect(
+      screen
+        .getByRole("link", { name: "Rita (rita@example.com)" })
+        .getAttribute("href"),
+    ).toBe("/admin/users/user_reporter");
+    expect(
+      screen
+        .getByRole("link", { name: "Otto (otto@example.com)" })
+        .getAttribute("href"),
+    ).toBe("/admin/users/user_reported");
+  });
+
+  it("names an anonymised reporter and a deleted member without a link", () => {
+    renderDetail(
+      report({
+        reporterId: undefined,
+        reporterLabel: null,
+        reportedLabel: null,
+      } as Partial<ReportDetailView>),
+    );
+    expect(screen.getByText("Anonymised").closest("a")).toBeNull();
+    expect(screen.getAllByText("Deleted member")[0].closest("a")).toBeNull();
+    expect(
+      screen.queryByRole("link", { name: /Rita|Otto|Anonymised|Deleted/ }),
+    ).toBeNull();
+  });
+
+  it("opens another report against the member from the list", () => {
+    renderDetail(
+      report({
+        otherReportCount: 1,
+        otherReports: [
+          {
+            reportId: "report_9",
+            targetKind: "message",
+            reason: "spam_scam",
+            status: "actioned",
+            decision: "warned",
+            createdAt: NOW.getTime() - 86_400_000,
+          },
+        ],
+      } as Partial<ReportDetailView>),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Spam or scam/ }));
+    expect(opened).toEqual(["report_9"]);
+  });
+
+  it("offers the next open report once decided, and not before", () => {
+    const decided = report({
+      status: "actioned",
+      decision: "warned",
+      statementOfReasons: "Rude language.",
+      decidedByLabel: "Ada",
+    });
+    renderDetail(decided, "report_2");
+    fireEvent.click(screen.getByRole("button", { name: "Next open report" }));
+    expect(opened).toEqual(["report_2"]);
+    cleanup();
+
+    // The last open report: nothing to go on to.
+    renderDetail(decided, null);
+    expect(
+      screen.queryByRole("button", { name: "Next open report" }),
+    ).toBeNull();
+    cleanup();
+
+    // Still open: decide this one first.
+    renderDetail(report(), "report_2");
+    expect(
+      screen.queryByRole("button", { name: "Next open report" }),
+    ).toBeNull();
   });
 
   it("shows the outcome instead of the form once decided", () => {
