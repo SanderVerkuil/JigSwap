@@ -2620,7 +2620,9 @@
       "member_warned": "When a moderator warns you after a report.",
       "message_image_rejected": "When our automated check removes a photo you sent in a message."
     },
+    "pushRateLimited": "You've turned on push many times just now. Try again later.",
     "pushServiceUnreachable": "Your browser couldn't reach its push service. Some privacy browsers block or remove it — Brave disables it by default (enable 'Use Google services for push messaging' in Settings), and de-Googled Chromium builds like Helium strip it out. Firefox, Chrome, or Edge will work.",
+    "pushServiceUnsupported": "JigSwap can't send push notifications through this browser's push service. Firefox, Chrome, Edge, or Safari will work.",
     "rich": {
       "deletedMember": "Deleted member",
       "unread": "Unread, ",

@@ -1,3 +1,4 @@
+import { convexErrorCode } from "@/components/exchange/request-trade";
 import { gateway } from "@/gateway";
 import {
   currentSubscriptionEndpoint,
@@ -99,12 +100,8 @@ export function usePushSubscription() {
       // usually Brave's default block, a privacy extension/ad-blocker, or the network — so we show
       // actionable guidance for that specific case.
       console.error("[push] enable failed:", error);
-      const msg = errorMessage(error);
-      toast.error(
-        msg.includes("PushManager.subscribe")
-          ? t("pushServiceUnreachable")
-          : `${t("pushError")}: ${msg}`,
-      );
+      const key = pushEnableErrorKey(error);
+      toast.error(key ? t(key) : `${t("pushError")}: ${errorMessage(error)}`);
     },
     // Always reconcile with the real browser state, whatever happened above.
     onSettled: () => syncFromBrowser(),
@@ -145,6 +142,25 @@ export function usePushSubscription() {
     enable: () => enableDevice.mutate(),
     disable: () => disableDevice.mutate(),
   };
+}
+
+// The message for a failed enable that has its own explanation, else null (the generic one with
+// the raw cause). The server refuses an endpoint off its push-service allowlist
+// (InvalidPushSubscription) and too many registrations an hour (RateLimited).
+export function pushEnableErrorKey(
+  error: unknown,
+):
+  | "pushServiceUnsupported"
+  | "pushRateLimited"
+  | "pushServiceUnreachable"
+  | null {
+  const code = convexErrorCode(error);
+  if (code === "InvalidPushSubscription") return "pushServiceUnsupported";
+  if (code === "RateLimited") return "pushRateLimited";
+  if (errorMessage(error).includes("PushManager.subscribe")) {
+    return "pushServiceUnreachable";
+  }
+  return null;
 }
 
 function errorMessage(error: unknown): string {

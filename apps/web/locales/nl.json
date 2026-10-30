@@ -2620,7 +2620,9 @@
       "member_warned": "Wanneer een moderator je na een melding waarschuwt.",
       "message_image_rejected": "Wanneer onze automatische controle een foto verwijdert die je in een bericht stuurde."
     },
+    "pushRateLimited": "Je hebt push net heel vaak ingeschakeld. Probeer het later opnieuw.",
     "pushServiceUnreachable": "Je browser kon zijn pushdienst niet bereiken. Sommige privacybrowsers blokkeren of verwijderen die — Brave schakelt het standaard uit (zet 'Google-services voor pushberichten gebruiken' aan in Instellingen), en de-Googled Chromium-browsers zoals Helium verwijderen het. Firefox, Chrome of Edge werkt wel.",
+    "pushServiceUnsupported": "JigSwap kan geen pushmeldingen versturen via de pushdienst van deze browser. Firefox, Chrome, Edge of Safari werkt wel.",
     "rich": {
       "deletedMember": "Verwijderd lid",
       "unread": "Ongelezen, ",
