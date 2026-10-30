@@ -406,13 +406,36 @@ export function newestOtherId(
 // them when the count was taken, so later arrivals don't move it). The inbox
 // counts the same way: every message after the reader's receipt that they
 // didn't write, system lines included. A run longer than the loaded messages
-// starts at the oldest loaded one, and moves up as older pages load. Undefined
-// when nothing was unread or the anchor isn't loaded.
+// starts at the oldest loaded one, and moves up as older pages load (see
+// unreadRunLoaded). Undefined when nothing was unread or the anchor isn't
+// loaded.
 export function firstUnreadId(
   messages: readonly ReadableMessage[],
   unreadCount: number,
   anchorId: string | undefined,
 ): string | undefined {
+  const start = unreadRunStart(messages, unreadCount, anchorId);
+  return start === undefined ? undefined : messages[Math.max(start, 0)].id;
+}
+
+// Whether the loaded messages reach back to the start of that unread run, so
+// the divider is where it will stay: false while the run reaches past the
+// oldest loaded message. True when there's no divider to place.
+export function unreadRunLoaded(
+  messages: readonly ReadableMessage[],
+  unreadCount: number,
+  anchorId: string | undefined,
+): boolean {
+  return unreadRunStart(messages, unreadCount, anchorId) !== -1;
+}
+
+// The index of the unread run's first message, -1 when the run reaches past
+// the oldest loaded message, undefined when there's no run to place.
+function unreadRunStart(
+  messages: readonly ReadableMessage[],
+  unreadCount: number,
+  anchorId: string | undefined,
+): number | undefined {
   if (unreadCount <= 0 || anchorId === undefined) return undefined;
   const anchor = messages.findIndex((message) => message.id === anchorId);
   if (anchor === -1) return undefined;
@@ -420,9 +443,9 @@ export function firstUnreadId(
   for (let i = anchor; i >= 0; i--) {
     if (messages[i].isMine) continue;
     counted += 1;
-    if (counted === unreadCount) return messages[i].id;
+    if (counted === unreadCount) return i;
   }
-  return messages[0].id;
+  return -1;
 }
 
 // The newest message the server has, skipping the reader's sends that are

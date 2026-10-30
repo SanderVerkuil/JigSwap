@@ -65,6 +65,7 @@ import {
   systemEventText,
   threadSubjectTitle,
   tradeEventText,
+  unreadRunLoaded,
   type InboxThread,
   type ThreadItem,
 } from "./format";
@@ -243,6 +244,11 @@ export function ThreadView({
     threadId: string;
     count: number;
     upToId: string | undefined;
+    // Whether the messages reach back to the start of that run, or no older
+    // page is coming. Until then the thread holds its layout (see below).
+    // Latched: a page that briefly drops out of the paginated results never
+    // takes a laid-out thread back to its skeleton.
+    runLoaded: boolean;
   }>();
   // Where the reader is, per thread, as of their last scroll: at the bottom or
   // not, and the newest message they had in view there. Others' messages after
@@ -253,20 +259,43 @@ export function ThreadView({
     atBottom: boolean;
     seenId: string | undefined;
   }>();
+  // More unread than the first page holds (UX-115): until the run's first
+  // message is loaded, the divider would sit on the oldest loaded message, and
+  // the page the scroll-up sentinel loads right after the first-load scroll
+  // would move it up, out of view. So the thread loads older pages before it
+  // lays out. The inbox caps the count at 50, so that's a few pages at most.
+  const olderPagesComing = status === "CanLoadMore" || status === "LoadingMore";
   if (
     messages !== undefined &&
     headerRow !== undefined &&
     unread?.threadId !== threadId
   ) {
+    const count = thread?.unreadCount ?? 0;
+    const upToId = newestOtherId(messages);
     setUnread({
       threadId,
-      count: thread?.unreadCount ?? 0,
-      upToId: newestOtherId(messages),
+      count,
+      upToId,
+      runLoaded: !olderPagesComing || unreadRunLoaded(messages, count, upToId),
     });
     setPosition({ threadId, atBottom: true, seenId: newestSentId(messages) });
+  } else if (
+    messages !== undefined &&
+    unread?.threadId === threadId &&
+    !unread.runLoaded &&
+    (!olderPagesComing ||
+      unreadRunLoaded(messages, unread.count, unread.upToId))
+  ) {
+    setUnread({ ...unread, runLoaded: true });
   }
-  // The messages and their unread snapshot are both in: the thread lays out.
-  const ready = messages !== undefined && unread?.threadId === threadId;
+  const loadingUnreadRun = unread?.threadId === threadId && !unread.runLoaded;
+  useEffect(() => {
+    if (loadingUnreadRun && status === "CanLoadMore") loadMore(PAGE_SIZE);
+  }, [loadingUnreadRun, status, loadMore]);
+  // The messages, their unread snapshot and the whole unread run are in: the
+  // thread lays out.
+  const ready =
+    messages !== undefined && unread?.threadId === threadId && unread.runLoaded;
 
   // Per-thread one-shot flag, reset when navigating between threads.
   const hasScrolledRef = useRef(false);
@@ -524,7 +553,7 @@ export function ThreadView({
   }, [messages, newest, threadId, title, circleThread, displayName, t]);
 
   const items =
-    messages === undefined || unread?.threadId !== threadId
+    messages === undefined || unread?.threadId !== threadId || !unread.runLoaded
       ? undefined
       : groupThreadMessages(
           messages,

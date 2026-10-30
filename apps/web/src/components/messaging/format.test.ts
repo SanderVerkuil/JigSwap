@@ -24,6 +24,7 @@ import {
   threadQuickLinks,
   threadSubjectTitle,
   tradeEventText,
+  unreadRunLoaded,
 } from "./format";
 
 // Deterministic translator stub: bare key when no values, key + values when
@@ -442,6 +443,30 @@ describe("firstUnreadId", () => {
   it("is undefined without a loaded anchor", () => {
     expect(firstUnreadId(thread, 2, undefined)).toBeUndefined();
     expect(firstUnreadId(thread, 2, "gone")).toBeUndefined();
+  });
+});
+
+describe("unreadRunLoaded", () => {
+  const m = (id: string, isMine: boolean) => ({ id, isMine });
+  // Ascending: hers, mine, hers, hers.
+  const thread = [m("a", false), m("b", true), m("c", false), m("d", false)];
+
+  it("is true once the loaded messages hold the whole run", () => {
+    expect(unreadRunLoaded(thread, 2, "d")).toBe(true);
+    // The run's first message is the oldest loaded one: still all there.
+    expect(unreadRunLoaded(thread, 3, "d")).toBe(true);
+  });
+
+  it("is false while the run reaches past the oldest loaded message", () => {
+    expect(unreadRunLoaded(thread, 4, "d")).toBe(false);
+    // Counted back from the anchor, not from the newest message.
+    expect(unreadRunLoaded(thread, 3, "c")).toBe(false);
+  });
+
+  it("is true when there's no divider to place", () => {
+    expect(unreadRunLoaded(thread, 0, "d")).toBe(true);
+    expect(unreadRunLoaded(thread, 2, undefined)).toBe(true);
+    expect(unreadRunLoaded(thread, 2, "gone")).toBe(true);
   });
 });
 

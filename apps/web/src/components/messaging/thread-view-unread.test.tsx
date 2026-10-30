@@ -34,18 +34,33 @@ import { ThreadView } from "./thread-view";
 
 const mocks = vi.hoisted(() => ({
   mutation: vi.fn<(name: string, args: unknown) => Promise<unknown>>(),
-  // The thread's messages, ascending; served newest-first as one exhausted page.
+  // The thread's messages, ascending; served newest-first.
   messages: [] as unknown[],
+  // How many of the newest messages the first page holds; each loadMore(n)
+  // adds n older ones. Undefined: everything, as one exhausted page.
+  firstPage: undefined as number | undefined,
+  loadMore: vi.fn<(numItems: number) => void>(),
 }));
 
-vi.mock("convex/react", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("convex/react")>()),
-  usePaginatedQuery: () => ({
-    results: [...mocks.messages].reverse(),
-    status: "Exhausted",
-    loadMore: () => {},
-  }),
-}));
+vi.mock("convex/react", async (importOriginal) => {
+  const { useCallback, useState } = await import("react");
+  return {
+    ...(await importOriginal<typeof import("convex/react")>()),
+    usePaginatedQuery: () => {
+      const [loaded, setLoaded] = useState(mocks.firstPage ?? Infinity);
+      const loadMore = useCallback((numItems: number) => {
+        mocks.loadMore(numItems);
+        setLoaded((count) => count + numItems);
+      }, []);
+      const newestFirst = [...mocks.messages].reverse();
+      return {
+        results: newestFirst.slice(0, loaded),
+        status: loaded < newestFirst.length ? "CanLoadMore" : "Exhausted",
+        loadMore,
+      };
+    },
+  };
+});
 
 vi.mock("@/compat/link", () => ({
   Link: ({
@@ -205,6 +220,8 @@ const scrollListTo = (top: number) => {
 beforeEach(() => {
   mocks.mutation.mockReset().mockResolvedValue(null);
   mocks.messages = MESSAGES;
+  mocks.firstPage = undefined;
+  mocks.loadMore.mockReset();
   geometry.scrollHeight = 1000;
   geometry.clientHeight = 400;
 });
@@ -305,6 +322,49 @@ describe("ThreadView unread boundary", () => {
     // Reaching the bottom catches up.
     scrollListTo(maxScrollTop());
     expect(await receipts()).toHaveLength(1);
+  });
+
+  describe("with more unread than the first page holds", () => {
+    // Ten of Mara's (read), five of mine, then 25 of hers: unread.
+    const LONG = Array.from({ length: 40 }, (_, i) =>
+      message(`m${i + 1}`, i >= 10 && i < 15, (i + 1) * 1_000),
+    );
+    const itemTexts = () =>
+      Array.from(list().children).map((li) => li.textContent ?? "");
+
+    it("loads older pages before placing the divider before the first unread", async () => {
+      mocks.messages = LONG;
+      mocks.firstPage = 20;
+      renderThread(25);
+      // The first page held only the newest 20: one more page reaches the run.
+      expect(mocks.loadMore.mock.calls).toEqual([[20]]);
+      const items = itemTexts();
+      const divider = items.indexOf("New messages");
+      expect(items[divider + 1]).toContain("Message m16");
+      expect(items[divider - 1]).toContain("Message m15");
+      // Opened at the divider, so nothing is marked read yet.
+      expect(list().scrollTop).toBeLessThan(maxScrollTop());
+      expect(await receipts()).toHaveLength(0);
+    });
+
+    it("loads nothing extra when the unread run fits in the first page", () => {
+      mocks.messages = LONG;
+      mocks.firstPage = 20;
+      renderThread(5);
+      expect(mocks.loadMore).not.toHaveBeenCalled();
+      const items = itemTexts();
+      expect(items[items.indexOf("New messages") + 1]).toContain("Message m36");
+    });
+
+    it("lays out once the history runs out, with the divider at the start", () => {
+      mocks.messages = LONG;
+      mocks.firstPage = 20;
+      // More than the thread holds (a count of 50 means "50 or more").
+      renderThread(50);
+      expect(mocks.loadMore.mock.calls).toEqual([[20]]);
+      const items = itemTexts();
+      expect(items[items.indexOf("New messages") + 1]).toContain("Message m1");
+    });
   });
 
   it("sends no receipt for the reader's own messages", async () => {
