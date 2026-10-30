@@ -408,6 +408,12 @@ export interface CopyPhoto {
    * its own uploader, who can show a "pending review" badge; rejected photos are never returned.
    */
   moderationStatus: "approved" | "pending";
+  /**
+   * Whether the viewer may remove this photo (library.removeCopyPhoto): true when they manage the
+   * copy (`viewerCanManage`) or uploaded the photo themselves, e.g. the previous owner after a
+   * transfer.
+   */
+  viewerMayRemove: boolean;
 }
 
 /**

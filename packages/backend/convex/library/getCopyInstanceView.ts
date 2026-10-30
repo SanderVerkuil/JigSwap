@@ -339,6 +339,8 @@ export const getCopyInstanceView = query({
               (img.moderationStatus ?? "approved") === "approved"
                 ? "approved"
                 : "pending",
+            // Mirrors library/removeCopyPhoto: the copy's managers, and the photo's own uploader.
+            viewerMayRemove: viewerCanManage || img.uploaderId === viewerId,
           };
         }),
     );
