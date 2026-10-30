@@ -3,6 +3,7 @@ import { Link } from "@/compat/link";
 import { SectionHead } from "@/components/dashboard-home/section-head";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { emptyStateFor } from "@/components/notifications/notification-empty-state";
+import { groupByRecency } from "@/components/notifications/notification-groups";
 import { NotificationItem } from "@/components/notifications/notification-item";
 import {
   ADMIN_NOTIFICATION_TYPES,
@@ -11,15 +12,13 @@ import {
   type NotificationCategoryKey,
   type NotificationType,
 } from "@/components/notifications/notification-meta";
-import {
-  formatUnreadBadge,
-  unreadNotificationsLabel,
-} from "@/components/notifications/unread-count";
+import { unreadNotificationsLabel } from "@/components/notifications/unread-count";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
 import { Switch } from "@/components/ui/switch";
 import { gateway } from "@/gateway";
+import { useDateFnsLocale } from "@/lib/date-locale";
 import { pageTitle } from "@/lib/page-title";
 import { cn } from "@/lib/utils";
 import { currentSubscriptionEndpoint, pushSupported } from "@/lib/web-push";
@@ -29,7 +28,6 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery } from "convex/react";
-import { isToday, isYesterday } from "date-fns";
 import { Bell, CheckCheck, Loader2, Settings2 } from "lucide-react";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
@@ -88,6 +86,9 @@ function NotificationsPage() {
   const t = useTranslations("notifications");
   const tCommon = useTranslations("common");
   const pushEnabled = usePushEnabledOnThisDevice();
+  const weekStartsOn = useDateFnsLocale().options?.weekStartsOn ?? 0;
+  // The page's first-render time (Date.now() can't run during render).
+  const [now] = useState(() => Date.now());
 
   const [category, setCategory] = useState<CategoryFilter>("all");
   const [unreadOnly, setUnreadOnly] = useState(false);
@@ -205,29 +206,8 @@ function NotificationsPage() {
     return true;
   });
 
-  const groups = (
-    [
-      {
-        key: "today",
-        label: t("today"),
-        rows: filtered.filter((row) => isToday(new Date(row.createdAt))),
-      },
-      {
-        key: "yesterday",
-        label: t("yesterday"),
-        rows: filtered.filter((row) => isYesterday(new Date(row.createdAt))),
-      },
-      {
-        key: "earlier",
-        label: t("earlier"),
-        rows: filtered.filter(
-          (row) =>
-            !isToday(new Date(row.createdAt)) &&
-            !isYesterday(new Date(row.createdAt)),
-        ),
-      },
-    ] as const
-  ).filter((group) => group.rows.length > 0);
+  // Today / Yesterday / This week / This month / Earlier, in the locale's week.
+  const groups = groupByRecency(filtered, now, weekStartsOn);
 
   const filtersActive = category !== "all" || unreadOnly;
   const clearFilters = () => {
@@ -246,14 +226,6 @@ function NotificationsPage() {
     <div className="flex w-full flex-col gap-6">
       <div className="grid gap-6 lg:gap-10 xl:grid-cols-[minmax(0,1fr)_280px]">
         <aside className="flex min-w-0 flex-col gap-4 xl:col-start-2 xl:row-start-1 xl:sticky xl:top-2 xl:self-start">
-          {/* Unread stat: a glanceable extra, not a control — xl only */}
-          <div className="hidden xl:block">
-            <p className="text-3xl font-bold tabular-nums">
-              {formatUnreadBadge(unreadCount)}
-            </p>
-            <p className="text-muted-foreground text-sm">{t("unreadStat")}</p>
-          </div>
-
           {/* Category pills + unread-only toggle: always visible. Below md the pills are ONE
               row that scrolls sideways, bleeding to the screen edges, with the toggle under it
               (two rows, not three); a wrapping row from md; a vertical stack at xl. */}
@@ -308,20 +280,13 @@ function NotificationsPage() {
             </label>
           </div>
 
-          {/* Push status: a glanceable extra, not a control — xl only */}
-          <div className="text-muted-foreground hidden items-center gap-1.5 text-sm xl:flex">
-            <span>
-              {t("pushOnDevice", {
-                state: pushEnabled ? t("pushStateOn") : t("pushStateOff"),
-              })}
-            </span>
-            <Link
-              href="/notifications/preferences"
-              className="hover:text-foreground underline"
-            >
-              {t("preferences")}
-            </Link>
-          </div>
+          {/* Push status: a glanceable extra, not a control — xl only. The unread count and the
+              preferences link live in the page head only, not repeated here (UX-183). */}
+          <p className="text-muted-foreground hidden text-sm xl:block">
+            {t("pushOnDevice", {
+              state: pushEnabled ? t("pushStateOn") : t("pushStateOff"),
+            })}
+          </p>
         </aside>
 
         <div className="min-w-0 xl:col-start-1 xl:row-start-1">
@@ -374,7 +339,7 @@ function NotificationsPage() {
             <div className="flex flex-col gap-8">
               {groups.map((group) => (
                 <section key={group.key}>
-                  <SectionHead title={group.label} />
+                  <SectionHead title={t(group.key)} />
                   <ul className="divide-y">
                     {group.rows.map((view) => {
                       const category = CATEGORY_BY_TYPE[view.type];
