@@ -92,7 +92,8 @@ export const Route = createFileRoute("/_dashboard/admin/moderation")({
 // not decided (pending / unscored) or whose hash check timed out, or check an unscored one again,
 // Review Requests decides the auto-rejected message photos whose sender asked for a review
 // (restore / keep removed), Hash matches lists the CSAM hash-list matches to report
-// (metadata only, never an image), and Activity Log lists the recent moderation stamps.
+// (metadata only, never an image), and Activity Log pages through every moderation stamp
+// (filterable by kind and acting admin, both in the URL).
 function ModerationPage() {
   const t = useTranslations("admin.moderation");
   const tAdmin = useTranslations("admin");
@@ -878,7 +879,17 @@ function ModerationPage() {
         </TabsContent>
 
         <TabsContent value="activity">
-          <ActivityLog emptyTitle={tAdmin("queueEmpty.title")} />
+          <ActivityLog
+            emptyTitle={tAdmin("queueEmpty.title")}
+            kind={search.kind}
+            actorId={search.actor}
+            onKindChange={(kind) =>
+              replaceSearch((prev) => ({ ...prev, kind }))
+            }
+            onClearActor={() =>
+              replaceSearch((prev) => ({ ...prev, actor: undefined }))
+            }
+          />
         </TabsContent>
       </Tabs>
 

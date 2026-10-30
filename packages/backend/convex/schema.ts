@@ -778,7 +778,10 @@ export default defineSchema({
     // Additive — Convex indexes existing rows automatically, no backfill.
     .index("by_actor", ["actorId", "at"])
     .index("by_target", ["targetId", "at"])
-    .index("by_target_member", ["targetMemberId", "at"]),
+    .index("by_target_member", ["targetMemberId", "at"])
+    // The console's activity log filtered to one kind, newest first (admin/getModerationActivity).
+    // Additive, on existing fields: Convex indexes existing rows automatically, no backfill.
+    .index("by_kind", ["kind", "at"]),
 
   // CSAM hash matches (lib/imageModeration/csamHashCheck), one row per quarantined image, for the
   // operator to report to Meldpunt Offlimits or the police (DSA Art. 18). Metadata only: the

@@ -29,10 +29,17 @@ describe("moderation activity messages", () => {
         const sentence = t.markup(kind as ActivityMessageKey, {
           actor: "Ada",
           target: "Mountain Vista",
+          actorLink: (chunks) => chunks,
+          targetLink: (chunks) => chunks,
           strong: (chunks) => chunks,
         });
         expect(sentence, kind).toContain("Ada");
         expect(sentence, kind).not.toContain("admin.moderation");
+        // The Activity Log links the actor, so a sentence that only bolds them loses the link.
+        expect(
+          messages.admin.moderation.activity[kind as ActivityMessageKey],
+        ).toContain("<actorLink>{actor}</actorLink>");
+        expect(messages.admin.moderation.activity.kinds).toHaveProperty(kind);
       }
       expect(errors).toEqual([]);
     },

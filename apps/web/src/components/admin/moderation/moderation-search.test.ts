@@ -6,6 +6,8 @@ const EMPTY = {
   item: undefined,
   report: undefined,
   status: undefined,
+  kind: undefined,
+  actor: undefined,
 };
 
 describe("validateModerationSearch", () => {
@@ -55,6 +57,22 @@ describe("validateModerationSearch", () => {
     expect(validateModerationSearch({ item: " abc ", report: " r1 " })).toEqual(
       { ...EMPTY, item: "abc", report: "r1" },
     );
+  });
+
+  it("keeps the activity log's kind and actor filters", () => {
+    expect(
+      validateModerationSearch({
+        tab: "activity",
+        kind: "report_warned",
+        actor: " j57actor ",
+      }),
+    ).toEqual({
+      ...EMPTY,
+      tab: "activity",
+      kind: "report_warned",
+      actor: "j57actor",
+    });
+    expect(validateModerationSearch({ kind: "", actor: 7 })).toEqual(EMPTY);
   });
 
   it("ignores unrelated params", () => {

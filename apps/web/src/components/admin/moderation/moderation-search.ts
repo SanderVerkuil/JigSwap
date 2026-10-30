@@ -3,7 +3,10 @@
 // - `tab`: the open tab (absent = Submissions);
 // - `item`: the selected row of a list+detail queue (a submission's `_id`, a photo's id/key, a
 //   review request's attachment id);
-// - `report` / `status`: the Reports tab's open report drawer and its status filter (absent = open).
+// - `report` / `status`: the Reports tab's open report drawer and its status filter (absent = open);
+// - `kind` / `actor`: the Activity Log's filters (a moderation-action kind, an acting admin's member
+//   _id). Kept as strings here: the log ignores a kind it does not know, and the server normalises
+//   the actor id.
 // Anything unknown or malformed is dropped, so a stale link falls back to the defaults.
 export const MODERATION_TABS = [
   "submissions",
@@ -24,6 +27,8 @@ export type ModerationSearch = {
   item?: string;
   report?: string;
   status?: ReportStatus;
+  kind?: string;
+  actor?: string;
 };
 
 const nonEmpty = (value: unknown): string | undefined =>
@@ -45,5 +50,7 @@ export function validateModerationSearch(
     item: nonEmpty(search.item),
     report: nonEmpty(search.report),
     status: oneOf(search.status, REPORT_STATUSES),
+    kind: nonEmpty(search.kind),
+    actor: nonEmpty(search.actor),
   };
 }
