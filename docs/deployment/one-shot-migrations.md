@@ -951,3 +951,52 @@ The remaining batches run as scheduled functions. The last batch logs one JSON l
 2. Its counts match the row counts the dashboard shows for `users`, `puzzles` and
    `ownedPuzzles` (give or take rows written while it ran).
 3. The home page shows the same numbers as before the run.
+
+---
+
+## `library/definitionStats:reconcile` — the catalog and definition pages' aggregates
+
+**When:** once per deployment, right after the `definitionStats` table, the marks on the
+write paths and the `reconcile definition stats` cron (PERF-B4m, SEC-29) are deployed there.
+Optional: the cron runs the same reconcile every night. There is no ordering pressure:
+every write that changes a definition's aggregates already gives it a row, and until a
+definition has one the catalog and definition pages compute its aggregates themselves, at
+the old cost (every review, copy and completion of the definition on each view), so run it
+soon after the deploy rather than waiting for the cron.
+
+**What it does:** pages through `puzzles` (100 definitions per batch; `batchSize` overrides
+it, rounded down and clamped to 1..500; each batch its own transaction, rescheduling itself
+until the table is exhausted) and schedules one `library/definitionStats:recompute` per
+definition. Each recompute is its own transaction: it reads the definition's reviews, copies
+and completions (and the profile visibility of the copies' owners), computes the totals the
+pages show with the same helpers they used to run live, and writes the definition's
+`definitionStats` row only when its totals changed. It never writes any other table.
+
+**Safe to re-run:** yes. A second run finds every row in step and writes nothing. It also
+doubles as a repair: a row whose totals differ from its sources without having been marked
+stale is rewritten and logged as `"event":"library.definitionStats.drift"` with its
+`puzzle_id`. A drift line points at a write path that changes reviews, copies, completions
+or profile visibility without marking the definition (see library/definitionStats).
+
+**Commands:**
+
+```bash
+cd packages/backend
+
+# dev, then prod
+npx convex run library/definitionStats:reconcile '{}'
+npx convex run --prod library/definitionStats:reconcile '{}'
+```
+
+The remaining batches and the per-definition recomputes run as scheduled functions. The
+last batch logs one JSON line with `"event":"library.definitionStats.reconcile"` and the
+number of `definitions` it scheduled.
+
+**Verify:**
+
+1. In the dashboard data view, `definitionStats` has one row per `puzzles` row, each with
+   `totals` and without `stale`.
+2. Run it again: no `library.definitionStats.drift` lines, and no row's `computedAt`
+   changes (give or take definitions written to in between).
+3. The public catalog, a catalog detail page and a `/puzzles/<id>` page show the same
+   ratings, owner, completion and availability numbers as before the run.

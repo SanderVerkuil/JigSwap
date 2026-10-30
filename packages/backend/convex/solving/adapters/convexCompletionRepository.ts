@@ -11,6 +11,7 @@ import {
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
+import { markCompletionStatsChange } from "../../library/definitionStats";
 import { toDomain, toRow } from "./completionMapper";
 
 // Driven adapter for the CompletionRepository port over `ctx.db`. The only place the
@@ -106,6 +107,8 @@ export const convexCompletionRepository = (
       const existing = await rowById(completion.id);
       if (existing) await ctx.db.patch(existing._id, row);
       else await ctx.db.insert("completions", row);
+      // The definition's completion stats follow the solve.
+      await markCompletionStatsChange(ctx, existing, row);
     },
 
     async listByUser(userId: MemberId): Promise<readonly Completion[]> {
@@ -138,7 +141,9 @@ export const convexCompletionRepository = (
     async delete(id: CompletionId): Promise<void> {
       const row = await rowById(id);
       // No-op if the row is already gone (idempotent).
-      if (row) await ctx.db.delete(row._id);
+      if (!row) return;
+      await ctx.db.delete(row._id);
+      await markCompletionStatsChange(ctx, row, null);
     },
   };
 };

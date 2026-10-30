@@ -4,6 +4,7 @@ import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { internalMutation, type MutationCtx } from "../_generated/server";
 import { logEvent } from "../lib/logEvent";
+import { markDefinitionStatsStale } from "../library/definitionStats";
 
 // Operator tool (SEC-70): remove what one member WROTE for others to read, on request — their copy
 // comments (puzzleComments), photo comments (photoComments), puzzle reviews (puzzleReviews), copy
@@ -106,13 +107,21 @@ const removePage = async (
           .withIndex("by_author", (q) => q.eq("authorId", memberId))
           .paginate(opts),
       );
-    case "puzzleReviews":
-      return deleteAll(
-        await ctx.db
-          .query("puzzleReviews")
-          .withIndex("by_user_puzzle", (q) => q.eq("userId", memberId))
-          .paginate(opts),
-      );
+    case "puzzleReviews": {
+      const page = await ctx.db
+        .query("puzzleReviews")
+        .withIndex("by_user_puzzle", (q) => q.eq("userId", memberId))
+        .paginate(opts);
+      if (!dryRun) {
+        // The definition's community rating follows the review's stars.
+        for (const row of page.page) {
+          if (row.rating !== undefined) {
+            await markDefinitionStatsStale(ctx, row.puzzleId);
+          }
+        }
+      }
+      return deleteAll(page);
+    }
     case "copyReviews":
       return deleteAll(
         await ctx.db

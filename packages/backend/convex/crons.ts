@@ -110,4 +110,13 @@ crons.interval(
   {},
 );
 
+// The catalog and definition pages' aggregates: every definition's definitionStats row recomputed
+// from source, repairing any a write path forgot to mark (library/definitionStats.reconcile).
+crons.daily(
+  "reconcile definition stats",
+  { hourUTC: 4, minuteUTC: 15 },
+  internal.library.definitionStats.reconcile,
+  {},
+);
+
 export default crons;

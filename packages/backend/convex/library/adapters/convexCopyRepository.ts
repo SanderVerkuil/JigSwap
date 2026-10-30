@@ -2,6 +2,7 @@ import type { Copy, CopyId, CopyRepository, OwnerId } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
 import { deleteBlobUnlessReferenced } from "../../lib/storage/blobLifecycle";
+import { markCopyStatsChange } from "../definitionStats";
 import { toDomain, toRow } from "./copyMapper";
 
 // Driven adapter for the CopyRepository port over `ctx.db`. The only place `ownedPuzzles` (and
@@ -54,6 +55,8 @@ export const convexCopyRepository = (ctx: MutationCtx): CopyRepository => {
       const ownedPuzzleId = existing
         ? (await ctx.db.patch(existing._id, row), existing._id)
         : await ctx.db.insert("ownedPuzzles", row);
+      // The definition's catalog aggregates (owners, public listings) follow the copy.
+      await markCopyStatsChange(ctx, existing, row);
 
       // Images belong to the Copy, but the domain path never adds one: photos are written only by
       // library/addCopyPhoto, which records the acting member as uploader, claims a fresh upload
@@ -100,6 +103,7 @@ export const convexCopyRepository = (ctx: MutationCtx): CopyRepository => {
       }
 
       await ctx.db.delete(row._id);
+      await markCopyStatsChange(ctx, row, null);
     },
 
     async listByOwner(ownerId: OwnerId): Promise<readonly Copy[]> {

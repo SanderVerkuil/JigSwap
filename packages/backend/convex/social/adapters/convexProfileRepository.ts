@@ -1,6 +1,7 @@
 import type { MemberId, Profile, ProfileRepository } from "@jigswap/domain";
 import type { Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
+import { markOwnerListingsChange } from "../../library/definitionStats";
 import { profileToDomain, profileToRow } from "./mappers";
 
 // Driven adapter for the ProfileRepository port over `ctx.db`. The only place the `profiles`
@@ -26,5 +27,10 @@ export const convexProfileRepository = (
       .unique();
     if (existing) await ctx.db.patch(existing._id, row);
     else await ctx.db.insert("profiles", row);
+    // Absent means public. Only a public owner's open copies count as public listings in the
+    // catalog's availability numbers, so those definitions are re-counted.
+    if ((existing?.visibility ?? "public") !== (row.visibility ?? "public")) {
+      await markOwnerListingsChange(ctx, row.memberId);
+    }
   },
 });

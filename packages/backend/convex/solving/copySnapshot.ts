@@ -1,5 +1,6 @@
 import type { Doc } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
+import { markCompletionStatsChange } from "../library/definitionStats";
 
 // Denormalize the durable puzzleId anchor + copy snapshot onto a just-written completion row.
 // Library-context data the Solving domain never loads, so the composition roots (record + start)
@@ -18,8 +19,9 @@ export const denormalizeCopyOntoCompletion = async (
     .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", completionId))
     .unique();
   if (!row) return;
+  const puzzleId = row.puzzleId ?? copy.puzzleId;
   await ctx.db.patch(row._id, {
-    puzzleId: row.puzzleId ?? copy.puzzleId,
+    puzzleId,
     copySnapshot: {
       copyId: copyAggregateId,
       ownerId: copy.ownerId,
@@ -31,4 +33,6 @@ export const denormalizeCopyOntoCompletion = async (
       pieceCount: copy.snapshot?.pieceCount,
     },
   });
+  // The definition's completion stats follow the anchor (a no-op when the save already marked it).
+  await markCompletionStatsChange(ctx, row, { ...row, puzzleId });
 };

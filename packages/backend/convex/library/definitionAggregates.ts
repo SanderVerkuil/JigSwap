@@ -81,12 +81,20 @@ export interface RatingBreakdown {
   percentages: [number, number, number, number, number];
 }
 
-/** Community rating distribution over the definition's `puzzleReviews` rows (one per member).
- * Migrated text-only rows (rating undefined) never aggregate. breakdown index 0..4 == [5★..1★]. */
-export const ratingBreakdownOf = async (
+/** The sums a RatingBreakdown is derived from (stored as is in library/definitionStats).
+ * breakdown index 0..4 == [5★..1★]. */
+export interface RatingTotals {
+  ratingCount: number;
+  ratingSum: number;
+  breakdown: [number, number, number, number, number];
+}
+
+/** Community rating sums over the definition's `puzzleReviews` rows (one per member). Migrated
+ * text-only rows (rating undefined) never aggregate. */
+export const ratingTotalsOf = async (
   ctx: QueryCtx,
   puzzleId: Id<"puzzles">,
-): Promise<RatingBreakdown> => {
+): Promise<RatingTotals> => {
   const reviews = await ctx.db
     .query("puzzleReviews")
     .withIndex("by_puzzle", (q) => q.eq("puzzleId", puzzleId))
@@ -100,13 +108,21 @@ export const ratingBreakdownOf = async (
     const bucket = 5 - r; // r=5 -> 0, r=1 -> 4
     if (bucket >= 0 && bucket <= 4) breakdown[bucket] += 1;
   }
-  const ratingCount = ratedReviews.length;
+  return { ratingCount: ratedReviews.length, ratingSum, breakdown };
+};
+
+/** The community rating distribution shown on the definition pages, from its sums. */
+export const ratingBreakdownFromTotals = ({
+  ratingCount,
+  ratingSum,
+  breakdown,
+}: RatingTotals): RatingBreakdown => {
   const pct = (n: number): number =>
     ratingCount > 0 ? Math.round((n / ratingCount) * 100) : 0;
   return {
     rating: ratingCount > 0 ? round1(ratingSum / ratingCount) : 0,
     count: ratingCount,
-    breakdown,
+    breakdown: [...breakdown],
     percentages: [
       pct(breakdown[0]),
       pct(breakdown[1]),
@@ -117,15 +133,29 @@ export const ratingBreakdownOf = async (
   };
 };
 
-/** Completion aggregate for a definition: count of finished solves + average whole-day duration.
- * A solve is recorded against the definition (puzzleId) OR against a copy (ownedPuzzleId only);
- * both are counted, deduped by _id. `ownedCopies` is the definition's ownedPuzzles rows (the caller
- * already has them). */
-export const completionStatsOf = async (
+/** Community rating distribution over the definition's `puzzleReviews` rows, read live. */
+export const ratingBreakdownOf = async (
+  ctx: QueryCtx,
+  puzzleId: Id<"puzzles">,
+): Promise<RatingBreakdown> =>
+  ratingBreakdownFromTotals(await ratingTotalsOf(ctx, puzzleId));
+
+/** The sums the completion stats are derived from (stored as is in library/definitionStats). */
+export interface CompletionTotals {
+  completedCount: number;
+  finishDaysSum: number;
+  finishDaysCount: number;
+}
+
+/** Completion sums for a definition: finished solves, and the whole-day durations of those that
+ * have one. A solve is recorded against the definition (puzzleId) OR against a copy (ownedPuzzleId
+ * only); both are counted, deduped by _id. `ownedCopies` is the definition's ownedPuzzles rows (the
+ * caller already has them). */
+export const completionTotalsOf = async (
   ctx: QueryCtx,
   puzzleId: Id<"puzzles">,
   ownedCopies: Doc<"ownedPuzzles">[],
-): Promise<{ totalCompletions: number; avgCompletionDays: number | null }> => {
+): Promise<CompletionTotals> => {
   const byDefinition = await ctx.db
     .query("completions")
     .withIndex("by_puzzle", (q) => q.eq("puzzleId", puzzleId))
@@ -149,15 +179,50 @@ export const completionStatsOf = async (
     .map(finishDaysOf)
     .filter((d): d is number => d != null);
   return {
-    totalCompletions: completed.length,
-    avgCompletionDays:
-      finishDaysList.length > 0
-        ? round1(
-            finishDaysList.reduce((s, d) => s + d, 0) / finishDaysList.length,
-          )
-        : null,
+    completedCount: completed.length,
+    finishDaysSum: finishDaysList.reduce((s, d) => s + d, 0),
+    finishDaysCount: finishDaysList.length,
   };
 };
+
+/** Completion aggregate shown on the definition pages (count of finished solves + average
+ * whole-day duration), from its sums. */
+export const completionStatsFromTotals = ({
+  completedCount,
+  finishDaysSum,
+  finishDaysCount,
+}: CompletionTotals): {
+  totalCompletions: number;
+  avgCompletionDays: number | null;
+} => ({
+  totalCompletions: completedCount,
+  avgCompletionDays:
+    finishDaysCount > 0 ? round1(finishDaysSum / finishDaysCount) : null,
+});
+
+/** Completion aggregate for a definition, read live. */
+export const completionStatsOf = async (
+  ctx: QueryCtx,
+  puzzleId: Id<"puzzles">,
+  ownedCopies: Doc<"ownedPuzzles">[],
+): Promise<{ totalCompletions: number; avgCompletionDays: number | null }> =>
+  completionStatsFromTotals(
+    await completionTotalsOf(ctx, puzzleId, ownedCopies),
+  );
+
+export interface PublicAvailability {
+  total: number;
+  byType: { swap: number; lend: number; sale: number };
+}
+
+/** The public availability aggregate from its per-type counts (stored as is in
+ * library/definitionStats). */
+export const publicAvailabilityFromByType = (
+  byType: PublicAvailability["byType"],
+): PublicAvailability => ({
+  total: byType.swap + byType.lend + byType.sale,
+  byType: { ...byType },
+});
 
 /** PUBLIC availability aggregate: open copies whose owner's profile is PUBLIC, each counted once
  * under its priority swap type. No circle reachability and no viewer exclusion — there is no
@@ -169,10 +234,7 @@ export const publicAvailabilityOf = async (
   ctx: QueryCtx,
   ownedCopies: Doc<"ownedPuzzles">[],
   visibilityCache: Map<string, "public" | "private"> = new Map(),
-): Promise<{
-  total: number;
-  byType: { swap: number; lend: number; sale: number };
-}> => {
+): Promise<PublicAvailability> => {
   const ownerIsPublic = async (ownerId: Id<"users">): Promise<boolean> => {
     const key = ownerId as unknown as string;
     let cached = visibilityCache.get(key);
@@ -188,5 +250,5 @@ export const publicAvailabilityOf = async (
       byType[swapTypeOf(copy)] += 1;
     }
   }
-  return { total: byType.swap + byType.lend + byType.sale, byType };
+  return publicAvailabilityFromByType(byType);
 };

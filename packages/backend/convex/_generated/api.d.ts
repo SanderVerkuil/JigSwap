@@ -344,6 +344,7 @@ import type * as library_copyVisibility from "../library/copyVisibility.js";
 import type * as library_createCollection from "../library/createCollection.js";
 import type * as library_createPersonalCategory from "../library/createPersonalCategory.js";
 import type * as library_definitionAggregates from "../library/definitionAggregates.js";
+import type * as library_definitionStats from "../library/definitionStats.js";
 import type * as library_deleteCollection from "../library/deleteCollection.js";
 import type * as library_deleteCopy from "../library/deleteCopy.js";
 import type * as library_deletePhotoComment from "../library/deletePhotoComment.js";
@@ -938,6 +939,7 @@ declare const fullApi: ApiFromModules<{
   "library/createCollection": typeof library_createCollection;
   "library/createPersonalCategory": typeof library_createPersonalCategory;
   "library/definitionAggregates": typeof library_definitionAggregates;
+  "library/definitionStats": typeof library_definitionStats;
   "library/deleteCollection": typeof library_deleteCollection;
   "library/deleteCopy": typeof library_deleteCopy;
   "library/deletePhotoComment": typeof library_deletePhotoComment;

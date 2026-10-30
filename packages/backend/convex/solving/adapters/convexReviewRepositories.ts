@@ -6,6 +6,7 @@ import {
 } from "@jigswap/domain";
 import type { Id } from "../../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../../_generated/server";
+import { markDefinitionStatsStale } from "../../library/definitionStats";
 
 // Driven adapters for the two-level review model over `ctx.db`. Upsert-by-unique-key: the
 // one-row-per-(member, target) cardinality the domain ports promise lives HERE, via the
@@ -60,16 +61,20 @@ export const convexPuzzleReviewRepository = (
         text: review.text,
         updatedAt: now,
       });
-      return;
+    } else {
+      await ctx.db.insert("puzzleReviews", {
+        userId,
+        puzzleId,
+        rating: review.rating,
+        text: review.text,
+        createdAt: now,
+        updatedAt: now,
+      });
     }
-    await ctx.db.insert("puzzleReviews", {
-      userId,
-      puzzleId,
-      rating: review.rating,
-      text: review.text,
-      createdAt: now,
-      updatedAt: now,
-    });
+    // The definition's community rating follows the review's stars (text alone doesn't count).
+    if (existing?.rating !== review.rating) {
+      await markDefinitionStatsStale(ctx, puzzleId);
+    }
   },
 
   async remove(memberId, definitionId): Promise<boolean> {
@@ -83,6 +88,9 @@ export const convexPuzzleReviewRepository = (
       .unique();
     if (!existing) return false;
     await ctx.db.delete(existing._id);
+    if (existing.rating !== undefined) {
+      await markDefinitionStatsStale(ctx, puzzleId);
+    }
     return true;
   },
 });

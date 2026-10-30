@@ -2069,6 +2069,42 @@ export default defineSchema({
     countedAt: v.number(),
   }).index("by_key", ["key"]),
 
+  // Per-definition aggregates the catalog and definition pages show (PERF-B4m, SEC-29), so a page
+  // reads one row instead of every review, copy and completion of the definition. Only the
+  // viewer-independent parts; what depends on the viewer (their household's private copies, the
+  // copies they can reach) is still read per request. Written only by
+  // library/definitionStats.recompute, which recomputes a definition from source when a write has
+  // marked it, and nightly for every definition (the reconcile, which is also the backfill).
+  //   totals      the sums the pages derive their numbers from (library/definitionAggregates);
+  //               absent until the first recompute, and reads compute live meanwhile
+  //     breakdown        rated reviews per star, [5★, 4★, 3★, 2★, 1★]
+  //     communityOwners  distinct owners of a copy that is not private
+  //     publicAvailable  open copies of public-profile owners, by priority swap type
+  //   stale       a write changed the definition's sources and a recompute is scheduled; the
+  //               totals are still served until it lands
+  //   computedAt  when the totals were last written
+  definitionStats: defineTable({
+    puzzleId: v.id("puzzles"),
+    totals: v.optional(
+      v.object({
+        ratingCount: v.number(),
+        ratingSum: v.number(),
+        breakdown: v.array(v.number()),
+        completedCount: v.number(),
+        finishDaysSum: v.number(),
+        finishDaysCount: v.number(),
+        communityOwners: v.number(),
+        publicAvailable: v.object({
+          swap: v.number(),
+          lend: v.number(),
+          sale: v.number(),
+        }),
+      }),
+    ),
+    stale: v.optional(v.boolean()),
+    computedAt: v.optional(v.number()),
+  }).index("by_puzzle", ["puzzleId"]),
+
   // Open-ended loans: possession of a Copy held by a borrower while ownership stays with the
   // lender. Closed when the borrower returns it or the owner recalls it. aggregateId = LoanId;
   // copyId is the Library CopyId (ownedPuzzles.aggregateId). Status indexes back the borrowed/lent
