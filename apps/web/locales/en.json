@@ -1384,6 +1384,8 @@
       "swapsOnly": "You have <swapsLink>{swapsCount, plural, one {# swap in motion} other {# swaps in motion}}</swapsLink> — keep those pieces moving.",
       "pendingOnly": "You have {pendingCount, plural, one {one request waiting for your reply} other {# requests waiting for your reply}}.",
       "goalOnly": "All quiet on the swap front — and you're <goalLink>{pct}% of the way</goalLink> to your goal of {target, plural, one {# puzzle} other {# puzzles}}.",
+      "shelfOffered": "You have <shelfLink>{offeredCount, plural, one {# puzzle up for swap} other {# puzzles up for swap}}</shelfLink> — <browseLink>browse what others have</browseLink> and find your next one. 🧩",
+      "shelfOnly": "You have <shelfLink>{ownedCount, plural, one {# puzzle on your shelf} other {# puzzles on your shelf}}</shelfLink> — {ownedCount, plural, one {offer it for swap} other {offer a few for swap}} and get things moving. 🧩",
       "empty": "Your shelf is ready when you are — add a puzzle or browse the community to get things moving. 🧩"
     },
     "pendingBanner": {

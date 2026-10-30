@@ -1384,6 +1384,8 @@
       "swapsOnly": "Je hebt <swapsLink>{swapsCount, plural, one {# lopende ruil} other {# lopende ruilen}}</swapsLink> — houd die stukjes in beweging.",
       "pendingOnly": "Je hebt {pendingCount, plural, one {één verzoek dat op je antwoord wacht} other {# verzoeken die op je antwoord wachten}}.",
       "goalOnly": "Alles rustig aan het ruilfront — en je bent <goalLink>{pct}% op weg</goalLink> naar je doel van {target, plural, one {# puzzel} other {# puzzels}}.",
+      "shelfOffered": "Je hebt <shelfLink>{offeredCount, plural, one {# puzzel te ruil} other {# puzzels te ruil}}</shelfLink> — <browseLink>kijk wat anderen hebben</browseLink> en vind je volgende puzzel. 🧩",
+      "shelfOnly": "Je hebt <shelfLink>{ownedCount, plural, one {# puzzel op je plank} other {# puzzels op je plank}}</shelfLink> — {ownedCount, plural, one {zet hem te ruil} other {zet er een paar te ruil}} en breng de boel in beweging. 🧩",
       "empty": "Je plank is er klaar voor — voeg een puzzel toe of neus rond in de community om de boel in beweging te krijgen. 🧩"
     },
     "pendingBanner": {

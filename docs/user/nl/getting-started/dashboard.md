@@ -10,7 +10,8 @@ summary: "Lees je persoonlijke overzicht van uitwisselingen, doelen, statistieke
 
 Je dashboard is een persoonlijk overzicht dat je puzzelleven in één oogopslag samenvat:
 
-- Een **kopzin** die je lopende uitwisselingen en doelvoortgang samenvat.
+- Een **kopzin** die je lopende uitwisselingen en doelvoortgang samenvat, of,
+  als er nog niets loopt, je plank en wat je daarvan te ruil hebt staan.
 - Een **banner voor openstaande verzoeken** als iemand je een inkomend uitwisselingsverzoek heeft gestuurd dat een reactie nodig heeft.
 - **Snelle-actie-chips**: _Puzzel Toevoegen_, _Bladeren_ en _Voltooiing Vastleggen_.
 - Een **3D-plank** die je echte puzzelkopieën toont als fysieke objecten die je kunt bekijken.
