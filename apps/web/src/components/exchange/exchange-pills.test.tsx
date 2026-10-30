@@ -76,6 +76,32 @@ describe("ExchangeStatusPill", () => {
     expect(screen.getByText("Recalled Oct 28").className).toContain("green");
   });
 
+  it("keeps the loan labels at AA contrast in light and dark mode", () => {
+    // On loan: the dark-mode violet text token, not #705aea (3.1:1 on the dark tint).
+    renderIn(
+      "en",
+      <ExchangeStatusPill
+        status="completed"
+        loan={{ status: "open", openedAt: opened }}
+      />,
+    );
+    expect(screen.getByText("On loan").className).toContain(
+      "dark:text-primary-text",
+    );
+    cleanup();
+    // Returned: green-800 on the green tint in light mode (green-700 is 4.25:1).
+    renderIn(
+      "en",
+      <ExchangeStatusPill
+        status="completed"
+        loan={{ status: "returned", openedAt: opened, closedAt: midday(9, 28) }}
+      />,
+    );
+    const returned = screen.getByText("Returned Oct 28");
+    expect(returned.className).toContain("text-green-800");
+    expect(returned.className).not.toMatch(/(^|\s)text-green-700/);
+  });
+
   it("adds the year to a return in another year", () => {
     renderIn(
       "en",

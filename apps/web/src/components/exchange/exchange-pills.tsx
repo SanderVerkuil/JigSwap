@@ -25,6 +25,14 @@ const STATUS_TONES: Partial<Record<ExchangeStatus, string>> = {
   completed: "bg-green-500/15 text-green-700 dark:text-green-400",
 };
 
+// A settled lend's loan labels share those hues (violet while out, green once back) but meet AA
+// for 12px bold text on their own: green-800 on the tint in light mode, and the lifted violet text
+// token in dark mode, where #705aea text on the dark tint is 3.1:1.
+const LOAN_TONES = {
+  open: "bg-jigsaw-primary/10 text-jigsaw-primary dark:text-primary-text",
+  closed: "bg-green-500/15 text-green-800 dark:text-green-400",
+};
+
 /**
  * An exchange's status on its row: Pending, Accepted, Completed, … A lend completes when the
  * puzzle is handed over, so a completed lend says where the puzzle is instead: On loan (violet,
@@ -50,20 +58,23 @@ export function ExchangeStatusPill({
   if (status === "completed" && loan) {
     if (loan.status === "open") {
       label = t("loanState.open");
-      tone = STATUS_TONES.accepted ?? tone;
-    } else if (loan.closedAt === undefined) {
-      label = tLending(
-        loan.status === "returned" ? "statusReturned" : "statusRecalled",
-      );
+      tone = LOAN_TONES.open;
     } else {
-      const sameYear =
-        new Date(loan.closedAt).getFullYear() === now.getFullYear();
-      const date = format.dateTime(loan.closedAt, {
-        day: "numeric",
-        month: "short",
-        ...(sameYear ? {} : { year: "numeric" }),
-      });
-      label = t(`loanState.${loan.status}`, { date });
+      tone = LOAN_TONES.closed;
+      if (loan.closedAt === undefined) {
+        label = tLending(
+          loan.status === "returned" ? "statusReturned" : "statusRecalled",
+        );
+      } else {
+        const sameYear =
+          new Date(loan.closedAt).getFullYear() === now.getFullYear();
+        const date = format.dateTime(loan.closedAt, {
+          day: "numeric",
+          month: "short",
+          ...(sameYear ? {} : { year: "numeric" }),
+        });
+        label = t(`loanState.${loan.status}`, { date });
+      }
     }
   }
   return <span className={cn(CHIP, tone, className)}>{label}</span>;
