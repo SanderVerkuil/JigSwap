@@ -85,7 +85,8 @@ export interface OwnedCopyView {
   /**
    * Resolved cover image URL for the card: the copy's chosen-and-approved cover photo when set,
    * else the puzzle's global catalogue box art, else null. Only populated by reads that resolve it
-   * (e.g. `library.ownedByOwner`); undefined elsewhere.
+   * (e.g. `library.ownedByOwner`); undefined elsewhere. Thumbnail-sized: the box art's 480 px
+   * rendition once it exists, else the original; a full-width card cover uses `coverSrcSet`.
    */
   coverUrl?: string | null;
   /**

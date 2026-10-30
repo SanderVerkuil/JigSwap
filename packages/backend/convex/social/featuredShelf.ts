@@ -3,10 +3,9 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
-import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
-import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 import { canViewCopy } from "../library/canViewCopy";
 import { toOwnedCopyView } from "../library/mappers";
+import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
 import { isBlockedEitherWay } from "./blocks";
 
 // Social read: the curated, ordered set of owned copies a member has featured on their profile
@@ -51,21 +50,8 @@ export const featuredShelf = query({
 
       const puzzle = await ctx.db.get(copy.puzzleId);
 
-      // Resolve cover: approved copy photo first, then puzzle box art.
-      let coverUrl: string | null = null;
-      if (copy.coverImageId) {
-        const img = await ctx.db.get(copy.coverImageId);
-        if (
-          img &&
-          (img.moderationStatus ?? "approved") === "approved" &&
-          isHashCleared(img)
-        ) {
-          coverUrl = await ctx.storage.getUrl(img.fileId);
-        }
-      }
-      if (!coverUrl && puzzle?.image) {
-        coverUrl = await boxArtUrl(ctx, puzzle.image);
-      }
+      // The shelf draws covers as small plank textures: the shared, gated, thumbnail-sized cover.
+      const coverUrl = await resolveCopyCoverUrl(ctx, copy, puzzle);
 
       results.push(
         toOwnedCopyView(copy, puzzle, { coverUrl, includeOwnerOnly: isOwner }),

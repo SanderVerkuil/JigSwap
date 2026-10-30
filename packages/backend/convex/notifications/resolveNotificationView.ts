@@ -18,7 +18,7 @@ import {
 import { projectTradeParty } from "../exchange/tradeParty";
 import { isOpenHouseholdInvite, membershipOf } from "../household/memberships";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
-import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
+import { boxArtThumbUrl } from "../lib/imageModeration/boxArtUrl";
 import { canViewCopy } from "../library/canViewCopy";
 import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
 import { circleOfOpenInvite } from "../sharing/circleAccess";
@@ -258,12 +258,13 @@ const loadDoc = <T extends "puzzles" | "ownedPuzzles" | "goals">(
 ) =>
   memoized(cache, `doc:${id}`, () => ctx.db.get(id)) as Promise<Doc<T> | null>;
 
-// Box art goes through its publication gate (lib/imageModeration/boxArtUrl).
+// Box art goes through its publication gate (lib/imageModeration/boxArtUrl); the notification
+// thumbnail is small, so its 480 px rendition once it exists.
 const boxArtUrlOf = (
   ctx: QueryCtx,
   cache: NotificationViewCache,
   id: Id<"_storage">,
-) => memoized(cache, `storage:${id}`, () => boxArtUrl(ctx, id));
+) => memoized(cache, `storage:${id}`, () => boxArtThumbUrl(ctx, id));
 
 // --- actor projection ---
 

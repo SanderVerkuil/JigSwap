@@ -17,6 +17,13 @@ export type ImageSources = {
 };
 
 /**
+ * The URL for a thumbnail-sized use of an image (chips, list rows, shelf textures, dialogs): the
+ * smallest rendition when there is one, else the original. Null when there is no image.
+ */
+export const thumbUrlOf = (image: ImageSources | null): string | null =>
+  image ? (image.thumbUrl ?? image.url) : null;
+
+/**
  * The renditions of a source blob as URLs, next to the source's own `url`. Only call it AFTER
  * the source's publication gate has passed (boxArtUrl's servableBoxArtId for box art): it does
  * not check whether the image may be shown.

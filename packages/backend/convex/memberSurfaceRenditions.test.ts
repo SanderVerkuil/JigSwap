@@ -272,6 +272,24 @@ describe("catalogue summary cards: imageSrcSet", () => {
 // ---------------------------------------------------------------------------------------------
 
 type CopyCard = { coverUrl?: string | null; coverSrcSet?: string };
+
+// Alice and Bob in one household.
+const shareHousehold = (t: T, s: Seeded) =>
+  t.run(async (ctx) => {
+    const householdId = crypto.randomUUID();
+    await ctx.db.insert("households", {
+      aggregateId: householdId,
+      createdAt: Date.now(),
+    });
+    for (const memberId of [s.alice, s.bob]) {
+      await ctx.db.insert("householdMembers", {
+        householdId,
+        memberId,
+        role: "member",
+        joinedAt: Date.now(),
+      });
+    }
+  });
 type CopyRead = (
   t: T,
   s: Seeded,
@@ -329,21 +347,7 @@ const COPY_CARD_READS: [string, CopyRead][] = [
   [
     "household.listHouseholdCopies",
     async (t, s) => {
-      await t.run(async (ctx) => {
-        const householdId = crypto.randomUUID();
-        await ctx.db.insert("households", {
-          aggregateId: householdId,
-          createdAt: Date.now(),
-        });
-        for (const memberId of [s.alice, s.bob]) {
-          await ctx.db.insert("householdMembers", {
-            householdId,
-            memberId,
-            role: "member",
-            joinedAt: Date.now(),
-          });
-        }
-      });
+      await shareHousehold(t, s);
       const response = await asBob(t).query(
         api.household.listHouseholdCopies.listHouseholdCopies,
         {},
@@ -392,7 +396,9 @@ describe("owned-copy cards: coverSrcSet", () => {
       const s = await seed(t, SERVED.listing, true);
       const { card, response } = await read(t, s);
       expect(card.coverSrcSet).toBe(await srcSetOf(t, s));
-      expect(card.coverUrl).toBe(await urlOf(t, s.image));
+      // coverUrl is the thumbnail-sized cover (chips, shelves, dialogs read it); the card itself
+      // picks from coverSrcSet.
+      expect(card.coverUrl).toBe(await urlOf(t, s.small));
       expectNoStorageIds(response, s);
     },
   );
@@ -429,6 +435,212 @@ describe("owned-copy cards: coverSrcSet", () => {
       const { card } = await read(t, s);
       expect(card.coverUrl).toBe(photoUrl);
       expect(card.coverSrcSet).toBeUndefined();
+    },
+  );
+});
+
+// ---------------------------------------------------------------------------------------------
+// Thumbnail-sized fields: the 480 px rendition when one exists, else the original; the same gate.
+// ---------------------------------------------------------------------------------------------
+
+type ThumbRead = (
+  t: T,
+  s: Seeded,
+) => Promise<{ thumb: string | null | undefined; response: unknown }>;
+
+// One solve of the seeded puzzle by Alice: in progress or finished, of her copy when `onCopy`.
+const seedSolve = (
+  t: T,
+  s: Seeded,
+  { inProgress, onCopy }: { inProgress: boolean; onCopy: boolean },
+) =>
+  t.run((ctx) =>
+    ctx.db.insert("completions", {
+      aggregateId: crypto.randomUUID(),
+      userId: s.alice,
+      puzzleId: s.puzzleId,
+      ...(onCopy && { ownedPuzzleId: s.copyId }),
+      startDate: Date.now() - 3_600_000,
+      ...(!inProgress && { endDate: Date.now() - 60_000 }),
+      photos: [],
+      isCompleted: !inProgress,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }),
+  );
+
+const THUMB_READS: [string, ThumbRead][] = [
+  [
+    "solving.listMyInProgress",
+    async (t, s) => {
+      await seedSolve(t, s, { inProgress: true, onCopy: false });
+      const response = await asAlice(t).query(
+        api.solving.listMyInProgress.listMyInProgress,
+        {},
+      );
+      return { thumb: one(response).thumbnailUrl, response };
+    },
+  ],
+  [
+    "solving.listMyCompletions (definition)",
+    async (t, s) => {
+      await seedSolve(t, s, { inProgress: false, onCopy: false });
+      const response = await asAlice(t).query(
+        api.solving.listMyCompletions.listMyCompletions,
+        {},
+      );
+      return { thumb: one(response).thumbnailUrl, response };
+    },
+  ],
+  [
+    "solving.listMyCompletions (copy cover)",
+    async (t, s) => {
+      await seedSolve(t, s, { inProgress: false, onCopy: true });
+      const response = await asAlice(t).query(
+        api.solving.listMyCompletions.listMyCompletions,
+        {},
+      );
+      return { thumb: one(response).thumbnailUrl, response };
+    },
+  ],
+  [
+    "social.getPublicProfile (currently solving)",
+    async (t, s) => {
+      await seedSolve(t, s, { inProgress: true, onCopy: false });
+      const response = await asAlice(t).query(
+        api.social.getPublicProfile.getPublicProfile,
+        { handle: s.alice },
+      );
+      if (!response || response.locked) throw new Error("no profile");
+      return {
+        thumb: one(response.currentlySolving ?? []).thumbnailUrl,
+        response,
+      };
+    },
+  ],
+  [
+    "social.listProfileCompletions (definition)",
+    async (t, s) => {
+      await seedSolve(t, s, { inProgress: false, onCopy: false });
+      const response = await asBob(t).query(
+        api.social.listProfileCompletions.listProfileCompletions,
+        { memberId: s.alice, paginationOpts: { numItems: 10, cursor: null } },
+      );
+      return { thumb: one(response.page).thumbnailUrl, response };
+    },
+  ],
+  [
+    "social.listProfileCompletions (copy cover)",
+    async (t, s) => {
+      await seedSolve(t, s, { inProgress: false, onCopy: true });
+      const response = await asBob(t).query(
+        api.social.listProfileCompletions.listProfileCompletions,
+        { memberId: s.alice, paginationOpts: { numItems: 10, cursor: null } },
+      );
+      return { thumb: one(response.page).thumbnailUrl, response };
+    },
+  ],
+  [
+    "social.featuredShelf",
+    async (t, s) => {
+      await t.run((ctx) =>
+        ctx.db.insert("profiles", {
+          memberId: s.alice,
+          featuredCopyIds: [s.copyId],
+          updatedAt: Date.now(),
+        }),
+      );
+      const response = await asBob(t).query(
+        api.social.featuredShelf.featuredShelf,
+        { userId: s.alice },
+      );
+      return { thumb: one(response).coverUrl, response };
+    },
+  ],
+  [
+    "household.listMyHouseholdCopyPermissions",
+    async (t, s) => {
+      await shareHousehold(t, s);
+      const response = await asAlice(t).query(
+        api.household.listMyHouseholdCopyPermissions
+          .listMyHouseholdCopyPermissions,
+        {},
+      );
+      return { thumb: one(response).coverUrl, response };
+    },
+  ],
+  [
+    "notifications.listMyNotificationViews (puzzle)",
+    async (t, s) => {
+      await t.run((ctx) =>
+        ctx.db.insert("notifications", {
+          userId: s.alice,
+          type: "puzzle_approved",
+          isRead: false,
+          createdAt: Date.now(),
+          subject: { kind: "puzzle", puzzleId: s.puzzleId },
+        }),
+      );
+      const response = await asAlice(t).query(
+        api.notifications.listMyNotificationViews.listMyNotificationViews,
+        { paginationOpts: { numItems: 10, cursor: null } },
+      );
+      return { thumb: one(response.page).context.thumbnailUrl, response };
+    },
+  ],
+  [
+    "search.globalSearch",
+    async (t) => {
+      const response = await asAlice(t).query(api.search.globalSearch.global, {
+        term: "vista",
+      });
+      return { thumb: one(response.puzzles).image, response };
+    },
+  ],
+  [
+    "insights.getRecommendations",
+    async (t, s) => {
+      const response = await asBob(t).query(
+        api.insights.getRecommendations.getRecommendations,
+        {},
+      );
+      const rec = response.find((r) => r.puzzleId === s.puzzleId);
+      if (!rec) throw new Error("not recommended");
+      return { thumb: rec.thumbnail, response };
+    },
+  ],
+];
+
+describe("thumbnail fields: the 480 px rendition", () => {
+  test.each(THUMB_READS)(
+    "%s: served box art with renditions",
+    async (_n, read) => {
+      const t = convexTest(schema, modules);
+      const s = await seed(t, SERVED.listing, true);
+      const { thumb, response } = await read(t, s);
+      expect(thumb).toBe(await urlOf(t, s.small));
+      expectNoStorageIds(response, s);
+    },
+  );
+
+  test.each(THUMB_READS)(
+    `%s: ${WITHHELD.label} box art with a leftover renditions row`,
+    async (_n, read) => {
+      const t = convexTest(schema, modules);
+      const s = await seed(t, WITHHELD.listing, true);
+      const { thumb, response } = await read(t, s);
+      expect(thumb ?? null).toBeNull();
+      expectNoStorageIds(response, s);
+    },
+  );
+
+  test.each(THUMB_READS)(
+    "%s: before the backfill, the original",
+    async (_n, read) => {
+      const t = convexTest(schema, modules);
+      const s = await seed(t, SERVED.listing, false);
+      const { thumb } = await read(t, s);
+      expect(thumb).toBe(await urlOf(t, s.image));
     },
   );
 });

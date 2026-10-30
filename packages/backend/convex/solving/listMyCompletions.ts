@@ -2,7 +2,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
 import { canViewDefinition } from "../catalog/definitionVisibility";
 import { requireMember } from "../identity/requireMember";
-import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
+import { boxArtThumbUrl } from "../lib/imageModeration/boxArtUrl";
 import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 import {
   buildCopyViewContext,
@@ -105,7 +105,7 @@ export const listMyCompletions = query({
       [...puzzles.entries()].map(async ([id, puzzle]) => {
         puzzleThumbs.set(
           id,
-          puzzle?.image ? await boxArtUrl(ctx, puzzle.image) : null,
+          puzzle?.image ? await boxArtThumbUrl(ctx, puzzle.image) : null,
         );
         puzzleOpenable.set(
           id,

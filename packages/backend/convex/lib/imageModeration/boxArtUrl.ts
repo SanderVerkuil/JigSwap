@@ -1,7 +1,11 @@
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { QueryCtx } from "../../_generated/server";
 import { isHashCleared } from "./hashCheckFields";
-import { renditionSources, type ImageSources } from "./imageSources";
+import {
+  renditionSources,
+  thumbUrlOf,
+  type ImageSources,
+} from "./imageSources";
 
 // Publication gate for box art (puzzles.image, a proposal's changes.image or baseline.image).
 // Box art goes through the shared moderation pipeline (catalog/boxArtUploads), and its blob is
@@ -12,7 +16,8 @@ import { renditionSources, type ImageSources } from "./imageSources";
 // hash-check fields), predates the gate and is served as before.
 //
 // EVERY read path that turns box art into a URL goes through `boxArtUrl` (or `boxArtImage`, which
-// adds the renditions), never `ctx.storage.getUrl` on the image directly.
+// adds the renditions, or `boxArtThumbUrl` for thumbnail-sized fields), never
+// `ctx.storage.getUrl` on the image directly.
 
 /** Whether a listed box-art upload may be served. */
 export const isBoxArtServable = (
@@ -64,3 +69,12 @@ export const boxArtImage = async (
   const url = await ctx.storage.getUrl(storageId);
   return url ? renditionSources(ctx, storageId, url) : null;
 };
+
+/**
+ * The URL for a thumbnail-sized field (list rows, notifications, search hits): the box art's
+ * 480 px rendition once it exists, else the original. Behind the same gate as boxArtUrl.
+ */
+export const boxArtThumbUrl = async (
+  ctx: QueryCtx,
+  image: Id<"_storage"> | string | null | undefined,
+): Promise<string | null> => thumbUrlOf(await boxArtImage(ctx, image));
