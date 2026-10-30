@@ -21,6 +21,7 @@ import {
   canViewCopyWithContext,
   type CopyViewContext,
 } from "../library/canViewCopy";
+import { toCopyPuzzleView } from "../library/mappers";
 import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
 import { blockedEitherWaySet } from "./blocks";
 import { areMutualFollowers, canSeeProfileContent } from "./privacy";
@@ -252,7 +253,7 @@ export const getActivityFeed = query({
           entry,
           actors.get(entry.memberId as string),
           entry.kind === "acquisitionBatch"
-            ? await toBatchView(ctx, acquiredCopies.get(entry.ref) ?? [])
+            ? await toBatchView(ctx, meId, acquiredCopies.get(entry.ref) ?? [])
             : undefined,
           targets[index],
         ),
@@ -303,9 +304,12 @@ const visibleAcquiredCopies = async (
 };
 
 // The grouped entry's payload: the visible count and the first few covers. Covers are resolved
-// only for the entries that made the page.
+// only for the entries that made the page. A cover's title follows the copy views' rule
+// (toCopyPuzzleView): the definition's current title when it is approved or the viewer owns the
+// copy, otherwise the copy's snapshot title, never a non-approved definition's live one.
 const toBatchView = async (
   ctx: QueryCtx,
+  viewerId: Id<"users">,
   copies: Doc<"ownedPuzzles">[],
 ): Promise<ActivityEntryView["batch"]> => ({
   count: copies.length,
@@ -314,9 +318,12 @@ const toBatchView = async (
       .slice(0, BATCH_COVER_COUNT)
       .map(async (copy): Promise<ActivityBatchCoverView> => {
         const puzzle = await ctx.db.get(copy.puzzleId);
+        const shown = toCopyPuzzleView(copy, puzzle, {
+          includeOwnerOnly: copy.ownerId === viewerId,
+        });
         return {
           copyId: copy.aggregateId as string,
-          title: puzzle?.title ?? copy.snapshot?.title ?? "",
+          title: shown?.title ?? copy.snapshot?.title ?? "",
           coverUrl: await resolveCopyCoverUrl(ctx, copy, puzzle),
         };
       }),

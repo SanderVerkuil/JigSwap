@@ -307,3 +307,36 @@ describe("social.getActivityFeed — single adds respect copy visibility", () =>
     expect(await singleRefs(t, "bob")).toEqual([closed]);
   });
 });
+
+// SEC-34: a cover's title follows the copy views' rule (library/mappers toCopyPuzzleView). A
+// definition that is not approved shows a follower the copy's snapshot title, never the live,
+// unmoderated one; an approved definition shows its current title, as before.
+describe("social.getActivityFeed — batch cover titles of non-approved definitions", () => {
+  test("a follower sees the snapshot title, the owner and approved definitions the live one", async () => {
+    const t = convexTest(schema, modules);
+    const { definitions } = await seed(t);
+    await addBatch(t, definitions.slice(0, 2));
+    await t.run(async (ctx) => {
+      for (const [index, patch] of [
+        [0, { status: "pending", title: "Unmoderated title" }],
+        [1, { title: "Puzzle 1 (2nd edition)" }],
+      ] as const) {
+        const row = await ctx.db
+          .query("puzzles")
+          .withIndex("by_aggregate_id", (q) =>
+            q.eq("aggregateId", definitions[index]),
+          )
+          .unique();
+        await ctx.db.patch(row!._id, patch);
+      }
+    });
+
+    const titles = async (viewer: string) =>
+      (await batchEntries(t, viewer))[0].batch?.covers.map((c) => c.title);
+    expect(await titles("bob")).toEqual(["Puzzle 0", "Puzzle 1 (2nd edition)"]);
+    expect(await titles("alice")).toEqual([
+      "Unmoderated title",
+      "Puzzle 1 (2nd edition)",
+    ]);
+  });
+});
