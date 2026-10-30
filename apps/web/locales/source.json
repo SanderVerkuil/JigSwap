@@ -804,6 +804,7 @@
     "anonymous": "Anonymous user",
     "deletedMember": "Deleted member",
     "attachPuzzle": "Attach a puzzle",
+    "attachPuzzleShort": "Puzzle",
     "attachTitle": "Attach a puzzle",
     "attached": "Attached: {title}",
     "backToInbox": "Back to messages",

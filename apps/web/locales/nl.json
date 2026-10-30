@@ -804,6 +804,7 @@
     "anonymous": "Anonieme gebruiker",
     "deletedMember": "Verwijderd lid",
     "attachPuzzle": "Puzzel bijvoegen",
+    "attachPuzzleShort": "Puzzel",
     "attachTitle": "Puzzel bijvoegen",
     "attached": "Bijgevoegd: {title}",
     "backToInbox": "Terug naar berichten",
