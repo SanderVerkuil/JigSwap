@@ -3429,6 +3429,7 @@
     "trends": {
       "title": "Completion trends",
       "description": "Solves finished per month over the last 12 months.",
+      "minutesDescription": "Solve time in minutes per month over the last 12 months.",
       "count": "Completions",
       "minutes": "Solve minutes",
       "empty": "No finished solves yet."
@@ -3445,6 +3446,7 @@
     "trades": {
       "title": "Trade activity",
       "description": "Your exchanges by status.",
+      "caption": "Swaps started per month over the last 12 months.",
       "count": "Exchanges",
       "empty": "No exchanges yet.",
       "status": {
@@ -3466,7 +3468,8 @@
     },
     "charts": {
       "completionsPerMonth": "Completions / month",
-      "swapsPerMonth": "Swaps / month"
+      "swapsPerMonth": "Swaps / month",
+      "month": "Month"
     }
   },
   "invite": {

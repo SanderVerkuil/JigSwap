@@ -3429,6 +3429,7 @@
     "trends": {
       "title": "Voltooiingstrends",
       "description": "Voltooiingen per maand over de laatste 12 maanden.",
+      "minutesDescription": "Oplostijd in minuten per maand over de laatste 12 maanden.",
       "count": "Voltooiingen",
       "minutes": "Oplosminuten",
       "empty": "Nog geen voltooiingen."
@@ -3445,6 +3446,7 @@
     "trades": {
       "title": "Ruilactiviteit",
       "description": "Je ruilen per status.",
+      "caption": "Gestarte ruilacties per maand over de laatste 12 maanden.",
       "count": "Ruilen",
       "empty": "Nog geen ruilen.",
       "status": {
@@ -3466,7 +3468,8 @@
     },
     "charts": {
       "completionsPerMonth": "Voltooiingen / maand",
-      "swapsPerMonth": "Ruilacties / maand"
+      "swapsPerMonth": "Ruilacties / maand",
+      "month": "Maand"
     }
   },
   "invite": {

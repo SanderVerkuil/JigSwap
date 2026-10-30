@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { BarChart3 } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "use-intl";
-import { monthLabel, Sparkbars } from "./sparkbars";
+import { Sparkbars } from "./sparkbars";
 
 export interface CompletionTrendPoint {
   month: string;
@@ -26,10 +26,10 @@ export function CompletionTrendsChart({
   const [metric, setMetric] = useState<Metric>("count");
 
   const hasData = data.some((d) => d.count > 0);
-  const values = data.map((d) =>
-    metric === "count" ? d.count : d.totalMinutes,
-  );
-  const labels = data.map((d) => monthLabel(d.month));
+  const points = data.map((d) => ({
+    month: d.month,
+    value: metric === "count" ? d.count : d.totalMinutes,
+  }));
 
   return (
     <section className="min-w-0">
@@ -59,8 +59,13 @@ export function CompletionTrendsChart({
       />
       {hasData ? (
         <Sparkbars
-          data={values}
-          labels={labels}
+          points={points}
+          caption={t(
+            metric === "count"
+              ? "trends.description"
+              : "trends.minutesDescription",
+          )}
+          valueLabel={t(`trends.${metric}`)}
           color="var(--jigsaw-primary)"
         />
       ) : (
