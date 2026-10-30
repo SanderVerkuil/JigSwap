@@ -5431,10 +5431,12 @@
         "status": {
           "pending": "Pending",
           "approved": "Approved",
-          "rejected": "Rejected"
+          "rejected": "Rejected",
+          "disabled": "Disabled"
         },
         "auditPerformedTitle": "Moderation actions performed",
         "auditPerformedEmpty": "No moderation actions performed.",
+        "auditPerformedAll": "View all in the activity log",
         "auditReceivedTitle": "Audit trail",
         "auditReceivedEmpty": "No audit entries target this member."
       }

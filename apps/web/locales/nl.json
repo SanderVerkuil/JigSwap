@@ -5431,10 +5431,12 @@
         "status": {
           "pending": "In afwachting",
           "approved": "Goedgekeurd",
-          "rejected": "Afgewezen"
+          "rejected": "Afgewezen",
+          "disabled": "Uitgeschakeld"
         },
         "auditPerformedTitle": "Uitgevoerde moderatieacties",
         "auditPerformedEmpty": "Geen uitgevoerde moderatieacties.",
+        "auditPerformedAll": "Alles bekijken in het activiteitenlog",
         "auditReceivedTitle": "Auditlogboek",
         "auditReceivedEmpty": "Geen auditvermeldingen voor dit lid."
       }
