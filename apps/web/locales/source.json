@@ -721,6 +721,7 @@
       "duplicate": "You already have an open request for this puzzle.",
       "ownCopy": "You can't request your own puzzle.",
       "missingTerms": "Some details are missing. Check the form and try again.",
+      "rateLimited": "You've sent a lot of requests lately. Try again later.",
       "generic": "Couldn't send the request. Please try again."
     }
   },

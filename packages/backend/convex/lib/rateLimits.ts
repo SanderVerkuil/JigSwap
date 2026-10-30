@@ -5,6 +5,7 @@ import { logEvent } from "./logEvent";
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
+const WEEK = 7 * DAY;
 
 // Per-member action limits (spec 2.7). Starting defaults; each is a fixed window of `windowMs`
 // allowing at most `max` actions.
@@ -84,6 +85,13 @@ export const RATE_LIMITS = {
   // announce a follow/unfollow or request/cancel loop once a day
   // (notifications/adapters/channels/followNoticeThrottle). The in-app row is not counted.
   followNotice: { windowMs: DAY, max: 1 },
+  // Exchange proposals (exchange/propose), all owners together: an hourly and a daily cap.
+  exchangePropose: { windowMs: HOUR, max: 20 },
+  exchangeProposeDaily: { windowMs: DAY, max: 50 },
+  // Proposals from one member to one copy owner, keyed "<initiator>:<owner>". Each opens a thread
+  // with the owner and notifies them, so a propose/cancel (or propose/decline) loop reaches one
+  // owner at most this often. Charged only after the reachability gate (see exchange/propose).
+  exchangePair: { windowMs: WEEK, max: 10 },
 } as const satisfies Record<string, { windowMs: number; max: number }>;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;

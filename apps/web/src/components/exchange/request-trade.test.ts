@@ -76,6 +76,7 @@ describe("proposeErrorKey", () => {
     ["DuplicateProposal", "duplicate"],
     ["SelfExchange", "ownCopy"],
     ["MissingTerms", "missingTerms"],
+    ["RateLimited", "rateLimited"],
   ])("maps %s to %s", (code, key) => {
     expect(proposeErrorKey(err(code))).toBe(key);
   });

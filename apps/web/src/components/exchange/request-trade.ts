@@ -54,6 +54,7 @@ export type ProposeErrorKey =
   | "duplicate"
   | "ownCopy"
   | "missingTerms"
+  | "rateLimited"
   | "generic";
 
 const CODE_TO_KEY: Record<string, ProposeErrorKey> = {
@@ -70,6 +71,8 @@ const CODE_TO_KEY: Record<string, ProposeErrorKey> = {
   DuplicateProposal: "duplicate",
   SelfExchange: "ownCopy",
   MissingTerms: "missingTerms",
+  // Too many requests lately: an hourly or daily cap, or the weekly cap per owner.
+  RateLimited: "rateLimited",
 };
 
 /** Map a propose failure to its localized message key; unknown failures are "generic". */

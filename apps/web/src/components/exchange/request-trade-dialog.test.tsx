@@ -11,6 +11,8 @@ import {
 } from "@testing-library/react";
 import { ConvexReactClient } from "convex/react";
 import { getFunctionName } from "convex/server";
+import { ConvexError } from "convex/values";
+import { toast } from "sonner";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
@@ -172,4 +174,27 @@ describe("RequestTradeDialog propose", () => {
       requestedPuzzleId: "copy_1",
     });
   });
+
+  it.each([
+    [
+      "en",
+      "Send request",
+      "You've sent a lot of requests lately. Try again later.",
+    ],
+    [
+      "nl",
+      "Aanvraag versturen",
+      "Je hebt de laatste tijd veel aanvragen verstuurd. Probeer het later opnieuw.",
+    ],
+  ] as const)(
+    "explains a rate-limited request (%s)",
+    async (locale, submitLabel, message) => {
+      mocks.mutation.mockRejectedValue(
+        new ConvexError({ code: "RateLimited", retryAfterMs: 60_000 }),
+      );
+      renderDialog(copy(), { locale, disclosure: { profilePrivate: false } });
+      fireEvent.click(submit(submitLabel));
+      await waitFor(() => expect(toast.error).toHaveBeenCalledWith(message));
+    },
+  );
 });

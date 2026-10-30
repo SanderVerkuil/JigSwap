@@ -721,6 +721,7 @@
       "duplicate": "Je hebt al een openstaande aanvraag voor deze puzzel.",
       "ownCopy": "Je kunt je eigen puzzel niet aanvragen.",
       "missingTerms": "Er ontbreken gegevens. Controleer het formulier en probeer het opnieuw.",
+      "rateLimited": "Je hebt de laatste tijd veel aanvragen verstuurd. Probeer het later opnieuw.",
       "generic": "De aanvraag kon niet worden verstuurd. Probeer het opnieuw."
     }
   },
