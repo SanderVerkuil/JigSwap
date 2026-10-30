@@ -16,10 +16,16 @@ JigSwap houdt een volledig **oplossingslogboek** bij van elke puzzel waar je aan
 
 1. Ga naar **Mijn Puzzels**.
 2. Klik bij de kopie die je hebt opgelost op **Voltooiing vastleggen**.
-3. Leg in het dialoogvenster je oplossing vast. Een voltooiing kan:
-   - **Gestart** zijn (lopend) en later afgemaakt worden, of
-   - **Achteraf vastgelegd** worden (al afgerond).
-4. Voeg **start- en einddatum** toe, je **oplostijd**, optionele **notities** en (als je wilt) een **beoordeling** met een waardering van 1 tot 5 sterren.
+3. Kies in het dialoogvenster **Afgerond** (de standaard) of **Nog bezig**.
+   Beide datums staan eerst op vandaag. Bij **Nog bezig** vul je alleen de
+   startdatum in, en rond je de oplossing later af.
+4. Vul bij een afgeronde puzzel de **start- en einddatum** in en, als je wilt,
+   bij **Hoelang heb je erover gedaan?** de uren en minuten. Voeg eventueel
+   **notities** toe. Na het opslaan kun je de puzzel 1 tot 5 sterren en een
+   **beoordeling** geven.
+
+Wil je geen oplostijden bijhouden? Klik onder de tijdvelden op **Tijden niet
+bijhouden**. Je zet ze weer aan bij **Voorkeuren** in je accountmenu.
 
 Je kunt ook beginnen bij **Voltooiingen**: open **Voltooiing vastleggen**
 (`/completions/new`) en kies de puzzel. Bovenaan staan de puzzels waar je nog

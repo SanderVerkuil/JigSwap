@@ -16,10 +16,16 @@ JigSwap keeps a full **solve log** of every puzzle you've worked on — even aft
 
 1. Go to **My Puzzles**.
 2. On the copy you solved, click **Log a solve**.
-3. In the dialog, record your solve. A completion can be:
-   - **Started** (in-progress) and finished later, or
-   - **Recorded** after the fact (already finished).
-4. Add **start and end dates**, your **solve time**, optional **notes**, and (if you wish) a **review** with a 1–5 star rating.
+3. In the dialog, choose **Finished** (the default) or **Still solving**. Both
+   dates start on today. With **Still solving** you only set the start date,
+   and you finish the solve later.
+4. For a finished solve, set the **start and end dates** and, if you like,
+   answer **How long did it take?** in hours and minutes. Add optional
+   **notes**. After saving, you can give the puzzle a 1–5 star rating and a
+   **review**.
+
+Don't want to record solve times? Click **Don't track times** under the time
+fields. You can turn them back on under **Preferences** in your account menu.
 
 You can also start from **Completions**: open **Log a completion**
 (`/completions/new`) and pick the puzzle. The list shows the solves you're still
