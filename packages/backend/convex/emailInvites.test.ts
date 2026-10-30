@@ -304,7 +304,8 @@ describe("sendEmailInvite", () => {
     const [email] = sentEmails();
     expect(sentEmails()).toHaveLength(1);
     expect(email.recipients).toEqual([{ email: NEW_ADDRESS }]);
-    expect(email.subject).toBe("Alice invited you to JigSwap");
+    expect(email.subject).toBe("You're invited to JigSwap");
+    expect(email.text_content).toContain("Alice invited you to JigSwap");
     expect(email.from.name).toBe("JigSwap");
     expect(email.html_content).toContain(
       "https://clerk.example/v1/tickets/accept?ticket=inv_fake_1",
@@ -320,10 +321,13 @@ describe("sendEmailInvite", () => {
 
     await send(t, "alice", NEW_ADDRESS);
 
-    expect(sentEmails()[0].subject).toBe("Alice nodigt je uit voor JigSwap");
+    expect(sentEmails()[0].subject).toBe("Je bent uitgenodigd voor JigSwap");
+    expect(sentEmails()[0].text_content).toContain(
+      "Alice nodigt je uit voor JigSwap",
+    );
   });
 
-  test("the subject's only member text is the sanitised inviter name", async () => {
+  test("the subject names no member, and the body names the sanitised inviter", async () => {
     const t = convexTest(schema, modules);
     const s = await seed(t);
     await t.run((ctx) =>
@@ -335,9 +339,11 @@ describe("sendEmailInvite", () => {
     await send(t, "alice", NEW_ADDRESS);
 
     const { subject, text_content } = sentEmails()[0];
-    expect(subject).not.toMatch(/[\r\n]/);
+    expect(subject).toBe("You're invited to JigSwap");
     // The line break is a space, the address is dropped, and the rest is cut to length.
-    expect(subject).toMatch(/^Alice Bcc: x+… invited you to JigSwap$/);
+    expect(text_content).toMatch(
+      /Alice Bcc: x+… invited you to JigSwap to follow each other\./,
+    );
     expect(text_content).not.toContain("evil@example.com");
   });
 
@@ -376,7 +382,7 @@ describe("sendEmailInvite", () => {
       jsInvite: { kind: "household", ref: row.aggregateId },
     });
     expect(sentEmails()[0].subject).toBe(
-      "Alice invited you to their household on JigSwap",
+      "You're invited to a household on JigSwap",
     );
   });
 

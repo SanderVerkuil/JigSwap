@@ -74,7 +74,7 @@ Setting the key on a deployment is a coordinator step, done after the TO VERIFY 
    - it names the inviter by their display name (length-capped, newlines, control and bidi/format characters stripped) and states the purpose: following each other, or joining their household;
    - it is sent from "JigSwap", never from the inviter's name;
    - **no free-text note.**
-   - The subject contains no user text other than the inviter's name.
+   - The subject is brand-only ("You're invited to JigSwap"): it contains no member text, not even the inviter's name (SEC-33).
    - The footer says who invited them and that, if they ignore it, JigSwap doesn't keep their address and the invitation stops working after 14 days. It claims nothing about the sign-in provider.
    - Then record the send in the send log.
 9. **The response is always `{ status: "sent" }`** for a well-formed address within the limits, whether or not the address has an account (no enumeration).

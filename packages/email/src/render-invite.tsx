@@ -14,7 +14,8 @@ export interface RenderInviteEmailInput {
   readonly locale: EmailLocale;
   /**
    * The inviter's display name, ALREADY sanitised for email (domain inviterNameForEmail: no line
-   * breaks, length-capped). Absent: the localized generic label.
+   * breaks, no links or addresses, length-capped). Absent: the localized generic label. Shown in
+   * the heading, body and footer, never in the subject.
    */
   readonly inviterName?: string;
   /** The invitation link (the sign-in provider's ticket URL). */
@@ -25,9 +26,9 @@ export interface RenderInviteEmailInput {
 const withName = (template: string, name: string): string =>
   template.replaceAll("{inviterName}", () => name);
 
-// Render the invitation email. React escapes the name in the HTML; the subject carries no member
-// text other than it. The From name is always the brand: the inviter is named inside, not in a
-// header the recipient's mail client shows as the sender.
+// Render the invitation email. React escapes the name in the HTML; the subject is brand-only and
+// carries no member text. The From name is always the brand: the inviter is named inside, not in
+// a header the recipient's mail client shows as the sender or the subject.
 export const renderInviteEmail = async (
   input: RenderInviteEmailInput,
 ): Promise<RenderedEmail> => {
@@ -43,7 +44,7 @@ export const renderInviteEmail = async (
     />
   );
   return {
-    subject: withName(copy.subject, name),
+    subject: copy.subject,
     html: await render(element),
     text: await render(element, { plainText: true }),
     fromName: "JigSwap",

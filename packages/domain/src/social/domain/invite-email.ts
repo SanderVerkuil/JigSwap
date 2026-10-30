@@ -58,7 +58,7 @@ const isLinkLike = (word: string): boolean => {
 };
 
 /**
- * The inviter's display name as an invitation email may show it (in the subject too): every
+ * The inviter's display name as an invitation email may show it (never in the subject): every
  * line break and control character becomes a space, invisible format characters (bidi controls,
  * zero-width characters) are dropped, runs of whitespace collapse, every word that looks like a
  * link or an email address is dropped (so a name can't put a clickable address in an email sent

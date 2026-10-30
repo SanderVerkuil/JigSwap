@@ -15,7 +15,8 @@ describe("renderInviteEmail", () => {
           ctaUrl: URL,
         });
         const label = `${kind}/${locale}`;
-        expect(email.subject, label).toContain("Anna");
+        expect(email.subject, label).not.toContain("Anna");
+        expect(email.text, label).toContain("Anna");
         expect(email.html, label).toContain("JigSwap");
         expect(email.html, label).toContain(URL.replaceAll("&", "&amp;"));
         expect(email.html, label).toContain(INVITE_COPY[kind][locale].cta);
@@ -33,7 +34,7 @@ describe("renderInviteEmail", () => {
       inviterName: "Anna",
       ctaUrl: URL,
     });
-    expect(follow.subject).toBe("Anna invited you to JigSwap");
+    expect(follow.subject).toBe("You're invited to JigSwap");
     expect(follow.text).toContain(
       "Anna invited you to JigSwap to follow each other.",
     );
@@ -44,7 +45,7 @@ describe("renderInviteEmail", () => {
       ctaUrl: URL,
     });
     expect(household.subject).toBe(
-      "Anna nodigt je uit voor hun huishouden op JigSwap",
+      "Je bent uitgenodigd voor een huishouden op JigSwap",
     );
     expect(household.text).toContain(
       "Anna nodigt je uit voor JigSwap om lid te worden van hun huishouden.",
@@ -73,6 +74,34 @@ describe("renderInviteEmail", () => {
     );
   });
 
+  it("has a brand-only subject: no member text, whatever the name", async () => {
+    const subjects = {
+      follow: {
+        en: "You're invited to JigSwap",
+        nl: "Je bent uitgenodigd voor JigSwap",
+      },
+      household: {
+        en: "You're invited to a household on JigSwap",
+        nl: "Je bent uitgenodigd voor een huishouden op JigSwap",
+      },
+    } as const;
+    for (const kind of INVITE_KINDS) {
+      for (const locale of ["en", "nl"] as const) {
+        for (const inviterName of [undefined, "Anna", "Bob de Vries"]) {
+          const email = await renderInviteEmail({
+            kind,
+            locale,
+            inviterName,
+            ctaUrl: URL,
+          });
+          expect(email.subject, `${kind}/${locale}`).toBe(
+            subjects[kind][locale],
+          );
+        }
+      }
+    }
+  });
+
   it("always sends from the brand, never the inviter's name", async () => {
     const email = await renderInviteEmail({
       kind: "follow",
@@ -91,7 +120,9 @@ describe("renderInviteEmail", () => {
         inviterName,
         ctaUrl: URL,
       });
-      expect(email.subject).toBe(`${inviterName} invited you to JigSwap`);
+      expect(email.text).toContain(
+        `${inviterName} invited you to JigSwap to follow each other.`,
+      );
       expect(email.text).toContain(
         `${inviterName} invited you with this email address.`,
       );
@@ -106,7 +137,9 @@ describe("renderInviteEmail", () => {
         inviterName,
         ctaUrl: URL,
       });
-      expect(en.subject).toBe("A JigSwap member invited you to JigSwap");
+      expect(en.text).toContain(
+        "A JigSwap member invited you to JigSwap to follow each other.",
+      );
       expect(en.fromName).toBe("JigSwap");
       const nl = await renderInviteEmail({
         kind: "household",
@@ -114,8 +147,8 @@ describe("renderInviteEmail", () => {
         inviterName,
         ctaUrl: URL,
       });
-      expect(nl.subject).toBe(
-        "Een JigSwap-lid nodigt je uit voor hun huishouden op JigSwap",
+      expect(nl.text).toContain(
+        "Een JigSwap-lid nodigt je uit voor JigSwap om lid te worden van hun huishouden.",
       );
       expect(nl.fromName).toBe("JigSwap");
     }
