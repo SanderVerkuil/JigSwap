@@ -3740,6 +3740,9 @@
         "blurb": "Modereer en beheer JigSwap."
       }
     },
+    "landing": {
+      "pendingRequests": "{count, plural, one {# verzoek wacht op je antwoord} other {# verzoeken wachten op je antwoord}}"
+    },
     "pages": {
       "dashboard": {
         "title": "Dashboard",

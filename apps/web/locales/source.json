@@ -3740,6 +3740,9 @@
         "blurb": "Moderate and manage JigSwap."
       }
     },
+    "landing": {
+      "pendingRequests": "{count, plural, one {# request waiting for your reply} other {# requests waiting for your reply}}"
+    },
     "pages": {
       "dashboard": {
         "title": "Dashboard",

@@ -12,6 +12,7 @@
 import {
   ArrowLeftRight,
   BarChart3,
+  Blend,
   BookOpen,
   CircleCheck,
   FolderOpen,
@@ -144,10 +145,11 @@ export const NAV_GROUPS: ShellNavGroup[] = [
         icon: Shapes,
         keywords: ["catalogue", "catalog", "catalogus", "puzzels"],
       },
+      // Two overlapping rings: Users already stands for Community (its tab and hub).
       {
         key: "circles",
         href: "/circles",
-        icon: Users,
+        icon: Blend,
         keywords: ["circles", "kringen", "groups", "groepen"],
       },
       {
