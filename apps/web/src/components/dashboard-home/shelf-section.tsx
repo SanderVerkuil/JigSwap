@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
@@ -52,6 +53,31 @@ const MOBILE_BOX_HEIGHTS = [118, 104, 124, 100, 114];
 const SHELF_BOX_COUNT = 5;
 const PHONE_SHELF_BOX_COUNT = 4;
 
+// How many copies the shelf shows on this device (useIsMobile()). Fresh on the
+// Shelf compares against it, so it only appears once it adds something.
+export function shelfBoxCount(isMobile: boolean): number {
+  return isMobile ? PHONE_SHELF_BOX_COUNT : SHELF_BOX_COUNT;
+}
+
+type StatKey = "owned" | "completed" | "rating" | "active";
+
+// Which stat rows to show. Exchanges completed, rating and active exchanges
+// stay hidden while all three are still zero (a new member would read three
+// zeros and a dash); once any of them counts, all four show.
+export function statRowsFor({
+  tradesCompleted,
+  totalReviews,
+  activeExchanges,
+}: {
+  tradesCompleted: number;
+  totalReviews: number;
+  activeExchanges: number;
+}): StatKey[] {
+  return tradesCompleted > 0 || totalReviews > 0 || activeExchanges > 0
+    ? ["owned", "completed", "rating", "active"]
+    : ["owned"];
+}
+
 function toPlankBox(
   copy: OwnedCopy,
   index: number,
@@ -90,16 +116,16 @@ function StatRow({
   return (
     <Link
       href={href}
-      className="group flex items-center gap-3.5 border-t py-3 first:border-t-0"
+      className="group flex items-center gap-2.5 border-t py-3 sm:gap-3.5 lg:first:border-t-0"
     >
-      <span className="font-heading min-w-[52px] text-2xl leading-none font-bold">
+      <span className="font-heading min-w-9 text-xl leading-none font-bold sm:min-w-[52px] sm:text-2xl">
         {value}
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-semibold">{label}</span>
         <span className="text-muted-foreground mt-px block text-xs">{sub}</span>
       </span>
-      <ChevronRight className="text-muted-foreground group-hover:text-foreground size-4 shrink-0 transition-colors" />
+      <ChevronRight className="text-muted-foreground group-hover:text-foreground hidden size-4 shrink-0 transition-colors sm:block" />
     </Link>
   );
 }
@@ -135,7 +161,7 @@ export function ShelfSection() {
   const plankBoxes = useMemo(
     () =>
       (shelf?.recent ?? [])
-        .slice(0, isMobile ? PHONE_SHELF_BOX_COUNT : SHELF_BOX_COUNT)
+        .slice(0, shelfBoxCount(isMobile))
         .map((copy, i) => toPlankBox(copy, i, isMobile)),
     [shelf, isMobile],
   );
@@ -174,32 +200,39 @@ export function ShelfSection() {
       e.status === "disputed",
   ).length;
 
-  const statRows = [
-    {
+  const tradesCompleted = stats?.tradesCompleted ?? 0;
+  const totalReviews = stats?.totalReviews ?? 0;
+  const allStatRows = {
+    owned: {
       href: "/my-puzzles",
       value: owned,
       label: t("stats.ownedLabel"),
       sub: t("stats.ownedSub", { count: forTrade }),
     },
-    {
+    completed: {
       href: "/trades",
-      value: stats?.tradesCompleted ?? 0,
+      value: tradesCompleted,
       label: t("stats.completedLabel"),
       sub: t("stats.completedSub"),
     },
-    {
+    rating: {
       href: "/people",
       value: stats?.averageRating ? stats.averageRating.toFixed(1) : "—",
       label: t("stats.ratingLabel"),
-      sub: t("stats.ratingSub", { count: stats?.totalReviews ?? 0 }),
+      sub: t("stats.ratingSub", { count: totalReviews }),
     },
-    {
+    active: {
       href: "/trades",
       value: activeExchanges,
       label: t("stats.activeLabel"),
       sub: t("stats.activeSub"),
     },
-  ];
+  };
+  const statRows = statRowsFor({
+    tradesCompleted,
+    totalReviews,
+    activeExchanges,
+  }).map((key) => allStatRows[key]);
 
   return (
     <section data-tour="dashboard-shelf">
@@ -227,7 +260,14 @@ export function ShelfSection() {
           <div className="h-[220px] min-w-0 sm:h-[300px] md:h-[360px]">
             <PuzzlePlank3D boxes={plankBoxes} />
           </div>
-          <div className="flex flex-col">
+          {/* Below lg the rows sit under the plank as a compact 2×2 grid. */}
+          <div
+            data-testid="shelf-stats"
+            className={cn(
+              "grid lg:flex lg:flex-col",
+              statRows.length > 1 && "grid-cols-2 gap-x-4 sm:gap-x-8",
+            )}
+          >
             {statRows.map((row) => (
               <StatRow key={row.label} {...row} />
             ))}

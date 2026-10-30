@@ -15,9 +15,12 @@ Je dashboard is een persoonlijk overzicht dat je puzzelleven in één oogopslag 
 - Een **banner voor openstaande verzoeken** als iemand je een inkomend uitwisselingsverzoek heeft gestuurd dat een reactie nodig heeft.
 - **Snelle-actie-chips**: _Puzzel Toevoegen_, _Bladeren_ en _Voltooiing Vastleggen_.
 - Een **3D-plank** die je echte puzzelkopieën toont als fysieke objecten die je kunt bekijken.
-- **Live statistieken**: hoeveel puzzels je bezit, afgeronde ruilen, je gemiddelde beoordeling en lopende uitwisselingen.
+- **Live statistieken**: hoeveel puzzels je bezit. Afgeronde ruilen, je
+  gemiddelde beoordeling en lopende uitwisselingen komen erbij zodra je je eerste
+  uitwisseling of beoordeling hebt.
 - Een **pulse-sectie**: uitwisselingen in beweging, doelvoortgang en je laatste activiteit.
-- Een **scroller met nieuwe puzzels** om net toegevoegde communitypuzzels te ontdekken.
+- Een **scroller met nieuwe puzzels** met de puzzels die je het laatst hebt
+  toegevoegd, zodra je er meer hebt dan er op je plank passen.
 
 ## Snel instellen
 

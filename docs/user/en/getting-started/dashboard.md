@@ -15,9 +15,11 @@ Your dashboard is a personal briefing that summarizes your puzzle life at a glan
 - A **pending-request banner** if someone has sent you an incoming exchange request that needs a response.
 - **Quick-action chips**: _Add Puzzle_, _Browse_, and _Log Completion_.
 - A **3D shelf** ("plank") showing your real puzzle copies as physical objects you can look at.
-- **Live stats**: how many puzzles you own, trades completed, your average rating, and active exchanges.
+- **Live stats**: how many puzzles you own. Trades completed, your average
+  rating, and active exchanges join in once you have your first exchange or review.
 - A **pulse section**: exchanges in motion, goal progress, and your latest activity.
-- A **fresh-puzzles scroller** to discover newly added community puzzles.
+- A **fresh-puzzles scroller** with the puzzles you added most recently, once
+  you have more than fit on your shelf.
 
 ## Quick setup
 
