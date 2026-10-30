@@ -16,6 +16,7 @@ export interface LegalSection {
   id: string;
   heading: string;
   blocks: LegalBlock[];
+  action?: React.ReactNode; // a control shown after the text (e.g. Cookie settings)
 }
 
 // Shared legal document layout: sticky table of contents with scroll-spy
@@ -145,6 +146,7 @@ export function LegalDoc({
                       );
                   }
                 })}
+                {s.action && <div className="mb-3.5">{s.action}</div>}
               </section>
             ))}
             {children && (

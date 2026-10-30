@@ -1,6 +1,8 @@
 import { Link } from "@/compat/link";
 import { LegalDoc, type LegalSection } from "@/components/marketing/legal-doc";
 import { PageHero } from "@/components/marketing/page-hero";
+import { Button } from "@/components/ui/button";
+import { openCookieSettings } from "@/lib/analytics-consent";
 import { seoHead } from "@/lib/seo-head";
 import { createFileRoute } from "@tanstack/react-router";
 import { useTranslations } from "use-intl";
@@ -198,6 +200,18 @@ function PrivacyPolicyPage() {
         { type: "list", items: list("cookies.types") },
         { type: "p", text: t("cookies.control") },
       ],
+      // Reopens the cookie banner, so analytics consent can be changed or
+      // withdrawn right here (GDPR Art. 7(3)).
+      action: (
+        <Button
+          type="button"
+          variant="outline"
+          onClick={openCookieSettings}
+          className="h-10 px-4 text-sm bg-mk-card border-mk-border text-mk-text-strong hover:bg-mk-muted"
+        >
+          {t("cookies.settingsButton")}
+        </Button>
+      ),
     },
     {
       id: "p-children",

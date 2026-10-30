@@ -1787,7 +1787,8 @@
         "Een cookie die onthoudt dat je de cookiemelding hebt gezien",
         "Analyse-identifiers van PostHog, opgeslagen in cookies en local storage — alleen nadat je de cookiemelding hebt geaccepteerd"
       ],
-      "control": "Analyse is opt-in: die draait alleen nadat je de cookiemelding hebt geaccepteerd, en weiger je, dan wordt die nooit geladen. Je kunt cookies ook blokkeren of verwijderen via je browserinstellingen; JigSwap blijft werken, al moet je dan opnieuw inloggen en kunnen je voorkeuren worden gereset."
+      "control": "Analyse is opt-in: die draait alleen nadat je de cookiemelding hebt geaccepteerd, en weiger je, dan wordt die nooit geladen. Je kunt cookies ook blokkeren of verwijderen via je browserinstellingen; JigSwap blijft werken, al moet je dan opnieuw inloggen en kunnen je voorkeuren worden gereset.",
+      "settingsButton": "Cookie-instellingen wijzigen"
     },
     "cookieConsent": {
       "title": "Cookie-instellingen",
@@ -3839,6 +3840,7 @@
       "privacy": "Privacybeleid",
       "terms": "Algemene voorwaarden",
       "cookies": "Cookiebeleid",
+      "cookieSettings": "Cookie-instellingen",
       "madeBy": "Met 🧩 gemaakt door een familie van puzzelaars.",
       "country": "Nederland"
     },

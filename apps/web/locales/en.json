@@ -1787,7 +1787,8 @@
         "A cookie that remembers that you have seen the cookie notice",
         "Analytics identifiers from PostHog, stored in cookies and local storage — only after you accept the cookie notice"
       ],
-      "control": "Analytics is opt-in: it only runs after you accept the cookie notice, and declining means it is never loaded. You can also block or delete cookies in your browser settings; JigSwap keeps working, though you will need to sign in again and your preferences may reset."
+      "control": "Analytics is opt-in: it only runs after you accept the cookie notice, and declining means it is never loaded. You can also block or delete cookies in your browser settings; JigSwap keeps working, though you will need to sign in again and your preferences may reset.",
+      "settingsButton": "Change cookie settings"
     },
     "cookieConsent": {
       "title": "Cookie settings",
@@ -3839,6 +3840,7 @@
       "privacy": "Privacy policy",
       "terms": "Terms of service",
       "cookies": "Cookie policy",
+      "cookieSettings": "Cookie settings",
       "madeBy": "Made with 🧩 by a family of puzzlers.",
       "country": "The Netherlands"
     },
