@@ -28,6 +28,19 @@ Rules:
 - Clerk adds `sub`, `iss`, `iat`, `exp` and `nbf` itself. The backend reads only `sub` and
   `metadata.role`. Other claims (name, email and so on) are unused.
 
+## Before deploying the metadata-only admin check
+
+`isAdmin` used to accept a flat `role` claim as a fallback. The commit "fix(identity): grant admin
+only from the versioned metadata claim" removed it, and it fails closed: if a live `convex`
+template emits a flat `role` instead of `metadata`, every admin loses `/admin` and every admin
+Convex function as soon as that commit is deployed. So the order is:
+
+1. Check the live `convex` template on BOTH instances, development and production (step 1 of the
+   checklist below). Both must contain `"metadata": "{{user.public_metadata}}"`. Fix the template
+   first if one does not.
+2. Deploy to development, sign in as an admin and open `/admin`.
+3. Only then deploy to production.
+
 ## Checking the live configuration
 
 Do this for each Clerk instance (development and production) whenever either setting changes:
