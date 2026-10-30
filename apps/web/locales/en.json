@@ -4775,7 +4775,9 @@
         "manualApproved": "Approved photo on “{title}” — {count} left in queue.",
         "manualRejected": "Rejected photo on “{title}” — {count} left in queue.",
         "hashCheckWaived": "Approved photo on “{title}” without a hash check — {count} left in queue.",
-        "recheckQueued": "Checking the photo on “{title}” again."
+        "recheckQueued": "Checking the photo on “{title}” again.",
+        "appealRestored": "Restored the message photo — {count} left in queue.",
+        "appealKept": "Kept the message photo removed — {count} left in queue."
       },
       "banner": {
         "pill": "ADMIN",
@@ -4793,6 +4795,7 @@
         "flagged": "Flagged Images",
         "activity": "Activity Log",
         "unchecked": "Unchecked Photos",
+        "appeals": "Review Requests",
         "hashMatches": "Hash matches",
         "reports": "Reports"
       },
@@ -4803,7 +4806,8 @@
         "sheetTitle": {
           "submissions": "Submission",
           "flagged": "Flagged image",
-          "unchecked": "Unchecked photo"
+          "unchecked": "Unchecked photo",
+          "appeals": "Review request"
         }
       },
       "handledElsewhere": {
@@ -4972,6 +4976,31 @@
           "recheck": "Check again runs the automated check once more, for example once the screening service works again."
         },
         "hashTimedOutHint": "The hash check against known abuse material could not be done within 7 days, so the automatic re-checks stopped. Approve without hash check publishes the photo without that check, after you confirm (a hash match found later still quarantines it); rejecting hides it like any rejection."
+      },
+      "appealsEmpty": "No photos are waiting for a review.",
+      "appeal": {
+        "loading": "Loading review requests…",
+        "intro": "The sender asked for a review after the automated check stopped this photo. You see only the photo, never the conversation.",
+        "imageAlt": "Message photo sent for review",
+        "rowSource": "Message photo",
+        "label": "Label",
+        "score": "Score",
+        "sentBy": "Sent by",
+        "uploadedAt": "Uploaded",
+        "requestedAt": "Review requested",
+        "reason": "Reason",
+        "noPreview": "No preview: this photo hasn't passed its hash check yet, or its file is gone. Until it shows here, it can't be restored.",
+        "effects": {
+          "restore": "Restoring approves the photo and delivers it to the conversation once its sender has sent it.",
+          "keepRemoved": "Keeping it removed deletes the photo for good; its sender sees that the decision stands."
+        },
+        "restore": "Restore Photo",
+        "keepRemoved": "Keep Removed",
+        "keepConfirmTitle": "Keep this photo removed?",
+        "keepConfirmBody": "The photo is deleted for good and its sender sees that the decision stands. This can't be undone.",
+        "keepConfirmAction": "Keep removed",
+        "notAwaiting": "This review request was already decided.",
+        "cannotRestore": "This photo can't be restored: it hasn't passed its hash check, or its file is gone."
       },
       "csam": {
         "loading": "Loading hash matches…",

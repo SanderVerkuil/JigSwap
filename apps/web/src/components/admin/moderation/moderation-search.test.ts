@@ -30,6 +30,7 @@ describe("validateModerationSearch", () => {
       "submissions",
       "flagged",
       "unchecked",
+      "appeals",
       "hashMatches",
       "reports",
       "activity",

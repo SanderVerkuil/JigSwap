@@ -1,6 +1,7 @@
 import { AdminQueryError } from "@/components/admin/admin-query-error";
 import { ActivityLog } from "@/components/admin/moderation/activity-log";
 import { AdminBanner } from "@/components/admin/moderation/admin-banner";
+import { AppealDetail } from "@/components/admin/moderation/appeal-detail";
 import { CsamEscalationsPanel } from "@/components/admin/moderation/csam-escalations";
 import {
   EditApproveDialog,
@@ -37,6 +38,7 @@ import {
   type PinnedSelection,
 } from "@/components/admin/moderation/use-pinned-selection";
 import { QueueEmpty } from "@/components/admin/queue-empty";
+import { convexErrorCode } from "@/components/exchange/request-trade";
 import { PageLoading } from "@/components/ui/loading";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -57,6 +59,7 @@ import {
   History,
   Inbox,
   MessageSquareWarning,
+  Scale,
   ScanEye,
   ShieldAlert,
 } from "lucide-react";
@@ -65,7 +68,10 @@ import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
 // The tabs that are list+detail queues.
-type QueueTab = Extract<ModerationTab, "submissions" | "flagged" | "unchecked">;
+type QueueTab = Extract<
+  ModerationTab,
+  "submissions" | "flagged" | "unchecked" | "appeals"
+>;
 
 export const Route = createFileRoute("/_dashboard/admin/moderation")({
   // The open tab, the selected queue item and the Reports tab's filter and drawer live in the
@@ -82,7 +88,9 @@ export const Route = createFileRoute("/_dashboard/admin/moderation")({
 // reason the submitter is told),
 // Flagged Images reviews the auto-rejected photos (restore / confirm removal),
 // Unchecked Photos lets an admin approve or reject photos the classifier has
-// not decided (pending / unscored) or whose hash check timed out, or check an unscored one again, Hash matches lists the CSAM hash-list matches to report
+// not decided (pending / unscored) or whose hash check timed out, or check an unscored one again,
+// Review Requests decides the auto-rejected message photos whose sender asked for a review
+// (restore / keep removed), Hash matches lists the CSAM hash-list matches to report
 // (metadata only, never an image), and Activity Log lists the recent moderation stamps.
 function ModerationPage() {
   const t = useTranslations("admin.moderation");
@@ -136,6 +144,14 @@ function ModerationPage() {
   });
   const recheckPhoto = useMutation({
     mutationFn: useConvexMutation(gateway.admin.recheckPhoto),
+  });
+  // Message photos the check stopped whose sender asked for a review (oldest request first).
+  const appealsQuery = useQuery(
+    convexQuery(gateway.admin.listImageReviewRequests, {}),
+  );
+  const appeals = appealsQuery.data;
+  const decideAppeal = useMutation({
+    mutationFn: useConvexMutation(gateway.admin.decideImageReview),
   });
   const csamQuery = useQuery(
     convexQuery(gateway.admin.listCsamEscalations, {}),
@@ -211,6 +227,7 @@ function ModerationPage() {
     restorePhoto.isPending ||
     decideUnchecked.isPending ||
     recheckPhoto.isPending ||
+    decideAppeal.isPending ||
     markCsam.isPending;
 
   // Each list+detail queue pins its selection (use-pinned-selection.ts): a new arrival never
@@ -233,6 +250,11 @@ function ModerationPage() {
     (photo) => photo.key,
     itemFor("unchecked"),
   );
+  const appealSelection = usePinnedSelection(
+    appeals,
+    (request) => request.attachmentId,
+    itemFor("appeals"),
+  );
   // After a decision (or Next) focus goes to the queue's detail container, never to the next
   // item's primary action, so a keyboard reviewer keeps their place and a double Enter cannot
   // decide the next item. Bumping a queue's token asks its QueueList to do that.
@@ -240,6 +262,7 @@ function ModerationPage() {
     submissions: 0,
     flagged: 0,
     unchecked: 0,
+    appeals: 0,
   });
   const focusDetail = (queue: QueueTab) =>
     setFocusTokens((tokens) => ({ ...tokens, [queue]: tokens[queue] + 1 }));
@@ -254,8 +277,8 @@ function ModerationPage() {
 
   // Decides row `id` of `queue` here. When it is the selected row, its leaving the queue moves
   // the selection to its neighbour (rather than reporting it handled elsewhere) and the URL
-  // follows, so the reviewer keeps flowing down the queue; a failure keeps the row selected.
-  // Resolves whether it succeeded.
+  // follows, so the reviewer keeps flowing down the queue; a failure keeps the row selected and
+  // toasts `failureMessage(error)` (the generic error by default). Resolves whether it succeeded.
   const decideRow = async (
     queue: QueueTab,
     selection: Pick<
@@ -264,15 +287,16 @@ function ModerationPage() {
     >,
     id: string,
     run: () => Promise<unknown>,
+    failureMessage: (error: unknown) => string = () => t("error"),
   ): Promise<boolean> => {
     const isSelected = selection.selectedId === id;
     const { nextId } = selection;
     if (isSelected) selection.expectRemoval(id);
     try {
       await run();
-    } catch {
+    } catch (error) {
       if (isSelected) selection.expectRemoval(null);
-      toast.error(t("error"));
+      toast.error(failureMessage(error));
       return false;
     }
     if (isSelected) {
@@ -416,6 +440,38 @@ function ModerationPage() {
     );
   };
 
+  // A review request: restore the photo, or keep it removed. The server refuses a request that is
+  // no longer awaiting a decision (another admin decided it) and a restore without a passed hash
+  // check or a stored file; each gets its own toast rather than the generic error.
+  const decideReview = async (decision: "restore" | "uphold") => {
+    const request = appealSelection.item;
+    if (!request || !appeals || appealSelection.gone) return;
+    const done = await decideRow(
+      "appeals",
+      appealSelection,
+      request.attachmentId,
+      () =>
+        decideAppeal.mutateAsync({
+          attachmentId: request.attachmentId,
+          decision,
+        }),
+      (error) => {
+        const code = convexErrorCode(error);
+        return code === "NotAwaitingReview"
+          ? t("appeal.notAwaiting")
+          : code === "CannotRestore"
+            ? t("appeal.cannotRestore")
+            : t("error");
+      },
+    );
+    if (!done) return;
+    toast.success(
+      t(decision === "restore" ? "toast.appealRestored" : "toast.appealKept", {
+        count: appeals.length - 1,
+      }),
+    );
+  };
+
   // An unscored photo back through the pipeline: it turns "pending" and stays in the queue until
   // the check decides it, so the selection stays put.
   const recheck = async (photo: UncheckedPhoto) => {
@@ -457,6 +513,11 @@ function ModerationPage() {
               <ScanEye aria-hidden />
               {t("tabs.unchecked")}
               <TabCount count={unchecked?.length} />
+            </TabsTrigger>
+            <TabsTrigger value="appeals" className={TAB_TRIGGER_CLASS}>
+              <Scale aria-hidden />
+              {t("tabs.appeals")}
+              <TabCount count={appeals?.length} />
             </TabsTrigger>
             <TabsTrigger value="hashMatches" className={TAB_TRIGGER_CLASS}>
               <ShieldAlert aria-hidden />
@@ -680,6 +741,74 @@ function ModerationPage() {
                       onWaive={() => decide(uncheckedPhoto, "waive_hash_check")}
                       onReject={() => decide(uncheckedPhoto, "reject")}
                       onRecheck={() => recheck(uncheckedPhoto)}
+                    />
+                  )}
+                </PinnedDetail>
+              }
+            />
+          )}
+        </TabsContent>
+
+        <TabsContent value="appeals">
+          {appealsQuery.isError ? (
+            <AdminQueryError
+              onRetry={() => void appealsQuery.refetch()}
+              retrying={appealsQuery.isFetching}
+            />
+          ) : appeals === undefined ? (
+            <PageLoading message={t("appeal.loading")} />
+          ) : appeals.length === 0 ? (
+            <QueueEmpty
+              title={tAdmin("queueEmpty.title")}
+              label={t("appealsEmpty")}
+            />
+          ) : (
+            <QueueList
+              items={appeals}
+              selectedId={appealSelection.selectedId}
+              label={t("tabs.appeals")}
+              onSelect={selectItem("appeals")}
+              detailTitle={t("detail.sheetTitle.appeals")}
+              focusDetailToken={focusTokens.appeals}
+              defaultDetailOpen={itemFor("appeals") !== undefined}
+              getId={(request) => request.attachmentId}
+              renderRow={(request) => (
+                <>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2">
+                      <span
+                        className={cn(
+                          "size-2 shrink-0 rounded-full",
+                          SEVERITY_DOT[severityBand(request.score)],
+                        )}
+                        aria-hidden
+                      />
+                      <span className="truncate text-sm font-semibold">
+                        {request.label ?? t("flag.unlabeled")}
+                      </span>
+                    </span>
+                    <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                      {t("appeal.rowSource")}
+                      {request.uploaderName && ` · ${request.uploaderName}`}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {relativeTime(request.reviewRequestedAt)}
+                  </span>
+                </>
+              )}
+              detail={
+                <PinnedDetail
+                  gone={appealSelection.gone}
+                  onNext={nextIn("appeals", appealSelection.nextId)}
+                >
+                  {appealSelection.item && (
+                    <AppealDetail
+                      key={appealSelection.item.attachmentId}
+                      request={appealSelection.item}
+                      busy={busy || appealSelection.gone}
+                      onRestore={() => decideReview("restore")}
+                      onKeepRemoved={() => decideReview("uphold")}
                     />
                   )}
                 </PinnedDetail>

@@ -4775,7 +4775,9 @@
         "manualApproved": "Foto goedgekeurd bij “{title}” — nog {count} in de wachtrij.",
         "manualRejected": "Foto afgewezen bij “{title}” — nog {count} in de wachtrij.",
         "hashCheckWaived": "Foto bij “{title}” goedgekeurd zonder hash-check — nog {count} in de wachtrij.",
-        "recheckQueued": "De foto bij “{title}” wordt opnieuw gecontroleerd."
+        "recheckQueued": "De foto bij “{title}” wordt opnieuw gecontroleerd.",
+        "appealRestored": "Foto in bericht hersteld — nog {count} in de wachtrij.",
+        "appealKept": "Foto in bericht blijft verwijderd — nog {count} in de wachtrij."
       },
       "banner": {
         "pill": "ADMIN",
@@ -4793,6 +4795,7 @@
         "flagged": "Gemarkeerde afbeeldingen",
         "activity": "Activiteitenlog",
         "unchecked": "Niet-gecontroleerde foto's",
+        "appeals": "Beoordelingsverzoeken",
         "hashMatches": "Hash-matches",
         "reports": "Gemeld"
       },
@@ -4803,7 +4806,8 @@
         "sheetTitle": {
           "submissions": "Inzending",
           "flagged": "Gemarkeerde afbeelding",
-          "unchecked": "Niet-gecontroleerde foto"
+          "unchecked": "Niet-gecontroleerde foto",
+          "appeals": "Beoordelingsverzoek"
         }
       },
       "handledElsewhere": {
@@ -4972,6 +4976,31 @@
           "recheck": "Opnieuw controleren laat de automatische controle nog een keer lopen, bijvoorbeeld zodra de controledienst weer werkt."
         },
         "hashTimedOutHint": "De hash-check op bekend misbruikmateriaal kon niet binnen 7 dagen worden gedaan, dus de automatische hercontroles zijn gestopt. Goedkeuren zonder hash-check publiceert de foto zonder die controle, nadat je dat bevestigt (een hash-match die later wordt gevonden, zet hem alsnog in quarantaine); afwijzen verbergt hem zoals elke afwijzing."
+      },
+      "appealsEmpty": "Er wachten geen foto's op een beoordeling.",
+      "appeal": {
+        "loading": "Beoordelingsverzoeken laden…",
+        "intro": "De afzender vroeg om een beoordeling nadat de automatische controle deze foto tegenhield. Je ziet alleen de foto, nooit het gesprek.",
+        "imageAlt": "Foto in bericht ter beoordeling",
+        "rowSource": "Foto in bericht",
+        "label": "Label",
+        "score": "Score",
+        "sentBy": "Verstuurd door",
+        "uploadedAt": "Geüpload",
+        "requestedAt": "Beoordeling gevraagd",
+        "reason": "Reden",
+        "noPreview": "Geen voorbeeld: deze foto is nog niet door de hash-check, of het bestand is weg. Zolang hij hier niet te zien is, kun je hem niet herstellen.",
+        "effects": {
+          "restore": "Herstellen keurt de foto goed en bezorgt hem in het gesprek zodra de afzender hem heeft verstuurd.",
+          "keepRemoved": "Verwijderd laten wist de foto definitief; de afzender ziet dat de beslissing blijft staan."
+        },
+        "restore": "Foto herstellen",
+        "keepRemoved": "Verwijderd laten",
+        "keepConfirmTitle": "Deze foto verwijderd laten?",
+        "keepConfirmBody": "De foto wordt definitief gewist en de afzender ziet dat de beslissing blijft staan. Dit kun je niet ongedaan maken.",
+        "keepConfirmAction": "Verwijderd laten",
+        "notAwaiting": "Over dit beoordelingsverzoek is al beslist.",
+        "cannotRestore": "Deze foto kan niet worden hersteld: hij is niet door de hash-check, of het bestand is weg."
       },
       "csam": {
         "loading": "Hash-matches laden…",

@@ -1,13 +1,15 @@
 // Typed search params for /admin/moderation, so the console's state survives Back, a reload and a
 // shared link, and a notification can point at one item:
 // - `tab`: the open tab (absent = Submissions);
-// - `item`: the selected row of a list+detail queue (a submission's `_id`, a photo's id/key);
+// - `item`: the selected row of a list+detail queue (a submission's `_id`, a photo's id/key, a
+//   review request's attachment id);
 // - `report` / `status`: the Reports tab's open report drawer and its status filter (absent = open).
 // Anything unknown or malformed is dropped, so a stale link falls back to the defaults.
 export const MODERATION_TABS = [
   "submissions",
   "flagged",
   "unchecked",
+  "appeals",
   "hashMatches",
   "reports",
   "activity",
