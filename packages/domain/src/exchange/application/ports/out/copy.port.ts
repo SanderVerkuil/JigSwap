@@ -9,6 +9,8 @@ export interface CopyView {
   // Members other than the owner who may act as if they owned this copy (household members the
   // owner left at `manage`). Absent ⇒ nobody but the owner.
   readonly coManagerIds?: readonly MemberId[];
+  // Who holds the copy now: a borrower while it is out on loan. Absent ⇒ the owner.
+  readonly heldBy?: MemberId;
   readonly availability: {
     readonly forTrade: boolean;
     readonly forSale: boolean;

@@ -54,11 +54,12 @@ export class ApplicationError extends DomainError {
     );
   }
 
-  // The copy is set aside for another deal: an accepted exchange that could still settle on it.
+  // The copy is set aside: for another deal (an accepted exchange that could still settle on it), or
+  // for a loan (it is out on loan until it comes back).
   static copyReserved(copyId: CopyId): ApplicationError {
     return new ApplicationError(
       "CopyReserved",
-      `Copy ${copyId} is set aside for another deal`,
+      `Copy ${copyId} is set aside for another deal or out on loan`,
     );
   }
 

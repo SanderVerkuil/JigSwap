@@ -45,7 +45,7 @@ const availableFor = (copy: CopyView, kind: ExchangeKind): boolean => {
 };
 
 // Transaction script: cross-aggregate read checks (dedup, copy existence/availability/ownership,
-// the initiator's exchange eligibility, recorded as `eligibleVia`)
+// neither copy out on loan, the initiator's exchange eligibility, recorded as `eligibleVia`)
 // then delegate the entity rules (self-exchange, term validity, state) to Exchange.propose.
 // Proposing reserves nothing: several members may ask for the same copy; accepting sets it aside
 // (accept-exchange). What a proposal found (the recipient owning the requested copy, the offered
@@ -66,7 +66,8 @@ export const makeProposeExchange =
     const requested = await deps.copies.getCopy(cmd.requestedCopyId);
     if (!requested)
       return err(ApplicationError.copyNotFound(cmd.requestedCopyId));
-    if (!availableFor(requested, cmd.kind)) {
+    // A copy out on loan is at the borrower's: not available for anything until it is back.
+    if (!availableFor(requested, cmd.kind) || isLentOut(requested)) {
       return err(
         ApplicationError.copyNotAvailable(cmd.requestedCopyId, cmd.kind),
       );
@@ -125,8 +126,15 @@ export const mayOfferCopy = (
     (offered.coManagerIds ?? []).includes(initiatorId)) &&
   offered.ownerId !== recipientId;
 
+// Is the copy out on loan, i.e. held by anyone but its owner? Such a copy is at the borrower's: it
+// can't be asked for, offered, agreed on or settled until it is back (propose, settlement-guard and
+// the read side listing offerable copies all apply it).
+export const isLentOut = (copy: CopyView): boolean =>
+  copy.heldBy !== undefined && copy.heldBy !== copy.ownerId;
+
 // For a swap the offered copy must exist and be owned (or household-co-managed) by the initiator
-// (the offered copy id lives in the kind-tagged terms). Returns it, so its owner can be recorded.
+// (the offered copy id lives in the kind-tagged terms), and be at home, not out on loan
+// (CopyReserved). Returns it, so its owner can be recorded.
 const loadOfferedCopy = async (
   copies: CopyPort,
   cmd: ProposeExchangeCommand,
@@ -140,6 +148,9 @@ const loadOfferedCopy = async (
   if (!offered) return err(ApplicationError.copyNotFound(offeredCopyId));
   if (!mayOfferCopy(offered, cmd.initiatorId, cmd.recipientId)) {
     return err(ApplicationError.offeredCopyNotOwned(offeredCopyId));
+  }
+  if (isLentOut(offered)) {
+    return err(ApplicationError.copyReserved(offeredCopyId));
   }
   return ok(offered);
 };

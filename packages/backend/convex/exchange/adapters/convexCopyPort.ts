@@ -20,6 +20,8 @@ export const convexCopyPort = (ctx: QueryCtx): CopyPort => ({
       ownerId: toMemberId(row.ownerId),
       // Household members who may act as co-owner (e.g. offer it in a swap).
       coManagerIds: await coManagerIdsOf(ctx, row),
+      // A borrower while it is out on loan; unset (legacy rows too) means the owner holds it.
+      heldBy: row.heldBy === undefined ? undefined : toMemberId(row.heldBy),
       availability: {
         forTrade: row.availability.forTrade,
         forSale: row.availability.forSale,

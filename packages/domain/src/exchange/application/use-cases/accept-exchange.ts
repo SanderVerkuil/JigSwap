@@ -15,9 +15,9 @@ export interface AcceptExchangeDeps extends ExchangeActionDeps {
 // the request rested on it: what the owner changed since (profile, follows, household) never stops
 // them accepting a request they received. Confirm, cancel, decline and dispute don't re-check it, so
 // a trade already under way can finish. Separately, accept (after eligibility) and confirm refuse
-// once a copy the deal names is no longer where the deal found it (settlement-guard): such a deal
-// could never settle. Last, accepting sets the deal's copies aside for it: it is refused while either
-// copy is set aside for another accepted deal (reservedElsewhere).
+// once a copy the deal names is no longer where the deal found it, or while it is out on loan
+// (settlement-guard): such a deal can't settle. Last, accepting sets the deal's copies aside for it:
+// it is refused while either copy is set aside for another accepted deal (reservedElsewhere).
 export const makeAcceptExchange = (deps: AcceptExchangeDeps): AcceptExchange =>
   runExchangeAction(
     deps,

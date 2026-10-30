@@ -10,6 +10,7 @@ export interface ConfirmCompletionDeps extends ExchangeActionDeps {
 // A party confirms; the exchange settles once both have. Every confirmation is refused, and nothing
 // is saved, once a copy the deal names is no longer where the deal found it (settlement-guard): a
 // stale exchange can never settle, so it never moves a copy away from someone it wasn't made with.
+// Nor does a deal settle while a copy it moves is out on loan (CopyReserved) until it is back.
 export const makeConfirmCompletion = (
   deps: ConfirmCompletionDeps,
 ): ConfirmCompletion =>

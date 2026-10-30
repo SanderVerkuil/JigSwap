@@ -340,7 +340,9 @@ useMutation(gateway.exchange.propose)(...)
 … recipient accepts, both confirm …
   → accept and every confirmation run the domain's settlementGuard first: refused, nothing saved,
     once the requested copy no longer belongs to the recipient or a swap's offered copy changed
-    owner or can no longer be offered by the initiator
+    owner or can no longer be offered by the initiator, and (CopyReserved) while either copy is out
+    on loan (`isLentOut`: held by anyone but its owner); propose refuses such copies too, and the
+    Library's reservation port counts an open loan, so a lent copy can't be re-offered or deleted
   → accept also sets the deal's copies aside: refused (CopyReserved) while either copy is in another
     accepted deal that could still settle (proposals set nothing aside)
   → confirmCompletion detects dual confirmation → emits ExchangeCompleted + OwnershipTransferred,

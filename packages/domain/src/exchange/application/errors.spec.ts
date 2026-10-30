@@ -41,7 +41,9 @@ describe("ApplicationError factories", () => {
   it("copyReserved interpolates the copy id", () => {
     const e = ApplicationError.copyReserved(copy);
     expect(e.code).toBe("CopyReserved");
-    expect(e.message).toBe("Copy copy1 is set aside for another deal");
+    expect(e.message).toBe(
+      "Copy copy1 is set aside for another deal or out on loan",
+    );
   });
 
   it("duplicateProposal interpolates the copy id", () => {

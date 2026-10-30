@@ -10,7 +10,11 @@ import {
   RecordingEventPublisher,
   SequentialIdGenerator,
 } from "../testing";
-import { makeProposeExchange, mayOfferCopy } from "./propose-exchange";
+import {
+  isLentOut,
+  makeProposeExchange,
+  mayOfferCopy,
+} from "./propose-exchange";
 
 const alice = toMemberId("alice"); // initiator
 const bob = toMemberId("bob"); // recipient
@@ -418,6 +422,54 @@ describe("makeProposeExchange", () => {
     if (result.isErr) expect(result.error.code).toBe("CopyNotFound");
   });
 
+  // A copy out on loan is at the borrower's: it can't be asked for, nor offered, until it is back.
+  describe("a copy out on loan", () => {
+    const eve = toMemberId("eve"); // the borrower
+
+    it("rejects asking for it with CopyNotAvailable, even while it is still offered", async () => {
+      copies.seed(
+        copy({
+          id: requestedId,
+          ownerId: bob,
+          heldBy: eve,
+          availability: { forTrade: false, forSale: true, forLend: true },
+        }),
+      );
+      const result = await propose({
+        initiatorId: alice,
+        recipientId: bob,
+        kind: "sale",
+        requestedCopyId: requestedId,
+        terms: saleTerms(),
+      });
+      expect(result.isErr && result.error.code).toBe("CopyNotAvailable");
+      expect(events.published).toHaveLength(0);
+      expect(repo.size()).toBe(0);
+    });
+
+    it("rejects offering it in a swap with CopyReserved", async () => {
+      copies
+        .seed(
+          copy({
+            id: requestedId,
+            ownerId: bob,
+            availability: { forTrade: true, forSale: false, forLend: false },
+          }),
+        )
+        .seed(copy({ id: offeredId, ownerId: alice, heldBy: eve }));
+      const result = await propose({
+        initiatorId: alice,
+        recipientId: bob,
+        kind: "swap",
+        requestedCopyId: requestedId,
+        terms: swapTerms,
+      });
+      expect(result.isErr && result.error.code).toBe("CopyReserved");
+      if (result.isErr) expect(result.error.message).toContain(offeredId);
+      expect(events.published).toHaveLength(0);
+    });
+  });
+
   it("rejects when the requested copy is not owned by the named recipient", async () => {
     // carol owns the requested copy, but the proposal names bob as the recipient.
     const carol = toMemberId("carol");
@@ -488,5 +540,23 @@ describe("mayOfferCopy", () => {
   it("rejects the recipient's own copy, even when co-managed", () => {
     const c = copy({ id: offeredId, ownerId: bob, coManagerIds: [alice] });
     expect(mayOfferCopy(c, alice, bob)).toBe(false);
+  });
+});
+
+describe("isLentOut", () => {
+  it("is false for a copy with no recorded holder (held by its owner)", () => {
+    expect(isLentOut(copy({ id: offeredId, ownerId: alice }))).toBe(false);
+  });
+
+  it("is false for a copy held by its owner", () => {
+    expect(
+      isLentOut(copy({ id: offeredId, ownerId: alice, heldBy: alice })),
+    ).toBe(false);
+  });
+
+  it("is true for a copy someone else holds", () => {
+    expect(
+      isLentOut(copy({ id: offeredId, ownerId: alice, heldBy: bob })),
+    ).toBe(true);
   });
 });

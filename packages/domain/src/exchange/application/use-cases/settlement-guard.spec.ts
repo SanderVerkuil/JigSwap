@@ -162,6 +162,54 @@ describe("settlementGuard: a swap's offered copy", () => {
   });
 });
 
+// A copy out on loan is at the borrower's: no deal on it may be accepted or settle until it is back.
+describe("settlementGuard: a copy out on loan", () => {
+  const lentTo = (copy: CopyView, holder: MemberId): CopyView => ({
+    ...copy,
+    heldBy: holder,
+  });
+
+  it("refuses with CopyReserved while the requested copy is out on loan", async () => {
+    const copies = new FakeCopyPort().seed(
+      lentTo(view(requestedId, bob), dave),
+    );
+    const refusal = await settlementGuard(copies)(sale());
+    expect(refusal?.code).toBe("CopyReserved");
+    expect(refusal?.message).toContain(requestedId);
+  });
+
+  it("refuses with CopyReserved while a swap's offered copy is out on loan", async () => {
+    const copies = new FakeCopyPort()
+      .seed(view(requestedId, bob))
+      .seed(lentTo(view(offeredId, alice), dave));
+    const refusal = await settlementGuard(copies)(swap(alice));
+    expect(refusal?.code).toBe("CopyReserved");
+    expect(refusal?.message).toContain(offeredId);
+  });
+
+  it("passes while each copy is held by its owner", async () => {
+    const copies = new FakeCopyPort()
+      .seed(lentTo(view(requestedId, bob), bob))
+      .seed(lentTo(view(offeredId, carol, [alice]), carol));
+    expect(await codeOf(copies, swap(carol))).toBe("ok");
+  });
+
+  it("answers a copy that changed hands before one out on loan", async () => {
+    const copies = new FakeCopyPort()
+      .seed(lentTo(view(requestedId, bob), dave))
+      .seed(view(offeredId, carol, []));
+    expect(await codeOf(copies, swap(carol))).toBe("OfferedCopyNotOwned");
+  });
+
+  it("ignores a loan on an offered copy the deal doesn't move", async () => {
+    const exchange = rehydrated({ kind: "sale", price: price() });
+    const copies = new FakeCopyPort()
+      .seed(view(requestedId, bob))
+      .seed(lentTo(view(offeredId, alice), dave));
+    expect(await codeOf(copies, exchange)).toBe("ok");
+  });
+});
+
 // The reservation rule's notion of a live deal: exactly the deals the guard would let settle.
 describe("canStillSettle", () => {
   it("holds while every copy the deal names is still in place", async () => {
@@ -173,6 +221,14 @@ describe("canStillSettle", () => {
 
   it("no longer holds once the requested copy changed hands", async () => {
     const copies = new FakeCopyPort().seed(view(requestedId, dave));
+    expect(await canStillSettle(copies)(sale())).toBe(false);
+  });
+
+  it("no longer holds while a copy is out on loan", async () => {
+    const copies = new FakeCopyPort().seed({
+      ...view(requestedId, bob),
+      heldBy: dave,
+    });
     expect(await canStillSettle(copies)(sale())).toBe(false);
   });
 

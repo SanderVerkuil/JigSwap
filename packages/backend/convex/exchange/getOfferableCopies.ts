@@ -1,4 +1,4 @@
-import { mayOfferCopy, toCopyId, toMemberId } from "@jigswap/domain";
+import { isLentOut, mayOfferCopy, toCopyId, toMemberId } from "@jigswap/domain";
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
@@ -11,9 +11,10 @@ import { convexCopyPort } from "./adapters/convexCopyPort";
 
 // Exchange read: the copies the viewer could offer in a swap for `requestedPuzzleId`. Candidates
 // are the viewer's own copies plus their household mates' copies; each is filtered through the
-// SAME domain rule propose applies to the offered copy (`mayOfferCopy`, over the same CopyPort
-// view), so the list never offers a copy propose would reject. Empty when the requested copy is
-// missing or not viewable — the query must not confirm a hidden copy exists.
+// SAME domain rules propose applies to the offered copy (`mayOfferCopy`, and `isLentOut`: a copy out
+// on loan can't be offered, over the same CopyPort view), so the list never offers a copy propose
+// would reject. Empty when the requested copy is missing or not viewable — the query must not
+// confirm a hidden copy exists.
 export const getOfferableCopies = query({
   args: { requestedPuzzleId: v.id("ownedPuzzles") },
   handler: async (ctx, args) => {
@@ -41,7 +42,9 @@ export const getOfferableCopies = query({
     const rows = [];
     for (const copy of candidates) {
       const view = await copies.getCopy(toCopyId(copy._id));
-      if (!view || !mayOfferCopy(view, viewer, recipient)) continue;
+      if (!view || !mayOfferCopy(view, viewer, recipient) || isLentOut(view)) {
+        continue;
+      }
       const puzzle = await ctx.db.get(copy.puzzleId);
       const ownedByViewer = copy.ownerId === viewerId;
       rows.push({

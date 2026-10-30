@@ -22,6 +22,8 @@ const ACTIVE_STATUSES = new Set(["proposed", "accepted"]);
 // current owner out of re-offering or deleting their copy. "Could still settle" is the Exchange
 // context's own rule (canStillSettle: the settlement guard accept and confirm run), read through
 // Exchange's CopyPort. Rows without an aggregateId can't be acted on at all and reserve nothing.
+// An open loan reserves the copy too: while it is at the borrower's it can't be re-offered or
+// deleted until it is back (returned or recalled).
 export const convexCopyReservationPort = (
   ctx: QueryCtx,
 ): CopyReservationPort => ({
@@ -33,6 +35,15 @@ export const convexCopyReservationPort = (
       )
       .unique();
     if (!copy) return false;
+
+    // Loans name the copy by its aggregateId; a copy's loans are few.
+    const openLoan = await ctx.db
+      .query("loans")
+      .withIndex("by_copy", (q) => q.eq("copyId", copyId as string))
+      .filter((q) => q.eq(q.field("status"), "open"))
+      .first();
+    if (openLoan) return true;
+
     const ownedPuzzleId = copy._id as Id<"ownedPuzzles">;
 
     // Indexed lookup of exchanges that reference the copy as requested or offered (union of the

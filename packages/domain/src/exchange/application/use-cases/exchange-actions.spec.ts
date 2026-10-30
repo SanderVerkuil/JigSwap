@@ -247,6 +247,37 @@ describe("makeAcceptExchange", () => {
     });
   });
 
+  // A copy out on loan is at the borrower's: nothing on it is agreed until it is back.
+  describe("refuses while a copy is out on loan", () => {
+    const accept = () =>
+      makeAcceptExchange(h)({ exchangeId: exId, actingMemberId: bob });
+
+    it("CopyReserved while the requested copy is out on loan, saving nothing", async () => {
+      await seedProposed(h.repo);
+      h.copies.seed({ ...copyView(requestedId, bob), heldBy: eve });
+      const result = await accept();
+      expect(result.isErr && result.error.code).toBe("CopyReserved");
+      if (result.isErr) expect(result.error.message).toContain(requestedId);
+      expect(h.events.published).toHaveLength(0);
+      expect((await h.repo.findById(exId))?.status).toBe("proposed");
+    });
+
+    it("CopyReserved while the swap's offered copy is out on loan", async () => {
+      await seedProposedSwap(h.repo, alice);
+      h.copies.seed({ ...copyView(offeredId, alice), heldBy: eve });
+      const result = await accept();
+      expect(result.isErr && result.error.code).toBe("CopyReserved");
+      if (result.isErr) expect(result.error.message).toContain(offeredId);
+      expect((await h.repo.findById(exId))?.status).toBe("proposed");
+    });
+
+    it("accepts once the copy is back with its owner", async () => {
+      await seedProposed(h.repo);
+      h.copies.seed({ ...copyView(requestedId, bob), heldBy: bob });
+      expect((await accept()).isOk).toBe(true);
+    });
+  });
+
   // One copy, one deal: accepting sets the deal's copies aside for it.
   describe("refuses while a copy is set aside for another accepted deal", () => {
     const otherId = toExchangeId("ex-other");
@@ -552,6 +583,20 @@ describe("makeConfirmCompletion (dual confirmation)", () => {
       expect(result.isErr && result.error.code).toBe("OfferedCopyNotOwned");
       expect((await h.repo.findById(exId))?.status).toBe("accepted");
       expect(h.events.published).toHaveLength(0);
+    });
+
+    it("CopyReserved while the requested copy is out on loan, nothing saved or published", async () => {
+      await seedAccepted(h.repo);
+      expect((await confirm(alice)).isOk).toBe(true);
+      h.copies.seed({ ...copyView(requestedId, bob), heldBy: eve });
+
+      const result = await confirm(bob);
+
+      expect(result.isErr && result.error.code).toBe("CopyReserved");
+      expect(h.events.published).toHaveLength(0);
+      const stored = (await h.repo.findById(exId))?.toState();
+      expect(stored?.status).toBe("accepted");
+      expect(stored?.recipientConfirmationTimestamp).toBeUndefined();
     });
 
     it("settles a swap while both copies are still in place", async () => {
