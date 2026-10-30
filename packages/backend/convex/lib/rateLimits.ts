@@ -137,8 +137,11 @@ export const chargePhotoAttach = async (
 //   MAPTILER_HOURLY_CAP - default 2000 requests per fixed hour
 //   MAPTILER_DAILY_CAP  - default 20000 requests per fixed day
 // One row per window on the rateLimits table (keys "maptiler:global:hour" / ":day").
+// MAPTILER_RENDER_RESERVE_PERCENT of each window is kept for the final render of a sent location
+// (conversation/locationStore.chargeRender): picker views and searches stop short of it.
 export const MAPTILER_HOURLY_CAP_DEFAULT = 2000;
 export const MAPTILER_DAILY_CAP_DEFAULT = 20_000;
+export const MAPTILER_RENDER_RESERVE_PERCENT = 20;
 
 const positiveIntOr = (raw: string | undefined, fallback: number): number => {
   const n = Number(raw);
@@ -150,20 +153,30 @@ export const mapTilerCaps = (env: Record<string, string | undefined>) => ({
   daily: positiveIntOr(env.MAPTILER_DAILY_CAP, MAPTILER_DAILY_CAP_DEFAULT),
 });
 
+// The part of a window's cap that picker views and searches may use.
+const withoutRenderReserve = (cap: number): number =>
+  Math.floor((cap * (100 - MAPTILER_RENDER_RESERVE_PERCENT)) / 100);
+
 /**
  * Charge `requests` upstream MapTiler requests to the global budget. False (and nothing
- * written) when either window would go over its cap; the refusal is logged.
+ * written) when either window would go over its cap; the refusal is logged. With
+ * `reserveForRenders` (picker views and searches) each window counts as full once it reaches
+ * its cap less the render reserve, so final renders can still be charged after the picker has
+ * spent its share.
  */
 export const chargeMapTilerBudget = async (
   ctx: MutationCtx,
   requests: number,
+  { reserveForRenders = false }: { reserveForRenders?: boolean } = {},
 ): Promise<boolean> => {
   if (requests <= 0) return true;
   const caps = mapTilerCaps(process.env);
+  const capOf = (cap: number) =>
+    reserveForRenders ? withoutRenderReserve(cap) : cap;
   const now = Date.now();
   const windows = [
-    { key: "maptiler:global:hour", windowMs: HOUR, cap: caps.hourly },
-    { key: "maptiler:global:day", windowMs: DAY, cap: caps.daily },
+    { key: "maptiler:global:hour", windowMs: HOUR, cap: capOf(caps.hourly) },
+    { key: "maptiler:global:day", windowMs: DAY, cap: capOf(caps.daily) },
   ];
   const planned = [];
   for (const window of windows) {

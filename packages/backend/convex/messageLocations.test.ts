@@ -748,7 +748,8 @@ describe("global MapTiler budget", () => {
     const t = convexTest(schema, modules);
     const { threadId } = await openThread(t);
     vi.stubEnv("MAPTILER_HOURLY_CAP", "10");
-    await spend(t, "maptiler:global:hour", 9);
+    // The picker's share is 8 of the 10 (the rest is kept for final renders).
+    await spend(t, "maptiler:global:hour", 7);
     // A 600x360 view needs more than the one request left.
     await expect(
       asAlice(t).action(api.conversation.renderPickerMap.renderPickerMap, {
@@ -804,6 +805,58 @@ describe("global MapTiler budget", () => {
         query: "Domplein",
       }),
     ).rejects.toThrow(/LocationUnavailable/);
+  });
+
+  test("picker views and searches stop at 80% of the hourly cap, so a final render still fits", async () => {
+    const t = convexTest(schema, modules);
+    const { threadId } = await openThread(t);
+    vi.stubEnv("MAPTILER_HOURLY_CAP", "100");
+    await spend(t, "maptiler:global:hour", 79);
+    const pickerView = () =>
+      asAlice(t).action(api.conversation.renderPickerMap.renderPickerMap, {
+        threadId,
+        lat: 52.09,
+        lng: 5.12,
+        zoom: 14,
+      });
+    const search = () =>
+      asAlice(t).action(api.conversation.searchPlaces.searchPlaces, {
+        threadId,
+        query: "Domplein",
+      });
+    // A view needs more than the one request left of the picker's 80.
+    await expect(pickerView()).rejects.toThrow(/LocationUnavailable/);
+    await search();
+    await expect(search()).rejects.toThrow(/LocationUnavailable/);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    // The final render of a sent location may use the reserved 20.
+    const id = await send(t, threadId);
+    await settleDueJobs(t);
+    expect((await row(t, id))!.mapStatus).toBe("ready");
+    const hour = await t.run(async (ctx) =>
+      (await ctx.db.query("rateLimits").collect()).find(
+        (r) => r.key === "maptiler:global:hour",
+      ),
+    );
+    expect(hour!.count).toBeGreaterThan(80);
+    expect(hour!.count).toBeLessThanOrEqual(100);
+  });
+
+  test("the daily cap keeps the same reserve for final renders", async () => {
+    const t = convexTest(schema, modules);
+    const { threadId } = await openThread(t);
+    vi.stubEnv("MAPTILER_DAILY_CAP", "100");
+    await spend(t, "maptiler:global:day", 80);
+    await expect(
+      asAlice(t).action(api.conversation.searchPlaces.searchPlaces, {
+        threadId,
+        query: "Domplein",
+      }),
+    ).rejects.toThrow(/LocationUnavailable/);
+    const id = await send(t, threadId);
+    await settleDueJobs(t);
+    expect((await row(t, id))!.mapStatus).toBe("ready");
   });
 
   test("a final render over budget settles as a text card, still delivered", async () => {
