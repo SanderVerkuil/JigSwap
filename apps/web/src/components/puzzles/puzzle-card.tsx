@@ -73,8 +73,8 @@ export function PuzzleCard({ puzzle }: PuzzleCardProps) {
           <Button
             size="icon"
             asChild
-            aria-label={t("addPuzzle")}
-            title={t("addPuzzle")}
+            aria-label={t("addToLibrary")}
+            title={t("addToLibrary")}
             className="shrink-0"
           >
             <Link href={`/my-puzzles/add/new?puzzleId=${puzzle._id}`}>

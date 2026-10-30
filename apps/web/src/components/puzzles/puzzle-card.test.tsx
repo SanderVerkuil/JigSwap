@@ -8,6 +8,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
+import nl from "../../../locales/nl.json";
 import { PuzzleCard as CatalogCard } from "./puzzle-card";
 import {
   PUZZLE_GRID_COVER_SIZES,
@@ -63,10 +64,18 @@ afterEach(() => {
 const SRC_SET =
   "https://cdn.test/480 480w, https://cdn.test/960 960w, https://cdn.test/original 1600w";
 
-const render = (node: ReactNode, viewMode: "grid" | "list" = "grid") =>
+const render = (
+  node: ReactNode,
+  viewMode: "grid" | "list" = "grid",
+  locale: "en" | "nl" = "en",
+) =>
   act(() =>
     root.render(
-      <IntlProvider locale="en" timeZone="UTC" messages={en}>
+      <IntlProvider
+        locale={locale}
+        timeZone="UTC"
+        messages={locale === "en" ? en : nl}
+      >
         <PuzzleViewProvider viewMode={viewMode}>{node}</PuzzleViewProvider>
       </IntlProvider>,
     ),
@@ -207,12 +216,16 @@ describe("catalogue PuzzleCard", () => {
         .getAttribute("aria-pressed"),
     ).toBe("false");
     expect(
+      screen.getByRole("link", { name: "Add to Library" }).getAttribute("href"),
+    ).toBe("/my-puzzles/add/new?puzzleId=p1");
+  });
+
+  it("says the + adds a copy to the library, in Dutch too", () => {
+    render(<CatalogCard puzzle={summary()} />, "grid", "nl");
+    expect(
       screen
-        .getAllByRole("link")
-        .some(
-          (link) =>
-            link.getAttribute("href") === "/my-puzzles/add/new?puzzleId=p1",
-        ),
-    ).toBe(true);
+        .getByRole("link", { name: "Toevoegen aan bibliotheek" })
+        .getAttribute("href"),
+    ).toBe("/my-puzzles/add/new?puzzleId=p1");
   });
 });

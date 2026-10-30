@@ -436,7 +436,6 @@
     "puzzles": {
       "title": "Puzzles",
       "subtitle": "Browse and discover puzzles from the community",
-      "addPuzzle": "Add Puzzle",
       "searchPlaceholder": "Title, brand, artist or tag…",
       "searchLabel": "Search the catalogue",
       "filtersLabel": "Filters",
@@ -3695,6 +3694,7 @@
     "browse": "Browse puzzles — JigSwap",
     "myPuzzles": "My puzzles — JigSwap",
     "addPuzzle": "Add puzzle — JigSwap",
+    "contributePuzzle": "Contribute a puzzle — JigSwap",
     "createPuzzle": "Create puzzle — JigSwap",
     "quickAddPuzzles": "Add several puzzles — JigSwap",
     "puzzles": "Puzzles catalogue — JigSwap",
@@ -3747,7 +3747,7 @@
       "noResultsFor": "No results for “{term}”"
     },
     "actions": {
-      "addPuzzle": "Add Puzzle",
+      "addToMyPuzzles": "Add to my puzzles",
       "addAPuzzle": "Add a Puzzle",
       "logCompletion": "Log a Completion",
       "createCircle": "Create a Circle",
@@ -3868,7 +3868,7 @@
       },
       "contributePuzzle": {
         "title": "Contribute a Puzzle",
-        "subtitle": "Add a puzzle to the shared catalogue for everyone."
+        "subtitle": "Adds a puzzle to the shared catalogue, not to your own puzzles."
       },
       "puzzles": {
         "title": "Puzzles catalogue",

@@ -156,17 +156,19 @@ export function PuzzlesClient({
 
   // The title/subtitle live in the shared shell page head (via route-meta); publish only the
   // "contribute to catalogue" action there so the body carries no own header. The result count
-  // sits once, in the toolbar next to the filters below, rather than repeating in the head.
+  // sits once, in the toolbar next to the filters below, rather than repeating in the head. It is
+  // an outline button named after the page it opens: contributing adds a puzzle to the shared
+  // catalogue, not a copy to the member's own puzzles (that is each card's +).
   usePageHeaderActions(
     () => (
-      <Button size="sm" asChild>
+      <Button size="sm" variant="outline" asChild>
         <Link href="/puzzles/add">
           <Plus className="h-4 w-4" />
-          {t("addPuzzle")}
+          {tPuzzles("contributePuzzle")}
         </Link>
       </Button>
     ),
-    [t],
+    [tPuzzles],
   );
 
   return (

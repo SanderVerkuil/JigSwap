@@ -382,3 +382,13 @@ export function isImmersiveMobileRoute(pathname: string): boolean {
 export function isFullBleedRoute(pathname: string): boolean {
   return /^\/messages(\/|$)/.test(pathname);
 }
+
+/**
+ * Routes that offer their own add actions in the page: My Puzzles and its add flow, and the
+ * puzzle catalogue (contribute a puzzle, add a copy from a card or a puzzle's page). The desktop
+ * top bar's "Add to my puzzles" shortcut steps aside there, so it never sits next to a second add
+ * button that leads somewhere else.
+ */
+export function hasOwnAddAction(pathname: string): boolean {
+  return /^\/(my-puzzles|puzzles)(\/|$)/.test(pathname);
+}

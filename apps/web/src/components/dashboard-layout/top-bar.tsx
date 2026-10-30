@@ -3,8 +3,8 @@
 // Global top bar of the console-style inset shell. It lives on the tinted
 // chrome surface (NOT inside the white content card): sidebar toggle, brand,
 // a centered search pill that opens the command palette, then bell, theme +
-// language switchers (tucked on the right, desktop only) and the Add Puzzle
-// CTA. No user avatar here — user identity lives bottom-left in the sidebar.
+// language switchers (tucked on the right, desktop only) and the "Add to my
+// puzzles" CTA. No user avatar here — user identity lives bottom-left in the sidebar.
 // Desktop-only (md+): below the breakpoint the MobileTopBar replaces it. On a
 // touch screen (a tablet at md+) every control is a 44px target.
 import { Link } from "@/compat/link";
@@ -14,13 +14,16 @@ import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ModeToggle } from "@/components/ui/theme-toggle";
+import { useLocation } from "@tanstack/react-router";
 import { Plus, Search } from "lucide-react";
 import { useTranslations } from "use-intl";
+import { hasOwnAddAction } from "./route-meta";
 import { useShortcutHint } from "./shortcut-hint";
 
 export function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   const t = useTranslations("shell");
   const shortcut = useShortcutHint();
+  const pathname = useLocation({ select: (location) => location.pathname });
 
   return (
     <header className="hidden h-14 shrink-0 items-center gap-2 px-4 md:flex">
@@ -61,15 +64,19 @@ export function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
           <ModeToggle className="pointer-coarse:size-11" />
           <LanguageSwitcher className="pointer-coarse:size-11" />
         </div>
-        <Button
-          asChild
-          className="ml-1 bg-jigsaw-primary text-white hover:bg-jigsaw-primary/90 pointer-coarse:h-11"
-        >
-          <Link href="/my-puzzles/add">
-            <Plus className="size-4" />
-            <span>{t("actions.addPuzzle")}</span>
-          </Link>
-        </Button>
+        {/* Named for where the puzzle ends up (the member's own puzzles), and left out where the
+            page offers its own add actions, so two add buttons never sit side by side. */}
+        {!hasOwnAddAction(pathname) && (
+          <Button
+            asChild
+            className="ml-1 bg-jigsaw-primary text-white hover:bg-jigsaw-primary/90 pointer-coarse:h-11"
+          >
+            <Link href="/my-puzzles/add">
+              <Plus className="size-4" />
+              <span>{t("actions.addToMyPuzzles")}</span>
+            </Link>
+          </Button>
+        )}
       </div>
     </header>
   );

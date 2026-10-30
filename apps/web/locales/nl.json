@@ -436,7 +436,6 @@
     "puzzles": {
       "title": "Puzzels",
       "subtitle": "Blader en ontdek puzzels van de community",
-      "addPuzzle": "Puzzel Toevoegen",
       "searchPlaceholder": "Titel, merk, kunstenaar of tag…",
       "searchLabel": "Zoek in de catalogus",
       "filtersLabel": "Filters",
@@ -3695,6 +3694,7 @@
     "browse": "Puzzels ontdekken — JigSwap",
     "myPuzzles": "Mijn puzzels — JigSwap",
     "addPuzzle": "Puzzel toevoegen — JigSwap",
+    "contributePuzzle": "Een puzzel bijdragen — JigSwap",
     "createPuzzle": "Puzzel aanmaken — JigSwap",
     "quickAddPuzzles": "Meerdere puzzels toevoegen — JigSwap",
     "puzzles": "Puzzelcatalogus — JigSwap",
@@ -3747,7 +3747,7 @@
       "noResultsFor": "Geen resultaten voor “{term}”"
     },
     "actions": {
-      "addPuzzle": "Puzzel Toevoegen",
+      "addToMyPuzzles": "Toevoegen aan mijn puzzels",
       "addAPuzzle": "Een Puzzel Toevoegen",
       "logCompletion": "Een Voltooiing Vastleggen",
       "createCircle": "Een Kring Aanmaken",
@@ -3868,7 +3868,7 @@
       },
       "contributePuzzle": {
         "title": "Een puzzel bijdragen",
-        "subtitle": "Voeg een puzzel toe aan de gedeelde catalogus voor iedereen."
+        "subtitle": "Voor de gedeelde catalogus, niet voor je eigen puzzels."
       },
       "puzzles": {
         "title": "Puzzelcatalogus",
