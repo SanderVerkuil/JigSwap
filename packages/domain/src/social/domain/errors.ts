@@ -11,6 +11,7 @@ export type SocialErrorCode =
   | "InvalidDisplayName"
   | "BioTooLong"
   | "EmptyCommentText"
+  | "CommentTextTooLong"
   | "InvalidCommentRating"
   | "NotConnectionOfferRecipient"
   | "ConnectionOfferNotPending"
@@ -71,6 +72,14 @@ export class SocialError extends DomainError {
     return new SocialError(
       "EmptyCommentText",
       "Comment text must not be empty",
+    );
+  }
+
+  // A comment's text was longer than the cap once trimmed.
+  static commentTextTooLong(max: number): SocialError {
+    return new SocialError(
+      "CommentTextTooLong",
+      `Comment text must be at most ${max} characters`,
     );
   }
 

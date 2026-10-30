@@ -2,6 +2,7 @@ import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
 import { ImageZoom } from "@/components/common/image-zoom";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
+import { convexErrorCode } from "@/components/exchange/request-trade";
 import { EmptyState } from "@/components/library/empty-state";
 import {
   difficultyClasses,
@@ -25,6 +26,7 @@ import {
   useProjectedMemberName,
 } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
+import { REVIEW_TEXT_MAX_LENGTH } from "@/lib/text-limits";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -541,8 +543,13 @@ function ReviewsSection({
         rating,
         ...(trimmed ? { text: trimmed } : {}),
       });
-    } catch {
-      toast.error(t("reviewFailed"));
+    } catch (error) {
+      // A review stored before the length cap can be longer than the field allows: say why.
+      toast.error(
+        convexErrorCode(error) === "ReviewTextTooLong"
+          ? t("reviewTooLong")
+          : t("reviewFailed"),
+      );
     }
   };
 
@@ -563,6 +570,7 @@ function ReviewsSection({
               ref={composerRef}
               placeholder={t("reviewPlaceholder", { title })}
               value={text}
+              maxLength={REVIEW_TEXT_MAX_LENGTH}
               onChange={(e) => setText(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {

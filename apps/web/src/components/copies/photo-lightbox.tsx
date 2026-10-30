@@ -1,6 +1,7 @@
 "use client";
 
 import { PhotoZoom } from "@/components/copies/photo-zoom";
+import { convexErrorCode } from "@/components/exchange/request-trade";
 import { MemberInitial } from "@/components/members/member-initial";
 import { ReportDialog } from "@/components/safety/report-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -19,6 +20,7 @@ import {
   useMemberDisplayName,
   useProjectedMemberName,
 } from "@/lib/member-display-name";
+import { COMMENT_TEXT_MAX_LENGTH } from "@/lib/text-limits";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -391,8 +393,12 @@ function PhotoComments({ photoId }: { photoId: Id<"ownedPuzzleImages"> }) {
     try {
       await postComment.mutateAsync({ photoId, text: trimmed });
       setText("");
-    } catch {
-      toast.error(t("commentFailed"));
+    } catch (error) {
+      toast.error(
+        convexErrorCode(error) === "CommentTextTooLong"
+          ? t("commentTooLong")
+          : t("commentFailed"),
+      );
     }
   };
 
@@ -415,6 +421,7 @@ function PhotoComments({ photoId }: { photoId: Id<"ownedPuzzleImages"> }) {
         <Input
           placeholder={t("addComment")}
           value={text}
+          maxLength={COMMENT_TEXT_MAX_LENGTH}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {

@@ -3,6 +3,7 @@
 import { Label } from "@/components/ui/label";
 import { StarRating } from "@/components/ui/star-rating";
 import { Textarea } from "@/components/ui/textarea";
+import { REVIEW_TEXT_MAX_LENGTH } from "@/lib/text-limits";
 import { useTranslations } from "use-intl";
 
 interface TwoLevelReviewFieldsProps {
@@ -50,6 +51,7 @@ export function TwoLevelReviewFields({
           id={puzzleTextId}
           placeholder={t("textPlaceholder")}
           value={puzzleText}
+          maxLength={REVIEW_TEXT_MAX_LENGTH}
           onChange={(e) => onPuzzleTextChange(e.target.value)}
         />
       </div>

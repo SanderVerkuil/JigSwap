@@ -1,18 +1,24 @@
 // @vitest-environment happy-dom
+import { ConvexError } from "convex/values";
 import type { ComponentProps } from "react";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
+import { toast } from "sonner";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
 import { PhotoLightbox } from "./photo-lightbox";
 
-// The lightbox's comments/cover/remove features talk to Convex; stub the data layer. Only the
-// photo's comment list (the one query keyed by `photoId`) returns data, set per test.
-const queryData = vi.hoisted(() => ({
+// What the stubbed data layer answers: the photo's comments (the only query keyed by `photoId`, set
+// per test) and the outcome of posting one.
+const stub = vi.hoisted(() => ({
   photoComments: undefined as unknown[] | undefined,
+  mutateAsync: (_args: unknown): Promise<unknown> => Promise.resolve(null),
 }));
+
+// The lightbox's comments/cover/remove features talk to Convex; stub the data layer so the tests
+// cover the zoom surface and the comment composer without a backend.
 vi.mock("@/gateway", () => ({
   gateway: new Proxy({}, { get: () => new Proxy({}, { get: () => ({}) }) }),
 }));
@@ -22,10 +28,14 @@ vi.mock("@convex-dev/react-query", () => ({
 }));
 vi.mock("@tanstack/react-query", () => ({
   useQuery: (options: { args?: { photoId?: string } }) => ({
-    data: options.args?.photoId ? queryData.photoComments : undefined,
+    data: options.args?.photoId ? stub.photoComments : undefined,
   }),
-  useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useMutation: () => ({
+    mutateAsync: (args: unknown) => stub.mutateAsync(args),
+    isPending: false,
+  }),
 }));
+vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -57,7 +67,9 @@ afterEach(() => {
   act(() => root.unmount());
   container.remove();
   document.body.innerHTML = "";
-  queryData.photoComments = undefined;
+  stub.photoComments = undefined;
+  stub.mutateAsync = () => Promise.resolve(null);
+  vi.mocked(toast.error).mockClear();
 });
 
 const render = (props: Partial<Props> = {}, locale: "en" | "nl" = "en") =>
@@ -222,7 +234,7 @@ describe("PhotoLightbox comments", () => {
       .map((el) => el.parentElement!.parentElement!);
 
   it("names a revealed author, with their initial", () => {
-    queryData.photoComments = [
+    stub.photoComments = [
       comment("c1", {
         anonymous: false,
         member: { name: "Mara Jansen", avatar: "https://example.test/m.png" },
@@ -236,9 +248,7 @@ describe("PhotoLightbox comments", () => {
   });
 
   it("labels a hidden author 'Anonymous user' with the person icon", () => {
-    queryData.photoComments = [
-      comment("c1", { anonymous: true, anonRef: "abc" }),
-    ];
+    stub.photoComments = [comment("c1", { anonymous: true, anonRef: "abc" })];
     render();
     const [row] = rows();
     expect(row.textContent).toContain("Anonymous user");
@@ -246,7 +256,7 @@ describe("PhotoLightbox comments", () => {
   });
 
   it("labels a departed author 'Deleted member', in Dutch too", () => {
-    queryData.photoComments = [
+    stub.photoComments = [
       comment("c1", { anonymous: true, anonRef: "abc", departed: true }),
     ];
     render();
@@ -256,9 +266,7 @@ describe("PhotoLightbox comments", () => {
   });
 
   it("uses the Dutch anonymous label", () => {
-    queryData.photoComments = [
-      comment("c1", { anonymous: true, anonRef: "abc" }),
-    ];
+    stub.photoComments = [comment("c1", { anonymous: true, anonRef: "abc" })];
     render({}, "nl");
     expect(rows()[0].textContent).toContain("Anonieme gebruiker");
   });
@@ -266,7 +274,7 @@ describe("PhotoLightbox comments", () => {
   // Deploy skew: the web ships before Convex, and a pre-SEC-11 backend still sends the author as a
   // plain MemberView. The row keeps the name that backend sent rather than the generic label.
   it("names a legacy MemberView author while the backend lags", () => {
-    queryData.photoComments = [
+    stub.photoComments = [
       comment("c1", { _id: "u1", name: "Mara Jansen", isActive: true }),
     ];
     render();
@@ -276,8 +284,66 @@ describe("PhotoLightbox comments", () => {
   });
 
   it("labels a departed legacy author 'Deleted member'", () => {
-    queryData.photoComments = [comment("c1", { _id: "u1", isActive: false })];
+    stub.photoComments = [comment("c1", { _id: "u1", isActive: false })];
     render();
     expect(rows()[0].textContent).toContain("Deleted member");
+  });
+});
+
+describe("PhotoLightbox comment composer", () => {
+  const approved = gallery.map((p) => ({
+    ...p,
+    moderationStatus: "approved" as const,
+  }));
+  const composer = () =>
+    document.querySelector<HTMLInputElement>(
+      'input[placeholder="Add a comment…"]',
+    );
+  const postButton = () =>
+    [...document.querySelectorAll("button")].find(
+      (el) => el.textContent === "Post",
+    )!;
+  const type = (input: HTMLInputElement, value: string) =>
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        "value",
+      )!.set!;
+      setter.call(input, value);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  const post = async () => {
+    await act(async () => {
+      postButton().click();
+      await Promise.resolve();
+    });
+  };
+
+  it("limits the composer to the server's 1000 characters", () => {
+    render({ gallery: approved });
+    expect(composer()!.maxLength).toBe(1000);
+  });
+
+  it("explains a comment the server refuses as too long", async () => {
+    stub.mutateAsync = () =>
+      Promise.reject(
+        new ConvexError({ code: "CommentTextTooLong", message: "too long" }),
+      );
+    render({ gallery: approved });
+    type(composer()!, "Nice");
+    await post();
+    expect(toast.error).toHaveBeenCalledWith(
+      "That comment is too long (1,000 characters max).",
+    );
+  });
+
+  it("keeps the generic message for other failures", async () => {
+    stub.mutateAsync = () => Promise.reject(new Error("offline"));
+    render({ gallery: approved });
+    type(composer()!, "Nice");
+    await post();
+    expect(toast.error).toHaveBeenCalledWith(
+      "Couldn’t post your comment. Please try again.",
+    );
   });
 });

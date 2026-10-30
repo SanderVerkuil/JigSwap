@@ -2923,6 +2923,7 @@
       "submit": "Save review",
       "saved": "Review saved",
       "saveError": "Could not save the review. Please try again.",
+      "textTooLong": "That review is too long (2,000 characters max).",
       "ratingRequired": "Please pick a rating first.",
       "puzzleQuestion": "What did you think of this puzzle?",
       "copyQuestion": "What did you think of this copy?",
@@ -4029,6 +4030,7 @@
       "next": "Next photo",
       "counter": "{current} / {total}",
       "commentFailed": "Couldn’t post your comment. Please try again.",
+      "commentTooLong": "That comment is too long (1,000 characters max).",
       "setAsCover": "Set as cover",
       "currentCover": "Current cover",
       "coverUpdated": "Cover updated",
@@ -4107,6 +4109,7 @@
     "post": "Post",
     "updateReview": "Update review",
     "reviewFailed": "Couldn't post review",
+    "reviewTooLong": "That review is too long (2,000 characters max).",
     "noReviews": "No reviews yet. Be the first.",
     "anonymousReviewer": "Anonymous user",
     "swapType": {

@@ -19,6 +19,7 @@ import type { FunctionReturnType } from "convex/server";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
+import { solvingErrorCode } from "./solving-error";
 
 type MyReviews = FunctionReturnType<typeof gateway.solving.getMyReviews>;
 
@@ -139,7 +140,12 @@ function ReviewForm({
       onOpenChange(false);
     } catch (error) {
       console.error("Failed to save review:", error);
-      toast.error(t("saveError"));
+      // A review stored before the length cap can be longer than the field allows: say why.
+      toast.error(
+        solvingErrorCode(error) === "ReviewTextTooLong"
+          ? t("textTooLong")
+          : t("saveError"),
+      );
     }
   };
 

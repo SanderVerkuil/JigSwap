@@ -12,7 +12,10 @@ import {
 } from "../ports/out/review.repositories";
 import { FixedClock, RecordingEventPublisher } from "../testing";
 import { makeUpsertCopyReview } from "./upsert-copy-review";
-import { makeUpsertPuzzleReview } from "./upsert-puzzle-review";
+import {
+  makeUpsertPuzzleReview,
+  REVIEW_TEXT_MAX_LENGTH,
+} from "./upsert-puzzle-review";
 
 const ALICE = toMemberId("alice");
 const BOB = toMemberId("bob");
@@ -111,6 +114,38 @@ describe("Review upsert use cases", () => {
       if (result.isErr) expect(result.error.code).toBe("InvalidRating");
       expect(puzzleReviews.upserts).toHaveLength(0);
       expect(events.published).toHaveLength(0);
+    });
+
+    it("accepts text of exactly the maximum length (measured after trimming)", async () => {
+      const upsert = makeUpsertPuzzleReview({ puzzleReviews, events, clock });
+      const result = await upsert({
+        actingMemberId: ALICE,
+        puzzleId: PUZZLE,
+        rating: 3,
+        text: `  ${"a".repeat(REVIEW_TEXT_MAX_LENGTH)}  `,
+      });
+      expect(result.isOk).toBe(true);
+      expect(puzzleReviews.upserts[0]?.text).toHaveLength(
+        REVIEW_TEXT_MAX_LENGTH,
+      );
+    });
+
+    it("rejects text longer than the maximum with ReviewTextTooLong", async () => {
+      const upsert = makeUpsertPuzzleReview({ puzzleReviews, events, clock });
+      const result = await upsert({
+        actingMemberId: ALICE,
+        puzzleId: PUZZLE,
+        rating: 3,
+        text: "a".repeat(REVIEW_TEXT_MAX_LENGTH + 1),
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("ReviewTextTooLong");
+      expect(puzzleReviews.upserts).toHaveLength(0);
+      expect(events.published).toHaveLength(0);
+    });
+
+    it("caps review text at 2000 characters", () => {
+      expect(REVIEW_TEXT_MAX_LENGTH).toBe(2000);
     });
 
     it("normalises whitespace-only text to undefined", async () => {

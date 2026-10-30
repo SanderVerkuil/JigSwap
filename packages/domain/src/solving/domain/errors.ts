@@ -11,6 +11,7 @@ export type SolvingErrorCode =
   | "NotCompletionOwner"
   | "InvalidGoalTarget"
   | "InvalidRating"
+  | "ReviewTextTooLong"
   | "InvalidDuration"
   | "NotAllowedToReviewCopy"
   | "InvalidDatePrecision"
@@ -72,6 +73,14 @@ export class SolvingError extends DomainError {
     return new SolvingError(
       "InvalidRating",
       `A star rating must be an integer from 1 to 5 (got ${value})`,
+    );
+  }
+
+  // A puzzle review's text was longer than the cap once trimmed.
+  static reviewTextTooLong(max: number): SolvingError {
+    return new SolvingError(
+      "ReviewTextTooLong",
+      `A review's text must be at most ${max} characters`,
     );
   }
 

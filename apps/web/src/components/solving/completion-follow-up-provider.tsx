@@ -343,9 +343,11 @@ export function CompletionFollowUpProvider({
       toast.error(
         code === "TooManyPhotos"
           ? t("tooManyPhotos")
-          : retryAt !== undefined
-            ? t("photosRateLimited", { when: relativeTime(retryAt) })
-            : t("saveError"),
+          : code === "ReviewTextTooLong"
+            ? tReview("textTooLong")
+            : retryAt !== undefined
+              ? t("photosRateLimited", { when: relativeTime(retryAt) })
+              : t("saveError"),
       );
     } finally {
       setSaving(false);

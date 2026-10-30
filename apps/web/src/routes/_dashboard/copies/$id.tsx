@@ -41,6 +41,7 @@ import {
   useProjectedMemberName,
 } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
+import { COMMENT_TEXT_MAX_LENGTH } from "@/lib/text-limits";
 import { isUploadRateLimited, mintUploadUrl } from "@/lib/upload-rate-limit";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -1428,6 +1429,7 @@ function CommentsSection({ copyId }: { copyId: string }) {
           <Input
             placeholder={t("addComment")}
             value={text}
+            maxLength={COMMENT_TEXT_MAX_LENGTH}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
