@@ -56,7 +56,10 @@ dashboard, and **Show me around** starts a short guided tour.
 Continue also saves what you've done on the step: the puzzles you picked, the
 puzzles you ticked as finished, or a location you typed. Its label says so, for
 example **Add 3 and continue** or **Save and continue**, and you only move on
-once it's saved.
+once it's saved. If you leave a step another way before saving (Skip, Finish
+later, another step, or your browser's back button), JigSwap first asks
+**Leave without saving?**: choose **Keep editing** to stay, or **Discard** to go
+on without saving.
 
 ### The Quick setup card
 

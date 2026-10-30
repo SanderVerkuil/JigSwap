@@ -4,6 +4,7 @@ import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createContinueRunner,
+  createLeaveGuard,
   createStepCommitStore,
   hasPendingWork,
   StepCommitContext,
@@ -70,6 +71,45 @@ describe("hasPendingWork", () => {
     expect(hasPendingWork({ kind: "solves", count: 1, ready: false })).toBe(
       true,
     );
+  });
+});
+
+describe("createLeaveGuard", () => {
+  const setup = () => {
+    const store = createStepCommitStore();
+    const runner = createContinueRunner(() => {});
+    return { store, runner, guard: createLeaveGuard(store, runner) };
+  };
+
+  it("asks before leaving a step with unsaved work, never with nothing pending", () => {
+    const { store, guard } = setup();
+    expect(guard.shouldAsk()).toBe(false);
+    store.publish({ kind: "solves", count: 0, ready: true });
+    expect(guard.shouldAsk()).toBe(false);
+    store.publish({ kind: "solves", count: 2, ready: false });
+    expect(guard.shouldAsk()).toBe(true);
+  });
+
+  it("never asks once the member moves on on purpose", () => {
+    const { store, guard } = setup();
+    store.publish({ kind: "puzzles", count: 2, ready: true });
+    guard.leave();
+    expect(guard.shouldAsk()).toBe(false);
+  });
+
+  it("never asks while Continue is saving the work", async () => {
+    const { store, runner, guard } = setup();
+    store.publish({ kind: "puzzles", count: 2, ready: true });
+    let finish!: (saved: boolean) => void;
+    const saving = runner.run({
+      commit: () => new Promise<boolean>((resolve) => (finish = resolve)),
+      go: () => {},
+    });
+    expect(guard.shouldAsk()).toBe(false);
+    finish(false);
+    await saving;
+    // The save failed: the work is still unsaved, so the guard is back.
+    expect(guard.shouldAsk()).toBe(true);
   });
 });
 

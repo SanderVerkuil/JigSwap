@@ -61,7 +61,11 @@ Doorgaan slaat ook op wat je bij de stap hebt gedaan: de puzzels die je hebt
 gekozen, de puzzels die je als afgemaakt hebt aangevinkt of een locatie die je
 hebt ingevuld. Dat staat dan op de knop, bijvoorbeeld
 **3 toevoegen en doorgaan** of **Opslaan en doorgaan**, en je gaat pas verder
-als het is opgeslagen.
+als het is opgeslagen. Ga je op een andere manier weg voordat het is opgeslagen
+(Overslaan, Later afmaken, een andere stap of de terugknop van je browser), dan
+vraagt JigSwap eerst **Weggaan zonder op te slaan?**: kies
+**Verder bewerken** om te blijven, of **Niet opslaan** om zonder opslaan verder
+te gaan.
 
 ### De kaart Snel instellen
 

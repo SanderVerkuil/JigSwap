@@ -163,3 +163,29 @@ export function createContinueRunner(
     },
   };
 }
+
+export interface LeaveGuard {
+  /**
+   * True while leaving the step (Finish later, a stepper link, Back, a link in the step, Skip,
+   * closing the tab) would drop unsaved work, so the flow asks first. Never once the member is
+   * moving on on purpose, nor while Continue is saving (that work is already on its way).
+   */
+  shouldAsk: () => boolean;
+  /** The member moves on on purpose: Continue saved, or they chose Discard on Skip. */
+  leave: () => void;
+}
+
+/** The leave guard of one quick setup step (UX-16), over its commit store and Continue runner. */
+export function createLeaveGuard(
+  store: StepCommitStore,
+  runner: ContinueRunner,
+): LeaveGuard {
+  let leaving = false;
+  return {
+    shouldAsk: () =>
+      !leaving && !runner.isBusy() && hasPendingWork(store.getSnapshot()),
+    leave: () => {
+      leaving = true;
+    },
+  };
+}
