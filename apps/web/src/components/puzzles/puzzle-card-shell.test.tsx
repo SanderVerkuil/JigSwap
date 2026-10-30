@@ -92,8 +92,17 @@ describe("PuzzleCardShell cover renditions", () => {
 
 // Router-free Link: the test asserts card layout classes, not routing.
 vi.mock("@/compat/link", () => ({
-  Link: ({ children, href }: { children?: ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
+  Link: ({
+    children,
+    href,
+    ...rest
+  }: {
+    children?: ReactNode;
+    href: string;
+  }) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
   ),
 }));
 
@@ -187,4 +196,28 @@ describe("PuzzleCardShell difficulty pill", () => {
       expect(cls.some((c) => c.startsWith("dark:text-"))).toBe(true);
     },
   );
+
+  it("rings the whole card when its stretched title link has keyboard focus (UX-72)", () => {
+    const host = document.createElement("div");
+    host.innerHTML = renderToStaticMarkup(
+      <IntlProvider locale="en" timeZone="UTC" messages={en}>
+        <PuzzleViewProvider viewMode="grid">
+          <PuzzleCardShell puzzle={puzzle()} imageHref="/puzzles/p1" />
+        </PuzzleViewProvider>
+      </IntlProvider>,
+    );
+    const link = host.querySelector("a");
+    expect(link?.getAttribute("href")).toBe("/puzzles/p1");
+    // The link hides its own outline (it would only circle the title)...
+    expect(link?.getAttribute("data-card-link")).toBe("");
+    expect(link?.classList.contains("focus-visible:outline-none")).toBe(true);
+    // ...so the card draws a full-alpha ring while the link is focused.
+    const card = host.querySelector('[data-slot="card"]');
+    expect([...(card?.classList ?? [])]).toEqual(
+      expect.arrayContaining([
+        "has-[[data-card-link]:focus-visible]:ring-2",
+        "has-[[data-card-link]:focus-visible]:ring-ring",
+      ]),
+    );
+  });
 });

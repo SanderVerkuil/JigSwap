@@ -220,7 +220,7 @@ export function CompletionRow({
           {completion.link ? (
             <Link
               href={hrefForLink(completion.link)}
-              className="text-sm font-semibold after:absolute after:inset-0 after:z-[1] after:content-[''] hover:underline focus-visible:underline focus-visible:outline-none"
+              className="text-sm font-semibold after:absolute after:inset-0 after:z-[1] after:rounded-md after:content-[''] hover:underline focus-visible:underline focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring"
             >
               {title}
             </Link>

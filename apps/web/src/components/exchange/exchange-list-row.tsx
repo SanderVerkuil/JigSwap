@@ -126,7 +126,7 @@ export function ExchangeListRow({
         // The detail only exists while open.
         aria-controls={open ? detailId : undefined}
         onClick={() => setOpen((value) => !value)}
-        className="group hover:bg-muted/50 focus-visible:ring-ring/50 -mx-2 flex w-[calc(100%+1rem)] items-center gap-3.5 rounded-lg px-2 py-1.5 text-left transition-colors outline-none focus-visible:ring-[3px]"
+        className="group hover:bg-muted/50 focus-visible:ring-ring -mx-2 flex w-[calc(100%+1rem)] items-center gap-3.5 rounded-lg px-2 py-1.5 text-left transition-colors outline-none focus-visible:ring-2"
       >
         <ExchangeCover
           kind={exchange.type}

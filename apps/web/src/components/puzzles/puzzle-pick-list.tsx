@@ -42,7 +42,7 @@ export function PuzzlePickList({
                 followed by what it does. */}
             <Link
               href={addCopyHref(puzzle._id)}
-              className="hover:bg-accent focus-visible:ring-ring/50 flex min-h-12 min-w-0 flex-1 items-center gap-3 py-2 pl-3 text-left transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-inset motion-reduce:transition-none"
+              className="hover:bg-accent focus-visible:ring-ring flex min-h-12 min-w-0 flex-1 items-center gap-3 py-2 pl-3 text-left transition-colors outline-none focus-visible:ring-2 focus-visible:ring-inset motion-reduce:transition-none"
             >
               <span className="bg-muted size-10 shrink-0 overflow-hidden rounded-md">
                 {puzzle.image && (

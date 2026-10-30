@@ -145,6 +145,23 @@ describe.each(Object.entries(themes))("%s theme tokens", (_name, vars) => {
     }
   });
 
+  // The keyboard focus indicator (globals.css :focus-visible, Button's ring) is drawn in --ring
+  // at full alpha on whatever surface the control sits on: 3:1 for non-text contrast (1.4.11).
+  it("keeps the focus ring at 3:1 on the app's surfaces", () => {
+    for (const surface of [
+      "background",
+      "card",
+      "popover",
+      "muted",
+      "accent",
+      "sidebar",
+    ]) {
+      expect(contrast(c("ring"), c(surface)), surface).toBeGreaterThanOrEqual(
+        3,
+      );
+    }
+  });
+
   it("keeps violet text at AA on surfaces and its own tint", () => {
     const text = c("primary-text");
     const surfaces: Record<string, Rgb> = {

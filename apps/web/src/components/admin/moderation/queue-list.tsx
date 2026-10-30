@@ -148,7 +148,7 @@ export function QueueList<T>({
       aria-label={detailTitle}
       tabIndex={-1}
       className={cn(
-        "outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+        "outline-none focus-visible:ring-2 focus-visible:ring-ring",
         className,
       )}
     >
@@ -178,7 +178,7 @@ export function QueueList<T>({
               className={cn(
                 // scroll-mt: a row focused by the arrow keys scrolls into view below the sticky
                 // page head and tab bar, not under them.
-                "flex w-full cursor-pointer scroll-mt-[calc(var(--app-sticky-top,0px)+3.5rem)] items-center gap-3 border-b border-l-2 px-3 py-3 text-left outline-none last:border-b-0 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:ring-inset",
+                "flex w-full cursor-pointer scroll-mt-[calc(var(--app-sticky-top,0px)+3.5rem)] items-center gap-3 border-b border-l-2 px-3 py-3 text-left outline-none last:border-b-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
                 active
                   ? "border-l-primary bg-primary/5"
                   : "border-l-transparent hover:bg-accent/50",

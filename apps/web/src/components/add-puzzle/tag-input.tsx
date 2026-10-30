@@ -43,7 +43,7 @@ export function TagInput({
   };
   return (
     <>
-      <div className="flex min-h-[42px] flex-wrap items-center gap-1.5 rounded-lg border border-border bg-card p-2 transition-[color,box-shadow] focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50">
+      <div className="flex min-h-[42px] flex-wrap items-center gap-1.5 rounded-lg border border-border bg-card p-2 transition-[color,box-shadow] focus-within:border-ring focus-within:ring-2 focus-within:ring-ring">
         {value.map((tag) => (
           <span
             key={tag}

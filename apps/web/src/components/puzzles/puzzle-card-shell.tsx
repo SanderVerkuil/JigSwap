@@ -264,7 +264,7 @@ export function PuzzleCardShell({
         // The stretched title link stands for the whole card, so keyboard focus on it rings the
         // card (its underline alone is too faint a cue). Focus on an action button keeps that
         // button's own ring instead.
-        "has-[[data-card-link]:focus-visible]:ring-2 has-[[data-card-link]:focus-visible]:ring-ring",
+        "has-[[data-card-link]:focus-visible]:ring-2 has-[[data-card-link]:focus-visible]:ring-ring has-[[data-card-link]:focus-visible]:ring-offset-2 has-[[data-card-link]:focus-visible]:ring-offset-background",
         selected && "ring-2 ring-primary",
         (href || selectable) && "cursor-pointer",
         className,

@@ -101,7 +101,7 @@ export function SolveTimeFields({
         <button
           type="button"
           onClick={onOptOut}
-          className="text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 mt-1 inline-flex items-center rounded-sm py-1 text-xs underline underline-offset-2 outline-none focus-visible:ring-[3px] pointer-coarse:min-h-9"
+          className="text-muted-foreground hover:text-foreground focus-visible:ring-ring mt-1 inline-flex items-center rounded-sm py-1 text-xs underline underline-offset-2 outline-none focus-visible:ring-2 pointer-coarse:min-h-9"
         >
           {t("dontTrackTimes")}
         </button>

@@ -25,7 +25,7 @@ import { RequesterPreview } from "./requester-preview";
 // without nesting the actions inside it (they sit above it with `relative z-10`). ring-inset keeps
 // the focus ring inside the popover's scroll clip.
 const STRETCHED =
-  "after:absolute after:inset-0 after:z-[1] after:content-[''] focus-visible:outline-none focus-visible:after:ring-[3px] focus-visible:after:ring-inset focus-visible:after:ring-ring/50";
+  "after:absolute after:inset-0 after:z-[1] after:content-[''] focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-ring";
 
 /** Split a server href ("/trades?exchange=x", "/whats-new#entry-y") into router link parts. */
 export function hrefParts(href: string): {

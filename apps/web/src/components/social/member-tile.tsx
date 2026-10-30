@@ -124,7 +124,7 @@ export function MemberTile({
               data-card-link=""
               title={name}
               aria-describedby={describedBy}
-              className="line-clamp-2 rounded-sm [overflow-wrap:anywhere] after:absolute after:inset-0 after:z-[1] after:rounded-xl after:content-[''] hover:underline focus-visible:outline-none focus-visible:after:ring-[3px] focus-visible:after:ring-ring/50"
+              className="line-clamp-2 rounded-sm [overflow-wrap:anywhere] after:absolute after:inset-0 after:z-[1] after:rounded-xl after:content-[''] hover:underline focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring"
             >
               {name}
             </Link>
