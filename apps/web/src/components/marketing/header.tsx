@@ -4,12 +4,15 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { clearIntlCache, setLocale, type Locale } from "@/lib/i18n";
+import { Flag } from "@/components/ui/flag";
+import {
+  currentLanguage,
+  LanguageRadioItems,
+} from "@/components/ui/language-switcher";
 import { cn } from "@/lib/utils";
-import { useLocation, useRouter } from "@tanstack/react-router";
+import { useLocation } from "@tanstack/react-router";
 // sanctioned convex/react exception: Authenticated/Unauthenticated auth-state components (see tanstack-query migration spec)
 import { Authenticated, Unauthenticated } from "convex/react";
 import { Menu, Moon, Sun, X } from "lucide-react";
@@ -144,50 +147,27 @@ export function MarketingHeader() {
   );
 }
 
-const LANGUAGES = [
-  { code: "en", name: "English", flag: "🇺🇸" },
-  { code: "nl", name: "Nederlands", flag: "🇳🇱" },
-] as const satisfies readonly { code: Locale; name: string; flag: string }[];
-
-// Flag + dropdown — switches the use-intl catalog via the locale cookie. With
-// no cookie set the trigger shows the system language (Accept-Language
+// Flag + code pill and a dropdown of the language radios (shared with the app's
+// top bar) — switches the use-intl catalog via the locale cookie. With no
+// cookie set the trigger shows the system language (Accept-Language
 // negotiation in detectLocale).
 function LangToggle() {
   const t = useTranslations("marketing.nav");
-  const locale = useLocale();
-  const router = useRouter();
-  const change = async (next: Locale) => {
-    if (next === locale) return;
-    await setLocale({ data: next });
-    // Drop the client-side catalog cache so the invalidated root beforeLoad
-    // fetches the newly selected locale.
-    clearIntlCache();
-    await router.invalidate();
-  };
-  const current =
-    LANGUAGES.find((lang) => lang.code === locale) ?? LANGUAGES[0];
+  const current = currentLanguage(useLocale());
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          aria-label={t("switchLanguage")}
-          className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-mk-border bg-mk-card text-[18px] leading-none"
+          aria-label={`${t("switchLanguage")}: ${current.name}`}
+          className="inline-flex items-center justify-center gap-1.5 h-10 px-3 rounded-full border border-mk-border bg-mk-card text-[13px] font-semibold leading-none text-mk-text-body"
         >
-          {current.flag}
+          <Flag locale={current.code} />
+          {current.code.toUpperCase()}
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        {LANGUAGES.map((language) => (
-          <DropdownMenuItem
-            key={language.code}
-            onClick={() => change(language.code)}
-            className={cn(locale === language.code && "bg-accent")}
-          >
-            <span className="mr-2">{language.flag}</span>
-            {language.name}
-          </DropdownMenuItem>
-        ))}
+        <LanguageRadioItems />
       </DropdownMenuContent>
     </DropdownMenu>
   );
