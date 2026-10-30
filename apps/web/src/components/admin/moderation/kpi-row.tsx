@@ -32,21 +32,27 @@ function KpiTile({
   label: string;
   chipClass: string;
 }) {
+  // A container query, not a viewport breakpoint: the tile is narrow on phones AND in the 4-up row
+  // beside the sidebar (~1024px). A narrow tile puts the label under a smaller chip + the value, at
+  // full tile width, so a long Dutch compound ("beoordelingstijd") fits; a wide one keeps it beside
+  // the chip.
   return (
-    <div className="flex items-center gap-3 rounded-xl border bg-card px-4 py-4">
-      <span
-        className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${chipClass}`}
-      >
-        <Icon className="size-5" aria-hidden />
-      </span>
-      <div className="min-w-0">
-        {value === undefined ? (
-          <Skeleton className="h-6 w-10" />
-        ) : (
-          <div className="text-2xl leading-none font-bold">{value}</div>
-        )}
+    <div className="@container rounded-xl border bg-card px-4 py-4">
+      <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 @min-[10.5rem]:gap-y-1">
+        <span
+          className={`flex size-8 shrink-0 items-center justify-center rounded-lg @min-[10.5rem]:row-span-2 @min-[10.5rem]:size-10 ${chipClass}`}
+        >
+          <Icon className="size-4 @min-[10.5rem]:size-5" aria-hidden />
+        </span>
+        <div className="@min-[10.5rem]:self-end">
+          {value === undefined ? (
+            <Skeleton className="h-6 w-10" />
+          ) : (
+            <div className="text-2xl leading-none font-bold">{value}</div>
+          )}
+        </div>
         <div
-          className="mt-1 line-clamp-2 text-xs text-muted-foreground"
+          className="col-span-2 line-clamp-2 text-xs break-words text-muted-foreground @min-[10.5rem]:col-span-1 @min-[10.5rem]:col-start-2 @min-[10.5rem]:self-start"
           title={label}
         >
           {label}
