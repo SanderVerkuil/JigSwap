@@ -62,26 +62,22 @@ export const updatePuzzleDefinition = mutation({
   handler: async (ctx, args) => {
     const actingMember = await requireMember(ctx);
 
-    const definitions = convexPuzzleDefinitionRepository(ctx);
+    // ACL: admins only, checked before the definition is read so a member learns nothing about
+    // an id. A member, its submitter included, changes a definition only through a change
+    // proposal (proposeDefinitionChange) that an admin reviews: not after moderation, and not
+    // while it is pending either, so what an admin approves is exactly what was submitted.
+    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
 
-    // ACL: an admin may edit any definition. A submitter may edit their own definition only
-    // while it is still pending; once moderated, it changes only through a change proposal
-    // (proposeDefinitionChange) or an admin edit, never silently by its submitter.
+    const definitions = convexPuzzleDefinitionRepository(ctx);
     const existing = await definitions.findById(
       toPuzzleDefinitionId(args.puzzleDefinitionId),
     );
     if (!existing) throw new ConvexError("Not found");
-    const { submittedBy, status } = existing.toState();
-    const isSubmitter =
-      (submittedBy as unknown as string) ===
-      (actingMember as unknown as string);
-    if (!(await isAdmin(ctx)) && !(isSubmitter && status === "pending")) {
-      throw new ConvexError("Forbidden");
-    }
     // An admin editing someone ELSE's definition is a moderation act; stamp it after success.
-    // Submitter self-edits stay un-audited (unchanged behavior). The ACL above already
-    // guaranteed that a non-submitter actor IS an admin.
-    const isAdminEditingOthers = !isSubmitter;
+    // An admin editing their own submission stays un-audited (unchanged behavior).
+    const isAdminEditingOthers =
+      (existing.toState().submittedBy as unknown as string) !==
+      (actingMember as unknown as string);
     // A new image must be box art the server stripped of its metadata for this member.
     await assertBoxArtImage(
       ctx,
