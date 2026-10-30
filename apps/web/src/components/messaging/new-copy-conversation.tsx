@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway, type Id } from "@/gateway";
+import { useCoarsePointer } from "@/hooks/use-coarse-pointer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,7 @@ import { Send } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "use-intl";
 import { EmojiButton } from "./emoji-button";
+import { enterKeyHintFor, shouldSendOnEnter } from "./enter-to-send";
 import { conversationErrorCode, threadSubjectTitle } from "./format";
 import { NO_SPLIT_ONLY_CLASS } from "./frame";
 import { handleMarkupShortcut, MARKUP_KEYSHORTCUTS } from "./markup-shortcuts";
@@ -37,6 +39,7 @@ export function NewCopyConversation({ copyId }: { copyId: string }) {
   const navigate = useNavigate();
   // The shell top bar (and its h1) is hidden here on phones.
   const Heading = useIsMobile() ? "h1" : "h2";
+  const coarsePointer = useCoarsePointer();
   const { member } = useCurrentMember();
   const me = member?._id;
 
@@ -194,12 +197,13 @@ export function NewCopyConversation({ copyId }: { copyId: string }) {
               value={body}
               onChange={(event) => onValue(event.target.value)}
               aria-keyshortcuts={MARKUP_KEYSHORTCUTS}
+              enterKeyHint={enterKeyHintFor(coarsePointer)}
               onKeyDown={(event) => {
                 if (handleMarkupShortcut(event, MAX_MESSAGE_LENGTH, onValue)) {
                   return;
                 }
-                // Enter sends; Shift+Enter inserts a newline (same as the thread composer).
-                if (event.key === "Enter" && !event.shiftKey) {
+                // The thread composer's Enter rule (enter-to-send.ts).
+                if (shouldSendOnEnter(event.nativeEvent, coarsePointer)) {
                   event.preventDefault();
                   void send();
                 }

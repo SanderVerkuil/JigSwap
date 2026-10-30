@@ -90,32 +90,34 @@ describe("NewCopyConversation — ownerHidden", () => {
   });
 });
 
+const NEW_VIEW = {
+  status: "new",
+  canMessage: true,
+  owner: {
+    anonymous: false,
+    member: {
+      _id: "u_mara",
+      _creationTime: 0,
+      name: "Mara",
+      isActive: true,
+      createdAt: 0,
+      updatedAt: 0,
+    },
+  },
+  copy: {
+    copyId: "copy1",
+    title: "Harbour Lights",
+    brand: "Ravensburger",
+    pieceCount: 1000,
+    coverUrl: null,
+  },
+};
+
 describe("NewCopyConversation — composer", () => {
   it("wraps the selection on Ctrl+B and Enter still sends", async () => {
     vi.spyOn(navigator, "platform", "get").mockReturnValue("Linux x86_64");
     mocks.start.mockResolvedValue("thread_1");
-    mocks.view = {
-      status: "new",
-      canMessage: true,
-      owner: {
-        anonymous: false,
-        member: {
-          _id: "u_mara",
-          _creationTime: 0,
-          name: "Mara",
-          isActive: true,
-          createdAt: 0,
-          updatedAt: 0,
-        },
-      },
-      copy: {
-        copyId: "copy1",
-        title: "Harbour Lights",
-        brand: "Ravensburger",
-        pieceCount: 1000,
-        coverUrl: null,
-      },
-    };
+    mocks.view = NEW_VIEW;
     renderPane();
     const input = screen.getByRole("textbox") as HTMLTextAreaElement;
     expect(input.getAttribute("aria-keyshortcuts")).toContain("Control+B");
@@ -128,6 +130,38 @@ describe("NewCopyConversation — composer", () => {
       expect(mocks.start).toHaveBeenCalledWith({
         copyId: "copy1",
         body: "is it **free**",
+      }),
+    );
+    vi.restoreAllMocks();
+  });
+});
+
+describe("NewCopyConversation — Enter on a touch screen", () => {
+  it("inserts a line break instead of sending; Ctrl+Enter still sends", async () => {
+    const native = window.matchMedia.bind(window);
+    vi.spyOn(window, "matchMedia").mockImplementation((query: string) => {
+      const list = native(query);
+      if (query === "(pointer: coarse)") {
+        Object.defineProperty(list, "matches", { value: true });
+      }
+      return list;
+    });
+    mocks.start.mockResolvedValue("thread_1");
+    mocks.view = NEW_VIEW;
+    renderPane();
+    const input = screen.getByRole("textbox") as HTMLTextAreaElement;
+    expect(input.getAttribute("enterkeyhint")).toBe("enter");
+    fireEvent.change(input, { target: { value: "is it free" } });
+
+    // Not prevented: the browser inserts the line break.
+    expect(fireEvent.keyDown(input, { key: "Enter" })).toBe(true);
+    expect(mocks.start).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(input, { key: "Enter", ctrlKey: true });
+    await waitFor(() =>
+      expect(mocks.start).toHaveBeenCalledWith({
+        copyId: "copy1",
+        body: "is it free",
       }),
     );
     vi.restoreAllMocks();
