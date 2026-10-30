@@ -1,7 +1,9 @@
 // @vitest-environment happy-dom
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it } from "vitest";
+import en from "../../../locales/en.json";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -22,6 +24,13 @@ afterEach(() => {
   cleanup();
   document.body.innerHTML = "";
 });
+
+// The primitives label their close button through the app catalogue.
+const wrapper = ({ children }: { children: ReactNode }) => (
+  <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+    {children}
+  </IntlProvider>
+);
 
 const mount = (html: string) => {
   document.body.insertAdjacentHTML("beforeend", html);
@@ -139,7 +148,7 @@ describe.each(["dialog", "sheet", "alert"] as const)(
   "%s content without a trigger",
   (kind) => {
     it("returns focus to the element that was focused when it opened", async () => {
-      render(<Harness kind={kind} />);
+      render(<Harness kind={kind} />, { wrapper });
       const opener = screen.getByRole("button", { name: "Opener" });
       opener.focus();
       act(() => opener.click());
@@ -153,7 +162,7 @@ describe.each(["dialog", "sheet", "alert"] as const)(
     });
 
     it("leaves focus alone when something else took it while closing", async () => {
-      render(<Harness kind={kind} moveFocusOnClose />);
+      render(<Harness kind={kind} moveFocusOnClose />, { wrapper });
       const opener = screen.getByRole("button", { name: "Opener" });
       opener.focus();
       act(() => opener.click());
@@ -213,7 +222,7 @@ function CallerHandlers({ ownReturn }: { ownReturn?: boolean }) {
 
 describe("DialogContent with its own focus handlers", () => {
   it("still returns focus when the caller picks the initial focus", async () => {
-    render(<CallerHandlers />);
+    render(<CallerHandlers />, { wrapper });
     const opener = screen.getByRole("button", { name: "Opener" });
     opener.focus();
     act(() => opener.click());
@@ -227,7 +236,7 @@ describe("DialogContent with its own focus handlers", () => {
   });
 
   it("lets a caller that handles close focus itself win", async () => {
-    render(<CallerHandlers ownReturn />);
+    render(<CallerHandlers ownReturn />, { wrapper });
     const opener = screen.getByRole("button", { name: "Opener" });
     opener.focus();
     act(() => opener.click());

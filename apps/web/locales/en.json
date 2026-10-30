@@ -4427,6 +4427,9 @@
     },
     "breadcrumbLabel": "Breadcrumb",
     "primaryNav": "Primary",
+    "toggleSidebar": "Toggle sidebar",
+    "sidebarTitle": "Menu",
+    "sidebarDescription": "Main navigation",
     "waitingCount": "{capped, select, yes {{count} or more waiting} other {{count} waiting}}",
     "plankReset": "Reset"
   },

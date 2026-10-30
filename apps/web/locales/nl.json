@@ -4427,6 +4427,9 @@
     },
     "breadcrumbLabel": "Broodkruimel",
     "primaryNav": "Hoofdnavigatie",
+    "toggleSidebar": "Zijbalk in- of uitklappen",
+    "sidebarTitle": "Menu",
+    "sidebarDescription": "Hoofdnavigatie",
     "waitingCount": "{capped, select, yes {{count} of meer te behandelen} other {{count} te behandelen}}",
     "plankReset": "Herstellen"
   },
