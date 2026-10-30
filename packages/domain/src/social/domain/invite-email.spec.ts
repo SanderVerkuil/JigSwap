@@ -79,7 +79,7 @@ describe("inviterNameForEmail", () => {
   });
 
   it("turns line breaks and control characters into single spaces", () => {
-    expect(inviterNameForEmail("Anna\r\nBcc: x@y.z")).toBe("Anna Bcc: x@y.z");
+    expect(inviterNameForEmail("Anna\r\nBcc: Bob")).toBe("Anna Bcc: Bob");
     expect(inviterNameForEmail("A\u0000B\u0007C\u007fD\u0085E\u009fF")).toBe(
       "A B C D E F",
     );
@@ -106,6 +106,48 @@ describe("inviterNameForEmail", () => {
       expect(inviterNameForEmail(`Ann${mark}a${mark}${mark}`)).toBe("Anna");
     }
     expect(inviterNameForEmail("\u202E\u2066")).toBeUndefined();
+  });
+
+  it.each([
+    ["Anna https://evil.example/login", "Anna"],
+    ["Anna hxxp://evil.example", "Anna"],
+    ["Anna (https://evil.example)", "Anna"],
+    ["Anna www.evil.example", "Anna"],
+    ["Anna WWW.EVIL.EXAMPLE", "Anna"],
+    ["Anna evil.example", "Anna"],
+    ["Anna bit.ly/x1", "Anna"],
+    ["Anna evil.example:8080/pay?now=1", "Anna"],
+    ["Anna bücher.de", "Anna"],
+    ["Anna sub.evil.example.", "Anna"],
+    ["Visit evil.example, Anna", "Visit Anna"],
+    ["Anna anna@evil.example", "Anna"],
+    ["Anna <anna@evil.example>", "Anna"],
+    ["Anna evil\u200B.example", "Anna"],
+    ["Anna\nevil.example\nde Vries", "Anna de Vries"],
+  ])("drops the link-like token in %j", (raw, kept) => {
+    expect(inviterNameForEmail(raw)).toBe(kept);
+  });
+
+  it.each([
+    ["J.R.R. Tolkien"],
+    ["Dr.Who"],
+    ["St. John"],
+    ["Anna B. de Vries"],
+    ["a.k.a. Puzzler"],
+    ["Pi 3.14"],
+    ["@anna"],
+    ["Anna & Bob"],
+    ["Anna-Marie O'Neil"],
+  ])("keeps the ordinary name %j", (raw) => {
+    expect(inviterNameForEmail(raw)).toBe(raw);
+  });
+
+  it("returns undefined when only links or addresses were given", () => {
+    expect(inviterNameForEmail("https://evil.example")).toBeUndefined();
+    expect(
+      inviterNameForEmail("evil.example  www.evil.example"),
+    ).toBeUndefined();
+    expect(inviterNameForEmail("x@y.z")).toBeUndefined();
   });
 
   it("collapses whitespace runs and trims", () => {

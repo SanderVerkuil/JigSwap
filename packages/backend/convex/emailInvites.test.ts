@@ -334,11 +334,11 @@ describe("sendEmailInvite", () => {
 
     await send(t, "alice", NEW_ADDRESS);
 
-    const { subject } = sentEmails()[0];
+    const { subject, text_content } = sentEmails()[0];
     expect(subject).not.toMatch(/[\r\n]/);
-    expect(subject).toMatch(
-      /^Alice Bcc: evil@example.com x+… invited you to JigSwap$/,
-    );
+    // The line break is a space, the address is dropped, and the rest is cut to length.
+    expect(subject).toMatch(/^Alice Bcc: x+… invited you to JigSwap$/);
+    expect(text_content).not.toContain("evil@example.com");
   });
 
   test("an invalid address is InvalidEmail, and costs nothing", async () => {
