@@ -537,6 +537,41 @@ describe("catalog.updatePuzzleDefinition after moderation", () => {
       "Mountain Vista (2nd edition)",
     );
   });
+
+  test("even an admin edit cannot give a definition another puzzle's barcode", async () => {
+    const t = convexTest(schema, modules);
+    await seedMembers(t);
+    await asAdmin(t).mutation(
+      api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+      { title: "Popular Puzzle", pieceCount: 1000, ean: VALID_EAN },
+    );
+    const id = (await asAdmin(t).mutation(
+      api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+      { title: "Mountain Vista", pieceCount: 1000 },
+    )) as string;
+
+    await expectConvexCode(
+      asAdmin(t).mutation(
+        api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
+        { puzzleDefinitionId: id, title: "Renamed", ean: VALID_EAN },
+      ),
+      "DuplicateBarcode",
+    );
+    const row = await puzzleRow(t, id);
+    expect(row?.ean).toBeUndefined();
+    expect(row?.title).toBe("Mountain Vista");
+
+    // Restating the definition's own barcode alongside another edit is no clash.
+    await asAdmin(t).mutation(
+      api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
+      { puzzleDefinitionId: id, ean: "9780201379624" },
+    );
+    await asAdmin(t).mutation(
+      api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
+      { puzzleDefinitionId: id, ean: "9780201379624", upc: "036000291452" },
+    );
+    expect((await puzzleRow(t, id))?.upc).toBe("036000291452");
+  });
 });
 
 describe("catalog category management", () => {

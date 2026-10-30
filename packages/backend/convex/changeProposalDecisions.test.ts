@@ -164,6 +164,40 @@ describe("catalog.approveChangeProposal", () => {
       "IllegalProposalTransition",
     );
   });
+
+  test("refuses a proposal that would give the definition another puzzle's barcode, changing nothing", async () => {
+    const t = convexTest(schema, modules);
+    await seedMembers(t);
+    await asAdmin(t).mutation(
+      api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+      { title: "Popular Puzzle", pieceCount: 1000, ean: "4006381333931" },
+    );
+    const definitionId = await submitApproved(t);
+    const proposalId = (await asBob(t).mutation(
+      api.catalog.proposeDefinitionChange.proposeDefinitionChange,
+      {
+        puzzleDefinitionId: definitionId,
+        title: "Mountain Vista (Panorama)",
+        ean: "4006381333931",
+      },
+    )) as string;
+
+    await expectConvexCode(
+      asAdmin(t).mutation(
+        api.catalog.approveChangeProposal.approveChangeProposal,
+        { changeProposalId: proposalId },
+      ),
+      "DuplicateBarcode",
+    );
+
+    expect((await proposalRow(t, proposalId))?.status).toBe("pending");
+    const puzzle = await puzzleRow(t, definitionId);
+    expect(puzzle?.title).toBe("Mountain Vista");
+    expect(puzzle?.ean).toBeUndefined();
+    expect(
+      (await allActions(t)).some((a) => a.kind === "proposal_approved"),
+    ).toBe(false);
+  });
 });
 
 describe("catalog.rejectChangeProposal", () => {

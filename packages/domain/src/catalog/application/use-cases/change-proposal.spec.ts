@@ -427,6 +427,58 @@ describe("makeApproveChangeProposal", () => {
     );
     expect(events.published).toEqual([]);
   });
+
+  it("saves NOTHING when the proposed barcode is held by another definition (DuplicateBarcode)", async () => {
+    await seedDefinition();
+    const other = PuzzleDefinition.submit({
+      id: toPuzzleDefinitionId("pd-other"),
+      title: "Other Puzzle",
+      pieceCount: 500,
+      submittedBy: bob,
+      now: NOW,
+      barcodes: { ean: "4006381333931" },
+    });
+    if (!other.isOk) throw new Error("seed failed");
+    await definitions.save(other.value);
+    const proposalId = await fileOne({
+      title: "Corrected",
+      barcodes: { ean: "4006381333931" },
+    });
+
+    const approve = makeApproveChangeProposal(deps());
+    const r = await approve({ changeProposalId: proposalId });
+
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("DuplicateBarcode");
+    expect((await proposals.findById(proposalId))!.status).toBe("pending");
+    const definition = (await definitions.findById(definitionId))!.toState();
+    expect(definition.title).toBe("Starry Night");
+    expect(definition.ean).toBeUndefined();
+    expect(events.published).toEqual([]);
+  });
+
+  it("applies a proposal that restates the definition's own barcode", async () => {
+    await seedDefinition();
+    await makeApproveChangeProposal(deps())({
+      changeProposalId: await fileOne({ barcodes: { ean: "4006381333931" } }),
+    });
+    // A second proposal keeps the EAN and adds a UPC: the definition's own EAN is no clash.
+    const proposalId = await makeFileChangeProposal(deps())({
+      puzzleDefinitionId: definitionId,
+      proposedBy: bob,
+      changes: { barcodes: { ean: "4006381333931", upc: "036000291452" } },
+    });
+    if (!proposalId.isOk) throw new Error("setup failed");
+
+    const r = await makeApproveChangeProposal(deps())({
+      changeProposalId: proposalId.value,
+    });
+
+    expect(r.isOk).toBe(true);
+    expect((await definitions.findById(definitionId))!.toState().upc).toBe(
+      "036000291452",
+    );
+  });
 });
 
 describe("makeRejectChangeProposal", () => {

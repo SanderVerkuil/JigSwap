@@ -279,4 +279,51 @@ describe("Catalog PuzzleDefinition use cases", () => {
     const stored = await repo.findById(id);
     expect(stored?.toState().brand).toBe("Ravensburger");
   });
+
+  // The barcode-uniqueness rule applies to edits too, not only to submissions.
+  it("refuses an update that takes a barcode another definition holds, writing nothing", async () => {
+    await submitOk({ ean: "4006381333931" });
+    const id = await submitOk({ ean: "9780201379624" });
+    events.published.length = 0;
+
+    const r = await makeUpdatePuzzleDefinition(deps)({
+      puzzleDefinitionId: id,
+      changes: { title: "Hijack", barcodes: { ean: "4006381333931" } },
+    });
+
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("DuplicateBarcode");
+    const stored = (await repo.findById(id))!.toState();
+    expect(stored.ean).toBe("9780201379624");
+    expect(stored.title).toBe("Starry Night");
+    expect(events.published).toEqual([]);
+  });
+
+  it("lets an update restate the definition's own barcodes", async () => {
+    const id = await submitOk({ ean: "4006381333931" });
+
+    const r = await makeUpdatePuzzleDefinition(deps)({
+      puzzleDefinitionId: id,
+      changes: { barcodes: { ean: "4006381333931", upc: "036000291452" } },
+    });
+
+    expect(r.isOk).toBe(true);
+    const stored = (await repo.findById(id))!.toState();
+    expect(stored.ean).toBe("4006381333931");
+    expect(stored.upc).toBe("036000291452");
+  });
+
+  it("lets an update take a barcode held only by a rejected definition", async () => {
+    const rejectedId = await submitOk({ ean: "4006381333931" });
+    await makeRejectPuzzleDefinition(deps)({ puzzleDefinitionId: rejectedId });
+    const id = await submitOk();
+
+    const r = await makeUpdatePuzzleDefinition(deps)({
+      puzzleDefinitionId: id,
+      changes: { barcodes: { ean: "4006381333931" } },
+    });
+
+    expect(r.isOk).toBe(true);
+    expect((await repo.findById(id))!.toState().ean).toBe("4006381333931");
+  });
 });
