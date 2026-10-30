@@ -171,4 +171,15 @@ describe("PuzzleCard (browse)", () => {
       .map((button) => button.getAttribute("aria-label") ?? button.textContent);
     expect(names).toEqual(["Favorite"]);
   });
+
+  it("says whose copy it is and how it is offered before its condition", () => {
+    renderCard();
+    const owner = screen.getByText("Sander Verkuil");
+    const offer = screen.getByText("For Trade");
+    const condition = screen.getByText("Good");
+    const follows = (a: Node, b: Node) =>
+      (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+    expect(follows(owner, offer)).toBe(true);
+    expect(follows(offer, condition)).toBe(true);
+  });
 });

@@ -337,58 +337,74 @@ export function PuzzleCard({
 
   // Context badges: condition, availability flags, and the owner — the
   // owned-copy specifics that the shared shell deliberately doesn't know about.
-  const badges = (
-    <>
-      {owner}
-      <div className="flex flex-wrap items-center gap-2 mb-2">
-        <Badge
-          variant={
-            puzzle.condition === "new_sealed" || puzzle.condition === "like_new"
-              ? "default"
-              : "secondary"
-          }
-          className="text-xs"
-        >
-          {t(puzzle.condition)}
+  const conditionRow = (
+    <div className="flex flex-wrap items-center gap-2 mb-2">
+      <Badge
+        variant={
+          puzzle.condition === "new_sealed" || puzzle.condition === "like_new"
+            ? "default"
+            : "secondary"
+        }
+        className="text-xs"
+      >
+        {t(puzzle.condition)}
+      </Badge>
+      {/* Only the owner and their household ever receive a private copy. */}
+      {puzzle.visibility === "private" ? (
+        <Badge variant="outline" className="gap-1 text-xs">
+          <Lock className="size-3" aria-hidden />
+          {t("private")}
         </Badge>
-        {/* Only the owner and their household ever receive a private copy. */}
-        {puzzle.visibility === "private" ? (
-          <Badge variant="outline" className="gap-1 text-xs">
-            <Lock className="size-3" aria-hidden />
-            {t("private")}
-          </Badge>
-        ) : null}
-      </div>
-
-      {showAvailability && (
-        // Wraps: all three offers do not fit one row of a compact phone card.
-        <div className="flex flex-wrap items-center gap-2 mb-2">
-          {puzzle.availability.forLend ? (
-            <Badge variant="outline" className="text-xs">
-              {t("lend")}
-            </Badge>
-          ) : null}
-          {puzzle.availability.forTrade ? (
-            <Badge variant="outline" className="text-xs">
-              {t("trade")}
-            </Badge>
-          ) : null}
-          {puzzle.availability.forSale ? (
-            <Badge variant="outline" className="text-xs">
-              {t("sale")}
-            </Badge>
-          ) : null}
-        </div>
-      )}
-
-      {ownerLabel && (
-        <div className="flex items-center gap-2 mb-2">
-          <User className="h-3 w-3 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground">{ownerLabel}</span>
-        </div>
-      )}
-    </>
+      ) : null}
+    </div>
   );
+
+  const availabilityRow = showAvailability && (
+    // Wraps: all three offers do not fit one row of a compact phone card.
+    <div className="flex flex-wrap items-center gap-2 mb-2">
+      {puzzle.availability.forLend ? (
+        <Badge variant="outline" className="text-xs">
+          {t("lend")}
+        </Badge>
+      ) : null}
+      {puzzle.availability.forTrade ? (
+        <Badge variant="outline" className="text-xs">
+          {t("trade")}
+        </Badge>
+      ) : null}
+      {puzzle.availability.forSale ? (
+        <Badge variant="outline" className="text-xs">
+          {t("sale")}
+        </Badge>
+      ) : null}
+    </div>
+  );
+
+  const ownerRow = ownerLabel && (
+    <div className="flex items-center gap-2 mb-2">
+      <User className="h-3 w-3 text-muted-foreground" />
+      <span className="text-xs text-muted-foreground">{ownerLabel}</span>
+    </div>
+  );
+
+  // On Browse a card is an offer, so whose copy it is and how it is offered (swap, lend, sell)
+  // come first; the condition follows. Elsewhere the copy's own state leads.
+  const badges =
+    variant === "browse" ? (
+      <>
+        {owner}
+        {ownerRow}
+        {availabilityRow}
+        {conditionRow}
+      </>
+    ) : (
+      <>
+        {owner}
+        {conditionRow}
+        {availabilityRow}
+        {ownerRow}
+      </>
+    );
 
   // Whether this variant should show the ⋯ overflow menu (owner-management actions).
   // Suppressed in selection/pick where card-click owns the interaction.
