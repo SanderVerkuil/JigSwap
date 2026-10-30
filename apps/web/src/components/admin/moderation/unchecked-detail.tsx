@@ -3,8 +3,9 @@
 // Detail pane for a photo nobody has decided (pending / unscored, or its hash check timed out): the image behind
 // the same click-to-reveal blur guard (RevealGuard) as the flagged pane, a metadata grid (status, why it could not
 // be checked, puzzle, uploader) and the two manual decisions, plus "Check again" for an unscored
-// photo (`canRecheck`). A photo whose hash check timed out gets "Approve without hash check" in
-// place of Approve (the server refuses a plain approval for it). Mutations live in the route; reject
+// photo (`canRecheck`). Beside the buttons, one sentence per decision says what it does to this
+// photo's source (effects.<source>). A photo whose hash check timed out gets "Approve without hash
+// check" in place of Approve (the server refuses a plain approval for it). Mutations live in the route; reject
 // and the waiver use the app's two-step inline confirm (first click arms, second fires, disarms
 // after 3s).
 import { Badge } from "@/components/ui/badge";
@@ -115,9 +116,27 @@ export function UncheckedDetail({
         ))}
       </div>
 
-      <p className="text-xs text-muted-foreground">
-        {timedOut ? t("hashTimedOutHint") : t("hint")}
-      </p>
+      {timedOut && (
+        <p className="text-xs text-muted-foreground">{t("hashTimedOutHint")}</p>
+      )}
+
+      {/* What each decision does to THIS kind of photo, one sentence each, beside the buttons. */}
+      <ul className="flex flex-col gap-1.5 text-xs text-muted-foreground">
+        <li className="flex gap-2">
+          <Check className="mt-px size-3.5 shrink-0" aria-hidden />
+          {t(`effects.${photo.source}.approve`)}
+        </li>
+        <li className="flex gap-2">
+          <X className="mt-px size-3.5 shrink-0" aria-hidden />
+          {t(`effects.${photo.source}.reject`)}
+        </li>
+        {photo.canRecheck && (
+          <li className="flex gap-2">
+            <RotateCw className="mt-px size-3.5 shrink-0" aria-hidden />
+            {t("effects.recheck")}
+          </li>
+        )}
+      </ul>
 
       <div className="flex flex-wrap items-center gap-2.5">
         {timedOut ? (

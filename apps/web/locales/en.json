@@ -4926,7 +4926,29 @@
         "recheck": "Check again",
         "waive": "Approve without hash check",
         "waiveArm": "Yes, publish without hash check",
-        "hint": "Approving publishes the photo to other members. Rejecting hides it; a rejected copy photo moves to Flagged Images, a rejected completion photo is deleted, and rejected box art is removed from its puzzle and deleted. Check again runs the automated check once more on a photo it could not check, for example after the screening service is working again. A message photo is sent to its conversation when approved; rejecting removes it for both members and tells the sender. A circle icon becomes the circle's icon when approved; rejecting deletes it and the circle keeps its previous icon.",
+        "effects": {
+          "copy": {
+            "approve": "Approving shows the photo on its copy to other members.",
+            "reject": "Rejecting hides it and moves it to Flagged images, where it can still be restored or removed for good."
+          },
+          "completion": {
+            "approve": "Approving shows the photo on its completion to other members.",
+            "reject": "Rejecting removes the photo from its completion and deletes it."
+          },
+          "boxArt": {
+            "approve": "Approving shows the box art on its puzzle.",
+            "reject": "Rejecting removes the box art from its puzzle and deletes it."
+          },
+          "message": {
+            "approve": "Approving shows the photo in its conversation.",
+            "reject": "Rejecting removes the photo for both members and tells the sender."
+          },
+          "circleIcon": {
+            "approve": "Approving makes it the circle's new icon.",
+            "reject": "Rejecting deletes the icon; the circle keeps its previous icon."
+          },
+          "recheck": "Check again runs the automated check once more, for example once the screening service works again."
+        },
         "hashTimedOutHint": "The hash check against known abuse material could not be done within 7 days, so the automatic re-checks stopped. Approve without hash check publishes the photo without that check, after a second click to confirm (a hash match found later still quarantines it); rejecting hides it like any rejection."
       },
       "csam": {

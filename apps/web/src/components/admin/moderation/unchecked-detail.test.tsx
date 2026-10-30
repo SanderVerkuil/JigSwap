@@ -154,6 +154,45 @@ describe("UncheckedDetail", () => {
     expect(onReject).not.toHaveBeenCalled();
   });
 
+  it("says in one sentence per decision what approving and rejecting do to this kind of photo (en/nl)", () => {
+    render();
+    let text = container.textContent ?? "";
+    expect(text).toContain(
+      "Approving shows the photo on its copy to other members.",
+    );
+    expect(text).toContain(
+      "Rejecting hides it and moves it to Flagged images, where it can still be restored or removed for good.",
+    );
+    // Only this photo's source is explained, not every source at once.
+    expect(text).not.toContain("conversation");
+    expect(text).not.toContain("Check again runs");
+
+    render({
+      photo: {
+        ...photo,
+        key: "message:m1",
+        source: "message",
+        canRecheck: true,
+      },
+    });
+    text = container.textContent ?? "";
+    expect(text).toContain("Approving shows the photo in its conversation.");
+    expect(text).toContain(
+      "Rejecting removes the photo for both members and tells the sender.",
+    );
+    expect(text).toContain("Check again runs the automated check once more");
+    expect(text).not.toContain("Flagged images");
+
+    render({ photo: { ...photo, source: "circleIcon" } }, "nl");
+    text = container.textContent ?? "";
+    expect(text).toContain(
+      "Goedkeuren maakt dit het nieuwe pictogram van de kring.",
+    );
+    expect(text).toContain(
+      "Afwijzen verwijdert het pictogram; de kring houdt zijn vorige pictogram.",
+    );
+  });
+
   it("an unknown reason falls back to a generic label", () => {
     render({ photo: { ...photo, reason: "something_new" } });
     expect(container.textContent).toContain("Unknown");
