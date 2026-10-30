@@ -229,7 +229,7 @@ export function CoverColourField({
               {isBest && (
                 <span
                   aria-hidden
-                  className="absolute -top-2 left-1/2 -translate-x-1/2 inline-flex items-center gap-0.5 rounded-full bg-jigsaw-secondary px-1.5 py-0.5 text-[9px] font-semibold leading-none text-white shadow-sm ring-2 ring-card whitespace-nowrap"
+                  className="absolute -top-2 left-1/2 -translate-x-1/2 inline-flex items-center gap-0.5 rounded-full bg-jigsaw-secondary-strong px-1.5 py-0.5 text-[9px] font-semibold leading-none text-white shadow-sm ring-2 ring-card whitespace-nowrap"
                 >
                   <Star className="size-2.5" fill="currentColor" />
                   {t("coverBest")}

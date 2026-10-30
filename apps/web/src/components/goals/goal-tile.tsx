@@ -47,7 +47,7 @@ const STATUS_LOOK: Record<
   },
   achieved: {
     icon: Trophy,
-    chip: "bg-jigsaw-secondary/15 text-jigsaw-secondary",
+    chip: "bg-jigsaw-secondary/15 text-jigsaw-secondary-text",
     bar: "bg-jigsaw-secondary",
   },
   ended: {

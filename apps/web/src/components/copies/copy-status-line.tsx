@@ -66,7 +66,7 @@ export function CopyStatusLine({
     ];
   } else if (offered) {
     icon = <ArrowLeftRight />;
-    tone = "text-jigsaw-secondary";
+    tone = "text-jigsaw-secondary-text";
     parts = detailed
       ? [
           offered,

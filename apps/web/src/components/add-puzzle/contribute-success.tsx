@@ -27,7 +27,7 @@ export function ContributeSuccess({
     <section className="flex max-w-xl flex-col items-start gap-4 rounded-xl border border-border bg-card p-6 shadow-sm">
       <CircleCheck
         aria-hidden
-        className="size-8 text-jigsaw-secondary"
+        className="size-8 text-jigsaw-secondary-text"
         strokeWidth={1.75}
       />
       <div className="flex flex-col gap-1.5">

@@ -31,7 +31,7 @@ export function LivePreviewCard(props: LivePreviewProps) {
           />
         )}
         {props.available && (
-          <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-jigsaw-secondary px-2.5 py-1 text-xs font-semibold text-white">
+          <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-jigsaw-secondary-strong px-2.5 py-1 text-xs font-semibold text-white">
             <span className="size-1.5 rounded-full bg-white" />{" "}
             {t("previewAvailable")}
           </span>
@@ -130,7 +130,7 @@ export function ReadinessChecklist({
           <span
             className={[
               "inline-flex size-[18px] items-center justify-center rounded-full",
-              c.ok ? "bg-jigsaw-secondary text-white" : "bg-muted",
+              c.ok ? "bg-jigsaw-secondary-strong text-white" : "bg-muted",
             ].join(" ")}
           >
             <span className="sr-only">{c.ok ? "complete" : "incomplete"}</span>

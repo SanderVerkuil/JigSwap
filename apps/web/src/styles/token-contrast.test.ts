@@ -83,6 +83,15 @@ function resolve(value: string, vars: Map<string, string>): Rgb {
   throw new Error(`unsupported colour ${v}`);
 }
 
+// Tailwind's `bg-x/10` is x at 10% alpha, composited over the surface in sRGB.
+function over(top: Rgb, alpha: number, under: Rgb): Rgb {
+  const enc = (c: number) =>
+    c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055;
+  return [0, 1, 2].map((i) =>
+    toLinear(enc(top[i]) * alpha + enc(under[i]) * (1 - alpha)),
+  ) as unknown as Rgb;
+}
+
 function contrast(fg: Rgb, bg: Rgb): number {
   const y = ([r, g, b]: Rgb) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
   const [hi, lo] = [y(fg), y(bg)].sort((p, q) => q - p);
@@ -97,6 +106,7 @@ const themes = {
 
 describe.each(Object.entries(themes))("%s theme tokens", (_name, vars) => {
   const c = (name: string) => resolve(`var(--${name})`, vars);
+  const white: Rgb = [1, 1, 1];
 
   it("keeps muted text at AA on the app's surfaces", () => {
     for (const surface of [
@@ -111,6 +121,27 @@ describe.each(Object.entries(themes))("%s theme tokens", (_name, vars) => {
         contrast(c("muted-foreground"), c(surface)),
         surface,
       ).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it("keeps white text at AA on the strong brand green", () => {
+    expect(
+      contrast(white, c("jigsaw-secondary-strong")),
+    ).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("keeps green text at AA on surfaces and its own tints", () => {
+    const text = c("jigsaw-secondary-text");
+    const green = c("jigsaw-secondary");
+    const surfaces: Record<string, Rgb> = {
+      background: c("background"),
+      card: c("card"),
+      "secondary-tint": c("jigsaw-secondary-tint"),
+      "secondary/10 on card": over(green, 0.1, c("card")),
+      "secondary/15 on card": over(green, 0.15, c("card")),
+    };
+    for (const [surface, bg] of Object.entries(surfaces)) {
+      expect(contrast(text, bg), surface).toBeGreaterThanOrEqual(4.5);
     }
   });
 });

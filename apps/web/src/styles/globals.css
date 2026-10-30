@@ -109,6 +109,11 @@
   --jigsaw-primary: #6048e8;
   --jigsaw-primary-accent: #ec4899;
   --jigsaw-secondary: #19c316;
+  /* Brand green is a fill/dot colour: white on it is 2.37:1 and it is 2.13:1 as text on its own
+     tint. Same hue (oklch h 142.5), darker: white on --jigsaw-secondary-strong is 5.50:1, and
+     --jigsaw-secondary-text is 5.50:1 on white, 4.95:1 on --jigsaw-secondary-tint. */
+  --jigsaw-secondary-strong: #127a10;
+  --jigsaw-secondary-text: #127a10;
   --jigsaw-success: #10b981;
   --jigsaw-warning: #f59e0b;
   --jigsaw-puzzle: #ec4899;
@@ -176,6 +181,11 @@
   --jigsaw-primary: #705aea;
   --jigsaw-primary-accent: #ec4899;
   --jigsaw-secondary: #19c316;
+  /* Fills behind white text keep the light value (5.50:1). Green as text is lifted instead
+     (same hue, oklch L 0.80): #19c316 is only 4.21:1 on the dark --jigsaw-secondary-tint, this
+     is 5.68:1 there and 8.27:1 on the card. */
+  --jigsaw-secondary-strong: #127a10;
+  --jigsaw-secondary-text: #66dc5c;
   --jigsaw-success: #34d399;
   --jigsaw-warning: #fbbf24;
   --jigsaw-puzzle: #f472b6;
@@ -232,6 +242,8 @@
   /* JigSwap custom color utilities */
   --color-jigsaw-primary: var(--jigsaw-primary);
   --color-jigsaw-secondary: var(--jigsaw-secondary);
+  --color-jigsaw-secondary-strong: var(--jigsaw-secondary-strong);
+  --color-jigsaw-secondary-text: var(--jigsaw-secondary-text);
   --color-jigsaw-primary-accent: var(--jigsaw-primary-accent);
   --color-jigsaw-success: var(--jigsaw-success);
   --color-jigsaw-warning: var(--jigsaw-warning);

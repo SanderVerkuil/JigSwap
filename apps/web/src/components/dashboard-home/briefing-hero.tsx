@@ -38,7 +38,7 @@ function HeadlineLink({
       className={cn(
         "underline decoration-2 underline-offset-[5px] transition-colors",
         tone === "green"
-          ? "text-jigsaw-secondary decoration-jigsaw-secondary/30 hover:decoration-jigsaw-secondary"
+          ? "text-jigsaw-secondary-text decoration-jigsaw-secondary/30 hover:decoration-jigsaw-secondary"
           : "text-jigsaw-primary decoration-jigsaw-primary/30 hover:decoration-jigsaw-primary",
       )}
     >
