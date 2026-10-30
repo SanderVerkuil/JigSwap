@@ -1,6 +1,12 @@
-import type { CopyId, CopyReservationPort } from "@jigswap/domain";
+import {
+  canStillSettle,
+  type CopyId,
+  type CopyReservationPort,
+} from "@jigswap/domain";
 import type { Id } from "../../_generated/dataModel";
 import type { QueryCtx } from "../../_generated/server";
+import { convexCopyPort } from "../../exchange/adapters/convexCopyPort";
+import { toDomain } from "../../exchange/adapters/mapper";
 
 // Active-exchange statuses that reserve a copy: a proposed or accepted exchange is "in flight"
 // and the copy may not be re-offered until it resolves (rejected/cancelled/completed/disputed
@@ -10,7 +16,12 @@ const ACTIVE_STATUSES = new Set(["proposed", "accepted"]);
 // Driven adapter for the CopyReservationPort: the cross-context seam to Exchange. The Library
 // asks "is this copy reserved?" instead of knowing about the `exchanges` table shape. The
 // domain CopyId is the copy's aggregateId; exchanges reference copies by Convex _id, so resolve
-// first, then check whether any active exchange offers/requests it.
+// first, then check whether an active exchange that offers/requests it could still settle.
+// A deal that no longer could (the copy changed hands, the housemate who offered it left the
+// household, the swap's other copy did either) reserves nothing, so a stale deal never locks the
+// current owner out of re-offering or deleting their copy. "Could still settle" is the Exchange
+// context's own rule (canStillSettle: the settlement guard accept and confirm run), read through
+// Exchange's CopyPort. Rows without an aggregateId can't be acted on at all and reserve nothing.
 export const convexCopyReservationPort = (
   ctx: QueryCtx,
 ): CopyReservationPort => ({
@@ -40,8 +51,13 @@ export const convexCopyReservationPort = (
         )
         .collect(),
     ]);
-    return [...asRequested, ...asOffered].some((ex) =>
-      ACTIVE_STATUSES.has(ex.status),
-    );
+    const stillSettles = canStillSettle(convexCopyPort(ctx));
+    for (const row of [...asRequested, ...asOffered]) {
+      if (!ACTIVE_STATUSES.has(row.status) || row.aggregateId === undefined) {
+        continue;
+      }
+      if (await stillSettles(toDomain(row))) return true;
+    }
+    return false;
   },
 });

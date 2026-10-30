@@ -38,3 +38,11 @@ export const settlementGuard =
     }
     return null;
   };
+
+// Could the deal still settle as things stand, i.e. would the guard let it? Only such a deal sets
+// its copies aside: one that can no longer settle (a copy changed hands, the offered copy can no
+// longer be offered) never holds a copy against its current owner.
+export const canStillSettle =
+  (copies: CopyPort) =>
+  async (exchange: Exchange): Promise<boolean> =>
+    (await settlementGuard(copies)(exchange)) === null;

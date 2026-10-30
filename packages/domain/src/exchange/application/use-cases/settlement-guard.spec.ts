@@ -9,7 +9,7 @@ import {
 } from "../../domain";
 import { CopyView } from "../ports/out/copy.port";
 import { FakeCopyPort } from "../testing";
-import { settlementGuard } from "./settlement-guard";
+import { canStillSettle, settlementGuard } from "./settlement-guard";
 
 const alice = toMemberId("alice"); // initiator
 const bob = toMemberId("bob"); // recipient, owner of the requested copy
@@ -159,5 +159,27 @@ describe("settlementGuard: a swap's offered copy", () => {
   it("checks only the requested copy for a swap without an offered copy", async () => {
     const exchange = rehydrated({ offeredCopyId: undefined });
     expect(await codeOf(withRequested(), exchange)).toBe("ok");
+  });
+});
+
+// The reservation rule's notion of a live deal: exactly the deals the guard would let settle.
+describe("canStillSettle", () => {
+  it("holds while every copy the deal names is still in place", async () => {
+    const copies = new FakeCopyPort()
+      .seed(view(requestedId, bob))
+      .seed(view(offeredId, carol, [alice]));
+    expect(await canStillSettle(copies)(swap(carol))).toBe(true);
+  });
+
+  it("no longer holds once the requested copy changed hands", async () => {
+    const copies = new FakeCopyPort().seed(view(requestedId, dave));
+    expect(await canStillSettle(copies)(sale())).toBe(false);
+  });
+
+  it("no longer holds once the offered copy can't be offered, though the requested one is in place", async () => {
+    const copies = new FakeCopyPort()
+      .seed(view(requestedId, bob))
+      .seed(view(offeredId, carol, []));
+    expect(await canStillSettle(copies)(swap(carol))).toBe(false);
   });
 });

@@ -361,6 +361,76 @@ describe("deals whose copies are still in place settle as before", () => {
   });
 });
 
+const deleteCopy = (t: T, owner: Name, copy: Copy) =>
+  as(t, owner).mutation(api.library.deleteCopy.deleteCopy, {
+    copyId: copy.aggregateId,
+  });
+
+// The victim used to be stuck: the stale deal still counted as reserving the copy, so they could
+// neither offer nor delete it. Only a deal that could still settle reserves a copy now.
+describe("a stale exchange never holds a copy against its current owner", () => {
+  test("after the sockpuppet sale, Vic can offer Y again and delete it", async () => {
+    const t = convexTest(schema, modules);
+    const { ids, puzzleAggregateId } = await seed(t);
+    const y = await acquire(t, "bob", puzzleAggregateId);
+    await offer(t, "bob", y, { forSale: true });
+    const stale = await proposeSale(t, "sock", y);
+    await accept(t, "bob", stale);
+    await confirm(t, "sock", stale);
+    await settle(t, await proposeSale(t, "vic", y), "vic", "bob");
+    expect((await copyRow(t, y)).ownerId).toBe(ids.vic);
+
+    await offer(t, "vic", y, { forSale: true });
+    expect((await copyRow(t, y)).availability.forSale).toBe(true);
+    await deleteCopy(t, "vic", y);
+    expect(await t.run((ctx) => ctx.db.get(y.id))).toBeNull();
+  });
+
+  test("once Hugo is removed, Mara can delete X and Rex can offer R again", async () => {
+    const t = convexTest(schema, modules);
+    const { ids, puzzleAggregateId } = await seed(t);
+    await formHousehold(t, ids);
+    const x = await acquire(t, "mara", puzzleAggregateId);
+    const r = await acquire(t, "rex", puzzleAggregateId);
+    await offer(t, "rex", r, { forTrade: true });
+    const swap = await proposeSwap(t, "hugo", r, x);
+    await accept(t, "rex", swap);
+    await removeHugo(t, ids);
+
+    // The swap can no longer settle, so it sets neither copy aside: not even Rex's own.
+    await offer(t, "rex", r, { forTrade: true, forSale: true });
+    expect((await copyRow(t, r)).availability.forSale).toBe(true);
+    await deleteCopy(t, "mara", x);
+    expect(await t.run((ctx) => ctx.db.get(x.id))).toBeNull();
+  });
+
+  test("a deal that can still settle keeps its copies reserved", async () => {
+    const t = convexTest(schema, modules);
+    const { ids, puzzleAggregateId } = await seed(t);
+    const y = await acquire(t, "bob", puzzleAggregateId);
+    await offer(t, "bob", y, { forSale: true });
+    await proposeSale(t, "vic", y);
+
+    expect(await codeOf(deleteCopy(t, "bob", y))).toBe("CopyReserved");
+    expect(
+      await codeOf(offer(t, "bob", y, { forSale: true, forTrade: true })),
+    ).toBe("CopyReserved");
+
+    // A housemate's live swap reserves the owner's offered copy, accepted or not.
+    await formHousehold(t, ids);
+    const x = await acquire(t, "mara", puzzleAggregateId);
+    const r = await acquire(t, "rex", puzzleAggregateId);
+    await offer(t, "rex", r, { forTrade: true });
+    const swap = await proposeSwap(t, "hugo", r, x);
+    expect(await codeOf(deleteCopy(t, "mara", x))).toBe("CopyReserved");
+    await accept(t, "rex", swap);
+    expect(await codeOf(deleteCopy(t, "mara", x))).toBe("CopyReserved");
+    expect(
+      await codeOf(offer(t, "rex", r, { forTrade: true, forSale: true })),
+    ).toBe("CopyReserved");
+  });
+});
+
 // A settlement event recorded directly, as one written before the guard (or in the narrow window
 // in which two old deals both settled before either transfer ran) would reach the dispatcher.
 const recordSettlementEvent = (
