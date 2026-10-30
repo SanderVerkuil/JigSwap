@@ -158,6 +158,7 @@ function ReviewForm({
         onPuzzleTextChange={setPuzzleText}
         copyRating={copyRating}
         onCopyRatingChange={setCopyRating}
+        showPuzzleSection={data.puzzleReviewAllowed}
         showCopySection={showCopySection}
         showUpdatesExisting={hasExisting}
       />

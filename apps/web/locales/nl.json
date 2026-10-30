@@ -2927,7 +2927,8 @@
       "ratingRequired": "Kies eerst een beoordeling.",
       "puzzleQuestion": "Wat vond je van deze puzzel?",
       "copyQuestion": "Wat vond je van dit exemplaar?",
-      "updatesExisting": "Opslaan werkt je bestaande beoordeling bij."
+      "updatesExisting": "Opslaan werkt je bestaande beoordeling bij.",
+      "puzzleNotReviewable": "Je kunt alleen goedgekeurde puzzels beoordelen."
     },
     "followUp": {
       "title": "Puzzel voltooid!",
@@ -4107,6 +4108,7 @@
     "reviewPlaceholder": "Beoordeel {title} (optioneel)…",
     "rateRequired": "Beoordeel deze puzzel",
     "reviewPublicNote": "Reviews verschijnen ook in de openbare puzzelcatalogus.",
+    "reviewNotOpen": "Je kunt alleen goedgekeurde puzzels beoordelen.",
     "post": "Plaatsen",
     "updateReview": "Beoordeling bijwerken",
     "reviewFailed": "Kon review niet plaatsen",

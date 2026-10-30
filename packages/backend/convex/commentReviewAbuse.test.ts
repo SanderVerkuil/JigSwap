@@ -242,3 +242,116 @@ describe("photo discussion only on published photos, newest 100 shown (SEC-28)",
     expect(comments[99].text).toBe("comment 20");
   });
 });
+
+describe("reviews only on approved definitions or your own submission (SEC-28)", () => {
+  const seedPending = (t: T, submittedBy: Id<"users">) =>
+    t.run((ctx) =>
+      ctx.db.insert("puzzles", {
+        aggregateId: crypto.randomUUID(),
+        title: "Pending Vista",
+        pieceCount: 500,
+        status: "pending",
+        submittedBy,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      }),
+    );
+
+  test("a spammer cannot review someone else's pending definition", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    const pending = await seedPending(t, alice);
+
+    expect(
+      await codeOf(
+        asBob(t).mutation(api.social.postPuzzleReview.postPuzzleReview, {
+          puzzleId: pending,
+          rating: 1,
+          text: "on a pending definition",
+        }),
+      ),
+    ).toBe("PuzzleNotReviewable");
+    expect(
+      await codeOf(
+        asBob(t).mutation(api.solving.submitReviews.submitReviews, {
+          puzzleId: pending,
+          puzzle: { rating: 1 },
+        }),
+      ),
+    ).toBe("PuzzleNotReviewable");
+    expect(await countRows(t, "puzzleReviews")).toBe(0);
+  });
+
+  test.each(["rejected", "disabled"] as const)(
+    "a %s definition takes no reviews from other members",
+    async (status) => {
+      const t = convexTest(schema, modules);
+      const { puzzleId } = await seed(t);
+      await t.run((ctx) => ctx.db.patch(puzzleId, { status }));
+
+      expect(
+        await codeOf(
+          asBob(t).mutation(api.social.postPuzzleReview.postPuzzleReview, {
+            puzzleId,
+            rating: 3,
+          }),
+        ),
+      ).toBe("PuzzleNotReviewable");
+    },
+  );
+
+  test("the submitter may review their own pending definition through either form", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    const pending = await seedPending(t, alice);
+
+    await asAlice(t).mutation(api.social.postPuzzleReview.postPuzzleReview, {
+      puzzleId: pending,
+      rating: 4,
+    });
+    await asAlice(t).mutation(api.solving.submitReviews.submitReviews, {
+      puzzleId: pending,
+      puzzle: { rating: 5, text: "my own submission" },
+    });
+    const rows = await t.run((ctx) => ctx.db.query("puzzleReviews").collect());
+    expect(rows.map((r) => [r.rating, r.text])).toEqual([
+      [5, "my own submission"],
+    ]);
+  });
+
+  test("getMyReviews tells the form whether the puzzle level can be saved", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, puzzleId } = await seed(t);
+    const pending = await seedPending(t, alice);
+    const allowed = async (as: typeof asAlice, id: Id<"puzzles">) =>
+      (
+        await as(t).query(api.solving.getMyReviews.getMyReviews, {
+          puzzleId: id,
+        })
+      ).puzzleReviewAllowed;
+
+    expect(await allowed(asBob, puzzleId)).toBe(true);
+    expect(await allowed(asBob, pending)).toBe(false);
+    expect(await allowed(asAlice, pending)).toBe(true);
+
+    await t.run((ctx) => ctx.db.delete(pending));
+    expect(await allowed(asAlice, pending)).toBe(false);
+  });
+
+  test("a copy-only review still works on a definition the member cannot review", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, copyId, puzzleId } = await seed(t);
+    await t.run((ctx) =>
+      ctx.db.patch(puzzleId, { status: "disabled", submittedBy: bob }),
+    );
+    // Alice may not review the puzzle, but she owns the copy, so she may rate it; the puzzle
+    // level is not sent.
+    await asAlice(t).mutation(api.solving.submitReviews.submitReviews, {
+      puzzleId,
+      copyId,
+      copy: { rating: 4 },
+    });
+    const rows = await t.run((ctx) => ctx.db.query("copyReviews").collect());
+    expect(rows.map((r) => [r.userId, r.rating])).toEqual([[alice, 4]]);
+  });
+});

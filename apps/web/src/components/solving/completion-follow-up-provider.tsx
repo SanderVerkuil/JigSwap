@@ -99,6 +99,7 @@ export function CompletionFollowUpProvider({
     puzzleRating: number;
     puzzleText: string;
     copyRating: number;
+    puzzleReviewAllowed: boolean;
     copyReviewAllowed: boolean;
     hasExisting: boolean;
   } | null>(null);
@@ -145,6 +146,7 @@ export function CompletionFollowUpProvider({
       puzzleRating: reviewsData.puzzle?.rating ?? 0,
       puzzleText: reviewsData.puzzle?.text ?? "",
       copyRating: reviewsData.copy?.rating ?? 0,
+      puzzleReviewAllowed: reviewsData.puzzleReviewAllowed,
       copyReviewAllowed: reviewsData.copyReviewAllowed,
       hasExisting: reviewsData.puzzle !== null || reviewsData.copy !== null,
     };
@@ -395,6 +397,7 @@ export function CompletionFollowUpProvider({
                   onPuzzleTextChange={setPuzzleText}
                   copyRating={copyRating}
                   onCopyRatingChange={setCopyRating}
+                  showPuzzleSection={seed.puzzleReviewAllowed}
                   showCopySection={showCopySection}
                   showUpdatesExisting={seed.hasExisting}
                   puzzleTextId="follow-up-review-text"

@@ -526,6 +526,9 @@ function ReviewsSection({
   }
 
   const hasExistingReview = myReviews?.puzzle != null;
+  // Only an approved definition (or the viewer's own submission) takes reviews; the server
+  // refuses the rest, so the composer is not offered there.
+  const canReview = myReviews?.puzzleReviewAllowed !== false;
 
   const list = reviews ?? [];
   const title = view?.definition.title ?? "";
@@ -562,43 +565,49 @@ function ReviewsSection({
       />
 
       {/* Composer */}
-      <div className="mb-4 flex gap-2.5">
-        <MemberAvatar source={me} avatar={me?.avatar} />
-        <div className="flex flex-1 flex-col gap-2">
-          <div className="flex gap-2">
-            <Input
-              ref={composerRef}
-              placeholder={t("reviewPlaceholder", { title })}
-              value={text}
-              maxLength={REVIEW_TEXT_MAX_LENGTH}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  void submit();
-                }
-              }}
-              className="flex-1"
+      {!canReview ? (
+        <p className="text-muted-foreground mb-4 text-sm">
+          {t("reviewNotOpen")}
+        </p>
+      ) : (
+        <div className="mb-4 flex gap-2.5">
+          <MemberAvatar source={me} avatar={me?.avatar} />
+          <div className="flex flex-1 flex-col gap-2">
+            <div className="flex gap-2">
+              <Input
+                ref={composerRef}
+                placeholder={t("reviewPlaceholder", { title })}
+                value={text}
+                maxLength={REVIEW_TEXT_MAX_LENGTH}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    void submit();
+                  }
+                }}
+                className="flex-1"
+              />
+              <Button
+                variant="brand"
+                onClick={() => void submit()}
+                disabled={postReview.isPending || rating < 1}
+              >
+                {hasExistingReview ? t("updateReview") : t("post")}
+              </Button>
+            </div>
+            <StarRating
+              value={rating}
+              onChange={setRating}
+              size="sm"
+              label={t("rateRequired")}
             />
-            <Button
-              variant="brand"
-              onClick={() => void submit()}
-              disabled={postReview.isPending || rating < 1}
-            >
-              {hasExistingReview ? t("updateReview") : t("post")}
-            </Button>
+            <p className="text-muted-foreground text-xs">
+              {t("reviewPublicNote")}
+            </p>
           </div>
-          <StarRating
-            value={rating}
-            onChange={setRating}
-            size="sm"
-            label={t("rateRequired")}
-          />
-          <p className="text-muted-foreground text-xs">
-            {t("reviewPublicNote")}
-          </p>
         </div>
-      </div>
+      )}
 
       {/* List */}
       <div className="flex flex-col">

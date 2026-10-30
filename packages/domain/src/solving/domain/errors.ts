@@ -14,6 +14,7 @@ export type SolvingErrorCode =
   | "ReviewTextTooLong"
   | "InvalidDuration"
   | "NotAllowedToReviewCopy"
+  | "PuzzleNotReviewable"
   | "InvalidDatePrecision"
   | "InvalidYear"
   | "DurationNotAllowed";
@@ -97,6 +98,14 @@ export class SolvingError extends DomainError {
     return new SolvingError(
       "NotAllowedToReviewCopy",
       "Only the copy's owner or a member who completed it may review this copy",
+    );
+  }
+
+  // A puzzle review needs an existing, approved definition, unless the reviewer submitted it.
+  static puzzleNotReviewable(): SolvingError {
+    return new SolvingError(
+      "PuzzleNotReviewable",
+      "Only approved puzzles (or your own submissions) can be reviewed",
     );
   }
 

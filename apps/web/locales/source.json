@@ -2927,7 +2927,8 @@
       "ratingRequired": "Please pick a rating first.",
       "puzzleQuestion": "What did you think of this puzzle?",
       "copyQuestion": "What did you think of this copy?",
-      "updatesExisting": "Saving updates your existing review."
+      "updatesExisting": "Saving updates your existing review.",
+      "puzzleNotReviewable": "Only approved puzzles can be reviewed."
     },
     "followUp": {
       "title": "Puzzle solved!",
@@ -4107,6 +4108,7 @@
     "reviewPlaceholder": "Review {title} (optional)…",
     "rateRequired": "Rate this puzzle",
     "reviewPublicNote": "Reviews also appear on the public puzzle catalogue.",
+    "reviewNotOpen": "Only approved puzzles can be reviewed.",
     "post": "Post",
     "updateReview": "Update review",
     "reviewFailed": "Couldn't post review",
