@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { buildNavTree, buildPager, flattenOrder, pagesForLocale } from "./nav";
+import {
+  buildNavTree,
+  buildPager,
+  findDocPage,
+  flattenOrder,
+  pagesForLocale,
+} from "./nav";
 import type { DocPage } from "./types";
 
 function page(
@@ -127,5 +133,33 @@ describe("buildPager", () => {
       buildPager(tree, "getting-started/accounts-and-sign-in").prev,
     ).toBeNull();
     expect(buildPager(tree, "your-library/collections").next).toBeNull();
+  });
+});
+
+describe("findDocPage", () => {
+  it("finds a page by its slug, ignoring a trailing slash", () => {
+    expect(
+      findDocPage(PAGES, "your-library/collections")?.frontmatter.title,
+    ).toBe("Collections");
+    expect(
+      findDocPage(PAGES, "your-library/collections/")?.frontmatter.title,
+    ).toBe("Collections");
+  });
+
+  it("finds a group index page", () => {
+    expect(findDocPage(PAGES, "your-library")?.isIndex).toBe(true);
+  });
+
+  it("prefers a leaf page over an index page with the same slug", () => {
+    const both = [
+      page("faq", "faq", true, "FAQ index"),
+      page("faq", "faq", false, "FAQ page"),
+    ];
+    expect(findDocPage(both, "faq")?.frontmatter.title).toBe("FAQ page");
+  });
+
+  it("is undefined for a slug no page has", () => {
+    expect(findDocPage(PAGES, "nope/nope")).toBeUndefined();
+    expect(findDocPage(PAGES, undefined)).toBe(findDocPage(PAGES, ""));
   });
 });

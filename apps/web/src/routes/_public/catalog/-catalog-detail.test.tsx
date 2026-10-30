@@ -13,6 +13,8 @@ import nl from "../../../../locales/nl.json";
 import { Route } from "./$id";
 
 const PUZZLE_ID = "puzzle1";
+// What the mocked router's notFound() returns, so a test can tell a 404 from any other throw.
+const NOT_FOUND = { isNotFound: true } as const;
 
 vi.mock("@/compat/link", () => ({
   Link: ({
@@ -36,6 +38,7 @@ vi.mock("@tanstack/react-router", () => ({
     useParams: () => ({ id: PUZZLE_ID }),
   }),
   redirect: vi.fn(),
+  notFound: () => NOT_FOUND,
 }));
 
 type View = NonNullable<
@@ -187,5 +190,63 @@ describe("public catalogue detail head", () => {
       content:
         "De Kattenshow by Jumbo — 1,000-piece jigsaw puzzle. Community rating, reviews and swap availability on JigSwap.",
     });
+  });
+});
+
+type LoaderFn = (ctx: {
+  context: {
+    queryClient: { ensureQueryData: (q: unknown) => Promise<unknown> };
+  };
+  params: { id: string };
+}) => Promise<{ view: View }>;
+const loader = (Route as unknown as { options: { loader: LoaderFn } }).options
+  .loader;
+// The loader reads the view first and the reviews second; `view` is what the first read yields.
+const loadWith = (view: () => Promise<unknown>) =>
+  loader({
+    context: {
+      queryClient: {
+        ensureQueryData: vi
+          .fn()
+          .mockImplementationOnce(view)
+          .mockImplementationOnce(() => Promise.resolve([])),
+      },
+    },
+    params: { id: PUZZLE_ID },
+  });
+
+describe("public catalogue detail not found", () => {
+  it("answers a nonexistent puzzle with a real 404", async () => {
+    await expect(loadWith(() => Promise.resolve(null))).rejects.toBe(NOT_FOUND);
+  });
+
+  it("answers a malformed id (the read rejects) with a real 404", async () => {
+    await expect(
+      loadWith(() => Promise.reject(new Error("Server Error"))),
+    ).rejects.toBe(NOT_FOUND);
+  });
+
+  it("loads an existing puzzle", async () => {
+    const view = viewWith(unrated);
+    await expect(loadWith(() => Promise.resolve(view))).resolves.toEqual({
+      view,
+    });
+  });
+
+  it("titles the 404 as a missing page", () => {
+    const { meta } = head({ match: headMatch("nl") });
+    expect(meta).toEqual([{ title: nl.marketing.titles.notFound }]);
+  });
+
+  it("shows a heading and a way back to the catalogue when the puzzle is gone", () => {
+    renderDetail(null as unknown as View);
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Puzzle not found" }),
+    ).toBeTruthy();
+    expect(
+      screen
+        .getByRole("link", { name: "Browse the catalogue" })
+        .getAttribute("href"),
+    ).toBe("/catalog");
   });
 });

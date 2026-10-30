@@ -4103,7 +4103,8 @@
       "privacy": "Privacy Policy — JigSwap",
       "terms": "Terms of Service — JigSwap",
       "catalog": "Puzzle catalogue — JigSwap",
-      "docs": "Docs — JigSwap"
+      "docs": "Docs — JigSwap",
+      "notFound": "Page not found — JigSwap"
     },
     "meta": {
       "home": "Build your own jigsaw puzzle library, lend and swap puzzles with fellow puzzlers, and always know who has your lent-out boxes. Free to join.",

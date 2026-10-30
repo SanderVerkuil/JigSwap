@@ -1,6 +1,6 @@
 import { Link } from "@/compat/link";
 import { ImageZoom } from "@/components/common/image-zoom";
-import { EmptyState } from "@/components/library/empty-state";
+import { MarketingNotFoundContent } from "@/components/NotFound";
 import {
   difficultyClasses,
   MemberAvatar,
@@ -14,11 +14,12 @@ import { Button } from "@/components/ui/button";
 import { StarRating } from "@/components/ui/star-rating";
 import { gateway, Id } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
+import { pageTitle } from "@/lib/page-title";
 import { headMessage, seoHead } from "@/lib/seo-head";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import { ArrowLeftRight, MessageCircle, UserRound } from "lucide-react";
 import { useState } from "react";
@@ -50,24 +51,22 @@ export const Route = createFileRoute("/_public/catalog/$id")({
     }
   },
   loader: async ({ context, params }) => {
-    // A malformed id fails `v.id("puzzles")` arg validation and rejects here. Rather than crash to
-    // the root error boundary, swallow it and let the component render the same friendly not-found
-    // a well-formed-but-nonexistent id shows (which resolves to `null`).
-    try {
-      const [view] = await Promise.all([
-        context.queryClient.ensureQueryData(viewQuery(params.id)),
-        context.queryClient.ensureQueryData(reviewsQuery(params.id)),
-      ]);
-      return { view };
-    } catch {
-      return { view: null };
-    }
+    // Both reads settle before deciding, so neither is still pending when the page is dehydrated.
+    const [view] = await Promise.allSettled([
+      context.queryClient.ensureQueryData(viewQuery(params.id)),
+      context.queryClient.ensureQueryData(reviewsQuery(params.id)),
+    ]);
+    // A nonexistent id resolves to null; a malformed one fails `v.id("puzzles")` arg validation and
+    // rejects (production redacts the message, so the two can't be told apart). Either way the URL
+    // names no puzzle: a real 404 with the friendly not-found below, not a 200.
+    if (view.status === "rejected" || !view.value) throw notFound();
+    return { view: view.value };
   },
   // loaderData is resolved before head() runs on the SSR pass, which is what crawlers and link
   // previews read; the description is the visitor's language via the root intl payload.
   head: ({ loaderData, match }) => {
-    const d = loaderData?.view?.definition;
-    if (!d) return { meta: [{ title: "JigSwap" }] };
+    const d = loaderData?.view.definition;
+    if (!d) return { meta: [{ title: pageTitle(match.context, "notFound") }] };
     const maker = d.brand || d.publisher;
     return seoHead(match, "catalog", {
       title: `${d.title} — JigSwap`,
@@ -80,23 +79,31 @@ export const Route = createFileRoute("/_public/catalog/$id")({
       image: d.image,
     });
   },
+  notFoundComponent: PuzzleNotFound,
   component: PublicPuzzlePage,
 });
 
+// The public 404, naming what's missing; a way back to the catalogue is among its actions.
+function PuzzleNotFound() {
+  const t = useTranslations("publicCatalog");
+  return (
+    <main>
+      <MarketingNotFoundContent
+        title={t("notFound")}
+        message={t("notFoundSub")}
+      />
+    </main>
+  );
+}
+
 function PublicPuzzlePage() {
   const { id } = Route.useParams();
-  const t = useTranslations("publicCatalog");
   const { data: view, isError } = useQuery(viewQuery(id));
 
-  // A malformed id makes the query error (arg validation); treat it exactly like a nonexistent id.
+  // The loader already 404s a missing puzzle; this covers one removed (or a read failing) while
+  // the page is open, treated exactly like a nonexistent id.
   if (view === undefined && !isError) return null; // loader-prefetched; only a hard refetch passes here
-  if (view === null || isError) {
-    return (
-      <main className="mx-auto w-full max-w-[1200px] px-6 py-10">
-        <EmptyState title={t("notFound")} sub={t("notFoundSub")} />
-      </main>
-    );
-  }
+  if (view === null || isError) return <PuzzleNotFound />;
   return <PublicPuzzleDetail view={view} puzzleId={id} />;
 }
 
