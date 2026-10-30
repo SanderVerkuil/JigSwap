@@ -57,6 +57,12 @@ opnieuw tegen. Staat er aan het eind nog een stap open, dan zie je
 **Naar mijn plank** je terug naar je dashboard, en start
 **Geef me een rondleiding** een korte rondleiding.
 
+Doorgaan slaat ook op wat je bij de stap hebt gedaan: de puzzels die je hebt
+gekozen, de puzzels die je als afgemaakt hebt aangevinkt of een locatie die je
+hebt ingevuld. Dat staat dan op de knop, bijvoorbeeld
+**3 toevoegen en doorgaan** of **Opslaan en doorgaan**, en je gaat pas verder
+als het is opgeslagen.
+
 ### De kaart Snel instellen
 
 Nieuwe leden zien ook een kaart **Snel instellen** op het dashboard. Die toont

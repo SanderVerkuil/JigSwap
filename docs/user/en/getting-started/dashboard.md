@@ -53,6 +53,11 @@ you've already done are left out. If a step is still open at the end,
 to the first one. When you're done, **Go to my shelf** returns you to your
 dashboard, and **Show me around** starts a short guided tour.
 
+Continue also saves what you've done on the step: the puzzles you picked, the
+puzzles you ticked as finished, or a location you typed. Its label says so, for
+example **Add 3 and continue** or **Save and continue**, and you only move on
+once it's saved.
+
 ### The Quick setup card
 
 New members also see a **Quick setup** card on the dashboard. It shows how

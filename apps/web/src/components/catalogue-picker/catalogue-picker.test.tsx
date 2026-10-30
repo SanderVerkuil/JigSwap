@@ -1,6 +1,11 @@
 // @vitest-environment happy-dom
+import {
+  createStepCommitStore,
+  StepCommitContext,
+} from "@/components/quick-start/step-commit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -149,5 +154,61 @@ describe("CataloguePicker", () => {
     expect(
       await screen.findByRole("button", { name: "Add 30 puzzles" }),
     ).toBeTruthy();
+  });
+});
+
+describe("CataloguePicker inside quick setup", () => {
+  const renderInFlow = () => {
+    const store = createStepCommitStore();
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+          <StepCommitContext value={store}>
+            <CataloguePicker />
+          </StepCommitContext>
+        </IntlProvider>
+      </QueryClientProvider>,
+    );
+    return store;
+  };
+  const continueCommit = async (store: ReturnType<typeof renderInFlow>) => {
+    let saved: boolean | undefined;
+    await act(async () => {
+      saved = await store.commit();
+    });
+    return saved;
+  };
+
+  it("has no submit of its own; Continue adds every pick in chunks of 25", async () => {
+    mocks.acquire.mockImplementation(async (args) => copiesFor(args));
+    const store = renderInFlow();
+    await pickAll();
+    expect(screen.queryByRole("button", { name: "Add 30 puzzles" })).toBeNull();
+    expect(store.getSnapshot()).toEqual({
+      kind: "puzzles",
+      count: 30,
+      ready: true,
+    });
+
+    expect(await continueCommit(store)).toBe(true);
+    expect(mocks.acquire.mock.calls.map(([a]) => a.items.length)).toEqual([
+      25, 5,
+    ]);
+    expect(store.getSnapshot()?.count).toBe(0);
+  });
+
+  it("keeps the member on the step when a chunk is refused, with the rest still picked", async () => {
+    mocks.acquire
+      .mockImplementationOnce(async (args) => copiesFor(args))
+      .mockRejectedValueOnce(new Error("rate limited"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const store = renderInFlow();
+    await pickAll();
+
+    expect(await continueCommit(store)).toBe(false);
+    expect(store.getSnapshot()?.count).toBe(5);
+    expect(mocks.toastError).toHaveBeenCalledWith(
+      "Added 25 of 30 puzzles. The rest are still picked, so you can try again.",
+    );
   });
 });

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { QuickStartStepId, QuickStartView } from "@jigswap/contracts";
 import { Link } from "@tanstack/react-router";
-import { Puzzle } from "lucide-react";
+import { Loader2, Puzzle } from "lucide-react";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useTranslations } from "use-intl";
 import {
@@ -23,6 +23,7 @@ import {
   StepMarker,
   useStepText,
 } from "./parts";
+import { hasPendingWork, type StepCommitSnapshot } from "./step-commit";
 
 // Focus the step's h2 whenever the step changes (spec §5.3), as the tour card does.
 function useFocusOnChange<T extends HTMLElement>(key: string) {
@@ -36,20 +37,26 @@ function useFocusOnChange<T extends HTMLElement>(key: string) {
 /**
  * One /welcome step (spec §2.2, §5.3): the stepper, the step's h2 (PageHead owns the h1), its body
  * and the sticky footer with Skip and Continue, last in the DOM. On phones the footer docks above
- * the MobileTabBar (at its measured height, which grows in the installed app), and it hides while a text field in the step has focus (B11), so the keyboard,
- * the footer and the tab bar never cover the step together.
+ * the MobileTabBar (at its measured height, which grows in the installed app), and it hides while
+ * a text field in the step has focus (B11), so the keyboard, the footer and the tab bar never cover
+ * the step together. While the step holds unsaved work (`pendingWork`), Continue says it saves it
+ * first ("Add 3 and continue"); `continuing` marks that save in flight.
  */
 export function QuickStartFlowView({
   step,
   view,
   onSkip,
   onContinue,
+  pendingWork = null,
+  continuing = false,
   children,
 }: {
   step: QuickStartStepId;
   view: QuickStartView;
   onSkip: () => void;
   onContinue: () => void;
+  pendingWork?: StepCommitSnapshot | null;
+  continuing?: boolean;
   children: ReactNode;
 }) {
   const t = useTranslations("quickStart.flow");
@@ -58,6 +65,7 @@ export function QuickStartFlowView({
   const eyebrowId = useId();
   const headingRef = useFocusOnChange<HTMLHeadingElement>(step);
   const [typing, setTyping] = useState(false);
+  const pending = hasPendingWork(pendingWork);
   const position = stepPosition(step);
   // Position only: the h2 below carries the title, so the eyebrow never repeats or truncates it.
   const eyebrow =
@@ -166,15 +174,30 @@ export function QuickStartFlowView({
         <Button
           variant="ghost"
           className="pointer-coarse:min-h-11"
+          disabled={continuing}
           onClick={onSkip}
         >
           {t("skip")}
         </Button>
+        {/* The label may wrap on a narrow phone ("3 vastleggen en doorgaan") instead of
+            pushing past the footer. */}
         <Button
-          className={cn(PRIMARY_LOOK, "flex-1 md:flex-none")}
+          className={cn(
+            PRIMARY_LOOK,
+            "h-auto min-h-9 min-w-0 flex-1 py-2 whitespace-normal text-balance md:flex-none",
+          )}
+          disabled={continuing || (pending && !pendingWork.ready)}
+          aria-busy={continuing || undefined}
           onClick={onContinue}
         >
-          {t("continue")}
+          {continuing && (
+            <Loader2 aria-hidden className="motion-safe:animate-spin" />
+          )}
+          {pending
+            ? t(`commitAndContinue.${pendingWork.kind}`, {
+                count: pendingWork.count,
+              })
+            : t("continue")}
         </Button>
       </div>
     </div>

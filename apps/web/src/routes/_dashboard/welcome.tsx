@@ -15,6 +15,13 @@ import {
 import { PeopleStep } from "@/components/quick-start/people-step";
 import { ProfileStep } from "@/components/quick-start/profile-step";
 import { useMarkQuickStartUsed } from "@/components/quick-start/session";
+import {
+  createContinueRunner,
+  createStepCommitStore,
+  hasPendingWork,
+  StepCommitContext,
+  useStepCommitSnapshot,
+} from "@/components/quick-start/step-commit";
 import { TourHandoffButton } from "@/components/quick-start/tour-handoff";
 import { PastSolvesForm } from "@/components/solving/past-solves-form";
 import { tourButtonState } from "@/components/tour/controller";
@@ -30,14 +37,15 @@ import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import type { QuickStartStepId, QuickStartView } from "@jigswap/contracts";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "use-intl";
 
 // The quick start flow (spec §2.2): one URL per step, so the browser back button walks back
 // through them. A missing or unknown step resolves to the first open required step. Skip
-// stores the skip; Continue stores nothing (done-ness is derived from data). Both go to the next
-// step that is still to do, so finished steps are never walked through again. No dialogs inside
-// the flow, and the What's new highlight never opens here.
+// stores the skip; Continue first saves what the step holds unsaved (picks, ticks, a typed
+// location: UX-16) and otherwise stores nothing (done-ness is derived from data). Both go to the
+// next step that is still to do, so finished steps are never walked through again. No dialogs
+// inside the flow, and the What's new highlight never opens here.
 export const Route = createFileRoute("/_dashboard/welcome")({
   validateSearch: (search: Record<string, unknown>): { step?: FlowStep } => ({
     step: parseFlowStep(search.step),
@@ -100,13 +108,67 @@ function WelcomePage() {
   };
 
   return (
-    <QuickStartFlowView
+    <FlowStep
+      key={step}
       step={step}
       view={view}
       onSkip={skip}
-      onContinue={() => go(nextOpenStep(step, view))}
+      onNext={() => go(nextOpenStep(step, view))}
+    />
+  );
+}
+
+// One step of the flow, keyed by step so each step starts with its own commit store. The step's
+// body publishes its unsaved work there; Continue saves it (single flight) and goes on only once
+// it saved. A failed save keeps the member on the step with their work (the step toasts why).
+function FlowStep({
+  step,
+  view,
+  onSkip,
+  onNext,
+}: {
+  step: QuickStartStepId;
+  view: QuickStartView;
+  onSkip: () => void;
+  onNext: () => void;
+}) {
+  const [store] = useState(createStepCommitStore);
+  const pendingWork = useStepCommitSnapshot(store);
+  const [continuing, setContinuing] = useState(false);
+  const [runner] = useState(() => createContinueRunner(setContinuing));
+  // A save that lands after the member already left (Finish later mid-save) must not pull them
+  // back into the flow.
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+
+  const onContinue = () => {
+    const work = store.getSnapshot();
+    if (hasPendingWork(work) && !work.ready) return;
+    void runner.run({
+      commit: hasPendingWork(work) ? store.commit : null,
+      go: () => {
+        if (mounted.current) onNext();
+      },
+    });
+  };
+
+  return (
+    <QuickStartFlowView
+      step={step}
+      view={view}
+      onSkip={onSkip}
+      onContinue={onContinue}
+      pendingWork={pendingWork}
+      continuing={continuing}
     >
-      <StepBody step={step} view={view} onSkip={skip} />
+      <StepCommitContext value={store}>
+        <StepBody step={step} view={view} onSkip={onSkip} />
+      </StepCommitContext>
     </QuickStartFlowView>
   );
 }

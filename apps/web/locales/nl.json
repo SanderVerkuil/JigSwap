@@ -5675,6 +5675,11 @@
       "optionalStep": "Optionele stap",
       "skip": "Overslaan",
       "continue": "Doorgaan",
+      "commitAndContinue": {
+        "puzzles": "{count} toevoegen en doorgaan",
+        "solves": "{count} vastleggen en doorgaan",
+        "profile": "Opslaan en doorgaan"
+      },
       "finishLater": "Later afmaken"
     },
     "people": {

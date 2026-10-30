@@ -471,6 +471,82 @@ describe("QuickStartFlowView", () => {
     expect(flat.indexOf("body")).toBeLessThan(flat.lastIndexOf("Skip"));
   });
 
+  describe("Continue with unsaved step work", () => {
+    const footer = (
+      over: Partial<Parameters<typeof QuickStartFlowView>[0]>,
+      locale: Locale = "en",
+    ) => {
+      const html = render(
+        <QuickStartFlowView
+          step="puzzles"
+          view={VIEW}
+          onSkip={() => {}}
+          onContinue={() => {}}
+          {...over}
+        >
+          <p>body</p>
+        </QuickStartFlowView>,
+        locale,
+      );
+      const [skip, next] = controls(html).slice(-2);
+      return { skip: skip!, next: next! };
+    };
+    const disabled = (el: Element) => attr(el, "disabled") !== undefined;
+
+    it("says what Continue saves, in English and Dutch", () => {
+      const cases = [
+        [
+          { kind: "puzzles", count: 3 },
+          "Add 3 and continue",
+          "3 toevoegen en doorgaan",
+        ],
+        [
+          { kind: "solves", count: 2 },
+          "Log 2 and continue",
+          "2 vastleggen en doorgaan",
+        ],
+        [
+          { kind: "profile", count: 1 },
+          "Save and continue",
+          "Opslaan en doorgaan",
+        ],
+      ] as const;
+      for (const [work, en, nl] of cases) {
+        const pendingWork = { ...work, ready: true };
+        expect(text(footer({ pendingWork }).next)).toBe(en);
+        expect(text(footer({ pendingWork }, "nl").next)).toBe(nl);
+        expect(disabled(footer({ pendingWork }).next)).toBe(false);
+      }
+    });
+
+    it("reads plain Continue when nothing is pending", () => {
+      const { next } = footer({
+        pendingWork: { kind: "solves", count: 0, ready: true },
+      });
+      expect(text(next)).toBe("Continue");
+      expect(text(footer({ pendingWork: null }).next)).toBe("Continue");
+    });
+
+    it("waits for a ticked row that still needs its date", () => {
+      const { next } = footer({
+        pendingWork: { kind: "solves", count: 2, ready: false },
+      });
+      expect(text(next)).toBe("Log 2 and continue");
+      expect(disabled(next)).toBe(true);
+    });
+
+    it("is busy while saving, with Skip held too", () => {
+      const { skip, next } = footer({
+        pendingWork: { kind: "puzzles", count: 3, ready: true },
+        continuing: true,
+      });
+      expect(attr(next, "aria-busy")).toBe("true");
+      expect(disabled(next)).toBe(true);
+      expect(disabled(skip)).toBe(true);
+      expect(nameOf(next)).toBe("Add 3 and continue");
+    });
+  });
+
   it("docks the footer above the mobile tab bar, at its measured height", () => {
     const html = renderFlow("puzzles");
     const footer = all(html).find((el) =>

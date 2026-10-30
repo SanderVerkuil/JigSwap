@@ -2,6 +2,7 @@
 
 import { SegmentedPills } from "@/components/add-puzzle/segmented-pills";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
+import { useStepCommitRegistration } from "@/components/quick-start/step-commit";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -96,7 +97,9 @@ export function PastSolvesForm({
 }
 
 // The rows and the submit button, given the candidate copies (newest first). Holds the ticks and
-// each row's "When?" answer; at most PAGE rows are ticked at once (the mutation's cap).
+// each row's "When?" answer; at most PAGE rows are ticked at once (the mutation's cap). The submit
+// only shows once something is ticked (never "Log 0"); inside quick setup it never shows, because
+// the flow's Continue logs the ticks ("Log 3 and continue").
 export function PastSolvesList({
   candidates,
   pending,
@@ -113,6 +116,23 @@ export function PastSolvesList({
   const [choices, setChoices] = useState<Map<string, PastSolveChoice>>(
     () => new Map(),
   );
+  const items = [...choices].map(([copyId, choice]) =>
+    toPastCompletionItem(copyId, choice),
+  );
+  const ready = items.every((item) => item !== null);
+
+  // Resolves true when the batch was logged, and clears the ticks.
+  const submit = async () => {
+    const logged = await onSubmit(items as PastCompletionItem[]);
+    if (logged) setChoices(new Map());
+    return logged;
+  };
+  const inFlow = useStepCommitRegistration({
+    kind: "solves",
+    count: choices.size,
+    ready,
+    commit: submit,
+  });
 
   if (candidates.length === 0) {
     return (
@@ -126,11 +146,9 @@ export function PastSolvesList({
   const years = yearOptions(new Date().getFullYear());
   // The member's local today: the latest day a past solve may be picked for.
   const maxDate = localTodayInput();
-  const items = [...choices].map(([copyId, choice]) =>
-    toPastCompletionItem(copyId, choice),
-  );
-  const ready = items.every((item) => item !== null);
   const full = choices.size >= PAGE;
+  const showMore = shown < candidates.length;
+  const showSubmit = !inFlow && choices.size > 0;
 
   const setChoice = (copyId: string, choice: PastSolveChoice | null) =>
     setChoices((prev) => {
@@ -139,10 +157,6 @@ export function PastSolvesList({
       else next.delete(copyId);
       return next;
     });
-
-  const submit = async () => {
-    if (await onSubmit(items as PastCompletionItem[])) setChoices(new Map());
-  };
 
   return (
     <div className="space-y-4">
@@ -168,22 +182,26 @@ export function PastSolvesList({
           );
         })}
       </ul>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        {shown < candidates.length ? (
-          <Button variant="outline" onClick={() => setShown((n) => n + PAGE)}>
-            {t("showMore")}
-          </Button>
-        ) : (
-          <span />
-        )}
-        <Button
-          className="bg-jigsaw-primary hover:bg-jigsaw-primary/90 text-white"
-          onClick={submit}
-          disabled={choices.size === 0 || !ready || pending}
-        >
-          {t("submit", { count: choices.size })}
-        </Button>
-      </div>
+      {(showMore || showSubmit) && (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          {showMore ? (
+            <Button variant="outline" onClick={() => setShown((n) => n + PAGE)}>
+              {t("showMore")}
+            </Button>
+          ) : (
+            <span />
+          )}
+          {showSubmit && (
+            <Button
+              className="bg-jigsaw-primary hover:bg-jigsaw-primary/90 text-white"
+              onClick={() => void submit()}
+              disabled={!ready || pending}
+            >
+              {t("submit", { count: choices.size })}
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

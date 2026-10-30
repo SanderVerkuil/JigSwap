@@ -5675,6 +5675,11 @@
       "optionalStep": "Optional step",
       "skip": "Skip",
       "continue": "Continue",
+      "commitAndContinue": {
+        "puzzles": "Add {count} and continue",
+        "solves": "Log {count} and continue",
+        "profile": "Save and continue"
+      },
       "finishLater": "Finish later"
     },
     "people": {
