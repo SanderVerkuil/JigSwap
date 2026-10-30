@@ -60,12 +60,13 @@ import { findMetadata, stripImageMetadata } from "./stripMetadata";
 //      metadata at byte level (lib/imageModeration/stripMetadata: Exif incl. GPS, XMP, IPTC,
 //      comments, PNG text chunks, WebP EXIF/XMP, Orientation included) and re-encode that in
 //      memory via jimp, turned upright for the Orientation the Exif held — PNG when it has
-//      transparency, else JPEG — plus the blurhash. A malformed block structure or a decode
-//      failure is refused as "decode_failed". An upright WebP (no Orientation, or 1) is not
-//      re-encoded: its stripped bytes are stored (as "image/webp"); one that needs turning is
-//      decoded (WASM) and re-encoded like the rest. Whatever is stored must be within the
-//      upload limit ("too_large") and show no metadata left (findMetadata), or it is refused
-//      too.
+//      transparency, else JPEG — plus the blurhash. Every format is re-encoded, WebP included
+//      (decoded by the WASM decoder, normaliseImage): what is stored is always the encoder's
+//      output, never the container as uploaded, so no chunk the stripper keeps (a WebP's ICCP or
+//      a frame's nested chunks) reaches storage. A malformed block structure or a decode failure
+//      is refused as "decode_failed". Whatever is stored must be within the upload limit
+//      ("too_large") and show no metadata left (findMetadata, run on the encoder's output), or
+//      it is refused too.
 //   3. CSAM hash check (lib/imageModeration/csamHashCheck), until the row has passed one: MD5 +
 //      SHA-1 of the ORIGINAL bytes (what hash lists match) and of the re-encode (what is stored,
 //      upright), BEFORE any refusal, swap or classification. A match stores the matched bytes
@@ -120,8 +121,8 @@ export const hashImageBytes = (bytes: Uint8Array): ImageHashes => ({
 // we emit PNG so the transparency is preserved — a JPEG would flatten the alpha to black (jimp has
 // no WebP encoder). Opaque images emit JPEG (smaller). Returns the bytes plus the mime so the
 // caller stores the blob with the matching content type, and the image's blurhash (lib/blurhash)
-// from the same decode. A WebP is decoded with the WASM decoder (only called for one that needs
-// turning; see runImageModeration). The decode re-runs the input guards and throws on a bitmap
+// from the same decode. A WebP is decoded with the WASM decoder (normaliseImage), so it too is
+// stored as the encoder's output. The decode re-runs the input guards and throws on a bitmap
 // that is not the size its header announced (decodeUpright), which the pipeline refuses as
 // "decode_failed".
 export const reencodeImage = async (
@@ -555,13 +556,10 @@ const runAttempt = async <R extends ModerationRow>(
     // Strip + re-encode on ANY attempt until the row is marked re-encoded, so a retry after a
     // download or swap failure never classifies (and so never publishes) the original with its
     // EXIF/GPS. In memory only: nothing is stored or deleted until the hash check has passed. A
-    // malformed or undecodable image is refused (a header that says JPEG/PNG/GIF over a body
-    // that is not one is a polyglot or a corrupt file); an upright WebP keeps its stripped bytes.
-    let encoded: {
-      bytes: Uint8Array;
-      mime: string;
-      blurhash?: string;
-    } | null = null;
+    // malformed or undecodable image is refused (a header that says JPEG/PNG/GIF/WebP over a
+    // body that is not one is a polyglot or a corrupt file). Every format, WebP included, is
+    // stored as the re-encode (SEC-72).
+    let encoded: Awaited<ReturnType<typeof reencodeImage>> | null = null;
     if (guard.ok && row.reencodedAt === undefined) {
       // GIF has no byte-level stripper: jimp's re-encode (PNG/JPEG) drops its extensions.
       const stripped =
@@ -571,11 +569,6 @@ const runAttempt = async <R extends ModerationRow>(
       if (stripped === null) {
         event.strip_error = "malformed";
         refusal = "decode_failed";
-      } else if (guard.format === "webp" && stripped.orientation === 1) {
-        // Upright already: stored as its stripped bytes (not re-encoded, no blurhash).
-        event.stripped_bytes = stripped.bytes.length;
-        event.reencoded = false;
-        encoded = { bytes: stripped.bytes, mime: "image/webp" };
       } else {
         event.stripped_bytes = stripped.bytes.length;
         event.orientation = stripped.orientation;
@@ -603,14 +596,12 @@ const runAttempt = async <R extends ModerationRow>(
       if (encoded) {
         event.reencoded_mime = encoded.mime;
         event.reencoded_bytes = encoded.bytes.length;
-        // Defence in depth: what is about to be stored must carry no metadata at all.
-        const format =
-          encoded.mime === "image/webp"
-            ? "webp"
-            : encoded.mime === "image/png"
-              ? "png"
-              : "jpeg";
-        const left = findMetadata(encoded.bytes, format);
+        // Defence in depth: what is about to be stored must carry no metadata at all. Checked on
+        // the encoder's output (JPEG or PNG), never on the stripper's own output.
+        const left = findMetadata(
+          encoded.bytes,
+          encoded.mime === "image/png" ? "png" : "jpeg",
+        );
         if (left === null || left.length > 0) {
           event.metadata_left = left === null ? "malformed" : left.join(",");
           encoded = null;
@@ -686,17 +677,10 @@ const runAttempt = async <R extends ModerationRow>(
       return;
     }
 
-    // Swap the row to the clean blob (the re-encode, or a WebP's stripped bytes) and drop the
-    // original. A row not yet re-encoded always has `encoded` here (otherwise it was refused);
-    // a WebP that had nothing to strip and is stored as image/webp already stays as it is.
+    // Swap the row to the clean blob (the re-encode) and drop the original. A row not yet
+    // re-encoded always has `encoded` here (otherwise it was refused).
     let cleanBytes = bytes;
-    const unchanged =
-      encoded !== null &&
-      encoded.mime === mime &&
-      encoded.bytes.length === bytes.length &&
-      encoded.bytes.every((byte, i) => byte === bytes[i]);
-    const replacement =
-      row.reencodedAt !== undefined || unchanged ? null : encoded;
+    const replacement = row.reencodedAt !== undefined ? null : encoded;
     if (replacement) {
       // Tracks the just-stored blob across the try/catch. If `setFile` throws AFTER the store
       // succeeded, the row still points at the original, so the new blob is unreferenced. There

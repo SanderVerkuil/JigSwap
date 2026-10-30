@@ -20,8 +20,10 @@ import { findMetadata, stripImageMetadata } from "./stripMetadata";
 //   (and, until that turned the pixels upright, a JPEG kept an Orientation-only Exif block).
 // - "proposals": puzzleChangeProposals.changes.image (a proposed new box art).
 // - "copy" / "completion": ownedPuzzleImages / completionImages. The moderation pipeline always
-//   re-encoded JPEG/PNG/GIF, but stored WebP as uploaded, and rows from before the pipeline were
-//   never processed. Rows still pending (the pipeline owns them) or quarantined are skipped.
+//   re-encoded JPEG/PNG/GIF, but stored WebP as uploaded (until it re-encoded every WebP too),
+//   and rows from before the pipeline were never processed. Rows still pending (the pipeline
+//   owns them) or quarantined are skipped. An animated WebP (ANIM/ANMF chunks) counts as
+//   malformed and is skipped: its frames nest chunks the stripper does not look inside.
 //
 // Each image is downloaded and checked (findMetadata); one that carries metadata is stripped and
 // turned upright (lib/imageModeration/normaliseImage: an Exif Orientation 2..8 is applied to the

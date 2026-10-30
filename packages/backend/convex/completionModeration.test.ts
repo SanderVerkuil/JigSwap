@@ -1,4 +1,5 @@
 import { convexTest, type TestConvex } from "convex-test";
+import { Jimp } from "jimp";
 import { describe, expect, test } from "vitest";
 import {
   settleDueScheduled,
@@ -13,9 +14,10 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 // Verdict-store tests for the completion-photo moderation pipeline. The store mutations are
 // called DIRECTLY via `internal.*` — but note convex-test DOES drain runAfter(0) jobs in the
-// background (real setTimeout), so the scheduled action runs during these tests and ends
-// "unscored" (env-less: no token; non-image bytes: no file swap; never "rejected"). The tests
-// stay deterministic by settling all scheduled jobs to a terminal state and resetting the
+// background (real setTimeout), so the scheduled action runs during these tests: it swaps each
+// attached photo (sidecar and completions.photos entry) to its re-encode, then ends "unscored"
+// (env-less: no token; never "rejected"). The tests stay deterministic by settling all scheduled
+// jobs to a terminal state, reading the photo's file id back after that swap, and resetting the
 // sidecar to "pending" before each direct verdict call, combined with setModerationVerdict's
 // first-wins-on-pending guard (a late re-run can never overwrite a decided verdict).
 
@@ -79,41 +81,21 @@ const recordForAlice = async (
   ).completionId;
 
 // Unique content per blob — convex-test content-addresses storage, so identical bytes would
-// yield identical URLs and blunt the "which photo survived" assertions below. The bytes are a
-// well-formed 2x2 WebP (VP8L) with the unique part inside its image chunk, stored as image/webp,
-// so they pass the pipeline's input guards and take its WebP path: jimp cannot decode WebP, the
-// metadata strip finds nothing to drop, so no file swap happens and the photo is classified as
-// uploaded.
-const webpBlob = () => {
-  const body = new Uint8Array([
-    0x2f,
-    0x01,
-    0x40,
-    0x00,
-    0x00,
-    ...new TextEncoder().encode(crypto.randomUUID()),
-    0, // pad to an even chunk size
-  ]);
-  const chunk = body.length - 1;
-  const riff = 4 + 8 + body.length;
-  return new Uint8Array([
-    ...new TextEncoder().encode("RIFF"),
-    riff & 0xff,
-    riff >> 8,
-    0,
-    0,
-    ...new TextEncoder().encode("WEBPVP8L"),
-    chunk & 0xff,
-    chunk >> 8,
-    0,
-    0,
-    ...body,
-  ]);
-};
-const storeBlob = (t: TestConvex<typeof schema>) =>
-  t.run((ctx) =>
-    ctx.storage.store(new Blob([webpBlob()], { type: "image/webp" })),
+// yield identical URLs and blunt the "which photo survived" assertions below. Each blob is a 2x2
+// PNG of a colour of its own, half transparent, so it passes the pipeline's input guards and
+// re-encodes losslessly (transparency keeps it PNG) to bytes of its own too.
+let blobs = 0;
+const storeBlob = async (t: TestConvex<typeof schema>) => {
+  blobs += 1;
+  const png = await new Jimp({
+    width: 2,
+    height: 2,
+    color: blobs * 0x100 + 0x80,
+  }).getBuffer("image/png");
+  return t.run((ctx) =>
+    ctx.storage.store(new Blob([new Uint8Array(png)], { type: "image/png" })),
   );
+};
 
 const completionRow = (t: TestConvex<typeof schema>, aggregateId: string) =>
   t.run(async (ctx) =>
@@ -143,26 +125,30 @@ const moderationActions = (t: TestConvex<typeof schema>) =>
 const settleScheduledJobs = (t: TestConvex<typeof schema>) =>
   settleDueScheduled(t);
 
-// Attach one photo and return its sidecar row, reset to "pending": the background-drained
-// action marks it unscored (verdict-only — the WebP path, so no file swap), so settle that job first, then re-open the sidecar so each test exercises the FIRST
-// verdict deterministically.
+// Attach one photo and return its sidecar row, reset to "pending", with the file id the photo
+// has now: the background-drained action swaps it to its re-encode and marks it unscored, so
+// settle that job first, then re-open the sidecar so each test exercises the FIRST verdict
+// deterministically.
 const attachOne = async (
   t: TestConvex<typeof schema>,
   completionId: string,
 ) => {
-  const fileId = (await storeBlob(t)) as Id<"_storage">;
+  const before = new Set(
+    (await completionImagesFor(t, completionId)).map((img) => img._id),
+  );
+  const uploadId = (await storeBlob(t)) as Id<"_storage">;
   await asAlice(t).mutation(
     api.solving.attachCompletionPhotos.attachCompletionPhotos,
-    { completionId, storageIds: [fileId] },
+    { completionId, storageIds: [uploadId] },
   );
   await settleScheduledJobs(t);
   const images = await completionImagesFor(t, completionId);
-  const sidecar = images.find((img) => img.fileId === fileId);
+  const sidecar = images.find((img) => !before.has(img._id));
   if (!sidecar) throw new Error("sidecar not inserted by attach");
   await t.run((ctx) =>
     ctx.db.patch(sidecar._id, { moderationStatus: "pending" }),
   );
-  return { fileId, sidecar };
+  return { fileId: sidecar.fileId, sidecar };
 };
 
 describe("completionModerationStore.setModerationFile (approve-with-swap)", () => {
@@ -171,11 +157,7 @@ describe("completionModerationStore.setModerationFile (approve-with-swap)", () =
     const { copyAggregateId } = await seed(t);
     const completionId = await recordForAlice(t, copyAggregateId);
     const { sidecar } = await attachOne(t, completionId);
-    const otherFileId = (await storeBlob(t)) as Id<"_storage">;
-    await asAlice(t).mutation(
-      api.solving.attachCompletionPhotos.attachCompletionPhotos,
-      { completionId, storageIds: [otherFileId] },
-    );
+    const { fileId: otherFileId } = await attachOne(t, completionId);
 
     // Backdate the sidecar so the updatedAt bump is observable.
     const staleAt = Date.now() - 10_000;
@@ -253,11 +235,7 @@ describe("completionModerationStore.setModerationVerdict", () => {
       t,
       completionId,
     );
-    const keptFileId = (await storeBlob(t)) as Id<"_storage">;
-    await asAlice(t).mutation(
-      api.solving.attachCompletionPhotos.attachCompletionPhotos,
-      { completionId, storageIds: [keptFileId] },
-    );
+    const { fileId: keptFileId } = await attachOne(t, completionId);
 
     await t.mutation(
       internal.solving.completionModerationStore.setModerationVerdict,
@@ -322,30 +300,27 @@ describe("rejected-photo read filtering", () => {
   const seedStatuses = async (t: TestConvex<typeof schema>) => {
     const { copyAggregateId } = await seed(t);
     const completionId = await recordForAlice(t, copyAggregateId);
-    const approved = (await storeBlob(t)) as Id<"_storage">;
-    const rejected = (await storeBlob(t)) as Id<"_storage">;
-    const pending = (await storeBlob(t)) as Id<"_storage">;
+    const uploads = [
+      (await storeBlob(t)) as Id<"_storage">,
+      (await storeBlob(t)) as Id<"_storage">,
+      (await storeBlob(t)) as Id<"_storage">,
+    ];
     await asAlice(t).mutation(
       api.solving.attachCompletionPhotos.attachCompletionPhotos,
-      { completionId, storageIds: [approved, rejected, pending] },
+      { completionId, storageIds: uploads },
     );
-    // Let the background drain finish (it marks all three unscored) before pinning the
-    // exact statuses, so none can be overwritten afterwards.
+    // Let the background drain finish (it swaps all three to their re-encodes and marks them
+    // unscored) before pinning the exact statuses, so none can be overwritten afterwards. The
+    // sidecars come back in the order the photos were attached.
     await settleScheduledJobs(t);
     const images = await completionImagesFor(t, completionId);
-    const byFile = new Map(images.map((img) => [img.fileId, img._id]));
+    const [approved, rejected, pending] = images.map((img) => img.fileId);
     const legacy = (await storeBlob(t)) as Id<"_storage">;
     const row = await completionRow(t, completionId);
     await t.run(async (ctx) => {
-      await ctx.db.patch(byFile.get(approved)!, {
-        moderationStatus: "approved",
-      });
-      await ctx.db.patch(byFile.get(rejected)!, {
-        moderationStatus: "rejected",
-      });
-      await ctx.db.patch(byFile.get(pending)!, {
-        moderationStatus: "pending",
-      });
+      await ctx.db.patch(images[0]._id, { moderationStatus: "approved" });
+      await ctx.db.patch(images[1]._id, { moderationStatus: "rejected" });
+      await ctx.db.patch(images[2]._id, { moderationStatus: "pending" });
       // `legacy` gets NO sidecar at all.
       await ctx.db.patch(row!._id, {
         photos: [approved, rejected, pending, legacy],

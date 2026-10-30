@@ -12,8 +12,10 @@
 // - PNG: keeps the critical chunks and the ancillary chunks that change how the pixels look
 //   (tRNS, gAMA, cHRM, sRGB, iCCP, sBIT, bKGD, pHYs, cICP, mDCV, cLLI, and the APNG chunks), up
 //   to IEND. Drops eXIf, tEXt, iTXt (XMP lives here), zTXt, tIME and any other chunk.
-// - WebP: keeps VP8/VP8L/VP8X/ALPH/ANIM/ANMF/ICCP and drops EXIF, "XMP " and any other chunk,
-//   clearing the matching VP8X flags and rewriting the RIFF size.
+// - WebP: keeps VP8/VP8L/VP8X/ALPH/ICCP and drops EXIF, "XMP " and any other chunk, clearing
+//   the matching VP8X flags and rewriting the RIFF size. An animation (an ANIM or ANMF chunk) is
+//   malformed: a frame (ANMF) nests chunks of its own, EXIF and XMP included, which this walker
+//   does not look inside, so it is never stripped, nor reported clean.
 //
 // Orientation: a phone photo often stores its pixels sideways with an Exif Orientation tag that
 // tells viewers how to turn them (JPEG APP1; PNG eXIf and WebP EXIF can carry it too). Every
@@ -254,15 +256,9 @@ const walkPng = (b: Uint8Array): Walk | null => {
 
 // ---- WebP ---------------------------------------------------------------------------------
 
-const WEBP_KEEP = new Set([
-  "VP8 ",
-  "VP8L",
-  "VP8X",
-  "ALPH",
-  "ANIM",
-  "ANMF",
-  "ICCP",
-]);
+const WEBP_KEEP = new Set(["VP8 ", "VP8L", "VP8X", "ALPH", "ICCP"]);
+// Chunks that make a WebP an animation, which is refused as malformed (see the header).
+const WEBP_ANIMATION = new Set(["ANIM", "ANMF"]);
 // VP8X flag bits announcing the chunks we drop.
 const VP8X_EXIF = 0x08;
 const VP8X_XMP = 0x04;
@@ -278,6 +274,7 @@ const walkWebp = (b: Uint8Array): Walk | null => {
     const end = i + 8 + size + (size & 1);
     if (i + 8 + size > b.length) return null;
     const type = String.fromCharCode(...b.subarray(i, i + 4));
+    if (WEBP_ANIMATION.has(type)) return null;
     const bytes = b.subarray(i, Math.min(end, b.length));
     if (WEBP_KEEP.has(type)) {
       blocks.push({ bytes, keep: true });

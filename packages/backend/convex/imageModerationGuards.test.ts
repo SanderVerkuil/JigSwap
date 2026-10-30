@@ -26,8 +26,8 @@ import schema from "./schema";
 // APNG) is rejected as "invalid_image" before any decode or classifier call, and its blob is
 // deleted. Every accepted upload has its metadata
 // (EXIF incl. GPS, XMP, IPTC, comments, PNG text chunks, WebP EXIF/XMP) stripped before it is
-// stored, served or sent to the classifier; WebP, which jimp cannot decode, keeps its stripped
-// bytes.
+// stored, served or sent to the classifier, and is stored as the encoder's output: a WebP too is
+// decoded (WASM) and re-encoded, never stored as the container it came in.
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
@@ -234,7 +234,7 @@ const APNG = craftPng(
   iendChunk(),
 );
 
-// A lossless 2x2 WebP header (VP8L) with an undecodable body: jimp has no WebP decoder anyway.
+// A lossless 2x2 WebP header (VP8L) over a body that does not decode.
 const WEBP_BYTES = new Uint8Array([
   ...new TextEncoder().encode("RIFF"),
   0,
@@ -416,14 +416,14 @@ describe("metadata stripped before anything is stored or classified (copy photos
       "jpeg",
       [30, 40],
     ],
-    // Upright already: its stripped bytes are stored as they are.
+    // Upright already: decoded and re-encoded all the same.
     [
       "an upright WebP",
       "orientation/1.webp",
       "image/webp",
-      "image/webp",
-      "webp",
-      null,
+      "image/jpeg",
+      "jpeg",
+      [24, 16],
     ],
   ] as const)(
     "%s with GPS is stored and classified without any metadata; the upload is deleted",
@@ -447,15 +447,54 @@ describe("metadata stripped before anything is stored or classified (copy photos
       for (const secret of SECRETS) {
         expect(latin1(stored.bytes)).not.toContain(secret);
       }
-      // Each fixture's Exif held Orientation 6: the stored pixels are turned upright.
-      if (size) {
-        const image = await Jimp.read(Buffer.from(stored.bytes));
-        expect([image.bitmap.width, image.bitmap.height]).toEqual(size);
-      }
+      // The stored pixels are upright (every fixture but orientation/1.webp held Orientation 6).
+      const image = await Jimp.read(Buffer.from(stored.bytes));
+      expect([image.bitmap.width, image.bitmap.height]).toEqual(size);
       const [sent] = await classifiedBytes(fetchMock);
       expect(sent).toEqual(stored.bytes);
     },
   );
+
+  // The byte-level stripper keeps the chunks a WebP needs to display (VP8X, ICCP, ALPH, the
+  // bitstream) as they are, so whatever rides in them would be stored with it. Re-encoding every
+  // WebP stores the encoder's output instead, and the metadata check runs on that (SEC-72).
+  test("a still WebP stores none of its chunks' bytes: only the encoder's output, with a blurhash", async () => {
+    const fetchMock = cleanReply();
+    vi.stubGlobal("fetch", fetchMock);
+    const t = withModerationPool(convexTest(schema, modules));
+    const { copy } = await seed(t);
+    // orientation/1.webp (VP8X, VP8L, EXIF) with an ICC profile chunk that carries a location.
+    const original = webpChunks(fixture("orientation/1.webp"));
+    const vp8x = original.get("VP8X")!;
+    vp8x[8] |= 0x20; // the VP8X flag that announces an ICC profile
+    const body = [
+      ...vp8x,
+      ...riffChunk("ICCP", ascii("GPS Kerkstraat 1, Utrecht 52,5.2057N")),
+      ...original.get("VP8L")!,
+    ];
+    const webp = new Uint8Array([
+      ...ascii("RIFF"),
+      ...le(4 + body.length, 4),
+      ...ascii("WEBP"),
+      ...body,
+    ]);
+    const fileId = await store(t, webp, "image/webp");
+
+    const row = await addCopyPhoto(t, copy, fileId);
+
+    expect(row.moderationStatus).toBe("approved");
+    expect(row.blurhash).toEqual(expect.any(String));
+    const stored = (await storedBytes(t, row.fileId))!;
+    expect(stored.type).toBe("image/jpeg");
+    expect(findMetadata(stored.bytes, "jpeg")).toEqual([]);
+    for (const secret of SECRETS) {
+      expect(latin1(stored.bytes)).not.toContain(secret);
+    }
+    const image = await Jimp.read(Buffer.from(stored.bytes));
+    expect([image.bitmap.width, image.bitmap.height]).toEqual([24, 16]);
+    const [sent] = await classifiedBytes(fetchMock);
+    expect(sent).toEqual(stored.bytes);
+  });
 
   test("a JPEG whose segments run past the end is refused, never stored or classified", async () => {
     const fetchMock = cleanReply();
@@ -640,11 +679,11 @@ describe("decode failures and polyglots (copy photos)", () => {
     expect(stored).toEqual([]);
   });
 
-  test("WebP claimed as another type is stored again as image/webp and the original deleted", async () => {
+  test("a WebP claimed as another type is re-encoded and stored as JPEG, the original deleted", async () => {
     vi.stubGlobal("fetch", cleanReply());
     const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
-    const fileId = await store(t, WEBP_BYTES, "text/html");
+    const fileId = await store(t, fixture("orientation/1.webp"), "text/html");
 
     const row = await addCopyPhoto(t, copy, fileId);
 
@@ -654,7 +693,23 @@ describe("decode failures and polyglots (copy photos)", () => {
     const storedType = await t.run(
       async (ctx) => (await ctx.storage.get(row.fileId))?.type,
     );
-    expect(storedType).toBe("image/webp");
+    expect(storedType).toBe("image/jpeg");
+  });
+
+  test("a WebP header over a body that does not decode is refused as decode_failed", async () => {
+    const fetchMock = cleanReply();
+    vi.stubGlobal("fetch", fetchMock);
+    const t = withModerationPool(convexTest(schema, modules));
+    const { copy } = await seed(t);
+    const fileId = await store(t, WEBP_BYTES, "image/webp");
+
+    const row = await addCopyPhoto(t, copy, fileId);
+
+    expect(row.moderationStatus).toBe("rejected");
+    expect(row.moderationLabel).toBe("invalid_image");
+    expect(row.moderationReason).toBe("decode_failed");
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(await blobExists(t, fileId)).toBe(false);
   });
 });
 

@@ -43,10 +43,9 @@
 // first one after it. A WebP is accepted only as such a still: an animation (the VP8X animation
 // flag, or an ANIM or ANMF chunk anywhere) is refused ("animated"), and behind a VP8X header the
 // bitstream must be exactly the canvas size, so the size checked is the size decoded.
-// jimp 1.x has no WebP codec, so the pipeline does not re-encode an upright WebP. It strips
-// the WebP's EXIF/XMP chunks at byte level instead (stripMetadata) and stores those bytes (no
-// blurhash). One whose EXIF held an Orientation is decoded (WASM, normaliseImage), turned
-// upright and re-encoded like JPEG/PNG.
+// jimp 1.x has no WebP codec, so the pipeline decodes every WebP with the WASM decoder
+// (normaliseImage) and re-encodes it like JPEG/PNG (JPEG, or PNG when it has transparency, with
+// a blurhash): a WebP is never stored as the container it was uploaded in.
 // WebP stays accepted because phones and browsers hand it over and the web client may upload the
 // original when it cannot re-encode in the browser.
 //

@@ -18,6 +18,9 @@ import {
 import { WEBP_DECODER_WASM_BASE64 } from "./webpDecoderWasm";
 
 // Strip an image's metadata and turn its pixels upright. Node only (jimp, a WASM WebP decoder).
+// The moderation pipeline uses `decodeUpright` (and `hasTransparency`): it re-encodes every upload
+// (pipeline.reencodeImage), WebP included. `stripAndNormalise` serves the one-shot backfill
+// (backfillStripMetadata).
 //
 // `stripImageMetadata` drops every Exif block, Orientation included. An image whose Exif held
 // no Orientation (or 1) is stored as the stripped bytes, untouched. One with 2..8 is decoded,

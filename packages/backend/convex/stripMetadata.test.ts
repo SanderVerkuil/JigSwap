@@ -304,4 +304,27 @@ describe("WebP", () => {
       stripImageMetadata(fixture("gps.webp").subarray(0, 60), "webp"),
     ).toBeNull();
   });
+
+  // A frame (ANMF) holds chunks of its own, EXIF and XMP included, which this walker does not
+  // look inside: an animation is never stripped, nor reported clean (SEC-72).
+  test.each(["ANIM", "ANMF"])(
+    "a WebP with an %s chunk is malformed",
+    (type) => {
+      const original = fixture("gps.webp");
+      // gps.webp's EXIF and XMP chunks, carried inside the extra chunk.
+      const inner = original.subarray(30 + 8 + 58);
+      const size = inner.length;
+      const animated = new Uint8Array([
+        ...original,
+        ...Array.from(type, (ch) => ch.charCodeAt(0)),
+        size & 0xff,
+        (size >> 8) & 0xff,
+        (size >> 16) & 0xff,
+        size >>> 24,
+        ...inner,
+      ]);
+      expect(findMetadata(animated, "webp")).toBeNull();
+      expect(stripImageMetadata(animated, "webp")).toBeNull();
+    },
+  );
 });

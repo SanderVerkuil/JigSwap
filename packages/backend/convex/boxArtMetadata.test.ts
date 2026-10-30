@@ -106,8 +106,8 @@ const sanitize = (t: TestConvex<typeof schema>, storageId: Id<"_storage">) =>
   asAlice(t).action(api.catalog.sanitizeBoxArt.sanitizeBoxArt, { storageId });
 
 describe("sanitizeBoxArt", () => {
-  // Each fixture's Exif holds Orientation 6, so each is stored turned upright (a turned WebP as
-  // JPEG: jimp has no WebP encoder); an upright WebP is stored as its stripped bytes.
+  // Each gps fixture's Exif holds Orientation 6, so each is stored turned upright. Every WebP is
+  // decoded and re-encoded, turned or not: as JPEG, there is no WebP encoder on the server.
   test.each([
     ["JPEG", "gps.jpg", "image/jpeg", "image/jpeg", "jpeg", [48, 64]],
     ["PNG", "gps.png", "image/png", "image/png", "png", [30, 40]],
@@ -116,8 +116,8 @@ describe("sanitizeBoxArt", () => {
       "upright WebP",
       "orientation/1.webp",
       "image/webp",
-      "image/webp",
-      "webp",
+      "image/jpeg",
+      "jpeg",
       [24, 16],
     ],
   ] as const)(
