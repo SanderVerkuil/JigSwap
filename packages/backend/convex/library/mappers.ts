@@ -49,6 +49,34 @@ export const toCopySnapshotView = (
     pieceCount: snapshot.pieceCount,
   };
 
+/**
+ * The catalogue facts joined onto a copy for this caller. An approved definition's facts are
+ * public catalogue data. For a pending, rejected or disabled definition only the copy's owner
+ * (`includeOwnerOnly`) gets them; everyone else gets just the facts the copy itself carries, its
+ * snapshot title, brand and piece count (the row's, for a legacy copy without a snapshot), and
+ * never the unmoderated description, publisher, difficulty, category or tags.
+ */
+export const toCopyPuzzleView = (
+  copy: Doc<"ownedPuzzles">,
+  puzzle: Doc<"puzzles"> | null,
+  opts?: { includeOwnerOnly?: boolean },
+): OwnedCopyPuzzleView | null => {
+  if (!puzzle) return null;
+  if (puzzle.status === "approved" || opts?.includeOwnerOnly) {
+    return toOwnedCopyPuzzleView(puzzle);
+  }
+  return {
+    _id: puzzle._id,
+    _creationTime: puzzle._creationTime,
+    aggregateId: puzzle.aggregateId,
+    title: copy.snapshot?.title ?? puzzle.title,
+    brand: copy.snapshot?.brand ?? puzzle.brand,
+    pieceCount: copy.snapshot?.pieceCount ?? puzzle.pieceCount,
+    createdAt: puzzle.createdAt,
+    updatedAt: puzzle.updatedAt,
+  };
+};
+
 /** The owner summary joined onto a copy in browse/detail reads. */
 export const toOwnedCopyOwnerView = (
   row: Doc<"users">,
@@ -69,7 +97,8 @@ export const toOwnedCopyOwnerView = (
  * something each call site must remember to do. `salePrice` is NOT owner-only: it is the public
  * asking price for a copy listed `forSale`, so it is always carried (the row only holds it when the
  * owner set one). Callers that surface OTHER members' copies must leave `includeOwnerOnly` at its
- * `false` default.
+ * `false` default. The same flag decides the joined `puzzle` (toCopyPuzzleView): a copy of a
+ * definition that is not approved shows a non-owner only its snapshot facts.
  */
 export const toOwnedCopyView = (
   row: Doc<"ownedPuzzles">,
@@ -103,7 +132,9 @@ export const toOwnedCopyView = (
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
   addedAt: opts?.addedAt,
-  puzzle: puzzle ? toOwnedCopyPuzzleView(puzzle) : null,
+  puzzle: toCopyPuzzleView(row, puzzle, {
+    includeOwnerOnly: opts?.includeOwnerOnly,
+  }),
   owner:
     opts && "owner" in opts
       ? opts.owner
@@ -122,7 +153,8 @@ export type PublicCopyView = Omit<
 /**
  * The public projection of an owned copy for profile listings. Built on `toOwnedCopyView` with
  * `includeOwnerOnly: false`, then drops the owner-only KEYS entirely (not just their values), so
- * the profile payload is identical for every viewer, the owner included.
+ * the profile payload is identical for every viewer, the owner included (a copy of a definition
+ * that is not approved therefore shows its snapshot facts to the owner here too).
  */
 export const toPublicCopyView = (
   row: Doc<"ownedPuzzles">,
