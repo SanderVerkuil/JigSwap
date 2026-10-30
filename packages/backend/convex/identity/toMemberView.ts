@@ -23,7 +23,7 @@ export const toMemberIdentityView = (
 // Shared row->DTO mapping for the member reads. Emits a PII-free MemberView (no email, no clerkId)
 // so member-to-other projections never leak a member's email or Clerk subject id. It adds bio,
 // location and preferredLanguage, so it may only reach a viewer the privacy rules reveal the member
-// to (social/privacy projectMemberIdentity).
+// to (social/privacy projectMemberIdentity); toMemberViewAllowlist.test.ts pins its callers.
 export const toMemberView = (user: Doc<"users">): MemberView => ({
   ...toMemberIdentityView(user),
   bio: user.bio,
