@@ -2,6 +2,7 @@ import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
 import { SectionHead } from "@/components/dashboard-home/section-head";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
+import { emptyStateFor } from "@/components/notifications/notification-empty-state";
 import { NotificationItem } from "@/components/notifications/notification-item";
 import {
   ADMIN_NOTIFICATION_TYPES,
@@ -233,11 +234,18 @@ function NotificationsPage() {
     setCategory("all");
     setUnreadOnly(false);
   };
+  const emptyState = emptyStateFor({
+    loaded: notifications.length,
+    shown: filtered.length,
+    unreadOnly,
+    unreadTotal: unreadCount,
+    canLoadMore: pageStatus === "CanLoadMore",
+  });
 
   return (
     <div className="flex w-full flex-col gap-6">
       <div className="grid gap-6 lg:gap-10 xl:grid-cols-[minmax(0,1fr)_280px]">
-        <aside className="flex flex-col gap-4 xl:col-start-2 xl:row-start-1 xl:sticky xl:top-2 xl:self-start">
+        <aside className="flex min-w-0 flex-col gap-4 xl:col-start-2 xl:row-start-1 xl:sticky xl:top-2 xl:self-start">
           {/* Unread stat: a glanceable extra, not a control — xl only */}
           <div className="hidden xl:block">
             <p className="text-3xl font-bold tabular-nums">
@@ -246,10 +254,15 @@ function NotificationsPage() {
             <p className="text-muted-foreground text-sm">{t("unreadStat")}</p>
           </div>
 
-          {/* Category pills + unread-only toggle: always visible; horizontal
-              wrap row below xl, vertical stack at xl. */}
-          <div className="flex flex-wrap items-center gap-2 xl:flex-col xl:items-start xl:gap-3">
-            <div className="flex flex-wrap gap-2" role="group">
+          {/* Category pills + unread-only toggle: always visible. Below md the pills are ONE
+              row that scrolls sideways, bleeding to the screen edges, with the toggle under it
+              (two rows, not three); a wrapping row from md; a vertical stack at xl. */}
+          <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center xl:flex-col xl:items-start xl:gap-3">
+            <div
+              role="group"
+              aria-label={t("filterLabel")}
+              className="flex gap-2 [scrollbar-width:none] max-md:-mx-4 max-md:overflow-x-auto max-md:overscroll-x-contain max-md:px-4 max-md:py-1 md:flex-wrap"
+            >
               <Button
                 type="button"
                 size="sm"
@@ -285,7 +298,7 @@ function NotificationsPage() {
                 );
               })}
             </div>
-            <label className="text-muted-foreground flex items-center gap-2 text-sm">
+            <label className="text-muted-foreground flex items-center gap-2 self-start text-sm md:self-auto">
               <Switch
                 checked={unreadOnly}
                 onCheckedChange={setUnreadOnly}
@@ -312,7 +325,7 @@ function NotificationsPage() {
         </aside>
 
         <div className="min-w-0 xl:col-start-1 xl:row-start-1">
-          {notifications.length === 0 ? (
+          {emptyState?.kind === "none" ? (
             <Card>
               <CardContent className="p-12 text-center">
                 <div className="bg-muted mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
@@ -324,18 +337,34 @@ function NotificationsPage() {
                 </p>
               </CardContent>
             </Card>
-          ) : filtered.length === 0 ? (
+          ) : emptyState ? (
+            // Filters matched nothing in the loaded pages: say that, not "no notifications".
             <Card>
               <CardContent className="p-12 text-center">
                 <div className="bg-muted mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
-                  <Bell className="text-muted-foreground h-8 w-8" />
+                  {emptyState.kind === "caughtUp" ? (
+                    <CheckCheck className="text-muted-foreground h-8 w-8" />
+                  ) : (
+                    <Bell className="text-muted-foreground h-8 w-8" />
+                  )}
                 </div>
-                <h3 className="mb-2 text-lg font-medium">{t("empty")}</h3>
-                <p className="text-muted-foreground mb-4 text-sm">
-                  {t("emptyHint")}
-                </p>
+                <h3 className="mb-2 text-lg font-medium">
+                  {emptyState.kind === "caughtUp"
+                    ? t("allRead")
+                    : t("nothingMatches")}
+                </h3>
+                {emptyState.kind === "noMatch" && emptyState.moreToLoad && (
+                  <p className="text-muted-foreground text-sm">
+                    {t("filteredLoadMoreHint")}
+                  </p>
+                )}
                 {filtersActive && (
-                  <Button variant="outline" size="sm" onClick={clearFilters}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-4"
+                    onClick={clearFilters}
+                  >
                     {t("clearFilters")}
                   </Button>
                 )}
