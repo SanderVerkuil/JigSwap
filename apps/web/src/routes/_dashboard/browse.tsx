@@ -6,6 +6,10 @@ import {
   type CategoryOption,
   type QueryBuilderState,
 } from "@/components/browse/query-builder";
+import {
+  browseFilterArgs,
+  useBrowsePages,
+} from "@/components/browse/use-browse-pages";
 import { EmptyState } from "@/components/community/primitives";
 import { canRequestTrade } from "@/components/exchange/request-trade";
 import {
@@ -16,10 +20,13 @@ import {
   copyMessageRoute,
   isOwnCopy,
 } from "@/components/messaging/copy-conversation";
+import { PuzzleCardSkeleton } from "@/components/puzzles/puzzle-card-skeleton";
 import { ViewModeToggle } from "@/components/puzzles/view-mode-toggle";
+import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
-import { gateway, Id } from "@/gateway";
+import { Skeleton } from "@/components/ui/skeleton";
+import { gateway } from "@/gateway";
 import { validateBrowseSearch } from "@/lib/browse-search";
 import { useProjectedMemberName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
@@ -76,23 +83,11 @@ function BrowsePage() {
     ),
   );
 
-  // Server-side filters: category, condition, difficulty, piece range, and the
-  // free-text searchTerm (which the browse query matches over title / brand /
-  // description / tags) are all honoured by gateway.library.browseOwned.
-  const { data: browseOwnedPuzzlesResult } = useQuery(
-    convexQuery(gateway.library.browseOwned, {
-      category: query.category
-        ? (query.category as Id<"adminCategories">)
-        : undefined,
-      difficulty: query.difficulty || undefined,
-      condition: query.condition || undefined,
-      minPieceCount: query.minPieces ? parseInt(query.minPieces) : undefined,
-      maxPieceCount: query.maxPieces ? parseInt(query.maxPieces) : undefined,
-      searchTerm: debouncedText || undefined,
-      puzzleId: puzzleFilter,
-      includeOwnPuzzles: false,
-      limit: 50,
-    }),
+  // Every condition (availability included) and the free-text searchTerm (matched over title /
+  // brand / description / tags) is applied by gateway.library.browseOwned before paging, so the
+  // total and "Load more" cover every matching offer, not just the first page.
+  const browse = useBrowsePages(
+    browseFilterArgs(query, debouncedText, puzzleFilter),
   );
 
   const { data: categoriesRaw } = useQuery(
@@ -108,26 +103,13 @@ function BrowsePage() {
     [categoriesRaw],
   );
 
-  // Client-side filter: per-availability-flag narrowing. The browse query only
-  // prefilters to copies with ANY availability flag set, so selecting specific
-  // channels (for trade / lend / sale) is filtered here over the returned rows.
-  // TODO: a server-side `availability` arg on browseOwnedPuzzles would let this
-  // run in the query and keep paging counts exact for large libraries.
-  const shownPuzzles = useMemo(() => {
-    const rows = browseOwnedPuzzlesResult?.ownedPuzzles ?? [];
-    if (query.availability.length === 0) return rows;
-    return rows.filter((puzzle) =>
-      query.availability.some((flag) => puzzle.availability[flag]),
-    );
-  }, [browseOwnedPuzzlesResult, query.availability]);
-
-  if (
-    !user ||
-    convexUser === undefined ||
-    browseOwnedPuzzlesResult === undefined
-  ) {
+  // Only the member lookup gates the page. Results load inside it, so the query builder stays
+  // mounted (and the Text field keeps focus) while a new filter's results arrive.
+  if (!user || convexUser === undefined) {
     return <PageLoading message={tCommon("loading")} />;
   }
+
+  const shownPuzzles = browse.rows;
 
   return (
     <div className="flex flex-col gap-[18px]">
@@ -156,63 +138,109 @@ function BrowsePage() {
           tEnum={t}
         />
         <div className="flex items-center gap-3">
-          <span className="text-muted-foreground text-sm">
-            {tBrowse("resultsCount", { count: shownPuzzles.length })}
-          </span>
+          {/* The exact number of matching offers: "Showing x of y" while more can be loaded. */}
+          {browse.total === undefined ? (
+            browse.loading && <Skeleton className="h-4 w-28" />
+          ) : (
+            <span className="text-muted-foreground text-sm">
+              {shownPuzzles.length < browse.total
+                ? tBrowse("showingCount", {
+                    shown: shownPuzzles.length,
+                    total: browse.total,
+                  })
+                : tBrowse("resultsCount", { count: shownPuzzles.length })}
+            </span>
+          )}
           <ViewModeToggle value={viewMode} onChange={setViewMode} />
         </div>
       </div>
 
       {/* Results */}
-      {shownPuzzles.length === 0 ? (
+      {browse.failed ? (
+        <EmptyState
+          title={tBrowse("loadFailed")}
+          sub={tBrowse("loadFailedHint")}
+        />
+      ) : browse.loading ? (
+        <PuzzleViewProvider viewMode={viewMode}>
+          {Array.from({ length: 8 }, (_, i) => (
+            <PuzzleCardSkeleton key={i} />
+          ))}
+        </PuzzleViewProvider>
+      ) : shownPuzzles.length === 0 && !browse.stale ? (
         <EmptyState
           title={tBrowse("noPuzzlesFound")}
           sub={tBrowse("tryDifferentFilters")}
         />
       ) : (
-        <PuzzleViewProvider viewMode={viewMode}>
-          {shownPuzzles.map((puzzle) => {
-            // The owner is privacy-projected: `ownerId` is present only when the owner is revealed.
-            // An anonymised owner can still receive a trade request (propose derives the recipient
-            // server-side, #144) but can't be messaged from here (the copy page applies the same rule).
-            const { ownerId, owner } = puzzle;
-            return (
-              <PuzzleCard
-                key={puzzle._id}
-                puzzle={puzzle}
-                variant="browse"
-                ownerLabel={projectedName(owner, tCopyOwner("anonymous"))}
-                onView={(ownedPuzzleId) =>
-                  navigate({
-                    to: "/copies/$id",
-                    params: { id: ownedPuzzleId },
-                  })
-                }
-                onRequestExchange={
-                  canRequestTrade(puzzle, convexUser?._id)
-                    ? () =>
-                        setRequestCopy({
-                          copyId: puzzle._id,
-                          ...(ownerId !== undefined ? { ownerId } : {}),
-                          owner: owner.anonymous ? null : owner.member,
-                          title: puzzle.puzzle?.title ?? "",
-                          pieceCount: puzzle.puzzle?.pieceCount,
-                          coverUrl: puzzle.coverUrl,
-                          availability: puzzle.availability,
-                        })
-                    : undefined
-                }
-                onMessage={
-                  ownerId === undefined || isOwnCopy(ownerId, convexUser?._id)
-                    ? undefined
-                    : (ownedPuzzleId) =>
-                        navigate(copyMessageRoute(ownedPuzzleId))
-                }
-                onFavorite={() => toast(tBrowse("favoritesComingSoon"))}
-              />
-            );
-          })}
-        </PuzzleViewProvider>
+        // While a new filter's results load, the previous ones stay, dimmed and marked busy.
+        <div
+          aria-busy={browse.stale}
+          className={
+            browse.stale
+              ? "opacity-60 motion-safe:transition-opacity"
+              : undefined
+          }
+        >
+          <PuzzleViewProvider viewMode={viewMode}>
+            {shownPuzzles.map((puzzle) => {
+              // The owner is privacy-projected: `ownerId` is present only when the owner is
+              // revealed. An anonymised owner can still receive a trade request (propose derives
+              // the recipient server-side, #144) but can't be messaged from here (the copy page
+              // applies the same rule).
+              const { ownerId, owner } = puzzle;
+              return (
+                <PuzzleCard
+                  key={puzzle._id}
+                  puzzle={puzzle}
+                  variant="browse"
+                  ownerLabel={projectedName(owner, tCopyOwner("anonymous"))}
+                  onView={(ownedPuzzleId) =>
+                    navigate({
+                      to: "/copies/$id",
+                      params: { id: ownedPuzzleId },
+                    })
+                  }
+                  onRequestExchange={
+                    canRequestTrade(puzzle, convexUser?._id)
+                      ? () =>
+                          setRequestCopy({
+                            copyId: puzzle._id,
+                            ...(ownerId !== undefined ? { ownerId } : {}),
+                            owner: owner.anonymous ? null : owner.member,
+                            title: puzzle.puzzle?.title ?? "",
+                            pieceCount: puzzle.puzzle?.pieceCount,
+                            coverUrl: puzzle.coverUrl,
+                            availability: puzzle.availability,
+                          })
+                      : undefined
+                  }
+                  onMessage={
+                    ownerId === undefined || isOwnCopy(ownerId, convexUser?._id)
+                      ? undefined
+                      : (ownedPuzzleId) =>
+                          navigate(copyMessageRoute(ownedPuzzleId))
+                  }
+                  onFavorite={() => toast(tBrowse("favoritesComingSoon"))}
+                />
+              );
+            })}
+          </PuzzleViewProvider>
+        </div>
+      )}
+
+      {/* aria-disabled, not disabled, while the next page loads: a disabled button drops focus. */}
+      {(browse.hasMore || browse.loadingMore) && (
+        <Button
+          variant="outline"
+          className="h-11 self-center md:h-9"
+          aria-disabled={browse.loadingMore}
+          onClick={() => {
+            if (!browse.loadingMore) browse.loadMore();
+          }}
+        >
+          {browse.loadingMore ? tCommon("loading") : tBrowse("loadMore")}
+        </Button>
       )}
 
       <RequestTradeDialog
