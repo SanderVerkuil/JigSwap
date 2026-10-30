@@ -121,7 +121,11 @@ export interface OwnedCopyImageView {
   _creationTime: number;
   ownedPuzzleId: DocId;
   uploaderId: DocId;
-  fileId: DocId;
+  /**
+   * The photo's URL once it is approved and hash-checked, else null. Never its storage id: a raw
+   * `_storage` id is not a URL and is not sent to clients.
+   */
+  url: string | null;
   title?: string;
   description?: string;
   tag?: "box_front" | "box_back" | "pieces" | "completed" | "damage_detail";
@@ -130,7 +134,10 @@ export interface OwnedCopyImageView {
   updatedAt: number;
 }
 
-/** A completion record joined into `library.ownedWithCollectionStatus`. */
+/**
+ * A completion record joined into `library.ownedWithCollectionStatus`. Its photos are not carried
+ * (they are storage ids); `solving.completionHistory` resolves them to URLs.
+ */
 export interface OwnedCopyCompletionView {
   _id: DocId;
   _creationTime: number;
@@ -144,7 +151,6 @@ export interface OwnedCopyCompletionView {
   /** Absent = "day". */
   datePrecision?: CompletionDatePrecision;
   notes?: string;
-  photos: DocId[];
   isCompleted: boolean;
   createdAt: number;
   updatedAt: number;
@@ -162,7 +168,7 @@ export type OwnedCopyCollectionStatusView =
 /**
  * A single owned copy enriched with its image rows, owner, the member's collection status, and
  * completion history, as returned by `library.ownedWithCollectionStatus`. Superset of the legacy
- * spread row. Note `images` here are the raw image ROWS (consumers read `images[0].fileId`),
+ * spread row. Note `images` here are the copy's image ROWS (consumers read `images[0].url`),
  * distinct from `OwnedCopyView.puzzle.images`.
  */
 export interface OwnedCopyDetailView {

@@ -264,6 +264,51 @@ describe("no raw storage ids in read responses", () => {
     }
   });
 
+  test("the owner's copy management read gives photo URLs, never storage ids", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    const blobs = await allBlobs(t);
+
+    const view = await as(t, "alice").query(
+      api.library.getOwnedPuzzleWithCollectionStatus
+        .getOwnedPuzzleWithCollectionStatus,
+      { ownedPuzzleId: s.copy },
+    );
+
+    expect(idsIn(view, blobs)).toEqual([]);
+    // The approved photo is served; the pending one is listed without a URL.
+    expect(view?.images.map((image) => typeof image.url)).toEqual([
+      "string",
+      "object",
+    ]);
+    expect(view?.images[1].url).toBeNull();
+    expect(view?.completionHistory).toHaveLength(1);
+  });
+
+  test("a member's own completion reads give photo URLs, never storage ids", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    const blobs = await allBlobs(t);
+    const alice = as(t, "alice");
+
+    const mine = await alice.query(
+      api.solving.listMyCompletions.listMyCompletions,
+      {},
+    );
+    const history = await alice.query(
+      api.solving.getCompletionHistory.getCompletionHistory,
+      { puzzleDefinitionId: s.definitionId },
+    );
+
+    for (const rows of [mine, history]) {
+      expect(rows).toHaveLength(1);
+      expect(rows[0].photoItems).toEqual([
+        { url: expect.stringMatching(/^https:/), pending: false },
+      ]);
+      expect(idsIn(rows, blobs)).toEqual([]);
+    }
+  });
+
   test("a proposer sees only their own upload; baseline and current images are URLs", async () => {
     const t = convexTest(schema, modules);
     const s = await seed(t);

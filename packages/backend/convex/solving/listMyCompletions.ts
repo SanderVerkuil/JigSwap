@@ -21,7 +21,7 @@ type CompletionLink = {
 
 // Read side for the solving history view: the acting member's own completions, newest first.
 // Auth-gated; photo storage ids are resolved to display items (url + pending flag) via
-// resolvePhotoItems.
+// resolvePhotoItems, and the ids themselves are not sent (withPhotoItems).
 // Each row is also enriched with a navigation `link` and a `thumbnailUrl`, resolved once per
 // DISTINCT copy/puzzle (many completions share one) since this is a self-facing read only.
 export const listMyCompletions = query({
@@ -124,8 +124,7 @@ export const listMyCompletions = query({
           undefined;
 
         return {
-          ...row,
-          photoItems: await resolvePhotoItems(ctx, row),
+          ...(await withPhotoItems(ctx, row)),
           thumbnailUrl,
           link,
         };
@@ -133,6 +132,16 @@ export const listMyCompletions = query({
     );
   },
 });
+
+// A completion row as its own member reads it: the photos go out as `photoItems` (URLs), never as
+// the row's `photos` storage ids (SEC-01). Shared with getCompletionHistory.
+export const withPhotoItems = async (
+  ctx: QueryCtx,
+  row: Doc<"completions">,
+) => {
+  const { photos: _photos, ...rest } = row;
+  return { ...rest, photoItems: await resolvePhotoItems(ctx, row) };
+};
 
 // A completion photo ready for display: the served URL plus whether moderation is still pending.
 export type PhotoItem = { url: string; pending: boolean };

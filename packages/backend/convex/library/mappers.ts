@@ -142,15 +142,20 @@ export const toPublicCopyView = (
   return rest;
 };
 
-/** A stored image row for an owned copy. */
+/**
+ * A stored image row for an owned copy, with the URL the caller resolved for it (null when it may
+ * not be served). Never the row's `fileId`: a raw storage id is not a URL and must not reach
+ * clients (SEC-01).
+ */
 export const toOwnedCopyImageView = (
   row: Doc<"ownedPuzzleImages">,
+  url: string | null,
 ): OwnedCopyImageView => ({
   _id: row._id,
   _creationTime: row._creationTime,
   ownedPuzzleId: row.ownedPuzzleId,
   uploaderId: row.uploaderId,
-  fileId: row.fileId,
+  url,
   title: row.title,
   description: row.description,
   tag: row.tag,
@@ -159,7 +164,7 @@ export const toOwnedCopyImageView = (
   updatedAt: row.updatedAt,
 });
 
-/** A completion record joined into the copy-detail view. */
+/** A completion record joined into the copy-detail view, without its photos' storage ids. */
 export const toOwnedCopyCompletionView = (
   row: Doc<"completions">,
 ): OwnedCopyCompletionView => ({
@@ -174,7 +179,6 @@ export const toOwnedCopyCompletionView = (
   completionTimeMinutes: row.completionTimeMinutes,
   datePrecision: row.datePrecision,
   notes: row.notes,
-  photos: row.photos,
   isCompleted: row.isCompleted,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,

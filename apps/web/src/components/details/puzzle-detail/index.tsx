@@ -69,9 +69,9 @@ export function PuzzleDetail({
         <Card>
           <CardContent className="p-0">
             <div className="aspect-square bg-muted rounded-t-lg relative overflow-hidden">
-              {ownedPuzzle.images && ownedPuzzle.images.length > 0 ? (
+              {ownedPuzzle.images[0]?.url ? (
                 <Image
-                  src={ownedPuzzle.images[0].fileId}
+                  src={ownedPuzzle.images[0].url}
                   alt={ownedPuzzle.puzzle.title}
                   className="w-full h-full object-cover"
                   width={500}

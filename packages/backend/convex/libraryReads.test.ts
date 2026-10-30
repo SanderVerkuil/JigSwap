@@ -298,8 +298,8 @@ describe("library reads", () => {
     expect(view).not.toBeNull();
     expect(view?.puzzle.title).toBe("Mountain Vista");
     expect(view?.images).toHaveLength(1);
-    // Consumers read images[0].fileId directly.
-    expect(view?.images[0].fileId).toBeDefined();
+    // Consumers read images[0].url (a served URL, never the storage id).
+    expect(view?.images[0].url).toMatch(/^https:/);
     expect(view?.owner?.name).toBe("Alice");
     // The copy IS a member of Alice's "Favourites" collection -> in-collection with its visibility.
     expect(view?.collectionStatus.isInCollection).toBe(true);
