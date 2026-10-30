@@ -9,8 +9,9 @@ import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import { useTranslations } from "use-intl";
+import { useTimeZone, useTranslations } from "use-intl";
 import { ActivityBatchCovers } from "./activity-batch-covers";
+import { groupSameDayAdds } from "./activity-feed-group";
 import { ACTIVITY_META, isKnownActivityKind } from "./activity-feed-meta";
 import { ActivityTargetLink, ActorLink } from "./activity-links";
 
@@ -19,13 +20,15 @@ import { ActivityTargetLink, ActorLink } from "./activity-links";
 // as open, thin-divider rows on the ground (no boxed card). A row with a server-decided target is one
 // stretched link to it; the actor's name is a separate sibling link to their profile. When the
 // server names the entry's puzzle (`subject`, sent only to viewers who may see it), the sentence and
-// the link say which puzzle, and its cover shows as a decorative thumbnail.
+// the link say which puzzle, and its cover shows as a decorative thumbnail. One member's single adds
+// on the same day fold into one "added N puzzles" row (groupSameDayAdds).
 
 export function ActivityFeed() {
   const t = useTranslations("activity");
   const tRich = useTranslations("notifications.rich");
   const displayName = useMemberDisplayName();
   const relativeTime = useRelativeTime();
+  const timeZone = useTimeZone();
   const { data: feed } = useQuery(convexQuery(gateway.social.activityFeed, {}));
   const { data: me } = useQuery(convexQuery(gateway.identity.currentUser, {}));
 
@@ -43,9 +46,10 @@ export function ActivityFeed() {
     return <EmptyState title={t("empty")} sub={t("emptyHint")} />;
   }
 
+  const rows = groupSameDayAdds(feed, timeZone);
   return (
     <div className="flex flex-col">
-      {feed.map((entry, index) => {
+      {rows.map((entry, index) => {
         if (!isKnownActivityKind(entry.kind)) return null;
         const meta = ACTIVITY_META[entry.kind];
         const Icon = meta.icon;
@@ -64,7 +68,7 @@ export function ActivityFeed() {
             className={cn(
               "relative flex items-start gap-3 py-3.5",
               entry.target && "hover:bg-muted/40 transition-colors",
-              index < feed.length - 1 && "border-b",
+              index < rows.length - 1 && "border-b",
             )}
           >
             <span className="bg-muted mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full">

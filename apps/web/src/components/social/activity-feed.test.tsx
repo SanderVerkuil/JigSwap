@@ -389,3 +389,48 @@ describe("ActivityFeed — the puzzle an entry is about", () => {
     expect(sentences(html)).toContain("Sander completed a swap");
   });
 });
+
+describe("ActivityFeed — same-day adds", () => {
+  const add = (ref: string, minutesAgo: number): Feed[number] => ({
+    memberId: SANDER,
+    kind: "acquisition",
+    occurredAt: Date.now() - minutesAgo * 60_000,
+    ref,
+    actorName: "Sander",
+    actor: { handle: SANDER },
+    target: { kind: "copy", id: `doc-${ref}` },
+    subject: {
+      title: `Puzzle ${ref}`,
+      coverUrl: `https://example.com/${ref}.jpg`,
+    },
+  });
+
+  it("folds one member's adds from the same day into one row linking to their puzzles", () => {
+    // Pinned to midday in Amsterdam so one and two minutes ago are always the same day there.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(Date.UTC(2026, 0, 15, 12));
+    let html: string;
+    try {
+      html = render([add("a", 1), add("b", 2)]);
+    } finally {
+      vi.useRealTimers();
+    }
+    expect(sentences(html)).toContain("Sander added 2 puzzles to their shelf");
+    const els = elementsOf(html);
+    const link = profilePuzzlesLink(els);
+    expect(attr(link!, "href")).toBe("/members/sander1#puzzles");
+    expect(attr(link!, "aria-label")).toBe(
+      "View these 2 puzzles on the profile",
+    );
+    // One row: the profile link replaces the per-copy links.
+    expect(
+      links(els).filter((el) => attr(el, "href")?.startsWith("/copies/")),
+    ).toEqual([]);
+    const strip = els.find((el) => attr(el, "data-slot") === "batch-covers")!;
+    expect(
+      descendantsOf(strip)
+        .filter((el) => el.tagName === "img")
+        .map((img) => attr(img, "title")),
+    ).toEqual(["Puzzle a", "Puzzle b"]);
+  });
+});
