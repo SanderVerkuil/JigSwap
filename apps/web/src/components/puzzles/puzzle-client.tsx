@@ -8,11 +8,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
 import {
   catalogueSearchArgs,
-  EMPTY_CATALOGUE_FILTERS,
   favouritesInCatalogue,
   hasActiveCatalogueFilters,
-  type CatalogueFilters,
 } from "@/lib/catalogue-filters";
+import {
+  facetSearch,
+  filtersFromSearch,
+  type PuzzlesSearch,
+} from "@/lib/puzzles-search";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
@@ -27,32 +30,46 @@ import { PuzzleViewProvider } from "./puzzle-view-provider";
 
 const PAGE_SIZE = 20;
 const SEARCH_DEBOUNCE_MS = 300;
+// Upper bound on the rows a returning visit asks for in one go.
+const MAX_RESTORED_ROWS = 120;
+
+// How many rows each search had loaded when the member last left it. Coming Back to the same search
+// asks for that many at once and draws as many placeholders, so the page is tall enough for the
+// router's scroll restoration to land where the member was. In memory only: a reload starts afresh.
+const loadedRows = new Map<string, number>();
 
 interface PuzzlesClientProps {
+  /** The validated /puzzles URL state: term, filters, favourites and view mode. */
+  search: PuzzlesSearch;
+  /** Updates the URL state; receives the latest state so quick successive edits all land. */
+  onSearchChange: (update: (prev: PuzzlesSearch) => PuzzlesSearch) => void;
   className?: string;
 }
 
-export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
+export function PuzzlesClient({
+  search,
+  onSearchChange,
+  className = "",
+}: PuzzlesClientProps) {
   const t = useTranslations("puzzles.puzzles");
 
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const viewMode = search.view ?? "grid";
+  const favoritesOnly = search.fav === true;
+  const filters = filtersFromSearch(search);
   const [showFilters, setShowFilters] = useState(false);
   const filtersPanelId = useId();
-  const [favoritesOnly, setFavoritesOnly] = useState(false);
-  const [filters, setFilters] = useState<CatalogueFilters>(
-    EMPTY_CATALOGUE_FILTERS,
-  );
 
-  // The search box edits a draft; the filters (and so the server query) take it over after a
-  // pause in typing, so every keystroke doesn't start a new search.
-  const [searchDraft, setSearchDraft] = useState("");
+  // The search box edits a draft, seeded from the URL; the URL (and so the server query) takes it
+  // over after a pause in typing, so every keystroke doesn't start a new search.
+  const [searchDraft, setSearchDraft] = useState(search.q ?? "");
   const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(searchTimer.current), []);
   const onSearchInput = (value: string) => {
     setSearchDraft(value);
     clearTimeout(searchTimer.current);
     searchTimer.current = setTimeout(
-      () => setFilters((prev) => ({ ...prev, searchTerm: value })),
+      () =>
+        onSearchChange((prev) => ({ ...prev, q: value.trim() || undefined })),
       SEARCH_DEBOUNCE_MS,
     );
   };
@@ -60,11 +77,22 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
   // The catalogue is searched and filtered on the server, so matches beyond the loaded pages are
   // found. Favourites are a short, complete list: the same facets apply to it on the client.
   const searchArgs = catalogueSearchArgs(filters);
+  const searchKey = JSON.stringify(searchArgs);
+  const remembered = Math.min(
+    loadedRows.get(searchKey) ?? 0,
+    MAX_RESTORED_ROWS,
+  );
   const catalogue = usePaginatedQuery(
     gateway.catalog.search,
     favoritesOnly ? "skip" : searchArgs,
-    { initialNumItems: PAGE_SIZE },
+    { initialNumItems: Math.max(remembered, PAGE_SIZE) },
   );
+  const loadedCount = catalogue.results.length;
+  useEffect(() => {
+    if (!favoritesOnly && loadedCount > 0) {
+      loadedRows.set(searchKey, loadedCount);
+    }
+  }, [favoritesOnly, searchKey, loadedCount]);
   const { data: favourites } = useQuery(
     convexQuery(gateway.catalog.listMyFavorites, favoritesOnly ? {} : "skip"),
   );
@@ -113,8 +141,8 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
   const clearFilters = () => {
     clearTimeout(searchTimer.current);
     setSearchDraft("");
-    setFilters(EMPTY_CATALOGUE_FILTERS);
-    setFavoritesOnly(false);
+    // Everything but the view mode.
+    onSearchChange((prev) => ({ view: prev.view }));
   };
 
   const hasActiveFilters =
@@ -159,7 +187,12 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
             <Button
               variant={favoritesOnly ? "default" : "outline"}
               aria-pressed={favoritesOnly}
-              onClick={() => setFavoritesOnly(!favoritesOnly)}
+              onClick={() =>
+                onSearchChange((prev) => ({
+                  ...prev,
+                  fav: prev.fav ? undefined : true,
+                }))
+              }
               className="flex items-center gap-2"
             >
               <Heart className="h-4 w-4" />
@@ -196,7 +229,9 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
             {showFilters && (
               <PuzzleFilters
                 filters={filters}
-                onFiltersChange={setFilters}
+                onFiltersChange={(next) =>
+                  onSearchChange((prev) => ({ ...prev, ...facetSearch(next) }))
+                }
                 className="mt-4"
               />
             )}
@@ -210,14 +245,18 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
           <Button
             variant={viewMode === "grid" ? "default" : "outline"}
             size="sm"
-            onClick={() => setViewMode("grid")}
+            onClick={() =>
+              onSearchChange((prev) => ({ ...prev, view: undefined }))
+            }
           >
             <Grid className="h-4 w-4" />
           </Button>
           <Button
             variant={viewMode === "list" ? "default" : "outline"}
             size="sm"
-            onClick={() => setViewMode("list")}
+            onClick={() =>
+              onSearchChange((prev) => ({ ...prev, view: "list" }))
+            }
           >
             <List className="h-4 w-4" />
           </Button>
@@ -265,7 +304,7 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
 
       {puzzles.length === 0 && listState !== "complete" && (
         <PuzzleViewProvider viewMode={viewMode}>
-          {Array.from({ length: PAGE_SIZE / 2 }, (_, i) => (
+          {Array.from({ length: remembered || PAGE_SIZE / 2 }, (_, i) => (
             <PuzzleCardSkeleton key={i} />
           ))}
         </PuzzleViewProvider>
