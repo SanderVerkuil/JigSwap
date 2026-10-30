@@ -1,4 +1,5 @@
 import { SignIn } from "@/compat/clerk";
+import { AuthShell } from "@/components/auth/auth-shell";
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -13,15 +14,13 @@ export const Route = createFileRoute("/sign-in/$")({
 
 function SignInPage() {
   return (
-    <div className="flex items-center justify-center bg-background min-h-svh">
-      <div className="w-full max-w-md">
-        {/* Explicit redirect_url query params (set by lib/require-auth.ts) still
-            win; this only changes the no-param fallback from / to /dashboard. */}
-        <SignIn
-          appearance={{ elements: { rootBox: "mx-auto", card: "shadow-lg" } }}
-          fallbackRedirectUrl="/dashboard"
-        />
-      </div>
-    </div>
+    <AuthShell>
+      {/* Explicit redirect_url query params (set by lib/require-auth.ts) still
+          win; this only changes the no-param fallback from / to /dashboard. */}
+      <SignIn
+        appearance={{ elements: { rootBox: "mx-auto", card: "shadow-lg" } }}
+        fallbackRedirectUrl="/dashboard"
+      />
+    </AuthShell>
   );
 }

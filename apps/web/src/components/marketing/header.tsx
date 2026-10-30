@@ -190,7 +190,7 @@ export function MarketingHeader() {
 // top bar) — switches the use-intl catalog via the locale cookie. With no
 // cookie set the trigger shows the system language (Accept-Language
 // negotiation in detectLocale).
-function LangToggle({ className }: { className?: string }) {
+export function LangToggle({ className }: { className?: string }) {
   const t = useTranslations("marketing.nav");
   const current = currentLanguage(useLocale());
   const code = current.code.toUpperCase();
@@ -219,7 +219,7 @@ function LangToggle({ className }: { className?: string }) {
 
 // Single round light/dark toggle (the marketing chrome skips the "system"
 // dropdown; next-themes still persists the choice app-wide).
-function ModeToggle({ className }: { className?: string }) {
+export function ModeToggle({ className }: { className?: string }) {
   const t = useTranslations("marketing.nav");
   const { resolvedTheme, setTheme } = useTheme();
   return (
