@@ -48,9 +48,12 @@ export const Route = createFileRoute("/_dashboard")({
 });
 
 function DashboardLayout() {
-  const sidebar = Route.useRouteContext({ select: (c) => c.sidebar });
+  // Primitives, not the object: beforeLoad returns a fresh object on every navigation, and
+  // re-rendering this layout would re-render every provider below it each time.
+  const sidebarOpen = Route.useRouteContext({ select: (c) => c.sidebar.open });
+  const sidebarWide = Route.useRouteContext({ select: (c) => c.sidebar.wide });
   return (
-    <DashboardShell sidebar={sidebar}>
+    <DashboardShell sidebar={{ open: sidebarOpen, wide: sidebarWide }}>
       <DurationPromptProvider>
         <CompletionFollowUpProvider>
           {/* Above the Outlet so a running tour survives its own page changes. */}
