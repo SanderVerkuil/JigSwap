@@ -338,14 +338,20 @@ useMutation(gateway.exchange.propose)(...)
   → any dependent useQuery subscriptions refresh automatically (no manual refetch)
 
 … recipient accepts, both confirm …
-  → confirmCompletion detects dual confirmation → emits ExchangeCompleted + OwnershipTransferred
+  → accept and every confirmation run the domain's settlementGuard first: refused, nothing saved,
+    once the requested copy no longer belongs to the recipient or a swap's offered copy changed
+    owner or can no longer be offered by the initiator
+  → confirmCompletion detects dual confirmation → emits ExchangeCompleted + OwnershipTransferred,
+    which names expectedPreviousOwner (the owner the deal was made with)
     → SYNC handler marks the copy unavailable in the same transaction
     → dispatch order: custody subscriber inserts the provenance row (capturing the PRE-transfer
-      owner) BEFORE library/transferOnSettlement reassigns the owner; then notifications fire
+      owner) BEFORE library/transferOnSettlement reassigns the owner (refused with OwnershipChanged,
+      custody row rolled back, once the copy belongs to anyone else); then notifications fire
 ```
 
 For a `lend` kind, settlement emits `PossessionTransferred`; `library/openLoanOnSettlement.ts`
-opens a `Loan` and moves `heldBy` to the borrower (ownership never moves).
+opens a `Loan` and moves `heldBy` to the borrower (ownership never moves), only while the event's
+`lender` still owns the copy.
 
 ### 3.4 Image upload (Convex Storage)
 

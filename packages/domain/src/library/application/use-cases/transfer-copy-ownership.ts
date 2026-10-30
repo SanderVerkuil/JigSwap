@@ -13,14 +13,19 @@ export interface TransferCopyOwnershipDeps {
 }
 
 // Settlement-driven (no acting member): load the copy (→ CopyNotFound), hand the ownership move to
-// the aggregate (resets owner-scoped fields, keeps the physical record), persist, publish.
+// the aggregate (refuses once the copy no longer belongs to the expected previous owner; resets
+// owner-scoped fields, keeps the physical record), persist, publish.
 export const makeTransferCopyOwnership =
   (deps: TransferCopyOwnershipDeps): TransferCopyOwnership =>
   async (cmd: TransferCopyOwnershipCommand) => {
     const copy = await deps.copies.findById(cmd.copyId);
     if (!copy) return err(LibraryApplicationError.copyNotFound(cmd.copyId));
 
-    const outcome = copy.transferTo(cmd.newOwner, deps.clock.now());
+    const outcome = copy.transferTo(
+      cmd.newOwner,
+      deps.clock.now(),
+      cmd.expectedPreviousOwner,
+    );
     if (outcome.isErr) return err(outcome.error);
 
     await deps.copies.save(copy);

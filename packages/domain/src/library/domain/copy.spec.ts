@@ -268,6 +268,21 @@ describe("Copy.transferTo", () => {
     expect(state.snapshot.title).toBe("Starry Night");
     expect(state.missingPiecesCount).toBe(2);
   });
+  // A settlement names the owner the deal was made with; the copy moves only away from them.
+  it("transfers when the expected previous owner still owns it", () => {
+    const copy = owned();
+    expect(copy.transferTo(newOwner, LATER, owner).isOk).toBe(true);
+    expect(copy.ownerId).toBe(newOwner);
+  });
+
+  it("refuses with OwnershipChanged once someone else owns it, changing nothing", () => {
+    const copy = owned();
+    const before = copy.toState();
+    const result = copy.transferTo(newOwner, LATER, toOwnerId("carol"));
+    expect(result.isErr && result.error.code).toBe("OwnershipChanged");
+    expect(copy.toState()).toEqual(before);
+    expect(copy.pullEvents()).toHaveLength(0);
+  });
 });
 
 describe("Copy possession (lend / return)", () => {

@@ -62,7 +62,8 @@ export interface ExchangeState {
   readonly requestedCopyId: CopyId;
   readonly offeredCopyId?: CopyId; // swap only
   // Swap only: the offered copy's owner at propose time; accept and confirm refuse once the copy has
-  // another owner (settlement-guard). Absent on swaps proposed before it was recorded.
+  // another owner (settlement-guard), and its OwnershipTransferred names them as the expected
+  // previous owner. Absent on swaps proposed before it was recorded.
   readonly offeredCopyOwnerId?: MemberId;
   readonly price?: Money; // sale only
   readonly returnDate?: Date; // lend only
@@ -235,8 +236,10 @@ export class Exchange {
 
   // Settlement: complete, then hand over the requested copy. A swap/sale moves OWNERSHIP; a lend
   // moves only POSSESSION (the borrower holds it open-endedly, the owner keeps ownership). For a
-  // swap the offered copy's ownership also moves to the recipient. (Cross-aggregate "a copy is
-  // reserved by at most one active exchange" is an APPLICATION-layer rule, not enforced here.)
+  // swap the offered copy's ownership also moves to the recipient. Each move names the owner the
+  // deal was made with (the recipient; the recorded owner of the offered copy), so Library never
+  // moves or lends a copy away from anyone else. (Cross-aggregate "a copy is reserved by at most
+  // one active exchange" is an APPLICATION-layer rule, not enforced here.)
   private settle(now: Date): Result<void, ExchangeError> {
     const moved = this.transition("completed", now);
     if (moved.isErr) return moved;
@@ -248,6 +251,7 @@ export class Exchange {
           this.state.requestedCopyId,
           this.state.initiatorId,
           this.state.returnDate,
+          this.state.recipientId,
           now,
         ),
       );
@@ -257,6 +261,7 @@ export class Exchange {
           this.id,
           this.state.requestedCopyId,
           this.state.initiatorId,
+          this.state.recipientId,
           now,
         ),
       );
@@ -267,6 +272,7 @@ export class Exchange {
           this.id,
           this.state.offeredCopyId,
           this.state.recipientId,
+          this.state.offeredCopyOwnerId,
           now,
         ),
       );

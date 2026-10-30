@@ -47,6 +47,14 @@ describe("LibraryError factories", () => {
     expect(e.message).toBe("A wishlist holds desired definitions, not copies");
   });
 
+  it("ownershipChanged", () => {
+    const e = LibraryError.ownershipChanged();
+    expect(e.code).toBe("OwnershipChanged");
+    expect(e.message).toBe(
+      "The copy no longer belongs to the member the exchange was made with",
+    );
+  });
+
   it("copyMustBeVisibleToOffer", () => {
     const e = LibraryError.copyMustBeVisibleToOffer();
     expect(e.code).toBe("CopyMustBeVisibleToOffer");

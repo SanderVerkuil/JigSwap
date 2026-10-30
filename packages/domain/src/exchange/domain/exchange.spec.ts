@@ -309,6 +309,29 @@ describe("settlement events", () => {
     expect(transfers[1]).toMatchObject({ copyId: offered, newOwner: bob });
   });
 
+  // Library refuses a transfer whose copy no longer belongs to the expected previous owner, so a
+  // settlement never moves a copy away from someone the deal wasn't made with.
+  it("each transfer names the owner the deal was made with as the expected previous owner", () => {
+    const carol = toMemberId("carol"); // alice's housemate, whose copy alice offered
+    const ex = propose(swapTerms, { offeredCopyOwnerId: carol });
+    ex.accept(bob, NOW);
+    ex.confirmCompletion(alice, NOW);
+    ex.confirmCompletion(bob, LATER);
+    const transfers = ex
+      .pullEvents()
+      .filter(
+        (e): e is OwnershipTransferred => e.name === "OwnershipTransferred",
+      );
+    expect(transfers[0]).toMatchObject({
+      copyId: requested,
+      expectedPreviousOwner: bob,
+    });
+    expect(transfers[1]).toMatchObject({
+      copyId: offered,
+      expectedPreviousOwner: carol,
+    });
+  });
+
   it("a sale transfers ONLY the requested copy to the initiator", () => {
     const ex = accepted(saleTerms());
     ex.confirmCompletion(alice, NOW);
@@ -334,7 +357,11 @@ describe("settlement events", () => {
       (e): e is PossessionTransferred => e.name === "PossessionTransferred",
     );
     expect(possession).toHaveLength(1);
-    expect(possession[0]).toMatchObject({ copyId: requested, borrower: alice });
+    expect(possession[0]).toMatchObject({
+      copyId: requested,
+      borrower: alice,
+      lender: bob, // Library opens the loan only while the recipient still owns the copy
+    });
   });
 
   // The second transfer is guarded by `kind === "swap" && offeredCopyId`. Rehydrating
@@ -374,6 +401,13 @@ describe("settlement events", () => {
     // `if (true)` mutant dies here.
     const ex = acceptedState({ kind: "swap", offeredCopyId: undefined });
     expect(settle(ex)).toHaveLength(1);
+  });
+
+  it("an offered copy whose owner was never recorded names no expected previous owner", () => {
+    // A swap proposed before the owner was recorded: Library then transfers without the check.
+    const transfers = settle(accepted(swapTerms));
+    expect(transfers[1]?.copyId).toBe(offered);
+    expect(transfers[1]?.expectedPreviousOwner).toBeUndefined();
   });
 
   it("records ExchangeCompleted exactly once on settlement", () => {

@@ -1,5 +1,5 @@
 import { Clock, DomainEventPublisher, err, ok } from "../../../shared-kernel";
-import { Loan } from "../../domain";
+import { LibraryError, Loan } from "../../domain";
 import { LibraryApplicationError } from "../errors";
 import { OpenLoan, OpenLoanCommand } from "../ports/in/open-loan.port";
 import { CopyRepository } from "../ports/out/copy.repository";
@@ -15,12 +15,17 @@ export interface OpenLoanDeps {
 }
 
 // Settlement reaction: open an open-ended loan and hand possession of the copy to the borrower.
-// The lender is the copy's current owner; ownership is untouched (only heldBy moves).
+// The lender is the copy's current owner, and must be the owner the lend was agreed with
+// (OwnershipChanged otherwise): a copy is never lent out of someone else's library. Ownership is
+// untouched (only heldBy moves).
 export const makeOpenLoan =
   (deps: OpenLoanDeps): OpenLoan =>
   async (cmd: OpenLoanCommand) => {
     const copy = await deps.copies.findById(cmd.copyId);
     if (!copy) return err(LibraryApplicationError.copyNotFound(cmd.copyId));
+    if (cmd.lender !== undefined && copy.ownerId !== cmd.lender) {
+      return err(LibraryError.ownershipChanged());
+    }
 
     const now = deps.clock.now();
     const opened = Loan.open({

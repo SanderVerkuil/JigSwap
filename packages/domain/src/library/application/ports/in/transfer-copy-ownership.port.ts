@@ -6,6 +6,9 @@ import { LibraryApplicationError } from "../../errors";
 export interface TransferCopyOwnershipCommand {
   readonly copyId: CopyId;
   readonly newOwner: OwnerId;
+  // The owner the exchange was made with; refused (OwnershipChanged) once the copy belongs to anyone
+  // else. Absent on settlements recorded before it was carried: no check.
+  readonly expectedPreviousOwner?: OwnerId;
 }
 
 export interface TransferCopyOwnership {

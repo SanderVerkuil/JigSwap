@@ -1,7 +1,7 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError, type Value } from "convex/values";
-import { describe, expect, test } from "vitest";
-import { api } from "./_generated/api";
+import { describe, expect, test, vi } from "vitest";
+import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
@@ -9,7 +9,9 @@ import schema from "./schema";
 // an exchange on it stays open, and a stale exchange then settled anyway, moving the copy (photos
 // and history included) out of the library of an owner who was never a party to it. Accept and
 // confirm-completion now refuse once a copy is no longer where the deal found it. Driven through
-// the real mutations and the async settlement dispatch.
+// the real mutations and the async settlement dispatch. Behind that, each settlement event names
+// the owner the deal was made with, and the Library reactions refuse to move or lend a copy that
+// belongs to anyone else.
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
@@ -356,5 +358,119 @@ describe("deals whose copies are still in place settle as before", () => {
     expect(row.ownerId).toBe(ids.bob);
     expect(row.heldBy).toBe(ids.sock);
     expect(await loansOf(t, y)).toHaveLength(1);
+  });
+});
+
+// A settlement event recorded directly, as one written before the guard (or in the narrow window
+// in which two old deals both settled before either transfer ran) would reach the dispatcher.
+const recordSettlementEvent = (
+  t: T,
+  name: "OwnershipTransferred" | "PossessionTransferred",
+  payload: Record<string, unknown>,
+) =>
+  t.run((ctx) =>
+    ctx.db.insert("domainEvents", {
+      name,
+      payload: { exchangeId: "x-stale", ...payload },
+      occurredAt: Date.now(),
+      context: "exchange",
+    }),
+  );
+
+const dispatch = async (t: T, eventId: Id<"domainEvents">) => {
+  // The refusal is logged as a dispatch error on purpose; keep the test output clean.
+  const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
+  try {
+    await t.mutation(internal.events.dispatch.dispatch, { eventId });
+  } finally {
+    quiet.mockRestore();
+  }
+  return t.run((ctx) => ctx.db.get(eventId));
+};
+
+describe("the settlement reactions move or lend a copy only from the owner the deal was made with", () => {
+  const setUp = async () => {
+    const t = convexTest(schema, modules);
+    const { ids, puzzleAggregateId } = await seed(t);
+    // Y belongs to Vic now; an old deal was made with Bob.
+    const y = await acquire(t, "vic", puzzleAggregateId);
+    return { t, ids, y };
+  };
+
+  test("a transfer expecting a former owner is refused: no move, no custody row, a recorded failure", async () => {
+    const { t, ids, y } = await setUp();
+    const eventId = await recordSettlementEvent(t, "OwnershipTransferred", {
+      copyId: y.id,
+      newOwner: ids.sock,
+      expectedPreviousOwner: ids.bob,
+    });
+
+    const event = await dispatch(t, eventId);
+
+    expect((await copyRow(t, y)).ownerId).toBe(ids.vic);
+    expect(await custodyOf(t, y)).toHaveLength(0);
+    expect(event?.failedHandlers).toEqual(["ownershipTransfer"]);
+    expect(event?.failedAt).toBeDefined();
+    expect(event?.lastError?.handler).toBe("ownershipTransfer");
+    expect(event?.lastError?.message).toContain("OwnershipChanged");
+  });
+
+  test("a transfer expecting the current owner, or recorded before the field existed, still moves the copy", async () => {
+    const { t, ids, y } = await setUp();
+    const named = await dispatch(
+      t,
+      await recordSettlementEvent(t, "OwnershipTransferred", {
+        copyId: y.id,
+        newOwner: ids.sock,
+        expectedPreviousOwner: ids.vic,
+      }),
+    );
+    expect(named?.processedAt).toBeDefined();
+    expect((await copyRow(t, y)).ownerId).toBe(ids.sock);
+
+    const legacy = await dispatch(
+      t,
+      await recordSettlementEvent(t, "OwnershipTransferred", {
+        copyId: y.id,
+        newOwner: ids.rex,
+      }),
+    );
+    expect(legacy?.processedAt).toBeDefined();
+    expect((await copyRow(t, y)).ownerId).toBe(ids.rex);
+    expect((await custodyOf(t, y)).map((e) => e.previousOwner)).toEqual([
+      ids.vic,
+      ids.sock,
+    ]);
+  });
+
+  test("a loan agreed with a former owner is refused: none opens and Vic keeps holding the copy", async () => {
+    const { t, ids, y } = await setUp();
+    const eventId = await recordSettlementEvent(t, "PossessionTransferred", {
+      copyId: y.id,
+      borrower: ids.sock,
+      lender: ids.bob,
+    });
+
+    const event = await dispatch(t, eventId);
+
+    expect(await loansOf(t, y)).toHaveLength(0);
+    const row = await copyRow(t, y);
+    expect(row.heldBy ?? row.ownerId).toBe(ids.vic);
+    expect(event?.failedHandlers).toEqual(["openLoan"]);
+    expect(event?.lastError?.message).toContain("OwnershipChanged");
+  });
+
+  test("a loan recorded before the lender was carried still opens", async () => {
+    const { t, ids, y } = await setUp();
+    const event = await dispatch(
+      t,
+      await recordSettlementEvent(t, "PossessionTransferred", {
+        copyId: y.id,
+        borrower: ids.sock,
+      }),
+    );
+    expect(event?.processedAt).toBeDefined();
+    expect(await loansOf(t, y)).toHaveLength(1);
+    expect((await copyRow(t, y)).heldBy).toBe(ids.sock);
   });
 });

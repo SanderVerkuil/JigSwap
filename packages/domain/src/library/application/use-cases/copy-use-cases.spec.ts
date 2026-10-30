@@ -489,6 +489,27 @@ describe("copy mutation use cases", () => {
       if (result.isErr) expect(result.error.code).toBe("CopyNotFound");
       expect(events.published).toHaveLength(0);
     });
+
+    it("transfers from the expected previous owner", async () => {
+      const result = await run()({
+        copyId,
+        newOwner: bob,
+        expectedPreviousOwner: alice,
+      });
+      expect(result.isOk).toBe(true);
+      expect((await copies.findById(copyId))?.ownerId).toBe(bob);
+    });
+
+    it("refuses with OwnershipChanged when someone else owns it now, saving nothing", async () => {
+      const result = await run()({
+        copyId,
+        newOwner: bob,
+        expectedPreviousOwner: bob,
+      });
+      expect(result.isErr && result.error.code).toBe("OwnershipChanged");
+      expect((await copies.findById(copyId))?.ownerId).toBe(alice);
+      expect(events.published).toHaveLength(0);
+    });
   });
 });
 

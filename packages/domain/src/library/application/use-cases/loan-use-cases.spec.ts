@@ -94,6 +94,30 @@ describe("loan use cases", () => {
       if (result.isErr) expect(result.error.code).toBe("CannotLendToSelf");
       expect(events.published).toHaveLength(0);
     });
+
+    // The settled lend names its lender; the loan opens only while they still own the copy.
+    it("opens the loan when the lender still owns the copy", async () => {
+      const result = await open()({
+        copyId,
+        borrowerId: borrower,
+        lender: owner,
+      });
+      if (!result.isOk) throw new Error("expected ok");
+      const loan = await loans.findById(result.value);
+      expect(loan?.toState().lenderId).toBe(owner);
+    });
+
+    it("refuses with OwnershipChanged once someone else owns the copy, opening nothing", async () => {
+      const result = await open()({
+        copyId,
+        borrowerId: borrower,
+        lender: toOwnerId("carol"),
+      });
+      expect(result.isErr && result.error.code).toBe("OwnershipChanged");
+      expect(events.published).toHaveLength(0);
+      expect((await copies.findById(copyId))?.heldBy).toBe(owner);
+      expect(loans.size()).toBe(0);
+    });
   });
 
   describe("closing a loan (return / recall)", () => {
