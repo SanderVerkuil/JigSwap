@@ -15,7 +15,7 @@ JigSwap houdt een volledig **oplossingslogboek** bij van elke puzzel waar je aan
 ### Een voltooiing vastleggen
 
 1. Ga naar **Mijn Puzzels**.
-2. Klik bij de kopie die je hebt opgelost op **Oplossing Vastleggen**.
+2. Klik bij de kopie die je hebt opgelost op **Voltooiing vastleggen**.
 3. Leg in het dialoogvenster je oplossing vast. Een voltooiing kan:
    - **Gestart** zijn (lopend) en later afgemaakt worden, of
    - **Achteraf vastgelegd** worden (al afgerond).

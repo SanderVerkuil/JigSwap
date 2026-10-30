@@ -15,7 +15,7 @@ JigSwap keeps a full **solve log** of every puzzle you've worked on — even aft
 ### Log a completion
 
 1. Go to **My Puzzles**.
-2. On the copy you solved, click **Log Solve**.
+2. On the copy you solved, click **Log a solve**.
 3. In the dialog, record your solve. A completion can be:
    - **Started** (in-progress) and finished later, or
    - **Recorded** after the fact (already finished).

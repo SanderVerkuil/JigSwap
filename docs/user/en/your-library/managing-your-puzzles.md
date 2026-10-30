@@ -22,7 +22,7 @@ Your library is the set of physical puzzle **copies** you personally own. (A "co
    - **In Progress**
    - **Completed**
 
-Each puzzle card shows its loan status (who currently has it, if lent out) and gives you quick actions.
+Each puzzle card shows its condition (a coloured dot and its word, such as **Good**), what it's offered for (green chips with an icon for swap, lend and sale), its tags as _#tag_, and its loan status (who currently has it, if lent out). It also gives you quick actions.
 
 ## Actions on each puzzle
 
@@ -31,7 +31,7 @@ From a puzzle card you can:
 - **View** — open the full copy detail page.
 - **Edit** — change the copy's details.
 - **Delete** — remove the copy from your library (with confirmation).
-- **Log Solve** — record that you've completed (or started) the puzzle.
+- **Log a solve** or **Start puzzle** — record that you've completed (or started) the puzzle.
 - **Recall** — if a puzzle is currently lent out, recall it to get it back.
 
 ## The copy detail page
@@ -65,7 +65,7 @@ The detail page is the rich record of a single owned copy. It includes:
 - A **community rating breakdown** and a comment area.
 
 **Owner actions** on this page include the **Offer for swap** and **Offer to
-lend** switches, logging a completion, and editing. Each switch change is
+lend** switches, **Log a solve**, and editing. Each switch change is
 confirmed with an **Undo**, and it never changes who can see the copy (see
 below). While the copy is out on loan the switches are off and disabled until
 it's back. **Recall** asks you to confirm first: it ends the loan and marks

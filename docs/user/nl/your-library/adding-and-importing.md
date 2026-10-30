@@ -45,7 +45,7 @@ Je komt terecht op het aanmaak-/kopieerformulier (`/my-puzzles/add/new`).
 
 **Vul de gegevens handmatig in (of pas de geïmporteerde aan):**
 
-- **Titel**, **merk**, **aantal stukken**, **moeilijkheid**, **conditie**.
+- **Titel**, **merk**, **aantal stukken**, **moeilijkheid**, **conditie** (Nieuw (verzegeld), Zo goed als nieuw, Goed, Redelijk of Slecht).
 - **Beschikbaarheids-chips**: markeer als _voor ruil_, _voor uitlenen_ en/of _te koop_.
 - Een **omslag** — kies een kleurstaal, of upload/scrape een foto. Een omslagfoto wordt automatisch gecontroleerd (zoals elke foto die je uploadt) voordat iemand hem ziet; een foto die de controle tegenhoudt kan niet worden gebruikt, en zolang de controle nog loopt toont de puzzel zijn standaardafbeelding. Duurt de controle langer, dan krijg je na het opslaan een melding, en bij je eigen puzzels staat op de standaardafbeelding **Wordt gecontroleerd**; je hoeft niets te doen.
 - **Tags** en **notities**.

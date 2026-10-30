@@ -43,7 +43,7 @@ You'll land on the creation/copy form (`/my-puzzles/add/new`).
 
 **Fill in the details manually (or adjust the imported ones):**
 
-- **Title**, **brand**, **piece count**, **difficulty**, **condition**.
+- **Title**, **brand**, **piece count**, **difficulty**, **condition** (New (sealed), Like new, Good, Fair or Poor).
 - **Availability chips**: mark it _for trade_, _for lend_, and/or _for sale_.
 - A **cover** — pick a color swatch, or upload/scrape a photo. A cover photo is checked automatically (like every photo you upload) before anyone sees it; a photo the check refuses can't be used, and until the check has finished the puzzle shows its placeholder. If the check takes longer, you get a message after saving, and on your own puzzles the placeholder says **Being checked**; you don't need to do anything.
 - **Tags** and **notes**.

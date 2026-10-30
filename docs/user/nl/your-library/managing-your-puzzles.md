@@ -22,7 +22,7 @@ Je bibliotheek is de verzameling fysieke puzzel**kopieën** die jij persoonlijk 
    - **Bezig**
    - **Voltooid**
 
-Elke puzzelkaart toont de uitleenstatus (wie hem nu heeft, als hij uitgeleend is) en geeft je snelle acties.
+Elke puzzelkaart toont de conditie (een gekleurde stip met een woord als **Goed**), waarvoor hij wordt aangeboden (groene chips met een icoon voor ruilen, uitlenen en verkopen), de tags als _#tag_ en de uitleenstatus (wie hem nu heeft, als hij uitgeleend is). Ook geeft hij je snelle acties.
 
 ## Acties op elke puzzel
 
@@ -31,7 +31,7 @@ Vanaf een puzzelkaart kun je:
 - **Bekijken** — open de volledige detailpagina van de kopie.
 - **Bewerken** — wijzig de details van de kopie.
 - **Verwijderen** — haal de kopie uit je bibliotheek (met bevestiging).
-- **Oplossing Vastleggen** — leg vast dat je de puzzel hebt voltooid (of gestart).
+- **Voltooiing vastleggen** of **Puzzel starten** — leg vast dat je de puzzel hebt voltooid (of gestart).
 - **Terughalen** — als een puzzel momenteel is uitgeleend, haal hem dan terug.
 
 ## De detailpagina van een kopie
