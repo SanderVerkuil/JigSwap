@@ -15,7 +15,6 @@ import { useSyncExternalStore } from "react";
 import { useTranslations } from "use-intl";
 
 export const THEMES = ["light", "dark", "system"] as const;
-export type ThemeChoice = (typeof THEMES)[number];
 
 const noopSubscribe = () => () => {};
 
