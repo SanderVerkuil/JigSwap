@@ -2723,6 +2723,8 @@
     "preferencesSubtitle": "Kies hoe je over elk soort activiteit op de hoogte wilt blijven.",
     "preferencesUpdated": "Voorkeuren bijgewerkt",
     "preferencesError": "Kon de voorkeur niet bijwerken. Probeer het opnieuw.",
+    "bulkChanged": "{channel} {state, select, on {aangezet} other {uitgezet}} voor {count, plural, one {# melding} other {# meldingen}}",
+    "undo": "Ongedaan maken",
     "backToNotifications": "Terug naar meldingen",
     "jumpTo": "Ga naar",
     "channelInApp": "In-app",

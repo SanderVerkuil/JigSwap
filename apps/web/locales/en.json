@@ -2723,6 +2723,8 @@
     "preferencesSubtitle": "Choose how you want to hear about each kind of activity.",
     "preferencesUpdated": "Preferences updated",
     "preferencesError": "Could not update the preference. Please try again.",
+    "bulkChanged": "{channel} turned {state, select, on {on} other {off}} for {count, plural, one {# notification} other {# notifications}}",
+    "undo": "Undo",
     "backToNotifications": "Back to notifications",
     "jumpTo": "Jump to",
     "channelInApp": "In-app",

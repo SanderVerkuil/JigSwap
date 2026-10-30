@@ -75,18 +75,52 @@ export function NotificationPreferencesPanel() {
     }
   };
 
+  const restorePreferences = async (
+    updates: {
+      type: (typeof NOTIFICATION_TYPES)[number];
+      channel: NotificationChannel;
+      enabled: boolean;
+    }[],
+  ) => {
+    try {
+      await setPreferences.mutateAsync({ updates });
+    } catch {
+      toast.error(t("preferencesError"));
+    }
+  };
+
+  // A category header flips up to 8 settings in one tap, so it offers an Undo that puts back
+  // exactly the settings this tap changed (the snapshot is taken before the write).
   const handleToggleCategory = async (
     types: readonly (typeof NOTIFICATION_TYPES)[number][],
     channel: NotificationChannel,
     enabled: boolean,
   ) => {
+    const previous = types
+      .filter((type) => (preferences[type]?.[channel] === true) !== enabled)
+      .map((type) => ({ type, channel, enabled: !enabled }));
     try {
       await setPreferences.mutateAsync({
         updates: types.map((type) => ({ type, channel, enabled })),
       });
     } catch {
       toast.error(t("preferencesError"));
+      return;
     }
+    if (previous.length === 0) return;
+    toast.success(
+      t("bulkChanged", {
+        channel: channelLabel[channel],
+        state: enabled ? "on" : "off",
+        count: previous.length,
+      }),
+      {
+        action: {
+          label: t("undo"),
+          onClick: () => void restorePreferences(previous),
+        },
+      },
+    );
   };
 
   // The query container must be an ANCESTOR of the grid: a container query never styles its own
