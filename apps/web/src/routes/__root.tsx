@@ -1,4 +1,4 @@
-import { enUS, nlNL } from "@clerk/localizations";
+import { enUS } from "@clerk/localizations";
 import { ClerkProvider, useAuth } from "@clerk/tanstack-react-start";
 import { auth } from "@clerk/tanstack-react-start/server";
 import { ConvexQueryClient } from "@convex-dev/react-query";
@@ -19,6 +19,7 @@ import { DefaultCatchBoundary } from "../components/DefaultCatchBoundary";
 import { NotFound } from "../components/NotFound";
 import { Providers } from "../components/providers";
 import { ErrorBoundary } from "../components/ui/error-boundary";
+import { nlNLLocalization } from "../lib/clerk-localization";
 import { getIntlCached, seedIntlCache } from "../lib/i18n";
 import { ZOD_JITLESS_SCRIPT } from "../lib/zod-jitless";
 // Side effect: start listening for beforeinstallprompt before any route chunk loads.
@@ -204,7 +205,7 @@ function RootComponent() {
   // app locale. Reactive to intl.locale so a language switch re-localizes Clerk.
   return (
     <ClerkProvider
-      localization={intl.locale === "nl" ? nlNL : enUS}
+      localization={intl.locale === "nl" ? nlNLLocalization : enUS}
       appearance={clerkAppearance}
       nonce={cspNonce}
     >
