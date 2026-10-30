@@ -2,6 +2,15 @@ import { readFileSync } from "node:fs";
 import { Jimp } from "jimp";
 import { describe, expect, test } from "vitest";
 import {
+  appExtensionDifferentialGif,
+  craftGif,
+  gifApplication,
+  gifComment,
+  gifControl,
+  gifFrame,
+  gifNetscapeLoop,
+} from "../test-fixtures/craftGif";
+import {
   craftPng,
   iendChunk,
   ihdrChunk,
@@ -261,6 +270,51 @@ describe("readImageDimensions", () => {
       ok: false,
       reason: "unreadable_header",
     });
+  });
+
+  test("a GIF is walked the way omggif walks it, so the frame checked is the frame decoded (SEC-18)", () => {
+    // omggif skips 17 bytes blind after an application extension whose first sub-block is not
+    // the 11-byte identifier: past the 1x1 frame a size-prefixed walk meets, to a 65535x16384
+    // one (1 GiB of index stream, plus whatever the LZW data fills).
+    expect(
+      checkImageBytes(
+        appExtensionDifferentialGif({ width: 65535, height: 16384 }),
+      ),
+    ).toEqual({ ok: false, reason: "unreadable_header" });
+    // Blocks omggif refuses: a plain text extension, any other label, and a graphic control
+    // extension that is not exactly one 4-byte sub-block and its terminator.
+    for (const block of [
+      [0x21, 0x01, 12, ...new Array<number>(12).fill(0), 0],
+      [0x21, 0x02, 1, 0, 0],
+      [0x21, 0xf9, 5, 0, 0, 0, 0, 0, 0],
+      [0x21, 0xf9, 4, 0, 0, 0, 0, 1, 0],
+    ]) {
+      expect(checkImageBytes(craftGif(4, 3, block, gifFrame(4, 3)))).toEqual({
+        ok: false,
+        reason: "unreadable_header",
+      });
+    }
+    // The first frame's data must end inside the file (omggif throws otherwise).
+    const truncated = craftGif(4, 3, gifFrame(4, 3)).subarray(0, -3);
+    expect(checkImageBytes(truncated)).toEqual({
+      ok: false,
+      reason: "unreadable_header",
+    });
+    // What real GIFs carry before their first frame reads the same in both walks.
+    expect(
+      checkImageBytes(
+        craftGif(
+          4,
+          3,
+          gifNetscapeLoop(),
+          gifApplication("XMP DataXMP", [1, 2, 3]),
+          gifComment("made by hand"),
+          gifControl(),
+          gifFrame(4, 3),
+          gifFrame(2, 2),
+        ),
+      ),
+    ).toEqual({ ok: true, format: "gif", width: 4, height: 3 });
   });
 
   test("reads real jimp-encoded JPEG and PNG files", async () => {

@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { convexTest, type TestConvex } from "convex-test";
 import { Jimp } from "jimp";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { appExtensionDifferentialGif } from "../test-fixtures/craftGif";
 import {
   craftPng,
   iendChunk,
@@ -226,6 +227,13 @@ const ANIMATED_GPS_WEBP = (() => {
   ]);
 })();
 
+// The review's GIF (SEC-18): a 1x1 frame to a walk by the sub-block sizes, a 65535x16384 one to
+// omggif, which skips the application extension's sub-blocks by a fixed 17 bytes.
+const DIFFERENTIAL_GIF = appExtensionDifferentialGif({
+  width: 65535,
+  height: 16384,
+});
+
 // An APNG: a still PNG plus an animation control chunk (acTL).
 const APNG = craftPng(
   ihdrChunk(2, 2),
@@ -289,6 +297,12 @@ describe("input guards (copy photos)", () => {
     ],
     ["an animated WebP", ANIMATED_GPS_WEBP, "image/webp", "animated"],
     ["an APNG", APNG, "image/png", "animated"],
+    [
+      "a GIF whose application extension hides a 65535x16384 frame from the walk",
+      DIFFERENTIAL_GIF,
+      "image/gif",
+      "unreadable_header",
+    ],
   ] as const)(
     "%s is rejected as invalid_image, never decoded or classified, and its blob deleted",
     async (_name, bytes, type, reason) => {

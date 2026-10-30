@@ -51,7 +51,9 @@
 //
 // GIF: jimp decodes the first frame into a bitmap of the logical screen size (omggif), so the
 // screen size bounds the decode, and the first frame must fit inside the screen; the re-encode
-// keeps that one frame, so an animated GIF is stored (and classified) as its first frame.
+// keeps that one frame, so an animated GIF is stored (and classified) as its first frame. The
+// blocks before that frame are walked exactly as omggif walks them, so the frame checked is the
+// frame it decodes; a block omggif would read differently, or refuse, is refused here.
 
 /** Largest accepted upload, in bytes (10 MB). */
 export const MAX_IMAGE_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -277,21 +279,38 @@ const pngHeader = (b: Uint8Array): Header | null => {
 
 // GIF: the logical screen descriptor right after the 6-byte signature (u16 LE each), checked
 // together with the FIRST image descriptor, which is the frame jimp decodes: it must lie inside
-// the logical screen (and so within the pixel budget the screen is checked against). Anything
-// before it must be well-formed extension blocks. No image descriptor => no usable header.
+// the logical screen (and so within the pixel budget the screen is checked against).
+// The blocks before it are walked the way omggif (jimp's decoder) walks them, which is not
+// simply by their size-prefixed sub-blocks: it reads a graphic control extension (F9) as exactly
+// one 4-byte sub-block and its terminator, and throws on any label other than F9, FE (comment)
+// and FF (application). An application extension whose first sub-block is not its 11-byte
+// identifier it skips by a fixed 17 bytes, whatever the sub-blocks say: walked by their sizes
+// instead, a crafted file shows a 1x1 frame here and a 65535x16384 one to omggif (SEC-18). So
+// a GIF is accepted only with blocks both walks read alike: a graphic control extension of
+// exactly that shape, comments, and application extensions that open with the identifier.
+// The first frame's data must end inside the file. No image descriptor => no usable header.
 const gifDimensions = (
   b: Uint8Array,
 ): { width: number; height: number } | null => {
   if (b.length < 13) return null;
   const screen = { width: u16le(b, 6), height: u16le(b, 8) };
-  const flags = b[10];
-  // Global colour table: 3 * 2^(n+1) bytes when the flag bit is set.
-  let i = 13 + (flags & 0x80 ? 3 * (1 << ((flags & 0x07) + 1)) : 0);
+  // Size-prefixed sub-blocks from `at` up to their 0 terminator: the index after it, or null
+  // when they run past the end.
+  const subBlocksEnd = (at: number): number | null => {
+    let i = at;
+    while (i < b.length && b[i] !== 0) i += b[i] + 1;
+    return i < b.length ? i + 1 : null;
+  };
+  // A colour table: 3 * 2^(n+1) bytes when the flag bit is set.
+  const colourTable = (flags: number) =>
+    flags & 0x80 ? 3 * (1 << ((flags & 0x07) + 1)) : 0;
+  let i = 13 + colourTable(b[10]);
   while (i < b.length) {
     const block = b[i];
     if (block === 0x2c) {
-      // Image descriptor: left, top, width, height (u16 LE each).
-      if (i + 9 >= b.length) return null;
+      // Image descriptor: left, top, width, height (u16 LE each), flags; then the local colour
+      // table, the LZW minimum code size and the data sub-blocks.
+      if (i + 10 > b.length) return null;
       const left = u16le(b, i + 1);
       const top = u16le(b, i + 3);
       const width = u16le(b, i + 5);
@@ -304,13 +323,22 @@ const gifDimensions = (
       ) {
         return null;
       }
+      const data = i + 10 + colourTable(b[i + 9]);
+      if (data >= b.length || subBlocksEnd(data + 1) === null) return null;
       return screen;
     }
     if (block !== 0x21) return null; // trailer (0x3B) or garbage before any frame
-    // Extension: introducer, label, then size-prefixed sub-blocks ending with a 0 size.
+    const label = b[i + 1];
     i += 2;
-    while (i < b.length && b[i] !== 0) i += b[i] + 1;
-    i += 1;
+    if (label === 0xf9) {
+      if (b[i] !== 4 || b[i + 5] !== 0) return null;
+      i += 6;
+      continue;
+    }
+    if (label !== 0xfe && !(label === 0xff && b[i] === 0x0b)) return null;
+    const end = subBlocksEnd(i);
+    if (end === null) return null;
+    i = end;
   }
   return null;
 };
