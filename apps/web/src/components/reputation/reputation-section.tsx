@@ -83,7 +83,7 @@ export function ReputationSection({ memberId }: ReputationSectionProps) {
       ) : (
         <ul className="mt-4 divide-y">
           {reviews.map((review) => (
-            <li key={review._id} className="space-y-3 py-4">
+            <li key={review.id} className="space-y-3 py-4">
               <div className="flex items-center justify-between gap-2">
                 <StarRating value={review.rating} size="sm" />
                 <span className="text-muted-foreground text-xs">
