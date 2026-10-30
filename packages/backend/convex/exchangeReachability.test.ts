@@ -213,8 +213,10 @@ describe("exchange.propose reachability", () => {
       test(`blocked by the ${blocker}`, async () => {
         const t = convexTest(schema, modules);
         const s = await seed(t);
-        // A shared circle is a route a block does not sever, so only the block stands between
-        // the requester and the copy.
+        // Without the block the shared circle would make the copy reachable, so the block alone
+        // decides. canViewCopy already refuses a pair blocked either way (owner and holder
+        // excepted), so these two cases pin the observable answer; the holder case below is the
+        // one that exercises propose's own block check.
         await shareViaCircle(t, s);
         await insertBlock(t, s, blocker);
         await t.run((ctx) => mkUser(ctx, "clerk_stranger"));
