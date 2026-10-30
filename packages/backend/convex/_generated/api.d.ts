@@ -388,6 +388,7 @@ import type * as notifications_backfillRefs from "../notifications/backfillRefs.
 import type * as notifications_copy from "../notifications/copy.js";
 import type * as notifications_deliveryContent from "../notifications/deliveryContent.js";
 import type * as notifications_errors from "../notifications/errors.js";
+import type * as notifications_getMyMessagePreviews from "../notifications/getMyMessagePreviews.js";
 import type * as notifications_getMyPreferences from "../notifications/getMyPreferences.js";
 import type * as notifications_getPushConfig from "../notifications/getPushConfig.js";
 import type * as notifications_listMyNotificationViews from "../notifications/listMyNotificationViews.js";
@@ -399,6 +400,7 @@ import type * as notifications_resolveForDelivery from "../notifications/resolve
 import type * as notifications_resolveNotificationView from "../notifications/resolveNotificationView.js";
 import type * as notifications_sendEmail from "../notifications/sendEmail.js";
 import type * as notifications_sendWebPush from "../notifications/sendWebPush.js";
+import type * as notifications_setMessagePreview from "../notifications/setMessagePreview.js";
 import type * as notifications_setNotificationPreferences from "../notifications/setNotificationPreferences.js";
 import type * as notifications_subscriber from "../notifications/subscriber.js";
 import type * as notifications_threadDigest from "../notifications/threadDigest.js";
@@ -958,6 +960,7 @@ declare const fullApi: ApiFromModules<{
   "notifications/copy": typeof notifications_copy;
   "notifications/deliveryContent": typeof notifications_deliveryContent;
   "notifications/errors": typeof notifications_errors;
+  "notifications/getMyMessagePreviews": typeof notifications_getMyMessagePreviews;
   "notifications/getMyPreferences": typeof notifications_getMyPreferences;
   "notifications/getPushConfig": typeof notifications_getPushConfig;
   "notifications/listMyNotificationViews": typeof notifications_listMyNotificationViews;
@@ -969,6 +972,7 @@ declare const fullApi: ApiFromModules<{
   "notifications/resolveNotificationView": typeof notifications_resolveNotificationView;
   "notifications/sendEmail": typeof notifications_sendEmail;
   "notifications/sendWebPush": typeof notifications_sendWebPush;
+  "notifications/setMessagePreview": typeof notifications_setMessagePreview;
   "notifications/setNotificationPreferences": typeof notifications_setNotificationPreferences;
   "notifications/subscriber": typeof notifications_subscriber;
   "notifications/threadDigest": typeof notifications_threadDigest;

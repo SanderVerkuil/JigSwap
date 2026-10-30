@@ -129,6 +129,8 @@ export const send = internalAction({
             relatedId: args.relatedId,
             actorId: args.actorId,
             subject: args.subject,
+            // Quotes a message's text only if the recipient allows it in push.
+            channel: "push",
           },
         );
         event.resolved = content !== null;

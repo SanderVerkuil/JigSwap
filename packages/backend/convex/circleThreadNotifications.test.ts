@@ -818,6 +818,8 @@ describe("circle message text never leaves the app", () => {
         params: {},
         relatedId: threadId,
         subject: { kind: "thread", threadId },
+        // Push quotes a plain message's text by default, so only the circle strip keeps it out.
+        channel: "push",
       },
     );
     expect(content).not.toBeNull();
@@ -831,6 +833,7 @@ describe("circle message text never leaves the app", () => {
         params: {},
         relatedId: threadId,
         subject: { kind: "thread", threadId },
+        channel: "push",
       },
     );
     expect(dmShaped!.params.messagePreview).toBe("secret plans for saturday");

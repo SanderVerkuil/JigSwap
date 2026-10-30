@@ -7,6 +7,27 @@ import { NOTIFICATION_TYPES, NotificationType } from "./notification-type";
 // The set of channels enabled for a single notification type. A missing channel means disabled.
 export type ChannelToggles = Readonly<Partial<Record<Channel, boolean>>>;
 
+// The off-app channels a message notification can quote the message's text on. In-app always shows
+// it (the member is signed in), so it has no setting.
+export type MessagePreviewChannel = Exclude<Channel, "inApp">;
+
+export const MESSAGE_PREVIEW_CHANNELS: readonly MessagePreviewChannel[] = [
+  "email",
+  "push",
+];
+
+// Per off-app channel: may a message notification quote the message text? Absent = the default.
+export type MessagePreviewToggles = Readonly<
+  Partial<Record<MessagePreviewChannel, boolean>>
+>;
+
+// The defaults (SEC-64): an email leaves the text out (it sits in a third-party mailbox, often
+// forwarded or read on shared screens), a push includes it (the member opted into push on their
+// own device; this keeps push's existing behaviour).
+const DEFAULT_MESSAGE_PREVIEWS: Readonly<
+  Record<MessagePreviewChannel, boolean>
+> = { email: false, push: true };
+
 // A channel toggle map with every channel explicitly resolved -- what `defaultToggles` and
 // `resolvedToggles` always produce (no absent keys to fall back on).
 type ResolvedChannelToggles = Readonly<Record<Channel, boolean>>;
@@ -19,6 +40,9 @@ export interface NotificationPreferenceState {
   readonly memberId: MemberId;
   // type -> channel -> enabled. Absent (type or channel) resolves to disabled.
   readonly toggles: Readonly<Partial<Record<NotificationType, ChannelToggles>>>;
+  // Whether email / push may quote a message's text. Absent (rows written before the setting, or a
+  // channel never toggled) resolves to DEFAULT_MESSAGE_PREVIEWS.
+  readonly messagePreviews?: MessagePreviewToggles;
   readonly updatedAt: Date;
 }
 
@@ -86,6 +110,37 @@ export class NotificationPreference {
       resolved[type] = triple;
     }
     return resolved;
+  }
+
+  // May a message notification on `channel` quote the message's text? An explicit stored value
+  // wins; otherwise the channel's default (email no, push yes).
+  includesMessagePreview(channel: MessagePreviewChannel): boolean {
+    return (
+      this.state.messagePreviews?.[channel] ?? DEFAULT_MESSAGE_PREVIEWS[channel]
+    );
+  }
+
+  // Both off-app channels resolved: the read side the settings UI renders.
+  resolvedMessagePreviews(): Readonly<Record<MessagePreviewChannel, boolean>> {
+    return {
+      email: this.includesMessagePreview("email"),
+      push: this.includesMessagePreview("push"),
+    };
+  }
+
+  // Let `channel` quote message text, or not. A no-op when the value already matches. Records no
+  // event: like PreferenceChanged, nothing downstream subscribes; delivery reads it at send time.
+  setMessagePreview(
+    channel: MessagePreviewChannel,
+    enabled: boolean,
+    now: Date,
+  ): void {
+    if (this.includesMessagePreview(channel) === enabled) return;
+    this.state = {
+      ...this.state,
+      messagePreviews: { ...this.state.messagePreviews, [channel]: enabled },
+      updatedAt: now,
+    };
   }
 
   // Turn a (type, channel) delivery on. Records PreferenceChanged only when it actually changed.

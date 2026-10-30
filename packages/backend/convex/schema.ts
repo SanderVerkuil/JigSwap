@@ -1429,6 +1429,14 @@ export default defineSchema({
     aggregateId: v.optional(v.string()),
     memberId: v.id("users"),
     toggles: v.any(),
+    // Whether email / push may quote a message's text (SEC-64). Absent, or a channel absent,
+    // means the domain default: email no, push yes.
+    messagePreviews: v.optional(
+      v.object({
+        email: v.optional(v.boolean()),
+        push: v.optional(v.boolean()),
+      }),
+    ),
     updatedAt: v.number(),
   }).index("by_member", ["memberId"]),
 

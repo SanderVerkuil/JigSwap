@@ -1,5 +1,6 @@
 import type { Doc, Id } from "../_generated/dataModel";
 import { internalQuery } from "../_generated/server";
+import { preferenceOrDefault } from "./adapters/convexNotificationPreferenceRepository";
 import { deliveryContentOf, deliveryResolutionArgs } from "./deliveryContent";
 import {
   createNotificationViewCache,
@@ -72,6 +73,21 @@ export const resolveForDelivery = internalQuery({
         ...params
       } = content.params;
       return { ...content, params };
+    }
+    // A message's text leaves the app only on a channel the recipient allows it on (email off and
+    // push on by default; NotificationPreference.includesMessagePreview). A delivery that names no
+    // channel (a payload scheduled before the setting existed) quotes nothing. A photo or
+    // location keeps its kind ("sent a photo"): that is not the message's text.
+    if (content.params["messagePreview"] !== undefined) {
+      const allowed =
+        args.channel !== undefined &&
+        (
+          await preferenceOrDefault(ctx, args.recipientId)
+        ).includesMessagePreview(args.channel);
+      if (!allowed) {
+        const { messagePreview: _preview, ...params } = content.params;
+        return { ...content, params };
+      }
     }
     return content;
   },

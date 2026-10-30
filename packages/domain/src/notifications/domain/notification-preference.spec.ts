@@ -234,3 +234,71 @@ describe("NotificationPreference round-trip", () => {
     expect(back.pullEvents()).toEqual([]);
   });
 });
+
+// Whether email and push may quote a message's text (SEC-64). Email defaults to no text, push to
+// the text (push keeps its existing behaviour); in-app always shows it, so it has no setting.
+describe("NotificationPreference message previews", () => {
+  it("defaults: email leaves the text out, push includes it", () => {
+    const pref = def();
+    expect(pref.includesMessagePreview("email")).toBe(false);
+    expect(pref.includesMessagePreview("push")).toBe(true);
+    expect(pref.resolvedMessagePreviews()).toEqual({
+      email: false,
+      push: true,
+    });
+  });
+
+  it("a row stored before the setting existed resolves to the defaults", () => {
+    const pref = NotificationPreference.rehydrate({
+      id,
+      memberId: alice,
+      toggles: {},
+      updatedAt: NOW,
+    });
+    expect(pref.resolvedMessagePreviews()).toEqual({
+      email: false,
+      push: true,
+    });
+  });
+
+  it("setMessagePreview flips one channel and stamps updatedAt", () => {
+    const pref = def();
+    pref.setMessagePreview("email", true, LATER);
+    pref.setMessagePreview("push", false, LATER);
+    expect(pref.resolvedMessagePreviews()).toEqual({
+      email: true,
+      push: false,
+    });
+    expect(pref.toState().messagePreviews).toEqual({
+      email: true,
+      push: false,
+    });
+    expect(pref.toState().updatedAt).toBe(LATER);
+  });
+
+  it("an explicit stored value wins over the default", () => {
+    const pref = NotificationPreference.rehydrate({
+      id,
+      memberId: alice,
+      toggles: {},
+      messagePreviews: { push: false },
+      updatedAt: NOW,
+    });
+    expect(pref.includesMessagePreview("push")).toBe(false);
+    expect(pref.includesMessagePreview("email")).toBe(false);
+  });
+
+  it("is a no-op when the value already matches", () => {
+    const pref = def();
+    pref.setMessagePreview("push", true, LATER);
+    expect(pref.toState().messagePreviews).toBeUndefined();
+    expect(pref.toState().updatedAt).toBe(NOW);
+  });
+
+  it("leaves the per-type toggles untouched", () => {
+    const pref = def();
+    const before = pref.resolvedToggles();
+    pref.setMessagePreview("email", true, LATER);
+    expect(pref.resolvedToggles()).toEqual(before);
+  });
+});

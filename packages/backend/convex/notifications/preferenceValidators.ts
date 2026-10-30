@@ -46,3 +46,10 @@ export const channelValidator = v.union(
   v.literal("email"),
   v.literal("push"),
 );
+
+// The off-app channels whose message notifications may quote the message's text (the domain
+// MessagePreviewChannel). In-app always shows it, so it is not a choice.
+export const messagePreviewChannelValidator = v.union(
+  v.literal("email"),
+  v.literal("push"),
+);

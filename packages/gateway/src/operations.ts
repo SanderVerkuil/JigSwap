@@ -367,6 +367,11 @@ export const gateway = {
         .updateNotificationPreference,
     setPreferences:
       api.notifications.setNotificationPreferences.setNotificationPreferences,
+    // Whether email / push notifications for a message may quote its text ({ email, push });
+    // set one channel at a time.
+    messagePreviews:
+      api.notifications.getMyMessagePreviews.getMyMessagePreviews,
+    setMessagePreview: api.notifications.setMessagePreview.setMessagePreview,
     // Native Web Push: the client reads the (non-secret) VAPID public key, then registers /
     // unregisters its PushManager subscription as the member toggles push.
     pushConfig: api.notifications.getPushConfig.getPushConfig,
