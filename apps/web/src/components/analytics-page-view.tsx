@@ -5,6 +5,11 @@ import { usePostHog } from "@/components/analytics-provider";
 import { useConvexAuth } from "convex/react";
 import { useEffect } from "react";
 
+// Earlier versions sent email and username with identify. Unset them on the
+// member's PostHog person once per page load (SEC-59); this can go once those
+// properties have been purged in PostHog itself.
+let legacyPersonPropertiesUnset = false;
+
 // Ported from apps/web/src/components/posthog-page-view.tsx: next/navigation
 // hooks swapped for the compat layer; behavior (pageview capture + identify) kept.
 export function PostHogPageView(): null {
@@ -13,7 +18,8 @@ export function PostHogPageView(): null {
   const posthog = usePostHog();
 
   const { isLoading, isAuthenticated } = useConvexAuth();
-  const { user } = useUser();
+  const { isLoaded, isSignedIn, user } = useUser();
+  const userId = user?.id;
 
   useEffect(() => {
     // Consent gate: posthog only has __loaded once initPostHog ran (i.e. the
@@ -34,13 +40,29 @@ export function PostHogPageView(): null {
   }, [pathname, searchParams, posthog]);
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated && user && posthog && posthog.__loaded) {
-      posthog.identify(user.id, {
-        email: user.primaryEmailAddress?.emailAddress,
-        username: user.username,
-      });
+    if (!isLoading && isAuthenticated && userId && posthog?.__loaded) {
+      // The opaque account id only: never name, email or username.
+      posthog.identify(userId);
+      if (!legacyPersonPropertiesUnset) {
+        legacyPersonPropertiesUnset = true;
+        posthog.unsetPersonProperties(["email", "username"]);
+      }
     }
-  }, [isLoading, isAuthenticated, user, posthog]);
+  }, [isLoading, isAuthenticated, userId, posthog]);
+
+  useEffect(() => {
+    // Signed out, by the menu, session expiry or another tab: give this
+    // device a fresh anonymous identity so later events aren't linked to the
+    // member. Visitors who never signed in keep theirs.
+    if (
+      isLoaded &&
+      !isSignedIn &&
+      posthog?.__loaded &&
+      posthog.get_property("$user_state") === "identified"
+    ) {
+      posthog.reset();
+    }
+  }, [isLoaded, isSignedIn, posthog]);
 
   return null;
 }
