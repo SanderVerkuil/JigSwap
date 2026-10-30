@@ -270,3 +270,114 @@ describe("a logged solve names a copy or a puzzle (SEC-30)", () => {
     expect(await completionCount(t)).toBe(1);
   });
 });
+
+describe("daily solve cap (SEC-30)", () => {
+  const completionsOf = (t: T, userId: Id<"users">) =>
+    t.run((ctx) =>
+      ctx.db
+        .query("completions")
+        .withIndex("by_user", (q) => q.eq("userId", userId))
+        .collect(),
+    );
+
+  const recordSolve = (t: T, who: string, puzzleDefinitionId: string) =>
+    as(t, who).mutation(api.solving.recordCompletion.recordCompletion, {
+      puzzleDefinitionId,
+      datePrecision: "unknown",
+    });
+
+  const startSolve = (t: T, who: string, copyId: string) =>
+    as(t, who).mutation(api.solving.startCompletion.startCompletion, {
+      copyId,
+      startDate: Date.now(),
+    });
+
+  const recordPast = (t: T, who: string, copyIds: string[]) =>
+    as(t, who).mutation(
+      api.solving.recordPastCompletions.recordPastCompletions,
+      {
+        items: copyIds.map((copyId) => ({
+          copyId,
+          datePrecision: "unknown" as const,
+        })),
+      },
+    );
+
+  test("recordCompletion and startCompletion count one solve each", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, definitions } = await seed(t);
+    const {
+      copyIds: [copyId],
+    } = await acquireCopies(t, "alice", definitions.slice(0, 1));
+
+    await recordSolve(t, "alice", definitions[0]!);
+    expect((await limitRow(t, "solveLog", alice))?.count).toBe(1);
+    await startSolve(t, "alice", copyId!);
+    expect((await limitRow(t, "solveLog", alice))?.count).toBe(2);
+  });
+
+  test("recordPastCompletions counts every solve in the batch", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, definitions } = await seed(t);
+    const { copyIds } = await acquireCopies(t, "alice", definitions);
+
+    await recordPast(t, "alice", copyIds);
+    expect((await limitRow(t, "solveLog", alice))?.count).toBe(BATCH);
+  });
+
+  test("a batch that would cross the cap is refused whole and writes nothing", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, definitions } = await seed(t);
+    const { copyIds } = await acquireCopies(
+      t,
+      "alice",
+      definitions.slice(0, 3),
+    );
+    const used = RATE_LIMITS.solveLog.max - 2;
+    await setUsed(t, "solveLog", alice, used);
+
+    await expectConvexCode(recordPast(t, "alice", copyIds), "RateLimited");
+    expect(await completionsOf(t, alice)).toHaveLength(0);
+    expect(await eventCount(t, "CompletionRecorded")).toBe(0);
+    expect((await limitRow(t, "solveLog", alice))?.count).toBe(used);
+
+    await recordPast(t, "alice", copyIds.slice(0, 2));
+    expect((await limitRow(t, "solveLog", alice))?.count).toBe(
+      RATE_LIMITS.solveLog.max,
+    );
+  });
+
+  test("every solve path is refused once the day is used up", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, definitions } = await seed(t);
+    const { copyIds } = await acquireCopies(
+      t,
+      "alice",
+      definitions.slice(0, 1),
+    );
+    await setUsed(t, "solveLog", alice, RATE_LIMITS.solveLog.max);
+
+    await expectConvexCode(
+      recordSolve(t, "alice", definitions[0]!),
+      "RateLimited",
+    );
+    await expectConvexCode(startSolve(t, "alice", copyIds[0]!), "RateLimited");
+    await expectConvexCode(recordPast(t, "alice", copyIds), "RateLimited");
+    expect(await completionsOf(t, alice)).toHaveLength(0);
+    expect(await eventCount(t, "CompletionStarted")).toBe(0);
+    expect(await eventCount(t, "CompletionRecorded")).toBe(0);
+  });
+
+  test("the budget comes back after a day, and is per member", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, definitions } = await seed(t);
+    await setUsed(t, "solveLog", alice, RATE_LIMITS.solveLog.max);
+
+    await recordSolve(t, "bob", definitions[0]!);
+    expect(await completionsOf(t, bob)).toHaveLength(1);
+
+    await setUsed(t, "solveLog", alice, RATE_LIMITS.solveLog.max, DAY);
+    await recordSolve(t, "alice", definitions[0]!);
+    expect((await limitRow(t, "solveLog", alice))?.count).toBe(1);
+  });
+});

@@ -18,6 +18,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
+import { solveSaveErrorKey } from "./solving-error";
 
 function todayInputValue(): string {
   return new Date().toISOString().slice(0, 10);
@@ -71,7 +72,7 @@ export function StartSolveDialog({
       onOpenChange(false);
     } catch (error) {
       console.error("Failed to start solve:", error);
-      toast.error(t("saveError"));
+      toast.error(t(solveSaveErrorKey(error)));
     }
   };
 

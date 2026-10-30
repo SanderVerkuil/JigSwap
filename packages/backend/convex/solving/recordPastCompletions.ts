@@ -3,6 +3,7 @@ import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { enforceRateLimit } from "../lib/rateLimits";
 import { convexCompletionRepository } from "./adapters/convexCompletionRepository";
 import { completionIdGenerator } from "./adapters/idGenerators";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
@@ -50,6 +51,10 @@ export const recordPastCompletions = mutation({
         message: `Log between 1 and ${MAX_PAST_COMPLETIONS} solves at once`,
       });
     }
+    // Every solve of the batch counts against the member's daily solve budget (SEC-30); a batch
+    // that doesn't fit is refused whole.
+    await enforceRateLimit(ctx, "solveLog", me, args.items.length);
+
     if (new Set(args.items.map((i) => i.copyId)).size !== args.items.length) {
       throw new ConvexError({
         code: "DuplicateCopy",

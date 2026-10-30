@@ -2913,6 +2913,7 @@
       "savedInProgress": "Solve started",
       "finished": "Solve finished",
       "saveError": "Could not save the solve. Please try again.",
+      "rateLimited": "You've logged a lot of solves today. Try again tomorrow.",
       "endBeforeStartError": "The finish date can't be before the start date.",
       "allPiecesPresent": "All pieces were present",
       "updateCopyPiecesTitle": "Update this copy?",
@@ -2930,7 +2931,8 @@
       "submit": "Start",
       "started": "Puzzle started",
       "finishTrigger": "Finish solve",
-      "saveError": "Could not save the solve. Please try again."
+      "saveError": "Could not save the solve. Please try again.",
+      "rateLimited": "You've started or logged a lot of solves today. Try again tomorrow."
     },
     "durationPrompt": {
       "title": "Track how long puzzles take you?",
@@ -5133,7 +5135,8 @@
       "empty": "Add a puzzle first, then come back to log it.",
       "submit": "{count, plural, one {Log # puzzle} other {Log # puzzles}}",
       "saved": "{count, plural, one {# puzzle logged} other {# puzzles logged}}",
-      "saveError": "Couldn't log these puzzles. Nothing was saved, so you can try again."
+      "saveError": "Couldn't log these puzzles. Nothing was saved, so you can try again.",
+      "rateLimited": "You've logged a lot of puzzles today. Nothing was saved, so try again tomorrow."
     },
     "welcome": {
       "title": "Welcome to JigSwap!",

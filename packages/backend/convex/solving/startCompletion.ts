@@ -9,6 +9,7 @@ import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { copyAccessOf } from "../household/copyAccess";
 import { requireMember } from "../identity/requireMember";
+import { enforceRateLimit } from "../lib/rateLimits";
 import { convexCompletionRepository } from "./adapters/convexCompletionRepository";
 import { completionIdGenerator } from "./adapters/idGenerators";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
@@ -28,6 +29,8 @@ export const startCompletion = mutation({
   handler: async (ctx, args) => {
     const userId = await requireMember(ctx);
     const me = userId as unknown as string;
+    // One solve against the member's daily solve budget (SEC-30).
+    await enforceRateLimit(ctx, "solveLog", me);
 
     const copy = await ctx.db
       .query("ownedPuzzles")

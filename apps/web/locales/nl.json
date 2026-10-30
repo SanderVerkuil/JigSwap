@@ -2913,6 +2913,7 @@
       "savedInProgress": "Voltooiing gestart",
       "finished": "Voltooiing afgerond",
       "saveError": "Kon de voltooiing niet opslaan. Probeer het opnieuw.",
+      "rateLimited": "Je hebt vandaag al veel voltooiingen vastgelegd. Probeer het morgen opnieuw.",
       "endBeforeStartError": "De einddatum kan niet vóór de startdatum liggen.",
       "allPiecesPresent": "Alle stukjes waren aanwezig",
       "updateCopyPiecesTitle": "Dit exemplaar bijwerken?",
@@ -2930,7 +2931,8 @@
       "submit": "Starten",
       "started": "Puzzel gestart",
       "finishTrigger": "Puzzel afronden",
-      "saveError": "Kon de sessie niet opslaan. Probeer het opnieuw."
+      "saveError": "Kon de sessie niet opslaan. Probeer het opnieuw.",
+      "rateLimited": "Je hebt vandaag al veel puzzels gestart of vastgelegd. Probeer het morgen opnieuw."
     },
     "durationPrompt": {
       "title": "Bijhouden hoelang puzzels duren?",
@@ -5133,7 +5135,8 @@
       "empty": "Voeg eerst een puzzel toe en kom dan terug om hem vast te leggen.",
       "submit": "{count, plural, one {# puzzel vastleggen} other {# puzzels vastleggen}}",
       "saved": "{count, plural, one {# puzzel vastgelegd} other {# puzzels vastgelegd}}",
-      "saveError": "Deze puzzels konden niet worden vastgelegd. Er is niets opgeslagen, dus je kunt het opnieuw proberen."
+      "saveError": "Deze puzzels konden niet worden vastgelegd. Er is niets opgeslagen, dus je kunt het opnieuw proberen.",
+      "rateLimited": "Je hebt vandaag al veel puzzels vastgelegd. Er is niets opgeslagen, dus probeer het morgen opnieuw."
     },
     "welcome": {
       "title": "Welkom bij JigSwap!",

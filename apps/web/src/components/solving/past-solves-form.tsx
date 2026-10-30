@@ -21,6 +21,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
+import { solveSaveErrorKey } from "./solving-error";
 
 // Rows shown at first and added per "Show more"; also the most one submit may log (the
 // recordPastCompletions cap), so a member ticks at most this many at once.
@@ -82,7 +83,7 @@ export function PastSolvesForm({
       return true;
     } catch (error) {
       console.error("Failed to log past solves:", error);
-      toast.error(t("saveError"));
+      toast.error(t(solveSaveErrorKey(error)));
       return false;
     }
   };

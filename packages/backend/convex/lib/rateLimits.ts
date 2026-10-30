@@ -113,6 +113,10 @@ export const RATE_LIMITS = {
   // copy: a full quick-start batch is 25. Bounds how fast one account can flood Browse and the
   // activity feed (SEC-29); a heavy cataloguing day stays well inside it.
   copyAdd: { windowMs: DAY, max: 500 },
+  // Solves logged or started (solving/recordCompletion, startCompletion and recordPastCompletions),
+  // counted per solve: the quick start's past-solves batch is up to 25. Bounds how fast one account
+  // can flood the activity feed's solve events (SEC-30).
+  solveLog: { windowMs: DAY, max: 300 },
 } as const satisfies Record<string, { windowMs: number; max: number }>;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;
