@@ -2929,7 +2929,8 @@
       "skip": "Overslaan",
       "saved": "Bedankt! Alles is opgeslagen.",
       "saveError": "Kon niet alles opslaan. Probeer het opnieuw.",
-      "tooManyPhotos": "Een voltooiing kan maximaal 5 foto's hebben."
+      "tooManyPhotos": "Een voltooiing kan maximaal 5 foto's hebben.",
+      "photosRateLimited": "Je hebt net veel foto's toegevoegd. Probeer het later opnieuw."
     },
     "goals": {
       "title": "Doelen",
@@ -3979,6 +3980,8 @@
     "uploading": "Uploaden…",
     "photoAdded": "Foto toegevoegd",
     "photoFailed": "Kon foto niet toevoegen",
+    "photoRateLimited": "Je hebt net veel foto's toegevoegd. Probeer het later opnieuw.",
+    "photoLimitReached": "Een exemplaar kan maximaal 20 foto's hebben.",
     "noPhotos": "Nog geen foto's.",
     "completionHistory": "Voltooiingsgeschiedenis",
     "completionsCount": "{count} voltooiingen",

@@ -252,6 +252,8 @@ export function CompletionFollowUpProvider({
       return;
     }
     setSaving(true);
+    // Whether the failure below came from the attach call (its RateLimited is the photo limit).
+    let attaching = false;
     try {
       // 1. Upload in parallel — only photos without a storageId (Retry re-runs failures
       //    only; earlier successes keep their storageIds).
@@ -316,6 +318,7 @@ export function CompletionFollowUpProvider({
         return storageId ? [storageId as Id<"_storage">] : [];
       });
       if (storageIds.length > 0) {
+        attaching = true;
         await attachCompletionPhotos({ completionId, storageIds });
       }
 
@@ -332,7 +335,11 @@ export function CompletionFollowUpProvider({
         );
       }
       toast.error(
-        code === "TooManyPhotos" ? t("tooManyPhotos") : t("saveError"),
+        code === "TooManyPhotos"
+          ? t("tooManyPhotos")
+          : code === "RateLimited" && attaching
+            ? t("photosRateLimited")
+            : t("saveError"),
       );
     } finally {
       setSaving(false);

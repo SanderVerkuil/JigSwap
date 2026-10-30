@@ -3,6 +3,7 @@ import { useRouter } from "@/compat/navigation";
 import { availabilityToSharing } from "@/components/add-puzzle";
 import { ImageZoom } from "@/components/common/image-zoom";
 import { CopyOwner } from "@/components/copies/copy-owner";
+import { copyPhotoErrorKey } from "@/components/copies/copy-photo-error";
 import { EditCopyDialog } from "@/components/copies/edit-copy-dialog";
 import { PhotoLightbox } from "@/components/copies/photo-lightbox";
 import {
@@ -1003,12 +1004,13 @@ function PhotoStrip({
       });
     },
     onSuccess: () => toast.success(t("photoAdded")),
-    // An upload URL refused by the member's upload limit says to wait (SEC-20).
+    // An upload URL refused by the member's upload limit says to wait (SEC-20); the attach's own
+    // refusals (the photo limit, a full copy) name their reason (SEC-19).
     onError: (error) =>
       toast.error(
         isUploadRateLimited(error)
           ? tCommon("photoUploadRateLimited")
-          : t("photoFailed"),
+          : t(copyPhotoErrorKey(error)),
       ),
     onSettled: () => {
       if (inputRef.current) inputRef.current.value = "";
