@@ -95,8 +95,14 @@ An exchange moves through clear steps:
    confirm first, because they can't be undone; the other member gets a
    notification either way.
 3. **Completion** — once accepted, **both parties must confirm** completion.
-   Use **Mark Complete**. Until then, either of you can still **Cancel** the
-   exchange, for example if plans change or the other member stops responding.
+   Use **Mark Complete** once the puzzle has actually changed hands. A dialog
+   first tells you what completing does: for a swap or sale the puzzle moves to
+   the other member's library and that can't be undone; for a loan, the loan
+   starts. After you confirm, the exchange shows **You confirmed … · Waiting
+   for …** until your partner confirms too. If your partner confirmed first,
+   the exchange shows **Your turn**, and your confirmation completes it. Until
+   then, either of you can still **Cancel** the exchange, for example if plans
+   change or the other member stops responding.
 4. **Completed** — when both confirm, ownership (swap/sale) or possession
    (loan) transfers, and you can **Leave a review** of your partner.
 

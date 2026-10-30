@@ -8,6 +8,12 @@ import { useCurrentMember } from "@/components/dashboard-home/use-current-member
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { BorrowedEmptyState } from "@/components/exchange/borrowed-empty-state";
 import { ExchangeActions } from "@/components/exchange/exchange-actions";
+import { YourTurnPill } from "@/components/exchange/exchange-pills";
+import {
+  confirmationState,
+  viewerSide,
+  type Direction,
+} from "@/components/exchange/exchange-state";
 import { ReturnLoanButton } from "@/components/exchange/return-loan-button";
 import { TradePartnerCard } from "@/components/exchange/trade-partner-card";
 import { ThreadView } from "@/components/messaging/thread-view";
@@ -44,8 +50,6 @@ type BorrowedLoan = FunctionReturnType<typeof gateway.lending.borrowed>[number];
 // owner/requester reads and the completed status; Borrowed folds the old
 // /borrowed page in as a tab (open loans where the viewer is the borrower).
 type ExchangeTab = "all" | "incoming" | "outgoing" | "completed" | "borrowed";
-
-type Direction = "incoming" | "outgoing";
 
 export const Route = createFileRoute("/_dashboard/trades")({
   validateSearch: validateTradesSearch,
@@ -291,6 +295,10 @@ function ExchangeListRow({
   );
 
   const KindIcon = KIND_ICONS[exchange.type] ?? ArrowLeftRight;
+  // Only the partner has confirmed completion: the viewer's confirmation settles it.
+  const yourTurn =
+    exchange.status === "accepted" &&
+    confirmationState(exchange, viewerSide(direction)).mySettles;
 
   return (
     <div
@@ -322,6 +330,11 @@ function ExchangeListRow({
               when: relativeTime(exchange.createdAt),
             })}
           </div>
+          {yourTurn && (
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              <YourTurnPill />
+            </div>
+          )}
         </div>
         <StatusPill status={exchange.status} />
         <Button
@@ -405,6 +418,8 @@ function ExchangeDetail({
         exchange={exchange}
         direction={direction}
         partnerName={who}
+        requestedTitle={exchange.requestedPuzzle?.title}
+        offeredTitle={exchange.offeredPuzzle?.title}
       >
         {/* Review the partner once completed; the dialog hides itself when the
             viewer has already reviewed this exchange. */}

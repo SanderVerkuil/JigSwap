@@ -41,12 +41,15 @@ const CANCEL = getFunctionName(gateway.exchange.cancel);
 const COMPLETE = getFunctionName(gateway.exchange.complete);
 
 const EXCHANGE = "exchange-1";
+const NOW = Date.UTC(2026, 9, 30, 12);
+const HOUR = 3_600_000;
 
 const exchange = (
   fields: Partial<ActionableExchange> = {},
 ): ActionableExchange => ({
   aggregateId: EXCHANGE,
   status: "proposed",
+  type: "trade",
   ...fields,
 });
 
@@ -71,11 +74,14 @@ const renderActions = ({
         locale={locale}
         messages={locale === "en" ? en : nl}
         timeZone="Europe/Amsterdam"
+        now={new Date(NOW)}
       >
         <ExchangeActions
           exchange={exchange(fields)}
           direction={direction}
           partnerName="Anna"
+          requestedTitle="Harbour Lights"
+          offeredTitle="Tulip Fields"
         />
       </IntlProvider>
     </QueryClientProvider>,
@@ -273,6 +279,18 @@ describe("ExchangeActions: cancel an accepted exchange", () => {
     },
   );
 
+  it("still lets a member who already confirmed call it off", () => {
+    renderActions({
+      fields: {
+        status: "accepted",
+        recipientConfirmationTimestamp: NOW - HOUR,
+      },
+      direction: "incoming",
+    });
+    expect(screen.queryByRole("button", { name: "Mark Complete" })).toBeNull();
+    expect(button("Cancel").disabled).toBe(false);
+  });
+
   it("keeps the dialog open and explains a refusal", async () => {
     mocks.mutation.mockRejectedValue(
       new ConvexError({ code: "WrongParty", message: "x" }),
@@ -316,20 +334,120 @@ describe("ExchangeActions: cancel an accepted exchange", () => {
 });
 
 describe("ExchangeActions: complete", () => {
-  it("confirms completion with a pending label and a toast", async () => {
-    const pending = deferred();
-    mocks.mutation.mockReturnValue(pending.promise);
-    renderActions({ fields: { status: "accepted" } });
-
+  const completeDialog = () => {
     fireEvent.click(button("Mark Complete"));
-    await waitFor(() => expect(button("Confirming…").disabled).toBe(true));
+    return screen.getByRole("alertdialog");
+  };
+
+  it("asks first, and says the partner still has to confirm", async () => {
+    mocks.mutation.mockResolvedValue(null);
+    // The requester of a swap nobody has confirmed yet.
+    renderActions({ fields: { status: "accepted" }, direction: "outgoing" });
+    expect(screen.queryByText("Your turn")).toBeNull();
+
+    const dialog = completeDialog();
+    expect(within(dialog).getByText("Confirm the handover?")).toBeTruthy();
+    expect(
+      within(dialog).getByText(
+        "Only confirm once the puzzle has changed hands. The exchange completes as soon as Anna confirms too. Completion moves “Tulip Fields” to Anna's library and “Harbour Lights” to yours. This can't be undone.",
+      ),
+    ).toBeTruthy();
+    expect(mocks.mutation).not.toHaveBeenCalled();
+
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Confirm handover" }),
+    );
+    await waitFor(() =>
+      expect(mocks.toastSuccess).toHaveBeenCalledWith(
+        "Confirmed. Waiting for Anna.",
+      ),
+    );
     expect(mocks.mutation).toHaveBeenCalledWith(COMPLETE, {
       exchangeId: EXCHANGE,
     });
+  });
 
-    pending.resolve(null);
+  it("shows the owner it's their turn when only the buyer has confirmed, and that their click settles", async () => {
+    mocks.mutation.mockResolvedValue(null);
+    renderActions({
+      fields: {
+        status: "accepted",
+        type: "sale",
+        initiatorConfirmationTimestamp: NOW - 2 * HOUR,
+      },
+      direction: "incoming",
+    });
+    expect(screen.getByText("Your turn")).toBeTruthy();
+    expect(screen.getByText("Anna confirmed 2 hours ago")).toBeTruthy();
+
+    const dialog = completeDialog();
+    expect(
+      within(dialog).getByText(
+        "Anna has already confirmed, so your confirmation completes the exchange. Completion moves “Harbour Lights” to Anna's library. This can't be undone.",
+      ),
+    ).toBeTruthy();
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Confirm handover" }),
+    );
     await waitFor(() =>
-      expect(mocks.toastSuccess).toHaveBeenCalledWith("Handover confirmed"),
+      expect(mocks.toastSuccess).toHaveBeenCalledWith("Exchange completed"),
+    );
+  });
+
+  it("words a loan as starting the loan, not as a permanent move", async () => {
+    mocks.mutation.mockResolvedValue(null);
+    renderActions({
+      fields: {
+        status: "accepted",
+        type: "loan",
+        recipientConfirmationTimestamp: NOW - HOUR,
+      },
+      direction: "outgoing",
+    });
+    const dialog = completeDialog();
+    expect(
+      within(dialog).getByText(
+        "Anna has already confirmed, so your confirmation completes the exchange. Completion starts the loan: you hold “Harbour Lights” until you return it to Anna.",
+      ),
+    ).toBeTruthy();
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Confirm handover" }),
+    );
+    await waitFor(() =>
+      expect(mocks.toastSuccess).toHaveBeenCalledWith("Loan started"),
+    );
+  });
+
+  it("replaces the button with who it is waiting for once the viewer has confirmed", () => {
+    renderActions({
+      fields: {
+        status: "accepted",
+        recipientConfirmationTimestamp: NOW - 3 * HOUR,
+      },
+      direction: "incoming",
+    });
+    expect(
+      screen.getByText("You confirmed 3 hours ago · Waiting for Anna"),
+    ).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Mark Complete" })).toBeNull();
+    expect(screen.queryByText("Your turn")).toBeNull();
+  });
+
+  it("keeps the confirm open with a pending label while it runs", async () => {
+    mocks.mutation.mockReturnValue(new Promise(() => {}));
+    renderActions({ fields: { status: "accepted" } });
+    const dialog = completeDialog();
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Confirm handover" }),
+    );
+    await waitFor(() =>
+      expect(
+        (
+          within(screen.getByRole("alertdialog")).getByRole("button", {
+            name: "Confirming…",
+          }) as HTMLButtonElement
+        ).disabled,
+      ).toBe(true),
     );
   });
 
@@ -341,7 +459,11 @@ describe("ExchangeActions: complete", () => {
       mocks.toastError.mockReset();
       mocks.mutation.mockRejectedValue(new ConvexError({ code, message: "x" }));
       renderActions({ fields: { status: "accepted" } });
-      fireEvent.click(button("Mark Complete"));
+      fireEvent.click(
+        within(completeDialog()).getByRole("button", {
+          name: "Confirm handover",
+        }),
+      );
       await waitFor(() =>
         expect(mocks.toastError).toHaveBeenCalledWith(message),
       );
@@ -359,6 +481,25 @@ describe("ExchangeActions: complete", () => {
 });
 
 describe("ExchangeActions: Dutch", () => {
+  it("says who confirmed and words the handover in Dutch", () => {
+    renderActions({
+      locale: "nl",
+      fields: {
+        status: "accepted",
+        type: "loan",
+        initiatorConfirmationTimestamp: NOW - 2 * HOUR,
+      },
+    });
+    expect(screen.getByText("Jouw beurt")).toBeTruthy();
+    expect(screen.getByText("Anna heeft 2 uur geleden bevestigd")).toBeTruthy();
+    fireEvent.click(button("Markeren als Voltooid"));
+    expect(
+      screen.getByText(
+        "Anna heeft al bevestigd, dus met jouw bevestiging is de uitwisseling afgerond. Bij afronding gaat de lening in: Anna houdt “Harbour Lights” tot die wordt teruggegeven, en de puzzel blijft in je bibliotheek.",
+      ),
+    ).toBeTruthy();
+  });
+
   it("labels the actions and the confirm in Dutch", () => {
     renderActions({ locale: "nl" });
     expect(button("Accepteren")).toBeTruthy();

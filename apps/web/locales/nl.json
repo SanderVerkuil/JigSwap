@@ -711,6 +711,26 @@
       "copyReserved": "Een van de puzzels in deze uitwisseling is al gereserveerd voor een andere uitwisseling of is uitgeleend. Je kunt doorgaan zodra die uitwisseling is afgerond of geannuleerd, of zodra de puzzel terug is. Beide deelnemers aan die uitwisseling kunnen hem annuleren.",
       "copyChangedHands": "Deze uitwisseling kan niet meer doorgaan: een van de puzzels is van eigenaar gewisseld of niet meer beschikbaar."
     },
+    "completeConfirm": {
+      "title": "Overdracht bevestigen?",
+      "leadFirst": "Bevestig pas als de puzzel echt is overgedragen. De uitwisseling is afgerond zodra {name} ook bevestigt.",
+      "leadSettles": "{name} heeft al bevestigd, dus met jouw bevestiging is de uitwisseling afgerond.",
+      "effect": {
+        "trade": "Bij afronding gaat “{give}” naar de bibliotheek van {name} en “{get}” naar die van jou.",
+        "saleGive": "Bij afronding gaat “{title}” naar de bibliotheek van {name}.",
+        "saleGet": "Bij afronding gaat “{title}” naar jouw bibliotheek.",
+        "loanLend": "Bij afronding gaat de lening in: {name} houdt “{title}” tot die wordt teruggegeven, en de puzzel blijft in je bibliotheek.",
+        "loanBorrow": "Bij afronding gaat de lening in: jij houdt “{title}” tot je hem teruggeeft aan {name}."
+      },
+      "irreversible": "Dit kun je niet ongedaan maken.",
+      "confirm": "Overdracht bevestigen",
+      "untitled": "deze puzzel"
+    },
+    "confirmation": {
+      "waiting": "Je hebt {when} bevestigd · Wachten op {name}",
+      "partnerConfirmed": "{name} heeft {when} bevestigd",
+      "yourTurn": "Jouw beurt"
+    },
     "declineExchange": "Uitwisseling Afwijzen",
     "completeExchange": "Uitwisseling Voltooien",
     "cancelExchange": "Uitwisseling Annuleren",
@@ -785,8 +805,10 @@
       "accepted": "Verzoek geaccepteerd. Spreek de overdracht af met {name}.",
       "declined": "Verzoek afgewezen",
       "cancelled": "Verzoek geannuleerd",
-      "cancelledAccepted": "Uitwisseling geannuleerd",
-      "confirmed": "Overdracht bevestigd"
+      "confirmedWaiting": "Bevestigd. Wachten op {name}.",
+      "completed": "Uitwisseling afgerond",
+      "loanStarted": "Lening gestart",
+      "cancelledAccepted": "Uitwisseling geannuleerd"
     }
   },
   "tradeRequest": {

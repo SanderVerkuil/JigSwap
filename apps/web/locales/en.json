@@ -711,6 +711,26 @@
       "copyReserved": "One of the puzzles in this exchange is already set aside for another exchange or is out on loan. You can go ahead once that exchange is completed or cancelled, or once the puzzle is back. Either member of that exchange can cancel it.",
       "copyChangedHands": "This exchange can't go ahead any more: one of its puzzles has changed hands or is no longer available."
     },
+    "completeConfirm": {
+      "title": "Confirm the handover?",
+      "leadFirst": "Only confirm once the puzzle has changed hands. The exchange completes as soon as {name} confirms too.",
+      "leadSettles": "{name} has already confirmed, so your confirmation completes the exchange.",
+      "effect": {
+        "trade": "Completion moves “{give}” to {name}'s library and “{get}” to yours.",
+        "saleGive": "Completion moves “{title}” to {name}'s library.",
+        "saleGet": "Completion moves “{title}” to your library.",
+        "loanLend": "Completion starts the loan: {name} holds “{title}” until they return it, and it stays in your library.",
+        "loanBorrow": "Completion starts the loan: you hold “{title}” until you return it to {name}."
+      },
+      "irreversible": "This can't be undone.",
+      "confirm": "Confirm handover",
+      "untitled": "this puzzle"
+    },
+    "confirmation": {
+      "waiting": "You confirmed {when} · Waiting for {name}",
+      "partnerConfirmed": "{name} confirmed {when}",
+      "yourTurn": "Your turn"
+    },
     "declineExchange": "Decline Exchange",
     "completeExchange": "Complete Exchange",
     "cancelExchange": "Cancel Exchange",
@@ -785,8 +805,10 @@
       "accepted": "Request accepted. Arrange the handover with {name}.",
       "declined": "Request declined",
       "cancelled": "Request cancelled",
-      "cancelledAccepted": "Exchange cancelled",
-      "confirmed": "Handover confirmed"
+      "confirmedWaiting": "Confirmed. Waiting for {name}.",
+      "completed": "Exchange completed",
+      "loanStarted": "Loan started",
+      "cancelledAccepted": "Exchange cancelled"
     }
   },
   "tradeRequest": {
