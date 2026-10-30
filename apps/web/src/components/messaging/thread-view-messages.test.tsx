@@ -354,6 +354,23 @@ describe("ThreadView header", () => {
   });
 });
 
+// UX-178: on phones bubble text sits close to the 16px it was typed at, and
+// the group's time is at least 12px.
+describe("ThreadView text sizes", () => {
+  it("renders bubbles at 15px on phones (14px from md) and the time at 12px", () => {
+    renderThread(dmThread());
+    const bubble = screen.getByText("Mara's message").closest("[title]");
+    expect(bubble?.className).toMatch(/(^| )text-\[15px\]( |$)/);
+    expect(bubble?.className).toMatch(/(^| )md:text-sm( |$)/);
+    const times = document.querySelectorAll("li time");
+    expect(times.length).toBeGreaterThan(0);
+    for (const time of times) {
+      expect(time.className).toMatch(/(^| )text-xs( |$)/);
+      expect(time.className).not.toMatch(/text-\[11px\]/);
+    }
+  });
+});
+
 describe("ThreadView photos", () => {
   const img = (id: string, sentAt: number, body = "") => ({
     id,

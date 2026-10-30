@@ -997,7 +997,7 @@ function GroupBody({
       {!lastPending && (
         <time
           dateTime={new Date(last.sentAt).toISOString()}
-          className="text-muted-foreground px-1 pt-0.5 text-[11px] tabular-nums"
+          className="text-muted-foreground px-1 pt-0.5 text-xs tabular-nums"
         >
           {formatMessageTime(last.sentAt, locale)}
         </time>
@@ -1041,8 +1041,9 @@ function CopyUnavailableCard({
   );
 }
 
+// 15px on phones, close to the 16px the composer types at; 14px from md.
 const BUBBLE_CLASS =
-  "max-w-[min(80%,30rem)] rounded-2xl px-3.5 py-2 text-sm leading-5 break-words whitespace-pre-wrap";
+  "max-w-[min(80%,30rem)] rounded-2xl px-3.5 py-2 text-[15px] leading-5 break-words whitespace-pre-wrap md:text-sm";
 
 // Tighten the inner-side corners where bubbles of one group stack.
 function bubbleCorners(own: boolean, index: number, count: number) {
