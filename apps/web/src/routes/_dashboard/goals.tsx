@@ -1,34 +1,21 @@
 import { useUser } from "@/compat/clerk";
 import { SectionHead } from "@/components/dashboard-home/section-head";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
+import { GoalFormDialog } from "@/components/goals/goal-form-dialog";
+import type { GoalRow } from "@/components/goals/goal-row";
 import { EmptyState } from "@/components/library/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
 import { pageTitle } from "@/lib/page-title";
 import { cn } from "@/lib/utils";
-import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import type { FunctionReturnType } from "convex/server";
 import { Plus, Target, Trophy } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 import { useTranslations } from "use-intl";
-
-type GoalRow = FunctionReturnType<typeof gateway.solving.myGoals>[number];
 
 const GOAL_GRID = "grid gap-x-10 gap-y-8 md:grid-cols-2 2xl:grid-cols-3";
 
@@ -42,13 +29,8 @@ export const Route = createFileRoute("/_dashboard/goals")({
 function GoalsPage() {
   const { user } = useUser();
   const t = useTranslations("solving.goals");
-  const tCommon = useTranslations("common");
 
   const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [target, setTarget] = useState("");
-  const [targetDate, setTargetDate] = useState("");
 
   const { data: convexUser } = useQuery(
     convexQuery(
@@ -60,45 +42,6 @@ function GoalsPage() {
   const { data: goals } = useQuery(
     convexQuery(gateway.solving.myGoals, convexUser?._id ? {} : "skip"),
   );
-
-  const createGoal = useMutation({
-    mutationFn: useConvexMutation(gateway.solving.createGoal),
-  });
-
-  const reset = () => {
-    setTitle("");
-    setDescription("");
-    setTarget("");
-    setTargetDate("");
-  };
-
-  const handleCreate = async () => {
-    const targetCompletions = Number(target);
-    if (
-      !title.trim() ||
-      !Number.isFinite(targetCompletions) ||
-      targetCompletions < 1
-    ) {
-      return;
-    }
-    const dueMs = targetDate ? new Date(targetDate).getTime() : undefined;
-
-    try {
-      await createGoal.mutateAsync({
-        title: title.trim(),
-        description: description.trim() || undefined,
-        targetCompletions,
-        targetDate:
-          dueMs !== undefined && !Number.isNaN(dueMs) ? dueMs : undefined,
-      });
-      toast.success(t("created"));
-      reset();
-      setOpen(false);
-    } catch (error) {
-      console.error("Failed to create goal:", error);
-      toast.error(t("createError"));
-    }
-  };
 
   // The page title lives in the shell page head; publish the count + primary
   // action there too so the page body carries no duplicate section header.
@@ -140,73 +83,7 @@ function GoalsPage() {
 
   return (
     <div className="flex w-full flex-col gap-[26px]">
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t("createTitle")}</DialogTitle>
-            <DialogDescription>{t("createDescription")}</DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="goal-title">{t("goalTitle")}</Label>
-              <Input
-                id="goal-title"
-                value={title}
-                placeholder={t("goalTitlePlaceholder")}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="goal-description">{t("goalDescription")}</Label>
-              <Textarea
-                id="goal-description"
-                value={description}
-                placeholder={t("goalDescriptionPlaceholder")}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="goal-target">{t("targetCompletions")}</Label>
-                <Input
-                  id="goal-target"
-                  type="number"
-                  min={1}
-                  inputMode="numeric"
-                  value={target}
-                  onChange={(e) => setTarget(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="goal-date">{t("targetDate")}</Label>
-                <Input
-                  id="goal-date"
-                  type="date"
-                  value={targetDate}
-                  onChange={(e) => setTargetDate(e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setOpen(false)}
-              disabled={createGoal.isPending}
-            >
-              {tCommon("cancel")}
-            </Button>
-            <Button
-              onClick={handleCreate}
-              disabled={createGoal.isPending || !title.trim() || !target}
-            >
-              {t("submit")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <GoalFormDialog open={open} onOpenChange={setOpen} />
 
       {goals.length === 0 ? (
         <EmptyState
