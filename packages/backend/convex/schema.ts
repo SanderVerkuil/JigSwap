@@ -1221,8 +1221,11 @@ export default defineSchema({
     // one per thread per member per PUSH_THROTTLE_MS). Absent = never pushed.
     lastPushedAt: v.optional(v.number()),
     // Circle thread email digest: a digest is scheduled to fire at emailPendingUntil (absent = none
-    // pending), and lastEmailedAt is when the member was last sent one (at most one per 6 h).
+    // pending).
     emailPendingUntil: v.optional(v.number()),
+    // When the member was last emailed about this thread: a circle digest (at most one per 6 h), or
+    // a DM or exchange message. Either way no second email while lastEmailedAt > lastReadAt (one
+    // per unread run). Absent = never emailed.
     lastEmailedAt: v.optional(v.number()),
   })
     .index("by_member", ["memberId"])

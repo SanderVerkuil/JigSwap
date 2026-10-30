@@ -36,8 +36,8 @@ const groupOf = (
 export const MAX_GROUPED_ACTOR_IDS = 10;
 
 // The REAL in-app channel: delivery here means persisting a notification row, so it shows up in
-// the member's in-app feed. All other channels (email/push) are out-of-band and persist nothing,
-// so they stay one delivery per event even when the in-app row is grouped.
+// the member's in-app feed. All other channels (email/push) are out-of-band and persist nothing:
+// grouping here never holds them back, only their own throttles do (emailChannel, pushChannel).
 export const inAppChannel =
   (ctx: MutationCtx) =>
   async (notification: Notification): Promise<void> => {

@@ -75,9 +75,63 @@ export const RATE_LIMITS = {
   // request/cancel loop reaches them at most this often. Undoing (unfollow, cancel) isn't charged
   // here, so a member can always withdraw.
   followPair: { windowMs: DAY, max: 6 },
+  // Notification emails to one recipient, every type together (the notifications email channel),
+  // keyed by the recipient: a backstop under the per-type throttles, so no mix of senders can
+  // make one inbox (and the shared sending domain) take more than this in a day.
+  emailDaily: { windowMs: DAY, max: 50 },
 } as const satisfies Record<string, { windowMs: number; max: number }>;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;
+
+type WindowCharge =
+  { allowed: true } | { allowed: false; retryAfterMs: number };
+
+// Count one action against `name` for `subject` in its current fixed window. A full window writes
+// nothing, so refused attempts don't extend the lockout.
+const chargeWindow = async (
+  ctx: MutationCtx,
+  name: RateLimitName,
+  subject: string,
+): Promise<WindowCharge> => {
+  const { windowMs, max } = RATE_LIMITS[name];
+  const key = `${name}:${subject}`;
+  const now = Date.now();
+  const row = await ctx.db
+    .query("rateLimits")
+    .withIndex("by_key", (q) => q.eq("key", key))
+    .unique();
+
+  if (row === null) {
+    await ctx.db.insert("rateLimits", { key, windowStart: now, count: 1 });
+    return { allowed: true };
+  }
+  if (now - row.windowStart >= windowMs) {
+    await ctx.db.patch(row._id, { windowStart: now, count: 1 });
+    return { allowed: true };
+  }
+  if (row.count < max) {
+    await ctx.db.patch(row._id, { count: row.count + 1 });
+    return { allowed: true };
+  }
+  return { allowed: false, retryAfterMs: row.windowStart + windowMs - now };
+};
+
+const logRefusal = (
+  name: RateLimitName,
+  retryAfterMs: number,
+  fields: Record<string, string>,
+): void => {
+  const { windowMs, max } = RATE_LIMITS[name];
+  logEvent({
+    event: "rateLimit.refused",
+    outcome: "error",
+    limit: name,
+    ...fields,
+    window_ms: windowMs,
+    max,
+    retry_after_ms: retryAfterMs,
+  });
+};
 
 // Count one action against the member's `name` limit, or throw
 // ConvexError({ code: "RateLimited", retryAfterMs }) when the current window is full. A refusal
@@ -88,38 +142,31 @@ export const enforceRateLimit = async (
   name: RateLimitName,
   memberId: string,
 ): Promise<void> => {
-  const { windowMs, max } = RATE_LIMITS[name];
-  const key = `${name}:${memberId}`;
-  const now = Date.now();
-  const row = await ctx.db
-    .query("rateLimits")
-    .withIndex("by_key", (q) => q.eq("key", key))
-    .unique();
-
-  if (row === null) {
-    await ctx.db.insert("rateLimits", { key, windowStart: now, count: 1 });
-    return;
-  }
-  if (now - row.windowStart >= windowMs) {
-    await ctx.db.patch(row._id, { windowStart: now, count: 1 });
-    return;
-  }
-  if (row.count < max) {
-    await ctx.db.patch(row._id, { count: row.count + 1 });
-    return;
-  }
-
-  const retryAfterMs = row.windowStart + windowMs - now;
-  logEvent({
-    event: "rateLimit.refused",
-    outcome: "error",
-    limit: name,
-    member_id: memberId,
-    window_ms: windowMs,
-    max,
-    retry_after_ms: retryAfterMs,
+  const charge = await chargeWindow(ctx, name, memberId);
+  if (charge.allowed) return;
+  logRefusal(name, charge.retryAfterMs, { member_id: memberId });
+  throw new ConvexError({
+    code: "RateLimited",
+    retryAfterMs: charge.retryAfterMs,
   });
-  throw new ConvexError({ code: "RateLimited", retryAfterMs });
+};
+
+/**
+ * Count one occurrence against `name` for `subject` (a member id, or a composite key) without
+ * throwing: true when it fits the current window (and is counted), false when the window is full
+ * (nothing written; the refusal is logged). For work the caller skips rather than refuses, such
+ * as an out-of-band notification, where a throw would roll back the rest of the mutation.
+ */
+export const consumeRateLimit = async (
+  ctx: MutationCtx,
+  name: RateLimitName,
+  subject: string,
+): Promise<boolean> => {
+  const charge = await chargeWindow(ctx, name, subject);
+  if (!charge.allowed) {
+    logRefusal(name, charge.retryAfterMs, { subject });
+  }
+  return charge.allowed;
 };
 
 /**

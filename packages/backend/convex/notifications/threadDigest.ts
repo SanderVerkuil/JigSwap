@@ -20,7 +20,7 @@ import { isViewingMessages } from "./presenceGate";
 // The circle thread email digest (spec 5.5). A circle message is never emailed on its own: the
 // first unread one since the member last read the thread arms a single delayed digest, which at
 // fire time sends one email only if the member still hasn't caught up. DMs and exchange threads
-// keep their per-message email.
+// email without the delay, but also once per unread run (adapters/channels/emailChannel).
 
 /** How long after the first unread message the digest fires. */
 export const DIGEST_DELAY_MS = 30 * 60 * 1000;

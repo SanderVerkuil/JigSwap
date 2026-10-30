@@ -683,15 +683,16 @@ describe("circle email digest", () => {
     expect(await digestsTo(t, bob)).toHaveLength(2);
   });
 
-  test("DMs keep their per-message email and never arm a digest", async () => {
+  test("DMs email without a digest delay, once per unread run, and never arm a digest", async () => {
     const t = convexTest(schema, modules);
     const { bob } = await seed(t);
     await enableEmail(t, "bob", "message_received");
     const dm = await openDm(t, "alice", bob);
     await post(t, "alice", dm, "one");
     await post(t, "alice", dm, "two");
+    // The second message lands in the same unread run (messageEmailThrottle.test.ts, SEC-25).
     const emails = await emailsTo(t, bob);
-    expect(emails).toHaveLength(2);
+    expect(emails).toHaveLength(1);
     expect(await armed(t, bob)).toEqual([]);
   });
 });
