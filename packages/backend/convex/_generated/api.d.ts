@@ -306,6 +306,7 @@ import type * as lib_logEvent from "../lib/logEvent.js";
 import type * as lib_rateLimits from "../lib/rateLimits.js";
 import type * as lib_storage_blobLifecycle from "../lib/storage/blobLifecycle.js";
 import type * as lib_storage_storageSweep from "../lib/storage/storageSweep.js";
+import type * as lib_retention from "../lib/retention.js";
 import type * as library_acquireCopies from "../library/acquireCopies.js";
 import type * as library_acquireCopy from "../library/acquireCopy.js";
 import type * as library_adapters_batchEventPublisher from "../library/adapters/batchEventPublisher.js";
@@ -880,6 +881,7 @@ declare const fullApi: ApiFromModules<{
   "lib/rateLimits": typeof lib_rateLimits;
   "lib/storage/blobLifecycle": typeof lib_storage_blobLifecycle;
   "lib/storage/storageSweep": typeof lib_storage_storageSweep;
+  "lib/retention": typeof lib_retention;
   "library/acquireCopies": typeof library_acquireCopies;
   "library/acquireCopy": typeof library_acquireCopy;
   "library/adapters/batchEventPublisher": typeof library_adapters_batchEventPublisher;

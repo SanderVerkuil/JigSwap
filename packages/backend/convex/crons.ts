@@ -40,4 +40,15 @@ crons.daily(
   {},
 );
 
+// Retention backstops (lib/retention): dry-run unless RETENTION_ENFORCE names the sweep.
+// Reports past their 12 months and evidence copies past their 6 months whose purge job was lost
+// get it re-armed; reports left open over 30 days are logged at error level
+// (reports/retention).
+crons.daily(
+  "report retention backstop",
+  { hourUTC: 4, minuteUTC: 0 },
+  internal.reports.retention.sweepReportRetention,
+  {},
+);
+
 export default crons;

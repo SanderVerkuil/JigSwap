@@ -2164,7 +2164,11 @@ export default defineSchema({
     .index("by_reporter_created", ["reporterId", "createdAt"])
     .index("by_reported_user", ["reportedUserId", "createdAt"])
     // The reports sharing one evidence copy (its purge; message-photo claims refuse it).
-    .index("by_evidence_file", ["evidenceFileId"]),
+    .index("by_evidence_file", ["evidenceFileId"])
+    // The daily retention backstop (reports/retention.sweepReportRetention): decided reports not
+    // purged yet, by decision time, and evidence copies by the end of their retention.
+    .index("by_retention_due", ["retentionPurgedAt", "decidedAt"])
+    .index("by_evidence_retain", ["evidenceRetainUntil"]),
 
   // Fixed-window rate limit counters (lib/rateLimits). One row per key ("<limit>:<memberId>", or
   // "<limit>:<memberId>:<otherId>" for a per-pair limit such as followPair, or
