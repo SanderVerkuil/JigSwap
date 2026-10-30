@@ -1,13 +1,14 @@
 import { useUser } from "@/compat/clerk";
-import {
-  CoverChip,
-  EmptyState,
-  FilterBar,
-} from "@/components/community/primitives";
+import { CoverChip, FilterBar } from "@/components/community/primitives";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { BorrowedEmptyState } from "@/components/exchange/borrowed-empty-state";
 import { ExchangeActions } from "@/components/exchange/exchange-actions";
+import {
+  splitNeedsYou,
+  visibleExchanges,
+  type ListedExchange,
+} from "@/components/exchange/exchange-list";
 import {
   OfferChip,
   SaleOffer,
@@ -18,6 +19,7 @@ import {
   viewerSide,
   type Direction,
 } from "@/components/exchange/exchange-state";
+import { ExchangesEmptyState } from "@/components/exchange/exchanges-empty-state";
 import { ReturnLoanButton } from "@/components/exchange/return-loan-button";
 import { TradePartnerCard } from "@/components/exchange/trade-partner-card";
 import { ThreadView } from "@/components/messaging/thread-view";
@@ -34,26 +36,28 @@ import {
   usePartyDisplayName,
 } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
-import { validateTradesSearch } from "@/lib/trades-search";
+import {
+  EXCHANGE_STATUSES,
+  validateTradesSearch,
+  type ExchangeStatus,
+  type TradesSearch,
+  type TradesTab,
+} from "@/lib/trades-search";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import { ArrowLeftRight, MessageCircle, Package, Tag } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useTranslations } from "use-intl";
-
-type ExchangeStatus =
-  "proposed" | "accepted" | "rejected" | "completed" | "cancelled" | "disputed";
 
 type ExchangeRow = FunctionReturnType<typeof gateway.exchange.incoming>[number];
 type BorrowedLoan = FunctionReturnType<typeof gateway.lending.borrowed>[number];
 
-// The pill tabs: All / Incoming / Outgoing / Completed map onto the real
-// owner/requester reads and the completed status; Borrowed folds the old
-// /borrowed page in as a tab (open loans where the viewer is the borrower).
-type ExchangeTab = "all" | "incoming" | "outgoing" | "completed" | "borrowed";
+// The pill tabs pick one kind of filter, the direction: All / Incoming / Outgoing map onto the
+// owner/requester reads; Borrowed folds the old /borrowed page in as a tab (open loans where the
+// viewer is the borrower). The status is a separate select. Both live in the URL (trades-search).
 
 export const Route = createFileRoute("/_dashboard/trades")({
   validateSearch: validateTradesSearch,
@@ -103,18 +107,29 @@ function ExchangesPage() {
   const t = useTranslations("trades");
   const tCommon = useTranslations("common");
   const tLending = useTranslations("lending");
-  const { exchange: focusedExchange } = Route.useSearch();
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const focusedExchange = search.exchange;
+  const tab: TradesTab = search.tab ?? "all";
+  const statusFilter = search.status;
 
-  const [tab, setTab] = useState<ExchangeTab>("all");
+  // Tab and status are URL state: a change replaces the entry (Back leaves the page, it doesn't
+  // step through filters) and drops the ?exchange= highlight, which only a deep link sets.
+  const showView = (next: { tab: TradesTab; status?: ExchangeStatus }) =>
+    void navigate({
+      search: {
+        tab: next.tab === "all" ? undefined : next.tab,
+        status: next.tab === "borrowed" ? undefined : next.status,
+      } satisfies TradesSearch,
+      replace: true,
+      resetScroll: false,
+    });
 
   // The page head's "?" starts the exchanges guide at its step on this page.
   const { startTour } = useTourLauncher();
   usePageHeaderActions(
     () => <GuideHelpButton tourId="exchanges" startTour={startTour} />,
     [startTour],
-  );
-  const [statusFilter, setStatusFilter] = useState<ExchangeStatus | "all">(
-    "all",
   );
 
   const { data: convexUser } = useQuery(
@@ -145,8 +160,8 @@ function ExchangesPage() {
     return <PageLoading message={tCommon("loading")} />;
   }
 
-  // Tag every exchange with its direction once, then filter per tab.
-  const tagged: Array<{ exchange: ExchangeRow; direction: Direction }> = [
+  // Tag every exchange with its direction once, then filter per tab and status.
+  const tagged: Array<ListedExchange<ExchangeRow>> = [
     ...incomingExchanges.map((exchange) => ({
       exchange,
       direction: "incoming" as const,
@@ -157,18 +172,15 @@ function ExchangesPage() {
     })),
   ].sort((a, b) => b.exchange.updatedAt - a.exchange.updatedAt);
 
-  const rows = tagged.filter(({ exchange, direction }) => {
-    if (tab === "completed") return exchange.status === "completed";
-    if (tab === "incoming" && direction !== "incoming") return false;
-    if (tab === "outgoing" && direction !== "outgoing") return false;
-    return statusFilter === "all" || exchange.status === statusFilter;
-  });
+  const rows =
+    tab === "borrowed" ? [] : visibleExchanges(tagged, tab, statusFilter);
+  // What waits on the viewer (answer a request, confirm a handover) is listed first.
+  const { needsYou, others } = splitNeedsYou(rows);
 
-  const tabs: Array<{ value: ExchangeTab; label: string }> = [
+  const tabs: Array<{ value: TradesTab; label: string }> = [
     { value: "all", label: t("all") },
     { value: "incoming", label: t("incoming") },
     { value: "outgoing", label: t("outgoing") },
-    { value: "completed", label: t("completed") },
     { value: "borrowed", label: tLending("borrowedTitle") },
   ];
 
@@ -179,35 +191,54 @@ function ExchangesPage() {
         : tLending("borrowedCount", { count: borrowed.length })
       : t("exchangesCount", { count: rows.length });
 
+  const renderRows = (group: typeof rows, offset: number) => (
+    <div className="flex flex-col">
+      {group.map(({ exchange, direction }, index) => {
+        const focused =
+          focusedExchange !== undefined &&
+          (exchange.aggregateId === focusedExchange ||
+            exchange._id === focusedExchange);
+        return (
+          <ExchangeListRow
+            // Re-mount when the deep-linked exchange changes so it opens.
+            key={`${exchange._id}-${direction}-${focused}`}
+            focused={focused}
+            exchange={exchange}
+            direction={direction}
+            gradientIndex={offset + index}
+            viewerId={convexUser?._id}
+            isLast={index === group.length - 1}
+          />
+        );
+      })}
+    </div>
+  );
+
   return (
     <div className="flex flex-col gap-[18px]">
       <FilterBar
         data-tour="trades-tabs"
         filters={tabs}
         value={tab}
-        onChange={setTab}
+        onChange={(next) => showView({ tab: next, status: statusFilter })}
         count={count}
         extra={
-          tab !== "completed" &&
           tab !== "borrowed" && (
             <select
-              value={statusFilter}
+              value={statusFilter ?? "all"}
               onChange={(e) =>
-                setStatusFilter(e.target.value as ExchangeStatus | "all")
+                showView({
+                  tab,
+                  status: EXCHANGE_STATUSES.find(
+                    (status) => status === e.target.value,
+                  ),
+                })
               }
               className="bg-card focus:ring-primary h-8 rounded-md border px-2 text-sm focus:ring-2 focus:outline-none"
-              aria-label={t("allStatuses")}
+              aria-label={t("statusFilter")}
             >
               <option value="all">{t("allStatuses")}</option>
-              {(
-                [
-                  "proposed",
-                  "accepted",
-                  "rejected",
-                  "cancelled",
-                  "disputed",
-                ] as const
-              ).map((status) => (
+              {EXCHANGE_STATUSES.map((status) => (
                 <option key={status} value={status}>
                   {t(`status.${status}`)}
                 </option>
@@ -220,33 +251,54 @@ function ExchangesPage() {
       {tab === "borrowed" ? (
         <BorrowedList borrowed={borrowed} />
       ) : rows.length === 0 ? (
-        <EmptyState
-          title={t("noExchanges")}
-          sub={t("noExchangesDescription")}
+        <ExchangesEmptyState
+          tab={tab}
+          status={statusFilter}
+          onShowAllStatuses={() => showView({ tab })}
         />
+      ) : needsYou.length === 0 ? (
+        renderRows(others, 0)
       ) : (
-        <div className="flex flex-col">
-          {rows.map(({ exchange, direction }, index) => {
-            const focused =
-              focusedExchange !== undefined &&
-              (exchange.aggregateId === focusedExchange ||
-                exchange._id === focusedExchange);
-            return (
-              <ExchangeListRow
-                // Re-mount when the deep-linked exchange changes so it opens.
-                key={`${exchange._id}-${direction}-${focused}`}
-                focused={focused}
-                exchange={exchange}
-                direction={direction}
-                gradientIndex={index}
-                viewerId={convexUser?._id}
-                isLast={index === rows.length - 1}
-              />
-            );
-          })}
-        </div>
+        <>
+          <ExchangeGroup title={t("groups.needsYou")} count={needsYou.length}>
+            {renderRows(needsYou, 0)}
+          </ExchangeGroup>
+          {others.length > 0 && (
+            <ExchangeGroup title={t("groups.others")} count={others.length}>
+              {renderRows(others, needsYou.length)}
+            </ExchangeGroup>
+          )}
+        </>
       )}
     </div>
+  );
+}
+
+// A titled run of exchange rows ("Needs you", "Other exchanges"), only used when something waits on
+// the viewer; otherwise the list renders without headings.
+function ExchangeGroup({
+  title,
+  count,
+  children,
+}: {
+  title: string;
+  count: number;
+  children: ReactNode;
+}) {
+  const headingId = useId();
+  return (
+    <section aria-labelledby={headingId}>
+      <h2
+        id={headingId}
+        className="font-heading flex items-baseline gap-2 text-lg font-bold"
+      >
+        {title}
+        <span className="text-muted-foreground text-sm font-medium">
+          {count}
+        </span>
+      </h2>
+      {children}
+    </section>
   );
 }
 

@@ -74,10 +74,17 @@ The **Exchanges** page organizes everything into tabs:
 - **All**
 - **Incoming** — requests sent to you.
 - **Outgoing** — requests you sent.
-- **Completed**
 - **Borrowed** — open loans where you're currently holding someone else's
   puzzle. When you have none, it explains how borrowing works and links to
   **Browse Puzzles**.
+
+Use the status filter next to the tabs to show only exchanges with one status,
+such as **Pending** or **Completed**. The tab and the filter are part of the
+page's address, so you can bookmark or share a view, and it stays the same when
+you come back to the page.
+
+Exchanges that wait on you (a request to answer, or a handover to confirm) are
+listed first, under **Needs you**.
 
 Click **View** on any exchange to expand its details: both puzzles, the
 trade-partner card and the actions for the exchange's current step.

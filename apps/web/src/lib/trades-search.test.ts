@@ -17,4 +17,61 @@ describe("/trades search params", () => {
       exchange: undefined,
     });
   });
+
+  it("keeps the tab and the status filter so the view survives back/forward", () => {
+    expect(
+      validateTradesSearch({ tab: "incoming", status: "completed" }),
+    ).toEqual({ tab: "incoming", status: "completed" });
+    expect(validateTradesSearch({ tab: "outgoing" })).toEqual({
+      tab: "outgoing",
+    });
+    expect(validateTradesSearch({ status: "proposed" })).toEqual({
+      status: "proposed",
+    });
+  });
+
+  it("treats All as the default, without a param", () => {
+    expect(validateTradesSearch({ tab: "all" }).tab).toBeUndefined();
+  });
+
+  it("drops an unknown tab or status", () => {
+    const search = validateTradesSearch({ tab: "completed", status: "lost" });
+    expect(search.tab).toBeUndefined();
+    expect(search.status).toBeUndefined();
+    const garbled = validateTradesSearch({ tab: 3, status: ["accepted"] });
+    expect(garbled.tab).toBeUndefined();
+    expect(garbled.status).toBeUndefined();
+  });
+
+  it("has no status filter on the Borrowed tab", () => {
+    expect(
+      validateTradesSearch({ tab: "borrowed", status: "accepted" }),
+    ).toEqual({ tab: "borrowed" });
+  });
+
+  // The router merges the raw query with the validator's result, so a key left out of the result
+  // would pass through unvalidated: every key must be present, undefined when dropped.
+  it("returns every key, so a dropped param can't slip through unvalidated", () => {
+    for (const search of [
+      {},
+      { exchange: "ex_123", tab: "incoming", status: "rejected" },
+      { tab: "borrowed", status: "accepted" },
+    ]) {
+      expect(Object.keys(validateTradesSearch(search)).sort()).toEqual([
+        "exchange",
+        "status",
+        "tab",
+      ]);
+    }
+  });
+
+  it("shows every exchange for a deep link, so the linked row is never filtered out", () => {
+    expect(
+      validateTradesSearch({
+        exchange: "ex_123",
+        tab: "incoming",
+        status: "cancelled",
+      }),
+    ).toEqual({ exchange: "ex_123" });
+  });
 });

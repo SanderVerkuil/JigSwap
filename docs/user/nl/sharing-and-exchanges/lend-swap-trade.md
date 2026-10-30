@@ -78,10 +78,17 @@ De pagina **Uitwisselingen** ordent alles in tabbladen:
 - **Alle**
 - **Inkomend** — verzoeken die naar jou zijn gestuurd.
 - **Uitgaand** — verzoeken die jij hebt verstuurd.
-- **Voltooid**
 - **Geleend** — openstaande leningen waarbij jij momenteel iemand anders zijn
   puzzel in bezit hebt. Heb je er geen, dan legt het tabblad uit hoe lenen
   werkt en linkt het naar **Puzzels Ontdekken**.
+
+Met het statusfilter naast de tabbladen toon je alleen uitwisselingen met één
+status, zoals **In afwachting** of **Afgerond**. Het tabblad en het filter
+staan in het adres van de pagina, dus je kunt een weergave bewaren of delen, en
+hij blijft hetzelfde als je terugkomt.
+
+Uitwisselingen die op jou wachten (een verzoek om te beantwoorden of een
+overdracht om te bevestigen) staan bovenaan, onder **Wacht op jou**.
 
 Klik op **Bekijken** bij een uitwisseling om de details uit te klappen: beide
 puzzels, de ruilpartnerkaart en de acties voor de huidige stap van de

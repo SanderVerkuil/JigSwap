@@ -696,7 +696,6 @@
     "pending": "In Afwachting",
     "accepted": "Geaccepteerd",
     "declined": "Afgewezen",
-    "completed": "Voltooid",
     "cancelled": "Geannuleerd",
     "newRequest": "Nieuw Uitwisselingsverzoek",
     "acceptExchange": "Uitwisseling Accepteren",
@@ -747,9 +746,8 @@
     },
     "incoming": "Inkomend",
     "outgoing": "Uitgaand",
-    "allStatuses": "Alle Statussen",
-    "noExchanges": "Nog geen uitwisselingen",
-    "noExchangesDescription": "Begin met het bladeren door puzzels om je eerste ruilverzoek te maken",
+    "allStatuses": "Alle statussen",
+    "statusFilter": "Filteren op status",
     "tradeRequest": "Uitwisselingsverzoek",
     "yourRequest": "Jouw Verzoek",
     "theyWant": "Zij Willen",
@@ -766,6 +764,31 @@
     "all": "Alle",
     "exchangesCount": "{count, plural, one {# uitwisseling} other {# uitwisselingen}}",
     "rowMeta": "{direction} · met {who} · {when}",
+    "groups": {
+      "needsYou": "Wacht op jou",
+      "others": "Overige uitwisselingen"
+    },
+    "empty": {
+      "all": {
+        "title": "Nog geen uitwisselingen",
+        "sub": "Vraag je om een puzzel, of vraagt iemand om een van de jouwe, dan verschijnt het verzoek hier."
+      },
+      "incoming": {
+        "title": "Nog geen verzoeken voor je puzzels",
+        "sub": "Leden kunnen vragen om de puzzels die je aanbiedt te ruilen, lenen of kopen. Kies op Mijn Puzzels wat je aanbiedt.",
+        "action": "Naar Mijn Puzzels"
+      },
+      "outgoing": {
+        "title": "Nog geen verzoeken verstuurd",
+        "sub": "Zoek een puzzel via Puzzels Ontdekken en vraag de eigenaar of je hem mag ruilen, lenen of kopen."
+      },
+      "browse": "Puzzels ontdekken",
+      "filtered": {
+        "title": "Geen uitwisselingen met status “{status}”",
+        "sub": "Kies een andere status of toon ze allemaal.",
+        "action": "Alle statussen tonen"
+      }
+    },
     "kind": {
       "trade": "Ruil",
       "sale": "Verkoop",

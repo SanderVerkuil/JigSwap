@@ -696,7 +696,6 @@
     "pending": "Pending",
     "accepted": "Accepted",
     "declined": "Declined",
-    "completed": "Completed",
     "cancelled": "Cancelled",
     "newRequest": "New Exchange Request",
     "acceptExchange": "Accept Exchange",
@@ -747,9 +746,8 @@
     },
     "incoming": "Incoming",
     "outgoing": "Outgoing",
-    "allStatuses": "All Statuses",
-    "noExchanges": "No trades yet",
-    "noExchangesDescription": "Start browsing puzzles to make your first trade request",
+    "allStatuses": "All statuses",
+    "statusFilter": "Filter by status",
     "tradeRequest": "Exchange Request",
     "yourRequest": "Your Request",
     "theyWant": "They Want",
@@ -766,6 +764,31 @@
     "all": "All",
     "exchangesCount": "{count, plural, one {# exchange} other {# exchanges}}",
     "rowMeta": "{direction} · with {who} · {when}",
+    "groups": {
+      "needsYou": "Needs you",
+      "others": "Other exchanges"
+    },
+    "empty": {
+      "all": {
+        "title": "No exchanges yet",
+        "sub": "When you ask for a puzzle, or someone asks for one of yours, the request shows up here."
+      },
+      "incoming": {
+        "title": "No requests for your puzzles",
+        "sub": "Members can ask to swap, borrow or buy the puzzles you offer. Choose what you offer on My Puzzles.",
+        "action": "Go to My Puzzles"
+      },
+      "outgoing": {
+        "title": "No requests sent yet",
+        "sub": "Find a puzzle on Browse Puzzles and ask its owner to swap, lend or sell it to you."
+      },
+      "browse": "Browse puzzles",
+      "filtered": {
+        "title": "No exchanges with status “{status}”",
+        "sub": "Pick another status, or show them all.",
+        "action": "Show all statuses"
+      }
+    },
     "kind": {
       "trade": "Trade",
       "sale": "Sale",
