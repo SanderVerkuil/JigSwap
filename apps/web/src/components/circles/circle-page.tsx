@@ -1,8 +1,10 @@
 "use client";
 
-// A circle's own page (/circles/$circleId, G6b): the name with the member
-// avatar stack and the existing manage / leave actions, the latest few group
-// chat messages with "Open group chat", and the copies shared in the circle.
+// A circle's own page (/circles/$circleId, G6b): the viewer's seat and the
+// member count with the member avatar stack and the existing manage / leave
+// actions, the latest few group chat messages with "Open group chat", and the
+// copies shared in the circle. The page head (h1) carries the circle's name,
+// so the card doesn't repeat it and the sections are h2s under it.
 // Everything is read through member-gated queries: a non-member, an ex-member
 // and an unknown id all get the same in-shell 404 (getCircle returns null), so
 // the page never tells whether a circle exists.
@@ -84,19 +86,19 @@ export function CirclePage({ circleId }: { circleId: string }) {
             <CoverChip icon={Users} size={52} gradientIndex={0} />
           )}
           <div className="min-w-0 flex-1">
-            <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
-              <h2 className="font-heading min-w-0 text-xl font-bold break-words">
-                {detail.name}
-              </h2>
+            <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm">
               <CircleRoleBadge
                 isOwner={detail.isOwnedByViewer}
                 permission={detail.viewerPermission}
                 interactive
               />
+              <span aria-hidden className="text-muted-foreground">
+                ·
+              </span>
+              <span className="text-muted-foreground">
+                {t("page.memberCount", { count: detail.memberCount })}
+              </span>
             </div>
-            <p className="text-muted-foreground mt-0.5 text-sm">
-              {t("page.memberCount", { count: detail.memberCount })}
-            </p>
             {/* To its uploader and the Admins only (getCircle). */}
             {detail.iconStatus === "checking" && (
               <p className="text-muted-foreground mt-1 flex items-center gap-1.5 text-xs">
@@ -173,7 +175,7 @@ function Section({
 }) {
   return (
     <Card className="flex min-w-0 flex-col gap-3 p-4 sm:p-6">
-      <h3 className="font-heading text-lg font-semibold">{title}</h3>
+      <h2 className="font-heading text-lg font-semibold">{title}</h2>
       {children}
       {footer}
     </Card>

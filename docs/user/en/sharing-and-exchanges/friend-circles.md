@@ -22,16 +22,18 @@ yes: members are invited and join only when they accept.
 You are the circle's **Owner** and its first admin. Each circle on the page
 shows your place in it: **Owner**, or your permission (**View only**, **Can
 exchange** or **Admin**). Point at it to see what it lets you do. Each circle
-also shows the member count and avatars. Admins also get a settings button
-that opens the manage dialog.
+also shows its members' avatars. Admins also get a settings button that opens
+the manage dialog, and members who don't own the circle get a **⋯** menu with
+**Leave circle**.
 
 ## The circle page
 
-Click a circle on **Circles** to open its own page. It shows:
+Click a circle's name on **Circles** to open its own page. It shows:
 
-- the circle's name, your place in it (**Owner** or your permission; tap or
-  point at it to see what it lets you do) and the members' avatars, with
-  **Manage** for admins and **Leave circle** for members;
+- the circle's name as the page title, then your place in it (**Owner** or
+  your permission; tap or point at it to see what it lets you do), the member
+  count and the members' avatars, with **Manage** for admins and **Leave
+  circle** for members;
 - **Group chat**: the latest messages, and **Open group chat** to join the
   conversation;
 - **Shared puzzles**: the most recent puzzles shared in the circle. Click one
@@ -186,7 +188,8 @@ the circle's chat does see when someone is typing there.
 
 ## Leave a circle
 
-1. On **Circles**, click **Leave circle** on the circle.
+1. On **Circles**, open the circle's **⋯** menu and choose **Leave circle**.
+   On the circle's own page, click **Leave circle**.
 2. Confirm.
 
 You lose access to the circle, its group chat and the puzzles shared in it.

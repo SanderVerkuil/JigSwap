@@ -1,10 +1,19 @@
+// @vitest-environment happy-dom
 import { ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  cleanup,
+  fireEvent,
+  render as renderDom,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { ConvexProviderWithAuth, ConvexReactClient } from "convex/react";
 import { parseFragment, type DefaultTreeAdapterMap } from "parse5";
+import { useRef, useState, type ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createTranslator, IntlProvider } from "use-intl";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
 import source from "../../../locales/source.json";
@@ -16,13 +25,19 @@ const useSignedOut = () => ({
   fetchAccessToken: async () => null,
 });
 
-const render = (locale: "en" | "nl" = "en") => {
+const Providers = ({
+  locale = "en",
+  children,
+}: {
+  locale?: "en" | "nl";
+  children: ReactNode;
+}) => {
   const convex = new ConvexReactClient("https://example.convex.cloud");
   const convexQueryClient = new ConvexQueryClient(convex);
   const queryClient = new QueryClient({
     defaultOptions: { queries: { queryKeyHashFn: convexQueryClient.hashFn() } },
   });
-  return renderToStaticMarkup(
+  return (
     <ConvexProviderWithAuth client={convex} useAuth={useSignedOut}>
       <QueryClientProvider client={queryClient}>
         <IntlProvider
@@ -30,12 +45,42 @@ const render = (locale: "en" | "nl" = "en") => {
           messages={locale === "en" ? en : nl}
           timeZone="Europe/Amsterdam"
         >
-          <LeaveCircleAction circleId="circle-1" circleName="Family" />
+          {children}
         </IntlProvider>
       </QueryClientProvider>
-    </ConvexProviderWithAuth>,
+    </ConvexProviderWithAuth>
   );
 };
+
+const render = (locale: "en" | "nl" = "en") =>
+  renderToStaticMarkup(
+    <Providers locale={locale}>
+      <LeaveCircleAction circleId="circle-1" circleName="Family" />
+    </Providers>,
+  );
+
+// A host that opens the confirm itself (as a ⋯ menu item does) and names
+// where focus goes back to.
+function MenuHost() {
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  return (
+    <>
+      <button ref={triggerRef} type="button" onClick={() => setOpen(true)}>
+        More actions
+      </button>
+      <LeaveCircleAction
+        circleId="circle-1"
+        circleName="Family"
+        open={open}
+        onOpenChange={setOpen}
+        returnFocusRef={triggerRef}
+      />
+    </>
+  );
+}
+
+afterEach(cleanup);
 
 // Assert on a real HTML tree (parse5), never on regex-extracted markup.
 type Node = DefaultTreeAdapterMap["childNode"];
@@ -105,5 +150,37 @@ describe("LeaveCircleAction", () => {
       "You'll lose access to this circle and the puzzles shared in it. An admin can invite you again.",
     );
     expect(source.circles).toEqual(en.circles);
+  });
+});
+
+describe("LeaveCircleAction opened by its host (no trigger)", () => {
+  it("renders no trigger of its own, only the confirm when asked", async () => {
+    renderDom(
+      <Providers>
+        <MenuHost />
+      </Providers>,
+    );
+    expect(screen.queryByRole("button", { name: "Leave circle" })).toBeNull();
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "More actions" }));
+    const dialog = await screen.findByRole("alertdialog", {
+      name: "Leave Family?",
+    });
+    expect(dialog.textContent).toContain(en.circles.leaveConfirmBody);
+    expect(screen.getByRole("button", { name: "Leave circle" })).toBeTruthy();
+  });
+
+  it("returns focus to the host's trigger when cancelled", async () => {
+    renderDom(
+      <Providers>
+        <MenuHost />
+      </Providers>,
+    );
+    const host = screen.getByRole("button", { name: "More actions" });
+    fireEvent.click(host);
+    fireEvent.click(await screen.findByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+    expect(document.activeElement).toBe(host);
   });
 });

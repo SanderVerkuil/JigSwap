@@ -194,12 +194,18 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("CirclePage", () => {
-  it("shows a member the circle's name, members and the leave action", () => {
+  it("shows a member their seat, the members and the leave action", () => {
     renderPage({ circle: detail() });
+    // The page head (h1) already names the circle: the card doesn't repeat it,
+    // and the sections sit directly under that h1.
+    expect(screen.queryByRole("heading", { name: "Puzzle Club" })).toBeNull();
     expect(
-      screen.getByRole("heading", { name: "Puzzle Club", level: 2 }),
-    ).toBeTruthy();
-    expect(screen.getByText("3 members")).toBeTruthy();
+      screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent),
+    ).toEqual([en.circles.page.chatTitle, en.circles.page.sharedTitle]);
+    expect(screen.queryAllByRole("heading", { level: 3 })).toHaveLength(0);
+    // One meta line: the viewer's seat · the member count.
+    const meta = screen.getByText("3 members").parentElement;
+    expect(meta?.textContent).toBe("View only·3 members");
     const stack = screen.getByRole("group", { name: "Members of Puzzle Club" });
     expect(within(stack).getByRole("button", { name: "Bas" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Leave circle" })).toBeTruthy();

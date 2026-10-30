@@ -2371,8 +2371,6 @@
       "Exchange": "Je kunt de puzzels aanvragen die hier gedeeld zijn en je eigen puzzels delen.",
       "Admin": "Je kunt puzzels aanvragen en delen, mensen uitnodigen en leden beheren."
     },
-    "ownedByYou": "Van jou",
-    "sharedWithYou": "Met jou gedeeld",
     "membersLabel": "{count, plural, one {lid} other {leden}}",
     "avatarStackLabel": "Leden van {circle}",
     "avatarStackMore": "{count, plural, one {nog # lid} other {nog # leden}}",
@@ -2380,6 +2378,7 @@
     "emptySub": "Maak een kring aan om puzzels te ruilen met vrienden en familie.",
     "loading": "Kringen laden…",
     "leave": "Kring verlaten",
+    "rowMenuLabel": "Meer acties voor {circle}",
     "leaveConfirmTitle": "{circle} verlaten?",
     "leaveConfirmBody": "Je verliest de toegang tot deze kring en de puzzels die erin gedeeld zijn. Een beheerder kan je opnieuw uitnodigen.",
     "leaveError": "Kon de kring niet verlaten. Probeer het opnieuw.",

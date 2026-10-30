@@ -2371,8 +2371,6 @@
       "Exchange": "You can request the puzzles shared here and share your own.",
       "Admin": "You can request and share puzzles, invite people and manage members."
     },
-    "ownedByYou": "Owned by you",
-    "sharedWithYou": "Shared with you",
     "membersLabel": "{count, plural, one {member} other {members}}",
     "avatarStackLabel": "Members of {circle}",
     "avatarStackMore": "{count, plural, one {# more member} other {# more members}}",
@@ -2380,6 +2378,7 @@
     "emptySub": "Create a circle to swap puzzles with friends and family.",
     "loading": "Loading circles…",
     "leave": "Leave circle",
+    "rowMenuLabel": "More actions for {circle}",
     "leaveConfirmTitle": "Leave {circle}?",
     "leaveConfirmBody": "You'll lose access to this circle and the puzzles shared in it. An admin can invite you again.",
     "leaveError": "Couldn't leave the circle. Please try again.",

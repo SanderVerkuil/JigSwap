@@ -22,17 +22,19 @@ ja te zeggen: leden worden uitgenodigd en doen pas mee als ze accepteren.
 Je bent de **Eigenaar** van de kring en de eerste beheerder. Elke kring op de
 pagina toont jouw plek erin: **Eigenaar**, of je recht (**Alleen bekijken**,
 **Mag ruilen** of **Beheerder**). Wijs het aan om te zien wat je ermee kunt.
-Elke kring toont ook het aantal leden en hun avatars. Beheerders krijgen ook
-een instellingenknop die het beheervenster opent.
+Elke kring toont ook de avatars van de leden. Beheerders krijgen ook een
+instellingenknop die het beheervenster opent, en leden die niet de eigenaar
+zijn een **⋯**-menu met **Kring verlaten**.
 
 ## De pagina van een kring
 
-Klik op **Kringen** op een kring om de eigen pagina ervan te openen. Daarop
-staan:
+Klik op **Kringen** op de naam van een kring om de eigen pagina ervan te
+openen. Daarop staan:
 
-- de naam van de kring, jouw plek erin (**Eigenaar** of je recht; tik erop of
-  wijs het aan om te zien wat je ermee kunt) en de avatars van de leden, met
-  **Beheren** voor beheerders en **Kring verlaten** voor leden;
+- de naam van de kring als paginatitel, en daaronder jouw plek erin
+  (**Eigenaar** of je recht; tik erop of wijs het aan om te zien wat je ermee
+  kunt), het aantal leden en de avatars van de leden, met **Beheren** voor
+  beheerders en **Kring verlaten** voor leden;
 - **Groepschat**: de nieuwste berichten, en **Groepschat openen** om mee te
   praten;
 - **Gedeelde puzzels**: de puzzels die het laatst in de kring zijn gedeeld.
@@ -200,7 +202,8 @@ in de chat van de kring wanneer iemand daar typt.
 
 ## Een kring verlaten
 
-1. Klik op de pagina **Kringen** bij de kring op **Kring verlaten**.
+1. Open op de pagina **Kringen** het **⋯**-menu van de kring en kies **Kring
+   verlaten**. Op de eigen pagina van de kring klik je op **Kring verlaten**.
 2. Bevestig.
 
 Je verliest de toegang tot de kring, de groepschat en de puzzels die erin
