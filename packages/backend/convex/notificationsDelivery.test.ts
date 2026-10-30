@@ -647,6 +647,33 @@ describe("sendEmail action", () => {
       "https://jigswap.site/messages/thread-9",
     );
   });
+
+  test("a provider rejection logs the status, never the recipient (SEC-75)", async () => {
+    const s = await setup();
+    fetchMock.mockResolvedValueOnce(
+      new Response("viewer@example.com is on the suppression list", {
+        status: 422,
+      }),
+    );
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    await s.t.action(internal.notifications.sendEmail.send, {
+      to: "viewer@example.com",
+      toName: "viewer",
+      type: "message_received",
+      params: { actorName: "Anna" },
+      locale: "en",
+      relatedId: "thread-9",
+      idempotencyKey: "notif-4",
+    });
+    const lines = logged.mock.calls
+      .map((call) => String(call[0]))
+      .filter((line) => line.includes('"notifications.email"'));
+    logged.mockRestore();
+    expect(lines).toHaveLength(1);
+    const line = JSON.parse(lines[0]) as { error: { detail: string } };
+    expect(line.error.detail).toBe("AhaSend 422");
+    expect(lines[0]).not.toContain("viewer@example.com");
+  });
 });
 
 describe("sendWebPush action", () => {
