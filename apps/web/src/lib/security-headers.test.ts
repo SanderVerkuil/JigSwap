@@ -32,6 +32,12 @@ describe("SECURITY_HEADERS", () => {
     expect(directives).toEqual(["frame-ancestors"]);
   });
 
+  it("pins HTTPS for two years on the domain and its subdomains, without preload", () => {
+    expect(headers.get("strict-transport-security")).toBe(
+      "max-age=63072000; includeSubDomains",
+    );
+  });
+
   it("stops MIME sniffing", () => {
     expect(headers.get("x-content-type-options")).toBe("nosniff");
   });

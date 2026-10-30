@@ -7,6 +7,9 @@
 // The Content-Security-Policy here carries only frame-ancestors, which report-only mode ignores;
 // the full policy is rolled out report-only first.
 export const SECURITY_HEADERS = {
+  // Replaces Vercel's default (max-age only). includeSubDomains assumes every *.jigswap.site
+  // host serves HTTPS; no preload until the domain set is settled.
+  "strict-transport-security": "max-age=63072000; includeSubDomains",
   "x-content-type-options": "nosniff",
   // Same-origin requests keep the full Referer (CSRF origin checks fall back on it);
   // cross-site requests get the origin only.
