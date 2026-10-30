@@ -9,6 +9,7 @@ import { Puzzle } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslations } from "use-intl";
 import { BoxArtCheckingLabel } from "./box-art-checking";
+import { difficultyClasses } from "./catalog-detail-parts";
 import { usePuzzleView } from "./puzzle-view-provider";
 
 // Normalized view-model the shell renders. Both the catalog card and the
@@ -62,22 +63,6 @@ export interface PuzzleCardShellProps {
 
 // The list view's cover column is `w-32` (8rem); keep the two in step.
 const LIST_COVER_SIZES = "128px";
-
-// Difficulty colour swatch, shared with the catalog card's original helper.
-function difficultyColor(difficulty?: string | null) {
-  switch (difficulty) {
-    case "easy":
-      return "bg-green-100 text-green-800";
-    case "medium":
-      return "bg-yellow-100 text-yellow-800";
-    case "hard":
-      return "bg-orange-100 text-orange-800";
-    case "expert":
-      return "bg-red-100 text-red-800";
-    default:
-      return "bg-gray-100 text-gray-800";
-  }
-}
 
 export function PuzzleCardShell({
   puzzle,
@@ -201,7 +186,7 @@ export function PuzzleCardShell({
           {puzzle.difficulty && (
             <Badge
               variant="secondary"
-              className={cn("text-xs", difficultyColor(puzzle.difficulty))}
+              className={cn("text-xs", difficultyClasses(puzzle.difficulty))}
             >
               {difficultyLabel(puzzle.difficulty)}
             </Badge>

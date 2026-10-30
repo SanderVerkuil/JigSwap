@@ -164,3 +164,27 @@ describe("PuzzleCardShell density", () => {
     expect(renderDensity("grid", "cover").cover).not.toContain("bg-muted");
   });
 });
+
+describe("PuzzleCardShell difficulty pill", () => {
+  it.each(["easy", "medium", "hard", "expert"] as const)(
+    "gives the %s difficulty pill dark-mode colours (UX-10)",
+    (difficulty) => {
+      const label = en.puzzles.puzzles.difficulty[difficulty];
+      const host = document.createElement("div");
+      host.innerHTML = renderToStaticMarkup(
+        <IntlProvider locale="en" timeZone="UTC" messages={en}>
+          <PuzzleViewProvider viewMode="grid">
+            <PuzzleCardShell puzzle={puzzle({ difficulty })} />
+          </PuzzleViewProvider>
+        </IntlProvider>,
+      );
+      const pill = [...host.querySelectorAll('[data-slot="badge"]')].find(
+        (el) => el.textContent === label,
+      );
+      expect(pill).toBeDefined();
+      const cls = [...(pill?.classList ?? [])];
+      expect(cls.some((c) => c.startsWith("dark:bg-"))).toBe(true);
+      expect(cls.some((c) => c.startsWith("dark:text-"))).toBe(true);
+    },
+  );
+});
