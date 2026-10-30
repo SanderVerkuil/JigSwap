@@ -1,4 +1,5 @@
 import { gateway } from "@/gateway";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import { useConvexAction } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
@@ -16,10 +17,12 @@ export interface ImportedMatch {
 // Kept as an explicit state machine (busy-state rule v2 exemption): the exported
 // ImportState carries draft/match result data and maps a non-throwing
 // result.ok === false to 'error', which a derived useMutation mapping would not simplify.
+// An error's reason is "rateLimited" when the server refused the member for importing too
+// many pages (catalog/extractFromUrl's RateLimited), else "failed".
 export type ImportState =
   | { status: "idle" }
   | { status: "loading" }
-  | { status: "error" }
+  | { status: "error"; reason: "failed" | "rateLimited" }
   | { status: "ready"; draft: ImportedDraft; match: ImportedMatch | null };
 
 export const usePuzzleImport = () => {
@@ -33,12 +36,16 @@ export const usePuzzleImport = () => {
     try {
       const result = await extract.mutateAsync({ url });
       if (!result.ok) {
-        setState({ status: "error" });
+        setState({ status: "error", reason: "failed" });
         return;
       }
       setState({ status: "ready", draft: result.draft, match: result.match });
-    } catch {
-      setState({ status: "error" });
+    } catch (error) {
+      setState({
+        status: "error",
+        reason:
+          convexErrorCode(error) === "RateLimited" ? "rateLimited" : "failed",
+      });
     }
   };
 

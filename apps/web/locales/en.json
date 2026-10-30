@@ -510,6 +510,7 @@
     "importFetch": "Fetch details",
     "importFetching": "Fetching…",
     "importFailed": "Couldn't read that page — add the details manually.",
+    "importRateLimited": "You've imported a lot of pages just now. Try again later, or fill in the details below.",
     "importAlreadyExists": "This puzzle is already on JigSwap — add it to your collection?",
     "importAddToCollection": "Add to collection",
     "importCreateAnyway": "Create new anyway",

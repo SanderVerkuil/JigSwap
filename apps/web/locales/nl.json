@@ -510,6 +510,7 @@
     "importFetch": "Gegevens ophalen",
     "importFetching": "Bezig met ophalen…",
     "importFailed": "Kon die pagina niet lezen — vul de gegevens handmatig in.",
+    "importRateLimited": "Je hebt net veel pagina's geïmporteerd. Probeer het later opnieuw, of vul de gegevens hieronder zelf in.",
     "importAlreadyExists": "Deze puzzel staat al op JigSwap — toevoegen aan je collectie?",
     "importAddToCollection": "Aan collectie toevoegen",
     "importCreateAnyway": "Toch nieuw aanmaken",

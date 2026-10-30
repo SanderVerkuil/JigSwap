@@ -95,7 +95,11 @@ export function ImportZone({
         )}
         {state.status === "error" && (
           <span className="text-xs text-muted-foreground">
-            {t("importFailed")}
+            {t(
+              state.reason === "rateLimited"
+                ? "importRateLimited"
+                : "importFailed",
+            )}
           </span>
         )}
       </div>
