@@ -9,6 +9,7 @@ import {
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { enforceRateLimit } from "../lib/rateLimits";
 import { convexCatalogSnapshotProvider } from "./adapters/convexCatalogSnapshotProvider";
 import { convexCopyRepository } from "./adapters/convexCopyRepository";
 import { libraryEventPublisher } from "./adapters/eventPublisher";
@@ -50,6 +51,8 @@ export const acquireCopy = mutation({
   },
   handler: async (ctx, args) => {
     const ownerId = (await requireMember(ctx)) as unknown as OwnerId;
+    // One copy against the member's daily copy budget (SEC-29).
+    await enforceRateLimit(ctx, "copyAdd", ownerId);
 
     const acquire = makeAcquireCopy({
       copies: convexCopyRepository(ctx),

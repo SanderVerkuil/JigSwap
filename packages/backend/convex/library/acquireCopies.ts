@@ -10,6 +10,7 @@ import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { convexCopyManagerPolicy } from "../household/copyAccess";
 import { requireMember } from "../identity/requireMember";
+import { enforceRateLimit } from "../lib/rateLimits";
 import { batchEventPublisher } from "./adapters/batchEventPublisher";
 import { convexCatalogSnapshotProvider } from "./adapters/convexCatalogSnapshotProvider";
 import { convexCopyRepository } from "./adapters/convexCopyRepository";
@@ -54,6 +55,15 @@ export const acquireCopies = mutation({
       })),
     );
     if (plan.isErr) throw toConvexError(plan.error);
+    // Every copy of the batch counts against the member's daily copy budget (SEC-29); a batch
+    // that doesn't fit is refused whole.
+    await enforceRateLimit(
+      ctx,
+      "copyAdd",
+      ownerId,
+      undefined,
+      plan.value.length,
+    );
 
     const batchId = crypto.randomUUID();
     const acquire = makeAcquireCopy({

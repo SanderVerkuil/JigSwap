@@ -352,6 +352,7 @@
     "puzzleCreated": "Puzzel succesvol aangemaakt",
     "puzzleSubmittedForReview": "Puzzel ingediend ter beoordeling",
     "puzzleCreationFailed": "Puzzel aanmaken mislukt",
+    "addRateLimited": "Je hebt vandaag al veel puzzels toegevoegd. Probeer het morgen opnieuw.",
     "rateLimited": "Je hebt voorlopig het maximale aantal puzzels toegevoegd. Probeer het {when} opnieuw.",
     "coverRateLimited": "Je hebt voorlopig het maximale aantal omslagfoto's toegevoegd. Probeer het {when} opnieuw, of kies een omslagkleur.",
     "textTooLong": "Een van de velden is te lang. Maak het korter en probeer het opnieuw.",
@@ -1828,7 +1829,8 @@
     "limitReached": "Je kunt maximaal {max} puzzels tegelijk toevoegen.",
     "submit": "{count, plural, one {# puzzel toevoegen} other {# puzzels toevoegen}}",
     "added": "{count, plural, one {# puzzel aan je plank toegevoegd} other {# puzzels aan je plank toegevoegd}}",
-    "addFailed": "Deze puzzels konden niet worden toegevoegd, dus er is niets toegevoegd. Probeer het opnieuw."
+    "addFailed": "Deze puzzels konden niet worden toegevoegd, dus er is niets toegevoegd. Probeer het opnieuw.",
+    "rateLimited": "Je hebt vandaag al veel puzzels toegevoegd. Probeer het morgen opnieuw."
   },
   "collections": {
     "myCollections": "Mijn Collecties",

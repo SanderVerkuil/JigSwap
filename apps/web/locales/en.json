@@ -352,6 +352,7 @@
     "puzzleCreated": "Puzzle created successfully",
     "puzzleSubmittedForReview": "Puzzle submitted for review",
     "puzzleCreationFailed": "Failed to create puzzle",
+    "addRateLimited": "You've added a lot of puzzles today. Try again tomorrow.",
     "rateLimited": "You've added the most puzzles allowed for now. Try again {when}.",
     "coverRateLimited": "You've added the most cover photos allowed for now. Try again {when}, or pick a cover colour instead.",
     "textTooLong": "One of the fields is too long. Shorten it and try again.",
@@ -1828,7 +1829,8 @@
     "limitReached": "You can add up to {max} puzzles at once.",
     "submit": "{count, plural, one {Add # puzzle} other {Add # puzzles}}",
     "added": "{count, plural, one {# puzzle added to your shelf} other {# puzzles added to your shelf}}",
-    "addFailed": "Couldn't add these puzzles, so nothing was added. Please try again."
+    "addFailed": "Couldn't add these puzzles, so nothing was added. Please try again.",
+    "rateLimited": "You've added a lot of puzzles today. Try again tomorrow."
   },
   "collections": {
     "myCollections": "My Collections",
