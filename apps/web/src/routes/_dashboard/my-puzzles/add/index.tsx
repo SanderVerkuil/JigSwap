@@ -9,7 +9,11 @@ import { Input } from "@/components/ui/input";
 import { PageLoading } from "@/components/ui/loading";
 import { useTourLauncher } from "@/components/whats-new/tour-launcher";
 import { gateway, type Id } from "@/gateway";
-import { catalogueSearchKey, detectBarcode } from "@/lib/catalogue-search";
+import {
+  catalogueSearchKey,
+  detectBarcode,
+  isPartialBarcode,
+} from "@/lib/catalogue-search";
 import { pageTitle } from "@/lib/page-title";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
@@ -197,6 +201,11 @@ function AddPuzzleChooserPage() {
     status !== "LoadingFirstPage" &&
     filteredSubmissions.length === 0 &&
     catalogue.length === 0;
+  // The empty states carry their own way on (Create new, Register it), or ask to keep typing a
+  // barcode, so the footer's "Create new" only shows under a list of results.
+  const listsResults = barcode
+    ? !!barcodeMatch
+    : filteredSubmissions.length > 0 || catalogue.length > 0;
 
   return (
     <div className="flex flex-col gap-8">
@@ -275,7 +284,12 @@ function AddPuzzleChooserPage() {
             </p>
           </div>
 
-          {nothingToShow ? (
+          {nothingToShow && isPartialBarcode(searchKey) ? (
+            <EmptyState
+              title={tPicker("keepTypingBarcode")}
+              sub={tPicker("barcodeLength")}
+            />
+          ) : nothingToShow ? (
             <EmptyState
               title={t("chooser.noResults")}
               sub={t("chooser.cantFind")}
@@ -304,11 +318,15 @@ function AddPuzzleChooserPage() {
         </section>
       )}
 
-      {/* Persistent "can't find it?" CTA below the grid. */}
-      <div className="flex flex-col items-center gap-2 border-t border-border pt-6 text-center">
-        <p className="text-muted-foreground text-sm">{t("chooser.cantFind")}</p>
-        {createNewCta}
-      </div>
+      {/* "Can't find it?" CTA below the results. */}
+      {listsResults && (
+        <div className="flex flex-col items-center gap-2 border-t border-border pt-6 text-center">
+          <p className="text-muted-foreground text-sm">
+            {t("chooser.cantFind")}
+          </p>
+          {createNewCta}
+        </div>
+      )}
     </div>
   );
 }

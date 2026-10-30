@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { isPartialBarcode } from "@/lib/catalogue-search";
 import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { Check, Plus, Search, X } from "lucide-react";
@@ -161,7 +162,9 @@ export function CataloguePickerView({
 
       {trimmed && rows.length === 0 && !isSearching && (
         <p className="text-muted-foreground text-sm">
-          {t("noResults", { query: trimmed })}
+          {isPartialBarcode(trimmed)
+            ? `${t("keepTypingBarcode")} ${t("barcodeLength")}`
+            : t("noResults", { query: trimmed })}
         </p>
       )}
 

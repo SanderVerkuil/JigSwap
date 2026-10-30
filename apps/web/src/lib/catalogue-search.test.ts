@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { catalogueSearchKey, detectBarcode } from "./catalogue-search";
+import {
+  catalogueSearchKey,
+  detectBarcode,
+  isPartialBarcode,
+} from "./catalogue-search";
 
 describe("detectBarcode", () => {
   it("accepts 12 and 13 digit codes", () => {
@@ -21,6 +25,31 @@ describe("detectBarcode", () => {
     expect(detectBarcode("40063813339310")).toBeNull();
     expect(detectBarcode("Lake 1000")).toBeNull();
     expect(detectBarcode("4006381333931a")).toBeNull();
+  });
+});
+
+describe("isPartialBarcode", () => {
+  it("is true for the start of a barcode: 6 to 11 digits", () => {
+    expect(isPartialBarcode("871012")).toBe(true);
+    expect(isPartialBarcode("8710126")).toBe(true);
+    expect(isPartialBarcode("87101260001")).toBe(true);
+  });
+
+  it("strips spaces and dashes like detectBarcode", () => {
+    expect(isPartialBarcode(" 8 710-126 ")).toBe(true);
+  });
+
+  it("is false for short numbers people search by (piece counts, years)", () => {
+    expect(isPartialBarcode("1000")).toBe(false);
+    expect(isPartialBarcode("12000")).toBe(false);
+  });
+
+  it("is false for a whole barcode, text, or nothing", () => {
+    expect(isPartialBarcode("036000291452")).toBe(false);
+    expect(isPartialBarcode("4006381333931")).toBe(false);
+    expect(isPartialBarcode("Lake 1000")).toBe(false);
+    expect(isPartialBarcode("8710126a")).toBe(false);
+    expect(isPartialBarcode("")).toBe(false);
   });
 });
 

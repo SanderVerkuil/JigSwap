@@ -1903,6 +1903,8 @@
     "pickedHeading": "Gekozen ({count})",
     "onShelf": "Op je plank",
     "noResults": "Geen puzzels gevonden voor \"{query}\".",
+    "keepTypingBarcode": "Typ de barcode verder…",
+    "barcodeLength": "Barcodes op puzzeldozen hebben 12 of 13 cijfers.",
     "notListed": "Niet gevonden?",
     "register": "\"{query}\" registreren",
     "registerNew": "Een nieuwe puzzel registreren",

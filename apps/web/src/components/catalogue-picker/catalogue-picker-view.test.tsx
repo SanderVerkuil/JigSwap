@@ -206,6 +206,20 @@ describe("CataloguePickerView", () => {
     expect(els.some((el) => text(el) === 'No puzzles match "zzz".')).toBe(true);
   });
 
+  it("asks to keep typing a partial barcode instead of saying nothing matches", () => {
+    const els = render({ term: "8710126", rows: [] });
+    expect(
+      els.some(
+        (el) =>
+          text(el) ===
+          "Keep typing the barcode… Barcodes on puzzle boxes have 12 or 13 digits.",
+      ),
+    ).toBe(true);
+    expect(els.some((el) => text(el).startsWith("No puzzles match"))).toBe(
+      false,
+    );
+  });
+
   it("disables unpicked rows once the tray is full", () => {
     const full = Array.from({ length: PICK_LIMIT }, (_, i) => pick(`p${i}`));
     const els = render({
