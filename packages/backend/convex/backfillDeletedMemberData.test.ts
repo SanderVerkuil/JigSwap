@@ -348,6 +348,74 @@ describe("conversation.backfillDeletedMemberData: a solve kept on someone else's
   });
 });
 
+describe("conversation.backfillDeletedMemberData: the legacy exchange chat", () => {
+  // Jay was deleted before the purge covered the legacy `messages` table; his chat with Bob was
+  // copied into their exchange thread by conversation/backfill and is all he left behind.
+  test("a real run finds him through his legacy rows and deletes the copied ones", async () => {
+    const t = newT();
+    const { jay, legacyId } = await t.run(async (ctx) => {
+      const now = Date.now();
+      const mk = (who: string) =>
+        ctx.db.insert("users", {
+          clerkId: `clerk_${who}`,
+          name: who,
+          isActive: true,
+          createdAt: now,
+          updatedAt: now,
+        });
+      const bob = await mk("bob");
+      const jay = await mk("jay");
+      const puzzleId = await ctx.db.insert("puzzles", {
+        title: "Lighthouse",
+        pieceCount: 1000,
+        status: "approved",
+        submittedBy: bob,
+        createdAt: now,
+        updatedAt: now,
+      });
+      const copy = await ctx.db.insert("ownedPuzzles", {
+        puzzleId,
+        ownerId: bob,
+        condition: "good",
+        availability: { forTrade: false, forSale: false, forLend: false },
+        createdAt: now,
+        updatedAt: now,
+      });
+      const exchangeId = await ctx.db.insert("exchanges", {
+        initiatorId: jay,
+        recipientId: bob,
+        type: "trade",
+        requestedPuzzleId: copy,
+        status: "completed",
+        createdAt: now,
+        updatedAt: now,
+      });
+      const legacyId = await ctx.db.insert("messages", {
+        exchangeId,
+        senderId: jay,
+        receiverId: bob,
+        content: "Can we meet at the station?",
+        messageType: "text",
+        isRead: true,
+        createdAt: now,
+      });
+      return { jay, legacyId };
+    });
+    await t.mutation(internal.conversation.backfill.run, {});
+    await t.run((ctx) => ctx.db.delete(jay));
+
+    await t.mutation(
+      internal.conversation.backfillDeletedMemberData.backfillDeletedMemberData,
+      { dryRun: false, table: "messages" },
+    );
+    await settleDueJobs(t);
+    await runDelayedScrubs(t);
+
+    expect(reportedIds()).toEqual([jay]);
+    expect(await t.run((ctx) => ctx.db.get(legacyId))).toBeNull();
+  });
+});
+
 describe("conversation.backfillDeletedMemberData: events keyed by a deleted copy", () => {
   // An earlier deletion removed Hana's copy but left its CopyDetailsUpdated (no member id, her
   // notes) in the log. Bob's copy still exists.

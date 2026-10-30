@@ -13,6 +13,7 @@ import {
   type RateLimitName,
 } from "../lib/rateLimits";
 import { presence } from "../presence";
+import { isCopiedLegacyMessage } from "./backfill";
 import { removeForDeletedMember } from "./messageAttachments";
 import { scrubMemberEvents } from "./purgeMemberEvents";
 import {
@@ -86,6 +87,11 @@ import {
 //                The other party, if still active, gets a trade_cancelled_member_deleted
 //                notification (actor: the departed member, "Deleted member") and a system row in
 //                the exchange's thread.
+//   legacyMessagesSent      } their rows in the legacy exchange chat (`messages`, from before
+//   legacyMessagesReceived  } Conversation), both directions: a row conversation/backfill has
+//                copied into its exchange thread is a duplicate and is deleted (the thread keeps the
+//                message, like any other); one never copied is the only copy and is kept, counted
+//                in the log (conversation.purgeLegacyMessages kept_unmigrated).
 //   loansOpen    the open loans of copies they lent  } returned (closedAt now), the copy back with
 //   loansOpenIn  the open loans of copies they borrow } its owner; loan rows stay as history
 //   copies       the copies they own now (by_owner only), each with its collection memberships,
@@ -165,6 +171,8 @@ const PHASES = [
   "presence",
   "exchangesOpen",
   "exchangesOpenIn",
+  "legacyMessagesSent",
+  "legacyMessagesReceived",
   "loansOpen",
   "loansOpenIn",
   "copies",
@@ -215,6 +223,8 @@ const phaseValidator = v.union(
   v.literal("presence"),
   v.literal("exchangesOpen"),
   v.literal("exchangesOpenIn"),
+  v.literal("legacyMessagesSent"),
+  v.literal("legacyMessagesReceived"),
   v.literal("loansOpen"),
   v.literal("loansOpenIn"),
   v.literal("copies"),
@@ -740,6 +750,41 @@ const runPhase = async (
       return cancelOpenExchanges(ctx, memberId, "initiator", opts);
     case "exchangesOpenIn":
       return cancelOpenExchanges(ctx, memberId, "recipient", opts);
+    case "legacyMessagesSent":
+    case "legacyMessagesReceived": {
+      // The legacy exchange chat, both directions. A row conversation/backfill copied into its
+      // exchange thread is a duplicate and goes; one never copied is the only copy of that message
+      // and is kept (counted, so the owner can run the backfill before dropping the table).
+      const sent = phase === "legacyMessagesSent";
+      const page = await (
+        sent
+          ? ctx.db
+              .query("messages")
+              .withIndex("by_sender", (q) => q.eq("senderId", memberId))
+          : ctx.db
+              .query("messages")
+              .withIndex("by_receiver", (q) => q.eq("receiverId", memberId))
+      ).paginate(opts);
+      let kept = 0;
+      for (const row of page.page) {
+        if (await isCopiedLegacyMessage(ctx, row._id)) {
+          await ctx.db.delete(row._id);
+        } else {
+          kept += 1;
+        }
+      }
+      if (page.page.length > 0) {
+        logEvent({
+          event: "conversation.purgeLegacyMessages",
+          outcome: "success",
+          member_id: memberId,
+          side: sent ? "sender" : "receiver",
+          deleted: page.page.length - kept,
+          kept_unmigrated: kept,
+        });
+      }
+      return page;
+    }
     case "loansOpen":
       return closeOpenLoans(ctx, memberId, "lender", opts);
     case "loansOpenIn":

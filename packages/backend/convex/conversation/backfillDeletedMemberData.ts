@@ -11,8 +11,9 @@ export const BACKFILL_DELETED_MEMBER_DATA_BATCH = 200;
 export const BACKFILL_DELETED_MEMBER_DATA_MAX_BATCH = 1000;
 
 // The tables that hold what the later purge phases clean up, walked in this order. Each row names
-// the member(s) it belongs to; an exchange or a loan names both parties, an event any member its
-// payload mentions (so a member who left nothing but events is found, and their purge scrubs them).
+// the member(s) it belongs to; an exchange, a loan or a legacy chat message names both parties, an
+// event any member its payload mentions (so a member who left nothing but events is found, and
+// their purge scrubs them).
 const TABLES = [
   "exchanges",
   "loans",
@@ -24,6 +25,7 @@ const TABLES = [
   "categories",
   "circles",
   "householdMembers",
+  "messages",
   "domainEvents",
 ] as const;
 type Table = (typeof TABLES)[number];
@@ -38,6 +40,7 @@ const tableValidator = v.union(
   v.literal("categories"),
   v.literal("circles"),
   v.literal("householdMembers"),
+  v.literal("messages"),
   v.literal("domainEvents"),
 );
 
@@ -112,6 +115,11 @@ const pageOf = async (
     case "householdMembers":
       return idsOf(ctx.db.query("householdMembers"), opts, (row) => [
         row.memberId,
+      ]);
+    case "messages":
+      return idsOf(ctx.db.query("messages"), opts, (row) => [
+        row.senderId,
+        row.receiverId,
       ]);
     // An event names members anywhere in its untyped payload: every string that is a users id.
     // An event that names only a copy (CopyDetailsUpdated and its notes) leads to no member, so

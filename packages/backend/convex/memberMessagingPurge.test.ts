@@ -1,3 +1,4 @@
+import presenceTest from "@convex-dev/presence/test";
 import type {
   InboxThreadView,
   MessageAttachmentView,
@@ -695,5 +696,160 @@ describe("account deletion: blocks, reveals, reports, rate limits", () => {
     for (const photo of staged) {
       expect(await blobExists(t, photo.fileId)).toBe(false);
     }
+  });
+});
+
+// The phases after "presence" need the presence component registered.
+const newPurgeT = (): T => {
+  const t = convexTest(schema, modules);
+  presenceTest.register(t);
+  return t;
+};
+
+// The wide events a test run logged under `event`.
+const loggedEvents = (event: string): Record<string, unknown>[] =>
+  vi
+    .mocked(console.log)
+    .mock.calls.map((call) => String(call[0]))
+    .filter((line) => line.startsWith("{"))
+    .map((line) => JSON.parse(line) as Record<string, unknown>)
+    .filter((line) => line.event === event);
+
+describe("account deletion: the legacy exchange chat", () => {
+  // Alice and Bob chatted about a trade in the legacy `messages` table, and conversation/backfill
+  // copied that chat into their exchange thread. Two later legacy rows between Alice and Carol were
+  // never copied, and Bob and Carol have a copied legacy chat of their own.
+  const seedLegacy = async (t: T) => {
+    const s = await seed(t);
+    const legacy = await t.run(async (ctx) => {
+      const puzzleId = await ctx.db.insert("puzzles", {
+        title: "Lighthouse",
+        pieceCount: 1000,
+        status: "approved",
+        submittedBy: s.bob,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const copy = await ctx.db.insert("ownedPuzzles", {
+        puzzleId,
+        ownerId: s.bob,
+        condition: "good",
+        availability: { forTrade: true, forSale: false, forLend: false },
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const exchange = (
+        initiatorId: Id<"users">,
+        recipientId: Id<"users">,
+        aggregateId: string,
+      ) =>
+        ctx.db.insert("exchanges", {
+          aggregateId,
+          initiatorId,
+          recipientId,
+          type: "trade",
+          requestedPuzzleId: copy,
+          status: "completed",
+          createdAt: 1,
+          updatedAt: 1,
+        });
+      const message = (
+        exchangeId: Id<"exchanges">,
+        senderId: Id<"users">,
+        receiverId: Id<"users">,
+        content: string,
+      ) =>
+        ctx.db.insert("messages", {
+          exchangeId,
+          senderId,
+          receiverId,
+          content,
+          messageType: "text",
+          isRead: true,
+          createdAt: 1,
+        });
+      const ab = await exchange(s.alice, s.bob, "exch-ab");
+      const bc = await exchange(s.bob, s.carol, "exch-bc");
+      return {
+        ac: await exchange(s.alice, s.carol, "exch-ac"),
+        aliceToBob: await message(ab, s.alice, s.bob, "Is it complete?"),
+        bobToAlice: await message(ab, s.bob, s.alice, "Every piece"),
+        bobToCarol: await message(bc, s.bob, s.carol, "Still available"),
+      };
+    });
+    await t.mutation(internal.conversation.backfill.run, {});
+    const uncopied = await t.run(async (ctx) => {
+      const message = (senderId: Id<"users">, receiverId: Id<"users">) =>
+        ctx.db.insert("messages", {
+          exchangeId: legacy.ac,
+          senderId,
+          receiverId,
+          content: "Not copied yet",
+          messageType: "text",
+          isRead: true,
+          createdAt: 2,
+        });
+      return {
+        aliceToCarol: await message(s.alice, s.carol),
+        carolToAlice: await message(s.carol, s.alice),
+      };
+    });
+    return { ...s, ...legacy, ...uncopied };
+  };
+
+  test("copied rows go both ways; rows never copied stay and are counted", async () => {
+    const t = newPurgeT();
+    const s = await seedLegacy(t);
+    await deleteAlice(t);
+
+    const left = await t.run(async (ctx) =>
+      (await ctx.db.query("messages").collect()).map((m) => m._id).sort(),
+    );
+    expect(left).toEqual([s.bobToCarol, s.aliceToCarol, s.carolToAlice].sort());
+    // Bob still reads the copied chat in the exchange thread.
+    const copies = await t.run(async (ctx) =>
+      Promise.all(
+        [s.aliceToBob, s.bobToAlice].map((id) =>
+          ctx.db
+            .query("threadMessages")
+            .withIndex("by_message_id", (q) =>
+              q.eq("messageId", `legacy-${id}`),
+            )
+            .unique(),
+        ),
+      ),
+    );
+    expect(copies.map((m) => m?.body)).toEqual([
+      "Is it complete?",
+      "Every piece",
+    ]);
+    const kept = loggedEvents("conversation.purgeLegacyMessages").reduce(
+      (sum, line) => sum + Number(line.kept_unmigrated),
+      0,
+    );
+    expect(kept).toBe(2);
+  });
+
+  test("legacyMessagesStatus pages the table and counts the rows not copied", async () => {
+    const t = newPurgeT();
+    await seedLegacy(t);
+    let cursor: string | null = null;
+    let scanned = 0;
+    let unmigrated = 0;
+    for (;;) {
+      const page: {
+        scanned: number;
+        unmigrated: number;
+        isDone: boolean;
+        continueCursor: string;
+      } = await t.query(internal.conversation.backfill.legacyMessagesStatus, {
+        paginationOpts: { numItems: 2, cursor },
+      });
+      scanned += page.scanned;
+      unmigrated += page.unmigrated;
+      if (page.isDone) break;
+      cursor = page.continueCursor;
+    }
+    expect({ scanned, unmigrated }).toEqual({ scanned: 5, unmigrated: 2 });
   });
 });
