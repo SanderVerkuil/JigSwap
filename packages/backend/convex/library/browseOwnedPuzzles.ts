@@ -9,22 +9,24 @@ import { profileVisibilityOf, projectMemberIdentity } from "../social/privacy";
 import { collectCircleSharedCopies } from "./circleSharedCopies";
 import { viewerMayRequestCopy } from "./exchangeRoutes";
 import { toCopyPuzzleView, toOwnedCopyView } from "./mappers";
+import { isOpenAvailability, openCopiesNewestFirst } from "./openListing";
 import { resolveCopyCoverUrl } from "./resolveCoverUrl";
 
-// A copy is "open" iff at least one exchange-availability flag is set. Rule 1 of Browse
-// visibility: only open copies are ever shown, including circle-shared ones.
-const isOpen = (copy: Doc<"ownedPuzzles">): boolean =>
-  copy.availability.forTrade ||
-  copy.availability.forSale ||
-  copy.availability.forLend;
-
-// A page holds 1 to MAX_LIMIT copies whatever the client asks for; the offset is never negative.
+// The most open copies one Browse call reads as candidates, newest first. Every filter below runs
+// over this window, so past it `total` is a lower bound (`totalIsLowerBound`) and the oldest
+// listings are only reachable through the definition filter (`puzzleId`, its own window).
+export const BROWSE_CANDIDATE_CAP = 1000;
+// A page holds 1 to BROWSE_MAX_LIMIT copies whatever the client asks for (the web asks for 50); the
+// offset is never negative.
+export const BROWSE_MAX_LIMIT = 50;
 const DEFAULT_LIMIT = 20;
-const MAX_LIMIT = 50;
 
-// Library read: browse OTHER members' available owned copies with filters. Auth gating, the
-// availability prefilter, every puzzle-based filter (category/pieces/difficulty/search), the
-// newest-first ordering, the owner join, and offset/limit paging are preserved from legacy
+// Library read: browse OTHER members' available owned copies with filters. Rule 1 of Browse
+// visibility: only OPEN copies are ever shown (library/openListing), including circle-shared ones.
+// Candidates are the newest BROWSE_CANDIDATE_CAP open copies read from the `isOpen` indexes, so
+// closed copies are never read and no pile of older listings can push newer ones out (SEC-29).
+// Auth gating, every puzzle-based filter (category/pieces/difficulty/search), the newest-first
+// ordering, the owner join and offset/limit paging are preserved from legacy
 // puzzles.browseOwnedPuzzles; the result maps to a typed paginated DTO.
 export const browseOwnedPuzzles = query({
   args: {
@@ -60,7 +62,7 @@ export const browseOwnedPuzzles = query({
   handler: async (ctx, args): Promise<BrowseOwnedCopiesView> => {
     const limit = clampLimit(args.limit, {
       fallback: DEFAULT_LIMIT,
-      max: MAX_LIMIT,
+      max: BROWSE_MAX_LIMIT,
     });
     const offset = clampOffset(args.offset);
 
@@ -73,42 +75,39 @@ export const browseOwnedPuzzles = query({
         ? undefined
         : ctx.db.normalizeId("puzzles", args.puzzleId);
     if (puzzleId === null) {
-      return { ownedPuzzles: [], total: 0, hasMore: false };
+      return {
+        ownedPuzzles: [],
+        total: 0,
+        hasMore: false,
+        totalIsLowerBound: false,
+      };
     }
 
-    // Availability-sourced candidate set: every OPEN copy (rule 1). Convex can't `neq` on an
-    // index, so we collect the availability-filtered set and exclude the viewer's own copies in
-    // memory (unless includeOwnPuzzles). Browse shows OTHER members' available copies.
-    // Perf: bound the worst-case scan with `.take(500)` instead of an unbounded `.collect()`.
-    // CAVEAT: this is a read-cap, not a true index — at large catalogue scale this set should be
-    // sourced from a dedicated availability index + cursor paging rather than an in-memory filter.
-    // With a definition filter, source candidates from the `by_puzzle` index instead, so copies of
-    // that puzzle are never lost behind the global 500-row cap.
-    const candidates = puzzleId
-      ? ctx.db
-          .query("ownedPuzzles")
-          .withIndex("by_puzzle", (q) => q.eq("puzzleId", puzzleId))
-      : ctx.db.query("ownedPuzzles");
-    const availableNotOwn = (
-      await candidates
-        .filter((f) =>
-          f.or(
-            f.eq(f.field("availability.forTrade"), true),
-            f.eq(f.field("availability.forSale"), true),
-            f.eq(f.field("availability.forLend"), true),
-          ),
-        )
-        .take(500)
-    ).filter((c) => args.includeOwnPuzzles || c.ownerId !== memberId);
+    // Candidate window: the newest open copies (rule 1), platform-wide or of one definition. One
+    // row past the cap tells whether the window was cut. Convex can't `neq` on an index, so the
+    // viewer's own copies are dropped in memory (unless includeOwnPuzzles): Browse shows OTHER
+    // members' available copies.
+    const candidates = await openCopiesNewestFirst(ctx, {
+      puzzleId,
+      limit: BROWSE_CANDIDATE_CAP + 1,
+    });
+    const windowCut = candidates.length > BROWSE_CANDIDATE_CAP;
+    const availableNotOwn = candidates
+      .slice(0, BROWSE_CANDIDATE_CAP)
+      .filter((c) => args.includeOwnPuzzles || c.ownerId !== memberId);
 
     // Circle-shared copies the viewer may see (cross-context). Rule 1 applies to these too: a
     // copy must be OPEN to appear, even when reached via a circle. Build the set of circle-shared
     // copy ids for the membership check below, and keep the (open) rows so the union also adds any
-    // open circle copy the availability collect missed (e.g. a viewer's own copy is dropped above
-    // but a fellow member's open circle copy that wasn't in the prefilter is added here).
+    // open circle copy the candidate window missed (e.g. a fellow member's open circle copy older
+    // than the window is added here).
     const circleShared = (
       await collectCircleSharedCopies(ctx, memberId)
-    ).filter((c) => isOpen(c) && (!puzzleId || c.puzzleId === puzzleId));
+    ).filter(
+      (c) =>
+        isOpenAvailability(c.availability) &&
+        (!puzzleId || c.puzzleId === puzzleId),
+    );
     const circleSharedIds = new Set(
       circleShared.map((c) => c._id as unknown as string),
     );
@@ -128,8 +127,8 @@ export const browseOwnedPuzzles = query({
 
     // Rule 2 (reachability): a copy is shown when its owner is PUBLIC, or the copy is circle-shared
     // with the viewer. Private, non-circle owners' copies are excluded entirely (no row over the
-    // wire). Apply to the availability-sourced set, then UNION any open circle-shared copy the
-    // availability collect missed — de-duplicated by copy id.
+    // wire). Apply to the candidate window, then UNION any open circle-shared copy the window
+    // missed — de-duplicated by copy id.
     const shown: Doc<"ownedPuzzles">[] = [];
     const seen = new Set<string>();
     // Copies of members blocked either way with the viewer are never shown (spec 2.6).
@@ -157,12 +156,22 @@ export const browseOwnedPuzzles = query({
       ownedPuzzles = ownedPuzzles.filter((i) => i.condition === args.condition);
     }
 
+    // One read per distinct definition, not per copy: the window can hold many copies of one.
+    const puzzleReads = new Map<string, Promise<Doc<"puzzles"> | null>>();
+    const puzzleOf = (id: Id<"puzzles">) => {
+      let read = puzzleReads.get(id);
+      if (read === undefined) {
+        read = ctx.db.get(id);
+        puzzleReads.set(id, read);
+      }
+      return read;
+    };
     // The puzzle-based filters match only the catalogue facts the card shows (`shown`, the same
     // projection toOwnedCopyView joins): for a copy of a definition that is not approved that is
     // its snapshot title, brand and pieces, so a search can't probe hidden description or tags.
     const withPuzzles = await Promise.all(
       ownedPuzzles.map(async (copy) => {
-        const puzzle = await ctx.db.get(copy.puzzleId);
+        const puzzle = await puzzleOf(copy.puzzleId);
         return { copy, puzzle, shown: toCopyPuzzleView(copy, puzzle) };
       }),
     );
@@ -246,6 +255,7 @@ export const browseOwnedPuzzles = query({
       ownedPuzzles: page,
       total: filtered.length,
       hasMore: offset + limit < filtered.length,
+      totalIsLowerBound: windowCut,
     };
   },
 });

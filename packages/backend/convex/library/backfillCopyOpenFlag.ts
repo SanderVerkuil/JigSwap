@@ -23,7 +23,9 @@ type Counts = {
 // Per row it writes `isOpen` = isOpenAvailability(availability) when the flag is absent or disagrees.
 // It writes only `isOpen` (not `updatedAt`: this is not an owner edit), so a re-run writes nothing.
 // `dryRun` walks every page and counts without writing. A re-run also repairs any row a write path
-// changed without keeping the flag in step (`repaired` counts them).
+// changed without keeping the flag in step (`repaired` counts them). Until it has run, Browse finds
+// legacy open copies through the absent-flag range in library/openListing.openCopiesNewestFirst, at
+// the old full-scan cost. Runbook: docs/deployment/one-shot-migrations.md.
 export const backfillCopyOpenFlag = internalMutation({
   args: {
     cursor: v.optional(v.union(v.string(), v.null())),

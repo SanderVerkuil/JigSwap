@@ -680,6 +680,26 @@ until that row exists, even when `STORAGE_GC_MODE` is `delete` (photo-moderation
 sweep").
 
 **Safe to re-run:** yes. A second real run creates 0 sidecars.
+## `library/backfillCopyOpenFlag` — the listing flag Browse reads by index
+
+**When:** once per deployment, after the `ownedPuzzles.isOpen` flag and its `by_open` /
+`by_puzzle_open` indexes (PERF-B1m, SEC-29) are deployed there. There is no ordering
+pressure: every copy save and every settled exchange already writes the flag, and until a
+row has one, Browse still finds it through a fallback that reads the rows without a flag and
+checks their availability. That fallback costs what Browse cost before (it scans legacy
+closed copies too), so run the backfill soon after the deploy; once it has run, the
+fallback range is empty and Browse reads only open copies.
+
+**What it does:** pages through `ownedPuzzles` (200 rows per batch; `batchSize` overrides
+it, rounded down and clamped to 1..1000; each batch its own transaction, rescheduling itself
+until the table is exhausted) and writes `isOpen` = "at least one of `forTrade`, `forSale`,
+`forLend` is set" on every row whose flag is absent (`set`) or disagrees with its
+availability (`repaired`). Rows already in step are left alone. It writes only `isOpen`
+(not `updatedAt`: this is not an owner edit).
+
+**Safe to re-run:** yes. A second run finds every row in step and writes nothing. It also
+doubles as a repair: if a future write path changes `availability` without the flag, a
+re-run corrects those rows (`repaired` > 0 points at that bug).
 
 **Commands:**
 
@@ -809,3 +829,25 @@ totals; the line with `"done":true` carries the whole run's totals.
 
 **Verify:** the real run's final `cleared` equals the dry run's `settled`, and a second dry run
 reports `"settled":0`.
+# dev: dry run (counts only, writes nothing), then the real run
+npx convex run library/backfillCopyOpenFlag:backfillCopyOpenFlag '{"dryRun":true}'
+npx convex run library/backfillCopyOpenFlag:backfillCopyOpenFlag '{}'
+
+# prod: same, after dev looks right
+npx convex run --prod library/backfillCopyOpenFlag:backfillCopyOpenFlag '{"dryRun":true}'
+npx convex run --prod library/backfillCopyOpenFlag:backfillCopyOpenFlag '{}'
+```
+
+The command returns the FIRST batch's `{ scanned, set, repaired, inStep }`; the remaining
+batches run as scheduled functions. Each batch logs one JSON line with
+`"event":"library.backfillCopyOpenFlag"`, `dry_run`, the batch counts and the running
+`totals`; the line with `"is_done":true` carries the whole run's totals.
+
+**Verify:**
+
+1. The real run's final `totals.set + totals.repaired` matches the dry run's (give or take
+   copies saved in between, which already carry the flag).
+2. Run the dry run again: its final totals show `"set":0` and `"repaired":0`.
+3. In the dashboard data view, every `ownedPuzzles` row has `isOpen`, and it is `true`
+   exactly when one of its availability flags is.
+4. Browse lists the newest open copies first, including copies added after the oldest 500.
