@@ -1,0 +1,141 @@
+{
+  "variant": "desktop-light",
+  "route": "/docs/getting-started/accounts-and-sign-in",
+  "authed": false,
+  "name": "pub__docs_getting-started_accounts-and-sign-in",
+  "loadMs": 3697,
+  "finalUrl": "/docs/getting-started/accounts-and-sign-in",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "JigSwap",
+    "lang": "en",
+    "h1": [
+      "Accounts & Sign-In"
+    ],
+    "headings": [
+      "H1 Accounts & Sign-In",
+      "H2 Create an account",
+      "H2 Sign in",
+      "H2 Public pages (no account needed)",
+      "H2 When you delete your account"
+    ],
+    "pageHeight": 2482,
+    "overflowX": -15,
+    "overflowOffenders": [],
+    "interactiveCount": 65,
+    "tapUnder24": 14,
+    "tapUnder24Examples": [
+      "a.sr-only.focus:not-sr-only.focus:absolute.focus:z-50 \"Skip to content\" 1x1",
+      "a.hover:text-mk-violet-600.active \"Docs\" 32x20",
+      "a \"Friend Circles\" 114x20",
+      "a \"Households\" 99x20",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"How it works\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Browse puzzles\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Features\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Docs\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Start trading\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"About\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Contact\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Privacy policy\" 224x22"
+    ],
+    "tap24to44": 44,
+    "tap24to44Examples": [
+      "a [aria=\"JigSwap\"] \"JigSwap\" 118x37",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"How it works\" 96x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"Browse puzzles\" 115x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"Features\" 65x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"About\" 44x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"Docs\" 37x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"Contact\" 58x35",
+      "button#radix-_R_7aj6l6_.inline-flex.items-center.justify-center.w-10 [aria=\"Switch language\"] \"🇺🇸\" 40x40"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "a.sr-only.focus:not-sr-only.focus:absolute.focus:z-50 \"Skip to content\""
+    ],
+    "smallText": [
+      "kbd.ml-auto.font-mono.text-[11px].px-1.5 \"⌘K\" 11px",
+      "div.font-mono.text-[11px].font-bold.tracking-[.1em] \"ON THIS PAGE\" 11px"
+    ],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "count": 42,
+      "nodes": [
+        {
+          "target": ".mb-2 > span",
+          "html": "<span>Search docs…</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.18 (foreground color: #7c7689, background color: #f9faff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": "kbd",
+          "html": "<kbd class=\"ml-auto font-mono text-[11px] px-1.5 py-0.5 rounded-[5px] bg-mk-muted border border-mk-border\">⌘K</kbd>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.58 (foreground color: #7c7689, background color: #e7e7fb, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": "#radix-_R_6bcj6l6_ > .ml-1\\.5.border-l.flex-col > .rounded-r-\\[6px\\].hover\\:bg-mk-muted\\/60.text-\\[13\\.5px\\]:nth-child(2)",
+          "html": "<a class=\"-ml-px border-l-2 py-[6px] px-3.5 text-[13.5px] leading-snug rounded-r-[6px] transition-colors border-transparent text-mk-text-muted font-medium hover",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #7c7689, background color: #ececfb, font size: 10.1pt (13.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": "#radix-_R_6bcj6l6_ > .ml-1\\.5.border-l.flex-col > .rounded-r-\\[6px\\].hover\\:bg-mk-muted\\/60.text-\\[13\\.5px\\]:nth-child(3)",
+          "html": "<a class=\"-ml-px border-l-2 py-[6px] px-3.5 text-[13.5px] leading-snug rounded-r-[6px] transition-colors border-transparent text-mk-text-muted font-medium hover",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #7c7689, background color: #ececfb, font size: 10.1pt (13.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    },
+    {
+      "id": "landmark-unique",
+      "impact": "moderate",
+      "help": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+      "count": 2,
+      "nodes": [
+        {
+          "target": ".min-\\[861px\\]\\:flex",
+          "html": "<nav class=\"hidden min-[861px]:flex items-center gap-[26px] ml-3.5\">",
+          "summary": "Fix any of the following:\n  The landmark must have a unique aria-label, aria-labelledby, or title to make landmarks distinguishable"
+        },
+        {
+          "target": ".top-\\[86px\\]",
+          "html": "<aside class=\"sticky top-[86px] self-start max-h-[calc(100dvh-86px)] overflow-y-auto pr-6 border-r border-mk-border py-8 max-[1000px]:hidden\">",
+          "summary": "Fix any of the following:\n  The landmark must have a unique aria-label, aria-labelledby, or title to make landmarks distinguishable"
+        }
+      ]
+    },
+    {
+      "id": "region",
+      "impact": "moderate",
+      "help": "All page content should be contained by landmarks",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".sr-only",
+          "html": "<a href=\"#docs-content\" class=\"sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:rounded-md focus:bg-mk-card focus:px-3 focus:p",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 2482,
+    "client": 900,
+    "top": 1582,
+    "step": 810
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/desktop-light/pub__docs_getting-started_accounts-and-sign-in__01.jpg",
+    "/tmp/jigswap-review/tiles/desktop-light/pub__docs_getting-started_accounts-and-sign-in__02.jpg",
+    "/tmp/jigswap-review/tiles/desktop-light/pub__docs_getting-started_accounts-and-sign-in__03.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

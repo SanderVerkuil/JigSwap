@@ -1,0 +1,55 @@
+{
+  "variant": "mobile-nl",
+  "route": "/library",
+  "authed": true,
+  "name": "app__library",
+  "loadMs": 4630,
+  "finalUrl": "/library",
+  "metrics": {
+    "regionScrollHeight": 1166,
+    "regionOverflowX": 0,
+    "title": "Mijn Bibliotheek — JigSwap",
+    "lang": "nl",
+    "h1": [
+      "Mijn Bibliotheek",
+      "Mijn Bibliotheek"
+    ],
+    "headings": [
+      "H1 Mijn Bibliotheek",
+      "H1 Mijn Bibliotheek",
+      "H2 Zet JigSwap op je beginscherm",
+      "H2 Zoeken"
+    ],
+    "pageHeight": 1542,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 16,
+    "tapUnder24": 0,
+    "tapUnder24Examples": [],
+    "tap24to44": 0,
+    "tap24to44Examples": [],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 1542,
+    "client": 844,
+    "top": 698,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-nl/app__library__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__library__02.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

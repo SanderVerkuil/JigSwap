@@ -1,0 +1,96 @@
+{
+  "variant": "mobile-dark",
+  "route": "/how-it-works",
+  "authed": false,
+  "name": "pub__how-it-works",
+  "loadMs": 3723,
+  "finalUrl": "/how-it-works",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "How it works — JigSwap",
+    "lang": "en",
+    "h1": [
+      "From shelf to sharing, in five steps"
+    ],
+    "headings": [
+      "H1 From shelf to sharing, in five steps",
+      "H3 Create your profile",
+      "H3 Fill your shelf",
+      "H3 Discover & request",
+      "H3 Agree: lend or swap",
+      "H3 Track & wrap up",
+      "H2 Lend, swap or share in circles",
+      "H3 Lend",
+      "H3 Swap",
+      "H3 Share in circles",
+      "H2 A few quick answers"
+    ],
+    "pageHeight": 3865,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 19,
+    "tapUnder24": 10,
+    "tapUnder24Examples": [
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"How it works\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Browse puzzles\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Features\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Docs\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Start trading\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"About\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Contact\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Privacy policy\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Terms of service\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Cookie policy\" 342x22"
+    ],
+    "tap24to44": 4,
+    "tap24to44Examples": [
+      "a [aria=\"JigSwap\"] \"JigSwap\" 118x37",
+      "button#radix-_R_7aj6l6_.inline-flex.items-center.justify-center.w-10 [aria=\"Switch language\"] \"🇺🇸\" 40x40",
+      "button.inline-flex.items-center.justify-center.w-10 [aria=\"Toggle dark mode\"] 40x40",
+      "button.min-[861px]:hidden.inline-flex.items-center.justify-center [aria=\"Open menu\"] 40x40"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [],
+    "smallText": [
+      "div.font-mono.text-[11px].font-bold.tracking-[.08em] \"FOR A WHILE OR INDEFINITELY\" 11px",
+      "div.font-mono.text-[11px].font-bold.tracking-[.08em] \"THE CLASSIC\" 11px",
+      "div.font-mono.text-[11px].font-bold.tracking-[.08em] \"WITH FAMILY & FRIENDS\" 11px"
+    ],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".text-center > .text-xs.tracking-\\[\\.12em\\].gap-2",
+          "html": "<div class=\"inline-flex items-center gap-2 font-mono text-xs font-semibold tracking-[.12em] uppercase text-mk-violet-600 justify-center\"><span class=\"w-[18px] h",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.93 (foreground color: #7f7af2, background color: #292b42, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 3865,
+    "client": 844,
+    "top": 3021,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__how-it-works__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__how-it-works__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__how-it-works__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__how-it-works__04.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__how-it-works__05.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

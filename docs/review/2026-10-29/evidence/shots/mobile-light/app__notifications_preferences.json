@@ -1,0 +1,94 @@
+{
+  "variant": "mobile-light",
+  "route": "/notifications/preferences",
+  "authed": true,
+  "name": "app__notifications_preferences",
+  "loadMs": 4485,
+  "finalUrl": "/notifications/preferences",
+  "metrics": {
+    "regionScrollHeight": 4381,
+    "regionOverflowX": 0,
+    "title": "Notification preferences — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Notification preferences",
+      "Notification preferences"
+    ],
+    "headings": [
+      "H1 Notification preferences",
+      "H1 Notification preferences",
+      "H2 Push on this device",
+      "H2 Notification preferences",
+      "H2 Add JigSwap to your home screen",
+      "H2 Search"
+    ],
+    "pageHeight": 4757,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 136,
+    "tapUnder24": 126,
+    "tapUnder24Examples": [
+      "a.text-muted-foreground.hover:text-foreground.text-sm.hover:underline \"Trades\" 48x20",
+      "a.text-muted-foreground.hover:text-foreground.text-sm.hover:underline \"Messages\" 69x20",
+      "a.text-muted-foreground.hover:text-foreground.text-sm.hover:underline \"Social\" 41x20",
+      "a.text-muted-foreground.hover:text-foreground.text-sm.hover:underline \"My submissions\" 109x20",
+      "a.text-muted-foreground.hover:text-foreground.text-sm.hover:underline \"Product updates\" 117x20",
+      "a.text-muted-foreground.hover:text-foreground.text-sm.hover:underline \"Safety\" 46x20",
+      "button.peer.border-input.dark:bg-input/30.data-[state=checked]:bg-primary [aria=\"Trades — In-app\"] \"on\" 16x16",
+      "button.peer.border-input.dark:bg-input/30.data-[state=checked]:bg-primary [aria=\"Trades — Email\"] \"on\" 16x16",
+      "button.peer.border-input.dark:bg-input/30.data-[state=checked]:bg-primary [aria=\"Trades — Push\"] \"on\" 16x16",
+      "button.peer.data-[state=checked]:bg-primary.data-[state=unchecked]:bg-input.focus-visible:border-ring \"on\" 32x18",
+      "button.peer.data-[state=checked]:bg-primary.data-[state=unchecked]:bg-input.focus-visible:border-ring \"on\" 32x18",
+      "button.peer.data-[state=checked]:bg-primary.data-[state=unchecked]:bg-input.focus-visible:border-ring \"on\" 32x18"
+    ],
+    "tap24to44": 0,
+    "tap24to44Examples": [],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [
+      "span#col-inApp.text-muted-foreground.text-center.text-[10px].font-medium \"IN-APP\" 10px",
+      "span#col-email.text-muted-foreground.text-center.text-[10px].font-medium \"EMAIL\" 10px",
+      "span#col-push.text-muted-foreground.text-center.text-[10px].font-medium \"PUSH\" 10px"
+    ],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "region",
+      "impact": "moderate",
+      "help": "All page content should be contained by landmarks",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".sm\\:text-left",
+          "html": "<div data-slot=\"dialog-header\" class=\"flex flex-col gap-2 text-center sm:text-left sr-only\">",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 4757,
+    "client": 844,
+    "top": 3913,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-light/app__notifications_preferences__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__notifications_preferences__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__notifications_preferences__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__notifications_preferences__04.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__notifications_preferences__05.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__notifications_preferences__06.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__notifications_preferences__07.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

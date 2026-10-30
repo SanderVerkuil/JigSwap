@@ -1,0 +1,75 @@
+{
+  "variant": "desktop-dark",
+  "route": "/contact",
+  "authed": false,
+  "name": "pub__contact",
+  "loadMs": 3661,
+  "finalUrl": "/contact",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "Contact — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Got a question or something to share?"
+    ],
+    "headings": [
+      "H1 Got a question or something to share?"
+    ],
+    "pageHeight": 1561,
+    "overflowX": -15,
+    "overflowOffenders": [],
+    "interactiveCount": 32,
+    "tapUnder24": 13,
+    "tapUnder24Examples": [
+      "a.block.text-[15.5px].text-mk-violet-600.mt-1.5 \"hello@jigswap.site\" 518x23",
+      "a.block.text-[15.5px].text-mk-violet-600.mt-1.5 \"support@jigswap.site\" 518x23",
+      "a.block.text-[15.5px].text-mk-violet-600.mt-1.5 \"privacy@jigswap.site\" 518x23",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"How it works\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Browse puzzles\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Features\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Docs\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Start trading\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"About\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Contact\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Privacy policy\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Terms of service\" 224x22"
+    ],
+    "tap24to44": 17,
+    "tap24to44Examples": [
+      "a [aria=\"JigSwap\"] \"JigSwap\" 118x37",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"How it works\" 96x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"Browse puzzles\" 115x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"Features\" 65x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"About\" 44x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"Docs\" 37x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"Contact\" 58x35",
+      "button#radix-_R_7aj6l6_.inline-flex.items-center.justify-center.w-10 [aria=\"Switch language\"] \"🇺🇸\" 40x40"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [],
+    "smallText": [],
+    "zoomingInputs": [
+      "input#contact-name.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 14px",
+      "input#contact-email.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 14px",
+      "textarea#contact-message.w-full.resize-y.text-[15px].px-[13px] 15px"
+    ],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 1561,
+    "client": 900,
+    "top": 661,
+    "step": 810
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/desktop-dark/pub__contact__01.jpg",
+    "/tmp/jigswap-review/tiles/desktop-dark/pub__contact__02.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

@@ -1,0 +1,77 @@
+{
+  "variant": "mobile-dark",
+  "route": "/docs",
+  "authed": false,
+  "name": "pub__docs",
+  "loadMs": 3666,
+  "finalUrl": "/docs",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "JigSwap",
+    "lang": "en",
+    "h1": [
+      "JigSwap User Guide"
+    ],
+    "headings": [
+      "H1 JigSwap User Guide",
+      "H3 Getting Started",
+      "H3 Your Library",
+      "H3 Sharing & Exchanges",
+      "H3 Discovering & Community",
+      "H3 Staying Informed",
+      "H3 Help"
+    ],
+    "pageHeight": 2717,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 23,
+    "tapUnder24": 13,
+    "tapUnder24Examples": [
+      "a.sr-only.focus:not-sr-only.focus:absolute.focus:z-50 \"Skip to content\" 1x1",
+      "button.flex.items-center.gap-1.5.text-[14px] [aria=\"Open documentation navigation\"] \"Docs\" 56x21",
+      "button.ml-auto [aria=\"Search documentation\"] 16x16",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"How it works\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Browse puzzles\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Features\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Docs\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Start trading\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"About\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Contact\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Privacy policy\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Terms of service\" 342x22"
+    ],
+    "tap24to44": 4,
+    "tap24to44Examples": [
+      "a [aria=\"JigSwap\"] \"JigSwap\" 118x37",
+      "button#radix-_R_7aj6l6_.inline-flex.items-center.justify-center.w-10 [aria=\"Switch language\"] \"🇺🇸\" 40x40",
+      "button.inline-flex.items-center.justify-center.w-10 [aria=\"Toggle dark mode\"] 40x40",
+      "button.min-[861px]:hidden.inline-flex.items-center.justify-center [aria=\"Open menu\"] 40x40"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "a.sr-only.focus:not-sr-only.focus:absolute.focus:z-50 \"Skip to content\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 2717,
+    "client": 844,
+    "top": 1873,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__docs__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__docs__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__docs__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__docs__04.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

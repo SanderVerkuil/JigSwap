@@ -1,0 +1,117 @@
+{
+  "variant": "desktop-light",
+  "route": "/features",
+  "authed": false,
+  "name": "pub__features",
+  "loadMs": 3642,
+  "finalUrl": "/features",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "Features — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Everything for puzzling together"
+    ],
+    "headings": [
+      "H1 Everything for puzzling together",
+      "H2 Manage your whole collection",
+      "H3 Digital shelf",
+      "H3 Collections",
+      "H3 Completions",
+      "H2 Always know who has your puzzles",
+      "H3 Lending overview",
+      "H3 Status per puzzle",
+      "H3 For as long as you like",
+      "H2 Find your next challenge",
+      "H3 Smart filters",
+      "H3 Fresh finds",
+      "H3 Exchanges, end to end",
+      "H2 Together, and safe",
+      "H3 Circles",
+      "H3 Reviews",
+      "H3 Community",
+      "H2 Ready to begin?"
+    ],
+    "pageHeight": 2904,
+    "overflowX": -15,
+    "overflowOffenders": [],
+    "interactiveCount": 23,
+    "tapUnder24": 10,
+    "tapUnder24Examples": [
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"How it works\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Browse puzzles\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Features\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Docs\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Start trading\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"About\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Contact\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Privacy policy\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Terms of service\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Cookie policy\" 224x22"
+    ],
+    "tap24to44": 11,
+    "tap24to44Examples": [
+      "a [aria=\"JigSwap\"] \"JigSwap\" 118x37",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"How it works\" 96x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"Browse puzzles\" 115x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"Features\" 65x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"About\" 44x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"Docs\" 37x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"Contact\" 58x35",
+      "button#radix-_R_7aj6l6_.inline-flex.items-center.justify-center.w-10 [aria=\"Switch language\"] \"🇺🇸\" 40x40"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "count": 25,
+      "nodes": [
+        {
+          "target": ".py-\\[clamp\\(56px\\,8vw\\,104px\\)\\]:nth-child(2) > .w-full.mx-auto.max-w-\\[1200px\\] > .grid-cols-3.max-\\[860px\\]\\:grid-cols-1.gap-9 > div:nth-child(1) > .pt-\\[18px\\].border-t-2.border-mk-violet-200 > p",
+          "html": "<p class=\"text-[15px] leading-relaxed text-mk-text-muted\">Every puzzle with brand, piece count, condition and notes — one tidy, tactile overview.</p>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #7c7689, background color: #ececfb, font size: 11.3pt (15px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": ".py-\\[clamp\\(56px\\,8vw\\,104px\\)\\]:nth-child(2) > .w-full.mx-auto.max-w-\\[1200px\\] > .grid-cols-3.max-\\[860px\\]\\:grid-cols-1.gap-9 > div:nth-child(2) > .pt-\\[18px\\].border-t-2.border-mk-violet-200 > p",
+          "html": "<p class=\"text-[15px] leading-relaxed text-mk-text-muted\">Group by brand, theme or mood — private or public, with your own name, colour and icon.</p>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #7c7689, background color: #ececfb, font size: 11.3pt (15px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": ".py-\\[clamp\\(56px\\,8vw\\,104px\\)\\]:nth-child(2) > .w-full.mx-auto.max-w-\\[1200px\\] > .grid-cols-3.max-\\[860px\\]\\:grid-cols-1.gap-9 > div:nth-child(3) > .pt-\\[18px\\].border-t-2.border-mk-violet-200 > p",
+          "html": "<p class=\"text-[15px] leading-relaxed text-mk-text-muted\">Track dates, solve times and ratings — and set goals for your puzzle year.</p>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #7c7689, background color: #ececfb, font size: 11.3pt (15px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": ".bg-mk-muted.py-\\[clamp\\(56px\\,8vw\\,104px\\)\\]:nth-child(3) > .w-full.mx-auto.max-w-\\[1200px\\] > .grid-cols-3.max-\\[860px\\]\\:grid-cols-1.gap-9 > div:nth-child(1) > .pt-\\[18px\\].border-t-2.border-mk-violet-200 > p",
+          "html": "<p class=\"text-[15px] leading-relaxed text-mk-text-muted\">Everything you've lent out in one place — who has it and since when.</p>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.58 (foreground color: #7c7689, background color: #e7e7fb, font size: 11.3pt (15px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 2904,
+    "client": 900,
+    "top": 2004,
+    "step": 810
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/desktop-light/pub__features__01.jpg",
+    "/tmp/jigswap-review/tiles/desktop-light/pub__features__02.jpg",
+    "/tmp/jigswap-review/tiles/desktop-light/pub__features__03.jpg",
+    "/tmp/jigswap-review/tiles/desktop-light/pub__features__04.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

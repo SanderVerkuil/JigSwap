@@ -1,0 +1,71 @@
+{
+  "variant": "mobile-light",
+  "route": "/messages/04e0cd32-b61f-48f9-98e1-c25d9de34c28",
+  "authed": true,
+  "name": "app__messages_04e0cd32-b61f-48f9-98e1-c25d9de34c28",
+  "loadMs": 4985,
+  "finalUrl": "/messages/04e0cd32-b61f-48f9-98e1-c25d9de34c28",
+  "metrics": {
+    "regionScrollHeight": 844,
+    "regionOverflowX": 0,
+    "title": "Messages — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Messages",
+      "Sander Verkuil"
+    ],
+    "headings": [
+      "H1 Messages",
+      "H1 Sander Verkuil",
+      "H2 Add JigSwap to your home screen",
+      "H2 Search"
+    ],
+    "pageHeight": 1106,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 9,
+    "tapUnder24": 0,
+    "tapUnder24Examples": [],
+    "tap24to44": 0,
+    "tap24to44Examples": [],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.sr-only \"Sander Verkuil:\""
+    ],
+    "smallText": [
+      "time.text-muted-foreground.px-1.pt-0.5.text-[11px] \"8:50 AM\" 11px"
+    ],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "region",
+      "impact": "moderate",
+      "help": "All page content should be contained by landmarks",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".sm\\:text-left",
+          "html": "<div data-slot=\"dialog-header\" class=\"flex flex-col gap-2 text-center sm:text-left sr-only\">",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 1106,
+    "client": 844,
+    "top": 262,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-light/app__messages_04e0cd32-b61f-48f9-98e1-c25d9de34c28__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__messages_04e0cd32-b61f-48f9-98e1-c25d9de34c28__02.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

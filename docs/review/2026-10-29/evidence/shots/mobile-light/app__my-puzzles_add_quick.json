@@ -1,0 +1,76 @@
+{
+  "variant": "mobile-light",
+  "route": "/my-puzzles/add/quick",
+  "authed": true,
+  "name": "app__my-puzzles_add_quick",
+  "loadMs": 4520,
+  "finalUrl": "/my-puzzles/add/quick",
+  "metrics": {
+    "regionScrollHeight": 468,
+    "regionOverflowX": 0,
+    "title": "Add several puzzles — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Add several puzzles",
+      "Add several puzzles"
+    ],
+    "headings": [
+      "H1 Add several puzzles",
+      "H1 Add several puzzles",
+      "H2 Add JigSwap to your home screen",
+      "H2 Search"
+    ],
+    "pageHeight": 844,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 14,
+    "tapUnder24": 0,
+    "tapUnder24Examples": [],
+    "tap24to44": 1,
+    "tap24to44Examples": [
+      "input#_R_3amksj6l6_.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 358x36"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\"",
+      "label.sr-only \"Search the catalogue\"",
+      "p.sr-only \"0 picked\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "region",
+      "impact": "moderate",
+      "help": "All page content should be contained by landmarks",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".text-center",
+          "html": "<div data-slot=\"dialog-header\" class=\"flex flex-col gap-2 text-center sm:text-left sr-only\">",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 844,
+    "client": 844,
+    "top": 0,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-light/app__my-puzzles_add_quick__01.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [
+    "[CONVEX M(presence:heartbeat)] [Request ID: d6af44c571ef7f9b] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":1359}\n    at enforceRateLimit (../../convex/lib/rateLimits.ts:45:32)\n    at async handler (../../convex/presence.ts:61:4)\n",
+    "pageerror: [CONVEX M(presence:heartbeat)] [Request ID: d6af44c571ef7f9b] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":1359}"
+  ],
+  "httpErrors": []
+}

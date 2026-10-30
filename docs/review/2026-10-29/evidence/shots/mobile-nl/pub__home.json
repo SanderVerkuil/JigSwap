@@ -1,0 +1,89 @@
+{
+  "variant": "mobile-nl",
+  "route": "/",
+  "authed": false,
+  "name": "pub__home",
+  "loadMs": 5636,
+  "finalUrl": "/",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "JigSwap — Deel legpuzzels met andere liefhebbers",
+    "lang": "nl",
+    "h1": [
+      "Deel legpuzzels met andere liefhebbers"
+    ],
+    "headings": [
+      "H1 Deel legpuzzels met andere liefhebbers",
+      "H2 In drie stappen aan de slag",
+      "H3 Vul je plank",
+      "H3 Ontdek & vraag aan",
+      "H3 Leen uit & volg",
+      "H3 Een plank die aanvoelt als thuis",
+      "H3 Leen uit — en weet altijd bij wie je puzzels zijn",
+      "H3 Vind je volgende uitdaging",
+      "H2 Eén puzzel, vele handen",
+      "H2 Klaar om je eerste puzzel te delen?"
+    ],
+    "pageHeight": 6293,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 18,
+    "tapUnder24": 10,
+    "tapUnder24Examples": [
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Hoe het werkt\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Puzzels bekijken\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Functies\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Documentatie\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Begin met ruilen\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Over ons\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Contact\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Privacybeleid\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Algemene voorwaarden\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Cookiebeleid\" 342x22"
+    ],
+    "tap24to44": 5,
+    "tap24to44Examples": [
+      "a.active [aria=\"JigSwap\"] \"JigSwap\" 118x37",
+      "button#radix-_R_7aj6l6_.inline-flex.items-center.justify-center.w-10 [aria=\"Taal wijzigen\"] \"🇳🇱\" 40x40",
+      "button.inline-flex.items-center.justify-center.w-10 [aria=\"Toggle dark mode\"] 40x40",
+      "button.min-[861px]:hidden.inline-flex.items-center.justify-center [aria=\"Menu openen\"] 40x40",
+      "a.inline-flex.items-center.justify-center.gap-2 \"Lees hoe het werkt\" 184x36"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [],
+    "smallText": [
+      "div \"NATUUR\" 9.5px",
+      "b \"1000\" 11px",
+      "span \"PCS\" 5.5px",
+      "div \"Boslicht\" 11px",
+      "div \"KUNST\" 9.5px",
+      "b \"2000\" 11px",
+      "span \"PCS\" 5.5px",
+      "div \"Sterrennacht\" 11px"
+    ],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 6293,
+    "client": 844,
+    "top": 5320,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__home__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__home__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__home__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__home__04.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__home__05.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__home__06.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__home__07.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__home__08.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

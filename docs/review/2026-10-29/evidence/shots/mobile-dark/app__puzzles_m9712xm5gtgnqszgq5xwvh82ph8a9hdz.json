@@ -1,0 +1,91 @@
+{
+  "variant": "mobile-dark",
+  "route": "/puzzles/m9712xm5gtgnqszgq5xwvh82ph8a9hdz",
+  "authed": true,
+  "name": "app__puzzles_m9712xm5gtgnqszgq5xwvh82ph8a9hdz",
+  "loadMs": 4618,
+  "finalUrl": "/puzzles/m9712xm5gtgnqszgq5xwvh82ph8a9hdz",
+  "metrics": {
+    "regionScrollHeight": 1556,
+    "regionOverflowX": 0,
+    "title": "Puzzle details — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Café",
+      "Café",
+      "Café"
+    ],
+    "headings": [
+      "H1 Café",
+      "H1 Café",
+      "H1 Café",
+      "H2 Community Rating",
+      "H2 Available to Swap",
+      "H2 Reviews",
+      "H2 Add JigSwap to your home screen",
+      "H2 Search"
+    ],
+    "pageHeight": 1932,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 25,
+    "tapUnder24": 6,
+    "tapUnder24Examples": [
+      "a.text-jigsaw-primary.mt-3.inline-block.text-sm \"See all 1 available copies →\" 196x20",
+      "button.rounded-sm.p-0.5.transition-transform.hover:scale-110 [aria=\"1 star\"] 20x20",
+      "button.rounded-sm.p-0.5.transition-transform.hover:scale-110 [aria=\"2 stars\"] 20x20",
+      "button.rounded-sm.p-0.5.transition-transform.hover:scale-110 [aria=\"3 stars\"] 20x20",
+      "button.rounded-sm.p-0.5.transition-transform.hover:scale-110 [aria=\"4 stars\"] 20x20",
+      "button.rounded-sm.p-0.5.transition-transform.hover:scale-110 [aria=\"5 stars\"] 20x20"
+    ],
+    "tap24to44": 7,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.justify-center.gap-2 \"Add to Library\" 151x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Find a Copy to Swap\" 200x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Write a Review\" 156x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Add to Favorites\" 171x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Suggest an edit\" 165x36",
+      "input.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 244x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Post\" 64x36"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".inline-block",
+          "html": "<a class=\"text-jigsaw-primary mt-3 inline-block text-sm font-semibold hover:underline\" href=\"/browse?puzzle=m9712xm5gtgnqszgq5xwvh82ph8a9hdz\">See all 1 availabl",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.42 (foreground color: #705aea, background color: #1d1c34, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 1932,
+    "client": 844,
+    "top": 1088,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-dark/app__puzzles_m9712xm5gtgnqszgq5xwvh82ph8a9hdz__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__puzzles_m9712xm5gtgnqszgq5xwvh82ph8a9hdz__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__puzzles_m9712xm5gtgnqszgq5xwvh82ph8a9hdz__03.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

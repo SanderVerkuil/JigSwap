@@ -1,0 +1,63 @@
+{
+  "variant": "mobile-dark",
+  "route": "/circles",
+  "authed": true,
+  "name": "app__circles",
+  "loadMs": 4493,
+  "finalUrl": "/circles",
+  "metrics": {
+    "regionScrollHeight": 468,
+    "regionOverflowX": 0,
+    "title": "Circles — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Circles",
+      "Circles"
+    ],
+    "headings": [
+      "H1 Circles",
+      "H1 Circles",
+      "H2 Add JigSwap to your home screen",
+      "H2 Search"
+    ],
+    "pageHeight": 844,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 18,
+    "tapUnder24": 0,
+    "tapUnder24Examples": [],
+    "tap24to44": 4,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.justify-center.gap-2 [aria=\"Show me how\"] 32x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Create Circle\" 139x32",
+      "button.focus-visible:ring-ring.relative.flex.shrink-0 [aria=\"Sander Verkuil\"] 32x32",
+      "button.focus-visible:ring-ring.relative.flex.shrink-0 [aria=\"Henk Pieterszoon\"] 32x32"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 844,
+    "client": 844,
+    "top": 0,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-dark/app__circles__01.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [
+    "[CONVEX M(presence:heartbeat)] [Request ID: f7c28570946cc47e] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":13725}\n    at enforceRateLimit (../../convex/lib/rateLimits.ts:45:32)\n    at async handler (../../convex/presence.ts:61:4)\n",
+    "pageerror: [CONVEX M(presence:heartbeat)] [Request ID: f7c28570946cc47e] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":13725}"
+  ],
+  "httpErrors": []
+}

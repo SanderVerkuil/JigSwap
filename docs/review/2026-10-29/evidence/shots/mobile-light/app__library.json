@@ -1,0 +1,70 @@
+{
+  "variant": "mobile-light",
+  "route": "/library",
+  "authed": true,
+  "name": "app__library",
+  "loadMs": 4598,
+  "finalUrl": "/library",
+  "metrics": {
+    "regionScrollHeight": 1166,
+    "regionOverflowX": 0,
+    "title": "My Library — JigSwap",
+    "lang": "en",
+    "h1": [
+      "My Library",
+      "My Library"
+    ],
+    "headings": [
+      "H1 My Library",
+      "H1 My Library",
+      "H2 Add JigSwap to your home screen",
+      "H2 Search"
+    ],
+    "pageHeight": 1542,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 16,
+    "tapUnder24": 0,
+    "tapUnder24Examples": [],
+    "tap24to44": 0,
+    "tap24to44Examples": [],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "region",
+      "impact": "moderate",
+      "help": "All page content should be contained by landmarks",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".text-center",
+          "html": "<div data-slot=\"dialog-header\" class=\"flex flex-col gap-2 text-center sm:text-left sr-only\">",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 1542,
+    "client": 844,
+    "top": 698,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-light/app__library__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__library__02.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

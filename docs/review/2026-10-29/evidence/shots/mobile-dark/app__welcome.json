@@ -1,0 +1,67 @@
+{
+  "variant": "mobile-dark",
+  "route": "/welcome",
+  "authed": true,
+  "name": "app__welcome",
+  "loadMs": 4556,
+  "finalUrl": "/welcome",
+  "metrics": {
+    "regionScrollHeight": 730,
+    "regionOverflowX": 0,
+    "title": "Quick setup — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Quick setup",
+      "Quick setup"
+    ],
+    "headings": [
+      "H1 Quick setup",
+      "H1 Quick setup",
+      "H2 Log puzzles you finished",
+      "H2 Search"
+    ],
+    "pageHeight": 844,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 15,
+    "tapUnder24": 0,
+    "tapUnder24Examples": [],
+    "tap24to44": 4,
+    "tap24to44Examples": [
+      "button#past-solve-684f3896-f8fb-484f-8e47-5e148ab155be.peer.border-input.dark:bg-input/30.data-[state=checked]:bg-primary \"on\" 24x24",
+      "button#past-solve-dae2acb6-1cea-47de-a84a-9b63392ea941.peer.border-input.dark:bg-input/30.data-[state=checked]:bg-primary \"on\" 24x24",
+      "button#past-solve-7fb48d12-e587-4523-b53c-64f52c97f9ba.peer.border-input.dark:bg-input/30.data-[state=checked]:bg-primary \"on\" 24x24",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Log 0 puzzles\" 129x36"
+    ],
+    "unnamedControls": [
+      "button#past-solve-684f3896-f8fb-484f-8e47-5e148ab155be.peer.border-input.dark:bg-input/30.data-[state=checked]:bg-primary \"on\"",
+      "button#past-solve-dae2acb6-1cea-47de-a84a-9b63392ea941.peer.border-input.dark:bg-input/30.data-[state=checked]:bg-primary \"on\"",
+      "button#past-solve-7fb48d12-e587-4523-b53c-64f52c97f9ba.peer.border-input.dark:bg-input/30.data-[state=checked]:bg-primary \"on\""
+    ],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\"",
+      "p#_r_3_.text-muted-foreground.font-mono.text-[11px].tracking-[0.09em] \"STEP 2 OF 4 · LOG PUZZLES YOU FINISHED\""
+    ],
+    "smallText": [
+      "p#_r_3_.text-muted-foreground.font-mono.text-[11px].tracking-[0.09em] \"STEP 2 OF 4 · LOG PUZZLES YOU FINISHED\" 11px"
+    ],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 844,
+    "client": 844,
+    "top": 0,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-dark/app__welcome__01.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

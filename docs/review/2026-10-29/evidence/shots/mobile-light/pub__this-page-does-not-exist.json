@@ -1,0 +1,105 @@
+{
+  "variant": "mobile-light",
+  "route": "/this-page-does-not-exist",
+  "authed": false,
+  "name": "pub__this-page-does-not-exist",
+  "loadMs": 3847,
+  "finalUrl": "/this-page-does-not-exist",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "JigSwap",
+    "lang": "en",
+    "h1": [],
+    "headings": [],
+    "pageHeight": 844,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 6,
+    "tapUnder24": 0,
+    "tapUnder24Examples": [],
+    "tap24to44": 6,
+    "tap24to44Examples": [
+      "a [aria=\"JigSwap\"] \"JigSwap\" 118x37",
+      "button#radix-_R_1qj6l6_.inline-flex.items-center.justify-center.w-10 [aria=\"Switch language\"] \"🇺🇸\" 40x40",
+      "button.inline-flex.items-center.justify-center.w-10 [aria=\"Toggle dark mode\"] 40x40",
+      "button.min-[861px]:hidden.inline-flex.items-center.justify-center [aria=\"Open menu\"] 40x40",
+      "a.inline-flex.items-center.justify-center.gap-2 \"Back to Home\" 308x36",
+      "a.inline-flex.items-center.justify-center.gap-2 \"Browse Puzzles\" 308x36"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "landmark-one-main",
+      "impact": "moderate",
+      "help": "Document should have one main landmark",
+      "count": 1,
+      "nodes": [
+        {
+          "target": "html",
+          "html": "<html lang=\"en\" class=\"light\" style=\"color-scheme: light;\">",
+          "summary": "Fix all of the following:\n  Document does not have a main landmark"
+        }
+      ]
+    },
+    {
+      "id": "page-has-heading-one",
+      "impact": "moderate",
+      "help": "Page should contain a level-one heading",
+      "count": 1,
+      "nodes": [
+        {
+          "target": "html",
+          "html": "<html lang=\"en\" class=\"light\" style=\"color-scheme: light;\">",
+          "summary": "Fix all of the following:\n  Page must have a level-one heading"
+        }
+      ]
+    },
+    {
+      "id": "region",
+      "impact": "moderate",
+      "help": "All page content should be contained by landmarks",
+      "count": 3,
+      "nodes": [
+        {
+          "target": ".text-3xl",
+          "html": "<div data-slot=\"card-title\" class=\"text-3xl font-bold\">Page Not Found</div>",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": ".text-lg",
+          "html": "<div data-slot=\"card-description\" class=\"text-muted-foreground text-lg\">Oops! The page you're looking for doesn't exist.</div>",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": "div[data-slot=\"card-content\"]",
+          "html": "<div data-slot=\"card-content\" class=\"px-6 space-y-4\">",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 844,
+    "client": 844,
+    "top": 0,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-light/pub__this-page-does-not-exist__01.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 ()"
+  ],
+  "httpErrors": [
+    "404 http://localhost:3001/this-page-does-not-exist"
+  ]
+}

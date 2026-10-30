@@ -1,0 +1,126 @@
+{
+  "variant": "tablet-light",
+  "route": "/privacy",
+  "authed": false,
+  "name": "pub__privacy",
+  "loadMs": 3721,
+  "finalUrl": "/privacy",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "Privacy Policy — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Privacy Policy"
+    ],
+    "headings": [
+      "H1 Privacy Policy",
+      "H2 1. Information We Collect",
+      "H3 Information you provide",
+      "H3 Collected automatically",
+      "H2 2. How We Use Your Information",
+      "H3 Our lawful basis, in plain terms",
+      "H2 3. Where Your Data Lives",
+      "H3 Convex",
+      "H3 Clerk",
+      "H3 Vercel",
+      "H3 Sightengine",
+      "H3 MapTiler",
+      "H3 Axiom",
+      "H2 4. Photos You Upload",
+      "H2 5. Messages, Photos and Locations",
+      "H2 6. Group Chats in Circles",
+      "H2 7. Online Status and Typing",
+      "H3 Online status",
+      "H3 Typing indicators",
+      "H2 8. Blocking and Reporting",
+      "H3 Blocking",
+      "H3 Reporting",
+      "H2 9. How Long We Keep Data",
+      "H3 When you delete your account",
+      "H2 10. Analytics and Error Reporting"
+    ],
+    "pageHeight": 11297,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 16,
+    "tapUnder24": 12,
+    "tapUnder24Examples": [
+      "a.text-mk-violet-600.font-medium.hover:underline \"privacy@jigswap.site\" 153x16",
+      "a.text-mk-violet-600.font-medium.hover:underline \"contact form\" 93x16",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"How it works\" 370x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Browse puzzles\" 370x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Features\" 370x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Docs\" 370x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Start trading\" 370x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"About\" 370x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Contact\" 370x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Privacy policy\" 370x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Terms of service\" 370x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Cookie policy\" 370x22"
+    ],
+    "tap24to44": 4,
+    "tap24to44Examples": [
+      "a [aria=\"JigSwap\"] \"JigSwap\" 118x37",
+      "button#radix-_R_7aj6l6_.inline-flex.items-center.justify-center.w-10 [aria=\"Switch language\"] \"🇺🇸\" 40x40",
+      "button.inline-flex.items-center.justify-center.w-10 [aria=\"Toggle dark mode\"] 40x40",
+      "button.min-[861px]:hidden.inline-flex.items-center.justify-center [aria=\"Open menu\"] 40x40"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "count": 141,
+      "nodes": [
+        {
+          "target": ".mb-6",
+          "html": "<div class=\"flex items-center gap-2.5 text-[13.5px] text-mk-text-muted mb-6\">",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #7c7689, background color: #ececfb, font size: 10.1pt (13.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": "#p-collect > .leading-\\[1\\.7\\]",
+          "html": "<p class=\"text-[15.5px] leading-[1.7] text-mk-text-muted mb-3.5\">We collect information you give us directly, plus a limited amount of information collected aut",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #7c7689, background color: #ececfb, font size: 11.6pt (15.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": "#p-collect > ul:nth-child(4) > li:nth-child(1)",
+          "html": "<li class=\"text-[15.5px] leading-relaxed text-mk-text-muted\">Account details via Clerk, our sign-in provider: name, email address, username, and avatar</li>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #7c7689, background color: #ececfb, font size: 11.6pt (15.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": "#p-collect > ul:nth-child(4) > li:nth-child(2)",
+          "html": "<li class=\"text-[15.5px] leading-relaxed text-mk-text-muted\">Your profile: display name, bio, and other details you choose to share</li>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #7c7689, background color: #ececfb, font size: 11.6pt (15.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 11297,
+    "client": 1180,
+    "top": 7434,
+    "step": 1062
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/tablet-light/pub__privacy__01.jpg",
+    "/tmp/jigswap-review/tiles/tablet-light/pub__privacy__02.jpg",
+    "/tmp/jigswap-review/tiles/tablet-light/pub__privacy__03.jpg",
+    "/tmp/jigswap-review/tiles/tablet-light/pub__privacy__04.jpg",
+    "/tmp/jigswap-review/tiles/tablet-light/pub__privacy__05.jpg",
+    "/tmp/jigswap-review/tiles/tablet-light/pub__privacy__06.jpg",
+    "/tmp/jigswap-review/tiles/tablet-light/pub__privacy__07.jpg",
+    "/tmp/jigswap-review/tiles/tablet-light/pub__privacy__08.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

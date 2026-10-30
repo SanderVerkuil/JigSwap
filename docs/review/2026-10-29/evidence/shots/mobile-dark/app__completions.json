@@ -1,0 +1,62 @@
+{
+  "variant": "mobile-dark",
+  "route": "/completions",
+  "authed": true,
+  "name": "app__completions",
+  "loadMs": 4561,
+  "finalUrl": "/completions",
+  "metrics": {
+    "regionScrollHeight": 502,
+    "regionOverflowX": 0,
+    "title": "Completions — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Completions",
+      "Completions"
+    ],
+    "headings": [
+      "H1 Completions",
+      "H1 Completions",
+      "H2 Add JigSwap to your home screen",
+      "H2 Search"
+    ],
+    "pageHeight": 878,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 13,
+    "tapUnder24": 0,
+    "tapUnder24Examples": [],
+    "tap24to44": 2,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.justify-center.gap-2 [aria=\"Show me how\"] 32x32",
+      "a.inline-flex.items-center.justify-center.whitespace-nowrap \"Log Completion\" 158x32"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 878,
+    "client": 844,
+    "top": 34,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-dark/app__completions__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__completions__02.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [
+    "[CONVEX M(presence:heartbeat)] [Request ID: 657af676b2e7496b] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":10498}\n    at enforceRateLimit (../../convex/lib/rateLimits.ts:45:32)\n    at async handler (../../convex/presence.ts:61:4)\n",
+    "pageerror: [CONVEX M(presence:heartbeat)] [Request ID: 657af676b2e7496b] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":10498}"
+  ],
+  "httpErrors": []
+}

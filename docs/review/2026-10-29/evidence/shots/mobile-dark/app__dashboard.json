@@ -1,0 +1,85 @@
+{
+  "variant": "mobile-dark",
+  "route": "/dashboard",
+  "authed": true,
+  "name": "app__dashboard",
+  "loadMs": 5110,
+  "finalUrl": "/dashboard",
+  "metrics": {
+    "regionScrollHeight": 2625,
+    "regionOverflowX": 85,
+    "title": "Dashboard — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Welcome back, Henk! 🧩"
+    ],
+    "headings": [
+      "H1 Welcome back, Henk! 🧩",
+      "H2 Quick setup",
+      "H2 Your Shelf",
+      "H2 Solving now",
+      "H2 In Motion",
+      "H2 Goals",
+      "H2 Latest",
+      "H2 Fresh on the Shelf",
+      "H3 De Kattenshow",
+      "H3 Oostenrijk, Tirol, sellrainer berge",
+      "H3 Lam Gelegd",
+      "H2 Add JigSwap to your home screen",
+      "H2 Search"
+    ],
+    "pageHeight": 3001,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 45,
+    "tapUnder24": 2,
+    "tapUnder24Examples": [
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"De Kattenshow\" 113x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Lam Gelegd\" 88x20"
+    ],
+    "tap24to44": 10,
+    "tap24to44Examples": [
+      "a.bg-background.hover:bg-accent.inline-flex.items-center \"Add a Puzzle\" 146x34",
+      "a.bg-background.hover:bg-accent.inline-flex.items-center \"Browse Community\" 196x34",
+      "a.bg-background.hover:bg-accent.inline-flex.items-center \"Log a Completion\" 184x34",
+      "a.inline-flex.items-center.justify-center.whitespace-nowrap \"View Collections\" 147x32",
+      "a.underline.underline-offset-2 \"Start one from your puzzles\" 324x40",
+      "a.inline-flex.items-center.justify-center.whitespace-nowrap \"All\" 42x32",
+      "a.inline-flex.items-center.justify-center.whitespace-nowrap \"All\" 42x32",
+      "a.inline-flex.items-center.justify-center.whitespace-nowrap \"Set a Goal\" 103x32"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\"",
+      "span.sr-only \", done\"",
+      "span.sr-only \", to do\"",
+      "span.sr-only \", done\"",
+      "span.sr-only \", done\"",
+      "span.sr-only \", to do\"",
+      "span.text-muted-foreground.truncate.text-right.text-sm \"3 on the shelf · 3 up for trade\"",
+      "span.text-muted-foreground.truncate.text-right.text-sm \"Recently added\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 3001,
+    "client": 844,
+    "top": 2157,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-dark/app__dashboard__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__dashboard__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__dashboard__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__dashboard__04.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

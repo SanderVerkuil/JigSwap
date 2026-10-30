@@ -1,0 +1,91 @@
+{
+  "variant": "mobile-dark",
+  "route": "/my-puzzles/add/new?puzzleId=m9712xm5gtgnqszgq5xwvh82ph8a9hdz",
+  "authed": true,
+  "name": "app__my-puzzles_add_new_puzzleId_m9712xm5gtgnqszgq5xwvh82ph8a9hdz",
+  "loadMs": 4525,
+  "finalUrl": "/my-puzzles/add/new?puzzleId=m9712xm5gtgnqszgq5xwvh82ph8a9hdz",
+  "metrics": {
+    "regionScrollHeight": 1382,
+    "regionOverflowX": 0,
+    "title": "Create puzzle — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Create a Puzzle",
+      "Create a Puzzle"
+    ],
+    "headings": [
+      "H1 Create a Puzzle",
+      "H1 Create a Puzzle",
+      "H2 Add JigSwap to your home screen",
+      "H2 Search"
+    ],
+    "pageHeight": 1758,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 31,
+    "tapUnder24": 0,
+    "tapUnder24Examples": [],
+    "tap24to44": 19,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.gap-2.rounded-full \"Excellent\" 96x38",
+      "button.inline-flex.items-center.gap-2.rounded-full \"Good\" 72x38",
+      "button.inline-flex.items-center.gap-2.rounded-full \"Fair\" 58x38",
+      "button.inline-flex.items-center.gap-2.rounded-full \"Poor\" 65x38",
+      "button.inline-flex.items-center.gap-1.5.rounded-full \"For Trade\" 121x38",
+      "button.inline-flex.items-center.gap-1.5.rounded-full \"For Lend\" 112x38",
+      "button.inline-flex.items-center.gap-1.5.rounded-full \"For Sale\" 109x38",
+      "button.size-9.rounded-md.cursor-pointer.shadow-[0_0_0_1px_var(--border)] [aria=\"Cover colour 1\"] 36x36"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [
+      "div.font-mono.text-[10px].uppercase.tracking-[0.09em] \"ADDING A COPY OF\" 10px",
+      "div.font-mono.text-[10px].uppercase.tracking-[0.09em] \"LIVE PREVIEW\" 10px"
+    ],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "count": 2,
+      "nodes": [
+        {
+          "target": ".bg-jigsaw-secondary-tint",
+          "html": "<button type=\"button\" aria-pressed=\"true\" class=\"inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold cursor-pointer border transitio",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.2 (foreground color: #19c316, background color: #2e4746, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": ".left-3",
+          "html": "<span class=\"absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-jigsaw-secondary px-2.5 py-1 text-xs font-semibold text-white\"><span class=\"",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.37 (foreground color: #ffffff, background color: #19c316, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 1758,
+    "client": 844,
+    "top": 914,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-dark/app__my-puzzles_add_new_puzzleId_m9712xm5gtgnqszgq5xwvh82ph8a9hdz__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__my-puzzles_add_new_puzzleId_m9712xm5gtgnqszgq5xwvh82ph8a9hdz__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__my-puzzles_add_new_puzzleId_m9712xm5gtgnqszgq5xwvh82ph8a9hdz__03.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [
+    "[CONVEX M(presence:heartbeat)] [Request ID: 6a843501919aa0d3] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":14042}\n    at enforceRateLimit (../../convex/lib/rateLimits.ts:45:32)\n    at async handler (../../convex/presence.ts:61:4)\n",
+    "pageerror: [CONVEX M(presence:heartbeat)] [Request ID: 6a843501919aa0d3] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":14042}"
+  ],
+  "httpErrors": []
+}

@@ -1,0 +1,73 @@
+{
+  "variant": "mobile-nl",
+  "route": "/copies/m578n0zx5r5mrsgfb9mjz6czyx8gev0m",
+  "authed": true,
+  "name": "app__copies_m578n0zx5r5mrsgfb9mjz6czyx8gev0m",
+  "loadMs": 4607,
+  "finalUrl": "/copies/m578n0zx5r5mrsgfb9mjz6czyx8gev0m",
+  "metrics": {
+    "regionScrollHeight": 1791,
+    "regionOverflowX": 0,
+    "title": "Exemplaar in bezit — JigSwap",
+    "lang": "nl",
+    "h1": [
+      "Rondje Texel",
+      "Rondje Texel",
+      "Rondje Texel"
+    ],
+    "headings": [
+      "H1 Rondje Texel",
+      "H1 Rondje Texel",
+      "H1 Rondje Texel",
+      "H2 Foto's",
+      "H2 Voltooiingsgeschiedenis",
+      "H2 Uitleengeschiedenis",
+      "H2 Ruil- & handelsgeschiedenis",
+      "H2 Communitybeoordeling",
+      "H2 Beoordelingen van dit exemplaar",
+      "H2 Reacties",
+      "H2 Zet JigSwap op je beginscherm",
+      "H2 Zoeken"
+    ],
+    "pageHeight": 2167,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 17,
+    "tapUnder24": 2,
+    "tapUnder24Examples": [
+      "a.text-jigsaw-primary.font-semibold.hover:underline \"Bekijk puzzelpagina\" 161x23",
+      "a.truncate.hover:underline \"Sander Verkuil\" 106x20"
+    ],
+    "tap24to44": 4,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.justify-center.gap-2 \"Ruil aanvragen\" 158x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Bericht\" 101x36",
+      "input.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 212x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Plaatsen\" 96x36"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 2167,
+    "client": 844,
+    "top": 1323,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-nl/app__copies_m578n0zx5r5mrsgfb9mjz6czyx8gev0m__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__copies_m578n0zx5r5mrsgfb9mjz6czyx8gev0m__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__copies_m578n0zx5r5mrsgfb9mjz6czyx8gev0m__03.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

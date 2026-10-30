@@ -1,0 +1,500 @@
+[
+  {
+    "variant": "desktop-light",
+    "route": "/dashboard",
+    "authed": true,
+    "name": "app__dashboard",
+    "loadMs": 5446,
+    "finalUrl": "/dashboard",
+    "metrics": {
+      "regionScrollHeight": 2118,
+      "regionOverflowX": 0,
+      "title": "Dashboard — JigSwap",
+      "lang": "en",
+      "h1": [
+        "Welcome back, Henk! 🧩"
+      ],
+      "headings": [
+        "H1 Welcome back, Henk! 🧩",
+        "H2 Quick setup",
+        "H2 Your Shelf",
+        "H2 Solving now",
+        "H2 In Motion",
+        "H2 Goals",
+        "H2 Latest",
+        "H2 Fresh on the Shelf",
+        "H3 De Kattenshow",
+        "H3 Oostenrijk, Tirol, sellrainer berge",
+        "H3 Lam Gelegd",
+        "H2 Search"
+      ],
+      "pageHeight": 900,
+      "overflowX": 0,
+      "overflowOffenders": [],
+      "interactiveCount": 59,
+      "tapUnder24": 3,
+      "tapUnder24Examples": [
+        "a.underline.underline-offset-2 \"Start one from your puzzles\" 194x20",
+        "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"De Kattenshow\" 113x20",
+        "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Lam Gelegd\" 88x20"
+      ],
+      "tap24to44": 35,
+      "tap24to44Examples": [
+        "button.inline-flex.items-center.justify-center.gap-2 \"Toggle Sidebar\" 32x32",
+        "a.flex.shrink-0.items-center.transition-opacity 108x28",
+        "button.flex.h-9.w-full.max-w-[520px] \"Search puzzles, people, circles… ⌘K\" 520x36",
+        "button.inline-flex.items-center.justify-center.gap-2 [aria=\"Notifications\"] \"2\" 36x36",
+        "button#radix-_R_38cj6l6_.inline-flex.items-center.justify-center.gap-2 \"Toggle theme\" 36x36",
+        "button#radix-_R_58cj6l6_.inline-flex.items-center.justify-center.gap-2 \"Switch language\" 36x36",
+        "a.inline-flex.items-center.justify-center.gap-2 \"Add Puzzle\" 126x36",
+        "a.peer/menu-button.flex.w-full.items-center \"Dashboard\" 224x32"
+      ],
+      "unnamedControls": [],
+      "truncatedText": [
+        "span.sr-only \"Toggle Sidebar\"",
+        "span.sr-only \"Toggle theme\"",
+        "span.sr-only \"Switch language\"",
+        "span.cl-internal-1y7k3pi",
+        "span.sr-only \"Online\"",
+        "span.sr-only \", done\"",
+        "span.sr-only \", to do\"",
+        "span.sr-only \", done\"",
+        "span.sr-only \", done\"",
+        "span.sr-only \", to do\""
+      ],
+      "smallText": [
+        "kbd.pointer-events-none.rounded.border.bg-muted \"⌘K\" 11px",
+        "span.inline-flex.items-center.border.py-0.5 [aria=\"2 unread notifications\"] \"2\" 10px",
+        "a.text-sidebar-foreground/70.ring-sidebar-ring.flex.h-8 \"MY LIBRARY\" 10px",
+        "a.text-sidebar-foreground/70.ring-sidebar-ring.flex.h-8 \"COMMUNITY\" 10px"
+      ],
+      "zoomingInputs": [],
+      "imgsMissingAlt": 0,
+      "dialogsOpen": []
+    },
+    "axe": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "count": 2,
+        "nodes": [
+          {
+            "target": "kbd",
+            "html": "<kbd class=\"pointer-events-none rounded border bg-muted px-1.5 py-0.5 font-mono text-[11px] leading-none text-muted-foreground\">⌘K</kbd>",
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #6f7087, background color: #f2f2fb, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": ".transition-\\[filter\\]",
+            "html": "<span aria-hidden=\"true\" class=\"truncate text-xs text-muted-foreground transition-[filter] blur-[4px] select-none\">s.verkuil+dev@pm.me</span>",
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.21 (foreground color: #6f7087, background color: #eeeeff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "label-content-name-mismatch",
+        "impact": "serious",
+        "help": "Elements must have their visible text as part of their accessible name",
+        "count": 1,
+        "nodes": [
+          {
+            "target": "button[data-slot=\"popover-trigger\"]",
+            "html": "<button data-slot=\"popover-trigger\" class=\"inline-flex items-ce...\" aria-label=\"Notifications\" type=\"button\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-s",
+            "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+          }
+        ]
+      },
+      {
+        "id": "region",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "count": 18,
+        "nodes": [
+          {
+            "target": "a[data-active=\"true\"] > span",
+            "html": "<span>Dashboard</span>",
+            "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+          },
+          {
+            "target": ".p-2[data-slot=\"sidebar-group\"][data-sidebar=\"group\"]:nth-child(2) > .text-sidebar-foreground\\/70.transition-\\[margin\\,opacity\\].group-data-\\[collapsible\\=icon\\]\\:-mt-8",
+            "html": "<a class=\"text-sidebar-foregro...\" data-slot=\"sidebar-group-label\" data-sidebar=\"group-label\" href=\"/library\">",
+            "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+          },
+          {
+            "target": ".peer\\/menu-button[href$=\"my-puzzles\"][data-active=\"false\"] > span",
+            "html": "<span>My Puzzles</span>",
+            "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+          },
+          {
+            "target": ".peer\\/menu-button[href$=\"collections\"][data-active=\"false\"] > span",
+            "html": "<span>Collections</span>",
+            "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+          }
+        ]
+      }
+    ],
+    "scroll": {
+      "useRegion": true,
+      "scrollHeight": 2118,
+      "client": 830,
+      "top": 1288,
+      "step": 747
+    },
+    "tiles": [
+      "/tmp/jigswap-review/tiles/desktop-light/app__dashboard__01.jpg",
+      "/tmp/jigswap-review/tiles/desktop-light/app__dashboard__02.jpg",
+      "/tmp/jigswap-review/tiles/desktop-light/app__dashboard__03.jpg"
+    ],
+    "scrollsInnerRegion": true,
+    "consoleErrors": [],
+    "httpErrors": []
+  },
+  {
+    "variant": "desktop-light",
+    "route": "/messages/04e0cd32-b61f-48f9-98e1-c25d9de34c28",
+    "authed": true,
+    "name": "app__messages_04e0cd32-b61f-48f9-98e1-c25d9de34c28",
+    "loadMs": 5587,
+    "finalUrl": "/messages/04e0cd32-b61f-48f9-98e1-c25d9de34c28",
+    "metrics": {
+      "regionScrollHeight": 830,
+      "regionOverflowX": 0,
+      "title": "Messages — JigSwap",
+      "lang": "en",
+      "h1": [
+        "Messages"
+      ],
+      "headings": [
+        "H1 Messages",
+        "H2 Sander Verkuil",
+        "H2 Search"
+      ],
+      "pageHeight": 900,
+      "overflowX": 0,
+      "overflowOffenders": [],
+      "interactiveCount": 37,
+      "tapUnder24": 1,
+      "tapUnder24Examples": [
+        "a.transition-colors.hover:text-sidebar-accent-foreground.hover:underline \"Community\" 74x16"
+      ],
+      "tap24to44": 33,
+      "tap24to44Examples": [
+        "button.inline-flex.items-center.justify-center.gap-2 \"Toggle Sidebar\" 32x32",
+        "a.flex.shrink-0.items-center.transition-opacity 108x28",
+        "button.flex.h-9.w-full.max-w-[520px] \"Search puzzles, people, circles… ⌘K\" 520x36",
+        "button.inline-flex.items-center.justify-center.gap-2 [aria=\"Notifications\"] \"2\" 36x36",
+        "button#radix-_R_38cj6l6_.inline-flex.items-center.justify-center.gap-2 \"Toggle theme\" 36x36",
+        "button#radix-_R_58cj6l6_.inline-flex.items-center.justify-center.gap-2 \"Switch language\" 36x36",
+        "a.inline-flex.items-center.justify-center.gap-2 \"Add Puzzle\" 126x36",
+        "a.peer/menu-button.flex.w-full.items-center \"Dashboard\" 224x32"
+      ],
+      "unnamedControls": [],
+      "truncatedText": [
+        "span.sr-only \"Toggle Sidebar\"",
+        "span.sr-only \"Toggle theme\"",
+        "span.sr-only \"Switch language\"",
+        "span.cl-internal-1y7k3pi",
+        "span.sr-only \"Online\"",
+        "span.sr-only \"Monday, October 19, 2026 at 8:50 AM\"",
+        "span.sr-only \"Circle chat:\"",
+        "span.sr-only \"Monday, October 19, 2026 at 7:39 AM\"",
+        "span.sr-only \"Sander Verkuil:\""
+      ],
+      "smallText": [
+        "kbd.pointer-events-none.rounded.border.bg-muted \"⌘K\" 11px",
+        "span.inline-flex.items-center.border.py-0.5 [aria=\"2 unread notifications\"] \"2\" 10px",
+        "a.text-sidebar-foreground/70.ring-sidebar-ring.flex.h-8 \"MY LIBRARY\" 10px",
+        "a.text-sidebar-foreground/70.ring-sidebar-ring.flex.h-8 \"COMMUNITY\" 10px",
+        "time.text-muted-foreground.px-1.pt-0.5.text-[11px] \"8:50 AM\" 11px"
+      ],
+      "zoomingInputs": [
+        "textarea.placeholder:text-muted-foreground.focus-visible:border-ring.focus-visible:ring-ring/50.aria-invalid:ring-destructive/20 [aria=\"Message Sander Verkuil\"] 14px"
+      ],
+      "imgsMissingAlt": 0,
+      "dialogsOpen": []
+    },
+    "axe": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "count": 2,
+        "nodes": [
+          {
+            "target": "kbd",
+            "html": "<kbd class=\"pointer-events-none rounded border bg-muted px-1.5 py-0.5 font-mono text-[11px] leading-none text-muted-foreground\">⌘K</kbd>",
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #6f7087, background color: #f2f2fb, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": ".transition-\\[filter\\]",
+            "html": "<span aria-hidden=\"true\" class=\"truncate text-xs text-muted-foreground transition-[filter] blur-[4px] select-none\">s.verkuil+dev@pm.me</span>",
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.21 (foreground color: #6f7087, background color: #eeeeff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "label-content-name-mismatch",
+        "impact": "serious",
+        "help": "Elements must have their visible text as part of their accessible name",
+        "count": 1,
+        "nodes": [
+          {
+            "target": "button[data-slot=\"popover-trigger\"]",
+            "html": "<button data-slot=\"popover-trigger\" class=\"inline-flex items-ce...\" aria-label=\"Notifications\" type=\"button\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-s",
+            "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+          }
+        ]
+      },
+      {
+        "id": "region",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "count": 18,
+        "nodes": [
+          {
+            "target": ".peer\\/menu-button[href$=\"dashboard\"][data-active=\"false\"] > span",
+            "html": "<span>Dashboard</span>",
+            "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+          },
+          {
+            "target": "a[href$=\"library\"]",
+            "html": "<a class=\"text-sidebar-foregro...\" data-slot=\"sidebar-group-label\" data-sidebar=\"group-label\" href=\"/library\">",
+            "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+          },
+          {
+            "target": "a[href$=\"my-puzzles\"] > span",
+            "html": "<span>My Puzzles</span>",
+            "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+          },
+          {
+            "target": "a[href$=\"collections\"] > span",
+            "html": "<span>Collections</span>",
+            "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+          }
+        ]
+      }
+    ],
+    "scroll": {
+      "useRegion": false,
+      "scrollHeight": 900,
+      "client": 900,
+      "top": 0,
+      "step": 810
+    },
+    "tiles": [
+      "/tmp/jigswap-review/tiles/desktop-light/app__messages_04e0cd32-b61f-48f9-98e1-c25d9de34c28__01.jpg"
+    ],
+    "scrollsInnerRegion": false,
+    "consoleErrors": [],
+    "httpErrors": []
+  },
+  {
+    "variant": "mobile-light",
+    "route": "/dashboard",
+    "authed": true,
+    "name": "app__dashboard",
+    "loadMs": 5555,
+    "finalUrl": "/dashboard",
+    "metrics": {
+      "regionScrollHeight": 2625,
+      "regionOverflowX": 85,
+      "title": "Dashboard — JigSwap",
+      "lang": "en",
+      "h1": [
+        "Welcome back, Henk! 🧩"
+      ],
+      "headings": [
+        "H1 Welcome back, Henk! 🧩",
+        "H2 Quick setup",
+        "H2 Your Shelf",
+        "H2 Solving now",
+        "H2 In Motion",
+        "H2 Goals",
+        "H2 Latest",
+        "H2 Fresh on the Shelf",
+        "H3 De Kattenshow",
+        "H3 Oostenrijk, Tirol, sellrainer berge",
+        "H3 Lam Gelegd",
+        "H2 Add JigSwap to your home screen",
+        "H2 Search"
+      ],
+      "pageHeight": 3001,
+      "overflowX": 0,
+      "overflowOffenders": [],
+      "interactiveCount": 45,
+      "tapUnder24": 2,
+      "tapUnder24Examples": [
+        "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"De Kattenshow\" 113x20",
+        "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Lam Gelegd\" 88x20"
+      ],
+      "tap24to44": 10,
+      "tap24to44Examples": [
+        "a.bg-background.hover:bg-accent.inline-flex.items-center \"Add a Puzzle\" 146x34",
+        "a.bg-background.hover:bg-accent.inline-flex.items-center \"Browse Community\" 196x34",
+        "a.bg-background.hover:bg-accent.inline-flex.items-center \"Log a Completion\" 184x34",
+        "a.inline-flex.items-center.justify-center.whitespace-nowrap \"View Collections\" 147x32",
+        "a.underline.underline-offset-2 \"Start one from your puzzles\" 324x40",
+        "a.inline-flex.items-center.justify-center.whitespace-nowrap \"All\" 42x32",
+        "a.inline-flex.items-center.justify-center.whitespace-nowrap \"All\" 42x32",
+        "a.inline-flex.items-center.justify-center.whitespace-nowrap \"Set a Goal\" 103x32"
+      ],
+      "unnamedControls": [],
+      "truncatedText": [
+        "span.cl-internal-1y7k3pi",
+        "span.sr-only \"Online\"",
+        "span.sr-only \", done\"",
+        "span.sr-only \", to do\"",
+        "span.sr-only \", done\"",
+        "span.sr-only \", done\"",
+        "span.sr-only \", to do\"",
+        "span.text-muted-foreground.truncate.text-right.text-sm \"3 on the shelf · 3 up for trade\"",
+        "span.text-muted-foreground.truncate.text-right.text-sm \"Recently added\""
+      ],
+      "smallText": [],
+      "zoomingInputs": [],
+      "imgsMissingAlt": 0,
+      "dialogsOpen": []
+    },
+    "axe": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "count": 1,
+        "nodes": [
+          {
+            "target": ".text-jigsaw-secondary",
+            "html": "<span class=\"text-jigsaw-secondary\">Swap</span>",
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.37 (foreground color: #19c316, background color: #ffffff, font size: 14.3pt (19px), font weight: bold). Expected contrast ratio of 3:1"
+          }
+        ]
+      },
+      {
+        "id": "image-redundant-alt",
+        "impact": "minor",
+        "help": "Alternative text of images should not be repeated as text",
+        "count": 1,
+        "nodes": [
+          {
+            "target": "img[alt=\"JigSwap\"]",
+            "html": "<img src=\"/src/components/common/header-icon/logo.png\" alt=\"JigSwap\" class=\"size-7 object-contain\" loading=\"lazy\" decoding=\"async\">",
+            "summary": "Fix all of the following:\n  Element contains <img> element with alt text that duplicates existing text"
+          }
+        ]
+      },
+      {
+        "id": "page-has-heading-one",
+        "impact": "moderate",
+        "help": "Page should contain a level-one heading",
+        "count": 1,
+        "nodes": [
+          {
+            "target": "html",
+            "html": "<html lang=\"en\" class=\"light\" style=\"color-scheme: light; --mobile-top-bar-height: 57px; --page-head-height: 0px;\">",
+            "summary": "Fix all of the following:\n  Page must have a level-one heading"
+          }
+        ]
+      },
+      {
+        "id": "region",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "count": 1,
+        "nodes": [
+          {
+            "target": ".text-center",
+            "html": "<div data-slot=\"dialog-header\" class=\"flex flex-col gap-2 text-center sm:text-left sr-only\">",
+            "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+          }
+        ]
+      }
+    ],
+    "scroll": {
+      "useRegion": false,
+      "scrollHeight": 3001,
+      "client": 844,
+      "top": 2157,
+      "step": 760
+    },
+    "tiles": [
+      "/tmp/jigswap-review/tiles/mobile-light/app__dashboard__01.jpg",
+      "/tmp/jigswap-review/tiles/mobile-light/app__dashboard__02.jpg",
+      "/tmp/jigswap-review/tiles/mobile-light/app__dashboard__03.jpg",
+      "/tmp/jigswap-review/tiles/mobile-light/app__dashboard__04.jpg"
+    ],
+    "scrollsInnerRegion": false,
+    "consoleErrors": [],
+    "httpErrors": []
+  },
+  {
+    "variant": "mobile-light",
+    "route": "/messages/04e0cd32-b61f-48f9-98e1-c25d9de34c28",
+    "authed": true,
+    "name": "app__messages_04e0cd32-b61f-48f9-98e1-c25d9de34c28",
+    "loadMs": 4896,
+    "finalUrl": "/messages/04e0cd32-b61f-48f9-98e1-c25d9de34c28",
+    "metrics": {
+      "regionScrollHeight": 844,
+      "regionOverflowX": 0,
+      "title": "Messages — JigSwap",
+      "lang": "en",
+      "h1": [
+        "Messages",
+        "Sander Verkuil"
+      ],
+      "headings": [
+        "H1 Messages",
+        "H1 Sander Verkuil",
+        "H2 Add JigSwap to your home screen",
+        "H2 Search"
+      ],
+      "pageHeight": 1106,
+      "overflowX": 0,
+      "overflowOffenders": [],
+      "interactiveCount": 9,
+      "tapUnder24": 0,
+      "tapUnder24Examples": [],
+      "tap24to44": 0,
+      "tap24to44Examples": [],
+      "unnamedControls": [],
+      "truncatedText": [
+        "span.sr-only \"Sander Verkuil:\""
+      ],
+      "smallText": [
+        "time.text-muted-foreground.px-1.pt-0.5.text-[11px] \"8:50 AM\" 11px"
+      ],
+      "zoomingInputs": [],
+      "imgsMissingAlt": 0,
+      "dialogsOpen": []
+    },
+    "axe": [
+      {
+        "id": "region",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "count": 1,
+        "nodes": [
+          {
+            "target": ".sm\\:text-left",
+            "html": "<div data-slot=\"dialog-header\" class=\"flex flex-col gap-2 text-center sm:text-left sr-only\">",
+            "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+          }
+        ]
+      }
+    ],
+    "scroll": {
+      "useRegion": false,
+      "scrollHeight": 1106,
+      "client": 844,
+      "top": 262,
+      "step": 760
+    },
+    "tiles": [
+      "/tmp/jigswap-review/tiles/mobile-light/app__messages_04e0cd32-b61f-48f9-98e1-c25d9de34c28__01.jpg",
+      "/tmp/jigswap-review/tiles/mobile-light/app__messages_04e0cd32-b61f-48f9-98e1-c25d9de34c28__02.jpg"
+    ],
+    "scrollsInnerRegion": false,
+    "consoleErrors": [],
+    "httpErrors": []
+  }
+]

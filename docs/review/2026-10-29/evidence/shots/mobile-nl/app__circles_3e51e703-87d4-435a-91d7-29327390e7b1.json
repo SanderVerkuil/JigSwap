@@ -1,0 +1,64 @@
+{
+  "variant": "mobile-nl",
+  "route": "/circles/3e51e703-87d4-435a-91d7-29327390e7b1",
+  "authed": true,
+  "name": "app__circles_3e51e703-87d4-435a-91d7-29327390e7b1",
+  "loadMs": 4518,
+  "finalUrl": "/circles/3e51e703-87d4-435a-91d7-29327390e7b1",
+  "metrics": {
+    "regionScrollHeight": 480,
+    "regionOverflowX": 0,
+    "title": "Kringen — JigSwap",
+    "lang": "nl",
+    "h1": [
+      "Test",
+      "Test"
+    ],
+    "headings": [
+      "H1 Test",
+      "H1 Test",
+      "H2 Test",
+      "H3 Groepschat",
+      "H3 Gedeelde puzzels",
+      "H2 Zet JigSwap op je beginscherm",
+      "H2 Zoeken"
+    ],
+    "pageHeight": 856,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 15,
+    "tapUnder24": 0,
+    "tapUnder24Examples": [],
+    "tap24to44": 2,
+    "tap24to44Examples": [
+      "button.focus-visible:ring-ring.relative.flex.shrink-0 [aria=\"Sander Verkuil\"] 32x32",
+      "button.focus-visible:ring-ring.relative.flex.shrink-0 [aria=\"Henk Pieterszoon\"] 32x32"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 856,
+    "client": 844,
+    "top": 12,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-nl/app__circles_3e51e703-87d4-435a-91d7-29327390e7b1__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__circles_3e51e703-87d4-435a-91d7-29327390e7b1__02.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [
+    "[CONVEX M(presence:heartbeat)] [Request ID: e6f6f2a27bce25c5] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":10263}\n    at enforceRateLimit (../../convex/lib/rateLimits.ts:45:32)\n    at async handler (../../convex/presence.ts:61:4)\n",
+    "pageerror: [CONVEX M(presence:heartbeat)] [Request ID: e6f6f2a27bce25c5] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":10263}"
+  ],
+  "httpErrors": []
+}

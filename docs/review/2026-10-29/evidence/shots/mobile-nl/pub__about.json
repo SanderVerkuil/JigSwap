@@ -1,0 +1,86 @@
+{
+  "variant": "mobile-nl",
+  "route": "/about",
+  "authed": false,
+  "name": "pub__about",
+  "loadMs": 3691,
+  "finalUrl": "/about",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "Over ons — JigSwap",
+    "lang": "nl",
+    "h1": [
+      "Begonnen aan de keukentafel"
+    ],
+    "headings": [
+      "H1 Begonnen aan de keukentafel",
+      "H2 Puzzels delen toegankelijk en duurzaam maken — voo",
+      "H2 Onze waarden",
+      "H3 Hobby, geen handel",
+      "H3 Delen boven bezitten",
+      "H3 Community eerst",
+      "H3 Vertrouwen",
+      "H2 Van keukentafel tot community",
+      "H3 Een familieproject",
+      "H3 De eerste plank",
+      "H3 Een groeiende community"
+    ],
+    "pageHeight": 3233,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 15,
+    "tapUnder24": 10,
+    "tapUnder24Examples": [
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Hoe het werkt\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Puzzels bekijken\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Functies\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Documentatie\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Begin met ruilen\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Over ons\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Contact\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Privacybeleid\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Algemene voorwaarden\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Cookiebeleid\" 342x22"
+    ],
+    "tap24to44": 4,
+    "tap24to44Examples": [
+      "a [aria=\"JigSwap\"] \"JigSwap\" 118x37",
+      "button#radix-_R_7aj6l6_.inline-flex.items-center.justify-center.w-10 [aria=\"Taal wijzigen\"] \"🇳🇱\" 40x40",
+      "button.inline-flex.items-center.justify-center.w-10 [aria=\"Toggle dark mode\"] 40x40",
+      "button.min-[861px]:hidden.inline-flex.items-center.justify-center [aria=\"Menu openen\"] 40x40"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [],
+    "smallText": [
+      "div \"FAMILIE\" 9.5px",
+      "b \"500\" 11px",
+      "span \"PCS\" 5.5px",
+      "div \"Keukentafel\" 11px",
+      "div \"SAMEN\" 9.5px",
+      "b \"1000\" 11px",
+      "span \"PCS\" 5.5px",
+      "div \"Eerste ruil\" 11px"
+    ],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 3233,
+    "client": 844,
+    "top": 2389,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__about__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__about__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__about__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__about__04.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__about__05.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

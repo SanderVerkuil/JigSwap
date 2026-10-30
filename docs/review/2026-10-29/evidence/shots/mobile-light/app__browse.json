@@ -1,0 +1,141 @@
+{
+  "variant": "mobile-light",
+  "route": "/browse",
+  "authed": true,
+  "name": "app__browse",
+  "loadMs": 4632,
+  "finalUrl": "/browse",
+  "metrics": {
+    "regionScrollHeight": 1891,
+    "regionOverflowX": 0,
+    "title": "Browse puzzles — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Browse Puzzles",
+      "Browse Puzzles"
+    ],
+    "headings": [
+      "H1 Browse Puzzles",
+      "H1 Browse Puzzles",
+      "H3 Bereleuk hier!",
+      "H3 Rondje Texel",
+      "H3 Café",
+      "H2 Add JigSwap to your home screen",
+      "H2 Search"
+    ],
+    "pageHeight": 2267,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 26,
+    "tapUnder24": 3,
+    "tapUnder24Examples": [
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Bereleuk hier!\" 98x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Rondje Texel\" 93x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Café\" 36x20"
+    ],
+    "tap24to44": 12,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap [aria=\"Add Filter\"] \"Add Filter\" 113x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap [aria=\"Grid View\"] 36x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap [aria=\"List View\"] 36x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap 32x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap 32x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap 32x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap 32x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap 32x32"
+    ],
+    "unnamedControls": [
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap"
+    ],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "button-name",
+      "impact": "critical",
+      "help": "Buttons must have discernible text",
+      "count": 9,
+      "nodes": [
+        {
+          "target": ".rounded-xl.shadow-sm.group:nth-child(1) > .p-4.flex-1.flex-col > .z-10.mt-auto.pt-3 > .justify-between.gap-2.flex > .gap-2.flex > .w-8.has-\\[\\>svg\\]\\:px-2\\.5.h-8:nth-child(1)",
+          "html": "<button data-slot=\"button\" class=\"inline-flex items-ce...\">",
+          "summary": "Fix any of the following:\n  Element does not have inner text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references"
+        },
+        {
+          "target": ".rounded-xl.shadow-sm.group:nth-child(1) > .p-4.flex-1.flex-col > .z-10.mt-auto.pt-3 > .justify-between.gap-2.flex > .gap-2.flex > .w-8.has-\\[\\>svg\\]\\:px-2\\.5.h-8:nth-child(2)",
+          "html": "<button data-slot=\"button\" class=\"inline-flex items-ce...\">",
+          "summary": "Fix any of the following:\n  Element does not have inner text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references"
+        },
+        {
+          "target": ".rounded-xl.shadow-sm.group:nth-child(1) > .p-4.flex-1.flex-col > .z-10.mt-auto.pt-3 > .justify-between.gap-2.flex > .gap-2.flex > .w-8.has-\\[\\>svg\\]\\:px-2\\.5.h-8:nth-child(3)",
+          "html": "<button data-slot=\"button\" class=\"inline-flex items-ce...\">",
+          "summary": "Fix any of the following:\n  Element does not have inner text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references"
+        },
+        {
+          "target": ".rounded-xl.shadow-sm.group:nth-child(2) > .p-4.flex-1.flex-col > .z-10.mt-auto.pt-3 > .justify-between.gap-2.flex > .gap-2.flex > .w-8.has-\\[\\>svg\\]\\:px-2\\.5.h-8:nth-child(1)",
+          "html": "<button data-slot=\"button\" class=\"inline-flex items-ce...\">",
+          "summary": "Fix any of the following:\n  Element does not have inner text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references"
+        }
+      ]
+    },
+    {
+      "id": "heading-order",
+      "impact": "moderate",
+      "help": "Heading levels should only increase by one",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".rounded-xl.shadow-sm.group:nth-child(1) > .p-4.flex-1.flex-col > .mb-2:nth-child(1) > h3",
+          "html": "<h3 class=\"font-semibold text-sm line-clamp-2 mb-1\"><a class=\"after:absolute after:inset-0 after:z-[1] after:content-[''] hover:underline focus-visible:underlin",
+          "summary": "Fix any of the following:\n  Heading order invalid"
+        }
+      ]
+    },
+    {
+      "id": "region",
+      "impact": "moderate",
+      "help": "All page content should be contained by landmarks",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".text-center",
+          "html": "<div data-slot=\"dialog-header\" class=\"flex flex-col gap-2 text-center sm:text-left sr-only\">",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 2267,
+    "client": 844,
+    "top": 1423,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-light/app__browse__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__browse__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__browse__03.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [
+    "[CONVEX M(presence:heartbeat)] [Request ID: 8384c7529bf570b0] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":11358}\n    at enforceRateLimit (../../convex/lib/rateLimits.ts:45:32)\n    at async handler (../../convex/presence.ts:61:4)\n",
+    "pageerror: [CONVEX M(presence:heartbeat)] [Request ID: 8384c7529bf570b0] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":11358}"
+  ],
+  "httpErrors": []
+}

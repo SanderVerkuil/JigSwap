@@ -1,0 +1,109 @@
+{
+  "variant": "mobile-dark",
+  "route": "/notifications",
+  "authed": true,
+  "name": "app__notifications",
+  "loadMs": 4549,
+  "finalUrl": "/notifications",
+  "metrics": {
+    "regionScrollHeight": 802,
+    "regionOverflowX": 0,
+    "title": "Notifications — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Notifications",
+      "Notifications"
+    ],
+    "headings": [
+      "H1 Notifications",
+      "H1 Notifications",
+      "H2 Earlier",
+      "H2 Add JigSwap to your home screen",
+      "H2 Search"
+    ],
+    "pageHeight": 1178,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 28,
+    "tapUnder24": 5,
+    "tapUnder24Examples": [
+      "button.peer.data-[state=checked]:bg-primary.data-[state=unchecked]:bg-input.focus-visible:border-ring [aria=\"Unread only\"] \"on\" 32x18",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Unread, See what's new in JigSwap.\" 196x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Unread, Sander Verkuil sent a photo.\" 208x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"See what's new in JigSwap.\" 187x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Sander Verkuil started following you.\" 260x20"
+    ],
+    "tap24to44": 10,
+    "tap24to44Examples": [
+      "a.inline-flex.items-center.justify-center.whitespace-nowrap \"Notification preferences\" 223x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Mark all as read\" 161x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"All\" 42x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Trades\" 78x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Messages\" 100x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Social\" 70x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"My submissions\" 140x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Product updates\" 150x32"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\"",
+      "span.sr-only \"Unread,\"",
+      "span.sr-only \"Unread,\""
+    ],
+    "smallText": [
+      "time \"8 days ago\" 11px",
+      "span.inline-flex.items-center.justify-center.rounded-md \"Product updates\" 10px",
+      "time \"11 days ago\" 11px",
+      "span.inline-flex.items-center.justify-center.rounded-md \"Messages\" 10px",
+      "time \"11 days ago\" 11px",
+      "span.inline-flex.items-center.justify-center.rounded-md \"Social\" 10px",
+      "time \"11 days ago\" 11px",
+      "span.inline-flex.items-center.justify-center.rounded-md \"Product updates\" 10px",
+      "time \"12 days ago\" 11px",
+      "span.inline-flex.items-center.justify-center.rounded-md \"Social\" 10px"
+    ],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "count": 3,
+      "nodes": [
+        {
+          "target": "a[href$=\"circles\"]",
+          "html": "<a data-row-link=\"\" aria-describedby=\"ctx-96636c68-cb8b-44aa-a1fa-b0cae6d00e41\" class=\"after:absolute after:inset-0 after:z-[1] after:content-[''] focus-visible",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.93 (foreground color: #7a7994, background color: #1d1c34, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": "#ctx-96636c68-cb8b-44aa-a1fa-b0cae6d00e41 > span",
+          "html": "<span>No longer available</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.93 (foreground color: #7a7994, background color: #1d1c34, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": "time[datetime=\"2026-10-19T07:34:37.815Z\"]",
+          "html": "<time datetime=\"2026-10-19T07:34:37.815Z\">11 days ago</time>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.93 (foreground color: #7a7994, background color: #1d1c34, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 1178,
+    "client": 844,
+    "top": 334,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-dark/app__notifications__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__notifications__02.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

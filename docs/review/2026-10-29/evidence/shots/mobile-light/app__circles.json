@@ -1,0 +1,90 @@
+{
+  "variant": "mobile-light",
+  "route": "/circles",
+  "authed": true,
+  "name": "app__circles",
+  "loadMs": 4565,
+  "finalUrl": "/circles",
+  "metrics": {
+    "regionScrollHeight": 468,
+    "regionOverflowX": 0,
+    "title": "Circles — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Circles",
+      "Circles"
+    ],
+    "headings": [
+      "H1 Circles",
+      "H1 Circles",
+      "H2 Add JigSwap to your home screen",
+      "H2 Search"
+    ],
+    "pageHeight": 844,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 18,
+    "tapUnder24": 0,
+    "tapUnder24Examples": [],
+    "tap24to44": 4,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.justify-center.gap-2 [aria=\"Show me how\"] 32x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Create Circle\" 139x32",
+      "button.focus-visible:ring-ring.relative.flex.shrink-0 [aria=\"Sander Verkuil\"] 32x32",
+      "button.focus-visible:ring-ring.relative.flex.shrink-0 [aria=\"Henk Pieterszoon\"] 32x32"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "region",
+      "impact": "moderate",
+      "help": "All page content should be contained by landmarks",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".sm\\:text-left",
+          "html": "<div data-slot=\"dialog-header\" class=\"flex flex-col gap-2 text-center sm:text-left sr-only\">",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    },
+    {
+      "id": "target-size",
+      "impact": "serious",
+      "help": "All touch targets must be 24px large, or leave sufficient space",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".z-\\[4\\]",
+          "html": "<button type=\"button\" aria-label=\"Henk Pieterszoon\" class=\"focus-visible:ring-r...\" data-state=\"closed\">",
+          "summary": "Fix any of the following:\n  Target has insufficient size because it is partially obscured (smallest space is 22px by 32px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 844,
+    "client": 844,
+    "top": 0,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-light/app__circles__01.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [
+    "[CONVEX M(presence:heartbeat)] [Request ID: 567921a20463c3b1] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":5114}\n    at enforceRateLimit (../../convex/lib/rateLimits.ts:45:32)\n    at async handler (../../convex/presence.ts:61:4)\n",
+    "pageerror: [CONVEX M(presence:heartbeat)] [Request ID: 567921a20463c3b1] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":5114}"
+  ],
+  "httpErrors": []
+}

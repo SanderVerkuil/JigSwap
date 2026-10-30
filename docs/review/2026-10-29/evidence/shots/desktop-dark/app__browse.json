@@ -1,0 +1,89 @@
+{
+  "variant": "desktop-dark",
+  "route": "/browse",
+  "authed": true,
+  "name": "app__browse",
+  "loadMs": 4441,
+  "finalUrl": "/browse",
+  "metrics": {
+    "regionScrollHeight": 830,
+    "regionOverflowX": 0,
+    "title": "Browse puzzles — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Browse Puzzles",
+      "Browse Puzzles"
+    ],
+    "headings": [
+      "H1 Browse Puzzles",
+      "H1 Browse Puzzles",
+      "H3 Bereleuk hier!",
+      "H3 Rondje Texel",
+      "H3 Café",
+      "H2 Search"
+    ],
+    "pageHeight": 900,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 41,
+    "tapUnder24": 4,
+    "tapUnder24Examples": [
+      "a.transition-colors.hover:text-sidebar-accent-foreground.hover:underline \"Community\" 74x16",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Bereleuk hier!\" 98x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Rondje Texel\" 93x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Café\" 36x20"
+    ],
+    "tap24to44": 37,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.justify-center.gap-2 \"Toggle Sidebar\" 32x32",
+      "a.flex.shrink-0.items-center.transition-opacity 108x28",
+      "button.flex.h-9.w-full.max-w-[520px] \"Search puzzles, people, circles… ⌘K\" 520x36",
+      "button.inline-flex.items-center.justify-center.gap-2 [aria=\"Notifications\"] \"2\" 36x36",
+      "button#radix-_R_38cj6l6_.inline-flex.items-center.justify-center.gap-2 \"Toggle theme\" 36x36",
+      "button#radix-_R_58cj6l6_.inline-flex.items-center.justify-center.gap-2 \"Switch language\" 36x36",
+      "a.inline-flex.items-center.justify-center.gap-2 \"Add Puzzle\" 126x36",
+      "a.peer/menu-button.flex.w-full.items-center \"Dashboard\" 224x32"
+    ],
+    "unnamedControls": [
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap"
+    ],
+    "truncatedText": [
+      "span.sr-only \"Toggle Sidebar\"",
+      "span.sr-only \"Toggle theme\"",
+      "span.sr-only \"Switch language\"",
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [
+      "kbd.pointer-events-none.rounded.border.bg-muted \"⌘K\" 11px",
+      "span.inline-flex.items-center.border.py-0.5 [aria=\"2 unread notifications\"] \"2\" 10px",
+      "a.text-sidebar-foreground/70.ring-sidebar-ring.flex.h-8 \"MY LIBRARY\" 10px",
+      "a.text-sidebar-foreground/70.ring-sidebar-ring.flex.h-8 \"COMMUNITY\" 10px"
+    ],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 900,
+    "client": 900,
+    "top": 0,
+    "step": 810
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/desktop-dark/app__browse__01.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

@@ -1,0 +1,59 @@
+{
+  "variant": "mobile-nl",
+  "route": "/borrowed",
+  "authed": true,
+  "name": "app__borrowed",
+  "loadMs": 4426,
+  "finalUrl": "/borrowed",
+  "metrics": {
+    "regionScrollHeight": 468,
+    "regionOverflowX": 0,
+    "title": "Geleend — JigSwap",
+    "lang": "nl",
+    "h1": [
+      "Geleend",
+      "Geleend"
+    ],
+    "headings": [
+      "H1 Geleend",
+      "H1 Geleend",
+      "H2 Zet JigSwap op je beginscherm",
+      "H2 Zoeken"
+    ],
+    "pageHeight": 844,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 12,
+    "tapUnder24": 0,
+    "tapUnder24Examples": [],
+    "tap24to44": 1,
+    "tap24to44Examples": [
+      "a.inline-flex.items-center.justify-center.gap-2 \"Puzzels ontdekken\" 182x36"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 844,
+    "client": 844,
+    "top": 0,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-nl/app__borrowed__01.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [
+    "[CONVEX M(presence:heartbeat)] [Request ID: 66149cd7754c52e7] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":16700}\n    at enforceRateLimit (../../convex/lib/rateLimits.ts:45:32)\n    at async handler (../../convex/presence.ts:61:4)\n",
+    "pageerror: [CONVEX M(presence:heartbeat)] [Request ID: 66149cd7754c52e7] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":16700}"
+  ],
+  "httpErrors": []
+}

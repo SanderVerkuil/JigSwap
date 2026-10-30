@@ -1,0 +1,79 @@
+{
+  "variant": "mobile-light",
+  "route": "/profile",
+  "authed": true,
+  "name": "app__profile",
+  "loadMs": 6143,
+  "finalUrl": "/profile",
+  "metrics": {
+    "regionScrollHeight": 1105,
+    "regionOverflowX": 121,
+    "title": "Profile — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Profile",
+      "Profile"
+    ],
+    "headings": [
+      "H1 Profile",
+      "H1 Profile",
+      "H2 Henk Pieterszoon",
+      "H2 Henk's Shelf",
+      "H2 Reputation",
+      "H2 Add JigSwap to your home screen",
+      "H2 Search"
+    ],
+    "pageHeight": 1481,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 14,
+    "tapUnder24": 0,
+    "tapUnder24Examples": [],
+    "tap24to44": 4,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Show my QR\" 134x32",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Edit Profile\" 126x36",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Arrange shelf\" 142x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Reset\" 81x32"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\"",
+      "span.text-muted-foreground.truncate.text-right.text-sm \"3 on display\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "region",
+      "impact": "moderate",
+      "help": "All page content should be contained by landmarks",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".sm\\:text-left",
+          "html": "<div data-slot=\"dialog-header\" class=\"flex flex-col gap-2 text-center sm:text-left sr-only\">",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 1481,
+    "client": 844,
+    "top": 637,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-light/app__profile__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__profile__02.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

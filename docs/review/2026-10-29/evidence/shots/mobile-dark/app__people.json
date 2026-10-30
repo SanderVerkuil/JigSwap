@@ -1,0 +1,68 @@
+{
+  "variant": "mobile-dark",
+  "route": "/people",
+  "authed": true,
+  "name": "app__people",
+  "loadMs": 4600,
+  "finalUrl": "/people",
+  "metrics": {
+    "regionScrollHeight": 468,
+    "regionOverflowX": 0,
+    "title": "People — JigSwap",
+    "lang": "en",
+    "h1": [
+      "People",
+      "People"
+    ],
+    "headings": [
+      "H1 People",
+      "H1 People",
+      "H3 Sander Verkuil",
+      "H2 Add JigSwap to your home screen",
+      "H2 Search"
+    ],
+    "pageHeight": 844,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 20,
+    "tapUnder24": 3,
+    "tapUnder24Examples": [
+      "a.text-foreground.font-medium.underline.underline-offset-2 \"Review visibility\" 110x20",
+      "button.hover:bg-accent.hover:text-foreground.focus-visible:ring-ring.shrink-0 [aria=\"Dismiss\"] 20x20",
+      "a.line-clamp-2.rounded-sm.[overflow-wrap:anywhere].after:absolute [aria=\"Sander Verkuil\"] \"Sander Verkuil\" 268x22"
+    ],
+    "tap24to44": 4,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Show my QR\" 134x32",
+      "button#radix-_R_jamksj6l6_-trigger-network.dark:data-[state=active]:text-foreground.focus-visible:border-ring.focus-visible:ring-ring/50.focus-visible:outline-ring \"Your network\" 153x42",
+      "button#radix-_R_jamksj6l6_-trigger-find.dark:data-[state=active]:text-foreground.focus-visible:border-ring.focus-visible:ring-ring/50.focus-visible:outline-ring \"Find people\" 142x42",
+      "button#radix-_R_jamksj6l6_-trigger-activity.dark:data-[state=active]:text-foreground.focus-visible:border-ring.focus-visible:ring-ring/50.focus-visible:outline-ring \"Activity\" 113x42"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 844,
+    "client": 844,
+    "top": 0,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-dark/app__people__01.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [
+    "[CONVEX M(presence:heartbeat)] [Request ID: dc85b72b0e16f8f8] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":37648}\n    at enforceRateLimit (../../convex/lib/rateLimits.ts:45:32)\n    at async handler (../../convex/presence.ts:61:4)\n",
+    "pageerror: [CONVEX M(presence:heartbeat)] [Request ID: dc85b72b0e16f8f8] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":37648}"
+  ],
+  "httpErrors": []
+}

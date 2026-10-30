@@ -1,0 +1,67 @@
+{
+  "variant": "mobile-nl",
+  "route": "/trades",
+  "authed": true,
+  "name": "app__trades",
+  "loadMs": 4496,
+  "finalUrl": "/trades",
+  "metrics": {
+    "regionScrollHeight": 468,
+    "regionOverflowX": 0,
+    "title": "Uitwisselingen — JigSwap",
+    "lang": "nl",
+    "h1": [
+      "Uitwisselingen",
+      "Uitwisselingen"
+    ],
+    "headings": [
+      "H1 Uitwisselingen",
+      "H1 Uitwisselingen",
+      "H2 Zet JigSwap op je beginscherm",
+      "H2 Zoeken"
+    ],
+    "pageHeight": 844,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 18,
+    "tapUnder24": 0,
+    "tapUnder24Examples": [],
+    "tap24to44": 7,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.justify-center.gap-2 [aria=\"Laat me zien hoe\"] 32x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Alle\" 51x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Inkomend\" 99x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Uitgaand\" 94x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Voltooid\" 89x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Geleend\" 88x32",
+      "select.bg-card.focus:ring-primary.h-8.rounded-md [aria=\"Alle Statussen\"] \"Alle Statussen In afwachting Geaccepteer\" 141x32"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [
+      "select.bg-card.focus:ring-primary.h-8.rounded-md [aria=\"Alle Statussen\"] \"Alle Statussen In afwachting Geaccepteer\" 14px"
+    ],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 844,
+    "client": 844,
+    "top": 0,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-nl/app__trades__01.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [
+    "[CONVEX M(presence:heartbeat)] [Request ID: bad40ff542566e1d] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":21154}\n    at enforceRateLimit (../../convex/lib/rateLimits.ts:45:32)\n    at async handler (../../convex/presence.ts:61:4)\n",
+    "pageerror: [CONVEX M(presence:heartbeat)] [Request ID: bad40ff542566e1d] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":21154}"
+  ],
+  "httpErrors": []
+}

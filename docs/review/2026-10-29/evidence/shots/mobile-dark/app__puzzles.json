@@ -1,0 +1,93 @@
+{
+  "variant": "mobile-dark",
+  "route": "/puzzles",
+  "authed": true,
+  "name": "app__puzzles",
+  "loadMs": 4503,
+  "finalUrl": "/puzzles",
+  "metrics": {
+    "regionScrollHeight": 5149,
+    "regionOverflowX": 0,
+    "title": "Puzzles — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Puzzles catalogue",
+      "Puzzles catalogue"
+    ],
+    "headings": [
+      "H1 Puzzles catalogue",
+      "H1 Puzzles catalogue",
+      "H3 Lam Gelegd",
+      "H3 Oostenrijk, Tirol, sellrainer berge",
+      "H3 The Dolomites",
+      "H3 Het Tuincentrum Jan van Haasteren puzzels",
+      "H3 Café",
+      "H3 Food Truck Festival",
+      "H3 Bereleuk hier!",
+      "H3 Rondje Texel",
+      "H3 De Kattenshow",
+      "H2 Add JigSwap to your home screen",
+      "H2 Search"
+    ],
+    "pageHeight": 5525,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 53,
+    "tapUnder24": 9,
+    "tapUnder24Examples": [
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Lam Gelegd\" 88x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Oostenrijk, Tirol, sellrainer berge\" 240x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"The Dolomites\" 107x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Het Tuincentrum Jan van Haasteren puzzel\" 323x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Café\" 36x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Food Truck Festival\" 143x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Bereleuk hier!\" 98x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Rondje Texel\" 93x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"De Kattenshow\" 113x20"
+    ],
+    "tap24to44": 33,
+    "tap24to44Examples": [
+      "a.inline-flex.items-center.justify-center.whitespace-nowrap \"Add Puzzle\" 120x32",
+      "input.w-full.pl-10.pr-4.py-2 308x42",
+      "button.justify-center.whitespace-nowrap.rounded-md.text-sm \"Favorites\" 308x36",
+      "button.justify-center.whitespace-nowrap.rounded-md.text-sm \"Filters\" 308x36",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap 36x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap 38x32",
+      "a.inline-flex.items-center.justify-center.whitespace-nowrap \"View Details\" 236x32",
+      "button.inline-flex.items-center.justify-center.gap-2 [aria=\"Add to Favorites\"] 36x36"
+    ],
+    "unnamedControls": [
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap"
+    ],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 5525,
+    "client": 844,
+    "top": 4681,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-dark/app__puzzles__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__puzzles__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__puzzles__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__puzzles__04.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__puzzles__05.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__puzzles__06.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__puzzles__07.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__puzzles__08.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

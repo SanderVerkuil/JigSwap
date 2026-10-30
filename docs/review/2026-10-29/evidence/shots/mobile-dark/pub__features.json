@@ -1,0 +1,105 @@
+{
+  "variant": "mobile-dark",
+  "route": "/features",
+  "authed": false,
+  "name": "pub__features",
+  "loadMs": 3733,
+  "finalUrl": "/features",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "Features — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Everything for puzzling together"
+    ],
+    "headings": [
+      "H1 Everything for puzzling together",
+      "H2 Manage your whole collection",
+      "H3 Digital shelf",
+      "H3 Collections",
+      "H3 Completions",
+      "H2 Always know who has your puzzles",
+      "H3 Lending overview",
+      "H3 Status per puzzle",
+      "H3 For as long as you like",
+      "H2 Find your next challenge",
+      "H3 Smart filters",
+      "H3 Fresh finds",
+      "H3 Exchanges, end to end",
+      "H2 Together, and safe",
+      "H3 Circles",
+      "H3 Reviews",
+      "H3 Community",
+      "H2 Ready to begin?"
+    ],
+    "pageHeight": 4104,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 16,
+    "tapUnder24": 10,
+    "tapUnder24Examples": [
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"How it works\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Browse puzzles\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Features\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Docs\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Start trading\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"About\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Contact\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Privacy policy\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Terms of service\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Cookie policy\" 342x22"
+    ],
+    "tap24to44": 4,
+    "tap24to44Examples": [
+      "a [aria=\"JigSwap\"] \"JigSwap\" 118x37",
+      "button#radix-_R_7aj6l6_.inline-flex.items-center.justify-center.w-10 [aria=\"Switch language\"] \"🇺🇸\" 40x40",
+      "button.inline-flex.items-center.justify-center.w-10 [aria=\"Toggle dark mode\"] 40x40",
+      "button.min-[861px]:hidden.inline-flex.items-center.justify-center [aria=\"Open menu\"] 40x40"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "count": 2,
+      "nodes": [
+        {
+          "target": ".bg-mk-muted.py-\\[clamp\\(56px\\,8vw\\,104px\\)\\]:nth-child(3) > .w-full.mx-auto.max-w-\\[1200px\\] > div:nth-child(1) > div > .font-mono.text-xs.tracking-\\[\\.12em\\]",
+          "html": "<div class=\"inline-flex items-center gap-2 font-mono text-xs font-semibold tracking-[.12em] uppercase text-mk-violet-600\"><span class=\"w-[18px] h-0.5 rounded-xs",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.93 (foreground color: #7f7af2, background color: #292b42, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": ".bg-mk-muted.py-\\[clamp\\(56px\\,8vw\\,104px\\)\\]:nth-child(5) > .w-full.mx-auto.max-w-\\[1200px\\] > div:nth-child(1) > div > .font-mono.text-xs.tracking-\\[\\.12em\\]",
+          "html": "<div class=\"inline-flex items-center gap-2 font-mono text-xs font-semibold tracking-[.12em] uppercase text-mk-violet-600\"><span class=\"w-[18px] h-0.5 rounded-xs",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.93 (foreground color: #7f7af2, background color: #292b42, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 4104,
+    "client": 844,
+    "top": 3260,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__features__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__features__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__features__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__features__04.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__features__05.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__features__06.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

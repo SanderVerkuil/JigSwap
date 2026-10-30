@@ -1,0 +1,93 @@
+{
+  "variant": "mobile-nl",
+  "route": "/whats-new",
+  "authed": true,
+  "name": "app__whats-new",
+  "loadMs": 4971,
+  "finalUrl": "/whats-new",
+  "metrics": {
+    "regionScrollHeight": 37598,
+    "regionOverflowX": 0,
+    "title": "Wat is er nieuw — JigSwap",
+    "lang": "nl",
+    "h1": [
+      "Wat is er nieuw",
+      "Wat is er nieuw"
+    ],
+    "headings": [
+      "H1 Wat is er nieuw",
+      "H1 Wat is er nieuw",
+      "H2 OKTOBER 2026",
+      "H3 Weet wanneer JigSwap is bijgewerkt",
+      "H3 Geef je kring een pictogram",
+      "H3 Rechten in een kring doen nu wat ze zeggen",
+      "H3 Berichten vult de pagina",
+      "H3 Lege pagina's wijzen je de weg",
+      "H3 Rondleidingen: een korte uitleg van elke functie",
+      "H3 Elk tabblad binnen bereik",
+      "H3 Foto's in chats komen meteen aan",
+      "H3 Zie wanneer je puzzelafbeelding nog wordt gecontro",
+      "H3 Updates over uitwisselingen in je eigen taal",
+      "H3 Foto's verraden niet meer waar ze zijn gemaakt",
+      "H3 Kringchats zien eruit als kringchats",
+      "H3 Wat er gebeurt als een lid vertrekt",
+      "H3 Verbeteringen aan huishoudens",
+      "H3 Verbeteringen in Berichten",
+      "H3 Meer verbeteringen in Berichten",
+      "H3 Nodig vrienden uit per e-mail",
+      "H3 Meer privacyverbeteringen",
+      "H3 Verbeteringen in Berichten",
+      "H3 Leden blokkeren en melden",
+      "H3 Uitnodigingen voor kringen: niemand doet mee zonde",
+      "H3 Met een uitnodigingslink kiezen nieuwe leden zelf "
+    ],
+    "pageHeight": 37974,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 43,
+    "tapUnder24": 1,
+    "tapUnder24Examples": [
+      "a \"Berichten\" 73x21"
+    ],
+    "tap24to44": 32,
+    "tap24to44Examples": [
+      "button#radix-_R_3amksj6l6_-trigger-updates.dark:data-[state=active]:text-foreground.focus-visible:border-ring.focus-visible:ring-ring/50.focus-visible:outline-ring \"Updates\" 120x42",
+      "button#radix-_R_3amksj6l6_-trigger-guides.dark:data-[state=active]:text-foreground.focus-visible:border-ring.focus-visible:ring-ring/50.focus-visible:outline-ring \"Rondleidingen\" 162x42",
+      "a.inline-flex.items-center.justify-center.gap-2 \"Rondleidingen openen\" 316x36",
+      "a.inline-flex.items-center.justify-center.gap-2 \"Berichten openen\" 316x36",
+      "a.inline-flex.items-center.justify-center.gap-2 \"Berichten openen\" 316x36",
+      "a.inline-flex.items-center.justify-center.gap-2 \"Kringen openen\" 316x36",
+      "a.inline-flex.items-center.justify-center.gap-2 \"Huishouden openen\" 316x36",
+      "a.inline-flex.items-center.justify-center.gap-2 \"Berichten openen\" 316x36"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 37974,
+    "client": 844,
+    "top": 5320,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-nl/app__whats-new__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__whats-new__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__whats-new__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__whats-new__04.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__whats-new__05.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__whats-new__06.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__whats-new__07.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__whats-new__08.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

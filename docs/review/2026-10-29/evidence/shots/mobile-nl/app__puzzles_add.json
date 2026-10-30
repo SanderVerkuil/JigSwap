@@ -1,0 +1,74 @@
+{
+  "variant": "mobile-nl",
+  "route": "/puzzles/add",
+  "authed": true,
+  "name": "app__puzzles_add",
+  "loadMs": 4443,
+  "finalUrl": "/puzzles/add",
+  "metrics": {
+    "regionScrollHeight": 1967,
+    "regionOverflowX": 0,
+    "title": "Puzzel toevoegen — JigSwap",
+    "lang": "nl",
+    "h1": [
+      "Een puzzel bijdragen",
+      "Een puzzel bijdragen"
+    ],
+    "headings": [
+      "H1 Een puzzel bijdragen",
+      "H1 Een puzzel bijdragen",
+      "H2 Zet JigSwap op je beginscherm",
+      "H2 Zoeken"
+    ],
+    "pageHeight": 2343,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 42,
+    "tapUnder24": 0,
+    "tapUnder24Examples": [],
+    "tap24to44": 31,
+    "tap24to44Examples": [
+      "input.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 276x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Gegevens ophalen\" 187x36",
+      "input#cp-title.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 358x36",
+      "input#cp-publisher.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 171x36",
+      "input#cp-pieces.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 171x36",
+      "button.rounded-full.border.px-2.5.py-1 \"300\" 44x26",
+      "button.rounded-full.border.px-2.5.py-1 \"500\" 44x26",
+      "button.rounded-full.border.px-2.5.py-1 \"750\" 44x26"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\"",
+      "span.sr-only \"incomplete\"",
+      "span.sr-only \"incomplete\""
+    ],
+    "smallText": [
+      "div.font-mono.text-[10px].uppercase.tracking-[0.09em] \"LIVE VOORBEELD\" 10px"
+    ],
+    "zoomingInputs": [
+      "input.min-w-[120px].flex-1.border-none.bg-transparent [aria=\"Tags\"] 14px"
+    ],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 2343,
+    "client": 844,
+    "top": 1499,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-nl/app__puzzles_add__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__puzzles_add__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__puzzles_add__03.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [
+    "[CONVEX M(presence:heartbeat)] [Request ID: 495d0deb6b26fc7b] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":27323}\n    at enforceRateLimit (../../convex/lib/rateLimits.ts:45:32)\n    at async handler (../../convex/presence.ts:61:4)\n",
+    "pageerror: [CONVEX M(presence:heartbeat)] [Request ID: 495d0deb6b26fc7b] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":27323}"
+  ],
+  "httpErrors": []
+}

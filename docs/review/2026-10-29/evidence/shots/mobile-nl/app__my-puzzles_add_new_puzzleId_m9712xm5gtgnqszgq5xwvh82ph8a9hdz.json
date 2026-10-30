@@ -1,0 +1,71 @@
+{
+  "variant": "mobile-nl",
+  "route": "/my-puzzles/add/new?puzzleId=m9712xm5gtgnqszgq5xwvh82ph8a9hdz",
+  "authed": true,
+  "name": "app__my-puzzles_add_new_puzzleId_m9712xm5gtgnqszgq5xwvh82ph8a9hdz",
+  "loadMs": 4424,
+  "finalUrl": "/my-puzzles/add/new?puzzleId=m9712xm5gtgnqszgq5xwvh82ph8a9hdz",
+  "metrics": {
+    "regionScrollHeight": 1479,
+    "regionOverflowX": 0,
+    "title": "Puzzel aanmaken — JigSwap",
+    "lang": "nl",
+    "h1": [
+      "Een puzzel aanmaken",
+      "Een puzzel aanmaken"
+    ],
+    "headings": [
+      "H1 Een puzzel aanmaken",
+      "H1 Een puzzel aanmaken",
+      "H2 Zet JigSwap op je beginscherm",
+      "H2 Zoeken"
+    ],
+    "pageHeight": 1855,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 31,
+    "tapUnder24": 0,
+    "tapUnder24Examples": [],
+    "tap24to44": 19,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.gap-2.rounded-full \"Uitstekend\" 111x38",
+      "button.inline-flex.items-center.gap-2.rounded-full \"Goed\" 71x38",
+      "button.inline-flex.items-center.gap-2.rounded-full \"Redelijk\" 87x38",
+      "button.inline-flex.items-center.gap-2.rounded-full \"Slecht\" 77x38",
+      "button.inline-flex.items-center.gap-1.5.rounded-full \"Voor ruil\" 112x38",
+      "button.inline-flex.items-center.gap-1.5.rounded-full \"Voor uitlenen\" 149x38",
+      "button.inline-flex.items-center.gap-1.5.rounded-full \"Te koop\" 109x38",
+      "button.size-9.rounded-md.cursor-pointer.shadow-[0_0_0_1px_var(--border)] [aria=\"Cover colour 1\"] 36x36"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [
+      "div.font-mono.text-[10px].uppercase.tracking-[0.09em] \"EEN EXEMPLAAR TOEVOEGEN VAN\" 10px",
+      "div.font-mono.text-[10px].uppercase.tracking-[0.09em] \"LIVE VOORBEELD\" 10px"
+    ],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 1855,
+    "client": 844,
+    "top": 1011,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-nl/app__my-puzzles_add_new_puzzleId_m9712xm5gtgnqszgq5xwvh82ph8a9hdz__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__my-puzzles_add_new_puzzleId_m9712xm5gtgnqszgq5xwvh82ph8a9hdz__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__my-puzzles_add_new_puzzleId_m9712xm5gtgnqszgq5xwvh82ph8a9hdz__03.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [
+    "[CONVEX M(presence:heartbeat)] [Request ID: 88e028ed218a9f65] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":15273}\n    at enforceRateLimit (../../convex/lib/rateLimits.ts:45:32)\n    at async handler (../../convex/presence.ts:61:4)\n",
+    "pageerror: [CONVEX M(presence:heartbeat)] [Request ID: 88e028ed218a9f65] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":15273}"
+  ],
+  "httpErrors": []
+}

@@ -1,0 +1,145 @@
+{
+  "variant": "tablet-light",
+  "route": "/puzzles/add",
+  "authed": true,
+  "name": "app__puzzles_add",
+  "loadMs": 4576,
+  "finalUrl": "/puzzles/add",
+  "metrics": {
+    "regionScrollHeight": 2078,
+    "regionOverflowX": 0,
+    "title": "Add puzzle — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Contribute a Puzzle",
+      "Contribute a Puzzle"
+    ],
+    "headings": [
+      "H1 Contribute a Puzzle",
+      "H1 Contribute a Puzzle",
+      "H2 Search"
+    ],
+    "pageHeight": 1180,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 57,
+    "tapUnder24": 1,
+    "tapUnder24Examples": [
+      "a.transition-colors.hover:text-sidebar-accent-foreground.hover:underline \"Community\" 74x16"
+    ],
+    "tap24to44": 56,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.justify-center.gap-2 \"Toggle Sidebar\" 32x32",
+      "a.flex.shrink-0.items-center.transition-opacity 108x28",
+      "button.flex.h-9.w-full.max-w-[520px] \"Search puzzles, people, circles… ⌘K\" 326x36",
+      "button.inline-flex.items-center.justify-center.gap-2 [aria=\"Notifications\"] \"2\" 36x36",
+      "button#radix-_R_38cj6l6_.inline-flex.items-center.justify-center.gap-2 \"Toggle theme\" 36x36",
+      "button#radix-_R_58cj6l6_.inline-flex.items-center.justify-center.gap-2 \"Switch language\" 36x36",
+      "a.inline-flex.items-center.justify-center.gap-2 \"Add Puzzle\" 126x36",
+      "a.peer/menu-button.flex.w-full.items-center \"Dashboard\" 224x32"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.sr-only \"Toggle Sidebar\"",
+      "span.sr-only \"Toggle theme\"",
+      "span.sr-only \"Switch language\"",
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\"",
+      "span.sr-only \"incomplete\"",
+      "span.sr-only \"incomplete\""
+    ],
+    "smallText": [
+      "kbd.pointer-events-none.rounded.border.bg-muted \"⌘K\" 11px",
+      "span.inline-flex.items-center.border.py-0.5 [aria=\"2 unread notifications\"] \"2\" 10px",
+      "a.text-sidebar-foreground/70.ring-sidebar-ring.flex.h-8 \"MY LIBRARY\" 10px",
+      "a.text-sidebar-foreground/70.ring-sidebar-ring.flex.h-8 \"COMMUNITY\" 10px",
+      "div.font-mono.text-[10px].uppercase.tracking-[0.09em] \"LIVE PREVIEW\" 10px"
+    ],
+    "zoomingInputs": [
+      "input.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 14px",
+      "input#cp-title.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 14px",
+      "input#cp-publisher.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 14px",
+      "input#cp-pieces.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 14px",
+      "input#cp-brand.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 14px",
+      "input#cp-series.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 14px",
+      "input.min-w-[120px].flex-1.border-none.bg-transparent [aria=\"Tags\"] 14px"
+    ],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "count": 2,
+      "nodes": [
+        {
+          "target": "kbd",
+          "html": "<kbd class=\"pointer-events-none rounded border bg-muted px-1.5 py-0.5 font-mono text-[11px] leading-none text-muted-foreground\">⌘K</kbd>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #6f7087, background color: #f2f2fb, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": ".transition-\\[filter\\]",
+          "html": "<span aria-hidden=\"true\" class=\"truncate text-xs text-muted-foreground transition-[filter] blur-[4px] select-none\">s.verkuil+dev@pm.me</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.21 (foreground color: #6f7087, background color: #eeeeff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    },
+    {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "help": "Elements must have their visible text as part of their accessible name",
+      "count": 1,
+      "nodes": [
+        {
+          "target": "button[data-slot=\"popover-trigger\"]",
+          "html": "<button data-slot=\"popover-trigger\" class=\"inline-flex items-ce...\" aria-label=\"Notifications\" type=\"button\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-s",
+          "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+        }
+      ]
+    },
+    {
+      "id": "region",
+      "impact": "moderate",
+      "help": "All page content should be contained by landmarks",
+      "count": 18,
+      "nodes": [
+        {
+          "target": ".peer\\/menu-button[href$=\"dashboard\"][data-active=\"false\"] > span",
+          "html": "<span>Dashboard</span>",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": ".min-w-0[data-slot=\"sidebar-group\"][data-sidebar=\"group\"]:nth-child(2) > .text-sidebar-foreground\\/70.transition-\\[margin\\,opacity\\].group-data-\\[collapsible\\=icon\\]\\:-mt-8",
+          "html": "<a class=\"text-sidebar-foregro...\" data-slot=\"sidebar-group-label\" data-sidebar=\"group-label\" href=\"/library\">",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": "a[href$=\"my-puzzles\"] > span",
+          "html": "<span>My Puzzles</span>",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": "a[href$=\"collections\"] > span",
+          "html": "<span>Collections</span>",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": true,
+    "scrollHeight": 2078,
+    "client": 1110,
+    "top": 968,
+    "step": 999
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/tablet-light/app__puzzles_add__01.jpg",
+    "/tmp/jigswap-review/tiles/tablet-light/app__puzzles_add__02.jpg"
+  ],
+  "scrollsInnerRegion": true,
+  "consoleErrors": [],
+  "httpErrors": []
+}

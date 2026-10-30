@@ -1,0 +1,108 @@
+{
+  "variant": "mobile-light",
+  "route": "/whats-new",
+  "authed": true,
+  "name": "app__whats-new",
+  "loadMs": 4583,
+  "finalUrl": "/whats-new",
+  "metrics": {
+    "regionScrollHeight": 34358,
+    "regionOverflowX": 0,
+    "title": "What's new — JigSwap",
+    "lang": "en",
+    "h1": [
+      "What's new",
+      "What's new"
+    ],
+    "headings": [
+      "H1 What's new",
+      "H1 What's new",
+      "H2 OCTOBER 2026",
+      "H3 Know when JigSwap is updated",
+      "H3 Give your circle an icon",
+      "H3 Circle permissions now do what they say",
+      "H3 Messages fills the page",
+      "H3 Empty pages now point the way",
+      "H3 Guides: a short tour of any feature",
+      "H3 Every tab within reach",
+      "H3 Photos in chats arrive right away",
+      "H3 See when your puzzle image is still being checked",
+      "H3 Exchange updates in your language",
+      "H3 Photos no longer reveal where they were taken",
+      "H3 Circle chats look like circle chats",
+      "H3 What happens when a member leaves",
+      "H3 Household improvements",
+      "H3 Improvements to messages",
+      "H3 More improvements to messages",
+      "H3 Invite friends by email",
+      "H3 More privacy improvements",
+      "H3 Improvements to messages",
+      "H3 Block and report members",
+      "H3 Circle invitations: nobody joins without saying ye",
+      "H3 Invite links let new members choose to follow"
+    ],
+    "pageHeight": 34734,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 43,
+    "tapUnder24": 1,
+    "tapUnder24Examples": [
+      "a \"Messages\" 80x21"
+    ],
+    "tap24to44": 32,
+    "tap24to44Examples": [
+      "button#radix-_R_3amksj6l6_-trigger-updates.dark:data-[state=active]:text-foreground.focus-visible:border-ring.focus-visible:ring-ring/50.focus-visible:outline-ring \"Updates\" 120x42",
+      "button#radix-_R_3amksj6l6_-trigger-guides.dark:data-[state=active]:text-foreground.focus-visible:border-ring.focus-visible:ring-ring/50.focus-visible:outline-ring \"Guides\" 108x42",
+      "a.inline-flex.items-center.justify-center.gap-2 \"Open Guides\" 316x36",
+      "a.inline-flex.items-center.justify-center.gap-2 \"Open Messages\" 316x36",
+      "a.inline-flex.items-center.justify-center.gap-2 \"Open Messages\" 316x36",
+      "a.inline-flex.items-center.justify-center.gap-2 \"Open Circles\" 316x36",
+      "a.inline-flex.items-center.justify-center.gap-2 \"Open Household\" 316x36",
+      "a.inline-flex.items-center.justify-center.gap-2 \"Open Messages\" 316x36"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "region",
+      "impact": "moderate",
+      "help": "All page content should be contained by landmarks",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".text-center",
+          "html": "<div data-slot=\"dialog-header\" class=\"flex flex-col gap-2 text-center sm:text-left sr-only\">",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 34734,
+    "client": 844,
+    "top": 5320,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-light/app__whats-new__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__whats-new__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__whats-new__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__whats-new__04.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__whats-new__05.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__whats-new__06.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__whats-new__07.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__whats-new__08.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

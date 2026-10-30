@@ -1,0 +1,366 @@
+
+### app__messages [desktop-light] final=/messages pageH=900 regionSH=830 ovX=0 regOvX=0 scroll={'useRegion': False, 'scrollHeight': 900, 'client': 900, 'top': 0, 'step': 810} inner=False
+ headings: ['H1 Messages', 'H1 Messages', 'H2 Select a conversation', 'H2 Search']
+ tap<24: 1 ['a.transition-colors.hover:text-sidebar-accent-foreground.hover:underline "Community" 74x16']
+ tap24-44: 26 ['a.flex.shrink-0.items-center.transition-opacity 108x28', 'button.flex.h-9.w-full.max-w-[520px] "Search puzzles, people, circles… ⌘K" 520x36', 'button.inline-flex.items-center.justify-center.gap-2 [aria="Notifications"] "2" 36x36', 'button#radix-_R_58cj6l6_.inline-flex.items-center.justify-center.gap-2 "Switch language" 36x36', 'a.inline-flex.items-center.justify-center.gap-2 "Add Puzzle" 126x36', 'a.peer/menu-button.flex.w-full.items-center "Dashboard" 224x32']
+ unnamed: []
+ truncated: ['span.cl-internal-1y7k3pi']
+ small: ['kbd.pointer-events-none.rounded.border.bg-muted "⌘K" 11px', 'span.inline-flex.items-center.border.py-0.5 [aria="2 unread notifications"] "2" 10px']
+ zoomingInputs: []
+ overflowOff: []
+ dialogs: []
+  AXE color-contrast serious 2
+     - kbd | Fix any of the following:   Element has insufficient color contrast of 4.34 (foreground color: #6f7087, background color: #f2f2fb, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1 | <kbd class="pointer-events-none rounded border bg-muted px-1.5 py-0.5 font-mono text-[11px] leading-none text-muted-foreground">⌘K</kbd>
+     - .transition-\[filter\] | Fix any of the following:   Element has insufficient color contrast of 4.21 (foreground color: #6f7087, background color: #eeeeff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1 | <span aria-hidden="true" class="truncate text-xs text-muted-foreground transition-[filter] blur-[4px] select-none">s.verkuil+dev@pm.me</span>
+  AXE label-content-name-mismatch serious 1
+     - button[data-slot="popover-trigger"] | Fix any of the following:   Text inside the element is not included in the accessible name | <button data-slot="popover-trigger" class="inline-flex items-ce..." aria-label="Notifications" type="button" aria-haspopup="dialog" aria-expanded="false" data-s
+  AXE region 18
+ console: 4 []
+ http: []
+
+### app__messages [tablet-light] final=/messages pageH=1180 regionSH=1110 ovX=0 regOvX=0 scroll={'useRegion': False, 'scrollHeight': 1180, 'client': 1180, 'top': 0, 'step': 1062} inner=False
+ headings: ['H1 Messages', 'H1 Messages', 'H2 Select a conversation', 'H2 Search']
+ tap<24: 1 ['a.transition-colors.hover:text-sidebar-accent-foreground.hover:underline "Community" 74x16']
+ tap24-44: 26 ['a.flex.shrink-0.items-center.transition-opacity 108x28', 'button.flex.h-9.w-full.max-w-[520px] "Search puzzles, people, circles… ⌘K" 326x36', 'button.inline-flex.items-center.justify-center.gap-2 [aria="Notifications"] "2" 36x36', 'button#radix-_R_58cj6l6_.inline-flex.items-center.justify-center.gap-2 "Switch language" 36x36', 'a.inline-flex.items-center.justify-center.gap-2 "Add Puzzle" 126x36', 'a.peer/menu-button.flex.w-full.items-center "Dashboard" 224x32']
+ unnamed: []
+ truncated: ['span.cl-internal-1y7k3pi']
+ small: ['kbd.pointer-events-none.rounded.border.bg-muted "⌘K" 11px', 'span.inline-flex.items-center.border.py-0.5 [aria="2 unread notifications"] "2" 10px']
+ zoomingInputs: []
+ overflowOff: []
+ dialogs: []
+  AXE color-contrast serious 2
+     - kbd | Fix any of the following:   Element has insufficient color contrast of 4.34 (foreground color: #6f7087, background color: #f2f2fb, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1 | <kbd class="pointer-events-none rounded border bg-muted px-1.5 py-0.5 font-mono text-[11px] leading-none text-muted-foreground">⌘K</kbd>
+     - .transition-\[filter\] | Fix any of the following:   Element has insufficient color contrast of 4.21 (foreground color: #6f7087, background color: #eeeeff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1 | <span aria-hidden="true" class="truncate text-xs text-muted-foreground transition-[filter] blur-[4px] select-none">s.verkuil+dev@pm.me</span>
+  AXE label-content-name-mismatch serious 1
+     - button[data-slot="popover-trigger"] | Fix any of the following:   Text inside the element is not included in the accessible name | <button data-slot="popover-trigger" class="inline-flex items-ce..." aria-label="Notifications" type="button" aria-haspopup="dialog" aria-expanded="false" data-s
+  AXE region 18
+ console: 4 []
+ http: []
+
+### app__messages [mobile-light] final=/messages pageH=844 regionSH=468 ovX=0 regOvX=0 scroll={'useRegion': False, 'scrollHeight': 844, 'client': 844, 'top': 0, 'step': 760} inner=False
+ headings: ['H1 Messages', 'H1 Messages', 'H2 Select a conversation', 'H2 Add JigSwap to your home screen', 'H2 Search']
+ tap<24: 0 []
+ tap24-44: 0 []
+ unnamed: []
+ truncated: ['span.cl-internal-1y7k3pi']
+ small: []
+ zoomingInputs: []
+ overflowOff: []
+ dialogs: []
+  AXE region 1
+ console: 0 []
+ http: []
+
+### app__messages [desktop-dark] final=/messages pageH=900 regionSH=830 ovX=0 regOvX=0 scroll={'useRegion': False, 'scrollHeight': 900, 'client': 900, 'top': 0, 'step': 810} inner=False
+ headings: ['H1 Messages', 'H1 Messages', 'H2 Select a conversation', 'H2 Search']
+ tap<24: 1 ['a.transition-colors.hover:text-sidebar-accent-foreground.hover:underline "Community" 74x16']
+ tap24-44: 26 ['a.flex.shrink-0.items-center.transition-opacity 108x28', 'button.flex.h-9.w-full.max-w-[520px] "Search puzzles, people, circles… ⌘K" 520x36', 'button.inline-flex.items-center.justify-center.gap-2 [aria="Notifications"] "2" 36x36', 'button#radix-_R_58cj6l6_.inline-flex.items-center.justify-center.gap-2 "Switch language" 36x36', 'a.inline-flex.items-center.justify-center.gap-2 "Add Puzzle" 126x36', 'a.peer/menu-button.flex.w-full.items-center "Dashboard" 224x32']
+ unnamed: []
+ truncated: ['span.cl-internal-1y7k3pi']
+ small: ['kbd.pointer-events-none.rounded.border.bg-muted "⌘K" 11px', 'span.inline-flex.items-center.border.py-0.5 [aria="2 unread notifications"] "2" 10px']
+ zoomingInputs: []
+ overflowOff: []
+ dialogs: []
+ console: 4 []
+ http: []
+
+### app__messages [mobile-dark] final=/messages pageH=844 regionSH=468 ovX=0 regOvX=0 scroll={'useRegion': False, 'scrollHeight': 844, 'client': 844, 'top': 0, 'step': 760} inner=False
+ headings: ['H1 Messages', 'H1 Messages', 'H2 Select a conversation', 'H2 Add JigSwap to your home screen', 'H2 Search']
+ tap<24: 0 []
+ tap24-44: 0 []
+ unnamed: []
+ truncated: ['span.cl-internal-1y7k3pi']
+ small: []
+ zoomingInputs: []
+ overflowOff: []
+ dialogs: []
+ console: 4 []
+ http: []
+
+### app__messages [mobile-nl] final=/messages pageH=844 regionSH=468 ovX=0 regOvX=0 scroll={'useRegion': False, 'scrollHeight': 844, 'client': 844, 'top': 0, 'step': 760} inner=False
+ headings: ['H1 Berichten', 'H1 Berichten', 'H2 Selecteer een gesprek', 'H2 Zet JigSwap op je beginscherm', 'H2 Zoeken']
+ tap<24: 0 []
+ tap24-44: 0 []
+ unnamed: []
+ truncated: ['span.cl-internal-1y7k3pi']
+ small: []
+ zoomingInputs: []
+ overflowOff: []
+ dialogs: []
+ console: 4 []
+ http: []
+
+### app__messages_04e0cd32-b61f-48 [desktop-light] final=/messages/04e0cd32-b61f-48f9-98e1-c25d9de34c28 pageH=900 regionSH=830 ovX=0 regOvX=0 scroll={'useRegion': False, 'scrollHeight': 900, 'client': 900, 'top': 0, 'step': 810} inner=False
+ headings: ['H1 Messages', 'H2 Sander Verkuil', 'H2 Search']
+ tap<24: 1 ['a.transition-colors.hover:text-sidebar-accent-foreground.hover:underline "Community" 74x16']
+ tap24-44: 33 ['a.flex.shrink-0.items-center.transition-opacity 108x28', 'button.flex.h-9.w-full.max-w-[520px] "Search puzzles, people, circles… ⌘K" 520x36', 'button.inline-flex.items-center.justify-center.gap-2 [aria="Notifications"] "2" 36x36', 'button#radix-_R_58cj6l6_.inline-flex.items-center.justify-center.gap-2 "Switch language" 36x36', 'a.inline-flex.items-center.justify-center.gap-2 "Add Puzzle" 126x36', 'a.peer/menu-button.flex.w-full.items-center "Dashboard" 224x32']
+ unnamed: []
+ truncated: ['span.cl-internal-1y7k3pi']
+ small: ['kbd.pointer-events-none.rounded.border.bg-muted "⌘K" 11px', 'span.inline-flex.items-center.border.py-0.5 [aria="2 unread notifications"] "2" 10px', 'time.text-muted-foreground.px-1.pt-0.5.text-[11px] "8:50 AM" 11px']
+ zoomingInputs: ['textarea.placeholder:text-muted-foreground.focus-visible:border-ring.focus-visible:ring-ring/50.aria-invalid:ring-destructive/20 [aria="Message Sander Verkuil"] 14px']
+ overflowOff: []
+ dialogs: []
+  AXE color-contrast serious 2
+     - kbd | Fix any of the following:   Element has insufficient color contrast of 4.34 (foreground color: #6f7087, background color: #f2f2fb, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1 | <kbd class="pointer-events-none rounded border bg-muted px-1.5 py-0.5 font-mono text-[11px] leading-none text-muted-foreground">⌘K</kbd>
+     - .transition-\[filter\] | Fix any of the following:   Element has insufficient color contrast of 4.21 (foreground color: #6f7087, background color: #eeeeff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1 | <span aria-hidden="true" class="truncate text-xs text-muted-foreground transition-[filter] blur-[4px] select-none">s.verkuil+dev@pm.me</span>
+  AXE label-content-name-mismatch serious 1
+     - button[data-slot="popover-trigger"] | Fix any of the following:   Text inside the element is not included in the accessible name | <button data-slot="popover-trigger" class="inline-flex items-ce..." aria-label="Notifications" type="button" aria-haspopup="dialog" aria-expanded="false" data-s
+  AXE region 18
+ console: 4 []
+ http: []
+
+### app__messages_04e0cd32-b61f-48 [tablet-light] final=/messages/04e0cd32-b61f-48f9-98e1-c25d9de34c28 pageH=1180 regionSH=1110 ovX=0 regOvX=0 scroll={'useRegion': False, 'scrollHeight': 1180, 'client': 1180, 'top': 0, 'step': 1062} inner=False
+ headings: ['H1 Messages', 'H2 Sander Verkuil', 'H2 Search']
+ tap<24: 1 ['a.transition-colors.hover:text-sidebar-accent-foreground.hover:underline "Community" 74x16']
+ tap24-44: 33 ['a.flex.shrink-0.items-center.transition-opacity 108x28', 'button.flex.h-9.w-full.max-w-[520px] "Search puzzles, people, circles… ⌘K" 326x36', 'button.inline-flex.items-center.justify-center.gap-2 [aria="Notifications"] "2" 36x36', 'button#radix-_R_58cj6l6_.inline-flex.items-center.justify-center.gap-2 "Switch language" 36x36', 'a.inline-flex.items-center.justify-center.gap-2 "Add Puzzle" 126x36', 'a.peer/menu-button.flex.w-full.items-center "Dashboard" 224x32']
+ unnamed: []
+ truncated: ['span.cl-internal-1y7k3pi']
+ small: ['kbd.pointer-events-none.rounded.border.bg-muted "⌘K" 11px', 'span.inline-flex.items-center.border.py-0.5 [aria="2 unread notifications"] "2" 10px', 'time.text-muted-foreground.px-1.pt-0.5.text-[11px] "8:50 AM" 11px']
+ zoomingInputs: ['textarea.placeholder:text-muted-foreground.focus-visible:border-ring.focus-visible:ring-ring/50.aria-invalid:ring-destructive/20 [aria="Message Sander Verkuil"] 14px']
+ overflowOff: []
+ dialogs: []
+  AXE color-contrast serious 2
+     - kbd | Fix any of the following:   Element has insufficient color contrast of 4.34 (foreground color: #6f7087, background color: #f2f2fb, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1 | <kbd class="pointer-events-none rounded border bg-muted px-1.5 py-0.5 font-mono text-[11px] leading-none text-muted-foreground">⌘K</kbd>
+     - .transition-\[filter\] | Fix any of the following:   Element has insufficient color contrast of 4.21 (foreground color: #6f7087, background color: #eeeeff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1 | <span aria-hidden="true" class="truncate text-xs text-muted-foreground transition-[filter] blur-[4px] select-none">s.verkuil+dev@pm.me</span>
+  AXE label-content-name-mismatch serious 1
+     - button[data-slot="popover-trigger"] | Fix any of the following:   Text inside the element is not included in the accessible name | <button data-slot="popover-trigger" class="inline-flex items-ce..." aria-label="Notifications" type="button" aria-haspopup="dialog" aria-expanded="false" data-s
+  AXE region 18
+ console: 4 []
+ http: []
+
+### app__messages_04e0cd32-b61f-48 [mobile-light] final=/messages/04e0cd32-b61f-48f9-98e1-c25d9de34c28 pageH=1106 regionSH=844 ovX=0 regOvX=0 scroll={'useRegion': False, 'scrollHeight': 1106, 'client': 844, 'top': 262, 'step': 760} inner=False
+ headings: ['H1 Messages', 'H1 Sander Verkuil', 'H2 Add JigSwap to your home screen', 'H2 Search']
+ tap<24: 0 []
+ tap24-44: 0 []
+ unnamed: []
+ truncated: []
+ small: ['time.text-muted-foreground.px-1.pt-0.5.text-[11px] "8:50 AM" 11px']
+ zoomingInputs: []
+ overflowOff: []
+ dialogs: []
+  AXE region 1
+ console: 0 []
+ http: []
+
+### app__messages_04e0cd32-b61f-48 [desktop-dark] final=/messages/04e0cd32-b61f-48f9-98e1-c25d9de34c28 pageH=900 regionSH=830 ovX=0 regOvX=0 scroll={'useRegion': False, 'scrollHeight': 900, 'client': 900, 'top': 0, 'step': 810} inner=False
+ headings: ['H1 Messages', 'H2 Sander Verkuil', 'H2 Search']
+ tap<24: 1 ['a.transition-colors.hover:text-sidebar-accent-foreground.hover:underline "Community" 74x16']
+ tap24-44: 33 ['a.flex.shrink-0.items-center.transition-opacity 108x28', 'button.flex.h-9.w-full.max-w-[520px] "Search puzzles, people, circles… ⌘K" 520x36', 'button.inline-flex.items-center.justify-center.gap-2 [aria="Notifications"] "2" 36x36', 'button#radix-_R_58cj6l6_.inline-flex.items-center.justify-center.gap-2 "Switch language" 36x36', 'a.inline-flex.items-center.justify-center.gap-2 "Add Puzzle" 126x36', 'a.peer/menu-button.flex.w-full.items-center "Dashboard" 224x32']
+ unnamed: []
+ truncated: ['span.cl-internal-1y7k3pi']
+ small: ['kbd.pointer-events-none.rounded.border.bg-muted "⌘K" 11px', 'span.inline-flex.items-center.border.py-0.5 [aria="2 unread notifications"] "2" 10px', 'time.text-muted-foreground.px-1.pt-0.5.text-[11px] "8:50 AM" 11px']
+ zoomingInputs: ['textarea.placeholder:text-muted-foreground.focus-visible:border-ring.focus-visible:ring-ring/50.aria-invalid:ring-destructive/20 [aria="Message Sander Verkuil"] 14px']
+ overflowOff: []
+ dialogs: []
+ console: 4 []
+ http: []
+
+### app__messages_04e0cd32-b61f-48 [mobile-dark] final=/messages/04e0cd32-b61f-48f9-98e1-c25d9de34c28 pageH=1106 regionSH=844 ovX=0 regOvX=0 scroll={'useRegion': False, 'scrollHeight': 1106, 'client': 844, 'top': 262, 'step': 760} inner=False
+ headings: ['H1 Messages', 'H1 Sander Verkuil', 'H2 Add JigSwap to your home screen', 'H2 Search']
+ tap<24: 0 []
+ tap24-44: 0 []
+ unnamed: []
+ truncated: []
+ small: ['time.text-muted-foreground.px-1.pt-0.5.text-[11px] "8:50 AM" 11px']
+ zoomingInputs: []
+ overflowOff: []
+ dialogs: []
+ console: 0 []
+ http: []
+
+### app__messages_04e0cd32-b61f-48 [mobile-nl] final=/messages/04e0cd32-b61f-48f9-98e1-c25d9de34c28 pageH=1106 regionSH=844 ovX=0 regOvX=0 scroll={'useRegion': False, 'scrollHeight': 1106, 'client': 844, 'top': 262, 'step': 760} inner=False
+ headings: ['H1 Berichten', 'H1 Sander Verkuil', 'H2 Zet JigSwap op je beginscherm', 'H2 Zoeken']
+ tap<24: 0 []
+ tap24-44: 0 []
+ unnamed: []
+ truncated: []
+ small: ['time.text-muted-foreground.px-1.pt-0.5.text-[11px] "08:50" 11px']
+ zoomingInputs: []
+ overflowOff: []
+ dialogs: []
+ console: 0 []
+ http: []
+
+### app__messages_ec1b1833-8cae-47 [desktop-light] final=/messages/ec1b1833-8cae-47b3-ac3c-783e276b28c9 pageH=900 regionSH=830 ovX=0 regOvX=0 scroll={'useRegion': False, 'scrollHeight': 900, 'client': 900, 'top': 0, 'step': 810} inner=False
+ headings: ['H1 Messages', 'H2 Test\n, Circle chat', 'H2 Search']
+ tap<24: 2 ['a.transition-colors.hover:text-sidebar-accent-foreground.hover:underline "Community" 74x16', 'button.hover:text-foreground.focus-visible:ring-ring.relative.min-w-0 "2 members" 69x16']
+ tap24-44: 32 ['a.flex.shrink-0.items-center.transition-opacity 108x28', 'button.flex.h-9.w-full.max-w-[520px] "Search puzzles, people, circles… ⌘K" 520x36', 'button.inline-flex.items-center.justify-center.gap-2 [aria="Notifications"] "2" 36x36', 'button#radix-_R_58cj6l6_.inline-flex.items-center.justify-center.gap-2 "Switch language" 36x36', 'a.inline-flex.items-center.justify-center.gap-2 "Add Puzzle" 126x36', 'a.peer/menu-button.flex.w-full.items-center "Dashboard" 224x32']
+ unnamed: []
+ truncated: ['span.cl-internal-1y7k3pi']
+ small: ['kbd.pointer-events-none.rounded.border.bg-muted "⌘K" 11px', 'span.inline-flex.items-center.border.py-0.5 [aria="2 unread notifications"] "2" 10px', 'time.text-muted-foreground.px-1.pt-0.5.text-[11px] "7:39 AM" 11px']
+ zoomingInputs: ['textarea.placeholder:text-muted-foreground.focus-visible:border-ring.focus-visible:ring-ring/50.aria-invalid:ring-destructive/20 [aria="Message your circle Test"] 14px']
+ overflowOff: []
+ dialogs: []
+  AXE color-contrast serious 2
+     - kbd | Fix any of the following:   Element has insufficient color contrast of 4.34 (foreground color: #6f7087, background color: #f2f2fb, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1 | <kbd class="pointer-events-none rounded border bg-muted px-1.5 py-0.5 font-mono text-[11px] leading-none text-muted-foreground">⌘K</kbd>
+     - .transition-\[filter\] | Fix any of the following:   Element has insufficient color contrast of 4.21 (foreground color: #6f7087, background color: #eeeeff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1 | <span aria-hidden="true" class="truncate text-xs text-muted-foreground transition-[filter] blur-[4px] select-none">s.verkuil+dev@pm.me</span>
+  AXE label-content-name-mismatch serious 1
+     - button[data-slot="popover-trigger"] | Fix any of the following:   Text inside the element is not included in the accessible name | <button data-slot="popover-trigger" class="inline-flex items-ce..." aria-label="Notifications" type="button" aria-haspopup="dialog" aria-expanded="false" data-s
+  AXE region 18
+ console: 4 []
+ http: []
+
+### app__messages_ec1b1833-8cae-47 [tablet-light] final=/messages/ec1b1833-8cae-47b3-ac3c-783e276b28c9 pageH=1180 regionSH=1110 ovX=0 regOvX=0 scroll={'useRegion': False, 'scrollHeight': 1180, 'client': 1180, 'top': 0, 'step': 1062} inner=False
+ headings: ['H1 Messages', 'H2 Test\n, Circle chat', 'H2 Search']
+ tap<24: 1 ['a.transition-colors.hover:text-sidebar-accent-foreground.hover:underline "Community" 74x16']
+ tap24-44: 32 ['a.flex.shrink-0.items-center.transition-opacity 108x28', 'button.flex.h-9.w-full.max-w-[520px] "Search puzzles, people, circles… ⌘K" 326x36', 'button.inline-flex.items-center.justify-center.gap-2 [aria="Notifications"] "2" 36x36', 'button#radix-_R_58cj6l6_.inline-flex.items-center.justify-center.gap-2 "Switch language" 36x36', 'a.inline-flex.items-center.justify-center.gap-2 "Add Puzzle" 126x36', 'a.peer/menu-button.flex.w-full.items-center "Dashboard" 224x32']
+ unnamed: []
+ truncated: ['span.cl-internal-1y7k3pi']
+ small: ['kbd.pointer-events-none.rounded.border.bg-muted "⌘K" 11px', 'span.inline-flex.items-center.border.py-0.5 [aria="2 unread notifications"] "2" 10px', 'time.text-muted-foreground.px-1.pt-0.5.text-[11px] "7:39 AM" 11px']
+ zoomingInputs: ['textarea.placeholder:text-muted-foreground.focus-visible:border-ring.focus-visible:ring-ring/50.aria-invalid:ring-destructive/20 [aria="Message your circle Test"] 14px']
+ overflowOff: []
+ dialogs: []
+  AXE color-contrast serious 2
+     - kbd | Fix any of the following:   Element has insufficient color contrast of 4.34 (foreground color: #6f7087, background color: #f2f2fb, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1 | <kbd class="pointer-events-none rounded border bg-muted px-1.5 py-0.5 font-mono text-[11px] leading-none text-muted-foreground">⌘K</kbd>
+     - .transition-\[filter\] | Fix any of the following:   Element has insufficient color contrast of 4.21 (foreground color: #6f7087, background color: #eeeeff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1 | <span aria-hidden="true" class="truncate text-xs text-muted-foreground transition-[filter] blur-[4px] select-none">s.verkuil+dev@pm.me</span>
+  AXE label-content-name-mismatch serious 1
+     - button[data-slot="popover-trigger"] | Fix any of the following:   Text inside the element is not included in the accessible name | <button data-slot="popover-trigger" class="inline-flex items-ce..." aria-label="Notifications" type="button" aria-haspopup="dialog" aria-expanded="false" data-s
+  AXE region 18
+ console: 4 []
+ http: []
+
+### app__messages_ec1b1833-8cae-47 [mobile-light] final=/messages/ec1b1833-8cae-47b3-ac3c-783e276b28c9 pageH=1106 regionSH=844 ovX=0 regOvX=0 scroll={'useRegion': False, 'scrollHeight': 1106, 'client': 844, 'top': 262, 'step': 760} inner=False
+ headings: ['H1 Messages', 'H1 Test\n, Circle chat', 'H2 Add JigSwap to your home screen', 'H2 Search']
+ tap<24: 1 ['button.hover:text-foreground.focus-visible:ring-ring.relative.min-w-0 "2 members" 69x16']
+ tap24-44: 0 []
+ unnamed: []
+ truncated: ['button.hover:text-foreground.focus-visible:ring-ring.relative.min-w-0 "2 members"']
+ small: ['time.text-muted-foreground.px-1.pt-0.5.text-[11px] "7:39 AM" 11px']
+ zoomingInputs: []
+ overflowOff: []
+ dialogs: []
+  AXE region 1
+ console: 0 []
+ http: []
+
+### app__messages_ec1b1833-8cae-47 [desktop-dark] final=/messages/ec1b1833-8cae-47b3-ac3c-783e276b28c9 pageH=900 regionSH=830 ovX=0 regOvX=0 scroll={'useRegion': False, 'scrollHeight': 900, 'client': 900, 'top': 0, 'step': 810} inner=False
+ headings: ['H1 Messages', 'H2 Test\n, Circle chat', 'H2 Search']
+ tap<24: 2 ['a.transition-colors.hover:text-sidebar-accent-foreground.hover:underline "Community" 74x16', 'button.hover:text-foreground.focus-visible:ring-ring.relative.min-w-0 "2 members" 69x16']
+ tap24-44: 32 ['a.flex.shrink-0.items-center.transition-opacity 108x28', 'button.flex.h-9.w-full.max-w-[520px] "Search puzzles, people, circles… ⌘K" 520x36', 'button.inline-flex.items-center.justify-center.gap-2 [aria="Notifications"] "2" 36x36', 'button#radix-_R_58cj6l6_.inline-flex.items-center.justify-center.gap-2 "Switch language" 36x36', 'a.inline-flex.items-center.justify-center.gap-2 "Add Puzzle" 126x36', 'a.peer/menu-button.flex.w-full.items-center "Dashboard" 224x32']
+ unnamed: []
+ truncated: ['span.cl-internal-1y7k3pi']
+ small: ['kbd.pointer-events-none.rounded.border.bg-muted "⌘K" 11px', 'span.inline-flex.items-center.border.py-0.5 [aria="2 unread notifications"] "2" 10px', 'time.text-muted-foreground.px-1.pt-0.5.text-[11px] "7:39 AM" 11px']
+ zoomingInputs: ['textarea.placeholder:text-muted-foreground.focus-visible:border-ring.focus-visible:ring-ring/50.aria-invalid:ring-destructive/20 [aria="Message your circle Test"] 14px']
+ overflowOff: []
+ dialogs: []
+ console: 4 []
+ http: []
+
+### app__messages_ec1b1833-8cae-47 [mobile-dark] final=/messages/ec1b1833-8cae-47b3-ac3c-783e276b28c9 pageH=1106 regionSH=844 ovX=0 regOvX=0 scroll={'useRegion': False, 'scrollHeight': 1106, 'client': 844, 'top': 262, 'step': 760} inner=False
+ headings: ['H1 Messages', 'H1 Test\n, Circle chat', 'H2 Add JigSwap to your home screen', 'H2 Search']
+ tap<24: 1 ['button.hover:text-foreground.focus-visible:ring-ring.relative.min-w-0 "2 members" 69x16']
+ tap24-44: 0 []
+ unnamed: []
+ truncated: ['button.hover:text-foreground.focus-visible:ring-ring.relative.min-w-0 "2 members"']
+ small: ['time.text-muted-foreground.px-1.pt-0.5.text-[11px] "7:39 AM" 11px']
+ zoomingInputs: []
+ overflowOff: []
+ dialogs: []
+ console: 0 []
+ http: []
+
+### app__messages_ec1b1833-8cae-47 [mobile-nl] final=/messages/ec1b1833-8cae-47b3-ac3c-783e276b28c9 pageH=1106 regionSH=844 ovX=0 regOvX=0 scroll={'useRegion': False, 'scrollHeight': 1106, 'client': 844, 'top': 262, 'step': 760} inner=False
+ headings: ['H1 Berichten', 'H1 Test\n, Kringchat', 'H2 Zet JigSwap op je beginscherm', 'H2 Zoeken']
+ tap<24: 1 ['button.hover:text-foreground.focus-visible:ring-ring.relative.min-w-0 "2 leden" 44x16']
+ tap24-44: 0 []
+ unnamed: []
+ truncated: ['button.hover:text-foreground.focus-visible:ring-ring.relative.min-w-0 "2 leden"']
+ small: ['time.text-muted-foreground.px-1.pt-0.5.text-[11px] "07:39" 11px']
+ zoomingInputs: []
+ overflowOff: []
+ dialogs: []
+ console: 0 []
+ http: []
+
+### app__messages_new [desktop-light] final=/messages/new pageH=900 regionSH=830 ovX=0 regOvX=0 scroll={'useRegion': False, 'scrollHeight': 900, 'client': 900, 'top': 0, 'step': 810} inner=False
+ headings: ['H1 Messages', 'H2 Search']
+ tap<24: 1 ['a.transition-colors.hover:text-sidebar-accent-foreground.hover:underline "Community" 74x16']
+ tap24-44: 26 ['a.flex.shrink-0.items-center.transition-opacity 108x28', 'button.flex.h-9.w-full.max-w-[520px] "Search puzzles, people, circles… ⌘K" 520x36', 'button.inline-flex.items-center.justify-center.gap-2 [aria="Notifications"] "2" 36x36', 'button#radix-_R_58cj6l6_.inline-flex.items-center.justify-center.gap-2 "Switch language" 36x36', 'a.inline-flex.items-center.justify-center.gap-2 "Add Puzzle" 126x36', 'a.peer/menu-button.flex.w-full.items-center "Dashboard" 224x32']
+ unnamed: []
+ truncated: ['span.cl-internal-1y7k3pi']
+ small: ['kbd.pointer-events-none.rounded.border.bg-muted "⌘K" 11px', 'span.inline-flex.items-center.border.py-0.5 [aria="2 unread notifications"] "2" 10px']
+ zoomingInputs: []
+ overflowOff: []
+ dialogs: []
+  AXE color-contrast serious 2
+     - kbd | Fix any of the following:   Element has insufficient color contrast of 4.34 (foreground color: #6f7087, background color: #f2f2fb, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1 | <kbd class="pointer-events-none rounded border bg-muted px-1.5 py-0.5 font-mono text-[11px] leading-none text-muted-foreground">⌘K</kbd>
+     - .transition-\[filter\] | Fix any of the following:   Element has insufficient color contrast of 4.21 (foreground color: #6f7087, background color: #eeeeff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1 | <span aria-hidden="true" class="truncate text-xs text-muted-foreground transition-[filter] blur-[4px] select-none">s.verkuil+dev@pm.me</span>
+  AXE label-content-name-mismatch serious 1
+     - button[data-slot="popover-trigger"] | Fix any of the following:   Text inside the element is not included in the accessible name | <button data-slot="popover-trigger" class="inline-flex items-ce..." aria-label="Notifications" type="button" aria-haspopup="dialog" aria-expanded="false" data-s
+  AXE region 18
+ console: 4 []
+ http: []
+
+### app__messages_new [tablet-light] final=/messages/new pageH=1180 regionSH=1110 ovX=0 regOvX=0 scroll={'useRegion': False, 'scrollHeight': 1180, 'client': 1180, 'top': 0, 'step': 1062} inner=False
+ headings: ['H1 Messages', 'H2 Search']
+ tap<24: 1 ['a.transition-colors.hover:text-sidebar-accent-foreground.hover:underline "Community" 74x16']
+ tap24-44: 26 ['a.flex.shrink-0.items-center.transition-opacity 108x28', 'button.flex.h-9.w-full.max-w-[520px] "Search puzzles, people, circles… ⌘K" 326x36', 'button.inline-flex.items-center.justify-center.gap-2 [aria="Notifications"] "2" 36x36', 'button#radix-_R_58cj6l6_.inline-flex.items-center.justify-center.gap-2 "Switch language" 36x36', 'a.inline-flex.items-center.justify-center.gap-2 "Add Puzzle" 126x36', 'a.peer/menu-button.flex.w-full.items-center "Dashboard" 224x32']
+ unnamed: []
+ truncated: ['span.cl-internal-1y7k3pi']
+ small: ['kbd.pointer-events-none.rounded.border.bg-muted "⌘K" 11px', 'span.inline-flex.items-center.border.py-0.5 [aria="2 unread notifications"] "2" 10px']
+ zoomingInputs: []
+ overflowOff: []
+ dialogs: []
+  AXE color-contrast serious 2
+     - kbd | Fix any of the following:   Element has insufficient color contrast of 4.34 (foreground color: #6f7087, background color: #f2f2fb, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1 | <kbd class="pointer-events-none rounded border bg-muted px-1.5 py-0.5 font-mono text-[11px] leading-none text-muted-foreground">⌘K</kbd>
+     - .transition-\[filter\] | Fix any of the following:   Element has insufficient color contrast of 4.21 (foreground color: #6f7087, background color: #eeeeff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1 | <span aria-hidden="true" class="truncate text-xs text-muted-foreground transition-[filter] blur-[4px] select-none">s.verkuil+dev@pm.me</span>
+  AXE label-content-name-mismatch serious 1
+     - button[data-slot="popover-trigger"] | Fix any of the following:   Text inside the element is not included in the accessible name | <button data-slot="popover-trigger" class="inline-flex items-ce..." aria-label="Notifications" type="button" aria-haspopup="dialog" aria-expanded="false" data-s
+  AXE region 18
+ console: 4 []
+ http: []
+
+### app__messages_new [mobile-light] final=/messages/new pageH=1106 regionSH=844 ovX=0 regOvX=0 scroll={'useRegion': False, 'scrollHeight': 1106, 'client': 844, 'top': 262, 'step': 760} inner=False
+ headings: ['H1 Messages', 'H2 Add JigSwap to your home screen', 'H2 Search']
+ tap<24: 0 []
+ tap24-44: 0 []
+ unnamed: []
+ truncated: []
+ small: []
+ zoomingInputs: []
+ overflowOff: []
+ dialogs: []
+  AXE page-has-heading-one moderate 1
+     - html | Fix all of the following:   Page must have a level-one heading | <html lang="en" class="light" style="color-scheme: light; --page-head-height: 0px;">
+  AXE region 1
+ console: 2 []
+ http: []
+
+### app__messages_new [desktop-dark] final=/messages/new pageH=900 regionSH=830 ovX=0 regOvX=0 scroll={'useRegion': False, 'scrollHeight': 900, 'client': 900, 'top': 0, 'step': 810} inner=False
+ headings: ['H1 Messages', 'H2 Search']
+ tap<24: 1 ['a.transition-colors.hover:text-sidebar-accent-foreground.hover:underline "Community" 74x16']
+ tap24-44: 26 ['a.flex.shrink-0.items-center.transition-opacity 108x28', 'button.flex.h-9.w-full.max-w-[520px] "Search puzzles, people, circles… ⌘K" 520x36', 'button.inline-flex.items-center.justify-center.gap-2 [aria="Notifications"] "2" 36x36', 'button#radix-_R_58cj6l6_.inline-flex.items-center.justify-center.gap-2 "Switch language" 36x36', 'a.inline-flex.items-center.justify-center.gap-2 "Add Puzzle" 126x36', 'a.peer/menu-button.flex.w-full.items-center "Dashboard" 224x32']
+ unnamed: []
+ truncated: ['span.cl-internal-1y7k3pi']
+ small: ['kbd.pointer-events-none.rounded.border.bg-muted "⌘K" 11px', 'span.inline-flex.items-center.border.py-0.5 [aria="2 unread notifications"] "2" 10px']
+ zoomingInputs: []
+ overflowOff: []
+ dialogs: []
+ console: 4 []
+ http: []
+
+### app__messages_new [mobile-dark] final=/messages/new pageH=1106 regionSH=844 ovX=0 regOvX=0 scroll={'useRegion': False, 'scrollHeight': 1106, 'client': 844, 'top': 262, 'step': 760} inner=False
+ headings: ['H1 Messages', 'H2 Add JigSwap to your home screen', 'H2 Search']
+ tap<24: 0 []
+ tap24-44: 0 []
+ unnamed: []
+ truncated: []
+ small: []
+ zoomingInputs: []
+ overflowOff: []
+ dialogs: []
+ console: 0 []
+ http: []
+
+### app__messages_new [mobile-nl] final=/messages/new pageH=1106 regionSH=844 ovX=0 regOvX=0 scroll={'useRegion': False, 'scrollHeight': 1106, 'client': 844, 'top': 262, 'step': 760} inner=False
+ headings: ['H1 Berichten', 'H2 Zet JigSwap op je beginscherm', 'H2 Zoeken']
+ tap<24: 0 []
+ tap24-44: 0 []
+ unnamed: []
+ truncated: []
+ small: []
+ zoomingInputs: []
+ overflowOff: []
+ dialogs: []
+ console: 0 []
+ http: []

@@ -1,0 +1,62 @@
+{
+  "variant": "desktop-dark",
+  "route": "/sign-in",
+  "authed": false,
+  "name": "pub__sign-in",
+  "loadMs": 3837,
+  "finalUrl": "/sign-in",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "Sign in — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Sign in to JigSwap"
+    ],
+    "headings": [
+      "H1 Sign in to JigSwap"
+    ],
+    "pageHeight": 900,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 9,
+    "tapUnder24": 2,
+    "tapUnder24Examples": [
+      "a.cl-footerActionLink.🔒️.cl-internal-okpjoh \"Join waitlist\" 80x18",
+      "a.cl-internal-1scxde7 [aria=\"Clerk logo\"] 48x14"
+    ],
+    "tap24to44": 7,
+    "tap24to44Examples": [
+      "button.cl-socialButtonsIconButton.cl-button.cl-socialButtonsIconButton__apple.cl-button__apple [aria=\"Continue with Apple\"] 102x32",
+      "button.cl-socialButtonsIconButton.cl-button.cl-socialButtonsIconButton__google.cl-button__google [aria=\"Continue with Google\"] 102x32",
+      "button.cl-socialButtonsIconButton.cl-button.cl-socialButtonsIconButton__microsoft.cl-button__microsoft [aria=\"Continue with Microsoft\"] 102x32",
+      "input#identifier-field.cl-formFieldInput.cl-input.cl-formFieldInput__identifier.cl-input__identifier 322x32",
+      "input#password-field.cl-formFieldInput.cl-input.cl-formFieldInput__password.cl-input__password 303x32",
+      "button.cl-formFieldInputShowPasswordButton.cl-button.🔒️.cl-internal-1twtk2i [aria=\"Show password\"] 32x26",
+      "button.cl-formButtonPrimary.cl-button.🔒️.cl-internal-sb33io \"Continue\" 322x32"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [],
+    "smallText": [],
+    "zoomingInputs": [
+      "input#identifier-field.cl-formFieldInput.cl-input.cl-formFieldInput__identifier.cl-input__identifier 13px",
+      "input#password-field.cl-formFieldInput.cl-input.cl-formFieldInput__password.cl-input__password 13px"
+    ],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 900,
+    "client": 900,
+    "top": 0,
+    "step": 810
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/desktop-dark/pub__sign-in__01.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

@@ -1,0 +1,57 @@
+{
+  "variant": "mobile-nl",
+  "route": "/my-puzzles/suggestions",
+  "authed": true,
+  "name": "app__my-puzzles_suggestions",
+  "loadMs": 4454,
+  "finalUrl": "/my-puzzles/suggestions",
+  "metrics": {
+    "regionScrollHeight": 468,
+    "regionOverflowX": 0,
+    "title": "Mijn puzzels — JigSwap",
+    "lang": "nl",
+    "h1": [
+      "Mijn voorstellen",
+      "Mijn voorstellen"
+    ],
+    "headings": [
+      "H1 Mijn voorstellen",
+      "H1 Mijn voorstellen",
+      "H2 Zet JigSwap op je beginscherm",
+      "H2 Zoeken"
+    ],
+    "pageHeight": 844,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 11,
+    "tapUnder24": 0,
+    "tapUnder24Examples": [],
+    "tap24to44": 0,
+    "tap24to44Examples": [],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 844,
+    "client": 844,
+    "top": 0,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-nl/app__my-puzzles_suggestions__01.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [
+    "[CONVEX M(presence:heartbeat)] [Request ID: 6ea54d534c37f7af] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":3798}\n    at enforceRateLimit (../../convex/lib/rateLimits.ts:45:32)\n    at async handler (../../convex/presence.ts:61:4)\n",
+    "pageerror: [CONVEX M(presence:heartbeat)] [Request ID: 6ea54d534c37f7af] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":3798}"
+  ],
+  "httpErrors": []
+}

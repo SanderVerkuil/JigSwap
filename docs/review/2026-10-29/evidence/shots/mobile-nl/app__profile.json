@@ -1,0 +1,64 @@
+{
+  "variant": "mobile-nl",
+  "route": "/profile",
+  "authed": true,
+  "name": "app__profile",
+  "loadMs": 6201,
+  "finalUrl": "/profile",
+  "metrics": {
+    "regionScrollHeight": 1145,
+    "regionOverflowX": 121,
+    "title": "Profiel — JigSwap",
+    "lang": "nl",
+    "h1": [
+      "Profiel",
+      "Profiel"
+    ],
+    "headings": [
+      "H1 Profiel",
+      "H1 Profiel",
+      "H2 Henk Pieterszoon",
+      "H2 De Plank van Henk",
+      "H2 Reputatie",
+      "H2 Zet JigSwap op je beginscherm",
+      "H2 Zoeken"
+    ],
+    "pageHeight": 1521,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 14,
+    "tapUnder24": 0,
+    "tapUnder24Examples": [],
+    "tap24to44": 4,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Toon mijn QR\" 140x32",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Profiel Bewerken\" 171x36",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Plank indelen\" 138x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Herstellen\" 114x32"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\"",
+      "span.text-muted-foreground.truncate.text-right.text-sm \"3 uitgestald\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 1521,
+    "client": 844,
+    "top": 677,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-nl/app__profile__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__profile__02.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

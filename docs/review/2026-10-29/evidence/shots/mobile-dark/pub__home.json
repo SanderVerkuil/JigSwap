@@ -1,0 +1,119 @@
+{
+  "variant": "mobile-dark",
+  "route": "/",
+  "authed": false,
+  "name": "pub__home",
+  "loadMs": 5682,
+  "finalUrl": "/",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "JigSwap — Share jigsaw puzzles with fellow enthusiasts",
+    "lang": "en",
+    "h1": [
+      "Share jigsaw puzzles with fellow enthusiasts"
+    ],
+    "headings": [
+      "H1 Share jigsaw puzzles with fellow enthusiasts",
+      "H2 Up and running in three steps",
+      "H3 Fill your shelf",
+      "H3 Discover & request",
+      "H3 Lend & track",
+      "H3 A shelf that feels like home",
+      "H3 Lend out — and always know who has your puzzles",
+      "H3 Find your next challenge",
+      "H2 One puzzle, many hands",
+      "H2 Ready to share your first puzzle?"
+    ],
+    "pageHeight": 6312,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 18,
+    "tapUnder24": 10,
+    "tapUnder24Examples": [
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"How it works\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Browse puzzles\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Features\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Docs\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Start trading\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"About\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Contact\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Privacy policy\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Terms of service\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Cookie policy\" 342x22"
+    ],
+    "tap24to44": 5,
+    "tap24to44Examples": [
+      "a.active [aria=\"JigSwap\"] \"JigSwap\" 118x37",
+      "button#radix-_R_7aj6l6_.inline-flex.items-center.justify-center.w-10 [aria=\"Switch language\"] \"🇺🇸\" 40x40",
+      "button.inline-flex.items-center.justify-center.w-10 [aria=\"Toggle dark mode\"] 40x40",
+      "button.min-[861px]:hidden.inline-flex.items-center.justify-center [aria=\"Open menu\"] 40x40",
+      "a.inline-flex.items-center.justify-center.gap-2 \"See how it works\" 169x36"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [],
+    "smallText": [
+      "div \"NATUUR\" 9.5px",
+      "b \"1000\" 11px",
+      "span \"PCS\" 5.5px",
+      "div \"Boslicht\" 11px",
+      "div \"KUNST\" 9.5px",
+      "b \"2000\" 11px",
+      "span \"PCS\" 5.5px",
+      "div \"Sterrennacht\" 11px"
+    ],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "count": 5,
+      "nodes": [
+        {
+          "target": ".w-\\[38px\\].h-\\[38px\\].border-2:nth-child(2)",
+          "html": "<span class=\"w-[38px] h-[38px] rounded-full text-white font-mk-heading font-semibold text-[13px] inline-flex items-center justify-center border-2 border-mk-card",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.14 (foreground color: #ffffff, background color: #46ca40, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": ".py-3.border-b.px-4:nth-child(1) > .w-\\[34px\\].h-\\[34px\\].text-white",
+          "html": "<span class=\"w-[34px] h-[34px] shrink-0 rounded-full text-white font-mk-heading font-semibold text-xs inline-flex items-center justify-center\" style=\"background",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.14 (foreground color: #ffffff, background color: #46ca40, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": ".py-3.px-4.gap-3:nth-child(3) > .w-\\[34px\\].h-\\[34px\\].text-white",
+          "html": "<span class=\"w-[34px] h-[34px] shrink-0 rounded-full text-white font-mk-heading font-semibold text-xs inline-flex items-center justify-center\" style=\"background",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.52 (foreground color: #ffffff, background color: #ec4899, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": ".max-w-\\[1200px\\].mx-auto.px-6 > .grid-cols-2.gap-\\[clamp\\(32px\\,5vw\\,72px\\)\\].max-\\[860px\\]\\:grid-cols-1 > div:nth-child(1) > .tracking-\\[\\.12em\\].uppercase.font-mono",
+          "html": "<div class=\"inline-flex items-center gap-2 font-mono text-xs font-semibold tracking-[.12em] uppercase text-mk-violet-600\"><span class=\"w-[18px] h-0.5 rounded-xs",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.93 (foreground color: #7f7af2, background color: #292b42, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 6312,
+    "client": 844,
+    "top": 5320,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__home__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__home__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__home__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__home__04.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__home__05.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__home__06.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__home__07.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__home__08.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}
