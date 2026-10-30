@@ -241,3 +241,49 @@ describe("MobilePageActions", () => {
     expect(mobile?.className).toContain("justify-end");
   });
 });
+
+const renderHead = (content: PageHeaderContent) => {
+  mocks.pathname = "/puzzles/puzzle_1";
+  return render(
+    <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+      <PageHeaderSlotProvider>
+        <Publish content={content} />
+        <PageHead />
+      </PageHeaderSlotProvider>
+    </IntlProvider>,
+  );
+};
+
+describe("PageHead published title", () => {
+  it("shows a published title as the page heading", () => {
+    renderHead({ title: "Café" });
+
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Café");
+  });
+
+  it("keeps the breadcrumb leaf but leaves the heading to the page when the title is in its content", () => {
+    renderHead({ title: "Café", titleInContent: true });
+
+    expect(screen.queryByRole("heading")).toBeNull();
+    const trail = screen.getByRole("navigation", {
+      name: en.shell.breadcrumbLabel,
+    });
+    expect(trail.textContent).toContain("Café");
+    // The route's own page stays a crumb back to the listing.
+    expect(
+      screen
+        .getByRole("link", { name: en.shell.pages.puzzles.title })
+        .getAttribute("href"),
+    ).toBe("/puzzles");
+  });
+
+  it("still renders published actions when the title is in the content", () => {
+    renderHead({
+      title: "Café",
+      titleInContent: true,
+      actions: <button type="button">Act</button>,
+    });
+
+    expect(screen.getByRole("button", { name: "Act" })).toBeTruthy();
+  });
+});

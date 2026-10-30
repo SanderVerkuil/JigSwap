@@ -149,10 +149,14 @@ function PuzzleDefinitionDetail({
     totalAvailable,
   } = view;
 
-  // Publish the puzzle name as the page-head title so the shell shows it (and the
-  // breadcrumb becomes "Community › Puzzles catalogue › <name>" — the route's
-  // pageKey "puzzles" matches the catalogue nav item, which renders the middle crumb).
-  usePageHeader(() => ({ title: definition.title }), [definition.title]);
+  // Publish the puzzle name so the breadcrumb becomes "Community › Puzzles catalogue › <name>"
+  // (the route's pageKey "puzzles" matches the catalogue nav item, which renders the middle
+  // crumb). The hero's h1 below is the page's only title heading, so the shell keeps the name
+  // as the breadcrumb leaf (and mobile bar text) only.
+  usePageHeader(
+    () => ({ title: definition.title, titleInContent: true }),
+    [definition.title],
+  );
 
   // Only an approved definition (or the viewer's own submission) takes reviews; the server
   // refuses the rest, so neither the action nor the composer is offered there. Loading, or a

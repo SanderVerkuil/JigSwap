@@ -7,6 +7,8 @@
 //   • dynamic page: Group › Page › Leaf   (a page publishing a title override,
 //     e.g. a collection's name, via usePageHeader — the route's own title
 //     becomes a middle crumb linking back to the listing).
+// A page whose content already shows its title as an h1 (titleInContent) gets
+// only the breadcrumb (and actions) here, never a second title heading.
 // No crumbs on Dashboard, Profile or the landings themselves, but the crumb row
 // is reserved everywhere so the h1 sits at the same height on every page.
 // The title row wraps: when the actions don't fit beside the title they move
@@ -29,6 +31,7 @@ export function PageHead() {
   const { user } = useUser();
   const {
     title: titleOverride,
+    titleInContent,
     crumbs,
     actions: headerActions,
     meta: headerMeta,
@@ -130,19 +133,22 @@ export function PageHead() {
         data-slot="page-head-row"
         className="flex flex-wrap items-start gap-x-4 gap-y-2"
       >
-        {/* Keeps at least 16rem (or the full row) for the title, so actions that don't fit
-            beside it wrap onto their own line instead of crushing it. */}
-        <div
-          data-slot="page-head-title"
-          className="flex min-w-[min(100%,16rem)] flex-1 flex-wrap items-baseline gap-x-3.5 gap-y-0.5"
-        >
-          <h1 className="font-heading text-2xl font-bold tracking-tight">
-            {title}
-          </h1>
-          {!titleOverride && (
-            <p className="text-sm text-muted-foreground">{subtitle}</p>
-          )}
-        </div>
+        {/* A page that renders its own title h1 keeps it only as the breadcrumb leaf here.
+            Otherwise this keeps at least 16rem (or the full row) for the title, so actions that
+            don't fit beside it wrap onto their own line instead of crushing it. */}
+        {!titleInContent && (
+          <div
+            data-slot="page-head-title"
+            className="flex min-w-[min(100%,16rem)] flex-1 flex-wrap items-baseline gap-x-3.5 gap-y-0.5"
+          >
+            <h1 className="font-heading text-2xl font-bold tracking-tight">
+              {title}
+            </h1>
+            {!titleOverride && (
+              <p className="text-sm text-muted-foreground">{subtitle}</p>
+            )}
+          </div>
+        )}
         {headerMeta || headerActions ? (
           <div
             data-slot="page-head-actions"
