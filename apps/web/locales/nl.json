@@ -629,6 +629,8 @@
       "barcodeNotFound": "Nog geen puzzel met barcode {code}",
       "barcodeNotFoundHint": "Registreer hem, zodat jij en iedereen hem kunnen toevoegen.",
       "registerIt": "Registreer hem",
+      "details": "Details",
+      "detailsOf": "Details van {title}",
       "chosenPuzzle": "Een exemplaar toevoegen van",
       "copyDetails": "Jouw exemplaar",
       "addYourCopy": "Exemplaar toevoegen",

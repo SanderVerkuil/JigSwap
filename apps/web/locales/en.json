@@ -629,6 +629,8 @@
       "barcodeNotFound": "No puzzle with barcode {code} yet",
       "barcodeNotFoundHint": "Register it so you, and everyone else, can add it.",
       "registerIt": "Register it",
+      "details": "Details",
+      "detailsOf": "Details of {title}",
       "chosenPuzzle": "Adding a copy of",
       "copyDetails": "Your copy",
       "addYourCopy": "Add your copy",

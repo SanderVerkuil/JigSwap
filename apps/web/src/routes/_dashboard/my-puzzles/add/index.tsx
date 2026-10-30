@@ -1,14 +1,14 @@
 import { Link } from "@/compat/link";
+import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { EmptyState } from "@/components/library/empty-state";
-import { PuzzleCard } from "@/components/puzzles/puzzle-card";
-import { PuzzleViewProvider } from "@/components/puzzles/puzzle-view-provider";
+import { PuzzlePickList } from "@/components/puzzles/puzzle-pick-list";
 import { GuideHelpButton } from "@/components/tour/guide-help-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLoading } from "@/components/ui/loading";
 import { useTourLauncher } from "@/components/whats-new/tour-launcher";
-import { gateway } from "@/gateway";
+import { gateway, type Id } from "@/gateway";
 import { catalogueSearchKey, detectBarcode } from "@/lib/catalogue-search";
 import { pageTitle } from "@/lib/page-title";
 import { convexQuery } from "@convex-dev/react-query";
@@ -18,7 +18,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { usePaginatedQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { ListPlus, Plus, ScanBarcode, Search } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/my-puzzles/add/")({
@@ -77,6 +77,27 @@ function AddPuzzleChooserPage() {
   // acquire a copy of a puzzle they contributed before it is approved.
   const { data: mySubmissions } = useQuery(
     convexQuery(gateway.catalog.myContributedPuzzles, {}),
+  );
+
+  // The member's copies, to mark puzzles already on their shelf. Same args as the quick picker
+  // and the dashboard shelf, so the subscription is shared.
+  const { member } = useCurrentMember();
+  const { data: copies } = useQuery(
+    convexQuery(
+      gateway.library.ownedByOwner,
+      member?._id
+        ? { ownerId: member._id as Id<"users">, includeUnavailable: true }
+        : "skip",
+    ),
+  );
+  const ownedDefinitionIds = useMemo(
+    () =>
+      new Set(
+        (copies ?? []).flatMap((c) =>
+          c.puzzleDefinitionId ? [c.puzzleDefinitionId] : [],
+        ),
+      ),
+    [copies],
   );
 
   // The approved catalogue, searched server-side and paginated with infinite
@@ -202,11 +223,10 @@ function AddPuzzleChooserPage() {
               {t("chooser.yourSubmissionsHint")}
             </p>
           </div>
-          <PuzzleViewProvider viewMode="grid">
-            {filteredSubmissions.map((puzzle) => (
-              <PuzzleCard key={puzzle._id} puzzle={puzzle as CardPuzzle} />
-            ))}
-          </PuzzleViewProvider>
+          <PuzzlePickList
+            puzzles={filteredSubmissions as CardPuzzle[]}
+            ownedDefinitionIds={ownedDefinitionIds}
+          />
         </section>
       )}
 
@@ -220,9 +240,10 @@ function AddPuzzleChooserPage() {
           {barcodePending ? (
             spinner
           ) : barcodeMatch ? (
-            <PuzzleViewProvider viewMode="grid">
-              <PuzzleCard puzzle={barcodeMatch} />
-            </PuzzleViewProvider>
+            <PuzzlePickList
+              puzzles={[barcodeMatch]}
+              ownedDefinitionIds={ownedDefinitionIds}
+            />
           ) : (
             <EmptyState
               title={t("chooser.barcodeNotFound", { code: barcode })}
@@ -265,11 +286,10 @@ function AddPuzzleChooserPage() {
               {status === "LoadingFirstPage" ? (
                 spinner
               ) : catalogue.length > 0 ? (
-                <PuzzleViewProvider viewMode="grid">
-                  {catalogue.map((puzzle) => (
-                    <PuzzleCard key={puzzle._id} puzzle={puzzle} />
-                  ))}
-                </PuzzleViewProvider>
+                <PuzzlePickList
+                  puzzles={catalogue}
+                  ownedDefinitionIds={ownedDefinitionIds}
+                />
               ) : (
                 <p className="text-muted-foreground text-sm">
                   {t("chooser.noCatalogueResults")}
