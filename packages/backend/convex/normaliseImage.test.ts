@@ -1,5 +1,7 @@
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
+import { setFlagsFromString } from "node:v8";
+import { runInNewContext } from "node:vm";
 import { Jimp } from "jimp";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import {
@@ -269,6 +271,67 @@ describe("decodeUpright decodes only what the guards checked", () => {
       },
     });
     expect(JPEG_DECODER_MEMORY_MB).toBe(193);
+  });
+});
+
+// A full garbage collection on demand: V8's gc(), switched on for this file.
+setFlagsFromString("--expose-gc");
+const collectGarbage = runInNewContext("gc") as () => void;
+
+// Each WebP decode runs in a decoder instance of its own, whose heap grows to what that image
+// needs and is dropped with it: a big decode never stays resident for the next one (SEC-77).
+describe("the WebP decoder", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test("decodes WebPs one after another", async () => {
+    for (const [name, orientation] of [
+      ["1.webp", 1],
+      ["6.webp", 6],
+      ["6-alpha.webp", 6],
+      ["1.webp", 1],
+    ] as const) {
+      const image = await decodeUpright(fixture(name), "webp", orientation);
+      expectUpright(image.bitmap, {
+        tolerance: 2,
+        alpha: name === "6-alpha.webp" ? 128 : 255,
+      });
+    }
+  });
+
+  test("keeps no decoder instance, nor its heap, once its decode is done", async () => {
+    const instances: WeakRef<WebAssembly.Instance>[] = [];
+    const Instance = WebAssembly.Instance;
+    // Every instance the decoder creates, held weakly (a vi.spyOn would keep what it returned).
+    WebAssembly.Instance = new Proxy(Instance, {
+      construct: (target, args: [WebAssembly.Module, WebAssembly.Imports?]) => {
+        const instance = new target(...args);
+        instances.push(new WeakRef(instance));
+        return instance;
+      },
+    });
+    // As in a fresh Node process: no global ImageData yet, which the decoder's glue would define
+    // from inside the instance it is creating.
+    const imageData = Object.getOwnPropertyDescriptor(globalThis, "ImageData");
+    Reflect.deleteProperty(globalThis, "ImageData");
+    try {
+      await decodeUpright(fixture("1.webp"), "webp", 1);
+      await decodeUpright(fixture("6.webp"), "webp", 6);
+    } finally {
+      WebAssembly.Instance = Instance;
+      if (imageData) Object.defineProperty(globalThis, "ImageData", imageData);
+    }
+
+    expect(instances).toHaveLength(2);
+    // Collect in jobs of their own: a WeakRef's target is kept alive until the end of the job
+    // that created or read it.
+    for (let i = 0; i < 3; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      collectGarbage();
+    }
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(instances.map((ref) => ref.deref())).toEqual([undefined, undefined]);
   });
 });
 

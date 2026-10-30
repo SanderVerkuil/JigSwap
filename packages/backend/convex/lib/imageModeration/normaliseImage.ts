@@ -1,8 +1,7 @@
 "use node";
 
-import decodeWebpBytes, {
-  init as initWebpDecoder,
-} from "@jsquash/webp/decode.js";
+import webpDecoderFactory from "@jsquash/webp/codec/dec/webp_dec.js";
+import { initEmscriptenModule } from "@jsquash/webp/utils.js";
 import { Jimp } from "jimp";
 import {
   checkImageBytes,
@@ -39,24 +38,50 @@ import { WEBP_DECODER_WASM_BASE64 } from "./webpDecoderWasm";
 
 const JPEG_QUALITY = 95;
 
-let webpDecoderReady: Promise<void> | null = null;
+// The WebP decoder (libwebp), compiled once per process. Every decode instantiates it afresh: an
+// instance's heap only ever grows (to what the largest image it decoded needed), so a cached one
+// would keep the high-water mark of the biggest WebP resident for every decode after it, in a
+// 512 MiB action (SEC-77). A fresh instance is dropped with its heap once its decode returns
+// (the pixels are copied out of it).
+let webpDecoderModule: Promise<WebAssembly.Module> | null = null;
+
+// The decoder's glue defines a global ImageData (what it returns the pixels as) when there is
+// none, as in Node, from inside the first instance it creates: that class keeps the instance, heap
+// included, reachable for the life of the process. Defined here before any instance exists, no
+// instance is kept.
+const defineImageData = () => {
+  if ("ImageData" in globalThis) return;
+  Object.defineProperty(globalThis, "ImageData", {
+    configurable: true,
+    writable: true,
+    value: class ImageData {
+      constructor(
+        readonly data: Uint8ClampedArray,
+        readonly width: number,
+        readonly height: number,
+      ) {}
+    },
+  });
+};
+
+/** The decoder @jsquash/webp's glue builds: the pixels, or null when the bytes do not decode. */
+type WebpDecoder = { decode(data: Uint8Array): ImageData | null };
 
 const decodeWebp = async (bytes: Uint8Array): Promise<Bitmap> => {
-  webpDecoderReady ??= WebAssembly.compile(
+  webpDecoderModule ??= WebAssembly.compile(
     Buffer.from(WEBP_DECODER_WASM_BASE64, "base64"),
-  )
-    // The published typings omit the (supported) precompiled-module argument.
-    .then((module) =>
-      (initWebpDecoder as unknown as (m: WebAssembly.Module) => Promise<void>)(
-        module,
-      ),
-    )
-    .catch((error: unknown) => {
-      webpDecoderReady = null;
-      throw error;
-    });
-  await webpDecoderReady;
-  const image = await decodeWebpBytes(bytes.slice().buffer);
+  ).catch((error: unknown) => {
+    webpDecoderModule = null;
+    throw error;
+  });
+  const wasm = await webpDecoderModule;
+  defineImageData();
+  const decoder: WebpDecoder = await initEmscriptenModule(
+    webpDecoderFactory,
+    wasm,
+  );
+  const image = decoder.decode(bytes);
+  if (!image) throw new Error("WebP decode failed");
   const data = image.data;
   return {
     width: image.width,
