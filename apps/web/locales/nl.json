@@ -3693,12 +3693,12 @@
   },
   "titles": {
     "dashboard": "Dashboard — JigSwap",
-    "browse": "Puzzels bladeren — JigSwap",
+    "browse": "Puzzels ontdekken — JigSwap",
     "myPuzzles": "Mijn puzzels — JigSwap",
     "addPuzzle": "Puzzel toevoegen — JigSwap",
     "createPuzzle": "Puzzel aanmaken — JigSwap",
     "quickAddPuzzles": "Meerdere puzzels toevoegen — JigSwap",
-    "puzzles": "Puzzels — JigSwap",
+    "puzzles": "Puzzelcatalogus — JigSwap",
     "puzzle": "Puzzeldetails — JigSwap",
     "collections": "Collecties — JigSwap",
     "household": "Huishouden — JigSwap",
@@ -3824,8 +3824,8 @@
       },
       "browse": {
         "title": "Puzzels Ontdekken",
-        "subtitle": "Ontdek puzzels uit de community.",
-        "description": "Ontdek puzzels uit de community"
+        "subtitle": "Exemplaren die andere leden te ruil, te leen of te koop aanbieden.",
+        "description": "Exemplaren die andere leden te ruil, te leen of te koop aanbieden"
       },
       "circles": {
         "title": "Kringen",
@@ -3873,8 +3873,8 @@
       },
       "puzzles": {
         "title": "Puzzelcatalogus",
-        "subtitle": "De gedeelde puzzelcatalogus.",
-        "description": "De gedeelde puzzelcatalogus"
+        "subtitle": "Alle puzzels in JigSwap, of iemand ze nu aanbiedt of niet.",
+        "description": "Alle puzzels in JigSwap, aangeboden of niet"
       },
       "borrowed": {
         "title": "Geleend",

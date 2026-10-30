@@ -3698,7 +3698,7 @@
     "addPuzzle": "Add puzzle — JigSwap",
     "createPuzzle": "Create puzzle — JigSwap",
     "quickAddPuzzles": "Add several puzzles — JigSwap",
-    "puzzles": "Puzzles — JigSwap",
+    "puzzles": "Puzzles catalogue — JigSwap",
     "puzzle": "Puzzle details — JigSwap",
     "collections": "Collections — JigSwap",
     "household": "Household — JigSwap",
@@ -3824,8 +3824,8 @@
       },
       "browse": {
         "title": "Browse Puzzles",
-        "subtitle": "Discover puzzles from the community.",
-        "description": "Discover from the community"
+        "subtitle": "Copies other members offer to swap, lend or sell.",
+        "description": "Copies other members offer to swap, lend or sell"
       },
       "circles": {
         "title": "Circles",
@@ -3873,8 +3873,8 @@
       },
       "puzzles": {
         "title": "Puzzles catalogue",
-        "subtitle": "The shared puzzle catalogue.",
-        "description": "The shared puzzle catalogue"
+        "subtitle": "Every puzzle in JigSwap, whether or not anyone offers it.",
+        "description": "Every puzzle in JigSwap, offered or not"
       },
       "borrowed": {
         "title": "Borrowed",
