@@ -29,9 +29,8 @@ type OwnedCopy = FunctionReturnType<
 >["recent"][number];
 
 // How many copies the dashboard shelf reads: the Fresh section below shows six, so both sections
-// share one library.myShelf subscription; the plank shows the first PLANK_SIZE of them.
+// share one library.myShelf subscription; the plank shows the first SHELF_BOX_COUNT of them.
 export const MY_SHELF_SIZE = 6;
-const PLANK_SIZE = 5;
 
 // Warm gradient pairs for boxes without cover art (violet / green / pink /
 // amber brand hues) — never an empty gray box.
@@ -47,6 +46,11 @@ const BOX_HEIGHTS = [148, 130, 156, 126, 142];
 
 // Shorter set for the cramped mobile dashboard (see sub-project ②).
 const MOBILE_BOX_HEIGHTS = [118, 104, 124, 100, 114];
+
+// Boxes on the shelf. The 3D scene fits the whole row into the canvas, so a
+// phone shows one box fewer to keep the covers big enough to recognise.
+const SHELF_BOX_COUNT = 5;
+const PHONE_SHELF_BOX_COUNT = 4;
 
 function toPlankBox(
   copy: OwnedCopy,
@@ -131,7 +135,7 @@ export function ShelfSection() {
   const plankBoxes = useMemo(
     () =>
       (shelf?.recent ?? [])
-        .slice(0, PLANK_SIZE)
+        .slice(0, isMobile ? PHONE_SHELF_BOX_COUNT : SHELF_BOX_COUNT)
         .map((copy, i) => toPlankBox(copy, i, isMobile)),
     [shelf, isMobile],
   );
@@ -219,7 +223,8 @@ export function ShelfSection() {
         </div>
       ) : (
         <div className="grid items-center gap-10 lg:grid-cols-[1fr_252px]">
-          <div className="h-[300px] min-w-0 md:h-[360px]">
+          {/* Lower on phones: a width-fitted row needs less height there. */}
+          <div className="h-[220px] min-w-0 sm:h-[300px] md:h-[360px]">
             <PuzzlePlank3D boxes={plankBoxes} />
           </div>
           <div className="flex flex-col">
