@@ -4,9 +4,10 @@ import authConfig from "./auth.config";
 
 // The Clerk configuration admin rights depend on lives in the Clerk dashboard. The expected version
 // is kept in packages/backend/clerk/ (see its README); these checks keep that versioned copy honest.
-// identity/isAdmin reads `metadata.role` from the "convex" JWT and the web admin guard reads it from
-// the session token, so both must map `metadata` to the server-only public_metadata. The web writes
-// unsafeMetadata (shell preferences) from the browser, so no claim may ever come from it.
+// identity/isAdmin (and through it the web /admin guard) reads `metadata.role` from the "convex"
+// JWT; the web's session-token claims type the same field. Both must map `metadata` to
+// public_metadata, which only the Clerk Backend API writes. The browser writes unsafeMetadata
+// (shell preferences), so no claim may ever come from it.
 
 type ClerkClaims = Record<string, unknown>;
 type JwtTemplate = { name: string; claims: ClerkClaims };

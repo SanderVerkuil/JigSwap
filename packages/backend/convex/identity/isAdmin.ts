@@ -1,10 +1,10 @@
 import type { QueryCtx } from "../_generated/server";
 
 // Whether the acting caller is an admin. The role lives in Clerk publicMetadata.role, surfaced as
-// the `metadata.role` claim by the Clerk "convex" JWT template (the same claim the web admin guard
-// reads from the session token). Only that nested claim counts: a flat `role` claim is ignored, so
-// nothing but the template's `metadata` mapping can grant admin. Fails CLOSED: an unauthenticated
-// caller or a missing claim is NOT admin.
+// the `metadata.role` claim by the Clerk "convex" JWT template. The web /admin guard asks this same
+// check (identity/isCurrentUserAdmin). Only that nested claim counts: a flat `role` claim is
+// ignored, so nothing but the template's `metadata` mapping can grant admin. Fails CLOSED: an
+// unauthenticated caller or a missing claim is NOT admin.
 //
 // The expected template is versioned in packages/backend/clerk/convex-jwt-template.json (checked by
 // clerkTemplates.test.ts). It must map `metadata` to {{user.public_metadata}}, never to

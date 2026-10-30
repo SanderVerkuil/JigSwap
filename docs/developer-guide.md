@@ -202,8 +202,9 @@ TanStack Router. See [`03-bff-tanstack-start.md`](../spec/architecture/03-bff-ta
 - **Auth:** `__root.tsx` runs `fetchClerkAuth` (a `createServerFn`) on every SSR request and seeds
   a module-level `clientAuthCache` for client navigation. `_dashboard/route.tsx` calls
   `requireAuth` in `beforeLoad` (reads `userId` off context — no server call). `/admin` uses
-  `requireAdmin`, which **does** make a server call to read Clerk `sessionClaims.metadata.role`.
-  The Clerk session-token and `convex` JWT-template claims this relies on are versioned in
+  `requireAdmin`, which **does** make a server call: it asks Convex
+  (`identity/isCurrentUserAdmin`) with a `convex` JWT, whose `metadata.role` claim decides. The
+  Clerk JWT-template and session-token claims are versioned in
   [`packages/backend/clerk/`](../packages/backend/clerk/README.md); keep the dashboard in step.
 - **Data fetching:** all Convex interaction is `useQuery`/`useMutation`/`useAction` from
   `convex/react` against `gateway.*` (imported via the `@/gateway` shim at
