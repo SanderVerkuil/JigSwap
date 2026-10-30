@@ -1296,7 +1296,10 @@ export default defineSchema({
     .index("by_member", ["memberId"])
     .index("by_thread", ["threadAggregateId"])
     .index("by_thread_member", ["threadAggregateId", "memberId"])
-    .index("by_member_activity", ["memberId", "lastActivityAt"]),
+    .index("by_member_activity", ["memberId", "lastActivityAt"])
+    // The unread badge (getUnreadTotal): a member's unmuted rows (`muted` absent; setThreadMuted
+    // never stores false) with unread messages, biggest count first.
+    .index("by_member_unread", ["memberId", "muted", "unreadCount"]),
 
   // "Is typing" in a thread (conversation/setTyping, spec 4.3): at most one row per (thread,
   // member), patched in place and throttled server-side on `writtenAt`. clearTyping only unsets
