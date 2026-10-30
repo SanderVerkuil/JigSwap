@@ -2446,6 +2446,7 @@
     "channelPush": "Push",
     "channelsNote": "In-app notifications are delivered instantly. Push is delivered to your browser (you'll be asked for permission). Email is available for selected notification types.",
     "emailUnavailable": "Email is not available for this notification type",
+    "emailUnavailableShort": "Not available by email",
     "notificationType": "Notification",
     "types": {
       "trade_request": "Trade requests",

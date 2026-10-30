@@ -66,12 +66,16 @@ function controllableTypes(
   return types;
 }
 
-// The 13×3 type×channel preference grid, card-free. It's a single aligned matrix at every
+// The type×channel preference table, card-free. It's a single aligned matrix at every
 // container width: one header row names each channel once, then a divide-y row per type with
 // the switches in fixed-width columns that line up under the headers. Channel columns are
 // narrower below the @2xl/matrix container threshold and widen once the container has room.
-// role="grid"/row/columnheader/rowheader/gridcell + aria-labelledby give the switches
-// accessible names without visible per-cell labels.
+// The header row sticks under the shell's sticky chrome (--app-sticky-top) so a phone, where
+// the table runs for several screens, never shows three unlabelled switches; that needs the
+// wrapper to CLIP (overflow-clip) rather than hide its overflow, because overflow-hidden would
+// make it the sticky element's scroll container. role="table" (not "grid": there is no grid
+// keyboard model, each switch is its own tab stop). A switch is named by its row's title and
+// its column header only; the description, and the reason a switch is locked, describe it.
 const COLS =
   "grid grid-cols-[minmax(0,1fr)_repeat(3,3rem)] @2xl/matrix:grid-cols-[minmax(0,1fr)_repeat(3,5.5rem)] items-center";
 
@@ -97,13 +101,16 @@ export function ChannelMatrix({
   return (
     <div className="@container/matrix">
       <div
-        role="grid"
+        role="table"
         aria-label={t("matrixLabel")}
-        className="overflow-hidden rounded-lg border"
+        className="overflow-clip rounded-lg border"
       >
         <div
           role="row"
-          className={cn(COLS, "bg-muted/40 border-b px-4 py-2.5")}
+          className={cn(
+            COLS,
+            "bg-background/95 sticky top-[var(--app-sticky-top,0px)] z-10 border-b px-4 py-2.5 backdrop-blur-sm",
+          )}
         >
           <span
             role="columnheader"
@@ -116,7 +123,7 @@ export function ChannelMatrix({
               key={channel}
               role="columnheader"
               id={`col-${channel}`}
-              className="text-muted-foreground text-center text-[10px] font-medium tracking-wide uppercase @2xl/matrix:text-xs"
+              className="text-muted-foreground text-center text-xs font-medium tracking-wide uppercase"
             >
               {channelLabel[channel]}
             </span>
@@ -135,7 +142,7 @@ export function ChannelMatrix({
                 role="row"
                 className={cn(
                   COLS,
-                  "bg-muted/20 scroll-mt-24 border-t px-4 py-2.5",
+                  "bg-muted/20 scroll-mt-[calc(var(--app-sticky-top,0px)+3rem)] border-t px-4 py-2.5",
                 )}
               >
                 <span role="rowheader" className="pr-4">
@@ -154,7 +161,7 @@ export function ChannelMatrix({
                     : headerState(controllable, channel, preferences);
                   return (
                     <div
-                      role="gridcell"
+                      role="cell"
                       key={channel}
                       className="flex justify-center"
                     >
@@ -188,7 +195,6 @@ export function ChannelMatrix({
                     >
                       <span
                         role="rowheader"
-                        id={`row-${type}`}
                         className="flex min-w-0 items-center gap-3 pr-4"
                       >
                         <span
@@ -201,10 +207,18 @@ export function ChannelMatrix({
                           <Icon className="h-4 w-4" />
                         </span>
                         <span className="flex min-w-0 flex-col">
-                          <span className="text-sm font-medium">
+                          <span
+                            id={`row-${type}-title`}
+                            className="text-sm font-medium"
+                          >
                             {t(`types.${type}`)}
                           </span>
-                          <span className="text-muted-foreground line-clamp-2 text-xs">
+                          {/* Clamped only where there's room for a wide row; on a phone the
+                              whole description shows (e.g. "Email comes as a short digest"). */}
+                          <span
+                            id={`row-${type}-desc`}
+                            className="text-muted-foreground text-xs @2xl/matrix:line-clamp-2"
+                          >
                             {t(`typeDesc.${type}`)}
                           </span>
                           {MANDATORY_IN_APP_TYPES.has(type) && (
@@ -213,6 +227,15 @@ export function ChannelMatrix({
                               className="text-muted-foreground text-xs italic"
                             >
                               {t("mandatoryInApp")}
+                            </span>
+                          )}
+                          {/* Visible, not a title tooltip: touch screens never show those. */}
+                          {!EMAIL_ELIGIBLE_TYPES.has(type) && (
+                            <span
+                              id={`email-na-${type}`}
+                              className="text-muted-foreground text-xs italic"
+                            >
+                              {t("emailUnavailableShort")}
                             </span>
                           )}
                         </span>
@@ -227,7 +250,7 @@ export function ChannelMatrix({
                           MANDATORY_IN_APP_TYPES.has(type);
                         return (
                           <div
-                            role="gridcell"
+                            role="cell"
                             key={channel}
                             className="flex justify-center"
                           >
@@ -237,20 +260,17 @@ export function ChannelMatrix({
                                 (!emailUnavailable && row[channel] === true)
                               }
                               disabled={emailUnavailable || mandatory}
-                              aria-describedby={
-                                mandatory ? `mandatory-${type}` : undefined
-                              }
                               onCheckedChange={(checked) =>
                                 onToggle(type, channel, checked)
                               }
-                              aria-labelledby={`row-${type} col-${channel}`}
-                              title={
-                                emailUnavailable
-                                  ? t("emailUnavailable")
-                                  : mandatory
-                                    ? t("mandatoryInApp")
-                                    : undefined
-                              }
+                              aria-labelledby={`row-${type}-title col-${channel}`}
+                              aria-describedby={[
+                                `row-${type}-desc`,
+                                mandatory && `mandatory-${type}`,
+                                emailUnavailable && `email-na-${type}`,
+                              ]
+                                .filter(Boolean)
+                                .join(" ")}
                             />
                           </div>
                         );
