@@ -11,6 +11,11 @@ import type { QueryBuilderState } from "./query-builder";
 // The server must allow at least this many rows per call.
 export const BROWSE_PAGE_SIZE = 48;
 
+// How many pages each set of filters had open when the member last left Browse. Coming Back asks
+// for that many again (from the query cache, so at once), so the page is as tall as before and the
+// router's scroll restoration lands where the member was. In memory only: a reload starts afresh.
+const openPages = new Map<string, number>();
+
 type BrowsePage = FunctionReturnType<typeof gateway.library.browseOwned>;
 export type BrowseRow = BrowsePage["ownedPuzzles"][number];
 /** Every Browse filter; the paging (offset/limit) is added per page. */
@@ -84,8 +89,11 @@ export function mergeBrowsePages<Row extends { _id: string }>(
 export function useBrowsePages(args: BrowseArgs) {
   const key = JSON.stringify(args);
   // The page count belongs to one set of filters: under other filters it reads as 1, without an
-  // effect to reset it.
-  const [pages, setPages] = useState({ key, count: 1 });
+  // effect to reset it. A return visit starts with as many pages as were open last time.
+  const [pages, setPages] = useState(() => ({
+    key,
+    count: openPages.get(key) ?? 1,
+  }));
   const pageCount = pages.key === key ? pages.count : 1;
   const pageQuery = (index: number) =>
     convexQuery(gateway.library.browseOwned, {
@@ -116,6 +124,9 @@ export function useBrowsePages(args: BrowseArgs) {
     /** The rows on screen belong to the previous filters; the new ones are on their way. */
     stale,
     failed: first.error !== null && first.data === undefined,
-    loadMore: () => setPages({ key, count: pageCount + 1 }),
+    loadMore: () => {
+      openPages.set(key, pageCount + 1);
+      setPages({ key, count: pageCount + 1 });
+    },
   };
 }

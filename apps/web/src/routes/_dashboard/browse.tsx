@@ -1,7 +1,6 @@
 import { useUser } from "@/compat/clerk";
 import { PuzzleFilterChip } from "@/components/browse/puzzle-filter-chip";
 import {
-  EMPTY_QUERY,
   QueryBuilder,
   type CategoryOption,
   type QueryBuilderState,
@@ -27,19 +26,29 @@ import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
-import { validateBrowseSearch } from "@/lib/browse-search";
+import { useUrlTextDraft } from "@/hooks/use-url-text-draft";
+import {
+  browseFiltersFromSearch,
+  browseSearchFromFilters,
+  validateBrowseSearch,
+  type BrowseSearch,
+} from "@/lib/browse-search";
 import { useProjectedMemberName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
+// The Text condition reaches the URL (and so the server) after this pause in typing.
+const TEXT_DEBOUNCE_MS = 200;
+
 export const Route = createFileRoute("/_dashboard/browse")({
   // `?puzzle=<definitionId>` narrows Browse to copies of one catalogue puzzle (the catalogue's
-  // "Find a copy to swap" CTA). Kept in the URL so back/forward and shared links keep the filter.
+  // "Find a copy to swap" CTA). It, the text, every filter and the view mode live in the URL (see
+  // lib/browse-search), so Back from a copy and shared links keep the same results.
   validateSearch: validateBrowseSearch,
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "browse") }],
@@ -55,7 +64,9 @@ function BrowsePending() {
 
 function BrowsePage() {
   const navigate = useNavigate();
-  const { puzzle: puzzleFilter } = Route.useSearch();
+  const search = Route.useSearch();
+  const navigateSearch = Route.useNavigate();
+  const puzzleFilter = search.puzzle;
   const { user } = useUser();
   const t = useTranslations("puzzles");
   const tCommon = useTranslations("common");
@@ -63,18 +74,35 @@ function BrowsePage() {
   const tCopyOwner = useTranslations("copyOwner");
   const projectedName = useProjectedMemberName();
 
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [query, setQuery] = useState<QueryBuilderState>(EMPTY_QUERY);
   const [requestCopy, setRequestCopy] = useState<RequestableCopy | null>(null);
 
-  // Debounce the free-text condition (~200ms) so typing narrows results without
-  // refetching the browse query on every keystroke. Every other condition is
-  // applied immediately. `debouncedText` is what we actually send to the server.
-  const [debouncedText, setDebouncedText] = useState("");
-  useEffect(() => {
-    const handle = setTimeout(() => setDebouncedText(query.text.trim()), 200);
-    return () => clearTimeout(handle);
-  }, [query.text]);
+  // Narrowing Browse is a change of view, not a new page: no history entry, and the scroll
+  // position stays.
+  const updateSearch = (update: (prev: BrowseSearch) => BrowseSearch) =>
+    void navigateSearch({ search: update, replace: true, resetScroll: false });
+  const viewMode = search.view ?? "grid";
+
+  // The Text field edits a draft that follows the URL. Typing reaches the URL (and so the server)
+  // after a pause, so every keystroke doesn't start a new search; clearing it and every other
+  // condition apply at once.
+  const text = useUrlTextDraft(
+    search.q,
+    (q) => updateSearch((prev) => ({ ...prev, q })),
+    TEXT_DEBOUNCE_MS,
+  );
+  const query: QueryBuilderState = {
+    ...browseFiltersFromSearch(search),
+    text: text.draft,
+  };
+  const onQueryChange = (next: QueryBuilderState) => {
+    if (next.text !== text.draft) text.change(next.text);
+    const facets = browseSearchFromFilters(next);
+    if (
+      JSON.stringify(facets) !== JSON.stringify(browseSearchFromFilters(query))
+    ) {
+      updateSearch((prev) => ({ ...prev, ...facets }));
+    }
+  };
 
   const { data: convexUser } = useQuery(
     convexQuery(
@@ -87,7 +115,7 @@ function BrowsePage() {
   // brand / description / tags) is applied by gateway.library.browseOwned before paging, so the
   // total and "Load more" cover every matching offer, not just the first page.
   const browse = useBrowsePages(
-    browseFilterArgs(query, debouncedText, puzzleFilter),
+    browseFilterArgs(query, search.q ?? "", puzzleFilter),
   );
 
   const { data: categoriesRaw } = useQuery(
@@ -117,8 +145,12 @@ function BrowsePage() {
         <PuzzleFilterChip
           puzzleId={puzzleFilter}
           onRemove={() =>
-            // Clearing a filter stays on the same page: keep the scroll position.
-            navigate({ to: "/browse", search: {}, resetScroll: false })
+            // Clearing a filter stays on the same page: keep the scroll position and the other
+            // conditions.
+            navigateSearch({
+              search: (prev) => ({ ...prev, puzzle: undefined }),
+              resetScroll: false,
+            })
           }
         />
       )}
@@ -132,7 +164,7 @@ function BrowsePage() {
       >
         <QueryBuilder
           value={query}
-          onChange={setQuery}
+          onChange={onQueryChange}
           categories={categories}
           tBrowse={tBrowse}
           tEnum={t}
@@ -151,7 +183,15 @@ function BrowsePage() {
                 : tBrowse("resultsCount", { count: shownPuzzles.length })}
             </span>
           )}
-          <ViewModeToggle value={viewMode} onChange={setViewMode} />
+          <ViewModeToggle
+            value={viewMode}
+            onChange={(mode) =>
+              updateSearch((prev) => ({
+                ...prev,
+                view: mode === "list" ? "list" : undefined,
+              }))
+            }
+          />
         </div>
       </div>
 

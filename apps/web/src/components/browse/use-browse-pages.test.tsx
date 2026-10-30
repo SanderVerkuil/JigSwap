@@ -126,29 +126,34 @@ describe("useBrowsePages", () => {
     }).queryKey;
 
   // Unseeded pages stay in flight, like a subscription that hasn't answered yet.
-  const setup = (initial: BrowseArgs) => {
-    const queryClient = new QueryClient({
+  const newClient = () =>
+    new QueryClient({
       defaultOptions: {
         queries: { retry: false, queryFn: () => new Promise<never>(() => {}) },
       },
     });
-    const wrapper = ({ children }: { children: ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-    const hook = renderHook(({ args }) => useBrowsePages(args), {
+  const mount = (queryClient: QueryClient, initial: BrowseArgs) =>
+    renderHook(({ args }) => useBrowsePages(args), {
       initialProps: { args: initial },
-      wrapper,
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <QueryClientProvider client={queryClient}>
+          {children}
+        </QueryClientProvider>
+      ),
     });
-    return { queryClient, hook };
+  const setup = (initial: BrowseArgs) => {
+    const queryClient = newClient();
+    return { queryClient, hook: mount(queryClient, initial) };
   };
 
-  const all: BrowseArgs = { includeOwnPuzzles: false };
-  const lend: BrowseArgs = {
+  // The open-page memory outlives a mount, so every test browses its own filters.
+  const filters = (searchTerm: string): BrowseArgs => ({
     includeOwnPuzzles: false,
-    availability: ["forLend"],
-  };
+    searchTerm,
+  });
 
   it("loads the next page on request and stops when the server has no more", async () => {
+    const all = filters("paging");
     const total = BROWSE_PAGE_SIZE + 2;
     const { queryClient, hook } = setup(all);
     act(() => {
@@ -180,6 +185,8 @@ describe("useBrowsePages", () => {
   });
 
   it("starts again from the first page when the filters change", async () => {
+    const all = filters("reset");
+    const lend: BrowseArgs = { ...all, availability: ["forLend"] };
     const { queryClient, hook } = setup(all);
     act(() => {
       queryClient.setQueryData(
@@ -210,8 +217,32 @@ describe("useBrowsePages", () => {
   });
 
   it("reports loading until the first page of a first visit arrives", () => {
-    const { hook } = setup(all);
+    const { hook } = setup(filters("first-visit"));
     expect(hook.result.current.loading).toBe(true);
     expect(hook.result.current.rows).toEqual([]);
+  });
+
+  it("comes back (after Back) with as many pages as were open", async () => {
+    const args = filters("return-visit");
+    const { queryClient, hook } = setup(args);
+    act(() => {
+      queryClient.setQueryData(
+        keyFor(args, 0),
+        page(rows(0, BROWSE_PAGE_SIZE), 60, true),
+      );
+      queryClient.setQueryData(
+        keyFor(args, 1),
+        page(rows(BROWSE_PAGE_SIZE, 60), 60, false),
+      );
+    });
+    await waitFor(() => expect(hook.result.current.hasMore).toBe(true));
+    act(() => hook.result.current.loadMore());
+    await waitFor(() => expect(hook.result.current.rows).toHaveLength(60));
+    hook.unmount();
+
+    // A new mount with the same filters renders both pages straight from the cache.
+    const again = mount(queryClient, args);
+    expect(again.result.current.rows).toHaveLength(60);
+    expect(again.result.current.hasMore).toBe(false);
   });
 });
