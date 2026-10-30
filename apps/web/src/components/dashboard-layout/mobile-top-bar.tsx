@@ -12,8 +12,9 @@ import { Image } from "@/compat/image";
 import { Link } from "@/compat/link";
 import { usePathname } from "@/compat/navigation";
 // Mark-only glyph: the header-icon logo is the stacked lockup with "JigSwap"
-// baked in underneath, which doubled the wordmark text beside it.
-import logoMark from "@/components/marketing/assets/icon.png";
+// baked in underneath, which doubled the wordmark text beside it. 96px covers
+// the 28px mark at 3x (assets/icon.png is the 256px source).
+import logoMark from "@/components/marketing/assets/icon-96.webp";
 import { formatUnreadBadge } from "@/components/notifications/unread-count";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
@@ -135,7 +136,14 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
             className="flex h-11 shrink-0 items-center gap-2 pl-1.5"
           >
             {/* Decorative: the wordmark beside it already names the link. */}
-            <Image src={logoMark} alt="" className="size-7 object-contain" />
+            <Image
+              src={logoMark}
+              alt=""
+              width={28}
+              height={28}
+              priority
+              className="size-7 object-contain"
+            />
             <span className="font-heading text-[19px] leading-none font-bold">
               <span className="text-jigsaw-primary">Jig</span>
               <span className="text-jigsaw-secondary">Swap</span>

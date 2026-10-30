@@ -197,7 +197,9 @@ describe("MobileTopBar lockup", () => {
     const mark = home.querySelector("img");
     expect(mark?.getAttribute("alt")).toBe("");
     // The stacked header-icon lockup has "JigSwap" baked into the image.
-    expect(mark?.getAttribute("src")).toContain("marketing/assets/icon.png");
+    expect(mark?.getAttribute("src")).toContain(
+      "marketing/assets/icon-96.webp",
+    );
   });
 });
 
