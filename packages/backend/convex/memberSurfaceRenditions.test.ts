@@ -8,7 +8,8 @@ import schema from "./schema";
 // an `imageSrcSet` and the owned-copy cards a `coverSrcSet` (480 w, 960 w and the original), so
 // the browser picks a width. Both are given only for box art the publication gate (boxArtUrl)
 // serves, only as URLs, and only once renditions exist; before the backfill every read is exactly
-// what it was. An approved cover photo has no renditions (yet), so its card shows it alone.
+// what it was. An approved cover photo wins over the box art (with its own renditions, if any:
+// copyPhotoRenditions.test.ts).
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 

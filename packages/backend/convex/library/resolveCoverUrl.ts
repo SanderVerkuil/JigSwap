@@ -3,6 +3,7 @@ import type { QueryCtx } from "../_generated/server";
 import { boxArtImage } from "../lib/imageModeration/boxArtUrl";
 import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 import {
+  renditionSources,
   thumbUrlOf,
   type ImageSources,
 } from "../lib/imageModeration/imageSources";
@@ -10,9 +11,10 @@ import {
 // Canonical card-cover resolution for an owned copy, shared by every list read so cards look the
 // same everywhere: the copy's chosen-and-APPROVED cover photo if set, otherwise the puzzle's global
 // box art, else null (the card falls back to its placeholder). Pending/rejected cover photos do not
-// surface — only approved (an absent status is legacy = approved). The catalogue `image` is a
-// `_storage` id, so it MUST be resolved via its gate (boxArtImage), which also adds the box art's
-// renditions (srcSet, thumbUrl) once they exist. A cover photo has no renditions (yet): url only.
+// surface — only approved (an absent status is legacy = approved) and hash-cleared. Either comes
+// with its renditions (srcSet, thumbUrl) once they exist, read only AFTER its own gate: the cover
+// photo's above, the box art's in boxArtImage (the catalogue `image` is a `_storage` id, so it
+// MUST be resolved via that gate).
 export const resolveCopyCover = async (
   ctx: QueryCtx,
   copy: Doc<"ownedPuzzles">,
@@ -27,7 +29,7 @@ export const resolveCopyCover = async (
       isHashCleared(img)
     ) {
       const url = await ctx.storage.getUrl(img.fileId);
-      cover = url ? { url } : null;
+      cover = url ? await renditionSources(ctx, img.fileId, url) : null;
     }
   }
   if (!cover && puzzle?.image) {
@@ -51,7 +53,7 @@ export const resolveCopyCoverUrl = async (
 /**
  * The cover fields of a copy on a read that a card grid renders (toOwnedCopyView's `coverUrl` and
  * `coverSrcSet` opts): the thumbnail-sized URL (as resolveCopyCoverUrl, for the shelf textures and
- * dialogs that read `coverUrl` from the same response) plus, once its box art has renditions, the
+ * dialogs that read `coverUrl` from the same response) plus, once its cover has renditions, the
  * srcSet the card picks a width from.
  */
 export const resolveCopyCoverFields = async (

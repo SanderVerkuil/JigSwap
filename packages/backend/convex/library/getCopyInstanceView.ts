@@ -26,6 +26,10 @@ import { householdDefaultOf, membershipOf } from "../household/memberships";
 import { requireMember } from "../identity/requireMember";
 import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
+import {
+  renditionSources,
+  type ImageSources,
+} from "../lib/imageModeration/imageSources";
 import { areMutualFollowers, projectMemberIdentity } from "../social/privacy";
 import { canViewCopy } from "./canViewCopy";
 import { effectiveCopyVisibility } from "./copyVisibility";
@@ -345,7 +349,9 @@ export const getCopyInstanceView = query({
     // unscored photo could not be checked yet and stays private until a re-screen). Rejected
     // photos — and other members' pending/unscored photos — are excluded for everyone. And no
     // photo is served, to anyone, before its CSAM hash check has passed (isHashCleared): until
-    // then even the uploader gets a placeholder below.
+    // then even the uploader gets a placeholder below. An approved photo's strip thumbnail picks
+    // from its renditions (thumbUrl, srcSet) once they exist; `url`, which the lightbox and zoom
+    // show, stays the original.
     const visibleImageRows = imageRows.filter((img) => {
       if (!isHashCleared(img)) return false;
       const status = img.moderationStatus ?? "approved";
@@ -362,11 +368,19 @@ export const getCopyInstanceView = query({
         .map(async (img): Promise<CopyPhoto | null> => {
           const url = await ctx.storage.getUrl(img.fileId);
           if (!url) return null;
+          const sources: ImageSources =
+            (img.moderationStatus ?? "approved") === "approved"
+              ? await renditionSources(ctx, img.fileId, url)
+              : { url };
           // The uploader (the lightbox shows who took the shot), projected like every other member
           // on this page: a hidden uploader (often the hidden owner) is never named.
           return {
             id: img._id as string,
             url,
+            ...(sources.thumbUrl !== undefined && {
+              thumbUrl: sources.thumbUrl,
+            }),
+            ...(sources.srcSet !== undefined && { srcSet: sources.srcSet }),
             caption: img.title ?? img.tag ?? null,
             tag: img.tag ?? null,
             description: img.description ?? null,

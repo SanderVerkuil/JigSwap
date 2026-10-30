@@ -18,8 +18,9 @@ import schema from "./schema";
 // WebP renditions once it is approved (by the pipeline, a re-screen, an admin's decision or a
 // restore), and they live exactly as long as the photo: the owner's removal, an admin's
 // deletion, account erasure, deleting the copy, a rejection and a quarantine all delete them.
-// The backfill covers photos stored before renditions existed. HCS and the classifier are a
-// routed fake `fetch`.
+// They are served only behind the photo's own gate (approved and hash-cleared), only as URLs:
+// the gallery thumbnails and the cover on cards pick from them, while the lightbox and the copy
+// page's cover keep the original. HCS and the classifier are a routed fake `fetch`.
 
 vi.mock("node:dns/promises", () => ({
   lookup: async () => [{ address: "93.184.216.34", family: 4 }],
@@ -218,6 +219,12 @@ const blobIds = (t: T) =>
 
 const blobExists = (t: T, id: Id<"_storage">) =>
   t.run(async (ctx) => (await ctx.db.system.get(id)) !== null);
+
+const urlOf = async (t: T, id: Id<"_storage">) => {
+  const url = await t.run((ctx) => ctx.storage.getUrl(id));
+  if (!url) throw new Error("blob has no URL");
+  return url;
+};
 
 type GenerationJob = {
   name: string;
@@ -598,6 +605,115 @@ describe("copy photo renditions: deleted with the photo", () => {
     ]);
     expect(await allRenditions(t)).toEqual([]);
     for (const id of renditions) expect(await blobExists(t, id)).toBe(false);
+  });
+});
+
+describe("copy photo renditions: served behind the photo's gate, as URLs", () => {
+  const srcSetOf = async (
+    t: T,
+    source: Id<"_storage">,
+    r: { small: Id<"_storage">; medium: Id<"_storage"> },
+  ) =>
+    `${await urlOf(t, r.small)} 480w, ${await urlOf(t, r.medium)} 960w, ${await urlOf(t, source)} 1600w`;
+
+  const expectNoStorageIds = (response: unknown, ids: Id<"_storage">[]) => {
+    const json = JSON.stringify(response);
+    for (const id of ids) expect(json).not.toContain(id);
+  };
+
+  test("an approved photo's gallery thumbnail picks from them; the lightbox keeps the original", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    const photo = await seedPhoto(t, s, { moderationStatus: "approved" });
+    const r = await seedRenditions(t, photo.fileId);
+
+    const view = await asAlice(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: s.copy },
+    );
+
+    expect(view?.gallery).toEqual([
+      expect.objectContaining({
+        id: photo.imageId,
+        url: await urlOf(t, photo.fileId),
+        thumbUrl: await urlOf(t, r.small),
+        srcSet: await srcSetOf(t, photo.fileId, r),
+      }),
+    ]);
+    expectNoStorageIds(view, [photo.fileId, r.small, r.medium]);
+  });
+
+  test("the uploader's own photo still under review is shown as it is", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    const photo = await seedPhoto(t, s, {
+      moderationStatus: "pending",
+      hashCheckedAt: 1,
+    });
+    // A leftover row (it cannot normally exist for a pending photo) is not served.
+    const r = await seedRenditions(t, photo.fileId);
+
+    const view = await asAlice(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: s.copy },
+    );
+
+    expect(view?.gallery).toHaveLength(1);
+    const [entry] = view!.gallery;
+    expect(entry.url).toBe(await urlOf(t, photo.fileId));
+    expect(entry.thumbUrl).toBeUndefined();
+    expect(entry.srcSet).toBeUndefined();
+    const json = JSON.stringify(view);
+    expect(json).not.toContain(await urlOf(t, r.small));
+    expect(json).not.toContain(await urlOf(t, r.medium));
+  });
+
+  test("an approved cover photo's card picks from them; the copy page keeps the original", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    const photo = await seedPhoto(t, s, { moderationStatus: "approved" });
+    const r = await seedRenditions(t, photo.fileId);
+    await t.run((ctx) => ctx.db.patch(s.copy, { coverImageId: photo.imageId }));
+
+    const cards = await asAlice(t).query(
+      api.library.getOwnedPuzzlesByOwner.getOwnedPuzzlesByOwner,
+      { ownerId: s.alice, includeUnavailable: true },
+    );
+    expect(cards).toHaveLength(1);
+    expect(cards[0].coverSrcSet).toBe(await srcSetOf(t, photo.fileId, r));
+    // The thumbnail-sized cover other surfaces read (chips, shelves, dialogs).
+    expect(cards[0].coverUrl).toBe(await urlOf(t, r.small));
+    expectNoStorageIds(cards, [photo.fileId, r.small, r.medium]);
+
+    const view = await asAlice(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: s.copy },
+    );
+    expect(view?.snapshot.image).toBe(await urlOf(t, photo.fileId));
+  });
+
+  test("a cover photo that has not passed its hash check is not served, nor are its renditions", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    const photo = await seedPhoto(t, s, {
+      moderationStatus: "approved",
+      hashCheckPendingSince: 1,
+    });
+    const r = await seedRenditions(t, photo.fileId);
+    await t.run((ctx) => ctx.db.patch(s.copy, { coverImageId: photo.imageId }));
+
+    const cards = await asAlice(t).query(
+      api.library.getOwnedPuzzlesByOwner.getOwnedPuzzlesByOwner,
+      { ownerId: s.alice, includeUnavailable: true },
+    );
+
+    // The box art instead (served, no renditions of its own).
+    expect(cards[0].coverUrl).toBe(await urlOf(t, s.boxArt));
+    expect(cards[0].coverSrcSet).toBeUndefined();
+    const json = JSON.stringify(cards);
+    for (const id of [photo.fileId, r.small, r.medium]) {
+      expect(json).not.toContain(await urlOf(t, id));
+    }
   });
 });
 

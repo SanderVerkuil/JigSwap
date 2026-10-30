@@ -422,8 +422,15 @@ export interface CopyInstanceCommunity {
 export interface CopyPhoto {
   /** The `ownedPuzzleImages` _id as a string. Keys the photo's comment thread in the lightbox. */
   id: string;
-  /** The resolved storage URL. */
+  /** The resolved storage URL of the original (what the lightbox and zoom show). */
   url: string;
+  /**
+   * The 480 px rendition's URL, for thumbnail-sized uses; absent until the approved photo has
+   * renditions (show `url` then).
+   */
+  thumbUrl?: string;
+  /** `<url> <width>w` for each rendition and the original; absent when there are none. */
+  srcSet?: string;
   /** The caption (`title ?? tag`), or null when absent. */
   caption: string | null;
   /** The photo's tag (e.g. `box_front`), or null when absent. */
