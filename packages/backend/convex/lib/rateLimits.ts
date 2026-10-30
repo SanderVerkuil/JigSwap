@@ -47,8 +47,8 @@ export const RATE_LIMITS = {
   emailInviteNewAccount: { windowMs: DAY, max: 3 },
   // Requests to join a household (household/requestToJoinHousehold), like emailInvite.
   householdJoinRequest: { windowMs: DAY, max: 10 },
-  // Presence heartbeats across all rooms and tabs: a tab sends ~4/min (app room + messages at
-  // 30 s), so 30/min covers several tabs while capping heartbeat cost abuse.
+  // Presence heartbeats across all rooms and tabs: a tab sends ~3/min (app room at 60 s +
+  // messages at 30 s), so 30/min covers several tabs while capping heartbeat cost abuse.
   presenceHeartbeat: { windowMs: MINUTE, max: 30 },
   // Store-page imports (catalog/extractFromUrl): each runs outbound fetches and may fall through
   // to a paid Firecrawl scrape. Admins, who seed the catalogue, are exempt.
