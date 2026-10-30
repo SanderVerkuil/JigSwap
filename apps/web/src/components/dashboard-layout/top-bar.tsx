@@ -5,7 +5,8 @@
 // a centered search pill that opens the command palette, then bell, theme +
 // language switchers (tucked on the right, desktop only) and the Add Puzzle
 // CTA. No user avatar here — user identity lives bottom-left in the sidebar.
-// Desktop-only (md+): below the breakpoint the MobileTopBar replaces it.
+// Desktop-only (md+): below the breakpoint the MobileTopBar replaces it. On a
+// touch screen (a tablet at md+) every control is a 44px target.
 import { Link } from "@/compat/link";
 import { HeaderLogo } from "@/components/common/header-logo";
 import { NotificationBell } from "@/components/notifications/notification-bell";
@@ -21,10 +22,10 @@ export function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
 
   return (
     <header className="hidden h-14 shrink-0 items-center gap-2 px-4 md:flex">
-      <SidebarTrigger className="size-8 shrink-0" />
+      <SidebarTrigger className="size-8 shrink-0 pointer-coarse:size-11" />
       <Link
         href="/dashboard"
-        className="flex shrink-0 items-center transition-opacity hover:opacity-80"
+        className="flex shrink-0 items-center transition-opacity hover:opacity-80 pointer-coarse:h-11"
       >
         <HeaderLogo className="h-7 pl-0" />
       </Link>
@@ -34,7 +35,7 @@ export function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
         <button
           type="button"
           onClick={onOpenPalette}
-          className="flex h-9 w-full max-w-[520px] cursor-pointer items-center gap-2.5 rounded-full border bg-background px-4 text-sm text-muted-foreground shadow-xs transition-colors hover:border-ring/60"
+          className="flex h-9 w-full max-w-[520px] cursor-pointer items-center gap-2.5 rounded-full border bg-background px-4 text-sm text-muted-foreground shadow-xs transition-colors hover:border-ring/60 pointer-coarse:h-11"
         >
           <Search className="size-4 shrink-0" />
           <span className="flex-1 truncate text-left">
@@ -47,14 +48,14 @@ export function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
       </div>
 
       <div className="flex shrink-0 items-center gap-1">
-        <NotificationBell />
+        <NotificationBell className="pointer-coarse:size-11" />
         <div className="flex items-center gap-1">
-          <ModeToggle />
-          <LanguageSwitcher />
+          <ModeToggle className="pointer-coarse:size-11" />
+          <LanguageSwitcher className="pointer-coarse:size-11" />
         </div>
         <Button
           asChild
-          className="ml-1 bg-jigsaw-primary text-white hover:bg-jigsaw-primary/90"
+          className="ml-1 bg-jigsaw-primary text-white hover:bg-jigsaw-primary/90 pointer-coarse:h-11"
         >
           <Link href="/my-puzzles/add">
             <Plus className="size-4" />

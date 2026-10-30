@@ -10,6 +10,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { gateway } from "@/gateway";
+import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import type { NotificationView } from "@jigswap/contracts";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -23,7 +24,7 @@ import { formatUnreadBadge, unreadNotificationsLabel } from "./unread-count";
 // How many recent rows the dropdown shows; the rest live on the full page.
 const PREVIEW_COUNT = 6;
 
-export function NotificationBell() {
+export function NotificationBell({ className }: { className?: string }) {
   const { user } = useUser();
   const t = useTranslations("notifications");
   const [open, setOpen] = useState(false);
@@ -78,7 +79,7 @@ export function NotificationBell() {
         <Button
           variant="ghost"
           size="icon"
-          className="relative"
+          className={cn("relative", className)}
           aria-label={t("bell")}
         >
           <Bell className="h-5 w-5" />

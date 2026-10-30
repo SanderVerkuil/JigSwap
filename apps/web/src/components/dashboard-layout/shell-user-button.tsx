@@ -111,6 +111,9 @@ export function ShellUserButton({
                 }
               : {
                   userButtonAvatarBox: "!w-8 !h-8",
+                  // The desktop sidebar on a touch screen (tablets): a 44px target.
+                  userButtonTrigger:
+                    "pointer-coarse:flex! pointer-coarse:size-11! pointer-coarse:items-center! pointer-coarse:justify-center! pointer-coarse:rounded-lg!",
                 }),
           },
         }}

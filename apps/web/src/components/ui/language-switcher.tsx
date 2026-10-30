@@ -7,6 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { clearIntlCache, setLocale, type Locale } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 import { useRouter } from "@tanstack/react-router";
 import { Globe } from "lucide-react";
 import { toast } from "sonner";
@@ -17,7 +18,7 @@ const languages = [
   { code: "nl", name: "Nederlands", flag: "🇳🇱" },
 ];
 
-export function LanguageSwitcher() {
+export function LanguageSwitcher({ className }: { className?: string }) {
   const currentLocale = useLocale();
   const router = useRouter();
   const t = useTranslations("shell.language");
@@ -34,7 +35,11 @@ export function LanguageSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
+        <Button
+          variant="ghost"
+          size="icon"
+          className={cn("relative", className)}
+        >
           <Globe className="h-[1.2rem] w-[1.2rem]" />
           <span className="sr-only">{t("switch")}</span>
         </Button>
