@@ -11,6 +11,7 @@ import {
   Copy,
   CopyId,
   LibraryError,
+  Loan,
   LoanId,
 } from "../../domain";
 import {
@@ -143,6 +144,46 @@ describe("loan use cases", () => {
       expect(loans.size()).toBe(0);
       expect((await copies.findById(copyId))?.heldBy).toBe(borrower);
       expect(events.published).toHaveLength(0);
+    });
+
+    // A loan left open by rows from before these rules: its borrower no longer has the copy.
+    const leftOpenBy = async (lenderId: typeof owner) => {
+      const stale = Loan.open({
+        id: toLoanId("loan-left-open"),
+        copyId,
+        lenderId,
+        borrowerId: carol,
+        now: NOW,
+      });
+      if (!stale.isOk) throw new Error("setup");
+      await loans.save(stale.value);
+    };
+
+    it("refuses with AlreadyLentOut while the owner's own loan on it is open, even with the copy at home", async () => {
+      await leftOpenBy(owner);
+      const result = await open()({
+        copyId,
+        borrowerId: borrower,
+        lender: owner,
+      });
+      expect(result.isErr && result.error.code).toBe("AlreadyLentOut");
+      expect(loans.size()).toBe(1);
+      expect((await copies.findById(copyId))?.heldBy).toBe(owner);
+      expect(events.published).toHaveLength(0);
+    });
+
+    // A loan a former owner left open (a transfer before transfers ended loans) is stale: it never
+    // stops the current owner lending their copy.
+    it("lends the copy although a former owner's loan on it is still open", async () => {
+      await leftOpenBy(toOwnerId("dave"));
+      const result = await open()({
+        copyId,
+        borrowerId: borrower,
+        lender: owner,
+      });
+      expect(result.isOk).toBe(true);
+      expect((await copies.findById(copyId))?.heldBy).toBe(borrower);
+      expect(await loans.findOpenByCopy(copyId)).toHaveLength(2);
     });
 
     it("lends the copy again once the earlier loan is closed", async () => {

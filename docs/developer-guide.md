@@ -357,7 +357,9 @@ For a `lend` kind, settlement emits `PossessionTransferred`; `library/openLoanOn
 opens a `Loan` and moves `heldBy` to the borrower (ownership never moves), only while the event's
 `lender` still owns the copy and no other loan on it is open (one loan per copy, `AlreadyLentOut`).
 Returning or recalling a loan gives possession back only while that loan's borrower holds the copy,
-and a transfer (`transferOnSettlement`) ends any loan still open on the copy.
+and a transfer (`transferOnSettlement`) ends any loan still open on the copy. A loan a former owner
+left open (rows from before transfers ended loans) is stale: it neither blocks a new loan nor counts
+as a reservation for the current owner.
 
 ### 3.4 Image upload (Convex Storage)
 

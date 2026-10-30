@@ -23,7 +23,8 @@ const ACTIVE_STATUSES = new Set(["proposed", "accepted"]);
 // context's own rule (canStillSettle: the settlement guard accept and confirm run), read through
 // Exchange's CopyPort. Rows without an aggregateId can't be acted on at all and reserve nothing.
 // An open loan reserves the copy too: while it is at the borrower's it can't be re-offered or
-// deleted until it is back (returned or recalled).
+// deleted until it is back (returned or recalled). Only a loan the current owner made counts: one a
+// former owner left open (a transfer before transfers ended loans) never locks the new owner out.
 export const convexCopyReservationPort = (
   ctx: QueryCtx,
 ): CopyReservationPort => ({
@@ -40,7 +41,12 @@ export const convexCopyReservationPort = (
     const openLoan = await ctx.db
       .query("loans")
       .withIndex("by_copy", (q) => q.eq("copyId", copyId as string))
-      .filter((q) => q.eq(q.field("status"), "open"))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("status"), "open"),
+          q.eq(q.field("lenderId"), copy.ownerId),
+        ),
+      )
       .first();
     if (openLoan) return true;
 

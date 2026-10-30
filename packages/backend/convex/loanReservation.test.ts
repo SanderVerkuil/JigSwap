@@ -325,3 +325,61 @@ describe("nobody can ask for or offer a copy out on loan", () => {
     expect(await codeOf(proposeLend(t, "rex", x))).toBe("CopyNotAvailable");
   });
 });
+
+// Before a transfer ended the copy's loans, selling a copy out on loan left that loan open: the
+// copy (and possession of it) went to the buyer, the loan still named the seller as lender.
+describe("a loan a former owner left open holds nothing against the new owner", () => {
+  const soldWithLoanLeftOpen = async () => {
+    const t = convexTest(schema, modules);
+    const { ids, puzzleAggregateId } = await seed(t);
+    const x = await acquire(t, "lena", puzzleAggregateId);
+    await share(t, "lena", x, ALL_OFFERS);
+    await settle(t, await proposeSale(t, "dana", x), "dana", "lena");
+    expect((await copyRow(t, x)).ownerId).toBe(ids.dana);
+    const staleLoanId = crypto.randomUUID();
+    await t.run((ctx) =>
+      ctx.db.insert("loans", {
+        aggregateId: staleLoanId,
+        copyId: x.aggregateId,
+        lenderId: ids.lena,
+        borrowerId: ids.bo,
+        status: "open",
+        openedAt: Date.now() - 1000,
+      }),
+    );
+    return { t, ids, x, staleLoanId };
+  };
+
+  test("Dana can offer X and lend it to Carl; Bo closing the old loan leaves it with Carl", async () => {
+    const { t, ids, x, staleLoanId } = await soldWithLoanLeftOpen();
+
+    await share(t, "dana", x, ALL_OFFERS);
+    expect((await copyRow(t, x)).availability).toEqual({
+      forTrade: true,
+      forSale: true,
+      forLend: true,
+    });
+
+    await settle(t, await proposeLend(t, "carl", x), "carl", "dana");
+    expect((await copyRow(t, x)).heldBy).toBe(ids.carl);
+    const open = (await loansOf(t, x)).filter((l) => l.status === "open");
+    expect(open.map((l) => [l.lenderId, l.borrowerId])).toEqual(
+      expect.arrayContaining([
+        [ids.lena, ids.bo],
+        [ids.dana, ids.carl],
+      ]),
+    );
+
+    await as(t, "bo").mutation(api.library.returnLoan.returnLoan, {
+      loanId: staleLoanId,
+    });
+    expect((await copyRow(t, x)).heldBy).toBe(ids.carl);
+  });
+
+  test("Dana can delete X", async () => {
+    const { t, x } = await soldWithLoanLeftOpen();
+
+    await deleteCopy(t, "dana", x);
+    expect(await t.run((ctx) => ctx.db.get(x.id))).toBeNull();
+  });
+});
