@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { Jimp } from "jimp";
@@ -387,5 +388,66 @@ describe("box art renditions: an admin's approval", () => {
     await settleRenditions(t);
 
     await expectRenditions(t, image);
+  });
+});
+
+describe("box art renditions: the metadata strip one-shot", () => {
+  test("a blob it replaces loses its renditions, and the stripped blob gets its own", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { alice } = await seed(t);
+    // Legacy box art that still carries metadata (Exif with GPS, Orientation 6).
+    const legacy = await storeBytes(
+      t,
+      new Uint8Array(
+        readFileSync(
+          new URL("../test-fixtures/images/gps.jpg", import.meta.url),
+        ),
+      ),
+    );
+    const puzzleId = await t.run((ctx) =>
+      ctx.db.insert("puzzles", {
+        title: "Mountain Vista",
+        pieceCount: 1000,
+        status: "approved",
+        submittedBy: alice,
+        image: legacy,
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    // Renditions made before the strip ran (the fixture is too small for real ones).
+    const slot = async (width: number, height: number) => ({
+      fileId: await storeBytes(t, new Uint8Array([width])),
+      width,
+      height,
+    });
+    const [small, medium] = [await slot(480, 360), await slot(960, 720)];
+    await t.run((ctx) =>
+      ctx.db.insert("imageRenditions", {
+        sourceId: legacy,
+        width: 1000,
+        height: 750,
+        small,
+        medium,
+        createdAt: 1,
+      }),
+    );
+
+    await t.action(
+      internal.lib.imageModeration.backfillStripMetadata.backfillStripMetadata,
+      { table: "boxArt", dryRun: false },
+    );
+
+    const stripped = (await t.run((ctx) => ctx.db.get(puzzleId)))!.image!;
+    expect(stripped).not.toBe(legacy);
+    expect(await scheduledFor(t)).toEqual([stripped]);
+    await settleRenditions(t);
+    // The stripped blob is turned upright and too small for a rendition: recorded without one.
+    const rows = await allRenditions(t);
+    expect(rows).toEqual([
+      expect.objectContaining({ sourceId: stripped, width: 48, height: 64 }),
+    ]);
+    expect(rows[0].small).toBeUndefined();
+    expect(await blobIds(t)).toEqual([stripped]);
   });
 });
