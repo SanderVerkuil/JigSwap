@@ -2,13 +2,24 @@
 import { gateway } from "@/gateway";
 import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { ConvexReactClient } from "convex/react";
+import { getFunctionName } from "convex/server";
 import { IntlProvider } from "use-intl";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
 import { EditProfileForm } from "./edit-profile-form";
 import type { Member } from "./member-view";
+
+const mocks = vi.hoisted(() => ({
+  mutation: vi.fn<(name: string, args: unknown) => Promise<unknown>>(),
+}));
 
 vi.mock("@/compat/clerk", () => ({
   useUser: () => ({ isLoaded: true, user: { username: null } }),
@@ -16,17 +27,17 @@ vi.mock("@/compat/clerk", () => ({
   isReverificationCancelledError: () => false,
 }));
 
-// The display-name dialog has its own reads; only its trigger matters here.
-vi.mock("@/components/social/profile-edit-dialog", () => ({
-  ProfileEditDialog: () => <button type="button">Edit</button>,
-}));
-
 vi.mock("@convex-dev/react-query", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@convex-dev/react-query")>()),
-  useConvexMutation: () => () => Promise.resolve(null),
+  useConvexMutation:
+    (ref: Parameters<typeof getFunctionName>[0]) => (args: unknown) =>
+      mocks.mutation(getFunctionName(ref), args),
 }));
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+
+const EDIT_PROFILE = getFunctionName(gateway.social.editProfile);
+const SET_VISIBILITY = getFunctionName(gateway.social.setProfileVisibility);
 
 // A member who never picked a username or slug: the link preview falls back to
 // the long Convex id, the case that widened the form past a phone screen.
@@ -40,7 +51,7 @@ const member: Member = {
   updatedAt: Date.UTC(2026, 0, 1),
 };
 
-const renderForm = () => {
+const renderForm = (profile: { displayName?: string; bio?: string } = {}) => {
   const convexQueryClient = new ConvexQueryClient(
     new ConvexReactClient("https://example.convex.cloud"),
   );
@@ -60,16 +71,25 @@ const renderForm = () => {
     memberId: member._id,
     visibility: "public",
     updatedAt: 0,
+    ...profile,
   });
+  const onDone = vi.fn();
   render(
     <QueryClientProvider client={queryClient}>
       <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
-        <EditProfileForm member={member} onDone={() => {}} />
+        <EditProfileForm member={member} onDone={onDone} />
       </IntlProvider>
     </QueryClientProvider>,
   );
+  return { onDone };
 };
 
+const editProfileCalls = () =>
+  mocks.mutation.mock.calls.filter(([name]) => name === EDIT_PROFILE);
+
+beforeEach(() => {
+  mocks.mutation.mockReset().mockResolvedValue(null);
+});
 afterEach(cleanup);
 
 // happy-dom has no layout engine, so these pin the class contract that keeps
@@ -90,12 +110,88 @@ describe("EditProfileForm on a phone", () => {
     expect(preview?.classList).not.toContain("truncate");
     expect(url.classList).toContain("break-all");
   });
+});
 
-  it("lets the text beside the display-name and visibility controls shrink", () => {
+// One save model: every field in this form waits for Save, and Cancel drops
+// them all. Visibility saves instantly, so it lives in the Privacy section.
+describe("EditProfileForm saving", () => {
+  it("has no instantly-saving visibility control", () => {
     renderForm();
-    const visibilityText = screen.getByText("Private profile").parentElement;
-    const displayNameText = screen.getByText("Display name").parentElement;
-    expect(visibilityText?.classList).toContain("min-w-0");
-    expect(displayNameText?.classList).toContain("min-w-0");
+    expect(screen.queryByRole("switch")).toBeNull();
+    expect(screen.queryByRole("radiogroup")).toBeNull();
+    expect(screen.queryByText("Private profile")).toBeNull();
+  });
+
+  it("edits the display name inline, seeded from the saved one", () => {
+    renderForm({ displayName: "Puzzelhenk" });
+    const input = screen.getByLabelText("Display name") as HTMLInputElement;
+    expect(input.value).toBe("Puzzelhenk");
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("caps the display name at the server's 50 characters", () => {
+    renderForm();
+    expect(
+      screen.getByLabelText("Display name").getAttribute("maxlength"),
+    ).toBe("50");
+  });
+
+  it("shows the account name as the placeholder when no display name is set", () => {
+    renderForm();
+    const input = screen.getByLabelText("Display name") as HTMLInputElement;
+    expect(input.value).toBe("");
+    expect(input.placeholder).toBe("Henk Pieterszoon");
+  });
+
+  it("sends a changed display name and the bio in one editProfile call", async () => {
+    const { onDone } = renderForm({ displayName: "Henk", bio: "Old bio" });
+    fireEvent.change(screen.getByLabelText("Display name"), {
+      target: { value: "  Puzzelhenk " },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(onDone).toHaveBeenCalled());
+    expect(editProfileCalls()).toEqual([
+      [EDIT_PROFILE, { displayName: "Puzzelhenk", bio: "Old bio" }],
+    ]);
+    expect(mocks.mutation).not.toHaveBeenCalledWith(
+      SET_VISIBILITY,
+      expect.anything(),
+    );
+  });
+
+  it("keeps the display name when only the bio changed", async () => {
+    const { onDone } = renderForm({ displayName: "Henk", bio: "Old bio" });
+    fireEvent.change(screen.getByLabelText("Bio"), {
+      target: { value: "New bio" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(onDone).toHaveBeenCalled());
+    expect(editProfileCalls()).toHaveLength(1);
+    const [, args] = editProfileCalls()[0]!;
+    expect(args).toEqual({ bio: "New bio" });
+    expect(args).not.toHaveProperty("displayName", expect.anything());
+  });
+
+  it("skips editProfile when neither the name nor the bio changed", async () => {
+    const { onDone } = renderForm({ displayName: "Henk", bio: "Old bio" });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(onDone).toHaveBeenCalled());
+    expect(editProfileCalls()).toHaveLength(0);
+  });
+
+  it("flags an emptied display name inline and saves nothing", () => {
+    const { onDone } = renderForm({ displayName: "Henk" });
+    const input = screen.getByLabelText("Display name");
+    fireEvent.change(input, { target: { value: "   " } });
+
+    expect(input.getAttribute("aria-invalid")).toBe("true");
+    expect(screen.getByText("Display name cannot be empty")).toBeTruthy();
+    const save = screen.getByRole("button", { name: "Save" });
+    expect(save.hasAttribute("disabled")).toBe(true);
+    fireEvent.click(save);
+    expect(mocks.mutation).not.toHaveBeenCalled();
+    expect(onDone).not.toHaveBeenCalled();
   });
 });

@@ -5,11 +5,9 @@ import {
   useReverification,
   useUser,
 } from "@/compat/clerk";
-import { ProfileEditDialog } from "@/components/social/profile-edit-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
@@ -88,23 +86,28 @@ function isValidSlugFormat(value: string): boolean {
 // Mirrors the domain's BIO_MAX_LENGTH (Profile); the server refuses a longer bio (BioTooLong).
 const BIO_MAX_LENGTH = 500;
 
+// Mirrors the domain's DISPLAY_NAME_MAX_LENGTH; the server refuses a longer name.
+const DISPLAY_NAME_MAX_LENGTH = 50;
+
 // Mirrors identity/setLocation's cap; the server refuses a longer location (invalid_location).
 const LOCATION_MAX_LENGTH = 80;
 
-// The inline editor behind the header's Edit Profile toggle: username, the
-// shareable slug, location and bio as open labelled fields (no card).
+// The inline editor behind the header's Edit Profile toggle: display name,
+// username, the shareable slug, location and bio as open labelled fields (no
+// card). One save model: every field waits for Save and Cancel drops them all.
+// Settings that save the moment they change (profile visibility, the invite
+// link reset) live in the always-visible PrivacySection instead.
 // Username's source of truth is Clerk (updated here; mirrored to Convex by
 // the user.updated webhook) — if the Clerk instance has Username disabled
 // entirely, that specific rejection is swallowed into a friendly notice
 // instead of blocking the rest of the save. The slug is Convex-owned
 // (identity.setSlug) and is this form's primary shareable-handle control.
 // Location is saved to Convex via the identity gateway (users.location).
-// Bio is the member's PUBLIC "story" shown on their profile — it lives on
-// the Social profile (profiles.bio, gateway.social.editProfile), the same
-// field getPublicProfile reads, so editing it here is what actually changes
-// what other members see. users.bio (identity) is no longer surfaced by this
-// form. Display name stays on the Social profile editor (ProfileEditDialog,
-// embedded below) rather than being duplicated here.
+// Display name and bio are the member's PUBLIC face — both live on the Social
+// profile (profiles.displayName / profiles.bio, gateway.social.editProfile),
+// the fields getPublicProfile reads, so editing them here is what actually
+// changes what other members see. users.bio (identity) is no longer surfaced
+// by this form.
 //
 // Wrapper: waits for BOTH Clerk (the username source of truth) and the Social
 // profile to load before mounting the actual form, so every field's initial
@@ -154,15 +157,6 @@ function EditProfileFormLoaded({
   const updateProfile = useConvexMutation(gateway.identity.updateProfile);
   const editProfile = useConvexMutation(gateway.social.editProfile);
   const setSlug = useConvexMutation(gateway.identity.setSlug);
-  const setProfileVisibility = useMutation({
-    mutationFn: useConvexMutation(gateway.social.setProfileVisibility),
-  });
-
-  // The visibility setting (and display name, surfaced via the embedded
-  // ProfileEditDialog below) live on the Social profile, separate from the
-  // identity account fields above. Treat an absent profile/value as the
-  // "public" default.
-  const isPrivate = socialProfile?.visibility === "private";
 
   // Seed from Clerk (the username's source of truth), not the Convex mirror
   // (member.username) — the mirror is populated by the user.updated webhook,
@@ -174,6 +168,10 @@ function EditProfileFormLoaded({
   const [slug, setSlugValue] = useState(member.slug ?? "");
   const [location, setLocation] = useState(member.location ?? "");
   const [bio, setBio] = useState(socialProfile?.bio ?? "");
+  // Empty when the member never chose one: other members then see the account
+  // name, shown as the placeholder (never copied in, so it stays live).
+  const savedDisplayName = socialProfile?.displayName ?? "";
+  const [displayNameInput, setDisplayNameInput] = useState(savedDisplayName);
 
   // Server-side, per-field save errors mapped back onto the inputs. The form
   // stays open and keeps every value while these are set — nothing is lost on a
@@ -183,6 +181,11 @@ function EditProfileFormLoaded({
 
   const trimmedSlug = slug.trim();
   const slugFormatError = trimmedSlug !== "" && !isValidSlugFormat(trimmedSlug);
+  const trimmedDisplayName = displayNameInput.trim();
+  const displayNameChanged = trimmedDisplayName !== savedDisplayName;
+  // A chosen display name can be changed but not cleared (the server rejects
+  // an empty one), so an emptied field blocks Save with an inline message.
+  const displayNameError = displayNameChanged && trimmedDisplayName === "";
   // What `/members/<handle>` would be right now: the slug being typed, else
   // the username only when the server says it is this member's canonical
   // handle (it resolves back to them), else the id. Never the bare username:
@@ -245,12 +248,15 @@ function EditProfileFormLoaded({
           errors.slug = convexErrorMessage(err) ?? t("saveError");
         }
       }
-      // Bio lives on the Social profile (the public "story"). displayName is
-      // omitted so editProfile keeps the current one (or none) unchanged.
+      // Display name and bio live on the Social profile and go in ONE
+      // editProfile call. displayName is sent only when it changed (omitted =
+      // keep the current one, or none); bio is always sent, because an omitted
+      // bio clears it.
       const trimmedBio = bio.trim();
-      if (trimmedBio !== (socialProfile?.bio ?? "")) {
+      if (displayNameChanged || trimmedBio !== (socialProfile?.bio ?? "")) {
         try {
           await editProfile({
+            displayName: displayNameChanged ? trimmedDisplayName : undefined,
             bio: trimmedBio === "" ? undefined : trimmedBio,
           });
         } catch (err) {
@@ -280,19 +286,35 @@ function EditProfileFormLoaded({
     },
   });
 
-  const handleVisibilityChange = async (nextPrivate: boolean) => {
-    try {
-      await setProfileVisibility.mutateAsync({
-        visibility: nextPrivate ? "private" : "public",
-      });
-      toast.success(t("saved"));
-    } catch {
-      toast.error(t("saveError"));
-    }
-  };
-
   return (
     <div className="grid grid-cols-1 gap-x-6 gap-y-4 border-b pb-6 sm:grid-cols-2">
+      <div className="space-y-2 sm:col-span-2">
+        <Label htmlFor="profile-display-name">{t("displayName.label")}</Label>
+        <Input
+          id="profile-display-name"
+          value={displayNameInput}
+          maxLength={DISPLAY_NAME_MAX_LENGTH}
+          onChange={(e) => setDisplayNameInput(e.target.value)}
+          placeholder={displayName({
+            name: member.name,
+            username: member.username,
+          })}
+          aria-invalid={displayNameError}
+          aria-describedby="profile-display-name-hint"
+        />
+        <p
+          id="profile-display-name-hint"
+          className={
+            displayNameError
+              ? "text-destructive text-xs"
+              : "text-muted-foreground text-xs"
+          }
+        >
+          {displayNameError
+            ? t("displayName.emptyError")
+            : t("displayName.helper")}
+        </p>
+      </div>
       <div className="space-y-2">
         <Label htmlFor="profile-username">{t("username")}</Label>
         <Input
@@ -366,39 +388,12 @@ function EditProfileFormLoaded({
           {t("bioCounter", { count: bio.length, max: BIO_MAX_LENGTH })}
         </p>
       </div>
-      <div className="flex items-start justify-between gap-4 rounded-lg border p-4 sm:col-span-2">
-        <div className="min-w-0 space-y-1">
-          <Label>{t("displayName.label")}</Label>
-          <p className="text-muted-foreground text-sm">
-            {t("displayName.helper", {
-              name: displayName({
-                ...member,
-                name: socialProfile?.displayName ?? member.name,
-              }),
-            })}
-          </p>
-        </div>
-        <ProfileEditDialog />
-      </div>
-      <div className="flex items-start justify-between gap-4 rounded-lg border p-4 sm:col-span-2">
-        <div className="min-w-0 space-y-1">
-          <Label htmlFor="profile-visibility">{t("visibility.label")}</Label>
-          <p className="text-muted-foreground text-sm">
-            {t("visibility.helper")}
-          </p>
-        </div>
-        <Switch
-          id="profile-visibility"
-          checked={isPrivate}
-          disabled={setProfileVisibility.isPending}
-          onCheckedChange={handleVisibilityChange}
-          aria-label={t("visibility.label")}
-        />
-      </div>
       <div className="flex gap-2 sm:col-span-2">
         <Button
           onClick={() => saveProfile.mutate()}
-          disabled={saveProfile.isPending || slugFormatError}
+          disabled={
+            saveProfile.isPending || slugFormatError || displayNameError
+          }
         >
           <Save aria-hidden />
           {saveProfile.isPending ? t("saving") : t("save")}

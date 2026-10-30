@@ -10,8 +10,7 @@ Jij bepaalt wie elke puzzel ziet en hoeveel andere leden van je profiel zien.
 Op deze pagina lees je wie wat ziet, en hoe je dat aanpast.
 
 **Waar:** de pagina van een exemplaar (**Bewerken** →
-**Wie kan dit exemplaar zien**) en je profiel (`/profile` →
-**Profiel Bewerken** → **Privéprofiel**).
+**Wie kan dit exemplaar zien**) en je profiel (`/profile` → **Privacy**).
 
 ## Wie een exemplaar ziet
 
@@ -71,8 +70,11 @@ Een privé-exemplaar blijft zichtbaar voor:
 
 ## Je profiel openbaar of privé maken
 
-1. Open **Profiel** en klik op **Profiel Bewerken**.
-2. Zet **Privéprofiel** aan of uit.
+1. Open **Profiel** en scrol naar **Privacy**.
+2. Kies onder **Wie kan je profiel zien?** voor **Iedereen** of
+   **Alleen mensen die je toelaat**. De wijziging wordt meteen opgeslagen;
+   koos je de verkeerde, klik dan op **Ongedaan maken** in de melding die
+   verschijnt.
 
 Als je profiel privé is:
 

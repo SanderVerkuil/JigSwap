@@ -1112,11 +1112,24 @@
     },
     "displayName": {
       "label": "Weergavenaam",
-      "helper": "Andere leden zien je als \"{name}\". Pas dit aan via je openbare profielkaart."
+      "helper": "De naam die andere leden zien.",
+      "emptyError": "Weergavenaam mag niet leeg zijn"
     },
-    "visibility": {
-      "label": "Privéprofiel",
-      "helper": "Privéprofielen verschijnen als 'Anonieme gebruiker' voor leden met wie je geen connectie hebt."
+    "privacy": {
+      "title": "Privacy",
+      "publicStatus": "Leden kunnen je vinden via Mensen vinden, en iedereen met je link ziet je volledige profiel.",
+      "privateStatus": "Alleen leden die je wederzijds volgt, kunnen je vinden via Mensen vinden en je volledige profiel zien. Anderen zien een afgeschermd profiel.",
+      "nowPublic": "Je profiel is nu openbaar",
+      "nowPrivate": "Je profiel is nu privé",
+      "undo": "Ongedaan maken",
+      "saveError": "Het is niet gelukt om te wijzigen wie je profiel kan zien. Probeer het opnieuw.",
+      "inviteLink": "Uitnodigingslink",
+      "inviteLinkHelp": "Wie je QR-code of uitnodigingslink opent, kan met één tik zorgen dat jullie elkaar volgen. Reset de link als je wilt dat links en QR-codes die je al hebt gedeeld niet meer werken.",
+      "resetConfirmTitle": "Je uitnodigingslink resetten?",
+      "resetConfirmBody": "Links en QR-codes die je al hebt gedeeld, werken dan niet meer. Je QR-code krijgt meteen een nieuwe link.",
+      "resetConfirmAction": "Link resetten",
+      "resetDone": "Je uitnodigingslink is gereset",
+      "resetError": "Het is niet gelukt om je uitnodigingslink te resetten. Probeer het opnieuw."
     },
     "shelf": {
       "title": "De Plank van {name}",
@@ -1165,18 +1178,6 @@
       "beginner": "Beginner",
       "intermediate": "Gevorderd",
       "experienced": "Ervaren"
-    },
-    "editor": {
-      "title": "Openbaar profiel",
-      "description": "Je weergavenaam zoals andere leden hem zien.",
-      "edit": "Bewerken",
-      "save": "Opslaan",
-      "cancel": "Annuleren",
-      "displayName": "Weergavenaam",
-      "displayNamePlaceholder": "Je weergavenaam",
-      "emptyNameError": "Weergavenaam mag niet leeg zijn",
-      "saved": "Profiel opgeslagen",
-      "saveError": "Kon profiel niet opslaan"
     }
   },
   "dashboard": {
@@ -3149,7 +3150,6 @@
     "copied": "Gekopieerd!",
     "share": "Delen",
     "resetLink": "Uitnodigingslink resetten",
-    "resetConfirm": "Oude links en QR-codes werken dan niet meer. Resetten?",
     "needUsernameTitle": "Stel eerst een gebruikersnaam in",
     "needUsernameBody": "Je QR-bijschrift en profiellink gebruiken je gebruikersnaam. Stel er een in bij je accountinstellingen en kom dan terug.",
     "openSettings": "Accountinstellingen openen",
@@ -5017,7 +5017,7 @@
         },
         "your-profile": {
           "title": "Wie het jouwe ziet",
-          "body": "Je puzzels en afgemaakte puzzels staan op je profiel voor ingelogde leden die het mogen zien: iedereen als het openbaar is, wederzijdse volgers als het privé is. Je wijzigt dit via Profiel Bewerken."
+          "body": "Je puzzels en afgemaakte puzzels staan op je profiel voor ingelogde leden die het mogen zien: iedereen als het openbaar is, wederzijdse volgers als het privé is. Je wijzigt dit onder Privacy op je profiel."
         }
       },
       "guide": {
@@ -5137,7 +5137,7 @@
         },
         "profile": {
           "title": "Openbaar of privé",
-          "body": "Met een openbaar profiel ziet elk lid jou en de puzzels die je aanbiedt. Zet Privéprofiel aan via Profiel Bewerken, dan zien alleen mensen met wie je elkaar volgt je plank; anderen zien Anonieme gebruiker."
+          "body": "Met een openbaar profiel ziet elk lid jou en de puzzels die je aanbiedt. Kies Alleen mensen die je toelaat onder Privacy, dan zien alleen mensen met wie je elkaar volgt je plank; anderen zien Anonieme gebruiker."
         },
         "per-copy": {
           "title": "Eén puzzel tegelijk",

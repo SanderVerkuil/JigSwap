@@ -1112,11 +1112,24 @@
     },
     "displayName": {
       "label": "Display name",
-      "helper": "Shown to other members as \"{name}\". Edit it from your public profile card."
+      "helper": "The name other members see.",
+      "emptyError": "Display name cannot be empty"
     },
-    "visibility": {
-      "label": "Private profile",
-      "helper": "Private profiles appear as 'Anonymous user' to members you're not connected with."
+    "privacy": {
+      "title": "Privacy",
+      "publicStatus": "Members can find you in Find people, and anyone with your link sees your full profile.",
+      "privateStatus": "Only members you follow each other with can find you in Find people and see your full profile. Everyone else sees a locked profile.",
+      "nowPublic": "Your profile is now public",
+      "nowPrivate": "Your profile is now private",
+      "undo": "Undo",
+      "saveError": "Couldn't change who can see your profile. Please try again.",
+      "inviteLink": "Invite link",
+      "inviteLinkHelp": "Anyone who opens your QR code or invite link can make you follow each other in one tap. Reset it if you want links and QR codes you've already shared to stop working.",
+      "resetConfirmTitle": "Reset your invite link?",
+      "resetConfirmBody": "Links and QR codes you've already shared will stop working. Your QR code gets a new link straight away.",
+      "resetConfirmAction": "Reset link",
+      "resetDone": "Your invite link was reset",
+      "resetError": "Couldn't reset your invite link. Please try again."
     },
     "shelf": {
       "title": "{name}'s Shelf",
@@ -1165,18 +1178,6 @@
       "beginner": "Beginner",
       "intermediate": "Intermediate",
       "experienced": "Experienced"
-    },
-    "editor": {
-      "title": "Public profile",
-      "description": "Your display name as other members see them.",
-      "edit": "Edit",
-      "save": "Save",
-      "cancel": "Cancel",
-      "displayName": "Display name",
-      "displayNamePlaceholder": "Your display name",
-      "emptyNameError": "Display name cannot be empty",
-      "saved": "Profile saved",
-      "saveError": "Could not save profile"
     }
   },
   "dashboard": {
@@ -3149,7 +3150,6 @@
     "copied": "Copied!",
     "share": "Share",
     "resetLink": "Reset invite link",
-    "resetConfirm": "Old links and QR codes will stop working. Reset?",
     "needUsernameTitle": "Set a username first",
     "needUsernameBody": "Your QR caption and profile link use your username. Set one in your account settings, then come back.",
     "openSettings": "Open account settings",
@@ -5017,7 +5017,7 @@
         },
         "your-profile": {
           "title": "Who sees yours",
-          "body": "Your puzzles and finished solves show on your profile to signed-in members who can see it: anyone when it's public, mutual followers when it's private. Change it under Edit Profile."
+          "body": "Your puzzles and finished solves show on your profile to signed-in members who can see it: anyone when it's public, mutual followers when it's private. Change it under Privacy on your profile."
         }
       },
       "guide": {
@@ -5137,7 +5137,7 @@
         },
         "profile": {
           "title": "Public or private",
-          "body": "With a public profile, any member can see you and the puzzles you offer. Turn on Private profile under Edit Profile, and only people you follow each other with see your shelf; others see Anonymous user."
+          "body": "With a public profile, any member can see you and the puzzles you offer. Choose Only people you approve under Privacy, and only people you follow each other with see your shelf; others see Anonymous user."
         },
         "per-copy": {
           "title": "One puzzle at a time",

@@ -92,6 +92,7 @@ function DiscoverabilityNotice() {
         {t("body")}{" "}
         <Link
           to="/profile"
+          hash="privacy"
           className="text-foreground font-medium underline underline-offset-2"
         >
           {t("review")}

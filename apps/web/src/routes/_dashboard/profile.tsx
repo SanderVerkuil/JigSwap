@@ -1,6 +1,7 @@
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { EditProfileForm } from "@/components/profile/edit-profile-form";
 import { IdentityHeader } from "@/components/profile/identity-header";
+import { PrivacySection } from "@/components/profile/privacy-section";
 import { ProfileShelfSection } from "@/components/profile/shelf-section";
 import { ProfileStatsSection } from "@/components/profile/stats-section";
 import { ReputationSection } from "@/components/reputation/reputation-section";
@@ -16,7 +17,10 @@ import { useTranslations } from "use-intl";
 
 // The member's own profile, in the open card-free language: identity header
 // (avatar, name, meta row, trust badge, edit toggle) → "{FirstName}'s Shelf"
-// on the puzzle plank → four divided stat columns → received reputation.
+// on the puzzle plank → four divided stat columns → received reputation. The
+// always-visible Privacy section (#privacy; its settings save instantly) sits
+// right under the identity (and the Edit Profile form when open), so a deep
+// link lands on it before the slower sections below have loaded.
 // The shell chrome owns the "Profile" page title, so there is no page h1 here.
 export const Route = createFileRoute("/_dashboard/profile")({
   head: ({ match }) => ({
@@ -66,6 +70,7 @@ function ProfilePage() {
       {isEditing && (
         <EditProfileForm member={member} onDone={() => setIsEditing(false)} />
       )}
+      <PrivacySection />
       <ProfileShelfSection member={member} />
       <ProfileStatsSection member={member} />
       <ReputationSection memberId={member._id as Id<"users">} />
