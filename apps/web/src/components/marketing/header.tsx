@@ -29,11 +29,17 @@ const NAV = [
   { href: "/contact", key: "contact" },
 ] as const;
 
+// Brand CTA in the bar at every width: compact (40px tall) below the 861px
+// desktop breakpoint, the regular button size above it.
+const BAR_CTA = "h-10 px-3.5 min-[861px]:h-9 min-[861px]:px-4";
+
 // Sticky marketing header: transparent over the hero, frosted card once
 // scrolled. Nav + language pill + mode toggle + auth actions. The full bar needs
 // about 1,185px in Dutch (the page clips overflow, so whatever does not fit is
 // out of reach): below 1200px the nav folds into the burger, and below 861px the
-// auth actions follow it.
+// login link follows it. The bar keeps the brand CTA next to the menu toggle at
+// every width; on phones (<640px) the language and theme switches move into the
+// menu to make room for it, and below 375px the wordmark shrinks to its logo mark.
 export function MarketingHeader() {
   const t = useTranslations("marketing.nav");
   const { pathname } = useLocation();
@@ -89,16 +95,16 @@ export function MarketingHeader() {
           : "bg-transparent border-transparent",
       )}
     >
-      <div className="w-full max-w-[1200px] mx-auto px-6 flex items-center gap-5 h-[70px]">
+      <div className="w-full max-w-[1200px] mx-auto px-6 flex items-center gap-3 sm:gap-5 h-[70px]">
         <Link href="/" aria-label="JigSwap">
-          <Wordmark />
+          <Wordmark textClassName="max-[375px]:hidden" />
         </Link>
         <nav className="hidden min-[1200px]:flex items-center gap-4 ml-2">
           {NAV.map((item) => navLink(item))}
         </nav>
         <div className="ml-auto flex items-center gap-2.5">
-          <LangToggle />
-          <ModeToggle />
+          <LangToggle className="hidden sm:inline-flex" />
+          <ModeToggle className="hidden sm:inline-flex" />
           <Unauthenticated>
             <Link
               href="/sign-in"
@@ -106,20 +112,12 @@ export function MarketingHeader() {
             >
               {t("login")}
             </Link>
-            <Button
-              variant="brand"
-              className="hidden min-[861px]:inline-flex"
-              asChild
-            >
+            <Button variant="brand" className={BAR_CTA} asChild>
               <Link href="/sign-up">{t("startTrading")}</Link>
             </Button>
           </Unauthenticated>
           <Authenticated>
-            <Button
-              variant="brand"
-              className="hidden min-[861px]:inline-flex"
-              asChild
-            >
+            <Button variant="brand" className={BAR_CTA} asChild>
               <Link href="/dashboard">{t("dashboard")}</Link>
             </Button>
           </Authenticated>
@@ -155,7 +153,7 @@ export function MarketingHeader() {
               </Link>
               <Button
                 variant="brand"
-                className="min-[861px]:hidden mt-3 w-full"
+                className="min-[861px]:hidden mt-3 w-full h-11"
                 asChild
               >
                 <Link href="/sign-up" onClick={() => setOpen(false)}>
@@ -166,7 +164,7 @@ export function MarketingHeader() {
             <Authenticated>
               <Button
                 variant="brand"
-                className="min-[861px]:hidden mt-3 w-full"
+                className="min-[861px]:hidden mt-3 w-full h-11"
                 asChild
               >
                 <Link href="/dashboard" onClick={() => setOpen(false)}>
@@ -174,6 +172,10 @@ export function MarketingHeader() {
                 </Link>
               </Button>
             </Authenticated>
+            <div className="sm:hidden flex items-center gap-2.5 pt-4">
+              <LangToggle />
+              <ModeToggle />
+            </div>
           </div>
         </nav>
       )}
@@ -185,7 +187,7 @@ export function MarketingHeader() {
 // top bar) — switches the use-intl catalog via the locale cookie. With no
 // cookie set the trigger shows the system language (Accept-Language
 // negotiation in detectLocale).
-function LangToggle() {
+function LangToggle({ className }: { className?: string }) {
   const t = useTranslations("marketing.nav");
   const current = currentLanguage(useLocale());
   const code = current.code.toUpperCase();
@@ -196,7 +198,10 @@ function LangToggle() {
           type="button"
           // Names the visible code too, so voice control can target what it sees (WCAG 2.5.3).
           aria-label={`${t("switchLanguage")}: ${current.name}, ${code}`}
-          className="inline-flex items-center justify-center gap-1.5 h-10 px-3 rounded-full border border-mk-border bg-mk-card text-[13px] font-semibold leading-none text-mk-text-body"
+          className={cn(
+            "inline-flex items-center justify-center gap-1.5 h-10 px-3 rounded-full border border-mk-border bg-mk-card text-[13px] font-semibold leading-none text-mk-text-body",
+            className,
+          )}
         >
           <Flag locale={current.code} />
           {code}
@@ -211,14 +216,17 @@ function LangToggle() {
 
 // Single round light/dark toggle (the marketing chrome skips the "system"
 // dropdown; next-themes still persists the choice app-wide).
-function ModeToggle() {
+function ModeToggle({ className }: { className?: string }) {
   const { resolvedTheme, setTheme } = useTheme();
   return (
     <button
       type="button"
       onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
       aria-label="Toggle dark mode"
-      className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-mk-border bg-mk-card text-mk-text-body"
+      className={cn(
+        "inline-flex items-center justify-center w-10 h-10 rounded-full border border-mk-border bg-mk-card text-mk-text-body",
+        className,
+      )}
     >
       <Sun size={18} className="hidden dark:block" />
       <Moon size={18} className="dark:hidden" />

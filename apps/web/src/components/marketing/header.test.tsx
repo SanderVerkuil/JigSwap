@@ -159,6 +159,28 @@ describe("MarketingHeader mobile menu", () => {
     expect(document.activeElement).toBe(menuToggle());
   });
 
+  it("keeps the sign-up CTA in the bar on every width", () => {
+    renderHeader();
+    const cta = screen.getByRole("link", { name: "Start trading" });
+    expect(cta.getAttribute("href")).toBe("/sign-up");
+    // No breakpoint hides it: the bar keeps it next to the menu toggle.
+    expect(cta.className.split(/\s+/)).not.toContain("hidden");
+  });
+
+  it("offers the language and theme switches inside the menu on phones", () => {
+    renderHeader();
+    fireEvent.click(menuToggle());
+    const panel = screen.getByRole("navigation", { name: "Menu" });
+    expect(
+      within(panel).getByRole("button", {
+        name: "Switch language: English, EN",
+      }),
+    ).toBeTruthy();
+    expect(
+      within(panel).getByRole("button", { name: "Toggle dark mode" }),
+    ).toBeTruthy();
+  });
+
   it("leaves an Escape that another layer already handled alone", () => {
     renderHeader();
     fireEvent.click(menuToggle());
