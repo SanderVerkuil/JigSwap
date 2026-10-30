@@ -1,0 +1,88 @@
+// @vitest-environment happy-dom
+// UX-158: the search pill names the palette shortcut for the platform it runs on, only after
+// mount (the server cannot know it), announces both shortcuts to assistive tech and drops the
+// key hint on touch screens.
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { cleanup, render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
+import { renderToString } from "react-dom/server";
+import { IntlProvider } from "use-intl";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import en from "../../../locales/en.json";
+import { TopBar } from "./top-bar";
+
+vi.mock("@/compat/link", () => ({
+  Link: ({ href, children }: { href: string; children?: ReactNode }) => (
+    <a href={href}>{children}</a>
+  ),
+}));
+vi.mock("@/components/common/header-logo", () => ({ HeaderLogo: () => null }));
+vi.mock("@/components/notifications/notification-bell", () => ({
+  NotificationBell: () => null,
+}));
+vi.mock("@/components/ui/theme-toggle", () => ({ ModeToggle: () => null }));
+vi.mock("@/components/ui/language-switcher", () => ({
+  LanguageSwitcher: () => null,
+}));
+
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
+
+function topBar() {
+  return (
+    <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+      <SidebarProvider>
+        <TopBar onOpenPalette={() => {}} />
+      </SidebarProvider>
+    </IntlProvider>
+  );
+}
+
+function stubPlatform(platform: string) {
+  vi.stubGlobal("navigator", {
+    ...navigator,
+    platform,
+    userAgentData: undefined,
+  });
+}
+
+function searchPill() {
+  return screen.getByRole("button", { name: /Search puzzles/ });
+}
+
+describe("TopBar search shortcut hint", () => {
+  it("shows ⌘K on a Mac", () => {
+    stubPlatform("MacIntel");
+    render(topBar());
+    expect(searchPill().querySelector("kbd")?.textContent).toBe("⌘K");
+  });
+
+  it("shows Ctrl K on Linux and Windows", () => {
+    stubPlatform("Linux x86_64");
+    render(topBar());
+    expect(searchPill().querySelector("kbd")?.textContent).toBe("Ctrl K");
+    cleanup();
+    stubPlatform("Win32");
+    render(topBar());
+    expect(searchPill().querySelector("kbd")?.textContent).toBe("Ctrl K");
+  });
+
+  it("renders no hint on the server, where the platform is unknown", () => {
+    const html = renderToString(topBar());
+    expect(html).not.toContain("<kbd");
+    expect(html).not.toContain("⌘K");
+  });
+
+  it("announces both shortcuts and hides the hint on touch screens", () => {
+    stubPlatform("MacIntel");
+    render(topBar());
+    expect(searchPill().getAttribute("aria-keyshortcuts")).toBe(
+      "Meta+K Control+K",
+    );
+    expect(searchPill().querySelector("kbd")?.className).toContain(
+      "pointer-coarse:hidden",
+    );
+  });
+});

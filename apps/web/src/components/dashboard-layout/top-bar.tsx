@@ -16,9 +16,11 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ModeToggle } from "@/components/ui/theme-toggle";
 import { Plus, Search } from "lucide-react";
 import { useTranslations } from "use-intl";
+import { useShortcutHint } from "./shortcut-hint";
 
 export function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   const t = useTranslations("shell");
+  const shortcut = useShortcutHint();
 
   return (
     <header className="hidden h-14 shrink-0 items-center gap-2 px-4 md:flex">
@@ -35,15 +37,20 @@ export function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
         <button
           type="button"
           onClick={onOpenPalette}
+          aria-keyshortcuts="Meta+K Control+K"
           className="flex h-9 w-full max-w-[520px] cursor-pointer items-center gap-2.5 rounded-full border bg-background px-4 text-sm text-muted-foreground shadow-xs transition-colors hover:border-ring/60 pointer-coarse:h-11"
         >
           <Search className="size-4 shrink-0" />
           <span className="flex-1 truncate text-left">
             {t("search.placeholder")}
           </span>
-          <kbd className="pointer-events-none rounded border bg-muted px-1.5 py-0.5 font-mono text-[11px] leading-none text-muted-foreground">
-            ⌘K
-          </kbd>
+          {/* The platform's own shortcut, known only after mount; touch screens have no keyboard
+              to press it with. */}
+          {shortcut && (
+            <kbd className="pointer-events-none rounded border bg-muted px-1.5 py-0.5 font-mono text-[11px] leading-none text-muted-foreground pointer-coarse:hidden">
+              {shortcut}
+            </kbd>
+          )}
         </button>
       </div>
 
