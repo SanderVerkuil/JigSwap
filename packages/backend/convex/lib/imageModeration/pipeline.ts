@@ -117,14 +117,17 @@ export const hashImageBytes = (bytes: Uint8Array): ImageHashes => ({
 
 // Re-encode stripped image bytes (no Exif) to a metadata-free image, turned upright for the
 // Orientation (1..8) the stripped Exif held (lib/imageModeration/normaliseImage). Either output
-// (PNG/JPEG) carries no metadata. Format is alpha-aware: if the source has ANY transparent pixel
-// we emit PNG so the transparency is preserved — a JPEG would flatten the alpha to black (jimp has
-// no WebP encoder). Opaque images emit JPEG (smaller). Returns the bytes plus the mime so the
-// caller stores the blob with the matching content type, and the image's blurhash (lib/blurhash)
-// from the same decode. A WebP is decoded with the WASM decoder (normaliseImage), so it too is
-// stored as the encoder's output. The decode re-runs the input guards and throws on a bitmap
-// that is not the size its header announced (decodeUpright), which the pipeline refuses as
-// "decode_failed".
+// (PNG/JPEG) carries no metadata, and no colour profile either, on purpose: the web client's
+// canvas re-encode already hands over sRGB, so only an original sent as is (a browser whose
+// canvas cannot be trusted, apps/web prepare-photo) loses a wide-gamut profile. Only the one-shot
+// backfill (normaliseImage.stripAndNormalise) keeps colour profiles. Format is alpha-aware: if the
+// source has ANY transparent pixel we emit PNG so the transparency is preserved — a JPEG would
+// flatten the alpha to black (jimp has no WebP encoder). Opaque images emit JPEG (smaller).
+// Returns the bytes plus the mime so the caller stores the blob with the matching content type,
+// and the image's blurhash (lib/blurhash) from the same decode. A WebP is decoded with the WASM
+// decoder (normaliseImage), so it too is stored as the encoder's output. The decode re-runs the
+// input guards and throws on a bitmap that is not the size its header announced (decodeUpright),
+// which the pipeline refuses as "decode_failed".
 export const reencodeImage = async (
   input: Uint8Array,
   format: ImageFormat,

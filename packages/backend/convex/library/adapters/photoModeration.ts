@@ -397,6 +397,24 @@ export interface SightengineModerationOptions {
 }
 
 /**
+ * The name the image is uploaded under: its extension says the same format as its type (the
+ * pipeline sends JPEG or PNG; a re-screen sends a stored blob as it is, an older WebP included).
+ * JPEG when the type is unknown.
+ */
+const sightengineFileName = (mime: string | undefined): string => {
+  switch (mime) {
+    case "image/png":
+      return "photo.png";
+    case "image/webp":
+      return "photo.webp";
+    case "image/gif":
+      return "photo.gif";
+    default:
+      return "photo.jpg";
+  }
+};
+
+/**
  * The Sightengine adapter: multipart-uploads the image to check.json with the nudity model and
  * decides from the explicit classes. Same contract as the HF adapter: any failure is "unscored"
  * with a reason (never approved), it never throws, and it never logs the credentials.
@@ -423,7 +441,7 @@ export const makeSightengineModerationPort = (
         new Blob([toArrayBuffer(bytes)], {
           type: mime ?? "application/octet-stream",
         }),
-        mime === "image/png" ? "photo.png" : "photo.jpg",
+        sightengineFileName(mime),
       );
       form.append("models", opts.model ?? SIGHTENGINE_MODEL);
       form.append("api_user", opts.apiUser);
