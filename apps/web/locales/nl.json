@@ -1362,6 +1362,14 @@
       "axiom": {
         "title": "Axiom",
         "description": "Technische logs. Onze technische logregels (bijvoorbeeld dat een fotocontrole is uitgevoerd en hoe die afliep, met interne account- en record-ID's) worden naar Axiom gestuurd en opgeslagen in de EU-regio van Axiom. Deze logs bevatten geen berichten en geen foto's."
+      },
+      "ahasend": {
+        "title": "AhaSend",
+        "description": "E-mail versturen. AhaSend verstuurt onze meldingsmails (die je zelf aanzet in je meldingsvoorkeuren) en de uitnodigingen die leden per e-mail versturen. Per e-mail krijgt AhaSend het e-mailadres van de ontvanger (en bij leden hun naam) en de inhoud van de e-mail, waarin andere leden en puzzels genoemd kunnen worden. Een uitnodiging per e-mail bevat ook de naam van het lid dat hem verstuurde. De tekst van een bericht staat er alleen in als je dat aanzet (zie Berichten, foto's en locaties)."
+      },
+      "firecrawl": {
+        "title": "Firecrawl",
+        "description": "Winkelpagina's uitlezen. Voeg je een puzzel toe via een link naar een winkelpagina en kunnen we die pagina niet zelf uitlezen, dan vragen onze servers Firecrawl om de pagina op te halen. Firecrawl krijgt alleen de link die je hebt geplakt, nooit je accountgegevens, en wordt nooit vanuit je browser benaderd."
       }
     },
     "photos": {
@@ -1385,7 +1393,8 @@
         "Een foto die de controle tegenhoudt, krijgt het andere lid nooit te zien, en het bijschrift ook niet: diegene ziet \"Verwijderd door moderatie\". Je krijgt daar bericht over en kunt om een herbeoordeling vragen. Kan de automatische controle niet worden uitgevoerd, dan bekijkt een moderator de foto (zonder het gesprek te zien waarin hij is verstuurd) en keurt hem goed of verwijdert hem",
         "Een locatie delen gebeurt eenmalig: je stuurt één plek, nooit je actuele positie",
         "Een speld die je op de kaart zet wordt precies daar verstuurd. \"Mijn huidige locatie gebruiken\" wordt afgerond op een gebied van ongeveer 1 km; je exacte huidige positie versturen wordt alleen aangeboden aan leden die je wederzijdse volgers zijn, en alleen als je daarvoor kiest. Terwijl je de kaart rond je huidige positie bekijkt, onthouden we het midden ervan (afgerond op ongeveer 100 m) 15 minuten lang, zodat ook een speld die je precies op je eigen plek zet als een gebied bij benadering wordt verstuurd",
-        "De kaartweergave van een gedeelde locatie wordt eenmalig op onze servers gemaakt als je hem verstuurt (zie MapTiler hierboven)"
+        "De kaartweergave van een gedeelde locatie wordt eenmalig op onze servers gemaakt als je hem verstuurt (zie MapTiler hierboven)",
+        "Een e-mail of pushmelding over een nieuw bericht bevat de tekst van het bericht alleen als je dat toestaat in je meldingsvoorkeuren: e-mails laten de tekst weg tenzij je dat aanzet, pushmeldingen tonen hem tenzij je dat uitzet. Meldingen over de groepschat van een kring bevatten de tekst nooit"
       ]
     },
     "groups": {
@@ -1485,7 +1494,7 @@
       "noSale": "We verkopen, verhuren of verhandelen je persoonsgegevens niet. Nooit.",
       "limitedSharing": "Gegevens worden alleen in deze gevallen gedeeld:",
       "circumstances": [
-        "Met de dienstverleners uit dit beleid, als verwerkers namens ons: Convex (database en bestanden), Clerk (inloggen), Vercel (hosting), PostHog (analyse en foutrapportage), Axiom (operationele logs, gehost in de EU), Sightengine (automatische fotocontrole) en MapTiler (kaarten en plekken zoeken)",
+        "Met de dienstverleners uit dit beleid, als verwerkers namens ons: Convex (database en bestanden), Clerk (inloggen), Vercel (hosting), PostHog (analyse en foutrapportage), Axiom (operationele logs, gehost in de EU), Sightengine (automatische fotocontrole), MapTiler (kaarten en plekken zoeken), AhaSend (e-mail versturen) en Firecrawl (winkelpagina's uitlezen voor puzzels die je via een link toevoegt)",
         "Met andere leden, voor zover jij dat kiest — je profiel en de delen van je bibliotheek die je deelt zijn zichtbaar volgens jouw instellingen",
         "Wanneer de wet dat vereist, of om de dienst en haar leden te beschermen tegen fraude of misbruik",
         "Voor al het andere: alleen met jouw uitdrukkelijke toestemming"

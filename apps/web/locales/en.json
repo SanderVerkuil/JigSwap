@@ -1362,6 +1362,14 @@
       "axiom": {
         "title": "Axiom",
         "description": "Technical logs. Our technical event logs (for example, that a photo check ran and how it ended, with internal account and record identifiers) are sent to Axiom and stored in its EU region. These logs do not contain your messages or your photos."
+      },
+      "ahasend": {
+        "title": "AhaSend",
+        "description": "Email delivery. AhaSend sends our notification emails (the ones you turn on in your notification preferences) and the invitations members send by email. For each email it receives the recipient's email address (and, for members, their name) and the content of the email, which can name other members and puzzles. An email invitation also carries the name of the member who sent it. The text of a message is only included if you turn that on (see Messages, Photos and Locations)."
+      },
+      "firecrawl": {
+        "title": "Firecrawl",
+        "description": "Reading shop pages. When you add a puzzle from a link to a shop page and we cannot read that page ourselves, our servers ask Firecrawl to fetch it. Firecrawl receives only the link you pasted, never your account details, and is never contacted from your browser."
       }
     },
     "photos": {
@@ -1385,7 +1393,8 @@
         "A photo the check stops is never shown to the other member, and neither is its caption: they see \"Removed by moderation\". You are told, and you can ask for a review. If the automated check cannot be completed, a moderator looks at the photo (without seeing the conversation it was sent in) and approves or removes it",
         "Sharing a location is one-shot: it sends a single place, never your live position",
         "A pin you place on the map is sent exactly where you put it. \"Use my current location\" is rounded to an area of about 1 km; sending your exact current position is only offered to members who are your mutual followers, and only when you choose it. While you look at the map around your current position, its centre (rounded to about 100 m) is remembered for 15 minutes, so that a pin placed right where you are is sent as an approximate area too",
-        "The map preview of a shared location is rendered once, on our servers, when you send it (see MapTiler above)"
+        "The map preview of a shared location is rendered once, on our servers, when you send it (see MapTiler above)",
+        "Email and push notifications about a new message include its text only if you allow it in your notification preferences: emails leave the text out unless you turn it on, push notifications include it unless you turn it off. Notifications about a circle's group chat never include it"
       ]
     },
     "groups": {
@@ -1485,7 +1494,7 @@
       "noSale": "We do not sell, rent, or trade your personal data. Ever.",
       "limitedSharing": "Data is shared only in these cases:",
       "circumstances": [
-        "With the providers named in this policy, as processors on our behalf: Convex (database and files), Clerk (sign-in), Vercel (hosting), PostHog (analytics and error reporting), Axiom (operational logs, EU-hosted), Sightengine (automated photo screening), and MapTiler (maps and place search)",
+        "With the providers named in this policy, as processors on our behalf: Convex (database and files), Clerk (sign-in), Vercel (hosting), PostHog (analytics and error reporting), Axiom (operational logs, EU-hosted), Sightengine (automated photo screening), MapTiler (maps and place search), AhaSend (sending emails), and Firecrawl (reading shop pages for puzzles added from a link)",
         "With other members, to the extent you choose — your profile and the parts of your library you share are visible according to your settings",
         "When the law requires it, or to protect the service and its members against fraud or abuse",
         "For anything else: only with your explicit consent"

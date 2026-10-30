@@ -72,6 +72,10 @@ function PrivacyPolicyPage() {
         { type: "p", text: t("dataStorage.maptiler.description") },
         { type: "sub", text: t("dataStorage.axiom.title") },
         { type: "p", text: t("dataStorage.axiom.description") },
+        { type: "sub", text: t("dataStorage.ahasend.title") },
+        { type: "p", text: t("dataStorage.ahasend.description") },
+        { type: "sub", text: t("dataStorage.firecrawl.title") },
+        { type: "p", text: t("dataStorage.firecrawl.description") },
       ],
     },
     {
