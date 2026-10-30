@@ -161,7 +161,9 @@ function ReviewForm({
         onPuzzleTextChange={setPuzzleText}
         copyRating={copyRating}
         onCopyRatingChange={setCopyRating}
-        showPuzzleSection={data.puzzleReviewAllowed}
+        // A backend that predates puzzleReviewAllowed (deploy skew) leaves it out: offer the
+        // question, as before; the server still refuses an unreviewable puzzle.
+        showPuzzleSection={data.puzzleReviewAllowed !== false}
         showCopySection={showCopySection}
         showUpdatesExisting={hasExisting}
       />

@@ -527,7 +527,8 @@ function ReviewsSection({
 
   const hasExistingReview = myReviews?.puzzle != null;
   // Only an approved definition (or the viewer's own submission) takes reviews; the server
-  // refuses the rest, so the composer is not offered there.
+  // refuses the rest, so the composer is not offered there. Loading, or a backend that predates
+  // the flag, keeps the composer.
   const canReview = myReviews?.puzzleReviewAllowed !== false;
 
   const list = reviews ?? [];

@@ -146,7 +146,8 @@ export function CompletionFollowUpProvider({
       puzzleRating: reviewsData.puzzle?.rating ?? 0,
       puzzleText: reviewsData.puzzle?.text ?? "",
       copyRating: reviewsData.copy?.rating ?? 0,
-      puzzleReviewAllowed: reviewsData.puzzleReviewAllowed,
+      // Absent from a backend that predates it (deploy skew): offer the question, as before.
+      puzzleReviewAllowed: reviewsData.puzzleReviewAllowed !== false,
       copyReviewAllowed: reviewsData.copyReviewAllowed,
       hasExisting: reviewsData.puzzle !== null || reviewsData.copy !== null,
     };
