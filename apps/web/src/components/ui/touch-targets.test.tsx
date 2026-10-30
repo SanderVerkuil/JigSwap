@@ -1,0 +1,104 @@
+// @vitest-environment happy-dom
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
+import { Button } from "./button";
+import { Checkbox } from "./checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "./dropdown-menu";
+import { Switch } from "./switch";
+
+// Under a finger (pointer: coarse) the shared controls reach the 44px touch target the app uses
+// in onboarding and Reports (UX-70). The sizing lives in the primitives, behind pointer-coarse:,
+// so fine-pointer (mouse) layouts keep their compact sizes. happy-dom has no layout, so these
+// tests pin the classes; the browser check is the touch matrix in the commit message.
+
+afterEach(cleanup);
+
+const classes = (el: Element) => el.getAttribute("class")?.split(/\s+/) ?? [];
+
+describe("coarse-pointer touch targets", () => {
+  it.each(["default", "sm", "lg", "icon"] as const)(
+    "gives a %s Button a 44px minimum on touch, even with a size override",
+    (size) => {
+      render(
+        <Button size={size} className="size-8">
+          Go
+        </Button>,
+      );
+      const button = screen.getByRole("button", { name: "Go" });
+      expect(classes(button)).toEqual(
+        expect.arrayContaining([
+          "size-8",
+          "pointer-coarse:min-h-11",
+          "pointer-coarse:min-w-11",
+        ]),
+      );
+    },
+  );
+
+  it("lets a caller opt a Button out on touch", () => {
+    render(
+      <Button size="sm" className="pointer-coarse:min-h-0">
+        Go
+      </Button>,
+    );
+    const list = classes(screen.getByRole("button", { name: "Go" }));
+    expect(list).toContain("pointer-coarse:min-h-0");
+    expect(list).not.toContain("pointer-coarse:min-h-11");
+  });
+
+  it("grows the Switch hit area to 44px on touch without changing its size", () => {
+    render(<Switch aria-label="Email" />);
+    const list = classes(screen.getByRole("switch", { name: "Email" }));
+    expect(list).toEqual(
+      expect.arrayContaining([
+        "relative",
+        "h-[1.15rem]",
+        "w-8",
+        "pointer-coarse:after:absolute",
+        // 32×18.4 + 2×6px sideways and 2×13px up/down = 44×44.
+        "pointer-coarse:after:-inset-x-1.5",
+        "pointer-coarse:after:-inset-y-3.25",
+      ]),
+    );
+  });
+
+  it("grows the Checkbox hit area to 44px on touch without changing its size", () => {
+    render(<Checkbox aria-label="All trades" />);
+    const list = classes(screen.getByRole("checkbox", { name: "All trades" }));
+    expect(list).toEqual(
+      expect.arrayContaining([
+        "relative",
+        "size-4",
+        "pointer-coarse:after:absolute",
+        // 16 + 2×14px = 44.
+        "pointer-coarse:after:-inset-3.5",
+      ]),
+    );
+  });
+
+  it("makes menu rows, including submenu triggers, 44px tall on touch", () => {
+    render(
+      <DropdownMenu open>
+        <DropdownMenuTrigger>Menu</DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem>Edit</DropdownMenuItem>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>Add to collection</DropdownMenuSubTrigger>
+          </DropdownMenuSub>
+        </DropdownMenuContent>
+      </DropdownMenu>,
+    );
+    for (const name of ["Edit", "Add to collection"]) {
+      expect(classes(screen.getByRole("menuitem", { name }))).toContain(
+        "pointer-coarse:min-h-11",
+      );
+    }
+  });
+});
