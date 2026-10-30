@@ -34,6 +34,10 @@ export const RATE_LIMITS = {
   locationPicker: { windowMs: HOUR, max: 60 },
   // Email invitations (invitations/sendEmailInvite), follow and household together.
   emailInvite: { windowMs: DAY, max: 10 },
+  // A new account's email invitations (younger than invitations/config NEW_ACCOUNT_AGE_MS, or
+  // without a verified email), charged on top of emailInvite: a fresh sign-up can't send the
+  // full allowance of JigSwap-branded email.
+  emailInviteNewAccount: { windowMs: DAY, max: 3 },
   // Requests to join a household (household/requestToJoinHousehold), like emailInvite.
   householdJoinRequest: { windowMs: DAY, max: 10 },
   // Presence heartbeats across all rooms and tabs: a tab sends ~4/min (app room + messages at

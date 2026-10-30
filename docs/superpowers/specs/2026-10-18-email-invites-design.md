@@ -56,6 +56,7 @@ Setting the key on a deployment is a coordinator step, done after the TO VERIFY 
 2. **Normalise the address:** trim, lowercase, HTML-spec email syntax, at most 254 characters. Otherwise `InvalidEmail`.
 3. **Per-inviter rate limit:** `emailInvite`, 10 per day, shared by E1 and E2.
    - It uses the in-house limiter (`lib/rateLimits`) in its own mutation, before any other work, so it commits even when a later step fails.
+   - A new account (younger than 7 days, or without a verified email) is also charged `emailInviteNewAccount`, 3 per day (SEC-33).
    - Refused: `RateLimited` with `retryAfterMs`.
 4. **One local reference row** is always written, whatever happens next, so the inviter's pending list looks the same in every case: `emailInvites { aggregateId, kind, inviterId, householdId?, clerkInvitationId?, fallback?, createdAt, expiresAt = +14 d }`.
    - It stores **no email address**. The pending list shows "Invitation sent {date}" without one.

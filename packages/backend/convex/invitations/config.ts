@@ -12,6 +12,12 @@ export const EMAIL_INVITE_TTL_MS = EMAIL_INVITE_TTL_DAYS * DAY;
 /** At most one invitation email per address in this window, across all inviters. */
 export const SEND_LOG_WINDOW_MS = 30 * DAY;
 
+/**
+ * An inviter whose account is younger than this, or who has no verified email (users.email),
+ * is a new account: their invitations also count against RATE_LIMITS.emailInviteNewAccount.
+ */
+export const NEW_ACCOUNT_AGE_MS = 7 * DAY;
+
 // sendEmailInvite answers no sooner than RESPONSE_FLOOR_MS (+ up to RESPONSE_FLOOR_JITTER_MS)
 // after it started, whichever path it took after its first mutation (capped, existing member,
 // Clerk refusal, email sent, any failure), so the response time says nothing about the address.

@@ -48,6 +48,7 @@ type T = TestConvex<typeof schema>;
 type Who = "alice" | "bob" | "carol";
 
 const HMAC_KEY = "test-only-dummy-invite-email-hmac-key-0123456789";
+const DAY = 24 * 60 * 60_000;
 const NEW_ADDRESS = "newbie@example.org";
 
 const fetchMock = vi.fn(
@@ -85,6 +86,8 @@ afterEach(() => {
 
 const as = (t: T, who: Who) => t.withIdentity({ subject: `clerk_${who}` });
 
+// Established members: accounts a month old with a verified email (a newer account, or one
+// without a verified email, has the smaller new-account allowance).
 const seed = async (t: T) =>
   t.run(async (ctx) => {
     const now = Date.now();
@@ -95,7 +98,7 @@ const seed = async (t: T) =>
         name: who[0].toUpperCase() + who.slice(1),
         username: who,
         isActive: true,
-        createdAt: now,
+        createdAt: now - 30 * DAY,
         updatedAt: now,
         ...extra,
       });
@@ -415,6 +418,71 @@ describe("sendEmailInvite", () => {
     expect(await send(t, "bob", "for-bob@example.org")).toEqual({
       status: "sent",
     });
+  });
+
+  test("a new account: 3 a day, besides the 10", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    expect(RATE_LIMITS.emailInviteNewAccount).toEqual({
+      windowMs: DAY,
+      max: 3,
+    });
+    // Six days old: still new.
+    await t.run((ctx) =>
+      ctx.db.patch(s.alice, { createdAt: Date.now() - 6 * DAY }),
+    );
+
+    for (let i = 0; i < 3; i++) {
+      expect(await send(t, "alice", `person${i}@example.org`)).toEqual({
+        status: "sent",
+      });
+    }
+    const data = (await errorOf(send(t, "alice", "one-more@example.org"))) as {
+      code: string;
+      retryAfterMs: number;
+    };
+    expect(data.code).toBe("RateLimited");
+    expect(data.retryAfterMs).toBeGreaterThan(0);
+    expect(await rowsOf(t)).toHaveLength(3);
+    expect(gateway.created).toHaveLength(3);
+    // The refusal charged nothing: the daily count stays at the three that went out.
+    const counts = await t.run(async (ctx) =>
+      Object.fromEntries(
+        (await ctx.db.query("rateLimits").collect()).map((r) => [
+          r.key,
+          r.count,
+        ]),
+      ),
+    );
+    expect(counts[`emailInvite:${s.alice}`]).toBe(3);
+    expect(counts[`emailInviteNewAccount:${s.alice}`]).toBe(3);
+
+    // An established member is not charged the new-account allowance.
+    await send(t, "bob", "for-bob@example.org");
+    expect(
+      await t.run((ctx) =>
+        ctx.db
+          .query("rateLimits")
+          .withIndex("by_key", (q) =>
+            q.eq("key", `emailInviteNewAccount:${s.bob}`),
+          )
+          .unique(),
+      ),
+    ).toBeNull();
+  });
+
+  test("an account without a verified email has the new-account allowance, whatever its age", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await t.run((ctx) => ctx.db.patch(s.alice, { email: undefined }));
+
+    for (let i = 0; i < 3; i++) {
+      await send(t, "alice", `person${i}@example.org`);
+    }
+    expect(await codeOf(send(t, "alice", "one-more@example.org"))).toBe(
+      "RateLimited",
+    );
+    expect(await rowsOf(t)).toHaveLength(3);
   });
 
   test("the rate-limit count and the ref row commit, and the answer is sent, when a later step throws", async () => {
