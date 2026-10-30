@@ -100,3 +100,43 @@ describe("ProfileStatsSection", () => {
     expect(screen.queryByText("puzzles owned")).toBeNull();
   });
 });
+
+// The trust meter is a labelled progressbar whose copy matches the rule it
+// applies: completed exchanges only, thresholds 5 and 10 (UX-121).
+describe("ProfileStatsSection trust level", () => {
+  it("is a progressbar named Trust Level with the count as its value", () => {
+    renderStats(unlocked({ swaps: 3 }));
+    const meter = screen.getByRole("progressbar", { name: "Trust Level" });
+    expect(meter.getAttribute("aria-valuemin")).toBe("0");
+    expect(meter.getAttribute("aria-valuemax")).toBe("10");
+    expect(meter.getAttribute("aria-valuenow")).toBe("3");
+    expect(meter.getAttribute("aria-valuetext")).toBe(
+      "Beginner, 3 completed exchanges",
+    );
+  });
+
+  it("says what it is based on and how far the next level is", () => {
+    renderStats(unlocked({ swaps: 3 }));
+    expect(
+      screen.getByText("Based on completed exchanges · 2 more to Intermediate"),
+    ).toBeTruthy();
+    expect(screen.queryByText(/reviews/)).toBeNull();
+  });
+
+  it("counts towards Experienced from Intermediate", () => {
+    renderStats(unlocked({ swaps: 9 }));
+    expect(
+      screen.getByText("Based on completed exchanges · 1 more to Experienced"),
+    ).toBeTruthy();
+  });
+
+  it("caps the meter at the top level and drops the next-level hint", () => {
+    renderStats(unlocked({ swaps: 14 }));
+    const meter = screen.getByRole("progressbar", { name: "Trust Level" });
+    expect(meter.getAttribute("aria-valuenow")).toBe("10");
+    expect(meter.getAttribute("aria-valuetext")).toBe(
+      "Experienced, 14 completed exchanges",
+    );
+    expect(screen.getByText("Based on completed exchanges")).toBeTruthy();
+  });
+});

@@ -769,6 +769,7 @@
     "averageRating": "Gemiddelde beoordeling",
     "reviewCount": "{count, plural, =0 {Geen reviews} one {# review} other {# reviews}}",
     "noReviewsYet": "Nog geen reviews",
+    "noReviewsYetHint": "Nog geen reviews. Reviews verschijnen na je eerste voltooide uitwisseling.",
     "credibility": "Geloofwaardigheid",
     "credibilityLevel": {
       "low": "In opbouw",
@@ -1090,7 +1091,9 @@
     "tradesCompleted": "Uitwisselingen Voltooid",
     "reviews": "Beoordelingen",
     "trustLevel": "Vertrouwensniveau",
-    "trustLevelDescription": "Gebaseerd op voltooide uitwisselingen en beoordelingen",
+    "trustLevelDescription": "Gebaseerd op voltooide uitwisselingen",
+    "trustLevelDescriptionNext": "Gebaseerd op voltooide uitwisselingen · nog {count} tot {level}",
+    "trustLevelValueText": "{level}, {count, plural, one {# voltooide uitwisseling} other {# voltooide uitwisselingen}}",
     "notFound": "Gebruiker niet gevonden",
     "trustBadge": "{rating} Vertrouwen",
     "save": "Opslaan",
