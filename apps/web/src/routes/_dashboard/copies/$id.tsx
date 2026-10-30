@@ -452,8 +452,10 @@ function CopyInstanceDetail({
             </span>{" "}
             {tPuzzles("pieces")}
             {/* Only when the definition page would open for this viewer (not for a definition that
-                is no longer approved, unless they submitted it or are an admin). */}
-            {copy.viewerMayOpenDefinition && (
+                is no longer approved, unless they submitted it or are an admin). Hidden only on an
+                explicit false: web can deploy before the backend that sends the field, and an
+                absent value must keep the link for approved definitions. */}
+            {copy.viewerMayOpenDefinition !== false && (
               <>
                 {" · "}
                 <Link
