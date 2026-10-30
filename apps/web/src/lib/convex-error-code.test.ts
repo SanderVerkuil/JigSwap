@@ -9,6 +9,16 @@ describe("convexErrorCode", () => {
     );
   });
 
+  // The data can arrive JSON-encoded (exchange/request-trade relied on this before it shared
+  // this helper).
+  it("reads the code of a JSON-encoded refusal", () => {
+    expect(
+      convexErrorCode(
+        new ConvexError(JSON.stringify({ code: "DuplicateProposal" })),
+      ),
+    ).toBe("DuplicateProposal");
+  });
+
   it.each([
     ["a plain error", new Error("RateLimited")],
     ["a message-only ConvexError", new ConvexError("RateLimited")],
@@ -27,6 +37,16 @@ describe("convexRetryAfterMs", () => {
         new ConvexError({ code: "RateLimited", retryAfterMs: 90_000 }),
       ),
     ).toBe(90_000);
+  });
+
+  it("reads the wait of a JSON-encoded refusal", () => {
+    expect(
+      convexRetryAfterMs(
+        new ConvexError(
+          JSON.stringify({ code: "RateLimited", retryAfterMs: 60_000 }),
+        ),
+      ),
+    ).toBe(60_000);
   });
 
   it.each([
