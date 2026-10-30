@@ -1,11 +1,27 @@
 // @vitest-environment happy-dom
 import type { SolvePickerItem, SolvePickerSection } from "@/lib/solve-picker";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { IntlProvider } from "use-intl";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
 import { SolvePicker } from "./solve-picker";
+
+vi.mock("@/compat/link", () => ({
+  Link: ({
+    href,
+    children,
+    ...rest
+  }: {
+    href: string;
+    children?: ReactNode;
+  }) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
+  ),
+}));
 
 // The "Log a completion" picker: every puzzle is a real button with a name that says what picking
 // it does, under visible section headings, with the solves in progress first.
@@ -38,6 +54,23 @@ const SECTIONS: SolvePickerSection[] = [
     items: [
       log("own-1", "De Kattenshow", { brand: "Jumbo" }),
       log("own-2", "Tirol", { brand: "Ravensburger", pieceCount: 3000 }),
+    ],
+  },
+  {
+    id: "borrowed",
+    items: [
+      log("loan-1", "Kattenkwaad", {
+        target: { kind: "log", copyId: "loan-1", viewerIsOwner: false },
+      }),
+    ],
+  },
+  {
+    id: "household",
+    items: [
+      log("hh-1", "Alpen", {
+        ownerName: "Anna",
+        target: { kind: "log", copyId: "hh-1", viewerIsOwner: false },
+      }),
     ],
   },
 ];
@@ -90,6 +123,8 @@ describe("SolvePicker", () => {
     expect(sectionHeadings()).toEqual([
       "In progress: finish one",
       "Your puzzles",
+      "Borrowed",
+      "Household",
     ]);
   });
 
@@ -101,6 +136,8 @@ describe("SolvePicker", () => {
       "Lam Gelegd: finish solve, 500 pieces, In progress since Oct 3, 2026",
       "De Kattenshow: log a solve, Jumbo · 1,000 pieces",
       "Tirol: log a solve, Ravensburger · 3,000 pieces",
+      "Kattenkwaad: log a solve, 1,000 pieces",
+      "Alpen: log a solve, 1,000 pieces · Anna's copy",
     ]);
     for (const button of screen.getAllByRole("button")) {
       expect(button.getAttribute("type")).toBe("button");
@@ -155,6 +192,8 @@ describe("SolvePicker", () => {
     renderPicker([
       { id: "inProgress", items: [] },
       { id: "own", items: [log("own-1", "De Kattenshow")] },
+      { id: "borrowed", items: [] },
+      { id: "household", items: [] },
     ]);
     expect(sectionHeadings()).toEqual(["Your puzzles"]);
   });
@@ -163,18 +202,29 @@ describe("SolvePicker", () => {
     renderPicker(SECTIONS);
     const search = screen.getByRole("searchbox", { name: "Search puzzles" });
     fireEvent.change(search, { target: { value: "katten" } });
-    expect(sectionHeadings()).toEqual(["Your puzzles"]);
-    expect(screen.getAllByRole("button")).toHaveLength(1);
+    expect(sectionHeadings()).toEqual(["Your puzzles", "Borrowed"]);
+    expect(screen.getAllByRole("button")).toHaveLength(2);
+
+    fireEvent.change(search, { target: { value: "anna" } });
+    expect(sectionHeadings()).toEqual(["Household"]);
 
     fireEvent.change(search, { target: { value: "zzz" } });
     expect(screen.queryAllByRole("heading", { level: 2 })).toEqual([]);
     expect(screen.getByText("No puzzles match “zzz”")).toBeDefined();
   });
 
-  it("shows no search when there is nothing to pick", () => {
+  it("offers a way forward when there is nothing to log at all", () => {
     renderPicker(EMPTY);
     expect(screen.queryByRole("searchbox")).toBeNull();
-    expect(screen.getByText("No puzzles yet")).toBeDefined();
+    expect(screen.getByText("Nothing to log yet")).toBeDefined();
+    expect(
+      screen.getByRole("link", { name: "Add a puzzle" }).getAttribute("href"),
+    ).toBe("/my-puzzles/add");
+    expect(
+      screen
+        .getByRole("link", { name: "Find a puzzle to borrow" })
+        .getAttribute("href"),
+    ).toBe("/browse");
   });
 
   it("speaks Dutch", () => {
@@ -182,11 +232,15 @@ describe("SolvePicker", () => {
     expect(sectionHeadings()).toEqual([
       "Nog bezig: rond er een af",
       "Je eigen puzzels",
+      "Geleend",
+      "Huishouden",
     ]);
     expectButtonNames([
       "Lam Gelegd: voltooiing afronden, 500 stukjes, Bezig sinds 3 okt 2026",
       "De Kattenshow: voltooiing vastleggen, Jumbo · 1.000 stukjes",
       "Tirol: voltooiing vastleggen, Ravensburger · 3.000 stukjes",
+      "Kattenkwaad: voltooiing vastleggen, 1.000 stukjes",
+      "Alpen: voltooiing vastleggen, 1.000 stukjes · Exemplaar van Anna",
     ]);
   });
 });

@@ -3230,15 +3230,20 @@
         "searchLabel": "Puzzels zoeken",
         "sections": {
           "inProgress": "Nog bezig: rond er een af",
-          "own": "Je eigen puzzels"
+          "own": "Je eigen puzzels",
+          "borrowed": "Geleend",
+          "household": "Huishouden"
         },
         "logLabel": "{title}<action>: voltooiing vastleggen</action>",
         "finishLabel": "{title}<action>: voltooiing afronden</action>",
         "inProgressSince": "Bezig sinds {date}",
+        "ownerCopy": "Exemplaar van {name}",
         "untitled": "Puzzel zonder titel",
         "noMatches": "Geen puzzels gevonden voor “{term}”",
-        "noPuzzles": "Nog geen puzzels",
-        "noPuzzlesHint": "Voeg eerst puzzels toe aan je bibliotheek en log hier dan een voltooiing."
+        "noPuzzles": "Nog niets om vast te leggen",
+        "noPuzzlesHint": "Voeg een puzzel toe aan je bibliotheek of leen er een, en leg je voltooiingen dan hier vast.",
+        "addPuzzle": "Puzzel toevoegen",
+        "findToBorrow": "Zoek een puzzel om te lenen"
       },
       "delete": "Verwijderen",
       "deleteConfirmTitle": "Voltooiing verwijderen?",

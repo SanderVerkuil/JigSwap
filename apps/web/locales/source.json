@@ -3230,15 +3230,20 @@
         "searchLabel": "Search puzzles",
         "sections": {
           "inProgress": "In progress: finish one",
-          "own": "Your puzzles"
+          "own": "Your puzzles",
+          "borrowed": "Borrowed",
+          "household": "Household"
         },
         "logLabel": "{title}<action>: log a solve</action>",
         "finishLabel": "{title}<action>: finish solve</action>",
         "inProgressSince": "In progress since {date}",
+        "ownerCopy": "{name}'s copy",
         "untitled": "Untitled puzzle",
         "noMatches": "No puzzles match “{term}”",
-        "noPuzzles": "No puzzles yet",
-        "noPuzzlesHint": "Add puzzles to your library first, then log a completion here."
+        "noPuzzles": "Nothing to log yet",
+        "noPuzzlesHint": "Add a puzzle to your library or borrow one, then log your solves here.",
+        "addPuzzle": "Add a puzzle",
+        "findToBorrow": "Find a puzzle to borrow"
       },
       "delete": "Delete",
       "deleteConfirmTitle": "Delete this completion?",

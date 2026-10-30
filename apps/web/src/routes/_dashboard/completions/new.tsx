@@ -7,6 +7,7 @@ import { SolvePicker } from "@/components/solving/solve-picker";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway, Id } from "@/gateway";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
 import {
   buildSolvePickerSections,
@@ -31,6 +32,7 @@ function NewCompletionPage() {
   const t = useTranslations("solving.completions");
   const tShell = useTranslations("shell");
   const tCommon = useTranslations("common");
+  const displayName = useMemberDisplayName();
   // The picked puzzle; null while the picker shows.
   const [picked, setPicked] = useState<SolvePickerItem | null>(null);
   // The picked row's button. The dialogs have no Radix trigger to hand focus back to, so once the
@@ -51,7 +53,8 @@ function NewCompletionPage() {
   );
   const signedIn = !!convexUser?._id;
 
-  // The member's own copies, plus the solves they have in progress.
+  // Everything the member may log a solve for (solving/solvableCopy.ts): their own copies, the
+  // copies they hold on loan and their household's copies, plus the solves they have in progress.
   const { data: ownedPuzzles } = useQuery(
     convexQuery(
       gateway.library.ownedByOwner,
@@ -59,6 +62,12 @@ function NewCompletionPage() {
         ? { ownerId: convexUser._id as Id<"users">, includeUnavailable: true }
         : "skip",
     ),
+  );
+  const { data: borrowed } = useQuery(
+    convexQuery(gateway.lending.borrowed, signedIn ? {} : "skip"),
+  );
+  const { data: householdCopies } = useQuery(
+    convexQuery(gateway.household.copies, signedIn ? {} : "skip"),
   );
   const { data: inProgress } = useQuery(
     convexQuery(gateway.solving.myInProgress, signedIn ? {} : "skip"),
@@ -94,6 +103,8 @@ function NewCompletionPage() {
     convexUserPending ||
     convexUser === undefined ||
     ownedPuzzles === undefined ||
+    borrowed === undefined ||
+    householdCopies === undefined ||
     inProgress === undefined
   ) {
     return <PageLoading message={tCommon("loading")} />;
@@ -102,6 +113,9 @@ function NewCompletionPage() {
   const sections = buildSolvePickerSections({
     inProgress,
     owned: ownedPuzzles,
+    borrowed,
+    household: householdCopies,
+    nameOf: displayName,
   });
   const pickedTitle = picked?.title ?? t("new.untitled");
   const close = (open: boolean) => {

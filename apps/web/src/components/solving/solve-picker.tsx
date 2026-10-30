@@ -1,11 +1,13 @@
 "use client";
 
 import { Image } from "@/compat/image";
+import { Link } from "@/compat/link";
 import { SectionHead } from "@/components/dashboard-home/section-head";
 import { CoverChip } from "@/components/library/cover-chip";
 import { EmptyState } from "@/components/library/empty-state";
 import { chipColor } from "@/components/library/palette";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DATE_ONLY_TIME_ZONE } from "@/lib/date-input";
 import {
@@ -17,7 +19,9 @@ import {
 import {
   ChevronRight,
   Clock,
+  House,
   Puzzle,
+  Repeat,
   Search,
   type LucideIcon,
 } from "lucide-react";
@@ -27,6 +31,8 @@ import { useFormatter, useTranslations } from "use-intl";
 const SECTION_ICON: Record<SolvePickerSectionId, LucideIcon> = {
   inProgress: Clock,
   own: Puzzle,
+  borrowed: Repeat,
+  household: House,
 };
 
 // The "Log a completion" picker: a search over every section, then each non-empty section under
@@ -48,7 +54,22 @@ export function SolvePicker({
   const [searchTerm, setSearchTerm] = useState("");
 
   if (sections.every((section) => section.items.length === 0)) {
-    return <EmptyState title={t("noPuzzles")} sub={t("noPuzzlesHint")} />;
+    return (
+      <EmptyState
+        title={t("noPuzzles")}
+        sub={t("noPuzzlesHint")}
+        action={
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <Button asChild>
+              <Link href="/my-puzzles/add">{t("addPuzzle")}</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/browse">{t("findToBorrow")}</Link>
+            </Button>
+          </div>
+        }
+      />
+    );
   }
 
   const visible = filterSolvePickerSections(sections, searchTerm).filter(
@@ -118,6 +139,7 @@ function SolvePickerRow({
     item.pieceCount !== undefined
       ? t("pieces", { pieces: item.pieceCount })
       : undefined,
+    item.ownerName ? t("new.ownerCopy", { name: item.ownerName }) : undefined,
   ].filter((part): part is string => !!part);
   // Commas a screen reader pauses on between the parts of the name; not shown.
   const pause = <span className="sr-only">, </span>;
@@ -126,7 +148,7 @@ function SolvePickerRow({
   );
 
   // The accessible name is the row's own text, so it contains everything visible (WCAG 2.5.3):
-  // the title, then what picking does (screen readers only), brand, pieces and, for a solve
+  // the title, then what picking does (screen readers only), brand, pieces, owner and, for a solve
   // in progress, when it started.
   return (
     <button
