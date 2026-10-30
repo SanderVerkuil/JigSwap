@@ -6,8 +6,8 @@
 // pattern — see use-favorites), so rows land instantly and revert
 // automatically if the server rejects. Editing is delegated to the route via
 // onEdit (the shared dialog); (de)activation — the domain's soft delete — is
-// handled here, with deactivation behind an AlertDialog confirm and
-// reactivation firing directly (safe direction).
+// handled here, with deactivation behind an AlertDialog confirm and a success
+// toast that offers Undo, and reactivation firing directly (safe direction).
 import {
   AlertDialog,
   AlertDialogAction,
@@ -141,6 +141,12 @@ export function CategoryList({
     }
   };
 
+  const reactivate = (category: Category) =>
+    setActive(category, true, {
+      success: t("reactivateSuccess"),
+      error: t("reactivateError"),
+    });
+
   const setActive = async (
     category: Category,
     isActive: boolean,
@@ -152,7 +158,16 @@ export function CategoryList({
         catalogCategoryId: category.aggregateId,
         isActive,
       });
-      toast.success(messages.success);
+      // Deactivating is reversible, so its toast offers Undo (reactivate).
+      if (isActive) toast.success(messages.success);
+      else {
+        toast.success(messages.success, {
+          action: {
+            label: t("undo"),
+            onClick: () => void reactivate(category),
+          },
+        });
+      }
     } catch {
       toast.error(messages.error);
     }
@@ -179,12 +194,7 @@ export function CategoryList({
                 busy={busyId !== null && busyId === category.aggregateId}
                 onEdit={() => onEdit(category)}
                 onDeactivate={() => setConfirming(category)}
-                onReactivate={() =>
-                  setActive(category, true, {
-                    success: t("reactivateSuccess"),
-                    error: t("reactivateError"),
-                  })
-                }
+                onReactivate={() => void reactivate(category)}
               />
             ))}
           </div>

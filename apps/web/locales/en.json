@@ -5160,6 +5160,7 @@
         "reactivate": "Reactivate",
         "reactivateSuccess": "Category reactivated successfully",
         "reactivateError": "Failed to reactivate category",
+        "undo": "Undo",
         "reorderError": "Failed to reorder categories",
         "dragHandle": "Drag to reorder {name}"
       }

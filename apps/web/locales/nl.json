@@ -5160,6 +5160,7 @@
         "reactivate": "Reactiveren",
         "reactivateSuccess": "Categorie gereactiveerd",
         "reactivateError": "Categorie reactiveren mislukt",
+        "undo": "Ongedaan maken",
         "reorderError": "Categorieën herordenen mislukt",
         "dragHandle": "Sleep om {name} te herordenen"
       }
