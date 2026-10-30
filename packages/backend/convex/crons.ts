@@ -101,4 +101,13 @@ crons.weekly(
   { mode: "dry-run" },
 );
 
+// The public landing page's counters: users, puzzles and ownedPuzzles recounted into the
+// platformStats row that insights/getGlobalStats reads (insights/platformStats).
+crons.interval(
+  "recount platform stats",
+  { hours: 6 },
+  internal.insights.platformStats.recount,
+  {},
+);
+
 export default crons;

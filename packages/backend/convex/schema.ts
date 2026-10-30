@@ -2057,6 +2057,18 @@ export default defineSchema({
     completedAt: v.number(),
   }).index("by_name", ["name"]),
 
+  // The public landing page's counters (PERF-B2m), so insights/getGlobalStats reads one row instead
+  // of every users, puzzles and ownedPuzzles row. One row, key "global", rewritten by
+  // insights/platformStats.recount (a 6-hourly cron that recounts the three tables), so the numbers
+  // may be up to one interval old. Same meaning as the legacy count: every row of each table.
+  platformStats: defineTable({
+    key: v.string(),
+    users: v.number(),
+    puzzles: v.number(),
+    ownedPuzzles: v.number(),
+    countedAt: v.number(),
+  }).index("by_key", ["key"]),
+
   // Open-ended loans: possession of a Copy held by a borrower while ownership stays with the
   // lender. Closed when the borrower returns it or the owner recalls it. aggregateId = LoanId;
   // copyId is the Library CopyId (ownedPuzzles.aggregateId). Status indexes back the borrowed/lent

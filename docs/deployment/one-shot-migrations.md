@@ -909,3 +909,45 @@ where the real run counts them as `updated`; `inserted + updated` matches.
 2. Run the dry run again: its final totals show `"inserted":0` and `"updated":0`.
 3. In the dashboard data view, `readModelStatus` has a row with `name` `activityEntries`.
 4. The dashboard pulse and /people feed show the same entries as before the run.
+
+---
+
+## `insights/platformStats:recount` — the landing page's counters
+
+**When:** once per deployment, right after the `platformStats` table and the
+`recount platform stats` cron (PERF-B2m) are deployed there. Optional: the cron runs the
+same recount every 6 hours. There is no ordering pressure: until the first recount has
+written the row, `insights/getGlobalStats` counts the `users`, `puzzles` and
+`ownedPuzzles` tables itself, at the old full-table cost on every home page load, so run it
+soon after the deploy rather than waiting for the cron.
+
+**What it does:** pages through `users`, then `puzzles`, then `ownedPuzzles` (1000 rows per
+batch; `batchSize` overrides it, rounded down and clamped to 1..4000; a batch also stops
+after reading 4 MiB; each batch its own transaction, rescheduling itself until the last
+table is exhausted) and counts every row, with the meaning the landing page always had
+(deactivated members and definitions in any status included). The last batch writes the
+single `platformStats` row (`key` `global`) with the three counts and `countedAt`. It reads
+nothing else and writes only that row.
+
+**Safe to re-run:** yes. Each run rewrites the same row with fresh counts. Two runs at once
+(a manual run during the cron) each write a complete count; the later one stays.
+
+**Commands:**
+
+```bash
+cd packages/backend
+
+# dev, then prod
+npx convex run insights/platformStats:recount '{}'
+npx convex run --prod insights/platformStats:recount '{}'
+```
+
+The remaining batches run as scheduled functions. The last batch logs one JSON line with
+`"event":"insights.platformStats.recount"`, the `counts` and `counted_at`.
+
+**Verify:**
+
+1. In the dashboard data view, `platformStats` has one row with `key` `global`.
+2. Its counts match the row counts the dashboard shows for `users`, `puzzles` and
+   `ownedPuzzles` (give or take rows written while it ran).
+3. The home page shows the same numbers as before the run.

@@ -277,6 +277,7 @@ import type * as insights_getPersonalStats from "../insights/getPersonalStats.js
 import type * as insights_getPlankPuzzles from "../insights/getPlankPuzzles.js";
 import type * as insights_getRecommendations from "../insights/getRecommendations.js";
 import type * as insights_getTradeActivity from "../insights/getTradeActivity.js";
+import type * as insights_platformStats from "../insights/platformStats.js";
 import type * as insights_sampling from "../insights/sampling.js";
 import type * as invitations_adapters_clerkInvitationGateway from "../invitations/adapters/clerkInvitationGateway.js";
 import type * as invitations_adapters_fakeInvitationGateway from "../invitations/adapters/fakeInvitationGateway.js";
@@ -870,6 +871,7 @@ declare const fullApi: ApiFromModules<{
   "insights/getPlankPuzzles": typeof insights_getPlankPuzzles;
   "insights/getRecommendations": typeof insights_getRecommendations;
   "insights/getTradeActivity": typeof insights_getTradeActivity;
+  "insights/platformStats": typeof insights_platformStats;
   "insights/sampling": typeof insights_sampling;
   "invitations/adapters/clerkInvitationGateway": typeof invitations_adapters_clerkInvitationGateway;
   "invitations/adapters/fakeInvitationGateway": typeof invitations_adapters_fakeInvitationGateway;
