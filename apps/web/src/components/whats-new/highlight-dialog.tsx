@@ -15,13 +15,15 @@ import { safeStorage } from "@/lib/safe-storage";
 import { cn } from "@/lib/utils";
 import type { WhatsNewEntry } from "@/whats-new/types";
 import { useConvexMutation } from "@convex-dev/react-query";
-import type { WhatsNewTourProgressView } from "@jigswap/contracts";
+import {
+  WHATS_NEW_MANIFEST,
+  type WhatsNewTourProgressView,
+} from "@jigswap/contracts";
 import { Link as RouterLink } from "@tanstack/react-router";
 import { ArrowRight, Compass, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "use-intl";
 import { CategoryChip } from "./category-chip";
-import { WHATS_NEW_ENTRIES } from "./entries";
 import { canOpenHighlight, contentFor, pickHighlightEntry } from "./logic";
 import { isAnyDialogOpen, isSurfaceBusy } from "./surface-busy";
 import { useTourButton } from "./tour-button";
@@ -41,27 +43,42 @@ const OPEN_DELAY_MS = 600;
 export function WhatsNewHighlight() {
   const pathname = usePathname();
   const { unreadIds, tours } = useWhatsNewState();
+  // Picked from the manifest (same ids, order and flags as the entries), so the entry bodies are
+  // fetched only once there is something to show.
   const candidateId = unreadIds
-    ? pickHighlightEntry(WHATS_NEW_ENTRIES, unreadIds)?.id
+    ? pickHighlightEntry(WHATS_NEW_MANIFEST, unreadIds)?.id
     : undefined;
   const [entry, setEntry] = useState<WhatsNewEntry | null>(null);
   const markSeen = useConvexMutation(gateway.whatsNew.markSeen);
 
   useEffect(() => {
     if (!candidateId) return;
-    const timer = window.setTimeout(() => {
-      const open = canOpenHighlight({
+    let cancelled = false;
+    const canOpenNow = () =>
+      canOpenHighlight({
         pathname,
         shownThisSession: safeStorage.getItem("session", SHOWN_KEY) === "1",
         hasCandidate: true,
         surfaceBusy: isSurfaceBusy(),
         dialogOpen: isAnyDialogOpen(),
       });
-      if (!open) return;
-      safeStorage.setItem("session", SHOWN_KEY, "1");
-      setEntry(WHATS_NEW_ENTRIES.find((e) => e.id === candidateId) ?? null);
+    const timer = window.setTimeout(() => {
+      if (!canOpenNow()) return;
+      // The bodies load only when the modal is about to open; check again once they are in.
+      import("./entries").then(
+        ({ WHATS_NEW_ENTRIES }) => {
+          if (cancelled || !canOpenNow()) return;
+          safeStorage.setItem("session", SHOWN_KEY, "1");
+          setEntry(WHATS_NEW_ENTRIES.find((e) => e.id === candidateId) ?? null);
+        },
+        (error: unknown) =>
+          console.error("Failed to load What's new entries:", error),
+      );
     }, OPEN_DELAY_MS);
-    return () => window.clearTimeout(timer);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
   }, [pathname, candidateId]);
 
   // Every close (Esc, X, overlay, "Maybe later", any action) means "seen" (Part B §4.3).
