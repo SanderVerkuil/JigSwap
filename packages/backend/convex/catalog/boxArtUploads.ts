@@ -22,6 +22,7 @@ export type BoxArtRefusal =
   | "unsupported_format"
   | "unreadable_header"
   | "too_many_pixels"
+  | "interlaced"
   | "malformed"
   // Refused by the content check, or a CSAM hash match: deliberately the same answer, so the
   // uploader is never told that known abuse material was recognised (lib/imageModeration/

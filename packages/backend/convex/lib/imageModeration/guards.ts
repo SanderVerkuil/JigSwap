@@ -7,6 +7,14 @@
 //   HEIC, ...) is refused, whatever content type the client claimed.
 // - Pixels: the width x height read from the header is at most MAX_IMAGE_PIXELS, so a tiny file
 //   that would decompress to a huge bitmap (a decompression bomb) is refused before decode.
+//   That only holds when the decoder reads the same size from the same bytes, so a header a
+//   decoder could read differently is refused too, and the decode itself checks the bitmap it
+//   got against the header (normaliseImage.decodeUpright).
+//
+// PNG: pngjs (jimp's decoder) takes the size from EVERY IHDR it meets, so the last one decides
+// the bitmap, and it inflates an interlaced (Adam7) image with no bound on the output. A PNG is
+// accepted only with exactly one IHDR, as its first chunk, and not interlaced ("interlaced");
+// the non-interlaced inflate is bounded by that IHDR's size.
 //
 // WebP: jimp 1.x has no WebP codec, so the pipeline does not re-encode an upright WebP. It strips
 // the WebP's EXIF/XMP chunks at byte level instead (stripMetadata) and stores those bytes (no
@@ -33,6 +41,7 @@ export type ImageGuardFailure =
   | "unsupported_format" // the magic bytes are not JPEG / PNG / WebP / GIF
   | "unreadable_header" // a supported format whose header has no usable dimensions
   | "too_many_pixels" // more than MAX_IMAGE_PIXELS
+  | "interlaced" // an interlaced (Adam7) PNG, whose decode has no output bound
   | "decode_failed"; // a header over a body that does not decode (set by the pipeline)
 
 /** The verdict label a refused upload is recorded with. */
@@ -58,6 +67,9 @@ const u32be = (b: Uint8Array, i: number): number =>
   ((b[i] << 24) >>> 0) + ((b[i + 1] << 16) | (b[i + 2] << 8) | b[i + 3]);
 
 const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+
+/** What a header says about the decode: its size, and (PNG) whether it is interlaced. */
+type Header = { width: number; height: number; interlaced?: boolean };
 
 /** The image format the magic bytes announce, or null for anything else. */
 export const sniffImageFormat = (bytes: Uint8Array): ImageFormat | null => {
@@ -118,12 +130,24 @@ const jpegDimensions = (
   return null;
 };
 
-// PNG: the first chunk is IHDR, whose data starts with width u32 and height u32.
-const pngDimensions = (
-  b: Uint8Array,
-): { width: number; height: number } | null => {
-  if (b.length < 24 || !ascii(b, 12, "IHDR")) return null;
-  return { width: u32be(b, 16), height: u32be(b, 20) };
+// PNG: the chunk list, walked by its lengths up to IEND (pngjs refuses anything after it), must
+// hold exactly one IHDR, and it must be the first chunk, 13 bytes long: width u32, height u32,
+// bit depth, colour type, compression, filter, interlace method. A chunk that runs past the end
+// of the file ends the walk (pngjs cannot read past it either).
+const pngHeader = (b: Uint8Array): Header | null => {
+  if (b.length < 8 + 8 + 13) return null;
+  if (u32be(b, 8) !== 13 || !ascii(b, 12, "IHDR")) return null;
+  let i = 8 + 12 + 13;
+  while (i + 8 <= b.length) {
+    if (ascii(b, i + 4, "IHDR")) return null;
+    if (ascii(b, i + 4, "IEND")) break;
+    i += 12 + u32be(b, i);
+  }
+  return {
+    width: u32be(b, 16),
+    height: u32be(b, 20),
+    interlaced: b[28] !== 0,
+  };
 };
 
 // GIF: the logical screen descriptor right after the 6-byte signature (u16 LE each), checked
@@ -191,21 +215,26 @@ const webpDimensions = (
   return null;
 };
 
+const readHeader = (bytes: Uint8Array, format: ImageFormat): Header | null => {
+  const header =
+    format === "jpeg"
+      ? jpegDimensions(bytes)
+      : format === "png"
+        ? pngHeader(bytes)
+        : format === "gif"
+          ? gifDimensions(bytes)
+          : webpDimensions(bytes);
+  if (!header || header.width <= 0 || header.height <= 0) return null;
+  return header;
+};
+
 /** The width and height from the image header, or null when the header is unusable. */
 export const readImageDimensions = (
   bytes: Uint8Array,
   format: ImageFormat,
 ): { width: number; height: number } | null => {
-  const dims =
-    format === "jpeg"
-      ? jpegDimensions(bytes)
-      : format === "png"
-        ? pngDimensions(bytes)
-        : format === "gif"
-          ? gifDimensions(bytes)
-          : webpDimensions(bytes);
-  if (!dims || dims.width <= 0 || dims.height <= 0) return null;
-  return dims;
+  const header = readHeader(bytes, format);
+  return header && { width: header.width, height: header.height };
 };
 
 /** The size guard, for a byte count known before the download (storage metadata). */
@@ -216,16 +245,21 @@ export const checkImageSize = (
     ? { ok: false, reason: "too_large" }
     : { ok: true };
 
-/** Every guard on the downloaded bytes: size, magic bytes, then the header's pixel count. */
+/**
+ * Every guard on the downloaded bytes: size, magic bytes, then the header: its pixel count, and
+ * (PNG) no interlacing.
+ */
 export const checkImageBytes = (bytes: Uint8Array): ImageGuardResult => {
   const size = checkImageSize(bytes.length);
   if (!size.ok) return size;
   const format = sniffImageFormat(bytes);
   if (!format) return { ok: false, reason: "unsupported_format" };
-  const dims = readImageDimensions(bytes, format);
-  if (!dims) return { ok: false, reason: "unreadable_header" };
-  if (dims.width * dims.height > MAX_IMAGE_PIXELS) {
+  const header = readHeader(bytes, format);
+  if (!header) return { ok: false, reason: "unreadable_header" };
+  const { width, height } = header;
+  if (width * height > MAX_IMAGE_PIXELS) {
     return { ok: false, reason: "too_many_pixels" };
   }
-  return { ok: true, format, ...dims };
+  if (header.interlaced) return { ok: false, reason: "interlaced" };
+  return { ok: true, format, width, height };
 };

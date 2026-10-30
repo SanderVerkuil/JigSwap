@@ -51,8 +51,9 @@ import { findMetadata, stripImageMetadata } from "./stripMetadata";
 //   1. Load the row (skip when gone or no longer pending: first verdict wins, re-runs are no-ops),
 //      then count the attempt on the row (moderationPool.beginAttempt: `moderationAttempts`).
 //   2. Download the blob (an upload over HASH_MAX_BYTES is refused unread) and run the input
-//      guards (lib/imageModeration/guards): size, magic bytes, the header's pixel count, all
-//      before any decode. Then (on any attempt until the row is marked `reencodedAt`) strip the
+//      guards (lib/imageModeration/guards): size, magic bytes, the header's pixel count (PNG:
+//      one IHDR, not interlaced), all before any decode; the decode must match the header.
+//      Then (on any attempt until the row is marked `reencodedAt`) strip the
 //      metadata at byte level (lib/imageModeration/stripMetadata: Exif incl. GPS, XMP, IPTC,
 //      comments, PNG text chunks, WebP EXIF/XMP, Orientation included) and re-encode that in
 //      memory via jimp, turned upright for the Orientation the Exif held — PNG when it has
@@ -116,7 +117,9 @@ export const hashImageBytes = (bytes: Uint8Array): ImageHashes => ({
 // no WebP encoder). Opaque images emit JPEG (smaller). Returns the bytes plus the mime so the
 // caller stores the blob with the matching content type, and the image's blurhash (lib/blurhash)
 // from the same decode. A WebP is decoded with the WASM decoder (only called for one that needs
-// turning; see runImageModeration).
+// turning; see runImageModeration). The decode re-runs the input guards and throws on a bitmap
+// that is not the size its header announced (decodeUpright), which the pipeline refuses as
+// "decode_failed".
 export const reencodeImage = async (
   input: Uint8Array,
   format: ImageFormat,

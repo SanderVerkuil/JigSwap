@@ -4,6 +4,7 @@ import decodeWebpBytes, {
   init as initWebpDecoder,
 } from "@jsquash/webp/decode.js";
 import { Jimp } from "jimp";
+import { checkImageBytes } from "./guards";
 import { applyOrientation, type Bitmap } from "./orientation";
 import {
   jpegIccSegments,
@@ -61,19 +62,36 @@ const decodeWebp = async (bytes: Uint8Array): Promise<Bitmap> => {
 
 /**
  * Decode stripped bytes (no Exif) into a jimp image turned upright for `orientation` (1..8).
- * Throws when the bytes do not decode. GIF goes through jimp too (first frame).
+ * GIF goes through jimp too (first frame, at the logical screen size). Throws when the bytes do
+ * not decode, when the input guards (lib/imageModeration/guards) refuse them, and when the
+ * decoded bitmap is not the size the header announced: the guards bound the decode by the
+ * header alone, so a decoder that reads a bigger image from the same bytes is never let through
+ * (SEC-17).
  */
 export const decodeUpright = async (
   bytes: Uint8Array,
   format: StrippableFormat | "gif",
   orientation: number,
 ) => {
-  if (format === "webp") {
-    return Jimp.fromBitmap(
-      applyOrientation(await decodeWebp(bytes), orientation),
-    );
+  const header = checkImageBytes(bytes);
+  if (!header.ok) throw new Error(`refused before decode: ${header.reason}`);
+  if (header.format !== format) {
+    throw new Error(`refused before decode: ${header.format}, not ${format}`);
   }
-  const image = await Jimp.read(Buffer.from(bytes));
+  const assertHeaderSize = (bitmap: { width: number; height: number }) => {
+    if (bitmap.width !== header.width || bitmap.height !== header.height) {
+      throw new Error(
+        `decoded ${bitmap.width}x${bitmap.height}, the header said ${header.width}x${header.height}`,
+      );
+    }
+  };
+  if (format === "webp") {
+    const bitmap = await decodeWebp(bytes);
+    assertHeaderSize(bitmap);
+    return Jimp.fromBitmap(applyOrientation(bitmap, orientation));
+  }
+  const image = await Jimp.fromBuffer(Buffer.from(bytes));
+  assertHeaderSize(image.bitmap);
   if (orientation < 2 || orientation > 8) return image;
   const bitmap = image.bitmap;
   return Jimp.fromBitmap(

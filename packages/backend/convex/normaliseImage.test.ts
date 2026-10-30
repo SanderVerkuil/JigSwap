@@ -1,7 +1,14 @@
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { Jimp } from "jimp";
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
+import {
+  craftPng,
+  iendChunk,
+  ihdrChunk,
+  transparentIdat,
+  transparentPng,
+} from "../test-fixtures/craftPng";
 import { readImageDimensions } from "./lib/imageModeration/guards";
 import {
   decodeUpright,
@@ -187,6 +194,54 @@ describe("stripAndNormalise", () => {
     expect(
       await stripAndNormalise(fixture("6.png").subarray(0, 40), "png"),
     ).toBeNull();
+  });
+});
+
+// Nothing is decoded that the input guards would refuse, and no decoder may read a different size
+// from the bytes than the header the guards checked (SEC-17).
+describe("decodeUpright decodes only what the guards checked", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test("a PNG whose second IHDR announces a bigger image is never decoded", async () => {
+    const decode = vi.spyOn(Jimp, "fromBuffer");
+    const dualIhdr = craftPng(
+      ihdrChunk(1, 1),
+      ihdrChunk(64, 64),
+      transparentIdat(64, 64),
+      iendChunk(),
+    );
+
+    await expect(decodeUpright(dualIhdr, "png", 1)).rejects.toThrow(
+      /unreadable_header/,
+    );
+    expect(decode).not.toHaveBeenCalled();
+  });
+
+  test("an interlaced PNG is never decoded", async () => {
+    const decode = vi.spyOn(Jimp, "fromBuffer");
+
+    await expect(
+      decodeUpright(transparentPng(5, 5, { interlaced: true }), "png", 1),
+    ).rejects.toThrow(/interlaced/);
+    expect(decode).not.toHaveBeenCalled();
+  });
+
+  test("a decoded bitmap that is not the header's size is refused", async () => {
+    // The decoder reads 64x64 where the header said 3x2.
+    const bigger = await Jimp.fromBuffer(Buffer.from(transparentPng(64, 64)));
+    vi.spyOn(Jimp, "fromBuffer").mockResolvedValueOnce(bigger);
+
+    await expect(decodeUpright(transparentPng(3, 2), "png", 6)).rejects.toThrow(
+      /64x64/,
+    );
+  });
+
+  test("a turned image is checked before it is turned", async () => {
+    // Stored 3 wide and 2 tall with Orientation 6: the header's size, upright 2x3.
+    const image = await decodeUpright(transparentPng(3, 2), "png", 6);
+    expect([image.bitmap.width, image.bitmap.height]).toEqual([2, 3]);
   });
 });
 

@@ -1,6 +1,14 @@
 import { Jimp } from "jimp";
 import { describe, expect, test } from "vitest";
 import {
+  craftPng,
+  iendChunk,
+  ihdrChunk,
+  pngChunk,
+  transparentIdat,
+  transparentPng,
+} from "../test-fixtures/craftPng";
+import {
   checkImageBytes,
   checkImageSize,
   MAX_IMAGE_PIXELS,
@@ -270,6 +278,78 @@ describe("checkImageBytes", () => {
     expect(checkImageBytes(bytesOf(PNG_SIG))).toEqual({
       ok: false,
       reason: "unreadable_header",
+    });
+  });
+
+  // pngjs (jimp's PNG decoder) takes the size from EVERY IHDR it meets, so the last one decides
+  // the bitmap: the guard must see the only one there is (SEC-17).
+  describe("a PNG's header is its one IHDR, first", () => {
+    test("a real PNG passes", () => {
+      expect(checkImageBytes(transparentPng(3, 2))).toEqual({
+        ok: true,
+        format: "png",
+        width: 3,
+        height: 2,
+      });
+    });
+
+    test("a second IHDR that announces a bigger image is refused", () => {
+      const dualIhdr = craftPng(
+        ihdrChunk(1, 1),
+        ihdrChunk(5200, 5000),
+        transparentIdat(1, 1),
+        iendChunk(),
+      );
+      expect(readImageDimensions(dualIhdr, "png")).toBeNull();
+      expect(checkImageBytes(dualIhdr)).toEqual({
+        ok: false,
+        reason: "unreadable_header",
+      });
+    });
+
+    test("an IHDR that is not the first chunk is refused", () => {
+      const late = craftPng(
+        pngChunk("tEXt", new TextEncoder().encode("Comment\0hi")),
+        ihdrChunk(2, 2),
+        transparentIdat(2, 2),
+        iendChunk(),
+      );
+      expect(checkImageBytes(late)).toEqual({
+        ok: false,
+        reason: "unreadable_header",
+      });
+    });
+
+    test("an IHDR of the wrong length is refused", () => {
+      const long = craftPng(
+        pngChunk(
+          "IHDR",
+          new Uint8Array([0, 0, 0, 2, 0, 0, 0, 2, 8, 6, 0, 0, 0, 0]),
+        ),
+        transparentIdat(2, 2),
+        iendChunk(),
+      );
+      expect(checkImageBytes(long)).toEqual({
+        ok: false,
+        reason: "unreadable_header",
+      });
+    });
+
+    test("an interlaced (Adam7) PNG is refused: its inflate is unbounded", () => {
+      expect(
+        checkImageBytes(transparentPng(5, 5, { interlaced: true })),
+      ).toEqual({ ok: false, reason: "interlaced" });
+    });
+
+    test("anything after IEND is not part of the header walk", () => {
+      const trailing = new Uint8Array([
+        ...transparentPng(2, 2),
+        ...ihdrChunk(5200, 5000),
+      ]);
+      expect(readImageDimensions(trailing, "png")).toEqual({
+        width: 2,
+        height: 2,
+      });
     });
   });
 

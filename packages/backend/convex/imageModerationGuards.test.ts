@@ -3,6 +3,13 @@ import { convexTest, type TestConvex } from "convex-test";
 import { Jimp } from "jimp";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
+  craftPng,
+  iendChunk,
+  ihdrChunk,
+  transparentIdat,
+  transparentPng,
+} from "../test-fixtures/craftPng";
+import {
   settleDueScheduled,
   withModerationPool,
 } from "../test-fixtures/moderationPool";
@@ -13,7 +20,8 @@ import { findMetadata } from "./lib/imageModeration/stripMetadata";
 import schema from "./schema";
 
 // The shared moderation pipeline's input guards, end to end: an upload that is not a supported
-// image, is too large, or announces too many pixels is rejected as "invalid_image" before any
+// image, is too large, announces too many pixels, or has a header a decoder could read
+// differently (a PNG with a second IHDR, or interlaced) is rejected as "invalid_image" before any
 // decode or classifier call, and its blob is deleted. Every accepted upload has its metadata
 // (EXIF incl. GPS, XMP, IPTC, comments, PNG text chunks, WebP EXIF/XMP) stripped before it is
 // stored, served or sent to the classifier; WebP, which jimp cannot decode, keeps its stripped
@@ -126,6 +134,15 @@ const PNG_BOMB = new Uint8Array([
   0x52, 0, 0, 0x17, 0x70, 0, 0, 0x13, 0x88, 8, 6, 0, 0, 0,
 ]);
 
+// The review's dual-IHDR PNG (SEC-17): the first IHDR says 1x1, the second 5200x5000 (26 MP), over
+// a deflated body of that size (about 100 KB). pngjs takes the last IHDR's size.
+const DUAL_IHDR_PNG = craftPng(
+  ihdrChunk(1, 1),
+  ihdrChunk(5200, 5000),
+  transparentIdat(5200, 5000),
+  iendChunk(),
+);
+
 // A lossless 2x2 WebP header (VP8L) with an undecodable body: jimp has no WebP decoder anyway.
 const WEBP_BYTES = new Uint8Array([
   ...new TextEncoder().encode("RIFF"),
@@ -160,6 +177,18 @@ describe("input guards (copy photos)", () => {
       "unsupported_format",
     ],
     ["a decompression bomb", PNG_BOMB, "image/png", "too_many_pixels"],
+    [
+      "a PNG whose second IHDR lies about its size",
+      DUAL_IHDR_PNG,
+      "image/png",
+      "unreadable_header",
+    ],
+    [
+      "an interlaced PNG",
+      transparentPng(5, 5, { interlaced: true }),
+      "image/png",
+      "interlaced",
+    ],
   ] as const)(
     "%s is rejected as invalid_image, never classified, and its blob deleted",
     async (_name, bytes, type, reason) => {
@@ -416,6 +445,25 @@ describe("decode failures and polyglots (copy photos)", () => {
       ...new TextEncoder().encode("<html><script>alert(1)</script></html>"),
     ]);
     const fileId = await store(t, polyglot, "text/html");
+
+    const row = await addCopyPhoto(t, copy, fileId);
+
+    expect(row.moderationStatus).toBe("rejected");
+    expect(row.moderationLabel).toBe("invalid_image");
+    expect(row.moderationReason).toBe("decode_failed");
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(await blobExists(t, fileId)).toBe(false);
+  });
+
+  test("a decoder that reads another size than the header is refused as decode_failed", async () => {
+    const fetchMock = cleanReply();
+    vi.stubGlobal("fetch", fetchMock);
+    const t = withModerationPool(convexTest(schema, modules));
+    const { copy } = await seed(t);
+    const fileId = await store(t, transparentPng(3, 2), "image/png");
+    // Whatever the guards checked on the header, the decoder comes back with 64x64.
+    const bigger = await Jimp.fromBuffer(Buffer.from(transparentPng(64, 64)));
+    vi.spyOn(Jimp, "fromBuffer").mockResolvedValue(bigger);
 
     const row = await addCopyPhoto(t, copy, fileId);
 

@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { transparentPng } from "../test-fixtures/craftPng";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { readImageDimensions } from "./lib/imageModeration/guards";
@@ -158,6 +159,12 @@ describe("sanitizeBoxArt", () => {
       fixture("gps.jpg").subarray(0, 3300),
       "image/jpeg",
       "malformed",
+    ],
+    [
+      "an interlaced PNG",
+      transparentPng(5, 5, { interlaced: true }),
+      "image/png",
+      "interlaced",
     ],
   ] as const)(
     "%s is refused and the upload deleted",
