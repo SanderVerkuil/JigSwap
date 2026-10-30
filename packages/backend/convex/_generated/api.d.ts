@@ -406,6 +406,7 @@ import type * as notifications_preferenceValidators from "../notifications/prefe
 import type * as notifications_pushSubscriptions from "../notifications/pushSubscriptions.js";
 import type * as notifications_resolveForDelivery from "../notifications/resolveForDelivery.js";
 import type * as notifications_resolveNotificationView from "../notifications/resolveNotificationView.js";
+import type * as notifications_retention from "../notifications/retention.js";
 import type * as notifications_sendEmail from "../notifications/sendEmail.js";
 import type * as notifications_sendWebPush from "../notifications/sendWebPush.js";
 import type * as notifications_setMessagePreview from "../notifications/setMessagePreview.js";
@@ -991,6 +992,7 @@ declare const fullApi: ApiFromModules<{
   "notifications/pushSubscriptions": typeof notifications_pushSubscriptions;
   "notifications/resolveForDelivery": typeof notifications_resolveForDelivery;
   "notifications/resolveNotificationView": typeof notifications_resolveNotificationView;
+  "notifications/retention": typeof notifications_retention;
   "notifications/sendEmail": typeof notifications_sendEmail;
   "notifications/sendWebPush": typeof notifications_sendWebPush;
   "notifications/setMessagePreview": typeof notifications_setMessagePreview;

@@ -80,4 +80,14 @@ crons.daily(
   {},
 );
 
+// Old notifications (read after 180 days, any after 365): DRY RUN only, logging what would be
+// deleted (notifications/retention). Switching to "delete" waits for the owner to approve the
+// periods and add the retention line to the privacy policy.
+crons.daily(
+  "count expired notifications (dry run)",
+  { hourUTC: 4, minuteUTC: 15 },
+  internal.notifications.retention.sweepExpiredNotifications,
+  { mode: "dry-run" },
+);
+
 export default crons;
