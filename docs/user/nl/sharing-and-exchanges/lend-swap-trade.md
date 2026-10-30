@@ -34,8 +34,11 @@ verborgen, dan staat er **Anonieme gebruiker**.
 
 ## Een exemplaar aanvragen
 
-1. Open de pagina van het exemplaar en klik op **Ruil aanvragen**. Je kunt ook
-   de aanvraagknop op de kaart van een exemplaar in **Bladeren** gebruiken.
+1. Open de pagina van het exemplaar en klik op de aanvraagknop. Die zegt wat
+   de eigenaar aanbiedt: **Vragen om te lenen**, **Ruil aanvragen** of
+   **Vragen om te kopen**, of **Aanvragen…** als de eigenaar meer dan één ding
+   aanbiedt. Je kunt ook de aanvraagknop op de kaart van een exemplaar in
+   **Bladeren** gebruiken.
 2. Kies in het venster **Deze puzzel aanvragen** een **Soort uitwisseling**. Je
    ziet alleen de soorten die de eigenaar aanbiedt:
    - **Ruilen** — kies de **Puzzel die je aanbiedt** uit je bibliotheek. Zit je

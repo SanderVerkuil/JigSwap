@@ -134,7 +134,8 @@ function RequestTradeForm({
           : {}),
         ...(type === "sale" ? { salePrice: priceCents } : {}),
       });
-      toast.success(t("success"));
+      // Name what was asked for ("Borrow request sent"), not a generic trade request.
+      toast.success(t(`success.${type}`));
       onDone();
       void navigate({ to: "/trades" });
     } catch (error) {

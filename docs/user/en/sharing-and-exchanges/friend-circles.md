@@ -131,8 +131,8 @@ level.
 | **Can exchange** | Everything View only allows, send swap, lend or buy requests for puzzles shared in the circle, and share their own copies into it. |
 | **Admin**        | Everything Can exchange allows, and invite people, change permissions and remove members.                                          |
 
-For a View only member, the **Request swap** button on a shared puzzle is
-greyed out with "You have view-only access in this circle", and **Browse**
+For a View only member, the request button on a shared puzzle (such as
+**Request swap**) is greyed out with "You have view-only access in this circle", and **Browse**
 shows the puzzle without a request button.
 
 Your permission only counts for puzzles you reach through that circle. You can

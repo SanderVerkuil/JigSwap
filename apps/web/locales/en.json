@@ -876,7 +876,11 @@
     "cancel": "Cancel",
     "submit": "Send request",
     "submitting": "Sending…",
-    "success": "Request sent",
+    "success": {
+      "trade": "Swap request sent",
+      "sale": "Purchase request sent",
+      "loan": "Borrow request sent"
+    },
     "errors": {
       "notAvailable": "This puzzle is no longer available for that exchange.",
       "notFound": "This puzzle is no longer available.",
@@ -888,6 +892,12 @@
       "missingTerms": "Some details are missing. Check the form and try again.",
       "rateLimited": "You've sent a lot of requests lately. Try again later.",
       "generic": "Couldn't send the request. Please try again."
+    },
+    "cta": {
+      "borrow": "Ask to borrow",
+      "swap": "Request swap",
+      "buy": "Ask to buy",
+      "mixed": "Request…"
     }
   },
   "reputation": {
@@ -4268,7 +4278,6 @@
       "edit": "Edit",
       "logSolve": "Log solve",
       "delete": "Delete",
-      "requestSwap": "Request swap",
       "requestViewOnly": "You have view-only access in this circle",
       "message": "Message",
       "proposeSwap": "Propose a Swap",
@@ -5330,7 +5339,7 @@
         },
         "request": {
           "title": "Ask the owner",
-          "body": "Open a puzzle and press Request swap. Choose Swap, Borrow or Buy, whichever the owner offers, and send the request. You can message the owner too."
+          "body": "Open a puzzle and press its request button, such as Ask to borrow or Request swap: it names what the owner offers. If they offer more than one, choose Swap, Borrow or Buy, then send the request. You can message the owner too."
         },
         "trades": {
           "title": "Your exchanges",

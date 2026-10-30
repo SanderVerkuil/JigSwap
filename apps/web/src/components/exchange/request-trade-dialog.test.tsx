@@ -201,12 +201,12 @@ describe("RequestTradeDialog propose", () => {
 });
 
 describe("RequestTradeDialog success toast", () => {
-  // The same toast follows a swap, a purchase and a borrow, so it must not name one kind.
+  // The toast names the kind that was sent, so a borrow is never called a trade.
   it.each([
-    ["en", "Send request", "Request sent"],
-    ["nl", "Aanvraag versturen", "Aanvraag verstuurd"],
+    ["en", "Send request", "Borrow request sent"],
+    ["nl", "Aanvraag versturen", "Leenaanvraag verstuurd"],
   ] as const)(
-    "confirms a borrow without calling it a trade (%s)",
+    "names a borrow as a borrow, not a trade (%s)",
     async (locale, button, message) => {
       renderDialog(copy(), { locale, disclosure: { profilePrivate: false } });
       fireEvent.click(submit(button));

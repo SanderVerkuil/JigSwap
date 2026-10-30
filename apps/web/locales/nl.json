@@ -876,7 +876,11 @@
     "cancel": "Annuleren",
     "submit": "Aanvraag versturen",
     "submitting": "Versturen…",
-    "success": "Aanvraag verstuurd",
+    "success": {
+      "trade": "Ruilaanvraag verstuurd",
+      "sale": "Koopaanvraag verstuurd",
+      "loan": "Leenaanvraag verstuurd"
+    },
     "errors": {
       "notAvailable": "Deze puzzel is niet meer beschikbaar voor die uitwisseling.",
       "notFound": "Deze puzzel is niet meer beschikbaar.",
@@ -888,6 +892,12 @@
       "missingTerms": "Er ontbreken gegevens. Controleer het formulier en probeer het opnieuw.",
       "rateLimited": "Je hebt de laatste tijd veel aanvragen verstuurd. Probeer het later opnieuw.",
       "generic": "De aanvraag kon niet worden verstuurd. Probeer het opnieuw."
+    },
+    "cta": {
+      "borrow": "Vragen om te lenen",
+      "swap": "Ruil aanvragen",
+      "buy": "Vragen om te kopen",
+      "mixed": "Aanvragen…"
     }
   },
   "reputation": {
@@ -4268,7 +4278,6 @@
       "edit": "Bewerken",
       "logSolve": "Voltooiing vastleggen",
       "delete": "Verwijderen",
-      "requestSwap": "Ruil aanvragen",
       "requestViewOnly": "Je mag in deze kring alleen bekijken",
       "message": "Bericht",
       "proposeSwap": "Ruil voorstellen",
@@ -5330,7 +5339,7 @@
         },
         "request": {
           "title": "Vraag het de eigenaar",
-          "body": "Open een puzzel en druk op Ruil aanvragen. Kies Ruilen, Lenen of Kopen, wat de eigenaar aanbiedt, en verstuur het verzoek. Je kunt de eigenaar ook een bericht sturen."
+          "body": "Open een puzzel en druk op de aanvraagknop, zoals Vragen om te lenen of Ruil aanvragen: die noemt wat de eigenaar aanbiedt. Biedt de eigenaar meer dan één ding aan, kies dan Ruilen, Lenen of Kopen en verstuur het verzoek. Je kunt de eigenaar ook een bericht sturen."
         },
         "trades": {
           "title": "Je ruilen",

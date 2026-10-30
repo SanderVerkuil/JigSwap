@@ -15,6 +15,10 @@ import {
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { convexErrorCode } from "@/components/exchange/request-trade";
 import {
+  REQUEST_ACTION_ICONS,
+  requestActionKey,
+} from "@/components/exchange/request-trade";
+import {
   RequestTradeDialog,
   type RequestableCopy,
 } from "@/components/exchange/request-trade-dialog";
@@ -225,6 +229,7 @@ function CopyInstanceDetail({
   const tShell = useTranslations("shell");
   const tOwner = useTranslations("copyOwner");
   const tConversation = useTranslations("copyConversation");
+  const tRequest = useTranslations("tradeRequest.cta");
   const tPuzzles = useTranslations("puzzles");
   const tLogSolve = useTranslations("solving.logSolve");
   const tStart = useTranslations("solving.startSolve");
@@ -241,6 +246,9 @@ function CopyInstanceDetail({
   const availability = snapshot.availability;
   const isAvailable =
     availability.forTrade || availability.forSale || availability.forLend;
+  // The request button names what the owner offers ("Ask to borrow" on a lend-only copy).
+  const requestAction = requestActionKey(availability);
+  const RequestIcon = REQUEST_ACTION_ICONS[requestAction];
 
   // Owner action dialogs. `logOpen` drives the completion logger; `editOpen` drives the inline
   // copy editor (also reachable from the page-head Edit button registered below).
@@ -553,8 +561,8 @@ function CopyInstanceDetail({
                       });
                     }}
                   >
-                    <ArrowLeftRight className="h-4 w-4" />
-                    {t("actions.requestSwap")}
+                    <RequestIcon className="h-4 w-4" />
+                    {tRequest(requestAction)}
                   </Button>
                 )}
                 {isAvailable && !copy.viewerMayRequest && (

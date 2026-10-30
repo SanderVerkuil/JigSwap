@@ -140,8 +140,8 @@ samenvatting van één regel.
 | **Mag ruilen**      | Alles wat Alleen bekijken mag, een ruil-, leen- of koopaanvraag sturen voor puzzels die in de kring gedeeld zijn, en eigen exemplaren erin delen. |
 | **Beheerder**       | Alles wat Mag ruilen mag, en mensen uitnodigen, rechten wijzigen en leden verwijderen.                                                            |
 
-Heb je **Alleen bekijken**, dan is de knop **Ruil aanvragen** op een gedeelde
-puzzel grijs, met "Je mag in deze kring alleen bekijken", en toont
+Heb je **Alleen bekijken**, dan is de aanvraagknop op een gedeelde puzzel
+(zoals **Ruil aanvragen**) grijs, met "Je mag in deze kring alleen bekijken", en toont
 **Bladeren** de puzzel zonder aanvraagknop.
 
 Je recht telt alleen voor puzzels die je via die kring bereikt. Je kunt een

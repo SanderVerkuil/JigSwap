@@ -1,11 +1,13 @@
 import { convexErrorCode } from "@/lib/convex-error-code";
+import { ArrowLeftRight, Package, Tag, type LucideIcon } from "lucide-react";
 
 // Re-exported so modules that import the helper from here keep compiling; the helper itself lives
 // in lib/convex-error-code.ts. Keep this until no module imports it from this path.
 export { convexErrorCode } from "@/lib/convex-error-code";
 
 // Pure helpers for the trade-request dialog: which exchange types a copy allows, whether the
-// viewer may request it at all, and how propose's stable error codes map to localized messages.
+// viewer may request it at all, what its request button says, and how propose's stable error
+// codes map to localized messages.
 
 /** The `type` values `gateway.exchange.create` (propose) accepts. */
 export type ProposeType = "trade" | "sale" | "loan";
@@ -24,6 +26,37 @@ export const allowedProposeTypes = (
   ...(availability.forSale ? (["sale"] as const) : []),
   ...(availability.forLend ? (["loan"] as const) : []),
 ];
+
+/** Message keys under `tradeRequest.cta`: what a copy's request button offers. */
+export type RequestActionKey = "borrow" | "swap" | "buy" | "mixed";
+
+const SINGLE_ACTION: Record<ProposeType, RequestActionKey> = {
+  trade: "swap",
+  sale: "buy",
+  loan: "borrow",
+};
+
+/**
+ * The request button's wording, from what the copy is offered for: one kind names it ("Ask to
+ * borrow" for a lend-only copy), several ask generically ("Request…") and the dialog then lets the
+ * requester pick. Every request button (copy page, Browse card) should use this, so a lend-only
+ * copy never says "Request swap". A copy offered for nothing has no request button
+ * (canRequestTrade), so its "mixed" is never shown.
+ */
+export const requestActionKey = (
+  availability: Availability,
+): RequestActionKey => {
+  const types = allowedProposeTypes(availability);
+  return types.length === 1 ? SINGLE_ACTION[types[0]] : "mixed";
+};
+
+/** The request button's icon per action, matching the exchange kind icons on /trades. */
+export const REQUEST_ACTION_ICONS: Record<RequestActionKey, LucideIcon> = {
+  borrow: Package,
+  swap: ArrowLeftRight,
+  buy: Tag,
+  mixed: ArrowLeftRight,
+};
 
 /**
  * Whether to offer "Request trade": a known viewer who isn't the owner, on an available copy, and

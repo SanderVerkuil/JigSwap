@@ -33,8 +33,10 @@ can see it. If the owner's profile is hidden from you, it shows
 
 ## Request a copy
 
-1. Open the copy's page and click **Request swap**. You can also use the
-   request button on a copy's card in **Browse**.
+1. Open the copy's page and click its request button. The button says what
+   the owner offers: **Ask to borrow**, **Request swap** or **Ask to buy**, or
+   **Request…** when they offer more than one. You can also use the request
+   button on a copy's card in **Browse**.
 2. In the **Request this puzzle** dialog, choose an **Exchange type**. Only the
    types the owner offers are listed:
    - **Swap** — choose the **Puzzle you offer** from your library. If you're in

@@ -1,15 +1,61 @@
 import { convexErrorCode as sharedConvexErrorCode } from "@/lib/convex-error-code";
 import { ConvexError } from "convex/values";
+import { ArrowLeftRight, Package, Tag } from "lucide-react";
 import { describe, expect, it } from "vitest";
+import en from "../../../locales/en.json";
+import nl from "../../../locales/nl.json";
 import {
   allowedProposeTypes,
   canRequestTrade,
   convexErrorCode,
   parsePriceCents,
   proposeErrorKey,
+  REQUEST_ACTION_ICONS,
+  requestActionKey,
 } from "./request-trade";
 
 const none = { forTrade: false, forSale: false, forLend: false };
+
+describe("requestActionKey", () => {
+  it("names the one exchange a copy is offered for", () => {
+    expect(requestActionKey({ ...none, forLend: true })).toBe("borrow");
+    expect(requestActionKey({ ...none, forTrade: true })).toBe("swap");
+    expect(requestActionKey({ ...none, forSale: true })).toBe("buy");
+  });
+
+  it("asks generically when the copy is offered for more than one", () => {
+    expect(requestActionKey({ ...none, forTrade: true, forLend: true })).toBe(
+      "mixed",
+    );
+    expect(requestActionKey({ ...none, forSale: true, forLend: true })).toBe(
+      "mixed",
+    );
+    expect(
+      requestActionKey({ forTrade: true, forSale: true, forLend: true }),
+    ).toBe("mixed");
+  });
+
+  it.each([
+    [{ ...none, forLend: true }, "Ask to borrow", "Vragen om te lenen"],
+    [{ ...none, forTrade: true }, "Request swap", "Ruil aanvragen"],
+    [{ ...none, forSale: true }, "Ask to buy", "Vragen om te kopen"],
+    [{ ...none, forTrade: true, forLend: true }, "Request…", "Aanvragen…"],
+  ])(
+    "labels the button in EN and NL (%o)",
+    (availability, enLabel, nlLabel) => {
+      const key = requestActionKey(availability);
+      expect(en.tradeRequest.cta[key]).toBe(enLabel);
+      expect(nl.tradeRequest.cta[key]).toBe(nlLabel);
+    },
+  );
+
+  it("uses the exchange kind's icon, the swap arrows for a mixed request", () => {
+    expect(REQUEST_ACTION_ICONS.borrow).toBe(Package);
+    expect(REQUEST_ACTION_ICONS.swap).toBe(ArrowLeftRight);
+    expect(REQUEST_ACTION_ICONS.buy).toBe(Tag);
+    expect(REQUEST_ACTION_ICONS.mixed).toBe(ArrowLeftRight);
+  });
+});
 
 describe("allowedProposeTypes", () => {
   it("maps each availability flag to its propose type, in a stable order", () => {
