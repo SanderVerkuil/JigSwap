@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 import {
   DEFAULT_SUBJECT,
+  deliverablePushSubscriptions,
   isAllowedPushEndpoint,
   isGoneStatus,
   isValidPushKeys,
@@ -278,5 +279,36 @@ describe("isValidPushKeys", () => {
     ]) {
       expect(isValidPushKeys(keys), JSON.stringify(keys)).toBe(false);
     }
+  });
+});
+
+describe("deliverablePushSubscriptions", () => {
+  const sub = (endpoint: string, createdAt: number) => ({
+    endpoint,
+    p256dh: "p",
+    auth: "a",
+    createdAt,
+  });
+
+  test("keeps allowlisted endpoints, newest first, at most ten", () => {
+    const fcm = Array.from({ length: 12 }, (_, i) =>
+      sub(`https://fcm.googleapis.com/fcm/send/${i}`, i),
+    );
+    const picked = deliverablePushSubscriptions([
+      sub("https://10.0.0.1:8443/internal", 100),
+      ...fcm,
+    ]);
+    expect(picked.map((s) => s.createdAt)).toEqual([
+      11, 10, 9, 8, 7, 6, 5, 4, 3, 2,
+    ]);
+  });
+
+  test("leaves its input untouched", () => {
+    const input = [
+      sub("https://fcm.googleapis.com/fcm/send/old", 1),
+      sub("https://fcm.googleapis.com/fcm/send/new", 2),
+    ];
+    deliverablePushSubscriptions(input);
+    expect(input.map((s) => s.createdAt)).toEqual([1, 2]);
   });
 });

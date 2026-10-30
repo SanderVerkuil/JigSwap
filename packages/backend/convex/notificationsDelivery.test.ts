@@ -661,7 +661,8 @@ describe("sendWebPush action", () => {
     s.t.run((ctx) =>
       ctx.db.insert("pushSubscriptions", {
         userId,
-        endpoint: `https://push.example/${userId}`,
+        // The action only sends to allowlisted push services (SEC-16).
+        endpoint: `https://fcm.googleapis.com/fcm/send/${userId}`,
         p256dh: "p",
         auth: "a",
         createdAt: now,

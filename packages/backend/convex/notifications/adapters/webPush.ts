@@ -168,6 +168,19 @@ export const isValidPushKeys = (keys: {
   );
 };
 
+// The subscriptions one push goes to: allowlisted endpoints only, newest first (createdAt), at most
+// MAX_PUSH_SUBSCRIPTIONS_PER_MEMBER. Registration enforces both, but rows stored before it did may
+// point anywhere or number more; those are skipped here, not deleted.
+export const deliverablePushSubscriptions = <
+  S extends PushSubscriptionData & { readonly createdAt: number },
+>(
+  subs: readonly S[],
+): S[] =>
+  subs
+    .filter((sub) => isAllowedPushEndpoint(sub.endpoint))
+    .sort((a, b) => b.createdAt - a.createdAt)
+    .slice(0, MAX_PUSH_SUBSCRIPTIONS_PER_MEMBER);
+
 // The HTTP statuses a push service returns when a subscription is permanently invalid and should be
 // deleted rather than retried.
 export const isGoneStatus = (status: number): boolean =>
