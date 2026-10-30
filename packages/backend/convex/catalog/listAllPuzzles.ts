@@ -2,7 +2,11 @@ import type { PuzzleSummaryView } from "@jigswap/contracts";
 import { paginationOptsValidator, type PaginationResult } from "convex/server";
 import { query } from "../_generated/server";
 import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
+import { clampPaginationOpts } from "../lib/pageSize";
 import { toPuzzleSummaryView } from "./mappers";
+
+// A page holds 1 to MAX_PAGE_SIZE puzzles whatever the client asks for.
+const MAX_PAGE_SIZE = 50;
 
 // Catalog read: the public, browsable puzzle list (paginated). Pending/rejected submissions must
 // not leak, so only approved rows are read (by_status index, oldest first as legacy
@@ -14,7 +18,7 @@ export const listAllPuzzles = query({
     const puzzles = await ctx.db
       .query("puzzles")
       .withIndex("by_status", (q) => q.eq("status", "approved"))
-      .paginate(args.paginationOpts);
+      .paginate(clampPaginationOpts(args.paginationOpts, MAX_PAGE_SIZE));
 
     const page = await Promise.all(
       puzzles.page.map(async (puzzle) =>

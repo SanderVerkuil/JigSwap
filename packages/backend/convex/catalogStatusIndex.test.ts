@@ -75,6 +75,26 @@ const seed = async (t: TestConvex<typeof schema>) => {
   return { alice, ids };
 };
 
+// Bulk approved rows for the size-clamp tests (all share the search term "bulk").
+const seedApproved = async (t: TestConvex<typeof schema>, count: number) => {
+  const submitter = await mkMember(t, "clerk_bulk");
+  await t.run(async (ctx) => {
+    for (let i = 0; i < count; i += 1) {
+      await ctx.db.insert("puzzles", {
+        aggregateId: `bulk-${i}`,
+        title: `Bulk ${i}`,
+        brand: "Ravensburger",
+        pieceCount: 1000,
+        searchableText: `bulk ${i}`,
+        status: "approved",
+        submittedBy: submitter,
+        createdAt: NOW + i,
+        updatedAt: NOW + i,
+      });
+    }
+  });
+};
+
 const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
 const asAdmin = (t: TestConvex<typeof schema>) =>
@@ -225,5 +245,87 @@ describe("catalog reads by status (PERF-B8)", () => {
     expect(recs.map((r) => r.title).sort()).toEqual(
       [...APPROVED_OLDEST_FIRST].sort(),
     );
+  });
+});
+
+describe("catalog page sizes are clamped server-side (SEC-49)", () => {
+  test("getRecentPuzzles returns at most 24 rows; a non-finite limit gets the default 8", async () => {
+    const t = convexTest(schema, modules);
+    await seedApproved(t, 30);
+
+    const huge = await t.query(api.catalog.getRecentPuzzles.getRecentPuzzles, {
+      limit: 1e6,
+    });
+    expect(huge).toHaveLength(24);
+    expect(huge[0].title).toBe("Bulk 29");
+
+    const nan = await t.query(api.catalog.getRecentPuzzles.getRecentPuzzles, {
+      limit: Number.NaN,
+    });
+    expect(nan).toHaveLength(8);
+  });
+
+  test("listAllPuzzles and searchCatalog return at most 50 rows per page", async () => {
+    const t = convexTest(schema, modules);
+    await seedApproved(t, 60);
+    await mkMember(t, "clerk_alice");
+    const huge = { numItems: 1e6, cursor: null };
+
+    const all = await t.query(api.catalog.listAllPuzzles.listAllPuzzles, {
+      paginationOpts: huge,
+    });
+    expect(all.page).toHaveLength(50);
+    expect(all.isDone).toBe(false);
+
+    const browse = await asAlice(t).query(
+      api.catalog.searchCatalog.searchCatalog,
+      { paginationOpts: huge },
+    );
+    expect(browse.page).toHaveLength(50);
+    expect(browse.isDone).toBe(false);
+
+    const search = await asAlice(t).query(
+      api.catalog.searchCatalog.searchCatalog,
+      { paginationOpts: huge, searchTerm: "bulk" },
+    );
+    expect(search.page).toHaveLength(50);
+    expect(search.isDone).toBe(false);
+  });
+
+  test("browsePublicCatalog returns at most 40 cards per page", async () => {
+    const t = convexTest(schema, modules);
+    await seedApproved(t, 45);
+    const huge = { numItems: 1e6, cursor: null };
+
+    const browse = await t.query(
+      api.catalog.browsePublicCatalog.browsePublicCatalog,
+      { paginationOpts: huge },
+    );
+    expect(browse.page).toHaveLength(40);
+    expect(browse.isDone).toBe(false);
+
+    const search = await t.query(
+      api.catalog.browsePublicCatalog.browsePublicCatalog,
+      { paginationOpts: huge, searchTerm: "bulk" },
+    );
+    expect(search.page).toHaveLength(40);
+    expect(search.isDone).toBe(false);
+  });
+
+  test("getPuzzleSuggestions returns at most 20 suggestions", async () => {
+    const t = convexTest(schema, modules);
+    await seedApproved(t, 30);
+
+    const huge = await t.query(
+      api.catalog.getPuzzleSuggestions.getPuzzleSuggestions,
+      { searchTerm: "bulk", limit: 1e6 },
+    );
+    expect(huge).toHaveLength(20);
+
+    const fallback = await t.query(
+      api.catalog.getPuzzleSuggestions.getPuzzleSuggestions,
+      { searchTerm: "bulk", limit: Number.NaN },
+    );
+    expect(fallback).toHaveLength(5);
   });
 });
