@@ -328,7 +328,10 @@ describe("account deletion: follow edges and follow requests", () => {
     const [before] = await notificationsOf(t, s.bob, "new_follower");
     expect(before.actorIds?.[0]).toBe(s.alice);
     expect(before.relatedId).toBe(s.alice);
-    expect(before.params?.actorName).toBe("Alice");
+    // New rows carry no name (SEC-68); a row written before that still has the snapshot.
+    await t.run((ctx) =>
+      ctx.db.patch(before._id, { params: { actorName: "Alice" } }),
+    );
 
     await deleteAlice(t);
 
