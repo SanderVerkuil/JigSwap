@@ -31,8 +31,12 @@ import { useTranslations } from "use-intl";
 type PeopleTab = "network" | "find" | "activity";
 
 // Below sm the three tabs must fit a 390px phone without scrolling, in Dutch too ("Mensen
-// vinden"): the icons go and the triggers tighten. Scoped to this page, not the shared class.
-const PEOPLE_TAB_TRIGGER_CLASS = `${TAB_TRIGGER_CLASS} max-sm:px-2.5`;
+// vinden"), and still fit when Your network carries a pending-request count (up to three
+// digits): the icons go, the triggers and the gaps tighten. Measured at 390 in Dutch with
+// "128" showing: 355px in 358px. Narrower phones fall back to the scrolling list and its fade.
+// Scoped to this page, not the shared classes.
+const PEOPLE_TAB_TRIGGER_CLASS = `${TAB_TRIGGER_CLASS} max-sm:gap-1.5 max-sm:px-1.5`;
+const PEOPLE_TABS_LIST_CLASS = `${UNDERLINE_TABS_LIST_CLASS} max-sm:gap-0`;
 
 export const Route = createFileRoute("/_dashboard/people")({
   // URL-addressable tabs: /people?tab=find deep-links straight into discovery
@@ -240,7 +244,7 @@ function PeoplePage() {
 
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <StickyTabsBar>
-          <TabsList className={UNDERLINE_TABS_LIST_CLASS}>
+          <TabsList className={PEOPLE_TABS_LIST_CLASS}>
             <TabsTrigger
               value="network"
               className={PEOPLE_TAB_TRIGGER_CLASS}
