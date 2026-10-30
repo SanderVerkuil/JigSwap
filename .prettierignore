@@ -4,6 +4,7 @@
 /.nx/cache
 /.nx/workspace-data
 /pnpm-lock.yaml
+/.github/vercel-cli/package-lock.json
 /apps/web/locales/source.d.json.ts
 /apps/web/src/routeTree.gen.ts
 /apps/web/.output

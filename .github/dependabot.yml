@@ -1,4 +1,4 @@
-# Dependabot keeps the SHA-pinned GitHub Actions current.
+# Dependabot keeps the SHA-pinned GitHub Actions and the lockfile-pinned Vercel CLI current.
 #
 # Every `uses:` in .github/workflows is pinned to a full commit SHA with a `# vX.Y.Z` comment,
 # so a moved or hijacked tag cannot change what runs in jobs that hold deploy keys. Dependabot
@@ -19,5 +19,18 @@ updates:
       github-actions:
         patterns: ["*"]
         update-types: [minor, patch]
+    commit-message:
+      prefix: ci
+
+  # The Vercel CLI that vercel-preview.yml runs with VERCEL_TOKEN, installed with
+  # `npm ci --ignore-scripts` from .github/vercel-cli/package-lock.json (outside the pnpm
+  # workspace). A bump rewrites that lockfile; a major bump can change the deploy flags, so
+  # run one labelled preview before merging it.
+  - package-ecosystem: npm
+    directory: /.github/vercel-cli
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: ci

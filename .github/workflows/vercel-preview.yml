@@ -24,6 +24,13 @@ permissions:
 # documented way to give a CLI deployment that branch association (branch-scoped Preview
 # env vars and the per-branch URL alias).
 #
+# The CLI that receives VERCEL_TOKEN is installed from .github/vercel-cli/package-lock.json
+# with `npm ci --ignore-scripts`: only the locked, integrity-checked tarballs, and no
+# lifecycle scripts. That project sits outside the pnpm workspace, so pnpm-lock.yaml and the
+# workspace install never see it, and Dependabot proposes CLI bumps
+# (.github/dependabot.yml). The upload leaves node_modules out at any depth, so the
+# installed CLI is not sent to Vercel.
+#
 # The Vercel build and convex-preview.yml push to the same Convex preview at the same time;
 # both go through scripts/convex-deploy-retry.sh, which retries only on that race. They
 # stay separate workflows so seeding (dev export + import) never delays the web preview.
@@ -76,6 +83,13 @@ jobs:
         if: env.HAS_VERCEL == 'true'
         with:
           node-version: 22
+          cache: npm
+          cache-dependency-path: .github/vercel-cli/package-lock.json
+
+      - name: Install the Vercel CLI from its lockfile
+        if: env.HAS_VERCEL == 'true'
+        working-directory: .github/vercel-cli
+        run: npm ci --ignore-scripts --no-audit --no-fund
 
       - name: Deploy preview to Vercel
         id: deploy
@@ -86,9 +100,10 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         # Run from the repo root (Vercel: never invoke the CLI from a monorepo
         # subdirectory); the project's Root Directory setting (apps/web) applies remotely.
+        # Call the lockfile-installed binary by path, never a `vercel` found on PATH.
         # The deployment URL is the last line of stdout (progress and logs go to stderr).
         run: |
-          url="$(npx --yes vercel@62.2.0 deploy --target=preview --yes --logs \
+          url="$(.github/vercel-cli/node_modules/.bin/vercel deploy --target=preview --yes --logs \
             --token "$VERCEL_TOKEN" \
             --build-env "JIGSWAP_PREVIEW_BRANCH=$BRANCH_NAME" \
             --meta githubDeployment=1 \
