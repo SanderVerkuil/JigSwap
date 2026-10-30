@@ -93,7 +93,11 @@ function CollectionDetailPage() {
   // breadcrumb reads My Library › Collections › <name>. The Add/Share/Edit
   // actions now live in the in-content hero block per the redesign, so this
   // page intentionally publishes no header `actions`.
-  usePageHeader(() => ({ title: collection?.name }), [collection?.name]);
+  // Once loaded, the hero renders the name as this page's h1, so the shell's copy is plain text.
+  usePageHeader(
+    () => ({ title: collection?.name, ownsHeading: Boolean(collection) }),
+    [collection?.name, Boolean(collection)],
+  );
 
   const puzzles = useMemo(
     () => (collection?.puzzles ?? []).filter((p) => p != null),

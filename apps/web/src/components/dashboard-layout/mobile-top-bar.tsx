@@ -25,13 +25,12 @@ import { useCallback, useSyncExternalStore, type MouseEvent } from "react";
 import { useTranslations } from "use-intl";
 import { formatNavBadge, nameForNavBadge } from "./nav-badge";
 import { useUnreadMessageCount } from "./nav-counts";
-import { usePageHeaderContent } from "./page-header-slot";
 import {
   getNavGroup,
-  getRouteMeta,
   isImmersiveMobileRoute,
   isMobileTabRoot,
 } from "./route-meta";
+import { useShellTitle } from "./shell-title";
 import { ShellUserButton } from "./shell-user-button";
 import { MOBILE_TOP_BAR_HEIGHT_VAR, useHeightCssVar } from "./sticky-offset";
 
@@ -59,7 +58,9 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
       ? tNotifications("bellWithCount", { count: formatUnreadBadge(unread) })
       : tNotifications("bell");
 
-  const meta = getRouteMeta(pathname);
+  // A page-published title (dynamic routes) overrides the static route title,
+  // same precedence as the desktop page head.
+  const { meta, title: shellTitle, titleOverride } = useShellTitle();
   const isHome = meta?.variant === "dashboard";
   // Deep pages (a route with a parent section) trade the breadcrumb row for a
   // back chevron; landings, the profile and the pages a tab opens (/trades sits
@@ -98,14 +99,8 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
     event.preventDefault();
     router.history.back();
   };
-  // A page-published title (dynamic routes) overrides the static route title,
-  // same precedence as the desktop page head.
-  const { title: publishedTitle, titleInContent } = usePageHeaderContent();
-  const title =
-    publishedTitle ??
-    (meta && !isHome ? t(`pages.${meta.pageKey}.title`) : undefined);
-  // The page's own h1 carries the title; the bar keeps it as context text only.
-  const TitleTag = titleInContent ? "p" : "h1";
+  // Home shows the brand lockup instead of a title (the greeting is the sr-only h1 in main).
+  const title = isHome && titleOverride == null ? undefined : shellTitle;
   // Sticky page content (tab bars) sticks just below this bar.
   const measureRef = useHeightCssVar(MOBILE_TOP_BAR_HEIGHT_VAR);
 
@@ -139,6 +134,7 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
             aria-label="JigSwap"
             className="flex h-11 shrink-0 items-center gap-2 pl-1.5"
           >
+            {/* Decorative: the wordmark beside it already names the link. */}
             <Image src={logoMark} alt="" className="size-7 object-contain" />
             <span className="font-heading text-[19px] leading-none font-bold">
               <span className="text-jigsaw-primary">Jig</span>
@@ -148,8 +144,9 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
         ) : null}
 
         <div className="min-w-0 flex-1">
+          {/* Plain text: the page's h1 lives in main (ShellHeading), not in the banner. */}
           {title && (
-            <TitleTag
+            <p
               className={cn(
                 // The controls leave a phone about 126px: two smaller lines before an ellipsis.
                 "font-heading truncate text-lg font-bold max-sm:line-clamp-2 max-sm:whitespace-normal max-sm:text-base max-sm:leading-snug",
@@ -157,7 +154,7 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
               )}
             >
               {title}
-            </TitleTag>
+            </p>
           )}
         </div>
 

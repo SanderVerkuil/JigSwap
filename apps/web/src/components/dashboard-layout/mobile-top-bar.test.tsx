@@ -207,7 +207,9 @@ describe("MobileTopBar title", () => {
   it("wraps onto two smaller lines on phones instead of truncating", () => {
     renderBar("/completions/new");
     const classes = (
-      screen.getByRole("heading", { level: 1 }).getAttribute("class") ?? ""
+      screen
+        .getByText(en.shell.pages.completionNew.title)
+        .getAttribute("class") ?? ""
     ).split(/\s+/);
     expect(classes).toEqual(
       expect.arrayContaining([
@@ -221,8 +223,8 @@ describe("MobileTopBar title", () => {
 
   it("closes up the controls on phones, keeping every target at 44px", () => {
     renderBar("/completions/new");
-    const row = screen.getByRole("heading", { level: 1 }).parentElement
-      ?.parentElement;
+    const row = screen.getByText(en.shell.pages.completionNew.title)
+      .parentElement?.parentElement;
     expect(row?.getAttribute("class")?.split(/\s+/)).toContain("max-sm:gap-0");
     expect(
       screen.getByRole("link", { name: "Messages" }).getAttribute("class"),
@@ -248,10 +250,11 @@ const renderPublished = (content: PageHeaderContent) => {
 };
 
 describe("MobileTopBar published title", () => {
-  it("shows a published title as the page heading", () => {
+  it("shows a published title as plain text: the page's h1 lives in main", () => {
     renderPublished({ title: "Café" });
 
-    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Café");
+    expect(screen.queryByRole("heading")).toBeNull();
+    expect(screen.getByText("Café")).toBeTruthy();
   });
 
   it("shows the title as plain text when the page renders it as its own heading", () => {

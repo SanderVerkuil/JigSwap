@@ -33,6 +33,13 @@ export type PageHeaderContent = {
    */
   titleInContent?: boolean;
   /**
+   * The page renders its own visible h1 (a detail page's hero title). The shell then prints its
+   * title as plain text instead of a heading, so the page keeps exactly one h1. "phone": that h1
+   * only shows below md, so the page head keeps its h1 from md. Set it only while that h1 is
+   * actually rendered.
+   */
+  ownsHeading?: boolean | "phone";
+  /**
    * Explicit breadcrumb parent trail (excluding the current leaf, which is the
    * title). When set, the page head renders these crumbs instead of the
    * auto-derived Group › Page trail — use for deep routes like a collection's

@@ -13,24 +13,23 @@
 // is reserved everywhere so the h1 sits at the same height on every page.
 // The title row wraps: when the actions don't fit beside the title they move
 // to their own line rather than squeezing the title or running off the card.
-// Desktop-only: below md the mobile top bar owns the title and the back
-// affordance, and the shell's MobilePageActions row carries the actions.
+// Desktop-only: below md the mobile top bar shows the title and the back
+// affordance, ShellHeading (shell-title.tsx) carries the page's h1, and the
+// shell's MobilePageActions row carries the actions.
 import { Link } from "@/compat/link";
-import { usePathname } from "@/compat/navigation";
 import { ChevronRight } from "lucide-react";
 import { useTranslations } from "use-intl";
-import { useDashboardGreeting } from "./greeting";
 import { usePageHeaderContent } from "./page-header-slot";
-import { getNavGroup, getRouteMeta } from "./route-meta";
+import { getNavGroup } from "./route-meta";
+import { useShellTitle } from "./shell-title";
 import { PAGE_HEAD_HEIGHT_VAR, useHeightCssVar } from "./sticky-offset";
 
 export function PageHead() {
-  const pathname = usePathname();
-  const meta = getRouteMeta(pathname);
   const t = useTranslations("shell");
-  const greeting = useDashboardGreeting();
+  // A published title (dynamic route) overrides the static route title.
+  const { meta, pageTitle, titleOverride, title, ownsHeading } =
+    useShellTitle();
   const {
-    title: titleOverride,
     titleInContent,
     crumbs,
     actions: headerActions,
@@ -43,11 +42,9 @@ export function PageHead() {
     return null;
   }
 
-  const pageTitle = t(`pages.${meta.pageKey}.title`);
   const subtitle = t(`pages.${meta.pageKey}.subtitle`);
-  const baseTitle = meta.variant === "dashboard" ? greeting : pageTitle;
-  // A published title (dynamic route) overrides the static route title.
-  const title = titleOverride ?? baseTitle;
+  // The page's h1 from md, unless the page renders its own h1 there (then plain text, same look).
+  const TitleTag = ownsHeading === true ? "p" : "h1";
   const group =
     meta.group && meta.variant === undefined
       ? getNavGroup(meta.group)
@@ -136,9 +133,9 @@ export function PageHead() {
             data-slot="page-head-title"
             className="flex min-w-[min(100%,16rem)] flex-1 flex-wrap items-baseline gap-x-3.5 gap-y-0.5"
           >
-            <h1 className="font-heading text-2xl font-bold tracking-tight">
+            <TitleTag className="font-heading text-2xl font-bold tracking-tight">
               {title}
-            </h1>
+            </TitleTag>
             {!titleOverride && (
               <p className="text-sm text-muted-foreground">{subtitle}</p>
             )}

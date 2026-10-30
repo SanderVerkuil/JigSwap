@@ -347,6 +347,8 @@ function CopyInstanceDetail({
   usePageHeader(
     () => ({
       title: snapshot.title,
+      // The body renders the title as this page's h1 below md; from md the head's h1 is it.
+      ownsHeading: "phone",
       crumbs: navCollection
         ? [
             { label: tShell("groups.library.label"), href: "/library" },

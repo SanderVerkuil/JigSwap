@@ -39,6 +39,7 @@ import {
 } from "./page-header-slot";
 import { ShellPreferencesProvider, useShellPreferences } from "./preferences";
 import { isFullBleedRoute, isImmersiveMobileRoute } from "./route-meta";
+import { ShellHeading } from "./shell-title";
 import { SyncPreferredLanguage } from "./sync-preferred-language";
 import { TopBar } from "./top-bar";
 
@@ -196,6 +197,8 @@ function ContentArea({
         fullBleed && "md:flex md:min-h-0 md:max-w-none md:flex-1 md:p-0",
       )}
     >
+      {/* The page's h1 on phones, where the page head is hidden. */}
+      <ShellHeading />
       <MobilePageActions />
       {children}
     </div>
