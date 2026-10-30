@@ -233,6 +233,23 @@
             ]
           }
         ],
+        // Locale-less toLocale*() formats with the server's or browser's locale, not the app's,
+        // and breaks hydration (UX-63). use-intl's useFormatter() is pinned to the app locale.
+        "eslint/no-restricted-properties": [
+          "error",
+          {
+            "property": "toLocaleString",
+            "message": "Format with useFormatter() (format.number / format.dateTime) so the app locale and time zone apply; use an explicit Intl.*Format only for deliberately fixed-locale text."
+          },
+          {
+            "property": "toLocaleDateString",
+            "message": "Format with useFormatter().dateTime so the app locale and time zone apply."
+          },
+          {
+            "property": "toLocaleTimeString",
+            "message": "Format with useFormatter().dateTime so the app locale and time zone apply."
+          }
+        ],
         "nextjs/no-head-element": "off",
         "nextjs/no-html-link-for-pages": "off"
       }
