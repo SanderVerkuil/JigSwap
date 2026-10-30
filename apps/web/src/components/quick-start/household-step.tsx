@@ -8,13 +8,18 @@ import { MemberInitial } from "@/components/members/member-initial";
 import { EmailInvite } from "@/components/social/email-invite";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
-import { House } from "lucide-react";
+import { ChevronDown, House } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
@@ -25,8 +30,9 @@ type Invite = FunctionReturnType<typeof gateway.household.myInvites>[number];
 type Household = NonNullable<FunctionReturnType<typeof gateway.household.mine>>;
 
 // Step 4, Household (optional; spec §2.4). A pending invite comes first (D6): accept or decline
-// it here. In a household, the members and (for admins) the invite panel. Otherwise, the
-// explainer and "Create a household"; "I puzzle alone" is the same as Skip.
+// it here. In a household, the members and (for admins) a light invite panel: share a link first,
+// the name search and email invite folded away, no link management. Otherwise, the explainer and
+// "Create a household"; "I puzzle alone" is the same as Skip.
 export function HouseholdStep({ onAlone }: { onAlone: () => void }) {
   const t = useTranslations("household");
   const { data: household } = useQuery(convexQuery(gateway.household.mine, {}));
@@ -159,7 +165,7 @@ function InHousehold({
   household: Household;
   onError: (error: unknown) => void;
 }) {
-  const t = useTranslations("quickStart.household");
+  const t = useTranslations("quickStart");
   const th = useTranslations("household");
   const [shared, setShared] = useState(false);
   const isAdmin = household.viewerRole === "admin";
@@ -171,30 +177,62 @@ function InHousehold({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="divide-y rounded-lg border px-4">
-        {household.members.map((member) => (
-          <PersonRow
-            key={member.memberId}
-            person={member}
-            badge={
-              member.isYou ? (
-                <span className="text-muted-foreground text-xs">
-                  {th("members.you")}
-                </span>
-              ) : undefined
-            }
-          />
-        ))}
+      <div className="flex flex-col gap-2">
+        <div className="divide-y rounded-lg border px-4">
+          {household.members.map((member) => (
+            <PersonRow
+              key={member.memberId}
+              person={member}
+              badge={
+                member.isYou ? (
+                  <span className="text-muted-foreground text-xs">
+                    {th("members.you")}
+                  </span>
+                ) : undefined
+              }
+            />
+          ))}
+        </div>
+        {/* A household of one is done, but nobody shares the shelf yet (as on the card). */}
+        {household.members.length === 1 && (
+          <p className="text-muted-foreground text-sm">
+            {t("steps.household.justYou")}
+          </p>
+        )}
       </div>
       {isAdmin && (
         <section className="flex flex-col gap-3">
-          <h3 className="text-sm font-medium">{t("inviteMember")}</h3>
-          <HouseholdMemberInvite excludedIds={excluded} onError={onError} />
+          <h3 className="text-sm font-medium">{t("household.inviteMember")}</h3>
+          {/* Revoking links is management: it stays on the household page. */}
           <HouseholdInviteLink
             memberId={viewerId}
+            showRevoke={false}
             onShared={() => setShared(true)}
           />
-          <EmailInvite kind="household" />
+          {/* Closed, the content unmounts: no search or email form until asked for. */}
+          <Collapsible>
+            <CollapsibleTrigger asChild>
+              <Button
+                variant="ghost"
+                className="group -ml-3 pointer-coarse:min-h-11"
+              >
+                <ChevronDown
+                  aria-hidden
+                  className="size-4 transition-transform group-data-[state=open]:rotate-180 motion-reduce:transition-none"
+                />
+                {t("household.inviteMore")}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2 flex flex-col gap-5">
+              <div className="flex flex-col gap-3">
+                <HouseholdMemberInvite
+                  excludedIds={excluded}
+                  onError={onError}
+                />
+              </div>
+              <EmailInvite kind="household" />
+            </CollapsibleContent>
+          </Collapsible>
           <PushPrompt triggered={shared} />
         </section>
       )}

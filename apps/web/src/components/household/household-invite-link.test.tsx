@@ -15,7 +15,7 @@ const useSignedOut = () => ({
   fetchAccessToken: async () => null,
 });
 
-const render = (locale: "en" | "nl" = "en") => {
+const render = (locale: "en" | "nl" = "en", showRevoke?: boolean) => {
   const convex = new ConvexReactClient("https://example.convex.cloud");
   const convexQueryClient = new ConvexQueryClient(convex);
   const queryClient = new QueryClient({
@@ -29,7 +29,7 @@ const render = (locale: "en" | "nl" = "en") => {
           messages={locale === "en" ? en : nl}
           timeZone="Europe/Amsterdam"
         >
-          <HouseholdInviteLink memberId="m1" />
+          <HouseholdInviteLink memberId="m1" showRevoke={showRevoke} />
         </IntlProvider>
       </QueryClientProvider>
     </ConvexProviderWithAuth>,
@@ -79,6 +79,15 @@ describe("HouseholdInviteLink", () => {
       "Create invite link",
       "Revoke open links",
     ]);
+  });
+
+  it("can leave out Revoke open links (the quick setup step), keeping the note", () => {
+    const html = render("en", false);
+    expect(texts(html)).toContain(
+      "The link works once and expires in 14 days.",
+    );
+    const buttons = elementsOf(html).filter((el) => el.tagName === "button");
+    expect(buttons.map(textOf)).toEqual(["Create invite link"]);
   });
 
   it("renders in Dutch", () => {

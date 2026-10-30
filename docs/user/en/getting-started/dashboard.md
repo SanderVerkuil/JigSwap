@@ -45,7 +45,9 @@ The four steps are:
 
 Before the last step comes an optional **Household** step: create a household,
 accept an invitation, or choose **I puzzle alone**. It has no number and
-doesn't count toward your progress.
+doesn't count toward your progress. Once you have a household, the step offers
+an invite link first; **Invite by name or email** opens the other two ways to
+invite. Until someone joins, the step says **Just you so far**.
 
 Use **Continue** to go on, **Skip** to pass a step, or **Finish later** to
 leave. Continue and Skip take you to the next step that's still to do, so steps

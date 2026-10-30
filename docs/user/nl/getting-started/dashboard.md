@@ -47,7 +47,10 @@ De vier stappen zijn:
 
 Voor de laatste stap komt nog een optionele stap **Huishouden**: maak een
 huishouden aan, accepteer een uitnodiging of kies **Ik puzzel alleen**. Die stap
-heeft geen nummer en telt niet mee voor je voortgang.
+heeft geen nummer en telt niet mee voor je voortgang. Heb je een huishouden, dan
+biedt de stap eerst een uitnodigingslink aan; **Uitnodigen op naam of e-mail**
+opent de andere twee manieren om uit te nodigen. Zolang er nog niemand bij is
+gekomen, staat er **Voorlopig alleen jij**.
 
 Gebruik **Doorgaan** om verder te gaan, **Overslaan** om een stap over te
 slaan, of **Later afmaken** om te stoppen. Doorgaan en Overslaan brengen je naar

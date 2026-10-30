@@ -5701,6 +5701,7 @@
       "create": "Create a household",
       "alone": "I puzzle alone",
       "inviteMember": "Invite a member",
+      "inviteMore": "Invite by name or email",
       "pendingTitle": "{name} invited you to their household"
     },
     "profile": {
