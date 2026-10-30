@@ -38,6 +38,7 @@ import {
   useProjectedMemberName,
 } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
+import { isRateLimited } from "@/lib/upload-rate-limit";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -946,6 +947,7 @@ function PhotoStrip({
   coverImageId: string | null;
 }) {
   const t = useTranslations("copyInstance");
+  const tCommon = useTranslations("common");
   const inputRef = useRef<HTMLInputElement>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -993,7 +995,13 @@ function PhotoStrip({
       });
     },
     onSuccess: () => toast.success(t("photoAdded")),
-    onError: () => toast.error(t("photoFailed")),
+    // An upload URL refused by the member's upload limit says to wait (SEC-20).
+    onError: (error) =>
+      toast.error(
+        isRateLimited(error)
+          ? tCommon("photoUploadRateLimited")
+          : t("photoFailed"),
+      ),
     onSettled: () => {
       if (inputRef.current) inputRef.current.value = "";
     },

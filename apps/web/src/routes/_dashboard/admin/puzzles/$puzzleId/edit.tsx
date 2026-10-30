@@ -18,6 +18,7 @@ import { gateway, Id } from "@/gateway";
 import { useBoxArtCheckNotice } from "@/hooks/use-box-art-check";
 import { useUploadBoxArt } from "@/hooks/use-upload-box-art";
 import { pageTitle } from "@/lib/page-title";
+import { isRateLimited } from "@/lib/upload-rate-limit";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -105,6 +106,7 @@ function AdminEditForm({
   const t = useTranslations("admin.puzzles");
   const tSuggest = useTranslations("suggestEdit");
   const tShell = useTranslations("shell");
+  const tCommon = useTranslations("common");
 
   usePageHeader(
     () => ({
@@ -177,7 +179,13 @@ function AdminEditForm({
       toast.success(t("edit.saved"));
       router.push(`/admin/puzzles/${puzzleId}`);
     },
-    onError: (error) => toast.error(t(errorKeyFor(error))),
+    // A box-art upload URL refused by the member's upload limit says to wait (SEC-20).
+    onError: (error) =>
+      toast.error(
+        isRateLimited(error)
+          ? tCommon("photoUploadRateLimited")
+          : t(errorKeyFor(error)),
+      ),
   });
 
   const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>

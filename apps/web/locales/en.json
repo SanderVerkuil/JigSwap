@@ -22,7 +22,8 @@
     "removeOption": "Remove {option} option",
     "removeOptionButton": "button to remove option",
     "inputTag": "input tag",
-    "photoPendingReview": "Pending review"
+    "photoPendingReview": "Pending review",
+    "photoUploadRateLimited": "You've uploaded a lot of photos. Try again later."
   },
   "notFound": {
     "title": "Page Not Found",

@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useReportSurfaceBusy } from "@/components/whats-new/surface-busy";
 import { gateway, type Id } from "@/gateway";
 import { preparePhoto } from "@/lib/prepare-photo";
+import { isRateLimited } from "@/lib/upload-rate-limit";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
@@ -73,6 +74,7 @@ export function CompletionFollowUpProvider({
 }) {
   const t = useTranslations("solving.followUp");
   const tReview = useTranslations("solving.review");
+  const tCommon = useTranslations("common");
 
   const generateUploadUrl = useConvexMutation(
     gateway.library.generateUploadUrl,
@@ -275,7 +277,14 @@ export function CompletionFollowUpProvider({
       );
       if (failedIds.size > 0) {
         // Partial failure: keep the dialog open with failed items marked; Save becomes Retry.
-        toast.error(t("saveError"));
+        // An upload URL refused by the member's upload limit says to wait (SEC-20).
+        const rateLimited = settled.some(
+          (result) =>
+            result.status === "rejected" && isRateLimited(result.reason),
+        );
+        toast.error(
+          rateLimited ? tCommon("photoUploadRateLimited") : t("saveError"),
+        );
         return;
       }
 

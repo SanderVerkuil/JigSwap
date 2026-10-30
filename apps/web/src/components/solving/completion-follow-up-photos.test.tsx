@@ -174,6 +174,25 @@ describe("completion follow-up photos", () => {
     },
   );
 
+  it("an upload refused by the upload-URL rate limit tells the member to wait", async () => {
+    mocks.mutation.mockImplementation(async (name) => {
+      if (name === UPLOAD_URL) {
+        throw new ConvexError({ code: "RateLimited", retryAfterMs: 60_000 });
+      }
+      return null;
+    });
+    renderProvider();
+    await pick(new File(["x"], "x.jpg", { type: "image/jpeg" }));
+    await screen.findByRole("button", { name: "Remove photo" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await screen.findByRole("button", { name: "Retry" });
+    expect(toast.error).toHaveBeenCalledWith(en.common.photoUploadRateLimited);
+    expect(toast.error).not.toHaveBeenCalledWith(en.solving.followUp.saveError);
+    expect(mocks.mutation).not.toHaveBeenCalledWith(ATTACH, expect.anything());
+  });
+
   it("a photo the browser cannot prepare is not added", async () => {
     mocks.prepare.mockRejectedValue(new Error("EncodingError"));
     renderProvider();

@@ -22,7 +22,8 @@
     "removeOption": "Verwijder {option} optie",
     "removeOptionButton": "knop om optie te verwijderen",
     "inputTag": "invoertag",
-    "photoPendingReview": "Wacht op controle"
+    "photoPendingReview": "Wacht op controle",
+    "photoUploadRateLimited": "Je hebt veel foto's geüpload. Probeer het later opnieuw."
   },
   "notFound": {
     "title": "Pagina Niet Gevonden",
