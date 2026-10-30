@@ -3941,6 +3941,7 @@
         "community": "Community"
       },
       "back": "Terug naar {section}",
+      "backGeneric": "Terug",
       "openQuickActions": "Snelle Acties",
       "quick": {
         "addPuzzleSub": "Zet een nieuwe doos op je plank",

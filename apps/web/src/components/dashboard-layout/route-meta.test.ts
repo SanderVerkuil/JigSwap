@@ -3,6 +3,7 @@ import {
   getNavGroup,
   isFullBleedRoute,
   isImmersiveMobileRoute,
+  isMobileTabRoot,
 } from "./route-meta";
 
 describe("isImmersiveMobileRoute", () => {
@@ -35,6 +36,23 @@ describe("isFullBleedRoute", () => {
     "is not full-bleed on %s",
     (pathname) => {
       expect(isFullBleedRoute(pathname)).toBe(false);
+    },
+  );
+});
+
+// UX-59: the phone tabs open these pages, so the top bar shows no back chevron there.
+describe("isMobileTabRoot", () => {
+  it.each(["/dashboard", "/library", "/trades", "/community", "/trades/"])(
+    "is a tab root on %s",
+    (pathname) => {
+      expect(isMobileTabRoot(pathname)).toBe(true);
+    },
+  );
+
+  it.each(["/my-puzzles", "/messages", "/circles", "/trades/abc", "/browse"])(
+    "is not a tab root on %s",
+    (pathname) => {
+      expect(isMobileTabRoot(pathname)).toBe(false);
     },
   );
 });

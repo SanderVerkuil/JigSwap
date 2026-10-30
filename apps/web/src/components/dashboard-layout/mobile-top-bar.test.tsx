@@ -1,7 +1,9 @@
 // @vitest-environment happy-dom
 // UX-06: Messages is one tap away on a phone. The top bar carries a Messages icon with the unread
 // count as an aria-hidden badge; the count is in the link's name.
-import { cleanup, render, screen } from "@testing-library/react";
+// UX-59: the ‹ chevron is a real Back. It is hidden on the pages the tabs open; elsewhere it goes
+// back through history when the previous entry is in the app, and up to the section hub otherwise.
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -12,6 +14,8 @@ import { MobileTopBar } from "./mobile-top-bar";
 const mocks = vi.hoisted(() => ({
   pathname: "/dashboard",
   unreadMessages: 0,
+  canGoBack: false,
+  back: vi.fn<() => void>(),
 }));
 
 vi.mock("@/compat/navigation", () => ({
@@ -23,6 +27,15 @@ vi.mock("@/compat/clerk", () => ({
 vi.mock("@tanstack/react-query", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@tanstack/react-query")>()),
   useQuery: () => ({ data: undefined }),
+}));
+vi.mock("@tanstack/react-router", () => ({
+  useRouter: () => ({
+    history: {
+      canGoBack: () => mocks.canGoBack,
+      back: mocks.back,
+      subscribe: () => () => {},
+    },
+  }),
 }));
 vi.mock("./nav-counts", () => ({
   useUnreadMessageCount: () => mocks.unreadMessages,
@@ -48,6 +61,8 @@ afterEach(() => {
   cleanup();
   mocks.pathname = "/dashboard";
   mocks.unreadMessages = 0;
+  mocks.canGoBack = false;
+  mocks.back.mockReset();
 });
 
 function renderBar(pathname: string, locale: "en" | "nl" = "en") {
@@ -106,5 +121,59 @@ describe("MobileTopBar Messages entry", () => {
     expect(
       screen.getByRole("link", { name: "Berichten, 1 ongelezen bericht" }),
     ).toBeTruthy();
+  });
+});
+
+describe("MobileTopBar back chevron", () => {
+  const backLink = () => screen.queryByRole("link", { name: /^Back/ });
+
+  it.each(["/dashboard", "/library", "/trades", "/community"])(
+    "shows no back chevron on the tab root %s",
+    (pathname) => {
+      mocks.canGoBack = true;
+      renderBar(pathname);
+      expect(backLink()).toBeNull();
+    },
+  );
+
+  it("goes up to the section hub when there is no in-app page to go back to", () => {
+    renderBar("/my-puzzles");
+    const link = screen.getByRole("link", { name: "Back to My Library" });
+    expect(link.getAttribute("href")).toBe("/library");
+    const click = new MouseEvent("click", { bubbles: true, cancelable: true });
+    fireEvent(link, click);
+    expect(click.defaultPrevented).toBe(false);
+    expect(mocks.back).not.toHaveBeenCalled();
+  });
+
+  it("goes back through history when the previous page is in the app", () => {
+    mocks.canGoBack = true;
+    renderBar("/my-puzzles");
+    const link = screen.getByRole("link", { name: "Back" });
+    // The hub stays the link target for a new tab or a no-JS click.
+    expect(link.getAttribute("href")).toBe("/library");
+    const click = new MouseEvent("click", { bubbles: true, cancelable: true });
+    fireEvent(link, click);
+    expect(click.defaultPrevented).toBe(true);
+    expect(mocks.back).toHaveBeenCalledOnce();
+  });
+
+  it("leaves a modified click to the link (open the hub in a new tab)", () => {
+    mocks.canGoBack = true;
+    renderBar("/my-puzzles");
+    const click = new MouseEvent("click", {
+      bubbles: true,
+      cancelable: true,
+      ctrlKey: true,
+    });
+    fireEvent(screen.getByRole("link", { name: "Back" }), click);
+    expect(click.defaultPrevented).toBe(false);
+    expect(mocks.back).not.toHaveBeenCalled();
+  });
+
+  it("names the generic Back in Dutch", () => {
+    mocks.canGoBack = true;
+    renderBar("/my-puzzles", "nl");
+    expect(screen.getByRole("link", { name: "Terug" })).toBeTruthy();
   });
 });

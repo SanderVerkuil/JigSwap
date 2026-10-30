@@ -3941,6 +3941,7 @@
         "community": "Community"
       },
       "back": "Back to {section}",
+      "backGeneric": "Back",
       "openQuickActions": "Quick Actions",
       "quick": {
         "addPuzzleSub": "Put a new box on your shelf",
