@@ -5149,11 +5149,10 @@
         "removeUnavailable": "Inhoud kan alleen worden verwijderd bij meldingen over berichten, foto's, reacties en reviews.",
         "statementLabel": "Motivering (wordt naar het lid gestuurd)",
         "statementHint": "{count}/{max} tekens. Verplicht: wat is beperkt, op welke grond, en hoe om herbeoordeling te vragen.",
-        "templateNames": {
-          "removal": "Sjabloon verwijdering",
-          "warning": "Sjabloon waarschuwing",
-          "noViolation": "Sjabloon geen overtreding"
-        },
+        "insertTemplate": "Sjabloon invoegen",
+        "replaceTemplateTitle": "Je tekst vervangen?",
+        "replaceTemplateBody": "Het sjabloon voor “{decision}” vervangt wat je hebt geschreven. Je eigen tekst gaat dan verloren.",
+        "replaceTemplateConfirm": "Tekst vervangen",
         "templateContent": {
           "user": "je gedrag op JigSwap",
           "message": "je bericht",

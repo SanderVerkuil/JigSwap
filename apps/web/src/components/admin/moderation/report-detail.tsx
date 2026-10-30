@@ -7,7 +7,10 @@
 // filed), the Art. 16(2) notice when present, the photo when the target still
 // exists (behind the click-to-reveal RevealGuard), and the member's other
 // reports. An open report ends in the decide form; a decided one shows its
-// outcome. The server enforces isAdmin and validates the decision; the form
+// outcome. Each decision has its own statement-of-reasons template
+// (DECISION_TEMPLATE), filled in on choosing the decision while the text is
+// still empty or a template; text the admin wrote is only replaced after they
+// confirm. The server enforces isAdmin and validates the decision; the form
 // only mirrors those rules (Remove only for message, photo, comment and review
 // targets; a statement of reasons of 1–2000 characters).
 import {
@@ -30,7 +33,7 @@ import { cn } from "@/lib/utils";
 import { useConvexMutation } from "@convex-dev/react-query";
 import type { FunctionReturnType } from "convex/server";
 import { ImageOff } from "lucide-react";
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "use-intl";
 import { RevealGuard } from "./reveal-guard";
@@ -57,6 +60,13 @@ const DECISIONS: readonly Decision[] = [
   "content_removed",
 ];
 const TEMPLATES = ["removal", "warning", "noViolation"] as const;
+type Template = (typeof TEMPLATES)[number];
+// Each decision's statement-of-reasons template, so a removal text never goes out with a warning.
+const DECISION_TEMPLATE: Record<Decision, Template> = {
+  dismissed: "noViolation",
+  warned: "warning",
+  content_removed: "removal",
+};
 
 export function ReportDetail({ report }: { report: ReportDetailView }) {
   const t = useTranslations("admin.moderation.reports");
@@ -294,7 +304,12 @@ function DecideForm({ report }: { report: ReportDetailView }) {
   const [decision, setDecision] = useState<Decision | null>(null);
   const [statement, setStatement] = useState("");
   const [confirmingRemove, setConfirmingRemove] = useState(false);
+  const [confirmingReplace, setConfirmingReplace] = useState(false);
   const [busy, setBusy] = useState(false);
+  const statementRef = useRef<HTMLTextAreaElement>(null);
+  // Set when the replace confirm inserted the template, so focus returns to the text, not to the
+  // Insert template button (gone once the text is the template).
+  const replacedRef = useRef(false);
 
   const trimmed = statement.trim();
   const canSubmit =
@@ -306,6 +321,27 @@ function DecideForm({ report }: { report: ReportDetailView }) {
   const templateParams = {
     content: t(`templateContent.${report.targetKind}`),
     ground: t(`grounds.${report.reason}`),
+  };
+  const templateText = (template: Template) =>
+    t(`templates.${template}`, templateParams);
+  // Text the admin has not written themselves: empty, or exactly one of the templates.
+  const untouched = (text: string) =>
+    text.trim() === "" || TEMPLATES.some((tpl) => templateText(tpl) === text);
+  const decisionTemplate =
+    decision === null ? null : templateText(DECISION_TEMPLATE[decision]);
+
+  // Choosing a decision fills in its template while the text is untouched; the admin's own text
+  // is never overwritten (Insert template asks first).
+  const chooseDecision = (value: Decision) => {
+    setDecision(value);
+    if (untouched(statement)) {
+      setStatement(templateText(DECISION_TEMPLATE[value]));
+    }
+  };
+  const insertTemplate = () => {
+    if (decisionTemplate === null) return;
+    if (untouched(statement)) setStatement(decisionTemplate);
+    else setConfirmingReplace(true);
   };
 
   const run = async () => {
@@ -360,7 +396,7 @@ function DecideForm({ report }: { report: ReportDetailView }) {
                 value={value}
                 checked={decision === value}
                 disabled={disabled}
-                onChange={() => setDecision(value)}
+                onChange={() => chooseDecision(value)}
                 className="accent-primary size-4 shrink-0"
               />
               {t(`decide.${value}`)}
@@ -375,24 +411,22 @@ function DecideForm({ report }: { report: ReportDetailView }) {
       </fieldset>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor={statementId}>{t("statementLabel")}</Label>
-        <div className="flex flex-wrap gap-2">
-          {TEMPLATES.map((template) => (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Label htmlFor={statementId}>{t("statementLabel")}</Label>
+          {decisionTemplate !== null && statement !== decisionTemplate && (
             <Button
-              key={template}
               type="button"
               variant="outline"
               size="sm"
               className="h-11 md:h-8"
-              onClick={() =>
-                setStatement(t(`templates.${template}`, templateParams))
-              }
+              onClick={insertTemplate}
             >
-              {t(`templateNames.${template}`)}
+              {t("insertTemplate")}
             </Button>
-          ))}
+          )}
         </div>
         <Textarea
+          ref={statementRef}
           id={statementId}
           value={statement}
           required
@@ -417,6 +451,42 @@ function DecideForm({ report }: { report: ReportDetailView }) {
       >
         {decision ? t(`submit.${decision}`) : t("submit.none")}
       </Button>
+
+      <AlertDialog open={confirmingReplace} onOpenChange={setConfirmingReplace}>
+        <AlertDialogContent
+          onCloseAutoFocus={(event) => {
+            if (!replacedRef.current) return;
+            replacedRef.current = false;
+            event.preventDefault();
+            statementRef.current?.focus();
+          }}
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("replaceTemplateTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {decision &&
+                t("replaceTemplateBody", {
+                  decision: t(`decide.${decision}`),
+                })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-11 md:h-9">
+              {t("cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="h-11 md:h-9"
+              onClick={() => {
+                if (decisionTemplate === null) return;
+                replacedRef.current = true;
+                setStatement(decisionTemplate);
+              }}
+            >
+              {t("replaceTemplateConfirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={confirmingRemove} onOpenChange={setConfirmingRemove}>
         <AlertDialogContent>

@@ -5149,11 +5149,10 @@
         "removeUnavailable": "Content can only be removed for message, photo, comment and review reports.",
         "statementLabel": "Statement of reasons (sent to the member)",
         "statementHint": "{count}/{max} characters. Required: what was restricted, the ground, and how to ask for a review.",
-        "templateNames": {
-          "removal": "Removal template",
-          "warning": "Warning template",
-          "noViolation": "No-violation template"
-        },
+        "insertTemplate": "Insert template",
+        "replaceTemplateTitle": "Replace your text?",
+        "replaceTemplateBody": "The template for “{decision}” will replace what you've written, and your own text will be lost.",
+        "replaceTemplateConfirm": "Replace text",
         "templateContent": {
           "user": "your conduct on JigSwap",
           "message": "your message",

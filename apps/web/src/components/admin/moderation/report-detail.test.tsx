@@ -6,6 +6,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { getFunctionName } from "convex/server";
 import { IntlProvider } from "use-intl";
@@ -82,6 +83,15 @@ const renderDetail = (view: ReportDetailView) =>
 const removeRadio = () => screen.getByRole("radio", { name: "Remove content" });
 const statement = () =>
   screen.getByLabelText("Statement of reasons (sent to the member)");
+const statementValue = () => (statement() as HTMLTextAreaElement).value;
+
+// The templates as rendered for the default report (a message, harassment_hate).
+const REMOVAL =
+  "We removed your message because it breaks our community guidelines on harassment and hate. If you think we got this wrong, you can ask for a review via the contact page.";
+const WARNING =
+  "We're warning you about your message: it breaks our community guidelines on harassment and hate. Nothing was removed this time. If you think we got this wrong, you can ask for a review via the contact page.";
+const NO_VIOLATION =
+  "We reviewed a report about your message and found no breach of our community guidelines on harassment and hate. Nothing was restricted. You can ask for a review via the contact page.";
 
 beforeEach(() => {
   mocks.mutation.mockReset().mockResolvedValue(null);
@@ -193,8 +203,10 @@ describe("ReportDetail", () => {
 
   it("requires a statement of reasons", () => {
     renderDetail(report());
+    const submit = screen.getByRole("button", { name: "Choose a decision" });
+    expect(submit.hasAttribute("disabled")).toBe(true);
     fireEvent.click(screen.getByRole("radio", { name: "Warn member" }));
-    const submit = screen.getByRole("button", { name: "Warn member" });
+    fireEvent.change(statement(), { target: { value: "" } });
     expect(submit.hasAttribute("disabled")).toBe(true);
     fireEvent.change(statement(), { target: { value: "   " } });
     expect(submit.hasAttribute("disabled")).toBe(true);
@@ -216,13 +228,66 @@ describe("ReportDetail", () => {
     );
   });
 
-  it("inserts a template and confirms before removing content", async () => {
+  it("fills in the chosen decision's template while the text is untouched", () => {
+    renderDetail(report());
+    expect(statementValue()).toBe("");
+    // No decision yet: no template to insert.
+    expect(
+      screen.queryByRole("button", { name: "Insert template" }),
+    ).toBeNull();
+
+    fireEvent.click(screen.getByRole("radio", { name: "Warn member" }));
+    expect(statementValue()).toBe(WARNING);
+    fireEvent.click(screen.getByRole("radio", { name: "Dismiss" }));
+    expect(statementValue()).toBe(NO_VIOLATION);
+    fireEvent.click(removeRadio());
+    expect(statementValue()).toBe(REMOVAL);
+    // The text is the decision's template already.
+    expect(
+      screen.queryByRole("button", { name: "Insert template" }),
+    ).toBeNull();
+  });
+
+  it("keeps the admin's own text when the decision changes, and asks before replacing it", async () => {
+    renderDetail(report());
+    fireEvent.change(statement(), { target: { value: "My own words." } });
+    fireEvent.click(screen.getByRole("radio", { name: "Warn member" }));
+    expect(statementValue()).toBe("My own words.");
+
+    fireEvent.click(screen.getByRole("button", { name: "Insert template" }));
+    let confirm = await screen.findByRole("alertdialog", {
+      name: "Replace your text?",
+    });
+    fireEvent.click(within(confirm).getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+    expect(statementValue()).toBe("My own words.");
+
+    fireEvent.click(screen.getByRole("button", { name: "Insert template" }));
+    confirm = await screen.findByRole("alertdialog", {
+      name: "Replace your text?",
+    });
+    expect(confirm.textContent).toContain("Warn member");
+    fireEvent.click(
+      within(confirm).getByRole("button", { name: "Replace text" }),
+    );
+    await waitFor(() => expect(statementValue()).toBe(WARNING));
+    // Focus lands back in the text, not on the Insert template button that is now gone.
+    await waitFor(() => expect(document.activeElement).toBe(statement()));
+  });
+
+  it("inserts the template straight away over empty or template text", () => {
+    renderDetail(report());
+    fireEvent.click(screen.getByRole("radio", { name: "Warn member" }));
+    fireEvent.change(statement(), { target: { value: "  " } });
+    fireEvent.click(screen.getByRole("button", { name: "Insert template" }));
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(statementValue()).toBe(WARNING);
+  });
+
+  it("confirms before removing content, with the removal template filled in", async () => {
     renderDetail(report());
     fireEvent.click(removeRadio());
-    fireEvent.click(screen.getByRole("button", { name: "Removal template" }));
-    expect((statement() as HTMLTextAreaElement).value).toBe(
-      "We removed your message because it breaks our community guidelines on harassment and hate. If you think we got this wrong, you can ask for a review via the contact page.",
-    );
+    expect(statementValue()).toBe(REMOVAL);
     fireEvent.click(screen.getByRole("button", { name: "Remove content" }));
     expect(mocks.mutation).not.toHaveBeenCalled();
     const confirm = await screen.findByRole("alertdialog", {
