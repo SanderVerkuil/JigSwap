@@ -89,42 +89,48 @@ export function NotificationPreferencesPanel() {
     }
   };
 
+  // The query container must be an ANCESTOR of the grid: a container query never styles its own
+  // container, so with both on one element the two columns never applied while the aside's
+  // sticky still did, and it sat over the single-column table, swallowing the switches' clicks.
+  // The aside sticks just below the shell's sticky page head (--app-sticky-top).
   return (
-    <div className="@container/prefs grid gap-6 @4xl/prefs:grid-cols-[300px_minmax(0,1fr)] @4xl/prefs:gap-10">
-      <aside className="flex flex-col gap-6 @4xl/prefs:sticky @4xl/prefs:top-2 @4xl/prefs:self-start">
-        <PushDeviceSection />
-        <MessagePreviewSettings />
-        <p className="text-muted-foreground max-w-prose text-sm">
-          {t("channelsNote")}
-        </p>
-        <nav aria-label={t("jumpTo")}>
-          <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
-            {t("jumpTo")}
+    <div className="@container/prefs">
+      <div className="grid gap-6 @4xl/prefs:grid-cols-[300px_minmax(0,1fr)] @4xl/prefs:gap-10">
+        <aside className="flex flex-col gap-6 @4xl/prefs:sticky @4xl/prefs:top-[calc(var(--app-sticky-top,0px)+0.5rem)] @4xl/prefs:self-start">
+          <PushDeviceSection />
+          <MessagePreviewSettings />
+          <p className="text-muted-foreground max-w-prose text-sm">
+            {t("channelsNote")}
           </p>
-          <ul className="flex flex-col gap-1.5">
-            {visibleCategories.map((category) => (
-              <li key={category.key}>
-                <a
-                  href={`#category-${category.key}`}
-                  className="text-muted-foreground hover:text-foreground text-sm hover:underline"
-                >
-                  {t(`categories.${category.key}.title`)}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      </aside>
+          <nav aria-label={t("jumpTo")}>
+            <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
+              {t("jumpTo")}
+            </p>
+            <ul className="flex flex-col gap-1.5">
+              {visibleCategories.map((category) => (
+                <li key={category.key}>
+                  <a
+                    href={`#category-${category.key}`}
+                    className="text-muted-foreground hover:text-foreground text-sm hover:underline"
+                  >
+                    {t(`categories.${category.key}.title`)}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </aside>
 
-      <section className="max-w-[880px]">
-        <SectionHead title={t("preferences")} icon={Bell} />
-        <ChannelMatrix
-          preferences={preferences}
-          channelLabel={channelLabel}
-          onToggle={handleToggle}
-          onToggleCategory={handleToggleCategory}
-        />
-      </section>
+        <section className="max-w-[880px]">
+          <SectionHead title={t("preferences")} icon={Bell} />
+          <ChannelMatrix
+            preferences={preferences}
+            channelLabel={channelLabel}
+            onToggle={handleToggle}
+            onToggleCategory={handleToggleCategory}
+          />
+        </section>
+      </div>
     </div>
   );
 }
