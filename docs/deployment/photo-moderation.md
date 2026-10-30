@@ -139,6 +139,62 @@ The hash check is not configured on dev or prod today (`CSAM_HASHCHECK_PROVIDER`
 When it is configured, run `lib/imageModeration/recheckWaivedHashes` right after (above), and
 `lib/imageModeration/backfillBoxArtHashCheck` for older box art (one-shot-migrations.md).
 
+## Storage sweep: blobs nothing holds (dry run until the owner enables it)
+
+Uploads are claimed once and the delete paths keep a blob that another row still holds, so a blob
+nobody holds stays in storage whenever an upload is never attached (a form left unsaved, an attach
+that was refused or came too late, a burst of upload URLs). A daily cron (04:15 UTC) runs
+`lib/storage/storageSweep.sweepStorage` over the whole `_storage` table, 100 blobs per batch, each
+batch its own transaction, rescheduling itself until the table is done. For each blob:
+
+- **Younger than 24 hours** (`ORPHAN_MIN_AGE_MS`): kept. An upload may still be attached (the claim
+  windows are 15 minutes).
+- **Held by any blob reference** (`lib/imageModeration/blobReferences.blobReferenceKinds`: a copy,
+  completion or message photo, a message thumbnail or location map, a circle icon, a definition's
+  box art, a proposal's proposed box art, report evidence, or a CSAM escalation that preserves it):
+  kept. A box-art listing (`boxArtUploads`) holds its blob too, with the exception below.
+- **Held by nothing:** a candidate (`orphans`).
+- **Held only by its box-art listing** (no definition shows it, no proposal proposes it), at least
+  7 days old (`UNATTACHED_BOX_ART_TTL_MS`), and its checks are over (not `pending`, not
+  `quarantined`, hash check passed, and no hash re-check still owed after an admin waived it): a
+  candidate (`unattached_box_art`). In delete mode its listing row is deleted with it, so no catalog
+  form can name the art afterwards. A proposal's `baseline.image` (what the definition showed when
+  the proposal was filed) does not keep it: it is compared for conflicts, and its URL is sent only
+  while the blob exists.
+
+**Mode:** a dry run, unless the deployment environment variable `STORAGE_GC_MODE` is exactly
+`delete`. A dry run deletes nothing; it only logs what it would delete. The mode is read on every
+batch: removing the variable stops deletion from the next batch on. Setting it is an owner
+decision, made in the Convex dashboard (**Settings → Environment Variables**) or with
+`npx convex env set STORAGE_GC_MODE delete`.
+
+**Before switching to delete mode** (on each deployment, dev first):
+
+1. `solving/backfillLegacyCompletionSidecars` has run for real, and a fresh dry run of it reports
+   `"created":0`, `"without_aggregate_id":0` and `"photos_without_aggregate_id":0`
+   (one-shot-migrations.md). Until then a completion photo stored before the sidecars existed is
+   held only by the unindexable `completions.photos` array, so the sweep sees its blob as held by
+   nothing and would **delete a member's photo**.
+2. `blobReferences.test.ts` is green on the code being deployed: every `v.id("_storage")` field in
+   the schema is registered as a blob reference or reviewed as not one. A new storage-id field (for
+   example image renditions) must be registered before the sweep may delete.
+3. At least 7 daily dry runs, whose `storage.sweep` events show only expected candidates (spot-check
+   a few `batch_candidate_ids` in the dashboard's **Files** view: abandoned uploads, never-used box
+   art) and no unexpected kinds in `kept_by_kind`.
+
+Each batch logs one `storage.sweep` wide event: `mode` (`dry_run` or `delete`), `done`,
+`started_at`, `batch_scanned`, `batch_candidate_ids`, and the run's running totals (`scanned`,
+`scanned_bytes`, `young`, `kept`, `kept_by_kind`, `candidates`, `candidate_bytes`, `orphans`,
+`unattached_box_art`, `candidate_content_types`, `deleted`, `deleted_bytes`). The event with
+`"done":true` carries the whole run.
+
+```
+['jigswap'] | where event == "storage.sweep" and done == true | project _time, mode, scanned, kept, candidates, candidate_bytes, orphans, unattached_box_art, deleted, kept_by_kind
+```
+
+A blob the sweep deletes is gone for the app (only a Convex backup that includes file storage
+could bring it back), so the dry-run week is the safety net.
+
 ## Rollout: checks in flight at deploy time
 
 Retries scheduled by the previous code (`moderatePhoto` and friends with an `attempt` argument)

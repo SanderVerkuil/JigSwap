@@ -97,14 +97,15 @@ const heldBy = async (
  * Every kind of row that holds the blob, leaving out the row `except` (the one a delete path is
  * removing, or the one the pipeline is moving to a new blob). Empty when nothing else holds it.
  *
- * Deliberately NOT references (string-typed, compared or cached only, never served):
- * `puzzleChangeProposals.baseline.image` (the definition's image when the proposal was made) and
- * `ownedPuzzles.snapshot.thumbnail` (a cache of `puzzles.image`). Known residual: a legacy
- * completion photo that predates its completionImages sidecar lives only in the unindexable
- * `completions.photos` array until solving/backfillLegacyCompletionSidecars gives it one (a
- * completion without an aggregateId never can; that run counts them). blobReferences.test.ts
- * fails when the schema gains a
- * `v.id("_storage")` field that is not registered here.
+ * Deliberately NOT references (string-typed records, so the storage sweep may delete the blob
+ * once nothing above holds it): `puzzleChangeProposals.baseline.image` (the definition's image
+ * when the proposal was made: compared for conflicts, and its URL is sent only while the blob
+ * exists) and `ownedPuzzles.snapshot.thumbnail` (a cache of `puzzles.image`, never served). Known
+ * residual: a legacy completion photo that predates its completionImages sidecar lives only in
+ * the unindexable `completions.photos` array until solving/backfillLegacyCompletionSidecars gives
+ * it one (a completion without an aggregateId never can; that run counts them).
+ * blobReferences.test.ts fails when the schema gains a `v.id("_storage")` field that is not
+ * registered here.
  */
 export const blobReferenceKinds = async (
   ctx: QueryCtx,
