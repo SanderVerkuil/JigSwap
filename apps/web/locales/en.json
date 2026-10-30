@@ -3892,7 +3892,8 @@
       "hideEmail": "Hide Email Address",
       "admin": "Admin",
       "privacySafety": "Privacy & safety",
-      "homepage": "JigSwap homepage"
+      "homepage": "JigSwap homepage",
+      "signOut": "Sign out"
     },
     "theme": {
       "toggle": "Toggle theme",

@@ -7,7 +7,7 @@
 // top bar so both open the same menu instead of hard-navigating to /profile.
 // Once the member shares their presence it also offers the status choice
 // (Automatic / Away / Appear offline) and shows their own status dot.
-import { UserButton, useUser } from "@/compat/clerk";
+import { useClerk, UserButton, useUser } from "@/compat/clerk";
 import { NotificationPreferencesPanel } from "@/components/notifications/notification-preferences-panel";
 import { useAppActivity } from "@/components/presence/app-presence";
 import { PresenceDot } from "@/components/presence/presence-dot";
@@ -19,6 +19,7 @@ import { useWhatsNewUnreadCount } from "@/components/whats-new/use-whats-new-sta
 import { gateway } from "@/gateway";
 import { useUserSettings } from "@/hooks/use-user-settings";
 import { cn } from "@/lib/utils";
+import { tearDownPushForSignOut } from "@/lib/web-push";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import type { PresenceSettingsView } from "@jigswap/contracts";
 import { useQuery } from "@tanstack/react-query";
@@ -28,6 +29,7 @@ import {
   Check,
   House,
   ListChecks,
+  LogOut,
   Shield,
   ShieldBan,
   SlidersHorizontal,
@@ -64,6 +66,10 @@ export function ShellUserButton({
   );
   const tPresence = useTranslations("presence");
   const { user } = useUser();
+  const clerk = useClerk();
+  const unregisterPush = useConvexMutation(
+    gateway.notifications.unregisterPush,
+  );
   const whatsNewCount = useWhatsNewUnreadCount();
   // The status choice only means something once the member shares (spec 6.5).
   const presence = usePresenceSettings();
@@ -93,20 +99,25 @@ export function ShellUserButton({
     <span className="relative inline-flex shrink-0">
       <UserButton
         appearance={{
-          elements: tapTarget
-            ? {
-                userButtonAvatarBox: "!w-7 !h-7",
-                userButtonTrigger:
-                  "!flex !size-11 !items-center !justify-center !rounded-lg hover:!bg-accent",
-              }
-            : {
-                userButtonAvatarBox: "!w-8 !h-8",
-              },
+          elements: {
+            // Clerk's own Sign out stays hidden: ours (below) tears push down first. Clerk
+            // still renders a default item that isn't re-listed, so hiding is the only way out.
+            userButtonPopoverActionButton__signOut: "!hidden",
+            ...(tapTarget
+              ? {
+                  userButtonAvatarBox: "!w-7 !h-7",
+                  userButtonTrigger:
+                    "!flex !size-11 !items-center !justify-center !rounded-lg hover:!bg-accent",
+                }
+              : {
+                  userButtonAvatarBox: "!w-8 !h-8",
+                }),
+          },
         }}
       >
         {/* Custom menu items: a link to the app's own /profile alongside Clerk's
-          default account + sign-out actions (re-listed so they survive the
-          custom MenuItems block). */}
+          default account action (re-listed so it keeps its place in the custom
+          MenuItems block) and our own sign-out. */}
         <UserButton.MenuItems>
           <UserButton.Link
             label={t("pages.profile.title")}
@@ -190,7 +201,23 @@ export function ShellUserButton({
               />
             ))}
           <UserButton.Action label="manageAccount" />
-          <UserButton.Action label="signOut" />
+          {/* Sign out stops push to this browser first (SEC-54), while the
+            session can still unregister it on the server, so a shared browser
+            gets no more of this member's notifications. Bounded and
+            best-effort: sign-out always follows, to Clerk's afterSignOutUrl. */}
+          <UserButton.Action
+            label={t("user.signOut")}
+            labelIcon={<LogOut className="size-4" />}
+            onClick={() => {
+              void tearDownPushForSignOut((endpoint) =>
+                unregisterPush({ endpoint }),
+              )
+                .then(() => clerk.signOut())
+                .catch((error: unknown) =>
+                  console.error("Failed to sign out:", error),
+                );
+            }}
+          />
         </UserButton.MenuItems>
         {/* Custom pages mounted inside Clerk's own UserProfile modal. */}
         <UserButton.UserProfilePage

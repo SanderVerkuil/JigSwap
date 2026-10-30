@@ -3892,7 +3892,8 @@
       "hideEmail": "E-mailadres Verbergen",
       "admin": "Beheer",
       "privacySafety": "Privacy en veiligheid",
-      "homepage": "JigSwap-homepage"
+      "homepage": "JigSwap-homepage",
+      "signOut": "Uitloggen"
     },
     "theme": {
       "toggle": "Thema wisselen",
