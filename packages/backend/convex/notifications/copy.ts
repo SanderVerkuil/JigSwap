@@ -23,7 +23,7 @@ import type { DeliveryContent } from "./deliveryContent";
 //   puzzleTitle — puzzle_approved/rejected, proposal_approved/rejected, admin_proposal_filed,
 //                 admin_definition_submitted
 //   goalTitle   — goal_achieved
-//   reason      — proposal_rejected (moderator-entered, may be absent)
+//   reason      — puzzle_rejected, proposal_rejected (moderator-entered, may be absent)
 //   rating      — review_received (1-5, snapshotted)
 //   decision    — report_decided ("dismissed" | "content_removed" | "warned")
 //   restricted  — content_removed ("message" | "photo" | "comment" | "review"; a review's text)
@@ -136,12 +136,15 @@ const COPY: Record<NotificationType, (p: Params) => NotificationText> = {
       ? `Your submission "${p["puzzleTitle"]}" was approved`
       : "Your puzzle submission was approved",
   }),
-  puzzle_rejected: (p) => ({
-    title: "Puzzle Rejected",
-    message: p["puzzleTitle"]
+  puzzle_rejected: (p) => {
+    const base = p["puzzleTitle"]
       ? `Your submission "${p["puzzleTitle"]}" was rejected`
-      : "Your puzzle submission was rejected",
-  }),
+      : "Your puzzle submission was rejected";
+    return {
+      title: "Puzzle Rejected",
+      message: p["reason"] ? `${base}: ${p["reason"]}` : base,
+    };
+  },
   photo_removed: () => ({
     title: "Photo Removed",
     message: "A moderator removed one of your puzzle photos",

@@ -466,12 +466,13 @@ const translate = async (
     case "PuzzleDefinitionRejected": {
       const puzzle = await loadPuzzle(ctx, p.puzzleDefinitionId as string);
       if (!puzzle) return [];
+      const reason = p.reason as string | undefined;
       return [
         cmd(
           puzzle.submittedBy,
           "puzzle_rejected",
           puzzle._id,
-          { puzzleTitle: puzzle.title },
+          { puzzleTitle: puzzle.title, ...(reason ? { reason } : {}) },
           { subject: puzzleSubject(puzzle) }, // moderator-driven: no actor
         ),
       ];

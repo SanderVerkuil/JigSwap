@@ -2,6 +2,7 @@ import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError, type Value } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
@@ -79,6 +80,23 @@ const dataOf = (e: unknown): { code?: string } => {
     ? JSON.parse(data)
     : (data as { code?: string });
 };
+
+// Drain the async event dispatcher (the Notifications subscriber runs from a runAfter(0) job):
+// yield a macrotask so the pending job fires, then await any in-progress jobs, a few times over.
+const flushScheduled = async (t: TestConvex<typeof schema>) => {
+  for (let i = 0; i < 10; i++) {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await t.finishInProgressScheduledFunctions();
+  }
+};
+
+const notificationsFor = (t: TestConvex<typeof schema>, userId: Id<"users">) =>
+  t.run((ctx) =>
+    ctx.db
+      .query("notifications")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect(),
+  );
 
 const expectConvexCode = async (p: Promise<unknown>, code: string) => {
   await expect(p).rejects.toBeInstanceOf(ConvexError);
@@ -279,6 +297,13 @@ describe("catalog moderation lifecycle", () => {
         { puzzleDefinitionId: id },
       ),
     ).rejects.toThrow(/Forbidden/);
+    // A reason changes nothing about who may reject.
+    await expect(
+      asAlice(t).mutation(
+        api.catalog.rejectPuzzleDefinition.rejectPuzzleDefinition,
+        { puzzleDefinitionId: id, reason: "Not a jigsaw puzzle" },
+      ),
+    ).rejects.toThrow(/Forbidden/);
     expect((await puzzleRow(t, id))?.status).toBe("pending");
   });
 
@@ -302,6 +327,87 @@ describe("catalog moderation lifecycle", () => {
       {
         puzzleDefinitionId: id,
       },
+    );
+    expect((await puzzleRow(t, id))?.status).toBe("rejected");
+  });
+
+  test("reject tells the submitter the moderator's reason, trimmed", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seedMembers(t);
+    const id = (await asBob(t).mutation(
+      api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+      { title: "Mountain Vista", pieceCount: 1000 },
+    )) as string;
+    await flushScheduled(t);
+
+    await asAdmin(t).mutation(
+      api.catalog.rejectPuzzleDefinition.rejectPuzzleDefinition,
+      {
+        puzzleDefinitionId: id,
+        reason: "  Duplicate of “Mountain Vista”. Add your copy to it.  ",
+      },
+    );
+    await flushScheduled(t);
+
+    expect((await puzzleRow(t, id))?.status).toBe("rejected");
+    const rejected = (await notificationsFor(t, bob)).find(
+      (n) => n.type === "puzzle_rejected",
+    );
+    expect(rejected?.params).toEqual({
+      puzzleTitle: "Mountain Vista",
+      reason: "Duplicate of “Mountain Vista”. Add your copy to it.",
+    });
+  });
+
+  test("reject with no reason, or a blank one, sends the submitter none", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seedMembers(t);
+    const submit = async (title: string) =>
+      (await asBob(t).mutation(
+        api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+        { title, pieceCount: 1000 },
+      )) as string;
+    const withoutReason = await submit("Mountain Vista");
+    const blankReason = await submit("Harbour Lights");
+
+    await asAdmin(t).mutation(
+      api.catalog.rejectPuzzleDefinition.rejectPuzzleDefinition,
+      { puzzleDefinitionId: withoutReason },
+    );
+    await asAdmin(t).mutation(
+      api.catalog.rejectPuzzleDefinition.rejectPuzzleDefinition,
+      { puzzleDefinitionId: blankReason, reason: "   " },
+    );
+    await flushScheduled(t);
+
+    const params = (await notificationsFor(t, bob))
+      .filter((n) => n.type === "puzzle_rejected")
+      .map((n) => n.params)
+      .sort((a, b) =>
+        (a?.puzzleTitle ?? "").localeCompare(b?.puzzleTitle ?? ""),
+      );
+    expect(params).toEqual([
+      { puzzleTitle: "Harbour Lights" },
+      { puzzleTitle: "Mountain Vista" },
+    ]);
+  });
+
+  test("reject refuses a reason over the length cap (ReasonTooLong) and keeps it pending", async () => {
+    const t = convexTest(schema, modules);
+    const id = await submitPending(t);
+    await expectConvexCode(
+      asAdmin(t).mutation(
+        api.catalog.rejectPuzzleDefinition.rejectPuzzleDefinition,
+        { puzzleDefinitionId: id, reason: "x".repeat(1001) },
+      ),
+      "ReasonTooLong",
+    );
+    expect((await puzzleRow(t, id))?.status).toBe("pending");
+
+    // Exactly at the cap is fine.
+    await asAdmin(t).mutation(
+      api.catalog.rejectPuzzleDefinition.rejectPuzzleDefinition,
+      { puzzleDefinitionId: id, reason: "x".repeat(1000) },
     );
     expect((await puzzleRow(t, id))?.status).toBe("rejected");
   });

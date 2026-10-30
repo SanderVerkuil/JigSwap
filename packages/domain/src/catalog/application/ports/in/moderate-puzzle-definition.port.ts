@@ -21,10 +21,13 @@ export interface ApprovePuzzleDefinition {
   ): Promise<ModeratePuzzleDefinitionResult>;
 }
 
+// Reject also carries the moderator's optional reason, which the submitter is told.
+export interface RejectPuzzleDefinitionCommand extends ModeratePuzzleDefinitionCommand {
+  readonly reason?: string;
+}
+
 export interface RejectPuzzleDefinition {
-  (
-    cmd: ModeratePuzzleDefinitionCommand,
-  ): Promise<ModeratePuzzleDefinitionResult>;
+  (cmd: RejectPuzzleDefinitionCommand): Promise<ModeratePuzzleDefinitionResult>;
 }
 
 export interface DisablePuzzleDefinition {

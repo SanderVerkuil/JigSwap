@@ -27,10 +27,13 @@ export class PuzzleDefinitionApproved implements DomainEvent {
   ) {}
 }
 
+// Carries the moderator's reason (optional, like ChangeProposalRejected's) so the Notifications
+// subscriber can tell the submitter why without an extra lookup.
 export class PuzzleDefinitionRejected implements DomainEvent {
   readonly name = "PuzzleDefinitionRejected";
   constructor(
     readonly puzzleDefinitionId: PuzzleDefinitionId,
+    readonly reason: string | undefined,
     readonly occurredAt: Date,
   ) {}
 }

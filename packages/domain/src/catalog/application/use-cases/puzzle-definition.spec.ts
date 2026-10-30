@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { toPuzzleDefinitionId, toSubmitterId } from "../../../shared-kernel";
-import { BARCODE_HOLDING_STATUSES } from "../../domain";
+import {
+  BARCODE_HOLDING_STATUSES,
+  type PuzzleDefinitionRejected,
+} from "../../domain";
 import {
   FixedClock,
   InMemoryPuzzleDefinitionRepository,
@@ -264,6 +267,24 @@ describe("Catalog PuzzleDefinition use cases", () => {
     const r = await reject({ puzzleDefinitionId: id });
     expect(r.isOk).toBe(true);
     expect(events.names()).toEqual(["PuzzleDefinitionRejected"]);
+    expect(
+      (events.published[0] as PuzzleDefinitionRejected).reason,
+    ).toBeUndefined();
+    expect((await repo.findById(id))?.status).toBe("rejected");
+  });
+
+  it("passes the moderator's reason through to PuzzleDefinitionRejected", async () => {
+    const id = await submitOk();
+    events.published.length = 0;
+    const reject = makeRejectPuzzleDefinition(deps);
+    const r = await reject({
+      puzzleDefinitionId: id,
+      reason: "Not a jigsaw puzzle",
+    });
+    expect(r.isOk).toBe(true);
+    expect((events.published[0] as PuzzleDefinitionRejected).reason).toBe(
+      "Not a jigsaw puzzle",
+    );
   });
 
   it("updates a definition and publishes PuzzleDefinitionUpdated", async () => {
