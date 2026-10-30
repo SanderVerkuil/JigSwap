@@ -5,16 +5,17 @@
 // be checked, puzzle, uploader) and the two manual decisions, plus "Check again" for an unscored
 // photo (`canRecheck`). Beside the buttons, one sentence per decision says what it does to this
 // photo's source (effects.<source>). A photo whose hash check timed out gets "Approve without hash
-// check" in place of Approve (the server refuses a plain approval for it). Mutations live in the route; reject
-// and the waiver use the app's two-step inline confirm (first click arms, second fires, disarms
-// after 3s).
+// check" in place of Approve (the server refuses a plain approval for it). Mutations live in the
+// route. Reject and the waiver cannot be undone, so each asks first in an AlertDialog
+// (ConfirmAction) that repeats what it does to this photo's source; Approve and Check again fire
+// directly.
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
 import type { FunctionReturnType } from "convex/server";
 import { Check, ImageOff, RotateCw, ShieldAlert, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "use-intl";
+import { ConfirmAction } from "./confirm-action";
 import { RevealGuard } from "./reveal-guard";
 
 export type UncheckedPhoto = FunctionReturnType<
@@ -52,22 +53,7 @@ export function UncheckedDetail({
   onRecheck: () => void;
 }) {
   const t = useTranslations("admin.moderation.unchecked");
-  // NOTE: the caller keys this pane by photo, so reveal/armed state never carries over.
-  // Which two-step action is armed (at most one at a time).
-  const [armed, setArmed] = useState<"reject" | "waive" | null>(null);
-  const disarmTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  useEffect(() => () => clearTimeout(disarmTimer.current), []);
-
-  const twoStep = (action: "reject" | "waive", fire: () => void) => () => {
-    clearTimeout(disarmTimer.current);
-    if (armed === action) {
-      setArmed(null);
-      fire();
-      return;
-    }
-    setArmed(action);
-    disarmTimer.current = setTimeout(() => setArmed(null), 3000);
-  };
+  // NOTE: the caller keys this pane by photo, so reveal state never carries over.
   const timedOut = photo.status === "hashTimedOut";
 
   const reason =
@@ -140,24 +126,42 @@ export function UncheckedDetail({
 
       <div className="flex flex-wrap items-center gap-2.5">
         {timedOut ? (
-          <Button onClick={twoStep("waive", onWaive)} disabled={busy}>
-            <ShieldAlert aria-hidden />
-            {armed === "waive" ? t("waiveArm") : t("waive")}
-          </Button>
+          <ConfirmAction
+            trigger={
+              <Button disabled={busy}>
+                <ShieldAlert aria-hidden />
+                {t("waive")}
+              </Button>
+            }
+            title={t("waiveConfirmTitle")}
+            description={
+              <>
+                <p>{t("waiveConfirmBody")}</p>
+                <p>{t(`effects.${photo.source}.approve`)}</p>
+              </>
+            }
+            confirmLabel={t("waive")}
+            onConfirm={onWaive}
+          />
         ) : (
           <Button onClick={onApprove} disabled={busy}>
             <Check aria-hidden />
             {t("approve")}
           </Button>
         )}
-        <Button
-          variant="destructive"
-          onClick={twoStep("reject", onReject)}
-          disabled={busy}
-        >
-          <X aria-hidden />
-          {armed === "reject" ? t("rejectArm") : t("reject")}
-        </Button>
+        <ConfirmAction
+          trigger={
+            <Button variant="destructive" disabled={busy}>
+              <X aria-hidden />
+              {t("reject")}
+            </Button>
+          }
+          title={t("rejectConfirmTitle")}
+          description={t(`effects.${photo.source}.reject`)}
+          confirmLabel={t("reject")}
+          destructive
+          onConfirm={onReject}
+        />
         {photo.canRecheck && (
           <Button variant="outline" onClick={onRecheck} disabled={busy}>
             <RotateCw aria-hidden />

@@ -4839,7 +4839,9 @@
         "label": "Label",
         "score": "Score",
         "confirm": "Confirm Removal",
-        "confirmArm": "Are you sure?",
+        "confirmTitle": "Remove this photo for good?",
+        "confirmBody": "The photo is deleted from the copy and its uploader is told it was removed. This can't be undone.",
+        "confirmAction": "Remove photo",
         "restore": "Restore Photo",
         "hashTimedOutHint": "This photo's hash check against known abuse material timed out before it was rejected. Restoring it does not publish it: it goes back to Unchecked Photos, where only Approve without hash check publishes it."
       },
@@ -4922,10 +4924,11 @@
         "reasonLabel": "Reason",
         "approve": "Approve Photo",
         "reject": "Reject Photo",
-        "rejectArm": "Are you sure?",
+        "rejectConfirmTitle": "Reject this photo?",
         "recheck": "Check again",
         "waive": "Approve without hash check",
-        "waiveArm": "Yes, publish without hash check",
+        "waiveConfirmTitle": "Publish without the hash check?",
+        "waiveConfirmBody": "This photo was never checked against known abuse material. If a later check still finds a match, the photo is quarantined.",
         "effects": {
           "copy": {
             "approve": "Approving shows the photo on its copy to other members.",
@@ -4949,7 +4952,7 @@
           },
           "recheck": "Check again runs the automated check once more, for example once the screening service works again."
         },
-        "hashTimedOutHint": "The hash check against known abuse material could not be done within 7 days, so the automatic re-checks stopped. Approve without hash check publishes the photo without that check, after a second click to confirm (a hash match found later still quarantines it); rejecting hides it like any rejection."
+        "hashTimedOutHint": "The hash check against known abuse material could not be done within 7 days, so the automatic re-checks stopped. Approve without hash check publishes the photo without that check, after you confirm (a hash match found later still quarantines it); rejecting hides it like any rejection."
       },
       "csam": {
         "loading": "Loading hash matches…",
@@ -4985,7 +4988,9 @@
         "noteLabel": "Report reference or note",
         "notePlaceholder": "e.g. Meldpunt reference",
         "markReported": "Mark reported",
-        "close": "Close",
+        "close": "Close escalation",
+        "closeConfirmTitle": "Close this escalation?",
+        "closeConfirmBody": "Closing is final: you can't reopen it or add notes afterwards. The quarantined file stays quarantined.",
         "updated": "Escalation updated.",
         "waiting": "No hash-check answer yet: {countLabel} {count, plural, one {photo} other {photos}} waiting, unpublished (oldest {since}). They are re-checked automatically for up to 7 days, then handed to an admin.",
         "noteBy": "{name}, {time}",

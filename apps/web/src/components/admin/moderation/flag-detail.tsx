@@ -3,18 +3,19 @@
 // Detail pane for a flagged (auto-rejected) copy photo: the image behind a
 // click-to-reveal blur guard (RevealGuard) with a severity badge on top, a metadata grid, and
 // the two review decisions. Mutations live in the route; this pane only
-// renders and calls back. The destructive action uses the app's two-step
-// inline confirm (see photo-lightbox): first click arms, second fires, and an
-// armed button disarms itself after 3s. A photo rejected after its hash check
-// timed out (`hashTimedOut`) says that restoring it does not publish it.
+// renders and calls back. Confirm removal deletes the photo and notifies the
+// uploader, so it asks first in an AlertDialog that says exactly that
+// (ConfirmAction); Restore is not destructive and fires directly. A photo
+// rejected after its hash check timed out (`hashTimedOut`) says that
+// restoring it does not publish it.
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
 import type { FunctionReturnType } from "convex/server";
 import { ImageOff, Trash2, Undo2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
 import { useFormatter, useTranslations } from "use-intl";
+import { ConfirmAction } from "./confirm-action";
 import { RevealGuard } from "./reveal-guard";
 import { severityBand, type SeverityBand } from "./severity";
 
@@ -55,22 +56,7 @@ export function FlagDetail({
   const band = severityBand(photo.score);
 
   // NOTE: the caller keys this pane by imageId, so a different photo never
-  // inherits the previous one's reveal or armed confirm.
-  // Two-step destructive confirm; the timer disarms an unconfirmed click.
-  const [armed, setArmed] = useState(false);
-  const disarmTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  useEffect(() => () => clearTimeout(disarmTimer.current), []);
-
-  const confirmClick = () => {
-    clearTimeout(disarmTimer.current);
-    if (armed) {
-      setArmed(false);
-      onConfirmRemoval();
-      return;
-    }
-    setArmed(true);
-    disarmTimer.current = setTimeout(() => setArmed(false), 3000);
-  };
+  // inherits the previous one's reveal.
 
   const meta: [string, string][] = [
     [t("onPuzzle"), photo.puzzleTitle],
@@ -125,10 +111,19 @@ export function FlagDetail({
       )}
 
       <div className="flex flex-wrap items-center gap-2.5 pt-1">
-        <Button variant="destructive" onClick={confirmClick} disabled={busy}>
-          <Trash2 aria-hidden />
-          {armed ? t("confirmArm") : t("confirm")}
-        </Button>
+        <ConfirmAction
+          trigger={
+            <Button variant="destructive" disabled={busy}>
+              <Trash2 aria-hidden />
+              {t("confirm")}
+            </Button>
+          }
+          title={t("confirmTitle")}
+          description={t("confirmBody")}
+          confirmLabel={t("confirmAction")}
+          destructive
+          onConfirm={onConfirmRemoval}
+        />
         <Button variant="outline" onClick={onRestore} disabled={busy}>
           <Undo2 aria-hidden />
           {t("restore")}

@@ -145,7 +145,17 @@ describe("CsamEscalationsPanel", () => {
     expect(container.textContent).toContain("ref 42");
     expect(container.textContent).toContain("bob");
     expect(button("Mark reported")).toBeUndefined();
-    act(() => button("Close")!.click());
+    act(() => button("Close escalation")!.click());
+    // Closing is final, so it asks first and says so.
+    expect(onMark).not.toHaveBeenCalled();
+    const confirm = document.body.querySelector("[role='alertdialog']")!;
+    expect(confirm.textContent).toContain("Close this escalation?");
+    expect(confirm.textContent).toContain("Closing is final");
+    act(() =>
+      [...confirm.querySelectorAll("button")]
+        .find((b) => b.textContent === "Close escalation")!
+        .click(),
+    );
     expect(onMark).toHaveBeenCalledWith("e1", "closed", "");
 
     render({

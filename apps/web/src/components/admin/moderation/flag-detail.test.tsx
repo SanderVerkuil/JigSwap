@@ -36,7 +36,11 @@ afterEach(() => {
   container.remove();
 });
 
-const render = (flagged: FlaggedPhoto, locale: "en" | "nl" = "en") =>
+const render = (
+  flagged: FlaggedPhoto,
+  locale: "en" | "nl" = "en",
+  props: Partial<Parameters<typeof FlagDetail>[0]> = {},
+) =>
   act(() =>
     root.render(
       <IntlProvider
@@ -49,10 +53,18 @@ const render = (flagged: FlaggedPhoto, locale: "en" | "nl" = "en") =>
           busy={false}
           onConfirmRemoval={() => {}}
           onRestore={() => {}}
+          {...props}
         />
       </IntlProvider>,
     ),
   );
+
+const buttonIn = (scope: ParentNode, label: string) =>
+  [...scope.querySelectorAll("button")].find(
+    (b) => b.textContent?.trim() === label,
+  );
+const dialog = () =>
+  document.body.querySelector<HTMLElement>("[role='alertdialog']");
 
 describe("FlagDetail", () => {
   it("a photo rejected after its hash check timed out shows its image behind the blur guard and says restoring does not publish it (en/nl)", () => {
@@ -66,6 +78,30 @@ describe("FlagDetail", () => {
     expect(container.textContent).toContain("Restoring it does not publish it");
     render({ ...photo, hashTimedOut: true }, "nl");
     expect(container.textContent).toContain("Herstellen publiceert hem niet");
+  });
+
+  it("Confirm removal asks in a dialog that says the photo is deleted and the uploader told, and only then removes it (en/nl)", () => {
+    const onConfirmRemoval = vi.fn();
+    render(photo, "en", { onConfirmRemoval });
+    act(() => buttonIn(container, "Confirm Removal")!.click());
+    expect(onConfirmRemoval).not.toHaveBeenCalled();
+    const confirm = dialog()!;
+    expect(confirm.textContent).toContain("Remove this photo for good?");
+    expect(confirm.textContent).toContain(
+      "The photo is deleted from the copy and its uploader is told it was removed.",
+    );
+    act(() => buttonIn(confirm, "Cancel")!.click());
+    expect(onConfirmRemoval).not.toHaveBeenCalled();
+
+    act(() => buttonIn(container, "Confirm Removal")!.click());
+    act(() => buttonIn(dialog()!, "Remove photo")!.click());
+    expect(onConfirmRemoval).toHaveBeenCalledTimes(1);
+
+    render(photo, "nl", { onConfirmRemoval });
+    act(() => buttonIn(container, "Verwijdering bevestigen")!.click());
+    expect(dialog()!.textContent).toContain(
+      "Deze foto definitief verwijderen?",
+    );
   });
 
   it("an ordinary flagged photo has no timed-out hint", () => {

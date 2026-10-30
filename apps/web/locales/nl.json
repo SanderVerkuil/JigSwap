@@ -4839,7 +4839,9 @@
         "label": "Label",
         "score": "Score",
         "confirm": "Verwijdering bevestigen",
-        "confirmArm": "Weet je het zeker?",
+        "confirmTitle": "Deze foto definitief verwijderen?",
+        "confirmBody": "De foto wordt van het exemplaar verwijderd en de uploader krijgt bericht dat hij is verwijderd. Dit kun je niet ongedaan maken.",
+        "confirmAction": "Foto verwijderen",
         "restore": "Foto herstellen",
         "hashTimedOutHint": "De hash-check van deze foto op bekend misbruikmateriaal was verlopen voordat hij werd afgewezen. Herstellen publiceert hem niet: hij gaat terug naar Niet-gecontroleerde foto's, waar alleen Goedkeuren zonder hash-check hem publiceert."
       },
@@ -4922,10 +4924,11 @@
         "reasonLabel": "Reden",
         "approve": "Foto goedkeuren",
         "reject": "Foto afwijzen",
-        "rejectArm": "Weet je het zeker?",
+        "rejectConfirmTitle": "Deze foto afwijzen?",
         "recheck": "Opnieuw controleren",
         "waive": "Goedkeuren zonder hash-check",
-        "waiveArm": "Ja, publiceren zonder hash-check",
+        "waiveConfirmTitle": "Publiceren zonder hash-check?",
+        "waiveConfirmBody": "Deze foto is nooit gecontroleerd op bekend misbruikmateriaal. Vindt een latere controle toch een match, dan gaat de foto alsnog in quarantaine.",
         "effects": {
           "copy": {
             "approve": "Goedkeuren toont de foto bij het exemplaar aan andere leden.",
@@ -4949,7 +4952,7 @@
           },
           "recheck": "Opnieuw controleren laat de automatische controle nog een keer lopen, bijvoorbeeld zodra de controledienst weer werkt."
         },
-        "hashTimedOutHint": "De hash-check op bekend misbruikmateriaal kon niet binnen 7 dagen worden gedaan, dus de automatische hercontroles zijn gestopt. Goedkeuren zonder hash-check publiceert de foto zonder die controle, na een tweede klik ter bevestiging (een hash-match die later wordt gevonden, zet hem alsnog in quarantaine); afwijzen verbergt hem zoals elke afwijzing."
+        "hashTimedOutHint": "De hash-check op bekend misbruikmateriaal kon niet binnen 7 dagen worden gedaan, dus de automatische hercontroles zijn gestopt. Goedkeuren zonder hash-check publiceert de foto zonder die controle, nadat je dat bevestigt (een hash-match die later wordt gevonden, zet hem alsnog in quarantaine); afwijzen verbergt hem zoals elke afwijzing."
       },
       "csam": {
         "loading": "Hash-matches laden…",
@@ -4985,7 +4988,9 @@
         "noteLabel": "Meldingskenmerk of notitie",
         "notePlaceholder": "bijv. kenmerk van het Meldpunt",
         "markReported": "Markeer als gemeld",
-        "close": "Sluiten",
+        "close": "Escalatie sluiten",
+        "closeConfirmTitle": "Deze escalatie sluiten?",
+        "closeConfirmBody": "Sluiten is definitief: daarna kun je de escalatie niet heropenen en geen notities meer toevoegen. Het bestand blijft in quarantaine.",
         "updated": "Escalatie bijgewerkt.",
         "waiting": "Nog geen antwoord van de hash-check: {countLabel} {count, plural, one {foto wacht} other {foto's wachten}}, niet gepubliceerd (oudste {since}). Ze worden tot 7 dagen lang automatisch opnieuw gecontroleerd en daarna aan een beheerder overgedragen.",
         "noteBy": "{name}, {time}",
