@@ -492,6 +492,7 @@ import type * as sharing_shareCopyToCircle from "../sharing/shareCopyToCircle.js
 import type * as social_acceptConnection from "../social/acceptConnection.js";
 import type * as social_acceptHouseholdLinkInvite from "../social/acceptHouseholdLinkInvite.js";
 import type * as social_acceptQrFollow from "../social/acceptQrFollow.js";
+import type * as social_activityEntries from "../social/activityEntries.js";
 import type * as social_adapters_convexCommentRepository from "../social/adapters/convexCommentRepository.js";
 import type * as social_adapters_convexFollowRepository from "../social/adapters/convexFollowRepository.js";
 import type * as social_adapters_convexFollowRequestRepository from "../social/adapters/convexFollowRequestRepository.js";
@@ -1082,6 +1083,7 @@ declare const fullApi: ApiFromModules<{
   "social/acceptConnection": typeof social_acceptConnection;
   "social/acceptHouseholdLinkInvite": typeof social_acceptHouseholdLinkInvite;
   "social/acceptQrFollow": typeof social_acceptQrFollow;
+  "social/activityEntries": typeof social_activityEntries;
   "social/adapters/convexCommentRepository": typeof social_adapters_convexCommentRepository;
   "social/adapters/convexFollowRepository": typeof social_adapters_convexFollowRepository;
   "social/adapters/convexFollowRequestRepository": typeof social_adapters_convexFollowRequestRepository;

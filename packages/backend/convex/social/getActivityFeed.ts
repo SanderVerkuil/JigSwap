@@ -7,7 +7,6 @@ import {
   buildActivityFeed,
   toMemberId,
   type ActivityEntry,
-  type ActivityKind,
   type MemberId,
 } from "@jigswap/domain";
 import { v } from "convex/values";
@@ -24,33 +23,19 @@ import {
 } from "../library/canViewCopy";
 import { toCopyPuzzleView } from "../library/mappers";
 import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
+import { activityRowsOf, FEED_EVENT_NAMES } from "./activityEntries";
 import { blockedEitherWaySet } from "./blocks";
 import { areMutualFollowers, canSeeProfileContent } from "./privacy";
 
 // The activity-feed read: the acting member's own activity plus the activity of everyone they
-// follow, newest-first. It reads the DURABLE `domainEvents` log and maps FOREIGN events into
-// Social's anti-corruption ActivityEntry shape AT THIS SEAM (anti-corruption: Social's domain
-// never imports other contexts' event classes — we translate from the serialised payload here),
-// then folds them through the pure buildActivityFeed projection.
-//
-// Foreign events mapped (verified against the emitting domains):
-//   CompletionRecorded (Solving)  -> "completion",  member = payload.userId,  ref = completionId
-//                                    (dated, non-bulk solves only)
-//   CompletionStarted  (Solving)  -> "started",     member = payload.userId,  ref = completionId
-//                                    (opt-in + mutual-followers-only, filtered below)
-//   CopyAcquired       (Library)  -> "acquisition", member = payload.ownerId, ref = copyId
-//                                    or, with payload.batchId (one acquireCopies call), ONE
-//                                    "acquisitionBatch" per batch, ref = batchId (grouped below);
-//                                    both are gated per copy on what the viewer may see
-//   ExchangeCompleted  (Exchange) -> "exchange",    members = both parties (row),  ref = exchangeId
+// follow, newest-first. It reads the DURABLE `domainEvents` log, maps FOREIGN events into Social's
+// anti-corruption ActivityEntry shape through social/activityEntries.activityRowsOf (the one
+// event-to-entry mapping, shared with the activity read model), keeps those of the audience, then
+// folds them through the pure buildActivityFeed projection. "started" entries are opt-in and
+// mutual-followers-only, and acquisitions (single or a grouped batch) are gated per copy on what
+// the viewer may see; both filtered below.
 // Whatever the kind, an entry of another member shows only while the viewer may see that member's
 // profile content (canSeeProfileContent, SEC-43); the per-kind rules above only narrow that.
-const FEED_EVENT_NAMES = [
-  "CompletionRecorded",
-  "CompletionStarted",
-  "CopyAcquired",
-  "ExchangeCompleted",
-] as const;
 
 // A page holds 1 to MAX_LIMIT entries whatever the client asks for.
 const DEFAULT_LIMIT = 50;
@@ -118,15 +103,27 @@ export const getActivityFeed = query({
     // CopyAcquired events name, collected while mapping.
     const entryCopyIds = new Map<string, string[]>();
     const entries: ActivityEntry[] = [];
+    const now = Date.now();
     for (const batch of eventBatches) {
       for (const event of batch) {
-        const mapped = await toActivityEntries(
-          ctx,
-          event,
-          audience,
-          entryCopyIds,
-        );
-        entries.push(...mapped);
+        for (const row of await activityRowsOf(ctx, event)) {
+          if (!audience.has(row.actorId)) continue;
+          // A future-dated start hasn't begun; don't announce it (spec §2).
+          if (row.startDate !== undefined && row.startDate > now) continue;
+          entries.push({
+            memberId: asMember(row.actorId),
+            kind: row.kind,
+            occurredAt: new Date(row.occurredAt),
+            ref: row.ref,
+          });
+          if (row.kind === "acquisition") entryCopyIds.set(row.ref, [row.ref]);
+          if (row.kind === "acquisitionBatch") {
+            entryCopyIds.set(row.ref, [
+              ...(entryCopyIds.get(row.ref) ?? []),
+              ...(row.copyIds ?? []),
+            ]);
+          }
+        }
       }
     }
 
@@ -449,79 +446,6 @@ const resolveActor = async (
 };
 
 const asMember = (id: string): MemberId => toMemberId(id);
-
-// Translate one recorded foreign event into zero-or-more Social ActivityEntries, keeping only those
-// whose member is in the audience. The ACL lives entirely here; the domain stays foreign-free.
-const toActivityEntries = async (
-  ctx: QueryCtx,
-  event: Doc<"domainEvents">,
-  audience: Set<string>,
-  entryCopyIds: Map<string, string[]>,
-): Promise<ActivityEntry[]> => {
-  const p = event.payload as Record<string, unknown>;
-  const occurredAt = new Date(event.occurredAt);
-
-  const make = (
-    memberId: string,
-    kind: ActivityKind,
-    ref: string,
-  ): ActivityEntry[] =>
-    audience.has(memberId)
-      ? [{ memberId: asMember(memberId), kind, occurredAt, ref }]
-      : [];
-
-  switch (event.name) {
-    case "CompletionRecorded":
-      // A year-only or undated solve is a backfill, and so is anything logged in a batch: none of
-      // them is recent activity, so they never reach followers (spec 2026-10-17 §3.2, D4). Older
-      // payloads carry neither field and read as dated, single solves. A past-solves batch is
-      // HIDDEN, not grouped like a batch of copy adds: every solve in it is a backfill, even one
-      // with a picked day, so there is no "logged N solves" entry.
-      if ((p.datePrecision ?? "day") !== "day" || p.bulk === true) return [];
-      return make(p.userId as string, "completion", p.completionId as string);
-    case "CompletionStarted": {
-      // A future-dated start hasn't begun; don't announce it (spec §2).
-      // Payload is frozen at emission; a later startDate edit does not move this gate (accepted,
-      // like the deletion residual).
-      const startDate = p.startDate as number | undefined;
-      if (startDate !== undefined && startDate > Date.now()) return [];
-      return make(p.userId as string, "started", p.completionId as string);
-    }
-    case "CopyAcquired": {
-      // A batch add (acquireCopies) tags every event with one batch id; they fold into a single
-      // "acquisitionBatch" entry (deduped by ref = batchId) instead of one entry per box.
-      // Either way the entry's copies are recorded so the caller can gate it per copy.
-      const copyId = p.copyId as string;
-      const batchId = p.batchId;
-      if (typeof batchId !== "string") {
-        const single = make(p.ownerId as string, "acquisition", copyId);
-        if (single.length > 0) entryCopyIds.set(copyId, [copyId]);
-        return single;
-      }
-      const grouped = make(p.ownerId as string, "acquisitionBatch", batchId);
-      if (grouped.length > 0) {
-        entryCopyIds.set(batchId, [
-          ...(entryCopyIds.get(batchId) ?? []),
-          copyId,
-        ]);
-      }
-      return grouped;
-    }
-    case "ExchangeCompleted": {
-      // ExchangeCompleted carries no member; resolve both parties from the persisted exchange row
-      // (mirrors Notifications' both-party treatment) and attribute the settlement to each.
-      const row = await loadExchange(ctx, p.exchangeId as string);
-      if (!row) return [];
-      const ref = p.exchangeId as string;
-      return [
-        ...make(row.initiatorId as string, "exchange", ref),
-        ...make(row.recipientId as string, "exchange", ref),
-      ];
-    }
-    default:
-      return [];
-  }
-};
 
 // Resolve a persisted exchange from its ExchangeId aggregateId so we can attribute the parties.
 const loadExchange = (

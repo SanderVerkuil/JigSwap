@@ -19,10 +19,15 @@ import {
   handleDomainEvent as handleNotificationEvent,
   NOTIFYING_EVENT_NAMES,
 } from "../notifications/subscriber";
+import {
+  FEED_EVENT_NAMES,
+  projectActivityEvent,
+} from "../social/activityEntries";
 
 // The central async dispatcher. Scheduled once per recorded domain event; it loads the row, routes
 // it to every registered ASYNC subscriber that reacts to its name (trade reveal, Notifications,
-// Conversation, Custody + the Library transfer, the open-loan reaction), then stamps processedAt.
+// Conversation, Custody + the Library transfer, the open-loan reaction, the activity feed's
+// projection), then stamps processedAt.
 //
 // Failure semantics: Convex retries a scheduled mutation only on ITS OWN internal errors, never on
 // an application error thrown by our code. So each subscriber runs in its own sub-transaction
@@ -101,6 +106,16 @@ const HANDLERS: readonly {
     retry: false,
     // Update when the handler's own guard/switch gains an event.
     events: ["PossessionTransferred"],
+  },
+  // Folds the feed's events into the per-actor activity read model (social/activityEntries).
+  // Idempotent: one row per (actor, kind, ref), so a retry or a backfill replay changes nothing.
+  {
+    name: "activityFeed",
+    run: async (ctx, event) => {
+      await projectActivityEvent(ctx, event);
+    },
+    retry: true,
+    events: FEED_EVENT_NAMES,
   },
 ];
 

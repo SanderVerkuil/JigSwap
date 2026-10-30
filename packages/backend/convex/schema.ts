@@ -2015,6 +2015,37 @@ export default defineSchema({
     occurredAt: v.number(),
   }).index("by_copy", ["copyId", "occurredAt"]),
 
+  // The activity feed's per-actor read model (SEC-30, PERF-B3m): one row per piece of activity a
+  // member did, written by the event dispatcher (social/activityEntries.projectActivityEvent) from
+  // the feed's four events. The feed reads each audience member's own range of by_actor_time, so
+  // one member's events never crowd out another's and a new row only touches the feeds of the
+  // actor's followers. Only viewer-independent facts are stored; the viewer gates (started opt-in
+  // and mutual follow, profile unlock, canViewCopy, blocks) still run at read time.
+  //   kind/ref    the feed entry: "completion"/"started" -> completionId, "acquisition" -> copyId,
+  //               "acquisitionBatch" -> batchId, "exchange" -> exchangeId. One row per
+  //               (actorId, kind, ref): by_actor_kind_ref keeps the projection idempotent.
+  //   occurredAt  the event time (a batch: its newest event)
+  //   copyIds     acquisitionBatch only: the batch's copies (ownedPuzzles.aggregateId)
+  //   startDate   started only: the solve's start; the feed hides it until then
+  //   partyIds    exchange only: [initiator, recipient]; a party gets its own row
+  activityEntries: defineTable({
+    actorId: v.id("users"),
+    kind: v.union(
+      v.literal("completion"),
+      v.literal("started"),
+      v.literal("acquisition"),
+      v.literal("acquisitionBatch"),
+      v.literal("exchange"),
+    ),
+    ref: v.string(),
+    occurredAt: v.number(),
+    copyIds: v.optional(v.array(v.string())),
+    startDate: v.optional(v.number()),
+    partyIds: v.optional(v.array(v.id("users"))),
+  })
+    .index("by_actor_time", ["actorId", "occurredAt"])
+    .index("by_actor_kind_ref", ["actorId", "kind", "ref"]),
+
   // Open-ended loans: possession of a Copy held by a borrower while ownership stays with the
   // lender. Closed when the borrower returns it or the owner recalls it. aggregateId = LoanId;
   // copyId is the Library CopyId (ownedPuzzles.aggregateId). Status indexes back the borrowed/lent
