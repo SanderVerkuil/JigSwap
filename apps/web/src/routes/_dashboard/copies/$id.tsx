@@ -443,10 +443,11 @@ function CopyInstanceDetail({
 
         {/* Info */}
         <div className="min-w-0">
-          <h1 className="font-heading text-3xl font-bold tracking-tight">
+          {/* From md the shell page head already shows the title (published above). */}
+          <h1 className="font-heading text-3xl font-bold tracking-tight md:hidden">
             {snapshot.title}
           </h1>
-          <p className="text-muted-foreground mt-1 text-base">
+          <p className="text-muted-foreground mt-1 text-base md:mt-0">
             {snapshot.brand ? `${snapshot.brand} · ` : ""}
             <span className="font-mono">
               {snapshot.pieceCount.toLocaleString()}

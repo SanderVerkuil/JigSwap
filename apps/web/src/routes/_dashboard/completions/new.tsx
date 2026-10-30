@@ -100,6 +100,7 @@ function NewCompletionPage() {
     () => ({
       title: t("new.title"),
       crumbs: [
+        { label: tShell("groups.library.label"), href: "/library" },
         {
           label: tShell("pages.completions.title"),
           href: "/completions",
