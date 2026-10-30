@@ -219,7 +219,12 @@ function PuzzleDefinitionDetail({
             opens a side panel that magnifies where the cursor points. */}
         <div className="bg-muted relative aspect-square w-full overflow-hidden rounded-2xl shadow-sm">
           {definition.image ? (
-            <ImageZoom src={definition.image} alt={definition.title} fill />
+            <ImageZoom
+              src={definition.image}
+              alt={definition.title}
+              fill
+              priority
+            />
           ) : (
             <PuzzleCoverFallback checking={boxArtInCheck.has(puzzleId)} />
           )}

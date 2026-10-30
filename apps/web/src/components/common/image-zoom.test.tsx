@@ -156,3 +156,16 @@ describe("ImageZoom touch pinch-zoom", () => {
     expect(img().style.transform).toBe("");
   });
 });
+
+describe("ImageZoom loading", () => {
+  it("asks for a detail hero first when it is the page's priority image", () => {
+    render({ priority: true });
+    expect(img().getAttribute("fetchpriority")).toBe("high");
+    expect(img().getAttribute("loading")).toBeNull();
+  });
+
+  it("leaves the fetch priority to the browser otherwise (e.g. in a lightbox)", () => {
+    render();
+    expect(img().getAttribute("fetchpriority")).toBeNull();
+  });
+});

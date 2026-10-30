@@ -396,7 +396,12 @@ function CopyInstanceDetail({
             magnifies where the cursor points. */}
         <div className="bg-muted relative mx-auto aspect-square w-full max-w-[40vh] overflow-hidden rounded-2xl shadow-sm lg:mx-0 lg:max-w-[300px]">
           {snapshot.image ? (
-            <ImageZoom src={snapshot.image} alt={snapshot.title} fill />
+            <ImageZoom
+              src={snapshot.image}
+              alt={snapshot.title}
+              fill
+              priority
+            />
           ) : (
             <div className="from-jigsaw-primary/20 to-jigsaw-primary text-jigsaw-primary-foreground/70 absolute inset-0 flex items-center justify-center bg-gradient-to-br">
               <Puzzle className="h-1/3 w-1/3" />
