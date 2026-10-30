@@ -170,3 +170,136 @@ describe("rule P is bound to the copy's current owner", () => {
     expect(await viewCopy(t, "cat", copy)).not.toBeNull();
   });
 });
+
+// A household co-manager may offer the owner's copy in a swap (mayOfferCopy). The swap's recipient
+// then sees that copy while it is private, as long as it still belongs to the owner it was offered
+// for (the exchange records them as offeredPuzzleOwnerId) and the co-manager may still offer it.
+// Bound to the current owner like the rest of rule P: the copy changing hands (even to another
+// housemate the co-manager also manages) or the co-manager leaving ends it.
+type HouseholdName = "mara" | "hugo" | "ivy" | "rex" | "zoe";
+
+const asMember = (t: T, name: HouseholdName) =>
+  t.withIdentity({ subject: `clerk_${name}` });
+
+const seedHousehold = async (t: T) => {
+  const { ids, puzzleAggregateId } = await t.run(async (ctx) => {
+    const now = Date.now();
+    const mkUser = (name: HouseholdName) =>
+      ctx.db.insert("users", {
+        clerkId: `clerk_${name}`,
+        email: `${name}@example.com`,
+        name,
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    const ids = {
+      mara: await mkUser("mara"),
+      hugo: await mkUser("hugo"),
+      ivy: await mkUser("ivy"),
+      rex: await mkUser("rex"),
+      zoe: await mkUser("zoe"),
+    };
+    const puzzleAggregateId = crypto.randomUUID();
+    await ctx.db.insert("puzzles", {
+      aggregateId: puzzleAggregateId,
+      title: "Harbour Lights",
+      pieceCount: 1000,
+      status: "approved",
+      submittedBy: ids.mara,
+      createdAt: now,
+      updatedAt: now,
+    });
+    return { ids, puzzleAggregateId };
+  });
+  // Mara, Hugo and Ivy share a household (default permission: manage).
+  await asMember(t, "mara").mutation(
+    api.household.createHousehold.createHousehold,
+    {},
+  );
+  for (const mate of ["hugo", "ivy"] as const) {
+    const inviteId = await asMember(t, "mara").mutation(
+      api.household.inviteToHousehold.inviteToHousehold,
+      { inviteeId: ids[mate] },
+    );
+    await asMember(t, mate).mutation(
+      api.household.acceptHouseholdInvite.acceptHouseholdInvite,
+      { inviteId },
+    );
+  }
+  const acquire = async (owner: HouseholdName) => {
+    const aggregateId = (await asMember(t, owner).mutation(
+      api.library.acquireCopy.acquireCopy,
+      { puzzleDefinitionId: puzzleAggregateId, condition: "good" },
+    )) as string;
+    return { aggregateId, id: (await copyRowOf(t, aggregateId))._id };
+  };
+  const x = await acquire("mara");
+  const r = await acquire("rex");
+  await asMember(t, "rex").mutation(
+    api.library.updateCopySharing.updateCopySharing,
+    { copyId: r.aggregateId, visibility: "visible", forTrade: true },
+  );
+  // Hugo offers Mara's X for Rex's R; then Mara makes X private.
+  const swap = await asMember(t, "hugo").mutation(
+    api.exchange.propose.propose,
+    {
+      type: "trade",
+      requestedPuzzleId: r.id,
+      offeredPuzzleId: x.id,
+    },
+  );
+  await asMember(t, "mara").mutation(
+    api.library.updateCopySharing.updateCopySharing,
+    { copyId: x.aggregateId, visibility: "private" },
+  );
+  return { ids, x, swap };
+};
+
+const sees = (t: T, name: HouseholdName, copy: Id<"ownedPuzzles">) =>
+  asMember(t, name).query(api.library.getCopyInstanceView.getCopyInstanceView, {
+    copyId: copy,
+  });
+const rexSees = (t: T, copy: Id<"ownedPuzzles">) => sees(t, "rex", copy);
+
+describe("rule P for a copy a household co-manager offered", () => {
+  test("the swap's recipient sees the owner's private copy until it has another owner", async () => {
+    const t = convexTest(schema, modules);
+    const { ids, x, swap } = await seedHousehold(t);
+    const view = await rexSees(t, x.id);
+    expect(view).not.toBeNull();
+    expect(view?.snapshot.visibility).toBe("private");
+    // Only the swap's recipient: Zoe, no party to it, sees nothing.
+    expect(await sees(t, "zoe", x.id)).toBeNull();
+
+    // X passes to Ivy (as a settled deal would move it). Hugo co-manages Ivy's copies too, but the
+    // swap offered Mara's copy: it shows Rex nothing of Ivy's.
+    await t.run((ctx) => ctx.db.patch(x.id, { ownerId: ids.ivy }));
+    expect(await exchangeStatus(t, swap)).toBe("proposed");
+    expect(await rexSees(t, x.id)).toBeNull();
+  });
+
+  test("the recipient loses it once they decline the swap", async () => {
+    const t = convexTest(schema, modules);
+    const { x, swap } = await seedHousehold(t);
+    expect(await rexSees(t, x.id)).not.toBeNull();
+
+    await asMember(t, "rex").mutation(api.exchange.decline.decline, {
+      exchangeId: swap,
+    });
+    expect(await rexSees(t, x.id)).toBeNull();
+  });
+
+  test("the recipient loses it once the co-manager leaves the household", async () => {
+    const t = convexTest(schema, modules);
+    const { ids, x, swap } = await seedHousehold(t);
+    expect(await rexSees(t, x.id)).not.toBeNull();
+
+    await asMember(t, "mara").mutation(
+      api.household.removeHouseholdMember.removeHouseholdMember,
+      { memberId: ids.hugo },
+    );
+    expect(await exchangeStatus(t, swap)).toBe("proposed");
+    expect(await rexSees(t, x.id)).toBeNull();
+  });
+});

@@ -53,7 +53,10 @@ A private copy is still visible to:
 - the other member of a trade between the two of you that the copy is part
   of, while the trade is pending or accepted, and after it completes. If the
   trade is declined or cancelled, the copy is private to them again. Trades an
-  earlier owner of the copy made don't count.
+  earlier owner of the copy made don't count;
+- the member a housemate offered it to in a swap, as long as the copy is still
+  yours and your housemate can still manage it. If that member declines the
+  swap, or it's cancelled, the copy is private to them again.
 
 > **Note:** Only a visible copy can be offered. While a copy is offered for
 > swap, lend or sale, the private option is disabled. Withdraw the offer first.

@@ -1,5 +1,6 @@
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
+import { canManageCopy } from "../household/copyAccess";
 import { householdMateIds } from "../household/memberships";
 import { blockedEitherWaySet, isBlockedEitherWay } from "../social/blocks";
 import { areMutualFollowers, profileVisibilityOf } from "../social/privacy";
@@ -33,9 +34,12 @@ const EXCHANGE_STATUSES_REVEALING_COPY = {
 // either way round) of a revealing exchange in which the copy is the offered or the requested side.
 // A copy keeps its id through every sale, so an exchange with anyone else never counts: earlier
 // links in a resale chain and stale proposers to a former owner don't see the current owner's
-// private copy. Nor does the recipient of a swap a household co-manager offered on the owner's
-// behalf (the owner was not a party). Two index reads (by_offered_copy / by_requested_copy, both
-// bounded by the copy's own exchanges); only reached for a private copy no earlier rule passed, so
+// private copy. One exchange the owner is no party to counts too: a swap in which a household
+// co-manager offered the owner's copy shows it to the swap's recipient, while the copy still has
+// the owner it was offered for (offeredPuzzleOwnerId, recorded at propose; absent on older rows)
+// and the co-manager may still offer it (canManageCopy, as the settlement guard's offer rule). Two
+// index reads (by_offered_copy / by_requested_copy, both bounded by the copy's own exchanges), plus
+// a household read only for such a swap; only reached for a private copy no earlier rule passed, so
 // bulk callers don't need a memo.
 const isExchangePartyFor = async (
   ctx: QueryCtx,
@@ -54,14 +58,31 @@ const isExchangePartyFor = async (
       )
       .collect(),
   ]);
-  return [...offered, ...requested].some(
-    (exchange) =>
-      EXCHANGE_STATUSES_REVEALING_COPY[exchange.status] &&
-      ((exchange.initiatorId === viewerId &&
-        exchange.recipientId === copy.ownerId) ||
-        (exchange.recipientId === viewerId &&
-          exchange.initiatorId === copy.ownerId)),
-  );
+  const revealing = (exchange: Doc<"exchanges">) =>
+    EXCHANGE_STATUSES_REVEALING_COPY[exchange.status];
+  if (
+    [...offered, ...requested].some(
+      (exchange) =>
+        revealing(exchange) &&
+        ((exchange.initiatorId === viewerId &&
+          exchange.recipientId === copy.ownerId) ||
+          (exchange.recipientId === viewerId &&
+            exchange.initiatorId === copy.ownerId)),
+    )
+  ) {
+    return true;
+  }
+  for (const exchange of offered) {
+    if (
+      revealing(exchange) &&
+      exchange.recipientId === viewerId &&
+      exchange.offeredPuzzleOwnerId === copy.ownerId &&
+      (await canManageCopy(ctx, exchange.initiatorId, copy))
+    ) {
+      return true;
+    }
+  }
+  return false;
 };
 
 // Reusable per-request context so bulk callers (e.g. the completions enrichment) don't re-read the
@@ -107,7 +128,8 @@ export const buildCopyViewContext = async (
 // ...EXCEPT that a PRIVATE copy (effectiveCopyVisibility — the owner's per-copy toggle) stops after
 // rules 1, 2 and 5 plus one private-only rule:
 //   P. the viewer is the other PARTY, opposite the copy's CURRENT owner, of an exchange involving
-//      the copy (offered or requested side) that is live or went ahead — see
+//      the copy (offered or requested side) that is live or went ahead, or the recipient of a swap
+//      in which the owner's household co-manager still offers it for that owner — see
 //      EXCHANGE_STATUSES_REVEALING_COPY and isExchangePartyFor.
 // Rules 3 and 4 already require an OPEN copy, which is never private, so in practice this replaces
 // rule 6 with rule P for private copies. There is deliberately no admin rule here; admin surfaces use their own reads.
