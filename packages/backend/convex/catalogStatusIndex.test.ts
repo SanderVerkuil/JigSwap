@@ -225,6 +225,25 @@ describe("catalog reads by status (PERF-B8)", () => {
     ).rejects.toThrow(/Forbidden/);
   });
 
+  test("the sitemap feed pages through approved rows only, oldest first", async () => {
+    const t = convexTest(schema, modules);
+    const { ids } = await seed(t);
+
+    // 5 approved rows at 2 per page: 3 pages, the last one done.
+    const { rows, pages } = await walk((cursor) =>
+      t.query(api.catalog.listSitemapEntries.listSitemapEntries, {
+        paginationOpts: { numItems: 2, cursor },
+      }),
+    );
+    expect(pages).toBe(3);
+    const approvedSlugs = ROWS.filter((r) => r.status === "approved").map(
+      (r) => r.slug,
+    );
+    expect(rows.map((e) => e.id)).toEqual(approvedSlugs.map((s) => ids[s]));
+    // Each entry carries the definition's updatedAt for <lastmod>, nothing else.
+    expect(rows[0]).toEqual({ id: ids.a1, updatedAt: NOW + 100 });
+  });
+
   test("the landing plank and recommendations draw from approved rows only", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
@@ -310,6 +329,25 @@ describe("catalog page sizes are clamped server-side (SEC-49)", () => {
     );
     expect(search.page).toHaveLength(40);
     expect(search.isDone).toBe(false);
+  });
+
+  test("listSitemapEntries returns at most 1000 entries per page", async () => {
+    const t = convexTest(schema, modules);
+    await seedApproved(t, 1001);
+
+    const first = await t.query(
+      api.catalog.listSitemapEntries.listSitemapEntries,
+      { paginationOpts: { numItems: 1e6, cursor: null } },
+    );
+    expect(first.page).toHaveLength(1000);
+    expect(first.isDone).toBe(false);
+
+    const rest = await t.query(
+      api.catalog.listSitemapEntries.listSitemapEntries,
+      { paginationOpts: { numItems: 1e6, cursor: first.continueCursor } },
+    );
+    expect(rest.page).toHaveLength(1);
+    expect(rest.isDone).toBe(true);
   });
 
   test("getPuzzleSuggestions returns at most 20 suggestions", async () => {

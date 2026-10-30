@@ -1,16 +1,29 @@
+import { paginationOptsValidator, type PaginationResult } from "convex/server";
 import { query } from "../_generated/server";
+import { clampPaginationOpts } from "../lib/pageSize";
 
-// UNAUTHENTICATED feed for the /sitemap.xml server route: every approved definition's id +
-// updatedAt (for <lastmod>). Catalog URLs ONLY — member profiles are deliberately not
-// sitemap-listed (Phase 5 spec). A full collect() is fine at the current catalog scale; if the
-// catalog ever grows past ~10k definitions, page this and stream the sitemap instead.
+// A page holds 1 to MAX_PAGE_SIZE entries whatever the client asks for. An entry is two small
+// fields, so a full page stays far inside one function's read limit however large the catalogue.
+const MAX_PAGE_SIZE = 1000;
+
+// UNAUTHENTICATED feed for the /sitemap.xml server route: approved definitions' id + updatedAt
+// (for <lastmod>), oldest first, one page per call. The route walks the cursor, so no single call
+// reads the whole catalogue. Catalog URLs ONLY — member profiles are deliberately not
+// sitemap-listed (Phase 5 spec).
 export const listSitemapEntries = query({
-  args: {},
-  handler: async (ctx): Promise<{ id: string; updatedAt: number }[]> => {
+  args: { paginationOpts: paginationOptsValidator },
+  handler: async (
+    ctx,
+    args,
+  ): Promise<PaginationResult<{ id: string; updatedAt: number }>> => {
     const puzzles = await ctx.db
       .query("puzzles")
       .withIndex("by_status", (q) => q.eq("status", "approved"))
-      .collect();
-    return puzzles.map((p) => ({ id: p._id, updatedAt: p.updatedAt }));
+      .paginate(clampPaginationOpts(args.paginationOpts, MAX_PAGE_SIZE));
+
+    return {
+      ...puzzles,
+      page: puzzles.page.map((p) => ({ id: p._id, updatedAt: p.updatedAt })),
+    };
   },
 });
