@@ -56,6 +56,7 @@ const run = (
     household?: string[];
     inProgress?: string[];
     completed?: string[];
+    lentOut?: string[];
   } = {},
 ) =>
   filterAndSortCopies(
@@ -67,6 +68,7 @@ const run = (
         inProgress: context.inProgress?.includes(id) ?? false,
         completed: context.completed?.includes(id) ?? false,
       }),
+      lentOut: (id) => context.lentOut?.includes(id) ?? false,
       locale: "en",
     },
   ).map((c) => c._id);
@@ -100,6 +102,12 @@ describe("validateMyPuzzlesSearch", () => {
       owner: "household",
       sort: "pieces",
       q: "castle",
+    });
+  });
+
+  it("keeps the Lent Out status", () => {
+    expect(validateMyPuzzlesSearch({ status: "lentOut" })).toEqual({
+      status: "lentOut",
     });
   });
 
@@ -189,6 +197,12 @@ describe("filterAndSortCopies filters", () => {
     ]);
     expect(run(copies, { status: "forTrade" })).toEqual(["trade"]);
     expect(run(copies, { status: "forLend" })).toEqual(["lend"]);
+  });
+
+  it("keeps lent out apart from offered for lending", () => {
+    const context = { lentOut: ["none"] };
+    expect(run(copies, { status: "lentOut" }, context)).toEqual(["none"]);
+    expect(run(copies, { status: "forLend" }, context)).toEqual(["lend"]);
   });
 
   it("narrows by solve state", () => {

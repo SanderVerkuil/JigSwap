@@ -4,13 +4,14 @@ import type { OwnedCopyView } from "@jigswap/contracts";
 // and a sort. They live in the URL so Back from a copy, a reload or a shared link keeps them; the
 // defaults are left out so a bare /my-puzzles stays bare.
 
-// Status pills mapped onto what the data carries: the copy's offer flags, and the member's solve
-// log for the progress states.
+// Status pills mapped onto what the data carries: the copy's offer flags, the member's open loans
+// as lender, and the member's solve log for the progress states.
 export const MY_PUZZLES_STATUSES = [
   "all",
   "available",
   "forTrade",
   "forLend",
+  "lentOut",
   "inProgress",
   "completed",
 ] as const;
@@ -128,6 +129,8 @@ export interface CopyFilterContext {
   solveState: (
     copyId: string,
   ) => { inProgress: boolean; completed: boolean } | undefined;
+  /** Whether the copy is out with a borrower right now (the viewer's open loans as lender). */
+  lentOut: (copyId: string) => boolean;
   /** The UI locale, for sorting titles. */
   locale: string;
 }
@@ -147,6 +150,8 @@ const matchesStatus = (
       return forTrade;
     case "forLend":
       return forLend;
+    case "lentOut":
+      return context.lentOut(copy._id);
     case "inProgress":
       return context.solveState(copy._id)?.inProgress ?? false;
     case "completed":
