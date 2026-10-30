@@ -17,6 +17,12 @@ import {
 // until revealed) and `hashTimedOut`. Its hash gate stays closed, so restoring it does not publish
 // it: it turns "approved" but unchecked again, and so returns to Unchecked photos as "Hash check
 // timed out", where only "Approve without hash check" publishes it.
+//
+// A bounded read: the oldest REJECTED_PHOTOS_QUEUE_LIMIT rejected photos. Every decision takes a
+// photo out of "rejected" (restored, or deleted on confirm), so the next ones appear as the admin
+// works through the queue.
+export const REJECTED_PHOTOS_QUEUE_LIMIT = 100;
+
 export const listRejectedPhotos = query({
   args: {},
   handler: async (ctx) => {
@@ -28,7 +34,7 @@ export const listRejectedPhotos = query({
       .withIndex("by_moderation_status", (q) =>
         q.eq("moderationStatus", "rejected"),
       )
-      .collect();
+      .take(REJECTED_PHOTOS_QUEUE_LIMIT);
 
     return Promise.all(
       rows.map(async (row) => {

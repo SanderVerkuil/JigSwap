@@ -1158,7 +1158,13 @@ export default defineSchema({
     .index("by_map_file", ["mapFileId"])
     .index("by_moderation_status", ["moderationStatus"])
     .index("by_message", ["messageId"])
-    .index("by_review_requested", ["reviewRequestedAt"])
+    // Open review requests (admin/listImageReviewRequests): rejected, reviewDecidedAt undefined,
+    // reviewRequestedAt set; oldest request first.
+    .index("by_review_pending", [
+      "moderationStatus",
+      "reviewDecidedAt",
+      "reviewRequestedAt",
+    ])
     .index("by_hash_check_pending", ["hashCheckPendingSince"])
     // Timed-out hash checks still closed (admin/listUncheckedPhotos): hashCheckedAt undefined.
     .index("by_hash_check_timed_out", ["hashCheckedAt", "hashCheckTimedOutAt"])

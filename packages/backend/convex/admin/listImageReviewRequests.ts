@@ -9,6 +9,12 @@ import { requireMember } from "../identity/requireMember";
 // the only way an admin ever sees a private message photo that was not reported. Oldest request
 // first. Quarantined photos never appear (nobody may view them), even when a review was asked;
 // neither does anything about the conversation or the recipient. Admin-only.
+//
+// A bounded read: the by_review_pending range holds only the open requests (rejected, undecided,
+// asked for), so decided ones cost nothing, and the queue shows the oldest
+// IMAGE_REVIEW_QUEUE_LIMIT of them; the next ones appear as the admin decides.
+export const IMAGE_REVIEW_QUEUE_LIMIT = 100;
+
 export const listImageReviewRequests = query({
   args: {},
   handler: async (ctx) => {
@@ -17,8 +23,13 @@ export const listImageReviewRequests = query({
 
     const rows = await ctx.db
       .query("messageAttachments")
-      .withIndex("by_review_requested", (q) => q.gt("reviewRequestedAt", 0))
-      .collect();
+      .withIndex("by_review_pending", (q) =>
+        q
+          .eq("moderationStatus", "rejected")
+          .eq("reviewDecidedAt", undefined)
+          .gt("reviewRequestedAt", 0),
+      )
+      .take(IMAGE_REVIEW_QUEUE_LIMIT);
     return Promise.all(
       rows
         .filter(
