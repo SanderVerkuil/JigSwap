@@ -6,7 +6,9 @@ name: Convex Deploy
 #     preview deployment instead (see convex-preview.yml — preview deployments are
 #     available on every Convex plan, including Free/Starter).
 #   - production: only after the CI workflow succeeds on main (workflow_run gate), so prod
-#     never deploys code that failed lint/type-check/test/build.
+#     never deploys code that failed lint/type-check/test/build. The CI run must also come
+#     from a push to this repository: `branches: [main]` matches only the head branch NAME,
+#     so a pull request whose head branch is called `main` (e.g. from a fork) would match too.
 # _generated/* is committed, so a deploy only needs the deploy-key secrets.
 # After each push, `whatsNew/publishPending` starts the What's new notification fan-out (idempotent).
 # Preview deployments (convex-preview.yml) deliberately skip it: they are seeded from a dev snapshot
@@ -120,10 +122,13 @@ jobs:
 
   production:
     name: Deploy production deployment
-    # Only when the CI workflow completed successfully on main.
+    # Only when the CI workflow completed successfully for a push to main of this repository
+    # (never for a pull request run, whatever its head branch is called or where it lives).
     if: >-
       github.event_name == 'workflow_run' &&
-      github.event.workflow_run.conclusion == 'success'
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 10
     # Never cancel an in-flight production deploy; queue instead.
