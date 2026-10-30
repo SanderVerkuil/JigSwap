@@ -465,6 +465,12 @@ export interface CopyInstanceView {
    */
   viewerMayRequest: boolean;
   /**
+   * Whether the viewer may open the copy's puzzle DEFINITION page (`puzzleId`): it is approved, or
+   * the viewer submitted it or is an admin (the definition page's own gate). False hides the
+   * copy page's link to it, which would otherwise lead to "not found".
+   */
+  viewerMayOpenDefinition: boolean;
+  /**
    * Household facts, present when the viewer is the owner AND in a household, or a member of the
    * owner's household; null otherwise. `permission` is the effective permission (the copy's explicit
    * value, else the household default, else manage); `inheritsDefault` is true when the copy has no

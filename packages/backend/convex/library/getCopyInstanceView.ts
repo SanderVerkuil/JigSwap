@@ -16,6 +16,7 @@ import {
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
+import { canViewDefinition } from "../catalog/definitionVisibility";
 import { copyAccessOf } from "../household/copyAccess";
 import { personView } from "../household/getMyHousehold";
 import { householdDefaultOf, membershipOf } from "../household/memberships";
@@ -443,6 +444,8 @@ export const getCopyInstanceView = query({
       viewerIsOwner,
       viewerCanManage,
       viewerMayRequest: await viewerMayRequestCopy(ctx, viewerId, copy),
+      viewerMayOpenDefinition:
+        puzzle !== null && (await canViewDefinition(ctx, puzzle, viewerId)),
       household,
       owner,
       snapshot: {

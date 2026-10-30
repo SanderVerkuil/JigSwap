@@ -451,13 +451,19 @@ function CopyInstanceDetail({
               {snapshot.pieceCount.toLocaleString()}
             </span>{" "}
             {tPuzzles("pieces")}
-            {" · "}
-            <Link
-              href={`/puzzles/${copy.puzzleId}`}
-              className="text-jigsaw-primary font-semibold hover:underline"
-            >
-              {t("viewPuzzlePage")}
-            </Link>
+            {/* Only when the definition page would open for this viewer (not for a definition that
+                is no longer approved, unless they submitted it or are an admin). */}
+            {copy.viewerMayOpenDefinition && (
+              <>
+                {" · "}
+                <Link
+                  href={`/puzzles/${copy.puzzleId}`}
+                  className="text-jigsaw-primary font-semibold hover:underline"
+                >
+                  {t("viewPuzzlePage")}
+                </Link>
+              </>
+            )}
           </p>
 
           {/* Badges */}

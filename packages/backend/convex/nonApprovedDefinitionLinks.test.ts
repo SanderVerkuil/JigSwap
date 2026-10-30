@@ -11,7 +11,8 @@ const HOUR = 60 * 60 * 1000;
 // SEC-34: the definition page (getPuzzleDefinitionView) answers "not found" for a pending,
 // rejected or disabled definition unless the viewer submitted it or is an admin. Every read that
 // hands the client a link to that page must apply the same gate (canViewDefinition), so nobody is
-// sent to a dead page: the activity feed, the profile solves list and the member's own solve log.
+// sent to a dead page: the activity feed, the profile solves list, the member's own solve log and
+// the copy page's "View puzzle page" link.
 
 const HIDDEN = ["pending", "rejected", "disabled"] as const;
 
@@ -176,6 +177,36 @@ describe("links to a non-approved definition follow its read gate (SEC-34)", () 
       });
       await setStatus(t, puzzleId, status);
       expect(await ownCompletionLink(asUser(t, "alice"))).toBeUndefined();
+    },
+  );
+
+  test.each(HIDDEN)(
+    "the copy page offers the definition page of a %s definition only to its submitter or an admin",
+    async (status) => {
+      const t = convexTest(schema, modules);
+      const { alice, definitionId, puzzleId } = await seed(t);
+      const copyId = await ownAndSolve(t, definitionId, true);
+      const mayOpen = async (caller: Caller) =>
+        (
+          await caller.query(
+            api.library.getCopyInstanceView.getCopyInstanceView,
+            { copyId },
+          )
+        )?.viewerMayOpenDefinition;
+
+      for (const caller of [asUser(t, "bob"), asUser(t, "alice")]) {
+        expect(await mayOpen(caller)).toBe(true);
+      }
+
+      await setStatus(t, puzzleId, status);
+      // The copy's owner did not submit the definition, so the page would answer "not found"
+      // for her too.
+      for (const caller of [asUser(t, "bob"), asUser(t, "alice")]) {
+        expect(await mayOpen(caller)).toBe(false);
+      }
+      expect(await mayOpen(asAdminUser(t, "bob"))).toBe(true);
+      await t.run((ctx) => ctx.db.patch(puzzleId, { submittedBy: alice }));
+      expect(await mayOpen(asUser(t, "alice"))).toBe(true);
     },
   );
 });
