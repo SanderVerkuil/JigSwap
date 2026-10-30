@@ -233,12 +233,20 @@ function PuzzleDefinitionDetail({
 
           {/* Rating + difficulty + topics */}
           <div className="mt-3.5 flex flex-wrap items-center gap-2.5">
-            <span className="flex items-center gap-1.5">
-              <StarRating value={Math.round(rating.rating)} size="sm" />
-              <span className="text-muted-foreground text-sm">
-                {rating.rating} ({rating.count})
+            {/* Unrated: say so rather than five empty stars and "0 (0)". The Write a Review action
+                below already leads to the composer. */}
+            {rating.count > 0 ? (
+              <span className="flex items-center gap-1.5">
+                <StarRating value={Math.round(rating.rating)} size="sm" />
+                <span className="text-muted-foreground text-sm">
+                  {rating.rating} ({rating.count})
+                </span>
               </span>
-            </span>
+            ) : (
+              <span className="text-muted-foreground text-sm">
+                {t("noRatingsYet")}
+              </span>
+            )}
             <Badge
               className={cn(
                 "rounded-full border-transparent px-2.5 py-0.5 text-xs font-semibold",
@@ -340,9 +348,17 @@ function PuzzleDefinitionDetail({
           divided
         />
         <Stat
-          value={t("avgCompletionValue", {
-            days: stats.avgCompletionDays ?? "—",
-          })}
+          value={
+            stats.avgCompletionDays == null ? (
+              // No finished completions yet: a bare dash, never a unit on a missing number.
+              <>
+                <span aria-hidden="true">—</span>
+                <span className="sr-only">{t("noValue")}</span>
+              </>
+            ) : (
+              t("avgCompletionValue", { days: stats.avgCompletionDays })
+            )
+          }
           label={t("avgCompletion")}
           divided
         />
@@ -357,7 +373,7 @@ function PuzzleDefinitionDetail({
       <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
         {/* Left: rating + available copies */}
         <div className="space-y-9">
-          <CommunityRating rating={rating} />
+          <CommunityRating rating={rating} onRate={focusComposer} />
           <AvailableToSwap
             copies={availableCopies}
             totalAvailable={totalAvailable}
@@ -378,8 +394,28 @@ function PuzzleDefinitionDetail({
   );
 }
 
-function CommunityRating({ rating }: { rating: View["rating"] }) {
+function CommunityRating({
+  rating,
+  onRate,
+}: {
+  rating: View["rating"];
+  /** Takes the member to the review composer. */
+  onRate: () => void;
+}) {
   const t = useTranslations("puzzleDefinition");
+  // Unrated: an invitation instead of a "0" score over five 0% bars.
+  if (rating.count === 0) {
+    return (
+      <section>
+        <SectionHead icon={<StarGlyph />} title={t("communityRating")} />
+        <p className="text-muted-foreground text-sm">{t("noRatingsYet")}</p>
+        <Button variant="outline" size="sm" className="mt-3" onClick={onRate}>
+          <Star className="h-4 w-4" />
+          {t("beFirstToRate")}
+        </Button>
+      </section>
+    );
+  }
   return (
     <section>
       <SectionHead icon={<StarGlyph />} title={t("communityRating")} />
@@ -430,6 +466,16 @@ function swapTypeClasses(swapType: AvailableCopy["swapType"]) {
   }
 }
 
+// An offering owner's location and partner rating, each only when known (never "★ —").
+function ownerMetaLine(owner: AvailableCopy["owner"]) {
+  return [
+    owner.location,
+    owner.avgRating != null ? `★ ${owner.avgRating}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
 function AvailableToSwap({
   copies,
   totalAvailable,
@@ -469,11 +515,11 @@ function AvailableToSwap({
                 <div className="text-foreground truncate text-sm font-medium">
                   {displayName({ name: copy.owner.name })}
                 </div>
-                <div className="text-muted-foreground truncate text-xs">
-                  {copy.owner.location ?? ""}
-                  {copy.owner.location ? " · " : ""}★{" "}
-                  {copy.owner.avgRating ?? "—"}
-                </div>
+                {ownerMetaLine(copy.owner) && (
+                  <div className="text-muted-foreground truncate text-xs">
+                    {ownerMetaLine(copy.owner)}
+                  </div>
+                )}
               </div>
               <span
                 className={cn(
