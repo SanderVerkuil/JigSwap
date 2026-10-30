@@ -78,6 +78,7 @@ export function EditApproveDialog({
   onSave,
   busy,
   handledElsewhere,
+  onCloseAutoFocus,
 }: {
   /** The submission the dialog was opened for; only read when the dialog mounts. */
   submission: PendingSubmission;
@@ -87,6 +88,8 @@ export function EditApproveDialog({
   busy: boolean;
   /** That submission is no longer pending (decided by someone else): nothing to save. */
   handledElsewhere: boolean;
+  /** Where focus goes when the dialog closes (default: back to what opened it). */
+  onCloseAutoFocus?: (event: Event) => void;
 }) {
   const t = useTranslations("admin.moderation.editDialog");
   const tForm = useTranslations("forms.puzzle-form");
@@ -107,7 +110,10 @@ export function EditApproveDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent
+        className="sm:max-w-md"
+        onCloseAutoFocus={onCloseAutoFocus}
+      >
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>{t("description")}</DialogDescription>

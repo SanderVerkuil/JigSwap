@@ -63,6 +63,9 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
+// The tabs that are list+detail queues.
+type QueueTab = Extract<ModerationTab, "submissions" | "flagged" | "unchecked">;
+
 export const Route = createFileRoute("/_dashboard/admin/moderation")({
   // The open tab, the selected queue item and the Reports tab's filter and drawer live in the
   // URL (moderation-search.ts), so Back, a reload, a shared link and a notification restore them.
@@ -206,15 +209,31 @@ function ModerationPage() {
     (photo) => photo.key,
     itemFor("unchecked"),
   );
-  const nextIn = (queue: ModerationTab, nextId: string | null) =>
-    nextId === null ? undefined : () => selectItem(queue)(nextId);
+  // After a decision (or Next) focus goes to the queue's detail container, never to the next
+  // item's primary action, so a keyboard reviewer keeps their place and a double Enter cannot
+  // decide the next item. Bumping a queue's token asks its QueueList to do that.
+  const [focusTokens, setFocusTokens] = useState<Record<QueueTab, number>>({
+    submissions: 0,
+    flagged: 0,
+    unchecked: 0,
+  });
+  const focusDetail = (queue: QueueTab) =>
+    setFocusTokens((tokens) => ({ ...tokens, [queue]: tokens[queue] + 1 }));
+
+  const nextIn = (queue: QueueTab, nextId: string | null) =>
+    nextId === null
+      ? undefined
+      : () => {
+          selectItem(queue)(nextId);
+          focusDetail(queue);
+        };
 
   // Decides row `id` of `queue` here. When it is the selected row, its leaving the queue moves
   // the selection to its neighbour (rather than reporting it handled elsewhere) and the URL
   // follows, so the reviewer keeps flowing down the queue; a failure keeps the row selected.
   // Resolves whether it succeeded.
   const decideRow = async (
-    queue: ModerationTab,
+    queue: QueueTab,
     selection: Pick<
       PinnedSelection<unknown>,
       "selectedId" | "nextId" | "expectRemoval"
@@ -232,7 +251,10 @@ function ModerationPage() {
       toast.error(t("error"));
       return false;
     }
-    if (isSelected) selectItem(queue)(nextId);
+    if (isSelected) {
+      selectItem(queue)(nextId);
+      focusDetail(queue);
+    }
     return true;
   };
 
@@ -426,8 +448,10 @@ function ModerationPage() {
             <QueueList
               items={pending}
               selectedId={submissions.selectedId}
+              label={t("tabs.submissions")}
               onSelect={selectItem("submissions")}
               detailTitle={t("detail.sheetTitle.submissions")}
+              focusDetailToken={focusTokens.submissions}
               defaultDetailOpen={itemFor("submissions") !== undefined}
               getId={(submission) => submission._id}
               renderRow={(submission) => (
@@ -492,8 +516,10 @@ function ModerationPage() {
             <QueueList
               items={flagged}
               selectedId={flaggedSelection.selectedId}
+              label={t("tabs.flagged")}
               onSelect={selectItem("flagged")}
               detailTitle={t("detail.sheetTitle.flagged")}
+              focusDetailToken={focusTokens.flagged}
               defaultDetailOpen={itemFor("flagged") !== undefined}
               getId={(photo) => photo.imageId}
               renderRow={(photo) => (
@@ -559,8 +585,10 @@ function ModerationPage() {
             <QueueList
               items={unchecked}
               selectedId={uncheckedSelection.selectedId}
+              label={t("tabs.unchecked")}
               onSelect={selectItem("unchecked")}
               detailTitle={t("detail.sheetTitle.unchecked")}
+              focusDetailToken={focusTokens.unchecked}
               defaultDetailOpen={itemFor("unchecked") !== undefined}
               getId={(photo) => photo.key}
               renderRow={(photo) => (
@@ -673,6 +701,13 @@ function ModerationPage() {
           onSave={editApprove}
           busy={busy}
           handledElsewhere={pending !== undefined && !editTargetPending}
+          // Once its submission has left the queue (approved here, or handled elsewhere) the
+          // Edit button that opened the dialog now belongs to the next item: land on the detail.
+          onCloseAutoFocus={(event) => {
+            if (editTargetPending) return;
+            event.preventDefault();
+            focusDetail("submissions");
+          }}
         />
       )}
     </div>
