@@ -29,8 +29,12 @@ const EXCHANGE_STATUSES_REVEALING_COPY = {
   cancelled: false,
 } as const satisfies Record<Doc<"exchanges">["status"], boolean>;
 
-// Rule P: the viewer is a party (initiator or recipient) of a revealing exchange in which the copy
-// is the offered or the requested side. Two index reads (by_offered_copy / by_requested_copy, both
+// Rule P: the viewer and the copy's CURRENT owner are the two parties (initiator and recipient,
+// either way round) of a revealing exchange in which the copy is the offered or the requested side.
+// A copy keeps its id through every sale, so an exchange with anyone else never counts: earlier
+// links in a resale chain and stale proposers to a former owner don't see the current owner's
+// private copy. Nor does the recipient of a swap a household co-manager offered on the owner's
+// behalf (the owner was not a party). Two index reads (by_offered_copy / by_requested_copy, both
 // bounded by the copy's own exchanges); only reached for a private copy no earlier rule passed, so
 // bulk callers don't need a memo.
 const isExchangePartyFor = async (
@@ -53,7 +57,10 @@ const isExchangePartyFor = async (
   return [...offered, ...requested].some(
     (exchange) =>
       EXCHANGE_STATUSES_REVEALING_COPY[exchange.status] &&
-      (exchange.initiatorId === viewerId || exchange.recipientId === viewerId),
+      ((exchange.initiatorId === viewerId &&
+        exchange.recipientId === copy.ownerId) ||
+        (exchange.recipientId === viewerId &&
+          exchange.initiatorId === copy.ownerId)),
   );
 };
 
@@ -99,8 +106,9 @@ export const buildCopyViewContext = async (
 //      library, open or not, whatever the owner's profile visibility.
 // ...EXCEPT that a PRIVATE copy (effectiveCopyVisibility — the owner's per-copy toggle) stops after
 // rules 1, 2 and 5 plus one private-only rule:
-//   P. the viewer is the other PARTY of an exchange involving the copy (offered or requested side)
-//      that is live or went ahead — see EXCHANGE_STATUSES_REVEALING_COPY.
+//   P. the viewer is the other PARTY, opposite the copy's CURRENT owner, of an exchange involving
+//      the copy (offered or requested side) that is live or went ahead — see
+//      EXCHANGE_STATUSES_REVEALING_COPY and isExchangePartyFor.
 // Rules 3 and 4 already require an OPEN copy, which is never private, so in practice this replaces
 // rule 6 with rule P for private copies. There is deliberately no admin rule here; admin surfaces use their own reads.
 // A block either way between viewer and owner vetoes every rule after 1-2, rule P included (the
