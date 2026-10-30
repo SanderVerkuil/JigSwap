@@ -2,6 +2,7 @@ import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { DashboardShell } from "@/components/dashboard-layout/shell";
 import { MarketingFooter } from "@/components/marketing/footer";
 import { MarketingHeader } from "@/components/marketing/header";
+import { canonicalHandleOf } from "@/components/members/canonical-handle";
 import {
   ProfileBody,
   ProfileCtaBand,
@@ -68,9 +69,11 @@ export const Route = createFileRoute("/members/$handle")({
     // The server's canonical handle (slug, else a username that resolves back
     // to this member, else the id); id URLs (QR/share links) redirect to it.
     // Never rebuild it from `username`: another member may hold that string as
-    // a slug (SEC-07). The memberId fallback covers a backend that predates
-    // `handle`, so the redirect never targets undefined.
-    const canonical = profile.hero.handle ?? profile.hero.memberId;
+    // a slug (SEC-07). A backend that predates `handle` falls back to the slug,
+    // else keeps the requested handle (it just resolved to this member), so
+    // slug and username URLs keep working and the redirect never targets
+    // undefined.
+    const canonical = canonicalHandleOf(profile.hero, params.handle);
     if (canonical !== params.handle) {
       throw redirect({
         to: "/members/$handle",

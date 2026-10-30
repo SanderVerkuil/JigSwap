@@ -10,6 +10,7 @@ import { Image } from "@/compat/image";
 import { PuzzlePlank3D } from "@/components/common/puzzle-plank-3d";
 import { SectionHead } from "@/components/dashboard-home/section-head";
 import { contentWidthClass } from "@/components/dashboard-layout/content-width";
+import { canonicalHandleOf } from "@/components/members/canonical-handle";
 import { MemberInitial } from "@/components/members/member-initial";
 import {
   ProfileCompletionsSection,
@@ -191,9 +192,10 @@ function HeroSection({
   const displayName = useMemberDisplayName();
   const name = displayName({ name: hero.displayName });
   const memberSinceYear = new Date(hero.memberSince).getFullYear();
-  // The server's canonical handle, shown only when it reads as a name (not the bare id). Never
-  // rebuilt from `username`: another member may hold that string as a slug (SEC-07).
-  const handle = hero.handle !== hero.memberId ? hero.handle : undefined;
+  // The canonical handle, shown only when it reads as a name (not the bare id). Never rebuilt from
+  // `username`: another member may hold that string as a slug (SEC-07).
+  const canonical = canonicalHandleOf(hero);
+  const handle = canonical !== hero.memberId ? canonical : undefined;
 
   return (
     <section className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
