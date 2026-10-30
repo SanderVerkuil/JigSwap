@@ -208,6 +208,9 @@ type Seeded = Awaited<ReturnType<typeof seed>>;
 const as = (t: T, who: "alice" | "bob") =>
   t.withIdentity({ subject: `clerk_${who}` });
 
+const asAdmin = (t: T) =>
+  t.withIdentity({ subject: "clerk_admin", metadata: { role: "admin" } });
+
 // The reads that show a copy to its owner or to another member.
 const copyReads = (t: T, s: Seeded, who: "alice" | "bob") => {
   const viewer = as(t, who);
@@ -259,6 +262,73 @@ describe("no raw storage ids in read responses", () => {
         expect(idsIn(result, blobs), `${who} ${name}`).toEqual([]);
       }
     }
+  });
+
+  test("a proposer sees only their own upload; baseline and current images are URLs", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    const blobs = await allBlobs(t);
+
+    const [proposal] = await as(t, "alice").query(
+      api.catalog.listMyChangeProposals.listMyChangeProposals,
+      {},
+    );
+
+    // `changes.image` is the proposer's own upload: the edit form restates it on re-edit.
+    expect(idsIn(proposal, blobs)).toEqual([s.proposedArt]);
+    expect(proposal.changes.image).toBe(s.proposedArt);
+    expect(proposal.baseline.image).toMatch(/^https:/);
+    expect(proposal.current.image).toBe(proposal.definitionImage);
+    expect(proposal.conflictFields).toEqual([]);
+  });
+
+  test("the admin proposal reads carry no catalogue box-art id", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    const blobs = await allBlobs(t);
+    const admin = asAdmin(t);
+
+    const reads = {
+      pending: await admin.query(
+        api.catalog.listPendingChangeProposals.listPendingChangeProposals,
+        {},
+      ),
+      forDefinition: await admin.query(
+        api.catalog.listProposalsForDefinition.listProposalsForDefinition,
+        { puzzleDefinitionId: s.definitionId },
+      ),
+      byId: await admin.query(api.catalog.getChangeProposal.getChangeProposal, {
+        changeProposalId: s.proposalId,
+      }),
+    };
+    for (const [name, result] of Object.entries(reads)) {
+      // Only the proposed upload under review, never the definition's current or baseline art.
+      expect(idsIn(result, blobs), name).toEqual([s.proposedArt]);
+    }
+  });
+
+  test("a conflict on the image is still detected after the art changed", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    // The definition's art was replaced since the proposal was filed, and the old blob is gone.
+    const newArt = await store(t);
+    await t.run(async (ctx) => {
+      await ctx.db.patch(s.puzzleId, { image: newArt });
+      await ctx.storage.delete(s.boxArt);
+    });
+    const blobs = await allBlobs(t);
+
+    const proposal = await asAdmin(t).query(
+      api.catalog.getChangeProposal.getChangeProposal,
+      { changeProposalId: s.proposalId },
+    );
+
+    expect(proposal?.conflictFields).toEqual(["image"]);
+    expect(proposal?.hasConflict).toBe(true);
+    // The baseline art no longer resolves, so it is left out rather than sent as an id.
+    expect(proposal?.baseline.image).toBeUndefined();
+    expect(proposal?.current.image).toMatch(/^https:/);
+    expect(idsIn(proposal, [...blobs, s.boxArt])).toEqual([s.proposedArt]);
   });
 
   test("the data export carries no box-art or copy-photo id", async () => {

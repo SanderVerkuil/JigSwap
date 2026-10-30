@@ -78,8 +78,21 @@ export const conflictFields = (
     .filter((key) => !same(baseline[key], current[key]))
     .map((key) => key as string);
 
+// `baseline.image` and `current.image` hold the definition's box-art `_storage` id (then and now).
+// Conflicts compare those raw ids; the response then carries the art's URL instead, or no image
+// when it can't be served. A raw box-art id must never reach a client: a member holding one could
+// attach it as their own photo and delete it (SEC-01).
+const withImageUrl = async (ctx: QueryCtx, fields: Fields): Promise<Fields> => {
+  if (fields.image === undefined) return fields;
+  const { image, ...rest } = fields;
+  const url = await boxArtUrl(ctx, image);
+  return url ? { ...rest, image: url } : rest;
+};
+
 // Enrich a proposal row for admin/member lists: definition context, proposer name, current
-// values + conflicts, resolved image URLs for review rendering.
+// values + conflicts, resolved image URLs for review rendering. `changes.image` stays a storage
+// id: it is the proposer's own upload (bound to them by catalog/boxArtUploads.assertBoxArtImage),
+// and their edit form restates it.
 export const enrichProposal = async (
   ctx: QueryCtx,
   proposal: Doc<"puzzleChangeProposals">,
@@ -107,7 +120,8 @@ export const enrichProposal = async (
       ? await boxArtUrl(ctx, puzzle.image)
       : undefined,
     proposerName: proposer?.name,
-    current,
+    baseline: await withImageUrl(ctx, proposal.baseline),
+    current: await withImageUrl(ctx, current),
     conflictFields: conflicts,
     hasConflict: conflicts.length > 0,
     proposedImageUrl: proposal.changes.image
