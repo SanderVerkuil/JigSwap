@@ -1404,7 +1404,7 @@
     "shelf": {
       "title": "Your Shelf",
       "meta": "{owned, plural, one {# on the shelf} other {# on the shelf}} · {forTrade, plural, =0 {none up for trade} one {# up for trade} other {# up for trade}}",
-      "viewCollections": "View Collections",
+      "allPuzzles": "All my puzzles",
       "empty": "Your shelf is waiting for its first puzzle — add one and it'll sit right here, ready to be admired (and swapped). 🧩",
       "addFirst": "Add Your First Puzzle",
       "stats": {
@@ -1432,7 +1432,7 @@
     "pulse": {
       "inMotion": {
         "title": "In Motion",
-        "all": "All",
+        "all": "All<sr> exchanges</sr>",
         "meta": "{kind} · {direction} · {who}",
         "kind": {
           "trade": "Trade",
@@ -1455,7 +1455,7 @@
       },
       "goals": {
         "title": "Goals",
-        "all": "All",
+        "all": "All<sr> goals</sr>",
         "done": "{current}/{target} done",
         "empty": "No goals yet — set yourself a target and watch the ring fill up. 🧩",
         "noCurrent": "No current goals — set a new target and watch the ring fill up. 🧩",

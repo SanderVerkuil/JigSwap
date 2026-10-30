@@ -1404,7 +1404,7 @@
     "shelf": {
       "title": "Jouw Plank",
       "meta": "{owned, plural, one {# op de plank} other {# op de plank}} · {forTrade, plural, =0 {geen te ruil} one {# te ruil} other {# te ruil}}",
-      "viewCollections": "Collecties Bekijken",
+      "allPuzzles": "Al mijn puzzels",
       "empty": "Je plank wacht op zijn eerste puzzel — voeg er een toe en hij staat hier te pronken (en te ruilen). 🧩",
       "addFirst": "Voeg Je Eerste Puzzel Toe",
       "stats": {
@@ -1432,7 +1432,7 @@
     "pulse": {
       "inMotion": {
         "title": "In Beweging",
-        "all": "Alles",
+        "all": "Alle<sr> uitwisselingen</sr>",
         "meta": "{kind} · {direction} · {who}",
         "kind": {
           "trade": "Ruil",
@@ -1455,7 +1455,7 @@
       },
       "goals": {
         "title": "Doelen",
-        "all": "Alles",
+        "all": "Alle<sr> doelen</sr>",
         "done": "{current}/{target} gedaan",
         "empty": "Nog geen doelen — stel jezelf een doel en zie de ring vollopen. 🧩",
         "noCurrent": "Geen lopende doelen — stel een nieuw doel en zie de ring vollopen. 🧩",

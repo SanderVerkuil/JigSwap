@@ -24,6 +24,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
 import { ArrowLeftRight, Bell, Package, Target } from "lucide-react";
+import type { ReactNode } from "react";
 import { useTranslations } from "use-intl";
 import { SectionHead } from "./section-head";
 import { useCurrentMember } from "./use-current-member";
@@ -39,6 +40,10 @@ type Member = NonNullable<ReturnType<typeof useCurrentMember>["member"]>;
 const ACTIVE_STATUSES = new Set(["proposed", "accepted", "disputed"]);
 
 /* ----------------------------------------------------------- In Motion */
+
+// The section links read "All" on screen; the hidden rest of the message ("All
+// exchanges", "All goals") gives each its own accessible name.
+const srOnly = (chunks: ReactNode) => <span className="sr-only">{chunks}</span>;
 
 // Soft status pill tones: Pending amber, Accepted/Disputed violet,
 // Completed green — everything else muted.
@@ -157,7 +162,7 @@ function InMotionColumn({ exchanges }: { exchanges: ExchangeRow[] }) {
         icon={ArrowLeftRight}
         action={
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/trades">{t("all")}</Link>
+            <Link href="/trades">{t.rich("all", { sr: srOnly })}</Link>
           </Button>
         }
       />
@@ -275,7 +280,7 @@ function GoalsColumn({ goals }: { goals: GoalRow[] }) {
         icon={Target}
         action={
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/goals">{t("all")}</Link>
+            <Link href="/goals">{t.rich("all", { sr: srOnly })}</Link>
           </Button>
         }
       />

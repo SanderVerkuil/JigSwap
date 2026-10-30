@@ -102,6 +102,49 @@ const sentences = (html: string) =>
     )
     .map((el) => text(el).replace(/\s+/g, " ").trim());
 
+describe("PulseSection — section links", () => {
+  // [href, accessible text, visible text] of the In Motion and Goals "All" links.
+  const allLinks = (html: string) =>
+    elements(parseFragment(html))
+      .filter(
+        (el) =>
+          el.tagName === "a" &&
+          el.attrs.some(
+            (a) =>
+              a.name === "href" &&
+              (a.value === "/trades" || a.value === "/goals"),
+          ) &&
+          /^Alle?\b/.test(text(el)),
+      )
+      .map((a) => [
+        a.attrs.find((x) => x.name === "href")?.value,
+        text(a),
+        text({
+          childNodes: a.childNodes.filter(
+            (child) =>
+              !("attrs" in child) ||
+              !child.attrs.some(
+                (x) => x.name === "class" && x.value === "sr-only",
+              ),
+          ),
+        }),
+      ]);
+
+  it("names each All link after what it lists", () => {
+    expect(allLinks(render([]))).toEqual([
+      ["/trades", "All exchanges", "All"],
+      ["/goals", "All goals", "All"],
+    ]);
+  });
+
+  it("in Dutch, too", () => {
+    expect(allLinks(render([], "nl"))).toEqual([
+      ["/trades", "Alle uitwisselingen", "Alle"],
+      ["/goals", "Alle doelen", "Alle"],
+    ]);
+  });
+});
+
 describe("PulseSection — Latest rows", () => {
   it("names the puzzle when the feed sends its title", () => {
     const rows = sentences(

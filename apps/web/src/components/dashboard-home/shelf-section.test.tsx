@@ -22,8 +22,17 @@ const ME = "me1" as Id<"users">;
 
 // Router-free Link: the test asserts the rendered href, not routing.
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({ to, children, ...rest }: { to: string; children?: ReactNode }) => (
-    <a href={to} {...rest}>
+  Link: ({
+    to,
+    hash,
+    children,
+    ...rest
+  }: {
+    to: string;
+    hash?: string;
+    children?: ReactNode;
+  }) => (
+    <a href={to + (hash ? `#${hash}` : "")} {...rest}>
       {children}
     </a>
   ),
@@ -171,6 +180,36 @@ describe("ShelfSection — stats", () => {
     const classes = attr(statRail(html)!, "class")?.split(" ") ?? [];
     expect(classes).toContain("grid-cols-2");
     expect(classes).toContain("lg:flex-col");
+  });
+});
+
+describe("ShelfSection — links", () => {
+  it("offers all my puzzles, not collections", () => {
+    const html = render(<ShelfSection />, { copies: copies(3) });
+    const action = all(html).find(
+      (el) => el.tagName === "a" && text(el) === en.dashboard.shelf.allPuzzles,
+    );
+    expect(action && attr(action, "href")).toBe("/my-puzzles");
+    expect(html).not.toContain("/collections");
+  });
+
+  it("points the rating row at your own reviews", () => {
+    const html = render(<ShelfSection />, {
+      copies: copies(3),
+      stats: { ...noStats, totalReviews: 2, averageRating: 4.5 },
+    });
+    const rating = statRows(html).find(([, label]) =>
+      label?.includes(en.dashboard.shelf.stats.ratingLabel),
+    );
+    expect(rating?.[0]).toBe("/profile#reviews");
+  });
+
+  it("keeps the shelf meta off phones, where the owned row repeats it", () => {
+    const html = render(<ShelfSection />, { copies: copies(3) });
+    const meta = all(html).find(
+      (el) => attr(el, "class") === "hidden sm:inline",
+    );
+    expect(meta && text(meta)).toBe("3 on the shelf · 3 up for trade");
   });
 });
 

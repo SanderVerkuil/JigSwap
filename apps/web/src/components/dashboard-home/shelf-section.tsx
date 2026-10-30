@@ -10,6 +10,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
+import { Link as RouterLink } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import { BookOpen, ChevronRight } from "lucide-react";
 import { useMemo } from "react";
@@ -104,18 +105,21 @@ function toPlankBox(
 
 function StatRow({
   href,
+  hash,
   value,
   label,
   sub,
 }: {
   href: string;
+  hash?: string;
   value: string | number;
   label: string;
   sub: string;
 }) {
   return (
-    <Link
-      href={href}
+    <RouterLink
+      to={href}
+      hash={hash}
       className="group flex items-center gap-2.5 border-t py-3 sm:gap-3.5 lg:first:border-t-0"
     >
       <span className="font-heading min-w-9 text-xl leading-none font-bold sm:min-w-[52px] sm:text-2xl">
@@ -126,7 +130,7 @@ function StatRow({
         <span className="text-muted-foreground mt-px block text-xs">{sub}</span>
       </span>
       <ChevronRight className="text-muted-foreground group-hover:text-foreground hidden size-4 shrink-0 transition-colors sm:block" />
-    </Link>
+    </RouterLink>
   );
 }
 
@@ -215,8 +219,10 @@ export function ShelfSection() {
       label: t("stats.completedLabel"),
       sub: t("stats.completedSub"),
     },
+    // Your own reviews: the `reviews` anchor of ReputationSection on /profile.
     rating: {
-      href: "/people",
+      href: "/profile",
+      hash: "reviews",
       value: stats?.averageRating ? stats.averageRating.toFixed(1) : "—",
       label: t("stats.ratingLabel"),
       sub: t("stats.ratingSub", { count: totalReviews }),
@@ -240,10 +246,18 @@ export function ShelfSection() {
         title={t("title")}
         icon={BookOpen}
         headingProps={SHELF_HEADING_PROPS}
-        meta={owned > 0 ? t("meta", { owned, forTrade }) : undefined}
+        meta={
+          // Phones drop the meta: it would truncate beside the title and the
+          // owned stat row below repeats both numbers.
+          owned > 0 ? (
+            <span className="hidden sm:inline">
+              {t("meta", { owned, forTrade })}
+            </span>
+          ) : undefined
+        }
         action={
           <Button variant="outline" size="sm" asChild>
-            <Link href="/collections">{t("viewCollections")}</Link>
+            <Link href="/my-puzzles">{t("allPuzzles")}</Link>
           </Button>
         }
       />
