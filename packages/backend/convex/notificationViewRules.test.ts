@@ -363,6 +363,26 @@ describe("notificationHref", () => {
     ).toBe("/whats-new#entry-2026-10-tours");
   });
 
+  test("a submission review deep-links the moderation console to that submission", () => {
+    const puzzle = { kind: "puzzle", puzzleId: "p 1" } as const;
+    expect(
+      notificationHref({
+        ...base,
+        type: "admin_definition_submitted",
+        subject: puzzle,
+      }),
+    ).toBe("/admin/moderation?tab=submissions&item=p%201");
+    // A puzzle that no longer exists falls back to the console's default tab.
+    expect(
+      notificationHref({
+        ...base,
+        type: "admin_definition_submitted",
+        subject: puzzle,
+        subjectAvailable: false,
+      }),
+    ).toBe("/admin/moderation");
+  });
+
   test("static targets", () => {
     expect(notificationHref({ ...base, type: "goal_achieved" })).toBe("/goals");
     expect(notificationHref({ ...base, type: "review_received" })).toBe(
@@ -415,7 +435,12 @@ describe("legacyNotificationHref (mirror of the web's notificationHref)", () => 
     ["proposal_rejected", undefined, "/puzzles"],
     ["admin_proposal_filed", "cp", "/admin/puzzles/proposals/cp"],
     ["admin_proposal_filed", undefined, "/admin/puzzles/proposals"],
-    ["admin_definition_submitted", "p", "/admin/moderation"],
+    [
+      "admin_definition_submitted",
+      "p",
+      "/admin/moderation?tab=submissions&item=p",
+    ],
+    ["admin_definition_submitted", undefined, "/admin/moderation"],
     ["follow_request_received", "u", "/people"],
     ["follow_request_approved", "u", "/people"],
     ["household_invite_accepted", "h", "/household"],

@@ -220,8 +220,11 @@ export const notificationUrl = (type: string, relatedId?: string): string => {
       return relatedId
         ? `/admin/puzzles/proposals/${relatedId}`
         : "/admin/puzzles/proposals";
+    // relatedId is the submitted puzzle's `_id`, which the moderation console selects by.
     case "admin_definition_submitted":
-      return "/admin/moderation";
+      return relatedId
+        ? `/admin/moderation?tab=submissions&item=${relatedId}`
+        : "/admin/moderation";
     // Follow notifications land on the People page, where the requests strip lives.
     case "new_follower":
     case "follow_request_received":
