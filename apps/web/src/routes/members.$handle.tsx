@@ -21,6 +21,7 @@ import { gateway, Id } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
 import { safeStorage } from "@/lib/safe-storage";
+import { readSidebarCookies } from "@/lib/sidebar-state";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
@@ -47,6 +48,8 @@ export const Route = createFileRoute("/members/$handle")({
   validateSearch: (search: Record<string, unknown>): { invite?: string } => ({
     invite: typeof search.invite === "string" ? search.invite : undefined,
   }),
+  // Signed-in viewers get the dashboard shell: SSR needs the remembered sidebar state (UX-05).
+  beforeLoad: () => ({ sidebar: readSidebarCookies() }),
   loaderDeps: ({ search }) => ({ invite: search.invite }),
   loader: async ({ context, params, deps }) => {
     const fullProfile = await context.queryClient.ensureQueryData(
@@ -115,6 +118,7 @@ function MemberPending() {
 
 function MemberPage() {
   const { userId } = useRouteContext({ from: "__root__" });
+  const sidebar = Route.useRouteContext({ select: (c) => c.sidebar });
   const displayName = useMemberDisplayName();
   const { handle } = Route.useParams();
   const { invite } = Route.useSearch();
@@ -194,7 +198,7 @@ function MemberPage() {
   }
 
   return (
-    <DashboardShell>
+    <DashboardShell sidebar={sidebar}>
       <AuthedMemberPage
         profile={profile}
         invite={invite}
@@ -325,6 +329,7 @@ function OwnerPreviewBanner({ locked }: { locked: boolean }) {
 
 function MemberNotFound() {
   const { userId } = useRouteContext({ from: "__root__" });
+  const sidebar = Route.useRouteContext({ select: (c) => c.sidebar });
   const t = useTranslations("members");
   const body = (
     <div className="mx-auto flex max-w-md flex-col items-center gap-4 px-4 py-24 text-center">
@@ -343,7 +348,7 @@ function MemberNotFound() {
   );
   // App convention: 404 inside the authed app renders within the dashboard
   // shell (see _dashboard/route.tsx's notFoundComponent).
-  if (userId) return <DashboardShell>{body}</DashboardShell>;
+  if (userId) return <DashboardShell sidebar={sidebar}>{body}</DashboardShell>;
   return (
     <div className="mk-root font-mk-sans flex min-h-screen flex-col overflow-x-clip">
       <MarketingHeader />

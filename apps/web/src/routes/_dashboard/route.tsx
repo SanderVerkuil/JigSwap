@@ -9,6 +9,7 @@ import { TourProvider } from "@/components/tour/tour-provider";
 import { PageLoading } from "@/components/ui/loading";
 import { WhatsNewHighlight } from "@/components/whats-new/highlight-dialog";
 import { requireAuth } from "@/lib/require-auth";
+import { readSidebarCookies } from "@/lib/sidebar-state";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
 // Pathless layout for the logged-in app. Auth: requireAuth reads the Clerk
@@ -34,7 +35,11 @@ export const Route = createFileRoute("/_dashboard")({
         throw redirect({ to: "/catalog/$id", params: { id: puzzleDetail[1] } });
       }
     }
-    return requireAuth({ context, location });
+    // The remembered sidebar state, read here so SSR paints the sidebar the browser keeps (UX-05).
+    return {
+      ...requireAuth({ context, location }),
+      sidebar: readSidebarCookies(),
+    };
   },
   pendingComponent: () => <PageLoading message="Loading dashboard..." />,
   // 404 inside the app renders within the dashboard shell (this layout's Outlet).
@@ -43,8 +48,9 @@ export const Route = createFileRoute("/_dashboard")({
 });
 
 function DashboardLayout() {
+  const sidebar = Route.useRouteContext({ select: (c) => c.sidebar });
   return (
-    <DashboardShell>
+    <DashboardShell sidebar={sidebar}>
       <DurationPromptProvider>
         <CompletionFollowUpProvider>
           {/* Above the Outlet so a running tour survives its own page changes. */}
