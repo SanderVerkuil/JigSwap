@@ -92,6 +92,12 @@ export const RATE_LIMITS = {
   // with the owner and notifies them, so a propose/cancel (or propose/decline) loop reaches one
   // owner at most this often. Charged only after the reachability gate (see exchange/propose).
   exchangePair: { windowMs: WEEK, max: 10 },
+  // In-app household invites (household/inviteToHousehold), all invitees together.
+  householdInvite: { windowMs: DAY, max: 20 },
+  // Invites from one household to one member, keyed "<householdId>:<invitee>". A revoke deletes
+  // the invite and a decline closes it, so without this an invite/revoke loop would notify the
+  // invitee without end; it is also the household's re-invite cooldown after a revoke or decline.
+  householdInvitePair: { windowMs: WEEK, max: 3 },
 } as const satisfies Record<string, { windowMs: number; max: number }>;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;

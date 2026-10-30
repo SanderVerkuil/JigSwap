@@ -1924,7 +1924,8 @@
       "searchHeading": "Find a member",
       "emailHeading": "Invite by email",
       "dialogTitleNamed": "Invite to {name}",
-      "pendingOnMembersTab": "Sent invitations are listed on the Members tab."
+      "pendingOnMembersTab": "Sent invitations are listed on the Members tab.",
+      "rateLimited": "You've sent a lot of invites lately. Try again later."
     },
     "leave": {
       "action": "Leave household",

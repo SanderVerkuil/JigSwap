@@ -2125,6 +2125,7 @@ export default defineSchema({
 
   // Fixed-window rate limit counters (lib/rateLimits). One row per key ("<limit>:<memberId>", or
   // "<limit>:<memberId>:<otherId>" for a per-pair limit such as followPair, or
+  // "householdInvitePair:<householdId>:<inviteeId>", or
   // "followNotice:<channel>:<type>:<recipient>:<actor>"), reset in place when its window has
   // passed. Member keys keep the table bounded by the member count; pair and notice keys only by
   // what each member's own limits let them touch, and nothing prunes expired rows yet.

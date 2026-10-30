@@ -1924,7 +1924,8 @@
       "searchHeading": "Zoek een lid",
       "emailHeading": "Uitnodigen per e-mail",
       "dialogTitleNamed": "Uitnodigen voor {name}",
-      "pendingOnMembersTab": "Verstuurde uitnodigingen staan op het tabblad Leden."
+      "pendingOnMembersTab": "Verstuurde uitnodigingen staan op het tabblad Leden.",
+      "rateLimited": "Je hebt de laatste tijd veel uitnodigingen verstuurd. Probeer het later opnieuw."
     },
     "leave": {
       "action": "Huishouden verlaten",
