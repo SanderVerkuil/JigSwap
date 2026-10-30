@@ -27,8 +27,12 @@ Click your avatar to open the account menu. Besides **Profile**,
 **Where:** **What's new** in your account menu (`/whats-new`).
 
 The What's new page lists recent features, improvements and fixes, newest
-first. Updates you haven't seen yet are marked **New**, and the menu item shows
-how many there are, for example **What's new (2)**.
+first. Each update shows a short summary: choose **Read more** for the details.
+The page starts with the latest updates, and a button at the bottom, for
+example **Show 32 older updates**, lists the rest. Choose **Feature**,
+**Improvement** or **Fix** at the top to see one kind of update, or **All**.
+Updates you haven't seen yet are marked **New** and shown in full, and the menu
+item shows how many there are, for example **What's new (2)**.
 
 When there's something new, JigSwap may also show it in a short dialog. Click
 **Read more** to open the full entry, or **Maybe later** to close it.

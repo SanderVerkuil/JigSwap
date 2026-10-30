@@ -27,9 +27,13 @@ Klik op je avatar om het accountmenu te openen. Naast **Profiel**,
 **Waar:** **Wat is er nieuw** in je accountmenu (`/whats-new`).
 
 De pagina Wat is er nieuw toont recente functies, verbeteringen en oplossingen,
-de nieuwste eerst. Updates die je nog niet hebt gezien, zijn gemarkeerd met
-**Nieuw**, en het menu-item toont hoeveel het er zijn, bijvoorbeeld
-**Wat is er nieuw (2)**.
+de nieuwste eerst. Bij elke update staat een korte samenvatting: kies
+**Lees meer** voor de details. De pagina begint met de laatste updates, en een
+knop onderaan, bijvoorbeeld **32 oudere updates tonen**, toont de rest. Kies
+bovenaan **Functie**, **Verbetering** of **Oplossing** om één soort update te
+zien, of **Alle**. Updates die je nog niet hebt gezien, zijn gemarkeerd met
+**Nieuw** en staan helemaal open, en het menu-item toont hoeveel het er zijn,
+bijvoorbeeld **Wat is er nieuw (2)**.
 
 Is er iets nieuws, dan kan JigSwap het ook in een kort venster tonen. Klik op
 **Lees meer** om het volledige bericht te openen, of op **Misschien later** om

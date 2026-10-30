@@ -5334,6 +5334,12 @@
       "body": "Nieuwe functies en oplossingen verschijnen hier."
     },
     "readMore": "Lees meer",
+    "showLess": "Minder tonen",
+    "showOlder": "{count, plural, one {# oudere update tonen} other {# oudere updates tonen}}",
+    "filter": {
+      "label": "Updates filteren op soort",
+      "all": "Alle"
+    },
     "seeAll": "Alle updates bekijken",
     "modal": {
       "eyebrow": "Nieuw in JigSwap",

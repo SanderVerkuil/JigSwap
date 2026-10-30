@@ -5334,6 +5334,12 @@
       "body": "New features and fixes will show up here."
     },
     "readMore": "Read more",
+    "showLess": "Show less",
+    "showOlder": "{count, plural, one {Show # older update} other {Show # older updates}}",
+    "filter": {
+      "label": "Filter updates by type",
+      "all": "All"
+    },
     "seeAll": "See all updates",
     "modal": {
       "eyebrow": "New in JigSwap",
