@@ -9,6 +9,6 @@ notify: false
 ---
 
 When we update JigSwap while you have it open, a message tells you a new
-version is available. Click **Reload** to switch to it when you're ready, or
+version is available. Choose **Reload** to switch to it when you're ready, or
 **Not now** to keep going. JigSwap never reloads on its own, so nothing you're
 typing is lost.

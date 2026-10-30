@@ -1,7 +1,7 @@
 ---
 id: messages-improvements
 publishedAt: "2026-10-18T16:00:00Z"
-title: "Improvements to messages"
+title: "Photos and locations in messages"
 summary: "Send photos and share a meeting spot right from a conversation."
 category: feature
 highlight: true

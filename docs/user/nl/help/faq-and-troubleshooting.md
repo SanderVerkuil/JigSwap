@@ -121,7 +121,7 @@ JigSwap houdt je sessie gesynchroniseerd; als je in een ander tabblad uitlogt of
 <details>
 <summary>Ik zie "Er is een nieuwe versie van JigSwap". Wat moet ik doen?</summary>
 
-We hebben JigSwap bijgewerkt terwijl je het open had. Klik op **Opnieuw
+We hebben JigSwap bijgewerkt terwijl je het open had. Kies **Opnieuw
 laden** om de nieuwe versie te gebruiken; maak eerst af wat je aan het typen
 bent, want opnieuw laden wist dat. **Niet nu** verbergt het bericht tot de
 volgende update.
