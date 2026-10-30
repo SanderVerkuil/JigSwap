@@ -46,8 +46,12 @@ De stappen zijn:
 5. **Maak het persoonlijk** (optioneel): stel je foto en locatie in, en wie je
    profiel kan zien.
 
-Gebruik **Doorgaan** om naar de volgende stap te gaan, **Overslaan** om een
-stap over te slaan, of **Later afmaken** om te stoppen. Ben je klaar, dan brengt
+Gebruik **Doorgaan** om verder te gaan, **Overslaan** om een stap over te
+slaan, of **Later afmaken** om te stoppen. Doorgaan en Overslaan brengen je naar
+de volgende stap die nog openstaat, dus stappen die je al hebt gedaan kom je niet
+opnieuw tegen. Staat er aan het eind nog een stap open, dan zie je
+**Bijna klaar** met het aantal stappen dat nog over is, en brengt
+**Verder met instellen** je terug naar de eerste. Ben je klaar, dan brengt
 **Naar mijn plank** je terug naar je dashboard, en start
 **Geef me een rondleiding** een korte rondleiding.
 

@@ -5703,7 +5703,9 @@
     },
     "done": {
       "title": "Your shelf is ready",
+      "almostTitle": "Almost there: {count, plural, one {# step} other {# steps}} left",
       "summary": "{copies, plural, one {# puzzle} other {# puzzles}} · {solves} finished · {following} following",
+      "continueSetup": "Continue setup",
       "goToShelf": "Go to my shelf",
       "tour": "Show me around"
     }

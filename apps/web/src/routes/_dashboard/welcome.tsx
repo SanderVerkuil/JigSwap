@@ -6,9 +6,10 @@ import {
 } from "@/components/quick-start/flow-view";
 import { HouseholdStep } from "@/components/quick-start/household-step";
 import {
-  nextFlowStep,
+  nextOpenStep,
   parseFlowStep,
   resolveFlowStep,
+  withSkippedStep,
   type FlowStep,
 } from "@/components/quick-start/logic";
 import { PeopleStep } from "@/components/quick-start/people-step";
@@ -34,7 +35,8 @@ import { useTranslations } from "use-intl";
 
 // The quick start flow (spec §2.2): one URL per step, so the browser back button walks back
 // through them. A missing or unknown step resolves to the first open required step. Skip
-// stores the skip; Continue stores nothing (done-ness is derived from data). No dialogs inside
+// stores the skip; Continue stores nothing (done-ness is derived from data). Both go to the next
+// step that is still to do, so finished steps are never walked through again. No dialogs inside
 // the flow, and the What's new highlight never opens here.
 export const Route = createFileRoute("/_dashboard/welcome")({
   validateSearch: (search: Record<string, unknown>): { step?: FlowStep } => ({
@@ -54,6 +56,22 @@ function WelcomePage() {
     convexQuery(gateway.onboarding.quickStart, member ? {} : "skip"),
   );
   const record = useConvexMutation(gateway.onboarding.recordQuickStart);
+  // Skip shows as stored at once, so the next screen (often the done panel) never counts the
+  // skipped step as still open while the write is in flight. A separate handle: `record` must
+  // stay stable for the effect below.
+  const recordSkip = useConvexMutation(
+    gateway.onboarding.recordQuickStart,
+  ).withOptimisticUpdate((store, command) => {
+    if (command.kind !== "skipStep" || !command.step) return;
+    const current = store.getQuery(gateway.onboarding.quickStart, {});
+    if (current) {
+      store.setQuery(
+        gateway.onboarding.quickStart,
+        {},
+        withSkippedStep(current, command.step),
+      );
+    }
+  });
   const tCommon = useTranslations("common");
   useReportSurfaceBusy("quickstart", true);
   useMarkQuickStartUsed(true);
@@ -75,10 +93,10 @@ function WelcomePage() {
 
   const go = (next: FlowStep) => void navigate({ search: { step: next } });
   const skip = () => {
-    record({ kind: "skipStep", step }).catch((error: unknown) =>
+    recordSkip({ kind: "skipStep", step }).catch((error: unknown) =>
       console.error("Failed to skip the step:", error),
     );
-    go(nextFlowStep(step));
+    go(nextOpenStep(step, view));
   };
 
   return (
@@ -86,7 +104,7 @@ function WelcomePage() {
       step={step}
       view={view}
       onSkip={skip}
-      onContinue={() => go(nextFlowStep(step))}
+      onContinue={() => go(nextOpenStep(step, view))}
     >
       <StepBody step={step} view={view} onSkip={skip} />
     </QuickStartFlowView>

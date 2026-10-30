@@ -115,6 +115,20 @@ const VIEW: QuickStartView = {
   requiredTotal: 4,
 };
 
+// Every required step closed: three done, profile skipped.
+const DONE_VIEW: QuickStartView = {
+  ...VIEW,
+  cardVisible: false,
+  steps: [
+    step("puzzles", "done", { count: 7 }),
+    step("solves", "done", { count: 3 }),
+    step("people", "done", { count: 0 }),
+    step("household", "skipped", { pendingInvite: false }),
+    step("profile", "skipped"),
+  ],
+  requiredDone: 3,
+};
+
 describe("QuickSetupCardView (active)", () => {
   const html = render(
     <QuickSetupCardView view={VIEW} mode="active" onHide={() => {}} />,
@@ -378,7 +392,7 @@ describe("QuickStartFlowView", () => {
 
 describe("QuickStartDonePanel", () => {
   it("announces the summary and links to the shelf", () => {
-    const html = render(<QuickStartDonePanel view={VIEW} />);
+    const html = render(<QuickStartDonePanel view={DONE_VIEW} />);
     expect(text(byTag(html, "h2")[0]!)).toBe("Your shelf is ready");
     const status = all(html).find((el) => attr(el, "role") === "status");
     expect(text(status!)).toBe("7 puzzles · 3 finished · 0 following");
@@ -386,10 +400,43 @@ describe("QuickStartDonePanel", () => {
     expect(links.map((a) => [text(a), attr(a, "href")])).toEqual([
       ["Go to my shelf", "/dashboard"],
     ]);
+    expect(attr(links[0]!, "class")).toContain("bg-jigsaw-primary");
+  });
+
+  it("says how many required steps are left and leads back to the first", () => {
+    const html = render(<QuickStartDonePanel view={VIEW} />);
+    expect(text(byTag(html, "h2")[0]!)).toBe("Almost there: 2 steps left");
+    const links = byTag(html, "a");
+    expect(links.map((a) => [text(a), attr(a, "href")])).toEqual([
+      ["Continue setup", "/welcome?step=people"],
+      ["Go to my shelf", "/dashboard"],
+    ]);
+    expect(attr(links[0]!, "class")).toContain("bg-jigsaw-primary");
+    expect(attr(links[1]!, "class")).not.toContain("bg-jigsaw-primary");
+    // No celebration while steps are open.
+    expect(html).not.toContain("animate-ping");
+  });
+
+  it("counts one step left in the singular, in English and Dutch", () => {
+    const oneLeft: QuickStartView = {
+      ...DONE_VIEW,
+      steps: DONE_VIEW.steps.map((s) =>
+        s.id === "profile" ? { ...s, status: "todo" } : s,
+      ),
+    };
+    expect(
+      text(byTag(render(<QuickStartDonePanel view={oneLeft} />), "h2")[0]!),
+    ).toBe("Almost there: 1 step left");
+    const nlHtml = render(<QuickStartDonePanel view={oneLeft} />, "nl");
+    expect(text(byTag(nlHtml, "h2")[0]!)).toBe("Bijna klaar: nog 1 stap");
+    expect(byTag(nlHtml, "a").map((a) => [text(a), attr(a, "href")])).toEqual([
+      ["Verder met instellen", "/welcome?step=profile"],
+      ["Naar mijn plank", "/dashboard"],
+    ]);
   });
 
   it("only animates under motion-safe", () => {
-    const html = render(<QuickStartDonePanel view={VIEW} />);
+    const html = render(<QuickStartDonePanel view={DONE_VIEW} />);
     for (const el of all(html)) {
       const cls = attr(el, "class") ?? "";
       for (const token of cls.split(/\s+/)) {
@@ -401,7 +448,8 @@ describe("QuickStartDonePanel", () => {
   });
 
   it("renders in Dutch", () => {
-    const html = render(<QuickStartDonePanel view={VIEW} />, "nl");
+    const html = render(<QuickStartDonePanel view={DONE_VIEW} />, "nl");
+    expect(text(byTag(html, "h2")[0]!)).toBe("Je plank staat klaar");
     const status = all(html).find((el) => attr(el, "role") === "status");
     expect(text(status!)).toBe("7 puzzels · 3 afgemaakt · 0 gevolgd");
     expect(text(byTag(html, "a")[0]!)).toBe("Naar mijn plank");
@@ -476,7 +524,7 @@ describe("QuickStartDonePanel: tour hand-off", () => {
   it("shows Show me around next to the shelf link", () => {
     const html = render(
       <QuickStartDonePanel
-        view={VIEW}
+        view={DONE_VIEW}
         tourAction={
           <TourHandoffButton state={{ kind: "take" }} onStart={noop} />
         }
@@ -488,6 +536,22 @@ describe("QuickStartDonePanel: tour hand-off", () => {
     ]);
     const [button] = byTag(html, "button");
     expect(attr(button!, "type")).toBe("button");
+  });
+
+  it("keeps Show me around after the shelf link while steps are open", () => {
+    const html = render(
+      <QuickStartDonePanel
+        view={VIEW}
+        tourAction={
+          <TourHandoffButton state={{ kind: "take" }} onStart={noop} />
+        }
+      />,
+    );
+    expect(controls(html).map((el) => nameOf(el))).toEqual([
+      "Continue setup",
+      "Go to my shelf",
+      "Show me around",
+    ]);
   });
 
   it("reads as a resume while the tour is paused, and in Dutch", () => {

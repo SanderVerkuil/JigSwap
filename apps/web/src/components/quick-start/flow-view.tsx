@@ -10,6 +10,7 @@ import { useTranslations } from "use-intl";
 import {
   displayCount,
   isTextEntry,
+  openRequiredSteps,
   progressSegments,
   rowState,
   stepPosition,
@@ -148,8 +149,9 @@ export function QuickStartFlowView({
 
 /**
  * The done panel (spec §5.5). Motion is motion-safe only, so it renders static under reduced
- * motion. `tourAction` is the seam for Q8's "Show me around" hand-off; until then only "Go to
- * my shelf" shows.
+ * motion. While a required step is still to do it says how many are left and leads back to the
+ * first one, with "Go to my shelf" as the secondary action; it only celebrates once every
+ * required step is done or skipped. `tourAction` is the "Show me around" hand-off.
  */
 export function QuickStartDonePanel({
   view,
@@ -162,11 +164,15 @@ export function QuickStartDonePanel({
   const headingRef = useFocusOnChange<HTMLHeadingElement>("done");
   const count = (id: QuickStartStepId) =>
     view.steps.find((s) => s.id === id)?.count ?? 0;
+  const open = openRequiredSteps(view);
+  const first = open[0];
 
   return (
     <div className="flex flex-col items-center gap-4 py-10 text-center">
       <span aria-hidden className="relative flex size-14">
-        <span className="bg-jigsaw-primary/30 absolute inset-0 rounded-2xl motion-safe:animate-ping motion-safe:[animation-iteration-count:1]" />
+        {!first && (
+          <span className="bg-jigsaw-primary/30 absolute inset-0 rounded-2xl motion-safe:animate-ping motion-safe:[animation-iteration-count:1]" />
+        )}
         <span className="bg-jigsaw-primary-tint text-jigsaw-primary motion-safe:animate-in motion-safe:zoom-in-90 relative flex size-14 items-center justify-center rounded-2xl">
           <Puzzle className="size-7" />
         </span>
@@ -176,7 +182,7 @@ export function QuickStartDonePanel({
         tabIndex={-1}
         className="font-heading text-2xl font-semibold focus-visible:outline-none"
       >
-        {t("title")}
+        {first ? t("almostTitle", { count: open.length }) : t("title")}
       </h2>
       <p role="status" className="text-muted-foreground text-sm">
         {t("summary", {
@@ -186,7 +192,18 @@ export function QuickStartDonePanel({
         })}
       </p>
       <div className="flex flex-col gap-2 sm:flex-row">
-        <Button asChild className={PRIMARY_LOOK}>
+        {first && (
+          <Button asChild className={PRIMARY_LOOK}>
+            <Link to="/welcome" search={{ step: first.id }}>
+              {t("continueSetup")}
+            </Link>
+          </Button>
+        )}
+        <Button
+          asChild
+          variant={first ? "outline" : "default"}
+          className={first ? "pointer-coarse:min-h-11" : PRIMARY_LOOK}
+        >
           <Link to="/dashboard">{t("goToShelf")}</Link>
         </Button>
         {tourAction}

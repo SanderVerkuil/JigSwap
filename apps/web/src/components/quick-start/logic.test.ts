@@ -5,7 +5,8 @@ import {
   displayCount,
   inviteExtrasSuppressed,
   isTextEntry,
-  nextFlowStep,
+  nextOpenStep,
+  openRequiredSteps,
   parseFlowStep,
   progressSegments,
   resolveFlowStep,
@@ -13,6 +14,7 @@ import {
   shouldOfferPush,
   stepPosition,
   welcomeSurfaceBusy,
+  withSkippedStep,
 } from "./logic";
 
 const step = (
@@ -120,14 +122,80 @@ describe("resolveFlowStep", () => {
   });
 });
 
-describe("nextFlowStep", () => {
-  it("walks puzzles → solves → people → household → profile → done", () => {
-    expect(nextFlowStep("puzzles")).toBe("solves");
-    expect(nextFlowStep("solves")).toBe("people");
-    expect(nextFlowStep("people")).toBe("household");
-    expect(nextFlowStep("household")).toBe("profile");
-    expect(nextFlowStep("profile")).toBe("done");
-    expect(nextFlowStep("done")).toBe("done");
+describe("nextOpenStep (Skip and Continue)", () => {
+  it("walks puzzles → solves → people → household → profile → done for a fresh member", () => {
+    expect(nextOpenStep("puzzles", view())).toBe("solves");
+    expect(nextOpenStep("solves", view())).toBe("people");
+    expect(nextOpenStep("people", view())).toBe("household");
+    expect(nextOpenStep("household", view())).toBe("profile");
+    expect(nextOpenStep("profile", view())).toBe("done");
+  });
+
+  it("passes over steps that are already done", () => {
+    const v = withSteps({ solves: "done", people: "done" });
+    expect(nextOpenStep("puzzles", v)).toBe("household");
+  });
+
+  it("passes over skipped steps", () => {
+    const v = withSteps({ solves: "skipped", household: "skipped" });
+    expect(nextOpenStep("puzzles", v)).toBe("people");
+    expect(nextOpenStep("people", v)).toBe("profile");
+  });
+
+  it("stops at an open optional household", () => {
+    const v = withSteps({ people: "done" });
+    expect(nextOpenStep("solves", v)).toBe("household");
+  });
+
+  it("is done when nothing after the step is open, even with earlier steps open", () => {
+    const v = withSteps({
+      people: "done",
+      household: "done",
+      profile: "skipped",
+    });
+    expect(nextOpenStep("solves", v)).toBe("done");
+    expect(nextOpenStep("profile", view())).toBe("done");
+  });
+});
+
+describe("openRequiredSteps (the done panel)", () => {
+  it("lists the required steps still to do, in flow order", () => {
+    expect(
+      openRequiredSteps(withSteps({ puzzles: "done" })).map((s) => s.id),
+    ).toEqual(["solves", "people", "profile"]);
+  });
+
+  it("counts skipped steps as closed and ignores the optional household", () => {
+    expect(
+      openRequiredSteps(
+        withSteps({
+          puzzles: "done",
+          solves: "skipped",
+          people: "done",
+          profile: "done",
+        }),
+      ),
+    ).toEqual([]);
+  });
+});
+
+describe("withSkippedStep (optimistic Skip)", () => {
+  it("marks a to-do step skipped and leaves the rest alone", () => {
+    const v = withSteps({ puzzles: "done" });
+    const next = withSkippedStep(v, "profile");
+    expect(next.steps.map((s) => s.status)).toEqual([
+      "done",
+      "todo",
+      "todo",
+      "todo",
+      "skipped",
+    ]);
+    expect(next.requiredDone).toBe(v.requiredDone);
+  });
+
+  it("never turns a done step into a skipped one", () => {
+    const v = withSteps({ puzzles: "done" });
+    expect(withSkippedStep(v, "puzzles")).toEqual(v);
   });
 });
 

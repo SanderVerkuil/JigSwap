@@ -45,9 +45,12 @@ The steps are:
 5. **Make it yours** (optional): set your photo, location, and who can see your
    profile.
 
-Use **Continue** to go to the next step, **Skip** to pass a step, or
-**Finish later** to leave. When you're done, **Go to my shelf** returns you to
-your dashboard, and **Show me around** starts a short guided tour.
+Use **Continue** to go on, **Skip** to pass a step, or **Finish later** to
+leave. Continue and Skip take you to the next step that's still to do, so steps
+you've already done are left out. If a step is still open at the end,
+**Almost there** says how many are left and **Continue setup** takes you back
+to the first one. When you're done, **Go to my shelf** returns you to your
+dashboard, and **Show me around** starts a short guided tour.
 
 ### The Quick setup card
 

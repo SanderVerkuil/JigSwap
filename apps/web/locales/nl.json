@@ -5703,7 +5703,9 @@
     },
     "done": {
       "title": "Je plank staat klaar",
+      "almostTitle": "Bijna klaar: nog {count, plural, one {# stap} other {# stappen}}",
       "summary": "{copies, plural, one {# puzzel} other {# puzzels}} · {solves} afgemaakt · {following} gevolgd",
+      "continueSetup": "Verder met instellen",
       "goToShelf": "Naar mijn plank",
       "tour": "Geef me een rondleiding"
     }
