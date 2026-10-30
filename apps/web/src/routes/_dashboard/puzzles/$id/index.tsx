@@ -67,6 +67,10 @@ type PuzzleReview = FunctionReturnType<
   typeof gateway.social.listPuzzleReviews
 >[number];
 
+// Hero action buttons wrap a long label (e.g. Dutch "Vind een exemplaar om te ruilen") onto a
+// second line instead of overflowing the narrow info column beside the cover on tablets.
+const wrappingAction = "h-auto min-h-9 max-w-full whitespace-normal py-1.5";
+
 export const Route = createFileRoute("/_dashboard/puzzles/$id/")({
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "puzzle") }],
@@ -293,7 +297,7 @@ function PuzzleDefinitionDetail({
               link-style extras. */}
           <div className="mt-5 flex flex-wrap items-center gap-2.5">
             {ownCopyHref && (
-              <Button variant="brand" asChild>
+              <Button variant="brand" className={wrappingAction} asChild>
                 <Link href={ownCopyHref}>{t("viewYourCopy")}</Link>
               </Button>
             )}
@@ -301,6 +305,7 @@ function PuzzleDefinitionDetail({
                 fills in condition/availability/cover/notes for their copy). */}
             <Button
               variant={ownCopyHref ? "outline" : "brand"}
+              className={wrappingAction}
               onClick={() =>
                 router.push(`/my-puzzles/add/new?puzzleId=${puzzleId}`)
               }
@@ -311,6 +316,7 @@ function PuzzleDefinitionDetail({
             {/* Nothing to find while nobody offers a copy: disabled, with the reason below. */}
             <Button
               variant="outline"
+              className={wrappingAction}
               disabled={noCopiesOffered}
               aria-describedby={noCopiesOffered ? noCopiesHintId : undefined}
               onClick={() =>
