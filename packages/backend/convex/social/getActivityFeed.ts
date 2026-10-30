@@ -1,6 +1,7 @@
 import type {
   ActivityBatchCoverView,
   ActivityEntryView,
+  ActivitySubjectView,
   ActivityTargetView,
 } from "@jigswap/contracts";
 import {
@@ -15,6 +16,7 @@ import { query, type QueryCtx } from "../_generated/server";
 import { canViewDefinition } from "../catalog/definitionVisibility";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
+import { boxArtThumbUrl } from "../lib/imageModeration/boxArtUrl";
 import { clampLimit } from "../lib/pageSize";
 import {
   buildCopyViewContext,
@@ -161,14 +163,14 @@ export const getActivityFeed = query({
       ),
     );
 
-    // Each entry's link target, decided only for the entries that made the page. Sequential: the
-    // lazily built copy-view context and its memo aren't Promise.all-safe.
-    const targets: (ActivityTargetView | undefined)[] = [];
+    // Each entry's link target and subject, decided only for the entries that made the page.
+    // Sequential: the lazily built copy-view context and its memo aren't Promise.all-safe.
+    const links: EntryLink[] = [];
     const targetContext: { copyView: CopyViewContext | null } = {
       copyView: null,
     };
     for (const entry of feed) {
-      targets.push(
+      links.push(
         await resolveTarget(
           ctx,
           meId,
@@ -189,7 +191,7 @@ export const getActivityFeed = query({
           entry.kind === "acquisitionBatch"
             ? await toBatchView(ctx, meId, acquiredCopies.get(entry.ref) ?? [])
             : undefined,
-          targets[index],
+          links[index],
         ),
       ),
     );
@@ -461,11 +463,20 @@ const visibleAcquiredCopies = async (
   }
 };
 
+// A copy's title for this viewer, by the copy views' rule (toCopyPuzzleView): the definition's
+// current title when it is approved, or when the viewer owns the copy and it is disabled or their
+// own submission; otherwise the copy's snapshot title, never a non-approved definition's live one.
+const copyTitleFor = (
+  copy: Doc<"ownedPuzzles">,
+  puzzle: Doc<"puzzles"> | null,
+  viewerId: Id<"users">,
+): string | undefined =>
+  toCopyPuzzleView(copy, puzzle, {
+    includeOwnerOnly: copy.ownerId === viewerId,
+  })?.title ?? copy.snapshot?.title;
+
 // The grouped entry's payload: the visible count and the first few covers. Covers are resolved
-// only for the entries that made the page. A cover's title follows the copy views' rule
-// (toCopyPuzzleView): the definition's current title when it is approved, or when the viewer owns
-// the copy and it is disabled or their own submission; otherwise the copy's snapshot title, never a
-// non-approved definition's live one.
+// only for the entries that made the page.
 const toBatchView = async (
   ctx: QueryCtx,
   viewerId: Id<"users">,
@@ -477,17 +488,24 @@ const toBatchView = async (
       .slice(0, BATCH_COVER_COUNT)
       .map(async (copy): Promise<ActivityBatchCoverView> => {
         const puzzle = await ctx.db.get(copy.puzzleId);
-        const shown = toCopyPuzzleView(copy, puzzle, {
-          includeOwnerOnly: copy.ownerId === viewerId,
-        });
         return {
           copyId: copy.aggregateId as string,
-          title: shown?.title ?? copy.snapshot?.title ?? "",
+          title: copyTitleFor(copy, puzzle, viewerId) ?? "",
           coverUrl: await resolveCopyCoverUrl(ctx, copy, puzzle),
         };
       }),
   ),
 });
+
+// What an entry links to and which puzzle it names. The subject is decided behind the SAME gate as
+// the target (it never names a copy the viewer couldn't open), so it is resolved here, together.
+type EntryLink = { target?: ActivityTargetView; subject?: ActivitySubjectView };
+
+// No title, no subject: the row keeps its untitled sentence rather than naming "".
+const subjectOf = (
+  title: string | undefined,
+  coverUrl: string | null,
+): ActivitySubjectView | undefined => (title ? { title, coverUrl } : undefined);
 
 // Where an entry links, decided with the SAME gate the target page's own read applies, so the
 // client never guesses an id or a visibility:
@@ -501,6 +519,13 @@ const toBatchView = async (
 //                       (listProfileCompletions), behind its profile unlock rule.
 //   exchange         -> the viewer's trades page, only when the viewer is a party; a follower who is
 //                       not a party gets no target (the actor link still goes to the profile).
+// The subject mirrors the page the row stands in for:
+//   acquisition      -> the gated copy's title and cover, as the batch covers (toBatchView).
+//   completion/started -> the solve's snapshot title (else the puzzle's, when the viewer may open
+//                       that definition), with the copy's cover only when the viewer may reach the
+//                       copy, else the box art, like listProfileCompletions' row; nothing when the
+//                       profile is locked.
+//   acquisitionBatch / exchange -> none (a batch names its puzzles in its covers).
 const resolveTarget = async (
   ctx: QueryCtx,
   viewerId: Id<"users">,
@@ -509,31 +534,40 @@ const resolveTarget = async (
   acquiredCopies: Map<string, Doc<"ownedPuzzles">[]>,
   actorLinkable: boolean,
   context: { copyView: CopyViewContext | null },
-): Promise<ActivityTargetView | undefined> => {
+): Promise<EntryLink> => {
   const actorId = entry.memberId as unknown as Id<"users">;
   switch (entry.kind) {
     case "acquisition": {
       const copy = acquiredCopies.get(entry.ref)?.[0];
-      if (!copy) return undefined;
+      if (!copy) return {};
+      const puzzle = await ctx.db.get(copy.puzzleId);
       return {
-        kind: copy.ownerId === viewerId ? "myCopy" : "copy",
-        id: copy._id as string,
+        target: {
+          kind: copy.ownerId === viewerId ? "myCopy" : "copy",
+          id: copy._id as string,
+        },
+        subject: subjectOf(
+          copyTitleFor(copy, puzzle, viewerId),
+          await resolveCopyCoverUrl(ctx, copy, puzzle),
+        ),
       };
     }
     case "acquisitionBatch":
       return actorLinkable
-        ? { kind: "memberPuzzles", handle: entry.memberId as string }
-        : undefined;
+        ? {
+            target: { kind: "memberPuzzles", handle: entry.memberId as string },
+          }
+        : {};
     case "completion":
     case "started": {
       if (!(await canSeeProfileContent(ctx, viewerId, actorId))) {
-        return undefined;
+        return {};
       }
       const completion = await ctx.db
         .query("completions")
         .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", entry.ref))
         .unique();
-      if (!completion || completion.userId !== actorId) return undefined;
+      if (!completion || completion.userId !== actorId) return {};
       const copy = completion.ownedPuzzleId
         ? await ctx.db.get(completion.ownedPuzzleId)
         : null;
@@ -546,23 +580,40 @@ const resolveTarget = async (
           reachable = await canViewCopyWithContext(ctx, copy, context.copyView);
         }
       }
-      if (copy && reachable) {
-        return {
-          kind: copy.ownerId === viewerId ? "myCopy" : "copy",
-          id: copy._id as string,
-        };
-      }
       const puzzleId =
         completion.puzzleId ?? (copy && reachable ? copy.puzzleId : undefined);
       const puzzle = puzzleId ? await ctx.db.get(puzzleId) : null;
-      return puzzle && (await canViewDefinition(ctx, puzzle, viewerId))
-        ? { kind: "definition", id: puzzle._id as string }
-        : undefined;
+      // The definition page's own gate decides the link to that page AND whether the row may quote
+      // the definition's live title, so a non-approved title never reaches a viewer it would refuse.
+      const definitionVisible =
+        puzzle !== null && (await canViewDefinition(ctx, puzzle, viewerId));
+      const subject = subjectOf(
+        completion.copySnapshot?.title ??
+          (definitionVisible ? puzzle.title : undefined),
+        copy && reachable
+          ? await resolveCopyCoverUrl(ctx, copy, puzzle)
+          : await boxArtThumbUrl(ctx, puzzle?.image),
+      );
+      if (copy && reachable) {
+        return {
+          target: {
+            kind: copy.ownerId === viewerId ? "myCopy" : "copy",
+            id: copy._id as string,
+          },
+          subject,
+        };
+      }
+      return {
+        target: definitionVisible
+          ? { kind: "definition", id: puzzle._id as string }
+          : undefined,
+        subject,
+      };
     }
     case "exchange":
-      return partyIds?.includes(viewerId) ? { kind: "trades" } : undefined;
+      return partyIds?.includes(viewerId) ? { target: { kind: "trades" } } : {};
     default:
-      return undefined;
+      return {};
   }
 };
 
@@ -603,7 +654,7 @@ const toActivityEntryView = (
     | { name: string | undefined; linkable: boolean; departed: boolean }
     | undefined,
   batch: ActivityEntryView["batch"],
-  target: ActivityTargetView | undefined,
+  { target, subject }: EntryLink,
 ): ActivityEntryView => ({
   memberId: entry.memberId as string,
   kind: entry.kind,
@@ -614,4 +665,5 @@ const toActivityEntryView = (
   ...(batch ? { batch } : {}),
   ...(actor?.linkable ? { actor: { handle: entry.memberId as string } } : {}),
   ...(target ? { target } : {}),
+  ...(subject ? { subject } : {}),
 });

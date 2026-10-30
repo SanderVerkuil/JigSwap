@@ -82,6 +82,23 @@ export interface ActivityEntryView {
   actor?: { handle: string };
   /** Where the entry links. Absent = the entry renders as plain text. */
   target?: ActivityTargetView;
+  /**
+   * The puzzle a single add, start or finish is about, so the row can name it. Decided behind the
+   * same gate as `target`; absent when the viewer may not see it (and on batch/exchange entries)
+   * = render the untitled sentence.
+   */
+  subject?: ActivitySubjectView;
+}
+
+/**
+ * The puzzle an activity entry is about. `title` comes from the copy (or, for a solve, the snapshot
+ * taken when it was logged); the cover is the copy's approved cover photo only when the viewer may
+ * reach that copy, otherwise the puzzle's box art.
+ */
+export interface ActivitySubjectView {
+  title: string;
+  /** null = render the placeholder. */
+  coverUrl: string | null;
 }
 
 /**
