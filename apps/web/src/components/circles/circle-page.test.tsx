@@ -168,6 +168,11 @@ const renderPage = ({
       .queryKey,
     copies,
   );
+  // The manage dialog resolves the viewer's member id from their Clerk id ("clerk_me" above).
+  set(
+    convexQuery(gateway.identity.byClerkId, { clerkId: "clerk_me" }).queryKey,
+    { _id: "me" },
+  );
   render(
     <QueryClientProvider client={queryClient}>
       <IntlProvider
@@ -296,6 +301,68 @@ describe("CirclePage", () => {
     const link = screen.getByText("Lighthouse").closest("a");
     expect(link?.getAttribute("href")).toBe("/copies/copy_1");
     expect(screen.queryByText(en.circles.page.sharedEmpty)).toBeNull();
+  });
+
+  describe("the manage dialog's member rows (SEC-86)", () => {
+    // Each member row of the open manage dialog, in seat order: is the level select enabled, and is
+    // there a remove button next to it?
+    const memberRows = () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "Manage Puzzle Club" }),
+      );
+      const section = within(screen.getByRole("dialog"))
+        .getByRole("heading", { name: "Members" })
+        .closest("section");
+      if (!section) throw new Error("the dialog has no members section");
+      return within(section)
+        .getAllByRole("combobox")
+        .map((trigger) => ({
+          canChange: !(trigger as HTMLButtonElement).disabled,
+          canRemove:
+            trigger.parentElement !== null &&
+            within(trigger.parentElement).queryByRole("button") !== null,
+        }));
+    };
+    const LOCKED = { canChange: false, canRemove: false };
+    const OPEN = { canChange: true, canRemove: true };
+
+    it("locks the owner's and another Admin's row for a non-owner Admin", () => {
+      renderPage({
+        circle: detail({
+          viewerPermission: "Admin",
+          members: [
+            seat("u_anna", "Anna", { isOwner: true, permission: "Admin" }),
+            seat("u_bas", "Bas", { permission: "Admin" }),
+            seat("u_cas", "Cas", { permission: "Exchange" }),
+            seat("me", "Me", { permission: "Admin" }),
+          ],
+        }),
+      });
+
+      expect(memberRows()).toEqual([
+        LOCKED,
+        LOCKED,
+        OPEN,
+        // Their own level stays changeable (stepping down); walking out is Leave.
+        { canChange: true, canRemove: false },
+      ]);
+    });
+
+    it("leaves every other Admin's row open to the owner", () => {
+      renderPage({
+        circle: detail({
+          isOwnedByViewer: true,
+          viewerPermission: "Admin",
+          members: [
+            seat("me", "Me", { isOwner: true, permission: "Admin" }),
+            seat("u_bas", "Bas", { permission: "Admin" }),
+            seat("u_cas", "Cas", { permission: "Exchange" }),
+          ],
+        }),
+      });
+
+      expect(memberRows()).toEqual([LOCKED, OPEN, OPEN]);
+    });
   });
 
   it("says so when nothing is shared yet (nl)", () => {
