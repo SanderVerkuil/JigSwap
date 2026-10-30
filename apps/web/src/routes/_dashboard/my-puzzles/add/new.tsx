@@ -845,7 +845,7 @@ function AddPuzzlePage() {
 
         {/* Tags */}
         <div className="flex flex-col gap-1.5">
-          <Label>
+          <Label htmlFor="ap-tags">
             {t("fieldTags")}{" "}
             <span className="text-xs font-normal text-muted-foreground">
               {t("optional")}
@@ -853,6 +853,7 @@ function AddPuzzlePage() {
           </Label>
           <p className="text-xs text-muted-foreground">{t("tagsHint")}</p>
           <TagInput
+            id="ap-tags"
             value={form.tags}
             onChange={(tags) => setForm((f) => ({ ...f, tags }))}
             placeholder={t("tagsPlaceholder")}

@@ -206,8 +206,9 @@ export function PuzzleDefinitionFields({
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label>{tf("tags.label")}</Label>
+        <Label htmlFor={`${idPrefix}-tags`}>{tf("tags.label")}</Label>
         <TagInput
+          id={`${idPrefix}-tags`}
           value={form.tags}
           onChange={(tags) => set("tags", tags)}
           placeholder={tf("tags.placeholder")}

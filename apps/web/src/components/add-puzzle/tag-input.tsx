@@ -10,11 +10,17 @@ import { CATALOG_TEXT_LIMITS, MAX_CATALOG_TAGS } from "./catalog-text-limits";
 // not disabled, so keyboard focus isn't dropped when the last tag is added) and a hint below,
 // announced politely and linked to the input, says why.
 
+/**
+ * Free-text tags. Pass `id` and point the field's visible <Label htmlFor> at it so the input is named
+ * by that label; the built-in aria-label is only the fallback when there is none.
+ */
 export function TagInput({
+  id,
   value,
   onChange,
   placeholder = "landscape, ocean, calm…",
 }: {
+  id?: string;
   value: string[];
   onChange: (tags: string[]) => void;
   placeholder?: string;
@@ -37,11 +43,11 @@ export function TagInput({
   };
   return (
     <>
-      <div className="flex min-h-[42px] flex-wrap items-center gap-1.5 rounded-lg border border-border bg-card p-2">
+      <div className="flex min-h-[42px] flex-wrap items-center gap-1.5 rounded-lg border border-border bg-card p-2 transition-[color,box-shadow] focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50">
         {value.map((tag) => (
           <span
             key={tag}
-            className="inline-flex min-w-0 max-w-full items-center gap-1 rounded-full bg-jigsaw-primary-tint py-0.5 pl-2.5 pr-1.5 text-xs font-semibold text-primary-text"
+            className="inline-flex min-w-0 max-w-full items-center gap-0.5 rounded-full bg-jigsaw-primary-tint pl-2.5 text-xs font-semibold text-primary-text"
           >
             {/* A long unbroken tag is cut off with an ellipsis so its remove button stays visible. */}
             <span className="truncate" title={tag}>
@@ -51,14 +57,15 @@ export function TagInput({
               type="button"
               aria-label={`Remove ${tag}`}
               onClick={() => onChange(value.filter((x) => x !== tag))}
-              className="inline-flex shrink-0 cursor-pointer"
+              className="inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-full outline-none hover:bg-primary/15 focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <X className="size-3" />
+              <X className="size-3.5" />
             </button>
           </span>
         ))}
         <input
-          aria-label="Tags"
+          id={id}
+          aria-label={id ? undefined : "Tags"}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onBlur={() => {

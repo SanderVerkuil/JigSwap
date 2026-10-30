@@ -390,6 +390,20 @@ describe("on phones and tablets", () => {
   });
 });
 
+describe("accessible inputs", () => {
+  it("names the tag and import fields by their labels", () => {
+    renderPage();
+    expect(
+      screen.getByRole("textbox", {
+        name: `${en.puzzles.fieldTags} ${en.puzzles.optional}`,
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("textbox", { name: en.puzzles.importUrlPlaceholder }),
+    ).toBeTruthy();
+  });
+});
+
 describe("cancelling", () => {
   it("returns to the add chooser from the full form", () => {
     renderPage();
