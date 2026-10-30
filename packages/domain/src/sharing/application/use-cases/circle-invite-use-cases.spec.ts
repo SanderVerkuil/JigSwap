@@ -309,6 +309,36 @@ describe("Sharing circle-invite use cases", () => {
       expect(events.published).toEqual([]);
     });
 
+    // A third party's invite must not seat someone next to a member they blocked, or who blocked
+    // them: every current member counts, not only the inviter.
+    it.each([
+      ["the invitee blocked a plain member", invitee, member],
+      ["a plain member blocked the invitee", member, invitee],
+      ["another Admin blocked the invitee", admin, invitee],
+    ])(
+      "refuses generically when %s, persisting nothing",
+      async (_case, blocker, blocked) => {
+        const inviteId = await invited();
+        policy.block(blocker, blocked);
+
+        expect(codeOf(await accept(inviteId))).toBe("InviteNotFound");
+        expect((await circles.findById(circleId))?.isMember(invitee)).toBe(
+          false,
+        );
+        expect((await invites.findById(inviteId))?.status).toBe("pending");
+        expect(events.published).toEqual([]);
+      },
+    );
+
+    it("still seats the invitee across blocks that don't involve them, or with someone outside the circle", async () => {
+      const inviteId = await invited();
+      policy.block(admin, member);
+      policy.block(invitee, stranger);
+
+      expect((await accept(inviteId)).isOk).toBe(true);
+      expect((await circles.findById(circleId))?.isMember(invitee)).toBe(true);
+    });
+
     it("refuses generically when the inviter is no longer an Admin", async () => {
       const inviteId = await invited(invitee, admin);
       await makeChangePermission({ circles, events })({

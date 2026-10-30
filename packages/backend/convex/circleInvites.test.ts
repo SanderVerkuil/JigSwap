@@ -642,6 +642,35 @@ describe("sharing.acceptCircleInvite", () => {
     }
   });
 
+  // SEC-45: Alice's invite must not seat Carol next to a member she blocked or who blocked her.
+  test("a block either way with any other current member refuses generically", async () => {
+    for (const [blocker, blocked] of [
+      ["carol", "dave"],
+      ["dave", "carol"],
+      ["bob", "carol"],
+    ] as const) {
+      const t = convexTest(schema, modules);
+      const ids = await invited(t);
+      await block(t, ids[blocker], ids[blocked]);
+
+      await expectConvexCode(
+        accept(t, "carol", ids.inviteId),
+        "InviteNotFound",
+      );
+      expect((await isSeated(t, ids.circleId, ids.carol)).seat).toBeNull();
+      expect((await inviteRow(t, ids.inviteId))?.status).toBe("pending");
+    }
+  });
+
+  test("a block with someone outside the circle doesn't stand in the way", async () => {
+    const t = convexTest(schema, modules);
+    const { carol, eve, circleId, inviteId } = await invited(t);
+    await block(t, carol, eve);
+
+    expect(await accept(t, "carol", inviteId)).toBe(circleId);
+    expect((await isSeated(t, circleId, carol)).seat).not.toBeNull();
+  });
+
   test("an inviter who is no longer an Admin can't bring anyone in (even if the invite survived)", async () => {
     const t = convexTest(schema, modules);
     const { bob, carol, circleId, inviteId } = await invited(t, "bob");

@@ -6,6 +6,7 @@ export interface InvitePolicy {
   // The contact rule: not blocked either way, AND a mutual follow. Deliberately NOT "shares a
   // circle" or "has a thread": both can come about without the invitee's consent.
   canInvite(actor: MemberId, invitee: MemberId): Promise<boolean>;
-  // Either member has blocked the other. Re-checked when an invite is accepted.
+  // Either member has blocked the other. Re-checked when an invite is accepted, between the
+  // invitee and every current member of the circle.
   isBlockedEitherWay(a: MemberId, b: MemberId): Promise<boolean>;
 }

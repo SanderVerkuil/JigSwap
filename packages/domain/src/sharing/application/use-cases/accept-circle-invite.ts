@@ -6,8 +6,11 @@ import { CircleInviteDeps } from "./circle-invite-deps";
 // The invitee accepts and joins the circle at the invite's permission, through the Circle's own
 // admitInvitee (so MemberJoinedCircle is recorded exactly as for any join). Authorised by the
 // invite, not by impersonating the inviter: admitInvitee re-checks that the inviter is still an
-// Admin. A block either way, a lost Admin or a vanished circle all answer InviteNotFound, so the
-// invitee never learns which. Nothing is persisted unless every check passes.
+// Admin. The invitee is never seated next to someone they blocked or who blocked them: a block
+// either way with ANY current member (the inviter included) refuses, because a third party's
+// invite must not undo a block. A block, a lost Admin or a vanished circle all answer
+// InviteNotFound, so the invitee never learns which (nor who in the circle has the block). Nothing
+// is persisted unless every check passes.
 export const makeAcceptCircleInvite =
   (
     deps: Pick<
@@ -26,11 +29,15 @@ export const makeAcceptCircleInvite =
     if (accepted.isErr) return err(accepted.error);
 
     const circle = await deps.circles.findById(invite.circleId);
-    if (
-      !circle ||
-      (await deps.policy.isBlockedEitherWay(invite.inviteeId, invite.inviterId))
-    ) {
-      return err(SharingApplicationError.inviteNotFound());
+    if (!circle) return err(SharingApplicationError.inviteNotFound());
+    // At most MAX_CIRCLE_MEMBERS seats, so a bounded number of block lookups.
+    for (const seat of circle.members) {
+      if (seat.memberId === invite.inviteeId) continue;
+      if (
+        await deps.policy.isBlockedEitherWay(invite.inviteeId, seat.memberId)
+      ) {
+        return err(SharingApplicationError.inviteNotFound());
+      }
     }
 
     const admitted = circle.admitInvitee(

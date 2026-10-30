@@ -34,8 +34,10 @@ export const addMember = internalMutation({
   },
   handler: async (ctx, args) => {
     const actorId = await requireMember(ctx);
-    // A pair blocked either way can't be put in a circle together (spec 2.6): the generic
-    // not-allowed refusal, never a block-specific one.
+    // The actor and the new member must not be blocked either way (spec 2.6): the generic
+    // not-allowed refusal, never a block-specific one. Only that pair is checked here: this
+    // internal, test-only path seats directly. The consent path members really use
+    // (acceptCircleInvite -> makeAcceptCircleInvite) refuses a block with ANY current member.
     if (await isBlockedEitherWay(ctx, actorId, args.memberId)) {
       throw toConvexError(SharingError.notCircleAdmin());
     }
