@@ -5618,13 +5618,14 @@
       "stepPuzzles": "Voeg de puzzels op je plank toe",
       "stepSolves": "Vink aan welke je al hebt afgemaakt",
       "stepPeople": "Vind de mensen met wie je puzzelt",
+      "stepProfile": "Maak je profiel persoonlijk",
       "time": "Duurt ongeveer 3 minuten. Je kunt altijd stoppen.",
       "start": "Snel instellen",
       "explore": "Zelf rondkijken"
     },
     "card": {
       "title": "Snel instellen",
-      "progress": "{done} van {total}",
+      "progress": "{done} van {total} klaar",
       "progressLabel": "{done} van {total} stappen klaar",
       "hide": "Snel instellen verbergen",
       "hiddenToast": "Snel instellen is verborgen. Je kunt het weer openen via je accountmenu.",

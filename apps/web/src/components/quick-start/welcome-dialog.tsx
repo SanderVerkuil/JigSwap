@@ -84,7 +84,13 @@ function WelcomeDialogContent({ onClose }: { onClose: () => void }) {
 export function WelcomeDialogBody({ onClose }: { onClose: () => void }) {
   const t = useTranslations("quickStart.welcome");
   const fullWidth = "w-full sm:w-auto";
-  const lines = [t("stepPuzzles"), t("stepSolves"), t("stepPeople")];
+  // The four required steps, numbered as in the flow ("Step 2 of 4"); household is optional.
+  const lines = [
+    t("stepPuzzles"),
+    t("stepSolves"),
+    t("stepPeople"),
+    t("stepProfile"),
+  ];
   return (
     <>
       <div

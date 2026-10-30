@@ -15,7 +15,7 @@ import { ChevronRight, ListChecks, X } from "lucide-react";
 import { useId, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
-import { cardMode, progressSegments, rowState } from "./logic";
+import { cardMode, progressSegments, rowState, stepPosition } from "./logic";
 import { QuickStartProgress, StepMarker, useStepText } from "./parts";
 import {
   markQuickStartHidden,
@@ -76,7 +76,7 @@ export function QuickSetupCardView({
     return (
       <section aria-label={t("title")}>
         <div className="flex min-h-11 items-center gap-3.5">
-          <StepMarker state="done" number={0} />
+          <StepMarker state="done" />
           <p className="min-w-0 flex-1 text-sm font-semibold">{t("allDone")}</p>
           <Button
             variant="ghost"
@@ -120,9 +120,10 @@ export function QuickSetupCardView({
         labelledBy={headingId}
       />
       <ol className="mt-2">
-        {view.steps.map((step, i) => {
+        {view.steps.map((step) => {
           const state = rowState(step);
           const sub = subLine(step);
+          const position = stepPosition(step.id);
           return (
             <li key={step.id} className="border-t first:border-t-0">
               <Link
@@ -132,7 +133,9 @@ export function QuickSetupCardView({
               >
                 <StepMarker
                   state={state}
-                  number={i + 1}
+                  number={
+                    position.kind === "required" ? position.index : undefined
+                  }
                   pending={step.pendingInvite && state === "todo"}
                 />
                 <span className="min-w-0 flex-1">

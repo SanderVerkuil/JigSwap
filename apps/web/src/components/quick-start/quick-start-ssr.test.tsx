@@ -134,12 +134,36 @@ describe("QuickSetupCardView (active)", () => {
     <QuickSetupCardView view={VIEW} mode="active" onHide={() => {}} />,
   );
 
-  it("is a section labelled by its h2, with the x of 4 meta", () => {
+  it("is a section labelled by its h2, with the x of 4 done meta", () => {
     const [section] = byTag(html, "section");
     const [h2] = byTag(html, "h2");
     expect(text(h2!)).toBe("Quick setup");
     expect(attr(section!, "aria-labelledby")).toBe(attr(h2!, "id"));
-    expect(text(section!)).toContain("2 of 4");
+    expect(text(section!)).toContain("2 of 4 done");
+  });
+
+  it("numbers the rows like the flow: 1 to 4, with household unnumbered", () => {
+    const fresh = render(
+      <QuickSetupCardView
+        view={{
+          ...VIEW,
+          steps: VIEW.steps.map((s) => ({ ...s, status: "todo" })),
+        }}
+        mode="active"
+        onHide={() => {}}
+      />,
+    );
+    const markers = byTag(fresh, "a").map((a) =>
+      text(elements(a).find((el) => attr(el, "aria-hidden") === "true")!),
+    );
+    expect(markers).toEqual(["1", "2", "3", "", "4"]);
+  });
+
+  it("never marks a current segment on the card's bar", () => {
+    const bar = all(html).find((el) => attr(el, "role") === "progressbar")!;
+    expect(elements(bar).some((s) => attr(s, "class")?.includes("ring-"))).toBe(
+      false,
+    );
   });
 
   it("has one progressbar with four decorative segments", () => {
@@ -245,7 +269,7 @@ describe("QuickSetupCardView (active)", () => {
     expect(nameOf(byTag(nlHtml, "a")[1]!)).toBe(
       "Leg vast wat je al hebt afgemaakt, klaar, 3 vastgelegd",
     );
-    expect(text(parseFragment(nlHtml))).toContain("2 van 4");
+    expect(text(parseFragment(nlHtml))).toContain("2 van 4 klaar");
     expect(attr(byTag(nlHtml, "button")[0]!, "aria-label")).toBe(
       "Snel instellen verbergen",
     );
@@ -277,7 +301,7 @@ describe("WelcomeDialogBody", () => {
       locale,
     );
 
-  it("has the title, the three numbered lines and the time line", () => {
+  it("has the title, the four numbered steps and the time line", () => {
     const html = renderDialog("en");
     expect(text(byTag(html, "h2")[0]!)).toBe("Welcome to JigSwap!");
     const [ol] = byTag(html, "ol");
@@ -287,6 +311,7 @@ describe("WelcomeDialogBody", () => {
       "1Add the puzzles on your shelf",
       "2Mark the ones you've finished",
       "3Find the people you puzzle with",
+      "4Make your profile your own",
     ]);
     expect(text(parseFragment(html))).toContain(
       "Takes about 3 minutes. You can stop at any time.",
@@ -316,6 +341,12 @@ describe("WelcomeDialogBody", () => {
     ]);
     expect(text(parseFragment(html))).toContain(
       "Vink aan welke je al hebt afgemaakt",
+    );
+    const items = elements(byTag(html, "ol")[0]!).filter(
+      (el) => el.tagName === "li",
+    );
+    expect(items.map((li) => text(li)).at(-1)).toBe(
+      "4Maak je profiel persoonlijk",
     );
   });
 });
@@ -356,6 +387,46 @@ describe("QuickStartFlowView", () => {
       (el) => attr(el, "aria-current") === "step",
     );
     expect(current.map((el) => text(el))).toEqual(["3Find your people"]);
+  });
+
+  it("numbers the stepper 1 to 4 like the eyebrow, household unnumbered and optional", () => {
+    const html = render(
+      <QuickStartFlowView
+        step="profile"
+        view={{
+          ...VIEW,
+          steps: VIEW.steps.map((s) => ({ ...s, status: "todo" })),
+        }}
+        onSkip={() => {}}
+        onContinue={() => {}}
+      >
+        <p>body</p>
+      </QuickStartFlowView>,
+    );
+    const items = byTag(html, "li");
+    expect(items.map((li) => text(li))).toEqual([
+      "1Add your puzzles",
+      "2Log puzzles you finished",
+      "3Find your people",
+      "HouseholdOptional",
+      "4Make it yours",
+    ]);
+    expect(text(parseFragment(html))).toContain("Step 4 of 4");
+  });
+
+  it("rings the current step's segment on the phone bar", () => {
+    const segmentRings = (id: QuickStartStepView["id"]) => {
+      const bar = all(renderFlow(id)).find(
+        (el) => attr(el, "role") === "progressbar",
+      )!;
+      return elements(bar).map(
+        (s) => attr(s, "class")?.includes("ring-2") ?? false,
+      );
+    };
+    expect(segmentRings("solves")).toEqual([false, true, false, false]);
+    expect(segmentRings("profile")).toEqual([false, false, false, true]);
+    // Household is not one of the four segments.
+    expect(segmentRings("household")).toEqual([false, false, false, false]);
   });
 
   it("ends with Skip then Continue, after the body, in DOM order", () => {

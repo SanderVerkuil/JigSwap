@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { QuickStartStepId, QuickStartView } from "@jigswap/contracts";
@@ -52,6 +53,7 @@ export function QuickStartFlowView({
   children: ReactNode;
 }) {
   const t = useTranslations("quickStart.flow");
+  const tCard = useTranslations("quickStart.card");
   const { title } = useStepText();
   const eyebrowId = useId();
   const headingRef = useFocusOnChange<HTMLHeadingElement>(step);
@@ -85,25 +87,37 @@ export function QuickStartFlowView({
         </div>
         <QuickStartProgress
           segments={progressSegments(view.steps)}
+          current={
+            position.kind === "required" ? position.index - 1 : undefined
+          }
           labelledBy={eyebrowId}
         />
       </div>
       {/* md and up: the checklist's markers with the step titles. Not sticky. */}
       <div className="hidden items-start justify-between gap-3 md:flex">
         <ol className="flex flex-wrap gap-x-5 gap-y-2">
-          {view.steps.map((s, i) => (
-            <li
-              key={s.id}
-              aria-current={s.id === step ? "step" : undefined}
-              className={cn(
-                "flex items-center gap-2 text-sm",
-                s.id === step ? "font-semibold" : "text-muted-foreground",
-              )}
-            >
-              <StepMarker state={rowState(s)} number={i + 1} />
-              {title(s.id)}
-            </li>
-          ))}
+          {view.steps.map((s) => {
+            const at = stepPosition(s.id);
+            return (
+              <li
+                key={s.id}
+                aria-current={s.id === step ? "step" : undefined}
+                className={cn(
+                  "flex items-center gap-2 text-sm",
+                  s.id === step ? "font-semibold" : "text-muted-foreground",
+                )}
+              >
+                <StepMarker
+                  state={rowState(s)}
+                  number={at.kind === "required" ? at.index : undefined}
+                />
+                {title(s.id)}
+                {at.kind === "optional" && (
+                  <Badge variant="secondary">{tCard("optional")}</Badge>
+                )}
+              </li>
+            );
+          })}
         </ol>
         {finishLater}
       </div>

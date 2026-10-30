@@ -15,13 +15,17 @@ export const EYEBROW =
 
 /**
  * The four-segment progress bar (D9), one segment per required step. One element with
- * role="progressbar", labelled by the surrounding heading; the segments are decorative.
+ * role="progressbar", labelled by the surrounding heading; the segments are decorative. Filled
+ * segments are done; in the flow, `current` (0-based) rings the segment of the step on screen,
+ * so "Step 2 of 4" never sits over an unmarked bar (the gap widens so the ring stays clear).
  */
 export function QuickStartProgress({
   segments,
+  current,
   labelledBy,
 }: {
   segments: readonly boolean[];
+  current?: number;
   labelledBy: string;
 }) {
   const t = useTranslations("quickStart.card");
@@ -34,7 +38,7 @@ export function QuickStartProgress({
       aria-valuemax={segments.length}
       aria-valuenow={done}
       aria-valuetext={t("progressLabel", { done, total: segments.length })}
-      className="flex gap-1"
+      className={cn("flex gap-1", current !== undefined && "gap-1.5")}
     >
       {segments.map((on, i) => (
         <span
@@ -43,6 +47,8 @@ export function QuickStartProgress({
           className={cn(
             "h-1.5 flex-1 rounded-full transition-colors motion-reduce:transition-none",
             on ? "bg-primary" : "bg-muted",
+            i === current &&
+              "ring-primary ring-offset-background ring-2 ring-offset-1",
           )}
         />
       ))}
@@ -50,14 +56,17 @@ export function QuickStartProgress({
   );
 }
 
-/** A step's state marker (§5.2): number, check, dash or ring; always aria-hidden. */
+/**
+ * A step's state marker (§5.2): number, check, dash or ring; always aria-hidden. `number` is the
+ * step's stepPosition; the optional household has none, so its open marker is an empty ring.
+ */
 export function StepMarker({
   state,
   number,
   pending = false,
 }: {
   state: RowState;
-  number: number;
+  number?: number;
   pending?: boolean;
 }) {
   const base =

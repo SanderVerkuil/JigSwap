@@ -30,7 +30,7 @@ Als je net lid bent, biedt een venster **Welkom bij JigSwap!** de keuze
 **Snel instellen** of **Zelf rondkijken**. Wat je ook kiest, Snel instellen
 blijft beschikbaar in je accountmenu.
 
-De stappen zijn:
+De vier stappen zijn:
 
 1. **Voeg je puzzels toe**: kies de puzzels die je bezit uit de catalogus,
    meerdere tegelijk. Zie
@@ -41,10 +41,12 @@ De stappen zijn:
 3. **Vind je puzzelmaatjes**: volg mensen die je misschien kent, zoek leden op
    of deel je uitnodigingslink. Zie
    [Mensen & Volgen](/docs/discovering-and-community/people-and-following).
-4. **Huishouden** (optioneel): maak een huishouden aan, accepteer een
-   uitnodiging of kies **Ik puzzel alleen**.
-5. **Maak het persoonlijk** (optioneel): stel je foto en locatie in, en wie je
-   profiel kan zien.
+4. **Maak het persoonlijk**: stel je foto en locatie in, en wie je profiel kan
+   zien.
+
+Voor de laatste stap komt nog een optionele stap **Huishouden**: maak een
+huishouden aan, accepteer een uitnodiging of kies **Ik puzzel alleen**. Die stap
+heeft geen nummer en telt niet mee voor je voortgang.
 
 Gebruik **Doorgaan** om verder te gaan, **Overslaan** om een stap over te
 slaan, of **Later afmaken** om te stoppen. Doorgaan en Overslaan brengen je naar

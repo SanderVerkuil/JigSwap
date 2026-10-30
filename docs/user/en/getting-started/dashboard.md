@@ -30,7 +30,7 @@ When you first join, a **Welcome to JigSwap!** dialog offers
 **Start quick setup** or **Explore on my own**. Either way, Quick setup stays
 available from your account menu.
 
-The steps are:
+The four steps are:
 
 1. **Add your puzzles**: pick the puzzles you own from the catalogue, several
    at once. See [Adding & Importing Puzzles](/docs/your-library/adding-and-importing).
@@ -40,10 +40,11 @@ The steps are:
 3. **Find your people**: follow people you may know, search for members, or
    share your invite link. See
    [People & Following](/docs/discovering-and-community/people-and-following).
-4. **Household** (optional): create a household, accept an invitation, or
-   choose **I puzzle alone**.
-5. **Make it yours** (optional): set your photo, location, and who can see your
-   profile.
+4. **Make it yours**: set your photo, location, and who can see your profile.
+
+Before the last step comes an optional **Household** step: create a household,
+accept an invitation, or choose **I puzzle alone**. It has no number and
+doesn't count toward your progress.
 
 Use **Continue** to go on, **Skip** to pass a step, or **Finish later** to
 leave. Continue and Skip take you to the next step that's still to do, so steps
