@@ -388,7 +388,8 @@ describe("catalog mutations take only cleaned box art", () => {
     );
     const raw = await upload(t, fixture("gps.jpg"), "image/jpeg");
 
-    await asAlice(t).mutation(
+    // An approved definition is edited by an admin (its submitter may no longer edit it).
+    await asAdmin(t).mutation(
       api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
       { puzzleDefinitionId: definitionId, title: "Legacy 2", image: legacyArt },
     );

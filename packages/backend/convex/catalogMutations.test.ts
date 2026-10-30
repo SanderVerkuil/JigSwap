@@ -436,6 +436,109 @@ describe("catalog.updatePuzzleDefinition", () => {
   });
 });
 
+// Once an admin has decided a submission, its submitter can no longer edit it directly: the
+// definition changes only through a change proposal or an admin edit.
+describe("catalog.updatePuzzleDefinition after moderation", () => {
+  test("a submitter cannot rewrite their approved definition or take another puzzle's barcode", async () => {
+    const t = convexTest(schema, modules);
+    await seedMembers(t);
+    const decoyId = (await asBob(t).mutation(
+      api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+      { title: "Harmless Lighthouse", pieceCount: 1000 },
+    )) as string;
+    await asAdmin(t).mutation(
+      api.catalog.approvePuzzleDefinition.approvePuzzleDefinition,
+      { puzzleDefinitionId: decoyId },
+    );
+    const legitId = (await asAdmin(t).mutation(
+      api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+      { title: "Popular Puzzle", pieceCount: 1000, ean: VALID_EAN },
+    )) as string;
+    const before = await puzzleRow(t, decoyId);
+
+    await expect(
+      asBob(t).mutation(
+        api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
+        {
+          puzzleDefinitionId: decoyId,
+          title: "BUY CHEAP PILLS spam.example",
+          description: "SEO spam",
+          ean: VALID_EAN,
+        },
+      ),
+    ).rejects.toThrow(/Forbidden/);
+
+    // The row is untouched, the anonymous page keeps the moderated title, and a scan of the
+    // barcode still resolves the legitimate puzzle.
+    const after = await puzzleRow(t, decoyId);
+    expect(after).toEqual(before);
+    const publicView = await t.query(
+      api.catalog.getPublicDefinitionView.getPublicDefinitionView,
+      { puzzleId: after!._id },
+    );
+    expect(publicView?.definition.title).toBe("Harmless Lighthouse");
+    const scanned = await asAlice(t).query(
+      api.catalog.findPuzzleByBarcode.lookupPuzzleByBarcode,
+      { code: VALID_EAN },
+    );
+    expect(scanned?._id).toBe((await puzzleRow(t, legitId))?._id);
+    expect(scanned?.title).toBe("Popular Puzzle");
+  });
+
+  test.each([
+    ["rejected", ["reject"]],
+    ["disabled", ["approve", "disable"]],
+  ] as const)(
+    "a submitter cannot edit their own %s definition",
+    async (_status, moves) => {
+      const t = convexTest(schema, modules);
+      await seedMembers(t);
+      const id = (await asBob(t).mutation(
+        api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+        { title: "Mountain Vista", pieceCount: 1000 },
+      )) as string;
+      for (const move of moves) {
+        const fn =
+          move === "reject"
+            ? api.catalog.rejectPuzzleDefinition.rejectPuzzleDefinition
+            : move === "approve"
+              ? api.catalog.approvePuzzleDefinition.approvePuzzleDefinition
+              : api.catalog.disablePuzzleDefinition.disablePuzzleDefinition;
+        await asAdmin(t).mutation(fn, { puzzleDefinitionId: id });
+      }
+
+      await expect(
+        asBob(t).mutation(
+          api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
+          { puzzleDefinitionId: id, title: "Renamed After The Fact" },
+        ),
+      ).rejects.toThrow(/Forbidden/);
+      expect((await puzzleRow(t, id))?.title).toBe("Mountain Vista");
+    },
+  );
+
+  test("an admin may still edit an approved definition", async () => {
+    const t = convexTest(schema, modules);
+    await seedMembers(t);
+    const id = (await asBob(t).mutation(
+      api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+      { title: "Mountain Vista", pieceCount: 1000 },
+    )) as string;
+    await asAdmin(t).mutation(
+      api.catalog.approvePuzzleDefinition.approvePuzzleDefinition,
+      { puzzleDefinitionId: id },
+    );
+
+    await asAdmin(t).mutation(
+      api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
+      { puzzleDefinitionId: id, title: "Mountain Vista (2nd edition)" },
+    );
+    expect((await puzzleRow(t, id))?.title).toBe(
+      "Mountain Vista (2nd edition)",
+    );
+  });
+});
+
 describe("catalog category management", () => {
   const NAME = { en: "Animals", nl: "Dieren" };
 

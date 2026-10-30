@@ -64,20 +64,24 @@ export const updatePuzzleDefinition = mutation({
 
     const definitions = convexPuzzleDefinitionRepository(ctx);
 
-    // Ownership ACL: only the original submitter or an admin may edit a definition.
+    // ACL: an admin may edit any definition. A submitter may edit their own definition only
+    // while it is still pending; once moderated, it changes only through a change proposal
+    // (proposeDefinitionChange) or an admin edit, never silently by its submitter.
     const existing = await definitions.findById(
       toPuzzleDefinitionId(args.puzzleDefinitionId),
     );
     if (!existing) throw new ConvexError("Not found");
-    const submittedBy = existing.toState().submittedBy as unknown as string;
-    if (submittedBy !== (actingMember as unknown as string)) {
-      if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    const { submittedBy, status } = existing.toState();
+    const isSubmitter =
+      (submittedBy as unknown as string) ===
+      (actingMember as unknown as string);
+    if (!(await isAdmin(ctx)) && !(isSubmitter && status === "pending")) {
+      throw new ConvexError("Forbidden");
     }
     // An admin editing someone ELSE's definition is a moderation act; stamp it after success.
     // Submitter self-edits stay un-audited (unchanged behavior). The ACL above already
     // guaranteed that a non-submitter actor IS an admin.
-    const isAdminEditingOthers =
-      submittedBy !== (actingMember as unknown as string);
+    const isAdminEditingOthers = !isSubmitter;
     // A new image must be box art the server stripped of its metadata for this member.
     await assertBoxArtImage(
       ctx,
