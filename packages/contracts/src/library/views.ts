@@ -541,6 +541,12 @@ export interface CopyInstanceView {
    * `gallery` (with "pending"); rejected photos appear in neither.
    */
   pendingPhotos: PendingPhotoPlaceholder[];
+  /**
+   * The most photos the copy may hold (library/addCopyPhoto refuses the next with
+   * "TooManyImages"). Every photo in `gallery` and `pendingPhotos` takes a place; rejected and
+   * quarantined ones, listed in neither, don't. The add-photo control is off once they fill it.
+   */
+  photoLimit: number;
 }
 
 // --- Catalog puzzle-DEFINITION detail page -----------------------------------------------------

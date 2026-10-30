@@ -270,6 +270,18 @@ describe("addCopyPhoto: per-copy bounds", () => {
     ).toBe("TooManyImages");
   });
 
+  // The copy page stops offering "Add photo" at the cap, so nothing is uploaded only to be refused.
+  test("the copy page is told how many photos a copy may hold", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { aliceCopy } = await seed(t);
+
+    const view = await asAlice(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: aliceCopy },
+    );
+    expect(view?.photoLimit).toBe(MAX_COPY_IMAGES);
+  });
+
   test("an over-long title is refused", async () => {
     const t = withModerationPool(convexTest(schema, modules));
     const { aliceCopy } = await seed(t);

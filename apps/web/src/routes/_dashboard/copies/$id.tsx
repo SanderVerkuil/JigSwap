@@ -717,6 +717,7 @@ function CopyInstanceDetail({
         <PhotoStrip
           gallery={gallery}
           pendingPhotos={copy.pendingPhotos}
+          photoLimit={copy.photoLimit}
           canAdd={copy.viewerCanManage}
           copyId={copyId}
           coverImageId={snapshot.coverImageId}
@@ -945,12 +946,14 @@ function SectionHead({
 function PhotoStrip({
   gallery,
   pendingPhotos,
+  photoLimit,
   canAdd,
   copyId,
   coverImageId,
 }: {
   gallery: CopyInstanceView["gallery"];
   pendingPhotos: CopyInstanceView["pendingPhotos"];
+  photoLimit: CopyInstanceView["photoLimit"];
   canAdd: boolean;
   copyId: string;
   coverImageId: string | null;
@@ -1010,13 +1013,17 @@ function PhotoStrip({
       toast.error(
         isUploadRateLimited(error)
           ? tCommon("photoUploadRateLimited")
-          : t(copyPhotoErrorKey(error)),
+          : t(copyPhotoErrorKey(error), { max: photoLimit }),
       ),
     onSettled: () => {
       if (inputRef.current) inputRef.current.value = "";
     },
   });
   const uploading = uploadPhoto.isPending;
+  // Every photo shown here, placeholders included, takes one of the copy's places; once they are
+  // all taken the server refuses another (TooManyImages), so the picker is not offered and
+  // nothing is uploaded only to be refused.
+  const full = gallery.length + pendingPhotos.length >= photoLimit;
 
   return (
     <div className="flex gap-3.5 overflow-x-auto pb-1.5">
@@ -1065,7 +1072,13 @@ function PhotoStrip({
           className="aspect-[4/3] w-[210px] shrink-0 rounded-lg shadow-sm"
         />
       ))}
-      {canAdd && (
+      {canAdd && full && (
+        <p className="border-border text-muted-foreground flex aspect-[4/3] w-[150px] shrink-0 flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed px-3 text-center text-xs font-semibold">
+          <ImagePlus className="h-5 w-5 opacity-50" aria-hidden />
+          {t("photoLimitTile", { max: photoLimit })}
+        </p>
+      )}
+      {canAdd && !full && (
         <label
           className={cn(
             "border-border text-muted-foreground flex aspect-[4/3] w-[150px] shrink-0 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed text-xs font-semibold",

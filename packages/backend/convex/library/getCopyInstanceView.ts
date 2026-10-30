@@ -9,7 +9,10 @@ import type {
   PendingPhotoPlaceholder,
   ProjectedMember,
 } from "@jigswap/contracts";
-import { resolveHouseholdCopyPermission } from "@jigswap/domain";
+import {
+  MAX_COPY_IMAGES,
+  resolveHouseholdCopyPermission,
+} from "@jigswap/domain";
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
@@ -470,6 +473,7 @@ export const getCopyInstanceView = query({
       community,
       gallery,
       pendingPhotos,
+      photoLimit: MAX_COPY_IMAGES,
     };
   },
 });
