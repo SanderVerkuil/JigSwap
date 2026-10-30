@@ -4181,7 +4181,7 @@
     "beFirstToRate": "Geef als eerste een beoordeling",
     "availableToSwapSection": "Beschikbaar om te ruilen",
     "copiesCount": "{count, plural, one {# exemplaar} other {# exemplaren}}",
-    "seeAllCopies": "Bekijk alle {count} beschikbare exemplaren →",
+    "seeAllCopies": "{count, plural, one {Bekijk het beschikbare exemplaar →} other {Bekijk alle # beschikbare exemplaren →}}",
     "noCopies": "Er zijn nog geen exemplaren beschikbaar om te ruilen.",
     "reviews": "Reviews",
     "reviewPlaceholder": "Beoordeel {title} (optioneel)…",

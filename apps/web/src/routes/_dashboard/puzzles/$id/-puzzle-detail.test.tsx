@@ -220,3 +220,39 @@ describe("puzzle detail page: missing data", () => {
     expect(screen.queryByText(t.noRatingsYet)).toBeNull();
   });
 });
+
+describe("puzzle detail page: available copies link", () => {
+  const withCopies = (total: number): View => ({
+    ...emptyView(),
+    availableCopies: [offeredCopy("copy_1", null)],
+    totalAvailable: total,
+    stats: { ...emptyView().stats, availableToSwap: total },
+  });
+
+  it("names a single copy instead of saying 'all 1'", () => {
+    setView(withCopies(1));
+    renderPage();
+
+    expect(
+      screen.getByRole("link", { name: "View the available copy →" }),
+    ).toBeTruthy();
+  });
+
+  it("counts several copies", () => {
+    setView(withCopies(3));
+    renderPage();
+
+    expect(
+      screen.getByRole("link", { name: "See all 3 available copies →" }),
+    ).toBeTruthy();
+  });
+
+  it("uses the singular in Dutch too", () => {
+    setView(withCopies(1));
+    renderPage("nl");
+
+    expect(
+      screen.getByRole("link", { name: "Bekijk het beschikbare exemplaar →" }),
+    ).toBeTruthy();
+  });
+});

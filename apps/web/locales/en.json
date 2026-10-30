@@ -4181,7 +4181,7 @@
     "beFirstToRate": "Be the first to rate it",
     "availableToSwapSection": "Available to Swap",
     "copiesCount": "{count, plural, one {# copy} other {# copies}}",
-    "seeAllCopies": "See all {count} available copies →",
+    "seeAllCopies": "{count, plural, one {View the available copy →} other {See all # available copies →}}",
     "noCopies": "No copies are available to swap yet.",
     "reviews": "Reviews",
     "reviewPlaceholder": "Review {title} (optional)…",
