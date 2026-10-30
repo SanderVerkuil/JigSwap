@@ -33,7 +33,7 @@ export function PinnedDetail({
         />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold">{t("title")}</p>
-          <p className="text-sm text-muted-foreground">{t("body")}</p>
+          <p className="text-sm">{t("body")}</p>
         </div>
         {onNext && (
           <Button size="sm" className="h-11 md:h-8" onClick={onNext}>
