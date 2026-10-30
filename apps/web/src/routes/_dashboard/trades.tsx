@@ -7,24 +7,14 @@ import {
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { BorrowedEmptyState } from "@/components/exchange/borrowed-empty-state";
-import { exchangeErrorKey } from "@/components/exchange/exchange-error";
+import { ExchangeActions } from "@/components/exchange/exchange-actions";
+import { ReturnLoanButton } from "@/components/exchange/return-loan-button";
 import { TradePartnerCard } from "@/components/exchange/trade-partner-card";
 import { ThreadView } from "@/components/messaging/thread-view";
 import { LeaveReviewDialog } from "@/components/reputation/leave-review-dialog";
 import { ExchangeReportMenu } from "@/components/safety/exchange-report-menu";
 import { GuideHelpButton } from "@/components/tour/guide-help-button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { useTourLauncher } from "@/components/whats-new/tour-launcher";
 import { gateway, Id } from "@/gateway";
@@ -36,20 +26,12 @@ import {
 import { pageTitle } from "@/lib/page-title";
 import { validateTradesSearch } from "@/lib/trades-search";
 import { cn } from "@/lib/utils";
-import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
-import {
-  ArrowLeftRight,
-  CheckCircle,
-  MessageCircle,
-  Package,
-  Tag,
-  XCircle,
-} from "lucide-react";
+import { ArrowLeftRight, MessageCircle, Package, Tag } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
 type ExchangeStatus =
@@ -354,7 +336,8 @@ function ExchangeListRow({
       {open && (
         <ExchangeDetail
           exchange={exchange}
-          incoming={incoming}
+          direction={direction}
+          who={who}
           viewerId={viewerId}
         />
       )}
@@ -370,47 +353,20 @@ function ExchangeListRow({
 // review, message).
 function ExchangeDetail({
   exchange,
-  incoming,
+  direction,
+  who,
   viewerId,
 }: {
   exchange: ExchangeRow;
-  incoming: boolean;
+  direction: Direction;
+  // The counterparty's name exactly as the row shows it ("Deleted member" when gone).
+  who: string;
   viewerId?: string;
 }) {
   const t = useTranslations("trades");
   const displayName = useMemberDisplayName();
   const [chatOpen, setChatOpen] = useState(false);
-
-  const acceptExchange = useMutation({
-    mutationFn: useConvexMutation(gateway.exchange.accept),
-  });
-  const declineExchange = useMutation({
-    mutationFn: useConvexMutation(gateway.exchange.decline),
-  });
-  const completeExchange = useMutation({
-    mutationFn: useConvexMutation(gateway.exchange.complete),
-  });
-  const cancelExchange = useMutation({
-    mutationFn: useConvexMutation(gateway.exchange.cancel),
-  });
-
-  // The lifecycle mutations key off the domain aggregateId, not the Convex
-  // _id; guard against legacy rows lacking one so we never send undefined.
-  const run =
-    (mutate: (args: { exchangeId: string }) => Promise<unknown>) =>
-    async () => {
-      if (!exchange.aggregateId) return;
-      try {
-        await mutate({ exchangeId: exchange.aggregateId });
-      } catch (error) {
-        console.error("Exchange action failed:", error);
-        // Say why a refusal the member can make sense of happened: accept re-checks the requester's
-        // circle permission, and accept and complete refuse while a puzzle is set aside elsewhere or
-        // on loan, or once one changed hands (exchange-error).
-        const key = exchangeErrorKey(error);
-        if (key) toast.error(t(key));
-      }
-    };
+  const incoming = direction === "incoming";
 
   // The other party relative to the viewer (trust badge + review target).
   const partnerId = (
@@ -445,90 +401,11 @@ function ExchangeDetail({
         viewerIsRequester={!incoming}
       />
 
-      <div className="flex flex-wrap items-center gap-2">
-        {exchange.status === "proposed" && incoming && (
-          <>
-            <Button
-              size="sm"
-              disabled={!exchange.aggregateId}
-              onClick={run((args) => acceptExchange.mutateAsync(args))}
-            >
-              <CheckCircle className="h-4 w-4" />
-              {t("accept")}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!exchange.aggregateId}
-              onClick={run((args) => declineExchange.mutateAsync(args))}
-            >
-              <XCircle className="h-4 w-4" />
-              {t("decline")}
-            </Button>
-          </>
-        )}
-
-        {exchange.status === "proposed" && !incoming && (
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!exchange.aggregateId}
-            onClick={run((args) => cancelExchange.mutateAsync(args))}
-          >
-            <XCircle className="h-4 w-4" />
-            {t("cancel")}
-          </Button>
-        )}
-
-        {exchange.status === "accepted" && (
-          <>
-            <Button
-              size="sm"
-              disabled={!exchange.aggregateId}
-              onClick={run((args) => completeExchange.mutateAsync(args))}
-            >
-              <CheckCircle className="h-4 w-4" />
-              {t("markComplete")}
-            </Button>
-            {/* Accepting sets the puzzle aside for this one exchange, so either side can call it
-                off (a pending request is only the requester's to cancel). Calling off an agreed
-                deal is final, so it asks first and says what follows. */}
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={!exchange.aggregateId}
-                >
-                  <XCircle className="h-4 w-4" />
-                  {t("cancel")}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    {t("cancelAccepted.title")}
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {t("cancelAccepted.body")}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>
-                    {t("cancelAccepted.keep")}
-                  </AlertDialogCancel>
-                  <AlertDialogAction
-                    className={buttonVariants({ variant: "destructive" })}
-                    onClick={run((args) => cancelExchange.mutateAsync(args))}
-                  >
-                    {t("cancelAccepted.confirm")}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </>
-        )}
-
+      <ExchangeActions
+        exchange={exchange}
+        direction={direction}
+        partnerName={who}
+      >
         {/* Review the partner once completed; the dialog hides itself when the
             viewer has already reviewed this exchange. */}
         {exchange.status === "completed" && (
@@ -556,7 +433,7 @@ function ExchangeDetail({
             partnerName={displayName(partner)}
           />
         )}
-      </div>
+      </ExchangeActions>
 
       {chatOpen && (
         <ExchangeChat exchangeId={exchange.aggregateId ?? exchange._id} />
@@ -631,22 +508,8 @@ function BorrowedList({ borrowed }: { borrowed: BorrowedLoan[] | undefined }) {
   const t = useTranslations("lending");
   const displayName = useMemberDisplayName();
   const relativeTime = useRelativeTime();
-  const returnLoan = useMutation({
-    mutationFn: useConvexMutation(gateway.lending.returnLoan),
-  });
-  // Scope the pending state to the loan being returned so only that row's
-  // button disables, exactly as the old per-id busy flag did.
-  const returningId = returnLoan.isPending
-    ? (returnLoan.variables?.loanId ?? null)
-    : null;
-
-  const handleReturn = async (loanId: string) => {
-    try {
-      await returnLoan.mutateAsync({ loanId });
-    } catch (error) {
-      console.error("Failed to return loan:", error);
-    }
-  };
+  const lenderName = (loan: BorrowedLoan) =>
+    loan.lender ? displayName(loan.lender) : t("deletedMember");
 
   if (borrowed === undefined) {
     return <PageLoading message={t("loading")} />;
@@ -676,25 +539,17 @@ function BorrowedList({ borrowed }: { borrowed: BorrowedLoan[] | undefined }) {
               </span>
             </div>
             <div className="text-muted-foreground mt-0.5 truncate text-xs">
-              {t("borrowedFrom", {
-                name: loan.lender
-                  ? displayName(loan.lender)
-                  : t("deletedMember"),
-              })}{" "}
-              ·{" "}
+              {t("borrowedFrom", { name: lenderName(loan) })} ·{" "}
               {t("openedRelative", {
                 when: relativeTime(loan.openedAt),
               })}
             </div>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={returningId === loan.loanId}
-            onClick={() => handleReturn(loan.loanId)}
-          >
-            {returningId === loan.loanId ? t("returning") : t("returnAction")}
-          </Button>
+          <ReturnLoanButton
+            loanId={loan.loanId}
+            puzzleTitle={loan.puzzleTitle}
+            lenderName={lenderName(loan)}
+          />
         </div>
       ))}
     </div>

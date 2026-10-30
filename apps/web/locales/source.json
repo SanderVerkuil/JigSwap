@@ -700,8 +700,14 @@
     "cancelled": "Cancelled",
     "newRequest": "New Exchange Request",
     "acceptExchange": "Accept Exchange",
-    "acceptNotPermitted": "This request can't be accepted any more: the requester may no longer exchange this puzzle.",
     "errors": {
+      "IllegalTransition": "This exchange has changed in the meantime. Check its current status.",
+      "WrongParty": "You can't do that on this exchange.",
+      "ExchangeNotFound": "This exchange no longer exists.",
+      "NotPermittedInCircle": "This request can't be accepted any more: the requester may no longer exchange this puzzle.",
+      "NotConnected": "You can't do this with this member.",
+      "CopyNotAvailable": "This puzzle is no longer available for this exchange.",
+      "generic": "Something went wrong. Please try again.",
       "copyReserved": "One of the puzzles in this exchange is already set aside for another exchange or is out on loan. You can go ahead once that exchange is completed or cancelled, or once the puzzle is back. Either member of that exchange can cancel it.",
       "copyChangedHands": "This exchange can't go ahead any more: one of its puzzles has changed hands or is no longer available."
     },
@@ -758,6 +764,29 @@
       "shareEmail": "Share my email with {name}",
       "shareEmailHint": "Only for this trade. You can turn this off at any time.",
       "shareEmailError": "Couldn't change your email sharing. Please try again."
+    },
+    "pendingLabel": {
+      "accept": "Accepting…",
+      "decline": "Declining…",
+      "cancel": "Cancelling…",
+      "complete": "Confirming…"
+    },
+    "declineConfirm": {
+      "title": "Decline this request?",
+      "body": "{name} gets a notification that you declined. You can't undo this, but they can send a new request."
+    },
+    "cancelConfirm": {
+      "title": "Cancel your request?",
+      "body": "{name} gets a notification that you cancelled it. You can't undo this, but you can send a new request.",
+      "keep": "Keep request",
+      "confirm": "Cancel request"
+    },
+    "toast": {
+      "accepted": "Request accepted. Arrange the handover with {name}.",
+      "declined": "Request declined",
+      "cancelled": "Request cancelled",
+      "cancelledAccepted": "Exchange cancelled",
+      "confirmed": "Handover confirmed"
     }
   },
   "tradeRequest": {
@@ -3536,7 +3565,21 @@
     "deletedMember": "Deleted member",
     "anonymousMember": "Anonymous user",
     "borrowedCount": "{count, plural, one {# borrowed puzzle} other {# borrowed puzzles}}",
-    "pieceCount": "{count, plural, one {# piece} other {# pieces}}"
+    "pieceCount": "{count, plural, one {# piece} other {# pieces}}",
+    "returnConfirm": {
+      "title": "Return {title}?",
+      "body": "Only do this once {name} has the puzzle back. The loan closes, and you can't undo this."
+    },
+    "toast": {
+      "returned": "{title} returned to {name}"
+    },
+    "errors": {
+      "LoanNotFound": "This loan no longer exists.",
+      "LoanNotOpen": "This loan has already been closed.",
+      "NotBorrower": "Only the borrower can return this puzzle.",
+      "NotLender": "Only the owner can recall this puzzle.",
+      "generic": "Something went wrong. Please try again."
+    }
   },
   "marketing": {
     "nav": {

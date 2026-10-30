@@ -1,5 +1,6 @@
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { BorrowedEmptyState } from "@/components/exchange/borrowed-empty-state";
+import { ReturnLoanButton } from "@/components/exchange/return-loan-button";
 import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
 import { StartSolveDialog } from "@/components/solving/start-solve-dialog";
@@ -11,8 +12,8 @@ import { gateway } from "@/gateway";
 import { useDateFnsLocale } from "@/lib/date-locale";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
-import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
 import { Package, User } from "lucide-react";
@@ -44,9 +45,6 @@ function BorrowedPage() {
   const { data: borrowed, isPending } = useQuery(
     convexQuery(gateway.lending.borrowed, {}),
   );
-  const returnLoan = useMutation({
-    mutationFn: useConvexMutation(gateway.lending.returnLoan),
-  });
 
   // The caller's own solve log, powering the Start puzzle ↔ Finish solve swap per loan row.
   const { data: completions } = useQuery(
@@ -74,10 +72,6 @@ function BorrowedPage() {
     return map;
   }, [completions]);
 
-  // The loan currently being returned, so we can disable just its button while the mutation runs.
-  const returningId = returnLoan.isPending
-    ? (returnLoan.variables?.loanId ?? null)
-    : null;
   // The loan for which we are logging a solve (null = dialog closed).
   const [solveFor, setSolveFor] = useState<{
     copyId: string;
@@ -94,13 +88,8 @@ function BorrowedPage() {
     startDate: number;
   } | null>(null);
 
-  const handleReturn = async (loanId: string) => {
-    try {
-      await returnLoan.mutateAsync({ loanId });
-    } catch (error) {
-      console.error("Failed to return loan:", error);
-    }
-  };
+  const lenderName = (loan: NonNullable<typeof borrowed>[number]) =>
+    loan.lender ? displayName(loan.lender) : t("deletedMember");
 
   // The page title/subtitle live in the shell page head (ROUTE_META
   // `shell.pages.borrowed`); publish the borrowed-count meta there too so the
@@ -142,13 +131,7 @@ function BorrowedPage() {
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <User className="h-4 w-4" />
-                    <span>
-                      {t("borrowedFrom", {
-                        name: loan.lender
-                          ? displayName(loan.lender)
-                          : t("deletedMember"),
-                      })}
-                    </span>
+                    <span>{t("borrowedFrom", { name: lenderName(loan) })}</span>
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {t("openedRelative", {
@@ -202,15 +185,12 @@ function BorrowedPage() {
                       {tSolve("trigger")}
                     </Button>
                   )}
-                  <Button
-                    size="sm"
-                    disabled={returningId === loan.loanId}
-                    onClick={() => handleReturn(loan.loanId)}
-                  >
-                    {returningId === loan.loanId
-                      ? t("returning")
-                      : t("returnAction")}
-                  </Button>
+                  <ReturnLoanButton
+                    loanId={loan.loanId}
+                    puzzleTitle={loan.puzzleTitle}
+                    lenderName={lenderName(loan)}
+                    variant="default"
+                  />
                 </div>
               </CardContent>
             </Card>

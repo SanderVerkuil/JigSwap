@@ -92,7 +92,7 @@ vi.mock("@/components/messaging/thread-view", () => ({
   ThreadView: () => null,
 }));
 vi.mock("@/lib/page-title", () => ({ pageTitle: () => "Exchanges" }));
-vi.mock("sonner", () => ({ toast: { error: () => {} } }));
+vi.mock("sonner", () => ({ toast: { success: () => {}, error: () => {} } }));
 
 type Status =
   "proposed" | "accepted" | "rejected" | "completed" | "cancelled" | "disputed";

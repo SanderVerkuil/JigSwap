@@ -700,8 +700,14 @@
     "cancelled": "Geannuleerd",
     "newRequest": "Nieuw Uitwisselingsverzoek",
     "acceptExchange": "Uitwisseling Accepteren",
-    "acceptNotPermitted": "Dit verzoek kan niet meer worden geaccepteerd: de aanvrager mag deze puzzel niet meer ruilen.",
     "errors": {
+      "IllegalTransition": "Deze uitwisseling is intussen veranderd. Bekijk de huidige status.",
+      "WrongParty": "Dat kun je bij deze uitwisseling niet doen.",
+      "ExchangeNotFound": "Deze uitwisseling bestaat niet meer.",
+      "NotPermittedInCircle": "Dit verzoek kan niet meer worden geaccepteerd: de aanvrager mag deze puzzel niet meer ruilen.",
+      "NotConnected": "Je kunt dit niet doen met dit lid.",
+      "CopyNotAvailable": "Deze puzzel is niet meer beschikbaar voor deze uitwisseling.",
+      "generic": "Er ging iets mis. Probeer het opnieuw.",
       "copyReserved": "Een van de puzzels in deze uitwisseling is al gereserveerd voor een andere uitwisseling of is uitgeleend. Je kunt doorgaan zodra die uitwisseling is afgerond of geannuleerd, of zodra de puzzel terug is. Beide deelnemers aan die uitwisseling kunnen hem annuleren.",
       "copyChangedHands": "Deze uitwisseling kan niet meer doorgaan: een van de puzzels is van eigenaar gewisseld of niet meer beschikbaar."
     },
@@ -758,6 +764,29 @@
       "shareEmail": "Deel mijn e-mailadres met {name}",
       "shareEmailHint": "Alleen voor deze ruil. Je kunt dit altijd weer uitzetten.",
       "shareEmailError": "Kon het delen van je e-mailadres niet aanpassen. Probeer het opnieuw."
+    },
+    "pendingLabel": {
+      "accept": "Accepteren…",
+      "decline": "Afwijzen…",
+      "cancel": "Annuleren…",
+      "complete": "Bevestigen…"
+    },
+    "declineConfirm": {
+      "title": "Dit verzoek afwijzen?",
+      "body": "{name} krijgt een melding dat je het verzoek hebt afgewezen. Dit kun je niet ongedaan maken, maar een nieuw verzoek sturen kan wel."
+    },
+    "cancelConfirm": {
+      "title": "Je verzoek annuleren?",
+      "body": "{name} krijgt een melding dat je het verzoek hebt geannuleerd. Dit kun je niet ongedaan maken, maar je kunt wel een nieuw verzoek sturen.",
+      "keep": "Verzoek houden",
+      "confirm": "Verzoek annuleren"
+    },
+    "toast": {
+      "accepted": "Verzoek geaccepteerd. Spreek de overdracht af met {name}.",
+      "declined": "Verzoek afgewezen",
+      "cancelled": "Verzoek geannuleerd",
+      "cancelledAccepted": "Uitwisseling geannuleerd",
+      "confirmed": "Overdracht bevestigd"
     }
   },
   "tradeRequest": {
@@ -3536,7 +3565,21 @@
     "deletedMember": "Verwijderd lid",
     "anonymousMember": "Anonieme gebruiker",
     "borrowedCount": "{count, plural, one {# geleende puzzel} other {# geleende puzzels}}",
-    "pieceCount": "{count, plural, one {# stuk} other {# stukken}}"
+    "pieceCount": "{count, plural, one {# stuk} other {# stukken}}",
+    "returnConfirm": {
+      "title": "{title} teruggeven?",
+      "body": "Doe dit pas als {name} de puzzel terug heeft. De lening wordt afgesloten en dat kun je niet ongedaan maken."
+    },
+    "toast": {
+      "returned": "{title} teruggegeven aan {name}"
+    },
+    "errors": {
+      "LoanNotFound": "Deze lening bestaat niet meer.",
+      "LoanNotOpen": "Deze lening is al afgesloten.",
+      "NotBorrower": "Alleen wie de puzzel leent, kan hem teruggeven.",
+      "NotLender": "Alleen de eigenaar kan deze puzzel terugvragen.",
+      "generic": "Er ging iets mis. Probeer het opnieuw."
+    }
   },
   "marketing": {
     "nav": {

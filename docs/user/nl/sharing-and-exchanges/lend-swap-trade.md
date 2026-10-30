@@ -96,7 +96,9 @@ Een uitwisseling doorloopt duidelijke stappen:
 1. **In afwachting** — het verzoek is verstuurd.
 2. **Geaccepteerd / Afgewezen** — de ontvanger reageert. (Als ontvanger van een
    inkomend verzoek gebruik je **Accepteren** of **Afwijzen**. Als verzender
-   van een uitgaand verzoek kun je **Annuleren**.)
+   van een uitgaand verzoek kun je **Annuleren**.) Bij **Afwijzen** en
+   **Annuleren** vragen we je eerst om te bevestigen, omdat je ze niet ongedaan
+   kunt maken; het andere lid krijgt in beide gevallen een melding.
 3. **Afronding** — eenmaal geaccepteerd moeten **beide partijen** de afronding
    bevestigen. Gebruik **Markeren als Voltooid**. Tot dan kunnen jullie
    allebei de uitwisseling nog **Annuleren**, bijvoorbeeld als de plannen
@@ -125,7 +127,9 @@ is, of annuleer hem als hij al geaccepteerd was.
 ## Een geleende puzzel teruggeven
 
 Heb je een puzzel geleend (hij staat op het tabblad **Geleend**), gebruik dan
-de actie **Teruggeven** om hem terug te geven. Ben je de uitlener, dan kun je
+de actie **Teruggeven** om hem terug te geven. We vragen je eerst om te
+bevestigen: geef hem pas terug als de uitlener de puzzel echt terug heeft,
+want daarna is de lening definitief afgesloten. Ben je de uitlener, dan kun je
 een uitgeleend exemplaar **Terugvragen** vanuit je bibliotheek.
 
 Een puzzel kan maar aan één lid tegelijk uitgeleend zijn. Zolang hij is

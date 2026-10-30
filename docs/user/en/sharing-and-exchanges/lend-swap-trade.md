@@ -91,7 +91,9 @@ An exchange moves through clear steps:
 1. **Pending** — the request has been sent.
 2. **Accepted / Declined** — the recipient responds. (As the recipient of an
    incoming request, use **Accept** or **Decline**. As the sender of an
-   outgoing request, you can **Cancel**.)
+   outgoing request, you can **Cancel**.) **Decline** and **Cancel** ask you to
+   confirm first, because they can't be undone; the other member gets a
+   notification either way.
 3. **Completion** — once accepted, **both parties must confirm** completion.
    Use **Mark Complete**. Until then, either of you can still **Cancel** the
    exchange, for example if plans change or the other member stops responding.
@@ -116,7 +118,8 @@ request, or cancel it if it was accepted.
 ## Returning a borrowed puzzle
 
 If you've borrowed a puzzle (it's on the **Borrowed** tab), use the **Return**
-action to give it back. If you're the lender, you can **Recall** a lent-out copy
+action to give it back. You're asked to confirm first: only return it once the
+lender has the puzzle back, because the loan then closes for good. If you're the lender, you can **Recall** a lent-out copy
 from your library.
 
 A puzzle can be on loan to one member at a time. While it's out on loan, it
