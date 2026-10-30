@@ -395,7 +395,9 @@ export default defineSchema({
     .index("by_aggregate_id", ["aggregateId"])
     // Browse's candidate sources: open copies newest-first, platform-wide or for one definition.
     .index("by_open", ["isOpen", "createdAt"])
-    .index("by_puzzle_open", ["puzzleId", "isOpen", "createdAt"]),
+    .index("by_puzzle_open", ["puzzleId", "isOpen", "createdAt"])
+    // One member's copies of one definition (the definition view's household owner count).
+    .index("by_owner_puzzle", ["ownerId", "puzzleId"]),
 
   // This is a table for storing images of owned puzzles
   ownedPuzzleImages: defineTable({

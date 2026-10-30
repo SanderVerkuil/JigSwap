@@ -13,9 +13,12 @@ import {
   completionTotalsOf,
   finishDaysOf,
   publicAvailabilityOf,
+  ratingBreakdownFromTotals,
+  ratingBreakdownOf,
   ratingTotalsOf,
   type CompletionTotals,
   type PublicAvailability,
+  type RatingBreakdown,
   type RatingTotals,
 } from "./definitionAggregates";
 import { isOpenAvailability } from "./openListing";
@@ -97,6 +100,17 @@ export const definitionTotalsOrLive = async (
 ): Promise<DefinitionTotals> =>
   (await definitionTotalsOf(ctx, puzzleId)) ??
   (await computeDefinitionTotals(ctx, puzzleId));
+
+/** The definition's community rating: stored, or read live until its first recompute. */
+export const definitionRatingOf = async (
+  ctx: QueryCtx,
+  puzzleId: Id<"puzzles">,
+): Promise<RatingBreakdown> => {
+  const totals = await definitionTotalsOf(ctx, puzzleId);
+  return totals
+    ? ratingBreakdownFromTotals(totals)
+    : ratingBreakdownOf(ctx, puzzleId);
+};
 
 // Every field, in a fixed order: the stored object comes back with its keys sorted.
 const totalsKey = (t: StoredTotals | DefinitionTotals): string =>

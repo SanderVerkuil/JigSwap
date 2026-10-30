@@ -13,14 +13,22 @@ import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { blockedEitherWaySet } from "../social/blocks";
 import { profileVisibilityOf, projectMemberIdentity } from "../social/privacy";
 import { isCircleSharedWithViewer } from "./circleSharedCopies";
+import { isCopyPrivate } from "./copyVisibility";
 import {
   categoryNameOf,
   communityOwnersOf,
+  completionStatsFromTotals,
   completionStatsOf,
-  isOpen,
+  ratingBreakdownFromTotals,
   ratingBreakdownOf,
   swapTypeOf,
 } from "./definitionAggregates";
+import { definitionTotalsOf } from "./definitionStats";
+import { openCopiesNewestFirst } from "./openListing";
+
+// The most open copies of the definition the view reads as candidates for its reachable list,
+// newest first. Past it, `totalAvailable` (and stats.availableToSwap) is a lower bound.
+export const DEFINITION_CANDIDATE_CAP = 200;
 
 // Auth-gated catalog detail read for a puzzle DEFINITION (not a single copy). Aggregates the
 // community's review-rating distribution, ownership/completion stats, the viewer's own ownership, and
@@ -31,6 +39,11 @@ import {
 // circle can appear here and not in Browse. Returns null for an unknown puzzle, and for a definition
 // that is not approved unless the viewer submitted it or is an admin (canViewDefinition, the same
 // gate as getPuzzleById), so unmoderated, rejected or disabled catalogue text is not served by id.
+//
+// Bounded reads: the rating, owner and completion numbers come from the definition's
+// definitionStats row (library/definitionStats), plus the viewer's household's private-only
+// owners; the reachable list from the newest DEFINITION_CANDIDATE_CAP open copies
+// (library/openListing). Until the definition's first recompute the numbers are computed live.
 export const getPuzzleDefinitionView = query({
   args: { puzzleId: v.id("puzzles") },
   handler: async (ctx, args): Promise<PuzzleDefinitionDetailView | null> => {
@@ -58,28 +71,46 @@ export const getPuzzleDefinitionView = query({
       description: puzzle.description,
     };
 
-    // --- rating (over `puzzleComments` that carry a rating — these ARE the reviews) ------------
-    const rating = await ratingBreakdownOf(ctx, args.puzzleId);
-
-    // --- ownedPuzzles for this definition (drives owners count, viewer ownership, copies) -------
-    const owned = await ctx.db
-      .query("ownedPuzzles")
-      .withIndex("by_puzzle", (q) => q.eq("puzzleId", args.puzzleId))
-      .collect();
-
+    // --- rating, owners and completions --------------------------------------------------------
     // Owners count: private copies only count for the viewer's own and their household's.
     const mates = await householdMateIds(ctx, viewerId);
-    const communityOwners = communityOwnersOf(
-      owned,
-      (ownerId) => ownerId === viewerId || mates.has(ownerId),
-    );
-
-    // --- completions of the definition (totalCompletions, avgCompletionDays) --------------------
-    const { totalCompletions, avgCompletionDays } = await completionStatsOf(
-      ctx,
-      args.puzzleId,
-      owned,
-    );
+    const seesPrivateOf = (ownerId: Id<"users">) =>
+      ownerId === viewerId || mates.has(ownerId);
+    const aggregatesOf = async () => {
+      const totals = await definitionTotalsOf(ctx, args.puzzleId);
+      if (!totals) {
+        const owned = await ctx.db
+          .query("ownedPuzzles")
+          .withIndex("by_puzzle", (q) => q.eq("puzzleId", args.puzzleId))
+          .collect();
+        return {
+          rating: await ratingBreakdownOf(ctx, args.puzzleId),
+          communityOwners: communityOwnersOf(owned, seesPrivateOf),
+          ...(await completionStatsOf(ctx, args.puzzleId, owned)),
+        };
+      }
+      // The stored count has every owner of a copy that is not private; add the viewer and their
+      // housemates who hold only private copies of this definition.
+      let privateOnlyOwners = 0;
+      for (const memberId of [viewerId, ...mates]) {
+        const copies = await ctx.db
+          .query("ownedPuzzles")
+          .withIndex("by_owner_puzzle", (q) =>
+            q.eq("ownerId", memberId).eq("puzzleId", args.puzzleId),
+          )
+          .collect();
+        if (copies.length > 0 && copies.every(isCopyPrivate)) {
+          privateOnlyOwners++;
+        }
+      }
+      return {
+        rating: ratingBreakdownFromTotals(totals),
+        communityOwners: totals.communityOwners + privateOnlyOwners,
+        ...completionStatsFromTotals(totals),
+      };
+    };
+    const { rating, communityOwners, totalCompletions, avgCompletionDays } =
+      await aggregatesOf();
 
     // --- reachability gate (replicated from browseOwnedPuzzles/circleSharedCopies) --------------
     // An available copy is shown iff its owner's profile is PUBLIC, OR the copy is shared into a
@@ -96,10 +127,13 @@ export const getPuzzleDefinitionView = query({
       return cached === "public";
     };
 
-    // Candidate available copies of THIS definition, not the viewer's own, that are open.
-    const availableNotOwn = owned.filter(
-      (c) => c.ownerId !== viewerId && isOpen(c),
-    );
+    // Candidate available copies of THIS definition, not the viewer's own: the newest open ones.
+    const availableNotOwn = (
+      await openCopiesNewestFirst(ctx, {
+        puzzleId: args.puzzleId,
+        limit: DEFINITION_CANDIDATE_CAP,
+      })
+    ).filter((c) => c.ownerId !== viewerId);
 
     // Copies of members blocked either way with the viewer are never offered (spec 2.6).
     const blockedIds = await blockedEitherWaySet(ctx, viewerId);
@@ -113,8 +147,7 @@ export const getPuzzleDefinitionView = query({
         reachable.push(copy);
       }
     }
-    // Newest first.
-    reachable.sort((a, b) => b.createdAt - a.createdAt);
+    // Newest first (openCopiesNewestFirst's order).
 
     const totalAvailable = reachable.length;
     const availableToSwap = totalAvailable;

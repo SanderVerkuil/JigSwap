@@ -11,6 +11,9 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 type T = TestConvex<typeof schema>;
 
 const OPEN = { forTrade: false, forSale: true, forLend: true };
+// Opening a copy directly also sets its listing flag, as every real availability write does
+// (library/openListing): the definition view and Browse read open copies through it.
+const OPENED = { availability: OPEN, isOpen: true };
 
 const as = (t: T, clerkId: string) => t.withIdentity({ subject: clerkId });
 const asAlice = (t: T) => as(t, "clerk_alice"); // A: old owner, owns circle C
@@ -175,7 +178,7 @@ describe("circle shares on ownership transfer", () => {
       { puzzleDefinitionId: puzzleAggregateId, condition: "good" },
     )) as string;
     const copy = (await rowOf(t, copyAggregateId))._id;
-    await t.run(async (ctx) => ctx.db.patch(copy, { availability: OPEN }));
+    await t.run(async (ctx) => ctx.db.patch(copy, OPENED));
     await asAlice(t).mutation(api.sharing.shareCopyToCircle.shareCopyToCircle, {
       circleId,
       copyId: copyAggregateId,
@@ -192,7 +195,7 @@ describe("circle shares on ownership transfer", () => {
     expect((await rowOf(t, copyAggregateId)).ownerId).toBe(noah);
 
     // Noah opens the copy he now owns (settlement flips it closed).
-    await t.run(async (ctx) => ctx.db.patch(copy, { availability: OPEN }));
+    await t.run(async (ctx) => ctx.db.patch(copy, OPENED));
 
     const after = await miaReach(t, copy, puzzleId);
     expect(after.instance).toBeNull();
@@ -221,7 +224,7 @@ describe("circle shares on ownership transfer", () => {
       { puzzleDefinitionId: puzzleAggregateId, condition: "good" },
     )) as string;
     const copy = (await rowOf(t, copyAggregateId))._id;
-    await t.run(async (ctx) => ctx.db.patch(copy, { availability: OPEN }));
+    await t.run(async (ctx) => ctx.db.patch(copy, OPENED));
     await asAlice(t).mutation(api.sharing.shareCopyToCircle.shareCopyToCircle, {
       circleId,
       copyId: copyAggregateId,
@@ -231,7 +234,7 @@ describe("circle shares on ownership transfer", () => {
 
     await settleSaleToNoah(t, copy, alice);
     expect((await rowOf(t, copyAggregateId)).ownerId).toBe(noah);
-    await t.run(async (ctx) => ctx.db.patch(copy, { availability: OPEN }));
+    await t.run(async (ctx) => ctx.db.patch(copy, OPENED));
 
     // Sharing Noah's circle gives Mia no path by itself: only copies Noah shares into it are
     // reachable, and he never shared this one. Noah is private, not mutual, not in her household,

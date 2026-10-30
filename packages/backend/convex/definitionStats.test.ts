@@ -808,3 +808,159 @@ describe("the public catalog reads definitionStats", () => {
     expect((await catalogPage(t, 0)).page).toHaveLength(1);
   });
 });
+
+describe("the member definition and copy views read definitionStats", () => {
+  const memberView = (t: T, who: string, puzzleId: Id<"puzzles">) =>
+    asUser(t, who).query(
+      api.library.getPuzzleDefinitionView.getPuzzleDefinitionView,
+      { puzzleId },
+    );
+
+  // bob and dana share a household; dana holds only a PRIVATE copy of vista, so it counts as an
+  // owner for bob (and dana) but not for anyone else.
+  const seedHousehold = async (t: T, w: World) => {
+    const dana = await t.run(async (ctx) => {
+      const dana = await ctx.db.insert("users", {
+        clerkId: "clerk_dana",
+        email: "dana@example.com",
+        name: "dana",
+        isActive: true,
+        createdAt: BASE,
+        updatedAt: BASE,
+      });
+      const householdId = crypto.randomUUID();
+      await ctx.db.insert("households", {
+        aggregateId: householdId,
+        createdAt: BASE,
+      });
+      for (const [memberId, role] of [
+        [w.bob, "admin"],
+        [dana, "member"],
+      ] as const) {
+        await ctx.db.insert("householdMembers", {
+          householdId,
+          memberId,
+          role,
+          joinedAt: BASE,
+        });
+      }
+      return dana;
+    });
+    await insertCopy(t, {
+      ownerId: dana,
+      puzzleId: w.vista.id,
+      visibility: "private",
+    });
+    return dana;
+  };
+
+  test("the member view shows the same numbers as the live aggregates, household included", async () => {
+    const t = newT();
+    const w = await seedWorld(t);
+    const { aliceCopy } = await seedScenario(t, w);
+    await seedHousehold(t, w);
+    // Distinct listing times, so "newest first" has one order.
+    await t.run(async (ctx) => {
+      const copies = await ctx.db
+        .query("ownedPuzzles")
+        .withIndex("by_puzzle", (q) => q.eq("puzzleId", w.vista.id))
+        .collect();
+      for (const [i, copy] of copies.entries()) {
+        await ctx.db.patch(copy._id, { createdAt: BASE + i });
+      }
+    });
+    const live = {
+      bob: await memberView(t, "bob", w.vista.id),
+      dana: await memberView(t, "dana", w.vista.id),
+      alice: await memberView(t, "alice", w.vista.id),
+      copy: await asUser(t, "alice").query(
+        api.library.getCopyInstanceView.getCopyInstanceView,
+        { copyId: aliceCopy },
+      ),
+    };
+
+    await reconcile(t);
+
+    expect(await memberView(t, "bob", w.vista.id)).toEqual(live.bob);
+    expect(await memberView(t, "dana", w.vista.id)).toEqual(live.dana);
+    expect(await memberView(t, "alice", w.vista.id)).toEqual(live.alice);
+    expect(
+      await asUser(t, "alice").query(
+        api.library.getCopyInstanceView.getCopyInstanceView,
+        { copyId: aliceCopy },
+      ),
+    ).toEqual(live.copy);
+    // carol's private copy never counts; dana's counts inside her household only.
+    expect(live.bob?.stats.communityOwners).toBe(4);
+    expect(live.dana?.stats.communityOwners).toBe(4);
+    expect(live.alice?.stats.communityOwners).toBe(3);
+    // bob sees alice's open copy (public) but not his own or noah's (private profile).
+    expect(live.bob?.totalAvailable).toBe(1);
+  });
+
+  test("the member view reads a bounded window, however many copies the definition has", async () => {
+    const t = newT({ documentsRead: 150 });
+    const w = await seedWorld(t);
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 1000; i++) {
+        await ctx.db.insert("ownedPuzzles", {
+          aggregateId: crypto.randomUUID(),
+          puzzleId: w.vista.id,
+          ownerId: w.alice,
+          condition: "good",
+          availability: CLOSED,
+          isOpen: false,
+          createdAt: BASE + i,
+          updatedAt: BASE + i,
+        });
+      }
+    });
+    const open = await insertCopy(t, {
+      ownerId: w.alice,
+      puzzleId: w.vista.id,
+      availability: { forTrade: true, forSale: false, forLend: false },
+    });
+    await t.run((ctx) =>
+      ctx.db.patch(open, { isOpen: true, createdAt: BASE + 5000 }),
+    );
+    // bob holds one private copy himself.
+    await insertCopy(t, {
+      ownerId: w.bob,
+      puzzleId: w.vista.id,
+      visibility: "private",
+    });
+    // Without totals the view computes them from all 1,002 copies, past the read limit.
+    await expect(memberView(t, "bob", w.vista.id)).rejects.toThrow(
+      /too many documents/,
+    );
+
+    await t.run((ctx) =>
+      ctx.db.insert("definitionStats", {
+        puzzleId: w.vista.id,
+        totals: {
+          ratingCount: 2,
+          ratingSum: 7,
+          breakdown: [1, 0, 0, 1, 0],
+          completedCount: 9,
+          finishDaysSum: 10,
+          finishDaysCount: 4,
+          communityOwners: 1,
+          publicAvailable: { swap: 1, lend: 0, sale: 0 },
+        },
+        computedAt: BASE,
+      }),
+    );
+
+    const view = await memberView(t, "bob", w.vista.id);
+    expect(view?.rating.rating).toBe(3.5);
+    // The stored owners (alice) plus bob, whose only copy is private.
+    expect(view?.stats).toEqual({
+      communityOwners: 2,
+      totalCompletions: 9,
+      avgCompletionDays: 2.5,
+      availableToSwap: 1,
+    });
+    expect(view?.availableCopies.map((c) => c.copyId)).toEqual([open]);
+    expect(view?.ownership.viewerOwns).toBe(true);
+  });
+});
