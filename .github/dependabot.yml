@@ -1,8 +1,11 @@
 # Dependabot keeps the SHA-pinned GitHub Actions and the lockfile-pinned Vercel CLI current.
 #
-# Every `uses:` in .github/workflows is pinned to a full commit SHA with a `# vX.Y.Z` comment,
-# so a moved or hijacked tag cannot change what runs in jobs that hold deploy keys. Dependabot
-# reads the comment and bumps the SHA and the comment together. Minor and patch releases arrive
+# Every `uses:` in .github/workflows is pinned to a full commit SHA, followed by a version
+# comment that names a tag pointing at that exact commit: usually the release (`# v4.4.0`),
+# sometimes the major tag it was pinned from (peaceiris/actions-gh-pages `# v4`). Never
+# rewrite such a comment to a release tag that points at a different commit. A moved or
+# hijacked tag cannot change what runs in jobs that hold deploy keys. Dependabot reads the
+# comment and bumps the SHA and the comment together. Minor and patch releases arrive
 # as one grouped PR a week; each major release gets its own PR, because a major can change
 # inputs or defaults and needs its own check.
 version: 2
