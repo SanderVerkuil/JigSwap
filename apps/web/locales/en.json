@@ -828,6 +828,8 @@
     "inboxError": "Couldn't load your conversations.",
     "loadEarlier": "Load earlier messages",
     "loadingEarlier": "Loading earlier messages…",
+    "loadingOlderConversations": "Loading older conversations…",
+    "showOlderConversations": "Show older conversations",
     "messageButton": "Message",
     "messageName": "Message {name}",
     "moreCount": "{count} more",

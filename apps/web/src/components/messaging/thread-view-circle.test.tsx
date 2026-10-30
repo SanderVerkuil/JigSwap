@@ -244,8 +244,10 @@ const renderThread = (
   });
   mocks.messages = messages;
   queryClient.setQueryData(
-    convexQuery(gateway.conversation.getMyInbox, {}).queryKey,
-    [thread],
+    convexQuery(gateway.conversation.getInboxThread, {
+      threadId: thread.threadId,
+    }).queryKey,
+    thread,
   );
   queryClient.setQueryData(
     convexQuery(gateway.sharing.circle, { circleId: "circle_1" }).queryKey,

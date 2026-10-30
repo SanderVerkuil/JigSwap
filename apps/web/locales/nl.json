@@ -828,6 +828,8 @@
     "inboxError": "Je gesprekken konden niet worden geladen.",
     "loadEarlier": "Eerdere berichten laden",
     "loadingEarlier": "Eerdere berichten laden…",
+    "loadingOlderConversations": "Oudere gesprekken laden…",
+    "showOlderConversations": "Oudere gesprekken tonen",
     "messageButton": "Bericht",
     "messageName": "Bericht sturen aan {name}",
     "moreCount": "nog {count}",

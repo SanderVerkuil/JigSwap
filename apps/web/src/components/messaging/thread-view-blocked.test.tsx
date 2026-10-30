@@ -152,8 +152,10 @@ const renderThread = (thread: InboxThread) => {
     },
   ];
   queryClient.setQueryData(
-    convexQuery(gateway.conversation.getMyInbox, {}).queryKey,
-    [thread],
+    convexQuery(gateway.conversation.getInboxThread, {
+      threadId: thread.threadId,
+    }).queryKey,
+    thread,
   );
   render(
     <QueryClientProvider client={queryClient}>

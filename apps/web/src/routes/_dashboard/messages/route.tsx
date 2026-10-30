@@ -4,6 +4,7 @@ import {
   threadSubjectTitle,
   type Translator,
 } from "@/components/messaging/format";
+import { InboxWindowProvider } from "@/components/messaging/inbox-window";
 import { NewConversationMenu } from "@/components/messaging/new-conversation-menu";
 import { gateway } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
@@ -33,12 +34,14 @@ function MessagesLayout() {
   const { member } = useCurrentMember();
   // "New" lives in the page head (and the phone actions row), not in the list.
   usePageHeaderActions(() => <NewConversationMenu />, []);
+  // The inbox list's window ("Show older conversations") lives here, so it
+  // survives moving between the inbox and a thread.
   return (
-    <>
+    <InboxWindowProvider>
       {member ? <MessagesPresence memberId={member._id} /> : null}
       <MessageToastWatcher />
       <Outlet />
-    </>
+    </InboxWindowProvider>
   );
 }
 

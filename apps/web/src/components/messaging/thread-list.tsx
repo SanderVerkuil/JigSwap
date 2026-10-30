@@ -1,7 +1,8 @@
 "use client";
 
 // Inbox pane of /messages: the reactive getMyInbox subscription rendered as a
-// list of fixed-height conversation rows (message-center redesign spec §3–§4).
+// list of fixed-height conversation rows (message-center redesign spec §3–§4),
+// the newest page first and older ones on request (inbox-window.tsx).
 // All data access lives in the messaging components; routes stay thin.
 import { Link } from "@/compat/link";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
@@ -21,9 +22,15 @@ import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { stripFormatting } from "@jigswap/contracts";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeftRight, BellOff, User, UserRound } from "lucide-react";
-import { useState } from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import {
+  ArrowLeftRight,
+  BellOff,
+  Loader2,
+  User,
+  UserRound,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useLocale, useNow, useTranslations } from "use-intl";
 import { ActiveRowIndicator } from "./active-row-indicator";
 import { CircleThreadAvatar } from "./circle-thread-avatar";
@@ -42,6 +49,12 @@ import {
   type InboxThread,
   type Translator,
 } from "./format";
+import {
+  INBOX_MAX_SIZE,
+  INBOX_PAGE_SIZE,
+  inboxArgs,
+  useInboxWindow,
+} from "./inbox-window";
 
 // The revealed partner of a DM row, the only rows that carry a presence dot
 // (exchange rows show an exchange chip, circle rows their members).
@@ -139,14 +152,37 @@ function ThreadListBody({
   const now = useNow({ updateInterval: 60_000 }).getTime();
   const { member } = useCurrentMember();
   const me = member?._id;
+  // The newest `limit` conversations; "Show older conversations" grows it.
+  const [limit, setLimit] = useInboxWindow();
   const {
     data: inbox,
     isError,
     refetch,
-  } = useQuery(convexQuery(gateway.conversation.getMyInbox, me ? {} : "skip"));
+    isPlaceholderData: loadingOlder,
+  } = useQuery({
+    ...convexQuery(
+      gateway.conversation.getMyInbox,
+      me ? inboxArgs(limit) : "skip",
+    ),
+    // Keep the rows on screen while a longer window loads.
+    placeholderData: keepPreviousData,
+  });
   // One presence subscription for the list: DM partners, most recent first (exchange rows show
   // an exchange chip, not the partner's avatar, so they carry no dot).
   const presence = usePresenceOf(inbox?.map(dmPartnerId) ?? []);
+
+  // After "Show older conversations", focus moves to the first row it added
+  // (the last row when it added none), since the button may be gone.
+  const listRef = useRef<HTMLUListElement>(null);
+  const focusRowRef = useRef<number | null>(null);
+  useEffect(() => {
+    const index = focusRowRef.current;
+    if (index === null || loadingOlder || !inbox) return;
+    focusRowRef.current = null;
+    const rows =
+      listRef.current?.querySelectorAll<HTMLElement>(":scope > li > a");
+    if (rows?.length) rows[Math.min(index, rows.length - 1)].focus();
+  }, [inbox, loadingOlder]);
 
   if (isError) {
     return (
@@ -211,7 +247,11 @@ function ThreadListBody({
           activeKey={activeThreadId}
           layoutKey={inbox.map((thread) => thread.threadId).join()}
         />
-        <ul role="list" className="flex flex-col gap-0.5 p-2 max-md:-mx-2">
+        <ul
+          ref={listRef}
+          role="list"
+          className="flex flex-col gap-0.5 p-2 max-md:-mx-2"
+        >
           {inbox.map((thread) => (
             <li key={thread.threadId}>
               <ThreadRow
@@ -225,6 +265,39 @@ function ThreadListBody({
             </li>
           ))}
         </ul>
+        {/* A full window may have more behind it. Stays mounted while loading
+            (aria-disabled), so a keyboard user's focus survives. */}
+        {(loadingOlder ||
+          (inbox.length >= limit && limit < INBOX_MAX_SIZE)) && (
+          <div className="flex justify-center px-2 pb-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-disabled={loadingOlder || undefined}
+              onClick={
+                loadingOlder
+                  ? undefined
+                  : () => {
+                      focusRowRef.current = inbox.length;
+                      setLimit(
+                        Math.min(limit + INBOX_PAGE_SIZE, INBOX_MAX_SIZE),
+                      );
+                    }
+              }
+              className="text-muted-foreground aria-disabled:cursor-default"
+            >
+              {loadingOlder && (
+                <Loader2
+                  className="size-3.5 animate-spin motion-reduce:animate-none"
+                  aria-hidden
+                />
+              )}
+              {loadingOlder
+                ? t("loadingOlderConversations")
+                : t("showOlderConversations")}
+            </Button>
+          </div>
+        )}
       </nav>
     </CoverTooltipProvider>
   );
