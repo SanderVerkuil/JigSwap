@@ -17,6 +17,7 @@ import {
 } from ".";
 import { toMemberId } from "../../../shared-kernel";
 import {
+  HOUSEHOLD_INVITE_TTL_MS,
   HOUSEHOLD_JOIN_REQUEST_TTL_MS,
   HouseholdId,
   HouseholdInviteId,
@@ -91,6 +92,10 @@ const invite = async (
 const accept = (actorId: typeof ann, inviteId: HouseholdInviteId) =>
   makeAcceptHouseholdInvite(deps)({ actorId, inviteId });
 
+// Move the clock to the moment every invite sent so far has lapsed.
+const lapseInvites = () =>
+  clock.set(new Date(clock.now().getTime() + HOUSEHOLD_INVITE_TTL_MS));
+
 describe("createHousehold", () => {
   it("founds a household with the actor as admin", async () => {
     const id = await create();
@@ -159,6 +164,20 @@ describe("inviteToHousehold", () => {
     expect(result.isErr && result.error.code).toBe("DuplicateInvite");
   });
 
+  it("replaces a lapsed pending invite instead of answering DuplicateInvite", async () => {
+    await create();
+    const lapsed = await invite();
+    lapseInvites();
+    events.published.length = 0;
+
+    const fresh = await invite();
+    expect(fresh).not.toBe(lapsed);
+    expect(await invites.findById(lapsed)).toBeNull();
+    expect((await invites.findById(fresh))?.status).toBe("pending");
+    expect(events.names()).toEqual(["HouseholdInviteSent"]);
+    expect((await accept(bob, fresh)).isOk).toBe(true);
+  });
+
   it("rejects inviting yourself (you are already in your household)", async () => {
     await create();
     const result = await makeInviteToHousehold(deps)({
@@ -195,6 +214,26 @@ describe("acceptHouseholdInvite", () => {
   it("rejects an unknown invite", async () => {
     const result = await accept(bob, "nope" as HouseholdInviteId);
     expect(result.isErr && result.error.code).toBe("InviteNotFound");
+  });
+
+  it("refuses a lapsed invite as missing, changing nothing", async () => {
+    const householdId = await create();
+    const inviteId = await invite();
+    lapseInvites();
+    events.published.length = 0;
+
+    const result = await accept(bob, inviteId);
+    expect(result.isErr && result.error.code).toBe("InviteNotFound");
+    expect((await invites.findById(inviteId))?.status).toBe("pending");
+    expect((await households.findById(householdId))?.isMember(bob)).toBe(false);
+    expect(events.published).toEqual([]);
+  });
+
+  it("still accepts an invite just before it lapses", async () => {
+    await create();
+    const inviteId = await invite();
+    clock.set(new Date(clock.now().getTime() + HOUSEHOLD_INVITE_TTL_MS - 1));
+    expect((await accept(bob, inviteId)).isOk).toBe(true);
   });
 
   it("rejects when the invitee joined another household meanwhile", async () => {
@@ -612,6 +651,25 @@ describe("joinHouseholdByLink", () => {
     expect(
       await invites.findById("household-invite-2" as HouseholdInviteId),
     ).toBeNull();
+    expect(events.names()).toEqual([
+      "HouseholdInviteAccepted",
+      "HouseholdMemberJoined",
+    ]);
+  });
+
+  it("does not reuse a lapsed pending invite: a fresh one is made and accepted", async () => {
+    const householdId = await create();
+    const lapsed = await invite();
+    lapseInvites();
+    events.published.length = 0;
+
+    const result = await join(bob);
+    expect(result.isOk && result.value).toBe(householdId);
+    expect(await invites.findById(lapsed)).toBeNull();
+    expect(
+      (await invites.findById("household-invite-2" as HouseholdInviteId))
+        ?.status,
+    ).toBe("accepted");
     expect(events.names()).toEqual([
       "HouseholdInviteAccepted",
       "HouseholdMemberJoined",

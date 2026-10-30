@@ -7,6 +7,10 @@ import {
 } from "./events";
 import { HouseholdId, HouseholdInviteId, MemberId } from "./ids";
 
+// An invite lapses this long after it was sent (like a request to join); lapsing is read from
+// createdAt, never stored, so existing invites need no new field. A lapsed invite reads as missing.
+export const HOUSEHOLD_INVITE_TTL_MS = 14 * 24 * 60 * 60 * 1000;
+
 export type HouseholdInviteStatus = "pending" | "accepted" | "declined";
 
 export interface HouseholdInviteState {
@@ -21,7 +25,7 @@ export interface HouseholdInviteState {
 
 // An invitation to join a household: pending → accepted | declined, answered only by the invitee.
 // Joining (admitting into the Household) and the at-most-one-household rule are orchestrated by the
-// application layer on accept.
+// application layer on accept, which also refuses a lapsed invite (isExpired).
 export class HouseholdInvite {
   private events: DomainEvent[] = [];
 
@@ -75,6 +79,12 @@ export class HouseholdInvite {
       ),
     );
     return ok(invite);
+  }
+
+  isExpired(now: Date): boolean {
+    return (
+      now.getTime() >= this.state.createdAt.getTime() + HOUSEHOLD_INVITE_TTL_MS
+    );
   }
 
   accept(by: MemberId, now: Date): Result<void, HouseholdError> {

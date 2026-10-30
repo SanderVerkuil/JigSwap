@@ -13,6 +13,7 @@ import { requireMember } from "../identity/requireMember";
 import { isBlockedEitherWay } from "../social/blocks";
 import {
   householdDefaultOf,
+  isLapsedHouseholdInvite,
   membershipOf,
   membersOfHousehold,
 } from "./memberships";
@@ -40,8 +41,9 @@ export const personView = async (
 
 // The acting member's household (members + roles), or null. Pending sent invites and requests to
 // join are returned to the admin only — they are the one who chose those people and who answers
-// the requests. A request to join is listed while pending and not lapsed; a dropped one (asked
-// through a link the household's admin did not mint, or across a block) never is. Also the household-wide default copy
+// the requests. A sent invite is listed while pending and not lapsed. A request to join is listed
+// while pending and not lapsed; a dropped one (asked through a link the household's admin did not
+// mint, or across a block) never is. Also the household-wide default copy
 // permission (resolved) and how many copies, across ALL members, follow it (no explicit value) —
 // what a change of the default would affect.
 export const getMyHousehold = query({
@@ -66,6 +68,7 @@ export const getMyHousehold = query({
 
     let pendingInvites: HouseholdSentInviteView[] = [];
     if (membership.role === "admin") {
+      const now = Date.now();
       const invites = await ctx.db
         .query("householdInvites")
         .withIndex("by_household", (q) =>
@@ -77,7 +80,10 @@ export const getMyHousehold = query({
           // An email invitation's in-app invite (viaEmail) is listed only as that invitation
           // (invitations/listMyEmailInvites), never by name: see householdInvites.viaEmail.
           .filter(
-            (invite) => invite.status === "pending" && invite.viaEmail !== true,
+            (invite) =>
+              invite.status === "pending" &&
+              invite.viaEmail !== true &&
+              !isLapsedHouseholdInvite(invite, now),
           )
           .map(async (invite) => ({
             inviteId: invite.aggregateId,

@@ -48,7 +48,9 @@ invite: find a member, share a link, or send an email.
 2. Click **Invite** next to the person.
 
 They show under **Waiting for a response** on the **Members** tab until they
-answer. To withdraw the invitation, click **Revoke** next to them and confirm.
+answer. An invitation that isn't answered expires after 14 days; you can then
+invite them again. To withdraw the invitation, click **Revoke** next to them
+and confirm.
 
 ### See and revoke pending invitations
 

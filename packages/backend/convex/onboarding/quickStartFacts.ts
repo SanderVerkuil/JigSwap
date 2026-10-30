@@ -4,9 +4,27 @@ import {
 } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
+import { isLapsedHouseholdInvite } from "../household/memberships";
 
 // Counts are read with a cap so the query stays bounded; the UI shows 51 as "50+".
 const COUNT_CAP = 51;
+
+// Whether the member has a pending household invite that has not lapsed. Stops at the first one.
+const hasPendingHouseholdInvite = async (
+  ctx: QueryCtx,
+  me: Id<"users">,
+): Promise<boolean> => {
+  const now = Date.now();
+  const pending = ctx.db
+    .query("householdInvites")
+    .withIndex("by_invitee_status", (q) =>
+      q.eq("inviteeId", me).eq("status", "pending"),
+    );
+  for await (const invite of pending) {
+    if (!isLapsedHouseholdInvite(invite, now)) return true;
+  }
+  return false;
+};
 
 // The member's quick start facts (spec §2.4) from their own rows, with bounded index reads. Shared
 // by getQuickStart (the member's own view) and the internal activation report.
@@ -15,7 +33,7 @@ export const quickStartFactsOf = async (
   member: Doc<"users">,
 ): Promise<QuickStartFacts> => {
   const me = member._id;
-  const [copies, completions, follows, household, invite, profile] =
+  const [copies, completions, follows, household, pendingInvite, profile] =
     await Promise.all([
       ctx.db
         .query("ownedPuzzles")
@@ -35,12 +53,7 @@ export const quickStartFactsOf = async (
         .query("householdMembers")
         .withIndex("by_member", (q) => q.eq("memberId", me))
         .first(),
-      ctx.db
-        .query("householdInvites")
-        .withIndex("by_invitee_status", (q) =>
-          q.eq("inviteeId", me).eq("status", "pending"),
-        )
-        .first(),
+      hasPendingHouseholdInvite(ctx, me),
       ctx.db
         .query("profiles")
         .withIndex("by_member", (q) => q.eq("memberId", me))
@@ -58,7 +71,7 @@ export const quickStartFactsOf = async (
     follows: follows.length,
     pendingFollowRequests: pendingRequest ? 1 : 0,
     inHousehold: household !== null,
-    pendingHouseholdInvite: invite !== null,
+    pendingHouseholdInvite: pendingInvite,
     hasLocation: (member.location ?? "").trim() !== "",
     visibilitySet: profile?.visibility !== undefined,
   };

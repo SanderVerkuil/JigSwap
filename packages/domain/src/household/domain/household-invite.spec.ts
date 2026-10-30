@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { toId, toMemberId } from "../../shared-kernel";
 import { HouseholdInviteDeclined } from "./events";
-import { HouseholdInvite } from "./household-invite";
+import { HOUSEHOLD_INVITE_TTL_MS, HouseholdInvite } from "./household-invite";
 import { HouseholdId, HouseholdInviteId } from "./ids";
 
 const id = toId<"HouseholdInviteId">("invite-1") as HouseholdInviteId;
@@ -90,5 +90,16 @@ describe("HouseholdInvite.accept / decline", () => {
     expect(events).toEqual([
       new HouseholdInviteDeclined(id, householdId, ann, bob, t1),
     ]);
+  });
+});
+
+describe("HouseholdInvite.isExpired", () => {
+  it("lapses 14 days after it was sent", () => {
+    expect(HOUSEHOLD_INVITE_TTL_MS).toBe(14 * 24 * 60 * 60 * 1000);
+    const invite = sent();
+    const lapse = t0.getTime() + HOUSEHOLD_INVITE_TTL_MS;
+    expect(invite.isExpired(t0)).toBe(false);
+    expect(invite.isExpired(new Date(lapse - 1))).toBe(false);
+    expect(invite.isExpired(new Date(lapse))).toBe(true);
   });
 });

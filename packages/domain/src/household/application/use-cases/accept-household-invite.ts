@@ -6,7 +6,8 @@ import { switchHousehold } from "./switch-household";
 
 // The invitee accepts: the authoritative at-most-one-household check happens here (they may have
 // joined or founded another household since the invite was sent), and the household must still
-// exist. An invitee in another household is refused (AlreadyInHousehold) unless they asked to
+// exist. A lapsed invite (HOUSEHOLD_INVITE_TTL_MS after it was sent) answers InviteNotFound, as if
+// it had never been sent. An invitee in another household is refused (AlreadyInHousehold) unless they asked to
 // leave it (leaveCurrentHousehold): then they leave it (the last member dissolves it and its
 // pending invites; an admin hands over to the longest-standing member) and join, in one step.
 // Every check runs before anything is persisted, so a refusal changes nothing; the composition
@@ -16,10 +17,12 @@ export const makeAcceptHouseholdInvite =
     deps: Pick<HouseholdDeps, "households" | "invites" | "events" | "clock">,
   ): AcceptHouseholdInvite =>
   async (cmd) => {
-    const invite = await deps.invites.findById(cmd.inviteId);
-    if (!invite) return err(HouseholdApplicationError.inviteNotFound());
-
     const now = deps.clock.now();
+    const invite = await deps.invites.findById(cmd.inviteId);
+    if (!invite || invite.isExpired(now)) {
+      return err(HouseholdApplicationError.inviteNotFound());
+    }
+
     const accepted = invite.accept(cmd.actorId, now);
     if (accepted.isErr) return err(accepted.error);
 

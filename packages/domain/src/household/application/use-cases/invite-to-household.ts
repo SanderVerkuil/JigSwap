@@ -7,7 +7,8 @@ import { HouseholdDeps } from "./deps";
 // The admin invites a member who is not in THIS household. They may be in another one: the invite
 // still reaches them, and on accept they choose whether to leave it (acceptHouseholdInvite's
 // leaveCurrentHousehold). Not telling the inviter whether someone is in a household also keeps
-// that fact private. One pending invite per (household, invitee).
+// that fact private. One pending invite per (household, invitee): a lapsed one gives way to the new
+// invite rather than answering DuplicateInvite.
 export const makeInviteToHousehold =
   (
     deps: Pick<
@@ -24,7 +25,9 @@ export const makeInviteToHousehold =
     if (household.isMember(cmd.inviteeId)) {
       return err(HouseholdError.alreadyMember());
     }
-    if (await deps.invites.findPending(household.id, cmd.inviteeId)) {
+    const now = deps.clock.now();
+    const pending = await deps.invites.findPending(household.id, cmd.inviteeId);
+    if (pending && !pending.isExpired(now)) {
       return err(HouseholdApplicationError.duplicateInvite());
     }
 
@@ -33,10 +36,11 @@ export const makeInviteToHousehold =
       householdId: household.id,
       inviterId: cmd.actorId,
       inviteeId: cmd.inviteeId,
-      now: deps.clock.now(),
+      now,
     });
     if (invite.isErr) return err(invite.error);
 
+    if (pending) await deps.invites.remove(pending.id);
     await deps.invites.save(invite.value);
     await deps.events.publish(invite.value.pullEvents());
     return ok(invite.value.id);

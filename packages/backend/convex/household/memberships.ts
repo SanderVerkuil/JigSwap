@@ -1,3 +1,4 @@
+import { HOUSEHOLD_INVITE_TTL_MS } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 
@@ -47,3 +48,11 @@ export const householdMateIds = async (
     members.map((m) => m.memberId).filter((id) => id !== memberId),
   );
 };
+
+// A household invite lapses HOUSEHOLD_INVITE_TTL_MS after it was sent (the domain's
+// HouseholdInvite.isExpired; acceptHouseholdInvite refuses it as missing). Every read of pending
+// invites hides a lapsed one, so nobody is shown an invite that no longer works.
+export const isLapsedHouseholdInvite = (
+  invite: Pick<Doc<"householdInvites">, "createdAt">,
+  now: number,
+): boolean => now >= invite.createdAt + HOUSEHOLD_INVITE_TTL_MS;

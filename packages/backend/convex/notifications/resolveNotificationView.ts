@@ -16,7 +16,10 @@ import {
   projectThreadMember,
 } from "../conversation/threadMemberProjection";
 import { projectTradeParty } from "../exchange/tradeParty";
-import { membershipOf } from "../household/memberships";
+import {
+  isLapsedHouseholdInvite,
+  membershipOf,
+} from "../household/memberships";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { canViewCopy } from "../library/canViewCopy";
@@ -605,9 +608,18 @@ const resolveSubject = async (
         }),
       };
     }
+    // A lapsed pending invite reads as gone (expired), like a revoked one: accept refuses it.
     case "householdInvite": {
       const invite = await loadHouseholdInvite(ctx, cache, subject.inviteId);
-      const forViewer = invite && invite.inviteeId === viewerId ? invite : null;
+      const forViewer =
+        invite &&
+        invite.inviteeId === viewerId &&
+        !(
+          invite.status === "pending" &&
+          isLapsedHouseholdInvite(invite, Date.now())
+        )
+          ? invite
+          : null;
       const membership =
         forViewer?.status === "pending"
           ? await membershipOf(ctx, viewerId)

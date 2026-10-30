@@ -52,8 +52,9 @@ e-mail sturen.
 2. Klik op **Uitnodigen** naast de persoon.
 
 Diegene staat onder **Wacht op antwoord** op het tabblad **Leden** tot er een
-antwoord is. Wil je de uitnodiging intrekken, klik dan ernaast op
-**Intrekken** en bevestig.
+antwoord is. Een uitnodiging zonder antwoord vervalt na 14 dagen; daarna kun
+je diegene opnieuw uitnodigen. Wil je de uitnodiging intrekken, klik dan
+ernaast op **Intrekken** en bevestig.
 
 ### Openstaande uitnodigingen bekijken en intrekken
 
