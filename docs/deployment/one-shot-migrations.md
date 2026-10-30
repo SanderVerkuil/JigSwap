@@ -659,6 +659,12 @@ without an `aggregateId` cannot have a sidecar: its photos are only counted.
 
 `dryRun` **defaults to true**: without `"dryRun":false` it only counts.
 
+A real run that starts at the beginning of the table (no `cursor` passed) and ends with
+`without_aggregate_id` and `photos_without_aggregate_id` both 0 records a
+`legacyCompletionSidecars` row in `maintenanceMarkers` (its final event shows
+`"marker_recorded":true`). The storage sweep stays a dry run until that row exists, even when
+`STORAGE_GC_MODE` is `delete` (photo-moderation.md, "Storage sweep").
+
 **Safe to re-run:** yes. A second real run creates 0 sidecars.
 
 **Commands:**
@@ -677,9 +683,9 @@ npx convex run --prod solving/backfillLegacyCompletionSidecars:backfillLegacyCom
 
 The command returns the FIRST batch's running totals; the remaining batches run as scheduled
 functions. Every batch logs a `solving.backfillLegacyCompletionSidecars` wide event with
-`dry_run`, `done` and the running totals `completions`, `photos`, `created`, `existing`,
-`without_aggregate_id` and `photos_without_aggregate_id`; the event with `"done":true` carries
-the whole run. Follow it with `npx convex logs` (add `--prod` for prod) or in the dashboard Logs.
+`dry_run`, `done`, `from_start`, `marker_recorded` and the running totals `completions`,
+`photos`, `created`, `existing`, `without_aggregate_id` and `photos_without_aggregate_id`; the
+event with `"done":true` carries the whole run. Follow it with `npx convex logs` (add `--prod` for prod) or in the dashboard Logs.
 
 **Verify:**
 
@@ -688,6 +694,7 @@ the whole run. Follow it with `npx convex logs` (add `--prod` for prod) or in th
 2. Run the dry run again: its final event shows `"created":0`.
 3. Note `without_aggregate_id` and `photos_without_aggregate_id`. Both must be 0 before the
    storage sweep may delete blobs; anything else needs a decision about those completions first.
+   The real run's final event shows `"marker_recorded":true` exactly when both were 0.
 4. Spot-check an old completion with photos: its photos still show on the member's profile and
    in their completion history.
 

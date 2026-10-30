@@ -6,6 +6,7 @@ import {
   blobReferenceKinds,
   isReferenced,
 } from "./lib/imageModeration/blobReferences";
+import { hasMaintenanceMarker } from "./lib/maintenanceMarkers";
 import schema from "./schema";
 import { BACKFILL_LEGACY_SIDECARS_BATCH } from "./solving/backfillLegacyCompletionSidecars";
 
@@ -13,6 +14,8 @@ import { BACKFILL_LEGACY_SIDECARS_BATCH } from "./solving/backfillLegacyCompleti
 // the unindexable completions.photos array, so blob references (claims, reference-aware deletes,
 // the storage sweep) cannot see it. The backfill gives every such photo its sidecar, in the same
 // shape the re-screen creates, and counts the completions that cannot have one (no aggregateId).
+// A whole real run that leaves no photo without a sidecar records that it is done: the storage
+// sweep's delete mode waits for that.
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
@@ -98,7 +101,7 @@ const sidecars = (t: T) =>
   t.run((ctx) => ctx.db.query("completionImages").collect());
 
 // Run the first batch, drain the self-rescheduled ones, and return the final logged totals.
-const runAll = async (t: T, args: { dryRun?: boolean }) => {
+const runAll = async (t: T, args: { dryRun?: boolean; cursor?: string }) => {
   logs = [];
   vi.useFakeTimers();
   try {
@@ -115,6 +118,9 @@ const runAll = async (t: T, args: { dryRun?: boolean }) => {
   expect(last?.done).toBe(true);
   return last!;
 };
+
+const backfilled = (t: T) =>
+  t.run((ctx) => hasMaintenanceMarker(ctx, "legacyCompletionSidecars"));
 
 describe("solving/backfillLegacyCompletionSidecars", () => {
   test("defaults to a dry run: counts what it would create and writes nothing", async () => {
@@ -210,5 +216,49 @@ describe("solving/backfillLegacyCompletionSidecars", () => {
       created: 2 + extra,
     });
     expect(await sidecars(t)).toHaveLength(3 + extra);
+  });
+
+  test("only a whole real run that leaves no photo without its sidecar records that it is done", async () => {
+    const t = convexTest(schema, modules);
+    const { stampless } = await seed(t);
+
+    // A dry run writes nothing, the marker included.
+    await runAll(t, {});
+    expect(await backfilled(t)).toBe(false);
+    // A completion without an aggregateId keeps its photo invisible to blob references.
+    await runAll(t, { dryRun: false });
+    expect(await backfilled(t)).toBe(false);
+
+    // Once that completion has an aggregateId, the next real run covers its photo and records it.
+    await t.run(async (ctx) => {
+      const rows = await ctx.db.query("completions").collect();
+      const row = rows.find((c) => c.photos.includes(stampless))!;
+      await ctx.db.patch(row._id, { aggregateId: "completion-stamped" });
+    });
+    const totals = await runAll(t, { dryRun: false });
+    expect(totals).toMatchObject({
+      created: 1,
+      without_aggregate_id: 0,
+      photos_without_aggregate_id: 0,
+    });
+    expect(await backfilled(t)).toBe(true);
+  });
+
+  test("a run started part-way through the table does not record it", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await t.run(async (ctx) => {
+      for (const row of await ctx.db.query("completions").collect()) {
+        if (!row.aggregateId) await ctx.db.delete(row._id);
+      }
+    });
+    const { continueCursor } = await t.run((ctx) =>
+      ctx.db.query("completions").paginate({ numItems: 1, cursor: null }),
+    );
+
+    const totals = await runAll(t, { dryRun: false, cursor: continueCursor });
+    expect(totals).toMatchObject({ without_aggregate_id: 0 });
+    expect(totals.completions).toBeLessThan(3);
+    expect(await backfilled(t)).toBe(false);
   });
 });

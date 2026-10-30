@@ -6,6 +6,7 @@ import {
   insertLegacyCompletionSidecar,
 } from "../lib/imageModeration/rescreenStore";
 import { logEvent } from "../lib/logEvent";
+import { recordMaintenanceMarker } from "../lib/maintenanceMarkers";
 
 /** Completions read per batch: each holds at most 5 photos, so one lookup + insert per photo. */
 export const BACKFILL_LEGACY_SIDECARS_BATCH = 50;
@@ -42,6 +43,11 @@ const NO_TOTALS: Totals = {
 // aggregate id): its photos are counted (`photosWithoutAggregateId`) and stay invisible to blob
 // references. Both counts must be 0 before the storage sweep may delete.
 //
+// A real run that started at the beginning of the table and ends with both counts at 0 records
+// the `legacyCompletionSidecars` maintenance marker (lib/maintenanceMarkers): every completion
+// photo then has its sidecar (new ones get theirs at attach time), and the storage sweep stays a
+// dry run until that marker exists, whatever STORAGE_GC_MODE says.
+//
 // `dryRun` DEFAULTS TO TRUE: it only counts. Pages `completions` and reschedules itself until
 // done; every batch logs the running totals, the last one with `done: true`.
 // Runbook: docs/deployment/one-shot-migrations.md.
@@ -50,9 +56,12 @@ export const backfillLegacyCompletionSidecars = internalMutation({
     dryRun: v.optional(v.boolean()),
     cursor: v.optional(v.union(v.string(), v.null())),
     totals: v.optional(totalsValidator),
+    // Whether this run started at the first completion (set by the first batch, passed on).
+    fromStart: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<Totals & { done: boolean }> => {
     const dryRun = args.dryRun ?? true;
+    const fromStart = args.fromStart ?? args.cursor == null;
     const page = await ctx.db.query("completions").paginate({
       numItems: BACKFILL_LEGACY_SIDECARS_BATCH,
       cursor: args.cursor ?? null,
@@ -84,11 +93,24 @@ export const backfillLegacyCompletionSidecars = internalMutation({
       }
     }
 
+    // Every photo of the whole table now has its sidecar: the storage sweep may delete.
+    const covered =
+      !dryRun &&
+      fromStart &&
+      page.isDone &&
+      totals.withoutAggregateId === 0 &&
+      totals.photosWithoutAggregateId === 0;
+    if (covered) {
+      await recordMaintenanceMarker(ctx, "legacyCompletionSidecars");
+    }
+
     logEvent({
       event: "solving.backfillLegacyCompletionSidecars",
       outcome: "success",
       dry_run: dryRun,
       done: page.isDone,
+      from_start: fromStart,
+      marker_recorded: covered,
       completions: totals.completions,
       photos: totals.photos,
       created: totals.created,
@@ -101,7 +123,7 @@ export const backfillLegacyCompletionSidecars = internalMutation({
         0,
         internal.solving.backfillLegacyCompletionSidecars
           .backfillLegacyCompletionSidecars,
-        { dryRun, cursor: page.continueCursor, totals },
+        { dryRun, cursor: page.continueCursor, totals, fromStart },
       );
     }
     return { ...totals, done: page.isDone };

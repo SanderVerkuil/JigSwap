@@ -2082,4 +2082,11 @@ export default defineSchema({
     windowStart: v.number(),
     count: v.number(),
   }).index("by_key", ["key"]),
+
+  // One-shot maintenance steps that other code waits for (lib/maintenanceMarkers). One row per
+  // step name, written by the step itself when its run proves it done.
+  maintenanceMarkers: defineTable({
+    name: v.string(),
+    completedAt: v.number(),
+  }).index("by_name", ["name"]),
 });

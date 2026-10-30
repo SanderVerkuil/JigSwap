@@ -11,6 +11,7 @@ import {
   isWaivedHashRecheckCandidate,
 } from "../imageModeration/hashCheckFields";
 import { logEvent } from "../logEvent";
+import { hasMaintenanceMarker } from "../maintenanceMarkers";
 
 // The daily storage sweep (crons.ts; SEC-20, SEC-92). Uploads are claimed once and delete paths
 // keep blobs that another row holds, so a blob nothing holds stays behind whenever an upload is
@@ -32,6 +33,10 @@ import { logEvent } from "../logEvent";
 // DRY RUN unless the deployment env STORAGE_GC_MODE is exactly "delete" (an owner decision; see
 // docs/deployment/photo-moderation.md for the preconditions). The mode is read on every batch, so
 // unsetting it stops deletion at the next batch. A dry run only logs what it would delete.
+// Delete mode ALSO needs the `legacyCompletionSidecars` maintenance marker, which
+// solving/backfillLegacyCompletionSidecars records once every completion photo has its sidecar:
+// before that, a completion photo stored before the sidecars existed looks held by nothing and
+// would be deleted. Without it the sweep stays a dry run and logs `delete_blocked`.
 //
 // Pages `_storage` STORAGE_SWEEP_PAGE blobs per transaction (about a dozen index reads each) and
 // reschedules itself with the cursor; the age cutoffs are fixed when the run starts. One
@@ -167,7 +172,10 @@ export const sweepStorage = internalMutation({
   },
   handler: async (ctx, args): Promise<Totals & { done: boolean }> => {
     const startedAt = args.startedAt ?? Date.now();
-    const deleting = process.env.STORAGE_GC_MODE === "delete";
+    const deleteRequested = process.env.STORAGE_GC_MODE === "delete";
+    const deleting =
+      deleteRequested &&
+      (await hasMaintenanceMarker(ctx, "legacyCompletionSidecars"));
     const page = await ctx.db.system
       .query("_storage")
       .paginate({ numItems: STORAGE_SWEEP_PAGE, cursor: args.cursor ?? null });
@@ -228,6 +236,10 @@ export const sweepStorage = internalMutation({
       event: "storage.sweep",
       outcome: "success",
       mode: deleting ? "delete" : "dry_run",
+      delete_blocked:
+        deleteRequested && !deleting
+          ? "legacy_completion_sidecars_not_backfilled"
+          : undefined,
       done: page.isDone,
       started_at: startedAt,
       batch_scanned: page.page.length,

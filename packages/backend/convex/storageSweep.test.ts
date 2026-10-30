@@ -9,12 +9,14 @@ import {
 } from "../test-fixtures/blobHolders";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
+import { recordMaintenanceMarker } from "./lib/maintenanceMarkers";
 import { STORAGE_SWEEP_PAGE } from "./lib/storage/storageSweep";
 import schema from "./schema";
 
 // SEC-20 / SEC-92: the daily storage sweep deletes only blobs nothing holds (older than a day),
 // and box art that only its listing holds (older than a week, its checks done). It is a dry run
-// unless STORAGE_GC_MODE is "delete": then it only reports.
+// unless STORAGE_GC_MODE is "delete" and the legacy completion photos have their sidecars;
+// otherwise it only reports.
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
@@ -47,6 +49,7 @@ afterEach(() => {
 type SweepEvent = {
   event: string;
   mode: "dry_run" | "delete";
+  delete_blocked?: string;
   done: boolean;
   batch_candidate_ids: string[];
   scanned: number;
@@ -61,15 +64,11 @@ type SweepEvent = {
   deleted_bytes: number;
 };
 
-// Run a whole sweep at `at` (the first batch, then every batch it reschedules), and return its
-// wide events, the last one being the run's totals.
-const runSweep = async (
-  t: T,
-  at: number,
-  mode: "dry_run" | "delete" = "dry_run",
-) => {
+// Run a whole sweep at `at` with STORAGE_GC_MODE set to `envMode` (the first batch, then every
+// batch it reschedules), and return its wide events, the last one being the run's totals.
+const sweepOnce = async (t: T, at: number, envMode: string) => {
   vi.setSystemTime(at);
-  vi.stubEnv("STORAGE_GC_MODE", mode === "delete" ? "delete" : "");
+  vi.stubEnv("STORAGE_GC_MODE", envMode);
   logs = [];
   await t.mutation(sweep, {});
   await t.finishAllScheduledFunctions(vi.runAllTimers);
@@ -79,12 +78,28 @@ const runSweep = async (
     .filter((e) => e.event === "storage.sweep");
   const total = events[events.length - 1];
   expect(total?.done).toBe(true);
-  expect(events.every((e) => e.mode === mode)).toBe(true);
   return {
     events,
     total: total!,
     candidateIds: events.flatMap((e) => e.batch_candidate_ids),
   };
+};
+
+// What solving/backfillLegacyCompletionSidecars records after a clean real run; delete mode
+// needs it (see the test below).
+const markSidecarsBackfilled = (t: T) =>
+  t.run((ctx) => recordMaintenanceMarker(ctx, "legacyCompletionSidecars"));
+
+// A sweep on a deployment whose legacy completion photos are backfilled, in `mode`.
+const runSweep = async (
+  t: T,
+  at: number,
+  mode: "dry_run" | "delete" = "dry_run",
+) => {
+  await markSidecarsBackfilled(t);
+  const run = await sweepOnce(t, at, mode === "delete" ? "delete" : "");
+  expect(run.events.every((e) => e.mode === mode)).toBe(true);
+  return run;
 };
 
 const exists = (t: T, id: Id<"_storage">) =>
@@ -156,11 +171,42 @@ describe("lib/storage/storageSweep", () => {
   test("a mode other than exactly 'delete' is a dry run", async () => {
     const t = convexTest(schema, modules);
     const orphan = await storeBlob(t);
-    vi.setSystemTime(T0 + 2 * DAY);
-    vi.stubEnv("STORAGE_GC_MODE", "DELETE");
-    await t.mutation(sweep, {});
-    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    await markSidecarsBackfilled(t);
+    const run = await sweepOnce(t, T0 + 2 * DAY, "DELETE");
+    expect(run.total).toMatchObject({ mode: "dry_run", deleted: 0 });
+    expect(run.total.delete_blocked).toBeUndefined();
     expect(await exists(t, orphan)).toBe(true);
+  });
+
+  test("delete mode stays a dry run until the legacy completion photos have their sidecars", async () => {
+    const t = convexTest(schema, modules);
+    const orphan = await storeBlob(t);
+
+    // Before solving/backfillLegacyCompletionSidecars has run, a completion photo stored before
+    // the sidecars existed looks held by nothing: deleting "orphans" could delete it.
+    const blocked = await sweepOnce(t, T0 + 2 * DAY, "delete");
+    expect(blocked.events.every((e) => e.mode === "dry_run")).toBe(true);
+    expect(
+      blocked.events.every(
+        (e) => e.delete_blocked === "legacy_completion_sidecars_not_backfilled",
+      ),
+    ).toBe(true);
+    expect(blocked.total).toMatchObject({ candidates: 1, deleted: 0 });
+    expect(await exists(t, orphan)).toBe(true);
+
+    // The backfill's real run (here: nothing to backfill) records that it is done.
+    await t.mutation(
+      internal.solving.backfillLegacyCompletionSidecars
+        .backfillLegacyCompletionSidecars,
+      { dryRun: false },
+    );
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+
+    const real = await sweepOnce(t, T0 + 2 * DAY, "delete");
+    expect(real.events.every((e) => e.mode === "delete")).toBe(true);
+    expect(real.total.delete_blocked).toBeUndefined();
+    expect(real.total).toMatchObject({ candidates: 1, deleted: 1 });
+    expect(await exists(t, orphan)).toBe(false);
   });
 
   test("a preserved blob is never a candidate", async () => {
