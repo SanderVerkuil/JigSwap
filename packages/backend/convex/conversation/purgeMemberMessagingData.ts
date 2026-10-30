@@ -7,7 +7,11 @@ import {
   withdrawFallback,
 } from "../invitations/fallbacks";
 import { logEvent } from "../lib/logEvent";
-import { RATE_LIMITS, type RateLimitName } from "../lib/rateLimits";
+import {
+  inviteLandingBudget,
+  RATE_LIMITS,
+  type RateLimitName,
+} from "../lib/rateLimits";
 import { presence } from "../presence";
 import { removeForDeletedMember } from "./messageAttachments";
 import { scrubMemberEvents } from "./purgeMemberEvents";
@@ -62,7 +66,8 @@ import {
 //   staleRequestApproved  } is scanned, since actorIds is an array and cannot be indexed
 //   redemptionsOut  the redemptions of their invite links } deleted; the counters on the links
 //   redemptionsIn   their own redemption of someone's link } stay (historic totals, no identity)
-//   inviteLinks     their invite links, so none can still be redeemed
+//   inviteLinks     their invite links, so none can still be redeemed, with each link's landing
+//                   counter on rateLimits
 //   pushSubscriptions, favorites, tourProgress, settings  their own per-member rows
 //   notifications   their own inbox (resolveForDelivery drops an email or push still due)
 //   emailInvitesOut  the email invitations they sent: each row is deleted, its pending in-app
@@ -597,7 +602,17 @@ const runPhase = async (
         .query("inviteLinks")
         .withIndex("by_owner", (q) => q.eq("ownerId", memberId))
         .paginate(opts);
-      for (const row of page.page) await ctx.db.delete(row._id);
+      for (const row of page.page) {
+        // The link's landing counter (social/recordInviteLanding) goes with it.
+        for (const { key } of inviteLandingBudget(row._id)) {
+          const counter = await ctx.db
+            .query("rateLimits")
+            .withIndex("by_key", (q) => q.eq("key", key))
+            .unique();
+          if (counter) await ctx.db.delete(counter._id);
+        }
+        await ctx.db.delete(row._id);
+      }
       return page;
     }
     case "pushSubscriptions": {
