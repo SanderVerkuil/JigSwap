@@ -359,18 +359,3 @@ describe("exchange.getExchangesByOwner / getExchangesByRequester", () => {
     ).toEqual([]);
   });
 });
-
-describe("exchange.getExchangeStats", () => {
-  test("counts exchanges by status", async () => {
-    const t = convexTest(schema, modules);
-    await seed(t);
-    const stats = await t.query(
-      api.exchange.getExchangeStats.getExchangeStats,
-      {},
-    );
-    expect(stats.total).toBe(2);
-    expect(stats.proposed).toBe(1);
-    expect(stats.completed).toBe(1);
-    expect(stats.rejected).toBe(0);
-  });
-});

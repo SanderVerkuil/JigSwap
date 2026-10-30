@@ -209,7 +209,6 @@ import type * as exchange_errors from "../exchange/errors.js";
 import type * as exchange_getExchangeById from "../exchange/getExchangeById.js";
 import type * as exchange_getExchangesByOwner from "../exchange/getExchangesByOwner.js";
 import type * as exchange_getExchangesByRequester from "../exchange/getExchangesByRequester.js";
-import type * as exchange_getExchangeStats from "../exchange/getExchangeStats.js";
 import type * as exchange_getOfferableCopies from "../exchange/getOfferableCopies.js";
 import type * as exchange_getReplyDisclosure from "../exchange/getReplyDisclosure.js";
 import type * as exchange_getRequestDisclosure from "../exchange/getRequestDisclosure.js";
@@ -792,7 +791,6 @@ declare const fullApi: ApiFromModules<{
   "exchange/decline": typeof exchange_decline;
   "exchange/errors": typeof exchange_errors;
   "exchange/getExchangeById": typeof exchange_getExchangeById;
-  "exchange/getExchangeStats": typeof exchange_getExchangeStats;
   "exchange/getExchangesByOwner": typeof exchange_getExchangesByOwner;
   "exchange/getExchangesByRequester": typeof exchange_getExchangesByRequester;
   "exchange/getOfferableCopies": typeof exchange_getOfferableCopies;

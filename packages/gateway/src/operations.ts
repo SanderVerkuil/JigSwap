@@ -203,7 +203,7 @@ export const gateway = {
   exchange: {
     create: api.exchange.propose.propose,
     // Reads go through thin Convex adapters that return typed view DTOs from @jigswap/contracts
-    // (ExchangeView / ExchangeSummaryView / ExchangeStatsView) rather than raw rows;
+    // (ExchangeView / ExchangeSummaryView) rather than raw rows;
     // party-visibility, ordering and the joins are preserved so the UI is unchanged.
     byId: api.exchange.getExchangeById.getExchangeById,
     forUser: api.exchange.getUserExchanges.getUserExchanges,
@@ -214,7 +214,6 @@ export const gateway = {
     complete: api.exchange.confirmCompletion.confirmCompletion,
     cancel: api.exchange.cancel.cancel,
     dispute: api.exchange.raiseDispute.raiseDispute,
-    stats: api.exchange.getExchangeStats.getExchangeStats,
     // The viewer's copies they may offer in a swap for a requested copy (propose's offer rule).
     offerableCopies: api.exchange.getOfferableCopies.getOfferableCopies,
     // The request-flow notice: whether the caller's own profile is private (the owner always gets

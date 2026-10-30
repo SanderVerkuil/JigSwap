@@ -1,4 +1,3 @@
-import { z } from "zod";
 import type { MemberView } from "../identity/member";
 import type { ConvexSystemFields } from "../shared/convex";
 import type {
@@ -143,21 +142,6 @@ export type TradePartnerView =
         items: TradePartnerReviewView[];
       };
     };
-
-/**
- * Platform exchange counters (legacy `getExchangeStats`). Status buckets mirror the legacy keys
- * exactly (`rejected`, not `declined`).
- */
-export const exchangeStatsView = z.object({
-  total: z.number(),
-  proposed: z.number(),
-  accepted: z.number(),
-  completed: z.number(),
-  rejected: z.number(),
-  cancelled: z.number(),
-});
-
-export type ExchangeStatsView = z.infer<typeof exchangeStatsView>;
 
 /** The sender summary embedded on a message (legacy joined `_id`/`name`/`avatar` only). */
 export interface ExchangeMessageSenderView {
