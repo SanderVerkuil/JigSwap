@@ -9,6 +9,7 @@ export type SocialErrorCode =
   | "SelfFollow"
   | "RequestNotPending"
   | "InvalidDisplayName"
+  | "BioTooLong"
   | "EmptyCommentText"
   | "InvalidCommentRating"
   | "NotConnectionOfferRecipient"
@@ -45,6 +46,23 @@ export class SocialError extends DomainError {
     return new SocialError(
       "InvalidDisplayName",
       "Display name must not be empty",
+    );
+  }
+
+  // A profile display name was longer than the cap once cleaned. Same code as an empty name (both
+  // are an unusable display name to the caller); the message tells them apart.
+  static displayNameTooLong(max: number): SocialError {
+    return new SocialError(
+      "InvalidDisplayName",
+      `Display name must be at most ${max} characters`,
+    );
+  }
+
+  // A profile bio was longer than the cap once trimmed.
+  static bioTooLong(max: number): SocialError {
+    return new SocialError(
+      "BioTooLong",
+      `Bio must be at most ${max} characters`,
     );
   }
 

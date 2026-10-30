@@ -1047,6 +1047,7 @@
     "usernameReverifyCancelled": "Username not changed — you cancelled the verification step.",
     "locationPlaceholder": "City, Country",
     "bioPlaceholder": "Tell other members about yourself…",
+    "bioCounter": "{count}/{max}",
     "slug": {
       "label": "Custom link",
       "placeholder": "your-handle",

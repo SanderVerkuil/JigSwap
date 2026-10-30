@@ -28,23 +28,17 @@ export type PhotoCommentRow = Omit<
 >;
 
 // Row -> Profile aggregate. The row MUST carry an aggregateId (only domain-written rows do).
-// DisplayName re-validation here is total: a persisted name was already valid, so `create` succeeds.
-// An absent displayName (lazily-opened profile) stays absent.
+// The stored display name is rehydrated, not re-validated: a row written before the length cap may
+// hold a longer name, and loading it must not break every later profile mutation. An absent
+// displayName (lazily-opened profile) stays absent.
 export const profileToDomain = (row: Doc<"profiles">): Profile => {
-  // A persisted name was valid when written, so a failure here means row corruption, not user input.
-  const displayName =
-    row.displayName === undefined
-      ? undefined
-      : DisplayName.create(row.displayName);
-  if (displayName && !displayName.isOk) {
-    throw new Error(
-      `Corrupt profile row: invalid displayName "${row.displayName}"`,
-    );
-  }
   const state: ProfileState = {
     id: toProfileId(row.aggregateId as string),
     memberId: toMemberId(row.memberId),
-    displayName: displayName?.value,
+    displayName:
+      row.displayName === undefined
+        ? undefined
+        : DisplayName.fromState(row.displayName),
     bio: row.bio,
     // Legacy rows written before visibility existed are treated as public.
     visibility: row.visibility ?? "public",

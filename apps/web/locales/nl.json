@@ -1047,6 +1047,7 @@
     "usernameReverifyCancelled": "Gebruikersnaam niet gewijzigd — je hebt de verificatiestap geannuleerd.",
     "locationPlaceholder": "Plaats, Land",
     "bioPlaceholder": "Vertel andere leden iets over jezelf…",
+    "bioCounter": "{count}/{max}",
     "slug": {
       "label": "Eigen link",
       "placeholder": "jouw-naam",
