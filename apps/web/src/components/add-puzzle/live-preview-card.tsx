@@ -1,7 +1,7 @@
 // apps/web/src/components/add-puzzle/live-preview-card.tsx
 import { Badge } from "@/components/ui/badge";
 import { Check, Puzzle } from "lucide-react";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTranslations } from "use-intl";
 
 export interface LivePreviewProps {
   title: string;
@@ -15,6 +15,7 @@ export interface LivePreviewProps {
 
 export function LivePreviewCard(props: LivePreviewProps) {
   const t = useTranslations("puzzles");
+  const format = useFormatter();
   const cover = props.coverPhotoUrl
     ? {
         backgroundImage: `url(${props.coverPhotoUrl})`,
@@ -49,7 +50,9 @@ export function LivePreviewCard(props: LivePreviewProps) {
         <span className="text-sm">
           {props.pieceCount != null ? (
             <>
-              <span className="font-semibold">{props.pieceCount}</span>{" "}
+              <span className="font-semibold">
+                {format.number(props.pieceCount)}
+              </span>{" "}
               {t("pieces")}
             </>
           ) : (

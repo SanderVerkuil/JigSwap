@@ -276,6 +276,18 @@ describe("CataloguePickerView", () => {
     )!;
     expect(text(submit)).toBe("0 puzzels toevoegen");
   });
+
+  // The piece count follows the app locale, like every other number (UX-63).
+  it.each([
+    ["en", "1,000"],
+    ["nl", "1.000"],
+  ] as const)("formats a row's piece count in %s", (locale, expected) => {
+    const els = render({ term: "puzzle", rows: [row("a")] }, locale);
+    const messages = locale === "en" ? en : nl;
+    const label = locale === "en" ? "Add Puzzle a" : "Puzzle a toevoegen";
+    const [addA] = byLabel(els, label);
+    expect(text(addA)).toContain(`${expected} ${messages.puzzles.pieces}`);
+  });
 });
 
 // The quick-add page docks the submit on phones (stickyFooter); /welcome has its own flow footer.
