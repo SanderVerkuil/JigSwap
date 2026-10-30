@@ -5,6 +5,10 @@ name: Dependency audit
 # warning annotation and in the run summary. Fix them with a selective override in
 # pnpm-workspace.yaml (vulnerable range -> first patched release).
 #
+# A second pass audits the whole pnpm tree, so dev, lint, test and build tooling gets the same
+# warning: a lint plugin runs on every developer machine and CI job, though it never ships.
+# Production findings show up in both passes.
+#
 # A second step audits the Vercel CLI that vercel-preview.yml runs with VERCEL_TOKEN, read from
 # .github/vercel-cli/package-lock.json (also no install). Most of its advisories sit behind
 # exact pins inside Vercel's own packages, so the fix is a CLI release that moves them
@@ -80,6 +84,28 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           if [ "$status" -ne 0 ]; then
             echo "::warning title=Dependency audit::pnpm audit --prod reported advisories at moderate or above, or could not reach the registry (exit $status). See the run summary."
+          fi
+          exit 0
+
+      # Same contract, for every dependency: dev, lint, test and build tooling included.
+      - name: pnpm audit (all dependencies)
+        run: |
+          set +e
+          pnpm audit --audit-level=moderate > audit.txt 2>&1
+          status=$?
+          set -e
+          cat audit.txt
+          {
+            echo "## Dependency audit (all dependencies, including dev tooling)"
+            echo
+            echo "Advisories at moderate or above raise a warning; low ones are listed only."
+            echo
+            echo '```'
+            cat audit.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$status" -ne 0 ]; then
+            echo "::warning title=Dev tooling audit::pnpm audit (all dependencies, dev tooling included) reported advisories at moderate or above, or could not reach the registry (exit $status). See the run summary."
           fi
           exit 0
 
