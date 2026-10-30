@@ -91,7 +91,7 @@ export default defineSchema({
     preferredLanguage: v.optional(v.string()),
     isActive: v.boolean(),
     // Mirror of the Clerk publicMetadata.role claim, synced by the user webhook
-    // (users.updateOrCreateUser) and the one-shot backfillUserRoles action. DISPLAY +
+    // (users.updateOrCreateUser) and the daily backfillUserRoles reconcile. DISPLAY +
     // NOTIFICATION TARGETING only: authorization always reads the JWT via identity/isAdmin —
     // never gate on this field.
     role: v.optional(v.string()),

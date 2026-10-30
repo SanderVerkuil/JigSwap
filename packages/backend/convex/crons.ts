@@ -31,4 +31,13 @@ crons.daily(
   {},
 );
 
+// The users.role mirror (admin-only notification targeting) reconciled with Clerk, in case a user
+// webhook was lost (backfillUserRoles). Skipped where CLERK_SECRET_KEY is unset (previews).
+crons.daily(
+  "reconcile role mirror",
+  { hourUTC: 4, minuteUTC: 15 },
+  internal.backfillUserRoles.run,
+  {},
+);
+
 export default crons;

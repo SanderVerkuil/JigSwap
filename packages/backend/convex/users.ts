@@ -335,18 +335,22 @@ export const backfillMemberNames = internalMutation({
   },
 });
 
-// Backfill write for backfillUserRoles: patch the mirrored display role onto ONE user row by
-// clerkId. Internal-only (never wired to a public endpoint). Patching `role: undefined` clears
-// the field. Display-only: authorization stays JWT-based (identity/isAdmin).
+// Reconcile write for backfillUserRoles: patch the mirrored role onto ONE user row by clerkId.
+// Internal-only (never wired to a public endpoint). Patching `role: undefined` clears the field.
+// Returns whether the row changed. An unchanged role writes nothing (the daily reconcile visits
+// every member), and a deactivated (CSAM-tombstoned) row is left as it is, as in
+// updateOrCreateUser. Authorization stays JWT-based (identity/isAdmin).
 export const patchUserRole = internalMutation({
   args: { clerkId: v.string(), role: v.optional(v.string()) },
-  async handler(ctx, { clerkId, role }) {
+  async handler(ctx, { clerkId, role }): Promise<boolean> {
     const userRecord = await userQuery(ctx, clerkId);
     if (userRecord === null) {
       console.warn("backfillUserRoles: no users row for", clerkId);
-      return;
+      return false;
     }
+    if (!userRecord.isActive || userRecord.role === role) return false;
     await ctx.db.patch(userRecord._id, { role });
+    return true;
   },
 });
 
