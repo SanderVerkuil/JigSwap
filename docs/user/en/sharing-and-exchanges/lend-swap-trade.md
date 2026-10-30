@@ -81,10 +81,11 @@ The **Exchanges** page organizes everything into tabs:
 - **Outgoing** — requests you sent.
 - **Loans** — every open loan you're part of, in two sections:
   - **Borrowed by you** — puzzles you're currently holding. Start or finish a
-    solve, or log one, right from the row. When you have none, it links to
-    **Browse Puzzles**.
+    solve, or log one, right from the row or from the puzzle's own page. When
+    you have none, it links to **Browse Puzzles**.
   - **Lent out** — your puzzles (and household puzzles you may manage) that
-    are out on loan, and who has them.
+    are out on loan, and who has them. In **My Puzzles**, the **Lent Out**
+    filter shows the same puzzles among the rest of your collection.
 
 A loan with a return date shows when it's due back, such as **Due in 5 days**.
 Once it's due, it shows **Due today** or, after that, how many days it's

@@ -87,10 +87,13 @@ De pagina **Uitwisselingen** ordent alles in tabbladen:
 - **Uitgaand** — verzoeken die jij hebt verstuurd.
 - **Leningen** — al je lopende leningen, in twee delen:
   - **Door jou geleend** — puzzels die jij nu in bezit hebt. Begin of rond
-    vanaf de rij een puzzel af, of leg een voltooiing vast. Heb je er geen,
-    dan linkt het naar **Puzzels Ontdekken**.
+    een puzzel af, of leg een voltooiing vast, vanaf de rij of vanaf de pagina
+    van de puzzel zelf. Heb je er geen, dan linkt het naar **Puzzels
+    Ontdekken**.
   - **Uitgeleend** — jouw puzzels (en puzzels uit je huishouden die je mag
-    beheren) die zijn uitgeleend, en bij wie ze zijn.
+    beheren) die zijn uitgeleend, en bij wie ze zijn. In **Mijn Puzzels** laat
+    het filter **Uitgeleend** dezelfde puzzels zien tussen de rest van je
+    verzameling.
 
 Heeft een lening een terugbrengdatum, dan zie je wanneer de puzzel terug moet,
 zoals **Moet over 5 dagen terug**. Is het zover, dan staat er **Moet vandaag
