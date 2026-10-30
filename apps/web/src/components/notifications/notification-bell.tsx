@@ -19,7 +19,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import { NotificationItem } from "./notification-item";
-import { formatUnreadBadge, unreadNotificationsLabel } from "./unread-count";
+import { formatUnreadBadge } from "./unread-count";
 
 // How many recent rows the dropdown shows; the rest live on the full page.
 const PREVIEW_COUNT = 6;
@@ -52,6 +52,9 @@ export function NotificationBell({ className }: { className?: string }) {
   });
 
   const unreadCount = unread ?? 0;
+  // One display string for the badge and the trigger's name, so the visible count is always
+  // part of what screen readers announce (WCAG 2.5.3 Label in Name).
+  const unreadLabel = formatUnreadBadge(unreadCount);
   const preview = notifications ?? [];
 
   // The row link navigates; opening closes the popover and marks the row read without blocking.
@@ -80,16 +83,20 @@ export function NotificationBell({ className }: { className?: string }) {
           variant="ghost"
           size="icon"
           className={cn("relative", className)}
-          aria-label={t("bell")}
+          aria-label={
+            unreadCount > 0
+              ? t("bellWithCount", { count: unreadLabel })
+              : t("bell")
+          }
         >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
             <Badge
               variant="destructive"
+              aria-hidden
               className="absolute -right-1 -top-1 h-5 min-w-5 justify-center rounded-full px-1 text-[10px] leading-none tabular-nums"
-              aria-label={unreadNotificationsLabel(t, unreadCount)}
             >
-              {formatUnreadBadge(unreadCount)}
+              {unreadLabel}
             </Badge>
           )}
         </Button>

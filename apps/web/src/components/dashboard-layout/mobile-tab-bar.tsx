@@ -19,6 +19,7 @@ import { Plus, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "use-intl";
 import { MobileQuickSheet } from "./mobile-quick-sheet";
+import { formatNavBadge, nameForNavBadge } from "./nav-badge";
 import { usePendingRequestCount, useUnreadMessageCount } from "./nav-counts";
 import {
   getRouteMeta,
@@ -61,7 +62,7 @@ export function MobileTabBar() {
       value: pending,
       indicator: "badge",
       label: t("withPendingRequests", {
-        name: t("tabs.swaps"),
+        name: nameForNavBadge(t, t("tabs.swaps"), pending),
         count: pending,
       }),
     },
@@ -161,7 +162,8 @@ export function MobileTabBar() {
 }
 
 // A tab's live count: shown as a capped badge or a plain dot, both aria-hidden;
-// while it is above 0, `label` (the tab's name with the full count) names the tab.
+// while it is above 0, `label` (the tab's name with the full count and any capped
+// badge text) names the tab.
 type TabCount = {
   value: number;
   indicator: "badge" | "dot";
@@ -205,7 +207,7 @@ function TabLink({
               aria-hidden
               className="bg-jigsaw-primary-accent absolute -top-1 -right-2 inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-full px-1 text-[10px] leading-none font-bold text-white"
             >
-              {value > 9 ? "9+" : value}
+              {formatNavBadge(value)}
             </span>
           ))}
       </span>

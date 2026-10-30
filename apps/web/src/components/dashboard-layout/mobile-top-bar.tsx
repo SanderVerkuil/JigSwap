@@ -14,6 +14,7 @@ import { usePathname } from "@/compat/navigation";
 // Mark-only glyph: the header-icon logo is the stacked lockup with "JigSwap"
 // baked in underneath, which doubled the wordmark text beside it.
 import logoMark from "@/components/marketing/assets/icon.png";
+import { formatUnreadBadge } from "@/components/notifications/unread-count";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
@@ -22,6 +23,7 @@ import { useRouter } from "@tanstack/react-router";
 import { Bell, ChevronLeft, MessageSquare, Search } from "lucide-react";
 import { useCallback, useSyncExternalStore, type MouseEvent } from "react";
 import { useTranslations } from "use-intl";
+import { formatNavBadge, nameForNavBadge } from "./nav-badge";
 import { useUnreadMessageCount } from "./nav-counts";
 import { usePageHeaderContent } from "./page-header-slot";
 import {
@@ -39,6 +41,7 @@ const tapTarget =
 
 export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   const t = useTranslations("shell");
+  const tMobile = useTranslations("shell.mobile");
   const tNotifications = useTranslations("notifications");
   const pathname = usePathname();
   const { user } = useUser();
@@ -50,6 +53,11 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   const unread = unreadCount ?? 0;
   const unreadMessages = useUnreadMessageCount();
   const messagesTitle = t("pages.messages.title");
+  // The dot shows no number, so the count lives in the link's name; capped like the desktop bell.
+  const bellLabel =
+    unread > 0
+      ? tNotifications("bellWithCount", { count: formatUnreadBadge(unread) })
+      : tNotifications("bell");
 
   const meta = getRouteMeta(pathname);
   const isHome = meta?.variant === "dashboard";
@@ -166,7 +174,7 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
           aria-label={
             unreadMessages > 0
               ? t("mobile.withUnreadMessages", {
-                  name: messagesTitle,
+                  name: nameForNavBadge(tMobile, messagesTitle, unreadMessages),
                   count: unreadMessages,
                 })
               : messagesTitle
@@ -180,18 +188,21 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
               aria-hidden
               className="bg-jigsaw-primary-accent ring-card absolute top-1.5 right-0.5 inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-full px-1 text-[10px] leading-none font-bold text-white ring-2"
             >
-              {unreadMessages > 9 ? "9+" : unreadMessages}
+              {formatNavBadge(unreadMessages)}
             </span>
           )}
         </Link>
         <Link
           href="/notifications"
-          aria-label={tNotifications("bell")}
+          aria-label={bellLabel}
           className={cn(tapTarget, "relative text-muted-foreground")}
         >
           <Bell className="size-5" />
           {unread > 0 && (
-            <span className="bg-jigsaw-primary-accent ring-card absolute top-2.5 right-2.5 size-2 rounded-full ring-2" />
+            <span
+              aria-hidden
+              className="bg-jigsaw-primary-accent ring-card absolute top-2.5 right-2.5 size-2 rounded-full ring-2"
+            />
           )}
         </Link>
         <span data-tour="account-menu" className="flex">

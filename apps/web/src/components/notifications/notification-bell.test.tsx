@@ -12,12 +12,21 @@ import nl from "../../../locales/nl.json";
 import { NotificationBell } from "./notification-bell";
 
 vi.mock("@/compat/clerk", () => ({
-  useUser: () => ({ user: { id: "clerk_me" } }),
+  useUser: () => ({ user: { id: "user_me" } }),
 }));
 
 vi.mock("@/compat/link", () => ({
-  Link: ({ href, children }: { href: string; children?: ReactNode }) => (
-    <a href={href}>{children}</a>
+  Link: ({
+    href,
+    children,
+    ...rest
+  }: {
+    href: string;
+    children?: ReactNode;
+  }) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
   ),
 }));
 
@@ -61,23 +70,34 @@ const renderBell = (unread: number, locale: "en" | "nl" = "en") => {
   );
 };
 
-describe("NotificationBell badge", () => {
-  it("shows and announces the exact count below the cap", () => {
-    renderBell(7);
-    const badge = screen.getByLabelText("7 unread notifications");
-    expect(badge.textContent).toBe("7");
+afterEach(cleanup);
+
+describe("NotificationBell trigger name", () => {
+  it("is just 'Notifications' with nothing unread", () => {
+    renderBell(0);
+    expect(screen.getByRole("button", { name: "Notifications" })).toBeTruthy();
   });
 
-  it("shows and announces 99+ at the backend cap of 100", () => {
-    renderBell(100);
-    const badge = screen.getByLabelText("99+ unread notifications");
-    expect(badge.textContent).toBe("99+");
-  });
-
-  it("announces the capped count in Dutch", () => {
-    renderBell(100, "nl");
-    expect(screen.getByLabelText("99+ ongelezen meldingen").textContent).toBe(
-      "99+",
-    );
-  });
+  it.each([
+    [2, "en", "Notifications, 2 unread", "2"],
+    [7, "en", "Notifications, 7 unread", "7"],
+    // 100 is the backend's cap: past 99 the count is a lower bound.
+    [100, "en", "Notifications, 99+ unread", "99+"],
+    [140, "en", "Notifications, 99+ unread", "99+"],
+    [5, "nl", "Meldingen, 5 ongelezen", "5"],
+    [100, "nl", "Meldingen, 99+ ongelezen", "99+"],
+  ] as const)(
+    "carries the visible count %s (%s)",
+    (unread, locale, name, visible) => {
+      renderBell(unread, locale);
+      const button = screen.getByRole("button", { name });
+      // The visible badge text is part of the name (WCAG 2.5.3) and the badge
+      // itself is hidden so the count isn't read twice.
+      const badge = Array.from(button.querySelectorAll("[aria-hidden]")).find(
+        (el) => el.textContent === visible,
+      );
+      expect(badge).toBeTruthy();
+      expect(badge?.hasAttribute("aria-label")).toBe(false);
+    },
+  );
 });

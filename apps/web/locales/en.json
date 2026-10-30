@@ -2677,6 +2677,7 @@
     "title": "Notifications",
     "subtitle": "Stay on top of trades, reviews, and milestones.",
     "bell": "Notifications",
+    "bellWithCount": "Notifications, {count} unread",
     "unreadCount": "{count, plural, =0 {No unread notifications} one {# unread notification} other {# unread notifications}}",
     "unreadCountCapped": "99+ unread notifications",
     "recent": "Recent",
@@ -4408,6 +4409,7 @@
         "swaps": "Swaps",
         "community": "Community"
       },
+      "tabWithCount": "{label}, {count}",
       "back": "Back to {section}",
       "backGeneric": "Back",
       "openQuickActions": "Quick Actions",

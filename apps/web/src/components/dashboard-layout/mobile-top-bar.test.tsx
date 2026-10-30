@@ -106,11 +106,11 @@ describe("MobileTopBar Messages entry", () => {
     expect(link.querySelector("[aria-hidden]:not(svg)")?.textContent).toBe("3");
   });
 
-  it("caps the badge but not the name", () => {
+  it("caps the badge but not the name, which also carries the visible 9+", () => {
     mocks.unreadMessages = 12;
     renderBar("/dashboard");
     const link = screen.getByRole("link", {
-      name: "Messages, 12 unread messages",
+      name: "Messages, 9+, 12 unread messages",
     });
     expect(link.querySelector("[aria-hidden]:not(svg)")?.textContent).toBe(
       "9+",

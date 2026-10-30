@@ -2677,6 +2677,7 @@
     "title": "Meldingen",
     "subtitle": "Blijf op de hoogte van ruilen, beoordelingen en mijlpalen.",
     "bell": "Meldingen",
+    "bellWithCount": "Meldingen, {count} ongelezen",
     "unreadCount": "{count, plural, =0 {Geen ongelezen meldingen} one {# ongelezen melding} other {# ongelezen meldingen}}",
     "unreadCountCapped": "99+ ongelezen meldingen",
     "recent": "Recent",
@@ -4408,6 +4409,7 @@
         "swaps": "Ruilen",
         "community": "Community"
       },
+      "tabWithCount": "{label}, {count}",
       "back": "Terug naar {section}",
       "backGeneric": "Terug",
       "openQuickActions": "Snelle Acties",
