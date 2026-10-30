@@ -4786,7 +4786,7 @@
         "rejected": "Rejected",
         "flagsCleared": "Flags cleared",
         "avgReview": "Avg. review time",
-        "thisWeek": "this week"
+        "period": "Last 7 days"
       },
       "tabs": {
         "submissions": "Submissions",
