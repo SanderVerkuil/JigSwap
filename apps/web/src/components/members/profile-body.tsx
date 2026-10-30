@@ -148,6 +148,7 @@ function ProfileBodyContent({
       ) : profile.locked ? (
         <LockedCard
           firstName={firstName}
+          name={displayName({ name: hero.displayName })}
           memberId={hero.memberId as Id<"users">}
           viewer={viewer}
           returnToHref={returnToHref}
@@ -320,7 +321,7 @@ function HeroActions({
       <div className="flex flex-wrap items-center gap-2">
         {!locked && (
           <>
-            <FollowButton memberId={memberId} />
+            <FollowButton memberId={memberId} memberName={name} />
             <MessageButton memberId={memberId} />
           </>
         )}
@@ -711,11 +712,14 @@ function ShelfSection({
 // ── Locked (private, non-owner or owner-preview) ─────────────────────────────
 function LockedCard({
   firstName,
+  name,
   memberId,
   viewer,
   returnToHref,
 }: {
   firstName: string;
+  /** The member's resolved display name, for the follow control's labels. */
+  name: string;
   memberId: Id<"users">;
   viewer: ProfileViewer;
   returnToHref?: string;
@@ -730,7 +734,7 @@ function LockedCard({
       {viewer === "member" && (
         // Phase 1 keeps today's instant follow; the request-to-follow flow
         // replaces this in Phase 2.
-        <FollowButton memberId={memberId} />
+        <FollowButton memberId={memberId} memberName={name} />
       )}
       {viewer === "public" && (
         <Button asChild variant="brand">

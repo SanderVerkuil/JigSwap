@@ -186,9 +186,11 @@ describe("MemberTile", () => {
   it("labels the icon actions with the member's name", () => {
     const html = render({ stats: rated });
     const els = elementsOf(html);
-    expect(byLabel(els, "Unfollow Hans-Peter van den Berg")?.tagName).toBe(
-      "button",
-    );
+    // Following is a state that opens a menu (Unfollow lives inside it), not a one-tap Unfollow.
+    const following = byLabel(els, "Following Hans-Peter van den Berg");
+    expect(following?.tagName).toBe("button");
+    expect(attr(following!, "aria-haspopup")).toBe("menu");
+    expect(byLabel(els, "Unfollow Hans-Peter van den Berg")).toBeUndefined();
     expect(byLabel(els, "Message Hans-Peter van den Berg")?.tagName).toBe(
       "button",
     );

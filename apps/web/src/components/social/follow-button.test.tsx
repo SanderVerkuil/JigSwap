@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 import { gateway, type Id } from "@/gateway";
+import { convexQuery } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   cleanup,
@@ -16,16 +17,15 @@ import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
 import { FollowButton } from "./follow-button";
 
-const FOLLOW = getFunctionName(gateway.social.follow);
-const UNFOLLOW = getFunctionName(gateway.social.unfollow);
-const CANCEL = getFunctionName(gateway.social.cancelFollowRequest);
-const RELATION = getFunctionName(gateway.social.followRelation);
-const MARA = "member_mara" as Id<"users">;
-
 const mocks = vi.hoisted(() => ({
   mutation: vi.fn<(name: string, args: unknown) => Promise<unknown>>(),
-  queries: {} as Record<string, unknown>,
-  toastSuccess: vi.fn<(message: string) => void>(),
+  toastSuccess:
+    vi.fn<
+      (
+        message: string,
+        options?: { action?: { label: string; onClick: () => void } },
+      ) => void
+    >(),
   toastError: vi.fn<(message: string) => void>(),
 }));
 
@@ -35,53 +35,209 @@ vi.mock("@convex-dev/react-query", async (importOriginal) => ({
     (ref: Parameters<typeof getFunctionName>[0]) => (args: unknown) =>
       mocks.mutation(getFunctionName(ref), args),
 }));
-// Queries resolve from `mocks.queries` by function name; anything else stays unresolved.
-vi.mock("@tanstack/react-query", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@tanstack/react-query")>()),
-  useQuery: (options: { queryKey: unknown[] }) => ({
-    data: mocks.queries[options.queryKey[1] as string],
-  }),
-}));
+
 vi.mock("sonner", () => ({
   toast: { success: mocks.toastSuccess, error: mocks.toastError },
 }));
 
-const relation = (overrides: Record<string, unknown> = {}) => ({
-  following: false,
+const FOLLOW = getFunctionName(gateway.social.follow);
+const UNFOLLOW = getFunctionName(gateway.social.unfollow);
+const CANCEL = getFunctionName(gateway.social.cancelFollowRequest);
+const MARA = "member_mara" as Id<"users">;
+
+type Relation = {
+  following: boolean;
+  followsYou: boolean;
+  targetIsPrivate: boolean;
+  pendingRequest: { requestId: string; requestedAt: number } | null;
+};
+
+const FOLLOWING_PUBLIC: Relation = {
+  following: true,
   followsYou: false,
   targetIsPrivate: false,
   pendingRequest: null,
-  ...overrides,
-});
+};
 
-const renderButton = (locale: "en" | "nl" = "en") =>
+const renderButton = (
+  relation: Relation,
+  iconOnly = false,
+  locale: "en" | "nl" = "en",
+) => {
+  // The relation is seeded (Convex queries never go stale); the default queryFn serves the
+  // same relation, so react-query has a queryFn without a Convex client behind it.
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { queryFn: () => relation } },
+  });
+  queryClient.setQueryData(
+    convexQuery(gateway.social.followRelation, { memberId: MARA }).queryKey,
+    relation,
+  );
   render(
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider client={queryClient}>
       <IntlProvider
         locale={locale}
         messages={locale === "en" ? en : nl}
         timeZone="Europe/Amsterdam"
       >
-        <FollowButton memberId={MARA} />
+        <FollowButton memberId={MARA} memberName="Mara" iconOnly={iconOnly} />
       </IntlProvider>
     </QueryClientProvider>,
   );
+};
 
-const rateLimited = () =>
-  new ConvexError({ code: "RateLimited", retryAfterMs: 60_000 });
+// Radix menus open on a primary-button pointerdown.
+const openMenu = (name: string) =>
+  fireEvent.pointerDown(screen.getByRole("button", { name }), {
+    button: 0,
+    ctrlKey: false,
+  });
+
+const chooseUnfollow = async () =>
+  fireEvent.click(
+    await screen.findByRole("menuitem", { name: "Unfollow Mara" }),
+  );
 
 beforeEach(() => {
-  mocks.mutation.mockReset().mockResolvedValue({ kind: "followed", id: "f1" });
+  mocks.mutation.mockReset().mockResolvedValue(null);
   mocks.toastSuccess.mockReset();
   mocks.toastError.mockReset();
-  mocks.queries = { [RELATION]: relation() };
 });
 afterEach(cleanup);
 
+describe("FollowButton (following)", () => {
+  it("shows a Following state, not a direct Unfollow button", () => {
+    renderButton(FOLLOWING_PUBLIC);
+    const trigger = screen.getByRole("button", { name: "Following" });
+    expect(trigger.getAttribute("aria-haspopup")).toBe("menu");
+    expect(screen.queryByRole("button", { name: /Unfollow/ })).toBeNull();
+    expect(mocks.mutation).not.toHaveBeenCalled();
+  });
+
+  it("names the compact trigger after the member", () => {
+    renderButton(FOLLOWING_PUBLIC, true);
+    const trigger = screen.getByRole("button", { name: "Following Mara" });
+    expect(trigger.getAttribute("aria-haspopup")).toBe("menu");
+  });
+
+  it("unfollows a public member from the menu and offers Undo, which follows again", async () => {
+    mocks.mutation.mockImplementation(async (name) =>
+      name === FOLLOW ? { kind: "followed", id: "f2" } : null,
+    );
+    renderButton(FOLLOWING_PUBLIC, true);
+    openMenu("Following Mara");
+    await chooseUnfollow();
+
+    await waitFor(() =>
+      expect(mocks.mutation).toHaveBeenCalledWith(UNFOLLOW, {
+        followeeId: MARA,
+      }),
+    );
+    await waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalled());
+    const [message, options] = mocks.toastSuccess.mock.calls[0]!;
+    expect(message).toBe("Unfollowed Mara");
+    expect(options?.action?.label).toBe("Undo");
+
+    // Undo still works after the tile is gone (the network list drops one-way tiles).
+    cleanup();
+    options!.action!.onClick();
+    await waitFor(() =>
+      expect(mocks.mutation).toHaveBeenCalledWith(FOLLOW, {
+        followeeId: MARA,
+      }),
+    );
+    await waitFor(() =>
+      expect(mocks.toastSuccess).toHaveBeenLastCalledWith("Following"),
+    );
+  });
+
+  it("says so when Undo can't follow again", async () => {
+    renderButton(FOLLOWING_PUBLIC);
+    openMenu("Following");
+    await chooseUnfollow();
+    await waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalled());
+    const [, options] = mocks.toastSuccess.mock.calls[0]!;
+
+    mocks.mutation.mockRejectedValueOnce(new Error("rate limited"));
+    options!.action!.onClick();
+    await waitFor(() =>
+      expect(mocks.toastError).toHaveBeenCalledWith(
+        "Couldn't follow Mara again. Please try again.",
+      ),
+    );
+  });
+
+  it("confirms first for a private member who doesn't follow back, and offers no Undo", async () => {
+    renderButton({ ...FOLLOWING_PUBLIC, targetIsPrivate: true });
+    openMenu("Following");
+    await chooseUnfollow();
+
+    const dialog = await screen.findByRole("alertdialog", {
+      name: "Unfollow Mara?",
+    });
+    expect(dialog.textContent).toContain("send a new request");
+    expect(mocks.mutation).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Unfollow" }));
+    await waitFor(() =>
+      expect(mocks.mutation).toHaveBeenCalledWith(UNFOLLOW, {
+        followeeId: MARA,
+      }),
+    );
+    await waitFor(() =>
+      expect(mocks.toastSuccess).toHaveBeenCalledWith(
+        "Unfollowed Mara",
+        undefined,
+      ),
+    );
+  });
+
+  it("cancelling the confirm keeps the follow", async () => {
+    renderButton({ ...FOLLOWING_PUBLIC, targetIsPrivate: true });
+    openMenu("Following");
+    await chooseUnfollow();
+    await screen.findByRole("alertdialog");
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+    expect(mocks.mutation).not.toHaveBeenCalled();
+  });
+
+  it("skips the confirm for a private member who follows back (following again is instant)", async () => {
+    renderButton({
+      ...FOLLOWING_PUBLIC,
+      targetIsPrivate: true,
+      followsYou: true,
+    });
+    openMenu("Following");
+    await chooseUnfollow();
+    await waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalled());
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    const [, options] = mocks.toastSuccess.mock.calls[0]!;
+    expect(options?.action?.label).toBe("Undo");
+  });
+
+  it("reports a failed unfollow", async () => {
+    mocks.mutation.mockRejectedValueOnce(new Error("network"));
+    renderButton(FOLLOWING_PUBLIC);
+    openMenu("Following");
+    await chooseUnfollow();
+    await waitFor(() =>
+      expect(mocks.toastError).toHaveBeenCalledWith(
+        "Could not update follow status",
+      ),
+    );
+    expect(mocks.toastSuccess).not.toHaveBeenCalled();
+  });
+});
+
 describe("FollowButton refusals", () => {
+  const NOT_FOLLOWING: Relation = { ...FOLLOWING_PUBLIC, following: false };
+  const rateLimited = () =>
+    new ConvexError({ code: "RateLimited", retryAfterMs: 60_000 });
+
   it("says so when following is rate limited", async () => {
     mocks.mutation.mockRejectedValue(rateLimited());
-    renderButton();
+    renderButton(NOT_FOLLOWING);
     fireEvent.click(screen.getByRole("button", { name: "Follow" }));
 
     await waitFor(() =>
@@ -93,10 +249,12 @@ describe("FollowButton refusals", () => {
   });
 
   it("says so when unfollowing is rate limited, in Dutch too", async () => {
-    mocks.queries = { [RELATION]: relation({ following: true }) };
     mocks.mutation.mockRejectedValue(rateLimited());
-    renderButton("nl");
-    fireEvent.click(screen.getByRole("button", { name: "Ontvolgen" }));
+    renderButton(FOLLOWING_PUBLIC, false, "nl");
+    openMenu("Volgend");
+    fireEvent.click(
+      await screen.findByRole("menuitem", { name: "Mara ontvolgen" }),
+    );
 
     await waitFor(() =>
       expect(mocks.toastError).toHaveBeenCalledWith(
@@ -106,17 +264,32 @@ describe("FollowButton refusals", () => {
     expect(mocks.mutation).toHaveBeenCalledWith(UNFOLLOW, {
       followeeId: MARA,
     });
+    expect(mocks.toastSuccess).not.toHaveBeenCalled();
+  });
+
+  it("says so when Undo is rate limited, not that it merely failed", async () => {
+    renderButton(FOLLOWING_PUBLIC);
+    openMenu("Following");
+    await chooseUnfollow();
+    await waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalled());
+    const [, options] = mocks.toastSuccess.mock.calls[0]!;
+
+    mocks.mutation.mockRejectedValueOnce(rateLimited());
+    options!.action!.onClick();
+    await waitFor(() =>
+      expect(mocks.toastError).toHaveBeenCalledWith(
+        "You've followed and unfollowed a lot. Try again later.",
+      ),
+    );
   });
 
   it("says so when cancelling a request is rate limited", async () => {
-    mocks.queries = {
-      [RELATION]: relation({
-        targetIsPrivate: true,
-        pendingRequest: { requestId: "req_1", requestedAt: Date.now() },
-      }),
-    };
     mocks.mutation.mockRejectedValue(rateLimited());
-    renderButton();
+    renderButton({
+      ...NOT_FOLLOWING,
+      targetIsPrivate: true,
+      pendingRequest: { requestId: "req_1", requestedAt: Date.now() },
+    });
     fireEvent.keyDown(screen.getByRole("button", { name: /Requested/ }), {
       key: "Enter",
     });
@@ -136,7 +309,7 @@ describe("FollowButton refusals", () => {
 
   it("keeps the generic error for any other failure", async () => {
     mocks.mutation.mockRejectedValue(new ConvexError({ code: "Blocked" }));
-    renderButton();
+    renderButton(NOT_FOLLOWING);
     fireEvent.click(screen.getByRole("button", { name: "Follow" }));
 
     await waitFor(() =>
