@@ -13,8 +13,8 @@ import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import {
   householdDefaultOf,
-  householdMateIds,
   membershipOf,
+  membersOfHousehold,
 } from "./memberships";
 
 // Server-side household authorization over copies, built on the domain's single rule
@@ -55,21 +55,6 @@ export const copyAccessOf = async (
     await sharedHouseholdOf(ctx, actorId, copy.ownerId),
   );
 
-// The permission the copy grants its owner's household right now (explicit value, else the
-// owner's household default, else "manage"). Meaningful only while the owner is in a household.
-export const effectiveCopyPermission = async (
-  ctx: QueryCtx,
-  copy: Doc<"ownedPuzzles">,
-): Promise<HouseholdCopyPermission> => {
-  const membership = await membershipOf(ctx, copy.ownerId);
-  return resolveHouseholdCopyPermission(
-    copy.householdPermission,
-    membership
-      ? await householdDefaultOf(ctx, membership.householdId)
-      : undefined,
-  );
-};
-
 // May the actor act on the copy as if they owned it (owner, or household member at "manage")?
 export const canManageCopy = async (
   ctx: QueryCtx,
@@ -78,16 +63,54 @@ export const canManageCopy = async (
 ): Promise<boolean> =>
   canManageHouseholdCopy(await copyAccessOf(ctx, actorId, copy));
 
-// The members other than the owner who may manage the copy — Exchange's CopyView.coManagerIds.
+// The household facts co-management of an OWNER's copies depends on: their household's default
+// copy permission and the other members. Null when the owner is in no household. A bulk reader
+// resolves it once per owner and decides each copy with coManagerIdsFrom.
+export interface OwnerHousehold {
+  readonly defaultCopyPermission: HouseholdCopyPermission | undefined;
+  readonly mateIds: ReadonlySet<Id<"users">>;
+}
+
+export const ownerHouseholdOf = async (
+  ctx: QueryCtx,
+  ownerId: Id<"users">,
+): Promise<OwnerHousehold | null> => {
+  const membership = await membershipOf(ctx, ownerId);
+  if (!membership) return null;
+  const [defaultCopyPermission, members] = await Promise.all([
+    householdDefaultOf(ctx, membership.householdId),
+    membersOfHousehold(ctx, membership.householdId),
+  ]);
+  return {
+    defaultCopyPermission,
+    mateIds: new Set(
+      members.map((m) => m.memberId).filter((id) => id !== ownerId),
+    ),
+  };
+};
+
+// THE co-manager rule — Exchange's CopyView.coManagerIds: the members other than the owner who may
+// manage the copy, i.e. the owner's household mates while the copy's effective permission is
+// "manage"; nobody when the owner is in no household. `ownerHousehold` must be the copy owner's.
+export const coManagerIdsFrom = (
+  copy: Doc<"ownedPuzzles">,
+  ownerHousehold: OwnerHousehold | null,
+): MemberId[] => {
+  if (!ownerHousehold) return [];
+  const permission = resolveHouseholdCopyPermission(
+    copy.householdPermission,
+    ownerHousehold.defaultCopyPermission,
+  );
+  if (permission !== "manage") return [];
+  return [...ownerHousehold.mateIds].map((id) => toMemberId(id));
+};
+
+// Single-copy form of coManagerIdsFrom.
 export const coManagerIdsOf = async (
   ctx: QueryCtx,
   copy: Doc<"ownedPuzzles">,
-): Promise<MemberId[]> => {
-  if ((await effectiveCopyPermission(ctx, copy)) !== "manage") return [];
-  return [...(await householdMateIds(ctx, copy.ownerId))].map((id) =>
-    toMemberId(id),
-  );
-};
+): Promise<MemberId[]> =>
+  coManagerIdsFrom(copy, await ownerHouseholdOf(ctx, copy.ownerId));
 
 // Driven adapter for Library's CopyManagerPolicy port. Library hands over the domain CopyId (the
 // row's aggregateId); the permission is read from the row.
