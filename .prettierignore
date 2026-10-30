@@ -13,3 +13,5 @@
 /packages/contracts/src/whats-new/manifest.generated.ts
 # Verbatim Claude Design handoff reference — keep as-authored, do not reformat
 docs/superpowers/design-reference/
+# Raw review evidence (captured metrics, agent scripts) — keep as recorded, do not reformat
+docs/review/*/evidence/
