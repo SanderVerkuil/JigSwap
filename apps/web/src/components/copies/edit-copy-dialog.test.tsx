@@ -57,6 +57,10 @@ const copyOf = (
   visibility: "private" | "visible",
   visibilityPreference?: "private" | "visible",
   loans: Array<{ status: "open" | "returned" | "recalled" }> = [],
+  acquisition: {
+    acquisitionDate?: number;
+    acquisitionSource?: "bought_new" | "bought_used" | "trade" | "gift";
+  } = {},
 ) =>
   ({
     copyId: "row1",
@@ -72,6 +76,7 @@ const copyOf = (
       availability,
       visibility,
       visibilityPreference,
+      ...acquisition,
       tags: [],
     },
   }) as never;
@@ -319,5 +324,91 @@ describe("EditCopyDialog offers during a loan", () => {
       (screen.getByRole("button", { name: "For Trade" }) as HTMLButtonElement)
         .disabled,
     ).toBe(false);
+  });
+});
+
+describe("EditCopyDialog acquisition", () => {
+  const MARCH_17 = Date.UTC(2025, 2, 17, 9);
+  const select = (name: string) =>
+    screen.getByRole("combobox", { name }) as HTMLSelectElement;
+  const choose = (name: string, value: string) =>
+    fireEvent.change(select(name), { target: { value } });
+  const saveButton = () =>
+    screen.getByRole("button", { name: "Save" }) as HTMLButtonElement;
+
+  it("records the month, year and source it was acquired in", async () => {
+    renderDialog(copyOf(CLOSED, "visible", "visible"));
+    choose("Month acquired", "3");
+    choose("Year acquired", "2025");
+    choose("Source", "bought_used");
+    await save();
+    expect(calls.byMutation.updateDetails).toEqual([
+      {
+        copyId: "agg1",
+        acquisition: { date: Date.UTC(2025, 2, 1, 12), source: "bought_used" },
+      },
+    ]);
+  });
+
+  it("shows what is stored and keeps the exact date when only the source changes", async () => {
+    renderDialog(
+      copyOf(CLOSED, "visible", "visible", [], {
+        acquisitionDate: MARCH_17,
+        acquisitionSource: "gift",
+      }),
+    );
+    expect(select("Month acquired").value).toBe("3");
+    expect(select("Year acquired").value).toBe("2025");
+    expect(select("Source").value).toBe("gift");
+    choose("Source", "trade");
+    await save();
+    expect(calls.byMutation.updateDetails).toEqual([
+      { copyId: "agg1", acquisition: { date: MARCH_17, source: "trade" } },
+    ]);
+  });
+
+  it("clearing the month and year removes the date", async () => {
+    renderDialog(
+      copyOf(CLOSED, "visible", "visible", [], {
+        acquisitionDate: MARCH_17,
+        acquisitionSource: "gift",
+      }),
+    );
+    choose("Month acquired", "");
+    choose("Year acquired", "");
+    await save();
+    expect(calls.byMutation.updateDetails).toEqual([
+      { copyId: "agg1", acquisition: { source: "gift" } },
+    ]);
+  });
+
+  it("a month without a year can't be saved, and says why", () => {
+    renderDialog(copyOf(CLOSED, "visible", "visible"));
+    choose("Month acquired", "3");
+    expect(screen.getByText("Choose both a month and a year.")).toBeTruthy();
+    expect(saveButton().disabled).toBe(true);
+    choose("Year acquired", "2024");
+    expect(saveButton().disabled).toBe(false);
+  });
+
+  it("sends notes and acquisition in one write, and nothing when unchanged", async () => {
+    renderDialog(copyOf(CLOSED, "visible", "visible"));
+    await save();
+    expect(calls.byMutation.updateDetails).toBeUndefined();
+
+    cleanup();
+    renderDialog(copyOf(CLOSED, "visible", "visible"));
+    fireEvent.change(screen.getByLabelText("Notes"), {
+      target: { value: "Box a bit dented" },
+    });
+    choose("Source", "bought_new");
+    await save();
+    expect(calls.byMutation.updateDetails).toEqual([
+      {
+        copyId: "agg1",
+        notes: "Box a bit dented",
+        acquisition: { source: "bought_new" },
+      },
+    ]);
   });
 });

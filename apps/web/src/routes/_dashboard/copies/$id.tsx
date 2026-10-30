@@ -256,6 +256,12 @@ function CopyInstanceDetail({
   const [editOpen, setEditOpen] = useState(false);
   // The photo strip's file input, so the copy editor's "Add photo" can open the same picker.
   const addPhotoInputRef = useRef<HTMLInputElement>(null);
+  // Where the editor opens: on its acquisition fields when reached from "Add details".
+  const [editFocus, setEditFocus] = useState<"acquisition" | undefined>();
+  const openEditor = (focus?: "acquisition") => {
+    setEditFocus(focus);
+    setEditOpen(true);
+  };
   // The trade-request dialog's target (null = closed); set from the non-owner Request action.
   const [requestCopy, setRequestCopy] = useState<RequestableCopy | null>(null);
   // Start/Finish solve swap: `startOpen` drives the start dialog; `finishTarget` holds the
@@ -343,7 +349,7 @@ function CopyInstanceDetail({
               { label: tShell("crumbs.ownedCopies"), href: "/browse" },
             ],
       actions: copy.viewerCanManage ? (
-        <Button variant="outline" onClick={() => setEditOpen(true)}>
+        <Button variant="outline" onClick={() => openEditor()}>
           <Edit className="h-4 w-4" />
           {t("actions.edit")}
         </Button>
@@ -386,10 +392,6 @@ function CopyInstanceDetail({
     const { value, unit } = durationParts(minutes);
     return format.number(value, { style: "unit", unit, unitDisplay: "long" });
   };
-
-  const acquisitionSourceLabel = (
-    source?: "bought_new" | "bought_used" | "trade" | "gift",
-  ) => (source ? t(`acquisitionSourceLabel.${source}`) : "—");
 
   const conditionLabel = (condition: string) => {
     // Reuse the puzzles condition namespace where it exists; map the copy union.
@@ -627,29 +629,50 @@ function CopyInstanceDetail({
                 />
               }
             />
-            <MetaItem
-              icon={<Calendar className="h-3.5 w-3.5" />}
-              label={t("acquired")}
-              value={
-                snapshot.acquisitionDate
-                  ? formatMonth(snapshot.acquisitionDate)
-                  : "—"
-              }
-            />
-            <MetaItem
-              icon={<Gift className="h-3.5 w-3.5" />}
-              label={t("source")}
-              value={acquisitionSourceLabel(snapshot.acquisitionSource)}
-            />
-            <MetaItem
-              icon={<Clock className="h-3.5 w-3.5" />}
-              label={t("inYourLibrary")}
-              value={
-                copy.acquiredByViewerAt !== null
-                  ? ownedDuration(copy.acquiredByViewerAt)
-                  : "—"
-              }
-            />
+            {/* Acquisition (manager-only data): shown when recorded; when neither part is,
+                managers get "Add details", which opens the editor on those fields. */}
+            {snapshot.acquisitionDate != null && (
+              <MetaItem
+                icon={<Calendar className="h-3.5 w-3.5" />}
+                label={t("acquired")}
+                value={formatMonth(snapshot.acquisitionDate)}
+              />
+            )}
+            {snapshot.acquisitionSource && (
+              <MetaItem
+                icon={<Gift className="h-3.5 w-3.5" />}
+                label={t("source")}
+                value={t(
+                  `acquisitionSourceLabel.${snapshot.acquisitionSource}`,
+                )}
+              />
+            )}
+            {copy.viewerCanManage &&
+              copy.aggregateId != null &&
+              snapshot.acquisitionDate == null &&
+              !snapshot.acquisitionSource && (
+                <MetaItem
+                  icon={<Calendar className="h-3.5 w-3.5" />}
+                  label={t("acquired")}
+                  value={
+                    <button
+                      type="button"
+                      onClick={() => openEditor("acquisition")}
+                      className="text-jigsaw-primary hover:underline"
+                    >
+                      {t("addDetails")}
+                    </button>
+                  }
+                />
+              )}
+            {/* The viewer's own tenure: only the owner has one. */}
+            {copy.viewerIsOwner && copy.acquiredByViewerAt !== null && (
+              <MetaItem
+                icon={<Clock className="h-3.5 w-3.5" />}
+                label={t("inYourLibrary")}
+                value={ownedDuration(copy.acquiredByViewerAt)}
+              />
+            )}
             {snapshot.tags.length > 0 && (
               <MetaItem
                 icon={<Tag className="h-3.5 w-3.5" />}
@@ -688,11 +711,15 @@ function CopyInstanceDetail({
           label={t("statTimesLentOut")}
           divided
         />
-        <Stat
-          value={stats.yourCopyRating != null ? stats.yourCopyRating : "—"}
-          label={t("statYourCopyRating")}
-          divided
-        />
+        {/* The viewer's own rating of this copy: for those who can solve it here (owner and
+            household), or anyone who has rated it. */}
+        {(canSolve || stats.yourCopyRating != null) && (
+          <Stat
+            value={stats.yourCopyRating != null ? stats.yourCopyRating : "—"}
+            label={t("statYourCopyRating")}
+            divided
+          />
+        )}
       </div>
 
       {/* Photos */}
@@ -868,6 +895,7 @@ function CopyInstanceDetail({
               onOpenChange={setEditOpen}
               copy={copy}
               onAddPhotos={() => addPhotoInputRef.current?.click()}
+              focus={editFocus}
             />
           )}
         </>
@@ -1356,6 +1384,10 @@ function CopyReviewsSection({
           </div>
         </>
       )}
+      {/* Where copy reviews come from: whoever logs a solve of the copy is asked to rate it. */}
+      <p className="text-muted-foreground mt-2 text-xs">
+        {t("copyReviewsHint")}
+      </p>
     </section>
   );
 }
