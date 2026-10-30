@@ -5349,6 +5349,7 @@
       "take": "Take the tour",
       "replay": "Replay the tour",
       "resume": "Resume tour (step {step} of {total})",
+      "resumeShort": "Resume",
       "restart": "Start over"
     },
     "tabs": {

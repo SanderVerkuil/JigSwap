@@ -60,9 +60,9 @@ te stoppen.
   gemarkeerde knop om verder te gaan." Druk op de gemarkeerde knop en de
   rondleiding gaat verder.
 - Stop je halverwege, dan kun je de rondleiding hervatten op het tabblad
-  **Rondleidingen**, met **Rondleiding hervatten** (of **Opnieuw beginnen**).
-  De rondleiding van een update hervat je ook bij die update, en die uit Snel
-  instellen via Snel instellen.
+  **Rondleidingen**, met **Hervatten** (of **Opnieuw beginnen**). De
+  rondleiding van een update hervat je ook bij die update, met
+  **Rondleiding hervatten**, en die uit Snel instellen via Snel instellen.
 - **Rondleiding opnieuw bekijken** speelt een afgeronde rondleiding opnieuw af.
 - Op **Uitwisselingen**, **Kringen**, **Voltooiingen** en **Puzzel Toevoegen**
   start de knop **?** in de paginakop (**Laat me zien hoe**) de rondleiding van

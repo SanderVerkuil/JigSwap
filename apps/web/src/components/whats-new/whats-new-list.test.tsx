@@ -287,6 +287,29 @@ describe("WhatsNewList", () => {
     ]);
   });
 
+  it("sizes the tour, Start over and CTA actions for touch (UX-167)", () => {
+    const paused: WhatsNewTourProgressView = {
+      tourId: "households",
+      status: "in_progress",
+      step: 1,
+      updatedAt: 1,
+    };
+    const els = parse(render({ unreadIds: [], tours: [paused] }));
+    const actions = [
+      ...elementsOf(article(els, "households")),
+      ...elementsOf(article(els, "faster")),
+    ].filter((el) => el.tagName === "button" || el.tagName === "a");
+    expect(actions.map(textOf)).toEqual([
+      "Resume tour (step 2 of 3)",
+      "Start over",
+      "Open household",
+      "Open library",
+    ]);
+    for (const action of actions) {
+      expect(classes(action)).toContain("pointer-coarse:min-h-11");
+    }
+  });
+
   it("makes the CTA the primary action when there is no tour, and omits actions without either", () => {
     const els = parse(render({ unreadIds: [] }));
     const cta = elementsOf(article(els, "faster")).find(

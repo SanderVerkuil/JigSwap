@@ -54,9 +54,9 @@ Some updates also come with a short tour of the feature. Click
 - Some steps ask you to try the feature. They show "Press the highlighted
   button to continue." Press the highlighted button and the tour moves on.
 - If you leave a tour partway, you can resume it from its guide on the
-  **Guides** tab, with **Resume tour** (or **Start over**). An update's tour
-  also resumes from the update, and the tour from Quick setup from Quick
-  setup.
+  **Guides** tab, with **Resume** (or **Start over**). An update's tour also
+  resumes from the update, with **Resume tour**, and the tour from Quick setup
+  from Quick setup.
 - **Replay the tour** runs a finished tour again.
 - On **Exchanges**, **Circles**, **Completions** and **Add Puzzle**, the
   **?** button in the page header (**Show me how**) starts that page's guide

@@ -1,5 +1,6 @@
 "use client";
 
+import { tourButtonState } from "@/components/tour/controller";
 import {
   GUIDE_AREAS,
   guideMessageKeys,
@@ -18,6 +19,33 @@ import { CATEGORY_META } from "./category-chip";
 import { useTourButton } from "./tour-button";
 import { useTourLauncher } from "./tour-launcher";
 
+// Touch-sized guide actions (UX-167): 44px tall on a coarse pointer.
+const TOUCH_TARGET = "pointer-coarse:min-h-11";
+
+const GETTING_STARTED = "getting-started";
+
+/**
+ * The one guide whose button is the violet primary (UX-167): the paused guide the member touched
+ * last, else "Getting started" until it has been finished; otherwise none, and every guide button
+ * is outline.
+ */
+export function primaryGuideId(
+  progress: readonly WhatsNewTourProgressView[] | undefined,
+): string | undefined {
+  const stateOf = (tourId: string) =>
+    tourButtonState(
+      progress?.find((p) => p.tourId === tourId),
+      TOURS.get(tourId)?.steps.length ?? 0,
+    );
+  const paused = (progress ?? [])
+    .filter((p) => TOURS.has(p.tourId) && stateOf(p.tourId).kind === "resume")
+    .sort((a, b) => b.updatedAt - a.updatedAt);
+  if (paused[0]) return paused[0].tourId;
+  return TOURS.has(GETTING_STARTED) && stateOf(GETTING_STARTED).kind === "take"
+    ? GETTING_STARTED
+    : undefined;
+}
+
 // The /whats-new Guides tab: every tour in TOURS as a compact card, grouped by area, with the
 // member's progress. `entries` link a guide back to the update that introduced it; `tours` is the
 // saved tour progress (undefined while it loads: every guide then shows as not started).
@@ -35,6 +63,7 @@ export function GuidesList({
   const done = all.filter((tour) =>
     tours?.some((p) => p.tourId === tour.id && p.status === "completed"),
   ).length;
+  const primaryId = primaryGuideId(tours);
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-8">
@@ -61,6 +90,7 @@ export function GuidesList({
                     tour={tour}
                     entry={entries.find((entry) => entry.tour === tour.id)}
                     tours={tours}
+                    primary={tour.id === primaryId}
                   />
                 </li>
               ))}
@@ -76,15 +106,19 @@ function GuideCard({
   tour,
   entry,
   tours,
+  primary,
 }: {
   tour: TourDefinition;
   entry: WhatsNewEntry | undefined;
   tours: readonly WhatsNewTourProgressView[] | undefined;
+  /** The page's one primary action (primaryGuideId); every other guide button is outline. */
+  primary: boolean;
 }) {
   const t = useTranslations();
   const format = useFormatter();
   const { startTour } = useTourLauncher();
-  const { label, resumable, state } = useTourButton(tour.id, tours);
+  // The step chip next to the title already says "Step 2 of 3", so the button says just "Resume".
+  const { shortLabel, resumable, state } = useTourButton(tour.id, tours);
   const keys = guideMessageKeys(tour.id);
   const titleId = `guide-${tour.id}-title`;
   const Icon = tour.guide.icon;
@@ -162,7 +196,10 @@ function GuideCard({
             <Button
               variant="ghost"
               size="sm"
-              className="order-last w-full sm:order-first sm:w-auto"
+              className={cn(
+                "order-last w-full sm:order-first sm:w-auto",
+                TOUCH_TARGET,
+              )}
               onClick={(event) =>
                 startTour(tour.id, {
                   returnFocus: event.currentTarget,
@@ -174,10 +211,11 @@ function GuideCard({
             </Button>
           )}
           <Button
-            variant={state.kind === "replay" ? "outline" : "default"}
+            variant={primary ? "default" : "outline"}
             className={cn(
               "w-full sm:w-auto",
-              state.kind !== "replay" &&
+              TOUCH_TARGET,
+              primary &&
                 "bg-jigsaw-primary hover:bg-jigsaw-primary/90 text-white",
             )}
             onClick={(event) =>
@@ -185,7 +223,7 @@ function GuideCard({
             }
           >
             <Compass aria-hidden />
-            {label}
+            {shortLabel}
           </Button>
         </div>
       </Card>

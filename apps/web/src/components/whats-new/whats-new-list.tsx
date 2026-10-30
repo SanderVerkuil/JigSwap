@@ -288,6 +288,7 @@ function EntryCard({
                 variant={tour ? "outline" : "default"}
                 className={cn(
                   "w-full sm:w-auto",
+                  TOUCH_TARGET,
                   !tour &&
                     "bg-jigsaw-primary hover:bg-jigsaw-primary/90 text-white",
                 )}
@@ -320,7 +321,10 @@ function TourButtons({
   return (
     <>
       <Button
-        className="bg-jigsaw-primary hover:bg-jigsaw-primary/90 w-full text-white sm:w-auto"
+        className={cn(
+          "bg-jigsaw-primary hover:bg-jigsaw-primary/90 w-full text-white sm:w-auto",
+          TOUCH_TARGET,
+        )}
         onClick={(event) => onStart(event.currentTarget, false)}
       >
         <Compass aria-hidden />
@@ -330,7 +334,7 @@ function TourButtons({
         <Button
           variant="ghost"
           size="sm"
-          className="w-full self-center sm:w-auto"
+          className={cn("w-full self-center sm:w-auto", TOUCH_TARGET)}
           onClick={(event) => onStart(event.currentTarget, true)}
         >
           {t("tour.restart")}

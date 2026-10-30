@@ -5349,6 +5349,7 @@
       "take": "Doe de rondleiding",
       "replay": "Rondleiding opnieuw bekijken",
       "resume": "Rondleiding hervatten (stap {step} van {total})",
+      "resumeShort": "Hervatten",
       "restart": "Opnieuw beginnen"
     },
     "tabs": {
