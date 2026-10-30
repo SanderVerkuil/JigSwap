@@ -40,6 +40,8 @@ import { areMutualFollowers, canSeeProfileContent } from "./privacy";
 //                                    "acquisitionBatch" per batch, ref = batchId (grouped below);
 //                                    both are gated per copy on what the viewer may see
 //   ExchangeCompleted  (Exchange) -> "exchange",    members = both parties (row),  ref = exchangeId
+// Whatever the kind, an entry of another member shows only while the viewer may see that member's
+// profile content (canSeeProfileContent, SEC-43); the per-kind rules above only narrow that.
 const FEED_EVENT_NAMES = [
   "CompletionRecorded",
   "CompletionStarted",
@@ -122,13 +124,40 @@ export const getActivityFeed = query({
       }
     }
 
+    // Every entry of ANOTHER member needs the profile-content unlock (SEC-43): the viewer sees an
+    // actor's completions, exchanges, adds and starts only while canSeeProfileContent holds (a
+    // public profile or mutual followers; never across a block), so following a private member
+    // one way unlocks nothing. The kind-specific rules below (opt-in starts, per-copy acquisitions)
+    // only narrow this further. Checked once per distinct actor, and BEFORE the (kind, ref) dedupe:
+    // an exchange is attributed to both parties, and the viewer's own party entry must survive
+    // when the counterparty's is dropped.
+    const actorUnlocked = new Map<string, boolean>();
+    const permitted: ActivityEntry[] = [];
+    for (const e of entries) {
+      const actor = e.memberId as string;
+      if (actor === (meId as string)) {
+        permitted.push(e);
+        continue;
+      }
+      let unlocked = actorUnlocked.get(actor);
+      if (unlocked === undefined) {
+        unlocked = await canSeeProfileContent(
+          ctx,
+          meId,
+          actor as unknown as Id<"users">,
+        );
+        actorUnlocked.set(actor, unlocked);
+      }
+      if (unlocked) permitted.push(e);
+    }
+
     // One activity per (kind, ref): an ExchangeCompleted is attributed to BOTH parties, so a viewer
     // who is a party AND follows the counterparty would otherwise see the same exchange twice, and
     // a batch add maps one entry per CopyAcquired event. buildActivityFeed only sorts/slices, so
     // dedupe here, keeping the first occurrence: events are read newest-first, so a grouped batch
     // keeps its newest event's time (the batch time).
     const deduped = [
-      ...new Map(entries.map((e) => [`${e.kind}:${e.ref}`, e])).values(),
+      ...new Map(permitted.map((e) => [`${e.kind}:${e.ref}`, e])).values(),
     ];
 
     // "started" is OPT-IN and FRIENDS-ONLY (spec §4): the actor must have shareInProgress === true

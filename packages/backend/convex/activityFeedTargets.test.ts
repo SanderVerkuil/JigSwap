@@ -90,6 +90,19 @@ const recordSolve = (t: TestConvex<typeof schema>, copyId: string) =>
     endDate: Date.now() - HOUR,
   });
 
+const follow = (
+  t: TestConvex<typeof schema>,
+  followerId: Id<"users">,
+  followeeId: Id<"users">,
+) =>
+  t.run(async (ctx) => {
+    await ctx.db.insert("follows", {
+      followerId,
+      followeeId,
+      createdAt: Date.now(),
+    });
+  });
+
 const setVisibility = (
   t: TestConvex<typeof schema>,
   memberId: Id<"users">,
@@ -172,16 +185,15 @@ describe("social.getActivityFeed — link targets", () => {
     });
   });
 
-  test("a private actor's completion has no target for a one-way follower, but links the copy once mutual", async () => {
+  test("a private actor's completion is not shown to a one-way follower, but links the copy once mutual", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob, definitionId } = await seed(t);
     await setVisibility(t, alice, "private");
     const copyId = await addCopy(t, definitionId, false);
     await recordSolve(t, copyId);
 
-    const entry = await entryOf(t, "bob", "completion");
-    expect(entry).toBeDefined();
-    expect(entry?.target).toBeUndefined();
+    // SEC-43: mutuality is what unlocks a private member's content, entries included.
+    expect(await entryOf(t, "bob", "completion")).toBeUndefined();
 
     await t.run(async (ctx) => {
       await ctx.db.insert("follows", {
@@ -264,5 +276,90 @@ describe("social.getActivityFeed — link targets", () => {
     const entry = await entryOf(t, "bob", "acquisition");
     expect(entry).toBeDefined();
     expect(entry?.actor).toBeUndefined();
+  });
+});
+
+// SEC-43: every feed entry of another member needs the profile-content unlock (canSeeProfileContent:
+// a public profile or mutual followers), as acquisitions already did. The gate runs before an
+// exchange's two party entries are deduplicated, so a viewer's own trade with a private member they
+// follow one way still shows, as the viewer's entry.
+describe("social.getActivityFeed — private actors (SEC-43)", () => {
+  const seedExchange = (
+    t: TestConvex<typeof schema>,
+    puzzleId: Id<"puzzles">,
+    initiatorId: Id<"users">,
+    recipientId: Id<"users">,
+  ) =>
+    t.run(async (ctx) => {
+      const now = Date.now();
+      const copyId = await ctx.db.insert("ownedPuzzles", {
+        puzzleId,
+        ownerId: recipientId,
+        condition: "good",
+        availability: { forTrade: true, forSale: false, forLend: false },
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("exchanges", {
+        aggregateId: "exch-1",
+        initiatorId,
+        recipientId,
+        type: "trade",
+        requestedPuzzleId: copyId,
+        status: "completed",
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("domainEvents", {
+        name: "ExchangeCompleted",
+        payload: { exchangeId: "exch-1" },
+        occurredAt: now,
+        context: "exchange",
+      });
+    });
+
+  test("a private actor's exchange is hidden from a one-way follower and shown once mutual", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, carol, puzzleId } = await seed(t);
+    await setVisibility(t, alice, "private");
+    await follow(t, carol, alice);
+    await seedExchange(t, puzzleId, alice, bob);
+
+    expect(await entryOf(t, "carol", "exchange")).toBeUndefined();
+
+    await follow(t, alice, carol);
+    expect((await entryOf(t, "carol", "exchange"))?.memberId).toBe(alice);
+  });
+
+  test.each([
+    ["initiator", true],
+    ["recipient", false],
+  ])(
+    "the viewer's own exchange with a private member they follow one way still shows (private %s)",
+    async (_, privateInitiates) => {
+      const t = convexTest(schema, modules);
+      const { alice, bob, puzzleId } = await seed(t);
+      // bob follows alice one way (seed); alice is private. Whichever party entry the (kind, ref)
+      // dedupe keeps, dropping alice's only after it would lose bob's own entry too.
+      await setVisibility(t, alice, "private");
+      if (privateInitiates) await seedExchange(t, puzzleId, alice, bob);
+      else await seedExchange(t, puzzleId, bob, alice);
+
+      const mine = (await feedOf(t, "bob")).filter(
+        (e) => e.kind === "exchange",
+      );
+      expect(mine).toHaveLength(1);
+      expect(mine[0].memberId).toBe(bob);
+      expect(mine[0].target).toEqual({ kind: "trades" });
+    },
+  );
+
+  test("a public actor's completion still reaches a one-way follower", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, definitionId } = await seed(t);
+    await setVisibility(t, alice, "public");
+    await recordSolve(t, await addCopy(t, definitionId, true));
+
+    expect((await entryOf(t, "bob", "completion"))?.memberId).toBe(alice);
   });
 });

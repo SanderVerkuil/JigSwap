@@ -59,6 +59,8 @@ export interface FollowEdgeView {
  * the actor's display name (their Social profile displayName, falling back to their account name) —
  * resolved server-side so the UI can render "You"/"{name}" without an extra per-row lookup; the
  * feed's audience is always self + followees, so every actor here is already visible to the viewer.
+ * A followee's entries appear only while the viewer may see their profile content (public profile
+ * or mutual followers, SEC-43): following a private member one way shows none of their activity.
  */
 export interface ActivityEntryView {
   memberId: string;
