@@ -355,6 +355,7 @@ import type * as library_exchangeRoutes from "../library/exchangeRoutes.js";
 import type * as library_getBorrowedLoans from "../library/getBorrowedLoans.js";
 import type * as library_getCollectionById from "../library/getCollectionById.js";
 import type * as library_getCollectionsForOwnedPuzzle from "../library/getCollectionsForOwnedPuzzle.js";
+import type * as library_getCopyDocId from "../library/getCopyDocId.js";
 import type * as library_getCopyInstanceView from "../library/getCopyInstanceView.js";
 import type * as library_getCopyLoanHistory from "../library/getCopyLoanHistory.js";
 import type * as library_getLentOutLoans from "../library/getLentOutLoans.js";
@@ -953,6 +954,7 @@ declare const fullApi: ApiFromModules<{
   "library/getBorrowedLoans": typeof library_getBorrowedLoans;
   "library/getCollectionById": typeof library_getCollectionById;
   "library/getCollectionsForOwnedPuzzle": typeof library_getCollectionsForOwnedPuzzle;
+  "library/getCopyDocId": typeof library_getCopyDocId;
   "library/getCopyInstanceView": typeof library_getCopyInstanceView;
   "library/getCopyLoanHistory": typeof library_getCopyLoanHistory;
   "library/getLentOutLoans": typeof library_getLentOutLoans;

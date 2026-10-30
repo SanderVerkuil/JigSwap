@@ -117,6 +117,9 @@ export const gateway = {
     // Privacy-gated detail of a single owned copy: snapshot + projected owner + merged, anonymised
     // history timeline (transfers/completions/loans) split into the viewer's tenure vs gated history.
     getCopyInstanceView: api.library.getCopyInstanceView.getCopyInstanceView,
+    // A copy's domain id (what createOwned returns) -> its Convex id, for linking to the copy page.
+    // Null unless the caller may manage the copy (owner, or household member at "manage").
+    copyDocId: api.library.getCopyDocId.getCopyDocId,
     // Redesigned catalog detail of a puzzle DEFINITION: catalog facts + community rating
     // distribution + ownership/completion/availability stats + the viewer's own ownership + a short
     // list of REACHABLE available copies (Browse's public-OR-circle gate).
