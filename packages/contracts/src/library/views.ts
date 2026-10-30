@@ -69,11 +69,11 @@ export interface OwnedCopyView {
   acquisitionDate?: number;
   acquisitionSource?: "bought_new" | "bought_used" | "trade" | "gift";
   acquisitionPrice?: { amount: number; currency: string };
+  /** The cached catalog facts. No image: the box art reaches the client only as `coverUrl`. */
   snapshot?: {
     title: string;
     brand?: string;
     pieceCount: number;
-    thumbnail?: string;
   };
   createdAt: number;
   updatedAt: number;
@@ -181,11 +181,11 @@ export interface OwnedCopyDetailView {
   acquisitionDate?: number;
   acquisitionSource?: "bought_new" | "bought_used" | "trade" | "gift";
   acquisitionPrice?: { amount: number; currency: string };
+  /** The cached catalog facts. No image (see OwnedCopyView.snapshot). */
   snapshot?: {
     title: string;
     brand?: string;
     pieceCount: number;
-    thumbnail?: string;
   };
   createdAt: number;
   updatedAt: number;

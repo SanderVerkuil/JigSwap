@@ -8,6 +8,7 @@ import type {
 } from "@jigswap/contracts";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
+import { toCopySnapshotView } from "../library/mappers";
 import {
   projectTradeParty,
   tradePartyMemberView,
@@ -115,7 +116,8 @@ export const toOwnedPuzzleView = (
     aggregateId: c.aggregateId,
     puzzleId: c.puzzleId,
     puzzleDefinitionId: c.puzzleDefinitionId,
-    snapshot: c.snapshot,
+    // Never the cached box-art id (SEC-01): see library/mappers toCopySnapshotView.
+    snapshot: toCopySnapshotView(c.snapshot),
     ...(visible.has(c.ownerId) ? { ownerId: c.ownerId } : {}),
     condition: c.condition,
     missingPiecesCount: c.missingPiecesCount,
@@ -133,7 +135,9 @@ export const toOwnedPuzzleView = (
   };
 };
 
-// The catalog submitter (`submittedBy`) is never carried: it is an unrelated member's raw id.
+// The catalog submitter (`submittedBy`) is never carried: it is an unrelated member's raw id. Nor is
+// the box art (`image`): it is a raw `_storage` id, and a member holding one could attach it as
+// their own photo and delete it (SEC-01). No exchange view renders it.
 export const toPuzzleView = (
   p: Doc<"puzzles"> | null,
 ): ExchangePuzzleView | null =>
@@ -156,7 +160,6 @@ export const toPuzzleView = (
         difficulty: p.difficulty,
         category: p.category,
         tags: p.tags,
-        image: p.image,
         searchableText: p.searchableText,
         status: p.status,
         createdAt: p.createdAt,

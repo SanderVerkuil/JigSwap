@@ -241,8 +241,7 @@ function CopyRow({
   selectLabel: (title: string) => string;
 }) {
   const title = copy.puzzle?.title ?? copy.snapshot?.title ?? untitled;
-  const thumbnail =
-    copy.coverUrl ?? copy.puzzle?.images?.[0] ?? copy.snapshot?.thumbnail;
+  const thumbnail = copy.coverUrl ?? copy.puzzle?.images?.[0];
   return (
     <li className="flex items-center gap-3 py-2">
       <Checkbox

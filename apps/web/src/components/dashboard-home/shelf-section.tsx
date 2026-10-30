@@ -50,8 +50,7 @@ function toPlankBox(
 ): PuzzlePlankBox {
   // Prefer the copy's resolved cover (a user-uploaded/pinned photo) over the
   // catalogue image so a copy with its own cover shows it, not placeholder art.
-  const cover =
-    copy.coverUrl ?? copy.puzzle?.images?.[0] ?? copy.snapshot?.thumbnail;
+  const cover = copy.coverUrl ?? copy.puzzle?.images?.[0];
   const [c1, c2] = BOX_GRADIENTS[index % BOX_GRADIENTS.length];
   const heights = isMobile ? MOBILE_BOX_HEIGHTS : BOX_HEIGHTS;
   return {

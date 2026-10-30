@@ -5,7 +5,8 @@ import type { ConvexSystemFields } from "../shared/convex";
  * the legacy reads joined it (`requestedPuzzle` / `offeredPuzzle`). Faithful superset so consumers
  * reading `title` / `pieceCount` keep working. Optional fields mirror the schema's optionals.
  * PRIVACY: the catalog submitter (`submittedBy`) is deliberately NOT carried: it is an unrelated
- * member's raw id as far as the trade is concerned.
+ * member's raw id as far as the trade is concerned. Nor is the box art (`image`): it is a raw
+ * `_storage` id, never a URL, and must not reach clients (SEC-01).
  */
 export interface ExchangePuzzleView extends ConvexSystemFields {
   aggregateId?: string;
@@ -23,7 +24,6 @@ export interface ExchangePuzzleView extends ConvexSystemFields {
   difficulty?: "easy" | "medium" | "hard" | "expert";
   category?: string;
   tags?: string[];
-  image?: string;
   searchableText?: string;
   status: "pending" | "approved" | "rejected" | "disabled";
   createdAt: number;
@@ -39,11 +39,11 @@ export interface ExchangeOwnedPuzzleView extends ConvexSystemFields {
   aggregateId?: string;
   puzzleId: string;
   puzzleDefinitionId?: string;
+  /** The cached catalog facts. No image: the cached box-art id is never sent (SEC-01). */
   snapshot?: {
     title: string;
     brand?: string;
     pieceCount: number;
-    thumbnail?: string;
   };
   /**
    * Present only when the copy's owner is a party the viewer may see: omitted for an anonymous party

@@ -33,6 +33,22 @@ export const toOwnedCopyPuzzleView = (
   updatedAt: row.updatedAt,
 });
 
+/**
+ * The catalog snapshot a copy caches, as sent to clients: title, brand and piece count only.
+ *
+ * SECURITY: the stored `thumbnail` is the box art's raw `_storage` id, kept as an internal cache.
+ * It is never sent: it is not a URL, and a member holding a box-art id could attach it as their
+ * own photo and then delete it (SEC-01). A copy's image reaches the client as `coverUrl`.
+ */
+export const toCopySnapshotView = (
+  snapshot: Doc<"ownedPuzzles">["snapshot"],
+): OwnedCopyView["snapshot"] =>
+  snapshot && {
+    title: snapshot.title,
+    brand: snapshot.brand,
+    pieceCount: snapshot.pieceCount,
+  };
+
 /** The owner summary joined onto a copy in browse/detail reads. */
 export const toOwnedCopyOwnerView = (
   row: Doc<"users">,
@@ -83,7 +99,7 @@ export const toOwnedCopyView = (
   acquisitionDate: opts?.includeOwnerOnly ? row.acquisitionDate : undefined,
   acquisitionSource: opts?.includeOwnerOnly ? row.acquisitionSource : undefined,
   acquisitionPrice: opts?.includeOwnerOnly ? row.acquisitionPrice : undefined,
-  snapshot: row.snapshot,
+  snapshot: toCopySnapshotView(row.snapshot),
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
   addedAt: opts?.addedAt,

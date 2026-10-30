@@ -2,6 +2,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
 import { projectTradeParty, type TradePartyMemo } from "../exchange/tradeParty";
 import { requireMember } from "../identity/requireMember";
+import { toCopySnapshotView } from "../library/mappers";
 import { onboardingRowOf } from "../onboarding/memberOnboarding";
 
 // Per-context cap on rows pulled into a single export. Convex queries have a read budget; a member
@@ -132,6 +133,8 @@ export const exportUserData = query({
       })),
       ownedPuzzles: copies.map((c) => ({
         ...c,
+        // Never the cached box-art id (SEC-01): see library/mappers toCopySnapshotView.
+        snapshot: toCopySnapshotView(c.snapshot),
         puzzleTitle: titleByPuzzle.get(c.puzzleId),
       })),
       collections,

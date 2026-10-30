@@ -6,6 +6,7 @@ import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { effectiveCopyVisibility } from "./copyVisibility";
 import {
+  toCopySnapshotView,
   toOwnedCopyCompletionView,
   toOwnedCopyImageView,
   toOwnedCopyOwnerView,
@@ -111,7 +112,7 @@ export const getOwnedPuzzleWithCollectionStatus = query({
       acquisitionDate: ownedPuzzle.acquisitionDate,
       acquisitionSource: ownedPuzzle.acquisitionSource,
       acquisitionPrice: ownedPuzzle.acquisitionPrice,
-      snapshot: ownedPuzzle.snapshot,
+      snapshot: toCopySnapshotView(ownedPuzzle.snapshot),
       createdAt: ownedPuzzle.createdAt,
       updatedAt: ownedPuzzle.updatedAt,
       puzzle: toOwnedCopyPuzzleView(puzzle),
