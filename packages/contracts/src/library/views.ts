@@ -269,7 +269,11 @@ export interface CopyInstanceTransferEntry {
   occurredAt: number;
 }
 
-/** A completion of the copy (from the solving projection). */
+/**
+ * A completion of the copy (from the solving projection). An unfinished solve (no `endDate`) is
+ * included only for the solver themself, or for a mutual follower when the solver shares
+ * in-progress solves; everyone else sees finished solves only.
+ */
 export interface CopyInstanceCompletionEntry {
   type: "completion";
   /** The member who solved it (projected). */
