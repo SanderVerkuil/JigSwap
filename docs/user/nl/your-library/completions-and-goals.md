@@ -21,6 +21,12 @@ JigSwap houdt een volledig **oplossingslogboek** bij van elke puzzel waar je aan
    - **Achteraf vastgelegd** worden (al afgerond).
 4. Voeg **start- en einddatum** toe, je **oplostijd**, optionele **notities** en (als je wilt) een **beoordeling** met een waardering van 1 tot 5 sterren.
 
+Je kunt ook beginnen bij **Voltooiingen**: open **Voltooiing vastleggen**
+(`/completions/new`) en kies de puzzel. Bovenaan staan de puzzels waar je nog
+mee bezig bent (kies er een om hem af te ronden), daarna je eigen puzzels, de
+puzzels die je hebt geleend en de puzzels van je huishouden. Met **Zoeken**
+vind je een puzzel op titel, merk of eigenaar.
+
 > Je kunt tot **5 foto's** per voltooiing toevoegen, en bewerken kan binnen een venster van **24 uur** na het voltooien.
 
 ### Puzzels vastleggen die je eerder hebt afgemaakt

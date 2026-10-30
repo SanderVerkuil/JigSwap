@@ -21,6 +21,12 @@ JigSwap keeps a full **solve log** of every puzzle you've worked on — even aft
    - **Recorded** after the fact (already finished).
 4. Add **start and end dates**, your **solve time**, optional **notes**, and (if you wish) a **review** with a 1–5 star rating.
 
+You can also start from **Completions**: open **Log a completion**
+(`/completions/new`) and pick the puzzle. The list shows the solves you're still
+working on first (pick one to finish it), then your own puzzles, the puzzles
+you've borrowed, and your household's puzzles. Use **Search** to find one by
+title, brand or owner.
+
 > You can attach up to **5 photos** per completion, and edits are allowed within a **24-hour** window after completing.
 
 ### Log puzzles you finished in the past
