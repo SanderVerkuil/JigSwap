@@ -47,7 +47,8 @@ How the date you choose is used:
 
 - A solve with only a year shows as "In 2023"; one without a date shows as
   "Date unknown".
-- Solves without a date don't count toward your goals. Solves with a year do.
+- Solves without a date don't count toward your goals. A solve with only a
+  year counts toward a goal whose period includes part of that year.
 - Neither has a solve time, and neither is included in your monthly solve
   trends.
 - To add an exact date later, **Edit** the solve on the Completions page
@@ -74,11 +75,44 @@ Until you have a goal, the page explains what a goal is and offers
 
 ### Create a goal
 
-1. Open **Goals**.
-2. Create a new goal with:
-   - A **title** and **description**.
-   - A **target completion count**.
-   - An optional **due date**.
-3. Save.
+1. Open **Goals** and click **New Goal**.
+2. Fill in:
+   - A **title** (required) and an optional **description**.
+   - A **target completions** count (required): a whole number of 1 or more.
+   - A **period**: **From** and **To**. A new goal covers this calendar year
+     (1 January to 31 December) unless you change it. Leave **To** empty for
+     a goal without an end date.
+3. Click **Create goal**. If something is missing, the form says what to fix
+   next to the field.
 
-Each active goal shows a **progress bar**, a percentage, your current/target count, and a **trophy badge** once achieved. Progress updates automatically as you log completions — you don't have to update goals manually.
+### How progress counts
+
+A goal counts the solves you finish inside its period, from the first day to
+the last day:
+
+- A solve with a finish date counts when that date falls in the period.
+- A solve with only a year counts when that year overlaps the period.
+- A solve without a date never counts.
+
+Solves you logged before you created the goal count too, as long as they fall
+in the period. Progress updates automatically when you log, edit or delete a
+solve; you never update a goal by hand.
+
+### Your goals page
+
+Goals are grouped into **Active**, **Achieved** and **Past goals**. Each goal
+shows its period, a **progress bar**, a percentage and your current/target
+count. An achieved goal gets a **trophy badge**. **Past goals** (collapsed
+until you open it) holds goals whose period ended before you reached the
+target (**Ended**) and goals you archived (**Archived**).
+
+### Edit, archive or delete a goal
+
+Open the **⋯** menu on a goal:
+
+- **Edit** — change the title, description, target or period. Progress is
+  recounted for the new period.
+- **Archive** — move the goal to **Past goals**. It stops counting new solves
+  until you choose **Restore**, which recounts it.
+- **Delete** — remove the goal for good, after you confirm. Your solves are not
+  affected.
