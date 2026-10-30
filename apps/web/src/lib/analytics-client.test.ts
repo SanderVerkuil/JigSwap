@@ -208,6 +208,41 @@ describe("withdrawAnalyticsConsent", () => {
     expect(getPostHog()).toBeNull();
   });
 
+  // The consent store is what the UI calls; these run the real pair of modules.
+  it("shuts down once when the consent store withdraws a grant that is still loading", async () => {
+    const { getPostHog } = await freshLoader();
+    const { grantAnalyticsConsent, withdrawAnalyticsConsent } =
+      await import("./analytics-consent");
+
+    const granting = grantAnalyticsConsent();
+    withdrawAnalyticsConsent();
+    await granting;
+
+    expect(consentCalls).toEqual([
+      "flags off",
+      "reset with new device id",
+      "opt_out_capturing",
+    ]);
+    expect(readAnalyticsConsent(document.cookie)).toBe("denied");
+    expect(getPostHog()).toBeNull();
+  });
+
+  it("shuts down when another tab withdrew while posthog-js was loading", async () => {
+    const { getPostHog } = await freshLoader();
+    const { grantAnalyticsConsent } = await import("./analytics-consent");
+
+    const granting = grantAnalyticsConsent();
+    document.cookie = "cookieConsent=false; path=/";
+    await granting;
+
+    expect(consentCalls).toEqual([
+      "flags off",
+      "reset with new device id",
+      "opt_out_capturing",
+    ]);
+    expect(getPostHog()).toBeNull();
+  });
+
   it("opts back in, without an extra event, when consent is granted again", async () => {
     const { initPostHog, getPostHog, withdrawAnalyticsConsent } =
       await freshLoader();
