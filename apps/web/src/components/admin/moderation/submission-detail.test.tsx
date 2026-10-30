@@ -85,3 +85,30 @@ describe("SubmissionDetail reject", () => {
     expect(onReject).toHaveBeenCalledWith("Starry Night (1000pc)");
   });
 });
+
+describe("SubmissionDetail duplicate warning", () => {
+  it("shows no warning when the check found no match", () => {
+    renderDetail();
+    expect(screen.queryByText(/Possible duplicate/)).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Reject as duplicate" }),
+    ).toBeNull();
+  });
+
+  it("links the matched title to that puzzle's admin page", () => {
+    suggestions = [{ _id: "dup1", title: "Starry Night (1000pc)" }];
+    renderDetail();
+    const link = screen.getByRole("link", { name: "Starry Night (1000pc)" });
+    expect(link.getAttribute("href")).toBe("/admin/puzzles/dup1");
+  });
+
+  it("rejects as a duplicate of the matched title from the warning", () => {
+    suggestions = [{ _id: "dup1", title: "Starry Night (1000pc)" }];
+    const onReject = vi.fn();
+    renderDetail(onReject);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Reject as duplicate" }),
+    );
+    expect(onReject).toHaveBeenCalledWith("Starry Night (1000pc)");
+  });
+});

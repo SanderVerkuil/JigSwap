@@ -8,7 +8,9 @@
 // the route keys each opening by the submission it was opened for, so a live
 // update (or a new arrival in the queue) never re-seeds it and wipes the
 // admin's edits. If that submission leaves the queue meanwhile
-// (`handledElsewhere`), the dialog says so and Save is disabled.
+// (`handledElsewhere`), the dialog says so and Save is disabled. The fields it
+// leaves out (cover, category, series, shape, barcodes) are a link away, in the
+// full editor, which edits a pending submission too.
 import { SuggestInput } from "@/components/add-puzzle";
 import { puzzleFormSchema } from "@/components/forms/puzzle-form/puzzle-form-schema";
 import { Button } from "@/components/ui/button";
@@ -42,6 +44,7 @@ import { gateway } from "@/gateway";
 import { convexQuery } from "@convex-dev/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { useTranslations } from "use-intl";
 import { z } from "zod";
@@ -117,6 +120,19 @@ export function EditApproveDialog({
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>{t("description")}</DialogDescription>
+          <p className="text-sm text-muted-foreground">
+            {t.rich("fullEditor", {
+              link: (chunks) => (
+                <Link
+                  to="/admin/puzzles/$puzzleId/edit"
+                  params={{ puzzleId: submission._id }}
+                  className="font-medium text-primary-text underline underline-offset-2 hover:no-underline"
+                >
+                  {chunks}
+                </Link>
+              ),
+            })}
+          </p>
         </DialogHeader>
         {handledElsewhere && (
           <p

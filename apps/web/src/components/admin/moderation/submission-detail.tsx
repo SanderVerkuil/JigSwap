@@ -2,15 +2,16 @@
 
 // Detail pane for a pending catalog submission: cover, metadata, a
 // possible-duplicate warning (cheap title match against the approved-only
-// suggestions search index, run for the selected item only), and the three
-// moderation actions. Mutations live in the route; this pane only renders
-// and calls back.
+// suggestions search index, run for the selected item only) that links the
+// matched puzzle and offers "Reject as duplicate", and the three moderation
+// actions. Mutations live in the route; this pane only renders and calls back.
 import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
 import { useRelativeTime } from "@/hooks/use-relative-time";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import { AlertTriangle, Check, Pencil, Puzzle, X } from "lucide-react";
 import { useTranslations } from "use-intl";
@@ -51,10 +52,10 @@ export function SubmissionCover({
 
 // Loose-but-cheap title equivalence for the dup check: normalized equality or
 // containment either way, so "Starry Night" flags "Starry Night (1000pc)".
-function findTitleMatch(
+function findTitleMatch<T extends { title: string }>(
   title: string,
-  candidates: { title: string }[] | undefined,
-) {
+  candidates: T[] | undefined,
+): T | undefined {
   const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
   const target = norm(title);
   if (!target) return undefined;
@@ -134,19 +135,36 @@ export function SubmissionDetail({
       </div>
 
       {dup && (
-        <div className="flex items-start gap-2.5 rounded-lg border border-jigsaw-warning/30 bg-jigsaw-warning/10 px-3.5 py-3">
+        <div className="flex flex-wrap items-start gap-2.5 rounded-lg border border-jigsaw-warning/30 bg-jigsaw-warning/10 px-3.5 py-3">
           <AlertTriangle
             className="mt-0.5 size-4 shrink-0 text-jigsaw-warning"
             aria-hidden
           />
-          <p className="text-sm">
+          <p className="min-w-48 flex-1 text-sm [overflow-wrap:anywhere]">
             {t.rich("dupWarning", {
               title: dup.title,
-              strong: (chunks) => (
-                <strong className="font-semibold">{chunks}</strong>
+              link: (chunks) => (
+                <Link
+                  to="/admin/puzzles/$puzzleId"
+                  params={{ puzzleId: dup._id }}
+                  className="font-semibold underline underline-offset-2 hover:no-underline"
+                >
+                  {chunks}
+                </Link>
               ),
             })}
           </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onReject(dup.title)}
+            disabled={busy}
+            className="ml-auto h-11 md:h-8"
+          >
+            {/* Red text on the tinted banner fails contrast in dark mode: only the icon is red. */}
+            <X className="text-destructive" aria-hidden />
+            {t("rejectAsDuplicate")}
+          </Button>
         </div>
       )}
 

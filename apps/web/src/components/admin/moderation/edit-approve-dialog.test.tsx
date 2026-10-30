@@ -6,6 +6,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../../locales/en.json";
@@ -20,6 +21,30 @@ import type { PendingSubmission } from "./submission-detail";
 vi.mock("@tanstack/react-query", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@tanstack/react-query")>()),
   useQuery: () => ({ data: [] }),
+}));
+
+// Router-free Link: the test asserts the rendered href, not routing.
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({
+    to,
+    params,
+    children,
+    ...rest
+  }: {
+    to: string;
+    params?: Record<string, string>;
+    children?: ReactNode;
+  }) => (
+    <a
+      href={Object.entries(params ?? {}).reduce(
+        (path, [key, value]) => path.replace(`$${key}`, value),
+        to,
+      )}
+      {...rest}
+    >
+      {children}
+    </a>
+  ),
 }));
 
 afterEach(cleanup);
@@ -103,6 +128,13 @@ describe("EditApproveDialog", () => {
     ).toBe(true);
     // The edits stay visible (and copyable).
     expect(titleInput().value).toBe("Starry Night");
+  });
+
+  it("links to the full editor for the fields it does not cover", () => {
+    render(ui({}));
+    const link = screen.getByRole("link", { name: "Open the full editor" });
+    // The submission's Convex id: the full editor serves any status to admins.
+    expect(link.getAttribute("href")).toBe("/admin/puzzles/p1/edit");
   });
 
   it("says it in Dutch too", () => {

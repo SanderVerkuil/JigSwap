@@ -4815,7 +4815,8 @@
         "reveal": "Click or tap to reveal the photo",
         "hide": "Hide again"
       },
-      "dupWarning": "Possible duplicate of <strong>{title}</strong> already in the catalog. Review before approving.",
+      "dupWarning": "Possible duplicate of <link>{title}</link> already in the catalog. Review before approving.",
+      "rejectAsDuplicate": "Reject as duplicate",
       "actions": {
         "approve": "Approve & Publish",
         "edit": "Edit & Approve"
@@ -4823,6 +4824,7 @@
       "editDialog": {
         "title": "Edit & Approve",
         "description": "Fix the submission's details, then save to approve and publish it in one step.",
+        "fullEditor": "Need to fix the cover, category, series, shape or barcodes? <link>Open the full editor</link>, then approve it here.",
         "save": "Save & Approve",
         "handledElsewhere": "This submission was handled elsewhere while you were editing it, so it can no longer be approved from here."
       },

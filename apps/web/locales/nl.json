@@ -4815,7 +4815,8 @@
         "reveal": "Klik of tik om de foto te tonen",
         "hide": "Weer verbergen"
       },
-      "dupWarning": "Mogelijk duplicaat van <strong>{title}</strong> dat al in de catalogus staat. Controleer voor het goedkeuren.",
+      "dupWarning": "Mogelijk duplicaat van <link>{title}</link> dat al in de catalogus staat. Controleer voor het goedkeuren.",
+      "rejectAsDuplicate": "Afwijzen als duplicaat",
       "actions": {
         "approve": "Goedkeuren & publiceren",
         "edit": "Bewerken & goedkeuren"
@@ -4823,6 +4824,7 @@
       "editDialog": {
         "title": "Bewerken & goedkeuren",
         "description": "Corrigeer de gegevens van de inzending en sla op om deze in één stap goed te keuren en te publiceren.",
+        "fullEditor": "Wil je de afbeelding, categorie, serie, vorm of barcodes corrigeren? <link>Open de volledige editor</link> en keur de inzending daarna hier goed.",
         "save": "Opslaan & goedkeuren",
         "handledElsewhere": "Deze inzending is elders afgehandeld terwijl je aan het bewerken was. Goedkeuren kan hier niet meer."
       },
