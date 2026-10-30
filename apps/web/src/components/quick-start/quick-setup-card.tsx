@@ -12,7 +12,7 @@ import type { QuickStartView } from "@jigswap/contracts";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ChevronRight, ListChecks, X } from "lucide-react";
-import { useId, useState } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import { cardMode, progressSegments, rowState, stepPosition } from "./logic";
@@ -22,10 +22,13 @@ import {
   useMarkQuickStartUsed,
   useQuickStartSession,
 } from "./session";
+import { GettingStartedTourButton } from "./tour-handoff";
 
 // The dashboard checklist (spec §2.3, §5.2), between BriefingHero and ShelfSection. Visibility
 // comes from the server (getQuickStart.cardVisible); the one-row "all set up" state is per
-// session. Hiding stores the dismissal on the server and moves focus to the Shelf heading.
+// session. Hiding stores the dismissal on the server and moves focus to the Shelf heading. The card
+// ends with "Show me around", so the getting-started tour is offered beyond the /welcome done panel
+// (UX-91).
 export function QuickSetupCard() {
   const t = useTranslations("quickStart.card");
   const { member } = useCurrentMember();
@@ -56,17 +59,27 @@ export function QuickSetupCard() {
     );
   };
 
-  return <QuickSetupCardView view={view} mode={mode} onHide={hide} />;
+  return (
+    <QuickSetupCardView
+      view={view}
+      mode={mode}
+      onHide={hide}
+      tourAction={<GettingStartedTourButton />}
+    />
+  );
 }
 
 export function QuickSetupCardView({
   view,
   mode,
   onHide,
+  tourAction,
 }: {
   view: QuickStartView;
   mode: "active" | "allDone";
   onHide: () => void;
+  /** A final row after the steps (not a step itself): the getting-started tour. */
+  tourAction?: ReactNode;
 }) {
   const t = useTranslations("quickStart.card");
   const { title, subLine } = useStepText();
@@ -167,6 +180,7 @@ export function QuickSetupCardView({
           );
         })}
       </ol>
+      {tourAction && <div className="border-t pt-3">{tourAction}</div>}
     </section>
   );
 }

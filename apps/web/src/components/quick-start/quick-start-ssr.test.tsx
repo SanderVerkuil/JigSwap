@@ -41,6 +41,12 @@ vi.mock("@tanstack/react-router", () => ({
   },
 }));
 
+// The card file also holds the connected "Show me around" (tour-handoff), whose What's new state
+// reads the build-time entries module; the views under test never call it.
+vi.mock("@/components/whats-new/use-whats-new-state", () => ({
+  useWhatsNewState: () => ({ unreadIds: undefined, tours: undefined }),
+}));
+
 type Locale = "en" | "nl";
 const render = (node: ReactNode, locale: Locale = "en") =>
   renderToStaticMarkup(
@@ -304,6 +310,58 @@ describe("QuickSetupCardView (active)", () => {
     expect(attr(byTag(nlHtml, "button")[0]!, "aria-label")).toBe(
       "Snel instellen verbergen",
     );
+  });
+});
+
+describe("QuickSetupCardView: tour row", () => {
+  const noop = () => {};
+  const withTour = (locale: Locale = "en") =>
+    render(
+      <QuickSetupCardView
+        view={VIEW}
+        mode="active"
+        onHide={noop}
+        tourAction={
+          <TourHandoffButton state={{ kind: "take" }} onStart={noop} />
+        }
+      />,
+      locale,
+    );
+
+  it("ends the card with Show me around, after the step list", () => {
+    const html = withTour();
+    expect(
+      controls(html).map((el) => attr(el, "aria-label") ?? nameOf(el)),
+    ).toEqual([
+      "Hide quick setup",
+      "Add your puzzles, done, 7 added",
+      "Log puzzles you finished, done, 3 logged",
+      "Find your people, to do",
+      "HouseholdOptional, skipped, Skipped · Do it now",
+      "Make it yours, to do",
+      "Show me around",
+    ]);
+    // Not a step: the list still holds the five steps and no button.
+    const [ol] = byTag(html, "ol");
+    expect(elements(ol!).filter((el) => el.tagName === "li")).toHaveLength(5);
+    expect(elements(ol!).some((el) => el.tagName === "button")).toBe(false);
+  });
+
+  it("is only there when a tour action is passed", () => {
+    const html = render(
+      <QuickSetupCardView view={VIEW} mode="active" onHide={noop} />,
+    );
+    expect(controls(html).map((el) => nameOf(el))).not.toContain(
+      "Show me around",
+    );
+  });
+
+  it("renders in Dutch", () => {
+    expect(
+      controls(withTour("nl"))
+        .map((el) => nameOf(el))
+        .at(-1),
+    ).toBe("Geef me een rondleiding");
   });
 });
 

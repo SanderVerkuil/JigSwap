@@ -70,7 +70,8 @@ on without saving.
 ### The Quick setup card
 
 New members also see a **Quick setup** card on the dashboard. It shows how
-many steps are done and links to each one. To hide it, click
+many steps are done and links to each one. **Show me around** at the bottom of
+the card starts the short guided tour. To hide the card, click
 **Hide quick setup**; you can reopen it from your account menu.
 
 ## Invitations

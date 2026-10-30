@@ -13,15 +13,11 @@ import {
 import { PeopleStep } from "@/components/quick-start/people-step";
 import { ProfileStep } from "@/components/quick-start/profile-step";
 import { useMarkQuickStartUsed } from "@/components/quick-start/session";
-import { TourHandoffButton } from "@/components/quick-start/tour-handoff";
+import { GettingStartedTourButton } from "@/components/quick-start/tour-handoff";
 import { PastSolvesForm } from "@/components/solving/past-solves-form";
-import { tourButtonState } from "@/components/tour/controller";
-import { TOURS } from "@/components/tour/definitions";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { useReportSurfaceBusy } from "@/components/whats-new/surface-busy";
-import { useTourLauncher } from "@/components/whats-new/tour-launcher";
-import { useWhatsNewState } from "@/components/whats-new/use-whats-new-state";
 import { gateway } from "@/gateway";
 import { pageTitle } from "@/lib/page-title";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -88,7 +84,12 @@ function WelcomePage() {
   if (!step || !view) return <PageLoading message={tCommon("loading")} />;
 
   if (step === "done") {
-    return <QuickStartDonePanel view={view} tourAction={<TourHandoff />} />;
+    return (
+      <QuickStartDonePanel
+        view={view}
+        tourAction={<GettingStartedTourButton />}
+      />
+    );
   }
 
   const go = (next: FlowStep) => void navigate({ search: { step: next } });
@@ -153,23 +154,4 @@ function StepBody({
     case "profile":
       return <ProfileStep />;
   }
-}
-
-const HANDOFF_TOUR = "getting-started";
-
-// "Show me around" (spec §2.8): the standalone getting-started tour through the shared runner,
-// resuming at the saved step when it was paused.
-function TourHandoff() {
-  const { startTour } = useTourLauncher();
-  const { tours } = useWhatsNewState();
-  const state = tourButtonState(
-    tours?.find((p) => p.tourId === HANDOFF_TOUR),
-    TOURS.get(HANDOFF_TOUR)?.steps.length ?? 0,
-  );
-  return (
-    <TourHandoffButton
-      state={state}
-      onStart={(returnFocus) => startTour(HANDOFF_TOUR, { returnFocus })}
-    />
-  );
 }

@@ -78,8 +78,9 @@ te gaan.
 ### De kaart Snel instellen
 
 Nieuwe leden zien ook een kaart **Snel instellen** op het dashboard. Die toont
-hoeveel stappen klaar zijn en linkt naar elke stap. Wil je hem verbergen, klik
-dan op **Snel instellen verbergen**; je kunt hem weer openen via je
+hoeveel stappen klaar zijn en linkt naar elke stap. Onderaan de kaart start
+**Geef me een rondleiding** de korte rondleiding. Wil je de kaart verbergen,
+klik dan op **Snel instellen verbergen**; je kunt hem weer openen via je
 accountmenu.
 
 ## Uitnodigingen
