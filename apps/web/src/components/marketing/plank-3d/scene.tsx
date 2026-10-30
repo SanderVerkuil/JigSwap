@@ -1,3 +1,4 @@
+import { useCoarsePointer } from "@/components/common/puzzle-plank-3d/use-coarse-pointer";
 import type { PlankBox } from "@/components/marketing/plank";
 import { ContactShadows } from "@react-three/drei";
 import type {
@@ -11,6 +12,7 @@ import { easing } from "maath";
 import * as React from "react";
 import * as THREE from "three";
 import { BOX_DEPTH, BOX_SCALE, PuzzleBox, PX, type BoxSlot } from "./box";
+import { DemandFrames, frameDelta } from "./demand";
 import { LIGHTING, type LightingPreset } from "./palette";
 
 const SHELF_THICKNESS = 0.14;
@@ -89,7 +91,7 @@ function Lights({
   const hemi = React.useRef<THREE.HemisphereLight>(null);
   const rim = React.useRef<THREE.DirectionalLight>(null);
 
-  useFrame((_, delta) => {
+  useFrame((state, rawDelta) => {
     if (!key.current || !ambient.current || !hemi.current || !rim.current)
       return;
     if (reducedMotion) {
@@ -102,18 +104,23 @@ function Lights({
       rim.current.intensity = preset.rimIntensity;
       return;
     }
-    easing.damp(key.current, "intensity", preset.keyIntensity, 0.3, delta);
-    easing.dampC(key.current.color, preset.keyColor, 0.3, delta);
-    easing.damp(
-      ambient.current,
-      "intensity",
-      preset.ambientIntensity,
-      0.3,
-      delta,
-    );
-    easing.dampC(ambient.current.color, preset.ambientColor, 0.3, delta);
-    easing.damp(hemi.current, "intensity", preset.hemiIntensity, 0.3, delta);
-    easing.damp(rim.current, "intensity", preset.rimIntensity, 0.3, delta);
+    const delta = frameDelta(rawDelta);
+    // Demand frameloop: keep asking for frames until every light has settled.
+    const moving = [
+      easing.damp(key.current, "intensity", preset.keyIntensity, 0.3, delta),
+      easing.dampC(key.current.color, preset.keyColor, 0.3, delta),
+      easing.damp(
+        ambient.current,
+        "intensity",
+        preset.ambientIntensity,
+        0.3,
+        delta,
+      ),
+      easing.dampC(ambient.current.color, preset.ambientColor, 0.3, delta),
+      easing.damp(hemi.current, "intensity", preset.hemiIntensity, 0.3, delta),
+      easing.damp(rim.current, "intensity", preset.rimIntensity, 0.3, delta),
+    ].includes(true);
+    if (moving) state.invalidate();
   });
 
   return (
@@ -150,12 +157,12 @@ function Shelf({
   reducedMotion: boolean;
 }) {
   const mat = React.useRef<THREE.MeshStandardMaterial>(null);
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     if (!mat.current) return;
     if (reducedMotion) {
       mat.current.color.set(color);
-    } else {
-      easing.dampC(mat.current.color, color, 0.3, delta);
+    } else if (easing.dampC(mat.current.color, color, 0.3, frameDelta(delta))) {
+      state.invalidate();
     }
   });
   return (
@@ -201,12 +208,13 @@ function Parallax({
           0,
         ]
       : [0, 0, 0];
-    easing.dampE(
+    const moving = easing.dampE(
       group.current.rotation,
       target as [number, number, number],
       0.4,
-      delta,
+      frameDelta(delta),
     );
+    if (moving) state.invalidate();
   });
   return <group ref={group}>{children}</group>;
 }
@@ -242,15 +250,19 @@ function BoxSpot({
     o.position.set(x, 0.5, 0);
     return o;
   }, [x]);
-  useFrame((_, delta) => {
+  useFrame((state, rawDelta) => {
     if (!light.current) return;
     if (reducedMotion) {
       light.current.intensity = preset.spotIntensity;
       light.current.color.set(preset.spotColor);
       return;
     }
-    easing.damp(light.current, "intensity", preset.spotIntensity, 0.3, delta);
-    easing.dampC(light.current.color, preset.spotColor, 0.3, delta);
+    const delta = frameDelta(rawDelta);
+    const moving = [
+      easing.damp(light.current, "intensity", preset.spotIntensity, 0.3, delta),
+      easing.dampC(light.current.color, preset.spotColor, 0.3, delta),
+    ].includes(true);
+    if (moving) state.invalidate();
   });
   return (
     <>
@@ -277,14 +289,15 @@ function Haze({
   reducedMotion: boolean;
 }) {
   const scene = useThree((s) => s.scene);
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     const fog = scene.fog as THREE.Fog | null;
     if (!fog || !(fog instanceof THREE.Fog)) return;
     if (reducedMotion) {
       fog.color.set(preset.fogColor);
       return;
     }
-    easing.dampC(fog.color, preset.fogColor, 0.3, delta);
+    if (easing.dampC(fog.color, preset.fogColor, 0.3, frameDelta(delta)))
+      state.invalidate();
   });
   return null;
 }
@@ -346,6 +359,7 @@ function Arrangement({
   headingFont,
   lightingPreset,
   reducedMotion,
+  parallax,
   onFirstFrame,
 }: {
   rows: PlankBox[][];
@@ -353,6 +367,7 @@ function Arrangement({
   headingFont: string;
   lightingPreset: LightingPreset;
   reducedMotion: boolean;
+  parallax: boolean;
   onFirstFrame: () => void;
 }) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
@@ -419,7 +434,7 @@ function Arrangement({
       <FirstFrame onFirstFrame={onFirstFrame} />
       <fog attach="fog" args={[lightingPreset.fogColor, fogNear, fogFar]} />
       <Haze preset={lightingPreset} reducedMotion={reducedMotion} />
-      <Parallax enabled={!reducedMotion}>
+      <Parallax enabled={parallax}>
         {/* Yaw group: rotates all shelf rows + boxes + lights as a unit.
             SHELF_YAW is negative so (1,0,0) → (cos θ, 0, −sin θ) with θ < 0
             gives −sin θ > 0, i.e. the right end moves toward +z (the camera). */}
@@ -500,10 +515,13 @@ export interface SceneProps {
 
 export default function PlankScene(props: SceneProps) {
   const lightingPreset = LIGHTING[props.theme];
+  const coarse = useCoarsePointer();
+  // Touch has no hover, so the pointer parallax only follows mice and pens.
+  const parallax = !props.reducedMotion && !coarse;
   return (
     <Canvas
-      dpr={[1, 2]}
-      frameloop={props.visible ? "always" : "never"}
+      dpr={[1, coarse ? 1.5 : 2]}
+      frameloop={props.visible ? "demand" : "never"}
       gl={{ alpha: true, antialias: true }}
       style={{ pointerEvents: "none", background: "transparent" }}
       camera={{ fov: FOV }}
@@ -511,6 +529,12 @@ export default function PlankScene(props: SceneProps) {
       events={transformSafeEvents}
       resize={{ offsetSize: true }}
     >
+      <DemandFrames
+        eventSource={props.eventSource}
+        pointer={parallax}
+        visible={props.visible}
+        theme={props.theme}
+      />
       <Lights preset={lightingPreset} reducedMotion={props.reducedMotion} />
       <Arrangement
         rows={props.rows}
@@ -518,6 +542,7 @@ export default function PlankScene(props: SceneProps) {
         headingFont={props.headingFont}
         lightingPreset={lightingPreset}
         reducedMotion={props.reducedMotion}
+        parallax={parallax}
         onFirstFrame={props.onFirstFrame}
       />
     </Canvas>

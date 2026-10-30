@@ -1,5 +1,6 @@
 import type { PlankBox } from "@/components/marketing/plank";
 import { RoundedBox } from "@react-three/drei";
+import { useThree } from "@react-three/fiber";
 import * as React from "react";
 import * as THREE from "three";
 import {
@@ -50,6 +51,8 @@ interface ArtEntry {
   edges: CoverEdges | null;
   aspectSubs: Set<(aspect: number) => void>;
   edgeSubs: Set<(edges: CoverEdges) => void>;
+  /** Called when the texture is redrawn after creation (cover, fonts). */
+  redrawSubs: Set<() => void>;
 }
 
 const artCache = new Map<string, ArtEntry>();
@@ -71,6 +74,7 @@ function acquireArt(
       edges: null,
       aspectSubs: new Set(),
       edgeSubs: new Set(),
+      redrawSubs: new Set(),
     };
     next.texture = createBoxArtTexture(
       spec,
@@ -85,6 +89,7 @@ function acquireArt(
             next.edgeSubs.forEach((fn) => fn(edges));
           }
         : undefined,
+      () => next.redrawSubs.forEach((fn) => fn()),
     );
     artCache.set(key, next);
     entry = next;
@@ -149,6 +154,18 @@ export function PuzzleBox({
     [box, slot.c1, slot.c2, headingFont],
   );
   React.useEffect(() => () => releaseArt(key), [key]);
+
+  // A redrawn texture (cover image or brand font arrived) changes no React
+  // prop, so the demand-rendered canvas must be asked for a frame. One
+  // closure per box: the cache entry can be shared within one canvas.
+  const invalidate = useThree((s) => s.invalidate);
+  React.useEffect(() => {
+    const onRedraw = () => invalidate();
+    entry.redrawSubs.add(onRedraw);
+    return () => {
+      entry.redrawSubs.delete(onRedraw);
+    };
+  }, [entry, invalidate]);
 
   // The cached entry is an external store: the cover's real aspect and edge
   // strips land on it when the image loads (possibly long ago), and its sub

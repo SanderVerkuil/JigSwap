@@ -7,6 +7,10 @@ import {
   PuzzleBox,
 } from "@/components/marketing/plank-3d/box";
 import {
+  DemandFrames,
+  frameDelta,
+} from "@/components/marketing/plank-3d/demand";
+import {
   LIGHTING,
   type LightingPreset,
 } from "@/components/marketing/plank-3d/palette";
@@ -31,6 +35,7 @@ import { reconcileBodyRefs } from "./body-refs";
 import { clampThrowVelocity } from "./drag-math";
 import { framedContentHeight, layoutRow } from "./layout";
 import type { PlankSceneProps } from "./scene";
+import { useCoarsePointer } from "./use-coarse-pointer";
 import { DEFAULT_WOOD_PARAMS, useWoodTexture } from "./wood-texture";
 
 // @dimforge/rapier3d-compat is a transitive peer; we reference its enum
@@ -71,7 +76,7 @@ function Lights({
   const hemi = React.useRef<THREE.HemisphereLight>(null);
   const rim = React.useRef<THREE.DirectionalLight>(null);
 
-  useFrame((_, delta) => {
+  useFrame((state, rawDelta) => {
     if (!key.current || !ambient.current || !hemi.current || !rim.current)
       return;
     if (reducedMotion) {
@@ -83,18 +88,23 @@ function Lights({
       rim.current.intensity = preset.rimIntensity;
       return;
     }
-    easing.damp(key.current, "intensity", preset.keyIntensity, 0.3, delta);
-    easing.dampC(key.current.color, preset.keyColor, 0.3, delta);
-    easing.damp(
-      ambient.current,
-      "intensity",
-      preset.ambientIntensity,
-      0.3,
-      delta,
-    );
-    easing.dampC(ambient.current.color, preset.ambientColor, 0.3, delta);
-    easing.damp(hemi.current, "intensity", preset.hemiIntensity, 0.3, delta);
-    easing.damp(rim.current, "intensity", preset.rimIntensity, 0.3, delta);
+    const delta = frameDelta(rawDelta);
+    // Demand frameloop: keep asking for frames until every light has settled.
+    const moving = [
+      easing.damp(key.current, "intensity", preset.keyIntensity, 0.3, delta),
+      easing.dampC(key.current.color, preset.keyColor, 0.3, delta),
+      easing.damp(
+        ambient.current,
+        "intensity",
+        preset.ambientIntensity,
+        0.3,
+        delta,
+      ),
+      easing.dampC(ambient.current.color, preset.ambientColor, 0.3, delta),
+      easing.damp(hemi.current, "intensity", preset.hemiIntensity, 0.3, delta),
+      easing.damp(rim.current, "intensity", preset.rimIntensity, 0.3, delta),
+    ].includes(true);
+    if (moving) state.invalidate();
   });
 
   return (
@@ -594,10 +604,11 @@ function PhysicsArrangement({
 
 export default function PlankScenePhysics(props: PlankSceneProps) {
   const lightingPreset = LIGHTING[props.theme];
+  const coarse = useCoarsePointer();
   return (
     <Canvas
-      dpr={[1, 2]}
-      frameloop={props.visible ? "always" : "never"}
+      dpr={[1, coarse ? 1.5 : 2]}
+      frameloop={props.visible ? "demand" : "never"}
       gl={{ alpha: true, antialias: true }}
       style={{ pointerEvents: "auto", background: "transparent" }}
       camera={{ fov: FOV }}
@@ -605,10 +616,20 @@ export default function PlankScenePhysics(props: PlankSceneProps) {
       events={transformSafeEvents}
       resize={{ offsetSize: true }}
     >
+      <DemandFrames
+        eventSource={props.eventSource}
+        pointer={false}
+        visible={props.visible}
+        theme={props.theme}
+      />
       <Lights preset={lightingPreset} reducedMotion={props.reducedMotion} />
+      {/* "independent": rapier steps on its own requestAnimationFrame and
+          invalidates the demand canvas while any body is awake (drag, throw,
+          Reset), so frames stop once every box has come to rest. */}
       <Physics
         gravity={[0, -9.81, 0]}
         paused={!props.visible || props.reducedMotion}
+        updateLoop="independent"
       >
         <PhysicsArrangement
           boxes={props.boxes}
