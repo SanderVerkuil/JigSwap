@@ -101,7 +101,6 @@ export function FindPeople() {
               <MemberTile
                 key={member._id}
                 memberId={member._id as Id<"users">}
-                followsYou={false}
                 hideLocation
               />
             ))}
@@ -128,7 +127,6 @@ export function FindPeople() {
                 <MemberTile
                   key={member._id}
                   memberId={member._id as Id<"users">}
-                  followsYou={false}
                   hideLocation
                 />
               ))}

@@ -209,6 +209,32 @@ describe("MemberTile", () => {
     expect(html).toContain("Utrecht");
   });
 
+  it("reads 'Follows you' from the follow relation when the host doesn't know it", () => {
+    // Discovery surfaces (Find people) pass no followsYou; the tile asks the relation.
+    const html = render({ stats: rated }, { followsYou: undefined });
+    expect(html).toContain("Follows you");
+
+    const stranger = render(
+      {
+        stats: rated,
+        relation: {
+          following: false,
+          followsYou: false,
+          targetIsPrivate: false,
+          pendingRequest: null,
+        },
+      },
+      { followsYou: undefined },
+    );
+    expect(stranger).not.toContain("Follows you");
+  });
+
+  it("keeps the host's followsYou when it passes one", () => {
+    // The network list already knows (from the followers list); the relation can lag.
+    const html = render({ stats: rated }, { followsYou: false });
+    expect(html).not.toContain("Follows you");
+  });
+
   it("shows 'No reviews yet' and no star when the member is unreviewed", () => {
     const html = render({
       stats: { ...rated, totalReviews: 0, averageRating: 0 },
