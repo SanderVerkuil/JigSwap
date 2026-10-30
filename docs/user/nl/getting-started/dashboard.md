@@ -27,8 +27,9 @@ moment stoppen en later verdergaan.
 op je dashboard (`/welcome`).
 
 Als je net lid bent, biedt een venster **Welkom bij JigSwap!** de keuze
-**Snel instellen** of **Zelf rondkijken**. Wat je ook kiest, Snel instellen
-blijft beschikbaar in je accountmenu.
+**Snel instellen** of **Zelf rondkijken**, waar je ook binnenkomt: op je
+dashboard of op de pagina waar een link je naartoe bracht. Wat je ook kiest,
+Snel instellen blijft beschikbaar in je accountmenu.
 
 De vier stappen zijn:
 

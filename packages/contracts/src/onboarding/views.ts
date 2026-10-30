@@ -21,7 +21,7 @@ export interface QuickStartStepView {
 export interface QuickStartView {
   /** The account is younger than 7 days. */
   eligible: boolean;
-  /** Eligible and the welcome dialog was never dismissed. */
+  /** Eligible, the welcome dialog was never dismissed, and the member never opened /welcome. */
   showWelcome: boolean;
   /** Not dismissed, a required step is still open, and the account is < 30 days old or has 0 copies. */
   cardVisible: boolean;

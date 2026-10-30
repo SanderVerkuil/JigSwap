@@ -2,6 +2,7 @@ import { AppUpdatePrompt } from "@/components/app-update-prompt";
 import { DashboardShell } from "@/components/dashboard-layout/shell";
 import { AppNotFound } from "@/components/NotFound";
 import { AppPresence } from "@/components/presence/app-presence";
+import { WelcomeDialog } from "@/components/quick-start/welcome-dialog";
 import { InviteRedeemer } from "@/components/social/invite-redeemer";
 import { CompletionFollowUpProvider } from "@/components/solving/completion-follow-up-provider";
 import { TourProvider } from "@/components/tour/tour-provider";
@@ -61,6 +62,9 @@ function DashboardLayout() {
           <AppPresence />
           {/* Offers a reload after a deploy; only signed-in pages, not the marketing or docs pages. */}
           <AppUpdatePrompt />
+          {/* The one-time quick start welcome, on whichever page a new member lands. It wins
+              the surface-busy priority over the highlight below. */}
+          <WelcomeDialog />
           {/* Inside the follow-up provider: it yields to its prompt (surface-busy signal). */}
           <WhatsNewHighlight />
           <Outlet />

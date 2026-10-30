@@ -27,7 +27,8 @@ stop at any time and pick it up later.
 your dashboard (`/welcome`).
 
 When you first join, a **Welcome to JigSwap!** dialog offers
-**Start quick setup** or **Explore on my own**. Either way, Quick setup stays
+**Start quick setup** or **Explore on my own**, wherever you land: on your
+dashboard, or on the page a link brought you to. Either way, Quick setup stays
 available from your account menu.
 
 The four steps are:

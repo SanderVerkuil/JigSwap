@@ -13,6 +13,7 @@ import {
   rowState,
   shouldOfferPush,
   stepPosition,
+  welcomeDialogAllowed,
   welcomeSurfaceBusy,
   withSkippedStep,
 } from "./logic";
@@ -309,6 +310,22 @@ describe("welcomeSurfaceBusy (priority over the What's new highlight)", () => {
       }),
     ).toBe(false);
   });
+});
+
+describe("welcomeDialogAllowed (mounted in the whole signed-in shell)", () => {
+  it.each(["/dashboard", "/browse", "/puzzles/abc", "/messages", "/welcomes"])(
+    "may open on %s",
+    (pathname) => {
+      expect(welcomeDialogAllowed(pathname)).toBe(true);
+    },
+  );
+
+  it.each(["/welcome", "/welcome/", "/messages/thread-1", "/messages/new"])(
+    "stays closed on %s (the flow itself, a full-screen phone thread)",
+    (pathname) => {
+      expect(welcomeDialogAllowed(pathname)).toBe(false);
+    },
+  );
 });
 
 describe("inviteExtrasSuppressed (D7)", () => {

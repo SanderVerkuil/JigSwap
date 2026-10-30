@@ -181,6 +181,16 @@ describe("deriveQuickStart: eligibility and the welcome", () => {
     expect(view.eligible).toBe(true);
     expect(view.showWelcome).toBe(false);
   });
+
+  it("the welcome stops once the member opened quick setup on their own", () => {
+    // E.g. a household invite link sends a new member straight to /welcome: the welcome's offer
+    // ("Start quick setup") is already taken, so it must not greet them afterwards.
+    const view = deriveQuickStart(
+      input({ state: { skippedSteps: [], startedAt: NOW - 1 } }),
+    );
+    expect(view.eligible).toBe(true);
+    expect(view.showWelcome).toBe(false);
+  });
 });
 
 describe("deriveQuickStart: card visibility", () => {

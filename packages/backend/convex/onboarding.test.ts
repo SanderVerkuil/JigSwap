@@ -499,6 +499,20 @@ describe("onboarding.recordQuickStart", () => {
     expect((await rowsOf(t, ann))[0].startedAt).toBe(first.startedAt);
   });
 
+  test("opening quick setup without the welcome retires the welcome", async () => {
+    // A household invite link lands a new member on /welcome before any dashboard page.
+    const t = convexTest(schema, modules);
+    const ann = await insertUser(t, "ann");
+    expect((await quickStart(t, "ann")).showWelcome).toBe(true);
+    await record(t, "ann", { kind: "startQuickStart" });
+    expect(await quickStart(t, "ann")).toMatchObject({
+      eligible: true,
+      showWelcome: false,
+      cardVisible: true,
+    });
+    expect((await rowsOf(t, ann))[0].welcomeDismissedAt).toBeUndefined();
+  });
+
   test("a no-op on a member without a row writes nothing", async () => {
     const t = convexTest(schema, modules);
     const ann = await insertUser(t, "ann");

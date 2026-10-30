@@ -2,6 +2,7 @@
 // unit-test in node. "Done" comes from the server (onboarding.quickStart); these rules only
 // decide what the welcome dialog, the /welcome flow and the dashboard card show.
 
+import { isImmersiveMobileRoute } from "@/components/dashboard-layout/route-meta";
 import type {
   QuickStartStepId,
   QuickStartStepView,
@@ -129,6 +130,19 @@ export function welcomeSurfaceBusy({
   if (memberLoading) return true;
   if (!hasMember) return false;
   return view === undefined || view.showWelcome;
+}
+
+/**
+ * Where the welcome dialog may open. It is mounted in the signed-in shell, so a member who signs
+ * up from a deep link (a catalogue "Join" button, a sign-in `redirect_url`) still gets it on the
+ * page they land on; but never over the quick setup flow it offers, nor over a full-screen phone
+ * thread. Elsewhere it waits for the member's next page.
+ */
+export function welcomeDialogAllowed(pathname: string): boolean {
+  return (
+    pathname.replace(/\/+$/, "") !== "/welcome" &&
+    !isImmersiveMobileRoute(pathname)
+  );
 }
 
 /**
