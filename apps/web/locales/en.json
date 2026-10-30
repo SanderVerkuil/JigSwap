@@ -460,6 +460,7 @@
         "brand": "Brand",
         "selectBrand": "Select brand",
         "allBrands": "All brands",
+        "brandsUnavailable": "Couldn't load brands",
         "minPieces": "Min Pieces",
         "selectMinPieces": "Select minimum pieces",
         "noMinimum": "No minimum",
@@ -472,7 +473,9 @@
         "category": "Category",
         "selectCategory": "Select category",
         "allCategories": "All categories",
+        "categoriesUnavailable": "Couldn't load categories",
         "tags": "Tags",
+        "tagsUnavailable": "Couldn't load tags",
         "customRange": "Custom Range",
         "min": "Min",
         "max": "Max"

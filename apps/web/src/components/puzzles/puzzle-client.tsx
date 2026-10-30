@@ -10,7 +10,7 @@ import { useFavorites } from "@/hooks/use-favorites";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery } from "convex/react";
 import { Filter, Grid, Heart, List, Plus, Search, X } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useTranslations } from "use-intl";
 import { PuzzleCard } from "./puzzle-card";
 import { PuzzleFilters } from "./puzzle-filters";
@@ -26,6 +26,7 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
+  const filtersPanelId = useId();
   // Favorites narrowing is a lightweight toggle beside the advanced-filter panel: it filters the
   // already-loaded pages client-side against the member's favorite ids, like the other filters.
   const [favoritesOnly, setFavoritesOnly] = useState(false);
@@ -197,6 +198,8 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
             {/* Filter Toggle */}
             <Button
               variant="outline"
+              aria-expanded={showFilters}
+              aria-controls={filtersPanelId}
               onClick={() => setShowFilters(!showFilters)}
               className="flex items-center gap-2"
             >
@@ -217,14 +220,16 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
             )}
           </div>
 
-          {/* Advanced Filters */}
-          {showFilters && (
-            <PuzzleFilters
-              filters={filters}
-              onFiltersChange={setFilters}
-              className="mt-4"
-            />
-          )}
+          {/* Advanced Filters: the wrapper always exists so the toggle's aria-controls resolves */}
+          <div id={filtersPanelId}>
+            {showFilters && (
+              <PuzzleFilters
+                filters={filters}
+                onFiltersChange={setFilters}
+                className="mt-4"
+              />
+            )}
+          </div>
         </CardContent>
       </Card>
 

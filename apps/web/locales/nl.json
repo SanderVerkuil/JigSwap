@@ -460,6 +460,7 @@
         "brand": "Merk",
         "selectBrand": "Selecteer merk",
         "allBrands": "Alle merken",
+        "brandsUnavailable": "Merken konden niet worden geladen",
         "minPieces": "Min Stukken",
         "selectMinPieces": "Selecteer minimum stukken",
         "noMinimum": "Geen minimum",
@@ -472,7 +473,9 @@
         "category": "Categorie",
         "selectCategory": "Selecteer categorie",
         "allCategories": "Alle categorieën",
+        "categoriesUnavailable": "Categorieën konden niet worden geladen",
         "tags": "Tags",
+        "tagsUnavailable": "Tags konden niet worden geladen",
         "customRange": "Aangepast Bereik",
         "min": "Min",
         "max": "Max"
