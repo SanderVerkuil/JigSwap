@@ -4,17 +4,29 @@ import { Link } from "@/compat/link";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { PageLoading } from "@/components/ui/loading";
+import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
-import { useFavorites } from "@/hooks/use-favorites";
+import {
+  catalogueSearchArgs,
+  EMPTY_CATALOGUE_FILTERS,
+  favouritesInCatalogue,
+  hasActiveCatalogueFilters,
+  type CatalogueFilters,
+} from "@/lib/catalogue-filters";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery } from "convex/react";
 import { Filter, Grid, Heart, List, Plus, Search, X } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useTranslations } from "use-intl";
 import { PuzzleCard } from "./puzzle-card";
+import { PuzzleCardSkeleton } from "./puzzle-card-skeleton";
 import { PuzzleFilters } from "./puzzle-filters";
 import { PuzzleViewProvider } from "./puzzle-view-provider";
+
+const PAGE_SIZE = 20;
+const SEARCH_DEBOUNCE_MS = 300;
 
 interface PuzzlesClientProps {
   className?: string;
@@ -22,41 +34,63 @@ interface PuzzlesClientProps {
 
 export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
   const t = useTranslations("puzzles.puzzles");
-  const tCommon = useTranslations("common");
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
   const filtersPanelId = useId();
-  // Favorites narrowing is a lightweight toggle beside the advanced-filter panel: it filters the
-  // already-loaded pages client-side against the member's favorite ids, like the other filters.
   const [favoritesOnly, setFavoritesOnly] = useState(false);
-  const { isFavorite } = useFavorites();
-  const [filters, setFilters] = useState({
-    searchTerm: "",
-    brand: "",
-    minPieces: "",
-    maxPieces: "",
-    difficulty: "",
-    category: "",
-    tags: [] as string[],
-  });
+  const [filters, setFilters] = useState<CatalogueFilters>(
+    EMPTY_CATALOGUE_FILTERS,
+  );
+
+  // The search box edits a draft; the filters (and so the server query) take it over after a
+  // pause in typing, so every keystroke doesn't start a new search.
+  const [searchDraft, setSearchDraft] = useState("");
+  const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(searchTimer.current), []);
+  const onSearchInput = (value: string) => {
+    setSearchDraft(value);
+    clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(
+      () => setFilters((prev) => ({ ...prev, searchTerm: value })),
+      SEARCH_DEBOUNCE_MS,
+    );
+  };
+
+  // The catalogue is searched and filtered on the server, so matches beyond the loaded pages are
+  // found. Favourites are a short, complete list: the same facets apply to it on the client.
+  const searchArgs = catalogueSearchArgs(filters);
+  const catalogue = usePaginatedQuery(
+    gateway.catalog.search,
+    favoritesOnly ? "skip" : searchArgs,
+    { initialNumItems: PAGE_SIZE },
+  );
+  const { data: favourites } = useQuery(
+    convexQuery(gateway.catalog.listMyFavorites, favoritesOnly ? {} : "skip"),
+  );
+  const puzzles = favoritesOnly
+    ? favouritesInCatalogue(favourites ?? [], searchArgs)
+    : catalogue.results;
+  // "loading": nothing to show yet; "partial": more matches can still load; "complete": all are in.
+  const listState: "loading" | "partial" | "complete" = favoritesOnly
+    ? favourites === undefined
+      ? "loading"
+      : "complete"
+    : catalogue.status === "LoadingFirstPage"
+      ? "loading"
+      : catalogue.status === "Exhausted"
+        ? "complete"
+        : "partial";
 
   const observerRef = useRef<HTMLDivElement>(null);
-
-  // Use paginated query for infinite scroll
-  const {
-    results: puzzles,
-    status,
-    loadMore,
-    isLoading,
-  } = usePaginatedQuery(gateway.catalog.listAll, {}, { initialNumItems: 20 });
+  const { status, loadMore } = catalogue;
 
   // Infinite scroll implementation
   const handleObserver = useCallback(
     (entries: IntersectionObserverEntry[]) => {
       const [target] = entries;
       if (target.isIntersecting && status === "CanLoadMore") {
-        loadMore(20);
+        loadMore(PAGE_SIZE);
       }
     },
     [loadMore, status],
@@ -76,75 +110,21 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
     return () => observer.unobserve(element);
   }, [handleObserver]);
 
-  // Filter puzzles based on current filters
-  const filteredPuzzles = puzzles.filter((puzzle) => {
-    const matchesSearch =
-      !filters.searchTerm ||
-      puzzle.title.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-      (puzzle.description &&
-        puzzle.description
-          .toLowerCase()
-          .includes(filters.searchTerm.toLowerCase())) ||
-      (puzzle.brand &&
-        puzzle.brand.toLowerCase().includes(filters.searchTerm.toLowerCase()));
-
-    const matchesBrand =
-      !filters.brand ||
-      (puzzle.brand &&
-        puzzle.brand.toLowerCase().includes(filters.brand.toLowerCase()));
-
-    const matchesMinPieces =
-      !filters.minPieces || puzzle.pieceCount >= parseInt(filters.minPieces);
-
-    const matchesMaxPieces =
-      !filters.maxPieces || puzzle.pieceCount <= parseInt(filters.maxPieces);
-
-    const matchesDifficulty =
-      !filters.difficulty || puzzle.difficulty === filters.difficulty;
-
-    const matchesCategory =
-      !filters.category || puzzle.category === filters.category;
-
-    const matchesTags =
-      filters.tags.length === 0 ||
-      (puzzle.tags && filters.tags.some((tag) => puzzle.tags!.includes(tag)));
-
-    const matchesFavorites = !favoritesOnly || isFavorite(puzzle._id);
-
-    return (
-      matchesSearch &&
-      matchesBrand &&
-      matchesMinPieces &&
-      matchesMaxPieces &&
-      matchesDifficulty &&
-      matchesCategory &&
-      matchesTags &&
-      matchesFavorites
-    );
-  });
-
   const clearFilters = () => {
-    setFilters({
-      searchTerm: "",
-      brand: "",
-      minPieces: "",
-      maxPieces: "",
-      difficulty: "",
-      category: "",
-      tags: [],
-    });
+    clearTimeout(searchTimer.current);
+    setSearchDraft("");
+    setFilters(EMPTY_CATALOGUE_FILTERS);
     setFavoritesOnly(false);
   };
 
   const hasActiveFilters =
     favoritesOnly ||
-    Object.values(filters).some((value) =>
-      Array.isArray(value) ? value.length > 0 : value !== "",
-    );
+    searchDraft.trim() !== "" ||
+    hasActiveCatalogueFilters(filters);
 
   // The title/subtitle live in the shared shell page head (via route-meta); publish only the
   // "contribute to catalogue" action there so the body carries no own header. The result count
-  // stays next to the filters below rather than repeating in the head.
+  // sits once, in the toolbar next to the filters below, rather than repeating in the head.
   usePageHeaderActions(
     () => (
       <Button size="sm" asChild>
@@ -156,10 +136,6 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
     ),
     [t],
   );
-
-  if (isLoading && puzzles.length === 0) {
-    return <PageLoading message={tCommon("loading")} />;
-  }
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -173,13 +149,8 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
               <input
                 type="text"
                 placeholder={t("searchPlaceholder")}
-                value={filters.searchTerm}
-                onChange={(e) =>
-                  setFilters((prev) => ({
-                    ...prev,
-                    searchTerm: e.target.value,
-                  }))
-                }
+                value={searchDraft}
+                onChange={(e) => onSearchInput(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
@@ -251,13 +222,28 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
             <List className="h-4 w-4" />
           </Button>
         </div>
-        <div className="text-sm text-muted-foreground">
-          {t("puzzlesFound", { count: filteredPuzzles.length })}
-        </div>
+        {/* One count, on every screen size: final once every match is in, "so far" while more
+            can still load. */}
+        {listState === "loading" ? (
+          <Skeleton className="h-4 w-32" />
+        ) : (
+          <div className="text-sm text-muted-foreground">
+            {listState === "complete"
+              ? t("puzzlesFound", { count: puzzles.length })
+              : t("puzzlesFoundSoFar", { count: puzzles.length })}
+          </div>
+        )}
       </div>
 
-      {/* Puzzles Grid/List */}
-      {filteredPuzzles.length === 0 ? (
+      {/* Puzzles Grid/List. "No puzzles" only once the search is exhausted; until then a match
+          may still be on a later page. */}
+      {puzzles.length > 0 ? (
+        <PuzzleViewProvider viewMode={viewMode}>
+          {puzzles.map((puzzle) => (
+            <PuzzleCard key={puzzle._id} puzzle={puzzle} />
+          ))}
+        </PuzzleViewProvider>
+      ) : listState === "complete" ? (
         <Card>
           <CardContent className="p-12 text-center">
             <div className="text-muted-foreground">
@@ -271,19 +257,22 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
             </div>
           </CardContent>
         </Card>
-      ) : (
+      ) : null}
+
+      {/* Infinite Scroll Observer: above the placeholders, so it is in view (and keeps loading)
+          when the first pages hold no match yet. */}
+      <div ref={observerRef} className="h-4" />
+
+      {puzzles.length === 0 && listState !== "complete" && (
         <PuzzleViewProvider viewMode={viewMode}>
-          {filteredPuzzles.map((puzzle) => (
-            <PuzzleCard key={puzzle._id} puzzle={puzzle} />
+          {Array.from({ length: PAGE_SIZE / 2 }, (_, i) => (
+            <PuzzleCardSkeleton key={i} />
           ))}
         </PuzzleViewProvider>
       )}
 
-      {/* Infinite Scroll Observer */}
-      <div ref={observerRef} className="h-4" />
-
       {/* Loading More Indicator */}
-      {status === "LoadingMore" && (
+      {status === "LoadingMore" && puzzles.length > 0 && (
         <div className="flex justify-center py-4">
           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
         </div>
