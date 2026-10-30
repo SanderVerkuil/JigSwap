@@ -6,6 +6,7 @@ import type { MutationCtx } from "../../../_generated/server";
 import { participantRowOf } from "../../../conversation/readModelHelpers";
 import { consumeRateLimit } from "../../../lib/rateLimits";
 import { deliveryRefsOf } from "../../deliveryContent";
+import { followNoticeAllowed } from "./followNoticeThrottle";
 
 // Email channel: resolves the recipient's email/name/language and schedules the out-of-band send
 // (notifications/sendEmail) after commit. The action resolves the delivery for the recipient (actor,
@@ -19,7 +20,8 @@ import { deliveryRefsOf } from "../../deliveryContent";
 // them, and later ones wait until they have read it again (the thread's participant row keeps
 // lastEmailedAt; the circle digest applies the same rule to its own threads). And no member is
 // sent more than RATE_LIMITS.emailDaily notification emails a day, whatever the type; past it the
-// email is dropped and the refusal logged (the in-app row is unaffected).
+// email is dropped and the refusal logged (the in-app row is unaffected). Follow notices are
+// emailed at most once a day per actor and type (followNoticeThrottle, SEC-23).
 
 // The id prefix of a circle thread digest (notifications/threadDigest). A circle message is only
 // ever emailed as that digest: any other circle_message_received delivery is refused here, so a
@@ -49,6 +51,7 @@ export const emailChannel =
     ) {
       return;
     }
+    if (!(await followNoticeAllowed(ctx, "email", state))) return;
     if (!(await consumeRateLimit(ctx, "emailDaily", user._id))) return;
     if (seat) {
       await ctx.db.patch(seat._id, {

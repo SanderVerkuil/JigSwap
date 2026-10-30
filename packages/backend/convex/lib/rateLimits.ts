@@ -79,6 +79,11 @@ export const RATE_LIMITS = {
   // keyed by the recipient: a backstop under the per-type throttles, so no mix of senders can
   // make one inbox (and the shared sending domain) take more than this in a day.
   emailDaily: { windowMs: DAY, max: 50 },
+  // Follow notices (new_follower, follow_request_received) from one actor to one recipient, per
+  // out-of-band channel and type, keyed "<channel>:<type>:<recipient>:<actor>": email and push
+  // announce a follow/unfollow or request/cancel loop once a day
+  // (notifications/adapters/channels/followNoticeThrottle). The in-app row is not counted.
+  followNotice: { windowMs: DAY, max: 1 },
 } as const satisfies Record<string, { windowMs: number; max: number }>;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;

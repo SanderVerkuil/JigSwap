@@ -2,15 +2,17 @@ import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError, type Value } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import { enforceRateLimit, RATE_LIMITS } from "./lib/rateLimits";
+import { handleDomainEvent } from "./notifications/subscriber";
 import schema from "./schema";
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 // SEC-23: follow, unfollow and request/cancel loops are rate limited (a member bucket for every
-// toggle, a per-pair bucket for the follows and requests that notify the target), and a follow
-// request that is no longer pending when its event is dispatched notifies nobody.
+// toggle, a per-pair bucket for the follows and requests that notify the target), a follow
+// request that is no longer pending when its event is dispatched notifies nobody, and email and
+// push carry a follow notice from one actor at most once a day per type.
 
 type T = TestConvex<typeof schema>;
 
@@ -264,5 +266,167 @@ describe("follow request notifications", () => {
     expect(
       await notificationsOf(t, victim, "follow_request_received"),
     ).toHaveLength(1);
+  });
+});
+
+describe("follow notices on email and push", () => {
+  // The target switched email and push on for both follow types and has a push subscription.
+  const optIn = async (t: T, clerkId: string, userId: Id<"users">) => {
+    for (const type of ["new_follower", "follow_request_received"] as const) {
+      for (const channel of ["email", "push"] as const) {
+        await t
+          .withIdentity({ subject: clerkId })
+          .mutation(
+            api.notifications.updateNotificationPreference
+              .updateNotificationPreference,
+            { type, channel, enabled: true },
+          );
+      }
+    }
+    await t.run((ctx) =>
+      ctx.db.insert("pushSubscriptions", {
+        userId,
+        endpoint: `https://fcm.googleapis.com/fcm/send/${userId}`,
+        p256dh: "p",
+        auth: "a",
+        createdAt: Date.now(),
+      }),
+    );
+  };
+
+  type Scheduled = { name: string; args: unknown[] };
+  const sendsTo = (
+    t: T,
+    action: "sendEmail" | "sendWebPush",
+    userId: Id<"users">,
+    type: string,
+  ) =>
+    t.run(async (ctx) =>
+      (
+        (await ctx.db.system
+          .query("_scheduled_functions")
+          .collect()) as unknown as Scheduled[]
+      ).filter((job) => {
+        const args = job.args[0] as { userId?: string; type?: string };
+        return (
+          job.name.includes(action) &&
+          args.userId === userId &&
+          args.type === type
+        );
+      }),
+    );
+
+  // A MemberFollowed handled straight by the subscriber, past the source limits: as if a loop got
+  // through them (or another path emitted the event).
+  const followedEvent = (
+    t: T,
+    followerId: Id<"users">,
+    followeeId: Id<"users">,
+  ) =>
+    t.run(async (ctx) => {
+      const eventId = await ctx.db.insert("domainEvents", {
+        name: "MemberFollowed",
+        payload: { followerId, followeeId },
+        occurredAt: Date.now(),
+        context: "test",
+      });
+      await handleDomainEvent(
+        ctx,
+        (await ctx.db.get(eventId)) as Doc<"domainEvents">,
+      );
+    });
+
+  test("a follow/unfollow loop on a public member emails and pushes them once", async () => {
+    const t = convexTest(schema, modules);
+    const { open } = await seed(t);
+    await optIn(t, "clerk_open", open);
+
+    for (let i = 0; i < RATE_LIMITS.followPair.max; i++) {
+      await asAttacker(t).mutation(api.social.followMember.followMember, {
+        followeeId: open,
+      });
+      await flush(t);
+      await asAttacker(t).mutation(api.social.unfollowMember.unfollowMember, {
+        followeeId: open,
+      });
+    }
+    await flush(t);
+
+    expect(await sendsTo(t, "sendEmail", open, "new_follower")).toHaveLength(1);
+    expect(await sendsTo(t, "sendWebPush", open, "new_follower")).toHaveLength(
+      1,
+    );
+  });
+
+  test("a request/cancel loop on a private member emails and pushes them once", async () => {
+    const t = convexTest(schema, modules);
+    const { victim } = await seed(t);
+    await optIn(t, "clerk_victim", victim);
+
+    for (let i = 0; i < RATE_LIMITS.followPair.max; i++) {
+      const requested = await asAttacker(t).mutation(
+        api.social.followMember.followMember,
+        { followeeId: victim },
+      );
+      await flush(t);
+      await asAttacker(t).mutation(
+        api.social.cancelFollowRequest.cancelFollowRequest,
+        { requestId: requested.id },
+      );
+    }
+    await flush(t);
+
+    // Every request still reached the bell; only the out-of-band copies are held back.
+    expect(
+      await notificationsOf(t, victim, "follow_request_received"),
+    ).toHaveLength(RATE_LIMITS.followPair.max);
+    expect(
+      await sendsTo(t, "sendEmail", victim, "follow_request_received"),
+    ).toHaveLength(1);
+    expect(
+      await sendsTo(t, "sendWebPush", victim, "follow_request_received"),
+    ).toHaveLength(1);
+  });
+
+  test("25 follows from one actor give one email and one push; another actor still gets through", async () => {
+    const t = convexTest(schema, modules);
+    const { attacker, victim, open } = await seed(t);
+    await optIn(t, "clerk_open", open);
+
+    for (let i = 0; i < 25; i++) await followedEvent(t, attacker, open);
+    await followedEvent(t, victim, open);
+    await flush(t);
+
+    const emails = await sendsTo(t, "sendEmail", open, "new_follower");
+    const pushes = await sendsTo(t, "sendWebPush", open, "new_follower");
+    const actors = (jobs: Scheduled[]) =>
+      jobs.map((job) => (job.args[0] as { actorId?: string }).actorId);
+    expect(actors(emails)).toEqual([attacker, victim]);
+    expect(actors(pushes)).toEqual([attacker, victim]);
+  });
+
+  test("the throttle is a daily window: a day later the actor is announced again", async () => {
+    const t = convexTest(schema, modules);
+    const { attacker, open } = await seed(t);
+    await optIn(t, "clerk_open", open);
+    await followedEvent(t, attacker, open);
+    await followedEvent(t, attacker, open);
+
+    await t.run(async (ctx) => {
+      for (const row of await ctx.db.query("rateLimits").collect()) {
+        if (row.key.startsWith("followNotice:")) {
+          await ctx.db.patch(row._id, {
+            windowStart: row.windowStart - RATE_LIMITS.followNotice.windowMs,
+          });
+        }
+      }
+    });
+    await followedEvent(t, attacker, open);
+    await flush(t);
+
+    expect(await sendsTo(t, "sendEmail", open, "new_follower")).toHaveLength(2);
+    expect(await sendsTo(t, "sendWebPush", open, "new_follower")).toHaveLength(
+      2,
+    );
   });
 });
