@@ -58,6 +58,11 @@ export interface PuzzleCardShellProps {
    *  `puzzle.imageSrcSet`; without it the browser assumes the full viewport width. List view
    *  always uses the fixed 128px cover column. */
   imageSizes?: string;
+  /**
+   * Heading level of the card title: 3 (default) for a grid under a section h2, 2 for a grid
+   * that sits directly under the page h1, so the outline never skips a level.
+   */
+  headingLevel?: 2 | 3;
   className?: string;
 }
 
@@ -78,6 +83,7 @@ export function PuzzleCardShell({
   imageFit = "cover",
   imageChecking = false,
   imageSizes,
+  headingLevel = 3,
   className,
 }: PuzzleCardShellProps) {
   const t = useTranslations("puzzles");
@@ -89,6 +95,7 @@ export function PuzzleCardShell({
   // each card little room: a 4:3 cover (most box art is landscape), tighter
   // padding, and no description or tags. List rows keep one layout throughout.
   const compactOnPhones = viewMode === "grid";
+  const Title = `h${headingLevel}` as const;
 
   const difficultyLabel = (difficulty?: string | null) => {
     switch (difficulty) {
@@ -160,7 +167,7 @@ export function PuzzleCardShell({
       )}
     >
       <div className="mb-2">
-        <h3 className="font-semibold text-sm line-clamp-2 mb-1">
+        <Title className="font-semibold text-sm line-clamp-2 mb-1">
           {imageHref ? (
             // Stretched link: the ::after overlay spans the whole (relative) card, so
             // clicking the image, title or any empty area navigates. Action buttons
@@ -176,7 +183,7 @@ export function PuzzleCardShell({
           ) : (
             puzzle.title
           )}
-        </h3>
+        </Title>
         {puzzle.brand && (
           <p className="text-xs text-muted-foreground mb-1">{puzzle.brand}</p>
         )}

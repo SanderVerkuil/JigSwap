@@ -5,7 +5,10 @@ import { gateway } from "@/gateway";
 import type { FunctionReturnType } from "convex/server";
 import { Star } from "lucide-react";
 import { useTranslations } from "use-intl";
-import { PuzzleCardShell } from "./puzzle-card-shell";
+import {
+  PuzzleCardShell,
+  type PuzzleCardShellProps,
+} from "./puzzle-card-shell";
 
 // One card in the public catalog list, derived from the paginated public-browse read this card is
 // fed by. Sibling of PuzzleCard (which renders an owned-copy DTO with owner actions) — this one is
@@ -18,10 +21,13 @@ type CatalogCard = FunctionReturnType<
 export function DefinitionCard({
   card,
   imageSizes,
+  headingLevel,
 }: {
   card: CatalogCard;
   /** The cover's `sizes` in the caller's grid (see PuzzleCardShell's imageSizes). */
   imageSizes?: string;
+  /** Card title heading level; 2 when the grid sits directly under the page h1. */
+  headingLevel?: PuzzleCardShellProps["headingLevel"];
 }) {
   const t = useTranslations("publicCatalog");
 
@@ -56,6 +62,7 @@ export function DefinitionCard({
       badges={badges}
       imageHref={`/catalog/${card._id}`}
       imageFit="contain"
+      headingLevel={headingLevel}
     />
   );
 }

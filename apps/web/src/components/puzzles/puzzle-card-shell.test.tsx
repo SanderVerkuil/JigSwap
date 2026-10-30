@@ -223,6 +223,28 @@ describe("PuzzleCardShell difficulty pill", () => {
     },
   );
 
+  // A grid directly under the page h1 asks for h2 titles; nested grids keep h3 (UX-66).
+  it.each([
+    [undefined, "h3"],
+    [3, "h3"],
+    [2, "h2"],
+  ] as const)("titles the card at headingLevel %s as %s", (level, tag) => {
+    const host = document.createElement("div");
+    host.innerHTML = renderToStaticMarkup(
+      <IntlProvider locale="en" timeZone="UTC" messages={en}>
+        <PuzzleViewProvider viewMode="grid">
+          <PuzzleCardShell
+            puzzle={puzzle()}
+            imageHref="/puzzles/p1"
+            headingLevel={level}
+          />
+        </PuzzleViewProvider>
+      </IntlProvider>,
+    );
+    const headings = [...host.querySelectorAll("h1, h2, h3, h4, h5, h6")];
+    expect(headings.map((h) => h.tagName.toLowerCase())).toEqual([tag]);
+  });
+
   it("rings the whole card when its stretched title link has keyboard focus (UX-72)", () => {
     const host = document.createElement("div");
     host.innerHTML = renderToStaticMarkup(

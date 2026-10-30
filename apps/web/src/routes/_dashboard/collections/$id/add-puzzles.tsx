@@ -229,6 +229,7 @@ function AddPuzzlesToCollectionPage() {
         <PuzzleViewProvider viewMode="grid">
           {filteredPuzzles.map((puzzle) => (
             <PuzzleCard
+              headingLevel={2}
               key={puzzle._id}
               puzzle={puzzle}
               variant="selection"

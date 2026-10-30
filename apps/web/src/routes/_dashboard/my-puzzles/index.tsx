@@ -501,6 +501,7 @@ function PuzzlesPage() {
             const selectable = isSelectable(puzzle);
             return (
               <PuzzleCard
+                headingLevel={2}
                 key={puzzle._id}
                 puzzle={puzzle}
                 // While selecting, a tap selects (no navigation, no ⋯ menu); a copy the viewer

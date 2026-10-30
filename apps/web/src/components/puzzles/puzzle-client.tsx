@@ -326,7 +326,7 @@ export function PuzzlesClient({
         >
           <PuzzleViewProvider viewMode={viewMode}>
             {puzzles.map((puzzle) => (
-              <PuzzleCard key={puzzle._id} puzzle={puzzle} />
+              <PuzzleCard key={puzzle._id} puzzle={puzzle} headingLevel={2} />
             ))}
           </PuzzleViewProvider>
         </div>
@@ -341,11 +341,12 @@ export function PuzzlesClient({
                   <Search className="h-8 w-8" />
                 )}
               </div>
+              {/* Level with the h2 card titles it stands in for. */}
               {emptyState === "filtered" ? (
                 <>
-                  <h3 className="text-lg font-medium mb-2">
+                  <h2 className="text-lg font-medium mb-2">
                     {t("noPuzzlesFound")}
-                  </h3>
+                  </h2>
                   <p className="text-sm">{t("tryDifferentFilters")}</p>
                   <Button
                     variant="outline"
@@ -358,9 +359,9 @@ export function PuzzlesClient({
                 </>
               ) : emptyState === "noFavourites" ? (
                 <>
-                  <h3 className="text-lg font-medium mb-2">
+                  <h2 className="text-lg font-medium mb-2">
                     {t("noFavoritesTitle")}
-                  </h3>
+                  </h2>
                   <p className="text-sm">{t("noFavoritesHint")}</p>
                   <Button
                     variant="outline"
@@ -374,9 +375,9 @@ export function PuzzlesClient({
                 </>
               ) : (
                 <>
-                  <h3 className="text-lg font-medium mb-2">
+                  <h2 className="text-lg font-medium mb-2">
                     {t("emptyCatalogueTitle")}
-                  </h3>
+                  </h2>
                   <p className="text-sm">{t("emptyCatalogueHint")}</p>
                   <Button asChild className="mt-4">
                     <Link href="/puzzles/add">

@@ -150,6 +150,7 @@ function NetworkTab({
         <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]">
           {members.map(([memberId, { followsYou }]) => (
             <MemberTile
+              headingLevel={2}
               key={memberId}
               memberId={memberId as Id<"users">}
               followsYou={followsYou}

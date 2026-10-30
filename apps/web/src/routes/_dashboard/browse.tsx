@@ -240,6 +240,7 @@ function BrowsePage() {
               const { ownerId, owner } = puzzle;
               return (
                 <PuzzleCard
+                  headingLevel={2}
                   key={puzzle._id}
                   puzzle={puzzle}
                   variant="browse"

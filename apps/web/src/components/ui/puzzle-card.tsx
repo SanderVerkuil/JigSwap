@@ -6,6 +6,7 @@ import {
 } from "@/components/library/condition";
 import {
   PuzzleCardShell,
+  type PuzzleCardShellProps,
   type PuzzleCardView,
 } from "@/components/puzzles/puzzle-card-shell";
 // Re-export the consolidated provider so existing call sites that import
@@ -119,6 +120,8 @@ interface PuzzleCardProps {
   // Optional lending slot (e.g. an "on loan to X" badge + Recall action). The page owns the loan
   // data so the card stays generic; rendered above the action row when provided.
   loanBadge?: ReactNode;
+  /** Card title heading level; 2 when the grid sits directly under the page h1. */
+  headingLevel?: PuzzleCardShellProps["headingLevel"];
   className?: string;
 }
 
@@ -339,6 +342,7 @@ export function PuzzleCard({
   showCollectionDropdown = false,
   owner,
   loanBadge,
+  headingLevel,
   className = "",
 }: PuzzleCardProps) {
   const t = useTranslations("puzzles");
@@ -645,6 +649,7 @@ export function PuzzleCard({
       imageFit={imageFit}
       imageSizes={imageSizes}
       imageChecking={imageChecking}
+      headingLevel={headingLevel}
       className={className}
     />
   );
