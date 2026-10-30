@@ -2,7 +2,7 @@ import type { PuzzleReviewView } from "@jigswap/contracts";
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
-import { isAdmin } from "../identity/isAdmin";
+import { canViewDefinition } from "../catalog/definitionVisibility";
 import { requireMember } from "../identity/requireMember";
 import { droppedForBlock, viewerBlocksOf } from "./blocks";
 import { projectMemberIdentity } from "./privacy";
@@ -14,7 +14,8 @@ import { projectMemberIdentity } from "./privacy";
 //
 // SECURITY (SEC-11):
 //   - Auth-gated, and the definition must be disclosed to the caller exactly as getPuzzleById
-//     discloses it: APPROVED, or the caller is its submitter, or an admin. Otherwise [].
+//     discloses it (canViewDefinition: APPROVED, or the caller is its submitter, or an admin). A
+//     hidden or missing definition returns [], so its reviews never reveal that it exists.
 //   - Each author goes through the privacy chokepoint (projectMemberIdentity, salt = the puzzle
 //     id): a private author the viewer is not connected with is anonymous, a circle mate sees
 //     identity only, and a departed author is anonymous + `departed` (the web's "Deleted
@@ -29,12 +30,7 @@ export const listPuzzleReviews = query({
   handler: async (ctx, args): Promise<PuzzleReviewView[]> => {
     const viewerId = (await requireMember(ctx)) as unknown as Id<"users">;
     const puzzle = await ctx.db.get(args.puzzleId);
-    if (!puzzle) return [];
-    if (
-      puzzle.status !== "approved" &&
-      puzzle.submittedBy !== viewerId &&
-      !(await isAdmin(ctx))
-    ) {
+    if (!puzzle || !(await canViewDefinition(ctx, puzzle, viewerId))) {
       return [];
     }
     const blocks = await viewerBlocksOf(ctx, viewerId);

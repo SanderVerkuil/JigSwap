@@ -130,3 +130,91 @@ describe("non-approved definitions stay private (SEC-34)", () => {
     ).toBe("Title approved");
   });
 });
+
+describe("puzzle reviews of non-approved definitions stay private (SEC-34)", () => {
+  // The member reviews list and the review form sit on the definition page, so they apply its gate
+  // (canViewDefinition): a hidden definition reads like a missing one.
+  const reviewsOf = (
+    caller: ReturnType<TestConvex<typeof schema>["withIdentity"]>,
+    puzzleId: Id<"puzzles">,
+  ) =>
+    caller.query(api.social.listPuzzleReviews.listPuzzleReviews, { puzzleId });
+  const postReview = (
+    caller: ReturnType<TestConvex<typeof schema>["withIdentity"]>,
+    puzzleId: Id<"puzzles">,
+  ) =>
+    caller.mutation(api.social.postPuzzleReview.postPuzzleReview, {
+      puzzleId,
+      rating: 4,
+      text: "Lovely",
+    });
+  const reviewRows = (t: TestConvex<typeof schema>, puzzleId: Id<"puzzles">) =>
+    t.run((ctx) =>
+      ctx.db
+        .query("puzzleReviews")
+        .withIndex("by_puzzle", (q) => q.eq("puzzleId", puzzleId))
+        .collect(),
+    );
+
+  test.each(["pending", "rejected", "disabled"] as const)(
+    "another member neither reads nor posts reviews of a %s definition",
+    async (status) => {
+      const t = convexTest(schema, modules);
+      const { submitter, definitions } = await seed(t);
+      await t.run((ctx) =>
+        ctx.db.insert("puzzleReviews", {
+          puzzleId: definitions[status],
+          userId: submitter,
+          rating: 5,
+          text: "Mine",
+          createdAt: 1,
+          updatedAt: 1,
+        }),
+      );
+
+      expect(await reviewsOf(asOther(t), definitions[status])).toEqual([]);
+      await expect(postReview(asOther(t), definitions[status])).rejects.toThrow(
+        "Puzzle not found",
+      );
+      expect(await reviewRows(t, definitions[status])).toHaveLength(1);
+
+      // The submitter and an admin, who may open the definition, still read its reviews.
+      for (const caller of [asSubmitter(t), asAdmin(t)]) {
+        expect(
+          (await reviewsOf(caller, definitions[status])).map((r) => r.text),
+        ).toEqual(["Mine"]);
+      }
+    },
+  );
+
+  test("the submitter may review their own pending definition", async () => {
+    const t = convexTest(schema, modules);
+    const { definitions } = await seed(t);
+
+    await postReview(asSubmitter(t), definitions.pending);
+    expect(await reviewRows(t, definitions.pending)).toHaveLength(1);
+  });
+
+  test("an approved definition's reviews stay open to every member", async () => {
+    const t = convexTest(schema, modules);
+    const { definitions } = await seed(t);
+
+    await postReview(asOther(t), definitions.approved);
+    expect(
+      (await reviewsOf(asSubmitter(t), definitions.approved)).map(
+        (r) => r.text,
+      ),
+    ).toEqual(["Lovely"]);
+  });
+
+  test("a review of a deleted definition is refused like a hidden one", async () => {
+    const t = convexTest(schema, modules);
+    const { definitions } = await seed(t);
+    await t.run((ctx) => ctx.db.delete(definitions.approved));
+
+    await expect(postReview(asOther(t), definitions.approved)).rejects.toThrow(
+      "Puzzle not found",
+    );
+    expect(await reviewRows(t, definitions.approved)).toEqual([]);
+  });
+});
