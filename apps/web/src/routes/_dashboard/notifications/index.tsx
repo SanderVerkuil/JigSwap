@@ -31,7 +31,7 @@ import { usePaginatedQuery } from "convex/react";
 import { Bell, CheckCheck, Loader2, Settings2 } from "lucide-react";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
-import { useTranslations } from "use-intl";
+import { useNow, useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/notifications/")({
   head: ({ match }) => ({
@@ -87,8 +87,9 @@ function NotificationsPage() {
   const tCommon = useTranslations("common");
   const pushEnabled = usePushEnabledOnThisDevice();
   const weekStartsOn = useDateFnsLocale().options?.weekStartsOn ?? 0;
-  // The page's first-render time (Date.now() can't run during render).
-  const [now] = useState(() => Date.now());
+  // A minute clock (use-intl's useNow, as the message list uses), so the date sections move on
+  // when midnight passes with the page open instead of keeping yesterday's rows under Today.
+  const now = useNow({ updateInterval: 60_000 }).getTime();
 
   const [category, setCategory] = useState<CategoryFilter>("all");
   const [unreadOnly, setUnreadOnly] = useState(false);
