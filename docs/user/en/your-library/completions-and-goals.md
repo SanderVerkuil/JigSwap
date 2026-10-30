@@ -74,7 +74,9 @@ Each row shows the title, a status badge, a piece/days line, optional notes and 
 
 - **Finish** — for an in-progress solve.
 - **Add/Edit Review** — set or change your star rating and review text.
-- **Edit** — adjust date range, time, and notes.
+- **Edit** — adjust date range, time, and notes. Once a solve's edit window
+  has closed, the button is greyed out: hover over it or tap it to see when it
+  closed.
 
 ## Goals
 

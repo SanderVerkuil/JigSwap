@@ -75,7 +75,9 @@ Elke rij toont de titel, een statusbadge, een regel met stukken/dagen, optionele
 
 - **Afmaken** — voor een lopende oplossing.
 - **Beoordeling Toevoegen/Bewerken** — stel je sterwaardering en beoordelingstekst in of wijzig ze.
-- **Bewerken** — pas de datumreeks, tijd en notities aan.
+- **Bewerken** — pas de datumreeks, tijd en notities aan. Is het bewerkvenster
+  van een oplossing gesloten, dan is de knop grijs: beweeg erover of tik erop om
+  te zien wanneer het sloot.
 
 ## Doelen
 
