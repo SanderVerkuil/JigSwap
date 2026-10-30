@@ -342,6 +342,60 @@ describe("LocationPickerBody", () => {
     }
   });
 
+  it("a search refused by the member's limit says so, not that search is down", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      mocks.call.mockImplementation(async () => {
+        throw new ConvexError({ code: "RateLimited", retryAfterMs: 60_000 });
+      });
+      renderPicker();
+      fireEvent.change(screen.getByLabelText("Search for a place"), {
+        target: { value: "Domplein" },
+      });
+      expect(
+        await screen.findByText("You've searched a lot. Try again later."),
+      ).toBeTruthy();
+      expect(
+        screen.queryByText("Place search isn't available right now."),
+      ).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("a map view refused by the member's limit says so, and keeps the picker open", async () => {
+    fakeGeolocation({ latitude: 52, longitude: 5 });
+    mocks.call.mockImplementation(async () => {
+      throw new ConvexError({ code: "RateLimited", retryAfterMs: 60_000 });
+    });
+    renderPicker();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Use my current location" }),
+    );
+    expect(
+      await screen.findByText("You've moved the map a lot. Try again later."),
+    ).toBeTruthy();
+    expect(screen.queryByText("The map can't be shown right now.")).toBeNull();
+    expect(callbacks.onUnavailable).not.toHaveBeenCalled();
+  });
+
+  it("a later map view refused by the limit says why", async () => {
+    fakeGeolocation({ latitude: 52, longitude: 5 });
+    renderPicker();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Use my current location" }),
+    );
+    await waitFor(() => expect(document.querySelector("img")).toBeTruthy());
+    mocks.call.mockImplementation(async () => {
+      throw new ConvexError({ code: "RateLimited", retryAfterMs: 60_000 });
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Zoom in" }));
+    expect(
+      await screen.findByText("You've moved the map a lot. Try again later."),
+    ).toBeTruthy();
+    expect(callbacks.onUnavailable).not.toHaveBeenCalled();
+  });
+
   it("a failed search says so", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {

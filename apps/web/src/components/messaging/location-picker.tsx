@@ -267,8 +267,13 @@ export function LocationPickerBody({
   });
   // The view the shown image was rendered for (a tap maps against it).
   const view = map.data;
-  const mapUnavailable =
-    map.isError && conversationErrorCode(map.error) === "LocationUnavailable";
+  const mapErrorCode = map.isError
+    ? conversationErrorCode(map.error)
+    : undefined;
+  const mapUnavailable = mapErrorCode === "LocationUnavailable";
+  // Refused by the member's own picker limit: say so rather than "can't be shown".
+  const mapError =
+    mapErrorCode === "RateLimited" ? t("mapRateLimited") : t("mapFailed");
   useEffect(() => {
     if (mapUnavailable) onUnavailable();
   }, [mapUnavailable, onUnavailable]);
@@ -375,7 +380,9 @@ export function LocationPickerBody({
             search.length < MIN_QUERY_LENGTH
               ? "idle"
               : results.isError
-                ? "error"
+                ? conversationErrorCode(results.error) === "RateLimited"
+                  ? "rateLimited"
+                  : "error"
                 : results.data
                   ? "done"
                   : "loading"
@@ -446,7 +453,7 @@ export function LocationPickerBody({
           ) : (
             <div className="text-muted-foreground flex size-full flex-col items-center justify-center gap-2 p-6 text-center text-sm">
               <MapPin className="size-6" aria-hidden />
-              {map.isError ? t("mapFailed") : t("pickFirst")}
+              {map.isError ? mapError : t("pickFirst")}
             </div>
           )}
           {view && (map.isFetching || map.isError) && (
@@ -454,7 +461,7 @@ export function LocationPickerBody({
               role="status"
               className="bg-background/70 absolute inset-x-0 bottom-0 px-3 py-1.5 text-center text-xs"
             >
-              {map.isError ? t("mapFailed") : t("mapLoading")}
+              {map.isError ? mapError : t("mapLoading")}
             </div>
           )}
           {/* The picture's meaning for screen readers. */}
@@ -612,7 +619,7 @@ function SearchResults({
   results,
   onPick,
 }: {
-  state: "idle" | "loading" | "error" | "done";
+  state: "idle" | "loading" | "error" | "rateLimited" | "done";
   results: readonly { label: string; lat: number; lng: number }[];
   onPick: (place: { label: string; lat: number; lng: number }) => void;
 }) {
@@ -624,14 +631,18 @@ function SearchResults({
         role="status"
         className={cn(
           "text-xs",
-          state === "error" ? "text-destructive" : "text-muted-foreground",
+          state === "error" || state === "rateLimited"
+            ? "text-destructive"
+            : "text-muted-foreground",
         )}
       >
         {state === "loading"
           ? t("searching")
           : state === "error"
             ? t("searchFailed")
-            : t("noResults")}
+            : state === "rateLimited"
+              ? t("searchRateLimited")
+              : t("noResults")}
       </p>
     );
   }
