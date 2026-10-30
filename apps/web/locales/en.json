@@ -3227,6 +3227,16 @@
       "new": {
         "title": "Log a completion",
         "subtitle": "Pick a puzzle to log a solve against.",
+        "searchLabel": "Search puzzles",
+        "sections": {
+          "inProgress": "In progress: finish one",
+          "own": "Your puzzles"
+        },
+        "logLabel": "{title}<action>: log a solve</action>",
+        "finishLabel": "{title}<action>: finish solve</action>",
+        "inProgressSince": "In progress since {date}",
+        "untitled": "Untitled puzzle",
+        "noMatches": "No puzzles match “{term}”",
         "noPuzzles": "No puzzles yet",
         "noPuzzlesHint": "Add puzzles to your library first, then log a completion here."
       },

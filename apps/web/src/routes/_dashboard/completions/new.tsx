@@ -1,20 +1,21 @@
 import { useUser } from "@/compat/clerk";
 import { useRouter } from "@/compat/navigation";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
-import { EmptyState } from "@/components/library/empty-state";
 import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
+import { SolvePicker } from "@/components/solving/solve-picker";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { PageLoading } from "@/components/ui/loading";
-import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { gateway, Id } from "@/gateway";
 import { pageTitle } from "@/lib/page-title";
+import {
+  buildSolvePickerSections,
+  type SolvePickerItem,
+} from "@/lib/solve-picker";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/completions/new")({
@@ -30,17 +31,17 @@ function NewCompletionPage() {
   const t = useTranslations("solving.completions");
   const tShell = useTranslations("shell");
   const tCommon = useTranslations("common");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [solveTarget, setSolveTarget] = useState<{
-    copyId: string;
-    title: string;
-  } | null>(null);
-  // The in-progress completion being finished; null when the dialog is closed.
-  const [finishTarget, setFinishTarget] = useState<{
-    completionId: string;
-    startDate: number;
-    title: string;
-  } | null>(null);
+  // The picked puzzle; null while the picker shows.
+  const [picked, setPicked] = useState<SolvePickerItem | null>(null);
+  // The picked row's button. The dialogs have no Radix trigger to hand focus back to, so once the
+  // dialog is gone, focus returns to the row it was opened from (when it is still on the page).
+  const pickedFrom = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => {
+    if (picked !== null) return;
+    const trigger = pickedFrom.current;
+    pickedFrom.current = null;
+    if (trigger?.isConnected) trigger.focus();
+  }, [picked]);
 
   const { data: convexUser, isPending: convexUserPending } = useQuery(
     convexQuery(
@@ -48,8 +49,10 @@ function NewCompletionPage() {
       user?.id ? { clerkId: user.id } : "skip",
     ),
   );
+  const signedIn = !!convexUser?._id;
 
-  const { data: ownedPuzzles, isPending: ownedPuzzlesPending } = useQuery(
+  // The member's own copies, plus the solves they have in progress.
+  const { data: ownedPuzzles } = useQuery(
     convexQuery(
       gateway.library.ownedByOwner,
       convexUser?._id
@@ -57,45 +60,9 @@ function NewCompletionPage() {
         : "skip",
     ),
   );
-
-  // The member's solve log powers the finish-instead branch: registering a completion for a
-  // copy already in progress finishes that solve instead of logging a new one.
-  const { data: completions } = useQuery(
-    convexQuery(gateway.solving.myCompletions, convexUser?._id ? {} : "skip"),
+  const { data: inProgress } = useQuery(
+    convexQuery(gateway.solving.myInProgress, signedIn ? {} : "skip"),
   );
-  const solveStateByCopyId = useMemo(() => {
-    const map = new Map<
-      string,
-      {
-        inProgress: boolean;
-        completed: boolean;
-        inProgressCompletionId?: string;
-        inProgressStartDate?: number;
-      }
-    >();
-    for (const completion of completions ?? []) {
-      if (!completion.ownedPuzzleId) continue;
-      const state = map.get(completion.ownedPuzzleId) ?? {
-        inProgress: false,
-        completed: false,
-      };
-      if (completion.isCompleted) state.completed = true;
-      else {
-        state.inProgress = true;
-        // Retain the newest in-progress completion so the card's Finish action targets it.
-        if (
-          completion.aggregateId &&
-          (state.inProgressStartDate === undefined ||
-            completion.startDate > state.inProgressStartDate)
-        ) {
-          state.inProgressCompletionId = completion.aggregateId;
-          state.inProgressStartDate = completion.startDate;
-        }
-      }
-      map.set(completion.ownedPuzzleId, state);
-    }
-    return map;
-  }, [completions]);
 
   usePageHeader(
     () => ({
@@ -120,104 +87,57 @@ function NewCompletionPage() {
     [t, tShell, tCommon],
   );
 
+  // Wait for every list: until the in-progress solves are known, a copy with one would be offered
+  // as a new solve instead of the solve to finish.
   if (
     !user ||
     convexUserPending ||
     convexUser === undefined ||
-    ownedPuzzlesPending ||
-    ownedPuzzles === undefined
+    ownedPuzzles === undefined ||
+    inProgress === undefined
   ) {
     return <PageLoading message={tCommon("loading")} />;
   }
 
-  const filteredPuzzles = ownedPuzzles.filter(
-    (puzzle) =>
-      !searchTerm ||
-      puzzle.puzzle?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (puzzle.puzzle?.brand &&
-        puzzle.puzzle.brand.toLowerCase().includes(searchTerm.toLowerCase())),
-  );
-
-  const handleSelect = (ownedPuzzleId: Id<"ownedPuzzles">) => {
-    const copy = ownedPuzzles.find((p) => p._id === ownedPuzzleId);
-    if (!copy?.aggregateId) {
-      console.error("Cannot log a solve: copy is missing its aggregateId.");
-      return;
-    }
-    // With an in-progress solve on the copy, registering a completion finishes that solve
-    // instead of logging a separate one.
-    const state = solveStateByCopyId.get(ownedPuzzleId);
-    if (
-      state?.inProgressCompletionId &&
-      state.inProgressStartDate !== undefined
-    ) {
-      setFinishTarget({
-        completionId: state.inProgressCompletionId,
-        startDate: state.inProgressStartDate,
-        title: copy.puzzle?.title ?? "",
-      });
-      return;
-    }
-    setSolveTarget({
-      copyId: copy.aggregateId,
-      title: copy.puzzle?.title ?? "",
-    });
+  const sections = buildSolvePickerSections({
+    inProgress,
+    owned: ownedPuzzles,
+  });
+  const pickedTitle = picked?.title ?? t("new.untitled");
+  const close = (open: boolean) => {
+    if (!open) setPicked(null);
   };
 
   return (
     <div className="flex w-full flex-col gap-6">
       <p className="text-muted-foreground text-sm">{t("new.subtitle")}</p>
 
-      {/* Search */}
-      <div className="relative w-full max-w-sm">
-        <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-        <Input
-          type="text"
-          placeholder={tCommon("search")}
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-9"
-        />
-      </div>
+      <SolvePicker
+        sections={sections}
+        onPick={(item, trigger) => {
+          pickedFrom.current = trigger;
+          setPicked(item);
+        }}
+      />
 
-      {filteredPuzzles.length === 0 ? (
-        <EmptyState title={t("new.noPuzzles")} sub={t("new.noPuzzlesHint")} />
-      ) : (
-        <PuzzleViewProvider viewMode="grid">
-          {filteredPuzzles.map((puzzle) => (
-            <PuzzleCard
-              key={puzzle._id}
-              puzzle={puzzle}
-              variant="pick"
-              onSelect={handleSelect}
-              imageFit="contain"
-            />
-          ))}
-        </PuzzleViewProvider>
-      )}
-
-      {solveTarget && (
+      {picked?.target.kind === "log" && (
         <LogSolveDialog
-          open={true}
-          onOpenChange={(open) => {
-            if (!open) {
-              setSolveTarget(null);
-            }
-          }}
-          copyId={solveTarget.copyId}
-          puzzleTitle={solveTarget.title}
-          viewerIsOwner={true}
+          open
+          onOpenChange={close}
+          copyId={picked.target.copyId}
+          puzzleTitle={pickedTitle}
+          viewerIsOwner={picked.target.viewerIsOwner}
           onSuccess={() => router.push("/completions")}
         />
       )}
 
-      {finishTarget && (
+      {picked?.target.kind === "finish" && (
         <FinishSolveDialog
           open
-          onOpenChange={(open) => !open && setFinishTarget(null)}
-          completionId={finishTarget.completionId}
-          minEndDate={finishTarget.startDate}
-          puzzleTitle={finishTarget.title}
+          onOpenChange={close}
+          completionId={picked.target.completionId}
+          minEndDate={picked.target.startDate}
+          puzzleTitle={pickedTitle}
           onSuccess={() => router.push("/completions")}
         />
       )}

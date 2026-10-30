@@ -73,9 +73,7 @@ type OwnedPuzzleData = Omit<
 
 interface PuzzleCardProps {
   puzzle: OwnedPuzzleData;
-  // "pick" = single-pick picker: the whole card is clickable (fires onSelect) but renders no
-  // multi-select checkbox or selection ring, so it doesn't read as a bulk action.
-  variant?: "default" | "browse" | "collection" | "selection" | "pick";
+  variant?: "default" | "browse" | "collection" | "selection";
   onEdit?: (puzzleId: Id<"ownedPuzzles">) => void;
   onView?: (puzzleId: Id<"ownedPuzzles">) => void;
   /**
@@ -138,7 +136,7 @@ const OFFERS: ReadonlyArray<{
 // ---------------------------------------------------------------------------
 // Persistent top-right "⋯" overflow menu chip (owner-management actions).
 // Rendered as a cover overlay so it sits above the stretched-link (z-10) and
-// is always mounted for keyboard/SR reachability. Suppressed in selection/pick.
+// is always mounted for keyboard/SR reachability. Suppressed in selection.
 // ---------------------------------------------------------------------------
 // Top-right "corner chip" styling for the card's ⋯ menu trigger: frosted glass, always mounted,
 // dimmed at rest on hover-capable devices, full on card-hover/focus/touch. 44px hit area via
@@ -457,11 +455,10 @@ export function PuzzleCard({
     variant === "collection" ? onRemove : undefined;
 
   // Whether this variant should show the ⋯ overflow menu (owner-management actions).
-  // Suppressed in selection/pick where card-click owns the interaction.
+  // Suppressed in selection where card-click owns the interaction.
   const showOverflowMenu =
     showActions &&
     variant !== "selection" &&
-    variant !== "pick" &&
     !!(
       onLogSolve ||
       onStartSolve ||
@@ -628,9 +625,8 @@ export function PuzzleCard({
       puzzle={view}
       selected={isSelected}
       // In the selection picker the whole card toggles selection (not just the
-      // checkbox); the checkbox stays as the visible state + keyboard target. The
-      // "pick" variant is also card-clickable but shows no checkbox (single pick).
-      selectable={(variant === "selection" || variant === "pick") && !!onSelect}
+      // checkbox); the checkbox stays as the visible state + keyboard target.
+      selectable={variant === "selection" && !!onSelect}
       onSelect={onSelect ? () => onSelect(ownedId) : undefined}
       badges={badges}
       overlay={overlay}
@@ -639,10 +635,10 @@ export function PuzzleCard({
       // The cover link navigates to the puzzle's view page. With the overflow
       // menu in place, `onView` no longer drives a bottom button — but the
       // stretched link (via imageHref) still handles whole-card navigation.
-      // NOT in the selection/pick variants: there the whole card click is the
+      // NOT in the selection variant: there the whole card click is the
       // selection action, so a navigating cover link would hijack it.
       imageHref={
-        variant !== "selection" && variant !== "pick" && viewBasePath && ownedId
+        variant !== "selection" && viewBasePath && ownedId
           ? `${viewBasePath}/${ownedId}${viewSearch ?? ""}`
           : undefined
       }
