@@ -361,6 +361,13 @@ and a transfer (`transferOnSettlement`) ends any loan still open on the copy. A 
 left open (rows from before transfers ended loans) is stale: it neither blocks a new loan nor counts
 as a reservation for the current owner.
 
+Stored data from before these rules is checked by the read-only internal queries in
+`exchange/auditExchangeIntegrity.ts`: `settlementsByNonParty` (custody rows whose previous owner was
+not the party the deal was made with), `acceptedDealConflicts` (copies with more than one accepted
+exchange), `loanConflicts` (open loans whose borrower doesn't hold the copy, whose lender no longer
+owns it, or that share a copy) and `possessionWithoutLoan` (copies held by someone with no open loan
+to them). Each pages one table (at most 100 rows a page); run it until `isDone`.
+
 ### 3.4 Image upload (Convex Storage)
 
 `generateUploadUrl` mutation → one-time signed URL → `POST` the `File` blob to that URL via

@@ -191,6 +191,7 @@ import type * as exchange_adapters_inProcessEventPublisher from "../exchange/ada
 import type * as exchange_adapters_mapper from "../exchange/adapters/mapper.js";
 import type * as exchange_adapters_systemClock from "../exchange/adapters/systemClock.js";
 import type * as exchange_adapters_uuidExchangeId from "../exchange/adapters/uuidExchangeId.js";
+import type * as exchange_auditExchangeIntegrity from "../exchange/auditExchangeIntegrity.js";
 import type * as exchange_backfill from "../exchange/backfill.js";
 import type * as exchange_backfillTradeReveals from "../exchange/backfillTradeReveals.js";
 import type * as exchange_cancel from "../exchange/cancel.js";
@@ -751,6 +752,7 @@ declare const fullApi: ApiFromModules<{
   "exchange/adapters/mapper": typeof exchange_adapters_mapper;
   "exchange/adapters/systemClock": typeof exchange_adapters_systemClock;
   "exchange/adapters/uuidExchangeId": typeof exchange_adapters_uuidExchangeId;
+  "exchange/auditExchangeIntegrity": typeof exchange_auditExchangeIntegrity;
   "exchange/backfill": typeof exchange_backfill;
   "exchange/backfillTradeReveals": typeof exchange_backfillTradeReveals;
   "exchange/cancel": typeof exchange_cancel;
