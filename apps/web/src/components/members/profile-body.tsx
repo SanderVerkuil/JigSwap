@@ -126,14 +126,19 @@ function ProfileBodyContent({
     >
       {invitedName && <InvitedBanner name={invitedName} kind={invitedKind} />}
       {inviteExpired && <InviteExpiredNotice />}
-      <HeroSection
-        hero={hero}
-        viewer={viewer}
-        locked={profile.locked}
-        blockedByMe={blockedByMe}
-        returnToHref={returnToHref}
-        requestedHandle={requestedHandle}
-      />
+      {/* The hero lays out on its OWN width (the `hero` container), not the
+          viewport's: beside the dashboard sidebar an 820px tablet leaves it
+          only ~510px, too narrow for the name and the actions side by side. */}
+      <div className="@container/hero">
+        <HeroSection
+          hero={hero}
+          viewer={viewer}
+          locked={profile.locked}
+          blockedByMe={blockedByMe}
+          returnToHref={returnToHref}
+          requestedHandle={requestedHandle}
+        />
+      </div>
 
       {blockedByMe ? (
         <BlockedCard
@@ -206,8 +211,8 @@ function HeroSection({
   const handle = canonical !== hero.memberId ? canonical : undefined;
 
   return (
-    <section className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-      <div className="flex min-w-0 items-start gap-5">
+    <section className="flex flex-col gap-5 @2xl/hero:flex-row @2xl/hero:items-start @2xl/hero:justify-between">
+      <div className="flex min-w-0 items-start gap-5 @2xl/hero:flex-1">
         <Avatar className="size-24 shrink-0">
           {hero.avatar && <AvatarImage src={hero.avatar} alt={name} />}
           <AvatarFallback className="text-3xl">
@@ -217,7 +222,9 @@ function HeroSection({
 
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-            <h1 className="font-heading text-3xl">{name}</h1>
+            <h1 className="font-heading text-3xl [overflow-wrap:anywhere]">
+              {name}
+            </h1>
             {hero.reviewCount > 0 && (
               <span className="bg-jigsaw-secondary/10 text-jigsaw-secondary inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-sm font-medium">
                 <Star className="size-3.5 fill-current" />
@@ -237,13 +244,13 @@ function HeroSection({
 
           <div className="text-muted-foreground mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
             {handle && (
-              <span className="inline-flex items-center gap-1">
+              <span className="inline-flex items-center gap-1 [overflow-wrap:anywhere]">
                 <AtSign className="size-3.5" />
                 <span className="font-mono">{handle}</span>
               </span>
             )}
             {hero.location && (
-              <span className="inline-flex items-center gap-1">
+              <span className="inline-flex items-center gap-1 [overflow-wrap:anywhere]">
                 <MapPin className="size-3.5" />
                 {hero.location}
               </span>
@@ -310,7 +317,7 @@ function HeroActions({
     // and the request lives in the private card. Unlocked: Follow + Message.
     // Either way the overflow menu (Block) sits at the end.
     return (
-      <div className="flex shrink-0 flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {!locked && (
           <>
             <FollowButton memberId={memberId} />
