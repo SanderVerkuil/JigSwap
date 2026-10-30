@@ -153,11 +153,57 @@ const verifiedPrimaryEmailOf = (
     : undefined;
 };
 
-/** Create a new Clerk user or update existing Clerk user data. */
+// The one-way fingerprint a deleted Clerk account is remembered by (the deletedClerkUsers table):
+// hex SHA-256 of the domain-separated Clerk user id. Clerk ids carry over 100 random bits, so the
+// fingerprint can't be turned back into the id.
+const clerkIdFingerprint = async (clerkId: string): Promise<string> => {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(`deletedClerkUser/v1:${clerkId}`),
+  );
+  return Array.from(new Uint8Array(digest), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
+};
+
+const deletedClerkUserOf = (ctx: QueryCtx, fingerprint: string) =>
+  ctx.db
+    .query("deletedClerkUsers")
+    .withIndex("by_fingerprint", (q) => q.eq("fingerprint", fingerprint))
+    .first();
+
+/**
+ * Create a new Clerk user or update existing Clerk user data.
+ *
+ * Svix delivers Clerk events at least once, in no guaranteed order, and retries for hours, so an
+ * event is applied only when it can't undo something newer: never for a deleted account (a
+ * deletedClerkUsers tombstone), never onto a deactivated row (a CSAM tombstone keeps its fields
+ * blank), and never when its `updated_at` is older than the last event applied (clerkUpdatedAt).
+ * An equal `updated_at` is applied again, so a redelivered event is harmless. Any event may
+ * insert the row: a user.updated can overtake its user.created, and the older create is then
+ * dropped by the order check.
+ */
 export const updateOrCreateUser = internalMutation({
   args: { clerkUser: v.any() }, // no runtime validation, trust Clerk
   async handler(ctx, { clerkUser }: { clerkUser: ClerkUserSync }) {
+    // Logged without the Clerk id: for a deleted account that id is exactly what was erased.
+    const fingerprint = await clerkIdFingerprint(clerkUser.id);
+    if ((await deletedClerkUserOf(ctx, fingerprint)) !== null) {
+      console.warn("Clerk user event ignored: the account was deleted");
+      return;
+    }
     const userRecord = await userQuery(ctx, clerkUser.id);
+    if (userRecord !== null && !userRecord.isActive) {
+      console.warn("Clerk user event ignored: the account is deactivated");
+      return;
+    }
+    if (
+      userRecord?.clerkUpdatedAt !== undefined &&
+      clerkUser.updated_at < userRecord.clerkUpdatedAt
+    ) {
+      console.warn("Clerk user event ignored: older than the data stored");
+      return;
+    }
 
     // Clerk sends `null` for a missing first/last name; interpolating them directly persisted the
     // literal "null null". Keep only the present, non-blank halves; no name at all stays absent.
@@ -181,6 +227,7 @@ export const updateOrCreateUser = internalMutation({
         isActive: true,
         createdAt: clerkUser.created_at,
         updatedAt: clerkUser.updated_at,
+        clerkUpdatedAt: clerkUser.updated_at,
       });
     } else {
       await ctx.db.patch(userRecord._id, {
@@ -193,6 +240,7 @@ export const updateOrCreateUser = internalMutation({
         searchableName: toSearchableName(name, username),
         role: roleOf(clerkUser),
         updatedAt: clerkUser.updated_at,
+        clerkUpdatedAt: clerkUser.updated_at,
       });
     }
   },
@@ -306,6 +354,17 @@ export const patchUserRole = internalMutation({
 export const deleteUser = internalMutation({
   args: { id: v.string() },
   async handler(ctx, { id }) {
+    // Remember the deletion first, also when there is no row (yet): the user.created event may
+    // still be retried after this one. updateOrCreateUser then ignores every later event for this
+    // account, on both the hard-delete and the CSAM-tombstone path. Idempotent on redelivery.
+    const fingerprint = await clerkIdFingerprint(id);
+    if ((await deletedClerkUserOf(ctx, fingerprint)) === null) {
+      await ctx.db.insert("deletedClerkUsers", {
+        fingerprint,
+        deletedAt: Date.now(),
+      });
+    }
+
     const userRecord = await userQuery(ctx, id);
 
     if (userRecord === null) {

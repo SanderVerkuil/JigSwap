@@ -104,6 +104,11 @@ export default defineSchema({
     searchableName: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
+    // Clerk's `updated_at` of the newest user event applied to this row (users.updateOrCreateUser).
+    // Webhooks arrive in no guaranteed order, so an event older than this is dropped. Separate
+    // from `updatedAt`, which local profile edits also bump. Absent on rows synced before ordering
+    // was tracked: the next event is then accepted.
+    clerkUpdatedAt: v.optional(v.number()),
   })
     .index("by_clerk_id", ["clerkId"])
     .index("by_email", ["email"])
@@ -113,6 +118,15 @@ export default defineSchema({
     .searchIndex("by_searchable_name", {
       searchField: "searchableName",
     }),
+
+  // Clerk accounts that were deleted (users.deleteUser), so a late or redelivered Clerk webhook
+  // can't recreate them (users.updateOrCreateUser). Holds a one-way SHA-256 fingerprint of the
+  // Clerk user id, never the id itself, and nothing else about the member. Clerk never reuses an
+  // id, so a member who signs up again gets a new account and is unaffected.
+  deletedClerkUsers: defineTable({
+    fingerprint: v.string(),
+    deletedAt: v.number(),
+  }).index("by_fingerprint", ["fingerprint"]),
 
   // Box art that went through the server's checks (catalog/boxArtUploads): the blob and the
   // member it was checked for. A definition or proposal only takes a NEW image that is listed

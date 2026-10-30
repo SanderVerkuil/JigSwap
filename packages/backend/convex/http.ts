@@ -40,6 +40,8 @@ const handleClerkWebhook = httpAction(async (ctx, request) => {
         console.warn("Overwriting user", event.data.id);
       }
       console.log("creating/updating user", event.data.id);
+      // Svix delivers in no guaranteed order: updateOrCreateUser ignores an event for a deleted or
+      // deactivated account, or one older than the data already stored.
       await ctx.runMutation(internal.users.updateOrCreateUser, {
         clerkUser: event.data,
       });
