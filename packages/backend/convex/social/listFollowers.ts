@@ -3,7 +3,7 @@ import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { blockedEitherWaySet } from "./blocks";
-import { toFollowEdgeView } from "./readViews";
+import { FOLLOW_LIST_CAP, toFollowEdgeView } from "./readViews";
 
 // Read side: the members who follow the CALLER. Each entry resolves the FOLLOWER's display name.
 // Returns typed FollowEdgeView DTOs.
@@ -18,10 +18,14 @@ export const listFollowers = query({
     const viewer = (await requireMember(ctx)) as unknown as Id<"users">;
     const blockedIds = await blockedEitherWaySet(ctx, viewer);
 
-    const rows = await ctx.db
-      .query("follows")
-      .withIndex("by_followee", (q) => q.eq("followeeId", viewer))
-      .collect();
+    // Bounded read: only the newest FOLLOW_LIST_CAP edges, handed back oldest-first as before.
+    const rows = (
+      await ctx.db
+        .query("follows")
+        .withIndex("by_followee", (q) => q.eq("followeeId", viewer))
+        .order("desc")
+        .take(FOLLOW_LIST_CAP)
+    ).reverse();
     return Promise.all(
       rows
         .filter((r) => !blockedIds.has(r.followerId))

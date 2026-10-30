@@ -17,6 +17,12 @@ export const toProfileView = (row: Doc<"profiles">): ProfileView => ({
   updatedAt: row.updatedAt,
 });
 
+// Bound for listFollowers / listFollowees: each reads at most this many edges, newest first, so one
+// member's follow graph can never push the read past Convex's per-function limits. Past the cap the
+// oldest edges are dropped and the list (and anything counted from it) undercounts; the block filter
+// runs after the cap, so a blocked edge inside the window still uses a slot.
+export const FOLLOW_LIST_CAP = 500;
+
 // Build the followers/following list entry for one edge from the COUNTERPARTY member's id. Prefers
 // the counterparty's own Social profile display name, falling back to their account name so a
 // member without a profile still renders.
