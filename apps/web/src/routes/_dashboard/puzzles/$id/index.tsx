@@ -98,8 +98,8 @@ function PuzzlePage() {
 
 function PuzzleDefinitionSkeleton() {
   return (
-    <div className="w-full space-y-10">
-      <div className="grid gap-7 lg:grid-cols-[300px_minmax(0,1fr)]">
+    <div className="@container w-full space-y-10">
+      <div className="grid gap-7 @md:grid-cols-[200px_minmax(0,1fr)] @2xl:grid-cols-[300px_minmax(0,1fr)]">
         <Skeleton className="aspect-square w-full rounded-2xl" />
         <div className="space-y-4">
           <Skeleton className="h-9 w-2/3 rounded-lg" />
@@ -212,13 +212,14 @@ function PuzzleDefinitionDetail({
   ];
 
   return (
-    <div className="flex w-full flex-col gap-10">
-      {/* Hero */}
-      <section className="grid items-start gap-7 lg:grid-cols-[300px_minmax(0,1fr)]">
-        {/* Cover — full width on mobile, capped beside the info column at lg. object-contain (via
-            ImageZoom) shows the whole puzzle; hovering opens a side panel that magnifies where the
-            cursor points. */}
-        <div className="bg-muted relative aspect-square w-full overflow-hidden rounded-2xl shadow-sm lg:max-w-[300px]">
+    <div className="@container flex w-full flex-col gap-10">
+      {/* Hero: sized by the content width, not the viewport, so a tablet with the sidebar open
+          gets the cover beside the info instead of a full-width cover above it. */}
+      <section className="grid items-start gap-7 @md:grid-cols-[200px_minmax(0,1fr)] @2xl:grid-cols-[300px_minmax(0,1fr)]">
+        {/* Cover — full width on phones, a 200px then 300px column beside the info once the
+            content is wide enough. object-contain (via ImageZoom) shows the whole puzzle; hovering
+            opens a side panel that magnifies where the cursor points. */}
+        <div className="bg-muted relative aspect-square w-full overflow-hidden rounded-2xl shadow-sm">
           {definition.image ? (
             <ImageZoom src={definition.image} alt={definition.title} fill />
           ) : (
