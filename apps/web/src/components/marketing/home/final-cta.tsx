@@ -8,13 +8,15 @@ import { ArrowRight } from "lucide-react";
 import { useTranslations } from "use-intl";
 
 // Closing CTA panel: violet gradient, floating piece motifs, white button.
+// The marketing ramp inverts in dark mode (600 turns light), so dark mode uses
+// the deep 300 step to keep the panel — and the white text on it — at AA.
 export function FinalCTA() {
   const t = useTranslations("marketing");
   const startHref = useStartHref();
   return (
     <Section>
       <Container>
-        <div className="relative overflow-hidden rounded-[20px] [background:linear-gradient(135deg,var(--mk-violet-600),var(--mk-violet-400))] p-[clamp(44px,6vw,76px)] text-center">
+        <div className="relative overflow-hidden rounded-[20px] [background:linear-gradient(135deg,var(--mk-violet-600),var(--mk-violet-400))] dark:[background:linear-gradient(135deg,var(--mk-violet-300),var(--mk-violet-400))] p-[clamp(44px,6vw,76px)] text-center">
           <PieceMotif
             size={140}
             color="rgba(255,255,255,.12)"
@@ -36,7 +38,7 @@ export function FinalCTA() {
             </p>
             <div className="mt-[30px] flex justify-center">
               <Button
-                className="h-11 px-6 text-[15px] bg-white text-mk-violet-600 hover:bg-white/90"
+                className="h-11 px-6 text-[15px] bg-white text-mk-violet-600 dark:text-mk-violet-300 hover:bg-white/90"
                 asChild
               >
                 <Link href={startHref}>
