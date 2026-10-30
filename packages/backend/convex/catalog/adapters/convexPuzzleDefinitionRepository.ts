@@ -1,5 +1,6 @@
 import {
   toCatalogCategoryId,
+  type BarcodeHolderQuery,
   type CatalogCategoryId,
   type PuzzleDefinition,
   type PuzzleDefinitionId,
@@ -72,18 +73,34 @@ export const convexPuzzleDefinitionRepository = (
       else await ctx.db.insert("puzzles", row);
     },
 
-    // Barcode-uniqueness lookup: a value may be an EAN or a UPC, so probe both indexes.
-    async findByBarcode(barcode: string): Promise<PuzzleDefinition | null> {
-      const byEan = await ctx.db
-        .query("puzzles")
-        .withIndex("by_ean", (q) => q.eq("ean", barcode))
-        .first();
-      if (byEan) return hydrate(byEan);
-      const byUpc = await ctx.db
-        .query("puzzles")
-        .withIndex("by_upc", (q) => q.eq("upc", barcode))
-        .first();
-      return byUpc ? hydrate(byUpc) : null;
+    // Barcode-uniqueness lookup: a value may be an EAN or a UPC, so probe both indexes, one
+    // bounded read per requested status. `take(2)` suffices: at most one row is the excluded
+    // definition itself.
+    async findByBarcode(
+      barcode: string,
+      { statuses, excluding }: BarcodeHolderQuery,
+    ): Promise<PuzzleDefinition | null> {
+      const isOther = (row: Doc<"puzzles">) =>
+        excluding === undefined || row.aggregateId !== (excluding as string);
+      for (const status of statuses) {
+        const byEan = await ctx.db
+          .query("puzzles")
+          .withIndex("by_ean_status", (q) =>
+            q.eq("ean", barcode).eq("status", status),
+          )
+          .take(2);
+        const eanHolder = byEan.find(isOther);
+        if (eanHolder) return hydrate(eanHolder);
+        const byUpc = await ctx.db
+          .query("puzzles")
+          .withIndex("by_upc_status", (q) =>
+            q.eq("upc", barcode).eq("status", status),
+          )
+          .take(2);
+        const upcHolder = byUpc.find(isOther);
+        if (upcHolder) return hydrate(upcHolder);
+      }
+      return null;
     },
   };
 };

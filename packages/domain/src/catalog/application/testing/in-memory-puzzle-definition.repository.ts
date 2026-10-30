@@ -1,5 +1,8 @@
 import { PuzzleDefinition, PuzzleDefinitionId } from "../../domain";
-import { PuzzleDefinitionRepository } from "../ports/out/puzzle-definition.repository";
+import {
+  BarcodeHolderQuery,
+  PuzzleDefinitionRepository,
+} from "../ports/out/puzzle-definition.repository";
 
 // In-memory PuzzleDefinitionRepository for use-case tests. Stores persisted state and
 // rehydrates a fresh aggregate on read, mirroring the round-trip a real adapter performs.
@@ -18,8 +21,12 @@ export class InMemoryPuzzleDefinitionRepository implements PuzzleDefinitionRepos
     this.store.set(definition.id, definition.toState());
   }
 
-  async findByBarcode(barcode: string): Promise<PuzzleDefinition | null> {
+  async findByBarcode(
+    barcode: string,
+    { statuses, excluding }: BarcodeHolderQuery,
+  ): Promise<PuzzleDefinition | null> {
     for (const state of this.store.values()) {
+      if (state.id === excluding || !statuses.includes(state.status)) continue;
       if (
         state.ean === barcode ||
         state.upc === barcode ||

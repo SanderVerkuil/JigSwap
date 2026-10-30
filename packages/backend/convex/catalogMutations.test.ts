@@ -162,6 +162,37 @@ describe("catalog.submitPuzzleDefinition", () => {
     );
   });
 
+  test("a pending submission holds its barcode until rejected, then the barcode is free again", async () => {
+    const t = convexTest(schema, modules);
+    await seedMember(t);
+    const first = (await asAlice(t).mutation(
+      api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+      { title: "First Try", pieceCount: 1000, ean: VALID_EAN },
+    )) as string;
+
+    // While the first submission awaits moderation, the EAN is taken.
+    await expectConvexCode(
+      asAlice(t).mutation(
+        api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+        { title: "Second Try", pieceCount: 1000, ean: VALID_EAN },
+      ),
+      "DuplicateBarcode",
+    );
+
+    await asAdmin(t).mutation(
+      api.catalog.rejectPuzzleDefinition.rejectPuzzleDefinition,
+      { puzzleDefinitionId: first },
+    );
+
+    // Rejection releases it: the corrected resubmission goes through.
+    const second = (await asAlice(t).mutation(
+      api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+      { title: "Second Try", pieceCount: 1000, ean: VALID_EAN },
+    )) as string;
+    expect((await puzzleRow(t, second))?.ean).toBe(VALID_EAN);
+    expect((await puzzleRow(t, first))?.status).toBe("rejected");
+  });
+
   test("rejects a malformed barcode (aggregate invariant)", async () => {
     const t = convexTest(schema, modules);
     await seedMember(t);

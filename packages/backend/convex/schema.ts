@@ -226,8 +226,10 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     // Add indexes for new, important fields
-    .index("by_ean", ["ean"])
-    .index("by_upc", ["upc"])
+    // Barcode lookups always ask for a status: the scan/import match wants the approved row and
+    // the uniqueness rule only the statuses that hold a barcode (a rejected row releases it).
+    .index("by_ean_status", ["ean", "status"])
+    .index("by_upc_status", ["upc", "status"])
     .index("by_artist", ["artist"])
     .index("by_series", ["series"])
     // Existing indexes are great!

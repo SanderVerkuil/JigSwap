@@ -8,7 +8,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 const seedPuzzle = (
   extra: Pick<Doc<"puzzles">, "submittedBy"> &
-    Partial<Pick<Doc<"puzzles">, "ean" | "upc" | "status">>,
+    Partial<Pick<Doc<"puzzles">, "ean" | "upc" | "status" | "title">>,
 ) => ({
   title: "Mountain Vista",
   pieceCount: 1000,
@@ -118,4 +118,51 @@ describe("catalog.findPuzzleByBarcode", () => {
     );
     expect(match).toBeNull();
   });
+
+  // An OLDER non-approved row carrying the same barcode must not hide the approved one: the
+  // lookup asks the index for the approved row directly instead of taking the first row per code.
+  test.each(["pending", "rejected"] as const)(
+    "returns the approved match even when an older %s row carries the same EAN and UPC",
+    async (olderStatus) => {
+      const t = convexTest(schema, modules);
+      await t.run(async (ctx) => {
+        const submittedBy = await ctx.db.insert("users", {
+          clerkId: "c5",
+          email: "m@n.o",
+          name: "E",
+          isActive: true,
+          createdAt: 0,
+          updatedAt: 0,
+        });
+        await ctx.db.insert(
+          "puzzles",
+          seedPuzzle({
+            ean: "4005556150007",
+            upc: "036000291452",
+            status: olderStatus,
+            submittedBy,
+            title: "Squatter",
+          }),
+        );
+        await ctx.db.insert(
+          "puzzles",
+          seedPuzzle({
+            ean: "4005556150007",
+            upc: "036000291452",
+            submittedBy,
+          }),
+        );
+      });
+      const byEan = await t.query(
+        internal.catalog.findPuzzleByBarcode.findPuzzleByBarcode,
+        { ean: "4005556150007" },
+      );
+      expect(byEan?.title).toBe("Mountain Vista");
+      const byUpc = await t.query(
+        internal.catalog.findPuzzleByBarcode.findPuzzleByBarcode,
+        { upc: "036000291452" },
+      );
+      expect(byUpc?.title).toBe("Mountain Vista");
+    },
+  );
 });

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { toPuzzleDefinitionId, toSubmitterId } from "../../../shared-kernel";
+import { BARCODE_HOLDING_STATUSES } from "../../domain";
 import {
   FixedClock,
   InMemoryPuzzleDefinitionRepository,
@@ -108,8 +109,54 @@ describe("Catalog PuzzleDefinition use cases", () => {
     });
     expect(r.isOk).toBe(true);
     expect(lookup).toHaveBeenCalledTimes(1);
-    expect(lookup).toHaveBeenCalledWith("4006381333931");
+    expect(lookup).toHaveBeenCalledWith("4006381333931", {
+      statuses: BARCODE_HOLDING_STATUSES,
+    });
   });
+
+  // A rejected definition releases its barcodes: rejection is terminal, so the row can never
+  // be listed again, and keeping the EAN would let junk submissions squat real products.
+  it("lets a new submission reuse a barcode held only by a rejected definition", async () => {
+    const rejectedId = await submitOk({ ean: "4006381333931" });
+    await makeRejectPuzzleDefinition(deps)({ puzzleDefinitionId: rejectedId });
+
+    const r = await makeSubmitPuzzleDefinition(deps)({
+      title: "Corrected resubmission",
+      pieceCount: 1000,
+      submittedBy: submitter,
+      barcodes: { ean: "4006381333931" },
+    });
+    expect(r.isOk).toBe(true);
+    expect(repo.size()).toBe(2);
+  });
+
+  it.each([
+    ["pending", [] as const],
+    ["approved", ["approve"] as const],
+    ["disabled", ["approve", "disable"] as const],
+  ])(
+    "a %s definition still holds its barcode against a new submission",
+    async (_status, moves) => {
+      const holderId = await submitOk({ ean: "4006381333931" });
+      for (const move of moves) {
+        const run =
+          move === "approve"
+            ? makeApprovePuzzleDefinition(deps)
+            : makeDisablePuzzleDefinition(deps);
+        await run({ puzzleDefinitionId: holderId });
+      }
+
+      const r = await makeSubmitPuzzleDefinition(deps)({
+        title: "Squatter",
+        pieceCount: 500,
+        submittedBy: submitter,
+        barcodes: { ean: "4006381333931" },
+      });
+      expect(r.isErr).toBe(true);
+      if (r.isErr) expect(r.error.code).toBe("DuplicateBarcode");
+      expect(repo.size()).toBe(1);
+    },
+  );
 
   it("checks every distinct supplied barcode for a duplicate (UPC clash too)", async () => {
     await submitOk({ ean: "4006381333931" });
