@@ -3,9 +3,10 @@ import { query } from "../_generated/server";
 import { canonicalHandleOf } from "./resolveMemberByHandle";
 import { toCurrentMemberView } from "./toMemberView";
 
-// Identity read (thin adapter): the signed-in member, or null when unauthenticated. Returns the
-// self-only CurrentMemberView (includes the caller's own email + clerkId) — safe because it only
-// ever returns the caller's own account.
+// Identity read (thin adapter): the signed-in member, or null when unauthenticated, unknown or
+// deactivated (a tombstoned account's Clerk session can outlive the account; it must not read
+// as a member). Returns the self-only CurrentMemberView (includes the caller's own email +
+// clerkId) — safe because it only ever returns the caller's own account.
 export const getCurrentUser = query({
   args: {},
   handler: async (ctx): Promise<CurrentMemberView | null> => {
@@ -16,7 +17,7 @@ export const getCurrentUser = query({
       .query("users")
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
       .unique();
-    return user
+    return user?.isActive
       ? toCurrentMemberView(user, await canonicalHandleOf(ctx, user))
       : null;
   },

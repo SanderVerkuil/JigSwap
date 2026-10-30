@@ -4,6 +4,7 @@ import type {
 } from "@jigswap/contracts";
 import { v } from "convex/values";
 import { query } from "../_generated/server";
+import { optionalActingMember } from "../identity/optionalActingMember";
 import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 import { effectiveCopyVisibility } from "./copyVisibility";
 import {
@@ -16,19 +17,13 @@ import {
 
 // Library read: a single owned copy enriched with its image rows, owner, the acting member's
 // collection status, and completion history. Returns null (rather than throwing) on missing
-// auth/user/copy/puzzle, identical to legacy puzzles.getOwnedPuzzleWithCollectionStatus; the result
-// maps to a typed detail DTO.
+// auth/user/copy/puzzle and for a deactivated caller, as legacy
+// puzzles.getOwnedPuzzleWithCollectionStatus did; the result maps to a typed detail DTO.
 export const getOwnedPuzzleWithCollectionStatus = query({
   args: { ownedPuzzleId: v.id("ownedPuzzles") },
   handler: async (ctx, args): Promise<OwnedCopyDetailView | null> => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return null;
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .unique();
-    if (!user) return null;
+    const me = await optionalActingMember(ctx);
+    if (!me) return null;
 
     const ownedPuzzle = await ctx.db.get(args.ownedPuzzleId);
     if (!ownedPuzzle) return null;
@@ -37,7 +32,7 @@ export const getOwnedPuzzleWithCollectionStatus = query({
     // ACTING member, and the result exposes financials (acquisition/sale price), private notes, and
     // unmoderated photos. A non-owner gets null; the public copy-detail route uses the gated
     // getCopyInstanceView instead.
-    if (ownedPuzzle.ownerId !== user._id) return null;
+    if (ownedPuzzle.ownerId !== me) return null;
 
     // The definition's catalogue facts follow the copy views' rule (toCopyPuzzleView): the owner
     // gets a pending or rejected definition's text only if they submitted it.
@@ -59,7 +54,7 @@ export const getOwnedPuzzleWithCollectionStatus = query({
       (
         await ctx.db
           .query("collections")
-          .withIndex("by_user", (q) => q.eq("userId", user._id))
+          .withIndex("by_user", (q) => q.eq("userId", me))
           .collect()
       ).map((c) => c._id),
     );
@@ -79,7 +74,7 @@ export const getOwnedPuzzleWithCollectionStatus = query({
     const completions = await ctx.db
       .query("completions")
       .withIndex("by_user_owned_puzzle", (q) =>
-        q.eq("userId", user._id).eq("ownedPuzzleId", args.ownedPuzzleId),
+        q.eq("userId", me).eq("ownedPuzzleId", args.ownedPuzzleId),
       )
       .filter((q) => q.eq(q.field("isCompleted"), true))
       .order("desc")

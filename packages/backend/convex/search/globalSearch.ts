@@ -1,8 +1,8 @@
 import type { GlobalSearchResults } from "@jigswap/contracts";
 import { v } from "convex/values";
-import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
+import { optionalActingMember } from "../identity/optionalActingMember";
 import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { blockedEitherWaySet } from "../social/blocks";
 import { areMutualFollowers, profileVisibilityOf } from "../social/privacy";
@@ -20,7 +20,8 @@ import { areMutualFollowers, profileVisibilityOf } from "../social/privacy";
 //   - Circles      -> the signed-in member's circles only (small set), in-memory name filter.
 //   - Collections  -> the signed-in member's collections only (small set), in-memory name filter.
 //
-// Short/empty terms short-circuit to empty groups. Unauthenticated callers get empty groups too.
+// Short/empty terms short-circuit to empty groups. Unauthenticated, unknown and deactivated
+// callers get empty groups too.
 
 // We over-fetch people candidates from the search index (since some get dropped by the visibility
 // gate) and stop once `limit` visible matches are collected.
@@ -41,15 +42,8 @@ export const global = query({
     // Empty / too-short terms return empty groups fast.
     if (term.length < 2) return EMPTY;
 
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return EMPTY;
-
-    const currentUser = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .unique();
-    if (!currentUser) return EMPTY;
-    const memberId = currentUser._id as Id<"users">;
+    const memberId = await optionalActingMember(ctx);
+    if (!memberId) return EMPTY;
 
     // --- Puzzles: real search index, approved-only. ---
     const puzzleRows = await ctx.db

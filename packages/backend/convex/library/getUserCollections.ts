@@ -1,7 +1,8 @@
 import type { CollectionView } from "@jigswap/contracts";
-import { ConvexError, v } from "convex/values";
+import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
+import { requireMember } from "../identity/requireMember";
 import { canSeeProfileContent } from "../social/privacy";
 import {
   buildCopyViewContext,
@@ -21,21 +22,12 @@ export const getUserCollections = query({
     userId: v.optional(v.id("users")),
   },
   handler: async (ctx, args): Promise<CollectionView[]> => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new ConvexError("Not authenticated");
+    // An unknown or deactivated caller is refused (requireMember).
+    const me = (await requireMember(ctx)) as unknown as Id<"users">;
 
-    const currentUser = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .unique();
-    if (!currentUser) throw new ConvexError("User not found");
-
-    const targetUserId = args.userId || currentUser._id;
-    const isOwner = targetUserId === currentUser._id;
-    if (
-      !isOwner &&
-      !(await canSeeProfileContent(ctx, currentUser._id, targetUserId))
-    ) {
+    const targetUserId = args.userId || me;
+    const isOwner = targetUserId === me;
+    if (!isOwner && !(await canSeeProfileContent(ctx, me, targetUserId))) {
       return [];
     }
 
@@ -62,12 +54,9 @@ export const getUserCollections = query({
         .query("collectionMembers")
         .withIndex("by_collection", (q) => q.eq("collectionId", collection._id))
         .collect();
-      const viewerOwnsCollection = collection.userId === currentUser._id;
+      const viewerOwnsCollection = collection.userId === me;
       if (!viewerOwnsCollection) {
-        context ??= await buildCopyViewContext(
-          ctx,
-          currentUser._id as Id<"users">,
-        );
+        context ??= await buildCopyViewContext(ctx, me);
       }
       let count = 0;
       for (const member of members) {
@@ -87,7 +76,7 @@ export const getUserCollections = query({
       views.push(
         toCollectionView(collection, count, {
           // personalNotes is owner-only: surface it only on the acting member's OWN collections.
-          includeOwnerOnly: collection.userId === currentUser._id,
+          includeOwnerOnly: collection.userId === me,
         }),
       );
     }

@@ -3,6 +3,7 @@ import { internal } from "../_generated/api";
 import { internalMutation } from "../_generated/server";
 import { logEvent } from "../lib/logEvent";
 import { offerConnection } from "../social/connectionOffers";
+import { userQuery } from "../users";
 import { emailInviteKindValidator } from "./config";
 import { inviteIntoEmailInviteHousehold } from "./fallbacks";
 
@@ -45,10 +46,7 @@ export const applySignupInvite = internalMutation({
   },
   handler: async (ctx, { clerkUserId, kind, ref }): Promise<void> => {
     const outcome = await (async (): Promise<string> => {
-      const member = await ctx.db
-        .query("users")
-        .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkUserId))
-        .unique();
+      const member = await userQuery(ctx, clerkUserId);
       if (member === null) return "no_member";
       await ctx.scheduler.runAfter(
         0,
