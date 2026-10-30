@@ -1,14 +1,12 @@
 import { Link } from "@/compat/link";
 import { LegalDoc, type LegalSection } from "@/components/marketing/legal-doc";
 import { PageHero } from "@/components/marketing/page-hero";
-import { pageTitle } from "@/lib/page-title";
+import { seoHead } from "@/lib/seo-head";
 import { createFileRoute } from "@tanstack/react-router";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_public/privacy")({
-  head: ({ match }) => ({
-    meta: [{ title: pageTitle(match.context, "privacy") }],
-  }),
+  head: ({ match }) => seoHead(match, "privacy"),
   component: PrivacyPolicyPage,
 });
 

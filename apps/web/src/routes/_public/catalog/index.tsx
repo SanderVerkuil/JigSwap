@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
+import { seoHead } from "@/lib/seo-head";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -46,22 +47,7 @@ const CARD_IMAGE_SIZES =
   "(min-width: 1200px) 273px, (min-width: 1024px) calc((100vw - 110px) / 4), (min-width: 768px) calc((100vw - 90px) / 3), calc((100vw - 70px) / 2)";
 
 export const Route = createFileRoute("/_public/catalog/")({
-  head: () => ({
-    meta: [
-      { title: "Puzzle catalogue — JigSwap" },
-      {
-        name: "description",
-        content:
-          "Browse the JigSwap community puzzle catalogue: ratings, reviews and swap availability for jigsaw puzzles.",
-      },
-      { property: "og:title", content: "Puzzle catalogue — JigSwap" },
-      {
-        property: "og:description",
-        content:
-          "Browse the JigSwap community puzzle catalogue: ratings, reviews and swap availability for jigsaw puzzles.",
-      },
-    ],
-  }),
+  head: ({ match }) => seoHead(match, "catalog"),
   loader: async ({ context }) => {
     await context.queryClient.ensureQueryData(defaultFirstPageQuery);
   },

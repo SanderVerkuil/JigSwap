@@ -10,11 +10,23 @@ import { appVersionPlugin } from "./vite-plugin-app-version";
 import { docsPlugin } from "./vite-plugin-docs";
 import { whatsNewPlugin } from "./vite-plugin-whats-new";
 
+// Absolute origin for share previews (og:url, og:image; src/lib/seo-head.ts). Vercel provides the
+// production domain at build time; elsewhere it stays unset and those tags are left out, so no
+// domain is hard-coded in the repo.
+const productionHost = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+
 // root pinned to this dir so Vite resolves config/paths from the app, not the
 // monorepo root, when the build is invoked from a different cwd.
 export default defineConfig({
   root: __dirname,
   server: { port: 3001 },
+  define: productionHost
+    ? {
+        "import.meta.env.VITE_SITE_ORIGIN": JSON.stringify(
+          `https://${productionHost}`,
+        ),
+      }
+    : {},
   plugins: [
     tsConfigPaths({ projects: ["./tsconfig.json"] }),
     tailwindcss(),

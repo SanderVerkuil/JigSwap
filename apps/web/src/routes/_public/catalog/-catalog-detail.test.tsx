@@ -144,3 +144,48 @@ describe("public catalogue detail copy", () => {
     expect(screen.getByText("2 beoordelingen")).toBeTruthy();
   });
 });
+
+type HeadFn = (ctx: {
+  loaderData?: { view: View | null };
+  match: { context: unknown; pathname: string };
+}) => { meta: Array<Record<string, string>> };
+const head = (Route as unknown as { options: { head: HeadFn } }).options.head;
+const headMatch = (locale: "en" | "nl") => ({
+  context: {
+    intl: {
+      locale,
+      messages: locale === "en" ? en : nl,
+      timeZone: "Europe/Amsterdam",
+      now: 0,
+    },
+  },
+  pathname: `/catalog/${PUZZLE_ID}`,
+});
+
+describe("public catalogue detail head", () => {
+  it("describes the puzzle in the visitor's language", () => {
+    const { meta } = head({
+      loaderData: { view: viewWith(unrated) },
+      match: headMatch("nl"),
+    });
+    expect(meta).toContainEqual({ title: "De Kattenshow — JigSwap" });
+    expect(meta).toContainEqual({
+      name: "description",
+      content:
+        "De Kattenshow van Jumbo — legpuzzel van 1.000 stukjes. Beoordelingen, reviews en ruilbeschikbaarheid in de JigSwap-community.",
+    });
+    expect(meta).toContainEqual({ property: "og:locale", content: "nl_NL" });
+  });
+
+  it("keeps the English description for English visitors", () => {
+    const { meta } = head({
+      loaderData: { view: viewWith(unrated) },
+      match: headMatch("en"),
+    });
+    expect(meta).toContainEqual({
+      name: "description",
+      content:
+        "De Kattenshow by Jumbo — 1,000-piece jigsaw puzzle. Community rating, reviews and swap availability on JigSwap.",
+    });
+  });
+});

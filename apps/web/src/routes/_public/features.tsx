@@ -5,14 +5,12 @@ import { Reveal } from "@/components/marketing/reveal";
 import { Section, SectionHead } from "@/components/marketing/section";
 import { useStartHref } from "@/components/marketing/use-start-href";
 import { Button } from "@/components/ui/button";
-import { pageTitle } from "@/lib/page-title";
+import { seoHead } from "@/lib/seo-head";
 import { createFileRoute } from "@tanstack/react-router";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_public/features")({
-  head: ({ match }) => ({
-    meta: [{ title: pageTitle(match.context, "features") }],
-  }),
+  head: ({ match }) => seoHead(match, "features"),
   component: FeaturesPage,
 });
 

@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { StarRating } from "@/components/ui/star-rating";
 import { gateway, Id } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
+import { headMessage, seoHead } from "@/lib/seo-head";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
@@ -62,22 +63,22 @@ export const Route = createFileRoute("/_public/catalog/$id")({
       return { view: null };
     }
   },
-  head: ({ loaderData }) => {
+  // loaderData is resolved before head() runs on the SSR pass, which is what crawlers and link
+  // previews read; the description is the visitor's language via the root intl payload.
+  head: ({ loaderData, match }) => {
     const d = loaderData?.view?.definition;
     if (!d) return { meta: [{ title: "JigSwap" }] };
-    const title = `${d.title} — JigSwap`;
-    // English-only meta template: head() runs outside the intl render tree; acceptable for SEO.
-    const description = `${d.title}${d.brand || d.publisher ? ` by ${d.brand || d.publisher}` : ""} — ${d.pieceCount.toLocaleString("en")}-piece jigsaw puzzle. Community rating, reviews and swap availability on JigSwap.`;
-    return {
-      meta: [
-        { title },
-        { name: "description", content: description },
-        { property: "og:title", content: title },
-        { property: "og:description", content: description },
-        { property: "og:type", content: "website" },
-        ...(d.image ? [{ property: "og:image", content: d.image }] : []),
-      ],
-    };
+    const maker = d.brand || d.publisher;
+    return seoHead(match, "catalog", {
+      title: `${d.title} — JigSwap`,
+      description: headMessage(match.context, "publicCatalog.metaDescription", {
+        title: d.title,
+        hasMaker: maker ? "yes" : "no",
+        maker: maker ?? "",
+        count: d.pieceCount,
+      }),
+      image: d.image,
+    });
   },
   component: PublicPuzzlePage,
 });

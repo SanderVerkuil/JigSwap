@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { gateway } from "@/gateway";
 import { convexErrorCode } from "@/lib/convex-error-code";
-import { pageTitle } from "@/lib/page-title";
+import { seoHead } from "@/lib/seo-head";
 import { cn } from "@/lib/utils";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
@@ -16,9 +16,7 @@ import * as React from "react";
 import { useLocale, useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_public/contact")({
-  head: ({ match }) => ({
-    meta: [{ title: pageTitle(match.context, "contact") }],
-  }),
+  head: ({ match }) => seoHead(match, "contact"),
   component: ContactPage,
 });
 

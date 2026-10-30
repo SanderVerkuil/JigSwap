@@ -4099,7 +4099,20 @@
       "about": "About — JigSwap",
       "contact": "Contact — JigSwap",
       "privacy": "Privacy Policy — JigSwap",
-      "terms": "Terms of Service — JigSwap"
+      "terms": "Terms of Service — JigSwap",
+      "catalog": "Puzzle catalogue — JigSwap",
+      "docs": "Docs — JigSwap"
+    },
+    "meta": {
+      "home": "Build your own jigsaw puzzle library, lend and swap puzzles with fellow puzzlers, and always know who has your lent-out boxes. Free to join.",
+      "howItWorks": "How JigSwap works in five steps: create your profile, fill your shelf, find a puzzle, agree a loan or swap, and always see who has your boxes.",
+      "features": "A digital puzzle shelf, collections, completions, lending with tracking and a community you trust: everything JigSwap offers for puzzling together.",
+      "about": "JigSwap started at the kitchen table, as a family project to easily see and swap puzzles with friends and family. Read how it grew.",
+      "contact": "Have a question, an idea or feedback about JigSwap? Get in touch with us.",
+      "privacy": "How JigSwap handles your personal data: what we collect, why we use it, and the choices and rights you have.",
+      "terms": "The terms for using JigSwap: your account, lending and swapping puzzles, and the ground rules that keep the community fair and pleasant.",
+      "catalog": "Browse the JigSwap community puzzle catalogue: ratings, reviews and swap availability for jigsaw puzzles.",
+      "docs": "Guides to everything in JigSwap: your account, your puzzle library, lending and swapping, discovering puzzles and staying informed."
     }
   },
   "titles": {
@@ -5324,7 +5337,8 @@
     "anonymousReviewer": "A JigSwap member",
     "logInToReview": "Log in to write a review",
     "notFound": "Puzzle not found",
-    "notFoundSub": "This puzzle may have been removed from the catalogue."
+    "notFoundSub": "This puzzle may have been removed from the catalogue.",
+    "metaDescription": "{hasMaker, select, yes {{title} by {maker}} other {{title}}} — {count, number}-piece jigsaw puzzle. Community rating, reviews and swap availability on JigSwap."
   },
   "whatsNew": {
     "menuLabel": "What's new",

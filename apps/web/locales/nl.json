@@ -4099,7 +4099,20 @@
       "about": "Over ons — JigSwap",
       "contact": "Contact — JigSwap",
       "privacy": "Privacybeleid — JigSwap",
-      "terms": "Algemene voorwaarden — JigSwap"
+      "terms": "Algemene voorwaarden — JigSwap",
+      "catalog": "Puzzelcatalogus — JigSwap",
+      "docs": "Documentatie — JigSwap"
+    },
+    "meta": {
+      "home": "Bouw je eigen puzzelbibliotheek, leen en ruil legpuzzels met andere puzzelaars en zie altijd bij wie je uitgeleende dozen zijn. Gratis aanmelden.",
+      "howItWorks": "Zo werkt JigSwap in vijf stappen: maak je profiel aan, vul je plank, vind een puzzel, spreek een lening of ruil af en zie altijd bij wie je dozen zijn.",
+      "features": "Een digitale puzzelplank, collecties, voltooiingen, uitlenen met overzicht en een community die je vertrouwt: alles wat JigSwap biedt om samen te puzzelen.",
+      "about": "JigSwap begon aan de keukentafel, als familieproject om makkelijk puzzels te zien en te ruilen met vrienden en familie. Lees hoe het is gegroeid.",
+      "contact": "Heb je een vraag, een idee of feedback over JigSwap? Neem contact met ons op.",
+      "privacy": "Hoe JigSwap met je persoonsgegevens omgaat: wat we verzamelen, waarvoor we het gebruiken en welke keuzes en rechten je hebt.",
+      "terms": "De voorwaarden voor het gebruik van JigSwap: je account, puzzels uitlenen en ruilen, en de spelregels die de community eerlijk en prettig houden.",
+      "catalog": "Blader door de puzzelcatalogus van de JigSwap-community: beoordelingen, reviews en ruilbeschikbaarheid van legpuzzels.",
+      "docs": "Handleidingen voor alles in JigSwap: je account, je puzzelbibliotheek, uitlenen en ruilen, puzzels ontdekken en op de hoogte blijven."
     }
   },
   "titles": {
@@ -5324,7 +5337,8 @@
     "anonymousReviewer": "Een JigSwap-lid",
     "logInToReview": "Log in om een review te schrijven",
     "notFound": "Puzzel niet gevonden",
-    "notFoundSub": "Deze puzzel is mogelijk uit de catalogus verwijderd."
+    "notFoundSub": "Deze puzzel is mogelijk uit de catalogus verwijderd.",
+    "metaDescription": "{hasMaker, select, yes {{title} van {maker}} other {{title}}} — legpuzzel van {count, plural, one {# stukje} other {# stukjes}}. Beoordelingen, reviews en ruilbeschikbaarheid in de JigSwap-community."
   },
   "whatsNew": {
     "menuLabel": "Wat is er nieuw",

@@ -2,6 +2,7 @@ import { Container } from "@/components/marketing/container";
 import { PageHero } from "@/components/marketing/page-hero";
 import { Section } from "@/components/marketing/section";
 import { buildNavTree, pagesForLocale } from "@/docs/nav";
+import { seoHead } from "@/lib/seo-head";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BookOpen } from "lucide-react";
 import { useMemo } from "react";
@@ -9,6 +10,7 @@ import { useLocale, useTranslations } from "use-intl";
 import { pages } from "virtual:docs";
 
 export const Route = createFileRoute("/_public/docs/")({
+  head: ({ match }) => seoHead(match, "docs"),
   component: DocsIndex,
 });
 
