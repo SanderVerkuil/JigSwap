@@ -10,6 +10,7 @@ import type { FunctionReturnType } from "convex/server";
 import { Eye, Heart, Plus } from "lucide-react";
 import { useTranslations } from "use-intl";
 import { PuzzleCardShell } from "./puzzle-card-shell";
+import { PUZZLE_GRID_COVER_SIZES } from "./puzzle-view-provider";
 
 // Catalog summary view DTO this card renders, derived from the recent-puzzles read it is fed by
 // (the same shape `catalog.listAll` paginates). Ids surface as opaque strings.
@@ -42,7 +43,10 @@ export function PuzzleCard({ puzzle }: PuzzleCardProps) {
         description: puzzle.description,
         tags: puzzle.tags,
         imageUrl: puzzle.image,
+        imageSrcSet: puzzle.imageSrcSet,
       }}
+      // Every page renders these cards in the default PuzzleViewProvider grid.
+      imageSizes={PUZZLE_GRID_COVER_SIZES}
       imageHref={`/puzzles/${puzzle._id}`}
       imageFit="contain"
       imageChecking={!puzzle.image && boxArtInCheck.has(puzzle._id)}

@@ -5,7 +5,7 @@ import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { buildCopyViewContext, canViewCopyWithContext } from "./canViewCopy";
 import { toOwnedCopyView } from "./mappers";
-import { resolveCopyCoverUrl } from "./resolveCoverUrl";
+import { resolveCopyCoverFields } from "./resolveCoverUrl";
 
 const isOpen = (copy: Doc<"ownedPuzzles">): boolean =>
   copy.availability.forTrade ||
@@ -58,7 +58,7 @@ export const getOwnedPuzzlesByOwner = query({
       ownedPuzzles.map(async (copy) => {
         const puzzle = await ctx.db.get(copy.puzzleId);
         return toOwnedCopyView(copy, puzzle, {
-          coverUrl: await resolveCopyCoverUrl(ctx, copy, puzzle),
+          ...(await resolveCopyCoverFields(ctx, copy, puzzle)),
           includeOwnerOnly: isOwner,
         });
       }),

@@ -61,6 +61,9 @@ export interface PuzzleSummaryView {
   category?: DocId;
   tags?: string[];
   image?: string | null;
+  /** `srcset` for the box art: its 480/960 px renditions and the original (`image`), as URLs.
+   *  Absent until renditions exist; show `image` alone then. */
+  imageSrcSet?: string;
   status: "pending" | "approved" | "rejected" | "disabled";
   createdAt: number;
   updatedAt: number;

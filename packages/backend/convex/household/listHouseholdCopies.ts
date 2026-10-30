@@ -4,7 +4,7 @@ import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { toOwnedCopyView } from "../library/mappers";
-import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
+import { resolveCopyCoverFields } from "../library/resolveCoverUrl";
 import { personView } from "./getMyHousehold";
 import {
   householdDefaultOf,
@@ -42,7 +42,7 @@ export const listHouseholdCopies = query({
         const puzzle = await ctx.db.get(copy.puzzleId);
         views.push({
           ...toOwnedCopyView(copy, puzzle, {
-            coverUrl: await resolveCopyCoverUrl(ctx, copy, puzzle),
+            ...(await resolveCopyCoverFields(ctx, copy, puzzle)),
             includeOwnerOnly: viewerAccess === "manage",
           }),
           household: { owner, viewerAccess },

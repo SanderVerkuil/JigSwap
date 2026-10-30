@@ -110,6 +110,7 @@ export const toOwnedCopyView = (
     owner?: Doc<"users"> | null;
     addedAt?: number;
     coverUrl?: string | null;
+    coverSrcSet?: string;
     includeOwnerOnly?: boolean;
   },
 ): OwnedCopyView => ({
@@ -145,6 +146,7 @@ export const toOwnedCopyView = (
         : null
       : undefined,
   coverUrl: opts?.coverUrl,
+  coverSrcSet: opts?.coverSrcSet,
 });
 
 /** An owned copy as seen on a member's public profile: the owner-only keys are not present at all. */
@@ -162,7 +164,7 @@ export type PublicCopyView = Omit<
 export const toPublicCopyView = (
   row: Doc<"ownedPuzzles">,
   puzzle: Doc<"puzzles"> | null,
-  opts?: { coverUrl?: string | null },
+  opts?: { coverUrl?: string | null; coverSrcSet?: string },
 ): PublicCopyView => {
   const {
     notes: _notes,
@@ -172,6 +174,7 @@ export const toPublicCopyView = (
     ...rest
   } = toOwnedCopyView(row, puzzle, {
     coverUrl: opts?.coverUrl,
+    coverSrcSet: opts?.coverSrcSet,
     includeOwnerOnly: false,
   });
   return rest;

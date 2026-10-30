@@ -7,6 +7,7 @@ import {
 // Re-export the consolidated provider so existing call sites that import
 // `{ PuzzleCard, PuzzleViewProvider }` from this module keep working.
 import {
+  PUZZLE_GRID_COVER_SIZES,
   PuzzleViewProvider,
   usePuzzleView,
 } from "@/components/puzzles/puzzle-view-provider";
@@ -76,6 +77,9 @@ interface PuzzleCardProps {
   viewSearch?: string;
   /** Cover image fit: "cover" crops (default), "contain" shows the full image. */
   imageFit?: "cover" | "contain";
+  /** The cover's `sizes` in grid view (see PuzzleCardShell's imageSizes); defaults to the
+   *  PuzzleViewProvider grid's PUZZLE_GRID_COVER_SIZES. */
+  imageSizes?: string;
   onDelete?: (puzzleId: Id<"ownedPuzzles">) => void;
   onRemove?: (puzzleId: Id<"ownedPuzzles">) => void;
   onSelect?: (puzzleId: Id<"ownedPuzzles">) => void;
@@ -277,6 +281,7 @@ export function PuzzleCard({
   viewBasePath = "/copies",
   viewSearch,
   imageFit,
+  imageSizes = PUZZLE_GRID_COVER_SIZES,
   onDelete,
   onRemove,
   onSelect,
@@ -318,6 +323,8 @@ export function PuzzleCard({
     // Prefer the resolved cover (chosen-and-approved cover photo, else the catalogue box art) so a
     // copy's custom cover shows on its card instead of the placeholder; falls back to legacy images.
     imageUrl: puzzle.coverUrl ?? puzzle.puzzle.images?.[0],
+    // The cover's renditions, when the read offers them (only alongside coverUrl).
+    imageSrcSet: puzzle.coverSrcSet,
   };
   const imageChecking = !view.imageUrl && boxArtInCheck.has(puzzle.puzzleId);
 
@@ -524,6 +531,7 @@ export function PuzzleCard({
           : undefined
       }
       imageFit={imageFit}
+      imageSizes={imageSizes}
       imageChecking={imageChecking}
       className={className}
     />

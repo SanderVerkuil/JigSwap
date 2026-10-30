@@ -2,7 +2,7 @@ import type { PuzzleSummaryView } from "@jigswap/contracts";
 import { v } from "convex/values";
 import { internalQuery, query, type QueryCtx } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
-import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
+import { boxArtImage, boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { toPuzzleSummaryView } from "./mappers";
 
 // Ask the index for the APPROVED row directly, so an older pending or rejected row carrying the
@@ -74,7 +74,7 @@ export const lookupPuzzleByBarcode = query({
     if (!match) return null;
     return toPuzzleSummaryView(
       match,
-      match.image ? await boxArtUrl(ctx, match.image) : null,
+      match.image ? await boxArtImage(ctx, match.image) : null,
     );
   },
 });

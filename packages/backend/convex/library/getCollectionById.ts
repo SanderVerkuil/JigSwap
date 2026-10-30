@@ -10,7 +10,7 @@ import {
   type CopyViewContext,
 } from "./canViewCopy";
 import { toCollectionDetailView, toOwnedCopyView } from "./mappers";
-import { resolveCopyCoverUrl } from "./resolveCoverUrl";
+import { resolveCopyCoverFields } from "./resolveCoverUrl";
 
 // Library read: a collection with its member copies resolved (each carrying its addedAt and joined
 // Catalog puzzle). Returns null on a missing collection, and drops members whose copy was deleted —
@@ -84,7 +84,7 @@ export const getCollectionById = query({
           // Owner-only copy fields (notes/acquisition provenance) are the COPY owner's, decided per
           // copy — never from who owns the collection.
           includeOwnerOnly: viewerOwnsCopy,
-          coverUrl: await resolveCopyCoverUrl(ctx, copy, puzzle),
+          ...(await resolveCopyCoverFields(ctx, copy, puzzle)),
         });
       }),
     );

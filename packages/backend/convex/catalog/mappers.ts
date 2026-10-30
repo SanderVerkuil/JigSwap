@@ -4,6 +4,7 @@ import type {
   PuzzleSummaryView,
 } from "@jigswap/contracts";
 import type { Doc } from "../_generated/dataModel";
+import type { ImageSources } from "../lib/imageModeration/imageSources";
 
 // Row -> view DTO mappers for the Catalog reads. Pure functions (the storage-URL resolution is
 // passed in as an already-resolved value) so the mapping is unit-testable and `tsc` enforces it.
@@ -37,10 +38,13 @@ export const toPuzzleDefinitionView = (
   updatedAt: row.updatedAt,
 });
 
-/** The lighter list/picker view; `image` is the already-resolved box-art URL (null when unset). */
+/**
+ * The lighter list/picker view; `image` is the already-resolved box art (boxArtImage: its URL plus
+ * the renditions' srcSet once they exist; null when unset or withheld).
+ */
 export const toPuzzleSummaryView = (
   row: Doc<"puzzles">,
-  image: string | null,
+  image: ImageSources | null,
 ): PuzzleSummaryView => ({
   _id: row._id,
   _creationTime: row._creationTime,
@@ -52,7 +56,9 @@ export const toPuzzleSummaryView = (
   difficulty: row.difficulty,
   category: row.category,
   tags: row.tags,
-  image,
+  image: image?.url ?? null,
+  // Absent (not undefined) without renditions, so the response is what it was before them.
+  ...(image?.srcSet !== undefined && { imageSrcSet: image.srcSet }),
   status: row.status,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,

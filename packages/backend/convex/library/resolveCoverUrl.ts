@@ -1,19 +1,21 @@
 import type { Doc } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
-import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
+import { boxArtImage } from "../lib/imageModeration/boxArtUrl";
 import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
+import type { ImageSources } from "../lib/imageModeration/imageSources";
 
 // Canonical card-cover resolution for an owned copy, shared by every list read so cards look the
 // same everywhere: the copy's chosen-and-APPROVED cover photo if set, otherwise the puzzle's global
 // box art, else null (the card falls back to its placeholder). Pending/rejected cover photos do not
 // surface — only approved (an absent status is legacy = approved). The catalogue `image` is a
-// `_storage` id, so it MUST be resolved via `getUrl`.
-export const resolveCopyCoverUrl = async (
+// `_storage` id, so it MUST be resolved via its gate (boxArtImage), which also adds the box art's
+// renditions (srcSet, thumbUrl) once they exist. A cover photo has no renditions (yet): url only.
+export const resolveCopyCover = async (
   ctx: QueryCtx,
   copy: Doc<"ownedPuzzles">,
   puzzle: Doc<"puzzles"> | null,
-): Promise<string | null> => {
-  let coverUrl: string | null = null;
+): Promise<ImageSources | null> => {
+  let cover: ImageSources | null = null;
   if (copy.coverImageId) {
     const img = await ctx.db.get(copy.coverImageId);
     if (
@@ -21,11 +23,37 @@ export const resolveCopyCoverUrl = async (
       (img.moderationStatus ?? "approved") === "approved" &&
       isHashCleared(img)
     ) {
-      coverUrl = await ctx.storage.getUrl(img.fileId);
+      const url = await ctx.storage.getUrl(img.fileId);
+      cover = url ? { url } : null;
     }
   }
-  if (!coverUrl && puzzle?.image) {
-    coverUrl = await boxArtUrl(ctx, puzzle.image);
+  if (!cover && puzzle?.image) {
+    cover = await boxArtImage(ctx, puzzle.image);
   }
-  return coverUrl;
+  return cover;
+};
+
+/** The copy's cover (resolveCopyCover) as one URL, or null when it has none. */
+export const resolveCopyCoverUrl = async (
+  ctx: QueryCtx,
+  copy: Doc<"ownedPuzzles">,
+  puzzle: Doc<"puzzles"> | null,
+): Promise<string | null> =>
+  (await resolveCopyCover(ctx, copy, puzzle))?.url ?? null;
+
+/**
+ * The cover fields of a copy on a read that a card grid renders (toOwnedCopyView's `coverUrl` and
+ * `coverSrcSet` opts): the cover's URL plus, once its box art has renditions, the srcSet the card
+ * picks a width from.
+ */
+export const resolveCopyCoverFields = async (
+  ctx: QueryCtx,
+  copy: Doc<"ownedPuzzles">,
+  puzzle: Doc<"puzzles"> | null,
+): Promise<{ coverUrl: string | null; coverSrcSet?: string }> => {
+  const cover = await resolveCopyCover(ctx, copy, puzzle);
+  return {
+    coverUrl: cover?.url ?? null,
+    ...(cover?.srcSet !== undefined && { coverSrcSet: cover.srcSet }),
+  };
 };
