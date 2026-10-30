@@ -22,6 +22,9 @@ import { ErrorBoundary } from "../components/ui/error-boundary";
 import { getIntlCached, seedIntlCache } from "../lib/i18n";
 // Side effect: start listening for beforeinstallprompt before any route chunk loads.
 import "../lib/install-prompt";
+// Self-hosted font files to preload (see head below).
+import balooLatinWoff2 from "@fontsource-variable/baloo-2/files/baloo-2-latin-wght-normal.woff2?url";
+import poppinsLatin400Woff2 from "@fontsource/poppins/files/poppins-latin-400-normal.woff2?url";
 // Tailwind 4 entry + theme tokens; CSS-based config travels with this import.
 import appCss from "../styles/globals.css?url";
 
@@ -109,19 +112,24 @@ export const Route = createRootRouteWithContext<{
       // service-worker caching is involved; /sw.js stays push-only.
       { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "stylesheet", href: appCss },
-      // Fonts that next/font loaded in the web app, now via Google Fonts so
-      // globals.css --font-sans (Poppins) / --font-heading (Baloo 2) resolve.
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      // The fonts are self-hosted: globals.css imports their @font-face rules.
+      // Preload the latin files of the faces every page shows (Baloo 2
+      // headings, Poppins 400 body text) so they load alongside the CSS
+      // instead of after it. Same hashed URL as the CSS url(), so nothing
+      // downloads twice; font preloads must be CORS-mode to be reused.
       {
-        rel: "preconnect",
-        href: "https://fonts.gstatic.com",
+        rel: "preload",
+        href: balooLatinWoff2,
+        as: "font",
+        type: "font/woff2",
         crossOrigin: "anonymous",
       },
       {
-        rel: "stylesheet",
-        // Baloo 2 is the single heading face for both the app (--font-heading)
-        // and marketing (--font-mk-heading); Poppins is the body sans.
-        href: "https://fonts.googleapis.com/css2?family=Baloo+2:wght@400..800&family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap",
+        rel: "preload",
+        href: poppinsLatin400Woff2,
+        as: "font",
+        type: "font/woff2",
+        crossOrigin: "anonymous",
       },
     ],
   }),

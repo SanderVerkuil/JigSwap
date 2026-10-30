@@ -1,5 +1,15 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+/* Self-hosted fonts: Vite emits the woff2 files as hashed /assets, so no
+   request goes to Google. Baloo 2 is one variable face (400–800); Poppins
+   ships only the weights the UI uses (font-normal … font-bold). Per-script
+   unicode-range faces, so browsers download only the subsets a page needs.
+   __root.tsx preloads the two latin files used above the fold. */
+@import "@fontsource-variable/baloo-2";
+@import "@fontsource/poppins/400.css";
+@import "@fontsource/poppins/500.css";
+@import "@fontsource/poppins/600.css";
+@import "@fontsource/poppins/700.css";
 @import "./marketing.css";
 @import "./docs.css";
 
@@ -162,15 +172,16 @@
   --color-jigsaw-primary-tint: var(--jigsaw-primary-tint);
   --color-jigsaw-secondary-tint: var(--jigsaw-secondary-tint);
 
-  /* "Poppins" prepended (loaded via <link> in __root head) to mirror the
-     web app's next/font --font-sans; system stack stays as fallback. */
+  /* "Poppins" (self-hosted, imported at the top of this file) first; the
+     system stack stays as fallback. */
   --font-sans:
     "Poppins", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
     "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --font-mono:
     ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo,
     monospace;
-  --font-heading: "Baloo 2", var(--font-sans);
+  /* Fontsource names its variable build "Baloo 2 Variable". */
+  --font-heading: "Baloo 2 Variable", var(--font-sans);
 
   --radius: var(--radius);
 
