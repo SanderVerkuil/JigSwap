@@ -3096,6 +3096,7 @@
     "errors": {
       "invalidEmail": "Vul een geldig e-mailadres in.",
       "rateLimited": "Je hebt vandaag veel uitnodigingen verstuurd. Probeer het {when} opnieuw.",
+      "busy": "Uitnodigingen staan even op pauze. Probeer het {when} opnieuw.",
       "generic": "Kon de uitnodiging niet versturen. Probeer het opnieuw."
     },
     "pendingTitle": "Verstuurde uitnodigingen",

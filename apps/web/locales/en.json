@@ -3096,6 +3096,7 @@
     "errors": {
       "invalidEmail": "Enter a valid email address.",
       "rateLimited": "You've sent a lot of invitations today. Try again {when}.",
+      "busy": "Invitations are paused for a bit. Try again {when}.",
       "generic": "Couldn't send the invitation. Try again."
     },
     "pendingTitle": "Sent invitations",
