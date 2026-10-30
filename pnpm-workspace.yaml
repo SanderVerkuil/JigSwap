@@ -32,8 +32,12 @@ overrides:
   # Security patches for transitive deps flagged by Dependabot — each pins only
   # the vulnerable range to its first patched version (selective overrides).
   # Vite 8 accepts esbuild ^0.27.0 || ^0.28.0, so 0.28.1 is in range.
-  # js-yaml is now patched on the v3 line (3.15.0), so gray-matter's js-yaml v3
-  # API keeps working; 4.x resolutions are untouched.
+  # js-yaml is patched on both lines (3.15.2 and 4.3.2), so gray-matter keeps
+  # its js-yaml v3 API and xmlbuilder2 stays on v4.
+  # seroval and seroval-plugins use ~ instead of ^: TanStack declares ^1.6.7,
+  # and the patched 1.6 line keeps SSR serialisation on the minor TanStack was
+  # released against. A TanStack bump, not this override, moves them to 1.7.
+  # The plugins move in lockstep with seroval itself.
   # webpack-dev-server is only an optional peer of @nx/webpack 23 (>=5.2.5), so
   # re-resolving dropped it — and its http-proxy-middleware 2.x / sockjs / uuid
   # subtree — from the lockfile entirely. Their overrides below stay as guards
@@ -46,12 +50,22 @@ overrides:
   dompurify@<3.4.11: ^3.4.11
   postcss@<8.5.10: ^8.5.10
   qs@>=6.11.1 <6.15.2: ^6.15.2
-  undici@>=7.0.0 <7.28.0: ^7.28.0
+  undici@>=7.0.0 <7.30.1: ^7.30.1
   http-proxy-middleware@>=3.0.0 <3.0.7: ^3.0.7
   http-proxy-middleware@>=0.16.0 <2.0.10: ^2.0.10
-  js-yaml@>=3.0.0 <3.15.0: ^3.15.0
+  js-yaml@>=3.0.0 <3.15.2: ^3.15.2
+  js-yaml@>=4.0.0 <4.3.2: ^4.3.2
   webpack-dev-server@>=5.0.0 <5.2.5: ^5.2.5
   uuid@<11.1.1: ^11.1.1
+  seroval@>=1.5.5 <1.6.11: ~1.6.12
+  seroval-plugins@>=1.5.5 <1.6.11: ~1.6.12
+  fast-uri@>=3.0.0 <3.1.9: ^3.1.9
+  svgo@>=4.0.0 <4.1.0: ^4.1.0
+  browserslist@<4.28.7: ^4.28.7
+  baseline-browser-mapping@>=2.0.0 <2.11.0: ^2.11.0
+  postcss-selector-parser@>=7.0.0 <7.1.6: ^7.1.6
+  fflate@>=0.6.0 <0.6.11: ^0.6.11
+  fflate@>=0.4.5 <0.4.9: ^0.4.9
 
 onlyBuiltDependencies:
   - "@clerk/shared"
