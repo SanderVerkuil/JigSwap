@@ -1,0 +1,122 @@
+{
+  "variant": "mobile-light",
+  "route": "/puzzles/m9712xm5gtgnqszgq5xwvh82ph8a9hdz",
+  "authed": true,
+  "name": "app__puzzles_m9712xm5gtgnqszgq5xwvh82ph8a9hdz",
+  "loadMs": 4567,
+  "finalUrl": "/puzzles/m9712xm5gtgnqszgq5xwvh82ph8a9hdz",
+  "metrics": {
+    "regionScrollHeight": 1556,
+    "regionOverflowX": 0,
+    "title": "Puzzle details — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Café",
+      "Café",
+      "Café"
+    ],
+    "headings": [
+      "H1 Café",
+      "H1 Café",
+      "H1 Café",
+      "H2 Community Rating",
+      "H2 Available to Swap",
+      "H2 Reviews",
+      "H2 Add JigSwap to your home screen",
+      "H2 Search"
+    ],
+    "pageHeight": 1932,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 25,
+    "tapUnder24": 6,
+    "tapUnder24Examples": [
+      "a.text-jigsaw-primary.mt-3.inline-block.text-sm \"See all 1 available copies →\" 196x20",
+      "button.rounded-sm.p-0.5.transition-transform.hover:scale-110 [aria=\"1 star\"] 20x20",
+      "button.rounded-sm.p-0.5.transition-transform.hover:scale-110 [aria=\"2 stars\"] 20x20",
+      "button.rounded-sm.p-0.5.transition-transform.hover:scale-110 [aria=\"3 stars\"] 20x20",
+      "button.rounded-sm.p-0.5.transition-transform.hover:scale-110 [aria=\"4 stars\"] 20x20",
+      "button.rounded-sm.p-0.5.transition-transform.hover:scale-110 [aria=\"5 stars\"] 20x20"
+    ],
+    "tap24to44": 7,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.justify-center.gap-2 \"Add to Library\" 151x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Find a Copy to Swap\" 200x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Write a Review\" 156x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Add to Favorites\" 171x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Suggest an edit\" 165x36",
+      "input.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 244x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Post\" 64x36"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "region",
+      "impact": "moderate",
+      "help": "All page content should be contained by landmarks",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".text-center",
+          "html": "<div data-slot=\"dialog-header\" class=\"flex flex-col gap-2 text-center sm:text-left sr-only\">",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    },
+    {
+      "id": "target-size",
+      "impact": "serious",
+      "help": "All touch targets must be 24px large, or leave sufficient space",
+      "count": 5,
+      "nodes": [
+        {
+          "target": "button[aria-label=\"1 star\"]",
+          "html": "<button type=\"button\" role=\"radio\" aria-checked=\"false\" aria-label=\"1 star\" class=\"rounded-sm p-0.5 transition-transform hover:scale-110 focus:outline-none focu",
+          "summary": "Fix any of the following:\n  Target has insufficient size (20px by 20px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 20px instead of at least 24px."
+        },
+        {
+          "target": "button[aria-label=\"2 stars\"]",
+          "html": "<button type=\"button\" role=\"radio\" aria-checked=\"false\" aria-label=\"2 stars\" class=\"rounded-sm p-0.5 transition-transform hover:scale-110 focus:outline-none foc",
+          "summary": "Fix any of the following:\n  Target has insufficient size (20px by 20px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 20px instead of at least 24px."
+        },
+        {
+          "target": "button[aria-label=\"3 stars\"]",
+          "html": "<button type=\"button\" role=\"radio\" aria-checked=\"false\" aria-label=\"3 stars\" class=\"rounded-sm p-0.5 transition-transform hover:scale-110 focus:outline-none foc",
+          "summary": "Fix any of the following:\n  Target has insufficient size (20px by 20px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 20px instead of at least 24px."
+        },
+        {
+          "target": "button[aria-label=\"4 stars\"]",
+          "html": "<button type=\"button\" role=\"radio\" aria-checked=\"false\" aria-label=\"4 stars\" class=\"rounded-sm p-0.5 transition-transform hover:scale-110 focus:outline-none foc",
+          "summary": "Fix any of the following:\n  Target has insufficient size (20px by 20px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 20px instead of at least 24px."
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 1932,
+    "client": 844,
+    "top": 1088,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-light/app__puzzles_m9712xm5gtgnqszgq5xwvh82ph8a9hdz__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__puzzles_m9712xm5gtgnqszgq5xwvh82ph8a9hdz__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__puzzles_m9712xm5gtgnqszgq5xwvh82ph8a9hdz__03.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [
+    "[CONVEX M(presence:heartbeat)] [Request ID: 554a7b85d1e8690b] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":29869}\n    at enforceRateLimit (../../convex/lib/rateLimits.ts:45:32)\n    at async handler (../../convex/presence.ts:61:4)\n",
+    "pageerror: [CONVEX M(presence:heartbeat)] [Request ID: 554a7b85d1e8690b] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":29869}"
+  ],
+  "httpErrors": []
+}

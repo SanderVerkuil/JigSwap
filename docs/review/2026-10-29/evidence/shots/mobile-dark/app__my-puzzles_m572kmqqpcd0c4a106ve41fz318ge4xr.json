@@ -1,0 +1,99 @@
+{
+  "variant": "mobile-dark",
+  "route": "/my-puzzles/m572kmqqpcd0c4a106ve41fz318ge4xr",
+  "authed": true,
+  "name": "app__my-puzzles_m572kmqqpcd0c4a106ve41fz318ge4xr",
+  "loadMs": 4476,
+  "finalUrl": "/my-puzzles/m572kmqqpcd0c4a106ve41fz318ge4xr",
+  "metrics": {
+    "regionScrollHeight": 2106,
+    "regionOverflowX": 0,
+    "title": "My puzzles — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Oostenrijk, Tirol, sellrainer berge",
+      "Oostenrijk, Tirol, sellrainer berge",
+      "Oostenrijk, Tirol, sellrainer berge"
+    ],
+    "headings": [
+      "H1 Oostenrijk, Tirol, sellrainer berge",
+      "H1 Oostenrijk, Tirol, sellrainer berge",
+      "H1 Oostenrijk, Tirol, sellrainer berge",
+      "H2 Photos",
+      "H2 Completion History",
+      "H2 Lending History",
+      "H2 Swap & Trade History",
+      "H2 Community Rating",
+      "H2 Copy Reviews",
+      "H2 Comments",
+      "H2 Add JigSwap to your home screen",
+      "H2 Search"
+    ],
+    "pageHeight": 2482,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 21,
+    "tapUnder24": 1,
+    "tapUnder24Examples": [
+      "a.truncate.hover:underline \"Henk Pieterszoon\" 128x20"
+    ],
+    "tap24to44": 8,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.justify-center.gap-2 \"Edit\" 76x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Offered for Swap\" 176x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Offer to Lend\" 147x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Log a Completion\" 180x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Start puzzle\" 120x36",
+      "button.border-input.data-[placeholder]:text-muted-foreground.[&_svg:not([class*='text-'])]:text-muted-foreground.focus-visible:border-ring \"Use household default (currently: Can ma\" 358x36",
+      "input.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 244x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Post\" 64x36"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "h1.font-heading.truncate.text-lg.font-bold \"Oostenrijk, Tirol, sellrainer berge\"",
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\"",
+      "span \"Use household default (currently: Can ma\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "count": 2,
+      "nodes": [
+        {
+          "target": ".bg-jigsaw-secondary",
+          "html": "<span class=\"bg-jigsaw-secondary absolute left-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold text-white shadow-sm\"><s",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.37 (foreground color: #ffffff, background color: #19c316, font size: 9.0pt (12px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": ".hover\\:underline.text-jigsaw-primary",
+          "html": "<a class=\"text-jigsaw-primary font-semibold hover:underline\" href=\"/puzzles/m97cj1tav1gsg1a2jwbgqbw64h7nsqxb\">View puzzle page</a>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.42 (foreground color: #705aea, background color: #1d1c34, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 2482,
+    "client": 844,
+    "top": 1638,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-dark/app__my-puzzles_m572kmqqpcd0c4a106ve41fz318ge4xr__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__my-puzzles_m572kmqqpcd0c4a106ve41fz318ge4xr__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__my-puzzles_m572kmqqpcd0c4a106ve41fz318ge4xr__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__my-puzzles_m572kmqqpcd0c4a106ve41fz318ge4xr__04.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

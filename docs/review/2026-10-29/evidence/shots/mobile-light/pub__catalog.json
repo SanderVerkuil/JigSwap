@@ -1,0 +1,142 @@
+{
+  "variant": "mobile-light",
+  "route": "/catalog",
+  "authed": false,
+  "name": "pub__catalog",
+  "loadMs": 3848,
+  "finalUrl": "/catalog",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "Puzzle catalogue — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Puzzle catalogue"
+    ],
+    "headings": [
+      "H1 Puzzle catalogue",
+      "H3 De Kattenshow",
+      "H3 Rondje Texel",
+      "H3 Bereleuk hier!",
+      "H3 Food Truck Festival",
+      "H3 Café",
+      "H3 Het Tuincentrum Jan van Haasteren puzzels",
+      "H3 The Dolomites",
+      "H3 Oostenrijk, Tirol, sellrainer berge",
+      "H3 Lam Gelegd"
+    ],
+    "pageHeight": 3023,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 27,
+    "tapUnder24": 16,
+    "tapUnder24Examples": [
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"De Kattenshow\" 120x16",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Rondje Texel\" 100x16",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Bereleuk hier!\" 113x16",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Café\" 35x16",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"The Dolomites\" 113x16",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Lam Gelegd\" 93x16",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"How it works\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Browse puzzles\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Features\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Docs\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Start trading\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"About\" 342x22"
+    ],
+    "tap24to44": 9,
+    "tap24to44Examples": [
+      "a [aria=\"JigSwap\"] \"JigSwap\" 118x37",
+      "button#radix-_R_7aj6l6_.inline-flex.items-center.justify-center.w-10 [aria=\"Switch language\"] \"🇺🇸\" 40x40",
+      "button.inline-flex.items-center.justify-center.w-10 [aria=\"Toggle dark mode\"] 40x40",
+      "button.min-[861px]:hidden.inline-flex.items-center.justify-center [aria=\"Open menu\"] 40x40",
+      "input.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 342x36",
+      "button.border-input.data-[placeholder]:text-muted-foreground.[&_svg:not([class*='text-'])]:text-muted-foreground.focus-visible:border-ring \"All brands\" 342x36",
+      "button.border-input.data-[placeholder]:text-muted-foreground.[&_svg:not([class*='text-'])]:text-muted-foreground.focus-visible:border-ring \"Any piece count\" 342x36",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Food Truck Festival\" 86x36"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "button-name",
+      "impact": "critical",
+      "help": "Buttons must have discernible text",
+      "count": 2,
+      "nodes": [
+        {
+          "target": ".sm\\:w-44",
+          "html": "<button type=\"button\" role=\"combobox\" aria-expanded=\"false\" aria-autocomplete=\"none\" dir=\"ltr\" data-state=\"closed\" data-slot=\"select-trigger\" data-size=\"default",
+          "summary": "Fix any of the following:\n  Element does not have inner text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references"
+        },
+        {
+          "target": ".sm\\:w-48",
+          "html": "<button type=\"button\" role=\"combobox\" aria-expanded=\"false\" aria-autocomplete=\"none\" dir=\"ltr\" data-state=\"closed\" data-slot=\"select-trigger\" data-size=\"default",
+          "summary": "Fix any of the following:\n  Element does not have inner text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references"
+        }
+      ]
+    },
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "count": 14,
+      "nodes": [
+        {
+          "target": ".mt-1",
+          "html": "<p class=\"text-muted-foreground mt-1\">Every puzzle the JigSwap community collects, swaps and lends.</p>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.13 (foreground color: #6f7087, background color: #ececfb, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": ".mt-4",
+          "html": "<p class=\"mt-4 text-[14.5px] leading-relaxed text-mk-text-muted\">Swap, lend and share jigsaw puzzles — accessible and sustainable, for the whole community.</p>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.18 (foreground color: #7c7689, background color: #f9faff, font size: 10.9pt (14.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": ".text-\\[14\\.5px\\].text-mk-text-muted[href$=\"how-it-works\"]",
+          "html": "<a class=\"text-[14.5px] text-mk-text-muted hover:text-mk-violet-600 transition-colors\" href=\"/how-it-works\">How it works</a>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.18 (foreground color: #7c7689, background color: #f9faff, font size: 10.9pt (14.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": ".gap-3.flex-col.flex:nth-child(2) > .active[href$=\"catalog\"][data-status=\"active\"]",
+          "html": "<a class=\"text-[14.5px] text-mk-text-muted hover:text-mk-violet-600 transition-colors active\" href=\"/catalog\" data-status=\"active\" aria-current=\"page\">Browse pu",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.18 (foreground color: #7c7689, background color: #f9faff, font size: 10.9pt (14.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    },
+    {
+      "id": "heading-order",
+      "impact": "moderate",
+      "help": "Heading levels should only increase by one",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".bg-card.text-card-foreground.rounded-xl:nth-child(1) > .p-4.flex-1.flex-col > .mb-2:nth-child(1) > h3",
+          "html": "<h3 class=\"font-semibold text-sm line-clamp-2 mb-1\"><a class=\"after:absolute after:inset-0 after:z-[1] after:content-[''] hover:underline focus-visible:underlin",
+          "summary": "Fix any of the following:\n  Heading order invalid"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 3023,
+    "client": 844,
+    "top": 2179,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-light/pub__catalog__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/pub__catalog__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/pub__catalog__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/pub__catalog__04.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

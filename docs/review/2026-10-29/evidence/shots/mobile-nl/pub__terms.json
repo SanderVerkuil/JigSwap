@@ -1,0 +1,93 @@
+{
+  "variant": "mobile-nl",
+  "route": "/terms",
+  "authed": false,
+  "name": "pub__terms",
+  "loadMs": 3661,
+  "finalUrl": "/terms",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "Algemene voorwaarden — JigSwap",
+    "lang": "nl",
+    "h1": [
+      "Algemene Voorwaarden"
+    ],
+    "headings": [
+      "H1 Algemene Voorwaarden",
+      "H2 1. Akkoord met de Voorwaarden",
+      "H2 2. Wat JigSwap is",
+      "H2 3. Je account",
+      "H2 4. Gedrag in de community",
+      "H3 Wat we verwachten:",
+      "H3 Wat niet mag:",
+      "H2 5. Moderatie",
+      "H3 Automatische controle",
+      "H3 Melden",
+      "H3 Onze besluiten",
+      "H3 Om een herbeoordeling vragen",
+      "H3 Blokkeren",
+      "H2 6. Ruilen, verkopen en uitlenen",
+      "H2 7. Content en intellectueel eigendom",
+      "H3 Jouw content",
+      "H3 Het platform en puzzelillustraties",
+      "H2 8. Privacy",
+      "H2 9. Je account beëindigen",
+      "H2 10. Disclaimer",
+      "H2 11. Beperking van aansprakelijkheid",
+      "H2 12. Wijzigingen in deze Voorwaarden"
+    ],
+    "pageHeight": 8998,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 16,
+    "tapUnder24": 12,
+    "tapUnder24Examples": [
+      "a.text-mk-violet-600.font-medium.hover:underline \"legal@jigswap.site\" 135x16",
+      "a.text-mk-violet-600.font-medium.hover:underline \"contactformulier\" 120x16",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Hoe het werkt\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Puzzels bekijken\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Functies\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Documentatie\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Begin met ruilen\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Over ons\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Contact\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Privacybeleid\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Algemene voorwaarden\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Cookiebeleid\" 342x22"
+    ],
+    "tap24to44": 4,
+    "tap24to44Examples": [
+      "a [aria=\"JigSwap\"] \"JigSwap\" 118x37",
+      "button#radix-_R_7aj6l6_.inline-flex.items-center.justify-center.w-10 [aria=\"Taal wijzigen\"] \"🇳🇱\" 40x40",
+      "button.inline-flex.items-center.justify-center.w-10 [aria=\"Toggle dark mode\"] 40x40",
+      "button.min-[861px]:hidden.inline-flex.items-center.justify-center [aria=\"Menu openen\"] 40x40"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 8998,
+    "client": 844,
+    "top": 5320,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__terms__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__terms__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__terms__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__terms__04.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__terms__05.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__terms__06.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__terms__07.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__terms__08.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

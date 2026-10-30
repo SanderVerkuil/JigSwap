@@ -1,0 +1,82 @@
+{
+  "variant": "mobile-light",
+  "route": "/trades",
+  "authed": true,
+  "name": "app__trades",
+  "loadMs": 4588,
+  "finalUrl": "/trades",
+  "metrics": {
+    "regionScrollHeight": 468,
+    "regionOverflowX": 0,
+    "title": "Trades — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Exchanges",
+      "Exchanges"
+    ],
+    "headings": [
+      "H1 Exchanges",
+      "H1 Exchanges",
+      "H2 Add JigSwap to your home screen",
+      "H2 Search"
+    ],
+    "pageHeight": 844,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 18,
+    "tapUnder24": 0,
+    "tapUnder24Examples": [],
+    "tap24to44": 7,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.justify-center.gap-2 [aria=\"Show me how\"] 32x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"All\" 42x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Incoming\" 94x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Outgoing\" 95x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Completed\" 109x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Borrowed\" 98x32",
+      "select.bg-card.focus:ring-primary.h-8.rounded-md [aria=\"All Statuses\"] \"All Statuses Pending Accepted Declined C\" 118x32"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [
+      "select.bg-card.focus:ring-primary.h-8.rounded-md [aria=\"All Statuses\"] \"All Statuses Pending Accepted Declined C\" 14px"
+    ],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "region",
+      "impact": "moderate",
+      "help": "All page content should be contained by landmarks",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".sm\\:text-left",
+          "html": "<div data-slot=\"dialog-header\" class=\"flex flex-col gap-2 text-center sm:text-left sr-only\">",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 844,
+    "client": 844,
+    "top": 0,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-light/app__trades__01.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [
+    "[CONVEX M(presence:heartbeat)] [Request ID: ac6fc896a39e4f12] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":14188}\n    at enforceRateLimit (../../convex/lib/rateLimits.ts:45:32)\n    at async handler (../../convex/presence.ts:61:4)\n",
+    "pageerror: [CONVEX M(presence:heartbeat)] [Request ID: ac6fc896a39e4f12] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":14188}"
+  ],
+  "httpErrors": []
+}

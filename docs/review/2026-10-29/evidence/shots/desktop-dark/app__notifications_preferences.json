@@ -1,0 +1,93 @@
+{
+  "variant": "desktop-dark",
+  "route": "/notifications/preferences",
+  "authed": true,
+  "name": "app__notifications_preferences",
+  "loadMs": 4474,
+  "finalUrl": "/notifications/preferences",
+  "metrics": {
+    "regionScrollHeight": 3136,
+    "regionOverflowX": 0,
+    "title": "Notification preferences — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Notification preferences",
+      "Notification preferences"
+    ],
+    "headings": [
+      "H1 Notification preferences",
+      "H1 Notification preferences",
+      "H2 Push on this device",
+      "H2 Notification preferences",
+      "H2 Search"
+    ],
+    "pageHeight": 900,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 152,
+    "tapUnder24": 127,
+    "tapUnder24Examples": [
+      "a.transition-colors.hover:text-sidebar-accent-foreground.hover:underline.active \"Notifications\" 77x16",
+      "a.text-muted-foreground.hover:text-foreground.text-sm.hover:underline \"Trades\" 48x20",
+      "a.text-muted-foreground.hover:text-foreground.text-sm.hover:underline \"Messages\" 69x20",
+      "a.text-muted-foreground.hover:text-foreground.text-sm.hover:underline \"Social\" 41x20",
+      "a.text-muted-foreground.hover:text-foreground.text-sm.hover:underline \"My submissions\" 109x20",
+      "a.text-muted-foreground.hover:text-foreground.text-sm.hover:underline \"Product updates\" 117x20",
+      "a.text-muted-foreground.hover:text-foreground.text-sm.hover:underline \"Safety\" 46x20",
+      "button.peer.border-input.dark:bg-input/30.data-[state=checked]:bg-primary [aria=\"Trades — In-app\"] \"on\" 16x16",
+      "button.peer.border-input.dark:bg-input/30.data-[state=checked]:bg-primary [aria=\"Trades — Email\"] \"on\" 16x16",
+      "button.peer.border-input.dark:bg-input/30.data-[state=checked]:bg-primary [aria=\"Trades — Push\"] \"on\" 16x16",
+      "button.peer.data-[state=checked]:bg-primary.data-[state=unchecked]:bg-input.focus-visible:border-ring \"on\" 32x18",
+      "button.peer.data-[state=checked]:bg-primary.data-[state=unchecked]:bg-input.focus-visible:border-ring \"on\" 32x18"
+    ],
+    "tap24to44": 25,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.justify-center.gap-2 \"Toggle Sidebar\" 32x32",
+      "a.flex.shrink-0.items-center.transition-opacity 108x28",
+      "button.flex.h-9.w-full.max-w-[520px] \"Search puzzles, people, circles… ⌘K\" 520x36",
+      "button.inline-flex.items-center.justify-center.gap-2 [aria=\"Notifications\"] \"2\" 36x36",
+      "button#radix-_R_38cj6l6_.inline-flex.items-center.justify-center.gap-2 \"Toggle theme\" 36x36",
+      "button#radix-_R_58cj6l6_.inline-flex.items-center.justify-center.gap-2 \"Switch language\" 36x36",
+      "a.inline-flex.items-center.justify-center.gap-2 \"Add Puzzle\" 126x36",
+      "a.peer/menu-button.flex.w-full.items-center \"Dashboard\" 224x32"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.sr-only \"Toggle Sidebar\"",
+      "span.sr-only \"Toggle theme\"",
+      "span.sr-only \"Switch language\"",
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [
+      "kbd.pointer-events-none.rounded.border.bg-muted \"⌘K\" 11px",
+      "span.inline-flex.items-center.border.py-0.5 [aria=\"2 unread notifications\"] \"2\" 10px",
+      "a.text-sidebar-foreground/70.ring-sidebar-ring.flex.h-8 \"MY LIBRARY\" 10px",
+      "a.text-sidebar-foreground/70.ring-sidebar-ring.flex.h-8 \"COMMUNITY\" 10px"
+    ],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [],
+  "scroll": {
+    "useRegion": true,
+    "scrollHeight": 3136,
+    "client": 830,
+    "top": 2306,
+    "step": 747
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/desktop-dark/app__notifications_preferences__01.jpg",
+    "/tmp/jigswap-review/tiles/desktop-dark/app__notifications_preferences__02.jpg",
+    "/tmp/jigswap-review/tiles/desktop-dark/app__notifications_preferences__03.jpg",
+    "/tmp/jigswap-review/tiles/desktop-dark/app__notifications_preferences__04.jpg",
+    "/tmp/jigswap-review/tiles/desktop-dark/app__notifications_preferences__05.jpg"
+  ],
+  "scrollsInnerRegion": true,
+  "consoleErrors": [
+    "[CONVEX M(presence:heartbeat)] [Request ID: 913f2ca4feed063c] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":14398}\n    at enforceRateLimit (../../convex/lib/rateLimits.ts:45:32)\n    at async handler (../../convex/presence.ts:61:4)\n",
+    "pageerror: [CONVEX M(presence:heartbeat)] [Request ID: 913f2ca4feed063c] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":14398}"
+  ],
+  "httpErrors": []
+}

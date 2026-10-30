@@ -1,0 +1,81 @@
+{
+  "variant": "mobile-dark",
+  "route": "/docs/getting-started/accounts-and-sign-in",
+  "authed": false,
+  "name": "pub__docs_getting-started_accounts-and-sign-in",
+  "loadMs": 3701,
+  "finalUrl": "/docs/getting-started/accounts-and-sign-in",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "JigSwap",
+    "lang": "en",
+    "h1": [
+      "Accounts & Sign-In"
+    ],
+    "headings": [
+      "H1 Accounts & Sign-In",
+      "H2 Create an account",
+      "H2 Sign in",
+      "H2 Public pages (no account needed)",
+      "H2 When you delete your account"
+    ],
+    "pageHeight": 3912,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 27,
+    "tapUnder24": 16,
+    "tapUnder24Examples": [
+      "a.sr-only.focus:not-sr-only.focus:absolute.focus:z-50 \"Skip to content\" 1x1",
+      "button.flex.items-center.gap-1.5.text-[14px] [aria=\"Open documentation navigation\"] \"Docs\" 56x21",
+      "button.ml-auto [aria=\"Search documentation\"] 16x16",
+      "a.hover:text-mk-violet-600.active \"Docs\" 32x20",
+      "a \"Friend Circles\" 114x20",
+      "a \"Households\" 99x20",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"How it works\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Browse puzzles\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Features\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Docs\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Start trading\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"About\" 342x22"
+    ],
+    "tap24to44": 9,
+    "tap24to44Examples": [
+      "a [aria=\"JigSwap\"] \"JigSwap\" 118x37",
+      "button#radix-_R_7aj6l6_.inline-flex.items-center.justify-center.w-10 [aria=\"Switch language\"] \"🇺🇸\" 40x40",
+      "button.inline-flex.items-center.justify-center.w-10 [aria=\"Toggle dark mode\"] 40x40",
+      "button.min-[861px]:hidden.inline-flex.items-center.justify-center [aria=\"Open menu\"] 40x40",
+      "a \"Create an account\" 189x39",
+      "a \"Sign in\" 71x39",
+      "a \"When you delete your account\" 313x39",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Yes\" 67x32"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "a.sr-only.focus:not-sr-only.focus:absolute.focus:z-50 \"Skip to content\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 3912,
+    "client": 844,
+    "top": 3068,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__docs_getting-started_accounts-and-sign-in__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__docs_getting-started_accounts-and-sign-in__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__docs_getting-started_accounts-and-sign-in__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__docs_getting-started_accounts-and-sign-in__04.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__docs_getting-started_accounts-and-sign-in__05.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__docs_getting-started_accounts-and-sign-in__06.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

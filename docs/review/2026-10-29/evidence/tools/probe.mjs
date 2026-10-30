@@ -1,0 +1,10 @@
+import { chromium } from "playwright-core";
+const browser = await chromium.connectOverCDP("http://127.0.0.1:9222");
+const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+const page = await context.newPage();
+await page.goto("http://localhost:3001/sign-in", { waitUntil: "networkidle" });
+await page.waitForTimeout(2000);
+console.log(await page.locator("button").allInnerTexts());
+console.log(await page.locator("input").evaluateAll(els => els.map(e => e.name + ":" + e.type)));
+await page.screenshot({ path: "/tmp/jigswap-review/signin.png" });
+await context.close(); await browser.close();

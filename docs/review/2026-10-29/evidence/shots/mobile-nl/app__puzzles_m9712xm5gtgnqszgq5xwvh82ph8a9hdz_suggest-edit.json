@@ -1,0 +1,71 @@
+{
+  "variant": "mobile-nl",
+  "route": "/puzzles/m9712xm5gtgnqszgq5xwvh82ph8a9hdz/suggest-edit",
+  "authed": true,
+  "name": "app__puzzles_m9712xm5gtgnqszgq5xwvh82ph8a9hdz_suggest-edit",
+  "loadMs": 4823,
+  "finalUrl": "/puzzles/m9712xm5gtgnqszgq5xwvh82ph8a9hdz/suggest-edit",
+  "metrics": {
+    "regionScrollHeight": 1854,
+    "regionOverflowX": 87,
+    "title": "Puzzeldetails — JigSwap",
+    "lang": "nl",
+    "h1": [
+      "Wijziging voorstellen",
+      "Wijziging voorstellen"
+    ],
+    "headings": [
+      "H1 Wijziging voorstellen",
+      "H1 Wijziging voorstellen",
+      "H2 Zet JigSwap op je beginscherm",
+      "H2 Zoeken"
+    ],
+    "pageHeight": 2230,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 46,
+    "tapUnder24": 1,
+    "tapUnder24Examples": [
+      "input.sr-only 1x1"
+    ],
+    "tap24to44": 32,
+    "tap24to44Examples": [
+      "input#se-title.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground \"Café\" 367x36",
+      "input#se-brand.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground \"Goliath\" 367x36",
+      "input#se-publisher.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 367x36",
+      "input#se-pieces.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground \"1000\" 367x36",
+      "button.rounded-full.border.px-2.5.py-1 \"300\" 44x26",
+      "button.rounded-full.border.px-2.5.py-1 \"500\" 44x26",
+      "button.rounded-full.border.px-2.5.py-1 \"750\" 44x26",
+      "button.rounded-full.border.px-2.5.py-1 \"1000\" 51x26"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\"",
+      "input.sr-only"
+    ],
+    "smallText": [],
+    "zoomingInputs": [
+      "input.min-w-[120px].flex-1.border-none.bg-transparent [aria=\"Tags\"] 14px",
+      "input.sr-only 14px"
+    ],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 2230,
+    "client": 844,
+    "top": 1386,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-nl/app__puzzles_m9712xm5gtgnqszgq5xwvh82ph8a9hdz_suggest-edit__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__puzzles_m9712xm5gtgnqszgq5xwvh82ph8a9hdz_suggest-edit__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__puzzles_m9712xm5gtgnqszgq5xwvh82ph8a9hdz_suggest-edit__03.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

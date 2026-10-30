@@ -1,0 +1,145 @@
+{
+  "variant": "mobile-light",
+  "route": "/docs",
+  "authed": false,
+  "name": "pub__docs",
+  "loadMs": 3840,
+  "finalUrl": "/docs",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "JigSwap",
+    "lang": "en",
+    "h1": [
+      "JigSwap User Guide"
+    ],
+    "headings": [
+      "H1 JigSwap User Guide",
+      "H3 Getting Started",
+      "H3 Your Library",
+      "H3 Sharing & Exchanges",
+      "H3 Discovering & Community",
+      "H3 Staying Informed",
+      "H3 Help"
+    ],
+    "pageHeight": 2717,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 23,
+    "tapUnder24": 13,
+    "tapUnder24Examples": [
+      "a.sr-only.focus:not-sr-only.focus:absolute.focus:z-50 \"Skip to content\" 1x1",
+      "button.flex.items-center.gap-1.5.text-[14px] [aria=\"Open documentation navigation\"] \"Docs\" 56x21",
+      "button.ml-auto [aria=\"Search documentation\"] 16x16",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"How it works\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Browse puzzles\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Features\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Docs\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Start trading\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"About\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Contact\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Privacy policy\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Terms of service\" 342x22"
+    ],
+    "tap24to44": 4,
+    "tap24to44Examples": [
+      "a [aria=\"JigSwap\"] \"JigSwap\" 118x37",
+      "button#radix-_R_7aj6l6_.inline-flex.items-center.justify-center.w-10 [aria=\"Switch language\"] \"🇺🇸\" 40x40",
+      "button.inline-flex.items-center.justify-center.w-10 [aria=\"Toggle dark mode\"] 40x40",
+      "button.min-[861px]:hidden.inline-flex.items-center.justify-center [aria=\"Open menu\"] 40x40"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "a.sr-only.focus:not-sr-only.focus:absolute.focus:z-50 \"Skip to content\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "count": 19,
+      "nodes": [
+        {
+          "target": ".group.rounded-\\[20px\\].p-6:nth-child(1) > .mt-1\\.5",
+          "html": "<p class=\"text-[14.5px] text-mk-text-muted mt-1.5\">Create your account, set up your shelf, learn the layout, read your dashboard, search fast, and set your lang",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.18 (foreground color: #7c7689, background color: #f9faff, font size: 10.9pt (14.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": ".group.rounded-\\[20px\\].p-6:nth-child(2) > .mt-1\\.5",
+          "html": "<p class=\"text-[14.5px] text-mk-text-muted mt-1.5\">Add puzzles, organize collections, log completions, and track your goals.</p>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.18 (foreground color: #7c7689, background color: #f9faff, font size: 10.9pt (14.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": ".group.rounded-\\[20px\\].p-6:nth-child(3) > .mt-1\\.5",
+          "html": "<p class=\"text-[14.5px] text-mk-text-muted mt-1.5\">Control who sees each copy, then lend, swap, and trade with others, in circles and households.</p>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.18 (foreground color: #7c7689, background color: #f9faff, font size: 10.9pt (14.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": ".group.rounded-\\[20px\\].p-6:nth-child(4) > .mt-1\\.5",
+          "html": "<p class=\"text-[14.5px] text-mk-text-muted mt-1.5\">Browse puzzles and people, follow members, curate your profile, build reputation through reviews, and block o",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.18 (foreground color: #7c7689, background color: #f9faff, font size: 10.9pt (14.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    },
+    {
+      "id": "heading-order",
+      "impact": "moderate",
+      "help": "Heading levels should only increase by one",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".group.rounded-\\[20px\\].p-6:nth-child(1) > h3",
+          "html": "<h3 class=\"font-mk-heading font-semibold text-[18px] text-mk-text-strong group-hover:text-mk-violet-600\">Getting Started</h3>",
+          "summary": "Fix any of the following:\n  Heading order invalid"
+        }
+      ]
+    },
+    {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "help": "Elements must have their visible text as part of their accessible name",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".gap-1\\.5",
+          "html": "<button type=\"button\" aria-label=\"Open documentation navigation\" class=\"flex items-center gap-1.5 text-[14px] text-mk-text-body\">",
+          "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+        }
+      ]
+    },
+    {
+      "id": "region",
+      "impact": "moderate",
+      "help": "All page content should be contained by landmarks",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".sr-only",
+          "html": "<a href=\"#docs-content\" class=\"sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:rounded-md focus:bg-mk-card focus:px-3 focus:p",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 2717,
+    "client": 844,
+    "top": 1873,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-light/pub__docs__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/pub__docs__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/pub__docs__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/pub__docs__04.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

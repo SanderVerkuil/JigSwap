@@ -1,0 +1,90 @@
+{
+  "variant": "desktop-light",
+  "route": "/sign-up",
+  "authed": false,
+  "name": "pub__sign-up",
+  "loadMs": 3700,
+  "finalUrl": "/sign-up",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "Sign up — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Access restricted"
+    ],
+    "headings": [
+      "H1 Access restricted"
+    ],
+    "pageHeight": 900,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 3,
+    "tapUnder24": 2,
+    "tapUnder24Examples": [
+      "a.cl-footerActionLink.🔒️.cl-internal-okpjoh \"Sign in\" 42x18",
+      "a.cl-internal-1scxde7 [aria=\"Clerk logo\"] 48x14"
+    ],
+    "tap24to44": 1,
+    "tap24to44Examples": [
+      "button.cl-button.🔒️.cl-internal-r3dqqi \"Join waitlist\" 322x32"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "landmark-one-main",
+      "impact": "moderate",
+      "help": "Document should have one main landmark",
+      "count": 1,
+      "nodes": [
+        {
+          "target": "html",
+          "html": "<html lang=\"en\" class=\"light\" style=\"color-scheme: light;\">",
+          "summary": "Fix all of the following:\n  Document does not have a main landmark"
+        }
+      ]
+    },
+    {
+      "id": "region",
+      "impact": "moderate",
+      "help": "All page content should be contained by landmarks",
+      "count": 3,
+      "nodes": [
+        {
+          "target": "h1",
+          "html": "<h1 class=\"cl-headerTitle 🔒️ cl-internal-1pgoci9\" data-localization-key=\"signUp.restrictedAccess.title\">Access restricted</h1>",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": ".cl-headerSubtitle",
+          "html": "<p class=\"cl-headerSubtitle 🔒️ cl-internal-1eg9piu\" data-localization-key=\"signUp.restrictedAccess.subtitleWaitlist\" data-variant=\"body\" data-color=\"secondary\"",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": ".cl-footer",
+          "html": "<div class=\"cl-footer 🔒️ cl-internal-lpstq8\">",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 900,
+    "client": 900,
+    "top": 0,
+    "step": 810
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/desktop-light/pub__sign-up__01.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

@@ -1,0 +1,153 @@
+{
+  "variant": "tablet-light",
+  "route": "/circles/3e51e703-87d4-435a-91d7-29327390e7b1",
+  "authed": true,
+  "name": "app__circles_3e51e703-87d4-435a-91d7-29327390e7b1",
+  "loadMs": 4506,
+  "finalUrl": "/circles/3e51e703-87d4-435a-91d7-29327390e7b1",
+  "metrics": {
+    "regionScrollHeight": 1110,
+    "regionOverflowX": 0,
+    "title": "Circles — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Test",
+      "Test"
+    ],
+    "headings": [
+      "H1 Test",
+      "H1 Test",
+      "H2 Test",
+      "H3 Group chat",
+      "H3 Shared puzzles",
+      "H2 Search"
+    ],
+    "pageHeight": 1180,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 31,
+    "tapUnder24": 2,
+    "tapUnder24Examples": [
+      "a.transition-colors.hover:text-sidebar-accent-foreground.hover:underline \"Community\" 74x16",
+      "a.transition-colors.hover:text-sidebar-accent-foreground.hover:underline.active \"Circles\" 42x16"
+    ],
+    "tap24to44": 29,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.justify-center.gap-2 \"Toggle Sidebar\" 32x32",
+      "a.flex.shrink-0.items-center.transition-opacity 108x28",
+      "button.flex.h-9.w-full.max-w-[520px] \"Search puzzles, people, circles… ⌘K\" 326x36",
+      "button.inline-flex.items-center.justify-center.gap-2 [aria=\"Notifications\"] \"2\" 36x36",
+      "button#radix-_R_38cj6l6_.inline-flex.items-center.justify-center.gap-2 \"Toggle theme\" 36x36",
+      "button#radix-_R_58cj6l6_.inline-flex.items-center.justify-center.gap-2 \"Switch language\" 36x36",
+      "a.inline-flex.items-center.justify-center.gap-2 \"Add Puzzle\" 126x36",
+      "a.peer/menu-button.flex.w-full.items-center \"Dashboard\" 224x32"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.sr-only \"Toggle Sidebar\"",
+      "span.sr-only \"Toggle theme\"",
+      "span.sr-only \"Switch language\"",
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [
+      "kbd.pointer-events-none.rounded.border.bg-muted \"⌘K\" 11px",
+      "span.inline-flex.items-center.border.py-0.5 [aria=\"2 unread notifications\"] \"2\" 10px",
+      "a.text-sidebar-foreground/70.ring-sidebar-ring.flex.h-8 \"MY LIBRARY\" 10px",
+      "a.text-sidebar-foreground/70.ring-sidebar-ring.flex.h-8 \"COMMUNITY\" 10px"
+    ],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "count": 2,
+      "nodes": [
+        {
+          "target": "kbd",
+          "html": "<kbd class=\"pointer-events-none rounded border bg-muted px-1.5 py-0.5 font-mono text-[11px] leading-none text-muted-foreground\">⌘K</kbd>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #6f7087, background color: #f2f2fb, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": ".transition-\\[filter\\]",
+          "html": "<span aria-hidden=\"true\" class=\"truncate text-xs text-muted-foreground transition-[filter] blur-[4px] select-none\">s.verkuil+dev@pm.me</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.21 (foreground color: #6f7087, background color: #eeeeff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    },
+    {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "help": "Elements must have their visible text as part of their accessible name",
+      "count": 1,
+      "nodes": [
+        {
+          "target": "button[data-slot=\"popover-trigger\"]",
+          "html": "<button data-slot=\"popover-trigger\" class=\"inline-flex items-ce...\" aria-label=\"Notifications\" type=\"button\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-s",
+          "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+        }
+      ]
+    },
+    {
+      "id": "region",
+      "impact": "moderate",
+      "help": "All page content should be contained by landmarks",
+      "count": 18,
+      "nodes": [
+        {
+          "target": ".peer\\/menu-button[href$=\"dashboard\"][data-active=\"false\"] > span",
+          "html": "<span>Dashboard</span>",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": ".p-2[data-slot=\"sidebar-group\"][data-sidebar=\"group\"]:nth-child(2) > .text-sidebar-foreground\\/70.transition-\\[margin\\,opacity\\].group-data-\\[collapsible\\=icon\\]\\:-mt-8",
+          "html": "<a class=\"text-sidebar-foregro...\" data-slot=\"sidebar-group-label\" data-sidebar=\"group-label\" href=\"/library\">",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": "a[href$=\"my-puzzles\"] > span",
+          "html": "<span>My Puzzles</span>",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": "a[href$=\"collections\"] > span",
+          "html": "<span>Collections</span>",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    },
+    {
+      "id": "target-size",
+      "impact": "serious",
+      "help": "All touch targets must be 24px large, or leave sufficient space",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".z-\\[4\\]",
+          "html": "<button type=\"button\" aria-label=\"Henk Pieterszoon\" class=\"focus-visible:ring-r...\" data-state=\"closed\">",
+          "summary": "Fix any of the following:\n  Target has insufficient size because it is partially obscured (smallest space is 22px by 32px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 1180,
+    "client": 1180,
+    "top": 0,
+    "step": 1062
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/tablet-light/app__circles_3e51e703-87d4-435a-91d7-29327390e7b1__01.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [
+    "[CONVEX M(presence:heartbeat)] [Request ID: f20972ea29fc584c] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":25821}\n    at enforceRateLimit (../../convex/lib/rateLimits.ts:45:32)\n    at async handler (../../convex/presence.ts:61:4)\n",
+    "pageerror: [CONVEX M(presence:heartbeat)] [Request ID: f20972ea29fc584c] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":25821}"
+  ],
+  "httpErrors": []
+}

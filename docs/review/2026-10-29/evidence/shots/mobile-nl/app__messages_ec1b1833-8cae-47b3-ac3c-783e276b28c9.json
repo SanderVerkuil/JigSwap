@@ -1,0 +1,60 @@
+{
+  "variant": "mobile-nl",
+  "route": "/messages/ec1b1833-8cae-47b3-ac3c-783e276b28c9",
+  "authed": true,
+  "name": "app__messages_ec1b1833-8cae-47b3-ac3c-783e276b28c9",
+  "loadMs": 4544,
+  "finalUrl": "/messages/ec1b1833-8cae-47b3-ac3c-783e276b28c9",
+  "metrics": {
+    "regionScrollHeight": 844,
+    "regionOverflowX": 0,
+    "title": "Berichten — JigSwap",
+    "lang": "nl",
+    "h1": [
+      "Berichten",
+      "Test\n, Kringchat"
+    ],
+    "headings": [
+      "H1 Berichten",
+      "H1 Test\n, Kringchat",
+      "H2 Zet JigSwap op je beginscherm",
+      "H2 Zoeken"
+    ],
+    "pageHeight": 1106,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 8,
+    "tapUnder24": 1,
+    "tapUnder24Examples": [
+      "button.hover:text-foreground.focus-visible:ring-ring.relative.min-w-0 \"2 leden\" 44x16"
+    ],
+    "tap24to44": 0,
+    "tap24to44Examples": [],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.sr-only \", Kringchat\"",
+      "button.hover:text-foreground.focus-visible:ring-ring.relative.min-w-0 \"2 leden\"",
+      "span.sr-only \"Jij:\""
+    ],
+    "smallText": [
+      "time.text-muted-foreground.px-1.pt-0.5.text-[11px] \"07:39\" 11px"
+    ],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 1106,
+    "client": 844,
+    "top": 262,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-nl/app__messages_ec1b1833-8cae-47b3-ac3c-783e276b28c9__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__messages_ec1b1833-8cae-47b3-ac3c-783e276b28c9__02.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

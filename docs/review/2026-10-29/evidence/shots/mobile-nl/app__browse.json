@@ -1,0 +1,85 @@
+{
+  "variant": "mobile-nl",
+  "route": "/browse",
+  "authed": true,
+  "name": "app__browse",
+  "loadMs": 4771,
+  "finalUrl": "/browse",
+  "metrics": {
+    "regionScrollHeight": 1935,
+    "regionOverflowX": 0,
+    "title": "Puzzels bladeren — JigSwap",
+    "lang": "nl",
+    "h1": [
+      "Puzzels Ontdekken",
+      "Puzzels Ontdekken"
+    ],
+    "headings": [
+      "H1 Puzzels Ontdekken",
+      "H1 Puzzels Ontdekken",
+      "H3 Bereleuk hier!",
+      "H3 Rondje Texel",
+      "H3 Café",
+      "H2 Zet JigSwap op je beginscherm",
+      "H2 Zoeken"
+    ],
+    "pageHeight": 2311,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 26,
+    "tapUnder24": 3,
+    "tapUnder24Examples": [
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Bereleuk hier!\" 98x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Rondje Texel\" 93x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Café\" 36x20"
+    ],
+    "tap24to44": 12,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap [aria=\"Filter Toevoegen\"] \"Filter Toevoegen\" 166x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap [aria=\"Rasterweergave\"] 36x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap [aria=\"Lijstweergave\"] 36x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap 32x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap 32x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap 32x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap 32x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap 32x32"
+    ],
+    "unnamedControls": [
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap"
+    ],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 2311,
+    "client": 844,
+    "top": 1467,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-nl/app__browse__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__browse__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__browse__03.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [
+    "[CONVEX M(presence:heartbeat)] [Request ID: cf6b710b2b95c9b7] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":20992}\n    at enforceRateLimit (../../convex/lib/rateLimits.ts:45:32)\n    at async handler (../../convex/presence.ts:61:4)\n",
+    "pageerror: [CONVEX M(presence:heartbeat)] [Request ID: cf6b710b2b95c9b7] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":20992}"
+  ],
+  "httpErrors": []
+}

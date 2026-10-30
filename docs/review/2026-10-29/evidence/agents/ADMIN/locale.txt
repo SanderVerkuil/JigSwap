@@ -1,0 +1,410 @@
+moderation.loading | Loading submissions… | Inzendingen laden…
+moderation.empty | No pending submissions. | Geen openstaande inzendingen.
+moderation.pieces | {count} pieces | {count} stukjes
+moderation.reject | Reject | Afkeuren
+moderation.error | Failed to update submission | Inzending bijwerken mislukt
+moderation.toast.approved | Approved “{title}” — {count} left in queue. | “{title}” goedgekeurd — nog {count} in de wachtrij.
+moderation.toast.edited | Approved (edited) “{title}” — {count} left in queue. | “{title}” goedgekeurd (bewerkt) — nog {count} in de wachtrij.
+moderation.toast.rejected | Rejected “{title}” — {count} left in queue. | “{title}” afgewezen — nog {count} in de wachtrij.
+moderation.toast.removed | Removed image on “{title}” — {count} left in queue. | Afbeelding verwijderd bij “{title}” — nog {count} in de wachtrij.
+moderation.toast.restored | Restored photo on “{title}” — {count} left in queue. | Foto hersteld bij “{title}” — nog {count} in de wachtrij.
+moderation.toast.restoredToUnchecked | Moved the photo on “{title}” back to Unchecked Photos — {count} left in queue. | Foto bij “{title}” terug naar Niet-gecontroleerde foto's — nog {count} in de wachtrij.
+moderation.toast.manualApproved | Approved photo on “{title}” — {count} left in queue. | Foto goedgekeurd bij “{title}” — nog {count} in de wachtrij.
+moderation.toast.manualRejected | Rejected photo on “{title}” — {count} left in queue. | Foto afgewezen bij “{title}” — nog {count} in de wachtrij.
+moderation.toast.hashCheckWaived | Approved photo on “{title}” without a hash check — {count} left in queue. | Foto bij “{title}” goedgekeurd zonder hash-check — nog {count} in de wachtrij.
+moderation.toast.recheckQueued | Checking the photo on “{title}” again. | De foto bij “{title}” wordt opnieuw gecontroleerd.
+moderation.banner.pill | ADMIN | ADMIN
+moderation.banner.subtitle | Moderation console | Moderatieconsole
+moderation.kpis.approved | Approved | Goedgekeurd
+moderation.kpis.rejected | Rejected | Afgekeurd
+moderation.kpis.flagsCleared | Flags cleared | Meldingen afgehandeld
+moderation.kpis.avgReview | Avg. review time | Gem. beoordelingstijd
+moderation.kpis.thisWeek | this week | deze week
+moderation.tabs.submissions | Submissions | Inzendingen
+moderation.tabs.flagged | Flagged Images | Gemarkeerde afbeeldingen
+moderation.tabs.activity | Activity Log | Activiteitenlog
+moderation.tabs.unchecked | Unchecked Photos | Niet-gecontroleerde foto's
+moderation.tabs.hashMatches | Hash matches | Hash-matches
+moderation.tabs.reports | Reports | Meldingen
+moderation.detail.submitted | Submitted | Ingezonden
+moderation.detail.difficulty | Difficulty | Moeilijkheid
+moderation.detail.note | Submitter note | Notitie van inzender
+moderation.dupWarning | Possible duplicate of <strong>{title}</strong> already in the catalog. Review before approving. | Mogelijk duplicaat van <strong>{title}</strong> dat al in de catalogus staat. Controleer voor het goedkeuren.
+moderation.actions.approve | Approve & Publish | Goedkeuren & publiceren
+moderation.actions.edit | Edit & Approve | Bewerken & goedkeuren
+moderation.editDialog.title | Edit & Approve | Bewerken & goedkeuren
+moderation.editDialog.description | Fix the submission's details, then save to approve and publish it in one step. | Corrigeer de gegevens van de inzending en sla op om deze in één stap goed te keuren en te publiceren.
+moderation.editDialog.save | Save & Approve | Opslaan & goedkeuren
+moderation.flag.loading | Loading flagged images… | Gemarkeerde afbeeldingen laden…
+moderation.flag.unlabeled | Flagged image | Gemarkeerde afbeelding
+moderation.flag.reveal | Hover or tap to reveal flagged image | Beweeg eroverheen of tik om de gemarkeerde afbeelding te tonen
+moderation.flag.severity.high | High severity | Hoge ernst
+moderation.flag.severity.medium | Medium severity | Gemiddelde ernst
+moderation.flag.severity.low | Low severity | Lage ernst
+moderation.flag.onPuzzle | On puzzle | Op puzzel
+moderation.flag.uploadedBy | Uploaded by | Geüpload door
+moderation.flag.label | Label | Label
+moderation.flag.score | Score | Score
+moderation.flag.confirm | Confirm Removal | Verwijdering bevestigen
+moderation.flag.confirmArm | Are you sure? | Weet je het zeker?
+moderation.flag.restore | Restore Photo | Foto herstellen
+moderation.flag.hashTimedOutHint | This photo's hash check against known abuse material timed out before it was rejected. Restoring it does not publish it: it goes back to Unchecked Photos, where only Approve without hash check publishes it. | De hash-check van deze foto op bekend misbruikmateriaal was verlopen voordat hij werd afgewezen. Herstellen publiceert hem niet: hij gaat terug naar Niet-gecontroleerde foto's, waar alleen Goedkeuren zonder hash-check hem publiceert.
+moderation.flaggedEmpty | No flagged images. The community's happy. | Geen gemarkeerde afbeeldingen. De community is tevreden.
+moderation.activity.loading | Loading activity… | Activiteit laden…
+moderation.activity.system | System | Systeem
+moderation.activity.definition_approved | <strong>{actor}</strong> approved <strong>{target}</strong> | <strong>{actor}</strong> keurde <strong>{target}</strong> goed
+moderation.activity.definition_edited_approved | <strong>{actor}</strong> edited & approved <strong>{target}</strong> | <strong>{actor}</strong> bewerkte en keurde <strong>{target}</strong> goed
+moderation.activity.definition_rejected | <strong>{actor}</strong> rejected <strong>{target}</strong> | <strong>{actor}</strong> wees <strong>{target}</strong> af
+moderation.activity.definition_disabled | <strong>{actor}</strong> disabled <strong>{target}</strong> | <strong>{actor}</strong> schakelde <strong>{target}</strong> uit
+moderation.activity.definition_reenabled | <strong>{actor}</strong> re-enabled <strong>{target}</strong> | <strong>{actor}</strong> schakelde <strong>{target}</strong> weer in
+moderation.activity.definition_edited | <strong>{actor}</strong> edited <strong>{target}</strong> | <strong>{actor}</strong> bewerkte <strong>{target}</strong>
+moderation.activity.proposal_approved | <strong>{actor}</strong> approved a suggested edit to <strong>{target}</strong> | <strong>{actor}</strong> keurde een wijzigingsvoorstel voor <strong>{target}</strong> goed
+moderation.activity.proposal_rejected | <strong>{actor}</strong> rejected a suggested edit to <strong>{target}</strong> | <strong>{actor}</strong> wees een wijzigingsvoorstel voor <strong>{target}</strong> af
+moderation.activity.photo_removal_confirmed | <strong>{actor}</strong> removed a photo on <strong>{target}</strong> | <strong>{actor}</strong> verwijderde een foto bij <strong>{target}</strong>
+moderation.activity.photo_auto_rejected | <strong>{actor}</strong> auto-flagged a photo on <strong>{target}</strong> | <strong>{actor}</strong> markeerde automatisch een foto bij <strong>{target}</strong>
+moderation.activity.photo_restored | <strong>{actor}</strong> restored a photo on <strong>{target}</strong> | <strong>{actor}</strong> herstelde een foto bij <strong>{target}</strong>
+moderation.activity.role_granted | <strong>{actor}</strong> made <strong>{target}</strong> an admin | <strong>{actor}</strong> maakte <strong>{target}</strong> beheerder
+moderation.activity.role_revoked | <strong>{actor}</strong> removed the admin role from <strong>{target}</strong> | <strong>{actor}</strong> trok de beheerdersrol van <strong>{target}</strong> in
+moderation.activity.photo_manually_approved | <strong>{actor}</strong> approved an unchecked photo on <strong>{target}</strong> | <strong>{actor}</strong> keurde een niet-gecontroleerde foto goed bij <strong>{target}</strong>
+moderation.activity.photo_manually_rejected | <strong>{actor}</strong> rejected an unchecked photo on <strong>{target}</strong> | <strong>{actor}</strong> wees een niet-gecontroleerde foto af bij <strong>{target}</strong>
+moderation.activity.photo_hash_check_waived | <strong>{actor}</strong> approved a photo without a hash check on <strong>{target}</strong> | <strong>{actor}</strong> keurde een foto zonder hash-check goed bij <strong>{target}</strong>
+moderation.activity.image_quarantined | <strong>{actor}</strong> quarantined a photo after a known-abuse hash match (<strong>{target}</strong>) | <strong>{actor}</strong> zette een foto in quarantaine na een hash-match met bekend misbruikmateriaal (<strong>{target}</strong>)
+moderation.activity.csam_escalation_updated | <strong>{actor}</strong> updated a hash-match escalation (<strong>{target}</strong>) | <strong>{actor}</strong> werkte een hash-match-escalatie bij (<strong>{target}</strong>)
+moderation.activity.report_dismissed | <strong>{actor}</strong> dismissed a report about <strong>{target}</strong> | <strong>{actor}</strong> wees een melding over <strong>{target}</strong> af
+moderation.activity.report_content_removed | <strong>{actor}</strong> removed reported content from <strong>{target}</strong> | <strong>{actor}</strong> verwijderde gemelde inhoud van <strong>{target}</strong>
+moderation.activity.report_warned | <strong>{actor}</strong> warned <strong>{target}</strong> after a report | <strong>{actor}</strong> waarschuwde <strong>{target}</strong> na een melding
+moderation.activity.message_image_auto_rejected | <strong>{actor}</strong> auto-flagged a <strong>{target}</strong> | <strong>{actor}</strong> heeft een <strong>{target}</strong> automatisch gemarkeerd
+moderation.activity.message_image_restored | <strong>{actor}</strong> restored a <strong>{target}</strong> after a review request | <strong>{actor}</strong> heeft een <strong>{target}</strong> hersteld na een verzoek om herbeoordeling
+moderation.activityEmpty | No moderation activity yet. | Nog geen moderatieactiviteit.
+moderation.screening.title | Photo screening needs attention | Fotocontrole vraagt aandacht
+moderation.screening.missingToken | Screening is not configured on this deployment (provider {provider}; not set: {vars}). New photos stay visible to their uploader only until they can be checked. | Fotocontrole is niet ingesteld op deze deployment (aanbieder {provider}; ontbreekt: {vars}). Nieuwe foto's blijven alleen zichtbaar voor de uploader totdat ze gecontroleerd kunnen worden.
+moderation.screening.disabled | Screening is turned off on this deployment (MODERATION_PROVIDER=none). New photos are published without a check. | Fotocontrole staat uit op deze deployment (MODERATION_PROVIDER=none). Nieuwe foto's worden zonder controle gepubliceerd.
+moderation.screening.unscored | {countLabel} {count, plural, one {photo} other {photos}} could not be checked yet and {count, plural, one {is} other {are}} visible to the uploader only. Once screening works, run the re-screen from the one-shot migrations runbook. | {countLabel} {count, plural, one {foto kon} other {foto's konden}} nog niet worden gecontroleerd en {count, plural, one {is} other {zijn}} alleen zichtbaar voor de uploader. Voer de hercontrole uit het runbook voor eenmalige migraties uit zodra de controle werkt.
+moderation.uncheckedEmpty | No photos are waiting for a check. | Er wachten geen foto's op controle.
+moderation.unchecked.loading | Loading unchecked photos… | Niet-gecontroleerde foto's laden…
+moderation.unchecked.reveal | Hover or tap to reveal the photo | Beweeg eroverheen of tik om de foto te tonen
+moderation.unchecked.status.pending | Being checked | Wordt gecontroleerd
+moderation.unchecked.status.unscored | Could not be checked | Kon niet worden gecontroleerd
+moderation.unchecked.status.hashTimedOut | Hash check timed out | Hash-check verlopen
+moderation.unchecked.source.copy | Copy photo | Foto van exemplaar
+moderation.unchecked.source.completion | Completion photo | Foto van gelegde puzzel
+moderation.unchecked.source.boxArt | Box art | Catalogusafbeelding
+moderation.unchecked.source.message | Message photo | Foto in bericht
+moderation.unchecked.source.circleIcon | Circle icon | Kringpictogram
+moderation.unchecked.reason.missing_token | Screening not configured | Controle niet ingesteld
+moderation.unchecked.reason.auth | Provider rejected the credentials | Aanbieder weigerde de inloggegevens
+moderation.unchecked.reason.rate_limited | Provider rate limit | Limiet van aanbieder bereikt
+moderation.unchecked.reason.model_unavailable | Model unavailable | Model niet beschikbaar
+moderation.unchecked.reason.provider_error | Provider error | Fout bij aanbieder
+moderation.unchecked.reason.network | Provider unreachable | Aanbieder niet bereikbaar
+moderation.unchecked.reason.bad_response | Unexpected provider response | Onverwacht antwoord van aanbieder
+moderation.unchecked.reason.missing_file | File missing | Bestand ontbreekt
+moderation.unchecked.reason.download_error | File could not be read | Bestand kon niet worden gelezen
+moderation.unchecked.reason.internal_error | Internal error | Interne fout
+moderation.unchecked.reason.check_failed | The check did not complete | De controle is niet afgerond
+moderation.unchecked.reason.stalled | Still unchecked after 24 hours | Na 24 uur nog niet gecontroleerd
+moderation.unchecked.reason.unknown | Unknown | Onbekend
+moderation.unchecked.onPuzzle | On puzzle | Op puzzel
+moderation.unchecked.uploadedBy | Uploaded by | Geüpload door
+moderation.unchecked.statusLabel | Status | Status
+moderation.unchecked.reasonLabel | Reason | Reden
+moderation.unchecked.approve | Approve Photo | Foto goedkeuren
+moderation.unchecked.reject | Reject Photo | Foto afwijzen
+moderation.unchecked.rejectArm | Are you sure? | Weet je het zeker?
+moderation.unchecked.recheck | Check again | Opnieuw controleren
+moderation.unchecked.waive | Approve without hash check | Goedkeuren zonder hash-check
+moderation.unchecked.waiveArm | Yes, publish without hash check | Ja, publiceren zonder hash-check
+moderation.unchecked.hint | Approving publishes the photo to other members. Rejecting hides it; a rejected copy photo moves to Flagged Images, a rejected completion photo is deleted, and rejected box art is removed from its puzzle and deleted. Check again runs the automated check once more on a photo it could not check, for example after the screening service is working again. A message photo is sent to its conversation when approved; rejecting removes it for both members and tells the sender. A circle icon becomes the circle's icon when approved; rejecting deletes it and the circle keeps its previous icon. | Goedkeuren publiceert de foto voor andere leden. Afwijzen verbergt hem; een afgewezen foto van een exemplaar gaat naar Gemarkeerde afbeeldingen, een afgewezen foto van een gelegde puzzel wordt verwijderd, en een afgewezen catalogusafbeelding wordt van de puzzel gehaald en verwijderd. Opnieuw controleren laat de automatische controle nog een keer los op een foto die niet gecontroleerd kon worden, bijvoorbeeld als de controledienst weer werkt. Een foto in een bericht wordt na goedkeuring in het gesprek getoond; afwijzen verwijdert hem voor beide leden en laat de afzender dat weten. Een kringpictogram wordt na goedkeuring het pictogram van de kring; afwijzen verwijdert het en de kring houdt zijn vorige pictogram.
+moderation.unchecked.hashTimedOutHint | The hash check against known abuse material could not be done within 7 days, so the automatic re-checks stopped. Approve without hash check publishes the photo without that check, after a second click to confirm (a hash match found later still quarantines it); rejecting hides it like any rejection. | De hash-check op bekend misbruikmateriaal kon niet binnen 7 dagen worden gedaan, dus de automatische hercontroles zijn gestopt. Goedkeuren zonder hash-check publiceert de foto zonder die controle, na een tweede klik ter bevestiging (een hash-match die later wordt gevonden, zet hem alsnog in quarantaine); afwijzen verbergt hem zoals elke afwijzing.
+moderation.csam.loading | Loading hash matches… | Hash-matches laden…
+moderation.csam.empty | No hash matches. | Geen hash-matches.
+moderation.csam.operatorNoteTitle | What to do with a hash match | Wat te doen bij een hash-match
+moderation.csam.operatorNote | These uploads matched a list of known child sexual abuse material. They are quarantined: nobody can see them, admins included, and the file is kept. Report each one to Meldpunt Offlimits (<link>meldpunt.offlimits.nl</link>) or the police, then mark it reported. Do not try to open, download or share the image. | Deze uploads kwamen overeen met een lijst van bekend beeldmateriaal van seksueel misbruik van kinderen. Ze staan in quarantaine: niemand kan ze zien, ook beheerders niet, en het bestand blijft bewaard. Meld elke match bij Meldpunt Offlimits (<link>meldpunt.offlimits.nl</link>) of de politie en markeer hem daarna als gemeld. Probeer de afbeelding niet te openen, te downloaden of te delen.
+moderation.csam.notConfigured | Hash matching is off on this deployment (CSAM_HASHCHECK_PROVIDER is not "offlimits"). | Hash-matching staat uit op deze omgeving (CSAM_HASHCHECK_PROVIDER is niet "offlimits").
+moderation.csam.missingConfig | Hash matching is selected but not configured (not set: {vars}), so it is not running. | Hash-matching is gekozen maar niet ingesteld (ontbreekt: {vars}), dus het draait niet.
+moderation.csam.status.open | Open | Open
+moderation.csam.status.reported | Reported | Gemeld
+moderation.csam.status.closed | Closed | Gesloten
+moderation.csam.table.ownedPuzzleImages | Copy photo | Foto bij exemplaar
+moderation.csam.table.completionImages | Completion photo | Foto bij voltooiing
+moderation.csam.table.messageAttachments | Message photo | Foto in bericht
+moderation.csam.table.boxArtUploads | Box art | Catalogusafbeelding
+moderation.csam.table.circleIcons | Circle icon | Kringpictogram
+moderation.csam.matched | Matched {time} via {provider} | Match {time} via {provider}
+moderation.csam.uploader | Uploaded by {name} | Geüpload door {name}
+moderation.csam.reportedAt | Reported {time} | Gemeld {time}
+moderation.csam.noteLabel | Report reference or note | Meldingskenmerk of notitie
+moderation.csam.notePlaceholder | e.g. Meldpunt reference | bijv. kenmerk van het Meldpunt
+moderation.csam.markReported | Mark reported | Markeer als gemeld
+moderation.csam.close | Close | Sluiten
+moderation.csam.updated | Escalation updated. | Escalatie bijgewerkt.
+moderation.csam.waiting | Hash check unreachable: {countLabel} {count, plural, one {photo} other {photos}} waiting, unpublished (oldest {since}). They are re-checked automatically for up to 7 days, then handed to an admin. | Hash-check onbereikbaar: {countLabel} {count, plural, one {foto wacht} other {foto's wachten}}, niet gepubliceerd (oudste {since}). Ze worden tot 7 dagen lang automatisch opnieuw gecontroleerd en daarna aan een beheerder overgedragen.
+moderation.csam.noteBy | {name}, {time} | {name}, {time}
+moderation.csam.addNote | Add note | Notitie toevoegen
+moderation.csam.timedOut | Hash check timed out: {count, plural, one {# photo} other {# photos}} waited over 7 days and {count, plural, one {needs} other {need}} an admin decision in Unchecked photos. | Hash-check verlopen: {count, plural, one {# foto wacht} other {# foto's wachten}} al meer dan 7 dagen op een beslissing van een beheerder in Niet-gecontroleerde foto's.
+moderation.reports.statusFilter | Report status | Status van melding
+moderation.reports.loading | Loading reports… | Meldingen laden…
+moderation.reports.loadMore | Load more | Meer laden
+moderation.reports.empty.open | No open reports. | Geen open meldingen.
+moderation.reports.empty.actioned | No actioned reports yet. | Nog geen meldingen met maatregel.
+moderation.reports.empty.dismissed | No dismissed reports yet. | Nog geen afgewezen meldingen.
+moderation.reports.statuses.open | Open | Open
+moderation.reports.statuses.actioned | Actioned | Maatregel genomen
+moderation.reports.statuses.dismissed | Dismissed | Afgewezen
+moderation.reports.kinds.user | Member | Lid
+moderation.reports.kinds.message | Message | Bericht
+moderation.reports.kinds.copy | Puzzle copy | Puzzelexemplaar
+moderation.reports.kinds.photo | Photo | Foto
+moderation.reports.kinds.exchange | Trade | Ruil
+moderation.reports.kinds.attachment | Message photo | Foto in bericht
+moderation.reports.reportedArrow | reported | meldde
+moderation.reports.openCount | {count, plural, one {# open report against this member} other {# open reports against this member}} | {count, plural, one {# open melding tegen dit lid} other {# open meldingen tegen dit lid}}
+moderation.reports.detailTitle | Report | Melding
+moderation.reports.detailDescription | The evidence for this report and the decision form. | Het bewijs bij deze melding en het beslisformulier.
+moderation.reports.reason | Reason | Reden
+moderation.reports.targetKind | Target | Onderwerp
+moderation.reports.reporter | Reporter | Melder
+moderation.reports.reported | Reported member | Gemeld lid
+moderation.reports.filed | Filed | Gemeld
+moderation.reports.status | Status | Status
+moderation.reports.details | Reporter's details | Toelichting van de melder
+moderation.reports.illegalNotice | Illegal content notice | Melding van illegale inhoud
+moderation.reports.goodFaith | Good-faith statement confirmed. | Verklaring te goeder trouw bevestigd.
+moderation.reports.photo | Reported photo | Gemelde foto
+moderation.reports.photoGone | This photo no longer exists. | Deze foto bestaat niet meer.
+moderation.reports.evidence | Thread excerpt at filing time | Gespreksfragment op het moment van melden
+moderation.reports.reportedMessage | Reported | Gemeld
+moderation.reports.system | System | Systeem
+moderation.reports.deletedMember | Deleted member | Verwijderd lid
+moderation.reports.anonymisedReporter | Anonymised | Geanonimiseerd
+moderation.reports.otherParticipant | Other participant | Andere deelnemer
+moderation.reports.otherReports | {count, plural, =0 {No other reports against this member} one {# other report against this member} other {# other reports against this member}} | {count, plural, =0 {Geen andere meldingen tegen dit lid} one {# andere melding tegen dit lid} other {# andere meldingen tegen dit lid}}
+moderation.reports.decisions.dismissed | Dismissed | Afgewezen
+moderation.reports.decisions.warned | Member warned | Lid gewaarschuwd
+moderation.reports.decisions.content_removed | Content removed | Inhoud verwijderd
+moderation.reports.decidedBy | Decided by {name} | Besloten door {name}
+moderation.reports.decisionLegend | Decision | Besluit
+moderation.reports.decide.dismissed | Dismiss | Afwijzen
+moderation.reports.decide.warned | Warn member | Lid waarschuwen
+moderation.reports.decide.content_removed | Remove content | Inhoud verwijderen
+moderation.reports.removeUnavailable | Content can only be removed for message and photo reports. | Inhoud kan alleen worden verwijderd bij meldingen over berichten en foto's.
+moderation.reports.statementLabel | Statement of reasons (sent to the member) | Motivering (wordt naar het lid gestuurd)
+moderation.reports.statementHint | {count}/{max} characters. Required: what was restricted, the ground, and how to ask for a review. | {count}/{max} tekens. Verplicht: wat is beperkt, op welke grond, en hoe om herbeoordeling te vragen.
+moderation.reports.templateNames.removal | Removal template | Sjabloon verwijdering
+moderation.reports.templateNames.warning | Warning template | Sjabloon waarschuwing
+moderation.reports.templateNames.noViolation | No-violation template | Sjabloon geen overtreding
+moderation.reports.templateContent.user | your conduct on JigSwap | je gedrag op JigSwap
+moderation.reports.templateContent.message | your message | je bericht
+moderation.reports.templateContent.copy | your puzzle copy | je puzzelexemplaar
+moderation.reports.templateContent.photo | your photo | je foto
+moderation.reports.templateContent.exchange | your conduct in a trade | je gedrag bij een ruil
+moderation.reports.templateContent.attachment | your photo in a message | je foto in een bericht
+moderation.reports.grounds.spam_scam | spam and scams | spam en oplichting
+moderation.reports.grounds.harassment_hate | harassment and hate | intimidatie en haat
+moderation.reports.grounds.sexual | sexual or inappropriate content | seksuele of ongepaste inhoud
+moderation.reports.grounds.fake_trade | fake trades and no-shows | nepruilen en niet komen opdagen
+moderation.reports.grounds.illegal | illegal content | illegale inhoud
+moderation.reports.grounds.other | respectful behaviour | respectvol gedrag
+moderation.reports.templates.removal | We removed {content} because it breaks our community guidelines on {ground}. If you think we got this wrong, you can ask for a review via the contact page. | We hebben {content} verwijderd omdat het in strijd is met onze communityrichtlijnen over {ground}. Denk je dat we het mis hebben? Dan kun je via de contactpagina om een herbeoordeling vragen.
+moderation.reports.templates.warning | We're warning you about {content}: it breaks our community guidelines on {ground}. Nothing was removed this time. If you think we got this wrong, you can ask for a review via the contact page. | We waarschuwen je over {content}: het is in strijd met onze communityrichtlijnen over {ground}. Er is deze keer niets verwijderd. Denk je dat we het mis hebben? Dan kun je via de contactpagina om een herbeoordeling vragen.
+moderation.reports.templates.noViolation | We reviewed a report about {content} and found no breach of our community guidelines on {ground}. Nothing was restricted. You can ask for a review via the contact page. | We hebben een melding over {content} bekeken en geen overtreding gevonden van onze communityrichtlijnen over {ground}. Er is niets beperkt. Je kunt via de contactpagina om een herbeoordeling vragen.
+moderation.reports.submit.none | Choose a decision | Kies een besluit
+moderation.reports.submit.dismissed | Dismiss report | Melding afwijzen
+moderation.reports.submit.warned | Warn member | Lid waarschuwen
+moderation.reports.submit.content_removed | Remove content | Inhoud verwijderen
+moderation.reports.removeConfirmTitle | Remove this content? | Deze inhoud verwijderen?
+moderation.reports.removeConfirmBody | Both members will see it as removed by a moderator, and the author gets your statement of reasons. This can't be undone. | Beide leden zien dat een moderator het heeft verwijderd, en de auteur krijgt je motivering. Dit kan niet ongedaan worden gemaakt.
+moderation.reports.cancel | Cancel | Annuleren
+moderation.reports.decided | Decision saved | Besluit opgeslagen
+moderation.reports.decideError | Couldn't save the decision. Please try again. | Het besluit opslaan is niet gelukt. Probeer het opnieuw.
+contact.loading | Loading messages… | Berichten laden…
+contact.empty | No contact messages yet. | Nog geen contactberichten.
+contact.statusNew | New | Nieuw
+contact.statusHandled | Handled | Afgehandeld
+contact.subject.swap | Lending or swapping | Lenen of ruilen
+contact.subject.account | My account | Mijn account
+contact.subject.idea | Idea or feedback | Idee of feedback
+contact.subject.other | Something else | Iets anders
+contact.markHandled | Mark as handled | Markeren als afgehandeld
+contact.markHandledSuccess | Message marked as handled | Bericht gemarkeerd als afgehandeld
+contact.markHandledError | Failed to update message | Bericht bijwerken mislukt
+docFeedback.loading | Loading feedback… | Feedback laden…
+docFeedback.empty | No feedback yet. | Nog geen feedback.
+docFeedback.helpful | Helpful | Nuttig
+docFeedback.notHelpful | Not helpful | Niet nuttig
+categories.loading | Loading categories… | Categorieën laden…
+categories.add | Add Category | Categorie toevoegen
+categories.empty.title | No categories yet | Nog geen categorieën
+categories.empty.description | Create the first category to organize the catalog. | Maak de eerste categorie aan om de catalogus te ordenen.
+categories.form.createTitle | Create New Category | Nieuwe categorie aanmaken
+categories.form.createDescription | Add a new category to the catalog. It becomes active immediately. | Voeg een nieuwe categorie toe aan de catalogus. Ze is direct actief.
+categories.form.editTitle | Edit Category | Categorie bewerken
+categories.form.editDescription | Update the names, descriptions, and color of this category. | Werk de namen, beschrijvingen en kleur van deze categorie bij.
+categories.form.name | Name | Naam
+categories.form.description | Description | Beschrijving
+categories.form.nameRequired | Name is required | Naam is verplicht
+categories.form.color | Color | Kleur
+categories.form.colorAuto | Auto | Auto
+categories.form.colorAutoHint | Color follows the English name until you pick one manually | De kleur volgt de Engelse naam totdat je zelf een kleur kiest
+categories.form.create | Create | Aanmaken
+categories.form.update | Update | Bijwerken
+categories.form.createSuccess | Category created successfully | Categorie aangemaakt
+categories.form.updateSuccess | Category updated successfully | Categorie bijgewerkt
+categories.form.saveError | Failed to save category | Categorie opslaan mislukt
+categories.list.statusInactive | Inactive | Inactief
+categories.list.translationTooltip | {language}: “{value}” | {language}: “{value}”
+categories.list.missingTranslationTooltip | {language}: missing translation | {language}: vertaling ontbreekt
+categories.list.edit | Edit | Bewerken
+categories.list.deactivate | Deactivate | Deactiveren
+categories.list.deactivateConfirmTitle | Deactivate “{name}”? | “{name}” deactiveren?
+categories.list.deactivateConfirmBody | The category is hidden from members but not deleted; existing puzzles keep it. You can reactivate it from this list at any time. | De categorie wordt verborgen voor leden, maar niet verwijderd; bestaande puzzels behouden haar. Je kunt haar op elk moment vanuit deze lijst reactiveren.
+categories.list.deactivateSuccess | Category deactivated successfully | Categorie gedeactiveerd
+categories.list.deactivateError | Failed to deactivate category | Categorie deactiveren mislukt
+categories.list.reactivate | Reactivate | Reactiveren
+categories.list.reactivateSuccess | Category reactivated successfully | Categorie gereactiveerd
+categories.list.reactivateError | Failed to reactivate category | Categorie reactiveren mislukt
+categories.list.reorderError | Failed to reorder categories | Categorieën herordenen mislukt
+categories.list.dragHandle | Drag to reorder {name} | Sleep om {name} te herordenen
+puzzles.loading | Loading puzzle definitions… | Puzzeldefinities laden…
+puzzles.empty.title | No puzzle definitions yet | Nog geen puzzeldefinities
+puzzles.empty.description | Submitted puzzle definitions will appear here with their moderation status. | Ingediende puzzeldefinities verschijnen hier met hun moderatiestatus.
+puzzles.pieces | {count} pieces | {count} stukjes
+puzzles.submittedBy | by {name} | door {name}
+puzzles.ownerCount | {count, plural, one {# owner} other {# owners}} | {count, plural, one {# eigenaar} other {# eigenaren}}
+puzzles.status.pending | Pending | In afwachting
+puzzles.status.approved | Approved | Goedgekeurd
+puzzles.status.rejected | Rejected | Afgewezen
+puzzles.status.disabled | Disabled | Uitgeschakeld
+puzzles.disable | Disable | Uitschakelen
+puzzles.reenable | Re-enable | Weer inschakelen
+puzzles.disableConfirmTitle | Disable “{title}”? | “{title}” uitschakelen?
+puzzles.disableConfirmBody | The puzzle disappears from browse and search and can no longer be added to collections. Existing copies are not affected. You can re-enable it at any time. | De puzzel verdwijnt uit bladeren en zoeken en kan niet meer aan collecties worden toegevoegd. Bestaande exemplaren blijven onaangetast. Je kunt de puzzel altijd weer inschakelen.
+puzzles.reenableConfirmTitle | Re-enable “{title}”? | “{title}” weer inschakelen?
+puzzles.reenableConfirmBody | The puzzle becomes publicly visible and acquirable again. | De puzzel wordt weer openbaar zichtbaar en kan weer worden toegevoegd.
+puzzles.disableSuccess | “{title}” disabled | “{title}” uitgeschakeld
+puzzles.disableError | Could not disable the puzzle. Please try again. | Kon de puzzel niet uitschakelen. Probeer het opnieuw.
+puzzles.reenableSuccess | “{title}” re-enabled | “{title}” weer ingeschakeld
+puzzles.reenableError | Could not re-enable the puzzle. Please try again. | Kon de puzzel niet weer inschakelen. Probeer het opnieuw.
+puzzles.loadMore | Load more | Meer laden
+puzzles.edit.button | Edit | Bewerken
+puzzles.edit.title | Edit definition | Definitie bewerken
+puzzles.edit.save | Save changes | Wijzigingen opslaan
+puzzles.edit.saving | Saving… | Opslaan…
+puzzles.edit.saved | Definition updated | Definitie bijgewerkt
+puzzles.edit.noChanges | Change at least one field | Wijzig minstens één veld
+puzzles.edit.failed | Couldn't save the definition | Definitie opslaan mislukt
+puzzles.edit.errors.emptyTitle | The title can't be empty | De titel mag niet leeg zijn
+puzzles.edit.errors.invalidBarcode | One of the barcodes is not valid | Een van de barcodes is ongeldig
+puzzles.edit.errors.invalidPieceCount | The piece count must be a positive number | Het aantal stukjes moet een positief getal zijn
+puzzles.edit.cancel | Cancel | Annuleren
+puzzles.detail.notFoundTitle | Puzzle definition not found | Puzzeldefinitie niet gevonden
+puzzles.detail.notFound | This puzzle definition does not exist or was deleted. | Deze puzzeldefinitie bestaat niet of is verwijderd.
+puzzles.detail.submittedByLabel | Submitted by | Ingediend door
+puzzles.detail.created | Created {date} | Aangemaakt op {date}
+puzzles.detail.updated | Updated {date} | Bijgewerkt op {date}
+puzzles.detail.stats.owners | Owners | Eigenaren
+puzzles.detail.stats.copies | Copies | Exemplaren
+puzzles.detail.stats.forTrade | For trade | Te ruil
+puzzles.detail.stats.forSale | For sale | Te koop
+puzzles.detail.stats.forLend | For lending | Te leen
+puzzles.detail.ownersTitle | Owners | Eigenaren
+puzzles.detail.ownersEmpty | No member owns a copy of this puzzle yet. | Nog geen lid bezit een exemplaar van deze puzzel.
+puzzles.detail.copyCount | {count, plural, one {# copy} other {# copies}} | {count, plural, one {# exemplaar} other {# exemplaren}}
+puzzles.detail.auditTitle | Moderation activity | Moderatie-activiteit
+puzzles.detail.auditEmpty | No moderation activity for this puzzle yet. | Nog geen moderatie-activiteit voor deze puzzel.
+puzzles.detail.proposalsTitle | Suggested edits | Wijzigingsvoorstellen
+puzzles.detail.proposalsEmpty | No suggested edits for this puzzle. | Geen wijzigingsvoorstellen voor deze puzzel.
+proposals.title | Suggested edits | Wijzigingsvoorstellen
+proposals.empty.title | No open suggestions | Geen open voorstellen
+proposals.empty.description | Community-proposed edits to catalogue puzzles will appear here. | Door de community voorgestelde wijzigingen aan cataloguspuzzels verschijnen hier.
+proposals.conflict | Conflict | Conflict
+proposals.status.pending | Pending | In behandeling
+proposals.status.approved | Approved | Goedgekeurd
+proposals.status.rejected | Declined | Afgewezen
+proposals.status.withdrawn | Withdrawn | Ingetrokken
+proposals.conflictBanner | The puzzle changed since this was proposed. Marked fields no longer match what the proposer saw. | De puzzel is gewijzigd sinds dit voorstel werd ingediend. Gemarkeerde velden komen niet meer overeen met wat de indiener zag.
+proposals.conflictCount | {count, plural, one {# field has a conflict} other {# fields have conflicts}} | {count, plural, one {# veld heeft een conflict} other {# velden hebben conflicten}}
+proposals.fieldsChanged | {count, plural, one {# field changed} other {# fields changed}} | {count, plural, one {# veld gewijzigd} other {# velden gewijzigd}}
+proposals.proposedBy | by {name} | door {name}
+proposals.comment | Proposer's note | Toelichting van de indiener
+proposals.field | Field | Veld
+proposals.current | Current | Huidig
+proposals.proposed | Proposed | Voorgesteld
+proposals.imageCompare.title | Compare images | Afbeeldingen vergelijken
+proposals.imageCompare.description | Left is the current image, right is the proposed replacement. | Links de huidige afbeelding, rechts de voorgestelde vervanging.
+proposals.imageCompare.open | Compare | Vergelijken
+proposals.imageCompare.sideBySide | Side by side | Naast elkaar
+proposals.imageCompare.overlay | Overlay | Overlappend
+proposals.imageCompare.handleAria | Drag to compare current and proposed image | Sleep om huidige en voorgestelde afbeelding te vergelijken
+proposals.wasWhenProposed | Was {value} when proposed | Was {value} bij indienen
+proposals.none | — | —
+proposals.review | Review | Beoordelen
+proposals.approve | Approve | Goedkeuren
+proposals.approveConfirmTitle | Approve this suggestion? | Dit voorstel goedkeuren?
+proposals.approveConfirmBody | The proposed changes to “{title}” are applied immediately. | De voorgestelde wijzigingen aan “{title}” worden direct toegepast.
+proposals.approved | Suggestion approved and applied | Voorstel goedgekeurd en toegepast
+proposals.reject | Decline | Afwijzen
+proposals.rejectTitle | Decline this suggestion? | Dit voorstel afwijzen?
+proposals.rejectBody | The proposer is notified of the decision. You can add an optional reason. | De indiener wordt op de hoogte gebracht. Je kunt optioneel een reden toevoegen.
+proposals.reasonLabel | Reason (optional) | Reden (optioneel)
+proposals.reasonPlaceholder | e.g. the current title matches the box | bijv. de huidige titel komt overeen met de doos
+proposals.rejected | Suggestion declined | Voorstel afgewezen
+proposals.alreadyDecided | This suggestion was already decided | Dit voorstel is al beoordeeld
+proposals.alreadyDecidedSub | Another admin handled it, or the proposer withdrew it. | Een andere beheerder heeft het afgehandeld, of de indiener heeft het ingetrokken.
+proposals.notFound | Suggestion not found | Voorstel niet gevonden
+proposals.notFoundSub | This suggestion does not exist or the link is wrong. | Dit voorstel bestaat niet of de link klopt niet.
+proposals.rejectionReason | Reason | Reden
+proposals.actionFailed | Couldn't complete the action | Actie kon niet worden uitgevoerd
+proposals.backToQueue | Back to suggestions | Terug naar voorstellen
+queueEmpty.title | All clear | Alles afgehandeld
+users.loading | Loading members… | Leden laden…
+users.searchPlaceholder | Search by name or username… | Zoek op naam of gebruikersnaam…
+users.emptyTitle | No members found | Geen leden gevonden
+users.empty | No members match this search. | Geen leden gevonden voor deze zoekopdracht.
+users.columns.member | Member | Lid
+users.columns.email | Email | E-mail
+users.columns.joined | Joined | Lid sinds
+users.columns.status | Status | Status
+users.columns.role | Role | Rol
+users.columns.copies | Copies | Exemplaren
+users.columns.actions | Actions | Acties
+users.active | Active | Actief
+users.inactive | Inactive | Inactief
+users.adminBadge | Admin | Beheerder
+users.loadMore | Load more | Meer laden
+users.makeAdmin | Make admin | Beheerder maken
+users.removeAdmin | Remove admin | Beheerder verwijderen
+users.grantConfirmTitle | Make {name} an admin? | {name} beheerder maken?
+users.grantConfirmBody | This grants full access to the admin console, including moderation and member management. The change is audit-logged. | Dit geeft volledige toegang tot de beheerconsole, inclusief moderatie en ledenbeheer. De wijziging wordt vastgelegd in het auditlogboek.
+users.revokeConfirmTitle | Remove admin from {name}? | Beheerdersrechten van {name} intrekken?
+users.revokeConfirmBody | They lose access to the admin console once their session refreshes. The change is audit-logged. | Zij verliezen toegang tot de beheerconsole zodra hun sessie ververst. De wijziging wordt vastgelegd in het auditlogboek.
+users.grantSuccess | {name} is now an admin. | {name} is nu beheerder.
+users.grantError | Could not grant the admin role. | Kon de beheerdersrol niet toekennen.
+users.revokeSuccess | {name} is no longer an admin. | {name} is geen beheerder meer.
+users.revokeError | Could not remove the admin role. | Kon de beheerdersrol niet intrekken.
+users.viewProfile | View community profile | Communityprofiel bekijken
+users.viewProfileName | View {name}'s community profile | Communityprofiel van {name} bekijken
+users.profileUnavailable | Deactivated members have no community profile. | Gedeactiveerde leden hebben geen communityprofiel.
+users.detail.loading | Loading member… | Lid laden…
+users.detail.notFoundTitle | Member not found | Lid niet gevonden
+users.detail.notFound | This member does not exist (or was deleted). | Dit lid bestaat niet (of is verwijderd).
+users.detail.joined | Joined {date} | Lid sinds {date}
+users.detail.updated | Updated {date} | Bijgewerkt {date}
+users.detail.location | Location | Locatie
+users.detail.language | Language | Taal
+users.detail.stats.copies | Copies | Exemplaren
+users.detail.stats.forTrade | For trade | Te ruil
+users.detail.stats.forSale | For sale | Te koop
+users.detail.stats.forLend | For lend | Te leen
+users.detail.stats.collections | Collections | Collecties
+users.detail.stats.solves | Solves | Gelegd
+users.detail.submissionsTitle | Catalog submissions | Catalogusinzendingen
+users.detail.submissionsEmpty | No catalog submissions yet. | Nog geen catalogusinzendingen.
+users.detail.status.pending | Pending | In afwachting
+users.detail.status.approved | Approved | Goedgekeurd
+users.detail.status.rejected | Rejected | Afgewezen
+users.detail.auditPerformedTitle | Moderation actions performed | Uitgevoerde moderatieacties
+users.detail.auditPerformedEmpty | No moderation actions performed. | Geen uitgevoerde moderatieacties.
+users.detail.auditReceivedTitle | Audit trail | Auditlogboek
+users.detail.auditReceivedEmpty | No audit entries target this member. | Geen auditvermeldingen voor dit lid.
+[]

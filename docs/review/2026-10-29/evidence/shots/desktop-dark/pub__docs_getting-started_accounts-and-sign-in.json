@@ -1,0 +1,81 @@
+{
+  "variant": "desktop-dark",
+  "route": "/docs/getting-started/accounts-and-sign-in",
+  "authed": false,
+  "name": "pub__docs_getting-started_accounts-and-sign-in",
+  "loadMs": 3661,
+  "finalUrl": "/docs/getting-started/accounts-and-sign-in",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "JigSwap",
+    "lang": "en",
+    "h1": [
+      "Accounts & Sign-In"
+    ],
+    "headings": [
+      "H1 Accounts & Sign-In",
+      "H2 Create an account",
+      "H2 Sign in",
+      "H2 Public pages (no account needed)",
+      "H2 When you delete your account"
+    ],
+    "pageHeight": 2482,
+    "overflowX": -15,
+    "overflowOffenders": [],
+    "interactiveCount": 65,
+    "tapUnder24": 14,
+    "tapUnder24Examples": [
+      "a.sr-only.focus:not-sr-only.focus:absolute.focus:z-50 \"Skip to content\" 1x1",
+      "a.hover:text-mk-violet-600.active \"Docs\" 32x20",
+      "a \"Friend Circles\" 114x20",
+      "a \"Households\" 99x20",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"How it works\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Browse puzzles\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Features\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Docs\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Start trading\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"About\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Contact\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Privacy policy\" 224x22"
+    ],
+    "tap24to44": 44,
+    "tap24to44Examples": [
+      "a [aria=\"JigSwap\"] \"JigSwap\" 118x37",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"How it works\" 96x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"Browse puzzles\" 115x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"Features\" 65x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"About\" 44x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"Docs\" 37x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"Contact\" 58x35",
+      "button#radix-_R_7aj6l6_.inline-flex.items-center.justify-center.w-10 [aria=\"Switch language\"] \"🇺🇸\" 40x40"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "a.sr-only.focus:not-sr-only.focus:absolute.focus:z-50 \"Skip to content\""
+    ],
+    "smallText": [
+      "kbd.ml-auto.font-mono.text-[11px].px-1.5 \"⌘K\" 11px",
+      "div.font-mono.text-[11px].font-bold.tracking-[.1em] \"ON THIS PAGE\" 11px"
+    ],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 2482,
+    "client": 900,
+    "top": 1582,
+    "step": 810
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/desktop-dark/pub__docs_getting-started_accounts-and-sign-in__01.jpg",
+    "/tmp/jigswap-review/tiles/desktop-dark/pub__docs_getting-started_accounts-and-sign-in__02.jpg",
+    "/tmp/jigswap-review/tiles/desktop-dark/pub__docs_getting-started_accounts-and-sign-in__03.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

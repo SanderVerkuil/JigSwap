@@ -1,0 +1,60 @@
+{
+  "variant": "mobile-nl",
+  "route": "/goals",
+  "authed": true,
+  "name": "app__goals",
+  "loadMs": 4437,
+  "finalUrl": "/goals",
+  "metrics": {
+    "regionScrollHeight": 468,
+    "regionOverflowX": 0,
+    "title": "Doelen — JigSwap",
+    "lang": "nl",
+    "h1": [
+      "Doelen",
+      "Doelen"
+    ],
+    "headings": [
+      "H1 Doelen",
+      "H1 Doelen",
+      "H2 Zet JigSwap op je beginscherm",
+      "H2 Zoeken"
+    ],
+    "pageHeight": 844,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 13,
+    "tapUnder24": 0,
+    "tapUnder24Examples": [],
+    "tap24to44": 2,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Nieuw Doel\" 122x32",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Nieuw Doel\" 128x36"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 844,
+    "client": 844,
+    "top": 0,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-nl/app__goals__01.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [
+    "[CONVEX M(presence:heartbeat)] [Request ID: d63c30e701989cb0] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":483}\n    at enforceRateLimit (../../convex/lib/rateLimits.ts:45:32)\n    at async handler (../../convex/presence.ts:61:4)\n",
+    "pageerror: [CONVEX M(presence:heartbeat)] [Request ID: d63c30e701989cb0] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":483}"
+  ],
+  "httpErrors": []
+}

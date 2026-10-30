@@ -1,0 +1,93 @@
+{
+  "variant": "mobile-dark",
+  "route": "/copies/m578n0zx5r5mrsgfb9mjz6czyx8gev0m",
+  "authed": true,
+  "name": "app__copies_m578n0zx5r5mrsgfb9mjz6czyx8gev0m",
+  "loadMs": 4539,
+  "finalUrl": "/copies/m578n0zx5r5mrsgfb9mjz6czyx8gev0m",
+  "metrics": {
+    "regionScrollHeight": 1771,
+    "regionOverflowX": 0,
+    "title": "Owned copy — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Rondje Texel",
+      "Rondje Texel",
+      "Rondje Texel"
+    ],
+    "headings": [
+      "H1 Rondje Texel",
+      "H1 Rondje Texel",
+      "H1 Rondje Texel",
+      "H2 Photos",
+      "H2 Completion History",
+      "H2 Lending History",
+      "H2 Swap & Trade History",
+      "H2 Community Rating",
+      "H2 Copy Reviews",
+      "H2 Comments",
+      "H2 Add JigSwap to your home screen",
+      "H2 Search"
+    ],
+    "pageHeight": 2147,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 17,
+    "tapUnder24": 2,
+    "tapUnder24Examples": [
+      "a.text-jigsaw-primary.font-semibold.hover:underline \"View puzzle page\" 143x23",
+      "a.truncate.hover:underline \"Sander Verkuil\" 106x20"
+    ],
+    "tap24to44": 4,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.justify-center.gap-2 \"Request swap\" 152x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Message\" 116x36",
+      "input.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 244x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Post\" 64x36"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "count": 2,
+      "nodes": [
+        {
+          "target": ".bg-jigsaw-secondary",
+          "html": "<span class=\"bg-jigsaw-secondary absolute left-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold text-white shadow-sm\"><s",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.37 (foreground color: #ffffff, background color: #19c316, font size: 9.0pt (12px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": ".hover\\:underline.text-jigsaw-primary",
+          "html": "<a class=\"text-jigsaw-primary font-semibold hover:underline\" href=\"/puzzles/m97dtav2psspkcajgchvnaqnrs8a9a2s\">View puzzle page</a>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.42 (foreground color: #705aea, background color: #1d1c34, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 2147,
+    "client": 844,
+    "top": 1303,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-dark/app__copies_m578n0zx5r5mrsgfb9mjz6czyx8gev0m__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__copies_m578n0zx5r5mrsgfb9mjz6czyx8gev0m__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__copies_m578n0zx5r5mrsgfb9mjz6czyx8gev0m__03.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

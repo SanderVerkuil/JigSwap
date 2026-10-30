@@ -1,0 +1,79 @@
+{
+  "variant": "mobile-nl",
+  "route": "/my-puzzles/m572kmqqpcd0c4a106ve41fz318ge4xr",
+  "authed": true,
+  "name": "app__my-puzzles_m572kmqqpcd0c4a106ve41fz318ge4xr",
+  "loadMs": 4612,
+  "finalUrl": "/my-puzzles/m572kmqqpcd0c4a106ve41fz318ge4xr",
+  "metrics": {
+    "regionScrollHeight": 2172,
+    "regionOverflowX": 0,
+    "title": "Mijn puzzels — JigSwap",
+    "lang": "nl",
+    "h1": [
+      "Oostenrijk, Tirol, sellrainer berge",
+      "Oostenrijk, Tirol, sellrainer berge",
+      "Oostenrijk, Tirol, sellrainer berge"
+    ],
+    "headings": [
+      "H1 Oostenrijk, Tirol, sellrainer berge",
+      "H1 Oostenrijk, Tirol, sellrainer berge",
+      "H1 Oostenrijk, Tirol, sellrainer berge",
+      "H2 Foto's",
+      "H2 Voltooiingsgeschiedenis",
+      "H2 Uitleengeschiedenis",
+      "H2 Ruil- & handelsgeschiedenis",
+      "H2 Communitybeoordeling",
+      "H2 Beoordelingen van dit exemplaar",
+      "H2 Reacties",
+      "H2 Zet JigSwap op je beginscherm",
+      "H2 Zoeken"
+    ],
+    "pageHeight": 2548,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 21,
+    "tapUnder24": 1,
+    "tapUnder24Examples": [
+      "a.truncate.hover:underline \"Henk Pieterszoon\" 128x20"
+    ],
+    "tap24to44": 8,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.justify-center.gap-2 \"Bewerken\" 121x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Aangeboden voor ruil\" 208x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Aanbieden om uit te lenen\" 242x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Voltooiing vastleggen\" 212x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Puzzel starten\" 136x36",
+      "button.border-input.data-[placeholder]:text-muted-foreground.[&_svg:not([class*='text-'])]:text-muted-foreground.focus-visible:border-ring \"Standaard van het huishouden gebruiken (\" 358x36",
+      "input.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 212x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Plaatsen\" 96x36"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "h1.font-heading.truncate.text-lg.font-bold \"Oostenrijk, Tirol, sellrainer berge\"",
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\"",
+      "span \"Standaard van het huishouden gebruiken (\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 2548,
+    "client": 844,
+    "top": 1704,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-nl/app__my-puzzles_m572kmqqpcd0c4a106ve41fz318ge4xr__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__my-puzzles_m572kmqqpcd0c4a106ve41fz318ge4xr__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__my-puzzles_m572kmqqpcd0c4a106ve41fz318ge4xr__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__my-puzzles_m572kmqqpcd0c4a106ve41fz318ge4xr__04.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

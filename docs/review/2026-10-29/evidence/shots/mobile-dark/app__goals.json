@@ -1,0 +1,58 @@
+{
+  "variant": "mobile-dark",
+  "route": "/goals",
+  "authed": true,
+  "name": "app__goals",
+  "loadMs": 4476,
+  "finalUrl": "/goals",
+  "metrics": {
+    "regionScrollHeight": 468,
+    "regionOverflowX": 0,
+    "title": "Goals — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Goals",
+      "Goals"
+    ],
+    "headings": [
+      "H1 Goals",
+      "H1 Goals",
+      "H2 Add JigSwap to your home screen",
+      "H2 Search"
+    ],
+    "pageHeight": 844,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 13,
+    "tapUnder24": 0,
+    "tapUnder24Examples": [],
+    "tap24to44": 2,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"New Goal\" 113x32",
+      "button.inline-flex.items-center.justify-center.gap-2 \"New Goal\" 119x36"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 844,
+    "client": 844,
+    "top": 0,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-dark/app__goals__01.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

@@ -1,0 +1,104 @@
+{
+  "variant": "tablet-light",
+  "route": "/sign-in",
+  "authed": false,
+  "name": "pub__sign-in",
+  "loadMs": 3890,
+  "finalUrl": "/sign-in",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "Sign in — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Sign in to JigSwap"
+    ],
+    "headings": [
+      "H1 Sign in to JigSwap"
+    ],
+    "pageHeight": 1180,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 9,
+    "tapUnder24": 2,
+    "tapUnder24Examples": [
+      "a.cl-footerActionLink.🔒️.cl-internal-okpjoh \"Join waitlist\" 80x18",
+      "a.cl-internal-1scxde7 [aria=\"Clerk logo\"] 48x14"
+    ],
+    "tap24to44": 7,
+    "tap24to44Examples": [
+      "button.cl-socialButtonsIconButton.cl-button.cl-socialButtonsIconButton__apple.cl-button__apple [aria=\"Continue with Apple\"] 102x32",
+      "button.cl-socialButtonsIconButton.cl-button.cl-socialButtonsIconButton__google.cl-button__google [aria=\"Continue with Google\"] 102x32",
+      "button.cl-socialButtonsIconButton.cl-button.cl-socialButtonsIconButton__microsoft.cl-button__microsoft [aria=\"Continue with Microsoft\"] 102x32",
+      "input#identifier-field.cl-formFieldInput.cl-input.cl-formFieldInput__identifier.cl-input__identifier 322x32",
+      "input#password-field.cl-formFieldInput.cl-input.cl-formFieldInput__password.cl-input__password 303x32",
+      "button.cl-formFieldInputShowPasswordButton.cl-button.🔒️.cl-internal-1twtk2i [aria=\"Show password\"] 32x26",
+      "button.cl-formButtonPrimary.cl-button.🔒️.cl-internal-sb33io \"Continue\" 322x32"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [],
+    "smallText": [],
+    "zoomingInputs": [
+      "input#identifier-field.cl-formFieldInput.cl-input.cl-formFieldInput__identifier.cl-input__identifier 13px",
+      "input#password-field.cl-formFieldInput.cl-input.cl-formFieldInput__password.cl-input__password 13px"
+    ],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "landmark-one-main",
+      "impact": "moderate",
+      "help": "Document should have one main landmark",
+      "count": 1,
+      "nodes": [
+        {
+          "target": "html",
+          "html": "<html lang=\"en\" class=\"light\" style=\"color-scheme: light;\">",
+          "summary": "Fix all of the following:\n  Document does not have a main landmark"
+        }
+      ]
+    },
+    {
+      "id": "region",
+      "impact": "moderate",
+      "help": "All page content should be contained by landmarks",
+      "count": 4,
+      "nodes": [
+        {
+          "target": ".cl-header",
+          "html": "<div class=\"cl-header 🔒️ cl-internal-1f4p2mz\">",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": ".cl-dividerRow",
+          "html": "<div class=\"cl-dividerRow 🔒️ cl-internal-ovdovs\">",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": ".cl-formField__identifier > .cl-internal-17uj465",
+          "html": "<div class=\"cl-internal-17uj465\">",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": ".cl-footer",
+          "html": "<div class=\"cl-footer 🔒️ cl-internal-lpstq8\">",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 1180,
+    "client": 1180,
+    "top": 0,
+    "step": 1062
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/tablet-light/pub__sign-in__01.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

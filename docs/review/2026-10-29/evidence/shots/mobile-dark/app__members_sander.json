@@ -1,0 +1,89 @@
+{
+  "variant": "mobile-dark",
+  "route": "/members/sander",
+  "authed": true,
+  "name": "app__members_sander",
+  "loadMs": 4708,
+  "finalUrl": "/members/sander",
+  "metrics": {
+    "regionScrollHeight": 5059,
+    "regionOverflowX": 0,
+    "title": "Sander Verkuil — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Sander Verkuil",
+      "Sander Verkuil",
+      "Sander Verkuil"
+    ],
+    "headings": [
+      "H1 Sander Verkuil",
+      "H1 Sander Verkuil",
+      "H1 Sander Verkuil",
+      "H2 Sander's puzzles",
+      "H3 Bereleuk hier!",
+      "H3 Rondje Texel",
+      "H3 Café",
+      "H3 De Kattenshow",
+      "H3 Rondje Texel",
+      "H3 Bereleuk hier!",
+      "H3 Food Truck Festival",
+      "H3 Café",
+      "H3 Het Tuincentrum Jan van Haasteren puzzels",
+      "H2 Add JigSwap to your home screen",
+      "H2 Search"
+    ],
+    "pageHeight": 5435,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 25,
+    "tapUnder24": 8,
+    "tapUnder24Examples": [
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Bereleuk hier!\" 98x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Rondje Texel\" 93x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Café\" 36x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"De Kattenshow\" 113x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Rondje Texel\" 93x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Bereleuk hier!\" 98x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Food Truck Festival\" 143x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Café\" 36x20"
+    ],
+    "tap24to44": 5,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.justify-center.gap-2 \"Unfollow\" 123x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Message\" 124x36",
+      "button.inline-flex.items-center.gap-2.rounded-full \"All puzzles\" 107x38",
+      "button.inline-flex.items-center.gap-2.rounded-full \"Available\" 99x38",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Het Tuincentrum Jan van Haasteren puzzel\" 264x40"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 5435,
+    "client": 844,
+    "top": 4591,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-dark/app__members_sander__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__members_sander__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__members_sander__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__members_sander__04.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__members_sander__05.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__members_sander__06.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__members_sander__07.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__members_sander__08.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

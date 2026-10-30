@@ -1,0 +1,79 @@
+{
+  "variant": "mobile-nl",
+  "route": "/household",
+  "authed": true,
+  "name": "app__household",
+  "loadMs": 4739,
+  "finalUrl": "/household",
+  "metrics": {
+    "regionScrollHeight": 2054,
+    "regionOverflowX": 0,
+    "title": "Huishouden — JigSwap",
+    "lang": "nl",
+    "h1": [
+      "Huishouden",
+      "Huishouden"
+    ],
+    "headings": [
+      "H1 Huishouden",
+      "H1 Huishouden",
+      "H3 De Kattenshow",
+      "H3 Oostenrijk, Tirol, sellrainer berge",
+      "H3 Lam Gelegd",
+      "H2 Zet JigSwap op je beginscherm",
+      "H2 Zoeken"
+    ],
+    "pageHeight": 2430,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 28,
+    "tapUnder24": 3,
+    "tapUnder24Examples": [
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"De Kattenshow\" 113x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Oostenrijk, Tirol, sellrainer berge\" 240x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Lam Gelegd\" 88x20"
+    ],
+    "tap24to44": 13,
+    "tap24to44Examples": [
+      "button#radix-_r_6_-trigger-puzzles.dark:data-[state=active]:text-foreground.focus-visible:border-ring.focus-visible:ring-ring/50.focus-visible:outline-ring \"Puzzels\" 71x42",
+      "button#radix-_r_6_-trigger-members.dark:data-[state=active]:text-foreground.focus-visible:border-ring.focus-visible:ring-ring/50.focus-visible:outline-ring \"Leden 1\" 88x42",
+      "button#radix-_r_6_-trigger-sharing.dark:data-[state=active]:text-foreground.focus-visible:border-ring.focus-visible:ring-ring/50.focus-visible:outline-ring \"Delen\" 58x42",
+      "button#radix-_r_6_-trigger-settings.dark:data-[state=active]:text-foreground.focus-visible:border-ring.focus-visible:ring-ring/50.focus-visible:outline-ring \"Instellingen\" 102x42",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Alles\" 59x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Beschikbaar\" 117x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Te Ruilen\" 91x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Te Leen\" 81x32"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\"",
+      "span.sr-only \"Van\"",
+      "span.sr-only \"Van\"",
+      "span.sr-only \"Van\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 2430,
+    "client": 844,
+    "top": 1586,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-nl/app__household__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__household__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__household__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__household__04.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [
+    "[CONVEX M(presence:heartbeat)] [Request ID: d6d3d8ef10bf3689] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":28313}\n    at enforceRateLimit (../../convex/lib/rateLimits.ts:45:32)\n    at async handler (../../convex/presence.ts:61:4)\n",
+    "pageerror: [CONVEX M(presence:heartbeat)] [Request ID: d6d3d8ef10bf3689] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":28313}"
+  ],
+  "httpErrors": []
+}

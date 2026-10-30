@@ -1,0 +1,74 @@
+{
+  "variant": "mobile-nl",
+  "route": "/contact",
+  "authed": false,
+  "name": "pub__contact",
+  "loadMs": 3712,
+  "finalUrl": "/contact",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "Contact — JigSwap",
+    "lang": "nl",
+    "h1": [
+      "Even iets vragen of delen?"
+    ],
+    "headings": [
+      "H1 Even iets vragen of delen?"
+    ],
+    "pageHeight": 2561,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 25,
+    "tapUnder24": 13,
+    "tapUnder24Examples": [
+      "a.block.text-[15.5px].text-mk-violet-600.mt-1.5 \"hello@jigswap.site\" 342x23",
+      "a.block.text-[15.5px].text-mk-violet-600.mt-1.5 \"support@jigswap.site\" 342x23",
+      "a.block.text-[15.5px].text-mk-violet-600.mt-1.5 \"privacy@jigswap.site\" 342x23",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Hoe het werkt\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Puzzels bekijken\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Functies\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Documentatie\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Begin met ruilen\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Over ons\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Contact\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Privacybeleid\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Algemene voorwaarden\" 342x22"
+    ],
+    "tap24to44": 10,
+    "tap24to44Examples": [
+      "a [aria=\"JigSwap\"] \"JigSwap\" 118x37",
+      "button#radix-_R_7aj6l6_.inline-flex.items-center.justify-center.w-10 [aria=\"Taal wijzigen\"] \"🇳🇱\" 40x40",
+      "button.inline-flex.items-center.justify-center.w-10 [aria=\"Toggle dark mode\"] 40x40",
+      "button.min-[861px]:hidden.inline-flex.items-center.justify-center [aria=\"Menu openen\"] 40x40",
+      "input#contact-name.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 276x36",
+      "input#contact-email.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 276x36",
+      "button.cursor-pointer.px-3.5.py-2.rounded-full \"Lenen of ruilen\" 131x38",
+      "button.cursor-pointer.px-3.5.py-2.rounded-full \"Mijn account\" 116x38"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [],
+    "smallText": [],
+    "zoomingInputs": [
+      "textarea#contact-message.w-full.resize-y.text-[15px].px-[13px] 15px"
+    ],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 2561,
+    "client": 844,
+    "top": 1717,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__contact__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__contact__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__contact__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__contact__04.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

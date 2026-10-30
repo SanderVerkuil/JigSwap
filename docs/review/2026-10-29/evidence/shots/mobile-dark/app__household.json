@@ -1,0 +1,80 @@
+{
+  "variant": "mobile-dark",
+  "route": "/household",
+  "authed": true,
+  "name": "app__household",
+  "loadMs": 4553,
+  "finalUrl": "/household",
+  "metrics": {
+    "regionScrollHeight": 2014,
+    "regionOverflowX": 0,
+    "title": "Household — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Household",
+      "Household"
+    ],
+    "headings": [
+      "H1 Household",
+      "H1 Household",
+      "H3 De Kattenshow",
+      "H3 Oostenrijk, Tirol, sellrainer berge",
+      "H3 Lam Gelegd",
+      "H2 Add JigSwap to your home screen",
+      "H2 Search"
+    ],
+    "pageHeight": 2390,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 28,
+    "tapUnder24": 3,
+    "tapUnder24Examples": [
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"De Kattenshow\" 113x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Oostenrijk, Tirol, sellrainer berge\" 240x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Lam Gelegd\" 88x20"
+    ],
+    "tap24to44": 13,
+    "tap24to44Examples": [
+      "button#radix-_r_6_-trigger-puzzles.dark:data-[state=active]:text-foreground.focus-visible:border-ring.focus-visible:ring-ring/50.focus-visible:outline-ring \"Puzzles\" 71x42",
+      "button#radix-_r_6_-trigger-members.dark:data-[state=active]:text-foreground.focus-visible:border-ring.focus-visible:ring-ring/50.focus-visible:outline-ring \"Members 1\" 113x42",
+      "button#radix-_r_6_-trigger-sharing.dark:data-[state=active]:text-foreground.focus-visible:border-ring.focus-visible:ring-ring/50.focus-visible:outline-ring \"Sharing\" 73x42",
+      "button#radix-_r_6_-trigger-settings.dark:data-[state=active]:text-foreground.focus-visible:border-ring.focus-visible:ring-ring/50.focus-visible:outline-ring \"Settings\" 79x42",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"All\" 42x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Available\" 94x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"For Trade\" 97x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"For Lend\" 87x32"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\"",
+      "span.sr-only \"Owned by\"",
+      "span.sr-only \"Owned by\"",
+      "span.sr-only \"Owned by\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 2390,
+    "client": 844,
+    "top": 1546,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-dark/app__household__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__household__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__household__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__household__04.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [
+    "[CONVEX M(presence:heartbeat)] [Request ID: c33937d4c3b6050c] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":27341}\n    at enforceRateLimit (../../convex/lib/rateLimits.ts:45:32)\n    at async handler (../../convex/presence.ts:61:4)\n",
+    "pageerror: [CONVEX M(presence:heartbeat)] [Request ID: c33937d4c3b6050c] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":27341}"
+  ],
+  "httpErrors": []
+}

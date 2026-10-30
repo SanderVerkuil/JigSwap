@@ -1,0 +1,98 @@
+{
+  "variant": "mobile-light",
+  "route": "/members/sander",
+  "authed": false,
+  "name": "pub__members_sander",
+  "loadMs": 4049,
+  "finalUrl": "/members/sander",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "Sander Verkuil — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Sander Verkuil"
+    ],
+    "headings": [
+      "H1 Sander Verkuil",
+      "H2 Love puzzles too?"
+    ],
+    "pageHeight": 1708,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 16,
+    "tapUnder24": 10,
+    "tapUnder24Examples": [
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"How it works\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Browse puzzles\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Features\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Docs\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Start trading\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"About\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Contact\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Privacy policy\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Terms of service\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Cookie policy\" 342x22"
+    ],
+    "tap24to44": 6,
+    "tap24to44Examples": [
+      "a [aria=\"JigSwap\"] \"JigSwap\" 118x37",
+      "button#radix-_R_7aj6l6_.inline-flex.items-center.justify-center.w-10 [aria=\"Switch language\"] \"🇺🇸\" 40x40",
+      "button.inline-flex.items-center.justify-center.w-10 [aria=\"Toggle dark mode\"] 40x40",
+      "button.min-[861px]:hidden.inline-flex.items-center.justify-center [aria=\"Open menu\"] 40x40",
+      "a \"Follow\" 50x24",
+      "a \"Sign up free\" 97x24"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "count": 22,
+      "nodes": [
+        {
+          "target": ".font-mono",
+          "html": "<span class=\"font-mono\">sander</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.13 (foreground color: #6f7087, background color: #ececfb, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": ".gap-1.inline-flex:nth-child(2)",
+          "html": "<span class=\"inline-flex items-center gap-1\">",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.13 (foreground color: #6f7087, background color: #ececfb, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": ".gap-1.inline-flex:nth-child(3)",
+          "html": "<span class=\"inline-flex items-center gap-1\">",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.13 (foreground color: #6f7087, background color: #ececfb, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": ".gap-1.inline-flex:nth-child(4)",
+          "html": "<span class=\"inline-flex items-center gap-1\">",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.13 (foreground color: #6f7087, background color: #ececfb, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 1708,
+    "client": 844,
+    "top": 864,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-light/pub__members_sander__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/pub__members_sander__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/pub__members_sander__03.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

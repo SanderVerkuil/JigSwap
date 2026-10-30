@@ -1,0 +1,82 @@
+{
+  "variant": "mobile-dark",
+  "route": "/catalog",
+  "authed": false,
+  "name": "pub__catalog",
+  "loadMs": 3834,
+  "finalUrl": "/catalog",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "Puzzle catalogue — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Puzzle catalogue"
+    ],
+    "headings": [
+      "H1 Puzzle catalogue",
+      "H3 De Kattenshow",
+      "H3 Rondje Texel",
+      "H3 Bereleuk hier!",
+      "H3 Food Truck Festival",
+      "H3 Café",
+      "H3 Het Tuincentrum Jan van Haasteren puzzels",
+      "H3 The Dolomites",
+      "H3 Oostenrijk, Tirol, sellrainer berge",
+      "H3 Lam Gelegd"
+    ],
+    "pageHeight": 3023,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 27,
+    "tapUnder24": 16,
+    "tapUnder24Examples": [
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"De Kattenshow\" 120x16",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Rondje Texel\" 100x16",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Bereleuk hier!\" 113x16",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Café\" 35x16",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"The Dolomites\" 113x16",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Lam Gelegd\" 93x16",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"How it works\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Browse puzzles\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Features\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Docs\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Start trading\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"About\" 342x22"
+    ],
+    "tap24to44": 9,
+    "tap24to44Examples": [
+      "a [aria=\"JigSwap\"] \"JigSwap\" 118x37",
+      "button#radix-_R_7aj6l6_.inline-flex.items-center.justify-center.w-10 [aria=\"Switch language\"] \"🇺🇸\" 40x40",
+      "button.inline-flex.items-center.justify-center.w-10 [aria=\"Toggle dark mode\"] 40x40",
+      "button.min-[861px]:hidden.inline-flex.items-center.justify-center [aria=\"Open menu\"] 40x40",
+      "input.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 342x36",
+      "button.border-input.data-[placeholder]:text-muted-foreground.[&_svg:not([class*='text-'])]:text-muted-foreground.focus-visible:border-ring \"All brands\" 342x36",
+      "button.border-input.data-[placeholder]:text-muted-foreground.[&_svg:not([class*='text-'])]:text-muted-foreground.focus-visible:border-ring \"Any piece count\" 342x36",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Food Truck Festival\" 86x36"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 3023,
+    "client": 844,
+    "top": 2179,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__catalog__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__catalog__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__catalog__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__catalog__04.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

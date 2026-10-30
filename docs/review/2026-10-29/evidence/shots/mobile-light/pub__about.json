@@ -1,0 +1,116 @@
+{
+  "variant": "mobile-light",
+  "route": "/about",
+  "authed": false,
+  "name": "pub__about",
+  "loadMs": 3791,
+  "finalUrl": "/about",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "About — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Started at the kitchen table"
+    ],
+    "headings": [
+      "H1 Started at the kitchen table",
+      "H2 Making puzzle sharing accessible and sustainable —",
+      "H2 Our values",
+      "H3 Hobby, not hustle",
+      "H3 Sharing over owning",
+      "H3 Community first",
+      "H3 Trust",
+      "H2 From kitchen table to community",
+      "H3 A family project",
+      "H3 The first shelf",
+      "H3 A growing community"
+    ],
+    "pageHeight": 3153,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 15,
+    "tapUnder24": 10,
+    "tapUnder24Examples": [
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"How it works\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Browse puzzles\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Features\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Docs\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Start trading\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"About\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Contact\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Privacy policy\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Terms of service\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Cookie policy\" 342x22"
+    ],
+    "tap24to44": 4,
+    "tap24to44Examples": [
+      "a [aria=\"JigSwap\"] \"JigSwap\" 118x37",
+      "button#radix-_R_7aj6l6_.inline-flex.items-center.justify-center.w-10 [aria=\"Switch language\"] \"🇺🇸\" 40x40",
+      "button.inline-flex.items-center.justify-center.w-10 [aria=\"Toggle dark mode\"] 40x40",
+      "button.min-[861px]:hidden.inline-flex.items-center.justify-center [aria=\"Open menu\"] 40x40"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [],
+    "smallText": [
+      "div \"FAMILIE\" 9.5px",
+      "b \"500\" 11px",
+      "span \"PCS\" 5.5px",
+      "div \"Keukentafel\" 11px",
+      "div \"SAMEN\" 9.5px",
+      "b \"1000\" 11px",
+      "span \"PCS\" 5.5px",
+      "div \"Eerste ruil\" 11px"
+    ],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "count": 21,
+      "nodes": [
+        {
+          "target": ".text-\\[17px\\]",
+          "html": "<p class=\"text-[17px] leading-relaxed text-mk-text-muted mt-4 text-pretty\">We believe a finished puzzle isn't the end, but a new beginning for someone else. Jig",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #7c7689, background color: #ececfb, font size: 12.8pt (17px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": "div:nth-child(1) > .pt-4.border-t-2.border-mk-violet-200 > p",
+          "html": "<p class=\"text-[14.5px] leading-relaxed text-mk-text-muted\">Puzzling is relaxation. We're about sharing and joy, not profit.</p>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.58 (foreground color: #7c7689, background color: #e7e7fb, font size: 10.9pt (14.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": "div:nth-child(2) > .pt-4.border-t-2.border-mk-violet-200 > p",
+          "html": "<p class=\"text-[14.5px] leading-relaxed text-mk-text-muted\">One puzzle you lend out and that passes through many hands is worth more than ten gathering dust.</p",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.58 (foreground color: #7c7689, background color: #e7e7fb, font size: 10.9pt (14.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": "div:nth-child(3) > .pt-4.border-t-2.border-mk-violet-200 > p",
+          "html": "<p class=\"text-[14.5px] leading-relaxed text-mk-text-muted\">We build for the people who love puzzling as much as we do.</p>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.58 (foreground color: #7c7689, background color: #e7e7fb, font size: 10.9pt (14.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 3153,
+    "client": 844,
+    "top": 2309,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-light/pub__about__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/pub__about__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/pub__about__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/pub__about__04.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/pub__about__05.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

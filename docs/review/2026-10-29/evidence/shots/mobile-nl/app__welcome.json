@@ -1,0 +1,66 @@
+{
+  "variant": "mobile-nl",
+  "route": "/welcome",
+  "authed": true,
+  "name": "app__welcome",
+  "loadMs": 4738,
+  "finalUrl": "/welcome",
+  "metrics": {
+    "regionScrollHeight": 730,
+    "regionOverflowX": 0,
+    "title": "Snel instellen — JigSwap",
+    "lang": "nl",
+    "h1": [
+      "Snel instellen",
+      "Snel instellen"
+    ],
+    "headings": [
+      "H1 Snel instellen",
+      "H1 Snel instellen",
+      "H2 Leg vast wat je al hebt afgemaakt",
+      "H2 Zoeken"
+    ],
+    "pageHeight": 844,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 15,
+    "tapUnder24": 0,
+    "tapUnder24Examples": [],
+    "tap24to44": 4,
+    "tap24to44Examples": [
+      "button#past-solve-684f3896-f8fb-484f-8e47-5e148ab155be.peer.border-input.dark:bg-input/30.data-[state=checked]:bg-primary \"on\" 24x24",
+      "button#past-solve-dae2acb6-1cea-47de-a84a-9b63392ea941.peer.border-input.dark:bg-input/30.data-[state=checked]:bg-primary \"on\" 24x24",
+      "button#past-solve-7fb48d12-e587-4523-b53c-64f52c97f9ba.peer.border-input.dark:bg-input/30.data-[state=checked]:bg-primary \"on\" 24x24",
+      "button.inline-flex.items-center.justify-center.gap-2 \"0 puzzels vastleggen\" 186x36"
+    ],
+    "unnamedControls": [
+      "button#past-solve-684f3896-f8fb-484f-8e47-5e148ab155be.peer.border-input.dark:bg-input/30.data-[state=checked]:bg-primary \"on\"",
+      "button#past-solve-dae2acb6-1cea-47de-a84a-9b63392ea941.peer.border-input.dark:bg-input/30.data-[state=checked]:bg-primary \"on\"",
+      "button#past-solve-7fb48d12-e587-4523-b53c-64f52c97f9ba.peer.border-input.dark:bg-input/30.data-[state=checked]:bg-primary \"on\""
+    ],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\"",
+      "p#_r_3_.text-muted-foreground.font-mono.text-[11px].tracking-[0.09em] \"STAP 2 VAN 4 · LEG VAST WAT JE AL HEBT A\""
+    ],
+    "smallText": [
+      "p#_r_3_.text-muted-foreground.font-mono.text-[11px].tracking-[0.09em] \"STAP 2 VAN 4 · LEG VAST WAT JE AL HEBT A\" 11px"
+    ],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 844,
+    "client": 844,
+    "top": 0,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-nl/app__welcome__01.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

@@ -1,0 +1,104 @@
+{
+  "variant": "tablet-light",
+  "route": "/catalog/m9712xm5gtgnqszgq5xwvh82ph8a9hdz",
+  "authed": false,
+  "name": "pub__catalog_m9712xm5gtgnqszgq5xwvh82ph8a9hdz",
+  "loadMs": 4032,
+  "finalUrl": "/catalog/m9712xm5gtgnqszgq5xwvh82ph8a9hdz",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "Café — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Café"
+    ],
+    "headings": [
+      "H1 Café",
+      "H2 Available in the community",
+      "H2 Community rating",
+      "H2 Reviews"
+    ],
+    "pageHeight": 2297,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 18,
+    "tapUnder24": 11,
+    "tapUnder24Examples": [
+      "a.hover:underline \"Log in to write a review\" 164x16",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"How it works\" 370x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Browse puzzles\" 370x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Features\" 370x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Docs\" 370x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Start trading\" 370x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"About\" 370x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Contact\" 370x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Privacy policy\" 370x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Terms of service\" 370x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Cookie policy\" 370x22"
+    ],
+    "tap24to44": 7,
+    "tap24to44Examples": [
+      "a [aria=\"JigSwap\"] \"JigSwap\" 118x37",
+      "button#radix-_r_0_.inline-flex.items-center.justify-center.w-10 [aria=\"Switch language\"] \"🇺🇸\" 40x40",
+      "button.inline-flex.items-center.justify-center.w-10 [aria=\"Toggle dark mode\"] 40x40",
+      "button.min-[861px]:hidden.inline-flex.items-center.justify-center [aria=\"Open menu\"] 40x40",
+      "a.inline-flex.items-center.justify-center.gap-2 \"Join JigSwap to request a swap\" 246x36",
+      "a.inline-flex.items-center.justify-center.gap-2 \"Log in\" 74x36",
+      "a.inline-flex.items-center.justify-center.whitespace-nowrap \"Join to see who\" 130x32"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "count": 31,
+      "nodes": [
+        {
+          "target": ".uppercase",
+          "html": "<div class=\"text-muted-foreground text-xs font-semibold uppercase tracking-[0.18em]\">Puzzle catalogue</div>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.13 (foreground color: #6f7087, background color: #ececfb, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": ".text-base",
+          "html": "<p class=\"text-muted-foreground mt-1 text-base\">Goliath · <span class=\"font-mono\">1,000</span> pieces</p>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.13 (foreground color: #6f7087, background color: #ececfb, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": ".text-base > .font-mono",
+          "html": "<span class=\"font-mono\">1,000</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.13 (foreground color: #6f7087, background color: #ececfb, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": "div:nth-child(1) > .mt-1\\.5.text-sm.text-muted-foreground",
+          "html": "<div class=\"text-muted-foreground mt-1.5 text-sm\">Available to swap</div>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.13 (foreground color: #6f7087, background color: #ececfb, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 2297,
+    "client": 1180,
+    "top": 1117,
+    "step": 1062
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/tablet-light/pub__catalog_m9712xm5gtgnqszgq5xwvh82ph8a9hdz__01.jpg",
+    "/tmp/jigswap-review/tiles/tablet-light/pub__catalog_m9712xm5gtgnqszgq5xwvh82ph8a9hdz__02.jpg",
+    "/tmp/jigswap-review/tiles/tablet-light/pub__catalog_m9712xm5gtgnqszgq5xwvh82ph8a9hdz__03.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [
+    "pageerror: Hydration failed because the server rendered text didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random"
+  ],
+  "httpErrors": []
+}

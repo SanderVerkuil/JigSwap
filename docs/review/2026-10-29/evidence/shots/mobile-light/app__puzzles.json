@@ -1,0 +1,151 @@
+{
+  "variant": "mobile-light",
+  "route": "/puzzles",
+  "authed": true,
+  "name": "app__puzzles",
+  "loadMs": 4512,
+  "finalUrl": "/puzzles",
+  "metrics": {
+    "regionScrollHeight": 5149,
+    "regionOverflowX": 0,
+    "title": "Puzzles — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Puzzles catalogue",
+      "Puzzles catalogue"
+    ],
+    "headings": [
+      "H1 Puzzles catalogue",
+      "H1 Puzzles catalogue",
+      "H3 Lam Gelegd",
+      "H3 Oostenrijk, Tirol, sellrainer berge",
+      "H3 The Dolomites",
+      "H3 Het Tuincentrum Jan van Haasteren puzzels",
+      "H3 Café",
+      "H3 Food Truck Festival",
+      "H3 Bereleuk hier!",
+      "H3 Rondje Texel",
+      "H3 De Kattenshow",
+      "H2 Add JigSwap to your home screen",
+      "H2 Search"
+    ],
+    "pageHeight": 5525,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 53,
+    "tapUnder24": 9,
+    "tapUnder24Examples": [
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Lam Gelegd\" 88x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Oostenrijk, Tirol, sellrainer berge\" 240x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"The Dolomites\" 107x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Het Tuincentrum Jan van Haasteren puzzel\" 323x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Café\" 36x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Food Truck Festival\" 143x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Bereleuk hier!\" 98x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Rondje Texel\" 93x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"De Kattenshow\" 113x20"
+    ],
+    "tap24to44": 33,
+    "tap24to44Examples": [
+      "a.inline-flex.items-center.justify-center.whitespace-nowrap \"Add Puzzle\" 120x32",
+      "input.w-full.pl-10.pr-4.py-2 308x42",
+      "button.justify-center.whitespace-nowrap.rounded-md.text-sm \"Favorites\" 308x36",
+      "button.justify-center.whitespace-nowrap.rounded-md.text-sm \"Filters\" 308x36",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap 36x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap 38x32",
+      "a.inline-flex.items-center.justify-center.whitespace-nowrap \"View Details\" 236x32",
+      "button.inline-flex.items-center.justify-center.gap-2 [aria=\"Add to Favorites\"] 36x36"
+    ],
+    "unnamedControls": [
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap"
+    ],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "button-name",
+      "impact": "critical",
+      "help": "Buttons must have discernible text",
+      "count": 2,
+      "nodes": [
+        {
+          "target": ".justify-between > .gap-2.flex > .bg-primary.text-primary-foreground.hover\\:bg-primary\\/90",
+          "html": "<button data-slot=\"button\" class=\"inline-flex items-ce...\">",
+          "summary": "Fix any of the following:\n  Element does not have inner text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references"
+        },
+        {
+          "target": ".justify-between > .gap-2.flex > .h-8.has-\\[\\>svg\\]\\:px-2\\.5.gap-1\\.5:nth-child(2)",
+          "html": "<button data-slot=\"button\" class=\"inline-flex items-ce...\">",
+          "summary": "Fix any of the following:\n  Element does not have inner text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references"
+        }
+      ]
+    },
+    {
+      "id": "heading-order",
+      "impact": "moderate",
+      "help": "Heading levels should only increase by one",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".group.h-full.gap-0:nth-child(1) > .p-4.flex-1.flex-col > .mb-2:nth-child(1) > h3",
+          "html": "<h3 class=\"font-semibold text-sm line-clamp-2 mb-1\"><a class=\"after:absolute after:inset-0 after:z-[1] after:content-[''] hover:underline focus-visible:underlin",
+          "summary": "Fix any of the following:\n  Heading order invalid"
+        }
+      ]
+    },
+    {
+      "id": "region",
+      "impact": "moderate",
+      "help": "All page content should be contained by landmarks",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".text-center",
+          "html": "<div data-slot=\"dialog-header\" class=\"flex flex-col gap-2 text-center sm:text-left sr-only\">",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    },
+    {
+      "id": "target-size",
+      "impact": "serious",
+      "help": "All touch targets must be 24px large, or leave sufficient space",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".group.h-full.gap-0:nth-child(1) > .p-4.flex-1.flex-col > .mb-2:nth-child(1) > h3 > .after\\:absolute.after\\:inset-0.after\\:z-\\[1\\]",
+          "html": "<a class=\"after:absolute after:inset-0 after:z-[1] after:content-[''] hover:underline focus-visible:underline focus-visible:outline-none\" href=\"/puzzles/m973e7x",
+          "summary": "Fix any of the following:\n  Target has insufficient size (88px by 20px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 17px instead of at least 24px."
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 5525,
+    "client": 844,
+    "top": 4681,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-light/app__puzzles__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__puzzles__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__puzzles__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__puzzles__04.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__puzzles__05.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__puzzles__06.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__puzzles__07.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__puzzles__08.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

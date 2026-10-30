@@ -1,0 +1,102 @@
+{
+  "variant": "mobile-light",
+  "route": "/puzzles/add",
+  "authed": true,
+  "name": "app__puzzles_add",
+  "loadMs": 4511,
+  "finalUrl": "/puzzles/add",
+  "metrics": {
+    "regionScrollHeight": 1970,
+    "regionOverflowX": 0,
+    "title": "Add puzzle — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Contribute a Puzzle",
+      "Contribute a Puzzle"
+    ],
+    "headings": [
+      "H1 Contribute a Puzzle",
+      "H1 Contribute a Puzzle",
+      "H2 Add JigSwap to your home screen",
+      "H2 Search"
+    ],
+    "pageHeight": 2346,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 42,
+    "tapUnder24": 0,
+    "tapUnder24Examples": [],
+    "tap24to44": 31,
+    "tap24to44Examples": [
+      "input.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 276x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Fetch details\" 142x36",
+      "input#cp-title.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 358x36",
+      "input#cp-publisher.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 171x36",
+      "input#cp-pieces.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 171x36",
+      "button.rounded-full.border.px-2.5.py-1 \"300\" 44x26",
+      "button.rounded-full.border.px-2.5.py-1 \"500\" 44x26",
+      "button.rounded-full.border.px-2.5.py-1 \"750\" 44x26"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\"",
+      "span.sr-only \"incomplete\"",
+      "span.sr-only \"incomplete\""
+    ],
+    "smallText": [
+      "div.font-mono.text-[10px].uppercase.tracking-[0.09em] \"LIVE PREVIEW\" 10px"
+    ],
+    "zoomingInputs": [
+      "input.min-w-[120px].flex-1.border-none.bg-transparent [aria=\"Tags\"] 14px"
+    ],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "region",
+      "impact": "moderate",
+      "help": "All page content should be contained by landmarks",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".text-center",
+          "html": "<div data-slot=\"dialog-header\" class=\"flex flex-col gap-2 text-center sm:text-left sr-only\">",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    },
+    {
+      "id": "target-size",
+      "impact": "serious",
+      "help": "All touch targets must be 24px large, or leave sufficient space",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".border-transparent.px-3\\.5[role=\"radio\"]",
+          "html": "<button type=\"button\" role=\"radio\" aria-checked=\"true\" tabindex=\"0\" class=\"inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-sm font-semibold cursor-",
+          "summary": "Fix any of the following:\n  Target has insufficient size because it is partially obscured (smallest space is 64px by 13px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 2346,
+    "client": 844,
+    "top": 1502,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-light/app__puzzles_add__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__puzzles_add__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__puzzles_add__03.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [
+    "[CONVEX M(presence:heartbeat)] [Request ID: 7191c6084c104c73] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":17633}\n    at enforceRateLimit (../../convex/lib/rateLimits.ts:45:32)\n    at async handler (../../convex/presence.ts:61:4)\n",
+    "pageerror: [CONVEX M(presence:heartbeat)] [Request ID: 7191c6084c104c73] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":17633}"
+  ],
+  "httpErrors": []
+}

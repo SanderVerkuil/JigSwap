@@ -1,0 +1,108 @@
+{
+  "variant": "mobile-light",
+  "route": "/my-puzzles/add",
+  "authed": true,
+  "name": "app__my-puzzles_add",
+  "loadMs": 4652,
+  "finalUrl": "/my-puzzles/add",
+  "metrics": {
+    "regionScrollHeight": 5138,
+    "regionOverflowX": 0,
+    "title": "Add puzzle — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Add Puzzle",
+      "Add Puzzle"
+    ],
+    "headings": [
+      "H1 Add Puzzle",
+      "H1 Add Puzzle",
+      "H2 All puzzles",
+      "H3 Lam Gelegd",
+      "H3 Oostenrijk, Tirol, sellrainer berge",
+      "H3 The Dolomites",
+      "H3 Het Tuincentrum Jan van Haasteren puzzels",
+      "H3 Café",
+      "H3 Food Truck Festival",
+      "H3 Bereleuk hier!",
+      "H3 Rondje Texel",
+      "H3 De Kattenshow",
+      "H2 Add JigSwap to your home screen",
+      "H2 Search"
+    ],
+    "pageHeight": 5514,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 52,
+    "tapUnder24": 9,
+    "tapUnder24Examples": [
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Lam Gelegd\" 88x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Oostenrijk, Tirol, sellrainer berge\" 240x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"The Dolomites\" 107x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Het Tuincentrum Jan van Haasteren puzzel\" 323x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Café\" 36x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Food Truck Festival\" 143x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Bereleuk hier!\" 98x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Rondje Texel\" 93x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"De Kattenshow\" 113x20"
+    ],
+    "tap24to44": 32,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.justify-center.gap-2 [aria=\"Show me how\"] 32x32",
+      "a.inline-flex.items-center.justify-center.whitespace-nowrap \"Add several\" 132x32",
+      "a.inline-flex.items-center.justify-center.whitespace-nowrap \"Create new\" 127x32",
+      "input.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 358x36",
+      "a.inline-flex.items-center.justify-center.whitespace-nowrap \"View Details\" 236x32",
+      "button.inline-flex.items-center.justify-center.gap-2 [aria=\"Add to Favorites\"] 36x36",
+      "a.inline-flex.items-center.justify-center.gap-2 [aria=\"Add Puzzle\"] 36x36",
+      "a.inline-flex.items-center.justify-center.whitespace-nowrap \"View Details\" 236x32"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "region",
+      "impact": "moderate",
+      "help": "All page content should be contained by landmarks",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".sm\\:text-left",
+          "html": "<div data-slot=\"dialog-header\" class=\"flex flex-col gap-2 text-center sm:text-left sr-only\">",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 5514,
+    "client": 844,
+    "top": 4670,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-light/app__my-puzzles_add__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__my-puzzles_add__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__my-puzzles_add__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__my-puzzles_add__04.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__my-puzzles_add__05.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__my-puzzles_add__06.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__my-puzzles_add__07.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__my-puzzles_add__08.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [
+    "[CONVEX M(presence:heartbeat)] [Request ID: 33842bd20204769b] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":17277}\n    at enforceRateLimit (../../convex/lib/rateLimits.ts:45:32)\n    at async handler (../../convex/presence.ts:61:4)\n",
+    "pageerror: [CONVEX M(presence:heartbeat)] [Request ID: 33842bd20204769b] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":17277}"
+  ],
+  "httpErrors": []
+}

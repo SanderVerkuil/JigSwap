@@ -1,0 +1,104 @@
+{
+  "variant": "mobile-light",
+  "route": "/contact",
+  "authed": false,
+  "name": "pub__contact",
+  "loadMs": 3822,
+  "finalUrl": "/contact",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "Contact — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Got a question or something to share?"
+    ],
+    "headings": [
+      "H1 Got a question or something to share?"
+    ],
+    "pageHeight": 2566,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 25,
+    "tapUnder24": 13,
+    "tapUnder24Examples": [
+      "a.block.text-[15.5px].text-mk-violet-600.mt-1.5 \"hello@jigswap.site\" 342x23",
+      "a.block.text-[15.5px].text-mk-violet-600.mt-1.5 \"support@jigswap.site\" 342x23",
+      "a.block.text-[15.5px].text-mk-violet-600.mt-1.5 \"privacy@jigswap.site\" 342x23",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"How it works\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Browse puzzles\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Features\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Docs\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Start trading\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"About\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Contact\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Privacy policy\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Terms of service\" 342x22"
+    ],
+    "tap24to44": 10,
+    "tap24to44Examples": [
+      "a [aria=\"JigSwap\"] \"JigSwap\" 118x37",
+      "button#radix-_R_7aj6l6_.inline-flex.items-center.justify-center.w-10 [aria=\"Switch language\"] \"🇺🇸\" 40x40",
+      "button.inline-flex.items-center.justify-center.w-10 [aria=\"Toggle dark mode\"] 40x40",
+      "button.min-[861px]:hidden.inline-flex.items-center.justify-center [aria=\"Open menu\"] 40x40",
+      "input#contact-name.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 276x36",
+      "input#contact-email.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 276x36",
+      "button.cursor-pointer.px-3.5.py-2.rounded-full \"Lending or swapping\" 170x38",
+      "button.cursor-pointer.px-3.5.py-2.rounded-full \"My account\" 108x38"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [],
+    "smallText": [],
+    "zoomingInputs": [
+      "textarea#contact-message.w-full.resize-y.text-[15px].px-[13px] 15px"
+    ],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "count": 18,
+      "nodes": [
+        {
+          "target": ".py-\\[18px\\].border-b.border-mk-border:nth-child(1) > .mt-1.text-sm.text-mk-text-muted",
+          "html": "<div class=\"text-sm text-mk-text-muted mt-1\">We usually reply within 1 business day.</div>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #7c7689, background color: #ececfb, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": ".py-\\[18px\\].border-b.border-mk-border:nth-child(2) > .mt-1.text-sm.text-mk-text-muted",
+          "html": "<div class=\"text-sm text-mk-text-muted mt-1\">Questions about a swap or your account.</div>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #7c7689, background color: #ececfb, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": ".py-\\[18px\\]:nth-child(3) > .mt-1.text-sm.text-mk-text-muted",
+          "html": "<div class=\"text-sm text-mk-text-muted mt-1\">For privacy concerns or legal matters.</div>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #7c7689, background color: #ececfb, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": ".mt-2",
+          "html": "<p class=\"text-sm text-mk-text-muted mt-2 leading-relaxed\">JigSwap is an online platform — we work from home, in between puzzles.</p>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.58 (foreground color: #7c7689, background color: #e7e7fb, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 2566,
+    "client": 844,
+    "top": 1722,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-light/pub__contact__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/pub__contact__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/pub__contact__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/pub__contact__04.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

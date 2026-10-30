@@ -1,0 +1,99 @@
+{
+  "variant": "desktop-dark",
+  "route": "/terms",
+  "authed": false,
+  "name": "pub__terms",
+  "loadMs": 3752,
+  "finalUrl": "/terms",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "Terms of Service — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Terms of Service"
+    ],
+    "headings": [
+      "H1 Terms of Service",
+      "H2 1. Acceptance of Terms",
+      "H2 2. What JigSwap Is",
+      "H2 3. Your Account",
+      "H2 4. Community Conduct",
+      "H3 What we expect:",
+      "H3 What is not allowed:",
+      "H2 5. Moderation",
+      "H3 Automated screening",
+      "H3 Reporting",
+      "H3 Our decisions",
+      "H3 Asking for a review",
+      "H3 Blocking",
+      "H2 6. Swaps, Sales, and Loans",
+      "H2 7. Content and Intellectual Property",
+      "H3 Your content",
+      "H3 The platform and puzzle artwork",
+      "H2 8. Privacy",
+      "H2 9. Ending Your Account",
+      "H2 10. Disclaimer",
+      "H2 11. Limitation of Liability",
+      "H2 12. Changes to These Terms"
+    ],
+    "pageHeight": 5484,
+    "overflowX": -15,
+    "overflowOffenders": [],
+    "interactiveCount": 35,
+    "tapUnder24": 12,
+    "tapUnder24Examples": [
+      "a.text-mk-violet-600.font-medium.hover:underline \"legal@jigswap.site\" 135x16",
+      "a.text-mk-violet-600.font-medium.hover:underline \"contact form\" 93x16",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"How it works\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Browse puzzles\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Features\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Docs\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Start trading\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"About\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Contact\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Privacy policy\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Terms of service\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Cookie policy\" 224x22"
+    ],
+    "tap24to44": 22,
+    "tap24to44Examples": [
+      "a [aria=\"JigSwap\"] \"JigSwap\" 118x37",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"How it works\" 96x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"Browse puzzles\" 115x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"Features\" 65x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"About\" 44x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"Docs\" 37x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"Contact\" 58x35",
+      "button#radix-_R_7aj6l6_.inline-flex.items-center.justify-center.w-10 [aria=\"Switch language\"] \"🇺🇸\" 40x40"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [],
+    "smallText": [
+      "div.font-mono.text-[11px].font-bold.tracking-[.1em] \"CONTENTS\" 11px"
+    ],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 5484,
+    "client": 900,
+    "top": 4584,
+    "step": 810
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/desktop-dark/pub__terms__01.jpg",
+    "/tmp/jigswap-review/tiles/desktop-dark/pub__terms__02.jpg",
+    "/tmp/jigswap-review/tiles/desktop-dark/pub__terms__03.jpg",
+    "/tmp/jigswap-review/tiles/desktop-dark/pub__terms__04.jpg",
+    "/tmp/jigswap-review/tiles/desktop-dark/pub__terms__05.jpg",
+    "/tmp/jigswap-review/tiles/desktop-dark/pub__terms__06.jpg",
+    "/tmp/jigswap-review/tiles/desktop-dark/pub__terms__07.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

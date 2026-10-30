@@ -1,0 +1,127 @@
+{
+  "variant": "desktop-light",
+  "route": "/how-it-works",
+  "authed": false,
+  "name": "pub__how-it-works",
+  "loadMs": 3796,
+  "finalUrl": "/how-it-works",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "How it works — JigSwap",
+    "lang": "en",
+    "h1": [
+      "From shelf to sharing, in five steps"
+    ],
+    "headings": [
+      "H1 From shelf to sharing, in five steps",
+      "H3 Create your profile",
+      "H3 Fill your shelf",
+      "H3 Discover & request",
+      "H3 Agree: lend or swap",
+      "H3 Track & wrap up",
+      "H2 Lend, swap or share in circles",
+      "H3 Lend",
+      "H3 Swap",
+      "H3 Share in circles",
+      "H2 A few quick answers"
+    ],
+    "pageHeight": 2989,
+    "overflowX": -15,
+    "overflowOffenders": [],
+    "interactiveCount": 26,
+    "tapUnder24": 10,
+    "tapUnder24Examples": [
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"How it works\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Browse puzzles\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Features\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Docs\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Start trading\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"About\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Contact\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Privacy policy\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Terms of service\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Cookie policy\" 224x22"
+    ],
+    "tap24to44": 11,
+    "tap24to44Examples": [
+      "a [aria=\"JigSwap\"] \"JigSwap\" 118x37",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"How it works\" 96x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"Browse puzzles\" 115x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"Features\" 65x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"About\" 44x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"Docs\" 37x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"Contact\" 58x35",
+      "button#radix-_R_7aj6l6_.inline-flex.items-center.justify-center.w-10 [aria=\"Switch language\"] \"🇺🇸\" 40x40"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [],
+    "smallText": [
+      "div.font-mono.text-[11px].font-bold.tracking-[.08em] \"FOR A WHILE OR INDEFINITELY\" 11px",
+      "div.font-mono.text-[11px].font-bold.tracking-[.08em] \"THE CLASSIC\" 11px",
+      "div.font-mono.text-[11px].font-bold.tracking-[.08em] \"WITH FAMILY & FRIENDS\" 11px"
+    ],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "count": 25,
+      "nodes": [
+        {
+          "target": "div:nth-child(1) > .grid-cols-\\[auto_1fr\\].py-\\[22px\\].gap-6 > div > .mt-2.text-pretty.text-base",
+          "html": "<p class=\"text-base leading-relaxed text-mk-text-muted mt-2 text-pretty\">Sign up for free, pick a username and tell the community a little about yourself and th",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #7c7689, background color: #ececfb, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": "div:nth-child(2) > .grid-cols-\\[auto_1fr\\].py-\\[22px\\].gap-6 > div > .mt-2.text-pretty.text-base",
+          "html": "<p class=\"text-base leading-relaxed text-mk-text-muted mt-2 text-pretty\">Add your puzzles with brand, piece count, difficulty and condition — and an EAN if you ",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #7c7689, background color: #ececfb, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": "div:nth-child(3) > .grid-cols-\\[auto_1fr\\].py-\\[22px\\].gap-6 > div > .mt-2.text-pretty.text-base",
+          "html": "<p class=\"text-base leading-relaxed text-mk-text-muted mt-2 text-pretty\">Browse the community, filter for what you want and request a puzzle to borrow or swap. ",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #7c7689, background color: #ececfb, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": "div:nth-child(4) > .grid-cols-\\[auto_1fr\\].py-\\[22px\\].gap-6 > div > .mt-2.text-pretty.text-base",
+          "html": "<p class=\"text-base leading-relaxed text-mk-text-muted mt-2 text-pretty\">Propose a loan or a swap, agree the details together, and pick a spot to hand the puzzl",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #7c7689, background color: #ececfb, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    },
+    {
+      "id": "heading-order",
+      "impact": "moderate",
+      "help": "Heading levels should only increase by one",
+      "count": 1,
+      "nodes": [
+        {
+          "target": "div:nth-child(1) > .grid-cols-\\[auto_1fr\\].py-\\[22px\\].gap-6 > div > .text-\\[22px\\]",
+          "html": "<h3 class=\"font-mk-heading font-bold tracking-tight text-[22px] text-mk-text-strong\">Create your profile</h3>",
+          "summary": "Fix any of the following:\n  Heading order invalid"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 2989,
+    "client": 900,
+    "top": 2089,
+    "step": 810
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/desktop-light/pub__how-it-works__01.jpg",
+    "/tmp/jigswap-review/tiles/desktop-light/pub__how-it-works__02.jpg",
+    "/tmp/jigswap-review/tiles/desktop-light/pub__how-it-works__03.jpg",
+    "/tmp/jigswap-review/tiles/desktop-light/pub__how-it-works__04.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

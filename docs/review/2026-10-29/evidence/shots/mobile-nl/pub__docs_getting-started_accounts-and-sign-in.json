@@ -1,0 +1,80 @@
+{
+  "variant": "mobile-nl",
+  "route": "/docs/getting-started/accounts-and-sign-in",
+  "authed": false,
+  "name": "pub__docs_getting-started_accounts-and-sign-in",
+  "loadMs": 3709,
+  "finalUrl": "/docs/getting-started/accounts-and-sign-in",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "JigSwap",
+    "lang": "nl",
+    "h1": [
+      "Accounts & Inloggen"
+    ],
+    "headings": [
+      "H1 Accounts & Inloggen",
+      "H2 Een account aanmaken",
+      "H2 Inloggen",
+      "H2 Openbare pagina's (geen account nodig)",
+      "H2 Als je je account verwijdert"
+    ],
+    "pageHeight": 4080,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 27,
+    "tapUnder24": 16,
+    "tapUnder24Examples": [
+      "a.sr-only.focus:not-sr-only.focus:absolute.focus:z-50 \"Naar inhoud springen\" 1x1",
+      "button.flex.items-center.gap-1.5.text-[14px] [aria=\"Documentatienavigatie openen\"] \"Documentatie\" 121x21",
+      "button.ml-auto [aria=\"Documentatie zoeken\"] 16x16",
+      "a.hover:text-mk-violet-600.active \"Documentatie\" 92x20",
+      "a \"Vriendenkringen\" 141x20",
+      "a \"Huishoudens\" 110x20",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Hoe het werkt\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Puzzels bekijken\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Functies\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Documentatie\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Begin met ruilen\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Over ons\" 342x22"
+    ],
+    "tap24to44": 9,
+    "tap24to44Examples": [
+      "a [aria=\"JigSwap\"] \"JigSwap\" 118x37",
+      "button#radix-_R_7aj6l6_.inline-flex.items-center.justify-center.w-10 [aria=\"Taal wijzigen\"] \"🇳🇱\" 40x40",
+      "button.inline-flex.items-center.justify-center.w-10 [aria=\"Toggle dark mode\"] 40x40",
+      "button.min-[861px]:hidden.inline-flex.items-center.justify-center [aria=\"Menu openen\"] 40x40",
+      "a \"Een account aanmaken\" 241x39",
+      "a \"Inloggen\" 91x39",
+      "a \"Als je je account verwijdert\" 278x39",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Ja\" 57x32"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "a.sr-only.focus:not-sr-only.focus:absolute.focus:z-50 \"Naar inhoud springen\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 4080,
+    "client": 844,
+    "top": 3236,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__docs_getting-started_accounts-and-sign-in__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__docs_getting-started_accounts-and-sign-in__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__docs_getting-started_accounts-and-sign-in__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__docs_getting-started_accounts-and-sign-in__04.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__docs_getting-started_accounts-and-sign-in__05.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__docs_getting-started_accounts-and-sign-in__06.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

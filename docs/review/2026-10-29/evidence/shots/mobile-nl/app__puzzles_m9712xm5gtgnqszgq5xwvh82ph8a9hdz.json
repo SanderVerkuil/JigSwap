@@ -1,0 +1,76 @@
+{
+  "variant": "mobile-nl",
+  "route": "/puzzles/m9712xm5gtgnqszgq5xwvh82ph8a9hdz",
+  "authed": true,
+  "name": "app__puzzles_m9712xm5gtgnqszgq5xwvh82ph8a9hdz",
+  "loadMs": 4796,
+  "finalUrl": "/puzzles/m9712xm5gtgnqszgq5xwvh82ph8a9hdz",
+  "metrics": {
+    "regionScrollHeight": 1602,
+    "regionOverflowX": 0,
+    "title": "Puzzeldetails — JigSwap",
+    "lang": "nl",
+    "h1": [
+      "Café",
+      "Café",
+      "Café"
+    ],
+    "headings": [
+      "H1 Café",
+      "H1 Café",
+      "H1 Café",
+      "H2 Communitybeoordeling",
+      "H2 Beschikbaar om te ruilen",
+      "H2 Reviews",
+      "H2 Zet JigSwap op je beginscherm",
+      "H2 Zoeken"
+    ],
+    "pageHeight": 1978,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 25,
+    "tapUnder24": 6,
+    "tapUnder24Examples": [
+      "a.text-jigsaw-primary.mt-3.inline-block.text-sm \"Bekijk alle 1 beschikbare exemplaren →\" 281x20",
+      "button.rounded-sm.p-0.5.transition-transform.hover:scale-110 [aria=\"1 star\"] 20x20",
+      "button.rounded-sm.p-0.5.transition-transform.hover:scale-110 [aria=\"2 stars\"] 20x20",
+      "button.rounded-sm.p-0.5.transition-transform.hover:scale-110 [aria=\"3 stars\"] 20x20",
+      "button.rounded-sm.p-0.5.transition-transform.hover:scale-110 [aria=\"4 stars\"] 20x20",
+      "button.rounded-sm.p-0.5.transition-transform.hover:scale-110 [aria=\"5 stars\"] 20x20"
+    ],
+    "tap24to44": 7,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.justify-center.gap-2 \"Toevoegen aan bibliotheek\" 249x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Vind een exemplaar om te ruilen\" 287x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Schrijf een review\" 176x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Toevoegen aan Favorieten\" 247x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Wijziging voorstellen\" 199x36",
+      "input.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 212x36",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Plaatsen\" 96x36"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 1978,
+    "client": 844,
+    "top": 1134,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-nl/app__puzzles_m9712xm5gtgnqszgq5xwvh82ph8a9hdz__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__puzzles_m9712xm5gtgnqszgq5xwvh82ph8a9hdz__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__puzzles_m9712xm5gtgnqszgq5xwvh82ph8a9hdz__03.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

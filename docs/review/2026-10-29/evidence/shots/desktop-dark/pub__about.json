@@ -1,0 +1,113 @@
+{
+  "variant": "desktop-dark",
+  "route": "/about",
+  "authed": false,
+  "name": "pub__about",
+  "loadMs": 3690,
+  "finalUrl": "/about",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "About — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Started at the kitchen table"
+    ],
+    "headings": [
+      "H1 Started at the kitchen table",
+      "H2 Making puzzle sharing accessible and sustainable —",
+      "H2 Our values",
+      "H3 Hobby, not hustle",
+      "H3 Sharing over owning",
+      "H3 Community first",
+      "H3 Trust",
+      "H2 From kitchen table to community",
+      "H3 A family project",
+      "H3 The first shelf",
+      "H3 A growing community"
+    ],
+    "pageHeight": 2448,
+    "overflowX": -15,
+    "overflowOffenders": [],
+    "interactiveCount": 22,
+    "tapUnder24": 10,
+    "tapUnder24Examples": [
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"How it works\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Browse puzzles\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Features\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Docs\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Start trading\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"About\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Contact\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Privacy policy\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Terms of service\" 224x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Cookie policy\" 224x22"
+    ],
+    "tap24to44": 11,
+    "tap24to44Examples": [
+      "a [aria=\"JigSwap\"] \"JigSwap\" 118x37",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"How it works\" 96x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"Browse puzzles\" 115x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"Features\" 65x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"About\" 44x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"Docs\" 37x35",
+      "a.text-[15px].font-medium.py-1.5.hover:text-mk-violet-600 \"Contact\" 58x35",
+      "button#radix-_R_7aj6l6_.inline-flex.items-center.justify-center.w-10 [aria=\"Switch language\"] \"🇺🇸\" 40x40"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [],
+    "smallText": [
+      "div \"FAMILIE\" 9.5px",
+      "b \"500\" 11px",
+      "span \"PCS\" 5.5px",
+      "div \"Keukentafel\" 11px",
+      "div \"SAMEN\" 9.5px",
+      "b \"1000\" 11px",
+      "span \"PCS\" 5.5px",
+      "div \"Eerste ruil\" 11px"
+    ],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "count": 3,
+      "nodes": [
+        {
+          "target": "div:nth-child(1) > div:nth-child(4) > div:nth-child(2) > div > span",
+          "html": "<span style=\"font-size:5.5px;letter-spacing:.06em;text-transform:uppercase;color:#7c7689\">pcs</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.36 (foreground color: #7c7689, background color: #ffffff, font size: 4.1pt (5.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": "div:nth-child(3) > div:nth-child(4) > div:nth-child(2) > div > span",
+          "html": "<span style=\"font-size:5.5px;letter-spacing:.06em;text-transform:uppercase;color:#7c7689\">pcs</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.36 (foreground color: #7c7689, background color: #ffffff, font size: 4.1pt (5.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": ".max-w-\\[1200px\\].w-full.px-6 > .text-center.max-w-\\[760px\\].mx-auto > .text-xs.tracking-\\[\\.12em\\].uppercase",
+          "html": "<div class=\"inline-flex items-center gap-2 font-mono text-xs font-semibold tracking-[.12em] uppercase text-mk-violet-600 justify-center\"><span class=\"w-[18px] h",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.93 (foreground color: #7f7af2, background color: #292b42, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 2448,
+    "client": 900,
+    "top": 1548,
+    "step": 810
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/desktop-dark/pub__about__01.jpg",
+    "/tmp/jigswap-review/tiles/desktop-dark/pub__about__02.jpg",
+    "/tmp/jigswap-review/tiles/desktop-dark/pub__about__03.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

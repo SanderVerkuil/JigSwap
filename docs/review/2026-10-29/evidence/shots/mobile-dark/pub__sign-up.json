@@ -1,0 +1,53 @@
+{
+  "variant": "mobile-dark",
+  "route": "/sign-up",
+  "authed": false,
+  "name": "pub__sign-up",
+  "loadMs": 3772,
+  "finalUrl": "/sign-up",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "Sign up — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Access restricted"
+    ],
+    "headings": [
+      "H1 Access restricted"
+    ],
+    "pageHeight": 844,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 3,
+    "tapUnder24": 2,
+    "tapUnder24Examples": [
+      "a.cl-footerActionLink.🔒️.cl-internal-okpjoh \"Sign in\" 42x18",
+      "a.cl-internal-1scxde7 [aria=\"Clerk logo\"] 48x14"
+    ],
+    "tap24to44": 1,
+    "tap24to44Examples": [
+      "button.cl-button.🔒️.cl-internal-r3dqqi \"Join waitlist\" 272x32"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 844,
+    "client": 844,
+    "top": 0,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-dark/pub__sign-up__01.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

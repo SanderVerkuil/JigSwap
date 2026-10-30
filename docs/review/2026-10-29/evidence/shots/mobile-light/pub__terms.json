@@ -1,0 +1,123 @@
+{
+  "variant": "mobile-light",
+  "route": "/terms",
+  "authed": false,
+  "name": "pub__terms",
+  "loadMs": 3695,
+  "finalUrl": "/terms",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "Terms of Service — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Terms of Service"
+    ],
+    "headings": [
+      "H1 Terms of Service",
+      "H2 1. Acceptance of Terms",
+      "H2 2. What JigSwap Is",
+      "H2 3. Your Account",
+      "H2 4. Community Conduct",
+      "H3 What we expect:",
+      "H3 What is not allowed:",
+      "H2 5. Moderation",
+      "H3 Automated screening",
+      "H3 Reporting",
+      "H3 Our decisions",
+      "H3 Asking for a review",
+      "H3 Blocking",
+      "H2 6. Swaps, Sales, and Loans",
+      "H2 7. Content and Intellectual Property",
+      "H3 Your content",
+      "H3 The platform and puzzle artwork",
+      "H2 8. Privacy",
+      "H2 9. Ending Your Account",
+      "H2 10. Disclaimer",
+      "H2 11. Limitation of Liability",
+      "H2 12. Changes to These Terms"
+    ],
+    "pageHeight": 8187,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 16,
+    "tapUnder24": 12,
+    "tapUnder24Examples": [
+      "a.text-mk-violet-600.font-medium.hover:underline \"legal@jigswap.site\" 135x16",
+      "a.text-mk-violet-600.font-medium.hover:underline \"contact form\" 93x16",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"How it works\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Browse puzzles\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Features\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Docs\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Start trading\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"About\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Contact\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Privacy policy\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Terms of service\" 342x22",
+      "a.text-[14.5px].text-mk-text-muted.hover:text-mk-violet-600.transition-colors \"Cookie policy\" 342x22"
+    ],
+    "tap24to44": 4,
+    "tap24to44Examples": [
+      "a [aria=\"JigSwap\"] \"JigSwap\" 118x37",
+      "button#radix-_R_7aj6l6_.inline-flex.items-center.justify-center.w-10 [aria=\"Switch language\"] \"🇺🇸\" 40x40",
+      "button.inline-flex.items-center.justify-center.w-10 [aria=\"Toggle dark mode\"] 40x40",
+      "button.min-[861px]:hidden.inline-flex.items-center.justify-center [aria=\"Open menu\"] 40x40"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "count": 58,
+      "nodes": [
+        {
+          "target": "#t-acceptance > .leading-\\[1\\.7\\]",
+          "html": "<p class=\"text-[15.5px] leading-[1.7] text-mk-text-muted mb-3.5\">By accessing or using JigSwap you agree to be bound by these Terms. If you do not agree with an",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #7c7689, background color: #ececfb, font size: 11.6pt (15.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": "#t-service > .leading-\\[1\\.7\\]",
+          "html": "<p class=\"text-[15.5px] leading-[1.7] text-mk-text-muted mb-3.5\">JigSwap helps jigsaw puzzle collectors keep track of their puzzles and exchange them with other",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #7c7689, background color: #ececfb, font size: 11.6pt (15.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": "#t-service > ul > li:nth-child(1)",
+          "html": "<li class=\"text-[15.5px] leading-relaxed text-mk-text-muted\">A community-maintained puzzle catalog that members can add puzzles to</li>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #7c7689, background color: #ececfb, font size: 11.6pt (15.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": "#t-service > ul > li:nth-child(2)",
+          "html": "<li class=\"text-[15.5px] leading-relaxed text-mk-text-muted\">A personal library to track the copies you own, their condition, and photos of them</li>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #7c7689, background color: #ececfb, font size: 11.6pt (15.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 8187,
+    "client": 844,
+    "top": 5320,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-light/pub__terms__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/pub__terms__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/pub__terms__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/pub__terms__04.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/pub__terms__05.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/pub__terms__06.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/pub__terms__07.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/pub__terms__08.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

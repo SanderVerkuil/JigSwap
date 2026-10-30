@@ -1,0 +1,65 @@
+{
+  "variant": "mobile-nl",
+  "route": "/completions/new",
+  "authed": true,
+  "name": "app__completions_new",
+  "loadMs": 4489,
+  "finalUrl": "/completions/new",
+  "metrics": {
+    "regionScrollHeight": 1836,
+    "regionOverflowX": 0,
+    "title": "Voltooiing vastleggen — JigSwap",
+    "lang": "nl",
+    "h1": [
+      "Voltooiing vastleggen",
+      "Voltooiing vastleggen"
+    ],
+    "headings": [
+      "H1 Voltooiing vastleggen",
+      "H1 Voltooiing vastleggen",
+      "H3 De Kattenshow",
+      "H3 Oostenrijk, Tirol, sellrainer berge",
+      "H3 Lam Gelegd",
+      "H2 Zet JigSwap op je beginscherm",
+      "H2 Zoeken"
+    ],
+    "pageHeight": 2212,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 13,
+    "tapUnder24": 0,
+    "tapUnder24Examples": [],
+    "tap24to44": 2,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Annuleren\" 100x32",
+      "input.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 358x36"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 2212,
+    "client": 844,
+    "top": 1368,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-nl/app__completions_new__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__completions_new__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__completions_new__03.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [
+    "[CONVEX M(presence:heartbeat)] [Request ID: f532860980ee1904] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":6745}\n    at enforceRateLimit (../../convex/lib/rateLimits.ts:45:32)\n    at async handler (../../convex/presence.ts:61:4)\n",
+    "pageerror: [CONVEX M(presence:heartbeat)] [Request ID: f532860980ee1904] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":6745}"
+  ],
+  "httpErrors": []
+}

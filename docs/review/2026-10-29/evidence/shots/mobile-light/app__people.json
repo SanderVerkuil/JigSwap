@@ -1,0 +1,108 @@
+{
+  "variant": "mobile-light",
+  "route": "/people",
+  "authed": true,
+  "name": "app__people",
+  "loadMs": 4904,
+  "finalUrl": "/people",
+  "metrics": {
+    "regionScrollHeight": 468,
+    "regionOverflowX": 0,
+    "title": "People — JigSwap",
+    "lang": "en",
+    "h1": [
+      "People",
+      "People"
+    ],
+    "headings": [
+      "H1 People",
+      "H1 People",
+      "H3 Sander Verkuil",
+      "H2 Add JigSwap to your home screen",
+      "H2 Search"
+    ],
+    "pageHeight": 844,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 20,
+    "tapUnder24": 3,
+    "tapUnder24Examples": [
+      "a.text-foreground.font-medium.underline.underline-offset-2 \"Review visibility\" 110x20",
+      "button.hover:bg-accent.hover:text-foreground.focus-visible:ring-ring.shrink-0 [aria=\"Dismiss\"] 20x20",
+      "a.line-clamp-2.rounded-sm.[overflow-wrap:anywhere].after:absolute [aria=\"Sander Verkuil\"] \"Sander Verkuil\" 268x22"
+    ],
+    "tap24to44": 4,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Show my QR\" 134x32",
+      "button#radix-_R_jamksj6l6_-trigger-network.dark:data-[state=active]:text-foreground.focus-visible:border-ring.focus-visible:ring-ring/50.focus-visible:outline-ring \"Your network\" 153x42",
+      "button#radix-_R_jamksj6l6_-trigger-find.dark:data-[state=active]:text-foreground.focus-visible:border-ring.focus-visible:ring-ring/50.focus-visible:outline-ring \"Find people\" 142x42",
+      "button#radix-_R_jamksj6l6_-trigger-activity.dark:data-[state=active]:text-foreground.focus-visible:border-ring.focus-visible:ring-ring/50.focus-visible:outline-ring \"Activity\" 113x42"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".border-border > .flex-1",
+          "html": "<span class=\"flex-1\">JigSwap now has a Find people directory. Members with a public profile can be found by name — check or change who can find you. <a class=\"t",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.49 (foreground color: #6f7087, background color: #f6f6fd, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    },
+    {
+      "id": "heading-order",
+      "impact": "moderate",
+      "help": "Heading levels should only increase by one",
+      "count": 1,
+      "nodes": [
+        {
+          "target": "h3",
+          "html": "<h3 class=\"text-base leading-snug font-semibold\">",
+          "summary": "Fix any of the following:\n  Heading order invalid"
+        }
+      ]
+    },
+    {
+      "id": "region",
+      "impact": "moderate",
+      "help": "All page content should be contained by landmarks",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".text-center",
+          "html": "<div data-slot=\"dialog-header\" class=\"flex flex-col gap-2 text-center sm:text-left sr-only\">",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 844,
+    "client": 844,
+    "top": 0,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-light/app__people__01.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [
+    "[CONVEX M(presence:heartbeat)] [Request ID: 709c5e62e8f97cd9] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":32093}\n    at enforceRateLimit (../../convex/lib/rateLimits.ts:45:32)\n    at async handler (../../convex/presence.ts:61:4)\n",
+    "pageerror: [CONVEX M(presence:heartbeat)] [Request ID: 709c5e62e8f97cd9] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":32093}"
+  ],
+  "httpErrors": []
+}

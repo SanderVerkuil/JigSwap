@@ -1,0 +1,77 @@
+{
+  "variant": "desktop-dark",
+  "route": "/circles/3e51e703-87d4-435a-91d7-29327390e7b1",
+  "authed": true,
+  "name": "app__circles_3e51e703-87d4-435a-91d7-29327390e7b1",
+  "loadMs": 5142,
+  "finalUrl": "/circles/3e51e703-87d4-435a-91d7-29327390e7b1",
+  "metrics": {
+    "regionScrollHeight": 830,
+    "regionOverflowX": 0,
+    "title": "Circles — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Test",
+      "Test"
+    ],
+    "headings": [
+      "H1 Test",
+      "H1 Test",
+      "H2 Test",
+      "H3 Group chat",
+      "H3 Shared puzzles",
+      "H2 Search"
+    ],
+    "pageHeight": 900,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 31,
+    "tapUnder24": 2,
+    "tapUnder24Examples": [
+      "a.transition-colors.hover:text-sidebar-accent-foreground.hover:underline \"Community\" 74x16",
+      "a.transition-colors.hover:text-sidebar-accent-foreground.hover:underline.active \"Circles\" 42x16"
+    ],
+    "tap24to44": 29,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.justify-center.gap-2 \"Toggle Sidebar\" 32x32",
+      "a.flex.shrink-0.items-center.transition-opacity 108x28",
+      "button.flex.h-9.w-full.max-w-[520px] \"Search puzzles, people, circles… ⌘K\" 520x36",
+      "button.inline-flex.items-center.justify-center.gap-2 [aria=\"Notifications\"] \"2\" 36x36",
+      "button#radix-_R_38cj6l6_.inline-flex.items-center.justify-center.gap-2 \"Toggle theme\" 36x36",
+      "button#radix-_R_58cj6l6_.inline-flex.items-center.justify-center.gap-2 \"Switch language\" 36x36",
+      "a.inline-flex.items-center.justify-center.gap-2 \"Add Puzzle\" 126x36",
+      "a.peer/menu-button.flex.w-full.items-center \"Dashboard\" 224x32"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.sr-only \"Toggle Sidebar\"",
+      "span.sr-only \"Toggle theme\"",
+      "span.sr-only \"Switch language\"",
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [
+      "kbd.pointer-events-none.rounded.border.bg-muted \"⌘K\" 11px",
+      "span.inline-flex.items-center.border.py-0.5 [aria=\"2 unread notifications\"] \"2\" 10px",
+      "a.text-sidebar-foreground/70.ring-sidebar-ring.flex.h-8 \"MY LIBRARY\" 10px",
+      "a.text-sidebar-foreground/70.ring-sidebar-ring.flex.h-8 \"COMMUNITY\" 10px"
+    ],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 900,
+    "client": 900,
+    "top": 0,
+    "step": 810
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/desktop-dark/app__circles_3e51e703-87d4-435a-91d7-29327390e7b1__01.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

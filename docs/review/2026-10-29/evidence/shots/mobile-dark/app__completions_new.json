@@ -1,0 +1,66 @@
+{
+  "variant": "mobile-dark",
+  "route": "/completions/new",
+  "authed": true,
+  "name": "app__completions_new",
+  "loadMs": 4739,
+  "finalUrl": "/completions/new",
+  "metrics": {
+    "regionScrollHeight": 1816,
+    "regionOverflowX": 0,
+    "title": "Log a completion — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Log a completion",
+      "Log a completion"
+    ],
+    "headings": [
+      "H1 Log a completion",
+      "H1 Log a completion",
+      "H3 De Kattenshow",
+      "H3 Oostenrijk, Tirol, sellrainer berge",
+      "H3 Lam Gelegd",
+      "H2 Add JigSwap to your home screen",
+      "H2 Search"
+    ],
+    "pageHeight": 2192,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 13,
+    "tapUnder24": 0,
+    "tapUnder24Examples": [],
+    "tap24to44": 2,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Cancel\" 78x32",
+      "input.file:text-foreground.placeholder:text-muted-foreground.selection:bg-primary.selection:text-primary-foreground 358x36"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 2192,
+    "client": 844,
+    "top": 1348,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-dark/app__completions_new__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__completions_new__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__completions_new__03.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [
+    "[CONVEX M(presence:heartbeat)] [Request ID: 966d587ac0a8ef03] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":5194}\n    at enforceRateLimit (../../convex/lib/rateLimits.ts:45:32)\n    at async handler (../../convex/presence.ts:61:4)\n",
+    "pageerror: [CONVEX M(presence:heartbeat)] [Request ID: 966d587ac0a8ef03] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":5194}"
+  ],
+  "httpErrors": []
+}

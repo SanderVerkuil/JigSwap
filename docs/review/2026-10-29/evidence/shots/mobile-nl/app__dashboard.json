@@ -1,0 +1,84 @@
+{
+  "variant": "mobile-nl",
+  "route": "/dashboard",
+  "authed": true,
+  "name": "app__dashboard",
+  "loadMs": 5254,
+  "finalUrl": "/dashboard",
+  "metrics": {
+    "regionScrollHeight": 2667,
+    "regionOverflowX": 85,
+    "title": "Dashboard — JigSwap",
+    "lang": "nl",
+    "h1": [
+      "Welkom terug, Henk! 🧩"
+    ],
+    "headings": [
+      "H1 Welkom terug, Henk! 🧩",
+      "H2 Snel instellen",
+      "H2 Jouw Plank",
+      "H2 Nu aan het puzzelen",
+      "H2 In Beweging",
+      "H2 Doelen",
+      "H2 Recent",
+      "H2 Vers op de Plank",
+      "H3 De Kattenshow",
+      "H3 Oostenrijk, Tirol, sellrainer berge",
+      "H3 Lam Gelegd",
+      "H2 Zet JigSwap op je beginscherm",
+      "H2 Zoeken"
+    ],
+    "pageHeight": 3043,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 45,
+    "tapUnder24": 2,
+    "tapUnder24Examples": [
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"De Kattenshow\" 113x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Lam Gelegd\" 88x20"
+    ],
+    "tap24to44": 10,
+    "tap24to44Examples": [
+      "a.bg-background.hover:bg-accent.inline-flex.items-center \"Puzzel Toevoegen\" 186x34",
+      "a.bg-background.hover:bg-accent.inline-flex.items-center \"Community Verkennen\" 220x34",
+      "a.bg-background.hover:bg-accent.inline-flex.items-center \"Voltooiing Vastleggen\" 220x34",
+      "a.inline-flex.items-center.justify-center.whitespace-nowrap \"Collecties Bekijken\" 161x32",
+      "a.underline.underline-offset-2 \"Start er een vanuit je puzzels\" 310x40",
+      "a.inline-flex.items-center.justify-center.whitespace-nowrap \"Alles\" 59x32",
+      "a.inline-flex.items-center.justify-center.whitespace-nowrap \"Alles\" 59x32",
+      "a.inline-flex.items-center.justify-center.whitespace-nowrap \"Stel een Doel\" 121x32"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\"",
+      "span.sr-only \", klaar\"",
+      "span.sr-only \", nog te doen\"",
+      "span.sr-only \", klaar\"",
+      "span.sr-only \", klaar\"",
+      "span.sr-only \", nog te doen\"",
+      "span.text-muted-foreground.truncate.text-right.text-sm \"3 op de plank · 3 te ruil\"",
+      "span.text-muted-foreground.truncate.text-right.text-sm \"Onlangs toegevoegd\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 3043,
+    "client": 844,
+    "top": 2199,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-nl/app__dashboard__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__dashboard__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__dashboard__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__dashboard__04.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

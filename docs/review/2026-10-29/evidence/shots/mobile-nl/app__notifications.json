@@ -1,0 +1,82 @@
+{
+  "variant": "mobile-nl",
+  "route": "/notifications",
+  "authed": true,
+  "name": "app__notifications",
+  "loadMs": 4688,
+  "finalUrl": "/notifications",
+  "metrics": {
+    "regionScrollHeight": 840,
+    "regionOverflowX": 0,
+    "title": "Meldingen — JigSwap",
+    "lang": "nl",
+    "h1": [
+      "Meldingen",
+      "Meldingen"
+    ],
+    "headings": [
+      "H1 Meldingen",
+      "H1 Meldingen",
+      "H2 Eerder",
+      "H2 Zet JigSwap op je beginscherm",
+      "H2 Zoeken"
+    ],
+    "pageHeight": 1216,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 28,
+    "tapUnder24": 3,
+    "tapUnder24Examples": [
+      "button.peer.data-[state=checked]:bg-primary.data-[state=unchecked]:bg-input.focus-visible:border-ring [aria=\"Alleen ongelezen\"] \"on\" 32x18",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Bekijk wat er nieuw is in JigSwap.\" 223x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Sander Verkuil volgt je nu.\" 186x20"
+    ],
+    "tap24to44": 12,
+    "tap24to44Examples": [
+      "a.inline-flex.items-center.justify-center.whitespace-nowrap \"Meldingsvoorkeuren\" 193x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Alles markeren als gelezen\" 239x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Alle\" 51x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Uitwisselingen\" 129x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Berichten\" 95x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Sociaal\" 80x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Mijn inzendingen\" 144x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Productupdates\" 146x32"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\"",
+      "span.sr-only \"Ongelezen,\"",
+      "span.sr-only \"Ongelezen,\""
+    ],
+    "smallText": [
+      "time \"8 dagen geleden\" 11px",
+      "span.inline-flex.items-center.justify-center.rounded-md \"Productupdates\" 10px",
+      "time \"11 dagen geleden\" 11px",
+      "span.inline-flex.items-center.justify-center.rounded-md \"Berichten\" 10px",
+      "time \"11 dagen geleden\" 11px",
+      "span.inline-flex.items-center.justify-center.rounded-md \"Sociaal\" 10px",
+      "time \"11 dagen geleden\" 11px",
+      "span.inline-flex.items-center.justify-center.rounded-md \"Productupdates\" 10px",
+      "time \"12 dagen geleden\" 11px",
+      "span.inline-flex.items-center.justify-center.rounded-md \"Sociaal\" 10px"
+    ],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 1216,
+    "client": 844,
+    "top": 372,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-nl/app__notifications__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__notifications__02.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

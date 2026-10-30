@@ -1,0 +1,162 @@
+{
+  "variant": "desktop-light",
+  "route": "/whats-new",
+  "authed": true,
+  "name": "app__whats-new",
+  "loadMs": 4772,
+  "finalUrl": "/whats-new",
+  "metrics": {
+    "regionScrollHeight": 21932,
+    "regionOverflowX": 0,
+    "title": "What's new — JigSwap",
+    "lang": "en",
+    "h1": [
+      "What's new",
+      "What's new"
+    ],
+    "headings": [
+      "H1 What's new",
+      "H1 What's new",
+      "H2 OCTOBER 2026",
+      "H3 Know when JigSwap is updated",
+      "H3 Give your circle an icon",
+      "H3 Circle permissions now do what they say",
+      "H3 Messages fills the page",
+      "H3 Empty pages now point the way",
+      "H3 Guides: a short tour of any feature",
+      "H3 Every tab within reach",
+      "H3 Photos in chats arrive right away",
+      "H3 See when your puzzle image is still being checked",
+      "H3 Exchange updates in your language",
+      "H3 Photos no longer reveal where they were taken",
+      "H3 Circle chats look like circle chats",
+      "H3 What happens when a member leaves",
+      "H3 Household improvements",
+      "H3 Improvements to messages",
+      "H3 More improvements to messages",
+      "H3 Invite friends by email",
+      "H3 More privacy improvements",
+      "H3 Improvements to messages",
+      "H3 Block and report members",
+      "H3 Circle invitations: nobody joins without saying ye",
+      "H3 Invite links let new members choose to follow"
+    ],
+    "pageHeight": 900,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 58,
+    "tapUnder24": 1,
+    "tapUnder24Examples": [
+      "a \"Messages\" 80x21"
+    ],
+    "tap24to44": 57,
+    "tap24to44Examples": [
+      "button.inline-flex.items-center.justify-center.gap-2 \"Toggle Sidebar\" 32x32",
+      "a.flex.shrink-0.items-center.transition-opacity 108x28",
+      "button.flex.h-9.w-full.max-w-[520px] \"Search puzzles, people, circles… ⌘K\" 520x36",
+      "button.inline-flex.items-center.justify-center.gap-2 [aria=\"Notifications\"] \"2\" 36x36",
+      "button#radix-_R_38cj6l6_.inline-flex.items-center.justify-center.gap-2 \"Toggle theme\" 36x36",
+      "button#radix-_R_58cj6l6_.inline-flex.items-center.justify-center.gap-2 \"Switch language\" 36x36",
+      "a.inline-flex.items-center.justify-center.gap-2 \"Add Puzzle\" 126x36",
+      "a.peer/menu-button.flex.w-full.items-center \"Dashboard\" 224x32"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.sr-only \"Toggle Sidebar\"",
+      "span.sr-only \"Toggle theme\"",
+      "span.sr-only \"Switch language\"",
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [
+      "kbd.pointer-events-none.rounded.border.bg-muted \"⌘K\" 11px",
+      "span.inline-flex.items-center.border.py-0.5 [aria=\"2 unread notifications\"] \"2\" 10px",
+      "a.text-sidebar-foreground/70.ring-sidebar-ring.flex.h-8 \"MY LIBRARY\" 10px",
+      "a.text-sidebar-foreground/70.ring-sidebar-ring.flex.h-8 \"COMMUNITY\" 10px"
+    ],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "count": 2,
+      "nodes": [
+        {
+          "target": "kbd",
+          "html": "<kbd class=\"pointer-events-none rounded border bg-muted px-1.5 py-0.5 font-mono text-[11px] leading-none text-muted-foreground\">⌘K</kbd>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #6f7087, background color: #f2f2fb, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": ".transition-\\[filter\\]",
+          "html": "<span aria-hidden=\"true\" class=\"truncate text-xs text-muted-foreground transition-[filter] blur-[4px] select-none\">s.verkuil+dev@pm.me</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.21 (foreground color: #6f7087, background color: #eeeeff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    },
+    {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "help": "Elements must have their visible text as part of their accessible name",
+      "count": 1,
+      "nodes": [
+        {
+          "target": "button[data-slot=\"popover-trigger\"]",
+          "html": "<button data-slot=\"popover-trigger\" class=\"inline-flex items-ce...\" aria-label=\"Notifications\" type=\"button\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-s",
+          "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+        }
+      ]
+    },
+    {
+      "id": "region",
+      "impact": "moderate",
+      "help": "All page content should be contained by landmarks",
+      "count": 18,
+      "nodes": [
+        {
+          "target": ".peer\\/menu-button[href$=\"dashboard\"][data-active=\"false\"] > span",
+          "html": "<span>Dashboard</span>",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": ".min-w-0[data-slot=\"sidebar-group\"][data-sidebar=\"group\"]:nth-child(2) > .text-sidebar-foreground\\/70.px-2.transition-\\[margin\\,opacity\\]",
+          "html": "<a class=\"text-sidebar-foregro...\" data-slot=\"sidebar-group-label\" data-sidebar=\"group-label\" href=\"/library\">",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": ".peer\\/menu-button[href$=\"my-puzzles\"][data-active=\"false\"] > span",
+          "html": "<span>My Puzzles</span>",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": "a[href$=\"collections\"] > span",
+          "html": "<span>Collections</span>",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": true,
+    "scrollHeight": 21932,
+    "client": 830,
+    "top": 5229,
+    "step": 747
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/desktop-light/app__whats-new__01.jpg",
+    "/tmp/jigswap-review/tiles/desktop-light/app__whats-new__02.jpg",
+    "/tmp/jigswap-review/tiles/desktop-light/app__whats-new__03.jpg",
+    "/tmp/jigswap-review/tiles/desktop-light/app__whats-new__04.jpg",
+    "/tmp/jigswap-review/tiles/desktop-light/app__whats-new__05.jpg",
+    "/tmp/jigswap-review/tiles/desktop-light/app__whats-new__06.jpg",
+    "/tmp/jigswap-review/tiles/desktop-light/app__whats-new__07.jpg",
+    "/tmp/jigswap-review/tiles/desktop-light/app__whats-new__08.jpg"
+  ],
+  "scrollsInnerRegion": true,
+  "consoleErrors": [],
+  "httpErrors": []
+}

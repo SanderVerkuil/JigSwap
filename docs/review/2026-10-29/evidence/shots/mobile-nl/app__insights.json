@@ -1,0 +1,68 @@
+{
+  "variant": "mobile-nl",
+  "route": "/insights",
+  "authed": true,
+  "name": "app__insights",
+  "loadMs": 4530,
+  "finalUrl": "/insights",
+  "metrics": {
+    "regionScrollHeight": 2061,
+    "regionOverflowX": 73,
+    "title": "Inzichten — JigSwap",
+    "lang": "nl",
+    "h1": [
+      "Inzichten",
+      "Inzichten"
+    ],
+    "headings": [
+      "H1 Inzichten",
+      "H1 Inzichten",
+      "H2 Voltooiingen / maand",
+      "H2 Ruilacties / maand",
+      "H2 Collectie-uitsplitsing",
+      "H3 Op aantal stukjes",
+      "H3 Op moeilijkheid",
+      "H3 Topmerken",
+      "H2 Mijn gegevens exporteren",
+      "H2 Zet JigSwap op je beginscherm",
+      "H2 Zoeken"
+    ],
+    "pageHeight": 2437,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 14,
+    "tapUnder24": 0,
+    "tapUnder24Examples": [],
+    "tap24to44": 3,
+    "tap24to44Examples": [
+      "button.rounded-full.border.px-2.5.py-1 \"Voltooiingen\" 101x26",
+      "button.rounded-full.border.px-2.5.py-1 \"Oplosminuten\" 112x26",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Mijn gegevens exporteren\" 238x36"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 2437,
+    "client": 844,
+    "top": 1593,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-nl/app__insights__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__insights__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__insights__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__insights__04.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

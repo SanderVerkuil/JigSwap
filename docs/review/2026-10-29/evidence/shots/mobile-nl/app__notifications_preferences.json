@@ -1,0 +1,79 @@
+{
+  "variant": "mobile-nl",
+  "route": "/notifications/preferences",
+  "authed": true,
+  "name": "app__notifications_preferences",
+  "loadMs": 4587,
+  "finalUrl": "/notifications/preferences",
+  "metrics": {
+    "regionScrollHeight": 4589,
+    "regionOverflowX": 0,
+    "title": "Meldingsvoorkeuren — JigSwap",
+    "lang": "nl",
+    "h1": [
+      "Meldingsvoorkeuren",
+      "Meldingsvoorkeuren"
+    ],
+    "headings": [
+      "H1 Meldingsvoorkeuren",
+      "H1 Meldingsvoorkeuren",
+      "H2 Push op dit apparaat",
+      "H2 Meldingsvoorkeuren",
+      "H2 Zet JigSwap op je beginscherm",
+      "H2 Zoeken"
+    ],
+    "pageHeight": 4965,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 136,
+    "tapUnder24": 126,
+    "tapUnder24Examples": [
+      "a.text-muted-foreground.hover:text-foreground.text-sm.hover:underline \"Uitwisselingen\" 97x20",
+      "a.text-muted-foreground.hover:text-foreground.text-sm.hover:underline \"Berichten\" 67x20",
+      "a.text-muted-foreground.hover:text-foreground.text-sm.hover:underline \"Sociaal\" 50x20",
+      "a.text-muted-foreground.hover:text-foreground.text-sm.hover:underline \"Mijn inzendingen\" 116x20",
+      "a.text-muted-foreground.hover:text-foreground.text-sm.hover:underline \"Productupdates\" 113x20",
+      "a.text-muted-foreground.hover:text-foreground.text-sm.hover:underline \"Veiligheid\" 66x20",
+      "button.peer.border-input.dark:bg-input/30.data-[state=checked]:bg-primary [aria=\"Uitwisselingen — In-app\"] \"on\" 16x16",
+      "button.peer.border-input.dark:bg-input/30.data-[state=checked]:bg-primary [aria=\"Uitwisselingen — E-mail\"] \"on\" 16x16",
+      "button.peer.border-input.dark:bg-input/30.data-[state=checked]:bg-primary [aria=\"Uitwisselingen — Push\"] \"on\" 16x16",
+      "button.peer.data-[state=checked]:bg-primary.data-[state=unchecked]:bg-input.focus-visible:border-ring \"on\" 32x18",
+      "button.peer.data-[state=checked]:bg-primary.data-[state=unchecked]:bg-input.focus-visible:border-ring \"on\" 32x18",
+      "button.peer.data-[state=checked]:bg-primary.data-[state=unchecked]:bg-input.focus-visible:border-ring \"on\" 32x18"
+    ],
+    "tap24to44": 0,
+    "tap24to44Examples": [],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [
+      "span#col-inApp.text-muted-foreground.text-center.text-[10px].font-medium \"IN-APP\" 10px",
+      "span#col-email.text-muted-foreground.text-center.text-[10px].font-medium \"E-MAIL\" 10px",
+      "span#col-push.text-muted-foreground.text-center.text-[10px].font-medium \"PUSH\" 10px"
+    ],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 4965,
+    "client": 844,
+    "top": 4121,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-nl/app__notifications_preferences__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__notifications_preferences__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__notifications_preferences__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__notifications_preferences__04.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__notifications_preferences__05.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__notifications_preferences__06.jpg",
+    "/tmp/jigswap-review/tiles/mobile-nl/app__notifications_preferences__07.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

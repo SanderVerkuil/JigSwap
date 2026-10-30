@@ -1,0 +1,75 @@
+{
+  "variant": "mobile-dark",
+  "route": "/my-puzzles",
+  "authed": true,
+  "name": "app__my-puzzles",
+  "loadMs": 4724,
+  "finalUrl": "/my-puzzles",
+  "metrics": {
+    "regionScrollHeight": 2036,
+    "regionOverflowX": 0,
+    "title": "My puzzles — JigSwap",
+    "lang": "en",
+    "h1": [
+      "My Puzzles",
+      "My Puzzles"
+    ],
+    "headings": [
+      "H1 My Puzzles",
+      "H1 My Puzzles",
+      "H3 De Kattenshow",
+      "H3 Oostenrijk, Tirol, sellrainer berge",
+      "H3 Lam Gelegd",
+      "H2 Add JigSwap to your home screen",
+      "H2 Search"
+    ],
+    "pageHeight": 2412,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 30,
+    "tapUnder24": 4,
+    "tapUnder24Examples": [
+      "button.shrink-0.rounded.p-0.5.hover:bg-accent [aria=\"Dismiss hint\"] 20x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"De Kattenshow\" 113x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Oostenrijk, Tirol, sellrainer berge\" 240x20",
+      "a.after:absolute.after:inset-0.after:z-[1].after:content-[''] \"Lam Gelegd\" 88x20"
+    ],
+    "tap24to44": 13,
+    "tap24to44Examples": [
+      "a.inline-flex.items-center.justify-center.whitespace-nowrap \"My suggestions\" 158x32",
+      "a.inline-flex.items-center.justify-center.whitespace-nowrap \"Add Puzzle\" 120x32",
+      "button.inline-flex.items-center.justify-center.gap-2 [aria=\"Grid view\"] 36x36",
+      "button.inline-flex.items-center.justify-center.gap-2 [aria=\"List view\"] 36x36",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"All\" 42x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"Available\" 94x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"For Trade\" 97x32",
+      "button.inline-flex.items-center.justify-center.whitespace-nowrap \"For Lend\" 87x32"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 2412,
+    "client": 844,
+    "top": 1568,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-dark/app__my-puzzles__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__my-puzzles__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__my-puzzles__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-dark/app__my-puzzles__04.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

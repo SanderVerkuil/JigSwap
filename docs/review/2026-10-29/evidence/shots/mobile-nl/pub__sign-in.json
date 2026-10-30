@@ -1,0 +1,61 @@
+{
+  "variant": "mobile-nl",
+  "route": "/sign-in",
+  "authed": false,
+  "name": "pub__sign-in",
+  "loadMs": 3841,
+  "finalUrl": "/sign-in",
+  "metrics": {
+    "regionScrollHeight": null,
+    "regionOverflowX": null,
+    "title": "Inloggen — JigSwap",
+    "lang": "nl",
+    "h1": [
+      "Inloggen"
+    ],
+    "headings": [
+      "H1 Inloggen"
+    ],
+    "pageHeight": 844,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 9,
+    "tapUnder24": 1,
+    "tapUnder24Examples": [
+      "a.cl-internal-1scxde7 [aria=\"Clerk logo\"] 48x14"
+    ],
+    "tap24to44": 8,
+    "tap24to44Examples": [
+      "button.cl-socialButtonsIconButton.cl-button.cl-socialButtonsIconButton__apple.cl-button__apple [aria=\"Ga verder met Apple\"] 85x32",
+      "button.cl-socialButtonsIconButton.cl-button.cl-socialButtonsIconButton__google.cl-button__google [aria=\"Ga verder met Google\"] 85x32",
+      "button.cl-socialButtonsIconButton.cl-button.cl-socialButtonsIconButton__microsoft.cl-button__microsoft [aria=\"Ga verder met Microsoft\"] 85x32",
+      "input#identifier-field.cl-formFieldInput.cl-input.cl-formFieldInput__identifier.cl-input__identifier 272x32",
+      "input#password-field.cl-formFieldInput.cl-input.cl-formFieldInput__password.cl-input__password 303x32",
+      "button.cl-formFieldInputShowPasswordButton.cl-button.🔒️.cl-internal-1twtk2i [aria=\"Wachtwoord tonen\"] 32x26",
+      "button.cl-formButtonPrimary.cl-button.🔒️.cl-internal-sb33io \"Doorgaan\" 272x32",
+      "a.cl-footerActionLink.🔒️.cl-internal-okpjoh \"Meld je aan voor de wachtlijst\" 170x36"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [],
+    "smallText": [],
+    "zoomingInputs": [
+      "input#identifier-field.cl-formFieldInput.cl-input.cl-formFieldInput__identifier.cl-input__identifier 13px",
+      "input#password-field.cl-formFieldInput.cl-input.cl-formFieldInput__password.cl-input__password 13px"
+    ],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 844,
+    "client": 844,
+    "top": 0,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-nl/pub__sign-in__01.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}

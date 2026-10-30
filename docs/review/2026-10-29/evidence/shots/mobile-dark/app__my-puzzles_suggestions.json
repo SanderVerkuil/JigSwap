@@ -1,0 +1,58 @@
+{
+  "variant": "mobile-dark",
+  "route": "/my-puzzles/suggestions",
+  "authed": true,
+  "name": "app__my-puzzles_suggestions",
+  "loadMs": 4500,
+  "finalUrl": "/my-puzzles/suggestions",
+  "metrics": {
+    "regionScrollHeight": 468,
+    "regionOverflowX": 0,
+    "title": "My puzzles — JigSwap",
+    "lang": "en",
+    "h1": [
+      "My suggestions",
+      "My suggestions"
+    ],
+    "headings": [
+      "H1 My suggestions",
+      "H1 My suggestions",
+      "H2 Add JigSwap to your home screen",
+      "H2 Search"
+    ],
+    "pageHeight": 844,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 11,
+    "tapUnder24": 0,
+    "tapUnder24Examples": [],
+    "tap24to44": 0,
+    "tap24to44Examples": [],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 844,
+    "client": 844,
+    "top": 0,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-dark/app__my-puzzles_suggestions__01.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [
+    "[CONVEX M(presence:heartbeat)] [Request ID: bc2b7f9117e993e6] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":2655}\n    at enforceRateLimit (../../convex/lib/rateLimits.ts:45:32)\n    at async handler (../../convex/presence.ts:61:4)\n",
+    "pageerror: [CONVEX M(presence:heartbeat)] [Request ID: bc2b7f9117e993e6] Server Error\nUncaught ConvexError: {\"code\":\"RateLimited\",\"retryAfterMs\":2655}"
+  ],
+  "httpErrors": []
+}

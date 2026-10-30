@@ -1,0 +1,83 @@
+{
+  "variant": "mobile-light",
+  "route": "/insights",
+  "authed": true,
+  "name": "app__insights",
+  "loadMs": 4500,
+  "finalUrl": "/insights",
+  "metrics": {
+    "regionScrollHeight": 2061,
+    "regionOverflowX": 71,
+    "title": "Insights — JigSwap",
+    "lang": "en",
+    "h1": [
+      "Insights",
+      "Insights"
+    ],
+    "headings": [
+      "H1 Insights",
+      "H1 Insights",
+      "H2 Completions / month",
+      "H2 Swaps / month",
+      "H2 Collection breakdown",
+      "H3 By piece count",
+      "H3 By difficulty",
+      "H3 Top brands",
+      "H2 Export my data",
+      "H2 Add JigSwap to your home screen",
+      "H2 Search"
+    ],
+    "pageHeight": 2437,
+    "overflowX": 0,
+    "overflowOffenders": [],
+    "interactiveCount": 14,
+    "tapUnder24": 0,
+    "tapUnder24Examples": [],
+    "tap24to44": 3,
+    "tap24to44Examples": [
+      "button.rounded-full.border.px-2.5.py-1 \"Completions\" 104x26",
+      "button.rounded-full.border.px-2.5.py-1 \"Solve minutes\" 111x26",
+      "button.inline-flex.items-center.justify-center.gap-2 \"Export my data\" 162x36"
+    ],
+    "unnamedControls": [],
+    "truncatedText": [
+      "span.cl-internal-1y7k3pi",
+      "span.sr-only \"Online\""
+    ],
+    "smallText": [],
+    "zoomingInputs": [],
+    "imgsMissingAlt": 0,
+    "dialogsOpen": []
+  },
+  "axe": [
+    {
+      "id": "region",
+      "impact": "moderate",
+      "help": "All page content should be contained by landmarks",
+      "count": 1,
+      "nodes": [
+        {
+          "target": ".sm\\:text-left",
+          "html": "<div data-slot=\"dialog-header\" class=\"flex flex-col gap-2 text-center sm:text-left sr-only\">",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    }
+  ],
+  "scroll": {
+    "useRegion": false,
+    "scrollHeight": 2437,
+    "client": 844,
+    "top": 1593,
+    "step": 760
+  },
+  "tiles": [
+    "/tmp/jigswap-review/tiles/mobile-light/app__insights__01.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__insights__02.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__insights__03.jpg",
+    "/tmp/jigswap-review/tiles/mobile-light/app__insights__04.jpg"
+  ],
+  "scrollsInnerRegion": false,
+  "consoleErrors": [],
+  "httpErrors": []
+}
