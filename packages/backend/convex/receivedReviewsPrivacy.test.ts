@@ -8,8 +8,10 @@ import schema from "./schema";
 // categories, comment, createdAt, projected reviewer), never the stored row, so no exchange id,
 // reviewee id or aggregate id can correlate two members' lists into the trade graph and name an
 // anonymous reviewer. The reviewee is gated like getUserStats: a member who blocked the viewer
-// shows no reviews and a zero reputation, and a private member's received comments reach only
-// themself and their mutual followers (the ratings stay, as the profile shows them).
+// shows no reviews and a zero reputation, and a private member's received reviews reach only
+// themself and their mutual followers. A stranger reading the private member's list would
+// otherwise see the (named) public partner and so learn who the anonymous reviewer on that
+// partner's list is.
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
@@ -128,18 +130,13 @@ describe("listReviewsForMember (SEC-12)", () => {
     const { pub, priv, exchangeId } = await seed(t);
 
     const onPub = await listFor(t, "viewer", pub);
-    const onPriv = await listFor(t, "viewer", priv);
+    // priv's own read of their list, so both sides carry a row to compare.
+    const onPriv = await listFor(t, "priv", priv);
     expect(onPub).toHaveLength(1);
     expect(onPriv).toHaveLength(1);
     const keys = ["categories", "comment", "createdAt", "id", "rating"];
     expect(Object.keys(onPub[0]).sort()).toEqual([...keys, "reviewer"].sort());
-    expect(Object.keys(onPriv[0]).sort()).toEqual(
-      // The private reviewee's comment is withheld from a stranger (below).
-      keys
-        .filter((k) => k !== "comment")
-        .concat("reviewer")
-        .sort(),
-    );
+    expect(Object.keys(onPriv[0]).sort()).toEqual([...keys, "reviewer"].sort());
     for (const json of [JSON.stringify(onPub), JSON.stringify(onPriv)]) {
       expect(json).not.toContain(exchangeId);
       expect(json).not.toContain("exchangeId");
@@ -154,22 +151,34 @@ describe("listReviewsForMember (SEC-12)", () => {
     expect(onPub[0].categories).toEqual(scores);
   });
 
-  test("a private member's received comments reach only themself and mutual followers", async () => {
+  test("a private member's received reviews reach only themself and mutual followers", async () => {
     const t = convexTest(schema, modules);
     const { priv, viewer } = await seed(t);
 
-    // A stranger and a one-way follower see the rating, never the comment.
-    expect((await listFor(t, "viewer", priv))[0]).not.toHaveProperty("comment");
+    // A stranger and a one-way follower read nothing: not the comment, and not the reviewer.
+    expect(await listFor(t, "viewer", priv)).toEqual([]);
     await follow(t, viewer, priv);
-    const oneWay = await listFor(t, "viewer", priv);
-    expect(oneWay).toHaveLength(1);
-    expect(oneWay[0].rating).toBe(4);
-    expect(oneWay[0]).not.toHaveProperty("comment");
+    expect(await listFor(t, "viewer", priv)).toEqual([]);
 
     // Mutual followers and the member themself read it.
     await follow(t, priv, viewer);
     expect((await listFor(t, "viewer", priv))[0].comment).toBe(PRIV_COMMENT);
     expect((await listFor(t, "priv", priv))[0].comment).toBe(PRIV_COMMENT);
+  });
+
+  test("a stranger can't name the anonymous reviewer through the private partner's list", async () => {
+    const t = convexTest(schema, modules);
+    const { pub, priv } = await seed(t);
+
+    // On pub's list priv is anonymous. Reading priv's list must not then name pub as priv's
+    // partner, which would tell the stranger who that anonymous reviewer is.
+    const onPub = await listFor(t, "viewer", pub);
+    expect(onPub[0].reviewer.anonymous).toBe(true);
+    const onPriv = await listFor(t, "viewer", priv);
+    expect(onPriv).toEqual([]);
+    const json = JSON.stringify(onPriv);
+    expect(json).not.toContain(pub);
+    expect(json).not.toContain('"pub"');
   });
 
   test("a member who blocked the viewer shows no reviews and a zero reputation", async () => {
