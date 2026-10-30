@@ -45,7 +45,7 @@ export function CompletionTrendsChart({
                 aria-pressed={metric === option}
                 onClick={() => setMetric(option)}
                 className={cn(
-                  "rounded-full border px-2.5 py-1 text-xs font-medium whitespace-nowrap transition-colors",
+                  "pointer-coarse:min-h-9 rounded-full border px-2.5 py-1 text-xs font-medium whitespace-nowrap transition-colors",
                   metric === option
                     ? "border-transparent bg-primary text-primary-foreground"
                     : "bg-card hover:bg-accent text-foreground",
