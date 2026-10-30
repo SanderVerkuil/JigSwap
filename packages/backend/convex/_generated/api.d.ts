@@ -65,6 +65,7 @@ import type * as catalog_boxArtUploads from "../catalog/boxArtUploads.js";
 import type * as catalog_browsePublicCatalog from "../catalog/browsePublicCatalog.js";
 import type * as catalog_categoryFixture from "../catalog/categoryFixture.js";
 import type * as catalog_createCatalogCategory from "../catalog/createCatalogCategory.js";
+import type * as catalog_definitionVisibility from "../catalog/definitionVisibility.js";
 import type * as catalog_disablePuzzleDefinition from "../catalog/disablePuzzleDefinition.js";
 import type * as catalog_editChangeProposal from "../catalog/editChangeProposal.js";
 import type * as catalog_errors from "../catalog/errors.js";
@@ -634,6 +635,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/browsePublicCatalog": typeof catalog_browsePublicCatalog;
   "catalog/categoryFixture": typeof catalog_categoryFixture;
   "catalog/createCatalogCategory": typeof catalog_createCatalogCategory;
+  "catalog/definitionVisibility": typeof catalog_definitionVisibility;
   "catalog/disablePuzzleDefinition": typeof catalog_disablePuzzleDefinition;
   "catalog/editChangeProposal": typeof catalog_editChangeProposal;
   "catalog/errors": typeof catalog_errors;
