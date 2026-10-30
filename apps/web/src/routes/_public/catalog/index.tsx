@@ -13,10 +13,18 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
+import {
+  isPieceBucket,
+  normalizeCatalogQuery,
+  publicCatalogFilterArgs,
+  validatePublicCatalogSearch,
+  type PieceBucket,
+  type PublicCatalogSearch,
+} from "@/lib/public-catalog-search";
 import { seoHead } from "@/lib/seo-head";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import { Search } from "lucide-react";
 import * as React from "react";
@@ -25,20 +33,24 @@ import { useTranslations } from "use-intl";
 type BrowseResult = FunctionReturnType<typeof gateway.catalog.publicBrowse>;
 
 const PAGE_SIZE = 20;
-// The default (unfiltered) first page — the loader prefetches EXACTLY these args so the
-// initial render is SSR'd (same pattern as the home page's globalStatsQuery).
-const defaultFirstPageQuery = convexQuery(gateway.catalog.publicBrowse, {
-  paginationOpts: { numItems: PAGE_SIZE, cursor: null },
-});
+// The first page for the URL's filters. The loader prefetches EXACTLY these args so a
+// filtered link renders its results on the server (same pattern as the home page's
+// globalStatsQuery).
+const firstPageQuery = (search: PublicCatalogSearch) =>
+  convexQuery(gateway.catalog.publicBrowse, {
+    paginationOpts: { numItems: PAGE_SIZE, cursor: null },
+    ...publicCatalogFilterArgs(search),
+  });
 
-// Piece-count buckets from the spec: <500 / 500 / 1000 / 1500+.
-const PIECE_BUCKETS = {
-  lt500: { pieceMax: 499 },
-  b500: { pieceMin: 500, pieceMax: 999 },
-  b1000: { pieceMin: 1000, pieceMax: 1499 },
-  b1500: { pieceMin: 1500 },
-} as const;
-type PieceBucket = keyof typeof PIECE_BUCKETS;
+// How long typing pauses before the search term is written to the URL.
+const SEARCH_DEBOUNCE_MS = 300;
+
+const PIECE_BUCKET_LABELS = {
+  lt500: "piecesLt500",
+  b500: "pieces500",
+  b1000: "pieces1000",
+  b1500: "pieces1500",
+} as const satisfies Record<PieceBucket, string>;
 
 // A card cover's rendered width in the grid below (2/3/4 columns at base/md/lg, 18px gaps, inside
 // the 1200px main with 24px padding, minus the card's 1px borders), so the browser fetches the
@@ -47,9 +59,17 @@ const CARD_IMAGE_SIZES =
   "(min-width: 1200px) 273px, (min-width: 1024px) calc((100vw - 110px) / 4), (min-width: 768px) calc((100vw - 90px) / 3), calc((100vw - 70px) / 2)";
 
 export const Route = createFileRoute("/_public/catalog/")({
+  // Search, brand and piece bucket live in the URL so Back from a puzzle restores them
+  // and a filtered view can be shared.
+  validateSearch: validatePublicCatalogSearch,
+  loaderDeps: ({ search: { q, brand, pieces } }) => ({ q, brand, pieces }),
   head: ({ match }) => seoHead(match, "catalog"),
-  loader: async ({ context }) => {
-    await context.queryClient.ensureQueryData(defaultFirstPageQuery);
+  loader: async ({ context, deps, cause }) => {
+    // A filter change on the open page ("stay") doesn't wait for results: the controls
+    // update at once and the grid shows its skeleton. Arriving at the page (SSR, a shared
+    // link, Back from a puzzle) waits, so the first render already has the results.
+    if (cause === "stay") return;
+    await context.queryClient.ensureQueryData(firstPageQuery(deps));
   },
   component: CatalogListPage,
 });
@@ -57,37 +77,56 @@ export const Route = createFileRoute("/_public/catalog/")({
 function CatalogListPage() {
   const t = useTranslations("publicCatalog");
   const { convexClient } = Route.useRouteContext();
+  // The URL is the source of truth for the filters the results use.
+  const { q, brand, pieces } = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
 
-  // Toolbar state. `searchInput` is the raw keystrokes; `searchTerm` is the debounced value the
-  // query actually uses.
-  const [searchInput, setSearchInput] = React.useState("");
-  const [searchTerm, setSearchTerm] = React.useState("");
-  const [brand, setBrand] = React.useState<string | undefined>(undefined);
-  const [bucket, setBucket] = React.useState<PieceBucket | undefined>(
-    undefined,
+  // Filter changes replace the history entry (Back leaves the catalogue rather than
+  // stepping through every filter) and keep the scroll position.
+  const updateSearch = React.useCallback(
+    (patch: PublicCatalogSearch) => {
+      void navigate({
+        search: (prev) => ({ ...prev, ...patch }),
+        replace: true,
+        resetScroll: false,
+      });
+    },
+    [navigate],
   );
+
+  // The search box shows the raw keystrokes; `q` follows them into the URL once typing
+  // pauses. `sentQ` is the term the box last wrote to (or took from) the URL and `seenQ`
+  // the URL term at the last render. When the URL term changes to something the box did
+  // not write (Back/Forward, a "Catalogue" link), the box takes it over. The echo of the
+  // box's own write leaves it alone, even if more was typed while the URL caught up.
+  const [searchInput, setSearchInput] = React.useState(q ?? "");
+  const [sentQ, setSentQ] = React.useState(q);
+  const [seenQ, setSeenQ] = React.useState(q);
+  if (q !== seenQ) {
+    setSeenQ(q);
+    if (q !== sentQ) {
+      setSentQ(q);
+      setSearchInput(q ?? "");
+    }
+  }
 
   React.useEffect(() => {
-    const handle = setTimeout(() => setSearchTerm(searchInput.trim()), 300);
+    const next = normalizeCatalogQuery(searchInput);
+    if (next === sentQ) return;
+    const handle = setTimeout(() => {
+      setSentQ(next);
+      updateSearch({ q: next });
+    }, SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(handle);
-  }, [searchInput]);
+  }, [searchInput, sentQ, updateSearch]);
 
   const filterArgs = React.useMemo(
-    () => ({
-      ...(searchTerm.length >= 1 ? { searchTerm } : {}),
-      ...(brand ? { brand } : {}),
-      ...(bucket ? PIECE_BUCKETS[bucket] : {}),
-    }),
-    [searchTerm, brand, bucket],
+    () => publicCatalogFilterArgs({ q, brand, pieces }),
+    [q, brand, pieces],
   );
 
-  // First page: a plain reactive query (SSR'd for the unfiltered default via the loader).
-  const { data: firstPage } = useQuery(
-    convexQuery(gateway.catalog.publicBrowse, {
-      paginationOpts: { numItems: PAGE_SIZE, cursor: null },
-      ...filterArgs,
-    }),
-  );
+  // First page: a plain reactive query, prefetched by the loader for the URL's filters.
+  const { data: firstPage } = useQuery(firstPageQuery({ q, brand, pieces }));
 
   // Older pages accumulate in local state; a filter change resets them. We reset during render
   // (the sanctioned "adjust state when a value changes" pattern) rather than in an effect, which
@@ -139,7 +178,8 @@ function CatalogListPage() {
 
   const clearSearch = () => {
     setSearchInput("");
-    setSearchTerm("");
+    setSentQ(undefined);
+    updateSearch({ q: undefined });
   };
 
   return (
@@ -149,7 +189,9 @@ function CatalogListPage() {
       </h1>
       <p className="text-muted-foreground mt-1">{t("subtitle")}</p>
 
-      {/* Toolbar: search + brand + piece bucket. One row on >=sm, stacked on mobile. */}
+      {/* Toolbar: search + brand + piece bucket. One row on >=sm, stacked on mobile. The
+          triggers render their label themselves so a filtered link shows its filters in the
+          server HTML too. */}
       <div className="mt-6 flex flex-col gap-2.5 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
@@ -164,13 +206,15 @@ function CatalogListPage() {
         </div>
         <Select
           value={brand ?? "all"}
-          onValueChange={(v) => setBrand(v === "all" ? undefined : v)}
+          onValueChange={(v) =>
+            updateSearch({ brand: v === "all" ? undefined : v })
+          }
         >
           <SelectTrigger
             aria-label={t("brandLabel")}
             className="w-full sm:w-44"
           >
-            <SelectValue placeholder={t("allBrands")} />
+            <SelectValue>{brand ?? t("allBrands")}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t("allBrands")}</SelectItem>
@@ -184,23 +228,28 @@ function CatalogListPage() {
           </SelectContent>
         </Select>
         <Select
-          value={bucket ?? "all"}
+          value={pieces ?? "all"}
           onValueChange={(v) =>
-            setBucket(v === "all" ? undefined : (v as PieceBucket))
+            updateSearch({ pieces: isPieceBucket(v) ? v : undefined })
           }
         >
           <SelectTrigger
             aria-label={t("piecesLabel")}
             className="w-full sm:w-48"
           >
-            <SelectValue placeholder={t("allPieces")} />
+            <SelectValue>
+              {pieces ? t(PIECE_BUCKET_LABELS[pieces]) : t("allPieces")}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t("allPieces")}</SelectItem>
-            <SelectItem value="lt500">{t("piecesLt500")}</SelectItem>
-            <SelectItem value="b500">{t("pieces500")}</SelectItem>
-            <SelectItem value="b1000">{t("pieces1000")}</SelectItem>
-            <SelectItem value="b1500">{t("pieces1500")}</SelectItem>
+            {(
+              Object.entries(PIECE_BUCKET_LABELS) as [PieceBucket, string][]
+            ).map(([bucket, label]) => (
+              <SelectItem key={bucket} value={bucket}>
+                {t(label)}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -215,9 +264,9 @@ function CatalogListPage() {
             ))}
           </div>
         ) : cards.length === 0 ? (
-          searchTerm ? (
+          q ? (
             <EmptyState
-              title={t("noResults", { query: searchTerm })}
+              title={t("noResults", { query: q })}
               sub={t("noResultsSub")}
               action={
                 <Button variant="ghost" onClick={clearSearch}>
