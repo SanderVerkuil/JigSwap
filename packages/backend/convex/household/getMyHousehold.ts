@@ -13,7 +13,7 @@ import { requireMember } from "../identity/requireMember";
 import { isBlockedEitherWay } from "../social/blocks";
 import {
   householdDefaultOf,
-  isLapsedHouseholdInvite,
+  isOpenHouseholdInvite,
   membershipOf,
   membersOfHousehold,
 } from "./memberships";
@@ -41,9 +41,10 @@ export const personView = async (
 
 // The acting member's household (members + roles), or null. Pending sent invites and requests to
 // join are returned to the admin only — they are the one who chose those people and who answers
-// the requests. A sent invite is listed while pending and not lapsed. A request to join is listed
-// while pending and not lapsed; a dropped one (asked through a link the household's admin did not
-// mint, or across a block) never is. Also the household-wide default copy
+// the requests. A sent invite is listed while it can still be accepted (isOpenHouseholdInvite: not
+// lapsed, its inviter still the admin). A request to join is listed while pending and not lapsed;
+// a dropped one (asked through a link the household's admin did not mint, or across a block) never
+// is. Also the household-wide default copy
 // permission (resolved) and how many copies, across ALL members, follow it (no explicit value) —
 // what a change of the default would affect.
 export const getMyHousehold = query({
@@ -66,7 +67,7 @@ export const getMyHousehold = query({
         })),
     );
 
-    let pendingInvites: HouseholdSentInviteView[] = [];
+    const pendingInvites: HouseholdSentInviteView[] = [];
     if (membership.role === "admin") {
       const now = Date.now();
       const invites = await ctx.db
@@ -75,22 +76,17 @@ export const getMyHousehold = query({
           q.eq("householdId", membership.householdId),
         )
         .collect();
-      pendingInvites = await Promise.all(
-        invites
-          // An email invitation's in-app invite (viaEmail) is listed only as that invitation
-          // (invitations/listMyEmailInvites), never by name: see householdInvites.viaEmail.
-          .filter(
-            (invite) =>
-              invite.status === "pending" &&
-              invite.viaEmail !== true &&
-              !isLapsedHouseholdInvite(invite, now),
-          )
-          .map(async (invite) => ({
-            inviteId: invite.aggregateId,
-            invitee: await personView(ctx, invite.inviteeId),
-            createdAt: invite.createdAt,
-          })),
-      );
+      for (const invite of invites) {
+        // An email invitation's in-app invite (viaEmail) is listed only as that invitation
+        // (invitations/listMyEmailInvites), never by name: see householdInvites.viaEmail.
+        if (invite.viaEmail === true) continue;
+        if (!(await isOpenHouseholdInvite(ctx, invite, now))) continue;
+        pendingInvites.push({
+          inviteId: invite.aggregateId,
+          invitee: await personView(ctx, invite.inviteeId),
+          createdAt: invite.createdAt,
+        });
+      }
     }
 
     const joinRequests: HouseholdJoinRequestView[] = [];

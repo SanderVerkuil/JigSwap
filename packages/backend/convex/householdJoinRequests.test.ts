@@ -463,6 +463,39 @@ describe("approveJoinRequest", () => {
     });
   });
 
+  // SEC-31: a member who joined by request and was then removed must not rejoin through an
+  // invite that was still pending when they joined.
+  test("joining uses up a pending invite from that household, so a removal is final", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seed(t);
+    await createHousehold(t, "ann");
+    const toBob = await as(t, "ann").mutation(
+      api.household.inviteToHousehold.inviteToHousehold,
+      { inviteeId: bob },
+    );
+    const { requestId } = await ask(t, "bob", await expiredLink(t));
+    expect(await approve(t, "ann", requestId)).toEqual({ outcome: "joined" });
+    expect(
+      await as(t, "bob").query(
+        api.household.listMyHouseholdInvites.listMyHouseholdInvites,
+        {},
+      ),
+    ).toEqual([]);
+
+    await as(t, "ann").mutation(
+      api.household.removeHouseholdMember.removeHouseholdMember,
+      { memberId: bob },
+    );
+    await expectConvexCode(
+      as(t, "bob").mutation(
+        api.household.acceptHouseholdInvite.acceptHouseholdInvite,
+        { inviteId: toBob },
+      ),
+      "InviteNotFound",
+    );
+    expect(await householdOf(t, bob)).toEqual([]);
+  });
+
   test("switches a sole member: their household is dissolved", async () => {
     const t = convexTest(schema, modules);
     const { bob } = await seed(t);

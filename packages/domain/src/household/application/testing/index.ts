@@ -83,6 +83,17 @@ export class InMemoryHouseholdInviteRepository implements HouseholdInviteReposit
     return null;
   }
 
+  async listPendingForHousehold(
+    householdId: HouseholdId,
+  ): Promise<readonly HouseholdInvite[]> {
+    return [...this.store.values()]
+      .filter(
+        (state) =>
+          state.householdId === householdId && state.status === "pending",
+      )
+      .map((state) => HouseholdInvite.rehydrate(state));
+  }
+
   async save(invite: HouseholdInvite): Promise<void> {
     this.store.set(invite.id, invite.toState());
   }

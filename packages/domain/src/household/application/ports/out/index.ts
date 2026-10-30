@@ -24,8 +24,12 @@ export interface HouseholdInviteRepository {
     householdId: HouseholdId,
     inviteeId: MemberId,
   ): Promise<HouseholdInvite | null>;
+  // A household's pending invites, whoever sent them (withdrawn when they no longer speak for it).
+  listPendingForHousehold(
+    householdId: HouseholdId,
+  ): Promise<readonly HouseholdInvite[]>;
   save(invite: HouseholdInvite): Promise<void>;
-  // The admin revoked a pending invite: it goes, as if it had never been sent.
+  // A pending invite is revoked or withdrawn: it goes, as if it had never been sent.
   remove(id: HouseholdInviteId): Promise<void>;
   // Dissolution cascade: pending invites to a household that no longer exists are dropped.
   removePendingForHousehold(householdId: HouseholdId): Promise<void>;

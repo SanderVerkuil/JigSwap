@@ -4,12 +4,13 @@ import {
 } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
-import { isLapsedHouseholdInvite } from "../household/memberships";
+import { isOpenHouseholdInvite } from "../household/memberships";
 
 // Counts are read with a cap so the query stays bounded; the UI shows 51 as "50+".
 const COUNT_CAP = 51;
 
-// Whether the member has a pending household invite that has not lapsed. Stops at the first one.
+// Whether the member has a household invite they can still accept (isOpenHouseholdInvite: not
+// lapsed, its inviter still the admin). Stops at the first one.
 const hasPendingHouseholdInvite = async (
   ctx: QueryCtx,
   me: Id<"users">,
@@ -21,7 +22,7 @@ const hasPendingHouseholdInvite = async (
       q.eq("inviteeId", me).eq("status", "pending"),
     );
   for await (const invite of pending) {
-    if (!isLapsedHouseholdInvite(invite, now)) return true;
+    if (await isOpenHouseholdInvite(ctx, invite, now)) return true;
   }
   return false;
 };
