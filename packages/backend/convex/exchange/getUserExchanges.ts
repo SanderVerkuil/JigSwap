@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { optionalActingMember } from "../identity/optionalActingMember";
-import { enrichExchangeSummary } from "./readViews";
+import { enrichExchangeSummary, EXCHANGE_LIST_CAP } from "./readViews";
 
 type Roled = Doc<"exchanges"> & { userRole: "requester" | "owner" };
 
@@ -37,8 +37,9 @@ export const getUserExchanges = query({
     if (args.asRequester !== false) {
       const requesterExchanges = await ctx.db
         .query("exchanges")
-        .withIndex("by_initiator", (q) => q.eq("initiatorId", me))
-        .collect();
+        .withIndex("by_initiator_created", (q) => q.eq("initiatorId", me))
+        .order("desc")
+        .take(EXCHANGE_LIST_CAP);
       exchanges.push(
         ...requesterExchanges.map((tr) => ({
           ...tr,
@@ -50,8 +51,9 @@ export const getUserExchanges = query({
     if (args.asOwner !== false) {
       const ownerExchanges = await ctx.db
         .query("exchanges")
-        .withIndex("by_recipient", (q) => q.eq("recipientId", me))
-        .collect();
+        .withIndex("by_recipient_created", (q) => q.eq("recipientId", me))
+        .order("desc")
+        .take(EXCHANGE_LIST_CAP);
       exchanges.push(
         ...ownerExchanges.map((tr) => ({ ...tr, userRole: "owner" as const })),
       );
@@ -62,6 +64,8 @@ export const getUserExchanges = query({
     }
 
     exchanges.sort((a, b) => b.createdAt - a.createdAt);
+    // Each role read its newest EXCHANGE_LIST_CAP, so this keeps the newest overall.
+    exchanges = exchanges.slice(0, EXCHANGE_LIST_CAP);
 
     return Promise.all(
       exchanges.map((tr) => enrichExchangeSummary(ctx, tr, me, tr.userRole)),

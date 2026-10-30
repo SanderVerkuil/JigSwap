@@ -1,7 +1,7 @@
 import type { ExchangeSummaryView } from "@jigswap/contracts";
 import { query } from "../_generated/server";
 import { optionalActingMember } from "../identity/optionalActingMember";
-import { enrichExchangeSummary } from "./readViews";
+import { enrichExchangeSummary, EXCHANGE_LIST_CAP } from "./readViews";
 
 // Exchange read (thin adapter): exchanges where the signed-in member is the recipient (incoming).
 // Returns [] when unauthenticated, unknown or deactivated, newest-first — matching legacy
@@ -14,8 +14,9 @@ export const getExchangesByOwner = query({
 
     const exchanges = await ctx.db
       .query("exchanges")
-      .withIndex("by_recipient", (q) => q.eq("recipientId", me))
-      .collect();
+      .withIndex("by_recipient_created", (q) => q.eq("recipientId", me))
+      .order("desc")
+      .take(EXCHANGE_LIST_CAP);
 
     const enriched = await Promise.all(
       exchanges.map((tr) => enrichExchangeSummary(ctx, tr, me)),

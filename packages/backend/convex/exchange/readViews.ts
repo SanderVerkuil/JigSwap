@@ -19,6 +19,13 @@ import {
 // Shared row->DTO mapping for the exchange reads, so every exchange adapter emits typed view DTOs
 // (faithful supersets of the joined rows) rather than leaking raw documents.
 
+// Bound for a member's exchange lists (getUserExchanges, getExchangesByOwner,
+// getExchangesByRequester): at most this many rows, the newest by createdAt, so a heavy trader's
+// history (each row joins both parties and both copies) can never push the read past Convex's
+// per-function limits. Past the cap the oldest exchanges are dropped and anything counted from the
+// list undercounts; getUserExchanges' status filter only looks inside that window.
+export const EXCHANGE_LIST_CAP = 500;
+
 /**
  * Both parties as the viewer may see them inside THIS exchange, via the per-trade chokepoint
  * (exchange/tradeParty): a visible party (self, public, mutual) gets the full MemberView; a party

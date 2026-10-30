@@ -906,6 +906,10 @@ export default defineSchema({
   })
     .index("by_initiator", ["initiatorId", "offeredPuzzleId"])
     .index("by_recipient", ["recipientId", "offeredPuzzleId"])
+    // Newest-first per party for the bounded member list (exchange/getUserExchanges): the two
+    // indexes above order by offeredPuzzleId, so they cannot pick a member's newest exchanges.
+    .index("by_initiator_created", ["initiatorId", "createdAt"])
+    .index("by_recipient_created", ["recipientId", "createdAt"])
     .index("by_aggregate_id", ["aggregateId"])
     // Back the copy-reservation check: find exchanges referencing a copy as requested/offered
     // without scanning the whole table.
