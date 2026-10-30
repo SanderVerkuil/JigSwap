@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { withdrawAnalyticsConsent } from "@/lib/analytics-client";
 import {
   readAnalyticsConsent,
   writeAnalyticsConsent,
@@ -60,10 +61,11 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
 
     // Declines are persisted too, so analytics stays off on every future visit
     // and the banner doesn't nag again (the privacy policy promises declined
-    // analytics is never loaded).
+    // analytics is never loaded). A decline is also a withdrawal: it stops a
+    // PostHog already running in this page and clears what it stored.
     const handleDecline = React.useCallback(() => {
       setIsOpen(false);
-      writeAnalyticsConsent("denied");
+      void withdrawAnalyticsConsent();
       setTimeout(() => {
         setHide(true);
       }, 700);
