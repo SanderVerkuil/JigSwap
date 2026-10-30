@@ -32,10 +32,9 @@ import { gateway, Id } from "@/gateway";
 import {
   countsTowardThisYear,
   formatCompletionDate,
-  formatSolveTime,
+  formatCompletionMeta,
   hrefForLink,
 } from "@/lib/completion-format";
-import { formatDateOnly } from "@/lib/date-input";
 import { pageTitle } from "@/lib/page-title";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -166,11 +165,6 @@ function CompletionsPage() {
     return <CompletionsSkeleton />;
   }
 
-  const formatTime = (minutes?: number): string => formatSolveTime(t, minutes);
-
-  // Solve dates are calendar dates stored as UTC midnight, so they format in UTC.
-  const formatDate = (ms: number) => formatDateOnly(ms);
-
   // Top stats, computed from the real solve log: total finished, pieces placed
   // across those (via the library join) and finishes within the current year.
   const finished = completions.filter((completion) => completion.isCompleted);
@@ -219,30 +213,9 @@ function CompletionsPage() {
     const title = info?.title ?? snapshot?.title ?? t("title");
     const pieceCount = info?.pieceCount ?? snapshot?.pieceCount;
     const done = completion.isCompleted;
-    // A year-only or undated solve has sentinel dates: never derive days or a date from them.
-    const dated = (completion.datePrecision ?? "day") === "day";
-    // Whole days between start and finish, floored at one — "finished
-    // in 3 days" reads better than raw milliseconds.
-    const days =
-      done && completion.endDate !== undefined
-        ? Math.max(
-            1,
-            Math.round((completion.endDate - completion.startDate) / 86400000),
-          )
-        : undefined;
-    const metaLine = !dated
-      ? t("completed")
-      : done && pieceCount && days !== undefined
-        ? t("piecesFinished", { pieces: pieceCount, days })
-        : done && completion.endDate !== undefined
-          ? completion.completionTimeMinutes !== undefined
-            ? `${t("finished", { date: formatDate(completion.endDate) })} · ${formatTime(completion.completionTimeMinutes)}`
-            : t("finished", { date: formatDate(completion.endDate) })
-          : completion.completionTimeMinutes !== undefined
-            ? `${t("started", { date: formatDate(completion.startDate) })} · ${formatTime(completion.completionTimeMinutes)}`
-            : t("started", {
-                date: formatDate(completion.startDate),
-              });
+    // "1,000 pieces · 3h 20m" (a typed time), "· over 3 days" or "· in one day"; "Started {date}"
+    // while in progress. Year-only and undated solves never get a duration.
+    const metaLine = formatCompletionMeta(t, completion, pieceCount);
 
     return (
       <div

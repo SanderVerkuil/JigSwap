@@ -5,6 +5,8 @@ import nl from "../../locales/nl.json";
 import {
   countsTowardThisYear,
   formatCompletionDate,
+  formatCompletionMeta,
+  solveDuration,
 } from "./completion-format";
 
 // The helper is typed for the app's hook; a catalog-backed translator behaves the same.
@@ -141,5 +143,146 @@ describe("countsTowardThisYear", () => {
         yearStart,
       ),
     ).toBe(false);
+  });
+});
+
+describe("solveDuration", () => {
+  const DAY = Date.UTC(2026, 9, 12);
+  const days = (n: number) => DAY + n * 86_400_000;
+
+  it("shows a typed time, on one day or across several", () => {
+    expect(
+      solveDuration({
+        startDate: DAY,
+        endDate: DAY,
+        completionTimeMinutes: 200,
+      }),
+    ).toEqual({ kind: "time", minutes: 200 });
+    expect(
+      solveDuration({
+        startDate: DAY,
+        endDate: days(2),
+        completionTimeMinutes: 300,
+      }),
+    ).toEqual({ kind: "time", minutes: 300 });
+  });
+
+  it("treats the one-day default of a same-day solve as no typed time", () => {
+    expect(
+      solveDuration({
+        startDate: DAY,
+        endDate: DAY,
+        completionTimeMinutes: 1440,
+      }),
+    ).toEqual({ kind: "sameDay" });
+  });
+
+  it("treats a span-derived duration as no typed time and counts the calendar days", () => {
+    expect(
+      solveDuration({
+        startDate: DAY,
+        endDate: days(1),
+        completionTimeMinutes: 1440,
+      }),
+    ).toEqual({ kind: "days", days: 2 });
+    expect(
+      solveDuration({
+        startDate: DAY,
+        endDate: days(2),
+        completionTimeMinutes: 2880,
+      }),
+    ).toEqual({ kind: "days", days: 3 });
+  });
+
+  it("falls back to the dates when no duration is stored", () => {
+    expect(solveDuration({ startDate: DAY, endDate: DAY })).toEqual({
+      kind: "sameDay",
+    });
+    expect(solveDuration({ startDate: DAY, endDate: days(4) })).toEqual({
+      kind: "days",
+      days: 5,
+    });
+  });
+
+  it("has no duration for an unfinished, year-only or undated solve", () => {
+    expect(solveDuration({ startDate: DAY })).toBeNull();
+    expect(
+      solveDuration({
+        startDate: SENTINEL_2023,
+        endDate: SENTINEL_2023,
+        datePrecision: "year",
+      }),
+    ).toBeNull();
+    expect(
+      solveDuration({ startDate: DAY, endDate: DAY, datePrecision: "unknown" }),
+    ).toBeNull();
+  });
+});
+
+describe("formatCompletionMeta", () => {
+  const DAY = Date.UTC(2026, 9, 12);
+  const finished = (
+    endDate: number,
+    completionTimeMinutes?: number,
+    datePrecision?: "day" | "year" | "unknown",
+  ) => ({
+    isCompleted: true,
+    startDate: DAY,
+    endDate,
+    completionTimeMinutes,
+    datePrecision,
+  });
+
+  it("shows pieces and the typed time", () => {
+    expect(formatCompletionMeta(tEn, finished(DAY, 200), 1000)).toBe(
+      "1,000 pieces · 3h 20m",
+    );
+    expect(formatCompletionMeta(tNl, finished(DAY, 200), 1000)).toBe(
+      "1.000 stukjes · 3 u 20 m",
+    );
+  });
+
+  it("says a same-day solve without a typed time took one day", () => {
+    expect(formatCompletionMeta(tEn, finished(DAY, 1440), 500)).toBe(
+      "500 pieces · in one day",
+    );
+    expect(formatCompletionMeta(tNl, finished(DAY, 1440), 500)).toBe(
+      "500 stukjes · op één dag",
+    );
+  });
+
+  it("says a solve without a typed time spread over the calendar days it spans", () => {
+    const end = DAY + 2 * 86_400_000;
+    expect(formatCompletionMeta(tEn, finished(end, 2880), 1000)).toBe(
+      "1,000 pieces · over 3 days",
+    );
+    expect(formatCompletionMeta(tNl, finished(end, 2880), 1000)).toBe(
+      "1.000 stukjes · verspreid over 3 dagen",
+    );
+  });
+
+  it("leads with Completed when the piece count is unknown", () => {
+    expect(formatCompletionMeta(tEn, finished(DAY, 200))).toBe(
+      "Completed · 3h 20m",
+    );
+  });
+
+  it("never invents a duration for a year-only or undated solve", () => {
+    expect(
+      formatCompletionMeta(
+        tEn,
+        finished(SENTINEL_2023, undefined, "year"),
+        1000,
+      ),
+    ).toBe("1,000 pieces");
+    expect(formatCompletionMeta(tNl, finished(DAY, undefined, "unknown"))).toBe(
+      "Voltooid",
+    );
+  });
+
+  it("shows when an in-progress solve started, as the calendar date picked", () => {
+    expect(
+      formatCompletionMeta(tEn, { isCompleted: false, startDate: DAY }, 1000),
+    ).toBe(`Started ${inUtc(DAY)}`);
   });
 });
