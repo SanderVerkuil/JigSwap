@@ -1,4 +1,5 @@
 import type { PostHog } from "posthog-js";
+import { sanitizeAnalyticsEvent } from "./analytics-privacy";
 
 // Lazy, consent-gated PostHog loader. posthog-js is NEVER statically imported
 // anywhere in the app graph: it is fetched with a dynamic import() only once
@@ -25,6 +26,9 @@ export function initPostHog(): Promise<PostHog | null> {
         defaults: "2025-05-24",
         capture_exceptions: true,
         debug: import.meta.env.DEV,
+        // Strips query strings from URLs and drops clicks on the messaging
+        // screens before any event leaves the browser (SEC-59, SEC-47).
+        before_send: sanitizeAnalyticsEvent,
       });
       client = posthog;
       for (const listener of listeners) listener();

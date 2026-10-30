@@ -55,7 +55,7 @@ describe("initPostHog", () => {
     expect(getPostHog()).toBeNull();
   });
 
-  it("imports and initialises once, with the existing config, and notifies subscribers", async () => {
+  it("imports and initialises once, with the privacy filter, and notifies subscribers", async () => {
     vi.stubEnv("VITE_POSTHOG_KEY", "phc_test");
     const { initPostHog, getPostHog, subscribePostHog } = await freshLoader();
     const listener = vi.fn();
@@ -66,12 +66,14 @@ describe("initPostHog", () => {
 
     expect(importSpy).toHaveBeenCalledTimes(1);
     expect(init).toHaveBeenCalledTimes(1);
+    const { sanitizeAnalyticsEvent } = await import("./analytics-privacy");
     expect(init).toHaveBeenCalledWith("phc_test", {
       api_host: "/ingest",
       ui_host: "https://eu.posthog.com",
       defaults: "2025-05-24",
       capture_exceptions: true,
       debug: import.meta.env.DEV,
+      before_send: sanitizeAnalyticsEvent,
     });
     expect(a).toBe(b);
     expect(getPostHog()).toBe(a);

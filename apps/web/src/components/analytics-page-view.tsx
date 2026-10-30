@@ -19,6 +19,8 @@ export function PostHogPageView(): null {
     // Consent gate: posthog only has __loaded once initPostHog ran (i.e. the
     // visitor accepted the cookie notice). Without it, capture is a no-op.
     if (pathname && posthog && posthog.__loaded) {
+      // The query only re-triggers this effect: before_send strips it from
+      // $current_url (lib/analytics-privacy.ts).
       let url = window.origin + pathname;
       const query = searchParams.toString();
       if (query) {
