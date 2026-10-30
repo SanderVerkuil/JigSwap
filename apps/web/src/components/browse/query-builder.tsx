@@ -435,7 +435,7 @@ function ConditionShell({
     <div className="border-input bg-card flex items-center gap-1.5 rounded-full border py-0.5 pr-1 pl-2.5">
       <Badge
         variant="outline"
-        className="border-jigsaw-primary/30 text-jigsaw-primary bg-jigsaw-primary/10 rounded-full px-2 py-0 text-[11px] font-medium"
+        className="border-jigsaw-primary/30 text-primary-text bg-jigsaw-primary/10 rounded-full px-2 py-0 text-[11px] font-medium"
       >
         {label}
       </Badge>

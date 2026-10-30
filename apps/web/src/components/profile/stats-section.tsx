@@ -94,7 +94,7 @@ export function ProfileStatsSection({ member }: { member: Member }) {
               i === 2 && "sm:border-l",
             )}
           >
-            <div className="font-heading text-jigsaw-primary text-4xl leading-none font-bold">
+            <div className="font-heading text-primary-text text-4xl leading-none font-bold">
               {format.number(item.value)}
             </div>
             <div className="text-muted-foreground mt-2 text-sm">
@@ -108,7 +108,7 @@ export function ProfileStatsSection({ member }: { member: Member }) {
       <div className="mx-auto w-full max-w-sm text-center">
         <div className="text-sm font-semibold">
           <span id={trustLabelId}>{t("trustLevel")}</span>:{" "}
-          <span className="text-jigsaw-primary">
+          <span className="text-primary-text">
             {t(`trustLevels.${trustKey}`)}
           </span>
         </div>

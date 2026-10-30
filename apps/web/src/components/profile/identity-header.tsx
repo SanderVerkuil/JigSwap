@@ -84,7 +84,7 @@ export function IdentityHeader({
     <header className="flex flex-wrap items-center gap-x-5 gap-y-4 border-b pb-6">
       <Avatar className="size-[84px]">
         <AvatarImage src={avatarSrc} alt={name} />
-        <AvatarFallback className="font-heading bg-jigsaw-primary/10 text-jigsaw-primary text-2xl font-bold">
+        <AvatarFallback className="font-heading bg-jigsaw-primary/10 text-primary-text text-2xl font-bold">
           <MemberInitial source={nameSource} />
         </AvatarFallback>
       </Avatar>

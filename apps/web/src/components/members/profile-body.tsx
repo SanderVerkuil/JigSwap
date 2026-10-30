@@ -575,7 +575,7 @@ function StatStrip({ stats }: { stats: UnlockedProfile["stats"] }) {
           key={cell.label}
           className={cn("px-3 text-center", i > 0 && "sm:border-l")}
         >
-          <div className="font-heading text-jigsaw-primary text-4xl leading-none font-bold">
+          <div className="font-heading text-primary-text text-4xl leading-none font-bold">
             {cell.value.toLocaleString()}
           </div>
           <div className="text-muted-foreground mt-2 text-sm">{cell.label}</div>
@@ -838,7 +838,7 @@ function InvitedBanner({
   if (kind === "household") {
     return (
       <div className="border-jigsaw-primary/20 bg-jigsaw-primary/5 flex flex-col items-center gap-1 rounded-xl border px-4 py-3 text-center text-sm">
-        <p className="text-jigsaw-primary flex items-center justify-center gap-2 font-medium">
+        <p className="text-primary-text flex items-center justify-center gap-2 font-medium">
           <Sparkles className="size-4 shrink-0" />
           {t("householdInvitedYou", { name })}
         </p>
@@ -847,7 +847,7 @@ function InvitedBanner({
     );
   }
   return (
-    <div className="border-jigsaw-primary/20 bg-jigsaw-primary/5 text-jigsaw-primary flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-center text-sm font-medium">
+    <div className="border-jigsaw-primary/20 bg-jigsaw-primary/5 text-primary-text flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-center text-sm font-medium">
       <Sparkles className="size-4 shrink-0" />
       {t("invitedYou", { name })}
     </div>

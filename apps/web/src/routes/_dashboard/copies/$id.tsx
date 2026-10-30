@@ -453,7 +453,7 @@ function CopyInstanceDetail({
                 {" · "}
                 <Link
                   href={`/puzzles/${copy.puzzleId}`}
-                  className="text-jigsaw-primary font-semibold hover:underline"
+                  className="text-primary-text font-semibold hover:underline"
                 >
                   {t("viewPuzzlePage")}
                 </Link>
@@ -664,7 +664,7 @@ function CopyInstanceDetail({
                     <button
                       type="button"
                       onClick={() => openEditor("acquisition")}
-                      className="text-jigsaw-primary hover:underline"
+                      className="text-primary-text hover:underline"
                     >
                       {t("addDetails")}
                     </button>

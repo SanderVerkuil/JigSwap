@@ -144,4 +144,17 @@ describe.each(Object.entries(themes))("%s theme tokens", (_name, vars) => {
       expect(contrast(text, bg), surface).toBeGreaterThanOrEqual(4.5);
     }
   });
+
+  it("keeps violet text at AA on surfaces and its own tint", () => {
+    const text = c("primary-text");
+    const surfaces: Record<string, Rgb> = {
+      background: c("background"),
+      card: c("card"),
+      accent: c("accent"),
+      "primary/10 on card": over(c("jigsaw-primary"), 0.1, c("card")),
+    };
+    for (const [surface, bg] of Object.entries(surfaces)) {
+      expect(contrast(text, bg), surface).toBeGreaterThanOrEqual(4.5);
+    }
+  });
 });

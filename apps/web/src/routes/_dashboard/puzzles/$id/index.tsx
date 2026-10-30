@@ -576,7 +576,7 @@ function AvailableToSwap({
         <RouterLink
           to="/browse"
           search={{ puzzle: puzzleId }}
-          className="text-jigsaw-primary mt-3 inline-block text-sm font-semibold hover:underline"
+          className="text-primary-text mt-3 inline-block text-sm font-semibold hover:underline"
         >
           {t("seeAllCopies", { count: totalAvailable })}
         </RouterLink>
