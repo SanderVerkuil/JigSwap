@@ -206,3 +206,64 @@ export const chargeClerkInviteBudget = async (
   }
   return true;
 };
+
+// A fixed-window budget that is not tied to a member: a whole deployment's use of an anonymous
+// form, or one invite link's landing counter. `cap` is the most the window may count. One row
+// per key on the rateLimits table, reset in place when its window has passed.
+export type BudgetWindow = { key: string; windowMs: number; cap: number };
+
+/**
+ * Charge `amount` to every window, or to none of them. Null when charged; otherwise the ms until
+ * every full window has rolled over, with nothing written and each refusing window logged as a
+ * rateLimit.refused event. The caller decides what a refusal means (throw, or skip quietly).
+ */
+export const chargeBudget = async (
+  ctx: MutationCtx,
+  windows: readonly BudgetWindow[],
+  amount = 1,
+): Promise<number | null> => {
+  const now = Date.now();
+  const planned = [];
+  let retryAfterMs: number | null = null;
+  for (const window of windows) {
+    const row = await ctx.db
+      .query("rateLimits")
+      .withIndex("by_key", (q) => q.eq("key", window.key))
+      .unique();
+    const fresh = row === null || now - row.windowStart >= window.windowMs;
+    const count = (fresh ? 0 : row.count) + amount;
+    if (count > window.cap) {
+      const wait = fresh
+        ? window.windowMs
+        : row.windowStart + window.windowMs - now;
+      logEvent({
+        event: "rateLimit.refused",
+        outcome: "error",
+        limit: window.key,
+        window_ms: window.windowMs,
+        max: window.cap,
+        amount,
+        retry_after_ms: wait,
+      });
+      retryAfterMs = Math.max(retryAfterMs ?? 0, wait);
+      continue;
+    }
+    planned.push({ window, row, fresh, count });
+  }
+  if (retryAfterMs !== null) return retryAfterMs;
+  for (const { window, row, fresh, count } of planned) {
+    if (row === null) {
+      await ctx.db.insert("rateLimits", {
+        key: window.key,
+        windowStart: now,
+        count,
+      });
+    } else {
+      await ctx.db.patch(row._id, {
+        ...(fresh && { windowStart: now }),
+        count,
+      });
+    }
+  }
+  return null;
+};
