@@ -138,15 +138,38 @@ const blobIds = (t: T) =>
 const blobType = (t: T, id: Id<"_storage">) =>
   t.run(async (ctx) => (await ctx.storage.get(id))?.type ?? null);
 
-// The generateRenditions runs scheduled so far, by source.
-const scheduledFor = async (t: T) =>
+type GenerationJob = {
+  name: string;
+  args: { sourceId: Id<"_storage">; attempt?: number }[];
+  state: { kind: string };
+};
+const generationJobs = async (t: T) =>
   (
     (await t.run((ctx) =>
       ctx.db.system.query("_scheduled_functions").collect(),
-    )) as unknown as { name: string; args: { sourceId: string }[] }[]
-  )
-    .filter((job) => job.name.includes("renditions:generateRenditions"))
+    )) as unknown as GenerationJob[]
+  ).filter((job) => job.name.includes("renditions:generateRenditions"));
+
+// The generateRenditions runs scheduled so far (first attempts), by source.
+const scheduledFor = async (t: T) =>
+  (await generationJobs(t))
+    .filter((job) => job.args[0].attempt === undefined)
     .map((job) => job.args[0].sourceId);
+
+// Let the scheduled generation run. convex-test can fail an action's blob store while another
+// function's transaction is open ("Write outside of transaction"), which the action treats as a
+// storage failure and retries 30 s later: run such a retry now instead of waiting for it.
+const settleRenditions = async (t: T) => {
+  await settleDueScheduled(t);
+  for (const job of await generationJobs(t)) {
+    if (job.state.kind === "pending") {
+      await t.action(
+        internal.lib.imageModeration.renditions.generateRenditions,
+        job.args[0],
+      );
+    }
+  }
+};
 
 // Expect `sourceId` to have its two WebP renditions; returns their blob ids.
 const expectRenditions = async (t: T, sourceId: Id<"_storage">) => {
@@ -180,7 +203,7 @@ describe("box art renditions: made once approved", () => {
     // Scheduled by the verdict, not made inside the check.
     expect(await scheduledFor(t)).toEqual([image]);
 
-    await settleDueScheduled(t);
+    await settleRenditions(t);
     const renditions = await expectRenditions(t, image!);
     expect((await blobIds(t)).sort()).toEqual([image, ...renditions].sort());
   });
@@ -212,7 +235,7 @@ describe("box art renditions: deleted with the box art", () => {
       moderationStatus: "approved",
     });
     expect(row.hashCheckedAt).toBeUndefined();
-    await settleDueScheduled(t);
+    await settleRenditions(t);
     return { image, row, renditions: await expectRenditions(t, image) };
   };
 
@@ -315,7 +338,7 @@ describe("box art renditions: deleted with the box art", () => {
       ),
     ).toBe(true);
     expect(await scheduledFor(t)).toEqual([unscored.storageId]);
-    await settleDueScheduled(t);
+    await settleRenditions(t);
     await expectRenditions(t, unscored.storageId);
   });
 });
@@ -338,7 +361,7 @@ describe("box art renditions: an admin's approval", () => {
       { source: "boxArt", imageId: row._id, decision: "approve" },
     );
     expect(await scheduledFor(t)).toEqual([image]);
-    await settleDueScheduled(t);
+    await settleRenditions(t);
 
     await expectRenditions(t, image);
   });
@@ -361,7 +384,7 @@ describe("box art renditions: an admin's approval", () => {
       { source: "boxArt", imageId: row._id, decision: "waive_hash_check" },
     );
     expect(await scheduledFor(t)).toEqual([image]);
-    await settleDueScheduled(t);
+    await settleRenditions(t);
 
     await expectRenditions(t, image);
   });
