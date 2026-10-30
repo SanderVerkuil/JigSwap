@@ -77,6 +77,19 @@ describe("notifications subscriber actor name", () => {
     }
   });
 
+  test("stores a sanitised, length-capped snapshot of a long or bidi-laden name", async () => {
+    const rows = await followAndRead({
+      displayName: `Mara \u202Eadmin\u202C ${"x".repeat(1000)}`,
+    });
+    expect(rows.length).toBeGreaterThan(0);
+    for (const row of rows) {
+      const actorName = row.params?.actorName ?? "";
+      expect(actorName.startsWith("Mara admin xxx")).toBe(true);
+      expect(actorName).not.toMatch(/[\u202A-\u202E]/);
+      expect(Array.from(actorName)).toHaveLength(60);
+    }
+  });
+
   test("never stores the email when the member has no name", async () => {
     const rows = await followAndRead({});
     expect(rows.length).toBeGreaterThan(0);

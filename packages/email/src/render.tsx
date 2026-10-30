@@ -1,3 +1,4 @@
+import { inviterNameForEmail } from "@jigswap/domain";
 import { render } from "@react-email/render";
 import {
   DEFAULT_PARAMS,
@@ -54,6 +55,20 @@ const hasValues = (
 ): boolean =>
   tokensOf(template).every((key) => key === ignore || !!params[key]);
 
+// The actor's name is member-chosen text that reaches the subject, heading and body. It follows
+// the rule invitation emails apply to the inviter's name (domain inviterNameForEmail): line breaks
+// and control characters flattened, bidi and other invisible format characters dropped, at most
+// INVITER_NAME_MAX_LENGTH characters. A name with nothing printable left is dropped, so the
+// localized default ("Someone") stands in.
+const withSafeActorName = (
+  params: Readonly<Record<string, string>>,
+): Readonly<Record<string, string>> => {
+  const { actorName, ...rest } = params;
+  if (actorName === undefined) return params;
+  const name = inviterNameForEmail(actorName);
+  return name === undefined ? rest : { ...rest, actorName: name };
+};
+
 // Only a root-relative path that stays on the base URL's origin may become the CTA. The origin is
 // checked by resolving the href with the WHATWG URL parser (the one browsers use on the link), so
 // "/\host", "/<tab>/host" and other forms that pass a "/"-prefix test but resolve off-site fall
@@ -76,7 +91,7 @@ export const renderEmail = async (
   const copy = EMAIL_COPY[input.type][input.locale];
   const params = input.actorAnonymous
     ? { ...input.params, actorName: FORMER_MEMBER[input.locale] }
-    : input.params;
+    : withSafeActorName(input.params);
   const values = { ...DEFAULT_PARAMS[input.locale], ...params };
   const footer = FOOTER[input.locale];
   const messageKind = params["messageKind"];
@@ -115,18 +130,13 @@ export const renderEmail = async (
     />
   );
 
-  // The From display name carries the actor so the inbox line reads "Sander Verkuil | JigSwap"
-  // instead of a bare brand; falls back to the brand when the event has no actor (never the
-  // localized "Someone"/"Iemand" placeholder, nor the "Former member" label). Use the RAW param,
-  // not the DEFAULT_PARAMS fallback.
-  const actorName = input.actorAnonymous
-    ? undefined
-    : input.params["actorName"];
-
   return {
     subject: interpolate(copy.subject, values),
     html: await render(element),
     text: await render(element, { plainText: true }),
-    fromName: actorName ? `${actorName} | JigSwap` : "JigSwap",
+    // Always the brand, as invitation emails do: the sender line of a jigswap.site email never
+    // carries member-chosen text, so a display name cannot pose as JigSwap there. The actor is
+    // named in the subject and body instead.
+    fromName: "JigSwap",
   };
 };

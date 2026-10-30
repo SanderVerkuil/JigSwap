@@ -199,6 +199,7 @@ describe("message_received sender privacy", () => {
     expect(payloads.emails[0].subject).toBe(
       "New message from Pat Publicname on JigSwap",
     );
-    expect(payloads.emails[0].fromName).toBe("Pat Publicname | JigSwap");
+    // The sender line is always the brand; the subject names the sender.
+    expect(payloads.emails[0].fromName).toBe("JigSwap");
   });
 });
