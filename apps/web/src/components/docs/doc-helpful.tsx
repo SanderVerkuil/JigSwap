@@ -12,7 +12,8 @@ export function DocHelpful({ slug }: { slug: string }) {
   const submit = useMutation({
     mutationFn: useConvexMutation(gateway.docs.submitFeedback),
   });
-  const locale = useLocale();
+  // The backend stores only the locales the app ships.
+  const locale = useLocale() === "nl" ? "nl" : "en";
   const t = useTranslations("marketing.docs");
   const [state, setState] = React.useState<"idle" | "negative" | "done">(
     "idle",

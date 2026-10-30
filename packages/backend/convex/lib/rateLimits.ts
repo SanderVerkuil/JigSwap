@@ -267,3 +267,15 @@ export const chargeBudget = async (
   }
   return null;
 };
+
+// Deployment-wide budgets for the anonymous marketing forms: there is no member to key a limit
+// on, so every visitor shares one hourly and one daily window per form (SEC-22).
+export const CONTACT_BUDGET = [
+  { key: "contact:global:hour", windowMs: HOUR, cap: 20 },
+  { key: "contact:global:day", windowMs: DAY, cap: 100 },
+] as const satisfies readonly BudgetWindow[];
+
+export const DOC_FEEDBACK_BUDGET = [
+  { key: "docFeedback:global:hour", windowMs: HOUR, cap: 60 },
+  { key: "docFeedback:global:day", windowMs: DAY, cap: 300 },
+] as const satisfies readonly BudgetWindow[];

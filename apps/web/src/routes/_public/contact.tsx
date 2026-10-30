@@ -143,7 +143,7 @@ function ContactForm() {
         email: form.email,
         subject: form.subject,
         message: form.message,
-        locale,
+        locale: locale === "nl" ? "nl" : "en",
       });
       setSent(true);
     } catch {

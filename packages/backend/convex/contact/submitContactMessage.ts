@@ -1,8 +1,10 @@
 import { ConvexError, v } from "convex/values";
 import { mutation } from "../_generated/server";
+import { chargeBudget, CONTACT_BUDGET } from "../lib/rateLimits";
 
 // Hard caps mirror the client-side form limits; the mutation is public
-// (no requireMember) since the contact form lives on the marketing site.
+// (no requireMember) since the contact form lives on the marketing site, so a
+// deployment-wide budget (CONTACT_BUDGET) bounds how many messages land.
 const MAX_NAME = 200;
 const MAX_EMAIL = 320;
 const MIN_MESSAGE = 10;
@@ -25,7 +27,7 @@ export const submitContactMessage = mutation({
       v.literal("other"),
     ),
     message: v.string(),
-    locale: v.optional(v.string()),
+    locale: v.optional(v.union(v.literal("en"), v.literal("nl"))),
   },
   handler: async (ctx, args) => {
     const name = args.name.trim();
@@ -40,6 +42,12 @@ export const submitContactMessage = mutation({
     }
     if (message.length < MIN_MESSAGE || message.length > MAX_MESSAGE) {
       throw new ConvexError({ code: "invalid_message" });
+    }
+
+    // Charged only for a valid message, so malformed requests never use it up.
+    const retryAfterMs = await chargeBudget(ctx, CONTACT_BUDGET);
+    if (retryAfterMs !== null) {
+      throw new ConvexError({ code: "RateLimited", retryAfterMs });
     }
 
     await ctx.db.insert("contactMessages", {

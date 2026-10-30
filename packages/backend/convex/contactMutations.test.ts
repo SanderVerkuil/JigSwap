@@ -1,7 +1,8 @@
-import { convexTest } from "convex-test";
-import { ConvexError } from "convex/values";
+import { convexTest, type TestConvex } from "convex-test";
+import { ConvexError, type Value } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
+import { CONTACT_BUDGET } from "./lib/rateLimits";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
@@ -56,5 +57,115 @@ describe("contact/submitContactMessage", () => {
       ctx.db.query("contactMessages").collect(),
     );
     expect(rows).toHaveLength(0);
+  });
+});
+
+// convex-test serializes ConvexError.data to a JSON string at the function boundary; normalise.
+const dataOf = (e: unknown): { code?: string; retryAfterMs?: number } => {
+  const data = (e as ConvexError<Value>).data;
+  return typeof data === "string" ? JSON.parse(data) : (data as never);
+};
+
+const VALID = {
+  name: "Mara",
+  email: "mara@example.com",
+  subject: "other",
+  message: "A perfectly reasonable message.",
+} as const;
+
+const send = (t: TestConvex<typeof schema>, override = {}) =>
+  t.mutation(api.contact.submitContactMessage.submitContactMessage, {
+    ...VALID,
+    ...override,
+  });
+
+const contactRows = (t: TestConvex<typeof schema>) =>
+  t.run((ctx) => ctx.db.query("contactMessages").collect());
+
+// Move every contact budget window `ms` into the past.
+const ageBudget = (t: TestConvex<typeof schema>, ms: number) =>
+  t.run(async (ctx) => {
+    for (const { key } of CONTACT_BUDGET) {
+      const row = await ctx.db
+        .query("rateLimits")
+        .withIndex("by_key", (q) => q.eq("key", key))
+        .unique();
+      if (row)
+        await ctx.db.patch(row._id, { windowStart: row.windowStart - ms });
+    }
+  });
+
+const [hourly, daily] = CONTACT_BUDGET;
+
+describe("contact/submitContactMessage abuse limits (SEC-22)", () => {
+  test("only accepts a supported locale", async () => {
+    const t = convexTest(schema, modules);
+    // A hand-written client is not bound by the generated argument types.
+    const rawLocale = (locale: string) => locale as unknown as "en";
+
+    await expect(
+      send(t, { locale: rawLocale("x".repeat(900_000)) }),
+    ).rejects.toThrow();
+    await expect(send(t, { locale: rawLocale("de") })).rejects.toThrow();
+    expect(await contactRows(t)).toHaveLength(0);
+
+    await send(t, { locale: "en" });
+    await send(t);
+    expect((await contactRows(t)).map((row) => row.locale)).toEqual([
+      "en",
+      undefined,
+    ]);
+  });
+
+  test("refuses the message past the hourly budget, writing nothing", async () => {
+    const t = convexTest(schema, modules);
+    for (let i = 0; i < hourly.cap; i++) await send(t);
+
+    const error = await send(t).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ConvexError);
+    const data = dataOf(error);
+    expect(data.code).toBe("RateLimited");
+    expect(data.retryAfterMs).toBeGreaterThan(0);
+    expect(data.retryAfterMs).toBeLessThanOrEqual(hourly.windowMs);
+    expect(await contactRows(t)).toHaveLength(hourly.cap);
+  });
+
+  test("accepts messages again in the next hour", async () => {
+    const t = convexTest(schema, modules);
+    for (let i = 0; i < hourly.cap; i++) await send(t);
+    await ageBudget(t, hourly.windowMs);
+
+    await send(t);
+    expect(await contactRows(t)).toHaveLength(hourly.cap + 1);
+  });
+
+  test("the daily budget holds once the hour has rolled over", async () => {
+    const t = convexTest(schema, modules);
+    await t.run((ctx) =>
+      ctx.db.insert("rateLimits", {
+        key: daily.key,
+        windowStart: Date.now(),
+        count: daily.cap,
+      }),
+    );
+
+    const error = await send(t).catch((e: unknown) => e);
+    expect(dataOf(error).code).toBe("RateLimited");
+    expect(dataOf(error).retryAfterMs).toBeGreaterThan(hourly.windowMs);
+    expect(await contactRows(t)).toHaveLength(0);
+  });
+
+  test("invalid input does not use up the budget", async () => {
+    const t = convexTest(schema, modules);
+    for (let i = 0; i < hourly.cap + 5; i++) {
+      await expect(send(t, { message: "too short" })).rejects.toThrow(
+        ConvexError,
+      );
+    }
+    expect(
+      await t.run((ctx) => ctx.db.query("rateLimits").collect()),
+    ).toHaveLength(0);
+    await send(t);
+    expect(await contactRows(t)).toHaveLength(1);
   });
 });
