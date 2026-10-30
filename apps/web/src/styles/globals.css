@@ -93,7 +93,9 @@
   --secondary: oklch(0.965 0.012 286);
   --secondary-foreground: oklch(0.32 0.08 281);
   --muted: oklch(0.965 0.012 286);
-  --muted-foreground: oklch(0.553 0.035 282);
+  /* L 0.51 (was 0.553): muted text has to pass AA on the app's own tints, not only on white:
+     5.21:1 on --muted (was 4.34:1), 5.05:1 on --sidebar, 4.61:1 on --sidebar-accent. */
+  --muted-foreground: oklch(0.51 0.035 282);
   --accent: oklch(0.95 0.022 286);
   --accent-foreground: oklch(0.45 0.18 281);
   --destructive: oklch(0.577 0.245 27.325);
