@@ -52,7 +52,10 @@ details
 1. Open **Toon mijn QR** (bij **Mensen** of op je **Profiel**).
 2. Je vriend scant de code met de telefoon.
 3. Heeft je vriend al een account, dan tikt die op **Elkaar volgen** en volgen
-   jullie elkaar meteen.
+   jullie elkaar meteen. Is je profiel privé en volg je je vriend nog niet, dan
+   staat er **Volgverzoek sturen** op de knop. Je krijgt dan een volgverzoek,
+   dat je zoals gewoonlijk goedkeurt (zie
+   [Meldingen](/docs/staying-informed/notifications)).
 
 ### Met een uitnodigingslink
 
