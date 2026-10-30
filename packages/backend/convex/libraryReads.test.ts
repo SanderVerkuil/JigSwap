@@ -1,7 +1,10 @@
+import type { CollectionView } from "@jigswap/contracts";
 import { convexTest, type TestConvex } from "convex-test";
+import { makeFunctionReference } from "convex/server";
 import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import {
   buildCopyViewContext,
   canViewCopyWithContext,
@@ -412,18 +415,21 @@ describe("collection reads", () => {
     expect(seenByAlice.map((c) => c.name)).toEqual(["Favourites", "Wishlist"]);
   });
 
-  test("getUserCollections de-duplicates the target's public collections under includePublic", async () => {
-    const t = convexTest(schema, modules);
-    const { alice } = await seed(t);
+  // SEC-37 (LIB-10, SURF-9): another member's collections follow the profile-content rule.
+  // The pre-fix argument shape: `includePublic` unioned every public collection on the platform
+  // (owner ids and wishlists included) into the result. The validator now refuses it.
+  const userCollectionsWithIncludePublic = makeFunctionReference<
+    "query",
+    { userId?: Id<"users">; includePublic?: boolean },
+    CollectionView[]
+  >("library/getUserCollections:getUserCollections");
 
-    // A non-owner viewer querying Alice's collections WITH includePublic. Alice's public "Wishlist"
-    // is fetched once as the target's public collection AND again as part of the platform-wide
-    // public set — the result must contain each `_id` exactly once (no duplicate rows).
-    const bobClerk = "clerk_bob";
-    await t.run(async (ctx) => {
+  // Adds Bob, a second member with no relation to Alice, and returns Alice's PUBLIC "Wishlist".
+  const seedBob = (t: TestConvex<typeof schema>, alice: Id<"users">) =>
+    t.run(async (ctx) => {
       const now = Date.now();
-      await ctx.db.insert("users", {
-        clerkId: bobClerk,
+      const bob = await ctx.db.insert("users", {
+        clerkId: "clerk_bob",
         email: "bob@example.com",
         name: "Bob",
         username: "bob",
@@ -431,19 +437,147 @@ describe("collection reads", () => {
         createdAt: now,
         updatedAt: now,
       });
+      const wishlist = (
+        await ctx.db
+          .query("collections")
+          .withIndex("by_user", (q) => q.eq("userId", alice))
+          .collect()
+      ).find((c) => c.name === "Wishlist");
+      if (!wishlist) throw new Error("seed: Wishlist not found");
+      return { bob, wishlistId: wishlist._id };
     });
 
-    const seenByBob = await t
-      .withIdentity({ subject: bobClerk })
+  // What Bob gets for Alice's collections: the list's names and the Wishlist's detail.
+  const bobSees = async (
+    t: TestConvex<typeof schema>,
+    alice: Id<"users">,
+    wishlistId: Id<"collections">,
+  ) => {
+    const asBob = t.withIdentity({ subject: "clerk_bob" });
+    const list = await asBob.query(
+      api.library.getUserCollections.getUserCollections,
+      { userId: alice },
+    );
+    const detail = await asBob.query(
+      api.library.getCollectionById.getCollectionById,
+      { collectionId: wishlistId },
+    );
+    return { names: list.map((c) => c.name), detailName: detail?.name };
+  };
+
+  test("getUserCollections refuses includePublic: no platform-wide dump of public collections", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    await seedBob(t, alice);
+    // A third member's public collection, which includePublic handed to any signed-in caller.
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      const carol = await ctx.db.insert("users", {
+        clerkId: "clerk_carol",
+        email: "carol@example.com",
+        name: "Carol",
+        username: "carol",
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("collections", {
+        aggregateId: "coll-c",
+        userId: carol,
+        name: "Carol's shelf",
+        visibility: "public",
+        isDefault: false,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    await expect(
+      t
+        .withIdentity({ subject: "clerk_bob" })
+        .query(userCollectionsWithIncludePublic, {
+          userId: alice,
+          includePublic: true,
+        }),
+    ).rejects.toThrow(/Validator/);
+    // Asking for Alice's collections returns Alice's public ones only.
+    const seen = await t
+      .withIdentity({ subject: "clerk_bob" })
       .query(api.library.getUserCollections.getUserCollections, {
         userId: alice,
-        includePublic: true,
+      });
+    expect(seen.map((c) => c.name)).toEqual(["Wishlist"]);
+  });
+
+  test("a block either way hides another member's public collections", async () => {
+    for (const direction of ["aliceBlocksBob", "bobBlocksAlice"] as const) {
+      const t = convexTest(schema, modules);
+      const { alice } = await seed(t);
+      const { bob, wishlistId } = await seedBob(t, alice);
+      // Control: Alice has no profile row (public in-app), so Bob sees her public Wishlist.
+      expect(await bobSees(t, alice, wishlistId)).toEqual({
+        names: ["Wishlist"],
+        detailName: "Wishlist",
       });
 
-    const ids = seenByBob.map((c) => c._id);
-    expect(ids.length).toBe(new Set(ids).size);
-    // Alice's public "Wishlist" appears exactly once.
-    expect(seenByBob.filter((c) => c.name === "Wishlist")).toHaveLength(1);
+      await t.run((ctx) =>
+        ctx.db.insert(
+          "blocks",
+          direction === "aliceBlocksBob"
+            ? { blockerId: alice, blockedId: bob, createdAt: Date.now() }
+            : { blockerId: bob, blockedId: alice, createdAt: Date.now() },
+        ),
+      );
+      expect(await bobSees(t, alice, wishlistId)).toEqual({
+        names: [],
+        detailName: undefined,
+      });
+    }
+  });
+
+  test("a private owner's public collections show to mutual followers only", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    const { bob, wishlistId } = await seedBob(t, alice);
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("profiles", {
+        memberId: alice,
+        visibility: "private",
+        updatedAt: now,
+      });
+      // Bob follows Alice one way.
+      await ctx.db.insert("follows", {
+        followerId: bob,
+        followeeId: alice,
+        createdAt: now,
+      });
+    });
+    expect(await bobSees(t, alice, wishlistId)).toEqual({
+      names: [],
+      detailName: undefined,
+    });
+
+    // Alice follows back: as mutual followers Bob sees her public Wishlist, never her private
+    // "Favourites".
+    await t.run((ctx) =>
+      ctx.db.insert("follows", {
+        followerId: alice,
+        followeeId: bob,
+        createdAt: Date.now(),
+      }),
+    );
+    expect(await bobSees(t, alice, wishlistId)).toEqual({
+      names: ["Wishlist"],
+      detailName: "Wishlist",
+    });
+
+    // The private owner still sees all of her own collections.
+    const own = await asAlice(t).query(
+      api.library.getUserCollections.getUserCollections,
+      { userId: alice },
+    );
+    expect(own.map((c) => c.name)).toEqual(["Favourites", "Wishlist"]);
   });
 
   test("getUserCollections withholds personalNotes from a non-owner on a public collection", async () => {

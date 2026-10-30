@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { canSeeProfileContent } from "../social/privacy";
 import { canViewCopy } from "./canViewCopy";
 import { toCollectionDetailView, toOwnedCopyView } from "./mappers";
 import { resolveCopyCoverUrl } from "./resolveCoverUrl";
@@ -18,12 +19,14 @@ export const getCollectionById = query({
     const collection = await ctx.db.get(args.collectionId);
     if (!collection) return null;
 
-    // Visibility ACL: only the owner may read a non-public collection.
-    if (
-      collection.userId !== actingMember &&
-      collection.visibility !== "public"
-    ) {
-      return null;
+    // Visibility ACL: only the owner may read a non-public collection. Another member's public
+    // collection is profile content (SEC-37): shown only when canSeeProfileContent holds (public
+    // profile or mutual followers, never across a block either way), as getUserCollections lists.
+    if (collection.userId !== actingMember) {
+      if (collection.visibility !== "public") return null;
+      if (!(await canSeeProfileContent(ctx, actingMember, collection.userId))) {
+        return null;
+      }
     }
 
     // The collection's own owner-only field (personalNotes) surfaces only to the collection owner.
