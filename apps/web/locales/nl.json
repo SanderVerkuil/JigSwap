@@ -3550,6 +3550,7 @@
       "errorEmail": "Vul een geldig e-mailadres in",
       "errorMessage": "Vertel iets meer (min. 10 tekens)",
       "errorSubmit": "Er ging iets mis bij het versturen — probeer het opnieuw.",
+      "errorBusy": "Er komen nu veel berichten binnen. Probeer het later opnieuw, of mail ons op <mail>{email}</mail>.",
       "submit": "Verstuur bericht",
       "privacyNote": "Door te versturen ga je akkoord met ons privacybeleid.",
       "sentTitle": "Bericht verstuurd!",

@@ -5,6 +5,7 @@ import { Section } from "@/components/marketing/section";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { gateway } from "@/gateway";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import { pageTitle } from "@/lib/page-title";
 import { cn } from "@/lib/utils";
 import { useConvexMutation } from "@convex-dev/react-query";
@@ -116,7 +117,7 @@ function ContactForm() {
     name?: string;
     email?: string;
     message?: string;
-    submit?: string;
+    submit?: React.ReactNode;
   }>({});
   const [sent, setSent] = React.useState(false);
 
@@ -146,8 +147,22 @@ function ContactForm() {
         locale: locale === "nl" ? "nl" : "en",
       });
       setSent(true);
-    } catch {
-      setErrors({ submit: t("errorSubmit") });
+    } catch (error) {
+      // The deployment-wide budget is spent: point at the inbox the form feeds.
+      const email = t("emailValue");
+      setErrors({
+        submit:
+          convexErrorCode(error) === "RateLimited"
+            ? t.rich("errorBusy", {
+                email,
+                mail: (chunks) => (
+                  <a href={`mailto:${email}`} className="underline">
+                    {chunks}
+                  </a>
+                ),
+              })
+            : t("errorSubmit"),
+      });
     }
   };
 

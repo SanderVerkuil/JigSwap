@@ -3550,6 +3550,7 @@
       "errorEmail": "Enter a valid email",
       "errorMessage": "Tell us a bit more (min. 10 chars)",
       "errorSubmit": "Something went wrong while sending — please try again.",
+      "errorBusy": "We're receiving a lot of messages right now. Try again later, or email us at <mail>{email}</mail>.",
       "submit": "Send message",
       "privacyNote": "By sending, you agree to our privacy policy.",
       "sentTitle": "Message sent!",
