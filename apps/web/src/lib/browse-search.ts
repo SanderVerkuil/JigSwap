@@ -119,3 +119,27 @@ export function browseSearchFromFilters(
     avail: channels(filters.availability),
   };
 }
+
+/** Which "nothing here" message an empty Browse shows: "filtered" (the text or a filter is set,
+ *  so blame those), "puzzleNotOffered" (only ?puzzle narrows it: nobody offers that puzzle) or
+ *  "noOffers" (nothing narrows it: nobody offers anything this member can see). */
+export type BrowseEmptyState = "filtered" | "puzzleNotOffered" | "noOffers";
+
+// Every param except ?puzzle (a chip of its own, from "Find a copy") and the view mode is a
+// condition the member set in the query builder.
+export function browseEmptyState({
+  puzzle,
+  view: _view,
+  ...conditions
+}: BrowseSearch): BrowseEmptyState {
+  if (Object.values(conditions).some((value) => value !== undefined)) {
+    return "filtered";
+  }
+  return puzzle ? "puzzleNotOffered" : "noOffers";
+}
+
+/** The search with the text and every filter cleared; ?puzzle and the view mode stay. */
+export const withoutBrowseConditions = ({
+  puzzle,
+  view,
+}: BrowseSearch): BrowseSearch => ({ puzzle, view });

@@ -1273,7 +1273,6 @@
     "minPieces": "Min Stukken",
     "maxPieces": "Max Stukken",
     "clearFilters": "Alles Wissen",
-    "noPuzzlesFound": "Geen puzzels gevonden",
     "tryDifferentFilters": "Pas je filters aan.",
     "filterAll": "Alle",
     "available": "Beschikbaar",
@@ -1295,6 +1294,15 @@
       "messageOwner": "Bericht sturen aan de eigenaar",
       "messageOwnerName": "Bericht sturen aan {name}",
       "favorite": "Favoriet"
+    },
+    "empty": {
+      "filteredTitle": "Geen exemplaren gevonden met deze filters",
+      "puzzleNotOfferedTitle": "Nog niemand biedt deze puzzel aan",
+      "puzzleNotOfferedHint": "Bewaar hem bij je favorieten, dan vind je hem snel terug.",
+      "noOffersTitle": "Nog geen leden bieden puzzels aan",
+      "noOffersHint": "Kijk rond in de catalogus, of zoek mensen om te volgen.",
+      "openCatalogue": "Naar de catalogus",
+      "findPeople": "Mensen vinden"
     }
   },
   "browsePuzzleFilter": {

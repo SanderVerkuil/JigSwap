@@ -1,4 +1,5 @@
 import { useUser } from "@/compat/clerk";
+import { BrowseEmptyState } from "@/components/browse/browse-empty-state";
 import { PuzzleFilterChip } from "@/components/browse/puzzle-filter-chip";
 import {
   QueryBuilder,
@@ -33,6 +34,7 @@ import {
   browseFiltersFromSearch,
   browseSearchFromFilters,
   validateBrowseSearch,
+  withoutBrowseConditions,
   type BrowseSearch,
 } from "@/lib/browse-search";
 import type { Locale } from "@/lib/i18n";
@@ -214,9 +216,10 @@ function BrowsePage() {
           ))}
         </PuzzleViewProvider>
       ) : shownPuzzles.length === 0 && !browse.stale ? (
-        <EmptyState
-          title={tBrowse("noPuzzlesFound")}
-          sub={tBrowse("tryDifferentFilters")}
+        <BrowseEmptyState
+          search={search}
+          // Clearing the conditions keeps the ?puzzle chip and the view mode.
+          onClearConditions={() => updateSearch(withoutBrowseConditions)}
         />
       ) : (
         // While a new filter's results load, the previous ones stay, dimmed and marked busy.

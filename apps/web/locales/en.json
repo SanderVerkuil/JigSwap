@@ -1273,7 +1273,6 @@
     "minPieces": "Min Pieces",
     "maxPieces": "Max Pieces",
     "clearFilters": "Clear All",
-    "noPuzzlesFound": "No puzzles found",
     "tryDifferentFilters": "Try adjusting your filters.",
     "filterAll": "All",
     "available": "Available",
@@ -1295,6 +1294,15 @@
       "messageOwner": "Message the owner",
       "messageOwnerName": "Message {name}",
       "favorite": "Favorite"
+    },
+    "empty": {
+      "filteredTitle": "No copies match these filters",
+      "puzzleNotOfferedTitle": "Nobody offers this puzzle yet",
+      "puzzleNotOfferedHint": "Save it to your favorites to find it again quickly.",
+      "noOffersTitle": "No members are offering puzzles yet",
+      "noOffersHint": "Look through the catalogue, or find people to follow.",
+      "openCatalogue": "Open the catalogue",
+      "findPeople": "Find people"
     }
   },
   "browsePuzzleFilter": {
