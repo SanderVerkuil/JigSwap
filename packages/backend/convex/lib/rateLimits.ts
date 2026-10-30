@@ -279,3 +279,9 @@ export const DOC_FEEDBACK_BUDGET = [
   { key: "docFeedback:global:hour", windowMs: HOUR, cap: 60 },
   { key: "docFeedback:global:day", windowMs: DAY, cap: 300 },
 ] as const satisfies readonly BudgetWindow[];
+
+// One invite link's landing counter (social/recordInviteLanding, public): at most 20 counted
+// landings per hour per link, so an anonymous loop cannot keep patching the link row (SEC-82).
+export const inviteLandingBudget = (linkId: string): BudgetWindow[] => [
+  { key: `inviteLanding:${linkId}`, windowMs: HOUR, cap: 20 },
+];
