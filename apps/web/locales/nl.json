@@ -861,6 +861,17 @@
     "inboxError": "Je gesprekken konden niet worden geladen.",
     "loadEarlier": "Eerdere berichten laden",
     "loadingEarlier": "Eerdere berichten laden…",
+    "memberPicker": {
+      "description": "Kies iemand met wie je verbonden bent.",
+      "searchLabel": "Zoek leden",
+      "searchPlaceholder": "Zoek op naam…",
+      "recent": "Recent",
+      "mutual": "Jullie volgen elkaar",
+      "noMatch": "Niemand gevonden voor \"{query}\"",
+      "empty": "Mensen met wie je hebt gepraat en mensen die jou terugvolgen, verschijnen hier.",
+      "findMembers": "Leden zoeken",
+      "findSomeoneElse": "Iemand anders zoeken"
+    },
     "loadingOlderConversations": "Oudere gesprekken laden…",
     "showOlderConversations": "Oudere gesprekken tonen",
     "olderConversationsElsewhere": "Dit zijn je {count} meest recente gesprekken. Oudere open je vanaf de pagina van de uitwisseling, het lid of de kring.",
