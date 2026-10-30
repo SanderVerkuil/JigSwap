@@ -16,6 +16,7 @@ import {
   isHashCleared,
 } from "../lib/imageModeration/hashCheckFields";
 import { isPreservedBlob } from "../lib/imageModeration/quarantine";
+import { scheduleRenditions } from "../lib/imageModeration/renditionsStore";
 import { makeNotify } from "../notifications/adapters/makeNotify";
 import { CIRCLE_ICON_LABEL } from "../sharing/circleIconModerationStore";
 import { settleCircleIcon } from "../sharing/circleIcons";
@@ -92,7 +93,8 @@ const assertDecidable = (row: DecidableRow, decision: Decision): void => {
 // automatic rejection. A rejected COMPLETION photo gets the same side effects as an automatic
 // rejection: it is detached from the completion and its blob deleted. Rejected BOX ART likewise
 // (catalog/boxArtModerationStore.detachRejectedBoxArt): detached from every definition and
-// proposal holding it and its blob deleted; approved box art is served (boxArtUrl). A CIRCLE ICON
+// proposal holding it and its renditions and blob deleted; approved box art is served (boxArtUrl)
+// and gets its renditions in the background (lib/imageModeration/renditionsStore). A CIRCLE ICON
 // likewise: a rejected one's blob is deleted (its uploader is told it was removed), an approved
 // one becomes the circle's icon (sharing/circleIcons.settleCircleIcon).
 //
@@ -240,6 +242,7 @@ export const decideUncheckedPhoto = mutation({
         ...release,
       });
       if (decision === "reject") await detachRejectedBoxArt(ctx, row);
+      else await scheduleRenditions(ctx, row.storageId);
       await stampModerationAction(ctx, {
         actorId: memberId,
         kind,
