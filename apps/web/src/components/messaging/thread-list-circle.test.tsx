@@ -143,6 +143,8 @@ describe("ThreadList circle rows", () => {
     const link = row("Puzzle Club");
     expect(link.getAttribute("href")).toBe("/messages/c1");
     expect(within(link).getByText("Bas: Who has the Wasgij?")).toBeTruthy();
+    // Snippets quote private messages: the list stays out of PostHog capture.
+    expect(link.closest(".ph-no-capture")).not.toBeNull();
   });
 
   it.each([

@@ -6,6 +6,9 @@ import type { CaptureResult } from "posthog-js";
 // hold before anything leaves the device:
 //  - URLs lose their query string and fragment. Invite links carry their
 //    token in `?invite=`, and analytics never needs what follows the path.
+//  - Clicks, rage clicks, dead clicks and copies on the messaging screens are
+//    dropped, so private-message text and link targets never reach PostHog,
+//    even if a component loses its `ph-no-capture` class.
 
 type Properties = CaptureResult["properties"];
 
@@ -15,6 +18,15 @@ type Properties = CaptureResult["properties"];
 const URL_KEY = /(?:url|referrer|href)$/i;
 // Deep enough for web-vitals metrics and $elements; bounds odd payloads.
 const MAX_DEPTH = 6;
+
+// Interaction events that can carry clicked text, link targets or copied text.
+const DROPPED_ON_MESSAGES = new Set([
+  "$autocapture",
+  "$rageclick",
+  "$dead_click",
+  "$copy_autocapture",
+]);
+const MESSAGES_PATH = /^\/messages(?:\/|$)/;
 
 // rrweb event types that carry the page URL in session replay.
 const REPLAY_META = 4;
@@ -29,9 +41,16 @@ export function stripUrlQuery(url: string): string {
 export function sanitizeAnalyticsEvent(
   event: CaptureResult,
 ): CaptureResult | null {
+  const properties = event.properties ?? {};
+  if (
+    DROPPED_ON_MESSAGES.has(event.event) &&
+    MESSAGES_PATH.test(String(properties.$pathname ?? ""))
+  ) {
+    return null;
+  }
   return {
     ...event,
-    properties: sanitizeProperties(event.properties ?? {}),
+    properties: sanitizeProperties(properties),
     ...(event.$set && { $set: scrubRecord(event.$set) }),
     ...(event.$set_once && { $set_once: scrubRecord(event.$set_once) }),
   };

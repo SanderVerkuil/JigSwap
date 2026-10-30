@@ -28,7 +28,7 @@ describe("stripUrlQuery", () => {
   });
 });
 
-describe("sanitizeAnalyticsEvent", () => {
+describe("sanitizeAnalyticsEvent: URLs", () => {
   it("strips the query from every URL-bearing property, $set and $set_once", () => {
     const result = sanitizeAnalyticsEvent(
       event(
@@ -151,5 +151,34 @@ describe("sanitizeAnalyticsEvent", () => {
     const original = event("$pageview", { $current_url: PAGE });
     sanitizeAnalyticsEvent(original);
     expect(original.properties.$current_url).toBe(PAGE);
+  });
+});
+
+describe("sanitizeAnalyticsEvent: messaging", () => {
+  it.each(["$autocapture", "$rageclick", "$dead_click", "$copy_autocapture"])(
+    "drops %s on the messaging screens",
+    (name) => {
+      for (const path of ["/messages", "/messages/", "/messages/thread_1"]) {
+        expect(
+          sanitizeAnalyticsEvent(event(name, { $pathname: path })),
+        ).toBeNull();
+      }
+    },
+  );
+
+  it("keeps clicks elsewhere and pageviews on the messaging screens", () => {
+    expect(
+      sanitizeAnalyticsEvent(event("$autocapture", { $pathname: "/catalog" })),
+    ).not.toBeNull();
+    expect(
+      sanitizeAnalyticsEvent(
+        event("$autocapture", { $pathname: "/messages-archive" }),
+      ),
+    ).not.toBeNull();
+    expect(
+      sanitizeAnalyticsEvent(
+        event("$pageview", { $pathname: "/messages/thread_1" }),
+      ),
+    ).not.toBeNull();
   });
 });

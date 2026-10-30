@@ -268,7 +268,9 @@ function ReportForm({
 
       {/* The reported context, read-only. */}
       {"snippet" in target ? (
-        <div className="flex flex-col gap-1.5">
+        // ph-no-capture: the quoted text, a private message included, stays
+        // out of PostHog.
+        <div className="ph-no-capture flex flex-col gap-1.5">
           {target.kind !== "message" && (
             <p className="text-muted-foreground text-sm">
               {t(

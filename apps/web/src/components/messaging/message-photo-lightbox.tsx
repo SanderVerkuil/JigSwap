@@ -89,7 +89,8 @@ export function MessagePhotoLightbox({
           event.preventDefault();
           target.focus();
         }}
-        className="grid h-[90dvh] max-h-[90dvh] w-full max-w-[96vw] grid-rows-[minmax(0,1fr)_auto] gap-0 overflow-hidden bg-neutral-950 p-0 text-white sm:max-w-[96vw] md:max-w-[min(94vw,1200px)]"
+        // ph-no-capture: a photo from a private conversation stays out of PostHog.
+        className="ph-no-capture grid h-[90dvh] max-h-[90dvh] w-full max-w-[96vw] grid-rows-[minmax(0,1fr)_auto] gap-0 overflow-hidden bg-neutral-950 p-0 text-white sm:max-w-[96vw] md:max-w-[min(94vw,1200px)]"
       >
         <DialogTitle className="sr-only">{photo.alt}</DialogTitle>
         <DialogDescription className="sr-only">

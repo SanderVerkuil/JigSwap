@@ -34,7 +34,8 @@ export function initPostHog(): Promise<PostHog | null> {
         // Opting out also deletes PostHog's cookie and localStorage entry.
         opt_out_persistence_by_default: true,
         // Runs on every event before it leaves the browser: drop it without
-        // consent, then strip query strings from its URLs (SEC-59).
+        // consent, then strip query strings from its URLs (SEC-59) and drop
+        // clicks on the messaging screens (SEC-47).
         before_send: [requireAnalyticsConsent, sanitizeAnalyticsEvent],
       });
       return posthog;
