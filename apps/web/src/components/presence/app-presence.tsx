@@ -32,6 +32,10 @@ const ACTIVITY_EVENTS = ["pointerdown", "pointermove", "keydown", "wheel"];
  * "waiting" until the tab has been visible (so a tab opened in the background never heartbeats),
  * then "active", or "idle" after `idleAfterMs` without input. The idle timer is paused while the
  * tab is hidden and showing the tab again counts as activity.
+ *
+ * Input events (pointermove fires at frame rate) only record a timestamp and set state only when
+ * it changes; the one idle timer re-arms itself for whatever is left of the window since the
+ * latest input.
  */
 export function useAppActivity(
   idleAfterMs = IDLE_AFTER_MS,
@@ -40,16 +44,34 @@ export function useAppActivity(
     "waiting",
   );
   useEffect(() => {
+    let current: "waiting" | "active" | "idle" = "waiting";
+    let lastInput = 0;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    const set = (next: "active" | "idle") => {
+      if (next === current) return;
+      current = next;
+      setActivity(next);
+    };
+    const onIdleTimer = () => {
+      const remaining = lastInput + idleAfterMs - Date.now();
+      if (remaining > 0) {
+        timer = setTimeout(onIdleTimer, remaining);
+      } else {
+        timer = undefined;
+        set("idle");
+      }
+    };
     const markActive = () => {
-      clearTimeout(timer);
       if (document.hidden) return;
-      setActivity("active");
-      timer = setTimeout(() => setActivity("idle"), idleAfterMs);
+      lastInput = Date.now();
+      set("active");
+      timer ??= setTimeout(onIdleTimer, idleAfterMs);
     };
     const onVisibility = () => {
-      if (document.hidden) clearTimeout(timer);
-      else markActive();
+      if (document.hidden) {
+        clearTimeout(timer);
+        timer = undefined;
+      } else markActive();
     };
     markActive();
     for (const type of ACTIVITY_EVENTS) {
