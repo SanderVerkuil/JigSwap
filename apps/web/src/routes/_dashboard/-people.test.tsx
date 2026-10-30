@@ -32,7 +32,7 @@ vi.mock("@/gateway", () => ({
   gateway: { social: {}, identity: {} },
 }));
 vi.mock("@/components/dashboard-layout/page-header-slot", () => ({
-  usePageHeaderActions: () => {},
+  usePageHeader: () => {},
 }));
 vi.mock("@/components/social/activity-feed", () => ({
   ActivityFeed: () => <p>activity panel</p>,

@@ -1,6 +1,6 @@
 import { EmptyState } from "@/components/community/primitives";
 import { SectionHead } from "@/components/dashboard-home/section-head";
-import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
+import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { ActivityFeed } from "@/components/social/activity-feed";
 import { ConnectionOffersStrip } from "@/components/social/connection-offers";
 import { EmailInvite } from "@/components/social/email-invite";
@@ -202,25 +202,19 @@ function PeoplePage() {
   const headerMeta = loading
     ? undefined
     : t("memberCount", { count: members.length });
-  usePageHeaderActions(
-    () => (
-      <div className="flex items-center gap-3">
-        {me ? (
-          <QrDialog
-            memberId={me._id}
-            displayName={me.name}
-            username={me.username}
-            handle={me.handle}
-            avatarUrl={me.avatar}
-          />
-        ) : null}
-        {headerMeta ? (
-          <span className="text-muted-foreground hidden text-sm sm:inline">
-            {headerMeta}
-          </span>
-        ) : null}
-      </div>
-    ),
+  usePageHeader(
+    () => ({
+      meta: headerMeta,
+      actions: me ? (
+        <QrDialog
+          memberId={me._id}
+          displayName={me.name}
+          username={me.username}
+          handle={me.handle}
+          avatarUrl={me.avatar}
+        />
+      ) : undefined,
+    }),
     [headerMeta, me],
   );
 

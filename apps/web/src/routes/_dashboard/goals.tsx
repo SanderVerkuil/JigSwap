@@ -1,6 +1,6 @@
 import { useUser } from "@/compat/clerk";
 import { SectionHead } from "@/components/dashboard-home/section-head";
-import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
+import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { EmptyState } from "@/components/library/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -103,12 +103,10 @@ function GoalsPage() {
   // action there too so the page body carries no duplicate section header.
   const activeCount = (goals ?? []).filter((goal) => !goal.isAchieved).length;
   const headerMeta = t("activeCount", { count: activeCount });
-  usePageHeaderActions(
-    () => (
-      <>
-        <span className="text-muted-foreground hidden text-sm sm:inline">
-          {headerMeta}
-        </span>
+  usePageHeader(
+    () => ({
+      meta: headerMeta,
+      actions: (
         <Button
           variant="brand"
           size="sm"
@@ -118,8 +116,8 @@ function GoalsPage() {
           <Plus className="h-4 w-4" />
           {t("create")}
         </Button>
-      </>
-    ),
+      ),
+    }),
     [headerMeta],
   );
 

@@ -142,22 +142,18 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
     );
 
   // The title/subtitle live in the shared shell page head (via route-meta); publish only the
-  // result count + the "contribute to catalogue" action there so the body carries no own header.
+  // "contribute to catalogue" action there so the body carries no own header. The result count
+  // stays next to the filters below rather than repeating in the head.
   usePageHeaderActions(
     () => (
-      <>
-        <span className="text-muted-foreground hidden text-sm sm:inline">
-          {t("puzzlesFound", { count: filteredPuzzles.length })}
-        </span>
-        <Button size="sm" asChild>
-          <Link href="/puzzles/add">
-            <Plus className="h-4 w-4" />
-            {t("addPuzzle")}
-          </Link>
-        </Button>
-      </>
+      <Button size="sm" asChild>
+        <Link href="/puzzles/add">
+          <Plus className="h-4 w-4" />
+          {t("addPuzzle")}
+        </Link>
+      </Button>
     ),
-    [filteredPuzzles.length],
+    [t],
   );
 
   if (isLoading && puzzles.length === 0) {

@@ -1,6 +1,6 @@
 import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
-import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
+import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { CopyOwnerLine } from "@/components/household/copy-owner-line";
 import {
   useCopyCardActions,
@@ -233,29 +233,29 @@ function PuzzlesPage() {
   // Add Puzzle action there so the page body carries no duplicate header.
   const ownedCount = allCopies.length;
   const headerMeta = t("countMeta", { count: ownedCount });
-  usePageHeaderActions(
-    () => (
-      <>
-        <span className="text-muted-foreground hidden text-sm sm:inline">
-          {headerMeta}
-        </span>
-        <Button variant="outline" size="sm" asChild>
-          <Link
-            href="/my-puzzles/suggestions"
-            data-tour="my-puzzles-suggestions"
-          >
-            <Lightbulb className="h-4 w-4" />
-            {t("mySuggestions")}
-          </Link>
-        </Button>
-        <Button variant="brand" size="sm" asChild>
-          <Link href="/my-puzzles/add" data-tour="my-puzzles-add">
-            <Plus className="h-4 w-4" />
-            {t("addPuzzle")}
-          </Link>
-        </Button>
-      </>
-    ),
+  usePageHeader(
+    () => ({
+      meta: headerMeta,
+      actions: (
+        <>
+          <Button variant="outline" size="sm" asChild>
+            <Link
+              href="/my-puzzles/suggestions"
+              data-tour="my-puzzles-suggestions"
+            >
+              <Lightbulb className="h-4 w-4" />
+              {t("mySuggestions")}
+            </Link>
+          </Button>
+          <Button variant="brand" size="sm" asChild>
+            <Link href="/my-puzzles/add" data-tour="my-puzzles-add">
+              <Plus className="h-4 w-4" />
+              {t("addPuzzle")}
+            </Link>
+          </Button>
+        </>
+      ),
+    }),
     [headerMeta],
   );
 
