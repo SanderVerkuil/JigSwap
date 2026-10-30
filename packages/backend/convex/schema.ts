@@ -729,14 +729,22 @@ export default defineSchema({
     ),
     targetLabel: v.string(), // denormalized display title at decision time
     targetId: v.string(),
+    // The member a role change or report decision targets (SEC-57). Such a row stores this id
+    // and a neutral targetLabel, never the member's name or email: the admin read models
+    // resolve the label while the account exists and read "Deleted member" once it is gone.
+    // Absent on rows about content, and on rows stamped before it
+    // (admin/backfillAuditTargets).
+    targetMemberId: v.optional(v.id("users")),
     at: v.number(),
   })
     .index("by_at", ["at"])
     // Back the admin user-detail audit trail: actions a member PERFORMED as
-    // admin, and actions TARGETING them (targetId = clerkId for role rows).
+    // admin, and actions TARGETING them (by_target_member; legacy role rows
+    // key targetId on the clerkId until the backfill has run).
     // Additive — Convex indexes existing rows automatically, no backfill.
     .index("by_actor", ["actorId", "at"])
-    .index("by_target", ["targetId", "at"]),
+    .index("by_target", ["targetId", "at"])
+    .index("by_target_member", ["targetMemberId", "at"]),
 
   // CSAM hash matches (lib/imageModeration/csamHashCheck), one row per quarantined image, for the
   // operator to report to Meldpunt Offlimits or the police (DSA Art. 18). Metadata only: the

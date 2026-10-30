@@ -34,6 +34,8 @@ export interface AdminAuditEntryView {
   targetLabel: string;
   targetId: string;
   at: number;
+  /** The entry targets a member whose account is gone: render the localized "Deleted member". */
+  targetMemberDeleted?: boolean;
 }
 
 /** One of the member's catalog submissions (`puzzles.by_submitted_by`). */

@@ -13,6 +13,8 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as admin_auditEntry from "../admin/auditEntry.js";
+import type * as admin_backfillAuditTargets from "../admin/backfillAuditTargets.js";
 import type * as admin_confirmPhotoRemoval from "../admin/confirmPhotoRemoval.js";
 import type * as admin_decideImageReview from "../admin/decideImageReview.js";
 import type * as admin_decideReport from "../admin/decideReport.js";
@@ -585,6 +587,8 @@ import type * as whatsNew_readState from "../whatsNew/readState.js";
 import type * as whatsNew_recordTourProgress from "../whatsNew/recordTourProgress.js";
 
 declare const fullApi: ApiFromModules<{
+  "admin/auditEntry": typeof admin_auditEntry;
+  "admin/backfillAuditTargets": typeof admin_backfillAuditTargets;
   "admin/confirmPhotoRemoval": typeof admin_confirmPhotoRemoval;
   "admin/decideImageReview": typeof admin_decideImageReview;
   "admin/decideReport": typeof admin_decideReport;

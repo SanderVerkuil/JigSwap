@@ -131,6 +131,8 @@ import { threadRowByAggregateId } from "./readModelHelpers";
 //                Starts EVENT_SCRUB_DELAY_MS after the household phase, once the events the
 //                purge itself emitted have been dispatched.
 //                Admin, CSAM and moderation records are separate tables and stay unchanged.
+//                A moderation audit row names a member by users id only (targetMemberId,
+//                SEC-57), so it needs no scrub: it reads "Deleted member" once the row is gone.
 // One phase at a time, PURGE_BATCH_SIZE rows per run: a run that did not finish its phase
 // schedules the next run with the page cursor, so each run stays well inside Convex's per-mutation
 // limits whatever the member's history. Rows a phase keeps (a quarantined or evidence-held photo)

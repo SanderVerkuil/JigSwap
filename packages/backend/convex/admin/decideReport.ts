@@ -14,7 +14,6 @@ import { makeNotify } from "../notifications/adapters/makeNotify";
 import { photoCommentByTargetId } from "../reports/fileReport";
 import { scheduleReportRetention } from "../reports/retention";
 import { deleteCopyPhoto } from "./deleteCopyPhoto";
-import { adminLabelOf } from "./reportViews";
 import { stampModerationAction } from "./stampModerationAction";
 
 /** Max length of the statement of reasons (DSA Art. 17). */
@@ -128,11 +127,11 @@ export const decideReport = mutation({
       await releaseEvidenceHold(ctx, attachmentId);
     }
 
+    // The reported member by id only: their name and email are resolved when the trail is read.
     await stampModerationAction(ctx, {
       actorId: adminId,
       kind: STAMP_KIND[decision],
-      targetLabel:
-        (await adminLabelOf(ctx, report.reportedUserId)) ?? report.targetId,
+      targetMemberId: report.reportedUserId,
       targetId: report._id,
     });
 

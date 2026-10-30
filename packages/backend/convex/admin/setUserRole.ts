@@ -39,8 +39,6 @@ export const setUserRole = action({
       userId,
       role,
       actorId: target.actorId,
-      clerkId: target.clerkId,
-      name: target.name,
     });
   },
 });
