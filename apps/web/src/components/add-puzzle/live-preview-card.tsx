@@ -117,6 +117,7 @@ export function ReadinessChecklist({
 }: {
   items: ReadonlyArray<{ ok: boolean; label: string }>;
 }) {
+  const t = useTranslations("puzzles");
   return (
     <div className="flex flex-col gap-2.5 border-t border-border pt-3">
       {items.map((c) => (
@@ -133,7 +134,9 @@ export function ReadinessChecklist({
               c.ok ? "bg-jigsaw-secondary-strong text-white" : "bg-muted",
             ].join(" ")}
           >
-            <span className="sr-only">{c.ok ? "complete" : "incomplete"}</span>
+            <span className="sr-only">
+              {c.ok ? t("checkDone") : t("checkNotDone")}
+            </span>
             {c.ok && <Check className="size-3" />}
           </span>
           {c.label}

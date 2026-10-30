@@ -18,7 +18,7 @@ export function TagInput({
   id,
   value,
   onChange,
-  placeholder = "landscape, ocean, calm…",
+  placeholder,
 }: {
   id?: string;
   value: string[];
@@ -26,6 +26,7 @@ export function TagInput({
   placeholder?: string;
 }) {
   const t = useTranslations("puzzles");
+  const tCommon = useTranslations("common");
   const hintId = useId();
   const [draft, setDraft] = useState("");
   const full = value.length >= MAX_CATALOG_TAGS;
@@ -55,7 +56,7 @@ export function TagInput({
             </span>
             <button
               type="button"
-              aria-label={`Remove ${tag}`}
+              aria-label={tCommon("removeTag", { tag })}
               onClick={() => onChange(value.filter((x) => x !== tag))}
               className="inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-full outline-none hover:bg-primary/15 focus-visible:ring-2 focus-visible:ring-ring"
             >
@@ -65,7 +66,7 @@ export function TagInput({
         ))}
         <input
           id={id}
-          aria-label={id ? undefined : "Tags"}
+          aria-label={id ? undefined : tCommon("tags")}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onBlur={() => {
@@ -82,7 +83,9 @@ export function TagInput({
           readOnly={full}
           aria-disabled={full || undefined}
           aria-describedby={full ? hintId : undefined}
-          placeholder={value.length ? "" : placeholder}
+          placeholder={
+            value.length ? "" : (placeholder ?? t("tagsPlaceholder"))
+          }
           className="min-w-[120px] flex-1 border-none bg-transparent px-0.5 py-0.5 text-base text-foreground outline-none md:text-sm"
         />
       </div>

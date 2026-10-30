@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import en from "../../locales/en.json";
 import nl from "../../locales/nl.json";
-import { defaultDocumentTitle } from "./page-title";
+import { defaultDocumentTitle, pageTitle } from "./page-title";
 
 const context = (messages: unknown) => ({ intl: { messages } });
 
@@ -33,5 +33,16 @@ describe("defaultDocumentTitle", () => {
     expect(defaultDocumentTitle(undefined, [{ _notFound: true }])).toBe(
       "JigSwap",
     );
+  });
+});
+
+describe("pageTitle", () => {
+  it("reads the public catalogue title in the app language", () => {
+    expect(pageTitle(context(nl), "catalog")).toBe(nl.marketing.titles.catalog);
+    expect(pageTitle(context(en), "catalog")).toBe(en.marketing.titles.catalog);
+  });
+
+  it("falls back to the brand title without an intl payload", () => {
+    expect(pageTitle(undefined, "catalog")).toBe("JigSwap");
   });
 });

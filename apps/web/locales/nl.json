@@ -28,6 +28,8 @@
     "removeOption": "Verwijder {option} optie",
     "removeOptionButton": "knop om optie te verwijderen",
     "inputTag": "invoertag",
+    "tags": "Tags",
+    "removeTag": "Tag {tag} verwijderen",
     "photoPendingReview": "Wacht op controle",
     "errorBoundary": {
       "title": "Er ging iets mis",
@@ -577,6 +579,8 @@
     "checkTitle": "Titel ingevuld",
     "checkBrand": "Merk ingevuld",
     "checkPieces": "Aantal stukken ingevuld",
+    "checkDone": "Klaar",
+    "checkNotDone": "Nog niet klaar",
     "contributePuzzle": "Een puzzel bijdragen",
     "fieldTitle": "Puzzeltitel",
     "fieldTitlePlaceholder": "bijv. Sterrennacht",

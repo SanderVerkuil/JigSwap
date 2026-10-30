@@ -28,6 +28,8 @@
     "removeOption": "Remove {option} option",
     "removeOptionButton": "button to remove option",
     "inputTag": "input tag",
+    "tags": "Tags",
+    "removeTag": "Remove {tag}",
     "photoPendingReview": "Pending review",
     "errorBoundary": {
       "title": "Something went wrong",
@@ -577,6 +579,8 @@
     "checkTitle": "Title filled in",
     "checkBrand": "Brand filled in",
     "checkPieces": "Piece count filled in",
+    "checkDone": "Done",
+    "checkNotDone": "Not done yet",
     "contributePuzzle": "Contribute a Puzzle",
     "fieldTitle": "Puzzle Title",
     "fieldTitlePlaceholder": "e.g. Starry Night",
