@@ -1,5 +1,6 @@
 "use client";
 
+import { SegmentedPills } from "@/components/add-puzzle/segmented-pills";
 import { useCompletionFollowUp } from "@/components/solving/completion-follow-up-provider";
 import { useDurationPrompt } from "@/components/solving/duration-prompt-provider";
 import { Button } from "@/components/ui/button";
@@ -18,12 +19,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
 import { useUserSettings } from "@/hooks/use-user-settings";
 import { dateInputToMs, localTodayInput } from "@/lib/date-input";
+import { cn } from "@/lib/utils";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import { solveSaveErrorKey } from "./solving-error";
+
+// Whether the member is logging a finished solve or one they are still working on.
+type SolveStatus = "finished" | "inProgress";
 
 interface LogSolveDialogProps {
   open: boolean;
@@ -58,7 +63,9 @@ export function LogSolveDialog({
   const { requestPrompt } = useDurationPrompt();
   const { requestFollowUp } = useCompletionFollowUp();
 
-  // Both dates default to the member's local today, so "I just finished" is one tap.
+  // Both dates default to the member's local today, so "I just finished" is one tap. "Still
+  // solving" is an explicit choice that hides the end date, never a cleared date input.
+  const [status, setStatus] = useState<SolveStatus>("finished");
   const [startDate, setStartDate] = useState(() => localTodayInput());
   const [endDate, setEndDate] = useState(() => localTodayInput());
   const [hours, setHours] = useState("");
@@ -72,7 +79,7 @@ export function LogSolveDialog({
   const followUpAfterUpdateCopyRef = useRef<(() => void) | null>(null);
 
   const showDuration = trackCompletionDuration === true;
-  const isFinished = endDate !== "";
+  const isFinished = status === "finished";
 
   // Unmount safety valve: onOpenChange(false) can synchronously unmount this component (e.g.
   // /completions/new's setSolveTarget(null)), which would leave a pending follow-up dangling on
@@ -88,6 +95,7 @@ export function LogSolveDialog({
   );
 
   const reset = () => {
+    setStatus("finished");
     setStartDate(localTodayInput());
     setEndDate(localTodayInput());
     setHours("");
@@ -99,7 +107,8 @@ export function LogSolveDialog({
   const handleSubmit = async () => {
     const start = dateInputToMs(startDate);
     if (start === undefined) return;
-    const end = dateInputToMs(endDate);
+    const end = isFinished ? dateInputToMs(endDate) : undefined;
+    if (isFinished && end === undefined) return;
 
     // Combine hours+minutes into the single minutes value the domain stores; omit when blank.
     const totalMinutes =
@@ -190,7 +199,22 @@ export function LogSolveDialog({
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <SegmentedPills<SolveStatus>
+              ariaLabel={t("statusLabel")}
+              value={status}
+              onChange={setStatus}
+              options={[
+                { value: "finished", label: t("statusFinished") },
+                { value: "inProgress", label: t("statusInProgress") },
+              ]}
+            />
+
+            <div
+              className={cn(
+                "grid grid-cols-1 gap-4",
+                isFinished && "sm:grid-cols-2",
+              )}
+            >
               <div className="space-y-2">
                 <Label htmlFor="solve-start">{t("startDate")}</Label>
                 <Input
@@ -200,22 +224,21 @@ export function LogSolveDialog({
                   onChange={(e) => setStartDate(e.target.value)}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="solve-end">{t("endDate")}</Label>
-                <Input
-                  id="solve-end"
-                  type="date"
-                  value={endDate}
-                  min={startDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
-                <p className="text-muted-foreground text-xs">
-                  {t("endDateHint")}
-                </p>
-              </div>
+              {isFinished && (
+                <div className="space-y-2">
+                  <Label htmlFor="solve-end">{t("endDate")}</Label>
+                  <Input
+                    id="solve-end"
+                    type="date"
+                    value={endDate}
+                    min={startDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </div>
+              )}
             </div>
 
-            {showDuration && (
+            {isFinished && showDuration && (
               <div className="space-y-2">
                 <Label>{t("timeLabel")}</Label>
                 <div className="grid grid-cols-2 gap-4">
@@ -280,7 +303,11 @@ export function LogSolveDialog({
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={recordCompletion.isPending || !startDate}
+              disabled={
+                recordCompletion.isPending ||
+                !startDate ||
+                (isFinished && !endDate)
+              }
             >
               {t("submit")}
             </Button>
