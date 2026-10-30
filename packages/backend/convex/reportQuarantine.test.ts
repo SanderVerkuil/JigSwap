@@ -8,6 +8,7 @@ import {
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { asImage } from "./conversation/messageAttachments";
+import { isHashCleared } from "./lib/imageModeration/hashCheckFields";
 import schema from "./schema";
 
 // SEC-04: the report screens never serve, and never copy, the bytes of a CSAM-quarantined photo
@@ -556,5 +557,27 @@ describe("decideReport: removing content never rewrites or copies a quarantined 
     });
     expect(await blobExists(t, preserved)).toBe(true);
     expect((await reportRow(t, reportId)).decision).toBe("content_removed");
+  });
+});
+
+describe("the hash gate (isHashCleared)", () => {
+  test("is closed for a quarantined row, even one whose gate had opened before the match", () => {
+    // An admin-waived photo (or one approved before a later re-check) keeps hashCheckedAt when a
+    // re-check quarantines it; the gate must still close, since its fileId is now preserved.
+    expect(
+      isHashCleared({ moderationStatus: "quarantined", hashCheckedAt: 1 }),
+    ).toBe(false);
+    expect(isHashCleared({ moderationStatus: "quarantined" })).toBe(false);
+  });
+
+  test("is unchanged otherwise: open once checked, open for legacy rows, closed while pending", () => {
+    expect(
+      isHashCleared({ moderationStatus: "approved", hashCheckedAt: 1 }),
+    ).toBe(true);
+    expect(isHashCleared({})).toBe(true);
+    expect(isHashCleared({ hashCheckPendingSince: 1 })).toBe(false);
+    expect(isHashCleared({ hashCheckPendingSince: 1, hashCheckedAt: 2 })).toBe(
+      true,
+    );
   });
 });

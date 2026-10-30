@@ -24,7 +24,10 @@ import { v } from "convex/values";
 //
 // GATE: no read model issues a storage URL for a row until its hash check has passed. Convex
 // storage URLs do not expire, so a URL handed out before a match would keep serving the image.
-// Rows from before the gate existed carry neither field and keep being served as before.
+// Rows from before the gate existed carry neither field and keep being served as before. A
+// quarantined row is never cleared, whatever its fields say: a re-check that matches a photo whose
+// gate was already open (an admin waiver) leaves `hashCheckedAt` set, and its fileId now points at
+// the CSAM escalation's preserved blob.
 
 export const imageHashPair = v.object({ md5: v.string(), sha1: v.string() });
 
@@ -38,12 +41,17 @@ export const hashCheckFields = {
   hashCheckWaivedBy: v.optional(v.id("users")),
 };
 
-/** Whether the row's hash check has passed (or the row predates the gate): it may be served. */
+/**
+ * Whether the row's hash check has passed (or the row predates the gate): it may be served. Never
+ * for a quarantined row (a CSAM hash match), even one whose gate had opened before the match.
+ */
 export const isHashCleared = (row: {
   hashCheckedAt?: number;
   hashCheckPendingSince?: number;
+  moderationStatus?: string;
 }): boolean =>
-  row.hashCheckedAt !== undefined || row.hashCheckPendingSince === undefined;
+  row.moderationStatus !== "quarantined" &&
+  (row.hashCheckedAt !== undefined || row.hashCheckPendingSince === undefined);
 
 /**
  * Whether the photo's hash check timed out and is still undecided: its re-checks stopped, it is
