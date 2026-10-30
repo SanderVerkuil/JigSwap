@@ -5,6 +5,7 @@ import {
 import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { query } from "../_generated/server";
+import { explicitVisibilityOf } from "../social/privacy";
 import { mulberry32, partialShuffle } from "./sampling";
 
 // Bounded candidate scan: same guard used across insights — never an unbounded table scan.
@@ -17,11 +18,17 @@ const LIMIT_MAX = 8;
 // Pure mapper: derive a privacy-minimal view of a community member. The raw
 // name, username, email, and internal IDs never cross the wire — only two-letter
 // initials derived server-side and an optional avatar URL gated on explicit consent.
+// Initials come from the name the member shows publicly: their profile display name
+// when they chose one, else the account name.
 export const toCommunityAvatarView = (
   user: Doc<"users">,
+  profile?: Pick<Doc<"profiles">, "displayName"> | null,
 ): CommunityAvatarView => {
   // normalizeMemberName drops legacy "null null" names, which would otherwise render "NN".
-  const name = normalizeMemberName(user.name) ?? "";
+  const name =
+    normalizeMemberName(profile?.displayName) ??
+    normalizeMemberName(user.name) ??
+    "";
   let initials: string;
 
   if (name.length === 0) {
@@ -49,8 +56,12 @@ export const toCommunityAvatarView = (
 // Insights read (public, no auth): seeded-random sample of active members for
 // the marketing trust-row avatar cluster. `limit` is clamped to [1, 8]; `seed`
 // drives a deterministic PRNG so the same (seed, DB state) always returns the
-// same order. Bounded pool of the 200 most-recent active members; partial
-// Fisher-Yates picks `limit` items without shuffling the rest.
+// same order. Bounded pool of the 200 most-recent active members, shuffled, then
+// walked until `limit` members who EXPLICITLY chose a public profile are found
+// (SEC-90): a logged-out surface fails closed like getPublicProfile's anonymous
+// path, so members with no profile row, no visibility choice or a private profile
+// are never sampled. Fewer than `limit` (even none) is a valid answer; the hero
+// hides the cluster when it is empty.
 export const getCommunityAvatars = query({
   args: {
     limit: v.number(),
@@ -70,10 +81,21 @@ export const getCommunityAvatars = query({
       .filter((q) => q.eq(q.field("isActive"), true))
       .take(CANDIDATE_SCAN_LIMIT);
 
-    // Partial shuffle in-place; pool is a fresh array from .take() so mutation is safe.
+    // Shuffle in-place; pool is a fresh array from .take() so mutation is safe. The
+    // whole pool is shuffled because hidden members are skipped while walking it.
     const rand = mulberry32(args.seed);
-    const picked = partialShuffle(pool, limit, rand).slice(0, limit);
+    const shuffled = partialShuffle(pool, pool.length, rand);
 
-    return picked.map(toCommunityAvatarView);
+    const picked: CommunityAvatarView[] = [];
+    for (const user of shuffled) {
+      if (picked.length >= limit) break;
+      const profile = await ctx.db
+        .query("profiles")
+        .withIndex("by_member", (q) => q.eq("memberId", user._id))
+        .unique();
+      if (explicitVisibilityOf(profile) !== "public") continue;
+      picked.push(toCommunityAvatarView(user, profile));
+    }
+    return picked;
   },
 });

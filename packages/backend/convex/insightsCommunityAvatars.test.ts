@@ -7,7 +7,9 @@ import schema from "./schema";
 // Bundle every Convex module for the in-memory runtime, excluding test files.
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
-// Insert a set of active users and optionally a few inactive ones.
+// Insert a set of active users and optionally a few inactive ones. Each gets a profile row that
+// explicitly chose "public" unless `profile` says otherwise (null = no profile row at all; a row
+// without `visibility` = opened without a choice).
 const seedUsers = async (
   t: TestConvex<typeof schema>,
   users: Array<{
@@ -15,6 +17,10 @@ const seedUsers = async (
     avatar?: string;
     shareAvatarPublicly?: boolean;
     isActive?: boolean;
+    profile?: {
+      visibility?: "public" | "private";
+      displayName?: string;
+    } | null;
   }>,
 ) =>
   t.run(async (ctx) => {
@@ -31,6 +37,15 @@ const seedUsers = async (
         createdAt: now,
         updatedAt: now,
       });
+      const profile =
+        u.profile === undefined ? { visibility: "public" as const } : u.profile;
+      if (profile !== null) {
+        await ctx.db.insert("profiles", {
+          memberId: id,
+          ...profile,
+          updatedAt: now,
+        });
+      }
       ids.push(id);
     }
     return ids;
@@ -339,5 +354,85 @@ describe("insights.getCommunityAvatars — query behaviour", () => {
     );
 
     expect(result[0].image).toBe(url);
+  });
+});
+
+// SEC-90 (PRIV-18, SURF-12): this read is unauthenticated, so it samples only members who
+// explicitly chose a public profile (explicitVisibilityOf), and their initials come from the name
+// they show publicly.
+describe("insights.getCommunityAvatars — explicit public profiles only (SEC-90)", () => {
+  const sample = (t: TestConvex<typeof schema>, seed: number) =>
+    t.query(api.insights.getCommunityAvatars.getCommunityAvatars, {
+      limit: 8,
+      seed,
+    });
+
+  test("members with no profile row, a private one or no visibility choice are never sampled", async () => {
+    const t = convexTest(schema, modules);
+    await seedUsers(t, [
+      { name: "Nora Norow", profile: null },
+      { name: "Nils Norow", profile: null },
+      { name: "Pia Private", profile: { visibility: "private" } },
+      { name: "Piet Private", profile: { visibility: "private" } },
+      { name: "Uma Unset", profile: { displayName: "Uma" } },
+      { name: "Alice Public" },
+      { name: "Bob Public" },
+    ]);
+
+    for (const seed of [0, 1, 2, 3, 42]) {
+      const result = await sample(t, seed);
+      expect(result.map((m) => m.initials).sort()).toEqual(["AP", "BP"]);
+    }
+  });
+
+  test("walks past hidden members to fill the requested count", async () => {
+    const t = convexTest(schema, modules);
+    await seedUsers(t, [
+      ...Array.from({ length: 12 }, (_, i) => ({
+        name: `Hidden${i} X`,
+        profile: { visibility: "private" as const },
+      })),
+      { name: "Alice Public" },
+      { name: "Bob Public" },
+      { name: "Carol Public" },
+    ]);
+
+    for (const seed of [0, 7, 99]) {
+      const result = await t.query(
+        api.insights.getCommunityAvatars.getCommunityAvatars,
+        { limit: 3, seed },
+      );
+      expect(result.map((m) => m.initials).sort()).toEqual(["AP", "BP", "CP"]);
+    }
+  });
+
+  test("returns nothing when no member chose a public profile", async () => {
+    const t = convexTest(schema, modules);
+    await seedUsers(t, [
+      { name: "Nora Norow", profile: null },
+      { name: "Pia Private", profile: { visibility: "private" } },
+    ]);
+
+    expect(await sample(t, 0)).toEqual([]);
+  });
+
+  test("initials come from the public display name, not the account name", async () => {
+    const t = convexTest(schema, modules);
+    await seedUsers(t, [
+      {
+        name: "Sander Verkuil",
+        profile: { visibility: "public", displayName: "Puzzle Fox" },
+      },
+    ]);
+
+    expect((await sample(t, 0)).map((m) => m.initials)).toEqual(["PF"]);
+  });
+
+  test("a public member's avatar still needs shareAvatarPublicly", async () => {
+    const url = "https://example.com/avatar.jpg";
+    const t = convexTest(schema, modules);
+    await seedUsers(t, [{ name: "Alice Public", avatar: url }]);
+
+    expect(await sample(t, 0)).toEqual([{ initials: "AP", image: null }]);
   });
 });
