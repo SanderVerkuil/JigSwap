@@ -29,7 +29,10 @@ export function JigPlank({
   const inset = depth - 1;
   const lip = 16; // shelf front-face thickness
   return (
+    // Decorative illustration: the sample box titles, series and "pcs"
+    // labels are not content, so screen readers skip the whole shelf.
     <div
+      aria-hidden="true"
       style={{
         position: "relative",
         width: "fit-content",
