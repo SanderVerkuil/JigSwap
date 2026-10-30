@@ -13,6 +13,7 @@ import {
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
+import { canViewDefinition } from "../catalog/definitionVisibility";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
 import {
@@ -329,7 +330,8 @@ const toBatchView = async (
 //   acquisitionBatch -> the actor's profile puzzles. The batch already passed the profile unlock rule
 //                       (listProfileCopies' gate); the profile page itself needs an active member.
 //   completion/started -> the solve's copy when the viewer may reach it (canViewCopy), else the
-//                       puzzle definition, exactly like the profile's solves list
+//                       puzzle definition when the viewer may open it (canViewDefinition, the
+//                       definition page's gate), exactly like the profile's solves list
 //                       (listProfileCompletions), behind its profile unlock rule.
 //   exchange         -> the viewer's trades page, only when the viewer is a party; a follower who is
 //                       not a party gets no target (the actor link still goes to the profile).
@@ -386,7 +388,7 @@ const resolveTarget = async (
       const puzzleId =
         completion.puzzleId ?? (copy && reachable ? copy.puzzleId : undefined);
       const puzzle = puzzleId ? await ctx.db.get(puzzleId) : null;
-      return puzzle
+      return puzzle && (await canViewDefinition(ctx, puzzle, viewerId))
         ? { kind: "definition", id: puzzle._id as string }
         : undefined;
     }
