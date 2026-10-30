@@ -102,7 +102,6 @@ function PuzzleDefinitionSkeleton() {
       <div className="grid gap-7 lg:grid-cols-[300px_minmax(0,1fr)]">
         <Skeleton className="aspect-square w-full rounded-2xl" />
         <div className="space-y-4">
-          <Skeleton className="h-4 w-44 rounded-lg" />
           <Skeleton className="h-9 w-2/3 rounded-lg" />
           <Skeleton className="h-5 w-1/3 rounded-lg" />
           <Skeleton className="h-8 w-1/2 rounded-lg" />
@@ -229,10 +228,7 @@ function PuzzleDefinitionDetail({
 
         {/* Info */}
         <div className="min-w-0">
-          <div className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.18em]">
-            {t("eyebrow")}
-          </div>
-          <h1 className="font-heading mt-2 text-3xl font-bold tracking-tight">
+          <h1 className="font-heading text-3xl font-bold tracking-tight">
             {definition.title}
           </h1>
           <p className="text-muted-foreground mt-1 text-base">

@@ -356,3 +356,13 @@ describe("puzzle detail page: actions", () => {
     ).toBe(`/puzzles/${PUZZLE_ID}/suggest-edit`);
   });
 });
+
+describe("puzzle detail page: wording", () => {
+  it("opens with the puzzle's name, not an internal 'puzzle definition' label", () => {
+    setView(emptyView());
+    renderPage();
+
+    expect(document.body.textContent).not.toMatch(/definition/i);
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Café");
+  });
+});
