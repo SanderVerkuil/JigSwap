@@ -1,5 +1,6 @@
 import { useUser } from "@/compat/clerk";
-import { useRouter } from "@/compat/navigation";
+import { Link } from "@/compat/link";
+import { CreateCollectionDialog } from "@/components/collections/create-collection-dialog";
 import {
   EditCollectionDialog,
   type EditableCollection,
@@ -8,44 +9,15 @@ import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { CoverChip } from "@/components/library/cover-chip";
 import { EmptyState } from "@/components/library/empty-state";
 import { chipColor } from "@/components/library/palette";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { ColorPicker } from "@/components/ui/color-picker";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { EmojiPickerInput } from "@/components/ui/emoji-picker-input";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
 import { gateway, Id } from "@/gateway";
 import { pageTitle } from "@/lib/page-title";
-import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { cn } from "@/lib/utils";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { FolderOpen, Globe, Lock, Plus, Settings } from "lucide-react";
 import { useState } from "react";
@@ -66,24 +38,11 @@ function CollectionsPending() {
 
 function CollectionsPage() {
   const { user } = useUser();
-  const router = useRouter();
   const t = useTranslations("collections");
-  const tCommon = useTranslations("common");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingCollection, setEditingCollection] =
     useState<EditableCollection | null>(null);
-  // The collection aggregateId awaiting the destructive delete confirm; null
-  // when the dialog is closed. Nothing sets it yet — the delete affordance
-  // lands in a follow-up — but the confirm flow is already in its final shape.
-  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    visibility: "private" as "private" | "public",
-    color: "#3b82f6",
-    icon: "📦",
-  });
 
   const { data: convexUser, isPending: convexUserPending } = useQuery(
     convexQuery(
@@ -98,55 +57,6 @@ function CollectionsPage() {
       convexUser?._id ? { userId: convexUser._id as Id<"users"> } : "skip",
     ),
   );
-
-  const createCollection = useMutation({
-    mutationFn: useConvexMutation(gateway.collections.create),
-  });
-  const deleteCollection = useMutation({
-    mutationFn: useConvexMutation(gateway.collections.delete),
-  });
-
-  const handleCreateCollection = async () => {
-    try {
-      await createCollection.mutateAsync({
-        name: formData.name,
-        description: formData.description,
-        visibility: formData.visibility,
-        color: formData.color,
-        icon: formData.icon,
-        personalNotes: "",
-      });
-      setIsCreateDialogOpen(false);
-      setFormData({
-        name: "",
-        description: "",
-        visibility: "private",
-        color: "#3b82f6",
-        icon: "📦",
-      });
-    } catch (error) {
-      console.error("Failed to create collection:", error);
-    }
-  };
-
-  // Wired to a delete affordance in a follow-up; kept to preserve the intended flow.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleDeleteCollection = (collectionAggregateId?: string) => {
-    // The domain delete takes the CollectionId (aggregateId); guard rows missing it.
-    if (!collectionAggregateId) {
-      console.error("Cannot delete: collection is missing its aggregateId.");
-      return;
-    }
-    setDeleteTarget(collectionAggregateId);
-  };
-
-  const confirmDeleteCollection = async (collectionId: string) => {
-    try {
-      await deleteCollection.mutateAsync({ collectionId });
-    } catch (error) {
-      console.error("Failed to delete collection:", error);
-    }
-  };
 
   const openEditDialog = (collection: EditableCollection) => {
     setEditingCollection(collection);
@@ -204,99 +114,10 @@ function CollectionsPage() {
     <div className="flex flex-col gap-7">
       {/* The shelf meta + create action now live in the shell page head. */}
       <section>
-        {/* Create Collection Dialog (unchanged flow, opened from the head) */}
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t("createCollection")}</DialogTitle>
-              <DialogDescription>
-                {t("createCollectionDescription")}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">{t("name")}</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  placeholder={t("collectionNamePlaceholder")}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">{t("description")}</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  placeholder={t("descriptionPlaceholder")}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="visibility">{t("visibility")}</Label>
-                <Select
-                  value={formData.visibility}
-                  onValueChange={(value: "private" | "public") =>
-                    setFormData({ ...formData, visibility: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="private">
-                      <div className="flex items-center gap-2">
-                        <Lock className="h-4 w-4" />
-                        {t("private")}
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="public">
-                      <div className="flex items-center gap-2">
-                        <Globe className="h-4 w-4" />
-                        {t("public")}
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="icon">{t("icon")}</Label>
-                  <EmojiPickerInput
-                    id="icon"
-                    value={formData.icon}
-                    onChange={(emoji) =>
-                      setFormData({ ...formData, icon: emoji })
-                    }
-                    placeholder="📦"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="color">{t("color")}</Label>
-                  <ColorPicker
-                    value={formData.color}
-                    onChange={(color) =>
-                      setFormData({ ...formData, color: color })
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setIsCreateDialogOpen(false)}
-              >
-                {tCommon("cancel")}
-              </Button>
-              <Button onClick={handleCreateCollection}>{t("create")}</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <CreateCollectionDialog
+          open={isCreateDialogOpen}
+          onOpenChange={setIsCreateDialogOpen}
+        />
 
         {/* Collections Grid: compact tiles — the sanctioned card use */}
         {collections.length === 0 ? (
@@ -316,65 +137,72 @@ function CollectionsPage() {
         ) : (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-[18px]">
             {collections.map((collection, index) => (
-              <div
-                key={collection._id}
-                role="button"
-                tabIndex={0}
-                className="bg-card flex cursor-pointer gap-3.5 rounded-xl border p-3.5 shadow-sm transition-shadow hover:shadow-md"
-                onClick={() => router.push(`/collections/${collection._id}`)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    router.push(`/collections/${collection._id}`);
-                  }
-                }}
-              >
-                <CoverChip
-                  color={collection.color || chipColor(index)}
-                  icon={FolderOpen}
-                  emoji={collection.icon || undefined}
-                  size={74}
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="font-heading truncate text-lg font-bold">
-                      {collection.name}
-                    </div>
-                    <div className="flex shrink-0 items-center gap-1">
-                      {collection.visibility === "private" ? (
-                        <Lock className="text-muted-foreground h-4 w-4" />
-                      ) : (
-                        <Globe className="text-muted-foreground h-4 w-4" />
+              // The tile is one link to the collection; its Edit button sits beside the link
+              // (positioned over its top-right corner), never nested inside it.
+              <div key={collection._id} className="relative">
+                <Link
+                  href={`/collections/${collection._id}`}
+                  className="bg-card focus-visible:ring-ring/50 flex h-full gap-3.5 rounded-xl border p-3.5 shadow-sm transition-shadow outline-none hover:shadow-md focus-visible:ring-[3px]"
+                >
+                  <CoverChip
+                    color={collection.color || chipColor(index)}
+                    icon={FolderOpen}
+                    emoji={collection.icon || undefined}
+                    size={74}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div
+                      className={cn(
+                        "flex items-start justify-between gap-2",
+                        // Room for the Edit button over the corner.
+                        !collection.isDefault && "pr-10",
                       )}
-                      {!collection.isDefault && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-7"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openEditDialog(collection);
-                          }}
-                        >
-                          <Settings className="h-4 w-4" />
-                        </Button>
-                      )}
+                    >
+                      <div className="font-heading truncate text-lg font-bold">
+                        {collection.name}
+                      </div>
+                      <div className="flex shrink-0 items-center pt-1.5">
+                        {collection.visibility === "private" ? (
+                          <Lock
+                            className="text-muted-foreground h-4 w-4"
+                            role="img"
+                            aria-label={t("private")}
+                          />
+                        ) : (
+                          <Globe
+                            className="text-muted-foreground h-4 w-4"
+                            role="img"
+                            aria-label={t("public")}
+                          />
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  {collection.description && (
-                    <p className="text-muted-foreground mt-0.5 line-clamp-1 text-sm">
-                      {collection.description}
-                    </p>
-                  )}
-                  <div className="mt-2.5 flex items-center gap-2">
-                    <Badge variant="secondary">
-                      {collection.puzzleCount} {t("puzzles")}
-                    </Badge>
-                    {collection.isDefault && (
-                      <Badge variant="outline">{t("default")}</Badge>
+                    {collection.description && (
+                      <p className="text-muted-foreground mt-0.5 line-clamp-1 text-sm">
+                        {collection.description}
+                      </p>
                     )}
+                    <div className="mt-2.5 flex items-center gap-2">
+                      <Badge variant="secondary">
+                        {collection.puzzleCount} {t("puzzles")}
+                      </Badge>
+                      {collection.isDefault && (
+                        <Badge variant="outline">{t("default")}</Badge>
+                      )}
+                    </div>
                   </div>
-                </div>
+                </Link>
+                {!collection.isDefault && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 right-2 size-9"
+                    aria-label={t("editNamed", { name: collection.name })}
+                    onClick={() => openEditDialog(collection)}
+                  >
+                    <Settings className="h-4 w-4" aria-hidden />
+                  </Button>
+                )}
               </div>
             ))}
           </div>
@@ -386,36 +214,6 @@ function CollectionsPage() {
         onOpenChange={setIsEditDialogOpen}
         collection={editingCollection}
       />
-
-      <AlertDialog
-        open={deleteTarget !== null}
-        onOpenChange={(open) => {
-          if (!open) setDeleteTarget(null);
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("deleteConfirmTitle")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("deleteConfirmBody")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              className={buttonVariants({ variant: "destructive" })}
-              onClick={() => {
-                if (deleteTarget) {
-                  void confirmDeleteCollection(deleteTarget);
-                }
-                setDeleteTarget(null);
-              }}
-            >
-              {t("deleteConfirmAction")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

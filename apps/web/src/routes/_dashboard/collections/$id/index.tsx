@@ -1,4 +1,5 @@
 import { Link } from "@/compat/link";
+import { useRouter } from "@/compat/navigation";
 import {
   computeCollectionStats,
   DifficultyMix,
@@ -9,6 +10,7 @@ import {
   EditCollectionDialog,
   type EditableCollection,
 } from "@/components/collections/edit-collection-dialog";
+import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { CoverChip } from "@/components/library/cover-chip";
 import { EmptyState } from "@/components/library/empty-state";
@@ -60,6 +62,8 @@ function CollectionPending() {
 
 function CollectionDetailPage() {
   const { id } = Route.useParams();
+  const router = useRouter();
+  const { member } = useCurrentMember();
   const relativeTime = useRelativeTime();
   const t = useTranslations("collections");
   const tCommon = useTranslations("common");
@@ -180,6 +184,8 @@ function CollectionDetailPage() {
   };
 
   const isEmpty = puzzles.length === 0;
+  // A public collection is open to visitors too; only its owner may change it.
+  const viewerOwnsCollection = !!member && member._id === collection.userId;
 
   return (
     <div className="flex w-full flex-col gap-8">
@@ -198,9 +204,11 @@ function CollectionDetailPage() {
                 visibility: collection.visibility,
                 color: collection.color ?? undefined,
                 icon: collection.icon ?? undefined,
+                isDefault: collection.isDefault,
               } satisfies EditableCollection)
             : null
         }
+        onDeleted={() => router.push("/collections")}
       />
 
       {/* Share dialog — only reached for private collections (public ones copy
@@ -306,10 +314,12 @@ function CollectionDetailPage() {
               <Share2 className="h-4 w-4" />
               {t("share")}
             </Button>
-            <Button variant="ghost" onClick={() => setEditOpen(true)}>
-              <Edit className="h-4 w-4" />
-              {tCommon("edit")}
-            </Button>
+            {viewerOwnsCollection && (
+              <Button variant="ghost" onClick={() => setEditOpen(true)}>
+                <Edit className="h-4 w-4" />
+                {tCommon("edit")}
+              </Button>
+            )}
           </div>
         </div>
         <p className="text-muted-foreground shrink-0 text-xs">
