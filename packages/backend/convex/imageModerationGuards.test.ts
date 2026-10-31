@@ -18,6 +18,7 @@ import {
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { MAX_IMAGE_UPLOAD_BYTES } from "./lib/imageModeration/guards";
+import { MAX_REENCODE_EDGE } from "./lib/imageModeration/normaliseImage";
 import { findMetadata } from "./lib/imageModeration/stripMetadata";
 import schema from "./schema";
 
@@ -667,6 +668,40 @@ describe("decode failures and polyglots (copy photos)", () => {
     expect(fetchMock).not.toHaveBeenCalled();
     expect(await blobExists(t, fileId)).toBe(false);
   });
+
+  // An original that reached the server unconverted (a browser whose canvas cannot be trusted,
+  // or a direct call) is stored the way the web client would have re-encoded it: at most
+  // MAX_REENCODE_EDGE on its long edge, aspect kept. That also bounds the encoder's memory: a
+  // detailed 12 MP re-encode ran past the 512 MiB action limit (SEC-18).
+  test.each([
+    ["landscape", 2400, 1200, [1600, 800]],
+    ["portrait", 1000, 2000, [800, 1600]],
+    ["1600 px", 1600, 900, [1600, 900]],
+  ] as const)(
+    "a %s original is stored at most 1600 px on its long edge",
+    async (_name, width, height, size) => {
+      const fetchMock = cleanReply();
+      vi.stubGlobal("fetch", fetchMock);
+      const t = withModerationPool(convexTest(schema, modules));
+      const { copy } = await seed(t);
+      const original = new Jimp({ width, height, color: 0x3366ccff });
+      const fileId = await store(
+        t,
+        new Uint8Array(await original.getBuffer("image/jpeg")),
+        "image/jpeg",
+      );
+
+      const row = await addCopyPhoto(t, copy, fileId);
+
+      expect(MAX_REENCODE_EDGE).toBe(1600);
+      expect(row.moderationStatus).toBe("approved");
+      const stored = (await storedBytes(t, row.fileId))!;
+      const image = await Jimp.read(Buffer.from(stored.bytes));
+      expect([image.bitmap.width, image.bitmap.height]).toEqual(size);
+      const [sent] = await classifiedBytes(fetchMock);
+      expect(sent).toEqual(stored.bytes);
+    },
+  );
 
   test("a re-encode over 10 MB is refused as too_large, never stored or classified", async () => {
     const fetchMock = cleanReply();

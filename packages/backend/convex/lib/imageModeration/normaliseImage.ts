@@ -30,6 +30,7 @@ import { WEBP_DECODER_WASM_BASE64 } from "./webpDecoderWasm";
 //   visible. Its RGB ICC profile (APP2) is copied over, so wide-gamut (Display P3) phone photos
 //   keep their colours; a CMYK or grey profile is not (the re-encode is RGB).
 // - PNG stays PNG (lossless).
+// - Any of them is scaled down to MAX_REENCODE_EDGE on its long edge first, like a new upload.
 // - WebP: jimp has no WebP encoder, so it becomes PNG when it has transparency, else JPEG
 //   (quality 95), like the moderation pipeline's re-encode. The caller stores it under the
 //   returned mime.
@@ -151,6 +152,29 @@ export const decodeUpright = async (
   );
 };
 
+/**
+ * Longest edge, in pixels, of any image the server re-encodes (pipeline.reencodeImage, and
+ * stripAndNormalise when it turns an image): the long edge the web client re-encodes every photo
+ * to (apps/web/src/lib/prepare-photo.ts MAX_EDGE), so an original that reached the server
+ * unconverted is stored like any other photo. It also bounds the encoders' memory, which follows
+ * their output, not just the pixels: jpeg-js collects the JPEG in a plain JS array (8 bytes and
+ * more per output byte), so a detailed 12 MP re-encode (an 8 MB JPEG) needed more than the 512
+ * MiB a Node action has (SEC-18; measured in guards).
+ */
+export const MAX_REENCODE_EDGE = 1600;
+
+/**
+ * Scale a decoded image down, never up, so its long edge is at most MAX_REENCODE_EDGE, aspect
+ * kept (jimp's default resize, which averages the pixels it drops). Mutates the image.
+ */
+export const fitReencodeEdge = (
+  image: Awaited<ReturnType<typeof decodeUpright>>,
+): void => {
+  const { width, height } = image.bitmap;
+  if (Math.max(width, height) <= MAX_REENCODE_EDGE) return;
+  image.scaleToFit({ w: MAX_REENCODE_EDGE, h: MAX_REENCODE_EDGE });
+};
+
 /** Whether a decoded RGBA bitmap has any pixel that is not fully opaque. */
 export const hasTransparency = (data: Uint8Array): boolean => {
   for (let i = 3; i < data.length; i += 4) {
@@ -205,6 +229,7 @@ export const stripAndNormalise = async (
     format,
     stripped.orientation,
   );
+  fitReencodeEdge(image);
   if (
     format === "png" ||
     (format === "webp" && hasTransparency(image.bitmap.data))

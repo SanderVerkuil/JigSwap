@@ -76,6 +76,24 @@ const expectUpright = (
 
 const ORIENTATIONS = [1, 2, 3, 4, 5, 6, 7, 8];
 
+// A JPEG with a minimal little-endian Exif block (IFD0: Orientation only) right after its SOI.
+const withExifOrientation = (jpeg: Uint8Array, orientation: number) => {
+  const tiff = [
+    ...[0x49, 0x49, 0x2a, 0x00, 0x08, 0x00, 0x00, 0x00],
+    // One entry: tag 0x0112 (Orientation), SHORT, count 1, the value; then no next IFD.
+    ...[0x01, 0x00, 0x12, 0x01, 0x03, 0x00, 0x01, 0x00, 0x00, 0x00],
+    ...[orientation, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+  ];
+  const payload = [...new TextEncoder().encode("Exif\0\0"), ...tiff];
+  const length = payload.length + 2;
+  return new Uint8Array([
+    ...jpeg.subarray(0, 2),
+    ...[0xff, 0xe1, length >> 8, length & 0xff],
+    ...payload,
+    ...jpeg.subarray(2),
+  ]);
+};
+
 describe("stripAndNormalise", () => {
   test.each(ORIENTATIONS)(
     "PNG with Orientation %i comes out upright, as PNG",
@@ -142,6 +160,34 @@ describe("stripAndNormalise", () => {
       expectUpright(decoded.bitmap, { tolerance: n === 1 ? 0 : 12 });
     },
   );
+
+  // A turned image is re-encoded like a new upload, so it is held to the same long edge
+  // (MAX_REENCODE_EDGE): stored originals can be 12 MP, and the encoder's memory follows its
+  // output (SEC-18).
+  test("a turned image over 1600 px comes out upright at 1600 px on its long edge", async () => {
+    // Stored 1200 wide and 2400 tall, with Orientation 6: upright it is 2400 x 1200.
+    const sideways = new Uint8Array(
+      await new Jimp({
+        width: 1200,
+        height: 2400,
+        color: 0x884422ff,
+      }).getBuffer("image/jpeg"),
+    );
+    const original = withExifOrientation(sideways, 6);
+    expect(readImageDimensions(original, "jpeg")).toEqual({
+      width: 1200,
+      height: 2400,
+    });
+
+    const clean = (await stripAndNormalise(original, "jpeg"))!;
+
+    expect(clean.normalised).toBe(true);
+    expect(findMetadata(clean.bytes, "jpeg")).toEqual([]);
+    expect(readImageDimensions(clean.bytes, "jpeg")).toEqual({
+      width: 1600,
+      height: 800,
+    });
+  });
 
   test("a turned WebP with transparency comes out as PNG, alpha kept", async () => {
     const clean = (await stripAndNormalise(fixture("6-alpha.webp"), "webp"))!;

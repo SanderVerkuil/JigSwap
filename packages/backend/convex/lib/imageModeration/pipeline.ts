@@ -39,7 +39,11 @@ import {
   moderationRetryError,
   type ModerationTable,
 } from "./moderationPool";
-import { decodeUpright, hasTransparency } from "./normaliseImage";
+import {
+  decodeUpright,
+  fitReencodeEdge,
+  hasTransparency,
+} from "./normaliseImage";
 import { findMetadata, stripImageMetadata } from "./stripMetadata";
 
 // The shared image-moderation pipeline behind every table of uploaded photos (copy photos,
@@ -59,8 +63,9 @@ import { findMetadata, stripImageMetadata } from "./stripMetadata";
 //      Then (on any attempt until the row is marked `reencodedAt`) strip the
 //      metadata at byte level (lib/imageModeration/stripMetadata: Exif incl. GPS, XMP, IPTC,
 //      comments, PNG text chunks, WebP EXIF/XMP, Orientation included) and re-encode that in
-//      memory via jimp, turned upright for the Orientation the Exif held — PNG when it has
-//      transparency, else JPEG — plus the blurhash. Every format is re-encoded, WebP included
+//      memory via jimp, turned upright for the Orientation the Exif held and scaled down to
+//      1600 px on its long edge (normaliseImage.MAX_REENCODE_EDGE, as the web client sends
+//      photos) — PNG when it has transparency, else JPEG — plus the blurhash. Every format is re-encoded, WebP included
 //      (decoded by the WASM decoder, normaliseImage): what is stored is always the encoder's
 //      output, never the container as uploaded, so no chunk the stripper keeps (a WebP's ICCP or
 //      a frame's nested chunks) reaches storage. A malformed block structure or a decode failure
@@ -129,7 +134,8 @@ export const hashImageBytes = (bytes: Uint8Array): ImageHashes => ({
 // and the image's blurhash (lib/blurhash) from the same decode. A WebP is decoded with the WASM
 // decoder (normaliseImage), so it too is stored as the encoder's output. The decode re-runs the
 // input guards and throws on a bitmap that is not the size its header announced (decodeUpright),
-// which the pipeline refuses as "decode_failed".
+// which the pipeline refuses as "decode_failed". The image is scaled down to MAX_REENCODE_EDGE
+// (1600 px) on its long edge first, the size the web client re-encodes to (normaliseImage).
 export const reencodeImage = async (
   input: Uint8Array,
   format: ImageFormat,
@@ -140,6 +146,8 @@ export const reencodeImage = async (
   blurhash: string;
 }> => {
   const image = await decodeUpright(input, format, orientation);
+  // At most MAX_REENCODE_EDGE on the long edge, as the web client sends it: bounds the encoder.
+  fitReencodeEdge(image);
   // bitmap.data is RGBA; a single non-opaque pixel means the image carries real transparency.
   const hasAlpha = hasTransparency(image.bitmap.data);
   const out = hasAlpha

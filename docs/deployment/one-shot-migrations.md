@@ -467,8 +467,9 @@ Orientation included) and turned upright, the same way new uploads are
 (`lib/imageModeration/normaliseImage`):
 
 - No Orientation (or Orientation 1): stripped at byte level, the pixels untouched.
-- Orientation 2..8 (a phone photo stored sideways or mirrored): decoded, turned upright and
-  re-encoded with no metadata at all. A JPEG stays JPEG (quality 95, no chroma subsampling,
+- Orientation 2..8 (a phone photo stored sideways or mirrored): decoded, turned upright,
+  scaled down to at most 1600 px on its long edge (as new uploads are; it bounds the action's
+  memory) and re-encoded with no metadata at all. A JPEG stays JPEG (quality 95, no chroma subsampling,
   its RGB colour profile kept); a PNG stays PNG; a WebP becomes PNG when it has
   transparency, else JPEG (there is no WebP encoder on the server), and the new blob gets
   the matching content type. Box art cleaned by an earlier `sanitizeBoxArt` that kept an
