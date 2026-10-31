@@ -192,6 +192,20 @@ describe("ThreadList paging", () => {
     expect(rowLinks()).toHaveLength(60);
   });
 
+  it("says where older conversations are once the list reaches its cap", () => {
+    setup({
+      30: threads(30),
+      60: threads(60),
+      90: threads(90),
+      100: threads(100),
+    });
+    const hint =
+      "These are your 100 most recent conversations. Open older ones from their exchange, member or circle page.";
+    expect(screen.queryByText(hint)).toBeNull();
+    for (let i = 0; i < 3; i++) fireEvent.click(showOlder()!);
+    expect(screen.getByText(hint)).toBeTruthy();
+  });
+
   // The web can deploy before the backend that accepts `limit`.
   it("keeps the first page when the backend refuses a longer window", async () => {
     setup({ 30: threads(30), 60: "refused" });

@@ -306,6 +306,13 @@ function ThreadListBody({
             </Button>
           </div>
         )}
+        {/* The list stops at the backend's cap; older threads still open from
+            their exchange, member or circle page. */}
+        {!loadingOlder && inbox.length >= INBOX_MAX_SIZE && (
+          <p className="text-muted-foreground px-4 pb-4 text-center text-xs">
+            {t("olderConversationsElsewhere", { count: inbox.length })}
+          </p>
+        )}
       </nav>
     </CoverTooltipProvider>
   );

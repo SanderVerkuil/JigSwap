@@ -830,6 +830,7 @@
     "loadingEarlier": "Loading earlier messages…",
     "loadingOlderConversations": "Loading older conversations…",
     "showOlderConversations": "Show older conversations",
+    "olderConversationsElsewhere": "These are your {count} most recent conversations. Open older ones from their exchange, member or circle page.",
     "messageButton": "Message",
     "messageName": "Message {name}",
     "moreCount": "{count} more",
