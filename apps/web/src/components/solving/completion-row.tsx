@@ -3,6 +3,10 @@ import { Link } from "@/compat/link";
 import { CoverChip } from "@/components/library/cover-chip";
 import { chipColor } from "@/components/library/palette";
 import {
+  MessagePhotoLightbox,
+  type LightboxPhoto,
+} from "@/components/messaging/message-photo-lightbox";
+import {
   EditSolveButton,
   EditSolveMenuItem,
 } from "@/components/solving/edit-solve-button";
@@ -15,12 +19,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import type { gateway } from "@/gateway";
 import {
   formatCompletionDate,
@@ -30,6 +28,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { FunctionReturnType } from "convex/server";
 import { CircleCheck, Clock, MoreHorizontal, Star, Trash2 } from "lucide-react";
+import { useRef, useState } from "react";
 import { useTranslations } from "use-intl";
 
 // One of the member's solves as listMyCompletions returns it.
@@ -91,6 +90,18 @@ export function CompletionRow({
   // while in progress. Year-only and undated solves never get a duration.
   const metaLine = formatCompletionMeta(t, completion, pieceCount);
 
+  // The solve's photos open full size in the photo viewer (zoom, swipe, arrow keys), and focus
+  // returns to the thumbnail that opened it.
+  const photoItems = completion.photoItems ?? [];
+  const [viewing, setViewing] = useState<number | null>(null);
+  const viewerOpenerRef = useRef<HTMLButtonElement | null>(null);
+  const viewerPhotos: LightboxPhoto[] = photoItems.map((photo, photoIndex) => ({
+    // Only a key for the viewer: own photos are never reported.
+    attachmentId: `${photoIndex}:${photo.url}`,
+    url: photo.url,
+    alt: t("photoAlt", { title, pending: String(photo.pending) }),
+  }));
+
   // The row's actions; each is absent when the row can't offer it (legacy rows have no
   // aggregateId, rows without a puzzle can't be reviewed).
   const completionId = completion.aggregateId;
@@ -138,33 +149,35 @@ export function CompletionRow({
         !isLast && "border-b",
       )}
     >
+      {viewing !== null && (
+        <MessagePhotoLightbox
+          photos={viewerPhotos}
+          index={viewing}
+          onIndexChange={setViewing}
+          open
+          onOpenChange={(open) => {
+            if (!open) setViewing(null);
+          }}
+          // The member's own photos: there is nothing to report, so no author name is shown.
+          authorName=""
+          own
+          returnFocusRef={viewerOpenerRef}
+        />
+      )}
       {completion.thumbnailUrl && completion.link ? (
-        <TooltipProvider delayDuration={200}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link
-                href={hrefForLink(completion.link)}
-                aria-label={title}
-                className="relative z-10 shrink-0"
-              >
-                <Image
-                  src={completion.thumbnailUrl}
-                  alt=""
-                  width={44}
-                  height={44}
-                  className="h-11 w-11 shrink-0 rounded-lg border bg-muted object-contain"
-                />
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="p-1.5">
-              <img
-                src={completion.thumbnailUrl}
-                alt=""
-                className="max-h-[280px] max-w-[260px] rounded-md object-contain"
-              />
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Link
+          href={hrefForLink(completion.link)}
+          aria-label={title}
+          className="relative z-10 shrink-0"
+        >
+          <Image
+            src={completion.thumbnailUrl}
+            alt=""
+            width={44}
+            height={44}
+            className="h-11 w-11 shrink-0 rounded-lg border bg-muted object-contain"
+          />
+        </Link>
       ) : completion.thumbnailUrl ? (
         <Image
           src={completion.thumbnailUrl}
@@ -218,57 +231,45 @@ export function CompletionRow({
                 : ""}
           </p>
         )}
-        {completion.photoItems && completion.photoItems.length > 0 && (
-          <TooltipProvider delayDuration={200}>
-            <div className="mt-1.5 flex flex-wrap gap-1.5">
-              {completion.photoItems.map((photo, photoIndex) => (
-                <Tooltip key={`${photo.url}-${photoIndex}`}>
-                  <TooltipTrigger asChild>
-                    {/* Not a link (no nav target) — a focusable no-op button so keyboard
-                        users can surface the tooltip; z-10 lifts it above the stretched
-                        row link. */}
-                    <button
-                      type="button"
-                      aria-label={
-                        photo.pending
-                          ? `${title} — ${t("pendingReview")}`
-                          : title
-                      }
-                      className="relative z-10 shrink-0 rounded-md"
-                    >
-                      <Image
-                        src={photo.url}
-                        alt=""
-                        width={44}
-                        height={44}
-                        className="h-11 w-11 rounded-md border bg-muted object-contain"
-                      />
-                      {photo.pending && (
-                        <Badge
-                          variant="secondary"
-                          className="pointer-events-none absolute inset-x-0 bottom-0 justify-center rounded-none rounded-b-md px-0.5 py-0 text-[10px]"
-                        >
-                          {t("pendingReview")}
-                        </Badge>
-                      )}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="p-1.5">
-                    <img
-                      src={photo.url}
-                      alt=""
-                      className="max-h-[280px] max-w-[260px] rounded-md object-contain"
-                    />
-                    {photo.pending && (
-                      <p className="mt-1 text-center text-xs">
-                        {t("pendingReview")}
-                      </p>
-                    )}
-                  </TooltipContent>
-                </Tooltip>
-              ))}
-            </div>
-          </TooltipProvider>
+        {photoItems.length > 0 && (
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {photoItems.map((photo, photoIndex) => (
+              // z-10 lifts it above the stretched row link. A tap opens the photo viewer.
+              <button
+                key={`${photo.url}-${photoIndex}`}
+                type="button"
+                aria-label={t("photoLabel", {
+                  title,
+                  index: photoIndex + 1,
+                  count: photoItems.length,
+                  pending: String(photo.pending),
+                })}
+                className="focus-visible:ring-ring relative z-10 shrink-0 rounded-md focus-visible:ring-2 focus-visible:outline-none"
+                onClick={(event) => {
+                  viewerOpenerRef.current = event.currentTarget;
+                  setViewing(photoIndex);
+                }}
+              >
+                <Image
+                  src={photo.url}
+                  alt=""
+                  width={44}
+                  height={44}
+                  className="h-11 w-11 rounded-md border bg-muted object-contain"
+                />
+                {photo.pending && (
+                  // Pending review (said in the button's name): a corner mark that fits the
+                  // thumbnail in every language.
+                  <span
+                    aria-hidden
+                    className="bg-background text-muted-foreground pointer-events-none absolute -right-1 -bottom-1 inline-flex size-4 items-center justify-center rounded-full border"
+                  >
+                    <Clock className="size-2.5" />
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
         )}
       </div>
 

@@ -3225,7 +3225,8 @@
       "solvedBorrowedCopy": "Geleend exemplaar opgelost",
       "solvingOwnCopy": "Bezig met eigen exemplaar",
       "solvingBorrowedCopy": "Bezig met geleend exemplaar",
-      "pendingReview": "Wacht op controle",
+      "photoLabel": "{title}, foto {index} van {count}{pending, select, true {, wacht op controle} other {}}",
+      "photoAlt": "Je foto van {title}{pending, select, true { (wacht op controle)} other {}}",
       "piecesComplete": "was compleet",
       "piecesMissing": "miste stukjes",
       "new": {

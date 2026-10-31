@@ -4,6 +4,7 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
   within,
 } from "@testing-library/react";
 import type { ReactNode } from "react";
@@ -30,6 +31,11 @@ vi.mock("@/compat/link", () => ({
       {children}
     </a>
   ),
+}));
+
+// The photo viewer holds a (never opened, own photos) report form that needs a Convex client.
+vi.mock("@convex-dev/react-query", () => ({
+  useConvexMutation: () => vi.fn(),
 }));
 
 const toasts = vi.hoisted(() => ({ messages: [] as string[] }));
@@ -181,5 +187,73 @@ describe("CompletionRow actions", () => {
         .getAllByRole("menuitem")
         .map((item) => item.textContent),
     ).toEqual(["Beoordelen", "Bewerken", "Verwijderen"]);
+  });
+});
+
+describe("CompletionRow photos", () => {
+  const withPhotos = row({
+    thumbnailUrl: "https://files.test/cover.jpg",
+    photoItems: [
+      { url: "https://files.test/one.jpg", pending: false },
+      { url: "https://files.test/two.jpg", pending: true },
+    ],
+  });
+
+  it("makes each photo a button named for the solve", () => {
+    renderRow(withPhotos);
+    expect(
+      screen.getByRole("button", { name: "Tirol, photo 1 of 2" }),
+    ).toBeDefined();
+    expect(
+      screen.getByRole("button", {
+        name: "Tirol, photo 2 of 2, pending review",
+      }),
+    ).toBeDefined();
+  });
+
+  it("opens a tapped photo in the viewer, pages with the arrow keys and returns focus", async () => {
+    renderRow(withPhotos);
+    const second = screen.getByRole("button", {
+      name: "Tirol, photo 2 of 2, pending review",
+    });
+    second.focus();
+    fireEvent.click(second);
+    const dialog = await screen.findByRole("dialog", {
+      name: "Your photo of Tirol (pending review)",
+    });
+    expect(within(dialog).getByRole("img").getAttribute("src")).toBe(
+      "https://files.test/two.jpg",
+    );
+    // The member's own photos: nothing to report.
+    expect(screen.queryByRole("button", { name: "Report photo" })).toBeNull();
+    fireEvent.keyDown(window, { key: "ArrowRight" });
+    expect(
+      await screen.findByRole("dialog", { name: "Your photo of Tirol" }),
+    ).toBeDefined();
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(second));
+  });
+
+  it("keeps the cover as a plain link, without a hover-only preview", () => {
+    renderRow(withPhotos);
+    const cover = screen
+      .getAllByRole("link", { name: "Tirol" })
+      .find((link) => link.querySelector("img"));
+    expect(cover?.getAttribute("href")).toBe("/puzzles/puzzle-1");
+    // A Radix tooltip trigger carries data-state; the cover no longer is one.
+    expect(cover?.hasAttribute("data-state")).toBe(false);
+    for (const photo of screen.getAllByRole("button", { name: /photo \d/ })) {
+      expect(photo.hasAttribute("data-state")).toBe(false);
+    }
+  });
+
+  it("names the photos in Dutch", () => {
+    renderRow(withPhotos, "nl");
+    expect(
+      screen.getByRole("button", {
+        name: "Tirol, foto 2 van 2, wacht op controle",
+      }),
+    ).toBeDefined();
   });
 });

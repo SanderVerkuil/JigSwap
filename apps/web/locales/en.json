@@ -3225,7 +3225,8 @@
       "solvedBorrowedCopy": "Solved a borrowed copy",
       "solvingOwnCopy": "Solving your copy",
       "solvingBorrowedCopy": "Solving a borrowed copy",
-      "pendingReview": "Pending review",
+      "photoLabel": "{title}, photo {index} of {count}{pending, select, true {, pending review} other {}}",
+      "photoAlt": "Your photo of {title}{pending, select, true { (pending review)} other {}}",
       "piecesComplete": "was complete",
       "piecesMissing": "had missing pieces",
       "new": {
