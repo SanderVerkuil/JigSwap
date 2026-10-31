@@ -3041,12 +3041,11 @@
     },
     "export": {
       "title": "Mijn gegevens exporteren",
-      "description": "Download een JSON-kopie van je puzzels, voltooiingen, collecties, doelen en ruilen.",
+      "description": "Download een JSON-bestand met je account, puzzels, foto's, voltooiingen, beoordelingen, ruilen, wie je volgt en de berichten die je hebt gestuurd.",
       "button": "Mijn gegevens exporteren",
-      "preparing": "Voorbereiden...",
+      "preparing": "Voorbereiden... {percent}%",
       "success": "Je gegevens zijn gedownload.",
-      "error": "Kon je gegevens niet exporteren. Probeer het opnieuw.",
-      "capped": "Sommige lijsten zijn beperkt tot {limit} rijen per categorie."
+      "error": "Kon je gegevens niet exporteren. Probeer het opnieuw."
     },
     "charts": {
       "completionsPerMonth": "Voltooiingen / maand",

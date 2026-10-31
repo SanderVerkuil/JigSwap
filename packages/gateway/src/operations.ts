@@ -543,7 +543,6 @@ export const gateway = {
     tradeActivity: api.insights.getTradeActivity.getTradeActivity,
     // Downstream read-model: ranks approved catalog puzzles the member doesn't own from their taste.
     recommendations: api.insights.getRecommendations.getRecommendations,
-    exportUserData: api.insights.exportUserData.exportUserData,
     // The member's data export, one page of one section (@jigswap/contracts EXPORT_SECTIONS) at a
     // time: walk every section from cursor null until isDone.
     exportUserDataPage: api.insights.exportUserDataPage.exportUserDataPage,

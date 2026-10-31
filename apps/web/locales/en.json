@@ -3041,12 +3041,11 @@
     },
     "export": {
       "title": "Export my data",
-      "description": "Download a JSON copy of your puzzles, solves, collections, goals and exchanges.",
+      "description": "Download a JSON file with your account, puzzles, photos, solves, reviews, exchanges, who you follow and the messages you sent.",
       "button": "Export my data",
-      "preparing": "Preparing...",
+      "preparing": "Preparing... {percent}%",
       "success": "Your data has been downloaded.",
-      "error": "Could not export your data. Please try again.",
-      "capped": "Some lists were capped at {limit} rows per category."
+      "error": "Could not export your data. Please try again."
     },
     "charts": {
       "completionsPerMonth": "Completions / month",

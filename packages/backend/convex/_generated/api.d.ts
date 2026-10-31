@@ -268,7 +268,6 @@ import type * as identity_searchUsers from "../identity/searchUsers.js";
 import type * as identity_setLocation from "../identity/setLocation.js";
 import type * as identity_setSlug from "../identity/setSlug.js";
 import type * as identity_toMemberView from "../identity/toMemberView.js";
-import type * as insights_exportUserData from "../insights/exportUserData.js";
 import type * as insights_exportUserDataPage from "../insights/exportUserDataPage.js";
 import type * as insights_getCollectionBreakdown from "../insights/getCollectionBreakdown.js";
 import type * as insights_getCommunityAvatars from "../insights/getCommunityAvatars.js";
@@ -852,7 +851,6 @@ declare const fullApi: ApiFromModules<{
   "identity/setLocation": typeof identity_setLocation;
   "identity/setSlug": typeof identity_setSlug;
   "identity/toMemberView": typeof identity_toMemberView;
-  "insights/exportUserData": typeof insights_exportUserData;
   "insights/exportUserDataPage": typeof insights_exportUserDataPage;
   "insights/getCollectionBreakdown": typeof insights_getCollectionBreakdown;
   "insights/getCommunityAvatars": typeof insights_getCommunityAvatars;

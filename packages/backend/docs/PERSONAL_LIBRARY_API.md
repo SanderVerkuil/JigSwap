@@ -395,22 +395,21 @@ Get comprehensive user analytics.
 }
 ```
 
-#### `exportUserData`
+#### `exportUserDataPage`
 
-Export all user data in JSON format.
+One page of one section of the signed-in member's data export (`insights/exportUserDataPage`).
+The client walks every section of `EXPORT_SECTIONS` (`@jigswap/contracts`) from `cursor: null`,
+passing `continueCursor` back until `isDone`, and builds the JSON download.
 
-**Arguments:** `{}`
+**Arguments:** `{ section: ExportSection, cursor: string | null }`
 
 **Returns:**
 
 ```typescript
 {
-  user: User,
-  collections: Array<CollectionWithPuzzle>,
-  completions: Array<CompletionWithPuzzle>,
-  categories: Array<Category>,
-  goals: Array<Goal>,
-  exportDate: number,
+  rows: ExportRow[], // at most 200; photos as URLs, never storage ids
+  continueCursor: string,
+  isDone: boolean,
 }
 ```
 
