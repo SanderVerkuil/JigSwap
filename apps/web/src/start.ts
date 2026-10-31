@@ -19,8 +19,21 @@ const csrfMiddleware = createCsrfMiddleware({
 // is treated as signed out. `url` is Clerk's view of the request URL (forwarded
 // host and protocol), so production, previews and localhost each accept their
 // own origin.
+//
+// Dev on localhost only: browsers share localhost cookies across ports, so a
+// session minted by a dev server on another port arrives here too and would be
+// refused on SSR (signed out until clerk-js refreshes the token). There the
+// check is skipped; production builds always check.
+export function authorizedPartiesFor(
+  url: URL,
+  dev: boolean,
+): string[] | undefined {
+  if (dev && url.hostname === "localhost") return undefined;
+  return [url.origin];
+}
+
 const clerk = clerkMiddleware(({ url }) => ({
-  authorizedParties: [url.origin],
+  authorizedParties: authorizedPartiesFor(url, import.meta.env.DEV),
 }));
 
 // privateResponseMiddleware reads Clerk's session, so it runs after clerk:

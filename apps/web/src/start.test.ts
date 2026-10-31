@@ -2,7 +2,7 @@ import { csrfSymbol } from "@tanstack/react-start";
 import { describe, expect, it, vi } from "vitest";
 import { cspMiddleware } from "./lib/csp";
 import { privateResponseMiddleware } from "./lib/response-cache";
-import { startInstance } from "./start";
+import { authorizedPartiesFor, startInstance } from "./start";
 
 type ServerCtx = {
   request: Request;
@@ -96,5 +96,28 @@ describe("request middleware", () => {
     expect(
       await runFirst("router", { "sec-fetch-site": "cross-site" }),
     ).toEqual({ status: 200, reachedNext: true });
+  });
+});
+
+describe("authorizedPartiesFor (Clerk azp check)", () => {
+  it("accepts only tokens minted for the request's own origin in production", () => {
+    expect(
+      authorizedPartiesFor(new URL("https://jigswap.site/x"), false),
+    ).toEqual(["https://jigswap.site"]);
+    expect(
+      authorizedPartiesFor(new URL("http://localhost:3000/dashboard"), false),
+    ).toEqual(["http://localhost:3000"]);
+  });
+
+  it("keeps the check on dev servers reached by another host", () => {
+    expect(
+      authorizedPartiesFor(new URL("https://preview.jigswap.site/"), true),
+    ).toEqual(["https://preview.jigswap.site"]);
+  });
+
+  it("skips the check on a localhost dev server, where every port shares the session cookie", () => {
+    expect(
+      authorizedPartiesFor(new URL("http://localhost:3111/dashboard"), true),
+    ).toBeUndefined();
   });
 });
