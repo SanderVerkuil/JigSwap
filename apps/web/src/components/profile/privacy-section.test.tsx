@@ -217,3 +217,34 @@ describe("PrivacySection", () => {
     );
   });
 });
+
+describe("PrivacySection layout", () => {
+  // Side by side only when the section itself is wide enough: at 820px, with the sidebar
+  // open, a viewport (sm) switch squeezed the text beside the pills into ~160px.
+  it("puts each setting beside its control by the section's width, not the viewport's", () => {
+    renderSection("public");
+    const section = screen
+      .getByRole("heading", { name: "Privacy" })
+      .closest("section")!;
+    expect(section.classList).toContain("@container/privacy");
+    const rows = [
+      screen.getByRole("radiogroup", { name: "Who can see your profile?" }),
+      screen.getByRole("button", { name: "Reset invite link" }),
+    ].map((control) => {
+      let row = control.parentElement!;
+      while (!row.parentElement!.classList.contains("divide-y")) {
+        row = row.parentElement!;
+      }
+      return [...row.classList];
+    });
+    expect(rows).toHaveLength(2);
+    for (const classes of rows) {
+      expect(classes).toEqual(
+        expect.arrayContaining(["flex-col", "@2xl/privacy:flex-row"]),
+      );
+      expect(
+        classes.filter((name) => /^(sm|md|lg|xl):flex-row$/.test(name)),
+      ).toEqual([]);
+    }
+  });
+});

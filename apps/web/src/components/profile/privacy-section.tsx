@@ -78,12 +78,13 @@ export function PrivacySection() {
     <section
       id={PRIVACY_SECTION_ID}
       data-tour="profile-privacy"
-      // Land below the sticky page head / mobile top bar when deep-linked.
-      className="scroll-mt-[calc(var(--app-sticky-top,0px)+1rem)]"
+      // Land below the sticky page head / mobile top bar when deep-linked. Each row puts its
+      // control beside the explanation only when the section itself is wide enough.
+      className="@container/privacy scroll-mt-[calc(var(--app-sticky-top,0px)+1rem)]"
     >
       <SectionHead title={t("title")} icon={Shield} />
       <div className="divide-y">
-        <div className="flex flex-col gap-3 pb-5 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+        <div className="flex flex-col gap-3 pb-5 @2xl/privacy:flex-row @2xl/privacy:items-start @2xl/privacy:justify-between @2xl/privacy:gap-6">
           <div className="min-w-0 space-y-1">
             <p className="text-sm font-medium">{tChoice("visibility")}</p>
             {socialProfile !== undefined && (
@@ -108,7 +109,7 @@ export function PrivacySection() {
             </div>
           )}
         </div>
-        <div className="flex flex-col gap-3 pt-5 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+        <div className="flex flex-col gap-3 pt-5 @2xl/privacy:flex-row @2xl/privacy:items-start @2xl/privacy:justify-between @2xl/privacy:gap-6">
           <div className="min-w-0 space-y-1">
             <p className="text-sm font-medium">{t("inviteLink")}</p>
             <p className="text-muted-foreground text-sm">
