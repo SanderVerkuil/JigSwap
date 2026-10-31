@@ -3,15 +3,18 @@ import { Reveal } from "@/components/marketing/reveal";
 import { Eyebrow } from "@/components/marketing/section";
 import * as React from "react";
 
-// Sub-page header band: hero glow, eyebrow, display title, optional lead.
+// Sub-page header band: hero glow, eyebrow, display title, optional lead, and
+// an optional slot below it (e.g. the docs search box).
 export function PageHero({
   eyebrow,
   title,
   lead,
+  children,
 }: {
   eyebrow: React.ReactNode;
   title: React.ReactNode;
   lead?: React.ReactNode;
+  children?: React.ReactNode;
 }) {
   return (
     <div className="relative overflow-hidden border-b border-mk-border">
@@ -28,6 +31,7 @@ export function PageHero({
                 {lead}
               </p>
             )}
+            {children && <div className="mt-8">{children}</div>}
           </Reveal>
         </div>
       </Container>

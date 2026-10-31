@@ -1,5 +1,6 @@
 import { DocsMobileBar } from "@/components/docs/docs-mobile-bar";
 import { DocsSearch } from "@/components/docs/docs-search";
+import { DocsSearchProvider } from "@/components/docs/docs-search-context";
 import { DocsSidebar } from "@/components/docs/docs-sidebar";
 import {
   Sheet,
@@ -19,6 +20,7 @@ function DocsLayout() {
   const t = useTranslations("marketing.docs");
   const [searchOpen, setSearchOpen] = React.useState(false);
   const [navOpen, setNavOpen] = React.useState(false);
+  const openSearch = React.useCallback(() => setSearchOpen(true), []);
 
   // The /docs landing page renders a full-bleed marketing hero, which looks
   // cramped inside the 280px sidebar grid. Detect the exact index route via the
@@ -40,7 +42,7 @@ function DocsLayout() {
   }, []);
 
   return (
-    <>
+    <DocsSearchProvider value={openSearch}>
       <a
         href="#docs-content"
         className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:rounded-md focus:bg-mk-card focus:px-3 focus:py-2 focus:ring-2 focus:ring-mk-ring"
@@ -94,6 +96,6 @@ function DocsLayout() {
       </Sheet>
 
       <DocsSearch open={searchOpen} onOpenChange={setSearchOpen} />
-    </>
+    </DocsSearchProvider>
   );
 }
