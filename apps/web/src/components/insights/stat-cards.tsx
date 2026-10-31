@@ -18,7 +18,8 @@ export interface PersonalStats {
 }
 
 // Card-free personal stats: a big divided headline row for the four numbers
-// that matter most, with the remaining figures as a quieter second row.
+// that matter most, with the remaining figures as a quieter second row (three
+// to a row on phones, so the first screen isn't only stats).
 export function StatCards({ stats }: { stats: PersonalStats }) {
   const t = useTranslations("insights.stats");
 
@@ -66,6 +67,7 @@ export function StatCards({ stats }: { stats: PersonalStats }) {
       />
       <StatRow
         size="md"
+        mobileCols={3}
         stats={[
           {
             label: t("collections"),
