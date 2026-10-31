@@ -1,4 +1,5 @@
 import { useUser } from "@/compat/clerk";
+import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { EmptyState } from "@/components/library/empty-state";
@@ -13,6 +14,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Plus, Search } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/collections/$id/add-puzzles")(
@@ -55,18 +57,19 @@ function AddPuzzlesToCollectionPage() {
     }),
   );
 
-  const { data: availablePuzzles, isPending: availablePuzzlesPending } =
-    useQuery(
-      convexQuery(
-        gateway.library.ownedByOwner,
-        convexUser?._id
-          ? {
-              ownerId: convexUser._id as Id<"users">,
-              includeUnavailable: false,
-            }
-          : "skip",
-      ),
-    );
+  // The member's WHOLE library: a collection organises any copy, not only the ones on offer
+  // (kept-for-yourself, private and lent-out copies belong on a shelf too).
+  const { data: libraryCopies, isPending: libraryCopiesPending } = useQuery(
+    convexQuery(
+      gateway.library.ownedByOwner,
+      convexUser?._id
+        ? {
+            ownerId: convexUser._id as Id<"users">,
+            includeUnavailable: true,
+          }
+        : "skip",
+    ),
+  );
 
   const addPuzzleToCollection = useMutation({
     mutationFn: useConvexMutation(gateway.collections.addOwnedPuzzle),
@@ -82,30 +85,41 @@ function AddPuzzlesToCollectionPage() {
     setSelectedPuzzles(newSelected);
   };
 
-  const handleAddSelectedPuzzles = async () => {
-    // The domain add takes the Collection + Copy aggregateIds; resolve them from the loaded
-    // collection and the selected copy rows, skipping any that predate the backfill.
-    if (!collection?.aggregateId) {
-      console.error("Cannot add: collection is missing its aggregateId.");
-      return;
-    }
-    try {
-      for (const puzzleId of selectedPuzzles) {
-        const copy = availablePuzzles?.find((p) => p._id === puzzleId);
-        if (!copy?.aggregateId) {
-          console.error("Skipping copy missing its aggregateId:", puzzleId);
-          continue;
+  // Adds each selected copy in turn. A copy that went in is deselected; one that failed (or that
+  // lacks the aggregateId the domain add needs) stays selected, so a retry only re-sends those.
+  // Returns how many failed: none → back to the collection, otherwise stay and say so.
+  const addSelected = useMutation({
+    mutationFn: async () => {
+      let failed = 0;
+      for (const copyDocId of selectedPuzzles) {
+        const copy = libraryCopies?.find((p) => p._id === copyDocId);
+        try {
+          if (!collection?.aggregateId || !copy?.aggregateId) {
+            throw new Error("Collection or copy is missing its aggregateId.");
+          }
+          await addPuzzleToCollection.mutateAsync({
+            collectionId: collection.aggregateId,
+            copyId: copy.aggregateId,
+          });
+          setSelectedPuzzles((current) => {
+            const next = new Set(current);
+            next.delete(copyDocId);
+            return next;
+          });
+        } catch {
+          failed += 1;
         }
-        await addPuzzleToCollection.mutateAsync({
-          collectionId: collection.aggregateId,
-          copyId: copy.aggregateId,
-        });
       }
-      router.push(`/collections/${id}`);
-    } catch (error) {
-      console.error("Failed to add puzzles to collection:", error);
-    }
-  };
+      return failed;
+    },
+    onSuccess: (failed) => {
+      if (failed === 0) {
+        router.push(`/collections/${id}`);
+      } else {
+        toast.error(t("picker.addFailed", { count: failed }));
+      }
+    },
+  });
 
   // Publish an explicit breadcrumb trail + the route title so the chrome reads
   // My Library › Collections › <name> › Add Puzzles, plus the primary actions
@@ -133,8 +147,8 @@ function AddPuzzlesToCollectionPage() {
           <Button
             variant="brand"
             size="sm"
-            onClick={handleAddSelectedPuzzles}
-            disabled={selectedCount === 0}
+            onClick={() => addSelected.mutate()}
+            disabled={selectedCount === 0 || addSelected.isPending}
           >
             <Plus className="h-4 w-4" />
             {t("addSelected", { count: selectedCount })}
@@ -142,32 +156,26 @@ function AddPuzzlesToCollectionPage() {
         </>
       ),
     }),
-    [collection?.name, id, selectedCount],
+    [collection?.name, id, selectedCount, addSelected.isPending],
   );
 
-  // Filter puzzles based on search term
-  const filteredPuzzles =
-    availablePuzzles
-      ?.filter(
-        (puzzle) =>
-          !collection?.puzzles.map((p) => p?._id).includes(puzzle._id),
-      )
-      ?.filter(
-        (puzzle) =>
-          puzzle.puzzle?.title
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          (puzzle.puzzle?.brand &&
-            puzzle.puzzle.brand
-              .toLowerCase()
-              .includes(searchTerm.toLowerCase())),
-      ) || [];
+  // The library minus what's already in the collection, then narrowed by the search term.
+  const notInCollection =
+    libraryCopies?.filter(
+      (puzzle) => !collection?.puzzles.map((p) => p?._id).includes(puzzle._id),
+    ) ?? [];
+  const filteredPuzzles = notInCollection.filter(
+    (puzzle) =>
+      puzzle.puzzle?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (puzzle.puzzle?.brand &&
+        puzzle.puzzle.brand.toLowerCase().includes(searchTerm.toLowerCase())),
+  );
 
   if (
     collectionPending ||
     collection === undefined ||
-    availablePuzzlesPending ||
-    availablePuzzles === undefined ||
+    libraryCopiesPending ||
+    libraryCopies === undefined ||
     convexUserPending ||
     convexUser === undefined
   ) {
@@ -192,11 +200,30 @@ function AddPuzzlesToCollectionPage() {
         />
       </div>
 
-      {/* Puzzles Grid */}
-      {filteredPuzzles.length === 0 ? (
+      {/* Puzzles Grid, or why it's empty: no library yet, everything is already in this
+          collection, or nothing matches the search. */}
+      {libraryCopies.length === 0 ? (
         <EmptyState
-          title={t("noPuzzlesAvailable")}
-          sub={t("addPuzzlesFirst")}
+          title={t("picker.libraryEmpty")}
+          sub={t("picker.libraryEmptyHint")}
+          action={
+            <Button variant="brand" asChild>
+              <Link href="/my-puzzles/add">
+                <Plus className="h-4 w-4" />
+                {t("picker.addToLibrary")}
+              </Link>
+            </Button>
+          }
+        />
+      ) : notInCollection.length === 0 ? (
+        <EmptyState
+          title={t("picker.allInCollection")}
+          sub={t("picker.allInCollectionHint")}
+        />
+      ) : filteredPuzzles.length === 0 ? (
+        <EmptyState
+          title={t("picker.noMatch", { term: searchTerm.trim() })}
+          sub={t("picker.noMatchHint")}
         />
       ) : (
         <PuzzleViewProvider viewMode="grid">

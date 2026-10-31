@@ -1972,11 +1972,20 @@
       "privateLinkCopied": "Link gekopieerd — collectie blijft privé",
       "error": "Kon delen niet bijwerken. Probeer het opnieuw."
     },
-    "noPuzzlesAvailable": "Geen Puzzels Beschikbaar",
     "addPuzzlesFirst": "Voeg eerst puzzels toe aan je bibliotheek en orden ze dan in collecties.",
     "addSelected": "{count, plural, one {# puzzel toevoegen} other {# puzzels toevoegen}}",
     "updatedAgo": "Bijgewerkt {time}",
-    "added": "Toegevoegd"
+    "added": "Toegevoegd",
+    "picker": {
+      "libraryEmpty": "Nog niets in je bibliotheek",
+      "libraryEmptyHint": "Voeg eerst puzzels toe aan je bibliotheek en orden ze daarna in collecties.",
+      "addToLibrary": "Puzzel toevoegen",
+      "allInCollection": "Alles zit er al in",
+      "allInCollectionHint": "Elke puzzel uit je bibliotheek zit al in deze collectie.",
+      "noMatch": "Geen puzzels gevonden voor “{term}”",
+      "noMatchHint": "Probeer een andere titel of een ander merk.",
+      "addFailed": "{count, plural, one {Kon # puzzel niet toevoegen. Hij is nog geselecteerd, dus je kunt het opnieuw proberen.} other {Kon # puzzels niet toevoegen. Ze zijn nog geselecteerd, dus je kunt het opnieuw proberen.}}"
+    }
   },
   "household": {
     "loading": "Je huishouden laden…",

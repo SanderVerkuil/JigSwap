@@ -1972,11 +1972,20 @@
       "privateLinkCopied": "Link copied — collection stays private",
       "error": "Couldn't update sharing. Please try again."
     },
-    "noPuzzlesAvailable": "No Puzzles Available",
     "addPuzzlesFirst": "Add puzzles to your library first, then organise them into collections.",
     "addSelected": "{count, plural, one {Add # puzzle} other {Add # puzzles}}",
     "updatedAgo": "Updated {time}",
-    "added": "Added"
+    "added": "Added",
+    "picker": {
+      "libraryEmpty": "Nothing in your library yet",
+      "libraryEmptyHint": "Add puzzles to your library first, then file them into collections.",
+      "addToLibrary": "Add a puzzle",
+      "allInCollection": "Everything is already in here",
+      "allInCollectionHint": "Every puzzle in your library is already in this collection.",
+      "noMatch": "No puzzles match “{term}”",
+      "noMatchHint": "Try another title or brand.",
+      "addFailed": "{count, plural, one {Couldn't add # puzzle. It's still selected, so you can try again.} other {Couldn't add # puzzles. They're still selected, so you can try again.}}"
+    }
   },
   "household": {
     "loading": "Loading your household…",
