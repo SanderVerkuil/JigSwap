@@ -4360,7 +4360,7 @@
       },
       "adminFeedback": {
         "title": "Feedback",
-        "subtitle": "“Was deze pagina nuttig?”-stemmen uit de documentatie, nieuwste eerst.",
+        "subtitle": "“Was deze pagina nuttig?”-stemmen per documentatiepagina, minst nuttige eerst.",
         "description": "Bekijk stemmen over de documentatie"
       },
       "whatsNew": {
@@ -5221,7 +5221,10 @@
       "loading": "Feedback laden…",
       "empty": "Nog geen feedback.",
       "helpful": "Nuttig",
-      "notHelpful": "Niet nuttig"
+      "notHelpful": "Niet nuttig",
+      "helpfulCount": "{count} nuttig",
+      "notHelpfulCount": "{count} niet nuttig ({share})",
+      "comments": "{count, plural, one {# opmerking} other {# opmerkingen}}"
     },
     "categories": {
       "loading": "Categorieën laden…",

@@ -1,14 +1,13 @@
 import { AdminQueryError } from "@/components/admin/admin-query-error";
+import { DocFeedbackSummaryList } from "@/components/admin/doc-feedback-summary-list";
 import { QueueEmpty } from "@/components/admin/queue-empty";
-import { Badge } from "@/components/ui/badge";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
 import { pageTitle } from "@/lib/page-title";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { ThumbsDown, ThumbsUp } from "lucide-react";
-import { useFormatter, useTranslations } from "use-intl";
+import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/admin/feedback")({
   head: ({ match }) => ({
@@ -18,11 +17,11 @@ export const Route = createFileRoute("/_dashboard/admin/feedback")({
 });
 
 // Admin triage view for the public /docs "Was this page helpful?" votes,
-// newest first. Read-only; the listing is admin-gated server-side.
+// summarised per docs page, least helpful first. Read-only; the listing is
+// admin-gated server-side.
 function DocFeedbackPage() {
   const t = useTranslations("admin.docFeedback");
   const tAdmin = useTranslations("admin");
-  const format = useFormatter();
   const {
     data: feedback,
     isError,
@@ -43,45 +42,5 @@ function DocFeedbackPage() {
     return <QueueEmpty title={tAdmin("queueEmpty.title")} label={t("empty")} />;
   }
 
-  return (
-    <div className="rounded-xl border bg-card">
-      {feedback.map((entry) => (
-        <div
-          key={entry._id}
-          className="flex flex-col gap-3 border-b px-4 py-3 last:border-0"
-        >
-          <div className="space-y-1">
-            <div className="flex items-center justify-between gap-2">
-              <span className="min-w-0 text-base font-semibold [overflow-wrap:anywhere]">
-                {entry.slug}
-              </span>
-              {entry.helpful ? (
-                <Badge variant="default" className="flex items-center gap-1">
-                  <ThumbsUp className="h-3 w-3" />
-                  {t("helpful")}
-                </Badge>
-              ) : (
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  <ThumbsDown className="h-3 w-3" />
-                  {t("notHelpful")}
-                </Badge>
-              )}
-            </div>
-            <p className="text-sm text-muted-foreground">
-              {format.dateTime(new Date(entry.createdAt), {
-                dateStyle: "medium",
-                timeStyle: "short",
-              })}
-              {entry.locale && ` • ${entry.locale}`}
-            </p>
-          </div>
-          {entry.comment && (
-            <p className="text-sm whitespace-pre-wrap [overflow-wrap:anywhere]">
-              {entry.comment}
-            </p>
-          )}
-        </div>
-      ))}
-    </div>
-  );
+  return <DocFeedbackSummaryList entries={feedback} />;
 }

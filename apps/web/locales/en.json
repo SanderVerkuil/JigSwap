@@ -4360,7 +4360,7 @@
       },
       "adminFeedback": {
         "title": "Feedback",
-        "subtitle": "“Was this page helpful?” votes from the documentation, newest first.",
+        "subtitle": "“Was this page helpful?” votes per documentation page, least helpful first.",
         "description": "Review docs helpfulness votes"
       },
       "whatsNew": {
@@ -5221,7 +5221,10 @@
       "loading": "Loading feedback…",
       "empty": "No feedback yet.",
       "helpful": "Helpful",
-      "notHelpful": "Not helpful"
+      "notHelpful": "Not helpful",
+      "helpfulCount": "{count} helpful",
+      "notHelpfulCount": "{count} not helpful ({share})",
+      "comments": "{count, plural, one {# comment} other {# comments}}"
     },
     "categories": {
       "loading": "Loading categories…",
