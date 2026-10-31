@@ -1,5 +1,6 @@
 import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
+import { RecallLoanButton } from "@/components/copies/recall-loan-button";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { useShortcutHint } from "@/components/dashboard-layout/shortcut-hint";
 import { CopyOwnerLine } from "@/components/household/copy-owner-line";
@@ -30,8 +31,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
-import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { convexQuery } from "@convex-dev/react-query";
+import type { LoanView } from "@jigswap/contracts";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   ArrowRight,
@@ -41,7 +43,6 @@ import {
   List,
   MoreHorizontal,
   Plus,
-  Undo2,
   X,
 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -108,21 +109,21 @@ function ActionsCoachmark() {
     setDismissed(true);
   };
 
+  // A static hint, not a live region: it is on screen from the first paint, so announcing it would
+  // only interrupt. The dismiss is a full-size icon button so it is easy to hit on a phone.
   return (
-    <div
-      role="status"
-      aria-live="polite"
-      className="flex items-start gap-3 rounded-lg border border-border bg-muted/60 px-4 py-3 text-sm text-muted-foreground"
-    >
-      <span className="flex-1">{t("body")}</span>
-      <button
+    <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/60 px-4 py-3 text-sm text-muted-foreground">
+      <span className="flex-1 py-1">{t("body")}</span>
+      <Button
         type="button"
+        variant="ghost"
+        size="icon"
         aria-label={t("dismiss")}
         onClick={handleDismiss}
-        className="shrink-0 rounded p-0.5 hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="-my-1.5 -mr-2 size-9 shrink-0 hover:text-foreground"
       >
-        <X className="h-4 w-4" />
-      </button>
+        <X aria-hidden />
+      </Button>
     </div>
   );
 }
@@ -181,13 +182,6 @@ function PuzzlesPage() {
 
   // Open loans where the caller is the lender; the source of truth for "which of my copies are out".
   const { data: lentOut } = useQuery(convexQuery(gateway.lending.lentOut, {}));
-  const recallLoan = useMutation({
-    mutationFn: useConvexMutation(gateway.lending.recallLoan),
-  });
-  // The loan currently being recalled, so we disable only that copy's Recall button.
-  const recallingId = recallLoan.isPending
-    ? (recallLoan.variables?.loanId ?? null)
-    : null;
 
   // The member's solve log powers the In Progress / Completed pills and the card's Start/Finish.
   const solveStateByCopyId = useSolveStateByCopyId(Boolean(convexUser?._id));
@@ -204,14 +198,8 @@ function PuzzlesPage() {
     () => new Map((lentOut ?? []).map((loan) => [loan.copyDocId, loan])),
     [lentOut],
   );
-
-  const handleRecallLoan = async (loanId: string) => {
-    try {
-      await recallLoan.mutateAsync({ loanId });
-    } catch (error) {
-      console.error("Failed to recall loan:", error);
-    }
-  };
+  const borrowerName = (loan: LoanView) =>
+    loan.borrower ? displayName(loan.borrower) : tLending("deletedMember");
 
   const filterOptions: FilterOption<StatusFilter>[] = [
     { value: "all", label: t("filters.all") },
@@ -237,6 +225,19 @@ function PuzzlesPage() {
     if (statusFilter === "inProgress") return solveState?.inProgress ?? false;
     return solveState?.completed ?? false;
   });
+
+  // The filters narrowing the list right now, named as their controls name them, so an empty result
+  // says what excluded everything (and Show all can undo it) instead of "add your first puzzle".
+  const activeFilterLabels = [
+    statusFilter !== "all"
+      ? filterOptions.find((option) => option.value === statusFilter)?.label
+      : undefined,
+    ownerFilter !== "all" ? t(`ownerFilter.${ownerFilter}`) : undefined,
+  ].filter((label): label is string => Boolean(label));
+  const showAll = () => {
+    setStatusFilter("all");
+    setOwnerFilter("all");
+  };
 
   // The page title lives in the shell page head; publish the actions there so the
   // page body carries no duplicate header. The count lives beside the filters. Secondary
@@ -323,10 +324,14 @@ function PuzzlesPage() {
               }
             >
               <SelectTrigger
-                className="w-44 pointer-coarse:min-h-11"
+                className="pointer-coarse:min-h-11"
                 aria-label={t("ownerFilter.label")}
               >
-                <SelectValue />
+                {/* Say what the select filters ("Whose: All"), so it doesn't read as a second "All"
+                    beside the status pills. */}
+                <SelectValue>
+                  {t("ownerFilter.trigger", { owner: ownerFilter })}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("ownerFilter.all")}</SelectItem>
@@ -368,7 +373,7 @@ function PuzzlesPage() {
       />
 
       {/* Puzzles Grid/List */}
-      {filteredownedPuzzles.length === 0 ? (
+      {allCopies.length === 0 ? (
         <EmptyState
           title={t("noPuzzles")}
           sub={t("addFirstPuzzle")}
@@ -378,6 +383,18 @@ function PuzzlesPage() {
                 <Plus className="h-4 w-4" />
                 {t("addPuzzle")}
               </Link>
+            </Button>
+          }
+        />
+      ) : filteredownedPuzzles.length === 0 ? (
+        <EmptyState
+          title={t("noMatch.title", {
+            filters: activeFilterLabels.join(" · "),
+          })}
+          sub={t("noMatch.sub")}
+          action={
+            <Button variant="outline" onClick={showAll}>
+              {t("noMatch.showAll")}
             </Button>
           }
         />
@@ -407,23 +424,14 @@ function PuzzlesPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant="secondary" className="text-xs">
                         {tLending("onLoanTo", {
-                          name: loan.borrower
-                            ? displayName(loan.borrower)
-                            : tLending("deletedMember"),
+                          name: borrowerName(loan),
                         })}
                       </Badge>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 px-2"
-                        disabled={recallingId === loan.loanId}
-                        onClick={() => handleRecallLoan(loan.loanId)}
-                      >
-                        <Undo2 className="h-3 w-3 mr-1" />
-                        {recallingId === loan.loanId
-                          ? tLending("recalling")
-                          : tLending("recallAction")}
-                      </Button>
+                      {/* Recall ends the loan at once, so it asks first and reports either way. */}
+                      <RecallLoanButton
+                        loanId={loan.loanId}
+                        borrowerName={borrowerName(loan)}
+                      />
                     </div>
                   )
                 }

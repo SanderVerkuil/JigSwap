@@ -351,6 +351,11 @@
     "managePuzzles": "Beheer je puzzelcollectie",
     "noPuzzles": "Nog geen puzzels hier",
     "addFirstPuzzle": "Voeg je eerste puzzel toe om te beginnen met ruilen.",
+    "noMatch": {
+      "title": "Geen puzzels gevonden voor “{filters}”",
+      "sub": "Probeer een ander filter, of bekijk je hele bibliotheek.",
+      "showAll": "Alles tonen"
+    },
     "noImage": "Geen Afbeelding",
     "addPuzzleDescription": "Voeg een nieuwe puzzel toe aan je collectie",
     "selectPuzzle": "Puzzel Selecteren",
@@ -627,9 +632,10 @@
     "private": "Privé",
     "ownerFilter": {
       "label": "Van wie",
-      "all": "Alles",
+      "all": "Van iedereen",
       "mine": "Van mij",
-      "household": "Van huisgenoten"
+      "household": "Van huisgenoten",
+      "trigger": "{owner, select, mine {Van mij} household {Van huisgenoten} other {Van iedereen}}"
     },
     "boxArtCheck": {
       "label": "Wordt gecontroleerd",

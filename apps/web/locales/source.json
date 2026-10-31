@@ -351,6 +351,11 @@
     "managePuzzles": "Manage your puzzle collection",
     "noPuzzles": "No puzzles here yet",
     "addFirstPuzzle": "Add your first puzzle to start trading.",
+    "noMatch": {
+      "title": "No puzzles match “{filters}”",
+      "sub": "Try a different filter, or show your whole library.",
+      "showAll": "Show all"
+    },
     "noImage": "No Image",
     "addPuzzleDescription": "Add a new puzzle to your collection",
     "selectPuzzle": "Select Puzzle",
@@ -629,7 +634,8 @@
       "label": "Whose puzzles",
       "all": "All",
       "mine": "Mine",
-      "household": "Household members'"
+      "household": "Household members'",
+      "trigger": "Whose: {owner, select, mine {Mine} household {Household members''} other {All}}"
     },
     "boxArtCheck": {
       "label": "Being checked",
