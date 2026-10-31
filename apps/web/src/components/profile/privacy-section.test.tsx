@@ -108,7 +108,7 @@ describe("PrivacySection", () => {
     );
     expect(
       screen.getByText(
-        "Members can find you in Find people and Search, and any signed-in member who opens your link sees your full profile.",
+        "Signed-in members can find you in Find people and Search, and see your full profile when they open your link. Members you've blocked can't.",
       ),
     ).toBeTruthy();
   });
@@ -125,7 +125,7 @@ describe("PrivacySection", () => {
     );
     expect(
       screen.getByText(
-        "Only members you follow each other with can find you in Find people and Search, and see your full profile. Everyone else sees a locked profile.",
+        "Only members you follow each other with can find you in Find people and Search, and see your full profile. Everyone else sees a locked profile, and elsewhere sees you as Anonymous user unless you share a circle or a trade.",
       ),
     ).toBeTruthy();
   });
@@ -167,7 +167,7 @@ describe("PrivacySection", () => {
     );
     expect(
       screen.getByText(
-        "Only members you follow each other with can find you in Find people and Search, and see your full profile. Everyone else sees a locked profile.",
+        "Only members you follow each other with can find you in Find people and Search, and see your full profile. Everyone else sees a locked profile, and elsewhere sees you as Anonymous user unless you share a circle or a trade.",
       ),
     ).toBeTruthy();
   });
