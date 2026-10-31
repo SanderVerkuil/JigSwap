@@ -236,26 +236,35 @@ function ContactForm() {
           {errors.email && <div className={errCls}>{errors.email}</div>}
         </div>
       </div>
-      <div className="mt-[18px]">
-        <span className={labelCls}>{t("formSubject")}</span>
+      {/* Native radios (visually hidden, chips are their labels) give the
+          subject a checked state, the "Subject" group name and arrow keys. */}
+      <fieldset className="mt-[18px]">
+        <legend className={labelCls}>{t("formSubject")}</legend>
         <div className="flex flex-wrap gap-2">
           {SUBJECTS.map((k) => (
-            <button
+            <label
               key={k}
-              type="button"
-              onClick={() => setForm((f) => ({ ...f, subject: k }))}
               className={cn(
-                "cursor-pointer px-3.5 py-2 rounded-full text-[13.5px] font-medium border transition-colors",
+                "relative cursor-pointer px-3.5 py-2 rounded-full text-[13.5px] font-medium border transition-colors",
+                "has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-mk-ring",
                 form.subject === k
                   ? "border-mk-violet-400 bg-mk-violet-50 text-mk-violet-600"
                   : "border-mk-border bg-mk-card text-mk-text-body hover:bg-mk-muted",
               )}
             >
+              <input
+                type="radio"
+                name="contact-subject"
+                value={k}
+                checked={form.subject === k}
+                onChange={() => setForm((f) => ({ ...f, subject: k }))}
+                className="sr-only"
+              />
               {t(SUBJECT_KEY[k])}
-            </button>
+            </label>
           ))}
         </div>
-      </div>
+      </fieldset>
       <div className="mt-[18px]">
         <label htmlFor="contact-message" className={labelCls}>
           {t("formMessage")}
