@@ -14,12 +14,14 @@ import { isHashCleared } from "./lib/imageModeration/hashCheckFields";
 import schema from "./schema";
 
 // SEC-03 (P-03 Stage 1a): with no CSAM hash matching configured (CSAM_HASHCHECK_PROVIDER unset or
-// "none", or "offlimits" with a credential missing), nothing ever records a photo as hash-checked.
-// The photo is still published as before (the gate opens), but it is marked "not hash-checked"
-// (`hashCheckSkippedAt`) and KEEPS the hashes of the original and the re-encode, so a check can
-// run once matching is configured: the one-shot lib/imageModeration/recheckWaivedHashes checks
-// them then. The hash service is never called while matching is off. The classifier (Hugging
-// Face) and the hash service (Offlimits HCS) are a routed fake `fetch` that records every call.
+// "none"), nothing ever records a photo as hash-checked. The photo is still published as before
+// (the gate opens), but it is marked "not hash-checked" (`hashCheckSkippedAt`) and KEEPS the
+// hashes of the original and the re-encode, so a check can run once matching is configured: the
+// one-shot lib/imageModeration/recheckWaivedHashes checks them then. "offlimits" selected with a
+// credential missing is an outage, not "off": the photo is held unpublished like when the hash
+// service is unreachable (review §4 SEC-03 recommendation 3). The hash service is never called
+// while matching is off or incomplete. The classifier (Hugging Face) and the hash service
+// (Offlimits HCS) are a routed fake `fetch` that records every call.
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 type T = TestConvex<typeof schema>;
@@ -243,21 +245,28 @@ describe("an upload while hash matching is not configured", () => {
     });
   });
 
-  test("offlimits selected with a credential missing: the same, logged at error level, and HCS is never called", async () => {
+  test("offlimits selected with a credential missing: held unpublished like an outage, its hashes kept for a re-check, logged at error level, and HCS is never called", async () => {
     stubMissingConfig();
     const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
 
     const { row, upload } = await addCopyPhoto(t, copy);
 
+    // Screened as usual, but its gate stays closed: nothing marks it published unchecked.
     expect(row.moderationStatus).toBe("approved");
-    expectSkipped(row, upload.md5);
+    expect(row.hashCheckedAt).toBeUndefined();
+    expect(row.hashCheckSkippedAt).toBeUndefined();
+    expect(row.hashCheckPendingSince).toEqual(expect.any(Number));
+    expect(row.pendingHashes).toHaveLength(2);
+    expect(row.pendingHashes![0].md5).toBe(upload.md5);
+    expect(row.hashRecheckAttempt).toBe(1);
+    expect(isHashCleared(row)).toBe(false);
     expect(hcsCalls()).toEqual([]);
     const [event] = eventsNamed("library.moderatePhoto");
     expect(event).toMatchObject({
       outcome: "error",
       csam_hashcheck_config: "missing_config",
-      csam_hashcheck_status: "skipped",
+      csam_hashcheck_status: "unavailable",
       csam_hashcheck_reason: "missing_config",
     });
   });
@@ -305,8 +314,8 @@ describe("a photo held for its hash check when matching is switched off", () => 
   ];
 
   // A copy photo the classifier approved, held because its hash check was unavailable (it ran
-  // while Offlimits was configured): its re-check is armed as attempt 1.
-  const heldCopyPhoto = async (t: T) => {
+  // while Offlimits was configured) since `pendingSince`: its re-check is armed as attempt 1.
+  const heldCopyPhoto = async (t: T, pendingSince = 1_000) => {
     const { alice, copy } = await seed(t);
     return t.run(async (ctx) => {
       const fileId = await ctx.storage.store(
@@ -320,51 +329,72 @@ describe("a photo held for its hash check when matching is switched off", () => 
         fileId,
         moderationStatus: "approved",
         moderationScore: 0.01,
-        reencodedAt: 1_000,
-        hashCheckPendingSince: 1_000,
+        reencodedAt: pendingSince,
+        hashCheckPendingSince: pendingSince,
         pendingHashes: HASHES,
         hashRecheckAttempt: 1,
-        hashRecheckDueAt: 1_000,
-        createdAt: 1_000,
-        updatedAt: 1_000,
+        hashRecheckDueAt: pendingSince,
+        createdAt: pendingSince,
+        updatedAt: pendingSince,
       });
     });
   };
 
-  test.each([
-    ["provider none", "disabled", () => {}],
-    [
-      "offlimits with a credential missing",
-      "missing_config",
-      stubMissingConfig,
-    ],
-  ])(
-    "%s: its re-check publishes it marked not hash-checked, never as checked",
-    async (_label, config, stubEnv) => {
-      stubEnv();
-      const t = withModerationPool(convexTest(schema, modules));
-      const imageId = await heldCopyPhoto(t);
+  test("provider none: its re-check publishes it marked not hash-checked, never as checked", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const imageId = await heldCopyPhoto(t);
 
-      await t.action(internal.library.moderatePhoto.recheckHashes, {
-        imageId,
-        attempt: 1,
-        pooled: true,
-      });
+    await t.action(internal.library.moderatePhoto.recheckHashes, {
+      imageId,
+      attempt: 1,
+      pooled: true,
+    });
 
-      const row = await t.run((ctx) => ctx.db.get(imageId));
-      expect(row!.hashCheckedAt).toEqual(expect.any(Number));
-      expect(row!.hashCheckSkippedAt).toEqual(expect.any(Number));
-      expect(row!.hashCheckPendingSince).toBeUndefined();
-      expect(row!.pendingHashes).toEqual(HASHES);
-      expect(hcsCalls()).toEqual([]);
-      expect(eventsNamed("library.moderatePhoto.hashRecheck")).toEqual([
-        expect.objectContaining({
-          csam_hashcheck_config: config,
-          csam_hashcheck_status: "skipped",
-        }),
-      ]);
-    },
-  );
+    const row = await t.run((ctx) => ctx.db.get(imageId));
+    expect(row!.hashCheckedAt).toEqual(expect.any(Number));
+    expect(row!.hashCheckSkippedAt).toEqual(expect.any(Number));
+    expect(row!.hashCheckPendingSince).toBeUndefined();
+    expect(row!.pendingHashes).toEqual(HASHES);
+    expect(hcsCalls()).toEqual([]);
+    expect(eventsNamed("library.moderatePhoto.hashRecheck")).toEqual([
+      expect.objectContaining({
+        csam_hashcheck_config: "disabled",
+        csam_hashcheck_status: "skipped",
+      }),
+    ]);
+  });
+
+  test("offlimits with a credential missing: its re-check keeps it held and arms the next one, never publishing it", async () => {
+    stubMissingConfig();
+    const t = withModerationPool(convexTest(schema, modules));
+    // Held a minute ago, well inside the 7-day timeout.
+    const pendingSince = Date.now() - 60_000;
+    const imageId = await heldCopyPhoto(t, pendingSince);
+
+    await t.action(internal.library.moderatePhoto.recheckHashes, {
+      imageId,
+      attempt: 1,
+      pooled: true,
+    });
+
+    const row = await t.run((ctx) => ctx.db.get(imageId));
+    expect(row!.hashCheckedAt).toBeUndefined();
+    expect(row!.hashCheckSkippedAt).toBeUndefined();
+    expect(row!.hashCheckTimedOutAt).toBeUndefined();
+    expect(row!.hashCheckPendingSince).toBe(pendingSince);
+    expect(row!.pendingHashes).toEqual(HASHES);
+    expect(row!.hashRecheckAttempt).toBe(2);
+    expect(isHashCleared(row!)).toBe(false);
+    expect(hcsCalls()).toEqual([]);
+    expect(eventsNamed("library.moderatePhoto.hashRecheck")).toEqual([
+      expect.objectContaining({
+        outcome: "error",
+        csam_hashcheck_config: "missing_config",
+        csam_hashcheck_status: "unavailable",
+        csam_hashcheck_reason: "missing_config",
+      }),
+    ]);
+  });
 });
 
 describe("recording the skip", () => {

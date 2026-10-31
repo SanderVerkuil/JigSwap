@@ -149,8 +149,8 @@ export const hashCheckResultArgs = {
 /**
  * Record a hash-check outcome on a row: no_match clears the publication gate (and the markers of
  * a gate opened without a check, hashCheckWaivedBy and hashCheckSkippedAt); unavailable keeps it
- * closed and stores the hashes for a later re-check. "skipped" means no hash matching is
- * configured (csamHashCheck.skipsHashCheck): the gate opens as before, but the row is marked
+ * closed and stores the hashes for a later re-check. "skipped" means hash matching is switched
+ * off (csamHashCheck.skipsHashCheck): the gate opens as before, but the row is marked
  * "not hash-checked" (`hashCheckSkippedAt`) and KEEPS the hashes, never recorded as a pass; a row
  * whose gate already opened is left as it is. "refused" is the pipeline's word that it refused
  * the upload (an input guard; "rejected" with label invalid_image) and its blob is gone: such a

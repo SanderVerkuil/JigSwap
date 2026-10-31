@@ -16,13 +16,14 @@
 //   OFFLIMITS_HCS_USERNAME  — HCS user id.
 //   OFFLIMITS_HCS_PASSWORD  — HCS password.
 // "offlimits" with any of the three missing is `missing_config`: the pipeline logs it at error
-// level and the admin escalations view reports it by var NAME.
+// level, holds photos as if the service were down (skipsHashCheck), and the admin escalations
+// view reports it by var NAME.
 //
 // NOT CONFIGURED NEVER MEANS "NO MATCH" (SEC-03). There is no adapter that answers no_match
 // without asking a real hash list: an unconfigured deployment gets a port that only ever answers
-// "unavailable". The pipeline does not ask it at all while `skipsHashCheck` holds: it publishes
-// the photo marked "not hash-checked" (`hashCheckSkippedAt`) and keeps its hashes, so the photo
-// can be checked once matching is configured (hashCheckFields).
+// "unavailable". With provider "none" the pipeline does not ask it at all (`skipsHashCheck`): it
+// publishes the photo marked "not hash-checked" (`hashCheckSkippedAt`) and keeps its hashes, so
+// the photo can be checked once matching is configured (hashCheckFields).
 //
 // Fixed-IP egress: HCS allow-lists caller IPs, and Convex has no fixed egress IP. A proxy
 // (OFFLIMITS_HCS_PROXY_URL) is NOT implemented: Node's built-in fetch only takes a proxy through
@@ -243,14 +244,15 @@ export const makeUnconfiguredCsamHashCheckPort = (
 
 /**
  * Whether the pipeline publishes a photo WITHOUT a hash check (marked "not hash-checked" with its
- * hashes kept; hashCheckFields) instead of asking the port. Stage 1a of the review's P-03: both
- * "disabled" and "missing_config" skip. OWNER DECISION (docs/review/2026-10-29/05 §6): to treat a
- * selected but incomplete Offlimits config as an outage instead (photos held unpublished,
- * re-checked, then handed to an admin after HASH_CHECK_TIMEOUT_MS), return
- * `config.status === "disabled"` here. This is the only place that decides it.
+ * hashes kept; hashCheckFields) instead of asking the port: only when hash matching is switched
+ * off ("disabled", provider none). Offlimits selected but incomplete ("missing_config") is NOT
+ * skipped: the operator meant checks to run, so it fails closed like an outage. The pipeline asks
+ * the unconfigured port, which answers "unavailable": the photo is held unpublished, re-checked,
+ * then handed to an admin after HASH_CHECK_TIMEOUT_MS (review §4 SEC-03 recommendation 3). This is
+ * the only place that decides it.
  */
 export const skipsHashCheck = (config: CsamHashCheckConfig): boolean =>
-  config.status !== "ok";
+  config.status === "disabled";
 
 /** Build the configured port. Unconfigured or incomplete config => the unconfigured port. */
 export const makeCsamHashCheckPortFromEnv = (

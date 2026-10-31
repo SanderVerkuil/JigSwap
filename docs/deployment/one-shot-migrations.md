@@ -588,8 +588,8 @@ two kinds of photo, and nothing re-checks either on its own:
   Unchecked photos; an admin who publishes it with **Approve without hash check** leaves it
   marked `hashCheckWaivedBy` with its stored hashes (`pendingHashes`) (photo-moderation.md, "A
   timed-out photo: the admin decides").
-- A photo uploaded while no hash matching was configured (provider unset or `none`, or
-  `offlimits` with a credential missing) is published marked `hashCheckSkippedAt`, with its
+- A photo uploaded while hash matching was switched off (provider unset or `none`) is
+  published marked `hashCheckSkippedAt`, with its
   stored hashes (photo-moderation.md, "CSAM hash re-checks"). Photos published before that
   marker existed kept no hashes and cannot be checked.
 

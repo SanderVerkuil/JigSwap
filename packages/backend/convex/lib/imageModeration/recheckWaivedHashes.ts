@@ -14,8 +14,8 @@ import {
 // nothing re-checks either automatically:
 // - an admin approved it ("Approve without hash check", admin/decideUncheckedPhoto) after its
 //   check timed out (HASH_CHECK_TIMEOUT_MS): it carries `hashCheckWaivedBy`;
-// - no hash matching was configured when it was uploaded (provider "none", or "offlimits" with a
-//   credential missing; csamHashCheck.skipsHashCheck): it carries `hashCheckSkippedAt`.
+// - hash matching was switched off when it was uploaded (provider "none";
+//   csamHashCheck.skipsHashCheck): it carries `hashCheckSkippedAt`.
 // Both kept their `pendingHashes`. Run it right after the hash service (Offlimits) is configured
 // on a deployment.
 //

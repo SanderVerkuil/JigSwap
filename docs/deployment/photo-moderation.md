@@ -139,10 +139,12 @@ never asked and **nothing is recorded as hash-checked**: the pipeline publishes 
 before, but marks it "not hash-checked" (`hashCheckSkippedAt`; the wide event says
 `csam_hashcheck_status: "skipped"`) and keeps the hashes of the original and the re-encode
 (`pendingHashes`), so it can still be checked once the service is configured. `offlimits` with a
-credential missing behaves the same and logs at error level (`csam_hashcheck_config:
-"missing_config"`); whether it should hold photos unpublished instead is an open decision, made
-in one place (`csamHashCheck.skipsHashCheck`). A photo still waiting on a re-check when matching
-is switched off is published the same way by that re-check. Photos published before this marker
+credential missing is not "off" but an outage: the operator meant checks to run, so photos are
+held unpublished exactly as when the service is unreachable (re-checked for up to 7 days, then
+handed to an admin), and every attempt logs at error level (`csam_hashcheck_config:
+"missing_config"`, `csam_hashcheck_status: "unavailable"`). This is decided in one place
+(`csamHashCheck.skipsHashCheck`). A photo still waiting on a re-check when matching is switched
+off is published the same way by that re-check. Photos published before this marker
 existed kept no hashes and cannot be checked after the fact. Once the service is configured,
 `lib/imageModeration/recheckWaivedHashes` checks these photos as well as the waived ones (a match
 quarantines and escalates, a no_match clears the marker); a re-check of one never runs against

@@ -197,8 +197,8 @@ describe("configuration", () => {
       reason: "missing_config",
     });
     expect(fetchImpl).not.toHaveBeenCalled();
-    // Stage 1a: the pipeline skips the check (published, marked not hash-checked).
-    expect(skipsHashCheck(readCsamHashCheckConfig(env))).toBe(true);
+    // Not skipped: an incomplete config is an outage (photos held), never "off".
+    expect(skipsHashCheck(readCsamHashCheckConfig(env))).toBe(false);
     const config = readCsamHashCheckConfig(env);
     expect(config).toEqual({
       provider: "offlimits",

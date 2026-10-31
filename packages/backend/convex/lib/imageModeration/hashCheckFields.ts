@@ -10,13 +10,13 @@ import { v } from "convex/values";
 //   it ever be restored (admin/restorePhoto).
 // - `hashCheckedAt`: when the publication gate OPENED, which is not always a hash check: the
 //   check returned no_match, or an admin approved the photo after its check timed out
-//   (`hashCheckWaivedBy`), or no hash matching was configured (`hashCheckSkippedAt`). Only a row
+//   (`hashCheckWaivedBy`), or hash matching was switched off (`hashCheckSkippedAt`). Only a row
 //   with `hashCheckedAt` and neither marker has passed a hash check.
-// - `hashCheckSkippedAt`: when the pipeline published the photo WITHOUT a hash check because none
-//   is configured on the deployment (csamHashCheck.skipsHashCheck: provider "none", or
-//   "offlimits" with a credential missing). Nothing ever records such a photo as checked: it
-//   keeps its `pendingHashes`, so the one-shot lib/imageModeration/recheckWaivedHashes can check
-//   it once matching is configured. Cleared, with `pendingHashes`, when a check returns
+// - `hashCheckSkippedAt`: when the pipeline published the photo WITHOUT a hash check because hash
+//   matching is switched off on the deployment (csamHashCheck.skipsHashCheck: provider "none";
+//   "offlimits" with a credential missing holds photos instead). Nothing ever records such a
+//   photo as checked: it keeps its `pendingHashes`, so the one-shot
+//   lib/imageModeration/recheckWaivedHashes can check it once matching is configured. Cleared, with `pendingHashes`, when a check returns
 //   no_match; a match quarantines it (a quarantined row keeps the marker: it was served
 //   unchecked until the match). Photos published before this marker existed carry nothing: their
 //   hashes were never kept, so they cannot be checked later.

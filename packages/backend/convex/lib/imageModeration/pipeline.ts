@@ -75,9 +75,11 @@ import { findMetadata, stripImageMetadata } from "./stripMetadata";
 //      opens the publication gate (setHashCheck; lib/imageModeration/hashCheckFields), but only
 //      once the row holds the clean blob (after step 5): no read model serves the row before,
 //      so no URL is ever issued for the upload as sent. "unavailable" is logged at error level
-//      and the gate stays closed. With no hash matching configured (skipsHashCheck) nothing is
-//      asked and nothing is recorded as checked: after step 5 the gate opens with the row marked
-//      "not hash-checked" and its hashes kept (setHashCheck "skipped"; hashCheckFields).
+//      and the gate stays closed. With hash matching switched off (provider none; skipsHashCheck)
+//      nothing is asked and nothing is recorded as checked: after step 5 the gate opens with the
+//      row marked "not hash-checked" and its hashes kept (setHashCheck "skipped";
+//      hashCheckFields). Offlimits selected but incomplete is asked like any outage: its port
+//      answers "unavailable", so the gate stays closed.
 //   4. A refused upload is "rejected" with label "invalid_image" (the reason in
 //      moderationReason), never classified, and its blob is deleted; then it leaves the
 //      hash-pending index (setHashCheck "refused"). Never fails open.
@@ -230,7 +232,7 @@ export interface ImageModerationSteps<R extends ModerationRow> {
   /**
    * Record a hash-check outcome: no_match (opens the publication gate), unavailable (keeps it
    * closed, stores the hashes), refused (the upload was refused and its blob is gone: it leaves
-   * the hash-pending index), or skipped (no hash matching configured: the gate opens, the row is
+   * the hash-pending index), or skipped (hash matching switched off: the gate opens, the row is
    * marked "not hash-checked" and keeps the hashes; lib/imageModeration/quarantine
    * .applyHashCheckResult).
    */
@@ -617,10 +619,11 @@ const runAttempt = async <R extends ModerationRow>(
     // Only the outcome is logged, never the hashes. Once "unavailable" has stored the hashes,
     // the hash re-check (runHashRecheck, on its own Workpool: hashRecheckPool) owns the outcome.
     // A no_match opens the gate only after the swap below, so the upload as sent is never served.
-    // With no hash matching configured (skipsHashCheck) nothing is asked: the photo is published
+    // With hash matching switched off (skipsHashCheck) nothing is asked: the photo is published
     // as before, but after the swap it is marked "not hash-checked" and keeps the hashes of the
     // original and the re-encode (`skippedHashes`), so it can be checked once matching is
-    // configured. Never a no_match without a real answer (SEC-03).
+    // configured. An incomplete Offlimits config is asked, and its port answers "unavailable"
+    // (held, like an outage). Never a no_match without a real answer (SEC-03).
     let openGate = false;
     let skippedHashes: ImageHashes[] | null = null;
     if (row.hashCheckedAt === undefined && row.pendingHashes === undefined) {
@@ -630,8 +633,6 @@ const runAttempt = async <R extends ModerationRow>(
       if (skipsHashCheck(hashConfig)) {
         event.csam_hashcheck_status = "skipped";
         event.csam_hashcheck_reason = hashConfig.status;
-        // Offlimits selected but incomplete is a mistake to fix: error level, for alerting.
-        if (hashConfig.status === "missing_config") event.outcome = "error";
         if (refusal === null) skippedHashes = variants;
       } else {
         const hashCheck = await checkAllHashes(
@@ -834,13 +835,13 @@ export const runHashRecheck = async <R extends ModerationRow>(
       event.result = "skipped_stale";
       return;
     }
-    // Hash matching was switched off (or broken) while the photo waited: publish it as the
-    // upload pipeline would now, marked "not hash-checked" with its stored hashes kept. Never a
-    // no_match without a real answer (SEC-03).
+    // Hash matching was switched off while the photo waited: publish it as the upload pipeline
+    // would now, marked "not hash-checked" with its stored hashes kept. Never a no_match without
+    // a real answer (SEC-03). An incomplete config is not "off": it is asked below and answers
+    // "unavailable", so the photo keeps waiting.
     if (skipsHashCheck(hashConfig)) {
       event.csam_hashcheck_status = "skipped";
       event.csam_hashcheck_reason = hashConfig.status;
-      if (hashConfig.status === "missing_config") event.outcome = "error";
       await ctx.runMutation(steps.setHashCheck, {
         imageId,
         status: "skipped",
