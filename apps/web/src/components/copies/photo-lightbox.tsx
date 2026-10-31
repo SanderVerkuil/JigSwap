@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { gateway, Id } from "@/gateway";
 import {
+  authorMemberIdOf,
   projectedAuthorOf,
   useMemberDisplayName,
   useProjectedMemberName,
@@ -373,7 +374,7 @@ export function PhotoLightbox({
 
 // `open`: the photo is published (approved). Only then does it have a discussion; the server
 // refuses comments on, and lists none for, a photo still being checked (only its uploader sees
-// one here).
+// one here). Other members' comments can be reported; one ReportDialog serves the whole list.
 function PhotoComments({
   photoId,
   open,
@@ -398,6 +399,12 @@ function PhotoComments({
   const [text, setText] = useState("");
   const posting = postComment.isPending;
   const [now] = useState(() => Date.now());
+  // The comment being reported stays set while the dialog animates closed.
+  const [reported, setReported] = useState<PhotoComment | null>(null);
+  const [reporting, setReporting] = useState(false);
+  const reportTriggerRef = useRef<HTMLElement | null>(null);
+  const tCopy = useTranslations("copyInstance");
+  const projectedName = useProjectedMemberName();
 
   const list = comments ?? [];
   const relative = (timestamp: number) =>
@@ -485,12 +492,42 @@ function PhotoComments({
             comment={comment}
             relative={relative}
             last={i === list.length - 1}
+            // Never your own (the server refuses that too); not until we know who you are. A hidden
+            // author can be reported as well: the report names the comment, not them.
+            onReport={
+              me && authorMemberIdOf(comment.author) !== me._id
+                ? (trigger) => {
+                    reportTriggerRef.current = trigger;
+                    setReported(comment);
+                    setReporting(true);
+                  }
+                : undefined
+            }
           />
         ))}
         {list.length === 0 && (
           <p className="text-muted-foreground text-sm">{t("noComments")}</p>
         )}
       </div>
+      {reported && (
+        <ReportDialog
+          target={{
+            kind: "photoComment",
+            id: reported.id,
+            snippet: reported.text,
+          }}
+          name={projectedName(
+            projectedAuthorOf(reported.author),
+            tCopy("anonymousUser"),
+          )}
+          memberId={
+            authorMemberIdOf(reported.author) as Id<"users"> | undefined
+          }
+          open={reporting}
+          onOpenChange={setReporting}
+          returnFocusRef={reportTriggerRef}
+        />
+      )}
     </section>
   );
 }
@@ -499,11 +536,15 @@ function PhotoCommentRow({
   comment,
   relative,
   last,
+  onReport,
 }: {
   comment: PhotoComment;
   relative: (timestamp: number) => string;
   last: boolean;
+  /** Offered on other members' comments: opens the report dialog. */
+  onReport?: (trigger: HTMLButtonElement) => void;
 }) {
+  const tSafety = useTranslations("safety");
   const t = useTranslations("copyInstance");
   const projectedName = useProjectedMemberName();
   // A private author the viewer isn't connected with arrives anonymous (SEC-11): label only, and
@@ -530,6 +571,18 @@ function PhotoCommentRow({
           {comment.text}
         </p>
       </div>
+      {onReport && (
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={tSafety("reportCommentFrom", { name })}
+          title={tSafety("reportComment")}
+          onClick={(event) => onReport(event.currentTarget)}
+          className="text-muted-foreground hover:text-destructive -my-1.5 size-11 shrink-0 md:size-8"
+        >
+          <Flag className="size-4" aria-hidden />
+        </Button>
+      )}
     </div>
   );
 }

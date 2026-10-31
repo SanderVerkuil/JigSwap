@@ -2616,7 +2616,7 @@
       "circle_deleted": "When the owner deletes a circle you're in.",
       "whats_new": "When a new feature or change to JigSwap is announced.",
       "report_decided": "When a moderator decides on a report you filed.",
-      "content_removed": "When a moderator removes one of your messages or photos after a report.",
+      "content_removed": "When a moderator removes a message, photo, comment or review text of yours after a report.",
       "member_warned": "When a moderator warns you after a report.",
       "message_image_rejected": "When our automated check removes a photo you sent in a message."
     },
@@ -2801,7 +2801,7 @@
         "sentence": "{decision, select, dismissed {We reviewed your report and found no violation, so no action was taken.} content_removed {We reviewed your report and removed the content.} warned {We reviewed your report and warned the member.} other {We reviewed your report.}}"
       },
       "content_removed": {
-        "sentence": "{restricted, select, photo {A moderator removed one of your photos} other {A moderator removed one of your messages}} for {ground, select, spam_scam {spam or scam} harassment_hate {harassment or hate} sexual {sexual or inappropriate content} fake_trade {a fake trade or no-show} illegal {illegal content} other {breaking the community rules}}. This was decided by a person, not automatically. Reply via the contact page to request a review."
+        "sentence": "{restricted, select, photo {A moderator removed one of your photos} comment {A moderator removed one of your comments} review {A moderator removed the text of one of your reviews} other {A moderator removed one of your messages}} for {ground, select, spam_scam {spam or scam} harassment_hate {harassment or hate} sexual {sexual or inappropriate content} fake_trade {a fake trade or no-show} illegal {illegal content} other {breaking the community rules}}. This was decided by a person, not automatically. Reply via the contact page to request a review."
       },
       "member_warned": {
         "sentence": "A moderator warned you for {ground, select, spam_scam {spam or scam} harassment_hate {harassment or hate} sexual {sexual or inappropriate content} fake_trade {a fake trade or no-show} illegal {illegal content} other {breaking the community rules}}. This was decided by a person, not automatically. Reply via the contact page to request a review."
@@ -4432,7 +4432,9 @@
           "copy": "Puzzle copy",
           "photo": "Photo",
           "exchange": "Trade",
-          "attachment": "Message photo"
+          "attachment": "Message photo",
+          "photoComment": "Photo comment",
+          "puzzleReview": "Puzzle review"
         },
         "reportedArrow": "reported",
         "openCount": "{count, plural, one {# open report against this member} other {# open reports against this member}}",
@@ -4450,6 +4452,7 @@
         "photo": "Reported photo",
         "photoGone": "This photo no longer exists.",
         "evidence": "Thread excerpt at filing time",
+        "reportedText": "Reported text at filing time",
         "reportedMessage": "Reported",
         "system": "System",
         "deletedMember": "Deleted member",
@@ -4468,7 +4471,7 @@
           "warned": "Warn member",
           "content_removed": "Remove content"
         },
-        "removeUnavailable": "Content can only be removed for message and photo reports.",
+        "removeUnavailable": "Content can only be removed for message, photo, comment and review reports.",
         "statementLabel": "Statement of reasons (sent to the member)",
         "statementHint": "{count}/{max} characters. Required: what was restricted, the ground, and how to ask for a review.",
         "templateNames": {
@@ -4482,7 +4485,9 @@
           "copy": "your puzzle copy",
           "photo": "your photo",
           "exchange": "your conduct in a trade",
-          "attachment": "your photo in a message"
+          "attachment": "your photo in a message",
+          "photoComment": "your comment",
+          "puzzleReview": "your review text"
         },
         "grounds": {
           "spam_scam": "spam and scams",
@@ -5232,6 +5237,8 @@
       "description": "Tell us what's wrong. Reports are private: only our moderators see them.",
       "reportingMember": "Reporting {name}",
       "reportingPhoto": "Reporting a photo from {name}",
+      "reportingComment": "Reporting a comment from {name}",
+      "reportingReview": "Reporting a review from {name}",
       "reasonLegend": "Why are you reporting this?",
       "reasons": {
         "spam_scam": "Spam or scam",
@@ -5270,6 +5277,10 @@
     "reportName": "Report {name}",
     "reportMember": "Report member",
     "reportPhoto": "Report photo",
+    "reportComment": "Report comment",
+    "reportCommentFrom": "Report comment from {name}",
+    "reportReview": "Report review",
+    "reportReviewFrom": "Report review from {name}",
     "exchangeActions": "Trade actions",
     "myReports": {
       "title": "Your reports",
@@ -5282,7 +5293,9 @@
         "copy": "A puzzle copy",
         "photo": "A photo",
         "exchange": "A trade",
-        "attachment": "A message photo"
+        "attachment": "A message photo",
+        "photoComment": "A comment on a photo",
+        "puzzleReview": "A puzzle review"
       }
     }
   },

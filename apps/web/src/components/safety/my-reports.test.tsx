@@ -70,4 +70,22 @@ describe("MyReports", () => {
       "A photo·Sexual or inappropriate content·Handled·Oct 1, 2026",
     ]);
   });
+
+  it("names a reported comment or review by its kind", () => {
+    renderList(
+      (["photoComment", "puzzleReview"] as const).map((targetKind, i) => ({
+        reportId: `r${i}`,
+        targetKind,
+        targetId: `t${i}`,
+        reason: "spam_scam",
+        status: "open",
+        createdAt: Date.UTC(2026, 9, 17),
+      })),
+    );
+    const rows = screen.getAllByRole("listitem").map((row) => row.textContent);
+    expect(rows).toEqual([
+      "A comment on a photo·Spam or scam·Under review·Oct 17, 2026",
+      "A puzzle review·Spam or scam·Under review·Oct 17, 2026",
+    ]);
+  });
 });

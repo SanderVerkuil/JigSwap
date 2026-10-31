@@ -621,6 +621,44 @@ describe("NotificationItem rendering", () => {
     );
   });
 
+  it.each([
+    [
+      "comment",
+      "en",
+      "A moderator removed one of your comments for harassment or hate.",
+    ],
+    [
+      "review",
+      "en",
+      "A moderator removed the text of one of your reviews for harassment or hate.",
+    ],
+    [
+      "comment",
+      "nl",
+      "Een moderator heeft een reactie van je verwijderd wegens intimidatie of haat.",
+    ],
+    [
+      "review",
+      "nl",
+      "Een moderator heeft de tekst van een review van je verwijderd wegens intimidatie of haat.",
+    ],
+  ] as const)(
+    "names a removed %s in the content_removed sentence (%s)",
+    (restrictedContent, locale, sentence) => {
+      const { container } = renderItem(
+        base({
+          type: "content_removed",
+          actors: [],
+          actorCount: 0,
+          href: null,
+          context: { restrictedContent, ground: "harassment_hate" },
+        }),
+        { locale },
+      );
+      expect(container.textContent).toContain(sentence);
+    },
+  );
+
   it("popover: only the primary follow-request actions, no overflow, no mark-read", () => {
     const view = base({
       type: "follow_request_received",

@@ -2616,7 +2616,7 @@
       "circle_deleted": "Wanneer de eigenaar een kring verwijdert waar je lid van bent.",
       "whats_new": "Wanneer een nieuwe functie of wijziging in JigSwap wordt aangekondigd.",
       "report_decided": "Wanneer een moderator een besluit neemt over een melding die je hebt gedaan.",
-      "content_removed": "Wanneer een moderator na een melding een bericht of foto van je verwijdert.",
+      "content_removed": "Wanneer een moderator na een melding een bericht, foto, reactie of reviewtekst van je verwijdert.",
       "member_warned": "Wanneer een moderator je na een melding waarschuwt.",
       "message_image_rejected": "Wanneer onze automatische controle een foto verwijdert die je in een bericht stuurde."
     },
@@ -2801,7 +2801,7 @@
         "sentence": "{decision, select, dismissed {We hebben je melding beoordeeld en geen overtreding gevonden, dus er is niets veranderd.} content_removed {We hebben je melding beoordeeld en de inhoud verwijderd.} warned {We hebben je melding beoordeeld en het lid gewaarschuwd.} other {We hebben je melding beoordeeld.}}"
       },
       "content_removed": {
-        "sentence": "{restricted, select, photo {Een moderator heeft een foto van je verwijderd} other {Een moderator heeft een bericht van je verwijderd}} wegens {ground, select, spam_scam {spam of oplichting} harassment_hate {intimidatie of haat} sexual {seksuele of ongepaste inhoud} fake_trade {een nepruil of niet komen opdagen} illegal {illegale inhoud} other {het overtreden van de communityregels}}. Dit besluit is door een mens genomen, niet automatisch. Reageer via de contactpagina om een herbeoordeling te vragen."
+        "sentence": "{restricted, select, photo {Een moderator heeft een foto van je verwijderd} comment {Een moderator heeft een reactie van je verwijderd} review {Een moderator heeft de tekst van een review van je verwijderd} other {Een moderator heeft een bericht van je verwijderd}} wegens {ground, select, spam_scam {spam of oplichting} harassment_hate {intimidatie of haat} sexual {seksuele of ongepaste inhoud} fake_trade {een nepruil of niet komen opdagen} illegal {illegale inhoud} other {het overtreden van de communityregels}}. Dit besluit is door een mens genomen, niet automatisch. Reageer via de contactpagina om een herbeoordeling te vragen."
       },
       "member_warned": {
         "sentence": "Een moderator heeft je gewaarschuwd wegens {ground, select, spam_scam {spam of oplichting} harassment_hate {intimidatie of haat} sexual {seksuele of ongepaste inhoud} fake_trade {een nepruil of niet komen opdagen} illegal {illegale inhoud} other {het overtreden van de communityregels}}. Dit besluit is door een mens genomen, niet automatisch. Reageer via de contactpagina om een herbeoordeling te vragen."
@@ -4432,7 +4432,9 @@
           "copy": "Puzzelexemplaar",
           "photo": "Foto",
           "exchange": "Ruil",
-          "attachment": "Foto in bericht"
+          "attachment": "Foto in bericht",
+          "photoComment": "Reactie op foto",
+          "puzzleReview": "Puzzelreview"
         },
         "reportedArrow": "meldde",
         "openCount": "{count, plural, one {# open melding tegen dit lid} other {# open meldingen tegen dit lid}}",
@@ -4450,6 +4452,7 @@
         "photo": "Gemelde foto",
         "photoGone": "Deze foto bestaat niet meer.",
         "evidence": "Gespreksfragment op het moment van melden",
+        "reportedText": "Gemelde tekst op het moment van melden",
         "reportedMessage": "Gemeld",
         "system": "Systeem",
         "deletedMember": "Verwijderd lid",
@@ -4468,7 +4471,7 @@
           "warned": "Lid waarschuwen",
           "content_removed": "Inhoud verwijderen"
         },
-        "removeUnavailable": "Inhoud kan alleen worden verwijderd bij meldingen over berichten en foto's.",
+        "removeUnavailable": "Inhoud kan alleen worden verwijderd bij meldingen over berichten, foto's, reacties en reviews.",
         "statementLabel": "Motivering (wordt naar het lid gestuurd)",
         "statementHint": "{count}/{max} tekens. Verplicht: wat is beperkt, op welke grond, en hoe om herbeoordeling te vragen.",
         "templateNames": {
@@ -4482,7 +4485,9 @@
           "copy": "je puzzelexemplaar",
           "photo": "je foto",
           "exchange": "je gedrag bij een ruil",
-          "attachment": "je foto in een bericht"
+          "attachment": "je foto in een bericht",
+          "photoComment": "je reactie",
+          "puzzleReview": "de tekst van je review"
         },
         "grounds": {
           "spam_scam": "spam en oplichting",
@@ -5232,6 +5237,8 @@
       "description": "Vertel ons wat er mis is. Meldingen zijn privé: alleen onze moderators zien ze.",
       "reportingMember": "Je meldt {name}",
       "reportingPhoto": "Je meldt een foto van {name}",
+      "reportingComment": "Je meldt een reactie van {name}",
+      "reportingReview": "Je meldt een review van {name}",
       "reasonLegend": "Waarom meld je dit?",
       "reasons": {
         "spam_scam": "Spam of oplichting",
@@ -5270,6 +5277,10 @@
     "reportName": "{name} melden",
     "reportMember": "Lid melden",
     "reportPhoto": "Foto melden",
+    "reportComment": "Reactie melden",
+    "reportCommentFrom": "Reactie van {name} melden",
+    "reportReview": "Review melden",
+    "reportReviewFrom": "Review van {name} melden",
     "exchangeActions": "Ruilacties",
     "myReports": {
       "title": "Jouw meldingen",
@@ -5282,7 +5293,9 @@
         "copy": "Een puzzelexemplaar",
         "photo": "Een foto",
         "exchange": "Een ruil",
-        "attachment": "Een foto in een bericht"
+        "attachment": "Een foto in een bericht",
+        "photoComment": "Een reactie op een foto",
+        "puzzleReview": "Een puzzelreview"
       }
     }
   },

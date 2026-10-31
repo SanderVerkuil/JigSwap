@@ -14,6 +14,8 @@ import { PhotoLightbox } from "./photo-lightbox";
 // per test) and the outcome of posting one.
 const stub = vi.hoisted(() => ({
   photoComments: undefined as unknown[] | undefined,
+  // identity.currentUser (the only other query with object args).
+  me: undefined as unknown,
   mutateAsync: (_args: unknown): Promise<unknown> => Promise.resolve(null),
 }));
 
@@ -27,8 +29,13 @@ vi.mock("@convex-dev/react-query", () => ({
   useConvexMutation: () => vi.fn(),
 }));
 vi.mock("@tanstack/react-query", () => ({
-  useQuery: (options: { args?: { photoId?: string } }) => ({
-    data: options.args?.photoId ? stub.photoComments : undefined,
+  useQuery: (options: { args?: { photoId?: string } | "skip" }) => ({
+    data:
+      options.args === "skip"
+        ? undefined
+        : options.args?.photoId
+          ? stub.photoComments
+          : stub.me,
   }),
   useMutation: () => ({
     mutateAsync: (args: unknown) => stub.mutateAsync(args),
@@ -68,6 +75,7 @@ afterEach(() => {
   container.remove();
   document.body.innerHTML = "";
   stub.photoComments = undefined;
+  stub.me = undefined;
   stub.mutateAsync = () => Promise.resolve(null);
   vi.mocked(toast.error).mockClear();
 });
@@ -395,6 +403,105 @@ describe("PhotoLightbox comment composer", () => {
     await post();
     expect(toast.error).toHaveBeenCalledWith(
       "Couldn’t post your comment. Please try again.",
+    );
+  });
+});
+
+describe("PhotoLightbox comment reports", () => {
+  const approved = gallery.map((p) => ({
+    ...p,
+    moderationStatus: "approved" as const,
+  }));
+  const comment = (id: string, authorId: string, name: string) => ({
+    id,
+    author: {
+      anonymous: false,
+      member: { _id: authorId, isActive: true, name },
+    },
+    text: `${name} says hi`,
+    createdAt: 1,
+  });
+  const reportButtons = () =>
+    [
+      ...document.querySelectorAll<HTMLButtonElement>(
+        'button[aria-label^="Report comment from"]',
+      ),
+    ].map((el) => el.getAttribute("aria-label"));
+
+  it("offers Report on other members' comments, never on your own", () => {
+    stub.me = { _id: "me", isActive: true, name: "Me" };
+    stub.photoComments = [
+      comment("c1", "u1", "Sam"),
+      comment("c2", "me", "Me"),
+      comment("c3", "u2", "Kim"),
+    ];
+    render({ gallery: approved });
+    expect(reportButtons()).toEqual([
+      "Report comment from Sam",
+      "Report comment from Kim",
+    ]);
+  });
+
+  it("offers no Report until the viewer is known", () => {
+    stub.photoComments = [comment("c1", "u1", "Sam")];
+    render({ gallery: approved });
+    expect(reportButtons()).toEqual([]);
+  });
+
+  // SEC-11: a hidden author stays hidden through the report path. They can be reported, under the
+  // label the row shows, and with no id to offer "Also block" on.
+  it("offers Report on a hidden author's comment without identifying them", () => {
+    stub.me = { _id: "me", isActive: true, name: "Me" };
+    stub.photoComments = [
+      {
+        id: "c1",
+        author: { anonymous: true, anonRef: "abc" },
+        text: "Hidden says hi",
+        createdAt: 1,
+      },
+    ];
+    render({ gallery: approved });
+    click(button("Report comment from Anonymous user"));
+    expect(document.body.textContent).toContain(
+      "Reporting a comment from Anonymous user",
+    );
+    expect(document.querySelector("blockquote")?.textContent).toBe(
+      "Hidden says hi",
+    );
+    expect(document.body.textContent).not.toContain("Also block");
+  });
+
+  it("offers a block only for a revealed author", () => {
+    stub.me = { _id: "me", isActive: true, name: "Me" };
+    stub.photoComments = [comment("c1", "u1", "Sam")];
+    render({ gallery: approved });
+    click(button("Report comment from Sam"));
+    expect(document.body.textContent).toContain("Also block Sam");
+  });
+
+  // Deploy skew: a pre-SEC-11 backend sends the author as a plain MemberView.
+  it("never offers Report on your own comment while the backend lags", () => {
+    stub.me = { _id: "me", isActive: true, name: "Me" };
+    stub.photoComments = [
+      {
+        id: "c1",
+        author: { _id: "me", isActive: true, name: "Me" },
+        text: "Me says hi",
+        createdAt: 1,
+      },
+    ];
+    render({ gallery: approved });
+    expect(reportButtons()).toEqual([]);
+  });
+
+  it("opens the report dialog quoting the comment", () => {
+    stub.me = { _id: "me", isActive: true, name: "Me" };
+    stub.photoComments = [comment("c1", "u1", "Sam")];
+    render({ gallery: approved });
+    click(button("Report comment from Sam"));
+    expect(document.body.textContent).toContain("Reporting a comment from Sam");
+    expect(document.querySelector("blockquote")?.textContent).toBe(
+      "Sam says hi",
     );
   });
 });

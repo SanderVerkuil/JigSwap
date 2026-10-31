@@ -12,6 +12,7 @@ import {
   StarGlyph,
   Stat,
 } from "@/components/puzzles/catalog-detail-parts";
+import { ReportDialog } from "@/components/safety/report-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +22,7 @@ import { gateway, Id } from "@/gateway";
 import { useBoxArtInCheck } from "@/hooks/use-box-art-check";
 import { useFavorites } from "@/hooks/use-favorites";
 import {
+  authorMemberIdOf,
   projectedAuthorOf,
   useMemberDisplayName,
   useProjectedMemberName,
@@ -39,6 +41,7 @@ import type { FunctionReturnType } from "convex/server";
 import {
   ArrowLeftRight,
   ChevronRight,
+  Flag,
   Heart,
   MessageCircle,
   Pencil,
@@ -511,6 +514,11 @@ function ReviewsSection({
   const [text, setText] = useState("");
   const [rating, setRating] = useState(0);
   const [now] = useState(() => Date.now());
+  // The review being reported stays set while the dialog animates closed.
+  const [reported, setReported] = useState<PuzzleReview | null>(null);
+  const [reporting, setReporting] = useState(false);
+  const reportTriggerRef = useRef<HTMLElement | null>(null);
+  const projectedName = useProjectedMemberName();
 
   // Seed the composer once from the existing review, during render (the sanctioned "adjust
   // state when a value changes" pattern — an effect + setState would trip the
@@ -621,12 +629,45 @@ function ReviewsSection({
             review={review}
             relative={relative}
             last={i === list.length - 1}
+            // Other members' reviews with text (a rating alone has nothing to report; the server
+            // refuses it, and your own, too); not until we know who you are. A hidden author can be
+            // reported as well: the report names the review, not them.
+            onReport={
+              me &&
+              authorMemberIdOf(review.author) !== me._id &&
+              review.text != null
+                ? (trigger) => {
+                    reportTriggerRef.current = trigger;
+                    setReported(review);
+                    setReporting(true);
+                  }
+                : undefined
+            }
           />
         ))}
         {list.length === 0 && (
           <p className="text-muted-foreground text-sm">{t("noReviews")}</p>
         )}
       </div>
+      {reported && (
+        <ReportDialog
+          target={{
+            kind: "puzzleReview",
+            id: reported.id,
+            snippet: reported.text ?? "",
+          }}
+          name={projectedName(
+            projectedAuthorOf(reported.author),
+            t("anonymousReviewer"),
+          )}
+          memberId={
+            authorMemberIdOf(reported.author) as Id<"users"> | undefined
+          }
+          open={reporting}
+          onOpenChange={setReporting}
+          returnFocusRef={reportTriggerRef}
+        />
+      )}
     </section>
   );
 }
@@ -635,11 +676,15 @@ function ReviewRow({
   review,
   relative,
   last,
+  onReport,
 }: {
   review: PuzzleReview;
   relative: (timestamp: number) => string;
   last: boolean;
+  /** Offered on other members' reviews with text: opens the report dialog. */
+  onReport?: (trigger: HTMLButtonElement) => void;
 }) {
+  const tSafety = useTranslations("safety");
   const t = useTranslations("puzzleDefinition");
   const projectedName = useProjectedMemberName();
   // A private author the viewer isn't connected with arrives anonymous (SEC-11): label only, and
@@ -666,6 +711,18 @@ function ReviewRow({
           </p>
         )}
       </div>
+      {onReport && (
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={tSafety("reportReviewFrom", { name })}
+          title={tSafety("reportReview")}
+          onClick={(event) => onReport(event.currentTarget)}
+          className="text-muted-foreground hover:text-destructive -my-1.5 size-11 shrink-0 md:size-8"
+        >
+          <Flag className="size-4" aria-hidden />
+        </Button>
+      )}
     </div>
   );
 }

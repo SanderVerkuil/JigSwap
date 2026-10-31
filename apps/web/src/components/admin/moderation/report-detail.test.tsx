@@ -151,6 +151,35 @@ describe("ReportDetail", () => {
     expect(screen.getByText("Rita R. · rita@example.org")).toBeTruthy();
   });
 
+  it.each([
+    ["photoComment", "Photo comment", "your comment"],
+    ["puzzleReview", "Puzzle review", "your review text"],
+  ] as const)(
+    "shows a reported %s's text as filed and lets an admin remove it",
+    (targetKind, kindLabel, content) => {
+      renderDetail(
+        report({
+          targetKind,
+          targetId: "target_1",
+          evidence: { text: "You are an idiot" },
+          targetSummary: "You are an idiot",
+        } as Partial<ReportDetailView>),
+      );
+      expect(screen.getByText(kindLabel)).toBeTruthy();
+      const evidence = screen.getByRole("region", {
+        name: "Reported text at filing time",
+      });
+      expect(evidence.textContent).toContain("You are an idiot");
+      expect(evidence.textContent).toContain("Otto (otto@example.com)");
+      expect((removeRadio() as HTMLInputElement).disabled).toBe(false);
+      fireEvent.click(removeRadio());
+      fireEvent.click(screen.getByRole("button", { name: "Removal template" }));
+      expect((statement() as HTMLTextAreaElement).value).toMatch(
+        new RegExp(`^We removed ${content} because`),
+      );
+    },
+  );
+
   it("disables Remove for a user target", () => {
     renderDetail(report({ targetKind: "user", targetId: "user_reported" }));
     expect((removeRadio() as HTMLInputElement).disabled).toBe(true);

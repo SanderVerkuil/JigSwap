@@ -98,3 +98,14 @@ export const projectedAuthorOf = (
     : author.isActive === false
       ? { anonymous: true, anonRef: "", departed: true }
       : { anonymous: false, member: author };
+
+/**
+ * A review or comment author's member id, or undefined for one the server hid. The server always
+ * reveals a member to themselves, so an undefined id is never the viewer's own.
+ */
+export const authorMemberIdOf = (
+  author: ProjectedMember | (MemberView & { anonymous?: undefined }),
+): string | undefined => {
+  const projected = projectedAuthorOf(author);
+  return projected.anonymous ? undefined : projected.member._id;
+};

@@ -3,12 +3,13 @@
 // One report for the admin decision drawer (admin.getReport): who reported
 // whom and why, the evidence snapshot (the quoted thread excerpt with the
 // reported message highlighted; a message already removed by a moderator
-// shows as removed, never its body), the Art. 16(2) notice when present, the
-// photo when the target still exists, and the member's other reports. An
-// open report ends in the decide form; a decided one shows its outcome.
-// The server enforces isAdmin and validates the decision; the form only
-// mirrors those rules (Remove only for message and photo targets; a
-// statement of reasons of 1–2000 characters).
+// shows as removed, never its body; a photo comment's or review's text as
+// filed), the Art. 16(2) notice when present, the photo when the target still
+// exists, and the member's other reports. An open report ends in the decide
+// form; a decided one shows its outcome. The server enforces isAdmin and
+// validates the decision; the form only mirrors those rules (Remove only for
+// message, photo, comment and review targets; a statement of reasons of
+// 1–2000 characters).
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,6 +46,8 @@ export const REMOVABLE_TARGETS: ReadonlySet<string> = new Set([
   "message",
   "photo",
   "attachment",
+  "photoComment",
+  "puzzleReview",
 ]);
 
 const DECISIONS: readonly Decision[] = [
@@ -71,6 +74,7 @@ export function ReportDetail({ report }: { report: ReportDetailView }) {
           : t("otherParticipant");
 
   const messages = report.evidence.messages ?? [];
+  const reportedTextId = useId();
 
   return (
     <div className="flex flex-col gap-5">
@@ -136,6 +140,28 @@ export function ReportDetail({ report }: { report: ReportDetailView }) {
                 {t("photoGone")}
               </span>
             )}
+          </div>
+        </section>
+      )}
+
+      {report.evidence.text !== undefined && (
+        <section
+          aria-labelledby={reportedTextId}
+          className="flex flex-col gap-2"
+        >
+          <h3
+            id={reportedTextId}
+            className="text-xs tracking-wider text-muted-foreground uppercase"
+          >
+            {t("reportedText")}
+          </h3>
+          <div className="rounded-md border border-destructive bg-destructive/5 px-3 py-2 text-sm">
+            <span className="text-xs font-semibold">
+              {report.reportedLabel ?? t("deletedMember")}
+            </span>
+            <p className="mt-1 break-words whitespace-pre-wrap">
+              {report.evidence.text}
+            </p>
           </div>
         </section>
       )}
