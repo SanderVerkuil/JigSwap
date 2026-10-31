@@ -10,6 +10,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { isActiveMember } from "../identity/requireActiveMember";
+import { circleOfOpenInvite } from "../sharing/circleAccess";
 import { blockStateBetween, isBlockedEitherWay } from "../social/blocks";
 import { makeNotify } from "./adapters/makeNotify";
 import { isViewingMessages } from "./presenceGate";
@@ -711,25 +712,30 @@ const translate = async (
 
     // --- Sharing ---
     // Circle invite notifications carry no actorName snapshot: the actor is always a ref, and the
-    // read side reveals them only by the ordinary public / mutual rule. Nothing is sent across a
-    // block (either way) that landed before the event was dispatched.
+    // read side reveals them only by the ordinary public / mutual rule. Nothing is sent for an
+    // invite that is no longer on offer when the event is dispatched (sharing/circleAccess
+    // circleOfOpenInvite: answered, expired, its inviter no longer an Admin, or a block either way
+    // between the invitee and any member, the inviter included, that landed first).
     case "CircleInviteIssued": {
       const inviterId = p.inviterId as string;
       const inviteeId = p.inviteeId as string;
-      if (
-        await isBlockedEitherWay(ctx, asMember(inviteeId), asMember(inviterId))
-      ) {
+      const inviteId = p.inviteId as string;
+      const invite = await ctx.db
+        .query("circleInvites")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", inviteId))
+        .unique();
+      if (!invite || !(await circleOfOpenInvite(ctx, invite, Date.now()))) {
         return [];
       }
       return [
         cmd(
           inviteeId,
           "circle_invite_received",
-          p.inviteId as string,
+          inviteId,
           {},
           {
             actor: inviterId,
-            subject: { kind: "circleInvite", inviteId: p.inviteId as string },
+            subject: { kind: "circleInvite", inviteId },
           },
         ),
       ];

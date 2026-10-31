@@ -1527,6 +1527,100 @@ describe("circle invite notifications", () => {
     expect(await notificationsOf(t, carol)).toEqual([]);
   });
 
+  // SEC-45: accept refuses a block either way between the invitee and ANY current member, so
+  // every surface that offers the invite must agree: her list, the bell, email and push.
+  for (const [blocker, blocked, label] of [
+    ["carol", "dave", "the invitee blocked another member"],
+    ["dave", "carol", "another member blocked the invitee"],
+    ["bob", "carol", "a co-Admin blocked the invitee"],
+  ] as const) {
+    test(`once ${label}, the invite is no longer on offer anywhere`, async () => {
+      const t = convexTest(schema, modules);
+      const ids = await seed(t);
+      await mutualFollow(t, ids.alice, ids.carol);
+      const inviteId = await invite(t, "alice", ids.circleId, ids.carol);
+      await flushScheduled(t);
+      await block(t, ids[blocker], ids[blocked]);
+
+      expect(
+        await as(t, "carol").query(
+          api.sharing.listMyCircleInvites.listMyCircleInvites,
+          {},
+        ),
+      ).toEqual([]);
+      const [view] = await viewsOf(t, "carol");
+      expect(view.state).toBe("unavailable");
+      expect(view.context.circleName).toBeUndefined();
+      expect(view.href).toBe("/circles");
+      expect(
+        await t.query(
+          internal.notifications.resolveForDelivery.resolveForDelivery,
+          {
+            recipientId: ids.carol,
+            type: "circle_invite_received",
+            relatedId: inviteId,
+            actorId: ids.alice,
+            subject: { kind: "circleInvite", inviteId },
+          },
+        ),
+      ).toBeNull();
+    });
+
+    test(`when ${label} before dispatch, no notification is created`, async () => {
+      const t = convexTest(schema, modules);
+      const ids = await seed(t);
+      await mutualFollow(t, ids.alice, ids.carol);
+      await invite(t, "alice", ids.circleId, ids.carol);
+      await block(t, ids[blocker], ids[blocked]);
+      await flushScheduled(t);
+
+      expect(await notificationsOf(t, ids.carol)).toEqual([]);
+    });
+  }
+
+  test("an invite revoked before dispatch notifies nobody", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, carol, circleId } = await seed(t);
+    await mutualFollow(t, alice, carol);
+    const inviteId = await invite(t, "alice", circleId, carol);
+    await revoke(t, "alice", inviteId);
+    await flushScheduled(t);
+
+    expect(await notificationsOf(t, carol)).toEqual([]);
+  });
+
+  test("a block with someone outside the circle leaves the invite on offer", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, carol, eve, circleId } = await seed(t);
+    await mutualFollow(t, alice, carol);
+    const inviteId = await invite(t, "alice", circleId, carol);
+    await block(t, carol, eve);
+    await flushScheduled(t);
+
+    const listed = await as(t, "carol").query(
+      api.sharing.listMyCircleInvites.listMyCircleInvites,
+      {},
+    );
+    expect(listed.map((v) => v.inviteId)).toEqual([inviteId]);
+    const [view] = await viewsOf(t, "carol");
+    expect(view.context.circleName).toBe("Saturday Puzzlers");
+    expect(view.href).toBe(`/circles?invite=${inviteId}`);
+    expect(
+      (
+        await t.query(
+          internal.notifications.resolveForDelivery.resolveForDelivery,
+          {
+            recipientId: carol,
+            type: "circle_invite_received",
+            relatedId: inviteId,
+            actorId: alice,
+            subject: { kind: "circleInvite", inviteId },
+          },
+        )
+      )?.params.circleName,
+    ).toBe("Saturday Puzzlers");
+  });
+
   test("circle_invite_received is email-eligible; circle_invite_accepted is in-app/push only", async () => {
     expect(EMAIL_ELIGIBLE_TYPES.has("circle_invite_received")).toBe(true);
     expect(EMAIL_ELIGIBLE_TYPES.has("circle_invite_accepted")).toBe(false);
@@ -1545,6 +1639,8 @@ describe("circle invite notifications", () => {
       { type: "circle_invite_accepted", channel: "email", enabled: true },
     );
     const inviteId = await invite(t, "alice", circleId, carol);
+    // Dispatched while still on offer (an invite answered before dispatch notifies nobody).
+    await flushScheduled(t);
     await accept(t, "carol", inviteId);
     await flushScheduled(t);
 
