@@ -5,7 +5,10 @@ import {
   CoverStepError,
   SectionDivider,
 } from "@/components/add-puzzle";
-import { FormContextPanel } from "@/components/catalog/form-context-panel";
+import {
+  ChangesSummary,
+  FormContextPanel,
+} from "@/components/catalog/form-context-panel";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { EmptyState } from "@/components/library/empty-state";
 import {
@@ -208,6 +211,7 @@ function SuggestEditForm({
 
   const pendingArgs = buildProposalArgs(baseline, form, categories);
   const canSubmit = pendingArgs !== null || coverFile !== undefined;
+  const changes = pendingChanges(pendingArgs, coverFile !== undefined);
 
   const submit = useMutation({
     mutationFn: async () => {
@@ -340,7 +344,13 @@ function SuggestEditForm({
           maxLength={CATALOG_TEXT_LIMITS.comment}
         />
 
-        <div className="lg:hidden">{actionsRow}</div>
+        {/* Below lg the side panel (and its "Changes (N)" recap) is hidden, so recap the
+            changed fields right above the buttons. With nothing changed the action row's own
+            hint already says why Submit is disabled, so no empty recap is shown. */}
+        <div className="flex flex-col gap-4 lg:hidden">
+          {canSubmit && <ChangesSummary changes={changes} />}
+          {actionsRow}
+        </div>
       </div>
 
       <aside className="hidden lg:sticky lg:top-2 lg:block lg:self-start">
@@ -353,7 +363,7 @@ function SuggestEditForm({
               onPickFile={setCoverFile}
             />
           }
-          changes={pendingChanges(pendingArgs, coverFile !== undefined)}
+          changes={changes}
           actions={actionsRow}
         />
       </aside>

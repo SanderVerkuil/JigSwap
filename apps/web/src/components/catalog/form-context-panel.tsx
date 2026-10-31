@@ -18,21 +18,34 @@ export function FormContextPanel({
   changes: Record<string, unknown>;
   actions: ReactNode;
 }) {
+  return (
+    <div className="flex flex-col gap-6">
+      {image}
+      <ChangesSummary changes={changes} />
+      {actions}
+    </div>
+  );
+}
+
+// The "Changes (N)" heading with the changed-field chips (or "No changes yet"). Rendered by
+// FormContextPanel at lg, and by an edit page itself above its inline action row below lg,
+// where the side panel is hidden.
+export function ChangesSummary({
+  changes,
+}: {
+  changes: Record<string, unknown>;
+}) {
   const t = useTranslations("suggestEdit");
   const count = Object.values(changes).filter((v) => v !== undefined).length;
 
   return (
-    <div className="flex flex-col gap-6">
-      {image}
-      <div className="flex flex-col gap-2">
-        <p className="text-sm font-medium">{t("changesHeading", { count })}</p>
-        {count === 0 ? (
-          <p className="text-muted-foreground text-sm">{t("noChangesYet")}</p>
-        ) : (
-          <ChangedFieldChips changes={changes} />
-        )}
-      </div>
-      {actions}
+    <div className="flex flex-col gap-2">
+      <p className="text-sm font-medium">{t("changesHeading", { count })}</p>
+      {count === 0 ? (
+        <p className="text-muted-foreground text-sm">{t("noChangesYet")}</p>
+      ) : (
+        <ChangedFieldChips changes={changes} />
+      )}
     </div>
   );
 }
