@@ -272,6 +272,10 @@ describe("CirclePage", () => {
     expect(screen.getByText("Bas: Who has the Wasgij?")).toBeTruthy();
     expect(screen.getByText("You: Me too!")).toBeTruthy();
     expect(screen.queryByText(en.circles.page.chatEmpty)).toBeNull();
+    // The preview quotes the group chat: it stays out of PostHog capture.
+    expect(
+      screen.getByText("Bas: Who has the Wasgij?").closest(".ph-no-capture"),
+    ).not.toBeNull();
   });
 
   it("collapses a blocked member's message to the placeholder, never its text", () => {

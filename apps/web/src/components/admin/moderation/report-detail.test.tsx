@@ -94,6 +94,8 @@ describe("ReportDetail", () => {
     const current = document.querySelector('li[aria-current="true"]');
     expect(current?.textContent).toContain("Get lost");
     expect(current?.textContent).toContain("Otto (otto@example.com)");
+    // The evidence quotes private messages: the drawer stays out of PostHog capture.
+    expect(current?.closest(".ph-no-capture")).not.toBeNull();
   });
 
   it("shows an evidence message removed by a moderator as removed, never its body", () => {

@@ -77,7 +77,9 @@ export function ReportDetail({ report }: { report: ReportDetailView }) {
   const reportedTextId = useId();
 
   return (
-    <div className="flex flex-col gap-5">
+    // ph-no-capture: the drawer quotes private messages, the reporter's own
+    // words and the notifier's email; none of it goes to PostHog.
+    <div className="ph-no-capture flex flex-col gap-5">
       <dl className="grid grid-cols-2 gap-4 text-sm">
         <Meta label={t("reason")}>{tReasons(report.reason)}</Meta>
         <Meta label={t("targetKind")}>{t(`kinds.${report.targetKind}`)}</Meta>
