@@ -11,6 +11,7 @@ export function OnPageToc({
   className?: string;
 }) {
   const t = useTranslations("marketing.docs");
+  const labelId = React.useId();
   const [active, setActive] = React.useState(headings[0]?.id);
   React.useEffect(() => {
     const obs = new IntersectionObserver(
@@ -27,11 +28,17 @@ export function OnPageToc({
 
   if (headings.length === 0) return null;
   return (
-    <aside className={cn("self-start", className)}>
-      <div className="font-mono text-[11px] font-bold tracking-[.1em] uppercase text-mk-text-muted mb-3.5">
+    <aside aria-labelledby={labelId} className={cn("self-start", className)}>
+      <div
+        id={labelId}
+        className="font-mono text-[11px] font-bold tracking-[.1em] uppercase text-mk-text-muted mb-3.5"
+      >
         {t("onThisPage")}
       </div>
-      <nav className="flex flex-col gap-0.5 border-l border-mk-border">
+      <nav
+        aria-labelledby={labelId}
+        className="flex flex-col gap-0.5 border-l border-mk-border"
+      >
         {headings.map((h) => (
           <a
             key={h.id}

@@ -4079,6 +4079,7 @@
       "breadcrumbRoot": "Documentatie",
       "pagerPrevious": "Vorige",
       "pagerNext": "Volgende",
+      "pagerLabel": "Vorige en volgende pagina",
       "mobileNavButton": "Documentatie<sr> (navigatie openen)</sr>",
       "mobileSearch": "Documentatie zoeken",
       "helpfulQuestion": "Was deze pagina nuttig?",
