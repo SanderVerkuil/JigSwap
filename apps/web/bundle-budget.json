@@ -4,6 +4,9 @@
     "three.js": "isWebGLRenderer",
     "the rapier physics engine": "RigidBodyDesc"
   },
+  "documents": {
+    "maxInlineScriptKB": 64
+  },
   "routes": {
     "__root__": {
       "jsGzKB": 266,

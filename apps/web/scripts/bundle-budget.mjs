@@ -7,8 +7,12 @@
 // the route needs on first load (its manifest chain plus the root stylesheet)
 // and fails when either is more than `tolerance` over budget. It also fails when
 // any route preloads a chunk containing a `forbiddenInInitial` marker (three.js,
-// the physics engine), which must only load on idle or on request. Raising a
-// budget is a reviewed edit to bundle-budget.json, normally via --update.
+// the physics engine), which must only load on idle or on request, and when a
+// prerendered document carries an inline script above
+// `documents.maxInlineScriptKB` (the dehydrated router state; the message
+// catalog must stay out of it). It reports the message catalogs' gzip size,
+// fetched on every first visit. Raising a budget is a reviewed edit to
+// bundle-budget.json, normally via --update.
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -18,6 +22,7 @@ import {
   findForbiddenInitial,
   measureRoutes,
   nextBudget,
+  oversizedDocuments,
 } from "./bundle-budget-core.mjs";
 
 const appDir = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -95,6 +100,48 @@ for (const hit of forbidden) {
   );
 }
 
+// Prerendered documents (the docs): their inline scripts are the dehydrated
+// router state that every SSR page carries too.
+let documentProblems = 0;
+if (budget.documents) {
+  const { maxInlineScriptKB } = budget.documents;
+  const htmlFiles = fs
+    .readdirSync(publicDir, { recursive: true, encoding: "utf8" })
+    .filter((file) => file.endsWith(".html"));
+  const documents = htmlFiles.map((file) => ({
+    file,
+    html: fs.readFileSync(path.join(publicDir, file), "utf8"),
+  }));
+  const oversized = oversizedDocuments(documents, maxInlineScriptKB);
+  const [largest] = oversizedDocuments(documents, 0);
+  console.log(
+    `Prerendered documents: ${htmlFiles.length}, none may inline a script above ${maxInlineScriptKB} KB` +
+      (largest ? ` (largest: ${largest.inlineKB} KB, ${largest.file}).` : "."),
+  );
+  if (htmlFiles.length === 0) {
+    documentProblems++;
+    console.error(
+      "  OVER no prerendered .html in .output/public; the inline-script guard has nothing to check",
+    );
+  }
+  for (const doc of oversized) {
+    documentProblems++;
+    console.error(
+      `  OVER ${doc.file} inlines a ${doc.inlineKB} KB script; keep messages and other bulk out of the dehydrated state`,
+    );
+  }
+}
+
+// Fetched (and then cached) on every first visit, so worth watching.
+const catalogs = fs
+  .readdirSync(path.join(publicDir, "assets"))
+  .filter((file) => /^(en|nl)-[\w-]+\.json$/.test(file))
+  .map(
+    (file) =>
+      `${file} ${Math.round((gzipSize(`/assets/${file}`) / 1024) * 10) / 10} KB gz`,
+  );
+console.log(`Message catalogs: ${catalogs.join(", ") || "none found"}`);
+
 if (update) {
   const next = nextBudget(budget, measured);
   fs.writeFileSync(budgetFile, `${JSON.stringify(next, null, 2)}\n`);
@@ -103,12 +150,15 @@ if (update) {
     fail("a budgeted route is missing from the build; rename or remove it");
   }
   if (forbidden.length) fail("a route preloads a forbidden chunk");
+  if (documentProblems)
+    fail("a prerendered document is over its inline-script cap");
 } else {
   const over = rows.filter((row) => row.over);
-  if (over.length || forbidden.length) {
+  if (over.length || forbidden.length || documentProblems) {
     fail(
-      `${over.length} budget(s) exceeded, ${forbidden.length} forbidden chunk(s) preloaded. ` +
-        "Shrink the route, or accept the new weight with `pnpm --filter @jigswap/web bundle:check --update` in a reviewed commit.",
+      `${over.length} budget(s) exceeded, ${forbidden.length} forbidden chunk(s) preloaded, ` +
+        `${documentProblems} document problem(s). ` +
+        "Shrink the route or document, or accept a new route weight with `pnpm --filter @jigswap/web bundle:check --update` in a reviewed commit (the inline-script cap is a hand edit).",
     );
   }
 }

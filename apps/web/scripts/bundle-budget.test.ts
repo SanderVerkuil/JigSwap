@@ -3,8 +3,10 @@ import {
   compareToBudget,
   findForbiddenInitial,
   initialAssets,
+  largestInlineScriptBytes,
   measureRoutes,
   nextBudget,
+  oversizedDocuments,
 } from "./bundle-budget-core.mjs";
 
 // The shape of TanStack Start's build manifest: each route lists the JS it
@@ -172,5 +174,49 @@ describe("nextBudget", () => {
         __root__: { jsGzKB: 151, cssGzKB: 30 },
       },
     });
+  });
+});
+
+describe("largestInlineScriptBytes", () => {
+  it("measures the biggest inline script in bytes, ignoring scripts with a src", () => {
+    const html = [
+      "<html><head>",
+      '<script type="module" src="/assets/index.js"></script>',
+      '<script src="/assets/big.js">ignored body</script>',
+      "<script>self.$R=[]</script>",
+      '<SCRIPT class="$tsr">$_TSR.router={"locale":"nl","x":"é"}</SCRIPT>',
+      "</head><body></body></html>",
+    ].join("");
+    expect(largestInlineScriptBytes(html)).toBe(
+      new TextEncoder().encode('$_TSR.router={"locale":"nl","x":"é"}').length,
+    );
+  });
+
+  it("is zero for a document without inline scripts", () => {
+    expect(largestInlineScriptBytes('<script src="/a.js"></script>')).toBe(0);
+  });
+});
+
+describe("oversizedDocuments", () => {
+  const doc = (file: string, bytes: number) => ({
+    file,
+    html: `<script>${"x".repeat(bytes)}</script>`,
+  });
+
+  it("flags the documents whose largest inline script is above the cap, largest first", () => {
+    expect(
+      oversizedDocuments(
+        [
+          doc("docs/index.html", 4 * KB),
+          doc("docs/a/index.html", 64 * KB),
+          doc("docs/b/index.html", 200 * KB),
+          doc("docs/c/index.html", 64 * KB + 103),
+        ],
+        64,
+      ),
+    ).toEqual([
+      { file: "docs/b/index.html", inlineKB: 200 },
+      { file: "docs/c/index.html", inlineKB: 64.1 },
+    ]);
   });
 });

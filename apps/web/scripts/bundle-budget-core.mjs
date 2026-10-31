@@ -7,7 +7,8 @@
  * @typedef {Record<string, ManifestRoute>} ManifestRoutes
  * @typedef {{ files: number; jsGzKB: number; cssGzKB: number }} RouteWeight
  * @typedef {{ jsGzKB: number; cssGzKB: number }} RouteBudget
- * @typedef {{ tolerance: number; forbiddenInInitial?: Record<string, string>; routes: Record<string, RouteBudget> }} Budget
+ * @typedef {{ maxInlineScriptKB: number }} DocumentBudget
+ * @typedef {{ tolerance: number; forbiddenInInitial?: Record<string, string>; documents?: DocumentBudget; routes: Record<string, RouteBudget> }} Budget
  * @typedef {{ route: string; metric: string; budgetKB: number | null; actualKB: number | null; limitKB: number | null; over: boolean }} BudgetRow
  */
 
@@ -126,6 +127,39 @@ export function findForbiddenInitial(routes, { markers, contentOf }) {
     }
   }
   return hits;
+}
+
+/**
+ * Bytes of the largest inline <script> in an HTML document; scripts with a
+ * src don't count. Start dehydrates the router state (root context, loader
+ * data) into inline scripts, so a page carrying far more than usual means
+ * something large, such as the message catalog, is back in that state.
+ * @param {string} html
+ * @returns {number}
+ */
+export function largestInlineScriptBytes(html) {
+  let largest = 0;
+  for (const [, attributes, body] of html.matchAll(
+    /<script\b([^>]*)>([\s\S]*?)<\/script>/gi,
+  )) {
+    if (/\bsrc\s*=/i.test(attributes)) continue;
+    largest = Math.max(largest, new TextEncoder().encode(body).length);
+  }
+  return largest;
+}
+
+/**
+ * Documents whose largest inline script is above `maxKB`, largest first.
+ * @param {{ file: string; html: string }[]} documents
+ * @param {number} maxKB
+ * @returns {{ file: string; inlineKB: number }[]}
+ */
+export function oversizedDocuments(documents, maxKB) {
+  return documents
+    .map(({ file, html }) => ({ file, bytes: largestInlineScriptBytes(html) }))
+    .filter(({ bytes }) => bytes > maxKB * 1024)
+    .sort((a, b) => b.bytes - a.bytes)
+    .map(({ file, bytes }) => ({ file, inlineKB: toKB(bytes) }));
 }
 
 /**
