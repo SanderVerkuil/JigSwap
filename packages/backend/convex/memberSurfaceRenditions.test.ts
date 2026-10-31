@@ -221,6 +221,18 @@ const SUMMARY_READS: [string, SummaryRead][] = [
     },
   ],
   [
+    // The member's own not-yet-approved submission (the "Your submissions" cards on the add page).
+    "catalog.listMyContributedPuzzles",
+    async (t, s) => {
+      await t.run((ctx) => ctx.db.patch(s.puzzleId, { status: "pending" }));
+      const response = await asAlice(t).query(
+        api.catalog.listMyContributedPuzzles.listMyContributedPuzzles,
+        {},
+      );
+      return { card: one(response), response };
+    },
+  ],
+  [
     "catalog.lookupPuzzleByBarcode",
     async (t) => {
       const response = await asAlice(t).query(
