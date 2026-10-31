@@ -603,6 +603,15 @@ export const gateway = {
     deleteCircle: api.sharing.deleteCircle.deleteCircle,
     changePermission: api.sharing.changePermission.changePermission,
     shareCopyToCircle: api.sharing.shareCopyToCircle.shareCopyToCircle,
+    // Managing your own shares: share a selection of your copies at once (all or nothing, at most
+    // 100), take one back (owner only, whatever the seat), which of your copies are shared in a
+    // circle (members only), and where one of your copies is shared (owner only, else null).
+    shareCopiesToCircle: api.sharing.shareCopiesToCircle.shareCopiesToCircle,
+    unshareCopyFromCircle:
+      api.sharing.unshareCopyFromCircle.unshareCopyFromCircle,
+    myCircleShareState:
+      api.sharing.listMyCircleShareState.listMyCircleShareState,
+    copyCircleShares: api.sharing.getCopyCircleShares.getCopyCircleShares,
     myCircles: api.sharing.listMyCircles.listMyCircles,
     circle: api.sharing.getCircle.getCircle,
     // The circle page's shared puzzles: members only (CircleNotFound otherwise), canViewCopy per
