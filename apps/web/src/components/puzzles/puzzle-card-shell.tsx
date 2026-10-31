@@ -189,7 +189,8 @@ export function PuzzleCardShell({
         )}
         <div className="flex flex-wrap items-center gap-2 mb-2">
           <Badge variant="secondary" className="text-xs">
-            {format.number(puzzle.pieceCount ?? 0)} {t("pieces")}
+            {format.number(puzzle.pieceCount ?? 0)}{" "}
+            {t("pieces", { count: puzzle.pieceCount ?? 0 })}
           </Badge>
           {puzzle.difficulty && (
             <Badge

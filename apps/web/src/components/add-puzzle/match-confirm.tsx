@@ -21,7 +21,8 @@ export function MatchConfirm({
         <strong>
           {match.title}
           {match.brand ? ` · ${match.brand}` : ""} ·{" "}
-          {format.number(match.pieceCount)} {t("pieces")}
+          {format.number(match.pieceCount)}{" "}
+          {t("pieces", { count: match.pieceCount })}
         </strong>{" "}
         {t("matchFoundTail")}
       </span>

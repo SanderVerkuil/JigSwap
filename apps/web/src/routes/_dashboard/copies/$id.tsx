@@ -446,7 +446,7 @@ function CopyInstanceDetail({
             <span className="font-mono">
               {format.number(snapshot.pieceCount)}
             </span>{" "}
-            {tPuzzles("pieces")}
+            {tPuzzles("pieces", { count: snapshot.pieceCount })}
             {/* Only when the definition page would open for this viewer (not for a definition that
                 is no longer approved, unless they submitted it or are an admin). Hidden only on an
                 explicit false: web can deploy before the backend that sends the field, and an

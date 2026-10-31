@@ -53,10 +53,10 @@ export function LivePreviewCard(props: LivePreviewProps) {
               <span className="font-semibold">
                 {format.number(props.pieceCount)}
               </span>{" "}
-              {t("pieces")}
+              {t("pieces", { count: props.pieceCount })}
             </>
           ) : (
-            `— ${t("pieces")}`
+            `— ${t("pieces", { count: 0 })}`
           )}
         </span>
         {props.difficulty && (
@@ -85,10 +85,13 @@ export function AddPuzzleSummary({
   offers?: ReadonlyArray<string>;
 }) {
   const t = useTranslations("puzzles");
+  const format = useFormatter();
   if (!title.trim()) return null;
   const details = [
     brand,
-    pieceCount != null ? `${pieceCount} ${t("pieces")}` : "",
+    pieceCount != null
+      ? `${format.number(pieceCount)} ${t("pieces", { count: pieceCount })}`
+      : "",
     ...offers,
   ].filter((d) => d.length > 0);
   return (

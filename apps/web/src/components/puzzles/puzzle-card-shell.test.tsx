@@ -176,13 +176,16 @@ describe("PuzzleCardShell density", () => {
 });
 
 describe("PuzzleCardShell piece count", () => {
-  // The count follows the app locale, never the server's or browser's (UX-63).
+  // The count follows the app locale, never the server's or browser's (UX-63), and the
+  // word agrees with it: Dutch says "stukje"/"stukjes", never "stukken" (UX-65).
   it.each([
-    ["en", "1,000"],
-    ["nl", "1.000"],
+    ["en", 1000, "1,000 pieces"],
+    ["nl", 1000, "1.000 stukjes"],
+    ["en", 1, "1 piece"],
+    ["nl", 1, "1 stukje"],
   ] as const)(
-    "formats the piece count with the %s app locale",
-    (locale, expected) => {
+    "labels the %s piece count %s as %s",
+    (locale, pieceCount, expected) => {
       const html = renderToStaticMarkup(
         <IntlProvider
           locale={locale}
@@ -190,12 +193,11 @@ describe("PuzzleCardShell piece count", () => {
           messages={locale === "nl" ? nl : en}
         >
           <PuzzleViewProvider viewMode="grid">
-            <PuzzleCardShell puzzle={puzzle({ pieceCount: 1000 })} />
+            <PuzzleCardShell puzzle={puzzle({ pieceCount })} />
           </PuzzleViewProvider>
         </IntlProvider>,
       );
-      const label = locale === "nl" ? nl.puzzles.pieces : en.puzzles.pieces;
-      expect(html).toContain(`${expected} ${label}`);
+      expect(html).toContain(`>${expected}<`);
     },
   );
 });

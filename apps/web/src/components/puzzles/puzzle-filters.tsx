@@ -18,7 +18,7 @@ import type { Locale } from "@/lib/i18n";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
-import { useLocale, useTranslations } from "use-intl";
+import { useFormatter, useLocale, useTranslations } from "use-intl";
 import { categoryOptions } from "./category-options";
 
 interface Filters {
@@ -146,6 +146,7 @@ export function PuzzleFilters({
 }: PuzzleFiltersProps) {
   const t = useTranslations("puzzles.puzzles");
   const tPuzzles = useTranslations("puzzles");
+  const format = useFormatter();
 
   // Each read drives only its own control: a failing or slow one must not hold up the others.
   const brands = useQuery(convexQuery(gateway.catalog.allBrands, {}));
@@ -161,7 +162,7 @@ export function PuzzleFilters({
 
   const pieceOptions = COMMON_PIECE_COUNTS.map((count) => ({
     value: count.toString(),
-    label: `${count} ${tPuzzles("pieces")}`,
+    label: `${format.number(count)} ${tPuzzles("pieces", { count })}`,
   }));
 
   const updateFilter = (key: keyof Filters, value: string | string[]) => {

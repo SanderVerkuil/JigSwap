@@ -150,7 +150,7 @@ export function CataloguePickerView({
                       {[
                         row.brand,
                         row.pieceCount &&
-                          `${format.number(row.pieceCount)} ${tp("pieces")}`,
+                          `${format.number(row.pieceCount)} ${tp("pieces", { count: row.pieceCount })}`,
                       ]
                         .filter(Boolean)
                         .join(" · ")}

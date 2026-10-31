@@ -45,7 +45,8 @@ export function PuzzleDetailInfo({
                 Piece Count
               </p>
               <p className="text-lg">
-                {puzzle.puzzle.pieceCount} {t("pieces")}
+                {format.number(puzzle.puzzle.pieceCount)}{" "}
+                {t("pieces", { count: puzzle.puzzle.pieceCount })}
               </p>
             </div>
             {puzzle.puzzle.difficulty && (

@@ -6,7 +6,8 @@ import nl from "../../../locales/nl.json";
 import { LivePreviewCard } from "./live-preview-card";
 import { MatchConfirm } from "./match-confirm";
 
-// The add-puzzle preview and the import match show piece counts in the app locale (UX-63).
+// The add-puzzle preview and the import match show piece counts in the app locale (UX-63),
+// with the plural piece word (UX-65).
 const catalogs = { en, nl } as const;
 const html = (locale: keyof typeof catalogs, node: React.ReactNode) =>
   renderToStaticMarkup(
@@ -22,11 +23,9 @@ const html = (locale: keyof typeof catalogs, node: React.ReactNode) =>
 const noop = () => {};
 
 describe.each([
-  ["en", "1,000"],
-  ["nl", "1.000"],
+  ["en", "1,000 pieces"],
+  ["nl", "1.000 stukjes"],
 ] as const)("piece counts in %s", (locale, expected) => {
-  const pieces = catalogs[locale].puzzles.pieces;
-
   it("formats the live preview's count", () => {
     const text = html(
       locale,
@@ -37,7 +36,7 @@ describe.each([
         available={false}
       />,
     );
-    expect(text).toContain(`${expected} ${pieces}`);
+    expect(text).toContain(expected);
   });
 
   it("formats the imported match's count", () => {
@@ -49,6 +48,6 @@ describe.each([
         onIgnore={noop}
       />,
     );
-    expect(text).toContain(`${expected} ${pieces}`);
+    expect(text).toContain(expected);
   });
 });

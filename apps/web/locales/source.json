@@ -340,7 +340,7 @@
     "description": "Description",
     "brand": "Brand",
     "pieceCount": "Piece Count",
-    "pieces": "pieces",
+    "pieces": "{count, plural, one {piece} other {pieces}}",
     "difficulty": "Difficulty",
     "condition": "Condition",
     "category": "Category",
@@ -880,7 +880,7 @@
     "title": "Request this puzzle",
     "description": "Send {name} a request for this copy.",
     "ownedBy": "Owned by {name}",
-    "pieces": "{count} pieces",
+    "pieces": "{count, plural, one {# piece} other {# pieces}}",
     "typeLabel": "Exchange type",
     "types": {
       "trade": "Swap",
@@ -981,7 +981,7 @@
   },
   "copyConversation": {
     "title": "Message {name}",
-    "pieces": "{count} pieces",
+    "pieces": "{count, plural, one {# piece} other {# pieces}}",
     "placeholder": "Write a message about this puzzle…",
     "firstMessageHint": "Your conversation starts when you send the first message.",
     "self": "This is your own puzzle.",
@@ -2666,7 +2666,7 @@
       "minutesValue": "{minutes} min",
       "daysValue": "{days, plural, one {# day} other {# days}}",
       "daysHoursValue": "{days}d {hours}h",
-      "piecesValue": "{count, number} pieces",
+      "piecesValue": "{count, plural, one {# piece} other {# pieces}}",
       "privateBody": "This shelf is private — {name} shares their puzzles, completions and story with approved followers only.",
       "signUpToFollow": "Sign up to request to follow",
       "ctaTitle": "Love puzzles too?",
@@ -4784,7 +4784,7 @@
     "moderation": {
       "loading": "Loading submissions…",
       "empty": "No pending submissions.",
-      "pieces": "{count} pieces",
+      "pieces": "{count, plural, one {# piece} other {# pieces}}",
       "reject": "Reject",
       "error": "Failed to update submission",
       "toast": {
@@ -5306,7 +5306,7 @@
       "searchLabel": "Search puzzle definitions",
       "statusFilter": "Filter puzzle definitions by status",
       "allStatuses": "All",
-      "pieces": "{count} pieces",
+      "pieces": "{count, plural, one {# piece} other {# pieces}}",
       "submittedBy": "by {name}",
       "ownerCount": "{count, plural, one {# owner} other {# owners}}",
       "imageMissing": "Box art missing",

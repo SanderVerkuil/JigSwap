@@ -392,7 +392,7 @@ describe("on phones and tablets", () => {
 
     const summary = screen.getByTestId("add-summary");
     expect(summary.textContent).toContain("Café");
-    expect(summary.textContent).toContain("1000 pieces");
+    expect(summary.textContent).toContain("1,000 pieces");
     expect(summary.textContent).toContain("For Trade");
     const submit = screen.getByRole("button", { name: "Add Puzzle" });
     expect(

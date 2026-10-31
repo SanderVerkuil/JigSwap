@@ -279,14 +279,13 @@ describe("CataloguePickerView", () => {
 
   // The piece count follows the app locale, like every other number (UX-63).
   it.each([
-    ["en", "1,000"],
-    ["nl", "1.000"],
+    ["en", "1,000 pieces"],
+    ["nl", "1.000 stukjes"],
   ] as const)("formats a row's piece count in %s", (locale, expected) => {
     const els = render({ term: "puzzle", rows: [row("a")] }, locale);
-    const messages = locale === "en" ? en : nl;
     const label = locale === "en" ? "Add Puzzle a" : "Puzzle a toevoegen";
     const [addA] = byLabel(els, label);
-    expect(text(addA)).toContain(`${expected} ${messages.puzzles.pieces}`);
+    expect(text(addA)).toContain(expected);
   });
 });
 

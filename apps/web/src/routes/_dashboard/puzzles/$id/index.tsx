@@ -235,7 +235,7 @@ function PuzzleDefinitionDetail({
             <span className="font-mono">
               {format.number(definition.pieceCount)}
             </span>{" "}
-            {tPuzzles("pieces")}
+            {tPuzzles("pieces", { count: definition.pieceCount })}
           </p>
 
           {/* Rating + difficulty + topics */}
