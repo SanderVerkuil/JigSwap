@@ -1,6 +1,5 @@
 import presenceTest from "@convex-dev/presence/test";
 import { convexTest, type TestConvex } from "convex-test";
-import { ConvexError } from "convex/values";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -11,7 +10,6 @@ import {
   HEARTBEAT_LOG_SAMPLE_RATE,
   MESSAGES_ROOM,
   presence,
-  PRESENCE_ROOMS,
 } from "./presence";
 import schema from "./schema";
 import { INVISIBLE_VIEWERS_SEE_OTHERS } from "./social/getPresenceOf";
@@ -416,30 +414,121 @@ describe("presence heartbeat rooms", () => {
     expect(heartbeatLines(log)).toEqual([]);
   });
 
-  test("refuses heartbeats past the per-member limit, generically", async () => {
-    const t = setup();
-    const alice = await seedMember(t, "alice");
-    const bob = await seedMember(t, "bob");
-    const { max } = RATE_LIMITS.presenceHeartbeat;
-    for (let i = 0; i < max; i++) {
-      await heartbeat(
+  describe("past the per-member limit", () => {
+    // Alice and Bob are sharing mutual followers; Alice has spent her whole heartbeat budget on
+    // the messages room (the bucket is shared by every room), which getPresenceOf never reads.
+    const exhausted = async () => {
+      const t = setup();
+      const alice = await seedMember(t, "alice");
+      const bob = await seedMember(t, "bob");
+      await mutual(t, alice, bob);
+      await share(t, "alice");
+      await share(t, "bob");
+      for (let i = 0; i < RATE_LIMITS.presenceHeartbeat.max; i++) {
+        await heartbeat(t, "alice", alice, MESSAGES_ROOM);
+      }
+      return { t, alice, bob };
+    };
+
+    const aliceRooms = (t: T, alice: Id<"users">) =>
+      t.run(async (ctx) =>
+        (await presence.listUser(ctx, alice as string, false))
+          .map((room) => room.roomId)
+          .sort(),
+      );
+
+    const heartbeatCount = (t: T, alice: Id<"users">) =>
+      t.run(
+        async (ctx) =>
+          (
+            await ctx.db
+              .query("rateLimits")
+              .withIndex("by_key", (q) =>
+                q.eq("key", `presenceHeartbeat:${alice}`),
+              )
+              .unique()
+          )?.count,
+      );
+
+    test("a heartbeat is skipped quietly, not thrown at the page", async () => {
+      const { t, alice } = await exhausted();
+      // The stock usePresence hook fires heartbeats with no catch, so a throw here would surface
+      // as an uncaught page error. Empty tokens read as "no session" to the hook.
+      await expect(
+        heartbeat(t, "alice", alice, APP_ONLINE_ROOM),
+      ).resolves.toEqual({ roomToken: "", sessionToken: "" });
+    });
+
+    test("the skipped heartbeat opens no session and spends no budget", async () => {
+      const { t, alice } = await exhausted();
+      const max = RATE_LIMITS.presenceHeartbeat.max;
+      expect(await heartbeatCount(t, alice)).toBe(max);
+      await heartbeat(t, "alice", alice, APP_ONLINE_ROOM);
+      expect(await aliceRooms(t, alice)).toEqual([MESSAGES_ROOM]);
+      expect(await presenceOf(t, "bob", [alice])).toEqual([]);
+      expect(await heartbeatCount(t, alice)).toBe(max);
+    });
+
+    test("the refusal is still logged as a rate-limit refusal", async () => {
+      const { t, alice } = await exhausted();
+      const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+      await heartbeat(t, "alice", alice, APP_ONLINE_ROOM);
+      const refusals = errors.mock.calls
+        .map(([line]) => String(line))
+        .filter((line) => line.includes('"rateLimit.refused"'));
+      expect(refusals).toHaveLength(1);
+      expect(JSON.parse(refusals[0] ?? "{}")).toMatchObject({
+        event: "rateLimit.refused",
+        limit: "presenceHeartbeat",
+      });
+    });
+
+    test("the room, interval and session checks still run first", async () => {
+      const { t, alice } = await exhausted();
+      await expect(heartbeat(t, "alice", alice, "app:busy")).rejects.toThrow(
+        /Unknown presence room/,
+      );
+      await expect(
+        as(t, "alice").mutation(api.presence.heartbeat, {
+          roomId: APP_ONLINE_ROOM,
+          userId: alice as string,
+          sessionId: "session-alice",
+          interval: 1,
+        }),
+      ).rejects.toThrow(/Invalid presence interval/);
+    });
+
+    test("another member is unaffected", async () => {
+      const { t, bob } = await exhausted();
+      const { sessionToken } = await heartbeat(t, "bob", bob, APP_ONLINE_ROOM);
+      expect(sessionToken).not.toBe("");
+      expect(await presenceOf(t, "alice", [bob])).toEqual([
+        { memberId: bob, status: "online" },
+      ]);
+    });
+
+    test("the next heartbeat in a new window goes through again", async () => {
+      const { t, alice } = await exhausted();
+      await heartbeat(t, "alice", alice, APP_ONLINE_ROOM);
+      // Open a fresh window by ageing the member's rate-limit row past it.
+      await t.run(async (ctx) => {
+        const row = await ctx.db
+          .query("rateLimits")
+          .withIndex("by_key", (q) => q.eq("key", `presenceHeartbeat:${alice}`))
+          .unique();
+        if (row) await ctx.db.patch(row._id, { windowStart: 0 });
+      });
+      const { sessionToken } = await heartbeat(
         t,
         "alice",
         alice,
-        PRESENCE_ROOMS[i % 3] ?? MESSAGES_ROOM,
+        APP_ONLINE_ROOM,
       );
-    }
-    const refused = await heartbeat(t, "alice", alice, APP_ONLINE_ROOM).then(
-      () => null,
-      (error: unknown) => error,
-    );
-    expect(refused).toBeInstanceOf(ConvexError);
-    expect((refused as ConvexError<{ code: string }>).data.code).toBe(
-      "RateLimited",
-    );
-    expect(String((refused as Error).message)).not.toContain(alice as string);
-    // Per member: someone else is unaffected.
-    await heartbeat(t, "bob", bob, APP_ONLINE_ROOM);
+      expect(sessionToken).not.toBe("");
+      expect(await presenceOf(t, "bob", [alice])).toEqual([
+        { memberId: alice, status: "online" },
+      ]);
+    });
   });
 });
 
