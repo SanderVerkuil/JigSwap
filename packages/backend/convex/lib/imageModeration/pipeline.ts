@@ -65,13 +65,13 @@ import { findMetadata, stripImageMetadata } from "./stripMetadata";
 //      comments, PNG text chunks, WebP EXIF/XMP, Orientation included) and re-encode that in
 //      memory via jimp, turned upright for the Orientation the Exif held and scaled down to
 //      1600 px on its long edge (normaliseImage.MAX_REENCODE_EDGE, as the web client sends
-//      photos) — PNG when it has transparency, else JPEG — plus the blurhash. Every format is re-encoded, WebP included
-//      (decoded by the WASM decoder, normaliseImage): what is stored is always the encoder's
-//      output, never the container as uploaded, so no chunk the stripper keeps (a WebP's ICCP or
-//      a frame's nested chunks) reaches storage. A malformed block structure or a decode failure
-//      is refused as "decode_failed". Whatever is stored must be within the upload limit
-//      ("too_large") and show no metadata left (findMetadata, run on the encoder's output), or
-//      it is refused too.
+//      photos) — PNG when it has transparency, else JPEG — plus the blurhash. Every format is
+//      re-encoded, WebP included (decoded by the WASM decoder, normaliseImage): what is stored
+//      is always the encoder's output, never the container as uploaded, so no chunk the
+//      stripper keeps (a WebP's ICCP or a frame's nested chunks) reaches storage. A malformed
+//      block structure or a decode failure is refused as "decode_failed". Whatever is stored
+//      must be within the upload limit ("too_large") and show no metadata left (findMetadata,
+//      run on the encoder's output), or it is refused too.
 //   3. CSAM hash check (lib/imageModeration/csamHashCheck), until the row has passed one: MD5 +
 //      SHA-1 of the ORIGINAL bytes (what hash lists match) and of the re-encode (what is stored,
 //      upright), BEFORE any refusal, swap or classification. A match stores the matched bytes

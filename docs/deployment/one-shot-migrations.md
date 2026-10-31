@@ -474,7 +474,7 @@ Orientation included) and turned upright, the same way new uploads are
   transparency, else JPEG (there is no WebP encoder on the server), and the new blob gets
   the matching content type. Box art cleaned by an earlier `sanitizeBoxArt` that kept an
   Orientation-only Exif block counts as carrying metadata, so it is turned upright too.
-- An image that needs turning but is over the upload limits (10 MB, 12.2 MP; see
+- An image that needs turning but is over the upload limits (10 MB, 12.54 MP; see
   `lib/imageModeration/guards`) or does not decode is still stripped at byte level (its GPS
   matters more than its rotation), just not turned; it then shows sideways.
 

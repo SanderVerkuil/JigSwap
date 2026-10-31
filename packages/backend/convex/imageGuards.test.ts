@@ -348,18 +348,25 @@ describe("readImageDimensions", () => {
 
 describe("checkImageBytes", () => {
   test("accepts a supported image within the pixel budget", () => {
-    // A 12 MP phone photo (4:2:0), and an image of exactly MAX_IMAGE_PIXELS.
+    // 12 MP phone photos (4:2:0): an iPhone's 4032 x 3024 and a Pixel's 4080 x 3072, and an
+    // image of exactly MAX_IMAGE_PIXELS.
     expect(checkImageBytes(jpegHeader(4032, 3024))).toEqual({
       ok: true,
       format: "jpeg",
       width: 4032,
       height: 3024,
     });
-    expect(checkImageBytes(pngHeader(4000, 3050))).toEqual({
+    expect(checkImageBytes(jpegHeader(4080, 3072))).toEqual({
+      ok: true,
+      format: "jpeg",
+      width: 4080,
+      height: 3072,
+    });
+    expect(checkImageBytes(pngHeader(4000, 3135))).toEqual({
       ok: true,
       format: "png",
       width: 4000,
-      height: 3050,
+      height: 3135,
     });
   });
 
@@ -374,14 +381,14 @@ describe("checkImageBytes", () => {
     });
   });
 
-  test("refuses a decompression bomb from the header alone (> 12.2 MP)", () => {
-    // Measured: re-encoding a 12.2 MP image peaks under 512 MiB; a 25 MP one does not (SEC-18).
-    expect(MAX_IMAGE_PIXELS).toBe(12_200_000);
-    // 4067 x 3000 is just over the budget; the file itself is a few dozen bytes. So is the
+  test("refuses a decompression bomb from the header alone (> 12.54 MP)", () => {
+    // Measured: re-encoding a 12.54 MP image peaks under 512 MiB; a 25 MP one does not (SEC-18).
+    expect(MAX_IMAGE_PIXELS).toBe(12_540_000);
+    // 4181 x 3000 is just over the budget; the file itself is a few dozen bytes. So is the
     // review's 5000 x 5000 JPEG, which was OOM-killed on every attempt.
     for (const bomb of [
-      pngHeader(4067, 3000),
-      jpegHeader(4067, 3000),
+      pngHeader(4181, 3000),
+      jpegHeader(4181, 3000),
       jpegHeader(5000, 5000),
       gifHeader(65535, 65535),
       webpVp8x(16383, 16383),
@@ -406,16 +413,16 @@ describe("checkImageBytes", () => {
   // can meet, and refuses a JPEG in which it could meet two (SEC-18).
   describe("a JPEG is bounded by the blocks its one frame header makes the decoder allocate", () => {
     test("a 4:4:4 frame needs twice the blocks of a 4:2:0 one of the same size", () => {
-      expect(MAX_JPEG_BLOCKS).toBe(292_000);
+      expect(MAX_JPEG_BLOCKS).toBe(296_000);
       expect(
         checkImageBytes(jpegOf(sof(4032, 3024, [0x11, 0x11, 0x11]))),
       ).toEqual({ ok: false, reason: "too_many_pixels" });
       expect(
         checkImageBytes(jpegOf(sof(2880, 2160, [0x11, 0x11, 0x11]))),
       ).toEqual({ ok: true, format: "jpeg", width: 2880, height: 2160 });
-      // Four components (CMYK) at 4:4:4.
+      // Four components (CMYK) at 4:4:4: 2520 x 1880 needs 296,100 blocks.
       expect(
-        checkImageBytes(jpegOf(sof(2496, 1872, [0x11, 0x11, 0x11, 0x11]))),
+        checkImageBytes(jpegOf(sof(2520, 1880, [0x11, 0x11, 0x11, 0x11]))),
       ).toEqual({ ok: false, reason: "too_many_pixels" });
     });
 

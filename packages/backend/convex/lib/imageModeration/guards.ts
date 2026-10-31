@@ -13,17 +13,22 @@
 //
 // Memory: a Node action has 512 MiB, and a decode that runs past it kills the attempt before
 // anything is refused, so the upload is retried and crashes again. MAX_IMAGE_PIXELS and
-// MAX_JPEG_BLOCKS come from measuring the pipeline's decode, re-encode and blurhash (Node 26,
-// jimp 1.6.1, 2026-10-30) as the smallest cgroup (no swap) each image completes in:
-//   JPEG 4:2:0 4032x3024 (285,768 blocks)  373 MiB   the largest accepted; 8 MP 268, 14 MP 436
-//   JPEG 4:2:0 5000x5000                   OOM-killed at 512 MiB, now refused
-//   JPEG 4:4:4 4032x3024 (571,536 blocks)  611 MiB   now refused; 4:4:4 2880x2160: 324 MiB
-//   JPEG CMYK 3264x2448                    499 MiB   now refused; CMYK 2488x1872: 317 MiB
-//   JPEG of 779 bytes, 1x65535, 255 components sampled 15x15: 1.4 GiB, now refused
-//   JPEG of 111 bytes, CMYK 64x65535 sampled 4x4 (262,144 blocks): 331 MiB
-//   PNG RGBA 16-bit 4032x3024 324 MiB; WebP lossless 4032x3024 338 MiB; GIF 4032x3024 184 MiB
+// MAX_JPEG_BLOCKS come from measuring the pipeline's decode, scale to 1600 px
+// (normaliseImage.MAX_REENCODE_EDGE), re-encode and blurhash (Node 26, jimp 1.6.1, 2026-10-31)
+// as the smallest cgroup (no swap) each image completes in. "Detailed" is a high-entropy image
+// whose JPEG nearly fills the 10 MB upload limit; "smooth" a plasma fill of a few MB:
+//   JPEG 4:2:0 4080x3072 (293,760 blocks), detailed 9.3 MB   401 MiB  the worst accepted (o=6: 394)
+//   JPEG 4:2:0 4080x3072 smooth 380; 4096x3061 (294,912 blocks) Orientation 6: 380
+//   JPEG 4:2:0 4032x3024 detailed 8.5 MB                      387; WITHOUT the scale 513 (killed)
+//   JPEG 4:2:0 5000x5000                                      OOM-killed at 512 MiB, refused
+//   JPEG 4:4:4 4032x3024 (571,536 blocks)                     611 MiB, refused
+//   JPEG 4:4:4 2896x2176 (295,392 blocks) detailed 345; CMYK 2504x1880 (294,220) detailed 324
+//   JPEG of 779 bytes, 1x65535, 255 components sampled 15x15: 1.4 GiB, refused
+//   JPEG of 111 bytes, CMYK 80x59200 (296,000 blocks): 373 MiB
+//   PNG RGBA 16-bit 4080x3072 331 MiB; WebP lossless 4080x3072 184; GIF 4032x3024 191
 // jpeg-js's memory follows its blocks (about 800 bytes each), not the pixels, so a JPEG is
-// bounded by both. A deployed action carries more than this measurement, hence the headroom.
+// bounded by both; the encoders' memory follows their output, which the scale bounds. A deployed
+// action carries more than this measurement, hence the headroom (111 MiB at the worst).
 //
 // JPEG: jpeg-js (jimp's decoder) allocates the blocks of every frame header it meets, as many as
 // the components and their sampling ask for, whatever the pixel count. A JPEG is accepted only
@@ -59,15 +64,18 @@
 /** Largest accepted upload, in bytes (10 MB). */
 export const MAX_IMAGE_UPLOAD_BYTES = 10 * 1024 * 1024;
 
-/** Largest accepted image, in pixels: 12.2 MP, a 4032 x 3024 phone photo (see the header). */
-export const MAX_IMAGE_PIXELS = 12_200_000;
+/**
+ * Largest accepted image, in pixels: 12.54 MP, a 12 MP phone photo (an iPhone's 4032 x 3024, a
+ * Pixel's 4080 x 3072); see the header.
+ */
+export const MAX_IMAGE_PIXELS = 12_540_000;
 
 /**
  * Most 8x8 blocks jpeg-js may allocate for a JPEG's frame (see jpegHeader): what a 4:2:0 photo
- * of MAX_IMAGE_PIXELS needs (285,768 for 4032 x 3024), with room for MCU padding. A 4:4:4 JPEG
- * fits up to about 6.2 MP, a CMYK one up to about 4.6 MP.
+ * of MAX_IMAGE_PIXELS needs (293,760 for 4080 x 3072), with room for MCU padding. A 4:4:4 JPEG
+ * fits up to about 6.3 MP, a CMYK one up to about 4.7 MP.
  */
-export const MAX_JPEG_BLOCKS = 292_000;
+export const MAX_JPEG_BLOCKS = 296_000;
 
 /**
  * jpeg-js's own cap on what it allocates (its `maxMemoryUsageInMB`, which counts MiB), a backstop

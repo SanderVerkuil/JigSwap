@@ -323,7 +323,7 @@ describe("decodeUpright decodes only what the guards checked", () => {
         maxMemoryUsageInMB: JPEG_DECODER_MEMORY_MB,
       },
     });
-    expect(JPEG_DECODER_MEMORY_MB).toBe(193);
+    expect(JPEG_DECODER_MEMORY_MB).toBe(197);
   });
 
   // The guard walks a GIF as omggif does; even so, omggif is given only the frame it checked, so
