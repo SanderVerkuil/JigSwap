@@ -488,3 +488,186 @@ describe("the admin's waiting count is never hidden behind rows it does not coun
     expect(hashCheck.waitingCapped).toBe(true);
   });
 });
+
+// The one-shot for rows settled before the pipeline cleared the field itself: quarantined rows and
+// refused uploads whose blob is gone leave the index; everything that may still need the field
+// keeps it.
+describe("the one-shot clearSettledHashPending", () => {
+  const HASHES = [{ md5: "a".repeat(32), sha1: "b".repeat(40) }];
+
+  const seedIndex = async (t: T) => {
+    const s = await seed(t);
+    return t.run(async (ctx) => {
+      const gone = await ctx.storage.store(
+        new Blob(["refused"], { type: "image/jpeg" }),
+      );
+      await ctx.storage.delete(gone);
+      const copy = (fields: Partial<Doc<"ownedPuzzleImages">>) =>
+        ctx.db.insert("ownedPuzzleImages", {
+          ownedPuzzleId: s.copy,
+          uploaderId: s.alice,
+          fileId: s.fileId,
+          hashCheckPendingSince: 1_000,
+          createdAt: 1_000,
+          updatedAt: 1_000,
+          ...fields,
+        });
+      const refused = {
+        moderationStatus: "rejected",
+        moderationLabel: "invalid_image",
+      } as const;
+      return {
+        settled: {
+          quarantined: await copy({ moderationStatus: "quarantined" }),
+          refused: await copy({ ...refused, fileId: gone }),
+          refusedBoxArt: await ctx.db.insert("boxArtUploads", {
+            storageId: gone,
+            uploaderId: s.alice,
+            ...refused,
+            hashCheckPendingSince: 1_000,
+            createdAt: 1_000,
+          }),
+          quarantinedMessage: await ctx.db.insert("messageAttachments", {
+            kind: "image",
+            threadAggregateId: crypto.randomUUID(),
+            uploaderId: s.alice,
+            fileId: s.fileId,
+            byteSize: 11,
+            contentType: "image/jpeg",
+            moderationStatus: "quarantined",
+            hashCheckPendingSince: 1_000,
+            createdAt: 1_000,
+            updatedAt: 1_000,
+          }),
+        },
+        kept: {
+          // restorePhoto could publish it: the field keeps its gate closed.
+          refusedBlobStored: await copy({ ...refused }),
+          // A re-check still needs it (a match escalates even a refused upload).
+          refusedWithHashes: await copy({
+            ...refused,
+            fileId: gone,
+            pendingHashes: HASHES,
+          }),
+          waiting: await copy({
+            moderationStatus: "approved",
+            pendingHashes: HASHES,
+          }),
+          notReachedYet: await copy({ moderationStatus: "pending" }),
+          rejectedAfterTimeout: await copy({
+            moderationStatus: "rejected",
+            pendingHashes: HASHES,
+            hashCheckTimedOutAt: 2_000,
+          }),
+          circleIconWaiting: await ctx.db.insert("circleIcons", {
+            circleId: crypto.randomUUID(),
+            uploaderId: s.alice,
+            fileId: s.fileId,
+            moderationStatus: "approved",
+            pendingHashes: HASHES,
+            hashCheckPendingSince: 1_000,
+            createdAt: 1_000,
+            updatedAt: 1_000,
+          }),
+        },
+      };
+    });
+  };
+
+  type PhotoId =
+    | Id<"ownedPuzzleImages">
+    | Id<"boxArtUploads">
+    | Id<"messageAttachments">
+    | Id<"circleIcons">;
+  const pendingOf = (t: T, ids: Record<string, PhotoId>) =>
+    t.run(async (ctx) => {
+      const out: Record<string, number | undefined> = {};
+      for (const [name, id] of Object.entries(ids)) {
+        const row = await ctx.db.get(id);
+        // (A shared location carries no hash-check fields.)
+        out[name] =
+          row && "hashCheckPendingSince" in row
+            ? row.hashCheckPendingSince
+            : undefined;
+      }
+      return out;
+    });
+  const everyPending = (ids: Record<string, unknown>, value?: number) =>
+    Object.fromEntries(Object.keys(ids).map((name) => [name, value]));
+
+  const run = (t: T, args: { dryRun?: boolean; batchSize?: number } = {}) =>
+    t.mutation(
+      internal.lib.imageModeration.clearSettledHashPending
+        .clearSettledHashPending,
+      args,
+    );
+
+  // The last run event's running totals (logEvent writes one JSON line per page).
+  const lastTotals = () => {
+    const lines = vi
+      .mocked(console.log)
+      .mock.calls.map(([line]) => String(line))
+      .filter((line) =>
+        line.includes("imageModeration.clearSettledHashPending"),
+      )
+      .map((line) => JSON.parse(line) as Record<string, unknown>);
+    return lines[lines.length - 1];
+  };
+
+  test("the dry run (the default) counts the settled rows of every table and changes nothing", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const rows = await seedIndex(t);
+
+    await run(t, { batchSize: 2 });
+    await settleDueScheduled(t);
+
+    expect(lastTotals()).toMatchObject({
+      dry_run: true,
+      done: true,
+      scanned: 10,
+      settled: 4,
+      cleared: 0,
+    });
+    expect(await pendingOf(t, rows.settled)).toEqual(
+      everyPending(rows.settled, 1_000),
+    );
+    expect(await pendingOf(t, rows.kept)).toEqual(
+      everyPending(rows.kept, 1_000),
+    );
+  });
+
+  test("a real run clears exactly the settled rows, opens no gate, and a re-run finds none", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const rows = await seedIndex(t);
+
+    await run(t, { dryRun: false, batchSize: 2 });
+    await settleDueScheduled(t);
+
+    expect(lastTotals()).toMatchObject({
+      dry_run: false,
+      done: true,
+      scanned: 10,
+      settled: 4,
+      cleared: 4,
+    });
+    expect(await pendingOf(t, rows.settled)).toEqual(
+      everyPending(rows.settled, undefined),
+    );
+    expect(await pendingOf(t, rows.kept)).toEqual(
+      everyPending(rows.kept, 1_000),
+    );
+    // Only the field moved: the quarantined photo stays unservable, the refused one rejected.
+    const [quarantined, refused] = await t.run(async (ctx) => [
+      await ctx.db.get(rows.settled.quarantined),
+      await ctx.db.get(rows.settled.refused),
+    ]);
+    expect(quarantined!.moderationStatus).toBe("quarantined");
+    expect(isHashCleared(quarantined!)).toBe(false);
+    expect(refused!.moderationStatus).toBe("rejected");
+    expect(refused!.hashCheckedAt).toBeUndefined();
+
+    await run(t, { dryRun: false });
+    await settleDueScheduled(t);
+    expect(lastTotals()).toMatchObject({ done: true, scanned: 6, settled: 0 });
+  });
+});
