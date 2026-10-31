@@ -393,6 +393,10 @@ describe("WelcomeDialogBody", () => {
   it("has the title, the four numbered steps and the time line", () => {
     const html = renderDialog("en");
     expect(text(byTag(html, "h2")[0]!)).toBe("Welcome to JigSwap!");
+    // The copy counts the same four steps the list numbers.
+    expect(text(parseFragment(html))).toContain(
+      "Shall we set up your shelf? It takes four quick steps.",
+    );
     const [ol] = byTag(html, "ol");
     expect(attr(ol!, "role")).toBe("list");
     const items = elements(ol!).filter((el) => el.tagName === "li");
@@ -428,6 +432,9 @@ describe("WelcomeDialogBody", () => {
       "Zelf rondkijken",
       "Snel instellen",
     ]);
+    expect(text(parseFragment(html))).toContain(
+      "Zullen we je plank inrichten? Dat gaat in vier snelle stappen.",
+    );
     expect(text(parseFragment(html))).toContain(
       "Vink aan welke je al hebt afgemaakt",
     );
