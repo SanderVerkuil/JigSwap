@@ -118,7 +118,7 @@ Who wins when answers cross (every step is one Convex transaction, so the first 
   `result: "skipped_unconfigured"`): an unconfigured service cannot answer.
 
 What admins see: a photo waiting on its hash check is counted on **Admin → Moderation → Hash
-matches** ("Hash check unreachable: N photos waiting, unpublished", with the oldest wait). While it
+matches** ("No hash-check answer yet: N photos waiting, unpublished", with the oldest wait). While it
 waits it is not in **Unchecked photos** when the classifier approved it: there is nothing for an
 admin to decide yet, and nobody can publish it before the hash check passes. A waiting photo that
 the classifier could not score does appear there, without a preview, and cannot be approved or
@@ -154,8 +154,10 @@ counts them per table through the `by_hash_check_skipped` index, capped at 200 p
 index needs no backfill: only rows published after this change carry the marker.
 **Admin → Moderation** shows this state in a red banner at the top of the page
 (`HashCheckHealth`): "CSAM hash matching is OFF" (provider unset), "OFF: selected but not
-configured" (with the missing variable names), or "unreachable" (photos held unpublished), plus
-the count of photos published without a hash check and the date of the oldest. Once matching
+configured" (with the missing variable names; new photos are held), or "unreachable", with the
+count of photos held unpublished, plus the count of photos uploaded without a hash check and the
+date of the oldest. That count is of uploads, not of published photos: it includes photos the
+classifier rejected or a moderator removed later, which a later check still covers. Once matching
 works and that count reaches zero, the banner disappears. When it is configured, run `lib/imageModeration/recheckWaivedHashes` right after (above), and
 `lib/imageModeration/backfillBoxArtHashCheck` for older box art (one-shot-migrations.md).
 

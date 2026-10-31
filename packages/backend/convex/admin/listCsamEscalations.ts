@@ -26,7 +26,7 @@ const IMAGE_TABLES = [
 // quarantine). METADATA ONLY: never an image URL, thumbnail, blurhash or storage id. The image is
 // never shown to anyone, admins included. Also reports whether hash matching is configured on
 // this deployment (provider + the NAMES of missing env vars, never values), and how many photos
-// were published without a hash check while it was not (SEC-03).
+// were uploaded without a hash check while it was off (SEC-03).
 export const listCsamEscalations = query({
   args: {},
   handler: async (ctx) => {

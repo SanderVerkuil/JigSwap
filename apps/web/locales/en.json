@@ -4348,11 +4348,11 @@
           "offTitle": "CSAM hash matching is OFF on this deployment",
           "off": "Uploads are not compared with lists of known child sexual abuse material (CSAM_HASHCHECK_PROVIDER is not \"offlimits\"), and photos are published without that check.",
           "missingConfigTitle": "CSAM hash matching is OFF: selected but not configured",
-          "missingConfig": "Offlimits is selected, but not set: {vars}. Uploads are not compared with lists of known child sexual abuse material.",
+          "missingConfig": "Offlimits is selected, but not set: {vars}. No upload can be compared with lists of known child sexual abuse material, so new photos are held unpublished: they are re-checked for up to 7 days, then handed to an admin.",
           "unreachableTitle": "CSAM hash matching is unreachable",
-          "unreachable": "{countLabel} {count, plural, one {photo is} other {photos are}} held unpublished until it answers (oldest {since}). Details are under Hash matches.",
-          "uncheckedTitle": "Photos published without a CSAM hash check",
-          "unchecked": "{countLabel} {count, plural, one {photo was} other {photos were}} published without a hash check since {since}. Photos published before this count started are not included: their hashes were not kept.",
+          "held": "{countLabel} {count, plural, one {photo is} other {photos are}} held unpublished until the hash check answers (oldest {since}). Details are under Hash matches.",
+          "uncheckedTitle": "Photos uploaded without a CSAM hash check",
+          "unchecked": "{countLabel} {count, plural, one {photo was} other {photos were}} uploaded without a CSAM hash check since {since}. Photos uploaded before this count started are not included: their hashes were not kept.",
           "recheck": "Hash matching works now: check these photos with the one-shot recheckWaivedHashes (see the one-shot migrations runbook)."
         },
         "status": {
@@ -4375,7 +4375,7 @@
         "markReported": "Mark reported",
         "close": "Close",
         "updated": "Escalation updated.",
-        "waiting": "Hash check unreachable: {countLabel} {count, plural, one {photo} other {photos}} waiting, unpublished (oldest {since}). They are re-checked automatically for up to 7 days, then handed to an admin.",
+        "waiting": "No hash-check answer yet: {countLabel} {count, plural, one {photo} other {photos}} waiting, unpublished (oldest {since}). They are re-checked automatically for up to 7 days, then handed to an admin.",
         "noteBy": "{name}, {time}",
         "addNote": "Add note",
         "timedOut": "Hash check timed out: {count, plural, one {# photo} other {# photos}} waited over 7 days and {count, plural, one {needs} other {need}} an admin decision in Unchecked photos."

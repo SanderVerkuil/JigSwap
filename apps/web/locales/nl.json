@@ -4348,11 +4348,11 @@
           "offTitle": "CSAM-hash-matching staat UIT op deze omgeving",
           "off": "Uploads worden niet vergeleken met lijsten van bekend beeldmateriaal van seksueel misbruik van kinderen (CSAM_HASHCHECK_PROVIDER is niet \"offlimits\") en foto's worden zonder die controle gepubliceerd.",
           "missingConfigTitle": "CSAM-hash-matching staat UIT: gekozen maar niet ingesteld",
-          "missingConfig": "Offlimits is gekozen, maar dit ontbreekt: {vars}. Uploads worden niet vergeleken met lijsten van bekend beeldmateriaal van seksueel misbruik van kinderen.",
+          "missingConfig": "Offlimits is gekozen, maar dit ontbreekt: {vars}. Geen enkele upload kan worden vergeleken met lijsten van bekend beeldmateriaal van seksueel misbruik van kinderen, dus nieuwe foto's worden niet gepubliceerd: ze worden tot 7 dagen lang opnieuw gecontroleerd en daarna aan een beheerder overgedragen.",
           "unreachableTitle": "CSAM-hash-matching is onbereikbaar",
-          "unreachable": "{countLabel} {count, plural, one {foto wordt} other {foto's worden}} pas gepubliceerd als er antwoord komt (oudste {since}). Details staan onder Hash-matches.",
-          "uncheckedTitle": "Foto's gepubliceerd zonder CSAM-hash-check",
-          "unchecked": "{countLabel} {count, plural, one {foto is} other {foto's zijn}} sinds {since} zonder hash-check gepubliceerd. Foto's van vóór het begin van deze telling tellen niet mee: hun hashes zijn niet bewaard.",
+          "held": "{countLabel} {count, plural, one {foto wordt} other {foto's worden}} pas gepubliceerd als de hash-check antwoord geeft (oudste {since}). Details staan onder Hash-matches.",
+          "uncheckedTitle": "Foto's geüpload zonder CSAM-hash-check",
+          "unchecked": "{countLabel} {count, plural, one {foto is} other {foto's zijn}} sinds {since} zonder CSAM-hash-check geüpload. Foto's van vóór het begin van deze telling tellen niet mee: hun hashes zijn niet bewaard.",
           "recheck": "Hash-matching werkt nu: controleer deze foto's met de eenmalige recheckWaivedHashes (zie het runbook voor eenmalige migraties)."
         },
         "status": {
@@ -4375,7 +4375,7 @@
         "markReported": "Markeer als gemeld",
         "close": "Sluiten",
         "updated": "Escalatie bijgewerkt.",
-        "waiting": "Hash-check onbereikbaar: {countLabel} {count, plural, one {foto wacht} other {foto's wachten}}, niet gepubliceerd (oudste {since}). Ze worden tot 7 dagen lang automatisch opnieuw gecontroleerd en daarna aan een beheerder overgedragen.",
+        "waiting": "Nog geen antwoord van de hash-check: {countLabel} {count, plural, one {foto wacht} other {foto's wachten}}, niet gepubliceerd (oudste {since}). Ze worden tot 7 dagen lang automatisch opnieuw gecontroleerd en daarna aan een beheerder overgedragen.",
         "noteBy": "{name}, {time}",
         "addNote": "Notitie toevoegen",
         "timedOut": "Hash-check verlopen: {count, plural, one {# foto wacht} other {# foto's wachten}} al meer dan 7 dagen op een beslissing van een beheerder in Niet-gecontroleerde foto's."

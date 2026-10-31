@@ -195,7 +195,7 @@ describe("CsamEscalationsPanel", () => {
       }),
     });
     expect(container.textContent).toContain(
-      "Hash check unreachable: 3 photos waiting",
+      "No hash-check answer yet: 3 photos waiting",
     );
     expect(container.textContent).toContain("2 hours ago");
   });
