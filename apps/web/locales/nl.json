@@ -4305,6 +4305,7 @@
       "activity": {
         "loading": "Activiteit laden…",
         "system": "Systeem",
+        "deletedMemberTarget": "een verwijderd lid",
         "definition_approved": "<strong>{actor}</strong> keurde <strong>{target}</strong> goed",
         "definition_edited_approved": "<strong>{actor}</strong> bewerkte en keurde <strong>{target}</strong> goed",
         "definition_rejected": "<strong>{actor}</strong> wees <strong>{target}</strong> af",

@@ -10,7 +10,7 @@ const NOW = new Date("2026-10-30T12:00:00Z");
 afterEach(cleanup);
 
 describe("AuditList", () => {
-  it("names a member whose account is gone with the localized 'Deleted member' (SEC-57)", () => {
+  it("names a member whose account is gone with a localized in-sentence 'a deleted member' (SEC-57)", () => {
     render(
       <IntlProvider
         locale="nl"
@@ -34,7 +34,7 @@ describe("AuditList", () => {
       </IntlProvider>,
     );
     expect(screen.getByText(/beheerdersrol/).closest("p")?.textContent).toBe(
-      "Ada trok de beheerdersrol van Verwijderd lid in",
+      "Ada trok de beheerdersrol van een verwijderd lid in",
     );
   });
 });

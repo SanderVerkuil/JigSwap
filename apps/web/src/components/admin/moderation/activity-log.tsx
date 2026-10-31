@@ -108,7 +108,7 @@ export function ActivityLog({ emptyTitle }: { emptyTitle: string }) {
               {t.rich(`activity.${row.kind}`, {
                 actor: row.actorName ?? t("activity.system"),
                 target: row.targetMemberDeleted
-                  ? t("reports.deletedMember")
+                  ? t("activity.deletedMemberTarget")
                   : row.targetLabel,
                 strong: (chunks) => (
                   <strong className="font-semibold">{chunks}</strong>

@@ -4305,6 +4305,7 @@
       "activity": {
         "loading": "Loading activity…",
         "system": "System",
+        "deletedMemberTarget": "a deleted member",
         "definition_approved": "<strong>{actor}</strong> approved <strong>{target}</strong>",
         "definition_edited_approved": "<strong>{actor}</strong> edited & approved <strong>{target}</strong>",
         "definition_rejected": "<strong>{actor}</strong> rejected <strong>{target}</strong>",

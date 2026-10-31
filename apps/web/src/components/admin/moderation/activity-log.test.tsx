@@ -30,7 +30,7 @@ const renderIn = (locale: "en" | "nl") =>
   );
 
 describe("ActivityLog", () => {
-  it("names a member whose account is gone with the localized 'Deleted member' (SEC-57)", () => {
+  it("names a member whose account is gone with a localized in-sentence 'a deleted member' (SEC-57)", () => {
     mocks.rows = [
       {
         kind: "report_warned",
@@ -50,7 +50,7 @@ describe("ActivityLog", () => {
     ];
     renderIn("nl");
     expect(screen.getByText(/na een melding/).closest("p")?.textContent).toBe(
-      "Ada waarschuwde Verwijderd lid na een melding",
+      "Ada waarschuwde een verwijderd lid na een melding",
     );
     expect(screen.getByText(/beheerder/).closest("p")?.textContent).toBe(
       "Ada maakte Otto beheerder",
@@ -59,7 +59,7 @@ describe("ActivityLog", () => {
 
     renderIn("en");
     expect(screen.getByText(/after a report/).closest("p")?.textContent).toBe(
-      "Ada warned Deleted member after a report",
+      "Ada warned a deleted member after a report",
     );
   });
 });
