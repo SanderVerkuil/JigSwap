@@ -20,11 +20,100 @@ import {
 // (faithful supersets of the joined rows) rather than leaking raw documents.
 
 // Bound for a member's exchange lists (getUserExchanges, getExchangesByOwner,
-// getExchangesByRequester): at most this many rows, the newest by createdAt, so a heavy trader's
-// history (each row joins both parties and both copies) can never push the read past Convex's
-// per-function limits. Past the cap the oldest exchanges are dropped and anything counted from the
-// list undercounts; getUserExchanges' status filter only looks inside that window.
+// getExchangesByRequester): the newest this many by createdAt, plus the newest this many LIVE ones
+// (see readMemberExchanges), so a heavy trader's history (each row joins both parties and both
+// copies) can never push the read past Convex's per-function limits. Past the cap the oldest
+// FINISHED exchanges are dropped; an open one stays listed until more than the cap are open.
 export const EXCHANGE_LIST_CAP = 500;
+
+// Exchanges still in play: an offer to answer, a hand-over to arrange, a dispute to settle. The
+// web's active counts use the same three (dashboard pulse, briefing hero).
+export const LIVE_EXCHANGE_STATUSES = [
+  "proposed",
+  "accepted",
+  "disputed",
+] as const;
+
+type ExchangeStatus = Doc<"exchanges">["status"];
+
+const isLive = (status: ExchangeStatus): boolean =>
+  (LIVE_EXCHANGE_STATUSES as readonly ExchangeStatus[]).includes(status);
+
+/**
+ * The bounded window over a member's exchanges, newest first: the newest EXCHANGE_LIST_CAP overall
+ * plus the newest EXCHANGE_LIST_CAP live ones, so at most twice the cap. Rows are kept by identity,
+ * so a row in both halves is listed once.
+ */
+export const boundedExchangeWindow = <
+  R extends Pick<Doc<"exchanges">, "status" | "createdAt">,
+>(
+  rows: R[],
+): R[] => {
+  const newestFirst = [...rows].sort((a, b) => b.createdAt - a.createdAt);
+  const kept = new Set<R>([
+    ...newestFirst.slice(0, EXCHANGE_LIST_CAP),
+    ...newestFirst
+      .filter((row) => isLive(row.status))
+      .slice(0, EXCHANGE_LIST_CAP),
+  ]);
+  return newestFirst.filter((row) => kept.has(row));
+};
+
+/**
+ * One role's exchanges for the member (initiator = outgoing, recipient = incoming), newest first,
+ * read only through bounded index ranges. With a `status`: that status's newest EXCHANGE_LIST_CAP,
+ * however old. Without: the newest EXCHANGE_LIST_CAP overall plus each live status's newest
+ * EXCHANGE_LIST_CAP, cut down by boundedExchangeWindow, so an old open exchange is never pushed out
+ * by newer finished ones.
+ */
+export const readMemberExchanges = async (
+  ctx: QueryCtx,
+  memberId: Id<"users">,
+  role: "initiator" | "recipient",
+  status?: ExchangeStatus,
+): Promise<Doc<"exchanges">[]> => {
+  const inStatus = (s: ExchangeStatus) =>
+    role === "initiator"
+      ? ctx.db
+          .query("exchanges")
+          .withIndex("by_initiator_status_created", (q) =>
+            q.eq("initiatorId", memberId).eq("status", s),
+          )
+          .order("desc")
+          .take(EXCHANGE_LIST_CAP)
+      : ctx.db
+          .query("exchanges")
+          .withIndex("by_recipient_status_created", (q) =>
+            q.eq("recipientId", memberId).eq("status", s),
+          )
+          .order("desc")
+          .take(EXCHANGE_LIST_CAP);
+  if (status) return inStatus(status);
+
+  const newest =
+    role === "initiator"
+      ? ctx.db
+          .query("exchanges")
+          .withIndex("by_initiator_created", (q) =>
+            q.eq("initiatorId", memberId),
+          )
+          .order("desc")
+          .take(EXCHANGE_LIST_CAP)
+      : ctx.db
+          .query("exchanges")
+          .withIndex("by_recipient_created", (q) =>
+            q.eq("recipientId", memberId),
+          )
+          .order("desc")
+          .take(EXCHANGE_LIST_CAP);
+  const [history, ...live] = await Promise.all([
+    newest,
+    ...LIVE_EXCHANGE_STATUSES.map(inStatus),
+  ]);
+  const byId = new Map<Id<"exchanges">, Doc<"exchanges">>();
+  for (const row of [...history, ...live.flat()]) byId.set(row._id, row);
+  return boundedExchangeWindow([...byId.values()]);
+};
 
 /**
  * Both parties as the viewer may see them inside THIS exchange, via the per-trade chokepoint

@@ -1,7 +1,7 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import { EXCHANGE_LIST_CAP } from "./exchange/readViews";
 import schema from "./schema";
 
@@ -48,11 +48,19 @@ const seedParties = (t: TestConvex<typeof schema>) =>
 
 type Parties = Awaited<ReturnType<typeof seedParties>>;
 
+type LoanRow = {
+  aggregateId: string;
+  createdAt: number;
+  asInitiator: boolean;
+  // Defaults to "proposed".
+  status?: Doc<"exchanges">["status"];
+};
+
 // A loan request; `asInitiator` says whether Alice asked (requester) or was asked (owner).
 const insertLoan = (
   t: TestConvex<typeof schema>,
   p: Parties,
-  rows: { aggregateId: string; createdAt: number; asInitiator: boolean }[],
+  rows: LoanRow[],
 ) =>
   t.run(async (ctx) => {
     for (const row of rows) {
@@ -62,7 +70,7 @@ const insertLoan = (
         recipientId: row.asInitiator ? p.bob : p.alice,
         type: "loan",
         requestedPuzzleId: row.asInitiator ? p.bobsCopy : p.alicesCopy,
-        status: "proposed",
+        status: row.status ?? "proposed",
         createdAt: row.createdAt,
         updatedAt: row.createdAt,
       });
@@ -162,5 +170,143 @@ describe("exchange.getExchangesByOwner / getExchangesByRequester are bounded (PE
     expect(incoming.map((e) => e.aggregateId)).toEqual(
       rows.slice(0, EXCHANGE_LIST_CAP).map((r) => r.aggregateId),
     );
+  });
+});
+
+describe("live exchanges never fall out of the bounded lists (PERF-B13)", () => {
+  // EXCHANGE_LIST_CAP + 1 finished exchanges, all newer than three old live ones (proposed,
+  // accepted, disputed) and one old finished one. Only the live ones may survive past the cap.
+  const history = (asInitiator: boolean): LoanRow[] => [
+    ...Array.from({ length: EXCHANGE_LIST_CAP + 1 }, (_, i) => ({
+      aggregateId: `done-${i}`,
+      createdAt: BASE - i,
+      asInitiator,
+      status: "completed" as const,
+    })),
+    {
+      aggregateId: "old-proposed",
+      createdAt: BASE - 10_000,
+      asInitiator,
+      status: "proposed",
+    },
+    {
+      aggregateId: "old-accepted",
+      createdAt: BASE - 10_001,
+      asInitiator,
+      status: "accepted",
+    },
+    {
+      aggregateId: "old-disputed",
+      createdAt: BASE - 10_002,
+      asInitiator,
+      status: "disputed",
+    },
+    {
+      aggregateId: "old-rejected",
+      createdAt: BASE - 10_003,
+      asInitiator,
+      status: "rejected",
+    },
+  ];
+  const expected = [
+    ...Array.from({ length: EXCHANGE_LIST_CAP }, (_, i) => `done-${i}`),
+    "old-proposed",
+    "old-accepted",
+    "old-disputed",
+  ];
+
+  test("getUserExchanges keeps the old live exchanges after the newest history", async () => {
+    const t = convexTest(schema, modules);
+    await insertLoan(t, await seedParties(t), history(true));
+
+    const list = await asAlice(t).query(
+      api.exchange.getUserExchanges.getUserExchanges,
+      {},
+    );
+
+    expect(list.map((e) => e.aggregateId)).toEqual(expected);
+  });
+
+  test("a status filter reads that status, not the newest window", async () => {
+    const t = convexTest(schema, modules);
+    await insertLoan(t, await seedParties(t), history(false));
+
+    const proposed = await asAlice(t).query(
+      api.exchange.getUserExchanges.getUserExchanges,
+      { status: "proposed" },
+    );
+    const rejected = await asAlice(t).query(
+      api.exchange.getUserExchanges.getUserExchanges,
+      { status: "rejected" },
+    );
+
+    expect(proposed.map((e) => [e.aggregateId, e.userRole])).toEqual([
+      ["old-proposed", "owner"],
+    ]);
+    expect(rejected.map((e) => e.aggregateId)).toEqual(["old-rejected"]);
+  });
+
+  test("incoming and outgoing keep the old live exchanges", async () => {
+    const t = convexTest(schema, modules);
+    const parties = await seedParties(t);
+    await insertLoan(t, parties, history(false));
+    await insertLoan(
+      t,
+      parties,
+      history(true).map((row) => ({
+        ...row,
+        aggregateId: `out-${row.aggregateId}`,
+      })),
+    );
+
+    const incoming = await asAlice(t).query(
+      api.exchange.getExchangesByOwner.getExchangesByOwner,
+      {},
+    );
+    const outgoing = await asAlice(t).query(
+      api.exchange.getExchangesByRequester.getExchangesByRequester,
+      {},
+    );
+
+    expect(incoming.map((e) => e.aggregateId)).toEqual(expected);
+    expect(outgoing.map((e) => e.aggregateId)).toEqual(
+      expected.map((id) => `out-${id}`),
+    );
+  });
+
+  test("live exchanges are themselves capped, newest kept", async () => {
+    const t = convexTest(schema, modules);
+    // EXCHANGE_LIST_CAP + 1 old live exchanges spread over the three live statuses, all older
+    // than EXCHANGE_LIST_CAP finished ones.
+    const statuses = ["proposed", "accepted", "disputed"] as const;
+    const live: LoanRow[] = Array.from(
+      { length: EXCHANGE_LIST_CAP + 1 },
+      (_, i) => ({
+        aggregateId: `live-${i}`,
+        createdAt: BASE - 10_000 - i,
+        asInitiator: true,
+        status: statuses[i % statuses.length],
+      }),
+    );
+    const done: LoanRow[] = Array.from(
+      { length: EXCHANGE_LIST_CAP },
+      (_, i) => ({
+        aggregateId: `done-${i}`,
+        createdAt: BASE - i,
+        asInitiator: true,
+        status: "completed",
+      }),
+    );
+    await insertLoan(t, await seedParties(t), [...done, ...live]);
+
+    const list = await asAlice(t).query(
+      api.exchange.getUserExchanges.getUserExchanges,
+      {},
+    );
+
+    expect(list.map((e) => e.aggregateId)).toEqual([
+      ...done.map((r) => r.aggregateId),
+      ...live.slice(0, EXCHANGE_LIST_CAP).map((r) => r.aggregateId),
+    ]);
   });
 });

@@ -1,7 +1,7 @@
 import type { ExchangeSummaryView } from "@jigswap/contracts";
 import { query } from "../_generated/server";
 import { optionalActingMember } from "../identity/optionalActingMember";
-import { enrichExchangeSummary, EXCHANGE_LIST_CAP } from "./readViews";
+import { enrichExchangeSummary, readMemberExchanges } from "./readViews";
 
 // Exchange read (thin adapter): exchanges where the signed-in member is the initiator (outgoing).
 // Returns [] when unauthenticated, unknown or deactivated, newest-first — matching legacy
@@ -12,11 +12,8 @@ export const getExchangesByRequester = query({
     const me = await optionalActingMember(ctx);
     if (!me) return [];
 
-    const exchanges = await ctx.db
-      .query("exchanges")
-      .withIndex("by_initiator_created", (q) => q.eq("initiatorId", me))
-      .order("desc")
-      .take(EXCHANGE_LIST_CAP);
+    // Bounded: the newest EXCHANGE_LIST_CAP plus the newest EXCHANGE_LIST_CAP still-open ones.
+    const exchanges = await readMemberExchanges(ctx, me, "initiator");
 
     const enriched = await Promise.all(
       exchanges.map((tr) => enrichExchangeSummary(ctx, tr, me)),

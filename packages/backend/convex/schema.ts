@@ -910,6 +910,19 @@ export default defineSchema({
     // indexes above order by offeredPuzzleId, so they cannot pick a member's newest exchanges.
     .index("by_initiator_created", ["initiatorId", "createdAt"])
     .index("by_recipient_created", ["recipientId", "createdAt"])
+    // Per party and status, newest first: the bounded lists read the live statuses here, so an old
+    // open exchange is never cut off by the newest-history window (exchange/readViews,
+    // readMemberExchanges).
+    .index("by_initiator_status_created", [
+      "initiatorId",
+      "status",
+      "createdAt",
+    ])
+    .index("by_recipient_status_created", [
+      "recipientId",
+      "status",
+      "createdAt",
+    ])
     .index("by_aggregate_id", ["aggregateId"])
     // Back the copy-reservation check: find exchanges referencing a copy as requested/offered
     // without scanning the whole table.
