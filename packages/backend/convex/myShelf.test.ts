@@ -3,6 +3,7 @@ import { ConvexError } from "convex/values";
 import { beforeEach, describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
+import { MY_SHELF_SCAN_CAP } from "./library/getMyShelf";
 import schema from "./schema";
 
 // library.myShelf: the signed-in member's own shelf summary for the dashboard and profile
@@ -147,6 +148,33 @@ describe("library.myShelf", () => {
     expect(shelf.recent[0].notes).toBe("note 80");
     expect(shelf.recent[0].puzzle?.title).toBe("Harbour Lights");
     expect(shelf.recent[0]).toHaveProperty("coverUrl");
+  });
+
+  test("past the scan cap the newest copies still make the shelf", async () => {
+    // Added oldest first, as a real library grows: the copies past the cap are the newest ones.
+    const ids = await t.run(async (ctx) => {
+      const out: Id<"ownedPuzzles">[] = [];
+      for (let i = 0; i <= MY_SHELF_SCAN_CAP; i++) {
+        out.push(
+          await ctx.db.insert("ownedPuzzles", {
+            puzzleId: w.puzzleId,
+            ownerId: w.ann,
+            condition: "good",
+            availability: closed,
+            createdAt: i,
+            updatedAt: i,
+          }),
+        );
+      }
+      return out;
+    });
+
+    const shelf = await shelfOf(t, "ann", 2);
+    expect(shelf.total).toBe(MY_SHELF_SCAN_CAP);
+    expect(shelf.recent.map((copy) => copy._id)).toEqual([
+      ids[MY_SHELF_SCAN_CAP],
+      ids[MY_SHELF_SCAN_CAP - 1],
+    ]);
   });
 
   test("an empty library is an empty shelf", async () => {

@@ -8,7 +8,8 @@ import { toOwnedCopyView } from "./mappers";
 import { resolveCopyCoverUrl } from "./resolveCoverUrl";
 
 // Bound for the counting scan. No real member comes close to 5000 copies (the same bound as
-// identity/getUserStats); past it the counts undercount rather than the read failing.
+// identity/getUserStats); past it the counts undercount rather than the read failing, and the scan
+// keeps the most recently added copies, so the newest always reach the shelf.
 export const MY_SHELF_SCAN_CAP = 5000;
 
 const DEFAULT_SHELF_SIZE = 6;
@@ -28,9 +29,11 @@ export const getMyShelf = query({
       max: MAX_SHELF_SIZE,
     });
 
+    // Newest first (by_owner ends in _creationTime), so past the cap the OLDEST copies drop out.
     const owned = await ctx.db
       .query("ownedPuzzles")
       .withIndex("by_owner", (q) => q.eq("ownerId", memberId))
+      .order("desc")
       .take(MY_SHELF_SCAN_CAP);
 
     const newest = [...owned]
