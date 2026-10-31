@@ -1,6 +1,8 @@
 // @vitest-environment happy-dom
 // UX-06: Messages is one tap away on a phone. The top bar carries a Messages icon with the unread
 // count as an aria-hidden badge; the count is in the link's name.
+// UX-160: the dashboard lockup is the mark-only glyph next to the wordmark text, so it reads
+// "JigSwap" once (the stacked logo already spells it out underneath the mark).
 // UX-59: the ‹ chevron is a real Back. It is hidden on the pages the tabs open; elsewhere it goes
 // back through history when the previous entry is in the app, and up to the section hub otherwise.
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
@@ -41,7 +43,11 @@ vi.mock("./nav-counts", () => ({
   useUnreadMessageCount: () => mocks.unreadMessages,
 }));
 vi.mock("./shell-user-button", () => ({ ShellUserButton: () => null }));
-vi.mock("@/compat/image", () => ({ Image: () => null }));
+vi.mock("@/compat/image", () => ({
+  Image: ({ src, alt }: { src: string; alt: string }) => (
+    <img src={src} alt={alt} />
+  ),
+}));
 vi.mock("@/compat/link", () => ({
   Link: ({
     href,
@@ -175,5 +181,17 @@ describe("MobileTopBar back chevron", () => {
     mocks.canGoBack = true;
     renderBar("/my-puzzles", "nl");
     expect(screen.getByRole("link", { name: "Terug" })).toBeTruthy();
+  });
+});
+
+describe("MobileTopBar lockup", () => {
+  it("names the home link JigSwap once, with a decorative mark-only glyph", () => {
+    renderBar("/dashboard");
+    const home = screen.getByRole("link", { name: "JigSwap" });
+    expect(home.getAttribute("href")).toBe("/dashboard");
+    const mark = home.querySelector("img");
+    expect(mark?.getAttribute("alt")).toBe("");
+    // The stacked header-icon lockup has "JigSwap" baked into the image.
+    expect(mark?.getAttribute("src")).toContain("marketing/assets/icon.png");
   });
 });
