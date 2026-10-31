@@ -10,6 +10,7 @@ import {
   type NavContext,
 } from "@/components/dashboard-layout/nav-context";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
+import { convexErrorCode } from "@/components/exchange/request-trade";
 import {
   RequestTradeDialog,
   type RequestableCopy,
@@ -286,8 +287,15 @@ function CopyInstanceDetail({
           snapshot.visibility,
         ),
       );
-    } catch {
-      toast.error(t("editCopy.editFailed"));
+    } catch (error) {
+      // Refused while an exchange in progress reserves the copy or it is out on loan: say so.
+      toast.error(
+        t(
+          convexErrorCode(error) === "CopyReserved"
+            ? "editCopy.copyReserved"
+            : "editCopy.editFailed",
+        ),
+      );
     }
   };
 

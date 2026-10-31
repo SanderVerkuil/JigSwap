@@ -7,6 +7,7 @@ import {
   SegmentedPills,
   type ConditionValue,
 } from "@/components/add-puzzle";
+import { convexErrorCode } from "@/components/exchange/request-trade";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -149,8 +150,16 @@ export function EditCopyDialog({
       await Promise.all(ops);
       if (ops.length > 0) toast.success(t("editCopy.saved"));
       onOpenChange(false);
-    } catch {
-      toast.error(t("editCopy.editFailed"));
+    } catch (error) {
+      // The Library refuses a sharing change while an exchange in progress reserves the copy or
+      // it is out on loan; say so rather than "please try again".
+      toast.error(
+        t(
+          convexErrorCode(error) === "CopyReserved"
+            ? "editCopy.copyReserved"
+            : "editCopy.editFailed",
+        ),
+      );
     }
   };
 

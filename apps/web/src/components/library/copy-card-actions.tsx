@@ -1,4 +1,5 @@
 import { useRouter } from "@/compat/navigation";
+import { convexErrorCode } from "@/components/exchange/request-trade";
 import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
 import { StartSolveDialog } from "@/components/solving/start-solve-dialog";
@@ -18,6 +19,7 @@ import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import type { HouseholdCopyPermission } from "@jigswap/contracts";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useMemo, useState, type ReactNode } from "react";
+import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
 export interface SolveState {
@@ -144,6 +146,10 @@ export function useCopyCardActions({
       await deletePuzzle.mutateAsync({ copyId });
     } catch (error) {
       console.error("Failed to delete puzzle:", error);
+      // Refused while an exchange in progress reserves the copy or it is out on loan: say why.
+      if (convexErrorCode(error) === "CopyReserved") {
+        toast.error(t("deleteReserved"));
+      }
     }
   };
 
