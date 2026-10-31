@@ -148,6 +148,7 @@ export function CirclePage({ circleId }: { circleId: string }) {
         <ChatPreview circleId={circleId} circleName={detail.name} />
         <SharedPuzzles
           circleId={circleId}
+          circleName={detail.name}
           canShare={canShareInCircle(detail.viewerPermission)}
         />
       </div>
@@ -297,9 +298,11 @@ function ChatPreview({
 // the share control; a View only member is told why there is none.
 function SharedPuzzles({
   circleId,
+  circleName,
   canShare,
 }: {
   circleId: string;
+  circleName: string;
   // Exchange and Admin may share their own copies here (read live from viewerPermission).
   canShare: boolean;
 }) {
@@ -340,7 +343,11 @@ function SharedPuzzles({
       footer={
         <div className="mt-1 border-t pt-4">
           {canShare ? (
-            <CircleShareSection circleId={circleId} memberId={member?._id} />
+            <CircleShareSection
+              circleId={circleId}
+              circleName={circleName}
+              memberId={member?._id}
+            />
           ) : (
             <p className="text-muted-foreground text-sm">
               {t("page.viewOnlyHint")}

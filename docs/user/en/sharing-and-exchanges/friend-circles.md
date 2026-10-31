@@ -160,11 +160,19 @@ puzzles**, and an admin can give you **Can exchange**. You can only share
 copies you own.
 
 1. Open the circle's page. Admins can also use the manage dialog.
-2. Under **Shared puzzles**, in **Share a copy**, choose one of your copies.
-3. Click **Share**.
+2. Under **Shared puzzles**, in **Share your puzzles**, tick the puzzles you
+   want to share. Search to find one quickly. Puzzles you already share there
+   are ticked and marked **Shared**.
+3. Click **Share** (for example **Share 3 puzzles**). A message confirms it.
+
+To stop sharing a puzzle, untick it and click **Stop sharing**. When you tick
+some puzzles and untick others, the button says **Save changes**. **Clear**
+drops the ticks you haven't saved yet.
 
 Circle members can see a shared copy while you offer it for swap, lend or
-sale and you're still a member of the circle.
+sale and you're still a member of the circle. The list marks the puzzles they
+won't see: **Not offered** (offer it for swap, lend or sale first) and
+**Private** (a private puzzle stays hidden, even when shared).
 
 If your permission later drops to **View only**, the copies you already
 shared stay shared. You just can't share new ones.

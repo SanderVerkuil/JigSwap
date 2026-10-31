@@ -172,12 +172,22 @@ kunt alleen exemplaren delen die van jou zijn.
 
 1. Open de pagina van de kring. Beheerders kunnen ook het beheervenster
    gebruiken.
-2. Kies onder **Gedeelde puzzels**, bij **Een exemplaar delen**, een van je
-   exemplaren.
-3. Klik op **Delen**.
+2. Vink onder **Gedeelde puzzels**, bij **Deel je puzzels**, de puzzels aan
+   die je wilt delen. Zoek om er snel een te vinden. Puzzels die je daar al
+   deelt, zijn aangevinkt en gemarkeerd als **Gedeeld**.
+3. Klik op **Delen** (bijvoorbeeld **3 puzzels delen**). Een melding bevestigt
+   het.
+
+Wil je een puzzel niet meer delen, vink hem dan uit en klik op **Niet meer
+delen**. Vink je tegelijk puzzels aan en uit, dan heet de knop **Wijzigingen
+opslaan**. Met **Wissen** gooi je de vinkjes weg die je nog niet hebt
+opgeslagen.
 
 Kringleden kunnen een gedeeld exemplaar zien zolang je het aanbiedt om te
-ruilen, uit te lenen of te verkopen, en je nog lid bent van de kring.
+ruilen, uit te lenen of te verkopen, en je nog lid bent van de kring. De lijst
+markeert de puzzels die ze niet zien: **Niet aangeboden** (bied hem eerst aan
+om te ruilen, uit te lenen of te verkopen) en **Privé** (een privépuzzel blijft
+verborgen, ook als je hem deelt).
 
 Daalt je recht later naar **Alleen bekijken**, dan blijven de exemplaren die je
 al deelde gedeeld. Je kunt alleen geen nieuwe meer delen.

@@ -2465,12 +2465,33 @@
       "unavailable": "Deze kring is niet langer beschikbaar.",
       "members": "Leden",
       "owner": "Eigenaar",
-      "shareCopy": "Een exemplaar delen",
-      "shareDescription": "Gedeelde exemplaren worden zichtbaar voor leden van deze kring. Een exemplaar dat je op privé hebt gezet, blijft privé.",
-      "chooseCopy": "Kies een van je exemplaren…",
+      "shareCopy": "Deel je puzzels",
+      "shareDescription": "Leden zien een gedeelde puzzel zolang je hem aanbiedt om te ruilen, uit te lenen of te verkopen. Een privépuzzel blijft verborgen. Vink puzzels aan om ze te delen, vink ze uit om te stoppen met delen.",
       "copyFallback": "Exemplaar",
-      "share": "Delen",
       "close": "Sluiten"
+    },
+    "share": {
+      "searchPlaceholder": "Zoek in je puzzels…",
+      "noMatches": "Geen puzzels gevonden.",
+      "noCopies": "Je bibliotheek is nog leeg. Voeg puzzels toe om ze hier te delen.",
+      "loadError": "Je puzzels konden niet worden geladen.",
+      "shared": "Gedeeld",
+      "notOffered": "Niet aangeboden: leden zien hem niet",
+      "private": "Privé: leden zien hem niet",
+      "shareCount": "{count, plural, one {# puzzel delen} other {# puzzels delen}}",
+      "unshareCount": "{count, plural, one {# puzzel niet meer delen} other {# puzzels niet meer delen}}",
+      "saveChanges": "Wijzigingen opslaan",
+      "saving": "Opslaan…",
+      "clear": "Wissen",
+      "sharedToast": "{count, plural, one {# puzzel gedeeld met {circle}} other {# puzzels gedeeld met {circle}}}",
+      "unsharedToast": "{count, plural, one {# puzzel niet meer gedeeld met {circle}} other {# puzzels niet meer gedeeld met {circle}}}"
+    },
+    "shareErrors": {
+      "CopyNotFound": "Een van deze puzzels staat niet meer in je bibliotheek.",
+      "CircleNotFound": "Deze kring is niet langer beschikbaar.",
+      "CannotShareCopy": "Je kunt in deze kring alleen bekijken, dus je kunt hier geen puzzels delen.",
+      "BatchTooLarge": "Je kunt maximaal 100 puzzels tegelijk delen.",
+      "generic": "Er ging iets mis. Probeer het opnieuw."
     },
     "page": {
       "memberCount": "{count, plural, one {# lid} other {# leden}}",

@@ -2465,12 +2465,33 @@
       "unavailable": "This circle is no longer available.",
       "members": "Members",
       "owner": "Owner",
-      "shareCopy": "Share a copy",
-      "shareDescription": "Shared copies become visible to members of this circle. A copy you've marked private stays private.",
-      "chooseCopy": "Choose one of your copies…",
+      "shareCopy": "Share your puzzles",
+      "shareDescription": "Members see a shared puzzle while you offer it for swap, loan or sale. A private puzzle stays hidden. Tick puzzles to share them, untick to stop sharing.",
       "copyFallback": "Copy",
-      "share": "Share",
       "close": "Close"
+    },
+    "share": {
+      "searchPlaceholder": "Search your puzzles…",
+      "noMatches": "No puzzles match your search.",
+      "noCopies": "Your library is empty. Add puzzles to share them here.",
+      "loadError": "Couldn't load your puzzles.",
+      "shared": "Shared",
+      "notOffered": "Not offered: members won't see it",
+      "private": "Private: members won't see it",
+      "shareCount": "{count, plural, one {Share # puzzle} other {Share # puzzles}}",
+      "unshareCount": "{count, plural, one {Stop sharing # puzzle} other {Stop sharing # puzzles}}",
+      "saveChanges": "Save changes",
+      "saving": "Saving…",
+      "clear": "Clear",
+      "sharedToast": "{count, plural, one {Shared # puzzle with {circle}} other {Shared # puzzles with {circle}}}",
+      "unsharedToast": "{count, plural, one {Stopped sharing # puzzle with {circle}} other {Stopped sharing # puzzles with {circle}}}"
+    },
+    "shareErrors": {
+      "CopyNotFound": "One of these puzzles is no longer in your library.",
+      "CircleNotFound": "This circle is no longer available.",
+      "CannotShareCopy": "You have view-only access in this circle, so you can't share puzzles here.",
+      "BatchTooLarge": "You can share at most 100 puzzles at once.",
+      "generic": "Something went wrong. Please try again."
     },
     "page": {
       "memberCount": "{count, plural, one {# member} other {# members}}",
