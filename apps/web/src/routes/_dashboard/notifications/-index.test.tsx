@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 // The "-" prefix keeps the TanStack route generator from treating this file as a route.
 import type { NotificationView } from "@jigswap/contracts";
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
 import type { ComponentType } from "react";
 import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -76,5 +76,47 @@ describe("NotificationsPage date sections (UX-183)", () => {
 
     expect(screen.queryByRole("heading", { name: "Today" })).toBeNull();
     expect(screen.getByRole("heading", { name: "Yesterday" })).toBeTruthy();
+  });
+});
+
+describe("NotificationsPage phone filter row (UX-122)", () => {
+  const renderPage = () => {
+    rows.current = [view("one", Date.now())];
+    render(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <NotificationsPage />
+      </IntlProvider>,
+    );
+    return screen.getByRole("group", { name: "Filter by category" });
+  };
+  const classesOf = (element: Element) => [...element.classList];
+
+  it("puts the category pills in one named row that scrolls sideways below md and wraps from md", () => {
+    const group = renderPage();
+    expect(classesOf(group)).toEqual(
+      expect.arrayContaining(["max-md:overflow-x-auto", "md:flex-wrap"]),
+    );
+    expect(classesOf(group)).not.toContain("flex-wrap");
+    expect(
+      within(group)
+        .getAllByRole("button")
+        .map((pill) => pill.getAttribute("aria-pressed")),
+    ).toContain("true");
+  });
+
+  it("keeps the unread-only switch out of the pill row, under it on a phone", () => {
+    const group = renderPage();
+    expect(within(group).queryByRole("switch")).toBeNull();
+    const toggle = screen.getByRole("switch", { name: "Unread only" });
+    const controls = group.parentElement!;
+    expect(controls.contains(toggle)).toBe(true);
+    expect(classesOf(controls)).toEqual(
+      expect.arrayContaining(["flex-col", "md:flex-row"]),
+    );
+  });
+
+  it("lets the aside shrink, so the one-row pills scroll instead of widening the page", () => {
+    const group = renderPage();
+    expect(classesOf(group.closest("aside")!)).toContain("min-w-0");
   });
 });
