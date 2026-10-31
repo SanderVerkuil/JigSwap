@@ -165,4 +165,31 @@ describe("household invite expiry", () => {
       )?.members.map((m) => m.isYou),
     ).toContain(true);
   });
+
+  test("the quick start still finds an open invite behind many lapsed ones", async () => {
+    const t = convexTest(schema, modules);
+    const { ann, bob } = await seed(t);
+    // Lapsed invites stay pending (lapsing is computed), one per household that ever invited
+    // Bob. Seeded older than the open one, as they would be.
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 30; i++) {
+        await ctx.db.insert("householdInvites", {
+          aggregateId: `lapsed-${i}`,
+          householdId: `household-${i}`,
+          inviterId: ann,
+          inviteeId: bob,
+          status: "pending",
+          createdAt: Date.now() - 20 * DAY,
+        });
+      }
+    });
+    await as(t, "ann").mutation(
+      api.household.createHousehold.createHousehold,
+      {},
+    );
+    expect(await householdStep(t)).toMatchObject({ pendingInvite: false });
+
+    await annInvitesBob(t, bob);
+    expect(await householdStep(t)).toMatchObject({ pendingInvite: true });
+  });
 });

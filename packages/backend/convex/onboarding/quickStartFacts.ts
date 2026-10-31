@@ -9,19 +9,26 @@ import { isOpenHouseholdInvite } from "../household/memberships";
 // Counts are read with a cap so the query stays bounded; the UI shows 51 as "50+".
 const COUNT_CAP = 51;
 
+// Pending household invites the quick start looks at, newest first. Lapsed ones stay pending
+// (lapsing is computed, never stored), so the read is capped; an open invite is under 14 days old,
+// so newest first it sits ahead of every lapsed one.
+const PENDING_INVITE_SCAN_CAP = 20;
+
 // Whether the member has a household invite they can still accept (isOpenHouseholdInvite: not
-// lapsed, its inviter still the admin). Stops at the first one.
+// lapsed, its inviter still the admin), among their newest PENDING_INVITE_SCAN_CAP pending ones.
 const hasPendingHouseholdInvite = async (
   ctx: QueryCtx,
   me: Id<"users">,
 ): Promise<boolean> => {
   const now = Date.now();
-  const pending = ctx.db
+  const pending = await ctx.db
     .query("householdInvites")
     .withIndex("by_invitee_status", (q) =>
       q.eq("inviteeId", me).eq("status", "pending"),
-    );
-  for await (const invite of pending) {
+    )
+    .order("desc")
+    .take(PENDING_INVITE_SCAN_CAP);
+  for (const invite of pending) {
     if (await isOpenHouseholdInvite(ctx, invite, now)) return true;
   }
   return false;
