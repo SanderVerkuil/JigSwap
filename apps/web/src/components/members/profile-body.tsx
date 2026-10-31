@@ -211,6 +211,7 @@ function HeroSection({
   requestedHandle?: string;
 }) {
   const t = useTranslations("members.profile");
+  const format = useFormatter();
   const displayName = useMemberDisplayName();
   const name = displayName({ name: hero.displayName });
   const memberSinceYear = new Date(hero.memberSince).getFullYear();
@@ -239,7 +240,10 @@ function HeroSection({
               <span className="bg-jigsaw-secondary/10 text-jigsaw-secondary-text inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-sm font-medium">
                 <Star className="size-3.5 fill-current" />
                 {t("ratingPill", {
-                  rating: hero.rating.toFixed(1),
+                  rating: format.number(hero.rating, {
+                    minimumFractionDigits: 1,
+                    maximumFractionDigits: 1,
+                  }),
                   reviewCount: hero.reviewCount,
                 })}
               </span>

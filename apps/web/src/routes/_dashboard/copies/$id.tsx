@@ -1346,7 +1346,10 @@ function CopyReviewsSection({
         <>
           <div className="mb-1.5 flex items-end gap-2.5">
             <div className="font-heading text-foreground text-2xl font-bold leading-none">
-              {average.toFixed(1)}
+              {format.number(average, {
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1,
+              })}
             </div>
             <div className="pb-0.5">
               <StarRating value={Math.round(average)} size="sm" />

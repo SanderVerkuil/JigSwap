@@ -152,7 +152,10 @@ export function TradePartnerCard({
                   aria-hidden
                 />
                 <span className="text-foreground font-medium">
-                  {partner.reviews.averageRating.toFixed(1)}
+                  {format.number(partner.reviews.averageRating, {
+                    minimumFractionDigits: 1,
+                    maximumFractionDigits: 1,
+                  })}
                 </span>
                 <span>
                   (

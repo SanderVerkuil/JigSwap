@@ -22,7 +22,7 @@ import {
   Star,
   X,
 } from "lucide-react";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTranslations } from "use-intl";
 import type { Member } from "./member-view";
 import { PRIVACY_SECTION_ID } from "./privacy-section";
 
@@ -46,6 +46,7 @@ export function IdentityHeader({
 }) {
   const t = useTranslations("profile");
   const tPublic = useTranslations("members.profile");
+  const format = useFormatter();
   const displayName = useMemberDisplayName();
   const { user } = useUser();
   const { data: reputation } = useQuery(
@@ -133,7 +134,10 @@ export function IdentityHeader({
           <Badge className="bg-jigsaw-success border-transparent text-white">
             <Star aria-hidden className="fill-current" />
             {tPublic("ratingPill", {
-              rating: reputation.averageRating.toFixed(1),
+              rating: format.number(reputation.averageRating, {
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1,
+              }),
               reviewCount: reputation.reviewCount,
             })}
           </Badge>

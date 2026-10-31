@@ -95,7 +95,10 @@ export function ReputationSection({ memberId }: ReputationSectionProps) {
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
           <div className="flex items-center gap-2">
             <span className="font-heading text-3xl leading-none font-bold">
-              {profile.averageRating.toFixed(1)}
+              {format.number(profile.averageRating, {
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1,
+              })}
             </span>
             <StarRating value={Math.round(profile.averageRating)} size="sm" />
           </div>
