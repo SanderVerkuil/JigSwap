@@ -42,7 +42,10 @@ const FORMAT_CHARACTERS = /\p{Cf}/gu;
 const WRAPPING = /^[\p{P}\p{S}]+|[\p{P}\p{S}]+$/gu;
 // A host name: dot-separated labels ending in an all-lowercase or all-uppercase top-level
 // domain of at least two letters, with an optional port, path or query. A single-letter or
-// mixed-case last part ("J.R.R.", "Dr.Who") is not a host.
+// mixed-case last part ("J.R.R.", "Dr.Who") is not a host. Deliberately broad: there is no list
+// of real top-level domains, so a lowercase handle such as "anna.smith" is dropped too (a false
+// positive the spec pins). Known gaps the other way: non-ASCII top-level domains and bare IPv4
+// addresses are not matched.
 const BARE_HOST =
   /^(?:[\p{L}\p{N}-]+\.)+(?:[a-z]{2,}|[A-Z]{2,})(?:[/:?#]\S*)?$/u;
 

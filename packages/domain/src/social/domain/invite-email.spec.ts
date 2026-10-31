@@ -142,6 +142,20 @@ describe("inviterNameForEmail", () => {
     expect(inviterNameForEmail(raw)).toBe(raw);
   });
 
+  // On purpose, on the safe side: a dotted all-lowercase handle has the shape of a host name
+  // (any lowercase last part could be a top-level domain), so it is dropped like a link, and a
+  // name with nothing else left falls back to the generic label. A capitalised last part is kept.
+  it.each([
+    ["anna.smith", undefined],
+    ["jan.de.vries", undefined],
+    ["puzzle.lover", undefined],
+    ["Mr Bean mr.bean", "Mr Bean"],
+    ["Jan.Jansen", "Jan.Jansen"],
+    ["anna.Smith", "anna.Smith"],
+  ])("treats the dotted lowercase handle in %j as a host", (raw, kept) => {
+    expect(inviterNameForEmail(raw)).toBe(kept);
+  });
+
   it("returns undefined when only links or addresses were given", () => {
     expect(inviterNameForEmail("https://evil.example")).toBeUndefined();
     expect(
