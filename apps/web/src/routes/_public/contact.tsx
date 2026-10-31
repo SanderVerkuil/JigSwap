@@ -27,7 +27,7 @@ const CHANNELS = [
   { icon: Shield, key: "privacy" },
 ] as const;
 
-// Contact: channel list + the form. Submissions persist via the public
+// Contact: the form + channel list. Submissions persist via the public
 // gateway.contact.submit mutation (admin triage), not a fake success state.
 function ContactPage() {
   const t = useTranslations("marketing.contactPage");
@@ -41,8 +41,17 @@ function ContactPage() {
 
       <Section>
         <Container>
+          {/* The form comes first in the DOM, so on phones (one column) it
+              starts right under the hero and is reached first. From 861px the
+              grid puts the channel list back in the left column. */}
           <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] max-[860px]:grid-cols-1 gap-[clamp(32px,5vw,64px)] items-start">
-            <Reveal>
+            <Reveal
+              delay={120}
+              className="min-[861px]:col-start-2 min-[861px]:row-start-1"
+            >
+              <ContactForm />
+            </Reveal>
+            <Reveal className="min-[861px]:col-start-1 min-[861px]:row-start-1">
               <div className="flex flex-col gap-2">
                 {CHANNELS.map(({ icon: Icon, key }, i) => (
                   <div
@@ -79,9 +88,6 @@ function ContactPage() {
                   </p>
                 </div>
               </div>
-            </Reveal>
-            <Reveal delay={120}>
-              <ContactForm />
             </Reveal>
           </div>
         </Container>

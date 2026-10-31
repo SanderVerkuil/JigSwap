@@ -276,3 +276,18 @@ describe("contact form details", () => {
     ).toBe("/privacy");
   });
 });
+
+describe("contact page layout", () => {
+  it("puts the form before the email channels, so phones reach it first", () => {
+    renderPage();
+    const form = screen
+      .getByRole("button", { name: copy.submit })
+      .closest("form");
+    const firstChannel = screen.getByRole("link", { name: copy.emailValue });
+    expect(form).not.toBeNull();
+    expect(
+      form!.compareDocumentPosition(firstChannel) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+});
