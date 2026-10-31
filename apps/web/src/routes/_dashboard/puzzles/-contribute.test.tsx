@@ -157,3 +157,88 @@ describe("contribute a puzzle", () => {
     expect(screen.queryByText(/op je plank/)).toBeNull();
   });
 });
+
+// A catalogue summary row, as puzzleSuggestions and lookupBarcode return them.
+const summary = (_id: string, title: string, brand?: string) => ({
+  _id,
+  _creationTime: 1,
+  title,
+  brand,
+  pieceCount: 1000,
+  status: "approved" as const,
+  createdAt: 1,
+  updatedAt: 1,
+});
+
+describe("checking the catalogue for the puzzle being contributed", () => {
+  const typeTitle = (title: string) =>
+    fireEvent.change(screen.getByLabelText("Puzzle Title"), {
+      target: { value: title },
+    });
+
+  it("offers an existing puzzle with the typed title, and adding a copy of it instead", async () => {
+    const suggestions = vi.fn((_args: unknown) => [
+      summary("p_cafe", "Café", "Jan van Haasteren"),
+      summary("p_market", "Café de Markt"),
+      summary("p_other", "Night Watch"),
+    ]);
+    mocks.data.set("catalog/getPuzzleSuggestions:getPuzzleSuggestions", (a) =>
+      suggestions(a),
+    );
+    renderPage();
+
+    typeTitle("Ca");
+    typeTitle("Café");
+    const banner = await screen.findByText(/Café · Jan van Haasteren/);
+    expect(suggestions).not.toHaveBeenCalledWith(
+      expect.objectContaining({ searchTerm: "ca" }),
+    );
+    expect(suggestions).toHaveBeenCalledWith(
+      expect.objectContaining({ searchTerm: "café" }),
+    );
+    // Only titles that plausibly name the same puzzle are offered.
+    expect(screen.getByText(/Café de Markt/)).toBeTruthy();
+    expect(screen.queryByText(/Night Watch/)).toBeNull();
+
+    const row = banner.closest("div")!;
+    fireEvent.click(
+      Array.from(row.querySelectorAll("button")).find(
+        (b) => b.textContent === "Use this one",
+      )!,
+    );
+    expect(mocks.push).toHaveBeenCalledWith(
+      "/my-puzzles/add/new?puzzleId=p_cafe",
+    );
+  });
+
+  it("lets the member say a suggested puzzle is a different one", async () => {
+    mocks.data.set("catalog/getPuzzleSuggestions:getPuzzleSuggestions", () => [
+      summary("p_cafe", "Café"),
+    ]);
+    renderPage();
+    typeTitle("Café");
+    await screen.findByText(/We found/);
+
+    fireEvent.click(screen.getByRole("button", { name: "No, it's different" }));
+    expect(screen.queryByText(/We found/)).toBeNull();
+  });
+
+  it("looks up a typed EAN and offers the puzzle that already carries it", async () => {
+    const lookup = vi.fn((_args: unknown) =>
+      summary("p_barcode", "Dorpsstraat"),
+    );
+    mocks.data.set("catalog/findPuzzleByBarcode:lookupPuzzleByBarcode", (a) =>
+      lookup(a),
+    );
+    renderPage();
+    fireEvent.click(
+      screen.getByRole("button", { name: "More details (optional)" }),
+    );
+    fireEvent.change(screen.getByLabelText("EAN"), {
+      target: { value: "4006381333931" },
+    });
+
+    await screen.findByText(/Dorpsstraat/);
+    expect(lookup).toHaveBeenCalledWith({ code: "4006381333931" });
+  });
+});

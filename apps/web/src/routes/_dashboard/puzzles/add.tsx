@@ -8,6 +8,8 @@ import {
   coverStep,
   CoverStepError,
   DIFFICULTY_OPTIONS,
+  duplicateCandidates,
+  duplicateLookups,
   ImportZone,
   LivePreviewCard,
   MatchConfirm,
@@ -38,6 +40,7 @@ import {
 } from "@/components/ui/select";
 import { gateway, Id } from "@/gateway";
 import { useBoxArtCheckNotice } from "@/hooks/use-box-art-check";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useRelativeTime } from "@/hooks/use-relative-time";
 import { useUploadBoxArt } from "@/hooks/use-upload-box-art";
 import { convexErrorCode } from "@/lib/convex-error-code";
@@ -50,6 +53,7 @@ import {
 } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import type { FunctionReturnType } from "convex/server";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -108,6 +112,24 @@ const DEFAULT_FORM: FormState = {
   dimensions: { width: "", height: "", unit: "cm" },
 };
 
+// How long typing in the title or barcode fields pauses before the catalogue is checked.
+const DUPLICATE_CHECK_DEBOUNCE_MS = 300;
+// Title search results fetched per check; only those whose title overlaps are offered.
+const TITLE_SUGGESTION_LIMIT = 8;
+
+type CatalogueMatch = NonNullable<
+  FunctionReturnType<typeof gateway.catalog.lookupBarcode>
+>;
+
+const toImportedMatch = (p: CatalogueMatch): ImportedMatch => ({
+  puzzleId: p._id,
+  aggregateId: p.aggregateId,
+  title: p.title,
+  brand: p.brand,
+  pieceCount: p.pieceCount,
+  imageUrl: p.image ?? undefined,
+});
+
 function ContributePuzzlePage() {
   const router = useRouter();
   const t = useTranslations("puzzles");
@@ -118,6 +140,12 @@ function ContributePuzzlePage() {
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [pendingMatch, setPendingMatch] = useState<ImportedMatch | null>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  // Catalogue puzzles the member said are a different puzzle; never offered again on this form.
+  const [dismissedMatches, setDismissedMatches] = useState<ReadonlySet<string>>(
+    new Set(),
+  );
+  const dismissMatch = (puzzleId: string) =>
+    setDismissedMatches((ids) => new Set(ids).add(puzzleId));
 
   // Convex mutations & actions, called inside the contribute wrapper below.
   const createPuzzle = useConvexMutation(gateway.catalog.createPuzzle);
@@ -137,6 +165,53 @@ function ContributePuzzlePage() {
       brand: form.brand.trim() || undefined,
       publisher: form.publisher.trim() || undefined,
     }),
+  );
+
+  // Is this puzzle already in the catalogue? The typed title and EAN/UPC are checked (debounced)
+  // so the member can add a copy of the existing puzzle instead of contributing a duplicate.
+  const lookups = duplicateLookups(form);
+  const titleTerm = useDebouncedValue(
+    lookups.titleTerm,
+    DUPLICATE_CHECK_DEBOUNCE_MS,
+  );
+  const barcode = useDebouncedValue(
+    lookups.barcode,
+    DUPLICATE_CHECK_DEBOUNCE_MS,
+  );
+  const { data: titleMatches } = useQuery(
+    convexQuery(
+      gateway.catalog.puzzleSuggestions,
+      titleTerm
+        ? { searchTerm: titleTerm, limit: TITLE_SUGGESTION_LIMIT }
+        : "skip",
+    ),
+  );
+  const { data: barcodeMatch } = useQuery(
+    convexQuery(
+      gateway.catalog.lookupBarcode,
+      barcode ? { code: barcode } : "skip",
+    ),
+  );
+  const duplicates = duplicateCandidates({
+    titleTerm,
+    titleMatches,
+    barcodeMatch,
+    dismissed: dismissedMatches,
+  });
+  const addCopyOf = (puzzleId: string) =>
+    router.push(`/my-puzzles/add/new?puzzleId=${puzzleId}`);
+  const duplicateBanners = (matches: ReadonlyArray<CatalogueMatch>) => (
+    // Always rendered (hidden while empty) so screen readers announce a match as it appears.
+    <div aria-live="polite" className="flex flex-col gap-2 empty:hidden">
+      {matches.map((p) => (
+        <MatchConfirm
+          key={p._id}
+          match={toImportedMatch(p)}
+          onUse={() => addCopyOf(p._id)}
+          onIgnore={() => dismissMatch(p._id)}
+        />
+      ))}
+    </div>
   );
 
   // Object URL for the cover file preview — derived from the file; the effect only revokes the
@@ -278,11 +353,12 @@ function ContributePuzzlePage() {
           match={pendingMatch}
           onUse={() => {
             setPendingMatch(null);
-            router.push(
-              `/my-puzzles/add/new?puzzleId=${pendingMatch.puzzleId}`,
-            );
+            addCopyOf(pendingMatch.puzzleId);
           }}
-          onIgnore={() => setPendingMatch(null)}
+          onIgnore={() => {
+            dismissMatch(pendingMatch.puzzleId);
+            setPendingMatch(null);
+          }}
         />
       )}
 
@@ -300,6 +376,7 @@ function ContributePuzzlePage() {
             placeholder={t("fieldTitlePlaceholder")}
             maxLength={CATALOG_TEXT_LIMITS.title}
           />
+          {duplicateBanners(duplicates.byTitle)}
         </div>
 
         {/* Publisher + Piece Count */}
@@ -481,6 +558,9 @@ function ContributePuzzlePage() {
                 />
               </div>
             </div>
+            {duplicateBanners(
+              duplicates.byBarcode ? [duplicates.byBarcode] : [],
+            )}
 
             {/* Model Number */}
             <div className="flex flex-col gap-1.5">

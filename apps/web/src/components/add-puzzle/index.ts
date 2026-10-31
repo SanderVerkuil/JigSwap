@@ -5,6 +5,7 @@ export * from "./availability-chips";
 export * from "./catalog-text-limits";
 export * from "./contribute-error";
 export * from "./cover-colour-field";
+export * from "./duplicate-check";
 export * from "./filter-suggestions";
 export * from "./import-zone";
 export * from "./live-preview-card";
