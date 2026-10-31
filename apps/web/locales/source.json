@@ -2629,6 +2629,7 @@
     "requestedName": "Follow request to {name} pending",
     "cancelRequest": "Cancel request",
     "toastFollowing": "Following",
+    "toastFollowingName": "You now follow {name}",
     "toastRequestSent": "Request sent",
     "toastUnfollowed": "Unfollowed {name}",
     "toastRequestCancelled": "Request cancelled",

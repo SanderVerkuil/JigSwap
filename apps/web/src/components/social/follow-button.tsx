@@ -114,14 +114,18 @@ export function FollowButton({
   const refusal = (error: unknown, fallback: string) =>
     convexErrorCode(error) === "RateLimited" ? t("errorRateLimited") : fallback;
 
+  // What a follow says, an Undo's too: whom you now follow, whenever the name is known.
+  const followConfirmation = (requested: boolean) =>
+    requested
+      ? t("toastRequestSent")
+      : memberName
+        ? t("toastFollowingName", { name: memberName })
+        : t("toastFollowing");
+
   const handleFollow = async () => {
     try {
       const result = await follow.mutateAsync({ followeeId: memberId });
-      toast.success(
-        result.kind === "requested"
-          ? t("toastRequestSent")
-          : t("toastFollowing"),
-      );
+      toast.success(followConfirmation(result.kind === "requested"));
     } catch (error) {
       toast.error(refusal(error, t("errorUpdate")));
     }
@@ -130,11 +134,7 @@ export function FollowButton({
   const undoUnfollow = async () => {
     try {
       const result = await followMember({ followeeId: memberId });
-      toast.success(
-        result.kind === "requested"
-          ? t("toastRequestSent")
-          : t("toastFollowing"),
-      );
+      toast.success(followConfirmation(result.kind === "requested"));
     } catch (error) {
       toast.error(refusal(error, t("undoError", { name: memberName })));
     }
