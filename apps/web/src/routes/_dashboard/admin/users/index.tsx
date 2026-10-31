@@ -1,6 +1,9 @@
 import { QueueEmpty } from "@/components/admin/queue-empty";
 import { useUrlSearchInput } from "@/components/admin/users/use-url-search-input";
-import { validateAdminUsersSearch } from "@/components/admin/users/users-search";
+import {
+  looksLikeEmail,
+  validateAdminUsersSearch,
+} from "@/components/admin/users/users-search";
 import { UsersTable } from "@/components/admin/users/users-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -75,7 +78,13 @@ function AdminUsersPage() {
       {status === "LoadingFirstPage" ? (
         <PageLoading message={t("loading")} />
       ) : users.length === 0 ? (
-        <QueueEmpty icon={UserX} title={t("emptyTitle")} label={t("empty")} />
+        <QueueEmpty
+          icon={UserX}
+          title={t("emptyTitle")}
+          label={
+            search && looksLikeEmail(search) ? t("emptyEmail") : t("empty")
+          }
+        />
       ) : (
         <UsersTable users={users} />
       )}

@@ -9,3 +9,9 @@ export function validateAdminUsersSearch(
   const q = typeof search.q === "string" ? search.q.trim() : "";
   return { q: q ? q : undefined };
 }
+
+// A whole email address ("local@domain", no spaces), which admin.listUsers looks up exactly
+// instead of searching names. Mirrors EMAIL_SHAPED in packages/backend/convex/admin/listUsers.ts.
+export function looksLikeEmail(term: string): boolean {
+  return /^[^\s@]+@[^\s@]+$/.test(term);
+}

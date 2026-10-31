@@ -5208,6 +5208,8 @@
         "other": "Iets anders"
       },
       "markHandled": "Markeren als afgehandeld",
+      "findMember": "Lid zoeken",
+      "findMemberLabel": "Lid zoeken: {email}",
       "markHandledSuccess": "Bericht gemarkeerd als afgehandeld",
       "markHandledError": "Bericht bijwerken mislukt",
       "undo": "Ongedaan maken",
@@ -5391,9 +5393,10 @@
     },
     "users": {
       "loading": "Leden laden…",
-      "searchPlaceholder": "Zoek op naam of gebruikersnaam…",
+      "searchPlaceholder": "Naam, gebruikersnaam of e-mail…",
       "emptyTitle": "Geen leden gevonden",
       "empty": "Geen leden gevonden voor deze zoekopdracht.",
+      "emptyEmail": "Geen lid gebruikt dit e-mailadres. Zoeken op e-mail werkt alleen met het hele adres.",
       "columns": {
         "member": "Lid",
         "email": "E-mail",

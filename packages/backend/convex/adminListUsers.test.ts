@@ -128,6 +128,65 @@ describe("admin/listUsers", () => {
     expect(result.page.map((u) => u.name)).toEqual(["Cleo"]);
   });
 
+  test("an email address finds exactly that member (e.g. from a contact message)", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const result = await asAdmin(t).query(api.admin.listUsers.listUsers, {
+      ...firstPage,
+      search: "  clerk_bob@example.com ",
+    });
+    expect(result.page.map((u) => u.name)).toEqual(["Bob"]);
+    expect(result.page[0].ownedCopyCount).toBe(2);
+    expect(result.isDone).toBe(true);
+
+    // A visitor may type their address in other case than the member's verified one.
+    const shouted = await asAdmin(t).query(api.admin.listUsers.listUsers, {
+      ...firstPage,
+      search: "Clerk_Bob@Example.com",
+    });
+    expect(shouted.page.map((u) => u.name)).toEqual(["Bob"]);
+  });
+
+  test("an address stored in mixed case is found as typed", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("users", {
+        clerkId: "clerk_dana",
+        email: "Dana.Jansen@Example.nl",
+        name: "Dana",
+        searchableName: "dana",
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+    const result = await asAdmin(t).query(api.admin.listUsers.listUsers, {
+      ...firstPage,
+      search: "Dana.Jansen@Example.nl",
+    });
+    expect(result.page.map((u) => u.name)).toEqual(["Dana"]);
+  });
+
+  test("a partial or unknown address matches no one", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    for (const search of [
+      "clerk_bob@example",
+      "clerk_bob@exam",
+      "bob@example.com",
+      "nobody@example.com",
+    ]) {
+      const result = await asAdmin(t).query(api.admin.listUsers.listUsers, {
+        ...firstPage,
+        search,
+      });
+      expect(result.page).toEqual([]);
+      expect(result.isDone).toBe(true);
+    }
+  });
+
   test("search is also admin-gated", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
@@ -135,6 +194,12 @@ describe("admin/listUsers", () => {
       asMember(t).query(api.admin.listUsers.listUsers, {
         ...firstPage,
         search: "cleo",
+      }),
+    ).rejects.toThrow(/Forbidden/);
+    await expect(
+      asMember(t).query(api.admin.listUsers.listUsers, {
+        ...firstPage,
+        search: "clerk_bob@example.com",
       }),
     ).rejects.toThrow(/Forbidden/);
   });

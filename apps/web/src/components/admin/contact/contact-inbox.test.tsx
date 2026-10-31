@@ -8,7 +8,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { getFunctionName } from "convex/server";
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../../locales/en.json";
@@ -37,6 +37,26 @@ vi.mock("@convex-dev/react-query", async (importOriginal) => ({
 }));
 vi.mock("sonner", () => ({
   toast: { success: mocks.toastSuccess, error: mocks.toastError },
+}));
+// Router-free Link: the test asserts the rendered href, not routing.
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({
+    to,
+    search,
+    children,
+    ...rest
+  }: {
+    to: string;
+    search?: Record<string, string>;
+    children?: ReactNode;
+  }) => (
+    <a
+      href={`${to}${search ? `?${new URLSearchParams(search)}` : ""}`}
+      {...rest}
+    >
+      {children}
+    </a>
+  ),
 }));
 
 const message = (overrides: Record<string, unknown> = {}) => ({
@@ -205,6 +225,22 @@ describe("ContactInbox", () => {
         "Message moved back to New",
       ),
     );
+  });
+
+  it("links each sender to the member directory, searched by their address", () => {
+    mocks.paginated.mockReturnValue(
+      page([message(), message({ _id: "m2", status: "handled" })]),
+    );
+    renderInbox({ status: "all" });
+    const links = screen.getAllByRole("link", {
+      name: "Find member: mara@example.com",
+    });
+    // Handled messages too: the sender may write again.
+    expect(links).toHaveLength(2);
+    expect(links[0].getAttribute("href")).toBe(
+      "/admin/users?q=mara%40example.com",
+    );
+    expect(links[0].textContent).toBe("Find member");
   });
 
   it("says when the undo fails (nl)", async () => {

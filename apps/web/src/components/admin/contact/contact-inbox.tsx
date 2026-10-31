@@ -4,8 +4,8 @@
 // paginated with Load more. The status filter (New, the default / Handled / All) is the route's
 // URL search, so a reload, Back or a shared link keeps it; New carries the waiting count from
 // admin.pendingCounts. A new message is marked handled in one click, and the toast's Undo puts it
-// back to new. The listing and both transitions are admin-gated server-side in the Convex
-// functions.
+// back to new. Each message links its sender's address to the member directory (Find member).
+// The listing and both transitions are admin-gated server-side in the Convex functions.
 import { AdminQueryError } from "@/components/admin/admin-query-error";
 import { QueueEmpty } from "@/components/admin/queue-empty";
 import { Badge } from "@/components/ui/badge";
@@ -17,9 +17,10 @@ import { mailtoHref } from "@/lib/mailto";
 import { formatQueueCount, type QueueCount } from "@/lib/queue-count";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery } from "convex/react";
-import { Check } from "lucide-react";
+import { Check, UserSearch } from "lucide-react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "use-intl";
 import { CONTACT_FILTERS, type ContactFilter } from "./contact-search";
@@ -192,18 +193,32 @@ function ContactMessages({ status }: { status: ContactFilter }) {
             <p className="text-sm whitespace-pre-wrap [overflow-wrap:anywhere]">
               {message.message}
             </p>
-            {message.status === "new" && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handle(message._id)}
-                disabled={busyId === message._id}
-                className="flex items-center gap-1 self-start"
-              >
-                <Check className="h-3 w-3" />
-                {t("markHandled")}
+            <div className="flex flex-wrap items-center gap-2">
+              {message.status === "new" && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handle(message._id)}
+                  disabled={busyId === message._id}
+                  className="flex h-11 items-center gap-1 md:h-8"
+                >
+                  <Check className="h-3 w-3" />
+                  {t("markHandled")}
+                </Button>
+              )}
+              {/* The member behind the address, if any: /admin/users looks an address up
+                  exactly (admin.listUsers). */}
+              <Button size="sm" variant="ghost" className="h-11 md:h-8" asChild>
+                <Link
+                  to="/admin/users"
+                  search={{ q: message.email }}
+                  aria-label={t("findMemberLabel", { email: message.email })}
+                >
+                  <UserSearch className="h-3 w-3" aria-hidden />
+                  {t("findMember")}
+                </Link>
               </Button>
-            )}
+            </div>
           </div>
         ))}
       </div>

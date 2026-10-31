@@ -5208,6 +5208,8 @@
         "other": "Something else"
       },
       "markHandled": "Mark as handled",
+      "findMember": "Find member",
+      "findMemberLabel": "Find member: {email}",
       "markHandledSuccess": "Message marked as handled",
       "markHandledError": "Failed to update message",
       "undo": "Undo",
@@ -5391,9 +5393,10 @@
     },
     "users": {
       "loading": "Loading members…",
-      "searchPlaceholder": "Search by name or username…",
+      "searchPlaceholder": "Name, username or email…",
       "emptyTitle": "No members found",
       "empty": "No members match this search.",
+      "emptyEmail": "No member uses this email address. Searching by email needs the whole address.",
       "columns": {
         "member": "Member",
         "email": "Email",
