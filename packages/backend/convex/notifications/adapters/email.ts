@@ -17,6 +17,10 @@ export interface EmailMessage {
   // Stable per-notification key (the Notification aggregateId): a replayed send is deduplicated
   // by the provider instead of double-delivering.
   readonly idempotencyKey: string;
+  // The signed one-click unsubscribe URL for this email's notification type (SEC-84,
+  // notifications/unsubscribeToken). When set, the adapter adds the RFC 8058 List-Unsubscribe
+  // headers; when absent (an invitation, or no EMAIL_UNSUBSCRIBE_SECRET) it adds none.
+  readonly listUnsubscribeUrl?: string;
 }
 
 // Outbound port. An adapter MAY throw on failure — the sendEmail action is the single caller and

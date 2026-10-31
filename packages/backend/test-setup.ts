@@ -18,3 +18,9 @@ afterEach(async () => {
 // Assigned unconditionally so a value exported in the developer's shell never leaks into tests.
 process.env.ANON_REF_SECRET =
   "test-only-dummy-anon-ref-secret-not-used-anywhere-real";
+
+// SEC-84: the one-click List-Unsubscribe link is an HMAC keyed by the server-only
+// EMAIL_UNSUBSCRIBE_SECRET. The same kind of dummy, non-secret value (at least 32 characters), set
+// unconditionally so a value in the developer's shell never changes what tests see.
+process.env.EMAIL_UNSUBSCRIBE_SECRET =
+  "test-only-dummy-email-unsubscribe-secret-not-used-anywhere-real";

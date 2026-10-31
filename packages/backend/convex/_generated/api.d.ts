@@ -400,6 +400,8 @@ import type * as notifications_setNotificationPreferences from "../notifications
 import type * as notifications_subscriber from "../notifications/subscriber.js";
 import type * as notifications_threadDigest from "../notifications/threadDigest.js";
 import type * as notifications_unreadCount from "../notifications/unreadCount.js";
+import type * as notifications_unsubscribe from "../notifications/unsubscribe.js";
+import type * as notifications_unsubscribeToken from "../notifications/unsubscribeToken.js";
 import type * as notifications_updateNotificationPreference from "../notifications/updateNotificationPreference.js";
 import type * as notifications_viewRules from "../notifications/viewRules.js";
 import type * as onboarding_activationReport from "../onboarding/activationReport.js";
@@ -965,6 +967,8 @@ declare const fullApi: ApiFromModules<{
   "notifications/subscriber": typeof notifications_subscriber;
   "notifications/threadDigest": typeof notifications_threadDigest;
   "notifications/unreadCount": typeof notifications_unreadCount;
+  "notifications/unsubscribe": typeof notifications_unsubscribe;
+  "notifications/unsubscribeToken": typeof notifications_unsubscribeToken;
   "notifications/updateNotificationPreference": typeof notifications_updateNotificationPreference;
   "notifications/viewRules": typeof notifications_viewRules;
   "onboarding/activationReport": typeof onboarding_activationReport;

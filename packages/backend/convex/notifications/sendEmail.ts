@@ -8,6 +8,7 @@ import { ingestToAxiom } from "../lib/axiom";
 import { logEvent, type WideEvent } from "../lib/logEvent";
 import { makeEmailSenderFromEnv } from "./adapters/email";
 import { deliveryRefsValidator, type DeliveryContent } from "./deliveryContent";
+import { emailUnsubscribeUrlOf } from "./unsubscribeToken";
 
 const errMsg = (e: unknown): string =>
   e instanceof Error ? e.message : String(e);
@@ -100,6 +101,13 @@ export const send = internalAction({
         href: content?.href,
         actorAnonymous: content?.actorAnonymous,
       });
+      // One-click unsubscribe from this type's email (SEC-84). Only for a payload that names its
+      // recipient, and only once EMAIL_UNSUBSCRIBE_SECRET is set; otherwise no header is sent.
+      const listUnsubscribeUrl =
+        args.userId !== undefined
+          ? await emailUnsubscribeUrlOf(process.env, args.userId, args.type)
+          : undefined;
+      event.list_unsubscribe = listUnsubscribeUrl !== undefined;
       await makeEmailSenderFromEnv().send({
         to: args.to,
         toName: args.toName,
@@ -108,6 +116,7 @@ export const send = internalAction({
         text: rendered.text,
         fromName: rendered.fromName,
         idempotencyKey: args.idempotencyKey,
+        ...(listUnsubscribeUrl !== undefined ? { listUnsubscribeUrl } : {}),
       });
     } catch (error) {
       event.outcome = "error";

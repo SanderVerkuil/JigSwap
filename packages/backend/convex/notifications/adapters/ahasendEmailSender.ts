@@ -47,6 +47,16 @@ export const ahaSendEmailSender = (cfg: AhaSendConfig): EmailSender => ({
           subject: stripCrlf(message.subject),
           html_content: message.html,
           text_content: message.text,
+          // RFC 8058 one-click unsubscribe, through AhaSend's custom `headers` map. A mail provider
+          // POSTs `List-Unsubscribe=One-Click` to the URL (notifications/unsubscribe).
+          ...(message.listUnsubscribeUrl
+            ? {
+                headers: {
+                  "List-Unsubscribe": `<${stripCrlf(message.listUnsubscribeUrl)}>`,
+                  "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+                },
+              }
+            : {}),
           ...(cfg.sandbox ? { sandbox: true } : {}),
         }),
       },
