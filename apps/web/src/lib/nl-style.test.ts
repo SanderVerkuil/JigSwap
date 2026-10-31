@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import en from "../../locales/en.json";
 import nl from "../../locales/nl.json";
+import source from "../../locales/source.json";
 
 // Dutch UI text is sentence case: only the first word of a label or sentence starts with a
 // capital, plus names (UX-65). English Title Case carried over into nl.json ("Puzzel
@@ -254,11 +256,42 @@ describe("nl.json", () => {
     expect(offenders).toEqual([]);
   });
 
+  // Puzzle pieces are "stukje"/"stukjes" everywhere, never "stuk"/"stukken" (UX-65).
+  it("calls puzzle pieces stukjes", () => {
+    // "zeldzame stukken" means rare items, not puzzle pieces.
+    const items = new Set(["features.vastCollection.description"]);
+    const offenders = leaves(nl)
+      .filter(
+        ([key, value]) =>
+          (!items.has(key) && /\bstukken\b/i.test(value)) ||
+          (/piece/i.test(key) && /\bstuk\b/i.test(value)),
+      )
+      .map(([key, value]) => `${key}: ${value}`);
+    expect(offenders).toEqual([]);
+  });
+
   // "Laden…", not "Laden...": one ellipsis character, as in the rest of the app.
   it("uses the ellipsis character, never three dots", () => {
     const offenders = leaves(nl)
       .filter(([, value]) => value.includes("..."))
       .map(([key, value]) => `${key}: ${value}`);
     expect(offenders).toEqual([]);
+  });
+});
+
+// The three catalogs describe the same keys: a key missing from nl.json renders the raw key
+// for Dutch members in production, and source.json mirrors en.json.
+describe("locale files", () => {
+  const keys = (messages: unknown) => leaves(messages).map(([key]) => key);
+
+  it("have the same keys in en.json and nl.json", () => {
+    const nlKeys = new Set(keys(nl));
+    const enKeys = new Set(keys(en));
+    expect(keys(en).filter((key) => !nlKeys.has(key))).toEqual([]);
+    expect(keys(nl).filter((key) => !enKeys.has(key))).toEqual([]);
+  });
+
+  it("keep source.json equal to en.json", () => {
+    expect(source).toEqual(en);
   });
 });
