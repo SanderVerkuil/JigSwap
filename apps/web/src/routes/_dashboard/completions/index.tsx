@@ -3,9 +3,9 @@ import { Image } from "@/compat/image";
 import { Link } from "@/compat/link";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { CoverChip } from "@/components/library/cover-chip";
-import { EmptyState } from "@/components/library/empty-state";
 import { chipColor } from "@/components/library/palette";
 import { StatRow } from "@/components/library/stat-row";
+import { CompletionsEmptyState } from "@/components/solving/completions-empty-state";
 import { EditCompletionDialog } from "@/components/solving/edit-completion-dialog";
 import { EditSolveButton } from "@/components/solving/edit-solve-button";
 import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
@@ -143,24 +143,28 @@ function CompletionsPage() {
   }, [ownedPuzzles]);
 
   // The page title lives in the shell page head; publish the log meta + the Log
-  // Completion action there so the body carries no duplicate section header.
+  // Completion action there so the body carries no duplicate section header. While the empty
+  // state shows, its own button is the only Log action (and carries the tour anchor).
   const { startTour } = useTourLauncher();
+  const isEmpty = completions !== undefined && completions.length === 0;
   usePageHeader(
     () => ({
-      meta: t("mostRecent"),
+      meta: isEmpty ? undefined : t("mostRecent"),
       actions: (
         <>
           <GuideHelpButton tourId="track-your-solves" startTour={startTour} />
-          <Button variant="brand" size="sm" asChild>
-            <Link href="/completions/new" data-tour="completions-log">
-              <Plus className="h-4 w-4" />
-              {t("logAction")}
-            </Link>
-          </Button>
+          {!isEmpty && (
+            <Button variant="brand" size="sm" asChild>
+              <Link href="/completions/new" data-tour="completions-log">
+                <Plus className="h-4 w-4" />
+                {t("logAction")}
+              </Link>
+            </Button>
+          )}
         </>
       ),
     }),
-    [t, startTour],
+    [t, startTour, isEmpty],
   );
 
   if (
@@ -463,7 +467,7 @@ function CompletionsPage() {
           page head; the stat row above stays as a distinct sub-section. */}
       <section>
         {sorted.length === 0 ? (
-          <EmptyState title={t("empty")} sub={t("emptyHint")} />
+          <CompletionsEmptyState />
         ) : (
           <>
             {inProgress.length > 0 && (
