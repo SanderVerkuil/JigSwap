@@ -148,9 +148,13 @@ function textRuns(message: string): string[] {
 const QUOTED =
   /“[^”]*”|„[^”"]*[”"]|"[^"]*"|‘[^’]*’|(^|[\s(])'[^'\s][^']*'(?=[\s.,;:!?)]|$)/g;
 
+// "Gem. moeilijkheid": the full stop of an abbreviation ends no sentence.
+const ABBREVIATION = /\b(gem|min|max|ca|incl|excl|nr)\.(?=\s)/giu;
+
 // Drops what is not checked: <b> labels, tags and quoted labels.
 const checkable = (run: string) =>
   run
+    .replace(ABBREVIATION, "$1")
     .replace(/<b>[\s\S]*?<\/b>/g, "§")
     .replace(/<\/?\w+>/g, " ")
     .replace(QUOTED, "$1§");
@@ -242,6 +246,8 @@ describe("nl-style helpers", () => {
     ["Zet 'Google-services gebruiken' aan.", []],
     ["Bewaard in de EU-regio van Convex", []],
     ["Je foto's en QR-codes", []],
+    ["Gem. Moeilijkheid", ["Moeilijkheid"]],
+    ["Min. stukjes", []],
   ] as const)("%s → %j", (message, expected) => {
     expect(titleCaseWords("x", message)).toEqual(expected);
   });

@@ -142,7 +142,7 @@ describe("headMessage", () => {
         values,
       ),
     ).toBe(
-      "Café van Jumbo — legpuzzel van 1.000 stukjes. Beoordelingen, reviews en ruilbeschikbaarheid in de JigSwap-community.",
+      "Café van Jumbo — legpuzzel van 1.000 stukjes. Sterren, reviews en ruilbeschikbaarheid in de JigSwap-community.",
     );
   });
 

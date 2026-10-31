@@ -114,7 +114,7 @@
       "description": "Verminder afval door puzzels een tweede leven te geven. Maak je hobby milieuvriendelijker."
     },
     "core": {
-      "title": "Volledig puzzelbeheer platform",
+      "title": "Volledig puzzelbeheerplatform",
       "personalLibrary": {
         "title": "Persoonlijke bibliotheek",
         "description": "Volg je collectie, voltooiingsgeschiedenis en persoonlijke analyses met gedetailleerde statistieken en voortgangsregistratie."
@@ -449,7 +449,7 @@
       "useThis": "Gebruik deze",
       "noResults": "Geen overeenkomende puzzels gevonden",
       "loading": "Voorstellen laden…",
-      "typeToSearch": "Type om naar puzzels te zoeken…"
+      "typeToSearch": "Typ om naar puzzels te zoeken…"
     },
     "puzzleSelection": "Puzzelselectie",
     "puzzleSelectionDescription": "Kies of je een nieuwe puzzel wilt maken of een bestaande wilt selecteren",
@@ -457,7 +457,7 @@
     "searchExistingPuzzles": "Zoek bestaande puzzels",
     "searchPuzzles": "Zoek puzzels",
     "searchPuzzlesPlaceholder": "Zoek op titel, merk of aantal stukjes…",
-    "typeToSearch": "Type om naar puzzels te zoeken…",
+    "typeToSearch": "Typ om naar puzzels te zoeken…",
     "loading": "Laden…",
     "noResults": "Geen overeenkomende puzzels gevonden",
     "change": "Wijzigen",
@@ -497,10 +497,10 @@
         "allBrands": "Alle merken",
         "brandsUnavailable": "Merken konden niet worden geladen",
         "minPieces": "Min. stukjes",
-        "selectMinPieces": "Selecteer minimum aantal stukjes",
+        "selectMinPieces": "Selecteer minimaal aantal stukjes",
         "noMinimum": "Geen minimum",
         "maxPieces": "Max. stukjes",
-        "selectMaxPieces": "Selecteer maximum aantal stukjes",
+        "selectMaxPieces": "Selecteer maximaal aantal stukjes",
         "noMaximum": "Geen maximum",
         "difficulty": "Moeilijkheidsgraad",
         "selectDifficulty": "Selecteer moeilijkheidsgraad",
@@ -2018,7 +2018,7 @@
       "description": "Kies de methode die het beste voor je werkt. We reageren meestal binnen 24 uur tijdens werkdagen."
     },
     "email": {
-      "title": "E-mail ondersteuning",
+      "title": "E-mailondersteuning",
       "description": "Voor algemene vragen, ondersteuningsvragen of feedback:",
       "address": "hello@jigswap.site",
       "responseTime": "We reageren meestal binnen 24 uur"
@@ -2165,8 +2165,8 @@
     "deleted": "“{name}” is verwijderd",
     "deleteError": "Kon de collectie niet verwijderen. Probeer het opnieuw.",
     "loadingCollections": "Collecties laden…",
-    "piecesTotal": "Stukjes totaal",
-    "avgDifficulty": "Gem. Moeilijkheid",
+    "piecesTotal": "Stukjes in totaal",
+    "avgDifficulty": "Gem. moeilijkheid",
     "upForTrade": "Te ruil",
     "difficultyMix": "Moeilijkheidsverdeling",
     "puzzlesInCollection": "Puzzels in deze collectie",
@@ -4138,7 +4138,7 @@
       "contact": "Heb je een vraag, een idee of feedback over JigSwap? Neem contact met ons op.",
       "privacy": "Hoe JigSwap met je persoonsgegevens omgaat: wat we verzamelen, waarvoor we het gebruiken en welke keuzes en rechten je hebt.",
       "terms": "De voorwaarden voor het gebruik van JigSwap: je account, puzzels uitlenen en ruilen, en de spelregels die de community eerlijk en prettig houden.",
-      "catalog": "Blader door de puzzelcatalogus van de JigSwap-community: beoordelingen, reviews en ruilbeschikbaarheid van legpuzzels.",
+      "catalog": "Bekijk de puzzelcatalogus van de JigSwap-community: sterren en reviews van puzzelaars, en welke legpuzzels er te ruil zijn.",
       "docs": "Handleidingen voor alles in JigSwap: je account, je puzzelbibliotheek, uitlenen en ruilen, puzzels ontdekken en op de hoogte blijven."
     }
   },
@@ -5541,7 +5541,7 @@
     "notFoundSub": "Deze puzzel is mogelijk uit de catalogus verwijderd.",
     "loadErrorTitle": "We konden deze puzzel niet laden",
     "loadErrorSub": "Er ging iets mis aan onze kant. Probeer het zo nog eens.",
-    "metaDescription": "{hasMaker, select, yes {{title} van {maker}} other {{title}}} — legpuzzel van {count, plural, one {# stukje} other {# stukjes}}. Beoordelingen, reviews en ruilbeschikbaarheid in de JigSwap-community."
+    "metaDescription": "{hasMaker, select, yes {{title} van {maker}} other {{title}}} — legpuzzel van {count, plural, one {# stukje} other {# stukjes}}. Sterren, reviews en ruilbeschikbaarheid in de JigSwap-community."
   },
   "whatsNew": {
     "menuLabel": "Wat is er nieuw",
