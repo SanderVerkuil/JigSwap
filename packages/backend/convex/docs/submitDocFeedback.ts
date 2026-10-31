@@ -29,8 +29,11 @@ export const submitDocFeedback = mutation({
       throw new ConvexError({ code: "invalid_comment" });
     }
 
-    // Charged only for a valid vote, so malformed requests never use it up.
-    const retryAfterMs = await chargeBudget(ctx, DOC_FEEDBACK_BUDGET);
+    // Charged only for a valid vote, so malformed requests never use it up. Refusals are not
+    // logged one by one (anyone can loop this); the window filling is logged once.
+    const retryAfterMs = await chargeBudget(ctx, DOC_FEEDBACK_BUDGET, 1, {
+      logRefusals: false,
+    });
     if (retryAfterMs !== null) {
       throw new ConvexError({ code: "RateLimited", retryAfterMs });
     }

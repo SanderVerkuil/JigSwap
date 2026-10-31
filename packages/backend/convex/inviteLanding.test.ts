@@ -1,5 +1,5 @@
 import { convexTest, type TestConvex } from "convex-test";
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
 import { inviteLandingBudget } from "./lib/rateLimits";
 import schema from "./schema";
@@ -27,6 +27,17 @@ const seedUsers = (t: TestConvex<typeof schema>) =>
     });
     return { alice, bob };
   });
+
+// Wide events are JSON lines: info on console.log, error on console.error.
+const captureLogs = () => {
+  const info = vi.spyOn(console, "log").mockImplementation(() => {});
+  const error = vi.spyOn(console, "error").mockImplementation(() => {});
+  const eventsOf = (spy: typeof info) =>
+    spy.mock.calls.map(
+      ([line]) => JSON.parse(String(line)) as Record<string, unknown>,
+    );
+  return { info: () => eventsOf(info), error: () => eventsOf(error) };
+};
 
 const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
@@ -160,5 +171,25 @@ describe("recordInviteLanding budget (SEC-82)", () => {
     expect(
       await t.run((ctx) => ctx.db.query("rateLimits").collect()),
     ).toHaveLength(0);
+  });
+
+  test("landings past the budget log no error line", async () => {
+    const t = convexTest(schema, modules);
+    await seedUsers(t);
+    const { token } = await asAlice(t).mutation(
+      api.social.getMyInviteLink.getMyInviteLink,
+      {},
+    );
+    const link = await linkOf(t, token);
+    const [budget] = inviteLandingBudget(link!._id);
+    const logs = captureLogs();
+    for (let i = 0; i < budget.cap + 30; i++) await land(t, token);
+
+    expect(logs.error()).toEqual([]);
+    expect((await linkOf(t, token))?.landingViews).toBe(budget.cap);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 });

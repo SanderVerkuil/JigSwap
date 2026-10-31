@@ -246,13 +246,20 @@ export type BudgetWindow = { key: string; windowMs: number; cap: number };
 
 /**
  * Charge `amount` to every window, or to none of them. Null when charged; otherwise the ms until
- * every full window has rolled over, with nothing written and each refusing window logged as a
- * rateLimit.refused event. The caller decides what a refusal means (throw, or skip quietly).
+ * every full window has rolled over, with nothing written. The caller decides what a refusal
+ * means (throw, or skip quietly).
+ *
+ * Logging: the charge that fills a window logs one info-level rateLimit.filled event, so each
+ * window reports at most once that it ran out. Each refusal is also logged as an error-level
+ * rateLimit.refused event unless `logRefusals` is false; anonymous callers pass false, since
+ * their refusals are as frequent as a caller cares to loop and would otherwise drive unbounded
+ * error-level log volume and alerts.
  */
 export const chargeBudget = async (
   ctx: MutationCtx,
   windows: readonly BudgetWindow[],
   amount = 1,
+  { logRefusals = true }: { logRefusals?: boolean } = {},
 ): Promise<number | null> => {
   const now = Date.now();
   const planned = [];
@@ -268,15 +275,17 @@ export const chargeBudget = async (
       const wait = fresh
         ? window.windowMs
         : row.windowStart + window.windowMs - now;
-      logEvent({
-        event: "rateLimit.refused",
-        outcome: "error",
-        limit: window.key,
-        window_ms: window.windowMs,
-        max: window.cap,
-        amount,
-        retry_after_ms: wait,
-      });
+      if (logRefusals) {
+        logEvent({
+          event: "rateLimit.refused",
+          outcome: "error",
+          limit: window.key,
+          window_ms: window.windowMs,
+          max: window.cap,
+          amount,
+          retry_after_ms: wait,
+        });
+      }
       retryAfterMs = Math.max(retryAfterMs ?? 0, wait);
       continue;
     }
@@ -294,6 +303,16 @@ export const chargeBudget = async (
       await ctx.db.patch(row._id, {
         ...(fresh && { windowStart: now }),
         count,
+      });
+    }
+    // A charged window never passes its cap, and refusals write nothing, so this is once per window.
+    if (count === window.cap) {
+      logEvent({
+        event: "rateLimit.filled",
+        outcome: "success",
+        limit: window.key,
+        window_ms: window.windowMs,
+        max: window.cap,
       });
     }
   }

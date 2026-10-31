@@ -13,9 +13,11 @@ export const recordInviteLanding = mutation({
       .withIndex("by_token", (q) => q.eq("token", token))
       .unique();
     if (link === null || link.revokedAt !== undefined) return;
-    if ((await chargeBudget(ctx, inviteLandingBudget(link._id))) !== null) {
-      return;
-    }
+    // A landing past the budget is a silent no-op: no write and no per-refusal log line.
+    const refused = await chargeBudget(ctx, inviteLandingBudget(link._id), 1, {
+      logRefusals: false,
+    });
+    if (refused !== null) return;
     await ctx.db.patch(link._id, { landingViews: link.landingViews + 1 });
   },
 });

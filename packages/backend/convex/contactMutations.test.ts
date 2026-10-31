@@ -1,6 +1,6 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError, type Value } from "convex/values";
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
 import { CONTACT_BUDGET } from "./lib/rateLimits";
 import schema from "./schema";
@@ -95,6 +95,17 @@ const ageBudget = (t: TestConvex<typeof schema>, ms: number) =>
     }
   });
 
+// Wide events are JSON lines: info on console.log, error on console.error.
+const captureLogs = () => {
+  const info = vi.spyOn(console, "log").mockImplementation(() => {});
+  const error = vi.spyOn(console, "error").mockImplementation(() => {});
+  const eventsOf = (spy: typeof info) =>
+    spy.mock.calls.map(
+      ([line]) => JSON.parse(String(line)) as Record<string, unknown>,
+    );
+  return { info: () => eventsOf(info), error: () => eventsOf(error) };
+};
+
 const [hourly, daily] = CONTACT_BUDGET;
 
 describe("contact/submitContactMessage abuse limits (SEC-22)", () => {
@@ -167,5 +178,24 @@ describe("contact/submitContactMessage abuse limits (SEC-22)", () => {
     ).toHaveLength(0);
     await send(t);
     expect(await contactRows(t)).toHaveLength(1);
+  });
+
+  test("a loop past the budget logs no error line, only one for the window filling", async () => {
+    const t = convexTest(schema, modules);
+    const logs = captureLogs();
+    for (let i = 0; i < hourly.cap + 30; i++) {
+      await send(t).catch(() => undefined);
+    }
+
+    expect(logs.error().filter((e) => e.event === "rateLimit.refused")).toEqual(
+      [],
+    );
+    expect(logs.info().filter((e) => e.event === "rateLimit.filled")).toEqual([
+      expect.objectContaining({ limit: hourly.key }),
+    ]);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 });

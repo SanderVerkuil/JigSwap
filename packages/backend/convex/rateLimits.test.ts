@@ -1,6 +1,6 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError, type Value } from "convex/values";
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import {
@@ -232,5 +232,74 @@ describe("chargeBudget", () => {
       expect(row.count).toBe(1);
       expect(Date.now() - row.windowStart).toBeLessThan(HOUR);
     }
+  });
+});
+
+describe("chargeBudget logging", () => {
+  const HOUR = 3_600_000;
+  const windows: BudgetWindow[] = [
+    { key: "test:global:hour", windowMs: HOUR, cap: 2 },
+  ];
+
+  // Wide events are JSON lines: info on console.log, error on console.error.
+  const eventsOf = (spy: { mock: { calls: unknown[][] } }) =>
+    spy.mock.calls.map(
+      ([line]) => JSON.parse(String(line)) as Record<string, unknown>,
+    );
+  const spyLogs = () => ({
+    info: vi.spyOn(console, "log").mockImplementation(() => {}),
+    error: vi.spyOn(console, "error").mockImplementation(() => {}),
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test("logs every refusal at error level by default", async () => {
+    const t = convexTest(schema, modules);
+    const logs = spyLogs();
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 5; i++) await chargeBudget(ctx, windows);
+    });
+
+    expect(
+      eventsOf(logs.error).filter((e) => e.event === "rateLimit.refused"),
+    ).toHaveLength(3);
+  });
+
+  test("with logRefusals: false a refusal logs nothing", async () => {
+    const t = convexTest(schema, modules);
+    const logs = spyLogs();
+    const results = await t.run(async (ctx) => {
+      const out = [];
+      for (let i = 0; i < 50; i++) {
+        out.push(await chargeBudget(ctx, windows, 1, { logRefusals: false }));
+      }
+      return out;
+    });
+
+    expect(results.filter((r) => r !== null)).toHaveLength(48);
+    expect(logs.error).not.toHaveBeenCalled();
+  });
+
+  test("logs once, at info level, when a charge fills a window", async () => {
+    const t = convexTest(schema, modules);
+    const logs = spyLogs();
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 10; i++) {
+        await chargeBudget(ctx, windows, 1, { logRefusals: false });
+      }
+    });
+
+    expect(
+      eventsOf(logs.info).filter((e) => e.event === "rateLimit.filled"),
+    ).toEqual([
+      expect.objectContaining({
+        outcome: "success",
+        limit: "test:global:hour",
+        max: 2,
+        window_ms: HOUR,
+      }),
+    ]);
   });
 });
