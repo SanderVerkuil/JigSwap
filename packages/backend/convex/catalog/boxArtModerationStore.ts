@@ -154,6 +154,8 @@ export const quarantine = internalMutation({
         moderationStatus: "quarantined",
         ...(match.fileId ? { storageId: match.fileId } : {}),
         pendingHashes: undefined,
+        // A quarantined photo waits on nothing: it leaves the hash-pending index (SEC-55).
+        hashCheckPendingSince: undefined,
       });
       await repointBoxArt(
         ctx,

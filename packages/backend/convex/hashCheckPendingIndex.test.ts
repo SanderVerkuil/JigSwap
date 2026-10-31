@@ -7,6 +7,7 @@ import {
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { HASH_CHECK_WAITING_CAP } from "./admin/listCsamEscalations";
+import { isHashCleared } from "./lib/imageModeration/hashCheckFields";
 import schema from "./schema";
 
 // SEC-55: the `by_hash_check_pending` index holds the photos whose CSAM hash check has not
@@ -229,6 +230,135 @@ describe("the refused outcome only clears a refused row that owes no hash check"
     expect(row!.hashCheckedAt).toBeUndefined();
     expect(row!.pendingHashes).toEqual(fields.pendingHashes);
   });
+});
+
+// A quarantined photo is never served, whatever its hash-check fields say (isHashCleared), and
+// never leaves quarantine: it waits on nothing, so it leaves the index the moment it is
+// quarantined, in every image table.
+describe("a quarantined photo leaves the hash-pending index, its gate still closed", () => {
+  const MATCH = {
+    md5: "c".repeat(32),
+    sha1: "d".repeat(40),
+    provider: "offlimits",
+    originalDiscarded: false,
+  };
+
+  // Each table's photo, waiting on its hash check, and its store's quarantine step.
+  const tables = {
+    copy: async (t: T, s: Awaited<ReturnType<typeof seed>>) => {
+      const imageId = await t.run((ctx) =>
+        ctx.db.insert("ownedPuzzleImages", {
+          ownedPuzzleId: s.copy,
+          uploaderId: s.alice,
+          fileId: s.fileId,
+          moderationStatus: "approved",
+          hashCheckPendingSince: 1_000,
+          createdAt: 1_000,
+          updatedAt: 1_000,
+        }),
+      );
+      await t.mutation(internal.library.moderationStore.quarantineImage, {
+        imageId,
+        uploaderId: s.alice,
+        ...MATCH,
+      });
+      return t.run((ctx) => ctx.db.get(imageId));
+    },
+    completion: async (t: T, s: Awaited<ReturnType<typeof seed>>) => {
+      const imageId = await t.run((ctx) =>
+        ctx.db.insert("completionImages", {
+          completionId: crypto.randomUUID(),
+          uploaderId: s.alice,
+          fileId: s.fileId,
+          moderationStatus: "approved",
+          hashCheckPendingSince: 1_000,
+          createdAt: 1_000,
+          updatedAt: 1_000,
+        }),
+      );
+      await t.mutation(
+        internal.solving.completionModerationStore.quarantineImage,
+        { imageId, uploaderId: s.alice, ...MATCH },
+      );
+      return t.run((ctx) => ctx.db.get(imageId));
+    },
+    message: async (t: T, s: Awaited<ReturnType<typeof seed>>) => {
+      const imageId = await t.run((ctx) =>
+        ctx.db.insert("messageAttachments", {
+          kind: "image",
+          threadAggregateId: crypto.randomUUID(),
+          uploaderId: s.alice,
+          fileId: s.fileId,
+          byteSize: 11,
+          contentType: "image/jpeg",
+          moderationStatus: "approved",
+          hashCheckPendingSince: 1_000,
+          createdAt: 1_000,
+          updatedAt: 1_000,
+        }),
+      );
+      await t.mutation(
+        internal.conversation.attachmentModerationStore.quarantineImage,
+        { imageId, uploaderId: s.alice, ...MATCH },
+      );
+      const row = await t.run((ctx) => ctx.db.get(imageId));
+      // (The table also holds shared locations, which carry no hash-check fields.)
+      if (row?.kind === "location") throw new Error("expected a photo");
+      return row;
+    },
+    boxArt: async (t: T, s: Awaited<ReturnType<typeof seed>>) => {
+      const imageId = await t.run((ctx) =>
+        ctx.db.insert("boxArtUploads", {
+          storageId: s.fileId,
+          uploaderId: s.alice,
+          moderationStatus: "approved",
+          hashCheckPendingSince: 1_000,
+          createdAt: 1_000,
+        }),
+      );
+      await t.mutation(internal.catalog.boxArtModerationStore.quarantine, {
+        imageId,
+        uploaderId: s.alice,
+        ...MATCH,
+      });
+      return t.run((ctx) => ctx.db.get(imageId));
+    },
+    circleIcon: async (t: T, s: Awaited<ReturnType<typeof seed>>) => {
+      const imageId = await t.run((ctx) =>
+        ctx.db.insert("circleIcons", {
+          circleId: crypto.randomUUID(),
+          uploaderId: s.alice,
+          fileId: s.fileId,
+          moderationStatus: "approved",
+          hashCheckPendingSince: 1_000,
+          createdAt: 1_000,
+          updatedAt: 1_000,
+        }),
+      );
+      await t.mutation(internal.sharing.circleIconModerationStore.quarantine, {
+        imageId,
+        uploaderId: s.alice,
+        ...MATCH,
+      });
+      return t.run((ctx) => ctx.db.get(imageId));
+    },
+  };
+
+  test.each(Object.keys(tables) as (keyof typeof tables)[])(
+    "%s",
+    async (table) => {
+      const t = convexTest(schema, modules);
+      const s = await seed(t);
+
+      const row = await tables[table](t, s);
+      if (!row) throw new Error("the quarantined row is gone");
+
+      expect(row.moderationStatus).toBe("quarantined");
+      expect(row.hashCheckPendingSince).toBeUndefined();
+      expect(row.hashCheckedAt).toBeUndefined();
+      expect(isHashCleared(row)).toBe(false);
+    },
+  );
 });
 
 describe("the admin's waiting count is never hidden behind rows it does not count", () => {

@@ -79,8 +79,8 @@ export const listCsamEscalations = query({
     // re-check), across the image tables: a count (capped) and the oldest wait. Photos whose
     // check timed out are counted apart: they wait on an admin (Unchecked photos), not a re-check.
     // The index also holds rows neither count covers (a photo the pipeline has not reached yet, a
-    // quarantined one, a timed-out one an admin rejected, refused uploads from before they left
-    // the index): those are filtered out BEFORE the cap, so no number of them can hide a waiting
+    // timed-out one an admin rejected, refused or quarantined rows from before they left the
+    // index): those are filtered out BEFORE the cap, so no number of them can hide a waiting
     // photo (SEC-55). They are few, so the scan stays small.
     let waitingPhotos = 0;
     let timedOutPhotos = 0;

@@ -4,7 +4,10 @@ import { v } from "convex/values";
 //
 // - `hashCheckPendingSince`: set when the upload is inserted (and kept while the hash service is
 //   unreachable); cleared once the CSAM hash check returns no_match, once the check is skipped
-//   (below), or once the pipeline refused the upload and its blob is gone.
+//   (below), once the pipeline refused the upload and its blob is gone, or once the photo is
+//   quarantined (a match: it waits on nothing, and its gate stays closed by its status). A
+//   timed-out photo an admin rejected keeps it: it is what keeps that photo's gate closed should
+//   it ever be restored (admin/restorePhoto).
 // - `hashCheckedAt`: when the publication gate OPENED, which is not always a hash check: the
 //   check returned no_match, or an admin approved the photo after its check timed out
 //   (`hashCheckWaivedBy`), or no hash matching was configured (`hashCheckSkippedAt`). Only a row
