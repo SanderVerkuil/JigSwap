@@ -2,8 +2,10 @@ import { paginationOptsValidator, type PaginationResult } from "convex/server";
 import { query } from "../_generated/server";
 import { clampPaginationOpts } from "../lib/pageSize";
 
-// A page holds 1 to MAX_PAGE_SIZE entries whatever the client asks for. An entry is two small
-// fields, so a full page stays far inside one function's read limit however large the catalogue.
+// A page holds 1 to MAX_PAGE_SIZE entries whatever the client asks for. Convex counts the whole
+// documents read, not the two fields returned: a full page reads 1000 complete puzzle rows
+// (descriptions, tags, searchableText), a few MB at today's row sizes and well inside the 16 MiB
+// and 32,000-document limits. Lower this if puzzle rows grow much larger.
 const MAX_PAGE_SIZE = 1000;
 
 // UNAUTHENTICATED feed for the /sitemap.xml server route: approved definitions' id + updatedAt
