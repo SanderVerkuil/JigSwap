@@ -185,7 +185,7 @@ export function CategoryList({
           items={categories.map((category) => category._id)}
           strategy={verticalListSortingStrategy}
         >
-          <div className="rounded-xl border bg-card">
+          <div className="@container rounded-xl border bg-card">
             {categories.map((category) => (
               <CategoryRow
                 key={category._id}
@@ -272,12 +272,15 @@ function CategoryRow({
     isDragging,
   } = useSortable({ id: category._id, disabled: !sortable });
 
+  // In a list narrower than @2xl (672px: phones, and tablets beside the
+  // sidebar) the actions wrap onto their own full-width line under the name,
+  // so a long (Dutch) name and the button labels never compete for one row.
   return (
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        "flex items-center gap-3 border-b px-4 py-3 last:border-0",
+        "flex flex-wrap items-center gap-3 border-b px-4 py-3 last:border-0 @2xl:flex-nowrap",
         !category.isActive && "opacity-60",
         isDragging && "relative z-10 bg-accent shadow-sm",
       )}
@@ -299,7 +302,9 @@ function CategoryRow({
       />
       <div className="min-w-0 flex-1 space-y-0.5">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-          <span className="font-semibold">{category.name[uiLocale]}</span>
+          <span className="min-w-0 font-semibold break-words">
+            {category.name[uiLocale]}
+          </span>
           {otherLocales.map((locale) => {
             const translation = category.name[locale]?.trim();
             const tooltip = translation
@@ -339,13 +344,13 @@ function CategoryRow({
           </p>
         )}
       </div>
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex w-full shrink-0 items-center justify-end gap-2 @2xl:w-auto">
         <Button
           size="sm"
           variant="outline"
           onClick={onEdit}
           disabled={!sortable || busy}
-          className="flex items-center gap-1"
+          className="flex h-11 items-center gap-1 md:h-8"
         >
           <Edit className="h-3 w-3" />
           {t("edit")}
@@ -356,7 +361,7 @@ function CategoryRow({
             variant="outline"
             onClick={onDeactivate}
             disabled={!sortable || busy}
-            className="flex items-center gap-1 text-destructive hover:text-destructive"
+            className="flex h-11 items-center gap-1 text-destructive hover:text-destructive md:h-8"
           >
             <EyeOff className="h-3 w-3" />
             {t("deactivate")}
@@ -367,7 +372,7 @@ function CategoryRow({
             variant="outline"
             onClick={onReactivate}
             disabled={!sortable || busy}
-            className="flex items-center gap-1"
+            className="flex h-11 items-center gap-1 md:h-8"
           >
             <Eye className="h-3 w-3" />
             {t("reactivate")}
