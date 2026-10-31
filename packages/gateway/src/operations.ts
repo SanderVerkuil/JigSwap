@@ -218,6 +218,10 @@ export const gateway = {
     // The request-flow notice: whether the caller's own profile is private (the owner always gets
     // the requester's trade card). null = signed out / missing / own / unviewable copy.
     requestDisclosure: api.exchange.getRequestDisclosure.getRequestDisclosure,
+    // The reply-flow notice for the OWNER of one exchange ({ exchangeId: the aggregateId }):
+    // whether their next message in its thread would reveal their trade card to the requester.
+    // null = not the owner / unknown exchange.
+    replyDisclosure: api.exchange.getReplyDisclosure.getReplyDisclosure,
     // The counterparty card of one exchange (per-trade reveal: name, handle, reviews; the email
     // only when the partner shared it, plus the viewer's own sharing switch state).
     tradePartner: api.exchange.getTradePartner.getTradePartner,
