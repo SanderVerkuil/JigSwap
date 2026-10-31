@@ -3209,6 +3209,7 @@
       "editWindowClosed": "This completion can no longer be edited (the 24-hour window has closed).",
       "editClosed": "Editing closed on {when}. You can edit a solve until 24 hours after its end date.",
       "review": "Review",
+      "actionsLabel": "Actions for {title}",
       "stats": {
         "completed": "Puzzles completed",
         "pieces": "Pieces placed",

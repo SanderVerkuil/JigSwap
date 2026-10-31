@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -21,6 +22,31 @@ interface EditSolveButtonProps {
   onEdit: () => void;
 }
 
+// The edit window of one solve, shared by the Edit button and the row menu's Edit item: whether
+// it has closed, why (the reason text), and an attempt that opens the form or, once the window has
+// closed by now, says why in a toast.
+function useEditWindow(editableUntil: number | null | undefined) {
+  const t = useTranslations("solving.completions");
+  const format = useFormatter();
+  // Date.now() during render is impure; capture it at mount, and re-check on attempt below.
+  const [renderedAt] = useState(() => Date.now());
+  const reason = () =>
+    t("editClosed", {
+      when: format.dateTime(new Date(editableUntil ?? 0), {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }),
+    });
+  return {
+    closed: isEditClosed(editableUntil, renderedAt),
+    reason,
+    attempt: (onEdit: () => void) => {
+      if (isEditClosed(editableUntil, Date.now())) toast(reason());
+      else onEdit();
+    },
+  };
+}
+
 // The Edit (pencil) action on a completion row. Once the edit window has closed it stays visible
 // but unavailable (aria-disabled, still focusable) and says why: as its tooltip/description, and
 // in a toast when tapped, since touch has no hover.
@@ -29,32 +55,41 @@ export function EditSolveButton({
   onEdit,
 }: EditSolveButtonProps) {
   const t = useTranslations("solving.completions");
-  const format = useFormatter();
-  // Date.now() during render is impure; capture it at mount, and re-check on click below.
-  const [renderedAt] = useState(() => Date.now());
-  const closed = isEditClosed(editableUntil, renderedAt);
-  const reason = () =>
-    t("editClosed", {
-      when: format.dateTime(new Date(editableUntil ?? 0), {
-        dateStyle: "medium",
-        timeStyle: "short",
-      }),
-    });
+  const edit = useEditWindow(editableUntil);
 
   return (
     <Button
       variant="ghost"
       size="icon"
-      className="size-8 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
-      title={closed ? reason() : t("edit")}
+      className="size-8 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 pointer-coarse:size-11"
+      title={edit.closed ? edit.reason() : t("edit")}
       aria-label={t("edit")}
-      aria-disabled={closed || undefined}
-      onClick={() => {
-        if (isEditClosed(editableUntil, Date.now())) toast(reason());
-        else onEdit();
-      }}
+      aria-disabled={edit.closed || undefined}
+      onClick={() => edit.attempt(onEdit)}
     >
       <Pencil className="h-4 w-4" />
     </Button>
+  );
+}
+
+// The same action as an item of the row's actions menu (phones). Once the window has closed it
+// stays in the menu, dimmed and aria-disabled but still selectable, and selecting it says why.
+export function EditSolveMenuItem({
+  editableUntil,
+  onEdit,
+}: EditSolveButtonProps) {
+  const t = useTranslations("solving.completions");
+  const edit = useEditWindow(editableUntil);
+
+  return (
+    <DropdownMenuItem
+      aria-disabled={edit.closed || undefined}
+      title={edit.closed ? edit.reason() : undefined}
+      className="aria-disabled:opacity-50 pointer-coarse:min-h-11"
+      onSelect={() => edit.attempt(onEdit)}
+    >
+      <Pencil aria-hidden />
+      {t("edit")}
+    </DropdownMenuItem>
   );
 }

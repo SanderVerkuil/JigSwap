@@ -3209,6 +3209,7 @@
       "editWindowClosed": "Deze voltooiing kan niet meer worden bewerkt (het venster van 24 uur is gesloten).",
       "editClosed": "Bewerken was mogelijk tot {when}. Je kunt een voltooiing tot 24 uur na de einddatum bewerken.",
       "review": "Beoordelen",
+      "actionsLabel": "Acties voor {title}",
       "stats": {
         "completed": "Puzzels voltooid",
         "pieces": "Stukjes gelegd",

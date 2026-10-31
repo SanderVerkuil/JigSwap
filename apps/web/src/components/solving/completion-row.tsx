@@ -2,9 +2,19 @@ import { Image } from "@/compat/image";
 import { Link } from "@/compat/link";
 import { CoverChip } from "@/components/library/cover-chip";
 import { chipColor } from "@/components/library/palette";
-import { EditSolveButton } from "@/components/solving/edit-solve-button";
+import {
+  EditSolveButton,
+  EditSolveMenuItem,
+} from "@/components/solving/edit-solve-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Tooltip,
   TooltipContent,
@@ -19,7 +29,7 @@ import {
 } from "@/lib/completion-format";
 import { cn } from "@/lib/utils";
 import type { FunctionReturnType } from "convex/server";
-import { CircleCheck, Clock, Star, Trash2 } from "lucide-react";
+import { CircleCheck, Clock, MoreHorizontal, Star, Trash2 } from "lucide-react";
 import { useTranslations } from "use-intl";
 
 // One of the member's solves as listMyCompletions returns it.
@@ -81,6 +91,46 @@ export function CompletionRow({
   // while in progress. Year-only and undated solves never get a duration.
   const metaLine = formatCompletionMeta(t, completion, pieceCount);
 
+  // The row's actions; each is absent when the row can't offer it (legacy rows have no
+  // aggregateId, rows without a puzzle can't be reviewed).
+  const completionId = completion.aggregateId;
+  const puzzleId = completion.puzzleId;
+  const canFinish = !done && Boolean(completionId);
+  const openFinish = () => {
+    if (!completionId) return;
+    onOpenDialog({
+      kind: "finish",
+      completionId,
+      startDate: completion.startDate,
+      puzzleTitle,
+    });
+  };
+  const openReview =
+    puzzleId != null
+      ? () =>
+          onOpenDialog({
+            kind: "review",
+            puzzleId,
+            copyId: completion.ownedPuzzleId ?? undefined,
+          })
+      : undefined;
+  const openEdit = completionId
+    ? () =>
+        onOpenDialog({
+          kind: "edit",
+          completionId,
+          inProgress: !done,
+          startDate: completion.startDate,
+          endDate: completion.endDate,
+          timeMinutes: completion.completionTimeMinutes,
+          notes: completion.notes,
+          datePrecision: completion.datePrecision,
+        })
+    : undefined;
+  const openDelete = completionId
+    ? () => onOpenDialog({ kind: "delete", completionId })
+    : undefined;
+
   return (
     <div
       className={cn(
@@ -130,7 +180,7 @@ export function CompletionRow({
           size={44}
         />
       )}
-      <div className="min-w-0 flex-1 basis-52">
+      <div className="min-w-0 flex-1 basis-40">
         <div className="flex flex-wrap items-center gap-2">
           {completion.link ? (
             <Link
@@ -222,81 +272,110 @@ export function CompletionRow({
         )}
       </div>
 
-      <span className="text-muted-foreground w-[78px] text-right text-xs whitespace-nowrap">
-        {formatCompletionDate(t, completion)}
-      </span>
+      {/* From sm up the wrapper dissolves and the date sits in the row like before. */}
+      <div className="flex flex-col items-end gap-1 sm:contents">
+        <span className="text-muted-foreground w-[78px] text-right text-xs whitespace-nowrap">
+          {formatCompletionDate(t, completion)}
+        </span>
+        {/* Below sm: the row's actions in one 44px menu under the date, so they never take a
+            line of their own (Finish stays a visible button). */}
+        {(openReview || openEdit || openDelete) && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative z-10 -mr-3 size-11 sm:hidden"
+                aria-label={t("actionsLabel", { title })}
+              >
+                <MoreHorizontal aria-hidden className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {openReview && (
+                <DropdownMenuItem
+                  className="pointer-coarse:min-h-11"
+                  onSelect={openReview}
+                >
+                  <Star aria-hidden />
+                  {t("review")}
+                </DropdownMenuItem>
+              )}
+              {openEdit && (
+                <EditSolveMenuItem
+                  editableUntil={completion.editableUntil}
+                  onEdit={openEdit}
+                />
+              )}
+              {openDelete && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    className="pointer-coarse:min-h-11"
+                    onSelect={openDelete}
+                  >
+                    <Trash2 aria-hidden />
+                    {t("delete")}
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
 
-      <div className="relative z-10 flex items-center gap-1">
-        {!done && completion.aggregateId && (
+      <div
+        className={cn(
+          "relative z-10 items-center gap-2",
+          canFinish ? "flex" : "hidden sm:flex",
+        )}
+      >
+        {canFinish && (
           <Button
             variant="outline"
             size="sm"
-            onClick={() =>
-              onOpenDialog({
-                kind: "finish",
-                completionId: completion.aggregateId!,
-                startDate: completion.startDate,
-                puzzleTitle,
-              })
-            }
+            className="pointer-coarse:min-h-11"
+            onClick={openFinish}
           >
             <CircleCheck className="h-4 w-4" />
             {t("finish")}
           </Button>
         )}
-        {completion.puzzleId != null && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-8"
-            title={t("review")}
-            aria-label={t("review")}
-            onClick={() =>
-              onOpenDialog({
-                kind: "review",
-                puzzleId: completion.puzzleId!,
-                copyId: completion.ownedPuzzleId ?? undefined,
-              })
-            }
-          >
-            <Star className="h-4 w-4" />
-          </Button>
-        )}
-        {completion.aggregateId && (
-          // Unavailable (with the reason) once the server's edit window has closed.
-          <EditSolveButton
-            editableUntil={completion.editableUntil}
-            onEdit={() =>
-              onOpenDialog({
-                kind: "edit",
-                completionId: completion.aggregateId!,
-                inProgress: !done,
-                startDate: completion.startDate,
-                endDate: completion.endDate,
-                timeMinutes: completion.completionTimeMinutes,
-                notes: completion.notes,
-                datePrecision: completion.datePrecision,
-              })
-            }
-          />
-        )}
-        {completion.aggregateId && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-8 text-destructive hover:text-destructive"
-            title={t("delete")}
-            aria-label={t("delete")}
-            onClick={() =>
-              onOpenDialog({
-                kind: "delete",
-                completionId: completion.aggregateId!,
-              })
-            }
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        )}
+        {/* From sm up: the actions as icon buttons, 44px on touch. */}
+        <div className="hidden items-center gap-2 sm:flex">
+          {openReview && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8 pointer-coarse:size-11"
+              title={t("review")}
+              aria-label={t("review")}
+              onClick={openReview}
+            >
+              <Star className="h-4 w-4" />
+            </Button>
+          )}
+          {openEdit && (
+            // Unavailable (with the reason) once the server's edit window has closed.
+            <EditSolveButton
+              editableUntil={completion.editableUntil}
+              onEdit={openEdit}
+            />
+          )}
+          {openDelete && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8 text-destructive hover:text-destructive pointer-coarse:size-11"
+              title={t("delete")}
+              aria-label={t("delete")}
+              onClick={openDelete}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
