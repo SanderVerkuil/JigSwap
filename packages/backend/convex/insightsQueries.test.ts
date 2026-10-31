@@ -197,6 +197,32 @@ describe("insights.getPersonalStats", () => {
     expect(stats.averageRatingReceived).toBe(5);
     expect(stats.goalsActive).toBe(1);
     expect(stats.goalsAchieved).toBe(0);
+    expect(stats.goalsTotal).toBe(1);
+  });
+
+  test("counts archived goals in the goal total, so achieved never exceeds it", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    // A goal met and then archived: achieved, but no longer active.
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("goals", {
+        userId: alice,
+        title: "Solve 1",
+        targetCompletions: 1,
+        currentCompletions: 1,
+        isActive: false,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+    const stats = await asAlice(t).query(
+      api.insights.getPersonalStats.getPersonalStats,
+      {},
+    );
+    expect(stats.goalsActive).toBe(1);
+    expect(stats.goalsAchieved).toBe(1);
+    expect(stats.goalsTotal).toBe(2);
   });
 
   test("a catalog-only reviewer (zero completions) still gets an average", async () => {

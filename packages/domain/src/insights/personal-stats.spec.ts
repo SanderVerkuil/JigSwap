@@ -30,6 +30,7 @@ describe("computePersonalStats", () => {
       averageRatingReceived: 0,
       goalsActive: 0,
       goalsAchieved: 0,
+      goalsTotal: 0,
     });
     // Explicitly guard against NaN leaking through any average.
     expect(Number.isNaN(stats.averageSolveMinutes)).toBe(false);
@@ -120,6 +121,21 @@ describe("computePersonalStats", () => {
     });
     expect(stats.goalsActive).toBe(3);
     expect(stats.goalsAchieved).toBe(3);
+  });
+
+  it("counts every goal in the total, archived ones included, so achieved never exceeds it", () => {
+    const stats = computePersonalStats({
+      ...empty,
+      goals: [
+        { isActive: true, targetCompletions: 10, currentCompletions: 3 },
+        // Archived (isActive false) after being met: still achieved, so it must be in the total.
+        { isActive: false, targetCompletions: 2, currentCompletions: 9 },
+        { isActive: false, targetCompletions: 4, currentCompletions: 1 },
+      ],
+    });
+    expect(stats.goalsTotal).toBe(3);
+    expect(stats.goalsAchieved).toBe(1);
+    expect(stats.goalsActive).toBe(1);
   });
 
   it("passes through collectionsCount verbatim", () => {

@@ -62,6 +62,9 @@ export interface PersonalStats {
   readonly averageRatingReceived: number;
   readonly goalsActive: number;
   readonly goalsAchieved: number;
+  // Every goal the member has, archived ones included: achieved counts archived goals too, so
+  // "{achieved} of {total} goals" needs this total (goalsActive can be lower than goalsAchieved).
+  readonly goalsTotal: number;
 }
 
 // Mean of the present numeric values; empty input is 0 (not NaN) so the read model is total. Kept
@@ -110,5 +113,6 @@ export const computePersonalStats = (
     goalsAchieved: input.goals.filter(
       (g) => g.currentCompletions >= g.targetCompletions,
     ).length,
+    goalsTotal: input.goals.length,
   };
 };
