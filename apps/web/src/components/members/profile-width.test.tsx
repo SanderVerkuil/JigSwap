@@ -100,6 +100,15 @@ describe("profile page width", () => {
     expect(root).toContain("w-full");
   });
 
+  it("pads only the logged-out page; the dashboard shell already pads signed-in viewers", () => {
+    expect(classes(rootOf("public"))).toEqual(
+      expect.arrayContaining(["px-4", "py-10"]),
+    );
+    const signedIn = classes(rootOf("owner"));
+    expect(signedIn).not.toContain("px-4");
+    expect(signedIn).not.toContain("py-10");
+  });
+
   it("fits two puzzle cards per row on phones and auto-fills 212px columns from sm", () => {
     const grid = classOf(
       elementsOf(
