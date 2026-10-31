@@ -3,13 +3,15 @@ name: Dependency audit
 # Reports known advisories in the production dependency tree, read straight from
 # pnpm-lock.yaml (no install). It never fails: findings at moderate or above show up as a
 # warning annotation and in the run summary. Fix them with a selective override in
-# pnpm-workspace.yaml (vulnerable range -> first patched release).
+# pnpm-workspace.yaml (vulnerable range -> first patched release on the same major). When
+# the only patched release is a new major, an override would move its dependents across a
+# major they were never tested on, so leave the warning until they move.
 #
 # A second pass audits the whole pnpm tree, so dev, lint, test and build tooling gets the same
 # warning: a lint plugin runs on every developer machine and CI job, though it never ships.
 # Production findings show up in both passes.
 #
-# A second step audits the Vercel CLI that vercel-preview.yml runs with VERCEL_TOKEN, read from
+# A third step audits the Vercel CLI that vercel-preview.yml runs with VERCEL_TOKEN, read from
 # .github/vercel-cli/package-lock.json (also no install). Most of its advisories sit behind
 # exact pins inside Vercel's own packages, so the fix is a CLI release that moves them
 # (Dependabot proposes one monthly), not an override that the CLI was never tested against.
