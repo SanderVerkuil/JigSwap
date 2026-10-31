@@ -73,17 +73,22 @@ wederzijds volgt (jullie volgen elkaar).
 3. Kies de **Rechten**: **Alleen bekijken**, **Mag ruilen** of **Beheerder**.
 4. Klik op **Uitnodiging versturen**.
 
-Is er nog niemand om uit te nodigen, dan staat dat in de lijst, met de knop
-**Vrienden uitnodigen voor JigSwap**. Die opent **Mensen vinden**, met je
-uitnodigingslink en QR-code. Meldt een vriend zich daarmee aan, dan vragen we
-of jullie elkaar willen volgen. Doen jullie dat, dan kun je diegene uitnodigen.
-
 De persoon krijgt een melding. De uitnodiging staat onder
 **Openstaande uitnodigingen**, met wanneer je hem hebt verstuurd en wanneer hij
 verloopt. Een uitnodiging verloopt na 14 dagen.
 
 Wil je een uitnodiging annuleren, klik dan op **Intrekken** en bevestig. Je
 kunt diegene later opnieuw uitnodigen.
+
+Je kunt iemand ook vanaf diens profiel uitnodigen: open het **⋯**-menu, kies
+**Uitnodigen voor een kring…**, kies de kring en de rechten, en klik op
+**Uitnodiging versturen**. Die optie staat er als jullie elkaar volgen en jij
+**Beheerder** bent van minstens één kring.
+
+Is er nog niemand om uit te nodigen, dan staat dat in de lijst, met de knop
+**Vrienden uitnodigen voor JigSwap**. Die opent **Mensen vinden**, met je
+uitnodigingslink en QR-code. Meldt een vriend zich daarmee aan, dan vragen we
+of jullie elkaar willen volgen. Doen jullie dat, dan kun je diegene uitnodigen.
 
 > **Let op:** Een kring heeft maximaal 50 leden, en openstaande uitnodigingen
 > tellen mee voor dat maximum.

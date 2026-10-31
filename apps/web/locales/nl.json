@@ -2432,6 +2432,14 @@
       "RateLimited": "Je hebt vandaag veel uitnodigingen verstuurd. Probeer het morgen opnieuw.",
       "generic": "Er ging iets mis. Probeer het opnieuw."
     },
+    "inviteToCircle": {
+      "trigger": "Uitnodigen voor een kring…",
+      "title": "{name} uitnodigen voor een kring",
+      "description": "Diegene wordt lid na het accepteren van de uitnodiging. Je kunt mensen uitnodigen met wie je elkaar volgt.",
+      "circleLabel": "Kring",
+      "sending": "Versturen…",
+      "sent": "Uitnodiging voor {circle} verstuurd naar {name}"
+    },
     "icon": {
       "title": "Pictogram",
       "hint": "Eén pictogram voor de kring: op de kaart, de kringpagina en de groepschat. Leden zien het zodra onze automatische controle het heeft goedgekeurd.",

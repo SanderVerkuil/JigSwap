@@ -2432,6 +2432,14 @@
       "RateLimited": "You've sent a lot of invites today. Please try again tomorrow.",
       "generic": "Something went wrong. Please try again."
     },
+    "inviteToCircle": {
+      "trigger": "Invite to a circle…",
+      "title": "Invite {name} to a circle",
+      "description": "They join once they accept. You can invite people you follow each other with.",
+      "circleLabel": "Circle",
+      "sending": "Sending…",
+      "sent": "Invite to {circle} sent to {name}"
+    },
     "icon": {
       "title": "Icon",
       "hint": "One icon for the circle: on its card, its page and its group chat. Members see it once our automated check has approved it.",

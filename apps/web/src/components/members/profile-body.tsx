@@ -7,6 +7,10 @@
 // story + stats + records + shelf) or locked (hero + private card + follow
 // action). All tokens resolve in both the marketing and dashboard shells.
 import { Image } from "@/compat/image";
+import {
+  InviteToCircleDialog,
+  useCirclesToInviteInto,
+} from "@/components/circles/invite-to-circle-dialog";
 import { PuzzlePlank3D } from "@/components/common/puzzle-plank-3d";
 import { SectionHead } from "@/components/dashboard-home/section-head";
 import { contentWidthClass } from "@/components/dashboard-layout/content-width";
@@ -31,6 +35,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { gateway, Id } from "@/gateway";
 import { useRelativeTime } from "@/hooks/use-relative-time";
 import { useMemberDisplayName } from "@/lib/member-display-name";
@@ -51,6 +59,7 @@ import {
   Puzzle,
   Sparkles,
   Star,
+  UserPlus,
   Users,
   Zap,
   type LucideIcon,
@@ -340,7 +349,8 @@ function HeroActions({
   );
 }
 
-// The signed-in member's overflow menu on someone else's profile.
+// The signed-in member's overflow menu on someone else's profile. A circle
+// Admin who follows this member both ways also gets "Invite to a circle…".
 function ProfileMenu({
   memberId,
   name,
@@ -349,16 +359,46 @@ function ProfileMenu({
   name: string;
 }) {
   const t = useTranslations("safety");
+  const tCircles = useTranslations("circles");
   const router = useRouter();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [inviting, setInviting] = useState(false);
+  const circles = useCirclesToInviteInto(memberId);
   return (
-    <MemberActionsMenu
-      memberId={memberId}
-      name={name}
-      label={t("moreActions", { name })}
-      icon={MoreHorizontal}
-      // Re-run the route loader so the page reflects the block.
-      onBlocked={() => void router.invalidate()}
-    />
+    <>
+      <MemberActionsMenu
+        memberId={memberId}
+        name={name}
+        label={t("moreActions", { name })}
+        icon={MoreHorizontal}
+        triggerRef={triggerRef}
+        // Re-run the route loader so the page reflects the block.
+        onBlocked={() => void router.invalidate()}
+      >
+        {circles.length > 0 && (
+          <>
+            <DropdownMenuItem
+              className="min-h-11 md:min-h-0"
+              onSelect={() => setInviting(true)}
+            >
+              <UserPlus aria-hidden />
+              {tCircles("inviteToCircle.trigger")}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
+      </MemberActionsMenu>
+      {circles.length > 0 && (
+        <InviteToCircleDialog
+          memberId={memberId}
+          name={name}
+          circles={circles}
+          open={inviting}
+          onOpenChange={setInviting}
+          returnFocusRef={triggerRef}
+        />
+      )}
+    </>
   );
 }
 

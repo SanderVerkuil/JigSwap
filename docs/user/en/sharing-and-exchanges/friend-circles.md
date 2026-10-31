@@ -69,16 +69,21 @@ Any circle **Admin** can invite. You can invite people you follow mutually
 3. Choose their **Permission**: **View only**, **Can exchange** or **Admin**.
 4. Click **Send invite**.
 
-If there's nobody to invite yet, the list says so and offers **Invite friends
-to JigSwap**. It opens **Find people**, with your invite link and QR code.
-When a friend signs up through them, we ask whether you want to follow each
-other. Once you do, you can invite them.
-
 The person gets a notification. Their invite shows under **Pending invites**
 with when you sent it and when it expires. An invite expires after 14 days.
 
 To cancel an invite, click **Revoke** and confirm. You can invite them again
 later.
+
+You can also invite someone from their profile: open the **⋯** menu, choose
+**Invite to a circle…**, pick the circle and the permission, and click **Send
+invite**. The option is there when you follow each other and you're an
+**Admin** of at least one circle.
+
+If there's nobody to invite yet, the list says so and offers **Invite friends
+to JigSwap**. It opens **Find people**, with your invite link and QR code.
+When a friend signs up through them, we ask whether you want to follow each
+other. Once you do, you can invite them.
 
 > **Note:** A circle can have at most 50 members, and pending invites count
 > toward that limit.
