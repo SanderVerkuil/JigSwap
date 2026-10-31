@@ -4229,7 +4229,7 @@
     "editImage": "Foto bewerken",
     "changesHeading": "Wijzigingen ({count})",
     "noChangesYet": "Nog geen wijzigingen",
-    "keepCategory": "Huidige categorie behouden",
+    "noCategoryYet": "Nog geen categorie — kies er een",
     "submit": "Voorstel indienen",
     "update": "Voorstel bijwerken",
     "submitting": "Indienen…",

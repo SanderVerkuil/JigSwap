@@ -141,3 +141,53 @@ describe("suggest an edit below lg", () => {
     expect(outsideSidePanel(screen.queryAllByText(/^Wijzigingen/))).toEqual([]);
   });
 });
+
+const pills = (group: string) =>
+  Array.from(
+    screen
+      .getByRole("radiogroup", { name: group })
+      .querySelectorAll<HTMLElement>('[role="radio"]'),
+  );
+const checked = (group: string) =>
+  pills(group)
+    .filter((pill) => pill.getAttribute("aria-checked") === "true")
+    .map((pill) => pill.textContent);
+const tabStops = (group: string) =>
+  pills(group).filter((pill) => pill.tabIndex === 0);
+
+describe("suggest an edit shows only what the catalogue knows", () => {
+  it("selects no difficulty or shape the puzzle never had, but keeps both reachable", () => {
+    renderPage();
+    for (const group of ["Difficulty", "Shape"]) {
+      expect(checked(group)).toEqual([]);
+      expect(tabStops(group)).toHaveLength(1);
+    }
+  });
+
+  it("selects the difficulty and shape the puzzle has", () => {
+    setQuery(gateway.catalog.puzzleById, {
+      ...sparseView(),
+      difficulty: "hard",
+      shape: "round",
+    });
+    renderPage();
+    expect(checked("Difficulty")).toEqual(["Hard"]);
+    expect(checked("Shape")).toEqual(["Round"]);
+  });
+
+  it("suggests a difficulty only once the member picks one", () => {
+    renderPage();
+    fireEvent.click(screen.getByRole("radio", { name: "Expert" }));
+    expect(checked("Difficulty")).toEqual(["Expert"]);
+    const [heading] = outsideSidePanel(screen.getAllByText("Changes (1)"));
+    expect(heading.parentElement!.textContent).toContain("Difficulty");
+  });
+
+  it("invites a category when the puzzle has none", () => {
+    renderPage("nl");
+    expect(screen.getByText("Nog geen categorie — kies er een")).toBeTruthy();
+    cleanup();
+    renderPage("en");
+    expect(screen.getByText("No category yet — choose one")).toBeTruthy();
+  });
+});

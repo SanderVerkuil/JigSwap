@@ -4229,7 +4229,7 @@
     "editImage": "Edit photo",
     "changesHeading": "Changes ({count})",
     "noChangesYet": "No changes yet",
-    "keepCategory": "Keep current category",
+    "noCategoryYet": "No category yet — choose one",
     "submit": "Submit suggestion",
     "update": "Update suggestion",
     "submitting": "Submitting…",

@@ -30,7 +30,8 @@ import type { ProposalFormState } from "./proposal-diff";
 // the caller's ProposalFormState; labels come from the existing forms.puzzle-form namespace
 // (plus suggestEdit.replaceImage for the image control). The difficulty/shape pills are
 // SEEDED with the definition's current value for display, but only onChange writes form
-// state — an untouched pill therefore never produces a diff. The cover-image field lives in
+// state — an untouched pill therefore never produces a diff. A value the definition never
+// had shows no pill selected (never a made-up default). The cover-image field lives in
 // the sibling `CoverImageField` below (both pages render it separately so it can relocate
 // into their sticky context panel at `lg:`).
 export interface PuzzleDefinitionFieldsProps {
@@ -164,7 +165,7 @@ export function PuzzleDefinitionFields({
             ...o,
             label: tf(`difficulty.${o.value}`),
           }))}
-          value={form.difficulty || difficultySeed || "medium"}
+          value={form.difficulty || difficultySeed || undefined}
           onChange={(v) =>
             set("difficulty", v as ProposalFormState["difficulty"])
           }
@@ -179,7 +180,7 @@ export function PuzzleDefinitionFields({
             value,
             label: tf(`shape.${value}`),
           }))}
-          value={form.shape || shapeSeed || "rectangular"}
+          value={form.shape || shapeSeed || undefined}
           onChange={(v) => set("shape", v as ProposalFormState["shape"])}
           ariaLabel={tf("shape.label")}
         />
@@ -192,7 +193,7 @@ export function PuzzleDefinitionFields({
           onValueChange={(v) => set("categoryId", v)}
         >
           <SelectTrigger id={`${idPrefix}-category`}>
-            <SelectValue placeholder={t("keepCategory")} />
+            <SelectValue placeholder={t("noCategoryYet")} />
           </SelectTrigger>
           <SelectContent>
             {categories.map((c) => (
