@@ -45,12 +45,6 @@ function DocsLayout() {
 
   return (
     <DocsSearchProvider value={openSearch}>
-      <a
-        href="#docs-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:rounded-md focus:bg-mk-card focus:px-3 focus:py-2 focus:ring-2 focus:ring-mk-ring"
-      >
-        {t("skipToContent")}
-      </a>
       <DocsMobileBar
         onOpenNav={() => setNavOpen(true)}
         onOpenSearch={() => setSearchOpen(true)}
