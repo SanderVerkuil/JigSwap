@@ -110,6 +110,14 @@ describe("PuzzlePlank3D physics on request", () => {
     expect(button()?.hasAttribute("aria-disabled")).toBe(false);
   });
 
+  it("names the button after what it does to the (decorative) shelf", async () => {
+    await render();
+    expect(button()?.getAttribute("aria-label")).toBe("Play with the shelf");
+    await act(async () => button()!.click());
+    await frame("physics");
+    expect(button()?.getAttribute("aria-label")).toBe("Reset the shelf");
+  });
+
   it("retires the static scene once it has faded out under physics", async () => {
     await render();
     await frame("static");

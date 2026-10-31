@@ -271,14 +271,17 @@ export function PuzzlePlank3D({
       )}
 
       {/* Play, then Reset once physics is live: one button, so keyboard focus
-          stays put when it switches. stopPropagation on pointer-down so the
-          press isn't picked up by r3f as a box grab (the canvas listens on this
-          container as its event source). */}
+          stays put when it switches. Its accessible name says what it acts on,
+          since the shelf itself is hidden from assistive tech (and keeps the
+          visible word, for voice control). stopPropagation on pointer-down so
+          the press isn't picked up by r3f as a box grab (the canvas listens on
+          this container as its event source). */}
       {canPlay && (
         <Button
           type="button"
           variant="secondary"
           size="sm"
+          aria-label={physicsReady ? t("plankResetLabel") : t("plankPlayLabel")}
           aria-disabled={physicsLoading || undefined}
           onPointerDown={(e) => e.stopPropagation()}
           onClick={() => {

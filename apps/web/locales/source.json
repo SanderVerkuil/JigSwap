@@ -4446,7 +4446,9 @@
     "sidebarTitle": "Menu",
     "sidebarDescription": "Main navigation",
     "waitingCount": "{capped, select, yes {{count} or more waiting} other {{count} waiting}}",
-    "plankReset": "Reset"
+    "plankReset": "Reset",
+    "plankPlayLabel": "Play with the shelf",
+    "plankResetLabel": "Reset the shelf"
   },
   "copyInstance": {
     "notFound": "Copy not found",

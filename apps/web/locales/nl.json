@@ -4446,7 +4446,9 @@
     "sidebarTitle": "Menu",
     "sidebarDescription": "Hoofdnavigatie",
     "waitingCount": "{capped, select, yes {{count} of meer te behandelen} other {{count} te behandelen}}",
-    "plankReset": "Herstellen"
+    "plankReset": "Herstellen",
+    "plankPlayLabel": "Spelen met de plank",
+    "plankResetLabel": "Plank herstellen"
   },
   "copyInstance": {
     "notFound": "Exemplaar niet gevonden",
