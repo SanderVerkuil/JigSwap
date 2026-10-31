@@ -836,6 +836,7 @@
     "puzzlesMenu": "Puzzels ({count})",
     "puzzleCount": "{count, plural, one {# puzzel} other {# puzzels}}",
     "removeAttachment": "{title} verwijderen",
+    "replyRevealHint": "Als je reageert, ziet {name} je naam, gebruikersnaam en de reviews die je hebt gekregen, alleen voor deze ruil. Je e-mailadres blijft privé.",
     "retry": "Opnieuw proberen",
     "searchPuzzles": "Zoek puzzels",
     "selectConversation": "Selecteer een gesprek",

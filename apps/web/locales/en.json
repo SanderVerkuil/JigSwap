@@ -836,6 +836,7 @@
     "puzzlesMenu": "Puzzles ({count})",
     "puzzleCount": "{count, plural, one {# puzzle} other {# puzzles}}",
     "removeAttachment": "Remove {title}",
+    "replyRevealHint": "Replying shows {name} your name, handle and the reviews you've received, for this trade only. Your email address stays private.",
     "retry": "Try again",
     "searchPuzzles": "Search puzzles",
     "selectConversation": "Select a conversation",
