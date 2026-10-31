@@ -4056,7 +4056,7 @@
       "errorSubmit": "Er ging iets mis bij het versturen — probeer het opnieuw.",
       "errorBusy": "Er komen nu veel berichten binnen. Probeer het later opnieuw, of mail ons op <mail>{email}</mail>.",
       "submit": "Verstuur bericht",
-      "privacyNote": "Door te versturen ga je akkoord met ons privacybeleid.",
+      "privacyNote": "Door te versturen ga je akkoord met ons <link>privacybeleid</link>.",
       "sentTitle": "Bericht verstuurd!",
       "sentBody": "Bedankt voor je bericht. We nemen zo snel mogelijk contact met je op.",
       "sentAgain": "Nog een bericht sturen"

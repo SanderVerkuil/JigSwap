@@ -261,3 +261,18 @@ describe("contact form outcome", () => {
     expect(document.activeElement).toBe(name);
   });
 });
+
+describe("contact form details", () => {
+  it("lets browsers autofill the name and email", () => {
+    renderPage();
+    expect(field(copy.formName).getAttribute("autocomplete")).toBe("name");
+    expect(field(copy.formEmail).getAttribute("autocomplete")).toBe("email");
+  });
+
+  it("links the privacy note to the privacy policy", () => {
+    renderPage("nl");
+    expect(
+      screen.getByRole("link", { name: "privacybeleid" }).getAttribute("href"),
+    ).toBe("/privacy");
+  });
+});

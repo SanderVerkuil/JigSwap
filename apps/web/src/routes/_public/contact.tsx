@@ -10,7 +10,7 @@ import { seoHead } from "@/lib/seo-head";
 import { cn } from "@/lib/utils";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { LifeBuoy, Mail, MapPin, Shield } from "lucide-react";
 import * as React from "react";
 import { flushSync } from "react-dom";
@@ -242,6 +242,7 @@ function ContactForm() {
           <Input
             ref={nameRef}
             id="contact-name"
+            autoComplete="name"
             placeholder={t("formNamePlaceholder")}
             value={form.name}
             onChange={set("name")}
@@ -263,6 +264,7 @@ function ContactForm() {
             ref={emailRef}
             id="contact-email"
             type="email"
+            autoComplete="email"
             placeholder={t("formEmailPlaceholder")}
             value={form.email}
             onChange={set("email")}
@@ -322,7 +324,7 @@ function ContactForm() {
             errors.message ? "contact-message-error" : undefined
           }
           className={cn(
-            "w-full resize-y text-[15px] px-[13px] py-[11px] rounded-[10px] border bg-mk-card text-mk-text-body outline-none",
+            "w-full resize-y text-base px-[13px] py-[11px] rounded-[10px] border bg-mk-card text-mk-text-body outline-none",
             "focus:[box-shadow:0_0_0_3px_rgb(96_72_232_/_.18)]",
             errors.message ? "border-mk-danger" : "border-mk-input-border",
           )}
@@ -347,7 +349,16 @@ function ContactForm() {
         {t("submit")}
       </Button>
       <p className="text-[12.5px] text-mk-text-muted mt-3.5 text-center leading-normal">
-        {t("privacyNote")}
+        {t.rich("privacyNote", {
+          link: (chunks) => (
+            <Link
+              to="/privacy"
+              className="font-medium text-mk-violet-600 underline underline-offset-2 hover:no-underline"
+            >
+              {chunks}
+            </Link>
+          ),
+        })}
       </p>
     </form>
   );

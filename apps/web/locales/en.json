@@ -4056,7 +4056,7 @@
       "errorSubmit": "Something went wrong while sending — please try again.",
       "errorBusy": "We're receiving a lot of messages right now. Try again later, or email us at <mail>{email}</mail>.",
       "submit": "Send message",
-      "privacyNote": "By sending, you agree to our privacy policy.",
+      "privacyNote": "By sending, you agree to our <link>privacy policy</link>.",
       "sentTitle": "Message sent!",
       "sentBody": "Thanks for reaching out. We'll get back to you as soon as we can.",
       "sentAgain": "Send another message"
