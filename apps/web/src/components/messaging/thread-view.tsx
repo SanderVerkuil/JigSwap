@@ -125,12 +125,25 @@ export function ThreadView({
   );
   // This thread's inbox row: undefined while loading, null when the inbox
   // wouldn't list it (e.g. a subject that no longer resolves).
-  const { data: inboxRow } = useQuery(
+  const { data: inboxRow, isError: inboxRowFailed } = useQuery(
     convexQuery(
       gateway.conversation.getInboxThread,
       me ? { threadId } : "skip",
     ),
   );
+  // A backend without getInboxThread (the web can deploy before it): find the
+  // row in the inbox's first page instead, as before.
+  const { data: inboxPage } = useQuery(
+    convexQuery(
+      gateway.conversation.getMyInbox,
+      me && inboxRowFailed ? {} : "skip",
+    ),
+  );
+  const headerRow = inboxRowFailed
+    ? inboxPage === undefined
+      ? undefined
+      : (inboxPage.find((row) => row.threadId === threadId) ?? null)
+    : inboxRow;
   // My photos here that aren't messages yet (being checked, or stopped).
   const { data: pendingPhotos } = useQuery(
     convexQuery(
@@ -140,7 +153,7 @@ export function ThreadView({
   );
   const outboxCount =
     pendingPhotos?.filter((photo) => photo.sendRequested).length ?? 0;
-  const thread = inboxRow ?? undefined;
+  const thread = headerRow ?? undefined;
   // A circle (group) thread, or the two-party (DM / exchange) thread.
   const circleThread = thread && isCircleThread(thread) ? thread : undefined;
   const pairThread =
@@ -323,7 +336,7 @@ export function ThreadView({
   // title is the page's h1 there; desktop keeps the shell's page h1.
   const Heading = useIsMobile() ? "h1" : "h2";
   const focusedThreadRef = useRef<string | null>(null);
-  const headerReady = inboxRow !== undefined;
+  const headerReady = headerRow !== undefined;
   useEffect(() => {
     if (hideHeader || !headerReady) return;
     if (focusedThreadRef.current === threadId) return;
@@ -395,7 +408,7 @@ export function ThreadView({
         <div className="bg-card sticky top-0 z-10 shrink-0 border-b pt-[env(safe-area-inset-top)] md:static md:pt-0">
           <div className="flex h-14 items-center gap-3 px-2 md:px-4">
             <BackToInboxLink />
-            {inboxRow === undefined ? (
+            {headerRow === undefined ? (
               <>
                 <Skeleton className="size-9 shrink-0 rounded-full" />
                 <Skeleton className="h-4 w-36" />

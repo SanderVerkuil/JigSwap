@@ -141,8 +141,9 @@ const renderThread = (
   locale: "en" | "nl" = "en",
   // exchange.replyDisclosure for an exchange thread; unseeded = still loading.
   replyDisclosure?: { revealsYou: boolean } | null,
-  // The thread's own inbox row (getInboxThread); null when the inbox wouldn't list it.
-  header: InboxThread | null = thread,
+  // The thread's own inbox row (getInboxThread); null when the inbox wouldn't list it;
+  // "unsupported" for a backend without getInboxThread, whose inbox first page holds the thread.
+  header: InboxThread | null | "unsupported" = thread,
 ) => {
   const convexQueryClient = new ConvexQueryClient(
     new ConvexReactClient("https://example.convex.cloud"),
@@ -158,12 +159,21 @@ const renderThread = (
     },
   });
   mocks.messages = MESSAGES;
-  queryClient.setQueryData(
-    convexQuery(gateway.conversation.getInboxThread, {
-      threadId: thread.threadId,
-    }).queryKey,
-    header,
-  );
+  const headerKey = convexQuery(gateway.conversation.getInboxThread, {
+    threadId: thread.threadId,
+  }).queryKey;
+  if (header === "unsupported") {
+    queryClient.setQueryDefaults(headerKey, {
+      queryFn: () =>
+        Promise.reject(new Error("Could not find public function")),
+    });
+    queryClient.setQueryData(
+      convexQuery(gateway.conversation.getMyInbox, {}).queryKey,
+      [thread],
+    );
+  } else {
+    queryClient.setQueryData(headerKey, header);
+  }
   if (replyDisclosure !== undefined && thread.subject.kind === "exchange") {
     queryClient.setQueryData(
       convexQuery(gateway.exchange.replyDisclosure, {
@@ -204,6 +214,14 @@ describe("ThreadView header", () => {
     renderThread(dmThread(), "en", undefined, null);
     expect(screen.getByRole("heading", { name: "Conversation" })).toBeTruthy();
     expect(screen.getByText("Mara's message")).toBeTruthy();
+  });
+
+  // The web can deploy before the backend that serves getInboxThread.
+  it("finds its row in the inbox when the backend has no getInboxThread", async () => {
+    renderThread(exchangeThread(), "en", undefined, "unsupported");
+    expect(
+      await screen.findByRole("heading", { name: "Trade: Night Harbour" }),
+    ).toBeTruthy();
   });
 });
 

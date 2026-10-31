@@ -154,12 +154,7 @@ function ThreadListBody({
   const me = member?._id;
   // The newest `limit` conversations; "Show older conversations" grows it.
   const [limit, setLimit] = useInboxWindow();
-  const {
-    data: inbox,
-    isError,
-    refetch,
-    isPlaceholderData: loadingOlder,
-  } = useQuery({
+  const windowed = useQuery({
     ...convexQuery(
       gateway.conversation.getMyInbox,
       me ? inboxArgs(limit) : "skip",
@@ -167,6 +162,17 @@ function ThreadListBody({
     // Keep the rows on screen while a longer window loads.
     placeholderData: keepPreviousData,
   });
+  // A backend that refuses a longer window (the web can deploy before it):
+  // keep showing the first page, and stop offering older conversations.
+  const olderRefused = windowed.isError && limit !== INBOX_PAGE_SIZE;
+  const firstPage = useQuery(
+    convexQuery(
+      gateway.conversation.getMyInbox,
+      me && olderRefused ? {} : "skip",
+    ),
+  );
+  const { data: inbox, isError, refetch } = olderRefused ? firstPage : windowed;
+  const loadingOlder = !olderRefused && windowed.isPlaceholderData;
   // One presence subscription for the list: DM partners, most recent first (exchange rows show
   // an exchange chip, not the partner's avatar, so they carry no dot).
   const presence = usePresenceOf(inbox?.map(dmPartnerId) ?? []);
@@ -268,7 +274,9 @@ function ThreadListBody({
         {/* A full window may have more behind it. Stays mounted while loading
             (aria-disabled), so a keyboard user's focus survives. */}
         {(loadingOlder ||
-          (inbox.length >= limit && limit < INBOX_MAX_SIZE)) && (
+          (!olderRefused &&
+            inbox.length >= limit &&
+            limit < INBOX_MAX_SIZE)) && (
           <div className="flex justify-center px-2 pb-3">
             <Button
               variant="ghost"

@@ -2,7 +2,13 @@
 import { gateway } from "@/gateway";
 import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { ConvexReactClient } from "convex/react";
 import type { ReactNode } from "react";
 import { IntlProvider } from "use-intl";
@@ -71,10 +77,10 @@ const threads = (count: number): AnyInboxThread[] =>
   }));
 
 // The inbox's windows as getMyInbox answers them: `pages` maps a requested
-// limit (30 = the default, asked with no args) to the rows it returns. A
-// window left out stays loading.
+// limit (30 = the default, asked with no args) to the rows it returns, or to
+// "refused" for a backend that rejects it. A window left out stays loading.
 const setup = (
-  pages: Record<number, AnyInboxThread[]>,
+  pages: Record<number, AnyInboxThread[] | "refused">,
   locale: "en" | "nl" = "en",
 ) => {
   const convexQueryClient = new ConvexQueryClient(
@@ -91,13 +97,18 @@ const setup = (
     },
   });
   for (const [limit, rows] of Object.entries(pages)) {
-    queryClient.setQueryData(
-      convexQuery(
-        gateway.conversation.getMyInbox,
-        Number(limit) === 30 ? {} : { limit: Number(limit) },
-      ).queryKey,
-      rows,
+    const { queryKey } = convexQuery(
+      gateway.conversation.getMyInbox,
+      Number(limit) === 30 ? {} : { limit: Number(limit) },
     );
+    if (rows === "refused") {
+      queryClient.setQueryDefaults(queryKey, {
+        queryFn: () =>
+          Promise.reject(new Error("ArgumentValidationError: limit")),
+      });
+    } else {
+      queryClient.setQueryData(queryKey, rows);
+    }
   }
   const tree = (listKey: string) => (
     <QueryClientProvider client={queryClient}>
@@ -179,6 +190,17 @@ describe("ThreadList paging", () => {
 
     remountList();
     expect(rowLinks()).toHaveLength(60);
+  });
+
+  // The web can deploy before the backend that accepts `limit`.
+  it("keeps the first page when the backend refuses a longer window", async () => {
+    setup({ 30: threads(30), 60: "refused" });
+    fireEvent.click(showOlder()!);
+
+    expect(await screen.findByRole("link", { name: /Member 30/ })).toBeTruthy();
+    await waitFor(() => expect(showOlder()).toBeNull());
+    expect(rowLinks()).toHaveLength(30);
+    expect(screen.queryByText("Couldn't load your conversations.")).toBeNull();
   });
 
   it("speaks Dutch", () => {
