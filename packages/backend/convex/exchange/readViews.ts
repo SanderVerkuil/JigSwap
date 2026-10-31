@@ -26,18 +26,27 @@ import {
 // FINISHED exchanges are dropped; an open one stays listed until more than the cap are open.
 export const EXCHANGE_LIST_CAP = 500;
 
-// Exchanges still in play: an offer to answer, a hand-over to arrange, a dispute to settle. The
-// web's active counts use the same three (dashboard pulse, briefing hero).
-export const LIVE_EXCHANGE_STATUSES = [
-  "proposed",
-  "accepted",
-  "disputed",
-] as const;
-
 type ExchangeStatus = Doc<"exchanges">["status"];
 
+// Exchanges still in play: an offer to answer, a hand-over to arrange, a dispute to settle. The
+// web's active counts use the same three (dashboard pulse, briefing hero). Every status must be
+// classified here (the `satisfies` fails type-check otherwise), so a new in-play status can't
+// silently be treated as finished and drop out of the bounded lists.
+const EXCHANGE_STATUS_IS_LIVE = {
+  proposed: true,
+  accepted: true,
+  disputed: true,
+  completed: false,
+  rejected: false,
+  cancelled: false,
+} as const satisfies Record<ExchangeStatus, boolean>;
+
+export const LIVE_EXCHANGE_STATUSES: readonly ExchangeStatus[] = (
+  Object.keys(EXCHANGE_STATUS_IS_LIVE) as ExchangeStatus[]
+).filter((status) => EXCHANGE_STATUS_IS_LIVE[status]);
+
 const isLive = (status: ExchangeStatus): boolean =>
-  (LIVE_EXCHANGE_STATUSES as readonly ExchangeStatus[]).includes(status);
+  EXCHANGE_STATUS_IS_LIVE[status];
 
 /**
  * The bounded window over a member's exchanges, newest first: the newest EXCHANGE_LIST_CAP overall
