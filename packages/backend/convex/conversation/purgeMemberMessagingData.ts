@@ -153,7 +153,8 @@ export const EVENT_SCRUB_BATCH_SIZE = 1000;
 // 2 + 4 + 8 minutes), and are not skipped as in flight.
 export const EVENT_SCRUB_DELAY_MS = 20 * 60_000;
 
-const PHASES = [
+// In run order. Every phase must be accounted for in memberDataCoverage.test.ts (SEC-95).
+export const PHASES = [
   "attachments",
   "reveals",
   "gpsViews",
