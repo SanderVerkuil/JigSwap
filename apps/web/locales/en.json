@@ -4157,7 +4157,8 @@
       "addAPuzzle": "Add a Puzzle",
       "logCompletion": "Log a Completion",
       "createCircle": "Create a Circle",
-      "browseCommunity": "Browse Community"
+      "browseCommunity": "Browse Community",
+      "exportData": "Export my data"
     },
     "welcome": "Welcome back, {name}! 🧩",
     "welcomeAnonymous": "Welcome back! 🧩",

@@ -4157,7 +4157,8 @@
       "addAPuzzle": "Een Puzzel Toevoegen",
       "logCompletion": "Een Voltooiing Vastleggen",
       "createCircle": "Een Kring Aanmaken",
-      "browseCommunity": "Community Verkennen"
+      "browseCommunity": "Community Verkennen",
+      "exportData": "Mijn gegevens exporteren"
     },
     "welcome": "Welkom terug, {name}! 🧩",
     "welcomeAnonymous": "Welkom terug! 🧩",

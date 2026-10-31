@@ -13,14 +13,19 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import type { FunctionReturnType } from "convex/server";
+import { getFunctionName, type FunctionReturnType } from "convex/server";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
 import { CommandPalette } from "./command-palette";
 
-const mocks = vi.hoisted(() => ({ push: vi.fn<(href: string) => void>() }));
+const mocks = vi.hoisted(() => ({
+  query: vi.fn<(name: string, args: unknown) => Promise<unknown>>(),
+  push: vi.fn<(href: string) => void>(),
+  setOpen: vi.fn(),
+  success: vi.fn(),
+}));
 
 vi.mock("@/compat/clerk", () => ({
   useUser: () => ({ user: { id: "user_me" } }),
@@ -33,7 +38,17 @@ vi.mock("@/compat/navigation", () => ({
 vi.mock("convex/react", async (importOriginal) => ({
   ...(await importOriginal<typeof import("convex/react")>()),
   useConvexAuth: () => ({ isAuthenticated: true, isLoading: false }),
+  useConvex: () => ({
+    query: (ref: Parameters<typeof getFunctionName>[0], args: unknown) =>
+      mocks.query(getFunctionName(ref), args),
+  }),
 }));
+
+vi.mock("sonner", () => ({
+  toast: { success: mocks.success, error: vi.fn() },
+}));
+
+const EXPORT_PAGE = getFunctionName(gateway.insights.exportUserDataPage);
 
 type Results = FunctionReturnType<typeof gateway.search.global>;
 
@@ -79,7 +94,7 @@ const renderPalette = ({
         messages={locale === "nl" ? nl : en}
         timeZone="Europe/Amsterdam"
       >
-        <CommandPalette open setOpen={() => {}} />
+        <CommandPalette open setOpen={mocks.setOpen} />
       </IntlProvider>
     </QueryClientProvider>,
   );
@@ -91,10 +106,21 @@ const type = (term: string) =>
 const option = (name: string) => screen.queryByRole("option", { name });
 
 beforeEach(() => {
+  mocks.query
+    .mockReset()
+    .mockResolvedValue({ rows: [], isDone: true, continueCursor: "" });
   mocks.push.mockReset();
+  mocks.setOpen.mockReset();
+  mocks.success.mockReset();
+  vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:export");
+  vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+  vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
 });
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 describe("CommandPalette", () => {
   it("lists the Go To destinations and quick actions with an empty input", () => {
@@ -311,4 +337,44 @@ describe("CommandPalette library copies", () => {
     fireEvent.click(row!);
     expect(mocks.push).toHaveBeenCalledWith("/my-puzzles/c1");
   });
+});
+
+// The palette's quick actions include the data export, which runs in place (the palette closes
+// and the file downloads) instead of sending the member to the page that hosts the button.
+describe("CommandPalette data export", () => {
+  it("offers Export my data and runs the export without navigating", async () => {
+    renderPalette();
+    fireEvent.click(screen.getByRole("option", { name: "Export my data" }));
+    expect(mocks.setOpen).toHaveBeenCalledWith(false);
+    await waitFor(() =>
+      expect(mocks.query).toHaveBeenCalledWith(EXPORT_PAGE, {
+        section: "account",
+        cursor: null,
+      }),
+    );
+    await waitFor(() => expect(mocks.success).toHaveBeenCalled());
+    expect(mocks.push).not.toHaveBeenCalled();
+  });
+
+  it("names the export in Dutch", () => {
+    renderPalette({ locale: "nl" });
+    expect(
+      screen.getByRole("option", { name: "Mijn gegevens exporteren" }),
+    ).toBeDefined();
+  });
+
+  // Like the other quick actions: bilingual keywords, and the best match is listed first.
+  it.each(["export", "download", "gegevens"])(
+    "lists it first for “%s”",
+    async (term) => {
+      renderPalette();
+      type(term);
+      await screen.findByText("Searching…");
+      await waitFor(() =>
+        expect(screen.getAllByRole("option")[0]?.textContent).toBe(
+          "Export my data",
+        ),
+      );
+    },
+  );
 });
