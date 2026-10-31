@@ -11,6 +11,12 @@ import { EmptyState } from "@/components/library/empty-state";
 import { FilterBar, FilterOption } from "@/components/library/filter-bar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import {
@@ -33,6 +39,7 @@ import {
   House,
   Lightbulb,
   List,
+  MoreHorizontal,
   Plus,
   Undo2,
   X,
@@ -232,20 +239,34 @@ function PuzzlesPage() {
   });
 
   // The page title lives in the shell page head; publish the actions there so the
-  // page body carries no duplicate header. The count lives beside the filters.
+  // page body carries no duplicate header. The count lives beside the filters. Secondary
+  // destinations (My suggestions) sit in a ⋯ menu so Add Puzzle is the one header button.
   usePageHeader(
     () => ({
       actions: (
         <>
-          <Button variant="outline" size="sm" asChild>
-            <Link
-              href="/my-puzzles/suggestions"
-              data-tour="my-puzzles-suggestions"
-            >
-              <Lightbulb className="h-4 w-4" />
-              {t("mySuggestions")}
-            </Link>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              {/* The guided tour's "find your suggestions" step points here. */}
+              <Button
+                variant="outline"
+                size="icon"
+                className="size-8"
+                aria-label={t("moreActions")}
+                data-tour="my-puzzles-suggestions"
+              >
+                <MoreHorizontal className="h-4 w-4" aria-hidden />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <Link href="/my-puzzles/suggestions">
+                  <Lightbulb className="h-4 w-4" aria-hidden />
+                  {t("mySuggestions")}
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button variant="brand" size="sm" asChild>
             <Link href="/my-puzzles/add" data-tour="my-puzzles-add">
               <Plus className="h-4 w-4" />

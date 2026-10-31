@@ -343,6 +343,7 @@
     "completed": "Voltooid",
     "addPuzzle": "Puzzel Toevoegen",
     "mySuggestions": "Mijn voorstellen",
+    "moreActions": "Meer acties",
     "editPuzzle": "Puzzel Bewerken",
     "deletePuzzle": "Puzzel Verwijderen",
     "requestExchange": "Uitwisseling Aanvragen",
@@ -5269,7 +5270,7 @@
         },
         "find": {
           "title": "Later terugvinden",
-          "body": "Mijn voorstellen toont alles wat je hebt voorgesteld."
+          "body": "Open hier het ⋯-menu en kies Mijn voorstellen om alles te zien wat je hebt voorgesteld."
         },
         "follow": {
           "title": "Volg je voorstellen",

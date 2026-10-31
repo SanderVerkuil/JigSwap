@@ -343,6 +343,7 @@
     "completed": "Completed",
     "addPuzzle": "Add Puzzle",
     "mySuggestions": "My suggestions",
+    "moreActions": "More actions",
     "editPuzzle": "Edit Puzzle",
     "deletePuzzle": "Delete Puzzle",
     "requestExchange": "Request Exchange",
@@ -5269,7 +5270,7 @@
         },
         "find": {
           "title": "Find them later",
-          "body": "My suggestions lists everything you've suggested."
+          "body": "Open the ⋯ menu here and choose My suggestions to see everything you've suggested."
         },
         "follow": {
           "title": "Follow your suggestions",
