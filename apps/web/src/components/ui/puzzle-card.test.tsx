@@ -294,6 +294,28 @@ describe("copy card menu", () => {
       },
     );
 
+  it("offers a collection's owner Remove from this collection in the ⋯ menu, not a one-tap trash", () => {
+    const onRemove = vi.fn();
+    renderCard({ variant: "collection", onRemove });
+    expect(
+      screen.queryByRole("button", { name: "Remove from this collection" }),
+    ).toBeNull();
+    openMenu();
+    const remove = screen.getByRole("menuitem", {
+      name: "Remove from this collection",
+    });
+    expect(remove.querySelector("svg.lucide-folder-minus")).toBeTruthy();
+    expect(remove.querySelector("svg.lucide-trash-2")).toBeNull();
+    expect(onRemove).not.toHaveBeenCalled();
+    fireEvent.click(remove);
+    expect(onRemove).toHaveBeenCalledWith("copy_1");
+  });
+
+  it("shows no menu on a collection card the viewer can't change", () => {
+    renderCard({ variant: "collection" });
+    expect(screen.queryByRole("button", { name: "Puzzle actions" })).toBeNull();
+  });
+
   it("marks Start puzzle with a play icon, unlike Log a solve", () => {
     renderOwnedCard({ onLogSolve: () => {}, onStartSolve: () => {} });
     openMenu();

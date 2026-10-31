@@ -622,7 +622,7 @@
       "addYourCopyHint": "Geef aan in welke staat het is en hoe je het wilt delen.",
       "copyPhotosLater": "Zodra het in je bibliotheek staat, kun je op de pagina ervan foto's van je eigen exemplaar toevoegen."
     },
-    "removeFromCollection": "Uit deze collectie verwijderen",
+    "removeFromCollection": "Uit deze collectie halen",
     "private": "Privé",
     "ownerFilter": {
       "label": "Van wie",
@@ -1993,7 +1993,11 @@
       "noMatch": "Geen puzzels gevonden voor “{term}”",
       "noMatchHint": "Probeer een andere titel of een ander merk.",
       "addFailed": "{count, plural, one {Kon # puzzel niet toevoegen. Hij is nog geselecteerd, dus je kunt het opnieuw proberen.} other {Kon # puzzels niet toevoegen. Ze zijn nog geselecteerd, dus je kunt het opnieuw proberen.}}"
-    }
+    },
+    "removed": "“{title}” is uit deze collectie gehaald",
+    "undo": "Ongedaan maken",
+    "removeError": "Kon de puzzel niet uit deze collectie halen. Probeer het opnieuw.",
+    "undoRemoveError": "Kon de puzzel niet terugzetten. Probeer het opnieuw."
   },
   "household": {
     "loading": "Je huishouden laden…",

@@ -78,6 +78,9 @@ function CollectionDetailPage() {
   const removeFromCollection = useMutation({
     mutationFn: useConvexMutation(gateway.collections.removeOwnedPuzzle),
   });
+  const addToCollection = useMutation({
+    mutationFn: useConvexMutation(gateway.collections.addOwnedPuzzle),
+  });
   const updateCollection = useMutation({
     mutationFn: useConvexMutation(gateway.collections.update),
   });
@@ -98,24 +101,32 @@ function CollectionDetailPage() {
 
   const stats = useMemo(() => computeCollectionStats(puzzles), [puzzles]);
 
+  // Takes a copy out of this collection (the copy stays in the library), confirmed by a toast
+  // whose Undo puts it back. The domain remove/add take the Collection + Copy aggregateIds.
   const handleRemovePuzzle = async (ownedPuzzleId: Id<"ownedPuzzles">) => {
-    // The domain remove takes the Collection + Copy aggregateIds; resolve them from the loaded
-    // collection and its member rows, and guard rows that predate the backfill.
     const copy = collection?.puzzles?.find((p) => p && p._id === ownedPuzzleId);
-    if (!collection?.aggregateId || !copy?.aggregateId) {
-      console.error(
-        "Cannot remove: collection or copy is missing aggregateId.",
-      );
+    const collectionId = collection?.aggregateId;
+    const copyId = copy?.aggregateId;
+    if (!collectionId || !copyId) {
+      toast.error(t("removeError"));
       return;
     }
     try {
-      await removeFromCollection.mutateAsync({
-        collectionId: collection.aggregateId,
-        copyId: copy.aggregateId,
-      });
-    } catch (error) {
-      console.error("Failed to remove puzzle from collection:", error);
+      await removeFromCollection.mutateAsync({ collectionId, copyId });
+    } catch {
+      toast.error(t("removeError"));
+      return;
     }
+    toast.success(t("removed", { title: copy?.puzzle?.title ?? "" }), {
+      action: {
+        label: t("undo"),
+        onClick: () => {
+          addToCollection
+            .mutateAsync({ collectionId, copyId })
+            .catch(() => toast.error(t("undoRemoveError")));
+        },
+      },
+    });
   };
 
   // Copy the current page URL to the clipboard; guard for SSR / browsers that
@@ -304,12 +315,14 @@ function CollectionDetailPage() {
             </p>
           )}
           <div className="flex flex-wrap items-center gap-2.5">
-            <Button variant="brand" asChild>
-              <Link href={`/collections/${id}/add-puzzles`}>
-                <Plus className="h-4 w-4" />
-                {t("addPuzzles")}
-              </Link>
-            </Button>
+            {viewerOwnsCollection && (
+              <Button variant="brand" asChild>
+                <Link href={`/collections/${id}/add-puzzles`}>
+                  <Plus className="h-4 w-4" />
+                  {t("addPuzzles")}
+                </Link>
+              </Button>
+            )}
             <Button variant="outline" onClick={handleShare}>
               <Share2 className="h-4 w-4" />
               {t("share")}
@@ -370,14 +383,16 @@ function CollectionDetailPage() {
       {isEmpty ? (
         <EmptyState
           title={t("noPuzzlesInCollection")}
-          sub={t("addPuzzlesFirst")}
+          sub={viewerOwnsCollection ? t("addPuzzlesFirst") : undefined}
           action={
-            <Button variant="brand" asChild>
-              <Link href={`/collections/${id}/add-puzzles`}>
-                <Plus className="h-4 w-4" />
-                {t("addPuzzles")}
-              </Link>
-            </Button>
+            viewerOwnsCollection ? (
+              <Button variant="brand" asChild>
+                <Link href={`/collections/${id}/add-puzzles`}>
+                  <Plus className="h-4 w-4" />
+                  {t("addPuzzles")}
+                </Link>
+              </Button>
+            ) : undefined
           }
         />
       ) : (
@@ -387,7 +402,7 @@ function CollectionDetailPage() {
               key={puzzle._id}
               puzzle={puzzle}
               variant="collection"
-              onRemove={handleRemovePuzzle}
+              onRemove={viewerOwnsCollection ? handleRemovePuzzle : undefined}
               viewSearch={`?from=collection:${id}`}
             />
           ))}

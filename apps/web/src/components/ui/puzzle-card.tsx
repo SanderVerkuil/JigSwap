@@ -28,12 +28,6 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { gateway, Id } from "@/gateway";
 import { useBoxArtInCheck } from "@/hooks/use-box-art-check";
 import { cn } from "@/lib/utils";
@@ -44,6 +38,7 @@ import {
   CircleCheck,
   Clock,
   Edit,
+  FolderMinus,
   FolderOpen,
   Heart,
   Lock,
@@ -133,9 +128,9 @@ const OFFERS: ReadonlyArray<{
 // Rendered as a cover overlay so it sits above the stretched-link (z-10) and
 // is always mounted for keyboard/SR reachability. Suppressed in selection/pick.
 // ---------------------------------------------------------------------------
-// Shared top-right "corner chip" styling for the card's overlay controls (the ⋯ menu and the
-// collection remove button): frosted glass, always mounted, dimmed at rest on hover-capable
-// devices, full on card-hover/focus/touch. 44px hit area via negative margin + padding.
+// Top-right "corner chip" styling for the card's ⋯ menu trigger: frosted glass, always mounted,
+// dimmed at rest on hover-capable devices, full on card-hover/focus/touch. 44px hit area via
+// negative margin + padding.
 const CORNER_CHIP_CLASS = [
   "flex h-[40px] w-[40px] items-center justify-center rounded-full",
   "bg-background/70 backdrop-blur-md border border-border/50 shadow-sm",
@@ -155,6 +150,8 @@ interface PuzzleOverflowMenuProps {
   // When set, the menu includes an "add to collection" submenu (the Copy aggregateId the add needs).
   showCollection?: boolean;
   copyAggregateId?: string;
+  // On a collection's page: take this copy out of the collection (the copy itself stays).
+  onRemoveFromCollection?: (id: Id<"ownedPuzzles">) => void;
 }
 
 function PuzzleOverflowMenu({
@@ -166,13 +163,21 @@ function PuzzleOverflowMenu({
   onDelete,
   showCollection = false,
   copyAggregateId,
+  onRemoveFromCollection,
 }: PuzzleOverflowMenuProps) {
   const t = useTranslations("puzzles");
   const tSolving = useTranslations("solving.logSolve");
   const tStart = useTranslations("solving.startSolve");
 
   // Don't mount the chip at all when nothing is wired.
-  if (!onLogSolve && !onStartSolve && !onEdit && !onDelete && !showCollection)
+  if (
+    !onLogSolve &&
+    !onStartSolve &&
+    !onEdit &&
+    !onDelete &&
+    !showCollection &&
+    !onRemoveFromCollection
+  )
     return null;
 
   return (
@@ -245,6 +250,17 @@ function PuzzleOverflowMenu({
               </DropdownMenuSubContent>
             </DropdownMenuSub>
           )}
+          {onRemoveFromCollection && (
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemoveFromCollection(ownedId);
+              }}
+            >
+              <FolderMinus className="h-4 w-4 mr-2 shrink-0" />
+              {t("removeFromCollection")}
+            </DropdownMenuItem>
+          )}
           {onDelete && (
             <>
               <DropdownMenuSeparator />
@@ -262,40 +278,6 @@ function PuzzleOverflowMenu({
           )}
         </DropdownMenuContent>
       </DropdownMenu>
-    </div>
-  );
-}
-
-// Collection cards use the top-right corner (where owner cards show the ⋯ menu) for a single
-// "remove from this collection" action, with a tooltip clarifying what it does.
-function PuzzleCornerRemove({
-  ownedId,
-  onRemove,
-}: {
-  ownedId: Id<"ownedPuzzles">;
-  onRemove: (id: Id<"ownedPuzzles">) => void;
-}) {
-  const t = useTranslations("puzzles");
-  return (
-    <div className="absolute top-2 right-2 z-10">
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              aria-label={t("removeFromCollection")}
-              onClick={(e) => {
-                e.stopPropagation();
-                onRemove(ownedId);
-              }}
-              className={`${CORNER_CHIP_CLASS} text-destructive hover:bg-destructive/10`}
-            >
-              <Trash2 className="h-4 w-4" aria-hidden />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>{t("removeFromCollection")}</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
     </div>
   );
 }
@@ -436,6 +418,11 @@ export function PuzzleCard({
       </>
     );
 
+  // On a collection's page, onRemove takes the copy out of that collection: a ⋯ menu item, not
+  // a one-tap control (the page passes it only to the collection's owner).
+  const onRemoveFromCollection =
+    variant === "collection" ? onRemove : undefined;
+
   // Whether this variant should show the ⋯ overflow menu (owner-management actions).
   // Suppressed in selection/pick where card-click owns the interaction.
   const showOverflowMenu =
@@ -447,7 +434,8 @@ export function PuzzleCard({
       onStartSolve ||
       onEdit ||
       onDelete ||
-      showCollectionDropdown
+      showCollectionDropdown ||
+      onRemoveFromCollection
     );
 
   // Image overlays: the ⋯ overflow chip (top-right), the selection ring's
@@ -475,10 +463,8 @@ export function PuzzleCard({
           onDelete={onDelete}
           showCollection={showCollectionDropdown}
           copyAggregateId={puzzle.aggregateId}
+          onRemoveFromCollection={onRemoveFromCollection}
         />
-      )}
-      {showActions && variant === "collection" && onRemove && (
-        <PuzzleCornerRemove ownedId={ownedId} onRemove={onRemove} />
       )}
       {isSelected && (
         <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
@@ -504,7 +490,7 @@ export function PuzzleCard({
   // Browse/exchange/social actions stay in the bottom action row as before.
   // The owner-management actions (log solve, edit, delete) AND "add to collection" now live in
   // the ⋯ overflow menu (the latter as a submenu), so they no longer render a bottom-row control.
-  // The collection variant's onRemove moves to the top-right corner chip (PuzzleCornerRemove).
+  // The collection variant's onRemove is the ⋯ menu's "Remove from this collection".
   // onView is intentionally omitted here: whole-card navigation covers it (stretched link).
   const browseActions = !!(
     (variant !== "collection" && onRemove) ||

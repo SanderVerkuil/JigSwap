@@ -4,10 +4,17 @@ import { gateway, type Id } from "@/gateway";
 import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import type { CollectionDetailView, OwnedCopyView } from "@jigswap/contracts";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { ConvexReactClient } from "convex/react";
 import { getFunctionName } from "convex/server";
 import type { ComponentType, ReactNode } from "react";
+import { toast } from "sonner";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../../../locales/en.json";
@@ -48,7 +55,13 @@ vi.mock("@convex-dev/react-query", async (importOriginal) => ({
     (ref: Parameters<typeof getFunctionName>[0]) => (args: unknown) =>
       mocks.mutation(getFunctionName(ref), args),
 }));
+vi.mock("@/components/ui/collection-dropdown", () => ({
+  CollectionMenuItems: () => null,
+}));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+
+const REMOVE = getFunctionName(gateway.collections.removeOwnedPuzzle);
+const ADD = getFunctionName(gateway.collections.addOwnedPuzzle);
 
 const OWNER = "owner" as Id<"users">;
 
@@ -119,18 +132,73 @@ const renderPage = (viewer: string) => {
 beforeEach(() => {
   mocks.mutation.mockReset().mockResolvedValue(null);
   mocks.push.mockReset();
+  vi.mocked(toast.success).mockReset();
+  vi.mocked(toast.error).mockReset();
 });
+
+const removeViaMenu = () => {
+  fireEvent.pointerDown(
+    screen.getByRole("button", { name: "Puzzle actions" }),
+    { button: 0, ctrlKey: false },
+  );
+  fireEvent.click(
+    screen.getByRole("menuitem", { name: "Remove from this collection" }),
+  );
+};
+
+type ToastAction = { action?: { label: string; onClick: () => void } };
 afterEach(cleanup);
 
 describe("collection page controls", () => {
-  it("gives the owner Edit", () => {
+  it("gives the owner Edit, Add Puzzles and a ⋯ menu on each card", () => {
     renderPage(OWNER);
     expect(screen.getByRole("button", { name: "Edit" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Add Puzzles" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Puzzle actions" })).toBeTruthy();
   });
 
-  it("gives a visitor of a public collection no Edit", () => {
+  it("gives a visitor of a public collection none of them", () => {
     renderPage("visitor");
     expect(screen.getByText("Puzzle 1")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Edit" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Add Puzzles" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Puzzle actions" })).toBeNull();
+  });
+});
+
+describe("removing a puzzle from the collection", () => {
+  it("takes it out, confirms with a toast, and Undo puts it back", async () => {
+    renderPage(OWNER);
+    removeViaMenu();
+
+    await waitFor(() => expect(toast.success).toHaveBeenCalledTimes(1));
+    expect(mocks.mutation.mock.calls).toEqual([
+      [REMOVE, { collectionId: "col_agg", copyId: "copy_agg_1" }],
+    ]);
+    const [message, options] = vi.mocked(toast.success).mock.calls[0] as [
+      string,
+      ToastAction,
+    ];
+    expect(message).toBe("Removed “Puzzle 1” from this collection");
+    expect(options.action?.label).toBe("Undo");
+
+    options.action?.onClick();
+    await waitFor(() => expect(mocks.mutation).toHaveBeenCalledTimes(2));
+    expect(mocks.mutation.mock.calls[1]).toEqual([
+      ADD,
+      { collectionId: "col_agg", copyId: "copy_agg_1" },
+    ]);
+  });
+
+  it("says so when the removal fails", async () => {
+    mocks.mutation.mockRejectedValue(new Error("offline"));
+    renderPage(OWNER);
+    removeViaMenu();
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "Couldn't take the puzzle out of this collection. Please try again.",
+      ),
+    );
+    expect(toast.success).not.toHaveBeenCalled();
   });
 });
