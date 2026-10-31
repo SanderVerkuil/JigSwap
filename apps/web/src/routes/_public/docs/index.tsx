@@ -69,9 +69,9 @@ function DocsIndex() {
                 <div className="grid place-items-center size-11 rounded-[12px] bg-mk-violet-50 text-mk-violet-600 mb-4">
                   <GroupIcon slug={group.slug} />
                 </div>
-                <h3 className="font-mk-heading font-semibold text-[18px] text-mk-text-strong group-hover:text-mk-violet-600">
+                <h2 className="font-mk-heading font-semibold text-[18px] text-mk-text-strong group-hover:text-mk-violet-600">
                   {group.title}
-                </h3>
+                </h2>
                 <p className="text-[14.5px] text-mk-text-muted mt-1.5">
                   {summaryFor(group.slug)}
                 </p>
