@@ -185,6 +185,7 @@ function MemberPage() {
             }
             invitedKind={inviteKind}
             inviteExpired={inviteExpired}
+            requestedHandle={handle}
           />
           {!profile.locked && <ProfileCtaBand returnToHref={returnToHref} />}
         </main>
@@ -218,6 +219,7 @@ function AuthedMemberPage({
 }) {
   const tShell = useTranslations("shell");
   const displayName = useMemberDisplayName();
+  const { handle } = Route.useParams();
   const name = displayName({ name: profile.hero.displayName });
   const memberId = profile.hero.memberId as Id<"users">;
 
@@ -290,6 +292,7 @@ function AuthedMemberPage({
         profile={profile}
         shelf={shelf}
         viewer={isSelf ? "owner" : "member"}
+        requestedHandle={handle}
       />
     </>
   );

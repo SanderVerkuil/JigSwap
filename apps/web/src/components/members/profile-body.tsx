@@ -88,6 +88,7 @@ function ProfileBodyContent({
   invitedName,
   invitedKind = "network",
   inviteExpired = false,
+  requestedHandle,
 }: {
   profile: PublicProfileView;
   // The auth-gated featured shelf (fetched only for logged-in viewers of an
@@ -103,6 +104,9 @@ function ProfileBodyContent({
   invitedKind?: "network" | "household";
   // The visitor's household link has expired or was already used; the teaser still renders.
   inviteExpired?: boolean;
+  // The /members/$handle param the page was opened with (the server resolved it to this member):
+  // the hero's @handle fallback while the backend predates `handle` (deploy skew).
+  requestedHandle?: string;
 }) {
   const displayName = useMemberDisplayName();
   const hero = profile.hero;
@@ -128,6 +132,7 @@ function ProfileBodyContent({
         locked={profile.locked}
         blockedByMe={blockedByMe}
         returnToHref={returnToHref}
+        requestedHandle={requestedHandle}
       />
 
       {blockedByMe ? (
@@ -181,20 +186,23 @@ function HeroSection({
   locked,
   blockedByMe,
   returnToHref,
+  requestedHandle,
 }: {
   hero: Hero;
   viewer: ProfileViewer;
   locked: boolean;
   blockedByMe: boolean;
   returnToHref?: string;
+  requestedHandle?: string;
 }) {
   const t = useTranslations("members.profile");
   const displayName = useMemberDisplayName();
   const name = displayName({ name: hero.displayName });
   const memberSinceYear = new Date(hero.memberSince).getFullYear();
   // The canonical handle, shown only when it reads as a name (not the bare id). Never rebuilt from
-  // `username`: another member may hold that string as a slug (SEC-07).
-  const canonical = canonicalHandleOf(hero);
+  // `username`: another member may hold that string as a slug (SEC-07). The same rule as the
+  // route's redirect, so the hero names the URL the page settles on.
+  const canonical = canonicalHandleOf(hero, requestedHandle);
   const handle = canonical !== hero.memberId ? canonical : undefined;
 
   return (
