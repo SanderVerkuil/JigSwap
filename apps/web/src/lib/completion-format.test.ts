@@ -6,6 +6,7 @@ import {
   countsTowardThisYear,
   formatCompletionDate,
   formatCompletionMeta,
+  formatSolveTime,
   solveDuration,
 } from "./completion-format";
 
@@ -219,6 +220,27 @@ describe("solveDuration", () => {
   });
 });
 
+describe("formatSolveTime", () => {
+  it("writes minutes, hours and days compactly in English", () => {
+    expect(formatSolveTime(tEn, 45)).toBe("45m");
+    expect(formatSolveTime(tEn, 200)).toBe("3h 20m");
+    expect(formatSolveTime(tEn, 2880)).toBe("2 days");
+    expect(formatSolveTime(tEn, 1440 + 125)).toBe("1d 2h 5m");
+  });
+
+  // "m" reads as metres in Dutch: minutes are "min", hours "u", days "d", always spaced.
+  it("writes them the Dutch way", () => {
+    expect(formatSolveTime(tNl, 45)).toBe("45 min");
+    expect(formatSolveTime(tNl, 200)).toBe("3 u 20 min");
+    expect(formatSolveTime(tNl, 2880)).toBe("2 dagen");
+    expect(formatSolveTime(tNl, 1440 + 125)).toBe("1 d 2 u 5 min");
+  });
+
+  it("says when no time was recorded", () => {
+    expect(formatSolveTime(tEn)).toBe("No time recorded");
+  });
+});
+
 describe("formatCompletionMeta", () => {
   const DAY = Date.UTC(2026, 9, 12);
   const finished = (
@@ -238,7 +260,7 @@ describe("formatCompletionMeta", () => {
       "1,000 pieces · 3h 20m",
     );
     expect(formatCompletionMeta(tNl, finished(DAY, 200), 1000)).toBe(
-      "1.000 stukjes · 3 u 20 m",
+      "1.000 stukjes · 3 u 20 min",
     );
   });
 

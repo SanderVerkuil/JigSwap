@@ -3428,10 +3428,6 @@
       "goalsOfTotal": "{achieved} of {total, plural, one {# goal} other {# goals}}",
       "ratingGiven": "Avg rating given",
       "ratingReceived": "Avg rating received",
-      "time": "{hours}h {minutes}m",
-      "timeMinutes": "{minutes}m",
-      "timeDays": "{days, plural, one {# day} other {# days}}",
-      "timeDaysHours": "{days}d {hours}h {minutes}m",
       "ratingNone": "—"
     },
     "trends": {

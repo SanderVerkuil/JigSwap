@@ -79,6 +79,23 @@ describe("StatCards", () => {
     expect(screen.getByText("Puzzles owned")).toBeDefined();
   });
 
+  it("writes the total solve time like the completion log does", () => {
+    renderStats({ totalSolveMinutes: 200 });
+    expect(cellOf("Total solve time")?.firstElementChild?.textContent).toBe(
+      "3h 20m",
+    );
+    cleanup();
+    renderStats({ totalSolveMinutes: 200 }, "nl");
+    expect(cellOf("Totale oplostijd")?.firstElementChild?.textContent).toBe(
+      "3 u 20 min",
+    );
+    cleanup();
+    renderStats({ totalSolveMinutes: 1440 + 125 }, "nl");
+    expect(cellOf("Totale oplostijd")?.firstElementChild?.textContent).toBe(
+      "1 d 2 u 5 min",
+    );
+  });
+
   it("drops the zero solve figures while there is no finished solve", () => {
     renderStats({ completionsCount: 0, totalSolveMinutes: 0 });
     expect(screen.queryByText("Completions")).toBeNull();

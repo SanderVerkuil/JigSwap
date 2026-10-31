@@ -1,6 +1,7 @@
 "use client";
 
 import { StatRow } from "@/components/library/stat-row";
+import { formatSolveTime } from "@/lib/completion-format";
 import { useTranslations } from "use-intl";
 
 export interface PersonalStats {
@@ -23,21 +24,8 @@ export interface PersonalStats {
 // to a row on phones, so the first screen isn't only stats).
 export function StatCards({ stats }: { stats: PersonalStats }) {
   const t = useTranslations("insights.stats");
-
-  const formatTime = (minutes: number): string => {
-    const days = Math.floor(minutes / 1440);
-    const rest = minutes % 1440;
-    const h = Math.floor(rest / 60);
-    const m = rest % 60;
-    if (days > 0) {
-      return h === 0 && m === 0
-        ? t("timeDays", { days })
-        : t("timeDaysHours", { days, hours: h, minutes: m });
-    }
-    return h > 0
-      ? t("time", { hours: h, minutes: m })
-      : t("timeMinutes", { minutes: m });
-  };
+  // The completion log's duration format, so a time reads the same on both pages.
+  const tSolve = useTranslations("solving.completions");
 
   // Null means "no ratings yet"; a 0 rating means the same in the legacy read model (mean of an
   // empty set), so both show the placeholder rather than a misleading 0.0.
@@ -61,7 +49,7 @@ export function StatCards({ stats }: { stats: PersonalStats }) {
                 },
                 {
                   label: t("solveTime"),
-                  value: formatTime(stats.totalSolveMinutes),
+                  value: formatSolveTime(tSolve, stats.totalSolveMinutes),
                 },
               ]
             : []),
