@@ -1,5 +1,9 @@
 import { convexErrorCode } from "@/lib/convex-error-code";
 
+// Re-exported so modules that import the helper from here keep compiling; the helper itself lives
+// in lib/convex-error-code.ts. Keep this until no module imports it from this path.
+export { convexErrorCode } from "@/lib/convex-error-code";
+
 // Pure helpers for the trade-request dialog: which exchange types a copy allows, whether the
 // viewer may request it at all, and how propose's stable error codes map to localized messages.
 
