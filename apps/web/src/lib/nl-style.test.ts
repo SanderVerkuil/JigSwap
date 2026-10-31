@@ -55,6 +55,7 @@ const PROPER_NOUNS = new Set([
   "Firecrawl",
   "Google",
   "Apple",
+  "Mac",
   "Brave",
   "Chrome",
   "Chromium",
@@ -164,8 +165,9 @@ const SENTENCE = /\.(\s|$)|[!?]\s/;
 const strip = (token: string) =>
   token.replace(/^[^\p{L}\p{N}§#]+|[^\p{L}\p{N}§#]+$/gu, "");
 const capitalised = (word: string) => /^\p{Lu}/u.test(word);
-// "QR-code", "EU-hosting", "JSON": an acronym keeps its capitals.
-const acronym = (word: string) => /^[\p{Lu}\d]{2,}(?!\p{Ll})/u.test(word);
+// "QR-code", "EU-hosting", "JSON": an acronym keeps its capitals; so does a letter range ("A–Z").
+const acronym = (word: string) =>
+  /^[\p{Lu}\d]{2,}(?!\p{Ll})/u.test(word) || /^\p{Lu}[–-]\p{Lu}$/u.test(word);
 
 function allowedFor(key: string): readonly string[] {
   return Object.entries(ALLOWED).flatMap(([pattern, words]) =>
@@ -248,6 +250,8 @@ describe("nl-style helpers", () => {
     ["Je foto's en QR-codes", []],
     ["Gem. Moeilijkheid", ["Moeilijkheid"]],
     ["Min. stukjes", []],
+    ["Safari (Mac, iPhone of iPad)", []],
+    ["Titel A–Z", []],
   ] as const)("%s → %j", (message, expected) => {
     expect(titleCaseWords("x", message)).toEqual(expected);
   });
@@ -259,7 +263,10 @@ describe("nl.json", () => {
       .map(([key, value]) => [key, value, titleCaseWords(key, value)] as const)
       .filter(([, , hits]) => hits.length > 0)
       .map(([key, value, hits]) => `${key}: ${value}  [${hits.join(", ")}]`);
-    expect(offenders).toEqual([]);
+    expect(
+      offenders,
+      "Write Dutch in sentence case: lowercase the listed words. A real name goes in PROPER_NOUNS; another control's label is quoted or listed in ALLOWED.",
+    ).toEqual([]);
   });
 
   // Puzzle pieces are "stukje"/"stukjes" everywhere, never "stuk"/"stukken" (UX-65).
