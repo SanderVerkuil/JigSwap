@@ -332,6 +332,8 @@ export const gateway = {
     // Two-level review form: upsert puzzle and/or copy review in one call; read own rows back.
     submitReviews: api.solving.submitReviews.submitReviews,
     getMyReviews: api.solving.getMyReviews.getMyReviews,
+    // Author-only: "Delete my review" removes the caller's own star review of the copy.
+    deleteCopyReview: api.solving.deleteCopyReview.deleteCopyReview,
   },
 
   // Federated user settings: a read-composition over each context's settings section. Writes are

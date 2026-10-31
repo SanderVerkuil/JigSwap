@@ -1,11 +1,14 @@
 import { DomainError } from "../../shared-kernel";
-import { CompletionId, GoalId, PuzzleDefinitionId } from "../domain";
+import { CompletionId, CopyId, GoalId, PuzzleDefinitionId } from "../domain";
 
 // Orchestration-level failures the aggregates cannot express because they depend on the world
 // (repository lookups) rather than their own data. Like SolvingError, the `code` is the stable,
 // machine-readable discriminant a transport adapter maps to; the message is for logs/tests only.
 export type SolvingApplicationErrorCode =
-  "CompletionNotFound" | "GoalNotFound" | "PuzzleReviewNotFound";
+  | "CompletionNotFound"
+  | "GoalNotFound"
+  | "PuzzleReviewNotFound"
+  | "CopyReviewNotFound";
 
 export class SolvingApplicationError extends DomainError {
   override readonly name = "SolvingApplicationError";
@@ -38,6 +41,14 @@ export class SolvingApplicationError extends DomainError {
     return new SolvingApplicationError(
       "PuzzleReviewNotFound",
       `No review of puzzle ${puzzleId} by this member`,
+    );
+  }
+
+  // The acting member has no star review of this copy to delete.
+  static copyReviewNotFound(copyId: CopyId): SolvingApplicationError {
+    return new SolvingApplicationError(
+      "CopyReviewNotFound",
+      `No review of copy ${copyId} by this member`,
     );
   }
 }

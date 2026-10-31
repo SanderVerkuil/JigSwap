@@ -187,7 +187,7 @@ const MANIFEST: Record<string, Disposition> = {
   },
   "copyReviews.userId": {
     erasure: {
-      kept: "a rating they gave another member's copy stays (ratings of their own copies go with the copies); the operator tool removes them on request (social/removeMemberContent)",
+      kept: "a rating they gave another member's copy stays (ratings of their own copies go with the copies); the member deletes their own in the app (solving/deleteCopyReview) and the operator tool removes all of them on request (social/removeMemberContent)",
     },
     phases: ["copies"],
     export: { exported: ["copyReviews"] },

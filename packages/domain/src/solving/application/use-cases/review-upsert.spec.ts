@@ -48,6 +48,9 @@ class RecordingCopyReviewRepository implements CopyReviewRepository {
   async upsert(review: CopyReviewUpsert): Promise<void> {
     this.upserts.push(review);
   }
+  async remove(): Promise<boolean> {
+    return false;
+  }
 }
 
 describe("Review upsert use cases", () => {

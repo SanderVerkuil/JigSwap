@@ -568,6 +568,7 @@ import type * as solving_completionModerationStore from "../solving/completionMo
 import type * as solving_copySnapshot from "../solving/copySnapshot.js";
 import type * as solving_createGoal from "../solving/createGoal.js";
 import type * as solving_deleteCompletion from "../solving/deleteCompletion.js";
+import type * as solving_deleteCopyReview from "../solving/deleteCopyReview.js";
 import type * as solving_editCompletion from "../solving/editCompletion.js";
 import type * as solving_errors from "../solving/errors.js";
 import type * as solving_finishCompletion from "../solving/finishCompletion.js";
@@ -1151,6 +1152,7 @@ declare const fullApi: ApiFromModules<{
   "solving/copySnapshot": typeof solving_copySnapshot;
   "solving/createGoal": typeof solving_createGoal;
   "solving/deleteCompletion": typeof solving_deleteCompletion;
+  "solving/deleteCopyReview": typeof solving_deleteCopyReview;
   "solving/editCompletion": typeof solving_editCompletion;
   "solving/errors": typeof solving_errors;
   "solving/finishCompletion": typeof solving_finishCompletion;

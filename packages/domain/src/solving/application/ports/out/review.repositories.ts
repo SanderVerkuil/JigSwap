@@ -4,7 +4,8 @@ import { CopyId, MemberId, PuzzleDefinitionId } from "../../../domain";
 // puzzle review per puzzle and AT MOST ONE copy review per copy — `upsert` creates the row or
 // replaces the existing one; enforcing that cardinality is the 2c-convex adapter's job (the
 // `puzzleReviews`/`copyReviews` tables), never the domain's. A member may delete their own puzzle
-// review: `remove` deletes the (member, puzzle) row and says whether there was one.
+// or copy review: `remove` deletes the (member, puzzle) or (member, copy) row and says whether
+// there was one.
 
 // The already-normalised values a puzzle-review upsert persists.
 export interface PuzzleReviewUpsert {
@@ -35,4 +36,5 @@ export interface CopyReviewUpsert {
 
 export interface CopyReviewRepository {
   upsert(review: CopyReviewUpsert): Promise<void>;
+  remove(userId: MemberId, copyId: CopyId): Promise<boolean>;
 }

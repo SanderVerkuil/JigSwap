@@ -1196,7 +1196,7 @@ describe("getCopyInstanceView rich detail", () => {
 });
 
 describe("getCopyInstanceView copyReviews", () => {
-  test("rows come back {author, rating, updatedAt} sorted desc by updatedAt", async () => {
+  test("rows come back {author, rating, updatedAt, canDelete} sorted desc by updatedAt", async () => {
     const t = convexTest(schema, modules);
     const { now, viewer, solver, copy } = await seedCopy(t);
     await setVisibility(t, solver, "public");
@@ -1232,6 +1232,7 @@ describe("getCopyInstanceView copyReviews", () => {
       },
       rating: 3,
       updatedAt: now + 30,
+      canDelete: false,
     });
     expect(view?.copyReviews[1]).toEqual({
       author: {
@@ -1240,6 +1241,8 @@ describe("getCopyInstanceView copyReviews", () => {
       },
       rating: 5,
       updatedAt: now + 10,
+      // The viewer's own review: only its author may delete it (SEC-70).
+      canDelete: true,
     });
   });
 
