@@ -1621,14 +1621,18 @@ export default defineSchema({
 
   // Social: a text-only discussion comment on a single shared PHOTO (an `ownedPuzzleImages` row),
   // surfaced in the photo lightbox. Keyed by the photo _id (not a puzzle definition); aggregateId is
-  // the PhotoCommentId. Append-only — the read side projects this table directly into view DTOs.
+  // the PhotoCommentId (the id the web holds, and a photoComment report's target). Append-only for
+  // members; a moderator deletes a reported one (admin/decideReport). The read side projects this
+  // table directly into view DTOs.
   photoComments: defineTable({
     aggregateId: v.optional(v.string()),
     photoId: v.id("ownedPuzzleImages"),
     authorId: v.id("users"),
     text: v.string(),
     createdAt: v.number(),
-  }).index("by_photo", ["photoId"]),
+  })
+    .index("by_photo", ["photoId"])
+    .index("by_aggregate_id", ["aggregateId"]),
 
   // Social: a directed follow edge (followerId -> followeeId). Indexed both ways so the read side
   // can list a member's followers and the people they follow; aggregateId is the FollowId.
@@ -2022,9 +2026,9 @@ export default defineSchema({
 
   // DSA notice-and-action (spec 2.5): a member's report about another member or their content.
   // Filing never changes the target; an admin decides it (admin/decideReport), which may tombstone
-  // a message or remove a photo. `targetId` is the target's canonical id string: users / copy /
-  // photo / attachment `_id`, the threadMessages `messageId`, or the exchange aggregateId (raw
-  // `_id` fallback).
+  // a message, remove a photo or a photo comment, or clear a review's text. `targetId` is the
+  // target's canonical id string: users / copy / photo / attachment / puzzleReviews `_id`, the
+  // threadMessages `messageId`, or the exchange or photo comment aggregateId (raw `_id` fallback).
   // `evidence` is snapshotted at filing time so later edits or removal can't destroy it.
   reports: defineTable({
     // Absent once the reporter is anonymised: they deleted their account, or the report reached
@@ -2039,6 +2043,10 @@ export default defineSchema({
       v.literal("exchange"),
       // A message photo (messageAttachments `_id`).
       v.literal("attachment"),
+      // A comment on a copy photo (photoComments aggregateId, raw `_id` for legacy rows).
+      v.literal("photoComment"),
+      // The text of a review on a catalogue puzzle (puzzleReviews `_id`).
+      v.literal("puzzleReview"),
     ),
     targetId: v.string(),
     reportedUserId: v.id("users"),
@@ -2084,6 +2092,9 @@ export default defineSchema({
           }),
         ),
       ),
+      // photoComment / puzzleReview target: the reported text as filed (a legacy over-long text
+      // cut to reports/fileReport EVIDENCE_TEXT_MAX_LENGTH). Cleared by the retention purge.
+      text: v.optional(v.string()),
     }),
     status: v.union(
       v.literal("open"),
@@ -2111,7 +2122,7 @@ export default defineSchema({
     decidedBy: v.optional(v.id("users")),
     decidedAt: v.optional(v.number()),
     // The retention purge ran (reports/retention, 12 months after the decision): the reporter is
-    // anonymised and the details and evidence message bodies are cleared.
+    // anonymised and the details, the evidence message bodies and the evidence text are cleared.
     retentionPurgedAt: v.optional(v.number()),
     createdAt: v.number(),
   })

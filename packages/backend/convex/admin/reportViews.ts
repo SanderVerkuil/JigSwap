@@ -28,7 +28,7 @@ const copyTitleOf = async (
 
 /**
  * A one-line summary of what was reported: the message's snapshotted text (a message photo's
- * caption), the copy's (or the
+ * caption), an excerpt of a photo comment's or review's snapshotted text, the copy's (or the
  * photo's copy's, or the exchange's requested copy's) puzzle title. Null when there is nothing
  * to show (a user target, or the target is gone).
  */
@@ -50,6 +50,12 @@ export const targetSummaryOf = async (
       );
       return snapshot ? (messagePreviewOf(snapshot.body) ?? null) : null;
     }
+    case "photoComment":
+    case "puzzleReview":
+      // The text as filed (the comment may be gone, the review's text cleared, since).
+      return report.evidence.text !== undefined
+        ? (messagePreviewOf(report.evidence.text) ?? null)
+        : null;
     case "copy": {
       const copyId = ctx.db.normalizeId("ownedPuzzles", report.targetId);
       return copyId ? copyTitleOf(ctx, copyId) : null;

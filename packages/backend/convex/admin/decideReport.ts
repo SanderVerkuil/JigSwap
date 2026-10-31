@@ -11,6 +11,7 @@ import {
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
 import { makeNotify } from "../notifications/adapters/makeNotify";
+import { photoCommentByTargetId } from "../reports/fileReport";
 import { scheduleReportRetention } from "../reports/retention";
 import { deleteCopyPhoto } from "./deleteCopyPhoto";
 import { adminLabelOf } from "./reportViews";
@@ -30,11 +31,25 @@ const STAMP_KIND = {
   warned: "report_warned",
 } as const satisfies Record<Decision, string>;
 
+// What a content_removed notice says was removed (its `restricted` param), per target kind; null
+// for the kinds removeContent refuses. A new target kind is a type error here.
+const RESTRICTED_CONTENT = {
+  message: "message",
+  attachment: "photo",
+  photo: "photo",
+  photoComment: "comment",
+  puzzleReview: "review",
+  user: null,
+  copy: null,
+  exchange: null,
+} as const satisfies Record<Doc<"reports">["targetKind"], string | null>;
+
 // Decide an open report (spec 2.5). "content_removed" tombstones a reported message (with its
-// photo, for an image message or a reported message photo) or removes a reported copy photo (the
-// confirmPhotoRemoval path); it does not apply to user, copy or exchange
-// targets. "warned" and "dismissed" change no content. Every other OPEN report on the same target
-// is decided with it (same decision and statement). The decision is audit-stamped; each reporter
+// photo, for an image message or a reported message photo), removes a reported copy photo (the
+// confirmPhotoRemoval path), deletes a reported photo comment, or clears a reported review's text
+// (its rating stays); it does not apply to user, copy or exchange targets. "warned" and
+// "dismissed" change no content. Every other OPEN report on the same target is decided with it
+// (same decision and statement). The decision is audit-stamped; each reporter
 // gets report_decided (Art. 16(5)) and the reported member gets the Art. 17 statement of reasons
 // (content_removed / member_warned). The moderator is never named to either.
 export const decideReport = mutation({
@@ -138,19 +153,15 @@ export const decideReport = mutation({
       decision !== "dismissed" &&
       (await ctx.db.get(report.reportedUserId)) !== null
     ) {
+      const restricted = RESTRICTED_CONTENT[report.targetKind];
       await notify({
         memberId: toMemberId(report.reportedUserId),
         type:
           decision === "content_removed" ? "content_removed" : "member_warned",
         relatedId: report._id,
         params: {
-          ...(decision === "content_removed"
-            ? {
-                restricted:
-                  report.targetKind === "attachment"
-                    ? "photo"
-                    : report.targetKind,
-              }
+          ...(decision === "content_removed" && restricted !== null
+            ? { restricted }
             : {}),
           ground: report.reason,
           reason: statementOfReasons,
@@ -244,11 +255,12 @@ const reportedAttachmentOf = async (
 
 // Remove the reported content: tombstone a message (its body and copy reference are cleared too,
 // so the content is gone from the database, not just hidden; the report's evidence snapshot
-// keeps the original), remove a message photo with its message, delete a copy photo. A target
-// that is already
-// gone (removed, or its author deleted it) needs nothing more, and a quarantined copy photo is
-// kept whole, row and blob (the CSAM preservation owns it; it is already shown to nobody). Other
-// kinds have no content an admin can remove here.
+// keeps the original), remove a message photo with its message, delete a copy photo or a photo
+// comment, clear a review's text. A review keeps its rating, so the definition's rating stays
+// what members gave it; a legacy text-only review (no rating) is deleted, as nothing of it is
+// left. A target that is already gone (removed, or its author deleted it) needs nothing more,
+// and a quarantined copy photo is kept whole, row and blob (the CSAM preservation owns it; it is
+// already shown to nobody). Other kinds have no content an admin can remove here.
 const removeContent = async (ctx: MutationCtx, report: Doc<"reports">) => {
   switch (report.targetKind) {
     case "message": {
@@ -275,6 +287,21 @@ const removeContent = async (ctx: MutationCtx, report: Doc<"reports">) => {
           image,
           await ctx.db.get(image.ownedPuzzleId),
         );
+      }
+      return;
+    }
+    case "photoComment": {
+      const comment = await photoCommentByTargetId(ctx, report.targetId);
+      if (comment) await ctx.db.delete(comment._id);
+      return;
+    }
+    case "puzzleReview": {
+      const reviewId = ctx.db.normalizeId("puzzleReviews", report.targetId);
+      const review = reviewId ? await ctx.db.get(reviewId) : null;
+      if (!review) return;
+      if (review.rating === undefined) await ctx.db.delete(review._id);
+      else if (review.text !== undefined) {
+        await ctx.db.patch(review._id, { text: undefined });
       }
       return;
     }

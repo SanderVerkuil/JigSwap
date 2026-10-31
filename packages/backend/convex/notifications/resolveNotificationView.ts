@@ -728,7 +728,7 @@ const resolveSubject = async (
 // The report-outcome params (report_decided, content_removed, member_warned), narrowed to the
 // literals the contract allows; anything else is dropped.
 const REPORT_DECISIONS = ["dismissed", "content_removed", "warned"] as const;
-const RESTRICTED_CONTENT = ["message", "photo"] as const;
+const RESTRICTED_CONTENT = ["message", "photo", "comment", "review"] as const;
 const GROUNDS = [
   "spam_scam",
   "harassment_hate",

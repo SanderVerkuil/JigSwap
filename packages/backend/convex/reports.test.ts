@@ -4,6 +4,7 @@ import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { RATE_LIMITS } from "./lib/rateLimits";
+import { EVIDENCE_TEXT_MAX_LENGTH } from "./reports/fileReport";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
@@ -163,7 +164,14 @@ const expectCode = async (p: Promise<unknown>, code: string) => {
 };
 
 type FileArgs = {
-  targetKind: "user" | "message" | "copy" | "photo" | "exchange";
+  targetKind:
+    | "user"
+    | "message"
+    | "copy"
+    | "photo"
+    | "exchange"
+    | "photoComment"
+    | "puzzleReview";
   targetId: string;
   reason?:
     | "spam_scam"
@@ -196,6 +204,93 @@ const notificationsOf = (t: T, userId: Id<"users">) =>
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect(),
   );
+
+// Photo comments and puzzle reviews, mostly bob's, for the photoComment and puzzleReview kinds.
+const seedDiscussion = (t: T, ids: Awaited<ReturnType<typeof seed>>) =>
+  t.run(async (ctx) => {
+    const now = Date.now();
+    const comment = (
+      photoId: Id<"ownedPuzzleImages">,
+      authorId: Id<"users">,
+      text: string,
+      aggregateId?: string,
+    ) =>
+      ctx.db.insert("photoComments", {
+        ...(aggregateId ? { aggregateId } : {}),
+        photoId,
+        authorId,
+        text,
+        createdAt: now,
+      });
+    const bobComment = await comment(
+      ids.photo,
+      ids.bob,
+      "Ugly puzzle, ugly person",
+      "pc-bob",
+    );
+    // A legacy row: the web holds its `_id`.
+    const legacyComment = await comment(ids.photo, ids.bob, "Legacy insult");
+    const aliceComment = await comment(
+      ids.photo,
+      ids.alice,
+      "Lovely!",
+      "pc-alice",
+    );
+    await comment(
+      ids.pendingPhoto,
+      ids.bob,
+      "On a pending photo",
+      "pc-pending",
+    );
+    await comment(ids.closedPhoto, ids.bob, "On a hidden copy", "pc-closed");
+
+    const mkPuzzle = (status: "approved" | "pending") =>
+      ctx.db.insert("puzzles", {
+        title: `A ${status} puzzle`,
+        pieceCount: 500,
+        status,
+        submittedBy: ids.bob,
+        createdAt: now,
+        updatedAt: now,
+      });
+    const review = (
+      puzzleId: Id<"puzzles">,
+      userId: Id<"users">,
+      fields: { rating?: number; text?: string },
+    ) =>
+      ctx.db.insert("puzzleReviews", {
+        userId,
+        puzzleId,
+        ...fields,
+        createdAt: now,
+        updatedAt: now,
+      });
+    const starryNight = (await ctx.db.get(ids.openCopy))!.puzzleId;
+    const otherPuzzle = await mkPuzzle("approved");
+    const pendingPuzzle = await mkPuzzle("pending");
+    return {
+      bobComment,
+      legacyComment,
+      aliceComment,
+      bobReview: await review(starryNight, ids.bob, {
+        rating: 1,
+        text: "Worst puzzle, and its fans are idiots",
+      }),
+      aliceReview: await review(starryNight, ids.alice, {
+        rating: 5,
+        text: "Great",
+      }),
+      ratingOnlyReview: await review(otherPuzzle, ids.bob, { rating: 2 }),
+      // A migrated text-only review (no rating).
+      legacyTextReview: await review(otherPuzzle, ids.carol, {
+        text: "Legacy text-only abuse",
+      }),
+      pendingReview: await review(pendingPuzzle, ids.bob, {
+        rating: 3,
+        text: "On a pending definition",
+      }),
+    };
+  });
 
 describe("fileReport: target visibility", () => {
   test("message: a participant reports the other person's message; the author is reported", async () => {
@@ -415,6 +510,134 @@ describe("fileReport: target visibility", () => {
     await expectCode(
       file(asCarol(t), { targetKind: "exchange", targetId: "exchange-ab" }),
       "NotFound",
+    );
+  });
+});
+
+describe("fileReport: photo comments and puzzle reviews", () => {
+  test("photoComment: by aggregateId or a legacy _id; the author is reported and the text snapshotted", async () => {
+    const t = convexTest(schema, modules);
+    const ids = await seed(t);
+    const { bobComment, legacyComment } = await seedDiscussion(t, ids);
+
+    const first = await file(asAlice(t), {
+      targetKind: "photoComment",
+      targetId: "pc-bob",
+    });
+    expect(await reportRow(t, first.reportId)).toMatchObject({
+      targetKind: "photoComment",
+      targetId: "pc-bob",
+      reportedUserId: ids.bob,
+      evidence: { text: "Ugly puzzle, ugly person" },
+    });
+    // The raw _id of a row that has an aggregateId resolves to it: the same open report.
+    const again = await file(asAlice(t), {
+      targetKind: "photoComment",
+      targetId: bobComment,
+    });
+    expect(again.reportId).toBe(first.reportId);
+
+    const legacy = await file(asAlice(t), {
+      targetKind: "photoComment",
+      targetId: legacyComment,
+    });
+    expect(await reportRow(t, legacy.reportId)).toMatchObject({
+      targetId: legacyComment,
+      reportedUserId: ids.bob,
+      evidence: { text: "Legacy insult" },
+    });
+
+    // A later edit of the row doesn't touch the snapshot.
+    await t.run((ctx) => ctx.db.patch(bobComment, { text: "Nice puzzle" }));
+    expect((await reportRow(t, first.reportId)).evidence).toEqual({
+      text: "Ugly puzzle, ugly person",
+    });
+  });
+
+  test("photoComment: your own, an unknown id, a pending photo's or a hidden copy's is NotFound", async () => {
+    const t = convexTest(schema, modules);
+    const ids = await seed(t);
+    await seedDiscussion(t, ids);
+    for (const targetId of [
+      "pc-alice",
+      "nope",
+      "pc-pending",
+      "pc-closed",
+      ids.photo,
+    ]) {
+      await expectCode(
+        file(asAlice(t), { targetKind: "photoComment", targetId }),
+        "NotFound",
+      );
+    }
+    // The photo is no longer published (rejected after the comment).
+    await t.run((ctx) =>
+      ctx.db.patch(ids.photo, { moderationStatus: "rejected" }),
+    );
+    await expectCode(
+      file(asAlice(t), { targetKind: "photoComment", targetId: "pc-bob" }),
+      "NotFound",
+    );
+  });
+
+  test("puzzleReview: a review with text on an approved definition; the author is reported and the text snapshotted", async () => {
+    const t = convexTest(schema, modules);
+    const ids = await seed(t);
+    const { bobReview, legacyTextReview } = await seedDiscussion(t, ids);
+    const { reportId } = await file(asCarol(t), {
+      targetKind: "puzzleReview",
+      targetId: bobReview,
+    });
+    expect(await reportRow(t, reportId)).toMatchObject({
+      targetKind: "puzzleReview",
+      targetId: bobReview,
+      reportedUserId: ids.bob,
+      evidence: { text: "Worst puzzle, and its fans are idiots" },
+    });
+    const legacy = await file(asAlice(t), {
+      targetKind: "puzzleReview",
+      targetId: legacyTextReview,
+    });
+    expect((await reportRow(t, legacy.reportId)).reportedUserId).toBe(
+      ids.carol,
+    );
+  });
+
+  test("puzzleReview: your own, a rating-only one, one on a pending definition and an unknown id are NotFound", async () => {
+    const t = convexTest(schema, modules);
+    const ids = await seed(t);
+    const { aliceReview, ratingOnlyReview, pendingReview } =
+      await seedDiscussion(t, ids);
+    for (const targetId of [
+      aliceReview,
+      ratingOnlyReview,
+      pendingReview,
+      "nope",
+      ids.photo,
+    ]) {
+      await expectCode(
+        file(asAlice(t), { targetKind: "puzzleReview", targetId }),
+        "NotFound",
+      );
+    }
+  });
+
+  test(`a legacy over-long text is snapshotted cut to ${EVIDENCE_TEXT_MAX_LENGTH} characters, never mid-emoji`, async () => {
+    const t = convexTest(schema, modules);
+    const ids = await seed(t);
+    const { bobReview } = await seedDiscussion(t, ids);
+    // The emoji's two UTF-16 units straddle the cut.
+    await t.run((ctx) =>
+      ctx.db.patch(bobReview, {
+        text: `${"x".repeat(EVIDENCE_TEXT_MAX_LENGTH - 2)}😀${"y".repeat(50_000)}`,
+      }),
+    );
+    const { reportId } = await file(asAlice(t), {
+      targetKind: "puzzleReview",
+      targetId: bobReview,
+    });
+    expect((await reportRow(t, reportId)).evidence.text).toBe(
+      `${"x".repeat(EVIDENCE_TEXT_MAX_LENGTH - 2)}…`,
     );
   });
 });
@@ -934,6 +1157,45 @@ describe("admin listReports / getReport", () => {
   });
 });
 
+describe("admin listReports / getReport: comments and reviews", () => {
+  test("summarise the snapshotted text and carry it as evidence", async () => {
+    const t = convexTest(schema, modules);
+    const ids = await seed(t);
+    const { bobReview } = await seedDiscussion(t, ids);
+    const commentReport = await file(asAlice(t), {
+      targetKind: "photoComment",
+      targetId: "pc-bob",
+    });
+    await t.run((ctx) =>
+      ctx.db.patch(bobReview, { text: `Spam ${"x".repeat(200)}` }),
+    );
+    const reviewReport = await file(asAlice(t), {
+      targetKind: "puzzleReview",
+      targetId: bobReview,
+    });
+
+    const { page } = await asAdmin(t).query(api.admin.listReports.listReports, {
+      status: "open",
+      paginationOpts: { numItems: 10, cursor: null },
+    });
+    const summaryOf = (reportId: Id<"reports">) =>
+      page.find((row) => row.reportId === reportId)?.targetSummary;
+    expect(summaryOf(commentReport.reportId)).toBe("Ugly puzzle, ugly person");
+    // An excerpt, not the whole text.
+    expect(summaryOf(reviewReport.reportId)).toMatch(/^Spam x+…$/);
+    expect(summaryOf(reviewReport.reportId)!.length).toBeLessThan(100);
+
+    const detail = await asAdmin(t).query(api.admin.getReport.getReport, {
+      reportId: commentReport.reportId,
+    });
+    expect(detail).toMatchObject({
+      targetKind: "photoComment",
+      evidence: { text: "Ugly puzzle, ugly person" },
+      photoUrl: null,
+    });
+  });
+});
+
 describe("admin decideReport", () => {
   test("content_removed on a message tombstones it in the thread and the inbox, and drops its copy card", async () => {
     const t = convexTest(schema, modules);
@@ -1277,5 +1539,149 @@ describe("admin decideReport", () => {
       targetLabel: "Bob",
       targetId: reportId,
     });
+  });
+});
+
+describe("admin decideReport: comments and reviews", () => {
+  const removeContent = (t: T, reportId: Id<"reports">) =>
+    asAdmin(t).mutation(api.admin.decideReport.decideReport, {
+      reportId,
+      decision: "content_removed",
+      statementOfReasons: "Insults are not allowed",
+    });
+
+  test("content_removed on a photo comment deletes it, deciding the reports filed by aggregateId and by _id together", async () => {
+    const t = convexTest(schema, modules);
+    const ids = await seed(t);
+    const { bobComment, aliceComment } = await seedDiscussion(t, ids);
+    const fromAlice = await file(asAlice(t), {
+      targetKind: "photoComment",
+      targetId: "pc-bob",
+    });
+    const fromCarol = await file(asCarol(t), {
+      targetKind: "photoComment",
+      targetId: bobComment,
+    });
+    await removeContent(t, fromAlice.reportId);
+
+    await t.run(async (ctx) => {
+      expect(await ctx.db.get(bobComment)).toBeNull();
+      expect(await ctx.db.get(aliceComment)).not.toBeNull();
+    });
+    for (const id of [fromAlice.reportId, fromCarol.reportId]) {
+      expect(await reportRow(t, id)).toMatchObject({
+        status: "actioned",
+        decision: "content_removed",
+        // The evidence keeps the original.
+        evidence: { text: "Ugly puzzle, ugly person" },
+      });
+    }
+    const listed = await asCarol(t).query(
+      api.library.listPhotoComments.listPhotoComments,
+      { photoId: ids.photo },
+    );
+    expect(listed.map((c) => c.id)).not.toContain("pc-bob");
+    expect(listed.map((c) => c.id)).toContain("pc-alice");
+
+    const toBob = (await notificationsOf(t, ids.bob)).filter(
+      (n) => n.type === "content_removed",
+    );
+    expect(toBob).toHaveLength(1);
+    expect(toBob[0].params).toMatchObject({ restricted: "comment" });
+    const views = await asBob(t).query(
+      api.notifications.listMyNotificationViews.listMyNotificationViews,
+      { paginationOpts: { numItems: 10, cursor: null } },
+    );
+    expect(views.page[0]).toMatchObject({
+      type: "content_removed",
+      context: { restrictedContent: "comment" },
+    });
+  });
+
+  test("content_removed on a legacy comment (no aggregateId) deletes it", async () => {
+    const t = convexTest(schema, modules);
+    const ids = await seed(t);
+    const { legacyComment } = await seedDiscussion(t, ids);
+    const { reportId } = await file(asAlice(t), {
+      targetKind: "photoComment",
+      targetId: legacyComment,
+    });
+    await removeContent(t, reportId);
+    expect(await t.run((ctx) => ctx.db.get(legacyComment))).toBeNull();
+  });
+
+  test("content_removed on a review clears its text and keeps its rating; the notice says 'review'", async () => {
+    const t = convexTest(schema, modules);
+    const ids = await seed(t);
+    const { bobReview } = await seedDiscussion(t, ids);
+    const puzzleId = (await t.run((ctx) => ctx.db.get(bobReview)))!.puzzleId;
+    const before = await t.run((ctx) => ctx.db.get(bobReview));
+    const { reportId } = await file(asAlice(t), {
+      targetKind: "puzzleReview",
+      targetId: bobReview,
+    });
+    await removeContent(t, reportId);
+
+    const after = await t.run((ctx) => ctx.db.get(bobReview));
+    expect(after).not.toHaveProperty("text");
+    // Neither the rating nor the review's place in the list moves.
+    expect(after).toMatchObject({
+      rating: 1,
+      updatedAt: before!.updatedAt,
+    });
+    const reviews = await asCarol(t).query(
+      api.social.listPuzzleReviews.listPuzzleReviews,
+      { puzzleId },
+    );
+    expect(reviews.find((r) => r.id === bobReview)).toMatchObject({
+      rating: 1,
+      text: null,
+    });
+    expect((await reportRow(t, reportId)).evidence.text).toBe(
+      "Worst puzzle, and its fans are idiots",
+    );
+    const toBob = (await notificationsOf(t, ids.bob)).filter(
+      (n) => n.type === "content_removed",
+    );
+    expect(toBob[0].params).toMatchObject({ restricted: "review" });
+    // The cleared review has nothing left to report.
+    await expectCode(
+      file(asCarol(t), { targetKind: "puzzleReview", targetId: bobReview }),
+      "NotFound",
+    );
+  });
+
+  test("content_removed on a legacy text-only review deletes it, as nothing of it is left", async () => {
+    const t = convexTest(schema, modules);
+    const ids = await seed(t);
+    const { legacyTextReview } = await seedDiscussion(t, ids);
+    const { reportId } = await file(asAlice(t), {
+      targetKind: "puzzleReview",
+      targetId: legacyTextReview,
+    });
+    await removeContent(t, reportId);
+    expect(await t.run((ctx) => ctx.db.get(legacyTextReview))).toBeNull();
+  });
+
+  test("content_removed on a comment or review that is already gone still decides the report", async () => {
+    const t = convexTest(schema, modules);
+    const ids = await seed(t);
+    const { bobComment, bobReview } = await seedDiscussion(t, ids);
+    const comment = await file(asAlice(t), {
+      targetKind: "photoComment",
+      targetId: "pc-bob",
+    });
+    const review = await file(asAlice(t), {
+      targetKind: "puzzleReview",
+      targetId: bobReview,
+    });
+    await t.run(async (ctx) => {
+      await ctx.db.delete(bobComment);
+      await ctx.db.delete(bobReview);
+    });
+    for (const { reportId } of [comment, review]) {
+      await removeContent(t, reportId);
+      expect((await reportRow(t, reportId)).status).toBe("actioned");
+    }
   });
 });

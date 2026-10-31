@@ -36,6 +36,19 @@ describe("renderNotificationText", () => {
       }).message,
     ).toBe("A moderator removed your photo: Nudity");
     expect(
+      renderNotificationText("content_removed", { restricted: "comment" })
+        .message,
+    ).toBe("A moderator removed your comment");
+    expect(
+      renderNotificationText("content_removed", {
+        restricted: "review",
+        reason: "Insults",
+      }).message,
+    ).toBe("A moderator removed the text of your review: Insults");
+    expect(renderNotificationText("content_removed", {}).message).toBe(
+      "A moderator removed your message",
+    );
+    expect(
       renderNotificationText("member_warned", { reason: "Rude" }).message,
     ).toBe("A moderator warned you: Rude");
   });

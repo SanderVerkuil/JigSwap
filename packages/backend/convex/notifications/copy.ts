@@ -26,7 +26,7 @@ import type { DeliveryContent } from "./deliveryContent";
 //   reason      — proposal_rejected (moderator-entered, may be absent)
 //   rating      — review_received (1-5, snapshotted)
 //   decision    — report_decided ("dismissed" | "content_removed" | "warned")
-//   restricted  — content_removed ("message" | "photo")
+//   restricted  — content_removed ("message" | "photo" | "comment" | "review"; a review's text)
 //   ground      — content_removed, member_warned (the report reason the decision rests on)
 //   reason      — also content_removed, member_warned: the moderator's statement of reasons
 //   automated   — content_removed, member_warned ("false": decided by a person)
@@ -273,12 +273,22 @@ const COPY: Record<NotificationType, (p: Params) => NotificationText> = {
         ? "We reviewed your report and took no action"
         : "We reviewed your report and took action",
   }),
-  content_removed: (p) => ({
-    title: "Content removed",
-    message: p["reason"]
-      ? `A moderator removed your ${p["restricted"] === "photo" ? "photo" : "message"}: ${p["reason"]}`
-      : `A moderator removed your ${p["restricted"] === "photo" ? "photo" : "message"}`,
-  }),
+  content_removed: (p) => {
+    const what =
+      p["restricted"] === "photo"
+        ? "your photo"
+        : p["restricted"] === "comment"
+          ? "your comment"
+          : p["restricted"] === "review"
+            ? "the text of your review"
+            : "your message";
+    return {
+      title: "Content removed",
+      message: p["reason"]
+        ? `A moderator removed ${what}: ${p["reason"]}`
+        : `A moderator removed ${what}`,
+    };
+  },
   message_image_rejected: () => ({
     title: "Photo removed",
     message:

@@ -5,10 +5,10 @@ import { internalMutation, type MutationCtx } from "../_generated/server";
 
 // Report retention (spec 2.8): a report is kept 12 months after its decision, then purged: the
 // reporter is anonymised (reporterId and the notice's name and email go), and the reporter's
-// details and the evidence snapshot's message bodies are cleared. The row stays (target, reason,
-// decision and statement of reasons) as the record of the decision; nothing in it names the
-// reporter or quotes the conversation any more. The removal evidence copy has its own, shorter
-// purge (reports/attachmentEvidence, 6 months).
+// details, the evidence snapshot's message bodies and its reported comment or review text are
+// cleared. The row stays (target, reason, decision and statement of reasons) as the record of the
+// decision; nothing in it names the reporter or quotes the reported content any more. The removal
+// evidence copy has its own, shorter purge (reports/attachmentEvidence, 6 months).
 //
 // Scheduled per report at its decision (admin/decideReport) with scheduler.runAt, like the
 // evidence purge: durable across deploys, exact to the report, no cron sweep needed.
@@ -59,6 +59,7 @@ export const purgeReport = internalMutation({
       ...(report.illegalNotice && {
         illegalNotice: { goodFaith: report.illegalNotice.goodFaith },
       }),
+      // Rebuilt from the message metadata only: the evidence `text` is dropped.
       evidence: {
         ...(report.evidence.messages && {
           messages: report.evidence.messages.map((message) => ({
