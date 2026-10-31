@@ -115,6 +115,8 @@ export function CataloguePickerView({
                     {row.image && (
                       <img
                         src={row.image}
+                        srcSet={row.imageSrcSet}
+                        sizes={row.imageSrcSet ? "40px" : undefined}
                         alt=""
                         className="h-full w-full object-cover"
                       />
