@@ -63,6 +63,8 @@ export interface PuzzleCardShellProps {
    * that sits directly under the page h1, so the outline never skips a level.
    */
   headingLevel?: 2 | 3;
+  /** The cover is above the fold: load it eagerly at high priority (see compat/image). */
+  imagePriority?: boolean;
   className?: string;
 }
 
@@ -84,6 +86,7 @@ export function PuzzleCardShell({
   imageChecking = false,
   imageSizes,
   headingLevel = 3,
+  imagePriority,
   className,
 }: PuzzleCardShellProps) {
   const t = useTranslations("puzzles");
@@ -139,6 +142,7 @@ export function PuzzleCardShell({
             }
             alt={puzzle.title || "Puzzle"}
             fill
+            priority={imagePriority}
             className={cn(
               "transition-transform group-hover:scale-105",
               imageFit === "contain" ? "object-contain" : "object-cover",

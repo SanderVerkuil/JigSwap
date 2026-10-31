@@ -22,12 +22,15 @@ export function DefinitionCard({
   card,
   imageSizes,
   headingLevel,
+  priority,
 }: {
   card: CatalogCard;
   /** The cover's `sizes` in the caller's grid (see PuzzleCardShell's imageSizes). */
   imageSizes?: string;
   /** Card title heading level; 2 when the grid sits directly under the page h1. */
   headingLevel?: PuzzleCardShellProps["headingLevel"];
+  /** Above the fold (the grid's first row): fetch the cover eagerly, first. */
+  priority?: boolean;
 }) {
   const t = useTranslations("publicCatalog");
 
@@ -63,6 +66,7 @@ export function DefinitionCard({
       imageHref={`/catalog/${card._id}`}
       imageFit="contain"
       headingLevel={headingLevel}
+      imagePriority={priority}
     />
   );
 }
