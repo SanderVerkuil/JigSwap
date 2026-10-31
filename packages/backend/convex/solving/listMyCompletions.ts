@@ -21,6 +21,12 @@ type CompletionLink = {
   id: string;
 };
 
+// Bound for listMyCompletions: at most this many completions, the newest first, so one member's
+// solve history (each row joins its copy, puzzle and photo sidecars) can never push the read past
+// Convex's per-function limits. Past the cap the oldest completions are dropped, and anything the
+// web derives from the list (the history page, "already solved" sets, counts) undercounts.
+export const COMPLETION_LIST_CAP = 1000;
+
 // Read side for the solving history view: the acting member's own completions, newest first.
 // Auth-gated; photo storage ids are resolved to display items (url + pending flag) via
 // resolvePhotoItems, and the ids themselves are not sent (withPhotoItems).
@@ -36,7 +42,7 @@ export const listMyCompletions = query({
       .query("completions")
       .withIndex("by_user", (q) => q.eq("userId", me))
       .order("desc")
-      .collect();
+      .take(COMPLETION_LIST_CAP);
 
     // Resolve display/navigation data once per DISTINCT copy/puzzle — many completions share one.
     const copyIds = [
