@@ -214,7 +214,9 @@ export function CircleShareSection({
   }
 
   return (
-    <section className="space-y-3">
+    // Inline-size containment: a long title truncates instead of widening a grid parent such
+    // as the manage dialog.
+    <section className="space-y-3 contain-inline-size">
       <h3 className="font-medium">{t("manage.shareCopy")}</h3>
       <p className="text-xs text-muted-foreground">
         {t("manage.shareDescription")}
