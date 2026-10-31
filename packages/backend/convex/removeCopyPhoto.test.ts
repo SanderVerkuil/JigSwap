@@ -154,7 +154,9 @@ describe("library.removeCopyPhoto", () => {
       asBob(t).mutation(api.library.removeCopyPhoto.removeCopyPhoto, {
         imageId: photoId,
       }),
-    ).rejects.toThrow("Only the owner");
+    ).rejects.toThrow(
+      "Only the copy's owner or the photo's uploader can remove this photo",
+    );
   });
 
   test("rejects an unknown photo", async () => {
@@ -219,7 +221,9 @@ describe("library.removeCopyPhoto after a transfer", () => {
       asAlice(t).mutation(api.library.removeCopyPhoto.removeCopyPhoto, {
         imageId: bobPhoto.photoId,
       }),
-    ).rejects.toThrow("Only the owner");
+    ).rejects.toThrow(
+      "Only the copy's owner or the photo's uploader can remove this photo",
+    );
     expect(await t.run((ctx) => ctx.db.get(bobPhoto.photoId))).not.toBeNull();
   });
 
@@ -233,7 +237,9 @@ describe("library.removeCopyPhoto after a transfer", () => {
         asCarol.mutation(api.library.removeCopyPhoto.removeCopyPhoto, {
           imageId: photoId,
         }),
-      ).rejects.toThrow("Only the owner");
+      ).rejects.toThrow(
+        "Only the copy's owner or the photo's uploader can remove this photo",
+      );
     }
   });
 

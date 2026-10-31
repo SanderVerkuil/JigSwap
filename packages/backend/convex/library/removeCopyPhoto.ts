@@ -28,7 +28,9 @@ export const removeCopyPhoto = mutation({
       image.uploaderId !== memberId &&
       !(await canManageCopy(ctx, memberId, copy))
     ) {
-      throw new ConvexError("Only the owner can remove a photo from this copy");
+      throw new ConvexError(
+        "Only the copy's owner or the photo's uploader can remove this photo",
+      );
     }
 
     // Clear the cover if this photo was it, so getCopyInstanceView falls back to the global image.
