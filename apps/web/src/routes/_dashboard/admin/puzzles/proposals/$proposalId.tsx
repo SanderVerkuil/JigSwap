@@ -1,5 +1,6 @@
 import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
+import { approveErrorKey } from "@/components/admin/proposals/approve-error";
 import {
   fieldDiffRows,
   type FieldDiffRow,
@@ -128,7 +129,7 @@ function ProposalReview({
       toast.success(t("approved"));
       router.push("/admin/puzzles/proposals");
     },
-    onError: () => toast.error(t("actionFailed")),
+    onError: (error) => toast.error(t(approveErrorKey(error))),
   });
   const reject = useMutation({
     mutationFn: useConvexMutation(gateway.catalog.rejectChangeProposal),

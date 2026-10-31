@@ -4669,6 +4669,7 @@
       "notFoundSub": "Dit voorstel bestaat niet of de link klopt niet.",
       "rejectionReason": "Reden",
       "actionFailed": "Actie kon niet worden uitgevoerd",
+      "approveTextTooLong": "Dit voorstel bevat tekst die langer is dan de catalogus toestaat, dus het kan niet worden toegepast. Wijs het af.",
       "backToQueue": "Terug naar voorstellen"
     },
     "queueEmpty": {

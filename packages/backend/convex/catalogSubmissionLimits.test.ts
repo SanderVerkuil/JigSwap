@@ -398,4 +398,37 @@ describe("catalogue text bounds", () => {
     expect(row?.pieceCount).toBe(1500);
     expect(row?.description).toBe(legacyDescription);
   });
+
+  test("approving a suggestion filed with over-long text before the bounds is TextTooLong and applies nothing", async () => {
+    const t = convexTest(schema, modules);
+    const definitionId = await approvedDefinition(t);
+    await seedMember(t, "clerk_bob");
+    await asMember(t, "clerk_bob").mutation(
+      api.catalog.proposeDefinitionChange.proposeDefinitionChange,
+      { puzzleDefinitionId: definitionId, title: "Better" },
+    );
+    // A proposal stored before the bounds existed.
+    await t.run(async (ctx) => {
+      const [row] = await ctx.db.query("puzzleChangeProposals").collect();
+      if (row) {
+        await ctx.db.patch(row._id, {
+          changes: { ...row.changes, description: "d".repeat(20_000) },
+        });
+      }
+    });
+    const [proposal] = await proposalRows(t);
+
+    const refusal = await refusalOf(
+      asAdmin(t, "clerk_admin").mutation(
+        api.catalog.approveChangeProposal.approveChangeProposal,
+        { changeProposalId: proposal!.aggregateId },
+      ),
+    );
+
+    expect(refusal.code).toBe("TextTooLong");
+    const [row] = await puzzleRows(t);
+    expect(row?.title).toBe("Mountain Vista");
+    expect(row?.description).toBeUndefined();
+    expect((await proposalRows(t)).map((p) => p.status)).toEqual(["pending"]);
+  });
 });

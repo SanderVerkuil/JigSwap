@@ -4669,6 +4669,7 @@
       "notFoundSub": "This suggestion does not exist or the link is wrong.",
       "rejectionReason": "Reason",
       "actionFailed": "Couldn't complete the action",
+      "approveTextTooLong": "This suggestion has text longer than the catalogue allows, so it can't be applied. Decline it instead.",
       "backToQueue": "Back to suggestions"
     },
     "queueEmpty": {
