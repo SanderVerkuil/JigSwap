@@ -262,4 +262,22 @@ describe("PhotoLightbox comments", () => {
     render({}, "nl");
     expect(rows()[0].textContent).toContain("Anonieme gebruiker");
   });
+
+  // Deploy skew: the web ships before Convex, and a pre-SEC-11 backend still sends the author as a
+  // plain MemberView. The row keeps the name that backend sent rather than the generic label.
+  it("names a legacy MemberView author while the backend lags", () => {
+    queryData.photoComments = [
+      comment("c1", { _id: "u1", name: "Mara Jansen", isActive: true }),
+    ];
+    render();
+    const [row] = rows();
+    expect(row.textContent).toContain("Mara Jansen");
+    expect(row.querySelector("svg")).toBeNull();
+  });
+
+  it("labels a departed legacy author 'Deleted member'", () => {
+    queryData.photoComments = [comment("c1", { _id: "u1", isActive: false })];
+    render();
+    expect(rows()[0].textContent).toContain("Deleted member");
+  });
 });

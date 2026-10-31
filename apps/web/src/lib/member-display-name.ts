@@ -3,6 +3,8 @@ import {
   resolveMemberDisplayName,
   type ExchangePartyState,
   type MemberNameSource,
+  type MemberView,
+  type ProjectedMember,
 } from "@jigswap/contracts";
 import { useCallback } from "react";
 import { useTranslations } from "use-intl";
@@ -80,3 +82,19 @@ export function useProjectedMemberName(): (
     [t, displayName],
   );
 }
+
+/**
+ * A review or comment author as the server sent it. Deploy skew: production web ships before
+ * Convex, and a backend that predates SEC-11's author projection still sends a plain MemberView
+ * (no `anonymous`). Such an author reads as revealed (that backend already sent their identity),
+ * or as departed when `isActive` is false; a projected author passes through unchanged. Delete
+ * once every backend serves ProjectedMember authors.
+ */
+export const projectedAuthorOf = (
+  author: ProjectedMember | (MemberView & { anonymous?: undefined }),
+): ProjectedMember =>
+  author.anonymous !== undefined
+    ? author
+    : author.isActive === false
+      ? { anonymous: true, anonRef: "", departed: true }
+      : { anonymous: false, member: author };

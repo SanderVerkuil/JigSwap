@@ -20,6 +20,7 @@ import { gateway, Id } from "@/gateway";
 import { useBoxArtInCheck } from "@/hooks/use-box-art-check";
 import { useFavorites } from "@/hooks/use-favorites";
 import {
+  projectedAuthorOf,
   useMemberDisplayName,
   useProjectedMemberName,
 } from "@/lib/member-display-name";
@@ -622,8 +623,9 @@ function ReviewRow({
   const projectedName = useProjectedMemberName();
   // A private author the viewer isn't connected with arrives anonymous (SEC-11): label only, and
   // the avatar and initial show only for a revealed author.
-  const name = projectedName(review.author, t("anonymousReviewer"));
-  const member = review.author.anonymous ? null : review.author.member;
+  const author = projectedAuthorOf(review.author);
+  const name = projectedName(author, t("anonymousReviewer"));
+  const member = author.anonymous ? null : author.member;
   return (
     <div className={cn("flex gap-3 py-3.5", !last && "border-border border-b")}>
       <MemberAvatar source={member} avatar={member?.avatar} />

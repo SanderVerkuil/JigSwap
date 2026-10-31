@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import en from "../../locales/en.json";
 import nl from "../../locales/nl.json";
 import {
+  projectedAuthorOf,
   useMemberDisplayName,
   usePartyDisplayName,
   useProjectedMemberName,
@@ -117,6 +118,36 @@ describe("useProjectedMemberName", () => {
         "nl",
       ),
     ).toBe("Verwijderd lid");
+  });
+});
+
+describe("projectedAuthorOf", () => {
+  const legacy = {
+    _id: "u1",
+    _creationTime: 1,
+    name: "Mara Jansen",
+    isActive: true,
+    createdAt: 1,
+    updatedAt: 1,
+  };
+
+  it("passes a projected author through unchanged", () => {
+    const hidden = { anonymous: true as const, anonRef: "abc" };
+    expect(projectedAuthorOf(hidden)).toBe(hidden);
+    const revealed = { anonymous: false as const, member: legacy };
+    expect(projectedAuthorOf(revealed)).toBe(revealed);
+  });
+
+  it("reads a pre-projection MemberView as revealed, or departed when inactive", () => {
+    expect(projectedAuthorOf(legacy)).toEqual({
+      anonymous: false,
+      member: legacy,
+    });
+    expect(projectedAuthorOf({ ...legacy, isActive: false })).toEqual({
+      anonymous: true,
+      anonRef: "",
+      departed: true,
+    });
   });
 });
 
