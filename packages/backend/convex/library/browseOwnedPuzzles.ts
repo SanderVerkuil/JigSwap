@@ -9,13 +9,21 @@ import { profileVisibilityOf, projectMemberIdentity } from "../social/privacy";
 import { collectCircleSharedCopies } from "./circleSharedCopies";
 import { viewerMayRequestCopy } from "./exchangeRoutes";
 import { toCopyPuzzleView, toOwnedCopyView } from "./mappers";
-import { isOpenAvailability, openCopiesNewestFirst } from "./openListing";
+import { isOpenAvailability, openListingWindow } from "./openListing";
 import { resolveCopyCoverUrl } from "./resolveCoverUrl";
 
-// The most open copies one Browse call reads as candidates, newest first. Every filter below runs
-// over this window, so past it `total` is a lower bound (`totalIsLowerBound`) and the oldest
-// listings are only reachable through the definition filter (`puzzleId`, its own window).
+// Browse's candidate window (library/openListing.openListingWindow). It holds at most
+// BROWSE_CANDIDATE_CAP copies the viewer may see, newest first. One owner's rows past
+// BROWSE_PER_OWNER only fill room the other owners leave, and reading stops after
+// BROWSE_READ_BUDGET rows or BROWSE_CANDIDATE_CAP distinct owners. The text, category, piece and
+// difficulty filters run over the window, so past it `total` is a lower bound
+// (`totalIsLowerBound`) and older listings are reachable through the definition filter
+// (`puzzleId`, its own window). A bounded window can always be crowded by enough newer listings
+// from enough members: these numbers make that take more than the read budget of newer open
+// copies, not just one member's pile.
 export const BROWSE_CANDIDATE_CAP = 1000;
+export const BROWSE_PER_OWNER = 50;
+export const BROWSE_READ_BUDGET = 3 * BROWSE_CANDIDATE_CAP;
 // A page holds 1 to BROWSE_MAX_LIMIT copies whatever the client asks for (the web asks for 50); the
 // offset is never negative.
 export const BROWSE_MAX_LIMIT = 50;
@@ -23,11 +31,13 @@ const DEFAULT_LIMIT = 20;
 
 // Library read: browse OTHER members' available owned copies with filters. Rule 1 of Browse
 // visibility: only OPEN copies are ever shown (library/openListing), including circle-shared ones.
-// Candidates are the newest BROWSE_CANDIDATE_CAP open copies read from the `isOpen` indexes, so
-// closed copies are never read and no pile of older listings can push newer ones out (SEC-29).
-// Auth gating, every puzzle-based filter (category/pieces/difficulty/search), the newest-first
-// ordering, the owner join and offset/limit paging are preserved from legacy
-// puzzles.browseOwnedPuzzles; the result maps to a typed paginated DTO.
+// Candidates come from the `isOpen` indexes through openListingWindow, so closed copies are never
+// read, and every gate that needs no puzzle (open, own copies, blocks, rule 2, condition) runs while
+// the window fills: a copy the viewer can't see never takes a slot, and no member's pile of listings
+// can push the others out (SEC-29). Auth gating, every puzzle-based filter
+// (category/pieces/difficulty/search), the newest-first ordering, the owner join and offset/limit
+// paging are preserved from legacy puzzles.browseOwnedPuzzles; the result maps to a typed paginated
+// DTO.
 export const browseOwnedPuzzles = query({
   args: {
     category: v.optional(v.id("adminCategories")),
@@ -83,24 +93,10 @@ export const browseOwnedPuzzles = query({
       };
     }
 
-    // Candidate window: the newest open copies (rule 1), platform-wide or of one definition. One
-    // row past the cap tells whether the window was cut. Convex can't `neq` on an index, so the
-    // viewer's own copies are dropped in memory (unless includeOwnPuzzles): Browse shows OTHER
-    // members' available copies.
-    const candidates = await openCopiesNewestFirst(ctx, {
-      puzzleId,
-      limit: BROWSE_CANDIDATE_CAP + 1,
-    });
-    const windowCut = candidates.length > BROWSE_CANDIDATE_CAP;
-    const availableNotOwn = candidates
-      .slice(0, BROWSE_CANDIDATE_CAP)
-      .filter((c) => args.includeOwnPuzzles || c.ownerId !== memberId);
-
     // Circle-shared copies the viewer may see (cross-context). Rule 1 applies to these too: a
     // copy must be OPEN to appear, even when reached via a circle. Build the set of circle-shared
-    // copy ids for the membership check below, and keep the (open) rows so the union also adds any
-    // open circle copy the candidate window missed (e.g. a fellow member's open circle copy older
-    // than the window is added here).
+    // copy ids for the window's rule 2 check, and keep the (open) rows so the union also adds any
+    // open circle copy the window missed (e.g. a fellow member's open circle copy older than it).
     const circleShared = (
       await collectCircleSharedCopies(ctx, memberId)
     ).filter(
@@ -125,35 +121,39 @@ export const browseOwnedPuzzles = query({
       return cached === "public";
     };
 
-    // Rule 2 (reachability): a copy is shown when its owner is PUBLIC, or the copy is circle-shared
-    // with the viewer. Private, non-circle owners' copies are excluded entirely (no row over the
-    // wire). Apply to the candidate window, then UNION any open circle-shared copy the window
-    // missed — de-duplicated by copy id.
-    const shown: Doc<"ownedPuzzles">[] = [];
-    const seen = new Set<string>();
     // Copies of members blocked either way with the viewer are never shown (spec 2.6).
     const blockedIds = await blockedEitherWaySet(ctx, memberId);
-    for (const copy of availableNotOwn) {
-      const id = copy._id as unknown as string;
-      if (seen.has(id) || blockedIds.has(copy.ownerId)) continue;
-      if (circleSharedIds.has(id) || (await ownerIsPublic(copy.ownerId))) {
-        shown.push(copy);
-        seen.add(id);
-      }
-    }
+    // The gates that need no puzzle, run as the window fills. Browse shows OTHER members' copies
+    // (unless includeOwnPuzzles). Rule 2 (reachability): a copy is shown when its owner is PUBLIC,
+    // or the copy is circle-shared with the viewer; a private, non-circle owner's copies are
+    // excluded entirely (no row over the wire).
+    const passesGates = (copy: Doc<"ownedPuzzles">) =>
+      (args.includeOwnPuzzles || copy.ownerId !== memberId) &&
+      !blockedIds.has(copy.ownerId) &&
+      (!args.condition || copy.condition === args.condition);
+    const window = await openListingWindow(
+      ctx,
+      puzzleId,
+      {
+        size: BROWSE_CANDIDATE_CAP,
+        perOwner: BROWSE_PER_OWNER,
+        readBudget: BROWSE_READ_BUDGET,
+        maxOwners: BROWSE_CANDIDATE_CAP,
+      },
+      async (copy) =>
+        passesGates(copy) &&
+        (circleSharedIds.has(copy._id as unknown as string) ||
+          (await ownerIsPublic(copy.ownerId))),
+    );
+
+    // The window, then UNION any open circle-shared copy it missed, de-duplicated by copy id.
+    const shown: Doc<"ownedPuzzles">[] = [...window.rows];
+    const seen = new Set(shown.map((c) => c._id as unknown as string));
     for (const copy of circleShared) {
       const id = copy._id as unknown as string;
-      if (seen.has(id) || blockedIds.has(copy.ownerId)) continue;
-      // Circle copies still respect includeOwnPuzzles: a viewer's own copy is excluded by default.
-      if (!args.includeOwnPuzzles && copy.ownerId === memberId) continue;
+      if (seen.has(id) || !passesGates(copy)) continue;
       shown.push(copy);
       seen.add(id);
-    }
-
-    let ownedPuzzles = shown;
-
-    if (args.condition) {
-      ownedPuzzles = ownedPuzzles.filter((i) => i.condition === args.condition);
     }
 
     // One read per distinct definition, not per copy: the window can hold many copies of one.
@@ -170,7 +170,7 @@ export const browseOwnedPuzzles = query({
     // projection toOwnedCopyView joins): for a copy of a definition that is not approved that is
     // its snapshot title, brand and pieces, so a search can't probe hidden description or tags.
     const withPuzzles = await Promise.all(
-      ownedPuzzles.map(async (copy) => {
+      shown.map(async (copy) => {
         const puzzle = await puzzleOf(copy.puzzleId);
         return { copy, puzzle, shown: toCopyPuzzleView(copy, puzzle) };
       }),
@@ -255,7 +255,7 @@ export const browseOwnedPuzzles = query({
       ownedPuzzles: page,
       total: filtered.length,
       hasMore: offset + limit < filtered.length,
-      totalIsLowerBound: windowCut,
+      totalIsLowerBound: window.cut,
     };
   },
 });

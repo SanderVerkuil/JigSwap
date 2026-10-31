@@ -689,9 +689,10 @@ sweep").
 `by_puzzle_open` indexes (PERF-B1m, SEC-29) are deployed there. There is no ordering
 pressure: every copy save and every settled exchange already writes the flag, and until a
 row has one, Browse still finds it through a fallback that reads the rows without a flag and
-checks their availability. That fallback costs what Browse cost before (it scans legacy
-closed copies too), so run the backfill soon after the deploy; once it has run, the
-fallback range is empty and Browse reads only open copies.
+checks their availability. That fallback reads legacy closed copies too, and they count
+against Browse's read budget (3,000 rows per call), so on a deployment with more copies
+than that Browse can miss older listings until the backfill has run. Run it soon after the
+deploy; once it has run, the fallback range is empty and Browse reads only open copies.
 
 **What it does:** pages through `ownedPuzzles` (200 rows per batch; `batchSize` overrides
 it, rounded down and clamped to 1..1000; each batch its own transaction, rescheduling itself

@@ -24,11 +24,17 @@ import {
   swapTypeOf,
 } from "./definitionAggregates";
 import { definitionTotalsOf } from "./definitionStats";
-import { openCopiesNewestFirst } from "./openListing";
+import { openListingWindow } from "./openListing";
 
-// The most open copies of the definition the view reads as candidates for its reachable list,
-// newest first. Past it, `totalAvailable` (and stats.availableToSwap) is a lower bound.
+// The view's window of reachable open copies of the definition (library/openListing
+// .openListingWindow): at most DEFINITION_CANDIDATE_CAP, newest first. One owner's copies past
+// DEFINITION_PER_OWNER only fill room the other owners leave, reading stops after
+// DEFINITION_READ_BUDGET rows or DEFINITION_CANDIDATE_CAP owners, and at most
+// DEFINITION_CANDIDATE_CAP per-copy circle checks run (a private owner's copy past that is not
+// offered). Past the window, `totalAvailable` (and stats.availableToSwap) is a lower bound.
 export const DEFINITION_CANDIDATE_CAP = 200;
+export const DEFINITION_PER_OWNER = 20;
+export const DEFINITION_READ_BUDGET = 3 * DEFINITION_CANDIDATE_CAP;
 
 // Auth-gated catalog detail read for a puzzle DEFINITION (not a single copy). Aggregates the
 // community's review-rating distribution, ownership/completion stats, the viewer's own ownership, and
@@ -43,7 +49,8 @@ export const DEFINITION_CANDIDATE_CAP = 200;
 // Bounded reads: the rating, owner and completion numbers come from the definition's
 // definitionStats row (library/definitionStats), plus the viewer's household's private-only
 // owners; the reachable list from the newest DEFINITION_CANDIDATE_CAP open copies
-// (library/openListing). Until the definition's first recompute the numbers are computed live.
+// (library/openListing), which no single owner can crowd. Until the definition's first recompute
+// the numbers are computed live.
 export const getPuzzleDefinitionView = query({
   args: { puzzleId: v.id("puzzles") },
   handler: async (ctx, args): Promise<PuzzleDefinitionDetailView | null> => {
@@ -127,27 +134,36 @@ export const getPuzzleDefinitionView = query({
       return cached === "public";
     };
 
-    // Candidate available copies of THIS definition, not the viewer's own: the newest open ones.
-    const availableNotOwn = (
-      await openCopiesNewestFirst(ctx, {
-        puzzleId: args.puzzleId,
-        limit: DEFINITION_CANDIDATE_CAP,
-      })
-    ).filter((c) => c.ownerId !== viewerId);
-
     // Copies of members blocked either way with the viewer are never offered (spec 2.6).
     const blockedIds = await blockedEitherWaySet(ctx, viewerId);
-    const reachable: Doc<"ownedPuzzles">[] = [];
-    for (const copy of availableNotOwn) {
-      if (blockedIds.has(copy.ownerId)) continue;
-      if (
-        (await ownerIsPublic(copy.ownerId)) ||
-        (await isCircleSharedWithViewer(ctx, viewerId, copy))
-      ) {
-        reachable.push(copy);
+    // The circle clause costs queries per copy, so only so many run; past that a private owner's
+    // copy is not offered (fails closed).
+    let circleChecks = 0;
+    const isReachable = async (copy: Doc<"ownedPuzzles">) => {
+      if (copy.ownerId === viewerId || blockedIds.has(copy.ownerId)) {
+        return false;
       }
-    }
-    // Newest first (openCopiesNewestFirst's order).
+      if (await ownerIsPublic(copy.ownerId)) return true;
+      if (circleChecks >= DEFINITION_CANDIDATE_CAP) return false;
+      circleChecks++;
+      return isCircleSharedWithViewer(ctx, viewerId, copy);
+    };
+    // Reachable open copies of THIS definition, not the viewer's own, newest first.
+    const reachable = (
+      await openListingWindow(
+        ctx,
+        args.puzzleId,
+        {
+          size: DEFINITION_CANDIDATE_CAP,
+          perOwner: DEFINITION_PER_OWNER,
+          readBudget: DEFINITION_READ_BUDGET,
+          maxOwners: DEFINITION_CANDIDATE_CAP,
+        },
+        isReachable,
+      )
+    ).rows.sort(
+      (a, b) => b.createdAt - a.createdAt || b._creationTime - a._creationTime,
+    );
 
     const totalAvailable = reachable.length;
     const availableToSwap = totalAvailable;
