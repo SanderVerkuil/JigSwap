@@ -6,7 +6,8 @@ import { checkImageBytes } from "./lib/imageModeration/guards";
 import { decodeUpright } from "./lib/imageModeration/normaliseImage";
 import {
   encodeRenditions,
-  RENDITION_WIDTHS,
+  RENDITION_LADDER,
+  RENDITION_MAX_BYTE_RATIO,
   renditionSizes,
 } from "./lib/imageModeration/renditionEncode";
 import { findMetadata } from "./lib/imageModeration/stripMetadata";
@@ -14,7 +15,9 @@ import { WEBP_ENCODER_WASM_BASE64 } from "./lib/imageModeration/webpEncoderWasm"
 
 // Renditions: the smaller WebP copies of a stored image that cards and thumbnails show. They
 // are made from the stored clean blob through the moderation pipeline's input guards, are
-// downscaled without aliasing, keep transparency and never carry metadata.
+// downscaled without aliasing, keep transparency and never carry metadata. The ladder is 480,
+// 640 and 960 px; a source narrower than a rung gets a WebP at its own width in that rung's
+// place, and a rendition not clearly smaller than its source is not kept.
 
 // A deterministic photo-like picture: smooth gradients plus pseudo-random grain, so the JPEG
 // and its WebP renditions have realistic sizes (a flat colour compresses to nothing).
@@ -35,12 +38,16 @@ const photoBitmap = (width: number, height: number) => {
   return { width, height, data };
 };
 
-const jpeg = async (width: number, height: number) =>
+const jpeg = async (width: number, height: number, quality = 90) =>
   new Uint8Array(
     await Jimp.fromBitmap(photoBitmap(width, height)).getBuffer("image/jpeg", {
-      quality: 90,
+      quality,
     }),
   );
+
+const sizesOf = (
+  renditions: { slot: string; width: number; height: number }[],
+) => renditions.map((r) => [r.slot, r.width, r.height]);
 
 const fixture = (name: string) =>
   new Uint8Array(
@@ -57,42 +64,69 @@ const ok = async (bytes: Uint8Array) => {
 };
 
 describe("renditionSizes", () => {
-  test("one per width narrower than the image, aspect kept", () => {
-    expect(RENDITION_WIDTHS).toEqual([480, 960]);
-    expect(renditionSizes(1600, 1200)).toEqual([
-      { width: 480, height: 360 },
-      { width: 960, height: 720 },
+  test("one per rung narrower than the image, aspect kept", () => {
+    expect(RENDITION_LADDER).toEqual([
+      { slot: "small", width: 480 },
+      { slot: "medium", width: 640 },
+      { slot: "large", width: 960 },
     ]);
-    expect(renditionSizes(700, 500)).toEqual([{ width: 480, height: 343 }]);
+    expect(renditionSizes(1600, 1200)).toEqual([
+      { slot: "small", width: 480, height: 360 },
+      { slot: "medium", width: 640, height: 480 },
+      { slot: "large", width: 960, height: 720 },
+    ]);
   });
 
-  test("none for an image no wider than the smallest width", () => {
-    expect(renditionSizes(400, 3000)).toEqual([]);
-    expect(renditionSizes(480, 360)).toEqual([]);
-    expect(renditionSizes(960, 720)).toEqual([{ width: 480, height: 360 }]);
+  test("the first rung as wide as the image or wider is made at the image's own width", () => {
+    // An 833 px cover: 480 and 640, then a WebP at 833 px in place of 960, so a card that needs
+    // more than 640 px never falls back to the (possibly PNG) original.
+    expect(renditionSizes(833, 1024)).toEqual([
+      { slot: "small", width: 480, height: 590 },
+      { slot: "medium", width: 640, height: 787 },
+      { slot: "large", width: 833, height: 1024 },
+    ]);
+    expect(renditionSizes(960, 720)).toEqual([
+      { slot: "small", width: 480, height: 360 },
+      { slot: "medium", width: 640, height: 480 },
+      { slot: "large", width: 960, height: 720 },
+    ]);
+    expect(renditionSizes(560, 420)).toEqual([
+      { slot: "small", width: 480, height: 360 },
+      { slot: "medium", width: 560, height: 420 },
+    ]);
+    expect(renditionSizes(400, 3000)).toEqual([
+      { slot: "small", width: 400, height: 3000 },
+    ]);
   });
 
-  test("a width whose height WebP cannot hold (over 16383 px) is left out", () => {
-    expect(renditionSizes(970, 16600)).toEqual([{ width: 480, height: 8214 }]);
+  test("a size whose height WebP cannot hold (over 16383 px) is left out", () => {
+    expect(renditionSizes(970, 16600)).toEqual([
+      { slot: "small", width: 480, height: 8214 },
+      { slot: "medium", width: 640, height: 10953 },
+    ]);
+    expect(renditionSizes(400, 20000)).toEqual([]);
   });
 
   test("a very wide image still gets at least one row", () => {
     expect(renditionSizes(20000, 10)).toEqual([
-      { width: 480, height: 1 },
-      { width: 960, height: 1 },
+      { slot: "small", width: 480, height: 1 },
+      { slot: "medium", width: 640, height: 1 },
+      { slot: "large", width: 960, height: 1 },
     ]);
   });
 });
 
 describe("encodeRenditions", () => {
-  test("a 1600x1200 JPEG gives 480 and 960 px WebP, much smaller than the source", async () => {
+  test("a 1600x1200 JPEG gives 480, 640 and 960 px WebP, much smaller than the source", async () => {
     const source = await jpeg(1600, 1200);
     const result = await ok(source);
     expect([result.width, result.height]).toEqual([1600, 1200]);
-    expect(result.renditions.map((r) => [r.width, r.height])).toEqual([
-      [480, 360],
-      [960, 720],
+    expect(sizesOf(result.renditions)).toEqual([
+      ["small", 480, 360],
+      ["medium", 640, 480],
+      ["large", 960, 720],
     ]);
+    expect(result.notSmaller).toEqual([]);
     for (const rendition of result.renditions) {
       // The header the guards read agrees, and the existing WASM decoder reads the pixels back.
       expect(checkImageBytes(rendition.bytes)).toEqual({
@@ -108,9 +142,10 @@ describe("encodeRenditions", () => {
       ]);
       expect(findMetadata(rendition.bytes, "webp")).toEqual([]);
     }
-    const [small, medium] = result.renditions;
+    const [small, medium, large] = result.renditions;
     expect(small.bytes.length).toBeLessThan(source.length / 8);
-    expect(medium.bytes.length).toBeLessThan(source.length / 3);
+    expect(medium.bytes.length).toBeLessThan(source.length / 5);
+    expect(large.bytes.length).toBeLessThan(source.length / 3);
   });
 
   test("a PNG with transparent pixels keeps its alpha", async () => {
@@ -129,9 +164,10 @@ describe("encodeRenditions", () => {
       await Jimp.fromBitmap(bitmap).getBuffer("image/png"),
     );
     const result = await ok(source);
-    expect(result.renditions.map((r) => [r.width, r.height])).toEqual([
-      [480, 320],
-      [960, 640],
+    expect(sizesOf(result.renditions)).toEqual([
+      ["small", 480, 320],
+      ["medium", 640, 427],
+      ["large", 960, 640],
     ]);
     for (const rendition of result.renditions) {
       const { bitmap: out } = await decodeUpright(rendition.bytes, "webp", 1);
@@ -147,7 +183,21 @@ describe("encodeRenditions", () => {
       expect(Math.abs(alphaAt(0.75, 0.5) - 128)).toBeLessThanOrEqual(8);
     }
     // A WebP with alpha is far smaller than the lossless PNG it came from.
-    expect(result.renditions[1].bytes.length).toBeLessThan(source.length / 4);
+    expect(result.renditions[2].bytes.length).toBeLessThan(source.length / 4);
+  });
+
+  test("a PNG narrower than 960 px gets a WebP at its own width, far smaller than the PNG", async () => {
+    // The shape of the live catalogue's heaviest cover: an 833x1024 PNG.
+    const source = new Uint8Array(
+      await Jimp.fromBitmap(photoBitmap(833, 1024)).getBuffer("image/png"),
+    );
+    const result = await ok(source);
+    expect(sizesOf(result.renditions)).toEqual([
+      ["small", 480, 590],
+      ["medium", 640, 787],
+      ["large", 833, 1024],
+    ]);
+    expect(result.renditions[2].bytes.length).toBeLessThan(source.length / 4);
   });
 
   test("fine detail is averaged, not aliased (a 1 px checkerboard turns grey)", async () => {
@@ -179,25 +229,45 @@ describe("encodeRenditions", () => {
     }
   });
 
-  test("a source no wider than 480 px gets no renditions", async () => {
-    const result = await ok(await jpeg(400, 600));
+  test("a source no wider than 480 px gets one WebP at its own width", async () => {
+    const source = await jpeg(400, 600);
+    const result = await ok(source);
     expect([result.width, result.height]).toEqual([400, 600]);
-    expect(result.renditions).toEqual([]);
+    expect(sizesOf(result.renditions)).toEqual([["small", 400, 600]]);
+    expect(result.renditions[0].bytes.length).toBeLessThanOrEqual(
+      source.length * RENDITION_MAX_BYTE_RATIO,
+    );
   });
 
-  test("a 700 px source gets only the 480 px rendition", async () => {
+  test("a 700 px source gets 480 and 640 px renditions and one at its own width", async () => {
     const result = await ok(await jpeg(700, 500));
-    expect(result.renditions.map((r) => [r.width, r.height])).toEqual([
-      [480, 343],
+    expect(sizesOf(result.renditions)).toEqual([
+      ["small", 480, 343],
+      ["medium", 640, 457],
+      ["large", 700, 500],
     ]);
   });
 
+  test("a rendition that is not clearly smaller than its source is not kept", async () => {
+    // A heavily compressed JPEG: a WebP at (nearly) its own width costs about as many bytes.
+    const source = await jpeg(1000, 750, 20);
+    const result = await ok(source);
+    expect(result.notSmaller).toContain("large");
+    expect(result.renditions.map((r) => r.slot)).not.toContain("large");
+    for (const rendition of result.renditions) {
+      expect(rendition.bytes.length).toBeLessThanOrEqual(
+        source.length * RENDITION_MAX_BYTE_RATIO,
+      );
+    }
+  });
+
   test("an upright WebP source works too", async () => {
-    const webp = (await ok(await jpeg(1600, 1200))).renditions[1].bytes;
+    const webp = (await ok(await jpeg(1600, 1200))).renditions[2].bytes;
     const result = await ok(webp);
     expect([result.width, result.height]).toEqual([960, 720]);
-    expect(result.renditions.map((r) => [r.width, r.height])).toEqual([
-      [480, 360],
+    expect(sizesOf(result.renditions).slice(0, 2)).toEqual([
+      ["small", 480, 360],
+      ["medium", 640, 480],
     ]);
   });
 
@@ -223,9 +293,10 @@ describe("encodeRenditions", () => {
     const result = await ok(source);
     // Shown turned a quarter (Orientation 6), as a browser shows the stored original.
     expect([result.width, result.height]).toEqual([1200, 1600]);
-    expect(result.renditions.map((r) => [r.width, r.height])).toEqual([
-      [480, 640],
-      [960, 1280],
+    expect(sizesOf(result.renditions)).toEqual([
+      ["small", 480, 640],
+      ["medium", 640, 853],
+      ["large", 960, 1280],
     ]);
     for (const rendition of result.renditions) {
       expect(findMetadata(rendition.bytes, "webp")).toEqual([]);

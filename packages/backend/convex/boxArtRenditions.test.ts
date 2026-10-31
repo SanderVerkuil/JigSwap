@@ -11,7 +11,7 @@ import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
-// The box-art lifecycle of renditions (PERF-C1, P-42): box art gets its 480 and 960 px WebP
+// The box-art lifecycle of renditions (PERF-C1, P-42): box art gets its 480, 640 and 960 px WebP
 // renditions in the background once it is approved (by the pipeline, a re-screen or an admin),
 // never while the uploader waits; whenever box art is rejected or quarantined its renditions and
 // their blobs are deleted with it. HCS and the classifier are a routed fake `fetch`.
@@ -140,6 +140,7 @@ const blobType = (t: T, id: Id<"_storage">) =>
   t.run(async (ctx) => (await ctx.storage.get(id))?.type ?? null);
 
 type GenerationJob = {
+  _id: string;
   name: string;
   args: { sourceId: Id<"_storage">; attempt?: number }[];
   state: { kind: string };
@@ -158,21 +159,28 @@ const scheduledFor = async (t: T) =>
     .map((job) => job.args[0].sourceId);
 
 // Let the scheduled generation run. convex-test can fail an action's blob store while another
-// function's transaction is open ("Write outside of transaction"), which the action treats as a
-// storage failure and retries 30 s later: run such a retry now instead of waiting for it.
+// function's transaction is open ("Write outside of transaction"; here a Workpool's loop), which
+// the action treats as a storage failure and retries 30 s later: run each such retry now, as a
+// fresh attempt (so the test runtime cannot use up the retry budget), until none is left.
 const settleRenditions = async (t: T) => {
   await settleDueScheduled(t);
-  for (const job of await generationJobs(t)) {
-    if (job.state.kind === "pending") {
+  const ran = new Set<string>();
+  for (let round = 0; round < 10; round++) {
+    const retries = (await generationJobs(t)).filter(
+      (job) => job.state.kind === "pending" && !ran.has(job._id),
+    );
+    if (retries.length === 0) return;
+    for (const job of retries) {
+      ran.add(job._id);
       await t.action(
         internal.lib.imageModeration.renditions.generateRenditions,
-        job.args[0],
+        { sourceId: job.args[0].sourceId },
       );
     }
   }
 };
 
-// Expect `sourceId` to have its two WebP renditions; returns their blob ids.
+// Expect `sourceId` to have its three WebP renditions; returns their blob ids.
 const expectRenditions = async (t: T, sourceId: Id<"_storage">) => {
   const rows = await allRenditions(t);
   expect(rows).toEqual([
@@ -181,10 +189,15 @@ const expectRenditions = async (t: T, sourceId: Id<"_storage">) => {
       width: 1000,
       height: 750,
       small: expect.objectContaining({ width: 480, height: 360 }),
-      medium: expect.objectContaining({ width: 960, height: 720 }),
+      medium: expect.objectContaining({ width: 640, height: 480 }),
+      large: expect.objectContaining({ width: 960, height: 720 }),
     }),
   ]);
-  const ids = [rows[0].small!.fileId, rows[0].medium!.fileId];
+  const ids = [
+    rows[0].small!.fileId,
+    rows[0].medium!.fileId,
+    rows[0].large!.fileId,
+  ];
   for (const id of ids) expect(await blobType(t, id)).toBe("image/webp");
   return ids;
 };
@@ -421,7 +434,11 @@ describe("box art renditions: the metadata strip one-shot", () => {
       width,
       height,
     });
-    const [small, medium] = [await slot(480, 360), await slot(960, 720)];
+    const [small, medium, large] = [
+      await slot(480, 360),
+      await slot(640, 480),
+      await slot(960, 720),
+    ];
     await t.run((ctx) =>
       ctx.db.insert("imageRenditions", {
         sourceId: legacy,
@@ -429,6 +446,7 @@ describe("box art renditions: the metadata strip one-shot", () => {
         height: 750,
         small,
         medium,
+        large,
         createdAt: 1,
       }),
     );
@@ -442,12 +460,20 @@ describe("box art renditions: the metadata strip one-shot", () => {
     expect(stripped).not.toBe(legacy);
     expect(await scheduledFor(t)).toEqual([stripped]);
     await settleRenditions(t);
-    // The stripped blob is turned upright and too small for a rendition: recorded without one.
+    // The stripped blob is turned upright: its own renditions are made from it (one, at its own
+    // 48 px width), and the old blob's are gone.
     const rows = await allRenditions(t);
     expect(rows).toEqual([
-      expect.objectContaining({ sourceId: stripped, width: 48, height: 64 }),
+      expect.objectContaining({
+        sourceId: stripped,
+        width: 48,
+        height: 64,
+        small: expect.objectContaining({ width: 48, height: 64 }),
+      }),
     ]);
-    expect(rows[0].small).toBeUndefined();
-    expect(await blobIds(t)).toEqual([stripped]);
+    expect(rows[0].medium).toBeUndefined();
+    expect((await blobIds(t)).sort()).toEqual(
+      [stripped, rows[0].small!.fileId].sort(),
+    );
   });
 });

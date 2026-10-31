@@ -103,6 +103,7 @@ const STORAGE_ID_FIELDS: Record<string, BlobReferenceKind | { not: string }> = {
   "reports.evidenceFileId": "reportEvidence",
   "imageRenditions.small.fileId": "renditionSmall",
   "imageRenditions.medium.fileId": "renditionMedium",
+  "imageRenditions.large.fileId": "renditionLarge",
   "imageRenditions.sourceId": {
     not: "names the image the row was made from, which the row follows: whatever deletes that image calls renditionsStore.deleteRenditions",
   },

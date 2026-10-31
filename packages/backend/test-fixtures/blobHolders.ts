@@ -180,7 +180,15 @@ export const BLOB_HOLDER_SEEDS: Record<
       sourceId: spare,
       width: 2000,
       height: 1500,
-      medium: { fileId: blob, width: 960, height: 720 },
+      medium: { fileId: blob, width: 640, height: 480 },
+      createdAt: 0,
+    }),
+  renditionLarge: (ctx, { spare }, blob) =>
+    ctx.db.insert("imageRenditions", {
+      sourceId: spare,
+      width: 2000,
+      height: 1500,
+      large: { fileId: blob, width: 960, height: 720 },
       createdAt: 0,
     }),
   preserved: (ctx, { member }, blob) =>

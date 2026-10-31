@@ -5,7 +5,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import schema from "./schema";
 
 // Box-art renditions on the signed-in surfaces (PERF-C1, P-42). The catalogue summary cards carry
-// an `imageSrcSet` and the owned-copy cards a `coverSrcSet` (480 w, 960 w and the original), so
+// an `imageSrcSet` and the owned-copy cards a `coverSrcSet` (480, 640, 960 w and the original), so
 // the browser picks a width. Both are given only for box art the publication gate (boxArtUrl)
 // serves, only as URLs, and only once renditions exist; before the backfill every read is exactly
 // what it was. An approved cover photo wins over the box art (with its own renditions, if any:
@@ -31,11 +31,12 @@ type Seeded = {
   image: Id<"_storage">;
   small?: Id<"_storage">;
   medium?: Id<"_storage">;
+  large?: Id<"_storage">;
 };
 
 // Alice and Bob; one approved definition whose box art is listed with `listing` (null: not
-// listed, legacy) and, when `renditions`, has a 480 and a 960 rendition of a 1600 px source; and
-// one open copy of it that Alice owns.
+// listed, legacy) and, when `renditions`, has the 480, 640 and 960 renditions of a 1600 px
+// source; and one open copy of it that Alice owns.
 const seed = (t: T, listing: Listing | null, renditions: boolean) =>
   t.run(async (ctx): Promise<Seeded> => {
     const now = Date.now();
@@ -91,15 +92,17 @@ const seed = (t: T, listing: Listing | null, renditions: boolean) =>
       ctx.storage.store(new Blob([body], { type: "image/webp" }));
     const small = await webp("small rendition");
     const medium = await webp("medium rendition");
+    const large = await webp("large rendition");
     await ctx.db.insert("imageRenditions", {
       sourceId: image,
       width: 1600,
       height: 1200,
       small: { fileId: small, width: 480, height: 360 },
-      medium: { fileId: medium, width: 960, height: 720 },
+      medium: { fileId: medium, width: 640, height: 480 },
+      large: { fileId: large, width: 960, height: 720 },
       createdAt: now,
     });
-    return { alice, bob, puzzleId, copyId, image, small, medium };
+    return { alice, bob, puzzleId, copyId, image, small, medium, large };
   });
 
 const urlOf = async (t: T, id: Id<"_storage"> | undefined) => {
@@ -109,9 +112,9 @@ const urlOf = async (t: T, id: Id<"_storage"> | undefined) => {
   return url;
 };
 
-// The srcset the seeded renditions make: both renditions, then the original at its own width.
+// The srcset the seeded renditions make: every rendition, then the original at its own width.
 const srcSetOf = async (t: T, s: Seeded) =>
-  `${await urlOf(t, s.small)} 480w, ${await urlOf(t, s.medium)} 960w, ${await urlOf(t, s.image)} 1600w`;
+  `${await urlOf(t, s.small)} 480w, ${await urlOf(t, s.medium)} 640w, ${await urlOf(t, s.large)} 960w, ${await urlOf(t, s.image)} 1600w`;
 
 const asAlice = (t: T) => t.withIdentity({ subject: "clerk_alice" });
 const asBob = (t: T) => t.withIdentity({ subject: "clerk_bob" });
@@ -125,7 +128,7 @@ const WITHHELD = {
 // Neither a source nor a rendition storage id may cross the wire.
 const expectNoStorageIds = (response: unknown, s: Seeded) => {
   const json = JSON.stringify(response);
-  for (const id of [s.image, s.small, s.medium]) {
+  for (const id of [s.image, s.small, s.medium, s.large]) {
     if (id) expect(json).not.toContain(id);
   }
 };

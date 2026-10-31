@@ -831,22 +831,26 @@ export default defineSchema({
 
   // Smaller WebP copies of a served image blob (lib/imageModeration/renditions) for the places
   // that show it small (cards, thumbnails). One row per SOURCE blob, made once the image may be
-  // shown (renditionsStore.isRenditionSource); `width`/`height` are the source's. A slot is
-  // absent when the source is no wider than its width, so a row with neither slot means "the
-  // source is already small". Every slot blob counts as referenced (blobReferences), and the
-  // row and its blobs are deleted with the source (renditionsStore.deleteRenditions). Read
-  // models serve them only through the source's own publication gate, and only as URLs.
+  // shown (renditionsStore.isRenditionSource); `width`/`height` are the source's. Each slot is
+  // its rung's width, or the source's own width in the first rung the source does not exceed
+  // (the later slots then stay empty); a slot is also absent when its WebP came out not clearly
+  // smaller than the source (renditionEncode). A row with no slot means "nothing smaller to
+  // offer". Every slot blob counts as referenced (blobReferences), and the row and its blobs are
+  // deleted with the source (renditionsStore.deleteRenditions). Read models serve them only
+  // through the source's own publication gate, and only as URLs.
   imageRenditions: defineTable({
     sourceId: v.id("_storage"),
     width: v.number(),
     height: v.number(),
-    small: v.optional(renditionSlotValidator), // 480 px wide
-    medium: v.optional(renditionSlotValidator), // 960 px wide
+    small: v.optional(renditionSlotValidator), // 480 px wide (or the source's width)
+    medium: v.optional(renditionSlotValidator), // 640 px wide (or the source's width)
+    large: v.optional(renditionSlotValidator), // 960 px wide (or the source's width)
     createdAt: v.number(),
   })
     .index("by_source", ["sourceId"])
     .index("by_small_file", ["small.fileId"])
-    .index("by_medium_file", ["medium.fileId"]),
+    .index("by_medium_file", ["medium.fileId"])
+    .index("by_large_file", ["large.fileId"]),
 
   // Community change proposals against APPROVED catalog definitions. `changes` is the exact
   // patch the definition receives on approval; `baseline` snapshots the changed fields' values

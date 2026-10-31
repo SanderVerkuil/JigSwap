@@ -43,7 +43,8 @@ export const backfillTotalsValidator = v.object({
   scanned: v.number(),
   // Eligible sources without renditions yet (all a dry run counts).
   candidates: v.number(),
-  // Recorded (a source no wider than 480 px gets a row without renditions).
+  // Recorded (a source none of whose renditions came out clearly smaller gets a row without
+  // any).
   recorded: v.number(),
   // Bytes the input guards refused, or that did not decode.
   refused: v.number(),
@@ -130,17 +131,18 @@ export const recordRenditions = internalMutation({
     height: v.number(),
     small: v.optional(slotValidator),
     medium: v.optional(slotValidator),
+    large: v.optional(slotValidator),
   },
   handler: async (
     ctx,
-    { sourceId, width, height, small, medium },
+    { sourceId, width, height, small, medium, large },
   ): Promise<boolean> => {
     const keep =
       (await ctx.db.system.get(sourceId)) !== null &&
       (await isRenditionSource(ctx, sourceId)) &&
       (await renditionsRow(ctx, sourceId)) === null;
     if (!keep) {
-      for (const slot of [small, medium]) {
+      for (const slot of [small, medium, large]) {
         if (slot) await deleteUnreferenced(ctx, slot.fileId);
       }
       return false;
@@ -151,6 +153,7 @@ export const recordRenditions = internalMutation({
       height,
       ...(small && { small }),
       ...(medium && { medium }),
+      ...(large && { large }),
       createdAt: Date.now(),
     });
     return true;
@@ -191,7 +194,7 @@ export const deleteRenditions = async (
     .collect();
   for (const row of rows) {
     await ctx.db.delete(row._id);
-    for (const slot of [row.small, row.medium]) {
+    for (const slot of [row.small, row.medium, row.large]) {
       if (slot) await deleteUnreferenced(ctx, slot.fileId);
     }
   }

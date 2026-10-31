@@ -8,8 +8,8 @@ import { ingestToAxiom } from "../axiom";
 import { logEvent, type WideEvent } from "../logEvent";
 import {
   encodeRenditions,
-  RENDITION_WIDTHS,
   type RenditionSet,
+  type RenditionSlot,
 } from "./renditionEncode";
 import {
   backfillTotalsValidator,
@@ -18,7 +18,7 @@ import {
   type BackfillTotals,
 } from "./renditionsStore";
 
-// Make and store the renditions of an image blob (PERF-C1, P-42): its 480 and 960 px WebP
+// Make and store the renditions of an image blob (PERF-C1, P-42): its 480, 640 and 960 px WebP
 // copies (lib/imageModeration/renditionEncode), recorded against the source blob in
 // `imageRenditions` (lib/imageModeration/renditionsStore, which also holds the invariants).
 //
@@ -80,11 +80,6 @@ const io = async <T>(stage: string, call: () => Promise<T>): Promise<T> => {
   }
 };
 
-const SLOT_BY_WIDTH = new Map<number, "small" | "medium">([
-  [RENDITION_WIDTHS[0], "small"],
-  [RENDITION_WIDTHS[1], "medium"],
-]);
-
 type Slot = { fileId: Id<"_storage">; width: number; height: number };
 
 // Make, store and record one source's renditions. Throws only a TransientError.
@@ -122,23 +117,22 @@ const render = async (
   }
   event.source_width = set.width;
   event.source_height = set.height;
+  if (set.notSmaller.length > 0) event.not_smaller = set.notSmaller;
 
-  const slots: { small?: Slot; medium?: Slot } = {};
+  const slots: Partial<Record<RenditionSlot, Slot>> = {};
   try {
     for (const rendition of set.renditions) {
-      const name = SLOT_BY_WIDTH.get(rendition.width);
-      if (!name) continue;
       const fileId = await io("store", () =>
         ctx.storage.store(
           new Blob([rendition.bytes as BlobPart], { type: "image/webp" }),
         ),
       );
-      slots[name] = {
+      slots[rendition.slot] = {
         fileId,
         width: rendition.width,
         height: rendition.height,
       };
-      event[`${name}_bytes`] = rendition.bytes.byteLength;
+      event[`${rendition.slot}_bytes`] = rendition.bytes.byteLength;
     }
     const recorded = await io("record", () =>
       ctx.runMutation(
@@ -149,9 +143,7 @@ const render = async (
     return recorded ? "recorded" : "discarded";
   } catch (error) {
     // Nothing holds the blobs stored so far: delete them before giving up on this attempt.
-    const fileIds = [slots.small, slots.medium].flatMap((slot) =>
-      slot ? [slot.fileId] : [],
-    );
+    const fileIds = Object.values(slots).map((slot) => slot.fileId);
     if (fileIds.length > 0) {
       await ctx
         .runMutation(

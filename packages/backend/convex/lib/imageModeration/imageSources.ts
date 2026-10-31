@@ -4,15 +4,17 @@ import type { QueryCtx } from "../../_generated/server";
 // How a read model offers an image to the client: the original's URL, plus, once renditions
 // exist for it (lib/imageModeration/renditions), a `srcSet` the browser picks a width from and a
 // `thumbUrl` (the smallest rendition) for thumbnail-sized uses. Before the backfill, or for a
-// source no wider than the smallest rendition, only `url` is set and callers show the original.
+// source with nothing smaller to offer, only `url` is set and callers show the original.
 //
 // URLs only: neither the source's nor a rendition's storage id ever leaves this module.
 
 export type ImageSources = {
   url: string;
-  /** The smallest rendition (480 px wide); absent when there is none. */
+  /** The smallest rendition (480 px wide, or the source's width when narrower); absent when there
+   *  is none. */
   thumbUrl?: string;
-  /** `<url> <width>w` for each rendition and the original; absent when there are no renditions. */
+  /** `<url> <width>w` for each rendition and, unless a rendition is already as wide as it, the
+   *  original; absent when there are no renditions. */
   srcSet?: string;
 };
 
@@ -39,18 +41,21 @@ export const renditionSources = async (
     .first();
   if (!row) return { url };
   const candidates: { url: string; width: number }[] = [];
-  for (const slot of [row.small, row.medium]) {
+  for (const slot of [row.small, row.medium, row.large]) {
     if (!slot) continue;
     // A slot whose blob is gone is left out rather than offered as a broken candidate.
     const slotUrl = await ctx.storage.getUrl(slot.fileId);
     if (slotUrl) candidates.push({ url: slotUrl, width: slot.width });
   }
   if (candidates.length === 0) return { url };
+  // The original only when it is wider than every rendition: a WebP at the source's own width
+  // stands in for it (and a srcset must not list one width twice).
+  if (candidates[candidates.length - 1].width < row.width) {
+    candidates.push({ url, width: row.width });
+  }
   return {
     url,
     thumbUrl: candidates[0].url,
-    srcSet: [...candidates, { url, width: row.width }]
-      .map((c) => `${c.url} ${c.width}w`)
-      .join(", "),
+    srcSet: candidates.map((c) => `${c.url} ${c.width}w`).join(", "),
   };
 };

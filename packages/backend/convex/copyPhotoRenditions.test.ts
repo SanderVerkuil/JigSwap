@@ -14,8 +14,8 @@ import {
 } from "./conversation/purgeMemberLibrary";
 import schema from "./schema";
 
-// Copy-photo renditions (PERF-C1, P-42): a member's photo of their copy gets its 480 and 960 px
-// WebP renditions once it is approved (by the pipeline, a re-screen, an admin's decision or a
+// Copy-photo renditions (PERF-C1, P-42): a member's photo of their copy gets its 480, 640 and 960
+// px WebP renditions once it is approved (by the pipeline, a re-screen, an admin's decision or a
 // restore), and they live exactly as long as the photo: the owner's removal, an admin's
 // deletion, account erasure, deleting the copy, a rejection and a quarantine all delete them.
 // They are served only behind the photo's own gate (approved and hash-cleared), only as URLs:
@@ -183,22 +183,26 @@ const seedPhoto = async (
   return { imageId, fileId };
 };
 
+type Renditions = Record<"small" | "medium" | "large", Id<"_storage">>;
+
 // Renditions of a 1600 x 1200 source, as the generation records them (stand-in blobs).
-const seedRenditions = (t: T, sourceId: Id<"_storage">) =>
+const seedRenditions = (t: T, sourceId: Id<"_storage">): Promise<Renditions> =>
   t.run(async (ctx) => {
     const webp = (body: string) =>
       ctx.storage.store(new Blob([body], { type: "image/webp" }));
     const small = await webp("small rendition");
     const medium = await webp("medium rendition");
+    const large = await webp("large rendition");
     await ctx.db.insert("imageRenditions", {
       sourceId,
       width: 1600,
       height: 1200,
       small: { fileId: small, width: 480, height: 360 },
-      medium: { fileId: medium, width: 960, height: 720 },
+      medium: { fileId: medium, width: 640, height: 480 },
+      large: { fileId: large, width: 960, height: 720 },
       createdAt: Date.now(),
     });
-    return { small, medium };
+    return { small, medium, large };
   });
 
 const photoRows = (t: T, copy: Id<"ownedPuzzles">) =>
@@ -227,6 +231,7 @@ const urlOf = async (t: T, id: Id<"_storage">) => {
 };
 
 type GenerationJob = {
+  _id: string;
   name: string;
   args: { sourceId: Id<"_storage">; attempt?: number }[];
   state: { kind: string };
@@ -245,21 +250,28 @@ const scheduledFor = async (t: T) =>
     .map((job) => job.args[0].sourceId);
 
 // Let the scheduled generation run. convex-test can fail an action's blob store while another
-// function's transaction is open ("Write outside of transaction"), which the action treats as a
-// storage failure and retries 30 s later: run such a retry now instead of waiting for it.
+// function's transaction is open ("Write outside of transaction"; here a Workpool's loop), which
+// the action treats as a storage failure and retries 30 s later: run each such retry now, as a
+// fresh attempt (so the test runtime cannot use up the retry budget), until none is left.
 const settleRenditions = async (t: T) => {
   await settleDueScheduled(t);
-  for (const job of await generationJobs(t)) {
-    if (job.state.kind === "pending") {
+  const ran = new Set<string>();
+  for (let round = 0; round < 10; round++) {
+    const retries = (await generationJobs(t)).filter(
+      (job) => job.state.kind === "pending" && !ran.has(job._id),
+    );
+    if (retries.length === 0) return;
+    for (const job of retries) {
+      ran.add(job._id);
       await t.action(
         internal.lib.imageModeration.renditions.generateRenditions,
-        job.args[0],
+        { sourceId: job.args[0].sourceId },
       );
     }
   }
 };
 
-// Expect `sourceId` (a 1000 x 750 photo) to have its two WebP renditions; returns their blobs.
+// Expect `sourceId` (a 1000 x 750 photo) to have its three WebP renditions; returns their blobs.
 const expectRenditions = async (t: T, sourceId: Id<"_storage">) => {
   const rows = await allRenditions(t);
   expect(rows).toEqual([
@@ -268,10 +280,15 @@ const expectRenditions = async (t: T, sourceId: Id<"_storage">) => {
       width: 1000,
       height: 750,
       small: expect.objectContaining({ width: 480, height: 360 }),
-      medium: expect.objectContaining({ width: 960, height: 720 }),
+      medium: expect.objectContaining({ width: 640, height: 480 }),
+      large: expect.objectContaining({ width: 960, height: 720 }),
     }),
   ]);
-  const ids = [rows[0].small!.fileId, rows[0].medium!.fileId];
+  const ids = [
+    rows[0].small!.fileId,
+    rows[0].medium!.fileId,
+    rows[0].large!.fileId,
+  ];
   for (const id of ids) {
     expect(await t.run(async (ctx) => (await ctx.storage.get(id))?.type)).toBe(
       "image/webp",
@@ -434,6 +451,7 @@ describe("copy photo renditions: made once the photo is approved", () => {
     expect(await allRenditions(t)).toEqual([]);
     expect(await blobExists(t, renditions.small)).toBe(false);
     expect(await blobExists(t, renditions.medium)).toBe(false);
+    expect(await blobExists(t, renditions.large)).toBe(false);
     // The rejected photo waits in Flagged Images: its own blob stays until the removal.
     expect(await blobExists(t, photo.fileId)).toBe(true);
   });
@@ -456,6 +474,7 @@ describe("copy photo renditions: made once the photo is approved", () => {
     expect(await allRenditions(t)).toEqual([]);
     expect(await blobExists(t, renditions.small)).toBe(false);
     expect(await blobExists(t, renditions.medium)).toBe(false);
+    expect(await blobExists(t, renditions.large)).toBe(false);
     expect(await blobExists(t, legacy.fileId)).toBe(true);
 
     expect(
@@ -486,17 +505,14 @@ describe("copy photo renditions: deleted with the photo", () => {
       },
       { copy: opts.copy },
     );
-    const { small, medium } = await seedRenditions(t, photo.fileId);
-    return { ...photo, small, medium };
+    return { ...photo, ...(await seedRenditions(t, photo.fileId)) };
   };
 
-  const expectGone = async (
-    t: T,
-    photo: { small: Id<"_storage">; medium: Id<"_storage"> },
-  ) => {
+  const expectGone = async (t: T, photo: Renditions) => {
     expect(await allRenditions(t)).toEqual([]);
     expect(await blobExists(t, photo.small)).toBe(false);
     expect(await blobExists(t, photo.medium)).toBe(false);
+    expect(await blobExists(t, photo.large)).toBe(false);
   };
 
   test("the owner's removal", async () => {
@@ -609,12 +625,8 @@ describe("copy photo renditions: deleted with the photo", () => {
 });
 
 describe("copy photo renditions: served behind the photo's gate, as URLs", () => {
-  const srcSetOf = async (
-    t: T,
-    source: Id<"_storage">,
-    r: { small: Id<"_storage">; medium: Id<"_storage"> },
-  ) =>
-    `${await urlOf(t, r.small)} 480w, ${await urlOf(t, r.medium)} 960w, ${await urlOf(t, source)} 1600w`;
+  const srcSetOf = async (t: T, source: Id<"_storage">, r: Renditions) =>
+    `${await urlOf(t, r.small)} 480w, ${await urlOf(t, r.medium)} 640w, ${await urlOf(t, r.large)} 960w, ${await urlOf(t, source)} 1600w`;
 
   const expectNoStorageIds = (response: unknown, ids: Id<"_storage">[]) => {
     const json = JSON.stringify(response);
@@ -640,7 +652,7 @@ describe("copy photo renditions: served behind the photo's gate, as URLs", () =>
         srcSet: await srcSetOf(t, photo.fileId, r),
       }),
     ]);
-    expectNoStorageIds(view, [photo.fileId, r.small, r.medium]);
+    expectNoStorageIds(view, [photo.fileId, r.small, r.medium, r.large]);
   });
 
   test("the uploader's own photo still under review is shown as it is", async () => {
@@ -666,6 +678,7 @@ describe("copy photo renditions: served behind the photo's gate, as URLs", () =>
     const json = JSON.stringify(view);
     expect(json).not.toContain(await urlOf(t, r.small));
     expect(json).not.toContain(await urlOf(t, r.medium));
+    expect(json).not.toContain(await urlOf(t, r.large));
   });
 
   test("an approved cover photo's card picks from them; the copy page keeps the original", async () => {
@@ -683,7 +696,7 @@ describe("copy photo renditions: served behind the photo's gate, as URLs", () =>
     expect(cards[0].coverSrcSet).toBe(await srcSetOf(t, photo.fileId, r));
     // The thumbnail-sized cover other surfaces read (chips, shelves, dialogs).
     expect(cards[0].coverUrl).toBe(await urlOf(t, r.small));
-    expectNoStorageIds(cards, [photo.fileId, r.small, r.medium]);
+    expectNoStorageIds(cards, [photo.fileId, r.small, r.medium, r.large]);
 
     const view = await asAlice(t).query(
       api.library.getCopyInstanceView.getCopyInstanceView,
@@ -711,7 +724,7 @@ describe("copy photo renditions: served behind the photo's gate, as URLs", () =>
     expect(cards[0].coverUrl).toBe(await urlOf(t, s.boxArt));
     expect(cards[0].coverSrcSet).toBeUndefined();
     const json = JSON.stringify(cards);
-    for (const id of [photo.fileId, r.small, r.medium]) {
+    for (const id of [photo.fileId, r.small, r.medium, r.large]) {
       expect(json).not.toContain(await urlOf(t, id));
     }
   });

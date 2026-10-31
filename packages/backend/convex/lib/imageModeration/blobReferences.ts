@@ -17,6 +17,7 @@ export type BlobReferenceKind =
   | "reportEvidence" // reports.evidenceFileId
   | "renditionSmall" // imageRenditions.small.fileId
   | "renditionMedium" // imageRenditions.medium.fileId
+  | "renditionLarge" // imageRenditions.large.fileId
   | "preserved"; // csamEscalations.fileId: kept for the escalation, never deleted by the app
 
 type Holder = { _id: string };
@@ -87,6 +88,11 @@ const LOOKUPS: Record<
     ctx.db
       .query("imageRenditions")
       .withIndex("by_medium_file", (q) => q.eq("medium.fileId", id))
+      .take(2),
+  renditionLarge: (ctx, id) =>
+    ctx.db
+      .query("imageRenditions")
+      .withIndex("by_large_file", (q) => q.eq("large.fileId", id))
       .take(2),
   preserved: (ctx, id) =>
     ctx.db

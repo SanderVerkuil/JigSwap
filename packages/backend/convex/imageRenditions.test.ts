@@ -11,7 +11,7 @@ import {
 } from "./lib/imageModeration/renditionsStore";
 import schema from "./schema";
 
-// Renditions (PERF-C1, P-42): the 480 and 960 px WebP copies of a served image, recorded per
+// Renditions (PERF-C1, P-42): the 480, 640 and 960 px WebP copies of a served image, recorded per
 // source blob in `imageRenditions`. Only an image that may be shown gets them (approved box art,
 // or legacy box art from before moderation), every rendition blob counts as referenced, they are
 // deleted with their source, and the backfill for existing box art is a dry run by default.
@@ -54,6 +54,21 @@ const jpeg = async (width: number, height: number) => {
   }
   return new Uint8Array(
     await Jimp.fromBitmap({ width, height, data }).getBuffer("image/jpeg"),
+  );
+};
+
+// Grey noise as a JPEG compressed hard: no WebP of it comes out clearly smaller.
+const noisyJpeg = async (width: number, height: number) => {
+  const data = Buffer.alloc(width * height * 4, 255);
+  let seed = 7;
+  for (let i = 0; i < data.length; i += 4) {
+    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    data.fill(seed >> 23, i, i + 3);
+  }
+  return new Uint8Array(
+    await Jimp.fromBitmap({ width, height, data }).getBuffer("image/jpeg", {
+      quality: 5,
+    }),
   );
 };
 
@@ -134,7 +149,7 @@ const bytesOf = async (t: T, id: Id<"_storage">) => {
 };
 
 describe("generateRenditions", () => {
-  test("approved box art gets a 480 and a 960 px WebP, recorded against its blob", async () => {
+  test("approved box art gets a 480, a 640 and a 960 px WebP, recorded against its blob", async () => {
     const t = convexTest(schema, modules);
     const sourceId = await seedBoxArt(t, await jpeg(1200, 900), "approved");
     const before = await storageCount(t);
@@ -148,10 +163,11 @@ describe("generateRenditions", () => {
       width: 1200,
       height: 900,
       small: { width: 480, height: 360 },
-      medium: { width: 960, height: 720 },
+      medium: { width: 640, height: 480 },
+      large: { width: 960, height: 720 },
     });
-    expect(await storageCount(t)).toBe(before + 2);
-    for (const slot of [row.small!, row.medium!]) {
+    expect(await storageCount(t)).toBe(before + 3);
+    for (const slot of [row.small!, row.medium!, row.large!]) {
       const stored = await bytesOf(t, slot.fileId);
       expect(stored?.type).toBe("image/webp");
       expect(checkImageBytes(stored!.bytes)).toEqual({
@@ -173,6 +189,7 @@ describe("generateRenditions", () => {
       source_height: 900,
       small_bytes: expect.any(Number),
       medium_bytes: expect.any(Number),
+      large_bytes: expect.any(Number),
     });
   });
 
@@ -187,7 +204,8 @@ describe("generateRenditions", () => {
       expect(await renditionsOf(t, sourceId)).toEqual([
         expect.objectContaining({
           small: expect.objectContaining({ width: 480, height: 384 }),
-          medium: expect.objectContaining({ width: 960, height: 768 }),
+          medium: expect.objectContaining({ width: 640, height: 512 }),
+          large: expect.objectContaining({ width: 960, height: 768 }),
         }),
       ]);
     },
@@ -247,9 +265,9 @@ describe("generateRenditions", () => {
     expect(await renditionsOf(t, sourceId)).toHaveLength(1);
   });
 
-  test("a source no wider than 480 px is recorded without renditions, so it is not decoded again", async () => {
+  test("a source with nothing clearly smaller to offer is recorded without renditions, so it is not decoded again", async () => {
     const t = convexTest(schema, modules);
-    const sourceId = await seedBoxArt(t, await jpeg(400, 600), "approved");
+    const sourceId = await seedBoxArt(t, await noisyJpeg(400, 600), "approved");
     const before = await storageCount(t);
 
     expect(await t.action(generate, { sourceId })).toBe("recorded");
@@ -257,12 +275,30 @@ describe("generateRenditions", () => {
     expect(row).toMatchObject({ width: 400, height: 600 });
     expect(row.small).toBeUndefined();
     expect(row.medium).toBeUndefined();
+    expect(row.large).toBeUndefined();
     expect(await storageCount(t)).toBe(before);
+    expect(
+      logged
+        .map((line) => JSON.parse(line) as Record<string, unknown>)
+        .find((line) => line.event === "imageModeration.renditions"),
+    ).toMatchObject({ result: "recorded", not_smaller: ["small"] });
 
     expect(await t.action(generate, { sourceId })).toBe("already_done");
   });
 
-  test("a 700 px source gets only the 480 px rendition", async () => {
+  test("a source no wider than 480 px gets one WebP at its own width", async () => {
+    const t = convexTest(schema, modules);
+    const sourceId = await seedBoxArt(t, await jpeg(400, 600), "approved");
+
+    expect(await t.action(generate, { sourceId })).toBe("recorded");
+
+    const [row] = await renditionsOf(t, sourceId);
+    expect(row.small).toMatchObject({ width: 400, height: 600 });
+    expect(row.medium).toBeUndefined();
+    expect(row.large).toBeUndefined();
+  });
+
+  test("a 700 px source gets 480 and 640 px renditions and one at its own width", async () => {
     const t = convexTest(schema, modules);
     const sourceId = await seedBoxArt(t, await jpeg(700, 500), "approved");
 
@@ -270,7 +306,8 @@ describe("generateRenditions", () => {
 
     const [row] = await renditionsOf(t, sourceId);
     expect(row.small).toMatchObject({ width: 480, height: 343 });
-    expect(row.medium).toBeUndefined();
+    expect(row.medium).toMatchObject({ width: 640, height: 457 });
+    expect(row.large).toMatchObject({ width: 700, height: 500 });
   });
 
   test("bytes that are not an image finish quietly, storing nothing", async () => {
@@ -305,7 +342,7 @@ describe("generateRenditions", () => {
 });
 
 describe("recordRenditions", () => {
-  const twoBlobs = async (t: T) => ({
+  const slotBlobs = async (t: T) => ({
     small: {
       fileId: await storeBytes(t, new Uint8Array([1]), "image/webp"),
       width: 480,
@@ -313,6 +350,11 @@ describe("recordRenditions", () => {
     },
     medium: {
       fileId: await storeBytes(t, new Uint8Array([2]), "image/webp"),
+      width: 640,
+      height: 480,
+    },
+    large: {
+      fileId: await storeBytes(t, new Uint8Array([3]), "image/webp"),
       width: 960,
       height: 720,
     },
@@ -321,7 +363,7 @@ describe("recordRenditions", () => {
   test("a source deleted while it was encoded keeps nothing: the new blobs are deleted", async () => {
     const t = convexTest(schema, modules);
     const sourceId = await seedBoxArt(t, await jpeg(10, 10), "approved");
-    const slots = await twoBlobs(t);
+    const slots = await slotBlobs(t);
     await t.run((ctx) => ctx.storage.delete(sourceId));
 
     expect(
@@ -336,12 +378,13 @@ describe("recordRenditions", () => {
     expect(await renditionsOf(t, sourceId)).toEqual([]);
     expect(await blobExists(t, slots.small.fileId)).toBe(false);
     expect(await blobExists(t, slots.medium.fileId)).toBe(false);
+    expect(await blobExists(t, slots.large.fileId)).toBe(false);
   });
 
   test("a source rejected while it was encoded keeps nothing", async () => {
     const t = convexTest(schema, modules);
     const sourceId = await seedBoxArt(t, await jpeg(10, 10), "approved");
-    const slots = await twoBlobs(t);
+    const slots = await slotBlobs(t);
     await t.run(async (ctx) => {
       const row = await ctx.db
         .query("boxArtUploads")
@@ -360,13 +403,14 @@ describe("recordRenditions", () => {
     ).toBe(false);
     expect(await blobExists(t, slots.small.fileId)).toBe(false);
     expect(await blobExists(t, slots.medium.fileId)).toBe(false);
+    expect(await blobExists(t, slots.large.fileId)).toBe(false);
   });
 
   test("a source already recorded keeps its first renditions; the late ones are deleted", async () => {
     const t = convexTest(schema, modules);
     const sourceId = await seedBoxArt(t, await jpeg(10, 10), "approved");
-    const first = await twoBlobs(t);
-    const late = await twoBlobs(t);
+    const first = await slotBlobs(t);
+    const late = await slotBlobs(t);
     expect(
       await t.mutation(record, {
         sourceId,
@@ -382,9 +426,12 @@ describe("recordRenditions", () => {
 
     const [row] = await renditionsOf(t, sourceId);
     expect(row.small?.fileId).toBe(first.small.fileId);
+    expect(row.large?.fileId).toBe(first.large.fileId);
     expect(await blobExists(t, first.small.fileId)).toBe(true);
+    expect(await blobExists(t, first.large.fileId)).toBe(true);
     expect(await blobExists(t, late.small.fileId)).toBe(false);
     expect(await blobExists(t, late.medium.fileId)).toBe(false);
+    expect(await blobExists(t, late.large.fileId)).toBe(false);
   });
 });
 
@@ -400,9 +447,10 @@ describe("references and deletion", () => {
       await t.run(async (ctx) => [
         await isReferenced(ctx, row.small!.fileId),
         await isReferenced(ctx, row.medium!.fileId),
+        await isReferenced(ctx, row.large!.fileId),
         await isReferenced(ctx, loose),
       ]),
-    ).toEqual([true, true, false]);
+    ).toEqual([true, true, true, false]);
   });
 
   test("deleteRenditions removes the row and its blobs, also when a blob is already gone", async () => {
@@ -416,6 +464,7 @@ describe("references and deletion", () => {
 
     expect(await renditionsOf(t, sourceId)).toEqual([]);
     expect(await blobExists(t, row.medium!.fileId)).toBe(false);
+    expect(await blobExists(t, row.large!.fileId)).toBe(false);
     // The source itself is its owner's to delete.
     expect(await blobExists(t, sourceId)).toBe(true);
     // Nothing to delete is fine too.

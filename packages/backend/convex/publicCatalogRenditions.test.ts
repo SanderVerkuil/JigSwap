@@ -5,10 +5,11 @@ import type { Doc, Id } from "./_generated/dataModel";
 import schema from "./schema";
 
 // Box-art renditions on the public surfaces (PERF-C1, P-42): the /catalog cards carry an
-// `imageSrcSet` (480 w, 960 w and the original) and the landing plank a `thumbUrl` (the 480 px
-// rendition), but only for box art the publication gate (boxArtUrl) serves, and only as URLs.
-// Without renditions (before the backfill, or a source too small for any) both read exactly as
-// before: `image` alone.
+// `imageSrcSet` (480 w, 640 w, 960 w and the original, or a WebP at the source's own width in
+// its place) and the landing plank a `thumbUrl` (the 480 px rendition), but only for box art the
+// publication gate (boxArtUrl) serves, and only as URLs. Without renditions (before the
+// backfill, or a source with nothing smaller to offer) both read exactly as before: `image`
+// alone.
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
@@ -20,14 +21,17 @@ type Listing = Partial<
   >
 >;
 
-// What the renditions row records: both slots (a 1600 px source), only the 480 (a 700 px
-// source), a row without slots (a source of 480 px or less), or no row at all (not made yet).
-type Renditions = "both" | "smallOnly" | "noSlots" | "none";
+// What the renditions row records: every slot (a 1600 px source); 480 and 640 plus a WebP at
+// the source's own width (an 833 px source); 480 and 640 only (a 1000 px source whose 960 px
+// WebP came out no smaller); a row without slots (nothing smaller to offer); or no row at all
+// (not made yet).
+type Renditions = "all" | "ownWidth" | "notSmaller" | "noSlots" | "none";
 
 type Seeded = {
   image: Id<"_storage">;
   small?: Id<"_storage">;
   medium?: Id<"_storage">;
+  large?: Id<"_storage">;
 };
 
 // One approved definition whose box art is listed with `listing` (or not listed: legacy).
@@ -65,20 +69,38 @@ const seed = (t: T, listing: Listing | null, renditions: Renditions) =>
     if (renditions === "none") return { image };
     const webp = (body: string) =>
       ctx.storage.store(new Blob([body], { type: "image/webp" }));
-    const small =
-      renditions === "noSlots" ? undefined : await webp("small rendition");
-    const medium =
-      renditions === "both" ? await webp("medium rendition") : undefined;
-    const width = { both: 1600, smallOnly: 700, noSlots: 400 }[renditions];
+    const width = { all: 1600, ownWidth: 833, notSmaller: 1000, noSlots: 400 }[
+      renditions
+    ];
+    type Slot = { fileId: Id<"_storage">; width: number; height: number };
+    const slot = async (name: string, w: number): Promise<Slot> => ({
+      fileId: await webp(`${name} rendition`),
+      width: w,
+      height: Math.round((w * 3) / 4),
+    });
+    const slots: { small?: Slot; medium?: Slot; large?: Slot } =
+      renditions === "noSlots"
+        ? {}
+        : {
+            small: await slot("small", 480),
+            medium: await slot("medium", 640),
+            ...(renditions !== "notSmaller" && {
+              large: await slot("large", Math.min(960, width)),
+            }),
+          };
     await ctx.db.insert("imageRenditions", {
       sourceId: image,
       width,
-      height: (width * 3) / 4,
-      ...(small && { small: { fileId: small, width: 480, height: 360 } }),
-      ...(medium && { medium: { fileId: medium, width: 960, height: 720 } }),
+      height: Math.round((width * 3) / 4),
+      ...slots,
       createdAt: now,
     });
-    return { image, small, medium };
+    return {
+      image,
+      small: slots.small?.fileId,
+      medium: slots.medium?.fileId,
+      large: slots.large?.fileId,
+    };
   });
 
 const urlOf = async (t: T, id: Id<"_storage">) => {
@@ -133,17 +155,18 @@ describe("public catalogue cards: imageSrcSet", () => {
     "served box art with renditions: %s",
     async (_n, listing) => {
       const t = convexTest(schema, modules);
-      const { image, small, medium } = await seed(t, listing, "both");
-      const [imageUrl, smallUrl, mediumUrl] = await Promise.all([
+      const { image, small, medium, large } = await seed(t, listing, "all");
+      const [imageUrl, smallUrl, mediumUrl, largeUrl] = await Promise.all([
         urlOf(t, image),
         urlOf(t, small!),
         urlOf(t, medium!),
+        urlOf(t, large!),
       ]);
 
       const card = await catalogCard(t);
       expect(card.image).toBe(imageUrl);
       expect(card.imageSrcSet).toBe(
-        `${smallUrl} 480w, ${mediumUrl} 960w, ${imageUrl} 1600w`,
+        `${smallUrl} 480w, ${mediumUrl} 640w, ${largeUrl} 960w, ${imageUrl} 1600w`,
       );
     },
   );
@@ -152,7 +175,7 @@ describe("public catalogue cards: imageSrcSet", () => {
     "box art the gate withholds shows no image and no srcSet, even with renditions: %s",
     async (_n, listing) => {
       const t = convexTest(schema, modules);
-      await seed(t, listing, "both");
+      await seed(t, listing, "all");
 
       const card = await catalogCard(t);
       expect(card.image).toBeNull();
@@ -169,7 +192,7 @@ describe("public catalogue cards: imageSrcSet", () => {
     expect(card).not.toHaveProperty("imageSrcSet");
   });
 
-  test("a source of 480 px or less (a row without slots) carries the original only", async () => {
+  test("a source with nothing smaller to offer (a row without slots) carries the original only", async () => {
     const t = convexTest(schema, modules);
     const { image } = await seed(t, null, "noSlots");
 
@@ -178,31 +201,42 @@ describe("public catalogue cards: imageSrcSet", () => {
     expect(card).not.toHaveProperty("imageSrcSet");
   });
 
-  test("a source between 480 and 960 px offers the 480 rendition and the original", async () => {
+  test("a source narrower than 960 px offers a WebP at its own width instead of the original", async () => {
     const t = convexTest(schema, modules);
-    const { image, small } = await seed(t, null, "smallOnly");
-    const imageUrl = await urlOf(t, image);
+    const { image, small, medium, large } = await seed(t, null, "ownWidth");
+
+    const card = await catalogCard(t);
+    expect(card.image).toBe(await urlOf(t, image));
+    expect(card.imageSrcSet).toBe(
+      `${await urlOf(t, small!)} 480w, ${await urlOf(t, medium!)} 640w, ${await urlOf(t, large!)} 833w`,
+    );
+  });
+
+  test("a source whose 960 px WebP came out no smaller offers the original above 640 px", async () => {
+    const t = convexTest(schema, modules);
+    const { image, small, medium } = await seed(t, null, "notSmaller");
 
     const card = await catalogCard(t);
     expect(card.imageSrcSet).toBe(
-      `${await urlOf(t, small!)} 480w, ${imageUrl} 700w`,
+      `${await urlOf(t, small!)} 480w, ${await urlOf(t, medium!)} 640w, ${await urlOf(t, image)} 1000w`,
     );
   });
 
   test("a rendition blob that is gone is left out of the srcSet", async () => {
     const t = convexTest(schema, modules);
-    const { image, small, medium } = await seed(t, null, "both");
+    const { image, small, medium, large } = await seed(t, null, "all");
     const imageUrl = await urlOf(t, image);
-    const mediumUrl = await urlOf(t, medium!);
     await t.run((ctx) => ctx.storage.delete(small!));
 
     const card = await catalogCard(t);
-    expect(card.imageSrcSet).toBe(`${mediumUrl} 960w, ${imageUrl} 1600w`);
+    expect(card.imageSrcSet).toBe(
+      `${await urlOf(t, medium!)} 640w, ${await urlOf(t, large!)} 960w, ${imageUrl} 1600w`,
+    );
   });
 
   test("the response carries URLs only, never a source or rendition storage id", async () => {
     const t = convexTest(schema, modules);
-    const { image, small, medium } = await seed(t, null, "both");
+    const { image, small, medium, large } = await seed(t, null, "all");
 
     const raw = JSON.stringify(
       await t.query(api.catalog.browsePublicCatalog.browsePublicCatalog, {
@@ -210,7 +244,9 @@ describe("public catalogue cards: imageSrcSet", () => {
       }),
     );
     expect(raw).toContain("480w");
-    for (const id of [image, small!, medium!]) expect(raw).not.toContain(id);
+    for (const id of [image, small!, medium!, large!]) {
+      expect(raw).not.toContain(id);
+    }
   });
 });
 
@@ -219,7 +255,7 @@ describe("landing plank: thumbUrl", () => {
     "served box art with renditions: %s",
     async (_n, listing) => {
       const t = convexTest(schema, modules);
-      const { image, small } = await seed(t, listing, "both");
+      const { image, small } = await seed(t, listing, "all");
 
       const box = await plankBox(t);
       expect(box.image).toBe(await urlOf(t, image));
@@ -231,7 +267,7 @@ describe("landing plank: thumbUrl", () => {
     "box art the gate withholds has no image and no thumbUrl, even with renditions: %s",
     async (_n, listing) => {
       const t = convexTest(schema, modules);
-      await seed(t, listing, "both");
+      await seed(t, listing, "all");
 
       const box = await plankBox(t);
       expect(box.image).toBeNull();
@@ -253,7 +289,7 @@ describe("landing plank: thumbUrl", () => {
 
   test("the response carries URLs only, never a source or rendition storage id", async () => {
     const t = convexTest(schema, modules);
-    const { image, small, medium } = await seed(t, null, "both");
+    const { image, small, medium, large } = await seed(t, null, "all");
 
     const raw = JSON.stringify(
       await t.query(api.insights.getPlankPuzzles.getPlankPuzzles, {
@@ -262,6 +298,8 @@ describe("landing plank: thumbUrl", () => {
       }),
     );
     expect(raw).toContain("thumbUrl");
-    for (const id of [image, small!, medium!]) expect(raw).not.toContain(id);
+    for (const id of [image, small!, medium!, large!]) {
+      expect(raw).not.toContain(id);
+    }
   });
 });

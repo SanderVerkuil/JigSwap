@@ -90,7 +90,7 @@ export interface OwnedCopyView {
    */
   coverUrl?: string | null;
   /**
-   * `srcset` for the card cover: the box art's 480/960 px renditions and its original, as URLs.
+   * `srcset` for the card cover: its 480/640/960 px WebP renditions and its original, as URLs.
    * Set by the reads a card grid renders (`library.ownedByOwner`, `library.browseOwned`,
    * `collections.byId`, `household.copies`, `social.profileCopies`), and only once the cover has
    * renditions; show `coverUrl` alone without it.

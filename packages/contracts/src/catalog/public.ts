@@ -19,8 +19,8 @@ export interface PublicCatalogCardView {
   pieceCount: number;
   difficulty?: PuzzleDifficulty;
   image: string | null;
-  /** `srcset` for the box art: its 480/960 px renditions and the original (`image`), as URLs.
-   *  Absent until renditions exist; show `image` alone then. */
+  /** `srcset` for the box art: its 480/640/960 px WebP renditions and the original (`image`),
+   *  as URLs. Absent until renditions exist; show `image` alone then. */
   imageSrcSet?: string;
   rating: { value: number; count: number };
   /** PublicAvailabilityView.total, denormalized for the card's "N to swap" badge. */
