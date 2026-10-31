@@ -3321,11 +3321,11 @@
         "label": "Dimensions",
         "width": {
           "label": "Width",
-          "placeholder": "Enter width"
+          "placeholder": "Width"
         },
         "height": {
           "label": "Height",
-          "placeholder": "Enter height"
+          "placeholder": "Height"
         },
         "unit": {
           "label": "Unit",

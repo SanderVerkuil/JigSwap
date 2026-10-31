@@ -252,7 +252,7 @@ export function PuzzleDefinitionFields({
         <div className="flex flex-wrap items-center gap-2">
           <Input
             aria-label={tf("dimensions.width.label")}
-            className="w-24"
+            className="w-28"
             type="number"
             value={form.dimensions.width}
             onChange={(e) =>
@@ -263,7 +263,7 @@ export function PuzzleDefinitionFields({
           <span className="text-muted-foreground">×</span>
           <Input
             aria-label={tf("dimensions.height.label")}
-            className="w-24"
+            className="w-28"
             type="number"
             value={form.dimensions.height}
             onChange={(e) =>

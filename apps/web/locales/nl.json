@@ -3321,11 +3321,11 @@
         "label": "Afmetingen",
         "width": {
           "label": "Breedte",
-          "placeholder": "Voer breedte in"
+          "placeholder": "Breedte"
         },
         "height": {
           "label": "Hoogte",
-          "placeholder": "Voer hoogte in"
+          "placeholder": "Hoogte"
         },
         "unit": {
           "label": "Eenheid",
