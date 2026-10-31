@@ -2487,6 +2487,8 @@
       "noCopies": "Your library is empty. Add puzzles to share them here.",
       "loadError": "Couldn't load your puzzles.",
       "shared": "Shared",
+      "willShare": "Will be shared",
+      "willUnshare": "Will stop being shared",
       "notOffered": "Not offered: members won't see it",
       "private": "Private: members won't see it",
       "shareCount": "{count, plural, one {Share # puzzle} other {Share # puzzles}}",

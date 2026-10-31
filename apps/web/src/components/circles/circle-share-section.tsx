@@ -130,7 +130,9 @@ export function CircleShareSection({
     );
   } else {
     body = (
-      <Command className="rounded-lg border">
+      // cmdk keeps one row highlighted for the keyboard; while the list has no focus that
+      // highlight would read as a selection, so it only shows on focus or hover.
+      <Command className="rounded-lg border [&:not(:focus-within)_[data-selected=true]:not(:hover)]:bg-transparent [&:not(:focus-within)_[data-selected=true]:not(:hover)]:text-foreground">
         <CommandInput
           placeholder={t("share.searchPlaceholder")}
           aria-label={t("share.searchPlaceholder")}
@@ -147,6 +149,15 @@ export function CircleShareSection({
               const sharedNow = sharedIds.has(id);
               const checked = staged.get(id) ?? sharedNow;
               const hidden = circleHiddenReason(copy);
+              // What the row is now, or what saving will do to it.
+              const status =
+                checked === sharedNow
+                  ? sharedNow
+                    ? "shared"
+                    : null
+                  : checked
+                    ? "willShare"
+                    : "willUnshare";
               return (
                 <CommandItem
                   key={id}
@@ -157,13 +168,18 @@ export function CircleShareSection({
                   onSelect={() =>
                     setStaged((current) => toggleStaged(current, id, sharedNow))
                   }
-                  className="min-h-11 items-start gap-3 py-2"
+                  // A row with a status line keeps its box on the title's line.
+                  className={cn(
+                    "min-h-11 gap-3 py-2",
+                    status || hidden ? "items-start" : "items-center",
+                  )}
                 >
                   <span
                     aria-hidden
                     data-state={checked ? "checked" : "unchecked"}
                     className={cn(
-                      "border-input mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-[4px] border shadow-xs",
+                      "border-input flex size-4 shrink-0 items-center justify-center rounded-[4px] border shadow-xs",
+                      (status || hidden) && "mt-0.5",
                       checked &&
                         "border-primary bg-primary text-primary-foreground",
                     )}
@@ -172,11 +188,11 @@ export function CircleShareSection({
                   </span>
                   <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <span className="truncate">{title}</span>
-                    {(sharedNow || hidden) && (
+                    {(status || hidden) && (
                       <span className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
-                        {sharedNow && (
+                        {status && (
                           <span className="text-foreground font-medium">
-                            {t("share.shared")}
+                            {t(`share.${status}`)}
                           </span>
                         )}
                         {hidden && (

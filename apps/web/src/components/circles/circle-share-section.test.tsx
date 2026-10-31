@@ -192,6 +192,22 @@ describe("CircleShareSection", () => {
     );
   });
 
+  it("says what saving will do to each changed row", () => {
+    renderSection();
+
+    fireEvent.click(option("Lighthouse"));
+    fireEvent.click(option("Wasgij"));
+    expect(option("Lighthouse").textContent).toContain(
+      en.circles.share.willShare,
+    );
+    expect(option("Wasgij").textContent).toContain(
+      en.circles.share.willUnshare,
+    );
+    expect(option("Wasgij").textContent).not.toContain(
+      `${en.circles.share.shared}${en.circles.share.willUnshare}`,
+    );
+  });
+
   it("ticking a copy back drops the change, and Clear drops them all", () => {
     renderSection();
 
