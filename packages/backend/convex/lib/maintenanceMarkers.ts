@@ -5,9 +5,9 @@ import type { MutationCtx, QueryCtx } from "../_generated/server";
 // thing done; readers treat a missing marker as "not yet".
 //
 // - legacyCompletionSidecars: solving/backfillLegacyCompletionSidecars finished a real run over
-//   the whole completions table and found no completion without an aggregateId, so every
-//   completion photo has its completionImages sidecar and blob references see it. The storage
-//   sweep (lib/storage/storageSweep) deletes nothing before this exists.
+//   the whole completions table and found no photo on a completion without an aggregateId, so
+//   every completion photo has its completionImages sidecar and blob references see it. The
+//   storage sweep (lib/storage/storageSweep) deletes nothing before this exists.
 export type MaintenanceMarker = "legacyCompletionSidecars";
 
 const markerRow = (ctx: QueryCtx, name: MaintenanceMarker) =>

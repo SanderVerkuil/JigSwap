@@ -655,15 +655,17 @@ the re-screen would create (`completionId`, `uploaderId` = the completion's memb
 `createdAt`, `updatedAt`; no moderation status and no hash-check fields). Every read model serves
 such a row exactly like the photo without one, so nothing changes for members; the re-screen
 still classifies the photo. Photos that already have a sidecar are left alone. A completion
-without an `aggregateId` cannot have a sidecar: its photos are only counted.
+without an `aggregateId` cannot have a sidecar: it is counted (`without_aggregate_id`) and so are
+its photos (`photos_without_aggregate_id`).
 
 `dryRun` **defaults to true**: without `"dryRun":false` it only counts.
 
 A real run that starts at the beginning of the table (no `cursor` passed) and ends with
-`without_aggregate_id` and `photos_without_aggregate_id` both 0 records a
-`legacyCompletionSidecars` row in `maintenanceMarkers` (its final event shows
-`"marker_recorded":true`). The storage sweep stays a dry run until that row exists, even when
-`STORAGE_GC_MODE` is `delete` (photo-moderation.md, "Storage sweep").
+`photos_without_aggregate_id` 0 records a `legacyCompletionSidecars` row in `maintenanceMarkers`
+(its final event shows `"marker_recorded":true`). A completion without an `aggregateId` and
+without photos holds no blob, so it does not stop the marker. The storage sweep stays a dry run
+until that row exists, even when `STORAGE_GC_MODE` is `delete` (photo-moderation.md, "Storage
+sweep").
 
 **Safe to re-run:** yes. A second real run creates 0 sidecars.
 
@@ -692,9 +694,18 @@ event with `"done":true` carries the whole run. Follow it with `npx convex logs`
 1. The real run's final `created` matches the dry run's (give or take photos attached in
    between, which get their sidecar at attach time).
 2. Run the dry run again: its final event shows `"created":0`.
-3. Note `without_aggregate_id` and `photos_without_aggregate_id`. Both must be 0 before the
-   storage sweep may delete blobs; anything else needs a decision about those completions first.
-   The real run's final event shows `"marker_recorded":true` exactly when both were 0.
+3. Note `without_aggregate_id` and `photos_without_aggregate_id`. `photos_without_aggregate_id`
+   must be 0 before the storage sweep may delete blobs; the real run's final event shows
+   `"marker_recorded":true` exactly when it was. If it is not 0, run
+   `solving/backfill:backfillSolving` (it stamps an `aggregateId` on every completion and goal
+   that lacks one, and skips rows that have one), then this backfill again, dry run and then real:
+
+   ```bash
+   npx convex run solving/backfill:backfillSolving '{}'   # add --prod for prod
+   ```
+
+   `without_aggregate_id` alone (completions without photos) does not block the sweep.
+
 4. Spot-check an old completion with photos: its photos still show on the member's profile and
    in their completion history.
 

@@ -170,19 +170,20 @@ decision, made in the Convex dashboard (**Settings → Environment Variables**) 
 
 Delete mode also needs the legacy completion photos backfilled, and the code enforces it: until
 `solving/backfillLegacyCompletionSidecars` has finished a real run over the whole table with no
-completion lacking an `aggregateId` (precondition 1 below), the sweep stays a dry run even when
-`STORAGE_GC_MODE` is `delete`, and every `storage.sweep` event carries
+photo on a completion lacking an `aggregateId` (precondition 1 below), the sweep stays a dry run
+even when `STORAGE_GC_MODE` is `delete`, and every `storage.sweep` event carries
 `"delete_blocked":"legacy_completion_sidecars_not_backfilled"`. That run records a
 `legacyCompletionSidecars` row in the `maintenanceMarkers` table, and the sweep looks for it.
 
 **Before switching to delete mode** (on each deployment, dev first):
 
 1. `solving/backfillLegacyCompletionSidecars` has run for real, and a fresh dry run of it reports
-   `"created":0`, `"without_aggregate_id":0` and `"photos_without_aggregate_id":0`
-   (one-shot-migrations.md). Until then a completion photo stored before the sidecars existed is
-   held only by the unindexable `completions.photos` array, so the sweep sees its blob as held by
-   nothing and would **delete a member's photo**. (The sweep refuses delete mode until the real
-   run has recorded its marker; see above.)
+   `"created":0` and `"photos_without_aggregate_id":0` (one-shot-migrations.md; if the second is
+   not 0, run `solving/backfill:backfillSolving` first, then the backfill again). Until then a
+   completion photo stored before the sidecars existed is held only by the unindexable
+   `completions.photos` array, so the sweep sees its blob as held by nothing and would **delete a
+   member's photo**. (The sweep refuses delete mode until the real run has recorded its marker;
+   see above.)
 2. `blobReferences.test.ts` is green on the code being deployed: every `v.id("_storage")` field in
    the schema is registered as a blob reference or reviewed as not one. A new storage-id field (for
    example image renditions) must be registered before the sweep may delete.

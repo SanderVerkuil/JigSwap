@@ -244,6 +244,25 @@ describe("solving/backfillLegacyCompletionSidecars", () => {
     expect(await backfilled(t)).toBe(true);
   });
 
+  test("a completion without an aggregateId and without photos does not hold up the marker", async () => {
+    const t = convexTest(schema, modules);
+    const { stampless } = await seed(t);
+    // The stampless completion loses its photo: it can hold no blob, so nothing stays invisible.
+    await t.run(async (ctx) => {
+      const rows = await ctx.db.query("completions").collect();
+      const row = rows.find((c) => c.photos.includes(stampless))!;
+      await ctx.db.patch(row._id, { photos: [] });
+    });
+
+    const totals = await runAll(t, { dryRun: false });
+    expect(totals).toMatchObject({
+      without_aggregate_id: 1,
+      photos_without_aggregate_id: 0,
+      marker_recorded: true,
+    });
+    expect(await backfilled(t)).toBe(true);
+  });
+
   test("a run started part-way through the table does not record it", async () => {
     const t = convexTest(schema, modules);
     await seed(t);

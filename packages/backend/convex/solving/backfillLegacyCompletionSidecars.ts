@@ -40,13 +40,16 @@ const NO_TOTALS: Totals = {
 // alone.
 //
 // A completion without an aggregateId cannot hold a sidecar (completionImages.completionId is the
-// aggregate id): its photos are counted (`photosWithoutAggregateId`) and stay invisible to blob
-// references. Both counts must be 0 before the storage sweep may delete.
+// aggregate id): it is counted (`withoutAggregateId`) and its photos are counted
+// (`photosWithoutAggregateId`); those photos stay invisible to blob references. The remedy is
+// solving/backfill:backfillSolving, which stamps the missing aggregateIds; then run this again. A
+// completion without photos holds no blob, so only `photosWithoutAggregateId` must be 0 before
+// the storage sweep may delete.
 //
-// A real run that started at the beginning of the table and ends with both counts at 0 records
-// the `legacyCompletionSidecars` maintenance marker (lib/maintenanceMarkers): every completion
-// photo then has its sidecar (new ones get theirs at attach time), and the storage sweep stays a
-// dry run until that marker exists, whatever STORAGE_GC_MODE says.
+// A real run that started at the beginning of the table and ends with `photosWithoutAggregateId`
+// at 0 records the `legacyCompletionSidecars` maintenance marker (lib/maintenanceMarkers): every
+// completion photo then has its sidecar (new ones get theirs at attach time), and the storage
+// sweep stays a dry run until that marker exists, whatever STORAGE_GC_MODE says.
 //
 // `dryRun` DEFAULTS TO TRUE: it only counts. Pages `completions` and reschedules itself until
 // done; every batch logs the running totals, the last one with `done: true`.
@@ -93,12 +96,12 @@ export const backfillLegacyCompletionSidecars = internalMutation({
       }
     }
 
-    // Every photo of the whole table now has its sidecar: the storage sweep may delete.
+    // Every photo of the whole table now has its sidecar: the storage sweep may delete. A
+    // completion without an aggregateId and without photos holds no blob, so it does not count.
     const covered =
       !dryRun &&
       fromStart &&
       page.isDone &&
-      totals.withoutAggregateId === 0 &&
       totals.photosWithoutAggregateId === 0;
     if (covered) {
       await recordMaintenanceMarker(ctx, "legacyCompletionSidecars");
