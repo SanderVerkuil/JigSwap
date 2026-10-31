@@ -16,10 +16,14 @@ function SignUpPage() {
   return (
     <AuthShell>
       {/* Explicit redirect_url query params (set by lib/require-auth.ts) still
-          win; this only changes the no-param fallback from / to /dashboard. */}
+          win; this only changes the no-param fallback from / to /dashboard.
+          signInUrl keeps the card's footer link on our own sign-in page;
+          without it Clerk links to the instance's hosted Account Portal,
+          which has no way back to JigSwap. */}
       <SignUp
         appearance={{ elements: { rootBox: "mx-auto", card: "shadow-lg" } }}
         fallbackRedirectUrl="/dashboard"
+        signInUrl="/sign-in"
       />
     </AuthShell>
   );
