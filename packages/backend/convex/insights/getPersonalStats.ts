@@ -4,11 +4,12 @@ import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 
 // Bound for every per-member read behind the Insights queries (personal stats, completion trends,
-// collection breakdown, trade activity, recommendation signals): the same 5000 as
-// identity/getUserStats' STATS_COLLECTION_CAP. No real member comes close; past it the numbers
-// undercount rather than the read failing. Where a time window matters (trends, trade activity by
-// month) the newest rows are the ones kept.
-export const INSIGHTS_READ_CAP = 5000;
+// collection breakdown, trade activity, recommendation signals). The bound is per read, and
+// getPersonalStats makes eight of them, so the cap is sized for that query's total: 8 x 3000 plus
+// the member row stays under Convex's 32,000 documents scanned per function. No real member comes
+// close; past it the numbers undercount rather than the read failing. Where a time window matters
+// (trends, trade activity by month) the newest rows are the ones kept.
+export const INSIGHTS_READ_CAP = 3000;
 
 // Insights read query (thin adapter): fetch the acting member's rows and apply the pure
 // computePersonalStats projection. No write model, no mutations — Insights is read-only.

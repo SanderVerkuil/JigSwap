@@ -88,7 +88,18 @@ const monthKey = (epochMs: number) => {
   return `${d.getUTCFullYear()}-${`${d.getUTCMonth() + 1}`.padStart(2, "0")}`;
 };
 
+// Convex's documented per-function limit on documents scanned by one query or mutation.
+const CONVEX_DOCUMENTS_SCANNED_LIMIT = 32_000;
+
 describe("insights reads are bounded at INSIGHTS_READ_CAP (PERF-B13)", () => {
+  test("getPersonalStats' worst case stays under Convex's per-function document limit", () => {
+    // Eight capped reads (completions, copies, collections, exchanges as initiator and as
+    // recipient, reviews received, puzzle reviews, goals) plus the member row.
+    expect(8 * INSIGHTS_READ_CAP + 1).toBeLessThanOrEqual(
+      CONVEX_DOCUMENTS_SCANNED_LIMIT,
+    );
+  });
+
   test("getPersonalStats counts at most INSIGHTS_READ_CAP rows per table", async () => {
     const t = convexTest(schema, modules);
     const s = await seedMember(t);
