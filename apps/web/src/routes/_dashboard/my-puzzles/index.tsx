@@ -2,7 +2,6 @@ import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
 import { RecallLoanButton } from "@/components/copies/recall-loan-button";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
-import { useShortcutHint } from "@/components/dashboard-layout/shortcut-hint";
 import { CopyOwnerLine } from "@/components/household/copy-owner-line";
 import {
   useCopyCardActions,
@@ -10,6 +9,17 @@ import {
 } from "@/components/library/copy-card-actions";
 import { EmptyState } from "@/components/library/empty-state";
 import { FilterBar, FilterOption } from "@/components/library/filter-bar";
+import { LibrarySearchInput } from "@/components/library/library-search-input";
+import {
+  filterAndSortCopies,
+  filtersFromSearch,
+  MAX_SEARCH_LENGTH,
+  validateMyPuzzlesSearch,
+  type MyPuzzlesOwner,
+  type MyPuzzlesSearch,
+  type MyPuzzlesSort,
+  type MyPuzzlesStatus,
+} from "@/components/library/my-puzzles-filters";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,9 +44,10 @@ import { pageTitle } from "@/lib/page-title";
 import { convexQuery } from "@convex-dev/react-query";
 import type { LoanView } from "@jigswap/contracts";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   ArrowRight,
+  ArrowUpDown,
   Grid,
   House,
   Lightbulb,
@@ -46,9 +57,12 @@ import {
   X,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useTranslations } from "use-intl";
+import { useLocale, useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/my-puzzles/")({
+  // View, status pill, whose copies, search and sort live in the URL (defaults omitted), so Back
+  // from a copy, a reload or a shared link shows the same list.
+  validateSearch: validateMyPuzzlesSearch,
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "myPuzzles") }],
   }),
@@ -60,11 +74,6 @@ function PuzzlesPending() {
   const t = useTranslations("puzzles");
   return <PageLoading message={t("loadingPuzzles")} />;
 }
-
-// Status pills mapped onto what the data actually carries: the availability
-// flags on each owned copy, and the member's solve log for progress states.
-type StatusFilter =
-  "all" | "available" | "forTrade" | "forLend" | "inProgress" | "completed";
 
 function PuzzlesGridSkeleton() {
   return (
@@ -131,16 +140,21 @@ function ActionsCoachmark() {
 function PuzzlesPage() {
   const { user } = useUser();
   const t = useTranslations("puzzles");
+  const locale = useLocale();
   const displayName = useMemberDisplayName();
   const tLending = useTranslations("lending");
-  const shortcut = useShortcutHint();
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  // Whose copies to show when the viewer is in a household: everything, only their own, or only
-  // the ones that come through a household member.
-  const [ownerFilter, setOwnerFilter] = useState<"all" | "mine" | "household">(
-    "all",
-  );
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const viewMode = search.view ?? "grid";
+  const filters = filtersFromSearch(search);
+  // Every control writes its value into the URL (a default clears its key). Replace, not push:
+  // changing a filter is not a new page, so Back still leaves My Puzzles in one step.
+  const setSearch = (patch: Partial<MyPuzzlesSearch>) =>
+    void navigate({
+      search: (prev) => validateMyPuzzlesSearch({ ...prev, ...patch }),
+      replace: true,
+      resetScroll: false,
+    });
   const { data: convexUser } = useQuery(
     convexQuery(
       gateway.identity.byClerkId,
@@ -201,7 +215,7 @@ function PuzzlesPage() {
   const borrowerName = (loan: LoanView) =>
     loan.borrower ? displayName(loan.borrower) : tLending("deletedMember");
 
-  const filterOptions: FilterOption<StatusFilter>[] = [
+  const filterOptions: FilterOption<MyPuzzlesStatus>[] = [
     { value: "all", label: t("filters.all") },
     { value: "available", label: t("filters.available") },
     { value: "forTrade", label: t("filters.forTrade") },
@@ -210,34 +224,24 @@ function PuzzlesPage() {
     { value: "completed", label: t("filters.completed") },
   ];
 
-  // Free-text search now lives in the global ⌘K palette; this page narrows only by status. The
-  // status pill maps onto the copy's availability flags or its solve state.
-  const filteredownedPuzzles = allCopies.filter((puzzle) => {
-    const viaHousehold = householdAccessById.has(puzzle._id);
-    if (ownerFilter === "mine" && viaHousehold) return false;
-    if (ownerFilter === "household" && !viaHousehold) return false;
-    if (statusFilter === "all") return true;
-    const { forTrade, forLend, forSale } = puzzle.availability;
-    if (statusFilter === "available") return forTrade || forLend || forSale;
-    if (statusFilter === "forTrade") return forTrade;
-    if (statusFilter === "forLend") return forLend;
-    const solveState = solveStateByCopyId.get(puzzle._id);
-    if (statusFilter === "inProgress") return solveState?.inProgress ?? false;
-    return solveState?.completed ?? false;
+  const filteredownedPuzzles = filterAndSortCopies(allCopies, filters, {
+    viaHousehold: (copyId) => householdAccessById.has(copyId),
+    solveState: (copyId) => solveStateByCopyId.get(copyId),
+    locale,
   });
 
   // The filters narrowing the list right now, named as their controls name them, so an empty result
   // says what excluded everything (and Show all can undo it) instead of "add your first puzzle".
   const activeFilterLabels = [
-    statusFilter !== "all"
-      ? filterOptions.find((option) => option.value === statusFilter)?.label
+    filters.q || undefined,
+    filters.status !== "all"
+      ? filterOptions.find((option) => option.value === filters.status)?.label
       : undefined,
-    ownerFilter !== "all" ? t(`ownerFilter.${ownerFilter}`) : undefined,
+    filters.owner !== "all" ? t(`ownerFilter.${filters.owner}`) : undefined,
   ].filter((label): label is string => Boolean(label));
-  const showAll = () => {
-    setStatusFilter("all");
-    setOwnerFilter("all");
-  };
+  // Clears what narrows the list (search, status, whose); the view and the sort stay as chosen.
+  const showAll = () =>
+    setSearch({ q: undefined, status: undefined, owner: undefined });
 
   // The page title lives in the shell page head; publish the actions there so the
   // page body carries no duplicate header. The count lives beside the filters. Secondary
@@ -294,43 +298,50 @@ function PuzzlesPage() {
       {/* One-time coachmark: points users at the ⋯ overflow menu on each card */}
       <ActionsCoachmark />
 
-      {/* Toolbar: a muted search hint on the left, view toggle on the right. Free-text search moved
-          to the global ⌘K palette; the Add Puzzle action lives in the shell page head. */}
-      <div className="flex flex-wrap items-center gap-3">
-        {myHousehold ? (
-          <Link
-            href="/household"
-            className="text-muted-foreground hover:text-foreground inline-flex min-w-0 items-center gap-1.5 text-sm underline-offset-4 hover:underline pointer-coarse:min-h-11"
-          >
-            <House className="size-4 shrink-0" aria-hidden />
-            <span className="min-w-0 truncate">
-              {myHousehold.name
-                ? t("householdPointerNamed", { name: myHousehold.name })
-                : t("householdPointer")}
-            </span>
-            <ArrowRight className="size-3.5 shrink-0" aria-hidden />
-          </Link>
-        ) : shortcut ? (
-          <p className="text-muted-foreground hidden text-sm sm:block pointer-coarse:hidden">
-            {t("searchHint", { shortcut })}
-          </p>
-        ) : null}
-        <div className="ml-auto flex items-center gap-2">
+      {/* Every puzzle in the household lives on the household's Puzzles tab. */}
+      {myHousehold && (
+        <Link
+          href="/household"
+          className="text-muted-foreground hover:text-foreground inline-flex min-w-0 items-center gap-1.5 self-start text-sm underline-offset-4 hover:underline pointer-coarse:min-h-11"
+        >
+          <House className="size-4 shrink-0" aria-hidden />
+          <span className="min-w-0 truncate">
+            {myHousehold.name
+              ? t("householdPointerNamed", { name: myHousehold.name })
+              : t("householdPointer")}
+          </span>
+          <ArrowRight className="size-3.5 shrink-0" aria-hidden />
+        </Link>
+      )}
+
+      {/* Toolbar: search on the left; whose, sort and the view toggle on the right. On a phone the
+          search shares its row with the view toggle and the selects drop to a row of their own.
+          The Add Puzzle action lives in the shell page head. */}
+      <div className="flex flex-wrap items-center gap-2">
+        <LibrarySearchInput
+          value={filters.q}
+          onCommit={(q) => setSearch({ q: q || undefined })}
+          label={t("librarySearch.label")}
+          placeholder={t("librarySearch.placeholder")}
+          maxLength={MAX_SEARCH_LENGTH}
+          className="min-w-0 flex-1 basis-56 xl:max-w-sm"
+        />
+        <div className="order-last flex w-full flex-wrap items-center gap-2 sm:order-none sm:ml-auto sm:w-auto">
           {myHousehold && (
             <Select
-              value={ownerFilter}
-              onValueChange={(value: "all" | "mine" | "household") =>
-                setOwnerFilter(value)
+              value={filters.owner}
+              onValueChange={(value: MyPuzzlesOwner) =>
+                setSearch({ owner: value === "all" ? undefined : value })
               }
             >
               <SelectTrigger
-                className="pointer-coarse:min-h-11"
+                className="max-sm:flex-1 pointer-coarse:min-h-11"
                 aria-label={t("ownerFilter.label")}
               >
                 {/* Say what the select filters ("Whose: All"), so it doesn't read as a second "All"
                     beside the status pills. */}
                 <SelectValue>
-                  {t("ownerFilter.trigger", { owner: ownerFilter })}
+                  {t("ownerFilter.trigger", { owner: filters.owner })}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -342,11 +353,35 @@ function PuzzlesPage() {
               </SelectContent>
             </Select>
           )}
+          <Select
+            value={filters.sort}
+            onValueChange={(value: MyPuzzlesSort) =>
+              setSearch({ sort: value === "recent" ? undefined : value })
+            }
+          >
+            <SelectTrigger
+              className="max-sm:flex-1 pointer-coarse:min-h-11"
+              aria-label={t("sort.label")}
+            >
+              {/* Icon and value stay together on the left when the trigger stretches on a phone. */}
+              <span className="flex min-w-0 items-center gap-2">
+                <ArrowUpDown aria-hidden />
+                <SelectValue />
+              </span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="recent">{t("sort.recent")}</SelectItem>
+              <SelectItem value="title">{t("sort.title")}</SelectItem>
+              <SelectItem value="pieces">{t("sort.pieces")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2">
           <Button
             variant={viewMode === "grid" ? "secondary" : "ghost"}
             size="icon"
             aria-label={t("gridView")}
-            onClick={() => setViewMode("grid")}
+            onClick={() => setSearch({ view: undefined })}
           >
             <Grid className="h-4 w-4" />
           </Button>
@@ -354,7 +389,7 @@ function PuzzlesPage() {
             variant={viewMode === "list" ? "secondary" : "ghost"}
             size="icon"
             aria-label={t("listView")}
-            onClick={() => setViewMode("list")}
+            onClick={() => setSearch({ view: "list" })}
           >
             <List className="h-4 w-4" />
           </Button>
@@ -364,8 +399,10 @@ function PuzzlesPage() {
       {/* Status pills + result count */}
       <FilterBar
         options={filterOptions}
-        value={statusFilter}
-        onChange={setStatusFilter}
+        value={filters.status}
+        onChange={(status) =>
+          setSearch({ status: status === "all" ? undefined : status })
+        }
         count={t("resultCount", {
           count: filteredownedPuzzles.length,
           total: allCopies.length,

@@ -353,8 +353,18 @@
     "addFirstPuzzle": "Add your first puzzle to start trading.",
     "noMatch": {
       "title": "No puzzles match “{filters}”",
-      "sub": "Try a different filter, or show your whole library.",
+      "sub": "Try a different search or filter, or show your whole library.",
       "showAll": "Show all"
+    },
+    "librarySearch": {
+      "label": "Search your puzzles",
+      "placeholder": "Search title, brand or tag"
+    },
+    "sort": {
+      "label": "Sort by",
+      "recent": "Recently added",
+      "title": "Title A–Z",
+      "pieces": "Fewest pieces first"
     },
     "noImage": "No Image",
     "addPuzzleDescription": "Add a new puzzle to your collection",
@@ -514,7 +524,6 @@
       "completed": "Completed"
     },
     "resultCount": "{count} of {total} puzzles",
-    "searchHint": "Press {shortcut} to search puzzles, people and more",
     "householdPointer": "All puzzles in your household",
     "householdPointerNamed": "All puzzles in {name}",
     "gridView": "Grid view",

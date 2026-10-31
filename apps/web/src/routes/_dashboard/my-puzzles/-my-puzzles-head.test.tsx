@@ -18,7 +18,11 @@ import { Route } from "./index";
 // lives in that menu (the guided tour points at the ⋯ button) instead of taking a header slot.
 
 vi.mock("@tanstack/react-router", () => ({
-  createFileRoute: () => (options: object) => ({ options }),
+  createFileRoute: () => (options: object) => ({
+    options,
+    useSearch: () => ({}),
+  }),
+  useNavigate: () => vi.fn(),
 }));
 vi.mock("@/compat/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
