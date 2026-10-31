@@ -215,8 +215,8 @@ describe("exchange.propose reachability", () => {
         const s = await seed(t);
         // Without the block the shared circle would make the copy reachable, so the block alone
         // decides. canViewCopy already refuses a pair blocked either way (owner and holder
-        // excepted), so these two cases pin the observable answer; the holder case below is the
-        // one that exercises propose's own block check.
+        // excepted), so these two cases pin the observable answer; the holder cases below are the
+        // ones that reach propose's own block check.
         await shareViaCircle(t, s);
         await insertBlock(t, s, blocker);
         await t.run((ctx) => mkUser(ctx, "clerk_stranger"));
@@ -237,19 +237,48 @@ describe("exchange.propose reachability", () => {
         expect(rows).toHaveLength(0);
       });
     }
+  });
 
-    // The member holding the copy passes canViewCopy whatever the block, so propose checks the
-    // block separately after it, and answers it the same way.
-    test("even for the member holding the copy", async () => {
-      const t = convexTest(schema, modules);
-      const s = await seed(t);
-      await t.run((ctx) => ctx.db.patch(s.copy, { heldBy: s.requester }));
-      await insertBlock(t, s, "owner");
+  // The member holding the copy (its borrower) passes canViewCopy whatever the block, and always
+  // has a route, so a stranger is the wrong yardstick for them: a blocked holder must get exactly
+  // what the same holder gets without the block (SEC-85), whatever terms they send.
+  describe("the member holding the copy gets the same refusal blocked or not", () => {
+    const proposeAsHolder = (
+      t: TestConvex<typeof schema>,
+      s: Seeded,
+      salePrice: number,
+    ) =>
+      t
+        .withIdentity({ subject: "clerk_requester" })
+        .mutation(api.exchange.propose.propose, {
+          type: "sale",
+          requestedPuzzleId: s.copy,
+          salePrice,
+        });
 
-      await expectCode(propose(t, s), "CopyNotReachable");
-      const rows = await t.run((ctx) => ctx.db.query("exchanges").collect());
-      expect(rows).toHaveLength(0);
-    });
+    for (const blocker of ["owner", "requester"] as const) {
+      for (const [terms, salePrice, code] of [
+        ["valid", 10, "CopyNotAvailable"],
+        ["invalid", 0, "MissingTerms"],
+      ] as const) {
+        test(`blocked by the ${blocker}, ${terms} terms`, async () => {
+          const t = convexTest(schema, modules);
+          const s = await seed(t);
+          await t.run((ctx) => ctx.db.patch(s.copy, { heldBy: s.requester }));
+
+          const unblocked = await refusalOf(proposeAsHolder(t, s, salePrice));
+          await insertBlock(t, s, blocker);
+          const blocked = await refusalOf(proposeAsHolder(t, s, salePrice));
+
+          expect(unblocked.code).toBe(code);
+          expect(blocked).toEqual(unblocked);
+          const rows = await t.run((ctx) =>
+            ctx.db.query("exchanges").collect(),
+          );
+          expect(rows).toHaveLength(0);
+        });
+      }
+    }
   });
 });
 

@@ -7,7 +7,8 @@ import { cannotReplyError, toConvexError } from "../conversation/errors";
 // both ways, so gates ask "blocked either way" and refuse with the SAME generic error a lost
 // connection gets (NotConnected), never a block-specific one. Posting to an existing thread
 // refuses with the generic CannotReply instead (see assertThreadNotBlocked), and proposing an
-// exchange with the CopyNotReachable a copy without a route gets (exchange/propose.ts).
+// exchange with what the member would get without the block: the CopyNotReachable a copy without a
+// route gets, or for the member holding the copy the lent-out CopyNotAvailable (exchange/propose.ts).
 
 type Member = Id<"users"> | MemberId;
 const asUserId = (m: Member) => m as unknown as Id<"users">;
