@@ -16,7 +16,14 @@ import { ImageEditorDialog } from "./image-editor-dialog";
 // cropper is a stand-in whose bake is a fixed JPEG and whose frame can be
 // "dragged"; the canvas probe is mocked per test.
 
-const mocks = vi.hoisted(() => ({ trusted: vi.fn(() => true) }));
+const mocks = vi.hoisted(() => ({
+  trusted: vi.fn(() => true),
+  // What Apply asked the cropper's bake for.
+  getCanvas: vi.fn((_options?: object) => ({
+    toBlob: (resolve: BlobCallback) =>
+      resolve(new Blob(["baked"], { type: "image/jpeg" })),
+  })),
+}));
 
 vi.mock("@/lib/prepare-photo", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/prepare-photo")>()),
@@ -30,10 +37,7 @@ vi.mock("react-advanced-cropper", () => ({
   ) {
     useImperativeHandle(ref, () => ({
       rotateImage: () => {},
-      getCanvas: () => ({
-        toBlob: (resolve: BlobCallback) =>
-          resolve(new Blob(["baked"], { type: "image/jpeg" })),
-      }),
+      getCanvas: mocks.getCanvas,
     }));
     const { onReady } = props;
     useEffect(() => onReady?.(), [onReady]);
@@ -65,6 +69,7 @@ const apply = () =>
 
 beforeEach(() => {
   mocks.trusted.mockReturnValue(true);
+  mocks.getCanvas.mockClear();
   vi.stubGlobal(
     "fetch",
     vi.fn(async () => new Response(PNG)),
@@ -85,6 +90,21 @@ describe("ImageEditorDialog Apply", () => {
     const file = onApply.mock.calls[0][0] as File;
     expect(file.type).toBe("image/jpeg");
     expect(await file.text()).toBe("baked");
+  });
+
+  // The bake is the upload (copy photos, circle icons): it is held to the long edge every other
+  // photo upload has (lib/prepare-photo MAX_EDGE), which is also what the server re-encodes to,
+  // so a large original is neither refused for its pixels nor uploaded at a size that is thrown
+  // away.
+  it("bakes at most 1600 px on the long edge, aspect kept", async () => {
+    const onApply = vi.fn();
+    renderEditor(onApply);
+    apply();
+    await waitFor(() => expect(onApply).toHaveBeenCalled());
+    expect(mocks.getCanvas).toHaveBeenCalledWith({
+      maxWidth: 1600,
+      maxHeight: 1600,
+    });
   });
 
   it("hands back the original, typed by its bytes, for an unedited photo in a scrambling browser", async () => {

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { canvasCanBeTrusted, sniffedType } from "@/lib/prepare-photo";
+import { canvasCanBeTrusted, MAX_EDGE, sniffedType } from "@/lib/prepare-photo";
 import { RotateCw } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { Cropper, type CropperRef } from "react-advanced-cropper";
@@ -149,8 +149,13 @@ export function ImageEditorDialog({
     return new File([blob], fileName, { type: await sniffedType(blob) });
   };
 
+  // Baked at most MAX_EDGE on the long edge, aspect kept, like every other photo upload: the
+  // server stores no more than that, and refuses an original over its pixel cap.
   const bakedFile = async () => {
-    const canvas = cropperRef.current?.getCanvas();
+    const canvas = cropperRef.current?.getCanvas({
+      maxWidth: MAX_EDGE,
+      maxHeight: MAX_EDGE,
+    });
     if (!canvas) throw new Error("no canvas");
     const blob = await new Promise<Blob | null>((resolve) =>
       canvas.toBlob(resolve, "image/jpeg", 0.9),
