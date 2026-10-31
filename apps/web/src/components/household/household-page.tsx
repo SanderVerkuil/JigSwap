@@ -9,6 +9,7 @@ import { PersonRow, type Person } from "@/components/household/person-row";
 import { SwitchHouseholdDialog } from "@/components/household/switch-household-dialog";
 import { EmptyState } from "@/components/library/empty-state";
 import { MemberInitial } from "@/components/members/member-initial";
+import { GuideHelpButton } from "@/components/tour/guide-help-button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,6 +36,7 @@ import {
   TabCount,
   UNDERLINE_TABS_LIST_CLASS,
 } from "@/components/ui/underline-tabs";
+import { useTourLauncher } from "@/components/whats-new/tour-launcher";
 import { gateway, Id } from "@/gateway";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMemberDisplayName } from "@/lib/member-display-name";
@@ -230,24 +232,32 @@ export function HouseholdDetails({
   // (the top bar already carries the title), so there it heads the Members list instead, like
   // "add participants" in a phone's group chat. A household of one is also nudged to invite from
   // the default Puzzles tab. Only one Invite button exists at a time, so the tour finds the right one.
+  // The "?" starts the who-sees-what guide (its first step is this page's Access tab). From md it
+  // leads the page head's actions, as on Circles; on phones it ends the explainer above the tabs,
+  // for the same reason as Invite. Again one at a time, so the guide starts from a visible button.
   const inviteInMembers = isAdmin && isMobile;
+  const { startTour } = useTourLauncher();
   usePageHeader(
     () => ({
       // The household's own name, when the members gave it one, replaces the static title.
       title: household.name,
-      actions:
-        isAdmin && !isMobile ? (
-          <Button
-            variant="brand"
-            data-tour="household-invite"
-            onClick={() => setInviteOpen(true)}
-          >
-            <UserPlus aria-hidden className="size-4" />
-            {t("invite.action")}
-          </Button>
-        ) : undefined,
+      actions: isMobile ? undefined : (
+        <>
+          <GuideHelpButton tourId="who-sees-what" startTour={startTour} />
+          {isAdmin && (
+            <Button
+              variant="brand"
+              data-tour="household-invite"
+              onClick={() => setInviteOpen(true)}
+            >
+              <UserPlus aria-hidden className="size-4" />
+              {t("invite.action")}
+            </Button>
+          )}
+        </>
+      ),
     }),
-    [household.name, isAdmin, isMobile, t],
+    [household.name, isAdmin, isMobile, t, startTour],
   );
 
   // Never offer someone who is already a member or already has a pending invite.
@@ -267,6 +277,19 @@ export function HouseholdDetails({
           onError={onError}
         />
       ))}
+
+      {/* Who sees what in a household, whichever tab is open: the rules matter on every one of
+          them, and on phones there is no page subtitle to carry them. */}
+      <p className="text-muted-foreground max-w-2xl text-sm">
+        {t("explainer")}
+        {isMobile && (
+          // Inline after the last word, so it never takes a row of its own; the negative margin
+          // keeps the 32px button from stretching the 20px line.
+          <span className="ml-1 inline-flex -my-1.5 align-middle">
+            <GuideHelpButton tourId="who-sees-what" startTour={startTour} />
+          </span>
+        )}
+      </p>
 
       <Tabs
         value={activeTab}
@@ -412,10 +435,6 @@ export function HouseholdDetails({
         </TabsContent>
 
         <TabsContent value="settings" className="mt-4 flex flex-col gap-6">
-          <p className="text-muted-foreground max-w-2xl text-sm">
-            {t("explainer")}
-          </p>
-
           <HouseholdSettings
             isAdmin={isAdmin}
             name={household.name}

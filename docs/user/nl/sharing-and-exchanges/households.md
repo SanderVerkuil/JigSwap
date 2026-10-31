@@ -15,6 +15,11 @@ puzzelsessies blijven persoonlijk.
 vier tabbladen: **Puzzels**, **Leden**, **Toegang** en **Instellingen**. Hij
 opent op **Puzzels**.
 
+Boven de tabbladen staat in het kort wie wat ziet in een huishouden. De knop
+**?** (**Laat me zien hoe**) start de rondleiding **Wie ziet wat**. Op een
+computer of tablet staat hij in de paginakop, op een telefoon aan het eind van
+die tekst.
+
 ## Een huishouden aanmaken
 
 1. Open **Huishouden**.

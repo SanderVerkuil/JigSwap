@@ -14,6 +14,10 @@ owned by whoever added them, and solves stay personal.
 tabs: **Puzzles**, **Members**, **Access** and **Settings**. It opens on
 **Puzzles**.
 
+Above the tabs, a short note sums up who sees what in a household. The **?**
+button (**Show me how**) starts the **Who sees what** guide. On a computer or
+tablet it's in the page header; on a phone it's at the end of that note.
+
 ## Create a household
 
 1. Open **Household**.
