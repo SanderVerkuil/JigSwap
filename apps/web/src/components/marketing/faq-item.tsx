@@ -12,12 +12,14 @@ export function FaqItem({
   last?: boolean;
 }) {
   const [open, setOpen] = React.useState(false);
+  const answerId = React.useId();
   return (
     <div className={last ? "" : "border-b border-mk-border"}>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
+        aria-controls={answerId}
         className="w-full flex items-center justify-between gap-4 py-5 text-left cursor-pointer"
       >
         <span className="font-mk-heading font-semibold text-lg text-mk-text-strong">
@@ -30,7 +32,12 @@ export function FaqItem({
           <Plus size={20} />
         </span>
       </button>
+      {/* max-height animates the reveal but hides nothing from assistive tech
+          or the keyboard; inert (with aria-hidden for older browsers) does. */}
       <div
+        id={answerId}
+        inert={!open}
+        aria-hidden={open ? undefined : true}
         className="overflow-hidden transition-[max-height] duration-300 ease-mk-out"
         style={{ maxHeight: open ? 200 : 0 }}
       >
