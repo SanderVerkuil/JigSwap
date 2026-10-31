@@ -10,7 +10,7 @@ import {
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
-import { ExportButton } from "./export-button";
+import { ExportButton, ExportDataButton, useDataExport } from "./export-button";
 
 type PageArgs = { section: string; cursor: string | null };
 
@@ -18,38 +18,59 @@ const mocks = vi.hoisted(() => ({
   query: vi.fn<(ref: unknown, args: PageArgs) => Promise<unknown>>(),
   success: vi.fn(),
   error: vi.fn(),
+  downloads: [] as string[],
 }));
 
 vi.mock("convex/react", async (importOriginal) => ({
   ...(await importOriginal<typeof import("convex/react")>()),
   useConvex: () => ({ query: mocks.query }),
 }));
+
 vi.mock("sonner", () => ({
   toast: { success: mocks.success, error: mocks.error },
 }));
 
-// The downloaded file: captured from the object URL the button creates.
+// The downloaded file: captured from the object URL the export creates.
 let downloaded: Blob | null = null;
+
+const withIntl = (node: React.ReactNode) => (
+  <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+    {node}
+  </IntlProvider>
+);
+
+// A caller that runs the export from its own control, like the command palette does.
+function RunExport() {
+  const { exportData, busy } = useDataExport();
+  return (
+    <button type="button" disabled={busy} onClick={() => void exportData()}>
+      run
+    </button>
+  );
+}
 
 beforeEach(() => {
   downloaded = null;
   mocks.query.mockReset();
   mocks.success.mockReset();
   mocks.error.mockReset();
+  mocks.downloads = [];
   URL.createObjectURL = (file: Blob | MediaSource) => {
     downloaded = file as Blob;
     return "blob:export";
   };
   URL.revokeObjectURL = () => {};
+  // Record the download instead of letting the DOM navigate.
+  vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (
+    this: HTMLAnchorElement,
+  ) {
+    mocks.downloads.push(this.download);
+  });
 });
-afterEach(cleanup);
-
-const renderButton = () =>
-  render(
-    <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
-      <ExportButton />
-    </IntlProvider>,
-  );
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 const page = (rows: unknown[], isDone: boolean, continueCursor = "") => ({
   rows,
@@ -57,7 +78,7 @@ const page = (rows: unknown[], isDone: boolean, continueCursor = "") => ({
   continueCursor,
 });
 
-describe("ExportButton", () => {
+describe("useDataExport", () => {
   it("reads every section page by page to its end and downloads all of it", async () => {
     mocks.query.mockImplementation(async (_ref, { section, cursor }) => {
       if (section === "account") {
@@ -70,8 +91,8 @@ describe("ExportButton", () => {
       }
       return page([], true);
     });
-    renderButton();
-    fireEvent.click(screen.getByRole("button", { name: "Export my data" }));
+    render(withIntl(<RunExport />));
+    fireEvent.click(screen.getByRole("button", { name: "run" }));
 
     await waitFor(() => expect(mocks.success).toHaveBeenCalled());
     expect(mocks.success).toHaveBeenCalledWith(
@@ -97,16 +118,41 @@ describe("ExportButton", () => {
     }
     expect(file.goals).toEqual([{ id: "goal-1" }, { id: "goal-2" }]);
     expect(file.account).toEqual([{ user: { email: "me@example.com" } }]);
+    expect(mocks.downloads).toHaveLength(1);
+    expect(mocks.downloads[0]).toMatch(
+      /^jigswap-export-\d{4}-\d{2}-\d{2}\.json$/,
+    );
     expect(
-      (
-        screen.getByRole("button", {
-          name: "Export my data",
-        }) as HTMLButtonElement
-      ).disabled,
+      (screen.getByRole("button", { name: "run" }) as HTMLButtonElement)
+        .disabled,
     ).toBe(false);
   });
 
-  it("shows its progress while it reads and stays disabled", async () => {
+  it("reports a failed page and downloads nothing", async () => {
+    mocks.query.mockImplementation(async (_ref, { section }) => {
+      if (section === "messagesSent") throw new Error("boom");
+      return page([], true);
+    });
+    render(withIntl(<RunExport />));
+    fireEvent.click(screen.getByRole("button", { name: "run" }));
+
+    await waitFor(() =>
+      expect(mocks.error).toHaveBeenCalledWith(
+        "Could not export your data. Please try again.",
+      ),
+    );
+    expect(downloaded).toBeNull();
+    expect(mocks.downloads).toHaveLength(0);
+    expect(mocks.success).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "run" })).toHaveProperty(
+      "disabled",
+      false,
+    );
+  });
+});
+
+describe("ExportDataButton", () => {
+  it("shows its progress while it reads and can't be started twice", async () => {
     let release: () => void = () => {};
     const held = new Promise<void>((resolve) => {
       release = resolve;
@@ -115,7 +161,7 @@ describe("ExportButton", () => {
       if (section === "copies") await held;
       return page([], true);
     });
-    renderButton();
+    render(withIntl(<ExportDataButton />));
     fireEvent.click(screen.getByRole("button", { name: "Export my data" }));
 
     // "account" and "pushDevices" are read; "copies" is still loading.
@@ -125,23 +171,20 @@ describe("ExportButton", () => {
     expect((busy as HTMLButtonElement).disabled).toBe(true);
 
     release();
-    await waitFor(() => expect(mocks.success).toHaveBeenCalled());
+    await screen.findByRole("button", { name: "Export my data" });
+    expect(mocks.query).toHaveBeenCalledTimes(EXPORT_SECTIONS.length);
+    expect(mocks.downloads).toHaveLength(1);
   });
+});
 
-  it("reports a failed page and downloads nothing", async () => {
-    mocks.query.mockImplementation(async (_ref, { section }) => {
-      if (section === "messagesSent") throw new Error("boom");
-      return page([], true);
-    });
-    renderButton();
-    fireEvent.click(screen.getByRole("button", { name: "Export my data" }));
-
-    await waitFor(() =>
-      expect(mocks.error).toHaveBeenCalledWith(
-        "Could not export your data. Please try again.",
-      ),
-    );
-    expect(downloaded).toBeNull();
-    expect(mocks.success).not.toHaveBeenCalled();
+describe("ExportButton", () => {
+  it("keeps the Insights footer with its heading and the export action", () => {
+    render(withIntl(<ExportButton />));
+    expect(
+      screen.getByRole("heading", { name: "Export my data" }),
+    ).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: "Export my data" }),
+    ).toBeDefined();
   });
 });

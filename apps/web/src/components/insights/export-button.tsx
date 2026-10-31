@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
+import { cn } from "@/lib/utils";
 import {
   EXPORT_SECTIONS,
   type ExportPageView,
@@ -14,13 +15,17 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
-export function ExportButton() {
+// The member's data export: read every section to its end, download it all as a dated JSON file
+// and confirm with a toast. One implementation for every place that offers it (the Insights
+// footer, the Privacy & safety page and the command palette), so they all download the same
+// complete file.
+export function useDataExport() {
   const t = useTranslations("insights.export");
   const convex = useConvex();
   // The share of sections read so far (0-100) while an export runs; null when idle.
   const [progress, setProgress] = useState<number | null>(null);
 
-  const handleExport = async () => {
+  const exportData = async () => {
     setProgress(0);
     try {
       // One-shot fetches (not live subscriptions): the export is a snapshot the user downloads,
@@ -65,8 +70,31 @@ export function ExportButton() {
     }
   };
 
-  // Card-free closing row: a quiet hairline-topped footer with the snapshot
-  // download as a plain outline action.
+  return { exportData, busy: progress !== null, progress };
+}
+
+// The export as a plain outline action, disabled and showing how far it is while the file is being
+// prepared.
+export function ExportDataButton({ className }: { className?: string }) {
+  const t = useTranslations("insights.export");
+  const { exportData, busy, progress } = useDataExport();
+  return (
+    <Button
+      variant="outline"
+      onClick={exportData}
+      disabled={busy}
+      className={cn("pointer-coarse:min-h-11", className)}
+    >
+      <Download aria-hidden className="h-4 w-4" />
+      {progress === null ? t("button") : t("preparing", { percent: progress })}
+    </Button>
+  );
+}
+
+// Card-free closing row on Insights: a quiet hairline-topped footer with the snapshot
+// download as a plain outline action.
+export function ExportButton() {
+  const t = useTranslations("insights.export");
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 border-t pt-5">
       <div className="min-w-0">
@@ -75,16 +103,7 @@ export function ExportButton() {
           {t("description")}
         </p>
       </div>
-      <Button
-        variant="outline"
-        onClick={handleExport}
-        disabled={progress !== null}
-      >
-        <Download className="h-4 w-4" />
-        {progress === null
-          ? t("button")
-          : t("preparing", { percent: progress })}
-      </Button>
+      <ExportDataButton />
     </div>
   );
 }
