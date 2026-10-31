@@ -5745,6 +5745,7 @@
     "unblockError": "Couldn't unblock {name}. Please try again.",
     "unblockName": "Unblock {name}",
     "undo": "Undo",
+    "yourData": "Your data",
     "report": {
       "title": "Report {name}",
       "description": "Tell us what's wrong. Reports are private: only our moderators see them.",

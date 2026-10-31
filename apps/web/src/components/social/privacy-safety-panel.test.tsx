@@ -134,4 +134,30 @@ describe("PrivacySafetyPanel", () => {
     ).toBeTruthy();
     expect(screen.getByText("Je hebt niemand geblokkeerd.")).toBeTruthy();
   });
+
+  it("offers the data export under Your data", () => {
+    renderPanel([]);
+    const section = screen
+      .getByRole("heading", { name: "Your data" })
+      .closest("section");
+    expect(section).toBeTruthy();
+    expect(
+      within(section!).getByText(/Download a JSON copy of your puzzles/),
+    ).toBeTruthy();
+    expect(
+      within(section!).getByRole("button", { name: "Export my data" }),
+    ).toBeTruthy();
+  });
+
+  it("offers the data export in Dutch", () => {
+    renderPanel([], "nl");
+    const section = screen
+      .getByRole("heading", { name: "Je gegevens" })
+      .closest("section");
+    expect(
+      within(section!).getByRole("button", {
+        name: "Mijn gegevens exporteren",
+      }),
+    ).toBeTruthy();
+  });
 });
