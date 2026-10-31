@@ -184,7 +184,7 @@ function CollectionsPage() {
                     )}
                     <div className="mt-2.5 flex items-center gap-2">
                       <Badge variant="secondary">
-                        {collection.puzzleCount} {t("puzzles")}
+                        {t("puzzleCount", { count: collection.puzzleCount })}
                       </Badge>
                       {collection.isDefault && (
                         <Badge variant="outline">{t("default")}</Badge>

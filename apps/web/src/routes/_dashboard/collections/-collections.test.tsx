@@ -119,6 +119,15 @@ describe("collection tiles", () => {
     );
   });
 
+  it("count their puzzles with the right plural", () => {
+    renderPage([
+      collection("Cats", { puzzleCount: 1 }),
+      collection("Dogs", { puzzleCount: 2 }),
+    ]);
+    expect(screen.getByText("1 puzzle")).toBeTruthy();
+    expect(screen.getByText("2 puzzles")).toBeTruthy();
+  });
+
   it("give the default collection no Edit button", () => {
     renderPage([collection("Favourites", { isDefault: true })]);
     expect(screen.getByText("Favourites").closest("a")).toBeTruthy();
