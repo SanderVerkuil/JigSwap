@@ -55,6 +55,7 @@ describe("moderation activity messages", () => {
         "category_reactivated",
         "categories_reordered",
         "contact_message_handled",
+        "contact_message_reopened",
       ]),
     );
   });

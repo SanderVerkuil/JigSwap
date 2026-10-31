@@ -4910,7 +4910,8 @@
           "category_deactivated": "Category deactivated",
           "category_reactivated": "Category reactivated",
           "categories_reordered": "Categories reordered",
-          "contact_message_handled": "Contact message handled"
+          "contact_message_handled": "Contact message handled",
+          "contact_message_reopened": "Contact message reopened"
         },
         "deletedMemberTarget": "a deleted member",
         "definition_approved": "<actorLink>{actor}</actorLink> approved <targetLink>{target}</targetLink>",
@@ -4942,7 +4943,8 @@
         "category_deactivated": "<actorLink>{actor}</actorLink> deactivated the category <targetLink>{target}</targetLink>",
         "category_reactivated": "<actorLink>{actor}</actorLink> reactivated the category <targetLink>{target}</targetLink>",
         "categories_reordered": "<actorLink>{actor}</actorLink> reordered the catalog categories",
-        "contact_message_handled": "<actorLink>{actor}</actorLink> marked a contact message as handled"
+        "contact_message_handled": "<actorLink>{actor}</actorLink> marked a contact message as handled",
+        "contact_message_reopened": "<actorLink>{actor}</actorLink> moved a contact message back to New"
       },
       "activityEmpty": "No moderation activity yet.",
       "screening": {
@@ -5208,6 +5210,9 @@
       "markHandled": "Mark as handled",
       "markHandledSuccess": "Message marked as handled",
       "markHandledError": "Failed to update message",
+      "undo": "Undo",
+      "reopenSuccess": "Message moved back to New",
+      "reopenError": "Couldn't move the message back to New",
       "loadMore": "Load more"
     },
     "docFeedback": {

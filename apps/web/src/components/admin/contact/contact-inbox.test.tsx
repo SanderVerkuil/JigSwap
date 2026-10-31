@@ -174,7 +174,7 @@ describe("ContactInbox", () => {
     expect(href).toBe("mailto:a%3Fbcc%3Dx%2540evil.com@site.nl");
   });
 
-  it("marks a new message handled", async () => {
+  it("marks a new message handled and offers Undo, which puts it back to new", async () => {
     mocks.paginated.mockReturnValue(page([message()]));
     renderInbox();
     fireEvent.click(screen.getByRole("button", { name: "Mark as handled" }));
@@ -185,8 +185,42 @@ describe("ContactInbox", () => {
       ),
     );
     await waitFor(() =>
-      expect(mocks.toastSuccess.mock.lastCall?.[0]).toBe(
+      expect(mocks.toastSuccess).toHaveBeenCalledWith(
         "Message marked as handled",
+        expect.anything(),
+      ),
+    );
+
+    const undo = mocks.toastSuccess.mock.lastCall?.[1]?.action;
+    expect(undo?.label).toBe("Undo");
+    undo!.onClick();
+    await waitFor(() =>
+      expect(mocks.mutation).toHaveBeenLastCalledWith(
+        "contact/reopenContactMessage:reopenContactMessage",
+        { id: "m1" },
+      ),
+    );
+    await waitFor(() =>
+      expect(mocks.toastSuccess).toHaveBeenLastCalledWith(
+        "Message moved back to New",
+      ),
+    );
+  });
+
+  it("says when the undo fails (nl)", async () => {
+    mocks.paginated.mockReturnValue(page([message()]));
+    renderInbox({}, "nl");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Markeren als afgehandeld" }),
+    );
+    await waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalled());
+    const undo = mocks.toastSuccess.mock.lastCall?.[1]?.action;
+    expect(undo?.label).toBe("Ongedaan maken");
+    mocks.mutation.mockRejectedValue(new Error("boom"));
+    undo!.onClick();
+    await waitFor(() =>
+      expect(mocks.toastError).toHaveBeenCalledWith(
+        "Kon het bericht niet terugzetten naar Nieuw",
       ),
     );
   });

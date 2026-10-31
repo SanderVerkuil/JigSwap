@@ -59,6 +59,7 @@ const TARGET_KIND: Record<ModerationKind, ActivityTarget["kind"] | null> = {
   category_reactivated: null,
   categories_reordered: null,
   contact_message_handled: null,
+  contact_message_reopened: null,
 };
 
 // The row's target as a link, or null when it no longer exists (a deleted puzzle, member or

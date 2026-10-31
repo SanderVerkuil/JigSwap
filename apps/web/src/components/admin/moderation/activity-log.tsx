@@ -30,6 +30,7 @@ import {
   FolderPlus,
   ImageOff,
   MailCheck,
+  MailOpen,
   Pencil,
   RefreshCw,
   ShieldAlert,
@@ -82,6 +83,7 @@ const KIND_META: Record<ActivityKind, [LucideIcon, string]> = {
   category_reactivated: [Eye, "text-jigsaw-success"],
   categories_reordered: [ArrowUpDown, "text-muted-foreground"],
   contact_message_handled: [MailCheck, "text-muted-foreground"],
+  contact_message_reopened: [MailOpen, "text-muted-foreground"],
 };
 
 // Single source of truth for "kinds with an admin.moderation.activity.* message" (and an

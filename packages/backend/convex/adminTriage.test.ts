@@ -196,6 +196,53 @@ describe("contact/markContactMessageHandled", () => {
   });
 });
 
+describe("contact/reopenContactMessage", () => {
+  test("rejects an unauthenticated caller and a non-admin member", async () => {
+    const t = convexTest(schema, modules);
+    const { newer } = await seed(t);
+    await expect(
+      t.mutation(api.contact.reopenContactMessage.reopenContactMessage, {
+        id: newer,
+      }),
+    ).rejects.toBeInstanceOf(ConvexError);
+    await expect(
+      asMember(t).mutation(
+        api.contact.reopenContactMessage.reopenContactMessage,
+        { id: newer },
+      ),
+    ).rejects.toThrow(/Forbidden/);
+    const row = await t.run((ctx) => ctx.db.get(newer));
+    expect(row?.status).toBe("handled");
+  });
+
+  test("puts a handled message back to new for an admin (the Undo of mark as handled)", async () => {
+    const t = convexTest(schema, modules);
+    const { older } = await seed(t);
+    await asAdmin(t).mutation(
+      api.contact.markContactMessageHandled.markContactMessageHandled,
+      { id: older },
+    );
+    await asAdmin(t).mutation(
+      api.contact.reopenContactMessage.reopenContactMessage,
+      { id: older },
+    );
+    const row = await t.run((ctx) => ctx.db.get(older));
+    expect(row?.status).toBe("new");
+  });
+
+  test("refuses a message that no longer exists", async () => {
+    const t = convexTest(schema, modules);
+    const { older } = await seed(t);
+    await t.run((ctx) => ctx.db.delete(older));
+    await expect(
+      asAdmin(t).mutation(
+        api.contact.reopenContactMessage.reopenContactMessage,
+        { id: older },
+      ),
+    ).rejects.toThrow(/message_not_found/);
+  });
+});
+
 describe("docs/listDocFeedback", () => {
   test("rejects an unauthenticated caller", async () => {
     const t = convexTest(schema, modules);

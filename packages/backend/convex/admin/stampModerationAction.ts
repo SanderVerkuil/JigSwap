@@ -31,7 +31,8 @@ type ModerationKind =
   | "category_deactivated"
   | "category_reactivated"
   | "categories_reordered"
-  | "contact_message_handled";
+  | "contact_message_handled"
+  | "contact_message_reopened";
 
 /**
  * The stored targetLabel of a row that targets a member (SEC-57): neutral, never their name or

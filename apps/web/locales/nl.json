@@ -4910,7 +4910,8 @@
           "category_deactivated": "Categorie gedeactiveerd",
           "category_reactivated": "Categorie gereactiveerd",
           "categories_reordered": "Categorieën in een nieuwe volgorde gezet",
-          "contact_message_handled": "Contactbericht afgehandeld"
+          "contact_message_handled": "Contactbericht afgehandeld",
+          "contact_message_reopened": "Contactbericht heropend"
         },
         "deletedMemberTarget": "een verwijderd lid",
         "definition_approved": "<actorLink>{actor}</actorLink> keurde <targetLink>{target}</targetLink> goed",
@@ -4942,7 +4943,8 @@
         "category_deactivated": "<actorLink>{actor}</actorLink> deactiveerde de categorie <targetLink>{target}</targetLink>",
         "category_reactivated": "<actorLink>{actor}</actorLink> reactiveerde de categorie <targetLink>{target}</targetLink>",
         "categories_reordered": "<actorLink>{actor}</actorLink> zette de cataloguscategorieën in een nieuwe volgorde",
-        "contact_message_handled": "<actorLink>{actor}</actorLink> markeerde een contactbericht als afgehandeld"
+        "contact_message_handled": "<actorLink>{actor}</actorLink> markeerde een contactbericht als afgehandeld",
+        "contact_message_reopened": "<actorLink>{actor}</actorLink> zette een contactbericht terug naar Nieuw"
       },
       "activityEmpty": "Nog geen moderatieactiviteit.",
       "screening": {
@@ -5208,6 +5210,9 @@
       "markHandled": "Markeren als afgehandeld",
       "markHandledSuccess": "Bericht gemarkeerd als afgehandeld",
       "markHandledError": "Bericht bijwerken mislukt",
+      "undo": "Ongedaan maken",
+      "reopenSuccess": "Bericht teruggezet naar Nieuw",
+      "reopenError": "Kon het bericht niet terugzetten naar Nieuw",
       "loadMore": "Meer laden"
     },
     "docFeedback": {

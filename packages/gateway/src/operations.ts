@@ -722,12 +722,14 @@ export const gateway = {
   },
 
   // Admin triage: the operational/support inboxes written by the public contact
-  // form and docs-feedback widget. Reads and the handled-transition are admin-only
-  // (enforced server-side in the Convex functions).
+  // form and docs-feedback widget. Reads and the new <-> handled transitions are
+  // admin-only (enforced server-side in the Convex functions).
   adminTriage: {
     contactMessages: api.contact.listContactMessages.listContactMessages,
     markContactHandled:
       api.contact.markContactMessageHandled.markContactMessageHandled,
+    // The Undo of markContactHandled: a handled message back to new.
+    reopenContact: api.contact.reopenContactMessage.reopenContactMessage,
     docFeedback: api.docs.listDocFeedback.listDocFeedback,
   },
 

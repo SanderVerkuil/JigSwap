@@ -3,8 +3,9 @@
 // Admin triage inbox for the public contact form (adminTriage.contactMessages), newest first,
 // paginated with Load more. The status filter (New, the default / Handled / All) is the route's
 // URL search, so a reload, Back or a shared link keeps it; New carries the waiting count from
-// admin.pendingCounts. A new message has a single "mark as handled" transition. The listing and
-// the transition are admin-gated server-side in the Convex functions.
+// admin.pendingCounts. A new message is marked handled in one click, and the toast's Undo puts it
+// back to new. The listing and both transitions are admin-gated server-side in the Convex
+// functions.
 import { AdminQueryError } from "@/components/admin/admin-query-error";
 import { QueueEmpty } from "@/components/admin/queue-empty";
 import { Badge } from "@/components/ui/badge";
@@ -98,16 +99,32 @@ function ContactMessages({ status }: { status: ContactFilter }) {
   const markHandled = useMutation({
     mutationFn: useConvexMutation(gateway.adminTriage.markContactHandled),
   });
+  const reopen = useMutation({
+    mutationFn: useConvexMutation(gateway.adminTriage.reopenContact),
+  });
   // Scope the pending state to the message being handled so only that row's
   // button disables, exactly as the old per-id busy flag did.
   const busyId = markHandled.isPending
     ? (markHandled.variables?.id ?? null)
     : null;
 
+  // Undo of handling: the message goes back to new (and back into the New filter).
+  const undo = async (id: Id<"contactMessages">) => {
+    try {
+      await reopen.mutateAsync({ id });
+      toast.success(t("reopenSuccess"));
+    } catch {
+      toast.error(t("reopenError"));
+    }
+  };
+  // Handling is one click with no confirm, so its toast offers Undo (back to new). Under the New
+  // filter the message leaves the list; Undo brings it back.
   const handle = async (id: Id<"contactMessages">) => {
     try {
       await markHandled.mutateAsync({ id });
-      toast.success(t("markHandledSuccess"));
+      toast.success(t("markHandledSuccess"), {
+        action: { label: t("undo"), onClick: () => void undo(id) },
+      });
     } catch {
       toast.error(t("markHandledError"));
     }

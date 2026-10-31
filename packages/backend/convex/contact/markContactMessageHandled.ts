@@ -7,10 +7,10 @@ import { requireMember } from "../identity/requireMember";
 
 // The audit label of a contact message: never the sender's name, email or text (personal data the
 // audit trail would otherwise keep after the message itself is gone).
-const CONTACT_MESSAGE_LABEL = "Contact message";
+export const CONTACT_MESSAGE_LABEL = "Contact message";
 
-// Admin triage write: mark a contact-form message as handled (the only status
-// transition — new -> handled). Admin-only, mirroring listContactMessages. The transition is
+// Admin triage write: mark a contact-form message as handled (new -> handled;
+// reopenContactMessage is its Undo). Admin-only, mirroring listContactMessages. The transition is
 // stamped on the admin audit trail (contact_message_handled, SEC-56); re-marking a handled
 // message is a no-op and stamps nothing.
 export const markContactMessageHandled = mutation({

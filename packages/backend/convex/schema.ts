@@ -760,6 +760,7 @@ export default defineSchema({
       v.literal("category_reactivated"),
       v.literal("categories_reordered"),
       v.literal("contact_message_handled"),
+      v.literal("contact_message_reopened"),
     ),
     targetLabel: v.string(), // denormalized display title at decision time
     targetId: v.string(),
