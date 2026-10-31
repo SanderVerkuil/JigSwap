@@ -712,7 +712,7 @@
     "cancel": "Cancel",
     "submit": "Send request",
     "submitting": "Sending...",
-    "success": "Trade request sent",
+    "success": "Request sent",
     "errors": {
       "notAvailable": "This puzzle is no longer available for that exchange.",
       "notFound": "This puzzle is no longer available.",
