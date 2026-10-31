@@ -13,7 +13,18 @@ import { ThreadView } from "@/components/messaging/thread-view";
 import { LeaveReviewDialog } from "@/components/reputation/leave-review-dialog";
 import { ExchangeReportMenu } from "@/components/safety/exchange-report-menu";
 import { GuideHelpButton } from "@/components/tour/guide-help-button";
-import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { useTourLauncher } from "@/components/whats-new/tour-launcher";
 import { gateway, Id } from "@/gateway";
@@ -480,16 +491,41 @@ function ExchangeDetail({
               {t("markComplete")}
             </Button>
             {/* Accepting sets the puzzle aside for this one exchange, so either side can call it
-                off (a pending request is only the requester's to cancel). */}
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!exchange.aggregateId}
-              onClick={run((args) => cancelExchange.mutateAsync(args))}
-            >
-              <XCircle className="h-4 w-4" />
-              {t("cancel")}
-            </Button>
+                off (a pending request is only the requester's to cancel). Calling off an agreed
+                deal is final, so it asks first and says what follows. */}
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!exchange.aggregateId}
+                >
+                  <XCircle className="h-4 w-4" />
+                  {t("cancel")}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    {t("cancelAccepted.title")}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {t("cancelAccepted.body")}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>
+                    {t("cancelAccepted.keep")}
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    className={buttonVariants({ variant: "destructive" })}
+                    onClick={run((args) => cancelExchange.mutateAsync(args))}
+                  >
+                    {t("cancelAccepted.confirm")}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </>
         )}
 

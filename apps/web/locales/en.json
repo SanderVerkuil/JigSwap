@@ -627,6 +627,12 @@
     "declineExchange": "Decline Exchange",
     "completeExchange": "Complete Exchange",
     "cancelExchange": "Cancel Exchange",
+    "cancelAccepted": {
+      "title": "Cancel this exchange?",
+      "body": "The exchange ends for both of you and can't be undone. The puzzle is then free for other requests.",
+      "keep": "Keep exchange",
+      "confirm": "Cancel exchange"
+    },
     "incoming": "Incoming",
     "outgoing": "Outgoing",
     "allStatuses": "All Statuses",

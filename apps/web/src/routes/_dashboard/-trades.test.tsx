@@ -13,6 +13,8 @@ import { createRoot, type Root } from "react-dom/client";
 import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
+import nl from "../../../locales/nl.json";
+import source from "../../../locales/source.json";
 import { Route as TradesRoute } from "./trades";
 
 (
@@ -144,6 +146,8 @@ const buttonNamed = (name: string) =>
     (button) => button.textContent?.trim() === name,
   );
 
+const confirmDialog = () => document.querySelector('[role="alertdialog"]');
+
 let container: HTMLDivElement | undefined;
 let root: Root | undefined;
 
@@ -182,16 +186,43 @@ afterEach(() => {
 });
 
 describe("exchange actions", () => {
-  // Accepting sets the puzzle aside for this one exchange, so the owner must be able to back out.
-  it("lets the owner cancel an accepted exchange", async () => {
+  // Accepting sets the puzzle aside for this one exchange, so the owner must be able to back out,
+  // but calling off an agreed deal is final, so it asks first and says what happens.
+  it("lets the owner cancel an accepted exchange once they confirm", async () => {
     await openExchange("incoming", "accepted");
     expect(actions()).toEqual([en.trades.markComplete, en.trades.cancel]);
     await act(async () => {
       buttonNamed(en.trades.cancel)?.click();
     });
+    expect(data.calls).toEqual([]);
+    expect(confirmDialog()?.textContent).toContain(
+      en.trades.cancelAccepted.body,
+    );
+    await act(async () => {
+      buttonNamed(en.trades.cancelAccepted.confirm)?.click();
+    });
     expect(data.calls).toEqual([
       ["exchange.cancel", { exchangeId: "ex-accepted" }],
     ]);
+  });
+
+  it("has the confirm's copy in every locale file", () => {
+    expect(source.trades.cancelAccepted).toEqual(en.trades.cancelAccepted);
+    expect(Object.keys(nl.trades.cancelAccepted).sort()).toEqual(
+      Object.keys(en.trades.cancelAccepted).sort(),
+    );
+  });
+
+  it("keeps an accepted exchange when the member backs out of the confirm", async () => {
+    await openExchange("outgoing", "accepted");
+    await act(async () => {
+      buttonNamed(en.trades.cancel)?.click();
+    });
+    await act(async () => {
+      buttonNamed(en.trades.cancelAccepted.keep)?.click();
+    });
+    expect(confirmDialog()).toBeNull();
+    expect(data.calls).toEqual([]);
   });
 
   it("lets the requester cancel an accepted exchange", async () => {

@@ -627,6 +627,12 @@
     "declineExchange": "Uitwisseling Afwijzen",
     "completeExchange": "Uitwisseling Voltooien",
     "cancelExchange": "Uitwisseling Annuleren",
+    "cancelAccepted": {
+      "title": "Deze uitwisseling annuleren?",
+      "body": "De uitwisseling stopt dan voor jullie allebei, en dat kun je niet terugdraaien. De puzzel is daarna weer vrij voor andere verzoeken.",
+      "keep": "Niet annuleren",
+      "confirm": "Uitwisseling annuleren"
+    },
     "incoming": "Inkomend",
     "outgoing": "Uitgaand",
     "allStatuses": "Alle Statussen",
