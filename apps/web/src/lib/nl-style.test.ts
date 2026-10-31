@@ -253,4 +253,12 @@ describe("nl.json", () => {
       .map(([key, value, hits]) => `${key}: ${value}  [${hits.join(", ")}]`);
     expect(offenders).toEqual([]);
   });
+
+  // "Laden…", not "Laden...": one ellipsis character, as in the rest of the app.
+  it("uses the ellipsis character, never three dots", () => {
+    const offenders = leaves(nl)
+      .filter(([, value]) => value.includes("..."))
+      .map(([key, value]) => `${key}: ${value}`);
+    expect(offenders).toEqual([]);
+  });
 });
