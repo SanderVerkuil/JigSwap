@@ -104,7 +104,7 @@ export function FollowButton({
     }
     return (
       <Button variant="outline" size={size} disabled>
-        <UserPlus className="mr-2 h-4 w-4" />
+        <UserPlus className="h-4 w-4" />
         {t("follow")}
       </Button>
     );
@@ -189,9 +189,9 @@ export function FollowButton({
         size={size}
         disabled={pending}
       >
-        <UserCheck className="mr-2 h-4 w-4" />
+        <UserCheck className="h-4 w-4" />
         {t("following")}
-        <ChevronDown className="ml-2 h-4 w-4" />
+        <ChevronDown className="h-4 w-4" />
       </Button>
     );
     return (
@@ -302,9 +302,9 @@ export function FollowButton({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size={size} disabled={pending}>
-            <Clock className="mr-2 h-4 w-4" />
+            <Clock className="h-4 w-4" />
             {label}
-            <ChevronDown className="ml-2 h-4 w-4" />
+            <ChevronDown className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -343,7 +343,7 @@ export function FollowButton({
       onClick={handleFollow}
       disabled={pending}
     >
-      <UserPlus className="mr-2 h-4 w-4" />
+      <UserPlus className="h-4 w-4" />
       {requestMode ? t("requestToFollow") : t("follow")}
     </Button>
   );

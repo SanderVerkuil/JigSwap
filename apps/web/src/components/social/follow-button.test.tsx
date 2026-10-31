@@ -319,3 +319,35 @@ describe("FollowButton refusals", () => {
     );
   });
 });
+
+// The Button already spaces its icons (gap-2). An icon margin on top doubled the gap and
+// widened the labelled buttons enough to push the 390px profile hero's overflow menu onto
+// a row of its own (UX-118 / UX-32 review follow-up).
+describe("FollowButton labelled icon spacing", () => {
+  const ICON_MARGIN = /^-?m[lrxse]-/;
+
+  it.each<[string, Relation]>([
+    ["Follow", { ...FOLLOWING_PUBLIC, following: false }],
+    ["Following", FOLLOWING_PUBLIC],
+    [
+      "Requested",
+      {
+        ...FOLLOWING_PUBLIC,
+        following: false,
+        targetIsPrivate: true,
+        pendingRequest: { requestId: "request_1", requestedAt: Date.now() },
+      },
+    ],
+  ])("%s adds no margin of its own to its icons", (name, relation) => {
+    renderButton(relation);
+    const icons = [
+      ...screen.getByRole("button", { name }).querySelectorAll("svg"),
+    ];
+    expect(icons.length).toBeGreaterThan(0);
+    for (const icon of icons) {
+      expect([...icon.classList].filter((c) => ICON_MARGIN.test(c))).toEqual(
+        [],
+      );
+    }
+  });
+});

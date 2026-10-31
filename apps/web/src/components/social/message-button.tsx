@@ -85,7 +85,7 @@ export function MessageButton({
         disabled={!enabled || pending}
         onClick={enabled ? handleClick : undefined}
       >
-        <MessageCircle className="mr-2 h-4 w-4" />
+        <MessageCircle className="h-4 w-4" />
         {t("messageButton")}
       </Button>
     );
