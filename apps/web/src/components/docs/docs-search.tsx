@@ -59,7 +59,10 @@ export function DocsSearch({
           shouldFilter={false}
           className="[&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group]]:px-2 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3"
         >
+          {/* 16px on phones so iOS doesn't zoom the page when the input takes
+              focus; the shared CommandInput stays text-sm elsewhere. */}
           <CommandInput
+            className="text-base md:text-sm"
             placeholder={t("searchPlaceholder")}
             value={query}
             onValueChange={setQuery}
