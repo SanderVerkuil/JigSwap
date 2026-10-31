@@ -4359,6 +4359,7 @@
       "admin": "Beheer",
       "privacySafety": "Privacy en veiligheid",
       "homepage": "JigSwap-homepage",
+      "helpGuides": "Hulp en rondleidingen",
       "signOut": "Uitloggen"
     },
     "theme": {
@@ -4389,7 +4390,8 @@
         "logCompletionSub": "Eentje af? Leg het vast",
         "findSwap": "Zoek een ruil",
         "findSwapSub": "Bekijk wat andere puzzelaars aanbieden",
-        "whatsNewSub": "De nieuwste functies en oplossingen"
+        "whatsNewSub": "De nieuwste functies en oplossingen",
+        "helpGuidesSub": "Korte rondleidingen door JigSwap"
       },
       "openQuickActionsUnread": "{count, plural, one {Snelle acties, # update} other {Snelle acties, # updates}}",
       "withUnreadMessages": "{count, plural, one {{name}, # ongelezen bericht} other {{name}, # ongelezen berichten}}",
@@ -5462,7 +5464,7 @@
         },
         "account-menu": {
           "title": "Instellingen en snel instellen",
-          "body": "Je profiel, meldingen en Snel instellen vind je hier."
+          "body": "Hier vind je je profiel, meldingen en Snel instellen. Hulp en rondleidingen zet alle rondleidingen op een rij."
         }
       },
       "guide": {

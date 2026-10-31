@@ -42,9 +42,9 @@ vi.mock("@/compat/clerk", () => {
   UserButton.MenuItems = ({ children }: { children: ReactNode }) => (
     <ul>{children}</ul>
   );
-  UserButton.Link = ({ label }: { label: string }) => (
+  UserButton.Link = ({ label, href }: { label: string; href: string }) => (
     <li>
-      <a href="#">{label}</a>
+      <a href={href}>{label}</a>
     </li>
   );
   UserButton.Action = ({
@@ -355,5 +355,32 @@ describe("ShellUserButton Preferences page", () => {
     fireEvent.keyDown(checked, { key: "ArrowRight" });
     expect(document.activeElement).toBe(other);
     expect(mocks.setPreference).toHaveBeenCalledWith("fullWidth", false);
+  });
+});
+
+describe("ShellUserButton help entry (UX-91)", () => {
+  const menuLinks = () =>
+    screen
+      .getAllByRole("link")
+      .map((link) => [link.textContent, link.getAttribute("href")]);
+
+  it("offers Help & guides right after What's new, opening the Guides tab", () => {
+    mocks.settings = undefined;
+    renderButton();
+    const links = menuLinks();
+    const whatsNew = links.findIndex(([label]) => label === "What's new");
+    expect(links[whatsNew + 1]).toEqual([
+      "Help & guides",
+      "/whats-new?tab=guides",
+    ]);
+  });
+
+  it("speaks Dutch", () => {
+    mocks.settings = undefined;
+    renderButton("nl");
+    expect(menuLinks()).toContainEqual([
+      "Hulp en rondleidingen",
+      "/whats-new?tab=guides",
+    ]);
   });
 });

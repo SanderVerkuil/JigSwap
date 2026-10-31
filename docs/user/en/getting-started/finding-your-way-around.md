@@ -19,6 +19,8 @@ Click your avatar to open the account menu. Besides **Profile**,
 **Preferences**, **Notifications** and **Privacy & safety**, it has:
 
 - **What's new**: recent features and fixes (see below).
+- **Help & guides**: every guided tour, on the **Guides** tab of What's new
+  (see [Guides](#guides)).
 - **Quick setup**: reopens the guided setup for your shelf. See
   [Your Dashboard](/docs/getting-started/dashboard#quick-setup).
 
@@ -41,11 +43,14 @@ The page has two tabs: **Updates** (the list above) and **Guides**.
 
 ### Guides
 
-The **Guides** tab (`/whats-new?tab=guides`) lists every guided tour in one
-place, grouped by area, with how many you've finished. Each guide shows how
-many steps it has and where you are: **Step 2 of 3** when you stopped partway,
-**Done** when you finished it. A guide that came with an update links back to
-it with **Introduced** and the month.
+**Where:** **Help & guides** in your account menu or, on a phone, in the
+quick-action sheet (`/whats-new?tab=guides`).
+
+The **Guides** tab lists every guided tour in one place, grouped by area, with
+how many you've finished. Each guide shows how many steps it has and where you
+are: **Step 2 of 3** when you stopped partway, **Done** when you finished it.
+A guide that came with an update links back to it with **Introduced** and the
+month.
 
 Some updates also come with a short tour of the feature. Click
 **Take the tour** on the update or on its guide, then use **Next** and

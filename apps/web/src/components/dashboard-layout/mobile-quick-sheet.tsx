@@ -5,7 +5,6 @@
 // one-line sub, chevron — sliding up over the dimmed backdrop, with a drag
 // handle and safe-area bottom padding. Below the actions, the theme and
 // language choices: phones have no top-bar menus for them.
-import { useRouter } from "@/compat/navigation";
 import {
   requestInstallTip,
   runInstallPrompt,
@@ -13,10 +12,12 @@ import {
 } from "@/components/install-app/use-install-app";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { WhatsNewCountPill } from "@/components/whats-new/badges";
+import { useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeftRight,
   ChevronRight,
   CircleCheck,
+  CircleHelp,
   Download,
   MessageSquare,
   Plus,
@@ -78,6 +79,14 @@ const ACTIONS: Array<{
     href: "/whats-new",
     icon: Sparkles,
   },
+  // The tours, one tap from any page (UX-91): the Guides tab of What's new. Same label as the
+  // account menu's item.
+  {
+    titleKey: "user.helpGuides",
+    subKey: "mobile.quick.helpGuidesSub",
+    href: "/whats-new?tab=guides",
+    icon: CircleHelp,
+  },
 ];
 
 export function MobileQuickSheet({
@@ -97,7 +106,7 @@ export function MobileQuickSheet({
   const tInstall = useTranslations("installApp");
   const tTheme = useTranslations("shell.theme");
   const tLanguage = useTranslations("shell.language");
-  const router = useRouter();
+  const navigate = useNavigate();
   const countFor = (href: string) =>
     href === "/whats-new"
       ? whatsNewCount
@@ -109,9 +118,10 @@ export function MobileQuickSheet({
       ? tMessages("unreadCount", { count })
       : tWhatsNew("unreadCount", { count });
 
+  // `href`, not `to`: the router parses its query (?tab=guides), which `to` would keep in the path.
   const go = (href: string) => {
     onOpenChange(false);
-    router.push(href);
+    void navigate({ href });
   };
 
   // The persistent install entry (the tip itself can be snoozed or turned off): the browser's

@@ -4359,6 +4359,7 @@
       "admin": "Admin",
       "privacySafety": "Privacy & safety",
       "homepage": "JigSwap homepage",
+      "helpGuides": "Help & guides",
       "signOut": "Sign out"
     },
     "theme": {
@@ -4389,7 +4390,8 @@
         "logCompletionSub": "Finished one? Record it",
         "findSwap": "Find a swap",
         "findSwapSub": "See what other puzzlers offer",
-        "whatsNewSub": "Latest features and fixes"
+        "whatsNewSub": "Latest features and fixes",
+        "helpGuidesSub": "Short guided tours of JigSwap"
       },
       "openQuickActionsUnread": "{count, plural, one {Quick actions, # update} other {Quick actions, # updates}}",
       "withUnreadMessages": "{count, plural, one {{name}, # unread message} other {{name}, # unread messages}}",
@@ -5462,7 +5464,7 @@
         },
         "account-menu": {
           "title": "Settings and quick setup",
-          "body": "Your profile, notifications and Quick setup live here."
+          "body": "Your profile, notifications and Quick setup live here, and Help & guides lists every tour."
         }
       },
       "guide": {

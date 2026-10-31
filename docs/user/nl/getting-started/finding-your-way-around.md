@@ -19,6 +19,8 @@ Klik op je avatar om het accountmenu te openen. Naast **Profiel**,
 **Voorkeuren**, **Meldingen** en **Privacy en veiligheid** vind je daar:
 
 - **Wat is er nieuw**: recente functies en oplossingen (zie hieronder).
+- **Hulp en rondleidingen**: alle rondleidingen, op het tabblad
+  **Rondleidingen** van Wat is er nieuw (zie [Rondleidingen](#rondleidingen)).
 - **Snel instellen**: opent opnieuw de begeleide inrichting van je plank. Zie
   [Je Dashboard](/docs/getting-started/dashboard#snel-instellen).
 
@@ -44,12 +46,14 @@ De pagina heeft twee tabbladen: **Updates** (de lijst hierboven) en
 
 ### Rondleidingen
 
-Het tabblad **Rondleidingen** (`/whats-new?tab=guides`) toont alle
-rondleidingen op één plek, per onderwerp gegroepeerd, met hoeveel je er hebt
-afgerond. Bij elke rondleiding staat hoeveel stappen hij heeft en waar je bent:
-**Stap 2 van 3** als je halverwege stopte, **Klaar** als je hem hebt afgerond.
-Hoort een rondleiding bij een update, dan linkt **Verschenen in** met de maand
-terug naar die update.
+**Waar:** **Hulp en rondleidingen** in je accountmenu of, op een telefoon, in
+het paneel van de snelle-actieknop (`/whats-new?tab=guides`).
+
+Het tabblad **Rondleidingen** toont alle rondleidingen op één plek, per
+onderwerp gegroepeerd, met hoeveel je er hebt afgerond. Bij elke rondleiding
+staat hoeveel stappen hij heeft en waar je bent: **Stap 2 van 3** als je
+halverwege stopte, **Klaar** als je hem hebt afgerond. Hoort een rondleiding
+bij een update, dan linkt **Verschenen in** met de maand terug naar die update.
 
 Bij sommige updates hoort ook een korte rondleiding door de functie. Klik bij
 de update of bij de rondleiding op **Doe de rondleiding** en gebruik dan

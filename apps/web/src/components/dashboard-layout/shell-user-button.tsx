@@ -6,7 +6,9 @@
 // inside Clerk's profile modal. Shared by the desktop sidebar footer and the mobile
 // top bar so both open the same menu instead of hard-navigating to /profile.
 // Once the member shares their presence it also offers the status choice
-// (Automatic / Away / Appear offline) and shows their own status dot.
+// (Automatic / Away / Appear offline) and shows their own status dot. "Help &
+// guides" opens the Guides tab of What's new, so the tours are one tap from any
+// page on desktop and phone (UX-91).
 import { useClerk, UserButton, useUser } from "@/compat/clerk";
 import { NotificationPreferencesPanel } from "@/components/notifications/notification-preferences-panel";
 import { useAppActivity } from "@/components/presence/app-presence";
@@ -28,6 +30,7 @@ import { useNavigate } from "@tanstack/react-router";
 import {
   Bell,
   Check,
+  CircleHelp,
   House,
   ListChecks,
   LogOut,
@@ -150,6 +153,12 @@ export function ShellUserButton({
               </span>
             }
             href="/whats-new"
+          />
+          {/* Clerk parses the query, so this lands on the Guides tab. */}
+          <UserButton.Link
+            label={t("user.helpGuides")}
+            labelIcon={<CircleHelp className="size-4" />}
+            href="/whats-new?tab=guides"
           />
           {/* Always here (spec §2.3): reopens the quick start and brings back a hidden card.
             restoreCard is a no-op when the card was never hidden. */}
