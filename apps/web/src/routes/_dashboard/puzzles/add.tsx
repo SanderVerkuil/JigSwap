@@ -17,6 +17,7 @@ import {
   SegmentedPills,
   SuggestInput,
   TagInput,
+  type SegmentedOption,
 } from "@/components/add-puzzle";
 import type { ImportedDraft } from "@/components/puzzle-import/draft-to-form-defaults";
 import type { ImportedMatch } from "@/components/puzzle-import/use-puzzle-import";
@@ -66,7 +67,8 @@ interface FormState {
   brand: string;
   publisher: string;
   pieceCount: number | undefined;
-  difficulty: "easy" | "medium" | "hard" | "expert";
+  // "" is "Not sure": the definition is submitted without a difficulty rather than a guessed one.
+  difficulty: "" | "easy" | "medium" | "hard" | "expert";
   coverColor: string;
   coverMode: "color" | "photo";
   coverFile: File | undefined;
@@ -89,7 +91,7 @@ const DEFAULT_FORM: FormState = {
   brand: "",
   publisher: "",
   pieceCount: undefined,
-  difficulty: "medium",
+  difficulty: "",
   coverColor: COVER_SWATCHES[0],
   coverMode: "color",
   coverFile: undefined,
@@ -207,7 +209,7 @@ function ContributePuzzlePage() {
         brand: form.brand || undefined,
         publisher: form.publisher || undefined,
         pieceCount: form.pieceCount!,
-        difficulty: form.difficulty,
+        difficulty: form.difficulty || undefined,
         tags: form.tags,
         ean: form.ean || undefined,
         upc: form.upc || undefined,
@@ -256,10 +258,13 @@ function ContributePuzzlePage() {
 
   const isReady = !!form.title.trim() && !!form.pieceCount;
 
-  const difficultyOptions = DIFFICULTY_OPTIONS.map((o) => ({
-    ...o,
-    label: t(`difficulty_${o.value}`),
-  }));
+  const difficultyOptions: SegmentedOption<FormState["difficulty"]>[] = [
+    ...DIFFICULTY_OPTIONS.map((o) => ({
+      ...o,
+      label: t(`difficulty_${o.value}`),
+    })),
+    { value: "", label: t("difficultyNotSure") },
+  ];
 
   const formColumn = (
     <>
@@ -367,12 +372,7 @@ function ContributePuzzlePage() {
           <SegmentedPills
             options={difficultyOptions}
             value={form.difficulty}
-            onChange={(v) =>
-              setForm((f) => ({
-                ...f,
-                difficulty: v as FormState["difficulty"],
-              }))
-            }
+            onChange={(difficulty) => setForm((f) => ({ ...f, difficulty }))}
             ariaLabel={t("fieldDifficulty")}
           />
         </div>
@@ -632,13 +632,13 @@ function ContributePuzzlePage() {
         title={form.title}
         brand={form.brand || form.publisher}
         pieceCount={form.pieceCount}
-        difficulty={form.difficulty}
+        difficulty={form.difficulty || undefined}
         coverColor={form.coverColor}
         coverPhotoUrl={previewPhotoUrl}
         available={false}
       />
       <p className="text-xs leading-relaxed text-muted-foreground">
-        {t("livePreviewCaption")}
+        {t("contributePreviewCaption")}
       </p>
       <ReadinessChecklist
         items={[

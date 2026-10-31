@@ -35,9 +35,11 @@ export function LivePreviewCard(props: LivePreviewProps) {
         )}
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent p-4">
           <div className="font-semibold text-white">
-            {props.title || "Your puzzle title"}
+            {props.title || t("previewTitlePlaceholder")}
           </div>
-          <div className="text-sm text-white/80">{props.brand || "Brand"}</div>
+          <div className="text-sm text-white/80">
+            {props.brand || t("previewBrandPlaceholder")}
+          </div>
         </div>
       </div>
       <div className="flex items-center justify-between gap-2 p-3">
