@@ -141,6 +141,7 @@ const MANIFEST: Record<string, Disposition> = {
     },
     phases: ["copies", "copyPhotos"],
     export: { exported: ["copyPhotos"] },
+    gap: "SEC-67: library/moderationStore deletes an auto-rejected copy photo 30 days after the rejection only once RETENTION_ENFORCE names copyPhotos; the policy says it is kept so the member can ask for a review, but copy photos have no such request yet (owner decision before enabling)",
   },
   "ownedPuzzleImages.moderatedBy": ADMIN_ATTRIBUTION,
   "ownedPuzzleImages.hashCheckWaivedBy": ADMIN_ATTRIBUTION,

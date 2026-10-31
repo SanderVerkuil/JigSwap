@@ -221,6 +221,13 @@ export const applyRescreenVerdict = internalMutation({
 /**
  * A copy photo the automated check rejected is deleted this long after the rejection (spec 2.8,
  * the privacy policy's "kept for 30 days so you can ask for a review ..., then deleted").
+ *
+ * OWNER DECISION (SEC-67) before RETENTION_ENFORCE names "copyPhotos": members have no in-app way
+ * to ask for a review of an auto-rejected copy photo (message photos have one,
+ * conversation/requestImageReview), so the window this sweep honours cannot be used yet.
+ * Options: add a review request for copy photos; correct the policy sentence for copy photos; or
+ * treat the admin Flagged Images queue as "the review". Keep copyPhotos dry-run until one is
+ * chosen.
  */
 export const REJECTED_COPY_PHOTO_TTL_MS = 30 * DAY_MS;
 
