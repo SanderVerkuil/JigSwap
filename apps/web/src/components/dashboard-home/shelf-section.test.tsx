@@ -228,6 +228,20 @@ describe("FreshSection", () => {
     expect(all(html).filter((el) => el.tagName === "article")).toHaveLength(6);
   });
 
+  it("adds the copy the shelf leaves out, but still starts at the newest", () => {
+    // One copy past the shelf: Fresh appears and shows it. It does not skip
+    // the shelf's copies (that would change what "fresh" means; owner
+    // decision UX-87 (c)), so the newest copies show in both places.
+    const html = render(<FreshSection />, {
+      copies: copies(shelfBoxCount(false) + 1),
+    });
+    const shown = all(html)
+      .filter((el) => el.tagName === "article")
+      .map((el) => attr(el, "data-copy"));
+    expect(shown[0]).toBe("copy-0");
+    expect(shown).toContain(`copy-${shelfBoxCount(false)}`);
+  });
+
   it("matches the shelf's box count on each device", () => {
     expect(shelfBoxCount(false)).toBe(5);
     expect(shelfBoxCount(true)).toBe(4);

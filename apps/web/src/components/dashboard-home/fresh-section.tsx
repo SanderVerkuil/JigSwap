@@ -18,7 +18,9 @@ import { useCurrentMember } from "./use-current-member";
 // horizontal scroller of puzzle cards. It only appears once the library holds
 // more copies than the shelf shows on this device: until then the shelf above
 // already shows every one of them (and with an empty library the shelf owns the
-// first-puzzle invitation).
+// first-puzzle invitation). Once shown it still starts at the newest copy, so
+// it overlaps the shelf's boxes; it is only guaranteed to add at least one
+// puzzle the shelf does not show.
 export function FreshSection() {
   const t = useTranslations("dashboard.fresh");
   const isMobile = useIsMobile();
