@@ -5,6 +5,7 @@ import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { EVENT_SCRUB_DELAY_MS } from "./conversation/purgeMemberMessagingData";
 import schema from "./schema";
+import { FEED_MAX_AUDIENCE } from "./social/getActivityFeed";
 
 // The activity feed's per-actor read model (SEC-30, PERF-B3m): social/activityEntries projects the
 // feed's events into one row per (actor, kind, ref), written by the event dispatcher and, for the
@@ -907,6 +908,51 @@ describe("activity feed — reads the projection once backfilled (SEC-30)", () =
     // The legacy path reads the global window and runs out of reads.
     await setReady(t, false);
     await expect(feedOf(t, "alice")).rejects.toThrow(/too many documents/);
+  });
+
+  test("a member following more people than the feed can merge still gets a feed", async () => {
+    const t = convexTest({
+      schema,
+      modules,
+      transactionLimits: { databaseQueries: FEED_MAX_AUDIENCE + 500 },
+    });
+    presenceTest.register(t);
+    const { alice, bob, definitions } = await seed(t);
+    const copy = await addCopy(t, "bob", definitions[0], true);
+    await settleDueJobs(t);
+    // Alice follows twice the cap: first someone with older activity, then quiet members, then
+    // bob, most recently.
+    const early = await addMallory(t);
+    await follow(t, alice, early);
+    await t.run(async (ctx) => {
+      await ctx.db.insert("activityEntries", {
+        actorId: early,
+        kind: "completion",
+        ref: "early-solve",
+        occurredAt: Date.now() - HOUR,
+      });
+      for (let i = 0; i < 2 * FEED_MAX_AUDIENCE; i++) {
+        const quiet = await ctx.db.insert("users", {
+          clerkId: `clerk_quiet_${i}`,
+          name: `quiet ${i}`,
+          isActive: true,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        });
+        await ctx.db.insert("follows", {
+          followerId: alice,
+          followeeId: quiet,
+          createdAt: Date.now(),
+        });
+      }
+    });
+    await follow(t, alice, bob);
+    await setReady(t, true);
+
+    const feed = await feedOf(t, "alice");
+    expect(refsOf(feed, "acquisition")).toEqual([copy]);
+    // The member followed longest ago falls outside the merge.
+    expect(refsOf(feed, "completion")).toEqual([]);
   });
 
   test("the limit is clamped to 1..50 on both paths", async () => {

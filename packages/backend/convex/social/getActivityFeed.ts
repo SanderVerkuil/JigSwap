@@ -52,7 +52,8 @@ import { areMutualFollowers, canSeeProfileContent } from "./privacy";
 // short: another member's entry only while the viewer may see their profile content
 // (canSeeProfileContent, SEC-43); one entry per (kind, ref); a start only once it has begun, and
 // from someone else only when they opted in and are a mutual follower; an acquisition only with the
-// copies this viewer may see (canViewCopy). Blocked members are out of the audience.
+// copies this viewer may see (canViewCopy). Blocked members are out of the audience, and it holds
+// at most FEED_MAX_AUDIENCE members.
 
 // A page holds 1 to MAX_LIMIT entries whatever the client asks for.
 const DEFAULT_LIMIT = 50;
@@ -69,6 +70,12 @@ const PER_NAME_CAP = 500;
 // The read-model path: rows read per feed, at most, and from any one member.
 const FEED_READ_BUDGET = 500;
 const PER_ACTOR_READ_CAP = 2 * MAX_LIMIT;
+
+// The read-model path opens one index range per audience member, and Convex allows 4,096 per
+// function, so a feed covers at most this many members: the viewer and the members they followed
+// most recently. Nothing caps follows, so without it a member following thousands would break
+// their own feed.
+export const FEED_MAX_AUDIENCE = 1000;
 
 // A feed entry plus what the read-time gates and the link target need.
 type Candidate = {
@@ -102,16 +109,17 @@ export const getActivityFeed = query({
       max: MAX_LIMIT,
     });
 
-    // Audience = the acting member + everyone they follow.
-    const followRows = await ctx.db
+    // Audience = the acting member + everyone they follow, up to FEED_MAX_AUDIENCE: past it, the
+    // members they followed most recently. Blocked actors drop out (spec 2.6), e.g. the
+    // counterparty of a shared exchange.
+    const blocked = await blockedEitherWaySet(ctx, meId);
+    const audience = new Set<string>([meId as string]);
+    for await (const f of ctx.db
       .query("follows")
       .withIndex("by_follower", (q) => q.eq("followerId", meId))
-      .collect();
-    const audience = new Set<string>([meId as string]);
-    for (const f of followRows) audience.add(f.followeeId as string);
-    // Blocked actors drop out (spec 2.6), e.g. the counterparty of a shared exchange.
-    for (const id of await blockedEitherWaySet(ctx, meId)) {
-      audience.delete(id as string);
+      .order("desc")) {
+      if (audience.size >= FEED_MAX_AUDIENCE) break;
+      if (!blocked.has(f.followeeId)) audience.add(f.followeeId as string);
     }
 
     const since = Date.now() - FEED_WINDOW_MS;
