@@ -6,7 +6,10 @@ const mocks = vi.hoisted(() => ({
   getMessages: vi.fn<(input: { data: Locale }) => Promise<Messages>>(),
 }));
 
-vi.mock("./i18n", () => ({ getMessages: mocks.getMessages }));
+vi.mock("./i18n", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./i18n")>()),
+  getMessages: mocks.getMessages,
+}));
 
 const catalogs: Record<Locale, Messages> = {
   en: { titles: { home: "Home" } },
@@ -156,5 +159,40 @@ describe("loadCatalog on the server", () => {
     expect(mocks.getMessages).toHaveBeenCalledTimes(2);
     expect(fetchMock).not.toHaveBeenCalled();
     expect(messagesFor("nl")).toEqual(serverCatalogs.nl);
+  });
+});
+
+describe("router (de)hydration", () => {
+  it("dehydrates only the locale, never the catalog or anything else in the root context", async () => {
+    const { dehydrateIntl } = await loadModule();
+    const rootContext = {
+      intl: { locale: "nl", timeZone: "Europe/Amsterdam", now: 0 },
+      userId: "user_1",
+      token: "jwt",
+      messages: catalogs.nl,
+    };
+    expect(dehydrateIntl(rootContext)).toEqual({ locale: "nl" });
+    expect(dehydrateIntl(undefined)).toEqual({ locale: undefined });
+  });
+
+  it("hydrates once the dehydrated locale's catalog has loaded", async () => {
+    stubFetch();
+    const { hydrateIntl, messagesFor } = await loadModule();
+    await hydrateIntl({ locale: "nl" });
+    expect(messagesFor("nl")).toEqual(catalogs.nl);
+  });
+
+  it("still hydrates when the catalog cannot load at all, and the next load retries", async () => {
+    const fetchMock = stubFetch({ fail: true });
+    mocks.getMessages.mockRejectedValueOnce(new Error("offline"));
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { hydrateIntl, loadCatalog, messagesFor } = await loadModule();
+
+    await expect(hydrateIntl({ locale: "nl" })).resolves.toBeUndefined();
+    expect(messagesFor("nl")).toBeUndefined();
+    expect(errors).toHaveBeenCalledOnce();
+
+    await expect(loadCatalog("nl")).resolves.toEqual(serverCatalogs.nl);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });

@@ -1,4 +1,4 @@
-import { getMessages, type Locale, type Messages } from "./i18n";
+import { contextLocale, getMessages, type Locale, type Messages } from "./i18n";
 
 // The message catalogs, kept out of the HTML. They used to ride in the root beforeLoad context,
 // which Start dehydrates into every document (~200 KB inline script per page, uncacheable). Each
@@ -87,6 +87,29 @@ export function loadCatalog(locale: Locale): Promise<Messages> {
     pending.set(locale, promise);
   }
   return promise;
+}
+
+/** What router.tsx hands the browser for i18n besides the root context: the locale only. */
+export type DehydratedIntl = { locale?: Locale };
+
+/** Router dehydrate: the root context's locale, never the catalog (that is the cached asset). */
+export function dehydrateIntl(rootContext: unknown): DehydratedIntl {
+  return { locale: contextLocale(rootContext) };
+}
+
+/**
+ * Router hydrate: loads the dehydrated locale's catalog, so it is in messagesFor() for the first
+ * client render. Never rejects: if the catalog cannot load at all (the file and the server
+ * function both failed), the page still hydrates and stays usable, rendered client-side with
+ * message keys in place of text, and the next navigation's root beforeLoad loads it again.
+ */
+export async function hydrateIntl({ locale }: DehydratedIntl): Promise<void> {
+  if (!locale) return;
+  try {
+    await loadCatalog(locale);
+  } catch (error) {
+    console.error(`Hydrating without the ${locale} message catalog:`, error);
+  }
 }
 
 async function fetchCatalog(locale: Locale): Promise<Messages> {
