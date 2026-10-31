@@ -30,6 +30,9 @@ describe("displayed decimals", () => {
           offenders.push(`${path.relative(root, file)}:${i + 1}`);
       });
     }
-    expect(offenders).toEqual([]);
+    expect(
+      offenders,
+      "Show decimals with useFormatter().number(value, { minimumFractionDigits: 1, maximumFractionDigits: 1 }); toFixed() always writes a full stop",
+    ).toEqual([]);
   });
 });
