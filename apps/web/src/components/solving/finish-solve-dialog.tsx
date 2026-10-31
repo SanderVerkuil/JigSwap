@@ -4,6 +4,7 @@ import { useCompletionFollowUp } from "@/components/solving/completion-follow-up
 import {
   showsSolveTime,
   SolveTimeFields,
+  useSolveTimeOptOut,
 } from "@/components/solving/solve-time-fields";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -65,6 +66,7 @@ export function FinishSolveDialog({
     mutationFn: useConvexMutation(gateway.solving.finishCompletion),
   });
   const { trackCompletionDuration } = useUserSettings();
+  const optOutOfTimes = useSolveTimeOptOut();
   const { requestFollowUp } = useCompletionFollowUp();
 
   const [endDate, setEndDate] = useState(() => localTodayInput());
@@ -156,6 +158,7 @@ export function FinishSolveDialog({
               minutes={minutes}
               onHoursChange={setHours}
               onMinutesChange={setMinutes}
+              onOptOut={optOutOfTimes}
             />
           )}
 

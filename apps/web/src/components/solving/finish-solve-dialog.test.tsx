@@ -12,6 +12,7 @@ import { FinishSolveDialog } from "./finish-solve-dialog";
 
 const calls = vi.hoisted(() => ({
   finish: [] as Array<Record<string, unknown>>,
+  trackDuration: [] as boolean[],
 }));
 
 vi.mock("@/gateway", () => ({
@@ -40,7 +41,11 @@ const settings = vi.hoisted(() => ({
 
 vi.mock("@/hooks/use-user-settings", () => ({
   useUserSettings: () => ({
+    isLoading: false,
     trackCompletionDuration: settings.trackCompletionDuration,
+    setTrackDuration: async (enabled: boolean) => {
+      calls.trackDuration.push(enabled);
+    },
   }),
 }));
 
@@ -73,6 +78,7 @@ const renderDialog = (
 
 beforeEach(() => {
   calls.finish = [];
+  calls.trackDuration = [];
   settings.trackCompletionDuration = true;
 });
 afterEach(() => cleanup());
@@ -128,6 +134,22 @@ describe("FinishSolveDialog", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save solve" }));
     await vi.waitFor(() => expect(calls.finish).toHaveLength(1));
     expect(calls.finish[0]).toMatchObject({ completionTimeMinutes: 120 });
+  });
+
+  it("lets a member who hasn't chosen yet opt out of solve times, like the Log dialog", () => {
+    settings.trackCompletionDuration = undefined;
+    renderDialog({ puzzleTitle: "Mountain Lake" });
+    fireEvent.click(screen.getByRole("button", { name: "Don't track times" }));
+    expect(calls.trackDuration).toEqual([false]);
+  });
+
+  it("offers no opt-out once times are on", () => {
+    settings.trackCompletionDuration = true;
+    renderDialog({ puzzleTitle: "Mountain Lake" });
+    expect(screen.getByLabelText("Hours")).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Don't track times" })).toBe(
+      null,
+    );
   });
 
   it("asks no time once the member turned times off", () => {

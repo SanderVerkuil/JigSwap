@@ -5,6 +5,7 @@ import { useCompletionFollowUp } from "@/components/solving/completion-follow-up
 import {
   showsSolveTime,
   SolveTimeFields,
+  useSolveTimeOptOut,
 } from "@/components/solving/solve-time-fields";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -62,11 +63,8 @@ export function LogSolveDialog({
   const updateDetails = useMutation({
     mutationFn: useConvexMutation(gateway.library.updateDetails),
   });
-  const {
-    isLoading: settingsLoading,
-    trackCompletionDuration,
-    setTrackDuration,
-  } = useUserSettings();
+  const { trackCompletionDuration } = useUserSettings();
+  const optOutOfTimes = useSolveTimeOptOut();
   const { requestFollowUp } = useCompletionFollowUp();
 
   // Both dates default to the member's local today, so "I just finished" is one tap. "Still
@@ -185,20 +183,6 @@ export function LogSolveDialog({
     }
   };
 
-  // "Don't track times": stores the choice (the fields hide once the setting updates) and says
-  // where to turn it back on.
-  const optOutOfTimes = async () => {
-    try {
-      await setTrackDuration(false);
-      setHours("");
-      setMinutes("");
-      toast.success(t("timesOff"));
-    } catch (error) {
-      console.error("Failed to turn off solve times:", error);
-      toast.error(t("timesOffError"));
-    }
-  };
-
   const closeOfferUpdateCopy = (o: boolean) => {
     setOfferUpdateCopy(o);
     if (!o) fireFollowUpAfterUpdateCopy();
@@ -262,11 +246,7 @@ export function LogSolveDialog({
                 minutes={minutes}
                 onHoursChange={setHours}
                 onMinutesChange={setMinutes}
-                onOptOut={
-                  !settingsLoading && trackCompletionDuration === undefined
-                    ? () => void optOutOfTimes()
-                    : undefined
-                }
+                onOptOut={optOutOfTimes}
               />
             )}
 

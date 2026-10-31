@@ -2,6 +2,8 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useUserSettings } from "@/hooks/use-user-settings";
+import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
 // The member's "track solve times" preference, undefined until they choose. Time fields show
@@ -10,6 +12,25 @@ export function showsSolveTime(
   trackCompletionDuration: boolean | undefined,
 ): boolean {
   return trackCompletionDuration !== false;
+}
+
+// "Don't track times" for the Log and Finish dialogs: offered only while the member hasn't chosen
+// yet (and their settings have loaded), undefined otherwise. It stores false, so the time fields
+// hide once the setting updates, and says where to turn times back on.
+export function useSolveTimeOptOut(): (() => void) | undefined {
+  const t = useTranslations("solving.logSolve");
+  const { isLoading, trackCompletionDuration, setTrackDuration } =
+    useUserSettings();
+  if (isLoading || trackCompletionDuration !== undefined) return undefined;
+  return () => {
+    setTrackDuration(false).then(
+      () => toast.success(t("timesOff")),
+      (error: unknown) => {
+        console.error("Failed to turn off solve times:", error);
+        toast.error(t("timesOffError"));
+      },
+    );
+  };
 }
 
 interface SolveTimeFieldsProps {
