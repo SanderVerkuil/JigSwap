@@ -1,5 +1,12 @@
+import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
+
+// The brand frame needs intl, router and theme context; only the Clerk props
+// matter here, so render the card without it.
+vi.mock("@/components/auth/auth-shell", () => ({
+  AuthShell: ({ children }: { children: ReactNode }) => children,
+}));
 
 // Capture the props the sign-in/up pages hand Clerk. Clerk's precedence is
 // redirect_url query param > fallbackRedirectUrl, whereas forceRedirectUrl would
