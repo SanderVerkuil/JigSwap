@@ -355,7 +355,6 @@
     "createNewPuzzle": "Nieuwe Puzzel Maken",
     "createNewPuzzleDescription": "Maak een nieuwe puzzel die nog niet bestaat",
     "puzzleCreated": "Puzzel succesvol aangemaakt",
-    "puzzleSubmittedForReview": "Puzzel ingediend ter beoordeling",
     "puzzleCreationFailed": "Puzzel aanmaken mislukt",
     "addRateLimited": "Je hebt vandaag al veel puzzels toegevoegd. Probeer het morgen opnieuw.",
     "rateLimited": "Je hebt voorlopig het maximale aantal puzzels toegevoegd. Probeer het {when} opnieuw.",
@@ -545,6 +544,14 @@
     "livePreview": "Live voorbeeld",
     "livePreviewCaption": "Zo ziet je puzzelkaart eruit voor anderen op je plank.",
     "contributePreviewCaption": "Zo komt de puzzel in de catalogus te staan zodra hij is goedgekeurd.",
+    "contributeDone": {
+      "pendingTitle": "“{title}” wacht op controle",
+      "pendingBody": "We controleren nieuwe puzzels voordat ze in de catalogus verschijnen. Je kunt hem nu al aan je puzzels toevoegen.",
+      "submittedTitle": "Bedankt voor het bijdragen van “{title}”",
+      "addToMyPuzzles": "Toevoegen aan mijn puzzels",
+      "contributeAnother": "Nog een puzzel bijdragen",
+      "backToCatalogue": "Terug naar de catalogus"
+    },
     "checkTitle": "Titel ingevuld",
     "checkBrand": "Merk ingevuld",
     "checkPieces": "Aantal stukken ingevuld",

@@ -20,6 +20,8 @@ const mocks = vi.hoisted(() => ({
   data: new Map<string, (args: unknown) => unknown>(),
   push: vi.fn<(href: string) => void>(),
   createPuzzle: vi.fn<(args: Record<string, unknown>) => Promise<string>>(),
+  // One-shot convex.query reads (the member's own pending submissions after submitting).
+  oneShot: vi.fn<(ref: unknown, args: unknown) => Promise<unknown>>(),
 }));
 
 vi.mock("@tanstack/react-router", () => ({
@@ -69,6 +71,10 @@ vi.mock("@convex-dev/react-query", async () => {
     useConvexAction: () => vi.fn(),
   };
 });
+vi.mock("convex/react", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("convex/react")>()),
+  useConvex: () => ({ query: mocks.oneShot }),
+}));
 vi.mock("@/hooks/use-box-art-check", () => ({
   useBoxArtCheckNotice: () => () => Promise.resolve(),
 }));
@@ -109,6 +115,8 @@ beforeEach(() => {
   mocks.push.mockReset();
   mocks.createPuzzle.mockReset();
   mocks.createPuzzle.mockResolvedValue("aggregate-1");
+  mocks.oneShot.mockReset();
+  mocks.oneShot.mockResolvedValue([]);
 });
 afterEach(cleanup);
 
@@ -240,5 +248,93 @@ describe("checking the catalogue for the puzzle being contributed", () => {
 
     await screen.findByText(/Dorpsstraat/);
     expect(lookup).toHaveBeenCalledWith({ code: "4006381333931" });
+  });
+});
+
+describe("after the puzzle is submitted", () => {
+  const submit = async () => {
+    fillRequired("  Café ");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Contribute a Puzzle" }),
+    );
+    return screen.findByRole("heading", { level: 2 });
+  };
+
+  it("says it is waiting for review and offers adding it to the member's puzzles", async () => {
+    mocks.oneShot.mockResolvedValue([
+      { ...summary("p_old", "Night Watch"), aggregateId: "aggregate-0" },
+      { ...summary("p_new", "Café"), aggregateId: "aggregate-1" },
+    ]);
+    renderPage();
+    const heading = await submit();
+
+    expect(heading.textContent).toBe("“Café” is waiting for review");
+    expect(document.activeElement).toBe(heading);
+    expect(
+      screen
+        .getByRole("link", { name: "Add it to my puzzles" })
+        .getAttribute("href"),
+    ).toBe("/my-puzzles/add/new?puzzleId=p_new");
+    expect(
+      screen
+        .getByRole("link", { name: "Back to the catalogue" })
+        .getAttribute("href"),
+    ).toBe("/puzzles");
+    // The member stays here: the catalogue would not show a pending puzzle.
+    expect(mocks.push).not.toHaveBeenCalled();
+    expect(screen.queryByLabelText("Puzzle Title")).toBeNull();
+  });
+
+  it("only thanks the member when the new puzzle cannot be found among their pending ones", async () => {
+    // An admin's submission is approved at once, so it is not in that list.
+    mocks.oneShot.mockResolvedValue([]);
+    renderPage();
+    const heading = await submit();
+
+    expect(heading.textContent).toBe("Thanks for contributing “Café”");
+    expect(screen.queryByText(/waiting for review/)).toBeNull();
+    expect(
+      screen.queryByRole("link", { name: "Add it to my puzzles" }),
+    ).toBeNull();
+  });
+
+  it("still confirms the submission when looking up its id fails", async () => {
+    mocks.oneShot.mockRejectedValue(new Error("offline"));
+    renderPage();
+    const heading = await submit();
+    expect(heading.textContent).toBe("Thanks for contributing “Café”");
+  });
+
+  it("starts a fresh form for another contribution", async () => {
+    renderPage();
+    await submit();
+    fireEvent.click(screen.getByRole("button", { name: "Contribute another" }));
+
+    const title = screen.getByLabelText("Puzzle Title") as HTMLInputElement;
+    expect(title.value).toBe("");
+    expect(
+      screen
+        .getByRole("radio", { name: "Not sure" })
+        .getAttribute("aria-checked"),
+    ).toBe("true");
+  });
+
+  it("says so in Dutch", async () => {
+    mocks.oneShot.mockResolvedValue([
+      { ...summary("p_new", "Café"), aggregateId: "aggregate-1" },
+    ]);
+    renderPage("nl");
+    fireEvent.change(screen.getByLabelText("Puzzeltitel"), {
+      target: { value: "Café" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "1000" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Een puzzel bijdragen" }),
+    );
+    const heading = await screen.findByRole("heading", { level: 2 });
+    expect(heading.textContent).toBe("“Café” wacht op controle");
+    expect(
+      screen.getByRole("link", { name: "Toevoegen aan mijn puzzels" }),
+    ).toBeTruthy();
   });
 });

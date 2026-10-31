@@ -355,7 +355,6 @@
     "createNewPuzzle": "Create New Puzzle",
     "createNewPuzzleDescription": "Create a new puzzle that doesn't exist yet",
     "puzzleCreated": "Puzzle created successfully",
-    "puzzleSubmittedForReview": "Puzzle submitted for review",
     "puzzleCreationFailed": "Failed to create puzzle",
     "addRateLimited": "You've added a lot of puzzles today. Try again tomorrow.",
     "rateLimited": "You've added the most puzzles allowed for now. Try again {when}.",
@@ -545,6 +544,14 @@
     "livePreview": "Live preview",
     "livePreviewCaption": "This is how your puzzle card will look to others on your shelf.",
     "contributePreviewCaption": "This is how it will look in the catalogue once it's approved.",
+    "contributeDone": {
+      "pendingTitle": "“{title}” is waiting for review",
+      "pendingBody": "We check new puzzles before they appear in the catalogue. You don't have to wait to add it to your puzzles.",
+      "submittedTitle": "Thanks for contributing “{title}”",
+      "addToMyPuzzles": "Add it to my puzzles",
+      "contributeAnother": "Contribute another",
+      "backToCatalogue": "Back to the catalogue"
+    },
     "checkTitle": "Title filled in",
     "checkBrand": "Brand filled in",
     "checkPieces": "Piece count filled in",

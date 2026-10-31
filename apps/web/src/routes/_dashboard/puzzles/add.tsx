@@ -3,6 +3,7 @@ import {
   AddPuzzleLayout,
   CATALOG_TEXT_LIMITS,
   contributeError,
+  ContributeSuccess,
   COVER_SWATCHES,
   CoverColourField,
   coverStep,
@@ -17,6 +18,7 @@ import {
   ReadinessChecklist,
   SectionDivider,
   SegmentedPills,
+  submittedPuzzleId,
   SuggestInput,
   TagInput,
   type SegmentedOption,
@@ -53,6 +55,7 @@ import {
 } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { useConvex } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -148,6 +151,7 @@ function ContributePuzzlePage() {
     setDismissedMatches((ids) => new Set(ids).add(puzzleId));
 
   // Convex mutations & actions, called inside the contribute wrapper below.
+  const convex = useConvex();
   const createPuzzle = useConvexMutation(gateway.catalog.createPuzzle);
   const uploadBoxArt = useUploadBoxArt();
   const notifyBoxArtCheck = useBoxArtCheckNotice();
@@ -279,7 +283,7 @@ function ContributePuzzlePage() {
         }
       }
 
-      await createPuzzle({
+      const aggregateId = await createPuzzle({
         title: form.title,
         brand: form.brand || undefined,
         publisher: form.publisher || undefined,
@@ -303,10 +307,19 @@ function ContributePuzzlePage() {
         image: imageId,
       });
       await notifyBoxArtCheck(imageId);
-    },
-    onSuccess: () => {
-      toast.success(t("puzzleSubmittedForReview"));
-      router.push("/puzzles");
+      // The submit returns the domain id; the add-a-copy form needs the Convex id, which the
+      // member's own pending submissions carry. Missing for an admin (approved at once) or when
+      // this read fails: the submission itself has succeeded either way.
+      let puzzleId: string | null = null;
+      try {
+        puzzleId = submittedPuzzleId(
+          await convex.query(gateway.catalog.myContributedPuzzles, {}),
+          aggregateId,
+        );
+      } catch {
+        puzzleId = null;
+      }
+      return { title: form.title.trim(), puzzleId };
     },
     onError: (error) => {
       console.error("Contribute puzzle failed:", error);
@@ -329,6 +342,14 @@ function ContributePuzzlePage() {
   const handleContribute = () => {
     if (!form.title.trim() || !form.pieceCount) return;
     contribute.mutate();
+  };
+
+  const contributeAnother = () => {
+    contribute.reset();
+    setForm(DEFAULT_FORM);
+    setPendingMatch(null);
+    setAdvancedOpen(false);
+    setDismissedMatches(new Set());
   };
 
   const isReady = !!form.title.trim() && !!form.pieceCount;
@@ -731,7 +752,17 @@ function ContributePuzzlePage() {
 
   return (
     <div className="space-y-6">
-      <AddPuzzleLayout form={formColumn} preview={previewColumn} />
+      {/* A submitted puzzle waits for review and is not in the catalogue yet, so the member
+          stays here and is told what happens next instead of being sent to /puzzles. */}
+      {contribute.data ? (
+        <ContributeSuccess
+          title={contribute.data.title}
+          puzzleId={contribute.data.puzzleId}
+          onContributeAnother={contributeAnother}
+        />
+      ) : (
+        <AddPuzzleLayout form={formColumn} preview={previewColumn} />
+      )}
     </div>
   );
 }
