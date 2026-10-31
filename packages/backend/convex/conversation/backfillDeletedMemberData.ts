@@ -166,9 +166,21 @@ const pageOf = async (
  * and scheduled once. Its domainEvents walk also drops the personal fields (a copy's notes) from
  * events keyed by a copy that no longer exists, or only counts them on a dry run
  * (`deletedCopyEvents`). Each batch logs its findings; the last logs the whole list. Re-running is
- * harmless: the purge is idempotent. A purged member can still be found (their seat in a DM an
- * active member still has, a legacy chat row never copied) and is then purged again, changing
- * nothing. Run by an operator, with approval.
+ * safe: the purge is idempotent. A purged member can still be found (their seat in a DM an active
+ * member still has, a legacy chat row never copied) and is then purged again, changing nothing.
+ * Run by an operator, with approval.
+ *
+ * Cost and run order. Every member found is purged again from `exchangesOpen`, which includes the
+ * domainEvents phase. Until events/eventMembers:backfillEventMembers has written its
+ * `domainEventMembers` marker, that phase pages the WHOLE event log for each member, so one real
+ * run costs about (departed members x log size), and so does every later re-run. Run the one-off
+ * post-deploy steps in this order (each a dry run `{}` first, then `{ dryRun: false }`):
+ *   1. events/redactPayloads:redactPayloads
+ *   2. events/eventMembers:backfillEventMembers (wait for its marker / final log line)
+ *   3. conversation/backfillDeletedMemberData:backfillDeletedMemberData
+ * Steps 1 and 2 are independent of each other; step 3 comes after both: after step 2's marker so
+ * each re-purge reads only the member's own events by index, and after step 1 because that index
+ * walk relies on redactPayloads for older events' free text. Also in docs/developer-guide.md §1.5.
  */
 export const backfillDeletedMemberData = internalMutation({
   args: {
