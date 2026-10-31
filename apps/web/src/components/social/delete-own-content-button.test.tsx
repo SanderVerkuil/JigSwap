@@ -41,6 +41,7 @@ const DELETE_REVIEW = getFunctionName(gateway.social.deletePuzzleReview);
 const CLEAR_REVIEW_COMMENT = getFunctionName(
   gateway.reputation.clearReviewComment,
 );
+const DELETE_COPY_REVIEW = getFunctionName(gateway.solving.deleteCopyReview);
 
 const wrap = (ui: React.ReactNode, locale: "en" | "nl" = "en") =>
   render(
@@ -160,6 +161,31 @@ describe("DeleteOwnContentButton", () => {
     );
   });
 
+  it("deletes the member's star review of a copy and says only the stars go", async () => {
+    wrap(
+      <DeleteOwnContentButton
+        kind="copyReview"
+        mutation={gateway.solving.deleteCopyReview}
+        args={{ copyId: "copy-1" as Id<"ownedPuzzles"> }}
+        iconOnly
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Delete my review" }));
+    expect(confirmDialog().textContent).toContain(
+      "Delete your review of this copy?",
+    );
+    fireEvent.click(
+      within(confirmDialog()).getByRole("button", { name: "Delete review" }),
+    );
+
+    await waitFor(() =>
+      expect(mocks.mutation).toHaveBeenCalledWith(DELETE_COPY_REVIEW, {
+        copyId: "copy-1",
+      }),
+    );
+    expect(mocks.toastSuccess).toHaveBeenCalledWith("Review deleted");
+  });
+
   it("is translated into Dutch", () => {
     wrap(
       <DeleteOwnContentButton
@@ -178,7 +204,12 @@ describe("DeleteOwnContentButton", () => {
   });
 
   it("every kind has the same keys in every catalog, and source mirrors en", () => {
-    const kinds: OwnContentKind[] = ["comment", "review", "reviewComment"];
+    const kinds: OwnContentKind[] = [
+      "comment",
+      "review",
+      "copyReview",
+      "reviewComment",
+    ];
     for (const kind of kinds) {
       expect(Object.keys(nl.ownContent[kind]).sort()).toEqual(
         Object.keys(en.ownContent[kind]).sort(),

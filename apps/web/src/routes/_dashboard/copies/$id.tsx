@@ -852,7 +852,7 @@ function CopyInstanceDetail({
         {/* Right: community + copy reviews + comments */}
         <div className="space-y-9">
           <CommunityRating community={community} />
-          <CopyReviewsSection reviews={copy.copyReviews} />
+          <CopyReviewsSection copyId={copyId} reviews={copy.copyReviews} />
           <CommentsSection copyId={copyId} />
         </div>
       </div>
@@ -1284,9 +1284,12 @@ function CommunityRating({
 // Star-only reviews of THIS physical copy (distinct from the definition-wide community rating
 // above). Authors are ProjectedMembers — privacy-projected server-side like every member on this
 // page, so an anonymised author renders the "Anonymous user" label and never a real name/avatar.
+// The viewer's own review (canDelete, server-computed) carries "Delete my review" (SEC-70).
 function CopyReviewsSection({
+  copyId,
   reviews,
 }: {
+  copyId: string;
   reviews: CopyInstanceView["copyReviews"];
 }) {
   const t = useTranslations("copyInstance");
@@ -1354,6 +1357,14 @@ function CopyReviewsSection({
                   </div>
                 </div>
                 <StarRating value={review.rating} size="sm" />
+                {review.canDelete && (
+                  <DeleteOwnContentButton
+                    kind="copyReview"
+                    mutation={gateway.solving.deleteCopyReview}
+                    args={{ copyId: copyId as Id<"ownedPuzzles"> }}
+                    iconOnly
+                  />
+                )}
               </div>
             ))}
           </div>

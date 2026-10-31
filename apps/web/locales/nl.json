@@ -5335,6 +5335,14 @@
       "done": "Review verwijderd",
       "error": "Je review kon niet worden verwijderd. Probeer het opnieuw."
     },
+    "copyReview": {
+      "action": "Mijn beoordeling verwijderen",
+      "title": "Je beoordeling van dit exemplaar verwijderen?",
+      "body": "Je sterren verdwijnen uit de beoordelingen van dit exemplaar. Je kunt het later opnieuw beoordelen.",
+      "confirm": "Beoordeling verwijderen",
+      "done": "Beoordeling verwijderd",
+      "error": "Je beoordeling kon niet worden verwijderd. Probeer het opnieuw."
+    },
     "reviewComment": {
       "action": "Opmerking verwijderen",
       "title": "Je opmerking verwijderen?",

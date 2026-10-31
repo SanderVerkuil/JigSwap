@@ -1,5 +1,5 @@
 // "Delete" for something the member wrote themselves — a copy or photo comment, their puzzle
-// review, or the written comment of their partner review (SEC-70). A labelled trigger behind an
+// review, their star review of a copy, or the written comment of their partner review (SEC-70). A labelled trigger behind an
 // AlertDialog confirm that runs the given author-only mutation. Callers render it only where the
 // server said the viewer may (the views' canDelete / canClearComment), so an older backend without
 // those flags shows nothing. The list queries are reactive: the row drops out by itself.
@@ -23,7 +23,8 @@ import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
-export type OwnContentKind = "comment" | "review" | "reviewComment";
+export type OwnContentKind =
+  "comment" | "review" | "copyReview" | "reviewComment";
 
 export function DeleteOwnContentButton<
   Mutation extends FunctionReference<"mutation">,

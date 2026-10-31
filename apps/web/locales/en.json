@@ -5335,6 +5335,14 @@
       "done": "Review deleted",
       "error": "Couldn't delete your review. Please try again."
     },
+    "copyReview": {
+      "action": "Delete my review",
+      "title": "Delete your review of this copy?",
+      "body": "Your stars disappear from this copy's reviews. You can rate it again later.",
+      "confirm": "Delete review",
+      "done": "Review deleted",
+      "error": "Couldn't delete your review. Please try again."
+    },
     "reviewComment": {
       "action": "Remove comment",
       "title": "Remove your comment?",
