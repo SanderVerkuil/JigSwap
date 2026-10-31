@@ -5250,7 +5250,7 @@
       "list": {
         "statusInactive": "Inactive",
         "translationTooltip": "{language}: “{value}”",
-        "missingTranslationTooltip": "{language}: missing translation",
+        "missingTranslation": "{language} missing",
         "edit": "Edit",
         "deactivate": "Deactivate",
         "deactivateConfirmTitle": "Deactivate “{name}”?",
@@ -5262,7 +5262,10 @@
         "reactivateError": "Failed to reactivate category",
         "undo": "Undo",
         "reorderError": "Failed to reorder categories",
-        "dragHandle": "Drag to reorder {name}"
+        "dragHandle": "Drag to reorder {name}",
+        "moreActions": "More actions for {name}",
+        "moveUp": "Move up",
+        "moveDown": "Move down"
       }
     },
     "puzzles": {

@@ -5250,7 +5250,7 @@
       "list": {
         "statusInactive": "Inactief",
         "translationTooltip": "{language}: “{value}”",
-        "missingTranslationTooltip": "{language}: vertaling ontbreekt",
+        "missingTranslation": "{language} ontbreekt",
         "edit": "Bewerken",
         "deactivate": "Deactiveren",
         "deactivateConfirmTitle": "“{name}” deactiveren?",
@@ -5262,7 +5262,10 @@
         "reactivateError": "Categorie reactiveren mislukt",
         "undo": "Ongedaan maken",
         "reorderError": "Categorieën herordenen mislukt",
-        "dragHandle": "Sleep om {name} te herordenen"
+        "dragHandle": "Sleep om {name} te herordenen",
+        "moreActions": "Meer acties voor {name}",
+        "moveUp": "Omhoog",
+        "moveDown": "Omlaag"
       }
     },
     "puzzles": {
