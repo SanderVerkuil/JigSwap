@@ -13,6 +13,7 @@ import { useMutation } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { LifeBuoy, Mail, MapPin, Shield } from "lucide-react";
 import * as React from "react";
+import { flushSync } from "react-dom";
 import { useLocale, useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_public/contact")({
@@ -118,6 +119,10 @@ function ContactForm() {
     submit?: React.ReactNode;
   }>({});
   const [sent, setSent] = React.useState(false);
+  const nameRef = React.useRef<HTMLInputElement>(null);
+  const emailRef = React.useRef<HTMLInputElement>(null);
+  const messageRef = React.useRef<HTMLTextAreaElement>(null);
+  const sentHeadingRef = React.useRef<HTMLHeadingElement>(null);
 
   const set =
     (k: "name" | "email" | "message") =>
@@ -133,8 +138,20 @@ function ContactForm() {
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email))
       er.email = t("errorEmail");
     if (form.message.trim().length < 10) er.message = t("errorMessage");
-    setErrors(er);
-    if (Object.keys(er).length > 0) return;
+    // Commit the errors before moving focus, so the field a screen reader
+    // announces already points at its error through aria-describedby.
+    flushSync(() => setErrors(er));
+    const firstInvalid = er.name
+      ? nameRef
+      : er.email
+        ? emailRef
+        : er.message
+          ? messageRef
+          : null;
+    if (firstInvalid) {
+      firstInvalid.current?.focus();
+      return;
+    }
 
     try {
       await submitMessage.mutateAsync({
@@ -144,13 +161,16 @@ function ContactForm() {
         message: form.message,
         locale: locale === "nl" ? "nl" : "en",
       });
-      setSent(true);
+      // The form (and the focused button) unmounts: land on the confirmation.
+      flushSync(() => setSent(true));
+      sentHeadingRef.current?.focus();
     } catch (error) {
       const code = convexErrorCode(error);
       // The server's address rule is stricter than the shape check above; name the field it
-      // refused rather than suggesting a retry.
+      // refused rather than suggesting a retry, the same way that check does.
       if (code === "invalid_email") {
-        setErrors({ email: t("errorEmail") });
+        flushSync(() => setErrors({ email: t("errorEmail") }));
+        emailRef.current?.focus();
         return;
       }
       // The deployment-wide budget is spent: point at the inbox the form feeds.
@@ -178,10 +198,16 @@ function ContactForm() {
   if (sent) {
     return (
       <div className="px-9 py-11 rounded-[20px] bg-mk-card border border-mk-border text-center shadow-mk-sm">
-        <div className="text-[44px]">🧩</div>
-        <h3 className="font-mk-heading font-bold tracking-tight text-2xl text-mk-text-strong mt-3">
+        <div aria-hidden="true" className="text-[44px]">
+          🧩
+        </div>
+        <h2
+          ref={sentHeadingRef}
+          tabIndex={-1}
+          className="font-mk-heading font-bold tracking-tight text-2xl text-mk-text-strong mt-3 outline-none"
+        >
           {t("sentTitle")}
-        </h3>
+        </h2>
         <p className="text-[15.5px] text-mk-text-muted mt-2.5 leading-relaxed">
           {t("sentBody")}
         </p>
@@ -189,8 +215,11 @@ function ContactForm() {
           variant="outline"
           className="mt-[22px] bg-mk-card border-mk-border text-mk-text-strong hover:bg-mk-muted"
           onClick={() => {
-            setSent(false);
-            setForm({ name: "", email: "", subject: "swap", message: "" });
+            flushSync(() => {
+              setSent(false);
+              setForm({ name: "", email: "", subject: "swap", message: "" });
+            });
+            nameRef.current?.focus();
           }}
         >
           {t("sentAgain")}
@@ -211,29 +240,41 @@ function ContactForm() {
             {t("formName")}
           </label>
           <Input
+            ref={nameRef}
             id="contact-name"
             placeholder={t("formNamePlaceholder")}
             value={form.name}
             onChange={set("name")}
             aria-invalid={!!errors.name}
+            aria-describedby={errors.name ? "contact-name-error" : undefined}
             className={errors.name ? "border-mk-danger" : ""}
           />
-          {errors.name && <div className={errCls}>{errors.name}</div>}
+          {errors.name && (
+            <div id="contact-name-error" className={errCls}>
+              {errors.name}
+            </div>
+          )}
         </div>
         <div>
           <label htmlFor="contact-email" className={labelCls}>
             {t("formEmail")}
           </label>
           <Input
+            ref={emailRef}
             id="contact-email"
             type="email"
             placeholder={t("formEmailPlaceholder")}
             value={form.email}
             onChange={set("email")}
             aria-invalid={!!errors.email}
+            aria-describedby={errors.email ? "contact-email-error" : undefined}
             className={errors.email ? "border-mk-danger" : ""}
           />
-          {errors.email && <div className={errCls}>{errors.email}</div>}
+          {errors.email && (
+            <div id="contact-email-error" className={errCls}>
+              {errors.email}
+            </div>
+          )}
         </div>
       </div>
       {/* Native radios (visually hidden, chips are their labels) give the
@@ -270,21 +311,33 @@ function ContactForm() {
           {t("formMessage")}
         </label>
         <textarea
+          ref={messageRef}
           id="contact-message"
           rows={5}
           value={form.message}
           onChange={set("message")}
           placeholder={t("formMessagePlaceholder")}
           aria-invalid={!!errors.message}
+          aria-describedby={
+            errors.message ? "contact-message-error" : undefined
+          }
           className={cn(
             "w-full resize-y text-[15px] px-[13px] py-[11px] rounded-[10px] border bg-mk-card text-mk-text-body outline-none",
             "focus:[box-shadow:0_0_0_3px_rgb(96_72_232_/_.18)]",
             errors.message ? "border-mk-danger" : "border-mk-input-border",
           )}
         />
-        {errors.message && <div className={errCls}>{errors.message}</div>}
+        {errors.message && (
+          <div id="contact-message-error" className={errCls}>
+            {errors.message}
+          </div>
+        )}
       </div>
-      {errors.submit && <div className={errCls}>{errors.submit}</div>}
+      {errors.submit && (
+        <div role="alert" className={errCls}>
+          {errors.submit}
+        </div>
+      )}
       <Button
         type="submit"
         variant="brand"

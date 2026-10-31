@@ -56,6 +56,12 @@ const renderPage = (locale: "en" | "nl" = "en") =>
 const field = (label: string) =>
   screen.getByLabelText(label) as HTMLInputElement | HTMLTextAreaElement;
 
+const describedBy = (el: HTMLElement) =>
+  (el.getAttribute("aria-describedby") ?? "")
+    .split(" ")
+    .filter(Boolean)
+    .map((id) => document.getElementById(id)?.textContent);
+
 const fillValid = () => {
   fireEvent.change(field(copy.formName), { target: { value: "Ada" } });
   fireEvent.change(field(copy.formEmail), {
@@ -72,6 +78,32 @@ const send = () =>
 afterEach(() => {
   cleanup();
   backend.submit.mockReset();
+});
+
+describe("contact form validation", () => {
+  it("moves focus to the name field and describes it with its error when sent empty", () => {
+    renderPage();
+    send();
+
+    const name = field(copy.formName);
+    expect(document.activeElement).toBe(name);
+    expect(name.getAttribute("aria-invalid")).toBe("true");
+    expect(describedBy(name)).toEqual([copy.errorName]);
+    expect(describedBy(field(copy.formEmail))).toEqual([copy.errorEmail]);
+    expect(describedBy(field(copy.formMessage))).toEqual([copy.errorMessage]);
+    expect(backend.submit).not.toHaveBeenCalled();
+  });
+
+  it("focuses the first invalid field, not always the first field", () => {
+    renderPage();
+    fireEvent.change(field(copy.formName), { target: { value: "Ada" } });
+    send();
+
+    const email = field(copy.formEmail);
+    expect(document.activeElement).toBe(email);
+    expect(describedBy(field(copy.formName))).toEqual([]);
+    expect(describedBy(email)).toEqual([copy.errorEmail]);
+  });
 });
 
 describe("contact form subject", () => {
@@ -160,5 +192,72 @@ describe("contact form", () => {
     await waitFor(() =>
       expect(screen.queryByText(/a lot of messages/)).toBeNull(),
     );
+  });
+});
+
+describe("contact form outcome", () => {
+  it("announces a failed send", async () => {
+    backend.submit.mockRejectedValue(new Error("offline"));
+    renderPage();
+    fillValid();
+    send();
+
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      copy.errorSubmit,
+    );
+  });
+
+  it("announces a busy form with the same alert", async () => {
+    backend.submit.mockRejectedValue(
+      new ConvexError({ code: "RateLimited", retryAfterMs: 60_000 }),
+    );
+    renderPage();
+    fillValid();
+    send();
+
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      copy.emailValue,
+    );
+  });
+
+  it("moves focus to the email field when the server refuses the address", async () => {
+    backend.submit.mockRejectedValue(
+      new ConvexError({ code: "invalid_email" }),
+    );
+    renderPage();
+    fillValid();
+    send();
+
+    const email = field(copy.formEmail);
+    await waitFor(() => expect(document.activeElement).toBe(email));
+    expect(describedBy(email)).toEqual([copy.errorEmail]);
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("moves focus to the confirmation heading after a successful send", async () => {
+    backend.submit.mockResolvedValue(null);
+    renderPage();
+    fillValid();
+    send();
+
+    const heading = await screen.findByRole("heading", {
+      level: 2,
+      name: copy.sentTitle,
+    });
+    expect(document.activeElement).toBe(heading);
+  });
+
+  it("returns focus to the name field when starting another message", async () => {
+    backend.submit.mockResolvedValue(null);
+    renderPage();
+    fillValid();
+    send();
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: copy.sentAgain }),
+    );
+    const name = field(copy.formName);
+    expect(name.value).toBe("");
+    expect(document.activeElement).toBe(name);
   });
 });
