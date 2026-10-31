@@ -24,12 +24,17 @@ import {
   swapTypeOf,
 } from "./definitionAggregates";
 import { definitionTotalsOf } from "./definitionStats";
-import { openListingWindow } from "./openListing";
+import {
+  newestListedFirst,
+  openListingWindow,
+  type ListingOwners,
+} from "./openListing";
 
-// The view's window of reachable open copies of the definition (library/openListing
-// .openListingWindow): at most DEFINITION_CANDIDATE_CAP, newest first. One owner's copies past
+// The view's windows of reachable open copies of the definition (library/openListing
+// .openListingWindow), one over public and one over private owners: at most
+// DEFINITION_CANDIDATE_CAP in all, newest offer first. One owner's copies past
 // DEFINITION_PER_OWNER only fill room the other owners leave, reading stops after
-// DEFINITION_READ_BUDGET rows or DEFINITION_CANDIDATE_CAP owners, and at most
+// DEFINITION_READ_BUDGET rows or DEFINITION_CANDIDATE_CAP owners per window, and at most
 // DEFINITION_CANDIDATE_CAP per-copy circle checks run (a private owner's copy past that is not
 // offered). Past the window, `totalAvailable` (and stats.availableToSwap) is a lower bound.
 export const DEFINITION_CANDIDATE_CAP = 200;
@@ -148,22 +153,29 @@ export const getPuzzleDefinitionView = query({
       circleChecks++;
       return isCircleSharedWithViewer(ctx, viewerId, copy);
     };
-    // Reachable open copies of THIS definition, not the viewer's own, newest first.
-    const reachable = (
-      await openListingWindow(
-        ctx,
-        args.puzzleId,
-        {
-          size: DEFINITION_CANDIDATE_CAP,
-          perOwner: DEFINITION_PER_OWNER,
-          readBudget: DEFINITION_READ_BUDGET,
-          maxOwners: DEFINITION_CANDIDATE_CAP,
-        },
-        isReachable,
-      )
-    ).rows.sort(
-      (a, b) => b.createdAt - a.createdAt || b._creationTime - a._creationTime,
-    );
+    // Reachable open copies of THIS definition, not the viewer's own, newest offer first. Public
+    // and private owners' copies fill separate windows, so private members' piles (whose copies
+    // need a per-copy circle check) can't push public offers out, nor the reverse.
+    const windowOf = async (owners: ListingOwners) =>
+      (
+        await openListingWindow(
+          ctx,
+          { puzzleId: args.puzzleId, owners },
+          {
+            size: DEFINITION_CANDIDATE_CAP,
+            perOwner: DEFINITION_PER_OWNER,
+            readBudget: DEFINITION_READ_BUDGET,
+            maxOwners: DEFINITION_CANDIDATE_CAP,
+          },
+          isReachable,
+        )
+      ).rows;
+    const reachable = [
+      ...(await windowOf("public")),
+      ...(await windowOf("private")),
+    ]
+      .sort(newestListedFirst)
+      .slice(0, DEFINITION_CANDIDATE_CAP);
 
     const totalAvailable = reachable.length;
     const availableToSwap = totalAvailable;

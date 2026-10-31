@@ -684,26 +684,32 @@ sweep").
 
 **Safe to re-run:** yes. A second real run creates 0 sidecars.
 ## `library/backfillCopyOpenFlag` — the listing flag Browse reads by index
+## `library/backfillCopyOpenFlag` — the listing fields Browse reads by index
 
-**When:** once per deployment, after the `ownedPuzzles.isOpen` flag and its `by_open` /
-`by_puzzle_open` indexes (PERF-B1m, SEC-29) are deployed there. There is no ordering
-pressure: every copy save and every settled exchange already writes the flag, and until a
-row has one, Browse still finds it through a fallback that reads the rows without a flag and
-checks their availability. That fallback reads legacy closed copies too, and they count
-against Browse's read budget (3,000 rows per call), so on a deployment with more copies
-than that Browse can miss older listings until the backfill has run. Run it soon after the
-deploy; once it has run, the fallback range is empty and Browse reads only open copies.
+**When:** once per deployment, after the `ownedPuzzles` listing fields (`isOpen`,
+`listedAt`, `ownerPrivate`) and their `by_listing` / `by_puzzle_listing` indexes (PERF-B1m,
+SEC-29) are deployed there. There is no ordering pressure: every copy save, every settled
+exchange and every profile visibility change already writes the fields, and until a row has
+them, Browse still finds it through a fallback that reads the rows without a flag and checks
+their availability and owner. That fallback reads legacy closed copies and private members'
+copies too, and they count against Browse's read budget (3,000 rows per call), so on a
+deployment with more copies than that Browse can miss older listings until the backfill has
+run. Run it soon after the deploy; once it has run, the fallback range is empty and Browse
+reads only public members' open copies.
 
 **What it does:** pages through `ownedPuzzles` (200 rows per batch; `batchSize` overrides
 it, rounded down and clamped to 1..1000; each batch its own transaction, rescheduling itself
-until the table is exhausted) and writes `isOpen` = "at least one of `forTrade`, `forSale`,
-`forLend` is set" on every row whose flag is absent (`set`) or disagrees with its
-availability (`repaired`). Rows already in step are left alone. It writes only `isOpen`
-(not `updatedAt`: this is not an owner edit).
+until the table is exhausted) and writes, on every row whose fields are absent (`set`) or
+disagree with its availability or owner (`repaired`): `isOpen` = "at least one of
+`forTrade`, `forSale`, `forLend` is set"; `listedAt` = when it was offered, kept if present
+and otherwise its `createdAt` (so Browse's order is today's), absent while closed;
+`ownerPrivate` = `true` while the owner's profile is private, absent otherwise. Rows already
+in step are left alone. It writes only those fields (not `updatedAt`: this is not an owner
+edit).
 
 **Safe to re-run:** yes. A second run finds every row in step and writes nothing. It also
-doubles as a repair: if a future write path changes `availability` without the flag, a
-re-run corrects those rows (`repaired` > 0 points at that bug).
+doubles as a repair: if a future write path changes `availability` or the owner without the
+fields, a re-run corrects those rows (`repaired` > 0 points at that bug).
 
 **Commands:**
 
@@ -853,8 +859,9 @@ batches run as scheduled functions. Each batch logs one JSON line with
    copies saved in between, which already carry the flag).
 2. Run the dry run again: its final totals show `"set":0` and `"repaired":0`.
 3. In the dashboard data view, every `ownedPuzzles` row has `isOpen`, and it is `true`
-   exactly when one of its availability flags is.
-4. Browse lists the newest open copies first, including copies added after the oldest 500.
+   exactly when one of its availability flags is; open rows have `listedAt`, and rows of
+   members with a private profile have `ownerPrivate: true`.
+4. Browse lists the newest offers first, including copies added after the oldest 500.
 
 ---
 

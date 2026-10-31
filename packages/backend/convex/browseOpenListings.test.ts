@@ -9,12 +9,12 @@ import {
 } from "./library/browseOwnedPuzzles";
 import schema from "./schema";
 
-// Browse's candidate source (PERF-B1m, SEC-29): open copies are read newest-first from the
-// `isOpen` indexes, so one member's pile of older listings can't hide newer ones, closed copies are
-// never read, and rows written before the flag existed (no `isOpen`) are still found by their
-// availability until library/backfillCopyOpenFlag has run. The window is filled with copies the
-// viewer may see, and one member's pile of NEWER listings only fills room the others leave, so no
-// one member can crowd the rest out.
+// Browse's candidate source (PERF-B1m, SEC-29): open copies are read newest offer first from the
+// listing indexes, so one member's pile of older listings can't hide newer ones, closed copies and
+// private members' copies are never read, and rows written before the listing fields existed (no
+// `isOpen`) are still found by their availability until library/backfillCopyOpenFlag has run. The
+// window is filled with copies the viewer may see, and one member's pile of NEWER listings only
+// fills room the others leave, so no one member can crowd the rest out.
 //
 // convex-test blind spot: rows dropped by a native `.filter()` are not counted as reads, so a
 // documentsRead limit can't show what a full-table `.filter()` costs in a deployment. The bounded
@@ -66,6 +66,10 @@ type CopySpec = {
   availability?: Avail;
   // Absent: a legacy row written before the flag existed.
   isOpen?: boolean;
+  // When it was offered; a flagged open row defaults to `createdAt`, as written by a save.
+  listedAt?: number;
+  // The owner's profile is private, as stamped by a save or the visibility sync.
+  ownerPrivate?: true;
 };
 
 const insertCopies = (t: TestConvex<typeof schema>, specs: CopySpec[]) =>
@@ -80,6 +84,10 @@ const insertCopies = (t: TestConvex<typeof schema>, specs: CopySpec[]) =>
           condition: "good",
           availability: spec.availability ?? OPEN,
           ...(spec.isOpen === undefined ? {} : { isOpen: spec.isOpen }),
+          ...(spec.isOpen === true && {
+            listedAt: spec.listedAt ?? spec.createdAt,
+          }),
+          ...(spec.ownerPrivate && { ownerPrivate: true as const }),
           createdAt: spec.createdAt,
           updatedAt: spec.createdAt,
         }),
@@ -286,7 +294,34 @@ describe("no one member can crowd Browse's window (SEC-29)", () => {
     expect(view.totalIsLowerBound).toBe(false);
   });
 
-  test(`a flood past the read budget is read only up to it`, async () => {
+  test("a private member's copies are never read, however many", async () => {
+    const t = convexTest({
+      schema,
+      modules,
+      transactionLimits: { documentsRead: 300 },
+    });
+    const { alice, vista, harbour } = await seedWorld(t);
+    const carol = await insertMember(t, "carol", "private");
+    const [aliceCopy] = await insertCopies(
+      t,
+      openCopies(1, { ownerId: alice, puzzleId: vista }, BASE, "flagged"),
+    );
+    await insertCopies(
+      t,
+      openCopies(
+        BROWSE_READ_BUDGET + 10,
+        { ownerId: carol, puzzleId: harbour, ownerPrivate: true },
+        BASE + 10,
+        "flagged",
+      ),
+    );
+
+    const view = await browseAsBob(t);
+    expect(idsOf(view)).toEqual([aliceCopy]);
+    expect(view.totalIsLowerBound).toBe(false);
+  });
+
+  test(`a flood not yet marked private (before the backfill) is read only up to the read budget`, async () => {
     const t = convexTest({
       schema,
       modules,
@@ -311,6 +346,33 @@ describe("no one member can crowd Browse's window (SEC-29)", () => {
     const view = await browseAsBob(t);
     expect(view.ownedPuzzles).toEqual([]);
     expect(view.totalIsLowerBound).toBe(true);
+  });
+
+  test("the definition view counts an older public listing past a marked private member's pile", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, vista } = await seedWorld(t);
+    const carol = await insertMember(t, "carol", "private");
+    const [aliceCopy] = await insertCopies(
+      t,
+      openCopies(1, { ownerId: alice, puzzleId: vista }, BASE, "flagged"),
+    );
+    await insertCopies(
+      t,
+      openCopies(
+        1000,
+        { ownerId: carol, puzzleId: vista, ownerPrivate: true },
+        BASE + 10,
+        "flagged",
+      ),
+    );
+
+    const view = await t
+      .withIdentity({ subject: "clerk_bob" })
+      .query(api.library.getPuzzleDefinitionView.getPuzzleDefinitionView, {
+        puzzleId: vista,
+      });
+    expect(view?.totalAvailable).toBe(1);
+    expect(view?.availableCopies.map((c) => c.copyId)).toEqual([aliceCopy]);
   });
 
   test("the definition view counts an older public listing past a private member's pile", async () => {
@@ -338,6 +400,42 @@ describe("no one member can crowd Browse's window (SEC-29)", () => {
       });
     expect(view?.totalAvailable).toBe(1);
     expect(view?.availableCopies.map((c) => c.copyId)).toEqual([aliceCopy]);
+  });
+});
+
+describe("Browse lists the newest offers first", () => {
+  test("an old copy offered today leads, for all copies, per definition and in the definition view", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, mallory, vista } = await seedWorld(t);
+    const mallorys = await insertCopies(
+      t,
+      openCopies(
+        3,
+        { ownerId: mallory, puzzleId: vista },
+        BASE + 100,
+        "flagged",
+      ),
+    );
+    // Added long before mallory's copies, offered after them.
+    const [aliceCopy] = await insertCopies(t, [
+      {
+        ownerId: alice,
+        puzzleId: vista,
+        createdAt: BASE,
+        isOpen: true,
+        listedAt: BASE + 10_000,
+      },
+    ]);
+    const expected = [aliceCopy, ...[...mallorys].reverse()];
+
+    expect(idsOf(await browseAsBob(t))).toEqual(expected);
+    expect(idsOf(await browseAsBob(t, { puzzleId: vista }))).toEqual(expected);
+    const view = await t
+      .withIdentity({ subject: "clerk_bob" })
+      .query(api.library.getPuzzleDefinitionView.getPuzzleDefinitionView, {
+        puzzleId: vista,
+      });
+    expect(view?.availableCopies.map((c) => c.copyId)).toEqual(expected);
   });
 });
 
@@ -455,6 +553,7 @@ describe("Browse reads a bounded window", () => {
           condition: "good",
           availability: OPEN,
           isOpen: true,
+          listedAt: BASE + i,
           createdAt: BASE + i,
           updatedAt: BASE + i,
         });

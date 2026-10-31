@@ -368,6 +368,7 @@ import type * as library_moderatePhoto from "../library/moderatePhoto.js";
 import type * as library_moderationStore from "../library/moderationStore.js";
 import type * as library_openListing from "../library/openListing.js";
 import type * as library_openLoanOnSettlement from "../library/openLoanOnSettlement.js";
+import type * as library_ownerListingVisibility from "../library/ownerListingVisibility.js";
 import type * as library_postPhotoComment from "../library/postPhotoComment.js";
 import type * as library_recallLoan from "../library/recallLoan.js";
 import type * as library_removeCopyFromCollection from "../library/removeCopyFromCollection.js";
@@ -963,6 +964,7 @@ declare const fullApi: ApiFromModules<{
   "library/moderationStore": typeof library_moderationStore;
   "library/openListing": typeof library_openListing;
   "library/openLoanOnSettlement": typeof library_openLoanOnSettlement;
+  "library/ownerListingVisibility": typeof library_ownerListingVisibility;
   "library/postPhotoComment": typeof library_postPhotoComment;
   "library/recallLoan": typeof library_recallLoan;
   "library/removeCopyFromCollection": typeof library_removeCopyFromCollection;

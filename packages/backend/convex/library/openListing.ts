@@ -10,37 +10,103 @@ export const isOpenAvailability = (
 ): boolean =>
   availability.forTrade || availability.forSale || availability.forLend;
 
-const newestFirst = (a: Doc<"ownedPuzzles">, b: Doc<"ownedPuzzles">) =>
-  b.createdAt - a.createdAt || b._creationTime - a._creationTime;
+/**
+ * The listing fields a copy row carries next to `availability` (schema.ts): `isOpen`, `listedAt`
+ * (when it was last offered; absent while closed) and `ownerPrivate` (the owner's profile is
+ * private; absent means public). `before` is the stored row (null on insert): an open copy keeps
+ * the time it was first offered, a copy that opens now is listed `now`, and a new open copy is
+ * listed when it was created. A stored open row without `listedAt` predates the field and keeps its
+ * `createdAt`, so the backfill (which passes the row as its own `before`) preserves today's order.
+ */
+export const listingStateOf = (
+  row: Pick<Doc<"ownedPuzzles">, "availability" | "createdAt">,
+  before: Pick<
+    Doc<"ownedPuzzles">,
+    "availability" | "listedAt" | "createdAt"
+  > | null,
+  ownerPrivate: boolean,
+  now: number,
+): Pick<Doc<"ownedPuzzles">, "isOpen" | "listedAt" | "ownerPrivate"> => {
+  const isOpen = isOpenAvailability(row.availability);
+  let listedAt: number | undefined;
+  if (isOpen) {
+    if (before === null) listedAt = row.createdAt;
+    else if (isOpenAvailability(before.availability)) {
+      listedAt = before.listedAt ?? before.createdAt;
+    } else listedAt = now;
+  }
+  return {
+    isOpen,
+    listedAt,
+    ownerPrivate: ownerPrivate ? true : undefined,
+  };
+};
 
-// Every row of the open-copy ranges, newest first (by `createdAt`), platform-wide or for one
-// definition: the `isOpen === true` index range merged with the range of rows written before the
-// flag existed (`isOpen` absent). Until library/backfillCopyOpenFlag has run, that second range
-// holds every legacy row, closed ones included; after it, the range is empty. Closed legacy rows
-// are yielded too, so a caller's read budget counts every row read: decide with isOpenAvailability.
+/** Whether a stored row's listing fields differ from `state` (absent and undefined are equal). */
+export const listingStateDiffers = (
+  row: Pick<Doc<"ownedPuzzles">, "isOpen" | "listedAt" | "ownerPrivate">,
+  state: Pick<Doc<"ownedPuzzles">, "isOpen" | "listedAt" | "ownerPrivate">,
+): boolean =>
+  row.isOpen !== state.isOpen ||
+  row.listedAt !== state.listedAt ||
+  row.ownerPrivate !== state.ownerPrivate;
+
+// The order Browse lists offers in: newest offer first. A row without `listedAt` (written before
+// the field existed) sorts by when it was created.
+export const listedTimeOf = (copy: Doc<"ownedPuzzles">): number =>
+  copy.listedAt ?? copy.createdAt;
+
+export const newestListedFirst = (
+  a: Doc<"ownedPuzzles">,
+  b: Doc<"ownedPuzzles">,
+): number =>
+  listedTimeOf(b) - listedTimeOf(a) || b._creationTime - a._creationTime;
+
+// Which owners' open copies a window reads: those whose profile is public (the rows Browse can
+// show to anyone) or private (only reachable through a circle).
+export type ListingOwners = "public" | "private";
+
+// Every row of one owner-visibility range of open copies, newest offer first, platform-wide or for
+// one definition (`by_listing` / `by_puzzle_listing`). The public range is merged with the range of
+// rows written before the listing fields existed (`isOpen` absent, owner not yet known): until
+// library/backfillCopyOpenFlag has run, it holds every legacy row, closed and private-owner ones
+// included; after it, the range is empty. Closed legacy rows are yielded too, so a caller's read
+// budget counts every row read: decide with isOpenAvailability, and re-check the owner.
 async function* openCopyRows(
   ctx: QueryCtx,
   puzzleId: Id<"puzzles"> | undefined,
+  owners: ListingOwners,
 ): AsyncGenerator<Doc<"ownedPuzzles">> {
-  const range = (isOpen: true | undefined) =>
+  const range = (isOpen: true | undefined, ownerPrivate: true | undefined) =>
     (puzzleId === undefined
       ? ctx.db
           .query("ownedPuzzles")
-          .withIndex("by_open", (q) => q.eq("isOpen", isOpen))
+          .withIndex("by_listing", (q) =>
+            q.eq("isOpen", isOpen).eq("ownerPrivate", ownerPrivate),
+          )
       : ctx.db
           .query("ownedPuzzles")
-          .withIndex("by_puzzle_open", (q) =>
-            q.eq("puzzleId", puzzleId).eq("isOpen", isOpen),
+          .withIndex("by_puzzle_listing", (q) =>
+            q
+              .eq("puzzleId", puzzleId)
+              .eq("isOpen", isOpen)
+              .eq("ownerPrivate", ownerPrivate),
           )
     )
       .order("desc")
       [Symbol.asyncIterator]();
-  const flagged = range(true);
-  const legacy = range(undefined);
+  const flagged = range(true, owners === "private" ? true : undefined);
+  if (owners === "private") {
+    for (let a = await flagged.next(); !a.done; a = await flagged.next()) {
+      yield a.value;
+    }
+    return;
+  }
+  const legacy = range(undefined, undefined);
   let a = await flagged.next();
   let b = await legacy.next();
   while (!a.done || !b.done) {
-    if (b.done || (!a.done && newestFirst(a.value, b.value) <= 0)) {
+    if (b.done || (!a.done && newestListedFirst(a.value, b.value) <= 0)) {
       yield a.value;
       a = await flagged.next();
     } else {
@@ -64,7 +130,7 @@ export type OpenWindowLimits = {
 };
 
 export type OpenWindow = {
-  // Accepted open copies: in read order (newest first), then the held-back ones that fitted.
+  // Accepted open copies: in read order (newest offer first), then the held-back ones that fitted.
   rows: Doc<"ownedPuzzles">[];
   // True when an open copy may have been left out (a budget ran out, the window filled up, or
   // held-back rows did not fit): totals over the window are then lower bounds.
@@ -72,7 +138,8 @@ export type OpenWindow = {
 };
 
 /**
- * A bounded candidate window of open copies, newest first, that no single owner can monopolise.
+ * A bounded candidate window of open copies, newest offer first, of public or of private owners,
+ * that no single owner can monopolise.
  * `accept` is the caller's gate (visibility, blocks, own copies, cheap filters): a refused row takes
  * no slot. Each owner gets `perOwner` rows looked at before the others have had theirs; the rest are
  * held back and fill whatever room is left once reading stops. Reading stops when the window is
@@ -82,7 +149,10 @@ export type OpenWindow = {
  */
 export const openListingWindow = async (
   ctx: QueryCtx,
-  puzzleId: Id<"puzzles"> | undefined,
+  {
+    puzzleId,
+    owners,
+  }: { puzzleId: Id<"puzzles"> | undefined; owners: ListingOwners },
   limits: OpenWindowLimits,
   accept: (copy: Doc<"ownedPuzzles">) => Promise<boolean>,
 ): Promise<OpenWindow> => {
@@ -91,7 +161,7 @@ export const openListingWindow = async (
   const lookedAt = new Map<Id<"users">, number>();
   let read = 0;
   let cut = false;
-  for await (const copy of openCopyRows(ctx, puzzleId)) {
+  for await (const copy of openCopyRows(ctx, puzzleId, owners)) {
     if (rows.length >= limits.size || read >= limits.readBudget) {
       cut = true;
       break;

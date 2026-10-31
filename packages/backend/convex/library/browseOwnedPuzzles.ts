@@ -9,18 +9,23 @@ import { profileVisibilityOf, projectMemberIdentity } from "../social/privacy";
 import { collectCircleSharedCopies } from "./circleSharedCopies";
 import { viewerMayRequestCopy } from "./exchangeRoutes";
 import { toCopyPuzzleView, toOwnedCopyView } from "./mappers";
-import { isOpenAvailability, openListingWindow } from "./openListing";
+import {
+  isOpenAvailability,
+  newestListedFirst,
+  openListingWindow,
+} from "./openListing";
 import { resolveCopyCoverUrl } from "./resolveCoverUrl";
 
-// Browse's candidate window (library/openListing.openListingWindow). It holds at most
-// BROWSE_CANDIDATE_CAP copies the viewer may see, newest first. One owner's rows past
+// Browse's candidate window (library/openListing.openListingWindow) over PUBLIC owners' open copies
+// (a private owner's copy is only reachable through a circle, read separately). It holds at most
+// BROWSE_CANDIDATE_CAP copies the viewer may see, newest offer first. One owner's rows past
 // BROWSE_PER_OWNER only fill room the other owners leave, and reading stops after
 // BROWSE_READ_BUDGET rows or BROWSE_CANDIDATE_CAP distinct owners. The text, category, piece and
 // difficulty filters run over the window, so past it `total` is a lower bound
 // (`totalIsLowerBound`) and older listings are reachable through the definition filter
 // (`puzzleId`, its own window). A bounded window can always be crowded by enough newer listings
-// from enough members: these numbers make that take more than the read budget of newer open
-// copies, not just one member's pile.
+// from enough members: these numbers make that take more than the read budget of newer public
+// offers, not just one member's pile, and private members' copies never count against it.
 export const BROWSE_CANDIDATE_CAP = 1000;
 export const BROWSE_PER_OWNER = 50;
 export const BROWSE_READ_BUDGET = 3 * BROWSE_CANDIDATE_CAP;
@@ -31,13 +36,13 @@ const DEFAULT_LIMIT = 20;
 
 // Library read: browse OTHER members' available owned copies with filters. Rule 1 of Browse
 // visibility: only OPEN copies are ever shown (library/openListing), including circle-shared ones.
-// Candidates come from the `isOpen` indexes through openListingWindow, so closed copies are never
-// read, and every gate that needs no puzzle (open, own copies, blocks, rule 2, condition) runs while
-// the window fills: a copy the viewer can't see never takes a slot, and no member's pile of listings
-// can push the others out (SEC-29). Auth gating, every puzzle-based filter
-// (category/pieces/difficulty/search), the newest-first ordering, the owner join and offset/limit
-// paging are preserved from legacy puzzles.browseOwnedPuzzles; the result maps to a typed paginated
-// DTO.
+// Candidates come from the listing indexes through openListingWindow, so closed copies and private
+// owners' copies are never read, and every gate that needs no puzzle (open, own copies, blocks,
+// rule 2, condition) runs while the window fills: a copy the viewer can't see never takes a slot,
+// and no member's pile of listings can push the others out (SEC-29). Results are newest OFFER first
+// (`listedAt`), so a copy offered today leads even if it was added long ago. Auth gating, every
+// puzzle-based filter (category/pieces/difficulty/search), the owner join and offset/limit paging
+// are preserved from legacy puzzles.browseOwnedPuzzles; the result maps to a typed paginated DTO.
 export const browseOwnedPuzzles = query({
   args: {
     category: v.optional(v.id("adminCategories")),
@@ -133,7 +138,7 @@ export const browseOwnedPuzzles = query({
       (!args.condition || copy.condition === args.condition);
     const window = await openListingWindow(
       ctx,
-      puzzleId,
+      { puzzleId, owners: "public" },
       {
         size: BROWSE_CANDIDATE_CAP,
         perOwner: BROWSE_PER_OWNER,
@@ -217,7 +222,7 @@ export const browseOwnedPuzzles = query({
       );
     }
 
-    filtered.sort((a, b) => b.copy.createdAt - a.copy.createdAt);
+    filtered.sort((a, b) => newestListedFirst(a.copy, b.copy));
 
     // The owner is projected through the identity chokepoint (salt = the copy's _id, as on the copy
     // page), so a hidden owner is anonymous and `ownerId` is only carried when they are revealed.

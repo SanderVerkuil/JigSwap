@@ -333,10 +333,22 @@ export default defineSchema({
     // Denormalized listing flag: true iff at least one availability flag above is set
     // (library/openListing.isOpenAvailability). Every availability write keeps it in step: the copy
     // repository's mapper on every save, and exchange's markCopyUnavailable. It lets Browse read open
-    // copies from `by_open` / `by_puzzle_open` without scanning closed ones. Absent on rows written
+    // copies from `by_listing` / `by_puzzle_listing` without scanning closed ones. Absent on rows written
     // before it existed until library/backfillCopyOpenFlag has run, so a reader must decide a row
     // without it from `availability`.
     isOpen: v.optional(v.boolean()),
+    // Denormalized listing state for Browse's candidate index (`by_listing` / `by_puzzle_listing`),
+    // written by the copy repository on every save, by markCopyUnavailable, by the owner's profile
+    // visibility sync (library/ownerListingVisibility) and by library/backfillCopyOpenFlag:
+    //   ownerPrivate  true while the owner's profile is private; absent means public, as on
+    //                 `profiles`. Browse shows a private owner's copy only through a circle, which it
+    //                 reads separately, so those rows stay out of its public range and can't use up
+    //                 its candidate window or read budget.
+    //   listedAt      when the copy was last offered (became open); absent while it is closed. Browse
+    //                 lists the newest offers first, so an old copy offered today sorts as new.
+    // A reader still re-checks the owner's visibility: a lagging flag can cost a slot, never leak.
+    ownerPrivate: v.optional(v.literal(true)),
+    listedAt: v.optional(v.number()),
     // The SharingSetting's visibility axis (who can SEE the copy), orthogonal to the
     // availability flags (what it can be USED for). Optional; legacy rows are unset. Convex has no
     // column defaults: the "visible" default lives in the create paths (domain SharingSetting.newCopy)
@@ -393,9 +405,15 @@ export default defineSchema({
     .index("by_owner", ["ownerId"])
     .index("by_puzzle", ["puzzleId"])
     .index("by_aggregate_id", ["aggregateId"])
-    // Browse's candidate sources: open copies newest-first, platform-wide or for one definition.
-    .index("by_open", ["isOpen", "createdAt"])
-    .index("by_puzzle_open", ["puzzleId", "isOpen", "createdAt"])
+    // The candidate sources of Browse and the definition view (library/openListing): open copies,
+    // by owner visibility, newest offer first, platform-wide or for one definition.
+    .index("by_listing", ["isOpen", "ownerPrivate", "listedAt"])
+    .index("by_puzzle_listing", [
+      "puzzleId",
+      "isOpen",
+      "ownerPrivate",
+      "listedAt",
+    ])
     // One member's copies of one definition (the definition view's household owner count).
     .index("by_owner_puzzle", ["ownerId", "puzzleId"]),
 
