@@ -5271,6 +5271,14 @@
         "title": "No puzzle definitions yet",
         "description": "Submitted puzzle definitions will appear here with their moderation status."
       },
+      "emptyFiltered": {
+        "title": "No matching puzzle definitions",
+        "description": "Try another status or search term."
+      },
+      "searchPlaceholder": "Search by title, brand or artist…",
+      "searchLabel": "Search puzzle definitions",
+      "statusFilter": "Filter puzzle definitions by status",
+      "allStatuses": "All",
       "pieces": "{count} pieces",
       "submittedBy": "by {name}",
       "ownerCount": "{count, plural, one {# owner} other {# owners}}",
@@ -5281,6 +5289,8 @@
         "rejected": "Rejected",
         "disabled": "Disabled"
       },
+      "review": "Review",
+      "reviewLabel": "Review “{title}”",
       "disable": "Disable",
       "reenable": "Re-enable",
       "disableConfirmTitle": "Disable “{title}”?",

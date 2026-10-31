@@ -5271,6 +5271,14 @@
         "title": "Nog geen puzzeldefinities",
         "description": "Ingediende puzzeldefinities verschijnen hier met hun moderatiestatus."
       },
+      "emptyFiltered": {
+        "title": "Geen puzzeldefinities gevonden",
+        "description": "Probeer een andere status of zoekterm."
+      },
+      "searchPlaceholder": "Zoek op titel, merk of artiest…",
+      "searchLabel": "Puzzeldefinities zoeken",
+      "statusFilter": "Puzzeldefinities filteren op status",
+      "allStatuses": "Alle",
       "pieces": "{count} stukjes",
       "submittedBy": "door {name}",
       "ownerCount": "{count, plural, one {# eigenaar} other {# eigenaren}}",
@@ -5281,6 +5289,8 @@
         "rejected": "Afgewezen",
         "disabled": "Uitgeschakeld"
       },
+      "review": "Beoordelen",
+      "reviewLabel": "Beoordelen: “{title}”",
       "disable": "Uitschakelen",
       "reenable": "Weer inschakelen",
       "disableConfirmTitle": "“{title}” uitschakelen?",
