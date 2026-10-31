@@ -8,6 +8,7 @@ import {
   CompletionTrendsChart,
 } from "@/components/insights/completion-trends-chart";
 import { ExportButton } from "@/components/insights/export-button";
+import { InsightsEmptyState } from "@/components/insights/insights-empty-state";
 import { PersonalStats, StatCards } from "@/components/insights/stat-cards";
 import {
   TradeActivityChart,
@@ -17,6 +18,7 @@ import { PageLoading } from "@/components/ui/loading";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
 import { pageTitle } from "@/lib/page-title";
+import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -83,12 +85,18 @@ function InsightsPage() {
     );
   }
 
+  // Before the first finished solve, an empty state that says how to start takes the place of the
+  // zero solve figures (StatCards drops them) and of the empty solves-per-month chart.
+  const hasSolves = stats.completionsCount > 0;
+
   return (
     <div className="flex flex-col gap-10">
+      {!hasSolves && <InsightsEmptyState />}
+
       <StatCards stats={stats} />
 
-      <div className="grid gap-10 lg:grid-cols-2">
-        <CompletionTrendsChart data={trends} />
+      <div className={cn("grid gap-10", hasSolves && "lg:grid-cols-2")}>
+        {hasSolves && <CompletionTrendsChart data={trends} />}
         <TradeActivityChart data={trades} />
       </div>
 

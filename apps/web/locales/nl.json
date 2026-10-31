@@ -3413,7 +3413,10 @@
     "subtitle": "Je puzzel- en ruilactiviteit in één oogopslag.",
     "nav": "Inzichten",
     "loading": "Je inzichten laden…",
-    "empty": "Nog geen gegevens — leg een voltooiing vast om inzichten te zien.",
+    "emptyTitle": "Nog geen voltooiingen",
+    "emptyHint": "Leg een voltooiing vast om hier je aantal voltooiingen, je totale oplostijd en je voltooiingen per maand te zien. Met een doel heb je iets om naartoe te werken.",
+    "emptyLog": "Voltooiing vastleggen",
+    "emptyGoal": "Doel stellen",
     "stats": {
       "completions": "Voltooiingen",
       "solveTime": "Totale oplostijd",

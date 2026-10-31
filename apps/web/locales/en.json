@@ -3413,7 +3413,10 @@
     "subtitle": "Your puzzling and trading activity at a glance.",
     "nav": "Insights",
     "loading": "Loading your insights…",
-    "empty": "No data yet — log a solve to see your insights.",
+    "emptyTitle": "No finished solves yet",
+    "emptyHint": "Log a solve to see your solve count, total solve time and solves per month here. A goal gives you something to aim for.",
+    "emptyLog": "Log a solve",
+    "emptyGoal": "Set a goal",
     "stats": {
       "completions": "Completions",
       "solveTime": "Total solve time",

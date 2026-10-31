@@ -44,18 +44,27 @@ export function StatCards({ stats }: { stats: PersonalStats }) {
   const formatRating = (rating: number | null): string =>
     rating != null && rating > 0 ? rating.toFixed(1) : t("ratingNone");
 
+  // Before the first finished solve the solve figures are only zeros, and the page shows an
+  // empty state that says how to start (InsightsEmptyState), so the headline keeps what the
+  // member already has.
+  const hasSolves = stats.completionsCount > 0;
+
   return (
     <div className="flex flex-col gap-8" data-tour="insights-stats">
       <StatRow
         stats={[
-          {
-            label: t("completions"),
-            value: String(stats.completionsCount),
-          },
-          {
-            label: t("solveTime"),
-            value: formatTime(stats.totalSolveMinutes),
-          },
+          ...(hasSolves
+            ? [
+                {
+                  label: t("completions"),
+                  value: String(stats.completionsCount),
+                },
+                {
+                  label: t("solveTime"),
+                  value: formatTime(stats.totalSolveMinutes),
+                },
+              ]
+            : []),
           {
             label: t("puzzlesOwned"),
             value: String(stats.puzzlesOwned),

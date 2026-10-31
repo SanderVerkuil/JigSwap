@@ -71,4 +71,21 @@ describe("StatCards", () => {
     renderStats({ goalsAchieved: 1, goalsTotal: undefined });
     expect(cellOf("Goals achieved")?.textContent).toBe("1Goals achieved");
   });
+
+  it("leads with the solve figures once there is a finished solve", () => {
+    renderStats({ completionsCount: 4 });
+    expect(cellOf("Completions")?.firstElementChild?.textContent).toBe("4");
+    expect(screen.getByText("Total solve time")).toBeDefined();
+    expect(screen.getByText("Puzzles owned")).toBeDefined();
+  });
+
+  it("drops the zero solve figures while there is no finished solve", () => {
+    renderStats({ completionsCount: 0, totalSolveMinutes: 0 });
+    expect(screen.queryByText("Completions")).toBeNull();
+    expect(screen.queryByText("Total solve time")).toBeNull();
+    // What the member does have still shows.
+    expect(cellOf("Puzzles owned")?.firstElementChild?.textContent).toBe("3");
+    expect(screen.getByText("Exchanges completed")).toBeDefined();
+    expect(screen.getByText("Collections")).toBeDefined();
+  });
 });
