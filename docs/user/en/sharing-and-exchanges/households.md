@@ -11,7 +11,7 @@ in the household sees each other's puzzles in **My Puzzles**. Puzzles stay
 owned by whoever added them, and solves stay personal.
 
 **Where:** **My Library** → **Household** (`/household`). The page has four
-tabs: **Puzzles**, **Members**, **Sharing** and **Settings**. It opens on
+tabs: **Puzzles**, **Members**, **Access** and **Settings**. It opens on
 **Puzzles**.
 
 ## Create a household
@@ -196,19 +196,19 @@ To set access for one puzzle:
 
 1. Open the puzzle's page.
 2. Under **Household access**, choose **Can manage**, **View only** or
-   **Use household default**.
+   **Household default**.
 
 Only the owner can change a puzzle's household access.
 
 ## Change several puzzles at once
 
-1. On **Household**, open the **Sharing** tab.
+1. On **Household**, open the **Access** tab.
 2. Optionally filter the list by household access.
 3. Tick the puzzles you want to change, or use **Select all**. A bar with
    the number selected appears below the list. On a phone it stays at the
    bottom of the screen while you scroll.
 4. In the bar, click **Set access** and choose **Can manage**, **View only**
-   or **Use household default**.
+   or **Household default**.
 5. Confirm with **Change access**.
 
 To start again, click **✕** (**Clear selection**) in the bar.

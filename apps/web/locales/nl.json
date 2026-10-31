@@ -2228,7 +2228,7 @@
       "memberManage": "Puzzel van je huishouden — jij mag hem beheren",
       "memberView": "Puzzel van je huishouden — alleen bekijken",
       "saveFailed": "Toegang voor het huishouden kon niet worden bijgewerkt",
-      "useDefault": "Standaard van het huishouden gebruiken (nu: {permission, select, view {Alleen bekijken} other {Mag beheren}})"
+      "useDefault": "Standaard huishouden ({permission, select, view {Alleen bekijken} other {Mag beheren}})"
     },
     "errors": {
       "generic": "Er ging iets mis. Probeer het opnieuw.",
@@ -2294,7 +2294,7 @@
     "tabs": {
       "puzzles": "Puzzels",
       "members": "Leden",
-      "sharing": "Delen",
+      "sharing": "Toegang",
       "settings": "Instellingen"
     },
     "puzzles": {
@@ -5265,7 +5265,7 @@
         },
         "copy-access": {
           "title": "Jij kiest per puzzel",
-          "body": "Je puzzels blijven van jou. Op het tabblad Delen kies je per puzzel wat het huishouden ermee mag: met Mag beheren kunnen huisgenoten hem bewerken, uitlenen en ruilen; met Alleen bekijken zien ze hem alleen. Selecteer er meerdere om ze in één keer aan te passen."
+          "body": "Je puzzels blijven van jou. Op het tabblad Toegang kies je per puzzel wat het huishouden ermee mag: met Mag beheren kunnen huisgenoten hem bewerken, uitlenen en ruilen; met Alleen bekijken zien ze hem alleen. Selecteer er meerdere om ze in één keer aan te passen."
         }
       },
       "guide": {
@@ -5393,7 +5393,7 @@
       "steps": {
         "household": {
           "title": "Je huishouden",
-          "body": "Mensen in je huishouden zien al je puzzels. Op het tabblad Delen van het huishouden kies je per puzzel of ze hem mogen beheren of alleen bekijken."
+          "body": "Mensen in je huishouden zien al je puzzels. Op het tabblad Toegang van het huishouden kies je per puzzel of ze hem mogen beheren of alleen bekijken."
         },
         "circles": {
           "title": "Je kringen",

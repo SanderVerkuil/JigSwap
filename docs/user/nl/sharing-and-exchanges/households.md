@@ -12,7 +12,7 @@ puzzelbibliotheek. Iedereen in het huishouden ziet elkaars puzzels in
 puzzelsessies blijven persoonlijk.
 
 **Waar:** **Mijn Bibliotheek** → **Huishouden** (`/household`). De pagina heeft
-vier tabbladen: **Puzzels**, **Leden**, **Delen** en **Instellingen**. Hij
+vier tabbladen: **Puzzels**, **Leden**, **Toegang** en **Instellingen**. Hij
 opent op **Puzzels**.
 
 ## Een huishouden aanmaken
@@ -214,19 +214,19 @@ Toegang instellen voor één puzzel:
 
 1. Open de pagina van de puzzel.
 2. Kies onder **Toegang huishouden** voor **Mag beheren**, **Alleen bekijken**
-   of **Standaard van het huishouden gebruiken**.
+   of **Standaard huishouden**.
 
 Alleen de eigenaar kan de toegang voor het huishouden van een puzzel wijzigen.
 
 ## Meerdere puzzels tegelijk wijzigen
 
-1. Open op **Huishouden** het tabblad **Delen**.
+1. Open op **Huishouden** het tabblad **Toegang**.
 2. Filter de lijst eventueel op toegang voor het huishouden.
 3. Vink de puzzels aan die je wilt wijzigen, of gebruik **Alles selecteren**.
    Onder de lijst verschijnt een balk met het aantal geselecteerde puzzels. Op
    een telefoon blijft die onderaan het scherm staan terwijl je scrolt.
 4. Klik in de balk op **Toegang kiezen** en kies **Mag beheren**,
-   **Alleen bekijken** of **Standaard van het huishouden gebruiken**.
+   **Alleen bekijken** of **Standaard huishouden**.
 5. Bevestig met **Toegang wijzigen**.
 
 Wil je opnieuw beginnen, klik dan in de balk op **✕** (**Selectie wissen**).

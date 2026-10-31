@@ -247,7 +247,7 @@ describe("MyHouseholdCopies selection bar", () => {
     expect(items.map((item) => item.textContent)).toEqual([
       "Can manage",
       "View only",
-      "Use household default (currently: View only)",
+      "Household default (View only)",
     ]);
     fireEvent.click(items[0]);
 

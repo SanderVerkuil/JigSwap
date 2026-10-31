@@ -11,6 +11,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
+import nl from "../../../locales/nl.json";
 import {
   HouseholdDetails,
   NoHousehold,
@@ -28,7 +29,7 @@ const useSignedOut = () => ({
   fetchAccessToken: async () => null,
 });
 
-const renderHtml = (node: ReactNode) => {
+const renderHtml = (node: ReactNode, locale: "en" | "nl" = "en") => {
   const convex = new ConvexReactClient("https://example.convex.cloud");
   const convexQueryClient = new ConvexQueryClient(convex);
   const queryClient = new QueryClient({
@@ -37,7 +38,11 @@ const renderHtml = (node: ReactNode) => {
   return renderToStaticMarkup(
     <ConvexProviderWithAuth client={convex} useAuth={useSignedOut}>
       <QueryClientProvider client={queryClient}>
-        <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <IntlProvider
+          locale={locale}
+          messages={locale === "en" ? en : nl}
+          timeZone="Europe/Amsterdam"
+        >
           {node}
         </IntlProvider>
       </QueryClientProvider>
@@ -113,6 +118,7 @@ const details = (
   viewerRole: "admin" | "member",
   activeTab: HouseholdTab,
   invites: ComponentProps<typeof HouseholdDetails>["invites"] = [],
+  locale: "en" | "nl" = "en",
 ) =>
   renderHtml(
     <HouseholdDetails
@@ -122,6 +128,7 @@ const details = (
       onTabChange={() => {}}
       onError={() => {}}
     />,
+    locale,
   );
 
 describe("HouseholdDetails", () => {
@@ -135,13 +142,13 @@ describe("HouseholdDetails", () => {
     expect(tabs.map(textOf)).toEqual([
       "Puzzles",
       "Members2",
-      "Sharing",
+      "Access",
       "Settings",
     ]);
     expect(attr(tabs[0], "aria-selected")).toBe("true");
     // The member count lives on the Members tab; no avatar row or "2 members" line.
     expect(texts(html)).not.toContain("2 members");
-    // The tour steps target always-mounted elements: the tab bar and the Sharing trigger.
+    // The tour steps target always-mounted elements: the tab bar and the Access trigger.
     expect(attr(tabs[2], "data-tour")).toBe("household-my-copies");
     const main = elementsOf(html).filter(
       (e) => attr(e, "data-tour") === "household-main",
@@ -213,7 +220,19 @@ describe("HouseholdDetails", () => {
     expect(texts(html)).not.toContain("Waiting for a response");
   });
 
-  it("puts the default line on the Sharing tab", () => {
+  it("names the tab after the access it sets, not the circles' Share", () => {
+    // Circles "share" a puzzle (who sees it); this tab sets what housemates may do with it, in
+    // the "access" words its own controls use. It keeps its ?tab=sharing value, so links and the
+    // tour's anchor still work.
+    const nlTabs = elementsOf(details("member", "sharing", [], "nl")).filter(
+      (e) => attr(e, "role") === "tab",
+    );
+    expect(textOf(nlTabs[2])).toBe("Toegang");
+    expect(attr(nlTabs[2], "aria-selected")).toBe("true");
+    expect(attr(nlTabs[2], "data-tour")).toBe("household-my-copies");
+  });
+
+  it("puts the default line on the Access tab", () => {
     const html = details("member", "sharing");
     expect(texts(html)).toContain("Household default: View only");
   });

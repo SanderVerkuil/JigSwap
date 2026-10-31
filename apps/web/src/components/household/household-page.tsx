@@ -57,9 +57,10 @@ import { useTranslations } from "use-intl";
 
 // The household page's views (the route in routes/_dashboard/household.tsx only loads the data
 // and owns the ?tab= search param). Puzzles (default: every puzzle in the household), Members,
-// Sharing (the viewer's own puzzles' household access) and Settings tabs; the admin's single
-// Invite action opens HouseholdInviteDialog. It sits in the shell page head beside the title from
-// md, and on phones at the top of the Members list (see HouseholdDetails).
+// Access (the viewer's own puzzles' household access; its ?tab= value stays "sharing" so old links
+// and the tours' anchor keep working) and Settings tabs; the admin's single Invite action opens
+// HouseholdInviteDialog. It sits in the shell page head beside the title from md, and on phones
+// at the top of the Members list (see HouseholdDetails).
 
 export type HouseholdTab = "puzzles" | "members" | "sharing" | "settings";
 

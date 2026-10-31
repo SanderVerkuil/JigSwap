@@ -2228,7 +2228,7 @@
       "memberManage": "Household copy — you can manage it",
       "memberView": "Household copy — view only",
       "saveFailed": "Couldn't update household access",
-      "useDefault": "Use household default (currently: {permission, select, view {View only} other {Can manage}})"
+      "useDefault": "Household default ({permission, select, view {View only} other {Can manage}})"
     },
     "errors": {
       "generic": "Something went wrong. Please try again.",
@@ -2294,7 +2294,7 @@
     "tabs": {
       "puzzles": "Puzzles",
       "members": "Members",
-      "sharing": "Sharing",
+      "sharing": "Access",
       "settings": "Settings"
     },
     "puzzles": {
@@ -5265,7 +5265,7 @@
         },
         "copy-access": {
           "title": "You decide per puzzle",
-          "body": "Your puzzles stay yours. On the Sharing tab you choose what the household may do with each one: Can manage lets housemates edit, lend and swap it; View only lets them see it. Select several to change them at once."
+          "body": "Your puzzles stay yours. On the Access tab you choose what the household may do with each one: Can manage lets housemates edit, lend and swap it; View only lets them see it. Select several to change them at once."
         }
       },
       "guide": {
@@ -5393,7 +5393,7 @@
       "steps": {
         "household": {
           "title": "Your household",
-          "body": "People in your household see all your puzzles. On the household's Sharing tab you choose per puzzle whether they can manage it or only view it."
+          "body": "People in your household see all your puzzles. On the household's Access tab you choose per puzzle whether they can manage it or only view it."
         },
         "circles": {
           "title": "Your circles",
