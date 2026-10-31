@@ -38,17 +38,20 @@ export function TagInput({
   return (
     <>
       <div className="flex min-h-[42px] flex-wrap items-center gap-1.5 rounded-lg border border-border bg-card p-2">
-        {value.map((t) => (
+        {value.map((tag) => (
           <span
-            key={t}
-            className="inline-flex items-center gap-1 rounded-full bg-jigsaw-primary-tint py-0.5 pl-2.5 pr-1.5 text-xs font-semibold text-primary-text"
+            key={tag}
+            className="inline-flex min-w-0 max-w-full items-center gap-1 rounded-full bg-jigsaw-primary-tint py-0.5 pl-2.5 pr-1.5 text-xs font-semibold text-primary-text"
           >
-            {t}
+            {/* A long unbroken tag is cut off with an ellipsis so its remove button stays visible. */}
+            <span className="truncate" title={tag}>
+              {tag}
+            </span>
             <button
               type="button"
-              aria-label={`Remove ${t}`}
-              onClick={() => onChange(value.filter((x) => x !== t))}
-              className="inline-flex cursor-pointer"
+              aria-label={`Remove ${tag}`}
+              onClick={() => onChange(value.filter((x) => x !== tag))}
+              className="inline-flex shrink-0 cursor-pointer"
             >
               <X className="size-3" />
             </button>
