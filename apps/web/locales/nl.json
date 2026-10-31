@@ -3216,7 +3216,7 @@
         "thisYear": "Dit jaar"
       },
       "log": "Voltooiingslog",
-      "logAction": "Voltooiing Loggen",
+      "logAction": "Voltooiing vastleggen",
       "mostRecent": "Meest recente eerst",
       "pieces": "{pieces, plural, one {# stukje} other {# stukjes}}",
       "sameDay": "op één dag",
@@ -3352,7 +3352,7 @@
       "subtitle": "Stel voltooiingsdoelen in en volg je voortgang.",
       "empty": "Nog geen doelen",
       "emptyHint": "Een doel is een aantal puzzels dat je wilt afmaken, zoals 10 dit jaar. Het loopt vanzelf op als je voltooiingen vastlegt.",
-      "create": "Nieuw Doel",
+      "create": "Nieuw doel",
       "createTitle": "Doel aanmaken",
       "createDescription": "Stel een doelaantal voltooiingen in om naartoe te werken.",
       "editTitle": "Doel bewerken",
@@ -5561,11 +5561,11 @@
         },
         "log-past": {
           "title": "Leg een eerdere puzzel vast",
-          "body": "Al eerder een puzzel afgemaakt? Druk op Voltooiing Loggen, kies de puzzel en vul in wanneer je hem maakte en hoe lang je erover deed."
+          "body": "Al eerder een puzzel afgemaakt? Druk op Voltooiing vastleggen, kies de puzzel en vul in wanneer je hem maakte en hoe lang je erover deed."
         },
         "goals": {
           "title": "Stel een doel",
-          "body": "Druk op Nieuw Doel en kies hoeveel puzzels je wilt afmaken, als je wilt voor een bepaalde datum. Je afgeronde puzzels tellen mee."
+          "body": "Druk op Nieuw doel en kies hoeveel puzzels je wilt afmaken, als je wilt voor een bepaalde datum. Je afgeronde puzzels tellen mee."
         },
         "insights": {
           "title": "Je cijfers",

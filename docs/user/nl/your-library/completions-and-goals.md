@@ -110,11 +110,11 @@ Stel persoonlijke uitdagingen in en volg ze automatisch aan de hand van je oplos
 **Waar:** **Doelen** (`/goals`).
 
 Zolang je nog geen doel hebt, legt de pagina uit wat een doel is en biedt
-hij **Nieuw Doel** aan.
+hij **Nieuw doel** aan.
 
 ### Een doel aanmaken
 
-1. Open **Doelen** en klik op **Nieuw Doel**.
+1. Open **Doelen** en klik op **Nieuw doel**.
 2. Vul in:
    - Een **titel** (verplicht) en eventueel een **beschrijving**.
    - Een **doelaantal voltooiingen** (verplicht): een heel getal van 1 of meer.
