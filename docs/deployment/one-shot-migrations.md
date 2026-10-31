@@ -986,6 +986,15 @@ stale is rewritten and logged as `"event":"library.definitionStats.drift"` with 
 `puzzle_id`. A drift line points at a write path that changes reviews, copies, completions
 or profile visibility without marking the definition (see library/definitionStats).
 
+**Watch:** an error line `"event":"library.definitionStats.recomputeOverdue"` with a
+`puzzle_id` means that definition's row stayed stale for more than five minutes: its
+recompute threw (Convex read limits on a very large definition, or write conflicts until
+the retries ran out). The next mark, and the nightly reconcile, log it and schedule another
+recompute; the page keeps serving the last totals meanwhile. If the same `puzzle_id` keeps
+coming back, its recompute does not fit in one transaction: the per-copy completions read
+in `computeDefinitionTotals` (one query per copy, for solves logged on a copy only) is the
+likely cause.
+
 **Commands:**
 
 ```bash
@@ -1003,7 +1012,7 @@ number of `definitions` it scheduled.
 **Verify:**
 
 1. In the dashboard data view, `definitionStats` has one row per `puzzles` row, each with
-   `totals` and without `stale`.
+   `totals` and without `stale` or `staleSince`.
 2. Run it again: no `library.definitionStats.drift` lines, and no row's `computedAt`
    changes (give or take definitions written to in between).
 3. The public catalog, a catalog detail page and a `/puzzles/<id>` page show the same

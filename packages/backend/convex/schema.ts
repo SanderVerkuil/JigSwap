@@ -2102,6 +2102,9 @@ export default defineSchema({
   //     publicAvailable  open copies of public-profile owners, by priority swap type
   //   stale       a write changed the definition's sources and a recompute is scheduled; the
   //               totals are still served until it lands
+  //   staleSince  when it was marked stale (or its recompute last re-scheduled). A mark, or the
+  //               nightly reconcile, that finds it stale for longer than a few minutes takes it
+  //               that the recompute failed: it logs that and schedules another
   //   computedAt  when the totals were last written
   definitionStats: defineTable({
     puzzleId: v.id("puzzles"),
@@ -2122,6 +2125,7 @@ export default defineSchema({
       }),
     ),
     stale: v.optional(v.boolean()),
+    staleSince: v.optional(v.number()),
     computedAt: v.optional(v.number()),
   }).index("by_puzzle", ["puzzleId"]),
 

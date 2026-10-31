@@ -3,7 +3,11 @@ import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { computeDefinitionTotals } from "./library/definitionStats";
+import {
+  computeDefinitionTotals,
+  markDefinitionStatsStale,
+  STALE_RETRY_MS,
+} from "./library/definitionStats";
 import schema from "./schema";
 
 // The definitionStats read model (PERF-B4m, SEC-29): one row per catalogue definition holding the
@@ -345,6 +349,74 @@ describe("definitionStats backfill and nightly reconcile", () => {
     });
 
     expect(await statsRow(t, w.harbour.id)).toBeNull();
+  });
+});
+
+describe("a recompute that never landed", () => {
+  // A stale row with no recompute pending, as a recompute that threw leaves it.
+  const leaveStale = async (t: T, puzzleId: Id<"puzzles">, since: number) => {
+    const row = await statsRow(t, puzzleId);
+    await t.run((ctx) =>
+      ctx.db.patch(row!._id, {
+        stale: true,
+        staleSince: since,
+        totals: { ...row!.totals!, communityOwners: 99 },
+      }),
+    );
+  };
+  const overdueLogs = () =>
+    vi
+      .mocked(console.error)
+      .mock.calls.filter((call) =>
+        String(call[0]).includes("definitionStats.recomputeOverdue"),
+      );
+
+  beforeEach(() => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  test("the next write re-schedules it once it is overdue, and says so", async () => {
+    const t = newT();
+    const w = await seedWorld(t);
+    await reconcile(t);
+    await leaveStale(t, w.vista.id, Date.now() - STALE_RETRY_MS - 1);
+
+    await insertCopy(t, { ownerId: w.alice, puzzleId: w.vista.id });
+    await t.run(async (ctx) => {
+      await markDefinitionStatsStale(ctx, w.vista.id);
+    });
+
+    expect((await expectInStep(t, w.vista.id)).communityOwners).toBe(1);
+    expect(overdueLogs()).toHaveLength(1);
+    expect((await statsRow(t, w.vista.id))?.staleSince).toBeUndefined();
+  });
+
+  test("a recompute still due is not scheduled twice", async () => {
+    const t = newT();
+    const w = await seedWorld(t);
+    await reconcile(t);
+    const before = (await recomputeJobs(t)).length;
+    await leaveStale(t, w.vista.id, Date.now());
+
+    await t.run(async (ctx) => {
+      await markDefinitionStatsStale(ctx, w.vista.id);
+    });
+
+    expect(await recomputeJobs(t)).toHaveLength(before);
+    expect(overdueLogs()).toHaveLength(0);
+  });
+
+  test("the nightly reconcile reports a definition stuck stale and repairs it", async () => {
+    const t = newT();
+    const w = await seedWorld(t);
+    await reconcile(t);
+    await leaveStale(t, w.harbour.id, Date.now() - STALE_RETRY_MS - 1);
+
+    await reconcile(t);
+
+    expect(overdueLogs()).toHaveLength(1);
+    expect(String(overdueLogs()[0]![0])).toContain(w.harbour.id);
+    expect((await expectInStep(t, w.harbour.id)).communityOwners).toBe(0);
   });
 });
 

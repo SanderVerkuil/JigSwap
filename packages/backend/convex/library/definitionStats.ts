@@ -33,8 +33,9 @@ import { isOpenAvailability } from "./openListing";
 // row stale and schedules one `recompute`, which recomputes the totals from source with the very
 // helpers the pages used to run live (library/definitionAggregates), so the numbers keep their
 // meaning. A nightly `reconcile` recomputes every definition: it is the backfill, and it repairs a
-// row a write path forgot to mark (logged as drift). Until a definition's totals exist, reads
-// compute them live, as before.
+// row a write path forgot to mark (logged as drift). A row left stale because its recompute threw
+// is logged and re-scheduled by the next mark or the reconcile (STALE_RETRY_MS). Until a
+// definition's totals exist, reads compute them live, as before.
 
 export type DefinitionTotals = RatingTotals &
   CompletionTotals & {
@@ -46,6 +47,10 @@ type StoredTotals = NonNullable<Doc<"definitionStats">["totals"]>;
 
 // Profile visibility fan-out: copies per batch (each at most one mark).
 const OWNER_MARK_BATCH = 100;
+// A recompute normally lands within seconds. A row still stale after this long lost its recompute
+// (it threw: read limits on a very large definition, or write conflicts until retries ran out), so
+// the next mark, or the nightly reconcile, logs it and schedules another.
+export const STALE_RETRY_MS = 5 * 60 * 1000;
 // Definitions per reconcile batch (one scheduled recompute each). `batchSize` overrides it,
 // floored and clamped to 1..MAX, below Convex's limit on functions scheduled per mutation.
 export const RECONCILE_BATCH = 100;
@@ -127,19 +132,46 @@ const totalsKey = (t: StoredTotals | DefinitionTotals): string =>
     t.publicAvailable.sale,
   ]);
 
+// A stale row whose recompute should have landed by `now`, logged as such. A row marked stale
+// before `staleSince` existed counts as overdue.
+const recomputeOverdue = (
+  row: Doc<"definitionStats">,
+  now: number,
+): boolean => {
+  if (row.stale !== true) return false;
+  if (row.staleSince !== undefined && now - row.staleSince < STALE_RETRY_MS) {
+    return false;
+  }
+  logEvent({
+    event: "library.definitionStats.recomputeOverdue",
+    outcome: "error",
+    puzzle_id: row.puzzleId,
+    stale_ms: row.staleSince === undefined ? null : now - row.staleSince,
+  });
+  return true;
+};
+
 /**
  * Mark a definition's totals stale and schedule their recompute. At most one recompute is pending
- * per definition: a row already stale has one scheduled (in this transaction or an earlier one),
- * and a definition without a row gets one, so later marks in the same transaction see it.
+ * per definition: a row stale since less than STALE_RETRY_MS has one scheduled (in this
+ * transaction or an earlier one), and a definition without a row gets one, so later marks in the
+ * same transaction see it. A row stale for longer lost its recompute: it is logged and re-scheduled.
  */
 export const markDefinitionStatsStale = async (
   ctx: MutationCtx,
   puzzleId: Id<"puzzles">,
 ): Promise<void> => {
+  const now = Date.now();
   const row = await statsRowOf(ctx, puzzleId);
-  if (row?.stale === true) return;
-  if (row) await ctx.db.patch(row._id, { stale: true });
-  else await ctx.db.insert("definitionStats", { puzzleId, stale: true });
+  if (row?.stale === true && !recomputeOverdue(row, now)) return;
+  if (row) await ctx.db.patch(row._id, { stale: true, staleSince: now });
+  else {
+    await ctx.db.insert("definitionStats", {
+      puzzleId,
+      stale: true,
+      staleSince: now,
+    });
+  }
   await ctx.scheduler.runAfter(0, internal.library.definitionStats.recompute, {
     puzzleId,
   });
@@ -287,7 +319,12 @@ export const recompute = internalMutation({
     const inStep =
       row.totals !== undefined && totalsKey(row.totals) === totalsKey(totals);
     if (inStep) {
-      if (row.stale === true) await ctx.db.patch(row._id, { stale: undefined });
+      if (row.stale === true) {
+        await ctx.db.patch(row._id, {
+          stale: undefined,
+          staleSince: undefined,
+        });
+      }
       return;
     }
     if (row.totals !== undefined && row.stale !== true) {
@@ -297,7 +334,12 @@ export const recompute = internalMutation({
         puzzle_id: puzzleId,
       });
     }
-    await ctx.db.patch(row._id, { totals, stale: undefined, computedAt });
+    await ctx.db.patch(row._id, {
+      totals,
+      stale: undefined,
+      staleSince: undefined,
+      computedAt,
+    });
   },
 });
 
@@ -324,7 +366,11 @@ export const reconcile = internalMutation({
     const page = await ctx.db
       .query("puzzles")
       .paginate({ numItems, cursor: args.cursor ?? null });
+    const now = Date.now();
     for (const puzzle of page.page) {
+      // Surfaces a definition whose recompute keeps failing even when no write marks it.
+      const row = await statsRowOf(ctx, puzzle._id);
+      if (row) recomputeOverdue(row, now);
       await ctx.scheduler.runAfter(
         0,
         internal.library.definitionStats.recompute,
