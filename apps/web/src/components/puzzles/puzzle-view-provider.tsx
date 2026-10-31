@@ -43,7 +43,9 @@ export function PuzzleViewProvider({
           (viewMode === "grid"
             ? // Design-language puzzle grid: compact covers that auto-fill the
               // row at a 212px minimum, instead of fixed breakpoint columns.
-              "grid grid-cols-[repeat(auto-fill,minmax(212px,1fr))] gap-[18px]"
+              // A phone column (~358px) fits only one 212px card, so below sm
+              // the grid is two fixed columns of compact cards instead.
+              "grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(212px,1fr))] sm:gap-[18px]"
             : "space-y-4")
         }
       >

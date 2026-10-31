@@ -354,7 +354,8 @@ export function PuzzleCard({
       </div>
 
       {showAvailability && (
-        <div className="flex items-center gap-2 mb-2">
+        // Wraps: all three offers do not fit one row of a compact phone card.
+        <div className="flex flex-wrap items-center gap-2 mb-2">
           {puzzle.availability.forLend ? (
             <Badge variant="outline" className="text-xs">
               {t("lend")}

@@ -100,6 +100,27 @@ describe("profile page width", () => {
     expect(root).toContain("w-full");
   });
 
+  it("fits two puzzle cards per row on phones and auto-fills 212px columns from sm", () => {
+    const grid = classOf(
+      elementsOf(
+        renderToStaticMarkup(
+          <PuzzleViewProvider viewMode="grid">{null}</PuzzleViewProvider>,
+        ),
+      )[0],
+    ).split(/\s+/);
+    expect(grid).toEqual(
+      expect.arrayContaining([
+        "grid",
+        "grid-cols-2",
+        "sm:grid-cols-[repeat(auto-fill,minmax(212px,1fr))]",
+      ]),
+    );
+    // The auto-fill template must not apply below sm: at ~358px it fits one column.
+    expect(grid).not.toContain(
+      "grid-cols-[repeat(auto-fill,minmax(212px,1fr))]",
+    );
+  });
+
   it("lays puzzle cards out directly in the shared puzzle grid", () => {
     const sharedGrid = classOf(
       elementsOf(

@@ -55,12 +55,15 @@ export function PuzzleCard({ puzzle }: PuzzleCardProps) {
         // without overflowing the card (which is `overflow-hidden`). The primary
         // "view details" takes the remaining width and truncates if needed; the
         // add action is a compact icon-only button with an accessible label.
+        // Below sm neither the two-column grid nor the list row leaves "view
+        // details" room to read, so it is hidden there: the stretched title link
+        // already opens the puzzle.
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
             asChild
-            className="min-w-0 flex-1"
+            className="min-w-0 flex-1 max-sm:hidden"
           >
             <Link href={`/puzzles/${puzzle._id}`}>
               <Eye className="h-4 w-4 shrink-0" />
