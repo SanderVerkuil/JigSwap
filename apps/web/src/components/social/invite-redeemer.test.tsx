@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
@@ -9,6 +9,8 @@ import { InviteRedeemer } from "./invite-redeemer";
 
 const mocks = vi.hoisted(() => ({
   qrDialogLoaded: 0,
+  // Makes the dialog throw the way React.lazy rethrows a failed chunk import.
+  qrDialogFails: false,
   redeem: vi.fn<(args: unknown) => Promise<unknown>>(),
 }));
 
@@ -16,9 +18,12 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/components/social/qr-dialog", () => {
   mocks.qrDialogLoaded++;
   return {
-    QrDialogAutoOpen: ({ title }: { title: string }) => (
-      <div role="dialog">{title}</div>
-    ),
+    QrDialogAutoOpen: ({ title }: { title: string }) => {
+      if (mocks.qrDialogFails) {
+        throw new TypeError("Failed to fetch dynamically imported module");
+      }
+      return <div role="dialog">{title}</div>;
+    },
   };
 });
 
@@ -64,9 +69,13 @@ const renderRedeemer = () =>
 
 beforeEach(() => {
   localStorage.clear();
+  mocks.qrDialogFails = false;
   mocks.redeem.mockReset().mockResolvedValue({ redeemed: true });
 });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 // In order: the first case must run before anything has loaded the QR dialog module.
 describe("InviteRedeemer", () => {
@@ -89,5 +98,25 @@ describe("InviteRedeemer", () => {
     );
     expect(mocks.redeem.mock.calls[0]?.[0]).toEqual({ token: "token-1" });
     expect(mocks.qrDialogLoaded).toBe(1);
+  });
+
+  it("skips the optional QR prompt, and leaves the page alone, when its chunk fails", async () => {
+    mocks.qrDialogFails = true;
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    localStorage.setItem(INVITE_KEY, "token-2");
+    const { container } = render(
+      <QueryClientProvider client={new QueryClient()}>
+        <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+          <InviteRedeemer />
+          {/* The dashboard page it is mounted next to. */}
+          <main>Dashboard</main>
+        </IntlProvider>
+      </QueryClientProvider>,
+    );
+    // The dialog was attempted (its failure got reported) ...
+    await waitFor(() => expect(errors).toHaveBeenCalled());
+    // ... and the page next to the redeemer is still there.
+    expect(container.textContent).toBe("Dashboard");
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 });

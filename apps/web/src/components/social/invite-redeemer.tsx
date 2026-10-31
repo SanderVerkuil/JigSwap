@@ -3,6 +3,7 @@ import {
   INVITE_KEY,
   NEW_MEMBER_WINDOW_MS,
 } from "@/components/social/invite-landing";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { gateway } from "@/gateway";
 import { safeStorage } from "@/lib/safe-storage";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -20,6 +21,9 @@ const QrDialogAutoOpen = lazy(() =>
     default: module.QrDialogAutoOpen,
   })),
 );
+// If that chunk fails to load (offline, a deploy in between), the optional prompt is skipped;
+// the error must not reach the dashboard's error boundary and replace the page.
+const SkipQrPrompt = () => null;
 
 const LOOP_SHOWN_KEY = "jigswap.inviteLoopShown";
 const FALLBACK_SHOWN_KEY = "jigswap.inviteFallbackShown";
@@ -123,17 +127,19 @@ export function InviteRedeemer() {
 
   // Loop closure: the new member's own QR, shown once, skippable (Dialog close = skip).
   return (
-    <Suspense fallback={null}>
-      <QrDialogAutoOpen
-        memberId={me._id}
-        displayName={me.name}
-        username={me.username}
-        handle={me.handle}
-        avatarUrl={me.avatar}
-        title={t("loopTitle")}
-        body={t("loopBody")}
-        onClose={() => setShowLoopQr(false)}
-      />
-    </Suspense>
+    <ErrorBoundary fallback={SkipQrPrompt}>
+      <Suspense fallback={null}>
+        <QrDialogAutoOpen
+          memberId={me._id}
+          displayName={me.name}
+          username={me.username}
+          handle={me.handle}
+          avatarUrl={me.avatar}
+          title={t("loopTitle")}
+          body={t("loopBody")}
+          onClose={() => setShowLoopQr(false)}
+        />
+      </Suspense>
+    </ErrorBoundary>
   );
 }
