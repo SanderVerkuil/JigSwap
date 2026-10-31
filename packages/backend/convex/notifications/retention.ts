@@ -8,10 +8,12 @@ import { logEvent } from "../lib/logEvent";
 // expires 180 days after its last activity, any notification 365 days after it. Last activity is
 // when a grouped row last absorbed an actor (updatedAt), else when it was created.
 //
-// SHIPS AS A DRY RUN. The daily cron (crons.ts) passes mode "dry-run": the sweep only counts what
-// it would delete and logs one wide event per run. Deleting needs the owner to approve the periods
-// and add the matching retention line to the privacy policy (EN/NL), then switch the cron's mode to
-// "delete" in the same change.
+// SHIPS AS A DRY RUN. The weekly cron (crons.ts) passes mode "dry-run": the sweep only counts what
+// it would delete and logs one wide event per run, also forwarded to Axiom. Because counting never
+// shrinks the backlog, a dry run stops after DRY_RUN_MAX_PAGES and reports a capped sample of the
+// OLDEST rows instead of re-reading every old notification each week. Deleting needs the owner to
+// approve the periods and add the matching retention line to the privacy policy (EN/NL), then
+// switch the cron's mode to "delete" in the same change (notificationRetention.test.ts pins it).
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 export const READ_RETENTION_DAYS = 180;
@@ -19,6 +21,13 @@ export const UNREAD_RETENTION_DAYS = 365;
 
 /** Notifications read per run (one page); the sweep reschedules itself for the next page. */
 export const RETENTION_SWEEP_PAGE = 200;
+
+/**
+ * A dry run stops after this many pages (2000 rows) and reports `capped`; its counts are then a
+ * lower bound taken from the oldest rows. Delete mode is not capped: it removes what it counts, so
+ * the backlog it reads only shrinks.
+ */
+export const DRY_RUN_MAX_PAGES = 10;
 
 const modeValidator = v.union(v.literal("dry-run"), v.literal("delete"));
 
@@ -37,9 +46,10 @@ const isExpired = (row: Doc<"notifications">, asOf: number): boolean => {
 
 /**
  * Sweep one page of notifications created before the read-retention cutoff (by_created_at), count
- * the expired ones and, in "delete" mode only, delete them; then schedule the next page. The cron
- * starts it with just a mode; `asOf` is fixed at the start so every page of a run reads the same
- * range, and `totals` carries the running counts into the single wide event logged at the end.
+ * the expired ones and, in "delete" mode only, delete them; then schedule the next page (a dry run
+ * stops after DRY_RUN_MAX_PAGES). The cron starts it with just a mode; `asOf` is fixed at the start
+ * so every page of a run reads the same range, and `totals` carries the running counts into the
+ * single wide event logged at the end.
  */
 export const sweepExpiredNotifications = internalMutation({
   args: {
@@ -55,7 +65,10 @@ export const sweepExpiredNotifications = internalMutation({
       }),
     ),
   },
-  handler: async (ctx, args): Promise<Totals & { isDone: boolean }> => {
+  handler: async (
+    ctx,
+    args,
+  ): Promise<Totals & { isDone: boolean; capped: boolean }> => {
     const mode = args.mode ?? "dry-run";
     const asOf = args.asOf ?? Date.now();
     // Nothing created after this can have expired: last activity is never before creation.
@@ -81,7 +94,10 @@ export const sweepExpiredNotifications = internalMutation({
       if (mode === "delete") await ctx.db.delete(row._id);
     }
 
-    if (!page.isDone) {
+    // A dry run with rows left stops here and reports a sample (see DRY_RUN_MAX_PAGES).
+    const capped =
+      mode === "dry-run" && !page.isDone && totals.pages >= DRY_RUN_MAX_PAGES;
+    if (!page.isDone && !capped) {
       await ctx.scheduler.runAfter(
         0,
         internal.notifications.retention.sweepExpiredNotifications,
@@ -89,7 +105,7 @@ export const sweepExpiredNotifications = internalMutation({
       );
     } else {
       const expired = totals.expiredRead + totals.expiredUnread;
-      logEvent({
+      const line = logEvent({
         event: "notifications.retentionSweep",
         outcome: "success",
         mode,
@@ -98,13 +114,22 @@ export const sweepExpiredNotifications = internalMutation({
         unread_retention_days: UNREAD_RETENTION_DAYS,
         pages: totals.pages,
         scanned: totals.scanned,
+        // True when a dry run stopped at DRY_RUN_MAX_PAGES: the counts are a lower bound.
+        capped,
         expired_read: totals.expiredRead,
         expired_unread: totals.expiredUnread,
         // In a dry run this is what WOULD be deleted; `deleted` stays 0.
         expired_total: expired,
         deleted: mode === "delete" ? expired : 0,
       });
+      // Mutations cannot reach Axiom (Node-only SDK), and the deployment log is not streamed
+      // anywhere (lib/axiom): hand the line to the Node forwarder so the owner can read the counts.
+      await ctx.scheduler.runAfter(
+        0,
+        internal.events.ingestDispatchFailure.ingest,
+        { line },
+      );
     }
-    return { ...totals, isDone: page.isDone };
+    return { ...totals, isDone: page.isDone, capped };
   },
 });

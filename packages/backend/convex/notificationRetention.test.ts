@@ -1,7 +1,13 @@
 import { convexTest, type TestConvex } from "convex-test";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { getFunctionName } from "convex/server";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import crons from "./crons";
+import {
+  DRY_RUN_MAX_PAGES,
+  RETENTION_SWEEP_PAGE,
+} from "./notifications/retention";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
@@ -97,8 +103,13 @@ const MIXED: Seed[] = [
   },
 ];
 
+beforeEach(() => {
+  // The final event is forwarded to Axiom by a scheduled action: keep it a no-op in tests.
+  vi.stubEnv("AXIOM_API_KEY", "");
+});
 afterEach(() => {
   vi.useRealTimers();
+  vi.unstubAllEnvs();
 });
 
 describe("notification retention sweep", () => {
@@ -169,6 +180,83 @@ describe("notification retention sweep", () => {
     expect(events[0]!.pages).toBe(3);
   });
 
+  test("a dry run stops after DRY_RUN_MAX_PAGES and reports a capped sample", async () => {
+    const t = convexTest(schema, modules);
+    const ann = await seedMember(t, "clerk_ann");
+    const rows = DRY_RUN_MAX_PAGES * RETENTION_SWEEP_PAGE + 50;
+    await seedRows(
+      t,
+      ann,
+      Array.from({ length: rows }, (_, i) => ({
+        label: `r${i}`,
+        ageDays: 200,
+        isRead: true,
+      })),
+    );
+
+    const events = await sweep(t);
+
+    expect(await remaining(t)).toBe(rows);
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      mode: "dry-run",
+      capped: true,
+      pages: DRY_RUN_MAX_PAGES,
+      scanned: DRY_RUN_MAX_PAGES * RETENTION_SWEEP_PAGE,
+      expired_read: DRY_RUN_MAX_PAGES * RETENTION_SWEEP_PAGE,
+      deleted: 0,
+    });
+  });
+
+  test("delete mode is not capped: it pages through the whole backlog", async () => {
+    const t = convexTest(schema, modules);
+    const ann = await seedMember(t, "clerk_ann");
+    const rows = DRY_RUN_MAX_PAGES * RETENTION_SWEEP_PAGE + 50;
+    await seedRows(
+      t,
+      ann,
+      Array.from({ length: rows }, (_, i) => ({
+        label: `r${i}`,
+        ageDays: 200,
+        isRead: true,
+      })),
+    );
+
+    const events = await sweep(t, { mode: "delete" });
+
+    expect(await remaining(t)).toBe(0);
+    expect(events[0]).toMatchObject({
+      mode: "delete",
+      capped: false,
+      deleted: rows,
+    });
+  });
+
+  test("the run's wide event is handed to the Axiom forwarder", async () => {
+    const t = convexTest(schema, modules);
+    const ann = await seedMember(t, "clerk_ann");
+    await seedRows(t, ann, MIXED);
+
+    await sweep(t);
+
+    const forwarded = await t.run(async (ctx) =>
+      (await ctx.db.system.query("_scheduled_functions").collect()).filter(
+        (job) =>
+          job.name ===
+          getFunctionName(internal.events.ingestDispatchFailure.ingest),
+      ),
+    );
+    expect(forwarded).toHaveLength(1);
+    expect(forwarded[0]!.args[0]).toMatchObject({
+      line: {
+        event: "notifications.retentionSweep",
+        mode: "dry-run",
+        expired_read: 2,
+        expired_unread: 1,
+      },
+    });
+  });
+
   test("nothing old: one page, nothing expired", async () => {
     const t = convexTest(schema, modules);
     const ann = await seedMember(t, "clerk_ann");
@@ -181,5 +269,24 @@ describe("notification retention sweep", () => {
 
     expect(await remaining(t)).toBe(2);
     expect(events[0]).toMatchObject({ scanned: 0, deleted: 0, pages: 1 });
+  });
+});
+
+describe("notification retention cron", () => {
+  const sweepJobs = () =>
+    Object.values(crons.crons).filter(
+      (job) =>
+        job.name ===
+        getFunctionName(
+          internal.notifications.retention.sweepExpiredNotifications,
+        ),
+    );
+
+  test("runs weekly and ONLY as a dry run until the owner approves deleting", () => {
+    // Switching to "delete" is an owner decision (retention periods + a privacy-policy line):
+    // this test must change in that same reviewed change, never as a side effect.
+    expect(sweepJobs()).toHaveLength(1);
+    expect(sweepJobs()[0]!.args).toEqual([{ mode: "dry-run" }]);
+    expect(sweepJobs()[0]!.schedule).toMatchObject({ type: "weekly" });
   });
 });
