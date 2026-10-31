@@ -358,11 +358,13 @@ export function CoverImageField({
             )}
           />
         )}
-        <div className="flex flex-col gap-1">
+        {/* min-w-0 + flex-wrap: in long locales ("Afbeelding vervangen" + "Foto bewerken")
+            the button pair wraps beside the thumbnail instead of running off a phone screen. */}
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="text-muted-foreground text-xs">
             {imageStateLabel}
           </span>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" asChild>
               <label className="cursor-pointer">
                 {t("replaceImage")}

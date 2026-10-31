@@ -280,11 +280,14 @@ function SuggestEditForm({
 
   // Rendered twice — inline below `lg:` (its position today) and again inside the sticky
   // context panel at `lg:` — via the CSS-only hidden/visible split below, not two hand-written
-  // copies: same element, same handlers, mounted at two DOM positions.
+  // copies: same element, same handlers, mounted at two DOM positions. The hint takes its own
+  // full-width line above the buttons so it never squeezes into a narrow column beside them.
   const actionsRow = (
-    <div className="flex items-center justify-end gap-2">
+    <div className="flex flex-wrap items-center justify-end gap-2">
       {!canSubmit && (
-        <span className="text-muted-foreground text-sm">{t("noChanges")}</span>
+        <span className="text-muted-foreground basis-full text-sm">
+          {t("noChanges")}
+        </span>
       )}
       <Button variant="outline" onClick={() => router.push(`/puzzles/${id}`)}>
         {t("cancel")}
