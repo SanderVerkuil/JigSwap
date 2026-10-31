@@ -23,6 +23,12 @@ describe("approveErrorKey", () => {
     );
   });
 
+  it("explains a suggestion the proposer edited after the admin chose Approve", () => {
+    expect(
+      approveErrorKey(new ConvexError({ code: "ChangeProposalChanged" })),
+    ).toBe("changedSinceReview");
+  });
+
   it.each([
     ["a network failure", new Error("fetch failed")],
     ["a message-only refusal", new ConvexError("Forbidden")],
@@ -35,6 +41,7 @@ describe("approveErrorKey", () => {
     for (const key of [
       "approveTextTooLong",
       "duplicateBarcode",
+      "changedSinceReview",
       "actionFailed",
     ] as const) {
       expect(en.admin.proposals[key]).toBeTruthy();

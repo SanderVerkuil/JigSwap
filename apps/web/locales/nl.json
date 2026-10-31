@@ -4693,6 +4693,7 @@
       "rejectionReason": "Reden",
       "actionFailed": "Actie kon niet worden uitgevoerd",
       "duplicateBarcode": "Een andere puzzel gebruikt al een van de voorgestelde barcodes. Wijs dit voorstel af of pas eerst de andere puzzel aan.",
+      "changedSinceReview": "De indiener heeft dit voorstel aangepast terwijl je het bekeek. Bekijk de wijzigingen en keur het opnieuw goed.",
       "approveTextTooLong": "Dit voorstel bevat tekst die langer is dan de catalogus toestaat, dus het kan niet worden toegepast. Wijs het af.",
       "backToQueue": "Terug naar voorstellen"
     },
