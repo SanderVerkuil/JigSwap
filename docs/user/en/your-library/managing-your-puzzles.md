@@ -1,7 +1,7 @@
 ---
 title: Managing Your Puzzles
 order: 1
-summary: "View your owned copies, use status filters, and explore the copy detail page."
+summary: "View your owned copies, search, sort and filter them, and explore the copy detail page."
 ---
 
 # Managing Your Puzzle Library
@@ -14,13 +14,25 @@ Your library is the set of physical puzzle **copies** you personally own. (A "co
 
 1. Open **My Puzzles** from the sidebar or tab bar.
 2. Switch between **grid** and **list** layouts.
-3. Use the **status filter pills** to narrow what you see:
+3. Type in the **search box** to find puzzles by title, brand or tag. Every
+   word you type has to match; capitals and accents don't matter, and you can
+   type a tag with or without its **#**.
+4. Pick an order in the **sort** menu: **Recently added** (the default),
+   **Title A–Z** or **Fewest pieces first**.
+5. Use the **status filter pills** to narrow what you see:
    - **All**
    - **Available**
    - **For Trade**
    - **For Lend**
    - **In Progress**
    - **Completed**
+6. In a household, the **Whose** menu shows everyone's puzzles, only yours, or
+   only your housemates'.
+
+Your search, sort, filters and layout are kept in the page address, so they're
+still there when you come back from a puzzle, reload the page or share the
+link. If nothing matches, the page says which search or filter left it empty;
+**Show all** clears them.
 
 Each puzzle card shows its condition (a coloured dot and its word, such as **Good**), what it's offered for (green chips with an icon for swap, lend and sale), its tags as _#tag_, and its loan status (who currently has it, if lent out). It also gives you quick actions.
 
@@ -33,6 +45,7 @@ From a puzzle card you can:
 - **Delete** — remove the copy from your library (with confirmation).
 - **Log a solve** or **Start puzzle** — record that you've completed (or started) the puzzle.
 - **Recall** — if a puzzle is currently lent out, recall it to get it back.
+  JigSwap asks you to confirm first, then tells you whether it worked.
 
 ## The copy detail page
 

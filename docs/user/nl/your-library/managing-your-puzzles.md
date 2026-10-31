@@ -1,7 +1,7 @@
 ---
 title: Je Puzzels Beheren
 order: 1
-summary: "Bekijk je eigen kopieën, gebruik statusfilters en verken de detailpagina van een kopie."
+summary: "Bekijk je eigen kopieën, zoek, sorteer en filter ze, en verken de detailpagina van een kopie."
 ---
 
 # Je Puzzelbibliotheek Beheren
@@ -14,13 +14,26 @@ Je bibliotheek is de verzameling fysieke puzzel**kopieën** die jij persoonlijk 
 
 1. Open **Mijn Puzzels** vanuit de zijbalk of de tabbalk.
 2. Wissel tussen de weergaven **raster** en **lijst**.
-3. Gebruik de **statusfilter-pillen** om te beperken wat je ziet:
+3. Typ in het **zoekvak** om puzzels te vinden op titel, merk of tag. Elk
+   woord dat je typt moet erin voorkomen; hoofdletters en accenten maken niet
+   uit, en een tag mag je met of zonder **#** typen.
+4. Kies een volgorde in het **sorteermenu**: **Onlangs toegevoegd** (de
+   standaard), **Titel A–Z** of **Minste stukken eerst**.
+5. Gebruik de **statusfilter-pillen** om te beperken wat je ziet:
    - **Alles**
    - **Beschikbaar**
    - **Te Ruilen**
    - **Te Leen**
    - **Bezig**
    - **Voltooid**
+6. Zit je in een huishouden, dan kies je in het menu **Van wie** of je de
+   puzzels van iedereen ziet, alleen die van jou of alleen die van je
+   huisgenoten.
+
+Je zoekterm, volgorde, filters en weergave staan in het adres van de pagina.
+Ze blijven dus staan als je terugkomt van een puzzel, de pagina herlaadt of de
+link deelt. Vindt de pagina niets, dan zie je welke zoekterm of welk filter
+dat veroorzaakt; met **Alles tonen** wis je ze.
 
 Elke puzzelkaart toont de conditie (een gekleurde stip met een woord als **Goed**), waarvoor hij wordt aangeboden (groene chips met een icoon voor ruilen, uitlenen en verkopen), de tags als _#tag_ en de uitleenstatus (wie hem nu heeft, als hij uitgeleend is). Ook geeft hij je snelle acties.
 
@@ -32,7 +45,9 @@ Vanaf een puzzelkaart kun je:
 - **Bewerken** — wijzig de details van de kopie.
 - **Verwijderen** — haal de kopie uit je bibliotheek (met bevestiging).
 - **Voltooiing vastleggen** of **Puzzel starten** — leg vast dat je de puzzel hebt voltooid (of gestart).
-- **Terughalen** — als een puzzel momenteel is uitgeleend, haal hem dan terug.
+- **Terugvragen** — als een puzzel momenteel is uitgeleend, vraag je hem
+  terug. JigSwap vraagt eerst om bevestiging en laat daarna weten of het gelukt
+  is.
 
 ## De detailpagina van een kopie
 
