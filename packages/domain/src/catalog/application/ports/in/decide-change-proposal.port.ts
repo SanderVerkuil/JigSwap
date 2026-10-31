@@ -6,6 +6,10 @@ import { CatalogApplicationError } from "../../errors";
 // deciding admin is stamped into moderationActions at the composition root, never here.
 export interface ApproveChangeProposalCommand {
   readonly changeProposalId: ChangeProposalId;
+  // The proposal's updatedAt as the admin reviewed it. When given, the approval is refused
+  // (ChangeProposalChanged) if the proposer edited the proposal since, so an admin never
+  // approves a diff they did not see.
+  readonly expectedUpdatedAt?: Date;
 }
 
 export interface RejectChangeProposalCommand {

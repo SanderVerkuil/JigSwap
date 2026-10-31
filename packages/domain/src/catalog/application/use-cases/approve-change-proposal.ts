@@ -31,6 +31,16 @@ export const makeApproveChangeProposal =
         CatalogApplicationError.changeProposalNotFound(cmd.changeProposalId),
       );
     }
+    // Approve only the version the admin reviewed: a proposer's edit after that moment (the
+    // review page is live, but the click can race it) must be looked at again, not applied.
+    if (
+      cmd.expectedUpdatedAt !== undefined &&
+      proposal.updatedAt.getTime() !== cmd.expectedUpdatedAt.getTime()
+    ) {
+      return err(
+        CatalogApplicationError.changeProposalChanged(cmd.changeProposalId),
+      );
+    }
 
     const definition = await deps.definitions.findById(
       proposal.puzzleDefinitionId,
