@@ -11,6 +11,7 @@ import {
   MemberTileSkeleton,
 } from "@/components/social/member-tile";
 import { QrDialog } from "@/components/social/qr-dialog";
+import { GuideHelpButton } from "@/components/tour/guide-help-button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   StickyTabsBar,
@@ -18,6 +19,7 @@ import {
   TabCount,
   UNDERLINE_TABS_LIST_CLASS,
 } from "@/components/ui/underline-tabs";
+import { useTourLauncher } from "@/components/whats-new/tour-launcher";
 import { gateway, Id } from "@/gateway";
 import { pageTitle } from "@/lib/page-title";
 import { safeStorage } from "@/lib/safe-storage";
@@ -204,27 +206,33 @@ function PeoplePage() {
   }
   const members = Array.from(network.entries());
 
-  // The page title ("People") lives in the shell page head; publish the QR
-  // dialog (self-service invite/QR) and the network member count there so the
-  // body carries no duplicate header. Kept in the always-mounted page so the
-  // header stays stable across tab switches.
+  // The page title ("People") lives in the shell page head; publish the
+  // member-profiles guide ("?"), the QR dialog (self-service invite/QR) and the
+  // network member count there so the body carries no duplicate header. Kept in
+  // the always-mounted page so the header stays stable across tab switches.
   const headerMeta = loading
     ? undefined
     : t("memberCount", { count: members.length });
+  const { startTour } = useTourLauncher();
   usePageHeader(
     () => ({
       meta: headerMeta,
-      actions: me ? (
-        <QrDialog
-          memberId={me._id}
-          displayName={me.name}
-          username={me.username}
-          handle={me.handle}
-          avatarUrl={me.avatar}
-        />
-      ) : undefined,
+      actions: (
+        <>
+          <GuideHelpButton tourId="member-profiles" startTour={startTour} />
+          {me ? (
+            <QrDialog
+              memberId={me._id}
+              displayName={me.name}
+              username={me.username}
+              handle={me.handle}
+              avatarUrl={me.avatar}
+            />
+          ) : null}
+        </>
+      ),
     }),
-    [headerMeta, me],
+    [headerMeta, me, startTour],
   );
 
   const handleTabChange = (value: string) => {

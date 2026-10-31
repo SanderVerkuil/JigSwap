@@ -63,9 +63,11 @@ Some updates also come with a short tour of the feature. Click
   resumes from the update, with **Resume tour**, and the tour from Quick setup
   from Quick setup.
 - **Replay the tour** runs a finished tour again.
-- On **Exchanges**, **Circles**, **Completions** and **Add Puzzle**, the
-  **?** button in the page header (**Show me how**) starts that page's guide
-  at its step on that page. On **Household** it starts the **Who sees what**
+- On **People**, **Exchanges**, **Circles**, **Completions** and
+  **Add Puzzle**, and on the **Dashboard** on a computer or tablet, the **?**
+  button in the page header (**Show me how**) starts that page's guide at its
+  step on that page: **Find your way around** on the Dashboard, **Member
+  profiles** on People. On **Household** it starts the **Who sees what**
   guide. On a phone, the **?** on **Exchanges** ends the row of filters, and
   the one on **Household** ends the note above the tabs.
 

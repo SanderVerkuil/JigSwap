@@ -68,12 +68,14 @@ te stoppen.
   rondleiding van een update hervat je ook bij die update, met
   **Rondleiding hervatten**, en die uit Snel instellen via Snel instellen.
 - **Rondleiding opnieuw bekijken** speelt een afgeronde rondleiding opnieuw af.
-- Op **Uitwisselingen**, **Kringen**, **Voltooiingen** en **Puzzel Toevoegen**
+- Op **Mensen**, **Uitwisselingen**, **Kringen**, **Voltooiingen** en
+  **Puzzel Toevoegen**, en op het **Dashboard** op een computer of tablet,
   start de knop **?** in de paginakop (**Laat me zien hoe**) de rondleiding van
-  die pagina, bij de stap op die pagina. Op **Huishouden** start hij de
-  rondleiding **Wie ziet wat**. Op een telefoon staat de **?** op
-  **Uitwisselingen** aan het eind van de rij filters, en op **Huishouden** aan
-  het eind van de tekst boven de tabbladen.
+  die pagina, bij de stap op die pagina: **Je weg vinden** op het Dashboard,
+  **Ledenprofielen** op Mensen. Op **Huishouden** start hij de rondleiding
+  **Wie ziet wat**. Op een telefoon staat de **?** op **Uitwisselingen** aan
+  het eind van de rij filters, en op **Huishouden** aan het eind van de tekst
+  boven de tabbladen.
 
 ## JigSwap op je telefoon installeren
 
