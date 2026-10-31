@@ -5193,8 +5193,12 @@
     "contact": {
       "loading": "Loading messages…",
       "empty": "No contact messages yet.",
+      "emptyNew": "No new contact messages.",
+      "emptyHandled": "No handled contact messages yet.",
       "statusNew": "New",
       "statusHandled": "Handled",
+      "statusAll": "All",
+      "statusFilter": "Filter messages by status",
       "subject": {
         "swap": "Lending or swapping",
         "account": "My account",
@@ -5203,7 +5207,8 @@
       },
       "markHandled": "Mark as handled",
       "markHandledSuccess": "Message marked as handled",
-      "markHandledError": "Failed to update message"
+      "markHandledError": "Failed to update message",
+      "loadMore": "Load more"
     },
     "docFeedback": {
       "loading": "Loading feedback…",

@@ -49,12 +49,14 @@ const asMember = (t: TestConvex<typeof schema>) =>
 const asAdmin = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice", metadata: { role: "admin" } });
 
+const firstPage = { paginationOpts: { numItems: 10, cursor: null } };
+
 describe("contact/listContactMessages", () => {
   test("rejects an unauthenticated caller", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
     await expect(
-      t.query(api.contact.listContactMessages.listContactMessages, {}),
+      t.query(api.contact.listContactMessages.listContactMessages, firstPage),
     ).rejects.toBeInstanceOf(ConvexError);
   });
 
@@ -64,20 +66,109 @@ describe("contact/listContactMessages", () => {
     await expect(
       asMember(t).query(
         api.contact.listContactMessages.listContactMessages,
-        {},
+        firstPage,
       ),
+    ).rejects.toThrow(/Forbidden/);
+    await expect(
+      asMember(t).query(api.contact.listContactMessages.listContactMessages, {
+        ...firstPage,
+        status: "new",
+      }),
     ).rejects.toThrow(/Forbidden/);
   });
 
-  test("returns every message, newest first, for an admin", async () => {
+  test("without a status returns every message, newest first, for an admin", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
-    const rows = await asAdmin(t).query(
+    const result = await asAdmin(t).query(
       api.contact.listContactMessages.listContactMessages,
-      {},
+      firstPage,
     );
-    expect(rows.map((r) => r.name)).toEqual(["Tom", "Mara"]);
-    expect(rows.map((r) => r.status)).toEqual(["handled", "new"]);
+    expect(result.isDone).toBe(true);
+    expect(result.page.map((r) => r.name)).toEqual(["Tom", "Mara"]);
+    expect(result.page.map((r) => r.status)).toEqual(["handled", "new"]);
+  });
+
+  test("a status narrows the inbox to new or handled messages", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const fresh = await asAdmin(t).query(
+      api.contact.listContactMessages.listContactMessages,
+      { ...firstPage, status: "new" },
+    );
+    expect(fresh.page.map((r) => r.name)).toEqual(["Mara"]);
+    const handled = await asAdmin(t).query(
+      api.contact.listContactMessages.listContactMessages,
+      { ...firstPage, status: "handled" },
+    );
+    expect(handled.page.map((r) => r.name)).toEqual(["Tom"]);
+  });
+
+  test("holds at most 50 messages per page, whatever the client asks for", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 60; i++) {
+        await ctx.db.insert("contactMessages", {
+          name: `Sender ${i}`,
+          email: "x@example.com",
+          subject: "other",
+          message: "Another message for the inbox.",
+          status: "new",
+          createdAt: Date.now() + i,
+        });
+      }
+    });
+    const huge = { numItems: 1e6, cursor: null };
+    const all = await asAdmin(t).query(
+      api.contact.listContactMessages.listContactMessages,
+      { paginationOpts: huge },
+    );
+    expect(all.page).toHaveLength(50);
+    expect(all.isDone).toBe(false);
+    const filtered = await asAdmin(t).query(
+      api.contact.listContactMessages.listContactMessages,
+      { paginationOpts: huge, status: "new" },
+    );
+    expect(filtered.page).toHaveLength(50);
+    expect(filtered.isDone).toBe(false);
+  });
+
+  test("pages newest first within a status", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    // Two more new messages: newest is Zoë, then Yara, then the seeded Mara.
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      for (const [name, at] of [
+        ["Yara", now + 1000],
+        ["Zoë", now + 2000],
+      ] as const) {
+        await ctx.db.insert("contactMessages", {
+          name,
+          email: "x@example.com",
+          subject: "other",
+          message: "Another message for the inbox.",
+          status: "new",
+          createdAt: at,
+        });
+      }
+    });
+    const page1 = await asAdmin(t).query(
+      api.contact.listContactMessages.listContactMessages,
+      { paginationOpts: { numItems: 2, cursor: null }, status: "new" },
+    );
+    expect(page1.page.map((r) => r.name)).toEqual(["Zoë", "Yara"]);
+    expect(page1.isDone).toBe(false);
+    const page2 = await asAdmin(t).query(
+      api.contact.listContactMessages.listContactMessages,
+      {
+        paginationOpts: { numItems: 2, cursor: page1.continueCursor },
+        status: "new",
+      },
+    );
+    expect(page2.page.map((r) => r.name)).toEqual(["Mara"]);
+    expect(page2.isDone).toBe(true);
   });
 });
 
@@ -185,7 +276,10 @@ describe("identity/isCurrentUserAdmin", () => {
       ),
     ).toBe(false);
     await expect(
-      asFlatRole.query(api.contact.listContactMessages.listContactMessages, {}),
+      asFlatRole.query(
+        api.contact.listContactMessages.listContactMessages,
+        firstPage,
+      ),
     ).rejects.toThrow(/Forbidden/);
   });
 });

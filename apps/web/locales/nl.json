@@ -5193,8 +5193,12 @@
     "contact": {
       "loading": "Berichten laden…",
       "empty": "Nog geen contactberichten.",
+      "emptyNew": "Geen nieuwe contactberichten.",
+      "emptyHandled": "Nog geen afgehandelde contactberichten.",
       "statusNew": "Nieuw",
       "statusHandled": "Afgehandeld",
+      "statusAll": "Alle",
+      "statusFilter": "Berichten filteren op status",
       "subject": {
         "swap": "Lenen of ruilen",
         "account": "Mijn account",
@@ -5203,7 +5207,8 @@
       },
       "markHandled": "Markeren als afgehandeld",
       "markHandledSuccess": "Bericht gemarkeerd als afgehandeld",
-      "markHandledError": "Bericht bijwerken mislukt"
+      "markHandledError": "Bericht bijwerken mislukt",
+      "loadMore": "Meer laden"
     },
     "docFeedback": {
       "loading": "Feedback laden…",
