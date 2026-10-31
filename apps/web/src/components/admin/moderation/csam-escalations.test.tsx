@@ -44,7 +44,7 @@ const data = (overrides: Partial<CsamEscalations> = {}): CsamEscalations => ({
     missingVars: [],
     waitingPhotos: 0,
     oldestWaitingSince: null,
-    waitingCap: 200,
+    waitingCapped: false,
     timedOutPhotos: 0,
     uncheckedPhotos: 0,
     uncheckedSince: null,
@@ -163,7 +163,7 @@ describe("CsamEscalationsPanel", () => {
           missingVars: ["OFFLIMITS_HCS_PASSWORD"],
           waitingPhotos: 0,
           oldestWaitingSince: null,
-          waitingCap: 200,
+          waitingCapped: false,
           timedOutPhotos: 0,
           uncheckedPhotos: 0,
           uncheckedSince: null,
@@ -186,7 +186,7 @@ describe("CsamEscalationsPanel", () => {
           missingVars: [],
           waitingPhotos: 3,
           oldestWaitingSince: NOW - 2 * 3_600_000,
-          waitingCap: 200,
+          waitingCapped: false,
           timedOutPhotos: 0,
           uncheckedPhotos: 0,
           uncheckedSince: null,
@@ -200,6 +200,23 @@ describe("CsamEscalationsPanel", () => {
     expect(container.textContent).toContain("2 hours ago");
   });
 
+  it("marks the waiting count with a plus only when a table hit its cap", () => {
+    const waiting = (waitingPhotos: number, waitingCapped: boolean) =>
+      data({
+        hashCheck: {
+          ...data().hashCheck,
+          waitingPhotos,
+          waitingCapped,
+          oldestWaitingSince: NOW - 3_600_000,
+        },
+      });
+    render({ data: waiting(250, false) });
+    expect(container.textContent).toContain("250 photos waiting");
+    expect(container.textContent).not.toContain("250+");
+    render({ data: waiting(200, true) });
+    expect(container.textContent).toContain("200+ photos waiting");
+  });
+
   it("points to the admin queue when hash checks timed out", () => {
     render({
       data: data({
@@ -209,7 +226,7 @@ describe("CsamEscalationsPanel", () => {
           missingVars: [],
           waitingPhotos: 0,
           oldestWaitingSince: null,
-          waitingCap: 200,
+          waitingCapped: false,
           timedOutPhotos: 2,
           uncheckedPhotos: 0,
           uncheckedSince: null,

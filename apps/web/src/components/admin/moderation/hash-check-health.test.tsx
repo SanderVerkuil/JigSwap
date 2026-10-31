@@ -24,7 +24,7 @@ const hashCheck = (overrides: Partial<HashCheck> = {}): HashCheck => ({
   missingVars: [],
   waitingPhotos: 0,
   oldestWaitingSince: null,
-  waitingCap: 200,
+  waitingCapped: false,
   timedOutPhotos: 0,
   uncheckedPhotos: 0,
   uncheckedSince: null,
@@ -154,8 +154,22 @@ describe("HashCheckHealth", () => {
     // An unreachable service cannot re-check anything yet.
     expect(text()).not.toContain("recheckWaivedHashes");
 
+    // "N+" only when a table's count hit its cap, never for an exact total of 200 or more.
     render(
-      hashCheck({ waitingPhotos: 200, oldestWaitingSince: NOW - 3_600_000 }),
+      hashCheck({
+        waitingPhotos: 250,
+        waitingCapped: false,
+        oldestWaitingSince: NOW - 3_600_000,
+      }),
+    );
+    expect(text()).toContain("250 photos are held unpublished");
+    expect(text()).not.toContain("250+");
+    render(
+      hashCheck({
+        waitingPhotos: 200,
+        waitingCapped: true,
+        oldestWaitingSince: NOW - 3_600_000,
+      }),
     );
     expect(text()).toContain("200+ photos are held unpublished");
   });

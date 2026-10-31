@@ -422,6 +422,69 @@ describe("the admin's waiting count is never hidden behind rows it does not coun
       waitingPhotos: 1,
       oldestWaitingSince: 5_000,
       timedOutPhotos: 1,
+      waitingCapped: false,
     });
+  });
+
+  // The count is capped per table, so only a table that hit its cap makes it "N+": an exact total
+  // above the cap, spread over tables that each stayed under it, is exact.
+  const insertWaiting = (
+    t: T,
+    s: Awaited<ReturnType<typeof seed>>,
+    n: number,
+  ) =>
+    t.run(async (ctx) => {
+      const HASHES = [{ md5: "a".repeat(32), sha1: "b".repeat(40) }];
+      for (let i = 0; i < n; i++) {
+        await ctx.db.insert("ownedPuzzleImages", {
+          ownedPuzzleId: s.copy,
+          uploaderId: s.alice,
+          fileId: s.fileId,
+          moderationStatus: "approved",
+          pendingHashes: HASHES,
+          hashCheckPendingSince: 1_000 + i,
+          createdAt: 1_000,
+          updatedAt: 1_000,
+        });
+        await ctx.db.insert("boxArtUploads", {
+          storageId: s.fileId,
+          uploaderId: s.alice,
+          moderationStatus: "approved",
+          pendingHashes: HASHES,
+          hashCheckPendingSince: 1_000 + i,
+          createdAt: 1_000,
+        });
+      }
+    });
+
+  test("an exact total above the cap, with no table at it, is not capped", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await insertWaiting(t, s, HASH_CHECK_WAITING_CAP - 75);
+
+    const { hashCheck } = await asAdmin(t).query(
+      api.admin.listCsamEscalations.listCsamEscalations,
+      {},
+    );
+
+    expect(hashCheck.waitingPhotos).toBe(2 * (HASH_CHECK_WAITING_CAP - 75));
+    expect(hashCheck.waitingPhotos).toBeGreaterThanOrEqual(
+      HASH_CHECK_WAITING_CAP,
+    );
+    expect(hashCheck.waitingCapped).toBe(false);
+  });
+
+  test("a table at its cap makes the count capped", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await insertWaiting(t, s, HASH_CHECK_WAITING_CAP);
+
+    const { hashCheck } = await asAdmin(t).query(
+      api.admin.listCsamEscalations.listCsamEscalations,
+      {},
+    );
+
+    expect(hashCheck.waitingPhotos).toBe(2 * HASH_CHECK_WAITING_CAP);
+    expect(hashCheck.waitingCapped).toBe(true);
   });
 });

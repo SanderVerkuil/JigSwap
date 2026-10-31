@@ -9,8 +9,9 @@ import { isHashCheckTimedOut } from "../lib/imageModeration/hashCheckFields";
 // At most this many escalations per status are listed (newest first).
 export const CSAM_ESCALATION_LIST_LIMIT = 100;
 
-// Per table, the waiting-for-hash-check count stops here (the tab then shows "N+"), and so does
-// the count of photos published without a hash check.
+// Per table, the waiting-for-hash-check count stops here, and so does the count of photos
+// published without a hash check; `waitingCapped` / `uncheckedCapped` say whether any table hit
+// it (the admin views then show "N+").
 export const HASH_CHECK_WAITING_CAP = 200;
 
 const IMAGE_TABLES = [
@@ -83,6 +84,7 @@ export const listCsamEscalations = query({
     // index): those are filtered out BEFORE the cap, so no number of them can hide a waiting
     // photo (SEC-55). They are few, so the scan stays small.
     let waitingPhotos = 0;
+    let waitingCapped = false;
     let timedOutPhotos = 0;
     let oldestWaitingSince: number | null = null;
     for (const table of IMAGE_TABLES) {
@@ -107,6 +109,7 @@ export const listCsamEscalations = query({
           ),
         )
         .take(HASH_CHECK_WAITING_CAP);
+      if (rows.length >= HASH_CHECK_WAITING_CAP) waitingCapped = true;
       for (const row of rows) {
         // (A shared location is never hash-checked; the index holds only photos.)
         if ("kind" in row && row.kind === "location") continue;
@@ -159,9 +162,9 @@ export const listCsamEscalations = query({
       hashCheck: {
         ...readCsamHashCheckConfig(process.env),
         waitingPhotos,
+        waitingCapped,
         oldestWaitingSince,
         timedOutPhotos,
-        waitingCap: HASH_CHECK_WAITING_CAP,
         uncheckedPhotos,
         uncheckedSince,
         uncheckedCapped,

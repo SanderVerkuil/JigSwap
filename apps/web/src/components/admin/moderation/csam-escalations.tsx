@@ -75,7 +75,7 @@ export function CsamEscalationsPanel({
       {hashCheck.waitingPhotos > 0 && (
         <WaitingNotice
           count={hashCheck.waitingPhotos}
-          capped={hashCheck.waitingPhotos >= hashCheck.waitingCap}
+          capped={hashCheck.waitingCapped}
           since={hashCheck.oldestWaitingSince}
         />
       )}

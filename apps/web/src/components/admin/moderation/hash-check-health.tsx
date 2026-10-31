@@ -48,10 +48,9 @@ export function HashCheckHealth({
     messages.push(
       t("unreachable", {
         count: waitingPhotos,
-        countLabel:
-          waitingPhotos >= hashCheck.waitingCap
-            ? `${waitingPhotos}+`
-            : String(waitingPhotos),
+        countLabel: hashCheck.waitingCapped
+          ? `${waitingPhotos}+`
+          : String(waitingPhotos),
         since:
           hashCheck.oldestWaitingSince === null
             ? ""
