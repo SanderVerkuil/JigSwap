@@ -152,6 +152,9 @@ export default defineSchema({
     .index("by_moderation_status", ["moderationStatus"])
     // The uploader's own box art still being checked (catalog/boxArtInCheck).
     .index("by_uploader_status", ["uploaderId", "moderationStatus"])
+    // ... and its own box art waiting on its hash check, read per uploader so other members'
+    // waiting rows are never scanned (catalog/boxArtInCheck).
+    .index("by_uploader_hash_pending", ["uploaderId", "hashCheckPendingSince"])
     .index("by_hash_check_pending", ["hashCheckPendingSince"])
     // Timed-out hash checks still closed (admin/listUncheckedPhotos): hashCheckedAt undefined.
     .index("by_hash_check_timed_out", ["hashCheckedAt", "hashCheckTimedOutAt"])
