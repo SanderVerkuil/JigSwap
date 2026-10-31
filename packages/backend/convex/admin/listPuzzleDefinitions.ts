@@ -1,6 +1,6 @@
 import type { AdminPuzzleDefinitionRowView } from "@jigswap/contracts";
 import { paginationOptsValidator, type PaginationResult } from "convex/server";
-import { ConvexError } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { query } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { adminMemberLabelOf } from "../identity/memberDisplayName";
@@ -15,12 +15,26 @@ const MAX_PAGE_SIZE = 50;
 
 // Admin read model: EVERY catalog definition regardless of status, newest first, paginated.
 // The public lists filter to approved; this console must also show pending/rejected/disabled.
+// Optional filters: `status` reads that status through puzzles.by_status (newest first); `search`
+// uses the catalogue search index (by_searchable_text, relevance order) over every status, narrowed
+// to `status` at the index when both are given.
 // Each row joins the admin metadata the /admin/puzzles table renders: submitter display name,
 // resolved thumbnail URL (plus whether its blob is gone), and the distinct-owner count
 // (ownedPuzzles.by_puzzle → dedupe ownerId, the getPuzzleDefinitionView pattern). Admin-only,
 // gated exactly like getModerationActivity.
 export const listPuzzleDefinitions = query({
-  args: { paginationOpts: paginationOptsValidator },
+  args: {
+    paginationOpts: paginationOptsValidator,
+    status: v.optional(
+      v.union(
+        v.literal("pending"),
+        v.literal("approved"),
+        v.literal("rejected"),
+        v.literal("disabled"),
+      ),
+    ),
+    search: v.optional(v.string()),
+  },
   handler: async (
     ctx,
     args,
@@ -28,10 +42,31 @@ export const listPuzzleDefinitions = query({
     await requireMember(ctx);
     if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
 
-    const puzzles = await ctx.db
-      .query("puzzles")
-      .order("desc")
-      .paginate(clampPaginationOpts(args.paginationOpts, MAX_PAGE_SIZE));
+    const { status } = args;
+    const term = args.search?.trim().toLowerCase() ?? "";
+    const paginationOpts = clampPaginationOpts(
+      args.paginationOpts,
+      MAX_PAGE_SIZE,
+    );
+    const puzzles =
+      term.length > 0
+        ? await ctx.db
+            .query("puzzles")
+            .withSearchIndex("by_searchable_text", (q) => {
+              const matching = q.search("searchableText", term);
+              return status ? matching.eq("status", status) : matching;
+            })
+            .paginate(paginationOpts)
+        : status
+          ? await ctx.db
+              .query("puzzles")
+              .withIndex("by_status", (q) => q.eq("status", status))
+              .order("desc")
+              .paginate(paginationOpts)
+          : await ctx.db
+              .query("puzzles")
+              .order("desc")
+              .paginate(paginationOpts);
 
     const page = await Promise.all(
       puzzles.page.map(
