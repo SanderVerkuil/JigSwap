@@ -102,6 +102,9 @@ export const gateway = {
     // must be the caller's (else the whole batch is rejected); deduped, capped, returns counts.
     setHouseholdPermissions:
       api.library.setCopiesHouseholdPermission.setCopiesHouseholdPermission,
+    // Bulk offers for My Puzzles' selection: set (or withdraw) offers on up to 100 copies the caller
+    // manages, keeping each copy's visibility choice. Returns counts plus the skipped copies and why.
+    updateOffers: api.library.updateCopiesOffers.updateCopiesOffers,
     // Reads go through the domain-driven library module (file.export namespacing); each is a thin
     // Convex query returning a typed @jigswap/contracts view DTO, not a raw row.
     ownedByOwner: api.library.getOwnedPuzzlesByOwner.getOwnedPuzzlesByOwner,

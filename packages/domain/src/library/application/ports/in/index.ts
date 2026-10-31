@@ -10,5 +10,6 @@ export * from "./open-loan.port";
 export * from "./set-copy-cover.port";
 export * from "./transfer-copy-ownership.port";
 export * from "./update-collection.port";
+export * from "./update-copies-offers.port";
 export * from "./update-copy-details.port";
 export * from "./update-copy-sharing.port";

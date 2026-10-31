@@ -384,6 +384,7 @@ import type * as library_setCopyCover from "../library/setCopyCover.js";
 import type * as library_setCopyHouseholdPermission from "../library/setCopyHouseholdPermission.js";
 import type * as library_transferOnSettlement from "../library/transferOnSettlement.js";
 import type * as library_updateCollection from "../library/updateCollection.js";
+import type * as library_updateCopiesOffers from "../library/updateCopiesOffers.js";
 import type * as library_updateCopyDetails from "../library/updateCopyDetails.js";
 import type * as library_updateCopySharing from "../library/updateCopySharing.js";
 import type * as notifications_act from "../notifications/act.js";
@@ -983,6 +984,7 @@ declare const fullApi: ApiFromModules<{
   "library/setCopyHouseholdPermission": typeof library_setCopyHouseholdPermission;
   "library/transferOnSettlement": typeof library_transferOnSettlement;
   "library/updateCollection": typeof library_updateCollection;
+  "library/updateCopiesOffers": typeof library_updateCopiesOffers;
   "library/updateCopyDetails": typeof library_updateCopyDetails;
   "library/updateCopySharing": typeof library_updateCopySharing;
   "notifications/act": typeof notifications_act;

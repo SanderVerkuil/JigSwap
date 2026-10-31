@@ -21,7 +21,8 @@ export type LibraryErrorCode =
   | "OwnershipChanged"
   | "AlreadyLentOut"
   | "TooManyImages"
-  | "ImageTextTooLong";
+  | "ImageTextTooLong"
+  | "OffersBatchTooLarge";
 
 export class LibraryError extends DomainError {
   override readonly name = "LibraryError";
@@ -154,6 +155,14 @@ export class LibraryError extends DomainError {
     return new LibraryError(
       "ImageTextTooLong",
       `A photo ${field} can be at most ${max} characters`,
+    );
+  }
+
+  // A bulk offer change with more distinct copies than the cap.
+  static offersBatchTooLarge(max: number): LibraryError {
+    return new LibraryError(
+      "OffersBatchTooLarge",
+      `At most ${max} puzzles can be changed at once`,
     );
   }
 }
