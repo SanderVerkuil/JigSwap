@@ -10,6 +10,7 @@ import { EditCompletionDialog } from "@/components/solving/edit-completion-dialo
 import { EditSolveButton } from "@/components/solving/edit-solve-button";
 import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { ReviewPuzzleDialog } from "@/components/solving/review-puzzle-dialog";
+import { SolveHistory } from "@/components/solving/solve-history";
 import { GuideHelpButton } from "@/components/tour/guide-help-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -484,24 +485,8 @@ function CompletionsPage() {
                 </div>
               </>
             )}
-            {history.length > 0 && (
-              <>
-                {inProgress.length > 0 && (
-                  <h2 className="text-muted-foreground mb-2 text-sm font-medium">
-                    {t("historySection")}
-                  </h2>
-                )}
-                <div className="flex flex-col">
-                  {history.map((completion, index) =>
-                    renderCompletionRow(
-                      completion,
-                      index,
-                      index === history.length - 1,
-                    ),
-                  )}
-                </div>
-              </>
-            )}
+            {/* Grouped by year (undated last), a page at a time. */}
+            <SolveHistory rows={history} renderRow={renderCompletionRow} />
           </>
         )}
       </section>

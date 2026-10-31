@@ -3253,7 +3253,9 @@
       "deleteSuccess": "Completion deleted",
       "deleteError": "Could not delete completion",
       "dateUnknown": "Date unknown",
-      "inYear": "In {year}"
+      "inYear": "In {year}",
+      "yearCount": "{count, plural, one {# solve} other {# solves}}",
+      "showMore": "Show {count} more"
     },
     "logSolve": {
       "trigger": "Log a solve",

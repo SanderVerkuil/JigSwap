@@ -3253,7 +3253,9 @@
       "deleteSuccess": "Voltooiing verwijderd",
       "deleteError": "Voltooiing kon niet worden verwijderd",
       "dateUnknown": "Datum onbekend",
-      "inYear": "In {year}"
+      "inYear": "In {year}",
+      "yearCount": "{count, plural, one {# voltooiing} other {# voltooiingen}}",
+      "showMore": "Nog {count} tonen"
     },
     "logSolve": {
       "trigger": "Voltooiing vastleggen",
