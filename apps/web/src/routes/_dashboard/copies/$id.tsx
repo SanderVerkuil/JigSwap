@@ -318,7 +318,8 @@ function CopyInstanceDetail({
   // "Owned copy"), the breadcrumb trail, and the owner-only Edit action. For the
   // owner route (owned) the crumbs are left to the shell's auto trail (My Library ›
   // My Puzzles › <name>, since /my-puzzles/$id's pageKey matches the nav item);
-  // the public route publishes an explicit Community › Owned Copies › <name> trail.
+  // the public route publishes an explicit Community › Browse Puzzles › <name> trail (the crumb
+  // uses Browse's own nav label, since that is where it leads).
   // A readable `?from=collection:<id>` context overrides both with My Library ›
   // Collections › <name> and highlights Collections in the sidebar; no context (or an
   // unreadable/malformed one) falls back to the behavior above, byte-identical.
@@ -338,7 +339,7 @@ function CopyInstanceDetail({
           ? undefined
           : [
               { label: tShell("groups.community.label"), href: "/community" },
-              { label: tShell("crumbs.ownedCopies"), href: "/browse" },
+              { label: tShell("pages.browse.title"), href: "/browse" },
             ],
       actions: copy.viewerCanManage ? (
         <Button variant="outline" onClick={() => openEditor()}>

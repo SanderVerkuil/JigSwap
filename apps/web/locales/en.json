@@ -4069,9 +4069,6 @@
       "withPendingRequests": "{count, plural, one {{name}, # request waiting for your reply} other {{name}, # requests waiting for your reply}}"
     },
     "breadcrumbLabel": "Breadcrumb",
-    "crumbs": {
-      "ownedCopies": "Owned Copies"
-    },
     "plankReset": "Reset"
   },
   "copyInstance": {
