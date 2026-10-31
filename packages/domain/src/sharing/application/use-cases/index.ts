@@ -10,5 +10,6 @@ export * from "./invite-to-circle";
 export * from "./leave-circle";
 export * from "./remove-member";
 export * from "./revoke-circle-invite";
+export * from "./share-copies-to-circle";
 export * from "./share-copy-to-circle";
 export * from "./withdraw-invites-from";
