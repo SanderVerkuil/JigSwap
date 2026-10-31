@@ -183,6 +183,25 @@ describe("ShelfSection — stats", () => {
   });
 });
 
+describe("ShelfSection — canvas", () => {
+  // The scene fits the row to the canvas width, so a fixed height on a narrow
+  // column (an 820px tablet, the 1024px lg grid) is mostly empty space. The
+  // canvas follows its width instead, capped at the desktop height.
+  it("sizes the shelf canvas from its width, up to 360px tall", () => {
+    const html = render(<ShelfSection />, { copies: copies(3) });
+    const holder = all(html).find((el) =>
+      el.childNodes.some(
+        (child) => "tagName" in child && attr(child, "data-testid") === "plank",
+      ),
+    );
+    const classes = attr(holder!, "class")?.split(" ") ?? [];
+    expect(classes).toEqual(
+      expect.arrayContaining(["w-full", "aspect-video", "max-h-[360px]"]),
+    );
+    expect(classes.some((c) => /(^|:)h-\[/.test(c))).toBe(false);
+  });
+});
+
 describe("ShelfSection — links", () => {
   it("offers all my puzzles, not collections", () => {
     const html = render(<ShelfSection />, { copies: copies(3) });

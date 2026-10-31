@@ -270,8 +270,10 @@ export function ShelfSection() {
         </div>
       ) : (
         <div className="grid items-center gap-10 lg:grid-cols-[1fr_252px]">
-          {/* Lower on phones: a width-fitted row needs less height there. */}
-          <div className="h-[220px] min-w-0 sm:h-[300px] md:h-[360px]">
+          {/* The scene fits the row to the canvas width, so the height follows
+              the width (16:9) instead of leaving a narrow column mostly empty;
+              wide columns keep the 360px desktop shelf. */}
+          <div className="aspect-video max-h-[360px] w-full min-w-0">
             <PuzzlePlank3D boxes={plankBoxes} />
           </div>
           {/* Below lg the rows sit under the plank as a compact 2×2 grid. */}
