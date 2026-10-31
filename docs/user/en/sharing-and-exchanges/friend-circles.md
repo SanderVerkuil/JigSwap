@@ -169,13 +169,19 @@ To stop sharing a puzzle, untick it and click **Stop sharing**. When you tick
 some puzzles and untick others, the button says **Save changes**. **Clear**
 drops the ticks you haven't saved yet.
 
+You can also start from the puzzle: on its page, or in the **⋯** menu on its
+card in **My Puzzles**, choose **Share with circles…**. Tick the circles to
+share it with, untick the ones to stop sharing it with, and click **Save**.
+Circles where you have **View only** can't be ticked.
+
 Circle members can see a shared copy while you offer it for swap, lend or
 sale and you're still a member of the circle. The list marks the puzzles they
 won't see: **Not offered** (offer it for swap, lend or sale first) and
 **Private** (a private puzzle stays hidden, even when shared).
 
 If your permission later drops to **View only**, the copies you already
-shared stay shared. You just can't share new ones.
+shared stay shared. You just can't share new ones. To stop sharing one, use
+**Share with circles…** on the puzzle.
 
 Shares end automatically:
 

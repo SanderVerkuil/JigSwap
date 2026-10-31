@@ -1,4 +1,8 @@
 import { useRouter } from "@/compat/navigation";
+import {
+  ShareWithCirclesDialog,
+  type ShareWithCirclesCopy,
+} from "@/components/circles/share-with-circles-dialog";
 import { convexErrorCode } from "@/components/exchange/request-trade";
 import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
@@ -68,12 +72,15 @@ interface ActionableCopy {
   _id: string;
   aggregateId?: string;
   puzzle?: { title?: string } | null;
+  // For the share dialog's "members won't see it" warning.
+  availability?: { forTrade: boolean; forSale: boolean; forLend: boolean };
+  visibility?: "private" | "visible";
 }
 
 // The ⋯ menu actions a puzzle card offers, for the viewer's own copies and their housemates'
 // alike (My Puzzles and the household's Puzzles tab). What a card offers follows the viewer's
 // access: the owner gets everything; a housemate gets solving, plus Edit only when the owner left
-// the copy at "manage", and never Delete or personal collections. The server enforces the same
+// the copy at "manage", and never Delete, Share with circles or personal collections. The server enforces the same
 // rules on every action; this only hides what would be refused. Render `dialogs` once on the page.
 export function useCopyCardActions({
   copies,
@@ -93,6 +100,7 @@ export function useCopyCardActions({
     onDelete?: (id: Id<"ownedPuzzles">) => void;
     onLogSolve: (id: Id<"ownedPuzzles">) => void;
     onStartSolve: (id: Id<"ownedPuzzles">) => void;
+    onShareWithCircles?: (id: Id<"ownedPuzzles">) => void;
     solveInProgress: boolean;
     showCollectionDropdown: boolean;
   };
@@ -117,6 +125,10 @@ export function useCopyCardActions({
     completionId: string;
     startDate: number;
   } | null>(null);
+  // The copy whose circle shares are being edited; null when the dialog is closed.
+  const [shareTarget, setShareTarget] = useState<ShareWithCirclesCopy | null>(
+    null,
+  );
   // The copy awaiting the destructive delete confirm; null when the dialog is closed.
   const [deleteTarget, setDeleteTarget] = useState<{
     copyId: string;
@@ -199,6 +211,21 @@ export function useCopyCardActions({
     }
   };
 
+  const handleShareWithCircles = (ownedPuzzleId: Id<"ownedPuzzles">) => {
+    // Circle shares are keyed by the Copy aggregateId; guard rows predating the backfill.
+    const copy = copies.find((p) => p._id === ownedPuzzleId);
+    if (!copy?.aggregateId) {
+      console.error("Cannot share: copy is missing its aggregateId.");
+      return;
+    }
+    setShareTarget({
+      copyId: copy.aggregateId,
+      title: copy.puzzle?.title ?? "",
+      availability: copy.availability,
+      visibility: copy.visibility,
+    });
+  };
+
   const cardActions = (copyId: string) => {
     // A household copy: owner-only actions (delete, personal collections) are hidden, and
     // edit is offered only when the owner left it at "manage".
@@ -209,6 +236,8 @@ export function useCopyCardActions({
       onDelete: household ? undefined : handleDeletePuzzle,
       onLogSolve: handleLogSolve,
       onStartSolve: handleStartSolve,
+      // Only the owner may share a copy into their circles (sharing/shareCopiesToCircle).
+      onShareWithCircles: household ? undefined : handleShareWithCircles,
       // Matches handleStartSolve's finish predicate (not `inProgress`): a legacy in-progress row
       // without an aggregateId can't be finished, so its card must keep showing "Start puzzle"
       // rather than a Finish label that opens Start.
@@ -238,6 +267,14 @@ export function useCopyCardActions({
           onOpenChange={(open) => !open && setStartTarget(null)}
           copyId={startTarget.copyId}
           puzzleTitle={startTarget.title}
+        />
+      )}
+
+      {shareTarget && (
+        <ShareWithCirclesDialog
+          open
+          onOpenChange={(open) => !open && setShareTarget(null)}
+          copy={shareTarget}
         />
       )}
 

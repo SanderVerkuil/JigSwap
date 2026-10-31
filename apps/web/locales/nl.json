@@ -2486,6 +2486,19 @@
       "sharedToast": "{count, plural, one {# puzzel gedeeld met {circle}} other {# puzzels gedeeld met {circle}}}",
       "unsharedToast": "{count, plural, one {# puzzel niet meer gedeeld met {circle}} other {# puzzels niet meer gedeeld met {circle}}}"
     },
+    "shareDialog": {
+      "trigger": "Delen met kringen…",
+      "title": "“{title}” delen met kringen",
+      "description": "Kringleden zien een gedeelde puzzel zolang je hem aanbiedt om te ruilen, uit te lenen of te verkopen.",
+      "notOffered": "Je biedt deze puzzel niet aan om te ruilen, uit te lenen of te verkopen, dus kringleden zien hem pas als je dat wel doet.",
+      "private": "Deze puzzel is privé, dus kringleden zien hem niet, ook niet als je hem deelt.",
+      "empty": "Je zit nog niet in een kring.",
+      "goToCircles": "Naar Kringen",
+      "viewOnly": "Alleen bekijken: je kunt hier niet delen",
+      "loadError": "Je kringen konden niet worden geladen.",
+      "save": "Opslaan",
+      "savedToast": "{count, plural, =0 {“{title}” is met geen enkele kring gedeeld} one {“{title}” is gedeeld met # kring} other {“{title}” is gedeeld met # kringen}}"
+    },
     "shareErrors": {
       "CopyNotFound": "Een van deze puzzels staat niet meer in je bibliotheek.",
       "CircleNotFound": "Deze kring is niet langer beschikbaar.",

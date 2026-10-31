@@ -183,6 +183,12 @@ delen**. Vink je tegelijk puzzels aan en uit, dan heet de knop **Wijzigingen
 opslaan**. Met **Wissen** gooi je de vinkjes weg die je nog niet hebt
 opgeslagen.
 
+Je kunt ook bij de puzzel zelf beginnen: kies op de pagina van de puzzel, of in
+het **⋯**-menu op de kaart in **Mijn Puzzels**, voor **Delen met kringen…**.
+Vink de kringen aan waarmee je hem wilt delen, vink de kringen uit waarmee je
+hem niet meer wilt delen, en klik op **Opslaan**. Kringen waarin je **Alleen
+bekijken** hebt, kun je niet aanvinken.
+
 Kringleden kunnen een gedeeld exemplaar zien zolang je het aanbiedt om te
 ruilen, uit te lenen of te verkopen, en je nog lid bent van de kring. De lijst
 markeert de puzzels die ze niet zien: **Niet aangeboden** (bied hem eerst aan
@@ -190,7 +196,8 @@ om te ruilen, uit te lenen of te verkopen) en **Privé** (een privépuzzel blijf
 verborgen, ook als je hem deelt).
 
 Daalt je recht later naar **Alleen bekijken**, dan blijven de exemplaren die je
-al deelde gedeeld. Je kunt alleen geen nieuwe meer delen.
+al deelde gedeeld. Je kunt alleen geen nieuwe meer delen. Wil je er een niet
+meer delen, gebruik dan **Delen met kringen…** bij de puzzel.
 
 Delen stopt automatisch:
 

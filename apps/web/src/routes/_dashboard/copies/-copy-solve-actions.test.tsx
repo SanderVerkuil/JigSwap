@@ -2,7 +2,7 @@
 import { gateway, type Id } from "@/gateway";
 import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { ConvexReactClient } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import type { ReactNode } from "react";
@@ -159,5 +159,24 @@ describe("copy page solve actions", () => {
     expect(button("Log a Completion")).not.toBeNull();
     expect(button("Offer for Swap")).not.toBeNull();
     expect(button("Message")).toBeNull();
+  });
+});
+
+describe("copy page circle sharing", () => {
+  const share = en.circles.shareDialog.trigger;
+
+  it("offers the owner Share with circles…, which opens the dialog", () => {
+    renderCopy(copyView({ viewerIsOwner: true, viewerCanManage: true }));
+    fireEvent.click(screen.getByRole("button", { name: share }));
+    expect(
+      screen.getByRole("heading", {
+        name: "Share “Harbour Lights” with circles",
+      }),
+    ).toBeTruthy();
+  });
+
+  it("offers it to nobody else: circle shares are the owner's alone", () => {
+    renderCopy(copyView({ viewerHoldsCopy: true }));
+    expect(button(share)).toBeNull();
   });
 });

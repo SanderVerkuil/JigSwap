@@ -2486,6 +2486,19 @@
       "sharedToast": "{count, plural, one {Shared # puzzle with {circle}} other {Shared # puzzles with {circle}}}",
       "unsharedToast": "{count, plural, one {Stopped sharing # puzzle with {circle}} other {Stopped sharing # puzzles with {circle}}}"
     },
+    "shareDialog": {
+      "trigger": "Share with circles…",
+      "title": "Share “{title}” with circles",
+      "description": "Circle members see a shared puzzle while you offer it for swap, loan or sale.",
+      "notOffered": "You don't offer this puzzle for swap, loan or sale, so circle members won't see it until you do.",
+      "private": "This puzzle is private, so circle members won't see it, even when it's shared.",
+      "empty": "You're not in any circle yet.",
+      "goToCircles": "Go to Circles",
+      "viewOnly": "View only: you can't share here",
+      "loadError": "Couldn't load your circles.",
+      "save": "Save",
+      "savedToast": "{count, plural, =0 {“{title}” isn't shared with any circle} one {“{title}” is shared with # circle} other {“{title}” is shared with # circles}}"
+    },
     "shareErrors": {
       "CopyNotFound": "One of these puzzles is no longer in your library.",
       "CircleNotFound": "This circle is no longer available.",

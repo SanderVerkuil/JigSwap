@@ -1,5 +1,6 @@
 import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
+import { ShareWithCirclesDialog } from "@/components/circles/share-with-circles-dialog";
 import { ImageZoom } from "@/components/common/image-zoom";
 import { CopyOfferSwitches } from "@/components/copies/copy-offer-switches";
 import { CopyOwner } from "@/components/copies/copy-owner";
@@ -13,8 +14,8 @@ import {
   type NavContext,
 } from "@/components/dashboard-layout/nav-context";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
-import { convexErrorCode } from "@/components/exchange/request-trade";
 import {
+  convexErrorCode,
   REQUEST_ACTION_ICONS,
   requestActionKey,
 } from "@/components/exchange/request-trade";
@@ -73,6 +74,7 @@ import {
   Star,
   Tag,
   UserRound,
+  Users,
 } from "lucide-react";
 import {
   useEffect,
@@ -230,6 +232,7 @@ function CopyInstanceDetail({
   const tOwner = useTranslations("copyOwner");
   const tConversation = useTranslations("copyConversation");
   const tRequest = useTranslations("tradeRequest.cta");
+  const tCircles = useTranslations("circles");
   const tPuzzles = useTranslations("puzzles");
   const tLogSolve = useTranslations("solving.logSolve");
   const tStart = useTranslations("solving.startSolve");
@@ -262,6 +265,8 @@ function CopyInstanceDetail({
     setEditFocus(focus);
     setEditOpen(true);
   };
+  // The owner's "Share with circles" dialog.
+  const [shareOpen, setShareOpen] = useState(false);
   // The trade-request dialog's target (null = closed); set from the non-owner Request action.
   const [requestCopy, setRequestCopy] = useState<RequestableCopy | null>(null);
   // Start/Finish solve swap: `startOpen` drives the start dialog; `finishTarget` holds the
@@ -508,6 +513,13 @@ function CopyInstanceDetail({
           <div className="mt-5 flex flex-wrap gap-2.5">
             {canSolve && (
               <>
+                {/* Circle shares are the owner's alone (sharing/shareCopiesToCircle). */}
+                {copy.viewerIsOwner && copy.aggregateId != null && (
+                  <Button variant="outline" onClick={() => setShareOpen(true)}>
+                    <Users className="h-4 w-4" />
+                    {tCircles("shareDialog.trigger")}
+                  </Button>
+                )}
                 {!myInProgress && (
                   <Button
                     variant="outline"
@@ -878,6 +890,18 @@ function CopyInstanceDetail({
               copy={copy}
               onAddPhotos={() => addPhotoInputRef.current?.click()}
               focus={editFocus}
+            />
+          )}
+          {copy.viewerIsOwner && copy.aggregateId != null && (
+            <ShareWithCirclesDialog
+              open={shareOpen}
+              onOpenChange={setShareOpen}
+              copy={{
+                copyId: copy.aggregateId,
+                title: snapshot.title,
+                availability,
+                visibility: snapshot.visibility,
+              }}
             />
           )}
         </>
