@@ -86,7 +86,12 @@ export function TradePartnerCard({
         )}
         {partner.state === "revealed" && (
           <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-            {partner.username && <span>@{partner.username}</span>}
+            {/* The canonical handle, only when it reads as a name (not the bare id). Never the
+                username: another member may hold it as a slug (SEC-07). A backend that predates
+                `handle` (deploy skew) leaves it out. */}
+            {partner.handle && partner.handle !== partner.memberId && (
+              <span>@{partner.handle}</span>
+            )}
             {partner.email && (
               <a
                 href={`mailto:${partner.email}`}

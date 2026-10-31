@@ -119,6 +119,12 @@ export type TradePartnerView =
       /** Display name (profile display name, else account name, else username). */
       name?: string;
       username?: string;
+      /**
+       * The partner's canonical `/members/<handle>` (slug, else a username that resolves back to
+       * them, else their id; SEC-07): the handle to show on the card. Never show `username` as the
+       * handle: another member may hold that string as a slug.
+       */
+      handle: string;
       /** Present only when the partner shared it with the viewer in this exchange (see above). */
       email?: string;
       /** The viewer's OWN email sharing in this exchange, for the switch on the card. */

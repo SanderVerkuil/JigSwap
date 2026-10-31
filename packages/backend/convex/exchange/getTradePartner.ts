@@ -12,6 +12,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
+import { canonicalHandleOf } from "../identity/resolveMemberByHandle";
 import { blockStateBetween } from "../social/blocks";
 import { projectMemberIdentity } from "../social/privacy";
 import { contactShareOf, projectTradeParty } from "./tradeParty";
@@ -76,6 +77,7 @@ export const getTradePartner = query({
       memberId: partnerId,
       ...(name !== undefined ? { name } : {}),
       ...(user.username !== undefined ? { username: user.username } : {}),
+      handle: await canonicalHandleOf(ctx, user),
       ...(emailVisible && user.email !== undefined
         ? { email: user.email }
         : {}),

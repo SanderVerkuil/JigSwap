@@ -59,6 +59,7 @@ const revealed = (
   memberId: "user_mara",
   name: "Mara",
   username: "mara",
+  handle: "mara-puzzles",
   email: "mara@example.test",
   emailSharing: { youShare: false, open: false },
   profileViewable: false,
@@ -135,7 +136,7 @@ describe("TradePartnerCard", () => {
   it("shows a revealed partner's trade card: name, handle, email, rating and reviews", () => {
     const { container } = renderCard(revealed());
     expect(screen.getByText("Mara")).toBeTruthy();
-    expect(screen.getByText("@mara")).toBeTruthy();
+    expect(screen.getByText("@mara-puzzles")).toBeTruthy();
     const mail = screen.getByRole("link", { name: "mara@example.test" });
     expect(mail.getAttribute("href")).toBe("mailto:mara@example.test");
     expect(screen.getByText("4.5")).toBeTruthy();
@@ -144,6 +145,19 @@ describe("TradePartnerCard", () => {
     expect(container.querySelectorAll("li")).toHaveLength(2);
     // An anonymous reviewer gets the generic label.
     expect(container.textContent).toContain("Puzzler ·");
+  });
+
+  it("shows the canonical handle, never the username (SEC-07)", () => {
+    // The username may be another member's slug: the server then hands out the bare id.
+    const { container } = renderCard(revealed({ handle: "user_mara" }));
+    expect(container.textContent).not.toContain("@mara");
+    expect(container.textContent).not.toContain("@user_mara");
+    cleanup();
+    // A backend that predates `handle` (deploy skew): no handle line at all.
+    const { container: skewed } = renderCard(
+      revealed({ handle: undefined as unknown as string }),
+    );
+    expect(skewed.textContent).not.toContain("@mara");
   });
 
   it("omits the email when the viewer may not see it", () => {

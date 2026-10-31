@@ -234,6 +234,64 @@ describe("canonical member handles (SEC-07)", () => {
     expect(blocks.find((b) => b.memberId === victim)?.handle).toBe(victim);
   });
 
+  test("the trade card names a partner only by a handle that resolves back to them", async () => {
+    const { t, victim, viewer } = await squattedSetup();
+    const plain = await insertUser(t, "clerk_plain", { username: "plainname" });
+    const slugged = await insertUser(t, "clerk_slugged", {
+      username: "slug_user",
+      slug: "slug-member",
+    });
+    const tradeWith = (owner: Id<"users">) =>
+      t.run(async (ctx) => {
+        const puzzleId = await ctx.db.insert("puzzles", {
+          title: "Harbour Lights",
+          pieceCount: 1000,
+          status: "approved",
+          submittedBy: owner,
+          createdAt: now,
+          updatedAt: now,
+        });
+        const copy = await ctx.db.insert("ownedPuzzles", {
+          puzzleId,
+          ownerId: owner,
+          condition: "good",
+          availability: { forTrade: true, forSale: false, forLend: false },
+          createdAt: now,
+          updatedAt: now,
+        });
+        const exchangeId = await ctx.db.insert("exchanges", {
+          initiatorId: viewer,
+          recipientId: owner,
+          type: "trade",
+          requestedPuzzleId: copy,
+          status: "accepted",
+          createdAt: now,
+          updatedAt: now,
+        });
+        await ctx.db.insert("tradeReveals", {
+          exchangeId,
+          reason: "accepted",
+          revealedAt: now,
+        });
+        return exchangeId;
+      });
+    const handleOnCard = async (owner: Id<"users">) => {
+      const card = await t
+        .withIdentity({ subject: "clerk_viewer" })
+        .query(api.exchange.getTradePartner.getTradePartner, {
+          exchangeId: await tradeWith(owner),
+        });
+      if (card?.state !== "revealed")
+        throw new Error("expected a revealed card");
+      return card.handle;
+    };
+
+    // The victim's username is the squatter's slug: the card hands out their id instead.
+    expect(await handleOnCard(victim)).toBe(victim);
+    expect(await handleOnCard(plain)).toBe("plainname");
+    expect(await handleOnCard(slugged)).toBe("slug-member");
+  });
+
   test("a member with a slug is linked by the slug everywhere", async () => {
     const t = convexTest(schema, modules);
     await insertUser(t, "clerk_viewer");
