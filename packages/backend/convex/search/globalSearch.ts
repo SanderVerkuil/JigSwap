@@ -5,14 +5,20 @@ import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { optionalActingMember } from "../identity/optionalActingMember";
 import { boxArtThumbUrl } from "../lib/imageModeration/boxArtUrl";
 import { clampLimit } from "../lib/pageSize";
+import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
 import { blockedEitherWaySet } from "../social/blocks";
 import { areMutualFollowers, profileVisibilityOf } from "../social/privacy";
 
 // Global search: the single read behind the ⌘K command palette. Given a term it returns a small
-// grouped result set across Puzzles, People, Circles and the signed-in member's Collections.
+// grouped result set across Puzzles, the signed-in member's own Copies, People, Circles and the
+// signed-in member's Collections.
 //
 // Indexing strategy (documented intentionally):
 //   - Puzzles      -> the existing `by_searchable_text` search index (approved-only). REAL index.
+//   - Copies       -> the signed-in member's OWN copies only (any visibility: they are theirs), the
+//                     newest COPY_SCAN_LIMIT via `by_owner`, in-memory match on the copy's cached
+//                     title/brand. A bounded read: in a larger library only the newest are searched
+//                     (My Puzzles' own search covers the whole library). Never another member's copy.
 //   - People       -> the `by_searchable_name` search index over users.searchableName. REAL index.
 //                     Results are then routed through the profile-visibility chokepoint so a member
 //                     with a private profile is never surfaced by name/username/avatar to a searcher
@@ -32,8 +38,19 @@ const PEOPLE_CANDIDATE_LIMIT = 50;
 const DEFAULT_LIMIT = 5;
 const MAX_LIMIT = 10;
 
+// How many of the member's newest copies the "In your library" group looks through.
+export const COPY_SCAN_LIMIT = 500;
+
+// Lowercased with accents stripped, so "creme" finds "Crème".
+const fold = (text: string): string =>
+  text
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase();
+
 const EMPTY: GlobalSearchResults = {
   puzzles: [],
+  copies: [],
   people: [],
   circles: [],
   collections: [],
@@ -69,6 +86,35 @@ export const global = query({
         href: `/puzzles/${row._id}`,
       })),
     );
+
+    // --- Copies: the member's own copies, newest first, bounded; in-memory title/brand match. ---
+    const words = fold(term).split(/\s+/).filter(Boolean);
+    const copyRows = await ctx.db
+      .query("ownedPuzzles")
+      .withIndex("by_owner", (q) => q.eq("ownerId", memberId))
+      .order("desc")
+      .take(COPY_SCAN_LIMIT);
+    const copies: GlobalSearchResults["copies"] = [];
+    for (const copy of copyRows) {
+      if (copies.length >= limit) break;
+      // The copy's cached catalogue snapshot; only a legacy row without one reads its puzzle here.
+      const legacyPuzzle = copy.snapshot
+        ? null
+        : await ctx.db.get(copy.puzzleId);
+      const title = copy.snapshot?.title ?? legacyPuzzle?.title;
+      if (!title) continue;
+      const brand = copy.snapshot?.brand ?? legacyPuzzle?.brand;
+      const haystack = fold(`${title}\n${brand ?? ""}`);
+      if (!words.every((word) => haystack.includes(word))) continue;
+      const puzzle = legacyPuzzle ?? (await ctx.db.get(copy.puzzleId));
+      copies.push({
+        id: copy._id,
+        title,
+        brand,
+        image: await resolveCopyCoverUrl(ctx, copy, puzzle),
+        href: `/my-puzzles/${copy._id}`,
+      });
+    }
 
     // --- People: real search index + profile-visibility gate. ---
     const candidates = await ctx.db
@@ -138,6 +184,6 @@ export const global = query({
         href: `/collections/${row._id}`,
       }));
 
-    return { puzzles, people, circles, collections };
+    return { puzzles, copies, people, circles, collections };
   },
 });

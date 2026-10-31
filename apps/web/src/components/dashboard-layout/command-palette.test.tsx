@@ -2,7 +2,7 @@
 // UX-55: the palette keeps its jump-to destinations and quick actions while a term is typed. cmdk
 // filters them on the localized title plus bilingual keywords; live search results sit above them,
 // "Searching…" is an extra row while the query runs, and the empty text only shows when nothing
-// at all matches.
+// at all matches. The member's own copies are a live group of their own, above the catalogue.
 import { gateway } from "@/gateway";
 import { convexQuery } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -39,6 +39,7 @@ type Results = FunctionReturnType<typeof gateway.search.global>;
 
 const NO_HITS: Results = {
   puzzles: [],
+  copies: [],
   people: [],
   circles: [],
   collections: [],
@@ -239,5 +240,48 @@ describe("CommandPalette", () => {
     await screen.findByText("Searching…");
     fireEvent.click(screen.getByRole("option", { name: "Messages" }));
     expect(mocks.push).toHaveBeenCalledWith("/messages");
+  });
+});
+
+// ⌘K finds the member's own copies: an "In your library" group, listed before the catalogue's
+// Puzzles, whose rows open the owner's copy page.
+describe("CommandPalette library copies", () => {
+  const lam: Results = {
+    ...NO_HITS,
+    puzzles: [
+      { id: "p1", title: "Lam Gelegd", image: null, href: "/puzzles/p1" },
+    ],
+    copies: [
+      {
+        id: "c1",
+        title: "Lam Gelegd",
+        brand: "Jumbo",
+        image: null,
+        href: "/my-puzzles/c1",
+      },
+    ],
+  };
+
+  it("lists the member's own copies before the catalogue's puzzles", async () => {
+    renderPalette({ seeded: { lam } });
+    type("lam");
+    await screen.findByRole("group", { name: "In your library" });
+    const headings = [...document.querySelectorAll("[cmdk-group-heading]")].map(
+      (heading) => heading.textContent,
+    );
+    expect(headings.slice(0, 2)).toEqual(["In your library", "Puzzles"]);
+  });
+
+  it("opens the owner's copy page", async () => {
+    renderPalette({ seeded: { lam } });
+    type("lam");
+    const group = await screen.findByRole("group", {
+      name: "In your library",
+    });
+    const row = group.querySelector("[cmdk-item]");
+    expect(row?.textContent).toContain("Lam Gelegd");
+    expect(row?.textContent).toContain("Jumbo");
+    fireEvent.click(row!);
+    expect(mocks.push).toHaveBeenCalledWith("/my-puzzles/c1");
   });
 });
