@@ -120,4 +120,15 @@ describe("FollowRequestsStrip", () => {
     data.requests = [request({ memberId: "u3" })];
     expect(links(render())).toEqual([{ href: "/members/u3", text: "Puzzler" }]);
   });
+
+  it("keeps a working link and name from a backend that predates the teaser view (deploy skew)", () => {
+    // The pre-SEC-11 backend sends the requester as a MemberView: `_id` and `name`, no `memberId`.
+    const legacy = { _id: "u4", name: "Old Shape", username: "oldshape" };
+    data.requests = [
+      request(legacy as unknown as IncomingFollowRequestView["requester"]),
+    ];
+    expect(links(render())).toEqual([
+      { href: "/members/u4", text: "Old Shape" },
+    ]);
+  });
 });

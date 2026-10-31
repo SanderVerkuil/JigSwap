@@ -13,16 +13,37 @@ import { useMemberDisplayName } from "@/lib/member-display-name";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import type { FunctionReturnType } from "convex/server";
 import { UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
+type Requester = FunctionReturnType<
+  typeof gateway.social.incomingFollowRequests
+>[number]["requester"];
+
+// A backend that predates the teaser view (the web deploys before Convex) still sends the
+// requester as a MemberView: `_id` and `name` in place of `memberId` and `displayName`. Reading
+// those only as a fallback keeps each row's link and name working until Convex catches up,
+// instead of linking /members/undefined.
+const withLegacyFallback = (
+  requester: Requester & { _id?: string; name?: string },
+): Requester => ({
+  ...requester,
+  memberId: requester.memberId ?? requester._id,
+  displayName: requester.displayName ?? requester.name,
+});
+
 export function FollowRequestsStrip() {
   const t = useTranslations("people");
   const displayName = useMemberDisplayName();
-  const { data: requests } = useQuery(
+  const { data } = useQuery(
     convexQuery(gateway.social.incomingFollowRequests, {}),
   );
+  const requests = data?.map((request) => ({
+    ...request,
+    requester: withLegacyFallback(request.requester),
+  }));
   const approve = useMutation({
     mutationFn: useConvexMutation(gateway.social.approveFollowRequest),
   });
