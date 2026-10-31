@@ -338,4 +338,76 @@ describe("setContactSharing", () => {
       /ContactSharingClosed/,
     );
   });
+
+  test.each(["requester", "owner"] as const)(
+    "a block by the %s withdraws both shares, so an unblock reveals no email until a new share",
+    async (blocker) => {
+      const t = convexTest(schema, modules);
+      const w = await seed(t, 2);
+      const blocked = blocker === "owner" ? "requester" : "owner";
+      const blockedId = blocker === "owner" ? w.requester : w.owner;
+      // Two accepted trades between the pair, both sides sharing on both.
+      const trades = [
+        await propose(t, w.copies[0]!),
+        await propose(t, w.copies[1]!),
+      ];
+      for (const ex of trades) {
+        await act(t, "owner", "accept", ex.aggregateId);
+        await share(t, "owner", ex.id, true);
+        await share(t, "requester", ex.id, true);
+      }
+      expect(await shareRows(t)).toHaveLength(4);
+
+      await as(t, blocker).mutation(api.social.blockMember.blockMember, {
+        memberId: blockedId,
+      });
+      await flush(t);
+      expect(await shareRows(t)).toEqual([]);
+
+      await as(t, blocker).mutation(api.social.unblockMember.unblockMember, {
+        memberId: blockedId,
+      });
+      await flush(t);
+      for (const ex of trades) {
+        for (const who of [blocker, blocked]) {
+          const view = await card(t, who, ex.id);
+          expect(view).toMatchObject({
+            state: "revealed",
+            emailSharing: { youShare: false, open: true },
+          });
+          expect(view).not.toHaveProperty("email");
+        }
+      }
+
+      // Sharing again is a new, explicit choice, and works as before.
+      await share(t, blocked, trades[0]!.id, true);
+      expect(await card(t, blocker, trades[0]!.id)).toHaveProperty(
+        "email",
+        `${blocked}@example.com`,
+      );
+    },
+  );
+
+  test("a block leaves shares on other members' trades alone", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    const ex = await propose(t, w.copies[0]!);
+    await act(t, "owner", "accept", ex.aggregateId);
+    await share(t, "owner", ex.id, true);
+    const third = await t.run(
+      async (ctx) =>
+        (await ctx.db
+          .query("users")
+          .withIndex("by_clerk_id", (q) => q.eq("clerkId", "clerk_third"))
+          .unique())!._id,
+    );
+    await as(t, "owner").mutation(api.social.blockMember.blockMember, {
+      memberId: third,
+    });
+    expect(await shareRows(t)).toHaveLength(1);
+    expect(await card(t, "requester", ex.id)).toHaveProperty(
+      "email",
+      "owner@example.com",
+    );
+  });
 });

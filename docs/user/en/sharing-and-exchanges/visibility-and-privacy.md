@@ -106,7 +106,9 @@ appears on your card only when they turned on their own switch.
 
 You can share while the trade is accepted, completed or disputed. If the
 trade is declined or cancelled, or one of you blocks the other, a shared email
-address is hidden again.
+address is hidden again. A block also turns the switch off for both of you, in
+every trade between you: after an unblock, your email address stays hidden
+until you turn it on again.
 
 The details you see in one trade don't unlock the other member's profile,
 library or activity. A second trade with the same member starts hidden again.

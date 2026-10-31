@@ -116,7 +116,9 @@ eigen schakelaar heeft aangezet.
 
 Je kunt je e-mailadres delen zolang de ruil geaccepteerd, afgerond of in
 geschil is. Wordt de ruil afgewezen of geannuleerd, of blokkeert een van jullie de
-ander, dan is een gedeeld e-mailadres weer verborgen.
+ander, dan is een gedeeld e-mailadres weer verborgen. Een blokkering zet de
+schakelaar bovendien voor jullie allebei uit, in elke ruil tussen jullie: na het
+deblokkeren blijft je e-mailadres verborgen tot je hem zelf weer aanzet.
 
 De gegevens die je in de ene ruil ziet, geven geen toegang tot het profiel, de
 bibliotheek of de activiteit van het andere lid. Een tweede ruil met hetzelfde
