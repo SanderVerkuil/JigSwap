@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { cleanup, render } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it } from "vitest";
 import en from "../../../locales/en.json";
@@ -16,8 +16,8 @@ const base: PersonalStats = {
   exchangesCompleted: 0,
   averageRatingGiven: null,
   averageRatingReceived: 0,
-  goalsActive: 0,
   goalsAchieved: 0,
+  goalsTotal: 0,
 };
 
 const renderStats = (
@@ -34,6 +34,9 @@ const renderStats = (
     </IntlProvider>,
   );
 
+// The cell a stat label sits in: value first, then the label, then the optional sub-line.
+const cellOf = (label: string) => screen.getByText(label).parentElement;
+
 afterEach(cleanup);
 
 describe("StatCards", () => {
@@ -44,5 +47,28 @@ describe("StatCards", () => {
     );
     expect(headline?.classList).toContain("grid-cols-2");
     expect(secondary?.classList).toContain("grid-cols-3");
+  });
+
+  it("says how many of all goals were achieved", () => {
+    renderStats({ goalsAchieved: 2, goalsTotal: 5 });
+    const goals = cellOf("Goals achieved");
+    expect(goals?.firstElementChild?.textContent).toBe("2");
+    expect(goals?.textContent).toContain("2 of 5 goals");
+    expect(goals?.textContent).not.toContain("active");
+  });
+
+  it("counts a single goal in the singular, in Dutch too", () => {
+    renderStats({ goalsAchieved: 1, goalsTotal: 1 }, "nl");
+    expect(cellOf("Doelen behaald")?.textContent).toContain("1 van 1 doel");
+  });
+
+  it("leaves the goals sub-line out when there are no goals", () => {
+    renderStats({ goalsAchieved: 0, goalsTotal: 0 });
+    expect(cellOf("Goals achieved")?.textContent).toBe("0Goals achieved");
+  });
+
+  it("leaves the goals sub-line out when the server doesn't send a total yet", () => {
+    renderStats({ goalsAchieved: 1, goalsTotal: undefined });
+    expect(cellOf("Goals achieved")?.textContent).toBe("1Goals achieved");
   });
 });

@@ -3422,7 +3422,7 @@
       "collections": "Collecties",
       "exchangesCompleted": "Voltooide ruilen",
       "goals": "Doelen behaald",
-      "goalsValue": "{achieved} van {active} actief",
+      "goalsOfTotal": "{achieved} van {total, plural, one {# doel} other {# doelen}}",
       "ratingGiven": "Gem. gegeven beoordeling",
       "ratingReceived": "Gem. ontvangen beoordeling",
       "time": "{hours}u {minutes}m",

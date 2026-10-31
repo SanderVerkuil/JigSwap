@@ -3422,7 +3422,7 @@
       "collections": "Collections",
       "exchangesCompleted": "Exchanges completed",
       "goals": "Goals achieved",
-      "goalsValue": "{achieved} of {active} active",
+      "goalsOfTotal": "{achieved} of {total, plural, one {# goal} other {# goals}}",
       "ratingGiven": "Avg rating given",
       "ratingReceived": "Avg rating received",
       "time": "{hours}h {minutes}m",

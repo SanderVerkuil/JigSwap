@@ -13,8 +13,9 @@ export interface PersonalStats {
   exchangesCompleted: number;
   averageRatingGiven: number | null;
   averageRatingReceived: number;
-  goalsActive: number;
   goalsAchieved: number;
+  // Every goal, archived ones included. Optional: a backend without it shows no goals sub-line.
+  goalsTotal?: number;
 }
 
 // Card-free personal stats: a big divided headline row for the four numbers
@@ -80,10 +81,12 @@ export function StatCards({ stats }: { stats: PersonalStats }) {
           {
             label: t("goals"),
             value: String(stats.goalsAchieved),
-            sub: t("goalsValue", {
-              achieved: stats.goalsAchieved,
-              active: stats.goalsActive,
-            }),
+            sub: stats.goalsTotal
+              ? t("goalsOfTotal", {
+                  achieved: stats.goalsAchieved,
+                  total: stats.goalsTotal,
+                })
+              : undefined,
           },
           {
             label: t("ratingGiven"),
