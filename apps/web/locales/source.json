@@ -4091,6 +4091,7 @@
       "searchTrigger": "Search docs…",
       "searchPlaceholder": "Search the docs…",
       "searchEmpty": "No results. Try a different term.",
+      "searchFailed": "Docs search isn't available right now. Keep typing to try again.",
       "searchPagesHeading": "Pages",
       "searchTitle": "Search documentation",
       "searchDescription": "Find a page in the JigSwap user guide",

@@ -63,6 +63,38 @@ describe("createDocsSearchStore", () => {
     expect(store.get("en")).toBeDefined();
   });
 
+  it("reports a failed load until the next load starts, notifying both ways", async () => {
+    let rejectFirst: (error: Error) => void = () => {};
+    const loadDocs = vi
+      .fn<(locale: string) => Promise<SearchDoc[]>>()
+      .mockImplementationOnce(
+        () =>
+          new Promise((_resolve, reject) => {
+            rejectFirst = reject;
+          }),
+      )
+      .mockResolvedValue(DOCS);
+    const store = createDocsSearchStore(loadDocs);
+    const listener = vi.fn();
+    store.subscribe(listener);
+
+    const first = store.load("en");
+    expect(store.failed("en")).toBe(false);
+    rejectFirst(new Error("chunk failed"));
+    await first;
+    expect(store.failed("en")).toBe(true);
+    expect(store.failed("nl")).toBe(false);
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    // Retrying clears the failure at once (the dialog shows "loading" again).
+    const retry = store.load("en");
+    expect(store.failed("en")).toBe(false);
+    expect(listener).toHaveBeenCalledTimes(2);
+    await retry;
+    expect(store.get("en")).toBeDefined();
+    expect(listener).toHaveBeenCalledTimes(3);
+  });
+
   it("stops notifying after unsubscribe", async () => {
     const store = createDocsSearchStore(async () => DOCS);
     const listener = vi.fn();

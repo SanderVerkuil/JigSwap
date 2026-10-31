@@ -56,6 +56,16 @@ export function DocsSearch({
     () => searchStore.get(locale),
     () => undefined,
   );
+  // A failed load says so instead of "Loading…" forever; typing retries it.
+  const failed = React.useSyncExternalStore(
+    searchStore.subscribe,
+    () => searchStore.failed(locale),
+    () => false,
+  );
+  const onQueryChange = (value: string) => {
+    setQuery(value);
+    if (searchStore.failed(locale)) void searchStore.load(locale);
+  };
   const hits = React.useMemo(() => index?.search(query) ?? [], [index, query]);
 
   const go = (slug: string) => {
@@ -85,12 +95,16 @@ export function DocsSearch({
             className="text-base md:not-pointer-coarse:text-sm"
             placeholder={t("searchPlaceholder")}
             value={query}
-            onValueChange={setQuery}
+            onValueChange={onQueryChange}
           />
           <CommandList>
             {query.trim() !== "" && hits.length === 0 && (
               <CommandEmpty>
-                {index ? t("searchEmpty") : tCommon("loading")}
+                {index
+                  ? t("searchEmpty")
+                  : failed
+                    ? t("searchFailed")
+                    : tCommon("loading")}
               </CommandEmpty>
             )}
             {hits.length > 0 && (

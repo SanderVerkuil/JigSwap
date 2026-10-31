@@ -4091,6 +4091,7 @@
       "searchTrigger": "Documentatie zoeken…",
       "searchPlaceholder": "Zoek in de documentatie…",
       "searchEmpty": "Geen resultaten. Probeer een andere term.",
+      "searchFailed": "Zoeken in de documentatie lukt nu niet. Typ verder om het opnieuw te proberen.",
       "searchPagesHeading": "Pagina's",
       "searchTitle": "Documentatie zoeken",
       "searchDescription": "Vind een pagina in de JigSwap-handleiding",
