@@ -58,7 +58,8 @@ export function SolveTimeFields({
   const t = useTranslations("solving.logSolve");
   return (
     <fieldset className="min-w-0">
-      <legend className="mb-2 text-sm leading-none font-medium">
+      {/* leading-snug, not the labels' leading-none: the question wraps on phones (e.g. Dutch). */}
+      <legend className="mb-2 text-sm leading-snug font-medium">
         {t("timeQuestion")}
       </legend>
       <div className="grid grid-cols-2 gap-4">
