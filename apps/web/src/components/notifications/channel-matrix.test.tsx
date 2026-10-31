@@ -121,3 +121,63 @@ describe("ChannelMatrix structure and names (UX-34)", () => {
     expect(switchFor("trade_request", "email").disabled).toBe(false);
   });
 });
+
+describe("ChannelMatrix layout (UX-34)", () => {
+  const classesOf = (element: Element) => [...element.classList];
+  const columnHeaders = () =>
+    screen.getAllByRole("columnheader").filter((header) => header.id);
+
+  it("clips the table instead of making it a scroll container, so the header can stick", () => {
+    renderMatrix();
+    // overflow-hidden/auto/scroll on any wrapper turns it into the sticky header's
+    // scroll container, and the header then scrolls away with the rows.
+    const table = screen.getByRole("table");
+    for (
+      let element: Element | null = table;
+      element && element !== document.body;
+      element = element.parentElement
+    ) {
+      expect(
+        classesOf(element).filter((name) =>
+          /(^|:)overflow-(x-|y-)?(hidden|auto|scroll)$/.test(name),
+        ),
+      ).toEqual([]);
+    }
+    expect(classesOf(table)).toContain("overflow-clip");
+  });
+
+  it("sticks the channel header row below the page's sticky chrome", () => {
+    renderMatrix();
+    const headerRow = columnHeaders()[0]!.closest('[role="row"]')!;
+    const classes = classesOf(headerRow);
+    expect(classes).toContain("sticky");
+    const top = classes.filter((name) => /(^|:)top-/.test(name));
+    expect(top).toHaveLength(1);
+    expect(top[0]).toMatch(/^top-\[var\(--app-sticky-top/);
+  });
+
+  it("keeps the channel labels at a readable size at every width", () => {
+    renderMatrix();
+    const headers = columnHeaders();
+    expect(headers.map((header) => header.textContent)).toEqual([
+      "In-app",
+      "Email",
+      "Push",
+    ]);
+    for (const header of headers) {
+      expect(classesOf(header)).toContain("text-xs");
+      expect(
+        classesOf(header).filter((name) => /text-\[\d+px\]/.test(name)),
+      ).toEqual([]);
+    }
+  });
+
+  it("shows the whole description on a narrow table; it is clamped only when wide", () => {
+    renderMatrix();
+    const description = document.getElementById("row-trade_request-desc")!;
+    const clamps = classesOf(description).filter((name) =>
+      /line-clamp-/.test(name),
+    );
+    expect(clamps).toEqual(["@2xl/matrix:line-clamp-2"]);
+  });
+});
