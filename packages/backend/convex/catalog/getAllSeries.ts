@@ -14,13 +14,16 @@ export const getAllSeries = query({
     publisher: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<SeriesView[]> => {
-    // Scoped path: collect + dedupe in JS. A brand's puzzles are few; a big publisher's
-    // catalog is larger but still fine at this app's scale — revisit if that changes.
+    // Scoped path: collect + dedupe in JS. A brand reads only its APPROVED puzzles through
+    // by_status_brand; a big publisher's catalog (by_publisher, filtered below) is larger but
+    // still fine at this app's scale — revisit if that changes.
     if (args.brand || args.publisher) {
       const rows = args.brand
         ? await ctx.db
             .query("puzzles")
-            .withIndex("by_brand", (q) => q.eq("brand", args.brand))
+            .withIndex("by_status_brand", (q) =>
+              q.eq("status", "approved").eq("brand", args.brand),
+            )
             .collect()
         : await ctx.db
             .query("puzzles")
