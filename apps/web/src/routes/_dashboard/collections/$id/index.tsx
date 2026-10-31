@@ -403,6 +403,10 @@ function CollectionDetailPage() {
               puzzle={puzzle}
               variant="collection"
               onRemove={viewerOwnsCollection ? handleRemovePuzzle : undefined}
+              // One URL per copy for its owner: their own copies open on /my-puzzles (as from
+              // My Puzzles); visitors get the public /copies page. Both keep the collection
+              // as breadcrumb context.
+              viewBasePath={viewerOwnsCollection ? "/my-puzzles" : "/copies"}
               viewSearch={`?from=collection:${id}`}
             />
           ))}

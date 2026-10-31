@@ -166,6 +166,22 @@ describe("collection page controls", () => {
   });
 });
 
+describe("where a card leads", () => {
+  it("opens the owner's own copy on /my-puzzles, keeping the collection as context", () => {
+    renderPage(OWNER);
+    expect(
+      screen.getByText("Puzzle 1").closest("a")?.getAttribute("href"),
+    ).toBe("/my-puzzles/copy_doc_1?from=collection:col_doc");
+  });
+
+  it("opens a visitor on the public copy page", () => {
+    renderPage("visitor");
+    expect(
+      screen.getByText("Puzzle 1").closest("a")?.getAttribute("href"),
+    ).toBe("/copies/copy_doc_1?from=collection:col_doc");
+  });
+});
+
 describe("removing a puzzle from the collection", () => {
   it("takes it out, confirms with a toast, and Undo puts it back", async () => {
     renderPage(OWNER);
