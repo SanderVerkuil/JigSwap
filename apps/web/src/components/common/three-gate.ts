@@ -5,7 +5,9 @@ import * as React from "react";
  * profile shelves). three.js is ~245 KB gz plus a GPU context, so it loads
  * only once the page is idle, on a viewport of at least 768 px, without
  * Save-Data and with at least 4 GB of memory where the browser reports it.
- * Everywhere else the CSS plank stays.
+ * Everywhere else the CSS plank stays. A scene loaded on the member's request
+ * (the profile shelf's physics) needs the same device budget at any viewport
+ * width (deviceAllows3D) and probes WebGL only once asked.
  */
 const WIDE_VIEWPORT = "(min-width: 768px)";
 const MIN_DEVICE_MEMORY_GB = 4;
@@ -23,10 +25,21 @@ export interface Load3DEnv {
   webgl: () => boolean;
 }
 
+/**
+ * The device budget every 3D scene needs, whether it loads on idle or on
+ * request: no Save-Data and at least 4 GB of memory where reported.
+ */
+export function deviceAllows3D(
+  env: Pick<Load3DEnv, "saveData" | "deviceMemory">,
+): boolean {
+  if (env.saveData) return false;
+  return (
+    env.deviceMemory === undefined || env.deviceMemory >= MIN_DEVICE_MEMORY_GB
+  );
+}
+
 export function shouldLoad3D(env: Load3DEnv): boolean {
-  if (!env.wideViewport || env.saveData) return false;
-  if (env.deviceMemory !== undefined && env.deviceMemory < MIN_DEVICE_MEMORY_GB)
-    return false;
+  if (!env.wideViewport || !deviceAllows3D(env)) return false;
   return env.webgl();
 }
 
@@ -48,18 +61,6 @@ export function supportsWebGL(): boolean {
 
 const noopSubscribe = () => () => {};
 const no = () => false;
-
-/**
- * WebGL support on the client (false on the server and during hydration).
- * Probes only when `enabled`, so callers that don't need it allocate nothing.
- */
-export function useWebGLSupport(enabled: boolean): boolean {
-  return React.useSyncExternalStore(
-    noopSubscribe,
-    enabled ? supportsWebGL : no,
-    no,
-  );
-}
 
 interface NetworkInformationLike {
   saveData?: boolean;
@@ -118,4 +119,16 @@ const getServerSnapshot = () => false;
  */
 export function useCanLoad3D(): boolean {
   return React.useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+
+const getDeviceSnapshot = () => deviceAllows3D(readEnv());
+
+/**
+ * True on a client whose device may run a 3D scene the member asks for (the
+ * shelf physics behind Play), at any viewport width. False on the server and
+ * during hydration. It never probes WebGL: call supportsWebGL() only once the
+ * member has asked, so a device that never asks allocates no GL context.
+ */
+export function useDeviceAllows3D(): boolean {
+  return React.useSyncExternalStore(noopSubscribe, getDeviceSnapshot, no);
 }

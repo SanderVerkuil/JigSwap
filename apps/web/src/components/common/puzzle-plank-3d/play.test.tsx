@@ -7,10 +7,19 @@ import en from "../../../../locales/en.json";
 import type { PlankSceneProps } from "./scene";
 
 // Device gate and scenes are stubbed: this covers only when each scene mounts.
-const gate = vi.hoisted(() => ({ canLoad3D: true, webgl: true }));
+const gate = vi.hoisted(() => ({
+  canLoad3D: true,
+  deviceAllows3D: true,
+  webgl: true,
+  webglProbes: 0,
+}));
 vi.mock("@/components/common/three-gate", () => ({
   useCanLoad3D: () => gate.canLoad3D,
-  useWebGLSupport: (enabled: boolean) => enabled && gate.webgl,
+  useDeviceAllows3D: () => gate.deviceAllows3D,
+  supportsWebGL: () => {
+    gate.webglProbes++;
+    return gate.webgl;
+  },
 }));
 vi.mock("@/components/marketing/plank-3d/palette", () => ({
   resolveCssColor: () => "#888888",
@@ -41,7 +50,9 @@ let root: Root;
 
 beforeEach(() => {
   gate.canLoad3D = true;
+  gate.deviceAllows3D = true;
   gate.webgl = true;
+  gate.webglProbes = 0;
   for (const key of Object.keys(firstFrame)) delete firstFrame[key];
   container = document.createElement("div");
   document.body.appendChild(container);
@@ -123,21 +134,39 @@ describe("PuzzlePlank3D physics on request", () => {
     expect(scene("physics")).not.toBeNull();
   });
 
-  it("offers Play over the CSS plank where 3D is gated off, without the static scene", async () => {
+  it("offers Play over the CSS plank on a phone, probing WebGL only once asked", async () => {
     gate.canLoad3D = false;
     await render();
     expect(scene("static")).toBeNull();
     expect(button()?.textContent).toBe("Play");
+    expect(gate.webglProbes).toBe(0);
     await act(async () => button()!.click());
+    expect(gate.webglProbes).toBe(1);
     expect(scene("physics")).not.toBeNull();
   });
 
-  it("offers nothing without WebGL, with reduced motion, or on a static shelf", async () => {
+  it("keeps the CSS plank and drops Play when the WebGL probe fails", async () => {
+    gate.canLoad3D = false;
     gate.webgl = false;
     await render();
+    await act(async () => button()!.click());
+    expect(scene("physics")).toBeNull();
     expect(button()).toBeNull();
+    await pointerDown(shelf(), "mouse");
+    expect(scene("physics")).toBeNull();
+  });
 
-    gate.webgl = true;
+  it("offers nothing on Save-Data or a low-memory device", async () => {
+    gate.canLoad3D = false;
+    gate.deviceAllows3D = false;
+    await render();
+    expect(button()).toBeNull();
+    await pointerDown(shelf(), "mouse");
+    expect(scene("physics")).toBeNull();
+    expect(gate.webglProbes).toBe(0);
+  });
+
+  it("offers nothing with reduced motion, or on a static shelf", async () => {
     vi.spyOn(window, "matchMedia").mockImplementation(
       (query: string) =>
         ({

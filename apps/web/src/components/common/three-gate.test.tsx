@@ -3,7 +3,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { shouldLoad3D, type Load3DEnv } from "./three-gate";
+import { deviceAllows3D, shouldLoad3D, type Load3DEnv } from "./three-gate";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -45,6 +45,23 @@ describe("shouldLoad3D", () => {
     expect(shouldLoad3D({ ...capable, saveData: true, webgl })).toBe(false);
     expect(shouldLoad3D({ ...capable, deviceMemory: 1, webgl })).toBe(false);
     expect(probed).toBe(false);
+  });
+});
+
+describe("deviceAllows3D", () => {
+  it.each<[string, Partial<Load3DEnv>, boolean]>([
+    ["a capable device", {}, true],
+    ["a capable phone", { wideViewport: false }, true],
+    ["Save-Data", { saveData: true }, false],
+    ["2 GB of device memory", { deviceMemory: 2 }, false],
+    ["exactly 4 GB of device memory", { deviceMemory: 4 }, true],
+    [
+      "a browser that does not report memory",
+      { deviceMemory: undefined },
+      true,
+    ],
+  ])("%s → %s", (_label, overrides, expected) => {
+    expect(deviceAllows3D({ ...capable, ...overrides })).toBe(expected);
   });
 });
 
@@ -123,5 +140,59 @@ describe("useCanLoad3D", () => {
     });
     expect(container.textContent).toBe("false");
     expect(HTMLCanvasElement.prototype.getContext).not.toHaveBeenCalled();
+  });
+});
+
+// happy-dom has neither navigator.connection nor navigator.deviceMemory.
+function stubNavigator(env: { saveData: boolean; deviceMemory: number }) {
+  Object.defineProperty(navigator, "connection", {
+    configurable: true,
+    value: { saveData: env.saveData },
+  });
+  Object.defineProperty(navigator, "deviceMemory", {
+    configurable: true,
+    value: env.deviceMemory,
+  });
+}
+
+afterEach(() => {
+  Reflect.deleteProperty(navigator, "connection");
+  Reflect.deleteProperty(navigator, "deviceMemory");
+});
+
+describe("useDeviceAllows3D", () => {
+  async function renderProbe() {
+    const { useDeviceAllows3D } = await loadGate();
+    function Probe() {
+      return <span>{String(useDeviceAllows3D())}</span>;
+    }
+    act(() => root.render(<Probe />));
+  }
+
+  it("is false on the server", async () => {
+    const { useDeviceAllows3D } = await loadGate();
+    function Probe() {
+      return <span>{String(useDeviceAllows3D())}</span>;
+    }
+    expect(renderToStaticMarkup(<Probe />)).toBe("<span>false</span>");
+  });
+
+  it("is true on a capable phone, without probing WebGL", async () => {
+    stubViewport(false);
+    stubNavigator({ saveData: false, deviceMemory: 8 });
+    await renderProbe();
+    expect(container.textContent).toBe("true");
+    expect(HTMLCanvasElement.prototype.getContext).not.toHaveBeenCalled();
+  });
+
+  it("is false with Save-Data or under 4 GB of memory", async () => {
+    stubViewport(true);
+    stubNavigator({ saveData: true, deviceMemory: 8 });
+    await renderProbe();
+    expect(container.textContent).toBe("false");
+
+    stubNavigator({ saveData: false, deviceMemory: 2 });
+    await renderProbe();
+    expect(container.textContent).toBe("false");
   });
 });

@@ -4,7 +4,11 @@ import {
   PuzzlePlank,
   type PuzzlePlankBox,
 } from "@/components/common/puzzle-plank";
-import { useCanLoad3D, useWebGLSupport } from "@/components/common/three-gate";
+import {
+  supportsWebGL,
+  useCanLoad3D,
+  useDeviceAllows3D,
+} from "@/components/common/three-gate";
 import {
   resolveCssColor,
   resolveHeadingFont,
@@ -61,8 +65,9 @@ export function PuzzlePlank3D({
   /**
    * When true, offers the rapier physics scene (grab/drag/throw) behind a Play
    * button, or a first mouse press on the shelf; until then the static scene
-   * (or the CSS plank) shows. Not offered without WebGL or with
-   * prefers-reduced-motion. Defaults to false (dashboard shelf).
+   * (or the CSS plank) shows. Not offered on Save-Data or low-memory devices
+   * or with prefers-reduced-motion, and dropped if WebGL turns out to be
+   * missing. Defaults to false (dashboard shelf).
    */
   interactive?: boolean;
 }) {
@@ -88,15 +93,23 @@ export function PuzzlePlank3D({
   // Idle client on a capable device (see three-gate); gates the static scene.
   // Otherwise the CSS plank stays.
   const canLoad3D = useCanLoad3D();
-  const webgl = useWebGLSupport(interactive);
+  const deviceAllows3D = useDeviceAllows3D();
   const reducedMotion = usePrefersReducedMotion();
   const { resolvedTheme } = useTheme();
   const theme: "light" | "dark" = resolvedTheme === "dark" ? "dark" : "light";
 
-  // Physics is offered wherever WebGL works, phones included (where only an
-  // explicit Play loads it), but never with reduced motion.
-  const canPlay = interactive && webgl && !reducedMotion && !physicsFailed;
+  // Physics is offered on any device the 3D gate's device budget allows
+  // (Save-Data and low memory never get it), phones included, where only an
+  // explicit Play loads it; never with reduced motion. WebGL is probed only
+  // once physics is asked for, so a phone that never asks allocates no GL
+  // context; without WebGL the request falls back to the CSS plank.
+  const canPlay =
+    interactive && deviceAllows3D && !reducedMotion && !physicsFailed;
   const physicsOn = canPlay && physicsRequested;
+  const requestPhysics = () => {
+    if (supportsWebGL()) setPhysicsRequested(true);
+    else setPhysicsFailed(true);
+  };
   // The static scene stays until physics has painted and faded in over it; if
   // it never painted itself there is nothing to crossfade from.
   const showStatic =
@@ -172,7 +185,7 @@ export function PuzzlePlank3D({
       // scrolling past the shelf on a phone or tablet loads nothing.
       onPointerDown={(e) => {
         if (canPlay && !physicsRequested && e.pointerType === "mouse")
-          setPhysicsRequested(true);
+          requestPhysics();
       }}
     >
       {/* CSS plank: fallback shown until a scene's first frame, or permanently
@@ -270,7 +283,7 @@ export function PuzzlePlank3D({
           onPointerDown={(e) => e.stopPropagation()}
           onClick={() => {
             if (physicsReady) setResetNonce((n) => n + 1);
-            else setPhysicsRequested(true);
+            else requestPhysics();
           }}
           className="absolute right-2 bottom-2 z-10 gap-1.5 shadow-sm"
         >
