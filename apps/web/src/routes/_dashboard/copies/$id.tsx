@@ -38,7 +38,7 @@ import {
   useProjectedMemberName,
 } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
-import { isRateLimited } from "@/lib/upload-rate-limit";
+import { isUploadRateLimited, mintUploadUrl } from "@/lib/upload-rate-limit";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -981,7 +981,7 @@ function PhotoStrip({
   // isPending covers the full upload span (busy-state rule v2).
   const uploadPhoto = useMutation({
     mutationFn: async (file: File) => {
-      const uploadUrl = await generateUploadUrl({});
+      const uploadUrl = await mintUploadUrl(() => generateUploadUrl({}));
       const res = await fetch(uploadUrl, {
         method: "POST",
         headers: { "Content-Type": file.type },
@@ -998,7 +998,7 @@ function PhotoStrip({
     // An upload URL refused by the member's upload limit says to wait (SEC-20).
     onError: (error) =>
       toast.error(
-        isRateLimited(error)
+        isUploadRateLimited(error)
           ? tCommon("photoUploadRateLimited")
           : t("photoFailed"),
       ),

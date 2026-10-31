@@ -41,7 +41,7 @@ import { useBoxArtCheckNotice } from "@/hooks/use-box-art-check";
 import { useUploadBoxArt } from "@/hooks/use-upload-box-art";
 import { pageTitle } from "@/lib/page-title";
 import { safeReturnTo } from "@/lib/return-to";
-import { isRateLimited } from "@/lib/upload-rate-limit";
+import { isUploadRateLimited } from "@/lib/upload-rate-limit";
 import {
   convexQuery,
   useConvexAction,
@@ -358,7 +358,7 @@ function AddPuzzlePage() {
       console.error("Add to library failed:", error);
       // A box-art upload URL refused by the member's upload limit says to wait (SEC-20).
       toast.error(
-        isRateLimited(error)
+        isUploadRateLimited(error)
           ? tCommon("photoUploadRateLimited")
           : t("puzzleCreationFailed"),
       );

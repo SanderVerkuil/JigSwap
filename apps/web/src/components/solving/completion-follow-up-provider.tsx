@@ -14,7 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useReportSurfaceBusy } from "@/components/whats-new/surface-busy";
 import { gateway, type Id } from "@/gateway";
 import { preparePhoto } from "@/lib/prepare-photo";
-import { isRateLimited } from "@/lib/upload-rate-limit";
+import { isUploadRateLimited, mintUploadUrl } from "@/lib/upload-rate-limit";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
@@ -222,7 +222,7 @@ export function CompletionFollowUpProvider({
 
   // One file's grant → POST → storageId pipeline (mirrors the copy PhotoStrip upload).
   const uploadOne = async (photo: PendingPhoto): Promise<string> => {
-    const uploadUrl = await generateUploadUrl({});
+    const uploadUrl = await mintUploadUrl(() => generateUploadUrl({}));
     const res = await fetch(uploadUrl, {
       method: "POST",
       headers: { "Content-Type": photo.file.type },
@@ -280,7 +280,7 @@ export function CompletionFollowUpProvider({
         // An upload URL refused by the member's upload limit says to wait (SEC-20).
         const rateLimited = settled.some(
           (result) =>
-            result.status === "rejected" && isRateLimited(result.reason),
+            result.status === "rejected" && isUploadRateLimited(result.reason),
         );
         toast.error(
           rateLimited ? tCommon("photoUploadRateLimited") : t("saveError"),
