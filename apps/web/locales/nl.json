@@ -1484,7 +1484,7 @@
       "description": "We gebruiken analyse om te begrijpen hoe JigSwap wordt gebruikt en om fouten op te sporen voordat ze het plezier bederven.",
       "posthog": {
         "title": "PostHog",
-        "description": "We gebruiken PostHog, gehost in de Europese Unie, voor productanalyse en foutrapportage. Analyseverzoeken lopen via ons eigen domein. Als je bent ingelogd, koppelt PostHog je bezoeken aan je interne account-ID, nooit aan je naam of e-mailadres. PostHog start pas nadat je de cookiemelding hebt geaccepteerd — weiger je, dan wordt het nooit geladen. Deze gegevens gebruiken we alleen om JigSwap te verbeteren."
+        "description": "We gebruiken PostHog, gehost in de Europese Unie, voor productanalyse en foutrapportage. Analyseverzoeken lopen via ons eigen domein. Als je bent ingelogd, delen we alleen je interne account-ID met PostHog, niet je naam of e-mailadres. PostHog start pas nadat je de cookiemelding hebt geaccepteerd — weiger je, dan wordt het nooit geladen. Deze gegevens gebruiken we alleen om JigSwap te verbeteren."
       },
       "noAdvertising": "We tonen geen advertenties, we gebruiken je gegevens niet voor reclame en we verkopen je gegevens nooit."
     },

@@ -1484,7 +1484,7 @@
       "description": "We use analytics to understand how JigSwap is used and to catch errors before they spoil the fun.",
       "posthog": {
         "title": "PostHog",
-        "description": "We use PostHog, hosted in the European Union, for product analytics and error reporting. Analytics requests are routed through our own domain. When you're signed in, PostHog links your visits to your internal account identifier, never to your name or email address. PostHog only starts after you accept the cookie notice — if you decline, it is never loaded. This data is used only to improve JigSwap."
+        "description": "We use PostHog, hosted in the European Union, for product analytics and error reporting. Analytics requests are routed through our own domain. When you're signed in, we share only your internal account identifier with PostHog, not your name or email address. PostHog only starts after you accept the cookie notice — if you decline, it is never loaded. This data is used only to improve JigSwap."
       },
       "noAdvertising": "We do not show ads, we do not use your data for advertising, and we never sell your data."
     },
