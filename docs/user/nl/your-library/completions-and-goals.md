@@ -70,15 +70,38 @@ Zo wordt de datum gebruikt die je kiest:
 
 ### De pagina Voltooiingen
 
-De pagina Voltooiingen toont al je oplossingsregistraties, met de nieuwste bovenaan, met een samenvatting van drie statistieken bovenaan: **totaal afgerond**, **stukken gelegd** en **dit jaar afgerond**.
+De pagina Voltooiingen toont al je oplossingsregistraties, met een samenvatting van drie statistieken bovenaan: **totaal afgerond**, **stukken gelegd** en **dit jaar afgerond**.
 
-Elke rij toont de titel, een statusbadge, een regel met stukken/dagen, optionele notities en een citaat uit de beoordeling, een sterwaardering en de afronddatum. Acties per rij:
+Voltooiingen waar je nog mee bezig bent, staan bovenaan onder **Bezig**.
+Daaronder groepeert **Geschiedenis** je afgeronde voltooiingen per jaar, het
+nieuwste jaar eerst, met het aantal voltooiingen in elk jaar. Voltooiingen
+waarvan je alleen het jaar weet, staan na de voltooiingen met een datum uit dat
+jaar, en voltooiingen zonder datum staan helemaal onderaan, onder
+**Datum onbekend**. De pagina toont eerst 30 afgeronde voltooiingen; klik op
+**Nog 30 tonen** om de volgende te zien.
 
-- **Afmaken** — voor een lopende oplossing.
-- **Beoordeling Toevoegen/Bewerken** — stel je sterwaardering en beoordelingstekst in of wijzig ze.
+Elke rij toont de titel, een statusbadge, een regel met stukjes/dagen,
+optionele notities, je foto's en de afronddatum. Klik of tik op een foto om hem
+groot te bekijken; met de pijlen, de pijltjestoetsen of door te vegen zie je de
+andere foto's van die voltooiing.
+
+Acties per rij:
+
+- **Voltooiing afronden** — voor een voltooiing waar je nog mee bezig bent.
+- **Beoordelen** — stel je sterwaardering en beoordelingstekst in of wijzig ze.
 - **Bewerken** — pas de datumreeks, tijd en notities aan. Is het bewerkvenster
   van een oplossing gesloten, dan is de knop grijs: beweeg erover of tik erop om
   te zien wanneer het sloot.
+- **Verwijderen** — haal de voltooiing uit je geschiedenis, nadat je dat hebt
+  bevestigd.
+
+Op een telefoon staan **Beoordelen**, **Bewerken** en **Verwijderen** in het
+**⋯**-menu van elke rij; **Voltooiing afronden** blijft een knop.
+
+Zolang je nog niets hebt vastgelegd, biedt de pagina **Voltooiing vastleggen**
+aan en, voor puzzels die je al had afgemaakt voordat je lid werd,
+**Leg eerdere voltooiingen vast**. Dat opent de stap
+**Leg vast wat je al hebt afgemaakt** van Snel instellen.
 
 ## Doelen
 

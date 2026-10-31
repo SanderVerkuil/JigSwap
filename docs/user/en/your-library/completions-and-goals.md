@@ -69,15 +69,34 @@ How the date you choose is used:
 
 ### The Completions page
 
-The Completions page shows all your solve records, newest first, with a three-stat summary at the top: **total finished**, **pieces placed**, and **finishes this year**.
+The Completions page shows all your solve records, with a three-stat summary at the top: **total finished**, **pieces placed**, and **finishes this year**.
 
-Each row shows the title, a status badge, a piece/days line, optional notes and review quote, a star rating, and the finish date. Per-row actions:
+Solves you're still working on come first, under **In progress**. Below them,
+**History** groups your finished solves by year, newest year first, with the
+number of solves in each year. Solves you only know the year of come after the
+dated solves of that year, and solves without a date are listed last, under
+**Date unknown**. The page shows 30 finished solves at first; click
+**Show 30 more** to see the next ones.
 
-- **Finish** — for an in-progress solve.
-- **Add/Edit Review** — set or change your star rating and review text.
+Each row shows the title, a status badge, a piece/days line, optional notes,
+your photos and the finish date. Click or tap a photo to see it full size; use
+the arrows, the arrow keys or a swipe to see the solve's other photos.
+
+Per-row actions:
+
+- **Finish solve** — for an in-progress solve.
+- **Review** — set or change your star rating and review text.
 - **Edit** — adjust date range, time, and notes. Once a solve's edit window
   has closed, the button is greyed out: hover over it or tap it to see when it
   closed.
+- **Delete** — remove the solve from your history, after you confirm.
+
+On a phone, **Review**, **Edit** and **Delete** are in each row's **⋯** menu;
+**Finish solve** stays a button.
+
+Until you've logged a solve, the page offers **Log a solve** and, for puzzles
+you finished before joining, **Mark past solves**, which opens Quick setup's
+**Log puzzles you finished** step.
 
 ## Goals
 
