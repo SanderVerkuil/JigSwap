@@ -5,6 +5,11 @@ import type { Doc } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
+import { clampPaginationOpts } from "../lib/pageSize";
+
+// Admin-only, but the page size is still the client's request: one page joins each member's
+// library size, so it holds at most this many members (the console asks for 25).
+const MAX_PAGE_SIZE = 50;
 
 // Admin read model: every member, paginated newest-first, with the display-only mirrored Clerk
 // role and the member's library size joined in. Admin-only, gated exactly like
@@ -42,6 +47,10 @@ export const listUsers = query({
     if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
 
     const search = args.search?.trim().toLowerCase() ?? "";
+    const paginationOpts = clampPaginationOpts(
+      args.paginationOpts,
+      MAX_PAGE_SIZE,
+    );
     const result =
       search.length > 0
         ? await ctx.db
@@ -49,11 +58,8 @@ export const listUsers = query({
             .withSearchIndex("by_searchable_name", (q) =>
               q.search("searchableName", search),
             )
-            .paginate(args.paginationOpts)
-        : await ctx.db
-            .query("users")
-            .order("desc")
-            .paginate(args.paginationOpts);
+            .paginate(paginationOpts)
+        : await ctx.db.query("users").order("desc").paginate(paginationOpts);
 
     return {
       ...result,
