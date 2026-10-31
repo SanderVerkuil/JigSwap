@@ -16,10 +16,10 @@ import { v } from "convex/values";
 //   matching is switched off on the deployment (csamHashCheck.skipsHashCheck: provider "none";
 //   "offlimits" with a credential missing holds photos instead). Nothing ever records such a
 //   photo as checked: it keeps its `pendingHashes`, so the one-shot
-//   lib/imageModeration/recheckWaivedHashes can check it once matching is configured. Cleared, with `pendingHashes`, when a check returns
-//   no_match; a match quarantines it (a quarantined row keeps the marker: it was served
-//   unchecked until the match). Photos published before this marker existed carry nothing: their
-//   hashes were never kept, so they cannot be checked later.
+//   lib/imageModeration/recheckWaivedHashes can check it once matching is configured. Cleared,
+//   with `pendingHashes`, when a check returns no_match; a match quarantines it (a quarantined
+//   row keeps the marker: it was served unchecked until the match). Photos published before this
+//   marker existed carry nothing: their hashes were never kept, so they cannot be checked later.
 // - `pendingHashes`: MD5 + SHA-1 of the original and the re-encode, kept while the check is
 //   "unavailable" so it can be retried after the original is gone (lib/imageModeration), after
 //   an admin approved a timed-out photo (below), and on a photo published unchecked (above).
@@ -79,8 +79,8 @@ export const isHashCheckTimedOut = (row: {
   row.hashCheckTimedOutAt !== undefined && row.hashCheckedAt === undefined;
 
 /**
- * Whether the photo was published WITHOUT a hash check (an admin waived it after a timeout, or no
- * hash matching was configured: `hashCheckSkippedAt`) and its stored hashes still wait for that
+ * Whether the photo was published WITHOUT a hash check (an admin waived it after a timeout, or
+ * hash matching was switched off: `hashCheckSkippedAt`) and its stored hashes still wait for that
  * check: the one-shot lib/imageModeration/recheckWaivedHashes checks them once the hash service is
  * configured. A no_match clears the marker and the hashes, a match quarantines the photo, so
  * neither is a candidate again.
