@@ -84,3 +84,5 @@ This page shows:
   member and confirm to unblock them. Only you can see this list.
 - **Your reports** — each report you've sent, with its status
   (**Under review** or **Handled**).
+- **Your data** — **Export my data** downloads a JSON copy of your data, the
+  same file as on **Insights**.
