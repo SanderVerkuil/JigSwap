@@ -25,7 +25,8 @@ JigSwap keeps a full **solve log** of every puzzle you've worked on — even aft
    **review**.
 
 Don't want to record solve times? Click **Don't track times** under the time
-fields. You can turn them back on under **Preferences** in your account menu.
+fields. To turn them back on, open your account menu → **Manage account** →
+**Preferences**.
 
 You can also start from **Completions**: open **Log a completion**
 (`/completions/new`) and pick the puzzle. The list shows the solves you're still

@@ -25,7 +25,8 @@ JigSwap houdt een volledig **oplossingslogboek** bij van elke puzzel waar je aan
    **beoordeling** geven.
 
 Wil je geen oplostijden bijhouden? Klik onder de tijdvelden op **Tijden niet
-bijhouden**. Je zet ze weer aan bij **Voorkeuren** in je accountmenu.
+bijhouden**. Je zet ze weer aan via je accountmenu → **Account beheren** →
+**Voorkeuren**.
 
 Je kunt ook beginnen bij **Voltooiingen**: open **Voltooiing vastleggen**
 (`/completions/new`) en kies de puzzel. Bovenaan staan de puzzels waar je nog
