@@ -22,6 +22,9 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+// The puzzle logged solves name: a solve must name a puzzle or a copy (SEC-30).
+const PUZZLE = "puzzle-1";
+
 const seed = (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const user = (clerkId: string) =>
@@ -33,7 +36,19 @@ const seed = (t: TestConvex<typeof schema>) =>
         createdAt: NOW,
         updatedAt: NOW,
       });
-    return { alice: await user("clerk_alice"), bob: await user("clerk_bob") };
+    const alice = await user("clerk_alice");
+    await ctx.db.insert("puzzles", {
+      aggregateId: PUZZLE,
+      title: "Mountain Vista",
+      brand: "Ravensburger",
+      pieceCount: 1000,
+      searchableText: "Mountain Vista Ravensburger",
+      status: "approved",
+      submittedBy: alice,
+      createdAt: NOW,
+      updatedAt: NOW,
+    });
+    return { alice, bob: await user("clerk_bob") };
   });
 
 const asAlice = (t: TestConvex<typeof schema>) =>
@@ -124,6 +139,7 @@ describe("goals count the solves inside their period", () => {
 
     // The next solve makes it 1/10, not 31/10 "achieved".
     await asAlice(t).mutation(api.solving.recordCompletion.recordCompletion, {
+      puzzleDefinitionId: PUZZLE,
       startDate: NOW - 2 * 60 * 60 * 1000,
       endDate: NOW - 60 * 60 * 1000,
     });
@@ -225,6 +241,7 @@ describe("goals count the solves inside their period", () => {
     const goalId = await createGoal(t, { targetCompletions: 1 });
     const log = () =>
       asAlice(t).mutation(api.solving.recordCompletion.recordCompletion, {
+        puzzleDefinitionId: PUZZLE,
         startDate: NOW - 2 * 60 * 60 * 1000,
         endDate: NOW - 60 * 60 * 1000,
       });
@@ -384,6 +401,7 @@ describe("solving.setGoalArchived", () => {
     expect((await goalRow(t, goalId))?.isActive).toBe(false);
 
     await asAlice(t).mutation(api.solving.recordCompletion.recordCompletion, {
+      puzzleDefinitionId: PUZZLE,
       startDate: NOW - 2 * 60 * 60 * 1000,
       endDate: NOW - 60 * 60 * 1000,
     });

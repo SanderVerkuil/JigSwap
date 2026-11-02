@@ -576,6 +576,7 @@ describe("completionEditableUntil", () => {
     const started = Completion.start({
       id: ID,
       userId: ALICE,
+      puzzleDefinitionId: PUZZLE,
       startDate: START,
       now: NOW,
     });
