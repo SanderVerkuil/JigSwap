@@ -2253,7 +2253,7 @@
   "household": {
     "loading": "Je huishouden laden…",
     "joined": "Je bent lid geworden van het huishouden",
-    "explainer": "Iedereen in je huishouden ziet elkaars puzzels in Mijn puzzels. Puzzels blijven van wie ze heeft toegevoegd; eigenaren kiezen per puzzel of het huishouden hem mag beheren (bewerken, uitlenen, ruilen) of alleen mag bekijken. Oplossingen blijven persoonlijk.",
+    "explainer": "Iedereen in je huishouden ziet elkaars puzzels in Mijn puzzels. Puzzels blijven van wie ze heeft toegevoegd; eigenaren kiezen per puzzel of het huishouden hem mag beheren (bewerken, uitlenen, ruilen) of alleen mag bekijken. Voltooiingen blijven persoonlijk.",
     "empty": {
       "title": "Je zit nog niet in een huishouden",
       "sub": "Maak een huishouden aan om je puzzelbibliotheek te delen met de mensen met wie je samenwoont, en nodig ze daarna uit.",
@@ -5765,7 +5765,7 @@
       },
       "guide": {
         "title": "Ledenprofielen",
-        "description": "Bekijk de puzzels en oplossingen van mensen in je netwerk, en kies wie de jouwe ziet."
+        "description": "Bekijk de puzzels en voltooiingen van mensen in je netwerk, en kies wie de jouwe ziet."
       }
     },
     "in-progress-solves": {
@@ -5792,7 +5792,7 @@
       "steps": {
         "shelf": {
           "title": "Je plank",
-          "body": "Elke puzzel die je toevoegt komt hier. Open er een om een oplossing vast te leggen of hem te ruilen."
+          "body": "Elke puzzel die je toevoegt komt hier. Open er een om een voltooiing vast te leggen of hem te ruilen."
         },
         "solving-now": {
           "title": "Nu aan het puzzelen",
@@ -5800,7 +5800,7 @@
         },
         "people": {
           "title": "Je netwerk",
-          "body": "Mensen met wie je elkaar volgt. Hun planken en oplossingen zie je hier."
+          "body": "Mensen met wie je elkaar volgt. Hun planken en voltooiingen zie je hier."
         },
         "account-menu": {
           "title": "Instellingen en snel instellen",
