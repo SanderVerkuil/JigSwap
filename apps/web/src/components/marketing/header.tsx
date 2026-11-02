@@ -154,16 +154,18 @@ export function MarketingHeader() {
 function LangToggle() {
   const t = useTranslations("marketing.nav");
   const current = currentLanguage(useLocale());
+  const code = current.code.toUpperCase();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          aria-label={`${t("switchLanguage")}: ${current.name}`}
+          // Names the visible code too, so voice control can target what it sees (WCAG 2.5.3).
+          aria-label={`${t("switchLanguage")}: ${current.name}, ${code}`}
           className="inline-flex items-center justify-center gap-1.5 h-10 px-3 rounded-full border border-mk-border bg-mk-card text-[13px] font-semibold leading-none text-mk-text-body"
         >
           <Flag locale={current.code} />
-          {current.code.toUpperCase()}
+          {code}
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
