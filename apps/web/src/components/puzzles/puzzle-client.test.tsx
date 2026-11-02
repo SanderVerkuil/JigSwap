@@ -256,6 +256,37 @@ describe("PuzzlesClient favourites", () => {
 });
 
 describe("PuzzlesClient filters panel", () => {
+  // After Back or from a shared link the results are narrowed: the member can see by what.
+  it.each<[PuzzlesSearch]>([
+    [{ brand: "Jumbo" }],
+    [{ minPieces: 500 }],
+    [{ maxPieces: 500 }],
+    [{ difficulty: "easy" }],
+    [{ category: "cat-1" }],
+    [{ tags: ["water"] }],
+  ])("starts open when %j narrows the results", (search) => {
+    renderClient(search);
+    expect(filtersToggle().getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByRole("combobox", { name: "Difficulty" })).toBeTruthy();
+  });
+
+  // The term and the favourites toggle show themselves in the toolbar.
+  it.each<[PuzzlesSearch]>([
+    [{}],
+    [{ q: "lake" }],
+    [{ fav: true }],
+    [{ view: "list" }],
+  ])("starts closed for %j", (search) => {
+    renderClient(search);
+    expect(filtersToggle().getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("can still be closed while a facet is set", () => {
+    renderClient({ brand: "Jumbo" });
+    fireEvent.click(filtersToggle());
+    expect(filtersToggle().getAttribute("aria-expanded")).toBe("false");
+  });
+
   it("opens and closes from its toggle, whose aria-controls always resolves", () => {
     renderClient();
     const toggle = filtersToggle();

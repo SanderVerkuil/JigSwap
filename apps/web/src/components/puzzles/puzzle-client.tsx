@@ -61,7 +61,11 @@ export function PuzzlesClient({
   const viewMode = search.view ?? "grid";
   const favoritesOnly = search.fav === true;
   const filters = filtersFromSearch(search);
-  const [showFilters, setShowFilters] = useState(false);
+  // Open from the start when a facet is set (Back from a puzzle, a shared link), so the member can
+  // see what narrows the results. The term and favourites show in the toolbar either way.
+  const [showFilters, setShowFilters] = useState(() =>
+    hasActiveCatalogueFilters({ ...filters, searchTerm: "" }),
+  );
   const filtersPanelId = useId();
 
   // The search box edits a draft that follows the URL; the URL (and so the server query) takes it
