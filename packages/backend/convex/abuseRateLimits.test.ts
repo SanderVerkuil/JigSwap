@@ -248,11 +248,14 @@ describe("sharing copies into a circle", () => {
     const circleId = await newCircle();
     await spend(RATE_LIMITS.circleShare.max - BATCH + 1);
     await expectRateLimited(share(circleId, copies));
-    expect(await t.run((ctx) => ctx.db.query("shareEvents").collect())).toEqual(
-      [],
-    );
+    expect(
+      await t.run((ctx) => ctx.db.query("circleCopyShares").collect()),
+    ).toEqual([]);
     await share(circleId, copies.slice(0, BATCH - 1));
     expect(await usedToday()).toBe(RATE_LIMITS.circleShare.max);
+    expect(
+      await t.run((ctx) => ctx.db.query("circleCopyShares").collect()),
+    ).toHaveLength(BATCH - 1);
   });
 
   test("sharing one copy at a time draws on the same budget", async () => {
