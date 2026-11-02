@@ -113,7 +113,7 @@ export function CataloguePickerView({
       </p>
 
       {rows.length > 0 && (
-        <ul className="divide-border flex flex-col divide-y rounded-xl border">
+        <ul className="divide-border flex flex-col divide-y overflow-hidden rounded-xl border">
           {rows.map((row) => {
             const picked = isPicked(picks, row.definitionId);
             return (
