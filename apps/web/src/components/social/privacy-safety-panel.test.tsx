@@ -142,7 +142,7 @@ describe("PrivacySafetyPanel", () => {
       .closest("section");
     expect(section).toBeTruthy();
     expect(
-      within(section!).getByText(/Download a JSON copy of your puzzles/),
+      within(section!).getByText(/Download a JSON file with your account/),
     ).toBeTruthy();
     expect(
       within(section!).getByRole("button", { name: "Export my data" }),

@@ -30,9 +30,10 @@ zodra je een puzzel af hebt; de rest zie je meteen.
 
 ## Je gegevens exporteren
 
-**Mijn gegevens exporteren** downloadt een JSON-kopie van je puzzels,
-voltooiingen, collecties, doelen en ruilen, met de naam
-`jigswap-export-<datum>.json`. Je vindt het op drie plekken:
+**Mijn gegevens exporteren** downloadt een JSON-bestand met je account, puzzels,
+foto's, voltooiingen, beoordelingen, ruilen, wie je volgt en de berichten die je
+hebt gestuurd, met de naam `jigswap-export-<datum>.json`. Je vindt het op drie
+plekken:
 
 - onderaan **Inzichten**;
 - op de pagina **Privacy en veiligheid** van je account (open je accountmenu →
@@ -40,5 +41,6 @@ voltooiingen, collecties, doelen en ruilen, met de naam
 - in snel zoeken (**Cmd/Ctrl + K**), onder **Snelle Acties**: als je het kiest,
   begint de download meteen.
 
-Heel lange lijsten worden afgekapt op een vast aantal rijen per categorie; de
-bevestiging meldt het als dat is gebeurd.
+Het bestand is altijd compleet, hoe lang je lijsten ook zijn. De knop laat zien
+hoe ver het is terwijl het bestand wordt klaargemaakt. Gaat er iets mis, dan
+krijg je geen bestand en zie je een melding om het opnieuw te proberen.

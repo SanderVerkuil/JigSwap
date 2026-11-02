@@ -30,9 +30,9 @@ else is shown from the start.
 
 ## Export your data
 
-**Export my data** downloads a JSON copy of your puzzles, completions,
-collections, goals and exchanges, named `jigswap-export-<date>.json`. You find
-it in three places:
+**Export my data** downloads a JSON file with your account, puzzles, photos,
+solves, reviews, exchanges, who you follow and the messages you sent, named
+`jigswap-export-<date>.json`. You find it in three places:
 
 - at the bottom of **Insights**;
 - on your account's **Privacy & safety** page (open your account menu →
@@ -40,5 +40,6 @@ it in three places:
 - in quick search (**Cmd/Ctrl + K**), under **Quick Actions**: choosing it
   starts the download straight away.
 
-Very long lists are cut off at a fixed number of rows per category; the
-confirmation tells you when that happened.
+The file is always complete, however long your lists are. The button shows how
+far it is while it prepares the file. If something goes wrong, you get no file
+and a message asking you to try again.
