@@ -178,6 +178,47 @@ describe("goals count the solves inside their period", () => {
     );
   });
 
+  test.each([
+    ["a blank title", { title: "   " }, "InvalidGoalTitle"],
+    ["a title past the limit", { title: "x".repeat(101) }, "InvalidGoalTitle"],
+    [
+      "a description past the limit",
+      { description: "x".repeat(1001) },
+      "InvalidGoalDescription",
+    ],
+    ["a start date that isn't a date", { startDate: NaN }, "InvalidGoalPeriod"],
+    [
+      "an end date that isn't a date",
+      { targetDate: 1e20 },
+      "InvalidGoalPeriod",
+    ],
+  ])(
+    "a direct call with %s is refused on create and on edit",
+    async (_name, invalid, code) => {
+      const t = convexTest(schema, modules);
+      await seed(t);
+      const valid = { title: "Ten", targetCompletions: 10 };
+      await expectConvexCode(
+        asAlice(t).mutation(api.solving.createGoal.createGoal, {
+          ...valid,
+          ...invalid,
+        }),
+        code,
+      );
+
+      const goalId = await createGoal(t, { targetCompletions: 5 });
+      await expectConvexCode(
+        asAlice(t).mutation(api.solving.updateGoal.updateGoal, {
+          goalId,
+          ...valid,
+          ...invalid,
+        }),
+        code,
+      );
+      expect((await goalRow(t, goalId))?.targetCompletions).toBe(5);
+    },
+  );
+
   test("editing a solve's date out of the period lowers the goal", async () => {
     const t = convexTest(schema, modules);
     const { alice } = await seed(t);

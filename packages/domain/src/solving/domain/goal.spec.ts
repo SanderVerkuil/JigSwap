@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { toGoalId, toMemberId } from "../../shared-kernel";
 import { DatePrecision } from "./date-precision";
-import { Goal, GoalDefinition } from "./goal";
+import {
+  Goal,
+  GoalDefinition,
+  MAX_GOAL_DESCRIPTION_LENGTH,
+  MAX_GOAL_TITLE_LENGTH,
+} from "./goal";
 import { GoalSolve } from "./goal-progress";
 
 const ID = toGoalId("goal-1");
@@ -103,6 +108,61 @@ describe("Goal.create", () => {
     expect(
       create(3, { targetDate: new Date("2026-06-01T00:00:00Z") }).isOk,
     ).toBe(true);
+  });
+});
+
+describe("what a goal definition may hold", () => {
+  const define = (extra: Partial<GoalDefinition>): GoalDefinition => ({
+    title: "Solve 3 puzzles",
+    targetCompletions: 3,
+    ...extra,
+  });
+  const expectRefused = (definition: GoalDefinition, code: string) => {
+    const created = create(definition.targetCompletions, definition);
+    expect(created.isErr && created.error.code).toBe(code);
+
+    const goal = fresh();
+    const before = goal.toState();
+    const edited = goal.edit(definition, LATER);
+    expect(edited.isErr && edited.error.code).toBe(code);
+    expect(goal.toState()).toBe(before);
+  };
+  const expectAccepted = (definition: GoalDefinition) => {
+    expect(create(definition.targetCompletions, definition).isOk).toBe(true);
+    expect(fresh().edit(definition, LATER).isOk).toBe(true);
+  };
+
+  it.each(["", "   ", "\n\t", "\u200b"])(
+    "refuses the title %j, which shows nothing, with InvalidGoalTitle",
+    (title) => expectRefused(define({ title }), "InvalidGoalTitle"),
+  );
+
+  it("takes a title up to the limit and refuses a longer one", () => {
+    expectAccepted(define({ title: "x".repeat(MAX_GOAL_TITLE_LENGTH) }));
+    expectRefused(
+      define({ title: "x".repeat(MAX_GOAL_TITLE_LENGTH + 1) }),
+      "InvalidGoalTitle",
+    );
+  });
+
+  it("takes a description up to the limit and refuses a longer one", () => {
+    expectAccepted(
+      define({ description: "x".repeat(MAX_GOAL_DESCRIPTION_LENGTH) }),
+    );
+    expectRefused(
+      define({ description: "x".repeat(MAX_GOAL_DESCRIPTION_LENGTH + 1) }),
+      "InvalidGoalDescription",
+    );
+  });
+
+  it.each([
+    ["start date", { startDate: new Date(Number.NaN) }],
+    ["target date", { targetDate: new Date(Number.NaN) }],
+    ["start date past the end of time", { startDate: new Date(1e20) }],
+    // A valid instant, but the day after it can't be represented.
+    ["target date at the end of time", { targetDate: new Date(8.64e15) }],
+  ])("refuses an invalid %s with InvalidGoalPeriod", (_name, dates) => {
+    expectRefused(define(dates), "InvalidGoalPeriod");
   });
 });
 

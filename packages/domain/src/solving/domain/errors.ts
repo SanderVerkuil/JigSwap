@@ -11,6 +11,8 @@ export type SolvingErrorCode =
   | "NotCompletionOwner"
   | "InvalidGoalTarget"
   | "InvalidGoalPeriod"
+  | "InvalidGoalTitle"
+  | "InvalidGoalDescription"
   | "NotGoalOwner"
   | "InvalidRating"
   | "ReviewTextTooLong"
@@ -73,11 +75,27 @@ export class SolvingError extends DomainError {
   }
 
   // A goal's period is empty: its start date (or, without one, the day it was created) falls after
-  // its target date.
+  // its target date. Also a date that isn't a real calendar date.
   static invalidGoalPeriod(): SolvingError {
     return new SolvingError(
       "InvalidGoalPeriod",
       "A goal's start date must be on or before its target date",
+    );
+  }
+
+  // A goal's title shows nothing, or is longer than the limit.
+  static invalidGoalTitle(max: number): SolvingError {
+    return new SolvingError(
+      "InvalidGoalTitle",
+      `A goal needs a title of at most ${max} characters`,
+    );
+  }
+
+  // A goal's description is longer than the limit.
+  static invalidGoalDescription(max: number): SolvingError {
+    return new SolvingError(
+      "InvalidGoalDescription",
+      `A goal's description may be at most ${max} characters`,
     );
   }
 

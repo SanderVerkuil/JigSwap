@@ -1,4 +1,10 @@
-import { DomainEvent, err, ok, Result } from "../../shared-kernel";
+import {
+  DomainEvent,
+  err,
+  hasVisibleCharacter,
+  ok,
+  Result,
+} from "../../shared-kernel";
 import { SolvingError } from "./errors";
 import { GoalAchieved, GoalCreated, GoalProgressed } from "./events";
 import {
@@ -8,6 +14,9 @@ import {
   GoalWindow,
 } from "./goal-progress";
 import { GoalId, MemberId } from "./ids";
+
+export const MAX_GOAL_TITLE_LENGTH = 100;
+export const MAX_GOAL_DESCRIPTION_LENGTH = 1000;
 
 // What a member decides about a goal: its wording, its target and the period it counts solves in.
 // `startDate` and `targetDate` are calendar dates (UTC midnight). Without a `startDate` the goal
@@ -51,8 +60,9 @@ export interface GoalState {
 // goal never counts solves from before it started or after it ended. progressFrom() is the
 // announced path (driven by completion changes) and emits GoalAchieved exactly once, the moment
 // progress first crosses the target; recount() is the silent path (creating, editing or restoring
-// a goal), which never announces anything. `targetCompletions` is a positive integer and the
-// period is never empty (start day on or before the target day). An archived goal
+// a goal), which never announces anything. The title shows at least one visible character, title
+// and description stay within their limits, `targetCompletions` is a positive integer and the
+// period is real and never empty (start day on or before the target day). An archived goal
 // (`isActive` false) is left alone by progressFrom's callers.
 export class Goal {
   private events: DomainEvent[] = [];
@@ -214,12 +224,25 @@ export class Goal {
 
   // --- internals ---
 
-  // A definition is valid with a positive integer target and a non-empty period, measured from
-  // its start date or, without one, from `createdAt`.
+  // A definition is valid with a title that shows something, wording within the limits, a positive
+  // integer target and a real, non-empty period, measured from its start date or, without one, from
+  // `createdAt`.
   private static validate(
     definition: GoalDefinition,
     createdAt: Date,
   ): SolvingError | undefined {
+    if (
+      !hasVisibleCharacter(definition.title) ||
+      definition.title.length > MAX_GOAL_TITLE_LENGTH
+    ) {
+      return SolvingError.invalidGoalTitle(MAX_GOAL_TITLE_LENGTH);
+    }
+    if (
+      definition.description !== undefined &&
+      definition.description.length > MAX_GOAL_DESCRIPTION_LENGTH
+    ) {
+      return SolvingError.invalidGoalDescription(MAX_GOAL_DESCRIPTION_LENGTH);
+    }
     if (
       !Number.isInteger(definition.targetCompletions) ||
       definition.targetCompletions <= 0
@@ -227,9 +250,12 @@ export class Goal {
       return SolvingError.invalidGoalTarget();
     }
     const window = goalCountingWindow({ ...definition, createdAt });
+    const from = window.from.getTime();
+    const toExclusive = window.toExclusive?.getTime();
     if (
-      window.toExclusive !== undefined &&
-      window.toExclusive.getTime() <= window.from.getTime()
+      Number.isNaN(from) ||
+      (toExclusive !== undefined &&
+        (Number.isNaN(toExclusive) || toExclusive <= from))
     ) {
       return SolvingError.invalidGoalPeriod();
     }
