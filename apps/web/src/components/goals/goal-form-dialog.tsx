@@ -13,6 +13,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
 import {
+  GOAL_DESCRIPTION_MAX_LENGTH,
+  GOAL_TITLE_MAX_LENGTH,
   goalFormErrorsFromCode,
   goalFormValues,
   minGoalEndDate,
@@ -126,7 +128,7 @@ function GoalForm({
       setValues((current) => ({ ...current, [field]: value }));
       // A changed date can fix or cause the period error, so it clears with either date.
       const clears: keyof GoalFormErrors | undefined =
-        field === "title" || field === "target"
+        field === "title" || field === "description" || field === "target"
           ? field
           : field === "from" || field === "to"
             ? "to"
@@ -138,7 +140,9 @@ function GoalForm({
 
   const showErrors = (next: GoalFormErrors) => {
     setErrors(next);
-    const first = (["title", "target", "to"] as const).find((f) => next[f]);
+    const first = (["title", "description", "target", "to"] as const).find(
+      (f) => next[f],
+    );
     if (first) document.getElementById(FIELD_ID[first])?.focus();
   };
 
@@ -173,7 +177,14 @@ function GoalForm({
     }
   };
 
-  const titleError = errors.title && t("errors.titleRequired");
+  const titleError =
+    errors.title &&
+    (errors.title === "required"
+      ? t("errors.titleRequired")
+      : t("errors.titleTooLong", { max: GOAL_TITLE_MAX_LENGTH }));
+  const descriptionError =
+    errors.description &&
+    t("errors.descriptionTooLong", { max: GOAL_DESCRIPTION_MAX_LENGTH });
   const targetError =
     errors.target &&
     (errors.target === "required"
@@ -203,6 +214,7 @@ function GoalForm({
           value={values.title}
           placeholder={t("goalTitlePlaceholder")}
           onChange={change("title")}
+          maxLength={GOAL_TITLE_MAX_LENGTH}
           required
           aria-invalid={titleError ? true : undefined}
           aria-describedby={describedBy(titleError && errorId("title"))}
@@ -217,7 +229,13 @@ function GoalForm({
           value={values.description}
           placeholder={t("goalDescriptionPlaceholder")}
           onChange={change("description")}
+          maxLength={GOAL_DESCRIPTION_MAX_LENGTH}
+          aria-invalid={descriptionError ? true : undefined}
+          aria-describedby={describedBy(
+            descriptionError && errorId("description"),
+          )}
         />
+        <FieldError id={errorId("description")} message={descriptionError} />
       </div>
 
       <div className="space-y-2">

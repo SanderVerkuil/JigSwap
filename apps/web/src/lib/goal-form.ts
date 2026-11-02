@@ -8,6 +8,11 @@ import { dateInputToMs, localTodayInput, msToDateInput } from "./date-input";
 
 const DAY_MS = 86_400_000;
 
+// The longest wording the server accepts (MAX_GOAL_TITLE_LENGTH and MAX_GOAL_DESCRIPTION_LENGTH in
+// solving/domain/goal.ts). Goals set before these limits can be longer, so the form says so too.
+export const GOAL_TITLE_MAX_LENGTH = 100;
+export const GOAL_DESCRIPTION_MAX_LENGTH = 1000;
+
 // Where a goal sits on the goals page. "ended" = its last day has passed without reaching the
 // target; reaching the target always wins over ending, and archiving wins over both.
 export type GoalStatus = "active" | "achieved" | "ended" | "archived";
@@ -76,7 +81,8 @@ export interface GoalFormValues {
 }
 
 export interface GoalFormErrors {
-  title?: "required";
+  title?: "required" | "tooLong";
+  description?: "tooLong";
   target?: TargetError;
   to?: "beforeFrom" | "past";
 }
@@ -148,6 +154,12 @@ export function validateGoalForm(
 
   const title = values.title.trim();
   if (title === "") errors.title = "required";
+  else if (title.length > GOAL_TITLE_MAX_LENGTH) errors.title = "tooLong";
+
+  const description = values.description.trim();
+  if (description.length > GOAL_DESCRIPTION_MAX_LENGTH) {
+    errors.description = "tooLong";
+  }
 
   const target = parseTarget(values.target);
   if (!target.ok) errors.target = target.error;
@@ -171,7 +183,7 @@ export function validateGoalForm(
     ok: true,
     definition: {
       title,
-      description: values.description.trim() || undefined,
+      description: description || undefined,
       targetCompletions: target.value,
       startDate,
       targetDate,
@@ -184,6 +196,10 @@ export function validateGoalForm(
 export function goalFormErrorsFromCode(
   code: string | undefined,
 ): GoalFormErrors | undefined {
+  // The form only sends a title with text in it, so this is one with nothing visible (zero-width
+  // characters, say).
+  if (code === "InvalidGoalTitle") return { title: "required" };
+  if (code === "InvalidGoalDescription") return { description: "tooLong" };
   if (code === "InvalidGoalTarget") return { target: "invalid" };
   if (code === "InvalidGoalPeriod") return { to: "beforeFrom" };
   return undefined;

@@ -3375,6 +3375,8 @@
       "updateError": "Kon het doel niet opslaan. Probeer het opnieuw.",
       "errors": {
         "titleRequired": "Geef je doel een titel.",
+        "titleTooLong": "Houd de titel op maximaal {max} tekens.",
+        "descriptionTooLong": "Houd de beschrijving op maximaal {max} tekens.",
         "targetRequired": "Vul in hoeveel puzzels je wilt afmaken.",
         "targetInvalid": "Gebruik een heel getal van 1 of meer.",
         "toBeforeFrom": "De einddatum mag niet vóór de begindatum liggen.",

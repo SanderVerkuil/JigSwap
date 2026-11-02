@@ -3375,6 +3375,8 @@
       "updateError": "Could not save the goal. Please try again.",
       "errors": {
         "titleRequired": "Give your goal a title.",
+        "titleTooLong": "Keep the title to {max} characters.",
+        "descriptionTooLong": "Keep the description to {max} characters.",
         "targetRequired": "Enter how many puzzles you want to finish.",
         "targetInvalid": "Use a whole number of 1 or more.",
         "toBeforeFrom": "The end date can't be before the start date.",

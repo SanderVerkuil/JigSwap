@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   currentGoals,
   defaultGoalPeriod,
+  GOAL_DESCRIPTION_MAX_LENGTH,
+  GOAL_TITLE_MAX_LENGTH,
   goalFormErrorsFromCode,
   goalFormValues,
   goalStatus,
@@ -191,6 +193,37 @@ describe("validateGoalForm", () => {
     ).toEqual({ ok: false, errors: { target: "invalid" } });
   });
 
+  it("takes a title and description up to the server's limits and refuses longer ones", () => {
+    expect(
+      validateGoalForm(
+        valid({
+          title: "x".repeat(GOAL_TITLE_MAX_LENGTH),
+          description: "x".repeat(GOAL_DESCRIPTION_MAX_LENGTH),
+        }),
+        { mode: "edit", now },
+      ).ok,
+    ).toBe(true);
+    expect(
+      validateGoalForm(
+        valid({
+          title: "x".repeat(GOAL_TITLE_MAX_LENGTH + 1),
+          description: "x".repeat(GOAL_DESCRIPTION_MAX_LENGTH + 1),
+        }),
+        { mode: "edit", now },
+      ),
+    ).toEqual({
+      ok: false,
+      errors: { title: "tooLong", description: "tooLong" },
+    });
+  });
+
+  it("measures the title without the spaces around it", () => {
+    const title = ` ${"x".repeat(GOAL_TITLE_MAX_LENGTH)} `;
+    expect(validateGoalForm(valid({ title }), { mode: "edit", now }).ok).toBe(
+      true,
+    );
+  });
+
   it("refuses an end date before the start date", () => {
     expect(
       validateGoalForm(valid({ from: "2026-12-01", to: "2026-11-30" }), {
@@ -311,6 +344,12 @@ describe("goalFormErrorsFromCode", () => {
     });
     expect(goalFormErrorsFromCode("InvalidGoalPeriod")).toEqual({
       to: "beforeFrom",
+    });
+    expect(goalFormErrorsFromCode("InvalidGoalTitle")).toEqual({
+      title: "required",
+    });
+    expect(goalFormErrorsFromCode("InvalidGoalDescription")).toEqual({
+      description: "tooLong",
     });
   });
 

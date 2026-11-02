@@ -220,6 +220,37 @@ describe("GoalFormDialog: create", () => {
 });
 
 describe("GoalFormDialog: edit", () => {
+  it("says when an older goal's wording is over the limit, on the field to shorten", async () => {
+    const { onOpenChange } = renderForm({
+      goal: {
+        ...GOAL,
+        title: "x".repeat(101),
+        description: "y".repeat(1001),
+      },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    await vi.waitFor(() =>
+      expect(errorOf(input(/^Title/))).toBe(
+        "Keep the title to 100 characters.",
+      ),
+    );
+    expect(errorOf(input("Description"))).toBe(
+      "Keep the description to 1000 characters.",
+    );
+    expect(document.activeElement).toBe(input(/^Title/));
+    expect(calls.update).toEqual([]);
+    expect(onOpenChange).not.toHaveBeenCalled();
+
+    fireEvent.change(input("Description"), { target: { value: "short" } });
+    expect(errorOf(input("Description"))).toBeUndefined();
+  });
+
+  it("stops typing at the limits", () => {
+    renderForm({ goal: GOAL });
+    expect(input(/^Title/).getAttribute("maxlength")).toBe("100");
+    expect(input("Description").getAttribute("maxlength")).toBe("1000");
+  });
+
   it("opens prefilled with the goal and sends the whole definition back", async () => {
     renderForm({ goal: GOAL });
     const dialog = screen.getByRole("dialog", { name: "Edit goal" });
