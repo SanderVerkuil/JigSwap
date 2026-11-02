@@ -5,8 +5,9 @@
 // 2-line description, hover chevron — per the content-width conformance
 // design (tile grid deliberately chosen over a row directory so these pages
 // feel like a "home" surface). Below sm, where the phone tabs open these hubs,
-// the tiles become compact ~56px rows (chip, title, one-line description,
-// chevron) so every page fits above the fold. Messages and Exchanges carry
+// the tiles become compact rows (chip, title, up to two lines of description,
+// chevron) so every page fits above the fold with the words that tell similar
+// pages apart intact. Messages and Exchanges carry
 // their live counts: a pill on the phone row, the full count in the link's
 // name at every size. A tile can also carry a count of the work waiting behind
 // it (`counts`, keyed by nav item; the admin hub passes its queue counts): a
@@ -78,7 +79,7 @@ export function GroupLanding({
                   </span>
                 )}
               </span>
-              <span className="line-clamp-1 text-sm text-muted-foreground sm:line-clamp-2">
+              <span className="line-clamp-2 text-sm text-muted-foreground">
                 {t(`pages.${item.key}.description`)}
               </span>
               {count && <span className="sr-only">{count.label}</span>}

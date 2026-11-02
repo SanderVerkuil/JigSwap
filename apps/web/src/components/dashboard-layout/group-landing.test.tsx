@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-// UX-06: on a phone the hub pages (/library, /community) list their pages as compact ~56px rows
+// UX-06: on a phone the hub pages (/library, /community) list their pages as compact rows
 // instead of tall tiles, and the Community hub shows the live counts on Messages (unread) and
 // Exchanges (requests waiting for the member's answer): a visual pill below sm, the full count in
 // the row's name at every size. From sm up the tile grid is unchanged.
@@ -78,8 +78,9 @@ describe("GroupLanding", () => {
     expect(classes).toContain("sm:flex-col");
     expect(classes).toContain("sm:p-5");
     const description = screen.getByText(en.shell.pages.myPuzzles.description);
-    expect(classesOf(description)).toContain("line-clamp-1");
-    expect(classesOf(description)).toContain("sm:line-clamp-2");
+    // Two lines at every size: the description is what tells Browse from the catalogue.
+    expect(classesOf(description)).toContain("line-clamp-2");
+    expect(classesOf(description)).not.toContain("line-clamp-1");
   });
 
   it("shows no counts while nothing is waiting", () => {
