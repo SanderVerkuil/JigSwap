@@ -103,6 +103,8 @@ export function PuzzleCardShell({
   // padding, and no description or tags. List rows are their own compact layout (renderListRow).
   const compactOnPhones = viewMode === "grid";
   const Title = `h${headingLevel}` as const;
+  // Nothing to say without a count (the add form's preview before one is typed): never "0 pieces".
+  const pieceCount = puzzle.pieceCount || undefined;
 
   const difficultyLabel = (difficulty?: string | null) => {
     switch (difficulty) {
@@ -207,8 +209,11 @@ export function PuzzleCardShell({
             )}
           </div>
           <div className="text-xs">
-            {format.number(puzzle.pieceCount ?? 0)}{" "}
-            {t("pieces", { count: puzzle.pieceCount ?? 0 })}
+            {pieceCount && (
+              <>
+                {format.number(pieceCount)} {t("pieces", { count: pieceCount })}
+              </>
+            )}
             {puzzle.difficulty && (
               <span className="text-muted-foreground block truncate max-sm:hidden">
                 {difficultyLabel(puzzle.difficulty)}
@@ -247,10 +252,11 @@ export function PuzzleCardShell({
           <p className="text-xs text-muted-foreground mb-1">{puzzle.brand}</p>
         )}
         <div className="flex flex-wrap items-center gap-2 mb-2">
-          <Badge variant="secondary" className="text-xs">
-            {format.number(puzzle.pieceCount ?? 0)}{" "}
-            {t("pieces", { count: puzzle.pieceCount ?? 0 })}
-          </Badge>
+          {pieceCount && (
+            <Badge variant="secondary" className="text-xs">
+              {format.number(pieceCount)} {t("pieces", { count: pieceCount })}
+            </Badge>
+          )}
           {puzzle.difficulty && (
             <Badge
               variant="secondary"

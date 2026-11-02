@@ -503,6 +503,16 @@ describe("on phones and tablets", () => {
     expect(within(preview).queryByRole("link")).toBeNull();
   });
 
+  it("previews no piece count until one is entered, as a real card can't have none", () => {
+    renderPage();
+    const preview = screen.getByText("Live preview").parentElement!;
+    expect(within(preview).queryByText(/piece/)).toBeNull();
+    fireEvent.change(screen.getByLabelText(en.puzzles.fieldPieceCount), {
+      target: { value: "1000" },
+    });
+    expect(within(preview).getByText("1,000 pieces")).toBeTruthy();
+  });
+
   it("shows no look-alike buttons in the live preview", () => {
     renderPage({ puzzleId: PUZZLE_DOC_ID });
     expect(screen.queryByRole("button", { name: "View" })).toBeNull();

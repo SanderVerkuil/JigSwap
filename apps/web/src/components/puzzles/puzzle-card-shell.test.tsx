@@ -261,6 +261,13 @@ describe("PuzzleCardShell piece count", () => {
   );
 });
 
+describe("PuzzleCardShell without a piece count", () => {
+  it.each(["grid", "list"] as const)("shows none in %s view", (viewMode) => {
+    render(puzzle({ pieceCount: 0 }), viewMode);
+    expect(container.textContent).not.toContain("0 pieces");
+  });
+});
+
 describe("PuzzleCardShell difficulty pill", () => {
   it.each(["easy", "medium", "hard", "expert"] as const)(
     "gives the %s difficulty pill dark-mode colours (UX-10)",
