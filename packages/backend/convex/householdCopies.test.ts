@@ -650,22 +650,32 @@ describe("household default copy permission", () => {
 
   test("the household reports its default and how many copies follow it", async () => {
     // Ann's manageCopy and Bob's bobCopy have no explicit value; Ann's viewCopy does; Cat is out.
+    const followers =
+      api.household.countCopiesUsingDefault.countCopiesUsingDefault;
     const before = await as(t, "bob").query(
       api.household.getMyHousehold.getMyHousehold,
       {},
     );
     expect(before?.defaultCopyPermission).toBe("manage");
-    expect(before?.copiesUsingDefault).toBe(2);
+    expect(await as(t, "bob").query(followers, {})).toBe(2);
     await as(t, "ann").mutation(setDefault, { permission: "view" });
     const after = await as(t, "ann").query(
       api.household.getMyHousehold.getMyHousehold,
       {},
     );
     expect(after?.defaultCopyPermission).toBe("view");
-    expect(after?.copiesUsingDefault).toBe(2);
+    expect(await as(t, "ann").query(followers, {})).toBe(2);
     expect(
       await as(t, "ann").mutation(setDefault, { permission: "view" }),
     ).toEqual({ changed: false });
+  });
+
+  test("the count of copies following the default is the household's own business", async () => {
+    const followers =
+      api.household.countCopiesUsingDefault.countCopiesUsingDefault;
+    await expect(t.query(followers, {})).rejects.toThrow(/Unauthenticated/);
+    // Cat is in no household: she learns nothing, and no one's copies are counted for her.
+    expect(await as(t, "cat").query(followers, {})).toBeNull();
   });
 
   test("clearing an explicit value falls back to the household default", async () => {

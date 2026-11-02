@@ -80,8 +80,6 @@ export interface HouseholdView {
   joinRequests: HouseholdJoinRequestView[];
   /** Household-wide permission for member copies without an explicit value (unset = "manage"). */
   defaultCopyPermission: HouseholdCopyPermission;
-  /** How many copies, across all members, have no explicit value and so follow the default. */
-  copiesUsingDefault: number;
 }
 
 /** `household.myInvites`: a pending invite the viewer received. */

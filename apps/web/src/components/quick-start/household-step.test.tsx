@@ -62,7 +62,6 @@ const household = (
   pendingInvites: [],
   joinRequests: [],
   defaultCopyPermission: "manage",
-  copiesUsingDefault: 0,
 });
 
 const renderStep = (viewerRole: HouseholdRole, others = 0) => {

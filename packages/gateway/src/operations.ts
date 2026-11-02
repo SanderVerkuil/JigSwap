@@ -165,6 +165,10 @@ export const gateway = {
   // Invite-based (admin invites, invitee accepts/declines); a member is in at most one household.
   household: {
     mine: api.household.getMyHousehold.getMyHousehold,
+    // How many copies follow the household's default permission: reads the copies, so only the
+    // settings panel asks for it (never put it back in `mine`, which My Puzzles reads).
+    copiesUsingDefault:
+      api.household.countCopiesUsingDefault.countCopiesUsingDefault,
     myInvites: api.household.listMyHouseholdInvites.listMyHouseholdInvites,
     copies: api.household.listHouseholdCopies.listHouseholdCopies,
     // The viewer's own copies with the household permission each grants (absent = "manage").

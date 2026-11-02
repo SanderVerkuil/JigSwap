@@ -129,7 +129,6 @@ const household = (viewerRole: "admin" | "member"): HouseholdData => ({
       : [],
   joinRequests: [],
   defaultCopyPermission: "view",
-  copiesUsingDefault: 4,
 });
 
 const details = (

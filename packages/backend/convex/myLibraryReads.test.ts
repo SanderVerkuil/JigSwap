@@ -435,3 +435,135 @@ describe("the bounded whole-library reads", () => {
     expect(mates).toHaveLength(LIBRARY_INDEX_CAP);
   });
 });
+
+// How many ownedPuzzles rows a read takes, counted at the syscalls convex-test serves it through:
+// rows from an index read, plus direct gets.
+const libraryRowsReadBy = async (read: () => Promise<unknown>) => {
+  interface ConvexGlobal {
+    syscall: (op: string, args: string) => string;
+    asyncSyscall: (op: string, args: string) => Promise<string>;
+  }
+  const convex = (globalThis as unknown as { Convex: ConvexGlobal }).Convex;
+  // The real ones are per test context, so a getter wraps whichever is current at each call.
+  const wrap = <K extends keyof ConvexGlobal>(
+    name: K,
+    wrapped: (real: ConvexGlobal[K]) => ConvexGlobal[K],
+  ) => {
+    const original = Object.getOwnPropertyDescriptor(
+      convex,
+      name,
+    ) as PropertyDescriptor & { get: () => ConvexGlobal[K] };
+    Object.defineProperty(convex, name, {
+      configurable: true,
+      get: () => wrapped(original.get.call(convex)),
+    });
+    return () => Object.defineProperty(convex, name, original);
+  };
+
+  const libraryQueries = new Set<number>();
+  let rows = 0;
+  const restoreSync = wrap("syscall", (real) => (op, args) => {
+    const result = real(op, args);
+    if (
+      op === "1.0/queryStream" &&
+      JSON.stringify(JSON.parse(args).query.source).includes("ownedPuzzles")
+    ) {
+      libraryQueries.add(JSON.parse(result).queryId);
+    }
+    return result;
+  });
+  const restoreAsync = wrap("asyncSyscall", (real) => async (op, args) => {
+    const result = await real(op, args);
+    const parsed = JSON.parse(args);
+    if (
+      (op === "1.0/queryStreamNext" &&
+        libraryQueries.has(parsed.queryId) &&
+        !JSON.parse(result).done) ||
+      (op === "1.0/get" && parsed.table === "ownedPuzzles")
+    ) {
+      rows += 1;
+    }
+    return result;
+  });
+  try {
+    await read();
+  } finally {
+    restoreSync();
+    restoreAsync();
+  }
+  return rows;
+};
+
+// What a plain My Puzzles reads and SSR prefetches (prefetch-my-puzzles.ts): an open list costs what
+// is on screen, however many copies the household holds.
+describe("a plain My Puzzles for a household member", () => {
+  const LIMIT = 48;
+  const addCopies = (ownerId: Id<"users">, count: number) =>
+    t.run(async (ctx) => {
+      for (let i = 0; i < count; i++) {
+        await ctx.db.insert("ownedPuzzles", {
+          puzzleId: w.puzzleId,
+          ownerId,
+          condition: "good",
+          availability: closed,
+          createdAt: i,
+          updatedAt: i,
+        });
+      }
+    });
+  const countMembers = (owned: number) =>
+    t.run(async (ctx) => {
+      for (const memberId of [w.ann, w.bob]) {
+        const row = await ctx.db
+          .query("memberLibraryCounts")
+          .withIndex("by_member", (q) => q.eq("memberId", memberId))
+          .unique();
+        if (row) await ctx.db.patch(row._id, { owned });
+        else {
+          await ctx.db.insert("memberLibraryCounts", {
+            memberId,
+            owned,
+            forTrade: 0,
+          });
+        }
+      }
+    });
+  const plainList = () => {
+    const ann = t.withIdentity({ subject: "clerk_ann" });
+    return libraryRowsReadBy(async () => {
+      await ann.query(api.identity.getCurrentUser.getCurrentUser, {});
+      await ann.query(api.household.getMyHousehold.getMyHousehold, {});
+      await ann.query(api.library.getLentOutLoans.getLentOutLoans, {});
+      await ann.query(api.solving.listMySolveStates.listMySolveStates, {});
+      await ann.query(api.catalog.boxArtInCheck.listMyBoxArtInCheck, {});
+      await ann.query(api.library.listMyLibraryWindow.listMyLibraryWindow, {
+        limit: LIMIT,
+      });
+    });
+  };
+
+  test("reads no more of the library when the library grows", async () => {
+    await addCopies(w.ann, 60);
+    await addCopies(w.bob, 60);
+    await countMembers(60);
+    const small = await plainList();
+    // The window and its one look-ahead row per owner; nothing scans.
+    expect(small).toBeGreaterThanOrEqual(LIMIT);
+    expect(small).toBeLessThan(120);
+
+    await addCopies(w.ann, 300);
+    await addCopies(w.bob, 300);
+    await countMembers(360);
+    expect(await plainList()).toBe(small);
+  });
+
+  test("the household read itself touches no copy at all", async () => {
+    await addCopies(w.ann, 20);
+    const ann = t.withIdentity({ subject: "clerk_ann" });
+    expect(
+      await libraryRowsReadBy(() =>
+        ann.query(api.household.getMyHousehold.getMyHousehold, {}),
+      ),
+    ).toBe(0);
+  });
+});

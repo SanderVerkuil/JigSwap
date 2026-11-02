@@ -439,7 +439,6 @@ export function HouseholdDetails({
             isAdmin={isAdmin}
             name={household.name}
             defaultCopyPermission={household.defaultCopyPermission}
-            copiesUsingDefault={household.copiesUsingDefault}
             onError={onError}
           />
 

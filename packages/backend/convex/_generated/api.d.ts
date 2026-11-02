@@ -238,6 +238,7 @@ import type * as household_adapters_deps from "../household/adapters/deps.js";
 import type * as household_adapters_runtime from "../household/adapters/runtime.js";
 import type * as household_approveJoinRequest from "../household/approveJoinRequest.js";
 import type * as household_copyAccess from "../household/copyAccess.js";
+import type * as household_countCopiesUsingDefault from "../household/countCopiesUsingDefault.js";
 import type * as household_createHousehold from "../household/createHousehold.js";
 import type * as household_declineHouseholdInvite from "../household/declineHouseholdInvite.js";
 import type * as household_declineJoinRequest from "../household/declineJoinRequest.js";
@@ -866,6 +867,7 @@ declare const fullApi: ApiFromModules<{
   "household/adapters/runtime": typeof household_adapters_runtime;
   "household/approveJoinRequest": typeof household_approveJoinRequest;
   "household/copyAccess": typeof household_copyAccess;
+  "household/countCopiesUsingDefault": typeof household_countCopiesUsingDefault;
   "household/createHousehold": typeof household_createHousehold;
   "household/declineHouseholdInvite": typeof household_declineHouseholdInvite;
   "household/declineJoinRequest": typeof household_declineJoinRequest;
