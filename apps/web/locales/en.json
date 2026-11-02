@@ -1443,7 +1443,7 @@
     "actions": {
       "addPuzzle": "Add a Puzzle",
       "browse": "Browse Community",
-      "logCompletion": "Log a Completion"
+      "logCompletion": "Log a solve"
     },
     "shelf": {
       "title": "Your Shelf",
@@ -4251,7 +4251,7 @@
     "actions": {
       "addToMyPuzzles": "Add to my puzzles",
       "addAPuzzle": "Add a Puzzle",
-      "logCompletion": "Log a Completion",
+      "logCompletion": "Log a solve",
       "createCircle": "Create a Circle",
       "browseCommunity": "Browse Community",
       "exportData": "Export my data"

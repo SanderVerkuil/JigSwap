@@ -319,7 +319,7 @@ describe("CommandPalette", () => {
   // UX-58: quick actions open the action itself, not the list page behind it.
   it.each([
     ["Add a Puzzle", "/my-puzzles/add"],
-    ["Log a Completion", "/completions/new"],
+    ["Log a solve", "/completions/new"],
     ["Create a Circle", "/circles?create=1"],
     ["Browse Community", "/browse"],
   ])("“%s” goes to %s", (name, href) => {

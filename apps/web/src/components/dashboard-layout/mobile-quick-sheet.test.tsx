@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-// UX-58: every quick-sheet row opens what it promises. "Log a Completion" opens the log flow, not
+// UX-58: every quick-sheet row opens what it promises. "Log a solve" opens the log flow, not
 // the list, and "Find a swap" opens Browse (where swaps start) instead of the exchanges list.
 // UX-06: Messages has a row of its own, with the unread count as a pill and in its name.
 // UX-56: phones have no top-bar theme or language menus, so the sheet carries both choices.
@@ -63,7 +63,7 @@ afterEach(cleanup);
 describe("MobileQuickSheet", () => {
   it.each([
     ["Add a Puzzle", "/my-puzzles/add"],
-    ["Log a Completion", "/completions/new"],
+    ["Log a solve", "/completions/new"],
     ["Find a swap", "/browse"],
     ["Messages", "/messages"],
     ["Profile", "/profile"],
@@ -78,7 +78,7 @@ describe("MobileQuickSheet", () => {
     renderSheet();
     expect(rowNames()).toEqual([
       "Add a Puzzle",
-      "Log a Completion",
+      "Log a solve",
       "Find a swap",
       "Messages",
       "Profile",
