@@ -193,7 +193,7 @@ describe("Browse page", () => {
       loadMore,
     };
     await open("/browse");
-    expect(text()).toContain("1+ puzzles found");
+    expect(text()).toContain("1+ copies found");
     await act(async () => button(copy.loadMore)?.click());
     expect(loadMore).toHaveBeenCalledTimes(1);
   });
@@ -201,7 +201,7 @@ describe("Browse page", () => {
   it("gives the count without a + once the end of the list is on screen", async () => {
     browse.current = { ...BASE, rows: [ROW] };
     await open("/browse");
-    expect(text()).toContain("1 puzzle found");
+    expect(text()).toContain("1 copy found");
     expect(button(copy.loadMore)).toBeFalsy();
   });
 
