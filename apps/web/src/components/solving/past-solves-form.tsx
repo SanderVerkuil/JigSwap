@@ -52,14 +52,14 @@ export function PastSolvesForm({
         : "skip",
     ),
   );
-  const { data: completions } = useQuery(
-    convexQuery(gateway.solving.myCompletions, member ? {} : "skip"),
+  const { data: solveStates } = useQuery(
+    convexQuery(gateway.solving.mySolveStates, member ? {} : "skip"),
   );
   const record = useMutation({
     mutationFn: useConvexMutation(gateway.solving.recordPastCompletions),
   });
 
-  if (copies === undefined || completions === undefined) {
+  if (copies === undefined || solveStates === undefined) {
     return (
       <div className="space-y-3" aria-busy="true">
         <Skeleton className="h-6 w-2/3" />
@@ -85,7 +85,10 @@ export function PastSolvesForm({
 
   return (
     <PastSolvesList
-      candidates={pastSolveCandidates(copies, completions).map((copy) => ({
+      candidates={pastSolveCandidates(
+        copies,
+        new Set(solveStates.map((state) => state.copyId)),
+      ).map((copy) => ({
         copyId: copy.aggregateId as string,
         title: copy.snapshot?.title ?? copy.puzzle?.title ?? "",
       }))}

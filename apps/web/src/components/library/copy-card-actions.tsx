@@ -33,39 +33,18 @@ export interface SolveState {
   inProgressStartDate?: number;
 }
 
-// The member's solve log keyed by the copy's ownedPuzzles _id: whether each copy has a solve in
+// The member's solve states keyed by the copy's ownedPuzzles _id: whether each copy has a solve in
 // progress (and the newest one to finish) or a completed one.
 export function useSolveStateByCopyId(
   enabled: boolean,
 ): Map<string, SolveState> {
-  const { data: completions } = useQuery(
-    convexQuery(gateway.solving.myCompletions, enabled ? {} : "skip"),
+  const { data: states } = useQuery(
+    convexQuery(gateway.solving.mySolveStates, enabled ? {} : "skip"),
   );
-  return useMemo(() => {
-    const map = new Map<string, SolveState>();
-    for (const completion of completions ?? []) {
-      if (!completion.ownedPuzzleId) continue;
-      const state = map.get(completion.ownedPuzzleId) ?? {
-        inProgress: false,
-        completed: false,
-      };
-      if (completion.isCompleted) state.completed = true;
-      else {
-        state.inProgress = true;
-        // Retain the newest in-progress completion so the card's Finish action targets it.
-        if (
-          completion.aggregateId &&
-          (state.inProgressStartDate === undefined ||
-            completion.startDate > state.inProgressStartDate)
-        ) {
-          state.inProgressCompletionId = completion.aggregateId;
-          state.inProgressStartDate = completion.startDate;
-        }
-      }
-      map.set(completion.ownedPuzzleId, state);
-    }
-    return map;
-  }, [completions]);
+  return useMemo(
+    () => new Map((states ?? []).map((state) => [state.copyId, state])),
+    [states],
+  );
 }
 
 interface ActionableCopy {

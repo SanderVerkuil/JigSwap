@@ -19,19 +19,16 @@ describe("pastSolveCandidates", () => {
       copy("c", 2, "agg-c"),
       copy("d", 4, "agg-d"),
     ];
-    const completions = [
-      { ownedPuzzleId: "a" }, // finished
-      { ownedPuzzleId: "d" }, // in progress also counts as "has a completion"
-      { ownedPuzzleId: undefined },
-    ];
-    expect(pastSolveCandidates(copies, completions).map((c) => c._id)).toEqual([
+    // "a" is finished; "d" is in progress, which also counts as "has a completion".
+    const solved = new Set(["a", "d"]);
+    expect(pastSolveCandidates(copies, solved).map((c) => c._id)).toEqual([
       "b",
       "c",
     ]);
   });
 
   it("skips legacy copies without an aggregateId (the mutation keys on it)", () => {
-    expect(pastSolveCandidates([copy("a", 1)], [])).toEqual([]);
+    expect(pastSolveCandidates([copy("a", 1)], new Set())).toEqual([]);
   });
 });
 

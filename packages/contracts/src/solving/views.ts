@@ -10,6 +10,19 @@
 export type CompletionDatePrecision = "day" | "year" | "unknown";
 
 /**
+ * `solving.mySolveStates`: what the acting member's solve log says about one copy (its ownedPuzzles
+ * _id). A copy without a row has no solve.
+ */
+export interface MySolveStateView {
+  copyId: string;
+  completed: boolean;
+  inProgress: boolean;
+  /** The in-progress solve to finish: the newest started that can be (it has an aggregateId). */
+  inProgressCompletionId?: string;
+  inProgressStartDate?: number;
+}
+
+/**
  * One of the acting member's in-progress solves (dashboard / self surfaces). Excludes notes,
  * photos, and internal row ids by construction — only what the card renders.
  */

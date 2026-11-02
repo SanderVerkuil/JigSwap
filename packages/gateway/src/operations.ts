@@ -346,6 +346,9 @@ export const gateway = {
     setGoalArchived: api.solving.setGoalArchived.setGoalArchived,
     deleteGoal: api.solving.deleteGoal.deleteGoal,
     myCompletions: api.solving.listMyCompletions.listMyCompletions,
+    // Per copy: is a solve on it finished, or in progress? For pills and "already solved" marks,
+    // which never need the joined history above.
+    mySolveStates: api.solving.listMySolveStates.listMySolveStates,
     completionHistory: api.solving.getCompletionHistory.getCompletionHistory,
     myGoals: api.solving.listMyGoals.listMyGoals,
     myInProgress: api.solving.listMyInProgress.listMyInProgress,

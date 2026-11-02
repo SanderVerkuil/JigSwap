@@ -24,7 +24,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/gateway", () => ({
   gateway: {
     library: { deleteOwned: "deleteOwned" },
-    solving: { myCompletions: "myCompletions" },
+    solving: { mySolveStates: "mySolveStates" },
   },
 }));
 vi.mock("@/compat/navigation", () => ({

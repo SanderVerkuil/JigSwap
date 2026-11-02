@@ -82,7 +82,7 @@ vi.mock("@/components/solving/log-solve-dialog", () => ({
   ),
 }));
 
-type Completions = FunctionReturnType<typeof gateway.solving.myCompletions>;
+type SolveStates = FunctionReturnType<typeof gateway.solving.mySolveStates>;
 
 const RECALL = getFunctionName(gateway.lending.recallLoan);
 const NOW = Date.UTC(2026, 9, 30, 12);
@@ -124,12 +124,12 @@ const lentLoan = loan({
 const renderTab = ({
   borrowed,
   lentOut,
-  completions = [],
+  solveStates = [],
   locale = "en",
 }: {
   borrowed: LoanView[] | undefined;
   lentOut: LoanView[] | undefined;
-  completions?: Completions;
+  solveStates?: SolveStates;
   locale?: "en" | "nl";
 }) => {
   const convexQueryClient = new ConvexQueryClient(
@@ -146,8 +146,8 @@ const renderTab = ({
     },
   });
   queryClient.setQueryData(
-    convexQuery(gateway.solving.myCompletions, {}).queryKey,
-    completions,
+    convexQuery(gateway.solving.mySolveStates, {}).queryKey,
+    solveStates,
   );
   render(
     <QueryClientProvider client={queryClient}>
@@ -199,15 +199,15 @@ describe("LoansTab", () => {
     renderTab({
       borrowed: [borrowedLoan],
       lentOut: [],
-      completions: [
+      solveStates: [
         {
-          _id: "c-row",
-          aggregateId: "completion-1",
-          ownedPuzzleId: "copy-doc-1",
-          isCompleted: false,
-          startDate: NOW - DAY,
+          copyId: "copy-doc-1",
+          completed: false,
+          inProgress: true,
+          inProgressCompletionId: "completion-1",
+          inProgressStartDate: NOW - DAY,
         },
-      ] as unknown as Completions,
+      ],
     });
     const borrowed = section("Borrowed by you 1");
     expect(

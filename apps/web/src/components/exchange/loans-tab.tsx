@@ -169,31 +169,26 @@ function BorrowedRows({ loans }: { loans: LoanView[] }) {
   const displayName = useMemberDisplayName();
   const elapsedTime = useElapsedTime();
 
-  // The viewer's own solve log powers the Start puzzle ↔ Finish solve swap per row.
-  const { data: completions } = useQuery(
-    convexQuery(gateway.solving.myCompletions, {}),
+  // The viewer's own solves power the Start puzzle ↔ Finish solve swap per row. A borrowed loan
+  // exposes its copy as loan.copyDocId ("" when the copy row is gone — skip those).
+  const { data: solveStates } = useQuery(
+    convexQuery(gateway.solving.mySolveStates, {}),
   );
-  // Newest in-progress solve per copy _id; a borrowed loan exposes its copy as loan.copyDocId
-  // ("" when the copy row is gone — skip those).
   const inProgressByCopyDocId = useMemo(() => {
     const map = new Map<string, { completionId: string; startDate: number }>();
-    for (const completion of completions ?? []) {
+    for (const state of solveStates ?? []) {
       if (
-        completion.isCompleted ||
-        !completion.ownedPuzzleId ||
-        !completion.aggregateId
-      )
-        continue;
-      const existing = map.get(completion.ownedPuzzleId);
-      if (!existing || completion.startDate > existing.startDate) {
-        map.set(completion.ownedPuzzleId, {
-          completionId: completion.aggregateId,
-          startDate: completion.startDate,
+        state.inProgressCompletionId !== undefined &&
+        state.inProgressStartDate !== undefined
+      ) {
+        map.set(state.copyId, {
+          completionId: state.inProgressCompletionId,
+          startDate: state.inProgressStartDate,
         });
       }
     }
     return map;
-  }, [completions]);
+  }, [solveStates]);
 
   // The open dialog, if any: start a solve, log a past one, or finish the one in progress.
   const [startFor, setStartFor] = useState<LoanView | null>(null);
