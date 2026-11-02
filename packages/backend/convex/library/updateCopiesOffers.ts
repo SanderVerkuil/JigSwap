@@ -8,6 +8,7 @@ import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { convexCopyManagerPolicy } from "../household/copyAccess";
 import { requireMember } from "../identity/requireMember";
+import { enforceRateLimit } from "../lib/rateLimits";
 import { convexCopyRepository } from "./adapters/convexCopyRepository";
 import { convexCopyReservationPort } from "./adapters/convexCopyReservationPort";
 import { libraryEventPublisher } from "./adapters/eventPublisher";
@@ -20,7 +21,8 @@ import { toConvexError } from "./errors";
 // owner's visibility choice and sale price. A flag that is given is set on every copy; an omitted
 // flag keeps each copy's own value. Copies the caller may not manage (or that don't exist), and
 // turning an offer on for a copy out on loan or reserved, are skipped, not fatal; offers can always
-// be taken off. `copyIds` are domain aggregateIds, deduped, at most 100.
+// be taken off. `copyIds` are domain aggregateIds, deduped, at most 100. One call can rewrite 100
+// rows and emit their events, so calls are rate limited per member.
 export const updateCopiesOffers = mutation({
   args: {
     copyIds: v.array(v.string()),
@@ -37,6 +39,7 @@ export const updateCopiesOffers = mutation({
     skipped: { copyId: string; reason: CopyOffersSkipReason }[];
   }> => {
     const actingMemberId = (await requireMember(ctx)) as unknown as OwnerId;
+    await enforceRateLimit(ctx, "bulkOffers", actingMemberId);
 
     const update = makeUpdateCopiesOffers({
       copies: convexCopyRepository(ctx),

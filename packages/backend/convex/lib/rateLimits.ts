@@ -47,6 +47,9 @@ export const RATE_LIMITS = {
   emailInviteNewAccount: { windowMs: DAY, max: 3 },
   // Requests to join a household (household/requestToJoinHousehold), like emailInvite.
   householdJoinRequest: { windowMs: DAY, max: 10 },
+  // My Puzzles' bulk offer calls (library/updateCopiesOffers), each rewriting up to 100 copies. One
+  // action on a large shelf takes a few calls, so 30/min leaves room for several actions and Undos.
+  bulkOffers: { windowMs: MINUTE, max: 30 },
   // Presence heartbeats across all rooms and tabs: a tab sends ~3/min (app room at 60 s +
   // messages at 30 s), so 30/min covers several tabs while capping heartbeat cost abuse.
   presenceHeartbeat: { windowMs: MINUTE, max: 30 },

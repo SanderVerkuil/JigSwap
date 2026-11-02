@@ -3,6 +3,7 @@ import { ConvexError } from "convex/values";
 import { beforeEach, describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
+import { enforceRateLimit, RATE_LIMITS } from "./lib/rateLimits";
 import { effectiveCopyVisibility } from "./library/copyVisibility";
 import schema from "./schema";
 
@@ -130,6 +131,31 @@ describe("library.updateCopiesOffers", () => {
         forTrade: true,
       }),
     ).rejects.toThrow("Unauthenticated");
+  });
+
+  test("is rate limited per member, and a refused call changes nothing", async () => {
+    const copy = await seedCopy(t, w, "copy-a");
+    await t.run(async (ctx) => {
+      for (let i = 0; i < RATE_LIMITS.bulkOffers.max; i++)
+        await enforceRateLimit(ctx, "bulkOffers", w.ann);
+    });
+
+    const attempt = updateOffers(t, "ann", {
+      copyIds: ["copy-a"],
+      forTrade: true,
+    });
+    await expect(attempt).rejects.toBeInstanceOf(ConvexError);
+    await attempt.catch((e: unknown) => {
+      expect((e as ConvexError<{ code: string }>).data.code).toBe(
+        "RateLimited",
+      );
+    });
+    expect((await rowOf(t, copy)).availability).toEqual(CLOSED);
+
+    // Another member's calls don't count against hers.
+    await expect(
+      updateOffers(t, "bob", { copyIds: ["copy-a"], forTrade: true }),
+    ).resolves.toEqual({ updated: 1, unchanged: 0, skipped: [] });
   });
 
   test("the owner offers copies for swap; each keeps the offers it already had", async () => {
