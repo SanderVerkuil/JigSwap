@@ -535,7 +535,6 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_user_name", ["userId", "name"])
-    .index("by_visibility", ["visibility"])
     .index("by_aggregate_id", ["aggregateId"]),
 
   // Collection membership - many-to-many relationship (now references ownedPuzzles)
@@ -1051,8 +1050,7 @@ export default defineSchema({
   })
     .index("by_exchange", ["exchangeId"])
     .index("by_sender", ["senderId"])
-    .index("by_receiver", ["receiverId"])
-    .index("by_created_at", ["createdAt"]),
+    .index("by_receiver", ["receiverId"]),
 
   // Conversation context. One row per Thread aggregate; messages are companion rows (long chats
   // must not brush the document size limit). participantsKey = the two user _ids sorted and
@@ -2071,7 +2069,6 @@ export default defineSchema({
     failedAt: v.optional(v.number()),
   })
     .index("by_processed", ["processedAt"])
-    .index("by_failed", ["failedAt"])
     // Backs the activity feed: pull recent events of a given name in a bounded time window without
     // a full-table scan-and-filter.
     .index("by_name", ["name", "occurredAt"]),

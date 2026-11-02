@@ -171,9 +171,10 @@ patterns:
   retry a scheduled mutation on an application error, so a throwing subscriber is caught: its
   writes roll back, the others commit, and it is logged as an `events.dispatch` error wide event
   (forwarded to Axiom). Idempotent subscribers (`retry: true`) are re-dispatched with backoff up to
-  5 passes; the rest give up at once. A given-up event gets `failedAt` (index `by_failed`),
+  5 passes; the rest give up at once. A given-up event gets `failedAt`,
   `failedHandlers` and `lastError`, and needs an operator. Alert on it in Axiom with
-  `['jigswap'] | where event == "events.dispatch" and outcome == "error" and will_retry == false`.
+  `['jigswap'] | where event == "events.dispatch" and outcome == "error" and will_retry == false`;
+  the wide event names the row (`event_id`).
   A payload never keeps free text a member typed or the identity they registered with
   (`REDACTED_EVENT_FIELDS` in `events/recordAndSchedule.ts`): a subscriber that needs such a field
   reads the source row. Each event's member ids are indexed in `domainEventMembers` (the account
