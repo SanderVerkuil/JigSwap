@@ -87,6 +87,13 @@ describe("contributeError", () => {
       expect(nl.puzzles[key]).toContain("{when}");
     }
   });
+
+  it("offers a way on that the form still has: no photo, not a cover colour", () => {
+    expect(en.puzzles.coverRateLimited).toContain("without a photo");
+    expect(en.puzzles.coverRateLimited).not.toMatch(/colour/i);
+    expect(nl.puzzles.coverRateLimited).toContain("zonder foto");
+    expect(nl.puzzles.coverRateLimited).not.toMatch(/kleur/i);
+  });
 });
 
 describe("coverStep", () => {

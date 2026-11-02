@@ -381,7 +381,7 @@
     "puzzleCreationFailed": "Failed to create puzzle",
     "addRateLimited": "You've added a lot of puzzles today. Try again tomorrow.",
     "rateLimited": "You've added the most puzzles allowed for now. Try again {when}.",
-    "coverRateLimited": "You've added the most cover photos allowed for now. Try again {when}, or pick a cover colour instead.",
+    "coverRateLimited": "You've added the most cover photos allowed for now. Try again {when}, or continue without a photo.",
     "textTooLong": "One of the fields is too long. Shorten it and try again.",
     "noPuzzleSelected": "Please select a puzzle first",
     "puzzleAdded": "Added to My Puzzles",

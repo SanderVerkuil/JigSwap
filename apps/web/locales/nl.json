@@ -381,7 +381,7 @@
     "puzzleCreationFailed": "Puzzel aanmaken mislukt",
     "addRateLimited": "Je hebt vandaag al veel puzzels toegevoegd. Probeer het morgen opnieuw.",
     "rateLimited": "Je hebt voorlopig het maximale aantal puzzels toegevoegd. Probeer het {when} opnieuw.",
-    "coverRateLimited": "Je hebt voorlopig het maximale aantal omslagfoto's toegevoegd. Probeer het {when} opnieuw, of kies een omslagkleur.",
+    "coverRateLimited": "Je hebt voorlopig het maximale aantal omslagfoto's toegevoegd. Probeer het {when} opnieuw, of ga verder zonder foto.",
     "textTooLong": "Een van de velden is te lang. Maak het korter en probeer het opnieuw.",
     "noPuzzleSelected": "Selecteer eerst een puzzel",
     "puzzleAdded": "Toegevoegd aan Mijn Puzzels",
