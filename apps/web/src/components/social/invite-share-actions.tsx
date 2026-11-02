@@ -13,12 +13,13 @@ type InviteShareProps = {
   url: string | null;
   // Called on any share, copy, Email or WhatsApp action (the quick start's push-prompt trigger).
   onShared?: () => void;
-} & (
-  | // Which message to prefill: the network link ("follow each other") or a household link...
-    { kind: "network" | "household"; puzzleTitle?: undefined }
-    // ...or one puzzle the member offers.
-  | { kind: "puzzle"; puzzleTitle: string }
-);
+} & ShareKind;
+
+// Which message to prefill: the network link ("follow each other"), a household link, or one puzzle
+// the member offers.
+type ShareKind =
+  | { kind: "network" | "household"; puzzleTitle?: undefined }
+  | { kind: "puzzle"; puzzleTitle: string };
 
 const noopSubscribe = () => () => {};
 
