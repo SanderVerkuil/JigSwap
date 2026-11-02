@@ -18,7 +18,7 @@ import { pageTitle } from "@/lib/page-title";
 import { headMessage, seoHead } from "@/lib/seo-head";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import { ArrowLeftRight, MessageCircle, UserRound } from "lucide-react";
@@ -38,10 +38,14 @@ const REVIEW_PAGE_SIZE = 20;
 
 const viewQuery = (id: string) =>
   convexQuery(gateway.catalog.publicDefinitionView, { puzzleId: id });
-const reviewsQuery = (id: string) =>
+const reviewsQuery = (id: string, endCursor?: string) =>
   convexQuery(gateway.social.listPublicPuzzleReviews, {
     puzzleId: id as Id<"puzzles">,
-    paginationOpts: { numItems: REVIEW_PAGE_SIZE, cursor: null },
+    paginationOpts: {
+      numItems: REVIEW_PAGE_SIZE,
+      cursor: null,
+      ...(endCursor !== undefined && { endCursor }),
+    },
   });
 
 export const Route = createFileRoute("/_public/catalog/$id")({
@@ -399,8 +403,14 @@ function PublicReviews({ puzzleId }: { puzzleId: string }) {
   const format = useFormatter();
   const { convexClient } = Route.useRouteContext();
   // First page: a plain reactive query, prefetched by the loader so it is in the server HTML. Older
-  // pages accumulate here, as on the catalogue list. The section is keyed by the puzzle.
-  const { data: firstPage } = useQuery(reviewsQuery(puzzleId));
+  // pages accumulate here, as on the catalogue list. The section is keyed by the puzzle. Once a page
+  // follows it, the first page ends where that page starts: left to hold its numItems, a new review
+  // would push its last row out of it and into the gap before that fixed next page.
+  const [firstPageEnd, setFirstPageEnd] = useState<string>();
+  const { data: firstPage } = useQuery({
+    ...reviewsQuery(puzzleId, firstPageEnd),
+    placeholderData: keepPreviousData,
+  });
   const [morePages, setMorePages] = useState<ReviewPage[]>([]);
   const [loadingMore, setLoadingMore] = useState(false);
   const lastPage = morePages.at(-1) ?? firstPage;
@@ -416,17 +426,16 @@ function PublicReviews({ puzzleId }: { puzzleId: string }) {
   const loadMore = async () => {
     if (!hasMore || loadingMore) return;
     setLoadingMore(true);
+    const cursor = lastPage.continueCursor;
     try {
       const next = await convexClient.query(
         gateway.social.listPublicPuzzleReviews,
         {
           puzzleId: puzzleId as Id<"puzzles">,
-          paginationOpts: {
-            numItems: REVIEW_PAGE_SIZE,
-            cursor: lastPage.continueCursor,
-          },
+          paginationOpts: { numItems: REVIEW_PAGE_SIZE, cursor },
         },
       );
+      setFirstPageEnd((end) => end ?? cursor);
       setMorePages((pages) => [...pages, next]);
     } finally {
       setLoadingMore(false);

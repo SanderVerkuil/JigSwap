@@ -2,7 +2,14 @@
 import { gateway, type Id } from "@/gateway";
 import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { ConvexReactClient } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import type { ComponentType, ReactNode } from "react";
@@ -123,17 +130,20 @@ const renderDetail = (
   );
   const Page = (Route as unknown as { options: { component: ComponentType } })
     .options.component;
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <IntlProvider
-        locale={locale}
-        messages={locale === "en" ? en : nl}
-        timeZone="Europe/Amsterdam"
-      >
-        <Page />
-      </IntlProvider>
-    </QueryClientProvider>,
-  );
+  return {
+    ...render(
+      <QueryClientProvider client={queryClient}>
+        <IntlProvider
+          locale={locale}
+          messages={locale === "en" ? en : nl}
+          timeZone="Europe/Amsterdam"
+        >
+          <Page />
+        </IntlProvider>
+      </QueryClientProvider>,
+    ),
+    queryClient,
+  };
 };
 
 afterEach(() => {
@@ -182,6 +192,56 @@ describe("public catalogue reviews", () => {
     expect(screen.getAllByText("Lovely box")).toHaveLength(1);
     expect(screen.queryByRole("button", { name: /more reviews/ })).toBeNull();
     expect(screen.getByText("2")).toBeTruthy();
+  });
+
+  // PERF-B13: the first page is live and later pages are fixed. Left to hold its numItems, the first
+  // page would drop its last row when a new review arrives, into the gap before the next page.
+  it("pins the first page once a page follows it, so a new review loses no row", async () => {
+    mocks.nextReviews.mockResolvedValue({
+      page: [review("r2", "Tough edges")],
+      isDone: true,
+      continueCursor: "",
+    });
+    const { queryClient } = renderDetail(viewWith(unrated), "en", {
+      page: [review("r1", "Lovely box")],
+      isDone: false,
+      continueCursor: "cursor-1",
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Show more reviews" }));
+    await screen.findByText("Tough edges");
+    // While the pinned read loads, the rows on screen stay.
+    expect(screen.getByText("Lovely box")).toBeTruthy();
+
+    const pinned = convexQuery(gateway.social.listPublicPuzzleReviews, {
+      puzzleId: PUZZLE_ID as Id<"puzzles">,
+      paginationOpts: { numItems: 20, cursor: null, endCursor: "cursor-1" },
+    }).queryKey;
+    await waitFor(() =>
+      expect(queryClient.getQueryState(pinned)?.fetchStatus).toBe("fetching"),
+    );
+    act(() => {
+      queryClient.setQueryData(pinned, {
+        page: [review("r3", "Brand new"), review("r1", "Lovely box")],
+        isDone: false,
+        continueCursor: "cursor-1",
+      });
+    });
+    await screen.findByText("Brand new");
+    expect(screen.getByText("Lovely box")).toBeTruthy();
+    expect(screen.getByText("Tough edges")).toBeTruthy();
+  });
+
+  it("keeps the first page unpinned until a page follows it", () => {
+    const { queryClient } = renderDetail(viewWith(unrated), "en", {
+      page: [review("r1", "Lovely box")],
+      isDone: false,
+      continueCursor: "cursor-1",
+    });
+    const reads = queryClient
+      .getQueryCache()
+      .getAll()
+      .map((query) => JSON.stringify(query.queryKey));
+    expect(reads.some((read) => read.includes("endCursor"))).toBe(false);
   });
 });
 
