@@ -28,9 +28,11 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/components/add-puzzle", async () => ({
-  // The text bounds and the refusal mapping stay real: the refusal mapping is under test here.
+  // The text bounds and the refusal mapping stay real: the refusal mapping is under test here. The
+  // duplicate check's pure helpers run on every render of the form.
   ...(await vi.importActual("@/components/add-puzzle/catalog-text-limits")),
   ...(await vi.importActual("@/components/add-puzzle/contribute-error")),
+  ...(await vi.importActual("@/components/add-puzzle/duplicate-check")),
   AddPuzzleLayout: ({ form }: { form: ReactNode }) => <>{form}</>,
   COVER_SWATCHES: ["#123456"],
   DIFFICULTY_OPTIONS: [],

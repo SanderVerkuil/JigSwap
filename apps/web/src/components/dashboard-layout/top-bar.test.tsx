@@ -11,6 +11,17 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
 import { TopBar } from "./top-bar";
 
+const mocks = vi.hoisted(() => ({ pathname: "/dashboard" }));
+
+vi.mock("@tanstack/react-router", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@tanstack/react-router")>()),
+  useLocation: (opts?: {
+    select?: (location: { pathname: string }) => unknown;
+  }) => {
+    const location = { pathname: mocks.pathname };
+    return opts?.select ? opts.select(location) : location;
+  },
+}));
 vi.mock("@/compat/link", () => ({
   Link: ({ href, children }: { href: string; children?: ReactNode }) => (
     <a href={href}>{children}</a>
@@ -28,6 +39,7 @@ vi.mock("@/components/ui/language-switcher", () => ({
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  mocks.pathname = "/dashboard";
 });
 
 function topBar() {
@@ -93,5 +105,23 @@ describe("TopBar search shortcut hint", () => {
     expect(searchPill().querySelector("kbd")?.className).toContain(
       "pointer-coarse:hidden",
     );
+  });
+});
+
+// UX-24: the shortcut says where the puzzle ends up, and steps aside where the page offers its own
+// add actions.
+describe("TopBar add shortcut", () => {
+  const addLink = () =>
+    screen.queryByRole("link", { name: en.shell.actions.addToMyPuzzles });
+
+  it("leads to adding a puzzle to the member's own puzzles", () => {
+    render(topBar());
+    expect(addLink()?.getAttribute("href")).toBe("/my-puzzles/add");
+  });
+
+  it("is left out on a page with its own add actions", () => {
+    mocks.pathname = "/puzzles";
+    render(topBar());
+    expect(addLink()).toBeNull();
   });
 });
