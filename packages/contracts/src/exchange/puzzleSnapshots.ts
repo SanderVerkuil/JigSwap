@@ -34,6 +34,11 @@ export interface ExchangePuzzleView extends ConvexSystemFields {
  * An owned copy document (`ownedPuzzles` table), embedded on exchange views as the legacy reads
  * joined it (`requestedOwnedPuzzle` / `offeredOwnedPuzzle`, and `ownerPuzzle`/`requesterPuzzle` on
  * the single-exchange view). Faithful superset of the row.
+ *
+ * PRIVACY: an exchange row outlives what it shows. A party with no access to the copy any more (the
+ * trade is over or the copy left it, and the copy page would refuse them) gets only the ids,
+ * `snapshot` and `createdAt`: every fact about the copy as it is now is absent, `condition`,
+ * `availability` and `updatedAt` included.
  */
 export interface ExchangeOwnedPuzzleView extends ConvexSystemFields {
   aggregateId?: string;
@@ -50,15 +55,15 @@ export interface ExchangeOwnedPuzzleView extends ConvexSystemFields {
    * (see ExchangeFields' PRIVACY note) and for a non-party owner (an offered household mate's copy).
    */
   ownerId?: string;
-  condition: "new_sealed" | "like_new" | "good" | "fair" | "poor";
+  condition?: "new_sealed" | "like_new" | "good" | "fair" | "poor";
   missingPiecesCount?: number;
   notes?: string;
-  availability: { forTrade: boolean; forSale: boolean; forLend: boolean };
+  availability?: { forTrade: boolean; forSale: boolean; forLend: boolean };
   visibility?: "private" | "visible";
   salePrice?: { amount: number; currency: string };
   acquisitionDate?: number;
   acquisitionSource?: "bought_new" | "bought_used" | "trade" | "gift";
   acquisitionPrice?: { amount: number; currency: string };
   createdAt: number;
-  updatedAt: number;
+  updatedAt?: number;
 }

@@ -40,9 +40,18 @@ export const getExchangeById = query({
       requesterState: parties.requesterState,
       ownerState: parties.ownerState,
       // Gate each copy independently on the acting member: a party never sees the counterparty's
-      // owner-only fields (notes / acquisition provenance), only those on the copy they own.
-      ownerPuzzle: toOwnedPuzzleView(ownerPuzzle, member, parties.visible),
-      requesterPuzzle: toOwnedPuzzleView(
+      // owner-only fields (notes / acquisition provenance), only those on the copy they own, and
+      // none of a copy they no longer have access to (toOwnedPuzzleView).
+      ownerPuzzle: await toOwnedPuzzleView(
+        ctx,
+        exchange,
+        ownerPuzzle,
+        member,
+        parties.visible,
+      ),
+      requesterPuzzle: await toOwnedPuzzleView(
+        ctx,
+        exchange,
         requesterPuzzle,
         member,
         parties.visible,
