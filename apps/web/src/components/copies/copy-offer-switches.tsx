@@ -4,7 +4,7 @@ import {
   hasAnyAvailability,
   type Availability,
 } from "@/components/add-puzzle/add-puzzle-mappers";
-import { convexErrorCode } from "@/components/exchange/request-trade";
+import { copyEditFailureKey } from "@/components/copies/copy-edit-failure";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { gateway } from "@/gateway";
@@ -68,13 +68,7 @@ export function CopyOfferSwitches({
   });
   // Refused while an exchange in progress reserves the copy or it is out on loan: say so.
   const reportFailure = (error: unknown) => {
-    toast.error(
-      tCopy(
-        convexErrorCode(error) === "CopyReserved"
-          ? "editCopy.copyReserved"
-          : "editCopy.editFailed",
-      ),
-    );
+    toast.error(tCopy(copyEditFailureKey(error)));
   };
 
   // Undo can fire long after its change, even after this component unmounted: it sets only the offer

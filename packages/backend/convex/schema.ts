@@ -352,8 +352,9 @@ export default defineSchema({
     //                 `profiles`. Browse shows a private owner's copy only through a circle, which it
     //                 reads separately, so those rows stay out of its public range and can't use up
     //                 its candidate window or read budget.
-    //   listedAt      when the copy was last offered (became open); absent while it is closed. Browse
-    //                 lists the newest offers first, so an old copy offered today sorts as new.
+    //   listedAt      when the copy was last offered (became open); kept while it is closed, so that
+    //                 reopening soon after keeps its place. Browse lists the newest offers first, so
+    //                 an old copy offered today sorts as new.
     // A reader still re-checks the owner's visibility: a lagging flag can cost a slot, never leak.
     ownerPrivate: v.optional(v.literal(true)),
     listedAt: v.optional(v.number()),

@@ -50,6 +50,10 @@ export const RATE_LIMITS = {
   // My Puzzles' bulk offer calls (library/updateCopiesOffers), each rewriting up to 100 copies. One
   // action on a large shelf takes a few calls, so 30/min leaves room for several actions and Undos.
   bulkOffers: { windowMs: MINUTE, max: 30 },
+  // A copy's sharing setting (library/updateCopySharing), one call per switch flipped on its page:
+  // each writes the row and a domain event, and a loop must not be free (openListing keeps a quick
+  // reopen from climbing Browse).
+  copySharing: { windowMs: MINUTE, max: 30 },
   // Presence heartbeats across all rooms and tabs: a tab sends ~3/min (app room at 60 s +
   // messages at 30 s), so 30/min covers several tabs while capping heartbeat cost abuse.
   presenceHeartbeat: { windowMs: MINUTE, max: 30 },

@@ -4631,6 +4631,7 @@
       "saved": "Changes saved",
       "cancel": "Cancel",
       "editFailed": "Could not save your changes. Please try again.",
+      "rateLimited": "You're changing this very quickly. Wait a minute and try again.",
       "copyReserved": "This puzzle is part of an exchange in progress or is out on loan, so you can't change how it's offered or shared right now. You can again once the exchange is completed, declined or cancelled, or once the puzzle is back.",
       "cover": "Cover image",
       "useCatalogueImage": "Use catalogue image",

@@ -83,3 +83,75 @@ describe("createPersonalCategory", () => {
     expect(rows).toHaveLength(RATE_LIMITS.categoryCreate.max);
   });
 });
+
+describe("updateCopySharing", () => {
+  // The auditor's repro: Mallory's 200 close and reopen cycles put her copies ahead of Alice's.
+  test("a close and reopen loop neither runs free nor climbs Browse", async () => {
+    const now = Date.now();
+    const { alice } = await t.run(async (ctx) => {
+      const member = (name: string) =>
+        ctx.db.insert("users", {
+          clerkId: `clerk_${name}`,
+          email: `${name}@example.com`,
+          name,
+          isActive: true,
+          createdAt: 1,
+          updatedAt: 1,
+        });
+      const alice = await member("alice");
+      const mallory = await member("mallory");
+      const puzzleId = await ctx.db.insert("puzzles", {
+        title: "Starry Night",
+        pieceCount: 1000,
+        status: "approved",
+        submittedBy: alice,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      // Alice's offer is the newest, so a loop is the only way ahead of it.
+      for (const [ownerId, aggregateId, listedAt] of [
+        [alice, "copy_alice", now - 1000],
+        [mallory, "copy_mallory", now - 2000],
+      ] as const) {
+        await ctx.db.insert("profiles", {
+          aggregateId: `profile_${aggregateId}`,
+          memberId: ownerId,
+          visibility: "public",
+          updatedAt: 1,
+        });
+        await ctx.db.insert("ownedPuzzles", {
+          aggregateId,
+          puzzleId,
+          ownerId,
+          heldBy: ownerId,
+          condition: "good",
+          availability: { forTrade: true, forSale: false, forLend: false },
+          isOpen: true,
+          listedAt,
+          createdAt: 1,
+          updatedAt: 1,
+        });
+      }
+      return { alice };
+    });
+    const flip = (forTrade: boolean) =>
+      t
+        .withIdentity({ subject: "clerk_mallory" })
+        .mutation(api.library.updateCopySharing.updateCopySharing, {
+          copyId: "copy_mallory",
+          forTrade,
+        });
+
+    for (let i = 0; i < RATE_LIMITS.copySharing.max; i += 2) {
+      await flip(false);
+      await flip(true);
+    }
+    await expectRateLimited(flip(false));
+
+    const { ownedPuzzles } = await asMe().query(
+      api.library.browseOwnedPuzzles.browseOwnedPuzzles,
+      { limit: 1 },
+    );
+    expect(ownedPuzzles[0].ownerId).toBe(alice);
+  });
+});

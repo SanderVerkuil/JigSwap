@@ -4631,6 +4631,7 @@
       "saved": "Wijzigingen opgeslagen",
       "cancel": "Annuleren",
       "editFailed": "Je wijzigingen konden niet worden opgeslagen. Probeer het opnieuw.",
+      "rateLimited": "Je wijzigt dit erg snel. Wacht een minuutje en probeer het opnieuw.",
       "copyReserved": "Deze puzzel hoort bij een lopende uitwisseling of is uitgeleend, dus je kunt nu niet aanpassen hoe je hem aanbiedt of deelt. Dat kan weer zodra de uitwisseling is afgerond, afgewezen of geannuleerd, of zodra de puzzel terug is.",
       "cover": "Omslagafbeelding",
       "useCatalogueImage": "Catalogusafbeelding gebruiken",

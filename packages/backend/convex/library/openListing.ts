@@ -10,13 +10,18 @@ export const isOpenAvailability = (
 ): boolean =>
   availability.forTrade || availability.forSale || availability.forLend;
 
+// How long after being listed a copy stays where it was when it closes and reopens. Browse lists the
+// newest offers first, so without this a close and reopen loop would hold page 1 for everyone.
+export const RELIST_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+
 /**
  * The listing fields a copy row carries next to `availability` (schema.ts): `isOpen`, `listedAt`
- * (when it was last offered; absent while closed) and `ownerPrivate` (the owner's profile is
- * private; absent means public). `before` is the stored row (null on insert): an open copy keeps
- * the time it was first offered, a copy that opens now is listed `now`, and a new open copy is
- * listed when it was created. A stored open row without `listedAt` predates the field and keeps its
- * `createdAt`, so the backfill (which passes the row as its own `before`) preserves today's order.
+ * (when it was last offered, kept while closed) and `ownerPrivate` (the owner's profile is private;
+ * absent means public). `before` is the stored row (null on insert): an open copy keeps the time it
+ * was first offered, a copy that opens now is listed `now` unless it was already listed within
+ * RELIST_COOLDOWN_MS, and a new open copy is listed when it was created. A stored open row without
+ * `listedAt` predates the field and keeps its `createdAt`, so the backfill (which passes the row as
+ * its own `before`) preserves today's order.
  */
 export const listingStateOf = (
   row: Pick<Doc<"ownedPuzzles">, "availability" | "createdAt">,
@@ -28,12 +33,19 @@ export const listingStateOf = (
   now: number,
 ): Pick<Doc<"ownedPuzzles">, "isOpen" | "listedAt" | "ownerPrivate"> => {
   const isOpen = isOpenAvailability(row.availability);
-  let listedAt: number | undefined;
-  if (isOpen) {
+  const wasOpen = before !== null && isOpenAvailability(before.availability);
+  const lastListed = wasOpen
+    ? (before.listedAt ?? before.createdAt)
+    : before?.listedAt;
+  let listedAt = lastListed;
+  if (isOpen && !wasOpen) {
     if (before === null) listedAt = row.createdAt;
-    else if (isOpenAvailability(before.availability)) {
-      listedAt = before.listedAt ?? before.createdAt;
-    } else listedAt = now;
+    else if (
+      lastListed === undefined ||
+      now - lastListed >= RELIST_COOLDOWN_MS
+    ) {
+      listedAt = now;
+    }
   }
   return {
     isOpen,

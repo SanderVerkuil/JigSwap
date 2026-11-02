@@ -6,7 +6,7 @@ import {
   SegmentedPills,
   type ConditionValue,
 } from "@/components/add-puzzle";
-import { convexErrorCode } from "@/components/exchange/request-trade";
+import { copyEditFailureKey } from "@/components/copies/copy-edit-failure";
 import { useConditionOptions } from "@/components/library/condition";
 import { Button } from "@/components/ui/button";
 import {
@@ -241,15 +241,7 @@ function EditCopyDialogForm({
       if (ops.length > 0) toast.success(t("editCopy.saved"));
       onOpenChange(false);
     } catch (error) {
-      // The Library refuses a sharing change while an exchange in progress reserves the copy or
-      // it is out on loan; say so rather than "please try again".
-      toast.error(
-        t(
-          convexErrorCode(error) === "CopyReserved"
-            ? "editCopy.copyReserved"
-            : "editCopy.editFailed",
-        ),
-      );
+      toast.error(t(copyEditFailureKey(error)));
     }
   };
 

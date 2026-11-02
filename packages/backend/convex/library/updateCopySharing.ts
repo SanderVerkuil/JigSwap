@@ -9,6 +9,7 @@ import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { convexCopyManagerPolicy } from "../household/copyAccess";
 import { requireMember } from "../identity/requireMember";
+import { enforceRateLimit } from "../lib/rateLimits";
 import { convexCopyRepository } from "./adapters/convexCopyRepository";
 import { convexCopyReservationPort } from "./adapters/convexCopyReservationPort";
 import { libraryEventPublisher } from "./adapters/eventPublisher";
@@ -33,6 +34,7 @@ export const updateCopySharing = mutation({
   },
   handler: async (ctx, args) => {
     const actingMemberId = (await requireMember(ctx)) as unknown as OwnerId;
+    await enforceRateLimit(ctx, "copySharing", actingMemberId);
 
     let salePrice: Price | undefined;
     if (args.salePrice) {
