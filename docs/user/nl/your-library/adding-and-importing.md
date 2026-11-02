@@ -27,7 +27,7 @@ Een puzzel toevoegen gaat in twee stappen:
    op Android), kun je ook op **Barcode scannen** naast het zoekveld tikken en
    je camera op de doos richten.
 5. Staat je puzzel al in de catalogus, klik er dan op (of op
-   **Toevoegen aan bibliotheek**) om er een kopie van toe te voegen aan je
+   **Toevoegen aan mijn puzzels**) om er een kopie van toe te voegen aan je
    bibliotheek. Met **Details** open je in plaats daarvan de cataloguspagina.
    Puzzels die je al bezit, zijn gemarkeerd met **Op je plank**. Is hij nieuw,
    klik dan op **Nieuwe aanmaken**.

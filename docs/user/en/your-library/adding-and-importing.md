@@ -26,9 +26,9 @@ Adding a puzzle is a two-step flow:
    Android), you can also tap **Scan a barcode** next to the search box and
    point your camera at the box.
 5. If your puzzle already exists in the catalogue, click it (or its
-   **Add to Library** button) to add a copy of it to your library. **Details**
-   opens its catalogue page instead. Puzzles you already own are marked
-   **On your shelf**. If it's new, click **Create new**.
+   **Add to my puzzles** button) to add a copy of it to your library.
+   **Details** opens its catalogue page instead. Puzzles you already own are
+   marked **On your shelf**. If it's new, click **Create new**.
 
 ## Step 2 — Create or copy
 
