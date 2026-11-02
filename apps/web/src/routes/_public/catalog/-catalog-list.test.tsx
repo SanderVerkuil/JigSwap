@@ -289,6 +289,95 @@ describe("public catalogue search in the URL", () => {
   });
 });
 
+describe("public catalogue Load more in the URL", () => {
+  const loader = (
+    Route as unknown as {
+      options: {
+        loader: (args: {
+          context: { queryClient: QueryClient };
+          deps: PublicCatalogSearch;
+          cause: string;
+        }) => Promise<void>;
+      };
+    }
+  ).options.loader;
+
+  it("writes how many pages show, keeping the filters and the scroll position", async () => {
+    renderAt({ brand: "Jumbo" }, "en", {
+      first: THREE_PAGES.first,
+      c2: THREE_PAGES.c2,
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Load more" }));
+    await vi.waitFor(() => expect(router.navigate).toHaveBeenCalled());
+
+    expect(lastUrlWrite()).toEqual({
+      search: { brand: "Jumbo", pages: 2 },
+      replace: true,
+      resetScroll: false,
+    });
+  });
+
+  it("restores the pages a URL names from what the loader fetched", () => {
+    renderAt({ pages: 3 }, "en", THREE_PAGES);
+    for (const title of ["Harbour", "Windmill", "Tulips"]) {
+      expect(screen.getByRole("heading", { name: title })).toBeTruthy();
+    }
+    expect(screen.queryByRole("button", { name: "Load more" })).toBeNull();
+  });
+
+  it("stops at the pages it has when the URL names more than exist", () => {
+    renderAt({ pages: 9 }, "en", THREE_PAGES);
+    expect(screen.getByRole("heading", { name: "Tulips" })).toBeTruthy();
+  });
+
+  it("shows only the first page without a page count, as after a Catalogue link", () => {
+    const { changeUrl } = renderAt({ pages: 2 }, "en", THREE_PAGES);
+    expect(screen.getByRole("heading", { name: "Windmill" })).toBeTruthy();
+
+    changeUrl({});
+
+    expect(screen.queryByRole("heading", { name: "Windmill" })).toBeNull();
+  });
+
+  it("starts over at one page when a filter changes", () => {
+    vi.useFakeTimers();
+    renderAt({ q: "castle", pages: 3 });
+
+    fireEvent.change(searchBox(), { target: { value: "bridge" } });
+    advanceDebounce();
+
+    expect(lastUrlWrite().search).toEqual({ q: "bridge" });
+  });
+
+  it("loads every page the URL names before the page renders", async () => {
+    const asked: unknown[] = [];
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          queryFn: ({ queryKey }) => {
+            const { paginationOpts } = queryKey[2] as {
+              paginationOpts: { cursor: string | null };
+            };
+            asked.push(paginationOpts.cursor);
+            const pages: Record<string, unknown> = THREE_PAGES;
+            return pages[paginationOpts.cursor ?? "first"];
+          },
+        },
+      },
+    });
+
+    await loader({
+      context: { queryClient },
+      deps: { pages: 9 },
+      cause: "enter",
+    });
+
+    // Stops at the last page, however many the URL names.
+    expect(asked).toEqual([null, "c2", "c3"]);
+  });
+});
+
 describe("public catalogue empty states", () => {
   it("says the catalogue is new only when nothing filters it", () => {
     renderAt({});

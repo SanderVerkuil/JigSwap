@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  MAX_CATALOG_PAGES,
   normalizeCatalogQuery,
   publicCatalogFilterArgs,
   validatePublicCatalogSearch,
@@ -81,6 +82,24 @@ describe("normalizeCatalogQuery", () => {
     expect(normalizeCatalogQuery(" cats  ")).toBe("cats");
     expect(normalizeCatalogQuery("   ")).toBeUndefined();
     expect(normalizeCatalogQuery("")).toBeUndefined();
+  });
+});
+
+describe("validatePublicCatalogSearch page count", () => {
+  it("keeps a count of pages past the first", () => {
+    expect(validatePublicCatalogSearch({ pages: 3 }).pages).toBe(3);
+  });
+
+  it("leaves one page or anything unusable out of the URL", () => {
+    for (const pages of [1, 0, -2, 2.5, "3", "many", null, NaN]) {
+      expect(validatePublicCatalogSearch({ pages }).pages).toBeUndefined();
+    }
+  });
+
+  it("caps what one URL can ask the server to load", () => {
+    expect(
+      validatePublicCatalogSearch({ pages: MAX_CATALOG_PAGES + 1 }).pages,
+    ).toBe(MAX_CATALOG_PAGES);
   });
 });
 

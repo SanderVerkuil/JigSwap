@@ -24,7 +24,11 @@ import {
 } from "@/lib/public-catalog-search";
 import { seoHead } from "@/lib/seo-head";
 import { convexQuery } from "@convex-dev/react-query";
-import { useQuery } from "@tanstack/react-query";
+import {
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+} from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 // sanctioned convex/react exception: Authenticated/Unauthenticated auth-state components (see tanstack-query migration spec)
 import { Unauthenticated } from "convex/react";
@@ -41,14 +45,33 @@ const PAGE_SIZE = 20;
 // so the browser fetches them before the scripts run. On narrower grids this
 // also covers (part of) the second row; covers further down stay lazy.
 const ABOVE_THE_FOLD_CARDS = 4;
-// The first page for the URL's filters. The loader prefetches EXACTLY these args so a
-// filtered link renders its results on the server (same pattern as the home page's
+// One page for the URL's filters; a null cursor is the first. The loader prefetches EXACTLY these
+// args so a filtered link renders its results on the server (same pattern as the home page's
 // globalStatsQuery).
-const firstPageQuery = (search: PublicCatalogSearch) =>
+const pageQuery = (search: PublicCatalogSearch, cursor: string | null) =>
   convexQuery(gateway.catalog.publicBrowse, {
-    paginationOpts: { numItems: PAGE_SIZE, cursor: null },
+    paginationOpts: { numItems: PAGE_SIZE, cursor },
     ...publicCatalogFilterArgs(search),
   });
+
+// The pages after the first that the URL names, as far as the cache has them: the loader just
+// fetched them, or "Load more" did earlier in this visit.
+function cachedExtraPages(
+  queryClient: QueryClient,
+  search: PublicCatalogSearch,
+): BrowseResult[] {
+  const pages: BrowseResult[] = [];
+  let page = queryClient.getQueryData<BrowseResult>(
+    pageQuery(search, null).queryKey,
+  );
+  while (page && !page.isDone && pages.length + 1 < (search.pages ?? 1)) {
+    page = queryClient.getQueryData<BrowseResult>(
+      pageQuery(search, page.continueCursor).queryKey,
+    );
+    if (page) pages.push(page);
+  }
+  return pages;
+}
 
 // How long typing pauses before the search term is written to the URL.
 const SEARCH_DEBOUNCE_MS = 300;
@@ -67,34 +90,46 @@ const CARD_IMAGE_SIZES =
   "(min-width: 1200px) 273px, (min-width: 1024px) calc((100vw - 110px) / 4), (min-width: 768px) calc((100vw - 90px) / 3), calc((100vw - 70px) / 2)";
 
 export const Route = createFileRoute("/_public/catalog/")({
-  // Search, brand and piece bucket live in the URL so Back from a puzzle restores them
-  // and a filtered view can be shared.
+  // Search, brand, piece bucket and the pages opened with "Load more" live in the URL so Back
+  // from a puzzle restores them and a filtered view can be shared.
   validateSearch: validatePublicCatalogSearch,
-  loaderDeps: ({ search: { q, brand, pieces } }) => ({ q, brand, pieces }),
+  loaderDeps: ({ search: { q, brand, pieces, pages } }) => ({
+    q,
+    brand,
+    pieces,
+    pages,
+  }),
   head: ({ match }) => seoHead(match, "catalog"),
   loader: async ({ context, deps, cause }) => {
     // A filter change on the open page ("stay") doesn't wait for results: the controls
     // update at once and the grid shows its skeleton. Arriving at the page (SSR, a shared
-    // link, Back from a puzzle) waits, so the first render already has the results.
+    // link, Back from a puzzle) waits, so the first render already has the results and the
+    // restored scroll position has the page height it needs.
     if (cause === "stay") return;
-    await context.queryClient.ensureQueryData(firstPageQuery(deps));
+    let page = await context.queryClient.ensureQueryData(pageQuery(deps, null));
+    for (let count = 1; count < (deps.pages ?? 1) && !page.isDone; count++) {
+      page = await context.queryClient.ensureQueryData(
+        pageQuery(deps, page.continueCursor),
+      );
+    }
   },
   component: CatalogListPage,
 });
 
 function CatalogListPage() {
   const t = useTranslations("publicCatalog");
-  const { convexClient } = Route.useRouteContext();
+  const queryClient = useQueryClient();
   // The URL is the source of truth for the filters the results use.
-  const { q, brand, pieces } = Route.useSearch();
+  const { q, brand, pieces, pages } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
 
   // Filter changes replace the history entry (Back leaves the catalogue rather than
-  // stepping through every filter) and keep the scroll position.
+  // stepping through every filter) and keep the scroll position. Any change other than "Load
+  // more" starts over at one page.
   const updateSearch = React.useCallback(
     (patch: PublicCatalogSearch) => {
       void navigate({
-        search: (prev) => ({ ...prev, ...patch }),
+        search: (prev) => ({ ...prev, pages: undefined, ...patch }),
         replace: true,
         resetScroll: false,
       });
@@ -134,12 +169,17 @@ function CatalogListPage() {
   );
 
   // First page: a plain reactive query, prefetched by the loader for the URL's filters.
-  const { data: firstPage } = useQuery(firstPageQuery({ q, brand, pieces }));
+  const { data: firstPage } = useQuery(pageQuery({ q, brand, pieces }, null));
 
-  // Older pages accumulate in local state; a filter change resets them. We reset during render
-  // (the sanctioned "adjust state when a value changes" pattern) rather than in an effect, which
-  // would trip the react-hooks/set-state-in-effect rule.
-  const [extraPages, setExtraPages] = React.useState<BrowseResult[]>([]);
+  // Older pages accumulate in local state, starting from those the URL names; a filter change
+  // resets them. We reset during render (the sanctioned "adjust state when a value changes"
+  // pattern) rather than in an effect, which would trip the react-hooks/set-state-in-effect rule.
+  // They show only while the URL says so: arriving at a bare /catalog from a Catalogue link shows
+  // one page.
+  const [loadedPages, setExtraPages] = React.useState<BrowseResult[]>(() =>
+    cachedExtraPages(queryClient, { q, brand, pieces, pages }),
+  );
+  const extraPages = pages ? loadedPages : [];
   const [loadingMore, setLoadingMore] = React.useState(false);
   const filterKey = JSON.stringify(filterArgs);
   const [prevFilterKey, setPrevFilterKey] = React.useState(filterKey);
@@ -170,15 +210,14 @@ function CatalogListPage() {
     const requestedFilterKey = filterKey;
     setLoadingMore(true);
     try {
-      const next = await convexClient.query(gateway.catalog.publicBrowse, {
-        paginationOpts: {
-          numItems: PAGE_SIZE,
-          cursor: lastPage.continueCursor,
-        },
-        ...filterArgs,
-      });
+      // Through the cache, so Back from a puzzle finds it without asking the server again.
+      const next = await queryClient.fetchQuery(
+        pageQuery({ q, brand, pieces }, lastPage.continueCursor),
+      );
       if (requestedFilterKey !== filterKeyRef.current) return;
-      setExtraPages((pages) => [...pages, next]);
+      const opened = [...extraPages, next];
+      setExtraPages(opened);
+      updateSearch({ pages: opened.length + 1 });
     } finally {
       setLoadingMore(false);
     }
