@@ -1,4 +1,5 @@
 import { Image } from "@/compat/image";
+import { FitToWidth } from "@/components/marketing/fit-to-width";
 import * as React from "react";
 
 // The signature "puzzle plank" motif: 3D puzzle boxes on a wooden shelf with a
@@ -16,6 +17,13 @@ export interface PlankBox {
   height?: number;
 }
 
+const SHELF_LIP = 16; // the shelf's front-face thickness
+const SHELF_OVERHANG = 16; // how far the shelf runs past the boxes on each side
+const SHELF_SHADOW = 27; // how far the shadow under the lip reaches
+
+/** The shelf's top-surface depth, which is also the width of its right end cap. */
+const shelfDepth = (depth: number) => depth + 24;
+
 export function JigPlank({
   boxes = [],
   depth = 18,
@@ -25,9 +33,9 @@ export function JigPlank({
   depth?: number;
   style?: React.CSSProperties;
 }) {
-  const sd = depth + 24; // shelf top-surface depth
+  const sd = shelfDepth(depth);
   const inset = depth - 1;
-  const lip = 16; // shelf front-face thickness
+  const lip = SHELF_LIP;
   return (
     // Decorative illustration: the sample box titles, series and "pcs"
     // labels are not content, so screen readers skip the whole shelf.
@@ -45,8 +53,8 @@ export function JigPlank({
         style={{
           position: "absolute",
           zIndex: 1,
-          left: -16,
-          right: -16,
+          left: -SHELF_OVERHANG,
+          right: -SHELF_OVERHANG,
           bottom: 0,
           height: sd,
           transformOrigin: "bottom left",
@@ -77,8 +85,8 @@ export function JigPlank({
         style={{
           position: "absolute",
           zIndex: 3,
-          left: -16,
-          right: -16,
+          left: -SHELF_OVERHANG,
+          right: -SHELF_OVERHANG,
           bottom: -lip,
           height: lip,
           background: "linear-gradient(180deg, #bd8449, #91602e)",
@@ -121,6 +129,34 @@ export function JigPlank({
         />
       </div>
     </div>
+  );
+}
+
+/**
+ * A JigPlank that scales down to fit its container. The boxes' top faces, the shelf's lip, shadow
+ * and end cap all paint past the plank's layout box, and FitToWidth clips at its own edge, so the
+ * layout box is padded by exactly that much: the whole shelf shows and counts towards the fit.
+ */
+export function FittedPlank({
+  boxes,
+  depth = 18,
+}: {
+  boxes: PlankBox[];
+  depth?: number;
+}) {
+  const top = depth;
+  const right = SHELF_OVERHANG + shelfDepth(depth);
+  const bottom = SHELF_LIP + SHELF_SHADOW;
+  return (
+    <FitToWidth>
+      <div
+        style={{
+          padding: `${top}px ${right}px ${bottom}px ${SHELF_OVERHANG}px`,
+        }}
+      >
+        <JigPlank boxes={boxes} depth={depth} />
+      </div>
+    </FitToWidth>
   );
 }
 
