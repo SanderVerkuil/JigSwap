@@ -45,7 +45,7 @@ crons.daily(
 // webhook was lost (backfillUserRoles). Skipped where CLERK_SECRET_KEY is unset (previews).
 crons.daily(
   "reconcile role mirror",
-  { hourUTC: 4, minuteUTC: 15 },
+  { hourUTC: 4, minuteUTC: 5 },
   internal.backfillUserRoles.run,
   {},
 );
@@ -66,7 +66,7 @@ crons.daily(
 // (conversation/attachmentModerationStore).
 crons.daily(
   "sent photo retention",
-  { hourUTC: 4, minuteUTC: 15 },
+  { hourUTC: 4, minuteUTC: 25 },
   internal.conversation.attachmentModerationStore.sweepUncheckedSentPhotos,
   {},
 );
