@@ -38,7 +38,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import { MessageCircle } from "lucide-react";
-import { useId, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useTranslations } from "use-intl";
 
 type ExchangeRow = FunctionReturnType<typeof gateway.exchange.incoming>[number];
@@ -161,36 +161,68 @@ function ExchangesPage() {
         : t("loans.count", { count: borrowed.length + lentOut.length })
       : t("exchangesCount", { count: rows.length });
 
-  const renderRows = (group: typeof rows, offset: number) => (
-    <div className="flex flex-col">
-      {group.map(({ exchange, direction }, index) => {
-        const focused =
-          focusedExchange !== undefined &&
-          (exchange.aggregateId === focusedExchange ||
-            exchange._id === focusedExchange);
-        return (
-          <ExchangeListRow
-            // Re-mount when the deep-linked exchange changes so it opens.
-            key={`${exchange._id}-${direction}-${focused}`}
-            focused={focused}
+  const renderRow = (
+    { exchange, direction }: (typeof rows)[number],
+    position: { index: number; isLast: boolean },
+  ) => {
+    const focused =
+      focusedExchange !== undefined &&
+      (exchange.aggregateId === focusedExchange ||
+        exchange._id === focusedExchange);
+    return (
+      <ExchangeListRow
+        key={`${exchange._id}-${direction}`}
+        focused={focused}
+        exchange={exchange}
+        direction={direction}
+        gradientIndex={position.index}
+        isLast={position.isLast}
+      >
+        {(who) => (
+          <ExchangeDetail
             exchange={exchange}
             direction={direction}
-            gradientIndex={offset + index}
-            isLast={index === group.length - 1}
-          >
-            {(who) => (
-              <ExchangeDetail
-                exchange={exchange}
-                direction={direction}
-                who={who}
-                viewerId={convexUser?._id}
-              />
-            )}
-          </ExchangeListRow>
-        );
-      })}
-    </div>
-  );
+            who={who}
+            viewerId={convexUser?._id}
+          />
+        )}
+      </ExchangeListRow>
+    );
+  };
+
+  // Rows and group headings are siblings in ONE flat keyed array, on purpose. A live update can move
+  // a row to the other group, or make the groups appear around it, and a row owns state that has to
+  // survive that: what's open, its chat, the composer's draft, the member's focus. A wrapper per
+  // group, or a nested array, would remount it.
+  const list: ReactNode[] = [
+    ...(needsYou.length > 0
+      ? [
+          <ExchangeGroupHeading
+            key="group-needs-you"
+            title={t("groups.needsYou")}
+            count={needsYou.length}
+          />,
+        ]
+      : []),
+    ...needsYou.map((row, index) =>
+      renderRow(row, { index, isLast: index === needsYou.length - 1 }),
+    ),
+    ...(needsYou.length > 0 && others.length > 0
+      ? [
+          <ExchangeGroupHeading
+            key="group-others"
+            title={t("groups.others")}
+            count={others.length}
+          />,
+        ]
+      : []),
+    ...others.map((row, index) =>
+      renderRow(row, {
+        index: needsYou.length + index,
+        isLast: index === others.length - 1,
+      }),
+    ),
+  ];
 
   return (
     <div className="flex flex-col gap-[18px]">
@@ -245,49 +277,27 @@ function ExchangesPage() {
           status={statusFilter}
           onShowAllStatuses={() => showView({ tab })}
         />
-      ) : needsYou.length === 0 ? (
-        renderRows(others, 0)
       ) : (
-        <>
-          <ExchangeGroup title={t("groups.needsYou")} count={needsYou.length}>
-            {renderRows(needsYou, 0)}
-          </ExchangeGroup>
-          {others.length > 0 && (
-            <ExchangeGroup title={t("groups.others")} count={others.length}>
-              {renderRows(others, needsYou.length)}
-            </ExchangeGroup>
-          )}
-        </>
+        <div className="flex flex-col">{list}</div>
       )}
     </div>
   );
 }
 
-// A titled run of exchange rows ("Needs you", "Other exchanges"), only used when something waits on
-// the viewer; otherwise the list renders without headings.
-function ExchangeGroup({
+// The heading above a run of exchange rows ("Needs you", "Other exchanges"), only used when something
+// waits on the viewer; otherwise the list renders without headings.
+function ExchangeGroupHeading({
   title,
   count,
-  children,
 }: {
   title: string;
   count: number;
-  children: ReactNode;
 }) {
-  const headingId = useId();
   return (
-    <section aria-labelledby={headingId}>
-      <h2
-        id={headingId}
-        className="font-heading flex items-baseline gap-2 text-lg font-bold"
-      >
-        {title}
-        <span className="text-muted-foreground text-sm font-medium">
-          {count}
-        </span>
-      </h2>
-      {children}
-    </section>
+    <h2 className="font-heading flex items-baseline gap-2 text-lg font-bold not-first:mt-[18px]">
+      {title}
+      <span className="text-muted-foreground text-sm font-medium">{count}</span>
+    </h2>
   );
 }
 

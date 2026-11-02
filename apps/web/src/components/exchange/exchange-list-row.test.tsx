@@ -126,6 +126,50 @@ describe("ExchangeListRow: one toggle for the whole row", () => {
   });
 });
 
+describe("ExchangeListRow: deep links", () => {
+  // The same row with a changing highlight: the page keeps its key stable across this.
+  const row = (focused: boolean) => (
+    <IntlProvider
+      locale="en"
+      messages={en}
+      timeZone="Europe/Amsterdam"
+      now={new Date(NOW)}
+    >
+      <ExchangeListRow
+        exchange={exchange()}
+        direction="incoming"
+        gradientIndex={0}
+        isLast
+        focused={focused}
+      >
+        {(who) => <p>Detail with {who}</p>}
+      </ExchangeListRow>
+    </IntlProvider>
+  );
+
+  it("stays open when the highlight goes, so changing a filter doesn't collapse it", () => {
+    const { rerender } = render(row(true));
+    expect(toggle().getAttribute("aria-expanded")).toBe("true");
+    const button = toggle();
+
+    rerender(row(false));
+    expect(toggle()).toBe(button);
+    expect(toggle().getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("opens when a deep link lands on it later, and the member can still collapse it", () => {
+    const { rerender } = render(row(false));
+    expect(toggle().getAttribute("aria-expanded")).toBe("false");
+
+    rerender(row(true));
+    expect(toggle().getAttribute("aria-expanded")).toBe("true");
+
+    fireEvent.click(toggle());
+    rerender(row(true));
+    expect(toggle().getAttribute("aria-expanded")).toBe("false");
+  });
+});
+
 describe("ExchangeListRow: covers", () => {
   const HARBOUR = "https://cdn.example/harbour.jpg";
   const TULIPS = "https://cdn.example/tulips.jpg";

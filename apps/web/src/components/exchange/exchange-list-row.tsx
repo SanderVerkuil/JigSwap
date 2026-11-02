@@ -61,6 +61,12 @@ export function ExchangeListRow({
   const relativeTime = useRelativeTime();
   const detailId = useId();
   const [open, setOpen] = useState(focused);
+  // A deep link to this row opens it; losing the highlight leaves it as the member has it.
+  const [wasFocused, setWasFocused] = useState(focused);
+  if (focused !== wasFocused) {
+    setWasFocused(focused);
+    if (focused) setOpen(true);
+  }
   const rowRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (focused) rowRef.current?.scrollIntoView({ block: "center" });
