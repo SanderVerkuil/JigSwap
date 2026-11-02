@@ -6,9 +6,11 @@
 // (SEC-38). The read carries nothing about the copy, so a row shows only what the member added.
 //
 // Hidden when there is nothing to act on. The read filters after it pages, so a page can come back
-// short or empty with more to read: it keeps reading until a screenful is on it. usePaginatedQuery
-// throws when a page fails, and the backend may lag this build, so a failure takes only this section
-// away, never the rest of the panel.
+// short or empty with more to read: it keeps reading until a screenful is on it, but only a few pages
+// at a time, because every page it holds stays subscribed and most members have nothing here. Past
+// that the member chooses to look further, so a photo can always be reached and opening the panel
+// doesn't walk every upload. usePaginatedQuery throws when a page fails, and the backend may lag this
+// build, so a failure takes only this section away, never the rest of the panel.
 //
 // The confirm is inline, as in the photo lightbox: this section lives in Clerk's profile modal, which
 // stacks above the app's dialogs (z-index 10000 against z-50), so an AlertDialog would open out of
@@ -30,9 +32,11 @@ type FormerCopyPhoto = FunctionReturnType<
   typeof gateway.library.myPhotosOnFormerCopies
 >["page"][number];
 
-// Uploads read per page, and how many rows make a screenful worth stopping at.
+// Uploads read per page, how many rows make a screenful worth stopping at, and how many pages are
+// read looking for one before the member is asked.
 const PAGE_SIZE = 25;
 const SCREENFUL = 10;
+const PAGES_PER_LOOK = 4;
 
 export function MyFormerCopyPhotos() {
   return (
@@ -53,12 +57,30 @@ function Section() {
     { initialNumItems: PAGE_SIZE },
   );
 
-  const shown = results.length;
-  useEffect(() => {
-    if (status === "CanLoadMore" && shown < SCREENFUL) loadMore(PAGE_SIZE);
-  }, [status, shown, loadMore]);
+  // A page has come in each time the hook is ready for another one.
+  const [pagesRead, setPagesRead] = useState(status === "CanLoadMore" ? 1 : 0);
+  const [previousStatus, setPreviousStatus] = useState(status);
+  if (status !== previousStatus) {
+    setPreviousStatus(status);
+    if (status === "CanLoadMore") setPagesRead(pagesRead + 1);
+  }
+  const [pagesAllowed, setPagesAllowed] = useState(PAGES_PER_LOOK);
+  const askedToLook = pagesAllowed > PAGES_PER_LOOK;
 
-  if (shown === 0) return null;
+  const shown = results.length;
+  const reading = status === "LoadingFirstPage" || status === "LoadingMore";
+  const looking =
+    status === "CanLoadMore" && shown < SCREENFUL && pagesRead < pagesAllowed;
+  useEffect(() => {
+    if (looking) loadMore(PAGE_SIZE);
+  }, [looking, pagesRead, loadMore]);
+
+  if (
+    shown === 0 &&
+    (status === "Exhausted" || ((looking || reading) && !askedToLook))
+  ) {
+    return null;
+  }
 
   return (
     <section className="flex flex-col gap-3">
@@ -70,23 +92,33 @@ function Section() {
         {t("title")}
       </h2>
       <p className="text-muted-foreground text-sm">{t("description")}</p>
-      <ul className="divide-y">
-        {results.map((photo) => (
-          <PhotoRow
-            key={photo.imageId}
-            photo={photo}
-            afterRemoval={headingRef}
-          />
-        ))}
-      </ul>
-      {status === "CanLoadMore" && (
+      {shown === 0 ? (
+        <p className="text-sm">{t("noneYet")}</p>
+      ) : (
+        <ul className="divide-y">
+          {results.map((photo) => (
+            <PhotoRow
+              key={photo.imageId}
+              photo={photo}
+              afterRemoval={headingRef}
+            />
+          ))}
+        </ul>
+      )}
+      {status !== "Exhausted" && (
+        // Stays in place while it reads, so keyboard focus isn't lost with it.
         <Button
           variant="outline"
           size="sm"
           className="h-11 self-start md:h-8"
-          onClick={() => loadMore(PAGE_SIZE)}
+          disabled={looking || reading}
+          onClick={() => {
+            setPagesAllowed(pagesRead + PAGES_PER_LOOK);
+            // With too little on screen the look above takes it from here.
+            if (shown >= SCREENFUL) loadMore(PAGE_SIZE);
+          }}
         >
-          {t("showMore")}
+          {t(shown === 0 ? "keepLooking" : "showMore")}
         </Button>
       )}
     </section>

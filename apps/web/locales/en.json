@@ -6130,7 +6130,9 @@
       "remove": "Remove",
       "removeName": "Remove {name}, added {date}",
       "confirmBody": "Remove this photo for good? It also goes for whoever has the puzzle now.",
-      "showMore": "Show more"
+      "showMore": "Show more",
+      "noneYet": "None among your newest photos.",
+      "keepLooking": "Keep looking"
     }
   },
   "ownContent": {

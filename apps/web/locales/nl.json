@@ -6130,7 +6130,9 @@
       "remove": "Verwijderen",
       "removeName": "{name} verwijderen, toegevoegd op {date}",
       "confirmBody": "Deze foto definitief verwijderen? Hij verdwijnt dan ook voor wie de puzzel nu heeft.",
-      "showMore": "Meer tonen"
+      "showMore": "Meer tonen",
+      "noneYet": "Geen bij je nieuwste foto's.",
+      "keepLooking": "Verder zoeken"
     }
   },
   "ownContent": {

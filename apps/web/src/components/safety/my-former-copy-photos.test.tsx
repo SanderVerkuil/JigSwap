@@ -9,6 +9,7 @@ import {
   within,
 } from "@testing-library/react";
 import { getFunctionName } from "convex/server";
+import type { ReactNode } from "react";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
@@ -52,16 +53,17 @@ const list = (
   });
 };
 
-const renderSection = (locale: "en" | "nl" = "en") =>
-  render(
-    <IntlProvider
-      locale={locale}
-      messages={locale === "en" ? en : nl}
-      timeZone="Europe/Amsterdam"
-    >
-      <MyFormerCopyPhotos />
-    </IntlProvider>,
-  );
+const section = (locale: "en" | "nl" = "en") => (
+  <IntlProvider
+    locale={locale}
+    messages={locale === "en" ? en : nl}
+    timeZone="Europe/Amsterdam"
+  >
+    <MyFormerCopyPhotos />
+  </IntlProvider>
+);
+
+const renderSection = (locale: "en" | "nl" = "en") => render(section(locale));
 
 const photo = (imageId: string, extra: object = {}) => ({
   imageId,
@@ -184,6 +186,90 @@ describe("MyFormerCopyPhotos", () => {
     list([photo("img_a")], "CanLoadMore");
     renderSection();
     expect(mocks.loadMore).toHaveBeenCalledTimes(1);
+  });
+
+  describe("a member with many uploads and none on a former copy", () => {
+    // The hook's next answer: the page that was asked for has come in, and it held nothing to show.
+    const answer = (rerender: (ui: ReactNode) => void) => {
+      list([], "LoadingMore");
+      rerender(section());
+      list([], "CanLoadMore");
+      rerender(section());
+    };
+
+    it("reads a few pages out of sight, then stops and offers to keep looking", () => {
+      list([], "LoadingFirstPage");
+      const { container, rerender } = renderSection();
+      list([], "CanLoadMore");
+      rerender(section());
+      expect(mocks.loadMore).toHaveBeenCalledTimes(1);
+      expect(container.firstChild).toBeNull();
+
+      answer(rerender);
+      answer(rerender);
+      expect(mocks.loadMore).toHaveBeenCalledTimes(3);
+      expect(container.firstChild).toBeNull();
+
+      answer(rerender);
+      expect(mocks.loadMore).toHaveBeenCalledTimes(3);
+      expect(
+        screen.getByRole("heading", {
+          name: "Photos of puzzles you no longer have",
+        }),
+      ).toBeTruthy();
+      expect(screen.getByText("None among your newest photos.")).toBeTruthy();
+      expect(screen.queryByRole("list")).toBeNull();
+    });
+
+    it("keeps looking on request, as far again, in sight", () => {
+      list([], "CanLoadMore");
+      const { rerender } = renderSection();
+      answer(rerender);
+      answer(rerender);
+      answer(rerender);
+      expect(mocks.loadMore).toHaveBeenCalledTimes(3);
+
+      fireEvent.click(screen.getByRole("button", { name: "Keep looking" }));
+      expect(mocks.loadMore).toHaveBeenCalledTimes(4);
+      list([], "LoadingMore");
+      rerender(section());
+      expect(
+        screen.getByRole<HTMLButtonElement>("button", { name: "Keep looking" })
+          .disabled,
+      ).toBe(true);
+
+      list([], "CanLoadMore");
+      rerender(section());
+      expect(mocks.loadMore).toHaveBeenCalledTimes(5);
+      answer(rerender);
+      answer(rerender);
+      expect(mocks.loadMore).toHaveBeenCalledTimes(7);
+      answer(rerender);
+      expect(mocks.loadMore).toHaveBeenCalledTimes(7);
+    });
+
+    it("goes away once there was nothing to find", () => {
+      list([], "CanLoadMore");
+      const { container, rerender } = renderSection();
+      list([], "Exhausted");
+      rerender(section());
+      expect(container.firstChild).toBeNull();
+    });
+
+    it("renders in Dutch", () => {
+      list([], "CanLoadMore");
+      const { rerender } = renderSection("nl");
+      for (let i = 0; i < 3; i++) {
+        list([], "LoadingMore");
+        rerender(section("nl"));
+        list([], "CanLoadMore");
+        rerender(section("nl"));
+      }
+      expect(screen.getByText("Geen bij je nieuwste foto's.")).toBeTruthy();
+      expect(
+        screen.getByRole("button", { name: "Verder zoeken" }),
+      ).toBeTruthy();
+    });
   });
 
   it("offers more once a screenful is on it", () => {
