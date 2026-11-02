@@ -138,6 +138,7 @@ export function UsersTable({ users }: { users: AdminUserRow[] }) {
               </td>
               <td className={`${DETAIL_CELL} text-right tabular-nums`}>
                 {user.ownedCopyCount}
+                {user.ownedCopyCountIsLowerBound && "+"}
               </td>
               <td className={`${ACTIONS_CELL} text-right`}>
                 <div className="flex items-center justify-end gap-2">

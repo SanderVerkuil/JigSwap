@@ -162,6 +162,55 @@ describe("the member and definition lists", () => {
     expect(page.find((user) => user._id === member)?.ownedCopyCount).toBe(1);
   });
 
+  test("listUsers doesn't call a counter row a lower bound", async () => {
+    await seedCopies();
+    const { page } = await asAdmin().query(api.admin.listUsers.listUsers, {
+      paginationOpts: { numItems: 25, cursor: null },
+    });
+    const row = page.find((user) => user._id === member);
+    expect(row?.ownedCopyCountIsLowerBound).toBeUndefined();
+  });
+
+  test("listPuzzleDefinitions says when a count from the bounded scan may be short", async () => {
+    await seedCopies();
+    await stored(undefined);
+    const { page } = await asAdmin().query(
+      api.admin.listPuzzleDefinitions.listPuzzleDefinitions,
+      { paginationOpts: { numItems: 25, cursor: null } },
+    );
+    expect(page[0]?.ownerCountIsLowerBound).toBe(true);
+  });
+
+  test("listPuzzleDefinitions counts a definition with few copies exactly before its totals have the count", async () => {
+    await t.run((ctx) =>
+      ctx.db.insert("ownedPuzzles", {
+        puzzleId,
+        ownerId: member,
+        heldBy: member,
+        condition: "good",
+        availability: { forTrade: false, forSale: false, forLend: false },
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    const { page } = await asAdmin().query(
+      api.admin.listPuzzleDefinitions.listPuzzleDefinitions,
+      { paginationOpts: { numItems: 25, cursor: null } },
+    );
+    expect(page[0]?.ownerCount).toBe(1);
+    expect(page[0]?.ownerCountIsLowerBound).toBeUndefined();
+  });
+
+  test("listPuzzleDefinitions doesn't call a stored count a lower bound", async () => {
+    await seedCopies();
+    await stored(1);
+    const { page } = await asAdmin().query(
+      api.admin.listPuzzleDefinitions.listPuzzleDefinitions,
+      { paginationOpts: { numItems: 25, cursor: null } },
+    );
+    expect(page[0]?.ownerCountIsLowerBound).toBeUndefined();
+  });
+
   test("listPuzzleDefinitions reads a definition's owners from its totals", async () => {
     await seedCopies();
     await stored(1);

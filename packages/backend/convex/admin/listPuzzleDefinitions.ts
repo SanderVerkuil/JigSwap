@@ -73,16 +73,15 @@ export const listPuzzleDefinitions = query({
     const page = await Promise.all(
       puzzles.page.map(
         async (puzzle): Promise<AdminPuzzleDefinitionRowView> => {
-          const ownerCount =
-            (await definitionTotalsOf(ctx, puzzle._id))?.ownerCount ??
-            new Set(
-              (
-                await ctx.db
+          const storedOwners = (await definitionTotalsOf(ctx, puzzle._id))
+            ?.ownerCount;
+          const scanned =
+            storedOwners === undefined
+              ? await ctx.db
                   .query("ownedPuzzles")
                   .withIndex("by_puzzle", (q) => q.eq("puzzleId", puzzle._id))
                   .take(OWNER_SCAN_CAP)
-              ).map((copy) => copy.ownerId),
-            ).size;
+              : [];
           const submitter = await ctx.db.get(puzzle.submittedBy);
           return {
             _id: puzzle._id as string,
@@ -98,7 +97,11 @@ export const listPuzzleDefinitions = query({
             imageMissing:
               puzzle.image !== undefined &&
               (await ctx.db.system.get(puzzle.image)) === null,
-            ownerCount,
+            ownerCount:
+              storedOwners ?? new Set(scanned.map((c) => c.ownerId)).size,
+            ...(scanned.length === OWNER_SCAN_CAP && {
+              ownerCountIsLowerBound: true,
+            }),
           };
         },
       ),

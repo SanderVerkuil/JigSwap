@@ -23,18 +23,22 @@ const MAX_PAGE_SIZE = 50;
 const toAdminUserView = async (
   ctx: QueryCtx,
   user: Doc<"users">,
-): Promise<AdminUserView> => ({
-  _id: user._id,
-  _creationTime: user._creationTime,
-  name: user.name,
-  username: user.username,
-  email: user.email,
-  avatar: user.avatar,
-  isActive: user.isActive,
-  role: user.role,
-  ownedCopyCount: (await readMemberLibraryCounts(ctx, user._id)).owned,
-  createdAt: user.createdAt,
-});
+): Promise<AdminUserView> => {
+  const { owned, complete } = await readMemberLibraryCounts(ctx, user._id);
+  return {
+    _id: user._id,
+    _creationTime: user._creationTime,
+    name: user.name,
+    username: user.username,
+    email: user.email,
+    avatar: user.avatar,
+    isActive: user.isActive,
+    role: user.role,
+    ownedCopyCount: owned,
+    ...(complete ? {} : { ownedCopyCountIsLowerBound: true }),
+    createdAt: user.createdAt,
+  };
+};
 
 // "local@domain" with no spaces: looked up as an exact address, not searched by name.
 const EMAIL_SHAPED = /^[^\s@]+@[^\s@]+$/;

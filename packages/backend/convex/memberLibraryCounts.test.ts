@@ -303,6 +303,25 @@ describe("readMemberLibraryCounts", () => {
     });
     const counts = await t.run((ctx) => readMemberLibraryCounts(ctx, w.ann));
     expect(counts.owned).toBe(LIBRARY_COUNT_SCAN_CAP);
+    expect(counts.complete).toBe(false);
+
+    // The admin list says so, because it is the page used to find the account.
+    const asAdmin = t.withIdentity({
+      subject: "clerk_ann",
+      metadata: { role: "admin" },
+    });
+    const { page } = await asAdmin.query(api.admin.listUsers.listUsers, {
+      paginationOpts: { numItems: 25, cursor: null },
+    });
+    const row = page.find((user) => user._id === w.ann);
+    expect(row?.ownedCopyCount).toBe(LIBRARY_COUNT_SCAN_CAP);
+    expect(row?.ownedCopyCountIsLowerBound).toBe(true);
+  });
+
+  test("a counted member's numbers are complete", async () => {
+    await legacyCopy(t, w, w.ann);
+    const counts = await t.run((ctx) => readMemberLibraryCounts(ctx, w.ann));
+    expect(counts).toEqual({ owned: 1, forTrade: 0, complete: true });
   });
 });
 

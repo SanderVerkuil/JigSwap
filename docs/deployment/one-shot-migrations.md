@@ -1039,7 +1039,11 @@ Optional: the cron runs the same reconcile every week. There is no ordering pres
 every write that changes a definition's aggregates already gives it a row, and until a
 definition has one the catalog and definition pages compute its aggregates themselves, at
 the old cost (every review, copy and completion of the definition on each view), so run it
-soon after the deploy rather than waiting for the cron.
+soon after the deploy rather than waiting for the cron. Two numbers wait for a definition's next
+recompute: the catalog's average solve time reads as nothing while a stored total still holds a
+solve time no solve can have taken, and the admin list's owner count reads as a lower bound
+("100+ owners") where the totals don't hold it yet. Run it again after a deploy that changes either
+of those, so they don't wait a week.
 
 **What it does:** pages through `puzzles` (100 definitions per batch; `batchSize` overrides
 it, rounded down and clamped to 1..500; each batch its own transaction, rescheduling itself

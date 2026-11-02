@@ -5352,6 +5352,7 @@
       "pieces": "{count, plural, one {# stukje} other {# stukjes}}",
       "submittedBy": "door {name}",
       "ownerCount": "{count, plural, one {# eigenaar} other {# eigenaren}}",
+      "ownerCountLowerBound": "{count}+ eigenaren",
       "imageMissing": "Afbeelding ontbreekt",
       "status": {
         "pending": "In afwachting",

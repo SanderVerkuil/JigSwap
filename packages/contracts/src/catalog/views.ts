@@ -105,6 +105,8 @@ export interface AdminPuzzleDefinitionRowView {
    */
   imageMissing: boolean;
   ownerCount: number;
+  /** The count stopped at a bound before the definition's totals held it: there may be more. */
+  ownerCountIsLowerBound?: boolean;
 }
 
 /** A distinct, non-blank brand name from the Catalog (brand-less definitions are left out). */

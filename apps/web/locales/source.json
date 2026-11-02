@@ -5352,6 +5352,7 @@
       "pieces": "{count, plural, one {# piece} other {# pieces}}",
       "submittedBy": "by {name}",
       "ownerCount": "{count, plural, one {# owner} other {# owners}}",
+      "ownerCountLowerBound": "{count}+ owners",
       "imageMissing": "Box art missing",
       "status": {
         "pending": "Pending",
