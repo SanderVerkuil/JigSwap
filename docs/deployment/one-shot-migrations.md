@@ -841,26 +841,6 @@ edit).
 **Safe to re-run:** yes. A second run finds every row in step and writes nothing. It also
 doubles as a repair: if a future write path changes `availability` or the owner without the
 fields, a re-run corrects those rows (`repaired` > 0 points at that bug).
-## `solving/recountGoals` — goals count only the solves inside their period
-
-**When:** once per deployment, right after period-scoped goals (the `goals.startDate` field, the
-`goal-progress` counting rule and the recompute on completion edits) are deployed there. There is
-no hard ordering pressure: every goal is recounted by the live code on its member's next solve,
-edit or delete. Until then, goals set before periods existed keep the lifetime total the old code
-stored, and inactive members would keep it indefinitely, so run it promptly. Owner decision: pair
-it with a What's new entry, since some "Achieved" goals become in progress again.
-
-**What it does:** pages through `goals` (100 rows per batch, each batch its own transaction,
-rescheduling itself until the table is exhausted) and sets `currentCompletions` to the number of
-the member's finished solves inside the goal's period: from `startDate` (or, for goals without
-one, the UTC day the goal was created) through the whole of `targetDate`. Day-dated solves count
-when they end in the period, year-only solves when their year overlaps it, undated solves never.
-It recounts archived goals too. It writes only `currentCompletions` (not `updatedAt`: this is not
-a member's edit) and records no domain event, so nobody gets a GoalAchieved notification for a
-correction. It never deletes anything.
-
-**Safe to re-run:** yes. Goals whose count is already right are skipped, so a second run changes 0
-rows.
 
 **Commands:**
 
@@ -1045,6 +1025,34 @@ number of `definitions` it scheduled.
    changes (give or take definitions written to in between).
 3. The public catalog, a catalog detail page and a `/puzzles/<id>` page show the same
    ratings, owner, completion and availability numbers as before the run.
+
+## `solving/recountGoals` — goals count only the solves inside their period
+
+**When:** once per deployment, right after period-scoped goals (the `goals.startDate` field, the
+`goal-progress` counting rule and the recompute on completion edits) are deployed there. There is
+no hard ordering pressure: every goal is recounted by the live code on its member's next solve,
+edit or delete. Until then, goals set before periods existed keep the lifetime total the old code
+stored, and inactive members would keep it indefinitely, so run it promptly. Owner decision: pair
+it with a What's new entry, since some "Achieved" goals become in progress again.
+
+**What it does:** pages through `goals` (100 rows per batch, each batch its own transaction,
+rescheduling itself until the table is exhausted) and sets `currentCompletions` to the number of
+the member's finished solves inside the goal's period: from `startDate` (or, for goals without
+one, the UTC day the goal was created) through the whole of `targetDate`. Day-dated solves count
+when they end in the period, year-only solves when their year overlaps it, undated solves never.
+It recounts archived goals too. It writes only `currentCompletions` (not `updatedAt`: this is not
+a member's edit) and records no domain event, so nobody gets a GoalAchieved notification for a
+correction. It never deletes anything.
+
+**Safe to re-run:** yes. Goals whose count is already right are skipped, so a second run changes 0
+rows.
+
+**Commands:**
+
+```bash
+cd packages/backend
+
+# dev: dry run (counts only, writes nothing), then the real run
 npx convex run solving/recountGoals:recountGoals '{"dryRun":true}'
 npx convex run solving/recountGoals:recountGoals '{}'
 
