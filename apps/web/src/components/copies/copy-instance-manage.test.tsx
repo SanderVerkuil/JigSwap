@@ -104,6 +104,24 @@ const renderCopy = (copy: CopyInstanceView) => {
 
 afterEach(cleanup);
 
+describe("Edit copy's Add photo", () => {
+  it("is offered while the copy has room for a photo", () => {
+    renderCopy(managedCopy({ pendingPhotos: [{ createdAt: 1 }] }));
+    expect(mocks.editProps?.onAddPhotos).toBeTypeOf("function");
+  });
+
+  // The photo strip renders no file input then, so the button would only close the dialog.
+  it("isn't offered once photos still being checked fill the limit", () => {
+    renderCopy(
+      managedCopy({
+        photoLimit: 2,
+        pendingPhotos: [{ createdAt: 1 }, { createdAt: 2 }],
+      }),
+    );
+    expect(mocks.editProps?.onAddPhotos).toBeUndefined();
+  });
+});
+
 describe("the acquisition date", () => {
   it("shows the recorded month", () => {
     renderCopy(

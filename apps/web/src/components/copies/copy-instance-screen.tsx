@@ -886,7 +886,13 @@ function CopyInstanceDetail({
               open={editOpen}
               onOpenChange={setEditOpen}
               copy={copy}
-              onAddPhotos={() => addPhotoInputRef.current?.click()}
+              onAddPhotos={
+                // With every place taken by photos still being checked, the photo strip has no
+                // file input for the button to open.
+                gallery.length + copy.pendingPhotos.length < copy.photoLimit
+                  ? () => addPhotoInputRef.current?.click()
+                  : undefined
+              }
               focus={editFocus}
             />
           )}
