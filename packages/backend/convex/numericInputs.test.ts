@@ -299,3 +299,89 @@ describe("a copy's numbers", () => {
     expect(row.missingPiecesCount).toBe(2);
   });
 });
+
+describe("an exchange's terms", () => {
+  const seedOtherCopy = () =>
+    t.run(async (ctx) => {
+      const owner = await ctx.db.insert("users", {
+        clerkId: "clerk_owner",
+        email: "owner@example.com",
+        name: "Owner",
+        isActive: true,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      await ctx.db.insert("profiles", {
+        aggregateId: "profile_owner",
+        memberId: owner,
+        visibility: "public",
+        updatedAt: 1,
+      });
+      return ctx.db.insert("ownedPuzzles", {
+        aggregateId: "copy_owner",
+        puzzleId,
+        ownerId: owner,
+        heldBy: owner,
+        condition: "good",
+        availability: { forTrade: false, forSale: true, forLend: true },
+        isOpen: true,
+        listedAt: 1,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+    });
+  const exchanges = () => t.run((ctx) => ctx.db.query("exchanges").collect());
+
+  test.each([1e300, Number.MAX_VALUE, 100_000_001, Number.NaN, -1, 1.5])(
+    "propose refuses a price of %p cents",
+    async (salePrice) => {
+      const requestedPuzzleId = await seedOtherCopy();
+      await expect(
+        asMe().mutation(api.exchange.propose.propose, {
+          type: "sale",
+          requestedPuzzleId,
+          salePrice,
+        }),
+      ).rejects.toThrow(/MissingTerms/);
+      expect(await exchanges()).toEqual([]);
+    },
+  );
+
+  test.each([
+    Number.POSITIVE_INFINITY,
+    Number.NEGATIVE_INFINITY,
+    1e30,
+    -1e15,
+    Date.now() + 11 * 365 * DAY,
+    1,
+  ])("propose refuses a return date of %p", async (loanReturnDate) => {
+    const requestedPuzzleId = await seedOtherCopy();
+    await expect(
+      asMe().mutation(api.exchange.propose.propose, {
+        type: "loan",
+        requestedPuzzleId,
+        loanReturnDate,
+      }),
+    ).rejects.toThrow(/MissingTerms/);
+    expect(await exchanges()).toEqual([]);
+  });
+
+  test("a stored price past the bound still reads back as stored", async () => {
+    const requestedPuzzleId = await seedOtherCopy();
+    const exchangeId = await asMe().mutation(api.exchange.propose.propose, {
+      type: "sale",
+      requestedPuzzleId,
+      salePrice: 1500,
+    });
+    await t.run(async (ctx) => {
+      const [row] = await ctx.db.query("exchanges").collect();
+      await ctx.db.patch(row._id, {
+        salePrice: { amount: 1e300, currency: "EUR" },
+      });
+    });
+    await asMe().mutation(api.exchange.cancel.cancel, { exchangeId });
+    const [row] = await exchanges();
+    expect(row.status).toBe("cancelled");
+    expect(row.salePrice?.amount).toBe(1e300);
+  });
+});

@@ -910,7 +910,7 @@
     "noOfferable": "Je hebt geen puzzels die je kunt aanbieden om te ruilen.",
     "priceLabel": "Jouw bod (EUR)",
     "pricePlaceholder": "bijv. 15,00",
-    "priceInvalid": "Vul een bedrag boven nul in, zoals 15 of 15,50.",
+    "priceInvalid": "Vul een bedrag boven nul en tot 1.000.000 in, zoals 15 of 15,50.",
     "revealNotice": {
       "title": "Je naam, gebruikersnaam en de reviews die je hebt gekregen worden zichtbaar voor de eigenaar van deze puzzel, alleen voor deze ruil.",
       "emailPrivate": "Je e-mailadres blijft privé, tenzij je het zelf deelt nadat de eigenaar heeft geaccepteerd.",

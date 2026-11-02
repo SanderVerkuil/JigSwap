@@ -100,7 +100,7 @@ export class Exchange {
       return err(ExchangeError.selfExchange());
     }
 
-    const terms = validateTerms(props.terms);
+    const terms = validateTerms(props.terms, props.now);
     if (terms.isErr) return err(terms.error);
 
     const state = Exchange.stateFromTerms(props, terms.value);

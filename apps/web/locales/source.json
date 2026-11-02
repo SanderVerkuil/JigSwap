@@ -910,7 +910,7 @@
     "noOfferable": "You have no puzzles you can offer in a swap.",
     "priceLabel": "Your offer (EUR)",
     "pricePlaceholder": "e.g. 15.00",
-    "priceInvalid": "Enter an amount above zero, like 15 or 15.50.",
+    "priceInvalid": "Enter an amount above zero and up to 1,000,000, like 15 or 15.50.",
     "revealNotice": {
       "title": "Your name, handle and the reviews you've received will be visible to the owner of this puzzle, for this trade only.",
       "emailPrivate": "Your email address stays private unless you choose to share it once the owner accepts.",
