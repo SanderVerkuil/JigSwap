@@ -64,7 +64,9 @@ export function HouseholdNameSetting({
           maxLength={MAX_NAME_LENGTH}
           placeholder={t("namePlaceholder")}
           onChange={(event) => setDraft(event.target.value)}
-          className="max-w-sm min-w-0 flex-1"
+          // basis-56: too narrow for that beside Save, the button wraps below rather than squeezing
+          // the field until its placeholder is cut off.
+          className="max-w-sm min-w-0 flex-1 basis-56"
         />
         <Button
           type="submit"
