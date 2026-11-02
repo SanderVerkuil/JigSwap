@@ -41,6 +41,9 @@ const MAX_RESTORED_ROWS = 120;
 // asks for that many at once and draws as many placeholders, so the page is tall enough for the
 // router's scroll restoration to land where the member was. In memory only: a reload starts afresh.
 const loadedRows = new Map<string, number>();
+// Whether the member last left the Filters panel open for each search, for the same reason: the
+// panel is part of the page's height.
+const filterPanelChoices = new Map<string, boolean>();
 
 interface PuzzlesClientProps {
   /** The validated /puzzles URL state: term, filters, favourites and view mode. */
@@ -61,11 +64,6 @@ export function PuzzlesClient({
   const viewMode = search.view ?? "grid";
   const favoritesOnly = search.fav === true;
   const filters = filtersFromSearch(search);
-  // Open from the start when a facet is set (Back from a puzzle, a shared link), so the member can
-  // see what narrows the results. The term and favourites show in the toolbar either way.
-  const [showFilters, setShowFilters] = useState(() =>
-    hasActiveCatalogueFilters({ ...filters, searchTerm: "" }),
-  );
   const filtersPanelId = useId();
   // Clearing remounts the panel, so a range value still waiting for its pause goes with the rest.
   const [filtersPanelKey, setFiltersPanelKey] = useState(0);
@@ -84,6 +82,14 @@ export function PuzzlesClient({
   // found. Favourites are a short, complete list: the same facets apply to it on the client.
   const searchArgs = catalogueSearchArgs(filters);
   const searchKey = JSON.stringify(searchArgs);
+  // Open from the start when a facet is set (a shared link), so the member can see what narrows the
+  // results; the term and favourites show in the toolbar either way. A member who opened or closed
+  // the panel for this search finds it that way again.
+  const [showFilters, setShowFilters] = useState(
+    () =>
+      filterPanelChoices.get(searchKey) ??
+      hasActiveCatalogueFilters({ ...filters, searchTerm: "" }),
+  );
   const remembered = Math.min(
     loadedRows.get(searchKey) ?? 0,
     MAX_RESTORED_ROWS,
@@ -240,7 +246,10 @@ export function PuzzlesClient({
                 variant="outline"
                 aria-expanded={showFilters}
                 aria-controls={filtersPanelId}
-                onClick={() => setShowFilters(!showFilters)}
+                onClick={() => {
+                  filterPanelChoices.set(searchKey, !showFilters);
+                  setShowFilters(!showFilters);
+                }}
                 className="flex items-center gap-2"
               >
                 <Filter className="h-4 w-4" />

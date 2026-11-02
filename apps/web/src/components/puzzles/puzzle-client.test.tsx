@@ -291,8 +291,31 @@ describe("PuzzlesClient filters panel", () => {
   });
 
   it("can still be closed while a facet is set", () => {
-    renderClient({ brand: "Jumbo" });
+    renderClient({ brand: "Goliath" });
     fireEvent.click(filtersToggle());
+    expect(filtersToggle().getAttribute("aria-expanded")).toBe("false");
+  });
+
+  // The page must be as tall as when the member left it, or scroll restoration lands elsewhere.
+  it("comes back (after Back) the way the member left it for this search", () => {
+    const closed: PuzzlesSearch = { brand: "Closed by the member" };
+    renderClient(closed);
+    fireEvent.click(filtersToggle());
+    cleanup();
+    renderClient(closed);
+    expect(filtersToggle().getAttribute("aria-expanded")).toBe("false");
+    cleanup();
+
+    const opened: PuzzlesSearch = { q: "opened by the member" };
+    renderClient(opened);
+    fireEvent.click(filtersToggle());
+    cleanup();
+    renderClient(opened);
+    expect(filtersToggle().getAttribute("aria-expanded")).toBe("true");
+    cleanup();
+
+    // Another search has its own answer.
+    renderClient({ q: "another term" });
     expect(filtersToggle().getAttribute("aria-expanded")).toBe("false");
   });
 
