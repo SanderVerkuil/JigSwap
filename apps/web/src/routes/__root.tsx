@@ -70,12 +70,19 @@ const getSsrConvexToken = createServerOnlyFn(async () => {
 type AuthPayload = { userId: string | null };
 let clientAuthCache: AuthPayload | null = null;
 
+type RootHeadContext = {
+  match: { context: unknown };
+  matches: ReadonlyArray<{ _notFound?: boolean }>;
+};
+
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
   convexClient: ConvexReactClient;
   convexQueryClient: ConvexQueryClient;
 }>()({
-  head: ({ match, matches }) => ({
+  // The annotation matters: an unannotated parameter here makes TypeScript settle the route's
+  // context before it has seen beforeLoad below, and every route loses userId and intl.
+  head: ({ match, matches }: RootHeadContext) => ({
     meta: [
       { charSet: "utf-8" },
       // viewport-fit=cover lets the mobile shell extend under the notch /
