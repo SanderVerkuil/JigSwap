@@ -325,3 +325,28 @@ describe("copy card menu", () => {
     expect(start.querySelector("svg.lucide-play")).toBeTruthy();
   });
 });
+
+describe("selection card", () => {
+  it("names its checkbox after the puzzle and toggles once from the checkbox or the card", () => {
+    const onSelect = vi.fn();
+    renderCard({ variant: "selection", onSelect });
+    const box = screen.getByRole("checkbox", {
+      name: "Select De Kattenshow",
+    }) as HTMLInputElement;
+    expect(box.disabled).toBe(false);
+    fireEvent.click(box);
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByText("De Kattenshow"));
+    expect(onSelect).toHaveBeenCalledTimes(2);
+    // Selecting never navigates: no link to the copy while picking.
+    expect(screen.queryByRole("link")).toBeNull();
+  });
+
+  it("shows a disabled checkbox on a copy the viewer can't select", () => {
+    renderCard({ variant: "selection" });
+    const box = screen.getByRole("checkbox", {
+      name: "Select De Kattenshow",
+    }) as HTMLInputElement;
+    expect(box.disabled).toBe(true);
+  });
+});

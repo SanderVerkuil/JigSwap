@@ -476,6 +476,10 @@ export function PuzzleCard({
           <input
             type="checkbox"
             checked={isSelected}
+            // Named after the puzzle; disabled when the page gives this copy no way to select it
+            // (e.g. a housemate's view-only copy in My Puzzles' selection mode).
+            aria-label={t("bulk.selectCopy", { title: view.title })}
+            disabled={!onSelect}
             onChange={() => onSelect?.(ownedId)}
             // The whole card already toggles selection; stop the click here from
             // bubbling to the card so the toggle doesn't fire twice and cancel out.
