@@ -14,8 +14,9 @@ import { useTranslations } from "use-intl";
 
 // Alternating feature rows (open layout, no cards — per the design system's
 // "cards are a last resort" rule). Copy is aligned with shipped features:
-// custody tracking says WHO has a box (no live location), recall sends an
-// in-app notification (not email), and discovery has no distance filter.
+// custody tracking says WHO has a box (no live location), recall closes the loan
+// once the puzzle is back (the borrower gets no notification), and discovery has
+// no distance filter.
 export function FeatureRows() {
   const t = useTranslations("marketing.home.rows");
 
@@ -158,7 +159,7 @@ function LendTrackVisual() {
       initial: "RJ",
       avatar: MK_AVATAR_TONES.pink,
       title: "Amsterdam",
-      sub: t("notificationSent"),
+      sub: t("backWithYou"),
       status: t("recalled"),
       tone: "warning",
     },

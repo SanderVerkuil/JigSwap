@@ -3973,7 +3973,7 @@
         "puzzlesCount": "{count} puzzels",
         "onYourShelf": "Op je plank",
         "withName": "bij {name}",
-        "notificationSent": "melding verstuurd",
+        "backWithYou": "weer bij jou",
         "available": "Beschikbaar",
         "lentOut": "Uitgeleend",
         "recalled": "Teruggevraagd",
@@ -4031,7 +4031,7 @@
       "faq2Q": "Kan ik een puzzel voor onbepaalde tijd lenen?",
       "faq2A": "Ja. Spreek met de eigenaar af hoe lang je 'm houdt — dat mag ook voor onbepaalde tijd zijn. De eigenaar ziet altijd bij wie de puzzel is en kan 'm terugvragen.",
       "faq3Q": "Hoe houdt de eigenaar zicht op zijn puzzel?",
-      "faq3A": "Elke puzzel staat in je overzicht 'Mijn puzzels', met de status en bij wie 'm is: beschikbaar, uitgeleend of teruggevraagd. Bij terugvragen krijgt de lener automatisch een melding.",
+      "faq3A": "Elke puzzel staat in je overzicht 'Mijn puzzels', met de status en bij wie 'm is. Wil je 'm terug? Stuur de lener een bericht om het af te spreken en kies Terugvragen zodra je de puzzel weer hebt: daarmee sluit je de uitlening.",
       "faq4Q": "Hoe geef ik de puzzel door?",
       "faq4A": "In persoon. Jullie spreken een plek en tijd af om de puzzel over te dragen — handig en zonder verzendkosten. Voorlopig regelen we geen verzending."
     },

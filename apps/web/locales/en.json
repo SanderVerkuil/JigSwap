@@ -3973,7 +3973,7 @@
         "puzzlesCount": "{count} puzzles",
         "onYourShelf": "On your shelf",
         "withName": "with {name}",
-        "notificationSent": "notification sent",
+        "backWithYou": "back with you",
         "available": "Available",
         "lentOut": "Lent out",
         "recalled": "Recalled",
@@ -4031,7 +4031,7 @@
       "faq2Q": "Can I borrow a puzzle indefinitely?",
       "faq2A": "Yes. Agree with the owner how long you keep it — that can be indefinitely. The owner always sees who has the puzzle and can ask for it back.",
       "faq3Q": "How does the owner keep track of their puzzle?",
-      "faq3A": "Every puzzle appears in your 'My puzzles' overview with its status and who has it: available, lent out or recalled. A recall automatically sends the borrower a notification.",
+      "faq3A": "Every puzzle appears in your 'My puzzles' overview with its status and who has it. Want it back? Message the borrower to arrange it, and choose Recall once you have the puzzle again: that closes the loan.",
       "faq4Q": "How do I hand the puzzle over?",
       "faq4A": "In person. You agree a place and time to hand the puzzle over — easy and free of shipping costs. For now we don't arrange shipping."
     },

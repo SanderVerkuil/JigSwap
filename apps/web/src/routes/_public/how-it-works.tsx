@@ -25,7 +25,8 @@ const MODE_ACCENTS = [
 
 // How it works: five numbered steps, the three sharing modes, and an FAQ.
 // Copy reflects shipped behaviour: manual puzzle entry (EAN optional, no
-// scanner), exchange proposals (no general DMs), in-app recall notifications.
+// scanner), exchange proposals (no general DMs), recall closes a loan once the
+// puzzle is back (no notification goes out).
 function HowItWorksPage() {
   const t = useTranslations("marketing.how");
   const start = useStartLink();
