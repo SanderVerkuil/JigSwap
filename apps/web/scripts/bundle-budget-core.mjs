@@ -140,7 +140,7 @@ export function findForbiddenInitial(routes, { markers, contentOf }) {
 export function largestInlineScriptBytes(html) {
   let largest = 0;
   for (const [, attributes, body] of html.matchAll(
-    /<script\b([^>]*)>([\s\S]*?)<\/script>/gi,
+    /<script\b([^>]*)>([\s\S]*?)<\/script\b[^>]*>/gi,
   )) {
     if (/\bsrc\s*=/i.test(attributes)) continue;
     largest = Math.max(largest, new TextEncoder().encode(body).length);

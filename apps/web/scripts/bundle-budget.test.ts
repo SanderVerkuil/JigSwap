@@ -195,6 +195,11 @@ describe("largestInlineScriptBytes", () => {
   it("is zero for a document without inline scripts", () => {
     expect(largestInlineScriptBytes('<script src="/a.js"></script>')).toBe(0);
   });
+
+  it("recognises an end tag with whitespace or attributes", () => {
+    expect(largestInlineScriptBytes("<script>abc</script >")).toBe(3);
+    expect(largestInlineScriptBytes("<script>abcd</script foo>")).toBe(4);
+  });
 });
 
 describe("oversizedDocuments", () => {
