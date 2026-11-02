@@ -179,8 +179,9 @@ patterns:
   (`REDACTED_EVENT_FIELDS` in `events/recordAndSchedule.ts`): a subscriber that needs such a field
   reads the source row. Each event's member ids are indexed in `domainEventMembers` (the account
   purge reads a member's events through it), and the daily `events/retention` sweep deletes events
-  dispatched more than 97 days ago (the activity feed's 90 days plus a week; a dry run unless
-  `RETENTION_ENFORCE` names `domainEvents`). In-flight and `failedAt` events are never deleted.
+  dispatched more than 97 days ago (the activity feed's 90 days plus a week; unless
+  `RETENTION_ENFORCE` names `domainEvents` it is a dry run, stopping after 5,000 events with
+  `capped` on its last line). In-flight and `failedAt` events are never deleted.
 
   **Replaying a `failedAt` event (manual).** Every handler in `failedHandlers` rolled back in full
   (its own sub-transaction), so re-running it cannot duplicate its own writes; handlers in
