@@ -22,7 +22,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { gateway, type Id } from "@/gateway";
+import { gateway } from "@/gateway";
 import { useRelativeTime } from "@/hooks/use-relative-time";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
@@ -206,9 +206,9 @@ export function ReportsQueue({
           </SheetHeader>
           <div className="px-5 pb-5">
             {openId && (
-              // The id comes from the URL; getReport validates it server-side.
+              // The id comes from the URL; getReport normalises it server-side.
               <ReportDetailLoader
-                reportId={openId as Id<"reports">}
+                reportId={openId}
                 queue={results}
                 onOpenReport={openFromDrawer}
               />
@@ -225,7 +225,7 @@ function ReportDetailLoader({
   queue,
   onOpenReport,
 }: {
-  reportId: Id<"reports">;
+  reportId: string;
   /** The loaded queue rows, for the next open report. */
   queue: Parameters<typeof nextOpenReportId>[0];
   onOpenReport: (reportId: string) => void;
@@ -238,8 +238,9 @@ function ReportDetailLoader({
     refetch,
     isFetching,
   } = useQuery(convexQuery(gateway.admin.getReport, { reportId }));
-  // getReport throws ConvexError NotFound for a report that is gone (a stale
-  // link); any other failure gets the retryable error state, never a spinner.
+  // getReport throws ConvexError NotFound for a report that is gone or an id
+  // that was never one (a stale or mangled link); any other failure gets the
+  // retryable error state, never a spinner.
   if (isError && convexErrorCode(error) === "NotFound") {
     return (
       <QueueEmpty

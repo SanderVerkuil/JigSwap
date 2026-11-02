@@ -1161,6 +1161,29 @@ describe("admin listReports / getReport", () => {
       photoUrl: null,
     });
   });
+
+  test("getReport treats an id that is no report (a mangled link) as NotFound, for admins only", async () => {
+    const t = convexTest(schema, modules);
+    const { photo } = await seed(t);
+    const getReport = api.admin.getReport.getReport;
+
+    await expectCode(
+      asAdmin(t).query(getReport, { reportId: "not-a-report-id" }),
+      "NotFound",
+    );
+    // A real id of another table.
+    await expectCode(
+      asAdmin(t).query(getReport, { reportId: photo }),
+      "NotFound",
+    );
+    await expectCode(
+      asAlice(t).query(getReport, { reportId: "not-a-report-id" }),
+      "Forbidden",
+    );
+    await expect(
+      t.query(getReport, { reportId: "not-a-report-id" }),
+    ).rejects.toThrow();
+  });
 });
 
 describe("admin listReports / getReport: comments and reviews", () => {
