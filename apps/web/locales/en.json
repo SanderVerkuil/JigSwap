@@ -5265,7 +5265,7 @@
         },
         "per-copy": {
           "title": "One puzzle at a time",
-          "body": "To hide a single puzzle, open it, press Edit and, under Who can see this copy, choose Private. Then only you and your household see it. A puzzle you offer for swap, lend or sale can't be private."
+          "body": "To hide a single puzzle, open it, press Edit and, under Who can see this copy, choose Private. Then only you and your household see it. If you offer it for swap, lend or sale, it's visible while the offer lasts and private again once you withdraw every offer."
         }
       }
     },
