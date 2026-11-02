@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
 import { cleanup, render, screen, within } from "@testing-library/react";
+import { cloneElement, type ReactElement } from "react";
 import { IntlProvider } from "use-intl";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
 import {
@@ -13,6 +14,16 @@ import {
   UNKNOWN_BUCKET,
   type CollectionBreakdownData,
 } from "./collection-breakdown";
+
+// The test DOM has no layout, so the charts get a fixed size and really draw.
+vi.mock("recharts", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("recharts")>()),
+  ResponsiveContainer: ({
+    children,
+  }: {
+    children: ReactElement<{ width: number; height: number }>;
+  }) => cloneElement(children, { width: 400, height: 120 }),
+}));
 
 // The collection breakdown can be read without hovering and without telling colours apart: the
 // difficulty chart is a stacked bar with a legend that names every difficulty in the app's
@@ -330,5 +341,29 @@ describe("CollectionBreakdown: bar charts", () => {
     const chart = container.querySelector<HTMLElement>("[data-slot=chart]");
     expect(chart?.style.height).toBe(`${7 * 40}px`);
     expect(chart?.parentElement?.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  // Piece count's values are only there as these labels. Recharts hides them while a bar animation
+  // runs, and each re-render with new rows would replay it: the numbers blink away.
+  it("draws every bar's value from the first paint, and across a re-render", () => {
+    const data = breakdown({
+      byPieceCount: [
+        { label: "100-299", value: 1 },
+        { label: "1000-1999", value: 12 },
+        { label: UNKNOWN_BUCKET, value: 2 },
+      ],
+    });
+    const { container, rerender } = renderBreakdown(data);
+    const values = () =>
+      [...container.querySelectorAll(".recharts-label-list text")].map(
+        (label) => label.textContent,
+      );
+    expect(values()).toEqual(["1", "12", "2"]);
+    rerender(
+      <IntlProvider locale="en" messages={en} timeZone="UTC">
+        <CollectionBreakdown data={data} />
+      </IntlProvider>,
+    );
+    expect(values()).toEqual(["1", "12", "2"]);
   });
 });

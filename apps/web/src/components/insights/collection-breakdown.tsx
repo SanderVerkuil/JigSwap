@@ -101,9 +101,11 @@ const BAR_ROW_HEIGHT = 40;
 
 // Labelled horizontal bars with their values drawn, shared by Piece count and Top brands. The chart
 // grows with its rows, so one or two get thin bars instead of bars stretched to a fixed height, and
-// any number of labels stay legible at any width. It reads without hovering. The drawing is
-// aria-hidden and off the Tab order (accessibilityLayer would make the SVG an unnamed keyboard
-// stop); screen readers get the same numbers from the table, in a figure named after the chart.
+// any number of labels stay legible at any width. It reads without hovering, so the bars don't
+// animate: Recharts hides the labels while an animation runs, and any re-render with new rows would
+// replay it. The drawing is aria-hidden and off the Tab order (accessibilityLayer would make the SVG
+// an unnamed keyboard stop); screen readers get the same numbers from the table, in a figure named
+// after the chart.
 function BreakdownBars({
   title,
   rows,
@@ -155,6 +157,7 @@ function BreakdownBars({
               fill="var(--color-value)"
               radius={4}
               maxBarSize={BAR_SIZE}
+              isAnimationActive={false}
             >
               <LabelList
                 dataKey="value"
