@@ -9,8 +9,8 @@ import { MatchConfirm } from "./match-confirm";
 // The add-puzzle preview and the import match show piece counts in the app locale (UX-63),
 // with the plural piece word (UX-65).
 const catalogs = { en, nl } as const;
-const html = (locale: keyof typeof catalogs, node: React.ReactNode) =>
-  renderToStaticMarkup(
+const html = (locale: keyof typeof catalogs, node: React.ReactNode) => {
+  let text = renderToStaticMarkup(
     <IntlProvider
       locale={locale}
       messages={catalogs[locale]}
@@ -18,7 +18,14 @@ const html = (locale: keyof typeof catalogs, node: React.ReactNode) =>
     >
       {node}
     </IntlProvider>,
-  ).replace(/<[^>]+>/g, "");
+  );
+  // Strip until stable: one pass can leave a tag behind when removing another forms it.
+  for (let previous = ""; previous !== text;) {
+    previous = text;
+    text = text.replace(/<[^>]+>/g, "");
+  }
+  return text;
+};
 
 const noop = () => {};
 
