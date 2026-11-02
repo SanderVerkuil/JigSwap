@@ -17,10 +17,14 @@ import {
   publicAvailabilityOf,
 } from "../library/definitionAggregates";
 import { definitionTotalsOf } from "../library/definitionStats";
+import { blockedEitherWaySet } from "../social/blocks";
 import { toPuzzleSummaryView } from "./mappers";
 
 // A page holds 1 to MAX_PAGE_SIZE puzzles whatever the client asks for.
 const MAX_PAGE_SIZE = 50;
+// Copies of one definition looked through for blocked owners' offers, so a definition with a flood
+// of copies can't use up a blocking viewer's read limit. Past it the chip can overcount.
+const MAX_COPIES_CHECKED_FOR_BLOCKS = 200;
 
 // Catalog read for the member catalogue (/puzzles) and the add-copy picker: the approved
 // catalogue, paginated, narrowed server-side by the search index when a term is given (so matches
@@ -34,8 +38,10 @@ const MAX_PAGE_SIZE = 50;
 // finished page instead of failing the query.
 //
 // Each row carries `availableCount`, for the card's link to Browse: the definition's stored public
-// offers (one definitionStats row per card) minus the viewer's own, which Browse never lists. A
-// definition whose stats don't exist yet has no count: this paged list never computes them live.
+// offers (one definitionStats row per card) minus the viewer's own and those of members blocked
+// either way, which Browse never lists. Only a viewer with blocks pays a read of the definition's
+// copies per card. A definition whose stats don't exist yet has no count: this paged list never
+// computes them live.
 export const searchCatalog = query({
   args: {
     paginationOpts: paginationOptsValidator,
@@ -115,6 +121,16 @@ export const searchCatalog = query({
             tags.some((tag) => puzzle.tags?.includes(tag)),
           );
 
+    const blockedOwners = await blockedEitherWaySet(ctx, me);
+    const visibilityCache = new Map<string, "public" | "private">();
+    const blockedOwnersCopies = async (puzzleId: Id<"puzzles">) => {
+      if (blockedOwners.size === 0) return [];
+      const copies = await ctx.db
+        .query("ownedPuzzles")
+        .withIndex("by_puzzle", (q) => q.eq("puzzleId", puzzleId))
+        .take(MAX_COPIES_CHECKED_FOR_BLOCKS);
+      return copies.filter((copy) => blockedOwners.has(copy.ownerId));
+    };
     const availableFromOthers = async (
       puzzleId: Id<"puzzles">,
     ): Promise<number> => {
@@ -128,7 +144,10 @@ export const searchCatalog = query({
           q.eq("ownerId", me).eq("puzzleId", puzzleId),
         )
         .collect();
-      return total - (await publicAvailabilityOf(ctx, mine)).total;
+      const hidden = [...mine, ...(await blockedOwnersCopies(puzzleId))];
+      return (
+        total - (await publicAvailabilityOf(ctx, hidden, visibilityCache)).total
+      );
     };
 
     const page = await Promise.all(
