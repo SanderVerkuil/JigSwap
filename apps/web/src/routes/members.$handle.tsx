@@ -23,6 +23,7 @@ import { gateway, Id } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
 import { safeStorage } from "@/lib/safe-storage";
+import { headMessage, seoHead } from "@/lib/seo-head";
 import { readSidebarCookies } from "@/lib/sidebar-state";
 import { authorizeServerReads } from "@/lib/ssr-member-data";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -99,21 +100,35 @@ export const Route = createFileRoute("/members/$handle")({
   // navigation is acceptable. The dynamic entity title is intentional (public
   // member pages are shareable/indexable per the spec); the pre-load fallback
   // reuses the localized page-title machinery.
-  head: ({ loaderData, match }) => ({
-    meta: [
-      {
-        title: loaderData?.profile?.hero.displayName
-          ? `${loaderData.profile.hero.displayName} — JigSwap`
-          : pageTitle(
+  // These tags are what a shared invite link shows in WhatsApp and the like, so they say what the
+  // link is for. They use no profile field beyond the display name the title already exposes.
+  head: ({ loaderData, match }) => {
+    const hero = loaderData?.profile?.hero;
+    if (!hero?.displayName) {
+      return {
+        meta: [
+          {
+            title: pageTitle(
               match.context,
               match.status === "notFound" ? "notFound" : "members",
             ),
-      },
-      ...(loaderData?.profile?.hero.visibility === "private"
-        ? [{ name: "robots", content: "noindex" }]
-        : []),
-    ],
-  }),
+          },
+        ],
+      };
+    }
+    const { meta } = seoHead(match, "members", {
+      title: `${hero.displayName} — JigSwap`,
+      description: headMessage(match.context, "members.metaDescription", {
+        name: hero.displayName,
+      }),
+    });
+    return {
+      meta:
+        hero.visibility === "private"
+          ? [...meta, { name: "robots", content: "noindex" }]
+          : meta,
+    };
+  },
   pendingComponent: MemberPending,
   notFoundComponent: MemberNotFound,
   component: MemberPage,

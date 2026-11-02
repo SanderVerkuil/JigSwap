@@ -2669,6 +2669,7 @@
     "errorRateLimited": "Je hebt vaak gevolgd en ontvolgd. Probeer het later opnieuw."
   },
   "members": {
+    "metaDescription": "Volg {name} op JigSwap, dé plek om legpuzzels uit te lenen en te ruilen.",
     "memberSince": "Lid sinds {date}",
     "loading": "Lid laden…",
     "collects": "Verzamelt ~{count, plural, one {# puzzel} other {# puzzels}} op JigSwap",

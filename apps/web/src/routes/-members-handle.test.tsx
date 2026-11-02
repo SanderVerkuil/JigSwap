@@ -92,12 +92,49 @@ const headOf = (
     },
   }).meta;
 
+const content = (meta: MetaTag[], key: string) =>
+  meta.find((tag) => tag.name === key || tag.property === key)?.content;
+
 afterEach(() => {
   cleanup();
   viewer.userId = null;
 });
 
-describe("member page title", () => {
+describe("member page share tags", () => {
+  it.each([
+    [
+      "en",
+      "en_US",
+      "Follow Mara on JigSwap, the place to lend and swap jigsaw puzzles.",
+    ],
+    [
+      "nl",
+      "nl_NL",
+      "Volg Mara op JigSwap, dé plek om legpuzzels uit te lenen en te ruilen.",
+    ],
+  ] as const)(
+    "describes the invite for link previews (%s)",
+    (locale, ogLocale, description) => {
+      const meta = headOf(locale, "public");
+      expect(meta[0].title).toBe("Mara — JigSwap");
+      expect(content(meta, "description")).toBe(description);
+      expect(content(meta, "og:description")).toBe(description);
+      expect(content(meta, "og:title")).toBe("Mara — JigSwap");
+      expect(content(meta, "og:site_name")).toBe("JigSwap");
+      expect(content(meta, "og:locale")).toBe(ogLocale);
+      expect(content(meta, "robots")).toBeUndefined();
+    },
+  );
+
+  it("keeps a private profile out of search, and adds nothing beyond its name", () => {
+    const meta = headOf("en", "private");
+    expect(content(meta, "robots")).toBe("noindex");
+    const tags = JSON.stringify(meta);
+    for (const field of ["windmills", "cdn.test", "Obdam"]) {
+      expect(tags).not.toContain(field);
+    }
+  });
+
   it("titles an unknown member as a page not found, in the visitor's language", () => {
     expect(headOf("en", undefined, "notFound")[0].title).toBe(
       "Page not found — JigSwap",

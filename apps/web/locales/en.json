@@ -2669,6 +2669,7 @@
     "errorRateLimited": "You've followed and unfollowed a lot. Try again later."
   },
   "members": {
+    "metaDescription": "Follow {name} on JigSwap, the place to lend and swap jigsaw puzzles.",
     "memberSince": "Member since {date}",
     "loading": "Loading member…",
     "collects": "Collects ~{count, plural, one {# puzzle} other {# puzzles}} on JigSwap",
