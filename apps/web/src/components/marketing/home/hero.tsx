@@ -34,7 +34,7 @@ const PUZZLES = {
 // A box's width in the shelf's cover column follows its piece count, so the row reads as real boxes.
 const BOX_WIDTH = { 500: "w-[68%]", 1000: "w-[85%]", 2000: "w-full" } as const;
 
-// Each person lives on a floor of house-cut.webp (1536x950) and is who the art shows there. `floor` is
+// Each person lives on a floor of house-cut.webp (2000x1228) and is who the art shows there. `floor` is
 // the height the drawer's notch points at, in art pixels. `pin` places the button on the art, high in
 // the floor so the lowest pin clears the fold on a short laptop; `phonePin` keeps the larger-looking
 // button wholly on its floor and clear of the wall at phone scale. `hole` is the even-odd polygon that
@@ -43,29 +43,29 @@ const PEOPLE = [
   {
     id: "sanne",
     name: "Sanne",
-    floor: 330,
+    floor: 427,
     boxes: ["theekoepel", "tulpen", "eendenvijver", "grachtje"],
-    pin: { x: "41.7%", y: "28.6%" },
-    phonePin: { x: "36%", y: "37.2%" },
-    hole: "polygon(evenodd,0 0,100% 0,100% 100%,0 100%,0 0,27.55% 25.6%,71.95% 25.6%,71.95% 44.1%,27.55% 44.1%,27.55% 25.6%)",
+    pin: { x: "36%", y: "31%" },
+    phonePin: { x: "32.4%", y: "36.8%" },
+    hole: "polygon(evenodd,0 0,100% 0,100% 100%,0 100%,0 0,27.6% 25.41%,71.9% 25.41%,71.9% 44.14%,27.6% 44.14%,27.6% 25.41%)",
   },
   {
     id: "opa",
     name: "Opa Wim",
-    floor: 520,
+    floor: 675,
     boxes: ["dorpsstraat", "molen", "grachtje"],
-    pin: { x: "30.6%", y: "56.6%" },
-    phonePin: { x: "35%", y: "56.7%" },
-    hole: "polygon(evenodd,0 0,100% 0,100% 100%,0 100%,0 0,27.55% 45%,71.95% 45%,71.95% 64.85%,27.55% 64.85%,27.55% 45%)",
+    pin: { x: "32%", y: "51.5%" },
+    phonePin: { x: "33.85%", y: "56.35%" },
+    hole: "polygon(evenodd,0 0,100% 0,100% 100%,0 100%,0 0,27.6% 44.95%,71.9% 44.95%,71.9% 65.07%,27.6% 65.07%,27.6% 44.95%)",
   },
   {
     id: "marieke",
     name: "Marieke",
-    floor: 690,
+    floor: 922,
     boxes: ["amsterdam", "tulpen"],
-    pin: { x: "34.4%", y: "67.4%" },
-    phonePin: { x: "35%", y: "77.5%" },
-    hole: "polygon(evenodd,0 0,100% 0,100% 100%,0 100%,0 0,27.55% 65.75%,71.95% 65.75%,71.95% 84.15%,27.55% 84.15%,27.55% 65.75%)",
+    pin: { x: "34%", y: "69.8%" },
+    phonePin: { x: "33.45%", y: "77.2%" },
+    hole: "polygon(evenodd,0 0,100% 0,100% 100%,0 100%,0 0,27.6% 65.8%,71.9% 65.8%,71.9% 84.45%,27.6% 84.45%,27.6% 65.8%)",
   },
 ] as const satisfies ReadonlyArray<{
   id: string;
@@ -148,7 +148,7 @@ function ShelfRow({
 
 // The street with the fronts off: the sky's text, then the cutaway house edge to edge, with a pin on
 // each of three floors. Choosing a pin strikes that floor forward and docks that person's shelf.
-// Phone: title, the house alone (a window on the art from x 370 to 1140 and y 80 to 810), sentence,
+// Phone: title, the house alone (a window on the art from x 495 to 1495 and y 0 to 1040), sentence,
 // actions, shelf.
 export function Hero() {
   const t = useTranslations("marketing");
@@ -184,7 +184,7 @@ export function Hero() {
       const drawer = drawerRef.current;
       if (!art || !drawer) return;
       const box = drawer.getBoundingClientRect();
-      const y = art.top + person.floor * (art.width / 1536) - box.top - 18;
+      const y = art.top + person.floor * (art.width / 2000) - box.top - 18;
       const notch = Math.max(12, Math.min(box.height - 48, y));
       drawer.style.setProperty("--notch", `${notch}px`);
     };
@@ -240,15 +240,15 @@ export function Hero() {
         </div>
       </div>
 
-      <div className="contents min-[760px]:relative min-[760px]:block min-[1180px]:mt-[calc(100cqw/1536*-86+14px)]">
-        <div className="relative order-2 h-[calc(100cqw/770*730)] overflow-hidden min-[760px]:h-auto min-[760px]:overflow-visible">
-          <div className="absolute top-[calc(100cqw/770*-80)] left-[calc(100cqw/770*-370)] w-[calc(100cqw/770*1536)] min-[760px]:relative min-[760px]:top-0 min-[760px]:left-0 min-[760px]:w-full">
+      <div className="contents min-[760px]:relative min-[760px]:block min-[1180px]:mt-[calc(100cqw/2000*-112+14px)]">
+        <div className="relative order-2 h-[calc(100cqw/1000*1040)] overflow-hidden min-[760px]:h-auto min-[760px]:overflow-visible">
+          <div className="absolute top-0 left-[calc(100cqw/1000*-495)] w-[calc(100cqw/1000*2000)] min-[760px]:relative min-[760px]:top-0 min-[760px]:left-0 min-[760px]:w-full">
             <img
               ref={artRef}
               src={houseCut}
               alt={t("home.heroAlt")}
-              width={1536}
-              height={950}
+              width={2000}
+              height={1228}
               fetchPriority="high"
               decoding="async"
               className="block h-auto w-full max-w-none"
@@ -304,7 +304,7 @@ export function Hero() {
           </div>
         </div>
 
-        <div className="contents min-[1180px]:pointer-events-none min-[1180px]:absolute min-[1180px]:top-[calc(100cqw/1536*86-14px)] min-[1180px]:right-0 min-[1180px]:bottom-0 min-[1180px]:flex min-[1180px]:w-[25.8%] min-[1180px]:flex-col">
+        <div className="contents min-[1180px]:pointer-events-none min-[1180px]:absolute min-[1180px]:top-[calc(100cqw/2000*112-14px)] min-[1180px]:right-0 min-[1180px]:bottom-0 min-[1180px]:flex min-[1180px]:w-[25.8%] min-[1180px]:flex-col">
           <aside
             ref={drawerRef}
             aria-labelledby="hero-shelf-title"

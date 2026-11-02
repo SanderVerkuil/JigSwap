@@ -86,8 +86,8 @@ describe("Hero", () => {
     const images = render("en").match(/<img[^>]*>/g) ?? [];
     const house = images.filter((img) => img.includes("fetchPriority"));
     expect(house).toHaveLength(1);
-    expect(house[0]).toContain('width="1536"');
-    expect(house[0]).toContain('height="950"');
+    expect(house[0]).toContain('width="2000"');
+    expect(house[0]).toContain('height="1228"');
     expect(house[0]).not.toContain("lazy");
     for (const img of images.filter((i) => !i.includes("fetchPriority"))) {
       expect(img).toContain('loading="lazy"');
