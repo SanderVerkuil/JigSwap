@@ -244,6 +244,47 @@ describe("backfillUserRoles/run (daily role reconcile)", () => {
 
   // A user.deleted webhook lost for good leaves an active row Clerk no longer lists; its role
   // mirror would keep it on admin-only email and push (SEC-32). Only the role is cleared.
+  test("spends no mutation on a member with no role on either side", async () => {
+    const t = convexTest(schema, modules);
+    await t.run(async (ctx) => {
+      for (const clerkId of ["clerk_plain_1", "clerk_plain_2", "clerk_admin"]) {
+        await ctx.db.insert("users", {
+          clerkId,
+          email: `${clerkId}@example.com`,
+          name: clerkId,
+          isActive: true,
+          ...(clerkId === "clerk_admin" ? { role: "admin" } : {}),
+          createdAt: 1,
+          updatedAt: 1,
+        });
+      }
+    });
+    vi.stubEnv("CLERK_SECRET_KEY", "sk_test");
+    clerk.getUserList.mockResolvedValueOnce({
+      data: [
+        { id: "clerk_plain_1", publicMetadata: {} },
+        { id: "clerk_plain_2", publicMetadata: {} },
+        { id: "clerk_plain_without_row", publicMetadata: {} },
+        { id: "clerk_admin", publicMetadata: {} },
+        {
+          id: "clerk_new_admin_without_row",
+          publicMetadata: { role: "admin" },
+        },
+      ],
+      totalCount: 5,
+    });
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const result = await t.action(internal.backfillUserRoles.run, {});
+
+    expect(result).toMatchObject({ scanned: 5, patched: 1 });
+    // patchUserRole warns about a clerkId with no row: a role Clerk names still gets there, and
+    // members with no role on either side (one with no row here too) never do.
+    expect(warn.mock.calls.map((call) => call[1])).toEqual([
+      "clerk_new_admin_without_row",
+    ]);
+  });
+
   test("clears the role of a member Clerk no longer has, and nothing else", async () => {
     vi.stubEnv("CLERK_SECRET_KEY", "sk_test_reconcile");
     const t = convexTest(schema, modules);
