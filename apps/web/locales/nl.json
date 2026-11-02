@@ -5273,6 +5273,8 @@
     "docFeedback": {
       "loading": "Feedback laden…",
       "empty": "Nog geen feedback.",
+      "partial": "Totalen van de nieuwste {count, plural, one {# stem} other {# stemmen}}. Laad meer om oudere mee te tellen.",
+      "loadMore": "Meer laden",
       "helpful": "Nuttig",
       "notHelpful": "Niet nuttig",
       "helpfulCount": "{count} nuttig",

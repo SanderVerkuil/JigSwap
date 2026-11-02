@@ -5273,6 +5273,8 @@
     "docFeedback": {
       "loading": "Loading feedback…",
       "empty": "No feedback yet.",
+      "partial": "Totals of the newest {count, plural, one {# vote} other {# votes}}. Load more to count older ones.",
+      "loadMore": "Load more",
       "helpful": "Helpful",
       "notHelpful": "Not helpful",
       "helpfulCount": "{count} helpful",
