@@ -21,6 +21,7 @@ import { Providers } from "../components/providers";
 import { ErrorBoundary } from "../components/ui/error-boundary";
 import { nlNLLocalization } from "../lib/clerk-localization";
 import { getIntlCached, seedIntlCache } from "../lib/i18n";
+import { defaultDocumentTitle } from "../lib/page-title";
 import { ZOD_JITLESS_SCRIPT } from "../lib/zod-jitless";
 // Side effect: start listening for beforeinstallprompt before any route chunk loads.
 import "../lib/install-prompt";
@@ -74,7 +75,7 @@ export const Route = createRootRouteWithContext<{
   convexClient: ConvexReactClient;
   convexQueryClient: ConvexQueryClient;
 }>()({
-  head: () => ({
+  head: ({ match, matches }) => ({
     meta: [
       { charSet: "utf-8" },
       // viewport-fit=cover lets the mobile shell extend under the notch /
@@ -87,7 +88,7 @@ export const Route = createRootRouteWithContext<{
         content:
           "width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content",
       },
-      { title: "JigSwap" },
+      { title: defaultDocumentTitle(match.context, matches) },
       // Installed-app ("Add to Home Screen") chrome. theme-color lives in
       // RootDocument: HeadContent dedupes metas by name, which would drop the
       // light/dark pair down to one.

@@ -17,3 +17,16 @@ export function pageTitle(context: unknown, key: string): string {
     { titles?: Record<string, string> } | undefined;
   return titles?.[key] ?? marketing?.titles?.[key] ?? FALLBACK;
 }
+
+// The root route's title, for pages that don't set their own: the brand, or the
+// not-found title when the router has no route for the URL. `_notFound` marks the
+// match whose layout renders the 404 (the root or a nearer one, like _public); it
+// is underscored but typed, so a router upgrade that renames it fails type-check.
+export function defaultDocumentTitle(
+  context: unknown,
+  matches: ReadonlyArray<{ _notFound?: boolean }>,
+): string {
+  return matches.some((match) => match._notFound)
+    ? pageTitle(context, "notFound")
+    : FALLBACK;
+}
