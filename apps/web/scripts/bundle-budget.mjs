@@ -118,11 +118,12 @@ if (budget.documents) {
     `Prerendered documents: ${htmlFiles.length}, none may inline a script above ${maxInlineScriptKB} KB` +
       (largest ? ` (largest: ${largest.inlineKB} KB, ${largest.file}).` : "."),
   );
-  // A build without Clerk and Convex env (CI) skips prerendering, which is best-effort, so there
-  // is nothing to measure there. Say so instead of failing: the route budgets above still ran.
+  // Prerendering is best-effort (vite.config.ts), so a build that couldn't do it still succeeds, and
+  // without Convex env its route weights are wrong too (the router throws and is minified away).
   if (htmlFiles.length === 0) {
-    console.log(
-      "  SKIP no prerendered .html in .output/public (a build without env skips prerendering); the inline-script guard did not run",
+    documentProblems++;
+    console.error(
+      "  OVER no prerendered .html in .output/public; build with VITE_CONVEX_URL, VITE_CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY set (placeholders do, see ci.yml)",
     );
   }
   for (const doc of oversized) {
