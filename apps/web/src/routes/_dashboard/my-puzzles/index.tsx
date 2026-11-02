@@ -1,6 +1,7 @@
 import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
+import { useShortcutHint } from "@/components/dashboard-layout/shortcut-hint";
 import { CopyOwnerLine } from "@/components/household/copy-owner-line";
 import {
   useCopyCardActions,
@@ -124,6 +125,7 @@ function PuzzlesPage() {
   const t = useTranslations("puzzles");
   const displayName = useMemberDisplayName();
   const tLending = useTranslations("lending");
+  const shortcut = useShortcutHint();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   // Whose copies to show when the viewer is in a household: everything, only their own, or only
@@ -289,11 +291,11 @@ function PuzzlesPage() {
             </span>
             <ArrowRight className="size-3.5 shrink-0" aria-hidden />
           </Link>
-        ) : (
-          <p className="text-muted-foreground hidden text-sm sm:block">
-            {t("searchHint")}
+        ) : shortcut ? (
+          <p className="text-muted-foreground hidden text-sm sm:block pointer-coarse:hidden">
+            {t("searchHint", { shortcut })}
           </p>
-        )}
+        ) : null}
         <div className="ml-auto flex items-center gap-2">
           {myHousehold && (
             <Select

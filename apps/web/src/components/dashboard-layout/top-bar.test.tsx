@@ -75,6 +75,15 @@ describe("TopBar search shortcut hint", () => {
     expect(html).not.toContain("⌘K");
   });
 
+  // Muted text on the muted chip is only 4.34:1.
+  it("draws the hint in a colour that meets 4.5:1 on its chip", () => {
+    stubPlatform("Win32");
+    render(topBar());
+    const classes = searchPill().querySelector("kbd")?.className;
+    expect(classes).toContain("text-foreground/75");
+    expect(classes).not.toContain("text-muted-foreground");
+  });
+
   it("announces both shortcuts and hides the hint on touch screens", () => {
     stubPlatform("MacIntel");
     render(topBar());

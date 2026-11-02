@@ -45,9 +45,10 @@ export function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
             {t("search.placeholder")}
           </span>
           {/* The platform's own shortcut, known only after mount; touch screens have no keyboard
-              to press it with. */}
+              to press it with. Muted text on the muted chip is only 4.34:1, so the hint uses the
+              foreground colour. */}
           {shortcut && (
-            <kbd className="pointer-events-none rounded border bg-muted px-1.5 py-0.5 font-mono text-[11px] leading-none text-muted-foreground pointer-coarse:hidden">
+            <kbd className="pointer-events-none rounded border bg-muted px-1.5 py-0.5 font-mono text-[11px] leading-none text-foreground/75 pointer-coarse:hidden">
               {shortcut}
             </kbd>
           )}

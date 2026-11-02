@@ -496,7 +496,7 @@
       "completed": "Voltooid"
     },
     "resultCount": "{count} van {total} puzzels",
-    "searchHint": "Druk op ⌘K om puzzels, mensen en meer te zoeken",
+    "searchHint": "Druk op {shortcut} om puzzels, mensen en meer te zoeken",
     "countMeta": "{count, plural, one {# puzzel} other {# puzzels}}",
     "householdPointer": "Alle puzzels in je huishouden",
     "householdPointerNamed": "Alle puzzels in {name}",
