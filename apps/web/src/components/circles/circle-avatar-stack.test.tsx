@@ -43,6 +43,29 @@ afterEach(() => {
 });
 
 describe("CircleAvatarStack", () => {
+  // Who can give a view-only member more rights is only findable here for a non-admin.
+  it("says a seat's role beside its name, to the tooltip and to assistive tech", async () => {
+    render(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <CircleAvatarStack
+          circleName="Family"
+          members={[
+            { key: "ada", name: "Ada", role: "Admin", fallback: "A" },
+            { key: "bram", name: "Bram", fallback: "B" },
+          ]}
+        />
+      </IntlProvider>,
+    );
+    const ada = screen.getByRole("button", { name: "Ada · Admin" });
+    expect(screen.getByRole("button", { name: "Bram" })).toBeTruthy();
+    vi.useFakeTimers();
+    fireEvent.pointerDown(ada, { pointerType: "touch" });
+    fireEvent.click(ada);
+    act(() => vi.advanceTimersByTime(0));
+    vi.useRealTimers();
+    expect(tooltipText()).toContain("Ada · Admin");
+  });
+
   it("labels the group and every avatar with the member's name", () => {
     renderStack(3);
     expect(

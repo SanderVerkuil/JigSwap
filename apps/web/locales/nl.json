@@ -2610,7 +2610,8 @@
       "sharedTitle": "Gedeelde puzzels",
       "sharedEmpty": "Er zijn nog geen puzzels gedeeld in deze kring.",
       "sharedError": "De gedeelde puzzels konden niet worden geladen.",
-      "viewOnlyHint": "Je kunt in deze kring alleen bekijken. Vraag een beheerder om “Mag ruilen” als je hier je eigen puzzels wilt delen en die van anderen wilt aanvragen."
+      "viewOnlyHint": "Je kunt in deze kring alleen bekijken. Vraag een beheerder om “Mag ruilen” als je hier je eigen puzzels wilt delen en die van anderen wilt aanvragen.",
+      "viewOnlyHintNamed": "Je kunt in deze kring alleen bekijken. Vraag {name} om “Mag ruilen” als je hier je eigen puzzels wilt delen en die van anderen wilt aanvragen."
     }
   },
   "people": {

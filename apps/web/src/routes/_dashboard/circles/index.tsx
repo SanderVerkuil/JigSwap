@@ -10,6 +10,7 @@ import {
 import { CircleRoleBadge } from "@/components/circles/circle-role-badge";
 import {
   useCircleSeatName,
+  useCircleSeatRole,
   type CircleMemberView,
   type CirclePermissionLevel,
 } from "@/components/circles/circle-seat";
@@ -418,6 +419,7 @@ function CircleMembersStack({
   circleName: string;
 }) {
   const seatName = useCircleSeatName();
+  const seatRole = useCircleSeatRole();
   const { data: detail, isPending } = useQuery(
     convexQuery(gateway.sharing.circle, { circleId }),
   );
@@ -436,6 +438,7 @@ function CircleMembersStack({
         members={detail.members.map((member: CircleMemberView) => ({
           key: member.membershipId,
           name: seatName(member),
+          role: seatRole(member),
           avatar: member.avatar,
           fallback: <MemberInitial source={member} />,
         }))}

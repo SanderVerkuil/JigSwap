@@ -16,7 +16,9 @@ import {
 import { CircleAvatarStack } from "@/components/circles/circle-avatar-stack";
 import { CircleRoleBadge } from "@/components/circles/circle-role-badge";
 import {
+  circleSeatToAsk,
   useCircleSeatName,
+  useCircleSeatRole,
   type CircleMemberView,
 } from "@/components/circles/circle-seat";
 import { CircleShareSection } from "@/components/circles/circle-share-section";
@@ -36,11 +38,12 @@ import {
 } from "@/components/messaging/format";
 import { OpenCircleChatButton } from "@/components/messaging/open-circle-chat";
 import { AppNotFound } from "@/components/NotFound";
+import { MessageButton } from "@/components/social/message-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
 import { Skeleton } from "@/components/ui/skeleton";
-import { gateway } from "@/gateway";
+import { gateway, type Id } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
@@ -57,6 +60,7 @@ export function CirclePage({ circleId }: { circleId: string }) {
   const navigate = useNavigate();
   const { user } = useUser();
   const seatName = useCircleSeatName();
+  const seatRole = useCircleSeatRole();
   // The manage dialog: closed, opened from Manage, or opened at its invite section.
   const [manageView, setManageView] = useState<"top" | "invite" | null>(null);
   const { data: detail, isPending } = useQuery(
@@ -116,6 +120,7 @@ export function CirclePage({ circleId }: { circleId: string }) {
               members={detail.members.map((member: CircleMemberView) => ({
                 key: member.membershipId,
                 name: seatName(member),
+                role: seatRole(member),
                 avatar: member.avatar,
                 fallback: <MemberInitial source={member} />,
               }))}
@@ -165,6 +170,7 @@ export function CirclePage({ circleId }: { circleId: string }) {
           circleId={circleId}
           circleName={detail.name}
           canShare={canShareInCircle(detail.viewerPermission)}
+          seatToAsk={circleSeatToAsk(detail.members)}
         />
       </div>
 
@@ -311,18 +317,22 @@ function ChatPreview({
 
 // The circle's shared copies (members only, canViewCopy per copy, private
 // copies left out), each linking to its copy page. A member who may share gets
-// the share control; a View only member is told why there is none.
+// the share control; a View only member is told why there is none, and who to ask.
 function SharedPuzzles({
   circleId,
   circleName,
   canShare,
+  seatToAsk,
 }: {
   circleId: string;
   circleName: string;
   // Exchange and Admin may share their own copies here (read live from viewerPermission).
   canShare: boolean;
+  // Who a View only member can ask for more; undefined when no admin's account is left.
+  seatToAsk?: CircleMemberView;
 }) {
   const t = useTranslations("circles");
+  const seatName = useCircleSeatName();
   const { member } = useCurrentMember();
   const {
     data: copies,
@@ -364,6 +374,19 @@ function SharedPuzzles({
               circleName={circleName}
               memberId={member?._id}
             />
+          ) : seatToAsk ? (
+            <div className="flex flex-col items-start gap-3">
+              <p className="text-muted-foreground text-sm">
+                {t("page.viewOnlyHintNamed", { name: seatName(seatToAsk) })}
+              </p>
+              {/* Gates itself: circle-mates may message each other, a block still stops it. */}
+              {seatToAsk.memberId && (
+                <MessageButton
+                  memberId={seatToAsk.memberId as Id<"users">}
+                  size="sm"
+                />
+              )}
+            </div>
           ) : (
             <p className="text-muted-foreground text-sm">
               {t("page.viewOnlyHint")}

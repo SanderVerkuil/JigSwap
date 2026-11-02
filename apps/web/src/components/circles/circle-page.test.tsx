@@ -210,12 +210,55 @@ describe("CirclePage", () => {
     const meta = screen.getByText("3 members").parentElement;
     expect(meta?.textContent).toBe("View only·3 members");
     const stack = screen.getByRole("group", { name: "Members of Puzzle Club" });
-    expect(within(stack).getByRole("button", { name: "Bas" })).toBeTruthy();
+    expect(
+      within(stack).getByRole("button", { name: "Bas · View only" }),
+    ).toBeTruthy();
+    expect(
+      within(stack).getByRole("button", { name: "Anna · Owner" }),
+    ).toBeTruthy();
     expect(screen.getByRole("button", { name: "Leave circle" })).toBeTruthy();
     // Managing is Admin-only.
     expect(
       screen.queryByRole("button", { name: "Manage Puzzle Club" }),
     ).toBeNull();
+  });
+
+  describe("who a view-only member is told to ask", () => {
+    it("falls back to another Admin when the owner's account is gone", () => {
+      renderPage({
+        circle: detail({
+          members: [
+            seat("gone", "", {
+              isOwner: true,
+              permission: "Admin",
+              departed: true,
+            }),
+            seat("u_bas", "Bas", { permission: "Admin" }),
+            seat("me", "Me"),
+          ],
+        }),
+      });
+      expect(screen.getByText(/Ask Bas for “Can exchange”/)).toBeTruthy();
+    });
+
+    it("says it generally, with no Message, when no admin is left to ask", () => {
+      renderPage({
+        circle: detail({
+          members: [
+            seat("gone", "", {
+              isOwner: true,
+              permission: "Admin",
+              departed: true,
+            }),
+            seat("me", "Me"),
+          ],
+        }),
+      });
+      expect(screen.getByText(en.circles.page.viewOnlyHint)).toBeTruthy();
+      expect(
+        screen.queryByRole("button", { name: en.messages.messageButton }),
+      ).toBeNull();
+    });
   });
 
   describe("a circle with only its owner in it", () => {
@@ -304,14 +347,19 @@ describe("CirclePage", () => {
   it("tells a view-only member why they can't share, instead of a share control", () => {
     renderPage({ circle: detail({ viewerPermission: "ViewOnly" }) });
     expect(screen.getByRole("button", { name: "View only" })).toBeTruthy();
-    expect(screen.getByText(en.circles.page.viewOnlyHint)).toBeTruthy();
+    // The page names who to ask, and how to reach them.
+    const hint = screen.getByText(/Ask Anna for “Can exchange”/);
+    expect(hint).toBeTruthy();
+    expect(hint.parentElement?.textContent).toContain(
+      en.messages.messageButton,
+    );
     expect(screen.queryByText(en.circles.manage.shareCopy)).toBeNull();
   });
 
   it("gives a member who may share the share control and no view-only note", () => {
     renderPage({ circle: detail({ viewerPermission: "Exchange" }) });
     expect(screen.getByText(en.circles.manage.shareCopy)).toBeTruthy();
-    expect(screen.queryByText(en.circles.page.viewOnlyHint)).toBeNull();
+    expect(screen.queryByText(/“Can exchange”/)).toBeNull();
   });
 
   it("names the owner's seat Owner (nl)", () => {
@@ -320,7 +368,7 @@ describe("CirclePage", () => {
       locale: "nl",
     });
     expect(screen.getByRole("button", { name: "Eigenaar" })).toBeTruthy();
-    expect(screen.queryByText(nl.circles.page.viewOnlyHint)).toBeNull();
+    expect(screen.queryByText(/“Mag ruilen”/)).toBeNull();
   });
 
   it("renders the generic not-found page for a non-member or an unknown circle", () => {
