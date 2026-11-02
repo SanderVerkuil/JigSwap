@@ -38,7 +38,7 @@ export interface CreateGoalProps extends GoalDefinition {
 
 // The persistable shape, kept close to the `goals` columns so the 2c mapper is a near
 // field-for-field translation (userId, title, description, targetCompletions, currentCompletions,
-// startDate, targetDate, isActive, createdAt, updatedAt).
+// startDate, targetDate, achievementAnnouncedAt, isActive, createdAt, updatedAt).
 export interface GoalState {
   readonly id: GoalId;
   readonly userId: MemberId;
@@ -48,6 +48,8 @@ export interface GoalState {
   readonly currentCompletions: number;
   readonly startDate?: Date;
   readonly targetDate?: Date;
+  // When GoalAchieved went out for the current target; unset until then.
+  readonly achievementAnnouncedAt?: Date;
   readonly isActive: boolean;
   readonly createdAt: Date;
   readonly updatedAt: Date;
@@ -58,9 +60,9 @@ export interface GoalState {
 // Invariants: `currentCompletions` is DERIVED, never hand-set: it is always the number of the
 // member's finished solves that fall inside the goal's counting window (see goal-progress), so a
 // goal never counts solves from before it started or after it ended. progressFrom() is the
-// announced path (driven by completion changes) and emits GoalAchieved exactly once, the moment
-// progress first crosses the target; recount() is the silent path (creating, editing or restoring
-// a goal), which never announces anything. The title shows at least one visible character, title
+// announced path (driven by completion changes) and emits GoalAchieved at most once per target,
+// the moment progress first crosses it; recount() is the silent path (creating, editing or
+// restoring a goal), which never announces anything. The title shows at least one visible character, title
 // and description stay within their limits, `targetCompletions` is a positive integer and the
 // period is real and never empty (start day on or before the target day). An archived goal
 // (`isActive` false) is left alone by progressFrom's callers.
@@ -129,7 +131,8 @@ export class Goal {
 
   // Replace what the member decided (title, description, target, period). Fields the new
   // definition leaves out are cleared. Records nothing: the caller recounts silently, so changing
-  // a goal never announces an achievement.
+  // a goal never announces an achievement. A changed target is a new thing to reach, so it can be
+  // announced in its turn.
   edit(definition: GoalDefinition, now: Date): Result<void, SolvingError> {
     const invalid = Goal.validate(definition, this.state.createdAt);
     if (invalid) return err(invalid);
@@ -141,6 +144,10 @@ export class Goal {
       targetCompletions: definition.targetCompletions,
       startDate: definition.startDate,
       targetDate: definition.targetDate,
+      achievementAnnouncedAt:
+        definition.targetCompletions === this.state.targetCompletions
+          ? this.state.achievementAnnouncedAt
+          : undefined,
       updatedAt: now,
     };
     return ok(undefined);
@@ -161,8 +168,9 @@ export class Goal {
 
   // Set the derived progress to the number of `solves` inside this goal's window, announcing it.
   // A no-op (same count) records nothing. Emits GoalProgressed whenever the count changes, and
-  // GoalAchieved exactly once — only on the transition that first crosses the target (so a later
-  // recompute that stays at/above the target does NOT re-fire it).
+  // GoalAchieved at most once per target: only on the transition that first crosses it. A later
+  // recompute that stays at or above the target doesn't re-fire it, and neither does dropping below
+  // it and crossing it again (a solve's date edited out and back, or a solve deleted and re-logged).
   progressFrom(solves: readonly GoalSolve[], now: Date): void {
     const count = countTowardGoal(solves, this.countingWindow);
     const previous = this.state.currentCompletions;
@@ -185,7 +193,12 @@ export class Goal {
     );
 
     const nowAchieved = count >= this.state.targetCompletions;
-    if (nowAchieved && !wasAchieved) {
+    if (
+      nowAchieved &&
+      !wasAchieved &&
+      this.state.achievementAnnouncedAt === undefined
+    ) {
+      this.state = { ...this.state, achievementAnnouncedAt: now };
       this.record(
         new GoalAchieved(
           this.state.id,

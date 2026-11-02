@@ -238,6 +238,47 @@ describe("Goal.progressFrom", () => {
     expect(names(goal)).toEqual(["GoalProgressed"]);
   });
 
+  it("announces a target only once, even when progress drops below it and crosses again", () => {
+    const goal = fresh();
+    goal.progressFrom(solvesToday(3), NOW);
+    goal.pullEvents();
+    goal.progressFrom(solvesToday(2), LATER); // a solve moved out of the period or deleted
+    expect(names(goal)).toEqual(["GoalProgressed"]);
+    expect(goal.isAchieved).toBe(false);
+    goal.progressFrom(solvesToday(3), LATER); // and back
+    expect(names(goal)).toEqual(["GoalProgressed"]);
+    expect(goal.isAchieved).toBe(true);
+  });
+
+  it("remembers the announcement across a save", () => {
+    const goal = fresh();
+    goal.progressFrom(solvesToday(3), NOW);
+    goal.pullEvents();
+    const restored = Goal.rehydrate(goal.toState());
+    restored.progressFrom(solvesToday(2), LATER);
+    restored.progressFrom(solvesToday(3), LATER);
+    expect(names(restored)).toEqual(["GoalProgressed", "GoalProgressed"]);
+  });
+
+  it("announces a new target after an edit changes it", () => {
+    const goal = fresh(3);
+    goal.progressFrom(solvesToday(3), NOW);
+    goal.pullEvents();
+    goal.edit({ title: "More", targetCompletions: 5 }, LATER);
+    goal.progressFrom(solvesToday(5), LATER);
+    expect(names(goal)).toEqual(["GoalProgressed", "GoalAchieved"]);
+  });
+
+  it("keeps the announcement when an edit leaves the target alone", () => {
+    const goal = fresh(3);
+    goal.progressFrom(solvesToday(3), NOW);
+    goal.pullEvents();
+    goal.edit({ title: "Renamed", targetCompletions: 3 }, LATER);
+    goal.progressFrom(solvesToday(2), LATER);
+    goal.progressFrom(solvesToday(3), LATER);
+    expect(names(goal)).toEqual(["GoalProgressed", "GoalProgressed"]);
+  });
+
   it("fires GoalAchieved when progress jumps straight past the target", () => {
     const goal = fresh();
     goal.progressFrom(solvesToday(10), NOW);

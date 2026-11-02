@@ -900,6 +900,9 @@ export default defineSchema({
     startDate: v.optional(v.number()),
     // The last calendar day (UTC midnight) the goal counts solves on, inclusive.
     targetDate: v.optional(v.number()),
+    // When GoalAchieved went out for the current target, so it goes out at most once. Optional: a
+    // goal without it hasn't announced anything the domain knows of.
+    achievementAnnouncedAt: v.optional(v.number()),
     isActive: v.boolean(),
     createdAt: v.number(),
     updatedAt: v.number(),

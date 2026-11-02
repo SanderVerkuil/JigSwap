@@ -219,6 +219,32 @@ describe("goals count the solves inside their period", () => {
     },
   );
 
+  test("deleting the solve that reached a goal and logging it again announces it once", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const goalId = await createGoal(t, { targetCompletions: 1 });
+    const log = () =>
+      asAlice(t).mutation(api.solving.recordCompletion.recordCompletion, {
+        startDate: NOW - 2 * 60 * 60 * 1000,
+        endDate: NOW - 60 * 60 * 1000,
+      });
+    const achievements = async () =>
+      (await eventNames(t)).filter((name) => name === "GoalAchieved").length;
+
+    const { completionId } = await log();
+    expect((await goalRow(t, goalId))?.achievementAnnouncedAt).toBe(NOW);
+    expect(await achievements()).toBe(1);
+
+    await asAlice(t).mutation(api.solving.deleteCompletion.deleteCompletion, {
+      completionId,
+    });
+    expect((await goalRow(t, goalId))?.currentCompletions).toBe(0);
+
+    await log();
+    expect((await goalRow(t, goalId))?.currentCompletions).toBe(1);
+    expect(await achievements()).toBe(1);
+  });
+
   test("editing a solve's date out of the period lowers the goal", async () => {
     const t = convexTest(schema, modules);
     const { alice } = await seed(t);
