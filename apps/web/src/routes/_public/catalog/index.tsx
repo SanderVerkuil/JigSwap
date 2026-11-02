@@ -288,7 +288,7 @@ function CatalogListPage() {
               title={q ? t("noResults", { query: q }) : t("noResultsFiltered")}
               sub={t(q ? "noResultsSub" : "noResultsFilteredSub")}
               action={
-                <Button variant="ghost" onClick={clearFilters}>
+                <Button variant="outline" onClick={clearFilters}>
                   {t(brand || pieces ? "clearFilters" : "clearSearch")}
                 </Button>
               }
