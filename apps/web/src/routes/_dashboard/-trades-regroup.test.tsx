@@ -145,7 +145,7 @@ type Seed = { incoming?: unknown[]; outgoing?: unknown[] };
 
 // TanStack Query notifies its observers on a zero timeout.
 const flushQueryNotifications = () =>
-  new Promise((resolve) => setTimeout(resolve, 0));
+  new Promise<void>((resolve) => setTimeout(resolve, 0));
 
 const renderPage = ({ incoming = [], outgoing = [] }: Seed) => {
   const convexQueryClient = new ConvexQueryClient(
