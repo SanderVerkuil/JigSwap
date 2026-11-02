@@ -362,7 +362,7 @@
     "myPuzzles": "My Puzzles",
     "managePuzzles": "Manage your puzzle collection",
     "noPuzzles": "No puzzles here yet",
-    "addFirstPuzzle": "Add your first puzzle to start trading.",
+    "addFirstPuzzle": "Add your first puzzle to start your shelf.",
     "noMatch": {
       "title": "No puzzles match “{filters}”",
       "sub": "Try a different search or filter, or show your whole library.",

@@ -60,7 +60,7 @@ vi.mock("@convex-dev/react-query", () => ({
   convexQuery: (name: string) => ({ name }),
   useConvexMutation: () => vi.fn(),
 }));
-// A signed-in member with no copies yet and no household.
+// A signed-in member with a library and no household.
 vi.mock("@tanstack/react-query", () => ({
   useQuery: ({ name }: { name: string }) => ({
     data:
@@ -69,7 +69,7 @@ vi.mock("@tanstack/react-query", () => ({
         : name === "householdMine"
           ? null
           : name === "myLibraryWindow"
-            ? { rows: [], hasMore: false, matched: 0, total: 0 }
+            ? { rows: [], hasMore: false, matched: 0, total: 1 }
             : [],
     isPending: false,
     isPlaceholderData: false,
@@ -135,7 +135,7 @@ describe("My Puzzles search", () => {
 
   it("names no shortcut on the server either", () => {
     const html = renderToString(page());
-    expect(html).toContain("0 of 0 puzzles");
+    expect(html).toContain("0 of 1 puzzles");
     expect(html).not.toMatch(/⌘K|Ctrl K/);
   });
 });
@@ -144,7 +144,7 @@ describe("My Puzzles head", () => {
   it("leaves the count to the filter row and keeps its actions in the head", () => {
     stubPlatform("Win32");
     render(page());
-    expect(screen.getByText("0 of 0 puzzles")).toBeTruthy();
+    expect(screen.getByText("0 of 1 puzzles")).toBeTruthy();
     expect(mocks.header?.meta).toBeUndefined();
     expect(mocks.header?.actions).toBeTruthy();
   });

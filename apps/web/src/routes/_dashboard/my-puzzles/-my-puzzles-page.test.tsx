@@ -214,11 +214,40 @@ afterEach(() => {
   localStorage.clear();
 });
 
+const HOUSEHOLD_OF_TWO = {
+  householdId: "h1",
+  members: [{ _id: "me" }, { _id: "anna" }],
+};
+const HOUSEHOLD_OF_ONE = { householdId: "h1", members: [{ _id: "me" }] };
+
 describe("My Puzzles empty states", () => {
   it("invites a member with an empty library to add their first puzzle", () => {
     renderPage({ copies: [] });
     expect(screen.getByText("No puzzles here yet")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Show all" })).toBeNull();
+  });
+
+  it("shows an empty library nothing else: no filters, count, Select or hint about cards", () => {
+    renderPage({ copies: [], household: HOUSEHOLD_OF_TWO });
+    expect(screen.queryByRole("searchbox")).toBeNull();
+    expect(screen.queryByRole("combobox")).toBeNull();
+    expect(screen.queryByRole("button", { name: "All" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Select" })).toBeNull();
+    expect(screen.queryByText("0 of 0 puzzles")).toBeNull();
+    expect(screen.queryByText(en.puzzles.coachmark.body)).toBeNull();
+    expect(
+      screen.queryByRole("link", { name: "All puzzles in your household" }),
+    ).toBeNull();
+    expect(screen.getByRole("link", { name: "Add Puzzle" })).toBeTruthy();
+  });
+
+  it("keeps the tour's Add target on the empty state's one Add button", () => {
+    renderPage({ copies: [] });
+    expect(
+      screen
+        .getByRole("link", { name: "Add Puzzle" })
+        .getAttribute("data-tour"),
+    ).toBe("my-puzzles-add");
   });
 
   it("says the filter matches nothing, and Show all brings the puzzles back", () => {
@@ -236,12 +265,6 @@ describe("My Puzzles empty states", () => {
     ).toBe("true");
   });
 });
-
-const HOUSEHOLD_OF_TWO = {
-  householdId: "h1",
-  members: [{ _id: "me" }, { _id: "anna" }],
-};
-const HOUSEHOLD_OF_ONE = { householdId: "h1", members: [{ _id: "me" }] };
 
 describe("My Puzzles owner select", () => {
   it("names what it filters instead of a bare “All”", () => {
@@ -329,7 +352,7 @@ describe("My Puzzles coachmark on a server-rendered page", () => {
         rows: [],
         hasMore: false,
         matched: 0,
-        total: 0,
+        total: 1,
       },
       [getFunctionName(gateway.household.mine)]: null,
       [getFunctionName(gateway.lending.lentOut)]: [],
