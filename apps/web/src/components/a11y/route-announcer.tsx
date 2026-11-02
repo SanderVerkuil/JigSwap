@@ -22,16 +22,19 @@ export function shouldMoveFocus(
 // How long a detail route's announcement waits for the page to name itself (its data has to come
 // in first). A page that names itself later still gets announced, just after its route's title.
 const PAGE_NAME_WAIT_MS = 1000;
+// The layout route of the dashboard shell, whose pages can still rename the tab. A public route's
+// head has already said all there is to say, so its announcement doesn't wait.
+const SHELL_ROUTE_ID = "/_dashboard";
 
 /**
  * Client-side navigation is silent to screen readers and leaves focus on the clicked link. After
  * each change of page (not a search- or hash-only change, not the first load) this speaks the new
  * page title in a polite live region and, on a link/push navigation, moves focus to the main
  * content without scrolling. Back/forward only announce: they keep the restored scroll position
- * and focus where the browser left it. A route with params is a detail page, whose route title is
- * generic until the shell names the tab after its data (ShellDocumentTitle): while the tab still
- * shows the route's title the announcement waits for that name, and any later change of the title
- * is spoken too. Rendered once, at the root.
+ * and focus where the browser left it. A route with params in the shell is a detail page, whose
+ * route title is generic until the shell names the tab after its data (ShellDocumentTitle): while
+ * the tab still shows the route's title the announcement waits for that name. Any later change of
+ * the title is spoken too. Rendered once, at the root.
  */
 export function RouteAnnouncer() {
   const router = useRouter();
@@ -73,7 +76,9 @@ export function RouteAnnouncer() {
         const routeTitle = matches
           .flatMap((match) => match.meta ?? [])
           .findLast((meta) => meta?.title)?.title;
-        const isDetail = Object.keys(matches.at(-1)?.params ?? {}).length > 0;
+        const isDetail =
+          matches.some((match) => match.routeId === SHELL_ROUTE_ID) &&
+          Object.keys(matches.at(-1)?.params ?? {}).length > 0;
         if (isDetail && title === routeTitle) {
           wait = window.setTimeout(speak, PAGE_NAME_WAIT_MS);
         } else {

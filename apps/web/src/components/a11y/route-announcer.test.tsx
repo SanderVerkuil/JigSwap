@@ -76,18 +76,25 @@ function makeRouter() {
       </>
     ),
   });
-  const page = (path: string) =>
+  // The dashboard shell's layout route, the one place a page can still rename the tab.
+  const shellRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    id: "_dashboard",
+    component: Outlet,
+  });
+  const page = (path: string, parent: typeof rootRoute | typeof shellRoute) =>
     createRoute({
-      getParentRoute: () => rootRoute,
+      getParentRoute: () => parent,
       path,
       head: () => ({ meta: [{ title: ROUTE_TITLE }] }),
       component: () => <p>{path}</p>,
     });
   return createRouter({
     routeTree: rootRoute.addChildren([
-      page("/a"),
-      page("/b"),
-      page("/items/$id"),
+      page("/a", rootRoute),
+      page("/b", rootRoute),
+      page("/docs/$slug", rootRoute),
+      shellRoute.addChildren([page("/items/$id", shellRoute)]),
     ]),
     history: createMemoryHistory({ initialEntries: ["/a"] }),
   });
@@ -166,14 +173,25 @@ describe("RouteAnnouncer", () => {
     expect(document.activeElement).toBe(byId("nav-link"));
   });
 
+  const frames = async () => {
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+  };
+
+  // Outside the shell nothing renames the tab, so a wait would only delay the page's name until
+  // after the screen reader has started on the page itself.
+  it("speaks a public detail page at once", async () => {
+    byId("nav-link").focus();
+    document.title = ROUTE_TITLE;
+    await go(() => router.history.push("/docs/accounts"), "/docs/accounts");
+    await frames();
+    expect(region().textContent).toBe(ROUTE_TITLE);
+    expect(document.activeElement).toBe(byId(MAIN_CONTENT_ID));
+  });
+
   // A detail page's route title is generic ("My puzzles") until the page's data is in and the shell
   // names the tab after it: speak that name, not the generic title first.
-  describe("on a detail route", () => {
-    const frames = async () => {
-      await new Promise((resolve) => requestAnimationFrame(resolve));
-      await new Promise((resolve) => requestAnimationFrame(resolve));
-    };
-
+  describe("on a detail route in the shell", () => {
     it("waits for the page to name itself, then speaks that once", async () => {
       document.title = ROUTE_TITLE;
       await go(() => router.history.push("/items/1"), "/items/1");
