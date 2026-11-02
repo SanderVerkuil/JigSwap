@@ -1,6 +1,7 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
@@ -96,7 +97,7 @@ const seed = async (t: TestConvex<typeof schema>) =>
       updatedAt: now,
     });
 
-    return { alice, bob, older, newer, mountain, alicesCopy };
+    return { alice, bob, older, newer, mountain, ocean, alicesCopy };
   });
 
 const asAlice = (t: TestConvex<typeof schema>) =>
@@ -416,5 +417,176 @@ describe("exchange summary covers", () => {
     // exch-2 offers nothing in return.
     const oneSided = list.find((e) => e.aggregateId === "exch-2");
     expect(oneSided?.offeredCoverUrl).toBeNull();
+  });
+});
+
+describe("exchange summary covers respect who may see the copy", () => {
+  // A member's own cover photo is personal; the row shows it only to a viewer the copy page would
+  // show it to (canViewCopy). Anyone else gets the catalogue box art, or null without any.
+  const withPhoto = async (
+    t: TestConvex<typeof schema>,
+    {
+      owner,
+      copy,
+      puzzle,
+      boxArt = false,
+    }: {
+      owner: Id<"users">;
+      copy: Id<"ownedPuzzles">;
+      puzzle?: Id<"puzzles">;
+      boxArt?: boolean;
+    },
+  ) =>
+    t.run(async (ctx) => {
+      const photoBlob = await ctx.storage.store(
+        new Blob(["cover-photo"], { type: "image/png" }),
+      );
+      const photo = await ctx.db.insert("ownedPuzzleImages", {
+        ownedPuzzleId: copy,
+        uploaderId: owner,
+        fileId: photoBlob,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      await ctx.db.patch(copy, { coverImageId: photo });
+      const photoUrl = await ctx.storage.getUrl(photoBlob);
+      let boxArtUrl: string | null = null;
+      if (boxArt && puzzle) {
+        const art = await ctx.storage.store(
+          new Blob(["box-art"], { type: "image/png" }),
+        );
+        await ctx.db.patch(puzzle, { image: art });
+        boxArtUrl = await ctx.storage.getUrl(art);
+      }
+      return { photoUrl, boxArtUrl };
+    });
+
+  // Bob's incoming row for the swap in which Alice offers her copy, under every incoming read.
+  const bobsRow = async (t: TestConvex<typeof schema>) => {
+    const [byOwner, all] = await Promise.all([
+      asBob(t).query(api.exchange.getExchangesByOwner.getExchangesByOwner, {}),
+      asBob(t).query(api.exchange.getUserExchanges.getUserExchanges, {}),
+    ]);
+    const row = byOwner.find((e) => e.aggregateId === "exch-1");
+    const sameRow = all.find((e) => e.aggregateId === "exch-1");
+    expect(sameRow?.offeredCoverUrl).toBe(row?.offeredCoverUrl);
+    return row;
+  };
+
+  const alicesOutgoingRow = async (t: TestConvex<typeof schema>) =>
+    (
+      await asAlice(t).query(
+        api.exchange.getExchangesByRequester.getExchangesByRequester,
+        {},
+      )
+    ).find((e) => e.aggregateId === "exch-1");
+
+  const seedPrivateCopy = (
+    t: TestConvex<typeof schema>,
+    copy: Id<"ownedPuzzles">,
+  ) =>
+    t.run((ctx) =>
+      ctx.db.patch(copy, {
+        availability: { forTrade: false, forSale: false, forLend: false },
+        visibility: "private",
+        visibilityAuthoritative: true,
+      }),
+    );
+
+  const setStatus = (
+    t: TestConvex<typeof schema>,
+    exchange: Id<"exchanges">,
+    status: "rejected" | "cancelled" | "accepted",
+  ) => t.run((ctx) => ctx.db.patch(exchange, { status }));
+
+  test("a member the owner blocked gets no cover photo, also one set after the block", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, alicesCopy } = await seed(t);
+    await t.run((ctx) =>
+      ctx.db.insert("blocks", {
+        blockerId: alice,
+        blockedId: bob,
+        createdAt: 1,
+      }),
+    );
+    const { photoUrl } = await withPhoto(t, { owner: alice, copy: alicesCopy });
+
+    const row = await bobsRow(t);
+    expect(row?.requesterState).toBe("hidden");
+    expect(row?.offeredCoverUrl).toBeNull();
+    expect(JSON.stringify(row)).not.toContain(photoUrl);
+    // The owner keeps their own photo on the same exchange.
+    expect((await alicesOutgoingRow(t))?.offeredCoverUrl).toBe(photoUrl);
+  });
+
+  test("a member who blocked the owner gets no cover photo either: the veto works both ways", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, alicesCopy } = await seed(t);
+    await t.run((ctx) =>
+      ctx.db.insert("blocks", {
+        blockerId: bob,
+        blockedId: alice,
+        createdAt: 1,
+      }),
+    );
+    const { photoUrl } = await withPhoto(t, { owner: alice, copy: alicesCopy });
+
+    const row = await bobsRow(t);
+    expect(row?.offeredCoverUrl).toBeNull();
+    expect(JSON.stringify(row)).not.toContain(photoUrl);
+  });
+
+  test("a viewer refused the photo still gets the catalogue box art", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, alicesCopy, ocean } = await seed(t);
+    await t.run((ctx) =>
+      ctx.db.insert("blocks", {
+        blockerId: alice,
+        blockedId: bob,
+        createdAt: 1,
+      }),
+    );
+    const { photoUrl, boxArtUrl } = await withPhoto(t, {
+      owner: alice,
+      copy: alicesCopy,
+      puzzle: ocean,
+      boxArt: true,
+    });
+    expect(boxArtUrl).not.toBeNull();
+
+    const row = await bobsRow(t);
+    expect(row?.offeredCoverUrl).toBe(boxArtUrl);
+    expect(JSON.stringify(row)).not.toContain(photoUrl);
+  });
+
+  test.each(["rejected", "cancelled"] as const)(
+    "a %s swap of a private copy gives the counterparty no cover photo: the owner's choice wins again",
+    async (status) => {
+      const t = convexTest(schema, modules);
+      const { alice, older, alicesCopy } = await seed(t);
+      const { photoUrl } = await withPhoto(t, {
+        owner: alice,
+        copy: alicesCopy,
+      });
+      await seedPrivateCopy(t, alicesCopy);
+      await setStatus(t, older, status);
+
+      const row = await bobsRow(t);
+      expect(row?.offeredCoverUrl).toBeNull();
+      expect(JSON.stringify(row)).not.toContain(photoUrl);
+      // The owner keeps their own photo.
+      expect((await alicesOutgoingRow(t))?.offeredCoverUrl).toBe(photoUrl);
+    },
+  );
+
+  test("a live swap of a private copy shows its cover photo to the other party", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, older, alicesCopy } = await seed(t);
+    const { photoUrl } = await withPhoto(t, { owner: alice, copy: alicesCopy });
+    await seedPrivateCopy(t, alicesCopy);
+    await setStatus(t, older, "accepted");
+
+    // Rule P of canViewCopy: the owner put the copy in front of this member to trade on.
+    expect((await bobsRow(t))?.offeredCoverUrl).toBe(photoUrl);
   });
 });

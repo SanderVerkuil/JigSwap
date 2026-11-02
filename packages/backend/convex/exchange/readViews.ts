@@ -10,6 +10,8 @@ import type {
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { copyShowsCatalogFacts } from "../catalog/definitionVisibility";
+import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
+import { canViewCopy } from "../library/canViewCopy";
 import { effectiveCopyVisibility } from "../library/copyVisibility";
 import { toCopySnapshotView } from "../library/mappers";
 import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
@@ -344,6 +346,27 @@ const settledLoanOf = async (
   };
 };
 
+/**
+ * SECURITY: an exchange row outlives what it shows. A party of a rejected or cancelled swap, or one
+ * the owner has since blocked, keeps the row and its catalogue data but may no longer open the copy.
+ * A member's own cover photo is personal, so the row carries it only for a viewer the copy page
+ * would show it to (`canViewCopy`, rule P and the block veto included); anyone else gets the
+ * catalogue box art, or null without any. A copy with no cover photo has nothing personal to hide,
+ * so it skips the check.
+ */
+const coverUrlForViewer = async (
+  ctx: QueryCtx,
+  viewerId: Id<"users">,
+  copy: Doc<"ownedPuzzles"> | null,
+  puzzle: Doc<"puzzles"> | null,
+): Promise<string | null> => {
+  if (!copy) return null;
+  if (copy.coverImageId && !(await canViewCopy(ctx, viewerId, copy))) {
+    return boxArtUrl(ctx, puzzle?.image);
+  }
+  return resolveCopyCoverUrl(ctx, copy, puzzle);
+};
+
 // Enrich one exchange row into a list-item view: project both parties (projectExchangeParties), the
 // requested/offered owned copies, their catalog definitions (copy.puzzleId -> puzzles), their card
 // covers and, for a completed lend, the loan it opened. Mirrors the legacy two-step join in
@@ -366,15 +389,10 @@ export const enrichExchangeSummary = async (
     requestedOwnedPuzzle ? ctx.db.get(requestedOwnedPuzzle.puzzleId) : null,
     offeredOwnedPuzzle ? ctx.db.get(offeredOwnedPuzzle.puzzleId) : null,
   ]);
-  // Both copies are already shown to both parties above, so their card covers are too. Resolved
-  // like every library card (approved cover photo, else box art) and always as URLs.
+  // Each side's card cover, as a URL, gated per copy and per viewer (coverUrlForViewer).
   const [requestedCoverUrl, offeredCoverUrl] = await Promise.all([
-    requestedOwnedPuzzle
-      ? resolveCopyCoverUrl(ctx, requestedOwnedPuzzle, requestedPuzzle)
-      : null,
-    offeredOwnedPuzzle
-      ? resolveCopyCoverUrl(ctx, offeredOwnedPuzzle, offeredPuzzle)
-      : null,
+    coverUrlForViewer(ctx, viewerId, requestedOwnedPuzzle, requestedPuzzle),
+    coverUrlForViewer(ctx, viewerId, offeredOwnedPuzzle, offeredPuzzle),
   ]);
   // A settled lend reads "completed" while the puzzle is still out: carry the loan it opened.
   const settledLend = e.type === "loan" && e.status === "completed";

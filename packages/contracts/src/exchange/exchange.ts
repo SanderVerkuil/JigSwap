@@ -82,8 +82,8 @@ export interface ExchangeSummaryView extends ExchangeFields {
   offeredOwnedPuzzle: ExchangeOwnedPuzzleView | null;
   offeredPuzzle: ExchangePuzzleView | null;
   /**
-   * Card cover of the requested copy, resolved like every library card (the copy's approved cover
-   * photo, else the puzzle's box art): a URL, never a storage id. Null when there is none; absent
+   * Card cover of the requested copy: the copy's approved cover photo for a viewer who may view
+   * the copy, else the puzzle's box art. A URL, never a storage id. Null when there is none; absent
    * from backends that predate it.
    */
   requestedCoverUrl?: string | null;
