@@ -43,6 +43,7 @@ const SET_VISIBILITY = getFunctionName(gateway.social.setProfileVisibility);
 // the long Convex id, the case that widened the form past a phone screen.
 const member: Member = {
   _id: "kd7945krncsg0nr1chmgbgnw2x7m0dca",
+  handle: "kd7945krncsg0nr1chmgbgnw2x7m0dca",
   _creationTime: 0,
   clerkId: "user_henk",
   name: "Henk Pieterszoon",

@@ -13,6 +13,7 @@ import { ProfileStatsSection } from "./stats-section";
 
 const member: Member = {
   _id: "member_henk",
+  handle: "member_henk",
   _creationTime: 0,
   clerkId: "user_henk",
   name: "Henk Pieterszoon",
@@ -27,6 +28,7 @@ const unlocked = (
   locked: false,
   hero: {
     memberId: member._id,
+    handle: member.handle,
     displayName: member.name,
     memberSince: member.createdAt,
     rating: 0,
