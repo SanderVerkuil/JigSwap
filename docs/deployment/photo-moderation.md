@@ -56,7 +56,7 @@ hashes are then checked again by `lib/imageModeration/hashRecheckPool.ts`:
 - **Timeout after 7 days** (`HASH_CHECK_TIMEOUT_MS`, counted from `hashCheckPendingSince`): when a
   re-check would be armed for a photo that has waited that long, the chain stops instead. The row
   is stamped `hashCheckTimedOutAt`, stays unpublished, keeps its stored hashes, and goes to
-  **Unchecked photos** as "Hash check timed out" (every table: copy photos, completion
+  **Unchecked** as "Hash check timed out" (every table: copy photos, completion
   photos, box art, sent message photos and circle icons). The last re-check runs a little over 7 days in. This
   happens wherever a re-check would be armed: after an "unavailable" answer, after the pool gives
   up, and in the daily sweep (a lost photo past 7 days times out rather than being re-armed).
@@ -90,12 +90,12 @@ unchecked photo) and decides it with `admin/decideUncheckedPhoto`, whatever the 
   not offered for a timed-out photo, and the server refuses it (`approve` on a timed-out row, and
   `waive_hash_check` on any row that did not time out, both throw), so a hash check is never skipped
   by the ordinary approval.
-- **Reject** is the table's usual manual rejection (a copy photo moves to Flagged Images, a
+- **Reject** is the table's usual manual rejection (a copy photo moves to Flagged, a
   completion photo and box art are detached and deleted, a circle icon is deleted and the circle
-  keeps its previous icon, a message photo is removed by moderation and its sender told). A rejected timed-out copy photo shows its image in **Flagged Images** to
+  keeps its previous icon, a message photo is removed by moderation and its sender told). A rejected timed-out copy photo shows its image in **Flagged** to
   admins (behind the same blur-until-reveal guard; `listRejectedPhotos` is admin-only), marked as
   timed out. **Restore Photo** there does not publish it: the hash gate stays closed, so it turns
-  "approved" but unchecked and goes back to **Unchecked photos** as "Hash check timed out", where
+  "approved" but unchecked and goes back to **Unchecked** as "Hash check timed out", where
   only Approve without hash check publishes it (the console says so before and after restoring).
 
 Who wins when answers cross (every step is one Convex transaction, so the first to commit wins):
@@ -119,7 +119,7 @@ Who wins when answers cross (every step is one Convex transaction, so the first 
 
 What admins see: a photo waiting on its hash check is counted on **Admin → Moderation → Hash
 matches** ("No hash-check answer yet: N photos waiting, unpublished", with the oldest wait). While it
-waits it is not in **Unchecked photos** when the classifier approved it: there is nothing for an
+waits it is not in **Unchecked** when the classifier approved it: there is nothing for an
 admin to decide yet, and nobody can publish it before the hash check passes. A waiting photo that
 the classifier could not score does appear there, without a preview, and cannot be approved or
 rejected until its hash check has passed or timed out. A timed-out photo is listed there once, as
@@ -263,7 +263,7 @@ row:
   `rearmed`, `rearmed_image_ids`).
 - `imageModeration.hashCheckTimedOut`: a photo's re-checks stopped after
   `HASH_CHECK_TIMEOUT_MS` and it needs an admin (`table`, `image_id`, `attempt`, `waited_ms`).
-  Always error level: each one is a photo waiting in **Unchecked photos**.
+  Always error level: each one is a photo waiting in **Unchecked**.
 
 Each hash re-check logs `<table event>.hashRecheck` (for example `library.moderatePhoto.hashRecheck`)
 with `attempt`, `pooled` and `csam_hashcheck_status`, or `result: "skipped_stale"` for a job that

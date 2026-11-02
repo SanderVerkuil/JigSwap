@@ -599,7 +599,7 @@ admins have approved photos without a hash check during a later hash-service out
 two kinds of photo, and nothing re-checks either on its own:
 
 - A photo whose hash check could not be done within 7 days goes to Admin → Moderation →
-  Unchecked photos; an admin who publishes it with **Approve without hash check** leaves it
+  Unchecked; an admin who publishes it with **Approve without hash check** leaves it
   marked `hashCheckWaivedBy` with its stored hashes (`pendingHashes`) (photo-moderation.md, "A
   timed-out photo: the admin decides").
 - A photo uploaded while hash matching was switched off (provider unset or `none`) is
