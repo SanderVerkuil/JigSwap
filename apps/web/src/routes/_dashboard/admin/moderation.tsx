@@ -18,6 +18,7 @@ import {
   type ModerationTab,
   type ReportStatus,
 } from "@/components/admin/moderation/moderation-search";
+import { ModerationTabBar } from "@/components/admin/moderation/moderation-tabs";
 import { PinnedDetail } from "@/components/admin/moderation/pinned-detail";
 import { QueueList } from "@/components/admin/moderation/queue-list";
 import { RejectSubmissionDialog } from "@/components/admin/moderation/reject-submission-dialog";
@@ -42,13 +43,7 @@ import { uncheckedQueueCount } from "@/components/admin/pending-counts";
 import { QueueEmpty } from "@/components/admin/queue-empty";
 import { convexErrorCode } from "@/components/exchange/request-trade";
 import { PageLoading } from "@/components/ui/loading";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  StickyTabsBar,
-  TAB_TRIGGER_CLASS,
-  TabCount,
-  UNDERLINE_TABS_LIST_CLASS,
-} from "@/components/ui/underline-tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { gateway } from "@/gateway";
 import { useRelativeTime } from "@/hooks/use-relative-time";
 import { pageTitle } from "@/lib/page-title";
@@ -56,15 +51,6 @@ import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import {
-  Flag,
-  History,
-  Inbox,
-  MessageSquareWarning,
-  Scale,
-  ScanEye,
-  ShieldAlert,
-} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
@@ -85,11 +71,11 @@ export const Route = createFileRoute("/_dashboard/admin/moderation")({
   component: ModerationPage,
 });
 
-// The moderation console: KPI week row + three underline tabs. Submissions is
+// The moderation console: KPI week row + the tab bar (moderation-tabs.tsx). Submissions is
 // the live queue (list+detail split with approve / edit&approve / reject with a
 // reason the submitter is told),
-// Flagged Images reviews the auto-rejected photos (restore / confirm removal),
-// Unchecked Photos lets an admin approve or reject photos the classifier has
+// Flagged reviews the auto-rejected photos (restore / confirm removal),
+// Unchecked lets an admin approve or reject photos the classifier has
 // not decided (pending / unscored) or whose hash check timed out, or check an unscored one again,
 // Hash matches lists the CSAM hash-list matches to report (metadata only, never an image),
 // Review Requests decides the auto-rejected message photos whose sender asked for a review
@@ -529,62 +515,49 @@ function ModerationPage() {
       <KpiRow />
 
       <Tabs value={tab} onValueChange={changeTab} className="gap-4">
-        <StickyTabsBar>
-          {/* Seven tabs do not fit a 1440 screen, and the list scrolls sideways. Hash matches and
-              Reports carry deadlines, so they stay ahead of the tabs that scroll out of view. */}
-          <TabsList className={UNDERLINE_TABS_LIST_CLASS}>
-            <TabsTrigger value="submissions" className={TAB_TRIGGER_CLASS}>
-              <Inbox aria-hidden />
-              {t("tabs.submissions")}
-              <TabCount
-                count={pendingCounts?.submissions.count ?? pending?.length}
-                capped={pendingCounts?.submissions.capped}
-              />
-            </TabsTrigger>
-            <TabsTrigger value="flagged" className={TAB_TRIGGER_CLASS}>
-              <Flag aria-hidden />
-              {t("tabs.flagged")}
-              <TabCount
-                count={pendingCounts?.flagged.count ?? flagged?.length}
-                capped={pendingCounts?.flagged.capped}
-              />
-            </TabsTrigger>
-            <TabsTrigger value="unchecked" className={TAB_TRIGGER_CLASS}>
-              <ScanEye aria-hidden />
-              {t("tabs.unchecked")}
-              <TabCount
-                count={uncheckedCount?.count}
-                capped={uncheckedCount?.capped}
-              />
-            </TabsTrigger>
-            <TabsTrigger value="hashMatches" className={TAB_TRIGGER_CLASS}>
-              <ShieldAlert aria-hidden />
-              {t("tabs.hashMatches")}
-              <TabCount
-                count={
-                  csam?.escalations.filter((e) => e.status === "open").length
-                }
-              />
-            </TabsTrigger>
-            <TabsTrigger value="reports" className={TAB_TRIGGER_CLASS}>
-              <MessageSquareWarning aria-hidden />
-              {t("tabs.reports")}
-              <TabCount
-                count={pendingCounts?.reports.count}
-                capped={pendingCounts?.reports.capped}
-              />
-            </TabsTrigger>
-            <TabsTrigger value="appeals" className={TAB_TRIGGER_CLASS}>
-              <Scale aria-hidden />
-              {t("tabs.appeals")}
-              <TabCount count={appeals?.length} />
-            </TabsTrigger>
-            <TabsTrigger value="activity" className={TAB_TRIGGER_CLASS}>
-              <History aria-hidden />
-              {t("tabs.activity")}
-            </TabsTrigger>
-          </TabsList>
-        </StickyTabsBar>
+        {/* Hash matches and Reports carry deadlines, so they come before the other queues. */}
+        <ModerationTabBar
+          value={tab}
+          onValueChange={changeTab}
+          tabs={[
+            {
+              value: "submissions",
+              label: t("tabs.submissions"),
+              count: pendingCounts?.submissions.count ?? pending?.length,
+              capped: pendingCounts?.submissions.capped,
+            },
+            {
+              value: "flagged",
+              label: t("tabs.flagged"),
+              count: pendingCounts?.flagged.count ?? flagged?.length,
+              capped: pendingCounts?.flagged.capped,
+            },
+            {
+              value: "unchecked",
+              label: t("tabs.unchecked"),
+              count: uncheckedCount?.count,
+              capped: uncheckedCount?.capped,
+            },
+            {
+              value: "hashMatches",
+              label: t("tabs.hashMatches"),
+              count: csam?.escalations.filter((e) => e.status === "open")
+                .length,
+            },
+            {
+              value: "reports",
+              label: t("tabs.reports"),
+              count: pendingCounts?.reports.count,
+              capped: pendingCounts?.reports.capped,
+            },
+            {
+              value: "appeals",
+              label: t("tabs.appeals"),
+              count: appeals?.length,
+            },
+            { value: "activity", label: t("tabs.activity") },
+          ]}
+        />
 
         <TabsContent value="submissions">
           {pendingQuery.isError ? (

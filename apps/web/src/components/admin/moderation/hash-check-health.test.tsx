@@ -69,7 +69,7 @@ describe("HashCheckHealth", () => {
     expect(container.innerHTML).toBe("");
     render(hashCheck());
     expect(container.innerHTML).toBe("");
-    // Timed-out photos are an admin queue (Unchecked photos), told on the Hash matches tab.
+    // Timed-out photos are an admin queue (Unchecked), told on the Hash matches tab.
     render(hashCheck({ timedOutPhotos: 2 }));
     expect(container.innerHTML).toBe("");
   });

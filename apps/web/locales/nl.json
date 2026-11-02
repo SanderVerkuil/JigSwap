@@ -4903,7 +4903,7 @@
         "rejected": "“{title}” afgewezen — nog {count} in de wachtrij.",
         "removed": "Afbeelding verwijderd bij “{title}” — nog {count} in de wachtrij.",
         "restored": "Foto hersteld bij “{title}” — nog {count} in de wachtrij.",
-        "restoredToUnchecked": "Foto bij “{title}” terug naar Niet-gecontroleerde foto's — nog {count} in de wachtrij.",
+        "restoredToUnchecked": "Foto bij “{title}” terug naar Niet gecontroleerd — nog {count} in de wachtrij.",
         "manualApproved": "Foto goedgekeurd bij “{title}” — nog {count} in de wachtrij.",
         "manualRejected": "Foto afgewezen bij “{title}” — nog {count} in de wachtrij.",
         "hashCheckWaived": "Foto bij “{title}” goedgekeurd zonder hash-check — nog {count} in de wachtrij.",
@@ -4926,10 +4926,11 @@
         "submissions": "Inzendingen",
         "flagged": "Gemarkeerd",
         "activity": "Activiteitenlog",
-        "unchecked": "Niet-gecontroleerde foto's",
-        "appeals": "Beoordelingsverzoeken",
+        "unchecked": "Niet gecontroleerd",
+        "appeals": "Herbeoordelingen",
         "hashMatches": "Hash-matches",
-        "reports": "Gemeld"
+        "reports": "Gemeld",
+        "label": "Moderatiewachtrij"
       },
       "detail": {
         "submitted": "Ingezonden",
@@ -4998,7 +4999,7 @@
         "confirmBody": "De foto wordt van het exemplaar verwijderd en de uploader krijgt bericht dat hij is verwijderd. Dit kun je niet ongedaan maken.",
         "confirmAction": "Foto verwijderen",
         "restore": "Foto herstellen",
-        "hashTimedOutHint": "De hash-check van deze foto op bekend misbruikmateriaal was verlopen voordat hij werd afgewezen. Herstellen publiceert hem niet: hij gaat terug naar Niet-gecontroleerde foto's, waar alleen Goedkeuren zonder hash-check hem publiceert."
+        "hashTimedOutHint": "De hash-check van deze foto op bekend misbruikmateriaal was verlopen voordat hij werd afgewezen. Herstellen publiceert hem niet: hij gaat terug naar Niet gecontroleerd, waar alleen Goedkeuren zonder hash-check hem publiceert."
       },
       "flaggedEmpty": "Geen gemarkeerde afbeeldingen. De community is tevreden.",
       "activity": {
@@ -5128,7 +5129,7 @@
         "effects": {
           "copy": {
             "approve": "Goedkeuren toont de foto bij het exemplaar aan andere leden.",
-            "reject": "Afwijzen verbergt de foto en zet hem bij Gemarkeerde afbeeldingen, waar je hem nog kunt herstellen of definitief verwijderen."
+            "reject": "Afwijzen verbergt de foto en zet hem bij Gemarkeerd, waar je hem nog kunt herstellen of definitief verwijderen."
           },
           "completion": {
             "approve": "Goedkeuren toont de foto bij de gelegde puzzel aan andere leden.",
@@ -5216,7 +5217,7 @@
         "waiting": "Nog geen antwoord van de hash-check: {countLabel} {count, plural, one {foto wacht} other {foto's wachten}}, niet gepubliceerd (oudste {since}). Ze worden tot 7 dagen lang automatisch opnieuw gecontroleerd en daarna aan een beheerder overgedragen.",
         "noteBy": "{name}, {time}",
         "addNote": "Notitie toevoegen",
-        "timedOut": "Hash-check verlopen: {count, plural, one {# foto wacht} other {# foto's wachten}} al meer dan 7 dagen op een beslissing van een beheerder in Niet-gecontroleerde foto's."
+        "timedOut": "Hash-check verlopen: {count, plural, one {# foto wacht} other {# foto's wachten}} al meer dan 7 dagen op een beslissing van een beheerder in Niet gecontroleerd."
       },
       "reports": {
         "statusFilter": "Status van melding",

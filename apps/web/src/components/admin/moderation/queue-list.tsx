@@ -12,8 +12,9 @@
 //   the next item's primary action, so a double Enter cannot approve the wrong
 //   item;
 // - from lg (1024px) the detail sits next to the list and sticks below the
-//   tab bar, scrolling on its own, so it stays in view however far down the
-//   list the reviewer selects;
+//   tab bar (however many rows it wraps to: --moderation-tabs-height, from
+//   moderation-tabs.tsx), scrolling on its own, so it stays in view however far
+//   down the list the reviewer selects;
 // - below lg (every tablet and phone) a row opens the detail in a Sheet, as
 //   the Reports tab does, instead of rendering it after the whole list.
 import {
@@ -178,7 +179,7 @@ export function QueueList<T>({
               className={cn(
                 // scroll-mt: a row focused by the arrow keys scrolls into view below the sticky
                 // page head and tab bar, not under them.
-                "flex w-full cursor-pointer scroll-mt-[calc(var(--app-sticky-top,0px)+3.5rem)] items-center gap-3 border-b border-l-2 px-3 py-3 text-left outline-none last:border-b-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+                "flex w-full cursor-pointer scroll-mt-[calc(var(--app-sticky-top,0px)+var(--moderation-tabs-height,2.75rem)+0.75rem)] items-center gap-3 border-b border-l-2 px-3 py-3 text-left outline-none last:border-b-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
                 active
                   ? "border-l-primary bg-primary/5"
                   : "border-l-transparent hover:bg-accent/50",
@@ -190,10 +191,10 @@ export function QueueList<T>({
         })}
       </div>
       {wide ? (
-        // Sticks below the sticky tab bar (--app-sticky-top + its ~44px height + a gap) and
-        // scrolls on its own when taller than what is left of the scroll region.
+        // Sticks below the sticky tab bar (--app-sticky-top + its height + a gap) and scrolls on its
+        // own when taller than what is left of the scroll region.
         detailContainer(
-          "w-full min-w-0 rounded-xl border bg-card p-5 lg:sticky lg:top-[calc(var(--app-sticky-top,0px)+3.5rem)] lg:max-h-[calc(100svh-var(--app-sticky-top,0px)-8.5rem)] lg:self-start lg:overflow-y-auto",
+          "w-full min-w-0 rounded-xl border bg-card p-5 lg:sticky lg:top-[calc(var(--app-sticky-top,0px)+var(--moderation-tabs-height,2.75rem)+0.75rem)] lg:max-h-[calc(100svh-var(--app-sticky-top,0px)-var(--moderation-tabs-height,2.75rem)-5.75rem)] lg:self-start lg:overflow-y-auto",
         )
       ) : (
         <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>

@@ -171,7 +171,7 @@ describe("UncheckedDetail", () => {
       "Approving shows the photo on its copy to other members.",
     );
     expect(text).toContain(
-      "Rejecting hides it and moves it to Flagged images, where it can still be restored or removed for good.",
+      "Rejecting hides it and moves it to Flagged, where it can still be restored or removed for good.",
     );
     // Only this photo's source is explained, not every source at once.
     expect(text).not.toContain("conversation");
@@ -192,7 +192,7 @@ describe("UncheckedDetail", () => {
       "Rejecting removes the photo for both members and tells the sender.",
     );
     expect(text).toContain("Check again runs the automated check once more");
-    expect(text).not.toContain("Flagged images");
+    expect(text).not.toContain("moves it to Flagged");
 
     render({ photo: { ...photo, source: "circleIcon" } }, "nl");
     text = container.textContent ?? "";
@@ -220,7 +220,7 @@ describe("UncheckedDetail", () => {
     expect(onReject).not.toHaveBeenCalled();
     expect(dialog()!.textContent).toContain("Reject this photo?");
     expect(dialog()!.textContent).toContain(
-      "Rejecting hides it and moves it to Flagged images",
+      "Rejecting hides it and moves it to Flagged",
     );
     act(() => dialogButton("Reject Photo").click());
     expect(onReject).toHaveBeenCalledTimes(1);

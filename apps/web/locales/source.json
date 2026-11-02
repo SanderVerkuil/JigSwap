@@ -4903,7 +4903,7 @@
         "rejected": "Rejected “{title}” — {count} left in queue.",
         "removed": "Removed image on “{title}” — {count} left in queue.",
         "restored": "Restored photo on “{title}” — {count} left in queue.",
-        "restoredToUnchecked": "Moved the photo on “{title}” back to Unchecked Photos — {count} left in queue.",
+        "restoredToUnchecked": "Moved the photo on “{title}” back to Unchecked — {count} left in queue.",
         "manualApproved": "Approved photo on “{title}” — {count} left in queue.",
         "manualRejected": "Rejected photo on “{title}” — {count} left in queue.",
         "hashCheckWaived": "Approved photo on “{title}” without a hash check — {count} left in queue.",
@@ -4924,12 +4924,13 @@
       },
       "tabs": {
         "submissions": "Submissions",
-        "flagged": "Flagged Images",
+        "flagged": "Flagged",
         "activity": "Activity Log",
-        "unchecked": "Unchecked Photos",
+        "unchecked": "Unchecked",
         "appeals": "Review Requests",
         "hashMatches": "Hash matches",
-        "reports": "Reports"
+        "reports": "Reports",
+        "label": "Moderation queue"
       },
       "detail": {
         "submitted": "Submitted",
@@ -4998,7 +4999,7 @@
         "confirmBody": "The photo is deleted from the copy and its uploader is told it was removed. This can't be undone.",
         "confirmAction": "Remove photo",
         "restore": "Restore Photo",
-        "hashTimedOutHint": "This photo's hash check against known abuse material timed out before it was rejected. Restoring it does not publish it: it goes back to Unchecked Photos, where only Approve without hash check publishes it."
+        "hashTimedOutHint": "This photo's hash check against known abuse material timed out before it was rejected. Restoring it does not publish it: it goes back to Unchecked, where only Approve without hash check publishes it."
       },
       "flaggedEmpty": "No flagged images. The community's happy.",
       "activity": {
@@ -5128,7 +5129,7 @@
         "effects": {
           "copy": {
             "approve": "Approving shows the photo on its copy to other members.",
-            "reject": "Rejecting hides it and moves it to Flagged images, where it can still be restored or removed for good."
+            "reject": "Rejecting hides it and moves it to Flagged, where it can still be restored or removed for good."
           },
           "completion": {
             "approve": "Approving shows the photo on its completion to other members.",
@@ -5216,7 +5217,7 @@
         "waiting": "No hash-check answer yet: {countLabel} {count, plural, one {photo} other {photos}} waiting, unpublished (oldest {since}). They are re-checked automatically for up to 7 days, then handed to an admin.",
         "noteBy": "{name}, {time}",
         "addNote": "Add note",
-        "timedOut": "Hash check timed out: {count, plural, one {# photo} other {# photos}} waited over 7 days and {count, plural, one {needs} other {need}} an admin decision in Unchecked photos."
+        "timedOut": "Hash check timed out: {count, plural, one {# photo} other {# photos}} waited over 7 days and {count, plural, one {needs} other {need}} an admin decision in Unchecked."
       },
       "reports": {
         "statusFilter": "Report status",
