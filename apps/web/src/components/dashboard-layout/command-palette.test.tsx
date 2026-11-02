@@ -320,12 +320,22 @@ describe("CommandPalette", () => {
   it.each([
     ["Add a Puzzle", "/my-puzzles/add"],
     ["Log a solve", "/completions/new"],
+    ["Mark past solves", "/completions/past"],
     ["Create a Circle", "/circles?create=1"],
     ["Browse Community", "/browse"],
   ])("“%s” goes to %s", (name, href) => {
     renderPalette();
     fireEvent.click(screen.getByRole("option", { name }));
     expect(mocks.push).toHaveBeenCalledWith(href);
+  });
+
+  // A member with a long history looks for this under either language's word, wherever they are.
+  it.each(["past", "eerdere"])("finds marking past solves by “%s”", (term) => {
+    renderPalette();
+    type(term);
+    expect(
+      screen.getByRole("option", { name: "Mark past solves" }),
+    ).toBeTruthy();
   });
 
   // UX-06: Users stands for Community (its tab and hub); Circles has its own glyph everywhere.

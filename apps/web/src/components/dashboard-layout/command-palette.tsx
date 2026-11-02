@@ -34,6 +34,7 @@ import {
   CircleCheck,
   Download,
   FolderOpen,
+  History,
   Plus,
   Puzzle,
   Search,
@@ -69,6 +70,12 @@ const QUICK_ACTIONS = [
       "vastleggen",
       "voltooiing",
     ],
+  },
+  {
+    key: "markPastSolves",
+    href: "/completions/past",
+    icon: History,
+    keywords: ["past", "earlier", "backfill", "eerdere", "afgemaakt"],
   },
   {
     key: "createCircle",
