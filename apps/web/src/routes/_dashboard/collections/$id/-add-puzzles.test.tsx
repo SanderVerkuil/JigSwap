@@ -4,6 +4,7 @@ import {
   PageHeaderSlotProvider,
   usePageHeaderContent,
 } from "@/components/dashboard-layout/page-header-slot";
+import { isSurfaceBusy } from "@/components/whats-new/surface-busy";
 import { gateway, type Id } from "@/gateway";
 import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import type { CollectionDetailView, OwnedCopyView } from "@jigswap/contracts";
@@ -14,6 +15,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { ConvexReactClient } from "convex/react";
 import { getFunctionName } from "convex/server";
@@ -213,11 +215,29 @@ describe("collection Add Puzzles picker", () => {
     expect(screen.queryByText("Nothing in your library yet")).toBeNull();
   });
 
+  it("docks its confirm on a phone once something is picked, where the page head has scrolled away", () => {
+    renderPicker({ library: [copy(1)] });
+    expect(screen.queryByTestId("picker-footer")).toBeNull();
+    selectCard("Puzzle 1");
+    const footer = screen.getByTestId("picker-footer");
+    expect(footer.classList).toContain("sticky");
+    expect(footer.classList).toContain("sm:hidden");
+    expect(
+      within(footer).getByRole("button", { name: "Add 1 puzzle" }),
+    ).toBeTruthy();
+    // The head's confirm is for wider screens, and the install tip steps aside meanwhile.
+    expect(isSurfaceBusy()).toBe(true);
+  });
+
   it("adds the selected copies and returns to the collection", async () => {
     renderPicker({ library: [copy(1), copy(2)] });
     selectCard("Puzzle 1");
     selectCard("Puzzle 2");
-    fireEvent.click(screen.getByRole("button", { name: "Add 2 puzzles" }));
+    fireEvent.click(
+      within(screen.getByTestId("picker-footer")).getByRole("button", {
+        name: "Add 2 puzzles",
+      }),
+    );
 
     await waitFor(() => expect(mocks.push).toHaveBeenCalledTimes(1));
     expect(mocks.mutation.mock.calls).toEqual([
@@ -237,7 +257,11 @@ describe("collection Add Puzzles picker", () => {
     renderPicker({ library: [copy(1), copy(2)] });
     selectCard("Puzzle 1");
     selectCard("Puzzle 2");
-    fireEvent.click(screen.getByRole("button", { name: "Add 2 puzzles" }));
+    fireEvent.click(
+      within(screen.getByTestId("picker-footer")).getByRole("button", {
+        name: "Add 2 puzzles",
+      }),
+    );
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledTimes(1));
     expect(vi.mocked(toast.error).mock.calls[0]?.[0]).toBe(
@@ -245,6 +269,10 @@ describe("collection Add Puzzles picker", () => {
     );
     expect(mocks.push).not.toHaveBeenCalled();
     // The copy that did go in is no longer selected; the one that failed still is.
-    expect(screen.getByRole("button", { name: "Add 1 puzzle" })).toBeTruthy();
+    expect(
+      within(screen.getByTestId("picker-footer")).getByRole("button", {
+        name: "Add 1 puzzle",
+      }),
+    ).toBeTruthy();
   });
 });
