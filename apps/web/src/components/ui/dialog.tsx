@@ -98,7 +98,12 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn("flex flex-col gap-2 text-center sm:text-left", className)}
+      // A long title leaves room for the close button: on both sides below sm, where the header
+      // centres it, so it stays centred.
+      className={cn(
+        "flex flex-col gap-2 text-center sm:text-left [&>[data-slot=dialog-title]]:max-sm:px-8 [&>[data-slot=dialog-title]]:sm:pr-8",
+        className,
+      )}
       {...props}
     />
   );

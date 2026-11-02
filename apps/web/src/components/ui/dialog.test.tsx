@@ -12,6 +12,7 @@ import {
   DialogContent,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
   DialogTitle,
 } from "./dialog";
 
@@ -83,6 +84,26 @@ describe("DialogContent", () => {
       ]),
     );
     expect(classes).not.toContain("opacity-70");
+  });
+});
+
+describe("DialogHeader", () => {
+  it("keeps a long title clear of the close button, and centred while the header centres it", () => {
+    render(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <Dialog open>
+          <DialogContent>
+            <DialogHeader data-testid="header">
+              <DialogTitle>A long title</DialogTitle>
+              <DialogDescription>Why</DialogDescription>
+            </DialogHeader>
+          </DialogContent>
+        </Dialog>
+      </IntlProvider>,
+    );
+    const classes = classesOf(screen.getByTestId("header"));
+    expect(classes).toContain("[&>[data-slot=dialog-title]]:max-sm:px-8");
+    expect(classes).toContain("[&>[data-slot=dialog-title]]:sm:pr-8");
   });
 });
 
