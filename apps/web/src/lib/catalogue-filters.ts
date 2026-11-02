@@ -1,4 +1,4 @@
-import { catalogueSearchKey } from "./catalogue-search";
+import { catalogueSearchKey, foldForSearch } from "./catalogue-search";
 
 // The member catalogue's (/puzzles) filters: the form values the toolbar and the Filters panel
 // edit, the catalog.search arguments they turn into, and the same predicate on the client for the
@@ -85,17 +85,20 @@ interface FilterablePuzzle {
 }
 
 // The client-side twin of catalog.search's facets. The term can't use the search index here, so
-// every word of it must appear in the title, brand or tags (the summary fields the index covers).
+// every word of it must appear in the title, brand or tags (the summary fields the index covers),
+// accents aside, as on the server.
 export function matchesCatalogueSearch(
   puzzle: FilterablePuzzle,
   args: CatalogueSearchArgs,
 ): boolean {
-  const haystack = [puzzle.title, puzzle.brand ?? "", ...(puzzle.tags ?? [])]
-    .join(" ")
-    .toLowerCase();
+  const haystack = foldForSearch(
+    [puzzle.title, puzzle.brand ?? "", ...(puzzle.tags ?? [])].join(" "),
+  );
   return (
     (args.searchTerm === undefined ||
-      args.searchTerm.split(" ").every((word) => haystack.includes(word))) &&
+      foldForSearch(args.searchTerm)
+        .split(" ")
+        .every((word) => haystack.includes(word))) &&
     (args.brand === undefined || puzzle.brand === args.brand) &&
     (args.pieceMin === undefined || puzzle.pieceCount >= args.pieceMin) &&
     (args.pieceMax === undefined || puzzle.pieceCount <= args.pieceMax) &&

@@ -1,4 +1,5 @@
 import type { BrowseOwnedCopiesView } from "@jigswap/contracts";
+import { foldDiacritics } from "@jigswap/domain";
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
@@ -170,7 +171,10 @@ export const browseOwnedPuzzles = query({
     // The puzzle-based filters match only the catalogue facts the card shows (the same projection
     // toOwnedCopyView joins): for a copy of a definition that is not approved that is its snapshot
     // title, brand and pieces, so a search can't probe hidden description or tags.
-    const searchTerm = args.searchTerm?.toLowerCase();
+    // Accents and case are ignored on both sides: "cafe" finds "Café".
+    const fold = (text: string) => foldDiacritics(text).toLowerCase();
+    const searchTerm = fold(args.searchTerm ?? "");
+    const matches = (text: string) => fold(text).includes(searchTerm);
     const filtersByPuzzle =
       Boolean(category) ||
       args.minPieceCount !== undefined ||
@@ -189,12 +193,10 @@ export const browseOwnedPuzzles = query({
           shown.pieceCount <= args.maxPieceCount) &&
         (!args.difficulty || shown.difficulty === args.difficulty) &&
         (!searchTerm ||
-          shown.title.toLowerCase().includes(searchTerm) ||
-          Boolean(shown.description?.toLowerCase().includes(searchTerm)) ||
-          Boolean(shown.brand?.toLowerCase().includes(searchTerm)) ||
-          Boolean(
-            shown.tags?.some((tag) => tag.toLowerCase().includes(searchTerm)),
-          ))
+          matches(shown.title) ||
+          Boolean(shown.description && matches(shown.description)) ||
+          Boolean(shown.brand && matches(shown.brand)) ||
+          Boolean(shown.tags?.some(matches)))
       );
     };
 

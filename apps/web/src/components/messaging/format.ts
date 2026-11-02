@@ -2,6 +2,7 @@
 // runtime imports so they unit-test in a plain node environment.
 
 import type { gateway } from "@/gateway";
+import { foldForSearch } from "@/lib/catalogue-search";
 import { stripFormatting, type MemberNameSource } from "@jigswap/contracts";
 import type { FunctionReturnType } from "convex/server";
 import { ConvexError } from "convex/values";
@@ -147,11 +148,6 @@ export function threadSubjectTitle(
     type: t(`exchangeType.${subject.exchangeType}`),
     title: subject.puzzleTitle ?? t("untitledPuzzle"),
   });
-}
-
-// Text folded for a forgiving search: "Zoë" and "ZOE" both read "zoe".
-function foldForSearch(text: string): string {
-  return text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
 }
 
 // Whether `text` contains `query`, ignoring case, accents and the spaces

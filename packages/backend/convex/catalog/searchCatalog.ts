@@ -1,4 +1,5 @@
 import type { PuzzleSummaryView } from "@jigswap/contracts";
+import { puzzleSearchTerm } from "@jigswap/domain";
 import {
   paginationOptsValidator,
   type FilterBuilder,
@@ -80,7 +81,9 @@ export const searchCatalog = query({
         ? await ctx.db
             .query("puzzles")
             .withSearchIndex("by_searchable_text", (q) =>
-              q.search("searchableText", term).eq("status", "approved"),
+              q
+                .search("searchableText", puzzleSearchTerm(term))
+                .eq("status", "approved"),
             )
             .filter(facets)
             .paginate(

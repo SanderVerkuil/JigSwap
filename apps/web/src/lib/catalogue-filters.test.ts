@@ -59,6 +59,15 @@ describe("catalogueSearchArgs", () => {
 });
 
 describe("matchesCatalogueSearch", () => {
+  it("ignores accents on both sides of the term", () => {
+    const cafe = { title: "Café", pieceCount: 500 };
+    const cafePlain = { title: "Cafe", pieceCount: 500 };
+    expect(matchesCatalogueSearch(cafe, { searchTerm: "cafe" })).toBe(true);
+    expect(matchesCatalogueSearch(cafePlain, { searchTerm: "café" })).toBe(
+      true,
+    );
+  });
+
   it("matches everything when no facet is set", () => {
     expect(matchesCatalogueSearch(puzzle, {})).toBe(true);
   });

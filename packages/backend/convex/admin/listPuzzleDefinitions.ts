@@ -1,4 +1,5 @@
 import type { AdminPuzzleDefinitionRowView } from "@jigswap/contracts";
+import { puzzleSearchTerm } from "@jigswap/domain";
 import { paginationOptsValidator, type PaginationResult } from "convex/server";
 import { ConvexError, v } from "convex/values";
 import { query } from "../_generated/server";
@@ -53,7 +54,10 @@ export const listPuzzleDefinitions = query({
         ? await ctx.db
             .query("puzzles")
             .withSearchIndex("by_searchable_text", (q) => {
-              const matching = q.search("searchableText", term);
+              const matching = q.search(
+                "searchableText",
+                puzzleSearchTerm(term),
+              );
               return status ? matching.eq("status", status) : matching;
             })
             .paginate(

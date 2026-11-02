@@ -1,4 +1,5 @@
 import type { PuzzleSummaryView } from "@jigswap/contracts";
+import { puzzleSearchTerm } from "@jigswap/domain";
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { boxArtImage } from "../lib/imageModeration/boxArtUrl";
@@ -25,7 +26,9 @@ export const getPuzzleSuggestions = query({
     const puzzles = await ctx.db
       .query("puzzles")
       .withSearchIndex("by_searchable_text", (q) =>
-        q.search("searchableText", searchTerm).eq("status", "approved"),
+        q
+          .search("searchableText", puzzleSearchTerm(searchTerm))
+          .eq("status", "approved"),
       )
       .take(limit);
 
