@@ -603,18 +603,24 @@ describe("fileReport: photo comments and puzzle reviews", () => {
     );
   });
 
-  test("puzzleReview: your own, a rating-only one, one on a pending definition and an unknown id are NotFound", async () => {
+  test("puzzleReview: one on a definition that isn't approved can be reported too", async () => {
     const t = convexTest(schema, modules);
     const ids = await seed(t);
-    const { aliceReview, ratingOnlyReview, pendingReview } =
-      await seedDiscussion(t, ids);
-    for (const targetId of [
-      aliceReview,
-      ratingOnlyReview,
-      pendingReview,
-      "nope",
-      ids.photo,
-    ]) {
+    const { pendingReview } = await seedDiscussion(t, ids);
+    const { reportId } = await file(asAlice(t), {
+      targetKind: "puzzleReview",
+      targetId: pendingReview,
+    });
+    const report = await reportRow(t, reportId);
+    expect(report.targetId).toBe(pendingReview);
+    expect(report.reportedUserId).toBe(ids.bob);
+  });
+
+  test("puzzleReview: your own, a rating-only one and an unknown id are NotFound", async () => {
+    const t = convexTest(schema, modules);
+    const ids = await seed(t);
+    const { aliceReview, ratingOnlyReview } = await seedDiscussion(t, ids);
+    for (const targetId of [aliceReview, ratingOnlyReview, "nope", ids.photo]) {
       await expectCode(
         file(asAlice(t), { targetKind: "puzzleReview", targetId }),
         "NotFound",

@@ -224,13 +224,12 @@ const resolveTarget = async (
     case "photoComment":
       return photoCommentTarget(ctx, reporterId, targetId);
     case "puzzleReview": {
-      // A review others can read (listPuzzleReviews): on an approved definition, with text. A
+      // A review with text. Its id comes from listPuzzleReviews, so the reporter has read it,
+      // whatever the definition's status (a submitter sees reviews of their own pending one). A
       // rating-only review has no content to report; its author can still be reported as a member.
       const reviewId = ctx.db.normalizeId("puzzleReviews", targetId);
       const review = reviewId ? await ctx.db.get(reviewId) : null;
       if (!review?.text) return null;
-      const puzzle = await ctx.db.get(review.puzzleId);
-      if (puzzle?.status !== "approved") return null;
       return {
         targetId: review._id,
         reportedUserId: review.userId,
