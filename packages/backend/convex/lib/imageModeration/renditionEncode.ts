@@ -7,7 +7,7 @@ import { defaultOptions } from "@jsquash/webp/meta.js";
 import { initEmscriptenModule } from "@jsquash/webp/utils.js";
 import { checkImageBytes, type ImageGuardFailure } from "./guards";
 import { decodeUpright } from "./normaliseImage";
-import { findMetadata } from "./stripMetadata";
+import { findMetadata, stripImageMetadata } from "./stripMetadata";
 import { WEBP_ENCODER_WASM_BASE64 } from "./webpEncoderWasm";
 
 // Renditions: smaller WebP copies of a stored image for the places that show it small (cards,
@@ -17,8 +17,9 @@ import { WEBP_ENCODER_WASM_BASE64 } from "./webpEncoderWasm";
 // Input is the stored CLEAN blob (already re-encoded by the moderation pipeline: metadata-free
 // and upright). It still goes through the pipeline's input guards (checkImageBytes: size, magic
 // bytes, the header's pixel count) before anything decodes it, and a body that does not decode
-// is refused as "decode_failed". It is decoded as a browser shows it (jimp applies an Exif
-// Orientation, which a clean blob no longer has).
+// is refused as "decode_failed". It is decoded as a browser shows it: decodeUpright decodes no
+// Exif, so the Orientation is read here and handed to it, as in the pipeline. A clean blob no
+// longer has one, but box art from before the metadata strip still may.
 //
 // - Sizes (renditionSizes): one per rung of RENDITION_LADDER (480, 640 and 960 px wide, aspect
 //   kept) narrower than the image, plus, in the place of the first rung that is not, a WebP at
@@ -149,9 +150,18 @@ export const encodeRenditions = async (
 ): Promise<RenditionSet> => {
   const guard = checkImageBytes(bytes);
   if (!guard.ok) return guard;
+  const stripped =
+    guard.format === "gif"
+      ? { bytes, orientation: 1 }
+      : stripImageMetadata(bytes, guard.format);
+  if (stripped === null) return { ok: false, reason: "decode_failed" };
   let image: Awaited<ReturnType<typeof decodeUpright>>;
   try {
-    image = await decodeUpright(bytes, guard.format, 1);
+    image = await decodeUpright(
+      stripped.bytes,
+      guard.format,
+      stripped.orientation,
+    );
   } catch {
     return { ok: false, reason: "decode_failed" };
   }
