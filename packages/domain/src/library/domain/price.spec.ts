@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Price } from "./price";
+import { MAX_PRICE_CENTS, Price } from "./price";
 
 describe("Price.create", () => {
   it("accepts a positive integer amount and upper-cases the currency", () => {
@@ -15,6 +15,20 @@ describe("Price.create", () => {
     const r = Price.create(100, "EUR");
     expect(r.isOk).toBe(true);
     if (r.isOk) expect(r.value.currency).toBe("EUR");
+  });
+
+  // A price of 1e300 cents is an integer too, and other members are shown it.
+  it.each([MAX_PRICE_CENTS + 1, 1e300, Number.MAX_VALUE])(
+    "rejects %p cents as more than any puzzle can cost",
+    (amount) => {
+      const r = Price.create(amount, "EUR");
+      expect(r.isErr).toBe(true);
+      if (r.isErr) expect(r.error.code).toBe("InvalidPrice");
+    },
+  );
+
+  it("accepts the highest price", () => {
+    expect(Price.create(MAX_PRICE_CENTS, "EUR").isOk).toBe(true);
   });
 
   // Zero is the boundary that distinguishes `<= 0` from `< 0`: it must be rejected.

@@ -9,6 +9,7 @@ export type LibraryErrorCode =
   | "InvalidCondition"
   | "InvalidPrice"
   | "InvalidAcquisitionDate"
+  | "InvalidMissingPieces"
   | "DuplicateCollectionName"
   | "CannotDeleteDefaultCollection"
   | "CopyNotInCollection"
@@ -55,6 +56,14 @@ export class LibraryError extends DomainError {
     return new LibraryError(
       "InvalidAcquisitionDate",
       "Not a date a copy can have been acquired on",
+    );
+  }
+
+  // A missing-piece count that isn't a whole number within MAX_MISSING_PIECES.
+  static invalidMissingPieces(): LibraryError {
+    return new LibraryError(
+      "InvalidMissingPieces",
+      "The number of missing pieces must be a whole number",
     );
   }
 

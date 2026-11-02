@@ -25,43 +25,50 @@ const BAD_DATES = [
 
 type T = TestConvex<typeof schema>;
 let t: T;
-let me: Id<"users">;
 let puzzleId: Id<"puzzles">;
 let copyAggregateId: string;
+let puzzleDefinitionAggregateId: string;
 const asMe = () => t.withIdentity({ subject: "clerk_me" });
 
 beforeEach(async () => {
   t = convexTest(schema, modules);
-  ({ me, puzzleId, copyAggregateId } = await t.run(async (ctx) => {
-    const me = await ctx.db.insert("users", {
-      clerkId: "clerk_me",
-      email: "me@example.com",
-      name: "Me",
-      isActive: true,
-      createdAt: 1,
-      updatedAt: 1,
-    });
-    const puzzleId = await ctx.db.insert("puzzles", {
-      title: "Starry Night",
-      pieceCount: 1000,
-      status: "approved",
-      submittedBy: me,
-      createdAt: 1,
-      updatedAt: 1,
-    });
-    const copyAggregateId = "copy_1";
-    await ctx.db.insert("ownedPuzzles", {
-      aggregateId: copyAggregateId,
-      puzzleId,
-      ownerId: me,
-      heldBy: me,
-      condition: "good",
-      availability: { forTrade: false, forSale: false, forLend: false },
-      createdAt: 1,
-      updatedAt: 1,
-    });
-    return { me, puzzleId, copyAggregateId };
-  }));
+  ({ puzzleId, copyAggregateId, puzzleDefinitionAggregateId } = await t.run(
+    async (ctx) => {
+      const me = await ctx.db.insert("users", {
+        clerkId: "clerk_me",
+        email: "me@example.com",
+        name: "Me",
+        isActive: true,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const puzzleId = await ctx.db.insert("puzzles", {
+        title: "Starry Night",
+        pieceCount: 1000,
+        status: "approved",
+        aggregateId: "definition_1",
+        submittedBy: me,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const copyAggregateId = "copy_1";
+      await ctx.db.insert("ownedPuzzles", {
+        aggregateId: copyAggregateId,
+        puzzleId,
+        ownerId: me,
+        heldBy: me,
+        condition: "good",
+        availability: { forTrade: false, forSale: false, forLend: false },
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      return {
+        puzzleId,
+        copyAggregateId,
+        puzzleDefinitionAggregateId: "definition_1",
+      };
+    },
+  ));
 });
 
 const completions = () => t.run((ctx) => ctx.db.query("completions").collect());
@@ -205,5 +212,90 @@ describe("a goal's numbers", () => {
     ).rejects.toThrow(/InvalidGoalPeriod/);
     const [row] = await goals();
     expect(row.targetCompletions).toBe(3);
+  });
+});
+
+describe("a copy's numbers", () => {
+  const BAD_COUNTS = [
+    -1,
+    1.5,
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    1e300,
+    100_001,
+  ];
+  const copyRows = () => t.run((ctx) => ctx.db.query("ownedPuzzles").collect());
+
+  test.each(BAD_COUNTS)(
+    "acquireCopy refuses %p missing pieces",
+    async (count) => {
+      await expect(
+        asMe().mutation(api.library.acquireCopy.acquireCopy, {
+          puzzleDefinitionId: puzzleDefinitionAggregateId,
+          condition: "good",
+          missingPiecesCount: count,
+        }),
+      ).rejects.toThrow(/InvalidMissingPieces/);
+      expect(await copyRows()).toHaveLength(1);
+    },
+  );
+
+  test.each(BAD_COUNTS)(
+    "updateCopyDetails refuses %p missing pieces",
+    async (count) => {
+      await expect(
+        asMe().mutation(api.library.updateCopyDetails.updateCopyDetails, {
+          copyId: copyAggregateId,
+          missingPiecesCount: count,
+        }),
+      ).rejects.toThrow(/InvalidMissingPieces/);
+      const [row] = await copyRows();
+      expect(row.missingPiecesCount).toBeUndefined();
+    },
+  );
+
+  test.each(BAD_DATES)(
+    "acquireCopy refuses an acquired date of %p",
+    async (date) => {
+      await expect(
+        asMe().mutation(api.library.acquireCopy.acquireCopy, {
+          puzzleDefinitionId: puzzleDefinitionAggregateId,
+          condition: "good",
+          acquisition: { date },
+        }),
+      ).rejects.toThrow(/InvalidAcquisitionDate/);
+    },
+  );
+
+  test.each([1e300, Number.MAX_VALUE, 100_000_001, Number.NaN, -1, 1.5])(
+    "a price of %p cents is refused on a sale and on an acquisition",
+    async (amountCents) => {
+      await expect(
+        asMe().mutation(api.library.updateCopySharing.updateCopySharing, {
+          copyId: copyAggregateId,
+          forSale: true,
+          salePrice: { amountCents, currency: "EUR" },
+        }),
+      ).rejects.toThrow(/InvalidPrice/);
+      await expect(
+        asMe().mutation(api.library.acquireCopy.acquireCopy, {
+          puzzleDefinitionId: puzzleDefinitionAggregateId,
+          condition: "good",
+          acquisition: { price: { amountCents, currency: "EUR" } },
+        }),
+      ).rejects.toThrow(/InvalidPrice/);
+      const rows = await copyRows();
+      expect(rows).toHaveLength(1);
+      expect(rows[0].salePrice).toBeUndefined();
+    },
+  );
+
+  test("ordinary numbers still save", async () => {
+    await asMe().mutation(api.library.updateCopyDetails.updateCopyDetails, {
+      copyId: copyAggregateId,
+      missingPiecesCount: 2,
+    });
+    const [row] = await copyRows();
+    expect(row.missingPiecesCount).toBe(2);
   });
 });
