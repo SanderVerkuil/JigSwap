@@ -28,9 +28,10 @@ vi.mock("@/components/dashboard-layout/page-header-slot", () => ({
   usePageHeader: (factory: () => { meta?: unknown; actions?: unknown }) => {
     mocks.header = factory();
   },
+  usePageHeaderContent: () => ({}),
 }));
 vi.mock("@/compat/clerk", () => ({
-  useUser: () => ({ user: { id: "user_1" } }),
+  useAuth: () => ({ isSignedIn: true }),
 }));
 vi.mock("@/compat/link", () => ({
   Link: ({ href, children }: { href: string; children?: ReactNode }) => (
@@ -39,7 +40,7 @@ vi.mock("@/compat/link", () => ({
 }));
 vi.mock("@/gateway", () => ({
   gateway: {
-    identity: { byClerkId: "byClerkId" },
+    identity: { currentUser: "currentUser" },
     library: {
       myLibraryWindow: "myLibraryWindow",
       myLibraryIndex: "myLibraryIndex",
@@ -63,7 +64,7 @@ vi.mock("@convex-dev/react-query", () => ({
 vi.mock("@tanstack/react-query", () => ({
   useQuery: ({ name }: { name: string }) => ({
     data:
-      name === "byClerkId"
+      name === "currentUser"
         ? { _id: "member_1" }
         : name === "householdMine"
           ? null

@@ -1,6 +1,9 @@
-import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
-import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
+import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
+import {
+  usePageHeader,
+  usePageHeaderContent,
+} from "@/components/dashboard-layout/page-header-slot";
 import { RecallLoanButton } from "@/components/exchange/recall-loan-button";
 import { CopyOwnerLine } from "@/components/household/copy-owner-line";
 import { AddToCollectionDialog } from "@/components/library/add-to-collection-dialog";
@@ -57,6 +60,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
+import { loadMemberDataOnServer } from "@/lib/ssr-member-data";
 import { convexQuery } from "@convex-dev/react-query";
 import type { HouseholdCopyPermission, LoanView } from "@jigswap/contracts";
 import { useQuery } from "@tanstack/react-query";
@@ -74,13 +78,21 @@ import {
   Plus,
   X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { useLocale, useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/my-puzzles/")({
   // View, status pill, whose copies, search and sort live in the URL (defaults omitted), so Back
   // from a copy, a reload or a shared link shows the same list.
   validateSearch: validateMyPuzzlesSearch,
+  loaderDeps: ({ search }) => ({ search }),
+  // Imported on demand so the browser never downloads it (see the dashboard's loader).
+  loader: ({ context, deps }) =>
+    loadMemberDataOnServer(context, async () => {
+      const { prefetchMyPuzzles } =
+        await import("@/components/library/prefetch-my-puzzles");
+      await prefetchMyPuzzles(context.queryClient, deps.search);
+    }),
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "myPuzzles") }],
   }),
@@ -113,27 +125,35 @@ function PuzzlesGridSkeleton() {
 
 // ---------------------------------------------------------------------------
 // One-time coachmark banner
-// Persists dismissed state in localStorage; lazy-initialised so it never reads
-// `window` during render (SSR safe), and avoids a setState-in-effect pattern.
+// Persists dismissed state in localStorage. Read as an external store: the server can't know, and
+// this page renders on the server with the member's puzzles, so server and hydration leave the hint
+// out and it appears right after if it was never dismissed.
 // ---------------------------------------------------------------------------
 const COACHMARK_KEY = "jigswap.coachmark.myPuzzlesActions";
+
+const coachmarkListeners = new Set<() => void>();
+
+function subscribeCoachmark(listener: () => void) {
+  coachmarkListeners.add(listener);
+  return () => {
+    coachmarkListeners.delete(listener);
+  };
+}
 
 function ActionsCoachmark() {
   const t = useTranslations("puzzles.coachmark");
 
-  // Lazy initialiser: reads localStorage once at mount, never in the render body.
-  const [dismissed, setDismissed] = useState<boolean>(() => {
-    if (typeof window === "undefined") return true;
-    return localStorage.getItem(COACHMARK_KEY) === "1";
-  });
+  const dismissed = useSyncExternalStore(
+    subscribeCoachmark,
+    () => localStorage.getItem(COACHMARK_KEY) === "1",
+    () => true,
+  );
 
   if (dismissed) return null;
 
   const handleDismiss = () => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(COACHMARK_KEY, "1");
-    }
-    setDismissed(true);
+    localStorage.setItem(COACHMARK_KEY, "1");
+    coachmarkListeners.forEach((listener) => listener());
   };
 
   // A static hint, not a live region: it is on screen from the first paint, so announcing it would
@@ -155,8 +175,19 @@ function ActionsCoachmark() {
   );
 }
 
+// On a phone the shell shows the page's actions in a row of their own above the page, once they are
+// published: after hydration. Until then this holds that row's height, so a list the server rendered
+// doesn't jump down under the member's thumb. (The row is 16px above the page and this page's gap is
+// 18px, hence the margin.)
+function PhoneActionsRowPlaceholder() {
+  const { actions } = usePageHeaderContent();
+  if (actions) return null;
+  return (
+    <div aria-hidden className="-mb-0.5 h-8 md:hidden pointer-coarse:h-11" />
+  );
+}
+
 function PuzzlesPage() {
-  const { user } = useUser();
   const t = useTranslations("puzzles");
   const locale = useLocale();
   const displayName = useMemberDisplayName();
@@ -174,14 +205,9 @@ function PuzzlesPage() {
       replace: true,
       resetScroll: false,
     });
-  const { data: convexUser } = useQuery(
-    convexQuery(
-      gateway.identity.byClerkId,
-      user?.id ? { clerkId: user.id } : "skip",
-    ),
-  );
+  const { member } = useCurrentMember();
 
-  const signedIn = Boolean(convexUser?._id);
+  const signedIn = Boolean(member?._id);
 
   // Selection mode (bulk actions). Only copies the viewer may manage can be selected, and an
   // action covers only the selected copies the current filters show, loaded or not.
@@ -367,12 +393,14 @@ function PuzzlesPage() {
     [t],
   );
 
-  if (!user || !convexUser) {
+  if (!member) {
     return <PuzzlesGridSkeleton />;
   }
 
   return (
     <div className="flex flex-col gap-[18px]">
+      <PhoneActionsRowPlaceholder />
+
       {/* One-time coachmark: points users at the ⋯ overflow menu on each card */}
       <ActionsCoachmark />
 
@@ -444,7 +472,8 @@ function PuzzlesPage() {
               {/* Icon and value stay together on the left when the trigger stretches on a phone. */}
               <span className="flex min-w-0 items-center gap-2">
                 <ArrowUpDown aria-hidden />
-                <SelectValue />
+                {/* Spelled out: Radix only knows the chosen label once hydrated. */}
+                <SelectValue>{t(`sort.${filters.sort}`)}</SelectValue>
               </span>
             </SelectTrigger>
             <SelectContent>

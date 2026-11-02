@@ -1,5 +1,8 @@
 import { ConvexQueryClient } from "@convex-dev/react-query";
-import { QueryClient } from "@tanstack/react-query";
+import {
+  defaultShouldDehydrateQuery,
+  QueryClient,
+} from "@tanstack/react-query";
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 import {
@@ -108,7 +111,12 @@ export function getRouter() {
       </ConvexProvider>
     ),
   });
-  setupRouterSsrQueryIntegration({ router, queryClient });
+  // Only what loaded: a read that failed or ran out of time on the server is simply read by the browser.
+  setupRouterSsrQueryIntegration({
+    router,
+    queryClient,
+    dehydrateOptions: { shouldDehydrateQuery: defaultShouldDehydrateQuery },
+  });
 
   return router;
 }

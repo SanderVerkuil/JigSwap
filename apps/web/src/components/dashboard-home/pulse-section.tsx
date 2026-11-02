@@ -144,7 +144,8 @@ function ExchangeTimelineRow({
 }
 
 // How many exchanges the In motion column shows.
-const IN_MOTION_ROWS = 3;
+export const IN_MOTION_ROWS = 3;
+export const LATEST_FEED_SIZE = 8;
 
 function InMotionColumn({ exchanges }: { exchanges: ExchangeRow[] }) {
   const t = useTranslations("dashboard.pulse.inMotion");
@@ -510,7 +511,7 @@ export function PulseSection() {
   const { data: feed } = useQuery(
     convexQuery(
       gateway.social.activityFeed,
-      member?._id ? { limit: 8 } : "skip",
+      member?._id ? { limit: LATEST_FEED_SIZE } : "skip",
     ),
   );
 

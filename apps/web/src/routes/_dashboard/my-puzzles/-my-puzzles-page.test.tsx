@@ -14,6 +14,8 @@ import {
 } from "@testing-library/react";
 import { getFunctionName } from "convex/server";
 import type { ComponentType, ReactNode } from "react";
+import { hydrateRoot } from "react-dom/client";
+import { renderToString } from "react-dom/server";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../../locales/en.json";
@@ -76,7 +78,11 @@ vi.mock("@tanstack/react-router", async () => {
       options,
       fullPath: "/my-puzzles/",
       useSearch: () =>
-        useSyncExternalStore(mocks.location.subscribe, mocks.location.get),
+        useSyncExternalStore(
+          mocks.location.subscribe,
+          mocks.location.get,
+          mocks.location.get,
+        ),
     }),
     useNavigate:
       () =>
@@ -93,7 +99,7 @@ vi.mock("@/compat/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 vi.mock("@/compat/clerk", () => ({
-  useUser: () => ({ user: { id: "clerk_me" } }),
+  useAuth: () => ({ isSignedIn: true }),
 }));
 vi.mock("@/compat/link", () => ({
   Link: ({
@@ -171,7 +177,7 @@ const renderPage = ({
 }) => {
   mocks.location.set(search);
   mocks.queries = {
-    [getFunctionName(gateway.identity.byClerkId)]: { _id: "me" },
+    [getFunctionName(gateway.identity.currentUser)]: { _id: "me" },
     [getFunctionName(gateway.library.myLibraryWindow)]: {
       rows: firstRows,
       hasMore,
@@ -267,6 +273,54 @@ describe("My Puzzles coachmark", () => {
         "Quick actions like logging a solve live in the ⋯ menu on each puzzle card.",
       ),
     ).toBeNull();
+  });
+});
+
+describe("My Puzzles coachmark on a server-rendered page", () => {
+  it("hydrates without a mismatch, then shows if it was never dismissed", async () => {
+    mocks.location.set({});
+    mocks.queries = {
+      [getFunctionName(gateway.identity.currentUser)]: { _id: "me" },
+      [getFunctionName(gateway.library.myLibraryWindow)]: {
+        rows: [],
+        hasMore: false,
+        matched: 0,
+        total: 0,
+      },
+      [getFunctionName(gateway.household.mine)]: null,
+      [getFunctionName(gateway.lending.lentOut)]: [],
+      [getFunctionName(gateway.solving.mySolveStates)]: [],
+    };
+    const Page = (Route as unknown as { options: { component: ComponentType } })
+      .options.component;
+    const tree = (
+      <QueryClientProvider client={new QueryClient()}>
+        <IntlProvider
+          locale="en"
+          messages={en}
+          timeZone="Europe/Amsterdam"
+          now={new Date(0)}
+        >
+          <Page />
+        </IntlProvider>
+      </QueryClientProvider>
+    );
+    const container = document.createElement("div");
+    document.body.append(container);
+    container.innerHTML = renderToString(tree);
+    expect(container.textContent).not.toContain(en.puzzles.coachmark.body);
+
+    const mismatches: unknown[] = [];
+    const root = await act(async () =>
+      hydrateRoot(container, tree, {
+        onRecoverableError: (error) => mismatches.push(error),
+      }),
+    );
+    expect(mismatches).toEqual([]);
+    expect(container.textContent).toContain(en.puzzles.coachmark.body);
+
+    await act(async () => root.unmount());
+    container.remove();
   });
 });
 

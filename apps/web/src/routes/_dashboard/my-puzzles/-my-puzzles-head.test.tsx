@@ -28,7 +28,7 @@ vi.mock("@/compat/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 vi.mock("@/compat/clerk", () => ({
-  useUser: () => ({ user: { id: "clerk_me" } }),
+  useAuth: () => ({ isSignedIn: true }),
 }));
 vi.mock("@/compat/link", () => ({
   Link: ({

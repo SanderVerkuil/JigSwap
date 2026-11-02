@@ -34,7 +34,7 @@ const location = vi.hoisted(() => {
 });
 
 vi.mock("@/compat/clerk", () => ({
-  useUser: () => ({ user: { id: "clerk_me" } }),
+  useAuth: () => ({ isSignedIn: true }),
 }));
 vi.mock("@/compat/link", () => ({
   Link: ({ href, children }: { href: string; children?: ReactNode }) => (
@@ -115,10 +115,7 @@ const renderPage = (locale: "en" | "nl" = "en") => {
   });
   const seed = (key: readonly unknown[], data: unknown) =>
     queryClient.setQueryData(key, data);
-  seed(
-    convexQuery(gateway.identity.byClerkId, { clerkId: "clerk_me" }).queryKey,
-    { _id: "u_me" },
-  );
+  seed(convexQuery(gateway.identity.currentUser, {}).queryKey, { _id: "u_me" });
   const copies = [
     copy("copy-a", "Harbour Lights", true),
     copy("copy-b", "Tulip Fields", false),

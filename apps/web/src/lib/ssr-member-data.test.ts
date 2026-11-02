@@ -2,10 +2,68 @@
 import { ConvexReactClient } from "convex/react";
 import { makeFunctionReference } from "convex/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { CONVEX_HOLD_MAX_MS, holdConvexUntilAuth } from "./ssr-member-data";
+import {
+  CONVEX_HOLD_MAX_MS,
+  holdConvexUntilAuth,
+  loadMemberDataOnServer,
+  SSR_MEMBER_DATA_BUDGET_MS,
+} from "./ssr-member-data";
+
+const SIGNED_IN = { userId: "user_1", ssrAuthed: true };
 
 afterEach(() => {
   vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
+
+describe("loadMemberDataOnServer", () => {
+  it("reads for a member the server holds a token for", async () => {
+    const prefetch = vi.fn(async () => {});
+    await loadMemberDataOnServer(SIGNED_IN, prefetch);
+    expect(prefetch).toHaveBeenCalledOnce();
+  });
+
+  it.each([
+    ["signed out", { userId: null, ssrAuthed: false }],
+    // Signed in, but no Convex token: the reads would run as nobody and put that in the page.
+    ["without a token", { userId: "user_1", ssrAuthed: false }],
+  ])("reads nothing %s", async (_, context) => {
+    const prefetch = vi.fn(async () => {});
+    await loadMemberDataOnServer(context, prefetch);
+    expect(prefetch).not.toHaveBeenCalled();
+  });
+
+  it("does nothing in the browser, so a navigation never waits on it", async () => {
+    vi.stubGlobal("window", {});
+    const prefetch = vi.fn(async () => {});
+    await loadMemberDataOnServer(SIGNED_IN, prefetch);
+    expect(prefetch).not.toHaveBeenCalled();
+  });
+
+  it("leaves a failed read to the browser instead of failing the page", async () => {
+    await expect(
+      loadMemberDataOnServer(SIGNED_IN, () =>
+        Promise.reject(new Error("backend down")),
+      ),
+    ).resolves.toBeUndefined();
+  });
+
+  it("stops waiting for a slow backend at the budget", async () => {
+    vi.useFakeTimers();
+    let settled = false;
+    const loading = loadMemberDataOnServer(
+      SIGNED_IN,
+      () => new Promise(() => {}),
+    ).then(() => {
+      settled = true;
+    });
+
+    await vi.advanceTimersByTimeAsync(SSR_MEMBER_DATA_BUDGET_MS - 1);
+    expect(settled).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    await loading;
+    expect(settled).toBe(true);
+  });
 });
 
 describe("holdConvexUntilAuth", () => {
