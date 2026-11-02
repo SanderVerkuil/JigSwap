@@ -504,15 +504,17 @@ export function ThreadView({
   // page head's title from md and its sr-only phone heading below md.
   const focusedThreadRef = useRef<string | null>(null);
   const headerReady = headerRow !== undefined;
-  // Opened to write about a puzzle: from md up the composer takes focus instead, as it does in a
-  // first conversation about a copy. Phones wait for a tap, so the keyboard stays down.
+  // The thread opened first was opened to write about a puzzle: from md up the composer takes focus
+  // instead, as it does in a first conversation about a copy. Phones wait for a tap, so the keyboard
+  // stays down. Any thread opened after it follows the usual rule.
   const isMobile = useIsMobile();
   const composerTakesFocus = attachCopyId !== undefined && !isMobile;
   useEffect(() => {
     if (hideHeader || !headerReady) return;
     if (focusedThreadRef.current === threadId) return;
+    const openedFirst = focusedThreadRef.current === null;
     focusedThreadRef.current = threadId;
-    if (composerTakesFocus) return;
+    if (openedFirst && composerTakesFocus) return;
     headingRef.current?.focus({ preventScroll: true });
   }, [hideHeader, headerReady, threadId, composerTakesFocus]);
 
