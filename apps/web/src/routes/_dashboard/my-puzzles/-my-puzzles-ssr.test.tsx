@@ -66,7 +66,6 @@ const ANSWERS: Record<string, unknown> = {
   [name(gateway.identity.currentUser)]: { _id: "me" },
   [name(gateway.household.mine)]: null,
   [name(gateway.lending.lentOut)]: [],
-  [name(gateway.solving.mySolveStates)]: [],
   [name(gateway.catalog.listMyBoxArtInCheck)]: [],
   [WINDOW]: { rows: [COPY], hasMore: false, matched: 1, total: 1 },
 };
@@ -110,7 +109,7 @@ beforeEach(() => {
 });
 
 describe("My Puzzles on the server", () => {
-  it("paints the list itself, with nothing left for the browser to read first", async () => {
+  it("paints the list itself, leaving only what the first paint doesn't need", async () => {
     const { queryClient } = clientAnswering();
     await prefetchMyPuzzles(queryClient, {});
 
@@ -125,7 +124,19 @@ describe("My Puzzles on the server", () => {
         .filter((query) => query.queryKey[2] !== "skip")
         .filter((query) => query.state.status !== "success")
         .map((query) => query.queryKey[1]),
-    ).toEqual([]);
+    ).toEqual([name(gateway.solving.mySolveStates)]);
+  });
+
+  it("leaves the solve states out of the HTML, which would grow with the library", async () => {
+    const { queryClient, asked } = clientAnswering();
+    await prefetchMyPuzzles(queryClient, {});
+    expect(asked.map(([fn]) => fn)).not.toContain(
+      name(gateway.solving.mySolveStates),
+    );
+    // Nothing on the first paint is missing for it: the card's Start or Finish is in its menu.
+    const html = renderPage(queryClient);
+    expect(html).toContain("Lighthouse at dusk");
+    expect(html).not.toContain('data-slot="skeleton"');
   });
 
   it("names the chosen sort, which the select can't work out until it's hydrated", async () => {
