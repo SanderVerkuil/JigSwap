@@ -18,6 +18,7 @@ import { PageLoading } from "@/components/ui/loading";
 import { gateway, Id } from "@/gateway";
 import { useBoxArtCheckNotice } from "@/hooks/use-box-art-check";
 import { useUploadBoxArt } from "@/hooks/use-upload-box-art";
+import { useUploadLimitMessage } from "@/hooks/use-upload-limit-message";
 import { pageTitle } from "@/lib/page-title";
 import { isUploadRateLimited } from "@/lib/upload-rate-limit";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -126,7 +127,7 @@ function AdminEditForm({
   const t = useTranslations("admin.puzzles");
   const tSuggest = useTranslations("suggestEdit");
   const tShell = useTranslations("shell");
-  const tCommon = useTranslations("common");
+  const uploadLimitMessage = useUploadLimitMessage();
 
   usePageHeader(
     () => ({
@@ -203,7 +204,7 @@ function AdminEditForm({
     onError: (error) =>
       toast.error(
         isUploadRateLimited(error)
-          ? tCommon("photoUploadRateLimited")
+          ? uploadLimitMessage(error)
           : t(errorKeyFor(error)),
       ),
   });

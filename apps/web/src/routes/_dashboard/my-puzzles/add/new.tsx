@@ -46,6 +46,7 @@ import { gateway, Id } from "@/gateway";
 import { useBoxArtCheckNotice } from "@/hooks/use-box-art-check";
 import { useRelativeTime } from "@/hooks/use-relative-time";
 import { useUploadBoxArt } from "@/hooks/use-upload-box-art";
+import { useUploadLimitMessage } from "@/hooks/use-upload-limit-message";
 import { convexErrorCode } from "@/lib/convex-error-code";
 import { pageTitle } from "@/lib/page-title";
 import { safeReturnTo } from "@/lib/return-to";
@@ -156,7 +157,7 @@ function AddPuzzlePage() {
   const searchParams = useSearchParams();
   const t = useTranslations("puzzles");
   const tf = useTranslations("forms.puzzle-form");
-  const tCommon = useTranslations("common");
+  const uploadLimitMessage = useUploadLimitMessage();
   const relativeTime = useRelativeTime();
   const tShell = useTranslations("shell");
   const format = useFormatter();
@@ -439,7 +440,7 @@ function AddPuzzlePage() {
       // filing's, the cover check's and the copy's own refusals (their limits, a text bound) name
       // their reason (SEC-26; the daily copy budget, SEC-29).
       if (isUploadRateLimited(error)) {
-        toast.error(tCommon("photoUploadRateLimited"));
+        toast.error(uploadLimitMessage(error));
         return;
       }
       const failure = contributeError(error, Date.now());

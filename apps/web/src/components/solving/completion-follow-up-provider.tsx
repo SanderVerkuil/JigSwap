@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useReportSurfaceBusy } from "@/components/whats-new/surface-busy";
 import { gateway, type Id } from "@/gateway";
 import { useRelativeTime } from "@/hooks/use-relative-time";
+import { useUploadLimitMessage } from "@/hooks/use-upload-limit-message";
 import { rateLimitedRetryAt } from "@/lib/convex-error-code";
 import { preparePhoto } from "@/lib/prepare-photo";
 import { isUploadRateLimited, mintUploadUrl } from "@/lib/upload-rate-limit";
@@ -77,7 +78,7 @@ export function CompletionFollowUpProvider({
 }) {
   const t = useTranslations("solving.followUp");
   const tReview = useTranslations("solving.review");
-  const tCommon = useTranslations("common");
+  const uploadLimitMessage = useUploadLimitMessage();
   const relativeTime = useRelativeTime();
 
   const generateUploadUrl = useConvexMutation(
@@ -289,12 +290,12 @@ export function CompletionFollowUpProvider({
       if (failedIds.size > 0) {
         // Partial failure: keep the dialog open with failed items marked; Save becomes Retry.
         // An upload URL refused by the member's upload limit says to wait (SEC-20).
-        const rateLimited = settled.some(
-          (result) =>
+        const rateLimited = settled.find(
+          (result): result is PromiseRejectedResult =>
             result.status === "rejected" && isUploadRateLimited(result.reason),
         );
         toast.error(
-          rateLimited ? tCommon("photoUploadRateLimited") : t("saveError"),
+          rateLimited ? uploadLimitMessage(rateLimited.reason) : t("saveError"),
         );
         return;
       }

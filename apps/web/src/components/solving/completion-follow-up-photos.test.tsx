@@ -188,7 +188,9 @@ describe("completion follow-up photos", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
     await screen.findByRole("button", { name: "Retry" });
-    expect(toast.error).toHaveBeenCalledWith(en.common.photoUploadRateLimited);
+    expect(toast.error).toHaveBeenCalledWith(
+      "You've uploaded the most photos allowed for now. Try again in 1 minute.",
+    );
     expect(toast.error).not.toHaveBeenCalledWith(en.solving.followUp.saveError);
     expect(mocks.mutation).not.toHaveBeenCalledWith(ATTACH, expect.anything());
   });
@@ -218,7 +220,7 @@ describe("completion follow-up photos", () => {
     );
     // The attach's own refusal is not the upload-URL limit.
     expect(toast.error).not.toHaveBeenCalledWith(
-      en.common.photoUploadRateLimited,
+      expect.stringContaining("You've uploaded"),
     );
     quiet.mockRestore();
   });

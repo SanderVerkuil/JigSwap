@@ -37,7 +37,8 @@
       "tryAgain": "Opnieuw proberen",
       "reload": "Pagina opnieuw laden"
     },
-    "photoUploadRateLimited": "Je hebt veel foto's geüpload. Probeer het later opnieuw."
+    "photoUploadRateLimited": "Je hebt veel foto's geüpload. Probeer het later opnieuw.",
+    "photoUploadRateLimitedUntil": "Je hebt voorlopig het maximale aantal foto's geüpload. Probeer het {when} opnieuw."
   },
   "notFound": {
     "title": "Pagina niet gevonden",

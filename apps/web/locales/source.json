@@ -37,7 +37,8 @@
       "tryAgain": "Try again",
       "reload": "Reload page"
     },
-    "photoUploadRateLimited": "You've uploaded a lot of photos. Try again later."
+    "photoUploadRateLimited": "You've uploaded a lot of photos. Try again later.",
+    "photoUploadRateLimitedUntil": "You've uploaded the most photos allowed for now. Try again {when}."
   },
   "notFound": {
     "title": "Page not found",

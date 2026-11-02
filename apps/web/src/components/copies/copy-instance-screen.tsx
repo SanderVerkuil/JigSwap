@@ -44,6 +44,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StarRating } from "@/components/ui/star-rating";
 import { gateway, Id } from "@/gateway";
 import { useRelativeTime } from "@/hooks/use-relative-time";
+import { useUploadLimitMessage } from "@/hooks/use-upload-limit-message";
 import { formatCompletionDate } from "@/lib/completion-format";
 import { DATE_ONLY_TIME_ZONE } from "@/lib/date-input";
 import { durationParts } from "@/lib/humanize-duration";
@@ -992,7 +993,7 @@ function PhotoStrip({
   inputRef: RefObject<HTMLInputElement | null>;
 }) {
   const t = useTranslations("copyInstance");
-  const tCommon = useTranslations("common");
+  const uploadLimitMessage = useUploadLimitMessage();
   const relativeTime = useRelativeTime();
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -1044,7 +1045,7 @@ function PhotoStrip({
       // An upload URL refused by the member's upload limit says to wait (SEC-20); the attach's own
       // refusals (the photo limit, a full copy) name their reason (SEC-19).
       if (isUploadRateLimited(error)) {
-        toast.error(tCommon("photoUploadRateLimited"));
+        toast.error(uploadLimitMessage(error));
         return;
       }
       const refusal = copyPhotoError(error, Date.now());
