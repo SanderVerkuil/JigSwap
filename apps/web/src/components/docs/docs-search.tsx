@@ -27,10 +27,15 @@ import { pages } from "virtual:docs";
 export function DocsSearch({
   open,
   onOpenChange,
+  onOpenAutoFocus,
+  onCloseAutoFocus,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-}) {
+} & Pick<
+  React.ComponentProps<typeof DialogContent>,
+  "onOpenAutoFocus" | "onCloseAutoFocus"
+>) {
   const t = useTranslations("marketing.docs");
   const locale = useLocale();
   const navigate = useNavigate();
@@ -50,7 +55,11 @@ export function DocsSearch({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="overflow-hidden p-0">
+      <DialogContent
+        className="overflow-hidden p-0"
+        onOpenAutoFocus={onOpenAutoFocus}
+        onCloseAutoFocus={onCloseAutoFocus}
+      >
         <DialogHeader className="sr-only">
           <DialogTitle>{t("searchTitle")}</DialogTitle>
           <DialogDescription>{t("searchDescription")}</DialogDescription>

@@ -2,6 +2,7 @@ import { DocsMobileBar } from "@/components/docs/docs-mobile-bar";
 import { DocsSearch } from "@/components/docs/docs-search";
 import { DocsSearchProvider } from "@/components/docs/docs-search-context";
 import { DocsSidebar } from "@/components/docs/docs-sidebar";
+import { useOverlayFocusReturn } from "@/components/docs/use-overlay-focus-return";
 import {
   Sheet,
   SheetContent,
@@ -21,6 +22,7 @@ function DocsLayout() {
   const [searchOpen, setSearchOpen] = React.useState(false);
   const [navOpen, setNavOpen] = React.useState(false);
   const openSearch = React.useCallback(() => setSearchOpen(true), []);
+  const overlayFocus = useOverlayFocusReturn();
 
   // The /docs landing page renders a full-bleed marketing hero, which looks
   // cramped inside the 280px sidebar grid. Detect the exact index route via the
@@ -82,6 +84,7 @@ function DocsLayout() {
         <SheetContent
           side="left"
           className="w-[300px] overflow-y-auto bg-mk-card"
+          {...overlayFocus}
         >
           <SheetTitle className="sr-only">{t("navSheetTitle")}</SheetTitle>
           <SheetDescription className="sr-only">
@@ -98,7 +101,11 @@ function DocsLayout() {
         </SheetContent>
       </Sheet>
 
-      <DocsSearch open={searchOpen} onOpenChange={setSearchOpen} />
+      <DocsSearch
+        open={searchOpen}
+        onOpenChange={setSearchOpen}
+        {...overlayFocus}
+      />
     </DocsSearchProvider>
   );
 }
