@@ -99,6 +99,7 @@ jobs:
           # The PR branch itself, not the pull_request merge ref: the CLI reads Git
           # metadata from the checkout, and a detached merge commit has no branch.
           ref: ${{ env.BRANCH_NAME }}
+          persist-credentials: false
 
       # No npm cache: setup-node only hashes lockfiles inside the workspace, and the install
       # takes seconds next to the remote build.
