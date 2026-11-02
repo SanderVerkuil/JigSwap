@@ -9,40 +9,40 @@
   },
   "routes": {
     "__root__": {
-      "jsGzKB": 266,
-      "cssGzKB": 30
+      "jsGzKB": 287,
+      "cssGzKB": 34
     },
     "/": {
-      "jsGzKB": 277,
-      "cssGzKB": 30
+      "jsGzKB": 298,
+      "cssGzKB": 34
     },
     "/_dashboard/dashboard": {
-      "jsGzKB": 414,
-      "cssGzKB": 30
+      "jsGzKB": 444,
+      "cssGzKB": 34
     },
     "/_dashboard/profile": {
-      "jsGzKB": 410,
-      "cssGzKB": 30
+      "jsGzKB": 439,
+      "cssGzKB": 34
     },
     "/members/$handle": {
-      "jsGzKB": 406,
-      "cssGzKB": 30
+      "jsGzKB": 442,
+      "cssGzKB": 34
     },
     "/_public/catalog/": {
-      "jsGzKB": 283,
-      "cssGzKB": 30
+      "jsGzKB": 304,
+      "cssGzKB": 34
     },
     "/_public/docs/$": {
-      "jsGzKB": 291,
-      "cssGzKB": 30
+      "jsGzKB": 313,
+      "cssGzKB": 34
     },
     "/_dashboard/copies/$id": {
-      "jsGzKB": 460,
-      "cssGzKB": 31
+      "jsGzKB": 499,
+      "cssGzKB": 36
     },
     "/_dashboard/messages": {
-      "jsGzKB": 393,
-      "cssGzKB": 30
+      "jsGzKB": 420,
+      "cssGzKB": 34
     }
   }
 }
