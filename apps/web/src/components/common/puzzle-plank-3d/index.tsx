@@ -18,7 +18,11 @@ import { Hand, Loader2, RotateCcw } from "lucide-react";
 import { useTheme } from "next-themes";
 import * as React from "react";
 import { useTranslations } from "use-intl";
-import { fallbackScale } from "./fallback-scale";
+import {
+  fallbackCentringShift,
+  fallbackHeight,
+  fallbackScale,
+} from "./fallback-scale";
 import type { PlankSceneProps } from "./scene";
 
 const PlankScene = React.lazy(() => import("./scene"));
@@ -60,8 +64,15 @@ class SceneBoundary extends React.Component<
 export function PuzzlePlank3D({
   boxes,
   interactive = false,
+  fitHeightBelowMd = false,
 }: {
   boxes: PuzzlePlankBox[];
+  /**
+   * Below md, where the static scene never loads, the widget is as tall as the
+   * scaled CSS plank instead of filling its parent, whose height is then free
+   * to follow it. In CSS, so the server render is already right.
+   */
+  fitHeightBelowMd?: boolean;
   /**
    * When true, offers the rapier physics scene (grab/drag/throw) behind a Play
    * button, or a first mouse press on the shelf; until then the static scene
@@ -75,6 +86,7 @@ export function PuzzlePlank3D({
   const fallbackLayer = React.useRef<HTMLDivElement>(null);
   const fallbackPlank = React.useRef<HTMLDivElement>(null);
   const [fallbackFit, setFallbackFit] = React.useState(1);
+  const [fittedHeight, setFittedHeight] = React.useState<number | null>(null);
   const [sceneReady, setSceneReady] = React.useState(false);
   const [visible, setVisible] = React.useState(true);
   const [resolved, setResolved] = React.useState<
@@ -152,9 +164,11 @@ export function PuzzlePlank3D({
     const layer = fallbackLayer.current;
     const plank = fallbackPlank.current;
     if (!layer || !plank) return;
-    const ro = new ResizeObserver(() =>
-      setFallbackFit(fallbackScale(layer.clientWidth, plank.offsetWidth)),
-    );
+    const ro = new ResizeObserver(() => {
+      const scale = fallbackScale(layer.clientWidth, plank.offsetWidth);
+      setFallbackFit(scale);
+      setFittedHeight(fallbackHeight(plank.offsetHeight, scale));
+    });
     ro.observe(layer);
     ro.observe(plank);
     return () => ro.disconnect();
@@ -180,7 +194,20 @@ export function PuzzlePlank3D({
   return (
     <div
       ref={container}
-      style={{ position: "relative", width: "100%", height: "100%" }}
+      className={
+        fitHeightBelowMd
+          ? "h-full max-md:h-[var(--plank-fit-height,7rem)]"
+          : "h-full"
+      }
+      style={
+        {
+          position: "relative",
+          width: "100%",
+          ...(fittedHeight !== null && {
+            "--plank-fit-height": `${fittedHeight}px`,
+          }),
+        } as React.CSSProperties
+      }
       // A mouse press on the shelf asks for physics too. Touch never does, so
       // scrolling past the shelf on a phone or tablet loads nothing.
       onPointerDown={(e) => {
@@ -209,7 +236,11 @@ export function PuzzlePlank3D({
       >
         <div
           ref={fallbackPlank}
-          style={{ flexShrink: 0, transform: `scale(${fallbackFit})` }}
+          // Centred by what it paints: the end cap makes the right side overhang more.
+          style={{
+            flexShrink: 0,
+            transform: `translateX(${-fallbackCentringShift(fallbackFit)}px) scale(${fallbackFit})`,
+          }}
         >
           <PuzzlePlank boxes={boxes} />
         </div>

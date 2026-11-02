@@ -199,6 +199,8 @@ describe("ShelfSection — canvas", () => {
       expect.arrayContaining(["w-full", "aspect-video", "max-h-[360px]"]),
     );
     expect(classes.some((c) => /(^|:)h-\[/.test(c))).toBe(false);
+    // Below md there is no scene to size for: the CSS plank decides.
+    expect(classes).toContain("max-md:aspect-auto");
   });
 });
 
@@ -263,6 +265,6 @@ describe("FreshSection", () => {
 
   it("matches the shelf's box count on each device", () => {
     expect(shelfBoxCount(false)).toBe(5);
-    expect(shelfBoxCount(true)).toBe(4);
+    expect(shelfBoxCount(true)).toBe(3);
   });
 });
