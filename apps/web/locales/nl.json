@@ -4437,8 +4437,8 @@
       },
       "adminModeration": {
         "title": "Moderatie",
-        "subtitle": "Beoordeel inzendingen, foto's en meldingen van leden op één plek.",
-        "description": "Beoordeel inzendingen, foto's en meldingen"
+        "subtitle": "Beoordeel inzendingen, foto's en rapportages van leden op één plek.",
+        "description": "Beoordeel inzendingen, foto's en rapportages"
       },
       "adminPuzzles": {
         "title": "Puzzels",
@@ -4929,7 +4929,7 @@
         "unchecked": "Niet gecontroleerd",
         "appeals": "Herbeoordelingen",
         "hashMatches": "Hash-matches",
-        "reports": "Gemeld",
+        "reports": "Rapportages",
         "label": "Moderatiewachtrij"
       },
       "detail": {
@@ -5031,9 +5031,9 @@
           "csam_escalation_updated": "Hash-match-escalatie bijgewerkt",
           "role_granted": "Beheerdersrol toegekend",
           "role_revoked": "Beheerdersrol ingetrokken",
-          "report_dismissed": "Melding afgewezen",
+          "report_dismissed": "Rapportage afgewezen",
           "report_content_removed": "Gemelde inhoud verwijderd",
-          "report_warned": "Lid gewaarschuwd na een melding",
+          "report_warned": "Lid gewaarschuwd na een rapportage",
           "message_image_auto_rejected": "Foto in bericht automatisch gemarkeerd",
           "message_image_restored": "Foto in bericht hersteld",
           "photo_recheck_requested": "Niet-gecontroleerde foto opnieuw gecontroleerd",
@@ -5064,9 +5064,9 @@
         "photo_hash_check_waived": "<actorLink>{actor}</actorLink> keurde een foto zonder hash-check goed bij <targetLink>{target}</targetLink>",
         "image_quarantined": "<actorLink>{actor}</actorLink> zette een foto in quarantaine na een hash-match met bekend misbruikmateriaal (<targetLink>{target}</targetLink>)",
         "csam_escalation_updated": "<actorLink>{actor}</actorLink> werkte een hash-match-escalatie bij (<targetLink>{target}</targetLink>)",
-        "report_dismissed": "<actorLink>{actor}</actorLink> wees een melding over <targetLink>{target}</targetLink> af",
+        "report_dismissed": "<actorLink>{actor}</actorLink> wees een rapportage over <targetLink>{target}</targetLink> af",
         "report_content_removed": "<actorLink>{actor}</actorLink> verwijderde gemelde inhoud van <targetLink>{target}</targetLink>",
-        "report_warned": "<actorLink>{actor}</actorLink> waarschuwde <targetLink>{target}</targetLink> na een melding",
+        "report_warned": "<actorLink>{actor}</actorLink> waarschuwde <targetLink>{target}</targetLink> na een rapportage",
         "message_image_auto_rejected": "<actorLink>{actor}</actorLink> heeft een <targetLink>{target}</targetLink> automatisch gemarkeerd",
         "message_image_restored": "<actorLink>{actor}</actorLink> heeft een <targetLink>{target}</targetLink> hersteld na een verzoek om herbeoordeling",
         "photo_recheck_requested": "<actorLink>{actor}</actorLink> liet een niet-gecontroleerde foto opnieuw controleren (<targetLink>{target}</targetLink>)",
@@ -5220,13 +5220,13 @@
         "timedOut": "Hash-check verlopen: {count, plural, one {# foto wacht} other {# foto's wachten}} al meer dan 7 dagen op een beslissing van een beheerder in Niet gecontroleerd."
       },
       "reports": {
-        "statusFilter": "Status van melding",
-        "loading": "Meldingen laden…",
+        "statusFilter": "Status van rapportage",
+        "loading": "Rapportages laden…",
         "loadMore": "Meer laden",
         "empty": {
-          "open": "Geen open meldingen.",
-          "actioned": "Nog geen meldingen met maatregel.",
-          "dismissed": "Nog geen afgewezen meldingen."
+          "open": "Geen open rapportages.",
+          "actioned": "Nog geen rapportages met maatregel.",
+          "dismissed": "Nog geen afgewezen rapportages."
         },
         "statuses": {
           "open": "Open",
@@ -5244,19 +5244,19 @@
           "puzzleReview": "Puzzelreview"
         },
         "reportedArrow": "meldde",
-        "openCount": "{count, plural, one {# open melding tegen dit lid} other {# open meldingen tegen dit lid}}",
-        "detailTitle": "Melding",
-        "detailDescription": "Het bewijs bij deze melding en het beslisformulier.",
-        "notFoundTitle": "Deze melding bestaat niet meer",
-        "notFound": "Misschien is de melding verwijderd, of is de link verouderd.",
+        "openCount": "{count, plural, one {# open rapportage tegen dit lid} other {# open rapportages tegen dit lid}}",
+        "detailTitle": "Rapportage",
+        "detailDescription": "Het bewijs bij deze rapportage en het beslisformulier.",
+        "notFoundTitle": "Deze rapportage bestaat niet meer",
+        "notFound": "Misschien is de rapportage verwijderd, of is de link verouderd.",
         "reason": "Reden",
         "targetKind": "Onderwerp",
         "reporter": "Melder",
         "reported": "Gemeld lid",
-        "filed": "Gemeld",
+        "filed": "Ingediend",
         "status": "Status",
         "details": "Toelichting van de melder",
-        "illegalNotice": "Melding van illegale inhoud",
+        "illegalNotice": "Rapportage van illegale inhoud",
         "goodFaith": "Verklaring te goeder trouw bevestigd.",
         "photo": "Gemelde foto",
         "photoGone": "Deze foto bestaat niet meer.",
@@ -5267,21 +5267,21 @@
         "deletedMember": "Verwijderd lid",
         "anonymisedReporter": "Geanonimiseerd",
         "otherParticipant": "Andere deelnemer",
-        "otherReports": "{count, plural, =0 {Geen andere meldingen tegen dit lid} one {# andere melding tegen dit lid} other {# andere meldingen tegen dit lid}}",
+        "otherReports": "{count, plural, =0 {Geen andere rapportages tegen dit lid} one {# andere rapportage tegen dit lid} other {# andere rapportages tegen dit lid}}",
         "decisions": {
           "dismissed": "Afgewezen",
           "warned": "Lid gewaarschuwd",
           "content_removed": "Inhoud verwijderd"
         },
         "decidedBy": "Besloten door {name}",
-        "nextOpenReport": "Volgende open melding",
+        "nextOpenReport": "Volgende open rapportage",
         "decisionLegend": "Besluit",
         "decide": {
           "dismissed": "Afwijzen",
           "warned": "Lid waarschuwen",
           "content_removed": "Inhoud verwijderen"
         },
-        "removeUnavailable": "Inhoud kan alleen worden verwijderd bij meldingen over berichten, foto's, reacties en reviews.",
+        "removeUnavailable": "Inhoud kan alleen worden verwijderd bij rapportages over berichten, foto's, reacties en reviews.",
         "statementLabel": "Motivering (wordt naar het lid gestuurd)",
         "statementHint": "{count}/{max} tekens. Verplicht: wat is beperkt, op welke grond, en hoe om herbeoordeling te vragen.",
         "insertTemplate": "Sjabloon invoegen",
@@ -5313,7 +5313,7 @@
         },
         "submit": {
           "none": "Kies een besluit",
-          "dismissed": "Melding afwijzen",
+          "dismissed": "Rapportage afwijzen",
           "warned": "Lid waarschuwen",
           "content_removed": "Inhoud verwijderen"
         },
