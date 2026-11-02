@@ -3,6 +3,7 @@
 // publishes through the page-header slot. Layout is asserted through the class contract that
 // keeps it from breaking: rows that wrap instead of overflowing, a crumb row that is always
 // there so the h1 sits at the same height on every page, and page meta in one fixed spot.
+import { APP_SCROLL_REGION_ID } from "@/lib/scroll-restoration";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { IntlProvider } from "use-intl";
@@ -15,7 +16,7 @@ import {
   usePageHeaderActions,
   type PageHeaderContent,
 } from "./page-header-slot";
-import { MobilePageActions } from "./shell";
+import { DashboardShell, MobilePageActions } from "./shell";
 
 const mocks = vi.hoisted(() => ({ pathname: "/notifications" }));
 
@@ -285,5 +286,32 @@ describe("PageHead published title", () => {
     });
 
     expect(screen.getByRole("button", { name: "Act" })).toBeTruthy();
+  });
+});
+
+// In a short window (a phone in landscape) the top bar and a sticky head took over a third of the
+// screen. The head scrolls away there, and what sticks to it (--app-sticky-top) sticks to the top.
+describe("PageHead in a short window", () => {
+  const SHORT = "[@media(max-height:500px)]";
+
+  it("stops sticking", () => {
+    const { container } = renderShellHead("/my-puzzles");
+    const classes = slot(container, "page-head")?.classList;
+    expect(classes).toContain("sticky");
+    expect(classes).toContain(`${SHORT}:static`);
+  });
+
+  it("no longer offsets what sticks below it", () => {
+    render(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <DashboardShell>
+          <p>page</p>
+        </DashboardShell>
+      </IntlProvider>,
+    );
+    const region = document.querySelector(
+      `[data-scroll-restoration-id="${APP_SCROLL_REGION_ID}"]`,
+    );
+    expect(region?.classList).toContain(`${SHORT}:md:[--app-sticky-top:0px]`);
   });
 });
