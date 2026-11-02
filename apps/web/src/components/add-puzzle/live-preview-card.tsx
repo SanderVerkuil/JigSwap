@@ -1,6 +1,8 @@
 // apps/web/src/components/add-puzzle/live-preview-card.tsx
 import { Badge } from "@/components/ui/badge";
+import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { Check, Puzzle } from "lucide-react";
+import type { ComponentProps } from "react";
 import { useFormatter, useTranslations } from "use-intl";
 
 export interface LivePreviewProps {
@@ -11,6 +13,65 @@ export interface LivePreviewProps {
   // Only a picture the submit will actually save; without one the card shows a neutral placeholder.
   coverPhotoUrl?: string;
   available: boolean;
+}
+
+type CopyCardData = ComponentProps<typeof PuzzleCard>["puzzle"];
+
+/**
+ * The add form's preview: the real My Puzzles card, built from the form, so it can't drift from
+ * what the member gets. No link and no actions: there is no copy yet.
+ */
+export function CopyPreviewCard({
+  title,
+  brand,
+  pieceCount,
+  difficulty,
+  tags,
+  condition,
+  availability,
+  coverPhotoUrl,
+}: {
+  title: string;
+  brand: string;
+  pieceCount: number | undefined;
+  difficulty?: "easy" | "medium" | "hard" | "expert";
+  tags?: readonly string[];
+  condition: CopyCardData["condition"];
+  availability: CopyCardData["availability"];
+  // Only a picture the submit will actually save.
+  coverPhotoUrl?: string;
+}) {
+  const t = useTranslations("puzzles");
+  const puzzle: CopyCardData = {
+    _id: "preview",
+    puzzleId: "preview",
+    condition,
+    availability,
+    visibility: "visible",
+    coverUrl: coverPhotoUrl,
+    createdAt: 0,
+    updatedAt: 0,
+    puzzle: {
+      _id: "preview",
+      title: title || t("previewTitlePlaceholder"),
+      brand: brand || undefined,
+      pieceCount: pieceCount ?? 0,
+      difficulty,
+      tags: tags ? [...tags] : undefined,
+      createdAt: 0,
+      updatedAt: 0,
+    },
+  };
+  return (
+    <PuzzleViewProvider viewMode="grid" className="">
+      <PuzzleCard
+        puzzle={puzzle}
+        viewBasePath=""
+        imageFit="contain"
+        showActions={false}
+      />
+    </PuzzleViewProvider>
+  );
 }
 
 export function LivePreviewCard(props: LivePreviewProps) {

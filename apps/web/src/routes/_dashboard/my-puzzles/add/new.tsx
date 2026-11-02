@@ -6,6 +6,7 @@ import {
   availabilityToSharing,
   CATALOG_TEXT_LIMITS,
   contributeError,
+  CopyPreviewCard,
   CopyStepError,
   CoverColourField,
   coverStep,
@@ -13,7 +14,6 @@ import {
   DIFFICULTY_OPTIONS,
   hasAnyAvailability,
   ImportZone,
-  LivePreviewCard,
   MatchConfirm,
   PieceCountField,
   ReadinessChecklist,
@@ -1101,7 +1101,7 @@ function AddPuzzlePage() {
       <div className="font-mono text-[10px] uppercase tracking-[0.09em] text-muted-foreground">
         {t("livePreview")}
       </div>
-      <LivePreviewCard
+      <CopyPreviewCard
         title={specificPuzzle?.title ?? form.title}
         brand={
           (specificPuzzle?.brand || specificPuzzle?.publisher) ??
@@ -1109,6 +1109,9 @@ function AddPuzzlePage() {
         }
         pieceCount={specificPuzzle?.pieceCount ?? form.pieceCount}
         difficulty={specificPuzzle?.difficulty ?? form.difficulty}
+        tags={isCopyMode ? specificPuzzle?.tags : form.tags}
+        condition={form.condition}
+        availability={form.availability}
         // Only what the submit saves: the catalogue puzzle's own picture in copy mode, the selected
         // box photo when the form creates a new catalogue puzzle, nothing for an import match.
         coverPhotoUrl={
@@ -1118,7 +1121,6 @@ function AddPuzzlePage() {
               ? undefined
               : previewPhotoUrl
         }
-        available={hasAnyAvailability(form.availability)}
       />
       <p className="text-xs leading-relaxed text-muted-foreground">
         {t("livePreviewCaption")}

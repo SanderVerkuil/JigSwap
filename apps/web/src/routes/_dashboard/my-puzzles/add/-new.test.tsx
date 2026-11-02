@@ -14,6 +14,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { ConvexReactClient } from "convex/react";
 import { getFunctionName } from "convex/server";
@@ -440,6 +441,27 @@ describe("on phones and tablets", () => {
       summary.compareDocumentPosition(submit) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+  });
+
+  it("previews the real My Puzzles card, following the form", () => {
+    renderPage();
+    fireEvent.change(screen.getByRole("textbox", { name: "Puzzle Title" }), {
+      target: { value: "Kattenshow" },
+    });
+    fireEvent.click(offerChip("For Trade"));
+    const preview = screen.getByText("Live preview").parentElement!;
+    expect(
+      within(preview).getByRole("heading", { name: "Kattenshow" }),
+    ).toBeTruthy();
+    expect(within(preview).getByTestId("copy-condition").textContent).toContain(
+      "Good",
+    );
+    expect(within(preview).getByTestId("copy-offers").textContent).toBe(
+      "For Trade",
+    );
+    expect(within(preview).queryByText("Available")).toBeNull();
+    // Nothing to open or act on: there is no copy yet.
+    expect(within(preview).queryByRole("link")).toBeNull();
   });
 
   it("shows no look-alike buttons in the live preview", () => {
