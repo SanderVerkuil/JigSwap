@@ -413,6 +413,60 @@ describe("identity.searchUsers profile-visibility gating", () => {
     expect(res).toHaveLength(0);
   });
 
+  describe("known-follower ranking (SEC-41)", () => {
+    const order = async (t: TestConvex<typeof schema>, subject: string) =>
+      (
+        await t
+          .withIdentity({ subject })
+          .query(api.identity.searchUsers.searchUsers, {
+            searchTerm: "puzzler",
+          })
+      ).map((u) => u.username);
+
+    // Two public members matching the same term equally well, and a searcher with nobody known.
+    const seedRanking = async (t: TestConvex<typeof schema>) => {
+      const searcher = await insertUser(t, "clerk_searcher", "Sam", "sam");
+      await insertUser(t, "clerk_control", "Connie", "connie");
+      const known = await insertUser(t, "clerk_known", "Kim", "kim");
+      const aaa = await insertUser(t, "clerk_aaa", "Puzzler Aaa", "aaa");
+      const bbb = await insertUser(t, "clerk_bbb", "Puzzler Bbb", "bbb");
+      return { searcher, known, aaa, bbb };
+    };
+
+    test("a private member the searcher follows one way does not move the results", async () => {
+      const t = convexTest(schema, modules);
+      const { searcher, known, aaa, bbb } = await seedRanking(t);
+      await setVisibility(t, known, "private");
+      await follow(t, searcher, known);
+      const baseline = await order(t, "clerk_control");
+      expect(baseline).toEqual(["aaa", "bbb"]);
+
+      // Whomever they follow, the result reads the same as for a member with no follows.
+      await follow(t, known, bbb);
+      expect(await order(t, "clerk_searcher")).toEqual(baseline);
+      await follow(t, known, aaa);
+      expect(await order(t, "clerk_searcher")).toEqual(baseline);
+    });
+
+    test("a known follower with a public profile still lifts a match", async () => {
+      const t = convexTest(schema, modules);
+      const { searcher, known, bbb } = await seedRanking(t);
+      await follow(t, searcher, known);
+      await follow(t, known, bbb);
+      expect(await order(t, "clerk_searcher")).toEqual(["bbb", "aaa"]);
+    });
+
+    test("a private known follower who follows the searcher back still lifts a match", async () => {
+      const t = convexTest(schema, modules);
+      const { searcher, known, bbb } = await seedRanking(t);
+      await setVisibility(t, known, "private");
+      await follow(t, searcher, known);
+      await follow(t, known, searcher);
+      await follow(t, known, bbb);
+      expect(await order(t, "clerk_searcher")).toEqual(["bbb", "aaa"]);
+    });
+  });
+
   test("reveals a private member to a mutual follower", async () => {
     const t = convexTest(schema, modules);
     const searcher = await insertUser(
