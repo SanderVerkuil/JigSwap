@@ -96,7 +96,7 @@ export function StatsBar({
       <dl className="flex flex-1 flex-wrap items-stretch divide-x divide-border">
         {cells.map((cell) => (
           <div key={cell.label} className="px-5 first:pl-0">
-            <dd className="font-heading text-2xl font-bold tracking-tight">
+            <dd className="text-2xl font-semibold tabular-nums">
               {cell.value}
             </dd>
             <dt className="text-xs text-muted-foreground">{cell.label}</dt>
@@ -134,7 +134,7 @@ export function DifficultyMix({
 
   return (
     <div className="min-w-[12rem]">
-      <div className="mb-1.5 text-[0.625rem] font-semibold uppercase tracking-wide text-muted-foreground">
+      <div className="mb-1.5 text-xs font-semibold text-muted-foreground">
         {label}
       </div>
       <div className="flex h-2 overflow-hidden rounded-full bg-muted">

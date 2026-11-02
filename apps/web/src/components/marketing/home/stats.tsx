@@ -1,37 +1,32 @@
-import { Container } from "@/components/marketing/container";
+import { EDGE } from "@/components/marketing/home/classes";
 import { Reveal } from "@/components/marketing/reveal";
-import { Section } from "@/components/marketing/section";
 import { globalStatsQuery } from "@/lib/marketing-queries";
+import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { useFormatter, useTranslations } from "use-intl";
+import { useTranslations } from "use-intl";
 
-// Stats strip — real platform numbers from gateway.insights.globalStats (prefetched in the home
-// route loader; the prototype's invented totals would overclaim).
+// The live figures in a sentence: real platform numbers from gateway.insights.globalStats, prefetched
+// in the home route loader. Small numbers stay as they are.
 export function Stats() {
   const t = useTranslations("marketing.home.stats");
-  const format = useFormatter();
   const { data: stats } = useQuery(globalStatsQuery);
 
-  const items: Array<[string, number | undefined]> = [
-    [t("puzzlers"), stats?.totalUsers],
-    [t("catalog"), stats?.totalPuzzles],
-    [t("shelves"), stats?.totalOwnedPuzzles],
-  ];
-
   return (
-    <Section tint className="py-11">
-      <Container>
-        <div className="grid grid-cols-3 max-[860px]:grid-cols-1 gap-6 max-[860px]:gap-7">
-          {items.map(([label, value], i) => (
-            <Reveal key={label} delay={i * 70} className="text-center">
-              <div className="font-mk-heading font-bold text-[clamp(30px,4vw,42px)] text-mk-violet-600 leading-none">
-                {value != null ? format.number(value) : "—"}
-              </div>
-              <div className="text-sm text-mk-text-muted mt-2">{label}</div>
-            </Reveal>
-          ))}
-        </div>
-      </Container>
-    </Section>
+    <section className="bg-mk-bg text-mk-text-strong">
+      <div className={cn(EDGE, "py-[clamp(64px,9vw,136px)]")}>
+        <h2 className="sr-only">{t("title")}</h2>
+        <Reveal rise={24}>
+          <p className="max-w-[34em] font-mk-heading text-[clamp(24px,2.5vw,36px)] leading-[1.3] text-pretty">
+            {stats == null
+              ? "–"
+              : t("sentence", {
+                  puzzlers: t("puzzlers", { count: stats.totalUsers }),
+                  shelves: t("shelves", { count: stats.totalOwnedPuzzles }),
+                  catalog: t("catalog", { count: stats.totalPuzzles }),
+                })}
+          </p>
+        </Reveal>
+      </div>
+    </section>
   );
 }

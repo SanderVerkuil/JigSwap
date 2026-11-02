@@ -1,11 +1,11 @@
 "use client";
 
-// Global top bar of the console-style inset shell. It lives on the tinted
-// chrome surface (NOT inside the white content card): sidebar toggle, brand,
-// a centered search pill that opens the command palette, then bell, theme +
-// language switchers (tucked on the right, desktop only) and the Add Puzzle
-// CTA. No user avatar here — user identity lives bottom-left in the sidebar.
-// Desktop-only (md+): below the breakpoint the MobileTopBar replaces it.
+// Global top bar: the top arm of the sky L-frame, with no rule against the
+// sidebar and NOT inside the white sheet. Sidebar toggle and logo, a flat search
+// control centred on the window that opens the command palette, then bell, theme
+// and language switchers and the frame's single marigold action, Add Puzzle. No
+// user avatar here: user identity lives bottom-left in the sidebar. Desktop-only
+// (md+): below the breakpoint the MobileTopBar replaces it.
 import { Link } from "@/compat/link";
 import { HeaderLogo } from "@/components/common/header-logo";
 import { NotificationBell } from "@/components/notifications/notification-bell";
@@ -20,43 +20,45 @@ export function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   const t = useTranslations("shell");
 
   return (
-    <header className="hidden h-14 shrink-0 items-center gap-2 px-4 md:flex">
-      <SidebarTrigger className="size-8 shrink-0" />
-      <Link
-        href="/dashboard"
-        className="flex shrink-0 items-center transition-opacity hover:opacity-80"
-      >
-        <HeaderLogo className="h-7 pl-0" />
-      </Link>
-
-      {/* Centered pill search opening the command palette. */}
-      <div className="flex min-w-0 flex-1 justify-center px-6">
-        <button
-          type="button"
-          onClick={onOpenPalette}
-          className="flex h-9 w-full max-w-[520px] cursor-pointer items-center gap-2.5 rounded-full border bg-background px-4 text-sm text-muted-foreground shadow-xs transition-colors hover:border-ring/60"
+    // Equal outer columns keep the search centred on the window, not on the gap
+    // between the two clusters; they grow past 1fr rather than clip at 820 wide.
+    <header className="hidden h-12 shrink-0 grid-cols-[1fr_minmax(0,34rem)_1fr] items-center gap-4 px-2 md:grid">
+      <div className="flex items-center gap-2 pl-2">
+        <SidebarTrigger
+          aria-label={t("toggleSidebar")}
+          className="size-8 shrink-0 hover:bg-sidebar-accent dark:hover:bg-sidebar-accent"
+        />
+        <Link
+          href="/dashboard"
+          className="flex shrink-0 items-center rounded-md ring-sidebar-ring transition-opacity outline-none hover:opacity-80 focus-visible:ring-2"
         >
-          <Search className="size-4 shrink-0" />
-          <span className="flex-1 truncate text-left">
-            {t("search.placeholder")}
-          </span>
-          <kbd className="pointer-events-none rounded border bg-muted px-1.5 py-0.5 font-mono text-[11px] leading-none text-muted-foreground">
-            ⌘K
-          </kbd>
-        </button>
+          <HeaderLogo />
+        </Link>
       </div>
 
-      <div className="flex shrink-0 items-center gap-1">
-        <NotificationBell />
-        <div className="flex items-center gap-1">
+      <button
+        type="button"
+        onClick={onOpenPalette}
+        className="flex h-8 w-full cursor-pointer items-center gap-2 rounded-md border border-sidebar-border bg-background px-2.5 text-sm text-muted-foreground transition-colors outline-none hover:border-ring/60 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+      >
+        <Search className="size-4 shrink-0" />
+        <span className="flex-1 truncate text-left">
+          {t("search.placeholder")}
+        </span>
+        <kbd className="pointer-events-none font-sans text-xs text-muted-foreground">
+          ⌘K
+        </kbd>
+      </button>
+
+      <div className="flex items-center justify-end gap-1">
+        {/* Ghost hover is the frame's own tone, so these need the next sky step. */}
+        <div className="flex items-center gap-1 [@media(hover:hover)]:[&_button:hover]:bg-sidebar-accent">
+          <NotificationBell />
           <ModeToggle />
           <LanguageSwitcher />
         </div>
-        <Button
-          asChild
-          className="ml-1 bg-jigsaw-primary text-white hover:bg-jigsaw-primary/90"
-        >
-          <Link href="/my-puzzles/add">
+        <Button asChild variant="brand" size="sm" className="ml-1">
+          <Link href="/my-puzzles/add" data-tour="my-puzzles-add">
             <Plus className="size-4" />
             <span>{t("actions.addPuzzle")}</span>
           </Link>

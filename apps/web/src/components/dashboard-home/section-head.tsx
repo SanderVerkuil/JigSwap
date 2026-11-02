@@ -25,23 +25,23 @@ export function SectionHead({
   return (
     <div
       className={cn(
-        "mb-5 flex items-baseline justify-between gap-3 border-b pb-2.5",
+        "mb-5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-2 border-b pb-2.5",
         className,
       )}
     >
       <h2
         {...headingProps}
         className={cn(
-          "font-heading flex items-center gap-2 text-xl font-semibold whitespace-nowrap",
+          "font-heading flex items-center gap-2 text-xl whitespace-nowrap",
           headingProps?.className,
         )}
       >
-        {Icon && <Icon className="text-jigsaw-primary size-[18px]" />}
+        {Icon && <Icon className="text-primary-text size-[18px]" />}
         {title}
       </h2>
-      <div className="flex min-w-0 items-center gap-3.5">
+      <div className="flex min-w-0 items-center gap-3.5 sm:ml-auto">
         {meta && (
-          <span className="text-muted-foreground truncate text-right text-sm">
+          <span className="text-muted-foreground truncate text-left text-sm sm:text-right">
             {meta}
           </span>
         )}

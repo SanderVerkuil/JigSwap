@@ -50,7 +50,7 @@ export function StarRating({
             className={cn(
               SIZES[size],
               star <= value
-                ? "fill-yellow-400 text-yellow-400"
+                ? "fill-jigsaw-gold text-jigsaw-gold"
                 : "text-muted-foreground/40",
             )}
             aria-hidden="true"
@@ -78,13 +78,13 @@ export function StarRating({
           onMouseLeave={() => setHovered(null)}
           onFocus={() => setHovered(star)}
           onBlur={() => setHovered(null)}
-          className="rounded-sm p-0.5 transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="rounded-sm p-0.5 transition-[scale] duration-160 ease-[cubic-bezier(0.23,1,0.32,1)] motion-safe:active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <Star
             className={cn(
               SIZES[size],
               star <= shown
-                ? "fill-yellow-400 text-yellow-400"
+                ? "fill-jigsaw-gold text-jigsaw-gold"
                 : "text-muted-foreground/40",
             )}
           />

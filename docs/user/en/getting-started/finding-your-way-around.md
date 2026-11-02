@@ -1,5 +1,5 @@
 ---
-title: Finding Your Way Around
+title: Finding your way around
 order: 2
 summary: "Learn the dashboard layout and navigation on desktop and mobile, install the app, and keep up with what's new."
 ---

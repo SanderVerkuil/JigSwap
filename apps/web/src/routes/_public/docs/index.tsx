@@ -3,7 +3,6 @@ import { PageHero } from "@/components/marketing/page-hero";
 import { Section } from "@/components/marketing/section";
 import { buildNavTree, pagesForLocale } from "@/docs/nav";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { BookOpen } from "lucide-react";
 import { useMemo } from "react";
 import { useLocale, useTranslations } from "use-intl";
 import { pages } from "virtual:docs";
@@ -24,32 +23,39 @@ function DocsIndex() {
 
   return (
     <div>
-      <PageHero
-        eyebrow={t("landingEyebrow")}
-        title={t("landingTitle")}
-        lead={t("landingLead")}
-      />
+      <PageHero title={t("landingTitle")} lead={t("landingLead")} />
       <Section>
         <Container>
-          <div className="grid grid-cols-3 max-[860px]:grid-cols-2 max-[540px]:grid-cols-1 gap-6">
+          <div className="grid grid-cols-2 gap-x-[clamp(32px,5vw,72px)] gap-y-11 max-[760px]:grid-cols-1">
             {tree.map((group) => (
-              <Link
-                key={group.slug}
-                // Typed router Link carries the splat param, unlike @/compat/link.
-                to="/docs/$"
-                params={{ _splat: group.links[0]?.slug ?? group.slug }}
-                className="group rounded-[20px] bg-mk-card border border-mk-border p-6 transition-all hover:shadow-mk-md hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mk-ring"
-              >
-                <div className="grid place-items-center size-11 rounded-[12px] bg-mk-violet-50 text-mk-violet-600 mb-4">
-                  <BookOpen className="size-5" />
-                </div>
-                <h3 className="font-mk-heading font-semibold text-[18px] text-mk-text-strong group-hover:text-mk-violet-600">
-                  {group.title}
-                </h3>
-                <p className="text-[14.5px] text-mk-text-muted mt-1.5">
+              <section key={group.slug}>
+                <h2 className="font-mk-heading text-[26px] leading-[1.2] font-normal">
+                  <Link
+                    // Typed router Link carries the splat param, unlike @/compat/link.
+                    to="/docs/$"
+                    params={{ _splat: group.links[0]?.slug ?? group.slug }}
+                    className="text-mk-text-strong hover:decoration-mk-text-strong underline decoration-transparent underline-offset-4 transition-[text-decoration-color] duration-150"
+                  >
+                    {group.title}
+                  </Link>
+                </h2>
+                <p className="text-mk-text-body mt-2 max-w-[56ch] text-[17px] leading-relaxed">
                   {summaryFor(group.slug)}
                 </p>
-              </Link>
+                <ul className="mt-3 flex flex-col gap-1">
+                  {group.links.map((link) => (
+                    <li key={link.slug}>
+                      <Link
+                        to="/docs/$"
+                        params={{ _splat: link.slug }}
+                        className="text-mk-text-strong text-[16px] underline decoration-mk-input-border underline-offset-3 transition-[text-decoration-color] duration-150 hover:decoration-mk-text-strong"
+                      >
+                        {link.title}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
             ))}
           </div>
         </Container>

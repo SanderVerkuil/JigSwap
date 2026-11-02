@@ -292,7 +292,7 @@ export function EditCopyDialog({
           >
             {t("editCopy.cancel")}
           </Button>
-          <Button variant="brand" onClick={() => void save()} disabled={saving}>
+          <Button onClick={() => void save()} disabled={saving}>
             {saving ? t("editCopy.saving") : t("editCopy.save")}
           </Button>
         </DialogFooter>

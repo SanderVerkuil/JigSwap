@@ -1,5 +1,5 @@
 ---
-title: Your Profile & the 3D Shelf
+title: Your profile & the 3D shelf
 order: 3
 summary: "Edit your public profile, curate the 3D shelf, and set profile visibility."
 ---

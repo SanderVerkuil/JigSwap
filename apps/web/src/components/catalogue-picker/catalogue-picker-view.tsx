@@ -142,7 +142,7 @@ export function CataloguePickerView({
                   {picked ? (
                     <Check
                       aria-hidden
-                      className="text-jigsaw-primary dark:text-foreground size-5 shrink-0"
+                      className="text-primary-text size-5 shrink-0"
                     />
                   ) : (
                     <Plus

@@ -1,5 +1,5 @@
 ---
-title: People & Following
+title: People & following
 order: 2
 summary: "Build your network, invite friends, follow members, follow the activity feed, and leave comments and reviews."
 ---

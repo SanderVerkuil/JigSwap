@@ -1,5 +1,5 @@
 ---
-title: Je Weg Vinden
+title: Je weg vinden
 order: 2
 summary: "Leer de indeling van het dashboard en de navigatie op desktop en mobiel, installeer de app en blijf op de hoogte van wat er nieuw is."
 ---

@@ -111,7 +111,7 @@ function ActionsCoachmark() {
         type="button"
         aria-label={t("dismiss")}
         onClick={handleDismiss}
-        className="shrink-0 rounded p-0.5 hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="-my-2.5 -mr-2.5 inline-flex size-11 shrink-0 items-center justify-center rounded hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <X className="h-4 w-4" />
       </button>
@@ -248,12 +248,6 @@ function PuzzlesPage() {
             {t("mySuggestions")}
           </Link>
         </Button>
-        <Button variant="brand" size="sm" asChild>
-          <Link href="/my-puzzles/add" data-tour="my-puzzles-add">
-            <Plus className="h-4 w-4" />
-            {t("addPuzzle")}
-          </Link>
-        </Button>
       </>
     ),
     [headerMeta],
@@ -353,7 +347,7 @@ function PuzzlesPage() {
           title={t("noPuzzles")}
           sub={t("addFirstPuzzle")}
           action={
-            <Button variant="brand" asChild>
+            <Button asChild>
               <Link href="/my-puzzles/add">
                 <Plus className="h-4 w-4" />
                 {t("addPuzzle")}

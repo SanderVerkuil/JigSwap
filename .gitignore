@@ -83,3 +83,10 @@ vitest.config.*.timestamp*
 
 # /brag launch videos and their render workspace (local only)
 brag-output/
+
+# Impeccable's local working files (surface briefs and design.json are tracked)
+apps/web/.impeccable/mocks/
+apps/web/.impeccable/questions/
+apps/web/.impeccable/review/
+apps/web/.impeccable/build/
+apps/web/.impeccable/hook.cache.json

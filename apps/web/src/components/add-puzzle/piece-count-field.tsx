@@ -34,7 +34,7 @@ export function PieceCountField({
             type="button"
             onClick={() => onChange(n)}
             className={[
-              "rounded-full border px-2.5 py-1 font-mono text-xs cursor-pointer transition-colors",
+              "rounded-md border px-2.5 py-1 text-xs tabular-nums cursor-pointer transition-colors",
               value === n
                 ? "bg-jigsaw-primary-tint text-primary-text border-border"
                 : "bg-card text-muted-foreground border-border hover:bg-accent",

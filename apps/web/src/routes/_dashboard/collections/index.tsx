@@ -170,11 +170,7 @@ function CollectionsPage() {
         <span className="text-muted-foreground hidden text-sm sm:inline">
           {headerMeta}
         </span>
-        <Button
-          variant="brand"
-          size="sm"
-          onClick={() => setIsCreateDialogOpen(true)}
-        >
+        <Button size="sm" onClick={() => setIsCreateDialogOpen(true)}>
           <Plus className="h-4 w-4" />
           {t("newCollection")}
         </Button>
@@ -306,10 +302,7 @@ function CollectionsPage() {
             title={t("noCollections")}
             sub={t("emptyHint")}
             action={
-              <Button
-                variant="brand"
-                onClick={() => setIsCreateDialogOpen(true)}
-              >
+              <Button onClick={() => setIsCreateDialogOpen(true)}>
                 <Plus className="h-4 w-4" />
                 {t("newCollection")}
               </Button>
@@ -322,7 +315,7 @@ function CollectionsPage() {
                 key={collection._id}
                 role="button"
                 tabIndex={0}
-                className="bg-card flex cursor-pointer gap-3.5 rounded-xl border p-3.5 shadow-sm transition-shadow hover:shadow-md"
+                className="bg-card flex cursor-pointer gap-3.5 rounded-xl border p-3.5 transition-colors"
                 onClick={() => router.push(`/collections/${collection._id}`)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {

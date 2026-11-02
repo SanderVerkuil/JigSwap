@@ -1,5 +1,5 @@
 ---
-title: Je Dashboard
+title: Je dashboard
 order: 3
 summary: "Lees je persoonlijke overzicht van uitwisselingen, doelen, statistieken en nieuwe puzzels, en richt je plank in met Snel instellen."
 ---

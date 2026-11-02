@@ -1,5 +1,5 @@
 ---
-title: Discovering Puzzles
+title: Discovering puzzles
 order: 1
 summary: "Browse available copies, explore the catalogue, and read aggregated puzzle detail."
 ---

@@ -167,70 +167,68 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
   return (
     <div className={`space-y-6 ${className}`}>
       {/* Filters and Search */}
-      <Card>
-        <CardContent>
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder={t("searchPlaceholder")}
-                value={filters.searchTerm}
-                onChange={(e) =>
-                  setFilters((prev) => ({
-                    ...prev,
-                    searchTerm: e.target.value,
-                  }))
-                }
-                className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-
-            {/* Favorites Toggle */}
-            <Button
-              variant={favoritesOnly ? "default" : "outline"}
-              aria-pressed={favoritesOnly}
-              onClick={() => setFavoritesOnly(!favoritesOnly)}
-              className="flex items-center gap-2"
-            >
-              <Heart className="h-4 w-4" />
-              {t("favoritesOnly")}
-            </Button>
-
-            {/* Filter Toggle */}
-            <Button
-              variant="outline"
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2"
-            >
-              <Filter className="h-4 w-4" />
-              {t("filtersLabel")}
-            </Button>
-
-            {/* Clear Filters */}
-            {hasActiveFilters && (
-              <Button
-                variant="ghost"
-                onClick={clearFilters}
-                className="flex items-center gap-2"
-              >
-                <X className="h-4 w-4" />
-                {t("clearFilters")}
-              </Button>
-            )}
+      <div>
+        <div className="flex flex-col lg:flex-row gap-4">
+          {/* Search */}
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder={t("searchPlaceholder")}
+              value={filters.searchTerm}
+              onChange={(e) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  searchTerm: e.target.value,
+                }))
+              }
+              className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            />
           </div>
 
-          {/* Advanced Filters */}
-          {showFilters && (
-            <PuzzleFilters
-              filters={filters}
-              onFiltersChange={setFilters}
-              className="mt-4"
-            />
+          {/* Favorites Toggle */}
+          <Button
+            variant={favoritesOnly ? "default" : "outline"}
+            aria-pressed={favoritesOnly}
+            onClick={() => setFavoritesOnly(!favoritesOnly)}
+            className="flex items-center gap-2"
+          >
+            <Heart className="h-4 w-4" />
+            {t("favoritesOnly")}
+          </Button>
+
+          {/* Filter Toggle */}
+          <Button
+            variant="outline"
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-2"
+          >
+            <Filter className="h-4 w-4" />
+            {t("filtersLabel")}
+          </Button>
+
+          {/* Clear Filters */}
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              onClick={clearFilters}
+              className="flex items-center gap-2"
+            >
+              <X className="h-4 w-4" />
+              {t("clearFilters")}
+            </Button>
           )}
-        </CardContent>
-      </Card>
+        </div>
+
+        {/* Advanced Filters */}
+        {showFilters && (
+          <PuzzleFilters
+            filters={filters}
+            onFiltersChange={setFilters}
+            className="mt-4"
+          />
+        )}
+      </div>
 
       {/* View Mode Toggle */}
       <div className="flex items-center justify-between">

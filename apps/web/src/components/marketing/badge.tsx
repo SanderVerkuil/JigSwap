@@ -4,7 +4,7 @@ import * as React from "react";
 // Marketing badge tones, ported from the design system's Badge TONES map.
 // Carries the puzzle difficulty scale as first-class tones.
 const TONES = {
-  brand: "bg-mk-violet-400 text-white",
+  brand: "bg-mk-canal-400 text-white",
   secondary: "bg-mk-muted text-mk-text-strong",
   outline: "bg-transparent text-mk-text-body border-mk-border",
   success: "bg-mk-success-soft text-mk-success-strong",

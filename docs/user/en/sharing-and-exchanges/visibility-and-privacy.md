@@ -1,5 +1,5 @@
 ---
-title: Visibility & Privacy
+title: Visibility & privacy
 order: 1
 summary: "Who sees your puzzles, your profile and your name, and how to keep a copy private."
 ---

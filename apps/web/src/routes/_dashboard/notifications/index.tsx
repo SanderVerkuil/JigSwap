@@ -16,7 +16,6 @@ import { PageLoading } from "@/components/ui/loading";
 import { Switch } from "@/components/ui/switch";
 import { gateway } from "@/gateway";
 import { pageTitle } from "@/lib/page-title";
-import { cn } from "@/lib/utils";
 import { currentSubscriptionEndpoint, pushSupported } from "@/lib/web-push";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import type { NotificationView } from "@jigswap/contracts";
@@ -239,11 +238,6 @@ function NotificationsPage() {
                 variant={category === "all" ? "default" : "outline"}
                 aria-pressed={category === "all"}
                 onClick={() => setCategory("all")}
-                className={cn(
-                  "rounded-full",
-                  category === "all" &&
-                    "bg-jigsaw-primary text-white hover:bg-jigsaw-primary/90",
-                )}
               >
                 {t("filterAll")}
               </Button>
@@ -257,11 +251,6 @@ function NotificationsPage() {
                     variant={active ? "default" : "outline"}
                     aria-pressed={active}
                     onClick={() => setCategory(cat.key)}
-                    className={cn(
-                      "rounded-full",
-                      active &&
-                        "bg-jigsaw-primary text-white hover:bg-jigsaw-primary/90",
-                    )}
                   >
                     {t(`categories.${cat.key}.title`)}
                   </Button>

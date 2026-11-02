@@ -277,7 +277,7 @@ function ChatPreview({
         <OpenCircleChatButton
           circleId={circleId}
           circleName={circleName}
-          variant="brand"
+          variant="default"
           className="w-full sm:w-auto sm:self-start"
         />
       }

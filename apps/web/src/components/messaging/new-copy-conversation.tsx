@@ -115,7 +115,7 @@ export function NewCopyConversation({ copyId }: { copyId: string }) {
   ) {
     return (
       <div className="flex min-h-0 flex-1 flex-col">
-        <div className="flex h-14 shrink-0 items-center px-2 md:hidden">
+        <div className="flex h-14 shrink-0 items-center px-2 lg:hidden">
           {backLink}
         </div>
         <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 text-center">

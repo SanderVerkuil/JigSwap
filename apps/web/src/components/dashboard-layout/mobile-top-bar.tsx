@@ -1,6 +1,6 @@
 "use client";
 
-// Slim mobile top bar (replaces the desktop chrome below the md breakpoint):
+// Slim sky top bar (replaces the desktop chrome below the md breakpoint):
 // brand lockup on the dashboard, a back chevron to the parent section landing
 // on deep pages (instead of breadcrumbs), just the title on landings/profile;
 // then search (command palette), notifications and the profile avatar on the
@@ -10,7 +10,7 @@ import { useUser } from "@/compat/clerk";
 import { Image } from "@/compat/image";
 import { Link } from "@/compat/link";
 import { usePathname } from "@/compat/navigation";
-import logoIcon from "@/components/common/header-icon/logo.png";
+import logoIcon from "@/components/marketing/assets/icon.png";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
@@ -28,7 +28,7 @@ import { MOBILE_TOP_BAR_HEIGHT_VAR, useHeightCssVar } from "./sticky-offset";
 
 // Shared 44px touch target for every control in the bar.
 const tapTarget =
-  "inline-flex size-11 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-accent";
+  "inline-flex size-11 shrink-0 items-center justify-center rounded-lg transition-[background-color,scale] duration-[160ms] ease-[cubic-bezier(0.23,1,0.32,1)] outline-none hover:bg-sidebar-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-safe:active:scale-[0.97]";
 
 export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   const t = useTranslations("shell");
@@ -65,7 +65,7 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   return (
     <header
       ref={measureRef}
-      className="sticky top-0 z-30 shrink-0 border-b bg-card pt-[env(safe-area-inset-top)] md:hidden"
+      className="sticky top-0 z-30 shrink-0 bg-sidebar pt-[env(safe-area-inset-top)] text-sidebar-foreground md:hidden"
     >
       <div className="flex h-14 items-center gap-1 pr-2 pl-1.5">
         {group ? (
@@ -83,14 +83,10 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
             href="/dashboard"
             className="flex h-11 shrink-0 items-center gap-2 pl-1.5"
           >
-            <Image
-              src={logoIcon}
-              alt="JigSwap"
-              className="size-7 object-contain"
-            />
-            <span className="font-heading text-[19px] leading-none font-bold">
-              <span className="text-jigsaw-primary">Jig</span>
-              <span className="text-jigsaw-secondary">Swap</span>
+            <Image src={logoIcon} alt="" className="size-7 object-contain" />
+            <span className="font-logo text-[22px] leading-none font-bold">
+              <span className="text-logo-jig">Jig</span>
+              <span className="text-logo-swap">Swap</span>
             </span>
           </Link>
         ) : null}
@@ -99,7 +95,7 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
           {title && (
             <h1
               className={cn(
-                "font-heading truncate text-lg font-bold",
+                "font-heading truncate text-xl leading-7",
                 !group && "pl-2",
               )}
             >
@@ -112,18 +108,18 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
           type="button"
           onClick={onOpenPalette}
           aria-label={t("search.label")}
-          className={cn(tapTarget, "text-muted-foreground")}
+          className={tapTarget}
         >
           <Search className="size-5" />
         </button>
         <Link
           href="/notifications"
           aria-label={tNotifications("bell")}
-          className={cn(tapTarget, "relative text-muted-foreground")}
+          className={cn(tapTarget, "relative")}
         >
           <Bell className="size-5" />
           {unread > 0 && (
-            <span className="bg-jigsaw-primary-accent ring-card absolute top-2.5 right-2.5 size-2 rounded-full ring-2" />
+            <span className="bg-jigsaw-primary-accent ring-sidebar absolute top-2.5 right-2.5 size-2 rounded-full ring-2" />
           )}
         </Link>
         <span data-tour="account-menu" className="flex">

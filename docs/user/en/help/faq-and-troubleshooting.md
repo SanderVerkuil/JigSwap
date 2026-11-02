@@ -1,5 +1,5 @@
 ---
-title: FAQ & Troubleshooting
+title: FAQ & troubleshooting
 order: 1
 summary: "Answers to common questions and fixes for things that go wrong."
 ---

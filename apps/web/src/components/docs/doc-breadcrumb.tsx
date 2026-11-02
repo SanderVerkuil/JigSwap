@@ -11,12 +11,12 @@ export function DocBreadcrumb({
   return (
     <nav
       aria-label={t("breadcrumbLabel")}
-      className="flex items-center gap-1.5 text-[13px] text-mk-text-muted mb-4"
+      className="flex flex-wrap items-center gap-1.5 text-[14px] text-mk-text-muted mb-4"
     >
       {trail.map((c, i) => (
-        <span key={i} className="flex items-center gap-1.5">
+        <span key={i} className="flex items-center gap-1.5 whitespace-nowrap">
           {c.to ? (
-            <Link href={c.to} className="hover:text-mk-violet-600">
+            <Link href={c.to} className="hover:text-mk-text-strong">
               {c.title}
             </Link>
           ) : (

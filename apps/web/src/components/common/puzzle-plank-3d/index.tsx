@@ -165,7 +165,7 @@ export function PuzzlePlank3D({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          transition: "opacity .45s ease",
+          transition: "opacity 200ms cubic-bezier(0.23, 1, 0.32, 1)",
           opacity: sceneReady ? 0 : 1,
           pointerEvents: sceneReady ? "none" : undefined,
         }}
@@ -184,7 +184,7 @@ export function PuzzlePlank3D({
                 // Physics scene needs pointer events for drag; static scene
                 // uses "none" so the surrounding page still scrolls freely.
                 pointerEvents: usePhysics ? "auto" : "none",
-                transition: "opacity .45s ease",
+                transition: "opacity 200ms cubic-bezier(0.23, 1, 0.32, 1)",
                 opacity: sceneReady ? 1 : 0,
               }}
             >

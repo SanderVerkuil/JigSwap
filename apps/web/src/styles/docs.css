@@ -19,18 +19,17 @@
 }
 .docs-prose h2 {
   font-size: clamp(24px, 2.6vw, 30px);
-  font-weight: 700;
+  font-weight: 400;
   line-height: 1.18;
-  margin: 48px 0 14px;
-  border-top: 1px solid var(--mk-border);
-  padding-top: 24px;
+  margin: 56px 0 14px;
 }
 .docs-prose h3 {
   font-size: 21px;
-  font-weight: 600;
+  font-weight: 400;
   margin: 32px 0 8px;
 }
 .docs-prose h4 {
+  font-family: var(--font-mk-sans);
   font-size: 17.5px;
   font-weight: 600;
   margin: 24px 0 6px;
@@ -52,7 +51,7 @@
   margin-bottom: 8px;
 }
 .docs-prose ul li::marker {
-  color: var(--mk-violet-400);
+  color: var(--mk-text-muted);
 }
 
 .docs-prose ol {
@@ -78,29 +77,24 @@
   border-radius: 9999px;
   display: grid;
   place-items: center;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--mk-violet-600);
-  background: var(--mk-violet-50);
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--mk-text-strong);
+  background: var(--mk-sky-soft);
 }
 
 .docs-prose a {
-  color: var(--mk-violet-600);
-  font-weight: 500;
+  color: var(--mk-text-strong);
+  font-weight: 600;
   text-decoration: underline;
-  text-decoration-color: color-mix(
-    in oklab,
-    var(--mk-violet-400) 35%,
-    transparent
-  );
-  text-underline-offset: 2px;
+  text-decoration-color: var(--mk-text-muted);
+  text-underline-offset: 3px;
   transition:
     color 0.15s var(--ease-mk-out),
     text-decoration-color 0.15s var(--ease-mk-out);
 }
 .docs-prose a:hover {
-  color: var(--mk-violet-500);
   text-decoration-color: currentColor;
 }
 .docs-prose a:focus-visible {
@@ -108,13 +102,16 @@
   outline-offset: 2px;
   border-radius: 3px;
 }
-/* external-link affordance: append ↗ to links that open in a new tab */
+/* external-link affordance: a drawn arrow after links that open in a new tab */
 .docs-prose a[target="_blank"]::after {
-  content: "↗";
+  content: "";
   display: inline-block;
-  margin-left: 0.15em;
-  font-size: 0.85em;
-  color: var(--mk-violet-400);
+  width: 0.75em;
+  height: 0.75em;
+  margin-left: 0.2em;
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 7h10v10M7 17 17 7'/%3E%3C/svg%3E")
+    center / contain no-repeat;
 }
 
 .docs-prose :not(pre) > code {
@@ -122,24 +119,11 @@
   font-size: 0.85em;
   padding: 0.1em 0.4em;
   border-radius: 6px;
-  background: color-mix(in oklab, var(--mk-violet-400) 10%, var(--mk-card));
-  border: 1px solid color-mix(in oklab, var(--mk-violet-400) 22%, transparent);
-  color: var(--mk-violet-700);
+  background: var(--mk-muted);
+  color: var(--mk-text-strong);
   /* keep long tokens like URLs/paths on one tidy line, wrapping at boundaries */
   word-break: break-word;
   overflow-wrap: anywhere;
-}
-/* In dark mode the old muted-grey fill read as a harsh light chip; use a softly
-   violet-tinted dark surface with a low-contrast border and a legible light
-   violet so inline paths/URLs sit calmly in the prose. */
-.dark .docs-prose :not(pre) > code {
-  background: color-mix(
-    in oklab,
-    var(--mk-violet-400) 14%,
-    var(--mk-card-base)
-  );
-  border-color: color-mix(in oklab, var(--mk-violet-400) 24%, transparent);
-  color: var(--mk-violet-200);
 }
 /* inline code inside a link shouldn't double-decorate */
 .docs-prose a > code {
@@ -148,14 +132,12 @@
 }
 
 .docs-prose pre {
-  background: var(--mk-card-base);
-  border: 1px solid var(--mk-border);
-  border-radius: 14px;
+  background: var(--mk-muted);
+  border-radius: 6px;
   padding: 18px 20px;
   overflow-x: auto;
   font-size: 14px;
   line-height: 1.6;
-  box-shadow: var(--shadow-mk-xs);
   margin: 24px 0;
 }
 .docs-prose pre code {
@@ -170,17 +152,16 @@
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  font-size: 14.5px;
+  font-size: 15px;
   margin: 24px 0;
   border: 1px solid var(--mk-border);
-  border-radius: 14px;
+  border-radius: 6px;
   overflow: hidden;
 }
 .docs-prose thead th {
   text-align: left;
-  font-family: var(--font-mk-heading);
   font-weight: 600;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--mk-text-strong);
   background: var(--mk-muted);
   padding: 10px 14px;
@@ -195,20 +176,18 @@
 }
 
 .docs-prose blockquote:not(.docs-callout) {
-  border-left: 3px solid var(--mk-violet-200);
+  border-left: 1px solid var(--mk-input-border);
   padding: 4px 0 4px 18px;
   margin: 24px 0;
   color: var(--mk-text-muted);
-  font-style: italic;
 }
 
 /* Collapsible sections (e.g. the FAQ). Authored as <details><summary>…</summary>
    …</details> in markdown. */
 .docs-prose details {
   margin: 10px 0;
-  border: 1px solid var(--mk-border);
-  border-radius: 12px;
-  background: var(--mk-card);
+  border-radius: 6px;
+  background: var(--mk-muted);
   overflow: hidden;
 }
 .docs-prose details + details {
@@ -221,11 +200,9 @@
   align-items: flex-start;
   gap: 10px;
   padding: 14px 16px;
-  font-family: var(--font-mk-heading);
   font-weight: 600;
-  font-size: 15.5px;
+  font-size: 16px;
   color: var(--mk-text-strong);
-  transition: color 0.15s var(--ease-mk-out);
 }
 .docs-prose summary::-webkit-details-marker {
   display: none;
@@ -237,19 +214,13 @@
   width: 8px;
   height: 8px;
   margin-top: 7px;
-  border-right: 2px solid var(--mk-violet-400);
-  border-bottom: 2px solid var(--mk-violet-400);
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
   transform: rotate(-45deg);
   transition: transform 0.15s var(--ease-mk-out);
 }
 .docs-prose details[open] > summary::before {
   transform: rotate(45deg);
-}
-.docs-prose summary:hover {
-  color: var(--mk-violet-600);
-}
-.docs-prose details[open] > summary {
-  border-bottom: 1px solid var(--mk-border);
 }
 /* the answer body inside an open <details> */
 .docs-prose details > :not(summary) {
@@ -261,7 +232,6 @@
   padding-top: 14px;
 }
 @media (prefers-reduced-motion: reduce) {
-  .docs-prose summary,
   .docs-prose summary::before {
     transition: none;
   }
@@ -270,9 +240,7 @@
   margin: 28px 0;
 }
 .docs-prose img {
-  border-radius: 14px;
-  border: 1px solid var(--mk-border);
-  box-shadow: var(--shadow-mk-sm);
+  border-radius: 6px;
   display: block;
   max-width: 100%;
 }
@@ -292,8 +260,8 @@
   text-decoration: none;
 }
 .docs-prose :is(h1, h2, h3, h4) a:hover {
-  text-decoration: none;
-  color: var(--mk-violet-600);
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
 /* callouts (from `> **Note:**`/`Tip:`/`Warning:`/`Important:` blockquotes,
@@ -303,10 +271,8 @@
   flex-direction: column;
   gap: 4px;
   margin: 24px 0;
-  border: 1px solid var(--mk-border);
-  border-left-width: 3px;
-  border-radius: 14px;
-  padding: 16px 16px 16px 14px;
+  border-radius: 6px;
+  padding: 16px;
 }
 .docs-callout > :last-child {
   margin-bottom: 0;
@@ -315,26 +281,21 @@
   margin-bottom: 8px;
 }
 .docs-callout[data-tone="info"] {
-  border-left-color: var(--mk-violet-400);
-  background: var(--mk-violet-50);
+  background: var(--mk-sky-soft);
+}
+/* The sky-soft step is the page ground at night, so it needs the next step up. */
+.dark .docs-callout[data-tone="info"],
+.dark .docs-prose ol > li::before {
+  background: var(--mk-muted);
 }
 .docs-callout[data-tone="tip"] {
-  border-left-color: var(--mk-green-400);
   background: var(--mk-success-soft);
 }
 .docs-callout[data-tone="warning"] {
-  border-left-color: var(--mk-warning);
   background: var(--mk-warning-soft);
 }
 .docs-callout[data-tone="danger"] {
-  border-left-color: var(--mk-danger);
   background: var(--mk-danger-soft);
-}
-
-/* dark overrides: the *-soft tones already adapt via marketing.css tokens;
-   keep callout text legible against them. */
-.dark .docs-callout {
-  border-color: var(--mk-border);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -135,7 +135,7 @@ export function ArrangeShelfDialog({
             <p className="text-muted-foreground text-sm">{t("noCopies")}</p>
           ) : (
             <div>
-              <p className="text-muted-foreground mb-3 text-xs font-medium uppercase tracking-wide">
+              <p className="text-muted-foreground mb-3 text-xs font-medium">
                 {t("pickSection")}
               </p>
               {atMax && (
@@ -187,7 +187,7 @@ export function ArrangeShelfDialog({
           {/* Ordered selection list */}
           {selected.length > 0 && (
             <div>
-              <p className="text-muted-foreground mb-3 text-xs font-medium uppercase tracking-wide">
+              <p className="text-muted-foreground mb-3 text-xs font-medium">
                 {t("orderSection", {
                   count: selected.length,
                   max: MAX_FEATURED,

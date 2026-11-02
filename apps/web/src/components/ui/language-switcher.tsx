@@ -2,8 +2,9 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { clearIntlCache, setLocale, type Locale } from "@/lib/i18n";
@@ -13,14 +14,15 @@ import { toast } from "sonner";
 import { useLocale, useTranslations } from "use-intl";
 
 const languages = [
-  { code: "en", name: "English", flag: "🇺🇸" },
-  { code: "nl", name: "Nederlands", flag: "🇳🇱" },
+  { code: "en", name: "English" },
+  { code: "nl", name: "Nederlands" },
 ];
 
 export function LanguageSwitcher() {
   const currentLocale = useLocale();
   const router = useRouter();
   const t = useTranslations("shell.language");
+  const current = languages.find((language) => language.code === currentLocale);
 
   const handleLanguageChange = async (locale: string) => {
     await setLocale({ data: locale as Locale });
@@ -34,23 +36,34 @@ export function LanguageSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
-          <Globe className="h-[1.2rem] w-[1.2rem]" />
-          <span className="sr-only">{t("switch")}</span>
+        <Button
+          variant="ghost"
+          className="relative gap-1.5 px-2.5 has-[>svg]:px-2.5"
+        >
+          <Globe className="h-[1.2rem] w-[1.2rem]" aria-hidden />
+          {currentLocale.toUpperCase()}
+          <span className="sr-only">
+            {t("switch")}.{" "}
+            {t("current", { language: current?.name ?? currentLocale })}
+          </span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>{t("label")}</DropdownMenuLabel>
-        {languages.map((language) => (
-          <DropdownMenuItem
-            key={language.code}
-            onClick={() => handleLanguageChange(language.code)}
-            className={currentLocale === language.code ? "bg-accent" : ""}
-          >
-            <span className="mr-2">{language.flag}</span>
-            {language.name}
-          </DropdownMenuItem>
-        ))}
+        <DropdownMenuRadioGroup
+          value={currentLocale}
+          onValueChange={handleLanguageChange}
+        >
+          {languages.map((language) => (
+            <DropdownMenuRadioItem
+              key={language.code}
+              value={language.code}
+              lang={language.code}
+            >
+              {language.name}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );

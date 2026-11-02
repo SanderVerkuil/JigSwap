@@ -1,5 +1,5 @@
 ---
-title: Mensen & Volgen
+title: Mensen & volgen
 order: 2
 summary: "Bouw je netwerk op, nodig vrienden uit, volg leden, volg de activiteitenfeed en laat opmerkingen en beoordelingen achter."
 ---

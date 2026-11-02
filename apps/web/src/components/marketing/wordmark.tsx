@@ -3,7 +3,7 @@ import { Image } from "@/compat/image";
 // stacked lockup with the wordmark text baked in underneath.
 import logoIcon from "@/components/marketing/assets/icon.png";
 
-// Logo mark + two-tone wordmark: violet "Jig", green "Swap" (Fraunces 700).
+// Logo mark + two-tone wordmark. The logo keeps its own colours whatever the theme's primary does.
 export function Wordmark({ size = 22 }: { size?: number }) {
   return (
     <span className="inline-flex items-center gap-[9px]">
@@ -15,11 +15,11 @@ export function Wordmark({ size = 22 }: { size?: number }) {
         className="block rounded-[7px]"
       />
       <span
-        className="font-mk-heading font-bold leading-none tracking-[-0.01em]"
+        className="font-logo leading-none font-bold"
         style={{ fontSize: size }}
       >
-        <span className="text-mk-violet-600">Jig</span>
-        <span className="text-mk-green-600">Swap</span>
+        <span className="text-logo-jig">Jig</span>
+        <span className="text-logo-swap">Swap</span>
       </span>
     </span>
   );

@@ -13,7 +13,7 @@ export function BorrowedEmptyState() {
       title={t("noBorrowed")}
       sub={t("noBorrowedDescription")}
       action={
-        <Button asChild variant="brand">
+        <Button asChild>
           <Link href="/browse">
             <Search className="h-4 w-4" />
             {t("browseAction")}

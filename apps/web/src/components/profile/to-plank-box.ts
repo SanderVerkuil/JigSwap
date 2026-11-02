@@ -8,12 +8,13 @@ export type ShelfCopy = FunctionReturnType<
   typeof gateway.social.featuredShelf
 >[number];
 
-// Same warm gradient fallbacks as the dashboard shelf — never an empty gray box.
-const BOX_GRADIENTS: ReadonlyArray<readonly [string, string]> = [
-  ["#6048e8", "#494e92"],
-  ["#3fae3c", "#157a13"],
-  ["#ec4899", "#b22d6e"],
-  ["#f5a623", "#cf7911"],
+// Flat street colours for a box without a cover, shared with the dashboard shelf, so neither shelf
+// ever shows an empty gray box.
+export const BOX_COLORS: ReadonlyArray<string> = [
+  "#146350",
+  "#a86400",
+  "#2b7bb9",
+  "#c8321f",
 ];
 
 // Varied box heights so the shelf reads like a real, lived-in collection.
@@ -26,14 +27,14 @@ const BOX_HEIGHTS = [148, 130, 156, 126, 142];
 export function toPlankBox(copy: ShelfCopy, index: number): PuzzlePlankBox {
   const cover =
     copy.coverUrl ?? copy.puzzle?.images?.[0] ?? copy.snapshot?.thumbnail;
-  const [c1, c2] = BOX_GRADIENTS[index % BOX_GRADIENTS.length];
+  const color = BOX_COLORS[index % BOX_COLORS.length];
   return {
     title: copy.puzzle?.title ?? copy.snapshot?.title,
     series: copy.puzzle?.brand ?? copy.snapshot?.brand,
     pieceCount: copy.puzzle?.pieceCount ?? copy.snapshot?.pieceCount,
     cover,
-    c1,
-    c2,
+    c1: color,
+    c2: color,
     height: cover ? undefined : BOX_HEIGHTS[index % BOX_HEIGHTS.length],
   };
 }

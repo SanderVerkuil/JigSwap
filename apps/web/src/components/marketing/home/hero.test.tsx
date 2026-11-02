@@ -1,14 +1,85 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
-import { useClientSeed } from "./hero";
+import { IntlProvider } from "use-intl";
+import { describe, expect, it, vi } from "vitest";
+import { Hero } from "./hero";
 
-function Probe() {
-  const seed = useClientSeed();
-  return <span>{seed === null ? "skip" : "seeded"}</span>;
+vi.mock("@/components/marketing/use-start-href", () => ({
+  useStartHref: () => "/sign-up",
+}));
+vi.mock("@/compat/link", () => ({
+  Link: ({ href, children, ...rest }: React.ComponentProps<"a">) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
+  ),
+}));
+vi.mock("@/lib/marketing-queries", () => ({ globalStatsQuery: {} }));
+vi.mock("@tanstack/react-query", () => ({
+  useQuery: () => ({ data: { totalUsers: 1 } }),
+}));
+
+function render(locale: "en" | "nl") {
+  const messages = JSON.parse(
+    readFileSync(
+      resolve(__dirname, `../../../../locales/${locale}.json`),
+      "utf8",
+    ),
+  ) as Record<string, never>;
+  return renderToStaticMarkup(
+    <IntlProvider
+      locale={locale}
+      messages={messages}
+      timeZone="Europe/Amsterdam"
+    >
+      <Hero />
+    </IntlProvider>,
+  );
 }
 
-describe("useClientSeed", () => {
-  it("is null on the server so seeded queries stay skipped during SSR", () => {
-    expect(renderToStaticMarkup(<Probe />)).toBe("<span>skip</span>");
+describe("Hero", () => {
+  it("server-renders three floor buttons with Opa Wim chosen and her shelf docked", () => {
+    const html = render("en");
+    const pressed = [
+      ...html.matchAll(/aria-pressed="(true|false)"[^>]*>([^<]+)</g),
+    ].map(([, state, name]) => [name, state]);
+    expect(pressed).toEqual([
+      ["Sanne", "false"],
+      ["Opa Wim", "true"],
+      ["Marieke", "false"],
+    ]);
+    expect(html).toContain("Opa Wim’s shelf");
+    expect(html).toContain("Dorpsstraat");
+    expect(html).not.toContain("Theekoepel");
+  });
+
+  it("links every ask to the start href", () => {
+    const html = render("en");
+    expect(
+      html.match(/href="\/sign-up"[^>]*aria-label="Ask to borrow/g),
+    ).toHaveLength(3);
+  });
+
+  it("uses the live count with a real plural", () => {
+    expect(render("en")).toContain("1 puzzler has a shelf here.");
+    expect(render("nl")).toContain("1 puzzelaar heeft hier een plank.");
+  });
+
+  it("formats piece counts for the locale", () => {
+    expect(render("en")).toContain("1,000 pieces");
+    expect(render("nl")).toContain("1.000 stukjes");
+  });
+
+  it("loads only the house eagerly, with its size declared", () => {
+    const images = render("en").match(/<img[^>]*>/g) ?? [];
+    const house = images.filter((img) => img.includes("fetchPriority"));
+    expect(house).toHaveLength(1);
+    expect(house[0]).toContain('width="2000"');
+    expect(house[0]).toContain('height="1228"');
+    expect(house[0]).not.toContain("lazy");
+    for (const img of images.filter((i) => !i.includes("fetchPriority"))) {
+      expect(img).toContain('loading="lazy"');
+    }
   });
 });

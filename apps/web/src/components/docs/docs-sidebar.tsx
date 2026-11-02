@@ -23,33 +23,33 @@ export function DocsSidebar({ onOpenSearch }: { onOpenSearch: () => void }) {
       <button
         type="button"
         onClick={onOpenSearch}
-        className="flex items-center gap-2.5 w-full h-10 px-3 mb-2 rounded-[10px] bg-mk-card border border-mk-border text-mk-text-muted text-[14px] text-left transition-colors hover:border-mk-violet-300 hover:text-mk-text-body focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mk-ring"
+        className="flex items-center gap-2.5 w-full h-10 px-3 mb-2 rounded-md bg-mk-card border border-mk-input-border text-mk-text-muted text-[14px] text-left transition-colors duration-150 hover:text-mk-text-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mk-ring"
       >
         <Search className="size-4 opacity-70" />
         <span>{t("searchTrigger")}</span>
-        <kbd className="ml-auto font-mono text-[11px] px-1.5 py-0.5 rounded-[5px] bg-mk-muted border border-mk-border">
+        <kbd className="ml-auto text-[13px] px-1.5 py-0.5 rounded-sm bg-mk-muted">
           ⌘K
         </kbd>
       </button>
 
       {navTree.map((group) => (
         <Collapsible key={group.slug} defaultOpen>
-          <CollapsibleTrigger className="group flex items-center gap-2 w-full py-2 mt-3 font-mk-heading font-semibold text-[13px] tracking-[.04em] text-mk-text-strong">
+          <CollapsibleTrigger className="group flex items-center gap-2 w-full py-2 mt-3 font-mk-heading font-normal text-[17px] text-mk-text-strong">
             <ChevronRight className="size-3.5 text-mk-text-muted transition-transform group-data-[state=open]:rotate-90" />
             {group.title}
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <div className="flex flex-col border-l border-mk-border ml-1.5">
+            <div className="flex flex-col gap-0.5 ml-1.5">
               {group.links.map((link) => (
                 <Link
                   key={link.slug}
                   to="/docs/$"
                   params={{ _splat: link.slug }}
-                  className="-ml-px border-l-2 py-[6px] px-3.5 text-[13.5px] leading-snug rounded-r-[6px] transition-colors border-transparent text-mk-text-muted font-medium hover:text-mk-text-body hover:bg-mk-muted/60"
+                  className="py-[6px] px-3 text-[15px] leading-snug rounded-sm transition-colors duration-150 text-mk-text-muted font-medium hover:text-mk-text-strong hover:bg-mk-muted"
                   activeProps={{
                     className: cn(
-                      "-ml-px border-l-2 py-[6px] px-3.5 text-[13.5px] leading-snug rounded-r-[6px]",
-                      "border-mk-violet-400 text-mk-violet-600 font-semibold bg-mk-violet-50",
+                      "py-[6px] px-3 text-[15px] leading-snug rounded-sm",
+                      "text-mk-text-strong font-semibold bg-mk-sky-soft dark:bg-mk-muted",
                     ),
                   }}
                 >

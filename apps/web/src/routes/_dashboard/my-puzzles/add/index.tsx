@@ -133,7 +133,7 @@ function AddPuzzleChooserPage() {
             {tPicker("openPicker")}
           </Link>
         </Button>
-        <Button variant="brand" size="sm" asChild>
+        <Button size="sm" asChild>
           <Link href="/my-puzzles/add/new">
             <Plus className="h-4 w-4" />
             {t("chooser.createNew")}

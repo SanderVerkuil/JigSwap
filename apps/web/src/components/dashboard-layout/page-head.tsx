@@ -1,6 +1,6 @@
 "use client";
 
-// Page head at the top of the inset content card: an optional breadcrumb row
+// Page head at the top of the white sheet: an optional breadcrumb row
 // above the page title and its muted one-line subtitle. Two breadcrumb shapes:
 //   • normal page:  Group › Page         (group links to its landing)
 //   • dynamic page: Group › Page › Leaf   (a page publishing a title override,
@@ -11,10 +11,11 @@
 import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
 import { usePathname } from "@/compat/navigation";
+import { cn } from "@/lib/utils";
 import { ChevronRight } from "lucide-react";
 import { useTranslations } from "use-intl";
 import { usePageHeaderContent } from "./page-header-slot";
-import { getNavGroup, getRouteMeta } from "./route-meta";
+import { getNavGroup, getRouteMeta, isFullBleedRoute } from "./route-meta";
 import { PAGE_HEAD_HEIGHT_VAR, useHeightCssVar } from "./sticky-offset";
 
 export function PageHead() {
@@ -35,7 +36,11 @@ export function PageHead() {
   }
 
   const pageTitle = t(`pages.${meta.pageKey}.title`);
-  const subtitle = t(`pages.${meta.pageKey}.subtitle`);
+  // The dashboard's own sentence sits right below, so its head stays a bare title.
+  const subtitle =
+    titleOverride || meta.variant === "dashboard"
+      ? null
+      : t(`pages.${meta.pageKey}.subtitle`);
   const baseTitle =
     meta.variant === "dashboard"
       ? user?.firstName
@@ -54,22 +59,27 @@ export function PageHead() {
       ? group.items.find((item) => item.key === meta.pageKey)
       : undefined;
 
-  const crumbLink =
-    "transition-colors hover:text-sidebar-accent-foreground hover:underline";
+  const crumbLink = "transition-colors hover:text-foreground hover:underline";
 
   return (
-    // Glass head: sticks to the top of the shared scroll region and frosts the content scrolling
-    // beneath it. Solid bg is the fallback; where backdrop-filter is supported the bg goes
-    // translucent so the blur reads. z-20 keeps it above the scrolling content.
+    // Sticks to the top of the shared scroll region on a solid ground, one quiet edge below it. z-20
+    // keeps it above the scrolling content. Its 24px sides share the content's left edge. The edge
+    // runs on the content's column too, since the scrollbar's reserved gutter would cut a full-width
+    // rule short of the sheet's side; a full-bleed page has no gutter and panes that meet the sides.
     <div
       ref={measureRef}
-      className="bg-background supports-[backdrop-filter]:bg-background/70 sticky top-0 z-20 hidden border-b px-4 pt-3.5 pb-3 backdrop-blur-md md:block md:px-7"
+      className={cn(
+        "bg-background sticky top-0 z-20 hidden px-6 pt-3 pb-3 md:block",
+        isFullBleedRoute(pathname)
+          ? "border-b"
+          : "after:bg-border after:absolute after:inset-x-6 after:bottom-0 after:h-px",
+      )}
     >
       {crumbs && crumbs.length > 0 ? (
         // Explicit trail published by the page (deep routes).
         <nav
           aria-label={t("breadcrumbLabel")}
-          className="mb-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground"
+          className="mb-0.5 flex flex-wrap items-center gap-1.5 text-[13px] text-muted-foreground"
         >
           {crumbs.map((crumb, i) => (
             <span key={i} className="flex items-center gap-1.5">
@@ -88,7 +98,7 @@ export function PageHead() {
       ) : group ? (
         <nav
           aria-label={t("breadcrumbLabel")}
-          className="mb-0.5 flex items-center gap-1.5 text-xs text-muted-foreground"
+          className="mb-0.5 flex items-center gap-1.5 text-[13px] text-muted-foreground"
         >
           <Link href={group.href} className={crumbLink}>
             {t(`groups.${group.key}.label`)}
@@ -107,19 +117,18 @@ export function PageHead() {
           )}
         </nav>
       ) : null}
-      <div className="flex items-center gap-4">
-        <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-3.5 gap-y-0.5">
-          <h1 className="font-heading text-2xl font-bold tracking-tight">
-            {title}
-          </h1>
-          {!titleOverride && (
+      {/* Actions drop to their own row before they squeeze the title onto two lines. */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div className="flex min-w-60 flex-1 flex-wrap items-baseline gap-x-3.5 gap-y-0.5">
+          <h1 className="font-heading text-2xl">{title}</h1>
+          {subtitle && (
             <p className="min-w-0 truncate text-sm text-muted-foreground">
               {subtitle}
             </p>
           )}
         </div>
         {headerActions ? (
-          <div className="flex shrink-0 items-center gap-2.5">
+          <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-2.5 md:shrink-0">
             {headerActions}
           </div>
         ) : null}

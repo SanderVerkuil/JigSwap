@@ -295,7 +295,6 @@ export function ImageEditorDialog({
           </Button>
           <Button
             type="button"
-            variant="brand"
             disabled={baking || !loaded}
             onClick={() => void apply()}
           >

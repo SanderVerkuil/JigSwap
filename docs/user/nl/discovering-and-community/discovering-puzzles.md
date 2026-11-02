@@ -1,5 +1,5 @@
 ---
-title: Puzzels Ontdekken
+title: Puzzels ontdekken
 order: 1
 summary: "Blader door beschikbare kopieën, verken de catalogus en lees de samengevoegde puzzeldetails."
 ---

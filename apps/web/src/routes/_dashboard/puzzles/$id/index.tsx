@@ -186,7 +186,7 @@ function PuzzleDefinitionDetail({
         {/* Cover — full width on mobile, capped beside the info column at lg. object-contain (via
             ImageZoom) shows the whole puzzle; hovering opens a side panel that magnifies where the
             cursor points. */}
-        <div className="bg-muted relative aspect-square w-full overflow-hidden rounded-2xl shadow-sm lg:max-w-[300px]">
+        <div className="bg-muted relative aspect-square w-full overflow-hidden rounded-lg lg:max-w-[300px]">
           {definition.image ? (
             <ImageZoom src={definition.image} alt={definition.title} fill />
           ) : (
@@ -196,15 +196,10 @@ function PuzzleDefinitionDetail({
 
         {/* Info */}
         <div className="min-w-0">
-          <div className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.18em]">
-            {t("eyebrow")}
-          </div>
-          <h1 className="font-heading mt-2 text-3xl font-bold tracking-tight">
-            {definition.title}
-          </h1>
+          <h1 className="font-heading text-3xl">{definition.title}</h1>
           <p className="text-muted-foreground mt-1 text-base">
             {definition.brand ? `${definition.brand} · ` : ""}
-            <span className="font-mono">
+            <span className="tabular-nums">
               {definition.pieceCount.toLocaleString()}
             </span>{" "}
             {tPuzzles("pieces")}
@@ -220,7 +215,7 @@ function PuzzleDefinitionDetail({
             </span>
             <Badge
               className={cn(
-                "rounded-full border-transparent px-2.5 py-0.5 text-xs font-semibold",
+                "rounded-md border-transparent px-2.5 py-0.5 text-xs font-semibold",
                 difficultyClasses(definition.difficulty),
               )}
             >
@@ -229,7 +224,7 @@ function PuzzleDefinitionDetail({
             {topics.map((topic, i) => (
               <span
                 key={`${topic}-${i}`}
-                className="border-border text-foreground inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold"
+                className="border-border text-foreground inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold"
               >
                 {topic}
               </span>
@@ -263,7 +258,6 @@ function PuzzleDefinitionDetail({
             {/* Opens the copy-mode add form (definition pre-filled; the member
                 fills in condition/availability/cover/notes for their copy). */}
             <Button
-              variant="brand"
               onClick={() =>
                 router.push(`/my-puzzles/add/new?puzzleId=${puzzleId}`)
               }
@@ -357,7 +351,7 @@ function CommunityRating({ rating }: { rating: View["rating"] }) {
     <section>
       <SectionHead icon={<StarGlyph />} title={t("communityRating")} />
       <div className="mb-3.5 flex items-end gap-3.5">
-        <div className="font-heading text-foreground text-4xl font-bold leading-none">
+        <div className="text-foreground font-sans text-4xl font-semibold leading-none tabular-nums">
           {rating.rating}
         </div>
         <div className="pb-0.5">
@@ -381,7 +375,7 @@ function CommunityRating({ rating }: { rating: View["rating"] }) {
                   style={{ width: `${percent}%` }}
                 />
               </span>
-              <span className="text-muted-foreground w-9 text-right font-mono text-xs">
+              <span className="text-muted-foreground w-9 text-right text-xs tabular-nums">
                 {percent}%
               </span>
             </div>
@@ -397,9 +391,9 @@ function swapTypeClasses(swapType: AvailableCopy["swapType"]) {
     case "swap":
       return "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200";
     case "lend":
-      return "bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-200";
+      return "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200";
     default:
-      return "bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200";
+      return "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200";
   }
 }
 
@@ -450,7 +444,7 @@ function AvailableToSwap({
               </div>
               <span
                 className={cn(
-                  "rounded-full px-2.5 py-0.5 text-xs font-semibold",
+                  "rounded-md px-2.5 py-0.5 text-xs font-semibold",
                   swapTypeClasses(copy.swapType),
                 )}
               >
@@ -465,7 +459,7 @@ function AvailableToSwap({
         <RouterLink
           to="/browse"
           search={{ puzzle: puzzleId }}
-          className="text-jigsaw-primary mt-3 inline-block text-sm font-semibold hover:underline"
+          className="text-primary-text mt-3 inline-block text-sm font-semibold hover:underline"
         >
           {t("seeAllCopies", { count: totalAvailable })}
         </RouterLink>
@@ -572,7 +566,6 @@ function ReviewsSection({
               className="flex-1"
             />
             <Button
-              variant="brand"
               onClick={() => void submit()}
               disabled={postReview.isPending || rating < 1}
             >

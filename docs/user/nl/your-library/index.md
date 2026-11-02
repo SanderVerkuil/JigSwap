@@ -1,5 +1,5 @@
 ---
-title: Je Bibliotheek
+title: Je bibliotheek
 order: 2
 summary: "Voeg puzzels toe, organiseer collecties, leg voltooiingen vast en volg je doelen."
 ---

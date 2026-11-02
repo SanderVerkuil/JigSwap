@@ -37,7 +37,7 @@ function NewMessagePage() {
           <NewCopyConversation key={copy} copyId={copy} />
         ) : (
           <>
-            <div className="flex h-14 shrink-0 items-center px-2 md:hidden">
+            <div className="flex h-14 shrink-0 items-center px-2 lg:hidden">
               <BackToInboxLink />
             </div>
             <div className="flex flex-1 items-center justify-center px-4 text-center">

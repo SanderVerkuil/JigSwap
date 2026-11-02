@@ -1,5 +1,5 @@
 ---
-title: Zichtbaarheid & Privacy
+title: Zichtbaarheid & privacy
 order: 1
 summary: "Wie je puzzels, je profiel en je naam ziet, en hoe je een exemplaar privé houdt."
 ---

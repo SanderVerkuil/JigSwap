@@ -564,7 +564,7 @@ export function BackToInboxLink() {
     <Link
       href="/messages"
       aria-label={t("backToInbox")}
-      className="hover:bg-accent focus-visible:ring-ring -ml-1 inline-flex size-11 shrink-0 items-center justify-center rounded-lg outline-none transition-colors focus-visible:ring-2 md:hidden"
+      className="hover:bg-accent focus-visible:ring-ring -ml-1 inline-flex size-11 shrink-0 items-center justify-center rounded-lg outline-none transition-colors focus-visible:ring-2 lg:hidden"
     >
       <ChevronLeft className="size-5" />
     </Link>

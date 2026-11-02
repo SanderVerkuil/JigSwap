@@ -1,9 +1,9 @@
 "use client";
 
 // Quick-action bottom sheet opened by the tab bar's raised center "+": the
-// four most-used actions as 56px rows — violet round icon chip, title with a
-// one-line sub, chevron — sliding up over the dimmed backdrop, with a drag
-// handle and safe-area bottom padding.
+// most-used actions as a flat list of 56px rows (bare icon, title, one-line
+// sub) sliding up over the dimmed backdrop, with a drag handle and safe-area
+// bottom padding.
 import { useRouter } from "@/compat/navigation";
 import {
   requestInstallTip,
@@ -14,7 +14,6 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { WhatsNewCountPill } from "@/components/whats-new/badges";
 import {
   ArrowLeftRight,
-  ChevronRight,
   CircleCheck,
   Download,
   Plus,
@@ -24,6 +23,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useTranslations } from "use-intl";
+
+const ROW =
+  "hover:bg-accent active:bg-accent focus-visible:ring-ring/50 flex min-h-14 w-full items-center gap-3.5 rounded-lg px-2.5 py-2 text-left transition-[background-color,scale] duration-[160ms] ease-[cubic-bezier(0.23,1,0.32,1)] outline-none focus-visible:ring-[3px] motion-safe:active:scale-[0.97]";
+const ROW_ICON = "text-primary-text size-5 shrink-0";
 
 // Titles reuse the command palette's quick-action strings where they exist;
 // the subs (and Propose a Swap) live under shell.mobile.quick.
@@ -112,8 +115,9 @@ export function MobileQuickSheet({
         side="bottom"
         aria-describedby={undefined}
         // The drag handle replaces the default X close affordance (the only
-        // direct child <button> of the content is that close button).
-        className="gap-0 rounded-t-[20px] border-t-0 bg-card p-0 [&>button]:hidden"
+        // direct child <button> of the content is that close button). The slide
+        // takes the iOS drawer curve; SheetContent itself drops it under reduced motion.
+        className="gap-0 rounded-t-xl border-t-0 bg-card p-0 ease-[cubic-bezier(0.32,0.72,0,1)] [&>button]:hidden"
       >
         <SheetTitle className="sr-only">{t("search.quickActions")}</SheetTitle>
         <div className="px-3.5 pt-2.5 pb-[calc(18px+env(safe-area-inset-bottom))]">
@@ -124,13 +128,11 @@ export function MobileQuickSheet({
                 key={action.href}
                 type="button"
                 onClick={() => go(action.href)}
-                className="hover:bg-accent flex min-h-14 items-center gap-3.5 rounded-xl px-2.5 py-2 text-left transition-colors"
+                className={ROW}
               >
-                <span className="bg-jigsaw-primary/10 text-jigsaw-primary inline-flex size-[42px] shrink-0 items-center justify-center rounded-full">
-                  <action.icon className="size-[19px]" />
-                </span>
+                <action.icon aria-hidden className={ROW_ICON} />
                 <span className="min-w-0 flex-1">
-                  <span className="block font-semibold">
+                  <span className="block font-medium">
                     {t(action.titleKey)}
                   </span>
                   <span className="text-muted-foreground block text-sm">
@@ -145,27 +147,19 @@ export function MobileQuickSheet({
                   )}
                 </span>
                 <WhatsNewCountPill count={countFor(action.href)} />
-                <ChevronRight className="text-muted-foreground size-4 shrink-0" />
               </button>
             ))}
             {installMethod && (
-              <button
-                type="button"
-                onClick={install}
-                className="hover:bg-accent flex min-h-14 items-center gap-3.5 rounded-xl px-2.5 py-2 text-left transition-colors"
-              >
-                <span className="bg-jigsaw-primary/10 text-jigsaw-primary inline-flex size-[42px] shrink-0 items-center justify-center rounded-full">
-                  <Download className="size-[19px]" />
-                </span>
+              <button type="button" onClick={install} className={ROW}>
+                <Download aria-hidden className={ROW_ICON} />
                 <span className="min-w-0 flex-1">
-                  <span className="block font-semibold">
+                  <span className="block font-medium">
                     {tInstall("menuTitle")}
                   </span>
                   <span className="text-muted-foreground block text-sm">
                     {tInstall("menuSub")}
                   </span>
                 </span>
-                <ChevronRight className="text-muted-foreground size-4 shrink-0" />
               </button>
             )}
           </div>

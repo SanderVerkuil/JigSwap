@@ -1,5 +1,5 @@
 ---
-title: Accounts & Sign-In
+title: Accounts & sign-in
 order: 1
 summary: "Create an account, sign in and out, and understand protected pages."
 ---

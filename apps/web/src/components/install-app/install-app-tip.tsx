@@ -169,21 +169,21 @@ export function InstallAppTipView({
 
   return (
     // Sticky just above the tab bar (57px = its 56px row + 1px border; keep in sync with
-    // MobileTabBar). The bottom padding clears the raised "+" (22px overhang + 4px ring) with an
-    // 8px gap and, in normal flow, reserves room so the last content row never hides under it.
-    <div className="pointer-events-none sticky bottom-[57px] z-20 shrink-0 px-3 pb-[34px] md:hidden">
+    // MobileTabBar). The bottom padding clears the raised "+" and, in normal flow, reserves room
+    // so the last content row never hides under it.
+    <div className="pointer-events-none sticky bottom-[57px] z-20 shrink-0 px-4 pb-[18px] md:hidden">
       <section
         id={TIP_ID}
         aria-labelledby={headingId}
-        className="bg-card text-card-foreground border-jigsaw-primary/20 animate-in fade-in slide-in-from-bottom-3 pointer-events-auto rounded-2xl border p-4 shadow-[0_12px_32px_-12px_rgb(0_0_0/0.28)] duration-300 ease-out motion-reduce:animate-none dark:shadow-[0_12px_32px_-8px_rgb(0_0_0/0.6)]"
+        className="bg-sidebar text-sidebar-foreground animate-in fade-in slide-in-from-bottom-3 pointer-events-auto rounded-lg p-3.5 duration-[250ms] ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:animate-none"
       >
         <div className="flex items-start gap-3">
           <img
             src="/icon-192.png"
             alt=""
-            width={42}
-            height={42}
-            className="ring-border size-[42px] shrink-0 rounded-[10px] bg-white p-1 ring-1"
+            width={36}
+            height={36}
+            className="size-9 shrink-0"
           />
           <div className="min-w-0 flex-1">
             <h2 id={headingId} className="text-sm font-semibold">
@@ -274,10 +274,7 @@ export function InstallAppTipView({
 
         <div className="mt-3 flex justify-end gap-2">
           {method === "prompt" && (
-            <Button
-              className="bg-jigsaw-primary hover:bg-jigsaw-primary/90 h-11 flex-1 text-white"
-              onClick={onInstall}
-            >
+            <Button className="h-11" onClick={onInstall}>
               <Download aria-hidden />
               {t("install")}
             </Button>
