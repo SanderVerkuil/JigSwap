@@ -109,9 +109,9 @@ describe("catalogue PuzzleCard cover", () => {
     expect(cover().getAttribute("sizes")).toBe(PUZZLE_GRID_COVER_SIZES);
   });
 
-  it("uses the list view's cover column in list view", () => {
+  it("uses the list view's thumbnail in list view", () => {
     render(<CatalogCard puzzle={summary({ imageSrcSet: SRC_SET })} />, "list");
-    expect(cover().getAttribute("sizes")).toBe("128px");
+    expect(cover().getAttribute("sizes")).toBe("56px");
   });
 
   it("shows the original alone before renditions exist", () => {
@@ -156,9 +156,9 @@ describe("owned-copy PuzzleCard cover", () => {
     expect(cover().getAttribute("sizes")).toBe("214px");
   });
 
-  it("uses the list view's cover column in list view", () => {
+  it("uses the list view's thumbnail in list view", () => {
     render(<CopyCard puzzle={copy({ coverSrcSet: SRC_SET })} />, "list");
-    expect(cover().getAttribute("sizes")).toBe("128px");
+    expect(cover().getAttribute("sizes")).toBe("56px");
   });
 
   it("shows the cover alone without renditions (a cover photo, or before the backfill)", () => {

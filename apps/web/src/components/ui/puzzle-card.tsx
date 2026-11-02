@@ -189,6 +189,8 @@ interface PuzzleOverflowMenuProps {
   copyAggregateId?: string;
   // On a collection's page: take this copy out of the collection (the copy itself stays).
   onRemoveFromCollection?: (id: Id<"ownedPuzzles">) => void;
+  // In a list row, at the row's end instead of over the cover.
+  inline?: boolean;
 }
 
 function PuzzleOverflowMenu({
@@ -203,6 +205,7 @@ function PuzzleOverflowMenu({
   showCollection = false,
   copyAggregateId,
   onRemoveFromCollection,
+  inline = false,
 }: PuzzleOverflowMenuProps) {
   const t = useTranslations("puzzles");
   const tSolving = useTranslations("solving.logSolve");
@@ -225,7 +228,7 @@ function PuzzleOverflowMenu({
   return (
     // `relative z-10` wrapper sits above the stretched-link overlay (z-[1]).
     // The 44px touch target is achieved via negative margin + extra padding.
-    <div className="absolute top-2 right-2 z-10">
+    <div className={inline ? undefined : "absolute top-2 right-2 z-10"}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
@@ -374,6 +377,7 @@ export function PuzzleCard({
   const conditionLabel = useConditionLabel();
   const boxArtInCheck = useBoxArtInCheck();
   const { viewMode } = usePuzzleView();
+  const listRow = viewMode === "list";
 
   // Early return if no puzzle data
   if (!puzzle.puzzle) {
@@ -498,57 +502,63 @@ export function PuzzleCard({
       onRemoveFromCollection
     );
 
-  // Image overlays: the ⋯ overflow chip (top-right), the selection ring's
-  // check, and the selection-variant checkbox.
+  const solveBadge = solveInProgress && (
+    <Badge
+      variant="secondary"
+      className="bg-background/70 backdrop-blur-md border border-border/50 shadow-sm text-xs"
+    >
+      <Clock className="mr-1 h-3 w-3" />
+      {tCompletions("inProgress")}
+    </Badge>
+  );
+  const overflowMenu = showOverflowMenu && (
+    <PuzzleOverflowMenu
+      ownedId={ownedId}
+      title={view.title}
+      onLogSolve={onLogSolve}
+      onStartSolve={onStartSolve}
+      solveInProgress={solveInProgress}
+      onEdit={onEdit}
+      onShareWithCircles={onShareWithCircles}
+      onDelete={onDelete}
+      showCollection={showCollectionDropdown}
+      copyAggregateId={puzzle.aggregateId}
+      onRemoveFromCollection={onRemoveFromCollection}
+      inline={listRow}
+    />
+  );
+  const selectCheckbox = variant === "selection" && (
+    <input
+      type="checkbox"
+      checked={isSelected}
+      // Named after the puzzle; disabled when the page gives this copy no way to select it
+      // (e.g. a housemate's view-only copy in My Puzzles' selection mode).
+      aria-label={t("bulk.selectCopy", { title: view.title })}
+      disabled={!onSelect}
+      onChange={() => onSelect?.(ownedId)}
+      // The whole card already toggles selection; stop the click here from
+      // bubbling to the card so the toggle doesn't fire twice and cancel out.
+      onClick={(e) => e.stopPropagation()}
+      className="h-4 w-4"
+    />
+  );
+
+  // Image overlays: the selection ring's check and, on a grid card's cover, the in-progress badge,
+  // the ⋯ overflow chip (top-right) and the selection-variant checkbox. A list row's thumbnail is
+  // too small for those: there the badge joins the row's badges, the rest its end (rowEnd).
   const overlay = (
     <>
-      {solveInProgress && (
-        <div className="absolute top-2 left-2 z-10">
-          <Badge
-            variant="secondary"
-            className="bg-background/70 backdrop-blur-md border border-border/50 shadow-sm text-xs"
-          >
-            <Clock className="mr-1 h-3 w-3" />
-            {tCompletions("inProgress")}
-          </Badge>
-        </div>
+      {!listRow && solveBadge && (
+        <div className="absolute top-2 left-2 z-10">{solveBadge}</div>
       )}
-      {showOverflowMenu && (
-        <PuzzleOverflowMenu
-          ownedId={ownedId}
-          title={view.title}
-          onLogSolve={onLogSolve}
-          onStartSolve={onStartSolve}
-          solveInProgress={solveInProgress}
-          onEdit={onEdit}
-          onShareWithCircles={onShareWithCircles}
-          onDelete={onDelete}
-          showCollection={showCollectionDropdown}
-          copyAggregateId={puzzle.aggregateId}
-          onRemoveFromCollection={onRemoveFromCollection}
-        />
-      )}
+      {!listRow && overflowMenu}
       {isSelected && (
         <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
           <Check className="h-8 w-8 text-primary-text" />
         </div>
       )}
-      {variant === "selection" && (
-        <div className="absolute top-2 right-2">
-          <input
-            type="checkbox"
-            checked={isSelected}
-            // Named after the puzzle; disabled when the page gives this copy no way to select it
-            // (e.g. a housemate's view-only copy in My Puzzles' selection mode).
-            aria-label={t("bulk.selectCopy", { title: view.title })}
-            disabled={!onSelect}
-            onChange={() => onSelect?.(ownedId)}
-            // The whole card already toggles selection; stop the click here from
-            // bubbling to the card so the toggle doesn't fire twice and cancel out.
-            onClick={(e) => e.stopPropagation()}
-            className="h-4 w-4"
-          />
-        </div>
+      {!listRow && selectCheckbox && (
+        <div className="absolute top-2 right-2">{selectCheckbox}</div>
       )}
     </>
   );
@@ -663,8 +673,25 @@ export function PuzzleCard({
       // checkbox); the checkbox stays as the visible state + keyboard target.
       selectable={variant === "selection" && !!onSelect}
       onSelect={onSelect ? () => onSelect(ownedId) : undefined}
-      badges={badges}
+      badges={
+        listRow && solveBadge ? (
+          <>
+            {solveBadge}
+            {badges}
+          </>
+        ) : (
+          badges
+        )
+      }
       overlay={overlay}
+      rowEnd={
+        listRow && (overflowMenu || selectCheckbox) ? (
+          <>
+            {overflowMenu}
+            {selectCheckbox}
+          </>
+        ) : undefined
+      }
       footer={loanBadge}
       actions={actions}
       // The cover link navigates to the puzzle's view page. With the overflow

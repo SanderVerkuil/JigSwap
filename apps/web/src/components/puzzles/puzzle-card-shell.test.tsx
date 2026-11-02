@@ -66,10 +66,10 @@ describe("PuzzleCardShell cover renditions", () => {
     expect(cover().getAttribute("sizes")).toBe(GRID_SIZES);
   });
 
-  it("sizes the list view's cover to its fixed 128px column", () => {
+  it("sizes the list view's cover to its fixed thumbnail", () => {
     render(puzzle({ imageSrcSet: SRC_SET }), "list", GRID_SIZES);
     expect(cover().getAttribute("srcset")).toBe(SRC_SET);
-    expect(cover().getAttribute("sizes")).toBe("128px");
+    expect(cover().getAttribute("sizes")).toBe("56px");
   });
 
   it("renders the original alone, exactly as before, without renditions", () => {
@@ -137,13 +137,15 @@ const renderDensity = (
   const byText = (text: string) =>
     [...host.querySelectorAll("*")].find(
       (el) => el.children.length === 0 && el.textContent === text,
-    )!;
+    );
   return {
     cover: host.querySelector("img")!.parentElement!.classList,
+    thumbnail:
+      host.querySelector("img")!.parentElement!.parentElement!.classList,
     // The content column is the card's second child in grid mode.
-    content: byText("Sheep everywhere").parentElement!.classList,
-    description: byText("Sheep everywhere").classList,
-    tags: byText("#cartoon").parentElement!.classList,
+    content: byText("Sheep everywhere")?.parentElement?.classList,
+    description: byText("Sheep everywhere")?.classList,
+    tags: byText("#cartoon")?.parentElement?.classList,
   };
 };
 
@@ -158,14 +160,14 @@ describe("PuzzleCardShell density", () => {
     expect(card.tags).toContain("max-sm:hidden");
   });
 
-  it("keeps the list row unchanged at every width", () => {
+  it("is one compact line in list mode: a small thumbnail, no description or tags", () => {
     const card = renderDensity("list");
     expect(card.cover).toContain("aspect-square");
     expect(card.cover).not.toContain("aspect-[4/3]");
-    expect(card.content).toContain("p-4");
-    expect(card.content).not.toContain("p-3");
-    expect(card.description).not.toContain("max-sm:hidden");
-    expect(card.tags).not.toContain("max-sm:hidden");
+    expect(card.thumbnail).toContain("size-14");
+    expect(card.thumbnail).toContain("sm:size-12");
+    expect(card.description).toBeUndefined();
+    expect(card.tags).toBeUndefined();
   });
 
   it("frames a contained cover on a muted backdrop instead of bare letterbox bands", () => {

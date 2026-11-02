@@ -155,6 +155,23 @@ describe("PuzzleCard (browse)", () => {
     ).not.toContain("sm:flex-none");
   });
 
+  it("puts ⋯ at the end of a list row, not on the thumbnail", () => {
+    renderCard({ variant: "default", onEdit: vi.fn() }, "en", "list");
+    const trigger = screen.getByRole("button", {
+      name: /More actions|actions/i,
+    });
+    expect(trigger.closest(".absolute")).toBeNull();
+    expect(trigger.closest("img")).toBeNull();
+  });
+
+  it("keeps ⋯ on the cover of a grid card", () => {
+    renderCard({ variant: "default", onEdit: vi.fn() }, "en", "grid");
+    const trigger = screen.getByRole("button", {
+      name: /More actions|actions/i,
+    });
+    expect(trigger.closest(".absolute")).toBeTruthy();
+  });
+
   it("names every action button, each differently", () => {
     renderCard();
     const names = screen
