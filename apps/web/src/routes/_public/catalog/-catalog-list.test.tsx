@@ -25,6 +25,13 @@ const router = vi.hoisted(() => ({
   search: {} as PublicCatalogSearch,
   navigate: vi.fn(),
 }));
+const auth = vi.hoisted(() => ({ signedIn: false }));
+
+vi.mock("convex/react", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("convex/react")>()),
+  Unauthenticated: ({ children }: { children: ReactNode }) =>
+    auth.signedIn ? null : children,
+}));
 
 vi.mock("@/compat/link", () => ({
   Link: ({
@@ -139,6 +146,7 @@ const advanceDebounce = () => {
 
 beforeEach(() => {
   router.navigate.mockClear();
+  auth.signedIn = false;
 });
 
 afterEach(() => {
@@ -168,6 +176,20 @@ describe("public catalogue controls", () => {
     expect(
       screen.getByRole("heading", { level: 2, name: "Results" }),
     ).toBeTruthy();
+  });
+
+  it("asks visitors to join, but not members", () => {
+    const { unmount } = renderAt({});
+    expect(
+      screen.getByRole("link", { name: "Join JigSwap to request a swap" }),
+    ).toBeTruthy();
+    unmount();
+
+    auth.signedIn = true;
+    renderAt({});
+    expect(
+      screen.queryByRole("link", { name: "Join JigSwap to request a swap" }),
+    ).toBeNull();
   });
 
   it("shows the URL's filters", () => {

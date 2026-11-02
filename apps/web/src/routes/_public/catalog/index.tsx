@@ -26,6 +26,8 @@ import { seoHead } from "@/lib/seo-head";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+// sanctioned convex/react exception: Authenticated/Unauthenticated auth-state components (see tanstack-query migration spec)
+import { Unauthenticated } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { Search } from "lucide-react";
 import * as React from "react";
@@ -325,13 +327,14 @@ function CatalogListPage() {
         )}
       </div>
 
-      {/* Conversion tail for logged-out visitors (members get redirected off /catalog/$id anyway,
-          and this static CTA is harmless if they browse the list). */}
-      <div className="mt-12 flex justify-center">
-        <Button variant="brand" asChild>
-          <Link href="/sign-up">{t("joinCta")}</Link>
-        </Button>
-      </div>
+      {/* Conversion tail for logged-out visitors. */}
+      <Unauthenticated>
+        <div className="mt-12 flex justify-center">
+          <Button variant="brand" asChild>
+            <Link href="/sign-up">{t("joinCta")}</Link>
+          </Button>
+        </div>
+      </Unauthenticated>
     </main>
   );
 }

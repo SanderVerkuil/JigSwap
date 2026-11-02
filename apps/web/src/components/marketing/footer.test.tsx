@@ -10,6 +10,11 @@ import { MarketingFooter } from "./footer";
 const consent = vi.hoisted(() => ({ openCookieSettings: vi.fn() }));
 vi.mock("@/lib/analytics-consent", () => consent);
 
+const startHref = vi.hoisted(() => ({ current: "/sign-up" }));
+vi.mock("@/components/marketing/use-start-href", () => ({
+  useStartHref: () => startHref.current,
+}));
+
 vi.mock("@/compat/link", () => ({
   Link: ({ href, ...rest }: ComponentProps<"a"> & { href: string }) => (
     <a href={href} {...rest} />
@@ -38,6 +43,28 @@ const renderFooter = (locale: "en" | "nl" = "en") =>
   );
 
 afterEach(cleanup);
+
+describe("MarketingFooter start link", () => {
+  afterEach(() => {
+    startHref.current = "/sign-up";
+  });
+
+  it("invites a visitor to start", () => {
+    renderFooter();
+    expect(
+      screen.getByRole("link", { name: "Start trading" }).getAttribute("href"),
+    ).toBe("/sign-up");
+  });
+
+  it("takes a member to their dashboard, under that name", () => {
+    startHref.current = "/dashboard";
+    renderFooter();
+    expect(screen.queryByRole("link", { name: "Start trading" })).toBeNull();
+    expect(
+      screen.getByRole("link", { name: "Dashboard" }).getAttribute("href"),
+    ).toBe("/dashboard");
+  });
+});
 
 describe("MarketingFooter legal links", () => {
   it("points Cookie policy at the cookie section, not the top of the privacy policy", () => {
