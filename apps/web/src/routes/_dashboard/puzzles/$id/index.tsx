@@ -163,10 +163,11 @@ function PuzzleDefinitionDetail({
     availableCopies,
     totalAvailable,
   } = view;
-  // The member's own copy, when they have one, is the page's primary destination.
+  // The member's own copy, when they have one, is the page's primary destination. It opens in the
+  // owner's frame (My Library › My Puzzles), not Browse's /copies frame.
   const ownCopyHref =
     ownership.viewerOwns && ownership.copyId
-      ? `/copies/${ownership.copyId}`
+      ? `/my-puzzles/${ownership.copyId}`
       : null;
   const noCopiesOffered = totalAvailable === 0;
   const noCopiesHintId = useId();

@@ -313,7 +313,8 @@ describe("puzzle detail page: actions", () => {
     renderPage();
 
     const viewCopy = screen.getByRole("link", { name: t.viewYourCopy });
-    expect(viewCopy.getAttribute("href")).toBe("/copies/copy_9");
+    // The owner's frame of the copy: My Library › My Puzzles › <name>, not Browse's.
+    expect(viewCopy.getAttribute("href")).toBe("/my-puzzles/copy_9");
     // It is the primary action, ahead of adding another copy, and the only link to the copy.
     const addAnother = screen.getByRole("button", {
       name: en.puzzles.addToLibrary,
