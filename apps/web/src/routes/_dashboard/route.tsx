@@ -10,12 +10,12 @@ import { PageLoading } from "@/components/ui/loading";
 import { WhatsNewHighlight } from "@/components/whats-new/highlight-dialog";
 import { requireAuth } from "@/lib/require-auth";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { useTranslations } from "use-intl";
 
 // Pathless layout for the logged-in app. Auth: requireAuth reads the Clerk
 // userId off the root context in beforeLoad and redirects to sign-in when
-// absent. Chrome: the console-style inset shell (tinted surface + global top
-// bar + transparent grouped sidebar + floating content card) lives in
-// components/dashboard-layout — page titles/subtitles/breadcrumbs come from
+// absent. Chrome: the framed-sheet shell (sky frame + global top bar + grouped
+// sidebar + white sheet) lives in components/dashboard-layout — page titles/subtitles/breadcrumbs come from
 // the central route-meta map there, so leaf routes don't touch the shell.
 // Static (non-$id) routes under /puzzles/ that must NOT be treated as a puzzle
 // id by the public-catalog handoff below. `/puzzles/` (the index) can't match
@@ -36,11 +36,16 @@ export const Route = createFileRoute("/_dashboard")({
     }
     return requireAuth({ context, location });
   },
-  pendingComponent: () => <PageLoading message="Loading dashboard..." />,
+  pendingComponent: DashboardPending,
   // 404 inside the app renders within the dashboard shell (this layout's Outlet).
   notFoundComponent: AppNotFound,
   component: DashboardLayout,
 });
+
+function DashboardPending() {
+  const t = useTranslations("shell");
+  return <PageLoading message={t("loading")} />;
+}
 
 function DashboardLayout() {
   return (

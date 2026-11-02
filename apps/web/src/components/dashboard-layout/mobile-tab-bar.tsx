@@ -89,10 +89,11 @@ export function MobileTabBar() {
         // it scrolls smoothly and stays flush as the address bar shows/hides —
         // unlike fixed, which the browser re-snaps to the layout viewport after
         // the toolbar animation (the jitter + the gap when the address bar
-        // appears). No env(safe-area-inset-bottom) pad: the mobile browser's
-        // bottom chrome already clears the home indicator, and on this target it
-        // reports a non-zero inset even with the address bar up, which showed as
-        // a standing gap below the bar. z-30 + overflow-visible keep the raised
+        // appears). No env(safe-area-inset-bottom) pad in a browser tab: the mobile
+        // browser's bottom chrome already clears the home indicator, and on this
+        // target it reports a non-zero inset even with the address bar up, which
+        // showed as a standing gap below the bar. An installed app has no such
+        // chrome, so there it pads. z-30 + overflow-visible keep the raised
         // center button (which rises above the bar via -mt) painted above page
         // content and unclipped.
         //
@@ -108,7 +109,7 @@ export function MobileTabBar() {
         // transition. Helps the gap most on Firefox for Android, whose Gecko
         // compositor otherwise lets a sticky bottom bar trail/detach more than
         // Blink does.
-        className="sticky bottom-0 z-30 grid shrink-0 grid-cols-5 items-stretch overflow-visible border-t bg-card shadow-[0_24px_0_0_var(--card)] [will-change:transform] md:hidden"
+        className="sticky bottom-0 z-30 grid shrink-0 grid-cols-5 items-stretch overflow-visible border-t bg-card shadow-[0_24px_0_0_var(--card)] [will-change:transform] md:hidden [@media(display-mode:standalone)]:pb-[env(safe-area-inset-bottom)]"
       >
         {TABS.slice(0, 2).map((tab) => (
           <TabLink key={tab.key} tab={tab} active={active} />
@@ -116,17 +117,18 @@ export function MobileTabBar() {
         <div className="flex items-center justify-center">
           <button
             type="button"
+            data-tour="my-puzzles-add"
             onClick={() => setSheetOpen(true)}
             aria-label={
               whatsNewCount > 0
                 ? t("openQuickActionsUnread", { count: whatsNewCount })
                 : t("openQuickActions")
             }
-            className="bg-jigsaw-primary ring-card relative -mt-[22px] inline-flex size-[52px] items-center justify-center rounded-full text-white shadow-[0_8px_22px_-6px_color-mix(in_oklab,var(--jigsaw-primary)_65%,transparent)] ring-4"
+            className="bg-jigsaw-gold text-jigsaw-on-gold hover:bg-mk-gold-press focus-visible:ring-ring/50 relative -mt-[22px] inline-flex size-[52px] items-center justify-center rounded-xl transition-[background-color,scale] duration-[160ms] ease-[cubic-bezier(0.23,1,0.32,1)] outline-none focus-visible:ring-[3px] motion-safe:active:scale-[0.97]"
           >
             <Plus className="size-6" />
             {whatsNewCount > 0 && (
-              <UnreadDot className="ring-card top-0.5 right-0.5 size-2.5" />
+              <UnreadDot className="ring-card -top-1 -right-1 size-2.5" />
             )}
           </button>
         </div>
@@ -170,17 +172,28 @@ function TabLink({
       aria-label={t(`tabs.${tab.key}`)}
       aria-current={on ? "page" : undefined}
       className={cn(
-        "flex min-h-14 flex-col items-center justify-center",
-        on ? "text-jigsaw-primary" : "text-muted-foreground",
+        "focus-visible:ring-ring/50 flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 transition-transform duration-[160ms] ease-[cubic-bezier(0.23,1,0.32,1)] outline-none focus-visible:ring-[3px] focus-visible:ring-inset motion-safe:active:scale-[0.97]",
+        on ? "text-foreground" : "text-muted-foreground",
       )}
     >
       <span className="relative">
-        <tab.icon className="size-[21px]" />
+        <tab.icon
+          className={cn("size-[21px]", on && "fill-current")}
+          strokeWidth={on ? 2.25 : 1.75}
+        />
         {badge > 0 && (
           <span className="bg-jigsaw-primary-accent absolute -top-1 -right-2 inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-full px-1 text-[10px] leading-none font-bold text-white">
             {badge > 9 ? "9+" : badge}
           </span>
         )}
+      </span>
+      <span
+        className={cn(
+          "text-xs leading-none",
+          on ? "font-semibold" : "font-medium",
+        )}
+      >
+        {t(`tabs.${tab.key}`)}
       </span>
     </Link>
   );

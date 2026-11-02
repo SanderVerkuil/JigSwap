@@ -3,7 +3,8 @@
 // ⌘K command palette: a real global search across Puzzles, People, Circles and the member's
 // Collections (gateway.search.global) plus the static "Go To" nav destinations and quick actions.
 // While a term is typed, live result groups render above the nav fallback; with an empty input the
-// palette is a pure jump-to navigator. Opened from the top-bar search pill or Cmd/Ctrl+K.
+// palette is a pure jump-to navigator. Opened from the top-bar search control or Cmd/Ctrl+K. It opens
+// and closes without animation, because it is pressed many times a day; other dialogs keep theirs.
 import { useUser } from "@/compat/clerk";
 import { useRouter } from "@/compat/navigation";
 import {
@@ -138,13 +139,15 @@ export function CommandPalette({
       onOpenChange={handleOpenChange}
       title={t("search.label")}
       description={t("search.inputPlaceholder")}
+      // The dialog primitive animates on data-state, so match it; the backdrop is the sibling before.
+      className="data-[state=closed]:animate-none! data-[state=open]:animate-none [[data-slot=dialog-overlay]:has(+&)]:animate-none!"
     >
       <CommandInput
         placeholder={t("search.inputPlaceholder")}
         value={value}
         onValueChange={setValue}
       />
-      <CommandList>
+      <CommandList className="[scrollbar-color:color-mix(in_oklab,var(--muted-foreground)_45%,transparent)_transparent] [scrollbar-width:thin]">
         {hasTerm ? (
           <>
             {isSearching ? (

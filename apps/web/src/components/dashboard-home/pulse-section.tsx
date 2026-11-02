@@ -39,11 +39,11 @@ const ACTIVE_STATUSES = new Set(["proposed", "accepted", "disputed"]);
 
 /* ----------------------------------------------------------- In Motion */
 
-// Soft status pill tones: Pending amber, Accepted/Disputed violet,
+// Soft status chip tones: Pending and Disputed amber, Accepted canal,
 // Completed green — everything else muted.
 const PILL_TONES: Record<string, string> = {
   proposed: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  accepted: "bg-jigsaw-primary/10 text-jigsaw-primary",
+  accepted: "bg-jigsaw-primary/10 text-primary-text",
   disputed: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
   completed: "bg-green-500/15 text-green-700 dark:text-green-400",
 };
@@ -61,7 +61,7 @@ function StatusPill({ status }: { status: ExchangeRow["status"] }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold",
+        "inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-bold",
         PILL_TONES[status] ?? "bg-muted text-muted-foreground",
       )}
     >
@@ -179,7 +179,7 @@ function InMotionColumn({ exchanges }: { exchanges: ExchangeRow[] }) {
 
 /* --------------------------------------------------------------- Goals */
 
-// The SVG goal ring: a muted track with the brand-violet progress arc and the
+// The SVG goal ring: a muted track with the canal progress arc and the
 // big percentage in the middle.
 function GoalRing({
   current,
@@ -213,7 +213,7 @@ function GoalRing({
           cy={mid}
           r={r}
           fill="none"
-          stroke="var(--jigsaw-primary)"
+          stroke="var(--primary-text)"
           strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={`${c * p} ${c}`}
@@ -221,10 +221,10 @@ function GoalRing({
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-0.5">
-        <span className="font-heading text-3xl leading-none font-bold">
+        <span className="font-sans text-3xl leading-none font-semibold tabular-nums">
           {Math.round(p * 100)}%
         </span>
-        <span className="text-muted-foreground font-mono text-xs">
+        <span className="text-muted-foreground text-xs tabular-nums">
           {t("done", { current, target })}
         </span>
       </div>
@@ -244,13 +244,13 @@ function GoalBar({ goal }: { goal: GoalRow }) {
     <Link href="/goals" className="block">
       <div className="mb-1.5 flex items-baseline justify-between gap-2.5">
         <span className="truncate text-xs font-semibold">{goal.title}</span>
-        <span className="text-muted-foreground font-mono text-xs whitespace-nowrap">
+        <span className="text-muted-foreground text-xs tabular-nums whitespace-nowrap">
           {goal.currentCompletions}/{goal.targetCompletions}
         </span>
       </div>
       <div className="bg-muted h-1.5 overflow-hidden rounded-full">
         <div
-          className="bg-jigsaw-primary h-full rounded-full transition-[width] duration-500"
+          className="bg-primary-text h-full rounded-full"
           style={{ width: `${pct}%` }}
         />
       </div>
