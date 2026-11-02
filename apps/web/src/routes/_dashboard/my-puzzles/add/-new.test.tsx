@@ -215,7 +215,7 @@ describe("adding a copy of a catalogue puzzle", () => {
       expect(offerChip(name).getAttribute("aria-pressed")).toBe("false");
     }
 
-    fireEvent.click(screen.getByRole("button", { name: "Add to Library" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add to my puzzles" }));
 
     await waitFor(() => expect(callsTo(ACQUIRE)).toHaveLength(1));
     await waitFor(() => expect(mocks.navigate).toHaveBeenCalled());
@@ -226,7 +226,7 @@ describe("adding a copy of a catalogue puzzle", () => {
     renderPage({ puzzleId: PUZZLE_DOC_ID });
     fireEvent.click(offerChip("For Loan"));
 
-    fireEvent.click(screen.getByRole("button", { name: "Add to Library" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add to my puzzles" }));
 
     await waitFor(() => expect(callsTo(UPDATE_SHARING)).toHaveLength(1));
     expect(callsTo(UPDATE_SHARING)[0]).toMatchObject({
@@ -251,7 +251,7 @@ describe("adding a copy of a catalogue puzzle", () => {
     renderPage({ puzzleId: PUZZLE_DOC_ID });
     fireEvent.click(offerChip("For Loan"));
 
-    fireEvent.click(screen.getByRole("button", { name: "Add to Library" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add to my puzzles" }));
 
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith(en.puzzles.addedNotOffered),
@@ -300,7 +300,7 @@ describe("condition", () => {
     ).toEqual(["New (sealed)", "Like new", "Good", "Fair", "Poor"]);
 
     fireEvent.click(screen.getByRole("radio", { name: "New (sealed)" }));
-    fireEvent.click(screen.getByRole("button", { name: "Add to Library" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add to my puzzles" }));
 
     await waitFor(() => expect(callsTo(ACQUIRE)).toHaveLength(1));
     expect(callsTo(ACQUIRE)[0]).toMatchObject({ condition: "new_sealed" });
@@ -321,7 +321,7 @@ describe("creating a new puzzle", () => {
 describe("after adding", () => {
   it("lands on the new copy's page and offers to add another", async () => {
     renderPage({ puzzleId: PUZZLE_DOC_ID });
-    fireEvent.click(screen.getByRole("button", { name: "Add to Library" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add to my puzzles" }));
 
     expect(await landing()).toEqual({
       to: "/my-puzzles/$id",
@@ -349,7 +349,7 @@ describe("after adding", () => {
       return null;
     });
     renderPage({ puzzleId: PUZZLE_DOC_ID });
-    fireEvent.click(screen.getByRole("button", { name: "Add to Library" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add to my puzzles" }));
 
     expect(await landing()).toEqual({ to: "/my-puzzles", ignoreBlocker: true });
     // The copy was added: no failure toast.
@@ -359,7 +359,7 @@ describe("after adding", () => {
 
   it("goes back to the flow it came from when returnTo is set", async () => {
     renderPage({ puzzleId: PUZZLE_DOC_ID, returnTo: "/welcome?step=puzzles" });
-    fireEvent.click(screen.getByRole("button", { name: "Add to Library" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add to my puzzles" }));
 
     expect(await landing()).toEqual({
       href: "/welcome?step=puzzles",

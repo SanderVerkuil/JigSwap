@@ -83,7 +83,9 @@ describe("PuzzleCard variant='pick'", () => {
       screen.getByRole("link", { name: "Puzzle a" }).getAttribute("href"),
     ).toBe(addHref);
     expect(
-      screen.getByRole("link", { name: "Add to Library" }).getAttribute("href"),
+      screen
+        .getByRole("link", { name: "Add to my puzzles" })
+        .getAttribute("href"),
     ).toBe(addHref);
   });
 
@@ -154,7 +156,7 @@ describe("PuzzlePickList", () => {
     expect(rows.className).toContain("sm:hidden");
     // Named by what it shows (label in name), ending in what it does.
     const add = within(rows).getByRole("link", {
-      name: "Puzzle a 1,000 pieces · Ravensburger Add to Library",
+      name: "Puzzle a 1,000 pieces · Ravensburger Add to my puzzles",
     });
     expect(add.getAttribute("href")).toBe("/my-puzzles/add/new?puzzleId=doc_a");
     expect(add.className).toContain("min-h-12");
@@ -168,7 +170,7 @@ describe("PuzzlePickList", () => {
   it("renders the pick cards from sm up", () => {
     renderList();
     const adds = screen.getAllByRole("link", {
-      name: /^(Add to Library|Add another copy)$/,
+      name: /^(Add to my puzzles|Add another copy)$/,
     });
     expect(adds).toHaveLength(3);
     const grid = adds[0].closest(".sm\\:grid");
@@ -197,7 +199,7 @@ describe("PuzzlePickList", () => {
     renderList("nl");
     expect(
       screen.getByRole("link", {
-        name: "Puzzle a 1.000 stukjes · Ravensburger Toevoegen aan bibliotheek",
+        name: "Puzzle a 1.000 stukjes · Ravensburger Toevoegen aan mijn puzzels",
       }),
     ).toBeTruthy();
     expect(screen.getAllByText("Op je plank").length).toBeGreaterThan(0);

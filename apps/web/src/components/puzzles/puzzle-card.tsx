@@ -25,7 +25,7 @@ interface PuzzleCardProps {
   /**
    * "catalogue" (default): the card opens the catalogue page, with a heart and a + to add a copy.
    * "pick": the Add Puzzle chooser's card. The whole card opens the add-a-copy form, with a
-   * labelled "Add to Library" button and a small Details link; no heart.
+   * labelled "Add to my puzzles" button and a small Details link; no heart.
    */
   variant?: "catalogue" | "pick";
   /** The member already owns a copy of this puzzle ("On your shelf"). */

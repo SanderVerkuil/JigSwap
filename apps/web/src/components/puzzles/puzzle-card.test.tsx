@@ -270,7 +270,9 @@ describe("catalogue PuzzleCard", () => {
         .getAttribute("aria-pressed"),
     ).toBe("false");
     expect(
-      screen.getByRole("link", { name: "Add to Library" }).getAttribute("href"),
+      screen
+        .getByRole("link", { name: "Add to my puzzles" })
+        .getAttribute("href"),
     ).toBe("/my-puzzles/add/new?puzzleId=p1");
   });
 
@@ -278,7 +280,7 @@ describe("catalogue PuzzleCard", () => {
     render(<CatalogCard puzzle={summary()} />, "grid", "nl");
     expect(
       screen
-        .getByRole("link", { name: "Toevoegen aan bibliotheek" })
+        .getByRole("link", { name: "Toevoegen aan mijn puzzels" })
         .getAttribute("href"),
     ).toBe("/my-puzzles/add/new?puzzleId=p1");
   });
