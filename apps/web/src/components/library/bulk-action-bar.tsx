@@ -114,7 +114,9 @@ export function BulkActionBar({
           data-testid="bulk-actions-compact"
           className="grid grid-cols-[auto_minmax(0,1fr)] gap-2 @2xl:hidden"
         >
-          <DropdownMenu>
+          {/* Not modal: a modal menu locks the page's scroll, which stops this bar sticking, so on a
+              phone the bar would drop to the end of the list and take the menu off screen. */}
+          <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button
                 type="button"

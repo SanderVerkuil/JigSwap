@@ -99,6 +99,20 @@ describe("BulkActionBar", () => {
     expect(all.onClear).toHaveBeenCalledOnce();
   });
 
+  it("opens the Offers menu without locking the page's scroll", async () => {
+    // A scroll lock stops the sticky bar sticking: on a phone it drops to the end of the list and
+    // takes the menu off screen with it. happy-dom has no layout, so the lock is what's checked.
+    renderBar({ selectedCount: 2 });
+    const compact = within(screen.getByTestId("bulk-actions-compact"));
+    const trigger = compact.getByRole("button", { name: "Offers" });
+    fireEvent.pointerDown(trigger, { button: 0, ctrlKey: false });
+
+    expect(
+      await screen.findByRole("menuitem", { name: "Offer to lend" }),
+    ).toBeTruthy();
+    expect(document.body.hasAttribute("data-scroll-locked")).toBe(false);
+  });
+
   it("leaves selection mode from its own close button", () => {
     const on = renderBar({ selectedCount: 1 });
     fireEvent.click(screen.getByRole("button", { name: "Stop selecting" }));
