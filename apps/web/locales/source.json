@@ -396,6 +396,7 @@
     "textTooLong": "One of the fields is too long. Shorten it and try again.",
     "noPuzzleSelected": "Please select a puzzle first",
     "puzzleAdded": "Added to My Puzzles",
+    "addedNotOffered": "Added to My Puzzles, but we couldn't offer it. You can switch that on from the puzzle's page.",
     "addAnother": "Add another",
     "puzzleAdditionFailed": "Failed to add puzzle to collection",
     "addToCollection": "Add to Collection",

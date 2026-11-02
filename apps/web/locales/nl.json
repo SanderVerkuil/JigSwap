@@ -396,6 +396,7 @@
     "textTooLong": "Een van de velden is te lang. Maak het korter en probeer het opnieuw.",
     "noPuzzleSelected": "Selecteer eerst een puzzel",
     "puzzleAdded": "Toegevoegd aan je puzzels",
+    "addedNotOffered": "Toegevoegd aan je puzzels, maar aanbieden is niet gelukt. Dat kun je aanzetten op de pagina van de puzzel.",
     "addAnother": "Nog een toevoegen",
     "puzzleAdditionFailed": "Puzzel toevoegen aan collectie mislukt",
     "addToCollection": "Toevoegen aan collectie",

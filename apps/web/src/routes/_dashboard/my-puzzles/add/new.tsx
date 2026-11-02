@@ -389,28 +389,43 @@ function AddPuzzlePage() {
         throw new CopyStepError(error);
       })) as string;
 
-      // 3. Apply availability if any chip is on.
+      // 3. Apply availability if any chip is on. The copy exists by now: a failed offer must not
+      // read as a failed add, or a retry adds a second copy. It stays unoffered, and the toast says
+      // so; its page has the switches.
+      let notOffered = false;
       if (hasAnyAvailability(form.availability)) {
-        await updateSharing(availabilityToSharing(copyId, form.availability));
+        try {
+          await updateSharing(availabilityToSharing(copyId, form.availability));
+        } catch (error) {
+          console.error("Offering the new copy failed:", error);
+          notOffered = true;
+        }
       }
 
       // 4. Land on the new copy, unless the member stays on the form or a flow takes them back.
-      return andAnother || returnTo ? null : await resolveCopyPageId(copyId);
+      return {
+        notOffered,
+        copyPageId:
+          andAnother || returnTo ? null : await resolveCopyPageId(copyId),
+      };
     },
-    onSuccess: (copyPageId, { andAnother }) => {
+    onSuccess: ({ copyPageId, notOffered }, { andAnother }) => {
+      if (notOffered) toast.error(t("addedNotOffered"));
       if (andAnother) {
-        toast.success(t("puzzleAdded"));
+        if (!notOffered) toast.success(t("puzzleAdded"));
         resetForm();
       } else if (returnTo) {
-        toast.success(t("puzzleAdded"));
+        if (!notOffered) toast.success(t("puzzleAdded"));
         void navigate({ href: returnTo });
       } else {
-        toast.success(t("puzzleAdded"), {
-          action: {
-            label: t("addAnother"),
-            onClick: () => void navigate({ to: "/my-puzzles/add" }),
-          },
-        });
+        if (!notOffered) {
+          toast.success(t("puzzleAdded"), {
+            action: {
+              label: t("addAnother"),
+              onClick: () => void navigate({ to: "/my-puzzles/add" }),
+            },
+          });
+        }
         if (copyPageId) {
           void navigate({ to: "/my-puzzles/$id", params: { id: copyPageId } });
         } else {

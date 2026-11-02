@@ -213,6 +213,33 @@ describe("adding a copy of a catalogue puzzle", () => {
       forSale: false,
     });
   });
+
+  // The copy exists by then: reading this as a failed add would invite a retry, which adds a second.
+  it("keeps the added copy when offering it fails, and says so instead of asking to retry", async () => {
+    vi.mocked(toast.success).mockClear();
+    vi.mocked(toast.error).mockClear();
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    mocks.call.mockImplementation(async (name: string) => {
+      if (name === UPDATE_SHARING) throw new Error("offline");
+      if (name === ACQUIRE) return "copy_agg_1";
+      if (name === COPY_DOC_ID) return "copy_doc_1";
+      return null;
+    });
+    renderPage({ puzzleId: PUZZLE_DOC_ID });
+    fireEvent.click(offerChip("For Loan"));
+
+    fireEvent.click(screen.getByRole("button", { name: "Add to Library" }));
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(en.puzzles.addedNotOffered),
+    );
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(callsTo(ACQUIRE)).toHaveLength(1);
+    expect(mocks.navigate).toHaveBeenCalledWith({
+      to: "/my-puzzles/$id",
+      params: { id: "copy_doc_1" },
+    });
+  });
 });
 
 describe("condition", () => {
