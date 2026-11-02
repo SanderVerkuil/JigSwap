@@ -210,6 +210,87 @@ describe("CookieConsent (mini)", () => {
     }
   });
 
+  it.each([
+    ["true", "en", "You currently allow analytics."],
+    ["false", "en", "You currently don't allow analytics."],
+    ["true", "nl", "Je staat analyse nu toe."],
+    ["false", "nl", "Je staat analyse nu niet toe."],
+  ] as const)(
+    "says what the current choice is when reopened (cookie %s, %s)",
+    (cookie, locale, line) => {
+      setConsentCookie(cookie);
+      render(banner(locale));
+
+      act(() => openCookieSettings());
+
+      expect(screen.getByText(line)).toBeTruthy();
+    },
+  );
+
+  it("leaves the choice alone when the reopened banner is closed with its button", () => {
+    setConsentCookie("true");
+    render(banner());
+    const opener = screen.getByRole("button", { name: "Open settings" });
+    act(() => opener.focus());
+    fireEvent.click(opener);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Close cookie settings" }),
+    );
+
+    expect(region()).toBeNull();
+    expect(readAnalyticsConsent(document.cookie)).toBe("granted");
+    expect(document.activeElement).toBe(opener);
+  });
+
+  it("leaves the choice alone when the reopened banner is closed with Escape", () => {
+    setConsentCookie("false");
+    render(banner());
+    const opener = screen.getByRole("button", { name: "Open settings" });
+    act(() => opener.focus());
+    fireEvent.click(opener);
+
+    fireEvent.keyDown(document.body, { key: "Escape" });
+
+    expect(region()).toBeNull();
+    expect(readAnalyticsConsent(document.cookie)).toBe("denied");
+    expect(document.activeElement).toBe(opener);
+  });
+
+  it("leaves Escape to a layer that already handled it", () => {
+    setConsentCookie("false");
+    render(banner());
+    act(() => openCookieSettings());
+
+    const consumed = new KeyboardEvent("keydown", {
+      key: "Escape",
+      bubbles: true,
+      cancelable: true,
+    });
+    consumed.preventDefault();
+    fireEvent(document.body, consumed);
+
+    expect(region()).toBeTruthy();
+  });
+
+  it("can't be dismissed before the visitor has chosen", () => {
+    render(banner());
+
+    expect(
+      screen.queryByRole("button", { name: "Close cookie settings" }),
+    ).toBeNull();
+    fireEvent.keyDown(document.body, { key: "Escape" });
+    expect(region()).toBeTruthy();
+
+    // "Cookie settings" before any choice is the same question.
+    act(() => openCookieSettings());
+    expect(
+      screen.queryByRole("button", { name: "Close cookie settings" }),
+    ).toBeNull();
+    fireEvent.keyDown(document.body, { key: "Escape" });
+    expect(region()).toBeTruthy();
+  });
+
   it("moves focus into the reopened banner and back to Cookie settings afterwards", () => {
     setConsentCookie("true");
     render(banner());

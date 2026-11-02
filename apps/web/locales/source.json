@@ -1796,7 +1796,10 @@
       "acceptText": "Allow analytics",
       "declineText": "No thanks",
       "learnMoreText": "Learn more",
-      "acceptanceText": "By choosing \"Allow analytics\", you agree to analytics cookies from PostHog."
+      "acceptanceText": "By choosing \"Allow analytics\", you agree to analytics cookies from PostHog.",
+      "currentGranted": "You currently allow analytics.",
+      "currentDenied": "You currently don't allow analytics.",
+      "closeSettings": "Close cookie settings"
     },
     "children": {
       "title": "Children",

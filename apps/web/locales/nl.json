@@ -1796,7 +1796,10 @@
       "acceptText": "Analyse toestaan",
       "declineText": "Nee, bedankt",
       "learnMoreText": "Meer informatie",
-      "acceptanceText": "Kies je \"Analyse toestaan\", dan ga je akkoord met analysecookies van PostHog."
+      "acceptanceText": "Kies je \"Analyse toestaan\", dan ga je akkoord met analysecookies van PostHog.",
+      "currentGranted": "Je staat analyse nu toe.",
+      "currentDenied": "Je staat analyse nu niet toe.",
+      "closeSettings": "Cookie-instellingen sluiten"
     },
     "children": {
       "title": "Kinderen",

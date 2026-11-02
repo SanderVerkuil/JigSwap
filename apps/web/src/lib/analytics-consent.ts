@@ -85,6 +85,12 @@ export function openCookieSettings(): void {
   notifyConsentListeners();
 }
 
+// Leave a reopened banner without changing anything.
+export function closeCookieSettings(): void {
+  settingsRequested = false;
+  notifyConsentListeners();
+}
+
 function recordDecision(decision: "granted" | "denied") {
   writeAnalyticsConsent(decision);
   sessionDecision = decision;

@@ -10,6 +10,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  closeCookieSettings,
+  currentAnalyticsConsent,
   getCookieBannerSnapshot,
   grantAnalyticsConsent,
   subscribeConsent,
@@ -18,7 +20,7 @@ import {
 } from "@/lib/analytics-consent";
 import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
-import { Cookie } from "lucide-react";
+import { Cookie, X } from "lucide-react";
 import * as React from "react";
 import { useTranslations } from "use-intl";
 
@@ -82,11 +84,32 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
       regionRef.current?.focus();
     }, [state]);
 
-    const returnFocus = () => {
+    const returnFocus = React.useCallback(() => {
       const opener = openerRef.current;
       openerRef.current = null;
       if (opener?.isConnected) opener.focus();
-    };
+    }, []);
+
+    // Someone who already chose may reopen the banner just to check: it says
+    // what the choice is, and they can leave without answering (the close
+    // button or Escape). A visitor who hasn't chosen still has to answer.
+    const choice = state === "settings" ? currentAnalyticsConsent() : "unset";
+    const canClose = choice !== "unset";
+
+    const handleClose = React.useCallback(() => {
+      closeCookieSettings();
+      returnFocus();
+    }, [returnFocus]);
+
+    // An Escape another layer already consumed (a dialog) is left alone.
+    React.useEffect(() => {
+      if (!canClose) return;
+      const onKeyDown = (event: KeyboardEvent) => {
+        if (event.key === "Escape" && !event.defaultPrevented) handleClose();
+      };
+      document.addEventListener("keydown", onKeyDown);
+      return () => document.removeEventListener("keydown", onKeyDown);
+    }, [canClose, handleClose]);
 
     // Use provided description or fall back to translation, which links to
     // the cookie section of the privacy policy.
@@ -218,10 +241,22 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
     if (variant === "mini") {
       return (
         <div {...commonWrapperProps}>
-          <Card className="mx-3 p-0 py-3 shadow-lg">
+          <Card className="relative mx-3 p-0 py-3 shadow-lg">
             <CardContent className="sm:flex grid gap-4 p-0 px-3.5">
-              <CardDescription className="text-xs sm:text-sm flex-1">
+              <CardDescription
+                className={cn(
+                  "text-xs sm:text-sm flex-1",
+                  canClose && "max-sm:pr-8",
+                )}
+              >
                 {consentDescription}
+                {canClose && (
+                  <span className="mt-1 block font-medium text-foreground">
+                    {t(
+                      choice === "granted" ? "currentGranted" : "currentDenied",
+                    )}
+                  </span>
+                )}
               </CardDescription>
               <div className="flex items-center gap-2 justify-end sm:gap-3">
                 <Button
@@ -234,6 +269,18 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
                 <Button onClick={handleAccept} className="h-10 px-4 text-sm">
                   {t("acceptText")}
                 </Button>
+                {canClose && (
+                  // In the corner on phones, where the buttons fill the row.
+                  <Button
+                    onClick={handleClose}
+                    variant="ghost"
+                    size="icon"
+                    aria-label={t("closeSettings")}
+                    className="size-10 max-sm:absolute max-sm:top-1 max-sm:right-1"
+                  >
+                    <X className="size-4" />
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
