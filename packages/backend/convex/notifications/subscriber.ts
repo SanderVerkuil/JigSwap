@@ -141,8 +141,9 @@ const memberName = async (
     .unique();
   // Profile display name first, then account name/username. Never the email: the recipient is
   // another member. The snapshot is copied into every recipient's row, so it is stored the way the
-  // out-of-band copy shows it (inviterNameForEmail: no control or bidi characters, at most
-  // INVITER_NAME_MAX_LENGTH characters), never as an unbounded member-chosen string.
+  // out-of-band copy shows it (inviterNameForEmail: no control or bidi characters, no link or email
+  // address words, at most INVITER_NAME_MAX_LENGTH characters), never as an unbounded member-chosen
+  // string.
   const actorName = inviterNameForEmail(memberDisplayNameOf(user, profile));
   return actorName ? { actorName } : {};
 };

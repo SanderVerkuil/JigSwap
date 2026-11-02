@@ -304,8 +304,9 @@ const COPY: Record<NotificationType, (p: Params) => NotificationText> = {
 
 // The actor's name is member-chosen text that reaches lock screens in the push title and body. It
 // follows the rule invitation emails apply to the inviter's name (domain inviterNameForEmail): line
-// breaks and control characters flattened, bidi and other invisible format characters dropped, at
-// most INVITER_NAME_MAX_LENGTH characters. A name with nothing printable left counts as no name.
+// breaks and control characters flattened, bidi and other invisible format characters dropped,
+// words that look like a link or an email address dropped, at most INVITER_NAME_MAX_LENGTH
+// characters. A name with nothing left counts as no name.
 const withSafeActorName = (params: Params): Params => {
   const { actorName, ...rest } = params;
   if (actorName === undefined) return params;

@@ -57,9 +57,9 @@ const hasValues = (
 
 // The actor's name is member-chosen text that reaches the subject, heading and body. It follows
 // the rule invitation emails apply to the inviter's name (domain inviterNameForEmail): line breaks
-// and control characters flattened, bidi and other invisible format characters dropped, at most
-// INVITER_NAME_MAX_LENGTH characters. A name with nothing printable left is dropped, so the
-// localized default ("Someone") stands in.
+// and control characters flattened, bidi and other invisible format characters dropped, words that
+// look like a link or an email address dropped, at most INVITER_NAME_MAX_LENGTH characters. A name
+// with nothing left is dropped, so the localized default ("Someone") stands in.
 const withSafeActorName = (
   params: Readonly<Record<string, string>>,
 ): Readonly<Record<string, string>> => {

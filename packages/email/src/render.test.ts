@@ -99,16 +99,17 @@ describe("renderEmail", () => {
     }
   });
 
-  it("flattens line breaks in the actor name", async () => {
+  it("flattens line breaks and drops an email address in the actor name", async () => {
     const email = await renderEmail({
       type: "message_received",
       params: { actorName: "Anna\r\nBcc: x@evil.example" },
       locale: "en",
       baseUrl: BASE,
     });
-    expect(email.subject).toBe(
-      "New message from Anna Bcc: x@evil.example on JigSwap",
-    );
+    expect(email.subject).toBe("New message from Anna Bcc: on JigSwap");
+    for (const output of [email.subject, email.html, email.text]) {
+      expect(output).not.toContain("evil.example");
+    }
   });
 
   it("falls back to the plain brand from name without an actor (never the Someone placeholder)", async () => {
