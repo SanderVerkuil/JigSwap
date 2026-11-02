@@ -44,6 +44,7 @@ const member: Member = {
   _creationTime: 0,
   clerkId: "clerk_me",
   name: "Ann Example",
+  handle: "ann-example",
   isActive: true,
   createdAt: 0,
   updatedAt: 0,
