@@ -153,3 +153,25 @@ describe("MobileQuickSheet help entry (UX-91)", () => {
     expect(rowNames()).toContain("Hulp en rondleidingen");
   });
 });
+
+// The sheet has to be closable without seeing the backdrop: a screen reader doesn't expose it, so
+// without a button the only way out was to pick an item.
+describe("MobileQuickSheet close button", () => {
+  it("offers a named close button that closes the sheet", () => {
+    renderSheet();
+    fireEvent.click(screen.getByRole("button", { name: en.common.close }));
+    expect(mocks.onOpenChange).toHaveBeenCalledWith(false);
+    expect(screen.getByRole("dialog").className).not.toContain(
+      "[&>button]:hidden",
+    );
+  });
+
+  it("shows its title in place of a drag handle that never dragged", () => {
+    renderSheet();
+    const title = screen.getByRole("heading", {
+      name: en.shell.search.quickActions,
+    });
+    expect(title.className).not.toContain("sr-only");
+    expect(screen.getByRole("dialog").querySelector(".bg-border")).toBeNull();
+  });
+});
