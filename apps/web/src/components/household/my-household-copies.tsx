@@ -340,7 +340,11 @@ function CopyRow({
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="truncate text-sm font-medium">{title}</div>
+        {/* Two lines, not one: touch has no tooltip, and similar titles must stay tellable apart
+            before a bulk change. */}
+        <div className="line-clamp-2 text-sm font-medium [overflow-wrap:anywhere]">
+          {title}
+        </div>
         <div className="text-muted-foreground text-xs">{sourceLabel}</div>
       </div>
       <Badge
