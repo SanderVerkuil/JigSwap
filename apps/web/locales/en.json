@@ -1023,7 +1023,8 @@
     "self": "This is your own puzzle.",
     "ownerHidden": "This owner keeps their profile private, so you can't message them from here.",
     "unavailable": "This puzzle isn't available to message about.",
-    "backToPuzzle": "Back to the puzzle"
+    "backToPuzzle": "Back to the puzzle",
+    "findACopy": "Find a copy"
   },
   "messages": {
     "anonymous": "Anonymous user",

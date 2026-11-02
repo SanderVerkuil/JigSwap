@@ -1023,7 +1023,8 @@
     "self": "Dit is je eigen puzzel.",
     "ownerHidden": "Deze eigenaar heeft een privéprofiel, dus vanaf hier kun je geen bericht sturen.",
     "unavailable": "Over deze puzzel kun je geen bericht sturen.",
-    "backToPuzzle": "Terug naar de puzzel"
+    "backToPuzzle": "Terug naar de puzzel",
+    "findACopy": "Zoek een exemplaar"
   },
   "messages": {
     "anonymous": "Anonieme gebruiker",

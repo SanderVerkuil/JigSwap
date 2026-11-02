@@ -144,6 +144,18 @@ export function NewCopyConversation({ copyId }: { copyId: string }) {
               {t("backToPuzzle")}
             </Link>
           )}
+          {/* A stale link to a copy that's gone: never a dead end, on a phone least of all, where
+              this pane has no tab bar and no inbox beside it. */}
+          {view?.status !== "self" && view?.status !== "ownerHidden" && (
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button size="sm" asChild>
+                <Link href="/browse">{t("findACopy")}</Link>
+              </Button>
+              <Button size="sm" variant="outline" asChild>
+                <Link href="/messages">{tMessages("backToInbox")}</Link>
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     );

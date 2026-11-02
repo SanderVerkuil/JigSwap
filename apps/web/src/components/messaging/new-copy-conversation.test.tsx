@@ -91,6 +91,39 @@ describe("NewCopyConversation — ownerHidden", () => {
   });
 });
 
+describe("NewCopyConversation — unavailable", () => {
+  it("says so and offers the next steps instead of a dead end", () => {
+    mocks.view = { status: "unavailable" };
+    renderPane();
+
+    expect(screen.getByText(en.copyConversation.unavailable)).toBeTruthy();
+    expect(
+      screen
+        .getByRole("link", { name: en.copyConversation.findACopy })
+        .getAttribute("href"),
+    ).toBe("/browse");
+    // Below the split view the header's back chevron goes the same way.
+    const back = screen.getAllByRole("link", {
+      name: en.messages.backToInbox,
+    });
+    expect(back.map((link) => link.getAttribute("href"))).toEqual([
+      "/messages",
+      "/messages",
+    ]);
+  });
+
+  it("keeps the self state's single way back", () => {
+    mocks.view = { status: "self" };
+    renderPane();
+    expect(
+      screen.queryByRole("link", { name: en.copyConversation.findACopy }),
+    ).toBeNull();
+    expect(
+      screen.getByRole("link", { name: en.copyConversation.backToPuzzle }),
+    ).toBeTruthy();
+  });
+});
+
 const NEW_VIEW = {
   status: "new",
   canMessage: true,
