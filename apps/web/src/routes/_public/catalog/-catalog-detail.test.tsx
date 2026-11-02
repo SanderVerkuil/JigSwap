@@ -148,6 +148,21 @@ describe("public catalogue detail copy", () => {
   });
 });
 
+describe("public catalogue detail layout", () => {
+  // Layout can't be measured here; the first-screen fit was checked in a browser at 390, 820 and
+  // 1440px. These classes are what keep the cover from filling a tablet's or phone's first screen.
+  it("keeps the cover beside the details from tablets up, and landscape on phones", () => {
+    renderDetail(viewWith(unrated));
+    const title = screen.getByRole("heading", { level: 1 });
+    const section = title.closest("section") as HTMLElement;
+    expect(section.className).toContain("md:grid-cols-[260px_minmax(0,1fr)]");
+
+    const cover = section.firstElementChild as HTMLElement;
+    expect(cover.className).toContain("aspect-[4/3]");
+    expect(cover.className).toContain("md:aspect-square");
+  });
+});
+
 type HeadFn = (ctx: {
   loaderData?: { view: View | null };
   match: { context: unknown; pathname: string; status?: string };
