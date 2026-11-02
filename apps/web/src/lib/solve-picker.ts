@@ -5,7 +5,7 @@ import type {
   OwnedCopyView,
 } from "@jigswap/contracts";
 
-// What the "Log a completion" picker offers, in this order:
+// What the "Log a solve" picker offers, in this order:
 // - inProgress: the member's unfinished solves. Picking one finishes it.
 // - own: the member's own copies.
 // - borrowed: copies they hold on loan.

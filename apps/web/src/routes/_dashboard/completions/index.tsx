@@ -219,7 +219,7 @@ function CompletionsPage() {
         />
       )}
 
-      {/* The log title, meta + Log Completion action now live in the shell
+      {/* The log title, meta + Log action now live in the shell
           page head; the stat row above stays as a distinct sub-section. */}
       <section>
         {completions.length === 0 ? (

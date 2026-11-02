@@ -35,7 +35,7 @@ const SECTION_ICON: Record<SolvePickerSectionId, LucideIcon> = {
   household: House,
 };
 
-// The "Log a completion" picker: a search over every section, then each non-empty section under
+// The "Log a solve" picker: a search over every section, then each non-empty section under
 // its own heading. Every puzzle is a real button whose name says what picking it does ("log a
 // solve" or "finish solve"), so it works with a keyboard and a screen reader. Rows are compact
 // (a 48px cover, title, brand and pieces) and carry nothing about the copy's condition or

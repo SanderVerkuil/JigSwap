@@ -3303,7 +3303,7 @@
         "thisYear": "This year"
       },
       "log": "Completion Log",
-      "logAction": "Log Completion",
+      "logAction": "Log a solve",
       "mostRecent": "Most recent first",
       "pieces": "{pieces, plural, one {# piece} other {# pieces}}",
       "sameDay": "in one day",
@@ -3317,7 +3317,7 @@
       "piecesComplete": "was complete",
       "piecesMissing": "had missing pieces",
       "new": {
-        "title": "Log a completion",
+        "title": "Log a solve",
         "subtitle": "Pick a puzzle to log a solve against.",
         "searchLabel": "Search puzzles",
         "sections": {
@@ -3358,7 +3358,7 @@
     "logSolve": {
       "trigger": "Log a solve",
       "title": "Log a solve",
-      "description": "Record a completion for {puzzle}.",
+      "description": "Record a solve of {puzzle}.",
       "statusLabel": "Have you finished it?",
       "statusFinished": "Finished",
       "statusInProgress": "Still solving",
@@ -4239,7 +4239,7 @@
     "goals": "Goals — JigSwap",
     "insights": "Insights — JigSwap",
     "completions": "Completions — JigSwap",
-    "completionNew": "Log a completion — JigSwap",
+    "completionNew": "Log a solve — JigSwap",
     "completionPast": "Mark past solves — JigSwap",
     "community": "Community — JigSwap",
     "circles": "Circles — JigSwap",
@@ -4345,9 +4345,9 @@
         "description": "Your finished-puzzle log"
       },
       "completionNew": {
-        "title": "Log a completion",
+        "title": "Log a solve",
         "subtitle": "Pick a puzzle to log a solve against.",
-        "description": "Log a new completion"
+        "description": "Log a new solve"
       },
       "completionPast": {
         "title": "Mark past solves",
@@ -5920,7 +5920,7 @@
         },
         "log-past": {
           "title": "Log a past solve",
-          "body": "Finished one before? Press Log Completion, pick the puzzle, and fill in when you did it and how long it took."
+          "body": "Finished one before? Press Log a solve, pick the puzzle, and fill in when you did it and how long it took."
         },
         "goals": {
           "title": "Set a goal",

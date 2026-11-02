@@ -23,7 +23,7 @@ vi.mock("@/compat/link", () => ({
   ),
 }));
 
-// The "Log a completion" picker: every puzzle is a real button with a name that says what picking
+// The "Log a solve" picker: every puzzle is a real button with a name that says what picking
 // it does, under visible section headings, with the solves in progress first.
 
 const STARTED = Date.UTC(2026, 9, 3);
