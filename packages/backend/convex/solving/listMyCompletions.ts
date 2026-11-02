@@ -5,6 +5,7 @@ import { canViewDefinition } from "../catalog/definitionVisibility";
 import { requireMember } from "../identity/requireMember";
 import { boxArtThumbUrl } from "../lib/imageModeration/boxArtUrl";
 import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
+import { renditionSources } from "../lib/imageModeration/imageSources";
 import {
   buildCopyViewContext,
   canViewCopyWithContext,
@@ -162,8 +163,10 @@ export const withPhotoItems = async (
   return { ...rest, photoItems: await resolvePhotoItems(ctx, row) };
 };
 
-// A completion photo ready for display: the served URL plus whether moderation is still pending.
-export type PhotoItem = { url: string; pending: boolean };
+// A completion photo ready for display: the served URL (the original, which the photo viewer
+// opens), whether moderation is still pending and, once an approved photo has renditions, the
+// `srcSet` its small tile picks from.
+export type PhotoItem = { url: string; pending: boolean; srcSet?: string };
 
 // Resolve a completion's photos to displayable items. Photos whose moderation sidecar says
 // "rejected" (or "quarantined") are dropped — and ONLY those. Pending stays visible but flagged `pending: true`
@@ -199,7 +202,11 @@ export const resolvePhotoItems = async (
       const url = await ctx.storage.getUrl(fileId);
       if (!url) return null;
       // An unscored photo (could not be checked yet) reads as pending to its owner.
-      return { url, pending: status === "pending" || status === "unscored" };
+      if (status === "pending" || status === "unscored") {
+        return { url, pending: true };
+      }
+      const { srcSet } = await renditionSources(ctx, fileId, url);
+      return { url, pending: false, ...(srcSet !== undefined && { srcSet }) };
     }),
   );
   return items.filter((item): item is PhotoItem => item !== null);

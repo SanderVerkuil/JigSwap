@@ -273,8 +273,12 @@ export function CompletionRow({
                   setViewing(photoIndex);
                 }}
               >
+                {/* A 44px tile, so the browser takes the small rendition once the photo has one;
+                    the viewer opens the original. */}
                 <Image
                   src={photo.url}
+                  srcSet={photo.srcSet}
+                  sizes={photo.srcSet ? "44px" : undefined}
                   alt=""
                   width={44}
                   height={44}

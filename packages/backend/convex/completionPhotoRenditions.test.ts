@@ -15,6 +15,7 @@ import {
   settleRenditions,
   storeBytes,
   storeWebp,
+  urlOf,
 } from "../test-fixtures/renditionJobs";
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
@@ -503,6 +504,140 @@ describe("completion photo renditions: deleted with the photo", () => {
         rowId: photo.imageId,
         fileId: preserved,
         status: "open",
+      }),
+    ]);
+  });
+});
+
+describe("completion photo renditions: served behind the photo's gate, as URLs", () => {
+  const myPhotoItems = async (t: T) => {
+    const [row] = await asAlice(t).query(
+      api.solving.listMyCompletions.listMyCompletions,
+      {},
+    );
+    return row.photoItems;
+  };
+
+  // Bob, a mutual follower of Alice, on her profile.
+  const onProfile = async (t: T, s: Seeded) => {
+    await t.run(async (ctx) => {
+      const bob = await ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", "clerk_bob"))
+        .unique();
+      for (const [followerId, followeeId] of [
+        [s.alice, bob!._id],
+        [bob!._id, s.alice],
+      ]) {
+        await ctx.db.insert("follows", {
+          followerId,
+          followeeId,
+          createdAt: 1,
+        });
+      }
+    });
+    const { page } = await t
+      .withIdentity({ subject: "clerk_bob" })
+      .query(api.social.listProfileCompletions.listProfileCompletions, {
+        memberId: s.alice,
+        paginationOpts: { numItems: 10, cursor: null },
+      });
+    return page[0];
+  };
+
+  test("an approved photo's tile picks from its rendition; `url`, which the viewer opens, stays the original", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    const photo = await seedPhoto(t, s, {
+      moderationStatus: "approved",
+      hashCheckedAt: 1,
+    });
+    const rendition = await seedRendition(t, photo.fileId);
+    const original = await urlOf(t, photo.fileId);
+
+    expect(await myPhotoItems(t)).toEqual([
+      {
+        url: original,
+        pending: false,
+        srcSet: `${await urlOf(t, rendition)} 256w, ${original} 1600w`,
+      },
+    ]);
+    const shown = await onProfile(t, s);
+    expect(shown.photoUrls).toEqual([original]);
+    expect(shown.photoSrcSets).toEqual([
+      `${await urlOf(t, rendition)} 256w, ${original} 1600w`,
+    ]);
+    // URLs only: no storage id on the wire.
+    expect(JSON.stringify(shown)).not.toContain(rendition);
+    expect(JSON.stringify(shown)).not.toContain(photo.fileId);
+  });
+
+  test("before the backfill the photo is served as it was", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    const photo = await seedPhoto(t, s, {
+      moderationStatus: "approved",
+      hashCheckedAt: 1,
+    });
+    const original = await urlOf(t, photo.fileId);
+
+    expect(await myPhotoItems(t)).toEqual([{ url: original, pending: false }]);
+    const shown = await onProfile(t, s);
+    expect(shown.photoUrls).toEqual([original]);
+    expect(shown.photoSrcSets).toEqual([null]);
+  });
+
+  test("a photo still under review shows its uploader the original, and others no rendition", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    const photo = await seedPhoto(t, s, {
+      moderationStatus: "pending",
+      hashCheckedAt: 1,
+    });
+    // A leftover row must not open anything: the gate decides, not the rendition.
+    const rendition = await seedRendition(t, photo.fileId);
+
+    expect(await myPhotoItems(t)).toEqual([
+      { url: await urlOf(t, photo.fileId), pending: true },
+    ]);
+    const shown = await onProfile(t, s);
+    expect(shown.photoUrls).toEqual([]);
+    expect(shown.photoSrcSets).toEqual([]);
+    expect(JSON.stringify(shown)).not.toContain(await urlOf(t, rendition));
+  });
+
+  test("a photo that has not passed its hash check is not served, nor is its rendition", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    const photo = await seedPhoto(t, s, {
+      moderationStatus: "approved",
+      hashCheckPendingSince: 1,
+    });
+    const rendition = await seedRendition(t, photo.fileId);
+    const renditionUrl = await urlOf(t, rendition);
+
+    expect(await myPhotoItems(t)).toEqual([]);
+    const shown = await onProfile(t, s);
+    expect(shown.photoUrls).toEqual([]);
+    expect(JSON.stringify(shown)).not.toContain(renditionUrl);
+  });
+
+  test("the member's data export keeps the photo's URL and state only", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    const photo = await seedPhoto(t, s, {
+      moderationStatus: "approved",
+      hashCheckedAt: 1,
+    });
+    await seedRendition(t, photo.fileId);
+
+    const { rows } = await asAlice(t).query(
+      api.insights.exportUserDataPage.exportUserDataPage,
+      { section: "completions", cursor: null },
+    );
+    expect(rows).toEqual([
+      expect.objectContaining({
+        photos: [{ url: await urlOf(t, photo.fileId), pending: false }],
       }),
     ]);
   });

@@ -6,6 +6,7 @@ import { canViewDefinition } from "../catalog/definitionVisibility";
 import { requireMember } from "../identity/requireMember";
 import { boxArtThumbUrl } from "../lib/imageModeration/boxArtUrl";
 import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
+import { renditionSources } from "../lib/imageModeration/imageSources";
 import { clampPaginationOpts } from "../lib/pageSize";
 import {
   buildCopyViewContext,
@@ -186,15 +187,20 @@ const pageDatedThenUndated = async (
 // Approved photos only: unlike the self-facing log (which shows pending with a badge), a profile is
 // seen by others, so a photo awaiting moderation is never shown — it surfaces only as a blurhash
 // placeholder (lib/blurhash: no URL, no id). Rejected photos appear in neither list. No sidecar =
-// legacy = approved.
+// legacy = approved. `photoSrcSets` runs parallel to `photoUrls`: what each photo's tile picks from
+// once it has renditions (null before), read only after the same gate. The URLs stay the originals,
+// which a click opens.
 const profilePhotos = async (
   ctx: QueryCtx,
   row: Pick<Doc<"completions">, "aggregateId" | "photos">,
 ): Promise<{
   photoUrls: string[];
+  photoSrcSets: (string | null)[];
   pendingPhotos: { blurhash: string | null }[];
 }> => {
-  if (row.photos.length === 0) return { photoUrls: [], pendingPhotos: [] };
+  if (row.photos.length === 0) {
+    return { photoUrls: [], photoSrcSets: [], pendingPhotos: [] };
+  }
   const sidecarByFile = new Map<string, Doc<"completionImages">>();
   const completionId = row.aggregateId;
   if (completionId) {
@@ -205,6 +211,7 @@ const profilePhotos = async (
     for (const s of sidecars) sidecarByFile.set(s.fileId as string, s);
   }
   const photoUrls: string[] = [];
+  const photoSrcSets: (string | null)[] = [];
   const pendingPhotos: { blurhash: string | null }[] = [];
   for (const fileId of row.photos) {
     const sidecar = sidecarByFile.get(fileId as string);
@@ -213,7 +220,11 @@ const profilePhotos = async (
     const cleared = !sidecar || isHashCleared(sidecar);
     if (status === "approved" && cleared) {
       const url = await ctx.storage.getUrl(fileId);
-      if (url) photoUrls.push(url);
+      if (url) {
+        photoUrls.push(url);
+        const { srcSet } = await renditionSources(ctx, fileId, url);
+        photoSrcSets.push(srcSet ?? null);
+      }
     } else if (
       status === "approved" ||
       status === "pending" ||
@@ -224,5 +235,5 @@ const profilePhotos = async (
       });
     }
   }
-  return { photoUrls, pendingPhotos };
+  return { photoUrls, photoSrcSets, pendingPhotos };
 };
