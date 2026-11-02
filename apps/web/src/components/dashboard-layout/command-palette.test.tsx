@@ -203,7 +203,7 @@ describe("CommandPalette", () => {
     ["en", "exports", "Export my data"],
     ["en", "exported", "Export my data"],
     ["en", "downloads", "Export my data"],
-    ["en", "logs", "Log a Completion"],
+    ["en", "logs", "Log a solve"],
     ["en", "solving", "Completions"],
     ["en", "completed", "Completions"],
     ["en", "messaging", "Messages"],
@@ -224,8 +224,8 @@ describe("CommandPalette", () => {
 
   // A longer word that merely starts with a keyword is a different word.
   it.each([
-    ["login", "Log a Completion"],
-    ["logo", "Log a Completion"],
+    ["login", "Log a solve"],
+    ["logo", "Log a solve"],
     ["address", "Add a Puzzle"],
     ["database", "Export my data"],
   ])("doesn't take %s for a form of a keyword", async (term, unrelated) => {
@@ -240,7 +240,7 @@ describe("CommandPalette", () => {
   it("matches the words of a search in any order", async () => {
     renderPalette();
     type("completion log");
-    await waitFor(() => expect(option("Log a Completion")).not.toBeNull());
+    await waitFor(() => expect(option("Log a solve")).not.toBeNull());
     expect(option("Messages")).toBeNull();
   });
 

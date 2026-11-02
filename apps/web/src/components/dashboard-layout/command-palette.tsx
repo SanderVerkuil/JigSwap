@@ -65,6 +65,7 @@ const QUICK_ACTIONS = [
       "solve",
       "finish",
       "complete",
+      "completion",
       "vastleggen",
       "voltooiing",
     ],
