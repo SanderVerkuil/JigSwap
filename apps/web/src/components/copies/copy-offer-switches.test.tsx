@@ -266,6 +266,46 @@ describe("CopyOfferSwitches", () => {
     expect(lastToast().options.action).toBeUndefined();
   });
 
+  it("shows no sale row on a copy that isn't offered for sale", () => {
+    renderSwitches({
+      availability: { forTrade: true, forLend: false, forSale: false },
+    });
+    expect(screen.queryByRole("switch", { name: "Offer for sale" })).toBeNull();
+  });
+
+  it("lets a copy on offer for sale be withdrawn from the same place", async () => {
+    const availability = { forTrade: false, forLend: false, forSale: true };
+    const { rerender } = renderSwitches({ availability });
+    const sale = screen.getByRole("switch", { name: "Offer for sale" });
+    expect(sale.getAttribute("aria-checked")).toBe("true");
+
+    fireEvent.click(sale);
+    await vi.waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalled());
+    expect(mocks.mutation).toHaveBeenCalledWith(UPDATE_SHARING, {
+      copyId: "agg1",
+      forTrade: false,
+      forLend: false,
+      forSale: false,
+    });
+    expect(lastToast().message).toBe("No longer offered for sale");
+
+    // The switch the member just used stays where it is, off, so focus has somewhere to be.
+    rerender(switches({ availability: CLOSED }));
+    expect(
+      screen
+        .getByRole("switch", { name: "Offer for sale" })
+        .getAttribute("aria-checked"),
+    ).toBe("false");
+
+    lastToast().options.action?.onClick();
+    await vi.waitFor(() =>
+      expect(mocks.mutation).toHaveBeenCalledWith(UPDATE_OFFERS, {
+        copyIds: ["agg1"],
+        forSale: true,
+      }),
+    );
+  });
+
   it("a copy without a domain id cannot be changed", () => {
     renderSwitches({ copyId: null });
     expect((swapSwitch() as HTMLButtonElement).disabled).toBe(true);

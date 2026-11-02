@@ -10,18 +10,18 @@ import { Switch } from "@/components/ui/switch";
 import { gateway } from "@/gateway";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
-import { useId } from "react";
+import { useId, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
-type OfferFlag = "forTrade" | "forLend";
+type OfferFlag = "forTrade" | "forLend" | "forSale";
 
 const OFFERS: ReadonlyArray<{
   flag: OfferFlag;
-  label: "swapLabel" | "lendLabel";
-  hint: "swapHint" | "lendHint";
-  on: "swapOn" | "lendOn";
-  off: "swapOff" | "lendOff";
+  label: "swapLabel" | "lendLabel" | "saleLabel";
+  hint: "swapHint" | "lendHint" | "saleHint";
+  on: "swapOn" | "lendOn" | "saleOn";
+  off: "swapOff" | "lendOff" | "saleOff";
 }> = [
   {
     flag: "forTrade",
@@ -37,10 +37,19 @@ const OFFERS: ReadonlyArray<{
     on: "lendOn",
     off: "lendOff",
   },
+  {
+    flag: "forSale",
+    label: "saleLabel",
+    hint: "saleHint",
+    on: "saleOn",
+    off: "saleOff",
+  },
 ];
 
 // The copy page's offer controls for whoever may manage the copy: one labelled switch per offer.
-// A flip writes the offers ONLY, never a visibility, so the backend keeps the owner's own choice
+// Sale isn't offered as a new choice here (the Edit dialog is where a copy goes up for sale), but a
+// copy on offer for sale gets its switch, so the status line's offer can be withdrawn from where the
+// others are; it stays once off, so the Undo has a visible home and focus isn't dropped. A flip writes the offers ONLY, never a visibility, so the backend keeps the owner's own choice
 // (a private copy is visible while offered and private again once every offer is withdrawn).
 // Each change is confirmed with an Undo toast; failures toast an error and the live query keeps
 // showing the stored state. While the copy is out on loan a switch that is off is disabled with the
@@ -63,6 +72,8 @@ export function CopyOfferSwitches({
   const t = useTranslations("copyInstance.offers");
   const tCopy = useTranslations("copyInstance");
   const id = useId();
+  const [saleShown, setSaleShown] = useState(availability.forSale);
+  if (availability.forSale && !saleShown) setSaleShown(true);
   const update = useMutation({
     mutationFn: useConvexMutation(gateway.library.updateSharing),
   });
@@ -138,41 +149,43 @@ export function CopyOfferSwitches({
 
   return (
     <div className="border-border bg-card divide-border max-w-md divide-y rounded-lg border">
-      {OFFERS.map(({ flag, label, hint }) => {
-        const locked = onLoan && !availability[flag];
-        return (
-          <div
-            key={flag}
-            className="flex min-h-14 items-center justify-between gap-4 px-4 py-2.5"
-          >
-            <div className="min-w-0">
-              <Label
-                htmlFor={`${id}-${flag}`}
-                className="text-sm font-semibold"
-              >
-                {t(label)}
-              </Label>
-              <p
-                id={`${id}-${flag}-hint`}
-                className="text-muted-foreground mt-0.5 text-xs"
-              >
-                {t(hint)}
-              </p>
+      {OFFERS.filter(({ flag }) => flag !== "forSale" || saleShown).map(
+        ({ flag, label, hint }) => {
+          const locked = onLoan && !availability[flag];
+          return (
+            <div
+              key={flag}
+              className="flex min-h-14 items-center justify-between gap-4 px-4 py-2.5"
+            >
+              <div className="min-w-0">
+                <Label
+                  htmlFor={`${id}-${flag}`}
+                  className="text-sm font-semibold"
+                >
+                  {t(label)}
+                </Label>
+                <p
+                  id={`${id}-${flag}-hint`}
+                  className="text-muted-foreground mt-0.5 text-xs"
+                >
+                  {t(hint)}
+                </p>
+              </div>
+              <Switch
+                id={`${id}-${flag}`}
+                checked={availability[flag]}
+                disabled={copyId == null || locked || update.isPending}
+                aria-describedby={
+                  locked
+                    ? `${id}-${flag}-hint ${id}-locked`
+                    : `${id}-${flag}-hint`
+                }
+                onCheckedChange={(on) => void change(flag, on)}
+              />
             </div>
-            <Switch
-              id={`${id}-${flag}`}
-              checked={availability[flag]}
-              disabled={copyId == null || locked || update.isPending}
-              aria-describedby={
-                locked
-                  ? `${id}-${flag}-hint ${id}-locked`
-                  : `${id}-${flag}-hint`
-              }
-              onCheckedChange={(on) => void change(flag, on)}
-            />
-          </div>
-        );
-      })}
+          );
+        },
+      )}
       {onLoan && (
         <p
           id={`${id}-locked`}
