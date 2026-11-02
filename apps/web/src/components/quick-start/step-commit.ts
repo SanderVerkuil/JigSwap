@@ -26,6 +26,14 @@ export interface StepCommitSnapshot {
  */
 export type StepCommit = () => Promise<boolean>;
 
+/** For work a step keeps outside its own state (the picker's tray), so leaving need not lose it. */
+export interface StepKept {
+  /** Pages the work survives leaving for: leaving for those never asks. */
+  outlives: (pathname: string) => boolean;
+  /** Drops the kept work: the member chose Discard. */
+  discard: () => void;
+}
+
 export interface StepCommitStore {
   subscribe: (listener: () => void) => () => void;
   getSnapshot: () => StepCommitSnapshot | null;
@@ -34,6 +42,9 @@ export interface StepCommitStore {
   setCommit: (commit: StepCommit | null) => void;
   /** Runs the latest registered commit; with none registered there is nothing to save. */
   commit: StepCommit;
+  setKept: (kept: StepKept | null) => void;
+  outlives: (pathname: string) => boolean;
+  discard: () => void;
 }
 
 const sameSnapshot = (
@@ -50,6 +61,7 @@ const sameSnapshot = (
 export function createStepCommitStore(): StepCommitStore {
   let snapshot: StepCommitSnapshot | null = null;
   let latest: StepCommit | null = null;
+  let kept: StepKept | null = null;
   const listeners = new Set<() => void>();
   return {
     subscribe: (listener) => {
@@ -68,6 +80,11 @@ export function createStepCommitStore(): StepCommitStore {
       latest = commit;
     },
     commit: () => (latest ? latest() : Promise.resolve(true)),
+    setKept: (next) => {
+      kept = next;
+    },
+    outlives: (pathname) => kept?.outlives(pathname) ?? false,
+    discard: () => kept?.discard(),
   };
 }
 
@@ -90,10 +107,15 @@ export function useStepCommitRegistration({
   count,
   ready,
   commit,
-}: StepCommitSnapshot & { commit: StepCommit }): boolean {
+  kept = null,
+}: StepCommitSnapshot & {
+  commit: StepCommit;
+  kept?: StepKept | null;
+}): boolean {
   const store = useContext(StepCommitContext);
   useEffect(() => {
     store?.setCommit(commit);
+    store?.setKept(kept);
   });
   useEffect(() => {
     store?.publish({ kind, count, ready });
@@ -103,6 +125,7 @@ export function useStepCommitRegistration({
     return () => {
       store.publish(null);
       store.setCommit(null);
+      store.setKept(null);
     };
   }, [store]);
   return store !== null;
@@ -168,9 +191,12 @@ export interface LeaveGuard {
   /**
    * True while leaving the step (Finish later, a stepper link, Back, a link in the step, Skip,
    * closing the tab) would drop unsaved work, so the flow asks first. Never once the member is
-   * moving on on purpose, nor while Continue is saving (that work is already on its way).
+   * moving on on purpose, nor while Continue is saving (that work is already on its way), nor on
+   * the way to a page the step's kept work survives (`nextPathname`).
    */
-  shouldAsk: () => boolean;
+  shouldAsk: (nextPathname?: string) => boolean;
+  /** shouldAsk in the shape of useBlocker's shouldBlockFn. */
+  shouldBlock: (args: { next: { pathname: string } }) => boolean;
   /** The member moves on on purpose: Continue saved, or they chose Discard on Skip. */
   leave: () => void;
 }
@@ -181,9 +207,14 @@ export function createLeaveGuard(
   runner: ContinueRunner,
 ): LeaveGuard {
   let leaving = false;
+  const shouldAsk = (nextPathname?: string) =>
+    !leaving &&
+    !runner.isBusy() &&
+    hasPendingWork(store.getSnapshot()) &&
+    !(nextPathname !== undefined && store.outlives(nextPathname));
   return {
-    shouldAsk: () =>
-      !leaving && !runner.isBusy() && hasPendingWork(store.getSnapshot()),
+    shouldAsk,
+    shouldBlock: ({ next }) => shouldAsk(next.pathname),
     leave: () => {
       leaving = true;
     },

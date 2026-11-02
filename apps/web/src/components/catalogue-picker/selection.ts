@@ -37,7 +37,10 @@ export const isPicked = (picks: readonly Pick[], definitionId: string) =>
 
 // Add the row at the end (forTrade off: the domain default), or remove it when already picked.
 // A full tray ignores further adds and returns the same array.
-export const togglePick = (picks: Pick[], row: Pickable): Pick[] => {
+export const togglePick = (
+  picks: readonly Pick[],
+  row: Pickable,
+): readonly Pick[] => {
   if (isPicked(picks, row.definitionId))
     return removePick(picks, row.definitionId);
   if (picks.length >= PICK_LIMIT) return picks;

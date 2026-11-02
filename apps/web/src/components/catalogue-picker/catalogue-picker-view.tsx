@@ -20,7 +20,7 @@ import {
 export interface CataloguePickerViewProps {
   term: string;
   rows: PickerRow[];
-  picks: Pick[];
+  picks: readonly Pick[];
   isSearching: boolean;
   isSubmitting: boolean;
   // Where "Register" sends the member back to after creating the puzzle.

@@ -12,7 +12,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { useRef } from "react";
 import { useTranslations } from "use-intl";
-import type { StepCommitSnapshot } from "./step-commit";
+import type { StepCommitKind } from "./step-commit";
+
+/** What leaving would drop: a quick setup step's unsaved work, or a filled-in add form. */
+export interface LeaveWork {
+  kind: StepCommitKind | "addForm";
+  count: number;
+}
 
 /**
  * "Leave without saving?" (UX-16): shown when the member leaves a quick setup step that still
@@ -28,7 +34,7 @@ export function LeaveStepDialog({
   onDiscard,
 }: {
   open: boolean;
-  work: StepCommitSnapshot | null;
+  work: LeaveWork | null;
   onKeep: () => void;
   onDiscard: () => void;
 }) {

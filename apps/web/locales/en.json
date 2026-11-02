@@ -5976,6 +5976,7 @@
         "title": "Leave without saving?",
         "puzzles": "{count, plural, one {The puzzle you picked hasn't been added to your shelf yet.} other {The # puzzles you picked haven't been added to your shelf yet.}}",
         "solves": "{count, plural, one {The puzzle you ticked hasn't been logged yet.} other {The # puzzles you ticked haven't been logged yet.}}",
+        "addForm": "The puzzle you filled in hasn't been added yet.",
         "profile": "Your new location hasn't been saved yet.",
         "keep": "Keep editing",
         "discard": "Discard"

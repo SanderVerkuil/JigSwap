@@ -18,6 +18,7 @@ import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
 import { CataloguePicker } from "./catalogue-picker";
+import { clearPickTray } from "./pick-tray";
 
 type Items = { puzzleDefinitionId: string; forTrade: boolean }[];
 
@@ -65,6 +66,7 @@ const copiesFor = ({ items }: { items: Items }) => ({
 });
 
 beforeEach(() => {
+  clearPickTray();
   mocks.acquire.mockReset();
   mocks.toastSuccess.mockReset();
   mocks.toastError.mockReset();
@@ -92,6 +94,37 @@ const pickAll = async () => {
 };
 
 describe("CataloguePicker", () => {
+  it("still has the picks when the member comes back from Register", async () => {
+    renderPicker();
+    fireEvent.change(screen.getByRole("searchbox"), {
+      target: { value: "puzzle" },
+    });
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Add Puzzle 0" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Add Puzzle 1" }));
+
+    // Register leaves the page, which unmounts the picker; returning mounts a fresh one.
+    cleanup();
+    renderPicker();
+    expect(
+      await screen.findByRole("button", { name: "Add 2 puzzles" }),
+    ).toBeTruthy();
+    expect(screen.getByText("Picked (2)")).toBeTruthy();
+  });
+
+  it("empties the tray once the picks are added", async () => {
+    mocks.acquire.mockImplementation(async (args) => copiesFor(args));
+    renderPicker();
+    await pickAll();
+    fireEvent.click(screen.getByRole("button", { name: "Add 30 puzzles" }));
+    await waitFor(() => expect(mocks.onAdded).toHaveBeenCalled());
+
+    cleanup();
+    renderPicker();
+    expect(screen.queryByText(/^Picked/)).toBeNull();
+  });
+
   it("adds more than 25 picks in chunks of 25, one call after the other", async () => {
     mocks.acquire.mockImplementation(async (args) => copiesFor(args));
     renderPicker();

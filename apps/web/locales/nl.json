@@ -5976,6 +5976,7 @@
         "title": "Weggaan zonder op te slaan?",
         "puzzles": "{count, plural, one {De puzzel die je hebt gekozen, staat nog niet op je plank.} other {De # puzzels die je hebt gekozen, staan nog niet op je plank.}}",
         "solves": "{count, plural, one {De puzzel die je hebt aangevinkt, is nog niet vastgelegd.} other {De # puzzels die je hebt aangevinkt, zijn nog niet vastgelegd.}}",
+        "addForm": "De puzzel die je hebt ingevuld is nog niet toegevoegd.",
         "profile": "Je nieuwe locatie is nog niet opgeslagen.",
         "keep": "Verder bewerken",
         "discard": "Niet opslaan"
