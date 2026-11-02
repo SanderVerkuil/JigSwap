@@ -175,6 +175,37 @@ describe("public catalogue availability", () => {
   });
 });
 
+describe("public catalogue owners", () => {
+  const owned = (communityOwners: number) =>
+    ({
+      ...viewWith(unrated),
+      stats: {
+        communityOwners,
+        totalCompletions: 0,
+        avgCompletionDays: null,
+      },
+    }) as View;
+
+  it.each([
+    ["en", 1, "Community owner"],
+    ["en", 2, "Community owners"],
+    ["nl", 1, "Eigenaar in de community"],
+    ["nl", 2, "Eigenaren in de community"],
+  ] as const)(
+    "labels the stat for the count (%s, %d)",
+    (locale, count, label) => {
+      renderDetail(owned(count), locale);
+      expect(screen.getByText(label)).toBeTruthy();
+    },
+  );
+
+  it("says it once when nothing is available: the stat, no sentence repeating it", () => {
+    renderDetail(owned(1));
+    expect(screen.getByText("Community owner")).toBeTruthy();
+    expect(screen.queryByText(/in their collection/)).toBeNull();
+  });
+});
+
 describe("public catalogue reviews", () => {
   it("shows the server-rendered first page with no way to more when it is all there", () => {
     renderDetail(viewWith(unrated), "en", {

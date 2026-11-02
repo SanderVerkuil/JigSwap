@@ -268,7 +268,7 @@ function PublicPuzzleDetail({
         {stats.communityOwners > 0 && (
           <Stat
             value={stats.communityOwners}
-            label={t("statOwners")}
+            label={t("statOwners", { count: stats.communityOwners })}
             divided={availability.total > 0}
           />
         )}
@@ -289,8 +289,8 @@ function PublicPuzzleDetail({
       </div>
 
       {/* Availability panel: aggregate only — no owner identities. Zero availability -> omit the
-          panel; show the softer owners line instead when anyone owns it (spec). */}
-      {availability.total > 0 ? (
+          panel; the owners stat above already says who has it. */}
+      {availability.total > 0 && (
         <section>
           <SectionHead
             icon={<ArrowLeftRight className="h-4 w-4" />}
@@ -347,12 +347,6 @@ function PublicPuzzleDetail({
             </Button>
           </div>
         </section>
-      ) : (
-        stats.communityOwners > 0 && (
-          <p className="text-muted-foreground text-sm">
-            {t("ownersHaveIt", { count: stats.communityOwners })}
-          </p>
-        )
       )}
 
       {/* Rating + reviews, two-column like the dashboard page. */}
