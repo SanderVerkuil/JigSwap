@@ -207,7 +207,7 @@ describe("ActivityLog", () => {
 
     renderLog({}, "nl");
     expect(sentences()).toEqual([
-      "Ada waarschuwde een verwijderd lid na een melding",
+      "Ada waarschuwde een verwijderd lid na een rapportage",
       "Ada trok de beheerdersrol van een verwijderd lid in",
       "Ada maakte Otto beheerder",
     ]);
