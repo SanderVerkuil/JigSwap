@@ -172,12 +172,14 @@ describe("ChannelMatrix layout (UX-34)", () => {
     }
   });
 
-  it("shows the whole description on a narrow table; it is clamped only when wide", () => {
+  // Touch has no tooltip, so a clamped description could never be read in full.
+  it("shows the whole description at every width", () => {
     renderMatrix();
-    const description = document.getElementById("row-trade_request-desc")!;
-    const clamps = classesOf(description).filter((name) =>
-      /line-clamp-/.test(name),
-    );
-    expect(clamps).toEqual(["@2xl/matrix:line-clamp-2"]);
+    for (const type of ["trade_request", "circle_message_received"]) {
+      const description = document.getElementById(`row-${type}-desc`)!;
+      expect(
+        classesOf(description).filter((name) => /line-clamp-/.test(name)),
+      ).toEqual([]);
+    }
   });
 });

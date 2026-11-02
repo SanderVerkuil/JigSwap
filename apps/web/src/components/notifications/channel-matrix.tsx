@@ -213,11 +213,11 @@ export function ChannelMatrix({
                           >
                             {t(`types.${type}`)}
                           </span>
-                          {/* Clamped only where there's room for a wide row; on a phone the
-                              whole description shows (e.g. "Email comes as a short digest"). */}
+                          {/* Never clamped: touch has no tooltip to read the rest, and some of
+                              it matters ("Email comes as a short digest"). */}
                           <span
                             id={`row-${type}-desc`}
-                            className="text-muted-foreground text-xs @2xl/matrix:line-clamp-2"
+                            className="text-muted-foreground text-xs"
                           >
                             {t(`typeDesc.${type}`)}
                           </span>
