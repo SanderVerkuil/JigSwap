@@ -1,5 +1,11 @@
 // @vitest-environment happy-dom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -63,6 +69,27 @@ describe("MarketingFooter start link", () => {
     expect(
       screen.getByRole("link", { name: "Dashboard" }).getAttribute("href"),
     ).toBe("/dashboard");
+  });
+});
+
+describe("MarketingFooter touch targets", () => {
+  // No layout here, so the size was measured in a browser (34px at 390 and 820, same rhythm as
+  // before). These classes are what make it: every link grows on touch while the gap shrinks.
+  it("gives every link and the cookie button more height on touch screens", () => {
+    renderFooter();
+    const footer = screen.getByRole("contentinfo");
+    const controls = [
+      ...within(footer)
+        .getAllByRole("link")
+        .filter((link) => link.textContent),
+      within(footer).getByRole("button", { name: "Cookie settings" }),
+    ];
+    // The brand link above the columns isn't a list item.
+    const listed = controls.filter((el) => el.closest(".flex-col"));
+    expect(listed.length).toBeGreaterThan(5);
+    for (const el of listed) {
+      expect(el.className.split(/\s+/)).toContain("pointer-coarse:py-1.5");
+    }
   });
 });
 
