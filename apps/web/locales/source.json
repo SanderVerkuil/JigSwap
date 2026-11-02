@@ -473,6 +473,7 @@
       "searchPlaceholder": "Title, brand, artist or tag…",
       "searchLabel": "Search the catalogue",
       "filtersLabel": "Filters",
+      "filtersLabelCount": "Filters ({count})",
       "clearFilters": "Clear Filters",
       "puzzlesFound": "{count, plural, one {# puzzle found} other {# puzzles found}}",
       "puzzlesFoundSoFar": "{count, plural, one {# puzzle found so far} other {# puzzles found so far}}",
@@ -514,6 +515,10 @@
         "tagsUnavailable": "Couldn't load tags",
         "removeTag": "Remove tag {tag}",
         "pieces": "Pieces",
+        "piecesRange": "{min}–{max} pieces",
+        "piecesFrom": "From {min} pieces",
+        "piecesUpTo": "Up to {max} pieces",
+        "removeFilter": "Remove filter: {label}",
         "min": "Min",
         "max": "Max"
       },

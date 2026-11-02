@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  activeFacetCount,
   catalogueEmptyState,
   catalogueSearchArgs,
   EMPTY_CATALOGUE_FILTERS,
@@ -73,6 +74,28 @@ describe("catalogueSearchArgs: an inverted piece range", () => {
     expect(
       catalogueSearchArgs({ ...EMPTY_CATALOGUE_FILTERS, minPieces: "777" }),
     ).toEqual({ pieceMin: 777 });
+  });
+});
+
+describe("activeFacetCount", () => {
+  it("is 0 with no facet, whatever the term", () => {
+    expect(
+      activeFacetCount({ ...EMPTY_CATALOGUE_FILTERS, searchTerm: "lake" }),
+    ).toBe(0);
+  });
+
+  it("counts a range once and each tag on its own", () => {
+    expect(
+      activeFacetCount({
+        ...EMPTY_CATALOGUE_FILTERS,
+        brand: "Jumbo",
+        minPieces: "500",
+        maxPieces: "1000",
+        difficulty: "hard",
+        category: "cat_1",
+        tags: ["a", "b"],
+      }),
+    ).toBe(6);
   });
 });
 

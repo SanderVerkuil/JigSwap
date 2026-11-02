@@ -79,6 +79,19 @@ export function hasActiveCatalogueFilters(filters: CatalogueFilters): boolean {
   );
 }
 
+/** How many facets narrow the results: a piece range counts once, each tag on its own. The term
+ *  is not one: it shows in the toolbar's box. */
+export function activeFacetCount(filters: CatalogueFilters): number {
+  return (
+    [
+      filters.brand,
+      filters.minPieces || filters.maxPieces,
+      filters.difficulty,
+      filters.category,
+    ].filter((value) => value.trim() !== "").length + filters.tags.length
+  );
+}
+
 interface FilterablePuzzle {
   title: string;
   brand?: string;

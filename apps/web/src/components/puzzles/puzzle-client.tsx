@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
 import { useUrlTextDraft } from "@/hooks/use-url-text-draft";
 import {
+  activeFacetCount,
   catalogueEmptyState,
   catalogueSearchArgs,
   favouritesInCatalogue,
@@ -25,6 +26,7 @@ import { usePaginatedQuery } from "convex/react";
 import { Filter, Heart, Plus, Search, X } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useTranslations } from "use-intl";
+import { ActiveFacetChips } from "./active-facet-chips";
 import { PuzzleCard } from "./puzzle-card";
 import { PuzzleCardSkeleton } from "./puzzle-card-skeleton";
 import { PuzzleFilters } from "./puzzle-filters";
@@ -165,12 +167,23 @@ export function PuzzlesClient({
     return () => observer.unobserve(element);
   }, [handleObserver]);
 
+  const applyFacets = (patch: Partial<typeof filters>) =>
+    onSearchChange((prev) => ({
+      ...prev,
+      ...facetSearch({ ...filtersFromSearch(prev), ...patch }),
+    }));
+
   const clearFilters = () => {
     searchBox.change("");
     setFiltersPanelKey((key) => key + 1);
     // Everything but the view mode.
     onSearchChange((prev) => ({ view: prev.view }));
   };
+
+  const facetCount = activeFacetCount(filters);
+  // A removed chip's button unmounts with it: focus moves here first, so keyboard and screen-reader
+  // users stay in the toolbar instead of restarting from the top of the page.
+  const filtersToggleRef = useRef<HTMLButtonElement>(null);
 
   const hasActiveFilters =
     favoritesOnly ||
@@ -231,19 +244,24 @@ export function PuzzlesClient({
                 {t("favoritesOnly")}
               </Button>
 
-              {/* Filter Toggle */}
+              {/* Filter Toggle: looks pressed while open or while facets narrow the results, and
+                  counts them, so a closed panel can't hide what is filtering the list. */}
               <Button
+                ref={filtersToggleRef}
                 variant="outline"
                 aria-expanded={showFilters}
                 aria-controls={filtersPanelId}
+                data-active={showFilters || facetCount > 0 ? "" : undefined}
                 onClick={() => {
                   filterPanelChoices.set(searchKey, !showFilters);
                   setShowFilters(!showFilters);
                 }}
-                className="flex items-center gap-2"
+                className="data-active:bg-accent data-active:text-accent-foreground dark:data-active:bg-accent flex items-center gap-2"
               >
                 <Filter className="h-4 w-4" />
-                {t("filtersLabel")}
+                {facetCount > 0
+                  ? t("filtersLabelCount", { count: facetCount })
+                  : t("filtersLabel")}
               </Button>
 
               {/* Clear Filters */}
@@ -266,16 +284,20 @@ export function PuzzlesClient({
               <PuzzleFilters
                 key={filtersPanelKey}
                 filters={filters}
-                onFiltersChange={(patch) =>
-                  onSearchChange((prev) => ({
-                    ...prev,
-                    ...facetSearch({ ...filtersFromSearch(prev), ...patch }),
-                  }))
-                }
+                onFiltersChange={applyFacets}
                 className="mt-4"
               />
             )}
           </div>
+          {!showFilters && facetCount > 0 && (
+            <ActiveFacetChips
+              filters={filters}
+              onRemove={(patch) => {
+                filtersToggleRef.current?.focus();
+                applyFacets(patch);
+              }}
+            />
+          )}
         </CardContent>
       </Card>
 

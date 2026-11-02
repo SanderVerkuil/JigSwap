@@ -473,6 +473,7 @@
       "searchPlaceholder": "Titel, merk, kunstenaar of tag…",
       "searchLabel": "Zoek in de catalogus",
       "filtersLabel": "Filters",
+      "filtersLabelCount": "Filters ({count})",
       "clearFilters": "Filters wissen",
       "puzzlesFound": "{count, plural, one {# puzzel gevonden} other {# puzzels gevonden}}",
       "puzzlesFoundSoFar": "{count, plural, one {Tot nu toe # puzzel gevonden} other {Tot nu toe # puzzels gevonden}}",
@@ -514,6 +515,10 @@
         "tagsUnavailable": "Tags konden niet worden geladen",
         "removeTag": "Tag {tag} verwijderen",
         "pieces": "Stukjes",
+        "piecesRange": "{min}–{max} stukjes",
+        "piecesFrom": "Vanaf {min} stukjes",
+        "piecesUpTo": "Tot {max} stukjes",
+        "removeFilter": "Filter verwijderen: {label}",
         "min": "Min",
         "max": "Max"
       },
