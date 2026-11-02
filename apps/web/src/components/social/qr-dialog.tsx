@@ -69,7 +69,10 @@ function QrCard(props: QrDialogProps & { onNavigate?: () => void }) {
     <>
       <div className="flex max-w-full flex-col items-center gap-2">
         <Avatar className="size-16">
-          {props.avatarUrl ? <AvatarImage src={props.avatarUrl} /> : null}
+          {/* Decorative: the name is right below it. */}
+          {props.avatarUrl ? (
+            <AvatarImage src={props.avatarUrl} alt="" />
+          ) : null}
           <AvatarFallback>
             <MemberInitial source={nameSource} />
           </AvatarFallback>
@@ -90,6 +93,7 @@ function QrCard(props: QrDialogProps & { onNavigate?: () => void }) {
             {qrUrl ? (
               <QRCodeSVG
                 value={qrUrl}
+                title={t("dialogTitle")}
                 size={320}
                 className="h-auto w-[min(70vw,320px)]"
                 bgColor="#ffffff"

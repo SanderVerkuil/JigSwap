@@ -103,6 +103,13 @@ describe("QR dialog", () => {
     expect(screen.queryByText(/\/members\//)).toBeNull();
   });
 
+  it("names the code for assistive tech", async () => {
+    renderDialog("mara");
+    expect(
+      await screen.findByRole("img", { name: en.invite.dialogTitle }),
+    ).toBeTruthy();
+  });
+
   it("treats a bare member id as no handle: no caption", async () => {
     renderDialog(null, "m1");
     await screen.findByText(en.invite.customLinkNote);
