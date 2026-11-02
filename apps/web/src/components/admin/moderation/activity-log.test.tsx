@@ -243,7 +243,7 @@ describe("ActivityLog", () => {
       .map((item) => item.querySelector("p")?.textContent);
     expect(sentences).toEqual([
       "Ada created the category Landscapes",
-      "Ada reordered the catalog categories",
+      "Ada reordered the catalogue categories",
     ]);
     for (const actor of screen.getAllByRole("link", { name: "Ada" })) {
       expect(actor.getAttribute("href")).toBe("/admin/users/u_admin");

@@ -1,7 +1,7 @@
 ---
 title: Adding & Importing Puzzles
 order: 2
-summary: "Add owned copies one at a time or several at once, search by barcode, import from a store URL, and contribute to the catalog."
+summary: "Add owned copies one at a time or several at once, search by barcode, import from a store URL, and contribute to the catalogue."
 ---
 
 # Adding & Importing Puzzles

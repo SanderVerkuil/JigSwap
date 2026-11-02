@@ -1868,7 +1868,7 @@
       "title": "What JigSwap Is",
       "description": "JigSwap helps jigsaw puzzle collectors keep track of their puzzles and exchange them with other members. The service includes:",
       "features": [
-        "A community-maintained puzzle catalog that members can add puzzles to",
+        "A community-maintained puzzle catalogue that members can add puzzles to",
         "A personal library to track the copies you own, their condition, and photos of them",
         "Logging completions (when you finished a puzzle and how long it took) and organising copies into collections",
         "Exchanges between members — swaps, sales, and loans — with messaging to arrange them",
@@ -1937,11 +1937,11 @@
       "description": "Different things on JigSwap belong to different people:",
       "yourContent": {
         "title": "Your content",
-        "description": "Photos, reviews, comments, and other content you post remain yours. By posting, you give us a non-exclusive licence to store and display that content so the service can work — for example, showing your puzzle photos to the members you have shared them with. Messages you post in a circle's group chat stay visible to its members after you leave the circle. Puzzles you add to the shared catalog become part of the community catalog that all members can use. Uploaded photos pass through an automated safety check before other members can see them (see the Privacy Policy for details)."
+        "description": "Photos, reviews, comments, and other content you post remain yours. By posting, you give us a non-exclusive licence to store and display that content so the service can work — for example, showing your puzzle photos to the members you have shared them with. Messages you post in a circle's group chat stay visible to its members after you leave the circle. Puzzles you add to the shared catalogue become part of the community catalogue that all members can use. Uploaded photos pass through an automated safety check before other members can see them (see the Privacy Policy for details)."
       },
       "platform": {
         "title": "The platform and puzzle artwork",
-        "description": "The JigSwap software is open source under the MIT licence. Puzzle images and artwork in the catalog belong to their respective publishers and rights holders and are used to identify puzzles. If you hold rights to content shown on JigSwap and want it corrected or removed, please contact us."
+        "description": "The JigSwap software is open source under the MIT licence. Puzzle images and artwork in the catalogue belong to their respective publishers and rights holders and are used to identify puzzles. If you hold rights to content shown on JigSwap and want it corrected or removed, please contact us."
       }
     },
     "privacy": {
@@ -3907,7 +3907,7 @@
       "trustRowEarly": "Be one of our first puzzlers",
       "stats": {
         "puzzlers": "Puzzlers signed up",
-        "catalog": "Puzzles in the catalog",
+        "catalog": "Puzzles in the catalogue",
         "shelves": "Puzzles on shelves"
       },
       "how": {
@@ -4034,7 +4034,7 @@
       "g3i1Title": "Smart filters",
       "g3i1Body": "Filter by piece count, difficulty, condition and category.",
       "g3i2Title": "Fresh finds",
-      "g3i2Body": "See the newest puzzles in the catalog as the community adds them.",
+      "g3i2Body": "See the newest puzzles in the catalogue as the community adds them.",
       "g3i3Title": "Exchanges, end to end",
       "g3i3Body": "Propose, accept and complete swaps — with clear statuses every step of the way.",
       "g4Eyebrow": "Community & trust",
@@ -4393,7 +4393,7 @@
       },
       "adminPuzzles": {
         "title": "Puzzles",
-        "subtitle": "Every catalog definition with its moderation status; disable or re-enable approved definitions.",
+        "subtitle": "Every catalogue definition with its moderation status; disable or re-enable approved definitions.",
         "description": "Browse all puzzle definitions and manage their lifecycle"
       },
       "adminCategories": {
@@ -4684,7 +4684,7 @@
   },
   "puzzleDefinition": {
     "notFound": "Puzzle not found",
-    "notFoundSub": "This puzzle may have been removed from the catalog, or the link is wrong.",
+    "notFoundSub": "This puzzle may have been removed from the catalogue, or the link is wrong.",
     "suggestEdit": "Suggest an edit",
     "communityOwners": "community owners",
     "totalCompletions": "total completions",
@@ -4885,7 +4885,7 @@
         "reveal": "Click or tap to reveal the photo",
         "hide": "Hide again"
       },
-      "dupWarning": "Possible duplicate of <link>{title}</link> already in the catalog. Review before approving.",
+      "dupWarning": "Possible duplicate of <link>{title}</link> already in the catalogue. Review before approving.",
       "rejectAsDuplicate": "Reject as duplicate",
       "actions": {
         "approve": "Approve & Publish",
@@ -5007,7 +5007,7 @@
         "category_updated": "<actorLink>{actor}</actorLink> edited the category <targetLink>{target}</targetLink>",
         "category_deactivated": "<actorLink>{actor}</actorLink> deactivated the category <targetLink>{target}</targetLink>",
         "category_reactivated": "<actorLink>{actor}</actorLink> reactivated the category <targetLink>{target}</targetLink>",
-        "categories_reordered": "<actorLink>{actor}</actorLink> reordered the catalog categories",
+        "categories_reordered": "<actorLink>{actor}</actorLink> reordered the catalogue categories",
         "contact_message_handled": "<actorLink>{actor}</actorLink> marked a contact message as handled",
         "contact_message_reopened": "<actorLink>{actor}</actorLink> moved a contact message back to New"
       },
@@ -5298,11 +5298,11 @@
       "add": "Add Category",
       "empty": {
         "title": "No categories yet",
-        "description": "Create the first category to organize the catalog."
+        "description": "Create the first category to organize the catalogue."
       },
       "form": {
         "createTitle": "Create New Category",
-        "createDescription": "Add a new category to the catalog. It becomes active immediately.",
+        "createDescription": "Add a new category to the catalogue. It becomes active immediately.",
         "editTitle": "Edit Category",
         "editDescription": "Update the names, descriptions, and color of this category.",
         "name": "Name",
@@ -5525,8 +5525,8 @@
           "collections": "Collections",
           "solves": "Solves"
         },
-        "submissionsTitle": "Catalog submissions",
-        "submissionsEmpty": "No catalog submissions yet.",
+        "submissionsTitle": "Catalogue submissions",
+        "submissionsEmpty": "No catalogue submissions yet.",
         "status": {
           "pending": "Pending",
           "approved": "Approved",
