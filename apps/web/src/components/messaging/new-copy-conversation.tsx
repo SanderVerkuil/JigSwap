@@ -2,8 +2,9 @@
 
 // The /messages/new?copy=<id> pane: where a copy's "Message" action lands. The backend resolves
 // the counterpart from the copy (getCopyConversation): an existing DM with the owner is opened
-// directly; otherwise this shows a composer pre-addressed to the owner with the puzzle attached,
-// and the DM is created only when the first message is sent (startCopyConversation).
+// directly, with the puzzle staged on its composer; otherwise this shows a composer pre-addressed
+// to the owner with the puzzle attached, and the DM is created only when the first message is sent
+// (startCopyConversation).
 import { Link } from "@/compat/link";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { Button } from "@/components/ui/button";
@@ -47,7 +48,8 @@ export function NewCopyConversation({ copyId }: { copyId: string }) {
     ),
   );
 
-  // An existing DM with the owner: open it instead of starting a second one.
+  // An existing DM with the owner: open it instead of starting a second one, and bring the puzzle
+  // along, so someone who has talked to the owner before keeps the context a first contact gets.
   const existingThreadId =
     view?.status === "existing" ? view.threadId : undefined;
   useEffect(() => {
@@ -55,10 +57,11 @@ export function NewCopyConversation({ copyId }: { copyId: string }) {
       void navigate({
         to: "/messages/$threadId",
         params: { threadId: existingThreadId },
+        search: { attach: copyId },
         replace: true,
       });
     }
-  }, [existingThreadId, navigate]);
+  }, [existingThreadId, copyId, navigate]);
 
   // Desktop lands the caret in the composer; phones wait for a tap so the
   // keyboard doesn't cover the screen unasked.

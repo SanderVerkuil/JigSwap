@@ -55,6 +55,7 @@ const renderPane = (locale: "en" | "nl" = "en") =>
 afterEach(() => {
   cleanup();
   mocks.view = undefined;
+  mocks.navigate.mockClear();
 });
 
 describe("NewCopyConversation — ownerHidden", () => {
@@ -112,6 +113,26 @@ const NEW_VIEW = {
     coverUrl: null,
   },
 };
+
+describe("NewCopyConversation — existing conversation", () => {
+  it("opens the DM with the puzzle to attach, replacing this history entry", async () => {
+    mocks.view = {
+      status: "existing",
+      threadId: "thread_1",
+      copy: NEW_VIEW.copy,
+    };
+    renderPane();
+
+    await waitFor(() =>
+      expect(mocks.navigate).toHaveBeenCalledWith({
+        to: "/messages/$threadId",
+        params: { threadId: "thread_1" },
+        search: { attach: "copy1" },
+        replace: true,
+      }),
+    );
+  });
+});
 
 describe("NewCopyConversation — composer", () => {
   it("wraps the selection on Ctrl+B and Enter still sends", async () => {

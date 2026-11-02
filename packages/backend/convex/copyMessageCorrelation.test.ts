@@ -211,9 +211,10 @@ describe("copy-page messaging with an anonymous owner (#154)", () => {
     if (before.status === "new") expect(before.owner.anonymous).toBe(false);
 
     const dmId = await seedDm(t, viewer, pub);
-    expect(await getView(t, publicCopy)).toEqual({
+    expect(await getView(t, publicCopy)).toMatchObject({
       status: "existing",
       threadId: dmId,
+      copy: { copyId: publicCopy },
     });
     const threadId = await asViewer(t).mutation(
       api.conversation.startCopyConversation.startCopyConversation,

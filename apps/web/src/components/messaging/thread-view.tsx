@@ -17,6 +17,7 @@ import { usePresenceOf } from "@/components/presence/use-presence";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, type Id } from "@/gateway";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -119,9 +120,12 @@ export function ThreadView({
   // Task 11 (trades panel) embeds the view without the subject header/back
   // affordance; the standalone /messages route keeps the default.
   hideHeader = false,
+  attachCopyId,
 }: {
   threadId: string;
   hideHeader?: boolean;
+  // The puzzle to stage on the composer (the route's ?attach, a copy's "Message").
+  attachCopyId?: string;
 }) {
   const t = useTranslations("messages");
   const tPresence = useTranslations("presence");
@@ -494,12 +498,17 @@ export function ThreadView({
   // page head's title from md and its sr-only phone heading below md.
   const focusedThreadRef = useRef<string | null>(null);
   const headerReady = headerRow !== undefined;
+  // Opened to write about a puzzle: from md up the composer takes focus instead, as it does in a
+  // first conversation about a copy. Phones wait for a tap, so the keyboard stays down.
+  const isMobile = useIsMobile();
+  const composerTakesFocus = attachCopyId !== undefined && !isMobile;
   useEffect(() => {
     if (hideHeader || !headerReady) return;
     if (focusedThreadRef.current === threadId) return;
     focusedThreadRef.current = threadId;
+    if (composerTakesFocus) return;
     headingRef.current?.focus({ preventScroll: true });
-  }, [hideHeader, headerReady, threadId]);
+  }, [hideHeader, headerReady, threadId, composerTakesFocus]);
 
   // Polite announcement for messages arriving from the other side — not on
   // first load, not for our own sends, not for system messages.
@@ -760,6 +769,7 @@ export function ThreadView({
           )}
           <MessageComposer
             threadId={threadId}
+            attachCopyId={attachCopyId}
             // A circle is never addressed like a person: it gets its own label.
             recipientName={circleThread ? undefined : title}
             theirsLabel={theirsLabel}

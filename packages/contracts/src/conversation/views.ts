@@ -220,7 +220,7 @@ export interface AttachableCopyView extends MessageCopyView {
 /**
  * Where a copy's "Message" action lands (getCopyConversation). `unavailable`: the copy does not
  * exist or the viewer may not view it. `self`: the viewer owns it. `existing`: a DM with the
- * owner already exists — open it. `new`: no DM yet — show a composer addressed to the owner
+ * owner already exists — open it, with `copy` staged on its composer. `new`: no DM yet — show a composer addressed to the owner
  * (privacy-projected; their raw id never crosses the wire); `canMessage` mirrors the
  * ConnectionPolicy that startCopyConversation enforces. `ownerHidden`: the owner is anonymous to
  * the viewer, so the copy page offers no conversation (every DM is one per pair, so landing on it
@@ -231,7 +231,11 @@ export type CopyConversationView =
   | { readonly status: "unavailable" }
   | { readonly status: "self" }
   | { readonly status: "ownerHidden" }
-  | { readonly status: "existing"; readonly threadId: string }
+  | {
+      readonly status: "existing";
+      readonly threadId: string;
+      readonly copy: MessageCopyView;
+    }
   | {
       readonly status: "new";
       readonly copy: MessageCopyView;

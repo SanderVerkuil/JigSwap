@@ -45,7 +45,13 @@ export const getCopyConversation = query({
           ),
       )
       .first();
-    if (dm) return { status: "existing", threadId: dm.aggregateId };
+    if (dm) {
+      return {
+        status: "existing",
+        threadId: dm.aggregateId,
+        copy: await messageCopyViewOf(ctx, copy),
+      };
+    }
 
     return {
       status: "new",
