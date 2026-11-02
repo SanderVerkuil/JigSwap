@@ -132,6 +132,11 @@ function InviteLinkRow({ memberId }: { memberId: string }) {
       <div className="min-w-0 space-y-1">
         <p className="text-sm font-medium">{t("inviteLink")}</p>
         <p className="text-muted-foreground text-sm">{t("inviteLinkHelp")}</p>
+        {failed && (
+          <p role="alert" className="text-sm">
+            {tInvite("linkError")}
+          </p>
+        )}
       </div>
       <div className="flex shrink-0 flex-wrap gap-2">
         {failed ? (

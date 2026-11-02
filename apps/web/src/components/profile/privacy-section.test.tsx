@@ -281,7 +281,7 @@ describe("PrivacySection", () => {
     );
   });
 
-  it("offers Try again when the invite link can't be fetched", async () => {
+  it("says so and offers Try again when the invite link can't be fetched", async () => {
     mocks.mutation.mockImplementation((name) =>
       name === MY_INVITE_LINK
         ? Promise.reject(new Error("offline"))
@@ -291,6 +291,7 @@ describe("PrivacySection", () => {
     expect(
       await screen.findByRole("button", { name: en.invite.retry }),
     ).toBeTruthy();
+    expect(screen.getByRole("alert").textContent).toBe(en.invite.linkError);
     expect(screen.queryByRole("button", { name: "Copy link" })).toBeNull();
   });
 
