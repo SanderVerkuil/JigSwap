@@ -1,3 +1,4 @@
+import { EXPORT_SECTIONS } from "@jigswap/contracts";
 import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
@@ -179,12 +180,19 @@ describe("an offered household-mate copy never discloses the mate", () => {
     );
     expect(row?.offeredPuzzleOwnerId).toBe(w.mate);
 
-    const exported = await as(t, "owner").query(
-      api.insights.exportUserData.exportUserData,
-      {},
+    const exported = Object.fromEntries(
+      await Promise.all(
+        EXPORT_SECTIONS.map(async (section) => {
+          const page = await as(t, "owner").query(
+            api.insights.exportUserDataPage.exportUserDataPage,
+            { section, cursor: null },
+          );
+          return [section, page.rows] as const;
+        }),
+      ),
     );
-    expect(exported.exchanges).toHaveLength(1);
-    expect(exported.exchanges[0]!.offeredPuzzleId).toBe(w.mateCopy);
-    expect(JSON.stringify(exported.exchanges)).not.toContain(w.mate);
+    expect(exported.exchangesReceived).toHaveLength(1);
+    expect(exported.exchangesReceived![0]!.offeredCopyId).toBe(w.mateCopy);
+    expect(JSON.stringify(exported)).not.toContain(w.mate);
   });
 });
