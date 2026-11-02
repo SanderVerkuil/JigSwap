@@ -4216,7 +4216,9 @@
     "members": "Leden — JigSwap",
     "copyInstance": "Exemplaar in bezit — JigSwap",
     "whatsNew": "Wat is er nieuw — JigSwap",
-    "quickSetup": "Snel instellen — JigSwap"
+    "quickSetup": "Snel instellen — JigSwap",
+    "mySuggestions": "Mijn voorstellen — JigSwap",
+    "suggestEdit": "Wijziging voorstellen — JigSwap"
   },
   "shell": {
     "search": {

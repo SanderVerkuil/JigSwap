@@ -40,7 +40,7 @@ import {
 } from "./page-header-slot";
 import { ShellPreferencesProvider, useShellPreferences } from "./preferences";
 import { isFullBleedRoute, isImmersiveMobileRoute } from "./route-meta";
-import { ShellHeading } from "./shell-title";
+import { ShellDocumentTitle, ShellHeading } from "./shell-title";
 import { SyncPreferredLanguage } from "./sync-preferred-language";
 import { TopBar } from "./top-bar";
 
@@ -90,6 +90,7 @@ export function DashboardShell({
     <ShellPreferencesProvider>
       <PageHeaderSlotProvider>
         <SyncPreferredLanguage />
+        <ShellDocumentTitle />
         {/* Mobile scrolls the document itself (no height cap, no overflow clip
             below md) so the browser's address bar auto-hides on scroll-down and
             returns on scroll-up — the regular-website behaviour. The mobile top

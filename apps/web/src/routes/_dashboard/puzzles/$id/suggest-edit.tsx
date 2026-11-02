@@ -44,7 +44,7 @@ import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/puzzles/$id/suggest-edit")({
   head: ({ match }) => ({
-    meta: [{ title: pageTitle(match.context, "puzzle") }],
+    meta: [{ title: pageTitle(match.context, "suggestEdit") }],
   }),
   component: SuggestEditPage,
 });

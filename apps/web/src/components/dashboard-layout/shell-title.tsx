@@ -8,7 +8,8 @@
 // which also drops the title line from the page head), and the shell then prints its title without
 // any heading; `ownsHeading: "phone"` does so only below md, where that page's h1 shows.
 import { usePathname } from "@/compat/navigation";
-import type { ReactNode } from "react";
+import { namedDocumentTitle } from "@/lib/page-title";
+import { useEffect, type ReactNode } from "react";
 import { useTranslations } from "use-intl";
 import { useDashboardGreeting } from "./greeting";
 import { usePageHeaderContent } from "./page-header-slot";
@@ -55,4 +56,37 @@ export function ShellHeading() {
   const { title, ownsHeading } = useShellTitle();
   if (ownsHeading || !title) return null;
   return <h1 className="sr-only md:hidden">{title}</h1>;
+}
+
+/**
+ * Names the browser tab after the title the page publishes, which is also what the route announcer
+ * speaks: a route's head() runs before a detail page's data is in, so it can only say "My puzzles".
+ * The router's head keeps writing the route's own title, on a language switch for one: this takes
+ * the tab back from it, and on the way out hands back whichever title the head wrote last, since the
+ * router won't write an unchanged one again. A title the next route's head wrote stays.
+ */
+export function ShellDocumentTitle() {
+  const { title } = usePageHeaderContent();
+  const name = typeof title === "string" ? title : undefined;
+  useEffect(() => {
+    if (!name) return;
+    const published = namedDocumentTitle(name);
+    let routeTitle = document.title;
+    document.title = published;
+    const observer = new MutationObserver(() => {
+      if (document.title === published) return;
+      routeTitle = document.title;
+      document.title = published;
+    });
+    observer.observe(document.head, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+    return () => {
+      observer.disconnect();
+      if (document.title === published) document.title = routeTitle;
+    };
+  }, [name]);
+  return null;
 }

@@ -27,7 +27,7 @@ import { useFormatter, useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/my-puzzles/suggestions")({
   head: ({ match }) => ({
-    meta: [{ title: pageTitle(match.context, "myPuzzles") }],
+    meta: [{ title: pageTitle(match.context, "mySuggestions") }],
   }),
   component: MySuggestionsPage,
 });

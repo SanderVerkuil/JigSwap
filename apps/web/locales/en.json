@@ -4216,7 +4216,9 @@
     "members": "Members — JigSwap",
     "copyInstance": "Owned copy — JigSwap",
     "whatsNew": "What's new — JigSwap",
-    "quickSetup": "Quick setup — JigSwap"
+    "quickSetup": "Quick setup — JigSwap",
+    "mySuggestions": "My suggestions — JigSwap",
+    "suggestEdit": "Suggest an edit — JigSwap"
   },
   "shell": {
     "search": {

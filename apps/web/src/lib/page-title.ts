@@ -13,6 +13,11 @@ import { messagesFor } from "@/lib/i18n-catalog";
 
 const FALLBACK = "JigSwap";
 
+// A page's own name as a document title, in the same shape as the `titles` catalog entries.
+export function namedDocumentTitle(name: string): string {
+  return `${name} — ${FALLBACK}`;
+}
+
 export function pageTitle(context: unknown, key: string): string {
   const locale = contextLocale(context);
   const messages = locale ? messagesFor(locale) : undefined;
