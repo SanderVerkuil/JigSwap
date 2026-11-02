@@ -61,7 +61,33 @@ vi.mock("@tanstack/react-router", () => ({
 
 const emptyPage = { page: [], isDone: true, continueCursor: "" };
 
-const queryClientFor = (search: PublicCatalogSearch) => {
+const card = (title: string) => ({
+  _id: title,
+  title,
+  brand: "Jumbo",
+  pieceCount: 1000,
+  image: null,
+  rating: { value: 0, count: 0 },
+  availableToSwap: 0,
+});
+
+// Three pages of one card each, by the cursor that asks for them.
+const THREE_PAGES = {
+  first: { page: [card("Harbour")], isDone: false, continueCursor: "c2" },
+  c2: { page: [card("Windmill")], isDone: false, continueCursor: "c3" },
+  c3: { page: [card("Tulips")], isDone: true, continueCursor: "end" },
+};
+
+const pageQueryKey = (search: PublicCatalogSearch, cursor: string | null) =>
+  convexQuery(gateway.catalog.publicBrowse, {
+    paginationOpts: { numItems: 20, cursor },
+    ...publicCatalogFilterArgs(search),
+  }).queryKey;
+
+const queryClientFor = (
+  search: PublicCatalogSearch,
+  pages: Record<string, unknown> = { first: emptyPage },
+) => {
   const convexQueryClient = new ConvexQueryClient(
     new ConvexReactClient("https://example.convex.cloud"),
   );
@@ -79,13 +105,12 @@ const queryClientFor = (search: PublicCatalogSearch) => {
     convexQuery(gateway.catalog.allBrands, {}).queryKey,
     ["Jumbo"],
   );
-  queryClient.setQueryData(
-    convexQuery(gateway.catalog.publicBrowse, {
-      paginationOpts: { numItems: 20, cursor: null },
-      ...publicCatalogFilterArgs(search),
-    }).queryKey,
-    emptyPage,
-  );
+  for (const [cursor, page] of Object.entries(pages)) {
+    queryClient.setQueryData(
+      pageQueryKey(search, cursor === "first" ? null : cursor),
+      page,
+    );
+  }
   return queryClient;
 };
 
@@ -102,9 +127,13 @@ const pageAt = (locale: "en" | "nl") => (
   </IntlProvider>
 );
 
-const renderAt = (search: PublicCatalogSearch, locale: "en" | "nl" = "en") => {
+const renderAt = (
+  search: PublicCatalogSearch,
+  locale: "en" | "nl" = "en",
+  pages?: Record<string, unknown>,
+) => {
   router.search = search;
-  const client = queryClientFor(search);
+  const client = queryClientFor(search, pages);
   const view = render(
     <QueryClientProvider client={client}>{pageAt(locale)}</QueryClientProvider>,
   );
@@ -175,6 +204,13 @@ describe("public catalogue controls", () => {
     ).toBeTruthy();
     expect(
       screen.getByRole("heading", { level: 2, name: "Results" }),
+    ).toBeTruthy();
+  });
+
+  it("titles the cards one level below the Results heading", () => {
+    renderAt({}, "en", { first: THREE_PAGES.first });
+    expect(
+      screen.getByRole("heading", { level: 3, name: "Harbour" }),
     ).toBeTruthy();
   });
 

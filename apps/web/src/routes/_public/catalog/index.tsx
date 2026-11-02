@@ -307,7 +307,6 @@ function CatalogListPage() {
                   key={card._id}
                   card={card}
                   imageSizes={CARD_IMAGE_SIZES}
-                  headingLevel={2}
                   priority={index < ABOVE_THE_FOLD_CARDS}
                 />
               ))}
