@@ -19,9 +19,10 @@ import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
 // Fullscreen "show my QR" dialog. The QR encodes the STABLE member-id URL (rename-proof) with the
-// invite token; the mono caption shows the member's canonical profile URL, and a hint says that the
-// code, Copy link and Share carry the personal invite link rather than that address. The QR card
-// is always white — dark mode must never invert the modules or phone cameras stop reading it.
+// invite token, so it works for every member, username or not. The mono caption shows the member's
+// canonical profile URL when that reads as a name, and a hint says that the code, Copy link and
+// Share carry the personal invite link rather than that address. The QR card is always white —
+// dark mode must never invert the modules or phone cameras stop reading it.
 const DIALOG_CONTENT_CLASS =
   "flex h-svh max-h-svh w-full max-w-full flex-col items-center justify-center gap-6 rounded-none sm:h-auto sm:max-h-[90svh] sm:max-w-md sm:rounded-lg";
 
@@ -37,38 +38,12 @@ type QrDialogProps = {
   avatarUrl?: string | null;
 };
 
-// Shared body: the username-gate prompt, OR the QR card. The gate is for a caption that would only
-// show a bare member id: no username and no custom link. It comes first so such a member never
-// mints an invite token; the fetch lives in QrCard, which mounts only past it.
-// `onNavigate` closes the enclosing dialog when the username-gate link routes away — otherwise the
-// dialog lingers open over the settings page (whose route can be the same one it navigates to).
-function QrDialogContent(props: QrDialogProps & { onNavigate?: () => void }) {
-  const t = useTranslations("invite");
-
-  const readableHandle =
-    props.handle !== undefined && props.handle !== props.memberId;
-  if (props.username == null && !readableHandle) {
-    return (
-      <div className="flex max-w-sm flex-col items-center gap-4 text-center">
-        <h2 className="font-heading text-xl">{t("needUsernameTitle")}</h2>
-        <p className="text-muted-foreground text-sm">{t("needUsernameBody")}</p>
-        <Button asChild variant="brand">
-          <Link to="/profile" onClick={props.onNavigate}>
-            {t("openSettings")}
-          </Link>
-        </Button>
-      </div>
-    );
-  }
-
-  return <QrCard {...props} />;
-}
-
 // Avatar + name, the QR card, the mono caption, the copy/share actions and what they send. Fetches
 // (and caches for the lifetime of this mount) the member's invite token — mounted fresh each time
 // the dialog opens (Radix unmounts DialogContent while closed), so a plain mount effect is enough;
-// no `open` prop needed here.
-function QrCard(props: QrDialogProps) {
+// no `open` prop needed here. `onNavigate` closes the enclosing dialog when the custom-link prompt
+// routes away — otherwise the dialog lingers open over the page (which can be the one it opened on).
+function QrCard(props: QrDialogProps & { onNavigate?: () => void }) {
   const t = useTranslations("invite");
   const displayName = useMemberDisplayName();
   const nameSource = { name: props.displayName, username: props.username };
@@ -93,8 +68,11 @@ function QrCard(props: QrDialogProps) {
   const qrUrl = link
     ? `${origin}/members/${props.memberId}?invite=${link.token}`
     : null;
-  const displayUrl = props.handle
-    ? `${origin.replace(/^https?:\/\//, "")}/members/${encodeURIComponent(props.handle)}`
+  // A bare member id is no address to show anyone: without a readable handle the caption goes.
+  const readableHandle =
+    props.handle !== props.memberId ? props.handle : undefined;
+  const displayUrl = readableHandle
+    ? `${origin.replace(/^https?:\/\//, "")}/members/${encodeURIComponent(readableHandle)}`
     : null;
 
   // "Copied" only once the clipboard accepted the link; a refusal (permissions, insecure context,
@@ -168,6 +146,20 @@ function QrCard(props: QrDialogProps) {
       <p className="text-muted-foreground max-w-sm text-center text-xs">
         {t("inviteLinkHint")}
       </p>
+      {!readableHandle && (
+        <div className="flex max-w-sm flex-col items-center gap-1 text-center">
+          <p className="text-muted-foreground text-xs">{t("customLinkNote")}</p>
+          <Button asChild variant="ghost" size="sm">
+            <Link
+              to="/profile"
+              search={{ edit: "link" }}
+              onClick={props.onNavigate}
+            >
+              {t("setCustomLink")}
+            </Link>
+          </Button>
+        </div>
+      )}
       {/* The button label swaps to "Copied!"; this live region announces it. */}
       <span role="status" aria-live="polite" className="sr-only">
         {copied ? t("copied") : ""}
@@ -179,8 +171,8 @@ function QrCard(props: QrDialogProps) {
 // Self-contained trigger button + dialog: `Show my QR` opens the fullscreen QR view.
 export function QrDialog(props: QrDialogProps) {
   const t = useTranslations("invite");
-  // Controlled so the username-gate link can close the dialog before it routes to /profile —
-  // otherwise it would linger open over the settings page.
+  // Controlled so the custom-link prompt can close the dialog before it routes to /profile —
+  // otherwise it would linger open over that page.
   const [open, setOpen] = useState(false);
 
   return (
@@ -193,7 +185,7 @@ export function QrDialog(props: QrDialogProps) {
       </DialogTrigger>
       <DialogContent className={DIALOG_CONTENT_CLASS}>
         <DialogTitle className="sr-only">{t("dialogTitle")}</DialogTitle>
-        <QrDialogContent {...props} onNavigate={() => setOpen(false)} />
+        <QrCard {...props} onNavigate={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
   );
@@ -218,7 +210,7 @@ export function QrDialogAutoOpen(
           {props.title}
         </DialogTitle>
         <p className="text-muted-foreground text-sm">{props.body}</p>
-        <QrDialogContent {...props} onNavigate={props.onClose} />
+        <QrCard {...props} onNavigate={props.onClose} />
         <Button variant="ghost" onClick={props.onClose}>
           {t("loopSkip")}
         </Button>
