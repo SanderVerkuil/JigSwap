@@ -42,6 +42,16 @@ describe("DialogContent", () => {
     expect(classes).toContain("overscroll-contain");
   });
 
+  // A field can sit inside the scrollport yet under the sticky footer, where the browser sees no
+  // reason to scroll to it. The padding covers the footer plus the 24px strip below it: two
+  // stacked buttons on a phone, one row from sm, both at their 44px touch height.
+  it("keeps a focused field clear of the sticky footer", () => {
+    renderDialog();
+    const classes = classesOf(screen.getByRole("dialog"));
+    expect(classes).toContain("scroll-pb-32");
+    expect(classes).toContain("sm:scroll-pb-20");
+  });
+
   it("lets a dialog that manages its own height and overflow override the defaults", () => {
     renderDialog("max-h-[90vh] overflow-hidden");
     const classes = classesOf(screen.getByRole("dialog"));
