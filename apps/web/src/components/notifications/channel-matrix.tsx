@@ -109,7 +109,7 @@ export function ChannelMatrix({
           role="row"
           className={cn(
             COLS,
-            "bg-background/95 sticky top-[var(--app-sticky-top,0px)] z-10 border-b px-4 py-2.5 backdrop-blur-sm",
+            "bg-background sticky top-[var(--app-sticky-top,0px)] z-10 border-b px-4 py-2.5",
           )}
         >
           <span

@@ -156,6 +156,15 @@ describe("ChannelMatrix layout (UX-34)", () => {
     expect(top[0]).toMatch(/^top-\[var\(--app-sticky-top/);
   });
 
+  it("hides the rows scrolling under the sticky header: it is opaque, not blurred", () => {
+    renderMatrix();
+    const classes = classesOf(columnHeaders()[0]!.closest('[role="row"]')!);
+    expect(classes).toContain("bg-background");
+    expect(classes.filter((name) => /backdrop-blur|\/\d+$/.test(name))).toEqual(
+      [],
+    );
+  });
+
   it("keeps the channel labels at a readable size at every width", () => {
     renderMatrix();
     const headers = columnHeaders();
