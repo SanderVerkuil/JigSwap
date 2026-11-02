@@ -9,7 +9,7 @@ import { Puzzle } from "lucide-react";
 import type { ReactNode } from "react";
 import { useFormatter, useTranslations } from "use-intl";
 import { BoxArtCheckingLabel } from "./box-art-checking";
-import { difficultyClasses } from "./catalog-detail-parts";
+import { difficultyClasses } from "./difficulty-classes";
 import { usePuzzleView } from "./puzzle-view-provider";
 
 // Normalized view-model the shell renders. Both the catalog card and the
