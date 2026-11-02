@@ -255,6 +255,16 @@ describe("exchange actions", () => {
     expect(actions()).toEqual([en.trades.accept, en.trades.decline]);
   });
 
+  // With its label, the ⋯ wrapped alone onto a row of its own on a phone.
+  it("keeps Message's name when it goes icon-only on a phone", async () => {
+    await openExchange("incoming", "proposed");
+    const button = buttonNamed(en.trades.message);
+    expect(button?.querySelector("span")?.classList).toContain(
+      "max-sm:sr-only",
+    );
+    expect(button?.querySelector("svg")).toBeTruthy();
+  });
+
   it("lets the requester cancel a pending request", async () => {
     await openExchange("outgoing", "proposed");
     expect(actions()).toEqual([en.trades.cancel]);

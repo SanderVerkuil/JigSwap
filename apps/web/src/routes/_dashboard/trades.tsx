@@ -482,14 +482,16 @@ function ExchangeDetail({
           />
         )}
 
+        {/* Icon-only on phones so the ⋯ keeps its place on this row; still the accessible name. */}
         <Button
           variant="ghost"
           size="sm"
+          className="max-sm:size-11"
           aria-expanded={chatOpen}
           onClick={() => setChatOpen((value) => !value)}
         >
           <MessageCircle className="h-4 w-4" />
-          {t("message")}
+          <span className="max-sm:sr-only">{t("message")}</span>
         </Button>
 
         {partner && (
