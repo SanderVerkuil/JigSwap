@@ -2680,7 +2680,6 @@
     "notFoundTitle": "Member not found",
     "notFoundSub": "This link may be outdated, or the member may have changed their username.",
     "findPeople": "Find people",
-    "backHome": "Back to home",
     "profile": {
       "ratingPill": "{rating} · {reviewCount, plural, one {# review} other {# reviews}}",
       "privateBadge": "Private",

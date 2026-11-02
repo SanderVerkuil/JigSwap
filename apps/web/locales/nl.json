@@ -2678,9 +2678,8 @@
     "ratingLabel": "Gem. rating",
     "bioTitle": "Over",
     "notFoundTitle": "Lid niet gevonden",
-    "notFoundSub": "Deze link is mogelijk verouderd, of het lid heeft hun gebruikersnaam gewijzigd.",
+    "notFoundSub": "Deze link is mogelijk verouderd, of dit lid heeft een andere gebruikersnaam gekozen.",
     "findPeople": "Mensen vinden",
-    "backHome": "Terug naar home",
     "profile": {
       "ratingPill": "{rating} · {reviewCount, plural, one {# review} other {# reviews}}",
       "privateBadge": "Privé",

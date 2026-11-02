@@ -10,6 +10,7 @@ import {
   type PublicProfileView,
 } from "@/components/members/profile-body";
 import { lockedProfileFromTeaser } from "@/components/members/teaser-profile";
+import { MarketingNotFoundContent } from "@/components/NotFound";
 import { HouseholdLinkInvite } from "@/components/social/household-link-invite";
 import {
   INVITE_KEY,
@@ -103,7 +104,10 @@ export const Route = createFileRoute("/members/$handle")({
       {
         title: loaderData?.profile?.hero.displayName
           ? `${loaderData.profile.hero.displayName} — JigSwap`
-          : pageTitle(match.context, "members"),
+          : pageTitle(
+              match.context,
+              match.status === "notFound" ? "notFound" : "members",
+            ),
       },
       ...(loaderData?.profile?.hero.visibility === "private"
         ? [{ name: "robots", content: "noindex" }]
@@ -341,29 +345,29 @@ function MemberNotFound() {
   const { userId } = useRouteContext({ from: "__root__" });
   const sidebar = Route.useRouteContext({ select: (c) => c.sidebar });
   const t = useTranslations("members");
-  const body = (
-    <div className="mx-auto flex max-w-md flex-col items-center gap-4 px-4 py-24 text-center">
-      <h1 className="font-heading text-2xl">{t("notFoundTitle")}</h1>
-      <p className="text-muted-foreground">{t("notFoundSub")}</p>
-      {userId ? (
-        <Button asChild>
-          <Link to="/people">{t("findPeople")}</Link>
-        </Button>
-      ) : (
-        <Button asChild>
-          <Link to="/">{t("backHome")}</Link>
-        </Button>
-      )}
-    </div>
-  );
   // App convention: 404 inside the authed app renders within the dashboard
   // shell (see _dashboard/route.tsx's notFoundComponent).
-  if (userId) return <DashboardShell sidebar={sidebar}>{body}</DashboardShell>;
+  if (userId) {
+    return (
+      <DashboardShell sidebar={sidebar}>
+        <div className="mx-auto flex max-w-md flex-col items-center gap-4 px-4 py-24 text-center">
+          <h1 className="font-heading text-2xl">{t("notFoundTitle")}</h1>
+          <p className="text-muted-foreground">{t("notFoundSub")}</p>
+          <Button asChild>
+            <Link to="/people">{t("findPeople")}</Link>
+          </Button>
+        </div>
+      </DashboardShell>
+    );
+  }
   return (
     <div className="mk-root font-mk-sans flex min-h-screen flex-col overflow-x-clip">
       <MarketingHeader />
       <main id={MAIN_CONTENT_ID} className="flex-1">
-        {body}
+        <MarketingNotFoundContent
+          title={t("notFoundTitle")}
+          message={t("notFoundSub")}
+        />
       </main>
       <MarketingFooter />
     </div>
