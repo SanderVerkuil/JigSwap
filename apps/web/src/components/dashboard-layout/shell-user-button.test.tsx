@@ -19,6 +19,7 @@ import { ShellUserButton } from "./shell-user-button";
 
 const mocks = vi.hoisted(() => ({
   settings: undefined as PresenceSettingsView | undefined,
+  setPreference: vi.fn<(key: string, value: unknown) => void>(),
   mutation: vi.fn<(name: string, args: unknown) => Promise<unknown>>(),
   signOut: vi.fn<() => Promise<void>>(),
   appearance: undefined as
@@ -86,7 +87,7 @@ vi.mock("./preferences", () => ({
   useShellPreferences: () => ({
     fullWidth: true,
     hideEmail: true,
-    setPreference: vi.fn(),
+    setPreference: mocks.setPreference,
   }),
 }));
 
@@ -334,5 +335,25 @@ describe("ShellUserButton Preferences page", () => {
         group.getAttribute("aria-label"),
       ),
     ).toEqual(["Thema", "Taal", "Contentbreedte"]);
+  });
+
+  it("gives the content-width choice the same radio keyboard behaviour", () => {
+    mocks.settings = undefined;
+    renderButton();
+    const group = screen.getByRole("radiogroup", { name: "Content Width" });
+    const radios = Array.from(
+      group.querySelectorAll<HTMLElement>("[role=radio]"),
+    );
+    const checked = radios.find(
+      (radio) => radio.getAttribute("aria-checked") === "true",
+    ) as HTMLElement;
+    const other = radios.find((radio) => radio !== checked) as HTMLElement;
+    expect(checked.tabIndex).toBe(0);
+    expect(other.tabIndex).toBe(-1);
+
+    checked.focus();
+    fireEvent.keyDown(checked, { key: "ArrowRight" });
+    expect(document.activeElement).toBe(other);
+    expect(mocks.setPreference).toHaveBeenCalledWith("fullWidth", false);
   });
 });

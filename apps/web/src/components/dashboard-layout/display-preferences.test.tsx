@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
 // UX-56: theme and language as segmented radio groups for the places that have no top-bar menus
 // (the phone quick sheet and the account modal's Preferences page). The current choice is
-// checked, a click applies the choice, and each language is named in its own language.
+// checked, a click applies the choice, and each language is named in its own language. On the
+// keyboard they behave like native radios: one Tab stop, arrow keys move and select.
 import type { Locale } from "@/lib/i18n";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
@@ -108,5 +109,63 @@ describe("LanguageRadios", () => {
       expect(radio.querySelector("svg[viewBox='0 0 60 45']")).toBeTruthy();
       expect(radio.textContent).not.toMatch(/\p{Regional_Indicator}/u);
     }
+  });
+});
+
+describe("radio keyboard behaviour", () => {
+  const tabStops = (group: string) =>
+    Array.from(
+      screen
+        .getByRole("radiogroup", { name: group })
+        .querySelectorAll<HTMLElement>("[role=radio]"),
+    )
+      .filter((radio) => radio.tabIndex === 0)
+      .map((radio) => radio.textContent);
+
+  it("makes only the checked radio a Tab stop", () => {
+    mocks.theme = "dark";
+    render(radios());
+    expect(tabStops("Theme")).toEqual(["Dark"]);
+    expect(tabStops("Language")).toEqual(["English"]);
+  });
+
+  it("makes the first radio the Tab stop while nothing is checked", () => {
+    mocks.theme = undefined;
+    render(radios());
+    expect(tabStops("Theme")).toEqual(["Light"]);
+  });
+
+  it.each([
+    ["ArrowRight", "dark", "Dark"],
+    ["ArrowDown", "dark", "Dark"],
+    // Wraps around the ends of the group.
+    ["ArrowLeft", "system", "System"],
+    ["ArrowUp", "system", "System"],
+  ])("%s moves to and selects %s", (key, theme, name) => {
+    render(radios());
+    const light = screen.getByRole("radio", { name: "Light" });
+    light.focus();
+    fireEvent.keyDown(light, { key });
+    expect(mocks.setTheme).toHaveBeenCalledWith(theme);
+    expect(document.activeElement).toBe(screen.getByRole("radio", { name }));
+  });
+
+  it("selects a language with the arrow keys", () => {
+    render(radios());
+    const english = screen.getByRole("radio", { name: "English" });
+    english.focus();
+    fireEvent.keyDown(english, { key: "ArrowRight" });
+    expect(mocks.changeLocale).toHaveBeenCalledWith("nl");
+    expect(document.activeElement).toBe(
+      screen.getByRole("radio", { name: "Nederlands" }),
+    );
+  });
+
+  it("leaves other keys alone", () => {
+    render(radios());
+    const light = screen.getByRole("radio", { name: "Light" });
+    light.focus();
+    fireEvent.keyDown(light, { key: "Tab" });
+    expect(mocks.setTheme).not.toHaveBeenCalled();
   });
 });

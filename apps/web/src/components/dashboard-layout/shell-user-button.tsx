@@ -38,7 +38,11 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
-import { LanguageRadios, ThemeRadios } from "./display-preferences";
+import {
+  LanguageRadios,
+  moveRadioWithArrows,
+  ThemeRadios,
+} from "./display-preferences";
 import { useShellPreferences } from "./preferences";
 
 const STATUS_OPTIONS = [
@@ -295,6 +299,7 @@ function PreferencesPage() {
         <div
           role="radiogroup"
           aria-label={t("contentWidth")}
+          onKeyDown={moveRadioWithArrows}
           className="flex gap-2"
         >
           <ContentWidthOption
@@ -374,6 +379,7 @@ function ContentWidthOption({
       type="button"
       role="radio"
       aria-checked={selected}
+      tabIndex={selected ? 0 : -1}
       onClick={onSelect}
       className={cn(
         "flex-1 rounded-md border px-3 py-2 text-sm transition-colors",
