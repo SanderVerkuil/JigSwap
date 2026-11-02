@@ -8,11 +8,17 @@ import schema from "./schema";
 // find no image, a paid Firecrawl scrape on the server's key (SEC-21). Only an active member may
 // start one, each member has an hourly and a daily import bucket (admins exempt), and every
 // Firecrawl scrape is charged to a deployment-wide budget first. No network: DNS and fetch are
-// stubbed, the shop refusing both cheap tiers (403) and Firecrawl answering 402.
+// stubbed, the shop refusing both cheap tiers (403) and Firecrawl answering 402. The cheap tiers'
+// transport answers through that stubbed fetch (it is covered by publicFetch.test.ts).
 
 vi.mock("node:dns/promises", () => ({
   lookup: async () => [{ address: "93.184.216.34", family: 4 }],
 }));
+vi.mock("./catalog/adapters/publicFetch", async (importOriginal) =>
+  (
+    await import("../test-fixtures/publicFetchViaGlobalFetch")
+  ).publicFetchViaGlobalFetch(importOriginal),
+);
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 

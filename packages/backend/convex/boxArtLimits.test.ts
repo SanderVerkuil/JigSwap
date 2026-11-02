@@ -12,9 +12,13 @@ import schema from "./schema";
 // boxArtCheckDaily 60), charged before the upload is claimed or anything is fetched (SEC-19).
 // Admins, who seed the catalogue, are exempt.
 
-vi.mock("node:dns/promises", () => ({
-  lookup: async () => [{ address: "93.184.216.34", family: 4 }],
-}));
+// importPuzzleImage's shop fetch answers through the stubbed global fetch (the transport itself is
+// covered by publicFetch.test.ts).
+vi.mock("./catalog/adapters/publicFetch", async (importOriginal) =>
+  (
+    await import("../test-fixtures/publicFetchViaGlobalFetch")
+  ).publicFetchViaGlobalFetch(importOriginal),
+);
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
