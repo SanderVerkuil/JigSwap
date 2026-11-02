@@ -184,6 +184,32 @@ describe("People header", () => {
   });
 });
 
+describe("People header count", () => {
+  // On Find people or Activity it would read as the number of members found.
+  it("only says how big the network is on the network tab", async () => {
+    network.results = [{ memberId: "m1", followsYou: false }];
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    const router = makeRouter();
+    await act(async () => {
+      root.render(<RouterProvider router={router} />);
+    });
+    expect(published.meta).toBe("1 member in your network");
+
+    await act(async () => {
+      tab(en.people.tabs.find).dispatchEvent(
+        new MouseEvent("mousedown", { bubbles: true, button: 0 }),
+      );
+    });
+    await vi.waitFor(() => expect(published.meta).toBeUndefined());
+
+    act(() => root.unmount());
+    container.remove();
+    network.results = [];
+  });
+});
+
 describe("People network", () => {
   const renderPeople = async () => {
     const container = document.createElement("div");
@@ -213,7 +239,7 @@ describe("People network", () => {
     expect(document.body.textContent).toContain("tile m1 follows you");
     expect(document.body.textContent).toContain("tile m2");
     expect(document.body.textContent).not.toContain("tile m2 follows you");
-    expect(published.meta).toBe("2 members");
+    expect(published.meta).toBe("2 members in your network");
     expect(document.body.textContent).not.toContain("Show more");
     done();
   });
@@ -222,7 +248,7 @@ describe("People network", () => {
     network.results = [{ memberId: "m1", followsYou: false }];
     network.status = "CanLoadMore";
     const done = await renderPeople();
-    expect(published.meta).toBe("1+ members");
+    expect(published.meta).toBe("1+ members in your network");
     const showMore = Array.from(document.querySelectorAll("button")).find(
       (button) => button.textContent === "Show more",
     )!;

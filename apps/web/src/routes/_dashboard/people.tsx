@@ -227,14 +227,16 @@ function PeoplePage() {
   const loading = networkStatus === "LoadingFirstPage";
 
   // The page title ("People") lives in the shell page head; publish the
-  // member-profiles guide ("?"), the QR dialog (self-service invite/QR) and the
-  // network member count there so the body carries no duplicate header. Kept in
-  // the always-mounted page so the header stays stable across tab switches.
-  const headerMeta = loading
-    ? undefined
-    : t(networkStatus === "Exhausted" ? "memberCount" : "memberCountMore", {
-        count: members.length,
-      });
+  // member-profiles guide ("?"), the QR dialog (self-service invite/QR) and, on the
+  // network tab, the network member count there so the body carries no duplicate
+  // header. Kept in the always-mounted page so the actions stay stable across tab
+  // switches. On another tab the count would read as the members found there.
+  const headerMeta =
+    loading || activeTab !== "network"
+      ? undefined
+      : t(networkStatus === "Exhausted" ? "memberCount" : "memberCountMore", {
+          count: members.length,
+        });
   const { startTour } = useTourLauncher();
   usePageHeader(
     () => ({

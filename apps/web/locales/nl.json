@@ -2617,8 +2617,8 @@
   },
   "people": {
     "yourNetwork": "Jouw netwerk",
-    "memberCount": "{count, plural, one {# lid} other {# leden}}",
-    "memberCountMore": "{count}+ leden",
+    "memberCount": "{count, plural, one {# lid} other {# leden}} in je netwerk",
+    "memberCountMore": "{count}+ leden in je netwerk",
     "showMoreMembers": "Meer tonen",
     "followsYou": "Volgt jou",
     "requests": {

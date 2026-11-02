@@ -2617,8 +2617,8 @@
   },
   "people": {
     "yourNetwork": "Your Network",
-    "memberCount": "{count, plural, one {# member} other {# members}}",
-    "memberCountMore": "{count}+ members",
+    "memberCount": "{count, plural, one {# member} other {# members}} in your network",
+    "memberCountMore": "{count}+ members in your network",
     "showMoreMembers": "Show more",
     "followsYou": "Follows you",
     "requests": {
