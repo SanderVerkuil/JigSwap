@@ -50,7 +50,7 @@ export const LIVE_EXCHANGE_STATUSES: readonly ExchangeStatus[] = (
   Object.keys(EXCHANGE_STATUS_IS_LIVE) as ExchangeStatus[]
 ).filter((status) => EXCHANGE_STATUS_IS_LIVE[status]);
 
-const isLive = (status: ExchangeStatus): boolean =>
+export const isLiveExchangeStatus = (status: ExchangeStatus): boolean =>
   EXCHANGE_STATUS_IS_LIVE[status];
 
 /**
@@ -67,11 +67,47 @@ export const boundedExchangeWindow = <
   const kept = new Set<R>([
     ...newestFirst.slice(0, EXCHANGE_LIST_CAP),
     ...newestFirst
-      .filter((row) => isLive(row.status))
+      .filter((row) => isLiveExchangeStatus(row.status))
       .slice(0, EXCHANGE_LIST_CAP),
   ]);
   return newestFirst.filter((row) => kept.has(row));
 };
+
+const exchangesInStatus = (
+  ctx: QueryCtx,
+  memberId: Id<"users">,
+  role: "initiator" | "recipient",
+  status: ExchangeStatus,
+): Promise<Doc<"exchanges">[]> =>
+  role === "initiator"
+    ? ctx.db
+        .query("exchanges")
+        .withIndex("by_initiator_status_created", (q) =>
+          q.eq("initiatorId", memberId).eq("status", status),
+        )
+        .order("desc")
+        .take(EXCHANGE_LIST_CAP)
+    : ctx.db
+        .query("exchanges")
+        .withIndex("by_recipient_status_created", (q) =>
+          q.eq("recipientId", memberId).eq("status", status),
+        )
+        .order("desc")
+        .take(EXCHANGE_LIST_CAP);
+
+/** One role's exchanges still in play: each live status's newest EXCHANGE_LIST_CAP. */
+export const readLiveExchanges = async (
+  ctx: QueryCtx,
+  memberId: Id<"users">,
+  role: "initiator" | "recipient",
+): Promise<Doc<"exchanges">[]> =>
+  (
+    await Promise.all(
+      LIVE_EXCHANGE_STATUSES.map((status) =>
+        exchangesInStatus(ctx, memberId, role, status),
+      ),
+    )
+  ).flat();
 
 /**
  * One role's exchanges for the member (initiator = outgoing, recipient = incoming), newest first,
@@ -86,23 +122,7 @@ export const readMemberExchanges = async (
   role: "initiator" | "recipient",
   status?: ExchangeStatus,
 ): Promise<Doc<"exchanges">[]> => {
-  const inStatus = (s: ExchangeStatus) =>
-    role === "initiator"
-      ? ctx.db
-          .query("exchanges")
-          .withIndex("by_initiator_status_created", (q) =>
-            q.eq("initiatorId", memberId).eq("status", s),
-          )
-          .order("desc")
-          .take(EXCHANGE_LIST_CAP)
-      : ctx.db
-          .query("exchanges")
-          .withIndex("by_recipient_status_created", (q) =>
-            q.eq("recipientId", memberId).eq("status", s),
-          )
-          .order("desc")
-          .take(EXCHANGE_LIST_CAP);
-  if (status) return inStatus(status);
+  if (status) return exchangesInStatus(ctx, memberId, role, status);
 
   const newest =
     role === "initiator"
@@ -120,12 +140,12 @@ export const readMemberExchanges = async (
           )
           .order("desc")
           .take(EXCHANGE_LIST_CAP);
-  const [history, ...live] = await Promise.all([
+  const [history, live] = await Promise.all([
     newest,
-    ...LIVE_EXCHANGE_STATUSES.map(inStatus),
+    readLiveExchanges(ctx, memberId, role),
   ]);
   const byId = new Map<Id<"exchanges">, Doc<"exchanges">>();
-  for (const row of [...history, ...live.flat()]) byId.set(row._id, row);
+  for (const row of [...history, ...live]) byId.set(row._id, row);
   return boundedExchangeWindow([...byId.values()]);
 };
 

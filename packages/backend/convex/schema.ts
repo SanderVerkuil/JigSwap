@@ -985,6 +985,10 @@ export default defineSchema({
     // indexes above order by offeredPuzzleId, so they cannot pick a member's newest exchanges.
     .index("by_initiator_created", ["initiatorId", "createdAt"])
     .index("by_recipient_created", ["recipientId", "createdAt"])
+    // Most recent activity first per party, for the finished exchanges' pages
+    // (exchange/listMyExchangeHistory). `updatedAt` is required, so these need no backfill.
+    .index("by_initiator_updated", ["initiatorId", "updatedAt"])
+    .index("by_recipient_updated", ["recipientId", "updatedAt"])
     // Per party and status, newest first: the bounded lists read the live statuses here, so an old
     // open exchange is never cut off by the newest-history window (exchange/readViews,
     // readMemberExchanges).

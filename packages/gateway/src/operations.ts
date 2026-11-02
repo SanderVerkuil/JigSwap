@@ -228,6 +228,13 @@ export const gateway = {
     forUser: api.exchange.getUserExchanges.getUserExchanges,
     incoming: api.exchange.getExchangesByOwner.getExchangesByOwner,
     outgoing: api.exchange.getExchangesByRequester.getExchangesByRequester,
+    // The Exchanges page and the dashboard: everything still in play, finished exchanges a page at a
+    // time, one exchange a deep link names, and the phone chrome's count of waiting requests.
+    myLive: api.exchange.listMyLiveExchanges.listMyLiveExchanges,
+    myHistory: api.exchange.listMyExchangeHistory.listMyExchangeHistory,
+    mySummary: api.exchange.getMyExchangeSummary.getMyExchangeSummary,
+    myPendingRequestCount:
+      api.exchange.getMyPendingRequestCount.getMyPendingRequestCount,
     accept: api.exchange.accept.accept,
     decline: api.exchange.decline.decline,
     complete: api.exchange.confirmCompletion.confirmCompletion,
