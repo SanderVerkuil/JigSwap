@@ -55,6 +55,9 @@ interface ActionableCopy {
   // For the offer items, and the share dialog's "members won't see it" warning.
   availability?: { forTrade: boolean; forSale: boolean; forLend: boolean };
   visibility?: "private" | "visible";
+  // The owner's own choice (`visibility` says "visible" on anything offered), for the offer toast's
+  // note. A backend that doesn't send it yet falls back to `visibility`.
+  visibilityPreference?: "private" | "visible";
 }
 
 // The ⋯ menu actions a puzzle card offers, for the viewer's own copies and their housemates'
@@ -188,7 +191,8 @@ export function useCopyCardActions({
       {
         copyId: copy.aggregateId,
         availability: copy.availability,
-        visibilityPreference: copy.visibility ?? "visible",
+        visibilityPreference:
+          copy.visibilityPreference ?? copy.visibility ?? "visible",
         onLoan: isOnLoan?.(ownedPuzzleId),
       },
       flag,

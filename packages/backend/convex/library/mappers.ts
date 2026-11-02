@@ -10,7 +10,10 @@ import type {
 } from "@jigswap/contracts";
 import type { Doc } from "../_generated/dataModel";
 import { copyShowsCatalogFacts } from "../catalog/definitionVisibility";
-import { effectiveCopyVisibility } from "./copyVisibility";
+import {
+  copyVisibilityPreference,
+  effectiveCopyVisibility,
+} from "./copyVisibility";
 
 // Row -> view DTO mappers for the Personal Library reads. Pure functions so the mapping is
 // unit-testable and `tsc` enforces it against the contracts shapes.
@@ -94,7 +97,7 @@ export const toOwnedCopyOwnerView = (
  * An owned copy with its joined puzzle (and optional owner / collection-membership timestamp).
  *
  * SECURITY: the owner-only personal fields — `notes`, `acquisitionPrice`, `acquisitionSource`,
- * `acquisitionDate` — are OMITTED by default and only included when `opts.includeOwnerOnly` is
+ * `acquisitionDate`, `visibilityPreference` — are OMITTED by default and only included when `opts.includeOwnerOnly` is
  * explicitly true (i.e. the
  * caller has established viewer === owner). Stripping owner-only data is opt-OUT at the mapper, not
  * something each call site must remember to do. `salePrice` is NOT owner-only: it is the public
@@ -127,6 +130,10 @@ export const toOwnedCopyView = (
   availability: row.availability,
   // The EFFECTIVE visibility (never the raw column — a legacy stored "private" is not a choice).
   visibility: effectiveCopyVisibility(row),
+  // The owner's own choice, kept while offered: for whoever may change the copy's offers.
+  visibilityPreference: opts?.includeOwnerOnly
+    ? copyVisibilityPreference(row)
+    : undefined,
   // Public asking price for a copy listed for sale — always carried.
   salePrice: row.salePrice,
   acquisitionDate: opts?.includeOwnerOnly ? row.acquisitionDate : undefined,
@@ -152,7 +159,11 @@ export const toOwnedCopyView = (
 /** An owned copy as seen on a member's public profile: the owner-only keys are not present at all. */
 export type PublicCopyView = Omit<
   OwnedCopyView,
-  "notes" | "acquisitionDate" | "acquisitionSource" | "acquisitionPrice"
+  | "notes"
+  | "acquisitionDate"
+  | "acquisitionSource"
+  | "acquisitionPrice"
+  | "visibilityPreference"
 >;
 
 /**
@@ -171,6 +182,7 @@ export const toPublicCopyView = (
     acquisitionDate: _acquisitionDate,
     acquisitionSource: _acquisitionSource,
     acquisitionPrice: _acquisitionPrice,
+    visibilityPreference: _visibilityPreference,
     ...rest
   } = toOwnedCopyView(row, puzzle, {
     coverUrl: opts?.coverUrl,

@@ -739,6 +739,44 @@ describe("an offer keeps the owner's private choice (UX-20)", () => {
     expect(viewOnly?.snapshot.visibilityPreference).toBeUndefined();
   });
 
+  test("a library row carries visibilityPreference to managers only", async () => {
+    const t = convexTest(schema, modules);
+    const cast = await seedCast(t);
+    await choosePublic(t, cast.alice);
+    const { copyId, rowId } = await privateCopy(t, cast);
+    await offer(t, copyId, { forTrade: true });
+
+    const rowFor = async (name: string) =>
+      (
+        await as(t, name).query(
+          api.library.listMyLibraryWindow.listMyLibraryWindow,
+          { limit: 10 },
+        )
+      ).rows.find((row) => row._id === rowId);
+    // Offered, so the effective value says "visible": the row must also say what the owner chose.
+    const own = await rowFor("alice");
+    expect(own?.visibility).toBe("visible");
+    expect(own?.visibilityPreference).toBe("private");
+    expect((await rowFor("dave"))?.visibilityPreference).toBe("private");
+
+    await t.run((ctx) => ctx.db.patch(rowId, { householdPermission: "view" }));
+    const viewOnly = await rowFor("dave");
+    expect(viewOnly).toBeDefined();
+    expect(viewOnly?.visibilityPreference).toBeUndefined();
+
+    // The public projection never carries it, not even to the owner on their own profile.
+    const profile = await as(t, "alice").query(
+      api.social.listProfileCopies.listProfileCopies,
+      {
+        memberId: cast.alice,
+        paginationOpts: { numItems: 10, cursor: null },
+      },
+    );
+    const onProfile = profile.page.find((copy) => copy._id === rowId);
+    expect(onProfile).toBeDefined();
+    expect(onProfile).not.toHaveProperty("visibilityPreference");
+  });
+
   test("visibilityPreference falls back to the effective value for unmarked and visible rows", async () => {
     const t = convexTest(schema, modules);
     const cast = await seedCast(t);

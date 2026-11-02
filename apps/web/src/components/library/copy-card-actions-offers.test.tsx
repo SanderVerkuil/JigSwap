@@ -11,7 +11,10 @@ import { useCopyCardActions } from "./copy-card-actions";
 // A card's ⋯ menu offers a copy the same way its page's switches do: offers only, never a
 // visibility, with an Undo toast; and only for whoever may manage the copy.
 
-type ToastOptions = { action?: { label: string; onClick: () => void } };
+type ToastOptions = {
+  description?: string;
+  action?: { label: string; onClick: () => void };
+};
 
 const mocks = vi.hoisted(() => ({
   mutation: vi.fn<(name: string, args: unknown) => Promise<unknown>>(),
@@ -42,9 +45,19 @@ const COPIES = [
   },
 ];
 
-function Harness({ viewerAccess }: { viewerAccess?: "manage" | "view" }) {
+function Harness({
+  viewerAccess,
+  copies = COPIES,
+  flag = "forLend",
+  on = true,
+}: {
+  viewerAccess?: "manage" | "view";
+  copies?: Parameters<typeof useCopyCardActions>[0]["copies"];
+  flag?: "forTrade" | "forLend";
+  on?: boolean;
+}) {
   const { cardActions } = useCopyCardActions({
-    copies: COPIES,
+    copies,
     householdAccessById: new Map(
       viewerAccess ? [["row1", { viewerAccess }]] : [],
     ),
@@ -54,7 +67,7 @@ function Harness({ viewerAccess }: { viewerAccess?: "manage" | "view" }) {
   return onToggleOffer ? (
     <button
       type="button"
-      onClick={() => onToggleOffer("row1" as never, "forLend", true)}
+      onClick={() => onToggleOffer("row1" as never, flag, on)}
     >
       offer to lend
     </button>
@@ -92,6 +105,54 @@ describe("the card menu's offers", () => {
     const [message, options] = mocks.toastSuccess.mock.calls[0]!;
     expect(message).toBe("Offered to lend");
     expect(options?.action?.label).toBe("Undo");
+  });
+
+  // An offered copy's `visibility` is always "visible" (the effective value): only the owner's own
+  // choice says it goes private again, as on the copy page's switches.
+  const offeredPrivately = (
+    extra: Partial<Parameters<typeof useCopyCardActions>[0]["copies"][number]>,
+  ) => [
+    {
+      _id: "row1",
+      aggregateId: "agg1",
+      puzzle: { title: "Harbour Lights" },
+      availability: { forTrade: true, forLend: false, forSale: false },
+      visibility: "visible" as const,
+      ...extra,
+    },
+  ];
+  const withdraw = async (
+    copies: Parameters<typeof useCopyCardActions>[0]["copies"],
+  ) => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+          <Harness copies={copies} flag="forTrade" on={false} />
+        </IntlProvider>
+      </QueryClientProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "offer to lend" }));
+    await vi.waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalled());
+    return mocks.toastSuccess.mock.calls[0]![1];
+  };
+
+  it("says a private copy is private again when its last offer is withdrawn", async () => {
+    const options = await withdraw(
+      offeredPrivately({ visibilityPreference: "private" }),
+    );
+    expect(options?.description).toBe(en.copyInstance.offers.privateAgain);
+  });
+
+  it("adds no note for a copy that isn't private", async () => {
+    const options = await withdraw(
+      offeredPrivately({ visibilityPreference: "visible" }),
+    );
+    expect(options?.description).toBeUndefined();
+  });
+
+  it("falls back to the effective visibility before the backend sends the choice", async () => {
+    const options = await withdraw(offeredPrivately({}));
+    expect(options?.description).toBeUndefined();
   });
 
   it("is there for a housemate who may manage the copy", () => {

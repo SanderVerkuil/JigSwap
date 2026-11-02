@@ -64,7 +64,13 @@ export interface OwnedCopyView {
   missingPiecesCount?: number;
   notes?: string;
   availability: CopyAvailability;
+  /** The copy's EFFECTIVE visibility: an offered copy is always "visible". */
   visibility?: "private" | "visible";
+  /**
+   * The owner's chosen visibility, kept while the copy is offered. Present only for whoever may
+   * manage the copy (with the other owner-only fields).
+   */
+  visibilityPreference?: "private" | "visible";
   salePrice?: { amount: number; currency: string };
   acquisitionDate?: number;
   acquisitionSource?: "bought_new" | "bought_used" | "trade" | "gift";
