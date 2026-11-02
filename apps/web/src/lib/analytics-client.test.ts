@@ -262,6 +262,37 @@ describe("withdrawAnalyticsConsent", () => {
     expect(getPostHog()).toBe(posthog);
   });
 
+  it("lets events through on this tab's own choice when the browser blocks cookies", async () => {
+    clearCookies();
+    const cookie = vi
+      .spyOn(document, "cookie", "set")
+      .mockImplementation(() => {});
+    try {
+      await freshLoader();
+      const { grantAnalyticsConsent, withdrawAnalyticsConsent } =
+        await import("./analytics-consent");
+      await grantAnalyticsConsent();
+      const [, config] = init.mock.calls[0] as [
+        string,
+        { before_send: ((event: CaptureResult) => CaptureResult | null)[] },
+      ];
+      const requireConsent = config.before_send[0];
+      const event: CaptureResult = {
+        uuid: "u1",
+        event: "$pageview",
+        properties: {},
+      };
+
+      expect(consentCalls).toEqual([]);
+      expect(requireConsent?.(event)).toBe(event);
+
+      withdrawAnalyticsConsent();
+      expect(requireConsent?.(event)).toBeNull();
+    } finally {
+      cookie.mockRestore();
+    }
+  });
+
   it("drops every event once consent is gone, even if withdrawn in another tab", async () => {
     const { initPostHog } = await freshLoader();
     await initPostHog();

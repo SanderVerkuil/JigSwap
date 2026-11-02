@@ -49,6 +49,10 @@ export function writeAnalyticsConsent(decision: "granted" | "denied") {
 export type CookieBannerState = "hidden" | "undecided" | "settings";
 
 let settingsRequested = false;
+// The choice made in this tab. The cookie normally carries it, but a browser
+// that blocks cookies discards the write, and the visitor must still be able to
+// answer the banner: their choice then holds until the page is reloaded.
+let sessionDecision: "granted" | "denied" | null = null;
 const consentListeners = new Set<() => void>();
 
 function notifyConsentListeners() {
@@ -62,11 +66,16 @@ export function subscribeConsent(listener: () => void): () => void {
   };
 }
 
+// The cookie as it reads *now* comes first, so a choice made in another tab
+// counts here too; this tab's own choice only fills in when no cookie exists.
+export function currentAnalyticsConsent(): AnalyticsConsent {
+  const stored = readAnalyticsConsent(document.cookie);
+  return stored === "unset" ? (sessionDecision ?? "unset") : stored;
+}
+
 export function getCookieBannerSnapshot(): CookieBannerState {
   if (settingsRequested) return "settings";
-  return readAnalyticsConsent(document.cookie) === "unset"
-    ? "undecided"
-    : "hidden";
+  return currentAnalyticsConsent() === "unset" ? "undecided" : "hidden";
 }
 
 // "Cookie settings" (footer, privacy policy): reopen the banner so the visitor
@@ -78,20 +87,21 @@ export function openCookieSettings(): void {
 
 function recordDecision(decision: "granted" | "denied") {
   writeAnalyticsConsent(decision);
+  sessionDecision = decision;
   settingsRequested = false;
   notifyConsentListeners();
 }
 
 // Start PostHog (initPostHog opts it back in after an earlier withdrawal), then
-// hold it to the consent cookie as it reads *now*, so a choice made while
-// posthog-js was still downloading is the one that counts, also from another
-// tab. A withdrawal in this tab has already stopped it by then.
+// hold it to the current choice, so one made while posthog-js was still
+// downloading is the one that counts, also from another tab. A withdrawal in
+// this tab has already stopped it by then.
 async function loadAnalytics(): Promise<void> {
   const client = await initPostHog();
   if (
     client &&
     getPostHog() === client &&
-    readAnalyticsConsent(document.cookie) !== "granted"
+    currentAnalyticsConsent() !== "granted"
   ) {
     await stopPostHog();
   }

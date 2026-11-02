@@ -1,6 +1,6 @@
 import type { CaptureResult, PostHog } from "posthog-js";
 import {
-  readAnalyticsConsent,
+  currentAnalyticsConsent,
   writeAnalyticsConsent,
 } from "./analytics-consent";
 import { sanitizeAnalyticsEvent } from "./analytics-privacy";
@@ -90,9 +90,10 @@ export async function withdrawAnalyticsConsent(): Promise<void> {
 }
 
 // Every event re-reads the consent cookie, so withdrawing in one tab also
-// silences PostHog in the member's other open tabs.
+// silences PostHog in the member's other open tabs. A browser that blocks
+// cookies has only this tab's own choice to go by.
 function requireAnalyticsConsent(event: CaptureResult): CaptureResult | null {
-  return readAnalyticsConsent(document.cookie) === "granted" ? event : null;
+  return currentAnalyticsConsent() === "granted" ? event : null;
 }
 
 function setClient(next: PostHog | null) {

@@ -56,6 +56,18 @@ function cookieDocument(initial = "") {
   };
 }
 
+// A browser that blocks cookies: reads stay empty and writes are thrown away.
+function blockedCookieDocument() {
+  return {
+    get cookie() {
+      return "";
+    },
+    set cookie(_raw: string) {
+      // Discarded, like "block all cookies" does.
+    },
+  };
+}
+
 // Stand-in for a loaded PostHog client. Like the real one, reset() also
 // clears the stored opt-out (posthog-js ConsentManager.reset), so the order
 // in which the code calls reset() and opt_out_capturing() is observable.
@@ -99,16 +111,22 @@ const stopPostHog = vi.fn(() => {
 
 // Fresh module state per test (the settings flag and listeners live in the
 // module), with the PostHog loader replaced by a controllable fake.
-async function freshConsent(cookie = "") {
+async function freshConsent(
+  cookie = "",
+  doc: { cookie: string } = cookieDocument(cookie),
+) {
   vi.resetModules();
   vi.doMock("./analytics-client", () => ({
     initPostHog,
     getPostHog: () => loaded,
     withdrawAnalyticsConsent: stopPostHog,
   }));
-  vi.stubGlobal("document", cookieDocument(cookie));
+  vi.stubGlobal("document", doc);
   return import("./analytics-consent");
 }
+
+const freshConsentCookiesBlocked = () =>
+  freshConsent("", blockedCookieDocument());
 
 const consentCookie = () => readAnalyticsConsent(document.cookie);
 
@@ -164,6 +182,81 @@ describe("consent store", () => {
     withdrawAnalyticsConsent();
 
     expect(getCookieBannerSnapshot()).toBe("hidden");
+  });
+});
+
+describe("a browser that discards cookie writes", () => {
+  it.each(["withdrawAnalyticsConsent", "grantAnalyticsConsent"] as const)(
+    "hides the banner for this tab after %s",
+    async (choose) => {
+      const consent = await freshConsentCookiesBlocked();
+      expect(consent.getCookieBannerSnapshot()).toBe("undecided");
+
+      void consent[choose]();
+
+      expect(consent.getCookieBannerSnapshot()).toBe("hidden");
+    },
+  );
+
+  it("asks again on the next page load, when nothing was stored", async () => {
+    const before = await freshConsentCookiesBlocked();
+    before.withdrawAnalyticsConsent();
+
+    const after = await freshConsentCookiesBlocked();
+
+    expect(after.getCookieBannerSnapshot()).toBe("undecided");
+  });
+
+  it("can still reopen Cookie settings and change the choice", async () => {
+    const consent = await freshConsentCookiesBlocked();
+    consent.withdrawAnalyticsConsent();
+
+    consent.openCookieSettings();
+    expect(consent.getCookieBannerSnapshot()).toBe("settings");
+    expect(consent.currentAnalyticsConsent()).toBe("denied");
+
+    void consent.grantAnalyticsConsent();
+    expect(consent.getCookieBannerSnapshot()).toBe("hidden");
+    expect(consent.currentAnalyticsConsent()).toBe("granted");
+  });
+
+  it("honours Allow analytics for this tab instead of opting out", async () => {
+    const { grantAnalyticsConsent } = await freshConsentCookiesBlocked();
+    const granting = grantAnalyticsConsent();
+    const client = fakePostHog();
+    finishLoading?.(client);
+    await granting;
+
+    expect(client.reset).not.toHaveBeenCalled();
+    expect(client.opt_out_capturing).not.toHaveBeenCalled();
+  });
+
+  it("stops a running PostHog on No thanks", async () => {
+    const { withdrawAnalyticsConsent } = await freshConsentCookiesBlocked();
+    const client = fakePostHog();
+    loaded = client;
+
+    withdrawAnalyticsConsent();
+
+    expect(client.has_opted_out_capturing()).toBe(true);
+  });
+});
+
+describe("currentAnalyticsConsent", () => {
+  it("follows the cookie, so a choice made in another tab counts here", async () => {
+    const { currentAnalyticsConsent, grantAnalyticsConsent } =
+      await freshConsent();
+    void grantAnalyticsConsent();
+    expect(currentAnalyticsConsent()).toBe("granted");
+
+    document.cookie = "cookieConsent=false";
+
+    expect(currentAnalyticsConsent()).toBe("denied");
+  });
+
+  it("is unset before any choice", async () => {
+    const { currentAnalyticsConsent } = await freshConsent();
+    expect(currentAnalyticsConsent()).toBe("unset");
   });
 });
 

@@ -1,8 +1,5 @@
 // @vitest-environment happy-dom
-import {
-  openCookieSettings,
-  readAnalyticsConsent,
-} from "@/lib/analytics-consent";
+import { readAnalyticsConsent } from "@/lib/analytics-consent";
 import {
   act,
   cleanup,
@@ -16,7 +13,6 @@ import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
-import { CookieConsent } from "./cookie-consent";
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({
@@ -77,6 +73,10 @@ const setConsentCookie = (value: "true" | "false" | null) => {
       : `cookieConsent=${value}; path=/`;
 };
 
+// Fresh per test: the store remembers this tab's choice in module state.
+let CookieConsent: typeof import("./cookie-consent").CookieConsent;
+let openCookieSettings: typeof import("@/lib/analytics-consent").openCookieSettings;
+
 const banner = (locale: "en" | "nl" = "en") => (
   <IntlProvider
     locale={locale}
@@ -92,11 +92,14 @@ const banner = (locale: "en" | "nl" = "en") => (
 
 const region = () => screen.queryByRole("region", { name: "Cookie settings" });
 
-beforeEach(() => {
+beforeEach(async () => {
   setConsentCookie(null);
   posthog.loaded = false;
   posthog.client.opt_in_capturing();
   posthog.withdraw.mockClear();
+  vi.resetModules();
+  ({ CookieConsent } = await import("./cookie-consent"));
+  ({ openCookieSettings } = await import("@/lib/analytics-consent"));
 });
 
 afterEach(cleanup);
@@ -189,6 +192,22 @@ describe("CookieConsent (mini)", () => {
     expect(readAnalyticsConsent(document.cookie)).toBe("denied");
     expect(posthog.client.has_opted_out_capturing()).toBe(true);
     expect(region()).toBeNull();
+  });
+
+  it("goes away when the browser discards the cookie, instead of staying for the session", () => {
+    const cookie = vi
+      .spyOn(document, "cookie", "set")
+      .mockImplementation(() => {});
+    try {
+      render(banner());
+
+      fireEvent.click(screen.getByRole("button", { name: "No thanks" }));
+
+      expect(readAnalyticsConsent(document.cookie)).toBe("unset");
+      expect(region()).toBeNull();
+    } finally {
+      cookie.mockRestore();
+    }
   });
 
   it("moves focus into the reopened banner and back to Cookie settings afterwards", () => {
