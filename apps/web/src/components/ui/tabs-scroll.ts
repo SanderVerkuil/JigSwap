@@ -8,6 +8,12 @@ import { useEffect, type RefObject } from "react";
 // How much of the neighbouring tab stays visible beside a revealed tab, so it reads as "more".
 export const REVEAL_MARGIN_PX = 32;
 
+// How long after a tab change to check the active tab again. A navigation that doesn't come from
+// the tab itself (a notification link, Back) keeps the router's default scroll handling, which
+// restores the positions it saw, also this list's, just after the commit. That cancels a smooth
+// reveal under way.
+export const REVEAL_SETTLE_MS = 250;
+
 export type ScrollMetrics = {
   scrollLeft: number;
   clientWidth: number;
@@ -124,9 +130,12 @@ export function useScrollableTabsList(ref: RefObject<HTMLElement | null>) {
           });
     resize?.observe(el);
     // The active trigger flips data-state on every tab change, by click, keyboard or URL.
+    let settle: ReturnType<typeof setTimeout> | undefined;
     const mutations = new MutationObserver(() => {
       revealActive(true);
       markEdges();
+      clearTimeout(settle);
+      settle = setTimeout(() => revealActive(true), REVEAL_SETTLE_MS);
     });
     mutations.observe(el, {
       subtree: true,
@@ -139,6 +148,7 @@ export function useScrollableTabsList(ref: RefObject<HTMLElement | null>) {
       el.removeEventListener("wheel", onWheel);
       resize?.disconnect();
       mutations.disconnect();
+      clearTimeout(settle);
     };
   }, [ref]);
 }

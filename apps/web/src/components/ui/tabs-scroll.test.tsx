@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Tabs, TabsList, TabsTrigger } from "./tabs";
 import {
   overflowEdges,
+  REVEAL_SETTLE_MS,
   scrollLeftToReveal,
   wheelScrollDelta,
 } from "./tabs-scroll";
@@ -159,5 +160,36 @@ describe("TabsList overflow", () => {
     expect(list.scrollLeft).toBe(200);
     expect(list.hasAttribute("data-overflow-start")).toBe(true);
     expect(list.hasAttribute("data-overflow-end")).toBe(false);
+  });
+
+  // A navigation that doesn't come from the tab (a notification link) keeps the router's default
+  // scroll handling: it restores the scroll positions it saw, also this list's, which cancels a
+  // smooth reveal under way. The active tab still has to end up in view.
+  it("reveals the active tab again after a navigation puts the list back", async () => {
+    fakeLayout();
+    vi.spyOn(HTMLElement.prototype, "scrollTo").mockImplementation(function (
+      this: HTMLElement,
+      options?: ScrollToOptions | number,
+    ) {
+      if (typeof options === "object") this.scrollLeft = options.left ?? 0;
+    });
+
+    render("e");
+    const list = container.querySelector<HTMLElement>('[role="tablist"]')!;
+    expect(list.scrollLeft).toBe(200);
+
+    render("a");
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(list.scrollLeft).toBe(0);
+    // The router restores what it saw, as it does after the commit.
+    list.scrollLeft = 200;
+    await act(async () => {
+      await new Promise((resolve) =>
+        setTimeout(resolve, REVEAL_SETTLE_MS + 20),
+      );
+    });
+    expect(list.scrollLeft).toBe(0);
   });
 });
