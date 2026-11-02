@@ -55,8 +55,8 @@ export function QuickStartFlowStep({
   const [guard] = useState(() => createLeaveGuard(store, runner));
   const blocker = useBlocker({
     shouldBlockFn: guard.shouldBlock,
-    // No destination here, so this asks for any work: closing the tab loses it either way.
-    enableBeforeUnload: () => guard.shouldAsk(),
+    // Called without a destination, so it asks for any work: closing the tab loses it either way.
+    enableBeforeUnload: guard.shouldAsk,
     withResolver: true,
   });
   const [askingSkip, setAskingSkip] = useState(false);
