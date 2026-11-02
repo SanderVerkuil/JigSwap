@@ -14,9 +14,10 @@ export const SECURITY_HEADERS = {
   // Same-origin requests keep the full Referer (CSRF origin checks fall back on it);
   // cross-site requests get the origin only.
   "referrer-policy": "strict-origin-when-cross-origin",
-  // geolocation for the messaging location picker; nothing uses camera, mic, payment or USB.
+  // geolocation for the messaging location picker, camera for the catalogue search's barcode
+  // scanner; nothing uses mic, payment or USB.
   "permissions-policy":
-    "camera=(), microphone=(), geolocation=(self), payment=(), usb=(), browsing-topics=()",
+    "camera=(self), microphone=(), geolocation=(self), payment=(), usb=(), browsing-topics=()",
   // No page may be framed (clickjacking). X-Frame-Options for older browsers.
   "x-frame-options": "DENY",
   "content-security-policy": "frame-ancestors 'none'",
