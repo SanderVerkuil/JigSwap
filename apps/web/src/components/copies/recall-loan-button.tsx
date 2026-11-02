@@ -49,7 +49,12 @@ export function RecallLoanButton({
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="outline" size="sm" disabled={recall.isPending}>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={recall.isPending}
+          className="pointer-coarse:min-h-11"
+        >
           <Undo2 />
           {recall.isPending ? t("recalling") : t("recallAction")}
         </Button>

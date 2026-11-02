@@ -290,7 +290,7 @@ function PuzzlesPage() {
               <Button
                 variant="outline"
                 size="icon"
-                className="size-8"
+                className="size-8 pointer-coarse:size-11"
                 aria-label={t("moreActions")}
                 data-tour="my-puzzles-suggestions"
               >
@@ -306,7 +306,12 @@ function PuzzlesPage() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button variant="brand" size="sm" asChild>
+          <Button
+            variant="brand"
+            size="sm"
+            asChild
+            className="pointer-coarse:min-h-11"
+          >
             <Link href="/my-puzzles/add" data-tour="my-puzzles-add">
               <Plus className="h-4 w-4" />
               {t("addPuzzle")}
