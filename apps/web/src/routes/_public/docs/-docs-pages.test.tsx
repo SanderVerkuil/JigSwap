@@ -290,6 +290,33 @@ describe("docs landing", () => {
     expect(openSearch).toHaveBeenCalledOnce();
   });
 
+  // UX-158: the same hint as the sidebar pill, not a Mac glyph on every platform.
+  it.each([
+    ["MacIntel", "⌘K"],
+    ["Linux x86_64", "Ctrl K"],
+    ["Win32", "Ctrl K"],
+  ])("names the %s shortcut in the hero search as %s", (platform, hint) => {
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      platform,
+      userAgentData: undefined,
+    });
+    render(
+      withIntl(
+        <DocsSearchProvider value={vi.fn()}>
+          <DocsIndex />
+        </DocsSearchProvider>,
+      ),
+    );
+    const kbd = screen
+      .getByRole("button", { name: en.marketing.docs.searchTrigger })
+      .querySelector("kbd");
+    expect(kbd?.textContent).toBe(hint);
+    expect(kbd?.className).toContain("pointer-coarse:hidden");
+    expect(kbd?.className).toContain("text-mk-text-body");
+    vi.unstubAllGlobals();
+  });
+
   it("speaks the visitor's language in the hero search", () => {
     render(
       withIntl(
