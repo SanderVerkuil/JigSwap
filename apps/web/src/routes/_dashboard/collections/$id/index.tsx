@@ -426,6 +426,8 @@ function CollectionDetailPage() {
               // as breadcrumb context.
               viewBasePath={viewerOwnsCollection ? "/my-puzzles" : "/copies"}
               viewSearch={`?from=collection:${id}`}
+              // The whole box, as My Puzzles shows it.
+              imageFit="contain"
             />
           ))}
         </PuzzleViewProvider>

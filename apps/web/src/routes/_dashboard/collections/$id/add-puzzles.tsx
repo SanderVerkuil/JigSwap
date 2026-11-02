@@ -238,6 +238,8 @@ function AddPuzzlesToCollectionPage() {
               variant="selection"
               isSelected={selectedPuzzles.has(puzzle._id as Id<"ownedPuzzles">)}
               onSelect={togglePuzzleSelection}
+              // The whole box, as My Puzzles shows it.
+              imageFit="contain"
             />
           ))}
         </PuzzleViewProvider>

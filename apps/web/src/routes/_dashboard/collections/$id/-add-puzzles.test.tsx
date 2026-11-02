@@ -175,6 +175,15 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("collection Add Puzzles picker", () => {
+  it("shows each copy's whole box, as My Puzzles does", () => {
+    renderPicker({
+      library: [{ ...copy(1), coverUrl: "https://cdn.test/cover.jpg" }],
+    });
+    expect(screen.getByAltText("Puzzle 1").className).toContain(
+      "object-contain",
+    );
+  });
+
   it("lists copies that aren't on offer, minus the ones already in the collection", () => {
     renderPicker({ library: [copy(1), copy(2)], inCollection: [copy(2)] });
     expect(screen.getByText("Puzzle 1")).toBeTruthy();

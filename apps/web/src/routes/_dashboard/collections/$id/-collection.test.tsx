@@ -77,6 +77,7 @@ const copy: OwnedCopyView = {
   condition: "good",
   availability: { forTrade: false, forLend: false, forSale: false },
   visibility: "visible",
+  coverUrl: "https://cdn.test/cover.jpg",
   createdAt: 0,
   updatedAt: 0,
   puzzle: {
@@ -225,6 +226,13 @@ describe("collection page controls", () => {
 });
 
 describe("where a card leads", () => {
+  it("shows the whole box, as My Puzzles does", () => {
+    renderPage(OWNER);
+    expect(screen.getByAltText("Puzzle 1").className).toContain(
+      "object-contain",
+    );
+  });
+
   it("opens the owner's own copy on /my-puzzles, keeping the collection as context", () => {
     renderPage(OWNER);
     expect(
