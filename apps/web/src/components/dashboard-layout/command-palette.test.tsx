@@ -169,6 +169,51 @@ describe("CommandPalette", () => {
     await waitFor(() => expect(option("Berichten")).not.toBeNull());
   });
 
+  // cmdk's default also takes letters scattered across words: "mess" matched "People" and "My
+  // Puzzles" through their keywords, and Dutch "swap" matched "Mijn gegevens exporteren".
+  it.each([
+    [
+      "en",
+      "mess",
+      "Messages",
+      ["People", "My Puzzles", "Completions", "Dashboard", "Export my data"],
+    ],
+    ["nl", "swap", "Uitwisselingen", ["Mijn gegevens exporteren"]],
+    ["en", "gol", "Goals", ["Messages", "Household"]],
+  ] as const)(
+    "lists only real matches: %s %s",
+    async (locale, term, wanted, unrelated) => {
+      renderPalette({ locale });
+      type(term);
+      await waitFor(() => expect(option(wanted)).not.toBeNull());
+      for (const name of unrelated) expect(option(name)).toBeNull();
+    },
+  );
+
+  it("matches the words of a search in any order", async () => {
+    renderPalette();
+    type("completion log");
+    await waitFor(() => expect(option("Log a Completion")).not.toBeNull());
+    expect(option("Messages")).toBeNull();
+  });
+
+  it("still matches anywhere in a word, and in any case", async () => {
+    renderPalette();
+    type("PUZZ");
+    await waitFor(() => expect(option("My Puzzles")).not.toBeNull());
+    expect(option("Puzzles catalogue")).not.toBeNull();
+  });
+
+  it("ranks the group of the real match first, with unrelated matches not counting", async () => {
+    renderPalette();
+    type("export");
+    await waitFor(() => expect(option("Export my data")).not.toBeNull());
+    const headings = [...document.querySelectorAll("[cmdk-group-heading]")].map(
+      (heading) => heading.textContent,
+    );
+    expect(headings[0]).toBe(en.shell.search.quickActions);
+  });
+
   it("drops destinations that do not match the term", async () => {
     renderPalette();
     type("ruil");

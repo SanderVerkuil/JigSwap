@@ -3,9 +3,9 @@
 // ⌘K command palette: a real global search across Puzzles, the member's own copies ("In your
 // library"), People, Circles and the member's Collections (gateway.search.global) plus the static
 // "Go To" nav destinations and quick actions.
-// The destinations and quick actions are ALWAYS listed: cmdk filters them on their localized
-// title plus bilingual keywords (route-meta), so typing "gol", "mess" or "ruil" still reaches
-// Goals, Messages or Exchanges. From MIN_TERM_LENGTH characters the live result groups render
+// The destinations and quick actions are ALWAYS listed: cmdk filters them (see paletteFilter) on
+// their localized title plus bilingual keywords (route-meta), so typing "gol", "mess" or "ruil"
+// still reaches Goals, Messages or Exchanges. From MIN_TERM_LENGTH characters the live result groups render
 // above them, with a "Searching…" row while the query runs; the empty text shows only when the
 // search is done and nothing at all matches. With an empty input the palette is a pure jump-to
 // navigator. Opened from the top-bar search pill or Cmd/Ctrl+K.
@@ -86,6 +86,32 @@ const EXPORT_DATA_KEYWORDS = [
   "downloaden",
   "gegevens",
 ] as const;
+
+// Whether every word of the search matches a title or keyword: as one piece anywhere in it, or as
+// letters in order inside one word, starting at the word's first letter ("gol" finds Goals). cmdk's
+// default also takes letters scattered across the words and keywords, which listed People and My
+// Puzzles for "mess". Its score still ranks what's left, so the best match stays first.
+function paletteFilter(value: string, search: string, keywords?: string[]) {
+  const texts = [value, ...(keywords ?? [])].map((text) => text.toLowerCase());
+  const inOrderIn = (term: string, word: string) => {
+    let matched = 0;
+    for (const letter of word) if (letter === term[matched]) matched++;
+    return word[0] === term[0] && matched === term.length;
+  };
+  const matches = search
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+    .every((term) =>
+      texts.some(
+        (text) =>
+          text.includes(term) ||
+          text.split(/\s+/).some((word) => inOrderIn(term, word)),
+      ),
+    );
+  // At least a sliver: cmdk's score is 0 for words typed in another order, which still match here.
+  return matches ? Math.max(defaultFilter(value, search, keywords), 0.01) : 0;
+}
 
 // Minimum term length before we hit the backend; mirrors the query's own short-circuit.
 const MIN_TERM_LENGTH = 2;
@@ -203,14 +229,14 @@ export function CommandPalette({
 
   // cmdk ranks items inside a group but never reorders the groups, and it highlights the first
   // match. So the static group holding the best match goes first: "add" then Enter adds a puzzle
-  // instead of opening Exchanges. Scored with cmdk's own filter, on the same raw input.
+  // instead of opening Exchanges. Scored with the palette's own filter, on the same raw input.
   const bestScore = (
     entries: ReadonlyArray<{ title: string; keywords?: readonly string[] }>,
   ) =>
     Math.max(
       0,
       ...entries.map((entry) =>
-        defaultFilter(entry.title, value, [...(entry.keywords ?? [])]),
+        paletteFilter(entry.title, value, [...(entry.keywords ?? [])]),
       ),
     );
   const actionsFirst =
@@ -266,6 +292,7 @@ export function CommandPalette({
       onOpenChange={handleOpenChange}
       title={t("search.label")}
       description={t("search.inputPlaceholder")}
+      filter={paletteFilter}
     >
       <CommandInput
         placeholder={t("search.inputPlaceholder")}
