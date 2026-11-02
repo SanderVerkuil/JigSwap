@@ -11,7 +11,8 @@
 // slim safe-area-aware top bar and a bottom tab bar with a quick-action
 // sheet; the content sits on the plain background with no inset card or page
 // head. The shadcn sidebar's mobile offcanvas becomes unreachable by design —
-// its trigger lives in the (hidden) desktop top bar.
+// its trigger lives in the (hidden) desktop top bar. From md to 1024px the top
+// bar's trigger opens that same sheet over the page, with the rail at rest.
 import { MAIN_CONTENT_ID, SkipLink } from "@/components/a11y/skip-link";
 import { InstallAppTip } from "@/components/install-app/install-app-tip";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -51,10 +52,10 @@ function subscribeWide(onChange: () => void) {
 
 const getWideSnapshot = () => window.matchMedia(SIDEBAR_WIDE_QUERY).matches;
 
-// The desktop sidebar's open state (UX-05, see lib/sidebar-state.ts): the member's remembered
-// toggle wins; without one it is docked open from 1024px and the icon rail below, following the
-// window live. The server and hydration render use last visit's width hint, so SSR paints the
-// same sidebar the browser settles on.
+// The desktop sidebar's open state (UX-05, see lib/sidebar-state.ts): the icon rail below 1024px,
+// where the toggle opens an overlay instead; from there the member's remembered toggle wins, else
+// docked open. It follows the window live. The server and hydration render use last visit's width
+// hint, so SSR paints the same sidebar the browser settles on.
 function useSidebarOpen(cookies: SidebarCookies) {
   const [explicit, setExplicit] = useState(cookies.open);
   const wide = useSyncExternalStore(
@@ -65,7 +66,7 @@ function useSidebarOpen(cookies: SidebarCookies) {
   useEffect(() => {
     writeSidebarCookie(SIDEBAR_WIDE_COOKIE_NAME, wide);
   }, [wide]);
-  return [resolveSidebarOpen(explicit, wide), setExplicit] as const;
+  return { open: resolveSidebarOpen(explicit, wide), setExplicit, wide };
 }
 
 const NO_SIDEBAR_COOKIES: SidebarCookies = { open: undefined, wide: undefined };
@@ -79,7 +80,7 @@ export function DashboardShell({
   sidebar?: SidebarCookies;
 }) {
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useSidebarOpen(sidebar);
+  const sidebarState = useSidebarOpen(sidebar);
   const pathname = useLocation({ select: (location) => location.pathname });
   // Full-bleed pages (/messages) fill the card from md: no content padding and
   // no page scroll, so only the page's own panes scroll.
@@ -96,10 +97,12 @@ export function DashboardShell({
             while the page scrolls under them. Desktop keeps the inset-card model:
             a fixed `svh` column that clips its own overflow and scrolls inside
             the card. */}
-        {/* Controlled: the provider still writes the sidebar_state cookie on every toggle. */}
+        {/* Controlled: the provider still writes the sidebar_state cookie on every docked toggle. */}
         <SidebarProvider
-          open={sidebarOpen}
-          onOpenChange={setSidebarOpen}
+          open={sidebarState.open}
+          onOpenChange={sidebarState.setExplicit}
+          overlay={!sidebarState.wide}
+          overlayKey={pathname}
           className="flex-col md:h-svh md:overflow-hidden"
         >
           {/* First Tab stop: jumps past the top bar and sidebar to the main landmark. */}

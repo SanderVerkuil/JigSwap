@@ -29,6 +29,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { UnreadDot, WhatsNewNavItem } from "@/components/whats-new/badges";
 import { useWhatsNewUnreadCount } from "@/components/whats-new/use-whats-new-state";
@@ -108,6 +109,7 @@ function NavGroup({ group }: { group: ShellNavGroup }) {
   const t = useTranslations("shell");
   const pathname = usePathname();
   const groupActive = pathname === group.href;
+  const { setOpenMobile } = useSidebar();
 
   return (
     <SidebarGroup>
@@ -115,6 +117,8 @@ function NavGroup({ group }: { group: ShellNavGroup }) {
         <Link
           href={group.href}
           aria-current={groupActive ? "page" : undefined}
+          // Like the rows: a tap closes the overlay, also on the page it links to.
+          onClick={() => setOpenMobile(false)}
           // Slot concatenates these after the primitive's classes without merging them, so the
           // active look is an aria-current variant, which wins over the base text colour.
           className="group/hub gap-2 font-mono tracking-[0.08em] uppercase hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:bg-sidebar-accent focus-visible:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:text-sidebar-accent-foreground"

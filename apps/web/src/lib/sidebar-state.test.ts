@@ -51,13 +51,18 @@ describe("parseSidebarCookies", () => {
 });
 
 describe("resolveSidebarOpen", () => {
-  it("honours a remembered choice whatever the window width", () => {
+  it("honours a remembered choice on a wide window", () => {
     expect(resolveSidebarOpen(false, true)).toBe(false);
-    expect(resolveSidebarOpen(true, false)).toBe(true);
+    expect(resolveSidebarOpen(true, true)).toBe(true);
   });
 
-  it("without a choice, opens on wide windows and shows the icon rail below", () => {
+  it("without a choice, opens on a wide window", () => {
     expect(resolveSidebarOpen(undefined, true)).toBe(true);
+  });
+
+  it("rests as the icon rail below 1024px, whatever was remembered", () => {
     expect(resolveSidebarOpen(undefined, false)).toBe(false);
+    expect(resolveSidebarOpen(false, false)).toBe(false);
+    expect(resolveSidebarOpen(true, false)).toBe(false);
   });
 });

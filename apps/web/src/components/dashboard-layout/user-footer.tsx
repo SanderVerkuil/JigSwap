@@ -12,6 +12,7 @@
 // to the Clerk user (see preferences.tsx). Admins reach /admin via the gated
 // sidebar group and the user menu's Admin link (shell-user-button.tsx).
 import { useUser } from "@/compat/clerk";
+import { useSidebar } from "@/components/ui/sidebar";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { useRef } from "react";
@@ -24,8 +25,11 @@ export function UserFooter() {
   const { hideEmail } = useShellPreferences();
   const rootRef = useRef<HTMLDivElement>(null);
   const menuWasOpenRef = useRef(false);
+  const { inSheet } = useSidebar();
 
-  if (!user) {
+  // Clerk portals its menu out of the modal sheet (the sidebar overlay below 1024px), where it can't
+  // take a tap or keep focus. The rail keeps its own avatar, one tap away once the sheet closes.
+  if (!user || inSheet) {
     return null;
   }
 
