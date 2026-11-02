@@ -482,25 +482,29 @@ function ExchangeDetail({
           />
         )}
 
-        {/* Icon-only on phones so the ⋯ keeps its place on this row; still the accessible name. */}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="max-sm:size-11"
-          aria-expanded={chatOpen}
-          onClick={() => setChatOpen((value) => !value)}
-        >
-          <MessageCircle className="h-4 w-4" />
-          <span className="max-sm:sr-only">{t("message")}</span>
-        </Button>
+        {/* Wraps as one, so the ⋯ never lands on a row alone: a long Dutch label can still fill the
+            row. It grows so the ⋯ keeps to the far end. */}
+        <div className="flex flex-1 items-center gap-2">
+          {/* Icon-only on phones to leave the row room; still the accessible name. */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="max-sm:size-11"
+            aria-expanded={chatOpen}
+            onClick={() => setChatOpen((value) => !value)}
+          >
+            <MessageCircle className="h-4 w-4" />
+            <span className="max-sm:sr-only">{t("message")}</span>
+          </Button>
 
-        {partner && (
-          <ExchangeReportMenu
-            exchangeId={exchange.aggregateId ?? exchange._id}
-            partnerId={partnerId}
-            partnerName={displayName(partner)}
-          />
-        )}
+          {partner && (
+            <ExchangeReportMenu
+              exchangeId={exchange.aggregateId ?? exchange._id}
+              partnerId={partnerId}
+              partnerName={displayName(partner)}
+            />
+          )}
+        </div>
       </ExchangeActions>
 
       {chatOpen && (

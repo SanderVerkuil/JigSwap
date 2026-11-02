@@ -815,7 +815,7 @@
     "accept": "Accept",
     "decline": "Decline",
     "cancel": "Cancel",
-    "markComplete": "Mark Complete",
+    "markComplete": "Mark complete",
     "message": "Message",
     "all": "All",
     "exchangesCount": "{count, plural, one {# exchange} other {# exchanges}}",
@@ -5839,7 +5839,7 @@
         },
         "complete": {
           "title": "Both of you confirm",
-          "body": "Once the puzzle has changed hands, you both press Mark Complete. The exchange is completed when both of you have."
+          "body": "Once the puzzle has changed hands, you both press Mark complete. The exchange is completed when both of you have."
         },
         "borrowed": {
           "title": "Your loans",
