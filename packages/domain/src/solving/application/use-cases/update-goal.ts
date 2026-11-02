@@ -11,7 +11,7 @@ export interface UpdateGoalDeps {
 }
 
 // Transaction script: load the acting member's own goal (GoalNotFound / NotGoalOwner), replace its
-// definition (InvalidGoalTitle / InvalidGoalDescription / InvalidGoalTarget / InvalidGoalPeriod), recount it SILENTLY for the new period, and
+// definition (refused by Goal.edit when invalid), recount it SILENTLY for the new period, and
 // persist. Publishes nothing: editing a goal never announces an achievement.
 export const makeUpdateGoal =
   (deps: UpdateGoalDeps): UpdateGoal =>
