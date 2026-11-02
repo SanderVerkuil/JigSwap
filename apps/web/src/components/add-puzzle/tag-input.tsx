@@ -86,7 +86,8 @@ export function TagInput({
           placeholder={
             value.length ? "" : (placeholder ?? t("tagsPlaceholder"))
           }
-          className="min-w-[120px] flex-1 border-none bg-transparent px-0.5 py-0.5 text-base text-foreground outline-none md:not-pointer-coarse:text-sm"
+          // On touch the field reaches into the box's padding: a 44px target at the box's height.
+          className="min-w-[120px] flex-1 border-none bg-transparent px-0.5 py-0.5 text-base text-foreground outline-none md:not-pointer-coarse:text-sm pointer-coarse:-my-2 pointer-coarse:py-2.5"
         />
       </div>
       <p

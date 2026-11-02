@@ -220,7 +220,7 @@ function QuickActions() {
         <Link
           key={href}
           href={href}
-          className="bg-background hover:bg-accent inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm font-semibold transition-colors"
+          className="bg-background hover:bg-accent inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm font-semibold transition-colors pointer-coarse:min-h-11"
         >
           <Icon className="text-jigsaw-primary size-[15px]" />
           {label}

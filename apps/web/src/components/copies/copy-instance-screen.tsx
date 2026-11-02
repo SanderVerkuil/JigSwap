@@ -425,7 +425,8 @@ function CopyInstanceDetail({
                 {" · "}
                 <Link
                   href={`/puzzles/${copy.puzzleId}`}
-                  className="text-primary-text font-semibold hover:underline"
+                  // Inline: on touch the padding grows its hit area, not the line.
+                  className="text-primary-text font-semibold hover:underline pointer-coarse:py-3"
                 >
                   {t("viewPuzzlePage")}
                 </Link>
@@ -636,7 +637,8 @@ function CopyInstanceDetail({
                     <button
                       type="button"
                       onClick={() => openEditor("acquisition")}
-                      className="text-primary-text hover:underline"
+                      // On touch a 44px target; the negative margin keeps the row's height.
+                      className="text-primary-text hover:underline pointer-coarse:-my-3 pointer-coarse:py-3"
                     >
                       {t("addDetails")}
                     </button>
