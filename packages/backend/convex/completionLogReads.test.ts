@@ -223,6 +223,68 @@ describe("solving.myCompletionsByIds", () => {
     expect(view.libraryInfo).toBeUndefined();
   });
 
+  // SEC-34: the log says of a copy what My Puzzles says of it (toCopyPuzzleView). The owner of a copy
+  // of someone else's pending or rejected definition reads the copy's snapshot, never its live text.
+  describe("a copy of a definition that isn't approved", () => {
+    const logAgainst = async (
+      status: Doc<"puzzles">["status"],
+      submittedBy: Id<"users">,
+    ) => {
+      await t.run(async (ctx) => {
+        await ctx.db.patch(w.puzzleId, {
+          status,
+          submittedBy,
+          title: "Live title",
+          pieceCount: 999,
+        });
+        await ctx.db.patch(w.copyId, {
+          snapshot: { title: "Snapshot title", pieceCount: 500 },
+        });
+      });
+      const id = await addCompletion(t, w.ann, { ownedPuzzleId: w.copyId });
+      const [row] = await rowsOf(t, "ann", [id]);
+      return row.libraryInfo;
+    };
+
+    test.each(["pending", "rejected"] as const)(
+      "someone else's %s definition reads as the copy's snapshot",
+      async (status) => {
+        expect(await logAgainst(status, w.bob)).toEqual({
+          title: "Snapshot title",
+          pieceCount: 500,
+        });
+      },
+    );
+
+    test.each(["pending", "rejected"] as const)(
+      "their own %s submission keeps its live title",
+      async (status) => {
+        expect(await logAgainst(status, w.ann)).toEqual({
+          title: "Live title",
+          pieceCount: 999,
+        });
+      },
+    );
+
+    test("a disabled definition, moderated once, keeps its live title", async () => {
+      expect(await logAgainst("disabled", w.bob)).toEqual({
+        title: "Live title",
+        pieceCount: 999,
+      });
+    });
+
+    test("agrees with what My Puzzles shows the same copy", async () => {
+      const info = await logAgainst("rejected", w.bob);
+      const library = await t
+        .withIdentity({ subject: "clerk_ann" })
+        .query(api.library.getMyLibraryCopies.getMyLibraryCopies, {
+          copyIds: [w.copyId],
+        });
+      expect(library[0].puzzle?.title).toBe(info?.title);
+      expect(library[0].puzzle?.pieceCount).toBe(info?.pieceCount);
+    });
+  });
+
   test("reads at most COMPLETION_ROWS_MAX ids, repeats counted once", async () => {
     const id = await addCompletion(t, w.ann);
     const rows = await rowsOf(

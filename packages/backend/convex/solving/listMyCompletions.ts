@@ -11,6 +11,7 @@ import {
   canViewCopyWithContext,
   type CopyViewContext,
 } from "../library/canViewCopy";
+import { toCopyPuzzleView } from "../library/mappers";
 import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
 
 // The navigation target for a completion row, most-specific-first: the viewer's own copy page,
@@ -54,8 +55,9 @@ export const listMyCompletions = query({
 // the ids themselves are not sent (withPhotoItems). Each row is also enriched with a navigation
 // `link` and a `thumbnailUrl`, resolved once per DISTINCT copy/puzzle (many completions share one)
 // since this is a self-facing read only, with `libraryInfo` (the title and piece count of a copy the
-// member owns now), and with `editableUntil` (epoch ms, null = no deadline) from the domain's
-// edit-window rule, so the UI only offers Edit while the server would accept it.
+// member owns now, as toCopyPuzzleView gives them to its owner), and with `editableUntil` (epoch ms,
+// null = no deadline) from the domain's edit-window rule, so the UI only offers Edit while the
+// server would accept it.
 export const enrichCompletions = async (
   ctx: QueryCtx,
   me: Id<"users">,
@@ -112,11 +114,17 @@ export const enrichCompletions = async (
       }
       const puzzle = copy.puzzleId ? await ctx.db.get(copy.puzzleId) : null;
       copyThumbs.set(id, await resolveCopyCoverUrl(ctx, copy, puzzle));
-      if (copy.ownerId === me && puzzle) {
-        libraryInfo.set(id, {
-          title: puzzle.title,
-          pieceCount: puzzle.pieceCount,
+      if (copy.ownerId === me) {
+        // What My Puzzles says of this copy: a definition the member may not read is its snapshot.
+        const facts = toCopyPuzzleView(copy, puzzle, {
+          includeOwnerOnly: true,
         });
+        if (facts) {
+          libraryInfo.set(id, {
+            title: facts.title,
+            pieceCount: facts.pieceCount,
+          });
+        }
       }
     }),
   );
