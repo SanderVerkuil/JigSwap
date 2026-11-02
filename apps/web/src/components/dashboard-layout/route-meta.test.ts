@@ -4,6 +4,7 @@ import {
   isFullBleedRoute,
   isImmersiveMobileRoute,
   isMobileTabRoot,
+  MOBILE_TABS,
 } from "./route-meta";
 
 describe("isImmersiveMobileRoute", () => {
@@ -48,6 +49,18 @@ describe("isMobileTabRoot", () => {
       expect(isMobileTabRoot(pathname)).toBe(true);
     },
   );
+
+  it("treats every tab's destination as a tab root", () => {
+    expect(MOBILE_TABS.map((tab) => tab.href)).toEqual([
+      "/dashboard",
+      "/library",
+      "/trades",
+      "/community",
+    ]);
+    for (const tab of MOBILE_TABS) {
+      expect(isMobileTabRoot(tab.href)).toBe(true);
+    }
+  });
 
   it.each(["/my-puzzles", "/messages", "/circles", "/trades/abc", "/browse"])(
     "is not a tab root on %s",

@@ -15,32 +15,21 @@ import { useWhatsNewUnreadCount } from "@/components/whats-new/use-whats-new-sta
 import { scrollToTopIfCurrent } from "@/lib/scroll-restoration";
 import { cn } from "@/lib/utils";
 import { useRouter } from "@tanstack/react-router";
-import {
-  ArrowLeftRight,
-  BookOpen,
-  LayoutDashboard,
-  Plus,
-  Users,
-  type LucideIcon,
-} from "lucide-react";
+import { Plus, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "use-intl";
 import { MobileQuickSheet } from "./mobile-quick-sheet";
 import { usePendingRequestCount, useUnreadMessageCount } from "./nav-counts";
-import { getRouteMeta, isImmersiveMobileRoute } from "./route-meta";
+import {
+  getRouteMeta,
+  isImmersiveMobileRoute,
+  MOBILE_TABS,
+  type MobileTabKey,
+} from "./route-meta";
 import { MOBILE_TAB_BAR_HEIGHT_VAR, useHeightCssVar } from "./sticky-offset";
 
-type TabKey = "home" | "library" | "swaps" | "community";
-
-const TABS: Array<{ key: TabKey; href: string; icon: LucideIcon }> = [
-  { key: "home", href: "/dashboard", icon: LayoutDashboard },
-  { key: "library", href: "/library", icon: BookOpen },
-  { key: "swaps", href: "/trades", icon: ArrowLeftRight },
-  { key: "community", href: "/community", icon: Users },
-];
-
 // /trades lights Swaps; every other route lights its parent section's tab.
-function activeTab(pathname: string): TabKey | null {
+function activeTab(pathname: string): MobileTabKey | null {
   const meta = getRouteMeta(pathname);
   if (meta?.variant === "dashboard") return "home";
   if (pathname === "/trades" || pathname.startsWith("/trades/")) {
@@ -67,7 +56,7 @@ export function MobileTabBar() {
   // messages (Community dot, quick-sheet row): Messages lives under Community.
   const pending = usePendingRequestCount();
   const unreadMessages = useUnreadMessageCount();
-  const counts: Partial<Record<TabKey, TabCount>> = {
+  const counts: Partial<Record<MobileTabKey, TabCount>> = {
     swaps: {
       value: pending,
       indicator: "badge",
@@ -128,7 +117,7 @@ export function MobileTabBar() {
         // Blink does.
         className="sticky bottom-0 z-30 grid shrink-0 grid-cols-5 items-stretch overflow-visible border-t bg-card shadow-[0_24px_0_0_var(--card)] [will-change:transform] md:hidden [@media(display-mode:standalone)]:pb-[env(safe-area-inset-bottom)]"
       >
-        {TABS.slice(0, 2).map((tab) => (
+        {MOBILE_TABS.slice(0, 2).map((tab) => (
           <TabLink key={tab.key} tab={tab} active={active} />
         ))}
         {/* The raised "+" reaches 12px above the bar; toasts clear it (sticky-offset.ts
@@ -150,7 +139,7 @@ export function MobileTabBar() {
             )}
           </button>
         </div>
-        {TABS.slice(2).map((tab) => (
+        {MOBILE_TABS.slice(2).map((tab) => (
           <TabLink
             key={tab.key}
             tab={tab}
@@ -182,8 +171,8 @@ function TabLink({
   active,
   count,
 }: {
-  tab: { key: TabKey; href: string; icon: LucideIcon };
-  active: TabKey | null;
+  tab: { key: MobileTabKey; href: string; icon: LucideIcon };
+  active: MobileTabKey | null;
   count?: TabCount;
 }) {
   const t = useTranslations("shell.mobile");

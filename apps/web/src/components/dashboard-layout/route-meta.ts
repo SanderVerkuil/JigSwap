@@ -341,13 +341,21 @@ export function getRouteMeta(pathname: string): ShellRouteMeta | undefined {
   return best;
 }
 
-// The pages the phone tab bar opens (keep in sync with MobileTabBar's TABS).
-const MOBILE_TAB_ROOTS = new Set([
-  "/dashboard",
-  "/library",
-  "/trades",
-  "/community",
-]);
+export type MobileTabKey = "home" | "library" | "swaps" | "community";
+
+// The phone tab bar's four destinations around its raised "+".
+export const MOBILE_TABS: ReadonlyArray<{
+  key: MobileTabKey;
+  href: string;
+  icon: LucideIcon;
+}> = [
+  { key: "home", href: "/dashboard", icon: LayoutDashboard },
+  { key: "library", href: "/library", icon: BookOpen },
+  { key: "swaps", href: "/trades", icon: ArrowLeftRight },
+  { key: "community", href: "/community", icon: Users },
+];
+
+const MOBILE_TAB_ROOTS = new Set(MOBILE_TABS.map((tab) => tab.href));
 
 /**
  * Pages a phone tab opens (Home, Library, Swaps, Community). The mobile top bar shows no back
