@@ -113,6 +113,42 @@ describe("GoalSections", () => {
     expect(screen.queryByText("Achieved")).toBeNull();
   });
 
+  it("opens past goals when archiving leaves nothing else on the page", () => {
+    const tree = (goals: GoalRow[]) => (
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <GoalSections goals={goals} actionsFor={actionsFor} now={NOW} />
+      </IntlProvider>
+    );
+    const last = goal({ title: "The only one" });
+    const { rerender } = render(tree([last]));
+    rerender(tree([{ ...last, isActive: false }]));
+    expect(screen.getByText("The only one")).toBeDefined();
+    expect(
+      screen
+        .getByRole("button", { name: "Hide past goals" })
+        .getAttribute("aria-expanded"),
+    ).toBe("true");
+  });
+
+  it("keeps past goals the way the member left them", () => {
+    const tree = (goals: GoalRow[]) => (
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <GoalSections goals={goals} actionsFor={actionsFor} now={NOW} />
+      </IntlProvider>
+    );
+    const live = goal({ title: "Chasing" });
+    const shelved = goal({ title: "Shelved", isActive: false });
+    const { rerender } = render(tree([live, shelved]));
+    fireEvent.click(screen.getByRole("button", { name: "Show past goals" }));
+    rerender(tree([live, shelved, goal({ title: "New one" })]));
+    expect(screen.getByText("Shelved")).toBeDefined();
+
+    // Closed by hand: archiving the rest doesn't reopen it.
+    fireEvent.click(screen.getByRole("button", { name: "Hide past goals" }));
+    rerender(tree([{ ...live, isActive: false }, shelved]));
+    expect(screen.queryByText("Shelved")).toBeNull();
+  });
+
   it("files an achieved goal under Achieved even after its end date", () => {
     renderSections([
       goal({

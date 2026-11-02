@@ -19,8 +19,8 @@ export const GOAL_GRID =
   "grid gap-x-10 gap-y-8 @2xl/goals:grid-cols-2 @6xl/goals:grid-cols-3";
 
 // The goals page body for a member with at least one goal: Active, Achieved, and a collapsible
-// "Past goals" (ended or archived). A section with no goals is not shown. Past goals start
-// collapsed unless they are all the member has.
+// "Past goals" (ended or archived). A section with no goals is not shown. Past goals stay
+// collapsed unless they are all the member has, or the member opened them.
 export function GoalSections({
   goals,
   actionsFor,
@@ -42,9 +42,11 @@ export function GoalSections({
   const achieved = inStatus("achieved");
   const past = inStatus("ended", "archived");
 
-  const [pastOpen, setPastOpen] = useState(
-    active.length === 0 && achieved.length === 0,
-  );
+  // The member's own toggle wins; until they use it, this follows the goals, so archiving the last
+  // live goal doesn't leave nothing but a collapsed header.
+  const [pastToggled, setPastToggled] = useState<boolean | undefined>();
+  const pastOpen =
+    pastToggled ?? (active.length === 0 && achieved.length === 0);
 
   const grid = (entries: typeof withStatus) => (
     <div className={GOAL_GRID}>
@@ -80,7 +82,7 @@ export function GoalSections({
       )}
 
       {past.length > 0 && (
-        <Collapsible asChild open={pastOpen} onOpenChange={setPastOpen}>
+        <Collapsible asChild open={pastOpen} onOpenChange={setPastToggled}>
           <section>
             <SectionHead
               title={t("past")}
