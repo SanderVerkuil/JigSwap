@@ -176,10 +176,10 @@ function CatalogListPage() {
     }
   };
 
-  const clearSearch = () => {
+  const clearFilters = () => {
     setSearchInput("");
     setSentQ(undefined);
-    updateSearch({ q: undefined });
+    updateSearch({ q: undefined, brand: undefined, pieces: undefined });
   };
 
   return (
@@ -272,13 +272,13 @@ function CatalogListPage() {
             ))}
           </div>
         ) : cards.length === 0 ? (
-          q ? (
+          q || brand || pieces ? (
             <EmptyState
-              title={t("noResults", { query: q })}
-              sub={t("noResultsSub")}
+              title={q ? t("noResults", { query: q }) : t("noResultsFiltered")}
+              sub={t(q ? "noResultsSub" : "noResultsFilteredSub")}
               action={
-                <Button variant="ghost" onClick={clearSearch}>
-                  {t("clearSearch")}
+                <Button variant="ghost" onClick={clearFilters}>
+                  {t(brand || pieces ? "clearFilters" : "clearSearch")}
                 </Button>
               }
             />
