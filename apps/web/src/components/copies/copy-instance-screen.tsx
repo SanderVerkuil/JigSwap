@@ -31,6 +31,7 @@ import { EmptyState } from "@/components/library/empty-state";
 import { MemberInitial } from "@/components/members/member-initial";
 import { copyMessageRoute } from "@/components/messaging/copy-conversation";
 import { PendingPhotoPlaceholder } from "@/components/photos/pending-photo-placeholder";
+import { difficultyClasses } from "@/components/puzzles/difficulty-classes";
 import { DeleteOwnContentButton } from "@/components/social/delete-own-content-button";
 import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
@@ -169,22 +170,6 @@ function CopyInstanceSkeleton() {
 function CopyInstanceNotFound() {
   const t = useTranslations("copyInstance");
   return <EmptyState title={t("notFound")} sub={t("notFoundSub")} />;
-}
-
-// Difficulty colour swatch, matching the shared PuzzleCard scheme.
-function difficultyClasses(difficulty?: string) {
-  switch (difficulty) {
-    case "easy":
-      return "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200";
-    case "medium":
-      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-200";
-    case "hard":
-      return "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200";
-    case "expert":
-      return "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200";
-    default:
-      return "bg-muted text-muted-foreground";
-  }
 }
 
 function CopyInstanceDetail({
