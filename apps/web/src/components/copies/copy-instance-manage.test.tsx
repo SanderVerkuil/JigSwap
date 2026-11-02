@@ -12,6 +12,7 @@ import { CopyInstanceScreen } from "./copy-instance-screen";
 const mocks = vi.hoisted(() => ({
   copy: undefined as unknown,
   household: undefined as unknown,
+  navigate: vi.fn(),
   editProps: undefined as { onAddPhotos?: () => void } | undefined,
 }));
 
@@ -74,7 +75,7 @@ vi.mock("@/compat/link", () => ({
 }));
 vi.mock("@tanstack/react-router", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@tanstack/react-router")>()),
-  useNavigate: () => vi.fn(),
+  useNavigate: () => mocks.navigate,
 }));
 vi.mock("@convex-dev/react-query", () => ({
   convexQuery: (ref: FunctionReference<"query">, args: unknown) => ({
@@ -100,12 +101,16 @@ vi.mock("@/components/dashboard-layout/page-header-slot", () => ({
   usePageHeaderActions: () => {},
 }));
 
-const renderCopy = (copy: CopyInstanceView) => {
+const renderCopy = (
+  copy: CopyInstanceView,
+  screenProps: Partial<Parameters<typeof CopyInstanceScreen>[0]> = {},
+) => {
   mocks.copy = copy;
   mocks.editProps = undefined;
+  mocks.navigate.mockReset();
   render(
     <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
-      <CopyInstanceScreen copyId="copy_1" owned />
+      <CopyInstanceScreen copyId="copy_1" owned {...screenProps} />
     </IntlProvider>,
   );
 };
@@ -127,6 +132,51 @@ describe("Edit copy's Add photo", () => {
       }),
     );
     expect(mocks.editProps?.onAddPhotos).toBeUndefined();
+  });
+});
+
+describe("/copies/$id for a copy in the viewer's own library", () => {
+  it("moves the owner to /my-puzzles, in place of this history entry", () => {
+    renderCopy(managedCopy({}), { owned: false });
+    expect(mocks.navigate).toHaveBeenCalledWith({
+      to: "/my-puzzles/$id",
+      params: { id: "copy_1" },
+      search: {},
+      replace: true,
+    });
+    expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
+  });
+
+  it("keeps the collection it came from", () => {
+    renderCopy(managedCopy({}), {
+      owned: false,
+      navContext: { kind: "collection", id: "col_1" },
+    });
+    expect(mocks.navigate).toHaveBeenCalledWith(
+      expect.objectContaining({ search: { from: "collection:col_1" } }),
+    );
+  });
+
+  it("moves a housemate too: the copy is in their library", () => {
+    renderCopy(
+      managedCopy({
+        viewerIsOwner: false,
+        household: { viewerAccess: "view", permission: "view" },
+      }),
+      { owned: false },
+    );
+    expect(mocks.navigate).toHaveBeenCalled();
+  });
+
+  it("leaves a visitor on the public page", () => {
+    renderCopy(managedCopy({ viewerIsOwner: false }), { owned: false });
+    expect(mocks.navigate).not.toHaveBeenCalled();
+    expect(screen.getByRole("heading", { level: 1 })).toBeTruthy();
+  });
+
+  it("stays put on /my-puzzles", () => {
+    renderCopy(managedCopy({}));
+    expect(mocks.navigate).not.toHaveBeenCalled();
   });
 });
 

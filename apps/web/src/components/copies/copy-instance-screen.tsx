@@ -97,8 +97,8 @@ type PuzzleComment = FunctionReturnType<
 >[number];
 // Shared copy-detail screen used by BOTH the public route (/copies/$id, owned=false)
 // and the owner route (/my-puzzles/$id, owned=true). `owned` drives the breadcrumb
-// framing and gates the owner route: viewing a copy you don't own under /my-puzzles
-// bounces to the public /copies view.
+// framing and gates both routes: viewing a copy you don't own under /my-puzzles bounces
+// to the public /copies view, and one in your library under /copies to /my-puzzles.
 export function CopyInstanceScreen({
   copyId,
   owned,
@@ -129,6 +129,23 @@ export function CopyInstanceScreen({
   useEffect(() => {
     if (notOwner) router.push(`/copies/${copyId}`);
   }, [notOwner, copyId, router]);
+  // And the other way: a copy in the viewer's own library lives under /my-puzzles (one URL per copy
+  // for them), whichever link brought them here. Replace, so Back doesn't land here again.
+  const navigate = useNavigate();
+  const inLibraryElsewhere =
+    !owned &&
+    copy != null &&
+    (copy.viewerIsOwner === true || copy.household !== null);
+  const fromCollection = navContext?.id;
+  useEffect(() => {
+    if (!inLibraryElsewhere) return;
+    void navigate({
+      to: "/my-puzzles/$id",
+      params: { id: copyId },
+      search: fromCollection ? { from: `collection:${fromCollection}` } : {},
+      replace: true,
+    });
+  }, [inLibraryElsewhere, copyId, fromCollection, navigate]);
 
   // A missing copy resolves to `null`; a malformed id or any other query failure surfaces as
   // `isError` with `copy` stuck at `undefined`. Treat both as not-found so an unresolvable copy
@@ -137,7 +154,7 @@ export function CopyInstanceScreen({
     return <CopyInstanceNotFound />;
   }
 
-  if (copyPending || copy === undefined || notOwner) {
+  if (copyPending || copy === undefined || notOwner || inLibraryElsewhere) {
     return <CopyInstanceSkeleton />;
   }
 

@@ -115,7 +115,8 @@ const renderCopy = (view: CopyView) => {
   render(
     <QueryClientProvider client={queryClient}>
       <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
-        <CopyInstanceScreen copyId="copy-doc-1" owned={false} />
+        {/* An owner lands on /my-puzzles/$id, whichever link they followed. */}
+        <CopyInstanceScreen copyId="copy-doc-1" owned={view.viewerIsOwner} />
       </IntlProvider>
     </QueryClientProvider>,
   );
