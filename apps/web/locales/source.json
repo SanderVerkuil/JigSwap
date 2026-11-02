@@ -2206,6 +2206,7 @@
       "decline": "Decline",
       "approved": "Request approved",
       "approvedFollowBackFailed": "Approved — but following them back failed, use the Follow button on their tile",
+      "approvedFollowBackRateLimited": "Approved — but you've followed and unfollowed a lot, so following them back has to wait. Try again later.",
       "declined": "Request declined",
       "error": "Something went wrong. Please try again."
     },

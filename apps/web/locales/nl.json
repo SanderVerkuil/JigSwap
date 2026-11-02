@@ -2206,6 +2206,7 @@
       "decline": "Weigeren",
       "approved": "Verzoek goedgekeurd",
       "approvedFollowBackFailed": "Goedgekeurd — maar terugvolgen is niet gelukt, gebruik de Volgen-knop op hun tegel",
+      "approvedFollowBackRateLimited": "Goedgekeurd — maar je hebt vaak gevolgd en ontvolgd, dus terugvolgen moet even wachten. Probeer het later opnieuw.",
       "declined": "Verzoek geweigerd",
       "error": "Er ging iets mis. Probeer het opnieuw."
     },

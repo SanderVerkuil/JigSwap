@@ -892,6 +892,57 @@ describe("NotificationActions", () => {
     expect(mocks.toastError).not.toHaveBeenCalled();
   });
 
+  it("says so when a follow back is rate limited, in Dutch too", async () => {
+    mocks.mutation.mockRejectedValue(new ConvexError({ code: "RateLimited" }));
+    renderItem(followable);
+    fireEvent.click(screen.getByRole("button", { name: "Follow back Mara" }));
+    await waitFor(() =>
+      expect(mocks.toastError).toHaveBeenCalledWith(
+        "You've followed and unfollowed a lot. Try again later.",
+      ),
+    );
+    cleanup();
+    mocks.toastError.mockReset();
+
+    renderItem(followable, { locale: "nl" });
+    fireEvent.click(screen.getByRole("button", { name: "Mara terugvolgen" }));
+    await waitFor(() =>
+      expect(mocks.toastError).toHaveBeenCalledWith(
+        "Je hebt vaak gevolgd en ontvolgd. Probeer het later opnieuw.",
+      ),
+    );
+  });
+
+  it("says so when the Undo of a follow back is rate limited", async () => {
+    mocks.mutation.mockImplementation((name) =>
+      name === ACT
+        ? Promise.resolve({ resolvedAs: "following" })
+        : Promise.reject(new ConvexError({ code: "RateLimited" })),
+    );
+    renderItem(followable);
+    fireEvent.click(screen.getByRole("button", { name: "Follow back Mara" }));
+    await waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalledOnce());
+    const [, options] = mocks.toastSuccess.mock.calls[0];
+    await act(async () => options.action.onClick());
+    expect(mocks.toastError).toHaveBeenCalledWith(
+      "You've followed and unfollowed a lot. Try again later.",
+    );
+  });
+
+  it("keeps the generic Undo error for any other failure", async () => {
+    mocks.mutation.mockImplementation((name) =>
+      name === ACT
+        ? Promise.resolve({ resolvedAs: "following" })
+        : Promise.reject(new Error("offline")),
+    );
+    renderItem(followable);
+    fireEvent.click(screen.getByRole("button", { name: "Follow back Mara" }));
+    await waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalledOnce());
+    const [, options] = mocks.toastSuccess.mock.calls[0];
+    await act(async () => options.action.onClick());
+    expect(mocks.toastError).toHaveBeenCalledWith("Couldn't undo. Try again.");
+  });
+
   it("a failure toasts, brings the buttons back and returns focus to the failed one", async () => {
     mocks.mutation.mockRejectedValue(new Error("network"));
     renderItem(
