@@ -280,6 +280,15 @@ function CopyInstanceDetail({
       }
     : null;
 
+  // The owner picks what their household may do with this copy; alone in the household there is no
+  // one to pick for. (A housemate viewing it is by definition not alone.)
+  const ownerInHousehold = copy.household?.viewerAccess === "owner";
+  const { data: ownerHousehold } = useQuery(
+    convexQuery(gateway.household.mine, ownerInHousehold ? {} : "skip"),
+  );
+  const showHouseholdAccess =
+    !ownerInHousehold || (ownerHousehold?.members.length ?? 0) > 1;
+
   // When the arriving link carried `?from=collection:<id>`, resolve that collection so the
   // page head can show contextual breadcrumbs instead of the canonical trail below. Skipped
   // (no query) when there's no context; unreadable/missing collections resolve to null and
@@ -662,7 +671,7 @@ function CopyInstanceDetail({
             )}
           </div>
 
-          {copy.household && (
+          {copy.household && showHouseholdAccess && (
             <HouseholdAccess copyId={copyId} household={copy.household} />
           )}
           <RequestTradeDialog

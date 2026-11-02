@@ -1,4 +1,5 @@
 // @vitest-environment happy-dom
+import { gateway } from "@/gateway";
 import type { CopyInstanceView } from "@jigswap/contracts";
 import { cleanup, render, screen } from "@testing-library/react";
 import { getFunctionName, type FunctionReference } from "convex/server";
@@ -10,6 +11,7 @@ import { CopyInstanceScreen } from "./copy-instance-screen";
 
 const mocks = vi.hoisted(() => ({
   copy: undefined as unknown,
+  household: undefined as unknown,
   editProps: undefined as { onAddPhotos?: () => void } | undefined,
 }));
 
@@ -18,15 +20,17 @@ const managedCopy = (over: {
   snapshot?: object;
   pendingPhotos?: object[];
   photoLimit?: number;
+  household?: object;
+  viewerIsOwner?: boolean;
 }) =>
   ({
     copyId: "copy_1",
     aggregateId: "aggregate_1",
     puzzleId: "puzzle_1",
-    viewerIsOwner: true,
+    viewerIsOwner: over.viewerIsOwner ?? true,
     viewerCanManage: true,
     viewerMayRequest: false,
-    household: null,
+    household: over.household ?? null,
     owner: { anonymous: true },
     completions: [],
     copyReviews: [],
@@ -81,7 +85,11 @@ vi.mock("@convex-dev/react-query", () => ({
 }));
 vi.mock("@tanstack/react-query", () => ({
   useQuery: ({ name }: { name: string }) => ({
-    data: name.endsWith("getCopyInstanceView") ? mocks.copy : undefined,
+    data: name.endsWith("getCopyInstanceView")
+      ? mocks.copy
+      : name === getFunctionName(gateway.household.mine)
+        ? mocks.household
+        : undefined,
     isPending: false,
     isError: false,
   }),
@@ -119,6 +127,39 @@ describe("Edit copy's Add photo", () => {
       }),
     );
     expect(mocks.editProps?.onAddPhotos).toBeUndefined();
+  });
+});
+
+describe("Household access", () => {
+  const ownerFacts = {
+    permission: "manage",
+    viewerAccess: "owner",
+    inheritsDefault: true,
+    householdDefault: "manage",
+  };
+  const accessLabel = en.household.copyAccess.label;
+
+  it("is offered to an owner sharing a household", () => {
+    mocks.household = { members: [{ _id: "me" }, { _id: "anna" }] };
+    renderCopy(managedCopy({ household: ownerFacts }));
+    expect(screen.getByText(accessLabel)).toBeTruthy();
+  });
+
+  it("isn't offered to an owner alone in their household", () => {
+    mocks.household = { members: [{ _id: "me" }] };
+    renderCopy(managedCopy({ household: ownerFacts }));
+    expect(screen.queryByText(accessLabel)).toBeNull();
+  });
+
+  it("still tells a housemate what they may do", () => {
+    mocks.household = undefined;
+    renderCopy(
+      managedCopy({
+        viewerIsOwner: false,
+        household: { ...ownerFacts, viewerAccess: "view" },
+      }),
+    );
+    expect(screen.getByText(en.household.copyAccess.memberView)).toBeTruthy();
   });
 });
 

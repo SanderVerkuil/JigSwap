@@ -229,10 +229,12 @@ function PuzzlesPage() {
     ),
   );
   // The viewer's household (null when in none): My puzzles points at its Puzzles tab, where every
-  // puzzle in the household can be filtered by owner.
+  // puzzle in the household can be filtered by owner. Alone in it there is no one else's puzzle to
+  // filter or see, so neither the pointer nor the whose filter shows (unless a link set the filter).
   const { data: myHousehold } = useQuery(
     convexQuery(gateway.household.mine, signedIn ? {} : "skip"),
   );
+  const householdShared = (myHousehold?.members.length ?? 0) > 1;
 
   // Open loans where the caller is the lender; the source of truth for "which of my copies are out".
   const { data: lentOut } = useQuery(convexQuery(gateway.lending.lentOut, {}));
@@ -405,7 +407,7 @@ function PuzzlesPage() {
       <ActionsCoachmark />
 
       {/* Every puzzle in the household lives on the household's Puzzles tab. */}
-      {myHousehold && (
+      {myHousehold && householdShared && (
         <Link
           href="/household"
           className="text-muted-foreground hover:text-foreground inline-flex min-w-0 items-center gap-1.5 self-start text-sm underline-offset-4 hover:underline pointer-coarse:min-h-11"
@@ -433,7 +435,7 @@ function PuzzlesPage() {
           className="min-w-0 flex-1 basis-56 xl:max-w-sm"
         />
         <div className="order-last flex w-full flex-wrap items-center gap-2 sm:order-none sm:ml-auto sm:w-auto">
-          {myHousehold && (
+          {(householdShared || filters.owner !== "all") && (
             <Select
               value={filters.owner}
               onValueChange={(value: MyPuzzlesOwner) =>

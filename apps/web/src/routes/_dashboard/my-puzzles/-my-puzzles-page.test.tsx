@@ -168,7 +168,11 @@ const renderPage = ({
   hasMore = false,
 }: {
   copies: OwnedCopyView[];
-  household?: { householdId: string; name?: string } | null;
+  household?: {
+    householdId: string;
+    name?: string;
+    members: { _id: string }[];
+  } | null;
   lentOut?: LoanView[];
   search?: SearchParams;
   // The first rows, when they are fewer than the library; `total` is what the counters say.
@@ -233,14 +237,54 @@ describe("My Puzzles empty states", () => {
   });
 });
 
+const HOUSEHOLD_OF_TWO = {
+  householdId: "h1",
+  members: [{ _id: "me" }, { _id: "anna" }],
+};
+const HOUSEHOLD_OF_ONE = { householdId: "h1", members: [{ _id: "me" }] };
+
 describe("My Puzzles owner select", () => {
   it("names what it filters instead of a bare “All”", () => {
     renderPage({
       copies: [copy("c1", "Lam Gelegd")],
-      household: { householdId: "h1" },
+      household: HOUSEHOLD_OF_TWO,
     });
     const trigger = screen.getByRole("combobox", { name: "Whose puzzles" });
     expect(trigger.textContent).toBe("Whose: All");
+  });
+
+  it("is there, with the household link, once someone else is in the household", () => {
+    renderPage({
+      copies: [copy("c1", "Lam Gelegd")],
+      household: HOUSEHOLD_OF_TWO,
+    });
+    expect(
+      screen.getByRole("link", { name: "All puzzles in your household" }),
+    ).toBeTruthy();
+  });
+
+  it("stays out of a household of one, where “household members'” can only be empty", () => {
+    renderPage({
+      copies: [copy("c1", "Lam Gelegd")],
+      household: HOUSEHOLD_OF_ONE,
+    });
+    expect(
+      screen.queryByRole("combobox", { name: "Whose puzzles" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("link", { name: "All puzzles in your household" }),
+    ).toBeNull();
+  });
+
+  it("stays while its filter is on, so it can be undone", () => {
+    renderPage({
+      copies: [copy("c1", "Lam Gelegd")],
+      household: HOUSEHOLD_OF_ONE,
+      search: { owner: "household" },
+    });
+    expect(
+      screen.getByRole("combobox", { name: "Whose puzzles" }),
+    ).toBeTruthy();
   });
 });
 
