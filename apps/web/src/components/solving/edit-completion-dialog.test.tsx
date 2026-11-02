@@ -31,7 +31,8 @@ vi.mock("@tanstack/react-query", () => ({
   }) => ({ mutateAsync: mutationFn, isPending: false }),
 }));
 
-vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+const toasts = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
+vi.mock("sonner", () => ({ toast: toasts }));
 
 const START = Date.UTC(2026, 9, 12);
 const END = Date.UTC(2026, 9, 14);
@@ -40,6 +41,7 @@ const renderDialog = (props: {
   inProgress?: boolean;
   initialEndDate?: number;
   initialTimeMinutes?: number;
+  initialNotes?: string;
 }) =>
   render(
     <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
@@ -55,6 +57,7 @@ const renderDialog = (props: {
 
 beforeEach(() => {
   calls.edit = [];
+  toasts.success.mockClear();
 });
 afterEach(() => cleanup());
 
@@ -113,5 +116,23 @@ describe("EditCompletionDialog", () => {
       endDate: undefined,
       completionTimeMinutes: undefined,
     });
+  });
+
+  it("sends an emptied note as empty, so the server clears it", async () => {
+    renderDialog({ initialEndDate: END, initialNotes: "Missing a corner" });
+    fireEvent.change(screen.getByLabelText("Notes"), {
+      target: { value: "   " },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save solve" }));
+    await vi.waitFor(() => expect(calls.edit).toHaveLength(1));
+    expect(calls.edit[0]?.notes).toBe("");
+  });
+
+  it("says a saved edit updated the solve, not that it logged one", async () => {
+    renderDialog({ initialEndDate: END });
+    fireEvent.click(screen.getByRole("button", { name: "Save solve" }));
+    await vi.waitFor(() =>
+      expect(toasts.success).toHaveBeenCalledWith("Solve updated"),
+    );
   });
 });

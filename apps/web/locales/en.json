@@ -3290,6 +3290,7 @@
       "noTime": "No time recorded",
       "finish": "Finish solve",
       "edit": "Edit",
+      "updated": "Solve updated",
       "editDescription": "Change the dates, time or notes of this solve.",
       "editInProgressDescription": "Change when you started or your notes. Finish the solve when you're done.",
       "editWindowClosed": "This completion can no longer be edited (the 24-hour window has closed).",

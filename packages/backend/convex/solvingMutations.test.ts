@@ -418,6 +418,30 @@ describe("solving.finishCompletion", () => {
 });
 
 describe("solving.editCompletion", () => {
+  test("an empty note clears the stored one; an absent note leaves it", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { copyAggregateId } = await seed(t);
+    const completionId = await recordForAlice(t, copyAggregateId);
+    await asAlice(t).mutation(api.solving.editCompletion.editCompletion, {
+      completionId,
+      notes: "Missing a corner",
+    });
+    await asAlice(t).mutation(api.solving.editCompletion.editCompletion, {
+      completionId,
+    });
+    expect((await completionRow(t, completionId))?.notes).toBe(
+      "Missing a corner",
+    );
+
+    await asAlice(t).mutation(api.solving.editCompletion.editCompletion, {
+      completionId,
+      notes: "",
+    });
+    const row = await completionRow(t, completionId);
+    expect(row).not.toBeNull();
+    expect(row?.notes).toBeUndefined();
+  });
+
   test("edits notes within the 24h window", async () => {
     const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);

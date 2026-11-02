@@ -3290,6 +3290,7 @@
       "noTime": "Geen tijd vastgelegd",
       "finish": "Voltooiing afronden",
       "edit": "Bewerken",
+      "updated": "Voltooiing bijgewerkt",
       "editDescription": "Pas de datums, de tijd of de notities van deze voltooiing aan.",
       "editInProgressDescription": "Pas je startdatum of je notities aan. Rond de voltooiing af als je klaar bent.",
       "editWindowClosed": "Deze voltooiing kan niet meer worden bewerkt (het venster van 24 uur is gesloten).",

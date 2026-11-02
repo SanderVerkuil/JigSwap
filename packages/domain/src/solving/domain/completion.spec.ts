@@ -329,6 +329,18 @@ describe("Completion.edit", () => {
     if (outcome.isErr) expect(outcome.error.code).toBe("NotCompletionOwner");
   });
 
+  it("clears the note on an empty string, and leaves it alone on undefined", () => {
+    const recorded = recordValid();
+    if (!recorded.isOk) throw new Error("setup failed");
+    expect(recorded.value.edit(ALICE, { notes: "first go" }, END).isOk).toBe(
+      true,
+    );
+    expect(recorded.value.edit(ALICE, {}, END).isOk).toBe(true);
+    expect(recorded.value.toState().notes).toBe("first go");
+    expect(recorded.value.edit(ALICE, { notes: "" }, END).isOk).toBe(true);
+    expect(recorded.value.toState().notes).toBeUndefined();
+  });
+
   it("allows an edit within the 24h window", () => {
     const recorded = recordValid();
     if (!recorded.isOk) throw new Error("setup failed");

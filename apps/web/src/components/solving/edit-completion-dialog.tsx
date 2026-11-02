@@ -88,9 +88,10 @@ export function EditCompletionDialog({
         startDate: start,
         endDate: end,
         completionTimeMinutes: end === undefined ? undefined : totalMinutes,
-        notes: notes.trim() || undefined,
+        // Sent even when empty: that is how a note is cleared.
+        notes: notes.trim(),
       });
-      toast.success(t("saved"));
+      toast.success(tCompletions("updated"));
       onOpenChange(false);
     } catch (error) {
       // The aggregate rejects edits past 24h; tell the user plainly instead of a generic error.

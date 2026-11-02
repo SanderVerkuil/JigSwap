@@ -89,6 +89,7 @@ export interface CompletionState {
 
 // Changes accepted by edit(). An undefined field leaves the current value untouched.
 export interface CompletionChanges {
+  // An empty string clears the note.
   readonly notes?: string;
   readonly photos?: readonly Photo[];
   readonly startDate?: Date;
@@ -378,7 +379,10 @@ export class Completion {
 
     this.state = {
       ...this.state,
-      notes: changes.notes ?? this.state.notes,
+      notes:
+        changes.notes === undefined
+          ? this.state.notes
+          : changes.notes || undefined,
       photos: nextPhotos,
       startDate: nextStart,
       endDate: nextEnd,
