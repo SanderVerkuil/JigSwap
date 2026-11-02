@@ -357,7 +357,11 @@ function PuzzleDefinitionDetail({
               id={noCopiesHintId}
               className="text-muted-foreground mt-2 text-sm"
             >
-              {t("noCopiesOffered")}
+              {t(
+                ownership.viewerOwns
+                  ? "noOtherCopiesOffered"
+                  : "noCopiesOffered",
+              )}
             </p>
           )}
           <div className="mt-2 flex flex-wrap items-center gap-x-5">
@@ -429,6 +433,7 @@ function PuzzleDefinitionDetail({
             copies={availableCopies}
             totalAvailable={totalAvailable}
             puzzleId={puzzleId}
+            viewerOwns={ownership.viewerOwns}
           />
         </div>
 
@@ -533,10 +538,13 @@ function AvailableToSwap({
   copies,
   totalAvailable,
   puzzleId,
+  viewerOwns,
 }: {
   copies: AvailableCopy[];
   totalAvailable: number;
   puzzleId: string;
+  /** This list leaves out the viewer's own copies, so "nobody offers it" would be untrue. */
+  viewerOwns: boolean;
 }) {
   const t = useTranslations("puzzleDefinition");
   const displayName = useMemberDisplayName();
@@ -548,7 +556,9 @@ function AvailableToSwap({
         meta={t("copiesCount", { count: totalAvailable })}
       />
       {copies.length === 0 ? (
-        <p className="text-muted-foreground text-sm">{t("noCopies")}</p>
+        <p className="text-muted-foreground text-sm">
+          {t(viewerOwns ? "noOtherCopies" : "noCopies")}
+        </p>
       ) : (
         <div className="flex flex-col">
           {copies.map((copy, i) => (

@@ -353,6 +353,23 @@ describe("puzzle detail page: actions", () => {
     );
   });
 
+  it("says nobody else offers it when the viewer owns the puzzle", () => {
+    setView({
+      ...emptyView(),
+      ownership: { viewerOwns: true, copyId: "copy_9", condition: "good" },
+    });
+    renderPage();
+
+    const find = screen.getByRole("button", { name: t.findCopyToSwap });
+    const hintId = find.getAttribute("aria-describedby");
+    expect(document.getElementById(hintId!)?.textContent).toBe(
+      t.noOtherCopiesOffered,
+    );
+    expect(screen.getByText(t.noOtherCopies)).toBeTruthy();
+    expect(screen.queryByText(t.noCopies)).toBeNull();
+    expect(screen.queryByText(t.noCopiesOffered)).toBeNull();
+  });
+
   it("lets the member find a copy when one is offered", () => {
     setView({
       ...emptyView(),
@@ -365,6 +382,16 @@ describe("puzzle detail page: actions", () => {
     expect((find as HTMLButtonElement).disabled).toBe(false);
     expect(find.getAttribute("aria-describedby")).toBeNull();
     expect(screen.queryByText(t.noCopiesOffered)).toBeNull();
+  });
+
+  it("shows no difficulty badge for a puzzle without a difficulty", () => {
+    const view = emptyView();
+    const { difficulty: _difficulty, ...definition } = view.definition;
+    setView({ ...view, definition });
+    renderPage();
+    expect(
+      screen.queryByText(en.puzzles.puzzles.difficulty.unknown),
+    ).toBeNull();
   });
 
   it("makes favourite a named toggle that reports its state", () => {
@@ -384,16 +411,6 @@ describe("puzzle detail page: actions", () => {
         .getByRole("button", { name: t.favorite })
         .getAttribute("aria-pressed"),
     ).toBe("true");
-  it("shows no difficulty badge for a puzzle without a difficulty", () => {
-    const view = emptyView();
-    const { difficulty: _difficulty, ...definition } = view.definition;
-    setView({ ...view, definition });
-    renderPage();
-    expect(
-      screen.queryByText(en.puzzles.puzzles.difficulty.unknown),
-    ).toBeNull();
-  });
-
     // The old labelled button is gone; its wording now only lives in the tooltip.
     expect(
       screen.queryByRole("button", { name: tCatalog.removeFromFavorites }),
