@@ -138,7 +138,7 @@ describe("BrowseEmptyState", () => {
     renderEmpty({ search: { puzzle: PUZZLE_ID }, locale: "nl" });
     expect(screen.getByText("Nog niemand biedt deze puzzel aan")).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: "Toevoegen aan Favorieten" }),
+      screen.getByRole("button", { name: "Toevoegen aan favorieten" }),
     ).toBeTruthy();
   });
 });

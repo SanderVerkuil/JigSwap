@@ -256,7 +256,7 @@ describe("ContactInbox", () => {
     undo!.onClick();
     await waitFor(() =>
       expect(mocks.toastError).toHaveBeenCalledWith(
-        "Kon het bericht niet terugzetten naar Nieuw",
+        "Kon het bericht niet terugzetten naar nieuw",
       ),
     );
   });
