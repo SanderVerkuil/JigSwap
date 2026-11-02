@@ -5,10 +5,10 @@ import { Link } from "@/compat/link";
 import { SectionHead } from "@/components/dashboard-home/section-head";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
+import { useStartedLabel } from "@/components/solving/use-started-label";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
-import { calendarDaysAgo } from "@/lib/date-input";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
@@ -28,9 +28,7 @@ export function SolvingNowSection() {
     startDate: number;
     title?: string;
   } | null>(null);
-  // Calling Date.now() during render is an impure-render violation; capture it once at mount
-  // (matches the codebase's existing `useState(() => Date.now())` idiom).
-  const [now] = useState(() => Date.now());
+  const startedLabel = useStartedLabel();
 
   const loading = isMemberLoading || (member != null && solves === undefined);
 
@@ -47,15 +45,6 @@ export function SolvingNowSection() {
   }
 
   if (!member || solves === undefined) return null;
-
-  // Clamped relative copy: future-dated starts read "starts in N days", never "-N days ago". The
-  // start is a calendar date (UTC midnight), so count calendar days to the member's local today.
-  const startedLabel = (startDate: number): string => {
-    const days = calendarDaysAgo(startDate, new Date(now));
-    if (days < 0) return t("startsInDays", { days: -days });
-    if (days === 0) return t("startedToday");
-    return t("startedDaysAgo", { days });
-  };
 
   return (
     <section data-tour="solving-now">
