@@ -173,10 +173,10 @@ export const toPuzzleView = (
  * approved, a viewer the copy does not show catalogue facts to (catalog/definitionVisibility's
  * copyShowsCatalogFacts: anyone but the copy's owner, and the owner too unless the definition is
  * disabled or their own submission) gets only the copy's snapshot facts (title, brand, pieces; the
- * row's for a legacy copy without a snapshot) plus toPuzzleView's box art, status and timestamps,
- * as library/mappers' toCopyPuzzleView does for every other copy view. The definition's unmoderated
- * text, identifiers and searchable text are left out. Approved definitions get toPuzzleView
- * unchanged.
+ * row's for a legacy copy without a snapshot) plus toPuzzleView's status and timestamps, as
+ * library/mappers' toCopyPuzzleView does for every other copy view. The definition's unmoderated
+ * text, identifiers and searchable text are left out, and like toPuzzleView it never carries the
+ * raw box-art id (`image`, SEC-01). Approved definitions get toPuzzleView unchanged.
  */
 export const toPuzzleViewFor = (
   p: Doc<"puzzles"> | null,
@@ -196,7 +196,6 @@ export const toPuzzleViewFor = (
     title: copy?.snapshot?.title ?? full.title,
     brand: copy?.snapshot?.brand ?? full.brand,
     pieceCount: copy?.snapshot?.pieceCount ?? full.pieceCount,
-    image: full.image,
     status: full.status,
     createdAt: full.createdAt,
     updatedAt: full.updatedAt,
