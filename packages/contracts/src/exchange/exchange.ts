@@ -191,3 +191,11 @@ export interface ExchangeMessageView extends ConvexSystemFields {
   createdAt: number;
   sender: ExchangeMessageSenderView | null;
 }
+
+/**
+ * How many live exchanges one `exchange.myLive` read joins, newest activity first. Every row joins
+ * both parties, both copies, their definitions and covers, so this keeps the worst case well inside
+ * Convex's 4,096 index ranges per function. More than this in play is a member with a window per
+ * `page`; a full window means there may be more, so a count built on it is a lower bound.
+ */
+export const LIVE_EXCHANGES_PER_READ = 100;

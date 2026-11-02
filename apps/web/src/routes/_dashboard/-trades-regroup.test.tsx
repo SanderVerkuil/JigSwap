@@ -4,7 +4,10 @@
 // were typing and where their focus is all live inside the row.
 import { gateway } from "@/gateway";
 import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
-import type { ExchangeSummaryView } from "@jigswap/contracts";
+import {
+  LIVE_EXCHANGES_PER_READ,
+  type ExchangeSummaryView,
+} from "@jigswap/contracts";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   act,
@@ -237,7 +240,7 @@ const renderPage = (
     return flushQueryNotifications();
   };
   const push = (seed: Seed) => act(() => setData(seed));
-  return { push, setData };
+  return { push, setData, queryClient };
 };
 
 const harbourToggle = () =>
@@ -285,6 +288,67 @@ beforeEach(() => {
   Element.prototype.scrollIntoView = vi.fn();
 });
 afterEach(cleanup);
+
+describe("Exchanges page: more live exchanges than one read joins", () => {
+  // `count` requests from others, newest first; each waits on the viewer.
+  const liveRows = (from: number, count: number) =>
+    Array.from({ length: count }, (_, i) =>
+      harbour({
+        _id: `ex_${from + i}`,
+        aggregateId: `agg-${from + i}`,
+        requester: bob,
+        owner: me,
+        requestedPuzzle: puzzle(`Puzzle ${from + i}`),
+        updatedAt: NOW - from - i,
+      }),
+    );
+  const rowTitles = () =>
+    [...document.querySelectorAll("button[aria-expanded] .line-clamp-2")]
+      .length;
+  const nextWindowKey = convexQuery(gateway.exchange.myLive, {
+    page: 1,
+  }).queryKey;
+
+  it("offers the next window when one is full, and joins it on request", async () => {
+    const { queryClient } = renderPage({
+      incoming: liveRows(0, LIVE_EXCHANGES_PER_READ),
+    });
+    expect(rowTitles()).toBe(LIVE_EXCHANGES_PER_READ);
+    expect(queryClient.getQueryState(nextWindowKey)).toBeUndefined();
+    // A count built on a full window is a lower bound.
+    expect(
+      screen.getByText(`${LIVE_EXCHANGES_PER_READ}+ exchanges`),
+    ).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: en.trades.showMore }));
+    expect(queryClient.getQueryState(nextWindowKey)).toBeDefined();
+
+    await act(async () => {
+      queryClient.setQueryData(
+        nextWindowKey,
+        liveRows(LIVE_EXCHANGES_PER_READ, 3).map((row) => ({
+          ...row,
+          userRole: "owner",
+        })) as never,
+      );
+      await flushQueryNotifications();
+    });
+    expect(rowTitles()).toBe(LIVE_EXCHANGES_PER_READ + 3);
+    expect(
+      screen.getByText(`${LIVE_EXCHANGES_PER_READ + 3} exchanges`),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: en.trades.showMore }),
+    ).toBeNull();
+  });
+
+  it("offers nothing more under a full window", () => {
+    renderPage({ incoming: liveRows(0, LIVE_EXCHANGES_PER_READ - 1) });
+    expect(
+      screen.queryByRole("button", { name: en.trades.showMore }),
+    ).toBeNull();
+  });
+});
 
 describe("Exchanges page: regrouping keeps a row as the member left it", () => {
   it("lists what waits on the viewer first, under headings only when something does", async () => {
