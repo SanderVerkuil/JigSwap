@@ -2735,7 +2735,7 @@
       "previewBanner": "Preview — this is how visitors see your profile.",
       "previewBannerPrivate": "Preview — this is how visitors see your profile. Approved followers see everything.",
       "editProfile": "Edit profile",
-      "backToApp": "Back to app"
+      "backToProfile": "Back to my profile"
     },
     "followersYouKnow": {
       "title": "Followers you know",

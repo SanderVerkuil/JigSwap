@@ -332,7 +332,7 @@ function AuthedMemberPage({
 
 // Owner-preview banner: signed-in self no longer redirects to /profile — they
 // see exactly what visitors see, with an explicit "this is a preview" frame and
-// escape hatches back to editing / the app. For a private profile the body
+// ways back to their profile and its open editor. For a private profile the body
 // shows the locked state; the banner notes that approved followers see it all.
 function OwnerPreviewBanner({ locked }: { locked: boolean }) {
   const t = useTranslations("members.profile");
@@ -344,12 +344,14 @@ function OwnerPreviewBanner({ locked }: { locked: boolean }) {
           {locked ? t("previewBannerPrivate") : t("previewBanner")}
         </p>
       </div>
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex shrink-0 flex-wrap items-center gap-2">
         <Button asChild size="sm" variant="outline">
-          <Link to="/dashboard">{t("backToApp")}</Link>
+          <Link to="/profile">{t("backToProfile")}</Link>
         </Button>
         <Button asChild size="sm">
-          <Link to="/profile">{t("editProfile")}</Link>
+          <Link to="/profile" search={{ edit: "profile" }}>
+            {t("editProfile")}
+          </Link>
         </Button>
       </div>
     </div>
