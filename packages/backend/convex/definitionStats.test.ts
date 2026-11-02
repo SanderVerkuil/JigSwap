@@ -3,6 +3,7 @@ import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
+import { COPY_ONLY_SOLVES_READ } from "./library/definitionAggregates";
 import {
   computeDefinitionTotals,
   markDefinitionStatsStale,
@@ -352,6 +353,155 @@ describe("definitionStats backfill and nightly reconcile", () => {
     });
 
     expect(await statsRow(t, w.harbour.id)).toBeNull();
+  });
+});
+
+// A definition can gather thousands of copies, and its recompute runs under Convex's real limits:
+// 4,096 index ranges per function, so nothing in it may cost a read per copy.
+describe("a definition with more copies than Convex allows index ranges", () => {
+  const COPIES = 4_200;
+
+  const seedCopies = async (
+    t: T,
+    puzzleId: Id<"puzzles">,
+    fields: (i: number) => Partial<Doc<"ownedPuzzles">>,
+  ) => {
+    for (let start = 0; start < COPIES; start += 500) {
+      await t.run(async (ctx) => {
+        for (let i = start; i < Math.min(COPIES, start + 500); i++) {
+          const ownerId = await ctx.db.insert("users", {
+            clerkId: `clerk_many_${i}`,
+            email: `many${i}@example.com`,
+            name: `many ${i}`,
+            isActive: true,
+            createdAt: BASE,
+            updatedAt: BASE,
+          });
+          await ctx.db.insert("ownedPuzzles", {
+            aggregateId: `many-${i}`,
+            puzzleId,
+            ownerId,
+            condition: "good",
+            availability: { ...CLOSED, forTrade: true },
+            isOpen: true,
+            listedAt: BASE,
+            createdAt: BASE,
+            updatedAt: BASE,
+            ...fields(i),
+          });
+        }
+      });
+    }
+  };
+
+  test("its recompute holds, each public listing and owner counted", async () => {
+    const t = convexTest({ schema, modules, transactionLimits: true });
+    const w = await seedWorld(t);
+    const privateOwners = 3;
+    await seedCopies(t, w.vista.id, (i) =>
+      i < privateOwners ? { ownerPrivate: true } : {},
+    );
+
+    await t.mutation(internal.library.definitionStats.recompute, {
+      puzzleId: w.vista.id,
+    });
+
+    const totals = (await statsRow(t, w.vista.id))?.totals;
+    expect(totals?.ownerCount).toBe(COPIES);
+    expect(totals?.publicAvailable.swap).toBe(COPIES - privateOwners);
+  }, 300_000);
+
+  test("a solve stored against a copy only still counts, without one read per copy", async () => {
+    const t = convexTest({ schema, modules, transactionLimits: true });
+    const w = await seedWorld(t);
+    await seedCopies(t, w.vista.id, () => ({}));
+    await t.run(async (ctx) => {
+      const copy = await ctx.db
+        .query("ownedPuzzles")
+        .withIndex("by_puzzle", (q) => q.eq("puzzleId", w.vista.id))
+        .first();
+      await ctx.db.insert("completions", {
+        aggregateId: "legacy-copy-only",
+        userId: w.alice,
+        ownedPuzzleId: copy!._id,
+        startDate: BASE,
+        endDate: BASE + 2 * DAY,
+        photos: [],
+        isCompleted: true,
+        createdAt: BASE,
+        updatedAt: BASE,
+      });
+    });
+
+    await t.mutation(internal.library.definitionStats.recompute, {
+      puzzleId: w.vista.id,
+    });
+
+    expect((await statsRow(t, w.vista.id))?.totals?.completedCount).toBe(1);
+  }, 300_000);
+});
+
+describe("completion totals, across the two ways a solve links to a definition", () => {
+  test("a copy-only solve counts for its copy's definition only, a named one once", async () => {
+    const t = newT();
+    const w = await seedWorld(t);
+    const vistaCopy = await insertCopy(t, {
+      ownerId: w.alice,
+      puzzleId: w.vista.id,
+    });
+    const harbourCopy = await insertCopy(t, {
+      ownerId: w.alice,
+      puzzleId: w.harbour.id,
+    });
+    await insertCompletion(t, { userId: w.alice, ownedPuzzleId: vistaCopy });
+    await insertCompletion(t, { userId: w.alice, ownedPuzzleId: harbourCopy });
+    // Both links to one definition: one solve.
+    await insertCompletion(t, {
+      userId: w.alice,
+      puzzleId: w.vista.id,
+      ownedPuzzleId: vistaCopy,
+    });
+    // An unfinished solve never counts.
+    await insertCompletion(t, {
+      userId: w.alice,
+      ownedPuzzleId: vistaCopy,
+      isCompleted: false,
+    });
+
+    expect((await liveTotals(t, w.vista.id)).completedCount).toBe(2);
+    expect((await liveTotals(t, w.harbour.id)).completedCount).toBe(1);
+  });
+
+  test("past its read bound it says so, instead of counting short in silence", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const t = newT();
+    const w = await seedWorld(t);
+    const copy = await insertCopy(t, {
+      ownerId: w.alice,
+      puzzleId: w.vista.id,
+    });
+    await t.run(async (ctx) => {
+      for (let i = 0; i < COPY_ONLY_SOLVES_READ + 1; i++) {
+        await ctx.db.insert("completions", {
+          aggregateId: `copy-only-${i}`,
+          userId: w.alice,
+          ownedPuzzleId: copy,
+          startDate: BASE,
+          endDate: BASE + DAY,
+          photos: [],
+          isCompleted: true,
+          createdAt: BASE,
+          updatedAt: BASE,
+        });
+      }
+    });
+
+    expect((await liveTotals(t, w.vista.id)).completedCount).toBe(
+      COPY_ONLY_SOLVES_READ,
+    );
+    expect(String(vi.mocked(console.error).mock.calls[0]?.[0])).toContain(
+      "copyOnlySolvesCapped",
+    );
   });
 });
 

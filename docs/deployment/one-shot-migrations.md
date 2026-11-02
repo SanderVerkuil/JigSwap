@@ -1084,6 +1084,36 @@ number of `definitions` it scheduled.
 3. The public catalog, a catalog detail page and a `/puzzles/<id>` page show the same
    ratings, owner, completion and availability numbers as before the run.
 
+## `solving/backfillCompletionPuzzleId` — old solves get their definition link
+
+**When:** once per deployment, any time after the code that reads
+`library/definitionAggregates.completionTotalsOf` this way is deployed there. It has probably run
+on production already (it dates from June 2026); a run that patches nothing confirms that.
+
+**What it does:** pages through `completions` and gives a row with a copy link but no `puzzleId` the
+definition its copy belongs to. Every write since sets that link, so only old rows are affected, and
+a row whose copy is gone stays as it is.
+
+**Why it matters now:** a definition's completion totals no longer run one query per copy, which
+failed past about 4,000 copies. They read the definition's solves plus the solves with no definition
+link, at most `COPY_ONLY_SOLVES_READ` (1,000) of those per read. The numbers don't change either
+way, but past that bound totals undercount and each read logs
+`library.definitionStats.copyOnlySolvesCapped` at error level. Seeing that line means this backfill
+has to run.
+
+**Safe to re-run:** yes. A second run patches 0.
+
+**Commands:** one batch per call; pass `continueCursor` back as `cursor` until `isDone` is true.
+
+```bash
+cd packages/backend
+npx convex run solving/backfillCompletionPuzzleId:run
+npx convex run solving/backfillCompletionPuzzleId:run '{"cursor":"<continueCursor>"}'
+# prod: the same with --prod, after dev looks right
+```
+
+---
+
 ## `solving/recountGoals` — goals count only the solves inside their period
 
 **When:** once per deployment, right after period-scoped goals (the `goals.startDate` field, the
