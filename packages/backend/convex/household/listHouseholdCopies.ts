@@ -1,54 +1,36 @@
 import type { HouseholdCopyView } from "@jigswap/contracts";
-import { resolveHouseholdCopyPermission } from "@jigswap/domain";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
-import { toOwnedCopyView } from "../library/mappers";
-import { resolveCopyCoverFields } from "../library/resolveCoverUrl";
-import { personView } from "./getMyHousehold";
 import {
-  householdDefaultOf,
-  householdMateIds,
-  membershipOf,
-} from "./memberships";
+  LIBRARY_INDEX_CAP,
+  libraryScopeOf,
+  newestCopiesOf,
+  toMyLibraryCopyViews,
+} from "../library/myLibraryRows";
 
-// The OTHER household members' copies, for the viewer's "My puzzles". Every household copy is
-// listed regardless of availability (the household rule of canViewCopy), tagged with its owner and
-// the viewer's access. Owner-only fields are included only for "manage" (co-owner) access. Empty
-// when the viewer is in no household. Newest first, like the owner's own list.
+// The OTHER household members' copies, for "Log a completion"'s picker, which offers every copy the
+// member may log a solve for. My Puzzles and the household's Puzzles tab page instead
+// (library/listMyLibraryWindow). Every household copy is listed regardless of availability (the
+// household rule of canViewCopy), tagged with its owner and the viewer's access. Owner-only fields
+// are included only for "manage" (co-owner) access. Empty when the viewer is in no household. Newest
+// first, at most LIBRARY_INDEX_CAP.
 export const listHouseholdCopies = query({
   args: {},
   handler: async (ctx): Promise<HouseholdCopyView[]> => {
     const viewerId = (await requireMember(ctx)) as unknown as Id<"users">;
-    const mates = await householdMateIds(ctx, viewerId);
-    const membership = await membershipOf(ctx, viewerId);
-    // Every mate shares the viewer's household, so one default applies to all their copies.
-    const householdDefault = membership
-      ? await householdDefaultOf(ctx, membership.householdId)
-      : undefined;
-
-    const views: HouseholdCopyView[] = [];
-    for (const mateId of mates) {
-      const owner = await personView(ctx, mateId);
-      const copies = await ctx.db
-        .query("ownedPuzzles")
-        .withIndex("by_owner", (q) => q.eq("ownerId", mateId))
-        .collect();
-      for (const copy of copies) {
-        const viewerAccess = resolveHouseholdCopyPermission(
-          copy.householdPermission,
-          householdDefault,
-        );
-        const puzzle = await ctx.db.get(copy.puzzleId);
-        views.push({
-          ...toOwnedCopyView(copy, puzzle, {
-            ...(await resolveCopyCoverFields(ctx, copy, puzzle)),
-            includeOwnerOnly: viewerAccess === "manage",
-          }),
-          household: { owner, viewerAccess },
-        });
-      }
-    }
-    return views.sort((a, b) => b.createdAt - a.createdAt);
+    const scope = await libraryScopeOf(ctx, viewerId);
+    if (scope.mates.size === 0) return [];
+    const copies = await newestCopiesOf(
+      ctx,
+      [...scope.mates],
+      LIBRARY_INDEX_CAP,
+    );
+    const views = await toMyLibraryCopyViews(ctx, copies, scope);
+    return views
+      .flatMap((view) =>
+        view.household ? [{ ...view, household: view.household }] : [],
+      )
+      .sort((a, b) => b.createdAt - a.createdAt);
   },
 });

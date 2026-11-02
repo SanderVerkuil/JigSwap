@@ -5,7 +5,13 @@ import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { buildCopyViewContext, canViewCopyWithContext } from "./canViewCopy";
 import { toOwnedCopyView } from "./mappers";
+import { LIBRARY_INDEX_CAP } from "./myLibraryRows";
 import { resolveCopyCoverFields } from "./resolveCoverUrl";
+
+// The most of another member's library this read covers, newest first. The app pages a visited
+// profile through social/listProfileCopies; nothing it renders calls this for someone else, but any
+// signed-in client can, so it must stay cheap.
+export const NON_OWNER_READ_CAP = 200;
 
 const isOpen = (copy: Doc<"ownedPuzzles">): boolean =>
   copy.availability.forTrade ||
@@ -18,6 +24,10 @@ const isOpen = (copy: Doc<"ownedPuzzles">): boolean =>
 // (acquisitionPrice/acquisitionSource/notes) stripped by the mapper's `includeOwnerOnly` default —
 // `includeUnavailable` is ignored for non-owners. Filtering, the newest-first ordering, and the
 // join are preserved from legacy puzzles.getOwnedPuzzlesByOwner; rows map to typed copy DTOs.
+//
+// Bounded: the owner's newest LIBRARY_INDEX_CAP copies, for the pickers that offer every copy (a
+// collection's Add puzzles, sharing with a circle, arranging the shelf, logging a solve), and a
+// non-owner's newest NON_OWNER_READ_CAP. Lists page instead (library/listMyLibraryWindow).
 export const getOwnedPuzzlesByOwner = query({
   args: {
     ownerId: v.id("users"),
@@ -30,7 +40,8 @@ export const getOwnedPuzzlesByOwner = query({
     let ownedPuzzles = await ctx.db
       .query("ownedPuzzles")
       .withIndex("by_owner", (q) => q.eq("ownerId", args.ownerId))
-      .collect();
+      .order("desc")
+      .take(isOwner ? LIBRARY_INDEX_CAP : NON_OWNER_READ_CAP);
 
     if (!isOwner) {
       // A non-owner only sees copies that pass THE canonical copy-reachability gate (canViewCopy),
