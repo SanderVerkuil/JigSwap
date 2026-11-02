@@ -385,3 +385,46 @@ describe("PuzzlesClient piece range", () => {
     expect(minInput().value).toBe("");
   });
 });
+
+describe("PuzzlesClient while a new search loads", () => {
+  const busy = () =>
+    document.querySelector("[aria-busy]")?.getAttribute("aria-busy");
+  const change = (next: Paginated, client: ReturnType<typeof renderClient>) => {
+    paginated.current = next;
+    client.rerender();
+  };
+
+  it("keeps the previous rows, dimmed and busy, until the new first page arrives", () => {
+    paginated.current = { results: LAKES, status: "Exhausted" };
+    const client = renderClient();
+    expect(busy()).toBe("false");
+
+    change(LOADING, client);
+    expect(cards()).toEqual(["Lake", "Lake view"]);
+    expect(placeholders()).toBe(0);
+    expect(busy()).toBe("true");
+    // The count belongs to the search on its way, so it doesn't claim the old rows' number.
+    expect(screen.queryByText(/puzzles? found/)).toBeNull();
+
+    const harbour = [row("harbour", "Harbour")];
+    change({ results: harbour, status: "Exhausted" }, client);
+    expect(cards()).toEqual(["Harbour"]);
+    expect(busy()).toBe("false");
+    expect(screen.getByText("1 puzzle found")).toBeTruthy();
+  });
+
+  it("replaces the kept rows with an empty state when the new search finds nothing", () => {
+    paginated.current = { results: LAKES, status: "Exhausted" };
+    const client = renderClient({ q: "lake" });
+    change(LOADING, client);
+    change(NOTHING, client);
+    expect(cards()).toEqual([]);
+    expect(screen.getByText(copy.noPuzzlesFound)).toBeTruthy();
+  });
+
+  it("shows placeholders on a first visit, with no rows to keep", () => {
+    renderClient();
+    expect(placeholders()).toBeGreaterThan(0);
+    expect(busy()).toBeUndefined();
+  });
+});

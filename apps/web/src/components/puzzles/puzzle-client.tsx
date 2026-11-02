@@ -93,6 +93,19 @@ export function PuzzlesClient({
     favoritesOnly ? "skip" : searchArgs,
     { initialNumItems: Math.max(remembered, PAGE_SIZE) },
   );
+  // The read drops its rows as soon as the arguments change. The last finished rows stay on screen,
+  // dimmed, until the new search's first page arrives, so a facet change doesn't collapse the grid.
+  const [settledRows, setSettledRows] = useState(catalogue.results);
+  if (
+    catalogue.status !== "LoadingFirstPage" &&
+    settledRows !== catalogue.results
+  ) {
+    setSettledRows(catalogue.results);
+  }
+  const showingSettledRows =
+    !favoritesOnly &&
+    catalogue.status === "LoadingFirstPage" &&
+    settledRows.length > 0;
   const loadedCount = catalogue.results.length;
   useEffect(() => {
     if (!favoritesOnly && loadedCount > 0) {
@@ -104,7 +117,9 @@ export function PuzzlesClient({
   );
   const puzzles = favoritesOnly
     ? favouritesInCatalogue(favourites ?? [], searchArgs)
-    : catalogue.results;
+    : showingSettledRows
+      ? settledRows
+      : catalogue.results;
   // "loading": nothing to show yet; "partial": more matches can still load; "complete": all are in.
   const listState: "loading" | "partial" | "complete" = favoritesOnly
     ? favourites === undefined
@@ -292,11 +307,20 @@ export function PuzzlesClient({
       {/* Puzzles Grid/List. "No puzzles" only once the search is exhausted; until then a match
           may still be on a later page. */}
       {puzzles.length > 0 ? (
-        <PuzzleViewProvider viewMode={viewMode}>
-          {puzzles.map((puzzle) => (
-            <PuzzleCard key={puzzle._id} puzzle={puzzle} />
-          ))}
-        </PuzzleViewProvider>
+        <div
+          aria-busy={showingSettledRows}
+          className={
+            showingSettledRows
+              ? "opacity-60 motion-safe:transition-opacity"
+              : undefined
+          }
+        >
+          <PuzzleViewProvider viewMode={viewMode}>
+            {puzzles.map((puzzle) => (
+              <PuzzleCard key={puzzle._id} puzzle={puzzle} />
+            ))}
+          </PuzzleViewProvider>
+        </div>
       ) : listState === "complete" ? (
         <Card>
           <CardContent className="p-12 text-center">
