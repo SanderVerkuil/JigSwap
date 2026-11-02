@@ -209,6 +209,29 @@ describe("CommandPalette", () => {
     expect(mocks.push).toHaveBeenCalledWith(href);
   });
 
+  // UX-06: Users stands for Community (its tab and hub); Circles has its own glyph everywhere.
+  it("draws circles with the Circles icon, not the Community one", async () => {
+    renderPalette({
+      seeded: {
+        book: {
+          ...NO_HITS,
+          circles: [{ id: "c1", name: "Book club", href: "/circles/c1" }],
+        },
+      },
+    });
+    const createCircle = screen.getByRole("option", {
+      name: "Create a Circle",
+    });
+    expect(createCircle.querySelector("svg")?.getAttribute("class")).toContain(
+      "lucide-blend",
+    );
+    type("book");
+    const hit = await screen.findByRole("option", { name: "Book club" });
+    expect(hit.querySelector("svg")?.getAttribute("class")).toContain(
+      "lucide-blend",
+    );
+  });
+
   it("navigates to a destination picked from a filtered list", async () => {
     renderPalette();
     type("mess");

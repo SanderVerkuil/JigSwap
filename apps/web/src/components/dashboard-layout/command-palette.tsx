@@ -27,13 +27,13 @@ import { useQuery } from "@tanstack/react-query";
 import { defaultFilter } from "cmdk";
 import { useConvexAuth } from "convex/react";
 import {
+  Blend,
   CircleCheck,
   FolderOpen,
   Plus,
   Puzzle,
   Search,
   User,
-  Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslations } from "use-intl";
@@ -62,7 +62,7 @@ const QUICK_ACTIONS = [
     key: "createCircle",
     // Opens the create dialog on arrival (circles-search.ts).
     href: "/circles?create=1",
-    icon: Users,
+    icon: Blend,
     keywords: ["create", "new circle", "kring", "aanmaken"],
   },
   {
@@ -314,7 +314,7 @@ export function CommandPalette({
                 value={keep(hit.id)}
                 onSelect={() => go(hit.href)}
               >
-                <Users />
+                <Blend />
                 <span>{hit.name}</span>
               </CommandItem>
             ))}
