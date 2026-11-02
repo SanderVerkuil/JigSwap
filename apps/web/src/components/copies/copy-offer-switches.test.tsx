@@ -16,6 +16,8 @@ import { CopyOfferSwitches } from "./copy-offer-switches";
 type ToastOptions = {
   description?: string;
   action?: { label: string; onClick: () => void };
+  cancel?: { label: string; onClick: () => void };
+  classNames?: { toast?: string };
 };
 
 const mocks = vi.hoisted(() => ({
@@ -106,6 +108,28 @@ describe("CopyOfferSwitches", () => {
     expect(message).toBe("Offered for swap");
     expect(options.description).toBeUndefined();
     expect(options.action?.label).toBe("Undo");
+  });
+
+  it("offers Send a link in the toast when an offer goes on, not when it comes off", async () => {
+    const onSendLink = vi.fn();
+    renderSwitches({ onSendLink });
+    fireEvent.click(lendSwitch());
+    await vi.waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalled());
+    const { message, options } = lastToast();
+    expect(message).toBe("Offered to lend");
+    expect(options.action?.label).toBe("Undo");
+    expect(options.cancel?.label).toBe(en.copyInstance.sendLink.trigger);
+    // Two buttons beside the title squeezed it letter by letter on a Dutch phone.
+    expect(options.classNames?.toast).toContain("flex-wrap");
+    options.cancel?.onClick();
+    expect(onSendLink).toHaveBeenCalled();
+    cleanup();
+
+    mocks.toastSuccess.mockReset();
+    renderSwitches({ onSendLink, availability: { ...CLOSED, forLend: true } });
+    fireEvent.click(lendSwitch());
+    await vi.waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalled());
+    expect(lastToast().options.cancel).toBeUndefined();
   });
 
   it("Undo puts back only the offer that changed, again without a visibility", async () => {

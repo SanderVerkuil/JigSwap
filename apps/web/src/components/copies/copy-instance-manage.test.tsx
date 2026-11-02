@@ -273,6 +273,28 @@ describe("the cover on a phone", () => {
   });
 });
 
+describe("Send a link", () => {
+  const sendLink = () =>
+    screen.queryByRole("button", { name: en.copyInstance.sendLink.trigger });
+
+  it("is there while the copy is on offer", () => {
+    renderCopy(
+      managedCopy({
+        snapshot: {
+          availability: { forTrade: false, forSale: false, forLend: true },
+        },
+      }),
+    );
+    expect(sendLink()).toBeTruthy();
+  });
+
+  // Nobody can ask for a copy that isn't on offer, and the link wouldn't open for most people.
+  it("isn't there while it isn't", () => {
+    renderCopy(managedCopy({}));
+    expect(sendLink()).toBeNull();
+  });
+});
+
 describe("the acquisition date", () => {
   it("shows the recorded month", () => {
     renderCopy(

@@ -11,11 +11,14 @@ import { canWebShare, mailtoUrl, whatsAppUrl } from "./invite-share";
 type InviteShareProps = {
   // The full landing URL with the token; null while it is still being fetched.
   url: string | null;
-  // Which message to prefill: the network link ("follow each other") or a household link.
-  kind: "network" | "household";
   // Called on any share, copy, Email or WhatsApp action (the quick start's push-prompt trigger).
   onShared?: () => void;
-};
+} & (
+  | // Which message to prefill: the network link ("follow each other") or a household link...
+    { kind: "network" | "household"; puzzleTitle?: undefined }
+    // ...or one puzzle the member offers.
+  | { kind: "puzzle"; puzzleTitle: string }
+);
 
 const noopSubscribe = () => () => {};
 
@@ -36,15 +39,18 @@ export function InviteShareActions(props: InviteShareProps) {
 export function InviteShareButtons({
   url,
   kind,
+  puzzleTitle,
   canShare,
   onShared,
 }: InviteShareProps & { canShare: boolean }) {
   const t = useTranslations("inviteShare");
 
-  const subject = t("subject");
-  const message = url
-    ? t(kind === "household" ? "householdMessage" : "message", { url })
-    : "";
+  const subject = t(kind === "puzzle" ? "puzzleSubject" : "subject");
+  const message = !url
+    ? ""
+    : kind === "puzzle"
+      ? t("puzzleMessage", { title: puzzleTitle ?? "", url })
+      : t(kind === "household" ? "householdMessage" : "message", { url });
 
   const share = () => {
     // The URL is part of the message text, so it is not passed again as `url` (most share
@@ -65,7 +71,7 @@ export function InviteShareButtons({
           onClick={share}
         >
           <Share2 className="size-4" />
-          {t("share")}
+          {t(kind === "puzzle" ? "sharePuzzle" : "share")}
         </Button>
       ) : null}
       <div className="flex flex-wrap gap-2">

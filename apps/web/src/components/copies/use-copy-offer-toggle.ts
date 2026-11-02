@@ -25,6 +25,13 @@ const CONFIRMATIONS: Record<
   forSale: { on: "saleOn", off: "saleOff" },
 };
 
+// Two buttons leave a toast no room for its title (on a Dutch phone it stacked letter by letter):
+// the buttons wrap onto their own line under the title.
+const TWO_BUTTON_TOAST = {
+  toast: "flex-wrap",
+  content: "!min-w-[calc(100%-2rem)]",
+};
+
 export interface OfferToggleTarget {
   /** The copy's domain id (aggregateId). */
   copyId: string;
@@ -33,6 +40,8 @@ export interface OfferToggleTarget {
   visibilityPreference: "private" | "visible";
   /** The copy has an open loan: withdrawing still works, but no Undo would put it back on. */
   onLoan?: boolean;
+  /** Opens "Send a link": turning an offer on then offers it right away in the toast. */
+  onSendLink?: () => void;
 }
 
 // One copy's offer switched on or off, wherever that happens (the copy page's switches, a card's ⋯
@@ -78,7 +87,13 @@ export function useCopyOfferToggle() {
   };
 
   const toggle = async (
-    { copyId, availability, visibilityPreference, onLoan }: OfferToggleTarget,
+    {
+      copyId,
+      availability,
+      visibilityPreference,
+      onLoan,
+      onSendLink,
+    }: OfferToggleTarget,
     flag: OfferFlag,
     on: boolean,
   ) => {
@@ -114,6 +129,12 @@ export function useCopyOfferToggle() {
               onClick: () => void undo(copyId, flag, !on),
             },
           }),
+      ...(on && onSendLink
+        ? {
+            cancel: { label: tCopy("sendLink.trigger"), onClick: onSendLink },
+            classNames: TWO_BUTTON_TOAST,
+          }
+        : {}),
     });
   };
 

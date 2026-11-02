@@ -1,13 +1,20 @@
 // @vitest-environment happy-dom
 import { cleanup, render, screen } from "@testing-library/react";
 import type { ComponentType, ReactNode } from "react";
+import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import en from "../../locales/en.json";
 import { Route as SignInRoute } from "./sign-in.$";
 import { Route as SignUpRoute } from "./sign-up.$";
 
 // The route modules only need their options back.
+const location = vi.hoisted(() => ({
+  search: {} as Record<string, unknown>,
+}));
 vi.mock("@tanstack/react-router", () => ({
   createFileRoute: () => (options: object) => ({ options }),
+  useLocation: ({ select }: { select: (value: typeof location) => unknown }) =>
+    select(location),
 }));
 
 vi.mock("@/components/auth/auth-shell", () => ({
@@ -32,7 +39,33 @@ const pageOf = (route: unknown) =>
 const propsOf = (testId: string): Record<string, unknown> =>
   JSON.parse(screen.getByTestId(testId).getAttribute("data-props") ?? "{}");
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  location.search = {};
+});
+
+describe("sign-up for a member's puzzle link", () => {
+  const renderSignUp = () => {
+    const Page = pageOf(SignUpRoute);
+    render(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <Page />
+      </IntlProvider>,
+    );
+  };
+
+  it("says why the visitor landed here", () => {
+    location.search = { redirect_url: "/copies/abc?shared=1" };
+    renderSignUp();
+    expect(screen.getByText(en.auth.sharedPuzzle)).toBeTruthy();
+  });
+
+  it("stays quiet for any other sign-up", () => {
+    location.search = { redirect_url: "/dashboard" };
+    renderSignUp();
+    expect(screen.queryByText(en.auth.sharedPuzzle)).toBeNull();
+  });
+});
 
 describe("auth pages", () => {
   it("links sign-in's 'Sign up' to the app's own sign-up page", () => {

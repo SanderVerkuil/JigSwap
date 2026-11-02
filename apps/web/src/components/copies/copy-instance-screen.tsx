@@ -11,6 +11,7 @@ import { formatCopyTenure } from "@/components/copies/copy-tenure";
 import { CoverLightbox } from "@/components/copies/cover-lightbox";
 import { EditCopyDialog } from "@/components/copies/edit-copy-dialog";
 import { PhotoLightbox } from "@/components/copies/photo-lightbox";
+import { SendCopyLinkDialog } from "@/components/copies/send-copy-link-dialog";
 import { type NavContext } from "@/components/dashboard-layout/nav-context";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import {
@@ -71,6 +72,7 @@ import {
   Edit,
   Gift,
   ImagePlus,
+  Link2,
   Maximize2,
   MessageCircle,
   Package,
@@ -247,6 +249,8 @@ function CopyInstanceDetail({
   const [shareOpen, setShareOpen] = useState(false);
   // The cover's large view (phones).
   const [coverOpen, setCoverOpen] = useState(false);
+  // "Send a link", for a manager while the copy is on offer.
+  const [sendLinkOpen, setSendLinkOpen] = useState(false);
   // The trade-request dialog's target (null = closed); set from the non-owner Request action.
   const [requestCopy, setRequestCopy] = useState<RequestableCopy | null>(null);
   // Start/Finish solve swap: `startOpen` drives the start dialog; `finishTarget` holds the
@@ -547,12 +551,19 @@ function CopyInstanceDetail({
                   snapshot.visibilityPreference ?? snapshot.visibility
                 }
                 onLoan={openLoanEntry !== undefined}
+                onSendLink={() => setSendLinkOpen(true)}
               />
             </div>
           )}
 
           {/* Actions */}
           <div className="mt-5 flex flex-wrap gap-2.5">
+            {copy.viewerCanManage && isAvailable && (
+              <Button variant="outline" onClick={() => setSendLinkOpen(true)}>
+                <Link2 className="h-4 w-4" />
+                {t("sendLink.trigger")}
+              </Button>
+            )}
             {canSolve && (
               <>
                 {/* Circle shares are the owner's alone (sharing/shareCopiesToCircle). */}
@@ -949,6 +960,15 @@ function CopyInstanceDetail({
                   : undefined
               }
               focus={editFocus}
+            />
+          )}
+          {copy.viewerCanManage && (
+            <SendCopyLinkDialog
+              copyId={copyId}
+              title={snapshot.title}
+              viewerIsOwner={copy.viewerIsOwner}
+              open={sendLinkOpen}
+              onOpenChange={setSendLinkOpen}
             />
           )}
           {copy.viewerIsOwner && copy.aggregateId != null && (

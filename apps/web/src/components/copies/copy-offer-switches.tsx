@@ -31,6 +31,7 @@ export function CopyOfferSwitches({
   availability,
   visibilityPreference,
   onLoan = false,
+  onSendLink,
 }: {
   /** The copy's domain id (aggregateId); null for legacy rows, which can't be changed here. */
   copyId: string | null;
@@ -39,6 +40,8 @@ export function CopyOfferSwitches({
   visibilityPreference: "private" | "visible";
   /** The copy has an open loan (CopyInstanceView loans: status "open"). */
   onLoan?: boolean;
+  /** Opens "Send a link"; turning an offer on offers it right away in the toast. */
+  onSendLink?: () => void;
 }) {
   const t = useTranslations("copyInstance.offers");
   const id = useId();
@@ -49,7 +52,7 @@ export function CopyOfferSwitches({
   const change = (flag: OfferFlag, on: boolean) => {
     if (copyId == null) return;
     return toggle(
-      { copyId, availability, visibilityPreference, onLoan },
+      { copyId, availability, visibilityPreference, onLoan, onSendLink },
       flag,
       on,
     );

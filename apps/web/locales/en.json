@@ -298,7 +298,8 @@
     "welcomeBack": "Welcome back to the puzzle trading community",
     "joinCommunity": "Join the puzzle trading community",
     "signInToAccount": "Sign in to your account",
-    "createNewAccount": "Create a new account"
+    "createNewAccount": "Create a new account",
+    "sharedPuzzle": "Someone shared a puzzle with you on JigSwap. Create a free account to see it, or sign in if you already have one."
   },
   "activity": {
     "completion": {
@@ -3623,11 +3624,14 @@
   },
   "inviteShare": {
     "share": "Share invite link",
+    "sharePuzzle": "Share link",
     "email": "Email",
     "whatsapp": "WhatsApp",
     "subject": "Join me on JigSwap",
     "message": "Join me on JigSwap, where I keep track of my puzzles: {url}",
     "householdMessage": "Join our household on JigSwap so we can share one puzzle shelf: {url}",
+    "puzzleSubject": "A puzzle on JigSwap",
+    "puzzleMessage": "I'm offering “{title}” on JigSwap. Have a look: {url}",
     "privacy": "JigSwap doesn't see or store who you send this to.",
     "inviteLink": "Invite with a link",
     "createLink": "Create invite link",
@@ -4660,6 +4664,12 @@
       "visibleWhileOffered": "It's visible while it's on offer and private again once you withdraw every offer.",
       "privateAgain": "It's private again.",
       "undo": "Undo"
+    },
+    "sendLink": {
+      "trigger": "Send a link",
+      "title": "Send a link to this puzzle",
+      "description": "Whoever opens it sees “{title}” and can ask for it. New to JigSwap? They sign up first and land right here.",
+      "privateNote": "Your profile is private, so this link only opens for people you follow each other with, your household, and circles you share this puzzle in."
     },
     "status": {
       "onLoan": "On loan to {name} since {date}",

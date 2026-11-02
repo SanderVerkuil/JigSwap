@@ -8,6 +8,12 @@ vi.mock("@/components/auth/auth-shell", () => ({
   AuthShell: ({ children }: { children: ReactNode }) => children,
 }));
 
+// Only the Clerk props matter here too; no router is mounted.
+vi.mock("@tanstack/react-router", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@tanstack/react-router")>()),
+  useLocation: () => undefined,
+}));
+
 // Capture the props the sign-in/up pages hand Clerk. Clerk's precedence is
 // redirect_url query param > fallbackRedirectUrl, whereas forceRedirectUrl would
 // override redirect_url. So /dashboard must be a *fallback*: an explicit target

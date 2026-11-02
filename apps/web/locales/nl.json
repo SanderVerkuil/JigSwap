@@ -298,7 +298,8 @@
     "welcomeBack": "Welkom terug bij de puzzelruil community",
     "joinCommunity": "Doe mee met de puzzelruil community",
     "signInToAccount": "Log in op je account",
-    "createNewAccount": "Maak een nieuw account"
+    "createNewAccount": "Maak een nieuw account",
+    "sharedPuzzle": "Iemand heeft een puzzel met je gedeeld op JigSwap. Maak een gratis account aan om die te bekijken, of log in als je er al een hebt."
   },
   "activity": {
     "completion": {
@@ -3623,11 +3624,14 @@
   },
   "inviteShare": {
     "share": "Uitnodigingslink delen",
+    "sharePuzzle": "Link delen",
     "email": "E-mail",
     "whatsapp": "WhatsApp",
     "subject": "Kom ook op JigSwap",
     "message": "Kom ook op JigSwap, daar houd ik mijn puzzels bij: {url}",
     "householdMessage": "Word lid van ons huishouden op JigSwap, dan delen we één puzzelplank: {url}",
+    "puzzleSubject": "Een puzzel op JigSwap",
+    "puzzleMessage": "Ik bied “{title}” aan op JigSwap. Kijk maar: {url}",
     "privacy": "JigSwap ziet en bewaart niet naar wie je dit stuurt.",
     "inviteLink": "Uitnodigen met een link",
     "createLink": "Uitnodigingslink maken",
@@ -4660,6 +4664,12 @@
       "visibleWhileOffered": "Zolang je hem aanbiedt, is hij zichtbaar. Trek je elk aanbod in, dan is hij weer privé.",
       "privateAgain": "Hij is weer privé.",
       "undo": "Ongedaan maken"
+    },
+    "sendLink": {
+      "trigger": "Stuur een link",
+      "title": "Stuur een link naar deze puzzel",
+      "description": "Wie de link opent, ziet “{title}” en kan erom vragen. Nog niet op JigSwap? Dan meldt diegene zich eerst aan en komt daarna meteen hier terecht.",
+      "privateNote": "Je profiel is privé, dus deze link werkt alleen voor mensen met wie je elkaar volgt, je huishouden en kringen waarin je deze puzzel deelt."
     },
     "status": {
       "onLoan": "Uitgeleend aan {name} sinds {date}",
