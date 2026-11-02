@@ -119,16 +119,26 @@ const listingRows = (
       })
   ).order("desc");
 
+// A row's place in the merged order.
+export type ListingKey = [listedTime: number, creationTime: number];
+
+// How many members one cursor remembers as past their share of a page, which also bounds its size.
+export const LISTING_HELD_OWNERS_MAX = 16;
+
 /**
  * Where a paged walk over public listings stopped (library/browseOwnedPuzzles). The flagged and the
  * legacy range each resume after their own last row: the merged order compares `listedAt ?? createdAt`,
  * which neither index holds on its own. `sortKey` is the last row's place in the merged order, for
- * the copies a caller merges in from memory.
+ * the copies a caller merges in from memory. `held` names the members past their share of a page and
+ * where in the order their rows started waiting, and `secondPass` says the walk has reached the end
+ * once and started over for those rows.
  */
 export type ListingCursor = {
   flagged?: [listedAt: number | null, creationTime: number];
   legacy?: number;
-  sortKey?: [listedTime: number, creationTime: number];
+  sortKey?: ListingKey;
+  held?: [ownerId: string, ...from: ListingKey][];
+  secondPass?: true;
 };
 
 export const encodeListingCursor = (cursor: ListingCursor): string =>
@@ -136,6 +146,14 @@ export const encodeListingCursor = (cursor: ListingCursor): string =>
 
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
+
+const isHeldOwner = (
+  value: unknown,
+): value is NonNullable<ListingCursor["held"]>[number] =>
+  Array.isArray(value) &&
+  typeof value[0] === "string" &&
+  isFiniteNumber(value[1]) &&
+  isFiniteNumber(value[2]);
 
 /** A cursor as the client sent it back. Anything unreadable starts from the newest offer: a cursor
  * only says where to read, and every row is still gated. */
@@ -150,7 +168,10 @@ export const decodeListingCursor = (
     return undefined;
   }
   if (typeof parsed !== "object" || parsed === null) return undefined;
-  const { flagged, legacy, sortKey } = parsed as Record<string, unknown>;
+  const { flagged, legacy, sortKey, held, secondPass } = parsed as Record<
+    string,
+    unknown
+  >;
   return {
     ...(Array.isArray(flagged) &&
     (flagged[0] === null || isFiniteNumber(flagged[0])) &&
@@ -163,6 +184,10 @@ export const decodeListingCursor = (
     isFiniteNumber(sortKey[1])
       ? { sortKey: [sortKey[0], sortKey[1]] }
       : {}),
+    ...(Array.isArray(held)
+      ? { held: held.filter(isHeldOwner).slice(0, LISTING_HELD_OWNERS_MAX) }
+      : {}),
+    ...(secondPass === true ? { secondPass } : {}),
   };
 };
 
@@ -200,9 +225,14 @@ async function* legacyRowsAfter(
   );
 }
 
+export const listingKeyOf = (copy: Doc<"ownedPuzzles">): ListingKey => [
+  listedTimeOf(copy),
+  copy._creationTime,
+];
+
 const isOlderThanKey = (
   copy: Doc<"ownedPuzzles">,
-  [listedTime, creationTime]: [number, number],
+  [listedTime, creationTime]: ListingKey,
 ): boolean => {
   const listed = listedTimeOf(copy);
   return (
@@ -210,6 +240,14 @@ const isOlderThanKey = (
     (listed === listedTime && copy._creationTime < creationTime)
   );
 };
+
+/** Whether a row sits at this place in the merged order or further down. */
+export const isAtOrPastKey = (
+  copy: Doc<"ownedPuzzles">,
+  key: ListingKey,
+): boolean =>
+  isOlderThanKey(copy, key) ||
+  (listedTimeOf(copy) === key[0] && copy._creationTime === key[1]);
 
 /**
  * The open copies of public owners after `after`, newest offer first, platform-wide or for one

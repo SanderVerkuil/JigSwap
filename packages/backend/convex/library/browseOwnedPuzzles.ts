@@ -15,8 +15,12 @@ import { toCopyPuzzleView, toOwnedCopyView } from "./mappers";
 import {
   decodeListingCursor,
   encodeListingCursor,
+  isAtOrPastKey,
   isOpenAvailability,
+  LISTING_HELD_OWNERS_MAX,
+  listingKeyOf,
   publicListingsAfter,
+  type ListingKey,
 } from "./openListing";
 import { resolveCopyCoverFields } from "./resolveCoverUrl";
 
@@ -27,6 +31,11 @@ import { resolveCopyCoverFields } from "./resolveCoverUrl";
 export const BROWSE_PAGE_READ_BUDGET = 500;
 // A page holds 1 to BROWSE_MAX_LIMIT copies whatever the client asks for (the web asks for 48).
 export const BROWSE_MAX_LIMIT = 50;
+// How many rows of one page one member can take: half of the web's page. Their next row and all
+// their older ones wait until every other listing has had its turn (see the walk below), so a pile
+// of newer listings can't fill the pages in front of everyone else's, and a member who lists a
+// batch of this size at once is left where they are.
+export const BROWSE_PAGE_OWNER_SHARE = 24;
 const DEFAULT_LIMIT = 20;
 
 // Library read: browse OTHER members' available owned copies with filters, a page at a time. Rule 1
@@ -43,7 +52,12 @@ const DEFAULT_LIMIT = 20;
 // to a typed paginated DTO. There is no total: counting matches would mean reading them all. `hasMore`
 // says more may follow, and only a page that reached the end of the listings says there is none.
 //
-// One member's pile of listings can push others down, never out: Load more reaches every row.
+// No member takes more than BROWSE_PAGE_OWNER_SHARE rows of a page while others have listings left
+// (SEC-29), and Load more reaches every row, each once. So the order is newest offer first, except
+// that the rest of a pile comes after everyone else's. Past LISTING_HELD_OWNERS_MAX members the next
+// ones stay in order, so enough accounts together can still fill pages, and a pile larger than the
+// read budget still costs a viewer a Load more per BROWSE_PAGE_READ_BUDGET rows to get past: the
+// walk has to read them to skip them, because the indexes don't hold the owner.
 export const browseOwnedPuzzles = query({
   args: {
     // A string, not v.id, for the same reason as puzzleId below: it arrives from a URL search param.
@@ -68,8 +82,8 @@ export const browseOwnedPuzzles = query({
       ),
     ),
     searchTerm: v.optional(v.string()),
-    // Narrow to copies offered ANY of these ways (for trade / lend / sale). Applied here, before
-    // paging, so `total` and `hasMore` count only matching copies. Absent or empty: no narrowing.
+    // Narrow to copies offered ANY of these ways (for trade / lend / sale). Applied while the page
+    // fills, so a page and `hasMore` hold only matching copies. Absent or empty: no narrowing.
     availability: v.optional(
       v.array(
         v.union(
@@ -214,29 +228,59 @@ export const browseOwnedPuzzles = query({
     // Walk until the page is full and one more match shows there is more, or the read budget or the
     // listings run out. The next page starts after the last row looked at and kept out of this one,
     // so rows refused here are not read again.
+    //
+    // A member's row past their share of this page is passed over, and from there on all of theirs:
+    // the cursor remembers from which place, so it costs no state per row. Once the walk reaches the
+    // end it starts over for exactly those rows, on this page if it has room. Which rows wait is
+    // decided by the place alone, so each row belongs to one pass. The second pass reads the whole
+    // walk again, a budget at a time, which only a viewer past every other listing ever pays for.
     const rows: Doc<"ownedPuzzles">[] = [];
     let position = decodeListingCursor(args.cursor);
+    let secondPass = position?.secondPass === true;
+    const held = new Map<string, ListingKey>(
+      (position?.held ?? []).map(([ownerId, ...from]) => [ownerId, from]),
+    );
+    const isHeld = (copy: Doc<"ownedPuzzles">) => {
+      const from = held.get(copy.ownerId);
+      return from !== undefined && isAtOrPastKey(copy, from);
+    };
+    const shownOnPage = new Map<string, number>();
     let scanned = 0;
     let hasMore = false;
-    for await (const { copy, cursor } of publicListingsAfter(
-      ctx,
-      puzzleId,
-      position,
-      candidates.map((c) => c.row),
-    )) {
-      if (scanned >= BROWSE_PAGE_READ_BUDGET) {
-        hasMore = true;
-        break;
-      }
-      scanned += 1;
-      if (await belongsOnPage(copy)) {
-        if (rows.length === limit) {
+    walk: for (;;) {
+      for await (const { copy, cursor } of publicListingsAfter(
+        ctx,
+        puzzleId,
+        position,
+        candidates.map((c) => c.row),
+      )) {
+        if (scanned >= BROWSE_PAGE_READ_BUDGET) {
           hasMore = true;
-          break;
+          break walk;
         }
-        rows.push(copy);
+        scanned += 1;
+        if (isHeld(copy) === secondPass && (await belongsOnPage(copy))) {
+          if (rows.length === limit) {
+            hasMore = true;
+            break walk;
+          }
+          const shown = shownOnPage.get(copy.ownerId) ?? 0;
+          if (
+            !secondPass &&
+            shown >= BROWSE_PAGE_OWNER_SHARE &&
+            held.size < LISTING_HELD_OWNERS_MAX
+          ) {
+            held.set(copy.ownerId, listingKeyOf(copy));
+          } else {
+            shownOnPage.set(copy.ownerId, shown + 1);
+            rows.push(copy);
+          }
+        }
+        position = cursor;
       }
-      position = cursor;
+      if (secondPass || held.size === 0) break;
+      secondPass = true;
+      position = undefined;
     }
 
     // The owner is projected through the identity chokepoint (salt = the copy's _id, as on the copy
@@ -275,8 +319,16 @@ export const browseOwnedPuzzles = query({
     return {
       ownedPuzzles: page,
       hasMore,
-      continueCursor:
-        hasMore && position ? encodeListingCursor(position) : null,
+      continueCursor: hasMore
+        ? encodeListingCursor({
+            ...position,
+            held:
+              held.size > 0
+                ? [...held].map(([ownerId, from]) => [ownerId, ...from])
+                : undefined,
+            secondPass: secondPass ? true : undefined,
+          })
+        : null,
     };
   },
 });
