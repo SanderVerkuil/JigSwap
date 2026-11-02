@@ -342,6 +342,25 @@ describe("currentGoals", () => {
     ]);
   });
 
+  it("drops an achieved goal once its last day has passed, so January can ask for a new one", () => {
+    const lastYear = goal("lastYear", {
+      isAchieved: true,
+      targetDate: Date.UTC(2025, 11, 31),
+    });
+    expect(currentGoals([lastYear], now)).toEqual([]);
+  });
+
+  it("keeps an achieved goal through its last day and when it has no end", () => {
+    const lastDayToday = goal("lastDayToday", {
+      isAchieved: true,
+      targetDate: Date.UTC(2026, 9, 30),
+    });
+    const openEnded = goal("openEnded", { isAchieved: true });
+    expect(
+      currentGoals([lastDayToday, openEnded], now).map((g) => g.id),
+    ).toEqual(["lastDayToday", "openEnded"]);
+  });
+
   it("is empty when every goal is in the past", () => {
     expect(
       currentGoals(
