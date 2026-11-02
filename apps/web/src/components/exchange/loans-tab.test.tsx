@@ -49,6 +49,14 @@ vi.mock("@/compat/link", () => ({
     </a>
   ),
 }));
+// The button gates itself on the member being connected; here we only check who a row offers it for.
+vi.mock("@/components/social/message-button", () => ({
+  MessageButton: ({ memberId, size }: { memberId: string; size?: string }) => (
+    <button data-member={memberId} data-size={size}>
+      Message
+    </button>
+  ),
+}));
 // The solve dialogs have their own tests; here we only check which one a row opens.
 vi.mock("@/components/solving/start-solve-dialog", () => ({
   StartSolveDialog: ({ copyId }: { copyId: string }) => (
@@ -229,6 +237,22 @@ describe("LoansTab", () => {
         "Tulip Fields recalled from Bas",
       ),
     );
+  });
+
+  it("lets the lender message the borrower next to Recall", () => {
+    renderTab({ borrowed: [], lentOut: [lentLoan] });
+    const lent = section("Lent out 1");
+    const message = within(lent).getByRole("button", { name: "Message" });
+    expect(message.getAttribute("data-member")).toBe("u_bas");
+    expect(message.getAttribute("data-size")).toBe("sm");
+    expect(within(lent).getByRole("button", { name: "Recall" })).toBeTruthy();
+  });
+
+  it("offers no Message for a borrower who has left", () => {
+    renderTab({ borrowed: [], lentOut: [{ ...lentLoan, borrower: null }] });
+    const lent = section("Lent out 1");
+    expect(within(lent).queryByRole("button", { name: "Message" })).toBeNull();
+    expect(within(lent).getByRole("button", { name: "Recall" })).toBeTruthy();
   });
 
   it("says when each loan is due back, and nothing for an open-ended one", () => {

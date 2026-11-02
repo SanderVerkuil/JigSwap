@@ -3,15 +3,16 @@
 //   Finish a solve, Log a past one; the old /borrowed page's actions) and hands the copy back with
 //   Return, behind a confirm.
 // - Lent out (lending.lentOut): the viewer's copies (and household copies they may manage) that
-//   are out on loan, with Recall behind a confirm.
+//   are out on loan, with Message (to arrange getting it back) and Recall behind a confirm.
 // Each title links to the copy. Each section loads and empties on its own, and an empty one says
 // what belongs there and where to go next.
 import { Link } from "@/compat/link";
+import { MessageButton } from "@/components/social/message-button";
 import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
 import { StartSolveDialog } from "@/components/solving/start-solve-dialog";
 import { Button } from "@/components/ui/button";
-import { gateway } from "@/gateway";
+import { gateway, type Id } from "@/gateway";
 import { useElapsedTime } from "@/hooks/use-relative-time";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
@@ -321,6 +322,14 @@ function LentRows({ loans }: { loans: LoanView[] }) {
           index={index}
           isLast={index === loans.length - 1}
         >
+          {/* Recall is for once the puzzle is back: this is how to arrange that. It gates itself on
+              the members being connected; a departed borrower has nobody to message. */}
+          {loan.borrower && (
+            <MessageButton
+              memberId={loan.borrower._id as Id<"users">}
+              size="sm"
+            />
+          )}
           <RecallLoanButton
             loanId={loan.loanId}
             puzzleTitle={loan.puzzleTitle}

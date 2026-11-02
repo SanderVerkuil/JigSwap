@@ -155,7 +155,8 @@ it once the lender has the puzzle back, because the loan then closes for good.
 If you're the lender, use **Recall** under **Loans › Lent out**, or on the
 puzzle's card in **My Puzzles**, once you have the puzzle back. The loan then
 closes for good, and the borrower doesn't get a notification. Under **Loans**
-you're asked to confirm first.
+you're asked to confirm first, and **Message** next to it lets you arrange
+getting the puzzle back, if you're connected with the borrower.
 
 A puzzle can be on loan to one member at a time. While it's out on loan, it
 isn't available: nobody can request it, you can't offer it again or offer it in
