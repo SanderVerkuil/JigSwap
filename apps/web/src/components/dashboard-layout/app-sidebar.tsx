@@ -24,7 +24,7 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
-import { WhatsNewNavItem } from "@/components/whats-new/badges";
+import { UnreadDot, WhatsNewNavItem } from "@/components/whats-new/badges";
 import { useWhatsNewUnreadCount } from "@/components/whats-new/use-whats-new-state";
 import { gateway } from "@/gateway";
 import { convexQuery } from "@convex-dev/react-query";
@@ -161,12 +161,16 @@ function NavLink({ item }: { item: ShellNavItem }) {
         </Link>
       </SidebarMenuButton>
       {unread > 0 && (
-        <SidebarMenuBadge
-          aria-hidden
-          className="bg-jigsaw-primary-accent rounded-full text-white"
-        >
-          {formatUnreadCount(unread)}
-        </SidebarMenuBadge>
+        <>
+          <SidebarMenuBadge
+            aria-hidden
+            className="bg-jigsaw-primary-accent rounded-full text-white"
+          >
+            {formatUnreadCount(unread)}
+          </SidebarMenuBadge>
+          {/* The collapsed icon rail (the tablet default) hides SidebarMenuBadge. */}
+          <UnreadDot className="ring-sidebar top-1.5 right-1.5 hidden size-2 group-data-[collapsible=icon]:block" />
+        </>
       )}
     </SidebarMenuItem>
   );

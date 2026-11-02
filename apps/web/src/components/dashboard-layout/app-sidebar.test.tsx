@@ -2,6 +2,8 @@
 // UX-159: the sidebar's group labels link to their hub pages (/library, /community), the same
 // destinations as the phone tabs, so they read as rows you can click: 12px, a row hover/focus
 // background and a chevron on hover and focus, marked as the current page on the hub itself.
+// UX-05: tablets default to the icon rail, where the Messages count pill is hidden, so the rail
+// keeps a dot on the icon; the count itself stays in the link's accessible name.
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
@@ -10,7 +12,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
 import { AppSidebar } from "./app-sidebar";
 
-const mocks = vi.hoisted(() => ({ pathname: "/dashboard" }));
+const mocks = vi.hoisted(() => ({
+  pathname: "/dashboard",
+  member: null as { _id: string } | null,
+  unreadTotal: undefined as number | undefined,
+}));
 
 vi.mock("@/compat/navigation", () => ({
   usePathname: () => mocks.pathname,
@@ -21,10 +27,13 @@ vi.mock("@/compat/clerk", async (importOriginal) => ({
 }));
 vi.mock("@tanstack/react-query", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@tanstack/react-query")>()),
-  useQuery: () => ({ data: undefined }),
+  // Only the unread total is ever asked for here: isAdmin and every other nav item skip.
+  useQuery: ({ queryKey }: { queryKey: readonly unknown[] }) => ({
+    data: queryKey.includes("skip") ? undefined : mocks.unreadTotal,
+  }),
 }));
 vi.mock("@/components/dashboard-home/use-current-member", () => ({
-  useCurrentMember: () => ({ member: null }),
+  useCurrentMember: () => ({ member: mocks.member }),
 }));
 vi.mock("@/components/whats-new/use-whats-new-state", () => ({
   useWhatsNewUnreadCount: () => 0,
@@ -48,6 +57,8 @@ vi.mock("@/compat/link", () => ({
 afterEach(() => {
   cleanup();
   mocks.pathname = "/dashboard";
+  mocks.member = null;
+  mocks.unreadTotal = undefined;
 });
 
 function renderSidebar(pathname = "/dashboard") {
@@ -116,5 +127,37 @@ describe("AppSidebar hub labels", () => {
     expect(classes).toContain(
       "aria-[current=page]:text-sidebar-accent-foreground",
     );
+  });
+});
+
+describe("AppSidebar Messages count", () => {
+  const messagesItem = () =>
+    screen
+      .getByRole("link", { name: /^Messages/ })
+      .closest("[data-sidebar=menu-item]") as HTMLElement;
+  const railDot = () =>
+    Array.from(messagesItem().querySelectorAll("[aria-hidden=true]")).find(
+      (element) =>
+        classesOf(element).includes("group-data-[collapsible=icon]:block"),
+    );
+
+  it("shows a decorative dot on the rail icon while messages are unread", () => {
+    mocks.member = { _id: "m1" };
+    mocks.unreadTotal = 3;
+    renderSidebar();
+    const dot = railDot();
+    expect(dot).toBeDefined();
+    // Hidden in the expanded sidebar, where the count pill shows instead.
+    expect(classesOf(dot as Element)).toContain("hidden");
+    expect(
+      screen.getByRole("link", { name: /^Messages/ }).textContent,
+    ).toContain("3");
+  });
+
+  it("shows no dot with nothing unread", () => {
+    mocks.member = { _id: "m1" };
+    mocks.unreadTotal = 0;
+    renderSidebar();
+    expect(railDot()).toBeUndefined();
   });
 });
