@@ -180,6 +180,8 @@ describe("PuzzleCard (browse)", () => {
     expect(row.className).toContain("@container");
     // Too narrow for the label beside its icon: the label stays on one line, without the icon.
     expect(request.className).toContain("@max-[16.5rem]:[&>svg]:hidden");
+    // Must carry has-[>svg]: a plain px-2 loses to Button's has-[>svg]:px-3, hidden icon or not.
+    expect(request.className).toContain("@max-[16.5rem]:has-[>svg]:px-2");
     // Too narrow for the icon buttons beside Request: they share their own row, with no gap.
     const icons = screen.getByRole("button", {
       name: "Message Sander Verkuil",

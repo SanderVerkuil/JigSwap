@@ -707,10 +707,11 @@ export function PuzzleCard({
           // rather than squeeze it. On a card too narrow for the label beside its icon the icon
           // goes (with some padding), which also lets all three share a row on a wider grid card;
           // only a card narrower than the label itself makes it wrap ("Vragen om te lenen" on a
-          // phone). min-w-0 lifts Button's touch minimum, which would otherwise be all the row
-          // reserves for it.
+          // phone). The padding names has-[>svg] because Button's own has-[>svg]:px-3 outranks a
+          // plain px-2, and still matches while the icon is only hidden. min-w-0 lifts Button's
+          // touch minimum, which would otherwise be all the row reserves for it.
           className={cn(
-            "h-auto min-h-10 min-w-0 flex-auto py-1.5 leading-tight whitespace-normal pointer-coarse:min-h-11 pointer-coarse:min-w-0 @max-[16.5rem]:px-2 @max-[16.5rem]:[&>svg]:hidden",
+            "h-auto min-h-10 min-w-0 flex-auto py-1.5 leading-tight whitespace-normal pointer-coarse:min-h-11 pointer-coarse:min-w-0 @max-[16.5rem]:has-[>svg]:px-2 @max-[16.5rem]:[&>svg]:hidden",
             viewMode === "list" && "sm:flex-none",
           )}
         >
