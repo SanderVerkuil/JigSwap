@@ -488,6 +488,11 @@ images whose structure can't be parsed are left alone and counted.
 - `"table":"boxArt"`: `puzzles.image`, plus the proposals of that definition whose
   `baseline.image` or `changes.image` is the same blob.
 - `"table":"proposals"`: `puzzleChangeProposals.changes.image` (proposed box art).
+- For both box-art tables, a blob's `boxArtUploads` listing decides. A listing that may be
+  served moves to the clean blob, so the publication gate and any later rejection follow it.
+  One that may not (pending, unscored, rejected, quarantined, or its hash check not passed)
+  is left alone with its blob, unserved: it counts in `withMetadata` but not in `stripped`,
+  and a re-run strips it once it is cleared.
 - `"table":"copy"` / `"table":"completion"`: `ownedPuzzleImages` / `completionImages`
   (a completion's `photos` entry is switched too). Pending and quarantined rows are
   skipped: the moderation pipeline owns them.
@@ -552,6 +557,11 @@ check is skipped.
 
 - `"table":"boxArt"`: `puzzles.image`.
 - `"table":"proposals"`: `puzzleChangeProposals.changes.image` (proposed box art).
+- For both box-art tables, a blob's `boxArtUploads` listing decides. A listing that may be
+  served moves to the clean blob, so the publication gate and any later rejection follow it.
+  One that may not (pending, unscored, rejected, quarantined, or its hash check not passed)
+  is left alone with its blob, unserved: it counts in `withMetadata` but not in `stripped`,
+  and a re-run strips it once it is cleared.
 
 `dryRun` defaults to **true**: without `"dryRun":false` it only counts (`unchecked`) and calls
 nothing outside. **Safe to re-run:** yes; checked box art is skipped.

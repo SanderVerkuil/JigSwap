@@ -24,6 +24,9 @@ import { findMetadata, stripImageMetadata } from "./stripMetadata";
 //   and rows from before the pipeline were never processed. Rows still pending (the pipeline
 //   owns them) or quarantined are skipped. An animated WebP (ANIM/ANMF chunks) counts as
 //   malformed and is skipped: its frames nest chunks the stripper does not look inside.
+// Box art listed in boxArtUploads keeps its listing: one that may be served moves to the clean blob
+// with everything else (so later verdicts follow it); one that may not is left alone until it may
+// (backfillStripMetadataStore swapBlob), still counted in `withMetadata`, not in `stripped`.
 //
 // Each image is downloaded and checked (findMetadata); one that carries metadata is stripped and
 // turned upright (lib/imageModeration/normaliseImage: an Exif Orientation 2..8 is applied to the

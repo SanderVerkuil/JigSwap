@@ -3,7 +3,8 @@ import { convexTest, type TestConvex } from "convex-test";
 import { Jimp } from "jimp";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { internal } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
+import { boxArtUrl } from "./lib/imageModeration/boxArtUrl";
 import { readImageDimensions } from "./lib/imageModeration/guards";
 import { findMetadata } from "./lib/imageModeration/stripMetadata";
 import schema from "./schema";
@@ -235,6 +236,133 @@ describe("backfillStripMetadata", () => {
     expect(await bytesOf(t, seeded.gpsWebp)).toBeNull();
     const pending = await t.run((ctx) => ctx.db.get(seeded.pendingPhoto));
     expect(pending?.fileId).toBe(seeded.pendingWebp);
+  });
+
+  // Box art listed in boxArtUploads answers to its listing: the publication gate (boxArtUrl) and
+  // every later verdict find the blob through it, and a blob with no listing counts as predating
+  // the gate. So the listing goes wherever the box art goes, and art not cleared yet stays put.
+  const listBoxArt = (
+    t: TestConvex<typeof schema>,
+    storageId: Id<"_storage">,
+    fields: Partial<Doc<"boxArtUploads">>,
+  ) =>
+    t.run(async (ctx) => {
+      const uploaderId = (await ctx.db.query("users").first())!._id;
+      return ctx.db.insert("boxArtUploads", {
+        storageId,
+        uploaderId,
+        createdAt: Date.now(),
+        ...fields,
+      });
+    });
+  const servedUrlOf = (t: TestConvex<typeof schema>, image?: string) =>
+    t.run((ctx) => boxArtUrl(ctx, image));
+  const storedBlobCount = (t: TestConvex<typeof schema>) =>
+    t.run(
+      async (ctx) => (await ctx.db.system.query("_storage").collect()).length,
+    );
+
+  const NOT_CLEARED: [string, Partial<Doc<"boxArtUploads">>][] = [
+    [
+      "unscored, its hash check still open",
+      { moderationStatus: "unscored", hashCheckPendingSince: 1 },
+    ],
+    ["unscored", { moderationStatus: "unscored", hashCheckedAt: 1 }],
+    [
+      "pending",
+      { moderationStatus: "pending", hashCheckPendingSince: Date.now() },
+    ],
+    ["quarantined", { moderationStatus: "quarantined" }],
+    [
+      "approved, its hash check still open",
+      { moderationStatus: "approved", hashCheckPendingSince: 1 },
+    ],
+  ];
+
+  test.each(NOT_CLEARED)(
+    "box art whose listing is %s is left alone, still unserved, with its bytes as uploaded",
+    async (_, fields) => {
+      const t = convexTest(schema, modules);
+      const seeded = await seed(t);
+      const listing = await listBoxArt(t, seeded.gpsJpeg, fields);
+      const blobs = await storedBlobCount(t);
+
+      expect(await run(t, "boxArt", false)).toMatchObject({ stripped: 0 });
+
+      const puzzle = await t.run((ctx) => ctx.db.get(seeded.withGps));
+      expect(puzzle?.image).toBe(seeded.gpsJpeg);
+      const row = await t.run((ctx) => ctx.db.get(listing));
+      expect(row?.storageId).toBe(seeded.gpsJpeg);
+      expect(row?.moderationStatus).toBe(fields.moderationStatus);
+      expect(await servedUrlOf(t, puzzle?.image)).toBeNull();
+      expect(await bytesOf(t, seeded.gpsJpeg)).toEqual(fixture("gps.jpg"));
+      expect(await storedBlobCount(t)).toBe(blobs);
+    },
+  );
+
+  test("proposed box art whose listing is not cleared is left alone too", async () => {
+    const t = convexTest(schema, modules);
+    const seeded = await seed(t);
+    await listBoxArt(t, seeded.gpsPng, {
+      moderationStatus: "unscored",
+      hashCheckPendingSince: 1,
+    });
+
+    expect(await run(t, "proposals", false)).toMatchObject({ stripped: 0 });
+
+    const proposal = await t.run((ctx) => ctx.db.get(seeded.proposal));
+    expect(proposal?.changes.image).toBe(seeded.gpsPng);
+    expect(await bytesOf(t, seeded.gpsPng)).toEqual(fixture("gps.png"));
+  });
+
+  const CLEARED: [string, Partial<Doc<"boxArtUploads">>][] = [
+    ["approved", { moderationStatus: "approved", hashCheckedAt: 1 }],
+    ["from before box art was moderated", {}],
+  ];
+
+  test.each(CLEARED)(
+    "a listing that is %s moves to the stripped blob, and the old blob goes",
+    async (_, fields) => {
+      const t = convexTest(schema, modules);
+      const seeded = await seed(t);
+      const listing = await listBoxArt(t, seeded.gpsJpeg, fields);
+
+      expect(await run(t, "boxArt", false)).toMatchObject({ stripped: 1 });
+
+      const puzzle = await t.run((ctx) => ctx.db.get(seeded.withGps));
+      expect(puzzle?.image).not.toBe(seeded.gpsJpeg);
+      const row = await t.run((ctx) => ctx.db.get(listing));
+      expect(row?.storageId).toBe(puzzle?.image);
+      expect(await servedUrlOf(t, puzzle?.image)).not.toBeNull();
+      // Nothing but the listing held the old blob, with its metadata: it must not stay behind.
+      expect(await bytesOf(t, seeded.gpsJpeg)).toBeNull();
+    },
+  );
+
+  test("a later rejection of a moved listing takes the served box art with it", async () => {
+    const t = convexTest(schema, modules);
+    const seeded = await seed(t);
+    const imageId = await listBoxArt(t, seeded.gpsJpeg, {
+      moderationStatus: "approved",
+      hashCheckedAt: 1,
+    });
+    await run(t, "boxArt", false);
+    const stripped = (await t.run((ctx) => ctx.db.get(seeded.withGps)))?.image;
+    expect(await servedUrlOf(t, stripped)).not.toBeNull();
+
+    await t.mutation(
+      internal.catalog.boxArtModerationStore.applyRescreenVerdict,
+      {
+        imageId,
+        moderationStatus: "rejected",
+        moderationScore: 0.99,
+      },
+    );
+
+    const puzzle = await t.run((ctx) => ctx.db.get(seeded.withGps));
+    expect(puzzle?.image).toBeUndefined();
+    expect(await servedUrlOf(t, stripped)).toBeNull();
+    expect(await bytesOf(t, stripped!)).toBeNull();
   });
 
   // Box art cleaned before sanitizeBoxArt turned pixels upright kept an Orientation-only Exif.
