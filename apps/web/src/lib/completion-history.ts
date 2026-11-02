@@ -8,6 +8,10 @@
 
 export const HISTORY_PAGE_SIZE = 30;
 
+// Mirrors the backend's COMPLETION_ROWS_MAX less room for the solves in progress: the deepest the
+// log can be scrolled, since it asks for the rows on screen in one read.
+export const HISTORY_ROWS_MAX = 900;
+
 export type HistoryRow = {
   startDate: number;
   endDate?: number;

@@ -352,9 +352,11 @@ export const gateway = {
     updateGoal: api.solving.updateGoal.updateGoal,
     setGoalArchived: api.solving.setGoalArchived.setGoalArchived,
     deleteGoal: api.solving.deleteGoal.deleteGoal,
-    myCompletions: api.solving.listMyCompletions.listMyCompletions,
+    // The completion log: a lean row per solve, and the full rows of those on screen.
+    myCompletionIndex: api.solving.listMyCompletionIndex.listMyCompletionIndex,
+    myCompletionsByIds: api.solving.getMyCompletionsByIds.getMyCompletionsByIds,
     // Per copy: is a solve on it finished, or in progress? For pills and "already solved" marks,
-    // which never need the joined history above.
+    // which never need the joined rows above.
     mySolveStates: api.solving.listMySolveStates.listMySolveStates,
     completionHistory: api.solving.getCompletionHistory.getCompletionHistory,
     myGoals: api.solving.listMyGoals.listMyGoals,

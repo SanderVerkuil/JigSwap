@@ -600,6 +600,7 @@ import type * as solving_attachCompletionPhotos from "../solving/attachCompletio
 import type * as solving_backfill from "../solving/backfill.js";
 import type * as solving_backfillCompletionPuzzleId from "../solving/backfillCompletionPuzzleId.js";
 import type * as solving_backfillLegacyCompletionSidecars from "../solving/backfillLegacyCompletionSidecars.js";
+import type * as solving_completionLogLimits from "../solving/completionLogLimits.js";
 import type * as solving_completionModerationStore from "../solving/completionModerationStore.js";
 import type * as solving_copySnapshot from "../solving/copySnapshot.js";
 import type * as solving_createGoal from "../solving/createGoal.js";
@@ -610,7 +611,9 @@ import type * as solving_editCompletion from "../solving/editCompletion.js";
 import type * as solving_errors from "../solving/errors.js";
 import type * as solving_finishCompletion from "../solving/finishCompletion.js";
 import type * as solving_getCompletionHistory from "../solving/getCompletionHistory.js";
+import type * as solving_getMyCompletionsByIds from "../solving/getMyCompletionsByIds.js";
 import type * as solving_getMyReviews from "../solving/getMyReviews.js";
+import type * as solving_listMyCompletionIndex from "../solving/listMyCompletionIndex.js";
 import type * as solving_listMyCompletions from "../solving/listMyCompletions.js";
 import type * as solving_listMyGoals from "../solving/listMyGoals.js";
 import type * as solving_listMyInProgress from "../solving/listMyInProgress.js";
@@ -1225,6 +1228,7 @@ declare const fullApi: ApiFromModules<{
   "solving/backfill": typeof solving_backfill;
   "solving/backfillCompletionPuzzleId": typeof solving_backfillCompletionPuzzleId;
   "solving/backfillLegacyCompletionSidecars": typeof solving_backfillLegacyCompletionSidecars;
+  "solving/completionLogLimits": typeof solving_completionLogLimits;
   "solving/completionModerationStore": typeof solving_completionModerationStore;
   "solving/copySnapshot": typeof solving_copySnapshot;
   "solving/createGoal": typeof solving_createGoal;
@@ -1235,7 +1239,9 @@ declare const fullApi: ApiFromModules<{
   "solving/errors": typeof solving_errors;
   "solving/finishCompletion": typeof solving_finishCompletion;
   "solving/getCompletionHistory": typeof solving_getCompletionHistory;
+  "solving/getMyCompletionsByIds": typeof solving_getMyCompletionsByIds;
   "solving/getMyReviews": typeof solving_getMyReviews;
+  "solving/listMyCompletionIndex": typeof solving_listMyCompletionIndex;
   "solving/listMyCompletions": typeof solving_listMyCompletions;
   "solving/listMyGoals": typeof solving_listMyGoals;
   "solving/listMyInProgress": typeof solving_listMyInProgress;

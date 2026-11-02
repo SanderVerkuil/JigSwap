@@ -1,6 +1,11 @@
 // @vitest-environment happy-dom
-import type { HistoryRow } from "@/lib/completion-history";
+import {
+  HISTORY_PAGE_SIZE,
+  HISTORY_ROWS_MAX,
+  type HistoryRow,
+} from "@/lib/completion-history";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { useState } from "react";
 import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it } from "vitest";
 import en from "../../../locales/en.json";
@@ -24,21 +29,35 @@ const undated = (id: string): Row => ({
   datePrecision: "unknown",
 });
 
-const renderHistory = (rows: Row[], locale: "en" | "nl" = "en") =>
+// The log owns how far the list is open.
+function Harness({ rows, start }: { rows: Row[]; start: number }) {
+  const [limit, setLimit] = useState(start);
+  return (
+    <SolveHistory
+      rows={rows}
+      limit={limit}
+      onShowMore={() => setLimit((current) => current + HISTORY_PAGE_SIZE)}
+      renderRow={(row) => (
+        <div key={row.id} data-testid="row">
+          {row.id}
+        </div>
+      )}
+    />
+  );
+}
+
+const renderHistory = (
+  rows: Row[],
+  locale: "en" | "nl" = "en",
+  start = HISTORY_PAGE_SIZE,
+) =>
   render(
     <IntlProvider
       locale={locale}
       messages={locale === "en" ? en : nl}
       timeZone="Europe/Amsterdam"
     >
-      <SolveHistory
-        rows={rows}
-        renderRow={(row) => (
-          <div key={row.id} data-testid="row">
-            {row.id}
-          </div>
-        )}
-      />
+      <Harness rows={rows} start={start} />
     </IntlProvider>,
   );
 
@@ -103,5 +122,16 @@ describe("SolveHistory", () => {
       "202631 voltooiingen",
       "Datum onbekend1 voltooiing",
     ]);
+  });
+
+  it("stops offering more past what the log joins at once, and says so", () => {
+    const rows = Array.from({ length: HISTORY_ROWS_MAX + 1 }, (_, i) =>
+      solvedOn(`s${i}`, 2024, 0, 1),
+    );
+    renderHistory(rows, "en", HISTORY_ROWS_MAX);
+    expect(screen.queryByRole("button", { name: /Show/ })).toBeNull();
+    expect(
+      screen.getByText(`Showing the newest ${HISTORY_ROWS_MAX} solves.`),
+    ).toBeTruthy();
   });
 });

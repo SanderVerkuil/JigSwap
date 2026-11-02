@@ -1,3 +1,5 @@
+import type { DocId } from "../catalog/views";
+
 // Solving read-model view DTOs: typed shapes the gateway's `solving:` reads return where the UI
 // must not receive raw completion rows (friend-facing or cross-context surfaces).
 
@@ -8,6 +10,19 @@
  * absent value means "day".
  */
 export type CompletionDatePrecision = "day" | "year" | "unknown";
+
+/**
+ * `solving.myCompletionIndex`: one lean row per solve of the acting member, with what the completion
+ * log's stats, order and year headings need. `pieceCount` is only set on a finished solve.
+ */
+export interface MyCompletionIndexRow {
+  _id: DocId;
+  isCompleted: boolean;
+  startDate: number;
+  endDate?: number;
+  datePrecision?: CompletionDatePrecision;
+  pieceCount?: number;
+}
 
 /**
  * `solving.mySolveStates`: what the acting member's solve log says about one copy (its ownedPuzzles

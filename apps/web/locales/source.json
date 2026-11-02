@@ -3300,7 +3300,8 @@
       "dateUnknown": "Date unknown",
       "inYear": "In {year}",
       "yearCount": "{count, plural, one {# solve} other {# solves}}",
-      "showMore": "Show {count} more"
+      "showMore": "Show {count} more",
+      "historyAtMax": "Showing the newest {max} solves."
     },
     "logSolve": {
       "trigger": "Log a solve",

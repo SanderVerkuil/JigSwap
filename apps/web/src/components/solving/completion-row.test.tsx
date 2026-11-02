@@ -64,6 +64,7 @@ const row = (over: Partial<CompletionRowData> = {}): CompletionRowData => ({
   thumbnailUrl: undefined,
   link: { kind: "definition", id: "puzzle-1" },
   editableUntil: NOW + HOUR,
+  libraryInfo: undefined,
   ...over,
 });
 
