@@ -682,30 +682,6 @@ sweep").
 **Safe to re-run:** yes. A second real run creates 0 sidecars.
 
 **Commands:**
-## `lib/imageModeration/clearSettledHashPending` — take settled photos out of the hash-pending index
-
-**When:** once per deployment, after the code that clears `hashCheckPendingSince` on refused and
-quarantined photos is deployed (SEC-55). Optional: nothing is wrong while those rows remain (the
-admin counts skip them), but the admin's Hash matches count, the uploader's "box art in check"
-list and the daily hash re-check sweep keep scanning them.
-
-**What it does:** pages through the `by_hash_check_pending` index of copy photos, completion
-photos, box art, message photos and circle icons (50 rows per batch, `batchSize` overrides this,
-max 100), in that order, and clears `hashCheckPendingSince` (nothing else) on a row that waits on
-nothing any more:
-
-- **quarantined** (a hash match; it is never served, whatever its fields say);
-- **refused:** rejected with label `invalid_image`, no stored hashes (`pendingHashes`), and its
-  blob gone.
-
-Everything else keeps the field: photos still waiting on their check or not reached by the
-pipeline yet, timed-out photos (with or without an admin decision; for one an admin rejected,
-the field keeps its gate closed should it be restored), and a refused row whose blob is still
-stored. Clearing the field never publishes anything.
-
-`dryRun` defaults to **true**: without `"dryRun":false` it only counts (`settled`) and writes
-nothing. **Safe to re-run:** yes; a cleared row is no longer in the index, so a second run reports
-`"settled":0`.
 
 ```bash
 cd packages/backend
@@ -786,6 +762,38 @@ Each page returns `{ scanned, missingImage, heldByMemberRows, isDone, continueCu
 every page means SEC-01 was never used on that deployment. After restoring art for every
 `missingImage` hit, a second run reports none, and no row in Admin → Puzzles shows **Box art
 missing**.
+
+---
+
+## `lib/imageModeration/clearSettledHashPending` — take settled photos out of the hash-pending index
+
+**When:** once per deployment, after the code that clears `hashCheckPendingSince` on refused and
+quarantined photos is deployed (SEC-55). Optional: nothing is wrong while those rows remain (the
+admin counts skip them), but the admin's Hash matches count, the uploader's "box art in check"
+list and the daily hash re-check sweep keep scanning them.
+
+**What it does:** pages through the `by_hash_check_pending` index of copy photos, completion
+photos, box art, message photos and circle icons (50 rows per batch, `batchSize` overrides this,
+max 100), in that order, and clears `hashCheckPendingSince` (nothing else) on a row that waits on
+nothing any more:
+
+- **quarantined** (a hash match; it is never served, whatever its fields say);
+- **refused:** rejected with label `invalid_image`, no stored hashes (`pendingHashes`), and its
+  blob gone.
+
+Everything else keeps the field: photos still waiting on their check or not reached by the
+pipeline yet, timed-out photos (with or without an admin decision; for one an admin rejected,
+the field keeps its gate closed should it be restored), and a refused row whose blob is still
+stored. Clearing the field never publishes anything.
+
+`dryRun` defaults to **true**: without `"dryRun":false` it only counts (`settled`) and writes
+nothing. **Safe to re-run:** yes; a cleared row is no longer in the index, so a second run reports
+`"settled":0`.
+
+```bash
+cd packages/backend
+
+# dev: dry run (counts only), then the real run
 npx convex run lib/imageModeration/clearSettledHashPending:clearSettledHashPending '{}'
 npx convex run lib/imageModeration/clearSettledHashPending:clearSettledHashPending '{"dryRun":false}'
 
