@@ -1288,6 +1288,8 @@
     "resultsCount": "{count, plural, one {# puzzle found} other {# puzzles found}}",
     "showingCount": "Showing {shown} of {total, plural, one {# puzzle} other {# puzzles}}",
     "loadMore": "Load more",
+    "loadMoreFailed": "Couldn't load more puzzles.",
+    "loadMoreRetry": "Try again",
     "loadFailed": "Couldn't load puzzles",
     "loadFailedHint": "Check your connection and reload the page.",
     "searchHint": "Press ⌘K to search by title or brand",

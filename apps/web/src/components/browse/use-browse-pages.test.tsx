@@ -245,4 +245,42 @@ describe("useBrowsePages", () => {
     expect(again.result.current.rows).toHaveLength(60);
     expect(again.result.current.hasMore).toBe(false);
   });
+
+  it("reports a later page that failed, keeps the rows and can ask for it again", async () => {
+    const args = filters("later-page-fails");
+    let attempt = 0;
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+          queryFn: () => {
+            attempt += 1;
+            return attempt === 1
+              ? Promise.reject(new Error("offline"))
+              : Promise.resolve(page(rows(BROWSE_PAGE_SIZE, 50), 50, false));
+          },
+        },
+      },
+    });
+    queryClient.setQueryData(
+      keyFor(args, 0),
+      page(rows(0, BROWSE_PAGE_SIZE), 50, true),
+    );
+    const hook = mount(queryClient, args);
+    expect(hook.result.current.loadMoreFailed).toBe(false);
+
+    act(() => hook.result.current.loadMore());
+    await waitFor(() => expect(hook.result.current.loadMoreFailed).toBe(true));
+    // Not stuck on "Loading…": the rows stay, and the button can be pressed again.
+    expect(hook.result.current.rows).toHaveLength(BROWSE_PAGE_SIZE);
+    expect(hook.result.current.loadingMore).toBe(false);
+    expect(hook.result.current.hasMore).toBe(true);
+    expect(hook.result.current.failed).toBe(false);
+
+    act(() => hook.result.current.loadMore());
+    await waitFor(() => expect(hook.result.current.rows).toHaveLength(50));
+    expect(hook.result.current.loadMoreFailed).toBe(false);
+    expect(hook.result.current.hasMore).toBe(false);
+    expect(attempt).toBe(2);
+  });
 });

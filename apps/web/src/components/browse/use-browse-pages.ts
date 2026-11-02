@@ -112,8 +112,18 @@ export function useBrowsePages(args: BrowseArgs) {
     queries: Array.from({ length: pageCount - 1 }, (_, i) => pageQuery(i + 1)),
   });
 
+  // A later page that failed: the rows before it stay, and Load more asks for it again. While it
+  // does, it reads as loading.
+  const failedIndex = rest.findIndex(
+    (r) => r.data === undefined && r.error !== null && !r.isFetching,
+  );
+  const reachable = failedIndex === -1 ? rest : rest.slice(0, failedIndex);
+
   const stale = first.isPlaceholderData;
-  const merged = mergeBrowsePages([first.data, ...rest.map((r) => r.data)]);
+  const merged = mergeBrowsePages([
+    first.data,
+    ...reachable.map((r) => r.data),
+  ]);
   return {
     rows: merged.rows,
     total: merged.total,
@@ -124,7 +134,13 @@ export function useBrowsePages(args: BrowseArgs) {
     /** The rows on screen belong to the previous filters; the new ones are on their way. */
     stale,
     failed: first.error !== null && first.data === undefined,
+    /** The page Load more asked for failed; the button asks for it again. */
+    loadMoreFailed: failedIndex !== -1,
     loadMore: () => {
+      if (failedIndex !== -1) {
+        void rest[failedIndex].refetch();
+        return;
+      }
       openPages.set(key, pageCount + 1);
       setPages({ key, count: pageCount + 1 });
     },

@@ -1288,6 +1288,8 @@
     "resultsCount": "{count, plural, one {# puzzel gevonden} other {# puzzels gevonden}}",
     "showingCount": "{shown} van {total, plural, one {# puzzel} other {# puzzels}} getoond",
     "loadMore": "Meer laden",
+    "loadMoreFailed": "Meer puzzels konden niet worden geladen.",
+    "loadMoreRetry": "Opnieuw proberen",
     "loadFailed": "Puzzels konden niet worden geladen",
     "loadFailedHint": "Controleer je verbinding en laad de pagina opnieuw.",
     "searchHint": "Druk op ⌘K om op titel of merk te zoeken",

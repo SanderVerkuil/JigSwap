@@ -281,6 +281,15 @@ function BrowsePage() {
         </div>
       )}
 
+      {browse.loadMoreFailed && (
+        <p
+          role="alert"
+          className="text-muted-foreground self-center text-center text-sm"
+        >
+          {tBrowse("loadMoreFailed")}
+        </p>
+      )}
+
       {/* aria-disabled, not disabled, while the next page loads: a disabled button drops focus. */}
       {(browse.hasMore || browse.loadingMore) && (
         <Button
@@ -291,7 +300,11 @@ function BrowsePage() {
             if (!browse.loadingMore) browse.loadMore();
           }}
         >
-          {browse.loadingMore ? tCommon("loading") : tBrowse("loadMore")}
+          {browse.loadingMore
+            ? tCommon("loading")
+            : browse.loadMoreFailed
+              ? tBrowse("loadMoreRetry")
+              : tBrowse("loadMore")}
         </Button>
       )}
 
