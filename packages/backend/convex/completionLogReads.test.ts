@@ -295,3 +295,119 @@ describe("solving.myCompletionsByIds", () => {
     expect(rows).toHaveLength(1);
   });
 });
+
+// The log asks for the rows on screen in one read, so its stated maximum has to hold under Convex's
+// real limits (4,096 index ranges per function) for the most expensive rows a member can have.
+describe("solving.myCompletionsByIds at its stated maximum", () => {
+  const BASE = 1_700_000_000_000;
+
+  // `count` solves, each of a distinct definition, with every photo allowed. `ownerOf` decides who
+  // owns each solve's copy, which also decides how much the copy gate costs.
+  const seedSolves = async (
+    t: T,
+    me: Id<"users">,
+    count: number,
+    ownerOf: (i: number) => Id<"users">,
+  ) => {
+    const ids: Id<"completions">[] = [];
+    const image = await t.run((ctx) =>
+      ctx.storage.store(new Blob(["x"], { type: "image/webp" })),
+    );
+    for (let start = 0; start < count; start += 100) {
+      const made = await t.run(async (ctx) => {
+        const out: Id<"completions">[] = [];
+        for (let i = start; i < Math.min(count, start + 100); i++) {
+          const puzzleId = await ctx.db.insert("puzzles", {
+            title: `p${i}`,
+            pieceCount: 1000,
+            status: "approved",
+            image,
+            submittedBy: me,
+            createdAt: BASE,
+            updatedAt: BASE,
+          });
+          const ownedPuzzleId = await ctx.db.insert("ownedPuzzles", {
+            puzzleId,
+            ownerId: ownerOf(i),
+            aggregateId: `c${i}`,
+            condition: "good",
+            availability: { forTrade: false, forSale: false, forLend: false },
+            createdAt: BASE,
+            updatedAt: BASE,
+          });
+          const aggregateId = `solve-${i}`;
+          const photos = [image, image, image, image, image];
+          const completionId = await ctx.db.insert("completions", {
+            aggregateId,
+            userId: me,
+            ownedPuzzleId,
+            puzzleId,
+            startDate: BASE,
+            endDate: BASE + 1,
+            isCompleted: true,
+            photos,
+            createdAt: BASE,
+            updatedAt: BASE,
+          });
+          await ctx.db.insert("completionImages", {
+            completionId: aggregateId,
+            uploaderId: me,
+            fileId: image,
+            moderationStatus: "approved",
+            createdAt: BASE,
+            updatedAt: BASE,
+          });
+          out.push(completionId);
+        }
+        return out;
+      });
+      ids.push(...made);
+    }
+    return ids;
+  };
+
+  test("own copies, with every photo allowed", async () => {
+    const t = convexTest({ schema, modules, transactionLimits: true });
+    const w = await seed(t);
+    const ids = await seedSolves(t, w.ann, COMPLETION_ROWS_MAX, () => w.ann);
+    const rows = await rowsOf(t, "ann", ids);
+    expect(rows).toHaveLength(COMPLETION_ROWS_MAX);
+    expect(rows[0].thumbnailUrl).toBeTruthy();
+  }, 300_000);
+
+  test("copies that have moved on to members the viewer may no longer see", async () => {
+    const t = convexTest({ schema, modules, transactionLimits: true });
+    const w = await seed(t);
+    const owners = await t.run(async (ctx) => {
+      const out: Id<"users">[] = [];
+      for (let i = 0; i < COMPLETION_ROWS_MAX; i++) {
+        const owner = await ctx.db.insert("users", {
+          clerkId: `clerk_owner_${i}`,
+          email: `owner${i}@example.com`,
+          name: `owner ${i}`,
+          isActive: true,
+          createdAt: BASE,
+          updatedAt: BASE,
+        });
+        await ctx.db.insert("profiles", {
+          memberId: owner,
+          displayName: `owner ${i}`,
+          visibility: "private",
+          updatedAt: BASE,
+        });
+        out.push(owner);
+      }
+      return out;
+    });
+    const ids = await seedSolves(
+      t,
+      w.ann,
+      COMPLETION_ROWS_MAX,
+      (i) => owners[i],
+    );
+    const rows = await rowsOf(t, "ann", ids);
+    expect(rows).toHaveLength(COMPLETION_ROWS_MAX);
+    // The copy is out of reach, so the row falls back to the definition's box art.
+    expect(rows[0].link?.kind).toBe("definition");
+  }, 300_000);
+});

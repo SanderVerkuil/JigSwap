@@ -13,6 +13,7 @@ import {
 } from "../library/canViewCopy";
 import { toCopyPuzzleView } from "../library/mappers";
 import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
+import { COMPLETION_ROWS_MAX } from "./completionLogLimits";
 
 // The navigation target for a completion row, most-specific-first: the viewer's own copy page,
 // a copy page they can reach (currently holding, or visible per the copy gate), else the durable
@@ -28,7 +29,7 @@ type CompletionLink = {
 // solve history (each row joins its copy, puzzle and photo sidecars) can never push the read past
 // Convex's per-function limits. Past the cap the oldest completions are dropped, and anything the
 // web derives from the list (the history page, "already solved" sets, counts) undercounts.
-export const COMPLETION_LIST_CAP = 1000;
+export const COMPLETION_LIST_CAP = COMPLETION_ROWS_MAX;
 
 // Read side for the solving history view: the acting member's own completions, newest first, with
 // each row enriched (enrichCompletions). The completion log itself now reads the lean
@@ -75,11 +76,19 @@ export const enrichCompletions = async (
   await Promise.all(
     copyIds.map(async (id) => copies.set(id as string, await ctx.db.get(id))),
   );
+  // One read per distinct definition, whether a solve names it or only its copy does.
+  const puzzleReads = new Map<Id<"puzzles">, Promise<Doc<"puzzles"> | null>>();
+  const puzzleOf = (id: Id<"puzzles">) => {
+    let read = puzzleReads.get(id);
+    if (read === undefined) {
+      read = ctx.db.get(id);
+      puzzleReads.set(id, read);
+    }
+    return read;
+  };
   const puzzles = new Map<string, Doc<"puzzles"> | null>();
   await Promise.all(
-    puzzleIds.map(async (id) =>
-      puzzles.set(id as string, await ctx.db.get(id)),
-    ),
+    puzzleIds.map(async (id) => puzzles.set(id as string, await puzzleOf(id))),
   );
 
   // Reachability per distinct copy. The circle-shared context is built lazily: only when some
@@ -112,7 +121,7 @@ export const enrichCompletions = async (
         copyThumbs.set(id, null);
         return;
       }
-      const puzzle = copy.puzzleId ? await ctx.db.get(copy.puzzleId) : null;
+      const puzzle = copy.puzzleId ? await puzzleOf(copy.puzzleId) : null;
       copyThumbs.set(id, await resolveCopyCoverUrl(ctx, copy, puzzle));
       if (copy.ownerId === me) {
         // What My Puzzles says of this copy: a definition the member may not read is its snapshot.
@@ -128,16 +137,23 @@ export const enrichCompletions = async (
       }
     }),
   );
-  const puzzleThumbs = new Map<string, string | null>();
+  // The definition's box art, read only for a row its copy gives no thumbnail: usually the copy's
+  // own thumbnail already is that box art, and each read costs two index ranges.
+  const puzzleThumbReads = new Map<string, Promise<string | null>>();
+  const puzzleThumbOf = (key: string) => {
+    let read = puzzleThumbReads.get(key);
+    if (read === undefined) {
+      const image = puzzles.get(key)?.image;
+      read = image ? boxArtThumbUrl(ctx, image) : Promise.resolve(null);
+      puzzleThumbReads.set(key, read);
+    }
+    return read;
+  };
   // Whether the member may open each definition's page (canViewDefinition, that page's gate):
   // a definition that is no longer approved gets no link unless they submitted it or are an admin.
   const puzzleOpenable = new Map<string, boolean>();
   await Promise.all(
     [...puzzles.entries()].map(async ([id, puzzle]) => {
-      puzzleThumbs.set(
-        id,
-        puzzle?.image ? await boxArtThumbUrl(ctx, puzzle.image) : null,
-      );
       puzzleOpenable.set(
         id,
         puzzle !== null && (await canViewDefinition(ctx, puzzle, me)),
@@ -164,7 +180,7 @@ export const enrichCompletions = async (
 
       const thumbnailUrl =
         (copyKey && copyReachable ? copyThumbs.get(copyKey) : null) ??
-        (puzzleKey ? puzzleThumbs.get(puzzleKey) : null) ??
+        (puzzleKey ? await puzzleThumbOf(puzzleKey) : null) ??
         undefined;
 
       return {
