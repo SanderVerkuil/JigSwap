@@ -21,25 +21,9 @@ vi.mock("@/compat/link", () => ({
     </a>
   ),
 }));
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({
-    to,
-    search,
-    children,
-    ...rest
-  }: {
-    to: string;
-    search?: Record<string, string>;
-    children?: ReactNode;
-  }) => (
-    <a href={search ? `${to}?${new URLSearchParams(search)}` : to} {...rest}>
-      {children}
-    </a>
-  ),
-}));
 
 // An empty completion log says what to do next: log a solve, or mark the puzzles solved before
-// joining in the quick start's past-solves step. It doesn't assume the member owns the puzzle.
+// joining on their own page, never the quick start. It doesn't assume the member owns the puzzle.
 
 const renderEmpty = (locale: "en" | "nl" = "en") =>
   render(
@@ -65,7 +49,7 @@ describe("CompletionsEmptyState", () => {
       screen
         .getByRole("link", { name: "Mark past solves" })
         .getAttribute("href"),
-    ).toBe("/welcome?step=solves");
+    ).toBe("/completions/past");
     expect(screen.getByText(/Already solved some\?/)).toBeDefined();
   });
 
@@ -84,6 +68,6 @@ describe("CompletionsEmptyState", () => {
       screen
         .getByRole("link", { name: "Leg eerdere voltooiingen vast" })
         .getAttribute("href"),
-    ).toBe("/welcome?step=solves");
+    ).toBe("/completions/past");
   });
 });

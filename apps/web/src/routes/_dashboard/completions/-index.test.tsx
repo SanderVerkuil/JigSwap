@@ -74,9 +74,15 @@ vi.mock("@/components/solving/completion-row", () => ({
   ),
 }));
 
-vi.mock("@/components/solving/completions-empty-state", () => ({
-  CompletionsEmptyState: () => <p>nothing logged yet</p>,
-}));
+vi.mock(
+  "@/components/solving/completions-empty-state",
+  async (importOriginal) => ({
+    ...(await importOriginal<
+      typeof import("@/components/solving/completions-empty-state")
+    >()),
+    CompletionsEmptyState: () => <p>nothing logged yet</p>,
+  }),
+);
 
 const INDEX = getFunctionName(gateway.solving.myCompletionIndex);
 const BY_IDS = getFunctionName(gateway.solving.myCompletionsByIds);
@@ -176,6 +182,15 @@ describe("completion log", () => {
     expect(screen.queryAllByTestId("row")).toEqual([]);
     expect(mocks.asked[BY_IDS]).toBe("skip");
     expect(screen.getByText("nothing logged yet")).toBeTruthy();
+  });
+
+  it("keeps marking past solves within reach once there is a log", () => {
+    renderLog([finished("a", 2024)]);
+    expect(
+      screen
+        .getByRole("link", { name: "Mark past solves" })
+        .getAttribute("href"),
+    ).toBe("/completions/past");
   });
 
   it("never reads the member's library", () => {

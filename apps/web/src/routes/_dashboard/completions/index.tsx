@@ -6,7 +6,10 @@ import {
   CompletionRow,
   type CompletionDialogRequest,
 } from "@/components/solving/completion-row";
-import { CompletionsEmptyState } from "@/components/solving/completions-empty-state";
+import {
+  CompletionsEmptyState,
+  PastSolvesPrompt,
+} from "@/components/solving/completions-empty-state";
 import { EditCompletionDialog } from "@/components/solving/edit-completion-dialog";
 import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { ReviewPuzzleDialog } from "@/components/solving/review-puzzle-dialog";
@@ -248,6 +251,9 @@ function CompletionsPage() {
               }
               renderRow={renderCompletionRow}
             />
+            <div className="mt-4">
+              <PastSolvesPrompt />
+            </div>
           </>
         )}
       </section>

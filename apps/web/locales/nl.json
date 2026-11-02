@@ -3276,7 +3276,7 @@
       "empty": "Nog geen voltooiingen",
       "emptyHint": "Leg een voltooiing vast voor een puzzel die je hebt, leent of met je huishouden deelt, en begin zo je geschiedenis.",
       "emptyLog": "Voltooiing vastleggen",
-      "emptyPastSolves": "Al een paar puzzels afgemaakt? <link>Leg eerdere voltooiingen vast</link>",
+      "pastSolvesPrompt": "Al een paar puzzels afgemaakt? <link>Leg eerdere voltooiingen vast</link>",
       "inProgressSection": "Bezig",
       "historySection": "Geschiedenis",
       "inProgress": "Bezig",
@@ -3336,6 +3336,12 @@
         "noPuzzlesHint": "Voeg een puzzel toe aan je bibliotheek of leen er een, en leg je voltooiingen dan hier vast.",
         "addPuzzle": "Puzzel toevoegen",
         "findToBorrow": "Zoek een puzzel om te lenen"
+      },
+      "past": {
+        "title": "Eerdere voltooiingen vastleggen",
+        "subtitle": "Vink de puzzels aan die je al eerder hebt afgemaakt. Je legt er tot 25 tegelijk vast.",
+        "back": "Terug naar voltooiingen",
+        "empty": "Geen puzzels meer om vast te leggen. Puzzels met een voltooiing staan hier niet tussen."
       },
       "delete": "Verwijderen",
       "deleteConfirmTitle": "Voltooiing verwijderen?",
@@ -4234,6 +4240,7 @@
     "insights": "Inzichten — JigSwap",
     "completions": "Voltooiingen — JigSwap",
     "completionNew": "Voltooiing vastleggen — JigSwap",
+    "completionPast": "Eerdere voltooiingen vastleggen — JigSwap",
     "community": "Community — JigSwap",
     "circles": "Kringen — JigSwap",
     "admin": "Beheer — JigSwap",
@@ -4341,6 +4348,11 @@
         "title": "Voltooiing vastleggen",
         "subtitle": "Kies een puzzel om een voltooiing voor te registreren.",
         "description": "Nieuwe voltooiing vastleggen"
+      },
+      "completionPast": {
+        "title": "Eerdere voltooiingen vastleggen",
+        "subtitle": "Vink de puzzels aan die je al eerder hebt afgemaakt.",
+        "description": "Leg de puzzels vast die je al eerder hebt afgemaakt"
       },
       "goals": {
         "title": "Doelen",
@@ -5951,6 +5963,8 @@
       "showMore": "Meer tonen",
       "empty": "Voeg eerst een puzzel toe en kom dan terug om hem vast te leggen.",
       "submit": "{count, plural, one {# puzzel vastleggen} other {# puzzels vastleggen}}",
+      "batchFull": "{count} is het maximum per keer. Leg deze eerst vast en ga daarna verder met de rest.",
+      "futureDate": "Kies een datum tot en met vandaag.",
       "saved": "{count, plural, one {# puzzel vastgelegd} other {# puzzels vastgelegd}}",
       "invalidDate": "Die datum kan niet. Controleer het jaar.",
       "invalidDuration": "Die puzzeltijd kan niet. Controleer de uren en minuten.",

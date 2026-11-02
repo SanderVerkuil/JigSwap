@@ -187,6 +187,20 @@ describe("PastSolvesList", () => {
     ).toBe(true);
   });
 
+  it("says what the caller gives it when there is nothing to log", () => {
+    const els = elementsOf(
+      render(
+        <PastSolvesList
+          candidates={[]}
+          pending={false}
+          onSubmit={submit}
+          emptyText="Nothing left."
+        />,
+      ),
+    );
+    expect(els.some((el) => textOf(el) === "Nothing left.")).toBe(true);
+  });
+
   it("shows the empty state with the caller's action when there is nothing to log", () => {
     const els = elementsOf(
       render(
@@ -289,6 +303,54 @@ describe("PastSolvesList (ticking)", () => {
     ]);
     // Logged rows clear, so nothing is pending any more.
     expect(store.getSnapshot()?.count).toBe(0);
+  });
+
+  it("says the batch limit at the cap, and stops the other rows", () => {
+    const candidates = Array.from({ length: 26 }, (_, i) => ({
+      copyId: `c${i}`,
+      title: `Puzzle ${i}`,
+    }));
+    renderDom(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <PastSolvesList
+          candidates={candidates}
+          pending={false}
+          onSubmit={async () => true}
+        />
+      </IntlProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Show more" }));
+    const message =
+      "25 is the most for one batch. Log these first, then mark the rest.";
+    for (let i = 0; i < 24; i++) tick(`Puzzle ${i}`);
+    expect(screen.queryByText(message)).toBeNull();
+    tick("Puzzle 24");
+    expect(screen.getByRole("status").textContent).toBe(message);
+    expect(
+      screen
+        .getByRole("checkbox", { name: "I finished Puzzle 25" })
+        .hasAttribute("disabled"),
+    ).toBe(true);
+    expect(screen.getByRole("button", { name: "Log 25 puzzles" })).toBeTruthy();
+  });
+
+  it("refuses a typed date after today, next to the row, with nothing to submit", () => {
+    list(async () => true);
+    tick("Cats");
+    act(() => {
+      fireEvent.click(screen.getByRole("radio", { name: "Pick a date" }));
+    });
+    act(() => {
+      fireEvent.change(screen.getByLabelText("Pick a date"), {
+        target: { value: "2999-01-01" },
+      });
+    });
+    expect(screen.getByText("Pick a date up to today.")).toBeTruthy();
+    expect(
+      screen
+        .getByRole("button", { name: "Log 1 puzzle" })
+        .hasAttribute("disabled"),
+    ).toBe(true);
   });
 
   it("keeps the ticks when saving fails", async () => {

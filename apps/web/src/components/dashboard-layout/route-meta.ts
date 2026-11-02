@@ -312,6 +312,7 @@ export const ROUTE_META: Record<string, ShellRouteMeta> = {
   "/household": { pageKey: "household", group: "library" },
   "/completions": { pageKey: "completions", group: "library" },
   "/completions/new": { pageKey: "completionNew", group: "library" },
+  "/completions/past": { pageKey: "completionPast", group: "library" },
   "/goals": { pageKey: "goals", group: "library" },
   "/insights": { pageKey: "insights", group: "library" },
 

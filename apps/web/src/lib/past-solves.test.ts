@@ -5,6 +5,8 @@ import {
   yearOptions,
 } from "./past-solves";
 
+const TODAY = "2026-11-02";
+
 const copy = (id: string, createdAt: number, aggregateId?: string) => ({
   _id: id,
   aggregateId,
@@ -35,34 +37,63 @@ describe("pastSolveCandidates", () => {
 describe("toPastCompletionItem", () => {
   it("sends no date for 'I don't remember'", () => {
     expect(
-      toPastCompletionItem("agg", {
-        when: "unknown",
-        year: 2023,
-        date: "2024-01-02",
-      }),
+      toPastCompletionItem(
+        "agg",
+        {
+          when: "unknown",
+          year: 2023,
+          date: "2024-01-02",
+        },
+        TODAY,
+      ),
     ).toEqual({ copyId: "agg", datePrecision: "unknown" });
   });
 
   it("sends only the year for 'Which year'", () => {
     expect(
-      toPastCompletionItem("agg", { when: "year", year: 2023, date: "" }),
+      toPastCompletionItem(
+        "agg",
+        { when: "year", year: 2023, date: "" },
+        TODAY,
+      ),
     ).toEqual({ copyId: "agg", datePrecision: "year", year: 2023 });
   });
 
   it("sends the picked day as UTC midnight, and nothing when no day is picked", () => {
     expect(
-      toPastCompletionItem("agg", {
-        when: "day",
-        year: 2023,
-        date: "2024-03-14",
-      }),
+      toPastCompletionItem(
+        "agg",
+        {
+          when: "day",
+          year: 2023,
+          date: "2024-03-14",
+        },
+        TODAY,
+      ),
     ).toEqual({
       copyId: "agg",
       datePrecision: "day",
       date: Date.UTC(2024, 2, 14),
     });
     expect(
-      toPastCompletionItem("agg", { when: "day", year: 2023, date: "" }),
+      toPastCompletionItem("agg", { when: "day", year: 2023, date: "" }, TODAY),
+    ).toBeNull();
+  });
+
+  it("sends today, and nothing for a day after it, which the server would refuse", () => {
+    expect(
+      toPastCompletionItem(
+        "agg",
+        { when: "day", year: 2026, date: TODAY },
+        TODAY,
+      ),
+    ).not.toBeNull();
+    expect(
+      toPastCompletionItem(
+        "agg",
+        { when: "day", year: 2026, date: "2026-11-03" },
+        TODAY,
+      ),
     ).toBeNull();
   });
 });

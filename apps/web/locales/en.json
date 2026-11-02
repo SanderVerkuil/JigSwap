@@ -3276,7 +3276,7 @@
       "empty": "No completions yet",
       "emptyHint": "Log a solve for any puzzle you own, borrow or share in your household to start your history.",
       "emptyLog": "Log a solve",
-      "emptyPastSolves": "Already solved some? <link>Mark past solves</link>",
+      "pastSolvesPrompt": "Already solved some? <link>Mark past solves</link>",
       "inProgressSection": "In progress",
       "historySection": "History",
       "inProgress": "In progress",
@@ -3336,6 +3336,12 @@
         "noPuzzlesHint": "Add a puzzle to your library or borrow one, then log your solves here.",
         "addPuzzle": "Add a puzzle",
         "findToBorrow": "Find a puzzle to borrow"
+      },
+      "past": {
+        "title": "Mark past solves",
+        "subtitle": "Tick the puzzles you finished earlier. You can log up to 25 at a time.",
+        "back": "Back to Completions",
+        "empty": "No puzzles left to mark. Puzzles you've logged a solve for don't show here."
       },
       "delete": "Delete",
       "deleteConfirmTitle": "Delete this completion?",
@@ -4234,6 +4240,7 @@
     "insights": "Insights — JigSwap",
     "completions": "Completions — JigSwap",
     "completionNew": "Log a completion — JigSwap",
+    "completionPast": "Mark past solves — JigSwap",
     "community": "Community — JigSwap",
     "circles": "Circles — JigSwap",
     "admin": "Admin — JigSwap",
@@ -4341,6 +4348,11 @@
         "title": "Log a completion",
         "subtitle": "Pick a puzzle to log a solve against.",
         "description": "Log a new completion"
+      },
+      "completionPast": {
+        "title": "Mark past solves",
+        "subtitle": "Tick the puzzles you finished earlier.",
+        "description": "Log the puzzles you finished earlier"
       },
       "goals": {
         "title": "Goals",
@@ -5951,6 +5963,8 @@
       "showMore": "Show more",
       "empty": "Add a puzzle first, then come back to log it.",
       "submit": "{count, plural, one {Log # puzzle} other {Log # puzzles}}",
+      "batchFull": "{count} is the most for one batch. Log these first, then mark the rest.",
+      "futureDate": "Pick a date up to today.",
       "saved": "{count, plural, one {# puzzle logged} other {# puzzles logged}}",
       "invalidDate": "That date isn't possible. Check the year.",
       "invalidDuration": "That solve time isn't possible. Check the hours and minutes.",
