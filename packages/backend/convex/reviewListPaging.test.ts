@@ -67,7 +67,7 @@ const memberPage = (
 ) =>
   t
     .withIdentity({ subject: "clerk_viewer" })
-    .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+    .query(api.social.listPuzzleReviews.listPuzzleReviewsPage, {
       puzzleId,
       paginationOpts: { numItems, cursor },
     });
@@ -78,7 +78,7 @@ const publicPage = (
   numItems: number,
   cursor: string | null = null,
 ) =>
-  t.query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviews, {
+  t.query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviewsPage, {
     puzzleId,
     paginationOpts: { numItems, cursor },
   });
@@ -156,10 +156,56 @@ describe("a definition the caller may not see", () => {
     await expect(
       t
         .withIdentity({ subject: "clerk_other" })
-        .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+        .query(api.social.listPuzzleReviews.listPuzzleReviewsPage, {
           puzzleId: w.pendingId,
           paginationOpts: { numItems: 10, cursor: null },
         }),
     ).resolves.toEqual({ page: [], isDone: true, continueCursor: "" });
+  });
+});
+
+// A tab or an SSR build from before paging still asks with just the puzzle. It must keep reading
+// reviews, not fail validation and say "No reviews yet", and it goes through the same gates.
+describe("web builds from before the lists paged", () => {
+  const memberRead = (who: string, puzzleId: Id<"puzzles">) =>
+    t
+      .withIdentity({ subject: `clerk_${who}` })
+      .query(api.social.listPuzzleReviews.listPuzzleReviews, { puzzleId });
+  const publicRead = (puzzleId: Id<"puzzles">) =>
+    t.query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviews, {
+      puzzleId,
+    });
+
+  test("read an array of the newest reviews, most recently updated first", async () => {
+    const w = await seed(t, reviewers(3));
+    const expected = ["r0", "r2", "r1"];
+    expect(
+      (await memberRead("viewer", w.puzzleId)).map((row) => row.text),
+    ).toEqual(expected);
+    expect((await publicRead(w.puzzleId)).map((row) => row.text)).toEqual(
+      expected,
+    );
+  });
+
+  test("get no more than one page", async () => {
+    const w = await seed(t, reviewers(55));
+    expect(await publicRead(w.puzzleId)).toHaveLength(50);
+    expect(await memberRead("viewer", w.puzzleId)).toHaveLength(50);
+  });
+
+  test("keep the gates: a hidden definition is empty and a block still drops the author", async () => {
+    const w = await seed(t, ["r0", "other"]);
+    expect(await publicRead(w.pendingId)).toEqual([]);
+    expect(await memberRead("other", w.pendingId)).toEqual([]);
+    await t.run((ctx) =>
+      ctx.db.insert("blocks", {
+        blockerId: w.users.r0,
+        blockedId: w.users.viewer,
+        createdAt: Date.now(),
+      }),
+    );
+    expect(
+      (await memberRead("viewer", w.puzzleId)).map((row) => row.text),
+    ).toEqual(["other"]);
   });
 });

@@ -222,14 +222,17 @@ describe.each<[string, ReviewRead]>([
     "social.listPuzzleReviews",
     (args) =>
       as(t, "viewer").query(
-        api.social.listPuzzleReviews.listPuzzleReviews,
+        api.social.listPuzzleReviews.listPuzzleReviewsPage,
         args,
       ),
   ],
   [
     "social.listPublicPuzzleReviews",
     (args) =>
-      t.query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviews, args),
+      t.query(
+        api.social.listPublicPuzzleReviews.listPublicPuzzleReviewsPage,
+        args,
+      ),
   ],
 ])("%s", (_, read) => {
   let puzzleId: Id<"puzzles">;

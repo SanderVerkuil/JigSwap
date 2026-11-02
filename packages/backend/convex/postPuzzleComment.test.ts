@@ -144,7 +144,7 @@ describe("postPuzzleComment / listPuzzleComments", () => {
 
     // The catalog reviews list shows ONLY the community review, not the copy comment.
     const reviews = await asBob(t)
-      .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+      .query(api.social.listPuzzleReviews.listPuzzleReviewsPage, {
         puzzleId,
         paginationOpts: FIRST_PAGE,
       })

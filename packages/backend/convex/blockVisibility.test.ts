@@ -760,7 +760,7 @@ describe("comments and reviews", () => {
         { anonymous: false, member: { _id: u.carol } },
       ]);
       const reviews = await alice
-        .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+        .query(api.social.listPuzzleReviews.listPuzzleReviewsPage, {
           puzzleId,
           paginationOpts: FIRST_PAGE,
         })
@@ -771,18 +771,24 @@ describe("comments and reviews", () => {
       // Public reviews: filtered when signed in, untouched for an anonymous visitor.
       expect(
         await alice
-          .query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviews, {
-            puzzleId,
-            paginationOpts: FIRST_PAGE,
-          })
+          .query(
+            api.social.listPublicPuzzleReviews.listPublicPuzzleReviewsPage,
+            {
+              puzzleId,
+              paginationOpts: FIRST_PAGE,
+            },
+          )
           .then((result) => result.page),
       ).toHaveLength(1);
       expect(
         await t
-          .query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviews, {
-            puzzleId,
-            paginationOpts: FIRST_PAGE,
-          })
+          .query(
+            api.social.listPublicPuzzleReviews.listPublicPuzzleReviewsPage,
+            {
+              puzzleId,
+              paginationOpts: FIRST_PAGE,
+            },
+          )
           .then((result) => result.page),
       ).toHaveLength(2);
     },

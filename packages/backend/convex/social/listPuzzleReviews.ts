@@ -1,9 +1,9 @@
 import type { PuzzleReviewView } from "@jigswap/contracts";
 import { stream } from "convex-helpers/server/stream";
-import { paginationOptsValidator } from "convex/server";
+import { paginationOptsValidator, type PaginationOptions } from "convex/server";
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
-import { query } from "../_generated/server";
+import { query, type QueryCtx } from "../_generated/server";
 import { canViewDefinition } from "../catalog/definitionVisibility";
 import { requireMember } from "../identity/requireMember";
 import { clampPaginationOpts } from "../lib/pageSize";
@@ -33,49 +33,70 @@ export const MAX_REVIEW_PAGE_SIZE = 50;
 //     their anonymous entry unchanged, so a block never confirms who wrote it (SEC-40).
 // There is no copy here (these are catalog-definition reviews), so the `canViewCopy` reachability
 // gate that listPuzzleComments uses does NOT apply.
-export const listPuzzleReviews = query({
+export const listPuzzleReviewsPage = query({
   args: { puzzleId: v.id("puzzles"), paginationOpts: paginationOptsValidator },
-  handler: async (ctx, args) => {
-    const viewerId = (await requireMember(ctx)) as unknown as Id<"users">;
-    const puzzle = await ctx.db.get(args.puzzleId);
-    if (!puzzle || !(await canViewDefinition(ctx, puzzle, viewerId))) {
-      return { page: [], isDone: true, continueCursor: "" };
-    }
-    const blocks = await viewerBlocksOf(ctx, viewerId);
-    const project = (authorId: Id<"users">) =>
-      projectMemberIdentity(ctx, viewerId, authorId, args.puzzleId as string);
-
-    // The block rules run while the page fills, so it stays full. Only an author the viewer blocked
-    // needs the identity decision here; one review per member, so every author is projected once
-    // more below at most.
-    const result = await stream(ctx.db, schema)
-      .query("puzzleReviews")
-      .withIndex("by_puzzle_updated", (q) => q.eq("puzzleId", args.puzzleId))
-      .order("desc")
-      .filterWith(async (row) => {
-        if (blocks.byThem.has(row.userId)) return false;
-        if (!blocks.byMe.has(row.userId)) return true;
-        return !droppedForBlock(
-          blocks,
-          row.userId,
-          !(await project(row.userId)).anonymous,
-        );
-      })
-      .paginate(clampPaginationOpts(args.paginationOpts, MAX_REVIEW_PAGE_SIZE));
-
-    const page = await Promise.all(
-      result.page.map(
-        async (row) =>
-          ({
-            id: row._id,
-            author: await project(row.userId),
-            rating: row.rating ?? null,
-            text: row.text ?? null,
-            updatedAt: row.updatedAt,
-            canDelete: row.userId === viewerId,
-          }) satisfies PuzzleReviewView,
-      ),
-    );
-    return { ...result, page };
-  },
+  handler: (ctx, args) =>
+    readReviewsPage(ctx, args.puzzleId, args.paginationOpts),
 });
+
+// Kept for web builds from before the review lists paged: they ask with just the puzzle and expect an
+// array, and would otherwise read "No reviews yet" until they reload. The newest page, through the
+// same gates. This build no longer calls it. Remove once those have aged out.
+export const listPuzzleReviews = query({
+  args: { puzzleId: v.id("puzzles") },
+  handler: async (ctx, args): Promise<PuzzleReviewView[]> =>
+    (
+      await readReviewsPage(ctx, args.puzzleId, {
+        numItems: MAX_REVIEW_PAGE_SIZE,
+        cursor: null,
+      })
+    ).page,
+});
+
+const readReviewsPage = async (
+  ctx: QueryCtx,
+  puzzleId: Id<"puzzles">,
+  paginationOpts: PaginationOptions,
+) => {
+  const viewerId = (await requireMember(ctx)) as unknown as Id<"users">;
+  const puzzle = await ctx.db.get(puzzleId);
+  if (!puzzle || !(await canViewDefinition(ctx, puzzle, viewerId))) {
+    return { page: [], isDone: true, continueCursor: "" };
+  }
+  const blocks = await viewerBlocksOf(ctx, viewerId);
+  const project = (authorId: Id<"users">) =>
+    projectMemberIdentity(ctx, viewerId, authorId, puzzleId as string);
+
+  // The block rules run while the page fills, so it stays full. Only an author the viewer blocked
+  // needs the identity decision here; one review per member, so every author is projected once
+  // more below at most.
+  const result = await stream(ctx.db, schema)
+    .query("puzzleReviews")
+    .withIndex("by_puzzle_updated", (q) => q.eq("puzzleId", puzzleId))
+    .order("desc")
+    .filterWith(async (row) => {
+      if (blocks.byThem.has(row.userId)) return false;
+      if (!blocks.byMe.has(row.userId)) return true;
+      return !droppedForBlock(
+        blocks,
+        row.userId,
+        !(await project(row.userId)).anonymous,
+      );
+    })
+    .paginate(clampPaginationOpts(paginationOpts, MAX_REVIEW_PAGE_SIZE));
+
+  const page = await Promise.all(
+    result.page.map(
+      async (row) =>
+        ({
+          id: row._id,
+          author: await project(row.userId),
+          rating: row.rating ?? null,
+          text: row.text ?? null,
+          updatedAt: row.updatedAt,
+          canDelete: row.userId === viewerId,
+        }) satisfies PuzzleReviewView,
+    ),
+  );
+  return { ...result, page };
+};

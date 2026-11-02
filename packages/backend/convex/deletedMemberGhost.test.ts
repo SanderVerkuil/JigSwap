@@ -225,7 +225,7 @@ describe.each(Object.keys(departures) as (keyof typeof departures)[])(
     test("puzzle reviews", async () => {
       const { asViewer, puzzleId, dora } = await setup();
       const reviews = await asViewer
-        .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+        .query(api.social.listPuzzleReviews.listPuzzleReviewsPage, {
           puzzleId,
           paginationOpts: FIRST_PAGE,
         })
@@ -317,7 +317,7 @@ describe.each(Object.keys(departures) as (keyof typeof departures)[])(
     test("public review authors are anonymous", async () => {
       const { t, puzzleId } = await setup();
       const reviews = await t
-        .query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviews, {
+        .query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviewsPage, {
           puzzleId,
           paginationOpts: FIRST_PAGE,
         })

@@ -261,7 +261,7 @@ describe("listPublicPuzzleReviews", () => {
     const { approved } = await seed(t);
 
     const reviews = await t
-      .query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviews, {
+      .query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviewsPage, {
         puzzleId: approved,
         paginationOpts: FIRST_PAGE,
       })
@@ -290,7 +290,7 @@ describe("listPublicPuzzleReviews", () => {
     });
 
     const reviews = await t
-      .query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviews, {
+      .query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviewsPage, {
         puzzleId: approved,
         paginationOpts: FIRST_PAGE,
       })
@@ -318,7 +318,7 @@ describe("listPublicPuzzleReviews", () => {
     });
 
     const reviews = await t
-      .query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviews, {
+      .query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviewsPage, {
         puzzleId: approved,
         paginationOpts: FIRST_PAGE,
       })
@@ -349,7 +349,7 @@ describe("listPublicPuzzleReviews", () => {
     });
 
     const reviews = await t
-      .query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviews, {
+      .query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviewsPage, {
         puzzleId: approved,
         paginationOpts: FIRST_PAGE,
       })
@@ -367,7 +367,7 @@ describe("listPublicPuzzleReviews", () => {
 
     expect(
       await t
-        .query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviews, {
+        .query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviewsPage, {
           puzzleId: pending,
           paginationOpts: FIRST_PAGE,
         })
@@ -381,7 +381,7 @@ describe("listPublicPuzzleReviews", () => {
 
     const raw = JSON.stringify(
       await t
-        .query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviews, {
+        .query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviewsPage, {
           puzzleId: approved,
           paginationOpts: FIRST_PAGE,
         })

@@ -133,7 +133,7 @@ const authorsSeenBy = async (t: T, key: string, u: Seeded) => {
   const viewer = as(t, key);
   const [reviews, comments, photoComments] = await Promise.all([
     viewer
-      .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+      .query(api.social.listPuzzleReviews.listPuzzleReviewsPage, {
         puzzleId: u.approved,
         paginationOpts: FIRST_PAGE,
       })
@@ -246,7 +246,7 @@ describe("SEC-11: reviews of a definition that is not approved", () => {
     const u = await seed(t);
     expect(
       await as(t, "stranger")
-        .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+        .query(api.social.listPuzzleReviews.listPuzzleReviewsPage, {
           puzzleId: u.pending,
           paginationOpts: FIRST_PAGE,
         })
@@ -258,7 +258,7 @@ describe("SEC-11: reviews of a definition that is not approved", () => {
     const t = convexTest(schema, modules);
     const u = await seed(t);
     const reviews = await as(t, "submitter")
-      .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+      .query(api.social.listPuzzleReviews.listPuzzleReviewsPage, {
         puzzleId: u.pending,
         paginationOpts: FIRST_PAGE,
       })
@@ -271,7 +271,7 @@ describe("SEC-11: reviews of a definition that is not approved", () => {
     const u = await seed(t);
     const reviews = await t
       .withIdentity({ subject: "clerk_stranger", metadata: { role: "admin" } })
-      .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+      .query(api.social.listPuzzleReviews.listPuzzleReviewsPage, {
         puzzleId: u.pending,
         paginationOpts: FIRST_PAGE,
       })

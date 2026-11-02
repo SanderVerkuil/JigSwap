@@ -75,7 +75,7 @@ describe("deletePuzzleReview", () => {
     });
 
     const asSeenByAlice = await asAlice(t)
-      .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+      .query(api.social.listPuzzleReviews.listPuzzleReviewsPage, {
         puzzleId,
         paginationOpts: FIRST_PAGE,
       })
@@ -100,7 +100,7 @@ describe("deletePuzzleReview", () => {
     });
     expect(mine.puzzle).toBeNull();
     const list = await asBob(t)
-      .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+      .query(api.social.listPuzzleReviews.listPuzzleReviewsPage, {
         puzzleId,
         paginationOpts: FIRST_PAGE,
       })

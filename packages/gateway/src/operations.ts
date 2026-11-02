@@ -549,11 +549,11 @@ export const gateway = {
     // Community reviews keyed by the puzzle DEFINITION (the catalog detail page has no copy id).
     // Same `puzzleComments` table + post-comment use case as the copy-keyed variants above.
     postPuzzleReview: api.social.postPuzzleReview.postPuzzleReview,
-    listPuzzleReviews: api.social.listPuzzleReviews.listPuzzleReviews,
+    listPuzzleReviews: api.social.listPuzzleReviews.listPuzzleReviewsPage,
     // Author-only: "Delete my review" removes the caller's own review of the puzzle.
     deletePuzzleReview: api.social.deletePuzzleReview.deletePuzzleReview,
     listPublicPuzzleReviews:
-      api.social.listPublicPuzzleReviews.listPublicPuzzleReviews,
+      api.social.listPublicPuzzleReviews.listPublicPuzzleReviewsPage,
     // Presence (opt-in, mutual-only, reciprocal): the caller's own share/override settings and
     // their setter, and which of up to 50 members the caller may see online or away (offline
     // and hidden members are absent). The heartbeats live under `presence` above.

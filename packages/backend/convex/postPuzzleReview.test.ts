@@ -200,7 +200,7 @@ describe("listPuzzleReviews — sourced from puzzleReviews", () => {
     });
 
     const list = await asAlice(t)
-      .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+      .query(api.social.listPuzzleReviews.listPuzzleReviewsPage, {
         puzzleId,
         paginationOpts: FIRST_PAGE,
       })
@@ -226,7 +226,7 @@ describe("listPuzzleReviews — sourced from puzzleReviews", () => {
     });
 
     const list = await asAlice(t)
-      .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+      .query(api.social.listPuzzleReviews.listPuzzleReviewsPage, {
         puzzleId,
         paginationOpts: FIRST_PAGE,
       })
@@ -243,7 +243,7 @@ describe("listPuzzleReviews — sourced from puzzleReviews", () => {
     await seedReview(t, { puzzleId, userId: alice, rating: 4 });
 
     const list = await asAlice(t)
-      .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+      .query(api.social.listPuzzleReviews.listPuzzleReviewsPage, {
         puzzleId,
         paginationOpts: FIRST_PAGE,
       })
@@ -282,7 +282,7 @@ describe("listPuzzleReviews — sourced from puzzleReviews", () => {
     });
 
     const list = await asAlice(t)
-      .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+      .query(api.social.listPuzzleReviews.listPuzzleReviewsPage, {
         puzzleId,
         paginationOpts: FIRST_PAGE,
       })
@@ -307,7 +307,7 @@ describe("listPuzzleReviews — sourced from puzzleReviews", () => {
     });
 
     const list = await asAlice(t)
-      .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+      .query(api.social.listPuzzleReviews.listPuzzleReviewsPage, {
         puzzleId,
         paginationOpts: FIRST_PAGE,
       })
@@ -333,7 +333,7 @@ describe("listPuzzleReviews — sourced from puzzleReviews", () => {
     });
 
     const list = await asAlice(t)
-      .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+      .query(api.social.listPuzzleReviews.listPuzzleReviewsPage, {
         puzzleId,
         paginationOpts: FIRST_PAGE,
       })
@@ -363,7 +363,7 @@ describe("listPuzzleReviews — sourced from puzzleReviews", () => {
 
     await expect(
       t
-        .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+        .query(api.social.listPuzzleReviews.listPuzzleReviewsPage, {
           puzzleId,
           paginationOpts: FIRST_PAGE,
         })

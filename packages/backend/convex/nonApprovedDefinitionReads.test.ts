@@ -142,7 +142,7 @@ describe("puzzle reviews of non-approved definitions stay private (SEC-34)", () 
     puzzleId: Id<"puzzles">,
   ) =>
     caller
-      .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+      .query(api.social.listPuzzleReviews.listPuzzleReviewsPage, {
         puzzleId,
         paginationOpts: FIRST_PAGE,
       })

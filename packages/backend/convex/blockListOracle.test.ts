@@ -153,7 +153,7 @@ const listsSeenBy = async (t: T, who: Who, s: Seeded) => {
   const viewer = as(t, who);
   return {
     puzzleReviews: await viewer
-      .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+      .query(api.social.listPuzzleReviews.listPuzzleReviewsPage, {
         puzzleId: s.puzzleId,
         paginationOpts: FIRST_PAGE,
       })
@@ -173,7 +173,7 @@ const listsSeenBy = async (t: T, who: Who, s: Seeded) => {
       )
     ).map(({ reviewer, ...rest }) => ({ ...rest, author: reviewer })),
     publicReviews: await viewer
-      .query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviews, {
+      .query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviewsPage, {
         puzzleId: s.puzzleId,
         paginationOpts: FIRST_PAGE,
       })

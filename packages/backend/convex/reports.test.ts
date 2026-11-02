@@ -1663,7 +1663,7 @@ describe("admin decideReport: comments and reviews", () => {
       updatedAt: before!.updatedAt,
     });
     const reviews = await asCarol(t)
-      .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+      .query(api.social.listPuzzleReviews.listPuzzleReviewsPage, {
         puzzleId,
         paginationOpts: FIRST_PAGE,
       })
