@@ -59,6 +59,11 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 describe("EditCompletionDialog", () => {
+  it("scrolls on a short screen, so Save stays reachable", () => {
+    renderDialog({ initialEndDate: END });
+    expect(screen.getByRole("dialog").className).toContain("overflow-y-auto");
+  });
+
   it("edits a finished solve's dates and time, without the in-progress hint", () => {
     renderDialog({ initialEndDate: END, initialTimeMinutes: 200 });
     expect(screen.queryByText(/Leave empty/)).toBeNull();

@@ -104,7 +104,8 @@ export function EditCompletionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      {/* Scrolls on a short screen, so Save stays reachable. */}
+      <DialogContent className="max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{tCompletions("edit")}</DialogTitle>
           <DialogDescription>

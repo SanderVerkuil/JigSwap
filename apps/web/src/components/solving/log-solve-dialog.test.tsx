@@ -86,6 +86,11 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 describe("LogSolveDialog: finished or still solving", () => {
+  it("scrolls on a short screen, so Save stays reachable", () => {
+    renderDialog();
+    expect(screen.getByRole("dialog").className).toContain("overflow-y-auto");
+  });
+
   it("starts as a finished solve dated today", () => {
     renderDialog();
     const status = screen.getByRole("radiogroup", {

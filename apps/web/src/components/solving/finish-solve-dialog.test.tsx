@@ -99,6 +99,11 @@ describe("FinishSolveDialog", () => {
     );
   });
 
+  it("scrolls on a short screen, so Save stays reachable", () => {
+    renderDialog({});
+    expect(screen.getByRole("dialog").className).toContain("overflow-y-auto");
+  });
+
   it("never offers to leave the end date empty, because finishing needs one", () => {
     renderDialog({ minEndDate: STARTED });
     expect(screen.queryByText(/Leave empty/)).toBeNull();
