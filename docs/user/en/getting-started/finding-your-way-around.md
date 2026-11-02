@@ -88,9 +88,10 @@ shows the steps:
 
 The **Install app** item in the quick-action sheet shows these steps too.
 
-> **Tip:** From your second visit on a phone, JigSwap shows an
-> **Add JigSwap to your home screen** tip above the tab bar (on Android Chrome
-> it has its own **Install app** button). Tap **Not now** to
-> hide it for 30 days, or close it to stop it appearing. You can still install
-> from the quick-action sheet at any time. The tip doesn't appear once JigSwap
-> is installed.
+> **Tip:** From your second visit on a phone, JigSwap shows a slim
+> **Install JigSwap** row above the tab bar. Tap **How?** to open the steps (on
+> Android Chrome you'll find the **Install app** button there too). Tap **✕** to
+> hide the row for 30 days, or choose **Don't show again** under **How?** to stop
+> it appearing. You can still install from the quick-action sheet at any time.
+> The row stays out of your way in conversations and forms, and doesn't appear
+> once JigSwap is installed.
