@@ -228,7 +228,7 @@ describe("My Puzzles recall", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Recall" }));
     expect(
-      screen.getByRole("alertdialog", { name: "Recall this puzzle?" }),
+      screen.getByRole("alertdialog", { name: /^Recall .*\?$/ }),
     ).toBeTruthy();
     expect(mocks.mutation).not.toHaveBeenCalled();
   });

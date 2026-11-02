@@ -45,9 +45,9 @@ Vanaf een puzzelkaart kun je:
 - **Bewerken** — wijzig de details van de kopie.
 - **Verwijderen** — haal de kopie uit je bibliotheek (met bevestiging).
 - **Voltooiing vastleggen** of **Puzzel starten** — leg vast dat je de puzzel hebt voltooid (of gestart).
-- **Terugvragen** — als een puzzel momenteel is uitgeleend, vraag je hem
-  terug. JigSwap vraagt eerst om bevestiging en laat daarna weten of het gelukt
-  is.
+- **Terugvragen** — heb je een uitgeleende puzzel terug, dan sluit je hiermee de
+  lening af. JigSwap vraagt eerst om bevestiging en laat daarna weten of het
+  gelukt is.
 
 ## Veel puzzels tegelijk wijzigen
 
@@ -107,8 +107,9 @@ De detailpagina is het uitgebreide overzicht van één eigen kopie. Het bevat:
 vastleggen en bewerken. Elke wijziging met een schakelaar bevestigen we met
 **Ongedaan maken**, en hij verandert nooit wie de kopie kan zien (zie
 hieronder). Is de kopie uitgeleend, dan kun je pas weer een aanbod aanzetten
-als hij terug is. Bij **Terugvragen** vragen we eerst om
-bevestiging: je beëindigt dan de lening en de puzzel staat weer bij jou.
+als hij terug is. Gebruik **Terugvragen** als je de puzzel terug hebt: we
+vragen eerst om bevestiging, daarna eindigt de lening en staat de puzzel weer
+bij jou.
 **Bezoekers** (andere leden) zien een openbare versie met in plaats daarvan de acties _Ruil Aanvragen_ en _Bericht_.
 
 **Beoordelingen van dit exemplaar** zijn sterren voor deze fysieke kopie. Wie

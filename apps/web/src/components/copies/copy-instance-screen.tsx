@@ -285,6 +285,7 @@ function CopyInstanceDetail({
   );
   const openLoan = openLoanEntry
     ? {
+        puzzleTitle: snapshot.title,
         borrowerName: projectedName(openLoanEntry.borrower, t("anonymousUser")),
         openedAt: openLoanEntry.openedAt,
         loanId:

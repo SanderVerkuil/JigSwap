@@ -47,7 +47,12 @@ afterEach(cleanup);
 describe("CopyStatusLine for whoever manages the copy", () => {
   it("an open loan names the borrower and the date, with Recall", () => {
     renderLine({
-      openLoan: { borrowerName: "Anna", openedAt: MARCH_3, loanId: "loan1" },
+      openLoan: {
+        puzzleTitle: "Tulip Fields",
+        borrowerName: "Anna",
+        openedAt: MARCH_3,
+        loanId: "loan1",
+      },
     });
     expect(line()).toContain("On loan to Anna since Mar 3, 2026");
     expect(screen.getByRole("button", { name: "Recall" })).toBeTruthy();
@@ -55,7 +60,12 @@ describe("CopyStatusLine for whoever manages the copy", () => {
 
   it("an open loan whose loan id isn't known yet has no Recall", () => {
     renderLine({
-      openLoan: { borrowerName: "Anna", openedAt: MARCH_3, loanId: null },
+      openLoan: {
+        puzzleTitle: "Tulip Fields",
+        borrowerName: "Anna",
+        openedAt: MARCH_3,
+        loanId: null,
+      },
     });
     expect(line()).toContain("On loan to Anna");
     expect(screen.queryByRole("button", { name: "Recall" })).toBeNull();
@@ -112,7 +122,12 @@ describe("CopyStatusLine for visitors", () => {
   it("renders nothing for a copy that isn't offered", () => {
     renderLine({
       detailed: false,
-      openLoan: { borrowerName: "Anna", openedAt: MARCH_3, loanId: "loan1" },
+      openLoan: {
+        puzzleTitle: "Tulip Fields",
+        borrowerName: "Anna",
+        openedAt: MARCH_3,
+        loanId: "loan1",
+      },
     });
     expect(screen.queryByTestId("copy-status-line")).toBeNull();
   });

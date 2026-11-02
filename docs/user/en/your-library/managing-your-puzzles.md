@@ -44,8 +44,8 @@ From a puzzle card you can:
 - **Edit** — change the copy's details.
 - **Delete** — remove the copy from your library (with confirmation).
 - **Log a solve** or **Start puzzle** — record that you've completed (or started) the puzzle.
-- **Recall** — if a puzzle is currently lent out, recall it to get it back.
-  JigSwap asks you to confirm first, then tells you whether it worked.
+- **Recall** — once a lent-out puzzle is back with you, use this to close the
+  loan. JigSwap asks you to confirm first, then tells you whether it worked.
 
 ## Change many puzzles at once
 
@@ -102,8 +102,8 @@ The detail page is the rich record of a single owned copy. It includes:
 lend** switches, **Log a solve**, and editing. Each switch change is
 confirmed with an **Undo**, and it never changes who can see the copy (see
 below). While the copy is out on loan you can't switch an offer on until it's
-back. **Recall** asks you to confirm first: it ends the loan and marks
-the puzzle as back with you.
+back. Use **Recall** once you have the puzzle back: it asks you to confirm
+first, then ends the loan and marks the puzzle as back with you.
 **Visitors** (other members) see a public version with _Request Swap_ and _Message_ actions instead.
 
 **Copy reviews** are star ratings of this physical copy. Anyone who logs a

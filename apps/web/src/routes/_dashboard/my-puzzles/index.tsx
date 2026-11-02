@@ -1,7 +1,7 @@
 import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
-import { RecallLoanButton } from "@/components/copies/recall-loan-button";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
+import { RecallLoanButton } from "@/components/exchange/recall-loan-button";
 import { CopyOwnerLine } from "@/components/household/copy-owner-line";
 import { AddToCollectionDialog } from "@/components/library/add-to-collection-dialog";
 import { BulkActionBar } from "@/components/library/bulk-action-bar";
@@ -540,6 +540,7 @@ function PuzzlesPage() {
                       {!selecting && (
                         <RecallLoanButton
                           loanId={loan.loanId}
+                          puzzleTitle={loan.puzzleTitle}
                           borrowerName={borrowerName(loan)}
                         />
                       )}
