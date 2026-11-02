@@ -33,7 +33,7 @@ beforeEach(async () => {
   server = createServer((req, res) => {
     requests.push(`${req.headers.host?.split(":")[0]}${req.url}`);
     const route = routes.get(req.url ?? "");
-    if (route) route(res);
+    if (typeof route === "function") route(res);
     else
       res
         .writeHead(200, { "content-type": "text/html" })
