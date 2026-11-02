@@ -63,18 +63,9 @@ export function CopyOfferSwitches({
   const t = useTranslations("copyInstance.offers");
   const tCopy = useTranslations("copyInstance");
   const id = useId();
-  // The raw mutation for Undo, which can fire after this component has re-rendered or unmounted.
-  const writeOffers = useConvexMutation(gateway.library.updateSharing);
-  const update = useMutation({ mutationFn: writeOffers });
-
-  // The offers only: no `visibility`, so updateCopySharing keeps the owner's stored choice.
-  const offersArgs = (aggregateId: string, offers: Availability) => ({
-    copyId: aggregateId,
-    forTrade: offers.forTrade,
-    forLend: offers.forLend,
-    forSale: offers.forSale,
+  const update = useMutation({
+    mutationFn: useConvexMutation(gateway.library.updateSharing),
   });
-
   // Refused while an exchange in progress reserves the copy or it is out on loan: say so.
   const reportFailure = (error: unknown) => {
     toast.error(
@@ -85,6 +76,39 @@ export function CopyOfferSwitches({
       ),
     );
   };
+
+  // Undo can fire long after its change, even after this component unmounted: it sets only the offer
+  // that changed, and the server keeps the others as they are by then, so Undo on an older toast
+  // can't take back a later change. A skip is the server refusing this copy, for the same reasons.
+  const writeOffer = useConvexMutation(gateway.library.updateOffers);
+  const undo = async (aggregateId: string, flag: OfferFlag, on: boolean) => {
+    try {
+      const { skipped } = await writeOffer({
+        copyIds: [aggregateId],
+        [flag]: on,
+      });
+      const refusal = skipped[0]?.reason;
+      if (refusal) {
+        toast.error(
+          tCopy(
+            refusal === "notAllowed"
+              ? "editCopy.editFailed"
+              : "editCopy.copyReserved",
+          ),
+        );
+      }
+    } catch (error) {
+      reportFailure(error);
+    }
+  };
+
+  // The offers only: no `visibility`, so updateCopySharing keeps the owner's stored choice.
+  const offersArgs = (aggregateId: string, offers: Availability) => ({
+    copyId: aggregateId,
+    forTrade: offers.forTrade,
+    forLend: offers.forLend,
+    forSale: offers.forSale,
+  });
 
   const change = async (flag: OfferFlag, on: boolean) => {
     if (copyId == null) return;
@@ -112,9 +136,7 @@ export function CopyOfferSwitches({
         : {
             action: {
               label: t("undo"),
-              onClick: () => {
-                writeOffers(offersArgs(copyId, before)).catch(reportFailure);
-              },
+              onClick: () => void undo(copyId, flag, !on),
             },
           }),
     });

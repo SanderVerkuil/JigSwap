@@ -10,7 +10,8 @@ import en from "../../../locales/en.json";
 import { CopyOfferSwitches } from "./copy-offer-switches";
 
 // The copy page's offer switches: each flip writes the offers only (never a visibility, so the
-// backend keeps the owner's own choice), confirms with an Undo toast, and reports failures.
+// backend keeps the owner's own choice), confirms with an Undo toast that puts back that one offer,
+// and reports failures.
 
 type ToastOptions = {
   description?: string;
@@ -35,23 +36,29 @@ vi.mock("sonner", () => ({
 }));
 
 const UPDATE_SHARING = getFunctionName(gateway.library.updateSharing);
+const UPDATE_OFFERS = getFunctionName(gateway.library.updateOffers);
 const CLOSED = { forTrade: false, forLend: false, forSale: false };
+
+const client = new QueryClient();
+
+const switches = (
+  props: Partial<Parameters<typeof CopyOfferSwitches>[0]> = {},
+) => (
+  <QueryClientProvider client={client}>
+    <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+      <CopyOfferSwitches
+        copyId="agg1"
+        availability={CLOSED}
+        visibilityPreference="visible"
+        {...props}
+      />
+    </IntlProvider>
+  </QueryClientProvider>
+);
 
 const renderSwitches = (
   props: Partial<Parameters<typeof CopyOfferSwitches>[0]> = {},
-) =>
-  render(
-    <QueryClientProvider client={new QueryClient()}>
-      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
-        <CopyOfferSwitches
-          copyId="agg1"
-          availability={CLOSED}
-          visibilityPreference="visible"
-          {...props}
-        />
-      </IntlProvider>
-    </QueryClientProvider>,
-  );
+) => render(switches(props));
 
 const swapSwitch = () => screen.getByRole("switch", { name: "Offer for swap" });
 const lendSwitch = () => screen.getByRole("switch", { name: "Offer to lend" });
@@ -63,7 +70,9 @@ const lastToast = () => {
 };
 
 beforeEach(() => {
-  mocks.mutation.mockReset().mockResolvedValue(null);
+  mocks.mutation
+    .mockReset()
+    .mockResolvedValue({ updated: 1, unchanged: 0, skipped: [] });
   mocks.toastSuccess.mockReset();
   mocks.toastError.mockReset();
 });
@@ -99,7 +108,7 @@ describe("CopyOfferSwitches", () => {
     expect(options.action?.label).toBe("Undo");
   });
 
-  it("Undo restores the previous offers, again without a visibility", async () => {
+  it("Undo puts back only the offer that changed, again without a visibility", async () => {
     renderSwitches({ availability: { ...CLOSED, forLend: true } });
     fireEvent.click(lendSwitch());
     await vi.waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalled());
@@ -108,8 +117,31 @@ describe("CopyOfferSwitches", () => {
     lastToast().options.action?.onClick();
     await vi.waitFor(() => expect(mocks.mutation).toHaveBeenCalledTimes(2));
     expect(mocks.mutation.mock.calls[1]).toEqual([
+      UPDATE_OFFERS,
+      { copyIds: ["agg1"], forLend: true },
+    ]);
+  });
+
+  it("Undo on an earlier change leaves a later change to another offer alone", async () => {
+    const { rerender } = renderSwitches();
+    fireEvent.click(swapSwitch());
+    await vi.waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalledTimes(1));
+    const swapUndo = lastToast().options.action;
+
+    // The live query reports the first change; then the member switches lend on as well.
+    rerender(switches({ availability: { ...CLOSED, forTrade: true } }));
+    fireEvent.click(lendSwitch());
+    await vi.waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalledTimes(2));
+    expect(mocks.mutation.mock.calls[1]).toEqual([
       UPDATE_SHARING,
-      { copyId: "agg1", ...CLOSED, forLend: true },
+      { copyId: "agg1", ...CLOSED, forTrade: true, forLend: true },
+    ]);
+
+    swapUndo?.onClick();
+    await vi.waitFor(() => expect(mocks.mutation).toHaveBeenCalledTimes(3));
+    expect(mocks.mutation.mock.calls[2]).toEqual([
+      UPDATE_OFFERS,
+      { copyIds: ["agg1"], forTrade: false },
     ]);
   });
 
@@ -184,6 +216,25 @@ describe("CopyOfferSwitches", () => {
       expect(mocks.toastError).toHaveBeenCalledWith(
         "Could not save your changes. Please try again.",
       ),
+    );
+  });
+
+  it.each([
+    ["reserved", en.copyInstance.editCopy.copyReserved],
+    ["onLoan", en.copyInstance.editCopy.copyReserved],
+    ["notAllowed", "Could not save your changes. Please try again."],
+  ])("reports an Undo the server skips as %s", async (reason, message) => {
+    renderSwitches({ availability: { ...CLOSED, forTrade: true } });
+    fireEvent.click(swapSwitch());
+    await vi.waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalled());
+    mocks.mutation.mockResolvedValueOnce({
+      updated: 0,
+      unchanged: 0,
+      skipped: [{ copyId: "agg1", reason }],
+    });
+    lastToast().options.action?.onClick();
+    await vi.waitFor(() =>
+      expect(mocks.toastError).toHaveBeenCalledWith(message),
     );
   });
 
