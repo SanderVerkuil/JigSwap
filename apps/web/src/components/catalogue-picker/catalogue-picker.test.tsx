@@ -20,7 +20,11 @@ import en from "../../../locales/en.json";
 import { CataloguePicker } from "./catalogue-picker";
 import { clearPickTray } from "./pick-tray";
 
-type Items = { puzzleDefinitionId: string; forTrade: boolean }[];
+type Items = {
+  puzzleDefinitionId: string;
+  forTrade: boolean;
+  forLend?: boolean;
+}[];
 
 const mocks = vi.hoisted(() => ({
   acquire: vi.fn<(args: { items: Items }) => Promise<{ copyIds: string[] }>>(),
@@ -144,6 +148,25 @@ describe("CataloguePicker", () => {
     );
   });
 
+  it("sends a pick's lend offer with it, and swap and lend independently", async () => {
+    mocks.acquire.mockImplementation(async (args) => copiesFor(args));
+    renderPicker();
+    fireEvent.change(screen.getByRole("searchbox"), {
+      target: { value: "puzzle" },
+    });
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Add Puzzle 0" }),
+    );
+    fireEvent.click(
+      screen.getByRole("switch", { name: "Puzzle 0 available to lend" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Add 1 puzzle" }));
+    await waitFor(() => expect(mocks.onAdded).toHaveBeenCalled());
+    expect(mocks.acquire.mock.calls[0]?.[0].items).toEqual([
+      { puzzleDefinitionId: "def_0", forTrade: false, forLend: true },
+    ]);
+  });
+
   it("keeps the picks a refused chunk didn't add, and says how many were added", async () => {
     mocks.acquire
       .mockImplementationOnce(async (args) => copiesFor(args))
@@ -162,14 +185,14 @@ describe("CataloguePicker", () => {
     expect(
       await screen.findByRole("button", { name: "Add 5 puzzles" }),
     ).toBeTruthy();
-    // The tray (one swap switch per pick) holds exactly the five that weren't added.
+    // The tray (a swap and a lend switch per pick) holds exactly the five that weren't added.
     expect(
       screen.getByRole("switch", { name: "Puzzle 29 available to swap" }),
     ).toBeTruthy();
     expect(
       screen.queryByRole("switch", { name: "Puzzle 0 available to swap" }),
     ).toBeNull();
-    expect(screen.getAllByRole("switch")).toHaveLength(5);
+    expect(screen.getAllByRole("switch")).toHaveLength(10);
   });
 
   // A refused chunk comes back in the result, not as a thrown error (acquireInChunks never throws),

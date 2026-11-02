@@ -10,21 +10,27 @@ import {
   registerSearch,
   removeLastPick,
   removePick,
+  setPickForLend,
   setPickForTrade,
   toAcquireItems,
   togglePick,
   type Pick,
 } from "./selection";
 
-const pick = (definitionId: string, forTrade = false): Pick => ({
+const pick = (
+  definitionId: string,
+  forTrade = false,
+  forLend = false,
+): Pick => ({
   definitionId,
   title: `Title ${definitionId}`,
   pending: false,
+  forLend,
   forTrade,
 });
 
 describe("togglePick", () => {
-  it("adds an unpicked row at the end with forTrade off", () => {
+  it("adds an unpicked row at the end with every offer off", () => {
     const picks = togglePick([pick("a")], {
       definitionId: "b",
       title: "Title b",
@@ -32,7 +38,13 @@ describe("togglePick", () => {
     });
     expect(picks).toEqual([
       pick("a"),
-      { definitionId: "b", title: "Title b", pending: true, forTrade: false },
+      {
+        definitionId: "b",
+        title: "Title b",
+        pending: true,
+        forTrade: false,
+        forLend: false,
+      },
     ]);
   });
 
@@ -71,11 +83,26 @@ describe("setPickForTrade", () => {
   });
 });
 
+describe("setPickForLend", () => {
+  it("flips only the named pick", () => {
+    expect(setPickForLend([pick("a"), pick("b")], "b", true)).toEqual([
+      pick("a"),
+      pick("b", false, true),
+    ]);
+  });
+});
+
 describe("toAcquireItems", () => {
   it("maps picks to the acquireCopies items, keeping each forTrade", () => {
     expect(toAcquireItems([pick("a"), pick("b", true)])).toEqual([
       { puzzleDefinitionId: "a", forTrade: false },
       { puzzleDefinitionId: "b", forTrade: true },
+    ]);
+  });
+
+  it("sends forLend only when it is on", () => {
+    expect(toAcquireItems([pick("a", false, true)])).toEqual([
+      { puzzleDefinitionId: "a", forTrade: false, forLend: true },
     ]);
   });
 });

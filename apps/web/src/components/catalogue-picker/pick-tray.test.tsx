@@ -20,6 +20,7 @@ const pick = (id: string): Pick => ({
   title: `Puzzle ${id}`,
   pending: false,
   forTrade: false,
+  forLend: false,
 });
 
 beforeEach(() => {
@@ -122,6 +123,7 @@ describe("parseTray", () => {
       title: "Puzzle 0",
       pending: false,
       forTrade: false,
+      forLend: false,
     });
   });
 });

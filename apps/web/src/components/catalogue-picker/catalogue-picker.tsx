@@ -18,6 +18,7 @@ import {
   pickerSearchResults,
   removeLastPick,
   removePick,
+  setPickForLend,
   setPickForTrade,
   togglePick,
   type Pick,
@@ -50,7 +51,7 @@ function useCatalogueSearch(term: string) {
 }
 
 // The multi-select catalogue picker: search, pick many (up to PICK_LIMIT), optionally offer each
-// for swap, and add them with `library.acquireCopies` calls of at most 25 each, one after the
+// for swap or to lend, and add them with `library.acquireCopies` calls of at most 25 each, one after the
 // other. Each call is all or nothing; if one is refused, the picks already added leave the tray
 // and the rest stay picked to retry. `returnTo` is where "Register" comes back to after the full
 // add form, and the tray (see pick-tray) is still there when it does. Inside quick setup the flow's
@@ -158,6 +159,9 @@ export function CataloguePicker({
       onRemoveLast={() => setPicks((current) => removeLastPick(current))}
       onForTradeChange={(id, forTrade) =>
         setPicks((current) => setPickForTrade(current, id, forTrade))
+      }
+      onForLendChange={(id, forLend) =>
+        setPicks((current) => setPickForLend(current, id, forLend))
       }
       onSubmit={() => submit.mutate(picks)}
     />

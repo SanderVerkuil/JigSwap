@@ -58,7 +58,11 @@ const asUser = (t: TestConvex<typeof schema>, name: string) =>
 const acquireCopies = (
   t: TestConvex<typeof schema>,
   args: {
-    items: { puzzleDefinitionId: string; forTrade?: boolean }[];
+    items: {
+      puzzleDefinitionId: string;
+      forTrade?: boolean;
+      forLend?: boolean;
+    }[];
     condition?: "new_sealed" | "like_new" | "good" | "fair" | "poor";
   },
 ) => asUser(t, "alice").mutation(api.library.acquireCopies.acquireCopies, args);
@@ -167,6 +171,36 @@ describe("library.acquireCopies", () => {
       expect(byDefinition.get(id)?.availability.forTrade).toBe(false);
       expect(byDefinition.get(id)?.visibility).toBe("visible");
     }
+  });
+
+  test("offers the items marked forLend to lend, alone or with a swap", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, approved } = await seed(t);
+    await acquireCopies(t, {
+      items: [
+        { puzzleDefinitionId: approved[0], forLend: true },
+        { puzzleDefinitionId: approved[1], forTrade: true, forLend: true },
+        { puzzleDefinitionId: approved[2] },
+      ],
+    });
+    const byDefinition = new Map(
+      (await copiesOf(t, alice)).map((r) => [r.puzzleDefinitionId, r]),
+    );
+    expect(byDefinition.get(approved[0])?.availability).toEqual({
+      forTrade: false,
+      forSale: false,
+      forLend: true,
+    });
+    expect(byDefinition.get(approved[1])?.availability).toEqual({
+      forTrade: true,
+      forSale: false,
+      forLend: true,
+    });
+    expect(byDefinition.get(approved[2])?.availability).toEqual({
+      forTrade: false,
+      forSale: false,
+      forLend: false,
+    });
   });
 
   test("is all or nothing: one refused definition writes no copy and no event", async () => {

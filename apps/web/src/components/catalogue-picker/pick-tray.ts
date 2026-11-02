@@ -21,7 +21,8 @@ interface Tray {
 
 const asPick = (value: unknown): Pick | null => {
   if (typeof value !== "object" || value === null) return null;
-  const { definitionId, title, pending, forTrade } = value as Partial<Pick>;
+  const { definitionId, title, pending, forTrade, forLend } =
+    value as Partial<Pick>;
   if (typeof definitionId !== "string" || typeof title !== "string") {
     return null;
   }
@@ -30,6 +31,7 @@ const asPick = (value: unknown): Pick | null => {
     title,
     pending: pending === true,
     forTrade: forTrade === true,
+    forLend: forLend === true,
   };
 };
 

@@ -28,14 +28,15 @@ export interface Pick {
   title: string;
   pending: boolean;
   forTrade: boolean;
+  forLend: boolean;
 }
 
-type Pickable = Omit<Pick, "forTrade">;
+type Pickable = Omit<Pick, "forTrade" | "forLend">;
 
 export const isPicked = (picks: readonly Pick[], definitionId: string) =>
   picks.some((p) => p.definitionId === definitionId);
 
-// Add the row at the end (forTrade off: the domain default), or remove it when already picked.
+// Add the row at the end (every offer off: the domain default), or remove it when already picked.
 // A full tray ignores further adds and returns the same array.
 export const togglePick = (
   picks: readonly Pick[],
@@ -51,6 +52,7 @@ export const togglePick = (
       title: row.title,
       pending: row.pending,
       forTrade: false,
+      forLend: false,
     },
   ];
 };
@@ -68,11 +70,20 @@ export const setPickForTrade = (
 ) =>
   picks.map((p) => (p.definitionId === definitionId ? { ...p, forTrade } : p));
 
-// The `library.acquireCopies` items for the tray.
+export const setPickForLend = (
+  picks: readonly Pick[],
+  definitionId: string,
+  forLend: boolean,
+) =>
+  picks.map((p) => (p.definitionId === definitionId ? { ...p, forLend } : p));
+
+// The `library.acquireCopies` items for the tray. forLend only when on, so a tray that lends nothing
+// still works against a backend deployed before it accepted that field.
 export const toAcquireItems = (picks: readonly Pick[]) =>
   picks.map((p) => ({
     puzzleDefinitionId: p.definitionId,
     forTrade: p.forTrade,
+    ...(p.forLend ? { forLend: true } : {}),
   }));
 
 // The tray in `library.acquireCopies`-sized chunks, in pick order.
