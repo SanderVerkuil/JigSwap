@@ -113,8 +113,6 @@ const renderBell = (
   );
 };
 
-afterEach(cleanup);
-
 describe("NotificationBell trigger name", () => {
   it("is just 'Notifications' with nothing unread", () => {
     renderBell(0);

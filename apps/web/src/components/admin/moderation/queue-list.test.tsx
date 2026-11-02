@@ -1,7 +1,9 @@
 // @vitest-environment happy-dom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
+import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import en from "../../../../locales/en.json";
 import { QueueList } from "./queue-list";
 
 // The viewport: wide (lg and up) or not, as the min-width media query reports it.
@@ -45,28 +47,30 @@ function Harness({
     setFocusToken((token) => token + 1);
   };
   return (
-    <QueueList
-      label="Submissions"
-      items={rows}
-      selectedId={selectedId}
-      onSelect={setSelectedId}
-      getId={(row) => row.id}
-      renderRow={(row) => <span>{row.title}</span>}
-      detail={
-        selected && (
-          <>
-            <h3>Detail of {selected.title}</h3>
-            <button type="button" onClick={() => approve(selected.id)}>
-              Approve
-            </button>
-          </>
-        )
-      }
-      detailTitle="Submission"
-      focusDetailToken={focusToken}
-      defaultDetailOpen={defaultDetailOpen}
-      openDetailToken={openDetailToken}
-    />
+    <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+      <QueueList
+        label="Submissions"
+        items={rows}
+        selectedId={selectedId}
+        onSelect={setSelectedId}
+        getId={(row) => row.id}
+        renderRow={(row) => <span>{row.title}</span>}
+        detail={
+          selected && (
+            <>
+              <h3>Detail of {selected.title}</h3>
+              <button type="button" onClick={() => approve(selected.id)}>
+                Approve
+              </button>
+            </>
+          )
+        }
+        detailTitle="Submission"
+        focusDetailToken={focusToken}
+        defaultDetailOpen={defaultDetailOpen}
+        openDetailToken={openDetailToken}
+      />
+    </IntlProvider>
   );
 }
 
