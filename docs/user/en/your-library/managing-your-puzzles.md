@@ -47,6 +47,27 @@ From a puzzle card you can:
 - **Recall** — if a puzzle is currently lent out, recall it to get it back.
   JigSwap asks you to confirm first, then tells you whether it worked.
 
+## Change many puzzles at once
+
+Click **Select** next to the puzzle count, then click the puzzles you want, or
+**Select all** for everything the current search and filters show. A bar at the
+bottom of the list then offers:
+
+- **Offer for swap** and **Offer to lend**: adds that offer and keeps any other
+  offers a puzzle already has. Where the bar is narrow, these and **Withdraw
+  offers** sit under **Offers**.
+- **Withdraw offers**: takes every offer off the selected puzzles.
+- **Add to collection**: puts the selected puzzles in a collection you pick.
+
+A message then says what changed and what didn't, with **Undo** for offers. A
+puzzle that's out on loan is left as it is, and one in an ongoing exchange can't
+be offered. These actions never change your choice of who can see a copy: a
+private copy is visible while it's on offer and private again once you withdraw
+every offer.
+
+You can select a housemate's puzzle only if they let you manage it, and it stays
+out of your own collections. **Done** ends the selection.
+
 ## The copy detail page
 
 **Where:** click **View** on a puzzle, or go to `/my-puzzles/<id>`.

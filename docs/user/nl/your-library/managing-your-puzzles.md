@@ -49,6 +49,29 @@ Vanaf een puzzelkaart kun je:
   terug. JigSwap vraagt eerst om bevestiging en laat daarna weten of het gelukt
   is.
 
+## Veel puzzels tegelijk wijzigen
+
+Klik naast het aantal puzzels op **Selecteren** en klik daarna de puzzels aan
+die je wilt, of kies **Alles selecteren** voor alles wat je huidige zoekterm en
+filters tonen. Onder aan de lijst verschijnt dan een balk met:
+
+- **Aanbieden voor ruil** en **Aanbieden om uit te lenen**: voegt dat aanbod toe
+  en houdt wat een puzzel al aanbood. Is de balk smal, dan staan deze en
+  **Aanbod intrekken** onder **Aanbod**.
+- **Aanbod intrekken**: haalt elk aanbod van de geselecteerde puzzels af.
+- **Aan collectie toevoegen**: zet de geselecteerde puzzels in een collectie die
+  je kiest.
+
+Daarna zie je wat er is veranderd en wat niet, met **Ongedaan maken** voor het
+aanbod. Een uitgeleende puzzel blijft zoals hij is, en een puzzel in een lopende
+uitwisseling kun je niet aanbieden. Deze acties veranderen nooit je keuze wie
+een kopie kan zien: een privékopie is zichtbaar zolang je hem aanbiedt en weer
+privé zodra je elk aanbod intrekt.
+
+Een puzzel van een huisgenoot kun je alleen selecteren als die jou hem laat
+beheren, en hij komt niet in je eigen collecties. Met **Klaar** stop je met
+selecteren.
+
 ## De detailpagina van een kopie
 
 **Waar:** klik op **Bekijken** bij een puzzel, of ga naar `/my-puzzles/<id>`.
