@@ -126,17 +126,22 @@ export function NotificationPreferencesPanel() {
   // The query container must be an ANCESTOR of the grid: a container query never styles its own
   // container, so with both on one element the two columns never applied while the aside's
   // sticky still did, and it sat over the single-column table, swallowing the switches' clicks.
-  // The aside sticks just below the shell's sticky page head (--app-sticky-top).
+  // Only Jump to sticks, just below the shell's sticky page head (--app-sticky-top): it is what's
+  // useful while scrolling, and the whole aside would run off a laptop screen with it. The aside
+  // stretches to the table's height (no self-start), so Jump to has that whole track to stick in.
   return (
     <div className="@container/prefs">
       <div className="grid gap-6 @4xl/prefs:grid-cols-[300px_minmax(0,1fr)] @4xl/prefs:gap-10">
-        <aside className="flex flex-col gap-6 @4xl/prefs:sticky @4xl/prefs:top-[calc(var(--app-sticky-top,0px)+0.5rem)] @4xl/prefs:self-start">
+        <aside className="flex flex-col gap-6">
           <PushDeviceSection />
           <MessagePreviewSettings />
           <p className="text-muted-foreground max-w-prose text-sm">
             {t("channelsNote")}
           </p>
-          <nav aria-label={t("jumpTo")}>
+          <nav
+            aria-label={t("jumpTo")}
+            className="@4xl/prefs:sticky @4xl/prefs:top-[calc(var(--app-sticky-top,0px)+0.5rem)]"
+          >
             <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
               {t("jumpTo")}
             </p>

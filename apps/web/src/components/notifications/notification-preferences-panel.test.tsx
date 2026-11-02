@@ -85,14 +85,17 @@ describe("NotificationPreferencesPanel layout (UX-33)", () => {
     expect(container.contains(grid)).toBe(true);
   });
 
-  it("makes the aside sticky only in the two-column layout, below the sticky page head", () => {
+  // A sticky whole aside (764px of it) ran off a laptop screen with most links out of reach.
+  it("sticks only Jump to, in the two-column layout, below the sticky page head", () => {
     renderPanel();
-    const aside = screen
-      .getByRole("navigation", { name: "Jump to" })
-      .closest("aside")!;
+    const nav = screen.getByRole("navigation", { name: "Jump to" });
+    const aside = nav.closest("aside")!;
     const grid = elementsWithClass(TWO_COLUMNS)[0];
     expect(aside.parentElement).toBe(grid);
-    const classes = [...aside.classList];
+    expect(
+      [...aside.classList].filter((name) => /sticky|self-start/.test(name)),
+    ).toEqual([]);
+    const classes = [...nav.classList];
     // Same container breakpoint as the two columns, and no unconditional sticky.
     expect(classes).toContain("@4xl/prefs:sticky");
     expect(classes).not.toContain("sticky");
