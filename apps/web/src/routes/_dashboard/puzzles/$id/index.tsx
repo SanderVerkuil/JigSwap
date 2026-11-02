@@ -17,9 +17,9 @@ import { ReportDialog } from "@/components/safety/report-dialog";
 import { DeleteOwnContentButton } from "@/components/social/delete-own-content-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StarRating } from "@/components/ui/star-rating";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
@@ -677,8 +677,6 @@ function ReviewsSection({
     format.relativeTime(new Date(timestamp), now);
 
   const submit = async () => {
-    // isPending guard: the Enter-key path bypasses the disabled button and could double-fire.
-    if (postReview.isPending || needsRating) return;
     const trimmed = text.trim();
     try {
       await postReview.mutateAsync({
@@ -739,24 +737,19 @@ function ReviewsSection({
                 </p>
               )}
             </div>
-            {/* Phones stack the text above Post so the placeholder is not cut off. */}
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Input
+            {/* Grows with the text, and Enter is a line break: a review is public, so only Post
+                publishes it. Same field as the post-solve follow-up (two-level-review-fields). */}
+            <div className="flex flex-col gap-2">
+              <Textarea
                 placeholder={t("reviewPlaceholder")}
                 value={text}
                 maxLength={REVIEW_TEXT_MAX_LENGTH}
                 onChange={(e) => setText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    void submit();
-                  }
-                }}
-                className="flex-1"
+                className="max-h-60"
               />
               <Button
                 variant="brand"
-                className="self-end sm:self-auto"
+                className="self-end"
                 onClick={() => void submit()}
                 disabled={postReview.isPending || needsRating}
                 aria-describedby={needsRating ? ratingHintId : undefined}
@@ -880,7 +873,7 @@ function ReviewRow({
           </span>
         </div>
         {review.text != null && (
-          <p className="text-foreground/90 mt-1 text-sm leading-relaxed">
+          <p className="text-foreground/90 mt-1 text-sm leading-relaxed whitespace-pre-wrap">
             {review.text}
           </p>
         )}

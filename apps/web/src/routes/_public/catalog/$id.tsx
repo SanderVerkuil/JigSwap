@@ -531,7 +531,7 @@ function PublicReviewRow({
           </span>
         </div>
         {review.text != null && (
-          <p className="text-foreground/90 mt-1 text-sm leading-relaxed">
+          <p className="text-foreground/90 mt-1 text-sm leading-relaxed whitespace-pre-wrap">
             {review.text}
           </p>
         )}

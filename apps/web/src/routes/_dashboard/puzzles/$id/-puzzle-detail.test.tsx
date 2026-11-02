@@ -459,6 +459,19 @@ describe("puzzle detail page: review composer", () => {
     ).toBeTruthy();
   });
 
+  it("writes a review in a multi-line field where Enter is a new line, not Post", () => {
+    setView(emptyView());
+    renderPage();
+    fireEvent.click(screen.getByRole("radio", { name: /^4/ }));
+
+    const text = screen.getByRole("textbox");
+    expect(text.tagName).toBe("TEXTAREA");
+    fireEvent.change(text, { target: { value: "First line" } });
+    // Not prevented: the browser inserts the line break.
+    expect(fireEvent.keyDown(text, { key: "Enter" })).toBe(true);
+    expect(mocks.postReview).not.toHaveBeenCalled();
+  });
+
   it("says a rating is needed to post until one is chosen", () => {
     setView(emptyView());
     renderPage();
