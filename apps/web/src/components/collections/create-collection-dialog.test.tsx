@@ -126,6 +126,21 @@ describe("CreateCollectionDialog", () => {
     expect(mocks.push).not.toHaveBeenCalled();
   });
 
+  it("says when to try again after creating too many, and stays open", async () => {
+    mocks.call.mockRejectedValue(
+      new ConvexError({ code: "RateLimited", retryAfterMs: 3_600_000 }),
+    );
+    const { onOpenChange } = renderDialog();
+    fireEvent.change(nameInput(), { target: { value: "Cats" } });
+    fireEvent.click(createButton());
+    await waitFor(() =>
+      expect(mocks.toastError).toHaveBeenCalledWith(
+        expect.stringMatching(/most collections allowed.*in 1 hour/),
+      ),
+    );
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
   it("says inline when the name is already taken, and stays open", async () => {
     mocks.call.mockRejectedValue(
       new ConvexError({ code: "DuplicateCollectionName", message: "taken" }),

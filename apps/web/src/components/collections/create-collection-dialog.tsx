@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
+import { useRelativeTime } from "@/hooks/use-relative-time";
+import { rateLimitedRetryAt } from "@/lib/convex-error-code";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { LIBRARY_TEXT_LIMITS } from "@jigswap/contracts";
 import { useMutation } from "@tanstack/react-query";
@@ -66,6 +68,7 @@ function CreateCollectionForm({
 }) {
   const t = useTranslations("collections");
   const tCommon = useTranslations("common");
+  const relativeTime = useRelativeTime();
   const router = useRouter();
   const convex = useConvex();
   const createCollection = useConvexMutation(gateway.collections.create);
@@ -106,8 +109,11 @@ function CreateCollectionForm({
       }
     },
     onError: (error) => {
+      const retryAt = rateLimitedRetryAt(error, Date.now());
       if (isDuplicateCollectionName(error)) {
         setNameError(t("duplicateName", { name }));
+      } else if (retryAt !== undefined) {
+        toast.error(t("createRateLimited", { when: relativeTime(retryAt) }));
       } else {
         toast.error(t("createError"));
       }

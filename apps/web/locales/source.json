@@ -2154,6 +2154,7 @@
     "create": "Create",
     "created": "Created “{name}”. Now add some puzzles to it.",
     "createError": "Couldn't create the collection. Please try again.",
+    "createRateLimited": "You've created the most collections allowed for now. Try again {when}.",
     "duplicateName": "You already have a collection called “{name}”.",
     "save": "Save",
     "saveError": "Couldn't save your changes. Please try again.",

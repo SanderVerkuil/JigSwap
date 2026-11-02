@@ -124,6 +124,10 @@ export const RATE_LIMITS = {
   // counted per solve: the quick start's past-solves batch is up to 25. Bounds how fast one account
   // can flood the activity feed's solve events (SEC-30).
   solveLog: { windowMs: DAY, max: 300 },
+  // Collections and personal categories created (library/createCollection, createPersonalCategory).
+  // Their text is bounded, but not how many a member has, and a profile's collections are read whole.
+  collectionCreate: { windowMs: DAY, max: 30 },
+  categoryCreate: { windowMs: DAY, max: 30 },
 } as const satisfies Record<string, { windowMs: number; max: number }>;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;

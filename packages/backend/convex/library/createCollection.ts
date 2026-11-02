@@ -6,6 +6,7 @@ import {
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { enforceRateLimit } from "../lib/rateLimits";
 import { convexCollectionRepository } from "./adapters/convexCollectionRepository";
 import { libraryEventPublisher } from "./adapters/eventPublisher";
 import { collectionIdGenerator } from "./adapters/idGenerators";
@@ -26,6 +27,7 @@ export const createCollection = mutation({
   },
   handler: async (ctx, args) => {
     const ownerId = (await requireMember(ctx)) as unknown as OwnerId;
+    await enforceRateLimit(ctx, "collectionCreate", ownerId);
 
     const create = makeCreateCollection({
       collections: convexCollectionRepository(ctx),

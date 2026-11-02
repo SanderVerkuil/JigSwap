@@ -2154,6 +2154,7 @@
     "create": "Maken",
     "created": "“{name}” is aangemaakt. Voeg er nu puzzels aan toe.",
     "createError": "Kon de collectie niet aanmaken. Probeer het opnieuw.",
+    "createRateLimited": "Je hebt voorlopig het maximale aantal collecties aangemaakt. Probeer het {when} opnieuw.",
     "duplicateName": "Je hebt al een collectie met de naam “{name}”.",
     "save": "Opslaan",
     "saveError": "Kon je wijzigingen niet opslaan. Probeer het opnieuw.",
