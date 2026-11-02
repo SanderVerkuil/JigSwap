@@ -50,6 +50,7 @@ const copyView = (fields: Partial<CopyView>): CopyView => ({
   viewerIsOwner: false,
   viewerCanManage: false,
   viewerMayRequest: false,
+  viewerMayOpenDefinition: true,
   household: null,
   owner: { anonymous: false, member: anna },
   snapshot: {
@@ -82,6 +83,7 @@ const copyView = (fields: Partial<CopyView>): CopyView => ({
   },
   gallery: [],
   pendingPhotos: [],
+  photoLimit: 12,
   ...fields,
 });
 
@@ -127,11 +129,11 @@ describe("copy page solve actions", () => {
   it("lets the borrower who holds the copy start or log a solve, and still message the owner", () => {
     renderCopy(copyView({ viewerHoldsCopy: true }));
     expect(button("Start puzzle")).not.toBeNull();
-    expect(button("Log a Completion")).not.toBeNull();
+    expect(button("Log a solve")).not.toBeNull();
     expect(button("Message")).not.toBeNull();
     // Borrowing does not make it theirs to manage.
     expect(button("Edit")).toBeNull();
-    expect(button("Offer for Swap")).toBeNull();
+    expect(screen.queryByRole("switch")).toBeNull();
   });
 
   it("doesn't offer a borrower a request for the copy they already hold, even while it stays on offer", () => {
@@ -190,7 +192,7 @@ describe("copy page solve actions", () => {
     ]) {
       renderCopy(view);
       expect(button("Start puzzle")).toBeNull();
-      expect(button("Log a Completion")).toBeNull();
+      expect(button("Log a solve")).toBeNull();
       expect(button("Message")).not.toBeNull();
       cleanup();
     }
@@ -205,8 +207,10 @@ describe("copy page solve actions", () => {
       }),
     );
     expect(button("Start puzzle")).not.toBeNull();
-    expect(button("Log a Completion")).not.toBeNull();
-    expect(button("Offer for Swap")).not.toBeNull();
+    expect(button("Log a solve")).not.toBeNull();
+    expect(
+      screen.queryByRole("switch", { name: "Offer for swap" }),
+    ).not.toBeNull();
     expect(button("Message")).toBeNull();
   });
 });
