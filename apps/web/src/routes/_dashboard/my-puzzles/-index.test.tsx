@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
 // The "-" prefix keeps the TanStack route generator from treating this file as a route.
-// UX-158: the search hint names the palette shortcut of the platform it runs on, only after mount,
-// and not on a touch screen (no keyboard to press it with). UX-157: the puzzle count shows once.
+// UX-158: no surface states a keyboard shortcut the member's platform doesn't use. My Puzzles' own
+// search box (UX-22) replaced its "Press ⌘K" hint, so it names none at all, on any platform.
+// UX-157: the puzzle count shows once.
 import { cleanup, render, screen } from "@testing-library/react";
 import type { ComponentType, ReactNode } from "react";
 import { renderToString } from "react-dom/server";
@@ -15,6 +16,14 @@ const mocks = vi.hoisted(() => ({
   header: undefined as { meta?: unknown; actions?: unknown } | undefined,
 }));
 
+// The list state lives in the URL; a bare /my-puzzles has none of it.
+vi.mock("@tanstack/react-router", () => ({
+  createFileRoute: () => (options: object) => ({
+    options,
+    useSearch: () => ({}),
+  }),
+  useNavigate: () => vi.fn(),
+}));
 vi.mock("@/components/dashboard-layout/page-header-slot", () => ({
   usePageHeader: (factory: () => { meta?: unknown; actions?: unknown }) => {
     mocks.header = factory();
@@ -31,7 +40,8 @@ vi.mock("@/compat/link", () => ({
 vi.mock("@/gateway", () => ({
   gateway: {
     identity: { byClerkId: "byClerkId" },
-    library: { ownedByOwner: "ownedByOwner" },
+    library: { ownedByOwner: "ownedByOwner", updateOffers: "updateOffers" },
+    collections: { addOwnedPuzzle: "addOwnedPuzzle" },
     household: { copies: "householdCopies", mine: "householdMine" },
     lending: { lentOut: "lentOut", recallLoan: "recallLoan" },
   },
@@ -87,28 +97,32 @@ function stubPlatform(platform: string) {
   });
 }
 
-describe("My Puzzles search hint", () => {
-  it.each([
-    ["MacIntel", "Press ⌘K to search puzzles, people and more"],
-    ["Linux x86_64", "Press Ctrl K to search puzzles, people and more"],
-  ])("names the %s shortcut", (platform, hint) => {
-    stubPlatform(platform);
-    render(page());
-    expect(screen.getByText(hint).className).toContain("pointer-coarse:hidden");
-  });
+describe("My Puzzles search", () => {
+  it.each(["MacIntel", "Linux x86_64", "Win32"])(
+    "offers its own search box and names no shortcut on %s",
+    (platform) => {
+      stubPlatform(platform);
+      render(page());
+      expect(
+        screen.getByRole("searchbox", { name: "Search your puzzles" }),
+      ).toBeTruthy();
+      expect(document.body.textContent).not.toMatch(/⌘K|Ctrl K/);
+    },
+  );
 
   it("speaks Dutch", () => {
     stubPlatform("Win32");
     render(page("nl"));
     expect(
-      screen.getByText("Druk op Ctrl K om puzzels, mensen en meer te zoeken"),
+      screen.getByRole("searchbox", { name: "Zoek in je puzzels" }),
     ).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/⌘K|Ctrl K/);
   });
 
-  it("renders no hint on the server, where the platform is unknown", () => {
+  it("names no shortcut on the server either", () => {
     const html = renderToString(page());
     expect(html).toContain("0 of 0 puzzles");
-    expect(html).not.toContain("search puzzles, people");
+    expect(html).not.toMatch(/⌘K|Ctrl K/);
   });
 });
 
