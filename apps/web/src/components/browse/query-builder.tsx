@@ -221,7 +221,7 @@ export function QueryBuilder({
   const anyShown = order.some((f) => shown[f]);
 
   return (
-    <div className="flex flex-col gap-2.5">
+    <div className="flex max-w-full min-w-0 flex-col gap-2.5">
       <div className="flex flex-wrap items-center gap-2">
         {/* Add Filter — themed Popover + Command list of the fields not yet added. */}
         <Popover open={addOpen} onOpenChange={setAddOpen}>
@@ -375,7 +375,10 @@ export function QueryBuilder({
             onRemove={() => removeField("availability")}
             removeLabel={tBrowse("removeFilter")}
           >
-            <div className="flex items-center gap-1" role="group">
+            <div
+              className="flex min-w-0 flex-wrap items-center gap-1"
+              role="group"
+            >
               {AVAILABILITY_FLAGS.map((flag) => {
                 const on = value.availability.includes(flag);
                 const labelKey =
@@ -419,7 +422,10 @@ export function QueryBuilder({
 /* ---------------------------------------------------------- sub-components */
 
 // A themed pill wrapper around one active condition: a brand-tinted label, the
-// field's control, and a remove button. Open and rounded, never a boxed card.
+// field's control, and a remove button. Open and rounded, never a boxed card. It
+// never outgrows the row, so the × stays on screen on a phone: the control gives
+// way (a select truncates, the availability toggles wrap), and a fixed radius
+// keeps the shape when wrapping makes the pill taller.
 function ConditionShell({
   label,
   onRemove,
@@ -432,10 +438,10 @@ function ConditionShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="border-input bg-card flex items-center gap-1.5 rounded-full border py-0.5 pr-1 pl-2.5">
+    <div className="border-input bg-card flex max-w-full min-w-0 items-center gap-1.5 rounded-[20px] border py-0.5 pr-1 pl-2.5">
       <Badge
         variant="outline"
-        className="border-jigsaw-primary/30 text-primary-text bg-jigsaw-primary/10 rounded-full px-2 py-0 text-[11px] font-medium"
+        className="border-jigsaw-primary/30 text-primary-text bg-jigsaw-primary/10 shrink-0 rounded-full px-2 py-0 text-[11px] font-medium"
       >
         {label}
       </Badge>
@@ -446,7 +452,7 @@ function ConditionShell({
         size="icon"
         onClick={onRemove}
         aria-label={`${removeLabel}: ${label}`}
-        className="text-muted-foreground hover:text-foreground size-6 rounded-full"
+        className="text-muted-foreground hover:text-foreground size-6 shrink-0 rounded-full"
       >
         <X className="h-3.5 w-3.5" />
       </Button>
@@ -483,7 +489,7 @@ function FacetSelect({
       <SelectTrigger
         size="sm"
         aria-label={ariaLabel}
-        className="h-8 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0"
+        className="h-8 min-w-0 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0 *:data-[slot=select-value]:block *:data-[slot=select-value]:truncate"
       >
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
