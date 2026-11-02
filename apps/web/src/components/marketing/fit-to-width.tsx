@@ -20,8 +20,18 @@ export function fitScale(containerWidth: number, naturalWidth: number): number {
  *
  * Used for the marketing JigPlank previews, which are intrinsically wider than a
  * phone viewport. At widths ≥ the child's natural width, scale is 1 (untouched).
+ *
+ * Only a browser can measure, so until then the wrapper holds the fitted height,
+ * worked out from the child's `natural` size, and the child stays hidden: drawn at
+ * natural size it would show cropped until hydration, then shrink and move the page.
  */
-export function FitToWidth({ children }: { children: React.ReactNode }) {
+export function FitToWidth({
+  natural,
+  children,
+}: {
+  natural: { width: number; height: number };
+  children: React.ReactNode;
+}) {
   const outer = React.useRef<HTMLDivElement>(null);
   const inner = React.useRef<HTMLDivElement>(null);
   const [scale, setScale] = React.useState(1);
@@ -52,7 +62,12 @@ export function FitToWidth({ children }: { children: React.ReactNode }) {
       ref={outer}
       style={{
         width: "100%",
-        height: scaledHeight ?? undefined,
+        ...(scaledHeight === null
+          ? {
+              aspectRatio: `${natural.width} / ${natural.height}`,
+              maxHeight: natural.height,
+            }
+          : { height: scaledHeight }),
         overflow: "hidden",
         display: "flex",
         justifyContent: "center",
@@ -65,6 +80,7 @@ export function FitToWidth({ children }: { children: React.ReactNode }) {
         ref={inner}
         style={{
           flex: "none",
+          visibility: scaledHeight === null ? "hidden" : undefined,
           transform: `scale(${scale})`,
           transformOrigin: "top center",
         }}

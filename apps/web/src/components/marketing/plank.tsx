@@ -17,12 +17,21 @@ export interface PlankBox {
   height?: number;
 }
 
+const BOX_WIDTH = 116; // a box's default width
+const BOX_ROW_PADDING = 46; // the room the boxes leave at each end of the shelf
 const SHELF_LIP = 16; // the shelf's front-face thickness
 const SHELF_OVERHANG = 16; // how far the shelf runs past the boxes on each side
 const SHELF_SHADOW = 27; // how far the shadow under the lip reaches
 
 /** The shelf's top-surface depth, which is also the width of its right end cap. */
 const shelfDepth = (depth: number) => depth + 24;
+
+/** The space between two boxes, which leaves room for a box's side face. */
+const boxGap = (depth: number) => depth * 2 + 2;
+
+/** A box's height on first paint; a cover takes its own proportions once it has loaded. */
+const initialBoxHeight = ({ width = BOX_WIDTH, height, cover }: PlankBox) =>
+  height || (cover ? Math.round(width / 1.4) : 144);
 
 export function JigPlank({
   boxes = [],
@@ -71,8 +80,8 @@ export function JigPlank({
           zIndex: 2,
           display: "flex",
           alignItems: "flex-end",
-          gap: depth * 2 + 2,
-          padding: "0 46px",
+          gap: boxGap(depth),
+          padding: `0 ${BOX_ROW_PADDING}px`,
           transform: `translate(${inset}px, ${-inset}px)`,
         }}
       >
@@ -147,8 +156,18 @@ export function FittedPlank({
   const top = depth;
   const right = SHELF_OVERHANG + shelfDepth(depth);
   const bottom = SHELF_LIP + SHELF_SHADOW;
+  const boxesWidth = boxes.reduce((sum, b) => sum + (b.width ?? BOX_WIDTH), 0);
+  const natural = {
+    width:
+      SHELF_OVERHANG +
+      right +
+      2 * BOX_ROW_PADDING +
+      boxesWidth +
+      boxGap(depth) * (boxes.length - 1),
+    height: top + bottom + depth + Math.max(...boxes.map(initialBoxHeight)),
+  };
   return (
-    <FitToWidth>
+    <FitToWidth natural={natural}>
       <div
         style={{
           padding: `${top}px ${right}px ${bottom}px ${SHELF_OVERHANG}px`,
@@ -167,13 +186,13 @@ function JigBox({
   cover,
   c1 = "var(--mk-violet-400)",
   c2 = "var(--mk-violet-600)",
-  width = 116,
+  width = BOX_WIDTH,
   height,
   depth = 18,
 }: PlankBox & { depth?: number }) {
   const isArt = !!cover;
   const [boxH, setBoxH] = React.useState(
-    height || (isArt ? Math.round(width / 1.4) : 144),
+    initialBoxHeight({ width, height, cover }),
   );
   const onImg = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const im = e.currentTarget;
