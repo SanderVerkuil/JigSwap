@@ -4,14 +4,13 @@ import { useCurrentMember } from "@/components/dashboard-home/use-current-member
 import { ConnectionOffersStrip } from "@/components/social/connection-offers";
 import { EmailInvite } from "@/components/social/email-invite";
 import { FindPeople } from "@/components/social/find-people";
-import { inviteLandingUrl } from "@/components/social/invite-share";
-import { InviteShareActions } from "@/components/social/invite-share-actions";
 import { MemberTile } from "@/components/social/member-tile";
+import { NetworkInvite } from "@/components/social/network-invite";
 import { gateway, type Id } from "@/gateway";
-import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { convexQuery } from "@convex-dev/react-query";
 import type { QuickStartStepStatus } from "@jigswap/contracts";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { useTranslations } from "use-intl";
 import { PushPrompt } from "./push-prompt";
 
@@ -56,7 +55,6 @@ export function PeopleStep({ status }: { status: QuickStartStepStatus }) {
           {t("inviteTitle")}
         </h3>
         <p className="text-muted-foreground text-sm">{t("inviteBody")}</p>
-        {/* No username needed: the link is the stable member-id URL (unlike the QR caption). */}
         {member ? (
           <NetworkInvite
             memberId={member._id}
@@ -102,25 +100,4 @@ function useSuggestions(): { memberId: string; followsYou: boolean }[] {
     out.push({ memberId: m.memberId, followsYou: false });
   }
   return out;
-}
-
-function NetworkInvite({
-  memberId,
-  onShared,
-}: {
-  memberId: string;
-  onShared: () => void;
-}) {
-  // getMyInviteLink is a mutation: it mints the link on first use.
-  const { mutate: fetchLink, data: link } = useMutation({
-    mutationFn: useConvexMutation(gateway.social.myInviteLink),
-  });
-  useEffect(() => {
-    fetchLink({});
-  }, [fetchLink]);
-  // Only set after a client-side mutation, so `window` is defined here.
-  const url = link
-    ? inviteLandingUrl(window.location.origin, memberId, link.token)
-    : null;
-  return <InviteShareActions url={url} kind="network" onShared={onShared} />;
 }

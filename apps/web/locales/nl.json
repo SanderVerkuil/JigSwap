@@ -3579,6 +3579,8 @@
     "copyLink": "Link kopiëren",
     "copied": "Gekopieerd!",
     "copyError": "Link kopiëren is niet gelukt. Probeer het opnieuw.",
+    "linkError": "Je uitnodigingslink ophalen is niet gelukt. Controleer je verbinding en probeer het opnieuw.",
+    "retry": "Opnieuw proberen",
     "inviteLinkHint": "De code en deze knoppen delen je persoonlijke uitnodigingslink, niet alleen je profieladres, zodat jullie elkaar kunnen volgen.",
     "share": "Delen",
     "resetLink": "Uitnodigingslink resetten",

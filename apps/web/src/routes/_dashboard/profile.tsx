@@ -88,7 +88,7 @@ function ProfilePage() {
           onDone={() => setIsEditing(false)}
         />
       )}
-      <PrivacySection />
+      <PrivacySection memberId={member._id} />
       <ProfileShelfSection member={member} />
       <ProfileStatsSection member={member} />
       <ReputationSection memberId={member._id as Id<"users">} />

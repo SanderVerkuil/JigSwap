@@ -42,6 +42,11 @@ vi.mock("sonner", () => ({
 
 const SET_VISIBILITY = getFunctionName(gateway.social.setProfileVisibility);
 const RESET_LINK = getFunctionName(gateway.social.resetInviteLink);
+const MY_INVITE_LINK = getFunctionName(gateway.social.myInviteLink);
+
+// Writes the test makes itself; the section also fetches the invite link on mount.
+const writes = (name: string) =>
+  mocks.mutation.mock.calls.filter(([called]) => called === name);
 
 const renderSection = (visibility: "public" | "private" | null) => {
   const convexQueryClient = new ConvexQueryClient(
@@ -73,7 +78,7 @@ const renderSection = (visibility: "public" | "private" | null) => {
   render(
     <QueryClientProvider client={queryClient}>
       <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
-        <PrivacySection />
+        <PrivacySection memberId="member_henk" />
       </IntlProvider>
     </QueryClientProvider>,
   );
@@ -82,7 +87,11 @@ const renderSection = (visibility: "public" | "private" | null) => {
 const radio = (name: string) => screen.getByRole("radio", { name });
 
 beforeEach(() => {
-  mocks.mutation.mockReset().mockResolvedValue(null);
+  mocks.mutation
+    .mockReset()
+    .mockImplementation((name) =>
+      Promise.resolve(name === MY_INVITE_LINK ? { token: "tok1" } : null),
+    );
   mocks.toastSuccess.mockReset();
   mocks.toastError.mockReset();
 });
@@ -136,7 +145,7 @@ describe("PrivacySection", () => {
     fireEvent.click(radio("Only people you approve"));
 
     await waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalled());
-    expect(mocks.mutation).toHaveBeenCalledTimes(1);
+    expect(writes(SET_VISIBILITY)).toHaveLength(1);
     expect(mocks.mutation).toHaveBeenCalledWith(SET_VISIBILITY, {
       visibility: "private",
     });
@@ -158,7 +167,11 @@ describe("PrivacySection", () => {
   });
 
   it("shows the chosen value while the save is in flight", async () => {
-    mocks.mutation.mockReturnValue(new Promise<never>(() => {}));
+    mocks.mutation.mockImplementation((name) =>
+      name === MY_INVITE_LINK
+        ? Promise.resolve({ token: "tok1" })
+        : new Promise<never>(() => {}),
+    );
     renderSection("public");
     fireEvent.click(radio("Only people you approve"));
     await waitFor(() =>
@@ -174,7 +187,11 @@ describe("PrivacySection", () => {
   });
 
   it("falls back to the stored value and says so when the save fails", async () => {
-    mocks.mutation.mockRejectedValueOnce(new Error("network"));
+    mocks.mutation.mockImplementation((name) =>
+      name === MY_INVITE_LINK
+        ? Promise.resolve({ token: "tok1" })
+        : Promise.reject(new Error("network")),
+    );
     renderSection("public");
     fireEvent.click(radio("Only people you approve"));
 
@@ -209,13 +226,78 @@ describe("PrivacySection", () => {
   it("does nothing when the current choice is picked again", () => {
     renderSection("private");
     fireEvent.click(radio("Only people you approve"));
-    expect(mocks.mutation).not.toHaveBeenCalled();
+    expect(writes(SET_VISIBILITY)).toHaveLength(0);
+  });
+
+  it("copies the invite link, for a member with no username too", async () => {
+    const writeText = vi.fn<(text: string) => Promise<void>>();
+    writeText.mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText },
+      configurable: true,
+    });
+    renderSection("public");
+    const copy = screen.getByRole("button", { name: "Copy link" });
+    await waitFor(() => expect(copy.hasAttribute("disabled")).toBe(false));
+    fireEvent.click(copy);
+    await waitFor(() =>
+      expect(writeText).toHaveBeenCalledWith(
+        `${window.location.origin}/members/member_henk?invite=tok1`,
+      ),
+    );
+  });
+
+  it("holds the new link after a reset, never the revoked one", async () => {
+    const writeText = vi.fn<(text: string) => Promise<void>>();
+    writeText.mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText },
+      configurable: true,
+    });
+    let token = "tok1";
+    mocks.mutation.mockImplementation((name) => {
+      if (name === RESET_LINK) token = "tok2";
+      return Promise.resolve(name === MY_INVITE_LINK ? { token } : null);
+    });
+    renderSection("public");
+    await waitFor(() =>
+      expect(
+        screen
+          .getByRole("button", { name: "Copy link" })
+          .hasAttribute("disabled"),
+      ).toBe(false),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Reset invite link" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reset link" }));
+    await waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalled());
+    await waitFor(() => expect(writes(MY_INVITE_LINK)).toHaveLength(2));
+    const copy = await screen.findByRole("button", { name: "Copy link" });
+    await waitFor(() => expect(copy.hasAttribute("disabled")).toBe(false));
+    fireEvent.click(copy);
+    await waitFor(() =>
+      expect(writeText).toHaveBeenCalledWith(
+        `${window.location.origin}/members/member_henk?invite=tok2`,
+      ),
+    );
+  });
+
+  it("offers Try again when the invite link can't be fetched", async () => {
+    mocks.mutation.mockImplementation((name) =>
+      name === MY_INVITE_LINK
+        ? Promise.reject(new Error("offline"))
+        : Promise.resolve(null),
+    );
+    renderSection("public");
+    expect(
+      await screen.findByRole("button", { name: en.invite.retry }),
+    ).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Copy link" })).toBeNull();
   });
 
   it("resets the invite link only after a confirm", async () => {
     renderSection("public");
     fireEvent.click(screen.getByRole("button", { name: "Reset invite link" }));
-    expect(mocks.mutation).not.toHaveBeenCalled();
+    expect(writes(RESET_LINK)).toHaveLength(0);
 
     const dialog = screen.getByRole("alertdialog", {
       name: "Reset your invite link?",

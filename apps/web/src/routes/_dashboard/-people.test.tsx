@@ -84,6 +84,9 @@ vi.mock("@/components/social/qr-dialog", () => ({ QrDialog: () => null }));
 vi.mock("@/components/social/email-invite", () => ({
   EmailInvite: () => null,
 }));
+vi.mock("@/components/social/network-invite", () => ({
+  NetworkInvite: () => <p>invite link panel</p>,
+}));
 
 // Mirrors the desktop dashboard shell: the page scrolls inside one region, not the window.
 function makeRouter() {
@@ -161,6 +164,8 @@ describe("People tabs", () => {
     );
 
     expect(document.body.textContent).toContain("find panel");
+    // The invite link is there for a member without a username too, not only in the setup step.
+    expect(document.body.textContent).toContain("invite link panel");
     expect(region().scrollTop).toBe(600);
   });
 });

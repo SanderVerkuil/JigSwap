@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { Check, Copy, Mail, MessageCircle, Share2 } from "lucide-react";
-import { useState, useSyncExternalStore } from "react";
-import { toast } from "sonner";
+import { Mail, MessageCircle, Share2 } from "lucide-react";
+import { useSyncExternalStore } from "react";
 import { useTranslations } from "use-intl";
+import { CopyLinkButton } from "./copy-link-button";
 import { canWebShare, mailtoUrl, whatsAppUrl } from "./invite-share";
 
 // The invite share sheet (decision 2): the member sends their invite link from their OWN device.
@@ -40,28 +40,11 @@ export function InviteShareButtons({
   onShared,
 }: InviteShareProps & { canShare: boolean }) {
   const t = useTranslations("inviteShare");
-  const tInvite = useTranslations("invite");
-  const [copied, setCopied] = useState(false);
 
   const subject = t("subject");
   const message = url
     ? t(kind === "household" ? "householdMessage" : "message", { url })
     : "";
-
-  // "Copied" only once the clipboard accepted the link; a refusal (permissions, insecure context,
-  // no clipboard API) says so instead, as the QR dialog's copy does.
-  const copy = async () => {
-    if (!url) return;
-    try {
-      await navigator.clipboard.writeText(url);
-    } catch {
-      toast.error(tInvite("copyError"));
-      return;
-    }
-    setCopied(true);
-    onShared?.();
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   const share = () => {
     // The URL is part of the message text, so it is not passed again as `url` (most share
@@ -86,15 +69,7 @@ export function InviteShareButtons({
         </Button>
       ) : null}
       <div className="flex flex-wrap gap-2">
-        <Button
-          variant="outline"
-          className={fallback}
-          disabled={!url}
-          onClick={() => void copy()}
-        >
-          {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-          {copied ? tInvite("copied") : tInvite("copyLink")}
-        </Button>
+        <CopyLinkButton url={url} className={fallback} onCopied={onShared} />
         {url ? (
           <>
             <Button asChild variant="outline" className={fallback}>
@@ -131,10 +106,6 @@ export function InviteShareButtons({
           </>
         )}
       </div>
-      {/* The button label swaps to "Copied!"; this live region announces it. */}
-      <span role="status" aria-live="polite" className="sr-only">
-        {copied ? tInvite("copied") : ""}
-      </span>
       <p className="text-muted-foreground text-xs">{t("privacy")}</p>
     </div>
   );

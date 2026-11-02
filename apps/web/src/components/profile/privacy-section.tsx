@@ -2,6 +2,8 @@
 
 import { SegmentedPills } from "@/components/add-puzzle/segmented-pills";
 import { SectionHead } from "@/components/dashboard-home/section-head";
+import { CopyLinkButton } from "@/components/social/copy-link-button";
+import { useMyInviteLink } from "@/components/social/use-my-invite-link";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,7 +36,7 @@ export const PRIVACY_SECTION_ID = "privacy";
 // drops them. Visibility uses the same Everyone / Only people you approve
 // choice as quick start, states what each setting means, and its toast offers
 // an Undo that writes the previous value back.
-export function PrivacySection() {
+export function PrivacySection({ memberId }: { memberId: string }) {
   const t = useTranslations("profile.privacy");
   const tChoice = useTranslations("quickStart.profile");
   const { data: socialProfile } = useQuery(
@@ -113,23 +115,41 @@ export function PrivacySection() {
             </div>
           )}
         </div>
-        <div className="flex flex-col gap-3 pt-5 @2xl/privacy:flex-row @2xl/privacy:items-start @2xl/privacy:justify-between @2xl/privacy:gap-6">
-          <div className="min-w-0 space-y-1">
-            <p className="text-sm font-medium">{t("inviteLink")}</p>
-            <p className="text-muted-foreground text-sm">
-              {t("inviteLinkHelp")}
-            </p>
-          </div>
-          <ResetInviteLinkButton />
-        </div>
+        <InviteLinkRow memberId={memberId} />
       </div>
     </section>
   );
 }
 
+// The member's invite link: copy it (no username needed) or reset it. After a reset the link is
+// fetched again, because the one held here no longer works.
+function InviteLinkRow({ memberId }: { memberId: string }) {
+  const t = useTranslations("profile.privacy");
+  const tInvite = useTranslations("invite");
+  const { url, failed, refetch } = useMyInviteLink(memberId);
+  return (
+    <div className="flex flex-col gap-3 pt-5 @2xl/privacy:flex-row @2xl/privacy:items-start @2xl/privacy:justify-between @2xl/privacy:gap-6">
+      <div className="min-w-0 space-y-1">
+        <p className="text-sm font-medium">{t("inviteLink")}</p>
+        <p className="text-muted-foreground text-sm">{t("inviteLinkHelp")}</p>
+      </div>
+      <div className="flex shrink-0 flex-wrap gap-2">
+        {failed ? (
+          <Button variant="outline" onClick={refetch}>
+            {tInvite("retry")}
+          </Button>
+        ) : (
+          <CopyLinkButton url={url} />
+        )}
+        <ResetInviteLinkButton onReset={refetch} />
+      </div>
+    </div>
+  );
+}
+
 // Revokes the member's QR / invite link and issues a new one, after a confirm:
 // links and QR codes already shared stop working.
-function ResetInviteLinkButton() {
+function ResetInviteLinkButton({ onReset }: { onReset: () => void }) {
   const t = useTranslations("profile.privacy");
   const tInvite = useTranslations("invite");
   const tCommon = useTranslations("common");
@@ -140,6 +160,7 @@ function ResetInviteLinkButton() {
   const reset = async () => {
     try {
       await resetLink.mutateAsync({});
+      onReset();
       toast.success(t("resetDone"));
     } catch {
       toast.error(t("resetError"));

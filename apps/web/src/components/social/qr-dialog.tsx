@@ -7,16 +7,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { gateway } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
-import { useConvexMutation } from "@convex-dev/react-query";
-import { useMutation } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Check, Copy, QrCode, Share2 } from "lucide-react";
+import { QrCode, Share2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
-import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { useState } from "react";
 import { useTranslations } from "use-intl";
+import { CopyLinkButton } from "./copy-link-button";
+import { useMyInviteLink } from "./use-my-invite-link";
 
 // Fullscreen "show my QR" dialog. The QR encodes the STABLE member-id URL (rename-proof) with the
 // invite token, so it works for every member, username or not. The mono caption shows the member's
@@ -47,48 +45,15 @@ function QrCard(props: QrDialogProps & { onNavigate?: () => void }) {
   const t = useTranslations("invite");
   const displayName = useMemberDisplayName();
   const nameSource = { name: props.displayName, username: props.username };
-  const [copied, setCopied] = useState(false);
-  const copiedTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-
-  const { mutate: fetchLink, data: link } = useMutation({
-    mutationFn: useConvexMutation(gateway.social.myInviteLink),
-  });
-
-  useEffect(() => {
-    fetchLink({});
-  }, [fetchLink]);
-
-  // No "Copied" reset may fire after the dialog closed.
-  useEffect(() => {
-    const timer = copiedTimer;
-    return () => clearTimeout(timer.current);
-  }, []);
+  const { url: qrUrl } = useMyInviteLink(props.memberId);
 
   const origin = typeof window === "undefined" ? "" : window.location.origin;
-  const qrUrl = link
-    ? `${origin}/members/${props.memberId}?invite=${link.token}`
-    : null;
   // A bare member id is no address to show anyone: without a readable handle the caption goes.
   const readableHandle =
     props.handle !== props.memberId ? props.handle : undefined;
   const displayUrl = readableHandle
     ? `${origin.replace(/^https?:\/\//, "")}/members/${encodeURIComponent(readableHandle)}`
     : null;
-
-  // "Copied" only once the clipboard accepted the link; a refusal (permissions, insecure context,
-  // no clipboard API) says so instead.
-  const copy = async () => {
-    if (!qrUrl) return;
-    try {
-      await navigator.clipboard.writeText(qrUrl);
-    } catch {
-      toast.error(t("copyError"));
-      return;
-    }
-    setCopied(true);
-    clearTimeout(copiedTimer.current);
-    copiedTimer.current = setTimeout(() => setCopied(false), 2000);
-  };
 
   const canShare =
     typeof navigator !== "undefined" && typeof navigator.share === "function";
@@ -125,10 +90,7 @@ function QrCard(props: QrDialogProps & { onNavigate?: () => void }) {
       ) : null}
       <p className="text-muted-foreground text-sm">{t("scanHint")}</p>
       <div className="flex gap-3">
-        <Button variant="outline" onClick={() => void copy()} disabled={!qrUrl}>
-          {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-          {copied ? t("copied") : t("copyLink")}
-        </Button>
+        <CopyLinkButton url={qrUrl} />
         {canShare ? (
           <Button
             variant="brand"
@@ -160,10 +122,6 @@ function QrCard(props: QrDialogProps & { onNavigate?: () => void }) {
           </Button>
         </div>
       )}
-      {/* The button label swaps to "Copied!"; this live region announces it. */}
-      <span role="status" aria-live="polite" className="sr-only">
-        {copied ? t("copied") : ""}
-      </span>
     </>
   );
 }

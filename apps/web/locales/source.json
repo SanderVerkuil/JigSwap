@@ -3579,6 +3579,8 @@
     "copyLink": "Copy link",
     "copied": "Copied!",
     "copyError": "Couldn't copy the link. Please try again.",
+    "linkError": "Couldn't get your invite link. Check your connection and try again.",
+    "retry": "Try again",
     "inviteLinkHint": "The code and these buttons share your personal invite link, not just your profile address, so you can follow each other.",
     "share": "Share",
     "resetLink": "Reset invite link",
