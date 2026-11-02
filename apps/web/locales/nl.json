@@ -2111,6 +2111,7 @@
     "submit": "{count, plural, one {# puzzel toevoegen} other {# puzzels toevoegen}}",
     "added": "{count, plural, one {# puzzel aan je plank toegevoegd} other {# puzzels aan je plank toegevoegd}}",
     "addedPartly": "{added} van de {total} puzzels toegevoegd. De rest is nog gekozen, dus je kunt het opnieuw proberen.",
+    "addedPartlyRateLimited": "{added} van de {total} puzzels toegevoegd, meer kan vandaag niet. De rest is nog gekozen, dus je kunt ze morgen toevoegen.",
     "addFailed": "Deze puzzels konden niet worden toegevoegd, dus er is niets toegevoegd. Probeer het opnieuw.",
     "rateLimited": "Je hebt vandaag al veel puzzels toegevoegd. Probeer het morgen opnieuw."
   },

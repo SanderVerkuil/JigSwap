@@ -12,6 +12,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
+import { ConvexError } from "convex/values";
 import type { ReactNode } from "react";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -136,6 +137,42 @@ describe("CataloguePicker", () => {
       screen.queryByRole("switch", { name: "Puzzle 0 available to swap" }),
     ).toBeNull();
     expect(screen.getAllByRole("switch")).toHaveLength(5);
+  });
+
+  // A refused chunk comes back in the result, not as a thrown error (acquireInChunks never throws),
+  // and the daily copy budget is a wait, not a retry.
+  it("says to wait when the daily limit refuses the first chunk", async () => {
+    mocks.acquire.mockRejectedValue(new ConvexError({ code: "RateLimited" }));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    renderPicker();
+    await pickAll();
+    fireEvent.click(screen.getByRole("button", { name: "Add 30 puzzles" }));
+
+    await waitFor(() =>
+      expect(mocks.toastError).toHaveBeenCalledWith(
+        "You've added a lot of puzzles today. Try again tomorrow.",
+      ),
+    );
+    expect(mocks.toastError).toHaveBeenCalledTimes(1);
+  });
+
+  it("says how many were added and to wait when the daily limit refuses a later chunk", async () => {
+    mocks.acquire
+      .mockImplementationOnce(async (args) => copiesFor(args))
+      .mockRejectedValueOnce(new ConvexError({ code: "RateLimited" }));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    renderPicker();
+    await pickAll();
+    fireEvent.click(screen.getByRole("button", { name: "Add 30 puzzles" }));
+
+    await waitFor(() =>
+      expect(mocks.toastError).toHaveBeenCalledWith(
+        "Added 25 of 30 puzzles, the most you can add today. The rest are still picked, so you can add them tomorrow.",
+      ),
+    );
+    expect(
+      await screen.findByRole("button", { name: "Add 5 puzzles" }),
+    ).toBeTruthy();
   });
 
   it("says nothing was added when the first chunk is refused", async () => {

@@ -117,15 +117,17 @@ export function CataloguePicker({
         return;
       }
       console.error("Batch add failed:", error);
+      const refusal = addErrorKey(error);
       toast.error(
         copyIds.length === 0
-          ? t("addFailed")
-          : t("addedPartly", { added: copyIds.length, total: tray.length }),
+          ? t(refusal)
+          : t(
+              refusal === "rateLimited"
+                ? "addedPartlyRateLimited"
+                : "addedPartly",
+              { added: copyIds.length, total: tray.length },
+            ),
       );
-    },
-    onError: (error) => {
-      console.error("Batch add failed:", error);
-      toast.error(t(addErrorKey(error)));
     },
   });
 
