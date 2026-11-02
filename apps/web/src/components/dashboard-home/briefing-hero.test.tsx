@@ -120,7 +120,7 @@ describe("Headline — the shelf variants", () => {
     });
     expect(text).toContain("1 puzzle up for swap");
     expect(links).toEqual([
-      ["/my-puzzles", "1 puzzle up for swap"],
+      ["/my-puzzles?status=forTrade", "1 puzzle up for swap"],
       ["/browse", "browse what others have"],
     ]);
   });
@@ -135,7 +135,7 @@ describe("Headline — the shelf variants", () => {
     );
     expect(offered.text).toContain("3 puzzels te ruil");
     expect(offered.links.map(([href]) => href)).toEqual([
-      "/my-puzzles",
+      "/my-puzzles?status=forTrade",
       "/browse",
     ]);
   });

@@ -129,7 +129,16 @@ export function Headline({
           </HeadlineLink>
         ),
         shelfLink: (chunks) => (
-          <HeadlineLink href="/my-puzzles">{chunks}</HeadlineLink>
+          // The offered ones when the words say how many are up for swap, not the whole shelf.
+          <HeadlineLink
+            href={
+              variant === "shelfOffered"
+                ? "/my-puzzles?status=forTrade"
+                : "/my-puzzles"
+            }
+          >
+            {chunks}
+          </HeadlineLink>
         ),
         browseLink: (chunks) => (
           <HeadlineLink href="/browse">{chunks}</HeadlineLink>
