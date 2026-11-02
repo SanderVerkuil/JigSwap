@@ -10,6 +10,7 @@ import {
   gifFrame,
   gifNetscapeLoop,
 } from "../test-fixtures/craftGif";
+import { progressiveJpeg } from "../test-fixtures/craftJpeg";
 import {
   craftPng,
   iendChunk,
@@ -26,6 +27,7 @@ import {
   MAX_IMAGE_PIXELS,
   MAX_IMAGE_UPLOAD_BYTES,
   MAX_JPEG_BLOCKS,
+  MAX_JPEG_SCANS,
   readImageDimensions,
   sniffImageFormat,
 } from "./lib/imageModeration/guards";
@@ -479,6 +481,57 @@ describe("checkImageBytes", () => {
           reason: "unreadable_header",
         });
       }
+    });
+
+    // jpeg-js walks every block on each scan, whatever is in it, so a progressive JPEG under a
+    // megabyte can hold a moderation slot for ten minutes: a scan costs 28 bytes of file. Pixels and
+    // blocks don't bound that. A normal progressive JPEG has about ten scans.
+    test("more scans than any real JPEG has are refused, before decoding", () => {
+      const of = (scans: number) =>
+        progressiveJpeg({ width: 3538, height: 3538, scans });
+      expect(MAX_JPEG_SCANS).toBe(32);
+      expect(checkImageBytes(of(10))).toEqual({
+        ok: true,
+        format: "jpeg",
+        width: 3538,
+        height: 3538,
+      });
+      expect(checkImageBytes(of(MAX_JPEG_SCANS)).ok).toBe(true);
+      for (const scans of [MAX_JPEG_SCANS + 1, 100, 22_000]) {
+        const bomb = of(scans);
+        expect(bomb.length).toBeLessThan(MAX_IMAGE_UPLOAD_BYTES);
+        expect(checkImageBytes(bomb)).toEqual({
+          ok: false,
+          reason: "too_many_pixels",
+        });
+      }
+    });
+
+    test("a scan in an APPn segment isn't counted; one after a fill byte is", () => {
+      const scan = (count: number) =>
+        Array.from({ length: count }, () =>
+          Array.from(segment(0xda, [1, 1, 0x00, 1, 63, 0x10])),
+        ).flat();
+      const frame = sof(64, 64, [0x11]);
+      expect(
+        checkImageBytes(
+          jpegOf(
+            frame,
+            segment(0xe1, scan(MAX_JPEG_SCANS + 1)),
+            bytesOf(scan(1)),
+          ),
+        ).ok,
+      ).toBe(true);
+      expect(
+        checkImageBytes(
+          jpegOf(
+            frame,
+            bytesOf(scan(MAX_JPEG_SCANS)),
+            // Fill bytes before a marker: the decoder's walk still lands on it.
+            bytesOf([0xff, 0xff], scan(1)),
+          ),
+        ).ok,
+      ).toBe(false);
     });
 
     test("a frame header inside an APPn or COM segment is not part of the decode", () => {

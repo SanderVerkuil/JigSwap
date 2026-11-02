@@ -11,6 +11,7 @@ import {
   gifFrame,
   gifNetscapeLoop,
 } from "../test-fixtures/craftGif";
+import { progressiveJpeg } from "../test-fixtures/craftJpeg";
 import {
   craftPng,
   iendChunk,
@@ -22,6 +23,7 @@ import {
   JPEG_DECODER_MEMORY_MB,
   jpegDecodeInput,
   MAX_IMAGE_PIXELS,
+  MAX_JPEG_SCANS,
   readImageDimensions,
 } from "./lib/imageModeration/guards";
 import {
@@ -262,6 +264,27 @@ describe("stripAndNormalise", () => {
 describe("decodeUpright decodes only what the guards checked", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  test("a JPEG of more scans than any real one has is never decoded", async () => {
+    const decode = vi.spyOn(Jimp, "fromBuffer");
+    await expect(
+      decodeUpright(
+        progressiveJpeg({ width: 64, height: 64, scans: MAX_JPEG_SCANS + 1 }),
+        "jpeg",
+        1,
+      ),
+    ).rejects.toThrow("refused before decode: too_many_pixels");
+    expect(decode).not.toHaveBeenCalled();
+  });
+
+  test("a progressive JPEG at the scan cap still decodes", async () => {
+    const decoded = await decodeUpright(
+      progressiveJpeg({ width: 64, height: 64, scans: MAX_JPEG_SCANS }),
+      "jpeg",
+      1,
+    );
+    expect([decoded.width, decoded.height]).toEqual([64, 64]);
   });
 
   test("a PNG whose second IHDR announces a bigger image is never decoded", async () => {
