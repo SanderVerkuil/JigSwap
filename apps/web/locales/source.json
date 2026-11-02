@@ -4650,7 +4650,9 @@
       "offerLend": "lending",
       "offerSale": "sale",
       "visibleWhileOffered": "Visible while offered, private again when you withdraw",
-      "notOffered": "Not offered"
+      "notOffered": "Not offered",
+      "visibleToCommunity": "Visible to the community",
+      "friendsCanSee": "Friends can see it"
     },
     "editCopy": {
       "title": "Edit copy",
@@ -4673,8 +4675,8 @@
       "sourceUnknown": "Not recorded",
       "visibility": {
         "label": "Who can see this copy",
-        "visible": "Visible to the community",
-        "visibleHint": "Your friends can see it in your library.",
+        "visible": "Visible",
+        "visibleHint": "Friends can see it, and anyone can while it's on offer.",
         "private": "Private — only you and your household",
         "privateHint": "Hidden from everyone else, friends included.",
         "offerNote": "Offering a puzzle for swap, lend or sale makes it visible while the offer lasts.",

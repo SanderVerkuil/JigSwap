@@ -90,7 +90,12 @@ describe("CopyStatusLine for whoever manages the copy", () => {
 
   it("a visible copy that isn't offered says so", () => {
     renderLine({});
-    expect(line()).toBe("Not offered · Visible to the community");
+    expect(line()).toBe("Not offered · Friends can see it");
+  });
+
+  it("says the same in Dutch", () => {
+    renderLine({}, "nl");
+    expect(line()).toBe("Niet aangeboden · Vrienden kunnen hem zien");
   });
 
   it("a private copy says who can see it", () => {

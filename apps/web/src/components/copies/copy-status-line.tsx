@@ -3,7 +3,7 @@
 import type { Availability } from "@/components/add-puzzle/add-puzzle-mappers";
 import { RecallLoanButton } from "@/components/exchange/recall-loan-button";
 import { cn } from "@/lib/utils";
-import { ArrowLeftRight, Globe, Lock, Package } from "lucide-react";
+import { ArrowLeftRight, Lock, Package, Users } from "lucide-react";
 import type { ReactNode } from "react";
 import { useFormatter, useTranslations } from "use-intl";
 
@@ -25,9 +25,10 @@ const OFFER_WORDS = [
 // The one line under a copy's title that says where it is and who can see it, replacing the
 // cover's "Available" chip and the For Trade/Lend/Sale badges. For whoever manages the copy
 // (`detailed`): an open loan ("On loan to Anna since 3 Mar 2026 · Recall"), otherwise the offers
-// plus who can see it, from the owner's own choice (`visibilityPreference`): visible to the
-// community, visible only while offered, or private. Visitors only see what it is offered for,
-// and nothing when it isn't offered.
+// plus who can see it, from the owner's own choice (`visibilityPreference`): friends while nothing
+// is offered and the community while something is (library/canViewCopy: a copy only opens up to
+// others through an offer), visible only while offered, or private. Visitors only see what it is
+// offered for, and nothing when it isn't offered.
 export function CopyStatusLine({
   detailed,
   availability,
@@ -73,15 +74,15 @@ export function CopyStatusLine({
           offered,
           visibilityPreference === "private"
             ? t("visibleWhileOffered")
-            : tVisibility("visible"),
+            : t("visibleToCommunity"),
         ]
       : [offered];
   } else if (detailed) {
-    icon = visibilityPreference === "private" ? <Lock /> : <Globe />;
+    icon = visibilityPreference === "private" ? <Lock /> : <Users />;
     parts =
       visibilityPreference === "private"
         ? [tVisibility("private")]
-        : [t("notOffered"), tVisibility("visible")];
+        : [t("notOffered"), t("friendsCanSee")];
   } else {
     return null;
   }
