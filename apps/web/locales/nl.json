@@ -3836,7 +3836,7 @@
       },
       "browse": {
         "title": "Puzzels Ontdekken",
-        "subtitle": "Exemplaren die andere leden te ruil, te leen of te koop aanbieden.",
+        "subtitle": "Exemplaren die leden te ruil, te leen of te koop aanbieden.",
         "description": "Exemplaren die andere leden te ruil, te leen of te koop aanbieden"
       },
       "circles": {
@@ -3885,7 +3885,7 @@
       },
       "puzzles": {
         "title": "Puzzelcatalogus",
-        "subtitle": "Alle puzzels in JigSwap, of iemand ze nu aanbiedt of niet.",
+        "subtitle": "Alle puzzels in JigSwap.",
         "description": "Alle puzzels in JigSwap, aangeboden of niet"
       },
       "borrowed": {

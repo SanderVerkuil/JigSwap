@@ -3885,7 +3885,7 @@
       },
       "puzzles": {
         "title": "Puzzles catalogue",
-        "subtitle": "Every puzzle in JigSwap, whether or not anyone offers it.",
+        "subtitle": "Every puzzle in JigSwap.",
         "description": "Every puzzle in JigSwap, offered or not"
       },
       "borrowed": {
