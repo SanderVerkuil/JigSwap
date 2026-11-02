@@ -2506,6 +2506,9 @@
       "shareCopy": "Deel je puzzels",
       "shareDescription": "Leden zien een gedeelde puzzel zolang je hem aanbiedt om te ruilen, uit te lenen of te verkopen. Een privépuzzel blijft verborgen. Vink puzzels aan om ze te delen, vink ze uit om te stoppen met delen.",
       "copyFallback": "Exemplaar",
+      "removeMember": "{name} verwijderen",
+      "removeFailed": "{name} verwijderen is niet gelukt. Probeer het opnieuw.",
+      "permissionFailed": "Wijzigen wat {name} mag is niet gelukt. Probeer het opnieuw.",
       "close": "Sluiten"
     },
     "share": {

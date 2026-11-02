@@ -2506,6 +2506,9 @@
       "shareCopy": "Share your puzzles",
       "shareDescription": "Members see a shared puzzle while you offer it for swap, loan or sale. A private puzzle stays hidden. Tick puzzles to share them, untick to stop sharing.",
       "copyFallback": "Copy",
+      "removeMember": "Remove {name}",
+      "removeFailed": "Couldn't remove {name}. Please try again.",
+      "permissionFailed": "Couldn't change what {name} may do. Please try again.",
       "close": "Close"
     },
     "share": {

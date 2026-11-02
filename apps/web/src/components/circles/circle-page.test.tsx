@@ -22,6 +22,7 @@ import { CHAT_PREVIEW_SIZE, CirclePage } from "./circle-page";
 const mocks = vi.hoisted(() => ({
   mutation: vi.fn<(name: string, args: unknown) => Promise<unknown>>(),
   navigate: vi.fn(),
+  toastError: vi.fn<(message: string) => void>(),
 }));
 
 vi.mock("@/compat/clerk", () => ({
@@ -59,7 +60,9 @@ vi.mock("@convex-dev/react-query", async (importOriginal) => ({
   },
 }));
 
-vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+vi.mock("sonner", () => ({
+  toast: { success: vi.fn(), error: mocks.toastError },
+}));
 
 type Detail = NonNullable<FunctionReturnType<typeof gateway.sharing.circle>>;
 type Messages = FunctionReturnType<
@@ -405,6 +408,32 @@ describe("CirclePage", () => {
       });
 
       expect(memberRows()).toEqual([LOCKED, OPEN, OPEN]);
+    });
+
+    it("names the remove button after its member, and says so when the removal fails", async () => {
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      mocks.mutation.mockRejectedValueOnce(new Error("offline"));
+      renderPage({
+        circle: detail({
+          isOwnedByViewer: true,
+          viewerPermission: "Admin",
+          members: [
+            seat("me", "Me", { isOwner: true, permission: "Admin" }),
+            seat("u_bas", "Bas"),
+          ],
+        }),
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: "Manage Puzzle Club" }),
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: "Remove Bas" }));
+
+      await vi.waitFor(() =>
+        expect(mocks.toastError).toHaveBeenCalledWith(
+          "Couldn't remove Bas. Please try again.",
+        ),
+      );
     });
   });
 
