@@ -28,11 +28,10 @@ export function PieceCountField({
         onChange={(e) => {
           if (e.target.value === "") return onChange(undefined);
           const n = Number(e.target.value);
-          onChange(
-            Number.isInteger(n) && n >= 1 && n <= MAX_PIECE_COUNT
-              ? n
-              : undefined,
-          );
+          // A keystroke that makes no piece count is ignored, like a character past a text field's
+          // maxLength: one digit too many must not wipe the number already typed.
+          if (Number.isInteger(n) && n >= 1 && n <= MAX_PIECE_COUNT)
+            onChange(n);
         }}
       />
       <div className="flex flex-wrap gap-1.5">
