@@ -130,6 +130,42 @@ describe("CompletionRow actions", () => {
     ]);
   });
 
+  const editRequest = (over: Partial<CompletionRowData>) => {
+    renderRow(row(over));
+    const menu = openMenu("Actions for Tirol");
+    fireEvent.click(within(menu).getByRole("menuitem", { name: "Edit" }));
+    return requests[0] as Extract<CompletionDialogRequest, { kind: "edit" }>;
+  };
+
+  it("prefills the edit form with a time the member typed", () => {
+    const sameDay = Date.UTC(2026, 9, 29);
+    const request = editRequest({
+      startDate: sameDay,
+      endDate: sameDay,
+      completionTimeMinutes: 200,
+    });
+    expect(request.timeMinutes).toBe(200);
+  });
+
+  it("leaves the time empty when the stored duration is only the one-day default", () => {
+    const sameDay = Date.UTC(2026, 9, 29);
+    const request = editRequest({
+      startDate: sameDay,
+      endDate: sameDay,
+      completionTimeMinutes: 1440,
+    });
+    expect(request.timeMinutes).toBeUndefined();
+  });
+
+  it("leaves the time empty when the stored duration is only the span between the dates", () => {
+    const request = editRequest({
+      startDate: Date.UTC(2026, 9, 27),
+      endDate: Date.UTC(2026, 9, 29),
+      completionTimeMinutes: 2880,
+    });
+    expect(request.timeMinutes).toBeUndefined();
+  });
+
   it("says why instead of opening the form once the edit window has closed", () => {
     renderRow(row({ editableUntil: NOW - HOUR }));
     const menu = openMenu("Actions for Tirol");

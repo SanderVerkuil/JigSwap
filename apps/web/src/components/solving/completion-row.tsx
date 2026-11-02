@@ -24,6 +24,7 @@ import {
   formatCompletionDate,
   formatCompletionMeta,
   hrefForLink,
+  solveDuration,
 } from "@/lib/completion-format";
 import { cn } from "@/lib/utils";
 import type { FunctionReturnType } from "convex/server";
@@ -133,7 +134,12 @@ export function CompletionRow({
           inProgress: !done,
           startDate: completion.startDate,
           endDate: completion.endDate,
-          timeMinutes: completion.completionTimeMinutes,
+          // Only a time the member typed: a duration the server derived from the dates starts
+          // empty, so moving a date re-derives it instead of saving the old one as if typed.
+          timeMinutes:
+            solveDuration(completion)?.kind === "time"
+              ? completion.completionTimeMinutes
+              : undefined,
           notes: completion.notes,
           datePrecision: completion.datePrecision,
         })
