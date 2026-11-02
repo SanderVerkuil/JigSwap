@@ -246,6 +246,75 @@ describe("lib/storage/storageSweep", () => {
     expect(await listingOf(t, art)).toBeNull();
   });
 
+  // A rendition never outlives its source (lib/imageModeration/renditionsStore). `_storage` pages
+  // in creation order, so a slot blob stored after its source comes up later in the same batch,
+  // already deleted, and one stored before it has been counted as kept by then.
+  const renditionsOf = (t: T, source: Id<"_storage">) =>
+    t.run((ctx) =>
+      ctx.db
+        .query("imageRenditions")
+        .withIndex("by_source", (q) => q.eq("sourceId", source))
+        .first(),
+    );
+  const storeWithRenditions = async (t: T) => {
+    const medium = await storeBlob(t); // Backfilled after a re-strip: older than its source.
+    const source = await storeBlob(t);
+    const small = await storeBlob(t);
+    const large = await storeBlob(t);
+    await t.run((ctx) =>
+      ctx.db.insert("imageRenditions", {
+        sourceId: source,
+        width: 2000,
+        height: 1500,
+        small: { fileId: small, width: 480, height: 360 },
+        medium: { fileId: medium, width: 640, height: 480 },
+        large: { fileId: large, width: 960, height: 720 },
+        createdAt: 0,
+      }),
+    );
+    return { source, slots: [small, medium, large] };
+  };
+
+  test("box art that goes after a week takes its renditions along, only in delete mode", async () => {
+    const t = convexTest(schema, modules);
+    const base = await seedBlobHolderBase(t);
+    const { source, slots } = await storeWithRenditions(t);
+    await holdBlob(t, base, "boxArtListing", source);
+
+    const dry = await runSweep(t, T0 + 8 * DAY);
+    expect(dry.total.unattached_box_art).toBe(1);
+    expect(dry.total.kept_by_kind.renditionSmall).toBe(1);
+    for (const blob of [source, ...slots]) {
+      expect(await exists(t, blob)).toBe(true);
+    }
+    expect(await renditionsOf(t, source)).not.toBeNull();
+
+    const real = await runSweep(t, T0 + 8 * DAY, "delete");
+    expect(real.candidateIds).toContain(source);
+    // The renditions go with their source: none is a candidate of its own, or counted twice.
+    for (const slot of slots) expect(real.candidateIds).not.toContain(slot);
+    expect(real.total.deleted).toBe(real.candidateIds.length);
+    for (const blob of [source, ...slots]) {
+      expect(await exists(t, blob)).toBe(false);
+    }
+    expect(await renditionsOf(t, source)).toBeNull();
+    expect(await listingOf(t, source)).toBeNull();
+  });
+
+  test("a blob nothing holds takes its renditions along in delete mode", async () => {
+    const t = convexTest(schema, modules);
+    await seedBlobHolderBase(t);
+    const { source, slots } = await storeWithRenditions(t);
+
+    const real = await runSweep(t, T0 + 2 * DAY, "delete");
+    expect(real.candidateIds).toContain(source);
+    for (const slot of slots) expect(real.candidateIds).not.toContain(slot);
+    for (const blob of [source, ...slots]) {
+      expect(await exists(t, blob)).toBe(false);
+    }
+    expect(await renditionsOf(t, source)).toBeNull();
+  });
+
   test("listed box art a definition or proposal holds is kept, a definition image a proposal recorded too", async () => {
     const t = convexTest(schema, modules);
     const base = await seedBlobHolderBase(t);

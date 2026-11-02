@@ -1,5 +1,5 @@
 import type { TestConvex } from "convex-test";
-import type { Id } from "../convex/_generated/dataModel";
+import type { Doc, Id } from "../convex/_generated/dataModel";
 import type { MutationCtx } from "../convex/_generated/server";
 import type { BlobReferenceKind } from "../convex/lib/imageModeration/blobReferences";
 import type schema from "../convex/schema";
@@ -55,6 +55,23 @@ export const seedBlobHolderBase = async (t: T) => ({
 });
 
 export type BlobHolderBase = Awaited<ReturnType<typeof seedBlobHolderBase>>;
+
+// A rendition of the spare blob, so only the rendition is `blob`. A definition shows that source:
+// the storage sweep deletes a source nothing holds, and its renditions with it.
+const renditionRow = async (
+  ctx: MutationCtx,
+  base: BlobHolderBase,
+  slot: Pick<Doc<"imageRenditions">, "small" | "medium" | "large">,
+) => {
+  await BLOB_HOLDER_SEEDS.definitionBoxArt(ctx, base, base.spare);
+  return ctx.db.insert("imageRenditions", {
+    sourceId: base.spare,
+    width: 2000,
+    height: 1500,
+    ...slot,
+    createdAt: 0,
+  });
+};
 
 // Typed as a Record over the kinds, so a new kind without a seed here fails type-check.
 export const BLOB_HOLDER_SEEDS: Record<
@@ -166,30 +183,17 @@ export const BLOB_HOLDER_SEEDS: Record<
       evidenceFileId: blob,
       createdAt: 0,
     }),
-  // The source is another blob: only the rendition is `blob`.
-  renditionSmall: (ctx, { spare }, blob) =>
-    ctx.db.insert("imageRenditions", {
-      sourceId: spare,
-      width: 2000,
-      height: 1500,
+  renditionSmall: (ctx, base, blob) =>
+    renditionRow(ctx, base, {
       small: { fileId: blob, width: 480, height: 360 },
-      createdAt: 0,
     }),
-  renditionMedium: (ctx, { spare }, blob) =>
-    ctx.db.insert("imageRenditions", {
-      sourceId: spare,
-      width: 2000,
-      height: 1500,
+  renditionMedium: (ctx, base, blob) =>
+    renditionRow(ctx, base, {
       medium: { fileId: blob, width: 640, height: 480 },
-      createdAt: 0,
     }),
-  renditionLarge: (ctx, { spare }, blob) =>
-    ctx.db.insert("imageRenditions", {
-      sourceId: spare,
-      width: 2000,
-      height: 1500,
+  renditionLarge: (ctx, base, blob) =>
+    renditionRow(ctx, base, {
       large: { fileId: blob, width: 960, height: 720 },
-      createdAt: 0,
     }),
   preserved: (ctx, { member }, blob) =>
     ctx.db.insert("csamEscalations", {

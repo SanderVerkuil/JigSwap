@@ -166,15 +166,17 @@ works and that count reaches zero, the banner disappears. When it is configured,
 Uploads are claimed once and the delete paths keep a blob that another row still holds, so a blob
 nobody holds stays in storage whenever an upload is never attached (a form left unsaved, an attach
 that was refused or came too late, a burst of upload URLs). A daily cron (04:15 UTC) runs
-`lib/storage/storageSweep.sweepStorage` over the whole `_storage` table, 100 blobs per batch, each
+`lib/storage/storageSweep.sweepStorage` over the whole `_storage` table, 50 blobs per batch, each
 batch its own transaction, rescheduling itself until the table is done. For each blob:
 
 - **Younger than 24 hours** (`ORPHAN_MIN_AGE_MS`): kept. An upload may still be attached (the claim
   windows are 15 minutes).
 - **Held by any blob reference** (`lib/imageModeration/blobReferences.blobReferenceKinds`: a copy,
   completion or message photo, a message thumbnail or location map, a circle icon, a definition's
-  box art, a proposal's proposed box art, report evidence, or a CSAM escalation that preserves it):
-  kept. A box-art listing (`boxArtUploads`) holds its blob too, with the exception below.
+  box art, a proposal's proposed box art, report evidence, an image rendition, or a CSAM escalation
+  that preserves it): kept. A box-art listing (`boxArtUploads`) holds its blob too, with the
+  exception below. A rendition is kept only as long as its source: deleting a blob also deletes its
+  renditions (`renditionsStore.deleteRenditions`), which are not counted as candidates of their own.
 - **Held by nothing:** a candidate (`orphans`).
 - **Held only by its box-art listing** (no definition shows it, no proposal proposes it), at least
   7 days old (`UNATTACHED_BOX_ART_TTL_MS`), and its checks are over (not `pending`, not
