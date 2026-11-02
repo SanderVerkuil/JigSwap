@@ -21,12 +21,13 @@ import { WEBP_ENCODER_WASM_BASE64 } from "./webpEncoderWasm";
 // Exif, so the Orientation is read here and handed to it, as in the pipeline. A clean blob no
 // longer has one, but box art from before the metadata strip still may.
 //
-// - Sizes (renditionSizes): one per rung of RENDITION_LADDER (480, 640 and 960 px wide, aspect
-//   kept) narrower than the image, plus, in the place of the first rung that is not, a WebP at
-//   the image's own width. A card that needs more pixels than the narrower rungs then still gets
-//   a WebP rather than the original, which may be a PNG several times the size (box art with
-//   transparency is stored as PNG). 640 is there for 2x screens: a 240-330 px card needs about
-//   500-660 px.
+// - Sizes (renditionSizes): one per rung of the ladder (by default RENDITION_LADDER: 480, 640 and
+//   960 px wide, aspect kept) narrower than the image, plus, in the place of the first rung that
+//   is not, a WebP at the image's own width. A card that needs more pixels than the narrower
+//   rungs then still gets a WebP rather than the original, which may be a PNG several times the
+//   size (box art with transparency is stored as PNG). 640 is there for 2x screens: a 240-330 px
+//   card needs about 500-660 px. An image only ever shown at one small size has a ladder of one
+//   rung (THUMBNAIL_LADDER), so it costs one extra blob instead of three.
 // - Bytes: a rendition is kept only when it is at most RENDITION_MAX_BYTE_RATIO of the source's
 //   bytes; otherwise the browser is better off with the original (a ~1000 px JPEG that is
 //   already compressed hard costs about as much as its 960 px WebP). The dropped slots are
@@ -57,6 +58,20 @@ export const RENDITION_LADDER = [
 ] as const;
 
 export type RenditionSlot = (typeof RENDITION_LADDER)[number]["slot"];
+
+export type RenditionLadder = readonly {
+  slot: RenditionSlot;
+  width: number;
+}[];
+
+/**
+ * One WebP for an image only ever shown as a small tile or avatar (a completion photo's 44 px tile,
+ * a circle icon's 40-56 px avatar): 256 px still fills them at 3x when `object-cover` crops the
+ * long side. The photo viewer opens the original.
+ */
+export const THUMBNAIL_LADDER = [
+  { slot: "small", width: 256 },
+] as const satisfies RenditionLadder;
 
 /** A rendition is kept only when its bytes are at most this share of the source's. */
 export const RENDITION_MAX_BYTE_RATIO = 0.9;
@@ -92,9 +107,10 @@ export type RenditionSet =
 export const renditionSizes = (
   width: number,
   height: number,
+  ladder: RenditionLadder = RENDITION_LADDER,
 ): RenditionSize[] => {
   const sizes: RenditionSize[] = [];
-  for (const rung of RENDITION_LADDER) {
+  for (const rung of ladder) {
     const w = Math.min(rung.width, width);
     sizes.push({
       slot: rung.slot,
@@ -147,6 +163,7 @@ const encodeWebp = async (bitmap: {
  */
 export const encodeRenditions = async (
   bytes: Uint8Array,
+  ladder: RenditionLadder = RENDITION_LADDER,
 ): Promise<RenditionSet> => {
   const guard = checkImageBytes(bytes);
   if (!guard.ok) return guard;
@@ -169,7 +186,7 @@ export const encodeRenditions = async (
   const maxBytes = bytes.byteLength * RENDITION_MAX_BYTE_RATIO;
   const renditions: Rendition[] = [];
   const notSmaller: RenditionSlot[] = [];
-  for (const size of renditionSizes(width, height).reverse()) {
+  for (const size of renditionSizes(width, height, ladder).reverse()) {
     if (image.bitmap.width !== size.width) {
       image.resize({ w: size.width, h: size.height });
     }

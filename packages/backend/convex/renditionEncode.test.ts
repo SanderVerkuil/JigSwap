@@ -9,14 +9,15 @@ import {
   RENDITION_LADDER,
   RENDITION_MAX_BYTE_RATIO,
   renditionSizes,
+  THUMBNAIL_LADDER,
 } from "./lib/imageModeration/renditionEncode";
 import { findMetadata } from "./lib/imageModeration/stripMetadata";
 import { WEBP_ENCODER_WASM_BASE64 } from "./lib/imageModeration/webpEncoderWasm";
 
 // Renditions: the smaller WebP copies of a stored image that cards and thumbnails show. They
 // are made from the stored clean blob through the moderation pipeline's input guards, are
-// downscaled without aliasing, keep transparency and never carry metadata. The ladder is 480,
-// 640 and 960 px; a source narrower than a rung gets a WebP at its own width in that rung's
+// downscaled without aliasing, keep transparency and never carry metadata. The default ladder is
+// 480, 640 and 960 px; a source narrower than a rung gets a WebP at its own width in that rung's
 // place, and a rendition not clearly smaller than its source is not kept.
 
 // A deterministic photo-like picture: smooth gradients plus pseudo-random grain, so the JPEG
@@ -62,6 +63,29 @@ const ok = async (bytes: Uint8Array) => {
   if (!result.ok) throw new Error(`refused: ${result.reason}`);
   return result;
 };
+
+describe("a shorter ladder", () => {
+  test("an image only ever shown small gets one small WebP", async () => {
+    expect(THUMBNAIL_LADDER).toEqual([{ slot: "small", width: 256 }]);
+    const result = await encodeRenditions(
+      await jpeg(1600, 1200),
+      THUMBNAIL_LADDER,
+    );
+    if (!result.ok) throw new Error(`refused: ${result.reason}`);
+    expect(sizesOf(result.renditions)).toEqual([["small", 256, 192]]);
+    expect(result.width).toBe(1600);
+    expect(result.height).toBe(1200);
+  });
+
+  test("a source narrower than its one rung gets a WebP at its own width", async () => {
+    const result = await encodeRenditions(
+      await jpeg(200, 100),
+      THUMBNAIL_LADDER,
+    );
+    if (!result.ok) throw new Error(`refused: ${result.reason}`);
+    expect(sizesOf(result.renditions)).toEqual([["small", 200, 100]]);
+  });
+});
 
 describe("renditionSizes", () => {
   test("one per rung narrower than the image, aspect kept", () => {
