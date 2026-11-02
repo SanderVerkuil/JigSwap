@@ -240,6 +240,8 @@ export type ShellRouteMeta = {
   pageKey: string;
   /** Breadcrumb parent; the crumb links to the group's landing page. */
   group?: ShellGroupKey;
+  /** The page above this one on a route outside the nav groups: the phone's back chevron's way up. */
+  parent?: { href: string; pageKey: string };
   /**
    * - "dashboard": personalised welcome title, no crumb row.
    * - "landing": group landing page, no crumb row.
@@ -324,7 +326,10 @@ export const ROUTE_META: Record<string, ShellRouteMeta> = {
   "/notifications": { pageKey: "notifications" },
   // Ungrouped like its parent (no ShellGroupKey fits); the page itself publishes
   // an explicit "Notifications" crumb via usePageHeader.
-  "/notifications/preferences": { pageKey: "notificationPreferences" },
+  "/notifications/preferences": {
+    pageKey: "notificationPreferences",
+    parent: { href: "/notifications", pageKey: "notifications" },
+  },
 };
 
 /** Resolve the shell meta for a pathname (exact, then longest prefix). */

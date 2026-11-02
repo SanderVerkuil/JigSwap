@@ -63,12 +63,20 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   // same precedence as the desktop page head.
   const { meta, title: shellTitle, titleOverride } = useShellTitle();
   const isHome = meta?.variant === "dashboard";
-  // Deep pages (a route with a parent section) trade the breadcrumb row for a
-  // back chevron; landings, the profile and the pages a tab opens (/trades sits
-  // in Community but is the Swaps tab) show only a title.
+  // Deep pages (a route with a parent section or page) trade the breadcrumb row
+  // for a back chevron; landings, the profile and the pages a tab opens (/trades
+  // sits in Community but is the Swaps tab) show only a title.
   const group =
     meta?.group && meta.variant === undefined && !isMobileTabRoot(pathname)
       ? getNavGroup(meta.group)
+      : undefined;
+  const up = group
+    ? { href: group.href, label: t(`groups.${group.key}.label`) }
+    : meta?.parent
+      ? {
+          href: meta.parent.href,
+          label: t(`pages.${meta.parent.pageKey}.title`),
+        }
       : undefined;
   // The chevron is a real Back: when the previous history entry is one of ours
   // (TanStack numbers only in-app entries, so canGoBack is false on a cold load
@@ -114,16 +122,16 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
       className="sticky top-0 z-30 shrink-0 border-b bg-card pt-[env(safe-area-inset-top)] md:hidden"
     >
       <div className="flex h-14 items-center gap-1 pr-2 pl-1.5 max-sm:gap-0">
-        {group ? (
+        {up ? (
           <Link
-            href={group.href}
+            href={up.href}
+            // On a child of that page the router would call this link the current page.
+            activeOptions={{ exact: true }}
             onClick={goBack}
             aria-label={
               canGoBack
                 ? t("mobile.backGeneric")
-                : t("mobile.back", {
-                    section: t(`groups.${group.key}.label`),
-                  })
+                : t("mobile.back", { section: up.label })
             }
             className={tapTarget}
           >
@@ -158,7 +166,7 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
               className={cn(
                 // The controls leave a phone about 126px: two smaller lines before an ellipsis.
                 "font-heading truncate text-lg font-bold max-sm:line-clamp-2 max-sm:whitespace-normal max-sm:text-base max-sm:leading-snug",
-                !group && "pl-2",
+                !up && "pl-2",
               )}
             >
               {title}

@@ -57,12 +57,14 @@ vi.mock("@/compat/link", () => ({
   Link: ({
     href,
     children,
+    activeOptions,
     ...rest
   }: {
     href: string;
     children?: ReactNode;
+    activeOptions?: { exact?: boolean };
   }) => (
-    <a href={href} {...rest}>
+    <a href={href} data-exact-active={activeOptions?.exact} {...rest}>
       {children}
     </a>
   ),
@@ -181,6 +183,32 @@ describe("MobileTopBar back chevron", () => {
     expect(click.defaultPrevented).toBe(false);
     expect(mocks.back).not.toHaveBeenCalled();
   });
+
+  // Notification preferences sits in no nav group, and in an installed app on iOS there is no
+  // browser back button.
+  it("goes up to the parent page on a route outside the nav groups", () => {
+    renderBar("/notifications/preferences");
+    const link = screen.getByRole("link", { name: "Back to Notifications" });
+    expect(link.getAttribute("href")).toBe("/notifications");
+    // The router would mark a link to the parent as current on its child otherwise.
+    expect(link.getAttribute("data-exact-active")).toBe("true");
+  });
+
+  it("goes back through history there too", () => {
+    mocks.canGoBack = true;
+    renderBar("/notifications/preferences");
+    fireEvent.click(screen.getByRole("link", { name: "Back" }));
+    expect(mocks.back).toHaveBeenCalledOnce();
+  });
+
+  it.each(["/notifications", "/profile", "/whats-new"])(
+    "shows no back chevron on the top-level page %s",
+    (pathname) => {
+      mocks.canGoBack = true;
+      renderBar(pathname);
+      expect(backLink()).toBeNull();
+    },
+  );
 
   it("names the generic Back in Dutch", () => {
     mocks.canGoBack = true;

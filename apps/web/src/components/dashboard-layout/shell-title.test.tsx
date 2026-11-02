@@ -32,12 +32,14 @@ vi.mock("@/compat/link", () => ({
   Link: ({
     href,
     children,
+    activeOptions,
     ...rest
   }: {
     href: string;
     children?: ReactNode;
+    activeOptions?: { exact?: boolean };
   }) => (
-    <a href={href} {...rest}>
+    <a href={href} data-exact-active={activeOptions?.exact} {...rest}>
       {children}
     </a>
   ),
