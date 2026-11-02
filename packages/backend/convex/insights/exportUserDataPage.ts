@@ -14,8 +14,10 @@ import { messageAttachmentViews } from "../conversation/messageAttachments";
 import { threadRowByAggregateId } from "../conversation/readModelHelpers";
 import { locationAttachmentViewOf } from "../conversation/sharedLocations";
 import {
+  contactShareOf,
   projectTradeParty,
   tradePartyMemberView,
+  tradeSideOf,
   type TradePartyMemo,
 } from "../exchange/tradeParty";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
@@ -168,6 +170,9 @@ const exchangeRow = async (
 ): Promise<ExportRow> => {
   const counterparty =
     exchange.initiatorId === me ? exchange.recipientId : exchange.initiatorId;
+  // Their own consent to show their email on this trade; the other party's is not theirs to read.
+  const side = tradeSideOf(exchange, me);
+  const emailShare = side && (await contactShareOf(ctx, exchange._id, side));
   return {
     id: exchange._id,
     type: exchange.type,
@@ -178,6 +183,8 @@ const exchangeRow = async (
     loanReturnDate: exchange.loanReturnDate,
     proposerConfirmedAt: exchange.initiatorConfirmationTimestamp,
     ownerConfirmedAt: exchange.recipientConfirmationTimestamp,
+    emailShared: Boolean(emailShare),
+    ...(emailShare && { emailSharedAt: emailShare.sharedAt }),
     createdAt: exchange.createdAt,
     updatedAt: exchange.updatedAt,
     counterparty: await tradePerson(ctx, me, exchange, counterparty, memo),

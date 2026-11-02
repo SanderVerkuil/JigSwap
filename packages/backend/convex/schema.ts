@@ -1026,7 +1026,9 @@ export default defineSchema({
   // Exchange: one party's explicit consent to show their email to the other party of THIS trade
   // (exchange/setContactSharing; read by exchange/getTradePartner through the domain rule
   // tradeEmailVisible). At most one row per side; deleting it withdraws consent. No row = not
-  // shared (fail closed, no backfill). Holds no member id: the side resolves through the exchange.
+  // shared (fail closed, no backfill). Holds no member id: the side resolves through the exchange,
+  // which is how the account purge (conversation/purgeMemberMessagingData) and the data export
+  // (insights/exportUserDataPage) find it.
   tradeContactShares: defineTable({
     exchangeId: v.id("exchanges"),
     side: v.union(v.literal("initiator"), v.literal("recipient")),

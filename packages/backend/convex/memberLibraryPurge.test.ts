@@ -861,6 +861,56 @@ describe("account deletion: a copy she sold stays whole; her own library goes", 
   });
 });
 
+// tradeContactShares holds no member id, so nothing but the exchange and the side ties a row to a
+// member (memberDataCoverage.test.ts classifies it through that pair).
+describe("account deletion: email-sharing consent", () => {
+  test("their own consent goes on both sides of their trades; the other party's stays", async () => {
+    const t = newT();
+    const s = await seedMembers(t);
+    const copy = await insertCopy(t, s.puzzleId, s.bob);
+    const exchange = (initiatorId: Id<"users">, recipientId: Id<"users">) =>
+      t.run((ctx) =>
+        ctx.db.insert("exchanges", {
+          initiatorId,
+          recipientId,
+          type: "sale",
+          requestedPuzzleId: copy,
+          status: "completed",
+          createdAt: 1,
+          updatedAt: 1,
+        }),
+      );
+    const started = await exchange(s.alice, s.bob);
+    const received = await exchange(s.bob, s.alice);
+    const notHers = await exchange(s.bob, s.carol);
+    await t.run(async (ctx) => {
+      for (const exchangeId of [started, received, notHers]) {
+        for (const side of ["initiator", "recipient"] as const) {
+          await ctx.db.insert("tradeContactShares", {
+            exchangeId,
+            side,
+            sharedAt: 1,
+          });
+        }
+      }
+    });
+
+    await deleteMember(t, "alice");
+
+    const left = await t.run((ctx) =>
+      ctx.db.query("tradeContactShares").collect(),
+    );
+    expect(left.map((row) => [row.exchangeId, row.side]).sort()).toEqual(
+      [
+        [started, "recipient"],
+        [received, "initiator"],
+        [notHers, "initiator"],
+        [notHers, "recipient"],
+      ].sort(),
+    );
+  });
+});
+
 describe("account deletion: photos kept for a CSAM escalation", () => {
   test("a quarantined copy photo and a preserved blob stay; the rest goes", async () => {
     const t = newT();

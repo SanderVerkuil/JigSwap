@@ -13,7 +13,8 @@ import schema from "./schema";
 // The walker below finds, through objects, arrays, unions, optionals and records:
 // - every v.id("users") field (a reference to a member);
 // - every v.any() field (opaque: it may hold member ids, e.g. domainEvents.payload);
-// - every string field named email/clerkId or ending in Email/ClerkId (a direct identifier).
+// - every string field named email/clerkId or ending in Email/ClerkId (a direct identifier);
+// - every `side` beside an exchange id (it names a party of that exchange, with no users id).
 // A v.string() that holds a users id cannot be seen; such paths are listed by hand with
 // `declared`. A new member-linked field without an entry fails here, and so does an entry for a
 // field the schema no longer has, a purge phase or export section no entry accounts for, or a
@@ -250,6 +251,14 @@ const MANIFEST: Record<string, Disposition> = {
     },
     phases: ["exchangesOpenIn"],
     export: { exported: ["exchangesReceived"] },
+  },
+  "tradeContactShares.side": {
+    erasure: {
+      deleted:
+        "their consent to show their email on each of their trades, found through the exchange and its side; the other party's consent on the same trade is theirs and stays",
+    },
+    phases: ["contactShares", "contactSharesIn"],
+    export: { exported: ["exchangesProposed", "exchangesReceived"] },
   },
   "exchanges.offeredPuzzleOwnerId": {
     erasure: {
@@ -871,11 +880,20 @@ const walk = (validator: GenericValidator, path: string, found: Found) => {
       if (IDENTIFIER_NAME.test(name)) found.memberPaths.add(path);
       return;
     }
-    case "object":
+    case "object": {
+      const { exchangeId, side } = validator.fields;
+      if (
+        exchangeId?.kind === "id" &&
+        exchangeId.tableName === "exchanges" &&
+        side
+      ) {
+        found.memberPaths.add(`${path}.side`);
+      }
       for (const [name, field] of Object.entries(validator.fields)) {
         walk(field, `${path}.${name}`, found);
       }
       return;
+    }
     case "array":
       walk(validator.element, `${path}[]`, found);
       return;
@@ -918,6 +936,7 @@ describe("member-data coverage manifest (SEC-95)", () => {
       "reports.evidence.messages[].authorId",
       "csamEscalations.uploaderSnapshot.email",
       "domainEvents.payload",
+      "tradeContactShares.side",
     ]) {
       expect(found.memberPaths).toContain(path);
     }
