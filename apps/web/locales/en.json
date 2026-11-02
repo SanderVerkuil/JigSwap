@@ -4237,7 +4237,10 @@
     "library": "My Library — JigSwap",
     "people": "People — JigSwap",
     "members": "Members — JigSwap",
-    "copyInstance": "Owned copy — JigSwap",
+    "copyInstance": "Copy — JigSwap",
+    "named": "{name} — JigSwap",
+    "suggestEditOf": "Suggest an edit: {name} — JigSwap",
+    "threadOf": "{name} — Messages — JigSwap",
     "whatsNew": "What's new — JigSwap",
     "quickSetup": "Quick setup — JigSwap",
     "mySuggestions": "My suggestions — JigSwap",
@@ -4397,7 +4400,7 @@
         "subtitle": "Everything that needs your attention."
       },
       "copyInstance": {
-        "title": "Owned copy",
+        "title": "Copy",
         "subtitle": "The provenance and history of a single copy."
       },
       "notificationPreferences": {

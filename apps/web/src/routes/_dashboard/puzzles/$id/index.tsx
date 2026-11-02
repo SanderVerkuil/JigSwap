@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/tooltip";
 import { gateway, Id } from "@/gateway";
 import { useBoxArtInCheck } from "@/hooks/use-box-art-check";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 import { useFavorites } from "@/hooks/use-favorites";
 import {
   authorMemberIdOf,
@@ -180,6 +181,8 @@ function PuzzleDefinitionDetail({
     () => ({ title: definition.title, titleInContent: true }),
     [definition.title],
   );
+  const tTitles = useTranslations("titles");
+  useDocumentTitle(tTitles("named", { name: definition.title }));
 
   // Only an approved definition (or the viewer's own submission) takes reviews; the server
   // refuses the rest, so neither the action nor the composer is offered there. Loading, or a

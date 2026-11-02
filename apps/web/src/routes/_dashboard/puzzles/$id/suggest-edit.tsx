@@ -28,6 +28,7 @@ import { PageLoading } from "@/components/ui/loading";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway, Id } from "@/gateway";
 import { useBoxArtCheckNotice } from "@/hooks/use-box-art-check";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 import { useRelativeTime } from "@/hooks/use-relative-time";
 import { useUploadBoxArt } from "@/hooks/use-upload-box-art";
 import { rateLimitedRetryAt } from "@/lib/convex-error-code";
@@ -160,6 +161,8 @@ function SuggestEditForm({
     }),
     [t, tShell, view.title, id, openProposal],
   );
+  const tTitles = useTranslations("titles");
+  useDocumentTitle(tTitles("suggestEditOf", { name: view.title }));
 
   // Freeze the diff baseline at mount (mirrors the backend's frozen-baseline model): the form
   // snapshot must diff against the definition AS THE MEMBER OPENED IT — if an admin changes the

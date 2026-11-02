@@ -99,6 +99,17 @@ describe("Copy page title", () => {
   });
 });
 
+describe("Copy page tab title", () => {
+  it("names the puzzle, so several open tabs can be told apart", () => {
+    render(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <CopyInstanceScreen copyId="copy_1" owned={false} />
+      </IntlProvider>,
+    );
+    expect(document.title).toBe("The Night Watch — JigSwap");
+  });
+});
+
 describe("Copy page community rating", () => {
   const renderScreen = () =>
     render(

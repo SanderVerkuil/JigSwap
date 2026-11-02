@@ -170,6 +170,17 @@ describe("sanitizeAnalyticsEvent: page titles", () => {
 });
 
 describe("sanitizeAnalyticsEvent: messaging", () => {
+  // A thread's tab title names the other member, and PostHog copies the title onto $pageview.
+  it("drops the page title on the messaging screens", () => {
+    const result = sanitizeAnalyticsEvent(
+      event("$pageview", {
+        $pathname: "/messages/thread_1",
+        title: "Mara — Messages — JigSwap",
+      }),
+    );
+    expect(result?.properties).toEqual({ $pathname: "/messages/thread_1" });
+  });
+
   it.each(["$autocapture", "$rageclick", "$dead_click", "$copy_autocapture"])(
     "drops %s on the messaging screens",
     (name) => {

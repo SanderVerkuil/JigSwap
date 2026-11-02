@@ -427,6 +427,14 @@ describe("puzzle detail page: actions", () => {
   });
 });
 
+describe("puzzle detail page: tab title", () => {
+  it("names the puzzle once it has loaded", () => {
+    setView(emptyView());
+    renderPage();
+    expect(document.title).toBe("Café — JigSwap");
+  });
+});
+
 describe("puzzle detail page: wording", () => {
   it("opens with the puzzle's name, not an internal 'puzzle definition' label", () => {
     setView(emptyView());

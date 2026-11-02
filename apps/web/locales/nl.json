@@ -4237,7 +4237,10 @@
     "library": "Mijn bibliotheek — JigSwap",
     "people": "Mensen — JigSwap",
     "members": "Leden — JigSwap",
-    "copyInstance": "Exemplaar in bezit — JigSwap",
+    "copyInstance": "Exemplaar — JigSwap",
+    "named": "{name} — JigSwap",
+    "suggestEditOf": "Wijziging voorstellen: {name} — JigSwap",
+    "threadOf": "{name} — Berichten — JigSwap",
     "whatsNew": "Wat is er nieuw — JigSwap",
     "quickSetup": "Snel instellen — JigSwap",
     "mySuggestions": "Mijn voorstellen — JigSwap",
@@ -4397,7 +4400,7 @@
         "subtitle": "Alles wat je aandacht vraagt."
       },
       "copyInstance": {
-        "title": "Exemplaar in bezit",
+        "title": "Exemplaar",
         "subtitle": "De herkomst en geschiedenis van één exemplaar."
       },
       "notificationPreferences": {

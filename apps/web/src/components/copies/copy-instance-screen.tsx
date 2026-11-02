@@ -45,6 +45,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StarRating } from "@/components/ui/star-rating";
 import { gateway, Id } from "@/gateway";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 import { useRelativeTime } from "@/hooks/use-relative-time";
 import { useUploadLimitMessage } from "@/hooks/use-upload-limit-message";
 import { formatCompletionDate } from "@/lib/completion-format";
@@ -324,7 +325,7 @@ function CopyInstanceDetail({
   );
 
   // Publish the page head: the puzzle name as the title (replacing the generic
-  // "Owned copy"), the breadcrumb trail, and the owner-only Edit action. For the
+  // "Copy"), the breadcrumb trail, and the owner-only Edit action. For the
   // owner route (owned) the crumbs are left to the shell's auto trail (My Library ›
   // My Puzzles › <name>, since /my-puzzles/$id's pageKey matches the nav item);
   // the public route publishes an explicit Community › Browse Puzzles › <name> trail (the crumb
@@ -332,6 +333,8 @@ function CopyInstanceDetail({
   // A readable `?from=collection:<id>` context overrides both with My Library ›
   // Collections › <name> and highlights Collections in the sidebar; no context (or an
   // unreadable/malformed one) falls back to the behavior above, byte-identical.
+  const tTitles = useTranslations("titles");
+  useDocumentTitle(tTitles("named", { name: snapshot.title }));
   usePageHeader(
     () => ({
       title: snapshot.title,

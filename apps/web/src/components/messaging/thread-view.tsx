@@ -17,6 +17,7 @@ import { usePresenceOf } from "@/components/presence/use-presence";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, type Id } from "@/gateway";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
@@ -196,6 +197,11 @@ export function ThreadView({
   const title = thread
     ? threadSubjectTitle(thread.subject, t, displayName)
     : undefined;
+  // Several open threads can be told apart. An embedded thread leaves its page's title alone.
+  const tTitles = useTranslations("titles");
+  useDocumentTitle(
+    title && !hideHeader ? tTitles("threadOf", { name: title }) : undefined,
+  );
   // Who wrote the other side's messages, for screen readers: the DM or trading
   // partner's display name, the anonymous label when they're anonymised, and a
   // generic label until the inbox row has loaded. Circle threads name each
