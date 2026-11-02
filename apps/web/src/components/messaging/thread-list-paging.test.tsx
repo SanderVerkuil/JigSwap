@@ -178,6 +178,24 @@ describe("ThreadList paging", () => {
     expect(screen.queryByText("No conversations match")).toBeNull();
   });
 
+  // No row to land on and the button is gone: focus would fall to the page body.
+  it("lands focus on Clear when the search still matches nothing and the button is gone", () => {
+    setup({ 30: threads(30), 60: threads(40) });
+    fireEvent.change(screen.getByRole("searchbox"), {
+      target: { value: "nobody" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Show older conversations" }),
+    );
+
+    expect(
+      screen.queryByRole("button", { name: "Show older conversations" }),
+    ).toBeNull();
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Clear" }),
+    );
+  });
+
   it("offers nothing when the inbox fits one page", () => {
     setup({ 30: threads(12) });
     expect(rowLinks()).toHaveLength(12);
