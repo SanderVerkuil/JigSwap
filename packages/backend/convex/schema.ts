@@ -354,7 +354,7 @@ export default defineSchema({
     //   ownerPrivate  true while the owner's profile is private; absent means public, as on
     //                 `profiles`. Browse shows a private owner's copy only through a circle, which it
     //                 reads separately, so those rows stay out of its public range and can't use up
-    //                 its candidate window or read budget.
+    //                 a page's read budget.
     //   listedAt      when the copy was last offered (became open); kept while it is closed, so that
     //                 reopening soon after keeps its place. Browse lists the newest offers first, so
     //                 an old copy offered today sorts as new.

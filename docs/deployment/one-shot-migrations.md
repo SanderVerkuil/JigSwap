@@ -833,9 +833,10 @@ SEC-29) are deployed there. There is no ordering pressure: every copy save, ever
 exchange and every profile visibility change already writes the fields, and until a row has
 them, Browse still finds it through a fallback that reads the rows without a flag and checks
 their availability and owner. That fallback reads legacy closed copies and private members'
-copies too, and they count against Browse's read budget (3,000 rows per call), so on a
-deployment with more copies than that Browse can miss older listings until the backfill has
-run. Run it soon after the deploy; once it has run, the fallback range is empty and Browse
+copies too, and they count against Browse's read budget (500 rows per page), so on a
+deployment with more copies than that a page can come back short until the backfill has
+run, and the member has to press Load more to reach older listings. Run it soon after the
+deploy; once it has run, the fallback range is empty and Browse
 reads only public members' open copies.
 
 **What it does:** pages through `ownedPuzzles` (200 rows per batch; `batchSize` overrides

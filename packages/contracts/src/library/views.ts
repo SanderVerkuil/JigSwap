@@ -116,14 +116,16 @@ export interface BrowseOwnedCopyView extends Omit<
   viewerMayRequest: boolean;
 }
 
-/** The paginated wrapper `library.browseOwned` returns (offset/limit paging, not Convex cursors). */
+/**
+ * One page of `library.browseOwned`. There is no total: counting matches would mean reading them.
+ * A filter that matches little can come back short, even empty, with `hasMore` still true.
+ */
 export interface BrowseOwnedCopiesView {
   ownedPuzzles: BrowseOwnedCopyView[];
-  total: number;
+  /** More may follow. False only once the walk reached the end of the listings. */
   hasMore: boolean;
-  /** True when Browse's candidate window (the newest open copies) was cut short, so `total` counts
-   * only the matches inside it and more may exist. Optional for older servers. */
-  totalIsLowerBound?: boolean;
+  /** Pass back as `cursor` for the next page; null when there is no next page. */
+  continueCursor: string | null;
 }
 
 /**

@@ -275,7 +275,7 @@ describe("library reads", () => {
       api.library.browseOwnedPuzzles.browseOwnedPuzzles,
       { searchTerm: "mountain", includeOwnPuzzles: true },
     );
-    expect(result.total).toBe(1);
+    expect(result.ownedPuzzles).toHaveLength(1);
     expect(result.hasMore).toBe(false);
     const owner = result.ownedPuzzles[0].owner;
     expect(owner.anonymous ? null : owner.member.name).toBe("Alice");

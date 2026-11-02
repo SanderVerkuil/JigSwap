@@ -78,53 +78,214 @@ export const newestListedFirst = (
 // show to anyone) or private (only reachable through a circle).
 export type ListingOwners = "public" | "private";
 
-// Every row of one owner-visibility range of open copies, newest offer first, platform-wide or for
-// one definition (`by_listing` / `by_puzzle_listing`). The public range is merged with the range of
-// rows written before the listing fields existed (`isOpen` absent, owner not yet known): until
-// library/backfillCopyOpenFlag has run, it holds every legacy row, closed and private-owner ones
-// included; after it, the range is empty. Closed legacy rows are yielded too, so a caller's read
-// budget counts every row read: decide with isOpenAvailability, and re-check the owner.
+// Where a walk over the listing indexes reads next, newest offer first.
+type ListingRange =
+  | { kind: "all" }
+  // Rows listed at exactly this time, created before `before` (the index ends in _creationTime).
+  | { kind: "sameTime"; listedAt: number | undefined; before: number }
+  | { kind: "listedBefore"; listedAt: number };
+
+// One index range of `isOpen` / `ownerPrivate` rows, platform-wide or for one definition.
+const listingRows = (
+  ctx: QueryCtx,
+  puzzleId: Id<"puzzles"> | undefined,
+  isOpen: true | undefined,
+  ownerPrivate: true | undefined,
+  range: ListingRange,
+) =>
+  (puzzleId === undefined
+    ? ctx.db.query("ownedPuzzles").withIndex("by_listing", (q) => {
+        const rows = q.eq("isOpen", isOpen).eq("ownerPrivate", ownerPrivate);
+        return range.kind === "all"
+          ? rows
+          : range.kind === "sameTime"
+            ? rows
+                .eq("listedAt", range.listedAt)
+                .lt("_creationTime", range.before)
+            : rows.lt("listedAt", range.listedAt);
+      })
+    : ctx.db.query("ownedPuzzles").withIndex("by_puzzle_listing", (q) => {
+        const rows = q
+          .eq("puzzleId", puzzleId)
+          .eq("isOpen", isOpen)
+          .eq("ownerPrivate", ownerPrivate);
+        return range.kind === "all"
+          ? rows
+          : range.kind === "sameTime"
+            ? rows
+                .eq("listedAt", range.listedAt)
+                .lt("_creationTime", range.before)
+            : rows.lt("listedAt", range.listedAt);
+      })
+  ).order("desc");
+
+/**
+ * Where a paged walk over public listings stopped (library/browseOwnedPuzzles). The flagged and the
+ * legacy range each resume after their own last row: the merged order compares `listedAt ?? createdAt`,
+ * which neither index holds on its own. `sortKey` is the last row's place in the merged order, for
+ * the copies a caller merges in from memory.
+ */
+export type ListingCursor = {
+  flagged?: [listedAt: number | null, creationTime: number];
+  legacy?: number;
+  sortKey?: [listedTime: number, creationTime: number];
+};
+
+export const encodeListingCursor = (cursor: ListingCursor): string =>
+  JSON.stringify(cursor);
+
+const isFiniteNumber = (value: unknown): value is number =>
+  typeof value === "number" && Number.isFinite(value);
+
+/** A cursor as the client sent it back. Anything unreadable starts from the newest offer: a cursor
+ * only says where to read, and every row is still gated. */
+export const decodeListingCursor = (
+  cursor: string | null | undefined,
+): ListingCursor | undefined => {
+  if (!cursor) return undefined;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(cursor);
+  } catch {
+    return undefined;
+  }
+  if (typeof parsed !== "object" || parsed === null) return undefined;
+  const { flagged, legacy, sortKey } = parsed as Record<string, unknown>;
+  return {
+    ...(Array.isArray(flagged) &&
+    (flagged[0] === null || isFiniteNumber(flagged[0])) &&
+    isFiniteNumber(flagged[1])
+      ? { flagged: [flagged[0] as number | null, flagged[1]] }
+      : {}),
+    ...(isFiniteNumber(legacy) ? { legacy } : {}),
+    ...(Array.isArray(sortKey) &&
+    isFiniteNumber(sortKey[0]) &&
+    isFiniteNumber(sortKey[1])
+      ? { sortKey: [sortKey[0], sortKey[1]] }
+      : {}),
+  };
+};
+
+async function* flaggedRowsAfter(
+  ctx: QueryCtx,
+  puzzleId: Id<"puzzles"> | undefined,
+  ownerPrivate: true | undefined,
+  after: ListingCursor["flagged"],
+): AsyncGenerator<Doc<"ownedPuzzles">> {
+  const rows = (range: ListingRange) =>
+    listingRows(ctx, puzzleId, true, ownerPrivate, range);
+  if (after === undefined) {
+    yield* rows({ kind: "all" });
+    return;
+  }
+  const [listedAt, before] = after;
+  yield* rows({ kind: "sameTime", listedAt: listedAt ?? undefined, before });
+  // A row without `listedAt` sorts below every timestamp, so this range includes those too.
+  if (listedAt !== null) yield* rows({ kind: "listedBefore", listedAt });
+}
+
+async function* legacyRowsAfter(
+  ctx: QueryCtx,
+  puzzleId: Id<"puzzles"> | undefined,
+  after: ListingCursor["legacy"],
+): AsyncGenerator<Doc<"ownedPuzzles">> {
+  yield* listingRows(
+    ctx,
+    puzzleId,
+    undefined,
+    undefined,
+    after === undefined
+      ? { kind: "all" }
+      : { kind: "sameTime", listedAt: undefined, before: after },
+  );
+}
+
+const isOlderThanKey = (
+  copy: Doc<"ownedPuzzles">,
+  [listedTime, creationTime]: [number, number],
+): boolean => {
+  const listed = listedTimeOf(copy);
+  return (
+    listed < listedTime ||
+    (listed === listedTime && copy._creationTime < creationTime)
+  );
+};
+
+/**
+ * The open copies of public owners after `after`, newest offer first, platform-wide or for one
+ * definition (`by_listing` / `by_puzzle_listing`), each with the cursor that resumes right after it.
+ * Reads the index only as far as the caller keeps asking. The range is merged with the range of rows
+ * written before the listing fields existed (`isOpen` absent, owner not yet known): until
+ * library/backfillCopyOpenFlag has run, it holds every legacy row, closed and private-owner ones
+ * included; after it, the range is empty. Closed legacy rows are yielded too, so a caller's read
+ * budget counts every row read: decide with isOpenAvailability, and re-check the owner.
+ *
+ * `alsoListed` are copies a caller holds in memory (circle-shared ones, which may be private owners'
+ * and so in no public range): merged in by the same order, each yielded once.
+ */
+export async function* publicListingsAfter(
+  ctx: QueryCtx,
+  puzzleId: Id<"puzzles"> | undefined,
+  after: ListingCursor | undefined,
+  alsoListed: readonly Doc<"ownedPuzzles">[] = [],
+): AsyncGenerator<{ copy: Doc<"ownedPuzzles">; cursor: ListingCursor }> {
+  const flagged = flaggedRowsAfter(ctx, puzzleId, undefined, after?.flagged);
+  const legacy = legacyRowsAfter(ctx, puzzleId, after?.legacy);
+  const sortKey = after?.sortKey;
+  const held = alsoListed
+    .filter((copy) => sortKey === undefined || isOlderThanKey(copy, sortKey))
+    .sort(newestListedFirst);
+  let heldAt = 0;
+  let cursor: ListingCursor = { ...after };
+  const yielded = new Set<Id<"ownedPuzzles">>();
+  let a = await flagged.next();
+  let b = await legacy.next();
+  for (;;) {
+    const fromFlagged = a.done ? undefined : a.value;
+    const fromLegacy = b.done ? undefined : b.value;
+    const fromHeld = held[heldAt];
+    // On a tie the index wins, so a held copy that is also in the index moves its position on.
+    let next = fromFlagged ?? fromLegacy ?? fromHeld;
+    if (next === undefined) return;
+    if (fromLegacy && newestListedFirst(fromLegacy, next) < 0)
+      next = fromLegacy;
+    if (fromHeld && newestListedFirst(fromHeld, next) < 0) next = fromHeld;
+
+    if (next === fromFlagged) {
+      cursor = {
+        ...cursor,
+        flagged: [next.listedAt ?? null, next._creationTime],
+      };
+      a = await flagged.next();
+    } else if (next === fromLegacy) {
+      cursor = { ...cursor, legacy: next._creationTime };
+      b = await legacy.next();
+    } else {
+      heldAt += 1;
+    }
+    if (yielded.has(next._id)) continue;
+    yielded.add(next._id);
+    cursor = {
+      ...cursor,
+      sortKey: [listedTimeOf(next), next._creationTime],
+    };
+    yield { copy: next, cursor };
+  }
+}
+
+// Every row of one owner-visibility range of open copies, newest offer first. See
+// publicListingsAfter for what the public range holds.
 async function* openCopyRows(
   ctx: QueryCtx,
   puzzleId: Id<"puzzles"> | undefined,
   owners: ListingOwners,
 ): AsyncGenerator<Doc<"ownedPuzzles">> {
-  const range = (isOpen: true | undefined, ownerPrivate: true | undefined) =>
-    (puzzleId === undefined
-      ? ctx.db
-          .query("ownedPuzzles")
-          .withIndex("by_listing", (q) =>
-            q.eq("isOpen", isOpen).eq("ownerPrivate", ownerPrivate),
-          )
-      : ctx.db
-          .query("ownedPuzzles")
-          .withIndex("by_puzzle_listing", (q) =>
-            q
-              .eq("puzzleId", puzzleId)
-              .eq("isOpen", isOpen)
-              .eq("ownerPrivate", ownerPrivate),
-          )
-    )
-      .order("desc")
-      [Symbol.asyncIterator]();
-  const flagged = range(true, owners === "private" ? true : undefined);
   if (owners === "private") {
-    for (let a = await flagged.next(); !a.done; a = await flagged.next()) {
-      yield a.value;
-    }
+    yield* flaggedRowsAfter(ctx, puzzleId, true, undefined);
     return;
   }
-  const legacy = range(undefined, undefined);
-  let a = await flagged.next();
-  let b = await legacy.next();
-  while (!a.done || !b.done) {
-    if (b.done || (!a.done && newestListedFirst(a.value, b.value) <= 0)) {
-      yield a.value;
-      a = await flagged.next();
-    } else {
-      yield b.value;
-      b = await legacy.next();
-    }
+  for await (const { copy } of publicListingsAfter(ctx, puzzleId, undefined)) {
+    yield copy;
   }
 }
 

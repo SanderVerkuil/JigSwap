@@ -118,8 +118,8 @@ function BrowsePage() {
   );
 
   // Every condition (availability included) and the free-text searchTerm (matched over title /
-  // brand / description / tags) is applied by gateway.library.browseOwned before paging, so the
-  // total and "Load more" cover every matching offer, not just the first page.
+  // brand / description / tags) is applied by gateway.library.browseOwned as it fills a page, so
+  // "Load more" reaches every matching offer.
   const browse = useBrowsePages(
     browseFilterArgs(query, search.q ?? "", puzzleFilter),
   );
@@ -178,18 +178,18 @@ function BrowsePage() {
           tEnum={t}
         />
         <div className="flex items-center gap-3">
-          {/* The exact number of matching offers: "Showing x of y" while more can be loaded. */}
-          {browse.total === undefined ? (
-            browse.loading && <Skeleton className="h-4 w-28" />
+          {/* How many offers are on screen, with a + while more may follow: counting them all would
+              mean reading them all. */}
+          {browse.loading ? (
+            <Skeleton className="h-4 w-28" />
           ) : (
-            <span className="text-muted-foreground text-sm">
-              {shownPuzzles.length < browse.total
-                ? tBrowse("showingCount", {
-                    shown: shownPuzzles.length,
-                    total: browse.total,
-                  })
-                : tBrowse("resultsCount", { count: shownPuzzles.length })}
-            </span>
+            shownPuzzles.length > 0 && (
+              <span className="text-muted-foreground text-sm">
+                {tBrowse(browse.hasMore ? "resultsCountMore" : "resultsCount", {
+                  count: shownPuzzles.length,
+                })}
+              </span>
+            )
           )}
           <ViewModeToggle
             value={viewMode}
@@ -215,7 +215,11 @@ function BrowsePage() {
             <PuzzleCardSkeleton key={i} />
           ))}
         </PuzzleViewProvider>
-      ) : shownPuzzles.length === 0 && !browse.stale ? (
+      ) : shownPuzzles.length === 0 && browse.hasMore ? (
+        // A filter that matches little: the server stopped looking before it found any, and carries
+        // on from there when asked.
+        <EmptyState title={tBrowse("noMatchesYet")} />
+      ) : shownPuzzles.length === 0 && !browse.stale && !browse.loadingMore ? (
         <BrowseEmptyState
           search={search}
           // Clearing the conditions keeps the ?puzzle chip and the view mode.
@@ -305,7 +309,9 @@ function BrowsePage() {
             ? tCommon("loading")
             : browse.loadMoreFailed
               ? tBrowse("loadMoreRetry")
-              : tBrowse("loadMore")}
+              : shownPuzzles.length === 0
+                ? tBrowse("keepLooking")
+                : tBrowse("loadMore")}
         </Button>
       )}
 
