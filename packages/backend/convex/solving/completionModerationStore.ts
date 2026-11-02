@@ -13,6 +13,10 @@ import {
   quarantineArgs,
   recordCsamEscalation,
 } from "../lib/imageModeration/quarantine";
+import {
+  deleteRenditions,
+  scheduleRenditions,
+} from "../lib/imageModeration/renditionsStore";
 import { deleteBlobUnlessReferenced } from "../lib/storage/blobLifecycle";
 import { needsRescreen } from "../library/adapters/photoModeration";
 
@@ -22,6 +26,10 @@ import { needsRescreen } from "../library/adapters/photoModeration";
 // functions. Unlike the library table, completion photos ALSO live in the parent `completions`
 // row's `photos` array, so the file swap and the rejection each patch that row too — direct
 // system writes, deliberately outside the Solving domain path (moderation is not a member edit).
+//
+// Renditions (lib/imageModeration/renditionsStore): an approval (writeVerdict, so the pipeline's
+// verdict and a re-screen's) schedules them in the background; a rejection and a quarantine delete
+// them.
 
 // Load the minimal row fields the moderation pipeline needs. Returns null when the row vanished.
 export const getImageForModeration = internalQuery({
@@ -93,11 +101,11 @@ type Verdict = {
   moderationAttempts?: number;
 };
 
-// Write a verdict onto a sidecar the caller has already decided may take it. On a transition INTO
-// rejected this deliberately does MORE than the library's verdict (library photos live solely in
-// their own table): it also drops the id from the completions row's `photos` array (freeing a cap
-// slot), deletes the blob, and stamps the audit row — the sidecar itself survives as the audit
-// record.
+// Write a verdict onto a sidecar the caller has already decided may take it. An approval schedules
+// the photo's renditions. On a transition INTO rejected this deliberately does MORE than the
+// library's verdict (library photos live solely in their own table): it also drops the id from the
+// completions row's `photos` array (freeing a cap slot), deletes the blob and its renditions, and
+// stamps the audit row — the sidecar itself survives as the audit record.
 const writeVerdict = async (
   ctx: MutationCtx,
   row: Doc<"completionImages">,
@@ -111,6 +119,9 @@ const writeVerdict = async (
     moderationAttempts: args.moderationAttempts,
     updatedAt: Date.now(),
   });
+  if (args.moderationStatus === "approved") {
+    await scheduleRenditions(ctx, row.fileId);
+  }
   if (args.moderationStatus !== "rejected") return;
   const title = await detachRejectedCompletionPhoto(ctx, row);
   // Audit trail (no actorId = system). Target the completion aggregate.
@@ -124,8 +135,8 @@ const writeVerdict = async (
 /**
  * The side effects of rejecting a completion photo (automated or by an admin): drop its id from
  * the completions row's `photos` array (a direct system write that frees a cap slot and leaves
- * updatedAt alone) and delete the blob. The sidecar survives as the audit record. Returns the
- * label for the audit stamp (the completion's cached copy title).
+ * updatedAt alone) and delete the blob and its renditions. The sidecar survives as the audit
+ * record. Returns the label for the audit stamp (the completion's cached copy title).
  */
 export const detachRejectedCompletionPhoto = async (
   ctx: MutationCtx,
@@ -140,6 +151,7 @@ export const detachRejectedCompletionPhoto = async (
       photos: completion.photos.filter((id) => id !== row.fileId),
     });
   }
+  await deleteRenditions(ctx, row.fileId);
   // Tolerate an already-deleted blob; don't fail the decision over a missing file. The sidecar
   // stays as the audit record, so it is left out of the check; anything else that holds the blob
   // keeps it: a CSAM escalation preserves it, or a row written before the claim rule holds the
@@ -175,14 +187,16 @@ export const setModerationVerdict = internalMutation({
 });
 
 // A CSAM hash match (lib/imageModeration/quarantine). FORCES the sidecar to "quarantined"
-// whatever its status now, points it at the preserved blob, drops the uploaded blob's id from the
-// completions row's `photos` array (a direct system write that leaves updatedAt alone, like a
-// rejection), and ALWAYS raises the escalation, even when the sidecar is gone.
+// whatever its status now, deletes the renditions of the blob it held, points it at the preserved
+// blob, drops the uploaded blob's id from the completions row's `photos` array (a direct system
+// write that leaves updatedAt alone, like a rejection), and ALWAYS raises the escalation, even
+// when the sidecar is gone.
 export const quarantineImage = internalMutation({
   args: { imageId: v.id("completionImages"), ...quarantineArgs },
   handler: async (ctx, { imageId, ...match }) => {
     const row = await ctx.db.get(imageId);
     if (row) {
+      await deleteRenditions(ctx, row.fileId);
       await ctx.db.patch(imageId, {
         moderationStatus: "quarantined",
         ...(match.fileId ? { fileId: match.fileId } : {}),

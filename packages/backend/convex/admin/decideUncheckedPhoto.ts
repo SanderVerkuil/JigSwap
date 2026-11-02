@@ -95,8 +95,9 @@ const assertDecidable = (row: DecidableRow, decision: Decision): void => {
 // restored or its removal confirmed (which deletes it and notifies the uploader), exactly like an
 // automatic rejection; its renditions are deleted, and an approved one gets them in the
 // background (lib/imageModeration/renditionsStore). A rejected COMPLETION photo gets the same
-// side effects as an automatic rejection: it is detached from the completion and its blob
-// deleted. Rejected BOX ART likewise
+// side effects as an automatic rejection: it is detached from the completion and its blob and
+// renditions deleted; an approved one gets its renditions in the background too. Rejected BOX ART
+// likewise
 // (catalog/boxArtModerationStore.detachRejectedBoxArt): detached from every definition and
 // proposal holding it and its renditions and blob deleted; approved box art is served (boxArtUrl)
 // and gets its renditions in the background (lib/imageModeration/renditionsStore). A CIRCLE ICON
@@ -290,6 +291,7 @@ export const decideUncheckedPhoto = mutation({
     if (!id || !row) throw new ConvexError("Photo not found");
     assertDecidable(row, decision);
     await ctx.db.patch(id, { ...decided, ...release });
+    if (decision !== "reject") await scheduleRenditions(ctx, row.fileId);
     const title =
       decision === "reject"
         ? await detachRejectedCompletionPhoto(ctx, row)

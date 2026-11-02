@@ -216,7 +216,9 @@ const deleteCompletionPhotos = async (
     ...images.map((image) => image.fileId),
   ]);
   for (const fileId of fileIds) {
-    if (!kept.has(fileId)) await deleteBlob(ctx, fileId);
+    if (kept.has(fileId)) continue;
+    await deleteRenditions(ctx, fileId);
+    await deleteBlob(ctx, fileId);
   }
 };
 

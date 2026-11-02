@@ -8,6 +8,9 @@ import { ingestToAxiom } from "../axiom";
 import { logEvent, type WideEvent } from "../logEvent";
 import {
   encodeRenditions,
+  RENDITION_LADDER,
+  THUMBNAIL_LADDER,
+  type RenditionLadder,
   type RenditionSet,
   type RenditionSlot,
 } from "./renditionEncode";
@@ -16,11 +19,13 @@ import {
   NO_TOTALS,
   renditionTableValidator,
   type BackfillTotals,
+  type RenditionKind,
 } from "./renditionsStore";
 
-// Make and store the renditions of an image blob (PERF-C1, P-42): its 480, 640 and 960 px WebP
-// copies (lib/imageModeration/renditionEncode), recorded against the source blob in
-// `imageRenditions` (lib/imageModeration/renditionsStore, which also holds the invariants).
+// Make and store the renditions of an image blob (PERF-C1, P-42): its smaller WebP copies
+// (lib/imageModeration/renditionEncode; which sizes depends on what the image is, LADDERS),
+// recorded against the source blob in `imageRenditions` (lib/imageModeration/renditionsStore,
+// which also holds the invariants).
 //
 // generateRenditions: one source, scheduled once an image may be shown (scheduleRenditions).
 // Checks the source is eligible and has none yet, downloads it, encodes, stores each rendition
@@ -33,14 +38,22 @@ import {
 // logs and Axiom.
 //
 // backfillRenditions: the one-shot for images stored before renditions existed, per `table`:
-// "boxArt" (the default: every definition's box art) or "copy" (copy photos). `dryRun`
-// defaults to TRUE: it only counts. Pass `dryRun: false` to write. Paginated: `batchSize`
+// "boxArt" (the default: every definition's box art), "copy" (copy photos) or "completion"
+// (completion photos). `dryRun` defaults to TRUE: it only counts. Pass `dryRun: false` to write. Paginated: `batchSize`
 // rows per run (default 10), their candidates made ONE AFTER ANOTHER in the same action
 // (one decoded image in memory at a time); the action re-schedules itself with the next cursor
 // and logs the running totals ("imageModeration.backfillRenditions") on every page and the
 // final ones with `done: true`. Create-only (it never deletes a stored image) and idempotent: a
 // source that has its renditions is no longer a candidate, so a re-run picks up only what
 // failed.
+
+// Which sizes each kind of image gets. Box art and copy photos appear on cards of many widths; a
+// completion photo is only ever a small tile, and the viewer opens the original.
+const LADDERS: Record<RenditionKind, RenditionLadder> = {
+  boxArt: RENDITION_LADDER,
+  copy: RENDITION_LADDER,
+  completion: THUMBNAIL_LADDER,
+};
 
 /** Runs per source, the first included, when storage or the database fails. */
 export const RENDITION_MAX_ATTEMPTS = 3;
@@ -93,8 +106,9 @@ const render = async (
       sourceId,
     }),
   );
-  if (!job.eligible) return "not_eligible";
+  if (job.kind === null) return "not_eligible";
   if (job.done) return "already_done";
+  event.source_kind = job.kind;
 
   const bytes = await io("download", async () => {
     const blob = await ctx.storage.get(sourceId);
@@ -105,7 +119,7 @@ const render = async (
 
   let set: RenditionSet;
   try {
-    set = await encodeRenditions(bytes);
+    set = await encodeRenditions(bytes, LADDERS[job.kind]);
   } catch (error) {
     event.outcome = "error";
     event.error = { stage: "encode", message: errMsg(error) };
