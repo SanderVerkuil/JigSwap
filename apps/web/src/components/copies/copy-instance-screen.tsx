@@ -2,6 +2,7 @@ import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
 import { ShareWithCirclesDialog } from "@/components/circles/share-with-circles-dialog";
 import { ImageZoom } from "@/components/common/image-zoom";
+import { acquisitionMonthOf } from "@/components/copies/acquisition-month";
 import { CopyOfferSwitches } from "@/components/copies/copy-offer-switches";
 import { CopyOwner } from "@/components/copies/copy-owner";
 import { copyPhotoError } from "@/components/copies/copy-photo-error";
@@ -379,6 +380,13 @@ function CopyInstanceDetail({
 
   const formatMonth = (timestamp: number) =>
     format.dateTime(new Date(timestamp), { year: "numeric", month: "short" });
+  // A stored value that isn't a real date (the server has refused them since UX-97) counts as not
+  // recorded: the manager gets "Add details" to fix it, not "Invalid Date".
+  const acquiredAt =
+    snapshot.acquisitionDate != null &&
+    acquisitionMonthOf(snapshot.acquisitionDate, "UTC") !== null
+      ? snapshot.acquisitionDate
+      : null;
 
   // Humanize a solve duration (minutes) to a localized "2 hours" / "1 day" / "1 week" via the
   // largest sensible unit — Intl unit formatting handles plurals + locale.
@@ -614,11 +622,11 @@ function CopyInstanceDetail({
             />
             {/* Acquisition (manager-only data): shown when recorded; when neither part is,
                 managers get "Add details", which opens the editor on those fields. */}
-            {snapshot.acquisitionDate != null && (
+            {acquiredAt !== null && (
               <MetaItem
                 icon={<Calendar className="h-3.5 w-3.5" />}
                 label={t("acquired")}
-                value={formatMonth(snapshot.acquisitionDate)}
+                value={formatMonth(acquiredAt)}
               />
             )}
             {snapshot.acquisitionSource && (
@@ -632,7 +640,7 @@ function CopyInstanceDetail({
             )}
             {copy.viewerCanManage &&
               copy.aggregateId != null &&
-              snapshot.acquisitionDate == null &&
+              acquiredAt === null &&
               !snapshot.acquisitionSource && (
                 <MetaItem
                   icon={<Calendar className="h-3.5 w-3.5" />}
