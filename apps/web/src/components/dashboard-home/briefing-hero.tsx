@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
 import { useMemberToday } from "@/hooks/use-member-today";
 import { useRelativeTime } from "@/hooks/use-relative-time";
-import { currentGoals } from "@/lib/goal-form";
+import { currentGoals, goalPercent } from "@/lib/goal-form";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
@@ -292,13 +292,7 @@ export function BriefingHero() {
   const goal =
     activeGoal && activeGoal.targetCompletions > 0
       ? {
-          pct: Math.min(
-            100,
-            Math.round(
-              (activeGoal.currentCompletions / activeGoal.targetCompletions) *
-                100,
-            ),
-          ),
+          pct: goalPercent(activeGoal),
           target: activeGoal.targetCompletions,
         }
       : null;

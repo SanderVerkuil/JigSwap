@@ -79,6 +79,14 @@ afterEach(() => {
 });
 
 describe("GoalSections", () => {
+  it("shows 99%, not 100%, on a goal just short of its target", () => {
+    renderSections([
+      goal({ currentCompletions: 999, targetCompletions: 1000 }),
+    ]);
+    expect(screen.getByText("99%")).toBeDefined();
+    expect(screen.queryByText("100%")).toBeNull();
+  });
+
   it("shows no Active heading when every goal is achieved", () => {
     renderSections([
       goal({ title: "Done", currentCompletions: 10, isAchieved: true }),

@@ -6,6 +6,7 @@ import {
   GOAL_TITLE_MAX_LENGTH,
   goalFormErrorsFromCode,
   goalFormValues,
+  goalPercent,
   goalStatus,
   minGoalEndDate,
   parseTarget,
@@ -415,5 +416,27 @@ describe("currentGoals", () => {
         today,
       ),
     ).toEqual([]);
+  });
+});
+
+describe("goalPercent", () => {
+  const percent = (currentCompletions: number, targetCompletions: number) =>
+    goalPercent({ currentCompletions, targetCompletions });
+
+  it("rounds down, so a goal just short of its target never reads 100%", () => {
+    expect(percent(999, 1000)).toBe(99);
+    expect(percent(1, 3)).toBe(33);
+  });
+
+  it("isn't thrown off by floating point", () => {
+    // 29 / 100 * 100 is 28.999999999999996.
+    expect(percent(29, 100)).toBe(29);
+    expect(percent(7, 25)).toBe(28);
+  });
+
+  it("reads 100% at the target and past it, and 0% without a target", () => {
+    expect(percent(10, 10)).toBe(100);
+    expect(percent(12, 10)).toBe(100);
+    expect(percent(3, 0)).toBe(0);
   });
 });
