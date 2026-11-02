@@ -44,7 +44,7 @@ afterEach(() => {
 
 describe("CircleAvatarStack", () => {
   // Who can give a view-only member more rights is only findable here for a non-admin.
-  it("says a seat's role beside its name, to the tooltip and to assistive tech", async () => {
+  it("says a seat's role beside its name, to the tooltip and to assistive tech", () => {
     render(
       <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
         <CircleAvatarStack
@@ -61,7 +61,9 @@ describe("CircleAvatarStack", () => {
     vi.useFakeTimers();
     fireEvent.pointerDown(ada, { pointerType: "touch" });
     fireEvent.click(ada);
-    act(() => vi.advanceTimersByTime(0));
+    act(() => {
+      vi.advanceTimersByTime(0);
+    });
     vi.useRealTimers();
     expect(tooltipText()).toContain("Ada · Admin");
   });
