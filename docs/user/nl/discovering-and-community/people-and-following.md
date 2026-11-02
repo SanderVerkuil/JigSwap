@@ -110,7 +110,7 @@ Heb je al een account en nodigt iemand jouw e-mailadres uit, dan krijg je geen
 e-mail. De uitnodiging komt dan in JigSwap bij je binnen, als dezelfde kaart
 **Uitnodigingen**.
 
-## Opmerkingen & beoordelingen
+## Opmerkingen en beoordelingen
 
 - **Puzzelbeoordelingen:** plaats op een catalogusdefinitiepagina een communityopmerking met een waardering van 1 tot 5 sterren.
 - **Opmerkingen bij kopieën:** bespreek een specifieke kopie op de detailpagina.
