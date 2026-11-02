@@ -29,17 +29,19 @@ const NAV = [
   { href: "/contact", key: "contact" },
 ] as const;
 
-// Brand CTA in the bar at every width: compact (40px tall) below the 861px
-// desktop breakpoint, the regular button size above it.
-const BAR_CTA = "h-10 px-3.5 min-[861px]:h-9 min-[861px]:px-4";
+// Brand CTA in the bar at every width: compact (40px tall) below the desktop
+// breakpoint, the regular button size above it.
+const BAR_CTA = "h-10 px-3.5 min-[1200px]:h-9 min-[1200px]:px-4";
 
 // Sticky marketing header: transparent over the hero, frosted card once
-// scrolled. Nav + language pill + mode toggle + auth actions. The full bar needs
-// about 1,185px in Dutch (the page clips overflow, so whatever does not fit is
-// out of reach): below 1200px the nav folds into the burger, and below 861px the
-// login link follows it. The bar keeps the brand CTA next to the menu toggle at
-// every width; on phones (<640px) the language and theme switches move into the
-// menu to make room for it, and below 375px the wordmark shrinks to its logo mark.
+// scrolled. Nav + language pill + mode toggle + auth actions. The full nav only
+// shows from 1200px, where the longest bar (Dutch, signed out: about 1,185px) fits
+// on one line; the page clips overflow, so whatever does not fit is out of reach.
+// If that bar gets longer the breakpoint must rise, and every min-[1200px] class
+// moves with it. Below it the nav folds into the burger, and below 861px the login
+// link follows. The bar keeps the brand CTA next to the menu toggle at every width;
+// on phones (<640px) the language and theme switches move into the menu to make
+// room for it, and below 375px the wordmark shrinks to its logo mark.
 export function MarketingHeader() {
   const t = useTranslations("marketing.nav");
   const { pathname } = useLocation();
@@ -76,7 +78,7 @@ export function MarketingHeader() {
       className={cn(
         mobile
           ? "text-[17px] font-semibold text-mk-text-strong py-3 px-1 border-b border-mk-border"
-          : "text-[15px] font-medium py-1.5 hover:text-mk-violet-600 transition-colors",
+          : "text-[15px] font-medium py-1.5 whitespace-nowrap hover:text-mk-violet-600 transition-colors",
         !mobile &&
           (pathname === item.href ? "text-mk-violet-600" : "text-mk-text-body"),
       )}
@@ -111,7 +113,7 @@ export function MarketingHeader() {
           <Unauthenticated>
             <Link
               href="/sign-in"
-              className="hidden min-[861px]:inline-flex text-[15px] font-semibold text-mk-text-body py-1.5 px-1 hover:text-mk-violet-600 transition-colors"
+              className="hidden min-[861px]:inline-flex text-[15px] font-semibold whitespace-nowrap text-mk-text-body py-1.5 px-1 hover:text-mk-violet-600 transition-colors"
             >
               {t("login")}
             </Link>

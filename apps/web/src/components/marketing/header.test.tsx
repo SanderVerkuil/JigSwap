@@ -205,6 +205,41 @@ describe("MarketingHeader mobile menu", () => {
   });
 });
 
+// jsdom-style environments have no layout, so the fit itself was measured in a browser (861-1440px,
+// EN and NL). This guards what makes it hold: one line per link, one shared breakpoint.
+describe("MarketingHeader desktop bar", () => {
+  it("never wraps a link, and swaps with the menu at one breakpoint", () => {
+    renderHeader();
+    const nav = screen.getByRole("navigation", { name: "Primary navigation" });
+    for (const link of within(nav).getAllByRole("link")) {
+      expect(link.className).toContain("whitespace-nowrap");
+    }
+    expect(screen.getByRole("link", { name: "Log in" }).className).toContain(
+      "whitespace-nowrap",
+    );
+
+    const breakpoint = /min-\[(\d+)px\]:flex/.exec(nav.className)?.[1];
+    expect(breakpoint).toBeDefined();
+    expect(menuToggle().className).toContain(`min-[${breakpoint}px]:hidden`);
+    expect(
+      screen.getByRole("link", { name: "Start trading" }).className,
+    ).toContain(`min-[${breakpoint}px]:h-9`);
+  });
+
+  it("keeps log in in the bar from 861px, and in the menu only below that", () => {
+    renderHeader();
+    expect(screen.getByRole("link", { name: "Log in" }).className).toContain(
+      "min-[861px]:inline-flex",
+    );
+
+    fireEvent.click(menuToggle());
+    const panel = screen.getByRole("navigation", { name: "Menu" });
+    expect(
+      within(panel).getByRole("link", { name: "Log in" }).className,
+    ).toContain("min-[861px]:hidden");
+  });
+});
+
 describe("MarketingHeader translations", () => {
   it("names the theme toggle in the visitor's language", () => {
     renderHeader("nl");
