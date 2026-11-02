@@ -41,7 +41,7 @@ describe("ImportZone", () => {
   });
 
   it("announces a failed import in the live region", () => {
-    renderZone({ status: "error" });
+    renderZone({ status: "error", reason: "failed" });
     expect(screen.getByRole("status").textContent).toContain(
       en.puzzles.importFailed,
     );

@@ -496,12 +496,12 @@ describe("EditCopyDialog starts from the copy as it is when opened", () => {
   it("reopening drops edits that were cancelled", () => {
     const copy = copyOf(CLOSED, "visible", "visible");
     const { rerender } = render(dialogFor(true, copy));
-    fireEvent.click(screen.getByRole("button", { name: "For Lend" }));
+    fireEvent.click(screen.getByRole("button", { name: "For Loan" }));
     rerender(dialogFor(false, copy));
     rerender(dialogFor(true, copy));
     expect(
       screen
-        .getByRole("button", { name: "For Lend" })
+        .getByRole("button", { name: "For Loan" })
         .getAttribute("aria-pressed"),
     ).toBe("false");
   });

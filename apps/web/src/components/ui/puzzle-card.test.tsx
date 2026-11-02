@@ -296,7 +296,7 @@ describe("copy card menu", () => {
 
   it("offers a collection's owner Remove from this collection in the ⋯ menu, not a one-tap trash", () => {
     const onRemove = vi.fn();
-    renderCard({ variant: "collection", onRemove });
+    renderOwnedCard({ variant: "collection", onRemove });
     expect(
       screen.queryByRole("button", { name: "Remove from this collection" }),
     ).toBeNull();
@@ -312,7 +312,7 @@ describe("copy card menu", () => {
   });
 
   it("shows no menu on a collection card the viewer can't change", () => {
-    renderCard({ variant: "collection" });
+    renderOwnedCard({ variant: "collection" });
     expect(screen.queryByRole("button", { name: "Puzzle actions" })).toBeNull();
   });
 
@@ -329,7 +329,7 @@ describe("copy card menu", () => {
 describe("selection card", () => {
   it("names its checkbox after the puzzle and toggles once from the checkbox or the card", () => {
     const onSelect = vi.fn();
-    renderCard({ variant: "selection", onSelect });
+    renderOwnedCard({ variant: "selection", onSelect });
     const box = screen.getByRole("checkbox", {
       name: "Select De Kattenshow",
     }) as HTMLInputElement;
@@ -343,7 +343,7 @@ describe("selection card", () => {
   });
 
   it("shows a disabled checkbox on a copy the viewer can't select", () => {
-    renderCard({ variant: "selection" });
+    renderOwnedCard({ variant: "selection" });
     const box = screen.getByRole("checkbox", {
       name: "Select De Kattenshow",
     }) as HTMLInputElement;

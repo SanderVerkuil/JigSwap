@@ -185,7 +185,7 @@ afterEach(cleanup);
 describe("adding a copy of a catalogue puzzle", () => {
   it("starts with every offer off and adds the copy without offering it", async () => {
     renderPage({ puzzleId: PUZZLE_DOC_ID });
-    for (const name of ["For Trade", "For Lend", "For Sale"]) {
+    for (const name of ["For Trade", "For Loan", "For Sale"]) {
       expect(offerChip(name).getAttribute("aria-pressed")).toBe("false");
     }
 
@@ -198,7 +198,7 @@ describe("adding a copy of a catalogue puzzle", () => {
 
   it("offers the copy only when the member switches an offer on", async () => {
     renderPage({ puzzleId: PUZZLE_DOC_ID });
-    fireEvent.click(offerChip("For Lend"));
+    fireEvent.click(offerChip("For Loan"));
 
     fireEvent.click(screen.getByRole("button", { name: "Add to Library" }));
 
@@ -233,7 +233,7 @@ describe("condition", () => {
 describe("creating a new puzzle", () => {
   it("starts with every offer off and does not list availability as a step", () => {
     renderPage();
-    for (const name of ["For Trade", "For Lend", "For Sale"]) {
+    for (const name of ["For Trade", "For Loan", "For Sale"]) {
       expect(offerChip(name).getAttribute("aria-pressed")).toBe("false");
     }
     expect(screen.getByText(en.puzzles.checkTitle)).toBeTruthy();
