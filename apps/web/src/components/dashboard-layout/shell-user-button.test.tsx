@@ -17,6 +17,9 @@ import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
 import { ShellUserButton } from "./shell-user-button";
 
+const consent = vi.hoisted(() => ({ openCookieSettings: vi.fn() }));
+vi.mock("@/lib/analytics-consent", () => consent);
+
 const mocks = vi.hoisted(() => ({
   settings: undefined as PresenceSettingsView | undefined,
   setPreference: vi.fn<(key: string, value: unknown) => void>(),
@@ -153,6 +156,23 @@ afterEach(cleanup);
 
 const statusItems = () =>
   screen.queryAllByRole("button", { name: /^Status: / });
+
+describe("ShellUserButton cookie settings", () => {
+  it.each([
+    ["en", "Cookie settings"],
+    ["nl", "Cookie-instellingen"],
+  ] as const)(
+    "reopens the cookie banner from the menu (%s)",
+    async (locale, name) => {
+      consent.openCookieSettings.mockClear();
+      renderButton(locale);
+      fireEvent.click(screen.getByRole("button", { name }));
+      await waitFor(() =>
+        expect(consent.openCookieSettings).toHaveBeenCalledTimes(1),
+      );
+    },
+  );
+});
 
 describe("ShellUserButton status menu", () => {
   it.each<[string, PresenceSettingsView | undefined]>([

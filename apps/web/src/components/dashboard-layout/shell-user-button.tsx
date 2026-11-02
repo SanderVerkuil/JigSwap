@@ -21,6 +21,7 @@ import { UnreadDot } from "@/components/whats-new/badges";
 import { useWhatsNewUnreadCount } from "@/components/whats-new/use-whats-new-state";
 import { gateway } from "@/gateway";
 import { useUserSettings } from "@/hooks/use-user-settings";
+import { openCookieSettings } from "@/lib/analytics-consent";
 import { cn } from "@/lib/utils";
 import { tearDownPushForSignOut } from "@/lib/web-push";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -31,6 +32,7 @@ import {
   Bell,
   Check,
   CircleHelp,
+  Cookie,
   House,
   ListChecks,
   LogOut,
@@ -74,6 +76,7 @@ export function ShellUserButton({
   const t = useTranslations("shell");
   const tWhatsNew = useTranslations("whatsNew");
   const tQuickStart = useTranslations("quickStart.menu");
+  const tFooter = useTranslations("marketing.footer");
   const navigate = useNavigate();
   const recordQuickStart = useConvexMutation(
     gateway.onboarding.recordQuickStart,
@@ -227,6 +230,15 @@ export function ShellUserButton({
                 }}
               />
             ))}
+          {/* In the menu, not on the Privacy & safety page: that page is in Clerk's modal, which
+            would cover the banner this reopens. Consent can be changed or withdrawn at any time
+            (GDPR Art. 7(3)). Reopened once the menu has closed and handed focus back to its
+            trigger, so the banner takes focus and returns it there. */}
+          <UserButton.Action
+            label={tFooter("cookieSettings")}
+            labelIcon={<Cookie className="size-4" />}
+            onClick={() => window.setTimeout(openCookieSettings)}
+          />
           <UserButton.Action label="manageAccount" />
           {/* Sign out stops push to this browser first (SEC-54), while the
             session can still unregister it on the server, so a shared browser

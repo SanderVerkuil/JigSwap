@@ -2,6 +2,7 @@ import { Link } from "@/compat/link";
 import { MAIN_CONTENT_ID } from "@/components/a11y/skip-link";
 import { LangToggle, ModeToggle } from "@/components/marketing/header";
 import { Wordmark } from "@/components/marketing/wordmark";
+import { openCookieSettings } from "@/lib/analytics-consent";
 import type * as React from "react";
 import { useTranslations } from "use-intl";
 
@@ -46,6 +47,14 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
           <Link href="/catalog" className={footerLinkCls}>
             {t("nav.catalog")}
           </Link>
+          {/* Consent can be changed or withdrawn from here too (GDPR Art. 7(3)). */}
+          <button
+            type="button"
+            onClick={openCookieSettings}
+            className={`${footerLinkCls} cursor-pointer`}
+          >
+            {t("footer.cookieSettings")}
+          </button>
         </div>
       </footer>
     </div>
