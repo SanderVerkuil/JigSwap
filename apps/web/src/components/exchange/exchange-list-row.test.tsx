@@ -261,6 +261,39 @@ describe("ExchangeListRow: phone layout", () => {
     expect(offer.parentElement).toBe(phonePill.parentElement);
   });
 
+  it("says on the row itself that the viewer has confirmed, without the detail open", () => {
+    renderRow({
+      fields: {
+        status: "accepted",
+        // The viewer owns the requested copy: the recipient.
+        recipientConfirmationTimestamp: NOW - HOUR,
+      },
+    });
+    expect(toggle().getAttribute("aria-expanded")).toBe("false");
+    const confirmed = screen.getByText("You confirmed");
+    const [phonePill] = screen.getAllByText("Accepted");
+    expect(confirmed.parentElement).toBe(phonePill.parentElement);
+    // From sm this line only holds chips: it must stay visible for this one.
+    expect(confirmed.parentElement?.className).not.toContain("sm:hidden");
+    expect(screen.queryByText("Your turn")).toBeNull();
+  });
+
+  it("doesn't say the viewer confirmed when only the partner has, or before anyone has", () => {
+    renderRow({
+      fields: {
+        status: "accepted",
+        initiatorConfirmationTimestamp: NOW - HOUR,
+      },
+    });
+    expect(screen.queryByText("You confirmed")).toBeNull();
+    expect(screen.getByText("Your turn")).toBeTruthy();
+    cleanup();
+
+    renderRow({ fields: { status: "accepted" } });
+    expect(screen.queryByText("You confirmed")).toBeNull();
+    expect(screen.queryByText("Your turn")).toBeNull();
+  });
+
   it("says a settled lend's puzzle is still on loan instead of Completed", () => {
     renderRow({
       fields: {
@@ -281,5 +314,16 @@ describe("ExchangeListRow: phone layout", () => {
     expect(name).toContain("Ruil · Harbour Lights");
     expect(name).toContain("met Anna de Vries");
     expect(screen.getAllByText("In afwachting")).toHaveLength(2);
+  });
+
+  it("says the viewer confirmed in Dutch too", () => {
+    renderRow({
+      locale: "nl",
+      fields: {
+        status: "accepted",
+        recipientConfirmationTimestamp: NOW - HOUR,
+      },
+    });
+    expect(screen.getByText("Je hebt bevestigd")).toBeTruthy();
   });
 });

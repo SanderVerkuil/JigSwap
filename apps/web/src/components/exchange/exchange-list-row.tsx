@@ -2,7 +2,7 @@
 // kind badge, "Kind · Mine ↔ Theirs" headline, "direction · with who · when" meta, status pill,
 // chevron) is ONE disclosure button that expands the detail under it; its name is the row's own
 // text, so a speech user can say what they see, and it announces expanded/collapsed. On phones the status pill joins the Your
-// turn / offer chips under the meta line, so the title and partner get the row's full width; from
+// turn / You confirmed / offer chips under the meta line, so the title and partner get the row's full width; from
 // sm it sits at the row's end. The detail (`children`) is indented under the text only from sm.
 import { useElapsedTime } from "@/hooks/use-relative-time";
 import { usePartyDisplayName } from "@/lib/member-display-name";
@@ -12,7 +12,12 @@ import { ChevronDown } from "lucide-react";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useTranslations } from "use-intl";
 import { ExchangeCover } from "./exchange-cover";
-import { ExchangeStatusPill, OfferChip, YourTurnPill } from "./exchange-pills";
+import {
+  ExchangeStatusPill,
+  OfferChip,
+  YouConfirmedPill,
+  YourTurnPill,
+} from "./exchange-pills";
 import {
   confirmationState,
   viewerSide,
@@ -96,10 +101,12 @@ export function ExchangeListRow({
       ? [exchange.requestedCoverUrl, exchange.offeredCoverUrl]
       : [exchange.offeredCoverUrl, exchange.requestedCoverUrl]
     : [exchange.requestedCoverUrl];
+  const confirmation = confirmationState(exchange, viewerSide(direction));
+  const accepted = exchange.status === "accepted";
   // Only the partner has confirmed completion: the viewer's confirmation settles it.
-  const yourTurn =
-    exchange.status === "accepted" &&
-    confirmationState(exchange, viewerSide(direction)).mySettles;
+  const yourTurn = accepted && confirmation.mySettles;
+  // The viewer has, and waits on the partner: the row says so without opening the detail.
+  const youConfirmed = accepted && confirmation.mineAt !== undefined;
   const offer = exchange.type === "sale" ? exchange.salePrice : undefined;
 
   return (
@@ -147,7 +154,7 @@ export function ExchangeListRow({
             className={cn(
               "mt-1.5 flex flex-wrap gap-1.5",
               // From sm the status pill sits at the row's end; keep this line only for the chips.
-              !(yourTurn || offer) && "sm:hidden",
+              !(yourTurn || youConfirmed || offer) && "sm:hidden",
             )}
           >
             <ExchangeStatusPill
@@ -156,6 +163,7 @@ export function ExchangeListRow({
               className="sm:hidden"
             />
             {yourTurn && <YourTurnPill />}
+            {youConfirmed && <YouConfirmedPill />}
             {offer && <OfferChip price={offer} />}
           </span>
         </span>

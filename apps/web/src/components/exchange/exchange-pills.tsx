@@ -97,6 +97,16 @@ export function YourTurnPill({ className }: { className?: string }) {
   );
 }
 
+/** The viewer has confirmed completion and waits on the partner; the row's collapsed summary of it. */
+export function YouConfirmedPill({ className }: { className?: string }) {
+  const t = useTranslations("trades.confirmation");
+  return (
+    <span className={cn(CHIP, "bg-muted text-foreground", className)}>
+      {t("youConfirmed")}
+    </span>
+  );
+}
+
 // A sale's price is stored in minor units (cents) with its currency.
 function useFormatPrice(): (price: SalePrice) => string {
   const format = useFormatter();

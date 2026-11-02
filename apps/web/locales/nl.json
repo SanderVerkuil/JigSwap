@@ -729,7 +729,8 @@
     "confirmation": {
       "waiting": "Je hebt {when} bevestigd · Wachten op {name}",
       "partnerConfirmed": "{name} heeft {when} bevestigd",
-      "yourTurn": "Jouw beurt"
+      "yourTurn": "Jouw beurt",
+      "youConfirmed": "Je hebt bevestigd"
     },
     "offer": {
       "chip": "Bod: {price}",

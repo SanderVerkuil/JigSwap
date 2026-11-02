@@ -729,7 +729,8 @@
     "confirmation": {
       "waiting": "You confirmed {when} · Waiting for {name}",
       "partnerConfirmed": "{name} confirmed {when}",
-      "yourTurn": "Your turn"
+      "yourTurn": "Your turn",
+      "youConfirmed": "You confirmed"
     },
     "offer": {
       "chip": "Offer: {price}",
