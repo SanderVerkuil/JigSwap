@@ -86,8 +86,9 @@ een kring delen. Met **Klaar** stop je met selecteren.
 De detailpagina is het uitgebreide overzicht van één eigen kopie. Het bevat:
 
 - Een **hero-afbeelding** met chips voor conditie en moeilijkheid. Op een
-  telefoon of tablet knijp je erin om in te zoomen en sleep je om rond te
-  kijken; dubbeltik om weer uit te zoomen.
+  telefoon tik je erop om hem groot te zien. Daar, en op een tablet, knijp je
+  erin om in te zoomen en sleep je om rond te kijken; dubbeltik om weer uit te
+  zoomen.
 - Een **statusregel** onder de titel. Op je eigen kopie staat daar waar de
   kopie is en wie hem kan zien: "Uitgeleend aan _naam_ sinds _datum_" (met
   **Terugvragen**); waarvoor hij wordt aangeboden en wie hem nu kan zien: de

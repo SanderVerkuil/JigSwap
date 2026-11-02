@@ -4690,6 +4690,7 @@
         "privateWhileOffered": "On offer, so it's visible for now. It goes back to private when you withdraw every offer."
       }
     },
+    "viewCoverLarger": "View cover larger",
     "photoCover": "Cover",
     "photoPending": "Pending review"
   },

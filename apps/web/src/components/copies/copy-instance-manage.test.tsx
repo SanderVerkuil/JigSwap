@@ -1,7 +1,13 @@
 // @vitest-environment happy-dom
 import { gateway } from "@/gateway";
 import type { CopyInstanceView } from "@jigswap/contracts";
-import { cleanup, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { getFunctionName, type FunctionReference } from "convex/server";
 import type { ReactNode } from "react";
 import { IntlProvider } from "use-intl";
@@ -231,6 +237,39 @@ describe("the hero on a phone", () => {
     expect(
       screen.getByTestId("copy-status-line").closest(".max-sm\\:col-span-2"),
     ).toBeTruthy();
+  });
+});
+
+describe("the cover on a phone", () => {
+  // A thumbnail there, too small to judge the box art or to pinch in: a tap opens it large.
+  it("opens large from a phone-only button, where a pinch has room", () => {
+    renderCopy(
+      managedCopy({ snapshot: { image: "https://cdn.test/box.jpg" } }),
+    );
+    expect(screen.queryByRole("dialog")).toBeNull();
+    const open = screen.getByRole("button", {
+      name: en.copyInstance.viewCoverLarger,
+    });
+    expect(open.classList).toContain("sm:hidden");
+
+    fireEvent.click(open);
+    const dialog = screen.getByRole("dialog", { name: "The Night Watch" });
+    expect(within(dialog).getByTestId("photo-zoom-surface")).toBeTruthy();
+    expect(within(dialog).getByRole("img").getAttribute("src")).toBe(
+      "https://cdn.test/box.jpg",
+    );
+    expect(
+      within(dialog).getByRole("button", {
+        name: en.copyInstance.photoLightbox.zoomIn,
+      }),
+    ).toBeTruthy();
+  });
+
+  it("offers no large view without a cover", () => {
+    renderCopy(managedCopy({}));
+    expect(
+      screen.queryByRole("button", { name: en.copyInstance.viewCoverLarger }),
+    ).toBeNull();
   });
 });
 

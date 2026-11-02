@@ -82,8 +82,9 @@ ends the selection.
 
 The detail page is the rich record of a single owned copy. It includes:
 
-- A **hero image** with condition and difficulty chips. On a phone or tablet,
-  pinch it to zoom in and drag to look around; double-tap to zoom back out.
+- A **hero image** with condition and difficulty chips. On a phone, tap it to
+  see it large. There, and on a tablet, pinch it to zoom in and drag to look
+  around; double-tap to zoom back out.
 - A **status line** under the title. On your own copy it says where the copy
   is and who can see it: "On loan to _name_ since _date_" (with **Recall**);
   what it's offered for and who can see it now: the community if your profile

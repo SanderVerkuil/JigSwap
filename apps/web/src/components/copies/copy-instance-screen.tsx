@@ -8,6 +8,7 @@ import { CopyOwner } from "@/components/copies/copy-owner";
 import { copyPhotoError } from "@/components/copies/copy-photo-error";
 import { CopyStatusLine } from "@/components/copies/copy-status-line";
 import { formatCopyTenure } from "@/components/copies/copy-tenure";
+import { CoverLightbox } from "@/components/copies/cover-lightbox";
 import { EditCopyDialog } from "@/components/copies/edit-copy-dialog";
 import { PhotoLightbox } from "@/components/copies/photo-lightbox";
 import { type NavContext } from "@/components/dashboard-layout/nav-context";
@@ -69,6 +70,7 @@ import {
   Edit,
   Gift,
   ImagePlus,
+  Maximize2,
   MessageCircle,
   Package,
   Puzzle,
@@ -242,6 +244,8 @@ function CopyInstanceDetail({
   };
   // The owner's "Share with circles" dialog.
   const [shareOpen, setShareOpen] = useState(false);
+  // The cover's large view (phones).
+  const [coverOpen, setCoverOpen] = useState(false);
   // The trade-request dialog's target (null = closed); set from the non-owner Request action.
   const [requestCopy, setRequestCopy] = useState<RequestableCopy | null>(null);
   // Start/Finish solve swap: `startOpen` drives the start dialog; `finishTarget` holds the
@@ -421,15 +425,28 @@ function CopyInstanceDetail({
           screen. From sm it is capped at 40vh and centred above the info; at lg it is a column
           beside it, spanning its two rows. */}
       <section className="grid grid-cols-[7.5rem_minmax(0,1fr)] items-start gap-x-4 sm:grid-cols-1 lg:grid-cols-[300px_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:gap-x-7">
-        {/* Cover. Hovering opens a side panel that magnifies where the cursor points. */}
+        {/* Cover. Hovering opens a side panel that magnifies where the cursor points. On a phone it
+            is too small to judge the box or to pinch in, so a tap opens it large instead. */}
         <div className="bg-muted relative aspect-square w-full overflow-hidden rounded-2xl shadow-sm sm:mx-auto sm:mb-7 sm:max-w-[40vh] lg:row-span-2 lg:mx-0 lg:mb-0 lg:max-w-[300px]">
           {snapshot.image ? (
-            <ImageZoom
-              src={snapshot.image}
-              alt={snapshot.title}
-              fill
-              priority
-            />
+            <>
+              <ImageZoom
+                src={snapshot.image}
+                alt={snapshot.title}
+                fill
+                priority
+              />
+              <button
+                type="button"
+                aria-label={t("viewCoverLarger")}
+                onClick={() => setCoverOpen(true)}
+                className="focus-visible:ring-ring absolute inset-0 grid touch-pan-x touch-pan-y cursor-zoom-in place-items-end rounded-2xl p-1.5 focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset sm:hidden"
+              >
+                <span className="bg-background/70 border-border/50 text-foreground grid size-6 place-items-center rounded-full border shadow-sm backdrop-blur-md">
+                  <Maximize2 className="size-3" aria-hidden />
+                </span>
+              </button>
+            </>
           ) : (
             <div className="from-jigsaw-primary/20 to-jigsaw-primary text-jigsaw-primary-foreground/70 absolute inset-0 flex items-center justify-center bg-gradient-to-br">
               <Puzzle className="h-1/3 w-1/3" />
@@ -880,6 +897,15 @@ function CopyInstanceDetail({
           <CommentsSection copyId={copyId} />
         </div>
       </div>
+
+      {snapshot.image && (
+        <CoverLightbox
+          src={snapshot.image}
+          alt={snapshot.title}
+          open={coverOpen}
+          onOpenChange={setCoverOpen}
+        />
+      )}
 
       {/* Solve dialogs (owner, household members and the borrower; keyed by aggregateId) + the
           inline copy editor (managers only). */}
