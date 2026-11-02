@@ -384,6 +384,16 @@ describe("puzzle detail page: actions", () => {
         .getByRole("button", { name: t.favorite })
         .getAttribute("aria-pressed"),
     ).toBe("true");
+  it("shows no difficulty badge for a puzzle without a difficulty", () => {
+    const view = emptyView();
+    const { difficulty: _difficulty, ...definition } = view.definition;
+    setView({ ...view, definition });
+    renderPage();
+    expect(
+      screen.queryByText(en.puzzles.puzzles.difficulty.unknown),
+    ).toBeNull();
+  });
+
     // The old labelled button is gone; its wording now only lives in the tooltip.
     expect(
       screen.queryByRole("button", { name: tCatalog.removeFromFavorites }),

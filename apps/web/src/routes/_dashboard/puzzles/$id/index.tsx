@@ -207,9 +207,6 @@ function PuzzleDefinitionDetail({
       ?.focus();
   };
 
-  const difficultyLabel = (difficulty?: string) =>
-    difficulty ? tDifficulty(difficulty) : tDifficulty("unknown");
-
   // The "topics" pills: the category name first (if any), then each tag.
   const topics = [
     ...(definition.categoryName ? [definition.categoryName] : []),
@@ -266,14 +263,16 @@ function PuzzleDefinitionDetail({
                 {t("noRatingsYet")}
               </span>
             )}
-            <Badge
-              className={cn(
-                "rounded-full border-transparent px-2.5 py-0.5 text-xs font-semibold",
-                difficultyClasses(definition.difficulty),
-              )}
-            >
-              {difficultyLabel(definition.difficulty)}
-            </Badge>
+            {definition.difficulty && (
+              <Badge
+                className={cn(
+                  "rounded-full border-transparent px-2.5 py-0.5 text-xs font-semibold",
+                  difficultyClasses(definition.difficulty),
+                )}
+              >
+                {tDifficulty(definition.difficulty)}
+              </Badge>
+            )}
             {topics.map((topic, i) => (
               <span
                 key={`${topic}-${i}`}
