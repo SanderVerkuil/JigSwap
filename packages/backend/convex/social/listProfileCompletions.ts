@@ -33,7 +33,9 @@ const MAX_PAGE_SIZE = 50;
 // a thumbnail and a link. The member's private solve `notes`, the legacy rating/review columns and
 // the copy snapshot (owner id, borrow flag) are not carried. The copy-specific thumbnail and link
 // are only used when the viewer may reach that copy (canViewCopy); otherwise the puzzle definition,
-// linked only when the viewer may open it (canViewDefinition, the definition page's own gate).
+// linked only when the viewer may open it (canViewDefinition, the definition page's own gate). The
+// same gate decides whether a row without a snapshot title or piece count may quote the definition's
+// live ones, so a non-approved definition's text never reaches a viewer it would refuse (SEC-34).
 //
 // Each row carries its `datePrecision` (absent = "day") for the "In 2023" / "Date unknown" label.
 // Undated solves sort LAST (spec 2026-10-17 §3.2): the dated rows (day and year) page first,
@@ -71,6 +73,8 @@ export const listProfileCompletions = query({
       const puzzleId =
         row.puzzleId ?? (copy && reachable ? copy.puzzleId : undefined);
       const puzzle = puzzleId ? await ctx.db.get(puzzleId) : null;
+      const definitionVisible =
+        puzzle !== null && (await canViewDefinition(ctx, puzzle, viewerId));
 
       let link: ProfileCompletionLink | undefined;
       if (copy && reachable) {
@@ -78,7 +82,7 @@ export const listProfileCompletions = query({
           kind: copy.ownerId === viewerId ? "myCopy" : "copy",
           id: copy._id as string,
         };
-      } else if (puzzle && (await canViewDefinition(ctx, puzzle, viewerId))) {
+      } else if (definitionVisible) {
         link = { kind: "definition", id: puzzle._id as string };
       }
 
@@ -91,8 +95,12 @@ export const listProfileCompletions = query({
 
       page.push({
         _id: row._id,
-        title: row.copySnapshot?.title ?? puzzle?.title,
-        pieceCount: row.copySnapshot?.pieceCount ?? puzzle?.pieceCount,
+        title:
+          row.copySnapshot?.title ??
+          (definitionVisible ? puzzle.title : undefined),
+        pieceCount:
+          row.copySnapshot?.pieceCount ??
+          (definitionVisible ? puzzle.pieceCount : undefined),
         startDate: row.startDate,
         endDate: row.endDate ?? row.startDate,
         completionTimeMinutes: row.completionTimeMinutes,

@@ -7,6 +7,7 @@ import { personView } from "../household/getMyHousehold";
 import { householdMateIds } from "../household/memberships";
 import { requireMember } from "../identity/requireMember";
 import { canViewCopy } from "../library/canViewCopy";
+import { toCopyPuzzleView } from "../library/mappers";
 import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
 import { toCopyView } from "./adapters/convexCopyPort";
 
@@ -46,11 +47,16 @@ export const getOfferableCopies = query({
         const view = toCopyView(copy, coManagerIdsFrom(copy, household));
         if (!mayOfferCopy(view, viewer, recipient) || isLentOut(view)) continue;
         const puzzle = await ctx.db.get(copy.puzzleId);
+        // Whoever may offer it manages it: the facts My Puzzles shows them (SEC-34), which for a
+        // definition they may not read are the copy's own snapshot, never its live title.
+        const facts = toCopyPuzzleView(copy, puzzle, {
+          includeOwnerOnly: true,
+        });
         rows.push({
           _id: copy._id as string,
-          title: puzzle?.title ?? copy.snapshot?.title ?? "",
-          brand: puzzle?.brand ?? copy.snapshot?.brand,
-          pieceCount: puzzle?.pieceCount ?? copy.snapshot?.pieceCount ?? 0,
+          title: facts?.title ?? copy.snapshot?.title ?? "",
+          brand: facts?.brand ?? copy.snapshot?.brand,
+          pieceCount: facts?.pieceCount ?? copy.snapshot?.pieceCount ?? 0,
           condition: copy.condition,
           coverUrl: await resolveCopyCoverUrl(ctx, copy, puzzle),
           ownedByViewer,
