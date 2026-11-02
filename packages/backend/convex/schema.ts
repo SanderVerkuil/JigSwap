@@ -664,6 +664,9 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_puzzle", ["puzzleId"])
+    // Most recently updated first, for the review lists' pages. `updatedAt` is required, so this
+    // needs no backfill.
+    .index("by_puzzle_updated", ["puzzleId", "updatedAt"])
     .index("by_user_puzzle", ["userId", "puzzleId"]),
 
   // One star-only review per (member, physical copy). Write-gated to the

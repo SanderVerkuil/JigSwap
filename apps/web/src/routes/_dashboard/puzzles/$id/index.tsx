@@ -44,6 +44,8 @@ import {
   Link as RouterLink,
   useNavigate,
 } from "@tanstack/react-router";
+// sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
+import { usePaginatedQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import {
   ArrowLeftRight,
@@ -66,7 +68,10 @@ type View = NonNullable<
 type AvailableCopy = View["availableCopies"][number];
 type PuzzleReview = FunctionReturnType<
   typeof gateway.social.listPuzzleReviews
->[number];
+>["page"][number];
+
+// How many reviews a page of the list adds.
+const REVIEW_PAGE_SIZE = 20;
 
 // Hero action buttons wrap a long label (e.g. Dutch "Vind een exemplaar om te ruilen") onto a
 // second line instead of overflowing the narrow info column beside the cover on tablets.
@@ -606,11 +611,17 @@ function ReviewsSection({
   const t = useTranslations("puzzleDefinition");
   const format = useFormatter();
   const ratingHintId = useId();
-  const { data: reviews } = useQuery(
-    convexQuery(gateway.social.listPuzzleReviews, {
-      puzzleId: puzzleId as Id<"puzzles">,
-    }),
+  const {
+    results: list,
+    status: reviewsStatus,
+    loadMore,
+  } = usePaginatedQuery(
+    gateway.social.listPuzzleReviews,
+    { puzzleId: puzzleId as Id<"puzzles"> },
+    { initialNumItems: REVIEW_PAGE_SIZE },
   );
+  const moreReviews =
+    reviewsStatus === "CanLoadMore" || reviewsStatus === "LoadingMore";
   const { data: me } = useQuery(convexQuery(gateway.identity.currentUser, {}));
   // The caller's own puzzle review (if any) drives the update-mode affordance:
   // prefill the composer and relabel the submit button.
@@ -647,7 +658,6 @@ function ReviewsSection({
 
   const hasExistingReview = myReviews?.puzzle != null;
 
-  const list = reviews ?? [];
   // Posting needs a rating (only the text is optional); until one is chosen, a hint says so and
   // describes both the stars and the disabled Post button.
   const needsRating = rating < 1;
@@ -684,7 +694,7 @@ function ReviewsSection({
       <SectionHead
         icon={<MessageCircle className="h-4 w-4" />}
         title={t("reviews")}
-        meta={String(list.length)}
+        meta={moreReviews ? `${list.length}+` : String(list.length)}
       />
 
       {/* Composer: the required rating first, then the optional text, then Post. */}
@@ -780,8 +790,22 @@ function ReviewsSection({
             }}
           />
         ))}
-        {list.length === 0 && (
+        {reviewsStatus === "Exhausted" && list.length === 0 && (
           <p className="text-muted-foreground text-sm">{t("noReviews")}</p>
+        )}
+        {/* aria-disabled, not disabled, while the next page loads: a disabled button drops focus. */}
+        {moreReviews && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-3 self-center pointer-coarse:min-h-11"
+            aria-disabled={reviewsStatus === "LoadingMore"}
+            onClick={() => {
+              if (reviewsStatus === "CanLoadMore") loadMore(REVIEW_PAGE_SIZE);
+            }}
+          >
+            {t("showMoreReviews")}
+          </Button>
         )}
       </div>
       {reported && (

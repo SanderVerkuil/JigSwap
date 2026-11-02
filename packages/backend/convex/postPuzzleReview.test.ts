@@ -8,6 +8,9 @@ import schema from "./schema";
 // Bundle every Convex module for the in-memory runtime, excluding test files.
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
+// A review list is paged; these tests look at what one generous page says.
+const FIRST_PAGE = { numItems: 50, cursor: null };
+
 // Seed one member + ONE approved catalog puzzle. The catalog review FORM upserts the member's
 // single `puzzleReviews` row keyed by the puzzle DEFINITION id directly (the catalog detail page
 // has no copy id).
@@ -196,10 +199,12 @@ describe("listPuzzleReviews — sourced from puzzleReviews", () => {
       rating: 5,
     });
 
-    const list = await asAlice(t).query(
-      api.social.listPuzzleReviews.listPuzzleReviews,
-      { puzzleId },
-    );
+    const list = await asAlice(t)
+      .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+        puzzleId,
+        paginationOpts: FIRST_PAGE,
+      })
+      .then((result) => result.page);
     expect(list).toHaveLength(1);
     expect(list[0].text).toBe("Stunning artwork");
     expect(list[0].rating).toBe(5);
@@ -220,10 +225,12 @@ describe("listPuzzleReviews — sourced from puzzleReviews", () => {
       text: "No stars from me",
     });
 
-    const list = await asAlice(t).query(
-      api.social.listPuzzleReviews.listPuzzleReviews,
-      { puzzleId },
-    );
+    const list = await asAlice(t)
+      .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+        puzzleId,
+        paginationOpts: FIRST_PAGE,
+      })
+      .then((result) => result.page);
     expect(list).toHaveLength(1);
     expect(list[0].rating).toBeNull();
     expect(list[0].text).toBe("No stars from me");
@@ -235,10 +242,12 @@ describe("listPuzzleReviews — sourced from puzzleReviews", () => {
 
     await seedReview(t, { puzzleId, userId: alice, rating: 4 });
 
-    const list = await asAlice(t).query(
-      api.social.listPuzzleReviews.listPuzzleReviews,
-      { puzzleId },
-    );
+    const list = await asAlice(t)
+      .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+        puzzleId,
+        paginationOpts: FIRST_PAGE,
+      })
+      .then((result) => result.page);
     expect(list).toHaveLength(1);
     expect(list[0].rating).toBe(4);
     expect(list[0].text).toBeNull();
@@ -272,10 +281,12 @@ describe("listPuzzleReviews — sourced from puzzleReviews", () => {
       updatedAt: base + 3_000,
     });
 
-    const list = await asAlice(t).query(
-      api.social.listPuzzleReviews.listPuzzleReviews,
-      { puzzleId },
-    );
+    const list = await asAlice(t)
+      .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+        puzzleId,
+        paginationOpts: FIRST_PAGE,
+      })
+      .then((result) => result.page);
     expect(list.map((c) => c.text)).toEqual(["newest", "middle", "oldest"]);
     // updatedAt is surfaced as-is.
     expect(list.map((c) => c.updatedAt)).toEqual([
@@ -295,10 +306,12 @@ describe("listPuzzleReviews — sourced from puzzleReviews", () => {
       await ctx.db.delete(bob);
     });
 
-    const list = await asAlice(t).query(
-      api.social.listPuzzleReviews.listPuzzleReviews,
-      { puzzleId },
-    );
+    const list = await asAlice(t)
+      .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+        puzzleId,
+        paginationOpts: FIRST_PAGE,
+      })
+      .then((result) => result.page);
     expect(list).toHaveLength(1);
     expect(list[0].text).toBe("Orphaned");
     // No id or placeholder name: the web renders its localized "Deleted member".
@@ -319,10 +332,12 @@ describe("listPuzzleReviews — sourced from puzzleReviews", () => {
       text: "Stunning artwork",
     });
 
-    const list = await asAlice(t).query(
-      api.social.listPuzzleReviews.listPuzzleReviews,
-      { puzzleId },
-    );
+    const list = await asAlice(t)
+      .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+        puzzleId,
+        paginationOpts: FIRST_PAGE,
+      })
+      .then((result) => result.page);
     expect(list).toHaveLength(1);
     expect(list[0].rating).toBe(5);
     expect(list[0].text).toBe("Stunning artwork");
@@ -347,7 +362,12 @@ describe("listPuzzleReviews — sourced from puzzleReviews", () => {
     });
 
     await expect(
-      t.query(api.social.listPuzzleReviews.listPuzzleReviews, { puzzleId }),
+      t
+        .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+          puzzleId,
+          paginationOpts: FIRST_PAGE,
+        })
+        .then((result) => result.page),
     ).rejects.toThrow(ConvexError);
   });
 });

@@ -4692,6 +4692,7 @@
     "reviewTooLong": "Die review is te lang (maximaal 2.000 tekens).",
     "reviewRateLimited": "Je hebt de laatste tijd veel reviews opgeslagen. Probeer het later opnieuw.",
     "noReviews": "Nog geen reviews. Wees de eerste.",
+    "showMoreReviews": "Meer reviews tonen",
     "anonymousReviewer": "Anonieme gebruiker",
     "swapType": {
       "swap": "Ruilen",
@@ -5547,6 +5548,7 @@
     "noRatings": "Nog geen beoordelingen.",
     "reviews": "Reviews",
     "noReviews": "Nog geen reviews.",
+    "showMoreReviews": "Meer reviews tonen",
     "anonymousReviewer": "Een JigSwap-lid",
     "logInToReview": "Log in om een review te schrijven",
     "notFound": "Puzzel niet gevonden",

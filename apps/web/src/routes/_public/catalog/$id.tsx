@@ -28,15 +28,20 @@ import { useFormatter, useTranslations } from "use-intl";
 type View = NonNullable<
   FunctionReturnType<typeof gateway.catalog.publicDefinitionView>
 >;
-type PublicReview = FunctionReturnType<
+type ReviewPage = FunctionReturnType<
   typeof gateway.social.listPublicPuzzleReviews
->[number];
+>;
+type PublicReview = ReviewPage["page"][number];
+
+// How many reviews a page of the list adds; the first page is in the server-rendered HTML.
+const REVIEW_PAGE_SIZE = 20;
 
 const viewQuery = (id: string) =>
   convexQuery(gateway.catalog.publicDefinitionView, { puzzleId: id });
 const reviewsQuery = (id: string) =>
   convexQuery(gateway.social.listPublicPuzzleReviews, {
     puzzleId: id as Id<"puzzles">,
+    paginationOpts: { numItems: REVIEW_PAGE_SIZE, cursor: null },
   });
 
 export const Route = createFileRoute("/_public/catalog/$id")({
@@ -383,7 +388,7 @@ function PublicPuzzleDetail({
             </>
           )}
         </section>
-        <PublicReviews puzzleId={puzzleId} />
+        <PublicReviews key={puzzleId} puzzleId={puzzleId} />
       </div>
     </main>
   );
@@ -392,8 +397,41 @@ function PublicPuzzleDetail({
 function PublicReviews({ puzzleId }: { puzzleId: string }) {
   const t = useTranslations("publicCatalog");
   const format = useFormatter();
-  const { data: reviews } = useQuery(reviewsQuery(puzzleId));
-  const list = reviews ?? [];
+  const { convexClient } = Route.useRouteContext();
+  // First page: a plain reactive query, prefetched by the loader so it is in the server HTML. Older
+  // pages accumulate here, as on the catalogue list. The section is keyed by the puzzle.
+  const { data: firstPage } = useQuery(reviewsQuery(puzzleId));
+  const [morePages, setMorePages] = useState<ReviewPage[]>([]);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const lastPage = morePages.at(-1) ?? firstPage;
+  const hasMore = lastPage !== undefined && !lastPage.isDone;
+  // A review updated meanwhile moves to the top of the first page: list it once.
+  const list = [
+    ...new Map(
+      [...(firstPage?.page ?? []), ...morePages.flatMap((p) => p.page)].map(
+        (review) => [review.id, review],
+      ),
+    ).values(),
+  ];
+  const loadMore = async () => {
+    if (!hasMore || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const next = await convexClient.query(
+        gateway.social.listPublicPuzzleReviews,
+        {
+          puzzleId: puzzleId as Id<"puzzles">,
+          paginationOpts: {
+            numItems: REVIEW_PAGE_SIZE,
+            cursor: lastPage.continueCursor,
+          },
+        },
+      );
+      setMorePages((pages) => [...pages, next]);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
   // Fixed baseline for relative-time formatting — reading Date.now() during render is impure
   // (react-hooks/purity); seed it once, matching the dashboard detail page.
   const [now] = useState(() => Date.now());
@@ -403,7 +441,7 @@ function PublicReviews({ puzzleId }: { puzzleId: string }) {
       <SectionHead
         icon={<MessageCircle className="h-4 w-4" />}
         title={t("reviews")}
-        meta={String(list.length)}
+        meta={hasMore ? `${list.length}+` : String(list.length)}
       />
       <div className="flex flex-col">
         {list.map((review, i) => (
@@ -416,6 +454,18 @@ function PublicReviews({ puzzleId }: { puzzleId: string }) {
         ))}
         {list.length === 0 && (
           <p className="text-muted-foreground text-sm">{t("noReviews")}</p>
+        )}
+        {/* aria-disabled, not disabled, while the next page loads: a disabled button drops focus. */}
+        {hasMore && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-3 self-center pointer-coarse:min-h-11"
+            aria-disabled={loadingMore}
+            onClick={() => void loadMore()}
+          >
+            {t("showMoreReviews")}
+          </Button>
         )}
       </div>
       {/* Read-only surface: in place of the composer, one muted line (spec). */}

@@ -8,6 +8,9 @@ import schema from "./schema";
 // Bundle every Convex module for the in-memory runtime, excluding test files.
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
+// A review list is paged; these tests look at what one generous page says.
+const FIRST_PAGE = { numItems: 50, cursor: null };
+
 // Seed two members + ONE catalog puzzle + two owned copies of THAT SAME puzzle (one Alice's, one
 // Bob's). Comments are COPY-scoped, so each copy surfaces only its own list (and they never leak
 // into the shared puzzle's community reviews).
@@ -140,10 +143,12 @@ describe("postPuzzleComment / listPuzzleComments", () => {
     });
 
     // The catalog reviews list shows ONLY the community review, not the copy comment.
-    const reviews = await asBob(t).query(
-      api.social.listPuzzleReviews.listPuzzleReviews,
-      { puzzleId },
-    );
+    const reviews = await asBob(t)
+      .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+        puzzleId,
+        paginationOpts: FIRST_PAGE,
+      })
+      .then((result) => result.page);
     expect(reviews.map((r) => r.text)).toEqual(["great design"]);
   });
 

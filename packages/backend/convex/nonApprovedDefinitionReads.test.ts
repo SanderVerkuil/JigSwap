@@ -7,6 +7,9 @@ import schema from "./schema";
 // Bundle every Convex module for the in-memory runtime, excluding test files.
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
+// A review list is paged; these tests look at what one generous page says.
+const FIRST_PAGE = { numItems: 50, cursor: null };
+
 // SEC-34: a catalogue definition that is not approved (pending, rejected, disabled) is disclosed
 // only to its submitter or an admin, through every definition read, exactly as getPuzzleById
 // already did. Another member gets null, the same answer as for an unknown id.
@@ -138,7 +141,12 @@ describe("puzzle reviews of non-approved definitions stay private (SEC-34)", () 
     caller: ReturnType<TestConvex<typeof schema>["withIdentity"]>,
     puzzleId: Id<"puzzles">,
   ) =>
-    caller.query(api.social.listPuzzleReviews.listPuzzleReviews, { puzzleId });
+    caller
+      .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+        puzzleId,
+        paginationOpts: FIRST_PAGE,
+      })
+      .then((result) => result.page);
   const postReview = (
     caller: ReturnType<TestConvex<typeof schema>["withIdentity"]>,
     puzzleId: Id<"puzzles">,

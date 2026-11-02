@@ -7,6 +7,9 @@ import schema from "./schema";
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
+// A review list is paged; these tests look at what one generous page says.
+const FIRST_PAGE = { numItems: 50, cursor: null };
+
 // The ghost "Deleted member" (spec 2026-10-19): every surface that shows content a member left
 // behind (reviews, comments, trade reviews, catalog contributions, activity, loans) must yield the
 // departed state once their users row is gone or tombstoned: no name, avatar or profile link.
@@ -221,10 +224,12 @@ describe.each(Object.keys(departures) as (keyof typeof departures)[])(
 
     test("puzzle reviews", async () => {
       const { asViewer, puzzleId, dora } = await setup();
-      const reviews = await asViewer.query(
-        api.social.listPuzzleReviews.listPuzzleReviews,
-        { puzzleId },
-      );
+      const reviews = await asViewer
+        .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+          puzzleId,
+          paginationOpts: FIRST_PAGE,
+        })
+        .then((result) => result.page);
       expect(reviews).toHaveLength(1);
       expectDepartedAuthor(reviews[0].author);
       expect(JSON.stringify(reviews)).not.toContain(dora);
@@ -311,10 +316,12 @@ describe.each(Object.keys(departures) as (keyof typeof departures)[])(
 
     test("public review authors are anonymous", async () => {
       const { t, puzzleId } = await setup();
-      const reviews = await t.query(
-        api.social.listPublicPuzzleReviews.listPublicPuzzleReviews,
-        { puzzleId },
-      );
+      const reviews = await t
+        .query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviews, {
+          puzzleId,
+          paginationOpts: FIRST_PAGE,
+        })
+        .then((result) => result.page);
       expect(reviews).toHaveLength(1);
       expect(reviews[0].author).toBeNull();
     });

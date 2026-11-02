@@ -33,6 +33,14 @@ vi.mock("@convex-dev/react-query", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@convex-dev/react-query")>()),
   useConvexMutation: () => vi.fn(),
 }));
+vi.mock("convex/react", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("convex/react")>()),
+  usePaginatedQuery: () => ({
+    results: [],
+    status: "Exhausted",
+    loadMore: vi.fn(),
+  }),
+}));
 vi.mock("@/components/dashboard-layout/page-header-slot", () => ({
   usePageHeader: () => {},
 }));

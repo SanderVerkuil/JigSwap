@@ -13,6 +13,9 @@ import schema from "./schema";
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
+// A review list is paged; these tests look at what one generous page says.
+const FIRST_PAGE = { numItems: 50, cursor: null };
+
 type T = TestConvex<typeof schema>;
 
 // Every profile detail of the private author, and her account name: none of them may reach a
@@ -129,9 +132,12 @@ const as = (t: T, key: string) => t.withIdentity({ subject: `clerk_${key}` });
 const authorsSeenBy = async (t: T, key: string, u: Seeded) => {
   const viewer = as(t, key);
   const [reviews, comments, photoComments] = await Promise.all([
-    viewer.query(api.social.listPuzzleReviews.listPuzzleReviews, {
-      puzzleId: u.approved,
-    }),
+    viewer
+      .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+        puzzleId: u.approved,
+        paginationOpts: FIRST_PAGE,
+      })
+      .then((result) => result.page),
     viewer.query(api.social.listPuzzleComments.listPuzzleComments, {
       copyId: u.copy,
     }),
@@ -239,20 +245,24 @@ describe("SEC-11: reviews of a definition that is not approved", () => {
     const t = convexTest(schema, modules);
     const u = await seed(t);
     expect(
-      await as(t, "stranger").query(
-        api.social.listPuzzleReviews.listPuzzleReviews,
-        { puzzleId: u.pending },
-      ),
+      await as(t, "stranger")
+        .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+          puzzleId: u.pending,
+          paginationOpts: FIRST_PAGE,
+        })
+        .then((result) => result.page),
     ).toEqual([]);
   });
 
   test("are listed for the submitter", async () => {
     const t = convexTest(schema, modules);
     const u = await seed(t);
-    const reviews = await as(t, "submitter").query(
-      api.social.listPuzzleReviews.listPuzzleReviews,
-      { puzzleId: u.pending },
-    );
+    const reviews = await as(t, "submitter")
+      .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+        puzzleId: u.pending,
+        paginationOpts: FIRST_PAGE,
+      })
+      .then((result) => result.page);
     expect(reviews).toHaveLength(1);
   });
 
@@ -263,7 +273,9 @@ describe("SEC-11: reviews of a definition that is not approved", () => {
       .withIdentity({ subject: "clerk_stranger", metadata: { role: "admin" } })
       .query(api.social.listPuzzleReviews.listPuzzleReviews, {
         puzzleId: u.pending,
-      });
+        paginationOpts: FIRST_PAGE,
+      })
+      .then((result) => result.page);
     expect(reviews).toHaveLength(1);
   });
 });

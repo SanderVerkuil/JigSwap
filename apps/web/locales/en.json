@@ -4692,6 +4692,7 @@
     "reviewTooLong": "That review is too long (2,000 characters max).",
     "reviewRateLimited": "You've saved a lot of reviews lately. Try again later.",
     "noReviews": "No reviews yet. Be the first.",
+    "showMoreReviews": "Show more reviews",
     "anonymousReviewer": "Anonymous user",
     "swapType": {
       "swap": "Swap",
@@ -5547,6 +5548,7 @@
     "noRatings": "No ratings yet.",
     "reviews": "Reviews",
     "noReviews": "No reviews yet.",
+    "showMoreReviews": "Show more reviews",
     "anonymousReviewer": "A JigSwap member",
     "logInToReview": "Log in to write a review",
     "notFound": "Puzzle not found",

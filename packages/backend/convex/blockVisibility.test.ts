@@ -15,6 +15,9 @@ import { projectMemberIdentity } from "./social/privacy";
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
+// A review list is paged; these tests look at what one generous page says.
+const FIRST_PAGE = { numItems: 50, cursor: null };
+
 type T = TestConvex<typeof schema>;
 type Who = "alice" | "bob" | "carol";
 type Users = Record<Who, Id<"users">>;
@@ -756,25 +759,31 @@ describe("comments and reviews", () => {
       expect(photoComments.map((c) => c.author)).toMatchObject([
         { anonymous: false, member: { _id: u.carol } },
       ]);
-      const reviews = await alice.query(
-        api.social.listPuzzleReviews.listPuzzleReviews,
-        { puzzleId },
-      );
+      const reviews = await alice
+        .query(api.social.listPuzzleReviews.listPuzzleReviews, {
+          puzzleId,
+          paginationOpts: FIRST_PAGE,
+        })
+        .then((result) => result.page);
       expect(reviews.map((r) => r.author)).toMatchObject([
         { anonymous: false, member: { _id: u.carol } },
       ]);
       // Public reviews: filtered when signed in, untouched for an anonymous visitor.
       expect(
-        await alice.query(
-          api.social.listPublicPuzzleReviews.listPublicPuzzleReviews,
-          { puzzleId },
-        ),
+        await alice
+          .query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviews, {
+            puzzleId,
+            paginationOpts: FIRST_PAGE,
+          })
+          .then((result) => result.page),
       ).toHaveLength(1);
       expect(
-        await t.query(
-          api.social.listPublicPuzzleReviews.listPublicPuzzleReviews,
-          { puzzleId },
-        ),
+        await t
+          .query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviews, {
+            puzzleId,
+            paginationOpts: FIRST_PAGE,
+          })
+          .then((result) => result.page),
       ).toHaveLength(2);
     },
   );
