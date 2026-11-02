@@ -1,7 +1,8 @@
-import { DomainEvent, ok, Result } from "../../shared-kernel";
+import { DomainEvent, err, ok, Result } from "../../shared-kernel";
 import { LibraryError } from "./errors";
 import { PersonalCategoryCreated } from "./events";
 import { OwnerId, PersonalCategoryId } from "./ids";
+import { checkLibraryText } from "./text-limits";
 
 // A lightweight aggregate: a member's private label for organising collections. Matches the
 // `categories` table. Homonym fix: this PersonalCategory ≠ Catalog's CatalogCategory (§1.5).
@@ -46,6 +47,12 @@ export class PersonalCategory {
   static create(
     props: CreatePersonalCategoryProps,
   ): Result<PersonalCategory, LibraryError> {
+    const text = checkLibraryText({
+      categoryName: props.name,
+      categoryDescription: props.description,
+      color: props.color,
+    });
+    if (text.isErr) return err(text.error);
     const state: PersonalCategoryState = {
       id: props.id,
       ownerId: props.ownerId,

@@ -17,6 +17,7 @@ import {
 } from "./events";
 import { Price } from "./price";
 import { SharingSetting } from "./sharing-setting";
+import { LIBRARY_TEXT_LIMITS } from "./text-limits";
 
 const copyId = toCopyId("copy1");
 const owner = toOwnerId("alice");
@@ -513,5 +514,34 @@ describe("a copy's missing pieces", () => {
       true,
     );
     expect(copy.toState().missingPiecesCount).toBe(count);
+  });
+});
+
+describe("a copy's notes are bounded", () => {
+  const max = LIBRARY_TEXT_LIMITS.copyNotes;
+
+  it("acquire refuses longer notes and takes the longest", () => {
+    const acquireWith = (notes: string) =>
+      Copy.acquire({
+        id: copyId,
+        ownerId: owner,
+        snapshot: snapshot(),
+        condition: "good",
+        notes,
+        now: NOW,
+      });
+    const refused = acquireWith("x".repeat(max + 1));
+    expect(refused.isErr).toBe(true);
+    if (refused.isErr) expect(refused.error.code).toBe("TextTooLong");
+    expect(acquireWith("x".repeat(max)).isOk).toBe(true);
+  });
+
+  it("updateDetails refuses longer notes and keeps the stored ones", () => {
+    const copy = acquire();
+    copy.updateDetails({ notes: "corner bent" }, LATER);
+    const refused = copy.updateDetails({ notes: "x".repeat(max + 1) }, LATER);
+    expect(refused.isErr).toBe(true);
+    if (refused.isErr) expect(refused.error.code).toBe("TextTooLong");
+    expect(copy.toState().notes).toBe("corner bent");
   });
 });

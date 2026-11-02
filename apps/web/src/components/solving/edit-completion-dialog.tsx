@@ -17,6 +17,7 @@ import { gateway } from "@/gateway";
 import { dateInputToMs, msToDateInput } from "@/lib/date-input";
 import { cn } from "@/lib/utils";
 import { useConvexMutation } from "@convex-dev/react-query";
+import { MAX_SOLVE_NOTES_LENGTH } from "@jigswap/contracts";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -162,6 +163,7 @@ export function EditCompletionDialog({
               placeholder={t("notesPlaceholder")}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
+              maxLength={MAX_SOLVE_NOTES_LENGTH}
             />
           </div>
         </div>

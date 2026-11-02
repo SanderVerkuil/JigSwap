@@ -18,6 +18,9 @@ import { isSpanLongerThanAnySolve, SolveDuration } from "./solve-duration";
 // A completion may hold at most five photos (§1.4).
 export const MAX_PHOTOS = 5;
 
+// The longest a solve's notes may be. Checked where notes are written, never on rehydrate.
+export const MAX_SOLVE_NOTES_LENGTH = 5_000;
+
 // Edits are only allowed within this window. It is anchored on the solve's end date (see
 // completionEditableUntil), which is a calendar date stored as UTC midnight, so a back-dated or
 // year-only solve is closed as soon as it is logged.
@@ -146,6 +149,9 @@ export class Completion {
     if (!isPossibleSolveDate(props.startDate, props.now)) {
       return err(SolvingError.invalidSolveDate());
     }
+    if ((props.notes?.length ?? 0) > MAX_SOLVE_NOTES_LENGTH) {
+      return err(SolvingError.notesTooLong(MAX_SOLVE_NOTES_LENGTH));
+    }
     const photos = props.photos ?? [];
     if (photos.length > MAX_PHOTOS) {
       return err(SolvingError.tooManyPhotos(MAX_PHOTOS));
@@ -191,6 +197,9 @@ export class Completion {
     const dates = Completion.resolveRecordDates(props);
     if (dates.isErr) return err(dates.error);
     const { startDate, endDate } = dates.value;
+    if ((props.notes?.length ?? 0) > MAX_SOLVE_NOTES_LENGTH) {
+      return err(SolvingError.notesTooLong(MAX_SOLVE_NOTES_LENGTH));
+    }
 
     const photos = props.photos ?? [];
     if (photos.length > MAX_PHOTOS) {
@@ -310,6 +319,9 @@ export class Completion {
       if (date && !isPossibleSolveDate(date, now)) {
         return err(SolvingError.invalidSolveDate());
       }
+    }
+    if ((changes.notes?.length ?? 0) > MAX_SOLVE_NOTES_LENGTH) {
+      return err(SolvingError.notesTooLong(MAX_SOLVE_NOTES_LENGTH));
     }
 
     // A "year"/"unknown" row's dates are sentinels, not facts. Setting a real date upgrades it to

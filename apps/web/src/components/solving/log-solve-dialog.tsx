@@ -25,6 +25,7 @@ import { useUserSettings } from "@/hooks/use-user-settings";
 import { dateInputToMs, localTodayInput } from "@/lib/date-input";
 import { cn } from "@/lib/utils";
 import { useConvexMutation } from "@convex-dev/react-query";
+import { MAX_SOLVE_NOTES_LENGTH } from "@jigswap/contracts";
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { toast } from "sonner";
@@ -282,6 +283,7 @@ export function LogSolveDialog({
                 placeholder={t("notesPlaceholder")}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
+                maxLength={MAX_SOLVE_NOTES_LENGTH}
               />
             </div>
           </div>

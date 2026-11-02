@@ -7,6 +7,7 @@ import {
   toPuzzleDefinitionId,
 } from "../../shared-kernel";
 import { Collection } from "./collection";
+import { LIBRARY_TEXT_LIMITS } from "./text-limits";
 
 const collectionId = toCollectionId("col1");
 const owner = toOwnerId("alice");
@@ -217,5 +218,54 @@ describe("rehydrate / toState round-trip", () => {
     const restored = Collection.rehydrate(state);
     expect(restored.pullEvents()).toHaveLength(0);
     expect(restored.toState()).toEqual(state);
+  });
+});
+
+// 400 KB names used to go straight in, and every member who opens the profile downloads them.
+describe("a collection's text is bounded", () => {
+  const tooLong = [
+    ["name", LIBRARY_TEXT_LIMITS.collectionName],
+    ["description", LIBRARY_TEXT_LIMITS.collectionDescription],
+    ["personalNotes", LIBRARY_TEXT_LIMITS.collectionNotes],
+    ["color", LIBRARY_TEXT_LIMITS.color],
+    ["icon", LIBRARY_TEXT_LIMITS.icon],
+  ] as const;
+  const fresh = () => create();
+
+  it.each(tooLong)("create refuses a %s past %i characters", (field, max) => {
+    const r = Collection.create({
+      id: collectionId,
+      ownerId: owner,
+      name: "Favorites",
+      now: NOW,
+      [field]: "x".repeat(max + 1),
+    });
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("TextTooLong");
+  });
+
+  it.each(tooLong)("create takes a %s of %i characters", (field, max) => {
+    expect(create({ [field]: "x".repeat(max) }).toState()[field]).toHaveLength(
+      max,
+    );
+  });
+
+  it.each(tooLong)(
+    "update refuses a %s past %i characters and changes nothing",
+    (field, max) => {
+      const collection = fresh();
+      const r = collection.update({ [field]: "x".repeat(max + 1) }, NOW);
+      expect(r.isErr).toBe(true);
+      if (r.isErr) expect(r.error.code).toBe("TextTooLong");
+      expect(collection.toState().name).toBe("Favorites");
+    },
+  );
+
+  it("a stored collection past a bound stays readable and takes other changes", () => {
+    const collection = Collection.rehydrate({
+      ...fresh().toState(),
+      description: "x".repeat(LIBRARY_TEXT_LIMITS.collectionDescription + 1),
+    });
+    expect(collection.update({ visibility: "public" }, NOW).isOk).toBe(true);
   });
 });

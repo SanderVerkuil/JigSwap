@@ -10,6 +10,7 @@ import {
   Completion,
   completionEditableUntil,
   EDIT_WINDOW_MS,
+  MAX_SOLVE_NOTES_LENGTH,
 } from "./completion";
 import { Photo } from "./photo";
 
@@ -826,5 +827,38 @@ describe("a solve's dates are dates a solve can have", () => {
     expect(completion.edit(ALICE, { notes: "Fixed" }, NOW).isOk).toBe(true);
     // And its date can be put right.
     expect(completion.edit(ALICE, { startDate: START }, NOW).isOk).toBe(true);
+  });
+});
+
+describe("a solve's notes are bounded", () => {
+  const tooLong = "x".repeat(MAX_SOLVE_NOTES_LENGTH + 1);
+
+  it("start and record refuse longer notes and take the longest", () => {
+    const start = (notes: string) =>
+      Completion.start({
+        id: ID,
+        userId: ALICE,
+        puzzleDefinitionId: PUZZLE,
+        startDate: START,
+        notes,
+        now: NOW,
+      });
+    const refused = [start(tooLong), recordValid({ notes: tooLong })];
+    for (const r of refused) {
+      expect(r.isErr).toBe(true);
+      if (r.isErr) expect(r.error.code).toBe("NotesTooLong");
+    }
+    const longest = "x".repeat(MAX_SOLVE_NOTES_LENGTH);
+    expect(start(longest).isOk).toBe(true);
+    expect(recordValid({ notes: longest }).isOk).toBe(true);
+  });
+
+  it("edit refuses longer notes and keeps the stored ones", () => {
+    const r = recordValid({ notes: "fun" });
+    if (!r.isOk) throw new Error("setup failed");
+    const edited = r.value.edit(ALICE, { notes: tooLong }, NOW);
+    expect(edited.isErr).toBe(true);
+    if (edited.isErr) expect(edited.error.code).toBe("NotesTooLong");
+    expect(r.value.toState().notes).toBe("fun");
   });
 });

@@ -16,6 +16,7 @@ export type SolvingErrorCode =
   | "NotGoalOwner"
   | "InvalidRating"
   | "ReviewTextTooLong"
+  | "NotesTooLong"
   | "InvalidDuration"
   | "InvalidSolveDate"
   | "NotAllowedToReviewCopy"
@@ -33,6 +34,14 @@ export class SolvingError extends DomainError {
     message: string,
   ) {
     super(message);
+  }
+
+  // A solve's notes are longer than their limit.
+  static notesTooLong(max: number): SolvingError {
+    return new SolvingError(
+      "NotesTooLong",
+      `A solve's notes can be at most ${max} characters`,
+    );
   }
 
   // A date that isn't real or lies outside what a solve can have (isPossibleSolveDate).

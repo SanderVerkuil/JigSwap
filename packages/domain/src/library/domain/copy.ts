@@ -22,6 +22,7 @@ import {
 } from "./events";
 import { CopyId, OwnerId, PuzzleDefinitionId } from "./ids";
 import { SharingSetting } from "./sharing-setting";
+import { checkLibraryText } from "./text-limits";
 
 // The most missing pieces a copy can report: the largest puzzles have a few tens of thousands.
 export const MAX_MISSING_PIECES = 100_000;
@@ -110,6 +111,8 @@ export class Copy {
     ) {
       return err(LibraryError.invalidMissingPieces());
     }
+    const text = checkLibraryText({ copyNotes: props.notes });
+    if (text.isErr) return err(text.error);
     const state: CopyState = {
       id: props.id,
       ownerId: props.ownerId,
@@ -261,6 +264,8 @@ export class Copy {
     ) {
       return err(LibraryError.invalidMissingPieces());
     }
+    const text = checkLibraryText({ copyNotes: changes.notes });
+    if (text.isErr) return text;
     this.state = {
       ...this.state,
       missingPiecesCount:

@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
 import { dateInputToMs, localTodayInput } from "@/lib/date-input";
 import { useConvexMutation } from "@convex-dev/react-query";
+import { MAX_SOLVE_NOTES_LENGTH } from "@jigswap/contracts";
 import { useMutation } from "@tanstack/react-query";
 import { useState, type RefObject } from "react";
 import { toast } from "sonner";
@@ -104,6 +105,7 @@ export function StartSolveDialog({
               placeholder={t("notesPlaceholder")}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
+              maxLength={MAX_SOLVE_NOTES_LENGTH}
             />
           </div>
         </div>

@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { gateway, Id } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { useConvexMutation } from "@convex-dev/react-query";
+import { LIBRARY_TEXT_LIMITS } from "@jigswap/contracts";
 import { useMutation } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
 import { Check, ImageOff, ImagePlus } from "lucide-react";
@@ -313,6 +314,7 @@ function EditCopyDialogForm({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder={t("editCopy.notesPlaceholder")}
+              maxLength={LIBRARY_TEXT_LIMITS.copyNotes}
               rows={3}
             />
           </div>

@@ -32,6 +32,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
 import { useConvexMutation } from "@convex-dev/react-query";
+import { LIBRARY_TEXT_LIMITS } from "@jigswap/contracts";
 import { useMutation } from "@tanstack/react-query";
 import { Globe, Lock, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -184,6 +185,7 @@ function EditCollectionForm({
               setFormData({ ...formData, name: e.target.value });
             }}
             placeholder={t("collectionNamePlaceholder")}
+            maxLength={LIBRARY_TEXT_LIMITS.collectionName}
             aria-invalid={nameError ? true : undefined}
             aria-describedby={nameError ? "edit-col-name-error" : undefined}
           />
@@ -202,6 +204,7 @@ function EditCollectionForm({
               setFormData({ ...formData, description: e.target.value })
             }
             placeholder={t("descriptionPlaceholder")}
+            maxLength={LIBRARY_TEXT_LIMITS.collectionDescription}
           />
         </div>
         <div className="space-y-2">

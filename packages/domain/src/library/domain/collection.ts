@@ -10,6 +10,23 @@ import {
   PuzzleWished,
 } from "./events";
 import { CollectionId, CopyId, OwnerId, PuzzleDefinitionId } from "./ids";
+import { checkLibraryText } from "./text-limits";
+
+// A collection's free text as the bounds name it; an absent field isn't checked.
+const checkCollectionText = (text: {
+  readonly name?: string;
+  readonly description?: string;
+  readonly color?: string;
+  readonly icon?: string;
+  readonly personalNotes?: string;
+}) =>
+  checkLibraryText({
+    collectionName: text.name,
+    collectionDescription: text.description,
+    color: text.color,
+    icon: text.icon,
+    collectionNotes: text.personalNotes,
+  });
 
 // A Collection's reach, matching the persisted `collections.visibility` column.
 export type CollectionVisibility = "private" | "public";
@@ -90,6 +107,8 @@ export class Collection {
   static create(
     props: CreateCollectionProps,
   ): Result<Collection, LibraryError> {
+    const text = checkCollectionText(props);
+    if (text.isErr) return err(text.error);
     const isWishlist = props.isWishlist ?? false;
     const state: CollectionState = {
       id: props.id,
@@ -133,6 +152,8 @@ export class Collection {
     },
     now: Date,
   ): Result<void, LibraryError> {
+    const text = checkCollectionText(props);
+    if (text.isErr) return text;
     this.state = {
       ...this.state,
       name: props.name ?? this.state.name,
