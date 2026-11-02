@@ -425,6 +425,19 @@ describe("solving.setGoalArchived", () => {
       "GoalNotFound",
     );
   });
+
+  test("requires a signed-in member", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const goalId = await createGoal(t, { targetCompletions: 5 });
+    await expect(
+      t.mutation(api.solving.setGoalArchived.setGoalArchived, {
+        goalId,
+        archived: true,
+      }),
+    ).rejects.toThrow("Unauthenticated");
+    expect((await goalRow(t, goalId))?.isActive).toBe(true);
+  });
 });
 
 describe("solving.deleteGoal", () => {
@@ -459,5 +472,15 @@ describe("solving.deleteGoal", () => {
       }),
       "GoalNotFound",
     );
+  });
+
+  test("requires a signed-in member", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const goalId = await createGoal(t, { targetCompletions: 5 });
+    await expect(
+      t.mutation(api.solving.deleteGoal.deleteGoal, { goalId }),
+    ).rejects.toThrow("Unauthenticated");
+    expect(await goalRow(t, goalId)).not.toBeNull();
   });
 });
