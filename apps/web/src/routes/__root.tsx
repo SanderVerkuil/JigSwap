@@ -201,8 +201,21 @@ const clerkAppearance = {
   },
   // Clerk's fields are 13px, and iOS zooms the page into any field under 16px on focus. On touch,
   // only the input text goes to 16px (not Clerk's global fontSize, which would scale every label).
+  // Its fields and buttons are 30-36px: on touch they reach the app's 44px target.
   elements: {
-    formFieldInput: { "@media (pointer: coarse)": { fontSize: "16px" } },
+    formFieldInput: {
+      "@media (pointer: coarse)": { fontSize: "16px", minHeight: "44px" },
+    },
+    formButtonPrimary: { "@media (pointer: coarse)": { minHeight: "44px" } },
+    socialButtonsIconButton: {
+      "@media (pointer: coarse)": { minHeight: "44px" },
+    },
+    socialButtonsBlockButton: {
+      "@media (pointer: coarse)": { minHeight: "44px" },
+    },
+    formFieldInputShowPasswordButton: {
+      "@media (pointer: coarse)": { minHeight: "44px", minWidth: "44px" },
+    },
   },
 } as const;
 
