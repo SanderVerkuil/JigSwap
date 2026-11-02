@@ -11,7 +11,8 @@ export function DocBreadcrumb({
   return (
     <nav
       aria-label={t("breadcrumbLabel")}
-      className="flex items-center gap-1.5 text-[13px] text-mk-text-muted mb-4"
+      // Wraps between crumbs, so each keeps its text on one line unless that alone is too wide.
+      className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[13px] text-mk-text-muted mb-4"
     >
       {trail.map((c, i) => (
         <span key={i} className="flex items-center gap-1.5">
