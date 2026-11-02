@@ -346,7 +346,7 @@ export function QueryBuilder({
               onRemove={() => removeField("pieces")}
               removeLabel={tBrowse("removeFilter")}
             >
-              <div className="flex items-center gap-1">
+              <div className="flex min-w-0 items-center gap-1">
                 <Input
                   autoFocus={pendingFocus === "pieces"}
                   type="number"
@@ -357,7 +357,7 @@ export function QueryBuilder({
                   onBlur={() => setPendingFocus(null)}
                   placeholder={tBrowse("min")}
                   aria-label={tBrowse("minPieces")}
-                  className="h-8 w-20 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0"
+                  className="h-8 max-w-20 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0"
                 />
                 <span className="text-muted-foreground text-xs">–</span>
                 <Input
@@ -368,7 +368,7 @@ export function QueryBuilder({
                   onChange={(e) => set({ maxPieces: e.target.value })}
                   placeholder={tBrowse("max")}
                   aria-label={tBrowse("maxPieces")}
-                  className="h-8 w-20 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0"
+                  className="h-8 max-w-20 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0"
                 />
               </div>
             </ConditionShell>
@@ -424,8 +424,8 @@ export function QueryBuilder({
 // A themed pill wrapper around one active condition: a brand-tinted label, the
 // field's control, and a remove button. Open and rounded, never a boxed card. It
 // never outgrows the row, so the × stays on screen on a phone: the control gives
-// way (a select truncates, the availability toggles wrap), and a fixed radius
-// keeps the shape when wrapping makes the pill taller.
+// way (a select truncates, the availability toggles wrap, the piece inputs narrow),
+// and a fixed radius keeps the shape when wrapping makes the pill taller.
 function ConditionShell({
   label,
   onRemove,

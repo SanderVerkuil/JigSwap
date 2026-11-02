@@ -107,6 +107,17 @@ describe("QueryBuilder: focus when a condition goes away", () => {
 });
 
 describe("QueryBuilder: piece count", () => {
+  // Layout itself can't be measured here: the 320px check was done in a browser.
+  it("lets its two inputs narrow, so the chip's remove button stays on a small phone", () => {
+    renderBuilder({ minPieces: "500" });
+    for (const name of [en.browse.minPieces, en.browse.maxPieces]) {
+      const input = screen.getByRole("spinbutton", { name });
+      expect(input.className).toContain("max-w-20");
+      expect(input.className).not.toMatch(/(^|\s)w-20(\s|$)/);
+      expect(input.parentElement?.className).toContain("min-w-0");
+    }
+  });
+
   it("shows short placeholders that fit and keeps the full names for screen readers", () => {
     renderBuilder({ minPieces: "", maxPieces: "1000" });
 
