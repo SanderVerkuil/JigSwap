@@ -1,4 +1,4 @@
 {
-  "prompt": "Pre-existing art: crop of the owner's illustration assets/puzzle-house.png. No new generation; regenerate from the prompts handed to the owner when larger art lands.",
-  "createdAt": "2026-11-02T09:46:44.824Z"
+  "prompt": "Owner-generated on t3.chat from the hero prompt (redraw assets/puzzle-house.png with flat sky and puzzle boxes in every room); source kept as assets/puzzle-house-2.png. Crop of the kitchen floor.",
+  "createdAt": "2026-11-02T13:00:05.058Z"
 }
