@@ -17,6 +17,8 @@ interface Page<Row> {
   page: Row[];
   continueCursor: string;
   isDone: boolean;
+  pageStatus?: string | null;
+  splitCursor?: string | null;
 }
 type PaginationOpts = {
   numItems: number;
@@ -48,6 +50,45 @@ const loadPinned = async <Row>(
       return rows;
     },
   };
+};
+
+/**
+ * Reads `pages` pages as the hook holds them and acts on a split the way it does: the page is replaced
+ * by its two halves, (cursor, splitCursor] and (splitCursor, continueCursor]. What it returns is what
+ * the member has on screen once every split has settled.
+ */
+const readSplitting = async <Row>(
+  read: (opts: PaginationOpts) => Promise<Page<Row>>,
+  numItems: number,
+  pages: number,
+) => {
+  const held: PaginationOpts[] = [{ numItems, cursor: null }];
+  let last = await read(held[0]);
+  for (let i = 1; i < pages; i++) {
+    const boundary = last.continueCursor;
+    held[i - 1] = { ...held[i - 1], endCursor: boundary };
+    held.push({ numItems, cursor: boundary });
+    last = await read(held[i]);
+  }
+  const rows: Row[] = [];
+  let splits = 0;
+  for (let opts = held.shift(); opts; opts = held.shift()) {
+    const result = await read(opts);
+    if (result.pageStatus === "SplitRequired" && result.splitCursor) {
+      splits += 1;
+      held.unshift(
+        { ...opts, endCursor: result.splitCursor },
+        {
+          ...opts,
+          cursor: result.splitCursor,
+          endCursor: result.continueCursor,
+        },
+      );
+      continue;
+    }
+    rows.push(...result.page);
+  }
+  return { rows, splits };
 };
 
 const addUsers = (t: T, names: string[]) =>
@@ -143,6 +184,8 @@ describe("social.myNetwork", () => {
   });
 });
 
+type Status = Doc<"exchanges">["status"];
+
 describe("exchange.myHistory", () => {
   let ann: Id<"users">;
   let bob: Id<"users">;
@@ -209,6 +252,118 @@ describe("exchange.myHistory", () => {
       ctx.db.patch(live, { status: "completed", updatedAt: 70 }),
     );
     expect(finished(await reread())).toEqual(["live", "e5", "e4", "e3", "e2"]);
+  });
+
+  // A pinned read stops at four pages' worth of rows, and these filters can honestly span more. The
+  // page is split, and a row between where the read stopped and the pin must land in one of the halves.
+  describe("a filter that matches little, through a split", () => {
+    const insertExchanges = (rows: { status: Status; updatedAt: number }[]) =>
+      t.run(async (ctx) => {
+        const copy = (ownerId: Id<"users">) =>
+          ctx.db.insert("ownedPuzzles", {
+            puzzleId,
+            ownerId,
+            condition: "good",
+            availability: { forTrade: true, forSale: false, forLend: false },
+            createdAt: 1,
+            updatedAt: 1,
+          });
+        const requestedPuzzleId = await copy(bob);
+        const offeredPuzzleId = await copy(ann);
+        for (const { status, updatedAt } of rows) {
+          await ctx.db.insert("exchanges", {
+            aggregateId: `e${updatedAt}`,
+            initiatorId: ann,
+            recipientId: bob,
+            requestedPuzzleId,
+            offeredPuzzleId,
+            type: "trade",
+            status,
+            createdAt: 1,
+            updatedAt,
+          });
+        }
+      });
+    const history =
+      (args: { status?: "rejected" } = {}) =>
+      (paginationOpts: PaginationOpts) =>
+        as(t, "ann").query(
+          api.exchange.listMyExchangeHistory.listMyExchangeHistory,
+          { ...args, paginationOpts },
+        );
+    const ids = (rows: { aggregateId?: string }[]) =>
+      rows.map((row) => row.aggregateId);
+
+    test("a sparse status loses no row when Show more pins the page", async () => {
+      // One finished row in 15 is rejected, so 20 of them span 300 rows; the bound is 200.
+      await insertExchanges(
+        Array.from({ length: 900 }, (_, i) => ({
+          status: i % 15 === 0 ? ("rejected" as const) : ("completed" as const),
+          updatedAt: 900 - i,
+        })),
+      );
+      const { rows, splits } = await readSplitting(
+        history({ status: "rejected" }),
+        20,
+        2,
+      );
+      expect(splits).toBeGreaterThan(0);
+      expect(ids(rows)).toEqual(
+        Array.from({ length: 40 }, (_, i) => `e${900 - i * 15}`),
+      );
+    });
+
+    test("live rows leading the merged stream lose no finished row", async () => {
+      // 250 live rows lead, and the history read filters them out.
+      await insertExchanges(
+        Array.from({ length: 290 }, (_, i) => ({
+          status: i < 250 ? ("proposed" as const) : ("completed" as const),
+          updatedAt: 290 - i,
+        })),
+      );
+      const { rows, splits } = await readSplitting(history(), 20, 2);
+      expect(splits).toBeGreaterThan(0);
+      expect(ids(rows)).toEqual(
+        Array.from({ length: 40 }, (_, i) => `e${40 - i}`),
+      );
+    });
+  });
+});
+
+describe("admin.getModerationActivity", () => {
+  test("one admin's sparse kind loses no row through a split", async () => {
+    const [admin] = await addUsers(t, ["admin"]);
+    await t.run(async (ctx) => {
+      // One in 15 matches, so 30 of them span 450 rows; the bound is 400.
+      for (let i = 0; i < 1200; i++) {
+        await ctx.db.insert("moderationActions", {
+          actorId: admin,
+          kind: i % 15 === 0 ? "report_warned" : "report_dismissed",
+          targetLabel: "Report",
+          targetId: `r${i}`,
+          at: 1200 - i,
+        });
+      }
+    });
+    const { rows, splits } = await readSplitting(
+      (paginationOpts) =>
+        t
+          .withIdentity({
+            subject: "clerk_admin",
+            metadata: { role: "admin" },
+          })
+          .query(api.admin.getModerationActivity.getModerationActivity, {
+            actorId: admin,
+            kind: "report_warned",
+            paginationOpts,
+          }),
+      30,
+      2,
+    );
+    expect(splits).toBeGreaterThan(0);
+    expect(rows.map((row) => row.at)).toEqual(
+      Array.from({ length: 60 }, (_, i) => 1200 - i * 15),
+    );
   });
 });
 

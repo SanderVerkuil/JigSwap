@@ -6,7 +6,7 @@ import type { Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
 import { canViewDefinition } from "../catalog/definitionVisibility";
 import { requireMember } from "../identity/requireMember";
-import { clampPaginationOpts } from "../lib/pageSize";
+import { paginateBounded } from "../lib/pageSize";
 import schema from "../schema";
 import { droppedForBlock, viewerBlocksOf } from "./blocks";
 import { projectMemberIdentity } from "./privacy";
@@ -70,20 +70,23 @@ const readReviewsPage = async (
   // The block rules run while the page fills, so it stays full. Only an author the viewer blocked
   // needs the identity decision here; one review per member, so every author is projected once
   // more below at most.
-  const result = await stream(ctx.db, schema)
-    .query("puzzleReviews")
-    .withIndex("by_puzzle_updated", (q) => q.eq("puzzleId", puzzleId))
-    .order("desc")
-    .filterWith(async (row) => {
-      if (blocks.byThem.has(row.userId)) return false;
-      if (!blocks.byMe.has(row.userId)) return true;
-      return !droppedForBlock(
-        blocks,
-        row.userId,
-        !(await project(row.userId)).anonymous,
-      );
-    })
-    .paginate(clampPaginationOpts(paginationOpts, MAX_REVIEW_PAGE_SIZE));
+  const result = await paginateBounded(
+    stream(ctx.db, schema)
+      .query("puzzleReviews")
+      .withIndex("by_puzzle_updated", (q) => q.eq("puzzleId", puzzleId))
+      .order("desc")
+      .filterWith(async (row) => {
+        if (blocks.byThem.has(row.userId)) return false;
+        if (!blocks.byMe.has(row.userId)) return true;
+        return !droppedForBlock(
+          blocks,
+          row.userId,
+          !(await project(row.userId)).anonymous,
+        );
+      }),
+    paginationOpts,
+    MAX_REVIEW_PAGE_SIZE,
+  );
 
   const page = await Promise.all(
     result.page.map(

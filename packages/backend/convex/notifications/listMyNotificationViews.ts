@@ -4,7 +4,7 @@ import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
-import { clampPaginationOpts, keepPinnedEnd } from "../lib/pageSize";
+import { paginateBounded } from "../lib/pageSize";
 import {
   createNotificationViewCache,
   resolveNotificationView,
@@ -22,22 +22,21 @@ export const listMyNotificationViews = query({
   handler: async (ctx, args): Promise<PaginationResult<NotificationView>> => {
     const memberId = await requireMember(ctx);
     const viewerId = memberId as unknown as Id<"users">;
-    const paginationOpts = clampPaginationOpts(
+    const result = await paginateBounded(
+      ctx.db
+        .query("notifications")
+        .withIndex("by_user", (q) => q.eq("userId", viewerId))
+        .order("desc")
+        // Only the in-app feed: legacy rows without a channel are in-app (see the row mapper).
+        .filter((q) =>
+          q.or(
+            q.eq(q.field("channel"), "inApp"),
+            q.eq(q.field("channel"), undefined),
+          ),
+        ),
       args.paginationOpts,
       MAX_NOTIFICATION_PAGE_SIZE,
     );
-    const result = await ctx.db
-      .query("notifications")
-      .withIndex("by_user", (q) => q.eq("userId", viewerId))
-      .order("desc")
-      // Only the in-app feed: legacy rows without a channel are in-app (see the row mapper).
-      .filter((q) =>
-        q.or(
-          q.eq(q.field("channel"), "inApp"),
-          q.eq(q.field("channel"), undefined),
-        ),
-      )
-      .paginate(paginationOpts);
 
     const cache = createNotificationViewCache({
       viewerIsAdmin: await isAdmin(ctx),
@@ -48,7 +47,7 @@ export const listMyNotificationViews = query({
       ),
     );
     return {
-      ...keepPinnedEnd(result, paginationOpts),
+      ...result,
       page: views.filter((view): view is NotificationView => view !== null),
     };
   },

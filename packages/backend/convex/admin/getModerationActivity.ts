@@ -4,7 +4,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
-import { clampPaginationOpts } from "../lib/pageSize";
+import { paginateBounded } from "../lib/pageSize";
 import schema from "../schema";
 import { userQuery } from "../users";
 import { toAuditEntry } from "./auditEntry";
@@ -133,7 +133,7 @@ export const getModerationActivity = query({
     }
 
     const actions = ctx.db.query("moderationActions");
-    const result = await (
+    const result = await paginateBounded(
       actorFilter !== undefined
         ? // An admin's own actions are few next to the whole log, so the kind is a filter here.
           actions
@@ -146,8 +146,10 @@ export const getModerationActivity = query({
           ? actions
               .withIndex("by_kind", (q) => q.eq("kind", kind))
               .order("desc")
-          : actions.withIndex("by_at").order("desc")
-    ).paginate(clampPaginationOpts(paginationOpts, MAX_PAGE_SIZE));
+          : actions.withIndex("by_at").order("desc"),
+      paginationOpts,
+      MAX_PAGE_SIZE,
+    );
 
     return {
       ...result,

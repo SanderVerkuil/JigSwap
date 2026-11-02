@@ -6,10 +6,7 @@ import { isAdmin } from "../identity/isAdmin";
 import { adminMemberLabelOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
 import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
-import {
-  clampPaginationOpts,
-  clampUnpinnedPaginationOpts,
-} from "../lib/pageSize";
+import { clampUnpinnedPaginationOpts, paginateBounded } from "../lib/pageSize";
 import { definitionTotalsOf } from "../library/definitionStats";
 
 // Admin-only, but the page size is still the client's request: each row joins its submitter, its
@@ -51,10 +48,6 @@ export const listPuzzleDefinitions = query({
 
     const { status } = args;
     const term = args.search?.trim().toLowerCase() ?? "";
-    const paginationOpts = clampPaginationOpts(
-      args.paginationOpts,
-      MAX_PAGE_SIZE,
-    );
     const puzzles =
       term.length > 0
         ? await ctx.db
@@ -66,16 +59,16 @@ export const listPuzzleDefinitions = query({
             .paginate(
               clampUnpinnedPaginationOpts(args.paginationOpts, MAX_PAGE_SIZE),
             )
-        : status
-          ? await ctx.db
-              .query("puzzles")
-              .withIndex("by_status", (q) => q.eq("status", status))
-              .order("desc")
-              .paginate(paginationOpts)
-          : await ctx.db
-              .query("puzzles")
-              .order("desc")
-              .paginate(paginationOpts);
+        : await paginateBounded(
+            status
+              ? ctx.db
+                  .query("puzzles")
+                  .withIndex("by_status", (q) => q.eq("status", status))
+                  .order("desc")
+              : ctx.db.query("puzzles").order("desc"),
+            args.paginationOpts,
+            MAX_PAGE_SIZE,
+          );
 
     const page = await Promise.all(
       puzzles.page.map(

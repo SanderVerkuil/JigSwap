@@ -4,7 +4,7 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
-import { clampPaginationOpts } from "../lib/pageSize";
+import { paginateBounded } from "../lib/pageSize";
 import {
   ownJoinRowsAt,
   readableThreadOf,
@@ -25,14 +25,17 @@ export const listThreadMessages = query({
     const me = (await requireMember(ctx)) as unknown as Id<"users">;
     const { thread, floor } = await readableThreadOf(ctx, args.threadId, me);
 
-    const result = await ctx.db
-      .query("threadMessages")
-      .withIndex("by_thread_sent", (q) => {
-        const scoped = q.eq("threadAggregateId", args.threadId);
-        return floor === undefined ? scoped : scoped.gt("sentAt", floor);
-      })
-      .order("desc")
-      .paginate(clampPaginationOpts(args.paginationOpts, MAX_PAGE_SIZE));
+    const result = await paginateBounded(
+      ctx.db
+        .query("threadMessages")
+        .withIndex("by_thread_sent", (q) => {
+          const scoped = q.eq("threadAggregateId", args.threadId);
+          return floor === undefined ? scoped : scoped.gt("sentAt", floor);
+        })
+        .order("desc"),
+      args.paginationOpts,
+      MAX_PAGE_SIZE,
+    );
     const rows =
       floor !== undefined && result.isDone
         ? [

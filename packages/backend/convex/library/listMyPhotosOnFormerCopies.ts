@@ -9,7 +9,7 @@ import {
   renditionSources,
   thumbUrlOf,
 } from "../lib/imageModeration/imageSources";
-import { clampPaginationOpts } from "../lib/pageSize";
+import { paginateBounded } from "../lib/pageSize";
 
 // A page reads at most this many of the member's uploads whatever the client asks for.
 const MAX_PAGE_SIZE = 50;
@@ -33,11 +33,14 @@ export const listMyPhotosOnFormerCopies = query({
     { paginationOpts },
   ): Promise<PaginationResult<MyPhotoOnFormerCopyView>> => {
     const me = (await requireMember(ctx)) as unknown as Id<"users">;
-    const uploads = await ctx.db
-      .query("ownedPuzzleImages")
-      .withIndex("by_uploader", (q) => q.eq("uploaderId", me))
-      .order("desc")
-      .paginate(clampPaginationOpts(paginationOpts, MAX_PAGE_SIZE));
+    const uploads = await paginateBounded(
+      ctx.db
+        .query("ownedPuzzleImages")
+        .withIndex("by_uploader", (q) => q.eq("uploaderId", me))
+        .order("desc"),
+      paginationOpts,
+      MAX_PAGE_SIZE,
+    );
 
     const page: MyPhotoOnFormerCopyView[] = [];
     for (const image of uploads.page) {

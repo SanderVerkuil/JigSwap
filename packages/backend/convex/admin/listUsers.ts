@@ -5,10 +5,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
-import {
-  clampPaginationOpts,
-  clampUnpinnedPaginationOpts,
-} from "../lib/pageSize";
+import { clampUnpinnedPaginationOpts, paginateBounded } from "../lib/pageSize";
 import { readMemberLibraryCounts } from "../library/memberLibraryCounts";
 
 // Admin-only, but the page size is still the client's request (the console asks for 25). A member's
@@ -74,10 +71,6 @@ export const listUsers = query({
     }
 
     const search = term.toLowerCase();
-    const paginationOpts = clampPaginationOpts(
-      args.paginationOpts,
-      MAX_PAGE_SIZE,
-    );
     const result =
       search.length > 0
         ? await ctx.db
@@ -88,7 +81,11 @@ export const listUsers = query({
             .paginate(
               clampUnpinnedPaginationOpts(args.paginationOpts, MAX_PAGE_SIZE),
             )
-        : await ctx.db.query("users").order("desc").paginate(paginationOpts);
+        : await paginateBounded(
+            ctx.db.query("users").order("desc"),
+            args.paginationOpts,
+            MAX_PAGE_SIZE,
+          );
 
     return {
       ...result,
