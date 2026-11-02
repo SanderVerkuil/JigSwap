@@ -15,7 +15,8 @@ const COUNT_CAP = 51;
 const PENDING_INVITE_SCAN_CAP = 20;
 
 // Whether the member has a household invite they can still accept (isOpenHouseholdInvite: not
-// lapsed, its inviter still the admin), among their newest PENDING_INVITE_SCAN_CAP pending ones.
+// lapsed, its inviter still the admin, no block either way), among their newest
+// PENDING_INVITE_SCAN_CAP pending ones.
 const hasPendingHouseholdInvite = async (
   ctx: QueryCtx,
   me: Id<"users">,

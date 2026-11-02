@@ -166,6 +166,48 @@ describe("household invite expiry", () => {
     ).toContain(true);
   });
 
+  // Accept refuses across a block, so an invite still on offer would single the block out: it reads
+  // as gone, like every other invite accept refuses, with nothing block-specific anywhere.
+  test.each(["ann", "bob"] as const)(
+    "after %s blocks the other side the invite reads as missing everywhere",
+    async (blocker) => {
+      const t = convexTest(schema, modules);
+      const { ann, bob } = await seed(t);
+      await as(t, "ann").mutation(
+        api.household.createHousehold.createHousehold,
+        {},
+      );
+      const inviteId = await annInvitesBob(t, bob);
+      await flushScheduled(t);
+      const other = blocker === "ann" ? bob : ann;
+
+      await as(t, blocker).mutation(api.social.blockMember.blockMember, {
+        memberId: other,
+      });
+
+      expect(await incoming(t)).toEqual([]);
+      expect(await adminPending(t)).toEqual([]);
+      expect(await householdStep(t)).toMatchObject({ pendingInvite: false });
+      const view = await inviteNotification(t);
+      expect(view?.availableActions).toEqual([]);
+      expect(view?.resolvedAs).toBe("expired");
+      await expectConvexCode(
+        as(t, "bob").mutation(
+          api.household.acceptHouseholdInvite.acceptHouseholdInvite,
+          { inviteId },
+        ),
+        "InviteNotFound",
+      );
+
+      // The row stays: unblocking puts an invite that has not lapsed back on offer, as with a
+      // circle invite (sharing/circleAccess circleOfOpenInvite).
+      await as(t, blocker).mutation(api.social.unblockMember.unblockMember, {
+        memberId: other,
+      });
+      expect((await incoming(t)).map((i) => i.inviteId)).toEqual([inviteId]);
+    },
+  );
+
   test("the quick start still finds an open invite behind many lapsed ones", async () => {
     const t = convexTest(schema, modules);
     const { ann, bob } = await seed(t);

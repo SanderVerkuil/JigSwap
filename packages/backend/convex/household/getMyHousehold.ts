@@ -42,9 +42,9 @@ export const personView = async (
 // The acting member's household (members + roles), or null. Pending sent invites and requests to
 // join are returned to the admin only — they are the one who chose those people and who answers
 // the requests. A sent invite is listed while it can still be accepted (isOpenHouseholdInvite: not
-// lapsed, its inviter still the admin). A request to join is listed while pending and not lapsed;
-// a dropped one (asked through a link the household's admin did not mint, or across a block) never
-// is. Also the household-wide default copy permission (resolved).
+// lapsed, its inviter still the admin, no block either way). A request to join is listed while
+// pending and not lapsed; a dropped one (asked through a link the household's admin did not mint,
+// or across a block) never is. Also the household-wide default copy permission (resolved).
 //
 // My Puzzles subscribes to this and SSR prefetches it for every household member, so it reads no
 // copies: an open list must not pay for the household's whole library. How many copies follow the

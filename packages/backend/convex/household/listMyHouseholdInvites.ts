@@ -7,8 +7,8 @@ import { isOpenHouseholdInvite } from "./memberships";
 
 // The acting member's incoming pending household invites, newest first, with the inviter shown
 // (the inviter initiated contact, as with follow requests). Only invites that can still be accepted
-// (isOpenHouseholdInvite): a lapsed one, or one whose inviter no longer runs the household, is left
-// out.
+// (isOpenHouseholdInvite): a lapsed one, one whose inviter no longer runs the household, or one
+// across a block is left out.
 export const listMyHouseholdInvites = query({
   args: {},
   handler: async (ctx): Promise<HouseholdIncomingInviteView[]> => {

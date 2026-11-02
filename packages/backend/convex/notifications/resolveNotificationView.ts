@@ -606,8 +606,9 @@ const resolveSubject = async (
         }),
       };
     }
-    // A pending invite that can no longer be accepted (lapsed, or its inviter no longer runs the
-    // household) reads as gone (expired), like a revoked one: accept refuses it.
+    // A pending invite that can no longer be accepted (lapsed, its inviter no longer runs the
+    // household, or a block either way) reads as gone (expired), like a revoked one: accept
+    // refuses it.
     case "householdInvite": {
       const invite = await loadHouseholdInvite(ctx, cache, subject.inviteId);
       const forViewer =
