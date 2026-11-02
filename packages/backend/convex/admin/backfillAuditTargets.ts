@@ -3,6 +3,7 @@ import { internal } from "../_generated/api";
 import type { Doc, Id } from "../_generated/dataModel";
 import { internalMutation, type MutationCtx } from "../_generated/server";
 import { logEvent } from "../lib/logEvent";
+import { userQuery } from "../users";
 import {
   MEMBER_TARGET_KINDS,
   MEMBER_TARGET_LABEL,
@@ -36,13 +37,7 @@ const legacyMemberOf = async (
   ctx: MutationCtx,
   row: Doc<"moderationActions">,
 ): Promise<Id<"users"> | undefined> => {
-  if (isRoleRow(row)) {
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", row.targetId))
-      .first();
-    return user?._id;
-  }
+  if (isRoleRow(row)) return (await userQuery(ctx, row.targetId))?._id;
   const reportId = ctx.db.normalizeId("reports", row.targetId);
   return reportId ? (await ctx.db.get(reportId))?.reportedUserId : undefined;
 };
