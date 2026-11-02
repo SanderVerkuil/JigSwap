@@ -163,6 +163,14 @@ describe("Household access", () => {
   });
 });
 
+describe("the community rating", () => {
+  it("says there are none yet, instead of a zero and five empty bars", () => {
+    renderCopy(managedCopy({}));
+    expect(screen.getByText("No ratings yet")).toBeTruthy();
+    expect(screen.queryByText("5★")).toBeNull();
+  });
+});
+
 describe("the hero on a phone", () => {
   // happy-dom has no layout: this pins the class contract; the geometry was checked in a browser.
   it("puts the cover beside the title and the rest full width below", () => {

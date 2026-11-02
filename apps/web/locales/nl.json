@@ -4583,6 +4583,7 @@
     "you": "jij",
     "finishedIn": "voltooid in {duration}",
     "communityRating": "Communitybeoordeling",
+    "noRatings": "Nog geen beoordelingen",
     "communityRatings": "{count} communitybeoordelingen",
     "copyReviews": "Beoordelingen van dit exemplaar",
     "copyReviewsHint": "Wie een voltooiing van dit exemplaar vastlegt, kan het beoordelen.",

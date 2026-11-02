@@ -1266,6 +1266,15 @@ function CommunityRating({
   community: CopyInstanceView["community"];
 }) {
   const t = useTranslations("copyInstance");
+  // Not rated by anyone: a big "0" and five empty bars would read as rated zero.
+  if (community.count === 0) {
+    return (
+      <section>
+        <SectionHead icon={<StarGlyph />} title={t("communityRating")} />
+        <p className="text-muted-foreground text-sm">{t("noRatings")}</p>
+      </section>
+    );
+  }
   return (
     <section>
       <SectionHead icon={<StarGlyph />} title={t("communityRating")} />
