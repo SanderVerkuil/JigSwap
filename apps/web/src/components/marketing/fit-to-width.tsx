@@ -56,6 +56,9 @@ export function FitToWidth({ children }: { children: React.ReactNode }) {
         overflow: "hidden",
         display: "flex",
         justifyContent: "center",
+        // Not the default stretch: the child would take the height set above, the next
+        // measure would scale that height again, and the wrapper would shrink to nothing.
+        alignItems: "flex-start",
       }}
     >
       <div
