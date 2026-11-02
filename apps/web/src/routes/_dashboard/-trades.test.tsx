@@ -50,7 +50,7 @@ vi.mock("@convex-dev/react-query", () => ({
     data.calls.push([fn, args]);
   },
 }));
-vi.mock("convex/react", () => ({
+vi.mock("convex-helpers/react", () => ({
   usePaginatedQuery: () => ({
     results: [],
     status: "Exhausted",

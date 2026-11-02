@@ -55,8 +55,7 @@ vi.mock("@tanstack/react-router", () => ({
   ),
   useNavigate: () => vi.fn(),
 }));
-vi.mock("convex/react", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("convex/react")>()),
+vi.mock("convex-helpers/react", () => ({
   usePaginatedQuery: () => ({
     ...mocks.reviews,
     loadMore: mocks.loadMoreReviews,

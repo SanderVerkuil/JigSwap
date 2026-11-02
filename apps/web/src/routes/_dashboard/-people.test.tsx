@@ -37,7 +37,7 @@ const network = vi.hoisted(() => ({
   status: "Exhausted" as string,
   loadMore: vi.fn(),
 }));
-vi.mock("convex/react", () => ({ usePaginatedQuery: () => network }));
+vi.mock("convex-helpers/react", () => ({ usePaginatedQuery: () => network }));
 // The header actions the page publishes, kept so a test can render them.
 const published = vi.hoisted(() => ({
   actions: undefined as ReactNode,

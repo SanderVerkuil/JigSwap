@@ -32,8 +32,7 @@ const mocks = vi.hoisted(() => ({
   loadMore: vi.fn(),
 }));
 
-vi.mock("convex/react", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("convex/react")>()),
+vi.mock("convex-helpers/react", () => ({
   usePaginatedQuery: (_query: unknown, args: unknown) => {
     mocks.historyArgs = args;
     return {

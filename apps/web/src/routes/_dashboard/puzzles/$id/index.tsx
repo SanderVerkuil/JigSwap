@@ -44,8 +44,9 @@ import {
   Link as RouterLink,
   useNavigate,
 } from "@tanstack/react-router";
-// sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
-import { usePaginatedQuery } from "convex/react";
+// Not convex/react's: this list is read through stream(), whose pages only keep their ends when the
+// client pins them, and this hook does (without it, a change loses or repeats a row between pages).
+import { usePaginatedQuery } from "convex-helpers/react";
 import type { FunctionReturnType } from "convex/server";
 import {
   ArrowLeftRight,

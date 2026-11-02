@@ -33,8 +33,7 @@ vi.mock("@convex-dev/react-query", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@convex-dev/react-query")>()),
   useConvexMutation: () => vi.fn(),
 }));
-vi.mock("convex/react", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("convex/react")>()),
+vi.mock("convex-helpers/react", () => ({
   usePaginatedQuery: () => ({
     results: [],
     status: "Exhausted",
