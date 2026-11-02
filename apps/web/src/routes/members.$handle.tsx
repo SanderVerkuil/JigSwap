@@ -276,8 +276,9 @@ function AuthedMemberPage({
   usePageHeader(
     () => ({
       title: name,
-      // ProfileBody's hero renders the name as this page's h1 once `me` resolves.
-      ownsHeading: Boolean(me),
+      // ProfileBody's hero renders the name as this page's h1 once `me` resolves: the head then
+      // keeps it only as the breadcrumb leaf, so the name isn't printed twice.
+      titleInContent: Boolean(me),
       crumbs: [
         { label: tShell("groups.community.label"), href: "/community" },
         { label: tShell("pages.members.title"), href: "/people" },
