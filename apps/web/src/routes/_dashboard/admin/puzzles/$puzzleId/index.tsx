@@ -38,7 +38,7 @@ const STATUS_VARIANT: Record<
 const PROPOSAL_STATUS_VARIANT: Record<
   FunctionReturnType<
     typeof gateway.admin.listProposalsForDefinition
-  >[number]["status"],
+  >["proposals"][number]["status"],
   "default" | "secondary" | "destructive" | "outline"
 > = {
   pending: "secondary",
@@ -68,7 +68,7 @@ function AdminPuzzleDetailPage() {
   // `definition` (and its aggregateId) is only available after `data` loads below, but hooks
   // must stay unconditional — query with the aggregateId once known, or "" while pending/on
   // error, which the backend's by_definition index lookup simply matches nothing against.
-  const { data: proposals } = useQuery(
+  const { data: proposalHistory } = useQuery(
     convexQuery(gateway.admin.listProposalsForDefinition, {
       puzzleDefinitionId: data?.definition.aggregateId ?? "",
     }),
@@ -94,6 +94,7 @@ function AdminPuzzleDetailPage() {
   }
 
   const { definition, stats, owners, audit } = data;
+  const proposals = proposalHistory?.proposals;
 
   return (
     <div className="space-y-6">
@@ -286,6 +287,13 @@ function AdminPuzzleDetailPage() {
 
       <section className="space-y-2">
         <h2 className="text-sm font-semibold">{t("detail.proposalsTitle")}</h2>
+        {proposalHistory?.capped && (
+          <p className="text-muted-foreground text-sm">
+            {t("detail.proposalsCapped", {
+              count: proposalHistory.proposals.length,
+            })}
+          </p>
+        )}
         {!proposals || proposals.length === 0 ? (
           <p className="text-muted-foreground text-sm">
             {t("detail.proposalsEmpty")}

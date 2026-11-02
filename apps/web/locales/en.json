@@ -5399,6 +5399,7 @@
         "auditTitle": "Moderation activity",
         "auditEmpty": "No moderation activity for this puzzle yet.",
         "proposalsTitle": "Suggested edits",
+        "proposalsCapped": "Showing the newest {count} suggested edits.",
         "proposalsEmpty": "No suggested edits for this puzzle."
       }
     },

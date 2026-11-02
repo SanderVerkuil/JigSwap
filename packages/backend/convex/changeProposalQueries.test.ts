@@ -167,10 +167,11 @@ describe("catalog.listPendingChangeProposals", () => {
     );
     expect(queue).toHaveLength(0);
 
-    const history = await asAdmin(t).query(
+    const { proposals: history, capped } = await asAdmin(t).query(
       api.catalog.listProposalsForDefinition.listProposalsForDefinition,
       { puzzleDefinitionId: definitionId },
     );
+    expect(capped).toBe(false);
     expect(history).toHaveLength(1);
     expect(history[0]).toMatchObject({
       status: "rejected",

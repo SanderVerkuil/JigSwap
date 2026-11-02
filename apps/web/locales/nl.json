@@ -5399,6 +5399,7 @@
         "auditTitle": "Moderatie-activiteit",
         "auditEmpty": "Nog geen moderatie-activiteit voor deze puzzel.",
         "proposalsTitle": "Wijzigingsvoorstellen",
+        "proposalsCapped": "Je ziet de nieuwste {count} voorgestelde wijzigingen.",
         "proposalsEmpty": "Geen wijzigingsvoorstellen voor deze puzzel."
       }
     },
