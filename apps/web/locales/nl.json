@@ -6098,6 +6098,16 @@
         "photoComment": "Een reactie op een foto",
         "puzzleReview": "Een puzzelreview"
       }
+    },
+    "formerCopyPhotos": {
+      "title": "Foto's van puzzels die je niet meer hebt",
+      "description": "Deze foto's heb je toegevoegd aan een puzzel die nu van iemand anders is, of die je niet meer beheert. Je kunt ze nog steeds verwijderen.",
+      "photo": "Je foto",
+      "added": "Toegevoegd op {date}",
+      "remove": "Verwijderen",
+      "removeName": "{name} verwijderen, toegevoegd op {date}",
+      "confirmBody": "Deze foto definitief verwijderen? Hij verdwijnt dan ook voor wie de puzzel nu heeft.",
+      "showMore": "Meer tonen"
     }
   },
   "ownContent": {

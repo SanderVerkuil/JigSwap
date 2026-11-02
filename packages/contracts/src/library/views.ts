@@ -461,6 +461,22 @@ export interface CopyPhoto {
 }
 
 /**
+ * One of the caller's own photos on a copy they no longer manage, e.g. the previous owner after a
+ * transfer (library.listMyPhotosOnFormerCopies). Just enough to recognise the photo and remove it
+ * (library.removeCopyPhoto); PRIVACY: nothing about the copy, its puzzle or who has it now.
+ */
+export interface MyPhotoOnFormerCopyView {
+  /** The `ownedPuzzleImages` _id as a string: what removeCopyPhoto takes. */
+  imageId: string;
+  /** A thumbnail-sized URL, or null while the photo's checks have not passed. */
+  url: string | null;
+  /** The caption the uploader gave it, if any. */
+  title?: string;
+  /** When it was uploaded (ms). */
+  createdAt: number;
+}
+
+/**
  * A photo that exists but may not be shown yet (it is still being screened). Carries only a
  * low-detail blurhash (null when none was computed) so the UI can render a blurred "pending
  * review" tile; deliberately no URL, storage id or row id.

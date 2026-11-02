@@ -270,4 +270,152 @@ describe("library.removeCopyPhoto after a transfer", () => {
       (await t.run((ctx) => ctx.db.get(copyId)))?.coverImageId,
     ).toBeUndefined();
   });
+
+  // The copy page is closed to a seller (getCopyInstanceView returns null), so this list is how they
+  // reach the right above (SEC-38). It holds their own photos and nothing about the copy.
+  const listMine = (t: TestConvex<typeof schema>, numItems = 50) =>
+    asAlice(t).query(
+      api.library.listMyPhotosOnFormerCopies.listMyPhotosOnFormerCopies,
+      { paginationOpts: { numItems, cursor: null } },
+    );
+
+  test("the seller can't open the copy, but lists their own photo and removes it from there", async () => {
+    const t = convexTest(schema, modules);
+    const { copyId, alicePhoto, bobPhoto } = await seedTransferred(t);
+    await t.run((ctx) =>
+      ctx.db.patch(alicePhoto.photoId, { title: "my-own-caption" }),
+    );
+    expect(await view(t, copyId)).toBeNull();
+
+    const { page, isDone } = await listMine(t);
+    expect(isDone).toBe(true);
+    expect(page.map((photo) => photo.imageId)).toEqual([alicePhoto.photoId]);
+    expect(page[0]).toEqual({
+      imageId: alicePhoto.photoId,
+      url: expect.any(String),
+      title: "my-own-caption",
+      createdAt: expect.any(Number),
+    });
+    // Nothing about the copy or who has it now.
+    const json = JSON.stringify(page);
+    expect(json).not.toContain(copyId);
+    expect(json).not.toContain(bobPhoto.photoId);
+    expect(json).not.toContain("Mountain Vista");
+    expect(json).not.toContain("clerk_bob");
+
+    await asAlice(t).mutation(api.library.removeCopyPhoto.removeCopyPhoto, {
+      imageId: page[0]!.imageId as Id<"ownedPuzzleImages">,
+    });
+    expect((await listMine(t)).page).toEqual([]);
+  });
+
+  test("photos on a copy they still manage, or nothing they uploaded, are not listed", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, puzzleAggregateId } = await seed(t);
+    const mine = await acquireCopy(t, puzzleAggregateId);
+    await addPhoto(t, mine, alice);
+    expect((await listMine(t)).page).toEqual([]);
+
+    // Bob's own photo on Bob's copy, and a stranger's list of nothing.
+    await t.run((ctx) => ctx.db.patch(mine, { ownerId: bob }));
+    await addPhoto(t, mine, bob);
+    const bobs = await asBob(t).query(
+      api.library.listMyPhotosOnFormerCopies.listMyPhotosOnFormerCopies,
+      { paginationOpts: { numItems: 50, cursor: null } },
+    );
+    expect(bobs.page).toEqual([]);
+  });
+
+  test("a rejected or quarantined photo stays out; one still being checked has no URL", async () => {
+    const t = convexTest(schema, modules);
+    const { copyId, alicePhoto } = await seedTransferred(t);
+    const { alice } = await t.run(async (ctx) => ({
+      alice: (await ctx.db.get(alicePhoto.photoId))!.uploaderId,
+    }));
+    const pending = await addPhoto(t, copyId, alice);
+    const rejected = await addPhoto(t, copyId, alice);
+    const quarantined = await addPhoto(t, copyId, alice);
+    await t.run(async (ctx) => {
+      await ctx.db.patch(pending.photoId, {
+        moderationStatus: "pending",
+        hashCheckPendingSince: 1,
+      });
+      await ctx.db.patch(rejected.photoId, { moderationStatus: "rejected" });
+      await ctx.db.patch(quarantined.photoId, {
+        moderationStatus: "quarantined",
+      });
+    });
+
+    const { page } = await listMine(t);
+    expect(page.map((photo) => photo.imageId).sort()).toEqual(
+      [alicePhoto.photoId, pending.photoId].sort(),
+    );
+    expect(
+      page.find((photo) => photo.imageId === pending.photoId)?.url,
+    ).toBeNull();
+  });
+
+  test("a photo whose copy is gone is not listed: removing it could only fail", async () => {
+    const t = convexTest(schema, modules);
+    const { copyId } = await seedTransferred(t);
+    await t.run((ctx) => ctx.db.delete(copyId));
+    expect((await listMine(t)).page).toEqual([]);
+  });
+
+  test("a member who left the household lists what they added to a mate's copy", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, puzzleAggregateId } = await seed(t);
+    await asBob(t).mutation(api.household.createHousehold.createHousehold, {});
+    const inviteId = await asBob(t).mutation(
+      api.household.inviteToHousehold.inviteToHousehold,
+      { inviteeId: alice },
+    );
+    await asAlice(t).mutation(
+      api.household.acceptHouseholdInvite.acceptHouseholdInvite,
+      { inviteId },
+    );
+    const copyId = await acquireCopy(t, puzzleAggregateId);
+    await t.run((ctx) => ctx.db.patch(copyId, { ownerId: bob }));
+    const photo = await addPhoto(t, copyId, alice);
+    expect((await listMine(t)).page).toEqual([]);
+
+    await asAlice(t).mutation(api.household.leaveHousehold.leaveHousehold, {});
+    expect((await listMine(t)).page.map((p) => p.imageId)).toEqual([
+      photo.photoId,
+    ]);
+  });
+
+  test("paged over everything they uploaded, newest first, and a page size is only a request", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, puzzleAggregateId } = await seed(t);
+    const sold = await acquireCopy(t, puzzleAggregateId);
+    const kept = await acquireCopy(t, puzzleAggregateId);
+    const older = await addPhoto(t, sold, alice);
+    await addPhoto(t, kept, alice);
+    await t.run((ctx) => ctx.db.patch(sold, { ownerId: bob }));
+
+    // The newest upload is on a copy Alice still has: its page is empty, not the end.
+    const first = await listMine(t, 1);
+    expect(first.page).toEqual([]);
+    expect(first.isDone).toBe(false);
+    const second = await asAlice(t).query(
+      api.library.listMyPhotosOnFormerCopies.listMyPhotosOnFormerCopies,
+      { paginationOpts: { numItems: 1, cursor: first.continueCursor } },
+    );
+    expect(second.page.map((photo) => photo.imageId)).toEqual([older.photoId]);
+
+    for (let i = 0; i < 60; i++) await addPhoto(t, sold, alice);
+    expect((await listMine(t, 100_000)).page).toHaveLength(50);
+  });
+
+  test("needs a signed-in member", async () => {
+    const t = convexTest(schema, modules);
+    await seedTransferred(t);
+    await expect(
+      t.query(
+        api.library.listMyPhotosOnFormerCopies.listMyPhotosOnFormerCopies,
+        { paginationOpts: { numItems: 10, cursor: null } },
+      ),
+    ).rejects.toThrow();
+  });
 });

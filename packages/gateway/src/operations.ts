@@ -90,6 +90,10 @@ export const gateway = {
     // Removal of an uploaded copy photo by the copy's owner/manager or by its uploader (deletes the
     // row + blob, clears the cover if it was the cover). Keyed by the ownedPuzzleImages id.
     removeCopyPhoto: api.library.removeCopyPhoto.removeCopyPhoto,
+    // The caller's own photos on copies they no longer manage, a page of uploads at a time, so a
+    // former owner can reach removeCopyPhoto without the copy's page (Privacy & safety).
+    myPhotosOnFormerCopies:
+      api.library.listMyPhotosOnFormerCopies.listMyPhotosOnFormerCopies,
     // Owner-only per-copy cover selection: pick one of the copy's photos, or clear to the global
     // image. Keyed by the copy's Convex id (like addCopyPhoto / getCopyInstanceView).
     setCopyCover: api.library.setCopyCover.setCopyCover,

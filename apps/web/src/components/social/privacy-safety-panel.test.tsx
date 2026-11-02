@@ -31,6 +31,13 @@ vi.mock("@/components/dashboard-home/use-current-member", () => ({
   useCurrentMember: () => ({ member: { _id: "member_me" } }),
 }));
 
+// The photos section (safety/my-former-copy-photos) reads through usePaginatedQuery.
+const paginated = vi.hoisted(() => vi.fn<() => unknown>());
+vi.mock("convex/react", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("convex/react")>()),
+  usePaginatedQuery: () => paginated(),
+}));
+
 vi.mock("@convex-dev/react-query", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@convex-dev/react-query")>()),
   useConvexMutation:
@@ -77,6 +84,11 @@ const renderPanel = (blocks: unknown[], locale: "en" | "nl" = "en") => {
 
 beforeEach(() => {
   mocks.mutation.mockReset().mockResolvedValue(null);
+  paginated.mockReset().mockReturnValue({
+    results: [],
+    status: "Exhausted",
+    loadMore: vi.fn(),
+  });
 });
 afterEach(cleanup);
 
@@ -133,6 +145,42 @@ describe("PrivacySafetyPanel", () => {
       screen.getByRole("heading", { name: "Privacy en veiligheid" }),
     ).toBeTruthy();
     expect(screen.getByText("Je hebt niemand geblokkeerd.")).toBeTruthy();
+  });
+
+  it("shows the photos a member left behind between their reports and their data", () => {
+    paginated.mockReturnValue({
+      results: [{ imageId: "img_a", url: null, createdAt: NOW.getTime() }],
+      status: "Exhausted",
+      loadMore: vi.fn(),
+    });
+    renderPanel([]);
+    expect(
+      screen
+        .getAllByRole("heading", { level: 2 })
+        .map((heading) => heading.textContent)
+        .slice(-3),
+    ).toEqual([
+      "Your reports",
+      "Photos of puzzles you no longer have",
+      "Your data",
+    ]);
+  });
+
+  it("keeps the rest of the panel when the photos section fails, as on a backend behind this build", () => {
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    paginated.mockImplementation(() => {
+      throw new Error("Could not find public function");
+    });
+    renderPanel([]);
+    expect(
+      screen.queryByRole("heading", {
+        name: "Photos of puzzles you no longer have",
+      }),
+    ).toBeNull();
+    expect(screen.getByRole("heading", { name: "Your data" })).toBeTruthy();
+    consoleError.mockRestore();
   });
 
   it("offers the data export under Your data", () => {

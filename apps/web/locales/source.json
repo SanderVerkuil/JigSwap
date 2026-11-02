@@ -6098,6 +6098,16 @@
         "photoComment": "A comment on a photo",
         "puzzleReview": "A puzzle review"
       }
+    },
+    "formerCopyPhotos": {
+      "title": "Photos of puzzles you no longer have",
+      "description": "You added these photos to a puzzle that now belongs to someone else, or that you no longer manage. You can still remove them.",
+      "photo": "Your photo",
+      "added": "Added {date}",
+      "remove": "Remove",
+      "removeName": "Remove {name}, added {date}",
+      "confirmBody": "Remove this photo for good? It also goes for whoever has the puzzle now.",
+      "showMore": "Show more"
     }
   },
   "ownContent": {
