@@ -4254,6 +4254,7 @@
       "noResultsFor": "No results for “{term}”"
     },
     "actions": {
+      "add": "Add",
       "addToMyPuzzles": "Add to my puzzles",
       "addAPuzzle": "Add a Puzzle",
       "logCompletion": "Log a solve",

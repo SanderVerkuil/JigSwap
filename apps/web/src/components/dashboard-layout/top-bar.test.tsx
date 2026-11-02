@@ -9,6 +9,7 @@ import { renderToString } from "react-dom/server";
 import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
+import nl from "../../../locales/nl.json";
 import { TopBar } from "./top-bar";
 
 const mocks = vi.hoisted(() => ({ pathname: "/dashboard" }));
@@ -23,8 +24,17 @@ vi.mock("@tanstack/react-router", async (importOriginal) => ({
   },
 }));
 vi.mock("@/compat/link", () => ({
-  Link: ({ href, children }: { href: string; children?: ReactNode }) => (
-    <a href={href}>{children}</a>
+  Link: ({
+    href,
+    children,
+    ...rest
+  }: {
+    href: string;
+    children?: ReactNode;
+  }) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
   ),
 }));
 vi.mock("@/components/common/header-logo", () => ({ HeaderLogo: () => null }));
@@ -125,11 +135,12 @@ describe("TopBar add shortcut", () => {
     expect(addLink()).toBeNull();
   });
 
-  // Below xl the label costs the search pill its room. It stays the link's name.
-  it("shows only its icon below xl and keeps its name", () => {
+  // From lg to xl the label costs the search pill its place. It stays the link's name.
+  it("shows only its icon from lg to xl and keeps its name", () => {
     render(topBar());
     const label = screen.getByText(en.shell.actions.addToMyPuzzles);
     expect(label.className).toContain("max-xl:sr-only");
+    expect(addLink()?.className).toContain("lg:max-xl:w-9");
     expect(addLink()).not.toBeNull();
   });
 });
@@ -144,5 +155,32 @@ describe("TopBar layout", () => {
     expect(bar?.className).toContain("grid-cols-[1fr_minmax(0,520px)_1fr]");
     expect(pill.parentElement).toBe(bar);
     expect(pill.className).toContain("w-full");
+  });
+
+  // The short label below lg can outgrow a 1fr column, and the pill would move between pages.
+  it("keeps the pill's left edge below lg by hugging the logo", () => {
+    render(topBar());
+    expect(searchPill().closest("header")?.className).toContain(
+      "max-lg:grid-cols-[auto_minmax(0,520px)_1fr]",
+    );
+  });
+});
+
+describe("TopBar add action", () => {
+  it("keeps its full name for assistive tech and shows a short label below lg", () => {
+    render(topBar());
+    const add = screen.getByRole("link", {
+      name: en.shell.actions.addToMyPuzzles,
+    });
+    expect(add.getAttribute("href")).toBe("/my-puzzles/add");
+    const short = screen.getByText(en.shell.actions.add);
+    const full = add.querySelector("span.lg\\:inline");
+    expect(short.className).toContain("lg:hidden");
+    expect(full?.textContent).toBe(en.shell.actions.addToMyPuzzles);
+  });
+
+  it("names the action in a way the short label is part of (WCAG 2.5.3)", () => {
+    expect(en.shell.actions.addToMyPuzzles).toContain(en.shell.actions.add);
+    expect(nl.shell.actions.addToMyPuzzles).toContain(nl.shell.actions.add);
   });
 });

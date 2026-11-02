@@ -4254,6 +4254,7 @@
       "noResultsFor": "Geen resultaten voor “{term}”"
     },
     "actions": {
+      "add": "Toevoegen",
       "addToMyPuzzles": "Toevoegen aan mijn puzzels",
       "addAPuzzle": "Een puzzel toevoegen",
       "logCompletion": "Een voltooiing vastleggen",

@@ -8,7 +8,9 @@
 // Desktop-only (md+): below the breakpoint the MobileTopBar replaces it. On a
 // touch screen (a tablet at md+) every control is a 44px target. The pill is the
 // middle of three columns, so it stays put whether or not a page shows the CTA,
-// and the side columns only claim its room when their content needs it.
+// and the side columns only claim its room when their content needs it. Below lg
+// the CTA's short label can outgrow its column, so the left column hugs the logo
+// there: the pill keeps its left edge on every page and gives way on its right.
 import { Link } from "@/compat/link";
 import { HeaderLogo } from "@/components/common/header-logo";
 import { NotificationBell } from "@/components/notifications/notification-bell";
@@ -28,7 +30,7 @@ export function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   const pathname = useLocation({ select: (location) => location.pathname });
 
   return (
-    <header className="hidden h-14 shrink-0 grid-cols-[1fr_minmax(0,520px)_1fr] items-center gap-x-3 px-4 md:grid xl:gap-x-6">
+    <header className="hidden h-14 shrink-0 grid-cols-[1fr_minmax(0,520px)_1fr] items-center gap-x-3 px-4 max-lg:grid-cols-[auto_minmax(0,520px)_1fr] md:grid xl:gap-x-6">
       <div className="flex items-center gap-2">
         <SidebarTrigger className="size-8 shrink-0 pointer-coarse:size-11" />
         <Link
@@ -72,12 +74,18 @@ export function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
         {!hasOwnAddAction(pathname) && (
           <Button
             asChild
-            className="ml-1 bg-jigsaw-primary text-white hover:bg-jigsaw-primary/90 pointer-coarse:h-11 max-xl:w-9 max-xl:px-0 pointer-coarse:max-xl:w-11"
+            className="ml-1 bg-jigsaw-primary text-white hover:bg-jigsaw-primary/90 pointer-coarse:h-11 lg:max-xl:w-9 lg:max-xl:px-0 pointer-coarse:lg:max-xl:w-11"
           >
-            <Link href="/my-puzzles/add" title={t("actions.addToMyPuzzles")}>
+            <Link
+              href="/my-puzzles/add"
+              title={t("actions.addToMyPuzzles")}
+              aria-label={t("actions.addToMyPuzzles")}
+            >
               <Plus className="size-4" />
-              {/* Icon only below xl, where the label would take the search pill's room. */}
-              <span className="max-xl:sr-only">
+              {/* The full label would take the search pill's room below lg and its place from lg
+                  to xl, so it shows from xl. Below that: a short label, then only the icon. */}
+              <span className="lg:hidden">{t("actions.add")}</span>
+              <span className="hidden max-xl:sr-only lg:inline">
                 {t("actions.addToMyPuzzles")}
               </span>
             </Link>
