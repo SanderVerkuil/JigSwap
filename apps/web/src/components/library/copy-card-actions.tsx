@@ -22,7 +22,7 @@ import { gateway, Id } from "@/gateway";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import type { HouseholdCopyPermission } from "@jigswap/contracts";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode, type RefObject } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
@@ -100,7 +100,10 @@ export function useCopyCardActions({
     onDelete?: (id: Id<"ownedPuzzles">) => void;
     onLogSolve: (id: Id<"ownedPuzzles">) => void;
     onStartSolve: (id: Id<"ownedPuzzles">) => void;
-    onShareWithCircles?: (id: Id<"ownedPuzzles">) => void;
+    onShareWithCircles?: (
+      id: Id<"ownedPuzzles">,
+      opener: RefObject<HTMLElement | null>,
+    ) => void;
     solveInProgress: boolean;
     showCollectionDropdown: boolean;
   };
@@ -125,10 +128,12 @@ export function useCopyCardActions({
     completionId: string;
     startDate: number;
   } | null>(null);
-  // The copy whose circle shares are being edited; null when the dialog is closed.
-  const [shareTarget, setShareTarget] = useState<ShareWithCirclesCopy | null>(
-    null,
-  );
+  // The copy whose circle shares are being edited; null when the dialog is closed. `opener` is the
+  // card's ⋯ trigger: the menu item that opened the dialog is gone by the time it closes.
+  const [shareTarget, setShareTarget] = useState<{
+    copy: ShareWithCirclesCopy;
+    opener: RefObject<HTMLElement | null>;
+  } | null>(null);
   // The copy awaiting the destructive delete confirm; null when the dialog is closed.
   const [deleteTarget, setDeleteTarget] = useState<{
     copyId: string;
@@ -211,7 +216,10 @@ export function useCopyCardActions({
     }
   };
 
-  const handleShareWithCircles = (ownedPuzzleId: Id<"ownedPuzzles">) => {
+  const handleShareWithCircles = (
+    ownedPuzzleId: Id<"ownedPuzzles">,
+    opener: RefObject<HTMLElement | null>,
+  ) => {
     // Circle shares are keyed by the Copy aggregateId; guard rows predating the backfill.
     const copy = copies.find((p) => p._id === ownedPuzzleId);
     if (!copy?.aggregateId) {
@@ -219,10 +227,13 @@ export function useCopyCardActions({
       return;
     }
     setShareTarget({
-      copyId: copy.aggregateId,
-      title: copy.puzzle?.title ?? "",
-      availability: copy.availability,
-      visibility: copy.visibility,
+      copy: {
+        copyId: copy.aggregateId,
+        title: copy.puzzle?.title ?? "",
+        availability: copy.availability,
+        visibility: copy.visibility,
+      },
+      opener,
     });
   };
 
@@ -274,7 +285,8 @@ export function useCopyCardActions({
         <ShareWithCirclesDialog
           open
           onOpenChange={(open) => !open && setShareTarget(null)}
-          copy={shareTarget}
+          copy={shareTarget.copy}
+          returnFocusRef={shareTarget.opener}
         />
       )}
 

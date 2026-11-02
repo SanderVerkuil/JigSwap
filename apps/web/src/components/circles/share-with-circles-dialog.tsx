@@ -2,7 +2,8 @@
 // circles, ticked where the copy is shared, saved together. A seat that may not share (View only)
 // can't tick a circle, but an existing share there can still be taken back. The dialog warns when
 // circle members won't see the copy even once shared (not offered, or private). The server is
-// the gate (owner only; getCopyCircleShares answers null for anyone else).
+// the gate (owner only; getCopyCircleShares answers null for anyone else). A ⋯ menu item that opens
+// it is gone by the time it closes, so `returnFocusRef` names where focus goes back to.
 import { Link } from "@/compat/link";
 import {
   circleHiddenReason,
@@ -28,7 +29,7 @@ import { gateway } from "@/gateway";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { EyeOff, Users } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useState, type ReactNode, type RefObject } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
@@ -45,10 +46,12 @@ export function ShareWithCirclesDialog({
   copy,
   open,
   onOpenChange,
+  returnFocusRef,
 }: {
   copy: ShareWithCirclesCopy;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  returnFocusRef?: RefObject<HTMLElement | null>;
 }) {
   const t = useTranslations("circles");
   const tCommon = useTranslations("common");
@@ -193,7 +196,15 @@ export function ShareWithCirclesDialog({
 
   return (
     <Dialog open={open} onOpenChange={close}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent
+        className="sm:max-w-md"
+        onCloseAutoFocus={(event) => {
+          const target = returnFocusRef?.current;
+          if (!target?.isConnected) return;
+          event.preventDefault();
+          target.focus();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>
             {t("shareDialog.title", { title: copy.title })}
