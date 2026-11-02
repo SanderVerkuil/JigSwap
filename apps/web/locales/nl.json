@@ -1537,6 +1537,8 @@
     "allConditions": "Alle condities",
     "minPieces": "Min. stukjes",
     "maxPieces": "Max. stukjes",
+    "min": "Min",
+    "max": "Max",
     "clearFilters": "Alles wissen",
     "tryDifferentFilters": "Pas je filters aan.",
     "filterAll": "Alle",

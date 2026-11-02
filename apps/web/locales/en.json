@@ -1537,6 +1537,8 @@
     "allConditions": "All Conditions",
     "minPieces": "Min Pieces",
     "maxPieces": "Max Pieces",
+    "min": "Min",
+    "max": "Max",
     "clearFilters": "Clear All",
     "tryDifferentFilters": "Try adjusting your filters.",
     "filterAll": "All",

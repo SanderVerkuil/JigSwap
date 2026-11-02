@@ -350,7 +350,7 @@ export function QueryBuilder({
                 value={value.minPieces}
                 onChange={(e) => set({ minPieces: e.target.value })}
                 onBlur={() => setPendingFocus(null)}
-                placeholder={tBrowse("minPieces")}
+                placeholder={tBrowse("min")}
                 aria-label={tBrowse("minPieces")}
                 className="h-8 w-20 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0"
               />
@@ -361,7 +361,7 @@ export function QueryBuilder({
                 min={0}
                 value={value.maxPieces}
                 onChange={(e) => set({ maxPieces: e.target.value })}
-                placeholder={tBrowse("maxPieces")}
+                placeholder={tBrowse("max")}
                 aria-label={tBrowse("maxPieces")}
                 className="h-8 w-20 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0"
               />
