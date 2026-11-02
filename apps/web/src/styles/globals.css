@@ -169,7 +169,9 @@
   --muted-foreground: oklch(0.74 0.04 286);
   --accent: oklch(0.36 0.06 285);
   --accent-foreground: oklch(0.965 0.01 286);
-  --destructive: oklch(0.704 0.191 22.216);
+  /* Text on an outline button (input/30 over the card) stays over 4.5:1, and white on
+     bg-destructive/60 still does too. */
+  --destructive: oklch(0.74 0.17 22.2);
   --destructive-foreground: #f8fafc;
   --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 16%);

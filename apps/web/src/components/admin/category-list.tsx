@@ -316,7 +316,6 @@ function CategoryRow({
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
         "flex flex-wrap items-center gap-3 border-b px-4 py-3 last:border-0 @2xl:flex-nowrap",
-        !category.isActive && "opacity-60",
         isDragging && "relative z-10 bg-accent shadow-sm",
       )}
     >
@@ -331,14 +330,26 @@ function CategoryRow({
       >
         <GripVertical className="h-4 w-4" aria-hidden />
       </button>
+      {/* An inactive row dims its swatch and name only: dimming the whole row with opacity would
+          take its description and badge below AA. */}
       <span
-        className="h-9 w-9 shrink-0 rounded-lg border"
+        className={cn(
+          "h-9 w-9 shrink-0 rounded-lg border",
+          !category.isActive && "opacity-60",
+        )}
         style={{ backgroundColor: category.color }}
         aria-hidden
       />
       <div className="min-w-0 flex-1 space-y-0.5">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-          <span className="min-w-0 font-semibold break-words">{name}</span>
+          <span
+            className={cn(
+              "min-w-0 font-semibold break-words",
+              !category.isActive && "text-muted-foreground",
+            )}
+          >
+            {name}
+          </span>
           {otherLocales.map((locale) => {
             const translation = translationOf(locale);
             if (!translation) return null;
