@@ -72,6 +72,12 @@ describe("CompletionTrendsChart", () => {
     expect(tableRows()).toEqual(["MonthSolve hours", "October 20263.3"]);
   });
 
+  it("shows whole hours from 10 up, so twelve labels fit a phone", () => {
+    renderChart([{ month: "2026-10", count: 1, totalMinutes: 7830 }]);
+    fireEvent.click(screen.getByRole("button", { name: "Solve hours" }));
+    expect(tableRows()).toEqual(["MonthSolve hours", "October 2026131"]);
+  });
+
   it("names the chart after the metric it shows", () => {
     renderChart();
     expect(

@@ -15,6 +15,11 @@ export interface CompletionTrendPoint {
 
 type Metric = "count" | "hours";
 
+// Minutes as the hours a bar's label shows: one decimal under 10, whole from there, so twelve labels
+// side by side fit a phone.
+const solveHours = (minutes: number): number =>
+  minutes < 600 ? Math.round(minutes / 6) / 10 : Math.round(minutes / 60);
+
 // "Completions / month" as a minimal sparkbar chart (design language), with the count/hours metric
 // toggle kept as small pills in the section head. The title, caption and table follow the metric
 // that is showing. The pills only show when there is something to switch to: hours count only the
@@ -33,7 +38,7 @@ export function CompletionTrendsChart({
   const metric = hasHours ? picked : "count";
   const points = data.map((d) => ({
     month: d.month,
-    value: metric === "count" ? d.count : Math.round(d.totalMinutes / 6) / 10,
+    value: metric === "count" ? d.count : solveHours(d.totalMinutes),
   }));
 
   return (
