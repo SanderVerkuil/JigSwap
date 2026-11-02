@@ -9,6 +9,8 @@ import {
   bucketLabel,
   CollectionBreakdown,
   OTHER_BUCKET,
+  pieceCountLabel,
+  PieceCountTick,
   UNKNOWN_BUCKET,
   type CollectionBreakdownData,
 } from "./collection-breakdown";
@@ -40,6 +42,59 @@ const renderBreakdown = (
       <CollectionBreakdown data={data} />
     </IntlProvider>,
   );
+
+describe("pieceCountLabel", () => {
+  const names = { unknown: "Onbekend", other: "Overig" };
+  const dutch = (n: number) => new Intl.NumberFormat("nl").format(n);
+  const english = (n: number) => new Intl.NumberFormat("en").format(n);
+
+  // The rest of the app shows 1.000 in Dutch and 1,000 in English.
+  it.each([
+    ["< 100", "< 100", "< 100"],
+    ["100-299", "100–299", "100–299"],
+    ["500-999", "500–999", "500–999"],
+    ["1000-1999", "1.000–1.999", "1,000–1,999"],
+    ["2000+", "2.000+", "2,000+"],
+  ])("formats %s", (bucket, inDutch, inEnglish) => {
+    expect(pieceCountLabel(bucket, names, dutch)).toBe(inDutch);
+    expect(pieceCountLabel(bucket, names, english)).toBe(inEnglish);
+  });
+
+  it("translates the sentinel, and leaves anything it doesn't recognise as it is", () => {
+    expect(pieceCountLabel(UNKNOWN_BUCKET, names, dutch)).toBe("Onbekend");
+    expect(pieceCountLabel("Unknown", names, dutch)).toBe("Unknown");
+  });
+});
+
+describe("PieceCountTick", () => {
+  const lines = (value: string) => {
+    const { container } = render(
+      <svg>
+        <PieceCountTick x={10} y={20} fill="#666" payload={{ value }} />
+      </svg>,
+    );
+    return [...container.querySelectorAll("tspan")].map((line) => [
+      line.textContent,
+      line.getAttribute("dy"),
+    ]);
+  };
+
+  // On one line these ran into each other in a phone's chart.
+  it("takes two lines for a range, and keeps the dash with the first", () => {
+    expect(lines("1.000–1.999")).toEqual([
+      ["1.000–", "0.71em"],
+      ["1.999", "1.1em"],
+    ]);
+  });
+
+  it("takes one line for a single number", () => {
+    expect(lines("2.000+")).toEqual([["2.000+", "0.71em"]]);
+  });
+
+  it("drops a word to the second line, clear of the number beside it", () => {
+    expect(lines("Onbekend")).toEqual([["Onbekend", "1.81em"]]);
+  });
+});
 
 const legendRows = () =>
   within(screen.getByRole("list", { name: "By difficulty" }))

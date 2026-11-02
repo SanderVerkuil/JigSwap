@@ -41,6 +41,24 @@ export function bucketLabel(
   return label;
 }
 
+// A piece-count bucket's display label: the numbers in the member's own format ("1.000–1.999" in
+// Dutch, "1,000–1,999" in English). Only for this chart: a brand may well be called "2000".
+export function pieceCountLabel(
+  label: string,
+  names: { unknown: string; other: string },
+  formatNumber: (value: number) => string,
+): string {
+  const range = /^(\d+)-(\d+)$/.exec(label);
+  if (range) {
+    return `${formatNumber(Number(range[1]))}–${formatNumber(Number(range[2]))}`;
+  }
+  const open = /^(< )?(\d+)(\+)?$/.exec(label);
+  if (open) {
+    return `${open[1] ?? ""}${formatNumber(Number(open[2]))}${open[3] ?? ""}`;
+  }
+  return bucketLabel(label, names);
+}
+
 // The brand bars in the query's order (top brands by count, then Other) without the copies that
 // have no brand: those are counted apart for a note under the chart, so they never rank as a brand.
 export function brandSeries(data: DistributionEntry[]): {
@@ -77,15 +95,46 @@ function hasValues(entries: DistributionEntry[]): boolean {
   return entries.some((e) => e.value > 0);
 }
 
+// A range takes two lines ("1.000–" over "1.999"): on one line, seven buckets run into each other in
+// a phone's chart. The wider "Onbekend" drops to the second line for the same reason. The axis
+// passes the position and colour in.
+export function PieceCountTick({
+  x,
+  y,
+  fill,
+  payload,
+}: {
+  x?: number;
+  y?: number;
+  fill?: string;
+  payload?: { value: string };
+}) {
+  const value = payload?.value ?? "";
+  const [from, to] = value.split(/(?<=–)/);
+  return (
+    <text x={x} y={y} fill={fill} textAnchor="middle">
+      <tspan x={x} dy={/\d/.test(value) ? "0.71em" : "1.81em"}>
+        {from}
+      </tspan>
+      {to && (
+        <tspan x={x} dy="1.1em">
+          {to}
+        </tspan>
+      )}
+    </text>
+  );
+}
+
 function PieceCountChart({ data }: { data: DistributionEntry[] }) {
   const t = useTranslations("insights.breakdown");
+  const format = useFormatter();
   const config = {
     value: { label: t("count"), color: "var(--chart-1)" },
   } satisfies ChartConfig;
   const names = { unknown: t("unknown"), other: t("other") };
   const buckets = data.map((e) => ({
     ...e,
-    label: bucketLabel(e.label, names),
+    label: pieceCountLabel(e.label, names, (value) => format.number(value)),
   }));
 
   return (
@@ -97,6 +146,8 @@ function PieceCountChart({ data }: { data: DistributionEntry[] }) {
           axisLine={false}
           tickMargin={8}
           interval={0}
+          height={44}
+          tick={<PieceCountTick />}
         />
         <YAxis
           tickLine={false}
