@@ -1,3 +1,4 @@
+import { defaultStringifySearch } from "@tanstack/react-router";
 import { describe, expect, it } from "vitest";
 import {
   browseEmptyState,
@@ -67,10 +68,28 @@ describe("validateBrowseSearch", () => {
     });
   });
 
-  it("leaves defaults out, so a bare /browse stays bare", () => {
+  it("gives no value for defaults, so a bare /browse stays bare", () => {
     expect(
-      validateBrowseSearch({ q: " ", avail: [], view: "grid", category: "" }),
-    ).toStrictEqual({});
+      defaultStringifySearch(
+        validateBrowseSearch({ q: " ", avail: [], view: "grid", category: "" }),
+      ),
+    ).toBe("");
+  });
+
+  it("returns every known key, so a dropped value replaces the raw one", () => {
+    expect(Object.keys(validateBrowseSearch({})).sort()).toEqual(
+      [
+        "avail",
+        "category",
+        "condition",
+        "difficulty",
+        "maxPieces",
+        "minPieces",
+        "puzzle",
+        "q",
+        "view",
+      ].sort(),
+    );
   });
 
   it("drops values Browse can't filter by", () => {
@@ -83,7 +102,7 @@ describe("validateBrowseSearch", () => {
         avail: ["forFree"],
         view: "table",
       }),
-    ).toStrictEqual({});
+    ).toEqual({});
   });
 
   it("reads one channel, ignores unknown ones and repeats", () => {
