@@ -37,7 +37,7 @@ export function browseFilterArgs(
   puzzleId: string | undefined,
 ): BrowseArgs {
   const args: BrowseArgs = { includeOwnPuzzles: false };
-  if (query.category) args.category = query.category as BrowseArgs["category"];
+  if (query.category) args.category = query.category;
   if (query.condition) args.condition = query.condition;
   if (query.difficulty) args.difficulty = query.difficulty;
   const minPieceCount = pieceCount(query.minPieces);

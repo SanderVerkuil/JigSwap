@@ -430,3 +430,83 @@ describe("library.browseOwnedPuzzles availability filter", () => {
     expect(seen).toHaveLength(3);
   });
 });
+
+describe("library.browseOwnedPuzzles category filter", () => {
+  // Files the seeded definition under a category, and adds a second definition under no category
+  // with an open copy from the public owner.
+  const seedCategory = async (t: TestConvex<typeof schema>) =>
+    t.run(async (ctx) => {
+      const now = Date.now();
+      const category = await ctx.db.insert("adminCategories", {
+        name: { en: "Landscapes", nl: "Landschappen" },
+        isActive: true,
+        sortOrder: 1,
+        createdAt: now,
+        updatedAt: now,
+      });
+      const copy = await ctx.db
+        .query("ownedPuzzles")
+        .filter((q) => q.eq(q.field("aggregateId"), "copy-public-open"))
+        .first();
+      await ctx.db.patch(copy!.puzzleId, { category });
+      const uncategorised = await ctx.db.insert("puzzles", {
+        aggregateId: "def-no-category",
+        title: "Uncategorised",
+        pieceCount: 500,
+        status: "approved",
+        submittedBy: copy!.ownerId,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("ownedPuzzles", {
+        aggregateId: "copy-no-category",
+        puzzleId: uncategorised,
+        ownerId: copy!.ownerId,
+        condition: "good",
+        availability: OPEN,
+        createdAt: now,
+        updatedAt: now,
+      });
+      return category as string;
+    });
+
+  test("narrows to copies of puzzles in that category", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const category = await seedCategory(t);
+    const view = await asViewer(t).query(
+      api.library.browseOwnedPuzzles.browseOwnedPuzzles,
+      { category },
+    );
+    expect(view.ownedPuzzles.map((c) => c.aggregateId)).not.toContain(
+      "copy-no-category",
+    );
+    expect(view.ownedPuzzles.map((c) => c.aggregateId)).toContain(
+      "copy-public-open",
+    );
+  });
+
+  // It arrives from a URL search param: a hand-edited link must not fail the whole read.
+  test("a malformed id yields an empty result, not an error", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await seedCategory(t);
+    for (const category of ["notanid", "5"]) {
+      const view = await asViewer(t).query(
+        api.library.browseOwnedPuzzles.browseOwnedPuzzles,
+        { category },
+      );
+      expect(view).toEqual({ ownedPuzzles: [], total: 0, hasMore: false });
+    }
+  });
+
+  test("still requires a signed-in member for a malformed id", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await expect(
+      t.query(api.library.browseOwnedPuzzles.browseOwnedPuzzles, {
+        category: "notanid",
+      }),
+    ).rejects.toThrow();
+  });
+});

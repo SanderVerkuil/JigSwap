@@ -48,7 +48,8 @@ const DEFAULT_LIMIT = 20;
 // `totalIsLowerBound`).
 export const browseOwnedPuzzles = query({
   args: {
-    category: v.optional(v.id("adminCategories")),
+    // A string, not v.id, for the same reason as puzzleId below: it arrives from a URL search param.
+    category: v.optional(v.string()),
     minPieceCount: v.optional(v.number()),
     maxPieceCount: v.optional(v.number()),
     difficulty: v.optional(
@@ -103,7 +104,11 @@ export const browseOwnedPuzzles = query({
       args.puzzleId === undefined
         ? undefined
         : ctx.db.normalizeId("puzzles", args.puzzleId);
-    if (puzzleId === null) {
+    const category =
+      args.category === undefined
+        ? undefined
+        : ctx.db.normalizeId("adminCategories", args.category);
+    if (puzzleId === null || category === null) {
       return {
         ownedPuzzles: [],
         total: 0,
@@ -200,12 +205,8 @@ export const browseOwnedPuzzles = query({
 
     let filtered = withPuzzles;
 
-    if (args.category) {
-      filtered = filtered.filter(
-        (i) =>
-          i.shown?.category === args.category &&
-          i.shown?.category !== undefined,
-      );
+    if (category) {
+      filtered = filtered.filter((i) => i.shown?.category === category);
     }
     if (args.minPieceCount !== undefined) {
       filtered = filtered.filter(
