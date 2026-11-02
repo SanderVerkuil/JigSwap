@@ -419,7 +419,10 @@ function PuzzleDefinitionDetail({
       <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
         {/* Left: rating + available copies */}
         <div className="space-y-9">
-          <CommunityRating rating={rating} onRate={focusComposer} />
+          <CommunityRating
+            rating={rating}
+            onRate={canReview ? focusComposer : undefined}
+          />
           <AvailableToSwap
             copies={availableCopies}
             totalAvailable={totalAvailable}
@@ -445,8 +448,8 @@ function CommunityRating({
   onRate,
 }: {
   rating: View["rating"];
-  /** Takes the member to the review composer. */
-  onRate: () => void;
+  /** Takes the member to the review composer; absent where the puzzle can't be reviewed. */
+  onRate?: () => void;
 }) {
   const t = useTranslations("puzzleDefinition");
   // Unrated: an invitation instead of a "0" score over five 0% bars.
@@ -455,10 +458,12 @@ function CommunityRating({
       <section>
         <SectionHead icon={<StarGlyph />} title={t("communityRating")} />
         <p className="text-muted-foreground text-sm">{t("noRatingsYet")}</p>
-        <Button variant="outline" size="sm" className="mt-3" onClick={onRate}>
-          <Star className="h-4 w-4" />
-          {t("beFirstToRate")}
-        </Button>
+        {onRate && (
+          <Button variant="outline" size="sm" className="mt-3" onClick={onRate}>
+            <Star className="h-4 w-4" />
+            {t("beFirstToRate")}
+          </Button>
+        )}
       </section>
     );
   }

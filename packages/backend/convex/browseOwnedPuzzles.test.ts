@@ -496,7 +496,12 @@ describe("library.browseOwnedPuzzles category filter", () => {
         api.library.browseOwnedPuzzles.browseOwnedPuzzles,
         { category },
       );
-      expect(view).toEqual({ ownedPuzzles: [], total: 0, hasMore: false });
+      expect(view).toEqual({
+        ownedPuzzles: [],
+        total: 0,
+        hasMore: false,
+        totalIsLowerBound: false,
+      });
     }
   });
 

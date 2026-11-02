@@ -216,6 +216,20 @@ describe("puzzle detail page: missing data", () => {
     );
   });
 
+  it("offers no way to rate a puzzle that can't be reviewed", () => {
+    setView(emptyView());
+    mocks.data.set(getFunctionName(gateway.solving.getMyReviews), {
+      puzzle: null,
+      puzzleReviewAllowed: false,
+    });
+    renderPage();
+
+    expect(screen.getAllByText(t.noRatingsYet).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("button", { name: t.beFirstToRate })).toBeNull();
+    expect(screen.queryByRole("button", { name: t.writeReview })).toBeNull();
+    expect(screen.getByText(t.reviewNotOpen)).toBeTruthy();
+  });
+
   it("shows the score, histogram, average and owner rating once they exist", () => {
     setView({
       ...emptyView(),

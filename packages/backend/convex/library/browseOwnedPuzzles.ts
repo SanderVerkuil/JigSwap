@@ -29,7 +29,7 @@ import { resolveCopyCoverFields } from "./resolveCoverUrl";
 export const BROWSE_CANDIDATE_CAP = 1000;
 export const BROWSE_PER_OWNER = 50;
 export const BROWSE_READ_BUDGET = 3 * BROWSE_CANDIDATE_CAP;
-// A page holds 1 to BROWSE_MAX_LIMIT copies whatever the client asks for (the web asks for 50); the
+// A page holds 1 to BROWSE_MAX_LIMIT copies whatever the client asks for (the web asks for 48); the
 // offset is never negative.
 export const BROWSE_MAX_LIMIT = 50;
 const DEFAULT_LIMIT = 20;
