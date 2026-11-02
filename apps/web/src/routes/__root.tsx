@@ -96,8 +96,8 @@ export const Route = createRootRouteWithContext<{
       // service-worker caching is involved; /sw.js stays push-only.
       { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "stylesheet", href: appCss },
-      // Fonts that next/font loaded in the web app, now via Google Fonts so
-      // globals.css --font-sans (Poppins) / --font-heading (Baloo 2) resolve.
+      // Google Fonts so globals.css --font-sans (Hanken Grotesk), --font-heading
+      // (Young Serif) and --font-logo (Baloo 2) resolve.
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       {
         rel: "preconnect",
@@ -106,9 +106,9 @@ export const Route = createRootRouteWithContext<{
       },
       {
         rel: "stylesheet",
-        // Baloo 2 is the single heading face for both the app (--font-heading)
-        // and marketing (--font-mk-heading); Poppins is the body sans.
-        href: "https://fonts.googleapis.com/css2?family=Baloo+2:wght@400..800&family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap",
+        // Young Serif is the display face and Hanken Grotesk the text face for the
+        // app and marketing alike; Baloo 2 only sets the logo's wordmark.
+        href: "https://fonts.googleapis.com/css2?family=Baloo+2:wght@700&family=Hanken+Grotesk:wght@400..700&family=Young+Serif&display=swap",
       },
     ],
   }),
@@ -230,17 +230,17 @@ function RootDocument({
       <head>
         <HeadContent />
         {/* Tints the browser / installed-app status bar to the mobile top
-            bar's surface (bg-card) per OS colour scheme; the manifest carries
-            the light value. */}
+            bar's sky surface per OS colour scheme; the manifest carries the
+            light value. */}
         <meta
           name="theme-color"
           media="(prefers-color-scheme: light)"
-          content="#ffffff"
+          content="#e3f1fa"
         />
         <meta
           name="theme-color"
           media="(prefers-color-scheme: dark)"
-          content="#282642"
+          content="#0f2a33"
         />
       </head>
       <body className="font-sans antialiased bg-background text-foreground">
