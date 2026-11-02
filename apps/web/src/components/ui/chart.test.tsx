@@ -77,3 +77,18 @@ describe("ChartContainer", () => {
     expect(styleText(markup)).toContain(` [data-chart=${attr}] {`);
   });
 });
+
+describe("ChartContainer", () => {
+  it("colours axis labels through the class Recharts 3 puts on the tick text", () => {
+    // Recharts fills the text #666 itself, about 2.9:1 on the dark panel, so a selector that misses
+    // it leaves every axis label under AA in dark mode.
+    const markup = renderToStaticMarkup(
+      <ChartContainer config={{}}>
+        <div />
+      </ChartContainer>,
+    );
+    expect(markup).toContain(
+      "[&amp;_.recharts-cartesian-axis-tick-value]:fill-muted-foreground",
+    );
+  });
+});
