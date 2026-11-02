@@ -17,7 +17,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
 import { ConvexError } from "convex/values";
 import { Save } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import type { Member } from "./member-view";
@@ -117,9 +117,12 @@ const LOCATION_MAX_LENGTH = 80;
 // queries the same profile, and Clerk loads early for auth.
 export function EditProfileForm({
   member,
+  focusCustomLink = false,
   onDone,
 }: {
   member: Member;
+  // Arriving to set a custom link (?edit=link): focus lands on that field, not the page top.
+  focusCustomLink?: boolean;
   onDone: () => void;
 }) {
   const { isLoaded } = useUser();
@@ -134,6 +137,7 @@ export function EditProfileForm({
     <EditProfileFormLoaded
       member={member}
       socialProfile={socialProfile}
+      focusCustomLink={focusCustomLink}
       onDone={onDone}
     />
   );
@@ -142,10 +146,12 @@ export function EditProfileForm({
 function EditProfileFormLoaded({
   member,
   socialProfile,
+  focusCustomLink,
   onDone,
 }: {
   member: Member;
   socialProfile: SocialProfile;
+  focusCustomLink: boolean;
   onDone: () => void;
 }) {
   const t = useTranslations("profile");
@@ -170,6 +176,10 @@ function EditProfileFormLoaded({
     user?.username ?? member.username ?? "",
   );
   const [slug, setSlugValue] = useState(member.slug ?? "");
+  const slugInput = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (focusCustomLink) slugInput.current?.focus();
+  }, [focusCustomLink]);
   const [location, setLocation] = useState(member.location ?? "");
   const [bio, setBio] = useState(socialProfile?.bio ?? "");
   // Empty when the member never chose one: other members then see the account
@@ -348,6 +358,7 @@ function EditProfileFormLoaded({
       <div className="space-y-2 sm:col-span-2">
         <Label htmlFor="profile-slug">{t("slug.label")}</Label>
         <Input
+          ref={slugInput}
           id="profile-slug"
           value={slug}
           onChange={(e) => {

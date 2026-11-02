@@ -57,6 +57,7 @@ const member: Member = {
 const renderForm = (
   profile: { displayName?: string; bio?: string } = {},
   accountFields: Partial<Member> = {},
+  focusCustomLink = false,
 ) => {
   const convexQueryClient = new ConvexQueryClient(
     new ConvexReactClient("https://example.convex.cloud"),
@@ -85,6 +86,7 @@ const renderForm = (
       <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
         <EditProfileForm
           member={{ ...member, ...accountFields }}
+          focusCustomLink={focusCustomLink}
           onDone={onDone}
         />
       </IntlProvider>
@@ -125,6 +127,21 @@ describe("EditProfileForm on a phone", () => {
     expect(preview?.textContent).toContain("Your profile link:");
     expect(preview?.classList).not.toContain("truncate");
     expect(url.classList).toContain("break-all");
+  });
+});
+
+// Arriving from the QR dialog to set a custom link: the member lands on that field.
+describe("EditProfileForm focus", () => {
+  it("focuses the custom-link field when asked to", () => {
+    renderForm({}, {}, true);
+    expect(document.activeElement).toBe(
+      screen.getByLabelText(en.profile.slug.label),
+    );
+  });
+
+  it("leaves focus alone when opened from its own toggle", () => {
+    renderForm();
+    expect(document.activeElement).toBe(document.body);
   });
 });
 
