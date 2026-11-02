@@ -989,8 +989,10 @@ where the real run counts them as `updated`; `inserted + updated` matches.
 ## `insights/platformStats:recount` — the landing page's counters
 
 **When:** once per deployment, right after the `platformStats` table and the
-`recount platform stats` cron (PERF-B2m) are deployed there. Optional: the cron runs the
-same recount every 6 hours. There is no ordering pressure: until the first recount has
+`recount platform stats` cron (PERF-B2m) are deployed there. Optional: the daily
+`top up platform stats` cron runs a whole recount as long as there is no row yet, and adds
+only the new rows after that (the same recount runs weekly and corrects for deleted rows).
+There is no ordering pressure: until the first recount has
 written the row, `insights/getGlobalStats` counts the `users`, `puzzles` and
 `ownedPuzzles` tables itself, at the old full-table cost on every home page load, so run it
 soon after the deploy rather than waiting for the cron.

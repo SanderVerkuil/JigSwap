@@ -2151,8 +2151,9 @@ export default defineSchema({
 
   // The public landing page's counters (PERF-B2m), so insights/getGlobalStats reads one row instead
   // of every users, puzzles and ownedPuzzles row. One row, key "global", rewritten by
-  // insights/platformStats.recount (a 6-hourly cron that recounts the three tables), so the numbers
-  // may be up to one interval old. Same meaning as the legacy count: every row of each table.
+  // insights/platformStats.recount (a weekly cron that recounts the three tables, with a daily
+  // top-up of new rows), so the numbers may be up to a day old, and a deleted row counted for up to
+  // a week. Same meaning as the legacy count: every row of each table.
   platformStats: defineTable({
     key: v.string(),
     users: v.number(),

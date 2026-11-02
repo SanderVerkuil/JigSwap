@@ -101,11 +101,18 @@ crons.weekly(
   { mode: "dry-run" },
 );
 
-// The public landing page's counters: users, puzzles and ownedPuzzles recounted into the
-// platformStats row that insights/getGlobalStats reads (insights/platformStats).
-crons.interval(
+// The public landing page's counters, in the platformStats row that insights/getGlobalStats reads
+// (insights/platformStats): the rows created since the last count added daily, and every row of
+// users, puzzles and ownedPuzzles recounted weekly, which also corrects for deleted ones.
+crons.daily(
+  "top up platform stats",
+  { hourUTC: 4, minuteUTC: 10 },
+  internal.insights.platformStats.topUp,
+  {},
+);
+crons.weekly(
   "recount platform stats",
-  { hours: 6 },
+  { dayOfWeek: "sunday", hourUTC: 4, minuteUTC: 55 },
   internal.insights.platformStats.recount,
   {},
 );
