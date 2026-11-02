@@ -7,8 +7,8 @@
 // the route needs on first load (its manifest chain plus the root stylesheet)
 // and fails when either is more than `tolerance` over budget. It also fails when
 // any route preloads a chunk containing a `forbiddenInInitial` marker (three.js,
-// the physics engine), which must only load on idle or on request, and when a
-// prerendered document carries an inline script above
+// the physics engine, the image cropper), which must only load on idle or on
+// request, and when a prerendered document carries an inline script above
 // `documents.maxInlineScriptKB` (the dehydrated router state; the message
 // catalog must stay out of it). It reports the message catalogs' gzip size,
 // fetched on every first visit. Raising a budget is a reviewed edit to

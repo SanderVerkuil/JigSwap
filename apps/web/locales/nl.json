@@ -4776,7 +4776,8 @@
     "autoCropNothing": "Geen egale rand om bij te snijden",
     "autoCropFailed": "Deze afbeelding kon niet worden geanalyseerd",
     "editingBlocked": "Je browser blokkeert het bewerken van afbeeldingen om je privacy te beschermen, dus je wijzigingen kunnen niet worden toegepast. Je kunt in plaats daarvan de originele, onbewerkte foto uploaden.",
-    "useOriginal": "Origineel uploaden"
+    "useOriginal": "Origineel uploaden",
+    "loadFailed": "De foto-editor kon niet worden geopend. Controleer je verbinding en probeer het opnieuw."
   },
   "mySuggestions": {
     "title": "Mijn voorstellen",

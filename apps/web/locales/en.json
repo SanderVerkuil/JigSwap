@@ -4776,7 +4776,8 @@
     "autoCropNothing": "No uniform border to trim",
     "autoCropFailed": "Couldn't analyse this image",
     "editingBlocked": "Your browser blocks image editing to protect your privacy, so your changes can't be applied. You can upload the original photo, unedited, instead.",
-    "useOriginal": "Upload original"
+    "useOriginal": "Upload original",
+    "loadFailed": "Couldn't open the photo editor. Check your connection and try again."
   },
   "mySuggestions": {
     "title": "My suggestions",

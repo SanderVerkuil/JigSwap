@@ -22,7 +22,7 @@ import {
   type RequestableCopy,
 } from "@/components/exchange/request-trade-dialog";
 import { HouseholdAccess } from "@/components/household/household-access";
-import { ImageEditorDialog } from "@/components/image-editor/image-editor-dialog";
+import { LazyImageEditorDialog } from "@/components/image-editor/lazy-image-editor-dialog";
 import {
   conditionDotClass,
   useConditionLabel,
@@ -1142,7 +1142,7 @@ function PhotoStrip({
           coverImageId={coverImageId}
         />
       )}
-      <ImageEditorDialog
+      <LazyImageEditorDialog
         src={editing?.src ?? null}
         fileName={editing?.fileName ?? "photo.jpg"}
         onApply={(file) => {

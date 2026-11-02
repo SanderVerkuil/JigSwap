@@ -2,7 +2,8 @@
   "tolerance": 0.05,
   "forbiddenInInitial": {
     "three.js": "isWebGLRenderer",
-    "the rapier physics engine": "RigidBodyDesc"
+    "the rapier physics engine": "RigidBodyDesc",
+    "the image cropper": "advanced-cropper-boundary"
   },
   "documents": {
     "maxInlineScriptKB": 64
@@ -37,8 +38,8 @@
       "cssGzKB": 34
     },
     "/_dashboard/copies/$id": {
-      "jsGzKB": 499,
-      "cssGzKB": 36
+      "jsGzKB": 477,
+      "cssGzKB": 34
     },
     "/_dashboard/messages": {
       "jsGzKB": 420,

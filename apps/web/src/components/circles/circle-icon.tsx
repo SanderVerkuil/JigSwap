@@ -6,7 +6,7 @@
 // uploader and the Admins see "Being checked", and a refused icon tells its
 // uploader it was removed (sharing/circleIcons.ts). The picker is shared by the
 // manage dialog's Icon section and the circle chat's "Change icon" item.
-import { ImageEditorDialog } from "@/components/image-editor/image-editor-dialog";
+import { LazyImageEditorDialog } from "@/components/image-editor/lazy-image-editor-dialog";
 import { CircleThreadAvatar } from "@/components/messaging/circle-thread-avatar";
 import { Button } from "@/components/ui/button";
 import { gateway, type Id } from "@/gateway";
@@ -99,7 +99,7 @@ export function useCircleIconPicker(circleId: string): {
           e.target.value = "";
         }}
       />
-      <ImageEditorDialog
+      <LazyImageEditorDialog
         src={editing?.src ?? null}
         fileName={editing?.fileName ?? "icon.jpg"}
         aspectRatio={1}
