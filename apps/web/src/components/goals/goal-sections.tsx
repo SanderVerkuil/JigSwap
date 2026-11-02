@@ -65,11 +65,7 @@ export function GoalSections({
     <div className="@container/goals flex flex-col gap-[26px]">
       {active.length > 0 && (
         <section>
-          <SectionHead
-            title={t("active")}
-            icon={Target}
-            meta={t("activeCount", { count: active.length })}
-          />
+          <SectionHead title={t("active")} icon={Target} />
           {grid(active)}
         </section>
       )}

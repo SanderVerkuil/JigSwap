@@ -79,6 +79,11 @@ afterEach(() => {
 });
 
 describe("GoalSections", () => {
+  it("names the Active section once: the page head carries the count", () => {
+    renderSections([goal(), goal()]);
+    expect(screen.queryByText("2 active")).toBeNull();
+  });
+
   it("shows 99%, not 100%, on a goal just short of its target", () => {
     renderSections([
       goal({ currentCompletions: 999, targetCompletions: 1000 }),
