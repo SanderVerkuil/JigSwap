@@ -218,6 +218,66 @@ describe("CirclePage", () => {
     ).toBeNull();
   });
 
+  describe("a circle with only its owner in it", () => {
+    const alone = () =>
+      detail({
+        memberCount: 1,
+        isOwnedByViewer: true,
+        viewerPermission: "Admin",
+        members: [seat("me", "Me", { isOwner: true, permission: "Admin" })],
+      });
+
+    it("prompts to invite people, opening Manage at the invite section", () => {
+      renderPage({ circle: alone() });
+      fireEvent.click(
+        screen.getByRole("button", { name: en.circles.page.invitePeople }),
+      );
+      const invite = screen.getByRole("region", {
+        name: en.circles.invite.title,
+      });
+      expect(
+        within(screen.getByRole("dialog")).getByRole("region", {
+          name: en.circles.invite.title,
+        }),
+      ).toBe(invite);
+      // Focus lands on the section (scrolling it into view) without popping up a phone's keyboard.
+      expect(document.activeElement).toBe(invite);
+    });
+
+    it("opens Manage at the top from Manage itself", () => {
+      renderPage({ circle: alone() });
+      fireEvent.click(
+        screen.getByRole("button", { name: "Manage Puzzle Club" }),
+      );
+      expect(screen.getByRole("dialog").contains(document.activeElement)).toBe(
+        true,
+      );
+      expect(document.activeElement).not.toBe(
+        screen.getByRole("region", { name: en.circles.invite.title }),
+      );
+    });
+
+    it("stops prompting once someone else joined", () => {
+      renderPage({
+        circle: detail({
+          memberCount: 2,
+          isOwnedByViewer: true,
+          viewerPermission: "Admin",
+        }),
+      });
+      expect(
+        screen.queryByRole("button", { name: en.circles.page.invitePeople }),
+      ).toBeNull();
+    });
+
+    it("never prompts someone who can't invite", () => {
+      renderPage({ circle: detail({ memberCount: 1 }) });
+      expect(
+        screen.queryByRole("button", { name: en.circles.page.invitePeople }),
+      ).toBeNull();
+    });
+  });
+
   it("offers an Admin owner the manage action and no leave", () => {
     renderPage({
       circle: detail({

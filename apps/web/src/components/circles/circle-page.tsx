@@ -45,7 +45,7 @@ import { useMemberDisplayName } from "@/lib/member-display-name";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Clock, Settings, Users } from "lucide-react";
+import { Clock, Settings, UserPlus, Users } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useLocale, useNow, useTranslations } from "use-intl";
 
@@ -57,7 +57,8 @@ export function CirclePage({ circleId }: { circleId: string }) {
   const navigate = useNavigate();
   const { user } = useUser();
   const seatName = useCircleSeatName();
-  const [manageOpen, setManageOpen] = useState(false);
+  // The manage dialog: closed, opened from Manage, or opened at its invite section.
+  const [manageView, setManageView] = useState<"top" | "invite" | null>(null);
   const { data: detail, isPending } = useQuery(
     convexQuery(gateway.sharing.circle, { circleId }),
   );
@@ -121,12 +122,26 @@ export function CirclePage({ circleId }: { circleId: string }) {
             />
           )}
           <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+            {/* The next step for a circle nobody else is in yet, as it is right after creating it. */}
+            {canManageCircle(detail.viewerPermission) &&
+              user &&
+              detail.memberCount === 1 && (
+                <Button
+                  variant="brand"
+                  size="sm"
+                  className="h-11 md:h-8"
+                  onClick={() => setManageView("invite")}
+                >
+                  <UserPlus aria-hidden className="size-4" />
+                  {t("page.invitePeople")}
+                </Button>
+              )}
             {canManageCircle(detail.viewerPermission) && user && (
               <Button
                 variant="outline"
                 size="sm"
                 className="h-11 md:h-8"
-                onClick={() => setManageOpen(true)}
+                onClick={() => setManageView("top")}
                 aria-label={t("page.manageNamed", { circle: detail.name })}
               >
                 <Settings aria-hidden className="size-4" />
@@ -153,11 +168,12 @@ export function CirclePage({ circleId }: { circleId: string }) {
         />
       </div>
 
-      {manageOpen && user && (
+      {manageView && user && (
         <ManageCircleDialog
           circleId={circleId}
           viewerId={user.id}
-          onClose={() => setManageOpen(false)}
+          focusInvite={manageView === "invite"}
+          onClose={() => setManageView(null)}
           onDeleted={backToList}
         />
       )}

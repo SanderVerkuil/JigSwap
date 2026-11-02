@@ -37,12 +37,19 @@ vi.mock("@/compat/link", () => ({
 
 vi.mock("@convex-dev/react-query", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@convex-dev/react-query")>()),
-  useConvexMutation: () => vi.fn(),
+  useConvexMutation: () => mocks.mutation,
 }));
 
 const mocks = vi.hoisted(() => ({
   search: {} as { invite?: string; create?: true },
   navigate: vi.fn(),
+  mutation: vi.fn<(args: unknown) => Promise<unknown>>(),
+  toastSuccess: vi.fn<(message: string) => void>(),
+  toastError: vi.fn<(message: string) => void>(),
+}));
+
+vi.mock("sonner", () => ({
+  toast: { success: mocks.toastSuccess, error: mocks.toastError },
 }));
 
 // The route module only needs its options back and the current search.
@@ -104,9 +111,95 @@ const renderList = (circles: ReturnType<typeof circle>[]) => {
 beforeEach(() => {
   mocks.search = {};
   mocks.navigate.mockReset();
+  mocks.mutation.mockReset();
+  mocks.toastSuccess.mockReset();
+  mocks.toastError.mockReset();
 });
 
 afterEach(cleanup);
+
+describe("creating a circle", () => {
+  const fillAndCreate = (name: string) => {
+    fireEvent.click(
+      screen.getByRole("button", { name: en.circles.createCircle }),
+    );
+    fireEvent.change(screen.getByLabelText(en.circles.manage.nameLabel), {
+      target: { value: name },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: en.circles.manage.create }),
+    );
+  };
+
+  it("confirms and goes on to the new circle's page", async () => {
+    mocks.mutation.mockResolvedValue("circle_new");
+    renderList([]);
+    fillAndCreate(" Saturday Puzzlers ");
+
+    await waitFor(() =>
+      expect(mocks.navigate).toHaveBeenCalledWith({
+        to: "/circles/$circleId",
+        params: { circleId: "circle_new" },
+        replace: false,
+      }),
+    );
+    expect(mocks.mutation.mock.calls[0]?.[0]).toEqual({
+      name: "Saturday Puzzlers",
+    });
+    expect(mocks.toastSuccess).toHaveBeenCalledWith(en.circles.manage.created);
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  // ?create=1 opened the dialog: Back from the new circle must not reopen it.
+  it("replaces the ?create=1 entry", async () => {
+    mocks.search = { create: true };
+    mocks.mutation.mockResolvedValue("circle_new");
+    renderList([]);
+    fireEvent.change(screen.getByLabelText(en.circles.manage.nameLabel), {
+      target: { value: "Mine" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: en.circles.manage.create }),
+    );
+    await waitFor(() =>
+      expect(mocks.navigate).toHaveBeenCalledWith({
+        to: "/circles/$circleId",
+        params: { circleId: "circle_new" },
+        replace: true,
+      }),
+    );
+    expect(mocks.navigate).toHaveBeenCalledTimes(1);
+  });
+
+  it("says so when it fails, and keeps the dialog and the name", async () => {
+    mocks.mutation.mockRejectedValue(new Error("offline"));
+    renderList([]);
+    fillAndCreate("Saturday Puzzlers");
+
+    await waitFor(() =>
+      expect(mocks.toastError).toHaveBeenCalledWith(
+        en.circles.manage.createFailed,
+      ),
+    );
+    expect(mocks.navigate).not.toHaveBeenCalled();
+    expect(
+      (screen.getByLabelText(en.circles.manage.nameLabel) as HTMLInputElement)
+        .value,
+    ).toBe("Saturday Puzzlers");
+  });
+
+  it("can't be sent twice while it is on its way", async () => {
+    mocks.mutation.mockReturnValue(new Promise<never>(() => {}));
+    renderList([]);
+    fillAndCreate("Saturday Puzzlers");
+    const create = screen.getByRole("button", {
+      name: en.circles.manage.create,
+    });
+    await waitFor(() => expect(create.hasAttribute("disabled")).toBe(true));
+    fireEvent.click(create);
+    expect(mocks.mutation).toHaveBeenCalledTimes(1);
+  });
+});
 
 describe("circles list rows", () => {
   it("links each circle's name to its own page", () => {
