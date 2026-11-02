@@ -113,7 +113,7 @@ describe("a stored solve time no solve can have taken doesn't count", () => {
       totalCompletions: 2,
     });
 
-    // And from the totals its recompute writes, nightly at the latest.
+    // And from the totals its recompute writes, weekly at the latest.
     await t.mutation(internal.library.definitionStats.recompute, { puzzleId });
     expect(await publicStats()).toMatchObject({
       avgCompletionDays: 2,

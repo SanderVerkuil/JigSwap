@@ -208,7 +208,7 @@ export const completionTotalsOf = async (
 
 /** Completion aggregate shown on the definition pages (count of finished solves + average
  * whole-day duration), from its sums. Stored sums that average past any solve were written before
- * finishDaysOf left such rows out: unknown until the row's next recompute (nightly at the latest). */
+ * finishDaysOf left such rows out: unknown until the row's next recompute (weekly at the latest). */
 export const completionStatsFromTotals = ({
   completedCount,
   finishDaysSum,

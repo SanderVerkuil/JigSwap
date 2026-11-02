@@ -32,10 +32,10 @@ import { isOpenAvailability } from "./openListing";
 // review and profile repositories, the exchange settlement and the account purge). A mark leaves a
 // definitionStatsPending row and schedules one `recompute`, which recomputes the totals from source
 // with the very helpers the pages used to run live (library/definitionAggregates), so the numbers
-// keep their meaning. A nightly `reconcile` recomputes every definition: it is the backfill, and it
+// keep their meaning. A weekly `reconcile` recomputes every definition: it is the backfill, and it
 // repairs a row a write path forgot to mark (logged as drift). A pending row left behind because its
-// recompute threw is logged and re-scheduled by the next mark or the reconcile (STALE_RETRY_MS).
-// Until a definition's totals exist, reads compute them live, as before.
+// recompute threw is logged and re-scheduled by the next mark or the daily `retryOverdueMarks`
+// (STALE_RETRY_MS). Until a definition's totals exist, reads compute them live, as before.
 //
 // Pages subscribe to the definitionStats row, so it is written only when its numbers change: a mark
 // never touches it, and neither does a recompute that finds the same totals.
@@ -54,7 +54,7 @@ type StoredTotals = NonNullable<Doc<"definitionStats">["totals"]>;
 const OWNER_MARK_BATCH = 100;
 // A recompute normally lands within seconds. A mark still pending after this long lost its recompute
 // (it threw: read limits on a very large definition, or write conflicts until retries ran out), so
-// the next mark, or the nightly reconcile, logs it and schedules another.
+// the next mark, or the daily retry, logs it and schedules another.
 export const STALE_RETRY_MS = 5 * 60 * 1000;
 // Definitions per reconcile batch (one scheduled recompute each). `batchSize` overrides it,
 // floored and clamped to 1..MAX, below Convex's limit on functions scheduled per mutation.
@@ -361,11 +361,36 @@ export const recompute = internalMutation({
   },
 });
 
+// Most marks a retry looks at, below Convex's limit on functions scheduled per mutation. More than
+// this pending at once wait for the next day's run.
+const OVERDUE_RETRY_READS = 500;
+
+// Daily (crons.ts): schedules another recompute for every mark whose recompute was lost, so a failed
+// one is logged and retried without a walk over the catalogue. Reads only what is pending.
+export const retryOverdueMarks = internalMutation({
+  args: {},
+  handler: async (ctx): Promise<void> => {
+    const now = Date.now();
+    const pending = await ctx.db
+      .query("definitionStatsPending")
+      .take(OVERDUE_RETRY_READS);
+    for (const mark of pending) {
+      if (!recomputeOverdue(mark, now)) continue;
+      await ctx.db.patch(mark._id, { since: now });
+      await ctx.scheduler.runAfter(
+        0,
+        internal.library.definitionStats.recompute,
+        { puzzleId: mark.puzzleId },
+      );
+    }
+  },
+});
+
 // Recomputes every definition: pages through `puzzles` and schedules one `recompute` per
 // definition (each its own transaction, so one oversized definition can't stall the rest), then
-// reschedules itself. Runs nightly (crons.ts) and is the backfill: the first run gives every
-// definition its row. Writes only rows whose totals changed, so a re-run writes nothing. Runbook:
-// docs/deployment/one-shot-migrations.md.
+// reschedules itself. Runs weekly (crons.ts), as a safety net behind the marks, and is the backfill:
+// the first run gives every definition its row. Writes only rows whose totals changed, so a re-run
+// writes nothing. Runbook: docs/deployment/one-shot-migrations.md.
 export const reconcile = internalMutation({
   args: {
     cursor: v.optional(v.union(v.string(), v.null())),

@@ -118,11 +118,21 @@ crons.weekly(
 );
 
 // The catalog and definition pages' aggregates: every definition's definitionStats row recomputed
-// from source, repairing any a write path forgot to mark (library/definitionStats.reconcile).
-crons.daily(
+// from source, repairing any a write path forgot to mark (library/definitionStats.reconcile). Writes
+// mark what they change, so this is a safety net, and it costs a function per definition: weekly.
+crons.weekly(
   "reconcile definition stats",
-  { hourUTC: 4, minuteUTC: 35 },
+  { dayOfWeek: "sunday", hourUTC: 4, minuteUTC: 35 },
   internal.library.definitionStats.reconcile,
+  {},
+);
+
+// A definition whose recompute was lost is logged and recomputed again, reading only what is
+// pending (library/definitionStats.retryOverdueMarks).
+crons.daily(
+  "retry overdue definition stats",
+  { hourUTC: 4, minuteUTC: 20 },
+  internal.library.definitionStats.retryOverdueMarks,
   {},
 );
 

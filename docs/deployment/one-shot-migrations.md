@@ -1034,7 +1034,7 @@ The remaining batches run as scheduled functions. The last batch logs one JSON l
 
 **When:** once per deployment, right after the `definitionStats` table, the marks on the
 write paths and the `reconcile definition stats` cron (PERF-B4m, SEC-29) are deployed there.
-Optional: the cron runs the same reconcile every night. There is no ordering pressure:
+Optional: the cron runs the same reconcile every week. There is no ordering pressure:
 every write that changes a definition's aggregates already gives it a row, and until a
 definition has one the catalog and definition pages compute its aggregates themselves, at
 the old cost (every review, copy and completion of the definition on each view), so run it
@@ -1057,8 +1057,8 @@ or profile visibility without marking the definition (see library/definitionStat
 **Watch:** an error line `"event":"library.definitionStats.recomputeOverdue"` with a
 `puzzle_id` means that definition's mark stayed pending for more than five minutes: its
 recompute threw (Convex read limits on a very large definition, or write conflicts until
-the retries ran out). The next mark, and the nightly reconcile, log it and schedule another
-recompute; the page keeps serving the last totals meanwhile. If the same `puzzle_id` keeps
+the retries ran out). The next mark, and the daily `retry overdue definition stats` cron, log it
+and schedule another recompute; the page keeps serving the last totals meanwhile. If the same `puzzle_id` keeps
 coming back, its recompute does not fit in one transaction: reading every copy, review and
 completion of a definition with tens of thousands of rows is the likely cause.
 

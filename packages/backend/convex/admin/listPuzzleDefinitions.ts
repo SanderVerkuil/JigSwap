@@ -16,7 +16,7 @@ import { definitionTotalsOf } from "../library/definitionStats";
 // box art and its owner count, so a page holds at most this many (the table asks for 25).
 const MAX_PAGE_SIZE = 50;
 // Copies of one definition read for its owner count until its totals have one. Past this it is a
-// lower bound, for at most a day: the nightly reconcile writes it for every definition.
+// lower bound, for at most a week: the weekly reconcile writes it for every definition.
 const OWNER_SCAN_CAP = 100;
 
 // Admin read model: EVERY catalog definition regardless of status, newest first, paginated.

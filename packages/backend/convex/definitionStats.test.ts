@@ -3,6 +3,7 @@ import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
+import crons from "./crons";
 import { COPY_ONLY_SOLVES_READ } from "./library/definitionAggregates";
 import {
   computeDefinitionTotals,
@@ -13,7 +14,7 @@ import schema from "./schema";
 
 // The definitionStats read model (PERF-B4m, SEC-29): one row per catalogue definition holding the
 // viewer-independent aggregates the catalog and definition pages show, recomputed from source by a
-// scheduled job whenever a write marks the definition, and by a nightly reconcile that doubles as
+// scheduled job whenever a write marks the definition, and by a weekly reconcile that doubles as
 // the backfill. Reads fall back to the live helpers until a definition's totals exist.
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
@@ -279,7 +280,7 @@ const recomputeJobs = (t: T) =>
     ),
   );
 
-describe("definitionStats backfill and nightly reconcile", () => {
+describe("definitionStats backfill and weekly reconcile", () => {
   test("writes one row per definition with the live aggregates", async () => {
     const t = newT();
     const w = await seedWorld(t);
@@ -567,7 +568,7 @@ describe("a recompute that never landed", () => {
     expect(overdueLogs()).toHaveLength(0);
   });
 
-  test("the nightly reconcile reports a definition stuck stale and repairs it", async () => {
+  test("the reconcile reports a definition stuck stale and repairs it", async () => {
     const t = newT();
     const w = await seedWorld(t);
     await reconcile(t);
@@ -578,6 +579,65 @@ describe("a recompute that never landed", () => {
     expect(overdueLogs()).toHaveLength(1);
     expect(String(overdueLogs()[0]![0])).toContain(w.harbour.id);
     expect((await expectInStep(t, w.harbour.id)).communityOwners).toBe(0);
+  });
+});
+
+describe("the daily retry of a lost recompute", () => {
+  const retry = (t: T) =>
+    t.mutation(internal.library.definitionStats.retryOverdueMarks, {});
+
+  beforeEach(() => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  test("re-schedules what is overdue and logs it, without walking the catalogue", async () => {
+    const t = newT({ documentsRead: 50 });
+    const w = await seedWorld(t);
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 200; i++) {
+        await ctx.db.insert("puzzles", {
+          title: `p${i}`,
+          pieceCount: 500,
+          status: "approved",
+          submittedBy: w.alice,
+          createdAt: BASE,
+          updatedAt: BASE,
+        });
+      }
+      await ctx.db.insert("definitionStatsPending", {
+        puzzleId: w.vista.id,
+        since: Date.now() - STALE_RETRY_MS - 1,
+      });
+      await ctx.db.insert("definitionStatsPending", {
+        puzzleId: w.harbour.id,
+        since: Date.now(),
+      });
+    });
+
+    await retry(t);
+
+    const jobs = await recomputeJobs(t);
+    expect(jobs).toHaveLength(1);
+    expect(jobs[0].args[0]).toEqual({ puzzleId: w.vista.id });
+    expect(vi.mocked(console.error).mock.calls).toHaveLength(1);
+  });
+
+  test("nothing pending, nothing scheduled", async () => {
+    const t = newT();
+    await seedWorld(t);
+    await retry(t);
+    expect(await recomputeJobs(t)).toEqual([]);
+  });
+});
+
+describe("crons", () => {
+  test("the whole-catalogue reconcile runs weekly and the retry of lost recomputes daily", () => {
+    expect(crons.crons["reconcile definition stats"]?.schedule).toMatchObject({
+      type: "weekly",
+    });
+    expect(
+      crons.crons["retry overdue definition stats"]?.schedule,
+    ).toMatchObject({ type: "daily" });
   });
 });
 
