@@ -85,7 +85,11 @@ export function PuzzlePickList({
                 aria-hidden
                 className="text-muted-foreground size-5 shrink-0"
               />
-              <span className="sr-only">{t("addToLibrary")}</span>
+              <span className="sr-only">
+                {onShelf(puzzle)
+                  ? t("chooser.addAnotherCopy")
+                  : t("addToLibrary")}
+              </span>
             </Link>
             <Button
               variant="ghost"

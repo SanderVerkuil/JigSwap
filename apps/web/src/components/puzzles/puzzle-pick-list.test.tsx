@@ -108,6 +108,15 @@ describe("PuzzleCard variant='pick'", () => {
     expect(screen.queryByText("On your shelf")).toBeNull();
   });
 
+  it("makes another copy of an owned puzzle the quieter choice, by name and by look", () => {
+    renderPick(true);
+    const add = screen.getByRole("link", { name: "Add another copy" });
+    expect(add.getAttribute("data-variant") ?? add.className).toContain(
+      "outline",
+    );
+    expect(screen.queryByRole("link", { name: "Add to Library" })).toBeNull();
+  });
+
   it("leaves the catalogue card as it was: the card opens the catalogue page", () => {
     render(
       withIntl(
@@ -158,7 +167,9 @@ describe("PuzzlePickList", () => {
 
   it("renders the pick cards from sm up", () => {
     renderList();
-    const adds = screen.getAllByRole("link", { name: "Add to Library" });
+    const adds = screen.getAllByRole("link", {
+      name: /^(Add to Library|Add another copy)$/,
+    });
     expect(adds).toHaveLength(3);
     const grid = adds[0].closest(".sm\\:grid");
     expect(grid?.className).toMatch(/(^| )hidden( |$)/);
@@ -174,10 +185,11 @@ describe("PuzzlePickList", () => {
     ).toEqual([false, true, false]);
   });
 
-  it("puts pieces before the brand beside the shelf mark, so only the brand can be cut short", () => {
+  it("says an owned row adds another copy, with pieces before the brand it may cut short", () => {
     renderList();
     const rows = screen.getByTestId("pick-rows");
     const owned = within(rows).getAllByRole("listitem")[1]!;
+    expect(owned.textContent).toContain("Add another copy");
     expect(owned.textContent).toMatch(/pieces · /);
   });
 

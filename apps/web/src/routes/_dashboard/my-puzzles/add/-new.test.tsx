@@ -18,7 +18,7 @@ import {
 } from "@testing-library/react";
 import { ConvexReactClient } from "convex/react";
 import { getFunctionName } from "convex/server";
-import type { ComponentType } from "react";
+import type { ComponentType, ReactNode } from "react";
 import { toast } from "sonner";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -51,6 +51,15 @@ vi.mock("@tanstack/react-router", () => ({
   },
   redirect: vi.fn(),
   notFound: vi.fn(),
+  Link: ({
+    to,
+    search,
+    children,
+  }: {
+    to: string;
+    search?: Record<string, string>;
+    children?: ReactNode;
+  }) => <a href={`${to}?${new URLSearchParams(search)}`}>{children}</a>,
 }));
 
 vi.mock("@convex-dev/react-query", async (importOriginal) => {
@@ -107,7 +116,10 @@ const PUZZLE: PuzzleDefinitionView = {
 const callsTo = (name: string) =>
   mocks.call.mock.calls.filter(([n]) => n === name).map(([, args]) => args);
 
-const renderPage = (search: Record<string, unknown> = {}) => {
+const renderPage = (
+  search: Record<string, unknown> = {},
+  ownedDefinitionIds: string[] = [],
+) => {
   mocks.search = search;
   const convexQueryClient = new ConvexQueryClient(
     new ConvexReactClient("https://example.convex.cloud"),
@@ -126,6 +138,10 @@ const renderPage = (search: Record<string, unknown> = {}) => {
     convexQuery(gateway.catalog.puzzleById, { puzzleId: PUZZLE_DOC_ID })
       .queryKey,
     PUZZLE,
+  );
+  queryClient.setQueryData(
+    convexQuery(gateway.library.myOwnedDefinitionIds, {}).queryKey,
+    ownedDefinitionIds,
   );
   const Page = routeOptions.component;
   render(
@@ -247,6 +263,29 @@ describe("adding a copy of a catalogue puzzle", () => {
       params: { id: "copy_doc_1" },
       ignoreBlocker: true,
     });
+  });
+});
+
+describe("a puzzle the member already owns", () => {
+  it("says so at the top of the form, with a way to the copy they have", () => {
+    renderPage({ puzzleId: PUZZLE_DOC_ID }, ["puzzle_agg_1"]);
+    expect(screen.getByText(/You already have this puzzle/)).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: "View" }).getAttribute("href"),
+    ).toBe("/my-puzzles?q=Caf%C3%A9");
+    // A second copy stays possible.
+    expect(
+      (
+        screen.getByRole("button", {
+          name: "Add to Library",
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(false);
+  });
+
+  it("says nothing about a puzzle they don't own", () => {
+    renderPage({ puzzleId: PUZZLE_DOC_ID }, ["some_other_puzzle"]);
+    expect(screen.queryByText(/You already have this puzzle/)).toBeNull();
   });
 });
 

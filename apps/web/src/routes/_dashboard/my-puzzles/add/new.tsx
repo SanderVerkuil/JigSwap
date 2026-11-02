@@ -59,9 +59,9 @@ import {
 } from "@convex-dev/react-query";
 import { LIBRARY_TEXT_LIMITS } from "@jigswap/contracts";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useConvex } from "convex/react";
-import { ChevronDown } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "use-intl";
@@ -209,6 +209,17 @@ function AddPuzzlePage() {
       puzzleIdFromUrl ? { puzzleId: puzzleIdFromUrl } : "skip",
     ),
   );
+
+  // Copy mode: whether the member already owns this puzzle, so a second copy is never an accident.
+  const { data: ownedDefinitionIds } = useQuery(
+    convexQuery(
+      gateway.library.myOwnedDefinitionIds,
+      puzzleIdFromUrl ? {} : "skip",
+    ),
+  );
+  const alreadyOwned =
+    !!specificPuzzle?.aggregateId &&
+    (ownedDefinitionIds ?? []).includes(specificPuzzle.aggregateId);
 
   // Maker-field autocomplete suggestion pools
   const { data: publisherSuggestions } = useQuery(
@@ -657,6 +668,19 @@ function AddPuzzlePage() {
           <div className="h-24 animate-pulse rounded-xl bg-muted" />
         ) : (
           chosenDefinition
+        )}
+        {alreadyOwned && specificPuzzle && (
+          <p className="text-muted-foreground flex flex-wrap items-center gap-x-1.5 text-sm">
+            <Check aria-hidden className="size-4 shrink-0" />
+            {t("chooser.alreadyOwned")}
+            <Link
+              to="/my-puzzles"
+              search={{ q: specificPuzzle.title }}
+              className="text-primary-text font-semibold underline-offset-4 hover:underline pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center"
+            >
+              {t("chooser.viewOwned")}
+            </Link>
+          </p>
         )}
       </div>
       <SectionDivider label={t("chooser.copyDetails")} />

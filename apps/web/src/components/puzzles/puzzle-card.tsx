@@ -171,14 +171,16 @@ function PickPuzzleCard({
         // Wraps instead of truncating: on a narrow card (or with a long Dutch label) Details drops
         // to its own line, and the Add label may still wrap inside its button, so neither is cut.
         <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+          {/* Already on the shelf: still possible, but no longer the obvious next step. */}
           <Button
             size="sm"
+            variant={onShelf ? "outline" : "default"}
             asChild
             className="h-auto min-h-8 min-w-0 flex-auto py-1.5 whitespace-normal"
           >
             <Link href={addHref}>
               <Plus aria-hidden className="h-4 w-4" />
-              {t("addToLibrary")}
+              {onShelf ? t("chooser.addAnotherCopy") : t("addToLibrary")}
             </Link>
           </Button>
           <Button
