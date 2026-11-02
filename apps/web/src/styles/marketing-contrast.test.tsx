@@ -15,10 +15,11 @@ type Rgb = readonly [number, number, number];
 type Tokens = Readonly<Record<string, string>>;
 type Mode = "light" | "dark";
 
-const CSS = readFileSync(join(__dirname, "marketing.css"), "utf8").replace(
-  /\/\*[\s\S]*?\*\//g,
-  "",
-);
+const stylesheet = (file: string) =>
+  readFileSync(join(__dirname, file), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+
+const CSS = stylesheet("marketing.css");
+const DOCS_CSS = stylesheet("docs.css");
 
 function declarations(selector: string): Tokens {
   const open = CSS.indexOf(`${selector} {`);
@@ -159,6 +160,58 @@ describe.each(["light", "dark"] as const)("marketing contrast (%s)", (mode) => {
       expect(contrast(color(tone.fg), color(tone.bg))).toBeGreaterThanOrEqual(
         AA,
       );
+    },
+  );
+});
+
+// The docs stylesheet's own rule (`selector` at the start of a line), property by property.
+function docsRule(selector: string): Record<string, string> {
+  const open = DOCS_CSS.search(
+    new RegExp(`^${selector.replace(/[.*+?^\${}()|[\]\\]/g, "\\$&")} \\{`, "m"),
+  );
+  if (open < 0) throw new Error(`docs.css has no "${selector}" rule`);
+  const body = DOCS_CSS.slice(
+    DOCS_CSS.indexOf("{", open) + 1,
+    DOCS_CSS.indexOf("}", open),
+  );
+  const rule: Record<string, string> = {};
+  for (const [, name, value] of body.matchAll(/([\w-]+)\s*:\s*([^;]+);/g)) {
+    rule[name] = value.replace(/\s+/g, " ").trim();
+  }
+  return rule;
+}
+
+// Inline code sets its own tint, so it needs its own guard: the ramp inverts in
+// dark mode, which makes a low step like violet-200 dark on the dark tint.
+describe.each(["light", "dark"] as const)("docs inline code (%s)", (mode) => {
+  it("reaches AA on its own tinted chip", () => {
+    const code = {
+      ...docsRule(".docs-prose :not(pre) > code"),
+      ...(mode === "dark"
+        ? docsRule(".dark .docs-prose :not(pre) > code")
+        : {}),
+    };
+    const tokens = MODES[mode];
+    expect(
+      contrast(resolve(code.color, tokens), resolve(code.background, tokens)),
+    ).toBeGreaterThanOrEqual(AA);
+  });
+});
+
+// Callouts tint the ground behind their prose, links included.
+describe.each(["light", "dark"] as const)("docs callout links (%s)", (mode) => {
+  it.each(["info", "tip", "warning", "danger"])(
+    "links reach AA on the %s callout",
+    (tone) => {
+      const link = {
+        ...docsRule(".docs-prose a"),
+        ...docsRule(".docs-callout a,\n.docs-callout a:hover"),
+      };
+      const fill = docsRule(`.docs-callout[data-tone="${tone}"]`);
+      const tokens = MODES[mode];
+      expect(
+        contrast(resolve(link.color, tokens), resolve(fill.background, tokens)),
+      ).toBeGreaterThanOrEqual(AA);
     },
   );
 });

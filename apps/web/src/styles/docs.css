@@ -130,8 +130,10 @@
   overflow-wrap: anywhere;
 }
 /* In dark mode the old muted-grey fill read as a harsh light chip; use a softly
-   violet-tinted dark surface with a low-contrast border and a legible light
-   violet so inline paths/URLs sit calmly in the prose. */
+   violet-tinted dark surface with a low-contrast border so inline paths/URLs sit
+   calmly in the prose. The text keeps violet-700 from the rule above: the ramp
+   inverts in dark mode, so that is a legible light violet there (and a low step
+   like violet-200 would be dark on this tint). */
 .dark .docs-prose :not(pre) > code {
   background: color-mix(
     in oklab,
@@ -139,7 +141,6 @@
     var(--mk-card-base)
   );
   border-color: color-mix(in oklab, var(--mk-violet-400) 24%, transparent);
-  color: var(--mk-violet-200);
 }
 /* inline code inside a link shouldn't double-decorate */
 .docs-prose a > code {
@@ -313,6 +314,12 @@
 }
 .docs-callout p {
   margin-bottom: 8px;
+}
+/* One ramp step stronger than the page's link colour, on hover too: the tints
+   put violet-600 under AA (the tip's green in dark mode reads 3.6:1). */
+.docs-callout a,
+.docs-callout a:hover {
+  color: var(--mk-violet-700);
 }
 .docs-callout[data-tone="info"] {
   border-left-color: var(--mk-violet-400);
