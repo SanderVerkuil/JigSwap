@@ -59,10 +59,10 @@ function DocsLayout() {
           <Outlet />
         </main>
       ) : (
-        // The sidebar collapses (and DocsMobileBar takes over) exactly where
-        // the marketing header swaps its nav for the burger: max-[861px] is
-        // the complement of the header's min-[861px], so the two never show
-        // a second bar side by side.
+        // The sidebar collapses (and DocsMobileBar takes over) below 861px, where
+        // the content column would get too narrow. The marketing header's nav has
+        // folded into its burger by then (below 1200px), so the Docs bar never
+        // shows under a full header nav.
         <div className="mx-auto w-full max-w-[1400px] px-6 grid grid-cols-[280px_minmax(0,1fr)] max-[861px]:grid-cols-1 gap-x-[clamp(32px,4vw,64px)] items-start">
           <aside className="sticky top-[86px] self-start max-h-[calc(100dvh-86px)] overflow-y-auto pr-6 border-r border-mk-border py-8 max-[861px]:hidden">
             <DocsSidebar onOpenSearch={() => setSearchOpen(true)} />

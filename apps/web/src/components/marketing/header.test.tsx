@@ -2,7 +2,7 @@
 // UX-57: the public header's language pill shows an SVG flag with the language code (an emoji
 // flag renders as the letters "US" on Windows), is named with the current language and the visible
 // code (WCAG 2.5.3), and its menu marks the current language as a checked radio with each name
-// tagged in its own language.
+// tagged in its own language. The nav folds into the burger before it can push the CTA off the bar.
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { IntlProvider } from "use-intl";
@@ -71,5 +71,31 @@ describe("MarketingHeader language pill", () => {
       ["English", "true", "en"],
       ["Nederlands", "false", "nl"],
     ]);
+  });
+});
+
+describe("MarketingHeader breakpoints", () => {
+  const classesOf = (element: Element | null) =>
+    (element?.getAttribute("class") ?? "").split(/\s+/);
+
+  // The full Dutch bar needs about 1,185px (nav, language pill, theme, log in and CTA), so below
+  // that width the nav would push the CTA past the clipped right edge.
+  it("folds the nav into the burger where the full bar stops fitting", () => {
+    renderHeader("nl");
+    expect(classesOf(screen.getByRole("navigation"))).toEqual(
+      expect.arrayContaining(["hidden", "min-[1200px]:flex"]),
+    );
+    expect(
+      classesOf(screen.getByRole("button", { name: "Menu openen" })),
+    ).toContain("min-[1200px]:hidden");
+  });
+
+  it("opens the burger menu at every width the burger shows", () => {
+    renderHeader("nl");
+    fireEvent.click(screen.getByRole("button", { name: "Menu openen" }));
+    const closeMenu = screen.getByRole("button", { name: "Menu sluiten" });
+    const panel = closeMenu.closest("header")?.lastElementChild ?? null;
+    expect(classesOf(panel)).toContain("min-[1200px]:hidden");
+    expect(panel?.querySelector("a[href='/how-it-works']")).toBeTruthy();
   });
 });

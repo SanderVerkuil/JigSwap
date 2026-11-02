@@ -30,7 +30,10 @@ const NAV = [
 ] as const;
 
 // Sticky marketing header: transparent over the hero, frosted card once
-// scrolled. Nav + language pill + mode toggle + auth actions.
+// scrolled. Nav + language pill + mode toggle + auth actions. The full bar needs
+// about 1,185px in Dutch (the page clips overflow, so whatever does not fit is
+// out of reach): below 1200px the nav folds into the burger, and below 861px the
+// auth actions follow it.
 export function MarketingHeader() {
   const t = useTranslations("marketing.nav");
   const { pathname } = useLocation();
@@ -75,7 +78,7 @@ export function MarketingHeader() {
         <Link href="/" aria-label="JigSwap">
           <Wordmark />
         </Link>
-        <nav className="hidden min-[861px]:flex items-center gap-[26px] ml-3.5">
+        <nav className="hidden min-[1200px]:flex items-center gap-4 ml-2">
           {NAV.map((item) => navLink(item))}
         </nav>
         <div className="ml-auto flex items-center gap-2.5">
@@ -109,32 +112,41 @@ export function MarketingHeader() {
             type="button"
             onClick={() => setOpen((o) => !o)}
             aria-label={open ? t("closeMenu") : t("openMenu")}
-            className="min-[861px]:hidden inline-flex items-center justify-center w-10 h-10 rounded-[10px] border border-mk-border bg-mk-card text-mk-text-body"
+            className="min-[1200px]:hidden inline-flex items-center justify-center w-10 h-10 rounded-[10px] border border-mk-border bg-mk-card text-mk-text-body"
           >
             {open ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </div>
       {open && (
-        <div className="min-[861px]:hidden border-t border-mk-border bg-mk-card">
+        <div className="min-[1200px]:hidden border-t border-mk-border bg-mk-card">
           <div className="w-full max-w-[1200px] mx-auto flex flex-col gap-1 px-6 pt-3 pb-[18px]">
             {NAV.map((item) => navLink(item, true))}
+            {/* From 861px these sit in the bar itself. */}
             <Unauthenticated>
               <Link
                 href="/sign-in"
                 onClick={() => setOpen(false)}
-                className="text-[17px] font-semibold text-mk-text-strong py-3 px-1 border-b border-mk-border"
+                className="min-[861px]:hidden text-[17px] font-semibold text-mk-text-strong py-3 px-1 border-b border-mk-border"
               >
                 {t("login")}
               </Link>
-              <Button variant="brand" className="mt-3 w-full" asChild>
+              <Button
+                variant="brand"
+                className="min-[861px]:hidden mt-3 w-full"
+                asChild
+              >
                 <Link href="/sign-up" onClick={() => setOpen(false)}>
                   {t("startTrading")}
                 </Link>
               </Button>
             </Unauthenticated>
             <Authenticated>
-              <Button variant="brand" className="mt-3 w-full" asChild>
+              <Button
+                variant="brand"
+                className="min-[861px]:hidden mt-3 w-full"
+                asChild
+              >
                 <Link href="/dashboard" onClick={() => setOpen(false)}>
                   {t("dashboard")}
                 </Link>
