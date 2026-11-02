@@ -27,7 +27,7 @@ import { WEBP_ENCODER_WASM_BASE64 } from "./webpEncoderWasm";
 //   rungs then still gets a WebP rather than the original, which may be a PNG several times the
 //   size (box art with transparency is stored as PNG). 640 is there for 2x screens: a 240-330 px
 //   card needs about 500-660 px. An image only ever shown at one small size has a ladder of one
-//   rung (THUMBNAIL_LADDER), so it costs one extra blob instead of three.
+//   rung (THUMBNAIL_LADDER, MESSAGE_THUMB_LADDER), so it costs one extra blob instead of three.
 // - Bytes: a rendition is kept only when it is at most RENDITION_MAX_BYTE_RATIO of the source's
 //   bytes; otherwise the browser is better off with the original (a ~1000 px JPEG that is
 //   already compressed hard costs about as much as its 960 px WebP). The dropped slots are
@@ -71,6 +71,14 @@ export type RenditionLadder = readonly {
  */
 export const THUMBNAIL_LADDER = [
   { slot: "small", width: 256 },
+] as const satisfies RenditionLadder;
+
+/**
+ * One WebP for a message photo (messageAttachments.thumbFileId): the thread's tile is at most 288
+ * px wide, so 640 px covers it at 2x. The photo viewer opens the original.
+ */
+export const MESSAGE_THUMB_LADDER = [
+  { slot: "small", width: 640 },
 ] as const satisfies RenditionLadder;
 
 /** A rendition is kept only when its bytes are at most this share of the source's. */

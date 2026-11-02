@@ -159,6 +159,7 @@ import type * as conversation_locationAvailable from "../conversation/locationAv
 import type * as conversation_locationStore from "../conversation/locationStore.js";
 import type * as conversation_markThreadRead from "../conversation/markThreadRead.js";
 import type * as conversation_messageAttachments from "../conversation/messageAttachments.js";
+import type * as conversation_messagePhotoGate from "../conversation/messagePhotoGate.js";
 import type * as conversation_moderateMessageImage from "../conversation/moderateMessageImage.js";
 import type * as conversation_openCircleThread from "../conversation/openCircleThread.js";
 import type * as conversation_openDmThread from "../conversation/openDmThread.js";
@@ -770,6 +771,7 @@ declare const fullApi: ApiFromModules<{
   "conversation/locationStore": typeof conversation_locationStore;
   "conversation/markThreadRead": typeof conversation_markThreadRead;
   "conversation/messageAttachments": typeof conversation_messageAttachments;
+  "conversation/messagePhotoGate": typeof conversation_messagePhotoGate;
   "conversation/moderateMessageImage": typeof conversation_moderateMessageImage;
   "conversation/openCircleThread": typeof conversation_openCircleThread;
   "conversation/openDmThread": typeof conversation_openDmThread;

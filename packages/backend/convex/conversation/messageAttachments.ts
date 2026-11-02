@@ -7,6 +7,7 @@ import { ConvexError } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import { isPreservedBlob } from "../lib/imageModeration/quarantine";
+import { scheduleRenditions } from "../lib/imageModeration/renditionsStore";
 import { logEvent } from "../lib/logEvent";
 import { readScreeningConfig } from "../library/adapters/photoModeration";
 import { makeNotify } from "../notifications/adapters/makeNotify";
@@ -17,6 +18,7 @@ import { messageIdGenerator } from "./adapters/idGenerators";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
 import { systemClock } from "./adapters/systemClock";
 import { participantsKeyOf } from "./adapters/threadMapper";
+import { isServable } from "./messagePhotoGate";
 import { threadRowByAggregateId } from "./readModelHelpers";
 import { isCurrentCircleMember } from "./threadMemberProjection";
 
@@ -34,6 +36,8 @@ import { isCurrentCircleMember } from "./threadMemberProjection";
 // (isServable: approved or blurred, hash-cleared, re-encoded); until then it is "pending", and a
 // photo the check stops reads "removed" for them. A photo already stopped before Send is never
 // appended (the sender's outbox keeps its refusal card).
+
+export { isServable };
 
 /** Largest upload accepted for a message photo. */
 export const MESSAGE_IMAGE_MAX_BYTES = 10 * 1024 * 1024;
@@ -136,9 +140,6 @@ export const participantThreadOf = async (
   return thread;
 };
 
-// The verdicts that let a photo be shown to someone other than its sender. "unscored" (the check
-// could not run) is NOT one: it waits for a moderator (admin/listUncheckedPhotos).
-const SERVABLE: ReadonlySet<Status> = new Set(["approved", "blurred"]);
 // States a photo never leaves on its own: never appended at Send, and "removed" for recipients
 // (an admin restore aside).
 const STOPPED: ReadonlySet<Status> = new Set([
@@ -167,15 +168,38 @@ export const isCaptionWithheld = (
 };
 
 /**
- * Whether the photo may be served to a reader other than its sender: an approving verdict (incl.
- * the sensitive "blurred" band, which still needs Show), a passed CSAM hash check, and its blob
- * swapped to the pipeline's re-encode (never the upload as sent, with its EXIF/GPS). THE gate of
- * every recipient-facing read: the thread read model, revealMessageImage and attachment reports.
+ * Make the photo's thumbnail in the background (lib/imageModeration/renditions) once it may be
+ * served, and not before: called after every write that can open the gate (a verdict, a passed
+ * hash check, an admin's decision). The job checks the gate again.
  */
-export const isServable = (row: Attachment): boolean =>
-  SERVABLE.has(row.moderationStatus) &&
-  row.hashCheckedAt !== undefined &&
-  row.reencodedAt !== undefined;
+export const scheduleMessageThumb = async (
+  ctx: MutationCtx,
+  attachmentId: Id<"messageAttachments">,
+): Promise<void> => {
+  const row = asImage(await ctx.db.get(attachmentId));
+  if (row && isServable(row) && row.thumbFileId === undefined) {
+    await scheduleRenditions(ctx, row.fileId);
+  }
+};
+
+/**
+ * Delete the photo's thumbnail now and forget it, whatever else holds the row: a CSAM match. A
+ * thumbnail is a derivative of the matched bytes: only the preserved blob stays
+ * (lib/imageModeration/quarantine), and every URL ever issued for the thumbnail dies with it.
+ */
+export const deleteMessageThumb = async (
+  ctx: MutationCtx,
+  row: ImageAttachment,
+): Promise<void> => {
+  if (row.thumbFileId === undefined) return;
+  if (await ctx.db.system.get(row.thumbFileId)) {
+    await ctx.storage.delete(row.thumbFileId);
+  }
+  await ctx.db.patch(row._id, {
+    thumbFileId: undefined,
+    thumbWidth: undefined,
+  });
+};
 
 /**
  * Delete an attachment's served blobs (a photo's, or a location's map preview), unless they must

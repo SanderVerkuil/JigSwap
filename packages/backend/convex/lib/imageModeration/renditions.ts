@@ -8,6 +8,7 @@ import { ingestToAxiom } from "../axiom";
 import { logEvent, type WideEvent } from "../logEvent";
 import {
   encodeRenditions,
+  MESSAGE_THUMB_LADDER,
   RENDITION_LADDER,
   THUMBNAIL_LADDER,
   type RenditionLadder,
@@ -24,8 +25,8 @@ import {
 
 // Make and store the renditions of an image blob (PERF-C1, P-42): its smaller WebP copies
 // (lib/imageModeration/renditionEncode; which sizes depends on what the image is, LADDERS),
-// recorded against the source blob in `imageRenditions` (lib/imageModeration/renditionsStore,
-// which also holds the invariants).
+// recorded against the source blob in `imageRenditions`, or on its row for a message photo
+// (lib/imageModeration/renditionsStore, which also holds the invariants).
 //
 // generateRenditions: one source, scheduled once an image may be shown (scheduleRenditions).
 // Checks the source is eligible and has none yet, downloads it, encodes, stores each rendition
@@ -39,7 +40,8 @@ import {
 //
 // backfillRenditions: the one-shot for images stored before renditions existed, per `table`:
 // "boxArt" (the default: every definition's box art), "copy" (copy photos), "completion"
-// (completion photos) or "circleIcon" (circle icons). `dryRun` defaults to TRUE: it only counts. Pass `dryRun: false` to write. Paginated: `batchSize`
+// (completion photos), "circleIcon" (circle icons) or "message" (message photos). `dryRun`
+// defaults to TRUE: it only counts. Pass `dryRun: false` to write. Paginated: `batchSize`
 // rows per run (default 10), their candidates made ONE AFTER ANOTHER in the same action
 // (one decoded image in memory at a time); the action re-schedules itself with the next cursor
 // and logs the running totals ("imageModeration.backfillRenditions") on every page and the
@@ -48,13 +50,14 @@ import {
 // failed.
 
 // Which sizes each kind of image gets. Box art and copy photos appear on cards of many widths; a
-// completion photo is only ever a small tile (the viewer opens the original) and a circle icon a
-// small avatar.
+// completion photo is only ever a small tile (the viewer opens the original), a circle icon a
+// small avatar and a message photo a thread tile of at most 288 px.
 const LADDERS: Record<RenditionKind, RenditionLadder> = {
   boxArt: RENDITION_LADDER,
   copy: RENDITION_LADDER,
   completion: THUMBNAIL_LADDER,
   circleIcon: THUMBNAIL_LADDER,
+  message: MESSAGE_THUMB_LADDER,
 };
 
 /** Runs per source, the first included, when storage or the database fails. */

@@ -7,6 +7,7 @@ import {
   deleteAttachmentBlobs,
   deleteReveals,
   MESSAGE_PHOTO_LABEL,
+  scheduleMessageThumb,
 } from "../conversation/messageAttachments";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
@@ -105,8 +106,8 @@ const assertDecidable = (row: DecidableRow, decision: Decision): void => {
 // an approved one becomes the circle's icon (sharing/circleIcons.settleCircleIcon).
 //
 // A MESSAGE photo (spec 2026-10-20 D5; only a sent, "unscored" one): approve serves it to the
-// thread (its message updates in place; the non-mutual blur still applies), which needs a passed
-// hash check AND the re-encode (else "Check again" first). Reject is a moderator removal: status
+// thread (its message updates in place; the non-mutual blur still applies) and schedules its
+// thumbnail, which needs a passed hash check AND the re-encode (else "Check again" first). Reject is a moderator removal: status
 // "removed" (both sides read "Removed by moderation"; the message and its caption stay), its blobs
 // and reveals deleted unless a report holds it, and the uploader gets the content_removed
 // statement of reasons (decided by a person). Nothing about the conversation is stamped. A sent
@@ -204,6 +205,7 @@ export const decideUncheckedPhoto = mutation({
           updatedAt: now,
           ...release,
         });
+        await scheduleMessageThumb(ctx, id);
       } else {
         await ctx.db.patch(id, {
           moderationStatus: "removed",

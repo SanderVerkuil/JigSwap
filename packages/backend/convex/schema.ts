@@ -837,10 +837,12 @@ export default defineSchema({
 
   // Smaller WebP copies of a served image blob (lib/imageModeration/renditions) for the places
   // that show it small (cards, thumbnails). One row per SOURCE blob, made once the image may be
-  // shown (renditionsStore.isRenditionSource); `width`/`height` are the source's. Each slot is
+  // shown (renditionsStore.renditionKindOf); `width`/`height` are the source's. Each slot is
   // its rung's width, or the source's own width in the first rung the source does not exceed
   // (the later slots then stay empty); a slot is also absent when its WebP came out not clearly
-  // smaller than the source (renditionEncode). A row with no slot means "nothing smaller to
+  // smaller than the source (renditionEncode). An image only ever shown small (a completion photo,
+  // a circle icon) has `small` alone, at 256 px. A message photo has no row here: its one thumbnail
+  // lives on its own row (messageAttachments.thumbFileId). A row with no slot means "nothing smaller to
   // offer". Every slot blob counts as referenced (blobReferences), and the row and its blobs are
   // deleted with the source (renditionsStore.deleteRenditions). Read models serve them only
   // through the source's own publication gate, and only as URLs.
@@ -848,7 +850,7 @@ export default defineSchema({
     sourceId: v.id("_storage"),
     width: v.number(),
     height: v.number(),
-    small: v.optional(renditionSlotValidator), // 480 px wide (or the source's width)
+    small: v.optional(renditionSlotValidator), // 480 px wide, or 256 (or the source's width)
     medium: v.optional(renditionSlotValidator), // 640 px wide (or the source's width)
     large: v.optional(renditionSlotValidator), // 960 px wide (or the source's width)
     createdAt: v.number(),
@@ -1155,8 +1157,16 @@ export default defineSchema({
         threadAggregateId: v.string(),
         uploaderId: v.id("users"),
         fileId: v.id("_storage"),
-        // A smaller rendition; not produced yet (the shared pipeline has no thumbnail step).
+        // One 640 px WebP of the clean image (or at its own width when narrower), made in the
+        // background once the photo is servable (lib/imageModeration/renditionsStore), and served
+        // only where the photo is (messageAttachmentViews). Deleted with the photo's blobs
+        // (deleteAttachmentBlobs), and at once on a CSAM match.
         thumbFileId: v.optional(v.id("_storage")),
+        // Its width in px, for the srcset.
+        thumbWidth: v.optional(v.number()),
+        // When the thumbnail job finished: with no thumbFileId, no WebP came out clearly smaller,
+        // so it is not decoded again.
+        thumbCheckedAt: v.optional(v.number()),
         // Pixel size the client reported at staging (layout only: the aspect-ratio box).
         width: v.optional(v.number()),
         height: v.optional(v.number()),
