@@ -1,5 +1,5 @@
 ---
-title: Insights & Stats
+title: Insights & stats
 order: 5
 summary: "Turn your activity into a personal dashboard and export your data."
 ---

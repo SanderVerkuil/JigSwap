@@ -1,5 +1,5 @@
 ---
-title: Language & Region
+title: Language & region
 order: 5
 summary: "Switch between English and Dutch; your choice is remembered."
 ---

@@ -1,5 +1,5 @@
 ---
-title: Delen & Uitwisselingen
+title: Delen & uitwisselingen
 order: 3
 summary: "Bepaal wie elke kopie ziet en leen, ruil en handel vervolgens met anderen, in kringen en huishoudens."
 ---

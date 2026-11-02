@@ -1,5 +1,5 @@
 ---
-title: Ontdekken & Community
+title: Ontdekken & community
 order: 4
 summary: "Blader door puzzels en mensen, volg leden, stel je profiel samen, bouw reputatie op met beoordelingen, en blokkeer of meld leden."
 ---

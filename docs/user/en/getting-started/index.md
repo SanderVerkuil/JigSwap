@@ -1,5 +1,5 @@
 ---
-title: Getting Started
+title: Getting started
 order: 1
 summary: "Create your account, set up your shelf, learn the layout, read your dashboard, search fast, and set your language."
 ---

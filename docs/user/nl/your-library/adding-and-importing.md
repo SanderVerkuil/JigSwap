@@ -1,5 +1,5 @@
 ---
-title: Puzzels Toevoegen & Importeren
+title: Puzzels toevoegen & importeren
 order: 2
 summary: "Voeg eigen kopieën één voor één of meerdere tegelijk toe, zoek op barcode, importeer via een winkellink en draag bij aan de catalogus."
 ---

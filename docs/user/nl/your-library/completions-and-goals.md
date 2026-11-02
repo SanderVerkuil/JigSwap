@@ -1,5 +1,5 @@
 ---
-title: Voltooiingen & Doelen
+title: Voltooiingen & doelen
 order: 4
 summary: "Leg oplossingen vast, maak lopende puzzels af, beoordeel ze en volg je doelen."
 ---

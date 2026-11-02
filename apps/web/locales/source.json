@@ -25,12 +25,11 @@
     "photoPendingReview": "Pending review"
   },
   "notFound": {
-    "title": "Page Not Found",
-    "description": "Oops! The page you're looking for doesn't exist.",
-    "message": "The page you're trying to access might have been moved, deleted, or you entered the wrong URL.",
-    "backToHome": "Back to Home",
-    "browsePuzzles": "Browse Puzzles",
-    "backToDashboard": "Back to Dashboard"
+    "title": "We can't find that page",
+    "description": "It may have moved, or the address has a typo. The shelves are all still where you left them.",
+    "backToHome": "Back to home",
+    "browsePuzzles": "Browse puzzles",
+    "backToDashboard": "Back to dashboard"
   },
   "navigation": {
     "home": "Home",
@@ -1127,7 +1126,7 @@
       "swapsOnly": "You have <swapsLink>{swapsCount, plural, one {# swap in motion} other {# swaps in motion}}</swapsLink> — keep those pieces moving.",
       "pendingOnly": "You have {pendingCount, plural, one {one request waiting for your reply} other {# requests waiting for your reply}}.",
       "goalOnly": "All quiet on the swap front — and you're <goalLink>{pct}% of the way</goalLink> to your goal of {target, plural, one {# puzzle} other {# puzzles}}.",
-      "empty": "Your shelf is ready when you are — add a puzzle or browse the community to get things moving. 🧩"
+      "empty": "Your shelf is ready when you are — add a puzzle or browse the community to get things moving."
     },
     "pendingBanner": {
       "swap": "<strong>{name}</strong> wants to swap <strong>{theirs}</strong> for your <mineStrong>{mine}</mineStrong>",
@@ -1138,7 +1137,6 @@
       "reply": "Reply"
     },
     "actions": {
-      "addPuzzle": "Add a Puzzle",
       "browse": "Browse Community",
       "logCompletion": "Log a Completion"
     },
@@ -1146,7 +1144,7 @@
       "title": "Your Shelf",
       "meta": "{owned, plural, one {# on the shelf} other {# on the shelf}} · {forTrade, plural, =0 {none up for trade} one {# up for trade} other {# up for trade}}",
       "viewCollections": "View Collections",
-      "empty": "Your shelf is waiting for its first puzzle — add one and it'll sit right here, ready to be admired (and swapped). 🧩",
+      "empty": "Your shelf is waiting for its first puzzle — add one and it'll sit right here, ready to be admired (and swapped).",
       "addFirst": "Add Your First Puzzle",
       "stats": {
         "ownedLabel": "Puzzles Owned",
@@ -1192,13 +1190,13 @@
           "rejected": "Declined",
           "cancelled": "Cancelled"
         },
-        "empty": "Nothing in motion right now — browse the community to line up your next swap. 🧩"
+        "empty": "Nothing in motion right now — browse the community to line up your next swap."
       },
       "goals": {
         "title": "Goals",
         "all": "All",
         "done": "{current}/{target} done",
-        "empty": "No goals yet — set yourself a target and watch the ring fill up. 🧩",
+        "empty": "No goals yet — set yourself a target and watch the ring fill up.",
         "setGoal": "Set a Goal"
       },
       "latest": {
@@ -1208,7 +1206,7 @@
         "acquisitionBatch": "<strong>{name}</strong> added {count, plural, one {# puzzle} other {# puzzles}} to their shelf",
         "exchange": "<strong>{name}</strong> completed a swap",
         "started": "<strong>{name}</strong> started a puzzle",
-        "empty": "All quiet for now — follow fellow puzzlers and their latest moves will show up here. 🧩"
+        "empty": "All quiet for now — follow fellow puzzlers and their latest moves will show up here."
       }
     },
     "fresh": {
@@ -1259,12 +1257,12 @@
     "description": "The complete platform for jigsaw puzzle enthusiasts - manage, trade, connect, and grow."
   },
   "privacy": {
-    "title": "Privacy Policy",
-    "lastUpdated": "Last Updated",
+    "title": "Privacy policy",
+    "lastUpdated": "Last updated",
     "effectiveDate": "21 October 2026",
     "introduction": "This Privacy Policy explains what personal data JigSwap collects, why we collect it, and what your rights are. JigSwap is run by Sander Verkuil, who is the controller for the processing described here. We aim to collect as little as possible and to be transparent about the rest.",
     "informationWeCollect": {
-      "title": "Information We Collect",
+      "title": "Information we collect",
       "description": "We collect information you give us directly, plus a limited amount of information collected automatically while you use JigSwap.",
       "personalInformation": {
         "title": "Information you provide",
@@ -1288,7 +1286,7 @@
       }
     },
     "howWeUseInformation": {
-      "title": "How We Use Your Information",
+      "title": "How we use your information",
       "description": "We use your data to run JigSwap — nothing more:",
       "purposes": [
         "Provide your library, completions, collections, and insights",
@@ -1311,7 +1309,7 @@
       }
     },
     "dataStorage": {
-      "title": "Where Your Data Lives",
+      "title": "Where your data lives",
       "description": "JigSwap does not run its own servers. Your data is stored in the European Union with a small number of service providers:",
       "convex": {
         "title": "Convex",
@@ -1339,7 +1337,7 @@
       }
     },
     "photos": {
-      "title": "Photos You Upload",
+      "title": "Photos you upload",
       "description": "Photos you add to your library or to a finished puzzle, images you upload as a puzzle's catalogue image, and a circle's icon, go through an automatic pipeline before other members can see them:",
       "steps": [
         "The image is re-encoded, which strips hidden metadata such as EXIF data — including any embedded location",
@@ -1351,7 +1349,7 @@
       ]
     },
     "messaging": {
-      "title": "Messages, Photos and Locations",
+      "title": "Messages, photos and locations",
       "description": "Messages you send are visible only to the members of that conversation. You can attach photos and share a location:",
       "items": [
         "Photos in messages go through the same pipeline as other photos: they are re-encoded, which strips hidden metadata such as EXIF data (including any embedded location), and screened by the automated content-safety check. A photo you send appears in the conversation straight away, but the other member sees only a blurred placeholder (a few average colours computed on our servers from the re-encoded photo) labelled \"Pending review\" until the photo has passed the check; the photo itself is not sent to their device before that",
@@ -1363,7 +1361,7 @@
       ]
     },
     "groups": {
-      "title": "Group Chats in Circles",
+      "title": "Group chats in circles",
       "description": "Every friend circle has a group chat. What you write there is shared with the circle's members:",
       "items": [
         "A circle's group chat is visible only to the circle's current members",
@@ -1377,7 +1375,7 @@
       ]
     },
     "presence": {
-      "title": "Online Status and Typing",
+      "title": "Online status and typing",
       "description": "Two features show what you are doing right now. Neither shows when you were last online.",
       "onlineTitle": "Online status",
       "onlineItems": [
@@ -1394,7 +1392,7 @@
       ]
     },
     "safety": {
-      "title": "Blocking and Reporting",
+      "title": "Blocking and reporting",
       "description": "You can block a member and report content or members that break the rules.",
       "blockingTitle": "Blocking",
       "blocking": "When you block someone, they can no longer message you, follow you or propose trades. They are not notified. Your block list is private: only you can see it, in your Privacy & safety settings. An unblock deletes the block.",
@@ -1409,7 +1407,7 @@
       "reporterWithheld": "We never tell the reported member who reported them. Both sides are told the outcome; the reported member receives a statement of the reasons for any action we take."
     },
     "retention": {
-      "title": "How Long We Keep Data",
+      "title": "How long we keep data",
       "description": "We keep data only as long as we need it:",
       "items": [
         "Photos you attach but never send: deleted after 24 hours",
@@ -1445,7 +1443,7 @@
       ]
     },
     "analytics": {
-      "title": "Analytics and Error Reporting",
+      "title": "Analytics and error reporting",
       "description": "We use analytics to understand how JigSwap is used and to catch errors before they spoil the fun.",
       "posthog": {
         "title": "PostHog",
@@ -1454,7 +1452,7 @@
       "noAdvertising": "We do not show ads, we do not use your data for advertising, and we never sell your data."
     },
     "dataSharing": {
-      "title": "Data Sharing",
+      "title": "Data sharing",
       "description": "We share personal data only with the providers that run JigSwap, and only what they need to do their job.",
       "noSale": "We do not sell, rent, or trade your personal data. Ever.",
       "limitedSharing": "Data is shared only in these cases:",
@@ -1466,7 +1464,7 @@
       ]
     },
     "dataSecurity": {
-      "title": "Data Security",
+      "title": "Data security",
       "description": "We take reasonable measures to protect your data:",
       "measures": [
         "All traffic between your browser and JigSwap is encrypted (TLS)",
@@ -1476,7 +1474,7 @@
       ]
     },
     "yourRights": {
-      "title": "Your Rights",
+      "title": "Your rights",
       "description": "Under the GDPR you have the following rights, and JigSwap has built-in tools for most of them:",
       "rights": [
         "Access: see the data we hold about you — most of it is directly visible in the app",
@@ -1511,11 +1509,11 @@
       "description": "JigSwap is not intended for children under 16, and we do not knowingly collect personal data from them. If you believe a child under 16 has an account, please contact us."
     },
     "international": {
-      "title": "International Data Transfers",
+      "title": "International data transfers",
       "description": "Your personal data is stored in the European Union: we use the EU-hosted variants of Convex, Clerk, PostHog, and Axiom. Our hosting provider Vercel serves the website through a global edge network, so requests may pass through servers outside the EU on their way to you, but the personal data itself stays stored in the EU. Where a provider processes limited data outside the EU/EEA, transfers take place under GDPR safeguards such as the EU standard contractual clauses."
     },
     "changes": {
-      "title": "Changes to This Policy",
+      "title": "Changes to this policy",
       "description": "We may update this policy as JigSwap evolves. Material changes are announced by posting the new policy on this page and updating the date at the top."
     },
     "contact": {
@@ -1527,16 +1525,16 @@
     }
   },
   "terms": {
-    "title": "Terms of Service",
-    "lastUpdated": "Last Updated",
+    "title": "Terms of service",
+    "lastUpdated": "Last updated",
     "effectiveDate": "19 October 2026",
     "introduction": "These Terms of Service ('Terms') govern your use of JigSwap, a community platform for jigsaw puzzle enthusiasts, run by Sander Verkuil. JigSwap is a hobby project, not a commercial marketplace. By creating an account or using JigSwap, you agree to these Terms.",
     "acceptance": {
-      "title": "Acceptance of Terms",
+      "title": "Acceptance of terms",
       "description": "By accessing or using JigSwap you agree to be bound by these Terms. If you do not agree with any part of them, please do not use the service."
     },
     "serviceDescription": {
-      "title": "What JigSwap Is",
+      "title": "What JigSwap is",
       "description": "JigSwap helps jigsaw puzzle collectors keep track of their puzzles and exchange them with other members. The service includes:",
       "features": [
         "A community-maintained puzzle catalog that members can add puzzles to",
@@ -1548,7 +1546,7 @@
       ]
     },
     "userAccounts": {
-      "title": "Your Account",
+      "title": "Your account",
       "description": "You need an account for most features. Sign-in and account management are handled by Clerk, our authentication provider. You are responsible for:",
       "responsibilities": [
         "Keeping access to your account secure",
@@ -1558,7 +1556,7 @@
       ]
     },
     "userConduct": {
-      "title": "Community Conduct",
+      "title": "Community conduct",
       "description": "JigSwap runs on trust between puzzle lovers. Use the service responsibly:",
       "expectedTitle": "What we expect:",
       "expected": [
@@ -1593,7 +1591,7 @@
       "blocking": "You can block any member. A blocked member can no longer message you, follow you or propose trades, and is not notified. Trades already accepted can still be completed. If you share a circle, you both stay in it: their messages in its group chat are hidden for you, and they are not told. You can unblock them at any time from your Privacy & safety settings."
     },
     "trading": {
-      "title": "Swaps, Sales, and Loans",
+      "title": "Swaps, sales, and loans",
       "description": "JigSwap lets members arrange swaps, sales, and loans of puzzles with each other. Every exchange is an agreement between the two members involved — not with JigSwap. When you take part in an exchange, you agree to:",
       "agreements": [
         "Accurately describe the condition and completeness of your puzzles",
@@ -1604,7 +1602,7 @@
       "disclaimer": "JigSwap only brings members into contact and keeps a record of the exchange. We are not a party to any exchange and are not responsible for payment, shipping, or the quality, condition, or completeness of exchanged puzzles. Exchanges are at your own risk."
     },
     "intellectualProperty": {
-      "title": "Content and Intellectual Property",
+      "title": "Content and intellectual property",
       "description": "Different things on JigSwap belong to different people:",
       "yourContent": {
         "title": "Your content",
@@ -1620,7 +1618,7 @@
       "description": "How we handle your personal data is described in our Privacy Policy, which applies alongside these Terms."
     },
     "termination": {
-      "title": "Ending Your Account",
+      "title": "Ending your account",
       "description": "You can stop using JigSwap and delete your account at any time. We may suspend or remove accounts that break these Terms — for example for scams, harassment, or unlawful content. Where reasonably possible, we will tell you why."
     },
     "disclaimer": {
@@ -1628,11 +1626,11 @@
       "description": "JigSwap is a hobby project provided free of charge and 'as is'. We do our best to keep it running well, but we cannot promise that the service will always be available or error-free."
     },
     "limitation": {
-      "title": "Limitation of Liability",
+      "title": "Limitation of liability",
       "description": "To the extent permitted by applicable law, JigSwap and its operator are not liable for indirect or consequential damage arising from your use of the service or from exchanges between members. Nothing in these Terms limits liability that cannot be limited or excluded under applicable law."
     },
     "changes": {
-      "title": "Changes to These Terms",
+      "title": "Changes to these terms",
       "description": "We may update these Terms from time to time. Material changes are announced by posting the new Terms on this page and updating the date at the top. If you keep using JigSwap after a change, the updated Terms apply."
     },
     "contact": {
@@ -3307,85 +3305,76 @@
       "docs": "Docs",
       "contact": "Contact",
       "login": "Log in",
-      "startTrading": "Start trading",
       "dashboard": "Dashboard",
       "openMenu": "Open menu",
       "closeMenu": "Close menu",
-      "switchLanguage": "Switch language"
+      "switchLanguage": "Switch language",
+      "startShelf": "Start your shelf",
+      "mainNav": "Main",
+      "toggleTheme": "Switch between light and dark"
     },
     "footer": {
-      "tagline": "Swap, lend and share jigsaw puzzles — accessible and sustainable, for the whole community.",
+      "tagline": "See what your family and friends have on their shelves, and borrow the next one.",
       "product": "Product",
       "community": "Community",
       "legal": "Legal",
       "privacy": "Privacy policy",
       "terms": "Terms of service",
       "cookies": "Cookie policy",
-      "madeBy": "Made with 🧩 by a family of puzzlers.",
+      "madeBy": "Made by a family of puzzlers.",
       "country": "The Netherlands"
     },
     "home": {
-      "eyebrow": "Lend • Swap • Share",
-      "heroTitle": "Share jigsaw puzzles with fellow enthusiasts",
-      "heroLead": "Build your own puzzle library, lend or swap puzzles, and always see who has your lent-out boxes. Connect with puzzlers across the country.",
-      "seeFeatures": "See the features",
-      "trustRow": "{count} puzzlers are already swapping",
+      "heroTitle": "See everyone’s shelf.",
+      "heroLead": "JigSwap shows which puzzles your family and friends own, so you can borrow the next one instead of asking around.",
+      "trustRow": "{count, plural, one {# puzzler has} other {# puzzlers have}} a shelf here.",
       "stats": {
-        "puzzlers": "Puzzlers signed up",
-        "catalog": "Puzzles in the catalog",
-        "shelves": "Puzzles on shelves"
+        "title": "So far on this street",
+        "sentence": "So far on this street: {puzzlers} {shelves} on their shelves, and the shared catalogue holds {catalog}.",
+        "puzzlers": "{count, plural, one {# puzzler keeps} other {# puzzlers keep}}",
+        "shelves": "{count, plural, one {# puzzle} other {# puzzles}}",
+        "catalog": "{count, plural, one {# puzzle} other {# puzzles}}"
       },
       "how": {
-        "eyebrow": "How it works",
-        "title": "Up and running in three steps",
-        "lead": "No fuss, no cost to begin. That's how simple shared puzzling is.",
-        "step1Title": "Fill your shelf",
-        "step1Body": "Add your puzzles with brand, piece count and condition — ready in a few taps.",
-        "step2Title": "Discover & request",
-        "step2Body": "Browse the community, filter by difficulty and piece count, and request a puzzle to borrow or swap.",
-        "step3Title": "Lend & track",
-        "step3Body": "Lend out for a while or indefinitely, and always see who has your puzzle.",
+        "title": "How a box moves",
+        "lead": "Three steps, no fuss, and it's free. You can always see who has your puzzle.",
+        "whoYou": "You",
+        "whoOwner": "The owner",
+        "fillTitle": "Fill your shelf",
+        "fillRow1": "Add a box",
+        "fillRow2": "Note its brand, piece count and condition",
+        "findTitle": "Find the next one",
+        "findRow1": "Browse what others have",
+        "findRow2": "Filter by difficulty and piece count",
+        "findRow3": "Ask to borrow or swap",
+        "handTitle": "Hand it over",
+        "handRow1": "Lend it for a while or indefinitely",
+        "handRow2": "Keep track of who has the box",
+        "result": "Nobody has to ask who has it.",
         "link": "See how it works"
       },
       "rows": {
-        "libraryEyebrow": "Your library",
-        "libraryTitle": "A shelf that feels like home",
-        "libraryBody": "Your collection as real 3D boxes on a wooden plank. Track completions, condition and notes — as tactile as your real bookshelf.",
-        "libraryPoint1": "Add unlimited puzzles",
-        "libraryPoint2": "Track completions & condition",
-        "libraryPoint3": "Share privately or publicly",
-        "lendEyebrow": "Lend & track",
-        "lendTitle": "Lend out — and always know who has your puzzles",
-        "lendBody": "Someone wants your puzzle? Lend it out for a while or indefinitely. JigSwap keeps track of who has which box — so lending is as carefree as puzzling.",
-        "lendPoint1": "Lend for a while or forever",
-        "lendPoint2": "See who has your puzzle",
-        "lendPoint3": "Ask for it back whenever you like",
-        "discoverEyebrow": "Discover",
-        "discoverTitle": "Find your next challenge",
-        "discoverBody": "Filter by piece count, difficulty, condition and category. Discover what fellow puzzlers have on their shelves and request a swap or a loan.",
-        "discoverPoint1": "Tailored filters",
-        "discoverPoint2": "Fresh finds from the community",
-        "discoverPoint3": "Lend, swap or share in your circle"
+        "libraryTitle": "Your library",
+        "libraryBody": "Every box you own in one place. Add as many as you like, keep track of completions, condition and notes, and share them privately or publicly.",
+        "lendTitle": "Lend and keep track",
+        "lendBody": "Lend a box for a while or indefinitely. JigSwap keeps track of who has which one, and you can ask for it back whenever you like.",
+        "discoverTitle": "Look around",
+        "discoverBody": "Filter by piece count, difficulty, condition and category. See what other puzzlers have on their shelves, then ask to borrow or swap."
       },
       "visual": {
         "myPuzzles": "My puzzles",
-        "puzzlesCount": "{count} puzzles",
         "onYourShelf": "On your shelf",
         "withName": "with {name}",
         "notificationSent": "notification sent",
         "available": "Available",
         "lentOut": "Lent out",
-        "recalled": "Recalled",
-        "chipPieces": "1000 pieces",
-        "chipMedium": "Medium",
-        "chipLikeNew": "Like new",
-        "chipAvailable": "Available",
-        "chipHard": "Hard"
+        "recalled": "Recalled"
       },
       "sustain": {
-        "eyebrow": "Sustainability",
         "title": "One puzzle, many hands",
-        "body": "A finished puzzle doesn't need to gather dust in the attic. By sharing, lending and swapping, the community gives puzzles a second, third and fourth life — and everyone gets more joy from them."
+        "body": "A finished puzzle doesn't have to sit in the attic. Pass it on to someone you know, and it gets done all over again.",
+        "contact": "Write to the family",
+        "tableAlt": "A kitchen table where two people work on a jigsaw puzzle, with a pot of tea and a plate of biscuits beside it."
       },
       "quote": {
         "text": "“We built JigSwap because our finished puzzles deserved better than the attic — and because puzzling is more fun when you share it.”",
@@ -3393,120 +3382,142 @@
         "sub": "Puzzling at the kitchen table since 2025"
       },
       "cta": {
-        "title": "Ready to share your first puzzle?",
-        "body": "It's free to begin. Build your shelf and meet the community."
+        "title": "Whose shelf would you look at first?",
+        "body": "Put your own boxes on a shelf, and ask the people you know to do the same. It's free."
+      },
+      "heroAlt": "A Dutch street with the front taken off one house, so every floor shows: puzzle boxes stacked in the attic, a bedroom, a living room with a puzzle on the table, and a kitchen where two people work on another.",
+      "pickerLabel": "Choose whose shelf to see",
+      "shelfOf": "{name}’s shelf",
+      "exampleShelf": "An example shelf",
+      "askToBorrow": "Ask to borrow",
+      "askToBorrowLabel": "Ask to borrow {title} from {name}",
+      "pieces": "{count} pieces",
+      "pictures": {
+        "bridge": "Two children carry puzzle boxes over a wooden bridge in a park, past a pond with ducks.",
+        "handover": "Two neighbours hand a puzzle box from one window to the other above a busy street.",
+        "picnic": "A grandmother and a small child finish a puzzle on a picnic blanket, with a dog beside them.",
+        "boat": "A couple rows a small boat with their dog under a canal bridge, past a duck and her ducklings."
       }
     },
     "how": {
-      "heroEyebrow": "How it works",
-      "heroTitle": "From shelf to sharing, in five steps",
-      "heroLead": "JigSwap makes sharing puzzles as relaxing as puzzling itself. Here's how it works, end to end.",
-      "step1Title": "Create your profile",
-      "step1Body": "Sign up for free, pick a username and tell the community a little about yourself and the puzzles you love.",
-      "step2Title": "Fill your shelf",
-      "step2Body": "Add your puzzles with brand, piece count, difficulty and condition — and an EAN if you have it handy.",
-      "step3Title": "Discover & request",
-      "step3Body": "Browse the community, filter for what you want and request a puzzle to borrow or swap. See instantly who offers something you'd like to try.",
-      "step4Title": "Agree: lend or swap",
-      "step4Body": "Propose a loan or a swap, agree the details together, and pick a spot to hand the puzzle over in person. Everything stays tidy in one place.",
-      "step5Title": "Track & wrap up",
-      "step5Body": "Always see who has your puzzle. Ask for it back whenever you like, log your completion and leave an honest review.",
-      "modesEyebrow": "Three ways",
+      "heroTitle": "Follow one box from shelf to shelf",
+      "heroLead": "One puzzle leaves one home, spends a while on someone else's table and finds its way back. Here's how that goes on JigSwap.",
+      "step1Title": "It starts on your shelf",
+      "step1Body": "Sign up for free, pick a username and say a little about the puzzles you love. Then add your boxes with brand, piece count, difficulty and condition, plus the EAN if it's handy.",
+      "step2Title": "Someone spots it",
+      "step2Body": "They browse the community, filter for what they're after and see right away who offers something worth trying. One request to borrow or swap is all it takes.",
+      "step3Title": "You hand it over yourself",
+      "step3Body": "Agree on a loan or a swap, settle the details together and pick a spot to meet. The box changes hands in person, and everything stays tidy in one place.",
+      "step4Title": "Then it finds its shelf again",
+      "step4Body": "You always see who has your puzzle, and you ask for it back whenever you like. Log your completion, leave an honest review, and the box is ready for the next person.",
       "modesTitle": "Lend, swap or share in circles",
-      "modesLead": "You decide how to share a puzzle. Every way is equally welcome.",
+      "modesLead": "You decide how a puzzle travels. Every way is welcome.",
       "mode1Title": "Lend",
-      "mode1Tag": "For a while or indefinitely",
-      "mode1Body": "Someone wants your puzzle? Lend it out for as long as you like — even forever. JigSwap tracks who has it, and you ask for it back whenever suits you.",
+      "mode1Body": "Lend a puzzle for as long as you like, even forever. JigSwap keeps track of who has it, and you ask for it back when it suits you.",
       "mode2Title": "Swap",
-      "mode2Tag": "The classic",
-      "mode2Body": "Trade one finished puzzle for another. Two puzzlers, two new challenges.",
+      "mode2Body": "The classic: trade one finished puzzle for another. Two puzzlers, two new challenges.",
       "mode3Title": "Share in circles",
-      "mode3Tag": "With family & friends",
-      "mode3Body": "Create a private circle for family or friends and share your shelf with exactly the people you choose — with per-circle permissions.",
-      "faqEyebrow": "Frequently asked",
+      "mode3Body": "Make a private circle for family or friends and share your shelf with exactly the people you choose, with permissions per circle.",
       "faqTitle": "A few quick answers",
       "faq1Q": "Does JigSwap cost money?",
-      "faq1A": "Creating an account, filling your shelf, lending and swapping is free. You hand puzzles over in person, so there are no shipping costs.",
+      "faq1A": "Creating an account, filling your shelf, lending and swapping are all free. You hand puzzles over in person, so there's no shipping to pay for.",
       "faq2Q": "Can I borrow a puzzle indefinitely?",
-      "faq2A": "Yes. Agree with the owner how long you keep it — that can be indefinitely. The owner always sees who has the puzzle and can ask for it back.",
+      "faq2A": "Yes. Agree with the owner how long you keep it, and that can be indefinitely. The owner always sees who has the puzzle and can ask for it back.",
       "faq3Q": "How does the owner keep track of their puzzle?",
       "faq3A": "Every puzzle appears in your 'My puzzles' overview with its status and who has it: available, lent out or recalled. A recall automatically sends the borrower a notification.",
       "faq4Q": "How do I hand the puzzle over?",
-      "faq4A": "In person. You agree a place and time to hand the puzzle over — easy and free of shipping costs. For now we don't arrange shipping."
+      "faq4A": "In person. You agree a place and time to hand the puzzle over, which is easy and free of shipping costs. For now we don't arrange shipping.",
+      "heroArtAlt": "Two children carry stacks of puzzle boxes across a wooden bridge.",
+      "stopsTitle": "One box, four stops",
+      "step1Where": "Available, on your shelf",
+      "step1Alt": "An attic full of stacked puzzle boxes, with a striped cat walking past.",
+      "step2Where": "Available, one request waiting",
+      "step2Alt": "Friends pass puzzle boxes to each other beside a full wheelbarrow.",
+      "step3Where": "Lent out, and you can see to whom",
+      "step3Alt": "A man leans out of his window and hands a puzzle box to the woman next door.",
+      "step4Where": "Back on the shelf",
+      "step4Alt": "A girl reads on her bed with the dog beside her, and the puzzle boxes back in their rows underneath."
     },
     "features": {
-      "heroEyebrow": "Features",
-      "heroTitle": "Everything for puzzling together",
-      "heroLead": "From a personal puzzle library to lending-with-tracking and a community you trust — here's what JigSwap gives you.",
-      "g1Eyebrow": "Your library",
-      "g1Title": "Manage your whole collection",
-      "g1i1Title": "Digital shelf",
-      "g1i1Body": "Every puzzle with brand, piece count, condition and notes — one tidy, tactile overview.",
-      "g1i2Title": "Collections",
-      "g1i2Body": "Group by brand, theme or mood — private or public, with your own name, colour and icon.",
-      "g1i3Title": "Completions",
-      "g1i3Body": "Track dates, solve times and ratings — and set goals for your puzzle year.",
-      "g2Eyebrow": "Lend & track",
+      "heroTitle": "A shelf that knows who has what",
+      "heroLead": "A library of your own, lending you can keep track of, and people you trust. Here's what's in the box.",
+      "g1Title": "Your whole collection, in one place",
+      "g1i1Body": "Every puzzle with its brand, piece count, condition and notes, in one tidy overview.",
+      "g1i2Body": "Group by brand, theme or mood. Private or public, with your own name, colour and icon.",
+      "g1i3Body": "Keep dates, solve times and ratings, and set goals for your puzzle year.",
       "g2Title": "Always know who has your puzzles",
-      "g2i1Title": "Lending overview",
-      "g2i1Body": "Everything you've lent out in one place — who has it and since when.",
-      "g2i2Title": "Status per puzzle",
-      "g2i2Body": "Available, lent out or recalled — see where every box stands at a glance.",
-      "g2i3Title": "For as long as you like",
-      "g2i3Body": "Lend out for a while or forever, and ask for it back whenever suits you.",
-      "g3Eyebrow": "Discover",
-      "g3Title": "Find your next challenge",
-      "g3i1Title": "Smart filters",
-      "g3i1Body": "Filter by piece count, difficulty, condition and category.",
-      "g3i2Title": "Fresh finds",
-      "g3i2Body": "See the newest puzzles in the catalog as the community adds them.",
-      "g3i3Title": "Exchanges, end to end",
-      "g3i3Body": "Propose, accept and complete swaps — with clear statuses every step of the way.",
-      "g4Eyebrow": "Community & trust",
-      "g4Title": "Together, and safe",
-      "g4i1Title": "Circles",
-      "g4i1Body": "Share your shelf with family and friend groups — you decide who may see and exchange.",
-      "g4i2Title": "Reviews",
-      "g4i2Body": "Rate exchanges afterwards — honest reviews and trust levels keep swapping pleasant.",
-      "g4i3Title": "Community",
+      "g2i1Body": "Everything you've lent out in one place: who has it and since when.",
+      "g2i2Body": "Available, lent out or recalled. You see where every box stands at a glance.",
+      "g2i3Body": "Lend for a while or forever, and ask for it back when it suits you.",
+      "g3Title": "Find your next puzzle",
+      "g3i1Body": "Narrow it down by piece count, difficulty, condition and category.",
+      "g3i2Body": "See the newest puzzles in the catalogue as the community adds them.",
+      "g3i3Body": "Propose, accept and complete swaps, with a clear status at every step.",
+      "g4Title": "With people you trust",
+      "g4i1Body": "Share your shelf with family and friend groups. You decide who may see and exchange.",
+      "g4i2Body": "Rate exchanges afterwards. Honest reviews and trust levels keep swapping pleasant.",
       "g4i3Body": "Follow fellow puzzlers, see their activity and share your public profile.",
-      "ctaTitle": "Ready to begin?",
-      "ctaAbout": "Get to know us"
+      "ctaTitle": "Start with one shelf",
+      "ctaAbout": "Get to know us",
+      "g1ArtAlt": "A girl reads on her bed with the dog beside her, and rows of puzzle boxes stored underneath.",
+      "uiTitle": "My puzzles",
+      "uiCoverAlt": "Box cover of {title}",
+      "ui1Title": "Dorpsstraat",
+      "ui1Who": "With your sister, since March",
+      "ui1Status": "Lent out",
+      "ui2Title": "Molen",
+      "ui2Who": "On your own shelf",
+      "ui2Status": "Available",
+      "ui3Title": "Amsterdam",
+      "ui3Who": "With the neighbours, since June",
+      "ui3Status": "Recalled",
+      "chipPieces": "Piece count",
+      "chipDifficulty": "Difficulty",
+      "chipCondition": "Condition",
+      "chipCategory": "Category",
+      "g4ArtAlt": "A man leans out of his window and hands a puzzle box to the woman next door.",
+      "sampleLabel": "An example search",
+      "valPieces": "1,000",
+      "valDifficulty": "Medium",
+      "valCondition": "Like new",
+      "valCategory": "Village life",
+      "sampleOwner": "On {name}’s shelf"
     },
     "aboutPage": {
-      "heroEyebrow": "About us",
       "heroTitle": "Started at the kitchen table",
-      "heroLead": "JigSwap grew out of a family side project: we just wanted an easy way to see and swap puzzles with friends and family. From there, a platform for the whole puzzle community was born.",
-      "missionEyebrow": "Our mission",
-      "missionTitle": "Making puzzle sharing accessible and sustainable — for everyone",
-      "missionBody": "We believe a finished puzzle isn't the end, but a new beginning for someone else. JigSwap connects puzzlers so every box gets opened more often.",
-      "valuesEyebrow": "What we stand for",
-      "valuesTitle": "Our values",
+      "heroLead": "JigSwap began as a family side project. We just wanted an easy way to see and swap puzzles with friends and family, and that's still what it's for.",
+      "missionTitle": "The last piece is a new beginning",
+      "missionBody": "A finished puzzle isn't the end, but a new start for someone else. JigSwap makes it easy to pass a box on, so every box gets opened more often.",
+      "valuesTitle": "What we stand for",
       "value1Title": "Hobby, not hustle",
-      "value1Body": "Puzzling is relaxation. We're about sharing and joy, not profit.",
+      "value1Body": "Puzzling is how we relax. This is about sharing and fun, not profit.",
       "value2Title": "Sharing over owning",
-      "value2Body": "One puzzle you lend out and that passes through many hands is worth more than ten gathering dust.",
+      "value2Body": "One puzzle you lend out, passing through many hands, is worth more than ten gathering dust.",
       "value3Title": "Community first",
-      "value3Body": "We build for the people who love puzzling as much as we do.",
+      "value3Body": "We build for people who love puzzling as much as we do.",
       "value4Title": "Trust",
-      "value4Body": "Honest reviews and transparent tracking keep every exchange safe.",
-      "storyEyebrow": "Our story",
+      "value4Body": "Honest reviews and clear tracking keep every exchange safe.",
       "storyTitle": "From kitchen table to community",
       "tl1Year": "2025",
       "tl1Title": "A family project",
       "tl1Body": "Started as a simple way to swap puzzles with friends and family.",
       "tl2Year": "2025",
       "tl2Title": "The first shelf",
-      "tl2Body": "The tactile puzzle plank was born — a digital shelf that feels like home.",
+      "tl2Body": "The puzzle plank was born: a digital shelf that feels like home.",
       "tl3Year": "2026",
       "tl3Title": "A growing community",
       "tl3Body": "Puzzlers now share, lend and swap across the country.",
-      "cta": "Get in touch"
+      "cta": "Get in touch",
+      "heroArtAlt": "A mother and daughter work on a puzzle at the kitchen table, with tea, biscuits and the cat beside them.",
+      "missionArtAlt": "A grandmother and a toddler lay a puzzle piece together on a picnic blanket.",
+      "valuesArtAlt": "A grandfather and a boy puzzle in the living room by the fire, with the dog at their feet.",
+      "slipYear": "Year",
+      "slipEntry": "What happened",
+      "storyArtAlt": "Neighbours hand each other puzzle boxes on a green, with loaded bicycles beside them."
     },
     "contactPage": {
-      "heroEyebrow": "Contact",
-      "heroTitle": "Got a question or something to share?",
-      "heroLead": "We'd love to hear from you — whether you need help, have an idea, or just want to say hi.",
+      "heroTitle": "Something to ask or share?",
+      "heroLead": "We'd love to hear from you, whether you need help, have an idea or just want to say hi.",
       "emailTitle": "Email",
       "emailValue": "hello@jigswap.site",
       "emailSub": "We usually reply within 1 business day.",
@@ -3517,7 +3528,7 @@
       "privacyValue": "privacy@jigswap.site",
       "privacySub": "For privacy concerns or legal matters.",
       "basedTitle": "Based in the Netherlands",
-      "basedBody": "JigSwap is an online platform — we work from home, in between puzzles.",
+      "basedBody": "JigSwap is an online platform. We work from home, in between puzzles.",
       "formName": "Name",
       "formNamePlaceholder": "Your name",
       "formEmail": "Email",
@@ -3532,17 +3543,21 @@
       "errorName": "Enter your name",
       "errorEmail": "Enter a valid email",
       "errorMessage": "Tell us a bit more (min. 10 chars)",
-      "errorSubmit": "Something went wrong while sending — please try again.",
+      "errorSubmit": "Something went wrong while sending. Please try again.",
       "submit": "Send message",
       "privacyNote": "By sending, you agree to our privacy policy.",
       "sentTitle": "Message sent!",
       "sentBody": "Thanks for reaching out. We'll get back to you as soon as we can.",
-      "sentAgain": "Send another message"
+      "sentAgain": "Send another message",
+      "artAlt": "A busy Dutch street market, with neighbours above the stalls passing a puzzle box between their windows.",
+      "formTitle": "Send us a message",
+      "channelsTitle": "Or write to us directly",
+      "channelsArtAlt": "A couple rows a small boat with their dog under a canal bridge, past a duck and her ducklings.",
+      "livingArtAlt": "A grandfather and a boy work on a puzzle in the living room, with the dog by the fire."
     },
     "legal": {
-      "eyebrow": "Legal",
       "contents": "Contents",
-      "privacyLead": "Your trust is everything. Here's how we handle your data carefully and transparently.",
+      "privacyLead": "How we handle your data, carefully and openly.",
       "termsLead": "The ground rules that keep swapping fair and pleasant for everyone."
     },
     "docs": {
@@ -3564,13 +3579,12 @@
       "helpfulYes": "Yes",
       "helpfulNo": "Not really",
       "helpfulThanks": "Thanks for the feedback!",
-      "helpfulThanksNegative": "Thanks — we'll use this to improve.",
+      "helpfulThanksNegative": "Thanks, we'll use this to improve.",
       "helpfulError": "Something went wrong. Please try again.",
       "helpfulPlaceholder": "What was missing or unclear? (optional)",
       "helpfulCommentLabel": "Feedback comment",
       "helpfulSend": "Send feedback",
-      "landingEyebrow": "Documentation",
-      "landingTitle": "JigSwap User Guide",
+      "landingTitle": "The JigSwap guide",
       "landingLead": "Everything you need to build your library, log solves, and swap puzzles with the community.",
       "skipToContent": "Skip to content",
       "navSheetTitle": "Documentation navigation",
@@ -3578,13 +3592,13 @@
       "breadcrumbLabel": "Breadcrumb"
     },
     "titles": {
-      "home": "JigSwap — Share jigsaw puzzles with fellow enthusiasts",
-      "howItWorks": "How it works — JigSwap",
-      "features": "Features — JigSwap",
-      "about": "About — JigSwap",
-      "contact": "Contact — JigSwap",
-      "privacy": "Privacy Policy — JigSwap",
-      "terms": "Terms of Service — JigSwap"
+      "home": "JigSwap: share jigsaw puzzles with fellow enthusiasts",
+      "howItWorks": "How it works | JigSwap",
+      "features": "Features | JigSwap",
+      "about": "About | JigSwap",
+      "contact": "Contact | JigSwap",
+      "privacy": "Privacy Policy | JigSwap",
+      "terms": "Terms of Service | JigSwap"
     }
   },
   "titles": {
@@ -3635,7 +3649,7 @@
       "inputPlaceholder": "Search or jump to…",
       "empty": "No results found.",
       "goTo": "Go To",
-      "quickActions": "Quick Actions",
+      "quickActions": "Quick actions",
       "groupPuzzles": "Puzzles",
       "groupPeople": "People",
       "groupCircles": "Circles",
@@ -3645,16 +3659,16 @@
     },
     "actions": {
       "addPuzzle": "Add Puzzle",
-      "addAPuzzle": "Add a Puzzle",
-      "logCompletion": "Log a Completion",
+      "addAPuzzle": "Add a puzzle",
+      "logCompletion": "Log a completion",
       "createCircle": "Create a Circle",
-      "browseCommunity": "Browse Community"
+      "browseCommunity": "Browse community"
     },
-    "welcome": "Welcome back, {name}! 🧩",
-    "welcomeAnonymous": "Welcome back! 🧩",
+    "welcome": "Welcome back, {name}!",
+    "welcomeAnonymous": "Welcome back!",
     "groups": {
       "library": {
-        "label": "My Library",
+        "label": "My library",
         "blurb": "Everything you own and track."
       },
       "community": {
@@ -3669,11 +3683,10 @@
     "pages": {
       "dashboard": {
         "title": "Dashboard",
-        "subtitle": "Here's what's happening with your puzzles.",
         "description": "Your puzzle world at a glance"
       },
       "library": {
-        "title": "My Library",
+        "title": "My library",
         "subtitle": "Everything you own and track."
       },
       "community": {
@@ -3852,7 +3865,8 @@
     "language": {
       "switch": "Switch language",
       "label": "Language",
-      "changed": "Language changed successfully"
+      "changed": "Language changed successfully",
+      "current": "Current language: {language}"
     },
     "mobile": {
       "tabsLabel": "Primary",
@@ -3863,13 +3877,13 @@
         "community": "Community"
       },
       "back": "Back to {section}",
-      "openQuickActions": "Quick Actions",
+      "openQuickActions": "Quick actions",
       "quick": {
         "addPuzzleSub": "Put a new box on your shelf",
         "logCompletionSub": "Finished one? Record it",
-        "proposeSwap": "Propose a Swap",
+        "proposeSwap": "Propose a swap",
         "proposeSwapSub": "Trade with a fellow puzzler",
-        "browseCommunitySub": "Discover puzzles near you",
+        "browseCommunitySub": "See what's on other people's shelves",
         "whatsNewSub": "Latest features and fixes"
       },
       "openQuickActionsUnread": "{count, plural, one {Quick actions, # update} other {Quick actions, # updates}}"
@@ -3878,7 +3892,9 @@
     "crumbs": {
       "ownedCopies": "Owned Copies"
     },
-    "plankReset": "Reset"
+    "plankReset": "Reset",
+    "toggleSidebar": "Collapse or expand the sidebar",
+    "loading": "Loading dashboard..."
   },
   "copyInstance": {
     "notFound": "Copy not found",
@@ -4046,7 +4062,6 @@
     "notFound": "Puzzle not found",
     "notFoundSub": "This puzzle may have been removed from the catalog, or the link is wrong.",
     "suggestEdit": "Suggest an edit",
-    "eyebrow": "Catalog · Puzzle Definition",
     "communityOwners": "community owners",
     "totalCompletions": "total completions",
     "avgCompletion": "avg. completion",
@@ -4698,7 +4713,7 @@
     "noResultsSub": "Try a brand name or fewer words",
     "clearSearch": "Clear search",
     "empty": "The catalogue is just getting started",
-    "emptySub": "Members add puzzles every day — check back soon.",
+    "emptySub": "Members add puzzles every day, so check back soon.",
     "joinCta": "Join JigSwap to request a swap",
     "logIn": "Log in",
     "availabilityTitle": "Available in the community",
@@ -4719,7 +4734,8 @@
     "anonymousReviewer": "A JigSwap member",
     "logInToReview": "Log in to write a review",
     "notFound": "Puzzle not found",
-    "notFoundSub": "This puzzle may have been removed from the catalogue."
+    "notFoundSub": "This puzzle may have been removed from the catalogue.",
+    "pieceCount": "{count, number} pieces"
   },
   "whatsNew": {
     "menuLabel": "What's new",
@@ -4740,7 +4756,6 @@
     "readMore": "Read more",
     "seeAll": "See all updates",
     "modal": {
-      "eyebrow": "New in JigSwap",
       "later": "Maybe later"
     },
     "tour": {

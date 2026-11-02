@@ -1,36 +1,67 @@
 import { Container } from "@/components/marketing/container";
-import { Reveal } from "@/components/marketing/reveal";
-import { Eyebrow } from "@/components/marketing/section";
+import { ENTER } from "@/components/marketing/home/classes";
+import { cn } from "@/lib/utils";
 import * as React from "react";
 
-// Sub-page header band: hero glow, eyebrow, display title, optional lead.
+// Sub-page header band: flat sky continuous with the header. The title runs the full measure at the
+// home page's scale; under it the lead and action stand on the left, and an `aside` picture, when the
+// page has one, stands on the band's bottom edge on the right. `below` lays a page's own content across
+// the foot of the band.
 export function PageHero({
-  eyebrow,
   title,
   lead,
+  action,
+  aside,
+  below,
 }: {
-  eyebrow: React.ReactNode;
   title: React.ReactNode;
   lead?: React.ReactNode;
+  action?: React.ReactNode;
+  aside?: React.ReactNode;
+  below?: React.ReactNode;
 }) {
   return (
-    <div className="relative overflow-hidden border-b border-mk-border">
-      <div className="mk-hero-glow" />
-      <Container className="relative">
-        <div className="py-[clamp(48px,6vw,84px)]">
-          <Reveal>
-            <Eyebrow>{eyebrow}</Eyebrow>
-            <h1 className="font-mk-heading font-bold tracking-tight text-mk-text-strong text-[clamp(34px,5vw,54px)] leading-[1.08] mt-4 max-w-[940px]">
-              {title}
-            </h1>
-            {lead && (
-              <p className="text-[clamp(17px,1.4vw,20px)] leading-relaxed text-mk-text-muted mt-[18px] text-pretty max-w-[640px]">
-                {lead}
-              </p>
-            )}
-          </Reveal>
-        </div>
+    <div className="bg-mk-sky text-mk-text-strong">
+      <Container className="pt-[clamp(20px,3vw,44px)]">
+        <h1 className="font-mk-heading text-[clamp(38px,6vw,104px)] leading-[1.03] font-normal tracking-[-0.015em] text-balance">
+          {title}
+        </h1>
       </Container>
+      <div
+        className={cn(
+          "mt-5",
+          aside &&
+            "lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-x-10",
+        )}
+      >
+        <Container
+          className={cn(
+            "pb-[clamp(24px,3vw,44px)]",
+            aside && "lg:self-start lg:pr-0",
+            ENTER,
+            "motion-safe:delay-[60ms]",
+          )}
+        >
+          {lead && (
+            <p className="max-w-[46ch] text-[clamp(18px,1.5vw,21px)] leading-normal text-pretty">
+              {lead}
+            </p>
+          )}
+          {action && <div className="mt-6">{action}</div>}
+        </Container>
+        {aside && (
+          <div
+            className={cn(
+              "min-w-0 lg:self-end",
+              ENTER,
+              "motion-safe:delay-[130ms]",
+            )}
+          >
+            {aside}
+          </div>
+        )}
+      </div>
+      {below}
     </div>
   );
 }

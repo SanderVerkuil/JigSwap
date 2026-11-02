@@ -1,5 +1,5 @@
 ---
-title: Staying Informed
+title: Staying informed
 order: 5
 summary: "Message other members and manage notifications across in-app, email, and web push channels."
 ---

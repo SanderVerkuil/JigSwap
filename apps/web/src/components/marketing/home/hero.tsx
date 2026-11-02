@@ -1,379 +1,334 @@
 import { Link } from "@/compat/link";
-import coverVillageStreet from "@/components/marketing/assets/cover-village-street.webp";
-import { type PlankBox } from "@/components/marketing/plank";
-import { JigPlank3D } from "@/components/marketing/plank-3d";
-import { Reveal } from "@/components/marketing/reveal";
-import { Eyebrow } from "@/components/marketing/section";
+import coverAmsterdam from "@/components/marketing/assets/art/covers/amsterdam.webp";
+import coverDorpsstraat from "@/components/marketing/assets/art/covers/dorpsstraat.webp";
+import coverEendenvijver from "@/components/marketing/assets/art/covers/eendenvijver.webp";
+import coverGrachtje from "@/components/marketing/assets/art/covers/grachtje.webp";
+import coverMolen from "@/components/marketing/assets/art/covers/molen.webp";
+import coverTheekoepel from "@/components/marketing/assets/art/covers/theekoepel.webp";
+import coverTulpen from "@/components/marketing/assets/art/covers/tulpen.webp";
+import houseCut from "@/components/marketing/assets/art/house-cut.webp";
+import { ENTER, PRESS, TEXT_LINK } from "@/components/marketing/home/classes";
 import { useStartHref } from "@/components/marketing/use-start-href";
 import { Button } from "@/components/ui/button";
-import { gateway } from "@/gateway";
 import { globalStatsQuery } from "@/lib/marketing-queries";
-import { convexQuery } from "@convex-dev/react-query";
+import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight } from "lucide-react";
 import * as React from "react";
 import { useFormatter, useTranslations } from "use-intl";
 
-// Fallback boxes for the signature PuzzlePlank — used during loading and when
-// the catalog has fewer than 3 puzzles. Themed brand colours + one real cover.
-// Decorative props (puzzle titles stay the same across locales, per the design).
-const PLANK_WIDE: PlankBox[] = [
-  {
-    series: "Natuur",
-    title: "Boslicht",
-    pieceCount: 1000,
-    c1: "var(--mk-violet-400)",
-    c2: "var(--mk-violet-600)",
-    width: 100,
+// Sample shelves for the demonstration in the hero. Names and titles are constants, not translated.
+const PUZZLES = {
+  dorpsstraat: { title: "Dorpsstraat", pieces: 1000, cover: coverDorpsstraat },
+  eendenvijver: {
+    title: "Eendenvijver",
+    pieces: 1000,
+    cover: coverEendenvijver,
   },
-  {
-    series: "Steden",
-    title: "Amsterdam",
-    pieceCount: 1500,
-    c1: "var(--mk-green-400)",
-    c2: "var(--mk-green-600)",
-    width: 96,
-  },
-  // The real-cover box: index 2 deals onto the central anchor row
-  // (2 % SHELF_ROWS), where the gallery spots and contact shadows keep it
-  // prominent and it sits in the framed part of the bookcase.
-  { cover: coverVillageStreet, title: "Dorpsstraat", width: 134 },
-  {
-    series: "Kunst",
-    title: "Sterrennacht",
-    pieceCount: 2000,
-    c1: "var(--mk-pink-400)",
-    c2: "var(--mk-pink-500)",
-    width: 108,
-  },
-  {
-    series: "Natuur",
-    title: "Waddenzee",
-    pieceCount: 500,
-    c1: "var(--mk-green-300)",
-    c2: "var(--mk-green-600)",
-    width: 90,
-  },
-  {
-    series: "Steden",
-    title: "Rotterdam",
-    pieceCount: 1000,
-    c1: "var(--mk-violet-300)",
-    c2: "var(--mk-violet-700)",
-    width: 104,
-  },
-  {
-    series: "Kunst",
-    title: "De Melkmeid",
-    pieceCount: 1500,
-    c1: "var(--mk-pink-300)",
-    c2: "var(--mk-pink-500)",
-    width: 98,
-  },
-  {
-    series: "Natuur",
-    title: "Keukenhof",
-    pieceCount: 1000,
-    c1: "var(--mk-green-400)",
-    c2: "var(--mk-green-600)",
-    width: 112,
-  },
-  {
-    series: "Steden",
-    title: "Utrecht",
-    pieceCount: 750,
-    c1: "var(--mk-violet-400)",
-    c2: "var(--mk-violet-600)",
-    width: 94,
-  },
-  {
-    series: "Kunst",
-    title: "De Nachtwacht",
-    pieceCount: 2000,
-    c1: "var(--mk-pink-400)",
-    c2: "var(--mk-pink-500)",
-    width: 118,
-  },
-  {
-    series: "Natuur",
-    title: "Hoge Veluwe",
-    pieceCount: 1500,
-    c1: "var(--mk-green-300)",
-    c2: "var(--mk-green-600)",
-    width: 102,
-  },
-  {
-    series: "Steden",
-    title: "Giethoorn",
-    pieceCount: 500,
-    c1: "var(--mk-violet-300)",
-    c2: "var(--mk-violet-700)",
-    width: 88,
-  },
-  {
-    series: "Kunst",
-    title: "Delfts Blauw",
-    pieceCount: 1000,
-    c1: "var(--mk-pink-300)",
-    c2: "var(--mk-pink-500)",
-    width: 106,
-  },
-  {
-    series: "Natuur",
-    title: "Kinderdijk",
-    pieceCount: 1500,
-    c1: "var(--mk-green-400)",
-    c2: "var(--mk-green-600)",
-    width: 96,
-  },
-];
+  theekoepel: { title: "Theekoepel", pieces: 2000, cover: coverTheekoepel },
+  grachtje: { title: "Grachtje", pieces: 500, cover: coverGrachtje },
+  tulpen: { title: "Tulpen", pieces: 1000, cover: coverTulpen },
+  molen: { title: "Molen", pieces: 2000, cover: coverMolen },
+  amsterdam: { title: "Amsterdam", pieces: 1000, cover: coverAmsterdam },
+} as const;
 
-const WIDTHS = [100, 134, 96, 108, 90, 104, 98] as const;
-const COLOR_PAIRS: Array<[string, string]> = [
-  ["var(--mk-violet-400)", "var(--mk-violet-600)"],
-  ["var(--mk-green-400)", "var(--mk-green-600)"],
-  ["var(--mk-pink-400)", "var(--mk-pink-500)"],
-  ["var(--mk-violet-300)", "var(--mk-violet-700)"],
-];
+// A box's width in the shelf's cover column follows its piece count, so the row reads as real boxes.
+const BOX_WIDTH = { 500: "w-[68%]", 1000: "w-[85%]", 2000: "w-full" } as const;
 
-// Number of stacked shelf rows in the 3D backdrop. The scene frames only the
-// central rows, so the top and bottom rows bleed off-frame and the bookcase
-// reads as continuing above and below the view.
-const SHELF_ROWS = 5;
+// Each person lives on a floor of house-cut.webp (1536x950) and is who the art shows there. `floor` is
+// the height the drawer's notch points at, in art pixels. `pin` places the button on the art, high in
+// the floor so the lowest pin clears the fold on a short laptop; `phonePin` keeps the larger-looking
+// button wholly on its floor and clear of the wall at phone scale. `hole` is the even-odd polygon that
+// leaves their floor undimmed.
+const PEOPLE = [
+  {
+    id: "sanne",
+    name: "Sanne",
+    floor: 330,
+    boxes: ["theekoepel", "tulpen", "eendenvijver", "grachtje"],
+    pin: { x: "41.7%", y: "28.6%" },
+    phonePin: { x: "36%", y: "37.2%" },
+    hole: "polygon(evenodd,0 0,100% 0,100% 100%,0 100%,0 0,27.55% 25.6%,71.95% 25.6%,71.95% 44.1%,27.55% 44.1%,27.55% 25.6%)",
+  },
+  {
+    id: "opa",
+    name: "Opa Wim",
+    floor: 520,
+    boxes: ["dorpsstraat", "molen", "grachtje"],
+    pin: { x: "30.6%", y: "56.6%" },
+    phonePin: { x: "35%", y: "56.7%" },
+    hole: "polygon(evenodd,0 0,100% 0,100% 100%,0 100%,0 0,27.55% 45%,71.95% 45%,71.95% 64.85%,27.55% 64.85%,27.55% 45%)",
+  },
+  {
+    id: "marieke",
+    name: "Marieke",
+    floor: 690,
+    boxes: ["amsterdam", "tulpen"],
+    pin: { x: "34.4%", y: "67.4%" },
+    phonePin: { x: "35%", y: "77.5%" },
+    hole: "polygon(evenodd,0 0,100% 0,100% 100%,0 100%,0 0,27.55% 65.75%,71.95% 65.75%,71.95% 84.15%,27.55% 84.15%,27.55% 65.75%)",
+  },
+] as const satisfies ReadonlyArray<{
+  id: string;
+  name: string;
+  floor: number;
+  boxes: ReadonlyArray<keyof typeof PUZZLES>;
+  pin: { x: string; y: string };
+  phonePin: { x: string; y: string };
+  hole: string;
+}>;
 
-// Deal boxes round-robin across the shelf rows so each row gets its own mix
-// of colours and covers; the 3D scene cycles each row's list to fill the
-// visible span, so a handful of unique boxes per row is enough.
-function toRows(boxes: PlankBox[]): PlankBox[][] {
-  const rows: PlankBox[][] = Array.from({ length: SHELF_ROWS }, () => []);
-  boxes.forEach((box, i) => rows[i % SHELF_ROWS].push(box));
-  return rows;
-}
+type Person = (typeof PEOPLE)[number];
+const DEFAULT_PERSON: Person = PEOPLE[1];
 
-type PlankPuzzleView = {
-  title: string;
-  pieceCount: number;
-  brand?: string;
-  image: string | null;
-};
-
-function toPlankBox(p: PlankPuzzleView, i: number): PlankBox {
-  const [c1, c2] = COLOR_PAIRS[i % COLOR_PAIRS.length];
-  return {
-    title: p.title,
-    pieceCount: p.pieceCount,
-    series: p.brand,
-    cover: p.image ?? undefined,
-    width: WIDTHS[i % WIDTHS.length],
-    // Only set colors when there is no cover; cover mode ignores them but we
-    // pass them for the gradient fallback while the image is loading.
-    c1,
-    c2,
-  };
-}
-
-// Minimal local type for the community avatar view — mirrors CommunityAvatarView
-// from @jigswap/contracts without importing the package directly.
-type CommunityAvatar = { initials: string; image: string | null };
-
-const AVATAR_COLORS = [
-  "var(--mk-violet-400)",
-  "var(--mk-green-500)",
-  "var(--mk-pink-400)",
-  "var(--mk-violet-600)",
-] as const;
-
-const noopSubscribe = () => () => {};
-
-// A random seed drawn once per mount that reads as null on the server and
-// during hydration, so seeded queries only start on the client. The
-// isClient flag comes from useSyncExternalStore (server snapshot false), not
-// a setState-in-effect, so there's no extra mount render.
-export function useClientSeed(): number | null {
-  const isClient = React.useSyncExternalStore(
-    noopSubscribe,
-    () => true,
-    () => false,
-  );
-  const [seed] = React.useState(() => Math.floor(Math.random() * 0xffffffff));
-  return isClient ? seed : null;
-}
-
-// Real member count instead of the prototype's invented "4.200+".
-function TrustRow() {
+function TrustLine() {
   const t = useTranslations("marketing.home");
-  const format = useFormatter();
   // Prefetched in the home route loader, so the count is present on first paint.
   const { data: stats } = useQuery(globalStatsQuery);
-
-  // Stable per-visit seed, client-only (SSR-safe). The query is skipped until
-  // the seed is ready; FALLBACK_AVATARS fills the cluster meanwhile as a
-  // decorative placeholder.
-  const seed = useClientSeed();
-  const { data } = useQuery(
-    convexQuery(
-      gateway.insights.communityAvatars,
-      seed === null ? "skip" : { limit: 4, seed },
-    ),
-  );
-  const communityAvatars: CommunityAvatar[] | undefined = data;
-
-  // Only render the avatar cluster once real community members are loaded — never
-  // fake placeholder users. Until then (loading or no members) the cluster is hidden.
-  const hasLiveAvatars =
-    communityAvatars != null && communityAvatars.length >= 1;
-
+  if (stats == null) return null;
   return (
-    <div className="flex items-center gap-3.5 mt-[30px] flex-wrap">
-      {hasLiveAvatars && (
-        <div aria-hidden="true" className="flex">
-          {communityAvatars.map((member, i) =>
-            member.image != null ? (
-              <span
-                key={i}
-                className="w-[38px] h-[38px] rounded-full inline-flex items-center justify-center border-2 border-mk-card overflow-hidden"
-                style={{ marginLeft: i ? -11 : 0 }}
-              >
-                <img
-                  src={member.image}
-                  alt=""
-                  className="w-full h-full rounded-full object-cover"
-                />
-              </span>
-            ) : (
-              <span
-                key={i}
-                className="w-[38px] h-[38px] rounded-full text-white font-mk-heading font-semibold text-[13px] inline-flex items-center justify-center border-2 border-mk-card"
-                style={{
-                  background: AVATAR_COLORS[i % AVATAR_COLORS.length],
-                  marginLeft: i ? -11 : 0,
-                }}
-              >
-                {member.initials}
-              </span>
-            ),
-          )}
-        </div>
-      )}
-      {stats != null && (
-        <div className="text-[14.5px] text-mk-text-muted leading-snug">
-          {t("trustRow", { count: format.number(stats.totalUsers) })}
-        </div>
-      )}
-    </div>
+    <p className="basis-full text-[17px] leading-snug min-[760px]:basis-auto min-[760px]:whitespace-nowrap">
+      {t("trustRow", { count: stats.totalUsers })}
+    </p>
   );
 }
 
-function HeroCTAs() {
+function ShelfRow({
+  person,
+  puzzleKey,
+  startHref,
+}: {
+  person: Person;
+  puzzleKey: keyof typeof PUZZLES;
+  startHref: string;
+}) {
+  const t = useTranslations("marketing.home");
+  const format = useFormatter();
+  const puzzle = PUZZLES[puzzleKey];
+  return (
+    <li className="grid grid-cols-[minmax(0,min(42%,136px))_minmax(0,1fr)] items-end gap-x-3.5 pt-3">
+      <img
+        src={puzzle.cover}
+        alt=""
+        width={480}
+        height={372}
+        loading="lazy"
+        decoding="async"
+        className={cn(
+          "block h-auto self-end rounded-t-[2px] border-b-[6px] border-mk-canal",
+          BOX_WIDTH[puzzle.pieces],
+        )}
+      />
+      <div className="flex min-w-0 flex-col items-start pb-2.5">
+        <b className="text-[18px] leading-[1.2] font-bold">{puzzle.title}</b>
+        <span className="text-[17px] leading-[1.25]">
+          {t("pieces", { count: format.number(puzzle.pieces) })}
+        </span>
+        <Button
+          variant="brand"
+          asChild
+          className="mt-1.5 h-[42px] rounded-[9px] px-3 text-[17px] font-bold min-[1180px]:px-2.5 min-[1180px]:text-[16px] min-[1360px]:px-3 min-[1360px]:text-[17px]"
+        >
+          <Link
+            href={startHref}
+            aria-label={t("askToBorrowLabel", {
+              title: puzzle.title,
+              name: person.name,
+            })}
+          >
+            {t("askToBorrow")}
+          </Link>
+        </Button>
+      </div>
+      <div className="col-span-full -mx-(--ledge) h-[9px] bg-mk-plank" />
+    </li>
+  );
+}
+
+// The street with the fronts off: the sky's text, then the cutaway house edge to edge, with a pin on
+// each of three floors. Choosing a pin strikes that floor forward and docks that person's shelf.
+// Phone: title, the house alone (a window on the art from x 370 to 1140 and y 80 to 810), sentence,
+// actions, shelf.
+export function Hero() {
   const t = useTranslations("marketing");
   const startHref = useStartHref();
-  return (
-    <div className="flex gap-3 flex-wrap mt-[30px]">
-      <Button variant="brand" className="h-11 px-6 text-[15px]" asChild>
-        <Link href={startHref}>
-          {t("nav.startTrading")}
-          <ArrowRight size={17} />
-        </Link>
-      </Button>
-      <Button
-        variant="outline"
-        className="h-11 px-6 text-[15px] bg-mk-card border-mk-border text-mk-text-strong hover:bg-mk-muted"
-        asChild
-      >
-        <Link href="/features">{t("home.seeFeatures")}</Link>
-      </Button>
-    </div>
-  );
-}
+  const [person, setPerson] = React.useState<Person>(DEFAULT_PERSON);
 
-// ---------------------------------------------------------------------------
-// Hero — full-bleed 3D backdrop
-// The puzzle plank covers the entire hero background. A readability scrim
-// (horizontal + bottom fade) sits above the canvas so text stays legible.
-// ---------------------------------------------------------------------------
+  const artRef = React.useRef<HTMLImageElement>(null);
+  const drawerRef = React.useRef<HTMLElement>(null);
 
-export function Hero() {
-  const t = useTranslations("marketing.home");
+  // On a phone the shelf starts below the fold, so choosing a floor scrolls just far enough to show its
+  // first box, which keeps the house and its other floors in view.
+  const choose = (next: Person) => {
+    setPerson(next);
+    if (!window.matchMedia("(max-width: 759px)").matches) return;
+    const firstBox = drawerRef.current?.querySelector("img");
+    if (!firstBox) return;
+    const overshoot =
+      firstBox.getBoundingClientRect().bottom + 16 - window.innerHeight;
+    if (overshoot <= 0) return;
+    const reduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    window.scrollBy({
+      top: overshoot,
+      behavior: reduced ? "auto" : "smooth",
+    });
+  };
 
-  // Stable per-visit seed, client-only (SSR-safe). The query is skipped until
-  // the seed is ready; PLANK_WIDE fills the plank meanwhile as a loading
-  // fallback.
-  const seed = useClientSeed();
-  const { data: livePuzzles } = useQuery(
-    convexQuery(
-      gateway.insights.plankPuzzles,
-      // 12 is the backend's clamp ceiling — enough for ~4 unique boxes per
-      // shelf row before the scene starts cycling them.
-      seed === null ? "skip" : { limit: 12, seed },
-    ),
-  );
-  const rows = React.useMemo(
-    () =>
-      toRows(
-        livePuzzles && livePuzzles.length >= 3
-          ? livePuzzles.map(toPlankBox)
-          : PLANK_WIDE,
-      ),
-    [livePuzzles],
-  );
+  // The drawer's notch points at the chosen floor while the sticky drawer rides over the art.
+  React.useEffect(() => {
+    const place = () => {
+      const art = artRef.current?.getBoundingClientRect();
+      const drawer = drawerRef.current;
+      if (!art || !drawer) return;
+      const box = drawer.getBoundingClientRect();
+      const y = art.top + person.floor * (art.width / 1536) - box.top - 18;
+      const notch = Math.max(12, Math.min(box.height - 48, y));
+      drawer.style.setProperty("--notch", `${notch}px`);
+    };
+    place();
+    window.addEventListener("scroll", place, { passive: true });
+    window.addEventListener("resize", place);
+    return () => {
+      window.removeEventListener("scroll", place);
+      window.removeEventListener("resize", place);
+    };
+  }, [person]);
 
   return (
-    <div className="relative overflow-hidden">
-      <div className="mk-hero-glow" />
-
-      {/* Full-bleed 3D backdrop layer */}
-      <div className="absolute inset-0" aria-hidden="true">
-        <JigPlank3D rows={rows} />
-      </div>
-
-      {/* Readability scrim: horizontal fade for the text side + bottom fade so
-          the scene melts into the next section. Works in light and dark modes
-          via color-mix over the bg token. Softened first stop so the frosted
-          panel behind the text provides its own local contrast. */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "linear-gradient(90deg, color-mix(in oklab, var(--mk-bg) 78%, transparent) 22%, color-mix(in oklab, var(--mk-bg) 55%, transparent) 55%, transparent 78%), linear-gradient(180deg, transparent 55%, color-mix(in oklab, var(--mk-bg) 70%, transparent) 100%)",
-          pointerEvents: "none",
-          zIndex: 1,
-        }}
-      />
-
-      {/* Text content — sits above the scrim */}
-      <div
-        className="relative w-full max-w-[1200px] mx-auto px-6"
-        style={{ zIndex: 2 }}
-      >
-        <div className="min-h-[520px] pt-[clamp(48px,7vw,100px)] pb-[clamp(64px,8vw,112px)]">
-          {/* Frosted-glass callout — provides local contrast behind the hero
-              text. Borderless and shadowless so it reads as part of the page
-              rather than a floating card. */}
-          <div
-            className="max-w-[640px] rounded-3xl"
-            style={{
-              background: "color-mix(in oklab, var(--mk-bg) 58%, transparent)",
-              backdropFilter: "blur(9px)",
-              WebkitBackdropFilter: "blur(9px)",
-              padding: "clamp(24px, 3.5vw, 44px)",
-            }}
+    <section className="@container relative flex flex-col bg-mk-sky text-mk-text-strong [--hero-h1-cap:15svh] [--m:16px] min-[760px]:block min-[760px]:[--m:40px]">
+      <div className="contents min-[760px]:relative min-[760px]:z-[3] min-[760px]:grid min-[760px]:grid-cols-1 min-[760px]:px-(--m) min-[1180px]:grid-cols-[minmax(0,1fr)_auto] min-[1180px]:items-start min-[1180px]:gap-x-10">
+        <h1 className="order-1 mt-0.5 mb-2.5 px-(--m) font-mk-heading text-[length:calc((100cqw-2*var(--m))/7.25)] leading-[1.04] font-normal tracking-[-0.012em] min-[760px]:col-span-full min-[760px]:mt-[-2px] min-[760px]:mb-0 min-[760px]:px-0 min-[760px]:text-[length:min(calc((100cqw-2*var(--m))/10.2),var(--hero-h1-cap))] min-[760px]:leading-none min-[760px]:whitespace-nowrap">
+          {t("home.heroTitle")}
+        </h1>
+        <p
+          className={cn(
+            "order-4 mt-3 px-(--m) text-[18px] leading-[1.36] text-pretty min-[760px]:mt-1.5 min-[760px]:max-w-[640px] min-[760px]:px-0 min-[760px]:text-[20px] min-[1180px]:max-w-[510px] min-[1180px]:[@media(max-height:880px)]:max-w-[560px] min-[1180px]:[@media(max-height:880px)]:text-[18px]",
+            ENTER,
+            "motion-safe:delay-[60ms]",
+          )}
+        >
+          {t("home.heroLead")}
+        </p>
+        <div
+          data-hero-action=""
+          className={cn(
+            "order-5 mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 px-(--m) min-[760px]:mt-2 min-[760px]:flex-nowrap min-[760px]:gap-x-[26px] min-[760px]:px-0 min-[1180px]:mt-1.5",
+            ENTER,
+            "motion-safe:delay-[130ms]",
+          )}
+        >
+          <Button
+            variant="brand"
+            asChild
+            className="h-[52px] rounded-[10px] px-[22px] text-[18px] font-bold min-[760px]:h-[50px] min-[760px]:text-[20px]"
           >
-            <Reveal>
-              <Eyebrow>{t("eyebrow")}</Eyebrow>
-              <h1 className="font-mk-heading font-bold tracking-tight text-mk-text-strong text-[clamp(38px,6vw,62px)] leading-[1.04] mt-[18px]">
-                {t("heroTitle")}
-              </h1>
-              <p className="text-[clamp(17px,1.4vw,20px)] leading-relaxed text-mk-text-muted mt-[22px] max-w-[520px] text-pretty">
-                {t("heroLead")}
-              </p>
-              <HeroCTAs />
-              <TrustRow />
-            </Reveal>
-          </div>
+            <Link href={startHref}>{t("nav.startShelf")}</Link>
+          </Button>
+          <Link
+            href="/catalog"
+            className={cn(
+              TEXT_LINK,
+              "inline-flex min-h-11 items-center text-[18px] whitespace-nowrap",
+            )}
+          >
+            {t("nav.catalog")}
+          </Link>
+          <TrustLine />
         </div>
       </div>
-    </div>
+
+      <div className="contents min-[760px]:relative min-[760px]:block min-[1180px]:mt-[calc(100cqw/1536*-86+14px)]">
+        <div className="relative order-2 h-[calc(100cqw/770*730)] overflow-hidden min-[760px]:h-auto min-[760px]:overflow-visible">
+          <div className="absolute top-[calc(100cqw/770*-80)] left-[calc(100cqw/770*-370)] w-[calc(100cqw/770*1536)] min-[760px]:relative min-[760px]:top-0 min-[760px]:left-0 min-[760px]:w-full">
+            <img
+              ref={artRef}
+              src={houseCut}
+              alt={t("home.heroAlt")}
+              width={1536}
+              height={950}
+              fetchPriority="high"
+              decoding="async"
+              className="block h-auto w-full max-w-none"
+            />
+            {/* Flat dim over the art, masked to the art's own edge so the sky stays clean. */}
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 bg-mk-canal/45"
+              style={{
+                maskImage: `url("${houseCut}")`,
+                WebkitMaskImage: `url("${houseCut}")`,
+                maskSize: "100% 100%",
+                WebkitMaskSize: "100% 100%",
+                clipPath: person.hole,
+              }}
+            />
+
+            <div
+              role="group"
+              aria-label={t("home.pickerLabel")}
+              className="pointer-events-none absolute inset-0"
+            >
+              {PEOPLE.map((p) => {
+                const active = p.id === person.id;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => choose(p)}
+                    style={
+                      {
+                        "--pin-x": p.pin.x,
+                        "--pin-y": p.pin.y,
+                        "--phone-pin-x": p.phonePin.x,
+                        "--phone-pin-y": p.phonePin.y,
+                      } as React.CSSProperties
+                    }
+                    className={cn(
+                      "pointer-events-auto absolute top-(--phone-pin-y) left-(--phone-pin-x) inline-flex min-h-11 -translate-x-1/2 -translate-y-full cursor-pointer items-center justify-center rounded-[10px] px-3 text-[16px] font-bold whitespace-nowrap after:absolute after:-bottom-[9px] after:left-1/2 after:-ml-[9px] after:block after:h-2.5 after:w-[18px] after:bg-inherit after:[clip-path:polygon(0_0,100%_0,50%_100%)] after:content-[''] min-[760px]:top-(--pin-y) min-[760px]:left-(--pin-x) min-[760px]:min-h-[46px] min-[760px]:px-[18px] min-[760px]:text-[18px] min-[760px]:after:-bottom-[11px] min-[760px]:after:-ml-[11px] min-[760px]:after:h-3 min-[760px]:after:w-[22px]",
+                      PRESS,
+                      "focus-visible:outline-3 focus-visible:outline-offset-0 focus-visible:outline-mk-on-canal focus-visible:ring-[7px] focus-visible:ring-mk-canal",
+                      active
+                        ? "bg-mk-gold text-mk-on-gold hover:bg-mk-gold-press"
+                        : "bg-mk-canal text-mk-on-canal hover:bg-[color-mix(in_oklab,var(--mk-canal)_86%,var(--mk-on-canal))] dark:bg-mk-card",
+                    )}
+                  >
+                    {p.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        <div className="contents min-[1180px]:pointer-events-none min-[1180px]:absolute min-[1180px]:top-[calc(100cqw/1536*86-14px)] min-[1180px]:right-0 min-[1180px]:bottom-0 min-[1180px]:flex min-[1180px]:w-[25.8%] min-[1180px]:flex-col">
+          <aside
+            ref={drawerRef}
+            aria-labelledby="hero-shelf-title"
+            className="relative order-7 mt-3 bg-mk-card px-(--m) pt-4 pb-2 [--ledge:var(--m)] min-[760px]:mt-0 min-[760px]:pt-[22px] min-[760px]:pb-4 min-[760px]:[--ledge:0px] min-[1180px]:pointer-events-auto min-[1180px]:sticky min-[1180px]:bottom-0 min-[1180px]:z-[4] min-[1180px]:mt-auto min-[1180px]:px-5 min-[1180px]:[--ledge:calc(var(--spacing)*5)] min-[1180px]:before:absolute min-[1180px]:before:top-(--notch,40px) min-[1180px]:before:-left-4 min-[1180px]:before:h-9 min-[1180px]:before:w-[17px] min-[1180px]:before:bg-inherit min-[1180px]:before:[clip-path:polygon(100%_0,100%_100%,0_50%)] min-[1180px]:before:content-[''] min-[1360px]:px-6 min-[1360px]:[--ledge:calc(var(--spacing)*6)]"
+          >
+            <h2
+              id="hero-shelf-title"
+              aria-live="polite"
+              className="font-mk-heading text-[28px] leading-[1.1] font-normal text-balance min-[760px]:text-[32px] min-[1180px]:text-[26px] min-[1360px]:text-[30px]"
+            >
+              {t("home.shelfOf", { name: person.name })}
+            </h2>
+            <p className="mt-0.5 text-[17px]">{t("home.exampleShelf")}</p>
+            <ul className="mt-3.5 min-[760px]:max-[1179px]:grid min-[760px]:max-[1179px]:grid-cols-2 min-[760px]:max-[1179px]:gap-x-7 min-[1000px]:max-[1179px]:grid-cols-3">
+              {person.boxes.map((key) => (
+                <ShelfRow
+                  key={key}
+                  person={person}
+                  puzzleKey={key}
+                  startHref={startHref}
+                />
+              ))}
+            </ul>
+          </aside>
+        </div>
+      </div>
+    </section>
   );
 }

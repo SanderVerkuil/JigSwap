@@ -10,7 +10,7 @@ export function DocsMobileBar({
 }) {
   const t = useTranslations("marketing.docs");
   return (
-    <div className="hidden max-[1000px]:flex sticky top-[70px] z-30 items-center gap-3 h-12 px-5 bg-[color-mix(in_oklab,var(--mk-card)_88%,transparent)] backdrop-blur-md border-b border-mk-border">
+    <div className="hidden max-[1000px]:flex sticky top-16 z-30 items-center gap-3 h-12 px-5 bg-mk-sky-soft">
       <button
         type="button"
         onClick={onOpenNav}

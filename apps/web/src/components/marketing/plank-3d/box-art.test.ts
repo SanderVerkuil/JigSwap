@@ -6,7 +6,7 @@ import {
   buildBoxArtSpec,
 } from "./box-art";
 
-const colors = { c1: "#8b5cf6", c2: "#6d28d9" };
+const colors = { c1: "#ffb81c", c2: "#0f3b30" };
 
 describe("averagePixelColor", () => {
   it("returns exact hex for a uniform buffer", () => {
@@ -61,8 +61,8 @@ describe("buildBoxArtSpec", () => {
     expect(spec.series).toBe("Natuur");
     expect(spec.title).toBe("Boslicht");
     expect(spec.pieceCount).toBe(1000);
-    expect(spec.c1).toBe("#8b5cf6");
-    expect(spec.c2).toBe("#6d28d9");
+    expect(spec.c1).toBe("#ffb81c");
+    expect(spec.c2).toBe("#0f3b30");
   });
 
   it("scales canvas dimensions by ART_SCALE for crispness", () => {

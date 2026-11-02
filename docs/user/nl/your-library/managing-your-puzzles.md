@@ -1,5 +1,5 @@
 ---
-title: Je Puzzels Beheren
+title: Je puzzels beheren
 order: 1
 summary: "Bekijk je eigen kopieën, gebruik statusfilters en verken de detailpagina van een kopie."
 ---

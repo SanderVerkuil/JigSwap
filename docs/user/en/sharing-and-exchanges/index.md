@@ -1,5 +1,5 @@
 ---
-title: Sharing & Exchanges
+title: Sharing & exchanges
 order: 3
 summary: "Control who sees each copy, then lend, swap, and trade with others, in circles and households."
 ---

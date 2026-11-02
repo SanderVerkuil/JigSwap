@@ -1,5 +1,5 @@
 ---
-title: Friend Circles
+title: Friend circles
 order: 3
 summary: "Create private groups, invite members, set permissions, share copies, and chat together."
 ---

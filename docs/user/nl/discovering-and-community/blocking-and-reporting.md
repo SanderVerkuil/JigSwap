@@ -1,5 +1,5 @@
 ---
-title: Blokkeren & Melden
+title: Blokkeren & melden
 order: 5
 summary: "Blokkeer leden met wie je geen contact wilt, meld problemen en beheer je blokkeringen."
 ---

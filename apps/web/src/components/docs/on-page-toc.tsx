@@ -28,21 +28,21 @@ export function OnPageToc({
   if (headings.length === 0) return null;
   return (
     <aside className={cn("self-start", className)}>
-      <div className="font-mono text-[11px] font-bold tracking-[.1em] uppercase text-mk-text-muted mb-3.5">
+      <div className="font-mk-heading text-[17px] text-mk-text-strong mb-3">
         {t("onThisPage")}
       </div>
-      <nav className="flex flex-col gap-0.5 border-l border-mk-border">
+      <nav className="flex flex-col gap-0.5">
         {headings.map((h) => (
           <a
             key={h.id}
             href={`#${h.id}`}
             aria-current={active === h.id ? "true" : undefined}
             className={cn(
-              "py-[6px] px-3.5 -ml-px border-l-2 text-[13px] leading-snug transition-colors",
-              h.depth === 3 && "pl-6",
+              "py-[5px] px-2.5 rounded-sm text-[14px] leading-snug transition-colors duration-150",
+              h.depth === 3 && "pl-5",
               active === h.id
-                ? "border-mk-violet-400 text-mk-violet-600 font-semibold"
-                : "border-transparent text-mk-text-muted hover:text-mk-text-body",
+                ? "bg-mk-sky-soft dark:bg-mk-muted text-mk-text-strong font-semibold"
+                : "text-mk-text-muted hover:text-mk-text-strong",
             )}
           >
             {h.text}

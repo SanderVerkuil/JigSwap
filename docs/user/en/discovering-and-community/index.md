@@ -1,5 +1,5 @@
 ---
-title: Discovering & Community
+title: Discovering & community
 order: 4
 summary: "Browse puzzles and people, follow members, curate your profile, build reputation through reviews, and block or report members."
 ---

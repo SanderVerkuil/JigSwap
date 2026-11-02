@@ -1,4 +1,5 @@
 import { SignUp } from "@/compat/clerk";
+import { authAppearance, AuthField } from "@/components/marketing/auth-field";
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -13,15 +14,10 @@ export const Route = createFileRoute("/sign-up/$")({
 
 function SignUpPage() {
   return (
-    <div className="flex items-center justify-center bg-background min-h-svh">
-      <div className="w-full max-w-md">
-        {/* Explicit redirect_url query params (set by lib/require-auth.ts) still
-            win; this only changes the no-param fallback from / to /dashboard. */}
-        <SignUp
-          appearance={{ elements: { rootBox: "mx-auto", card: "shadow-lg" } }}
-          fallbackRedirectUrl="/dashboard"
-        />
-      </div>
-    </div>
+    <AuthField>
+      {/* Explicit redirect_url query params (set by lib/require-auth.ts) still
+          win; this only changes the no-param fallback from / to /dashboard. */}
+      <SignUp appearance={authAppearance} fallbackRedirectUrl="/dashboard" />
+    </AuthField>
   );
 }

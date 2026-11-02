@@ -1,7 +1,8 @@
 import { Link } from "@/compat/link";
 import { EmptyState } from "@/components/library/empty-state";
+import { Container } from "@/components/marketing/container";
+import { PageHero } from "@/components/marketing/page-hero";
 import { DefinitionCard } from "@/components/puzzles/definition-card";
-import { PuzzleViewProvider } from "@/components/puzzles/puzzle-view-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -42,13 +43,13 @@ type PieceBucket = keyof typeof PIECE_BUCKETS;
 export const Route = createFileRoute("/_public/catalog/")({
   head: () => ({
     meta: [
-      { title: "Puzzle catalogue — JigSwap" },
+      { title: "Puzzle catalogue | JigSwap" },
       {
         name: "description",
         content:
           "Browse the JigSwap community puzzle catalogue: ratings, reviews and swap availability for jigsaw puzzles.",
       },
-      { property: "og:title", content: "Puzzle catalogue — JigSwap" },
+      { property: "og:title", content: "Puzzle catalogue | JigSwap" },
       {
         property: "og:description",
         content:
@@ -151,114 +152,109 @@ function CatalogListPage() {
   };
 
   return (
-    <main className="mx-auto w-full max-w-[1200px] px-6 py-10">
-      <h1 className="font-heading text-3xl font-bold tracking-tight">
-        {t("title")}
-      </h1>
-      <p className="text-muted-foreground mt-1">{t("subtitle")}</p>
-
-      {/* Toolbar: search + brand + piece bucket. One row on >=sm, stacked on mobile. */}
-      <div className="mt-6 flex flex-col gap-2.5 sm:flex-row sm:items-center">
-        <div className="relative flex-1">
-          <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
-          <Input
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder={t("searchPlaceholder")}
-            className="pl-9"
-          />
-        </div>
-        <Select
-          value={brand ?? "all"}
-          onValueChange={(v) => setBrand(v === "all" ? undefined : v)}
-        >
-          <SelectTrigger className="w-full sm:w-44">
-            <SelectValue placeholder={t("allBrands")} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("allBrands")}</SelectItem>
-            {(brands ?? [])
-              .filter((b): b is string => !!b)
-              .map((b) => (
-                <SelectItem key={b} value={b}>
-                  {b}
-                </SelectItem>
-              ))}
-          </SelectContent>
-        </Select>
-        <Select
-          value={bucket ?? "all"}
-          onValueChange={(v) =>
-            setBucket(v === "all" ? undefined : (v as PieceBucket))
-          }
-        >
-          <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder={t("allPieces")} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("allPieces")}</SelectItem>
-            <SelectItem value="lt500">{t("piecesLt500")}</SelectItem>
-            <SelectItem value="b500">{t("pieces500")}</SelectItem>
-            <SelectItem value="b1000">{t("pieces1000")}</SelectItem>
-            <SelectItem value="b1500">{t("pieces1500")}</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Grid */}
-      <div className="mt-8">
-        {firstPage === undefined ? (
-          <div className="grid grid-cols-2 gap-[18px] md:grid-cols-3 lg:grid-cols-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="aspect-[3/4] w-full rounded-xl" />
-            ))}
-          </div>
-        ) : cards.length === 0 ? (
-          searchTerm ? (
-            <EmptyState
-              title={t("noResults", { query: searchTerm })}
-              sub={t("noResultsSub")}
-              action={
-                <Button variant="ghost" onClick={clearSearch}>
-                  {t("clearSearch")}
-                </Button>
-              }
+    <main>
+      <PageHero title={t("title")} lead={t("subtitle")} />
+      <Container className="py-8">
+        {/* Toolbar: search + brand + piece bucket. One row on >=sm, stacked on mobile. */}
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+          <div className="relative flex-1">
+            <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+            <Input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder={t("searchPlaceholder")}
+              className="pl-9"
             />
-          ) : (
-            <EmptyState title={t("empty")} sub={t("emptySub")} />
-          )
-        ) : (
-          <>
-            <PuzzleViewProvider
-              viewMode="grid"
-              className="grid grid-cols-2 gap-[18px] md:grid-cols-3 lg:grid-cols-4"
-            >
-              {cards.map((card) => (
-                <DefinitionCard key={card._id} card={card} />
-              ))}
-            </PuzzleViewProvider>
-            {lastPage && !lastPage.isDone && (
-              <div className="mt-8 flex justify-center">
-                <Button
-                  variant="outline"
-                  onClick={() => void loadMore()}
-                  disabled={loadingMore}
-                >
-                  {t("loadMore")}
-                </Button>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+          </div>
+          <Select
+            value={brand ?? "all"}
+            onValueChange={(v) => setBrand(v === "all" ? undefined : v)}
+          >
+            <SelectTrigger className="w-full sm:w-44">
+              <SelectValue placeholder={t("allBrands")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("allBrands")}</SelectItem>
+              {(brands ?? [])
+                .filter((b): b is string => !!b)
+                .map((b) => (
+                  <SelectItem key={b} value={b}>
+                    {b}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+          <Select
+            value={bucket ?? "all"}
+            onValueChange={(v) =>
+              setBucket(v === "all" ? undefined : (v as PieceBucket))
+            }
+          >
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue placeholder={t("allPieces")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("allPieces")}</SelectItem>
+              <SelectItem value="lt500">{t("piecesLt500")}</SelectItem>
+              <SelectItem value="b500">{t("pieces500")}</SelectItem>
+              <SelectItem value="b1000">{t("pieces1000")}</SelectItem>
+              <SelectItem value="b1500">{t("pieces1500")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-      {/* Conversion tail for logged-out visitors (members get redirected off /catalog/$id anyway,
+        {/* Grid */}
+        <div className="mt-8">
+          {firstPage === undefined ? (
+            <div className="grid grid-cols-2 gap-[18px] md:grid-cols-3 lg:grid-cols-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="aspect-[3/4] w-full rounded-xl" />
+              ))}
+            </div>
+          ) : cards.length === 0 ? (
+            searchTerm ? (
+              <EmptyState
+                title={t("noResults", { query: searchTerm })}
+                sub={t("noResultsSub")}
+                action={
+                  <Button variant="ghost" onClick={clearSearch}>
+                    {t("clearSearch")}
+                  </Button>
+                }
+              />
+            ) : (
+              <EmptyState title={t("empty")} sub={t("emptySub")} />
+            )
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-y-10 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
+                {cards.map((card) => (
+                  <DefinitionCard key={card._id} card={card} />
+                ))}
+              </div>
+              {lastPage && !lastPage.isDone && (
+                <div className="mt-8 flex justify-center">
+                  <Button
+                    variant="outline"
+                    onClick={() => void loadMore()}
+                    disabled={loadingMore}
+                  >
+                    {t("loadMore")}
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Conversion tail for logged-out visitors (members get redirected off /catalog/$id anyway,
           and this static CTA is harmless if they browse the list). */}
-      <div className="mt-12 flex justify-center">
-        <Button variant="brand" asChild>
-          <Link href="/sign-up">{t("joinCta")}</Link>
-        </Button>
-      </div>
+        <div className="mt-12 flex justify-center">
+          <Button variant="brand" asChild>
+            <Link href="/sign-up">{t("joinCta")}</Link>
+          </Button>
+        </div>
+      </Container>
     </main>
   );
 }

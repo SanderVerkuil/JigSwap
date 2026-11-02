@@ -1,5 +1,5 @@
 ---
-title: Accounts & Inloggen
+title: Accounts & inloggen
 order: 1
 summary: "Maak een account aan, log in en uit, en begrijp beveiligde pagina's."
 ---

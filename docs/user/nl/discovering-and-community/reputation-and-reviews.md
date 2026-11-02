@@ -1,5 +1,5 @@
 ---
-title: Reputatie & Beoordelingen
+title: Reputatie & beoordelingen
 order: 4
 summary: "Laat na uitwisselingen partnerbeoordelingen achter en bouw je reputatiebadge op."
 ---

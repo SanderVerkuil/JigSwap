@@ -1,5 +1,5 @@
 ---
-title: Veelgestelde Vragen & Problemen Oplossen
+title: Veelgestelde vragen & problemen oplossen
 order: 1
 summary: "Antwoorden op veelgestelde vragen en oplossingen voor zaken die misgaan."
 ---

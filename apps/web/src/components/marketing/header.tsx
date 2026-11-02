@@ -1,4 +1,5 @@
 import { Link } from "@/compat/link";
+import { FOCUS, PRESS } from "@/components/marketing/home/classes";
 import { Wordmark } from "@/components/marketing/wordmark";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,32 +27,68 @@ const NAV = [
   { href: "/contact", key: "contact" },
 ] as const;
 
-// Sticky marketing header: transparent over the hero, frosted card once
-// scrolled. Nav + language pill + mode toggle + auth actions.
-export function MarketingHeader() {
+const ICON_BUTTON = cn(
+  PRESS,
+  FOCUS,
+  "inline-flex h-11 w-10 cursor-pointer items-center justify-center rounded-[10px] text-[15px] font-semibold hover:bg-mk-sky-soft min-[760px]:w-11",
+);
+
+// Sticky marketing header: a plain 64px bar on the sky, solid, with no border or shadow. Nav, language,
+// mode, and one action. Its height is what the home page's stacking sheets offset from.
+export function MarketingHeader({
+  hideActionNearHero = false,
+}: {
+  // The home hero has the same action in marigold; the header's stays away until that one has gone.
+  hideActionNearHero?: boolean;
+}) {
   const t = useTranslations("marketing.nav");
-  const { pathname } = useLocation();
-  const [scrolled, setScrolled] = React.useState(false);
-  const [open, setOpen] = React.useState(false);
+  const [heroActionInView, setHeroActionInView] =
+    React.useState(hideActionNearHero);
 
   React.useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    if (!hideActionNearHero) return;
+    const action = document.querySelector("[data-hero-action]");
+    if (!action) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setHeroActionInView(entry.isIntersecting),
+      { rootMargin: "-64px 0px 0px 0px" },
+    );
+    observer.observe(action);
+    return () => observer.disconnect();
+  }, [hideActionNearHero]);
+  const { pathname } = useLocation();
+  const [open, setOpen] = React.useState(false);
+  const menuButton = React.useRef<HTMLButtonElement>(null);
+
+  // Escape closes the phone menu and hands focus back to the button that opened it.
+  React.useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+        menuButton.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
 
   const navLink = (item: (typeof NAV)[number], mobile = false) => (
     <Link
       key={item.href}
       href={item.href}
       onClick={() => setOpen(false)}
+      aria-current={pathname === item.href ? "page" : undefined}
       className={cn(
+        FOCUS,
         mobile
-          ? "text-[17px] font-semibold text-mk-text-strong py-3 px-1 border-b border-mk-border"
-          : "text-[15px] font-medium py-1.5 hover:text-mk-violet-600 transition-colors",
-        !mobile &&
-          (pathname === item.href ? "text-mk-violet-600" : "text-mk-text-body"),
+          ? "flex min-h-12 items-center text-[17px] font-semibold"
+          : cn(
+              PRESS,
+              "inline-flex min-h-11 items-center text-[16px] whitespace-nowrap hover:underline hover:decoration-2 hover:underline-offset-[5px]",
+              pathname === item.href &&
+                "underline decoration-2 underline-offset-[5px]",
+            ),
       )}
     >
       {t(item.key)}
@@ -59,79 +96,97 @@ export function MarketingHeader() {
   );
 
   return (
-    <header
-      className={cn(
-        "sticky top-0 z-50 transition-[background-color,border-color] duration-250",
-        "border-b",
-        scrolled
-          ? "bg-[color-mix(in_oklab,var(--mk-card)_86%,transparent)] backdrop-blur-md backdrop-saturate-150 border-mk-border"
-          : "bg-transparent border-transparent",
-      )}
-    >
-      <div className="w-full max-w-[1200px] mx-auto px-6 flex items-center gap-5 h-[70px]">
-        <Link href="/" aria-label="JigSwap">
-          <Wordmark />
+    <header className="sticky top-0 z-50 bg-mk-sky text-mk-text-strong">
+      <div className="flex h-16 w-full items-center gap-2 px-4 min-[760px]:gap-5 min-[760px]:px-10">
+        <Link
+          href="/"
+          aria-label="JigSwap"
+          className={cn(PRESS, FOCUS, "min-[1180px]:mr-2")}
+        >
+          <Wordmark size={24} />
         </Link>
-        <nav className="hidden min-[861px]:flex items-center gap-[26px] ml-3.5">
+        <nav
+          aria-label={t("mainNav")}
+          className="ml-auto hidden items-center gap-[clamp(14px,1.6vw,26px)] min-[1180px]:flex"
+        >
           {NAV.map((item) => navLink(item))}
         </nav>
-        <div className="ml-auto flex items-center gap-2.5">
+        <div className="ml-auto flex items-center gap-1 min-[1180px]:ml-0">
           <LangToggle />
           <ModeToggle />
           <Unauthenticated>
             <Link
               href="/sign-in"
-              className="hidden min-[861px]:inline-flex text-[15px] font-semibold text-mk-text-body py-1.5 px-1 hover:text-mk-violet-600 transition-colors"
+              className={cn(
+                PRESS,
+                FOCUS,
+                "mx-1 hidden min-h-11 items-center text-[16px] font-bold whitespace-nowrap hover:underline hover:decoration-2 hover:underline-offset-[5px] min-[380px]:inline-flex min-[1180px]:mx-1.5",
+              )}
             >
               {t("login")}
             </Link>
             <Button
-              variant="brand"
-              className="hidden min-[861px]:inline-flex"
+              className={cn(
+                "hidden h-11 max-w-60 overflow-hidden rounded-[10px] px-4 text-[16px] font-bold transition-[max-width,padding,opacity,scale] duration-200 ease-mk-out min-[1180px]:inline-flex",
+                heroActionInView && "invisible max-w-0 px-0 opacity-0",
+              )}
               asChild
             >
-              <Link href="/sign-up">{t("startTrading")}</Link>
+              <Link href="/sign-up">{t("startShelf")}</Link>
             </Button>
           </Unauthenticated>
           <Authenticated>
             <Button
-              variant="brand"
-              className="hidden min-[861px]:inline-flex"
+              className="hidden h-11 rounded-[10px] px-4 text-[16px] font-bold min-[1180px]:inline-flex"
               asChild
             >
               <Link href="/dashboard">{t("dashboard")}</Link>
             </Button>
           </Authenticated>
           <button
+            ref={menuButton}
             type="button"
             onClick={() => setOpen((o) => !o)}
             aria-label={open ? t("closeMenu") : t("openMenu")}
-            className="min-[861px]:hidden inline-flex items-center justify-center w-10 h-10 rounded-[10px] border border-mk-border bg-mk-card text-mk-text-body"
+            aria-expanded={open}
+            aria-controls="marketing-menu"
+            className={cn(ICON_BUTTON, "min-[1180px]:hidden")}
           >
-            {open ? <X size={20} /> : <Menu size={20} />}
+            {open ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
       </div>
       {open && (
-        <div className="min-[861px]:hidden border-t border-mk-border bg-mk-card">
-          <div className="w-full max-w-[1200px] mx-auto flex flex-col gap-1 px-6 pt-3 pb-[18px]">
+        <div id="marketing-menu" className="bg-mk-card min-[1180px]:hidden">
+          <div className="flex w-full flex-col px-4 pt-2 pb-4 min-[760px]:px-10">
             {NAV.map((item) => navLink(item, true))}
             <Unauthenticated>
               <Link
                 href="/sign-in"
                 onClick={() => setOpen(false)}
-                className="text-[17px] font-semibold text-mk-text-strong py-3 px-1 border-b border-mk-border"
+                className={cn(
+                  FOCUS,
+                  "flex min-h-12 items-center text-[17px] font-semibold",
+                )}
               >
                 {t("login")}
               </Link>
-              <Button variant="brand" className="mt-3 w-full" asChild>
+              <Button
+                variant="brand"
+                className="mt-3 h-[50px] w-full rounded-[10px] text-[18px] font-bold"
+                asChild
+              >
                 <Link href="/sign-up" onClick={() => setOpen(false)}>
-                  {t("startTrading")}
+                  {t("startShelf")}
                 </Link>
               </Button>
             </Unauthenticated>
             <Authenticated>
-              <Button variant="brand" className="mt-3 w-full" asChild>
+              <Button
+                variant="brand"
+                className="mt-3 h-[50px] w-full rounded-[10px] text-[18px] font-bold"
+                asChild
+              >
                 <Link href="/dashboard" onClick={() => setOpen(false)}>
                   {t("dashboard")}
                 </Link>
@@ -145,13 +200,12 @@ export function MarketingHeader() {
 }
 
 const LANGUAGES = [
-  { code: "en", name: "English", flag: "🇺🇸" },
-  { code: "nl", name: "Nederlands", flag: "🇳🇱" },
-] as const satisfies readonly { code: Locale; name: string; flag: string }[];
+  { code: "en", name: "English", short: "EN" },
+  { code: "nl", name: "Nederlands", short: "NL" },
+] as const satisfies readonly { code: Locale; name: string; short: string }[];
 
-// Flag + dropdown — switches the use-intl catalog via the locale cookie. With
-// no cookie set the trigger shows the system language (Accept-Language
-// negotiation in detectLocale).
+// Language code + dropdown — switches the use-intl catalog via the locale cookie. With no cookie set
+// the trigger shows the system language (Accept-Language negotiation in detectLocale).
 function LangToggle() {
   const t = useTranslations("marketing.nav");
   const locale = useLocale();
@@ -172,9 +226,9 @@ function LangToggle() {
         <button
           type="button"
           aria-label={t("switchLanguage")}
-          className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-mk-border bg-mk-card text-[18px] leading-none"
+          className={ICON_BUTTON}
         >
-          {current.flag}
+          {current.short}
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -184,7 +238,6 @@ function LangToggle() {
             onClick={() => change(language.code)}
             className={cn(locale === language.code && "bg-accent")}
           >
-            <span className="mr-2">{language.flag}</span>
             {language.name}
           </DropdownMenuItem>
         ))}
@@ -193,19 +246,20 @@ function LangToggle() {
   );
 }
 
-// Single round light/dark toggle (the marketing chrome skips the "system"
+// Single light/dark toggle (the marketing chrome skips the "system"
 // dropdown; next-themes still persists the choice app-wide).
 function ModeToggle() {
+  const t = useTranslations("marketing.nav");
   const { resolvedTheme, setTheme } = useTheme();
   return (
     <button
       type="button"
       onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-      aria-label="Toggle dark mode"
-      className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-mk-border bg-mk-card text-mk-text-body"
+      aria-label={t("toggleTheme")}
+      className={ICON_BUTTON}
     >
-      <Sun size={18} className="hidden dark:block" />
-      <Moon size={18} className="dark:hidden" />
+      <Sun size={20} className="hidden dark:block" />
+      <Moon size={20} className="dark:hidden" />
     </button>
   );
 }

@@ -1,5 +1,5 @@
 ---
-title: Inzichten & Statistieken
+title: Inzichten & statistieken
 order: 5
 summary: "Maak van je activiteit een persoonlijk dashboard en exporteer je gegevens."
 ---

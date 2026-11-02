@@ -1,5 +1,5 @@
 ---
-title: Uitlenen, Ruilen & Verkopen
+title: Uitlenen, ruilen & verkopen
 order: 2
 summary: "Vind een exemplaar, vraag het aan, stuur de eigenaar een bericht en beheer je uitwisselingen."
 ---

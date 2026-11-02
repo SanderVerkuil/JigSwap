@@ -1,5 +1,5 @@
 ---
-title: Lend, Swap & Sell
+title: Lend, swap & sell
 order: 2
 summary: "Find a copy, request it, message its owner, and manage your exchanges."
 ---

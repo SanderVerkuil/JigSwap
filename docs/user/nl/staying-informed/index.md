@@ -1,5 +1,5 @@
 ---
-title: Op de Hoogte Blijven
+title: Op de hoogte blijven
 order: 5
 summary: "Stuur andere leden berichten en beheer meldingen via de kanalen in-app, e-mail en webpush."
 ---

@@ -1,5 +1,5 @@
 ---
-title: Je Profiel & de 3D-Plank
+title: Je profiel & de 3D-plank
 order: 3
 summary: "Bewerk je openbare profiel, stel de 3D-plank samen en bepaal de zichtbaarheid van je profiel."
 ---

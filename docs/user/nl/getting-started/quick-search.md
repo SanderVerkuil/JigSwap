@@ -1,5 +1,5 @@
 ---
-title: Snel Zoeken
+title: Snel zoeken
 order: 4
 summary: "Gebruik het opdrachtenpalet om overal naartoe te springen en puzzels, mensen en meer te vinden."
 ---

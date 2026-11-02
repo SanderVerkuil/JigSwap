@@ -1,5 +1,5 @@
 ---
-title: Blocking & Reporting
+title: Blocking & reporting
 order: 5
 summary: "Block members you don't want contact with, report problems, and manage your blocks."
 ---
