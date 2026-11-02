@@ -3,6 +3,13 @@ import { Link } from "@/compat/link";
 import { RecallLoanButton } from "@/components/copies/recall-loan-button";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { CopyOwnerLine } from "@/components/household/copy-owner-line";
+import { AddToCollectionDialog } from "@/components/library/add-to-collection-dialog";
+import { BulkActionBar } from "@/components/library/bulk-action-bar";
+import {
+  canSelectCopy,
+  selectedInView,
+  toggleSelection,
+} from "@/components/library/bulk-selection";
 import {
   useCopyCardActions,
   useSolveStateByCopyId,
@@ -20,6 +27,7 @@ import {
   type MyPuzzlesSort,
   type MyPuzzlesStatus,
 } from "@/components/library/my-puzzles-filters";
+import { useBulkCopyActions } from "@/components/library/use-bulk-copy-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -48,10 +56,12 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   ArrowRight,
   ArrowUpDown,
+  Check,
   Grid,
   House,
   Lightbulb,
   List,
+  ListChecks,
   MoreHorizontal,
   Plus,
   X,
@@ -243,6 +253,30 @@ function PuzzlesPage() {
   const showAll = () =>
     setSearch({ q: undefined, status: undefined, owner: undefined });
 
+  // Selection mode (bulk actions). Only copies the viewer may manage can be selected, and an
+  // action covers only the selected copies the current filters show.
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
+  const [collectionPickerOpen, setCollectionPickerOpen] = useState(false);
+  const isSelectable = (copy: (typeof allCopies)[number]) =>
+    canSelectCopy(copy, householdAccessById.get(copy._id));
+  const selectableIds = filteredownedPuzzles
+    .filter(isSelectable)
+    .map((copy) => copy._id);
+  const selectedIds = new Set(selectedInView(selected, selectableIds));
+  const selectedCopies = filteredownedPuzzles.filter((copy) =>
+    selectedIds.has(copy._id),
+  );
+  const toggleSelecting = () => {
+    setSelecting((on) => !on);
+    setSelected(new Set());
+  };
+  const bulk = useBulkCopyActions({
+    isHousemateCopy: (copyDocId) => householdAccessById.has(copyDocId),
+  });
+
   // The page title lives in the shell page head; publish the actions there so the
   // page body carries no duplicate header. The count lives beside the filters. Secondary
   // destinations (My suggestions) sit in a ⋯ menu so Add Puzzle is the one header button.
@@ -403,10 +437,27 @@ function PuzzlesPage() {
         onChange={(status) =>
           setSearch({ status: status === "all" ? undefined : status })
         }
-        count={t("resultCount", {
-          count: filteredownedPuzzles.length,
-          total: allCopies.length,
-        })}
+        count={
+          <span className="flex items-center gap-3">
+            {t("resultCount", {
+              count: filteredownedPuzzles.length,
+              total: allCopies.length,
+            })}
+            {/* Selection mode for bulk actions, offered once there is a copy the viewer manages. */}
+            {allCopies.some(isSelectable) && (
+              <Button
+                type="button"
+                variant={selecting ? "secondary" : "outline"}
+                size="sm"
+                onClick={toggleSelecting}
+                className="text-foreground pointer-coarse:min-h-11"
+              >
+                {selecting ? <Check aria-hidden /> : <ListChecks aria-hidden />}
+                {selecting ? t("bulk.done") : t("bulk.select")}
+              </Button>
+            )}
+          </span>
+        }
       />
 
       {/* Puzzles Grid/List */}
@@ -440,11 +491,21 @@ function PuzzlesPage() {
           {filteredownedPuzzles.map((puzzle) => {
             const loan = loanByCopyDocId.get(puzzle._id);
             const household = householdAccessById.get(puzzle._id);
+            const selectable = isSelectable(puzzle);
             return (
               <PuzzleCard
                 key={puzzle._id}
                 puzzle={puzzle}
-                variant="default"
+                // While selecting, a tap selects (no navigation, no ⋯ menu); a copy the viewer
+                // can't manage shows a disabled checkbox.
+                variant={selecting ? "selection" : "default"}
+                isSelected={selecting && selectedIds.has(puzzle._id)}
+                onSelect={
+                  selecting && selectable
+                    ? (id) => setSelected((prev) => toggleSelection(prev, id))
+                    : undefined
+                }
+                className={selecting && !selectable ? "opacity-60" : undefined}
                 viewBasePath="/my-puzzles"
                 imageFit="contain"
                 {...cardActions(puzzle._id)}
@@ -464,11 +525,14 @@ function PuzzlesPage() {
                           name: borrowerName(loan),
                         })}
                       </Badge>
-                      {/* Recall ends the loan at once, so it asks first and reports either way. */}
-                      <RecallLoanButton
-                        loanId={loan.loanId}
-                        borrowerName={borrowerName(loan)}
-                      />
+                      {/* Recall ends the loan at once, so it asks first and reports either way.
+                          Hidden while selecting, where a tap on the card selects it. */}
+                      {!selecting && (
+                        <RecallLoanButton
+                          loanId={loan.loanId}
+                          borrowerName={borrowerName(loan)}
+                        />
+                      )}
                     </div>
                   )
                 }
@@ -477,6 +541,29 @@ function PuzzlesPage() {
           })}
         </PuzzleViewProvider>
       )}
+
+      {selecting && (
+        <BulkActionBar
+          selectedCount={selectedCopies.length}
+          selectableCount={selectableIds.length}
+          busy={bulk.busy}
+          onSelectAll={() =>
+            setSelected((prev) => new Set([...prev, ...selectableIds]))
+          }
+          onClear={() => setSelected(new Set())}
+          onExit={toggleSelecting}
+          onOffer={(action) => void bulk.offer(action, selectedCopies)}
+          onAddToCollection={() => setCollectionPickerOpen(true)}
+        />
+      )}
+      <AddToCollectionDialog
+        open={collectionPickerOpen}
+        onOpenChange={setCollectionPickerOpen}
+        count={selectedCopies.length}
+        onPick={(collection) =>
+          bulk.addToCollection(collection, selectedCopies)
+        }
+      />
 
       {dialogs}
     </div>

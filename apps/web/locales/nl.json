@@ -651,7 +651,43 @@
       "toast": "Je afbeelding wordt nog gecontroleerd. Tot die controle klaar is, ziet niemand hem, ook jij niet: in plaats daarvan staat er een standaardafbeelding. De controle wordt automatisch opnieuw gedaan, je hoeft niets te doen."
     },
     "bulk": {
-      "selectCopy": "{title} selecteren"
+      "select": "Selecteren",
+      "done": "Klaar",
+      "barLabel": "Acties voor de geselecteerde puzzels",
+      "exit": "Stoppen met selecteren",
+      "selectedCount": "{count, plural, =0 {Niets geselecteerd} one {# geselecteerd} other {# geselecteerd}}",
+      "selectAll": "Alles selecteren ({count})",
+      "clear": "Selectie wissen",
+      "selectCopy": "{title} selecteren",
+      "offers": "Aanbod",
+      "offerSwap": "Aanbieden voor ruil",
+      "offerLend": "Aanbieden om uit te lenen",
+      "withdraw": "Aanbod intrekken",
+      "addToCollection": "Aan collectie toevoegen",
+      "result": {
+        "offerSwap": "{count, plural, one {# puzzel aangeboden voor ruil} other {# puzzels aangeboden voor ruil}}",
+        "offerLend": "{count, plural, one {# puzzel aangeboden om uit te lenen} other {# puzzels aangeboden om uit te lenen}}",
+        "withdraw": "{count, plural, one {Aanbod ingetrokken voor # puzzel} other {Aanbod ingetrokken voor # puzzels}}",
+        "nothingChanged": "Er is niets veranderd",
+        "unchanged": "{count, plural, one {# stond al zo.} other {# stonden al zo.}}",
+        "onLoan": "{count, plural, one {# is uitgeleend en bleef zoals hij was.} other {# zijn uitgeleend en bleven zoals ze waren.}}",
+        "reserved": "{count, plural, one {# hoort bij een lopende uitwisseling en bleef zoals hij was.} other {# horen bij een lopende uitwisseling en bleven zoals ze waren.}}",
+        "notAllowed": "{count, plural, one {# mag je niet wijzigen.} other {# mag je niet wijzigen.}}",
+        "failed": "{count, plural, one {# kon niet worden opgeslagen. Probeer het opnieuw.} other {# konden niet worden opgeslagen. Probeer het opnieuw.}}",
+        "visibleWhileOffered": "{count, plural, one {# privépuzzel is zichtbaar zolang je hem aanbiedt, en weer privé zodra je elk aanbod intrekt.} other {# privépuzzels zijn zichtbaar zolang je ze aanbiedt, en weer privé zodra je elk aanbod intrekt.}}",
+        "undo": "Ongedaan maken",
+        "undoFailed": "Ongedaan maken lukte niet. Controleer de puzzels en probeer het opnieuw."
+      },
+      "collection": {
+        "title": "Aan een collectie toevoegen",
+        "description": "{count, plural, one {Kies een collectie voor # puzzel.} other {Kies een collectie voor # puzzels.}}",
+        "none": "Je hebt nog geen collectie.",
+        "create": "Collectie maken",
+        "added": "{count, plural, one {# puzzel staat nu in {name}} other {# puzzels staan nu in {name}}}",
+        "noneAdded": "Er is niets aan {name} toegevoegd",
+        "housemates": "{count, plural, one {# is van een huisgenoot en komt niet in je collecties.} other {# zijn van huisgenoten en komen niet in je collecties.}}",
+        "failed": "{count, plural, one {# kon niet worden toegevoegd. Probeer het opnieuw.} other {# konden niet worden toegevoegd. Probeer het opnieuw.}}"
+      }
     }
   },
   "trades": {

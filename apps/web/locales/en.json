@@ -651,7 +651,43 @@
       "toast": "Your image is still being checked. Until it has passed, nobody sees it, you included: a placeholder is shown instead. It is checked again automatically, so there is nothing you need to do."
     },
     "bulk": {
-      "selectCopy": "Select {title}"
+      "select": "Select",
+      "done": "Done",
+      "barLabel": "Actions for the selected puzzles",
+      "exit": "Stop selecting",
+      "selectedCount": "{count, plural, =0 {Nothing selected} one {# selected} other {# selected}}",
+      "selectAll": "Select all ({count})",
+      "clear": "Clear selection",
+      "selectCopy": "Select {title}",
+      "offers": "Offers",
+      "offerSwap": "Offer for swap",
+      "offerLend": "Offer to lend",
+      "withdraw": "Withdraw offers",
+      "addToCollection": "Add to collection",
+      "result": {
+        "offerSwap": "{count, plural, one {Offered # puzzle for swap} other {Offered # puzzles for swap}}",
+        "offerLend": "{count, plural, one {Offered # puzzle to lend} other {Offered # puzzles to lend}}",
+        "withdraw": "{count, plural, one {Withdrew the offers on # puzzle} other {Withdrew the offers on # puzzles}}",
+        "nothingChanged": "Nothing changed",
+        "unchanged": "{count, plural, one {# was already set that way.} other {# were already set that way.}}",
+        "onLoan": "{count, plural, one {# is on loan, so it was left as it is.} other {# are on loan, so they were left as they are.}}",
+        "reserved": "{count, plural, one {# is part of an ongoing exchange, so it was left as it is.} other {# are part of an ongoing exchange, so they were left as they are.}}",
+        "notAllowed": "{count, plural, one {# isn't yours to change.} other {# aren't yours to change.}}",
+        "failed": "{count, plural, one {# couldn't be saved. Try again.} other {# couldn't be saved. Try again.}}",
+        "visibleWhileOffered": "{count, plural, one {# private puzzle is visible while it's on offer and private again once you withdraw every offer.} other {# private puzzles are visible while they're on offer and private again once you withdraw every offer.}}",
+        "undo": "Undo",
+        "undoFailed": "Couldn't undo that. Check the puzzles and try again."
+      },
+      "collection": {
+        "title": "Add to a collection",
+        "description": "{count, plural, one {Choose a collection for # puzzle.} other {Choose a collection for # puzzles.}}",
+        "none": "You don't have a collection yet.",
+        "create": "Create a collection",
+        "added": "{count, plural, one {# puzzle is now in {name}} other {# puzzles are now in {name}}}",
+        "noneAdded": "Nothing was added to {name}",
+        "housemates": "{count, plural, one {# belongs to a household member and stays out of your collections.} other {# belong to household members and stay out of your collections.}}",
+        "failed": "{count, plural, one {# couldn't be added. Try again.} other {# couldn't be added. Try again.}}"
+      }
     }
   },
   "trades": {
