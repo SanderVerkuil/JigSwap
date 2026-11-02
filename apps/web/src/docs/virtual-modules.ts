@@ -96,8 +96,30 @@ function localesOf(pages: readonly DocPage[]): string[] {
   return [...new Set(pages.map((p) => p.locale))];
 }
 
+const UNSAFE_IN_CODE: Readonly<Record<string, string>> = {
+  "<": "\\u003C",
+  ">": "\\u003E",
+  "\b": "\\b",
+  "\f": "\\f",
+  "\n": "\\n",
+  "\r": "\\r",
+  "\t": "\\t",
+  "\0": "\\0",
+  "\u2028": "\\u2028",
+  "\u2029": "\\u2029",
+};
+
+// JSON is a JS literal, except that it may still hold characters that end a script element or a
+// line. Doc text and slugs come from Markdown files, so escape those before generating code.
+function toCodeLiteral(value: unknown): string {
+  return JSON.stringify(value).replace(
+    /[<>\b\f\n\r\t\0\u2028\u2029]/g,
+    (char) => UNSAFE_IN_CODE[char] ?? char,
+  );
+}
+
 function exportConst(name: string, value: unknown): string {
-  return `export const ${name} = ${JSON.stringify(value)};\n`;
+  return `export const ${name} = ${toCodeLiteral(value)};\n`;
 }
 
 // Each entry a lazy import, so the bundler emits one chunk per target module.
@@ -108,7 +130,7 @@ function exportLoaders(
   const body = entries
     .map(
       ([key, moduleId]) =>
-        `  ${JSON.stringify(key)}: () => import(${JSON.stringify(moduleId)}),`,
+        `  ${toCodeLiteral(key)}: () => import(${toCodeLiteral(moduleId)}),`,
     )
     .join("\n");
   return `export const ${name} = {\n${body}\n};\n`;
