@@ -131,7 +131,7 @@ function BreakdownBars({
             accessibilityLayer={false}
             data={rows}
             layout="vertical"
-            margin={{ left: 8, right: 24 }}
+            margin={{ left: 8, right: 32 }}
           >
             <YAxis
               dataKey="label"
@@ -141,7 +141,14 @@ function BreakdownBars({
               width={96}
               tickMargin={4}
             />
-            <XAxis type="number" hide allowDecimals={false} />
+            {/* The longest bar fills the row. With the default domain a maximum of 1 drew a
+                quarter of it, on a scale from 0 to 4. */}
+            <XAxis
+              type="number"
+              hide
+              allowDecimals={false}
+              domain={[0, "dataMax"]}
+            />
             <ChartTooltip content={<ChartTooltipContent />} />
             <Bar
               dataKey="value"
