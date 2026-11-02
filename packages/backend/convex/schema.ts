@@ -424,8 +424,10 @@ export default defineSchema({
       "ownerPrivate",
       "listedAt",
     ])
-    // One member's copies of one definition (the definition view's household owner count).
-    .index("by_owner_puzzle", ["ownerId", "puzzleId"]),
+    // One member's copies of one definition (the definition view's household owner count and
+    // "you own this"), by either link a copy has to it.
+    .index("by_owner_puzzle", ["ownerId", "puzzleId"])
+    .index("by_owner_definition", ["ownerId", "puzzleDefinitionId"]),
 
   // This is a table for storing images of owned puzzles
   ownedPuzzleImages: defineTable({
