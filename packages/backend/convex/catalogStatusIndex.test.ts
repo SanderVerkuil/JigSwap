@@ -2,6 +2,7 @@ import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { PENDING_QUEUE_LIMIT } from "./catalog/pendingQueue";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
@@ -223,6 +224,32 @@ describe("catalog reads by status (PERF-B8)", () => {
         {},
       ),
     ).rejects.toThrow(/Forbidden/);
+  });
+
+  // SEC-26: a flood of submissions can't make the moderation queue fail its read.
+  test("the moderation queue holds the newest PENDING_QUEUE_LIMIT rows, however many wait", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await t.run(async (ctx) => {
+      const member = await ctx.db.query("users").first();
+      for (let i = 0; i < PENDING_QUEUE_LIMIT + 5; i++) {
+        await ctx.db.insert("puzzles", {
+          title: `Flood ${i}`,
+          pieceCount: 500,
+          status: "pending",
+          submittedBy: member!._id,
+          createdAt: NOW,
+          updatedAt: NOW,
+        });
+      }
+    });
+
+    const queue = await asAdmin(t).query(
+      api.catalog.listPendingPuzzleDefinitions.listPendingPuzzleDefinitions,
+      {},
+    );
+    expect(queue).toHaveLength(PENDING_QUEUE_LIMIT);
+    expect(queue[0]?.title).toBe(`Flood ${PENDING_QUEUE_LIMIT + 4}`);
   });
 
   test("the sitemap feed pages through approved rows only, oldest first", async () => {

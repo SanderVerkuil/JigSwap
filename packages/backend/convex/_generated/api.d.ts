@@ -99,6 +99,7 @@ import type * as catalog_mappers from "../catalog/mappers.js";
 import type * as catalog_migratePublishers from "../catalog/migratePublishers.js";
 import type * as catalog_moderateBoxArt from "../catalog/moderateBoxArt.js";
 import type * as catalog_myFavoritePuzzleIds from "../catalog/myFavoritePuzzleIds.js";
+import type * as catalog_pendingQueue from "../catalog/pendingQueue.js";
 import type * as catalog_proposalReadModel from "../catalog/proposalReadModel.js";
 import type * as catalog_proposeDefinitionChange from "../catalog/proposeDefinitionChange.js";
 import type * as catalog_reenablePuzzleDefinition from "../catalog/reenablePuzzleDefinition.js";
@@ -709,6 +710,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/migratePublishers": typeof catalog_migratePublishers;
   "catalog/moderateBoxArt": typeof catalog_moderateBoxArt;
   "catalog/myFavoritePuzzleIds": typeof catalog_myFavoritePuzzleIds;
+  "catalog/pendingQueue": typeof catalog_pendingQueue;
   "catalog/proposalReadModel": typeof catalog_proposalReadModel;
   "catalog/proposeDefinitionChange": typeof catalog_proposeDefinitionChange;
   "catalog/reenablePuzzleDefinition": typeof catalog_reenablePuzzleDefinition;
