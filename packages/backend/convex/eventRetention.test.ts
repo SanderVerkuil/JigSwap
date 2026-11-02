@@ -214,7 +214,7 @@ describe("domainEvents retention", () => {
 
     const events = sweepEvents();
     expect(events).toHaveLength(pages);
-    expect(events.at(-1)).toMatchObject({
+    expect(events[events.length - 1]).toMatchObject({
       is_done: true,
       capped: true,
       dry_run: true,
