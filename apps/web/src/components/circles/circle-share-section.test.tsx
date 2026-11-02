@@ -170,6 +170,32 @@ describe("CircleShareSection search", () => {
 });
 
 describe("CircleShareSection", () => {
+  it("says why housemates' puzzles aren't listed, only when the library holds some", () => {
+    const note = en.circles.share.housematesNote;
+    renderSection({ copies: [copy("c_light", "Lighthouse")] });
+    expect(screen.queryByText(note)).toBeNull();
+    cleanup();
+
+    renderSection({
+      copies: [
+        copy("c_light", "Lighthouse"),
+        copy("c_mate", "Housemate's", { viewerAccess: "manage" }),
+      ],
+    });
+    expect(screen.getByText(note)).toBeTruthy();
+    expect(option("Lighthouse")).toBeTruthy();
+    expect(screen.queryByText("Housemate's")).toBeNull();
+  });
+
+  // "Your library is empty" would be false: it holds their puzzles.
+  it("explains the empty list when only housemates' puzzles are in the library", () => {
+    renderSection({
+      copies: [copy("c_mate", "Housemate's", { viewerAccess: "manage" })],
+    });
+    expect(screen.getByText(en.circles.share.housematesNote)).toBeTruthy();
+    expect(screen.queryByText(en.circles.share.noCopies)).toBeNull();
+  });
+
   it("ticks the copies already shared and says which ones members won't see", () => {
     renderSection();
 

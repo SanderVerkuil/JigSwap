@@ -2564,6 +2564,7 @@
       "searchPlaceholder": "Zoek in je puzzels…",
       "noMatches": "Geen puzzels gevonden.",
       "noCopies": "Je bibliotheek is nog leeg. Voeg puzzels toe om ze hier te delen.",
+      "housematesNote": "Alleen je eigen puzzels staan hier. Huisgenoten delen die van hen zelf.",
       "loadError": "Je puzzels konden niet worden geladen.",
       "shared": "Gedeeld",
       "willShare": "Wordt gedeeld",

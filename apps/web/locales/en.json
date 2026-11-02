@@ -2564,6 +2564,7 @@
       "searchPlaceholder": "Search your puzzles…",
       "noMatches": "No puzzles match your search.",
       "noCopies": "Your library is empty. Add puzzles to share them here.",
+      "housematesNote": "Only your own puzzles are listed. Housemates share theirs themselves.",
       "loadError": "Couldn't load your puzzles.",
       "shared": "Shared",
       "willShare": "Will be shared",
