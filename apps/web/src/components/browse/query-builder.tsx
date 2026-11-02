@@ -45,7 +45,7 @@ import {
 import { DIFFICULTIES, type Difficulty } from "@/lib/catalogue-filters";
 import { cn } from "@/lib/utils";
 import { Plus, X } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 /* ----------------------------------------------------------------- types */
 
@@ -99,6 +99,9 @@ export function QueryBuilder({
 }: QueryBuilderProps) {
   const conditionLabel = useConditionLabel();
   const [addOpen, setAddOpen] = useState(false);
+  // A removed condition's × (and Clear All) unmounts with it: focus moves here first, so keyboard
+  // and screen-reader users stay in the filters instead of restarting from the top of the page.
+  const addFilterRef = useRef<HTMLButtonElement>(null);
   // Which Select should auto-open after being added, and which control to focus.
   const [openSelect, setOpenSelect] = useState<FieldKey | null>(null);
   const [pendingFocus, setPendingFocus] = useState<FieldKey | null>(null);
@@ -177,6 +180,7 @@ export function QueryBuilder({
   };
 
   const removeField = (field: FieldKey) => {
+    addFilterRef.current?.focus();
     unreveal(field);
     if (openSelect === field) setOpenSelect(null);
     if (pendingFocus === field) setPendingFocus(null);
@@ -203,6 +207,7 @@ export function QueryBuilder({
   };
 
   const clearAll = () => {
+    addFilterRef.current?.focus();
     setRevealed(new Set());
     setOpenSelect(null);
     setPendingFocus(null);
@@ -226,12 +231,14 @@ export function QueryBuilder({
         {/* Add Filter — themed Popover + Command list of the fields not yet added. */}
         <Popover open={addOpen} onOpenChange={setAddOpen}>
           <PopoverTrigger asChild>
+            {/* Never disabled, or it couldn't take that focus: with every condition on screen its
+                menu says none are left. */}
             <Button
+              ref={addFilterRef}
               type="button"
               variant="outline"
               size="sm"
               className="rounded-full"
-              disabled={availableFields.length === 0}
               aria-label={tBrowse("addFilter")}
             >
               <Plus className="h-4 w-4" />

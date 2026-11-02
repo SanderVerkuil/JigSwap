@@ -37,6 +37,48 @@ const renderBuilder = (initial: Partial<QueryBuilderState> = {}) =>
 
 afterEach(cleanup);
 
+describe("QueryBuilder: focus when a condition goes away", () => {
+  const addFilter = () =>
+    screen.getByRole("button", { name: en.browse.addFilter });
+
+  it("moves to Add Filter when a condition is removed", () => {
+    renderBuilder({ difficulty: "hard", availability: ["forTrade"] });
+    const remove = screen.getByRole("button", {
+      name: `${en.browse.removeFilter}: ${en.browse.fieldAvailability}`,
+    });
+    remove.focus();
+    fireEvent.click(remove);
+
+    expect(document.activeElement).toBe(addFilter());
+    expect(
+      screen.queryByRole("button", {
+        name: `${en.browse.removeFilter}: ${en.browse.fieldAvailability}`,
+      }),
+    ).toBeNull();
+  });
+
+  it("moves to Add Filter on Clear All", () => {
+    renderBuilder({ difficulty: "hard" });
+    const clear = screen.getByRole("button", { name: en.browse.clearFilters });
+    clear.focus();
+    fireEvent.click(clear);
+
+    expect(document.activeElement).toBe(addFilter());
+  });
+
+  it("can move there even with every condition on screen", () => {
+    renderBuilder({
+      category: "cat_1",
+      condition: "good",
+      difficulty: "hard",
+      minPieces: "500",
+      availability: ["forTrade"],
+      text: "lake",
+    });
+    expect((addFilter() as HTMLButtonElement).disabled).toBe(false);
+  });
+});
+
 describe("QueryBuilder: piece count", () => {
   it("shows short placeholders that fit and keeps the full names for screen readers", () => {
     renderBuilder({ minPieces: "", maxPieces: "1000" });
