@@ -53,7 +53,7 @@ export const recordPastCompletions = mutation({
     }
     // Every solve of the batch counts against the member's daily solve budget (SEC-30); a batch
     // that doesn't fit is refused whole.
-    await enforceRateLimit(ctx, "solveLog", me, args.items.length);
+    await enforceRateLimit(ctx, "solveLog", me, undefined, args.items.length);
 
     if (new Set(args.items.map((i) => i.copyId)).size !== args.items.length) {
       throw new ConvexError({
