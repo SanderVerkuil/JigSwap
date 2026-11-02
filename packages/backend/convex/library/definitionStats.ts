@@ -40,6 +40,8 @@ import { isOpenAvailability } from "./openListing";
 export type DefinitionTotals = RatingTotals &
   CompletionTotals & {
     communityOwners: number;
+    // Absent on a row its recompute hasn't reached since the field was added.
+    ownerCount?: number;
     publicAvailable: PublicAvailability["byType"];
   };
 
@@ -82,6 +84,7 @@ export const computeDefinitionTotals = async (
     ...completions,
     // No viewer: private copies never count here (the member view adds its household's own).
     communityOwners: communityOwnersOf(owned),
+    ownerCount: new Set(owned.map((copy) => copy.ownerId)).size,
     publicAvailable: byType,
   };
 };
@@ -127,6 +130,7 @@ const totalsKey = (t: StoredTotals | DefinitionTotals): string =>
     t.finishDaysSum,
     t.finishDaysCount,
     t.communityOwners,
+    t.ownerCount ?? null,
     t.publicAvailable.swap,
     t.publicAvailable.lend,
     t.publicAvailable.sale,
@@ -327,7 +331,12 @@ export const recompute = internalMutation({
       }
       return;
     }
-    if (row.totals !== undefined && row.stale !== true) {
+    // A row from before ownerCount differs from its sources without having missed anything.
+    if (
+      row.totals !== undefined &&
+      row.totals.ownerCount !== undefined &&
+      row.stale !== true
+    ) {
       logEvent({
         event: "library.definitionStats.drift",
         outcome: "success",

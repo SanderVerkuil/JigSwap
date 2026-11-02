@@ -9,9 +9,11 @@ import {
   clampPaginationOpts,
   clampUnpinnedPaginationOpts,
 } from "../lib/pageSize";
+import { readMemberLibraryCounts } from "../library/memberLibraryCounts";
 
-// Admin-only, but the page size is still the client's request: one page joins each member's
-// library size, so it holds at most this many members (the console asks for 25).
+// Admin-only, but the page size is still the client's request (the console asks for 25). A member's
+// library size comes from their counter row, one read however many copies they hold, so a member
+// adding copies by the thousand can't break the page used to find them.
 const MAX_PAGE_SIZE = 50;
 
 // Admin read model: every member, paginated newest-first, with the display-only mirrored Clerk
@@ -33,12 +35,7 @@ const toAdminUserView = async (
   avatar: user.avatar,
   isActive: user.isActive,
   role: user.role,
-  ownedCopyCount: (
-    await ctx.db
-      .query("ownedPuzzles")
-      .withIndex("by_owner", (q) => q.eq("ownerId", user._id))
-      .collect()
-  ).length,
+  ownedCopyCount: (await readMemberLibraryCounts(ctx, user._id)).owned,
   createdAt: user.createdAt,
 });
 

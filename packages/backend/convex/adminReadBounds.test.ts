@@ -1,6 +1,6 @@
 import { convexTest, type TestConvex } from "convex-test";
-import { beforeEach, describe, expect, test } from "vitest";
-import { api } from "./_generated/api";
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { MAX_DEFINITION_PROPOSALS } from "./catalog/listProposalsForDefinition";
 import schema from "./schema";
@@ -91,5 +91,201 @@ describe("catalog/listProposalsForDefinition", () => {
     const { proposals, capped } = await read();
     expect(capped).toBe(false);
     expect(proposals).toHaveLength(MAX_DEFINITION_PROPOSALS);
+  });
+});
+
+describe("the member and definition lists", () => {
+  // More copies of one definition by one member than the read limit, under a counter row and totals
+  // as the writes that added them keep them.
+  const seedCopies = () =>
+    t.run(async (ctx) => {
+      for (let i = 0; i < READ_LIMIT + 50; i++) {
+        await ctx.db.insert("ownedPuzzles", {
+          puzzleId,
+          ownerId: member,
+          heldBy: member,
+          condition: "good",
+          availability: { forTrade: false, forSale: false, forLend: false },
+          createdAt: 1,
+          updatedAt: 1,
+        });
+      }
+      await ctx.db.insert("memberLibraryCounts", {
+        memberId: member,
+        owned: READ_LIMIT + 50,
+        forTrade: 0,
+      });
+    });
+  const stored = (ownerCount: number | undefined) =>
+    t.run((ctx) =>
+      ctx.db.insert("definitionStats", {
+        puzzleId,
+        computedAt: 1,
+        totals: {
+          ratingCount: 0,
+          ratingSum: 0,
+          breakdown: [0, 0, 0, 0, 0],
+          completedCount: 0,
+          finishDaysSum: 0,
+          finishDaysCount: 0,
+          communityOwners: 0,
+          ownerCount,
+          publicAvailable: { swap: 0, lend: 0, sale: 0 },
+        },
+      }),
+    );
+
+  test("listUsers reads a member's size from the counter", async () => {
+    await seedCopies();
+    const { page } = await asAdmin().query(api.admin.listUsers.listUsers, {
+      paginationOpts: { numItems: 25, cursor: null },
+    });
+    const row = page.find((user) => user._id === member);
+    expect(row?.ownedCopyCount).toBe(READ_LIMIT + 50);
+  });
+
+  test("listUsers counts a member without a counter yet", async () => {
+    await t.run((ctx) =>
+      ctx.db.insert("ownedPuzzles", {
+        puzzleId,
+        ownerId: member,
+        heldBy: member,
+        condition: "good",
+        availability: { forTrade: false, forSale: false, forLend: false },
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    const { page } = await asAdmin().query(api.admin.listUsers.listUsers, {
+      paginationOpts: { numItems: 25, cursor: null },
+    });
+    expect(page.find((user) => user._id === member)?.ownedCopyCount).toBe(1);
+  });
+
+  test("listPuzzleDefinitions reads a definition's owners from its totals", async () => {
+    await seedCopies();
+    await stored(1);
+    const { page } = await asAdmin().query(
+      api.admin.listPuzzleDefinitions.listPuzzleDefinitions,
+      { paginationOpts: { numItems: 25, cursor: null } },
+    );
+    expect(page[0]?.ownerCount).toBe(1);
+  });
+
+  test("listPuzzleDefinitions stays within the read limit before the totals have the count", async () => {
+    await seedCopies();
+    await stored(undefined);
+    const { page } = await asAdmin().query(
+      api.admin.listPuzzleDefinitions.listPuzzleDefinitions,
+      { paginationOpts: { numItems: 25, cursor: null } },
+    );
+    expect(page[0]?.ownerCount).toBe(1);
+  });
+
+  test("a recompute writes every owner into the count, private copies included", async () => {
+    await t.run(async (ctx) => {
+      const other = await ctx.db.insert("users", {
+        clerkId: "clerk_other",
+        email: "other@example.com",
+        name: "Other",
+        isActive: true,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      for (const [ownerId, visibility] of [
+        [member, "visible"],
+        [other, "private"],
+      ] as const) {
+        await ctx.db.insert("ownedPuzzles", {
+          puzzleId,
+          ownerId,
+          heldBy: ownerId,
+          condition: "good",
+          availability: { forTrade: false, forSale: false, forLend: false },
+          visibility,
+          visibilityAuthoritative: true,
+          createdAt: 1,
+          updatedAt: 1,
+        });
+      }
+    });
+    await t.mutation(internal.library.definitionStats.recompute, { puzzleId });
+    const row = await t.run((ctx) =>
+      ctx.db
+        .query("definitionStats")
+        .withIndex("by_puzzle", (q) => q.eq("puzzleId", puzzleId))
+        .unique(),
+    );
+    expect(row?.totals?.ownerCount).toBe(2);
+    expect(row?.totals?.communityOwners).toBe(1);
+  });
+
+  test("a row from before the count isn't logged as drift when its recompute fills it", async () => {
+    await stored(undefined);
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    await t.mutation(internal.library.definitionStats.recompute, { puzzleId });
+    expect(
+      log.mock.calls.filter(([line]) => String(line).includes("drift")),
+    ).toEqual([]);
+    vi.restoreAllMocks();
+  });
+});
+
+describe("admin/getPuzzleDefinitionDetail", () => {
+  test("reads a bounded number of copies and says when it stopped", async () => {
+    t = convexTest({
+      schema,
+      modules,
+      transactionLimits: { documentsRead: 2200 },
+    });
+    const seeded = await t.run(async (ctx) => {
+      await ctx.db.insert("users", {
+        clerkId: "clerk_admin",
+        email: "admin@example.com",
+        name: "Admin",
+        isActive: true,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const owner = await ctx.db.insert("users", {
+        clerkId: "clerk_owner",
+        email: "owner@example.com",
+        name: "Owner",
+        isActive: true,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const definition = await ctx.db.insert("puzzles", {
+        title: "Starry Night",
+        pieceCount: 1000,
+        status: "approved",
+        submittedBy: owner,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      return { owner, definition };
+    });
+    for (let batch = 0; batch < 3; batch++) {
+      await t.run(async (ctx) => {
+        for (let i = 0; i < 1000; i++) {
+          await ctx.db.insert("ownedPuzzles", {
+            puzzleId: seeded.definition,
+            ownerId: seeded.owner,
+            heldBy: seeded.owner,
+            condition: "good",
+            availability: { forTrade: false, forSale: false, forLend: false },
+            createdAt: 1,
+            updatedAt: 1,
+          });
+        }
+      });
+    }
+    const { stats } = await asAdmin().query(
+      api.admin.getPuzzleDefinitionDetail.getPuzzleDefinitionDetail,
+      { puzzleId: seeded.definition },
+    );
+    expect(stats.capped).toBe(true);
+    expect(stats.copies.total).toBe(2000);
+    expect(stats.ownerCount).toBe(1);
   });
 });

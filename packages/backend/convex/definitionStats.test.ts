@@ -287,6 +287,8 @@ describe("definitionStats backfill and nightly reconcile", () => {
       finishDaysCount: 2,
       // alice, bob (their open copy is visible) and noah; carol holds only a private copy.
       communityOwners: 3,
+      // The admin console's count takes carol in.
+      ownerCount: 4,
       // noah's profile is private, so his copy for sale is not counted publicly.
       publicAvailable: { swap: 1, lend: 1, sale: 0 },
     });
@@ -298,6 +300,7 @@ describe("definitionStats backfill and nightly reconcile", () => {
       finishDaysSum: 0,
       finishDaysCount: 0,
       communityOwners: 0,
+      ownerCount: 0,
       publicAvailable: { swap: 0, lend: 0, sale: 0 },
     });
   });

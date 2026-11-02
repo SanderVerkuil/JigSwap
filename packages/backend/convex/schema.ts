@@ -2180,6 +2180,8 @@ export default defineSchema({
   //               absent until the first recompute, and reads compute live meanwhile
   //     breakdown        rated reviews per star, [5★, 4★, 3★, 2★, 1★]
   //     communityOwners  distinct owners of a copy that is not private
+  //     ownerCount       distinct owners of any copy, private ones included, for the admin console;
+  //                      absent until the row's next recompute (nightly at the latest)
   //     publicAvailable  open copies of public-profile owners, by priority swap type
   //   stale       a write changed the definition's sources and a recompute is scheduled; the
   //               totals are still served until it lands
@@ -2198,6 +2200,7 @@ export default defineSchema({
         finishDaysSum: v.number(),
         finishDaysCount: v.number(),
         communityOwners: v.number(),
+        ownerCount: v.optional(v.number()),
         publicAvailable: v.object({
           swap: v.number(),
           lend: v.number(),

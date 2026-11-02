@@ -10,11 +10,14 @@ import {
   clampPaginationOpts,
   clampUnpinnedPaginationOpts,
 } from "../lib/pageSize";
+import { definitionTotalsOf } from "../library/definitionStats";
 
 // Admin-only, but the page size is still the client's request: each row joins its submitter, its
-// box art and every copy of it (owner count), so a page holds at most this many (the table asks
-// for 25).
+// box art and its owner count, so a page holds at most this many (the table asks for 25).
 const MAX_PAGE_SIZE = 50;
+// Copies of one definition read for its owner count until its totals have one. Past this it is a
+// lower bound, for at most a day: the nightly reconcile writes it for every definition.
+const OWNER_SCAN_CAP = 100;
 
 // Admin read model: EVERY catalog definition regardless of status, newest first, paginated.
 // The public lists filter to approved; this console must also show pending/rejected/disabled.
@@ -22,9 +25,10 @@ const MAX_PAGE_SIZE = 50;
 // uses the catalogue search index (by_searchable_text, relevance order) over every status, narrowed
 // to `status` at the index when both are given.
 // Each row joins the admin metadata the /admin/puzzles table renders: submitter display name,
-// resolved thumbnail URL (plus whether its blob is gone), and the distinct-owner count
-// (ownedPuzzles.by_puzzle → dedupe ownerId, the getPuzzleDefinitionView pattern). Admin-only,
-// gated exactly like getModerationActivity.
+// resolved thumbnail URL (plus whether its blob is gone), and the distinct-owner count from the
+// definition's totals (library/definitionStats), one read however many copies it has, so a member
+// adding copies by the thousand can't break the page used to find them. Admin-only, gated exactly
+// like getModerationActivity.
 export const listPuzzleDefinitions = query({
   args: {
     paginationOpts: paginationOptsValidator,
@@ -76,13 +80,16 @@ export const listPuzzleDefinitions = query({
     const page = await Promise.all(
       puzzles.page.map(
         async (puzzle): Promise<AdminPuzzleDefinitionRowView> => {
-          const owned = await ctx.db
-            .query("ownedPuzzles")
-            .withIndex("by_puzzle", (q) => q.eq("puzzleId", puzzle._id))
-            .collect();
-          const distinctOwners = new Set(
-            owned.map((copy) => copy.ownerId as unknown as string),
-          );
+          const ownerCount =
+            (await definitionTotalsOf(ctx, puzzle._id))?.ownerCount ??
+            new Set(
+              (
+                await ctx.db
+                  .query("ownedPuzzles")
+                  .withIndex("by_puzzle", (q) => q.eq("puzzleId", puzzle._id))
+                  .take(OWNER_SCAN_CAP)
+              ).map((copy) => copy.ownerId),
+            ).size;
           const submitter = await ctx.db.get(puzzle.submittedBy);
           return {
             _id: puzzle._id as string,
@@ -98,7 +105,7 @@ export const listPuzzleDefinitions = query({
             imageMissing:
               puzzle.image !== undefined &&
               (await ctx.db.system.get(puzzle.image)) === null,
-            ownerCount: distinctOwners.size,
+            ownerCount,
           };
         },
       ),

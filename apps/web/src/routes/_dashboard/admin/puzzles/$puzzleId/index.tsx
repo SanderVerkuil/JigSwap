@@ -95,6 +95,9 @@ function AdminPuzzleDetailPage() {
 
   const { definition, stats, owners, audit } = data;
   const proposals = proposalHistory?.proposals;
+  // Past the copies the read stops at, each number is a lower bound.
+  const countLabel = (count: number) =>
+    `${format.number(count)}${stats.capped ? "+" : ""}`;
 
   return (
     <div className="space-y-6">
@@ -179,7 +182,7 @@ function AdminPuzzleDetailPage() {
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
           <div>
             <div className="text-2xl font-semibold tabular-nums">
-              {stats.ownerCount}
+              {countLabel(stats.ownerCount)}
             </div>
             <div className="text-xs text-muted-foreground">
               {t("detail.stats.owners")}
@@ -187,7 +190,7 @@ function AdminPuzzleDetailPage() {
           </div>
           <div>
             <div className="text-2xl font-semibold tabular-nums">
-              {stats.copies.total}
+              {countLabel(stats.copies.total)}
             </div>
             <div className="text-xs text-muted-foreground">
               {t("detail.stats.copies")}
@@ -195,7 +198,7 @@ function AdminPuzzleDetailPage() {
           </div>
           <div>
             <div className="text-2xl font-semibold tabular-nums">
-              {stats.copies.forTrade}
+              {countLabel(stats.copies.forTrade)}
             </div>
             <div className="text-xs text-muted-foreground">
               {t("detail.stats.forTrade")}
@@ -203,7 +206,7 @@ function AdminPuzzleDetailPage() {
           </div>
           <div>
             <div className="text-2xl font-semibold tabular-nums">
-              {stats.copies.forSale}
+              {countLabel(stats.copies.forSale)}
             </div>
             <div className="text-xs text-muted-foreground">
               {t("detail.stats.forSale")}
@@ -211,7 +214,7 @@ function AdminPuzzleDetailPage() {
           </div>
           <div>
             <div className="text-2xl font-semibold tabular-nums">
-              {stats.copies.forLend}
+              {countLabel(stats.copies.forLend)}
             </div>
             <div className="text-xs text-muted-foreground">
               {t("detail.stats.forLend")}

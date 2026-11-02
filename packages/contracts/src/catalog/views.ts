@@ -162,6 +162,8 @@ export interface AdminPuzzleDefinitionDetailView {
     submitter: { _id: DocId; name: string } | null;
   };
   stats: {
+    /** The numbers below stop at the copies read: lower bounds, shown as such. */
+    capped: boolean;
     /** Distinct members owning at least one copy. */
     ownerCount: number;
     copies: {
