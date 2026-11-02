@@ -245,6 +245,8 @@ function BrowsePage() {
                   key={puzzle._id}
                   puzzle={puzzle}
                   variant="browse"
+                  // The whole box, as the catalogue shows it.
+                  imageFit="contain"
                   ownerLabel={projectedName(owner, tCopyOwner("anonymous"))}
                   onView={(ownedPuzzleId) =>
                     navigate({

@@ -129,9 +129,13 @@ export function PuzzleCardShell({
       <div
         className={cn(
           "relative overflow-hidden",
+          // A list row's thumbnail is a fixed square. A contained cover (and the no-image gradient)
+          // fills it, so no blank block sits under it; a "cover" image keeps its own square.
           compactOnPhones
             ? "aspect-[4/3] rounded-t-lg sm:aspect-square"
-            : "aspect-square rounded-md",
+            : imageFit === "contain" || !puzzle.imageUrl
+              ? "h-full rounded-md"
+              : "aspect-square rounded-md",
           // A contained cover sits on a muted frame, so its letterbox bands read
           // as part of the cover instead of empty card space.
           puzzle.imageUrl && imageFit === "contain" && "bg-muted",

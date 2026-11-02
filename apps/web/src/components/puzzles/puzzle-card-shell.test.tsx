@@ -160,8 +160,18 @@ describe("PuzzleCardShell density", () => {
     expect(card.tags).toContain("max-sm:hidden");
   });
 
+  it("lets a contained cover fill the list row's thumbnail, so no blank block sits under it", () => {
+    const card = renderDensity("list", "contain");
+    expect(card.cover).toContain("h-full");
+    expect(card.cover).not.toContain("aspect-square");
+    // A minimum height would overflow the fixed thumbnail and crop the box.
+    expect(card.cover).not.toContain("min-h-32");
+    expect(card.thumbnail).toContain("size-14");
+    expect(card.thumbnail).toContain("sm:size-12");
+  });
+
   it("is one compact line in list mode: a small thumbnail, no description or tags", () => {
-    const card = renderDensity("list");
+    const card = renderDensity("list", "cover");
     expect(card.cover).toContain("aspect-square");
     expect(card.cover).not.toContain("aspect-[4/3]");
     expect(card.thumbnail).toContain("size-14");
