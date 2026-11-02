@@ -123,7 +123,10 @@ vi.mock("@convex-dev/react-query", async (importOriginal) => ({
 const SET = getFunctionName(gateway.social.setPresencePreferences);
 const UNREGISTER = getFunctionName(gateway.notifications.unregisterPush);
 
-const renderButton = (locale: "en" | "nl" = "en") => {
+const renderButton = (
+  locale: "en" | "nl" = "en",
+  { tapTarget = false } = {},
+) => {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false, queryFn: () => new Promise<never>(() => {}) },
@@ -136,7 +139,7 @@ const renderButton = (locale: "en" | "nl" = "en") => {
         messages={locale === "en" ? en : nl}
         timeZone="Europe/Amsterdam"
       >
-        <ShellUserButton />
+        <ShellUserButton tapTarget={tapTarget} />
       </IntlProvider>
     </QueryClientProvider>,
   );
@@ -383,4 +386,18 @@ describe("ShellUserButton help entry (UX-91)", () => {
       "/whats-new?tab=guides",
     ]);
   });
+});
+
+// Clerk's own focus style is a faint 4px box-shadow, about 1.4:1 on the lavender sidebar.
+describe("ShellUserButton focus ring", () => {
+  it.each([[false], [true]])(
+    "draws the app's solid ring around the trigger (tapTarget: %s)",
+    (tapTarget) => {
+      renderButton("en", { tapTarget });
+      const classes = mocks.appearance?.elements?.userButtonTrigger ?? "";
+      expect(classes).toContain("focus-visible:ring-2!");
+      expect(classes).toContain("focus-visible:ring-ring!");
+      expect(classes).toContain("focus-visible:ring-offset-2!");
+    },
+  );
 });

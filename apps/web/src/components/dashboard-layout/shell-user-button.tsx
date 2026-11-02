@@ -49,6 +49,11 @@ import {
 } from "./display-preferences";
 import { useShellPreferences } from "./preferences";
 
+// Clerk's own focus style is a faint 4px box-shadow, about 1.4:1 on the lavender sidebar: this is
+// the ring every other control has. Important, to beat the box-shadow Clerk sets on focus.
+const TRIGGER_FOCUS_RING =
+  "focus-visible:ring-2! focus-visible:ring-ring! focus-visible:ring-offset-2! focus-visible:ring-offset-background!";
+
 const STATUS_OPTIONS = [
   { override: "auto", label: "statusAuto" },
   { override: "away", label: "statusAway" },
@@ -115,14 +120,18 @@ export function ShellUserButton({
             ...(tapTarget
               ? {
                   userButtonAvatarBox: "!w-7 !h-7",
-                  userButtonTrigger:
+                  userButtonTrigger: cn(
                     "!flex !size-11 !items-center !justify-center !rounded-lg hover:!bg-accent",
+                    TRIGGER_FOCUS_RING,
+                  ),
                 }
               : {
                   userButtonAvatarBox: "!w-8 !h-8",
                   // The desktop sidebar on a touch screen (tablets): a 44px target.
-                  userButtonTrigger:
+                  userButtonTrigger: cn(
                     "pointer-coarse:flex! pointer-coarse:size-11! pointer-coarse:items-center! pointer-coarse:justify-center! pointer-coarse:rounded-lg!",
+                    TRIGGER_FOCUS_RING,
+                  ),
                 }),
           },
         }}
