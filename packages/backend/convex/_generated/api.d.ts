@@ -368,6 +368,7 @@ import type * as library_updateCopySharing from "../library/updateCopySharing.js
 import type * as notifications_act from "../notifications/act.js";
 import type * as notifications_adapters_ahasendEmailSender from "../notifications/adapters/ahasendEmailSender.js";
 import type * as notifications_adapters_channels_emailChannel from "../notifications/adapters/channels/emailChannel.js";
+import type * as notifications_adapters_channels_followNoticeThrottle from "../notifications/adapters/channels/followNoticeThrottle.js";
 import type * as notifications_adapters_channels_inAppChannel from "../notifications/adapters/channels/inAppChannel.js";
 import type * as notifications_adapters_channels_pushChannel from "../notifications/adapters/channels/pushChannel.js";
 import type * as notifications_adapters_convexNotificationPreferenceRepository from "../notifications/adapters/convexNotificationPreferenceRepository.js";
@@ -935,6 +936,7 @@ declare const fullApi: ApiFromModules<{
   "notifications/act": typeof notifications_act;
   "notifications/adapters/ahasendEmailSender": typeof notifications_adapters_ahasendEmailSender;
   "notifications/adapters/channels/emailChannel": typeof notifications_adapters_channels_emailChannel;
+  "notifications/adapters/channels/followNoticeThrottle": typeof notifications_adapters_channels_followNoticeThrottle;
   "notifications/adapters/channels/inAppChannel": typeof notifications_adapters_channels_inAppChannel;
   "notifications/adapters/channels/pushChannel": typeof notifications_adapters_channels_pushChannel;
   "notifications/adapters/convexNotificationPreferenceRepository": typeof notifications_adapters_convexNotificationPreferenceRepository;
