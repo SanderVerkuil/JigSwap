@@ -176,4 +176,31 @@ describe("FinishSolveDialog", () => {
       "Je bent op 12 oktober 2026 begonnen.",
     );
   });
+
+  it("refuses an end in the future, next to the field", () => {
+    renderDialog({ minEndDate: STARTED });
+    const end = screen.getByLabelText("End date");
+    expect(end.getAttribute("max")).toBe(localTodayInput());
+    fireEvent.change(end, { target: { value: "2999-01-01" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save solve" }));
+    expect(
+      screen.getByText("The finish date can't be in the future."),
+    ).toBeDefined();
+    expect(end.getAttribute("aria-describedby")).toBe(
+      "finish-started-on finish-end-error",
+    );
+    expect(calls.finish).toEqual([]);
+  });
+
+  it("refuses an end before the start it says the solve began on", () => {
+    renderDialog({ minEndDate: Date.UTC(2026, 9, 12) });
+    fireEvent.change(screen.getByLabelText("End date"), {
+      target: { value: "2026-10-10" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save solve" }));
+    expect(
+      screen.getByText("The finish date can't be before the start date."),
+    ).toBeDefined();
+    expect(calls.finish).toEqual([]);
+  });
 });

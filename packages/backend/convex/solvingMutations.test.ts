@@ -417,6 +417,46 @@ describe("solving.finishCompletion", () => {
   });
 });
 
+describe("a finish date in the future", () => {
+  test("recordCompletion refuses it with FutureEndDate and writes nothing", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { copyAggregateId } = await seed(t);
+    const nextWeek = Date.now() + 7 * 24 * HOUR;
+    await expectConvexCode(
+      recordForAlice(t, copyAggregateId, {
+        startDate: nextWeek,
+        endDate: nextWeek,
+      }),
+      "FutureEndDate",
+    );
+    const rows = await t.run((ctx) => ctx.db.query("completions").collect());
+    expect(rows).toEqual([]);
+  });
+
+  test("editCompletion refuses moving the end into it", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { copyAggregateId } = await seed(t);
+    const completionId = await recordForAlice(t, copyAggregateId);
+    await expectConvexCode(
+      asAlice(t).mutation(api.solving.editCompletion.editCompletion, {
+        completionId,
+        endDate: Date.now() + 7 * 24 * HOUR,
+      }),
+      "FutureEndDate",
+    );
+  });
+
+  test("recordCompletion still starts a solve in the future", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { copyAggregateId } = await seed(t);
+    const completionId = await recordForAlice(t, copyAggregateId, {
+      startDate: Date.now() + 7 * 24 * HOUR,
+      endDate: undefined,
+    });
+    expect((await completionRow(t, completionId))?.isCompleted).toBe(false);
+  });
+});
+
 describe("solving.editCompletion", () => {
   test("an empty note clears the stored one; an absent note leaves it", async () => {
     const t = withModerationPool(convexTest(schema, modules));

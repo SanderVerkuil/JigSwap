@@ -171,6 +171,7 @@ describe("Completion.record", () => {
   it("derives a multi-day span in minutes rather than the one-day fallback", () => {
     const result = recordValid({
       endDate: new Date("2026-06-03T10:00:00Z"), // 2 days after START
+      now: new Date("2026-06-03T10:00:00Z"),
     });
     expect(result.isOk).toBe(true);
     if (result.isOk)
@@ -814,14 +815,19 @@ describe("a solve's dates are dates a solve can have", () => {
     }
   });
 
-  it("accepts the first day of 1900, today, and a year ahead", () => {
-    for (const startDate of [
-      new Date(Date.UTC(1900, 0, 1)),
-      NOW,
-      new Date(NOW.getTime() + 365 * 24 * 60 * 60 * 1000),
-    ]) {
+  // A year ahead is only ever a start: a finish can't lie after today (FutureEndDate, below).
+  it("accepts the first day of 1900, today, and a start a year ahead", () => {
+    for (const startDate of [new Date(Date.UTC(1900, 0, 1)), NOW]) {
       expect(recordValid({ startDate, endDate: startDate }).isOk).toBe(true);
     }
+    const started = Completion.start({
+      id: ID,
+      userId: ALICE,
+      puzzleDefinitionId: PUZZLE,
+      startDate: new Date(NOW.getTime() + 365 * 24 * 60 * 60 * 1000),
+      now: NOW,
+    });
+    expect(started.isOk).toBe(true);
   });
 
   it("a stored row that predates the bound can still be edited in its other fields", () => {
@@ -872,5 +878,81 @@ describe("a solve's notes are bounded", () => {
     expect(edited.isErr).toBe(true);
     if (edited.isErr) expect(edited.error.code).toBe("NotesTooLong");
     expect(r.value.toState().notes).toBe("fun");
+  });
+});
+
+// A finish can't lie in the future: it would count toward "this year" and goals before it happened.
+// Solve dates are the member's local calendar date stored as UTC midnight, so "today" can be up to
+// 14 hours ahead of the UTC clock (UTC+14) and must still pass. A start in the future stays allowed:
+// a planned solve in progress has no finish yet.
+describe("Completion: a finish date in the future", () => {
+  const CLOCK = new Date("2026-06-01T10:00:00Z");
+  const TODAY_AT_UTC_PLUS_14 = new Date("2026-06-02T00:00:00Z");
+  const DAY_AFTER = new Date("2026-06-03T00:00:00Z");
+
+  const finishable = () => {
+    const started = Completion.start({
+      id: ID,
+      userId: ALICE,
+      puzzleDefinitionId: PUZZLE,
+      startDate: new Date("2026-05-30T00:00:00Z"),
+      now: CLOCK,
+    });
+    if (!started.isOk) throw new Error("setup failed");
+    return started.value;
+  };
+
+  it("record refuses it", () => {
+    const result = recordValid({
+      startDate: new Date("2026-05-30T00:00:00Z"),
+      endDate: DAY_AFTER,
+      now: CLOCK,
+    });
+    expect(result.isErr && result.error.code).toBe("FutureEndDate");
+  });
+
+  it("record accepts today on the calendar furthest ahead of UTC", () => {
+    const result = recordValid({
+      startDate: TODAY_AT_UTC_PLUS_14,
+      endDate: TODAY_AT_UTC_PLUS_14,
+      now: CLOCK,
+    });
+    expect(result.isOk).toBe(true);
+  });
+
+  it("finish refuses it", () => {
+    const outcome = finishable().finish(DAY_AFTER, CLOCK);
+    expect(outcome.isErr && outcome.error.code).toBe("FutureEndDate");
+  });
+
+  it("finish accepts today on the calendar furthest ahead of UTC", () => {
+    expect(finishable().finish(TODAY_AT_UTC_PLUS_14, CLOCK).isOk).toBe(true);
+  });
+
+  it("edit refuses moving the end into it", () => {
+    const recorded = recordValid({
+      startDate: new Date("2026-05-30T00:00:00Z"),
+      endDate: new Date("2026-06-01T00:00:00Z"),
+      now: CLOCK,
+    });
+    if (!recorded.isOk) throw new Error("setup failed");
+    const outcome = recorded.value.edit(ALICE, { endDate: DAY_AFTER }, CLOCK);
+    expect(outcome.isErr && outcome.error.code).toBe("FutureEndDate");
+  });
+
+  it("start still accepts a start date in the future", () => {
+    const started = Completion.start({
+      id: ID,
+      userId: ALICE,
+      puzzleDefinitionId: PUZZLE,
+      startDate: DAY_AFTER,
+      now: CLOCK,
+    });
+    expect(started.isOk).toBe(true);
+  });
+
+  it("edit still lets an in-progress solve move its start into the future", () => {
+    const outcome = finishable().edit(ALICE, { startDate: DAY_AFTER }, CLOCK);
+    expect(outcome.isOk).toBe(true);
   });
 });

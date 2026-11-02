@@ -1,6 +1,10 @@
 "use client";
 
-import { SolveTimeFields } from "@/components/solving/solve-time-fields";
+import {
+  SolveFieldError,
+  SolveTimeFields,
+  useSolveFormErrors,
+} from "@/components/solving/solve-time-fields";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,7 +18,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
-import { dateInputToMs, msToDateInput } from "@/lib/date-input";
+import {
+  dateInputToMs,
+  localTodayInput,
+  msToDateInput,
+} from "@/lib/date-input";
+import {
+  hasSolveFormErrors,
+  solveFormErrorsFromCode,
+  solveMinutes,
+  validateSolveForm,
+} from "@/lib/solve-form";
 import { cn } from "@/lib/utils";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { MAX_SOLVE_NOTES_LENGTH } from "@jigswap/contracts";
@@ -75,12 +89,31 @@ export function EditCompletionDialog({
   );
   const [notes, setNotes] = useState(initialNotes ?? "");
   const submitting = editCompletion.isPending;
+  const today = localTodayInput();
+  const { show, clearDates, clearTime, startError, endError, timeError } =
+    useSolveFormErrors({
+      start: "edit-start",
+      end: "edit-end",
+      time: "edit-time-hours",
+    });
 
   const handleSubmit = async () => {
+    const errors = validateSolveForm(
+      {
+        start: startDate,
+        end: inProgress ? undefined : endDate,
+        hours: inProgress ? undefined : hours,
+        minutes: inProgress ? undefined : minutes,
+      },
+      { today, datesRequired: dated },
+    );
+    if (hasSolveFormErrors(errors)) {
+      show(errors);
+      return;
+    }
     const start = dateInputToMs(startDate);
     const end = inProgress ? undefined : dateInputToMs(endDate);
-    const totalMinutes =
-      (Number(hours) || 0) * 60 + (Number(minutes) || 0) || undefined;
+    const totalMinutes = solveMinutes(hours, minutes);
 
     try {
       await editCompletion.mutateAsync({
@@ -94,8 +127,12 @@ export function EditCompletionDialog({
       toast.success(tCompletions("updated"));
       onOpenChange(false);
     } catch (error) {
+      const code = solvingErrorCode(error);
+      const fieldErrors = solveFormErrorsFromCode(code);
       // The aggregate rejects edits past 24h; tell the user plainly instead of a generic error.
-      if (solvingErrorCode(error) === "EditWindowClosed") {
+      if (fieldErrors) {
+        show(fieldErrors);
+      } else if (code === "EditWindowClosed") {
         toast.error(tCompletions("editWindowClosed"));
       } else {
         console.error("Failed to edit completion:", error);
@@ -130,8 +167,16 @@ export function EditCompletionDialog({
                 id="edit-start"
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                // A solve still going may start later; a finished one started by today.
+                max={inProgress ? undefined : today}
+                aria-invalid={startError ? true : undefined}
+                aria-describedby={startError ? "edit-start-error" : undefined}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  clearDates();
+                }}
               />
+              <SolveFieldError id="edit-start-error" message={startError} />
             </div>
             {!inProgress && (
               <div className="space-y-2">
@@ -141,8 +186,15 @@ export function EditCompletionDialog({
                   type="date"
                   value={endDate}
                   min={startDate}
-                  onChange={(e) => setEndDate(e.target.value)}
+                  max={today}
+                  aria-invalid={endError ? true : undefined}
+                  aria-describedby={endError ? "edit-end-error" : undefined}
+                  onChange={(e) => {
+                    setEndDate(e.target.value);
+                    clearDates();
+                  }}
                 />
+                <SolveFieldError id="edit-end-error" message={endError} />
               </div>
             )}
           </div>
@@ -152,8 +204,15 @@ export function EditCompletionDialog({
               idPrefix="edit-time"
               hours={hours}
               minutes={minutes}
-              onHoursChange={setHours}
-              onMinutesChange={setMinutes}
+              onHoursChange={(value) => {
+                setHours(value);
+                clearTime();
+              }}
+              onMinutesChange={(value) => {
+                setMinutes(value);
+                clearTime();
+              }}
+              error={timeError}
             />
           )}
 

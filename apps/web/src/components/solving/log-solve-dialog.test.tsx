@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { localTodayInput } from "@/lib/date-input";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { ConvexError } from "convex/values";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
@@ -28,8 +29,11 @@ vi.mock("@/gateway", () => ({
   },
 }));
 
+const failure = vi.hoisted(() => ({ next: null as Error | null }));
+
 vi.mock("@convex-dev/react-query", () => ({
   useConvexMutation: (ref: string) => async (args: Record<string, unknown>) => {
+    if (failure.next) throw failure.next;
     if (ref === "recordCompletion") calls.record.push(args);
     return { completionId: "c1", puzzleId: null, copyId: null };
   },
@@ -82,8 +86,89 @@ beforeEach(() => {
   calls.followUp = [];
   calls.trackDuration = [];
   settings.trackCompletionDuration = true;
+  failure.next = null;
 });
 afterEach(() => cleanup());
+
+// Save stays enabled and checks the whole form, like the goal form: what to fix sits next to the
+// field and takes focus, and nothing impossible reaches the server.
+describe("LogSolveDialog: what it refuses", () => {
+  const save = () =>
+    fireEvent.click(screen.getByRole("button", { name: "Save solve" }));
+  const setDate = (label: string, value: string) =>
+    fireEvent.change(screen.getByLabelText(label), { target: { value } });
+
+  it("refuses an end before the start, next to the end date, and focuses it", async () => {
+    renderDialog();
+    setDate("Start date", "2026-10-12");
+    setDate("End date", "2026-10-10");
+    save();
+    const end = screen.getByLabelText("End date");
+    expect(
+      screen.getByText("The finish date can't be before the start date."),
+    ).toBeDefined();
+    expect(end.getAttribute("aria-invalid")).toBe("true");
+    expect(end.getAttribute("aria-describedby")).toBe("solve-end-error");
+    expect(document.activeElement).toBe(end);
+    expect(calls.record).toEqual([]);
+  });
+
+  it("refuses an end in the future, and offers no such date in the picker", () => {
+    renderDialog();
+    const end = screen.getByLabelText("End date");
+    expect(end.getAttribute("max")).toBe(localTodayInput());
+    setDate("End date", "2999-01-01");
+    save();
+    expect(
+      screen.getByText("The finish date can't be in the future."),
+    ).toBeDefined();
+    expect(calls.record).toEqual([]);
+  });
+
+  it("refuses negative hours, and clears the error once they change", () => {
+    renderDialog();
+    fireEvent.change(screen.getByLabelText("Hours"), {
+      target: { value: "-2" },
+    });
+    save();
+    const message = "Use whole numbers: hours from 0, minutes from 0 to 59.";
+    expect(screen.getByText(message)).toBeDefined();
+    expect(calls.record).toEqual([]);
+    fireEvent.change(screen.getByLabelText("Hours"), {
+      target: { value: "2" },
+    });
+    expect(screen.queryByText(message)).toBeNull();
+  });
+
+  it("asks for a date that was cleared, instead of disabling Save", () => {
+    renderDialog();
+    setDate("Start date", "");
+    const button = screen.getByRole("button", { name: "Save solve" });
+    expect((button as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(button);
+    expect(screen.getByText("Pick a date.")).toBeDefined();
+    expect(calls.record).toEqual([]);
+  });
+
+  it("still lets a solve in progress start in the future", async () => {
+    renderDialog();
+    fireEvent.click(screen.getByRole("radio", { name: "Still solving" }));
+    expect(screen.getByLabelText("Start date").getAttribute("max")).toBeNull();
+    setDate("Start date", "2999-01-01");
+    save();
+    await vi.waitFor(() => expect(calls.record).toHaveLength(1));
+  });
+
+  it("puts what the server refuses next to the field instead of a generic toast", async () => {
+    failure.next = new ConvexError({
+      code: "InvalidTimeRange",
+      message: "x",
+    });
+    renderDialog();
+    save();
+    await screen.findByText("The finish date can't be before the start date.");
+  });
+});
 
 describe("LogSolveDialog: finished or still solving", () => {
   it("scrolls on a short screen, so Save stays reachable", () => {
