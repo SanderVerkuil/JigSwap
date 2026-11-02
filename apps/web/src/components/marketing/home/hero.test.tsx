@@ -1,6 +1,12 @@
 // @vitest-environment happy-dom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, renderHook, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  render,
+  renderHook,
+  screen,
+} from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { IntlProvider } from "use-intl";
@@ -98,11 +104,25 @@ describe("toPlankBox", () => {
 describe("Hero", () => {
   afterEach(cleanup);
 
-  const renderHero = () =>
+  // Answers the hero's Convex reads: the platform count and one member's avatar. The sample
+  // plank's puzzles stay unloaded, as on a server render.
+  const renderHero = (totalUsers = 0) =>
     render(
       <QueryClientProvider
         client={
-          new QueryClient({ defaultOptions: { queries: { enabled: false } } })
+          new QueryClient({
+            defaultOptions: {
+              queries: {
+                queryFn: ({ queryKey }) => {
+                  const fn = String(queryKey[1]);
+                  if (fn.includes("getGlobalStats")) return { totalUsers };
+                  if (fn.includes("getCommunityAvatars"))
+                    return [{ initials: "SV", image: null }];
+                  return [];
+                },
+              },
+            },
+          })
         }
       >
         <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
@@ -148,5 +168,18 @@ describe("Hero", () => {
     const lead = screen.getByText(en.marketing.home.heroLead);
     expect(lead.className).toContain("text-mk-text-body");
     expect(lead.className).not.toContain("text-mk-text-muted");
+  });
+
+  it("shows no one's initials beside the invitation to be among the first", async () => {
+    renderHero(1);
+    await screen.findByText(en.marketing.home.trustRowEarly);
+    // Long enough for the avatars' read to answer, were it asked.
+    await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+    expect(screen.queryByText("SV")).toBeNull();
+  });
+
+  it("shows the members' initials once the count is shown as social proof", async () => {
+    renderHero(5000);
+    await screen.findByText("SV");
   });
 });

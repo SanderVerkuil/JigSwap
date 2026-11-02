@@ -218,14 +218,17 @@ function TrustRow() {
   // Prefetched in the home route loader, so the count is present on first paint.
   const { data: stats } = useQuery(globalStatsQuery);
 
+  const socialProof = hasSocialProof(stats);
+
   // Hour-bucket seed shared by all visitors, client-only (SSR-safe). The
   // query is skipped until the seed is ready; the cluster stays hidden
-  // meanwhile.
+  // meanwhile. The faces belong with the member count: beside the invitation to
+  // be among the first they would explain nothing, so they aren't even read.
   const seed = useHourlySeed();
   const { data } = useQuery(
     convexQuery(
       gateway.insights.communityAvatars,
-      seed === null ? "skip" : { limit: 4, seed },
+      seed === null || !socialProof ? "skip" : { limit: 4, seed },
     ),
   );
   const communityAvatars: CommunityAvatar[] | undefined = data;
@@ -233,7 +236,7 @@ function TrustRow() {
   // Only render the avatar cluster once real community members are loaded — never
   // fake placeholder users. Until then (loading or no members) the cluster is hidden.
   const hasLiveAvatars =
-    communityAvatars != null && communityAvatars.length >= 1;
+    socialProof && communityAvatars != null && communityAvatars.length >= 1;
 
   return (
     <div className="flex items-center gap-3.5 mt-[30px] flex-wrap">
@@ -270,7 +273,7 @@ function TrustRow() {
       )}
       {stats != null && (
         <div className="text-[14.5px] text-mk-text-muted leading-snug">
-          {hasSocialProof(stats)
+          {socialProof
             ? t("trustRow", { count: format.number(stats.totalUsers) })
             : t("trustRowEarly")}
         </div>
