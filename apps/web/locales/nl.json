@@ -3529,7 +3529,7 @@
     "share": "Delen",
     "resetLink": "Uitnodigingslink resetten",
     "needUsernameTitle": "Stel eerst een gebruikersnaam in",
-    "needUsernameBody": "Je QR-bijschrift en profiellink gebruiken je gebruikersnaam. Stel er een in bij je accountinstellingen en kom dan terug.",
+    "needUsernameBody": "Je QR-bijschrift toont je profiellink, en die heeft een gebruikersnaam of een eigen link nodig. Stel er een in bij je accountinstellingen en kom dan terug.",
     "openSettings": "Accountinstellingen openen",
     "invitedYou": "{name} heeft je uitgenodigd voor JigSwap",
     "followEachOther": "{name} heeft hun code met je gedeeld — elkaar volgen?",

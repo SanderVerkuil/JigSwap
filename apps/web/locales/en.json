@@ -3529,7 +3529,7 @@
     "share": "Share",
     "resetLink": "Reset invite link",
     "needUsernameTitle": "Set a username first",
-    "needUsernameBody": "Your QR caption and profile link use your username. Set one in your account settings, then come back.",
+    "needUsernameBody": "Your QR caption shows your profile link, which needs a username or a custom link. Set one in your account settings, then come back.",
     "openSettings": "Open account settings",
     "invitedYou": "{name} invited you to JigSwap",
     "followEachOther": "{name} shared their code with you — follow each other?",
