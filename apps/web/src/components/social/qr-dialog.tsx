@@ -7,6 +7,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { LoadingSpinner } from "@/components/ui/loading";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { Link } from "@tanstack/react-router";
 import { QrCode, Share2 } from "lucide-react";
@@ -14,6 +15,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { useState } from "react";
 import { useTranslations } from "use-intl";
 import { CopyLinkButton } from "./copy-link-button";
+import { InviteLinkError } from "./invite-link-error";
 import { useMyInviteLink } from "./use-my-invite-link";
 
 // Fullscreen "show my QR" dialog. The QR encodes the STABLE member-id URL (rename-proof) with the
@@ -43,9 +45,10 @@ type QrDialogProps = {
 // routes away — otherwise the dialog lingers open over the page (which can be the one it opened on).
 function QrCard(props: QrDialogProps & { onNavigate?: () => void }) {
   const t = useTranslations("invite");
+  const tCommon = useTranslations("common");
   const displayName = useMemberDisplayName();
   const nameSource = { name: props.displayName, username: props.username };
-  const { url: qrUrl } = useMyInviteLink(props.memberId);
+  const { url: qrUrl, failed, refetch } = useMyInviteLink(props.memberId);
 
   const origin = typeof window === "undefined" ? "" : window.location.origin;
   // A bare member id is no address to show anyone: without a readable handle the caption goes.
@@ -69,58 +72,72 @@ function QrCard(props: QrDialogProps & { onNavigate?: () => void }) {
         </Avatar>
         <span className="font-heading text-lg">{displayName(nameSource)}</span>
       </div>
-      {/* Always-white card: ≥16px padding is the QR quiet zone. */}
-      <div className="rounded-2xl bg-white p-5 shadow-md">
-        {qrUrl ? (
-          <QRCodeSVG
-            value={qrUrl}
-            size={320}
-            className="h-auto w-[min(70vw,320px)]"
-            bgColor="#ffffff"
-            fgColor="#000000"
-          />
-        ) : (
-          <div className="size-[min(70vw,320px)]" />
-        )}
-      </div>
-      {displayUrl ? (
-        <span className="text-muted-foreground font-mono text-sm">
-          {displayUrl}
-        </span>
-      ) : null}
-      <p className="text-muted-foreground text-sm">{t("scanHint")}</p>
-      <div className="flex gap-3">
-        <CopyLinkButton url={qrUrl} />
-        {canShare ? (
-          <Button
-            variant="brand"
-            disabled={!qrUrl}
-            onClick={() => {
-              // A dismissed share sheet rejects; that is fine.
-              if (qrUrl) navigator.share({ url: qrUrl }).catch(() => {});
-            }}
-          >
-            <Share2 className="size-4" />
-            {t("share")}
-          </Button>
-        ) : null}
-      </div>
-      <p className="text-muted-foreground max-w-sm text-center text-xs">
-        {t("inviteLinkHint")}
-      </p>
-      {!readableHandle && (
-        <div className="flex max-w-sm flex-col items-center gap-1 text-center">
-          <p className="text-muted-foreground text-xs">{t("customLinkNote")}</p>
-          <Button asChild variant="ghost" size="sm">
-            <Link
-              to="/profile"
-              search={{ edit: "link" }}
-              onClick={props.onNavigate}
-            >
-              {t("setCustomLink")}
-            </Link>
-          </Button>
-        </div>
+      {failed ? (
+        <InviteLinkError onRetry={refetch} />
+      ) : (
+        <>
+          {/* Always-white card: ≥16px padding is the QR quiet zone. */}
+          <div className="rounded-2xl bg-white p-5 shadow-md">
+            {qrUrl ? (
+              <QRCodeSVG
+                value={qrUrl}
+                size={320}
+                className="h-auto w-[min(70vw,320px)]"
+                bgColor="#ffffff"
+                fgColor="#000000"
+              />
+            ) : (
+              <div
+                role="status"
+                aria-label={tCommon("loading")}
+                className="grid size-[min(70vw,320px)] place-items-center text-neutral-500"
+              >
+                <LoadingSpinner size="lg" />
+              </div>
+            )}
+          </div>
+          {displayUrl ? (
+            <span className="text-muted-foreground font-mono text-sm">
+              {displayUrl}
+            </span>
+          ) : null}
+          <p className="text-muted-foreground text-sm">{t("scanHint")}</p>
+          <div className="flex gap-3">
+            <CopyLinkButton url={qrUrl} />
+            {canShare ? (
+              <Button
+                variant="brand"
+                disabled={!qrUrl}
+                onClick={() => {
+                  // A dismissed share sheet rejects; that is fine.
+                  if (qrUrl) navigator.share({ url: qrUrl }).catch(() => {});
+                }}
+              >
+                <Share2 className="size-4" />
+                {t("share")}
+              </Button>
+            ) : null}
+          </div>
+          <p className="text-muted-foreground max-w-sm text-center text-xs">
+            {t("inviteLinkHint")}
+          </p>
+          {!readableHandle && (
+            <div className="flex max-w-sm flex-col items-center gap-1 text-center">
+              <p className="text-muted-foreground text-xs">
+                {t("customLinkNote")}
+              </p>
+              <Button asChild variant="ghost" size="sm">
+                <Link
+                  to="/profile"
+                  search={{ edit: "link" }}
+                  onClick={props.onNavigate}
+                >
+                  {t("setCustomLink")}
+                </Link>
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </>
   );

@@ -168,6 +168,39 @@ describe("QR dialog", () => {
   });
 });
 
+describe("QR card while the link is on its way or refused", () => {
+  it("shows a loading state, never a blank card, while the link is fetched", async () => {
+    mocks.mutation.mockReturnValue(new Promise<never>(() => {}));
+    renderDialog("mara");
+    expect(
+      await screen.findByRole("status", { name: en.common.loading }),
+    ).toBeTruthy();
+    expect(
+      screen
+        .getByRole("button", { name: "Copy link" })
+        .hasAttribute("disabled"),
+    ).toBe(true);
+  });
+
+  it("says so when the link can't be fetched, and Try again asks again", async () => {
+    mocks.mutation.mockRejectedValueOnce(new Error("offline"));
+    renderDialog("mara");
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      en.invite.linkError,
+    );
+    // Nothing to scan or copy, so the hints and actions about the code are gone too.
+    expect(screen.queryByText(en.invite.scanHint)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Copy link" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: en.invite.retry }));
+    await waitFor(() =>
+      expect(screen.getByText(en.invite.scanHint)).toBeTruthy(),
+    );
+    expect(mocks.mutation).toHaveBeenCalledTimes(2);
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+});
+
 describe("QrDialog caption", () => {
   it("shows the server's canonical handle, not the username (SEC-07)", async () => {
     renderDialog("mara", "mara-puzzles");
