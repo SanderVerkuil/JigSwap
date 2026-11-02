@@ -217,6 +217,17 @@ describe("MarketingHeader mobile menu", () => {
     );
   });
 
+  // No layout here either, so the taps were run in a browser (touch emulation at 390 and 820). The
+  // menu closes on the press, before the tap's click is aimed: if the panel took up room in the
+  // page, the page would jump up under the finger and the click would open something else.
+  it("floats over the page, so closing it leaves everything under a tap in place", () => {
+    renderHeader();
+    fireEvent.click(menuToggle());
+    expect(
+      screen.getByRole("navigation", { name: "Menu" }).className.split(/\s+/),
+    ).toEqual(expect.arrayContaining(["absolute", "inset-x-0", "top-full"]));
+  });
+
   it("closes on a press outside the header, leaving focus where the press put it", () => {
     renderHeader();
     fireEvent.click(menuToggle());

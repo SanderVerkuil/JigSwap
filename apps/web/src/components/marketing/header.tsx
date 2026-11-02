@@ -169,9 +169,12 @@ export function MarketingHeader() {
         <nav
           id="mk-mobile-nav"
           aria-label={t("menuLabel")}
-          // Scrolls by itself: the sticky header doesn't move with the page, so what
-          // doesn't fit below the bar could not be reached otherwise.
-          className="min-[1200px]:hidden max-h-[calc(100dvh-71px)] overflow-y-auto overscroll-contain border-t border-mk-border bg-mk-card"
+          // Floats over the page: the press outside that closes it comes before the tap's
+          // click is aimed, so a panel taking up room would let the page jump under the
+          // finger and the click land on something else. Scrolls by itself: the sticky
+          // header doesn't move with the page, so what doesn't fit below the bar could not
+          // be reached otherwise.
+          className="absolute inset-x-0 top-full min-[1200px]:hidden max-h-[calc(100dvh-71px)] overflow-y-auto overscroll-contain border-y border-mk-border bg-mk-card shadow-mk-md"
         >
           <div className="w-full max-w-[1200px] mx-auto flex flex-col gap-1 px-6 pt-3 pb-[18px]">
             {NAV.map((item) => navLink(item, true))}
