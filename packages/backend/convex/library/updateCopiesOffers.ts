@@ -18,8 +18,8 @@ import { toConvexError } from "./errors";
 // offers). Each copy runs the same single-copy sharing use case as updateCopySharing, with the
 // household manager policy and the reservation guard, and with offers only: every copy keeps its
 // owner's visibility choice and sale price. A flag that is given is set on every copy; an omitted
-// flag keeps each copy's own value. Copies the caller may not manage (or that don't exist) and
-// reserved ones are skipped, not fatal. `copyIds` are domain aggregateIds, deduped, at most 100.
+// flag keeps each copy's own value. Copies the caller may not manage (or that don't exist), copies
+// out on loan and reserved ones are skipped, not fatal. `copyIds` are domain aggregateIds, deduped, at most 100.
 export const updateCopiesOffers = mutation({
   args: {
     copyIds: v.array(v.string()),

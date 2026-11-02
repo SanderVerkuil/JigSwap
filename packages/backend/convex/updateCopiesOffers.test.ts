@@ -275,6 +275,47 @@ describe("library.updateCopiesOffers", () => {
     expect((await rowOf(t, free)).availability.forTrade).toBe(true);
   });
 
+  test("a copy out on loan stays off the market, for its owner and for a housemate who manages it", async () => {
+    const onLoan = await seedCopy(t, w, "copy-on-loan", { heldBy: w.bob });
+    const free = await seedCopy(t, w, "copy-free");
+
+    const byOwner = await updateOffers(t, "ann", {
+      copyIds: ["copy-on-loan", "copy-free"],
+      forTrade: true,
+    });
+    expect(byOwner).toEqual({
+      updated: 1,
+      unchanged: 0,
+      skipped: [{ copyId: "copy-on-loan", reason: "onLoan" }],
+    });
+
+    const byHousemate = await updateOffers(t, "bob", {
+      copyIds: ["copy-on-loan"],
+      forLend: true,
+    });
+    expect(byHousemate).toEqual({
+      updated: 0,
+      unchanged: 0,
+      skipped: [{ copyId: "copy-on-loan", reason: "onLoan" }],
+    });
+
+    expect((await rowOf(t, onLoan)).availability).toEqual(CLOSED);
+    expect((await rowOf(t, free)).availability.forTrade).toBe(true);
+  });
+
+  test("a stranger learns nothing about a copy being out on loan", async () => {
+    await seedCopy(t, w, "copy-on-loan", { heldBy: w.bob });
+    const result = await updateOffers(t, "cat", {
+      copyIds: ["copy-on-loan"],
+      forTrade: true,
+    });
+    expect(result).toEqual({
+      updated: 0,
+      unchanged: 0,
+      skipped: [{ copyId: "copy-on-loan", reason: "notAllowed" }],
+    });
+  });
+
   test("more than 100 distinct copies are refused before anything is written", async () => {
     const id = await seedCopy(t, w, "copy-0");
     const copyIds = [

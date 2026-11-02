@@ -227,6 +227,28 @@ describe("makeUpdateCopiesOffers", () => {
     expect((await sharingOf(bobs))?.forLend).toBe(true);
   });
 
+  it("leaves a copy that's out on loan alone and says so", async () => {
+    const onLoan = await seedCopy("on-loan");
+    const stored = await copies.findById(onLoan);
+    stored?.lendOut(bob, NOW);
+    if (stored) await copies.save(stored);
+    const free = await seedCopy("free");
+
+    const result = await run()({
+      actingMemberId: alice,
+      copyIds: [onLoan, free],
+      offers: { forTrade: true },
+    });
+
+    expect(result.isOk && result.value).toEqual({
+      updated: 1,
+      unchanged: 0,
+      skipped: [{ copyId: onLoan, reason: "onLoan" }],
+    });
+    expect((await sharingOf(onLoan))?.forTrade).toBe(false);
+    expect((await sharingOf(free))?.forTrade).toBe(true);
+  });
+
   it("skips a copy an active exchange reserves when offering it", async () => {
     const free = await seedCopy("free");
     const reserved = await seedCopy("reserved");

@@ -21,8 +21,9 @@ export interface UpdateCopiesOffersCommand {
 // Why a copy of the batch was left as it was:
 // - "notAllowed": no such copy, or the caller may not manage it (one answer for both, so the
 //   batch reveals nothing about copies the caller can't manage);
+// - "onLoan": it is out on loan, so it stays off the market until it is back;
 // - "reserved": an active exchange reserves it, so it can't be offered.
-export type CopyOffersSkipReason = "notAllowed" | "reserved";
+export type CopyOffersSkipReason = "notAllowed" | "onLoan" | "reserved";
 
 export interface UpdateCopiesOffersResult {
   // Copies whose offers changed.
