@@ -239,6 +239,34 @@ describe("PuzzleCard (browse)", () => {
     expect(follows(owner, offer)).toBe(true);
     expect(follows(offer, condition)).toBe(true);
   });
+
+  // UX-23: on Browse a card is an offer, so whose it is comes before what it is.
+  it("puts the owner and the offer right under the title, before the puzzle's facts", () => {
+    renderCard();
+    const title = screen.getByRole("heading", { name: "Café" });
+    const owner = screen.getByText("Sander Verkuil");
+    const offer = screen.getByText("For Trade");
+    const brand = screen.getByText("Goliath");
+    const pieces = screen.getByText(/1,000/);
+    const follows = (a: Node, b: Node) =>
+      (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+    expect(follows(title, owner)).toBe(true);
+    expect(follows(owner, offer)).toBe(true);
+    expect(follows(offer, brand)).toBe(true);
+    expect(follows(offer, pieces)).toBe(true);
+  });
+
+  // A list row keeps to one line, so it has no room under the title: they lead its badges.
+  it("keeps the owner and the offer in a list row, ahead of the condition", () => {
+    renderCard({}, "en", "list");
+    const owner = screen.getByText("Sander Verkuil");
+    const offer = screen.getByText("For Trade");
+    const condition = screen.getByTestId("copy-condition");
+    const follows = (a: Node, b: Node) =>
+      (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+    expect(follows(owner, offer)).toBe(true);
+    expect(follows(offer, condition)).toBe(true);
+  });
 });
 
 type CardCopy = ComponentProps<typeof PuzzleCard>["puzzle"];

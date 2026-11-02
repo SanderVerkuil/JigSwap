@@ -34,6 +34,9 @@ export interface PuzzleCardShellProps {
   puzzle: PuzzleCardView;
   /** Action row (e.g. View/Add links, or icon-button callbacks). */
   actions?: ReactNode;
+  /** Rendered right under the title, before the brand and pieces: what this card is above all.
+   *  A list row keeps to one line, so there it leads the row's badges. */
+  leadingMeta?: ReactNode;
   /** Context badges (e.g. availability flags, owner). Rendered under the meta row. */
   badges?: ReactNode;
   /** Overlay rendered over the image (e.g. selection checkmark/checkbox). */
@@ -77,6 +80,7 @@ const LIST_COVER_SIZES = "56px";
 export function PuzzleCardShell({
   puzzle,
   actions,
+  leadingMeta,
   badges,
   overlay,
   rowEnd,
@@ -225,8 +229,9 @@ export function PuzzleCardShell({
             )}
           </div>
           {/* The badges' own bottom margins are for the stacked grid card. */}
-          {badges && (
+          {(leadingMeta || badges) && (
             <div className="contents [&>*]:mb-0 sm:flex sm:min-w-0 sm:flex-wrap sm:items-center sm:gap-x-2 sm:gap-y-1">
+              {leadingMeta}
               {badges}
             </div>
           )}
@@ -252,6 +257,7 @@ export function PuzzleCardShell({
         <Title className="font-semibold text-sm line-clamp-2 mb-1">
           {titleContent}
         </Title>
+        {leadingMeta}
         {puzzle.brand && (
           <p className="text-xs text-muted-foreground mb-1">{puzzle.brand}</p>
         )}

@@ -504,15 +504,19 @@ export function PuzzleCard({
   );
 
   // On Browse a card is an offer, so whose copy it is and how it is offered (swap, lend, sell)
-  // come first; the condition follows. Elsewhere the copy's own state leads.
-  const badges =
+  // come first, right under the title, ahead of the puzzle's facts; the condition follows them.
+  // Elsewhere the copy's own state leads.
+  const leadingMeta =
     variant === "browse" ? (
       <>
         {owner}
         {ownerRow}
         {availabilityRow}
-        {conditionRow}
       </>
+    ) : undefined;
+  const badges =
+    variant === "browse" ? (
+      conditionRow
     ) : (
       <>
         {owner}
@@ -717,6 +721,7 @@ export function PuzzleCard({
       // checkbox); the checkbox stays as the visible state + keyboard target.
       selectable={variant === "selection" && !!onSelect}
       onSelect={onSelect ? () => onSelect(ownedId) : undefined}
+      leadingMeta={leadingMeta}
       badges={
         listRow && solveBadge ? (
           <>
