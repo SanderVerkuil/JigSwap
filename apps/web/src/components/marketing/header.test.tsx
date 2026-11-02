@@ -32,7 +32,11 @@ vi.mock("@/compat/link", () => ({
     </a>
   ),
 }));
-vi.mock("@/components/marketing/wordmark", () => ({ Wordmark: () => null }));
+vi.mock("@/components/marketing/wordmark", () => ({
+  Wordmark: ({ textClassName }: { textClassName?: string }) => (
+    <span data-testid="wordmark-name" className={textClassName} />
+  ),
+}));
 
 // Signed out: the header's auth-gated actions render their Unauthenticated branch.
 vi.mock("convex/react", () => ({
@@ -114,6 +118,14 @@ describe("MarketingHeader breakpoints", () => {
     expect(
       classesOf(screen.getByRole("button", { name: "Menu openen" })),
     ).toContain("min-[1200px]:hidden");
+  });
+
+  // At 360px the Dutch bar was measured to fit: wordmark 16-134, CTA 152-296, toggle 304-344.
+  it("keeps the product name in the bar down to 360px", () => {
+    renderHeader("nl");
+    expect(screen.getByTestId("wordmark-name").className).toBe(
+      "max-[360px]:hidden",
+    );
   });
 
   it("opens the burger menu at every width the burger shows", () => {

@@ -42,7 +42,9 @@ const BAR_CTA = "h-10 px-3.5 min-[1200px]:h-9 min-[1200px]:px-4";
 // moves with it. Below it the nav folds into the burger, and below 861px the login
 // link follows. The bar keeps the brand CTA next to the menu toggle at every width;
 // on phones (<640px) the language and theme switches move into the menu to make
-// room for it, and below 375px the wordmark shrinks to its logo mark.
+// room for it. Below 375px the bar tightens so the wordmark still fits beside the
+// longest CTA (Dutch: 360px is just enough), and only below 360px, under the
+// width of common Android phones, does it shrink to its logo mark.
 export function MarketingHeader() {
   const t = useTranslations("marketing.nav");
   const { pathname } = useLocation();
@@ -121,9 +123,9 @@ export function MarketingHeader() {
     >
       {/* First Tab stop on every marketing page: jumps to the page's <main>. */}
       <SkipLink />
-      <div className="w-full max-w-[1200px] mx-auto px-6 flex items-center gap-3 sm:gap-5 h-[70px]">
+      <div className="w-full max-w-[1200px] mx-auto px-6 max-[375px]:px-4 flex items-center gap-3 max-[375px]:gap-2 sm:gap-5 h-[70px]">
         <Link href="/" aria-label="JigSwap">
-          <Wordmark priority textClassName="max-[375px]:hidden" />
+          <Wordmark priority textClassName="max-[360px]:hidden" />
         </Link>
         <nav
           aria-label={t("primaryNav")}
@@ -131,7 +133,7 @@ export function MarketingHeader() {
         >
           {NAV.map((item) => navLink(item))}
         </nav>
-        <div className="ml-auto flex items-center gap-2.5">
+        <div className="ml-auto flex items-center gap-2.5 max-[375px]:gap-2">
           <LangToggle className="hidden sm:inline-flex" />
           <ModeToggle className="hidden sm:inline-flex" />
           <Unauthenticated>
