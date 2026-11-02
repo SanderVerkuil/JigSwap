@@ -68,6 +68,7 @@ function CollectionDetailPage() {
   const t = useTranslations("collections");
   const tCommon = useTranslations("common");
   const tPuzzles = useTranslations("puzzles");
+  const tShell = useTranslations("shell");
   const format = useFormatter();
 
   const { data: collection, isPending: collectionPending } = useQuery(
@@ -93,10 +94,15 @@ function CollectionDetailPage() {
   // breadcrumb reads My Library › Collections › <name>. The Add/Share/Edit
   // actions now live in the in-content hero block per the redesign, so this
   // page intentionally publishes no header `actions`.
-  // Once loaded, the hero renders the name as this page's h1, so the shell's copy is plain text.
+  // Once loaded, the hero renders the name as this page's h1, so the head keeps it only as the crumb
+  // and the phone's top bar, right above the hero, says where the page lives instead.
   usePageHeader(
-    () => ({ title: collection?.name, ownsHeading: Boolean(collection) }),
-    [collection?.name, Boolean(collection)],
+    () => ({
+      title: collection?.name,
+      titleInContent: Boolean(collection),
+      mobileTitle: collection ? tShell("pages.collections.title") : undefined,
+    }),
+    [collection?.name, Boolean(collection), tShell],
   );
 
   const puzzles = useMemo(

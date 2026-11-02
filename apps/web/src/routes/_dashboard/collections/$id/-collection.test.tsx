@@ -1,5 +1,9 @@
 // @vitest-environment happy-dom
 // The "-" prefix keeps the TanStack route generator from treating this file as a route.
+import {
+  PageHeaderSlotProvider,
+  usePageHeaderContent,
+} from "@/components/dashboard-layout/page-header-slot";
 import { gateway, type Id } from "@/gateway";
 import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import type { CollectionDetailView, OwnedCopyView } from "@jigswap/contracts";
@@ -127,7 +131,10 @@ const renderPage = (
   render(
     <QueryClientProvider client={queryClient}>
       <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
-        <Page />
+        <PageHeaderSlotProvider>
+          <Page />
+          <PublishedTitle />
+        </PageHeaderSlotProvider>
       </IntlProvider>
     </QueryClientProvider>,
   );
@@ -152,6 +159,28 @@ const removeViaMenu = () => {
 
 type ToastAction = { action?: { label: string; onClick: () => void } };
 afterEach(cleanup);
+
+// What the page published into the shell's page head.
+function PublishedTitle() {
+  const { title, titleInContent, mobileTitle } = usePageHeaderContent();
+  return (
+    <output data-testid="head">
+      {JSON.stringify({ title, titleInContent, mobileTitle })}
+    </output>
+  );
+}
+
+describe("the collection's name", () => {
+  it("shows once at each width: the hero's h1, kept as the crumb's leaf, not in the top bar", () => {
+    renderPage(OWNER);
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Cats");
+    expect(JSON.parse(screen.getByTestId("head").textContent ?? "")).toEqual({
+      title: "Cats",
+      titleInContent: true,
+      mobileTitle: "Collections",
+    });
+  });
+});
 
 describe("the page on a phone", () => {
   // happy-dom has no layout: these pin the class contract; the geometry was checked in a browser.
