@@ -1,6 +1,6 @@
 import { paginationOptsValidator, type PaginationResult } from "convex/server";
 import { query } from "../_generated/server";
-import { clampPaginationOpts } from "../lib/pageSize";
+import { clampUnpinnedPaginationOpts } from "../lib/pageSize";
 
 // A page holds 1 to MAX_PAGE_SIZE entries whatever the client asks for. Convex counts the whole
 // documents read, not the two fields returned: a full page reads 1000 complete puzzle rows
@@ -21,7 +21,9 @@ export const listSitemapEntries = query({
     const puzzles = await ctx.db
       .query("puzzles")
       .withIndex("by_status", (q) => q.eq("status", "approved"))
-      .paginate(clampPaginationOpts(args.paginationOpts, MAX_PAGE_SIZE));
+      .paginate(
+        clampUnpinnedPaginationOpts(args.paginationOpts, MAX_PAGE_SIZE),
+      );
 
     return {
       ...puzzles,

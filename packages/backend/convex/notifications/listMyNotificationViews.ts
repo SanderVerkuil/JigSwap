@@ -4,6 +4,7 @@ import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
+import { clampPaginationOpts, keepPinnedEnd } from "../lib/pageSize";
 import {
   createNotificationViewCache,
   resolveNotificationView,
@@ -21,6 +22,10 @@ export const listMyNotificationViews = query({
   handler: async (ctx, args): Promise<PaginationResult<NotificationView>> => {
     const memberId = await requireMember(ctx);
     const viewerId = memberId as unknown as Id<"users">;
+    const paginationOpts = clampPaginationOpts(
+      args.paginationOpts,
+      MAX_NOTIFICATION_PAGE_SIZE,
+    );
     const result = await ctx.db
       .query("notifications")
       .withIndex("by_user", (q) => q.eq("userId", viewerId))
@@ -32,13 +37,7 @@ export const listMyNotificationViews = query({
           q.eq(q.field("channel"), undefined),
         ),
       )
-      .paginate({
-        ...args.paginationOpts,
-        numItems: Math.max(
-          1,
-          Math.min(args.paginationOpts.numItems, MAX_NOTIFICATION_PAGE_SIZE),
-        ),
-      });
+      .paginate(paginationOpts);
 
     const cache = createNotificationViewCache({
       viewerIsAdmin: await isAdmin(ctx),
@@ -49,7 +48,7 @@ export const listMyNotificationViews = query({
       ),
     );
     return {
-      ...result,
+      ...keepPinnedEnd(result, paginationOpts),
       page: views.filter((view): view is NotificationView => view !== null),
     };
   },

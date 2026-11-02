@@ -13,6 +13,7 @@ import {
 } from "../exchange/tradeParty";
 import { isActiveMember } from "../identity/requireActiveMember";
 import { requireMember } from "../identity/requireMember";
+import { clampLimit } from "../lib/pageSize";
 import { circleIconFields } from "../sharing/circleIcons";
 import { blockStateBetween } from "../social/blocks";
 import { anonymousMemberOf, projectMemberIdentity } from "../social/privacy";
@@ -500,10 +501,10 @@ export const getMyInbox = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args): Promise<InboxThreadView[]> => {
     const me = (await requireMember(ctx)) as unknown as Id<"users">;
-    const limit =
-      args.limit === undefined || Number.isNaN(args.limit)
-        ? INBOX_DEFAULT_LIMIT
-        : Math.max(1, Math.min(INBOX_MAX_LIMIT, Math.floor(args.limit)));
+    const limit = clampLimit(args.limit, {
+      fallback: INBOX_DEFAULT_LIMIT,
+      max: INBOX_MAX_LIMIT,
+    });
 
     // Per-thread point reads; the last message and unread count are denormalized (the thread's
     // lastMessage, the membership's unreadCount), so no per-row message scans once backfilled.

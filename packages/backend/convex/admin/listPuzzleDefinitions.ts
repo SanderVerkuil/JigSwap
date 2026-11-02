@@ -6,7 +6,10 @@ import { isAdmin } from "../identity/isAdmin";
 import { adminMemberLabelOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
 import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
-import { clampPaginationOpts } from "../lib/pageSize";
+import {
+  clampPaginationOpts,
+  clampUnpinnedPaginationOpts,
+} from "../lib/pageSize";
 
 // Admin-only, but the page size is still the client's request: each row joins its submitter, its
 // box art and every copy of it (owner count), so a page holds at most this many (the table asks
@@ -56,7 +59,9 @@ export const listPuzzleDefinitions = query({
               const matching = q.search("searchableText", term);
               return status ? matching.eq("status", status) : matching;
             })
-            .paginate(paginationOpts)
+            .paginate(
+              clampUnpinnedPaginationOpts(args.paginationOpts, MAX_PAGE_SIZE),
+            )
         : status
           ? await ctx.db
               .query("puzzles")

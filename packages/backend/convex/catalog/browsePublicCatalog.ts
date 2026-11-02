@@ -4,7 +4,7 @@ import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { boxArtImage } from "../lib/imageModeration/boxArtUrl";
-import { clampPaginationOpts } from "../lib/pageSize";
+import { clampUnpinnedPaginationOpts } from "../lib/pageSize";
 import {
   publicAvailabilityFromByType,
   publicAvailabilityOf,
@@ -21,7 +21,8 @@ export const PUBLIC_CATALOG_MAX_PAGE = 40;
 // status-filtered at the index), brand, and a piece-count range. Each page row is enriched with
 // the card aggregates (rating summary + public availability count), read from the definition's
 // definitionStats row (library/definitionStats): one document per card, however many reviews and
-// copies the definition has. A page holds 1..PUBLIC_CATALOG_MAX_PAGE definitions.
+// copies the definition has. A page holds 1..PUBLIC_CATALOG_MAX_PAGE definitions; the page walks
+// them by hand with `cursor`, so a client's endCursor (which would override that) is dropped.
 //
 // Sort is newest-first ONLY: sorting by rating would require a denormalized per-definition rating
 // (a computed aggregate can't order a paginated index scan) — deliberately deferred.
@@ -39,7 +40,7 @@ export const browsePublicCatalog = query({
     args,
   ): Promise<PaginationResult<PublicCatalogCardView>> => {
     const term = args.searchTerm?.toLowerCase().trim() ?? "";
-    const paginationOpts = clampPaginationOpts(
+    const paginationOpts = clampUnpinnedPaginationOpts(
       args.paginationOpts,
       PUBLIC_CATALOG_MAX_PAGE,
     );

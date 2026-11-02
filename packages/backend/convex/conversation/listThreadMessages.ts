@@ -4,6 +4,7 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { clampPaginationOpts } from "../lib/pageSize";
 import {
   ownJoinRowsAt,
   readableThreadOf,
@@ -31,13 +32,7 @@ export const listThreadMessages = query({
         return floor === undefined ? scoped : scoped.gt("sentAt", floor);
       })
       .order("desc")
-      .paginate({
-        ...args.paginationOpts,
-        numItems: Math.min(
-          MAX_PAGE_SIZE,
-          Math.max(1, Math.floor(args.paginationOpts.numItems)),
-        ),
-      });
+      .paginate(clampPaginationOpts(args.paginationOpts, MAX_PAGE_SIZE));
     const rows =
       floor !== undefined && result.isDone
         ? [

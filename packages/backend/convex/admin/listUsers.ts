@@ -5,7 +5,10 @@ import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
-import { clampPaginationOpts } from "../lib/pageSize";
+import {
+  clampPaginationOpts,
+  clampUnpinnedPaginationOpts,
+} from "../lib/pageSize";
 
 // Admin-only, but the page size is still the client's request: one page joins each member's
 // library size, so it holds at most this many members (the console asks for 25).
@@ -85,7 +88,9 @@ export const listUsers = query({
             .withSearchIndex("by_searchable_name", (q) =>
               q.search("searchableName", search),
             )
-            .paginate(paginationOpts)
+            .paginate(
+              clampUnpinnedPaginationOpts(args.paginationOpts, MAX_PAGE_SIZE),
+            )
         : await ctx.db.query("users").order("desc").paginate(paginationOpts);
 
     return {

@@ -10,7 +10,11 @@ import type { DataModel } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { boxArtImage } from "../lib/imageModeration/boxArtUrl";
-import { clampPaginationOpts } from "../lib/pageSize";
+import {
+  clampPaginationOpts,
+  clampUnpinnedPaginationOpts,
+  keepPinnedEnd,
+} from "../lib/pageSize";
 import { toPuzzleSummaryView } from "./mappers";
 
 // A page holds 1 to MAX_PAGE_SIZE puzzles whatever the client asks for.
@@ -88,12 +92,17 @@ export const searchCatalog = query({
               q.search("searchableText", term).eq("status", "approved"),
             )
             .filter(facets)
-            .paginate(paginationOpts)
-        : await ctx.db
-            .query("puzzles")
-            .withIndex("by_status", (q) => q.eq("status", "approved"))
-            .filter(facets)
-            .paginate(paginationOpts);
+            .paginate(
+              clampUnpinnedPaginationOpts(args.paginationOpts, MAX_PAGE_SIZE),
+            )
+        : keepPinnedEnd(
+            await ctx.db
+              .query("puzzles")
+              .withIndex("by_status", (q) => q.eq("status", "approved"))
+              .filter(facets)
+              .paginate(paginationOpts),
+            paginationOpts,
+          );
 
     const tags = args.tags ?? [];
     const rows =
