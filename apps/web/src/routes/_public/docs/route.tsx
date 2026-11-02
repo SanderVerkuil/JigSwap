@@ -85,7 +85,8 @@ function DocsLayout() {
           <SheetDescription className="sr-only">
             {t("navSheetDescription")}
           </SheetDescription>
-          <div className="py-6" onClick={() => setNavOpen(false)}>
+          {/* Clears the sheet's close button (top right) and keeps the rows off its edges. */}
+          <div className="px-4 pt-12 pb-6" onClick={() => setNavOpen(false)}>
             <DocsSidebar
               onOpenSearch={() => {
                 setNavOpen(false);
