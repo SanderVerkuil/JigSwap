@@ -11,8 +11,9 @@ export interface EmailMessage {
   readonly subject: string;
   readonly html: string;
   readonly text: string;
-  // Per-message From display name (e.g. "Sander Verkuil | JigSwap"); falls back to the
-  // configured default.
+  // Per-message From display name: always the brand ("JigSwap", set by renderEmail), never
+  // member-chosen text; the actor appears only in the subject and body (SEC-14). Falls back to
+  // the configured default.
   readonly fromName?: string;
   // Stable per-notification key (the Notification aggregateId): a replayed send is deduplicated
   // by the provider instead of double-delivering.
