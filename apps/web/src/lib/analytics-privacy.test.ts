@@ -138,7 +138,6 @@ describe("sanitizeAnalyticsEvent: URLs", () => {
     const properties = {
       $pathname: "/catalog",
       $el_text: "Swap this one?",
-      title: "Which puzzle? | JigSwap",
       $referring_domain: "$direct",
       count: 3,
     };
@@ -151,6 +150,22 @@ describe("sanitizeAnalyticsEvent: URLs", () => {
     const original = event("$pageview", { $current_url: PAGE });
     sanitizeAnalyticsEvent(original);
     expect(original.properties.$current_url).toBe(PAGE);
+  });
+});
+
+describe("sanitizeAnalyticsEvent: page titles", () => {
+  // PostHog copies document.title into every $pageview, and the tab carries the page's own name:
+  // a circle, a household, a collection, or the member an admin is looking at.
+  it("never lets the tab's title out, whichever event carries it", () => {
+    for (const name of ["$pageview", "$pageleave", "$autocapture", "clicked"]) {
+      const result = sanitizeAnalyticsEvent(
+        event(name, {
+          $pathname: "/circles/c1",
+          title: "De familie Jansen — JigSwap",
+        }),
+      );
+      expect(result?.properties).toEqual({ $pathname: "/circles/c1" });
+    }
   });
 });
 

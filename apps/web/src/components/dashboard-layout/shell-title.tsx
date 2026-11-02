@@ -63,7 +63,8 @@ export function ShellHeading() {
  * speaks: a route's head() runs before a detail page's data is in, so it can only say "My puzzles".
  * The router's head keeps writing the route's own title, on a language switch for one: this takes
  * the tab back from it, and on the way out hands back whichever title the head wrote last, since the
- * router won't write an unchanged one again. A title the next route's head wrote stays.
+ * router won't write an unchanged one again. A title the next route's head wrote stays. Names can
+ * be private, so analytics never gets the title (sanitizeAnalyticsEvent in lib/analytics-privacy).
  */
 export function ShellDocumentTitle() {
   const { title } = usePageHeaderContent();
