@@ -64,6 +64,9 @@ export interface PuzzleSummaryView {
   /** `srcset` for the box art: its 480/640/960 px WebP renditions and the original (`image`),
    *  as URLs. Absent until renditions exist; show `image` alone then. */
   imageSrcSet?: string;
+  /** catalog.search only: how many other members publicly offer this puzzle, for the card's link
+   *  to Browse. Absent when none do, or before the definition's stats first exist. */
+  availableCount?: number;
   status: "pending" | "approved" | "rejected" | "disabled";
   createdAt: number;
   updatedAt: number;

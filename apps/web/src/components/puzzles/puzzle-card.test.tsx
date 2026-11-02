@@ -119,6 +119,42 @@ describe("catalogue PuzzleCard: on your shelf", () => {
   });
 });
 
+describe("catalogue PuzzleCard: copies available", () => {
+  it("links to Browse for this puzzle, above the card's stretched link", () => {
+    render(<CatalogCard puzzle={summary({ availableCount: 3 })} />);
+    const chip = screen.getByRole("link", {
+      name: "3 available, see the copies from members",
+    });
+    expect(chip.getAttribute("href")).toBe("/browse?puzzle=p1");
+    expect(chip.textContent).toBe("3 available");
+    expect(chip.className).toContain("z-10");
+  });
+
+  it("speaks one copy in the singular, and Dutch", () => {
+    render(
+      <CatalogCard puzzle={summary({ availableCount: 1 })} />,
+      "grid",
+      "nl",
+    );
+    const chip = screen.getByRole("link", {
+      name: "1 beschikbaar, bekijk het exemplaar van leden",
+    });
+    expect(chip.textContent).toBe("1 beschikbaar");
+  });
+
+  it("shows nothing without a count", () => {
+    render(<CatalogCard puzzle={summary()} />);
+    expect(container.querySelector('a[href^="/browse"]')).toBeNull();
+  });
+
+  it("isn't offered on the chooser's card", () => {
+    render(
+      <CatalogCard puzzle={summary({ availableCount: 3 })} variant="pick" />,
+    );
+    expect(container.querySelector('a[href^="/browse"]')).toBeNull();
+  });
+});
+
 describe("catalogue PuzzleCard cover", () => {
   it("lets the browser pick a rendition for the app's puzzle grid", () => {
     render(<CatalogCard puzzle={summary({ imageSrcSet: SRC_SET })} />);

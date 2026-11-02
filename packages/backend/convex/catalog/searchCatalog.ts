@@ -7,11 +7,16 @@ import {
   type PaginationResult,
 } from "convex/server";
 import { v } from "convex/values";
-import type { DataModel } from "../_generated/dataModel";
+import type { DataModel, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { boxArtImage } from "../lib/imageModeration/boxArtUrl";
 import { clampUnpinnedPaginationOpts, paginateBounded } from "../lib/pageSize";
+import {
+  publicAvailabilityFromByType,
+  publicAvailabilityOf,
+} from "../library/definitionAggregates";
+import { definitionTotalsOf } from "../library/definitionStats";
 import { toPuzzleSummaryView } from "./mappers";
 
 // A page holds 1 to MAX_PAGE_SIZE puzzles whatever the client asks for.
@@ -27,6 +32,10 @@ const MAX_PAGE_SIZE = 50;
 // an array field, so they narrow each page after the read; a page can come back short, never wrong.
 // `category` is a string because it arrives from a URL search param: a malformed id gives an empty,
 // finished page instead of failing the query.
+//
+// Each row carries `availableCount`, for the card's link to Browse: the definition's stored public
+// offers (one definitionStats row per card) minus the viewer's own, which Browse never lists. A
+// definition whose stats don't exist yet has no count: this paged list never computes them live.
 export const searchCatalog = query({
   args: {
     paginationOpts: paginationOptsValidator,
@@ -46,7 +55,7 @@ export const searchCatalog = query({
     tags: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args): Promise<PaginationResult<PuzzleSummaryView>> => {
-    await requireMember(ctx);
+    const me = (await requireMember(ctx)) as unknown as Id<"users">;
     const term = args.searchTerm?.toLowerCase().trim() ?? "";
     const category =
       args.category === undefined
@@ -106,13 +115,33 @@ export const searchCatalog = query({
             tags.some((tag) => puzzle.tags?.includes(tag)),
           );
 
+    const availableFromOthers = async (
+      puzzleId: Id<"puzzles">,
+    ): Promise<number> => {
+      const totals = await definitionTotalsOf(ctx, puzzleId);
+      if (!totals) return 0;
+      const { total } = publicAvailabilityFromByType(totals.publicAvailable);
+      if (total === 0) return 0;
+      const mine = await ctx.db
+        .query("ownedPuzzles")
+        .withIndex("by_owner_puzzle", (q) =>
+          q.eq("ownerId", me).eq("puzzleId", puzzleId),
+        )
+        .collect();
+      return total - (await publicAvailabilityOf(ctx, mine)).total;
+    };
+
     const page = await Promise.all(
-      rows.map(async (puzzle) =>
-        toPuzzleSummaryView(
-          puzzle,
-          puzzle.image ? await boxArtImage(ctx, puzzle.image) : null,
-        ),
-      ),
+      rows.map(async (puzzle) => {
+        const availableCount = await availableFromOthers(puzzle._id);
+        return {
+          ...toPuzzleSummaryView(
+            puzzle,
+            puzzle.image ? await boxArtImage(ctx, puzzle.image) : null,
+          ),
+          ...(availableCount > 0 ? { availableCount } : {}),
+        };
+      }),
     );
 
     return { ...result, page };

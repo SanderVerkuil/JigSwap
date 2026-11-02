@@ -8,7 +8,7 @@ import { useBoxArtInCheck } from "@/hooks/use-box-art-check";
 import { useFavorites } from "@/hooks/use-favorites";
 import { cn } from "@/lib/utils";
 import type { FunctionReturnType } from "convex/server";
-import { Check, Heart, Plus } from "lucide-react";
+import { ArrowLeftRight, Check, Heart, Plus } from "lucide-react";
 import { useTranslations } from "use-intl";
 import {
   PuzzleCardShell,
@@ -106,9 +106,24 @@ function CataloguePuzzleCard({
       headingLevel={headingLevel}
       imageChecking={!puzzle.image && boxArtInCheck.has(puzzle._id)}
       badges={
-        onShelf ? (
-          <div className="mb-2">
-            <OnShelfBadge />
+        onShelf || puzzle.availableCount ? (
+          <div className="mb-2 flex flex-wrap items-center gap-1.5">
+            {onShelf && <OnShelfBadge />}
+            {puzzle.availableCount && (
+              <Link
+                href={`/browse?puzzle=${puzzle._id}`}
+                aria-label={tCat("availableCopiesLabel", {
+                  count: puzzle.availableCount,
+                })}
+                // Above the title's stretched link; a 44px touch target without moving the row.
+                className="relative z-10 inline-flex items-center pointer-coarse:-my-3 pointer-coarse:py-3"
+              >
+                <span className="border-jigsaw-secondary/40 bg-jigsaw-secondary-tint hover:bg-jigsaw-secondary/20 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium text-green-800 transition-colors dark:text-green-300">
+                  <ArrowLeftRight className="size-3 shrink-0" aria-hidden />
+                  {tCat("availableCopies", { count: puzzle.availableCount })}
+                </span>
+              </Link>
+            )}
           </div>
         ) : undefined
       }

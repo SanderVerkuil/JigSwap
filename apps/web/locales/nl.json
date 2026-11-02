@@ -472,6 +472,8 @@
       "subtitle": "Blader en ontdek puzzels van de community",
       "searchPlaceholder": "Titel, merk, kunstenaar of tag…",
       "searchLabel": "Zoek in de catalogus",
+      "availableCopies": "{count} beschikbaar",
+      "availableCopiesLabel": "{count} beschikbaar, bekijk {count, plural, one {het exemplaar} other {de exemplaren}} van leden",
       "filtersLabel": "Filters",
       "filtersLabelCount": "Filters ({count})",
       "clearFilters": "Filters wissen",

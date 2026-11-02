@@ -472,6 +472,8 @@
       "subtitle": "Browse and discover puzzles from the community",
       "searchPlaceholder": "Title, brand, artist or tag…",
       "searchLabel": "Search the catalogue",
+      "availableCopies": "{count} available",
+      "availableCopiesLabel": "{count} available, see the {count, plural, one {copy} other {copies}} from members",
       "filtersLabel": "Filters",
       "filtersLabelCount": "Filters ({count})",
       "clearFilters": "Clear Filters",
