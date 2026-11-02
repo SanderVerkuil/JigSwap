@@ -186,46 +186,50 @@ export function PuzzleCardShell({
   );
 
   // One compact line per puzzle, so a library of hundreds can be scanned: thumbnail, title and
-  // brand, pieces, the copy's badges, then its actions and ⋯ at the end of the row. From sm the
+  // brand, pieces, the copy's badges, then ⋯ and its actions at the end of the row. From sm the
   // middle is three columns, so pieces and badges line up from row to row; on a phone pieces and
-  // badges flow together under the title and the actions take a line of their own.
+  // badges flow together under the title. The thumbnail and columns need 34rem to keep the title
+  // legible, so actions that don't fit beside that wrap to a line of their own, however wide they
+  // are: Browse's labelled Request button until a wide window, a pair of icons much sooner.
   const renderListRow = () => (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 p-2 sm:flex-nowrap sm:gap-x-4 sm:pr-3">
-      <div className="size-14 shrink-0 sm:size-12">{renderImage()}</div>
-      <div className="flex min-w-0 flex-1 basis-0 flex-wrap items-center gap-x-2 gap-y-1 sm:grid sm:grid-cols-[minmax(0,1fr)_6.5rem_minmax(0,1.1fr)] sm:gap-x-4">
-        <div className="w-full min-w-0 sm:w-auto">
-          <Title className="line-clamp-2 text-sm font-semibold">
-            {titleContent}
-          </Title>
-          {puzzle.brand && (
-            <p className="text-muted-foreground truncate text-xs">
-              {puzzle.brand}
-            </p>
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 p-2 sm:gap-x-4 sm:pr-3">
+      <div className="flex min-w-0 flex-[1_1_34rem] items-center gap-x-3 sm:gap-x-4">
+        <div className="size-14 shrink-0 sm:size-12">{renderImage()}</div>
+        <div className="flex min-w-0 flex-1 basis-0 flex-wrap items-center gap-x-2 gap-y-1 sm:grid sm:grid-cols-[minmax(0,1fr)_6.5rem_minmax(0,1.1fr)] sm:gap-x-4">
+          <div className="w-full min-w-0 sm:w-auto">
+            <Title className="line-clamp-2 text-sm font-semibold">
+              {titleContent}
+            </Title>
+            {puzzle.brand && (
+              <p className="text-muted-foreground truncate text-xs">
+                {puzzle.brand}
+              </p>
+            )}
+          </div>
+          <div className="text-xs">
+            {format.number(puzzle.pieceCount ?? 0)}{" "}
+            {t("pieces", { count: puzzle.pieceCount ?? 0 })}
+            {puzzle.difficulty && (
+              <span className="text-muted-foreground block truncate max-sm:hidden">
+                {difficultyLabel(puzzle.difficulty)}
+              </span>
+            )}
+          </div>
+          {/* The badges' own bottom margins are for the stacked grid card. */}
+          {badges && (
+            <div className="contents [&>*]:mb-0 sm:flex sm:min-w-0 sm:flex-wrap sm:items-center sm:gap-x-2 sm:gap-y-1">
+              {badges}
+            </div>
           )}
         </div>
-        <div className="text-xs">
-          {format.number(puzzle.pieceCount ?? 0)}{" "}
-          {t("pieces", { count: puzzle.pieceCount ?? 0 })}
-          {puzzle.difficulty && (
-            <span className="text-muted-foreground block truncate max-sm:hidden">
-              {difficultyLabel(puzzle.difficulty)}
-            </span>
-          )}
-        </div>
-        {/* The badges' own bottom margins are for the stacked grid card. */}
-        {badges && (
-          <div className="contents [&>*]:mb-0 sm:flex sm:min-w-0 sm:flex-wrap sm:items-center sm:gap-x-2 sm:gap-y-1">
-            {badges}
+        {rowEnd && (
+          <div className="relative z-10 flex shrink-0 items-center">
+            {rowEnd}
           </div>
         )}
       </div>
-      {rowEnd && (
-        <div className="relative z-10 flex shrink-0 items-center max-sm:order-1">
-          {rowEnd}
-        </div>
-      )}
       {(footer || actions) && (
-        <div className="relative z-10 flex items-center gap-2 max-sm:order-2 max-sm:w-full max-sm:flex-wrap sm:shrink-0">
+        <div className="relative z-10 flex items-center gap-2 max-sm:w-full max-sm:flex-wrap sm:ml-auto sm:shrink-0">
           {footer}
           {actions}
         </div>

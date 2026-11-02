@@ -487,7 +487,7 @@ export function PuzzleCard({
       {offers.map(({ flag, label, Icon }) => (
         <span
           key={flag}
-          className="inline-flex items-center gap-1 rounded-full border border-jigsaw-secondary/40 bg-jigsaw-secondary-tint px-2 py-0.5 text-xs font-medium text-green-800 dark:text-green-300"
+          className="inline-flex items-center gap-1 rounded-full border border-jigsaw-secondary/40 bg-jigsaw-secondary-tint px-2 py-0.5 text-xs font-medium whitespace-nowrap text-green-800 dark:text-green-300"
         >
           <Icon className="size-3 shrink-0" aria-hidden />
           {t(label)}

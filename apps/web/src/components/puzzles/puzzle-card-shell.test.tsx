@@ -177,6 +177,63 @@ describe("PuzzleCardShell density", () => {
   });
 });
 
+describe("PuzzleCardShell list row", () => {
+  const renderRow = (extra: {
+    actions?: ReactNode;
+    rowEnd?: ReactNode;
+    footer?: ReactNode;
+  }) => {
+    const host = document.createElement("div");
+    host.innerHTML = renderToStaticMarkup(
+      <IntlProvider locale="en" messages={en} timeZone="UTC">
+        <PuzzleViewProvider viewMode="list">
+          <PuzzleCardShell
+            puzzle={densityPuzzle}
+            imageHref="/puzzles/p1"
+            {...extra}
+          />
+        </PuzzleViewProvider>
+      </IntlProvider>,
+    );
+    const title = host.querySelector("h3")!;
+    const columns = title.parentElement!.parentElement!;
+    const line = columns.parentElement!;
+    return { host, line, columns, row: line.parentElement! };
+  };
+
+  // happy-dom has no layout: this pins the class contract; the widths were measured in a browser.
+  it("gives the thumbnail and columns a minimum width, so wide actions wrap instead of squeezing the title", () => {
+    const { host, line, row } = renderRow({
+      actions: <button type="button">Request swap</button>,
+    });
+    expect(line.classList).toContain("flex-[1_1_34rem]");
+    expect(line.querySelector("img")).toBeTruthy();
+    // Free to wrap at every width: whether the actions fit beside the line depends on the actions.
+    expect(row.classList).toContain("flex-wrap");
+    expect(row.className).not.toContain("flex-nowrap");
+    const actions = host.querySelector("button")!.parentElement!;
+    expect(actions.parentElement).toBe(row);
+    expect(line.contains(actions)).toBe(false);
+    expect(actions.classList).toContain("sm:ml-auto");
+  });
+
+  it("keeps the small row-end control on the title's line", () => {
+    const { host, line } = renderRow({
+      rowEnd: <button type="button">More</button>,
+    });
+    expect(line.contains(host.querySelector("button"))).toBe(true);
+  });
+
+  it("wraps the footer with the actions, not inside the title's line", () => {
+    const { host, line, row } = renderRow({
+      footer: <span data-testid="loan">On loan</span>,
+    });
+    const footer = host.querySelector('[data-testid="loan"]')!;
+    expect(footer.parentElement?.parentElement).toBe(row);
+    expect(line.contains(footer)).toBe(false);
+  });
+});
+
 describe("PuzzleCardShell piece count", () => {
   // The count follows the app locale, never the server's or browser's (UX-63), and the
   // word agrees with it: Dutch says "stukje"/"stukjes", never "stukken" (UX-65).
