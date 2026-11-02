@@ -669,6 +669,14 @@
       "household": "Van huisgenoten",
       "trigger": "{owner, select, mine {Van mij} household {Van huisgenoten} other {Van iedereen}}"
     },
+    "filterSheet": {
+      "title": "Filters",
+      "open": "{count, plural, =0 {Filters} one {Filters, # aan} other {Filters, # aan}}",
+      "status": "Status",
+      "show": "{count, plural, one {Toon # puzzel} other {Toon # puzzels}}",
+      "close": "Klaar",
+      "remove": "Filter weghalen: {filter}"
+    },
     "boxArtCheck": {
       "label": "Wordt gecontroleerd",
       "toast": "Je afbeelding wordt nog gecontroleerd. Tot die controle klaar is, ziet niemand hem, ook jij niet: in plaats daarvan staat er een standaardafbeelding. De controle wordt automatisch opnieuw gedaan, je hoeft niets te doen."

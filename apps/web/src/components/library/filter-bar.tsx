@@ -16,12 +16,16 @@ export function FilterBar<T extends string>({
   onChange,
   count,
   className,
+  pillsClassName,
+  countClassName,
 }: {
   options: FilterOption<T>[];
   value: T;
   onChange: (value: T) => void;
   count?: ReactNode;
   className?: string;
+  pillsClassName?: string;
+  countClassName?: string;
 }) {
   return (
     <div
@@ -30,7 +34,7 @@ export function FilterBar<T extends string>({
         className,
       )}
     >
-      <div className="flex flex-wrap gap-2" role="group">
+      <div className={cn("flex flex-wrap gap-2", pillsClassName)} role="group">
         {options.map((option) => {
           const active = value === option.value;
           return (
@@ -52,7 +56,11 @@ export function FilterBar<T extends string>({
           );
         })}
       </div>
-      {count && <span className="text-muted-foreground text-sm">{count}</span>}
+      {count && (
+        <span className={cn("text-muted-foreground text-sm", countClassName)}>
+          {count}
+        </span>
+      )}
     </div>
   );
 }

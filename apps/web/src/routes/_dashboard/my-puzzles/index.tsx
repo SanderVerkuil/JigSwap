@@ -33,6 +33,7 @@ import {
   type MyPuzzlesSort,
   type MyPuzzlesStatus,
 } from "@/components/library/my-puzzles-filters";
+import { MyPuzzlesPhoneFilters } from "@/components/library/my-puzzles-phone-filters";
 import { useBulkCopyActions } from "@/components/library/use-bulk-copy-actions";
 import {
   LIBRARY_ROWS_MAX,
@@ -235,6 +236,7 @@ function PuzzlesPage() {
     convexQuery(gateway.household.mine, signedIn ? {} : "skip"),
   );
   const householdShared = (myHousehold?.members.length ?? 0) > 1;
+  const showOwnerFilter = householdShared || filters.owner !== "all";
 
   // Open loans where the caller is the lender; the source of truth for "which of my copies are out".
   const { data: lentOut } = useQuery(convexQuery(gateway.lending.lentOut, {}));
@@ -331,6 +333,22 @@ function PuzzlesPage() {
   const showAll = () =>
     setSearch({ q: undefined, status: undefined, owner: undefined });
 
+  // Every puzzle in the household lives on the household's Puzzles tab.
+  const householdLink = myHousehold && householdShared && (
+    <Link
+      href="/household"
+      className="text-muted-foreground hover:text-foreground inline-flex max-w-full min-w-0 items-center gap-1.5 self-start text-sm underline-offset-4 hover:underline pointer-coarse:min-h-11"
+    >
+      <House className="size-4 shrink-0" aria-hidden />
+      <span className="min-w-0 truncate">
+        {myHousehold.name
+          ? t("householdPointerNamed", { name: myHousehold.name })
+          : t("householdPointer")}
+      </span>
+      <ArrowRight className="size-3.5 shrink-0" aria-hidden />
+    </Link>
+  );
+
   const isSelectable = (copy: { _id: string; aggregateId?: string }) =>
     canSelectCopy(copy, householdAccessById.get(copy._id));
   // Everything the filters show once the index is in; until then what's loaded.
@@ -413,25 +431,14 @@ function PuzzlesPage() {
           {/* One-time coachmark: points users at the ⋯ overflow menu on each card */}
           <ActionsCoachmark />
 
-          {/* Every puzzle in the household lives on the household's Puzzles tab. */}
-          {myHousehold && householdShared && (
-            <Link
-              href="/household"
-              className="text-muted-foreground hover:text-foreground inline-flex min-w-0 items-center gap-1.5 self-start text-sm underline-offset-4 hover:underline pointer-coarse:min-h-11"
-            >
-              <House className="size-4 shrink-0" aria-hidden />
-              <span className="min-w-0 truncate">
-                {myHousehold.name
-                  ? t("householdPointerNamed", { name: myHousehold.name })
-                  : t("householdPointer")}
-              </span>
-              <ArrowRight className="size-3.5 shrink-0" aria-hidden />
-            </Link>
+          {/* Beside the filters from sm; a phone only finds it in the Filters sheet. */}
+          {householdLink && (
+            <div className="max-sm:hidden">{householdLink}</div>
           )}
 
-          {/* Toolbar: search on the left; whose, sort and the view toggle on the right. On a phone the
-            search shares its row with the view toggle and the selects drop to a row of their own.
-            The Add Puzzle action lives in the shell page head. */}
+          {/* Toolbar: search on the left; whose and sort on the right. On a phone, where these and
+            the pills would fill the first screen, the search shares its row with one Filters button
+            and the rest moves into its sheet. The Add Puzzle action lives in the shell page head. */}
           <div className="flex flex-wrap items-center gap-2">
             <LibrarySearchInput
               value={filters.q}
@@ -441,7 +448,23 @@ function PuzzlesPage() {
               maxLength={MAX_SEARCH_LENGTH}
               className="min-w-0 flex-1 basis-56 xl:max-w-sm"
             />
-            <div className="order-last flex w-full flex-wrap items-center gap-2 sm:order-none sm:ml-auto sm:w-auto">
+            <MyPuzzlesPhoneFilters
+              statusOptions={filterOptions}
+              filters={filters}
+              showOwner={showOwnerFilter}
+              matchedCount={matchedCount}
+              householdLink={householdLink}
+              onStatusChange={(status) =>
+                setSearch({ status: status === "all" ? undefined : status })
+              }
+              onOwnerChange={(owner) =>
+                setSearch({ owner: owner === "all" ? undefined : owner })
+              }
+              onSortChange={(sort) =>
+                setSearch({ sort: sort === "recent" ? undefined : sort })
+              }
+            />
+            <div className="ml-auto flex flex-wrap items-center gap-2 max-sm:hidden">
               {(householdShared || filters.owner !== "all") && (
                 <Select
                   value={filters.owner}
@@ -480,7 +503,6 @@ function PuzzlesPage() {
                   className="max-sm:flex-1 pointer-coarse:min-h-11"
                   aria-label={t("sort.label")}
                 >
-                  {/* Icon and value stay together on the left when the trigger stretches on a phone. */}
                   <span className="flex min-w-0 items-center gap-2">
                     <ArrowUpDown aria-hidden />
                     {/* Spelled out: Radix only knows the chosen label once hydrated. */}
@@ -494,26 +516,6 @@ function PuzzlesPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant={viewMode === "grid" ? "secondary" : "ghost"}
-                size="icon"
-                aria-label={t("gridView")}
-                aria-pressed={viewMode === "grid"}
-                onClick={() => setSearch({ view: undefined })}
-              >
-                <Grid className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === "list" ? "secondary" : "ghost"}
-                size="icon"
-                aria-label={t("listView")}
-                aria-pressed={viewMode === "list"}
-                onClick={() => setSearch({ view: "list" })}
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </div>
           </div>
 
           {/* Status pills + result count */}
@@ -523,28 +525,59 @@ function PuzzlesPage() {
             onChange={(status) =>
               setSearch({ status: status === "all" ? undefined : status })
             }
+            pillsClassName="max-sm:hidden"
+            countClassName="max-sm:w-full"
             count={
-              <span className="flex items-center gap-3">
-                {matchedCount !== undefined &&
-                  totalCount !== undefined &&
-                  t("resultCount", { count: matchedCount, total: totalCount })}
-                {/* Selection mode for bulk actions, offered once there is a copy the viewer manages. */}
-                {selectionPool.some(isSelectable) && (
-                  <Button
-                    type="button"
-                    variant={selecting ? "secondary" : "outline"}
-                    size="sm"
-                    onClick={toggleSelecting}
-                    className="text-foreground pointer-coarse:min-h-11"
-                  >
-                    {selecting ? (
-                      <Check aria-hidden />
-                    ) : (
-                      <ListChecks aria-hidden />
-                    )}
-                    {selecting ? t("bulk.done") : t("bulk.select")}
-                  </Button>
-                )}
+              <span className="flex items-center justify-between gap-3">
+                <span className="min-w-0">
+                  {matchedCount !== undefined &&
+                    totalCount !== undefined &&
+                    t("resultCount", {
+                      count: matchedCount,
+                      total: totalCount,
+                    })}
+                </span>
+                <span className="flex shrink-0 items-center gap-1 sm:gap-3">
+                  <span className="flex items-center gap-1">
+                    <Button
+                      variant={viewMode === "grid" ? "secondary" : "ghost"}
+                      size="icon"
+                      aria-label={t("gridView")}
+                      aria-pressed={viewMode === "grid"}
+                      onClick={() => setSearch({ view: undefined })}
+                      className="text-foreground pointer-coarse:size-11"
+                    >
+                      <Grid className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant={viewMode === "list" ? "secondary" : "ghost"}
+                      size="icon"
+                      aria-label={t("listView")}
+                      aria-pressed={viewMode === "list"}
+                      onClick={() => setSearch({ view: "list" })}
+                      className="text-foreground pointer-coarse:size-11"
+                    >
+                      <List className="h-4 w-4" />
+                    </Button>
+                  </span>
+                  {/* Selection mode for bulk actions, offered once there is a copy the viewer manages. */}
+                  {selectionPool.some(isSelectable) && (
+                    <Button
+                      type="button"
+                      variant={selecting ? "secondary" : "outline"}
+                      size="sm"
+                      onClick={toggleSelecting}
+                      className="text-foreground pointer-coarse:min-h-11"
+                    >
+                      {selecting ? (
+                        <Check aria-hidden />
+                      ) : (
+                        <ListChecks aria-hidden />
+                      )}
+                      {selecting ? t("bulk.done") : t("bulk.select")}
+                    </Button>
+                  )}
+                </span>
               </span>
             }
           />

@@ -669,6 +669,14 @@
       "household": "Household members'",
       "trigger": "Whose: {owner, select, mine {Mine} household {Household members''} other {All}}"
     },
+    "filterSheet": {
+      "title": "Filters",
+      "open": "{count, plural, =0 {Filters} one {Filters, # on} other {Filters, # on}}",
+      "status": "Status",
+      "show": "{count, plural, one {Show # puzzle} other {Show # puzzles}}",
+      "close": "Done",
+      "remove": "Remove filter: {filter}"
+    },
     "boxArtCheck": {
       "label": "Being checked",
       "toast": "Your image is still being checked. Until it has passed, nobody sees it, you included: a placeholder is shown instead. It is checked again automatically, so there is nothing you need to do."

@@ -266,6 +266,89 @@ describe("My Puzzles empty states", () => {
   });
 });
 
+describe("My Puzzles filters on a phone", () => {
+  const openSheet = () => {
+    fireEvent.click(screen.getByRole("button", { name: "Filters" }));
+    return within(screen.getByRole("dialog", { name: "Filters" }));
+  };
+  const copies = [
+    copy("c1", "Lam Gelegd", {
+      availability: { forTrade: true, forLend: false, forSale: false },
+    }),
+    copy("c2", "De Kattenshow"),
+  ];
+
+  it("keeps the pills and selects out of the first screen, in CSS so the server render agrees", () => {
+    renderPage({ copies, household: HOUSEHOLD_OF_TWO });
+    const pills = screen
+      .getByRole("button", { name: "For Trade" })
+      .closest('[role="group"]');
+    expect(pills?.classList).toContain("max-sm:hidden");
+    expect(
+      screen
+        .getByRole("combobox", { name: "Sort by" })
+        .closest(".max-sm\\:hidden"),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Filters" }).classList).toContain(
+      "sm:hidden",
+    );
+  });
+
+  it("holds the status pills, whose and sort in its sheet, each applied at once", () => {
+    renderPage({ copies, household: HOUSEHOLD_OF_TWO });
+    const sheet = openSheet();
+    fireEvent.click(sheet.getByRole("button", { name: "For Trade" }));
+    expect(mocks.location.get()).toEqual({ status: "forTrade" });
+    expect(sheet.getByRole("button", { name: "Show 1 puzzle" })).toBeTruthy();
+
+    fireEvent.click(sheet.getByRole("button", { name: "Mine" }));
+    expect(mocks.location.get()).toEqual({ status: "forTrade", owner: "mine" });
+
+    fireEvent.click(sheet.getByRole("button", { name: "Title A–Z" }));
+    expect(mocks.location.get()).toMatchObject({ sort: "title" });
+  });
+
+  it("leaves whose out of the sheet in a household of one", () => {
+    renderPage({ copies, household: HOUSEHOLD_OF_ONE });
+    const sheet = openSheet();
+    expect(sheet.queryByRole("heading", { name: "Whose puzzles" })).toBeNull();
+    expect(sheet.queryByRole("link")).toBeNull();
+  });
+
+  it("offers the household's own list in the sheet once there is one", () => {
+    renderPage({ copies, household: HOUSEHOLD_OF_TWO });
+    expect(
+      openSheet().getByRole("link", { name: "All puzzles in your household" }),
+    ).toBeTruthy();
+  });
+
+  it("shows what's on as chips that can be removed, and counts them on the button", () => {
+    renderPage({
+      copies,
+      household: HOUSEHOLD_OF_TWO,
+      search: { status: "forTrade", owner: "mine" },
+    });
+    const button = screen.getByRole("button", { name: "Filters, 2 on" });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Remove filter: For Trade" }),
+    );
+    expect(mocks.location.get()).toEqual({ owner: "mine" });
+    expect(document.activeElement).toBe(button);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Remove filter: Mine" }),
+    );
+    expect(mocks.location.get()).toEqual({});
+    expect(screen.getByRole("button", { name: "Filters" })).toBeTruthy();
+  });
+
+  it("names no filter as a chip while none is on", () => {
+    renderPage({ copies, search: { sort: "title", view: "list" } });
+    expect(screen.queryByRole("button", { name: /^Remove filter/ })).toBeNull();
+    expect(screen.getByRole("button", { name: "Filters" })).toBeTruthy();
+  });
+});
+
 describe("My Puzzles owner select", () => {
   it("names what it filters instead of a bare “All”", () => {
     renderPage({
