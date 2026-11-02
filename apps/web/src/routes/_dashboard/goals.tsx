@@ -21,6 +21,7 @@ import {
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
+import { useReturnFocus } from "@/hooks/use-return-focus";
 import { goalStatus } from "@/lib/goal-form";
 import { pageTitle } from "@/lib/page-title";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -50,6 +51,8 @@ function GoalsPage() {
   // Same for the delete confirm: the target outlives the closing animation.
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<EditableGoal | undefined>();
+  // These dialogs have no Radix trigger, so focus returns to whatever opened them.
+  const dialogOpenerRef = useReturnFocus(formOpen || deleteOpen);
 
   const { data: convexUser } = useQuery(
     convexQuery(
@@ -69,7 +72,8 @@ function GoalsPage() {
     mutationFn: useConvexMutation(gateway.solving.deleteGoal),
   });
 
-  const openForm = (goal?: EditableGoal) => {
+  const openForm = (opener: HTMLElement | null, goal?: EditableGoal) => {
+    dialogOpenerRef.current = opener;
     setFormGoal(goal);
     setFormOpen(true);
   };
@@ -100,10 +104,11 @@ function GoalsPage() {
   const actionsFor = (goal: GoalRow) =>
     isEditableGoal(goal)
       ? {
-          onEdit: () => openForm(goal),
+          onEdit: (opener: HTMLElement | null) => openForm(opener, goal),
           onArchive: () => void archive(goal, true),
           onRestore: () => void archive(goal, false),
-          onDelete: () => {
+          onDelete: (opener: HTMLElement | null) => {
+            dialogOpenerRef.current = opener;
             setDeleteTarget(goal);
             setDeleteOpen(true);
           },
@@ -127,7 +132,7 @@ function GoalsPage() {
               <Button
                 variant="brand"
                 size="sm"
-                onClick={() => openForm()}
+                onClick={(event) => openForm(event.currentTarget)}
                 data-tour="goals-create"
               >
                 <Plus className="h-4 w-4" />
@@ -189,7 +194,7 @@ function GoalsPage() {
           action={
             <Button
               variant="brand"
-              onClick={() => openForm()}
+              onClick={(event) => openForm(event.currentTarget)}
               data-tour="goals-create"
             >
               <Plus className="h-4 w-4" />

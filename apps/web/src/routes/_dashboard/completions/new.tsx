@@ -7,6 +7,7 @@ import { SolvePicker } from "@/components/solving/solve-picker";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway, Id } from "@/gateway";
+import { useReturnFocus } from "@/hooks/use-return-focus";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
 import {
@@ -16,7 +17,7 @@ import {
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/completions/new")({
@@ -35,15 +36,8 @@ function NewCompletionPage() {
   const displayName = useMemberDisplayName();
   // The picked puzzle; null while the picker shows.
   const [picked, setPicked] = useState<SolvePickerItem | null>(null);
-  // The picked row's button. The dialogs have no Radix trigger to hand focus back to, so once the
-  // dialog is gone, focus returns to the row it was opened from (when it is still on the page).
-  const pickedFrom = useRef<HTMLButtonElement | null>(null);
-  useEffect(() => {
-    if (picked !== null) return;
-    const trigger = pickedFrom.current;
-    pickedFrom.current = null;
-    if (trigger?.isConnected) trigger.focus();
-  }, [picked]);
+  // The dialogs have no Radix trigger, so focus returns to the row they were opened from.
+  const pickedFromRef = useReturnFocus(picked !== null);
 
   const { data: convexUser, isPending: convexUserPending } = useQuery(
     convexQuery(
@@ -129,7 +123,7 @@ function NewCompletionPage() {
       <SolvePicker
         sections={sections}
         onPick={(item, trigger) => {
-          pickedFrom.current = trigger;
+          pickedFromRef.current = trigger;
           setPicked(item);
         }}
       />

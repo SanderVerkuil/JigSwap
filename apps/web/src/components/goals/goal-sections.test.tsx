@@ -42,14 +42,21 @@ const goal = (over: Partial<GoalRow> = {}): GoalRow => {
 };
 
 const actionsLog: string[] = [];
+const openers: (HTMLElement | null)[] = [];
 const actionsFor = (g: GoalRow): GoalTileActions | undefined =>
   g.aggregateId === undefined
     ? undefined
     : {
-        onEdit: () => actionsLog.push(`edit:${g.title}`),
+        onEdit: (opener) => {
+          actionsLog.push(`edit:${g.title}`);
+          openers.push(opener);
+        },
         onArchive: () => actionsLog.push(`archive:${g.title}`),
         onRestore: () => actionsLog.push(`restore:${g.title}`),
-        onDelete: () => actionsLog.push(`delete:${g.title}`),
+        onDelete: (opener) => {
+          actionsLog.push(`delete:${g.title}`);
+          openers.push(opener);
+        },
       };
 
 const renderSections = (goals: GoalRow[], locale: "en" | "nl" = "en") =>
@@ -69,6 +76,7 @@ const headings = () =>
 afterEach(() => {
   cleanup();
   actionsLog.length = 0;
+  openers.length = 0;
 });
 
 describe("GoalSections", () => {
@@ -201,6 +209,17 @@ describe("GoalTile menu", () => {
     fireEvent.click(within(menu).getByRole("menuitem", { name: "Delete" }));
     expect(actionsLog).toEqual(["delete:Ten"]);
   });
+
+  it.each(["Edit", "Delete"])(
+    "hands %s the menu button, for focus to return to",
+    (item) => {
+      renderSections([goal({ title: "Ten" })]);
+      const trigger = screen.getByRole("button", { name: "Actions for Ten" });
+      const menu = openMenu("Actions for Ten");
+      fireEvent.click(within(menu).getByRole("menuitem", { name: item }));
+      expect(openers).toEqual([trigger]);
+    },
+  );
 
   it("offers Restore instead of Archive on an archived goal", () => {
     renderSections([goal({ title: "Shelved", isActive: false })]);

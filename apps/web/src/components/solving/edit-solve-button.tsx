@@ -17,9 +17,15 @@ export function isEditClosed(
   return typeof editableUntil === "number" && now > editableUntil;
 }
 
-interface EditSolveButtonProps {
+interface EditSolveMenuItemProps {
   editableUntil: number | null | undefined;
   onEdit: () => void;
+}
+
+interface EditSolveButtonProps {
+  editableUntil: number | null | undefined;
+  // Gets the button, for focus to return to when the form closes.
+  onEdit: (opener: HTMLElement) => void;
 }
 
 // The edit window of one solve, shared by the Edit button and the row menu's Edit item: whether
@@ -65,7 +71,10 @@ export function EditSolveButton({
       title={edit.closed ? edit.reason() : t("edit")}
       aria-label={t("edit")}
       aria-disabled={edit.closed || undefined}
-      onClick={() => edit.attempt(onEdit)}
+      onClick={(event) => {
+        const opener = event.currentTarget;
+        edit.attempt(() => onEdit(opener));
+      }}
     >
       <Pencil className="h-4 w-4" />
     </Button>
@@ -77,7 +86,7 @@ export function EditSolveButton({
 export function EditSolveMenuItem({
   editableUntil,
   onEdit,
-}: EditSolveButtonProps) {
+}: EditSolveMenuItemProps) {
   const t = useTranslations("solving.completions");
   const edit = useEditWindow(editableUntil);
 

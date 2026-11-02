@@ -25,6 +25,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTourLauncher } from "@/components/whats-new/tour-launcher";
 import { gateway, Id } from "@/gateway";
+import { useReturnFocus } from "@/hooks/use-return-focus";
 import { countsTowardThisYear } from "@/lib/completion-format";
 import { pageTitle } from "@/lib/page-title";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -67,6 +68,8 @@ function CompletionsPage() {
   const t = useTranslations("solving.completions");
   const tCommon = useTranslations("common");
   const [dialog, setDialog] = useState<DialogState>(null);
+  // The dialogs have no Radix trigger, so focus returns to the row action that opened them.
+  const dialogOpenerRef = useReturnFocus(dialog !== null);
   const deleteCompletion = useMutation({
     mutationFn: useConvexMutation(gateway.solving.deleteCompletion),
   });
@@ -189,7 +192,10 @@ function CompletionsPage() {
       }
       index={index}
       isLast={isLast}
-      onOpenDialog={setDialog}
+      onOpenDialog={(request, opener) => {
+        dialogOpenerRef.current = opener;
+        setDialog(request);
+      }}
     />
   );
 

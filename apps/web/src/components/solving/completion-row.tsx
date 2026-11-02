@@ -76,7 +76,12 @@ export function CompletionRow({
   info?: { title: string; pieceCount?: number };
   index: number;
   isLast: boolean;
-  onOpenDialog: (request: CompletionDialogRequest) => void;
+  // `opener` is what focus returns to when the dialog closes: the button that was used, or the
+  // menu button for an item of the phone menu (the item itself is gone by then).
+  onOpenDialog: (
+    request: CompletionDialogRequest,
+    opener: HTMLElement | null,
+  ) => void;
 }) {
   const t = useTranslations("solving.completions");
   // Borrowed copies aren't in the viewer's library, so fall back to the durable
@@ -108,44 +113,55 @@ export function CompletionRow({
   const completionId = completion.aggregateId;
   const puzzleId = completion.puzzleId;
   const canFinish = !done && Boolean(completionId);
-  const openFinish = () => {
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
+  const openFinish = (opener: HTMLElement) => {
     if (!completionId) return;
-    onOpenDialog({
-      kind: "finish",
-      completionId,
-      startDate: completion.startDate,
-      puzzleTitle,
-    });
+    onOpenDialog(
+      {
+        kind: "finish",
+        completionId,
+        startDate: completion.startDate,
+        puzzleTitle,
+      },
+      opener,
+    );
   };
   const openReview =
     puzzleId != null
-      ? () =>
-          onOpenDialog({
-            kind: "review",
-            puzzleId,
-            copyId: completion.ownedPuzzleId ?? undefined,
-          })
+      ? (opener: HTMLElement | null) =>
+          onOpenDialog(
+            {
+              kind: "review",
+              puzzleId,
+              copyId: completion.ownedPuzzleId ?? undefined,
+            },
+            opener,
+          )
       : undefined;
   const openEdit = completionId
-    ? () =>
-        onOpenDialog({
-          kind: "edit",
-          completionId,
-          inProgress: !done,
-          startDate: completion.startDate,
-          endDate: completion.endDate,
-          // Only a time the member typed: a duration the server derived from the dates starts
-          // empty, so moving a date re-derives it instead of saving the old one as if typed.
-          timeMinutes:
-            solveDuration(completion)?.kind === "time"
-              ? completion.completionTimeMinutes
-              : undefined,
-          notes: completion.notes,
-          datePrecision: completion.datePrecision,
-        })
+    ? (opener: HTMLElement | null) =>
+        onOpenDialog(
+          {
+            kind: "edit",
+            completionId,
+            inProgress: !done,
+            startDate: completion.startDate,
+            endDate: completion.endDate,
+            // Only a time the member typed: a duration the server derived from the dates starts
+            // empty, so moving a date re-derives it instead of saving the old one as if typed.
+            timeMinutes:
+              solveDuration(completion)?.kind === "time"
+                ? completion.completionTimeMinutes
+                : undefined,
+            notes: completion.notes,
+            datePrecision: completion.datePrecision,
+          },
+          opener,
+        )
     : undefined;
   const openDelete = completionId
-    ? () => onOpenDialog({ kind: "delete", completionId })
+    ? (opener: HTMLElement | null) =>
+        onOpenDialog({ kind: "delete", completionId }, opener)
     : undefined;
 
   return (
@@ -290,6 +306,7 @@ export function CompletionRow({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
+                ref={menuTriggerRef}
                 variant="ghost"
                 size="icon"
                 className="relative z-10 -mr-3 size-11 sm:hidden"
@@ -302,7 +319,7 @@ export function CompletionRow({
               {openReview && (
                 <DropdownMenuItem
                   className="pointer-coarse:min-h-11"
-                  onSelect={openReview}
+                  onSelect={() => openReview(menuTriggerRef.current)}
                 >
                   <Star aria-hidden />
                   {t("review")}
@@ -311,7 +328,7 @@ export function CompletionRow({
               {openEdit && (
                 <EditSolveMenuItem
                   editableUntil={completion.editableUntil}
-                  onEdit={openEdit}
+                  onEdit={() => openEdit(menuTriggerRef.current)}
                 />
               )}
               {openDelete && (
@@ -320,7 +337,7 @@ export function CompletionRow({
                   <DropdownMenuItem
                     variant="destructive"
                     className="pointer-coarse:min-h-11"
-                    onSelect={openDelete}
+                    onSelect={() => openDelete(menuTriggerRef.current)}
                   >
                     <Trash2 aria-hidden />
                     {t("delete")}
@@ -343,7 +360,7 @@ export function CompletionRow({
             variant="outline"
             size="sm"
             className="pointer-coarse:min-h-11"
-            onClick={openFinish}
+            onClick={(event) => openFinish(event.currentTarget)}
           >
             <CircleCheck className="h-4 w-4" />
             {t("finish")}
@@ -358,7 +375,7 @@ export function CompletionRow({
               className="size-8 pointer-coarse:size-11"
               title={t("review")}
               aria-label={t("review")}
-              onClick={openReview}
+              onClick={(event) => openReview(event.currentTarget)}
             >
               <Star className="h-4 w-4" />
             </Button>
@@ -377,7 +394,7 @@ export function CompletionRow({
               className="size-8 text-destructive hover:text-destructive pointer-coarse:size-11"
               title={t("delete")}
               aria-label={t("delete")}
-              onClick={openDelete}
+              onClick={(event) => openDelete(event.currentTarget)}
             >
               <Trash2 className="h-4 w-4" />
             </Button>

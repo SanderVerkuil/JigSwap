@@ -69,6 +69,7 @@ const row = (over: Partial<CompletionRowData> = {}): CompletionRowData => ({
 });
 
 let requests: CompletionDialogRequest[] = [];
+let openers: (HTMLElement | null)[] = [];
 
 const renderRow = (completion: CompletionRowData, locale: "en" | "nl" = "en") =>
   render(
@@ -82,7 +83,10 @@ const renderRow = (completion: CompletionRowData, locale: "en" | "nl" = "en") =>
         info={{ title: "Tirol", pieceCount: 1000 }}
         index={0}
         isLast
-        onOpenDialog={(request) => requests.push(request)}
+        onOpenDialog={(request, opener) => {
+          requests.push(request);
+          openers.push(opener);
+        }}
       />
     </IntlProvider>,
   );
@@ -94,6 +98,7 @@ const openMenu = (name: string) => {
 
 beforeEach(() => {
   requests = [];
+  openers = [];
   toasts.messages = [];
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(NOW);
@@ -164,6 +169,30 @@ describe("CompletionRow actions", () => {
       completionTimeMinutes: 2880,
     });
     expect(request.timeMinutes).toBeUndefined();
+  });
+
+  it("hands the dialog the button to return focus to", () => {
+    renderRow(row());
+    const pencil = screen.getByRole("button", { name: "Edit" });
+    fireEvent.click(pencil);
+    expect(openers).toEqual([pencil]);
+  });
+
+  it("hands the dialog the menu button for an item of the phone menu", () => {
+    renderRow(row());
+    const trigger = screen.getByRole("button", { name: "Actions for Tirol" });
+    const menu = openMenu("Actions for Tirol");
+    fireEvent.click(within(menu).getByRole("menuitem", { name: "Delete" }));
+    expect(openers).toEqual([trigger]);
+  });
+
+  it("hands the dialog the Finish button", () => {
+    renderRow(row({ isCompleted: false, endDate: undefined }));
+    const finish = screen.getByRole("button", {
+      name: en.solving.completions.finish,
+    });
+    fireEvent.click(finish);
+    expect(openers).toEqual([finish]);
   });
 
   it("says why instead of opening the form once the edit window has closed", () => {

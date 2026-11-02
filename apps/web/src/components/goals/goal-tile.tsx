@@ -21,16 +21,18 @@ import {
   Trophy,
   type LucideIcon,
 } from "lucide-react";
+import { useRef } from "react";
 import { useTranslations } from "use-intl";
 import type { GoalRow } from "./goal-row";
 
 // What the member can do with a goal from its tile. Absent for a goal the goal mutations can't
-// address (a legacy row without an aggregateId), which then shows no menu.
+// address (a legacy row without an aggregateId), which then shows no menu. The actions that open a
+// dialog get the tile's menu button, for focus to return to when it closes.
 export interface GoalTileActions {
-  onEdit: () => void;
+  onEdit: (opener: HTMLElement | null) => void;
   onArchive: () => void;
   onRestore: () => void;
-  onDelete: () => void;
+  onDelete: (opener: HTMLElement | null) => void;
 }
 
 // Past goals (ended or archived) are drawn in neutral tones so the live ones stand out.
@@ -72,6 +74,7 @@ export function GoalTile({
   const t = useTranslations("solving.goals");
   const look = STATUS_LOOK[status];
   const Icon = look.icon;
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
 
   // Progress is derived from the server-maintained counts; never recomputed beyond a
   // clamped percentage for the bar width.
@@ -141,6 +144,7 @@ export function GoalTile({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
+                ref={menuTriggerRef}
                 variant="ghost"
                 size="icon"
                 className="-mr-2 size-9 shrink-0 pointer-coarse:size-11"
@@ -150,7 +154,9 @@ export function GoalTile({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={actions.onEdit}>
+              <DropdownMenuItem
+                onSelect={() => actions.onEdit(menuTriggerRef.current)}
+              >
                 <Pencil aria-hidden />
                 {t("edit")}
               </DropdownMenuItem>
@@ -168,7 +174,7 @@ export function GoalTile({
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 variant="destructive"
-                onSelect={actions.onDelete}
+                onSelect={() => actions.onDelete(menuTriggerRef.current)}
               >
                 <Trash2 aria-hidden />
                 {t("delete")}
