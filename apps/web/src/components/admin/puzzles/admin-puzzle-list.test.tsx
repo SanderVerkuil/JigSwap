@@ -193,6 +193,23 @@ describe("AdminPuzzleList", () => {
     ).toBe("/admin/puzzles/p1");
   });
 
+  it("gives the title room on a phone: the action takes its own line in a narrow list", () => {
+    mocks.paginated.mockReturnValue(
+      page([row({ title: "Een hele lange titel" })]),
+    );
+    renderList();
+    const title = screen.getByText("Een hele lange titel");
+    expect(title.className).toContain("line-clamp-2");
+    expect(title.className).not.toContain("truncate");
+    const link = title.closest("a");
+    expect(link?.className).toContain("basis-full");
+    expect(link?.className).toContain("@2xl:basis-0");
+    const listRow = link?.parentElement;
+    expect(listRow?.className).toContain("flex-wrap");
+    expect(listRow?.className).toContain("@2xl:flex-nowrap");
+    expect(listRow?.parentElement?.className).toContain("@container");
+  });
+
   it("marks a definition whose box art file is gone (SEC-01), and only that one", () => {
     mocks.paginated.mockReturnValue(
       page([
