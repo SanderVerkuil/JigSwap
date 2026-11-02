@@ -10,8 +10,8 @@ import {
 } from "./activityEntries";
 
 // Events per batch. Each costs at most an exchange lookup plus, per actor (two for an exchange),
-// a users read, an index lookup and one write. `batchSize` overrides it, floored and clamped to
-// 1..MAX, which stays far below Convex's per-mutation read and write limits.
+// a users read, up to two index lookups and one write. `batchSize` overrides it, floored and clamped
+// to 1..MAX, which stays far below Convex's per-mutation read and write limits.
 export const BACKFILL_ACTIVITY_ENTRIES_BATCH = 200;
 export const BACKFILL_ACTIVITY_ENTRIES_MAX_BATCH = 1000;
 

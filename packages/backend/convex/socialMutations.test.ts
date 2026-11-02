@@ -330,6 +330,17 @@ describe("activity feed projection", () => {
 
     const base = Date.now();
     // Alice's own completion (oldest).
+    await t.run((ctx) =>
+      ctx.db.insert("completions", {
+        aggregateId: "compl-alice",
+        userId: alice,
+        startDate: base,
+        photos: [],
+        isCompleted: true,
+        createdAt: base,
+        updatedAt: base,
+      }),
+    );
     await insertEvent(
       t,
       "CompletionRecorded",

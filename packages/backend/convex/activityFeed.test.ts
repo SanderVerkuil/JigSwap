@@ -227,6 +227,15 @@ describe("social.getActivityFeed — page size", () => {
     await t.run(async (ctx) => {
       const now = Date.now();
       for (let i = 0; i < 60; i++) {
+        await ctx.db.insert("completions", {
+          aggregateId: `cmp-${i}`,
+          userId: alice,
+          startDate: now - HOUR + i,
+          photos: [],
+          isCompleted: true,
+          createdAt: now,
+          updatedAt: now,
+        });
         await ctx.db.insert("domainEvents", {
           name: "CompletionRecorded",
           context: "solving",

@@ -3,6 +3,7 @@ import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
+import type { MutationCtx } from "./_generated/server";
 import { EVENT_SCRUB_DELAY_MS } from "./conversation/purgeMemberMessagingData";
 import schema from "./schema";
 import { FEED_MAX_AUDIENCE } from "./social/getActivityFeed";
@@ -58,6 +59,23 @@ const settleDueJobs = async (t: T) => {
 
 const asUser = (t: T, name: string) =>
   t.withIdentity({ subject: `clerk_${name}` });
+
+// The solve a hand-written CompletionRecorded or CompletionStarted event names: an event whose solve
+// is gone projects nothing.
+const insertSolve = (
+  ctx: MutationCtx,
+  userId: Id<"users">,
+  aggregateId: string,
+) =>
+  ctx.db.insert("completions", {
+    aggregateId,
+    userId,
+    startDate: 1,
+    photos: [],
+    isCompleted: true,
+    createdAt: 1,
+    updatedAt: 1,
+  });
 
 // alice, bob, carol and two approved definitions.
 const seed = (t: T) =>
@@ -419,6 +437,7 @@ describe("activity projection — written by the event dispatcher", () => {
       await ctx.db.patch(bob, { isActive: false });
       await ctx.db.delete(carol);
     });
+    await t.run((ctx) => insertSolve(ctx, alice, "c-4"));
     const ids = await t.run(async (ctx) =>
       Promise.all(
         [
@@ -573,6 +592,10 @@ describe("activity projection — backfill", () => {
         createdAt: now,
         updatedAt: now,
       });
+      await insertSolve(ctx, alice, "c-new");
+      await insertSolve(ctx, alice, "c-old");
+      await insertSolve(ctx, alice, "c-bulk");
+      await insertSolve(ctx, bob, "s-1");
       const events: [string, Record<string, unknown>, number][] = [
         [
           "CompletionRecorded",
@@ -961,6 +984,7 @@ describe("activity feed — reads the projection once backfilled (SEC-30)", () =
     await t.run(async (ctx) => {
       for (let i = 0; i < 60; i++) {
         const occurredAt = Date.now() - i * 1000;
+        await insertSolve(ctx, alice, `c-${i}`);
         await ctx.db.insert("domainEvents", {
           name: "CompletionRecorded",
           payload: { userId: alice, completionId: `c-${i}` },
@@ -1280,5 +1304,108 @@ describe("activity feed — the projection shows what the legacy read showed", (
     const [batch] = feed.filter((e) => e.kind === "acquisitionBatch");
     expect(batch.batch?.count).toBe(2);
     expect(batch.batch?.covers.map((c) => c.copyId)).toEqual(copyIds.slice(1));
+  });
+});
+
+// A member deletes a solve they no longer want shown: it leaves every feed at once, on both paths,
+// and nothing brings it back (an event still waiting for its dispatch, a retry, the backfill).
+describe("activity feed — a deleted solve", () => {
+  const started = Date.now() - 2 * HOUR;
+  const seedSolves = async (t: T) => {
+    const { alice, bob, definitions } = await seed(t);
+    await follow(t, bob, alice);
+    const copy = await addCopy(t, "alice", definitions[0], true);
+    const record = () =>
+      asUser(t, "alice").mutation(
+        api.solving.recordCompletion.recordCompletion,
+        { copyId: copy, startDate: started, endDate: Date.now() - HOUR },
+      );
+    return { alice, bob, copy, record };
+  };
+  const deleteSolve = (t: T, completionId: string) =>
+    asUser(t, "alice").mutation(api.solving.deleteCompletion.deleteCompletion, {
+      completionId,
+    });
+
+  test("leaves followers' feeds and its own at once, on both paths, and takes only itself", async () => {
+    const t = newT();
+    const { alice, record } = await seedSolves(t);
+    const { completionId: gone } = await record();
+    const { completionId: kept } = await record();
+    await settleDueJobs(t);
+    expect(refsOf(await feedBothWays(t, "bob"), "completion").sort()).toEqual(
+      [gone, kept].sort(),
+    );
+
+    await deleteSolve(t, gone);
+
+    for (const viewer of ["bob", "alice"]) {
+      const feed = await feedBothWays(t, viewer);
+      expect(refsOf(feed, "completion")).toEqual([kept]);
+      expect(feed.map((e) => e.ref)).not.toContain(gone);
+    }
+    expect((await rowsOf(t, alice)).map((r) => r.ref)).not.toContain(gone);
+  });
+
+  test("a start goes with its solve, for the actor and for a mutual follower", async () => {
+    const t = newT();
+    const { alice, bob, copy } = await seedSolves(t);
+    await follow(t, alice, bob);
+    await asUser(t, "alice").mutation(
+      api.solving.setShareInProgress.setShareInProgress,
+      { enabled: true },
+    );
+    const completionId = await asUser(t, "alice").mutation(
+      api.solving.startCompletion.startCompletion,
+      { copyId: copy, startDate: started },
+    );
+    await settleDueJobs(t);
+    expect(refsOf(await feedBothWays(t, "bob"), "started")).toEqual([
+      completionId,
+    ]);
+
+    await deleteSolve(t, completionId);
+
+    for (const viewer of ["bob", "alice"]) {
+      expect(refsOf(await feedBothWays(t, viewer), "started")).toEqual([]);
+    }
+    expect((await rowsOf(t, alice)).map((r) => r.kind)).not.toContain(
+      "started",
+    );
+  });
+
+  test("an event dispatched after the delete writes no row", async () => {
+    const t = newT();
+    const { alice, record } = await seedSolves(t);
+    await settleDueJobs(t);
+    // Deleted before the scheduled dispatch of its CompletionRecorded has run.
+    const { completionId } = await record();
+    await deleteSolve(t, completionId);
+    await settleDueJobs(t);
+
+    expect(
+      (await rowsOf(t, alice)).filter((r) => r.kind === "completion"),
+    ).toEqual([]);
+    expect(refsOf(await compareBothWays(t, "bob"), "completion")).toEqual([]);
+  });
+
+  test("a retry or a backfill replay of its event does not bring it back", async () => {
+    const t = newT();
+    const { alice, record } = await seedSolves(t);
+    const { completionId } = await record();
+    await settleDueJobs(t);
+    await deleteSolve(t, completionId);
+    const before = await rowsOf(t, alice);
+
+    for (const event of await eventsNamed(t, "CompletionRecorded")) {
+      await t.mutation(internal.events.dispatch.runSubscriber, {
+        eventId: event._id,
+        handler: "activityFeed",
+      });
+    }
+    await runBackfill(t);
+
+    expect(await rowsOf(t, alice)).toEqual(before);
+    expect(refsOf(await compareBothWays(t, "bob"), "completion")).toEqual([]);
   });
 });

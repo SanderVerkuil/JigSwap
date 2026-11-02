@@ -145,6 +145,17 @@ describe("domainEvents retention", () => {
     vi.stubEnv("RETENTION_ENFORCE", "all");
     const t = convexTest(schema, modules);
     const alice = await seedAlice(t);
+    await t.run((ctx) =>
+      ctx.db.insert("completions", {
+        aggregateId: "c-recent",
+        userId: alice,
+        startDate: NOW - FEED_WINDOW_MS,
+        photos: [],
+        isCompleted: true,
+        createdAt: NOW,
+        updatedAt: NOW,
+      }),
+    );
     await insertEvent(
       t,
       FEED_WINDOW_MS - DAY_MS,

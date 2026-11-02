@@ -27,6 +27,7 @@ import { toCopyPuzzleView } from "../library/mappers";
 import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
 import {
   ACTIVITY_READ_MODEL,
+  activityRefExists,
   activityRowsOf,
   FEED_EVENT_NAMES,
   FEED_WINDOW_MS,
@@ -285,7 +286,9 @@ async function* newestActivityFirst(
 }
 
 // The event log: the audience's activity in each event name's global window. A batch add maps one
-// row per CopyAcquired event; they fold into the first, which collects every copy of the batch.
+// row per CopyAcquired event; they fold into the first, which collects every copy of the batch. A
+// solve's events outlive it, so one deleted since drops out here; the read model loses its rows at
+// the delete.
 const fromEventLog = async (
   ctx: QueryCtx,
   audience: Set<string>,
@@ -315,7 +318,12 @@ const fromEventLog = async (
       }
     }
   }
-  return [...candidates.values()];
+  const kept: Candidate[] = [];
+  for (const candidate of candidates.values()) {
+    const { kind, ref } = candidate.entry;
+    if (await activityRefExists(ctx, kind, ref)) kept.push(candidate);
+  }
+  return kept;
 };
 
 // Whether the viewer may see this actor's entries: their own, or another member's profile content

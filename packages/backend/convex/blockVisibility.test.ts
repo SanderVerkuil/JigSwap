@@ -594,14 +594,23 @@ describe("activity feed", () => {
       const t = convexTest(schema, modules);
       const u = await seed(t);
       await follow(t, u.alice, u.bob);
-      await t.run((ctx) =>
-        ctx.db.insert("domainEvents", {
+      await t.run(async (ctx) => {
+        await ctx.db.insert("completions", {
+          aggregateId: "completion-1",
+          userId: u.bob,
+          startDate: Date.now(),
+          photos: [],
+          isCompleted: true,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        });
+        await ctx.db.insert("domainEvents", {
           name: "CompletionRecorded",
           payload: { userId: u.bob, completionId: "completion-1" },
           occurredAt: Date.now(),
           context: "solving",
-        }),
-      );
+        });
+      });
       const alice = as(t, "alice");
       const before = await alice.query(
         api.social.getActivityFeed.getActivityFeed,
