@@ -190,6 +190,53 @@ describe("CommandPalette", () => {
     },
   );
 
+  // A search word is often an inflected form of a keyword: longer than it, so neither "inside the
+  // keyword" nor "letters in order" can match it.
+  it.each([
+    ["en", "trades", "Exchanges"],
+    ["en", "traded", "Exchanges"],
+    ["en", "trading", "Exchanges"],
+    ["en", "swaps", "Exchanges"],
+    ["en", "swapped", "Exchanges"],
+    ["en", "loans", "Exchanges"],
+    ["en", "sales", "Exchanges"],
+    ["en", "exports", "Export my data"],
+    ["en", "exported", "Export my data"],
+    ["en", "downloads", "Export my data"],
+    ["en", "logs", "Log a Completion"],
+    ["en", "solving", "Completions"],
+    ["en", "completed", "Completions"],
+    ["en", "messaging", "Messages"],
+    ["nl", "trades", "Uitwisselingen"],
+    ["nl", "verkoop", "Uitwisselingen"],
+    ["nl", "ruilt", "Uitwisselingen"],
+    ["nl", "leent", "Uitwisselingen"],
+    ["nl", "exemplaar", "Mijn puzzels"],
+    ["nl", "exporteert", "Mijn gegevens exporteren"],
+  ] as const)(
+    "finds an inflected word: %s %s",
+    async (locale, term, wanted) => {
+      renderPalette({ locale });
+      type(term);
+      await waitFor(() => expect(option(wanted)).not.toBeNull());
+    },
+  );
+
+  // A longer word that merely starts with a keyword is a different word.
+  it.each([
+    ["login", "Log a Completion"],
+    ["logo", "Log a Completion"],
+    ["address", "Add a Puzzle"],
+    ["database", "Export my data"],
+  ])("doesn't take %s for a form of a keyword", async (term, unrelated) => {
+    renderPalette();
+    type("mess");
+    await waitFor(() => expect(option("Messages")).not.toBeNull());
+    type(term);
+    await waitFor(() => expect(option("Messages")).toBeNull());
+    expect(option(unrelated)).toBeNull();
+  });
+
   it("matches the words of a search in any order", async () => {
     renderPalette();
     type("completion log");

@@ -60,14 +60,21 @@ const QUICK_ACTIONS = [
     key: "logCompletion",
     href: "/completions/new",
     icon: CircleCheck,
-    keywords: ["log", "solve", "finished", "vastleggen", "voltooiing"],
+    keywords: [
+      "log",
+      "solve",
+      "finish",
+      "complete",
+      "vastleggen",
+      "voltooiing",
+    ],
   },
   {
     key: "createCircle",
     // Opens the create dialog on arrival (circles-search.ts).
     href: "/circles?create=1",
     icon: Blend,
-    keywords: ["create", "new circle", "kring", "aanmaken"],
+    keywords: ["create", "new circle", "kring", "aanmaken", "maak"],
   },
   {
     key: "browseCommunity",
@@ -82,15 +89,32 @@ const EXPORT_DATA_KEYWORDS = [
   "export",
   "download",
   "data",
+  "exporteer",
   "exporteren",
   "downloaden",
   "gegevens",
 ] as const;
 
-// Whether every word of the search matches a title or keyword: as one piece anywhere in it, or as
-// letters in order inside one word, starting at the word's first letter ("gol" finds Goals). cmdk's
-// default also takes letters scattered across the words and keywords, which listed People and My
-// Puzzles for "mess". Its score still ranks what's left, so the best match stays first.
+// What a search word may add to a title's or keyword's word: a plain English or Dutch ending, with
+// the word's last letter doubled or not. Matched from that last letter on (see inflects).
+const WORD_ENDING = /^(.)\1?(?:s|es|d|ed|er|ers|ing|n|en|t|te|ten|de|den)$/;
+
+// Whether a search word is a form of a title's or keyword's word: "trades" and "trading" of "trade",
+// "swapped" of "swap", "ruilt" of "ruil". Not just any word that starts with it: "login" isn't "log".
+function inflects(term: string, word: string) {
+  const stem = word.replace(/e$/, "");
+  return (
+    stem.length >= 3 &&
+    term.startsWith(stem) &&
+    WORD_ENDING.test(term.slice(stem.length - 1))
+  );
+}
+
+// Whether every word of the search matches a title or keyword: as one piece anywhere in it, as
+// letters in order inside one word, starting at the word's first letter ("gol" finds Goals), or as
+// a form of one word. cmdk's default also takes letters scattered across the words and keywords,
+// which listed People and My Puzzles for "mess". Its score still ranks what's left, so the best
+// match stays first.
 function paletteFilter(value: string, search: string, keywords?: string[]) {
   const texts = [value, ...(keywords ?? [])].map((text) => text.toLowerCase());
   const inOrderIn = (term: string, word: string) => {
@@ -106,7 +130,9 @@ function paletteFilter(value: string, search: string, keywords?: string[]) {
       texts.some(
         (text) =>
           text.includes(term) ||
-          text.split(/\s+/).some((word) => inOrderIn(term, word)),
+          text
+            .split(/\s+/)
+            .some((word) => inOrderIn(term, word) || inflects(term, word)),
       ),
     );
   // At least a sliver: cmdk's score is 0 for words typed in another order, which still match here.
