@@ -353,6 +353,28 @@ describe("PastSolvesList (ticking)", () => {
     ).toBe(true);
   });
 
+  it("links a refused date to its reason, and a valid date to nothing", () => {
+    list(async () => true);
+    tick("Cats");
+    act(() => {
+      fireEvent.click(screen.getByRole("radio", { name: "Pick a date" }));
+    });
+    const input = screen.getByLabelText("Pick a date");
+    act(() => {
+      fireEvent.change(input, { target: { value: "2999-01-01" } });
+    });
+    expect(input.getAttribute("aria-invalid")).toBe("true");
+    expect(input.getAttribute("aria-describedby")).toBe(
+      screen.getByText("Pick a date up to today.").id,
+    );
+    expect(input.getAttribute("aria-describedby")).toBeTruthy();
+    act(() => {
+      fireEvent.change(input, { target: { value: "2020-01-01" } });
+    });
+    expect(input.getAttribute("aria-invalid")).toBeNull();
+    expect(input.getAttribute("aria-describedby")).toBeNull();
+  });
+
   it("keeps the ticks when saving fails", async () => {
     const store = createStepCommitStore();
     list(async () => false, store);

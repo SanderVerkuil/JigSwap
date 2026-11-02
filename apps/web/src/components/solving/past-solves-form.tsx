@@ -241,6 +241,8 @@ export function PastSolveRow({
 }) {
   const t = useTranslations("quickStart.solves");
   const checkboxId = `past-solve-${id}`;
+  const dateErrorId = `${checkboxId}-date-error`;
+  const dateRefused = choice?.when === "day" && choice.date > maxDate;
   return (
     <div className="space-y-2 py-3">
       <div className="flex items-center gap-3">
@@ -297,12 +299,15 @@ export function PastSolveRow({
               max={maxDate}
               value={choice.date}
               onChange={(e) => onChange({ ...choice, date: e.target.value })}
-              aria-invalid={choice.date > maxDate ? true : undefined}
+              aria-invalid={dateRefused ? true : undefined}
+              aria-describedby={dateRefused ? dateErrorId : undefined}
               className="w-auto"
             />
           )}
-          {choice.when === "day" && choice.date > maxDate && (
-            <p className="text-destructive text-xs">{t("futureDate")}</p>
+          {dateRefused && (
+            <p id={dateErrorId} className="text-destructive text-xs">
+              {t("futureDate")}
+            </p>
           )}
         </div>
       )}
