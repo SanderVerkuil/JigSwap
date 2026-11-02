@@ -674,11 +674,11 @@
     },
     "filterSheet": {
       "title": "Filters",
-      "open": "{count, plural, =0 {Filters} one {Filters, # aan} other {Filters, # aan}}",
+      "open": "{count, plural, =0 {Filters} one {Filters, # actief} other {Filters, # actief}}",
       "status": "Status",
       "show": "{count, plural, one {Toon # puzzel} other {Toon # puzzels}}",
       "close": "Klaar",
-      "remove": "Filter weghalen: {filter}"
+      "remove": "Filter verwijderen: {filter}"
     },
     "boxArtCheck": {
       "label": "Wordt gecontroleerd",
