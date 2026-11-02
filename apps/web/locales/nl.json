@@ -2482,7 +2482,7 @@
     "invite": {
       "title": "Uitnodigen",
       "searchPlaceholder": "Zoek mensen die je kunt uitnodigen…",
-      "permissionLabel": "Rechten",
+      "permissionLabel": "Uitnodigen als",
       "send": "Uitnodiging versturen",
       "sent": "Uitnodiging verstuurd",
       "empty": "Je kunt mensen uitnodigen met wie je elkaar volgt.",

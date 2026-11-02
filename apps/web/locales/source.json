@@ -2482,7 +2482,7 @@
     "invite": {
       "title": "Invite",
       "searchPlaceholder": "Search people you can invite…",
-      "permissionLabel": "Permission",
+      "permissionLabel": "Invite as",
       "send": "Send invite",
       "sent": "Invite sent",
       "empty": "You can invite people you follow each other with.",

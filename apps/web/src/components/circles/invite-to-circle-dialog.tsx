@@ -79,8 +79,9 @@ export function InviteToCircleDialog({
   const t = useTranslations("circles");
   const tCommon = useTranslations("common");
   const [chosenCircleId, setChosenCircleId] = useState<string>();
+  // A circle is for swapping, and the inviter chose this person: they can still pick View only.
   const [permission, setPermission] =
-    useState<CirclePermissionLevel>("ViewOnly");
+    useState<CirclePermissionLevel>("Exchange");
   const circleId = circles.some((c) => c.circleId === chosenCircleId)
     ? chosenCircleId
     : circles[0]?.circleId;

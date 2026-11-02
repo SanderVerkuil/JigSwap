@@ -7,6 +7,7 @@ import { circleInviteErrorKey } from "@/components/circles/circle-invite-error";
 import { PersonRow } from "@/components/household/person-row";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -20,7 +21,7 @@ import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import { Send, UserPlus } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
@@ -33,9 +34,11 @@ export type InvitableMember = FunctionReturnType<
 
 export function CircleInvitePicker({ circleId }: { circleId: string }) {
   const t = useTranslations("circles");
+  const permissionId = useId();
   const [search, setSearch] = useState("");
+  // A circle is for swapping, and the inviter chose this person: they can still pick View only.
   const [permission, setPermission] =
-    useState<CirclePermissionLevel>("ViewOnly");
+    useState<CirclePermissionLevel>("Exchange");
 
   const term = search.trim();
   const { data: candidates } = useQuery({
@@ -58,7 +61,7 @@ export function CircleInvitePicker({ circleId }: { circleId: string }) {
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
         <Input
           type="search"
           value={search}
@@ -66,28 +69,30 @@ export function CircleInvitePicker({ circleId }: { circleId: string }) {
           placeholder={t("invite.searchPlaceholder")}
           aria-label={t("invite.searchPlaceholder")}
         />
-        <Select
-          value={permission}
-          onValueChange={(value: CirclePermissionLevel) => setPermission(value)}
-        >
-          <SelectTrigger
-            className="w-full sm:w-40"
-            aria-label={t("invite.permissionLabel")}
+        <div className="flex w-full shrink-0 flex-col gap-1.5 sm:w-40">
+          <Label htmlFor={permissionId}>{t("invite.permissionLabel")}</Label>
+          <Select
+            value={permission}
+            onValueChange={(value: CirclePermissionLevel) =>
+              setPermission(value)
+            }
           >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {PERMISSIONS.map((p) => (
-              <SelectItem
-                key={p}
-                value={p}
-                description={t(`permissionDescriptions.${p}`)}
-              >
-                {t(`permissions.${p}`)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+            <SelectTrigger id={permissionId} className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PERMISSIONS.map((p) => (
+                <SelectItem
+                  key={p}
+                  value={p}
+                  description={t(`permissionDescriptions.${p}`)}
+                >
+                  {t(`permissions.${p}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       {candidates !== undefined && (
         <InvitableMemberList
