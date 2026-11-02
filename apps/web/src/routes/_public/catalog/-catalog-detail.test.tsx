@@ -160,6 +160,21 @@ const review = (id: string, text: string) =>
     updatedAt: 1,
   }) as ReviewPage["page"][number];
 
+describe("public catalogue availability", () => {
+  const available = {
+    ...viewWith(unrated),
+    availability: { total: 3, byType: { swap: 1, lend: 1, sale: 1 } },
+  } as View;
+
+  it.each([
+    ["en", ["1 to swap", "1 to lend", "1 for sale"]],
+    ["nl", ["1 te ruilen", "1 te leen", "1 te koop"]],
+  ] as const)("says what each copy is available for (%s)", (locale, chips) => {
+    renderDetail(available, locale);
+    for (const chip of chips) expect(screen.getByText(chip)).toBeTruthy();
+  });
+});
+
 describe("public catalogue reviews", () => {
   it("shows the server-rendered first page with no way to more when it is all there", () => {
     renderDetail(viewWith(unrated), "en", {
