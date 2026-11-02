@@ -6,6 +6,7 @@ import type { Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
 import { makeEventPublisher } from "../../events/makeEventPublisher";
 import { markCopyStatsChange } from "../../library/definitionStats";
+import { syncMemberLibraryCounts } from "../../library/memberLibraryCounts";
 
 // Driven adapter for the DomainEventPublisher port, built per-mutation with `ctx`. It now durably
 // records + schedules ALL exchange events (for async subscribers like Notifications) while KEEPING
@@ -37,7 +38,8 @@ export const inProcessEventPublisher = (
 // Availability handler: mirrors today's "mark unavailable on completion" — a transferred copy
 // leaves the market. Emitted per transferred copy (requested->initiator, swap offered->recipient).
 // The listing fields (`isOpen`, `listedAt`) are cleared with it, or Browse would keep listing the
-// copy, and the definition's public availability count is marked for a recompute.
+// copy, the definition's public availability count is marked for a recompute, and the owner's
+// for-trade counter drops.
 const markCopyUnavailable = async (
   ctx: MutationCtx,
   copyId: Id<"ownedPuzzles">,
@@ -51,4 +53,5 @@ const markCopyUnavailable = async (
     listedAt: undefined,
   });
   await markCopyStatsChange(ctx, copy, { ...copy, availability: closed });
+  await syncMemberLibraryCounts(ctx, copy, { ...copy, availability: closed });
 };

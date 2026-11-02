@@ -342,6 +342,7 @@ import type * as library_addCopyToCollection from "../library/addCopyToCollectio
 import type * as library_backfill from "../library/backfill.js";
 import type * as library_backfillCopyOpenFlag from "../library/backfillCopyOpenFlag.js";
 import type * as library_backfillCopyVisibility from "../library/backfillCopyVisibility.js";
+import type * as library_backfillMemberLibraryCounts from "../library/backfillMemberLibraryCounts.js";
 import type * as library_browseOwnedPuzzles from "../library/browseOwnedPuzzles.js";
 import type * as library_canViewCopy from "../library/canViewCopy.js";
 import type * as library_changeCopyCondition from "../library/changeCopyCondition.js";
@@ -371,6 +372,7 @@ import type * as library_getUserCollections from "../library/getUserCollections.
 import type * as library_listPhotoComments from "../library/listPhotoComments.js";
 import type * as library_loanReadViews from "../library/loanReadViews.js";
 import type * as library_mappers from "../library/mappers.js";
+import type * as library_memberLibraryCounts from "../library/memberLibraryCounts.js";
 import type * as library_moderatePhoto from "../library/moderatePhoto.js";
 import type * as library_moderationStore from "../library/moderationStore.js";
 import type * as library_openListing from "../library/openListing.js";
@@ -954,6 +956,7 @@ declare const fullApi: ApiFromModules<{
   "library/backfill": typeof library_backfill;
   "library/backfillCopyOpenFlag": typeof library_backfillCopyOpenFlag;
   "library/backfillCopyVisibility": typeof library_backfillCopyVisibility;
+  "library/backfillMemberLibraryCounts": typeof library_backfillMemberLibraryCounts;
   "library/browseOwnedPuzzles": typeof library_browseOwnedPuzzles;
   "library/canViewCopy": typeof library_canViewCopy;
   "library/changeCopyCondition": typeof library_changeCopyCondition;
@@ -983,6 +986,7 @@ declare const fullApi: ApiFromModules<{
   "library/listPhotoComments": typeof library_listPhotoComments;
   "library/loanReadViews": typeof library_loanReadViews;
   "library/mappers": typeof library_mappers;
+  "library/memberLibraryCounts": typeof library_memberLibraryCounts;
   "library/moderatePhoto": typeof library_moderatePhoto;
   "library/moderationStore": typeof library_moderationStore;
   "library/openListing": typeof library_openListing;

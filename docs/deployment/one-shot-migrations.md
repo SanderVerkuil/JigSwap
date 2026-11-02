@@ -873,6 +873,54 @@ batches run as scheduled functions. Each batch logs one JSON line with
 
 ---
 
+## `library/backfillMemberLibraryCounts` — the shelf's owned and for-trade counters
+
+**When:** once per deployment, after the `memberLibraryCounts` table (PERF-B5q) is deployed
+there. There is no ordering pressure: until a member has a row, `library.myShelf` and their own
+`identity.userStats` count their copies at read time (at most 5,000), so the numbers are right
+and only the old cost stays. A member's first copy write creates their row as well. Run it soon
+after the deploy, so the shelf stops reading the whole library for members who rarely write.
+
+**What it does:** pages through `users` (20 members per batch; `batchSize` overrides it, rounded
+down and clamped to 1..100; each batch its own transaction, rescheduling itself until the table
+is exhausted). Per member it counts their copies and writes the row when it is absent (`set`) or
+disagrees (`repaired`). Members in step are left alone (`inStep`). A member without copies and
+without a row gets none (`empty`): their count reads no rows anyway. A member past 5,000 copies is
+left without a row (`overCap`), so their shelf keeps its bounded count.
+
+**Safe to re-run:** yes. A second run finds every row in step and writes nothing. It also doubles
+as a repair: `repaired` > 0 after the first run points at a write path that changed a copy's owner
+or for-trade flag without calling `syncMemberLibraryCounts`.
+
+**Commands:**
+
+```bash
+cd packages/backend
+
+# dev: dry run (counts only, writes nothing), then the real run
+npx convex run library/backfillMemberLibraryCounts:backfillMemberLibraryCounts '{"dryRun":true}'
+npx convex run library/backfillMemberLibraryCounts:backfillMemberLibraryCounts '{}'
+
+# prod: same, after dev looks right
+npx convex run --prod library/backfillMemberLibraryCounts:backfillMemberLibraryCounts '{"dryRun":true}'
+npx convex run --prod library/backfillMemberLibraryCounts:backfillMemberLibraryCounts '{}'
+```
+
+The command returns the FIRST batch's counts; the remaining batches run as scheduled functions.
+Each batch logs one JSON line with `"event":"library.backfillMemberLibraryCounts"`, `dry_run`, the
+batch counts and the running `totals`; the line with `"is_done":true` carries the whole run's
+totals.
+
+**Verify:**
+
+1. The real run's final `totals.set` matches the dry run's (give or take members who added a copy
+   in between, who then already have a row).
+2. Run the dry run again: its final totals show `"set":0` and `"repaired":0`.
+3. In the dashboard data view, a member's `memberLibraryCounts` row matches their `ownedPuzzles`
+   rows, and the dashboard shelf shows the same numbers as before.
+
+---
+
 ## `social/backfillActivityEntries` — the activity feed's per-actor read model
 
 **When:** once per deployment, after the `activityEntries` and `readModelStatus` tables and

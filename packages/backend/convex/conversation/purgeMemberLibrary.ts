@@ -16,6 +16,7 @@ import {
   markCompletionStatsChange,
   markCopyStatsChange,
 } from "../library/definitionStats";
+import { deleteMemberLibraryCounts } from "../library/memberLibraryCounts";
 import { makeNotify } from "../notifications/adapters/makeNotify";
 import { convexCircleRepository } from "../sharing/adapters/convexCircleRepository";
 import { inProcessEventPublisher as sharingEventPublisher } from "../sharing/adapters/inProcessEventPublisher";
@@ -303,6 +304,9 @@ export const deleteOwnCopies = async (
     .withIndex("by_owner", (q) => q.eq("ownerId", memberId))
     .paginate(opts);
   for (const copy of page.page) await deleteOwnCopy(ctx, memberId, copy);
+  // The copies' counters go once the last copy has: deleteOwnCopy doesn't keep them in step, because
+  // nothing reads a deleted member's counts and a recount per batch would be wasted.
+  if (page.isDone) await deleteMemberLibraryCounts(ctx, memberId);
   return page;
 };
 

@@ -5,6 +5,7 @@ import { deleteRenditions } from "../../lib/imageModeration/renditionsStore";
 import { deleteBlobUnlessReferenced } from "../../lib/storage/blobLifecycle";
 import { profileVisibilityOf } from "../../social/privacy";
 import { markCopyStatsChange } from "../definitionStats";
+import { syncMemberLibraryCounts } from "../memberLibraryCounts";
 import { listingStateOf } from "../openListing";
 import { toDomain, toRow } from "./copyMapper";
 
@@ -71,6 +72,8 @@ export const convexCopyRepository = (ctx: MutationCtx): CopyRepository => {
         : await ctx.db.insert("ownedPuzzles", row);
       // The definition's catalog aggregates (owners, public listings) follow the copy.
       await markCopyStatsChange(ctx, existing, row);
+      // And so do the owners' library counters (library/memberLibraryCounts).
+      await syncMemberLibraryCounts(ctx, existing, row);
 
       // Images belong to the Copy, but the domain path never adds one: photos are written only by
       // library/addCopyPhoto, which records the acting member as uploader, claims a fresh upload
@@ -122,6 +125,7 @@ export const convexCopyRepository = (ctx: MutationCtx): CopyRepository => {
 
       await ctx.db.delete(row._id);
       await markCopyStatsChange(ctx, row, null);
+      await syncMemberLibraryCounts(ctx, row, null);
     },
 
     async listByOwner(ownerId: OwnerId): Promise<readonly Copy[]> {

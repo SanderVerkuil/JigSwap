@@ -655,6 +655,16 @@ const MANIFEST: Record<string, Disposition> = {
     phases: ["domainEvents"],
     export: { excluded: "an internal index of the event log" },
   },
+  "memberLibraryCounts.memberId": {
+    erasure: {
+      deleted: "their library counters, once their copies are gone",
+    },
+    phases: ["copies"],
+    export: {
+      excluded:
+        "two numbers derived from their copies, which the export carries itself",
+    },
+  },
   "activityEntries.actorId": {
     erasure: {
       deleted:

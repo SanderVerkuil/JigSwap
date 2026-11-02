@@ -2146,6 +2146,17 @@ export default defineSchema({
     countedAt: v.number(),
   }).index("by_key", ["key"]),
 
+  // Per-member library counters (PERF-B5q), so a shelf reads one row instead of scanning the member's
+  // copies: an edit that moves neither number then re-runs nothing subscribed to them. Kept in step
+  // by every write that adds, removes, re-owns or re-offers a copy (library/memberLibraryCounts).
+  // A member without a row (before library/backfillMemberLibraryCounts reaches them, or past its scan
+  // cap) is counted from their copies at read time.
+  memberLibraryCounts: defineTable({
+    memberId: v.id("users"),
+    owned: v.number(),
+    forTrade: v.number(),
+  }).index("by_member", ["memberId"]),
+
   // Per-definition aggregates the catalog and definition pages show (PERF-B4m, SEC-29), so a page
   // reads one row instead of every review, copy and completion of the definition. Only the
   // viewer-independent parts; what depends on the viewer (their household's private copies, the
