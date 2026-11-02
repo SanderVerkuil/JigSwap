@@ -161,6 +161,12 @@ describe("SolvePicker", () => {
     ]);
   });
 
+  it("makes cards in one row the same height, however long a title is", () => {
+    renderPicker(SECTIONS);
+    const card = screen.getAllByRole("button")[0];
+    expect(card?.className.split(/\s+/)).toContain("h-full");
+  });
+
   it("shows no copy condition or availability badges", () => {
     renderPicker(SECTIONS);
     for (const label of ["Good", "For Trade", "For Lend", "Private"]) {

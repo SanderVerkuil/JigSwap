@@ -154,7 +154,7 @@ function SolvePickerRow({
     <button
       type="button"
       onClick={(event) => onPick(event.currentTarget)}
-      className="bg-card hover:bg-accent/60 focus-visible:border-ring focus-visible:ring-ring flex min-h-16 w-full items-center gap-3 rounded-xl border p-2.5 text-left transition-[color,background-color,box-shadow] outline-none focus-visible:ring-2"
+      className="bg-card hover:bg-accent/60 focus-visible:border-ring focus-visible:ring-ring flex h-full min-h-16 w-full items-center gap-3 rounded-xl border p-2.5 text-left transition-[color,background-color,box-shadow] outline-none focus-visible:ring-2"
     >
       {item.imageUrl ? (
         <Image
