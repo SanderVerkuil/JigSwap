@@ -153,6 +153,16 @@ function PuzzleDefinitionDetail({
   // pageKey "puzzles" matches the catalogue nav item, which renders the middle crumb).
   usePageHeader(() => ({ title: definition.title }), [definition.title]);
 
+  // Only an approved definition (or the viewer's own submission) takes reviews; the server
+  // refuses the rest, so neither the action nor the composer is offered there. Loading, or a
+  // backend that predates the flag, keeps them.
+  const { data: myReviews } = useQuery(
+    convexQuery(gateway.solving.getMyReviews, {
+      puzzleId: puzzleId as Id<"puzzles">,
+    }),
+  );
+  const canReview = myReviews?.puzzleReviewAllowed !== false;
+
   // The review composer is focused by the "Write a Review" action.
   const composerRef = useRef<HTMLInputElement>(null);
   const focusComposer = () => {
@@ -286,10 +296,12 @@ function PuzzleDefinitionDetail({
               <ArrowLeftRight className="h-4 w-4" />
               {t("findCopyToSwap")}
             </Button>
-            <Button variant="outline" onClick={focusComposer}>
-              <Star className="h-4 w-4" />
-              {t("writeReview")}
-            </Button>
+            {canReview && (
+              <Button variant="outline" onClick={focusComposer}>
+                <Star className="h-4 w-4" />
+                {t("writeReview")}
+              </Button>
+            )}
             <Button
               variant="outline"
               aria-pressed={favorited}
@@ -350,7 +362,11 @@ function PuzzleDefinitionDetail({
 
         {/* Right: reviews */}
         <div>
-          <ReviewsSection puzzleId={puzzleId} composerRef={composerRef} />
+          <ReviewsSection
+            puzzleId={puzzleId}
+            composerRef={composerRef}
+            canReview={canReview}
+          />
         </div>
       </div>
     </div>
@@ -483,9 +499,11 @@ function AvailableToSwap({
 function ReviewsSection({
   puzzleId,
   composerRef,
+  canReview,
 }: {
   puzzleId: string;
   composerRef: React.RefObject<HTMLInputElement | null>;
+  canReview: boolean;
 }) {
   const t = useTranslations("puzzleDefinition");
   const format = useFormatter();
@@ -534,10 +552,6 @@ function ReviewsSection({
   }
 
   const hasExistingReview = myReviews?.puzzle != null;
-  // Only an approved definition (or the viewer's own submission) takes reviews; the server
-  // refuses the rest, so the composer is not offered there. Loading, or a backend that predates
-  // the flag, keeps the composer.
-  const canReview = myReviews?.puzzleReviewAllowed !== false;
 
   const list = reviews ?? [];
   const title = view?.definition.title ?? "";
