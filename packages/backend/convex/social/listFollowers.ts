@@ -3,10 +3,12 @@ import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { blockedEitherWaySet } from "./blocks";
-import { FOLLOW_LIST_CAP, toFollowEdgeView } from "./readViews";
+import { FOLLOW_LIST_CAP, followExists, toFollowEdgeView } from "./readViews";
 
-// Read side: the members who follow the CALLER. Each entry resolves the FOLLOWER's display name.
-// Returns typed FollowEdgeView DTOs.
+// Read side: the members who follow the CALLER, for quick start's suggestions. The People page pages
+// its network instead (social/listMyNetwork). Each entry resolves the FOLLOWER's display name and says
+// whether the caller follows them (from the pair itself, so it is right however many the caller
+// follows). Returns typed FollowEdgeView DTOs.
 //
 // SECURITY (SEC-13): a member reads only their own followers, so the query takes no member id.
 // Another member's list would name every member who follows them, private members included, to any
@@ -29,9 +31,15 @@ export const listFollowers = query({
     return Promise.all(
       rows
         .filter((r) => !blockedIds.has(r.followerId))
-        .map((r) =>
-          toFollowEdgeView(ctx, r.aggregateId, r.followerId, r.createdAt),
-        ),
+        .map(async (r) => ({
+          ...(await toFollowEdgeView(
+            ctx,
+            r.aggregateId,
+            r.followerId,
+            r.createdAt,
+          )),
+          youFollow: await followExists(ctx, viewer, r.followerId),
+        })),
     );
   },
 });

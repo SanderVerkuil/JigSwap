@@ -50,11 +50,16 @@ const exchange = (
   },
 });
 
-const edge = (memberId: string, displayName?: string): FollowEdge => ({
+const edge = (
+  memberId: string,
+  displayName?: string,
+  followsYou = true,
+): FollowEdge => ({
   followId: `f_${memberId}`,
   memberId,
   displayName,
   createdAt: 0,
+  followsYou,
 });
 
 const mara = member("u_mara", "Mara", { avatar: "https://img/mara.png" });
@@ -79,7 +84,6 @@ describe("dmCandidates", () => {
         },
       ],
       [],
-      [],
     );
     expect(recent).toEqual([
       { memberId: "u_mara", name: mara, avatar: "https://img/mara.png" },
@@ -103,7 +107,6 @@ describe("dmCandidates", () => {
         dm("readonly", member("u_carla", "Carla"), { readOnly: true }),
       ],
       [],
-      [],
     );
     expect(recent).toEqual([]);
   });
@@ -116,14 +119,7 @@ describe("dmCandidates", () => {
         edge("u_zoe", "Zoë"),
         edge("u_eva", "Eva"),
         edge("u_eva", "Eva"),
-        edge("u_femke", "Femke"),
-        edge("u_anon"),
-      ],
-      [
-        edge("u_mara", "Mara"),
-        edge("u_zoe", "Zoë"),
-        edge("u_eva", "Eva"),
-        edge("u_gijs", "Gijs"),
+        edge("u_femke", "Femke", false),
         edge("u_anon"),
       ],
     );

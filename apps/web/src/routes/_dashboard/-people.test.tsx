@@ -24,7 +24,7 @@ import { Route as PeopleRoute } from "./people";
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
-// The page's data and child panels are out of scope: only the tab switch and the scroll region matter.
+// The child panels are out of scope; the page's data is the network page below.
 vi.mock("@tanstack/react-query", () => ({
   useQuery: () => ({ data: [] }),
 }));
@@ -32,11 +32,21 @@ vi.mock("@convex-dev/react-query", () => ({ convexQuery: () => ({}) }));
 vi.mock("@/gateway", () => ({
   gateway: { social: {}, identity: {} },
 }));
+const network = vi.hoisted(() => ({
+  results: [] as Array<{ memberId: string; followsYou: boolean }>,
+  status: "Exhausted" as string,
+  loadMore: vi.fn(),
+}));
+vi.mock("convex/react", () => ({ usePaginatedQuery: () => network }));
 // The header actions the page publishes, kept so a test can render them.
-const published = vi.hoisted(() => ({ actions: undefined as ReactNode }));
+const published = vi.hoisted(() => ({
+  actions: undefined as ReactNode,
+  meta: undefined as ReactNode,
+}));
 vi.mock("@/components/dashboard-layout/page-header-slot", () => ({
-  usePageHeader: (factory: () => { actions?: ReactNode }) => {
+  usePageHeader: (factory: () => { actions?: ReactNode; meta?: ReactNode }) => {
     published.actions = factory().actions;
+    published.meta = factory().meta;
   },
 }));
 vi.mock("@/components/tour/guide-help-button", () => ({
@@ -57,7 +67,17 @@ vi.mock("@/components/social/follow-requests-strip", () => ({
   FollowRequestsStrip: () => null,
 }));
 vi.mock("@/components/social/member-tile", () => ({
-  MemberTile: () => null,
+  MemberTile: ({
+    memberId,
+    followsYou,
+  }: {
+    memberId: string;
+    followsYou?: boolean;
+  }) => (
+    <p>
+      tile {memberId} {followsYou ? "follows you" : ""}
+    </p>
+  ),
   MemberTileSkeleton: () => null,
 }));
 vi.mock("@/components/social/qr-dialog", () => ({ QrDialog: () => null }));
@@ -156,5 +176,55 @@ describe("People header", () => {
       'data-guide="member-profiles"',
     );
     act(() => root.unmount());
+  });
+});
+
+describe("People network", () => {
+  const renderPeople = async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    await act(async () => {
+      root.render(<RouterProvider router={makeRouter()} />);
+    });
+    return () => {
+      act(() => root.unmount());
+      container.remove();
+    };
+  };
+
+  afterEach(() => {
+    network.results = [];
+    network.status = "Exhausted";
+    network.loadMore.mockClear();
+  });
+
+  it("shows the page with each member's own 'follows you', and the exact count once all loaded", async () => {
+    network.results = [
+      { memberId: "m1", followsYou: true },
+      { memberId: "m2", followsYou: false },
+    ];
+    const done = await renderPeople();
+    expect(document.body.textContent).toContain("tile m1 follows you");
+    expect(document.body.textContent).toContain("tile m2");
+    expect(document.body.textContent).not.toContain("tile m2 follows you");
+    expect(published.meta).toBe("2 members");
+    expect(document.body.textContent).not.toContain("Show more");
+    done();
+  });
+
+  it("says the count is partial while more pages remain, and Show more asks for them", async () => {
+    network.results = [{ memberId: "m1", followsYou: false }];
+    network.status = "CanLoadMore";
+    const done = await renderPeople();
+    expect(published.meta).toBe("1+ members");
+    const showMore = Array.from(document.querySelectorAll("button")).find(
+      (button) => button.textContent === "Show more",
+    )!;
+    await act(async () => {
+      showMore.click();
+    });
+    expect(network.loadMore).toHaveBeenCalledWith(48);
+    done();
   });
 });

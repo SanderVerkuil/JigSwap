@@ -2568,6 +2568,8 @@
   "people": {
     "yourNetwork": "Jouw netwerk",
     "memberCount": "{count, plural, one {# lid} other {# leden}}",
+    "memberCountMore": "{count}+ leden",
+    "showMoreMembers": "Meer tonen",
     "followsYou": "Volgt jou",
     "requests": {
       "title": "Volgverzoeken",

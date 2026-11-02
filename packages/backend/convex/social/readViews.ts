@@ -23,6 +23,20 @@ export const toProfileView = (row: Doc<"profiles">): ProfileView => ({
 // runs after the cap, so a blocked edge inside the window still uses a slot.
 export const FOLLOW_LIST_CAP = 500;
 
+// Whether `followerId` follows `followeeId`: one read of the pair index, so it is right however long
+// either list is (the capped lists above can't answer that past their window).
+export const followExists = async (
+  ctx: QueryCtx,
+  followerId: Id<"users">,
+  followeeId: Id<"users">,
+): Promise<boolean> =>
+  (await ctx.db
+    .query("follows")
+    .withIndex("by_follower_followee", (q) =>
+      q.eq("followerId", followerId).eq("followeeId", followeeId),
+    )
+    .first()) !== null;
+
 // Build the followers/following list entry for one edge from the COUNTERPARTY member's id. Prefers
 // the counterparty's own Social profile display name, falling back to their account name so a
 // member without a profile still renders.

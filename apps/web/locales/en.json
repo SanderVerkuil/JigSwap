@@ -2568,6 +2568,8 @@
   "people": {
     "yourNetwork": "Your Network",
     "memberCount": "{count, plural, one {# member} other {# members}}",
+    "memberCountMore": "{count}+ members",
+    "showMoreMembers": "Show more",
     "followsYou": "Follows you",
     "requests": {
       "title": "Follow requests",

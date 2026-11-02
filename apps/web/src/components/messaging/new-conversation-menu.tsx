@@ -205,17 +205,11 @@ function MemberPicker({
   const mutualId = useId();
   const inbox = useQuery(convexQuery(gateway.conversation.getMyInbox, {}));
   const following = useQuery(convexQuery(gateway.social.following, {}));
-  const followers = useQuery(convexQuery(gateway.social.followers, {}));
 
   // A list that fails to load counts as empty, so the others still show.
   const inboxRows = inbox.isError ? [] : inbox.data;
   const followingRows = following.isError ? [] : following.data;
-  const followerRows = followers.isError ? [] : followers.data;
-  if (
-    inboxRows === undefined ||
-    followingRows === undefined ||
-    followerRows === undefined
-  ) {
+  if (inboxRows === undefined || followingRows === undefined) {
     return (
       <div className="flex flex-col gap-1" aria-hidden>
         {[0, 1, 2].map((i) => (
@@ -225,11 +219,7 @@ function MemberPicker({
     );
   }
 
-  const { recent, mutual } = dmCandidates(
-    inboxRows,
-    followingRows,
-    followerRows,
-  );
+  const { recent, mutual } = dmCandidates(inboxRows, followingRows);
   if (recent.length === 0 && mutual.length === 0) {
     return (
       <div className="flex flex-col items-center gap-3 py-4 text-center">

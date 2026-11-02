@@ -12,6 +12,7 @@ import {
 } from "@/components/social/member-tile";
 import { QrDialog } from "@/components/social/qr-dialog";
 import { GuideHelpButton } from "@/components/tour/guide-help-button";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   StickyTabsBar,
@@ -26,6 +27,8 @@ import { safeStorage } from "@/lib/safe-storage";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+// sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
+import { usePaginatedQuery } from "convex/react";
 import { Activity, Mail, Search, Users, X } from "lucide-react";
 import { useState, useSyncExternalStore } from "react";
 import { useTranslations } from "use-intl";
@@ -120,19 +123,28 @@ function DiscoverabilityNotice() {
   );
 }
 
+// How many members a page of the network adds.
+const NETWORK_PAGE_SIZE = 48;
+
 // Your-network tab body: open connection offers (an inviter asking to follow each other) and the
-// pending follow-request strip above the deduped follower/following grid — the pre-tabs page
-// content. The network is computed by the parent (which also publishes the count into the page
-// header) and passed down, so the count and grid stay in sync without duplicating the follow
-// queries.
+// pending follow-request strip above the network grid — the pre-tabs page content. The network is
+// read by the parent (which also publishes the count into the page header) and passed down, so the
+// count and grid stay in sync without duplicating the read.
 function NetworkTab({
   members,
   loading,
+  canLoadMore,
+  loadingMore,
+  onLoadMore,
 }: {
-  members: Array<[string, { followsYou: boolean }]>;
+  members: ReadonlyArray<{ memberId: string; followsYou: boolean }>;
   loading: boolean;
+  canLoadMore: boolean;
+  loadingMore: boolean;
+  onLoadMore: () => void;
 }) {
   const t = useTranslations("people");
+  const tCommon = useTranslations("common");
 
   return (
     <section className="flex flex-col gap-4">
@@ -144,11 +156,11 @@ function NetworkTab({
             <MemberTileSkeleton key={i} />
           ))}
         </div>
-      ) : members.length === 0 ? (
+      ) : members.length === 0 && !canLoadMore ? (
         <EmptyState title={t("emptyTitle")} sub={t("emptySub")} />
       ) : (
         <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]">
-          {members.map(([memberId, { followsYou }]) => (
+          {members.map(({ memberId, followsYou }) => (
             <MemberTile
               headingLevel={2}
               key={memberId}
@@ -157,6 +169,19 @@ function NetworkTab({
             />
           ))}
         </div>
+      )}
+      {/* aria-disabled, not disabled, while the next page loads: a disabled button drops focus. */}
+      {(canLoadMore || loadingMore) && (
+        <Button
+          variant="outline"
+          className="h-11 self-center md:h-9"
+          aria-disabled={loadingMore}
+          onClick={() => {
+            if (!loadingMore) onLoadMore();
+          }}
+        >
+          {loadingMore ? tCommon("loading") : t("showMoreMembers")}
+        </Button>
       )}
     </section>
   );
@@ -177,11 +202,16 @@ function PeoplePage() {
   const activeTab: PeopleTab = tab ?? "network";
   const navigate = useNavigate({ from: Route.fullPath });
 
-  const { data: following } = useQuery(
-    convexQuery(gateway.social.following, {}),
-  );
-  const { data: followers } = useQuery(
-    convexQuery(gateway.social.followers, {}),
+  // The network a page at a time: one entry per person in either follow direction, newest first,
+  // each saying whether they follow the viewer.
+  const {
+    results: members,
+    status: networkStatus,
+    loadMore,
+  } = usePaginatedQuery(
+    gateway.social.myNetwork,
+    {},
+    { initialNumItems: NETWORK_PAGE_SIZE },
   );
   const { data: me } = useQuery(convexQuery(gateway.identity.currentUser, {}));
 
@@ -191,21 +221,7 @@ function PeoplePage() {
   );
   const pendingCount = incoming?.length ?? 0;
 
-  const loading = following === undefined || followers === undefined;
-
-  // Dedupe both follow directions into one network; remember who follows you
-  // so the tile can carry a "Follows you" badge.
-  const followerIds = new Set((followers ?? []).map((edge) => edge.memberId));
-  const network = new Map<string, { followsYou: boolean }>();
-  for (const edge of following ?? []) {
-    network.set(edge.memberId, { followsYou: followerIds.has(edge.memberId) });
-  }
-  for (const edge of followers ?? []) {
-    if (!network.has(edge.memberId)) {
-      network.set(edge.memberId, { followsYou: true });
-    }
-  }
-  const members = Array.from(network.entries());
+  const loading = networkStatus === "LoadingFirstPage";
 
   // The page title ("People") lives in the shell page head; publish the
   // member-profiles guide ("?"), the QR dialog (self-service invite/QR) and the
@@ -213,7 +229,9 @@ function PeoplePage() {
   // the always-mounted page so the header stays stable across tab switches.
   const headerMeta = loading
     ? undefined
-    : t("memberCount", { count: members.length });
+    : t(networkStatus === "Exhausted" ? "memberCount" : "memberCountMore", {
+        count: members.length,
+      });
   const { startTour } = useTourLauncher();
   usePageHeader(
     () => ({
@@ -275,7 +293,13 @@ function PeoplePage() {
         </StickyTabsBar>
 
         <TabsContent value="network" className="mt-4">
-          <NetworkTab members={members} loading={loading} />
+          <NetworkTab
+            members={members}
+            loading={loading}
+            canLoadMore={networkStatus === "CanLoadMore"}
+            loadingMore={networkStatus === "LoadingMore"}
+            onLoadMore={() => loadMore(NETWORK_PAGE_SIZE)}
+          />
         </TabsContent>
         <TabsContent value="find" className="mt-4 flex flex-col gap-8">
           <FindPeople />

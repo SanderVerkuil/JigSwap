@@ -564,6 +564,7 @@ import type * as social_listFollowers from "../social/listFollowers.js";
 import type * as social_listIncomingFollowRequests from "../social/listIncomingFollowRequests.js";
 import type * as social_listMyBlocks from "../social/listMyBlocks.js";
 import type * as social_listMyConnectionOffers from "../social/listMyConnectionOffers.js";
+import type * as social_listMyNetwork from "../social/listMyNetwork.js";
 import type * as social_listProfileCompletions from "../social/listProfileCompletions.js";
 import type * as social_listProfileCopies from "../social/listProfileCopies.js";
 import type * as social_listPublicPuzzleReviews from "../social/listPublicPuzzleReviews.js";
@@ -1184,6 +1185,7 @@ declare const fullApi: ApiFromModules<{
   "social/listIncomingFollowRequests": typeof social_listIncomingFollowRequests;
   "social/listMyBlocks": typeof social_listMyBlocks;
   "social/listMyConnectionOffers": typeof social_listMyConnectionOffers;
+  "social/listMyNetwork": typeof social_listMyNetwork;
   "social/listProfileCompletions": typeof social_listProfileCompletions;
   "social/listProfileCopies": typeof social_listProfileCopies;
   "social/listPublicPuzzleReviews": typeof social_listPublicPuzzleReviews;
