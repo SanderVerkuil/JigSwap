@@ -4,6 +4,7 @@ import { api } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import {
   BROWSE_CANDIDATE_CAP,
+  BROWSE_MAX_LIMIT,
   BROWSE_PER_OWNER,
   BROWSE_READ_BUDGET,
 } from "./library/browseOwnedPuzzles";
@@ -135,7 +136,7 @@ describe.each<Flag>(["flagged", "legacy"])(
         openCopies(1, { ownerId: alice, puzzleId: vista }, BASE + 10_000, flag),
       );
 
-      const view = await browseAsBob(t, { limit: 100 });
+      const view = await browseAsBob(t, { limit: BROWSE_MAX_LIMIT });
       expect(idsOf(view)[0]).toBe(aliceCopy);
       expect(view.total).toBe(501);
       expect(view.hasMore).toBe(true);
@@ -215,13 +216,13 @@ describe("no one member can crowd Browse's window (SEC-29)", () => {
     }
     await insertCopies(t, flood);
 
-    const view = await browseAsBob(t, { limit: 100 });
+    const view = await browseAsBob(t, { limit: BROWSE_MAX_LIMIT });
     // alice's listing plus as many of mallory's as fit; carol's are never shown.
     expect(view.total).toBe(BROWSE_CANDIDATE_CAP);
     expect(view.totalIsLowerBound).toBe(true);
     const last = await browseAsBob(t, {
-      limit: 100,
-      offset: BROWSE_CANDIDATE_CAP - 100,
+      limit: BROWSE_MAX_LIMIT,
+      offset: BROWSE_CANDIDATE_CAP - BROWSE_MAX_LIMIT,
     });
     expect(idsOf(last).slice(-1)).toEqual([aliceCopy]);
 
@@ -250,12 +251,15 @@ describe("no one member can crowd Browse's window (SEC-29)", () => {
       openCopies(1, { ownerId: alice, puzzleId: vista }, BASE, "flagged"),
     );
 
-    const view = await browseAsBob(t, { limit: 100, offset: 100 });
+    const view = await browseAsBob(t, {
+      limit: BROWSE_MAX_LIMIT,
+      offset: BROWSE_PER_OWNER * 3 + 1 - BROWSE_MAX_LIMIT,
+    });
     expect(view.total).toBe(BROWSE_PER_OWNER * 3 + 1);
     expect(view.totalIsLowerBound).toBe(false);
     // Still newest first.
     expect(idsOf(view)).toEqual([
-      ...mallorys.slice(0, BROWSE_PER_OWNER * 3 - 100).reverse(),
+      ...mallorys.slice(0, BROWSE_MAX_LIMIT - 1).reverse(),
       aliceCopy,
     ]);
   });
@@ -519,10 +523,10 @@ describe("Browse reads a bounded window", () => {
       ),
     );
 
-    const view = await browseAsBob(t, { limit: 100 });
+    const view = await browseAsBob(t, { limit: BROWSE_MAX_LIMIT });
     expect(view.totalIsLowerBound).toBe(true);
     expect(view.total).toBe(BROWSE_CANDIDATE_CAP);
-    expect(idsOf(view)).toEqual(ids.slice(-100).reverse());
+    expect(idsOf(view)).toEqual(ids.slice(-BROWSE_MAX_LIMIT).reverse());
   });
 
   test("a full window of distinct owners and definitions stays inside Convex's limits", async () => {
@@ -560,8 +564,8 @@ describe("Browse reads a bounded window", () => {
       }
     });
 
-    const view = await browseAsBob(t, { limit: 100 });
-    expect(view.ownedPuzzles).toHaveLength(100);
+    const view = await browseAsBob(t, { limit: BROWSE_MAX_LIMIT });
+    expect(view.ownedPuzzles).toHaveLength(BROWSE_MAX_LIMIT);
     expect(view.totalIsLowerBound).toBe(true);
   });
 });
@@ -575,11 +579,11 @@ describe("Browse paging arguments", () => {
     );
   };
 
-  test("limit is clamped to 1..100", async () => {
+  test(`limit is clamped to 1..${BROWSE_MAX_LIMIT}`, async () => {
     const t = convexTest(schema, modules);
     await seedMany(t);
     expect((await browseAsBob(t, { limit: 1_000 })).ownedPuzzles).toHaveLength(
-      100,
+      BROWSE_MAX_LIMIT,
     );
     expect((await browseAsBob(t, { limit: 0 })).ownedPuzzles).toHaveLength(1);
     expect((await browseAsBob(t, { limit: -5 })).ownedPuzzles).toHaveLength(1);
