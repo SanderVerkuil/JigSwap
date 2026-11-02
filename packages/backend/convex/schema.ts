@@ -1526,6 +1526,9 @@ export default defineSchema({
     // last time it absorbed an actor. Absent = never grouped.
     groupKey: v.optional(v.string()),
     updatedAt: v.optional(v.number()),
+    // How many items a grouped admin review row stands for (SEC-26), for groups whose copy counts
+    // them. Absent = one; a row that absorbed no second item never carries it.
+    itemCount: v.optional(v.number()),
   })
     .index("by_user", ["userId"])
     .index("by_user_read", ["userId", "isRead"])

@@ -2,8 +2,10 @@ import type { Notification } from "@jigswap/domain";
 import { internal } from "../../../_generated/api";
 import type { Id } from "../../../_generated/dataModel";
 import type { MutationCtx } from "../../../_generated/server";
+import { consumeRateLimit } from "../../../lib/rateLimits";
 import { renderNotificationText } from "../../copy";
 import { deliveryRefsOf } from "../../deliveryContent";
+import { ADMIN_NOTIFICATION_TYPES } from "../../viewRules";
 import { followNoticeAllowed } from "./followNoticeThrottle";
 
 // Web Push channel: schedules the out-of-band send (notifications/sendWebPush) after commit, which
@@ -17,6 +19,9 @@ import { followNoticeAllowed } from "./followNoticeThrottle";
 // thread per member per PUSH_THROTTLE_MS (the thread's participant row keeps lastPushedAt); the
 // OS replaces rather than stacks a thread's pushes via the payload's thread tag (sendWebPush).
 // A follow notice is pushed at most once a day per actor and type (followNoticeThrottle, SEC-23).
+// An admin is pushed about review work at most once an hour, whichever queue and however many items
+// (RATE_LIMITS.adminReviewPush, SEC-26): the in-app row keeps the count, so the later pushes of a
+// flood would say nothing new.
 export const PUSH_THROTTLE_MS = 2 * 60 * 1000;
 
 export const pushChannel =
@@ -58,6 +63,12 @@ export const pushChannel =
       }
     }
     if (!(await followNoticeAllowed(ctx, "push", state))) return;
+    if (
+      ADMIN_NOTIFICATION_TYPES.has(state.type) &&
+      !(await consumeRateLimit(ctx, "adminReviewPush", state.userId))
+    ) {
+      return;
+    }
     const { title, message } = renderNotificationText(
       state.type,
       state.params ?? {},

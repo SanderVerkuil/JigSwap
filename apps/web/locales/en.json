@@ -3102,10 +3102,12 @@
         "sentence": "{hasPuzzle, select, yes {A moderator removed a photo from <b>{puzzle}</b>.} other {A moderator removed one of your puzzle photos.}}"
       },
       "admin_proposal_filed": {
-        "sentence": "{hasPuzzle, select, yes {<b>{actor}</b> suggested an edit to <b>{puzzle}</b>.} other {<b>{actor}</b> suggested an edit to a catalogue puzzle.}}"
+        "sentence": "{hasPuzzle, select, yes {<b>{actor}</b> suggested an edit to <b>{puzzle}</b>.} other {<b>{actor}</b> suggested an edit to a catalogue puzzle.}}",
+        "sentenceGrouped": "<b>{count, number}</b> new suggested edits to review."
       },
       "admin_definition_submitted": {
-        "sentence": "{hasPuzzle, select, yes {<b>{actor}</b> submitted <b>{puzzle}</b> for moderation.} other {<b>{actor}</b> submitted a new puzzle for moderation.}}"
+        "sentence": "{hasPuzzle, select, yes {<b>{actor}</b> submitted <b>{puzzle}</b> for moderation.} other {<b>{actor}</b> submitted a new puzzle for moderation.}}",
+        "sentenceGrouped": "<b>{count, number}</b> new puzzle submissions to moderate."
       },
       "new_follower": {
         "sentence": "<b>{actor}</b> started following you.",

@@ -164,3 +164,197 @@ describe("admin review notifications", () => {
     expect((await notificationsFor(t, admin)).filter(isFiled)).toHaveLength(1);
   });
 });
+
+// SEC-26 (P-23 Phase A): a flood of submissions or suggestions reaches each admin as one updating
+// row per review queue, not one per item, and pushes them about it at most once an hour.
+describe("admin review notifications group while unread", () => {
+  const submitAs = (who: ReturnType<typeof asBob>, title: string) =>
+    who.mutation(api.catalog.submitPuzzleDefinition.submitPuzzleDefinition, {
+      title,
+      pieceCount: 500,
+    });
+  const isSubmitted = (n: { type: string }) =>
+    n.type === "admin_definition_submitted";
+  const isFiled = (n: { type: string }) => n.type === "admin_proposal_filed";
+  const viewsOf = async (t: TestConvex<typeof schema>) =>
+    (
+      await asAdmin(t).query(
+        api.notifications.listMyNotificationViews.listMyNotificationViews,
+        { paginationOpts: { numItems: 50, cursor: null } },
+      )
+    ).page;
+
+  test("one member's flood is one row per admin, counting what arrived, and links to the queue", async () => {
+    const t = convexTest(schema, modules);
+    const { admin, admin2 } = await seedMembers(t);
+    for (const title of ["One", "Two", "Three"]) {
+      await submitAs(asBob(t), title);
+    }
+    await flushScheduled(t);
+
+    for (const recipient of [admin, admin2]) {
+      const rows = (await notificationsFor(t, recipient)).filter(isSubmitted);
+      expect(rows).toHaveLength(1);
+      expect(rows[0]?.itemCount).toBe(3);
+      expect(rows[0]?.actorCount).toBe(1);
+      expect(rows[0]?.isRead).toBe(false);
+    }
+
+    const views = (await viewsOf(t)).filter(isSubmitted);
+    expect(views).toHaveLength(1);
+    expect(views[0]).toMatchObject({
+      itemCount: 3,
+      state: "informational",
+      href: "/admin/moderation",
+    });
+  });
+
+  test("several members' submissions join the same row, with the newest actor first", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, admin } = await seedMembers(t);
+    await submitAs(asAlice(t), "One");
+    await submitAs(asBob(t), "Two");
+    await flushScheduled(t);
+
+    const [row] = (await notificationsFor(t, admin)).filter(isSubmitted);
+    expect(row?.itemCount).toBe(2);
+    expect(row?.actorCount).toBe(2);
+    expect(row?.actorIds).toEqual([bob, alice]);
+  });
+
+  test("a single submission stays a plain row that names and opens that puzzle", async () => {
+    const t = convexTest(schema, modules);
+    await seedMembers(t);
+    await submitAs(asBob(t), "Only One");
+    await flushScheduled(t);
+
+    const views = (await viewsOf(t)).filter(isSubmitted);
+    expect(views).toHaveLength(1);
+    expect(views[0]?.itemCount).toBeUndefined();
+    expect(views[0]?.context.puzzleTitle).toBe("Only One");
+    expect(views[0]?.href).toContain("/admin/moderation?tab=submissions&item=");
+  });
+
+  test("once the admin has read the row, the next item opens a new one", async () => {
+    const t = convexTest(schema, modules);
+    const { admin } = await seedMembers(t);
+    await submitAs(asBob(t), "One");
+    await submitAs(asBob(t), "Two");
+    await flushScheduled(t);
+    const [read] = (await viewsOf(t)).filter(isSubmitted);
+    await asAdmin(t).mutation(
+      api.notifications.markNotificationRead.markNotificationRead,
+      { notificationId: read!.id },
+    );
+
+    await submitAs(asBob(t), "Three");
+    await flushScheduled(t);
+
+    const rows = (await notificationsFor(t, admin)).filter(isSubmitted);
+    expect(rows).toHaveLength(2);
+    const fresh = rows.find((row) => !row.isRead);
+    expect(fresh?.params?.puzzleTitle).toBe("Three");
+    expect(fresh?.itemCount).toBeUndefined();
+  });
+
+  test("the two queues group apart: a suggestion links to the suggestions list", async () => {
+    const t = convexTest(schema, modules);
+    const { admin } = await seedMembers(t);
+    const definitionId = await submitApproved(t);
+    await flushScheduled(t);
+    for (const who of [asBob(t), asAlice(t)]) {
+      await who.mutation(
+        api.catalog.proposeDefinitionChange.proposeDefinitionChange,
+        { puzzleDefinitionId: definitionId, title: "A better title" },
+      );
+    }
+    await flushScheduled(t);
+
+    const rows = await notificationsFor(t, admin);
+    expect(rows.filter(isFiled)).toHaveLength(1);
+    expect(rows.filter(isSubmitted)).toHaveLength(1);
+    expect(rows.find(isFiled)?.itemCount).toBe(2);
+
+    const [filed] = (await viewsOf(t)).filter(isFiled);
+    expect(filed?.href).toBe("/admin/puzzles/proposals");
+  });
+
+  test("a flood pushes an admin once an hour, whichever queue it hits, and never emails", async () => {
+    const t = convexTest(schema, modules);
+    const { admin, admin2 } = await seedMembers(t);
+    // Push is opt-in per type, and only goes to a member with a device.
+    await asAdmin(t).mutation(
+      api.notifications.updateNotificationPreference
+        .updateNotificationPreference,
+      { type: "admin_definition_submitted", channel: "push", enabled: true },
+    );
+    await asAdmin(t).mutation(
+      api.notifications.updateNotificationPreference
+        .updateNotificationPreference,
+      { type: "admin_proposal_filed", channel: "push", enabled: true },
+    );
+    await t.run((ctx) =>
+      ctx.db.insert("pushSubscriptions", {
+        userId: admin,
+        endpoint: "https://fcm.googleapis.com/fcm/send/admin",
+        p256dh: "p",
+        auth: "a",
+        createdAt: Date.now(),
+      }),
+    );
+    const definitionId = await submitApproved(t);
+    await flushScheduled(t);
+    await submitAs(asBob(t), "One");
+    await submitAs(asBob(t), "Two");
+    await submitAs(asAlice(t), "Three");
+    await asBob(t).mutation(
+      api.catalog.proposeDefinitionChange.proposeDefinitionChange,
+      { puzzleDefinitionId: definitionId, title: "A better title" },
+    );
+    await flushScheduled(t);
+
+    const scheduled = await t.run((ctx) =>
+      ctx.db.system.query("_scheduled_functions").collect(),
+    );
+    const named = (part: string) =>
+      scheduled.filter((job) => job.name.includes(part));
+    // Everything above fell in one hour, so the admin's device was pushed once, about the first item.
+    // admin2 has no device: their rows are in-app only.
+    const pushedTo = named("sendWebPush").map(
+      (job) => (job.args[0] as { userId: Id<"users"> }).userId,
+    );
+    expect(pushedTo.filter((id) => id === admin)).toHaveLength(1);
+    expect(pushedTo.filter((id) => id === admin2)).toEqual([]);
+    expect(named("sendEmail")).toEqual([]);
+  });
+
+  test("the push counter is keyed by the admin alone, so account deletion finds it", async () => {
+    const t = convexTest(schema, modules);
+    const { admin } = await seedMembers(t);
+    await asAdmin(t).mutation(
+      api.notifications.updateNotificationPreference
+        .updateNotificationPreference,
+      { type: "admin_definition_submitted", channel: "push", enabled: true },
+    );
+    await t.run((ctx) =>
+      ctx.db.insert("pushSubscriptions", {
+        userId: admin,
+        endpoint: "https://fcm.googleapis.com/fcm/send/admin",
+        p256dh: "p",
+        auth: "a",
+        createdAt: Date.now(),
+      }),
+    );
+    await submitAs(asBob(t), "One");
+    await flushScheduled(t);
+
+    // A "<limit>:<memberId>" key, which the account purge removes by name, not one it can't find.
+    const counter = await t.run((ctx) =>
+      ctx.db
+        .query("rateLimits")
+        .withIndex("by_key", (q) => q.eq("key", `adminReviewPush:${admin}`))
+        .unique(),
+    );
+    expect(counter?.count).toBe(1);
+  });
+});

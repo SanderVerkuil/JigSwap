@@ -3102,10 +3102,12 @@
         "sentence": "{hasPuzzle, select, yes {Een moderator heeft een foto van <b>{puzzle}</b> verwijderd.} other {Een moderator heeft een van je puzzelfoto's verwijderd.}}"
       },
       "admin_proposal_filed": {
-        "sentence": "{hasPuzzle, select, yes {<b>{actor}</b> heeft een wijziging voor <b>{puzzle}</b> voorgesteld.} other {<b>{actor}</b> heeft een wijziging voor een cataloguspuzzel voorgesteld.}}"
+        "sentence": "{hasPuzzle, select, yes {<b>{actor}</b> heeft een wijziging voor <b>{puzzle}</b> voorgesteld.} other {<b>{actor}</b> heeft een wijziging voor een cataloguspuzzel voorgesteld.}}",
+        "sentenceGrouped": "<b>{count, number}</b> nieuwe voorgestelde wijzigingen om te beoordelen."
       },
       "admin_definition_submitted": {
-        "sentence": "{hasPuzzle, select, yes {<b>{actor}</b> heeft <b>{puzzle}</b> ingediend voor moderatie.} other {<b>{actor}</b> heeft een nieuwe puzzel ingediend voor moderatie.}}"
+        "sentence": "{hasPuzzle, select, yes {<b>{actor}</b> heeft <b>{puzzle}</b> ingediend voor moderatie.} other {<b>{actor}</b> heeft een nieuwe puzzel ingediend voor moderatie.}}",
+        "sentenceGrouped": "<b>{count, number}</b> nieuwe puzzelinzendingen om te modereren."
       },
       "new_follower": {
         "sentence": "<b>{actor}</b> volgt je nu.",

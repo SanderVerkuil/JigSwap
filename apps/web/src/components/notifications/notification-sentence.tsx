@@ -109,10 +109,13 @@ export function NotificationSentence({ view }: { view: NotificationView }) {
     ground: context.ground ?? "",
     circle: context.circleName ?? "",
     hasCircle: context.circleName ? "yes" : "no",
+    // A grouped admin review row: how many arrived since it was last read.
+    count: view.itemCount ?? 1,
     b: bold,
   };
   const key =
-    type === "new_follower" && actorCount >= 2 && actors.length >= 2
+    (type === "new_follower" && actorCount >= 2 && actors.length >= 2) ||
+    (view.itemCount ?? 1) > 1
       ? "sentenceGrouped"
       : "sentence";
   return <>{t.rich(`rich.${type}.${key}`, values)}</>;
