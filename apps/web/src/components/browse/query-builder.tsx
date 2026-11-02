@@ -238,7 +238,6 @@ export function QueryBuilder({
                 ref={addFilterRef}
                 type="button"
                 variant="outline"
-                size="sm"
                 className="rounded-full"
                 aria-label={tBrowse("addFilter")}
               >
@@ -267,7 +266,7 @@ export function QueryBuilder({
             </PopoverContent>
           </Popover>
           {canClear && (
-            <Button type="button" variant="ghost" size="sm" onClick={clearAll}>
+            <Button type="button" variant="ghost" onClick={clearAll}>
               {tBrowse("clearFilters")}
             </Button>
           )}
