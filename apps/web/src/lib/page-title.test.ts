@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import en from "../../locales/en.json";
 import nl from "../../locales/nl.json";
-import type { Locale, Messages } from "./i18n";
+import type { Locale } from "./i18n";
 import { defaultDocumentTitle, pageTitle } from "./page-title";
 
 // The loaded catalogs, by locale: the title comes from the catalog of the locale in the root
 // context, not from the context itself.
-const catalogs: Partial<Record<Locale, Messages>> = { en, nl };
+const catalogs: Partial<Record<Locale, unknown>> = { en, nl };
 
 vi.mock("./i18n-catalog", () => ({
   messagesFor: (locale: Locale) => catalogs[locale],
