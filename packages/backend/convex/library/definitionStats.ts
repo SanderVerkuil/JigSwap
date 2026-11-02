@@ -29,13 +29,16 @@ import { isOpenAvailability } from "./openListing";
 //
 // Life cycle: a write that changes what a definition's aggregates count MARKS it
 // (markDefinitionStatsStale and the mark*Change helpers below, called from the copy, completion,
-// review and profile repositories, the exchange settlement and the account purge). A mark flags the
-// row stale and schedules one `recompute`, which recomputes the totals from source with the very
-// helpers the pages used to run live (library/definitionAggregates), so the numbers keep their
-// meaning. A nightly `reconcile` recomputes every definition: it is the backfill, and it repairs a
-// row a write path forgot to mark (logged as drift). A row left stale because its recompute threw
-// is logged and re-scheduled by the next mark or the reconcile (STALE_RETRY_MS). Until a
-// definition's totals exist, reads compute them live, as before.
+// review and profile repositories, the exchange settlement and the account purge). A mark leaves a
+// definitionStatsPending row and schedules one `recompute`, which recomputes the totals from source
+// with the very helpers the pages used to run live (library/definitionAggregates), so the numbers
+// keep their meaning. A nightly `reconcile` recomputes every definition: it is the backfill, and it
+// repairs a row a write path forgot to mark (logged as drift). A pending row left behind because its
+// recompute threw is logged and re-scheduled by the next mark or the reconcile (STALE_RETRY_MS).
+// Until a definition's totals exist, reads compute them live, as before.
+//
+// Pages subscribe to the definitionStats row, so it is written only when its numbers change: a mark
+// never touches it, and neither does a recompute that finds the same totals.
 
 export type DefinitionTotals = RatingTotals &
   CompletionTotals & {
@@ -49,7 +52,7 @@ type StoredTotals = NonNullable<Doc<"definitionStats">["totals"]>;
 
 // Profile visibility fan-out: copies per batch (each at most one mark).
 const OWNER_MARK_BATCH = 100;
-// A recompute normally lands within seconds. A row still stale after this long lost its recompute
+// A recompute normally lands within seconds. A mark still pending after this long lost its recompute
 // (it threw: read limits on a very large definition, or write conflicts until retries ran out), so
 // the next mark, or the nightly reconcile, logs it and schedules another.
 export const STALE_RETRY_MS = 5 * 60 * 1000;
@@ -64,6 +67,15 @@ const statsRowOf = (
 ): Promise<Doc<"definitionStats"> | null> =>
   ctx.db
     .query("definitionStats")
+    .withIndex("by_puzzle", (q) => q.eq("puzzleId", puzzleId))
+    .unique();
+
+const pendingRowOf = (
+  ctx: QueryCtx,
+  puzzleId: Id<"puzzles">,
+): Promise<Doc<"definitionStatsPending"> | null> =>
+  ctx.db
+    .query("definitionStatsPending")
     .withIndex("by_puzzle", (q) => q.eq("puzzleId", puzzleId))
     .unique();
 
@@ -90,7 +102,8 @@ export const computeDefinitionTotals = async (
 };
 
 /** The definition's stored totals, or null until its first recompute (the caller then computes
- * live). Stale totals are served: a recompute is already scheduled. One indexed read. */
+ * live). Totals of a marked definition are served: a recompute is already scheduled. One indexed
+ * read. */
 export const definitionTotalsOf = async (
   ctx: QueryCtx,
   puzzleId: Id<"puzzles">,
@@ -136,46 +149,36 @@ const totalsKey = (t: StoredTotals | DefinitionTotals): string =>
     t.publicAvailable.sale,
   ]);
 
-// A stale row whose recompute should have landed by `now`, logged as such. A row marked stale
-// before `staleSince` existed counts as overdue.
+// A pending mark whose recompute should have landed by `now`, logged as such.
 const recomputeOverdue = (
-  row: Doc<"definitionStats">,
+  pending: Doc<"definitionStatsPending">,
   now: number,
 ): boolean => {
-  if (row.stale !== true) return false;
-  if (row.staleSince !== undefined && now - row.staleSince < STALE_RETRY_MS) {
-    return false;
-  }
+  if (now - pending.since < STALE_RETRY_MS) return false;
   logEvent({
     event: "library.definitionStats.recomputeOverdue",
     outcome: "error",
-    puzzle_id: row.puzzleId,
-    stale_ms: row.staleSince === undefined ? null : now - row.staleSince,
+    puzzle_id: pending.puzzleId,
+    stale_ms: now - pending.since,
   });
   return true;
 };
 
 /**
  * Mark a definition's totals stale and schedule their recompute. At most one recompute is pending
- * per definition: a row stale since less than STALE_RETRY_MS has one scheduled (in this
- * transaction or an earlier one), and a definition without a row gets one, so later marks in the
- * same transaction see it. A row stale for longer lost its recompute: it is logged and re-scheduled.
+ * per definition: a mark younger than STALE_RETRY_MS has one scheduled (in this transaction or an
+ * earlier one), so later marks see it and stop. An older one lost its recompute: it is logged and
+ * re-scheduled. Touches nothing a page reads, so a mark alone re-runs no subscriber.
  */
 export const markDefinitionStatsStale = async (
   ctx: MutationCtx,
   puzzleId: Id<"puzzles">,
 ): Promise<void> => {
   const now = Date.now();
-  const row = await statsRowOf(ctx, puzzleId);
-  if (row?.stale === true && !recomputeOverdue(row, now)) return;
-  if (row) await ctx.db.patch(row._id, { stale: true, staleSince: now });
-  else {
-    await ctx.db.insert("definitionStats", {
-      puzzleId,
-      stale: true,
-      staleSince: now,
-    });
-  }
+  const pending = await pendingRowOf(ctx, puzzleId);
+  if (pending && !recomputeOverdue(pending, now)) return;
+  if (pending) await ctx.db.patch(pending._id, { since: now });
+  else await ctx.db.insert("definitionStatsPending", { puzzleId, since: now });
   await ctx.scheduler.runAfter(0, internal.library.definitionStats.recompute, {
     puzzleId,
   });
@@ -302,14 +305,16 @@ export const markOwnerListingsStale = internalMutation({
   },
 });
 
-// Recomputes one definition's totals from source and writes them only when they changed (or to
-// clear the stale flag), so an in-step definition costs readers nothing. A row that was not marked
-// stale but differs from its sources means some write path skipped its mark: logged as drift and
-// repaired. A definition that no longer exists loses its row.
+// Recomputes one definition's totals from source and writes them only when they changed, so an
+// in-step definition costs readers nothing. A row that wasn't marked but differs from its sources
+// means some write path skipped its mark: logged as drift and repaired. A definition that no longer
+// exists loses its row.
 export const recompute = internalMutation({
   args: { puzzleId: v.id("puzzles") },
   handler: async (ctx, { puzzleId }): Promise<void> => {
     const row = await statsRowOf(ctx, puzzleId);
+    const pending = await pendingRowOf(ctx, puzzleId);
+    if (pending) await ctx.db.delete(pending._id);
     if ((await ctx.db.get(puzzleId)) === null) {
       if (row) await ctx.db.delete(row._id);
       return;
@@ -320,10 +325,13 @@ export const recompute = internalMutation({
       await ctx.db.insert("definitionStats", { puzzleId, totals, computedAt });
       return;
     }
+    // Flags from before marks had their own table.
+    const hasLegacyFlag =
+      row.stale !== undefined || row.staleSince !== undefined;
     const inStep =
       row.totals !== undefined && totalsKey(row.totals) === totalsKey(totals);
     if (inStep) {
-      if (row.stale === true) {
+      if (hasLegacyFlag) {
         await ctx.db.patch(row._id, {
           stale: undefined,
           staleSince: undefined,
@@ -335,7 +343,8 @@ export const recompute = internalMutation({
     if (
       row.totals !== undefined &&
       row.totals.ownerCount !== undefined &&
-      row.stale !== true
+      !pending &&
+      !hasLegacyFlag
     ) {
       logEvent({
         event: "library.definitionStats.drift",
@@ -378,8 +387,8 @@ export const reconcile = internalMutation({
     const now = Date.now();
     for (const puzzle of page.page) {
       // Surfaces a definition whose recompute keeps failing even when no write marks it.
-      const row = await statsRowOf(ctx, puzzle._id);
-      if (row) recomputeOverdue(row, now);
+      const pending = await pendingRowOf(ctx, puzzle._id);
+      if (pending) recomputeOverdue(pending, now);
       await ctx.scheduler.runAfter(
         0,
         internal.library.definitionStats.recompute,

@@ -2185,11 +2185,8 @@ export default defineSchema({
   //     ownerCount       distinct owners of any copy, private ones included, for the admin console;
   //                      absent until the row's next recompute (nightly at the latest)
   //     publicAvailable  open copies of public-profile owners, by priority swap type
-  //   stale       a write changed the definition's sources and a recompute is scheduled; the
-  //               totals are still served until it lands
-  //   staleSince  when it was marked stale (or its recompute last re-scheduled). A mark, or the
-  //               nightly reconcile, that finds it stale for longer than a few minutes takes it
-  //               that the recompute failed: it logs that and schedules another
+  //   stale, staleSince  written before marks moved to definitionStatsPending; only a recompute
+  //               still reads them, to clear them
   //   computedAt  when the totals were last written
   definitionStats: defineTable({
     puzzleId: v.id("puzzles"),
@@ -2213,6 +2210,17 @@ export default defineSchema({
     stale: v.optional(v.boolean()),
     staleSince: v.optional(v.number()),
     computedAt: v.optional(v.number()),
+  }).index("by_puzzle", ["puzzleId"]),
+
+  // A write changed this definition's sources and a recompute is scheduled (library/definitionStats).
+  // Apart from definitionStats because every page showing the definition subscribes to that row: a
+  // mark, and a recompute that finds nothing changed, must not re-run them. Deleted by the recompute.
+  //   since  when it was marked (or its recompute last re-scheduled). A mark, or the reconcile, that
+  //          finds it older than a few minutes takes it that the recompute failed: it logs that and
+  //          schedules another
+  definitionStatsPending: defineTable({
+    puzzleId: v.id("puzzles"),
+    since: v.number(),
   }).index("by_puzzle", ["puzzleId"]),
 
   // Open-ended loans: possession of a Copy held by a borrower while ownership stays with the

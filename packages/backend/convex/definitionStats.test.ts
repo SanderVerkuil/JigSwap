@@ -246,6 +246,14 @@ const statsRow = (t: T, puzzleId: Id<"puzzles">) =>
       .unique(),
   );
 
+const pendingRow = (t: T, puzzleId: Id<"puzzles">) =>
+  t.run((ctx) =>
+    ctx.db
+      .query("definitionStatsPending")
+      .withIndex("by_puzzle", (q) => q.eq("puzzleId", puzzleId))
+      .unique(),
+  );
+
 const liveTotals = (t: T, puzzleId: Id<"puzzles">) =>
   t.run((ctx) => computeDefinitionTotals(ctx, puzzleId));
 
@@ -258,6 +266,7 @@ const reconcile = async (t: T, args: { batchSize?: number } = {}) => {
 const expectInStep = async (t: T, puzzleId: Id<"puzzles">) => {
   await settle(t);
   const row = await statsRow(t, puzzleId);
+  expect(await pendingRow(t, puzzleId)).toBeNull();
   expect(row?.stale).toBeUndefined();
   expect(row?.totals).toEqual(await liveTotals(t, puzzleId));
   return row!.totals!;
@@ -506,16 +515,15 @@ describe("completion totals, across the two ways a solve links to a definition",
 });
 
 describe("a recompute that never landed", () => {
-  // A stale row with no recompute pending, as a recompute that threw leaves it.
+  // A mark with no recompute pending, as a recompute that threw leaves it.
   const leaveStale = async (t: T, puzzleId: Id<"puzzles">, since: number) => {
     const row = await statsRow(t, puzzleId);
-    await t.run((ctx) =>
-      ctx.db.patch(row!._id, {
-        stale: true,
-        staleSince: since,
+    await t.run(async (ctx) => {
+      await ctx.db.patch(row!._id, {
         totals: { ...row!.totals!, communityOwners: 99 },
-      }),
-    );
+      });
+      await ctx.db.insert("definitionStatsPending", { puzzleId, since });
+    });
   };
   const overdueLogs = () =>
     vi
@@ -541,7 +549,7 @@ describe("a recompute that never landed", () => {
 
     expect((await expectInStep(t, w.vista.id)).communityOwners).toBe(1);
     expect(overdueLogs()).toHaveLength(1);
-    expect((await statsRow(t, w.vista.id))?.staleSince).toBeUndefined();
+    expect(await pendingRow(t, w.vista.id)).toBeNull();
   });
 
   test("a recompute still due is not scheduled twice", async () => {
@@ -655,7 +663,60 @@ describe("every write that changes a definition's aggregates marks it", () => {
     await settle(t);
 
     expect(await recomputeJobs(t)).toHaveLength(jobs);
-    expect((await statsRow(t, w.vista.id))?.stale).toBeUndefined();
+    expect(await pendingRow(t, w.vista.id)).toBeNull();
+  });
+
+  test("a mark that changes no number never touches the row pages subscribe to", async () => {
+    const t = newT();
+    const w = await seedWorld(t);
+    await acquire(t, "alice", w.vista.aggregateId);
+    await reconcile(t);
+    const before = await statsRow(t, w.vista.id);
+
+    await t.run(async (ctx) => {
+      await markDefinitionStatsStale(ctx, w.vista.id);
+    });
+    expect(await statsRow(t, w.vista.id)).toEqual(before);
+    expect(await pendingRow(t, w.vista.id)).not.toBeNull();
+
+    await settle(t);
+    expect(await statsRow(t, w.vista.id)).toEqual(before);
+    expect(await pendingRow(t, w.vista.id)).toBeNull();
+  });
+
+  test("a mark that does change a number writes the row once, when it lands", async () => {
+    const t = newT();
+    const w = await seedWorld(t);
+    await acquire(t, "alice", w.vista.aggregateId);
+    await reconcile(t);
+    const before = await statsRow(t, w.vista.id);
+
+    await asUser(t, "bob").mutation(api.library.acquireCopies.acquireCopies, {
+      items: [{ puzzleDefinitionId: w.vista.aggregateId }],
+    });
+    // Marked, not yet recomputed: readers still see the row as it was.
+    expect(await statsRow(t, w.vista.id)).toEqual(before);
+
+    expect((await expectInStep(t, w.vista.id)).communityOwners).toBe(2);
+  });
+
+  test("a row stale from before marks had their own table is cleared by its recompute", async () => {
+    const t = newT();
+    const w = await seedWorld(t);
+    await reconcile(t);
+    const row = await statsRow(t, w.vista.id);
+    await t.run((ctx) =>
+      ctx.db.patch(row!._id, { stale: true, staleSince: BASE }),
+    );
+
+    await t.mutation(internal.library.definitionStats.recompute, {
+      puzzleId: w.vista.id,
+    });
+
+    const after = await statsRow(t, w.vista.id);
+    expect(after?.stale).toBeUndefined();
+    expect(after?.staleSince).toBeUndefined();
+    expect(after?.totals).toEqual(row?.totals);
   });
 
   test("recording, editing and deleting a completion", async () => {
