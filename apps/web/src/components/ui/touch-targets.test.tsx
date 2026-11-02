@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import en from "../../../locales/en.json";
 import { AvailabilityChips } from "../add-puzzle/availability-chips";
 import { SegmentedPills } from "../add-puzzle/segmented-pills";
+import { TagInput } from "../add-puzzle/tag-input";
 import { Button } from "./button";
 import { Checkbox } from "./checkbox";
 import {
@@ -18,6 +19,8 @@ import {
 import { Input } from "./input";
 import { Select, SelectTrigger, SelectValue } from "./select";
 import { Switch } from "./switch";
+import { Tabs, TabsList, TabsTrigger } from "./tabs";
+import { TAB_TRIGGER_CLASS, UNDERLINE_TABS_LIST_CLASS } from "./underline-tabs";
 
 // Under a finger (pointer: coarse) the shared controls reach the 44px touch target the app uses
 // in onboarding and Reports (UX-70). The sizing lives in the primitives, behind pointer-coarse:,
@@ -139,6 +142,43 @@ describe("coarse-pointer touch targets", () => {
     expect(
       classes(screen.getByRole("button", { name: "For Trade" })),
     ).toContain("pointer-coarse:min-h-11");
+  });
+
+  it("makes an underline tab 44px tall on touch", () => {
+    render(
+      <Tabs defaultValue="a">
+        <TabsList className={UNDERLINE_TABS_LIST_CLASS}>
+          <TabsTrigger value="a" className={TAB_TRIGGER_CLASS}>
+            Following
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>,
+    );
+    expect(classes(screen.getByRole("tab", { name: "Following" }))).toContain(
+      "pointer-coarse:min-h-11",
+    );
+  });
+
+  it("grows a tag's remove button to 44px on touch without changing the chip", () => {
+    render(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <TagInput value={["cats"]} onChange={() => {}} />
+      </IntlProvider>,
+    );
+    expect(
+      classes(
+        screen.getByRole("button", {
+          name: "Remove cats",
+        }),
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        "relative",
+        "size-6",
+        "pointer-coarse:after:absolute",
+        "pointer-coarse:after:-inset-2.5",
+      ]),
+    );
   });
 
   it("makes menu rows, including submenu triggers, 44px tall on touch", () => {

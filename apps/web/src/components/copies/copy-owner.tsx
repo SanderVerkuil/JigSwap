@@ -51,7 +51,7 @@ export function CopyOwner({
         <Link
           to="/members/$handle"
           params={{ handle: revealed._id }}
-          className="truncate hover:underline"
+          className="truncate hover:underline pointer-coarse:-my-3 pointer-coarse:py-3"
         >
           {name}
         </Link>

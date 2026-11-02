@@ -112,7 +112,12 @@ export function IdentityHeader({
             {t("memberSince")} {memberYear}
           </span>
           {socialProfile !== undefined && (
-            <Badge asChild variant="outline" className="min-h-6 rounded-full">
+            // A 44px hit area under a finger, without growing the pill out of its line of text.
+            <Badge
+              asChild
+              variant="outline"
+              className="relative min-h-6 rounded-full pointer-coarse:overflow-visible pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:-inset-y-2.75"
+            >
               <Link to="/profile" hash={PRIVACY_SECTION_ID}>
                 {isPrivate ? <Lock aria-hidden /> : <Globe aria-hidden />}
                 {isPrivate

@@ -149,6 +149,14 @@ describe("IdentityHeader visibility and public view", () => {
     expect(badge.getAttribute("href")).toBe("/profile#privacy");
   });
 
+  // Badge clips its overflow, which would cut the hit area off again (UX-70).
+  it("gives the visibility badge a 44px hit area on touch", () => {
+    renderHeader();
+    const badge = screen.getByRole("link", { name: "Public · findable" });
+    expect(badge.className).toContain("pointer-coarse:overflow-visible");
+    expect(badge.className).toContain("pointer-coarse:after:-inset-y-2.75");
+  });
+
   it("shows a private profile as Private, linking to the Privacy section", () => {
     renderHeader({ profile: { visibility: "private" } });
     const badge = screen.getByRole("link", { name: "Private" });

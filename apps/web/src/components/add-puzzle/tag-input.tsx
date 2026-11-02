@@ -58,7 +58,7 @@ export function TagInput({
               type="button"
               aria-label={tCommon("removeTag", { tag })}
               onClick={() => onChange(value.filter((x) => x !== tag))}
-              className="inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-full outline-none hover:bg-primary/15 focus-visible:ring-2 focus-visible:ring-ring"
+              className="relative inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-full outline-none hover:bg-primary/15 focus-visible:ring-2 focus-visible:ring-ring pointer-coarse:after:absolute pointer-coarse:after:-inset-2.5"
             >
               <X className="size-3.5" />
             </button>

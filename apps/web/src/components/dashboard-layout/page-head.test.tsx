@@ -119,6 +119,14 @@ describe("PageHead crumb row", () => {
     );
   });
 
+  // A 16px line plus 14px either side; the row itself stays as tall as it was (UX-70).
+  it("gives a crumb a 44px hit area on touch", () => {
+    const { container } = renderShellHead("/circles");
+    const crumb = slot(container, "page-head-crumbs")?.querySelector("a");
+    expect(crumb?.className).toContain("pointer-coarse:py-3.5");
+    expect(crumb?.className).toContain("pointer-coarse:-my-3.5");
+  });
+
   it("fills the same row with the breadcrumb on a grouped page", () => {
     const { container } = renderShellHead("/circles");
     const crumbs = slot(container, "page-head-crumbs");
