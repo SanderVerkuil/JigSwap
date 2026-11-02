@@ -316,6 +316,17 @@ describe("MobileTopBar published title", () => {
     expect(screen.getByText("Café")).toBeTruthy();
   });
 
+  it("prints what the page asks for when its hero shows the title right below", () => {
+    renderPublished({
+      title: "Café",
+      ownsHeading: "phone",
+      mobileTitle: "My Puzzles",
+    });
+
+    expect(screen.getByText("My Puzzles")).toBeTruthy();
+    expect(screen.queryByText("Café")).toBeNull();
+  });
+
   it("shows the title as plain text when the page renders it as its own heading", () => {
     renderPublished({ title: "Café", titleInContent: true });
 

@@ -26,6 +26,7 @@ import { useCallback, useSyncExternalStore, type MouseEvent } from "react";
 import { useTranslations } from "use-intl";
 import { formatNavBadge, nameForNavBadge } from "./nav-badge";
 import { useUnreadMessageCount } from "./nav-counts";
+import { usePageHeaderContent } from "./page-header-slot";
 import {
   getNavGroup,
   isImmersiveMobileRoute,
@@ -62,6 +63,7 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   // A page-published title (dynamic routes) overrides the static route title,
   // same precedence as the desktop page head.
   const { meta, title: shellTitle, titleOverride } = useShellTitle();
+  const { mobileTitle } = usePageHeaderContent();
   const isHome = meta?.variant === "dashboard";
   // Deep pages (a route with a parent section or page) trade the breadcrumb row
   // for a back chevron; landings, the profile and the pages a tab opens (/trades
@@ -109,7 +111,8 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
     router.history.back();
   };
   // Home shows the brand lockup instead of a title (the greeting is the sr-only h1 in main).
-  const title = isHome && titleOverride == null ? undefined : shellTitle;
+  const title =
+    mobileTitle ?? (isHome && titleOverride == null ? undefined : shellTitle);
   // Sticky page content (tab bars) sticks just below this bar.
   const measureRef = useHeightCssVar(MOBILE_TOP_BAR_HEIGHT_VAR);
 

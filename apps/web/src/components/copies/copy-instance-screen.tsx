@@ -154,8 +154,8 @@ export function CopyInstanceScreen({
 function CopyInstanceSkeleton() {
   return (
     <div className="w-full space-y-8">
-      <div className="grid gap-7 lg:grid-cols-[300px_minmax(0,1fr)]">
-        <Skeleton className="mx-auto aspect-square w-full max-w-[40vh] rounded-2xl lg:mx-0 lg:max-w-none" />
+      <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-4 sm:grid-cols-1 sm:gap-7 lg:grid-cols-[300px_minmax(0,1fr)]">
+        <Skeleton className="aspect-square w-full rounded-2xl sm:mx-auto sm:max-w-[40vh] lg:mx-0 lg:max-w-none" />
         <div className="space-y-4">
           <Skeleton className="h-9 w-2/3 rounded-lg" />
           <Skeleton className="h-5 w-1/3 rounded-lg" />
@@ -316,6 +316,12 @@ function CopyInstanceDetail({
       title: snapshot.title,
       // The body renders the title as this page's h1 below md; from md the head's h1 is it.
       ownsHeading: "phone",
+      // That h1 sits right under the phone's top bar, which names where the copy lives instead.
+      mobileTitle: navCollection
+        ? tShell("pages.collections.title")
+        : inLibrary
+          ? tShell("pages.myPuzzles.title")
+          : tShell("pages.browse.title"),
       crumbs: navCollection
         ? [
             { label: tShell("groups.library.label"), href: "/library" },
@@ -394,11 +400,12 @@ function CopyInstanceDetail({
   return (
     <div className="flex w-full flex-col gap-10">
       {/* Hero */}
-      <section className="grid items-start gap-7 lg:grid-cols-[300px_minmax(0,1fr)]">
-        {/* Cover — capped at 40vh and centred below lg so the title, status and actions start on the
-            first screen of a phone; beside the info column at lg. Hovering opens a side panel that
-            magnifies where the cursor points. */}
-        <div className="bg-muted relative mx-auto aspect-square w-full max-w-[40vh] overflow-hidden rounded-2xl shadow-sm lg:mx-0 lg:max-w-[300px]">
+      {/* On a phone the cover sits small beside the title, so the offers and Log a solve fit the first
+          screen. From sm it is capped at 40vh and centred above the info; at lg it is a column
+          beside it, spanning its two rows. */}
+      <section className="grid grid-cols-[7.5rem_minmax(0,1fr)] items-start gap-x-4 sm:grid-cols-1 lg:grid-cols-[300px_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:gap-x-7">
+        {/* Cover. Hovering opens a side panel that magnifies where the cursor points. */}
+        <div className="bg-muted relative aspect-square w-full overflow-hidden rounded-2xl shadow-sm sm:mx-auto sm:mb-7 sm:max-w-[40vh] lg:row-span-2 lg:mx-0 lg:mb-0 lg:max-w-[300px]">
           {snapshot.image ? (
             <ImageZoom
               src={snapshot.image}
@@ -413,13 +420,13 @@ function CopyInstanceDetail({
           )}
         </div>
 
-        {/* Info */}
-        <div className="min-w-0">
+        {/* What it is: beside the cover on a phone. */}
+        <div className="min-w-0 max-sm:self-center">
           {/* From md the shell page head already shows the title (published above). */}
-          <h1 className="font-heading text-3xl font-bold tracking-tight md:hidden">
+          <h1 className="font-heading text-xl font-bold tracking-tight sm:text-3xl md:hidden">
             {snapshot.title}
           </h1>
-          <p className="text-muted-foreground mt-1 text-base md:mt-0">
+          <p className="text-muted-foreground mt-1 text-sm sm:text-base md:mt-0">
             {snapshot.brand ? `${snapshot.brand} · ` : ""}
             <span className="font-mono">
               {format.number(snapshot.pieceCount)}
@@ -442,7 +449,10 @@ function CopyInstanceDetail({
               </>
             )}
           </p>
+        </div>
 
+        {/* Where it stands and what can be done with it: full width from here on. */}
+        <div className="min-w-0 max-sm:col-span-2">
           {/* Status: custody, offers and who can see it, in one line (offers only for visitors). */}
           <CopyStatusLine
             detailed={copy.viewerCanManage}

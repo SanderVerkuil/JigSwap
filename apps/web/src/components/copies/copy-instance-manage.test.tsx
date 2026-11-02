@@ -163,6 +163,19 @@ describe("Household access", () => {
   });
 });
 
+describe("the hero on a phone", () => {
+  // happy-dom has no layout: this pins the class contract; the geometry was checked in a browser.
+  it("puts the cover beside the title and the rest full width below", () => {
+    renderCopy(managedCopy({}));
+    const hero = screen.getByRole("heading", { level: 1 }).closest("section");
+    expect(hero?.className).toContain("grid-cols-[7.5rem_minmax(0,1fr)]");
+    expect(hero?.className).toContain("sm:grid-cols-1");
+    expect(
+      screen.getByTestId("copy-status-line").closest(".max-sm\\:col-span-2"),
+    ).toBeTruthy();
+  });
+});
+
 describe("the acquisition date", () => {
   it("shows the recorded month", () => {
     renderCopy(
