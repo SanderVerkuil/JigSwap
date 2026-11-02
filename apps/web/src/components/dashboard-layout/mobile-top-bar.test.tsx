@@ -128,12 +128,41 @@ describe("MobileTopBar Messages entry", () => {
     ).toBe("page");
   });
 
+  it("shows the current page in the icon's colour too, not only to assistive tech", () => {
+    renderBar("/messages");
+    expect(
+      screen.getByRole("link", { name: "Messages" }).getAttribute("class"),
+    ).toContain("aria-[current=page]:text-primary-text");
+  });
+
   it("names the count in Dutch", () => {
     mocks.unreadMessages = 1;
     renderBar("/dashboard", "nl");
     expect(
       screen.getByRole("link", { name: "Berichten, 1 ongelezen bericht" }),
     ).toBeTruthy();
+  });
+});
+
+describe("MobileTopBar notifications bell", () => {
+  const bell = () => screen.getByRole("link", { name: en.notifications.bell });
+
+  it("is the current page on the notifications page, in name and colour", () => {
+    renderBar("/notifications");
+    expect(bell().getAttribute("aria-current")).toBe("page");
+    expect(bell().getAttribute("class")).toContain(
+      "aria-[current=page]:text-primary-text",
+    );
+  });
+
+  it("isn't the current page elsewhere, nor below it on preferences", () => {
+    renderBar("/dashboard");
+    expect(bell().getAttribute("aria-current")).toBeNull();
+    cleanup();
+    renderBar("/notifications/preferences");
+    expect(bell().getAttribute("aria-current")).toBeNull();
+    // The router would mark it current on a child route otherwise.
+    expect(bell().getAttribute("data-exact-active")).toBe("true");
   });
 });
 

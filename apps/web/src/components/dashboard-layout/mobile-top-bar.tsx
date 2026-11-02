@@ -35,9 +35,9 @@ import { useShellTitle } from "./shell-title";
 import { ShellUserButton } from "./shell-user-button";
 import { MOBILE_TOP_BAR_HEIGHT_VAR, useHeightCssVar } from "./sticky-offset";
 
-// Shared 44px touch target for every control in the bar.
+// Shared 44px touch target for every control in the bar; the page's own control shows as current.
 const tapTarget =
-  "inline-flex size-11 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-accent";
+  "inline-flex size-11 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-accent aria-[current=page]:text-primary-text";
 
 export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   const t = useTranslations("shell");
@@ -208,6 +208,9 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
         <Link
           href="/notifications"
           aria-label={bellLabel}
+          aria-current={pathname === "/notifications" ? "page" : undefined}
+          // Preferences isn't the notifications page, though it sits below it.
+          activeOptions={{ exact: true }}
           className={cn(tapTarget, "relative text-muted-foreground")}
         >
           <Bell className="size-5" />
