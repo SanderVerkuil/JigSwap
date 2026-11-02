@@ -4,7 +4,11 @@ import en from "../../../../locales/en.json";
 import nl from "../../../../locales/nl.json";
 import { MODERATION_ACTIVITY_KINDS } from "./activity-log";
 
-type ActivityMessageKey = keyof typeof en.admin.moderation.activity;
+// `kinds` is the nested group of filter labels, not a sentence.
+type ActivityMessageKey = Exclude<
+  keyof typeof en.admin.moderation.activity,
+  "kinds"
+>;
 
 vi.mock("@/gateway", () => ({ gateway: {} }));
 
