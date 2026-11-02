@@ -151,9 +151,21 @@ export async function compileMarkdown(raw: string): Promise<CompiledDoc> {
   };
 }
 
+// Block elements separate words; inline ones (bold, a link, a code token) sit inside a sentence,
+// and a space in their place would show up in search snippets as "for trade , for lend".
+const BLOCK_TAG =
+  /<\/?(?:address|article|aside|blockquote|br|dd|details|div|dl|dt|figcaption|figure|h[1-6]|hr|li|ol|p|pre|section|summary|table|tbody|td|tfoot|th|thead|tr|ul)\b[^>]*>/gi;
+
 function stripHtml(html: string): string {
-  return html
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  return (
+    html
+      .replace(BLOCK_TAG, " ")
+      .replace(/<[^>]+>/g, "")
+      // The serializer writes & and < as hex references; this text is shown as text.
+      .replace(/&#x([0-9a-f]+);/gi, (_, hex: string) =>
+        String.fromCodePoint(parseInt(hex, 16)),
+      )
+      .replace(/\s+/g, " ")
+      .trim()
+  );
 }
