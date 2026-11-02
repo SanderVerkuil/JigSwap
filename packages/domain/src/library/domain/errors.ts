@@ -8,6 +8,7 @@ export type LibraryErrorCode =
   | "NotOwner"
   | "InvalidCondition"
   | "InvalidPrice"
+  | "InvalidAcquisitionDate"
   | "DuplicateCollectionName"
   | "CannotDeleteDefaultCollection"
   | "CopyNotInCollection"
@@ -47,6 +48,14 @@ export class LibraryError extends DomainError {
   // A price (sale or acquisition) failed validation.
   static invalidPrice(detail: string): LibraryError {
     return new LibraryError("InvalidPrice", `Invalid price: ${detail}`);
+  }
+
+  // An acquisition date that isn't a real date or lies outside the possible range.
+  static invalidAcquisitionDate(): LibraryError {
+    return new LibraryError(
+      "InvalidAcquisitionDate",
+      "Not a date a copy can have been acquired on",
+    );
   }
 
   // Two collections of the same owner cannot share a name (the uniqueness check is an

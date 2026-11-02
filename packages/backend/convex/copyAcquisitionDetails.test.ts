@@ -204,6 +204,33 @@ describe("library.updateCopyDetails acquisition", () => {
     }
   });
 
+  test("a date that isn't possible is refused and the stored details stay", async () => {
+    const ann = as(t, "ann");
+    await ann.mutation(api.library.updateCopyDetails.updateCopyDetails, {
+      copyId: "copy-manage",
+      acquisition: { date: MARCH_2025, source: "gift" },
+    });
+    const before = await acquisitionOf(t, w.manageCopy);
+
+    for (const date of [
+      NaN,
+      Infinity,
+      -Infinity,
+      1e308,
+      Date.UTC(1899, 11, 31),
+      Date.now() + 2 * 365 * 24 * 60 * 60 * 1000,
+    ]) {
+      await expectConvexCode(
+        ann.mutation(api.library.updateCopyDetails.updateCopyDetails, {
+          copyId: "copy-manage",
+          acquisition: { date, source: "trade" },
+        }),
+        "InvalidAcquisitionDate",
+      );
+    }
+    expect(await acquisitionOf(t, w.manageCopy)).toEqual(before);
+  });
+
   test("an anonymous caller is refused", async () => {
     await expect(
       t.mutation(api.library.updateCopyDetails.updateCopyDetails, {

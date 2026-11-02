@@ -240,6 +240,50 @@ describe("updateDetails", () => {
     expect(copy.toState().acquisition.date).toEqual(MARCH);
     expect(copy.toState().acquisition.source).toBe("gift");
   });
+
+  describe("an impossible acquisition date", () => {
+    it.each([
+      ["not a real date", new Date(NaN)],
+      ["from before 1900", new Date("1899-12-31T12:00:00Z")],
+      ["more than a year ahead", new Date("2027-06-30T12:00:00Z")],
+    ])("refuses one %s and keeps the details as they were", (_, date) => {
+      const copy = acquire();
+      copy.updateDetails({ acquisition: { date: MARCH, source: "gift" } }, NOW);
+      copy.pullEvents();
+
+      const result = copy.updateDetails(
+        { acquisition: { date, source: "trade" }, notes: "changed" },
+        LATER,
+      );
+
+      expect(result.isErr && result.error.code).toBe("InvalidAcquisitionDate");
+      expect(copy.toState().acquisition.date).toEqual(MARCH);
+      expect(copy.toState().acquisition.source).toBe("gift");
+      expect(copy.toState().notes).not.toBe("changed");
+      expect(copy.pullEvents()).toEqual([]);
+    });
+
+    it("accepts any month of the current year, which the month picker offers", () => {
+      const copy = acquire();
+      const december = new Date("2026-12-01T12:00:00Z");
+      expect(
+        copy.updateDetails({ acquisition: { date: december } }, NOW).isOk,
+      ).toBe(true);
+      expect(copy.toState().acquisition.date).toEqual(december);
+    });
+
+    it("refuses one on a new copy", () => {
+      const result = Copy.acquire({
+        id: copyId,
+        ownerId: owner,
+        snapshot: snapshot(),
+        condition: "good",
+        acquisition: Acquisition.create({ date: new Date(NaN) }),
+        now: NOW,
+      });
+      expect(result.isErr && result.error.code).toBe("InvalidAcquisitionDate");
+    });
+  });
 });
 
 describe("changeCover", () => {

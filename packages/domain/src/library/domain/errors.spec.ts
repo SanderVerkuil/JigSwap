@@ -21,6 +21,12 @@ describe("LibraryError factories", () => {
     expect(e.message).toBe("Invalid price: amount must be positive");
   });
 
+  it("invalidAcquisitionDate", () => {
+    const e = LibraryError.invalidAcquisitionDate();
+    expect(e.code).toBe("InvalidAcquisitionDate");
+    expect(e.message).toBe("Not a date a copy can have been acquired on");
+  });
+
   it("duplicateCollectionName interpolates the name", () => {
     const e = LibraryError.duplicateCollectionName("Favorites");
     expect(e.code).toBe("DuplicateCollectionName");

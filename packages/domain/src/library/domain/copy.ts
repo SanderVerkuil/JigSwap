@@ -1,5 +1,9 @@
-import { DomainEvent, ok, Result } from "../../shared-kernel";
-import { Acquisition, AcquisitionSource } from "./acquisition";
+import { DomainEvent, err, ok, Result } from "../../shared-kernel";
+import {
+  Acquisition,
+  AcquisitionSource,
+  isPossibleAcquisitionDate,
+} from "./acquisition";
 import { CatalogSnapshot } from "./catalog-snapshot";
 import { Condition } from "./condition";
 import { CopyImage } from "./copy-image";
@@ -90,6 +94,10 @@ export class Copy {
   // Mint a brand-new copy: owner, condition, acquisition, default (visible, not offered) sharing; records
   // CopyAcquired. The snapshot is supplied by the application layer via the CatalogSnapshotProvider.
   static acquire(props: AcquireCopyProps): Result<Copy, LibraryError> {
+    const acquired = props.acquisition?.date;
+    if (acquired && !isPossibleAcquisitionDate(acquired, props.now)) {
+      return err(LibraryError.invalidAcquisitionDate());
+    }
     const state: CopyState = {
       id: props.id,
       ownerId: props.ownerId,
@@ -231,6 +239,10 @@ export class Copy {
     },
     now: Date,
   ): Result<void, LibraryError> {
+    const acquired = changes.acquisition?.date;
+    if (acquired && !isPossibleAcquisitionDate(acquired, now)) {
+      return err(LibraryError.invalidAcquisitionDate());
+    }
     this.state = {
       ...this.state,
       missingPiecesCount:

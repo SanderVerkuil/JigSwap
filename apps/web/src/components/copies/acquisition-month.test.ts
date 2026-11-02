@@ -22,6 +22,11 @@ describe("acquisition month", () => {
     });
   });
 
+  it("reads a timestamp that isn't a real date as no month", () => {
+    expect(acquisitionMonthOf(NaN, "UTC")).toBeNull();
+    expect(acquisitionMonthOf(1e308, "UTC")).toBeNull();
+  });
+
   it("round-trips every month in time zones from UTC-12 to UTC+14", () => {
     for (const zone of [
       "Etc/GMT+12",

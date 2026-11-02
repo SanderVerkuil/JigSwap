@@ -16,7 +16,8 @@ import { toConvexError } from "./errors";
 // Composition root for patching a copy's descriptive fields (missing-piece count, notes, and when
 // and how it was acquired). `copyId` is the domain aggregateId; omitted fields are left unchanged.
 // A supplied `acquisition` replaces the date (epoch millis) and source together, so leaving one out
-// clears it; the acquisition price is kept. Only someone who may manage the copy may patch it.
+// clears it; the acquisition price is kept. A date that isn't possible is refused by the domain.
+// Only someone who may manage the copy may patch it.
 export const updateCopyDetails = mutation({
   args: {
     copyId: v.string(),

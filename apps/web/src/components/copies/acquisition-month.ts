@@ -12,15 +12,19 @@ export interface AcquisitionMonth {
 export const acquisitionMonthStart = (year: number, month: number): number =>
   Date.UTC(year, month - 1, 1, 12);
 
+// null when the timestamp isn't a real date, which the backend refuses to store but formatToParts
+// would throw on: the Edit dialog reads this during render, even while closed.
 export const acquisitionMonthOf = (
   timestamp: number,
   timeZone: string,
-): AcquisitionMonth => {
+): AcquisitionMonth | null => {
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return null;
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone,
     year: "numeric",
     month: "numeric",
-  }).formatToParts(new Date(timestamp));
+  }).formatToParts(date);
   const part = (type: "year" | "month") =>
     Number(parts.find((p) => p.type === type)?.value);
   return { year: part("year"), month: part("month") };
