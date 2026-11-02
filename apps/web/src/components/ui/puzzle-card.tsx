@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { CollectionMenuItems } from "@/components/ui/collection-dropdown";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -95,6 +96,13 @@ interface PuzzleCardProps {
    *  PuzzleViewProvider grid's PUZZLE_GRID_COVER_SIZES. */
   imageSizes?: string;
   onDelete?: (puzzleId: Id<"ownedPuzzles">) => void;
+  /** Switches an offer from the ⋯ menu (useCopyOfferToggle); `offersLocked`: it's out on loan. */
+  onToggleOffer?: (
+    puzzleId: Id<"ownedPuzzles">,
+    flag: "forTrade" | "forLend",
+    on: boolean,
+  ) => void;
+  offersLocked?: boolean;
   onRemove?: (puzzleId: Id<"ownedPuzzles">) => void;
   onSelect?: (puzzleId: Id<"ownedPuzzles">) => void;
   onRequestExchange?: (puzzleId: Id<"ownedPuzzles">) => void;
@@ -165,6 +173,13 @@ const CORNER_CHIP_CLASS = [
   "group-hover:opacity-100 focus-within:opacity-100",
 ].join(" ");
 
+// The offers a card's ⋯ menu can switch directly, by the words the copy page's switches use. Going up
+// for sale stays with the Edit dialog, as on that page.
+const MENU_OFFERS = [
+  { flag: "forTrade", label: "swapLabel" },
+  { flag: "forLend", label: "lendLabel" },
+] as const;
+
 interface PuzzleOverflowMenuProps {
   ownedId: Id<"ownedPuzzles">;
   /** The card's puzzle title: names the trigger so each card's menu is distinguishable. */
@@ -184,6 +199,9 @@ interface PuzzleOverflowMenuProps {
     opener: RefObject<HTMLElement | null>,
   ) => void;
   onDelete?: (id: Id<"ownedPuzzles">) => void;
+  onToggleOffer?: PuzzleCardProps["onToggleOffer"];
+  offersLocked?: boolean;
+  availability: { forTrade: boolean; forLend: boolean };
   // When set, the menu includes an "add to collection" submenu (the Copy aggregateId the add needs).
   showCollection?: boolean;
   copyAggregateId?: string;
@@ -202,6 +220,9 @@ function PuzzleOverflowMenu({
   onEdit,
   onShareWithCircles,
   onDelete,
+  onToggleOffer,
+  offersLocked = false,
+  availability,
   showCollection = false,
   copyAggregateId,
   onRemoveFromCollection,
@@ -211,6 +232,7 @@ function PuzzleOverflowMenu({
   const tSolving = useTranslations("solving.logSolve");
   const tStart = useTranslations("solving.startSolve");
   const tCircles = useTranslations("circles");
+  const tOffers = useTranslations("copyInstance.offers");
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   // Don't mount the chip at all when nothing is wired.
@@ -220,6 +242,7 @@ function PuzzleOverflowMenu({
     !onEdit &&
     !onShareWithCircles &&
     !onDelete &&
+    !onToggleOffer &&
     !showCollection &&
     !onRemoveFromCollection
   )
@@ -282,6 +305,21 @@ function PuzzleOverflowMenu({
               {t("overflowMenu.edit")}
             </DropdownMenuItem>
           )}
+          {onToggleOffer &&
+            MENU_OFFERS.map(({ flag, label }) => (
+              <DropdownMenuCheckboxItem
+                key={flag}
+                // Lines the words up with the items that lead with an icon.
+                className="pl-10"
+                checked={availability[flag]}
+                // A copy on loan can't go on offer until it is back; withdrawing still works.
+                disabled={offersLocked && !availability[flag]}
+                onClick={(e) => e.stopPropagation()}
+                onCheckedChange={(on) => onToggleOffer(ownedId, flag, on)}
+              >
+                {tOffers(label)}
+              </DropdownMenuCheckboxItem>
+            ))}
           {onShareWithCircles && (
             <DropdownMenuItem
               onClick={(e) => {
@@ -349,6 +387,8 @@ export function PuzzleCard({
   imageFit,
   imageSizes = PUZZLE_GRID_COVER_SIZES,
   onDelete,
+  onToggleOffer,
+  offersLocked,
   onRemove,
   onSelect,
   onRequestExchange,
@@ -498,6 +538,7 @@ export function PuzzleCard({
       onEdit ||
       onShareWithCircles ||
       onDelete ||
+      onToggleOffer ||
       showCollectionDropdown ||
       onRemoveFromCollection
     );
@@ -521,6 +562,9 @@ export function PuzzleCard({
       onEdit={onEdit}
       onShareWithCircles={onShareWithCircles}
       onDelete={onDelete}
+      onToggleOffer={onToggleOffer}
+      offersLocked={offersLocked}
+      availability={puzzle.availability}
       showCollection={showCollectionDropdown}
       copyAggregateId={puzzle.aggregateId}
       onRemoveFromCollection={onRemoveFromCollection}

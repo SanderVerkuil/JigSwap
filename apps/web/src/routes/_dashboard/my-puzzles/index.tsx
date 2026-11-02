@@ -305,6 +305,7 @@ function PuzzlesPage() {
     copies: loadedCopies,
     householdAccessById,
     solveStateByCopyId,
+    isOnLoan: (copyId) => loanByCopyDocId.has(copyId),
   });
 
   const borrowerName = (loan: LoanView) =>

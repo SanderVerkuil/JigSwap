@@ -3,6 +3,7 @@ import {
   ShareWithCirclesDialog,
   type ShareWithCirclesCopy,
 } from "@/components/circles/share-with-circles-dialog";
+import { useCopyOfferToggle } from "@/components/copies/use-copy-offer-toggle";
 import { convexErrorCode } from "@/components/exchange/request-trade";
 import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
@@ -51,20 +52,21 @@ interface ActionableCopy {
   _id: string;
   aggregateId?: string;
   puzzle?: { title?: string } | null;
-  // For the share dialog's "members won't see it" warning.
+  // For the offer items, and the share dialog's "members won't see it" warning.
   availability?: { forTrade: boolean; forSale: boolean; forLend: boolean };
   visibility?: "private" | "visible";
 }
 
 // The ⋯ menu actions a puzzle card offers, for the viewer's own copies and their housemates'
 // alike (My Puzzles and the household's Puzzles tab). What a card offers follows the viewer's
-// access: the owner gets everything; a housemate gets solving, plus Edit only when the owner left
-// the copy at "manage", and never Delete, Share with circles or personal collections. The server enforces the same
+// access: the owner gets everything; a housemate gets solving, plus Edit and the offers only when the
+// owner left the copy at "manage", and never Delete, Share with circles or personal collections. The server enforces the same
 // rules on every action; this only hides what would be refused. Render `dialogs` once on the page.
 export function useCopyCardActions({
   copies,
   householdAccessById,
   solveStateByCopyId,
+  isOnLoan,
 }: {
   copies: readonly ActionableCopy[];
   // A housemate's copy maps to the viewer's access; the viewer's own copies are absent.
@@ -73,10 +75,18 @@ export function useCopyCardActions({
     { viewerAccess: HouseholdCopyPermission }
   >;
   solveStateByCopyId: ReadonlyMap<string, SolveState>;
+  // Where the page knows its open loans: a copy on loan can't go on offer until it is back.
+  isOnLoan?: (copyId: string) => boolean;
 }): {
   cardActions: (copyId: string) => {
     onEdit?: (id: Id<"ownedPuzzles">) => void;
     onDelete?: (id: Id<"ownedPuzzles">) => void;
+    onToggleOffer?: (
+      id: Id<"ownedPuzzles">,
+      flag: "forTrade" | "forLend",
+      on: boolean,
+    ) => void;
+    offersLocked: boolean;
     onLogSolve: (
       id: Id<"ownedPuzzles">,
       opener: RefObject<HTMLElement | null>,
@@ -158,6 +168,32 @@ export function useCopyCardActions({
         toast.error(t("deleteReserved"));
       }
     }
+  };
+
+  const { toggle: toggleOffer } = useCopyOfferToggle();
+  const handleToggleOffer = (
+    ownedPuzzleId: Id<"ownedPuzzles">,
+    flag: "forTrade" | "forLend",
+    on: boolean,
+  ) => {
+    // Offers are keyed by the Copy aggregateId; guard rows predating the backfill.
+    const copy = copies.find((p) => p._id === ownedPuzzleId);
+    if (!copy?.aggregateId || !copy.availability) {
+      console.error(
+        "Cannot change the offer: copy is missing its aggregateId.",
+      );
+      return;
+    }
+    void toggleOffer(
+      {
+        copyId: copy.aggregateId,
+        availability: copy.availability,
+        visibilityPreference: copy.visibility ?? "visible",
+        onLoan: isOnLoan?.(ownedPuzzleId),
+      },
+      flag,
+      on,
+    );
   };
 
   const handleEditPuzzle = (ownedPuzzleId: Id<"ownedPuzzles">) => {
@@ -245,6 +281,9 @@ export function useCopyCardActions({
     return {
       onEdit: canManage ? handleEditPuzzle : undefined,
       onDelete: household ? undefined : handleDeletePuzzle,
+      // Whoever may manage a copy may offer it, as on its page.
+      onToggleOffer: canManage ? handleToggleOffer : undefined,
+      offersLocked: isOnLoan?.(copyId) ?? false,
       onLogSolve: handleLogSolve,
       onStartSolve: handleStartSolve,
       // Only the owner may share a copy into their circles (sharing/shareCopiesToCircle).

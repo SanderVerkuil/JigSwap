@@ -356,6 +356,49 @@ describe("copy card menu", () => {
     expect(screen.queryByRole("button", { name: /^Actions for/ })).toBeNull();
   });
 
+  it("offers lending and swapping right in the menu, showing what's on", () => {
+    const onToggleOffer = vi.fn();
+    renderOwnedCard({
+      onToggleOffer,
+      puzzle: ownedCopy({
+        availability: { forTrade: true, forLend: false, forSale: false },
+      }),
+    });
+    openMenu();
+    const swap = screen.getByRole("menuitemcheckbox", {
+      name: "Offer for swap",
+    });
+    const lend = screen.getByRole("menuitemcheckbox", {
+      name: "Offer to lend",
+    });
+    expect(swap.getAttribute("aria-checked")).toBe("true");
+    expect(lend.getAttribute("aria-checked")).toBe("false");
+
+    fireEvent.click(lend);
+    expect(onToggleOffer).toHaveBeenCalledWith("copy_1", "forLend", true);
+  });
+
+  it("can't put a copy on loan on offer, but can withdraw one", () => {
+    renderOwnedCard({
+      onToggleOffer: vi.fn(),
+      offersLocked: true,
+      puzzle: ownedCopy({
+        availability: { forTrade: true, forLend: false, forSale: false },
+      }),
+    });
+    openMenu();
+    expect(
+      screen
+        .getByRole("menuitemcheckbox", { name: "Offer to lend" })
+        .getAttribute("aria-disabled"),
+    ).toBe("true");
+    expect(
+      screen
+        .getByRole("menuitemcheckbox", { name: "Offer for swap" })
+        .getAttribute("aria-disabled"),
+    ).toBeNull();
+  });
+
   it("marks Start puzzle with a play icon, unlike Log a solve", () => {
     renderOwnedCard({ onLogSolve: () => {}, onStartSolve: () => {} });
     openMenu();
