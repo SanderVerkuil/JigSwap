@@ -116,7 +116,9 @@ describe("PuzzleCard variant='pick'", () => {
     expect(add.getAttribute("data-variant") ?? add.className).toContain(
       "outline",
     );
-    expect(screen.queryByRole("link", { name: "Add to Library" })).toBeNull();
+    expect(
+      screen.queryByRole("link", { name: "Add to my puzzles" }),
+    ).toBeNull();
   });
 
   it("leaves the catalogue card as it was: the card opens the catalogue page", () => {

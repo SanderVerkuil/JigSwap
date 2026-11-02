@@ -277,7 +277,7 @@ describe("a puzzle the member already owns", () => {
     expect(
       (
         screen.getByRole("button", {
-          name: "Add to Library",
+          name: "Add to my puzzles",
         }) as HTMLButtonElement
       ).disabled,
     ).toBe(false);
