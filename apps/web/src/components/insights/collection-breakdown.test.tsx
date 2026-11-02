@@ -10,7 +10,6 @@ import {
   CollectionBreakdown,
   OTHER_BUCKET,
   pieceCountLabel,
-  PieceCountTick,
   UNKNOWN_BUCKET,
   type CollectionBreakdownData,
 } from "./collection-breakdown";
@@ -66,64 +65,9 @@ describe("pieceCountLabel", () => {
   });
 });
 
-describe("PieceCountTick", () => {
-  // The axis's width and its tick count give one bucket's room: 7 ticks at 300px is 43px each.
-  const tick = (value: string, width: number) =>
-    render(
-      <svg>
-        <PieceCountTick
-          x={10}
-          y={20}
-          fill="#666"
-          width={width}
-          visibleTicksCount={7}
-          payload={{ value }}
-        />
-      </svg>,
-    ).container;
-  const lines = (value: string, width = 300) =>
-    [...tick(value, width).querySelectorAll("tspan")].map((line) => [
-      line.textContent,
-      line.getAttribute("dy"),
-    ]);
-
-  // The dash starts the second line: "1.000–" beside "2.000+" read as one range, "1.000–2.000+".
-  it("takes two lines for a range that doesn't fit, with the dash on the second", () => {
-    expect(lines("1.000–1.999")).toEqual([
-      ["1.000", "0.71em"],
-      ["–1.999", "1.1em"],
-    ]);
-  });
-
-  it("takes one line for a single number", () => {
-    expect(lines("2.000+")).toEqual([["2.000+", "0.71em"]]);
-    expect(lines("< 100")).toEqual([["< 100", "0.71em"]]);
-  });
-
-  it("drops a word that doesn't fit to the second line, clear of the number beside it", () => {
-    expect(lines("Onbekend")).toEqual([["Onbekend", "1.81em"]]);
-  });
-
-  it("keeps labels on one line when their bucket has the room", () => {
-    expect(lines("1.000–1.999", 700)).toEqual([["1.000–1.999", "0.71em"]]);
-    expect(lines("Onbekend", 700)).toEqual([["Onbekend", "0.71em"]]);
-  });
-
-  // At 320 wide, and at 1280 next to an open sidebar, even "1.000" beside "2.000+" takes all of a
-  // bucket's room at the axis's normal size.
-  it("sets the labels smaller only when a bucket is too narrow for them", () => {
-    expect(
-      tick("2.000+", 245).querySelector("text")?.getAttribute("font-size"),
-    ).toBe("10");
-    expect(
-      tick("2.000+", 300).querySelector("text")?.getAttribute("font-size"),
-    ).toBeNull();
-  });
-});
-
 describe("CollectionBreakdown: columns", () => {
-  // Three columns next to an open sidebar leave a chart 209px at 1024 wide, too narrow for its axis.
-  it("takes three columns only when each still has room for the axis", () => {
+  // Three columns next to an open sidebar leave a chart 209px at 1024 wide, most of it labels.
+  it("takes three columns only when each still has room for its bars", () => {
     const { container } = renderBreakdown(breakdown());
     const grid = screen.getByRole("heading", { name: "By piece count" })
       .parentElement?.parentElement;
@@ -309,5 +253,82 @@ describe("CollectionBreakdown: buckets and brands", () => {
     );
     expect(screen.getByText("1 puzzel zonder merk")).toBeTruthy();
     expect(container.textContent).not.toContain(UNKNOWN_BUCKET);
+  });
+});
+
+// Piece count and Top brands read the same way at every width, and without a pointer: horizontal
+// bars with their values drawn, in a named figure with a table for screen readers, and no unnamed
+// keyboard stop on the chart library's SVG.
+describe("CollectionBreakdown: bar charts", () => {
+  const tableRows = (name: string) =>
+    within(within(screen.getByRole("figure", { name })).getByRole("table"))
+      .getAllByRole("row")
+      .map((row) => row.textContent);
+
+  it("names the piece count chart and tabulates every bucket, numbers formatted and sentinels translated", () => {
+    renderBreakdown(
+      breakdown({
+        byPieceCount: [
+          { label: "100-299", value: 1 },
+          { label: "1000-1999", value: 12 },
+          { label: UNKNOWN_BUCKET, value: 2 },
+        ],
+      }),
+    );
+    expect(tableRows("By piece count")).toEqual([
+      "By piece countPuzzles",
+      "100–2991",
+      "1,000–1,99912",
+      "Unknown2",
+    ]);
+  });
+
+  // The same bucket in Dutch, where the rest of the app shows 1.000.
+  it("formats the piece count buckets the Dutch way in the Dutch app", () => {
+    renderBreakdown(
+      breakdown({ byPieceCount: [{ label: "1000-1999", value: 12 }] }),
+      "nl",
+    );
+    expect(
+      within(screen.getByRole("figure", { name: "Op aantal stukjes" }))
+        .getAllByRole("rowheader")
+        .map((cell) => cell.textContent),
+    ).toEqual(["1.000–1.999"]);
+  });
+
+  it("names the brand chart and tabulates its bars, without the copies that have no brand", () => {
+    renderBreakdown(
+      breakdown({
+        byBrand: [
+          { label: "Ravensburger", value: 3 },
+          { label: OTHER_BUCKET, value: 1 },
+          { label: UNKNOWN_BUCKET, value: 2 },
+        ],
+      }),
+    );
+    expect(tableRows("Top brands")).toEqual([
+      "Top brandsPuzzles",
+      "Ravensburger3",
+      "Other1",
+    ]);
+  });
+
+  it("gives a chart one row of height per bar, so seven buckets never squeeze their labels", () => {
+    const { container } = renderBreakdown(
+      breakdown({
+        byPieceCount: [
+          "< 100",
+          "100-299",
+          "300-499",
+          "500-999",
+          "1000-1999",
+          "2000+",
+          UNKNOWN_BUCKET,
+        ].map((label) => ({ label, value: 1 })),
+      }),
+    );
+    const chart = container.querySelector<HTMLElement>("[data-slot=chart]");
+    expect(chart?.style.height).toBe(`${7 * 40}px`);
+    expect(chart?.parentElement?.getAttribute("aria-hidden")).toBe("true");
   });
 });
