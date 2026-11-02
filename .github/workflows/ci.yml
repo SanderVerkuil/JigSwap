@@ -49,20 +49,13 @@ jobs:
       - name: Check formatting
         run: pnpm run format:check
 
-      # The Clerk middleware refuses to start without a secret key, and then no docs page prerenders
-      # and bundle:check has no document to weigh. A file, because turbo hands the build only VITE_*
-      # (turbo.json), and widening that for every build isn't worth a placeholder. Git ignores this
-      # file, and a prerender has no session, so nothing calls Clerk with it.
-      - name: Placeholder Clerk secret for the docs prerender
-        run: echo "CLERK_SECRET_KEY=sk_test_ci_placeholder" > apps/web/.env.local
-
       # Convex _generated/* is committed, so no deployment or secrets are needed here.
       # arch:check enforces the DDD/hexagonal boundaries via dependency-cruiser.
       # bundle:check fails when a route's first-load JS/CSS grows past apps/web/bundle-budget.json.
       # The VITE_ placeholders make this the bundle that ships: without a URL router.tsx throws and the
-      # minifier drops the router and the Convex client behind it, about 34 KB on every route. The hosts
-      # are reserved (RFC 2606) and never resolve, turbo keeps them from the other tasks, and nothing
-      # deploys this build (Vercel builds with its own values).
+      # minifier drops the router and the Convex client behind it, about 34 KB on every route, and
+      # bundle:check refuses that build. The hosts are reserved (RFC 2606) and never resolve, turbo keeps
+      # them from the other tasks, and nothing deploys this build (Vercel builds with its own values).
       - name: Verify (lint, type-check, test, build, bundle:check, arch:check)
         env:
           VITE_CONVEX_URL: https://ci-placeholder.invalid

@@ -119,7 +119,7 @@ export function createCspNonce(): string {
 }
 
 // Only production page renders get a nonce. In dev, Vite injects inline scripts of its own;
-// prerendered pages (/docs) become static files that would all share one nonce.
+// a prerendered page (none today) would be a static file that shares one nonce.
 function nonceEnabled(): boolean {
   return !import.meta.env.DEV && process.env.TSS_PRERENDERING !== "true";
 }

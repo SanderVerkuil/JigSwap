@@ -26,11 +26,10 @@ export const Route = createFileRoute("/_public/docs/$")({
   codeSplitGroupings: [["loader", "component"]],
   // Resolving the page in the loader makes an unknown slug a real 404 (status
   // included) rather than a 200 rendering a not-found message, and hands head()
-  // the page's own title and summary. Every slug the prerender crawl reaches
-  // exists, so the crawl never meets this 404.
+  // the page's own title and summary.
   // Only this page's body is fetched (its own chunk); the nav comes from the
-  // shared page metadata. SSR and the prerendered HTML carry the body in the
-  // dehydrated loader data, so hydration fetches nothing extra.
+  // shared page metadata. SSR carries the body in the dehydrated loader data, so
+  // hydration fetches nothing extra.
   loader: async ({ params, context }) => {
     // Group index pages are pages too; a locale without the page shows English.
     const page = findDocPage(
