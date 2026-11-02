@@ -290,61 +290,63 @@ function CollectionDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Hero — open block, not a boxed card. */}
-      <div className="flex flex-wrap items-start gap-5">
+      {/* Hero — open block, not a boxed card. Below sm the chip and title share a row, with "Updated"
+          under the title and the description and buttons full width beneath, so none of them is
+          squeezed into a sliver. From sm the title, description and buttons are a column beside the
+          chip and "Updated" sits at the row's end. */}
+      <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 gap-y-1 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:gap-x-5 sm:gap-y-3">
         <CoverChip
           color={collection.color || "#6048e8"}
           icon={FolderOpen}
           emoji={collection.icon || undefined}
           size={96}
+          className="row-span-2 max-sm:!size-16 sm:row-span-3"
         />
-        <div className="min-w-0 flex-1 space-y-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="font-heading text-2xl font-bold tracking-tight">
-              {collection.name}
-            </h1>
-            <Badge
-              variant="outline"
-              className={cn(
-                collection.visibility === "public"
-                  ? "bg-jigsaw-success/15 text-jigsaw-success border-transparent"
-                  : "text-muted-foreground",
-              )}
-            >
-              {collection.visibility === "public" ? t("public") : t("private")}
-            </Badge>
-          </div>
-          {collection.description && (
-            <p className="text-muted-foreground max-w-2xl text-sm">
-              {collection.description}
-            </p>
-          )}
-          <div className="flex flex-wrap items-center gap-2.5">
-            {viewerOwnsCollection && (
-              <Button variant="brand" asChild>
-                <Link href={`/collections/${id}/add-puzzles`}>
-                  <Plus className="h-4 w-4" />
-                  {t("addPuzzles")}
-                </Link>
-              </Button>
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 self-end sm:self-start">
+          <h1 className="font-heading min-w-0 text-2xl font-bold tracking-tight break-words">
+            {collection.name}
+          </h1>
+          <Badge
+            variant="outline"
+            className={cn(
+              collection.visibility === "public"
+                ? "bg-jigsaw-success/15 text-jigsaw-success border-transparent"
+                : "text-muted-foreground",
             )}
-            <Button variant="outline" onClick={handleShare}>
-              <Share2 className="h-4 w-4" />
-              {t("share")}
-            </Button>
-            {viewerOwnsCollection && (
-              <Button variant="ghost" onClick={() => setEditOpen(true)}>
-                <Edit className="h-4 w-4" />
-                {tCommon("edit")}
-              </Button>
-            )}
-          </div>
+          >
+            {collection.visibility === "public" ? t("public") : t("private")}
+          </Badge>
         </div>
-        <p className="text-muted-foreground shrink-0 text-xs">
+        <p className="text-muted-foreground text-xs sm:shrink-0">
           {t("updatedAgo", {
             time: relativeTime(new Date(collection.updatedAt)),
           })}
         </p>
+        {collection.description && (
+          <p className="text-muted-foreground col-span-2 max-w-2xl text-sm max-sm:mt-3 sm:col-start-2">
+            {collection.description}
+          </p>
+        )}
+        <div className="col-span-2 flex flex-wrap items-center gap-2.5 max-sm:mt-3 sm:col-start-2">
+          {viewerOwnsCollection && (
+            <Button variant="brand" asChild>
+              <Link href={`/collections/${id}/add-puzzles`}>
+                <Plus className="h-4 w-4" />
+                {t("addPuzzles")}
+              </Link>
+            </Button>
+          )}
+          <Button variant="outline" onClick={handleShare}>
+            <Share2 className="h-4 w-4" />
+            {t("share")}
+          </Button>
+          {viewerOwnsCollection && (
+            <Button variant="ghost" onClick={() => setEditOpen(true)}>
+              <Edit className="h-4 w-4" />
+              {tCommon("edit")}
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Stats bar — only meaningful when the collection has members. */}

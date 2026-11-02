@@ -153,6 +153,17 @@ const removeViaMenu = () => {
 type ToastAction = { action?: { label: string; onClick: () => void } };
 afterEach(cleanup);
 
+describe("the page on a phone", () => {
+  // happy-dom has no layout: these pin the class contract; the geometry was checked in a browser.
+  it("keeps the stats in a plain two-column grid, not a wrapping divided row", () => {
+    renderPage(OWNER);
+    const stats = screen.getByText("Pieces Total").closest("dl");
+    expect(stats?.classList).toContain("grid-cols-2");
+    expect(stats?.classList).toContain("sm:divide-x");
+    expect(stats?.classList).not.toContain("divide-x");
+  });
+});
+
 describe("collection page controls", () => {
   it("says only the newest members are shown when the server left older ones out", () => {
     renderPage(OWNER, { ...collection, hasMorePuzzles: true });
