@@ -185,11 +185,14 @@ function ModerationPage() {
 
   // Edit & Approve works on the submission it was opened for, captured here: each opening is its
   // own session (the dialog's key), so the form is seeded once per opening and Save can only ever
-  // approve that submission, whatever happens to the queue meanwhile.
+  // approve that submission, whatever happens to the queue meanwhile. `decidedHere` is set while
+  // (and after) this reviewer's own save takes the submission out of the queue, so only someone
+  // else's decision reads as "handled elsewhere"; a failed save withdraws it.
   const [edit, setEdit] = useState<{
     submission: PendingSubmission;
     open: boolean;
     session: number;
+    decidedHere?: boolean;
   } | null>(null);
   const openEdit = (submission: PendingSubmission) =>
     setEdit((prev) => ({
@@ -198,6 +201,8 @@ function ModerationPage() {
       session: (prev?.session ?? 0) + 1,
     }));
   const closeEdit = () => setEdit((prev) => prev && { ...prev, open: false });
+  const setEditDecidedHere = (decidedHere: boolean) =>
+    setEdit((prev) => prev && { ...prev, decidedHere });
   const editTargetPending =
     edit !== null &&
     pending?.some((submission) => submission._id === edit.submission._id) ===
@@ -209,6 +214,7 @@ function ModerationPage() {
     duplicateTitle?: string;
     open: boolean;
     session: number;
+    decidedHere?: boolean;
   } | null>(null);
   const openReject = (submission: PendingSubmission, duplicateTitle?: string) =>
     setRejecting((prev) => ({
@@ -219,6 +225,8 @@ function ModerationPage() {
     }));
   const closeReject = () =>
     setRejecting((prev) => prev && { ...prev, open: false });
+  const setRejectDecidedHere = (decidedHere: boolean) =>
+    setRejecting((prev) => prev && { ...prev, decidedHere });
   const rejectTargetPending =
     rejecting !== null &&
     pending?.some(
@@ -337,13 +345,17 @@ function ModerationPage() {
     const submission = rejecting?.submission;
     if (!submission?.aggregateId || !pending || !rejectTargetPending) return;
     const puzzleDefinitionId = submission.aggregateId;
+    setRejectDecidedHere(true);
     const done = await decideRow(
       "submissions",
       submissions,
       submission._id,
       () => reject.mutateAsync({ puzzleDefinitionId, reason }),
     );
-    if (!done) return;
+    if (!done) {
+      setRejectDecidedHere(false);
+      return;
+    }
     toast.success(
       t("toast.rejected", {
         title: submission.title,
@@ -358,6 +370,7 @@ function ModerationPage() {
     const submission = edit?.submission;
     if (!submission?.aggregateId || !pending || !editTargetPending) return;
     const puzzleDefinitionId = submission.aggregateId;
+    setEditDecidedHere(true);
     const done = await decideRow(
       "submissions",
       submissions,
@@ -376,7 +389,10 @@ function ModerationPage() {
         await approve.mutateAsync({ puzzleDefinitionId, edited: true });
       },
     );
-    if (!done) return;
+    if (!done) {
+      setEditDecidedHere(false);
+      return;
+    }
     toast.success(
       t("toast.edited", {
         title: values.title,
@@ -901,7 +917,9 @@ function ModerationPage() {
           onOpenChange={(open) => !open && closeEdit()}
           onSave={editApprove}
           busy={busy}
-          handledElsewhere={pending !== undefined && !editTargetPending}
+          handledElsewhere={
+            pending !== undefined && !editTargetPending && !edit.decidedHere
+          }
           // Once its submission has left the queue (approved here, or handled elsewhere) the
           // Edit button that opened the dialog now belongs to the next item: land on the detail.
           onCloseAutoFocus={(event) => {
@@ -920,7 +938,11 @@ function ModerationPage() {
           onOpenChange={(open) => !open && closeReject()}
           onReject={rejectWithReason}
           busy={busy}
-          handledElsewhere={pending !== undefined && !rejectTargetPending}
+          handledElsewhere={
+            pending !== undefined &&
+            !rejectTargetPending &&
+            !rejecting.decidedHere
+          }
           // As for Edit & Approve: once its submission has left the queue, the Reject button
           // that opened the dialog belongs to the next item, so land on the detail instead.
           onCloseAutoFocus={(event) => {

@@ -257,6 +257,27 @@ describe("moderation console: Edit & Approve", () => {
     });
   });
 
+  it("does not call the reviewer's own decision handled elsewhere", async () => {
+    const approving = deferred();
+    convex.mutations = {
+      [APPROVE]: () => {
+        convex.set({ [PENDING]: [BUSY] });
+        return approving.promise;
+      },
+    };
+    await openConsole();
+    await heading("Alpine Lake");
+    const dialog = await openEditDialog();
+
+    saveEdit(dialog);
+    await waitFor(() => expect(convex.snapshot()[PENDING]).toEqual([BUSY]));
+    expect(within(dialog).queryByRole("alert")).toBeNull();
+
+    await act(async () => approving.resolve());
+    await heading("Busy Harbour");
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
   it("says so when someone else decides the submission meanwhile", async () => {
     await openConsole();
     await heading("Alpine Lake");
@@ -327,6 +348,27 @@ describe("moderation console: Reject", () => {
       puzzleDefinitionId: "agg-a",
       reason: "Not a jigsaw puzzle",
     });
+  });
+
+  it("does not call the reviewer's own decision handled elsewhere", async () => {
+    const rejecting = deferred();
+    convex.mutations = {
+      [REJECT]: () => {
+        convex.set({ [PENDING]: [BUSY] });
+        return rejecting.promise;
+      },
+    };
+    await openConsole();
+    await heading("Alpine Lake");
+    const dialog = await openRejectDialog();
+
+    confirmReject(dialog);
+    await waitFor(() => expect(convex.snapshot()[PENDING]).toEqual([BUSY]));
+    expect(within(dialog).queryByRole("alert")).toBeNull();
+
+    await act(async () => rejecting.resolve());
+    await heading("Busy Harbour");
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 
   it("says so when someone else decides the submission meanwhile", async () => {
