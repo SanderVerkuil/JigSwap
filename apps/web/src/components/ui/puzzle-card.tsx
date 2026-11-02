@@ -310,6 +310,7 @@ export function PuzzleCard({
   const tCard = useTranslations("browse.card");
   const tCatalog = useTranslations("puzzles.puzzles");
   const boxArtInCheck = useBoxArtInCheck();
+  const { viewMode } = usePuzzleView();
 
   // Early return if no puzzle data
   if (!puzzle.puzzle) {
@@ -554,7 +555,11 @@ export function PuzzleCard({
       {onRequestExchange && (
         <Button
           onClick={() => onRequestExchange(ownedId)}
-          className="h-10 flex-1 pointer-coarse:h-11"
+          // A list row can be 850px wide: past a phone, Request keeps its natural width there.
+          className={cn(
+            "h-10 flex-1 pointer-coarse:h-11",
+            viewMode === "list" && "sm:flex-none",
+          )}
         >
           <ArrowLeftRight className="h-4 w-4" aria-hidden />
           {tCard("request")}

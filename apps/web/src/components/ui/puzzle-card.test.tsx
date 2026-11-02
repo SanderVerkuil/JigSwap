@@ -63,6 +63,7 @@ const pendingQueryClient = () =>
 const renderCard = (
   props: Partial<CardProps> = {},
   locale: "en" | "nl" = "en",
+  viewMode: "grid" | "list" = "grid",
 ) => {
   const queryClient = pendingQueryClient();
   const handlers = {
@@ -77,7 +78,7 @@ const renderCard = (
         messages={locale === "en" ? en : nl}
         timeZone="Europe/Amsterdam"
       >
-        <PuzzleViewProvider viewMode="grid">
+        <PuzzleViewProvider viewMode={viewMode}>
           <PuzzleCard
             puzzle={copy}
             variant="browse"
@@ -119,6 +120,19 @@ describe("owned-copy PuzzleCard", () => {
 });
 
 describe("PuzzleCard (browse)", () => {
+  it("doesn't stretch Request across a wide list row, only across a phone's", () => {
+    renderCard({}, "en", "list");
+    const request = screen.getByRole("button", { name: "Request" });
+    expect(request.className).toContain("sm:flex-none");
+    expect(request.className).toContain("flex-1");
+    cleanup();
+
+    renderCard({}, "en", "grid");
+    expect(
+      screen.getByRole("button", { name: "Request" }).className,
+    ).not.toContain("sm:flex-none");
+  });
+
   it("names every action button, each differently", () => {
     renderCard();
     const names = screen
