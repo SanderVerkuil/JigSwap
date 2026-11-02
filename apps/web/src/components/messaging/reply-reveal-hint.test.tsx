@@ -56,14 +56,14 @@ describe("ReplyRevealHint", () => {
   it("tells the owner what a reply shows, and that the email stays private", () => {
     renderHint({ revealsYou: true });
     expect(screen.getByRole("note").textContent).toBe(
-      "Replying shows Mara your name, handle and the reviews you've received, for this trade only. Your email address stays private.",
+      "Replying shows Mara your name, handle and the reviews you've received, for this request only. Your email address stays private.",
     );
   });
 
   it("speaks Dutch", () => {
     renderHint({ revealsYou: true }, "nl");
     expect(screen.getByRole("note").textContent).toBe(
-      "Als je reageert, ziet Mara je naam, gebruikersnaam en de reviews die je hebt gekregen, alleen voor deze ruil. Je e-mailadres blijft privé.",
+      "Als je reageert, ziet Mara je naam, gebruikersnaam en de reviews die je hebt gekregen, alleen voor dit verzoek. Je e-mailadres blijft privé.",
     );
   });
 

@@ -884,7 +884,7 @@
       "hiddenNote": "Their details appear once they accept or reply.",
       "reviewsHeading": "Reviews received",
       "shareEmail": "Share my email with {name}",
-      "shareEmailHint": "Only for this trade. You can turn this off at any time.",
+      "shareEmailHint": "Only for this exchange. You can turn this off at any time.",
       "shareEmailError": "Couldn't change your email sharing. Please try again."
     },
     "pendingLabel": {
@@ -932,7 +932,7 @@
     "pricePlaceholder": "e.g. 15.00",
     "priceInvalid": "Enter an amount above zero and up to 1,000,000, like 15 or 15.50.",
     "revealNotice": {
-      "title": "Your name, handle and the reviews you've received will be visible to the owner of this puzzle, for this trade only.",
+      "title": "Your name, handle and the reviews you've received will be visible to the owner of this puzzle, for this request only.",
       "emailPrivate": "Your email address stays private unless you choose to share it once the owner accepts.",
       "profilePrivate": "Your profile itself stays private."
     },
@@ -1120,7 +1120,7 @@
     "puzzlesMenu": "Puzzles ({count})",
     "puzzleCount": "{count, plural, one {# puzzle} other {# puzzles}}",
     "removeAttachment": "Remove {title}",
-    "replyRevealHint": "Replying shows {name} your name, handle and the reviews you've received, for this trade only. Your email address stays private.",
+    "replyRevealHint": "Replying shows {name} your name, handle and the reviews you've received, for this request only. Your email address stays private.",
     "retry": "Try again",
     "searchConversations": "Search conversations",
     "searchConversationsPlaceholder": "Search conversations…",
