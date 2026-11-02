@@ -227,7 +227,7 @@ describe("makeUpdateCopiesOffers", () => {
     expect((await sharingOf(bobs))?.forLend).toBe(true);
   });
 
-  it("leaves a copy that's out on loan alone and says so", async () => {
+  it("won't put a copy that's out on loan on the market, and says so", async () => {
     const onLoan = await seedCopy("on-loan");
     const stored = await copies.findById(onLoan);
     stored?.lendOut(bob, NOW);
@@ -247,6 +247,73 @@ describe("makeUpdateCopiesOffers", () => {
     });
     expect((await sharingOf(onLoan))?.forTrade).toBe(false);
     expect((await sharingOf(free))?.forTrade).toBe(true);
+  });
+
+  describe("a copy out on loan that was offered again anyway", () => {
+    const seedReofferedLoan = async (id: string): Promise<CopyId> => {
+      const copyId = await seedCopy(id);
+      const stored = await copies.findById(copyId);
+      if (!stored) throw new Error("setup");
+      stored.lendOut(bob, NOW);
+      stored.updateSharing(
+        SharingSetting.create({ visibility: "visible", forTrade: true }),
+        NOW,
+      );
+      stored.pullEvents();
+      await copies.save(stored);
+      return copyId;
+    };
+
+    it("can still be taken off the market", async () => {
+      const id = await seedReofferedLoan("reoffered");
+
+      const result = await run()({
+        actingMemberId: alice,
+        copyIds: [id],
+        offers: { forTrade: false, forLend: false, forSale: false },
+      });
+
+      expect(result.isOk && result.value).toEqual({
+        updated: 1,
+        unchanged: 0,
+        skipped: [],
+      });
+      expect((await sharingOf(id))?.isAvailableForAnyExchange()).toBe(false);
+    });
+
+    it("can't take on another offer", async () => {
+      const id = await seedReofferedLoan("reoffered");
+
+      const result = await run()({
+        actingMemberId: alice,
+        copyIds: [id],
+        offers: { forLend: true },
+      });
+
+      expect(result.isOk && result.value).toEqual({
+        updated: 0,
+        unchanged: 0,
+        skipped: [{ copyId: id, reason: "onLoan" }],
+      });
+      expect((await sharingOf(id))?.forLend).toBe(false);
+      expect((await sharingOf(id))?.forTrade).toBe(true);
+    });
+
+    it("counts as unchanged when it already has the asked offer", async () => {
+      const id = await seedReofferedLoan("reoffered");
+
+      const result = await run()({
+        actingMemberId: alice,
+        copyIds: [id],
+        offers: { forTrade: true },
+      });
+
+      expect(result.isOk && result.value).toEqual({
+        updated: 0,
+        unchanged: 1,
+        skipped: [],
+      });
+    });
   });
 
   it("skips a copy an active exchange reserves when offering it", async () => {

@@ -14,11 +14,12 @@ const CHIP_KEYS: ReadonlyArray<{ key: ChipKey; tKey: string }> = [
 export function AvailabilityChips({
   value,
   onChange,
-  disabled = false,
+  isLocked,
 }: {
   value: Availability;
   onChange: (v: Availability) => void;
-  disabled?: boolean;
+  /** An offer that can't be changed right now. */
+  isLocked?: (offer: ChipKey) => boolean;
 }) {
   const t = useTranslations("puzzles");
   return (
@@ -30,7 +31,7 @@ export function AvailabilityChips({
             key={key}
             type="button"
             aria-pressed={on}
-            disabled={disabled}
+            disabled={isLocked?.(key) ?? false}
             onClick={() => onChange({ ...value, [key]: !on })}
             className={[
               "inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold cursor-pointer border transition-colors disabled:cursor-not-allowed disabled:opacity-50",

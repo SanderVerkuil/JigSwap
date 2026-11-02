@@ -63,8 +63,8 @@ filters tonen. Onder aan de lijst verschijnt dan een balk met:
   je kiest.
 
 Daarna zie je wat er is veranderd en wat niet, met **Ongedaan maken** voor het
-aanbod. Een uitgeleende puzzel blijft zoals hij is, en een puzzel in een lopende
-uitwisseling kun je niet aanbieden. Deze acties veranderen nooit je keuze wie
+aanbod. Een uitgeleende puzzel of een puzzel in een lopende uitwisseling kun je
+niet aanbieden, maar een aanbod intrekken kan altijd. Deze acties veranderen nooit je keuze wie
 een kopie kan zien: een privékopie is zichtbaar zolang je hem aanbiedt en weer
 privé zodra je elk aanbod intrekt.
 
@@ -106,8 +106,8 @@ De detailpagina is het uitgebreide overzicht van één eigen kopie. Het bevat:
 **Aanbieden voor ruil** en **Aanbieden om uit te lenen**, een voltooiing
 vastleggen en bewerken. Elke wijziging met een schakelaar bevestigen we met
 **Ongedaan maken**, en hij verandert nooit wie de kopie kan zien (zie
-hieronder). Is de kopie uitgeleend, dan staan de schakelaars uit en kun je ze
-pas weer gebruiken als hij terug is. Bij **Terugvragen** vragen we eerst om
+hieronder). Is de kopie uitgeleend, dan kun je pas weer een aanbod aanzetten
+als hij terug is. Bij **Terugvragen** vragen we eerst om
 bevestiging: je beëindigt dan de lening en de puzzel staat weer bij jou.
 **Bezoekers** (andere leden) zien een openbare versie met in plaats daarvan de acties _Ruil Aanvragen_ en _Bericht_.
 

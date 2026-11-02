@@ -60,8 +60,8 @@ bottom of the list then offers:
 - **Add to collection**: puts the selected puzzles in a collection you pick.
 
 A message then says what changed and what didn't, with **Undo** for offers. A
-puzzle that's out on loan is left as it is, and one in an ongoing exchange can't
-be offered. These actions never change your choice of who can see a copy: a
+puzzle that's out on loan or in an ongoing exchange can't be offered, but you
+can always withdraw an offer. These actions never change your choice of who can see a copy: a
 private copy is visible while it's on offer and private again once you withdraw
 every offer.
 
@@ -101,8 +101,8 @@ The detail page is the rich record of a single owned copy. It includes:
 **Owner actions** on this page include the **Offer for swap** and **Offer to
 lend** switches, **Log a solve**, and editing. Each switch change is
 confirmed with an **Undo**, and it never changes who can see the copy (see
-below). While the copy is out on loan the switches are off and disabled until
-it's back. **Recall** asks you to confirm first: it ends the loan and marks
+below). While the copy is out on loan you can't switch an offer on until it's
+back. **Recall** asks you to confirm first: it ends the loan and marks
 the puzzle as back with you.
 **Visitors** (other members) see a public version with _Request Swap_ and _Message_ actions instead.
 

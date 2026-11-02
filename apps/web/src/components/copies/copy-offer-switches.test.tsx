@@ -196,6 +196,25 @@ describe("CopyOfferSwitches", () => {
     ).toBeTruthy();
   });
 
+  it("an offer that is on during a loan can be withdrawn, with no Undo to put it back on", async () => {
+    renderSwitches({
+      availability: { ...CLOSED, forTrade: true },
+      onLoan: true,
+    });
+    expect((swapSwitch() as HTMLButtonElement).disabled).toBe(false);
+    expect((lendSwitch() as HTMLButtonElement).disabled).toBe(true);
+
+    fireEvent.click(swapSwitch());
+    await vi.waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalled());
+
+    expect(mocks.mutation.mock.calls[0]).toEqual([
+      UPDATE_SHARING,
+      { copyId: "agg1", ...CLOSED },
+    ]);
+    expect(lastToast().message).toBe("No longer offered for swap");
+    expect(lastToast().options.action).toBeUndefined();
+  });
+
   it("a copy without a domain id cannot be changed", () => {
     renderSwitches({ copyId: null });
     expect((swapSwitch() as HTMLButtonElement).disabled).toBe(true);

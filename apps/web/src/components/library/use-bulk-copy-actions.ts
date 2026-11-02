@@ -24,7 +24,8 @@ import {
 // most 100 copies, with offers only (never a visibility or a price), so every copy keeps its owner's
 // visibility choice; the server applies the single-copy rules (manager, loan, reservation) to each
 // copy and reports what it skipped. The toast offers Undo, which puts back only the flags the action
-// set, on the copies it changed.
+// set, on the copies it changed. The server can refuse that as well: an offer withdrawn from a copy
+// out on loan or now reserved can't go back on.
 //
 // Add to collection sends the member's own copies one `collections.addOwnedPuzzle` call each, four
 // at a time; housemates' copies never go into personal collections.
@@ -47,9 +48,11 @@ export function useBulkCopyActions({
 
   const undo = async (action: BulkOfferAction, changed: OfferSend[]) => {
     try {
+      let refused = 0;
       for (const { copyIds, change } of undoChanges(action, changed))
         for (const ids of chunk(copyIds, BULK_OFFERS_BATCH))
-          await writeOffers(ids, change);
+          refused += (await writeOffers(ids, change)).skipped.length;
+      if (refused > 0) toast.error(t("undoFailed"));
     } catch {
       toast.error(t("undoFailed"));
     }

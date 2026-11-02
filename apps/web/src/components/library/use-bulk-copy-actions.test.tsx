@@ -174,6 +174,24 @@ describe("bulk offers", () => {
     ]);
   });
 
+  it("says so when Undo is refused for a copy, such as one out on loan", async () => {
+    const { result } = renderActions();
+    await act(() =>
+      result.current.offer("withdraw", [
+        copy("a", { availability: { ...CLOSED, forTrade: true } }),
+      ]),
+    );
+    const { options } = lastToast(mocks.toastSuccess);
+
+    mocks.mutation.mockImplementation(
+      serverOffers([{ copyId: "agg_a", reason: "onLoan" }]),
+    );
+    await act(async () => options.action?.onClick());
+    expect(lastToast(mocks.toastError).message).toBe(
+      "Couldn't undo that. Check the puzzles and try again.",
+    );
+  });
+
   it("never sends a visibility, even for private copies", async () => {
     const { result } = renderActions();
     await act(() =>

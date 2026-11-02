@@ -128,7 +128,8 @@ function EditCopyDialogForm({
     useState<CopyVisibility>(initialVisibility);
   const offered =
     availability.forTrade || availability.forLend || availability.forSale;
-  // Lending a copy out withdraws its offers; it can't be offered again until it is back.
+  // Lending a copy out withdraws its offers. Until it is back an offer can't go on, but one that is
+  // on can come off. Judged against the stored offers, so a chip switched off here can go back on.
   const onLoan = copy.loans.some((loan) => loan.status === "open");
   const [notes, setNotes] = useState(snapshot.notes ?? "");
   // When and how it was acquired: month + year (both or neither) and a source; "" = not recorded.
@@ -284,7 +285,7 @@ function EditCopyDialogForm({
             <AvailabilityChips
               value={availability}
               onChange={setAvailability}
-              disabled={onLoan}
+              isLocked={(offer) => onLoan && !snapshot.availability[offer]}
             />
             {onLoan && (
               <p className="text-muted-foreground text-xs">

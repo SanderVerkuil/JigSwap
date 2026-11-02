@@ -303,6 +303,19 @@ describe("library.updateCopiesOffers", () => {
     expect((await rowOf(t, free)).availability.forTrade).toBe(true);
   });
 
+  test("a copy out on loan that is on offer anyway can still be withdrawn", async () => {
+    const onLoan = await seedCopy(t, w, "copy-on-loan", {
+      heldBy: w.bob,
+      availability: { ...CLOSED, forTrade: true },
+    });
+
+    await expect(
+      updateOffers(t, "ann", { copyIds: ["copy-on-loan"], ...CLOSED }),
+    ).resolves.toEqual({ updated: 1, unchanged: 0, skipped: [] });
+
+    expect((await rowOf(t, onLoan)).availability).toEqual(CLOSED);
+  });
+
   test("a stranger learns nothing about a copy being out on loan", async () => {
     await seedCopy(t, w, "copy-on-loan", { heldBy: w.bob });
     const result = await updateOffers(t, "cat", {

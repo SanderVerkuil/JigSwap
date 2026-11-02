@@ -335,6 +335,27 @@ describe("EditCopyDialog offers during a loan", () => {
     ).toBeTruthy();
   });
 
+  it("an offer that is on during a loan can be withdrawn, and put back before saving", async () => {
+    renderDialog(
+      copyOf({ ...CLOSED, forSale: true }, "visible", "visible", [
+        { status: "open" },
+      ]),
+    );
+    const chip = (name: string) =>
+      screen.getByRole("button", { name }) as HTMLButtonElement;
+    expect(chip("For Trade").disabled).toBe(true);
+    expect(chip("For Sale").disabled).toBe(false);
+
+    fireEvent.click(chip("For Sale"));
+    expect(chip("For Sale").getAttribute("aria-pressed")).toBe("false");
+    expect(chip("For Sale").disabled).toBe(false);
+
+    await save();
+    expect(calls.byMutation.updateSharing).toEqual([
+      expect.objectContaining(CLOSED),
+    ]);
+  });
+
   it("a returned loan leaves the offer chips usable", () => {
     renderDialog(
       copyOf(CLOSED, "visible", "visible", [{ status: "returned" }]),

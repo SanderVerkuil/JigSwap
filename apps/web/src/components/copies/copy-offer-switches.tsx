@@ -43,8 +43,9 @@ const OFFERS: ReadonlyArray<{
 // A flip writes the offers ONLY, never a visibility, so the backend keeps the owner's own choice
 // (a private copy is visible while offered and private again once every offer is withdrawn).
 // Each change is confirmed with an Undo toast; failures toast an error and the live query keeps
-// showing the stored state. While the copy is out on loan the switches are disabled with the reason:
-// lending it out withdrew its offers, and it can't be offered until it is back.
+// showing the stored state. While the copy is out on loan a switch that is off is disabled with the
+// reason: lending it out withdrew its offers, and it can't be offered until it is back. One that is
+// on can still be withdrawn, without an Undo, which would put it back on.
 export function CopyOfferSwitches({
   copyId,
   availability,
@@ -106,44 +107,56 @@ export function CopyOfferSwitches({
             : undefined;
     toast.success(t(on ? offer.on : offer.off), {
       ...(privateNote ? { description: privateNote } : {}),
-      action: {
-        label: t("undo"),
-        onClick: () => {
-          writeOffers(offersArgs(copyId, before)).catch(reportFailure);
-        },
-      },
+      ...(onLoan
+        ? {}
+        : {
+            action: {
+              label: t("undo"),
+              onClick: () => {
+                writeOffers(offersArgs(copyId, before)).catch(reportFailure);
+              },
+            },
+          }),
     });
   };
 
   return (
     <div className="border-border bg-card divide-border max-w-md divide-y rounded-lg border">
-      {OFFERS.map(({ flag, label, hint }) => (
-        <div
-          key={flag}
-          className="flex min-h-14 items-center justify-between gap-4 px-4 py-2.5"
-        >
-          <div className="min-w-0">
-            <Label htmlFor={`${id}-${flag}`} className="text-sm font-semibold">
-              {t(label)}
-            </Label>
-            <p
-              id={`${id}-${flag}-hint`}
-              className="text-muted-foreground mt-0.5 text-xs"
-            >
-              {t(hint)}
-            </p>
+      {OFFERS.map(({ flag, label, hint }) => {
+        const locked = onLoan && !availability[flag];
+        return (
+          <div
+            key={flag}
+            className="flex min-h-14 items-center justify-between gap-4 px-4 py-2.5"
+          >
+            <div className="min-w-0">
+              <Label
+                htmlFor={`${id}-${flag}`}
+                className="text-sm font-semibold"
+              >
+                {t(label)}
+              </Label>
+              <p
+                id={`${id}-${flag}-hint`}
+                className="text-muted-foreground mt-0.5 text-xs"
+              >
+                {t(hint)}
+              </p>
+            </div>
+            <Switch
+              id={`${id}-${flag}`}
+              checked={availability[flag]}
+              disabled={copyId == null || locked || update.isPending}
+              aria-describedby={
+                locked
+                  ? `${id}-${flag}-hint ${id}-locked`
+                  : `${id}-${flag}-hint`
+              }
+              onCheckedChange={(on) => void change(flag, on)}
+            />
           </div>
-          <Switch
-            id={`${id}-${flag}`}
-            checked={availability[flag]}
-            disabled={copyId == null || onLoan || update.isPending}
-            aria-describedby={
-              onLoan ? `${id}-${flag}-hint ${id}-locked` : `${id}-${flag}-hint`
-            }
-            onCheckedChange={(on) => void change(flag, on)}
-          />
-        </div>
-      ))}
+        );
+      })}
       {onLoan && (
         <p
           id={`${id}-locked`}
