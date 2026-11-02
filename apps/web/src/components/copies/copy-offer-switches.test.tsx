@@ -17,7 +17,7 @@ type ToastOptions = {
   description?: string;
   action?: { label: string; onClick: () => void };
   cancel?: { label: string; onClick: () => void };
-  classNames?: { toast?: string };
+  classNames?: { toast?: string; cancelButton?: string; actionButton?: string };
 };
 
 const mocks = vi.hoisted(() => ({
@@ -121,6 +121,10 @@ describe("CopyOfferSwitches", () => {
     expect(options.cancel?.label).toBe(en.copyInstance.sendLink.trigger);
     // Two buttons beside the title squeezed it letter by letter on a Dutch phone.
     expect(options.classNames?.toast).toContain("flex-wrap");
+    // Sonner gives each button an auto margin: without this, Send a link floats mid-toast.
+    expect(options.classNames?.toast).toContain("justify-end");
+    expect(options.classNames?.cancelButton).toContain("!ml-0");
+    expect(options.classNames?.actionButton).toContain("!ml-0");
     options.cancel?.onClick();
     expect(onSendLink).toHaveBeenCalled();
     cleanup();

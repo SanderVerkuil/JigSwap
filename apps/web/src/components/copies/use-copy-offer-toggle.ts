@@ -26,10 +26,13 @@ const CONFIRMATIONS: Record<
 };
 
 // Two buttons leave a toast no room for its title (on a Dutch phone it stacked letter by letter):
-// the buttons wrap onto their own line under the title.
+// the buttons wrap onto their own line under the title, packed together at its end. Sonner's auto
+// margin on each button would float the first one mid-toast.
 const TWO_BUTTON_TOAST = {
-  toast: "flex-wrap",
+  toast: "flex-wrap justify-end",
   content: "!min-w-[calc(100%-2rem)]",
+  cancelButton: "!ml-0",
+  actionButton: "!ml-0",
 };
 
 export interface OfferToggleTarget {
