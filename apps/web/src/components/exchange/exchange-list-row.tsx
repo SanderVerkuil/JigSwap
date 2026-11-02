@@ -4,7 +4,7 @@
 // text, so a speech user can say what they see, and it announces expanded/collapsed. On phones the status pill joins the Your
 // turn / offer chips under the meta line, so the title and partner get the row's full width; from
 // sm it sits at the row's end. The detail (`children`) is indented under the text only from sm.
-import { useRelativeTime } from "@/hooks/use-relative-time";
+import { useElapsedTime } from "@/hooks/use-relative-time";
 import { usePartyDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import type { ExchangeSummaryView } from "@jigswap/contracts";
@@ -58,7 +58,7 @@ export function ExchangeListRow({
 }) {
   const t = useTranslations("trades");
   const partyName = usePartyDisplayName();
-  const relativeTime = useRelativeTime();
+  const elapsedTime = useElapsedTime();
   const detailId = useId();
   const [open, setOpen] = useState(focused);
   // A deep link to this row opens it; losing the highlight leaves it as the member has it.
@@ -140,7 +140,7 @@ export function ExchangeListRow({
             {t("rowMeta", {
               direction: t(`direction.${direction}`),
               who,
-              when: relativeTime(exchange.createdAt),
+              when: elapsedTime(exchange.createdAt),
             })}
           </span>
           <span

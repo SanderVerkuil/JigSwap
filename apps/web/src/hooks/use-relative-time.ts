@@ -16,3 +16,19 @@ export function useRelativeTime(): (date: Date | number) => string {
     [format, now],
   );
 }
+
+// For things that already happened. The clock above lags by up to a tick, so an event from seconds
+// ago can be ahead of it: that reads "now", never "in 30 seconds". Not for times that may really lie
+// ahead (a retry-at); those keep useRelativeTime.
+export function useElapsedTime(): (date: Date | number) => string {
+  const format = useFormatter();
+  const now = useNow({ updateInterval: RELATIVE_TIME_UPDATE_INTERVAL_MS });
+  return useCallback(
+    (date: Date | number) =>
+      format.relativeTime(
+        Math.min(new Date(date).getTime(), now.getTime()),
+        now,
+      ),
+    [format, now],
+  );
+}

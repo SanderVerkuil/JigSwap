@@ -15,7 +15,7 @@
 // inside it, so focus moves to this block instead of falling to the page body.
 import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
-import { useRelativeTime } from "@/hooks/use-relative-time";
+import { useElapsedTime } from "@/hooks/use-relative-time";
 import { useConvexMutation } from "@convex-dev/react-query";
 import type { ExchangeFields } from "@jigswap/contracts";
 import { useMutation } from "@tanstack/react-query";
@@ -61,7 +61,7 @@ export function ExchangeActions({
 }) {
   const t = useTranslations("trades");
   const tCommon = useTranslations("common");
-  const relativeTime = useRelativeTime();
+  const elapsedTime = useElapsedTime();
 
   const accept = useMutation({
     mutationFn: useConvexMutation(gateway.exchange.accept),
@@ -148,7 +148,7 @@ export function ExchangeActions({
         <p className="text-muted-foreground flex items-center gap-1.5 text-sm">
           <Clock className="h-4 w-4 shrink-0" aria-hidden />
           {t("confirmation.waiting", {
-            when: relativeTime(mineAt),
+            when: elapsedTime(mineAt),
             name: partnerName,
           })}
         </p>
@@ -161,7 +161,7 @@ export function ExchangeActions({
             <span className="text-muted-foreground">
               {t("confirmation.partnerConfirmed", {
                 name: partnerName,
-                when: relativeTime(theirsAt),
+                when: elapsedTime(theirsAt),
               })}
             </span>
           </p>

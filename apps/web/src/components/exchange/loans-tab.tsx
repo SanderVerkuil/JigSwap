@@ -12,7 +12,7 @@ import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
 import { StartSolveDialog } from "@/components/solving/start-solve-dialog";
 import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
-import { useRelativeTime } from "@/hooks/use-relative-time";
+import { useElapsedTime } from "@/hooks/use-relative-time";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
@@ -166,7 +166,7 @@ function BorrowedRows({ loans }: { loans: LoanView[] }) {
   const tSolve = useTranslations("solving.logSolve");
   const tStart = useTranslations("solving.startSolve");
   const displayName = useMemberDisplayName();
-  const relativeTime = useRelativeTime();
+  const elapsedTime = useElapsedTime();
 
   // The viewer's own solve log powers the Start puzzle ↔ Finish solve swap per row.
   const { data: completions } = useQuery(
@@ -218,7 +218,7 @@ function BorrowedRows({ loans }: { loans: LoanView[] }) {
               key={loan.loanId}
               loan={loan}
               href={loan.copyDocId ? `/copies/${loan.copyDocId}` : undefined}
-              meta={`${t("borrowedFrom", { name: lenderName(loan) })} · ${relativeTime(loan.openedAt)}`}
+              meta={`${t("borrowedFrom", { name: lenderName(loan) })} · ${elapsedTime(loan.openedAt)}`}
               index={index}
               isLast={index === loans.length - 1}
             >
@@ -305,7 +305,7 @@ function BorrowedEmpty() {
 function LentRows({ loans }: { loans: LoanView[] }) {
   const t = useTranslations("lending");
   const displayName = useMemberDisplayName();
-  const relativeTime = useRelativeTime();
+  const elapsedTime = useElapsedTime();
   const borrowerName = (loan: LoanView) =>
     loan.borrower ? displayName(loan.borrower) : t("deletedMember");
 
@@ -317,7 +317,7 @@ function LentRows({ loans }: { loans: LoanView[] }) {
           loan={loan}
           // The owner's frame of the copy; it forwards to /copies/<id> for a household mate's copy.
           href={loan.copyDocId ? `/my-puzzles/${loan.copyDocId}` : undefined}
-          meta={`${t("onLoanTo", { name: borrowerName(loan) })} · ${relativeTime(loan.openedAt)}`}
+          meta={`${t("onLoanTo", { name: borrowerName(loan) })} · ${elapsedTime(loan.openedAt)}`}
           index={index}
           isLast={index === loans.length - 1}
         >

@@ -433,6 +433,20 @@ describe("ExchangeActions: complete", () => {
     expect(screen.queryByText("Your turn")).toBeNull();
   });
 
+  it("never says the viewer confirmed in the future, however far the minute clock lags", () => {
+    // A confirmation made just now is ahead of a clock that only ticks once a minute.
+    renderActions({
+      direction: "outgoing",
+      fields: {
+        status: "accepted",
+        initiatorConfirmationTimestamp: NOW + 30_000,
+      },
+    });
+    expect(
+      screen.getByText("You confirmed now · Waiting for Anna"),
+    ).toBeTruthy();
+  });
+
   it("keeps the confirm open with a pending label while it runs", async () => {
     mocks.mutation.mockReturnValue(new Promise(() => {}));
     renderActions({ fields: { status: "accepted" } });

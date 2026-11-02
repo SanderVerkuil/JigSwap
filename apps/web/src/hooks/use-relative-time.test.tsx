@@ -5,6 +5,7 @@ import { IntlProvider, type IntlError } from "use-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   RELATIVE_TIME_UPDATE_INTERVAL_MS,
+  useElapsedTime,
   useRelativeTime,
 } from "./use-relative-time";
 
@@ -57,5 +58,42 @@ describe("useRelativeTime", () => {
     });
     expect(screen.getByTestId("when").textContent).toBe("2 minutes ago");
     expect(onError).not.toHaveBeenCalled();
+  });
+});
+
+function ElapsedProbe({ at }: { at: number }) {
+  const elapsedTime = useElapsedTime();
+  return <span data-testid="elapsed">{elapsedTime(at)}</span>;
+}
+
+describe("useElapsedTime", () => {
+  // The clock only ticks once a minute, so something that just happened can be ahead of it.
+  it("never puts something that already happened in the future", () => {
+    const onError = vi.fn();
+    const html = renderToStaticMarkup(
+      withIntl(<ElapsedProbe at={NOW.getTime() + 30_000} />, onError),
+    );
+    expect(html).toContain(">now<");
+    expect(html).not.toContain("in 30 seconds");
+    expect(onError).not.toHaveBeenCalled();
+  });
+
+  it("reads like useRelativeTime for anything older", () => {
+    const onError = vi.fn();
+    const html = renderToStaticMarkup(
+      withIntl(<ElapsedProbe at={NOW.getTime() - 5 * 60_000} />, onError),
+    );
+    expect(html).toContain("5 minutes ago");
+  });
+
+  it("ticks once a minute", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+    render(withIntl(<ElapsedProbe at={NOW.getTime() - 60_000} />, vi.fn()));
+    expect(screen.getByTestId("elapsed").textContent).toBe("1 minute ago");
+    act(() => {
+      vi.advanceTimersByTime(RELATIVE_TIME_UPDATE_INTERVAL_MS);
+    });
+    expect(screen.getByTestId("elapsed").textContent).toBe("2 minutes ago");
   });
 });
