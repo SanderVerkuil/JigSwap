@@ -662,29 +662,31 @@ describe("getCopyInstanceView rich detail", () => {
     await setVisibility(t, solver, "public");
 
     await t.run(async (ctx) => {
-      // Viewer completion #1: 5-day solve.
+      // Viewer completion #1: a typed 5 hours.
       await ctx.db.insert("completions", {
         userId: viewer,
         ownedPuzzleId: copy,
         startDate: now,
         endDate: now + 5 * DAY,
+        completionTimeMinutes: 300,
         photos: [],
         isCompleted: true,
         createdAt: now,
         updatedAt: now,
       });
-      // Viewer completion #2: 2-day solve (fastest).
+      // Viewer completion #2: a typed 2 hours (fastest).
       await ctx.db.insert("completions", {
         userId: viewer,
         ownedPuzzleId: copy,
         startDate: now,
         endDate: now + 2 * DAY,
+        completionTimeMinutes: 120,
         photos: [],
         isCompleted: true,
         createdAt: now,
         updatedAt: now,
       });
-      // Another solver's completion: 10-day solve.
+      // Another solver's completion: a 10-day span and no typed time, so never the fastest.
       await ctx.db.insert("completions", {
         userId: solver,
         ownedPuzzleId: copy,
@@ -730,8 +732,7 @@ describe("getCopyInstanceView rich detail", () => {
       { copyId: copy },
     );
     expect(view?.stats.timesCompleted).toBe(3);
-    // 2-day fastest solve, now reported in raw minutes (2 * 24 * 60).
-    expect(view?.stats.fastestFinishMinutes).toBe(2 * 24 * 60);
+    expect(view?.stats.fastestFinishMinutes).toBe(120);
     expect(view?.stats.timesLentOut).toBe(2);
     // No copyReviews row for the viewer -> null, even though legacy per-solve ratings exist.
     expect(view?.stats.yourCopyRating).toBeNull();
@@ -769,13 +770,12 @@ describe("getCopyInstanceView rich detail", () => {
     expect(view?.stats.yourCopyRating).toBe(4);
   });
 
-  test("stored completionTimeMinutes wins over date-diff: same-day row with stored 1440 -> fastest = 1440", async () => {
+  test("the one day stored for an untimed same-day solve is not a time (UX-133)", async () => {
     const t = convexTest(schema, modules);
     const { now, viewer, copy } = await seedCopy(t);
 
     await t.run(async (ctx) => {
-      // Same-day completion (startDate === endDate, post-Fix-4 same-day completions store 1440).
-      // A date-diff would derive 0; the stored duration must win.
+      // Same-day completion (startDate === endDate): the domain stores 1440 when no time was typed.
       await ctx.db.insert("completions", {
         userId: viewer,
         ownedPuzzleId: copy,
@@ -793,8 +793,34 @@ describe("getCopyInstanceView rich detail", () => {
       api.library.getCopyInstanceView.getCopyInstanceView,
       { copyId: copy },
     );
-    expect(view?.stats.fastestFinishMinutes).toBe(1440);
-    expect(view?.completions[0]?.finishMinutes).toBe(1440);
+    expect(view?.stats.fastestFinishMinutes).toBeNull();
+    expect(view?.completions[0]?.finishMinutes).toBeNull();
+  });
+
+  test("a time typed on a same-day solve is the fastest finish and the row's time", async () => {
+    const t = convexTest(schema, modules);
+    const { now, viewer, copy } = await seedCopy(t);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("completions", {
+        userId: viewer,
+        ownedPuzzleId: copy,
+        startDate: now,
+        endDate: now,
+        completionTimeMinutes: 200,
+        photos: [],
+        isCompleted: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const view = await asViewer(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: copy },
+    );
+    expect(view?.stats.fastestFinishMinutes).toBe(200);
+    expect(view?.completions[0]?.finishMinutes).toBe(200);
   });
 
   test("legacy same-day row without a stored duration is excluded from fastest (unknown, never zero)", async () => {
@@ -825,13 +851,11 @@ describe("getCopyInstanceView rich detail", () => {
     expect(view?.completions[0]?.finishMinutes).toBeNull();
   });
 
-  test("legacy multi-day row without a stored duration still derives the date diff", async () => {
+  test("a multi-day solve without a typed time has no time, but carries its start for the span", async () => {
     const t = convexTest(schema, modules);
     const { now, viewer, copy } = await seedCopy(t);
 
     await t.run(async (ctx) => {
-      // Legacy row: a real 3-day span, no completionTimeMinutes stored — the date-diff fallback
-      // must still apply for rows that predate persisting an explicit duration.
       await ctx.db.insert("completions", {
         userId: viewer,
         ownedPuzzleId: copy,
@@ -848,8 +872,10 @@ describe("getCopyInstanceView rich detail", () => {
       api.library.getCopyInstanceView.getCopyInstanceView,
       { copyId: copy },
     );
-    expect(view?.stats.fastestFinishMinutes).toBe(3 * 24 * 60);
-    expect(view?.completions[0]?.finishMinutes).toBe(3 * 24 * 60);
+    expect(view?.stats.fastestFinishMinutes).toBeNull();
+    expect(view?.completions[0]?.finishMinutes).toBeNull();
+    expect(view?.completions[0]?.startedAt).toBe(now);
+    expect(view?.completions[0]?.occurredAt).toBe(now + 3 * DAY);
   });
 
   test("stats with no completions: zeros and nulls", async () => {
@@ -1209,10 +1235,10 @@ describe("getCopyInstanceView rich detail", () => {
     const solverEntry = view?.completions[0];
     const viewerEntry = view?.completions[1];
     expect(solverEntry?.isYou).toBe(false);
-    expect(solverEntry?.finishMinutes).toBe(7 * 24 * 60);
+    expect(solverEntry?.finishMinutes).toBeNull();
 
     expect(viewerEntry?.isYou).toBe(true);
-    expect(viewerEntry?.finishMinutes).toBe(3 * 24 * 60);
+    expect(viewerEntry?.finishMinutes).toBeNull();
 
     // Per-solve reviews are gone: the entries carry no rating/note keys at all.
     for (const entry of view?.completions ?? []) {

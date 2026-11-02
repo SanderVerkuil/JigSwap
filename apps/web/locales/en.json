@@ -4605,7 +4605,6 @@
     "exchangesCount": "{count} exchanges",
     "noSwaps": "No swaps or trades for this puzzle yet.",
     "you": "you",
-    "finishedIn": "finished in {duration}",
     "communityRating": "Community Rating",
     "noRatings": "No ratings yet",
     "communityRatings": "{count, plural, one {# community rating} other {# community ratings}}",

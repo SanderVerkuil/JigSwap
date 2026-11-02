@@ -49,9 +49,12 @@ import { gateway, Id } from "@/gateway";
 import { useDocumentTitle } from "@/hooks/use-document-title";
 import { useRelativeTime } from "@/hooks/use-relative-time";
 import { useUploadLimitMessage } from "@/hooks/use-upload-limit-message";
-import { formatCompletionDate } from "@/lib/completion-format";
+import {
+  formatCompletionDate,
+  formatSolveTime,
+  solveDurationText,
+} from "@/lib/completion-format";
 import { DATE_ONLY_TIME_ZONE } from "@/lib/date-input";
-import { durationParts } from "@/lib/humanize-duration";
 import {
   projectedAuthorOf,
   useMemberDisplayName,
@@ -418,13 +421,6 @@ function CopyInstanceDetail({
       ? snapshot.acquisitionDate
       : null;
 
-  // Humanize a solve duration (minutes) to a localized "2 hours" / "1 day" / "1 week" via the
-  // largest sensible unit — Intl unit formatting handles plurals + locale.
-  const formatDuration = (minutes: number) => {
-    const { value, unit } = durationParts(minutes);
-    return format.number(value, { style: "unit", unit, unitDisplay: "long" });
-  };
-
   return (
     <div className="flex w-full flex-col gap-10">
       {/* Hero */}
@@ -748,7 +744,7 @@ function CopyInstanceDetail({
         <Stat
           value={
             stats.fastestFinishMinutes != null
-              ? formatDuration(stats.fastestFinishMinutes)
+              ? formatSolveTime(tCompletions, stats.fastestFinishMinutes)
               : "—"
           }
           label={t("statFastestFinish")}
@@ -831,9 +827,16 @@ function CopyInstanceDetail({
                         startDate: c.occurredAt,
                         datePrecision: c.datePrecision,
                       })
-                    : c.finishMinutes != null
-                      ? `${formatSolveDay(c.occurredAt)} · ${t("finishedIn", { duration: formatDuration(c.finishMinutes) })}`
-                      : formatSolveDay(c.occurredAt)
+                    : [
+                        formatSolveDay(c.occurredAt),
+                        solveDurationText(tCompletions, {
+                          startDate: c.startedAt,
+                          endDate: c.occurredAt,
+                          completionTimeMinutes: c.finishMinutes ?? undefined,
+                        }),
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")
                 }
               />
             ))}

@@ -10,10 +10,9 @@ import type {
   ProjectedMember,
 } from "@jigswap/contracts";
 import {
-  isPlausibleSolveMinutes,
   MAX_COPY_IMAGES,
-  MAX_SOLVE_MINUTES,
   resolveHouseholdCopyPermission,
+  typedSolveMinutes,
 } from "@jigswap/domain";
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
@@ -44,30 +43,6 @@ import {
 } from "./copyVisibility";
 import { definitionRatingOf } from "./definitionStats";
 import { viewerMayRequestCopy } from "./exchangeRoutes";
-
-// Solve duration in whole MINUTES: the stored, explicit `completionTimeMinutes` ALWAYS wins (it's
-// the domain's resolved duration — mirrors `Completion.resolveDuration`, which already picked
-// explicit-vs-derived and applies the same-day => 1 day floor). The (endDate - startDate) diff is
-// only a FALLBACK for legacy rows that predate persisting a duration. A non-positive fallback
-// result means the span is unusable as a duration (e.g. a legacy same-day row) and returns null
-// (unknown) rather than a misleading 0, like a number no solve can have taken. Returned raw (not rounded to days) so the UI can humanize it
-// (e.g. "2 hours", "1 day", "4 days", "1 week") instead of collapsing a sub-day solve to "0 days".
-const finishMinutesOf = (c: {
-  startDate: number;
-  endDate?: number;
-  completionTimeMinutes?: number;
-}): number | null => {
-  if (c.completionTimeMinutes != null) {
-    return isPlausibleSolveMinutes(c.completionTimeMinutes)
-      ? Math.round(c.completionTimeMinutes)
-      : null;
-  }
-  if (c.endDate != null) {
-    const diff = Math.round((c.endDate - c.startDate) / 60000);
-    return diff > 0 && diff <= MAX_SOLVE_MINUTES ? diff : null;
-  }
-  return null;
-};
 
 // Privacy-gated detail read for a single owned COPY (instance). Auth-gated; the acting member is the
 // viewer. Assembles the copy's catalog/condition snapshot, its (projected) current owner, and one
@@ -272,9 +247,10 @@ export const getCopyInstanceView = query({
         .map(async (c) => ({
           solver: await project(c.userId),
           isYou: c.userId === viewerId,
+          startedAt: c.startDate,
           occurredAt: c.endDate ?? c.startDate,
           datePrecision: c.datePrecision,
-          finishMinutes: finishMinutesOf(c),
+          finishMinutes: typedSolveMinutes(c) ?? null,
         })),
     );
 
@@ -305,8 +281,8 @@ export const getCopyInstanceView = query({
 
     // --- Per-copy stats. -----------------------------------------------------------------------
     const finishMinutesList = completedCompletions
-      .map(finishMinutesOf)
-      .filter((d): d is number => d != null);
+      .map(typedSolveMinutes)
+      .filter((d): d is number => d !== undefined);
     const fastestFinishMinutes =
       finishMinutesList.length > 0 ? Math.min(...finishMinutesList) : null;
 

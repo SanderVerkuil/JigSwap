@@ -317,6 +317,56 @@ describe("getPublicProfile", () => {
     });
   });
 
+  test("the fastest record is a typed time: the one day stored for an untimed solve is none (UX-133)", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    await t.run(async (ctx) => {
+      const day = Date.UTC(2026, 5, 1);
+      await ctx.db.insert("completions", {
+        userId: alice,
+        startDate: day,
+        endDate: day,
+        completionTimeMinutes: 1440,
+        photos: [],
+        isCompleted: true,
+        copySnapshot: {
+          copyId: "copy-untimed",
+          ownerId: alice,
+          wasBorrowed: false,
+          condition: "good",
+          title: "Untimed",
+          pieceCount: 100,
+        },
+        createdAt: day,
+        updatedAt: day,
+      });
+      // Faster than the 60 typed minutes, but its 30 minutes are its span: derived, so no record.
+      await ctx.db.insert("completions", {
+        userId: alice,
+        startDate: day,
+        endDate: day + 30 * 60 * 1000,
+        completionTimeMinutes: 30,
+        photos: [],
+        isCompleted: true,
+        copySnapshot: {
+          copyId: "copy-derived",
+          ownerId: alice,
+          wasBorrowed: false,
+          condition: "good",
+          title: "Derived",
+          pieceCount: 100,
+        },
+        createdAt: day,
+        updatedAt: day,
+      });
+    });
+    const view = await t.query(api.social.getPublicProfile.getPublicProfile, {
+      handle: "alice",
+    });
+    if (!view || view.locked) throw new Error("expected unlocked");
+    expect(view.records.fastest).toEqual({ title: "Small Scene", minutes: 60 });
+  });
+
   test("avatar consent: anonymous caller sees the avatar only when shareAvatarPublicly is set", async () => {
     const t = convexTest(schema, modules);
     await seed(t);

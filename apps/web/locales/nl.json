@@ -4605,7 +4605,6 @@
     "exchangesCount": "{count} ruilen",
     "noSwaps": "Nog geen ruilen of handel voor deze puzzel.",
     "you": "jij",
-    "finishedIn": "voltooid in {duration}",
     "communityRating": "Communitybeoordeling",
     "noRatings": "Nog geen beoordelingen",
     "communityRatings": "{count, plural, one {# communitybeoordeling} other {# communitybeoordelingen}}",

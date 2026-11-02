@@ -363,13 +363,15 @@ export interface CopyCompletionEntry {
   solver: ProjectedMember;
   /** Whether the solver is the acting viewer. */
   isYou: boolean;
+  /** Epoch millis the solve started, so the UI can say how many days it spanned. */
+  startedAt: number;
   /** Epoch millis the completion is sorted/dated on (its `endDate`, else `startDate`). */
   occurredAt: number;
   /** Absent = "day"; label "year"/"unknown" solves instead of showing `occurredAt` as a date. */
   datePrecision?: CompletionDatePrecision;
   /**
-   * How long the solve took, in whole MINUTES: `endDate - startDate` when both are present, else
-   * `completionTimeMinutes`, else null. Raw minutes so the UI can humanize (hours/days/weeks).
+   * The time the solver typed, in whole MINUTES, or null when they typed none. Never the duration
+   * stored from the dates (domain `typedSolveMinutes`): a solve's dates don't say how long it took.
    */
   finishMinutes: number | null;
 }
@@ -415,7 +417,7 @@ export interface CopyTransferEntry {
 export interface CopyInstanceStats {
   /** Number of completed completions of this copy. */
   timesCompleted: number;
-  /** The smallest `finishMinutes` across completed completions, or null when none. */
+  /** The smallest typed `finishMinutes` across completed completions, or null when none. */
   fastestFinishMinutes: number | null;
   /** Number of loans recorded for this copy. */
   timesLentOut: number;
