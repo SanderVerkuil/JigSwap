@@ -1,4 +1,6 @@
+import { auth } from "@clerk/tanstack-react-start/server";
 import type { QueryClient } from "@tanstack/react-query";
+import { createServerOnlyFn } from "@tanstack/react-start";
 import type { ConvexReactClient } from "convex/react";
 
 // Server-side rendering of a signed-in member's own data, so a page's first paint doesn't wait for
@@ -6,7 +8,7 @@ import type { ConvexReactClient } from "convex/react";
 //
 // That data ends up in the page's HTML, which is safe only because every signed-in page goes out as
 // `private, no-store` (lib/response-cache.ts) and from next to Convex (the region pin in
-// vite.config.ts). The token itself never reaches the HTML (getSsrConvexToken in __root.tsx).
+// vite.config.ts). The token itself never reaches the HTML (getSsrConvexToken below).
 //
 // What a hard load costs: each prefetched read runs twice, once over HTTP here and once on the socket
 // when hydration subscribes it. Client-side navigation pays only the subscription.
@@ -16,13 +18,55 @@ import type { ConvexReactClient } from "convex/react";
 // not cost what SSR's shell already gives.
 export const SSR_MEMBER_DATA_BUDGET_MS = 400;
 
+// Server only: the Convex JWT ("convex" template in Clerk) that authenticates a loader's reads. With a
+// template this is a call to Clerk's API, so only a route whose server reads depend on the member asks,
+// and the budget above holds it. Never returned from a server fn or put in the route context, which is
+// dehydrated into the page HTML; in the browser, ConvexProviderWithClerk fetches its own token from
+// Clerk.
+const getSsrConvexToken = createServerOnlyFn(async () => {
+  try {
+    const { userId, getToken } = await auth();
+    return userId ? await getToken({ template: "convex" }) : null;
+  } catch {
+    return null;
+  }
+});
+
+type ServerReadContext = {
+  userId?: string | null;
+  convexQueryClient: { serverHttpClient?: { setAuth(token: string): void } };
+};
+
+/**
+ * For a route that reads on the server for everyone, and whose answers depend on who asks. Whether
+ * those reads can run as the viewer: a signed-in viewer's token is handed to the server's client,
+ * unless Clerk has none or doesn't answer within the budget. Then read nothing and leave the page to
+ * the browser, as reading as nobody could tell a member that a page they may open doesn't exist.
+ */
+export async function authorizeServerReads(
+  context: ServerReadContext,
+): Promise<boolean> {
+  if (typeof window !== "undefined" || !context.userId) return true;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const token = await Promise.race([
+    getSsrConvexToken(),
+    new Promise<null>((resolve) => {
+      timer = setTimeout(resolve, SSR_MEMBER_DATA_BUDGET_MS, null);
+    }),
+  ]);
+  clearTimeout(timer);
+  if (token) context.convexQueryClient.serverHttpClient?.setAuth(token);
+  return Boolean(token);
+}
+
 /**
  * Runs a route's prefetch during SSR for a request that really has a member and a token. In the
  * browser it does nothing, so a client-side navigation never waits on it (the page's reads are
  * subscriptions there, and usually cached already).
  *
- * `loadPrefetch` is a dynamic import, so the prefetch stays out of the browser's bundles, and counts
- * against the budget (a cold server can spend it all there, and then no read starts).
+ * The token and `loadPrefetch` both count against the budget (a slow Clerk or a cold server can spend
+ * it all, and then no read starts). `loadPrefetch` is a dynamic import, so the prefetch stays out of
+ * the browser's bundles.
  *
  * At the budget, every read still running is called off, and with it any read it would have led to.
  * Left to land, it would reach the query cache after the page's data was already sent, and go down
@@ -31,22 +75,21 @@ export const SSR_MEMBER_DATA_BUDGET_MS = 400;
  * hydration mismatch. These routes read nothing else on the server, so calling off every read is safe.
  */
 export async function loadMemberDataOnServer(
-  context: {
-    userId?: string | null;
-    ssrAuthed?: boolean;
-    queryClient: QueryClient;
-  },
+  context: ServerReadContext & { queryClient: QueryClient },
   loadPrefetch: () => Promise<(queryClient: QueryClient) => Promise<unknown>>,
 ): Promise<void> {
   if (typeof window !== "undefined") return;
-  if (!context.userId || !context.ssrAuthed) return;
+  if (!context.userId) return;
   let overBudget = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
   await Promise.race([
-    loadPrefetch()
-      .then((prefetch) =>
-        overBudget ? undefined : prefetch(context.queryClient),
-      )
+    Promise.all([getSsrConvexToken(), loadPrefetch()])
+      .then(([token, prefetch]) => {
+        // No token: the reads would run as nobody and put that in the page.
+        if (overBudget || !token) return;
+        context.convexQueryClient.serverHttpClient?.setAuth(token);
+        return prefetch(context.queryClient);
+      })
       .catch(() => undefined),
     new Promise((resolve) => {
       timer = setTimeout(() => {
