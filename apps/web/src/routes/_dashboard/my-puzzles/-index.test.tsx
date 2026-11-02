@@ -118,7 +118,7 @@ describe("My Puzzles search", () => {
       stubPlatform(platform);
       render(page());
       expect(
-        screen.getByRole("searchbox", { name: "Search your puzzles" }),
+        screen.getByRole("searchbox", { name: en.puzzles.librarySearch.label }),
       ).toBeTruthy();
       expect(document.body.textContent).not.toMatch(/⌘K|Ctrl K/);
     },
@@ -128,7 +128,7 @@ describe("My Puzzles search", () => {
     stubPlatform("Win32");
     render(page("nl"));
     expect(
-      screen.getByRole("searchbox", { name: "Zoek in je puzzels" }),
+      screen.getByRole("searchbox", { name: nl.puzzles.librarySearch.label }),
     ).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/⌘K|Ctrl K/);
   });

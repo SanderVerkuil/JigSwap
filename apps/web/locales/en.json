@@ -369,8 +369,8 @@
       "showAll": "Show all"
     },
     "librarySearch": {
-      "label": "Search your puzzles",
-      "placeholder": "Search title, brand or tag"
+      "label": "Search your puzzles by title, brand or tag",
+      "placeholder": "Search your puzzles"
     },
     "sort": {
       "label": "Sort by",
@@ -638,7 +638,8 @@
     "advancedDetails": "More details (optional)",
     "cancel": "Cancel",
     "chooser": {
-      "searchPlaceholder": "Search by title, brand or barcode…",
+      "searchLabel": "Search the catalogue by title, brand or barcode",
+      "searchPlaceholder": "Title, brand or barcode",
       "yourSubmissions": "Your submissions",
       "yourSubmissionsHint": "Puzzles you've added to the catalogue that aren't approved yet.",
       "allPuzzles": "All puzzles",

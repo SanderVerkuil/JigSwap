@@ -369,8 +369,8 @@
       "showAll": "Alles tonen"
     },
     "librarySearch": {
-      "label": "Zoek in je puzzels",
-      "placeholder": "Zoek op titel, merk of tag"
+      "label": "Zoek in je puzzels op titel, merk of tag",
+      "placeholder": "Zoek in je puzzels"
     },
     "sort": {
       "label": "Sorteren op",
@@ -638,7 +638,8 @@
     "advancedDetails": "Meer details (optioneel)",
     "cancel": "Annuleren",
     "chooser": {
-      "searchPlaceholder": "Zoek op titel, merk of barcode…",
+      "searchLabel": "Zoek in de catalogus op titel, merk of barcode",
+      "searchPlaceholder": "Titel, merk of barcode",
       "yourSubmissions": "Jouw inzendingen",
       "yourSubmissionsHint": "Puzzels die je aan de catalogus hebt toegevoegd en nog niet zijn goedgekeurd.",
       "allPuzzles": "Alle puzzels",

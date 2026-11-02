@@ -410,7 +410,7 @@ describe("My Puzzles URL state", () => {
     expect(
       (
         screen.getByRole("searchbox", {
-          name: "Search your puzzles",
+          name: en.puzzles.librarySearch.label,
         }) as HTMLInputElement
       ).value,
     ).toBe("katten");
@@ -457,7 +457,7 @@ describe("My Puzzles URL state", () => {
     try {
       renderPage({ copies: library });
       fireEvent.change(
-        screen.getByRole("searchbox", { name: "Search your puzzles" }),
+        screen.getByRole("searchbox", { name: en.puzzles.librarySearch.label }),
         { target: { value: "alpen " } },
       );
       act(() => {
@@ -481,7 +481,7 @@ describe("My Puzzles URL state", () => {
     expect(
       (
         screen.getByRole("searchbox", {
-          name: "Search your puzzles",
+          name: en.puzzles.librarySearch.label,
         }) as HTMLInputElement
       ).value,
     ).toBe("");
