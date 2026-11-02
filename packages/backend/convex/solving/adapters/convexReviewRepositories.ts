@@ -32,6 +32,17 @@ export const reviewedDefinitionOf = async (
 export const convexPuzzleReviewRepository = (
   ctx: MutationCtx,
 ): PuzzleReviewRepository => ({
+  async storedText(memberId, puzzleDefinitionId): Promise<string | undefined> {
+    const userId = memberId as unknown as Id<"users">;
+    const puzzleId = puzzleDefinitionId as unknown as Id<"puzzles">;
+    const existing = await ctx.db
+      .query("puzzleReviews")
+      .withIndex("by_user_puzzle", (q) =>
+        q.eq("userId", userId).eq("puzzleId", puzzleId),
+      )
+      .unique();
+    return existing?.text;
+  },
   async upsert(review): Promise<void> {
     const userId = review.userId as unknown as Id<"users">;
     const puzzleId = review.puzzleId as unknown as Id<"puzzles">;

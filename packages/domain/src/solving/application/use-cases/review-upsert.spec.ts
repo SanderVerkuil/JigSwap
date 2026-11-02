@@ -30,8 +30,13 @@ const APPROVED = { isApproved: true, submitterId: BOB } as const;
 // persistence adapter's job, so the fakes just record every call for assertion.
 class RecordingPuzzleReviewRepository implements PuzzleReviewRepository {
   readonly upserts: PuzzleReviewUpsert[] = [];
+  // What the member's stored review holds (a legacy one can be past the cap).
+  stored: string | undefined;
   async upsert(review: PuzzleReviewUpsert): Promise<void> {
     this.upserts.push(review);
+  }
+  async storedText(): Promise<string | undefined> {
+    return this.stored;
   }
 }
 
@@ -151,6 +156,40 @@ describe("Review upsert use cases", () => {
       if (result.isErr) expect(result.error.code).toBe("ReviewTextTooLong");
       expect(puzzleReviews.upserts).toHaveLength(0);
       expect(events.published).toHaveLength(0);
+    });
+
+    it("keeps a stored over-long text saved unchanged, so only the rating can change", async () => {
+      const legacy = "a".repeat(REVIEW_TEXT_MAX_LENGTH + 500);
+      puzzleReviews.stored = legacy;
+      const upsert = makeUpsertPuzzleReview({ puzzleReviews, events, clock });
+      const result = await upsert({
+        actingMemberId: ALICE,
+        puzzleId: PUZZLE,
+        definition: APPROVED,
+        rating: 2,
+        text: `  ${legacy} `,
+      });
+      expect(result.isOk).toBe(true);
+      expect(puzzleReviews.upserts[0]).toMatchObject({
+        rating: 2,
+        text: legacy,
+      });
+    });
+
+    it("rejects an edit that leaves a stored over-long text past the maximum", async () => {
+      const legacy = "a".repeat(REVIEW_TEXT_MAX_LENGTH + 500);
+      puzzleReviews.stored = legacy;
+      const upsert = makeUpsertPuzzleReview({ puzzleReviews, events, clock });
+      const result = await upsert({
+        actingMemberId: ALICE,
+        puzzleId: PUZZLE,
+        definition: APPROVED,
+        rating: 2,
+        text: `${legacy} edited`,
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("ReviewTextTooLong");
+      expect(puzzleReviews.upserts).toHaveLength(0);
     });
 
     it("caps review text at 2000 characters", () => {

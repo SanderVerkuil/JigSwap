@@ -41,9 +41,9 @@ const normalizeText = (text?: string): string | undefined => {
 // Transaction script: check the definition may be reviewed (it exists and is approved, or the
 // reviewer submitted it; the facts arrive on the command → PuzzleNotReviewable), validate the 1–5
 // rating, normalise the text and refuse it past REVIEW_TEXT_MAX_LENGTH (ReviewTextTooLong), upsert
-// the member's single review of the puzzle, publish PuzzleReviewUpserted. A stored review longer
-// than the cap is not grandfathered: the form shows the stored text, so a member editing it
-// shortens it in the same place.
+// the member's single review of the puzzle, publish PuzzleReviewUpserted. A stored text from before
+// the cap may be saved back unchanged, so a member can still change just the rating; any edit to it
+// has to fit.
 export const makeUpsertPuzzleReview =
   (deps: UpsertPuzzleReviewDeps): UpsertPuzzleReview =>
   async (cmd: UpsertPuzzleReviewCommand) => {
@@ -55,7 +55,12 @@ export const makeUpsertPuzzleReview =
     if (rating.isErr) return err(rating.error);
 
     const text = normalizeText(cmd.text);
-    if (text !== undefined && text.length > REVIEW_TEXT_MAX_LENGTH) {
+    if (
+      text !== undefined &&
+      text.length > REVIEW_TEXT_MAX_LENGTH &&
+      text !==
+        (await deps.puzzleReviews.storedText(cmd.actingMemberId, cmd.puzzleId))
+    ) {
       return err(SolvingError.reviewTextTooLong(REVIEW_TEXT_MAX_LENGTH));
     }
 

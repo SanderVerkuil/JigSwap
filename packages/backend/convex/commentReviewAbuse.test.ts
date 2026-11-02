@@ -142,6 +142,41 @@ describe("comment and review text caps (SEC-28)", () => {
     expect(await countRows(t, "puzzleReviews")).toBe(1);
   });
 
+  test("a stored review past the cap can have its rating changed; editing the text must shorten it", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, puzzleId } = await seed(t);
+    const legacy = "A".repeat(2500);
+    const row = await t.run((ctx) =>
+      ctx.db.insert("puzzleReviews", {
+        userId: bob,
+        puzzleId,
+        rating: 5,
+        text: legacy,
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    const save = (rating: number, text: string) =>
+      asBob(t).mutation(api.social.postPuzzleReview.postPuzzleReview, {
+        puzzleId,
+        rating,
+        text,
+      });
+
+    await save(2, legacy);
+    expect(await t.run((ctx) => ctx.db.get(row))).toMatchObject({
+      rating: 2,
+      text: legacy,
+    });
+
+    expect(await codeOf(save(2, `${legacy} and more`))).toBe(
+      "ReviewTextTooLong",
+    );
+
+    await save(3, "Shorter now");
+    expect((await t.run((ctx) => ctx.db.get(row)))?.text).toBe("Shorter now");
+  });
+
   test("submitReviews refuses puzzle review text over 2000 characters", async () => {
     const t = convexTest(schema, modules);
     const { puzzleId } = await seed(t);
