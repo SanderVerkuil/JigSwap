@@ -35,7 +35,7 @@ const anna = member("u_anna", "Anna de Vries");
 const exchange = (fields: Partial<ListRowExchange> = {}): ListRowExchange => ({
   type: "trade",
   status: "proposed",
-  createdAt: NOW - 3 * HOUR,
+  updatedAt: NOW - 3 * HOUR,
   requester: anna,
   owner: me,
   requesterState: "visible",
@@ -123,6 +123,14 @@ describe("ExchangeListRow: one toggle for the whole row", () => {
     );
     expect(panel?.className).toContain("sm:ml-[60px]");
     expect(panel?.className).not.toMatch(/(^|\s)ml-\[60px\]/);
+  });
+});
+
+describe("ExchangeListRow: its time", () => {
+  // The list sorts on the last activity: showing anything else makes the times read out of order.
+  it("says when it last changed, the same moment the list sorts by", () => {
+    renderRow({ fields: { updatedAt: NOW - 2 * HOUR } });
+    expect(toggle().textContent).toContain("2 hours ago");
   });
 });
 
