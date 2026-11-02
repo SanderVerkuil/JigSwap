@@ -296,3 +296,33 @@ describe("hasAnyChange with only explicitly-undefined members", () => {
     if (r.isErr) expect(r.error.code).toBe("EmptyProposal");
   });
 });
+
+describe("a proposal's numbers stay within reason", () => {
+  const filed = (changes: FileChangeProposalProps["changes"]) =>
+    PuzzleChangeProposal.file({
+      id,
+      puzzleDefinitionId: definitionId,
+      proposedBy: proposer,
+      changes,
+      baseline: {},
+      now: NOW,
+    });
+
+  it("refuses a piece count no puzzle has", () => {
+    const r = filed({ pieceCount: 1e300 });
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("InvalidPieceCount");
+  });
+
+  it.each([0, -1, Number.NaN, Number.POSITIVE_INFINITY, 1e300])(
+    "refuses a side of %p, on filing and on an edit",
+    (width) => {
+      const dimensions = { width, height: 50, unit: "cm" as const };
+      const r = filed({ dimensions });
+      expect(r.isErr).toBe(true);
+      if (r.isErr) expect(r.error.code).toBe("InvalidDimensions");
+      const edited = file().edit({ dimensions }, {}, undefined, LATER);
+      expect(edited.isErr).toBe(true);
+    },
+  );
+});

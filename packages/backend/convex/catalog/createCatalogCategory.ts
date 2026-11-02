@@ -1,4 +1,4 @@
-import { makeCreateCatalogCategory } from "@jigswap/domain";
+import { isValidSortOrder, makeCreateCatalogCategory } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
@@ -25,6 +25,12 @@ export const createCatalogCategory = mutation({
   handler: async (ctx, args) => {
     const adminId = (await requireMember(ctx)) as unknown as Id<"users">;
     if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    if (!isValidSortOrder(args.sortOrder)) {
+      throw new ConvexError({
+        code: "InvalidSortOrder",
+        message: "Not a position in the taxonomy",
+      });
+    }
 
     const create = makeCreateCatalogCategory({
       categories: convexCatalogCategoryRepository(ctx),

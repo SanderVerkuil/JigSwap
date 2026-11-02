@@ -395,6 +395,7 @@
     "rateLimited": "You've added the most puzzles allowed for now. Try again {when}.",
     "coverRateLimited": "You've added the most cover photos allowed for now. Try again {when}, or continue without a photo.",
     "textTooLong": "One of the fields is too long. Shorten it and try again.",
+    "invalidDimensions": "Check the width and height: both must be above zero and at most 10,000.",
     "noPuzzleSelected": "Please select a puzzle first",
     "puzzleAdded": "Added to My Puzzles",
     "addedNotOffered": "Added to My Puzzles, but we couldn't offer it. You can switch that on from the puzzle's page.",
@@ -4744,6 +4745,7 @@
       "rateLimited": "You've sent the most suggestions allowed for now. Try again {when}.",
       "coverRateLimited": "You've uploaded the most images allowed for now. Try again {when}.",
       "textTooLong": "One of the fields is too long. Shorten it and try again.",
+      "invalidDimensions": "Check the width and height: both must be above zero and at most 10,000.",
       "generic": "Couldn't submit your suggestion"
     }
   },
@@ -5366,7 +5368,8 @@
           "invalidBarcode": "One of the barcodes is not valid",
           "duplicateBarcode": "Another puzzle already uses one of these barcodes",
           "invalidPieceCount": "The piece count must be a positive number",
-          "textTooLong": "One of the fields is too long. Shorten it and try again."
+          "textTooLong": "One of the fields is too long. Shorten it and try again.",
+          "invalidDimensions": "Check the width and height: both must be above zero and at most 10,000."
         },
         "cancel": "Cancel"
       },

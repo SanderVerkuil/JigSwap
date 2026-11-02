@@ -48,6 +48,10 @@ export interface CatalogCategoryState {
 const isNameComplete = (name: LocalizedText): boolean =>
   name.en.trim().length > 0 && name.nl.trim().length > 0;
 
+// A position in the taxonomy's ordering: any ordinary number (a NaN sorts nowhere, for every reader).
+export const isValidSortOrder = (sortOrder: number): boolean =>
+  Number.isFinite(sortOrder) && Math.abs(sortOrder) <= 1_000_000_000;
+
 export class CatalogCategory {
   private events: DomainEvent[] = [];
 

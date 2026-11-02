@@ -32,11 +32,17 @@ export class CopyStepError extends Error {
 // The puzzles.* message for a failed contribute flow (cover step, then createPuzzle, then the add
 // form's copy step): the member's limit on submissions (rateLimited) or on cover photos
 // (coverRateLimited), each with when they can try again; the daily copy budget (addRateLimited,
-// which says when by itself); a field the catalogue refuses as too long (textTooLong); else the
-// generic failure.
+// which says when by itself); a field the catalogue refuses as too long (textTooLong); a width or
+// height it refuses (invalidDimensions); else the generic failure.
 export type ContributeError =
   | { key: "rateLimited" | "coverRateLimited"; retryAt: number }
-  | { key: "addRateLimited" | "textTooLong" | "puzzleCreationFailed" };
+  | {
+      key:
+        | "addRateLimited"
+        | "textTooLong"
+        | "invalidDimensions"
+        | "puzzleCreationFailed";
+    };
 
 export function contributeError(error: unknown, now: number): ContributeError {
   const fromCover = error instanceof CoverStepError;
@@ -49,7 +55,12 @@ export function contributeError(error: unknown, now: number): ContributeError {
   if (retryAt !== undefined) {
     return { key: fromCover ? "coverRateLimited" : "rateLimited", retryAt };
   }
-  return convexErrorCode(cause) === "TextTooLong"
-    ? { key: "textTooLong" }
-    : { key: "puzzleCreationFailed" };
+  switch (convexErrorCode(cause)) {
+    case "TextTooLong":
+      return { key: "textTooLong" };
+    case "InvalidDimensions":
+      return { key: "invalidDimensions" };
+    default:
+      return { key: "puzzleCreationFailed" };
+  }
 }

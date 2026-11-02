@@ -395,6 +395,7 @@
     "rateLimited": "Je hebt voorlopig het maximale aantal puzzels toegevoegd. Probeer het {when} opnieuw.",
     "coverRateLimited": "Je hebt voorlopig het maximale aantal omslagfoto's toegevoegd. Probeer het {when} opnieuw, of ga verder zonder foto.",
     "textTooLong": "Een van de velden is te lang. Maak het korter en probeer het opnieuw.",
+    "invalidDimensions": "Controleer de breedte en hoogte: ze moeten boven nul liggen en mogen niet hoger zijn dan 10.000.",
     "noPuzzleSelected": "Selecteer eerst een puzzel",
     "puzzleAdded": "Toegevoegd aan je puzzels",
     "addedNotOffered": "Toegevoegd aan je puzzels, maar aanbieden is niet gelukt. Dat kun je aanzetten op de pagina van de puzzel.",
@@ -4744,6 +4745,7 @@
       "rateLimited": "Je hebt voorlopig het maximale aantal voorstellen ingediend. Probeer het {when} opnieuw.",
       "coverRateLimited": "Je hebt voorlopig het maximale aantal afbeeldingen geüpload. Probeer het {when} opnieuw.",
       "textTooLong": "Een van de velden is te lang. Maak het korter en probeer het opnieuw.",
+      "invalidDimensions": "Controleer de breedte en hoogte: ze moeten boven nul liggen en mogen niet hoger zijn dan 10.000.",
       "generic": "Voorstel indienen mislukt"
     }
   },
@@ -5366,7 +5368,8 @@
           "invalidBarcode": "Een van de barcodes is ongeldig",
           "duplicateBarcode": "Een andere puzzel gebruikt al een van deze barcodes",
           "invalidPieceCount": "Het aantal stukjes moet een positief getal zijn",
-          "textTooLong": "Een van de velden is te lang. Maak het korter en probeer het opnieuw."
+          "textTooLong": "Een van de velden is te lang. Maak het korter en probeer het opnieuw.",
+          "invalidDimensions": "Controleer de breedte en hoogte: ze moeten boven nul liggen en mogen niet hoger zijn dan 10.000."
         },
         "cancel": "Annuleren"
       },

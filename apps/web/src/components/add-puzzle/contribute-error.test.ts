@@ -54,6 +54,18 @@ describe("contributeError", () => {
     ).toEqual({ key: "textTooLong" });
   });
 
+  it("says the width or height is wrong for an InvalidDimensions refusal", () => {
+    expect(
+      contributeError(
+        new ConvexError({
+          code: "InvalidDimensions",
+          message: "A puzzle's width and height must be positive numbers",
+        }),
+        NOW,
+      ),
+    ).toEqual({ key: "invalidDimensions" });
+  });
+
   it.each([
     ["a failed upload", new Error("Image upload failed")],
     ["a failed cover step", new CoverStepError(new Error("upload failed"))],

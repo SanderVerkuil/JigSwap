@@ -10,7 +10,7 @@ import {
   ChangeProposalWithdrawn,
 } from "./events";
 import { ChangeProposalId, PuzzleDefinitionId, SubmitterId } from "./ids";
-import { PieceCount } from "./piece-count";
+import { checkDimensions, PieceCount } from "./piece-count";
 import {
   ALLOWED_PROPOSAL_TRANSITIONS,
   ProposalStatus,
@@ -78,6 +78,8 @@ const validateChanges = (
     const validated = PieceCount.create(changes.pieceCount);
     if (validated.isErr) return err(validated.error);
   }
+  const dimensions = checkDimensions(changes.dimensions);
+  if (dimensions.isErr) return dimensions;
   if (changes.barcodes !== undefined) {
     const validated = validateBarcodes(changes.barcodes);
     if (validated.isErr) return err(validated.error);

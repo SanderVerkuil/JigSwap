@@ -385,3 +385,105 @@ describe("an exchange's terms", () => {
     expect(row.salePrice?.amount).toBe(1e300);
   });
 });
+
+describe("a definition's numbers", () => {
+  const asAdmin = () =>
+    t.withIdentity({ subject: "clerk_admin", metadata: { role: "admin" } });
+  const definition = { title: "A new puzzle", pieceCount: 500 };
+  const BAD_SIDES = [
+    0,
+    -1,
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    1e300,
+    10_001,
+  ];
+  const definitions = () => t.run((ctx) => ctx.db.query("puzzles").collect());
+
+  beforeEach(async () => {
+    await t.run((ctx) =>
+      ctx.db.insert("users", {
+        clerkId: "clerk_admin",
+        email: "admin@example.com",
+        name: "Admin",
+        isActive: true,
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+  });
+
+  test.each([1e300, Number.MAX_VALUE, 1_000_001, Number.NaN, -1])(
+    "submitPuzzleDefinition and proposeDefinitionChange refuse %p pieces",
+    async (pieceCount) => {
+      await expect(
+        asMe().mutation(
+          api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+          {
+            ...definition,
+            pieceCount,
+          },
+        ),
+      ).rejects.toThrow(/InvalidPieceCount/);
+      await expect(
+        asMe().mutation(
+          api.catalog.proposeDefinitionChange.proposeDefinitionChange,
+          {
+            puzzleDefinitionId: puzzleDefinitionAggregateId,
+            pieceCount,
+          },
+        ),
+      ).rejects.toThrow(/InvalidPieceCount/);
+      expect(await definitions()).toHaveLength(1);
+    },
+  );
+
+  test.each(BAD_SIDES)(
+    "submitPuzzleDefinition and proposeDefinitionChange refuse a side of %p",
+    async (width) => {
+      const dimensions = { width, height: 50, unit: "cm" as const };
+      await expect(
+        asMe().mutation(
+          api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+          {
+            ...definition,
+            dimensions,
+          },
+        ),
+      ).rejects.toThrow(/InvalidDimensions/);
+      await expect(
+        asMe().mutation(
+          api.catalog.proposeDefinitionChange.proposeDefinitionChange,
+          {
+            puzzleDefinitionId: puzzleDefinitionAggregateId,
+            dimensions,
+          },
+        ),
+      ).rejects.toThrow(/InvalidDimensions/);
+      expect(await definitions()).toHaveLength(1);
+    },
+  );
+
+  test.each([Number.NaN, Number.POSITIVE_INFINITY, 1e300])(
+    "the taxonomy refuses a position of %p",
+    async (sortOrder) => {
+      await expect(
+        asAdmin().mutation(
+          api.catalog.createCatalogCategory.createCatalogCategory,
+          {
+            name: { en: "Art", nl: "Kunst" },
+            sortOrder,
+          },
+        ),
+      ).rejects.toThrow(/InvalidSortOrder/);
+      await expect(
+        asAdmin().mutation(
+          api.catalog.reorderCatalogCategories.reorderCatalogCategories,
+          {
+            order: [{ catalogCategoryId: "any", sortOrder }],
+          },
+        ),
+      ).rejects.toThrow(/InvalidSortOrder/);
+    },
+  );
+});

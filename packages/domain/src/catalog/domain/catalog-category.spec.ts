@@ -3,6 +3,7 @@ import { DomainEvent, toCatalogCategoryId } from "../../shared-kernel";
 import {
   CatalogCategory,
   CreateCatalogCategoryProps,
+  isValidSortOrder,
   LocalizedText,
 } from "./catalog-category";
 import {
@@ -155,4 +156,17 @@ describe("rehydrate / toState round-trip", () => {
     expect(restored.pullEvents()).toHaveLength(0);
     expect(restored.toState()).toEqual(state);
   });
+});
+
+describe("isValidSortOrder", () => {
+  it.each([0, 3, -2, 1.5])("takes %p", (n) => {
+    expect(isValidSortOrder(n)).toBe(true);
+  });
+
+  it.each([Number.NaN, Number.POSITIVE_INFINITY, 1e300, -1e300])(
+    "refuses %p",
+    (n) => {
+      expect(isValidSortOrder(n)).toBe(false);
+    },
+  );
 });

@@ -2,6 +2,9 @@
 import { Input } from "@/components/ui/input";
 import { PIECE_PRESETS } from "./add-puzzle-schema";
 
+// The most pieces the server takes (catalog/domain/piece-count.ts MAX_PIECE_COUNT).
+const MAX_PIECE_COUNT = 1_000_000;
+
 export function PieceCountField({
   value,
   onChange,
@@ -19,12 +22,17 @@ export function PieceCountField({
         inputMode="numeric"
         step="1"
         min="1"
+        max={MAX_PIECE_COUNT}
         value={value ?? ""}
         placeholder="1000"
         onChange={(e) => {
           if (e.target.value === "") return onChange(undefined);
           const n = Number(e.target.value);
-          onChange(Number.isInteger(n) && n >= 1 ? n : undefined);
+          onChange(
+            Number.isInteger(n) && n >= 1 && n <= MAX_PIECE_COUNT
+              ? n
+              : undefined,
+          );
         }}
       />
       <div className="flex flex-wrap gap-1.5">

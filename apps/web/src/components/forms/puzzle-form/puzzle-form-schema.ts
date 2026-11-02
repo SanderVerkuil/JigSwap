@@ -32,7 +32,8 @@ export const puzzleFormSchema = z.object({
   pieceCount: z
     .number()
     .int("Piece count must be a whole number")
-    .gte(1, "Piece count must be at least 1"),
+    .gte(1, "Piece count must be at least 1")
+    .lte(1_000_000, "Piece count must be at most 1,000,000"),
 
   difficulty: z.enum(["easy", "medium", "hard", "expert"]).optional(),
 
@@ -60,8 +61,14 @@ export const puzzleFormSchema = z.object({
   // Physical details
   dimensions: z
     .object({
-      width: z.number().positive("Width must be greater than 0"),
-      height: z.number().positive("Height must be greater than 0"),
+      width: z
+        .number()
+        .positive("Width must be greater than 0")
+        .max(10_000, "Width must be at most 10,000"),
+      height: z
+        .number()
+        .positive("Height must be greater than 0")
+        .max(10_000, "Height must be at most 10,000"),
       unit: z.enum(["cm", "in"]),
     })
     .optional(),
