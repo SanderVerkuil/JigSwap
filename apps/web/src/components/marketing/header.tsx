@@ -48,6 +48,7 @@ export function MarketingHeader() {
   const { pathname } = useLocation();
   const [scrolled, setScrolled] = React.useState(false);
   const [open, setOpen] = React.useState(false);
+  const headerRef = React.useRef<HTMLElement>(null);
   const toggleRef = React.useRef<HTMLButtonElement>(null);
 
   // Escape closes the open menu and hands focus back to its toggle. An Escape
@@ -62,6 +63,25 @@ export function MarketingHeader() {
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
+  // A press outside the header closes the menu; focus stays wherever the press
+  // puts it. The language dropdown lives in a portal outside the header, and
+  // while it is open the press is its to handle.
+  React.useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (event: PointerEvent) => {
+      if (
+        event.target instanceof Node &&
+        headerRef.current?.contains(event.target)
+      ) {
+        return;
+      }
+      if (document.querySelector("[data-radix-popper-content-wrapper]")) return;
+      setOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [open]);
 
   React.useEffect(() => {
@@ -90,6 +110,7 @@ export function MarketingHeader() {
 
   return (
     <header
+      ref={headerRef}
       className={cn(
         "sticky top-0 z-50 transition-[background-color,border-color] duration-250",
         "border-b",
@@ -146,7 +167,9 @@ export function MarketingHeader() {
         <nav
           id="mk-mobile-nav"
           aria-label={t("menuLabel")}
-          className="min-[1200px]:hidden border-t border-mk-border bg-mk-card"
+          // Scrolls by itself: the sticky header doesn't move with the page, so what
+          // doesn't fit below the bar could not be reached otherwise.
+          className="min-[1200px]:hidden max-h-[calc(100dvh-71px)] overflow-y-auto overscroll-contain border-t border-mk-border bg-mk-card"
         >
           <div className="w-full max-w-[1200px] mx-auto flex flex-col gap-1 px-6 pt-3 pb-[18px]">
             {NAV.map((item) => navLink(item, true))}

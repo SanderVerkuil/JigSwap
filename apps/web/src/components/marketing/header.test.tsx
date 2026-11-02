@@ -189,6 +189,62 @@ describe("MarketingHeader mobile menu", () => {
     ).toBeTruthy();
   });
 
+  // No layout here, so the scrolling itself was measured in a browser (844x390, 320x180). This
+  // guards what makes it hold.
+  it("scrolls inside the panel, so its last items stay reachable on a short screen", () => {
+    renderHeader();
+    fireEvent.click(menuToggle());
+    expect(
+      screen.getByRole("navigation", { name: "Menu" }).className.split(/\s+/),
+    ).toEqual(
+      expect.arrayContaining([
+        "max-h-[calc(100dvh-71px)]",
+        "overflow-y-auto",
+        "overscroll-contain",
+      ]),
+    );
+  });
+
+  it("closes on a press outside the header, leaving focus where the press put it", () => {
+    renderHeader();
+    fireEvent.click(menuToggle());
+
+    fireEvent.pointerDown(document.body);
+
+    expect(screen.queryByRole("navigation", { name: "Menu" })).toBeNull();
+    expect(document.activeElement).not.toBe(menuToggle());
+  });
+
+  it("stays open on a press inside the header", () => {
+    renderHeader();
+    fireEvent.click(menuToggle());
+
+    fireEvent.pointerDown(screen.getByRole("navigation", { name: "Menu" }));
+    fireEvent.pointerDown(screen.getByRole("link", { name: "JigSwap" }));
+
+    expect(screen.getByRole("navigation", { name: "Menu" })).toBeTruthy();
+  });
+
+  it("stays open while the language menu, in its portal, takes the press", async () => {
+    renderHeader();
+    fireEvent.click(menuToggle());
+    const panel = screen.getByRole("navigation", { name: "Menu" });
+    fireEvent.pointerDown(
+      within(panel).getByRole("button", {
+        name: "Switch language: English, EN",
+      }),
+      { button: 0, ctrlKey: false },
+    );
+    const [item] = await screen.findAllByRole("menuitemradio");
+
+    fireEvent.pointerDown(item);
+
+    // The open dropdown hides the rest of the page from assistive technology.
+    expect(
+      screen.getByRole("navigation", { name: "Menu", hidden: true }),
+    ).toBeTruthy();
+  });
+
   it("leaves an Escape that another layer already handled alone", () => {
     renderHeader();
     fireEvent.click(menuToggle());
