@@ -131,7 +131,8 @@ export interface LocationAvailabilityView {
 
 /**
  * A message photo for one reader (spec 2026-10-20: every photo is a message from send time on).
- * - `ready`: show it (`url`/`thumbUrl`).
+ * - `ready`: show it: a tile from `srcSet` (the thumbnail and the original, once it has a thumbnail)
+ *   or `thumbUrl`, the photo viewer from `url`.
  * - `blurred`: show the blurhash behind "Show" (sensitive band, a sender who is not the reader's
  *   mutual follower, or a photo the reader reported); decided per reader, and carrying NO url:
  *   the tap calls conversation.revealMessageImage. Once revealed it comes back `ready` with
@@ -152,6 +153,8 @@ export interface MessageAttachmentView {
   readonly status: "ready" | "blurred" | "pending" | "rejected" | "removed";
   readonly url?: string;
   readonly thumbUrl?: string;
+  /** `ready` only: what a tile picks from, with `sizes`; absent without a thumbnail. */
+  readonly srcSet?: string;
   /** Pixel size, for the aspect-ratio box (absent when unknown). */
   readonly w?: number;
   readonly h?: number;

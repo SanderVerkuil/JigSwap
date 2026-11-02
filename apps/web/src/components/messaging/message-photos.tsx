@@ -52,6 +52,9 @@ type AttachmentView = Exclude<
 
 // The single photo / gallery width, as a share of the thread column.
 const MEDIA_WIDTH = "w-72 max-w-full";
+// What a tile draws at most, for its srcSet: the media width (w-72), or half of it in a gallery.
+const MEDIA_SIZE = "288px";
+const GALLERY_CELL_SIZE = "144px";
 
 export type PhotoMessage = Pick<
   ThreadMessage,
@@ -169,6 +172,7 @@ export function MessagePhotos({
                 aspect={aspect}
                 className={cn(spans && "col-span-2")}
                 compact={grid}
+                sizes={grid && !spans ? GALLERY_CELL_SIZE : MEDIA_SIZE}
                 label={
                   grid
                     ? t("tileLabel", { index: index + 1, count })
@@ -248,6 +252,7 @@ function PhotoTile({
   aspect,
   className,
   compact,
+  sizes,
   label,
   onOpen,
   onShow,
@@ -262,6 +267,8 @@ function PhotoTile({
   className?: string;
   /** A gallery cell: smaller controls. */
   compact: boolean;
+  /** The width the tile draws at, for the browser's pick from the view's srcSet. */
+  sizes: string;
   /** Accessible name of the open button. */
   label: string;
   onOpen: (trigger: HTMLButtonElement) => void;
@@ -450,6 +457,8 @@ function PhotoTile({
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={(compact && view.thumbUrl) || view.url}
+        srcSet={view.srcSet}
+        sizes={view.srcSet ? sizes : undefined}
         alt=""
         loading="lazy"
         decoding="async"

@@ -691,6 +691,9 @@ export const expireStagedAttachment = async (
  * The uploader sees their own photo: unblurred once servable; while pending, the image once its
  * hash check passed (as the outbox did), else the blurhash; once stopped, the refusal card
  * (`rejected`, rejectionFieldsOf: identical for a quarantined photo) until it is hidden from them.
+ *
+ * The thumbnail (`thumbUrl`, and the `srcSet` a tile picks from) is only ever sent with the photo's
+ * own `url`, past all of the above.
  */
 export const messageAttachmentViews = (ctx: QueryCtx, viewer: Id<"users">) => {
   const mutualWith = new Map<Id<"users">, Promise<boolean>>();
@@ -782,14 +785,30 @@ export const messageAttachmentViews = (ctx: QueryCtx, viewer: Id<"users">) => {
     const thumbUrl = row.thumbFileId
       ? await ctx.storage.getUrl(row.thumbFileId)
       : null;
+    const srcSet = thumbSrcSetOf(row, url, thumbUrl);
     return {
       status: "ready",
       ...(url !== null && { url }),
       ...(thumbUrl !== null && { thumbUrl }),
+      ...(srcSet !== undefined && { srcSet }),
       ...placeholder,
       ...(revealed && { revealed: true as const }),
     };
   };
+};
+
+// What a photo's tile picks from: its thumbnail and, when that is narrower, the original (its
+// `width` is the client's, which only steers the browser's pick). None without a thumbnail.
+const thumbSrcSetOf = (
+  row: Attachment,
+  url: string | null,
+  thumbUrl: string | null,
+): string | undefined => {
+  if (thumbUrl === null || row.thumbWidth === undefined) return undefined;
+  const thumb = `${thumbUrl} ${row.thumbWidth}w`;
+  return url !== null && row.width !== undefined && row.width > row.thumbWidth
+    ? `${thumb}, ${url} ${row.width}w`
+    : thumb;
 };
 
 /**

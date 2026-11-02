@@ -91,6 +91,64 @@ describe("MessagePhotos", () => {
     expect(img?.getAttribute("src")).toBe(READY.url);
   });
 
+  it("a tile picks from the photo's srcSet at the width it draws; the viewer opens the original", async () => {
+    const srcSet =
+      "https://files.test/thumb.webp 640w, https://files.test/full.jpg 1600w";
+    wrap(
+      <MessagePhotos
+        messages={[photo("m1", { ...READY, srcSet })]}
+        own={false}
+        authorName="Mara"
+      />,
+    );
+    const button = screen.getByRole("button", { name: "Photo from Mara" });
+    const img = button.querySelector("img[loading='lazy']");
+    expect(img?.getAttribute("srcset")).toBe(srcSet);
+    expect(img?.getAttribute("sizes")).toBe("288px");
+
+    fireEvent.click(button);
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog.querySelector("img")?.getAttribute("src")).toBe(READY.url);
+    expect(dialog.querySelector("img")?.getAttribute("srcset")).toBeNull();
+  });
+
+  it("in a gallery of three the first tile spans the width and the others take half", () => {
+    const srcSet = "https://files.test/thumb.webp 640w";
+    wrap(
+      <MessagePhotos
+        messages={["m1", "m2", "m3"].map((id) =>
+          photo(id, { ...READY, srcSet }),
+        )}
+        own={false}
+        authorName="Mara"
+      />,
+    );
+    const sizes = [1, 2, 3].map((index) =>
+      screen
+        .getByRole("button", { name: `Photo ${index} of 3, open` })
+        .querySelector("img[loading='lazy']")
+        ?.getAttribute("sizes"),
+    );
+    expect(sizes).toEqual(["288px", "144px", "144px"]);
+  });
+
+  it("a photo without a thumbnail is shown as before", () => {
+    const { thumbUrl: _thumbUrl, ...full } = READY;
+    wrap(
+      <MessagePhotos
+        messages={[photo("m1", full)]}
+        own={false}
+        authorName="Mara"
+      />,
+    );
+    const img = screen
+      .getByRole("button", { name: "Photo from Mara" })
+      .querySelector("img[loading='lazy']");
+    expect(img?.getAttribute("src")).toBe(READY.url);
+    expect(img?.getAttribute("srcset")).toBeNull();
+    expect(img?.getAttribute("sizes")).toBeNull();
+  });
+
   it("names the photo with its caption as plain text, without markers", () => {
     wrap(
       <MessagePhotos

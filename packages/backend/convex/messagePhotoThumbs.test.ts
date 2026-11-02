@@ -16,11 +16,13 @@ import {
   settleRenditions,
   storeBytes,
   storeWebp,
+  urlOf,
 } from "../test-fixtures/renditionJobs";
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import {
   asImage,
+  messageAttachmentViews,
   type ImageAttachment,
 } from "./conversation/messageAttachments";
 import { checkImageBytes } from "./lib/imageModeration/guards";
@@ -150,6 +152,7 @@ const seed = async (t: T) => {
 type Seeded = Awaited<ReturnType<typeof seed>>;
 
 const asAlice = (t: T) => t.withIdentity({ subject: "clerk_alice" });
+const asBob = (t: T) => t.withIdentity({ subject: "clerk_bob" });
 const asAdmin = (t: T) =>
   t.withIdentity({ subject: "clerk_ada", metadata: { role: "admin" } });
 
@@ -578,6 +581,214 @@ describe("message photo thumbnails: deleted with the photo", () => {
     expect(await blobExists(t, photo.thumb)).toBe(false);
     expect(await blobExists(t, photo.fileId)).toBe(false);
   });
+});
+
+describe("message photo thumbnails: served only where the photo is", () => {
+  const withThumb = async (
+    t: T,
+    s: Seeded,
+    fields: PhotoFields = SERVABLE,
+    thumbWidth = 640,
+  ) => {
+    const thumb = await storeWebp(t, "thumbnail");
+    const photo = await seedPhoto(t, s, {
+      width: 1000,
+      ...fields,
+      thumbFileId: thumb,
+      thumbWidth,
+    });
+    return {
+      ...photo,
+      thumb,
+      url: await urlOf(t, photo.fileId),
+      thumbUrl: await urlOf(t, thumb),
+    };
+  };
+
+  const viewFor = (t: T, viewer: Id<"users">, id: Id<"messageAttachments">) =>
+    t.run((ctx) => messageAttachmentViews(ctx, viewer)(id));
+
+  const stopFollowing = (t: T, s: Seeded) =>
+    t.run(async (ctx) => {
+      const edge = await ctx.db
+        .query("follows")
+        .withIndex("by_follower_followee", (q) =>
+          q.eq("followerId", s.bob).eq("followeeId", s.alice),
+        )
+        .first();
+      await ctx.db.delete(edge!._id);
+    });
+
+  // Expect no trace of the image: neither URL nor either storage id.
+  const expectNothingOfIt = (
+    view: unknown,
+    photo: Awaited<ReturnType<typeof withThumb>>,
+  ) => {
+    const json = JSON.stringify(view);
+    for (const secret of [
+      photo.url,
+      photo.thumbUrl,
+      photo.fileId,
+      photo.thumb,
+    ]) {
+      expect(json).not.toContain(secret);
+    }
+  };
+
+  test("a reader who may see it gets the thumbnail, a srcSet, and the original for the viewer", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    const photo = await withThumb(t, s);
+
+    const view = await viewFor(t, s.bob, photo.id);
+    expect(view).toEqual({
+      status: "ready",
+      w: 1000,
+      url: photo.url,
+      thumbUrl: photo.thumbUrl,
+      srcSet: `${photo.thumbUrl} 640w, ${photo.url} 1000w`,
+    });
+    // URLs only: no storage id on the wire.
+    expect(JSON.stringify(view)).not.toContain(photo.thumb);
+    expect(JSON.stringify(view)).not.toContain(photo.fileId);
+  });
+
+  test("a photo no wider than its thumbnail lists the thumbnail alone", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    const photo = await withThumb(t, s, { ...SERVABLE, width: 500 }, 500);
+
+    expect((await viewFor(t, s.bob, photo.id)).srcSet).toBe(
+      `${photo.thumbUrl} 500w`,
+    );
+  });
+
+  test("before the backfill the photo is served as it was", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    const photo = await seedPhoto(t, s, { ...SERVABLE, width: 1000 });
+
+    expect(await viewFor(t, s.bob, photo.id)).toEqual({
+      status: "ready",
+      w: 1000,
+      url: await urlOf(t, photo.fileId),
+    });
+  });
+
+  test("a non-mutual reader gets neither until they tap Show, then both, through the thread", async () => {
+    vi.stubGlobal("fetch", routedFetch("no_match"));
+    const t = withModerationPool(convexTest(schema, modules));
+    const s = await seed(t);
+    const sent = await sendThroughPipeline(t, s);
+    await settleRenditions(t);
+    const { thumbFileId, fileId } = await photoRow(t, sent._id);
+    const thumbUrl = await urlOf(t, thumbFileId!);
+    const url = await urlOf(t, fileId);
+    await stopFollowing(t, s);
+    const read = () =>
+      asBob(t).query(api.conversation.getThreadMessages.getThreadMessages, {
+        threadId: s.threadId,
+      });
+
+    const [blurred] = await read();
+    expect(blurred.attachment).toMatchObject({
+      status: "blurred",
+      notMutual: true,
+    });
+    for (const secret of [url, thumbUrl, fileId, thumbFileId!]) {
+      expect(JSON.stringify(blurred)).not.toContain(secret);
+    }
+
+    await asBob(t).mutation(
+      api.conversation.revealMessageImage.revealMessageImage,
+      { attachmentId: sent._id },
+    );
+
+    const [shown] = await read();
+    expect(shown.attachment).toMatchObject({
+      status: "ready",
+      revealed: true,
+      url,
+      thumbUrl,
+      srcSet: `${thumbUrl} 640w, ${url} 1000w`,
+    });
+  });
+
+  test("the sensitive band stays blurred for a reader and is shown to its sender", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    const photo = await withThumb(t, s, {
+      ...SERVABLE,
+      moderationStatus: "blurred",
+    });
+
+    const forBob = await viewFor(t, s.bob, photo.id);
+    expect(forBob.status).toBe("blurred");
+    expectNothingOfIt(forBob, photo);
+    expect(await viewFor(t, s.alice, photo.id)).toMatchObject({
+      status: "ready",
+      thumbUrl: photo.thumbUrl,
+    });
+  });
+
+  test("a reader with an open report on it gets neither", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    const photo = await withThumb(t, s);
+    await t.run((ctx) =>
+      ctx.db.insert("reports", {
+        reporterId: s.bob,
+        targetKind: "attachment",
+        targetId: photo.id,
+        reportedUserId: s.alice,
+        reason: "other",
+        evidence: {},
+        status: "open",
+        createdAt: 1,
+      }),
+    );
+
+    const view = await viewFor(t, s.bob, photo.id);
+    expect(view.status).toBe("blurred");
+    expectNothingOfIt(view, photo);
+  });
+
+  test.each<[string, PhotoFields, string]>([
+    ["pending", { ...SERVABLE, moderationStatus: "pending" }, "pending"],
+    ["unscored", { ...SERVABLE, moderationStatus: "unscored" }, "pending"],
+    ["rejected", { ...SERVABLE, moderationStatus: "rejected" }, "removed"],
+    [
+      "quarantined",
+      { ...SERVABLE, moderationStatus: "quarantined" },
+      "removed",
+    ],
+    ["removed", { ...SERVABLE, moderationStatus: "removed" }, "removed"],
+    ["not hash-cleared", { ...SERVABLE, hashCheckedAt: undefined }, "pending"],
+    ["not re-encoded", { ...SERVABLE, reencodedAt: undefined }, "pending"],
+    ["hidden", { ...SERVABLE, hiddenFromSender: true }, "removed"],
+  ])(
+    "a %s photo gives a reader neither, even with a thumbnail left on its row",
+    async (_label, fields, status) => {
+      const t = convexTest(schema, modules);
+      const s = await seed(t);
+      const photo = await withThumb(t, s, fields);
+
+      const view = await viewFor(t, s.bob, photo.id);
+      expect(view.status).toBe(status);
+      expectNothingOfIt(view, photo);
+    },
+  );
+
+  test.each(["rejected", "quarantined", "removed"] as const)(
+    "a %s photo shows its sender no image either",
+    async (moderationStatus) => {
+      const t = convexTest(schema, modules);
+      const s = await seed(t);
+      const photo = await withThumb(t, s, { ...SERVABLE, moderationStatus });
+
+      expectNothingOfIt(await viewFor(t, s.alice, photo.id), photo);
+    },
+  );
 });
 
 describe("message photo thumbnails: the backfill", () => {
