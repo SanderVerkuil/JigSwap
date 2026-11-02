@@ -184,6 +184,9 @@ card in **My Puzzles**, choose **Share with circles…**. Tick the circles to
 share it with, untick the ones to stop sharing it with, and click **Save**.
 Circles where you have **View only** can't be ticked.
 
+To share many puzzles from **My Puzzles**, click **Select**, pick them and choose
+**Share with circle**. A message says how many were shared and which ones weren't.
+
 Circle members can see a shared copy while you offer it for swap, lend or
 sale and you're still a member of the circle. The list marks the puzzles they
 won't see: **Not offered** (offer it for swap, lend or sale first) and

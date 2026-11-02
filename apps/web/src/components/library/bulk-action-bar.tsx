@@ -14,6 +14,7 @@ import {
   CircleOff,
   FolderPlus,
   Package,
+  Users,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -30,11 +31,17 @@ const OFFER_ACTIONS: ReadonlyArray<{
   { action: "withdraw", Icon: CircleOff },
 ];
 
+// Beside Offers these take what's left and wrap rather than overflow; on a phone that leaves no room
+// for an icon next to the words (Dutch on a small phone).
+const WRAPPING_ACTION =
+  "h-auto min-h-9 whitespace-normal leading-tight pointer-coarse:min-h-11 @max-md:has-[>svg]:px-2 @max-md:[&>svg]:hidden";
+
 // My Puzzles' selection bar: how many puzzles are selected, Select all / Clear, and what can be done
-// to them (Offer for swap, Offer to lend, Withdraw offers, Add to collection). It sticks to the
-// bottom of the list: on a phone just above the tab bar (clearing its raised "+"), from md up as a
-// floating bar. Where the bar is narrow (phones, tablets beside the sidebar) the three offer actions
-// share one "Offers" menu so every action stays on screen without wrapping.
+// to them (Offer for swap, Offer to lend, Withdraw offers, Add to collection, Share with circle). It
+// sticks to the bottom of the list: on a phone just above the tab bar (clearing its raised "+"), from
+// md up as a floating bar. All five actions fit beside the selection only in the widest bar, in
+// Dutch too; anywhere narrower the three offer actions share one "Offers" menu, so every action stays
+// on screen and the selected count stays readable. A narrow bar puts the actions on a row of their own.
 export function BulkActionBar({
   selectedCount,
   selectableCount,
@@ -44,6 +51,7 @@ export function BulkActionBar({
   onExit,
   onOffer,
   onAddToCollection,
+  onShareWithCircle,
 }: {
   selectedCount: number;
   // The copies on screen that can be selected (what Select all selects).
@@ -55,6 +63,7 @@ export function BulkActionBar({
   onExit: () => void;
   onOffer: (action: BulkOfferAction) => void;
   onAddToCollection: () => void;
+  onShareWithCircle: () => void;
 }) {
   const t = useTranslations("puzzles.bulk");
   const disabled = selectedCount === 0 || busy;
@@ -67,7 +76,7 @@ export function BulkActionBar({
       aria-busy={busy}
       className="bg-card @container sticky bottom-14 z-20 -mx-4 border-t px-4 pt-3 pb-[30px] md:bottom-4 md:mx-0 md:rounded-xl md:border md:pb-3 md:shadow-lg"
     >
-      <div className="flex flex-col gap-2 @2xl:flex-row @2xl:items-center">
+      <div className="flex flex-col gap-2 @4xl:flex-row @4xl:items-center">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <Button
             type="button"
@@ -109,10 +118,10 @@ export function BulkActionBar({
           )}
         </div>
 
-        {/* Narrow bar: the offer actions in one menu, beside Add to collection. */}
+        {/* The offer actions in one menu, beside Add to collection and Share with circle. */}
         <div
           data-testid="bulk-actions-compact"
-          className="grid grid-cols-[auto_minmax(0,1fr)] gap-2 @2xl:hidden"
+          className="grid grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)] gap-2 @4xl:flex @4xl:items-center @[87.5rem]:hidden"
         >
           {/* Not modal: a modal menu locks the page's scroll, which stops this bar sticking, so on a
               phone the bar would drop to the end of the list and take the menu off screen. */}
@@ -145,18 +154,27 @@ export function BulkActionBar({
             variant="outline"
             disabled={disabled}
             onClick={onAddToCollection}
-            // Takes what's left beside Offers and wraps rather than overflow (Dutch on a small phone).
-            className="h-auto min-h-9 whitespace-normal pointer-coarse:min-h-11"
+            className={WRAPPING_ACTION}
           >
             <FolderPlus aria-hidden />
             {t("addToCollection")}
           </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={disabled}
+            onClick={onShareWithCircle}
+            className={WRAPPING_ACTION}
+          >
+            <Users aria-hidden />
+            {t("shareWithCircle")}
+          </Button>
         </div>
 
-        {/* Wide bar: every action is its own button. */}
+        {/* The widest bar: every action is its own button. */}
         <div
           data-testid="bulk-actions-inline"
-          className="hidden items-center gap-2 @2xl:flex"
+          className="hidden items-center gap-2 @[87.5rem]:flex"
         >
           {OFFER_ACTIONS.map(({ action, Icon }) => (
             <Button
@@ -180,6 +198,16 @@ export function BulkActionBar({
           >
             <FolderPlus aria-hidden />
             {t("addToCollection")}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={disabled}
+            onClick={onShareWithCircle}
+          >
+            <Users aria-hidden />
+            {t("shareWithCircle")}
           </Button>
         </div>
       </div>

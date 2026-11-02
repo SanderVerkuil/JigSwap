@@ -10,6 +10,7 @@ import {
   fireEvent,
   render,
   screen,
+  within,
 } from "@testing-library/react";
 import { getFunctionName } from "convex/server";
 import type { ComponentType, ReactNode } from "react";
@@ -433,5 +434,60 @@ describe("My Puzzles paging", () => {
     expect(mocks.asked[INDEX]).toEqual({});
     fireEvent.click(screen.getByRole("button", { name: "Select all (60)" }));
     expect(screen.getByText("60 selected")).toBeTruthy();
+  });
+});
+
+describe("My Puzzles bulk share with a circle", () => {
+  const SHARE = getFunctionName(gateway.sharing.shareCopiesToCircle);
+  const CIRCLE = {
+    _id: "circle_doc",
+    aggregateId: "circle_1",
+    name: "Neighbours",
+    memberCount: 4,
+    isOwnedByViewer: false,
+    viewerPermission: "Exchange",
+    createdAt: 1,
+  };
+  const OFFERED = { forTrade: false, forSale: false, forLend: true };
+
+  it("shares the selected copies the member owns, and leaves a housemate's out", async () => {
+    const mine = copy("mine", "Mine", { availability: OFFERED });
+    const unoffered = copy("unoffered", "Not on offer");
+    // A housemate's copy the member may manage: selectable, but only its owner may share it.
+    const theirs = {
+      ...copy("theirs", "Theirs", { availability: OFFERED }),
+      viewerAccess: "manage",
+    } as OwnedCopyView;
+    renderPage({ copies: [mine, unoffered, theirs] });
+    mocks.queries[getFunctionName(gateway.sharing.myCircles)] = [CIRCLE];
+    mocks.mutation.mockResolvedValue({ shared: 2, alreadyShared: 0 });
+
+    fireEvent.click(screen.getByRole("button", { name: "Select" }));
+    fireEvent.click(screen.getByRole("button", { name: "Select all (3)" }));
+    fireEvent.click(
+      within(screen.getByTestId("bulk-actions-inline")).getByRole("button", {
+        name: "Share with circle",
+      }),
+    );
+
+    expect(screen.getByText("Choose a circle for 2 puzzles.")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "1 belongs to a household member. Only the owner can share a puzzle.",
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        "1 isn't on offer, so circle members won't see it until you offer it.",
+      ),
+    ).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: /Neighbours/ }));
+    await vi.waitFor(() =>
+      expect(mocks.mutation).toHaveBeenCalledWith(SHARE, {
+        circleId: "circle_1",
+        copyIds: ["agg_mine", "agg_unoffered"],
+      }),
+    );
   });
 });

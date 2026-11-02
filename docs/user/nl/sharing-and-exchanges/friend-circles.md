@@ -199,6 +199,10 @@ Vink de kringen aan waarmee je hem wilt delen, vink de kringen uit waarmee je
 hem niet meer wilt delen, en klik op **Opslaan**. Kringen waarin je **Alleen
 bekijken** hebt, kun je niet aanvinken.
 
+Wil je vanuit **Mijn Puzzels** veel puzzels tegelijk delen, klik dan op
+**Selecteren**, kies de puzzels en kies **Delen met kring**. Je ziet dan hoeveel
+er zijn gedeeld en welke niet.
+
 Kringleden kunnen een gedeeld exemplaar zien zolang je het aanbiedt om te
 ruilen, uit te lenen of te verkopen, en je nog lid bent van de kring. De lijst
 markeert de puzzels die ze niet zien: **Niet aangeboden** (bied hem eerst aan

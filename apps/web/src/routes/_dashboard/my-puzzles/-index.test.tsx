@@ -47,6 +47,10 @@ vi.mock("@/gateway", () => ({
       updateOffers: "updateOffers",
     },
     collections: { addOwnedPuzzle: "addOwnedPuzzle" },
+    sharing: {
+      myCircles: "myCircles",
+      shareCopiesToCircle: "shareCopiesToCircle",
+    },
     household: { copies: "householdCopies", mine: "householdMine" },
     lending: { lentOut: "lentOut", recallLoan: "recallLoan" },
   },

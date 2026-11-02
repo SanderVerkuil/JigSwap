@@ -54,10 +54,12 @@ Click **Select** next to the puzzle count, then click the puzzles you want, or
 bottom of the list then offers:
 
 - **Offer for swap** and **Offer to lend**: adds that offer and keeps any other
-  offers a puzzle already has. Where the bar is narrow, these and **Withdraw
-  offers** sit under **Offers**.
+  offers a puzzle already has. Unless your screen is very wide, these and
+  **Withdraw offers** sit under **Offers**.
 - **Withdraw offers**: takes every offer off the selected puzzles.
 - **Add to collection**: puts the selected puzzles in a collection you pick.
+- **Share with circle**: shares the selected puzzles with a circle you pick.
+  Circle members see a shared puzzle while it's on offer.
 
 A message then says what changed and what didn't, with **Undo** for offers. A
 puzzle that's out on loan or in an ongoing exchange can't be offered, but you
@@ -65,8 +67,9 @@ can always withdraw an offer. These actions never change your choice of who can 
 private copy is visible while it's on offer and private again once you withdraw
 every offer.
 
-You can select a housemate's puzzle only if they let you manage it, and it stays
-out of your own collections. **Done** ends the selection.
+You can select a housemate's puzzle only if they let you manage it. It stays out
+of your own collections, and only its owner can share it with a circle. **Done**
+ends the selection.
 
 ## The copy detail page
 

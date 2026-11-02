@@ -2,6 +2,7 @@
 import { gateway } from "@/gateway";
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { getFunctionName } from "convex/server";
+import { ConvexError } from "convex/values";
 import type { ReactNode } from "react";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -47,6 +48,7 @@ vi.mock("sonner", () => ({
 
 const UPDATE_OFFERS = getFunctionName(gateway.library.updateOffers);
 const ADD_TO_COLLECTION = getFunctionName(gateway.collections.addOwnedPuzzle);
+const SHARE_COPIES = getFunctionName(gateway.sharing.shareCopiesToCircle);
 const CLOSED = { forTrade: false, forLend: false, forSale: false };
 
 const copy = (id: string, extra: Partial<BulkCopy> = {}): BulkCopy => ({
@@ -278,5 +280,151 @@ describe("bulk add to collection", () => {
     const { message, options } = lastToast(mocks.toastSuccess);
     expect(message).toBe("1 puzzle is now in Holiday");
     expect(options.description).toBe("1 couldn't be added. Try again.");
+  });
+});
+
+describe("bulk share with a circle", () => {
+  const OFFERED = { ...CLOSED, forLend: true };
+  const CIRCLE = { aggregateId: "circle_1", name: "Neighbours" };
+  const offered = (id: string) => copy(id, { availability: OFFERED });
+  const refusal = (code: string) => new ConvexError({ code, message: code });
+
+  const shareCalls = () =>
+    mocks.mutation.mock.calls
+      .filter(([name]) => name === SHARE_COPIES)
+      .map(([, args]) => args as { circleId: string; copyIds: string[] });
+
+  // Answers shareCopiesToCircle as the server would: all or nothing, one refused copy refuses all.
+  const serverShares =
+    ({ gone = [] as string[], already = [] as string[] } = {}) =>
+    async (_name: string, args: unknown): Promise<unknown> => {
+      const { copyIds } = args as { copyIds: string[] };
+      if (copyIds.some((id) => gone.includes(id)))
+        throw refusal("CopyNotFound");
+      const alreadyShared = copyIds.filter((id) => already.includes(id)).length;
+      return { shared: copyIds.length - alreadyShared, alreadyShared };
+    };
+
+  it("shares the member's own copies and says what it left out", async () => {
+    mocks.mutation.mockImplementation(serverShares({ already: ["agg_c"] }));
+    const { result } = renderActions({ housemates: ["b"] });
+    await act(() =>
+      result.current.shareWithCircle(CIRCLE, [
+        offered("a"),
+        offered("b"),
+        offered("c"),
+        offered("d"),
+      ]),
+    );
+
+    expect(shareCalls()).toEqual([
+      { circleId: "circle_1", copyIds: ["agg_a", "agg_c", "agg_d"] },
+    ]);
+    const { message, options } = lastToast(mocks.toastSuccess);
+    expect(message).toBe("Shared 2 puzzles with Neighbours");
+    expect(options.description).toBe(
+      "1 was already shared there. 1 belongs to a household member. Only the owner can share a puzzle.",
+    );
+  });
+
+  it("says when circle members won't see what was shared", async () => {
+    mocks.mutation.mockImplementation(serverShares());
+    const { result } = renderActions();
+    await act(() =>
+      result.current.shareWithCircle(CIRCLE, [
+        offered("a"),
+        copy("b"),
+        copy("c", { visibility: "private" }),
+      ]),
+    );
+    expect(lastToast(mocks.toastSuccess).options.description).toBe(
+      "2 aren't on offer, so circle members won't see them until you offer them.",
+    );
+  });
+
+  it("names the copy that's gone and still shares the rest of its batch", async () => {
+    mocks.mutation.mockImplementation(serverShares({ gone: ["agg_b"] }));
+    const { result } = renderActions();
+    await act(() =>
+      result.current.shareWithCircle(CIRCLE, [
+        offered("a"),
+        offered("b"),
+        offered("c"),
+      ]),
+    );
+    const { message, options } = lastToast(mocks.toastSuccess);
+    expect(message).toBe("Shared 2 puzzles with Neighbours");
+    expect(options.description).toBe("1 is no longer in your library.");
+  });
+
+  it("doesn't warn about a copy that wasn't shared after all", async () => {
+    mocks.mutation.mockImplementation(serverShares({ gone: ["agg_b"] }));
+    const { result } = renderActions();
+    await act(() =>
+      result.current.shareWithCircle(CIRCLE, [offered("a"), copy("b")]),
+    );
+    expect(lastToast(mocks.toastSuccess).options.description).toBe(
+      "1 is no longer in your library.",
+    );
+  });
+
+  it("reports the copies a failed call took with it", async () => {
+    let call = 0;
+    mocks.mutation.mockImplementation(async (name, args) => {
+      call += 1;
+      if (call === 1) throw new Error("offline");
+      return serverShares()(name, args);
+    });
+    const { result } = renderActions();
+    await act(() =>
+      result.current.shareWithCircle(
+        CIRCLE,
+        Array.from({ length: 120 }, (_, i) => offered(`c${i}`)),
+      ),
+    );
+    const { message, options } = lastToast(mocks.toastSuccess);
+    expect(message).toBe("Shared 20 puzzles with Neighbours");
+    expect(options.description).toBe("100 couldn't be shared. Try again.");
+  });
+
+  it("says why the circle refused, when it refused everything", async () => {
+    mocks.mutation.mockRejectedValue(refusal("CannotShareCopy"));
+    const { result } = renderActions();
+    await act(() => result.current.shareWithCircle(CIRCLE, [offered("a")]));
+    expect(lastToast(mocks.toastError).message).toBe(
+      "You have view-only access in this circle, so you can't share puzzles here.",
+    );
+    expect(mocks.toastSuccess).not.toHaveBeenCalled();
+  });
+
+  it("shows an error when nothing could be shared for no stated reason", async () => {
+    mocks.mutation.mockRejectedValue(new Error("offline"));
+    const { result } = renderActions();
+    await act(() =>
+      result.current.shareWithCircle(CIRCLE, [offered("a"), offered("b")]),
+    );
+    expect(lastToast(mocks.toastError).message).toBe(
+      "2 couldn't be shared. Try again.",
+    );
+  });
+
+  it("calls nothing for housemates' copies alone, and says why", async () => {
+    const { result } = renderActions({ housemates: ["a"] });
+    await act(() => result.current.shareWithCircle(CIRCLE, [offered("a")]));
+    expect(shareCalls()).toEqual([]);
+    const { message, options } = lastToast(mocks.toastInfo);
+    expect(message).toBe("Nothing new was shared with Neighbours");
+    expect(options.description).toBe(
+      "1 belongs to a household member. Only the owner can share a puzzle.",
+    );
+  });
+
+  it("says nothing new was shared when everything already was", async () => {
+    mocks.mutation.mockImplementation(serverShares({ already: ["agg_a"] }));
+    const { result } = renderActions();
+    await act(() => result.current.shareWithCircle(CIRCLE, [offered("a")]));
+    const { message, options } = lastToast(mocks.toastInfo);
+    expect(message).toBe("Nothing new was shared with Neighbours");
+    expect(options.description).toBe("1 was already shared there.");
   });
 });

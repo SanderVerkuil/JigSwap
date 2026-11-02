@@ -684,6 +684,7 @@
       "offerLend": "Offer to lend",
       "withdraw": "Withdraw offers",
       "addToCollection": "Add to collection",
+      "shareWithCircle": "Share with circle",
       "result": {
         "offerSwap": "{count, plural, one {Offered # puzzle for swap} other {Offered # puzzles for swap}}",
         "offerLend": "{count, plural, one {Offered # puzzle to lend} other {Offered # puzzles to lend}}",
@@ -707,6 +708,16 @@
         "noneAdded": "Nothing was added to {name}",
         "housemates": "{count, plural, one {# belongs to a household member and stays out of your collections.} other {# belong to household members and stay out of your collections.}}",
         "failed": "{count, plural, one {# couldn't be added. Try again.} other {# couldn't be added. Try again.}}"
+      },
+      "circle": {
+        "title": "Share with a circle",
+        "description": "{count, plural, =0 {There's nothing here you can share.} one {Choose a circle for # puzzle.} other {Choose a circle for # puzzles.}}",
+        "housemates": "{count, plural, one {# belongs to a household member. Only the owner can share a puzzle.} other {# belong to household members. Only the owner can share a puzzle.}}",
+        "hidden": "{count, plural, one {# isn't on offer, so circle members won't see it until you offer it.} other {# aren't on offer, so circle members won't see them until you offer them.}}",
+        "alreadyShared": "{count, plural, one {# was already shared there.} other {# were already shared there.}}",
+        "gone": "{count, plural, one {# is no longer in your library.} other {# are no longer in your library.}}",
+        "failed": "{count, plural, one {# couldn't be shared. Try again.} other {# couldn't be shared. Try again.}}",
+        "nothingShared": "Nothing new was shared with {name}"
       }
     }
   },

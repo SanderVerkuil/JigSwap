@@ -7,9 +7,11 @@ import { AddToCollectionDialog } from "@/components/library/add-to-collection-di
 import { BulkActionBar } from "@/components/library/bulk-action-bar";
 import {
   canSelectCopy,
+  planCircleShare,
   selectedInView,
   toggleSelection,
 } from "@/components/library/bulk-selection";
+import { BulkShareDialog } from "@/components/library/bulk-share-dialog";
 import {
   useCopyCardActions,
   useSolveStateByCopyId,
@@ -188,6 +190,7 @@ function PuzzlesPage() {
     () => new Set(),
   );
   const [collectionPickerOpen, setCollectionPickerOpen] = useState(false);
+  const [circlePickerOpen, setCirclePickerOpen] = useState(false);
 
   // A lean row per copy, only while a view needs the whole library: a search, a sort or a status
   // pill, or selection mode (Select all covers every copy the filters show, not just the loaded
@@ -313,9 +316,10 @@ function PuzzlesPage() {
     setSelecting((on) => !on);
     setSelected(new Set());
   };
-  const bulk = useBulkCopyActions({
-    isHousemateCopy: (copyDocId) => householdAccessById.has(copyDocId),
-  });
+  const isHousemateCopy = (copyDocId: string) =>
+    householdAccessById.has(copyDocId);
+  const bulk = useBulkCopyActions({ isHousemateCopy });
+  const circleSharePlan = planCircleShare(selectedCopies, isHousemateCopy);
 
   // The page title lives in the shell page head; publish the actions there so the
   // page body carries no duplicate header. The count lives beside the filters. Secondary
@@ -635,6 +639,7 @@ function PuzzlesPage() {
           onExit={toggleSelecting}
           onOffer={(action) => void bulk.offer(action, selectedCopies)}
           onAddToCollection={() => setCollectionPickerOpen(true)}
+          onShareWithCircle={() => setCirclePickerOpen(true)}
         />
       )}
       <AddToCollectionDialog
@@ -644,6 +649,14 @@ function PuzzlesPage() {
         onPick={(collection) =>
           bulk.addToCollection(collection, selectedCopies)
         }
+      />
+      <BulkShareDialog
+        open={circlePickerOpen}
+        onOpenChange={setCirclePickerOpen}
+        count={circleSharePlan.copyIds.length}
+        housemates={circleSharePlan.housemates}
+        hidden={circleSharePlan.hidden.length}
+        onPick={(circle) => bulk.shareWithCircle(circle, selectedCopies)}
       />
 
       {dialogs}

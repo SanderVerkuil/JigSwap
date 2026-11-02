@@ -56,11 +56,13 @@ die je wilt, of kies **Alles selecteren** voor alles wat je huidige zoekterm en
 filters tonen. Onder aan de lijst verschijnt dan een balk met:
 
 - **Aanbieden voor ruil** en **Aanbieden om uit te lenen**: voegt dat aanbod toe
-  en houdt wat een puzzel al aanbood. Is de balk smal, dan staan deze en
-  **Aanbod intrekken** onder **Aanbod**.
+  en houdt wat een puzzel al aanbood. Tenzij je scherm heel breed is, staan deze
+  en **Aanbod intrekken** onder **Aanbod**.
 - **Aanbod intrekken**: haalt elk aanbod van de geselecteerde puzzels af.
 - **Aan collectie toevoegen**: zet de geselecteerde puzzels in een collectie die
   je kiest.
+- **Delen met kring**: deelt de geselecteerde puzzels met een kring die je kiest.
+  Kringleden zien een gedeelde puzzel zolang je hem aanbiedt.
 
 Daarna zie je wat er is veranderd en wat niet, met **Ongedaan maken** voor het
 aanbod. Een uitgeleende puzzel of een puzzel in een lopende uitwisseling kun je
@@ -69,8 +71,8 @@ een kopie kan zien: een privékopie is zichtbaar zolang je hem aanbiedt en weer
 privé zodra je elk aanbod intrekt.
 
 Een puzzel van een huisgenoot kun je alleen selecteren als die jou hem laat
-beheren, en hij komt niet in je eigen collecties. Met **Klaar** stop je met
-selecteren.
+beheren. Hij komt niet in je eigen collecties, en alleen de eigenaar kan hem met
+een kring delen. Met **Klaar** stop je met selecteren.
 
 ## De detailpagina van een kopie
 

@@ -684,6 +684,7 @@
       "offerLend": "Aanbieden om uit te lenen",
       "withdraw": "Aanbod intrekken",
       "addToCollection": "Aan collectie toevoegen",
+      "shareWithCircle": "Delen met kring",
       "result": {
         "offerSwap": "{count, plural, one {# puzzel aangeboden voor ruil} other {# puzzels aangeboden voor ruil}}",
         "offerLend": "{count, plural, one {# puzzel aangeboden om uit te lenen} other {# puzzels aangeboden om uit te lenen}}",
@@ -707,6 +708,16 @@
         "noneAdded": "Er is niets aan {name} toegevoegd",
         "housemates": "{count, plural, one {# is van een huisgenoot en komt niet in je collecties.} other {# zijn van huisgenoten en komen niet in je collecties.}}",
         "failed": "{count, plural, one {# kon niet worden toegevoegd. Probeer het opnieuw.} other {# konden niet worden toegevoegd. Probeer het opnieuw.}}"
+      },
+      "circle": {
+        "title": "Met een kring delen",
+        "description": "{count, plural, =0 {Hier zit niets bij dat je kunt delen.} one {Kies een kring voor # puzzel.} other {Kies een kring voor # puzzels.}}",
+        "housemates": "{count, plural, one {# is van een huisgenoot. Alleen de eigenaar kan een puzzel delen.} other {# zijn van huisgenoten. Alleen de eigenaar kan een puzzel delen.}}",
+        "hidden": "{count, plural, one {# wordt niet aangeboden, dus kringleden zien hem pas als je hem aanbiedt.} other {# worden niet aangeboden, dus kringleden zien ze pas als je ze aanbiedt.}}",
+        "alreadyShared": "{count, plural, one {# was daar al gedeeld.} other {# waren daar al gedeeld.}}",
+        "gone": "{count, plural, one {# staat niet meer in je bibliotheek.} other {# staan niet meer in je bibliotheek.}}",
+        "failed": "{count, plural, one {# kon niet worden gedeeld. Probeer het opnieuw.} other {# konden niet worden gedeeld. Probeer het opnieuw.}}",
+        "nothingShared": "Er is niets nieuws gedeeld met {name}"
       }
     }
   },
