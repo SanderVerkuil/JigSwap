@@ -23,11 +23,15 @@ Your library is the set of physical puzzle **copies** you personally own. (A "co
    - **All**
    - **Available**
    - **For Trade**
-   - **For Lend**
+   - **For Loan**
    - **In Progress**
    - **Completed**
-6. In a household, the **Whose** menu shows everyone's puzzles, only yours, or
-   only your housemates'.
+6. In a household with someone else in it, the **Whose** menu shows everyone's
+   puzzles, only yours, or only your housemates'.
+
+On a phone, the status pills, **Whose** and the sort order are behind the
+**Filters** button next to the search box. Filters that are on show as chips
+under it: tap one to remove it.
 
 Your search, sort, filters and layout are kept in the page address, so they're
 still there when you come back from a puzzle, reload the page or share the
@@ -42,6 +46,7 @@ From a puzzle card you can:
 
 - **View** — open the full copy detail page.
 - **Edit** — change the copy's details.
+- **Offer for swap** and **Offer to lend** — switch that offer on or off, with an Undo.
 - **Delete** — remove the copy from your library (with confirmation).
 - **Log a solve** or **Start puzzle** — record that you've completed (or started) the puzzle.
 - **Recall** — once a lent-out puzzle is back with you, use this to close the
@@ -148,8 +153,8 @@ Only approved photos can be used as a cover.
 Each copy is either visible or private. Set it when you **Edit** the copy,
 under **Who can see this copy**:
 
-- **Visible to the community**: members you follow each other with can see it
-  in your library.
+- **Visible**: members you follow each other with can see it in your library,
+  and anyone can while it's on offer.
 - **Private — only you and your household**: hidden from everyone else,
   friends included.
 

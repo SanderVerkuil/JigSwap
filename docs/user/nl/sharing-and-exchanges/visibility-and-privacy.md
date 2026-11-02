@@ -47,7 +47,7 @@ ook voor wederzijdse volgers.
 3. Klik op **Opslaan**.
 
 Het exemplaar krijgt nu een badge **Privé**. Wil je het weer tonen, kies dan
-**Zichtbaar voor de community**. Nieuwe exemplaren zijn zichtbaar.
+**Zichtbaar**. Nieuwe exemplaren zijn zichtbaar.
 
 Een privé-exemplaar blijft zichtbaar voor:
 

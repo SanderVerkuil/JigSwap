@@ -22,13 +22,17 @@ Je bibliotheek is de verzameling fysieke puzzel**kopieën** die jij persoonlijk 
 5. Gebruik de **statusfilter-pillen** om te beperken wat je ziet:
    - **Alles**
    - **Beschikbaar**
-   - **Te ruilen**
+   - **Te ruil**
    - **Te leen**
    - **Bezig**
    - **Voltooid**
-6. Zit je in een huishouden, dan kies je in het menu **Van wie** of je de
-   puzzels van iedereen ziet, alleen die van jou of alleen die van je
+6. Zit er nog iemand in je huishouden, dan kies je in het menu **Van wie** of
+   je de puzzels van iedereen ziet, alleen die van jou of alleen die van je
    huisgenoten.
+
+Op een telefoon staan de statuspillen, **Van wie** en de volgorde achter de knop
+**Filters** naast het zoekvak. Filters die aanstaan, zie je daaronder als
+chips: tik op een chip om hem weg te halen.
 
 Je zoekterm, volgorde, filters en weergave staan in het adres van de pagina.
 Ze blijven dus staan als je terugkomt van een puzzel, de pagina herlaadt of de
@@ -43,6 +47,7 @@ Vanaf een puzzelkaart kun je:
 
 - **Bekijken** — open de volledige detailpagina van de kopie.
 - **Bewerken** — wijzig de details van de kopie.
+- **Aanbieden voor ruil** en **Aanbieden om uit te lenen** — zet dat aanbod aan of uit, en maak het zo nodig ongedaan.
 - **Verwijderen** — haal de kopie uit je bibliotheek (met bevestiging).
 - **Voltooiing vastleggen** of **Puzzel starten** — leg vast dat je de puzzel hebt voltooid (of gestart).
 - **Terugvragen** — heb je een uitgeleende puzzel terug, dan sluit je hiermee de
@@ -157,8 +162,8 @@ Alleen goedgekeurde foto's kunnen als omslag worden gebruikt.
 Elke kopie is zichtbaar of privé. Je stelt dit in als je de kopie **Bewerkt**,
 onder **Wie kan dit exemplaar zien**:
 
-- **Zichtbaar voor de community**: leden die je wederzijds volgt, kunnen hem
-  zien in je bibliotheek.
+- **Zichtbaar**: leden die je wederzijds volgt, kunnen hem zien in je
+  bibliotheek, en iedereen zolang je hem aanbiedt.
 - **Privé — alleen jij en je huishouden**: verborgen voor alle anderen, ook
   voor je vrienden.
 

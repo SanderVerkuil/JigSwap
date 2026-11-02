@@ -67,9 +67,9 @@ Gebruik dit om je plank snel te vullen, bijvoorbeeld als je net lid bent.
 3. Klik op elke puzzel die je bezit om hem te kiezen. Klik er nog eens op om
    hem weer weg te halen. Puzzels die je al bezit, zijn gemarkeerd met
    **Op je plank**.
-4. Bekijk je keuzes onder **Gekozen**. Per puzzel kun je
-   **Beschikbaar om te ruilen** aanzetten. Doe je dat niet, dan worden je
-   keuzes niet aangeboden om te ruilen of uit te lenen. Op een telefoon blijft
+4. Bekijk je keuzes onder **Gekozen**. Per puzzel kun je **Te ruil** en
+   **Te leen** aanzetten. Doe je dat niet, dan worden je keuzes niet aangeboden
+   om te ruilen of uit te lenen. Op een telefoon blijft
    de knop **N puzzels toevoegen** onderaan het scherm staan zodra je iets hebt
    gekozen; tik op **Gekozen (N)** ernaast om je keuzes te zien.
 5. Klik op **N puzzels toevoegen** (bijvoorbeeld **4 puzzels toevoegen**).

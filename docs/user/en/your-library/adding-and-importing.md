@@ -64,7 +64,8 @@ Use this to fill your shelf quickly, for example when you first join.
 3. Click each puzzle you own to pick it. Click it again to remove it. Puzzles
    you already own are marked **On your shelf**.
 4. Review your picks under **Picked**. For each one, you can switch on
-   **Available to swap**. Picks aren't offered for swap or loan unless you do.
+   **For swap** and **To lend**. Picks aren't offered for swap or loan unless
+   you do.
    On a phone, the **Add N puzzles** button stays at the bottom of the screen
    once you've picked something; tap **Picked (N)** next to it to see your
    picks.
