@@ -1,8 +1,24 @@
 // @vitest-environment happy-dom
-import { cleanup, renderHook } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { cleanup, render, renderHook, screen } from "@testing-library/react";
+import type { ComponentProps } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { toPlankBox, useHourlySeed } from "./hero";
+import en from "../../../../locales/en.json";
+import { Hero, toPlankBox, useHourlySeed } from "./hero";
+
+vi.mock("@/compat/link", () => ({
+  Link: ({ href, ...rest }: ComponentProps<"a"> & { href: string }) => (
+    <a href={href} {...rest} />
+  ),
+}));
+vi.mock("@/components/marketing/use-start-href", () => ({
+  useStartHref: () => "/sign-up",
+}));
+vi.mock("next-themes", () => ({
+  useTheme: () => ({ resolvedTheme: "light" }),
+}));
 
 function Probe() {
   const seed = useHourlySeed();
@@ -76,5 +92,61 @@ describe("toPlankBox", () => {
       toPlankBox({ ...puzzle, image: "https://cdn.test/original" }, 0).cover,
     ).toBe("https://cdn.test/original");
     expect(toPlankBox({ ...puzzle, image: null }, 0).cover).toBeUndefined();
+  });
+});
+
+describe("Hero", () => {
+  afterEach(cleanup);
+
+  const renderHero = () =>
+    render(
+      <QueryClientProvider
+        client={
+          new QueryClient({ defaultOptions: { queries: { enabled: false } } })
+        }
+      >
+        <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+          <Hero />
+        </IntlProvider>
+      </QueryClientProvider>,
+    );
+
+  // The plank titles are on the sample boxes. A title can sit in the backdrop and in the phone's
+  // plank at once, so these find the plank by how it is shown.
+  const planksOf = (container: HTMLElement, selector: string) =>
+    [...container.querySelectorAll<HTMLElement>(selector)].filter((el) =>
+      el.textContent?.includes("Boslicht"),
+    );
+
+  it("puts the phone's plank in the page flow below the copy, not behind it", () => {
+    const { container } = renderHero();
+    const [plank] = planksOf(container, ".min-\\[768px\\]\\:hidden");
+    expect(plank).toBeTruthy();
+    const trustRowOrCtas = screen.getByRole("link", {
+      name: "See the features",
+    });
+    expect(
+      trustRowOrCtas.compareDocumentPosition(plank) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    // Sharp: outside the frosted panel, whose blur only applies from 768px up.
+    expect(
+      plank.closest(".min-\\[768px\\]\\:backdrop-blur-\\[9px\\]"),
+    ).toBeNull();
+  });
+
+  it("shows the backdrop's CSS planks only where they clear the copy's panel", () => {
+    const { container } = renderHero();
+    const stacks = planksOf(container, ".max-\\[1199px\\]\\:hidden");
+    expect(stacks).toHaveLength(1);
+    // An inline display would beat the class that hides it.
+    expect(stacks[0].style.display).toBe("");
+  });
+
+  it("sets the lead in the body colour, which holds its contrast over the shelf art", () => {
+    renderHero();
+    const lead = screen.getByText(en.marketing.home.heroLead);
+    expect(lead.className).toContain("text-mk-text-body");
+    expect(lead.className).not.toContain("text-mk-text-muted");
   });
 });

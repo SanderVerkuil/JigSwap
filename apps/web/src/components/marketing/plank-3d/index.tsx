@@ -98,8 +98,11 @@ export function JigPlank3D({ rows = [] }: { rows?: PlankBox[][] }) {
           whole stack is scaled down so the boxes read smaller, matching the
           scene. Other JigPlank call sites (features/about) are untouched —
           the stacking lives here, not in JigPlank itself.
-          Positioned right-of-center, vertically centered. */}
+          Positioned right-of-center, vertically centered. Below 1200px this
+          stack would sit under the hero's frosted panel and blur into smudges
+          behind the copy, so narrower screens get the scene or no art here. */}
       <div
+        className="flex max-[1199px]:hidden"
         style={{
           position: "absolute",
           right: "6%",
@@ -108,7 +111,6 @@ export function JigPlank3D({ rows = [] }: { rows?: PlankBox[][] }) {
           transition: "opacity .45s ease",
           opacity: sceneReady ? 0 : 1,
           filter: "drop-shadow(0 30px 40px rgb(40 30 80 / .16))",
-          display: "flex",
           flexDirection: "column",
           alignItems: "center",
           gap: 46,
