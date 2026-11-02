@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { gateway } from "@/gateway";
 import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
+import { LIBRARY_ROWS_MAX } from "@jigswap/contracts";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   cleanup,
@@ -154,6 +155,23 @@ describe("MyHouseholdCopies", () => {
     expect(buttons).not.toContain("Set access");
     expect(buttons).not.toContain("Select none");
     expect(els.map(textOf)).not.toContain("0 selected");
+  });
+
+  it("says Select all reaches only the newest copies once the read's maximum came back", () => {
+    const note = (count: number) =>
+      elementsOf(
+        render(
+          Array.from({ length: count }, (_, i) =>
+            copy(`c${i}`, `Puzzle ${i}`, "view"),
+          ),
+        ),
+      ).filter(
+        (e) =>
+          e.tagName === "p" &&
+          textOf(e) === `Showing your newest ${LIBRARY_ROWS_MAX} puzzles.`,
+      );
+    expect(note(LIBRARY_ROWS_MAX - 1)).toHaveLength(0);
+    expect(note(LIBRARY_ROWS_MAX)).toHaveLength(1);
   });
 
   it("shows the empty state in Dutch when the member has no puzzles", () => {

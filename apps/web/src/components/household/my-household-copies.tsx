@@ -1,3 +1,4 @@
+import { PickerCapNote } from "@/components/library/picker-cap-note";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -127,6 +128,7 @@ export function MyHouseholdCopies({
               {t("selectAll")}
             </Button>
           </div>
+          <PickerCapNote shown={copies.length} />
 
           {visible.length === 0 ? (
             <p className="text-muted-foreground text-sm">{t("noMatches")}</p>
