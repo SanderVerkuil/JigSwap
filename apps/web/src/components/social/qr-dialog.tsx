@@ -24,7 +24,10 @@ import { useMyInviteLink } from "./use-my-invite-link";
 // Share carry the personal invite link rather than that address. The QR card is always white —
 // dark mode must never invert the modules or phone cameras stop reading it.
 const DIALOG_CONTENT_CLASS =
-  "flex h-svh max-h-svh w-full max-w-full flex-col items-center justify-center gap-6 rounded-none sm:h-auto sm:max-h-[90svh] sm:max-w-md sm:rounded-lg";
+  "flex h-svh max-h-svh w-full max-w-full flex-col justify-start rounded-none sm:h-auto sm:max-h-[90svh] sm:max-w-md sm:rounded-lg";
+// Centred by its own auto margins, not justify-center on the dialog: when the content is taller than
+// a short phone, that centring pushes the top out of the scroll area for good.
+const DIALOG_BODY_CLASS = "my-auto flex w-full flex-col items-center gap-6";
 
 type QrDialogProps = {
   memberId: string;
@@ -63,14 +66,16 @@ function QrCard(props: QrDialogProps & { onNavigate?: () => void }) {
 
   return (
     <>
-      <div className="flex flex-col items-center gap-2">
+      <div className="flex max-w-full flex-col items-center gap-2">
         <Avatar className="size-16">
           {props.avatarUrl ? <AvatarImage src={props.avatarUrl} /> : null}
           <AvatarFallback>
             <MemberInitial source={nameSource} />
           </AvatarFallback>
         </Avatar>
-        <span className="font-heading text-lg">{displayName(nameSource)}</span>
+        <span className="font-heading max-w-full text-center text-lg [overflow-wrap:anywhere]">
+          {displayName(nameSource)}
+        </span>
       </div>
       {failed ? (
         <InviteLinkError onRetry={refetch} />
@@ -97,12 +102,14 @@ function QrCard(props: QrDialogProps & { onNavigate?: () => void }) {
             )}
           </div>
           {displayUrl ? (
-            <span className="text-muted-foreground font-mono text-sm">
+            <span className="text-muted-foreground max-w-full text-center font-mono text-sm break-all">
               {displayUrl}
             </span>
           ) : null}
-          <p className="text-muted-foreground text-sm">{t("scanHint")}</p>
-          <div className="flex gap-3">
+          <p className="text-muted-foreground text-center text-sm">
+            {t("scanHint")}
+          </p>
+          <div className="flex flex-wrap justify-center gap-3">
             <CopyLinkButton url={qrUrl} />
             {canShare ? (
               <Button
@@ -159,8 +166,10 @@ export function QrDialog(props: QrDialogProps) {
         </Button>
       </DialogTrigger>
       <DialogContent className={DIALOG_CONTENT_CLASS}>
-        <DialogTitle className="sr-only">{t("dialogTitle")}</DialogTitle>
-        <QrCard {...props} onNavigate={() => setOpen(false)} />
+        <div className={DIALOG_BODY_CLASS}>
+          <DialogTitle className="sr-only">{t("dialogTitle")}</DialogTitle>
+          <QrCard {...props} onNavigate={() => setOpen(false)} />
+        </div>
       </DialogContent>
     </Dialog>
   );
@@ -181,14 +190,18 @@ export function QrDialogAutoOpen(
   return (
     <Dialog open onOpenChange={(open) => !open && props.onClose()}>
       <DialogContent className={DIALOG_CONTENT_CLASS}>
-        <DialogTitle className="font-heading text-xl">
-          {props.title}
-        </DialogTitle>
-        <p className="text-muted-foreground text-sm">{props.body}</p>
-        <QrCard {...props} onNavigate={props.onClose} />
-        <Button variant="ghost" onClick={props.onClose}>
-          {t("loopSkip")}
-        </Button>
+        <div className={DIALOG_BODY_CLASS}>
+          <DialogTitle className="font-heading text-xl">
+            {props.title}
+          </DialogTitle>
+          <p className="text-muted-foreground text-center text-sm">
+            {props.body}
+          </p>
+          <QrCard {...props} onNavigate={props.onClose} />
+          <Button variant="ghost" onClick={props.onClose}>
+            {t("loopSkip")}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );

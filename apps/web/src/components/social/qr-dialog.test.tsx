@@ -201,6 +201,24 @@ describe("QR card while the link is on its way or refused", () => {
   });
 });
 
+describe("QR card on a phone", () => {
+  // No layout in happy-dom: these pin the classes; the geometry is checked in a browser.
+  it("lets a long unbroken handle wrap inside the dialog", async () => {
+    renderDialog("mara", "wilhelminavanoranjenassau1");
+    const caption = await screen.findByText(/wilhelminavanoranjenassau1$/);
+    expect(caption.classList).toContain("break-all");
+    expect(caption.classList).toContain("max-w-full");
+  });
+
+  it("scrolls a too-tall card from its top: the dialog never centres what overflows", async () => {
+    renderDialog("mara");
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog.classList).toContain("justify-start");
+    expect(dialog.classList).not.toContain("justify-center");
+    expect(dialog.firstElementChild?.classList).toContain("my-auto");
+  });
+});
+
 describe("QrDialog caption", () => {
   it("shows the server's canonical handle, not the username (SEC-07)", async () => {
     renderDialog("mara", "mara-puzzles");
