@@ -27,7 +27,10 @@ const mocks = vi.hoisted(() => ({
   createPuzzle: vi.fn<(args: unknown) => Promise<unknown>>(),
 }));
 
-vi.mock("@/components/add-puzzle", () => ({
+vi.mock("@/components/add-puzzle", async () => ({
+  // The text bounds and the refusal mapping stay real: the refusal mapping is under test here.
+  ...(await vi.importActual("@/components/add-puzzle/catalog-text-limits")),
+  ...(await vi.importActual("@/components/add-puzzle/contribute-error")),
   AddPuzzleLayout: ({ form }: { form: ReactNode }) => <>{form}</>,
   COVER_SWATCHES: ["#123456"],
   DIFFICULTY_OPTIONS: [],
