@@ -15,6 +15,9 @@ import { definitionTotalsOf } from "../library/definitionStats";
 
 // The most definitions one page returns, whatever the client asks for (the web asks for 20).
 export const PUBLIC_CATALOG_MAX_PAGE = 40;
+// The most rows one call reads of a brand to apply a piece range to them (this read is anonymous).
+// A page cut short by this comes back short, even empty, with the cursor where it stopped.
+export const PUBLIC_CATALOG_FILTER_READS = 500;
 
 // UNAUTHENTICATED paginated catalog list for the public /catalog page: approved definitions only
 // (the standard leak gate), newest first, optionally narrowed by a search term (search index,
@@ -24,8 +27,11 @@ export const PUBLIC_CATALOG_MAX_PAGE = 40;
 // copies the definition has. A page holds 1..PUBLIC_CATALOG_MAX_PAGE definitions; the page walks
 // them by hand with `cursor`, so a client's endCursor (which would override that) is dropped.
 //
-// Sort is newest-first ONLY: sorting by rating would require a denormalized per-definition rating
-// (a computed aggregate can't order a paginated index scan) — deliberately deferred.
+// Sort is newest-first, except that a piece range without a brand reads by_status_pieces: largest
+// first and newest first within one count, so a bucket of mostly 1,000-piece puzzles still reads as
+// newest first, and a range nothing is in costs nothing. Sorting by rating would require a
+// denormalized per-definition rating (a computed aggregate can't order a paginated index scan) —
+// deliberately deferred.
 
 export const browsePublicCatalog = query({
   args: {
@@ -45,26 +51,71 @@ export const browsePublicCatalog = query({
       PUBLIC_CATALOG_MAX_PAGE,
     );
 
-    // brand/piece narrowing shared by both branches (status is handled per-branch: at the search
-    // index for the search branch, at the by_status / by_status_brand index for the plain branch).
-    const matchesFacets = (p: Doc<"puzzles">): boolean =>
-      (args.brand === undefined || p.brand === args.brand) &&
-      (args.pieceMin === undefined || p.pieceCount >= args.pieceMin) &&
-      (args.pieceMax === undefined || p.pieceCount <= args.pieceMax);
+    const { brand, pieceMin, pieceMax } = args;
+    if (
+      pieceMin !== undefined &&
+      pieceMax !== undefined &&
+      pieceMin > pieceMax
+    ) {
+      return { page: [], isDone: true, continueCursor: "" };
+    }
 
-    // Plain browse: only approved rows are read (one brand's when filtered), newest first by the
-    // indexes' implicit _creationTime suffix. The piece range stays a filter so that order holds.
-    const brand = args.brand;
-    const approved =
-      brand === undefined
-        ? ctx.db
-            .query("puzzles")
-            .withIndex("by_status", (q) => q.eq("status", "approved"))
-        : ctx.db
-            .query("puzzles")
-            .withIndex("by_status_brand", (q) =>
-              q.eq("status", "approved").eq("brand", brand),
-            );
+    // brand/piece narrowing shared by every branch (status is handled per-branch: at the search
+    // index for the search branch, at the by_status* indexes for the plain ones).
+    const matchesFacets = (p: Doc<"puzzles">): boolean =>
+      (brand === undefined || p.brand === brand) &&
+      (pieceMin === undefined || p.pieceCount >= pieceMin) &&
+      (pieceMax === undefined || p.pieceCount <= pieceMax);
+    const hasPieceRange = pieceMin !== undefined || pieceMax !== undefined;
+
+    const readPlain = () => {
+      // One brand's approved rows, newest first; a piece range filters them, within a bound.
+      if (brand !== undefined) {
+        const rows = ctx.db
+          .query("puzzles")
+          .withIndex("by_status_brand", (q) =>
+            q.eq("status", "approved").eq("brand", brand),
+          )
+          .order("desc");
+        if (!hasPieceRange) return rows.paginate(paginationOpts);
+        return rows
+          .filter((q) =>
+            q.and(
+              ...(pieceMin === undefined
+                ? []
+                : [q.gte(q.field("pieceCount"), pieceMin)]),
+              ...(pieceMax === undefined
+                ? []
+                : [q.lte(q.field("pieceCount"), pieceMax)]),
+            ),
+          )
+          .paginate({
+            ...paginationOpts,
+            maximumRowsRead: PUBLIC_CATALOG_FILTER_READS,
+          });
+      }
+      // A piece range alone: every row read is a match, so numItems bounds the read.
+      if (hasPieceRange) {
+        return ctx.db
+          .query("puzzles")
+          .withIndex("by_status_pieces", (q) => {
+            const approved = q.eq("status", "approved");
+            if (pieceMin === undefined)
+              return approved.lte("pieceCount", pieceMax!);
+            const from = approved.gte("pieceCount", pieceMin);
+            return pieceMax === undefined
+              ? from
+              : from.lte("pieceCount", pieceMax);
+          })
+          .order("desc")
+          .paginate(paginationOpts);
+      }
+      return ctx.db
+        .query("puzzles")
+        .withIndex("by_status", (q) => q.eq("status", "approved"))
+        .order("desc") // newest first by _creationTime
+        .paginate(paginationOpts);
+    };
 
     const result =
       term.length > 0
@@ -75,31 +126,19 @@ export const browsePublicCatalog = query({
             )
             .filter((q) =>
               q.and(
-                args.brand === undefined
+                brand === undefined
                   ? q.eq(q.field("status"), "approved") // no-op placeholder keeps the AND non-empty
-                  : q.eq(q.field("brand"), args.brand),
-                args.pieceMin === undefined
+                  : q.eq(q.field("brand"), brand),
+                pieceMin === undefined
                   ? q.eq(q.field("status"), "approved")
-                  : q.gte(q.field("pieceCount"), args.pieceMin),
-                args.pieceMax === undefined
+                  : q.gte(q.field("pieceCount"), pieceMin),
+                pieceMax === undefined
                   ? q.eq(q.field("status"), "approved")
-                  : q.lte(q.field("pieceCount"), args.pieceMax),
+                  : q.lte(q.field("pieceCount"), pieceMax),
               ),
             )
             .paginate(paginationOpts)
-        : await approved
-            .order("desc") // newest first by _creationTime
-            .filter((q) =>
-              q.and(
-                args.pieceMin === undefined
-                  ? q.eq(q.field("status"), "approved")
-                  : q.gte(q.field("pieceCount"), args.pieceMin),
-                args.pieceMax === undefined
-                  ? q.eq(q.field("status"), "approved")
-                  : q.lte(q.field("pieceCount"), args.pieceMax),
-              ),
-            )
-            .paginate(paginationOpts);
+        : await readPlain();
 
     // Belt-and-braces: the branches above already gate status/facets, but the enrichment below is
     // the last line of defence against a future filter regression leaking a pending row.

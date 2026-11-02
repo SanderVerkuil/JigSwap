@@ -261,6 +261,9 @@ export default defineSchema({
     // by_status is also the bounded pending-submissions count (admin/getPendingCounts).
     .index("by_status", ["status"])
     .index("by_status_brand", ["status", "brand"])
+    // The public catalog's piece range (catalog/browsePublicCatalog): an anonymous read must not
+    // walk the approved catalogue to find what a range holds.
+    .index("by_status_pieces", ["status", "pieceCount"])
     // The public facet reads (catalog/getAll*) distinct over these from the approved rows only, so
     // pending and rejected submissions cost them no reads, however many arrive (SEC-26).
     .index("by_status_publisher", ["status", "publisher"])
