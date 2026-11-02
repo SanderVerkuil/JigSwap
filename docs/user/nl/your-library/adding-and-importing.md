@@ -47,13 +47,13 @@ Je komt terecht op het aanmaak-/kopieerformulier (`/my-puzzles/add/new`).
 
 - **Titel**, **merk**, **aantal stukken**, **moeilijkheid**, **conditie** (Nieuw (verzegeld), Zo goed als nieuw, Goed, Redelijk of Slecht).
 - **Beschikbaarheids-chips**: markeer als _voor ruil_, _voor uitlenen_ en/of _te koop_.
-- Een **omslag** — kies een kleurstaal, of upload/scrape een foto. Een omslagfoto wordt automatisch gecontroleerd (zoals elke foto die je uploadt) voordat iemand hem ziet; een foto die de controle tegenhoudt kan niet worden gebruikt, en zolang de controle nog loopt toont de puzzel zijn standaardafbeelding. Duurt de controle langer, dan krijg je na het opslaan een melding, en bij je eigen puzzels staat op de standaardafbeelding **Wordt gecontroleerd**; je hoeft niets te doen.
+- Een **foto van de doos** (optioneel, voor een nieuwe puzzel in de catalogus) — upload er een, of kies er een die de import heeft gevonden. Na de controle wordt hij de afbeelding van de puzzel in de catalogus. Hij wordt automatisch gecontroleerd (zoals elke foto die je uploadt) voordat iemand hem ziet; een foto die de controle tegenhoudt kan niet worden gebruikt, en zolang de controle nog loopt toont de puzzel zijn standaardafbeelding. Duurt de controle langer, dan krijg je na het opslaan een melding, en bij je eigen puzzels staat op de standaardafbeelding **Wordt gecontroleerd**; je hoeft niets te doen. Foto's van je eigen kopie zet je op de pagina van die kopie, zodra je hem hebt toegevoegd.
 - **Tags** en **notities**.
 - **Geavanceerde velden** (uitklapbaar): EAN, UPC, modelnummer, kunstenaar, serie, vorm, afmetingen.
 
-Een **live voorbeeldkaart** en een **gereedheidschecklist** staan naast het formulier, zodat je kunt zien hoe je puzzel eruit komt te zien.
+Op een groot scherm staan een **live voorbeeldkaart** en een **gereedheidschecklist** naast het formulier, zodat je kunt zien hoe je puzzel eruit komt te zien. Op een telefoon of tablet staat in plaats daarvan een korte samenvatting boven de knop om toe te voegen.
 
-> **Een kopie van een bestaande puzzel toevoegen:** Wanneer je vanuit de catalogus toevoegt (kopieermodus), is de catalogusdefinitie van de puzzel vergrendeld als alleen-lezen, en vul je alleen de kopie-specifieke velden in (jouw conditie, beschikbaarheid, notities, foto's, enz.).
+> **Een kopie van een bestaande puzzel toevoegen:** Wanneer je vanuit de catalogus toevoegt (kopieermodus), is de catalogusdefinitie van de puzzel vergrendeld als alleen-lezen, en vul je alleen de kopie-specifieke velden in (jouw conditie, beschikbaarheid en notities). Foto's van je eigen kopie voeg je daarna toe op de pagina van die kopie.
 
 ## Meerdere puzzels tegelijk toevoegen
 

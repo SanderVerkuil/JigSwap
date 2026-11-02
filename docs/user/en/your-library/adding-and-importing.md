@@ -45,13 +45,13 @@ You'll land on the creation/copy form (`/my-puzzles/add/new`).
 
 - **Title**, **brand**, **piece count**, **difficulty**, **condition** (New (sealed), Like new, Good, Fair or Poor).
 - **Availability chips**: mark it _for trade_, _for lend_, and/or _for sale_.
-- A **cover** — pick a color swatch, or upload/scrape a photo. A cover photo is checked automatically (like every photo you upload) before anyone sees it; a photo the check refuses can't be used, and until the check has finished the puzzle shows its placeholder. If the check takes longer, you get a message after saving, and on your own puzzles the placeholder says **Being checked**; you don't need to do anything.
+- A **box photo** (optional, for a new catalogue puzzle) — upload one, or pick one the import found. Once it has been checked, it becomes the puzzle's picture in the catalogue. It is checked automatically (like every photo you upload) before anyone sees it; a photo the check refuses can't be used, and until the check has finished the puzzle shows its placeholder. If the check takes longer, you get a message after saving, and on your own puzzles the placeholder says **Being checked**; you don't need to do anything. Photos of your own copy go on its page, once you've added it.
 - **Tags** and **notes**.
 - **Advanced fields** (collapsible): EAN, UPC, model number, artist, series, shape, dimensions.
 
-A **live preview card** and a **readiness checklist** sit alongside the form so you can see how your puzzle will look.
+On a large screen, a **live preview card** and a **readiness checklist** sit alongside the form so you can see how your puzzle will look. On a phone or tablet, a short summary sits above the add button instead.
 
-> **Adding a copy of an existing puzzle:** When you add from the catalogue (copy mode), the puzzle's catalogue definition is locked read-only, and you only fill in the copy-specific fields (your condition, availability, notes, photos, etc.).
+> **Adding a copy of an existing puzzle:** When you add from the catalogue (copy mode), the puzzle's catalogue definition is locked read-only, and you only fill in the copy-specific fields (your condition, availability and notes). You add photos of your own copy on its page afterwards.
 
 ## Add several puzzles at once
 
