@@ -52,7 +52,7 @@ vi.mock("@/components/ui/puzzle-card", () => ({
 }));
 
 type Stats = NonNullable<FunctionReturnType<typeof gateway.identity.userStats>>;
-type Exchanges = FunctionReturnType<typeof gateway.exchange.forUser>;
+type Exchanges = FunctionReturnType<typeof gateway.exchange.myLive>;
 
 const copy = (i: number, forTrade = true): OwnedCopyView => ({
   _id: `copy-${i}`,
@@ -103,7 +103,7 @@ const render = (
     data.stats ?? noStats,
   );
   queryClient.setQueryData(
-    convexQuery(gateway.exchange.forUser, {}).queryKey,
+    convexQuery(gateway.exchange.myLive, {}).queryKey,
     data.exchanges ?? [],
   );
   return renderToStaticMarkup(

@@ -55,15 +55,11 @@ describe("usePendingRequestCount", () => {
     expect(result.current).toBe(0);
   });
 
-  it("counts only incoming requests still waiting for the member's answer", () => {
+  it("returns the count of incoming requests still waiting for the member's answer", () => {
     mocks.member = { _id: "m1" };
-    mocks.data = [
-      { userRole: "owner", status: "proposed" },
-      { userRole: "owner", status: "proposed" },
-      { userRole: "owner", status: "accepted" },
-      { userRole: "requester", status: "proposed" },
-    ];
+    mocks.data = 2;
     const { result } = renderHook(() => usePendingRequestCount());
+    expect(mocks.args).not.toContain("skip");
     expect(result.current).toBe(2);
   });
 });

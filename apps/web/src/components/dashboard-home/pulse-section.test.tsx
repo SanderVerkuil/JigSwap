@@ -25,7 +25,13 @@ vi.mock("./use-current-member", () => ({
 }));
 vi.mock("@tanstack/react-query", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@tanstack/react-query")>()),
-  useQuery: () => ({ data: mocks.loaded ? [] : undefined }),
+  useQuery: ({ queryKey }: { queryKey: unknown[] }) => ({
+    data: !mocks.loaded
+      ? undefined
+      : String(queryKey[1]).includes("History")
+        ? { page: [], isDone: true, continueCursor: "" }
+        : [],
+  }),
 }));
 
 afterEach(() => {

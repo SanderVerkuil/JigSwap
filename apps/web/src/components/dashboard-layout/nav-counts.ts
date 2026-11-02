@@ -23,10 +23,10 @@ export function useUnreadMessageCount(): number {
 export function usePendingRequestCount(): number {
   const { member } = useCurrentMember();
   const { data } = useQuery(
-    convexQuery(gateway.exchange.forUser, member?._id ? {} : "skip"),
+    convexQuery(
+      gateway.exchange.myPendingRequestCount,
+      member?._id ? {} : "skip",
+    ),
   );
-  return (data ?? []).filter(
-    (exchange) =>
-      exchange.userRole === "owner" && exchange.status === "proposed",
-  ).length;
+  return data ?? 0;
 }

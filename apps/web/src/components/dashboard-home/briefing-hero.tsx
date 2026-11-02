@@ -19,10 +19,7 @@ import { useTranslations } from "use-intl";
 import { MY_SHELF_SIZE } from "./shelf-section";
 import { useCurrentMember } from "./use-current-member";
 
-type ExchangeRow = FunctionReturnType<typeof gateway.exchange.forUser>[number];
-
-// Exchanges that still need somebody's attention.
-const ACTIVE_STATUSES = new Set(["proposed", "accepted", "disputed"]);
+type ExchangeRow = FunctionReturnType<typeof gateway.exchange.myLive>[number];
 
 function HeadlineLink({
   href,
@@ -239,7 +236,8 @@ export function BriefingHero() {
   const { member, isMemberLoading } = useCurrentMember();
 
   const { data: exchanges } = useQuery(
-    convexQuery(gateway.exchange.forUser, member?._id ? {} : "skip"),
+    // Only what's still in play: finished exchanges have no part in the headline.
+    convexQuery(gateway.exchange.myLive, member?._id ? {} : "skip"),
   );
   const { data: goals } = useQuery(
     convexQuery(gateway.solving.myGoals, member?._id ? {} : "skip"),
@@ -274,7 +272,7 @@ export function BriefingHero() {
     );
   }
 
-  const active = (exchanges ?? []).filter((e) => ACTIVE_STATUSES.has(e.status));
+  const active = exchanges ?? [];
   const pendingIncoming = (exchanges ?? []).filter(
     (e) => e.userRole === "owner" && e.status === "proposed",
   );

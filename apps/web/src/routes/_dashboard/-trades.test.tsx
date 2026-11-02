@@ -33,8 +33,9 @@ vi.mock("@/gateway", () => ({
   gateway: {
     identity: { byClerkId: "identity.byClerkId" },
     exchange: {
-      incoming: "exchange.incoming",
-      outgoing: "exchange.outgoing",
+      myLive: "exchange.myLive",
+      myHistory: "exchange.myHistory",
+      mySummary: "exchange.mySummary",
       accept: "exchange.accept",
       decline: "exchange.decline",
       complete: "exchange.complete",
@@ -49,16 +50,30 @@ vi.mock("@convex-dev/react-query", () => ({
     data.calls.push([fn, args]);
   },
 }));
+vi.mock("convex/react", () => ({
+  usePaginatedQuery: () => ({
+    results: [],
+    status: "Exhausted",
+    loadMore: () => {},
+  }),
+}));
 vi.mock("@tanstack/react-query", () => ({
   useQuery: ({ fn }: { fn: string }) => ({
     data:
       fn === "identity.byClerkId"
         ? { _id: "me" }
-        : fn === "exchange.incoming"
-          ? data.incoming
-          : fn === "exchange.outgoing"
-            ? data.outgoing
-            : undefined,
+        : fn === "exchange.myLive"
+          ? [
+              ...data.incoming.map((row) => ({
+                ...(row as object),
+                userRole: "owner",
+              })),
+              ...data.outgoing.map((row) => ({
+                ...(row as object),
+                userRole: "requester",
+              })),
+            ]
+          : undefined,
   }),
   useMutation: ({
     mutationFn,

@@ -25,6 +25,23 @@ import { Route } from "./trades";
 const mocks = vi.hoisted(() => ({
   mutation: vi.fn<(name: string, args: unknown) => Promise<unknown>>(),
   search: {} as { exchange?: string },
+  // Finished exchanges, as the paged read returns them.
+  history: [] as unknown[],
+  historyStatus: "Exhausted",
+  historyArgs: undefined as unknown,
+  loadMore: vi.fn(),
+}));
+
+vi.mock("convex/react", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("convex/react")>()),
+  usePaginatedQuery: (_query: unknown, args: unknown) => {
+    mocks.historyArgs = args;
+    return {
+      results: mocks.history,
+      status: mocks.historyStatus,
+      loadMore: mocks.loadMore,
+    };
+  },
 }));
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
@@ -147,7 +164,10 @@ type Seed = { incoming?: unknown[]; outgoing?: unknown[] };
 const flushQueryNotifications = () =>
   new Promise<void>((resolve) => setTimeout(resolve, 0));
 
-const renderPage = ({ incoming = [], outgoing = [] }: Seed) => {
+const renderPage = (
+  { incoming = [], outgoing = [] }: Seed,
+  { linked }: { linked?: ExchangeSummaryView } = {},
+) => {
   const convexQueryClient = new ConvexQueryClient(
     new ConvexReactClient("https://example.convex.cloud"),
   );
@@ -161,14 +181,31 @@ const renderPage = ({ incoming = [], outgoing = [] }: Seed) => {
       },
     },
   });
-  const incomingKey = convexQuery(gateway.exchange.incoming, {}).queryKey;
-  const outgoingKey = convexQuery(gateway.exchange.outgoing, {}).queryKey;
+  const liveKey = convexQuery(gateway.exchange.myLive, {}).queryKey;
+  // What's in play, each row tagged with the viewer's role as the server does.
+  let current = { incoming, outgoing };
+  const setLive = () =>
+    queryClient.setQueryData(liveKey, [
+      ...current.incoming.map((row) => ({
+        ...(row as object),
+        userRole: "owner",
+      })),
+      ...current.outgoing.map((row) => ({
+        ...(row as object),
+        userRole: "requester",
+      })),
+    ] as never);
   queryClient.setQueryData(
     convexQuery(gateway.identity.byClerkId, { clerkId: "clerk_me" }).queryKey,
     { _id: "u_me" },
   );
-  queryClient.setQueryData(incomingKey, incoming as never);
-  queryClient.setQueryData(outgoingKey, outgoing as never);
+  setLive();
+  if (linked) {
+    queryClient.setQueryData(
+      convexQuery(gateway.exchange.mySummary, { exchange: "agg-old" }).queryKey,
+      linked,
+    );
+  }
   queryClient.setQueryData(
     convexQuery(gateway.conversation.getThreadByExchange, {
       exchangeId: "agg-harbour",
@@ -193,8 +230,11 @@ const renderPage = ({ incoming = [], outgoing = [] }: Seed) => {
 
   // A live push, as the Convex subscription delivers it.
   const setData = ({ incoming: nextIn, outgoing: nextOut }: Seed) => {
-    if (nextIn) queryClient.setQueryData(incomingKey, nextIn as never);
-    if (nextOut) queryClient.setQueryData(outgoingKey, nextOut as never);
+    current = {
+      incoming: nextIn ?? current.incoming,
+      outgoing: nextOut ?? current.outgoing,
+    };
+    setLive();
     return flushQueryNotifications();
   };
   const push = (seed: Seed) => act(() => setData(seed));
@@ -238,6 +278,9 @@ const reading = () =>
 
 beforeEach(() => {
   mocks.search = {};
+  mocks.history = [];
+  mocks.historyStatus = "Exhausted";
+  mocks.loadMore.mockReset();
   mocks.mutation.mockReset();
   mocks.mutation.mockResolvedValue(undefined);
   Element.prototype.scrollIntoView = vi.fn();
@@ -413,5 +456,62 @@ describe("Exchanges page: the viewer's own confirmation", () => {
 
     // The confirm stays open next to the error toast.
     expect(screen.getByRole("alertdialog")).not.toBeNull();
+  });
+});
+
+describe("Exchanges page: finished exchanges come a page at a time", () => {
+  const finished = (id: string, updatedAt: number) =>
+    ({
+      ...harbour({
+        _id: `ex_${id}`,
+        aggregateId: `agg-${id}`,
+        status: "completed",
+        updatedAt,
+        requestedPuzzle: puzzle(`Finished ${id}`),
+      }),
+      userRole: "requester",
+    }) as ExchangeSummaryView;
+
+  it("lists what's in play and the loaded history together, newest activity first", () => {
+    mocks.history = [finished("newer", NOW + 1), finished("older", NOW - 9)];
+    renderPage({ outgoing: [harbour()] });
+    expect(reading()).toEqual([
+      "Finished newer",
+      "Harbour Lights",
+      "Finished older",
+    ]);
+  });
+
+  it("says the count is partial while more remain, and Show more asks for them", () => {
+    mocks.history = [finished("a", NOW)];
+    mocks.historyStatus = "CanLoadMore";
+    renderPage({});
+    expect(screen.getByText("1+ exchanges")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: en.trades.showMore }));
+    expect(mocks.loadMore).toHaveBeenCalledWith(20);
+  });
+
+  it("offers no empty state while the first page is on its way", () => {
+    mocks.historyStatus = "LoadingFirstPage";
+    renderPage({});
+    expect(screen.queryByText(en.trades.empty.all.title)).toBeNull();
+  });
+
+  it("keeps a row as it is when it settles and moves from the live read to the history", async () => {
+    const { push } = renderPage({ outgoing: [harbour()] });
+    const draft = startDraft();
+
+    // The paged read has the settled row by the time the live read drops it.
+    mocks.history = [
+      { ...harbour({ status: "completed" }), userRole: "requester" },
+    ];
+    await push({ outgoing: [] });
+    expectDraftKept(draft);
+  });
+
+  it("a deep link shows a finished exchange past the loaded pages, without another page", () => {
+    mocks.search = { exchange: "agg-old" };
+    renderPage({}, { linked: finished("old", NOW - 1e9) });
+    expect(reading()).toEqual(["Finished old"]);
   });
 });

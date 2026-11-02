@@ -29,7 +29,7 @@ import { useTranslations } from "use-intl";
 import { SectionHead } from "./section-head";
 import { useCurrentMember } from "./use-current-member";
 
-type ExchangeRow = FunctionReturnType<typeof gateway.exchange.forUser>[number];
+type ExchangeRow = FunctionReturnType<typeof gateway.exchange.myLive>[number];
 type GoalRow = FunctionReturnType<typeof gateway.solving.myGoals>[number];
 type ActivityEntry = FunctionReturnType<
   typeof gateway.social.activityFeed
@@ -143,6 +143,9 @@ function ExchangeTimelineRow({
   );
 }
 
+// How many exchanges the In motion column shows.
+const IN_MOTION_ROWS = 3;
+
 function InMotionColumn({ exchanges }: { exchanges: ExchangeRow[] }) {
   const t = useTranslations("dashboard.pulse.inMotion");
 
@@ -153,7 +156,7 @@ function InMotionColumn({ exchanges }: { exchanges: ExchangeRow[] }) {
     const bActive = ACTIVE_STATUSES.has(b.status) ? 0 : 1;
     return aActive - bActive || b.updatedAt - a.updatedAt;
   });
-  const shown = sorted.slice(0, 3);
+  const shown = sorted.slice(0, IN_MOTION_ROWS);
 
   return (
     <section className="min-w-0">
@@ -483,9 +486,24 @@ function PulseSkeleton() {
 export function PulseSection() {
   const { member, isMemberLoading } = useCurrentMember();
 
-  const { data: exchanges } = useQuery(
-    convexQuery(gateway.exchange.forUser, member?._id ? {} : "skip"),
+  const { data: live } = useQuery(
+    convexQuery(gateway.exchange.myLive, member?._id ? {} : "skip"),
   );
+  // The column shows three: only when fewer are in play does it need the newest finished ones.
+  const { data: recentFinished } = useQuery(
+    convexQuery(
+      gateway.exchange.myHistory,
+      live !== undefined && live.length < IN_MOTION_ROWS
+        ? { paginationOpts: { numItems: IN_MOTION_ROWS, cursor: null } }
+        : "skip",
+    ),
+  );
+  const exchanges =
+    live === undefined
+      ? undefined
+      : live.length >= IN_MOTION_ROWS
+        ? live
+        : recentFinished && [...live, ...recentFinished.page];
   const { data: goals } = useQuery(
     convexQuery(gateway.solving.myGoals, member?._id ? {} : "skip"),
   );

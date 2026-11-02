@@ -14,6 +14,8 @@ type Roled = Doc<"exchanges"> & { userRole: "requester" | "owner" };
 // Exchange read (thin adapter): a member's exchanges as requester and/or owner. Role tagging,
 // optional status filter, newest-first ordering and the two-step puzzle joins all match the legacy
 // exchanges.getUserExchanges; only the per-row shape is now a typed ExchangeSummaryView.
+// Kept for web builds from before the Exchanges page moved to listMyLiveExchanges and
+// listMyExchangeHistory: this build no longer calls it. Remove once those have aged out.
 export const getUserExchanges = query({
   args: {
     status: v.optional(

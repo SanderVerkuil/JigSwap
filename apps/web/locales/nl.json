@@ -788,6 +788,8 @@
     "message": "Bericht",
     "all": "Alle",
     "exchangesCount": "{count, plural, one {# uitwisseling} other {# uitwisselingen}}",
+    "exchangesCountMore": "{count}+ uitwisselingen",
+    "showMore": "Meer tonen",
     "rowMeta": "{direction} · met {who} · {when}",
     "groups": {
       "needsYou": "Wacht op jou",

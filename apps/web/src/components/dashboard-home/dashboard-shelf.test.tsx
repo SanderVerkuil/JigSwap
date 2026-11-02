@@ -106,7 +106,7 @@ const renderSections = (ui: ReactNode, shelf: Shelf) => {
       .queryKey,
     { tradesCompleted: 0, averageRating: 0, totalReviews: 0 },
   );
-  set(convexQuery(gateway.exchange.forUser, {}).queryKey, []);
+  set(convexQuery(gateway.exchange.myLive, {}).queryKey, []);
   render(
     <QueryClientProvider client={queryClient}>
       <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">

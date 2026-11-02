@@ -788,6 +788,8 @@
     "message": "Message",
     "all": "All",
     "exchangesCount": "{count, plural, one {# exchange} other {# exchanges}}",
+    "exchangesCountMore": "{count}+ exchanges",
+    "showMore": "Show more",
     "rowMeta": "{direction} · with {who} · {when}",
     "groups": {
       "needsYou": "Needs you",

@@ -36,17 +36,28 @@ import {
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+// sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
+import { usePaginatedQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { MessageCircle } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useTranslations } from "use-intl";
 
-type ExchangeRow = FunctionReturnType<typeof gateway.exchange.incoming>[number];
+type ExchangeRow = FunctionReturnType<typeof gateway.exchange.myLive>[number];
 
-// The pill tabs pick one kind of filter, the direction: All / Incoming / Outgoing map onto the
-// owner/requester reads; Loans is the one home for open loans, borrowed and lent out (the old
-// /borrowed page redirects there). The status is a separate select. Both live in the URL
-// (trades-search).
+// How many finished exchanges a page adds.
+const HISTORY_PAGE_SIZE = 20;
+
+// The statuses that are read a page at a time; the rest are in play and read whole.
+const FINISHED_STATUSES = ["completed", "rejected", "cancelled"] as const;
+type FinishedStatus = (typeof FINISHED_STATUSES)[number];
+const isFinishedStatus = (status: ExchangeStatus): status is FinishedStatus =>
+  (FINISHED_STATUSES as readonly ExchangeStatus[]).includes(status);
+
+// The pill tabs pick one kind of filter, the direction: All / Incoming / Outgoing; Loans is the one
+// home for open loans, borrowed and lent out (the old /borrowed page redirects there). The status is
+// a separate select. Both live in the URL (trades-search). What's still in play is always read whole,
+// because any of it can need the member's answer; finished exchanges come a page at a time.
 
 export const Route = createFileRoute("/_dashboard/trades")({
   validateSearch: validateTradesSearch,
@@ -104,12 +115,39 @@ function ExchangesPage() {
     ),
   );
 
-  // Incoming = the viewer is the owner; outgoing = the viewer is the requester.
-  const { data: incomingExchanges } = useQuery(
-    convexQuery(gateway.exchange.incoming, {}),
+  const { data: liveExchanges } = useQuery(
+    convexQuery(gateway.exchange.myLive, {}),
   );
-  const { data: outgoingExchanges } = useQuery(
-    convexQuery(gateway.exchange.outgoing, {}),
+  // A live status filter needs no history; neither does the Loans tab.
+  const wantsHistory =
+    tab !== "loans" &&
+    (statusFilter === undefined || isFinishedStatus(statusFilter));
+  const {
+    results: finishedExchanges,
+    status: historyStatus,
+    loadMore,
+  } = usePaginatedQuery(
+    gateway.exchange.myHistory,
+    wantsHistory
+      ? {
+          direction: tab,
+          ...(statusFilter !== undefined && isFinishedStatus(statusFilter)
+            ? { status: statusFilter }
+            : {}),
+        }
+      : "skip",
+    { initialNumItems: HISTORY_PAGE_SIZE },
+  );
+  const historyLoading = wantsHistory && historyStatus === "LoadingFirstPage";
+  const hasMoreHistory =
+    wantsHistory &&
+    (historyStatus === "CanLoadMore" || historyStatus === "LoadingMore");
+  // A deep link can name a finished exchange past the pages loaded so far: read that one as well.
+  const { data: linkedExchange } = useQuery(
+    convexQuery(
+      gateway.exchange.mySummary,
+      focusedExchange !== undefined ? { exchange: focusedExchange } : "skip",
+    ),
   );
   // Open loans the viewer holds and the ones they lent out, only fetched on the Loans tab.
   const { data: borrowed } = useQuery(
@@ -119,26 +157,30 @@ function ExchangesPage() {
     convexQuery(gateway.lending.lentOut, tab === "loans" ? {} : "skip"),
   );
 
-  if (
-    !user ||
-    convexUser === undefined ||
-    incomingExchanges === undefined ||
-    outgoingExchanges === undefined
-  ) {
+  if (!user || convexUser === undefined || liveExchanges === undefined) {
     return <PageLoading message={tCommon("loading")} />;
   }
 
-  // Tag every exchange with its direction once, then filter per tab and status.
-  const tagged: Array<ListedExchange<ExchangeRow>> = [
-    ...incomingExchanges.map((exchange) => ({
+  // Tag every exchange with its direction once (incoming = the viewer is the owner, outgoing = the
+  // viewer is the requester), then filter per tab and status. Newest activity first, as loaded so
+  // far: a page of older exchanges joins below what's there, around any old one still in play.
+  const loaded = new Map<string, ExchangeRow>();
+  for (const exchange of [
+    ...liveExchanges,
+    ...finishedExchanges,
+    ...(linkedExchange ? [linkedExchange] : []),
+  ]) {
+    loaded.set(exchange._id, exchange);
+  }
+  const tagged: Array<ListedExchange<ExchangeRow>> = [...loaded.values()]
+    .map((exchange) => ({
       exchange,
-      direction: "incoming" as const,
-    })),
-    ...outgoingExchanges.map((exchange) => ({
-      exchange,
-      direction: "outgoing" as const,
-    })),
-  ].sort((a, b) => b.exchange.updatedAt - a.exchange.updatedAt);
+      direction:
+        exchange.userRole === "owner"
+          ? ("incoming" as const)
+          : ("outgoing" as const),
+    }))
+    .sort((a, b) => b.exchange.updatedAt - a.exchange.updatedAt);
 
   const rows =
     tab === "loans" ? [] : visibleExchanges(tagged, tab, statusFilter);
@@ -159,7 +201,9 @@ function ExchangesPage() {
       ? borrowed === undefined || lentOut === undefined
         ? undefined
         : t("loans.count", { count: borrowed.length + lentOut.length })
-      : t("exchangesCount", { count: rows.length });
+      : t(hasMoreHistory ? "exchangesCountMore" : "exchangesCount", {
+          count: rows.length,
+        });
 
   const renderRow = (
     { exchange, direction }: (typeof rows)[number],
@@ -212,7 +256,7 @@ function ExchangesPage() {
           <ExchangeGroupHeading
             key="group-others"
             title={t("groups.others")}
-            count={others.length}
+            count={hasMoreHistory ? `${others.length}+` : others.length}
           />,
         ]
       : []),
@@ -271,7 +315,9 @@ function ExchangesPage() {
 
       {tab === "loans" ? (
         <LoansTab borrowed={borrowed} lentOut={lentOut} />
-      ) : rows.length === 0 ? (
+      ) : rows.length === 0 && historyLoading ? (
+        <PageLoading message={tCommon("loading")} />
+      ) : rows.length === 0 && !hasMoreHistory ? (
         <ExchangesEmptyState
           tab={tab}
           status={statusFilter}
@@ -279,6 +325,20 @@ function ExchangesPage() {
         />
       ) : (
         <div className="flex flex-col">{list}</div>
+      )}
+
+      {/* aria-disabled, not disabled, while the next page loads: a disabled button drops focus. */}
+      {hasMoreHistory && (
+        <Button
+          variant="outline"
+          className="h-11 self-center md:h-9"
+          aria-disabled={historyStatus === "LoadingMore"}
+          onClick={() => {
+            if (historyStatus === "CanLoadMore") loadMore(HISTORY_PAGE_SIZE);
+          }}
+        >
+          {historyStatus === "LoadingMore" ? tCommon("loading") : t("showMore")}
+        </Button>
       )}
     </div>
   );
@@ -291,7 +351,7 @@ function ExchangeGroupHeading({
   count,
 }: {
   title: string;
-  count: number;
+  count: number | string;
 }) {
   return (
     <h2 className="font-heading flex items-baseline gap-2 text-lg font-bold not-first:mt-[18px]">

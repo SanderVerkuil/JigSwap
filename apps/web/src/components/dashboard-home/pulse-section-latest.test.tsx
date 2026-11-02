@@ -53,8 +53,14 @@ const render = (feed: ActivityEntryView[], locale: "en" | "nl" = "en") => {
     },
   });
   queryClient.setQueryData(
-    convexQuery(gateway.exchange.forUser, {}).queryKey,
+    convexQuery(gateway.exchange.myLive, {}).queryKey,
     [],
+  );
+  queryClient.setQueryData(
+    convexQuery(gateway.exchange.myHistory, {
+      paginationOpts: { numItems: 3, cursor: null },
+    }).queryKey,
+    { page: [], isDone: true, continueCursor: "" },
   );
   queryClient.setQueryData(
     convexQuery(gateway.solving.myGoals, {}).queryKey,
