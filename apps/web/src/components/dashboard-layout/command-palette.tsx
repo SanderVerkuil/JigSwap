@@ -140,6 +140,9 @@ export function CommandPalette({
     isAuthenticated &&
     typed.length >= MIN_TERM_LENGTH &&
     (typed !== term || results === undefined);
+  // Web deploys before Convex, and a failed or superseded backend deploy can keep it that way for
+  // longer, so a backend that doesn't return `copies` yet must not crash the app.
+  const copies = results?.copies ?? [];
 
   // Backend-confirmed admin role — same source as the /admin route guard and
   // the sidebar's gated group; Convex dedupes the shared subscription.
@@ -257,9 +260,9 @@ export function CommandPalette({
 
         {/* The member's own copies come first: someone typing a title they own most likely
             wants their copy, not the catalogue entry. */}
-        {results && results.copies.length > 0 ? (
+        {copies.length > 0 ? (
           <CommandGroup heading={t("search.groupLibrary")}>
-            {results.copies.map((hit) => (
+            {copies.map((hit) => (
               <CommandItem
                 key={hit.id}
                 value={keep(hit.id)}

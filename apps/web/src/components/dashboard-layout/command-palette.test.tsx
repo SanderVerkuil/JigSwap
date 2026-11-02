@@ -262,6 +262,14 @@ describe("CommandPalette library copies", () => {
     ],
   };
 
+  // Web deploys before Convex, so for a while new clients talk to a backend without `copies`.
+  const olderBackend = {
+    puzzles: lam.puzzles,
+    people: [],
+    circles: [],
+    collections: [],
+  } as unknown as Results;
+
   it("lists the member's own copies before the catalogue's puzzles", async () => {
     renderPalette({ seeded: { lam } });
     type("lam");
@@ -270,6 +278,25 @@ describe("CommandPalette library copies", () => {
       (heading) => heading.textContent,
     );
     expect(headings.slice(0, 2)).toEqual(["In your library", "Puzzles"]);
+  });
+
+  it("still lists the other groups when the backend returns no copies", async () => {
+    renderPalette({ seeded: { lam: olderBackend } });
+    type("lam");
+    await screen.findByRole("group", { name: "Puzzles" });
+    const headings = [...document.querySelectorAll("[cmdk-group-heading]")].map(
+      (heading) => heading.textContent,
+    );
+    expect(headings[0]).toBe("Puzzles");
+    expect(headings).not.toContain("In your library");
+  });
+
+  it("says there are no results when the backend returns no copies and nothing else", async () => {
+    renderPalette({ seeded: { qqq: { ...olderBackend, puzzles: [] } } });
+    type("qqq");
+    await waitFor(() =>
+      expect(screen.getByText("No results for “qqq”")).toBeTruthy(),
+    );
   });
 
   it("opens the owner's copy page", async () => {
