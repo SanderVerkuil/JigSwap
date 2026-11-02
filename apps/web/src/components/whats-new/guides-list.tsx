@@ -176,7 +176,7 @@ function GuideCard({
                   to="/whats-new"
                   search={{}}
                   hash={`entry-${entry.id}`}
-                  className="hover:text-foreground inline-flex items-center gap-1 underline-offset-2 hover:underline"
+                  className="hover:text-foreground inline-flex min-h-6 items-center gap-1 underline-offset-2 hover:underline pointer-coarse:min-h-11"
                 >
                   {t("whatsNew.guides.introduced", {
                     month: format.dateTime(new Date(entry.publishedAt), {

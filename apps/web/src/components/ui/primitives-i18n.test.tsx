@@ -51,6 +51,22 @@ describe.each(["en", "nl"] as const)("primitive labels in %s", (locale) => {
     ).toBeTruthy();
   });
 
+  // The 16px icon was the whole target: as the dialog's close, at least 36px, 44px on touch.
+  it("gives the sheet close button a real target", () => {
+    render(
+      <Sheet open>
+        <SheetContent>
+          <SheetTitle>Title</SheetTitle>
+          <SheetDescription>Body</SheetDescription>
+        </SheetContent>
+      </Sheet>,
+      { wrapper: inLocale(locale) },
+    );
+    const close = screen.getByRole("button", { name: messages.common.close });
+    expect(close.className).toContain("size-9");
+    expect(close.className).toContain("pointer-coarse:size-11");
+  });
+
   it("names the sheet close button", () => {
     render(
       <Sheet open>

@@ -79,7 +79,8 @@ function SheetContent({
         {...returnFocus}
       >
         {children}
-        <SheetPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none">
+        {/* The same target as the dialog's close: 36px, 44px on touch, the icon where it was. */}
+        <SheetPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground hover:bg-accent hover:text-accent-foreground absolute top-1.5 right-1.5 grid size-9 place-items-center rounded-md opacity-100 transition-colors pointer-coarse:top-0.5 pointer-coarse:right-0.5 pointer-coarse:size-11 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none">
           <XIcon className="size-4" />
           <span className="sr-only">{t("close")}</span>
         </SheetPrimitive.Close>
