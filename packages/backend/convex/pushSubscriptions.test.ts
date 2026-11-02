@@ -444,6 +444,7 @@ describe("push device list and revoke", () => {
       ["https://updates.push.services.mozilla.com/wpush/v2/b", "firefox"],
       ["https://web.push.apple.com/c", "safari"],
       ["https://wns2-am3p.notify.windows.com/w/?token=d", "edge"],
+      ["https://android.googleapis.com/gcm/send/f", "chrome"],
       ["https://push.example/e", "other"],
       ["not a url", "other"],
     ] as const;
