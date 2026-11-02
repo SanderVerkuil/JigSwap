@@ -107,7 +107,7 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
       ref={measureRef}
       className="sticky top-0 z-30 shrink-0 border-b bg-card pt-[env(safe-area-inset-top)] md:hidden"
     >
-      <div className="flex h-14 items-center gap-1 pr-2 pl-1.5">
+      <div className="flex h-14 items-center gap-1 pr-2 pl-1.5 max-sm:gap-0">
         {group ? (
           <Link
             href={group.href}
@@ -141,7 +141,8 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
           {title && (
             <h1
               className={cn(
-                "font-heading truncate text-lg font-bold",
+                // The controls leave a phone about 126px: two smaller lines before an ellipsis.
+                "font-heading truncate text-lg font-bold max-sm:line-clamp-2 max-sm:whitespace-normal max-sm:text-base max-sm:leading-snug",
                 !group && "pl-2",
               )}
             >

@@ -195,3 +195,32 @@ describe("MobileTopBar lockup", () => {
     expect(mark?.getAttribute("src")).toContain("marketing/assets/icon.png");
   });
 });
+
+// UX-06/UX-59: four icons and a back chevron leave about 126px at 360px, so on phones the title
+// is a little smaller and may take two lines before it truncates; the controls close up too.
+describe("MobileTopBar title", () => {
+  it("wraps onto two smaller lines on phones instead of truncating", () => {
+    renderBar("/completions/new");
+    const classes = (
+      screen.getByRole("heading", { level: 1 }).getAttribute("class") ?? ""
+    ).split(/\s+/);
+    expect(classes).toEqual(
+      expect.arrayContaining([
+        "max-sm:line-clamp-2",
+        "max-sm:whitespace-normal",
+        "max-sm:text-base",
+        "max-sm:leading-snug",
+      ]),
+    );
+  });
+
+  it("closes up the controls on phones, keeping every target at 44px", () => {
+    renderBar("/completions/new");
+    const row = screen.getByRole("heading", { level: 1 }).parentElement
+      ?.parentElement;
+    expect(row?.getAttribute("class")?.split(/\s+/)).toContain("max-sm:gap-0");
+    expect(
+      screen.getByRole("link", { name: "Messages" }).getAttribute("class"),
+    ).toContain("size-11");
+  });
+});
