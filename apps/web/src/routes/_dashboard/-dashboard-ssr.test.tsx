@@ -175,7 +175,6 @@ describe("the dashboard home on the server", () => {
   // The server runs in UTC and the browser where the member is, so a "today" taken from the runtime
   // would differ between the server's HTML and the first client render for hours around midnight.
   it("paints the same page whatever zone the server runs in", async () => {
-    const zone = process.env.TZ;
     // 00:30 on 3 November in Amsterdam, the 2nd in UTC and New York.
     const instant = new Date("2026-11-02T23:30:00Z");
     const goals = ANSWERS[name(gateway.solving.myGoals)];
@@ -204,7 +203,7 @@ describe("the dashboard home on the server", () => {
       const { queryClient } = clientAnswering();
       await prefetchDashboardHome(queryClient);
       const paintIn = (tz: string) => {
-        process.env.TZ = tz;
+        vi.stubEnv("TZ", tz);
         return renderPage(queryClient, instant);
       };
       const html = paintIn("Europe/Amsterdam");
@@ -215,7 +214,7 @@ describe("the dashboard home on the server", () => {
       expect(paintIn("Asia/Tokyo")).toBe(html);
     } finally {
       vi.useRealTimers();
-      process.env.TZ = zone;
+      vi.unstubAllEnvs();
       ANSWERS[name(gateway.solving.myGoals)] = goals;
       ANSWERS[name(gateway.solving.myInProgress)] = solves;
     }

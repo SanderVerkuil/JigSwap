@@ -39,9 +39,9 @@ const serveAndHydrate = async (
   serverZone: string,
   browserZone: string,
 ) => {
-  process.env.TZ = serverZone;
+  vi.stubEnv("TZ", serverZone);
   const html = renderToString(app(ui));
-  process.env.TZ = browserZone;
+  vi.stubEnv("TZ", browserZone);
   const container = document.createElement("div");
   container.innerHTML = html;
   const painted = container.textContent;
@@ -52,8 +52,6 @@ const serveAndHydrate = async (
   return { painted, settled: container.textContent, onRecoverableError };
 };
 
-const originalZone = process.env.TZ;
-
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(INSTANT);
@@ -62,14 +60,14 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
-  process.env.TZ = originalZone;
+  vi.unstubAllEnvs();
 });
 
 describe("useMemberToday", () => {
   it.each(["UTC", "America/New_York", "Asia/Tokyo"])(
     "paints the app's day on a server in %s",
     (zone) => {
-      process.env.TZ = zone;
+      vi.stubEnv("TZ", zone);
       expect(renderToString(app(<Today />))).toContain(String(NOV_3));
     },
   );
