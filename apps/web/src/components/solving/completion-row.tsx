@@ -10,7 +10,6 @@ import {
   EditSolveButton,
   EditSolveMenuItem,
 } from "@/components/solving/edit-solve-button";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -228,11 +227,6 @@ export function CompletionRow({
           ) : (
             <span className="text-sm font-semibold">{title}</span>
           )}
-          {!done && (
-            <Badge variant="secondary" className="text-xs">
-              {t("inProgress")}
-            </Badge>
-          )}
         </div>
         <div className="text-muted-foreground mt-0.5 text-xs">{metaLine}</div>
         {completion.notes && (
@@ -302,9 +296,13 @@ export function CompletionRow({
 
       {/* From sm up the wrapper dissolves and the date sits in the row like before. */}
       <div className="flex flex-col items-end gap-1 sm:contents">
-        <span className="text-muted-foreground w-[78px] text-right text-xs whitespace-nowrap">
-          {formatCompletionDate(t, format, completion)}
-        </span>
+        {/* A solve in progress says when it started in its meta line: a date here would read like
+            a finish. Its section heading says it is in progress. */}
+        {done && (
+          <span className="text-muted-foreground w-[78px] text-right text-xs whitespace-nowrap">
+            {formatCompletionDate(t, format, completion)}
+          </span>
+        )}
         {/* Below sm: the row's actions in one 44px menu under the date, so they never take a
             line of their own (Finish stays a visible button). */}
         {(openReview || openEdit || openDelete) && (

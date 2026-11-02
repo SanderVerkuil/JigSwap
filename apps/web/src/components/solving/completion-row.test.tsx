@@ -237,6 +237,16 @@ describe("CompletionRow actions", () => {
     ]);
   });
 
+  it("says a solve in progress is in progress once: no badge, and no date that reads like a finish", () => {
+    const { container } = renderRow(
+      row({ isCompleted: false, endDate: undefined }),
+    );
+    expect(screen.queryByText("In progress")).toBeNull();
+    expect(screen.getByText(/^Started Oct 28, 2026/)).toBeTruthy();
+    // The start date is only in the meta line, not in the date column as well.
+    expect(container.textContent?.match(/Oct 28, 2026/g)).toHaveLength(1);
+  });
+
   it("offers no menu when the row has no action", () => {
     renderRow(row({ aggregateId: undefined, puzzleId: undefined }));
     expect(
