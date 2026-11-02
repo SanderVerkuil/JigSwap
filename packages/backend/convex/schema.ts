@@ -251,11 +251,6 @@ export default defineSchema({
     // the uniqueness rule only the statuses that hold a barcode (a rejected row releases it).
     .index("by_ean_status", ["ean", "status"])
     .index("by_upc_status", ["upc", "status"])
-    .index("by_series", ["series"])
-    // Existing indexes are great!
-    .index("by_brand", ["brand"])
-    .index("by_publisher", ["publisher"])
-    .index("by_tags", ["tags"])
     // Whether a blob is a puzzle's box art (message-photo claims refuse it).
     .index("by_image", ["image"])
     .index("by_aggregate_id", ["aggregateId"])
@@ -266,6 +261,11 @@ export default defineSchema({
     // by_status is also the bounded pending-submissions count (admin/getPendingCounts).
     .index("by_status", ["status"])
     .index("by_status_brand", ["status", "brand"])
+    // The public facet reads (catalog/getAll*) distinct over these from the approved rows only, so
+    // pending and rejected submissions cost them no reads, however many arrive (SEC-26).
+    .index("by_status_publisher", ["status", "publisher"])
+    .index("by_status_series", ["status", "series"])
+    .index("by_status_tags", ["status", "tags"])
     .searchIndex("by_searchable_text", {
       searchField: "searchableText",
       // Lets public suggestions exclude pending/rejected submissions at the index level.
