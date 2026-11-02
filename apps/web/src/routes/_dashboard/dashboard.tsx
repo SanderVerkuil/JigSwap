@@ -28,11 +28,12 @@ export const Route = createFileRoute("/_dashboard/dashboard")({
   // Imported on demand so the browser never downloads it: a route's loader isn't code-split, so a
   // static import here would put the sections it shares constants with on every public page.
   loader: ({ context }) =>
-    loadMemberDataOnServer(context, async () => {
-      const { prefetchDashboardHome } =
-        await import("@/components/dashboard-home/prefetch-dashboard-home");
-      await prefetchDashboardHome(context.queryClient);
-    }),
+    loadMemberDataOnServer(
+      context,
+      async () =>
+        (await import("@/components/dashboard-home/prefetch-dashboard-home"))
+          .prefetchDashboardHome,
+    ),
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "dashboard") }],
   }),

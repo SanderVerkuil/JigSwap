@@ -1,4 +1,9 @@
 // @vitest-environment node
+import {
+  defaultShouldDehydrateQuery,
+  QueryClient,
+} from "@tanstack/react-query";
+import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 import { ConvexReactClient } from "convex/react";
 import { makeFunctionReference } from "convex/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -9,7 +14,11 @@ import {
   SSR_MEMBER_DATA_BUDGET_MS,
 } from "./ssr-member-data";
 
-const SIGNED_IN = { userId: "user_1", ssrAuthed: true };
+const signedIn = (queryClient = new QueryClient()) => ({
+  userId: "user_1",
+  ssrAuthed: true,
+  queryClient,
+});
 
 afterEach(() => {
   vi.useRealTimers();
@@ -19,8 +28,9 @@ afterEach(() => {
 describe("loadMemberDataOnServer", () => {
   it("reads for a member the server holds a token for", async () => {
     const prefetch = vi.fn(async () => {});
-    await loadMemberDataOnServer(SIGNED_IN, prefetch);
-    expect(prefetch).toHaveBeenCalledOnce();
+    const context = signedIn();
+    await loadMemberDataOnServer(context, async () => prefetch);
+    expect(prefetch).toHaveBeenCalledExactlyOnceWith(context.queryClient);
   });
 
   it.each([
@@ -29,21 +39,33 @@ describe("loadMemberDataOnServer", () => {
     ["without a token", { userId: "user_1", ssrAuthed: false }],
   ])("reads nothing %s", async (_, context) => {
     const prefetch = vi.fn(async () => {});
-    await loadMemberDataOnServer(context, prefetch);
+    await loadMemberDataOnServer(
+      { ...context, queryClient: new QueryClient() },
+      async () => prefetch,
+    );
     expect(prefetch).not.toHaveBeenCalled();
   });
 
   it("does nothing in the browser, so a navigation never waits on it", async () => {
     vi.stubGlobal("window", {});
     const prefetch = vi.fn(async () => {});
-    await loadMemberDataOnServer(SIGNED_IN, prefetch);
+    await loadMemberDataOnServer(signedIn(), async () => prefetch);
     expect(prefetch).not.toHaveBeenCalled();
   });
 
   it("leaves a failed read to the browser instead of failing the page", async () => {
     await expect(
-      loadMemberDataOnServer(SIGNED_IN, () =>
-        Promise.reject(new Error("backend down")),
+      loadMemberDataOnServer(
+        signedIn(),
+        async () => () => Promise.reject(new Error("backend down")),
+      ),
+    ).resolves.toBeUndefined();
+  });
+
+  it("leaves a prefetch that won't load to the browser too", async () => {
+    await expect(
+      loadMemberDataOnServer(signedIn(), () =>
+        Promise.reject(new Error("chunk failed")),
       ),
     ).resolves.toBeUndefined();
   });
@@ -52,8 +74,8 @@ describe("loadMemberDataOnServer", () => {
     vi.useFakeTimers();
     let settled = false;
     const loading = loadMemberDataOnServer(
-      SIGNED_IN,
-      () => new Promise(() => {}),
+      signedIn(),
+      async () => () => new Promise(() => {}),
     ).then(() => {
       settled = true;
     });
@@ -63,6 +85,127 @@ describe("loadMemberDataOnServer", () => {
     await vi.advanceTimersByTimeAsync(1);
     await loading;
     expect(settled).toBe(true);
+  });
+
+  // A read that outlives the budget must not change anything the page has decided on. The server's
+  // HTML and the browser's first render start from what was in the cache at the budget.
+  describe("a read still running at the budget", () => {
+    const key = (name: string) => [name];
+
+    it("never lands in the cache, while what finished in time stays", async () => {
+      vi.useFakeTimers();
+      const queryClient = new QueryClient();
+      let land = (_: string) => {};
+      const late = new Promise<string>((resolve) => {
+        land = resolve;
+      });
+      const loading = loadMemberDataOnServer(
+        signedIn(queryClient),
+        async () => (client) =>
+          Promise.allSettled([
+            client.fetchQuery({
+              queryKey: key("quick"),
+              queryFn: async () => "in time",
+            }),
+            client.fetchQuery({ queryKey: key("slow"), queryFn: () => late }),
+          ]),
+      );
+      await vi.advanceTimersByTimeAsync(SSR_MEMBER_DATA_BUDGET_MS);
+      await loading;
+
+      land("too late");
+      await vi.advanceTimersByTimeAsync(50);
+      expect(queryClient.getQueryData(key("quick"))).toBe("in time");
+      expect(queryClient.getQueryData(key("slow"))).toBeUndefined();
+      expect(queryClient.getQueryState(key("slow"))).toMatchObject({
+        status: "pending",
+        fetchStatus: "idle",
+      });
+    });
+
+    it("doesn't lead to the reads chained behind it", async () => {
+      vi.useFakeTimers();
+      const next = vi.fn(async () => "next");
+      const loading = loadMemberDataOnServer(
+        signedIn(),
+        async () => async (client) => {
+          await client.fetchQuery({
+            queryKey: key("me"),
+            queryFn: () =>
+              new Promise((resolve) => setTimeout(resolve, 10_000, "me")),
+          });
+          await client.fetchQuery({ queryKey: key("next"), queryFn: next });
+        },
+      );
+      await vi.advanceTimersByTimeAsync(SSR_MEMBER_DATA_BUDGET_MS);
+      await loading;
+      await vi.advanceTimersByTimeAsync(10_000);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it("starts no read when loading the prefetch took the whole budget", async () => {
+      vi.useFakeTimers();
+      const prefetch = vi.fn(async () => {});
+      const loading = loadMemberDataOnServer(
+        signedIn(),
+        () => new Promise((resolve) => setTimeout(resolve, 1_000, prefetch)),
+      );
+      await vi.advanceTimersByTimeAsync(SSR_MEMBER_DATA_BUDGET_MS);
+      await loading;
+      await vi.advanceTimersByTimeAsync(1_000);
+      expect(prefetch).not.toHaveBeenCalled();
+    });
+
+    // The route's real integration: what doesn't make dehydrate() must not follow by stream either.
+    it("isn't streamed to the browser after the page's data went out", async () => {
+      const queryClient = new QueryClient();
+      let finishRendering = () => {};
+      const router = {
+        isServer: true,
+        options: {} as {
+          dehydrate?: () => Promise<{
+            query: {
+              initial?: unknown[];
+              stream: ReadableStream<{ queryKey: unknown }[]>;
+            };
+          }>;
+        },
+        serverSsr: {
+          onRenderFinished: (callback: () => void) => {
+            finishRendering = callback;
+          },
+        },
+      };
+      setupRouterSsrQueryIntegration({
+        router: router as never,
+        queryClient,
+        dehydrateOptions: { shouldDehydrateQuery: defaultShouldDehydrateQuery },
+      });
+      let land = (_: string) => {};
+      const late = new Promise<string>((resolve) => {
+        land = resolve;
+      });
+      await loadMemberDataOnServer(
+        signedIn(queryClient),
+        async () => (client) =>
+          client.fetchQuery({ queryKey: key("slow"), queryFn: () => late }),
+      );
+      const dehydrated = await router.options.dehydrate?.();
+      expect(dehydrated?.query.initial).toBeUndefined();
+      const reader = dehydrated?.query.stream.getReader();
+
+      land("too late");
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      finishRendering();
+
+      const streamed: unknown[] = [];
+      for (;;) {
+        const chunk = await reader?.read();
+        if (!chunk || chunk.done) break;
+        streamed.push(chunk.value);
+      }
+      expect(streamed).toEqual([]);
+    });
   });
 });
 

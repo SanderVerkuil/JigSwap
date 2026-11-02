@@ -91,7 +91,7 @@ export const Route = createFileRoute("/_dashboard/my-puzzles/")({
     loadMemberDataOnServer(context, async () => {
       const { prefetchMyPuzzles } =
         await import("@/components/library/prefetch-my-puzzles");
-      await prefetchMyPuzzles(context.queryClient, deps.search);
+      return (queryClient) => prefetchMyPuzzles(queryClient, deps.search);
     }),
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "myPuzzles") }],
