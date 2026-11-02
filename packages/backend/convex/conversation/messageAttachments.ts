@@ -195,10 +195,7 @@ export const deleteMessageThumb = async (
   if (await ctx.db.system.get(row.thumbFileId)) {
     await ctx.storage.delete(row.thumbFileId);
   }
-  await ctx.db.patch(row._id, {
-    thumbFileId: undefined,
-    thumbWidth: undefined,
-  });
+  await ctx.db.patch(row._id, { thumbFileId: undefined });
 };
 
 /**
@@ -692,8 +689,8 @@ export const expireStagedAttachment = async (
  * hash check passed (as the outbox did), else the blurhash; once stopped, the refusal card
  * (`rejected`, rejectionFieldsOf: identical for a quarantined photo) until it is hidden from them.
  *
- * The thumbnail (`thumbUrl`, and the `srcSet` a tile picks from) is only ever sent with the photo's
- * own `url`, past all of the above.
+ * The thumbnail (`thumbUrl`, what a tile shows) is only ever sent with the photo's own `url`, past
+ * all of the above.
  */
 export const messageAttachmentViews = (ctx: QueryCtx, viewer: Id<"users">) => {
   const mutualWith = new Map<Id<"users">, Promise<boolean>>();
@@ -785,30 +782,14 @@ export const messageAttachmentViews = (ctx: QueryCtx, viewer: Id<"users">) => {
     const thumbUrl = row.thumbFileId
       ? await ctx.storage.getUrl(row.thumbFileId)
       : null;
-    const srcSet = thumbSrcSetOf(row, url, thumbUrl);
     return {
       status: "ready",
       ...(url !== null && { url }),
       ...(thumbUrl !== null && { thumbUrl }),
-      ...(srcSet !== undefined && { srcSet }),
       ...placeholder,
       ...(revealed && { revealed: true as const }),
     };
   };
-};
-
-// What a photo's tile picks from: its thumbnail and, when that is narrower, the original (its
-// `width` is the client's, which only steers the browser's pick). None without a thumbnail.
-const thumbSrcSetOf = (
-  row: Attachment,
-  url: string | null,
-  thumbUrl: string | null,
-): string | undefined => {
-  if (thumbUrl === null || row.thumbWidth === undefined) return undefined;
-  const thumb = `${thumbUrl} ${row.thumbWidth}w`;
-  return url !== null && row.width !== undefined && row.width > row.thumbWidth
-    ? `${thumb}, ${url} ${row.width}w`
-    : thumb;
 };
 
 /**

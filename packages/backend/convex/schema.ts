@@ -1162,8 +1162,6 @@ export default defineSchema({
         // only where the photo is (messageAttachmentViews). Deleted with the photo's blobs
         // (deleteAttachmentBlobs), and at once on a CSAM match.
         thumbFileId: v.optional(v.id("_storage")),
-        // Its width in px, for the srcset.
-        thumbWidth: v.optional(v.number()),
         // When the thumbnail job finished: with no thumbFileId, no WebP came out clearly smaller,
         // so it is not decoded again.
         thumbCheckedAt: v.optional(v.number()),

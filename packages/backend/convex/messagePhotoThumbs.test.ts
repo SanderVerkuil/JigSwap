@@ -95,7 +95,6 @@ type PhotoFields = Partial<
     | "messageId"
     | "width"
     | "thumbFileId"
-    | "thumbWidth"
   >
 >;
 
@@ -259,7 +258,6 @@ describe("message photo thumbnails: made once the photo may be served", () => {
 
     const row = await photoRow(t, photo._id);
     expect(row.thumbFileId).toBeDefined();
-    expect(row.thumbWidth).toBe(640);
     expect(row.thumbCheckedAt).toEqual(expect.any(Number));
     expect(await blobType(t, row.thumbFileId!)).toBe("image/webp");
     expect(
@@ -470,7 +468,6 @@ describe("message photo thumbnails: deleted with the photo", () => {
     const photo = await seedPhoto(t, s, {
       ...fields,
       thumbFileId: thumb,
-      thumbWidth: 640,
     });
     return { ...photo, thumb };
   };
@@ -506,7 +503,6 @@ describe("message photo thumbnails: deleted with the photo", () => {
       fileId: preserved,
     });
     expect(asImage(row)?.thumbFileId).toBeUndefined();
-    expect(asImage(row)?.thumbWidth).toBeUndefined();
     expect(
       await t.run((ctx) => ctx.db.query("csamEscalations").collect()),
     ).toEqual([
@@ -584,18 +580,12 @@ describe("message photo thumbnails: deleted with the photo", () => {
 });
 
 describe("message photo thumbnails: served only where the photo is", () => {
-  const withThumb = async (
-    t: T,
-    s: Seeded,
-    fields: PhotoFields = SERVABLE,
-    thumbWidth = 640,
-  ) => {
+  const withThumb = async (t: T, s: Seeded, fields: PhotoFields = SERVABLE) => {
     const thumb = await storeWebp(t, "thumbnail");
     const photo = await seedPhoto(t, s, {
       width: 1000,
       ...fields,
       thumbFileId: thumb,
-      thumbWidth,
     });
     return {
       ...photo,
@@ -635,7 +625,7 @@ describe("message photo thumbnails: served only where the photo is", () => {
     }
   };
 
-  test("a reader who may see it gets the thumbnail, a srcSet, and the original for the viewer", async () => {
+  test("a reader who may see it gets the thumbnail, and the original for the viewer", async () => {
     const t = convexTest(schema, modules);
     const s = await seed(t);
     const photo = await withThumb(t, s);
@@ -646,21 +636,10 @@ describe("message photo thumbnails: served only where the photo is", () => {
       w: 1000,
       url: photo.url,
       thumbUrl: photo.thumbUrl,
-      srcSet: `${photo.thumbUrl} 640w, ${photo.url} 1000w`,
     });
     // URLs only: no storage id on the wire.
     expect(JSON.stringify(view)).not.toContain(photo.thumb);
     expect(JSON.stringify(view)).not.toContain(photo.fileId);
-  });
-
-  test("a photo no wider than its thumbnail lists the thumbnail alone", async () => {
-    const t = convexTest(schema, modules);
-    const s = await seed(t);
-    const photo = await withThumb(t, s, { ...SERVABLE, width: 500 }, 500);
-
-    expect((await viewFor(t, s.bob, photo.id)).srcSet).toBe(
-      `${photo.thumbUrl} 500w`,
-    );
   });
 
   test("before the backfill the photo is served as it was", async () => {
@@ -710,7 +689,6 @@ describe("message photo thumbnails: served only where the photo is", () => {
       revealed: true,
       url,
       thumbUrl,
-      srcSet: `${thumbUrl} 640w, ${url} 1000w`,
     });
   });
 
@@ -818,7 +796,6 @@ describe("message photo thumbnails: the backfill", () => {
     const done = await seedPhoto(t, s, {
       ...SERVABLE,
       thumbFileId: await storeWebp(t, "thumbnail"),
-      thumbWidth: 640,
     });
     await t.run((ctx) =>
       ctx.db.insert("messageAttachments", {
@@ -861,7 +838,7 @@ describe("message photo thumbnails: the backfill", () => {
     await t.finishAllScheduledFunctions(vi.runAllTimers);
 
     for (const photo of [seeded.approved, seeded.blurred]) {
-      expect((await photoRow(t, photo.id)).thumbWidth).toBe(640);
+      expect((await photoRow(t, photo.id)).thumbFileId).toBeDefined();
     }
     for (const photo of [seeded.pending, seeded.quarantined]) {
       expect((await photoRow(t, photo.id)).thumbFileId).toBeUndefined();

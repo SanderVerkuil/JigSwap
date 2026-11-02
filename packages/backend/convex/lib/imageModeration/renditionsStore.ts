@@ -216,7 +216,7 @@ export const recordRenditions = internalMutation({
     const photo = kind === "message" && (await messagePhotoOf(ctx, sourceId));
     if (photo) {
       await ctx.db.patch(photo._id, {
-        ...(small && { thumbFileId: small.fileId, thumbWidth: small.width }),
+        ...(small && { thumbFileId: small.fileId }),
         thumbCheckedAt: Date.now(),
       });
       return true;

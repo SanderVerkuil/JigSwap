@@ -88,48 +88,43 @@ describe("MessagePhotos", () => {
     });
     expect(button.getAttribute("style")).toContain("aspect-ratio");
     const img = button.querySelector("img[loading='lazy']");
-    expect(img?.getAttribute("src")).toBe(READY.url);
+    expect(img?.getAttribute("src")).toBe(READY.thumbUrl);
   });
 
-  it("a tile picks from the photo's srcSet at the width it draws; the viewer opens the original", async () => {
-    const srcSet =
-      "https://files.test/thumb.webp 640w, https://files.test/full.jpg 1600w";
+  it("a tile loads the thumbnail, also at 3x (no srcset to pick the original from); the viewer opens the original", async () => {
     wrap(
       <MessagePhotos
-        messages={[photo("m1", { ...READY, srcSet })]}
+        messages={[photo("m1", READY)]}
         own={false}
         authorName="Mara"
       />,
     );
     const button = screen.getByRole("button", { name: "Photo from Mara" });
     const img = button.querySelector("img[loading='lazy']");
-    expect(img?.getAttribute("srcset")).toBe(srcSet);
-    expect(img?.getAttribute("sizes")).toBe("288px");
+    expect(img?.getAttribute("src")).toBe(READY.thumbUrl);
+    expect(img?.getAttribute("srcset")).toBeNull();
 
     fireEvent.click(button);
     const dialog = await screen.findByRole("dialog");
     expect(dialog.querySelector("img")?.getAttribute("src")).toBe(READY.url);
-    expect(dialog.querySelector("img")?.getAttribute("srcset")).toBeNull();
   });
 
-  it("in a gallery of three the first tile spans the width and the others take half", () => {
-    const srcSet = "https://files.test/thumb.webp 640w";
+  it("every tile of a gallery loads its thumbnail", () => {
     wrap(
       <MessagePhotos
-        messages={["m1", "m2", "m3"].map((id) =>
-          photo(id, { ...READY, srcSet }),
-        )}
+        messages={["m1", "m2", "m3"].map((id) => photo(id, READY))}
         own={false}
         authorName="Mara"
       />,
     );
-    const sizes = [1, 2, 3].map((index) =>
-      screen
-        .getByRole("button", { name: `Photo ${index} of 3, open` })
-        .querySelector("img[loading='lazy']")
-        ?.getAttribute("sizes"),
-    );
-    expect(sizes).toEqual(["288px", "144px", "144px"]);
+    for (const index of [1, 2, 3]) {
+      expect(
+        screen
+          .getByRole("button", { name: `Photo ${index} of 3, open` })
+          .querySelector("img[loading='lazy']")
+          ?.getAttribute("src"),
+      ).toBe(READY.thumbUrl);
+    }
   });
 
   it("a photo without a thumbnail is shown as before", () => {
@@ -145,8 +140,6 @@ describe("MessagePhotos", () => {
       .getByRole("button", { name: "Photo from Mara" })
       .querySelector("img[loading='lazy']");
     expect(img?.getAttribute("src")).toBe(READY.url);
-    expect(img?.getAttribute("srcset")).toBeNull();
-    expect(img?.getAttribute("sizes")).toBeNull();
   });
 
   it("names the photo with its caption as plain text, without markers", () => {

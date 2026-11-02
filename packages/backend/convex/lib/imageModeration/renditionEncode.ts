@@ -75,7 +75,8 @@ export const THUMBNAIL_LADDER = [
 
 /**
  * One WebP for a message photo (messageAttachments.thumbFileId): the thread's tile is at most 288
- * px wide, so 640 px covers it at 2x. The photo viewer opens the original.
+ * px wide, so 640 px covers it at 2x, and stays sharp enough at 3x for a preview. The photo viewer
+ * opens the original.
  */
 export const MESSAGE_THUMB_LADDER = [
   { slot: "small", width: 640 },
