@@ -28,7 +28,7 @@ interface PuzzleCardProps {
    * labelled "Add to Library" button and a small Details link; no heart.
    */
   variant?: "catalogue" | "pick";
-  /** pick variant: the member already owns a copy of this puzzle ("On your shelf"). */
+  /** The member already owns a copy of this puzzle ("On your shelf"). */
   onShelf?: boolean;
   /** Card title heading level; 2 when the grid sits directly under the page h1. */
   headingLevel?: PuzzleCardShellProps["headingLevel"];
@@ -51,14 +51,30 @@ export function PuzzleCard({
       headingLevel={headingLevel}
     />
   ) : (
-    <CataloguePuzzleCard puzzle={puzzle} headingLevel={headingLevel} />
+    <CataloguePuzzleCard
+      puzzle={puzzle}
+      onShelf={onShelf}
+      headingLevel={headingLevel}
+    />
+  );
+}
+
+// "On your shelf": the same marker on the catalogue's cards and the chooser's.
+function OnShelfBadge() {
+  const t = useTranslations("cataloguePicker");
+  return (
+    <Badge variant="outline">
+      <Check aria-hidden />
+      {t("onShelf")}
+    </Badge>
   );
 }
 
 function CataloguePuzzleCard({
   puzzle,
+  onShelf,
   headingLevel,
-}: Pick<PuzzleCardProps, "puzzle" | "headingLevel">) {
+}: Pick<PuzzleCardProps, "puzzle" | "headingLevel"> & { onShelf: boolean }) {
   const t = useTranslations("puzzles");
   // Catalog-card strings (the favourite labels) live under the nested
   // `puzzles.puzzles.*` namespace, not the flat `puzzles.*` one used by `t`.
@@ -89,6 +105,13 @@ function CataloguePuzzleCard({
       imageFit="contain"
       headingLevel={headingLevel}
       imageChecking={!puzzle.image && boxArtInCheck.has(puzzle._id)}
+      badges={
+        onShelf ? (
+          <div className="mb-2">
+            <OnShelfBadge />
+          </div>
+        ) : undefined
+      }
       actions={
         // The card opens the puzzle through its title's stretched link (one Tab stop per card), so
         // the row only holds the card's own actions: compact icon buttons with accessible names.
@@ -134,7 +157,6 @@ function PickPuzzleCard({
   headingLevel,
 }: Pick<PuzzleCardProps, "puzzle" | "headingLevel"> & { onShelf: boolean }) {
   const t = useTranslations("puzzles");
-  const tPicker = useTranslations("cataloguePicker");
   const boxArtInCheck = useBoxArtInCheck();
   const addHref = addCopyHref(puzzle._id);
 
@@ -160,10 +182,7 @@ function PickPuzzleCard({
       badges={
         onShelf ? (
           <div className="mb-2">
-            <Badge variant="outline">
-              <Check aria-hidden />
-              {tPicker("onShelf")}
-            </Badge>
+            <OnShelfBadge />
           </div>
         ) : undefined
       }

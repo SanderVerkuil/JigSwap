@@ -22,7 +22,7 @@ import { PuzzlesClient } from "./puzzle-client";
 // What the catalogue read reports. Mutable per test; `results` keep their identity between renders,
 // as usePaginatedQuery's do.
 type Paginated = {
-  results: { _id: string; title: string }[];
+  results: { _id: string; title: string; aggregateId?: string }[];
   status: "LoadingFirstPage" | "CanLoadMore" | "LoadingMore" | "Exhausted";
 };
 const paginated = vi.hoisted(() => ({
@@ -47,8 +47,16 @@ vi.mock("@/compat/link", () => ({
   ),
 }));
 vi.mock("./puzzle-card", () => ({
-  PuzzleCard: ({ puzzle }: { puzzle: { title: string } }) => (
-    <div data-testid="card">{puzzle.title}</div>
+  PuzzleCard: ({
+    puzzle,
+    onShelf,
+  }: {
+    puzzle: { title: string };
+    onShelf?: boolean;
+  }) => (
+    <div data-testid="card" data-on-shelf={onShelf ? "" : undefined}>
+      {puzzle.title}
+    </div>
   ),
 }));
 vi.mock("./puzzle-card-skeleton", () => ({
@@ -56,6 +64,7 @@ vi.mock("./puzzle-card-skeleton", () => ({
 }));
 
 const favouritesKey = convexQuery(gateway.catalog.listMyFavorites, {}).queryKey;
+const ownedKey = convexQuery(gateway.library.myOwnedDefinitionIds, {}).queryKey;
 
 const LOADING: Paginated = { results: [], status: "LoadingFirstPage" };
 const NOTHING: Paginated = { results: [], status: "Exhausted" };
@@ -81,7 +90,7 @@ function Harness({ initial }: { initial: PuzzlesSearch }) {
 
 const renderClient = (
   initial: PuzzlesSearch = {},
-  { favourites }: { favourites?: unknown[] } = {},
+  { favourites, owned }: { favourites?: unknown[]; owned?: string[] } = {},
 ) => {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -89,6 +98,7 @@ const renderClient = (
     },
   });
   if (favourites) queryClient.setQueryData(favouritesKey, favourites);
+  if (owned) queryClient.setQueryData(ownedKey, owned);
   // Fresh elements each time: a rerender has to reach PuzzlesClient for the read's new state to show.
   const tree = () => (
     <QueryClientProvider client={queryClient}>
@@ -186,6 +196,21 @@ describe("PuzzlesClient results", () => {
     paginated.current = { results: LAKES, status: "CanLoadMore" };
     renderClient();
     expect(screen.getByText("2 puzzles found so far")).toBeTruthy();
+  });
+
+  it("tells each card whether the member owns the puzzle, by its aggregate id", () => {
+    paginated.current = {
+      results: [
+        { ...row("a"), aggregateId: "agg-a" },
+        { ...row("b"), aggregateId: "agg-b" },
+      ],
+      status: "Exhausted",
+    };
+    renderClient({}, { owned: ["agg-b"] });
+    const shelf = screen
+      .getAllByTestId("card")
+      .map((card) => card.hasAttribute("data-on-shelf"));
+    expect(shelf).toEqual([false, true]);
   });
 
   it("sends the term and every facet to the server search", () => {

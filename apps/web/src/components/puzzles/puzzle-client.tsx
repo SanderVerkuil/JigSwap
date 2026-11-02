@@ -24,7 +24,14 @@ import { useQuery } from "@tanstack/react-query";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery } from "convex/react";
 import { Filter, Heart, Plus, Search, X } from "lucide-react";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useTranslations } from "use-intl";
 import { ActiveFacetChips } from "./active-facet-chips";
 import { PuzzleCard } from "./puzzle-card";
@@ -123,6 +130,11 @@ export function PuzzlesClient({
   const { data: favourites } = useQuery(
     convexQuery(gateway.catalog.listMyFavorites, favoritesOnly ? {} : "skip"),
   );
+  // What the member already has a copy of, so they can scan the catalogue for what they're missing.
+  const { data: ownedIds } = useQuery(
+    convexQuery(gateway.library.myOwnedDefinitionIds, {}),
+  );
+  const ownedDefinitionIds = useMemo(() => new Set(ownedIds), [ownedIds]);
   const puzzles = favoritesOnly
     ? favouritesInCatalogue(favourites ?? [], searchArgs)
     : showingSettledRows
@@ -338,7 +350,15 @@ export function PuzzlesClient({
         >
           <PuzzleViewProvider viewMode={viewMode}>
             {puzzles.map((puzzle) => (
-              <PuzzleCard key={puzzle._id} puzzle={puzzle} headingLevel={2} />
+              <PuzzleCard
+                key={puzzle._id}
+                puzzle={puzzle}
+                onShelf={
+                  !!puzzle.aggregateId &&
+                  ownedDefinitionIds.has(puzzle.aggregateId)
+                }
+                headingLevel={2}
+              />
             ))}
           </PuzzleViewProvider>
         </div>

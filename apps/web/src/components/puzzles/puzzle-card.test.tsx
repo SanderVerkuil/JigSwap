@@ -101,6 +101,24 @@ const summary = (extra: Partial<Summary> = {}): Summary => ({
   ...extra,
 });
 
+describe("catalogue PuzzleCard: on your shelf", () => {
+  it.each(["grid", "list"] as const)(
+    "marks a puzzle the member owns in the %s view, and keeps the + for another copy",
+    (viewMode) => {
+      render(<CatalogCard puzzle={summary()} onShelf />, viewMode);
+      expect(container.textContent).toContain(en.cataloguePicker.onShelf);
+      expect(
+        screen.getByRole("link", { name: en.puzzles.addToLibrary }),
+      ).toBeTruthy();
+    },
+  );
+
+  it("shows no marker on a puzzle they don't own", () => {
+    render(<CatalogCard puzzle={summary()} />);
+    expect(container.textContent).not.toContain(en.cataloguePicker.onShelf);
+  });
+});
+
 describe("catalogue PuzzleCard cover", () => {
   it("lets the browser pick a rendition for the app's puzzle grid", () => {
     render(<CatalogCard puzzle={summary({ imageSrcSet: SRC_SET })} />);
