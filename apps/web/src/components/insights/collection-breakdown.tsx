@@ -95,25 +95,44 @@ function hasValues(entries: DistributionEntry[]): boolean {
   return entries.some((e) => e.value > 0);
 }
 
-// A range takes two lines ("1.000–" over "1.999"): on one line, seven buckets run into each other in
-// a phone's chart. The wider "Onbekend" drops to the second line for the same reason. The axis
-// passes the position and colour in.
+// The widest a character of the axis's 12px type comes to, the air a label needs beside its
+// neighbour, and the narrowest bucket that type fits: below that even "1.000" beside "2.000+" fills
+// the bucket.
+const TICK_CHAR_PX = 8;
+const TICK_GAP_PX = 4;
+const TICK_FULL_SIZE_SLOT_PX = 40;
+
+// A label stays on one line while its bucket has the room. With less, a range takes two ("1.000" over
+// "–1.999", as "1.000–" beside "2.000+" read as one range) and the wider "Onbekend" drops to the
+// second line, clear of the number beside it. The axis passes the position, colour and sizes in.
 export function PieceCountTick({
   x,
   y,
   fill,
   payload,
+  width = 0,
+  visibleTicksCount = 1,
 }: {
   x?: number;
   y?: number;
   fill?: string;
   payload?: { value: string };
+  width?: number;
+  visibleTicksCount?: number;
 }) {
   const value = payload?.value ?? "";
-  const [from, to] = value.split(/(?<=–)/);
+  const slot = width / visibleTicksCount;
+  const fits = value.length * TICK_CHAR_PX + TICK_GAP_PX <= slot;
+  const [from, to] = fits ? [value] : value.split(/(?=–)/);
   return (
-    <text x={x} y={y} fill={fill} textAnchor="middle">
-      <tspan x={x} dy={/\d/.test(value) ? "0.71em" : "1.81em"}>
+    <text
+      x={x}
+      y={y}
+      fill={fill}
+      textAnchor="middle"
+      fontSize={slot < TICK_FULL_SIZE_SLOT_PX ? 10 : undefined}
+    >
+      <tspan x={x} dy={fits || /\d/.test(value) ? "0.71em" : "1.81em"}>
         {from}
       </tspan>
       {to && (
@@ -139,7 +158,7 @@ function PieceCountChart({ data }: { data: DistributionEntry[] }) {
 
   return (
     <ChartContainer config={config} className="h-[220px] w-full">
-      <BarChart data={buckets} margin={{ left: 4, right: 8 }}>
+      <BarChart data={buckets} margin={{ left: 4, right: 16 }}>
         <XAxis
           dataKey="label"
           tickLine={false}
@@ -311,15 +330,17 @@ function DifficultyChart({ data }: { data: DistributionEntry[] }) {
 function BreakdownBlock({
   title,
   data,
+  className,
   children,
 }: {
   title: string;
   data: DistributionEntry[];
+  className?: string;
   children: React.ReactNode;
 }) {
   const t = useTranslations("insights.breakdown");
   return (
-    <div className="min-w-0">
+    <div className={cn("min-w-0", className)}>
       <h3 className="text-muted-foreground mb-4 border-b pb-2 text-sm font-semibold">
         {title}
       </h3>
@@ -343,8 +364,14 @@ export function CollectionBreakdown({
   return (
     <section>
       <SectionHead title={t("title")} icon={FolderOpen} />
-      <div className="grid gap-8 lg:grid-cols-3">
-        <BreakdownBlock title={t("pieceCount")} data={data.byPieceCount}>
+      {/* Three columns next to an open sidebar leave a chart 209px at 1024 wide: too narrow for the
+          piece-count axis, which takes the full width until 1280. */}
+      <div className="grid gap-8 lg:grid-cols-2 xl:grid-cols-3">
+        <BreakdownBlock
+          title={t("pieceCount")}
+          data={data.byPieceCount}
+          className="lg:col-span-2 xl:col-span-1"
+        >
           <PieceCountChart data={data.byPieceCount} />
         </BreakdownBlock>
         <BreakdownBlock title={t("difficulty")} data={data.byDifficulty}>

@@ -67,32 +67,71 @@ describe("pieceCountLabel", () => {
 });
 
 describe("PieceCountTick", () => {
-  const lines = (value: string) => {
-    const { container } = render(
+  // The axis's width and its tick count give one bucket's room: 7 ticks at 300px is 43px each.
+  const tick = (value: string, width: number) =>
+    render(
       <svg>
-        <PieceCountTick x={10} y={20} fill="#666" payload={{ value }} />
+        <PieceCountTick
+          x={10}
+          y={20}
+          fill="#666"
+          width={width}
+          visibleTicksCount={7}
+          payload={{ value }}
+        />
       </svg>,
-    );
-    return [...container.querySelectorAll("tspan")].map((line) => [
+    ).container;
+  const lines = (value: string, width = 300) =>
+    [...tick(value, width).querySelectorAll("tspan")].map((line) => [
       line.textContent,
       line.getAttribute("dy"),
     ]);
-  };
 
-  // On one line these ran into each other in a phone's chart.
-  it("takes two lines for a range, and keeps the dash with the first", () => {
+  // The dash starts the second line: "1.000–" beside "2.000+" read as one range, "1.000–2.000+".
+  it("takes two lines for a range that doesn't fit, with the dash on the second", () => {
     expect(lines("1.000–1.999")).toEqual([
-      ["1.000–", "0.71em"],
-      ["1.999", "1.1em"],
+      ["1.000", "0.71em"],
+      ["–1.999", "1.1em"],
     ]);
   });
 
   it("takes one line for a single number", () => {
     expect(lines("2.000+")).toEqual([["2.000+", "0.71em"]]);
+    expect(lines("< 100")).toEqual([["< 100", "0.71em"]]);
   });
 
-  it("drops a word to the second line, clear of the number beside it", () => {
+  it("drops a word that doesn't fit to the second line, clear of the number beside it", () => {
     expect(lines("Onbekend")).toEqual([["Onbekend", "1.81em"]]);
+  });
+
+  it("keeps labels on one line when their bucket has the room", () => {
+    expect(lines("1.000–1.999", 700)).toEqual([["1.000–1.999", "0.71em"]]);
+    expect(lines("Onbekend", 700)).toEqual([["Onbekend", "0.71em"]]);
+  });
+
+  // At 320 wide, and at 1280 next to an open sidebar, even "1.000" beside "2.000+" takes all of a
+  // bucket's room at the axis's normal size.
+  it("sets the labels smaller only when a bucket is too narrow for them", () => {
+    expect(
+      tick("2.000+", 245).querySelector("text")?.getAttribute("font-size"),
+    ).toBe("10");
+    expect(
+      tick("2.000+", 300).querySelector("text")?.getAttribute("font-size"),
+    ).toBeNull();
+  });
+});
+
+describe("CollectionBreakdown: columns", () => {
+  // Three columns next to an open sidebar leave a chart 209px at 1024 wide, too narrow for its axis.
+  it("takes three columns only when each still has room for the axis", () => {
+    const { container } = renderBreakdown(breakdown());
+    const grid = screen.getByRole("heading", { name: "By piece count" })
+      .parentElement?.parentElement;
+    expect(grid?.className).toContain("xl:grid-cols-3");
+    expect(grid?.className).not.toContain(" lg:grid-cols-3");
+    expect(container.querySelector(".lg\\:col-span-2")?.textContent).toContain(
+      "By piece count",
+    );
   });
 });
 
