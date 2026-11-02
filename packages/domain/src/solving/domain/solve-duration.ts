@@ -1,7 +1,11 @@
 import { err, ok, Result } from "../../shared-kernel";
+import { DatePrecision } from "./date-precision";
 import { SolvingError } from "./errors";
 
 const MS_PER_MINUTE = 60_000;
+
+// A date-only same-day completion (start == end, no explicit duration) counts as one day.
+export const MINUTES_PER_DAY = 1440;
 
 // The longest a solve can be said to have taken: ten years. Whatever a member states is stored and
 // feeds the averages on a definition's public page, so one number must not be able to swamp them.
@@ -57,3 +61,27 @@ export class SolveDuration {
     return this.minutes === other.minutes;
   }
 }
+
+// The time a member typed for a solve, or undefined when they typed none. Completion always stores
+// a duration: without a typed time it derives one from the dates, or one day for a same-day solve
+// (resolveDuration). That stored value says how the dates relate, not how long the puzzle took, so
+// every figure that reads as a time (total solve time, solve hours, fastest finish) goes through
+// this. There is no "typed" flag on the row: a stored duration counts as typed when it differs
+// from what the dates would give. A typed time that happens to equal it (exactly 24h on one day)
+// reads as the dates, which is still true. Year-only and undated solves hold sentinel dates and
+// never have a time; a row without an end date has no span, so what it stored can't be derived. A
+// stored number no solve can have taken (isPlausibleSolveMinutes) was never a time either.
+export const typedSolveMinutes = (solve: {
+  readonly startDate: number;
+  readonly endDate?: number;
+  readonly completionTimeMinutes?: number;
+  readonly datePrecision?: DatePrecision;
+}): number | undefined => {
+  const { startDate, endDate, completionTimeMinutes: minutes } = solve;
+  if ((solve.datePrecision ?? "day") !== "day") return undefined;
+  if (!isPlausibleSolveMinutes(minutes)) return undefined;
+  if (endDate === undefined) return minutes;
+  const spanMinutes = Math.round((endDate - startDate) / MS_PER_MINUTE);
+  const derived = spanMinutes > 0 ? spanMinutes : MINUTES_PER_DAY;
+  return minutes === derived ? undefined : minutes;
+};

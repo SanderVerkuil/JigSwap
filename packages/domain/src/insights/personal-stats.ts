@@ -4,6 +4,8 @@
 
 // One completed solve, reduced to what the stats need.
 export interface CompletionStatInput {
+  // The time the member typed (typedSolveMinutes), never the duration stored from the dates: an
+  // untimed solve must not add up to a solve time.
   readonly completionTimeMinutes?: number;
   readonly isCompleted: boolean;
   // Absent = "day". Every precision counts in the lifetime total; only dated solves feed the

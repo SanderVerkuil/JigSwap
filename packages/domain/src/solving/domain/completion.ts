@@ -13,7 +13,11 @@ import {
 } from "./events";
 import { CompletionId, CopyId, MemberId, PuzzleDefinitionId } from "./ids";
 import { Photo } from "./photo";
-import { isSpanLongerThanAnySolve, SolveDuration } from "./solve-duration";
+import {
+  isSpanLongerThanAnySolve,
+  MINUTES_PER_DAY,
+  SolveDuration,
+} from "./solve-duration";
 
 // A completion may hold at most five photos (§1.4).
 export const MAX_PHOTOS = 5;
@@ -25,9 +29,6 @@ export const MAX_SOLVE_NOTES_LENGTH = 5_000;
 // completionEditableUntil), which is a calendar date stored as UTC midnight, so a back-dated or
 // year-only solve is closed as soon as it is logged.
 export const EDIT_WINDOW_MS = 24 * 60 * 60 * 1000;
-
-// A date-only same-day completion (start == end, no explicit duration) counts as one day.
-const MINUTES_PER_DAY = 1440;
 
 // Input to start(): an in-progress solve (no end yet).
 export interface StartCompletionProps {

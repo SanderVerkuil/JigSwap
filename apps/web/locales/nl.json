@@ -3513,6 +3513,7 @@
     "stats": {
       "completions": "Voltooiingen",
       "solveTime": "Totale oplostijd",
+      "solveTimeNone": "—",
       "puzzlesOwned": "Puzzels in bezit",
       "distinctDefinitions": "Unieke titels",
       "collections": "Collecties",
@@ -3526,10 +3527,10 @@
     "trends": {
       "title": "Voltooiingstrends",
       "description": "Voltooiingen per maand over de laatste 12 maanden.",
-      "minutesDescription": "Oplostijd in minuten per maand over de laatste 12 maanden.",
+      "hoursDescription": "Oplostijd in uren per maand over de laatste 12 maanden.",
       "count": "Voltooiingen",
-      "minutes": "Oplosminuten",
-      "empty": "Nog geen voltooiingen."
+      "hours": "Oplosuren",
+      "empty": "Geen voltooiingen met een datum in de laatste 12 maanden."
     },
     "breakdown": {
       "title": "Collectie-uitsplitsing",
@@ -3569,7 +3570,7 @@
     },
     "charts": {
       "completionsPerMonth": "Voltooiingen / maand",
-      "minutesPerMonth": "Oplosminuten / maand",
+      "hoursPerMonth": "Oplosuren / maand",
       "swapsPerMonth": "Ruilacties / maand",
       "month": "Maand"
     }

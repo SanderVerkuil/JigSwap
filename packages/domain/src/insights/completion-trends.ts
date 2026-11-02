@@ -7,6 +7,7 @@ import { DEFAULT_WINDOW_MONTHS, lastMonthKeys, monthKey } from "./month-window";
 export interface CompletionTrendInput {
   // Epoch milliseconds the solve finished. Only finished solves should be passed in.
   readonly completedAt: number;
+  // The time the member typed (typedSolveMinutes), never the duration stored from the dates.
   readonly completionTimeMinutes?: number;
   // Absent = "day". Year-only and undated solves have no month, so they are skipped (spec D4).
   readonly datePrecision?: "day" | "year" | "unknown";

@@ -3513,6 +3513,7 @@
     "stats": {
       "completions": "Completions",
       "solveTime": "Total solve time",
+      "solveTimeNone": "—",
       "puzzlesOwned": "Puzzles owned",
       "distinctDefinitions": "Distinct titles",
       "collections": "Collections",
@@ -3526,10 +3527,10 @@
     "trends": {
       "title": "Completion trends",
       "description": "Solves finished per month over the last 12 months.",
-      "minutesDescription": "Solve time in minutes per month over the last 12 months.",
+      "hoursDescription": "Solve time in hours per month over the last 12 months.",
       "count": "Completions",
-      "minutes": "Solve minutes",
-      "empty": "No finished solves yet."
+      "hours": "Solve hours",
+      "empty": "No dated solves in the last 12 months."
     },
     "breakdown": {
       "title": "Collection breakdown",
@@ -3569,7 +3570,7 @@
     },
     "charts": {
       "completionsPerMonth": "Completions / month",
-      "minutesPerMonth": "Solve minutes / month",
+      "hoursPerMonth": "Solve hours / month",
       "swapsPerMonth": "Swaps / month",
       "month": "Month"
     }

@@ -3,6 +3,7 @@ import {
   isPlausibleSolveMinutes,
   MAX_SOLVE_MINUTES,
   SolveDuration,
+  typedSolveMinutes,
 } from "./solve-duration";
 
 describe("SolveDuration", () => {
@@ -110,5 +111,97 @@ describe("isPlausibleSolveMinutes", () => {
     Number.POSITIVE_INFINITY,
   ])("refuses %p, whatever a row already holds", (minutes) => {
     expect(isPlausibleSolveMinutes(minutes)).toBe(false);
+  });
+});
+
+describe("typedSolveMinutes", () => {
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const day = Date.UTC(2026, 9, 12);
+
+  it("reads a time the member typed on a same-day solve", () => {
+    expect(
+      typedSolveMinutes({
+        startDate: day,
+        endDate: day,
+        completionTimeMinutes: 200,
+      }),
+    ).toBe(200);
+  });
+
+  it("reads a time the member typed on a solve spanning several days", () => {
+    expect(
+      typedSolveMinutes({
+        startDate: day,
+        endDate: day + 3 * DAY_MS,
+        completionTimeMinutes: 600,
+      }),
+    ).toBe(600);
+  });
+
+  it("does not take the one day stored for an untimed same-day solve for a time", () => {
+    expect(
+      typedSolveMinutes({
+        startDate: day,
+        endDate: day,
+        completionTimeMinutes: 1440,
+      }),
+    ).toBeUndefined();
+  });
+
+  it("does not take a duration derived from the dates for a time", () => {
+    expect(
+      typedSolveMinutes({
+        startDate: day,
+        endDate: day + 3 * DAY_MS,
+        completionTimeMinutes: 3 * 1440,
+      }),
+    ).toBeUndefined();
+  });
+
+  it("has no time for a solve that stored none", () => {
+    expect(
+      typedSolveMinutes({ startDate: day, endDate: day + DAY_MS }),
+    ).toBeUndefined();
+  });
+
+  it("has no time for a year-only or undated solve", () => {
+    for (const datePrecision of ["year", "unknown"] as const) {
+      expect(
+        typedSolveMinutes({
+          startDate: day,
+          endDate: day,
+          completionTimeMinutes: 200,
+          datePrecision,
+        }),
+      ).toBeUndefined();
+    }
+  });
+
+  it("keeps a stored time on a row without an end date: it has no span to derive from", () => {
+    expect(
+      typedSolveMinutes({ startDate: day, completionTimeMinutes: 200 }),
+    ).toBe(200);
+  });
+
+  it("has no time for a stored number no solve can have taken", () => {
+    for (const completionTimeMinutes of [
+      0,
+      -5,
+      MAX_SOLVE_MINUTES + 1,
+      Number.MAX_VALUE,
+      Number.NaN,
+      Number.POSITIVE_INFINITY,
+    ]) {
+      expect(
+        typedSolveMinutes({
+          startDate: day,
+          endDate: day + DAY_MS,
+          completionTimeMinutes,
+        }),
+      ).toBeUndefined();
+      expect(
+        typedSolveMinutes({ startDate: day, completionTimeMinutes }),
+      ).toBeUndefined();
+    }
   });
 });
