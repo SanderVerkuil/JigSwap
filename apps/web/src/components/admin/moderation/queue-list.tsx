@@ -46,6 +46,7 @@ export function QueueList<T>({
   detailTitle,
   focusDetailToken = 0,
   defaultDetailOpen = false,
+  openDetailToken = 0,
 }: {
   /** The listbox's accessible name (the queue's name). */
   label: string;
@@ -61,9 +62,20 @@ export function QueueList<T>({
   focusDetailToken?: number;
   /** Below lg, open the Sheet on mount (a link straight to an item). */
   defaultDetailOpen?: boolean;
+  /**
+   * Below lg, each change (not the value on mount) opens the Sheet: a link to an item that arrives
+   * while the list is already on screen. The list cannot tell that from its own selection, so the
+   * route decides (use-linked-item.ts); the arrow keys must keep moving the selection without it.
+   */
+  openDetailToken?: number;
 }) {
   const wide = useMinWidth(LG);
   const [sheetOpen, setSheetOpen] = useState(defaultDetailOpen);
+  const [seenOpenToken, setSeenOpenToken] = useState(openDetailToken);
+  if (openDetailToken !== seenOpenToken) {
+    setSeenOpenToken(openDetailToken);
+    if (!wide) setSheetOpen(true);
+  }
   const detailEl = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 

@@ -26,7 +26,13 @@ const ROWS: Row[] = [
 
 // Stands in for the route: owns the selection, renders the selected row's detail with an Approve
 // that removes the row, selects its neighbour and asks for the detail's focus (as decideRow does).
-function Harness({ defaultDetailOpen }: { defaultDetailOpen?: boolean }) {
+function Harness({
+  defaultDetailOpen,
+  openDetailToken,
+}: {
+  defaultDetailOpen?: boolean;
+  openDetailToken?: number;
+}) {
   const [rows, setRows] = useState(ROWS);
   const [selectedId, setSelectedId] = useState<string | null>("a");
   const [focusToken, setFocusToken] = useState(0);
@@ -59,6 +65,7 @@ function Harness({ defaultDetailOpen }: { defaultDetailOpen?: boolean }) {
       detailTitle="Submission"
       focusDetailToken={focusToken}
       defaultDetailOpen={defaultDetailOpen}
+      openDetailToken={openDetailToken}
     />
   );
 }
@@ -175,5 +182,34 @@ describe("QueueList", () => {
     expect(
       screen.getByRole("dialog", { name: "Submission" }).textContent,
     ).toContain("Detail of Alpine Lake");
+  });
+
+  it("below lg opens the sheet when a link arrives while the list is already up", () => {
+    setWide(false);
+    const { rerender } = render(<Harness openDetailToken={3} />);
+    expect(screen.queryByRole("dialog")).toBeNull();
+
+    rerender(<Harness openDetailToken={4} />);
+    expect(
+      screen.getByRole("dialog", { name: "Submission" }).textContent,
+    ).toContain("Detail of Alpine Lake");
+
+    // Dismissing it sticks until the next link.
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+    rerender(<Harness openDetailToken={4} />);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    rerender(<Harness openDetailToken={5} />);
+    expect(screen.getByRole("dialog", { name: "Submission" })).toBeTruthy();
+  });
+
+  it("from lg a link has no sheet to open, even after narrowing the window", () => {
+    setWide(true);
+    const { rerender } = render(<Harness openDetailToken={0} />);
+    rerender(<Harness openDetailToken={1} />);
+    expect(screen.queryByRole("dialog")).toBeNull();
+
+    setWide(false);
+    rerender(<Harness openDetailToken={1} />);
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 });

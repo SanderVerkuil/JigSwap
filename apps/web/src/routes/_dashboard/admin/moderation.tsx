@@ -33,6 +33,7 @@ import {
   UncheckedDetail,
   type UncheckedPhoto,
 } from "@/components/admin/moderation/unchecked-detail";
+import { useLinkedItem } from "@/components/admin/moderation/use-linked-item";
 import {
   usePinnedSelection,
   type PinnedSelection,
@@ -112,14 +113,19 @@ function ModerationPage() {
   ): void => {
     void navigate({ search: update, replace: true, resetScroll: false });
   };
+  // An item the console did not put in the URL itself is a link (say a notification's), and below
+  // lg a link has to open the detail Sheet even when the queue is already on screen.
+  const { linkToken, noteOwnWrite } = useLinkedItem(search.item);
   // Selects a row of `queue`. A no-op once the reviewer has moved to another tab (a decision that
   // resolves after a tab switch must not plant its next item in the new tab).
-  const selectItem = (queue: ModerationTab) => (id: string | null) =>
+  const selectItem = (queue: ModerationTab) => (id: string | null) => {
+    noteOwnWrite(id ?? undefined);
     replaceSearch((prev) =>
       (prev.tab ?? "submissions") === queue
         ? { ...prev, item: id ?? undefined }
         : prev,
     );
+  };
   // A tab switch starts the new tab clean: the item, report and filter belong to the old one.
   const changeTab = (value: string) => {
     const next = validateModerationSearch({ tab: value }).tab;
@@ -590,6 +596,7 @@ function ModerationPage() {
               detailTitle={t("detail.sheetTitle.submissions")}
               focusDetailToken={focusTokens.submissions}
               defaultDetailOpen={itemFor("submissions") !== undefined}
+              openDetailToken={linkToken}
               getId={(submission) => submission._id}
               renderRow={(submission) => (
                 <>
@@ -660,6 +667,7 @@ function ModerationPage() {
               detailTitle={t("detail.sheetTitle.flagged")}
               focusDetailToken={focusTokens.flagged}
               defaultDetailOpen={itemFor("flagged") !== undefined}
+              openDetailToken={linkToken}
               getId={(photo) => photo.imageId}
               renderRow={(photo) => (
                 <>
@@ -729,6 +737,7 @@ function ModerationPage() {
               detailTitle={t("detail.sheetTitle.unchecked")}
               focusDetailToken={focusTokens.unchecked}
               defaultDetailOpen={itemFor("unchecked") !== undefined}
+              openDetailToken={linkToken}
               getId={(photo) => photo.key}
               renderRow={(photo) => (
                 <>
@@ -803,6 +812,7 @@ function ModerationPage() {
               detailTitle={t("detail.sheetTitle.appeals")}
               focusDetailToken={focusTokens.appeals}
               defaultDetailOpen={itemFor("appeals") !== undefined}
+              openDetailToken={linkToken}
               getId={(request) => request.attachmentId}
               renderRow={(request) => (
                 <>

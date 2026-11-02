@@ -136,7 +136,8 @@ function makeRouter(url = "/admin/moderation") {
 async function openConsole(url?: string) {
   const router = makeRouter(url);
   render(<RouterProvider router={router} />);
-  await screen.findByRole("listbox", { name: "Submissions" });
+  // Hidden from the accessibility tree when a link opens the detail Sheet over it.
+  await screen.findByRole("listbox", { name: "Submissions", hidden: true });
   return router;
 }
 
@@ -381,6 +382,71 @@ describe("moderation console: Reject", () => {
     expect(within(dialog).getByRole("alert").textContent).toBe(
       en.admin.moderation.rejectDialog.handledElsewhere,
     );
+  });
+});
+
+describe("moderation console: the detail Sheet below lg", () => {
+  beforeEach(() => {
+    vi.stubGlobal("matchMedia", () => ({
+      matches: false,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }));
+  });
+
+  const sheet = () => screen.queryByRole("dialog", { name: "Submission" });
+  const linkToBusy = (router: ReturnType<typeof makeRouter>) =>
+    act(() =>
+      router.navigate({
+        to: "/admin/moderation",
+        search: { tab: "submissions", item: "b" },
+      } as never),
+    );
+
+  it("opens for a link that arrives while the queue is already on screen", async () => {
+    const router = await openConsole();
+    expect(sheet()).toBeNull();
+
+    await linkToBusy(router);
+
+    await waitFor(() => expect(sheet()?.textContent).toContain("Busy Harbour"));
+  });
+
+  it("opens for a link followed straight to the queue", async () => {
+    await openConsole("/admin/moderation?tab=submissions&item=b");
+    await waitFor(() => expect(sheet()?.textContent).toContain("Busy Harbour"));
+  });
+
+  it("stays closed while the reviewer arrows through the list", async () => {
+    const router = await openConsole();
+    const first = screen.getByRole("option", { name: /Alpine Lake/ });
+    first.focus();
+
+    fireEvent.keyDown(first, { key: "ArrowDown" });
+
+    await waitFor(() =>
+      expect(router.state.location.search).toMatchObject({ item: "b" }),
+    );
+    expect(sheet()).toBeNull();
+  });
+
+  it("does not reopen when a decision lands after the reviewer closed it", async () => {
+    const approving = deferred();
+    convex.mutations = { [APPROVE]: () => approving.promise };
+    const router = await openConsole();
+    fireEvent.click(screen.getByRole("option", { name: /Alpine Lake/ }));
+    await waitFor(() => expect(sheet()).not.toBeNull());
+    fireEvent.click(screen.getByRole("button", { name: "Approve & Publish" }));
+
+    fireEvent.keyDown(sheet()!, { key: "Escape" });
+    await waitFor(() => expect(sheet()).toBeNull());
+    act(() => convex.set({ [PENDING]: [BUSY] }));
+    await act(async () => approving.resolve());
+
+    await waitFor(() =>
+      expect(router.state.location.search).toMatchObject({ item: "b" }),
+    );
+    expect(sheet()).toBeNull();
   });
 });
 
