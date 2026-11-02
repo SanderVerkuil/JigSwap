@@ -5,6 +5,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import {
+  SidebarContent,
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuBadge,
@@ -97,5 +98,29 @@ describe("sidebar group label on the icon rail", () => {
     expect(classes).toContain("group-data-[collapsible=icon]:invisible");
     // Visibility transitions with the fade, so it only switches once the label has faded out.
     expect(classes).toContain("transition-[margin,opacity,visibility]");
+  });
+});
+
+describe("sidebar content on the icon rail", () => {
+  // The rail is the default below 1024px, so a short window (a phone in landscape, a small tablet)
+  // leaves it shorter than its links: they must stay reachable by swipe and wheel, while the
+  // labels stay clipped sideways.
+  it("scrolls vertically without a scrollbar and clips sideways while collapsed", () => {
+    render(
+      <SidebarProvider>
+        <SidebarContent data-testid="content" />
+      </SidebarProvider>,
+    );
+    const classes = classesOf(screen.getByTestId("content"));
+    expect(classes).not.toContain(
+      "group-data-[collapsible=icon]:overflow-hidden",
+    );
+    expect(classes).toContain(
+      "group-data-[collapsible=icon]:overflow-x-hidden",
+    );
+    expect(classes).toContain("group-data-[collapsible=icon]:overflow-y-auto");
+    expect(classes).toContain(
+      "group-data-[collapsible=icon]:[scrollbar-width:none]",
+    );
   });
 });
