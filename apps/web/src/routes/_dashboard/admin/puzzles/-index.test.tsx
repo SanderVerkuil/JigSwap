@@ -32,7 +32,9 @@ vi.mock("@/components/admin/puzzles/puzzle-lifecycle-action", () => ({
 vi.mock("@tanstack/react-router", () => ({
   createFileRoute: () => (options: { component: ComponentType }) => ({
     options,
+    useSearch: () => ({}),
   }),
+  useNavigate: () => () => {},
   Link: ({ children }: { children?: ReactNode }) => <a href="#">{children}</a>,
 }));
 
