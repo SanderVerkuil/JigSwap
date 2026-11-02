@@ -369,25 +369,25 @@ export function notificationAccent(type: string): string {
       return "text-jigsaw-warning";
     case "review_received":
     case "goal_achieved":
-      return "text-yellow-600 dark:text-yellow-400";
+      return "text-jigsaw-warning";
     case "puzzle_favorited":
-      return "text-pink-500";
+      return "text-jigsaw-puzzle";
     case "message_received":
     case "circle_message_received":
-      return "text-blue-500 dark:text-blue-400";
+      return "text-chart-3";
     case "new_follower":
     case "follow_request_received":
     case "household_invite_received":
     case "household_join_request_received":
     case "connection_offer_received":
     case "circle_invite_received":
-      return "text-blue-500 dark:text-blue-400";
+      return "text-chart-3";
     case "admin_proposal_filed":
     case "admin_definition_submitted":
       return "text-primary-text";
-    // Brand violet, matching the What's new feature chip.
+    // Canal green, matching the What's new feature chip.
     case "whats_new":
-      return "text-jigsaw-primary";
+      return "text-primary-text";
     default:
       return "text-primary-text";
   }

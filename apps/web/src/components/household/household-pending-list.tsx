@@ -239,7 +239,6 @@ function RequestRow({
           <AlertDialogTrigger asChild>
             <Button
               size="sm"
-              variant="brand"
               className="pointer-coarse:min-h-11"
               disabled={busy}
               aria-label={t("approveLabel", { name })}

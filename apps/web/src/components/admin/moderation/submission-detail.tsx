@@ -41,7 +41,7 @@ export function SubmissionCover({
         // eslint-disable-next-line @next/next/no-img-element
         <img src={url} alt={title} className="size-full object-cover" />
       ) : (
-        <span className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-jigsaw-primary/15 to-jigsaw-primary-accent/15 text-jigsaw-primary/50">
+        <span className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-jigsaw-primary/15 to-jigsaw-primary-accent/15 text-primary-text/50">
           <Puzzle className="size-1/2" aria-hidden />
         </span>
       )}

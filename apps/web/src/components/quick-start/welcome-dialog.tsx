@@ -91,7 +91,7 @@ export function WelcomeDialogBody({ onClose }: { onClose: () => void }) {
         aria-hidden
         className="bg-jigsaw-primary-tint flex h-28 items-center justify-center"
       >
-        <span className="bg-card text-jigsaw-primary flex size-14 items-center justify-center rounded-2xl shadow-sm">
+        <span className="bg-card text-primary-text flex size-14 items-center justify-center rounded-2xl shadow-sm">
           <Puzzle className="size-7" />
         </span>
       </div>

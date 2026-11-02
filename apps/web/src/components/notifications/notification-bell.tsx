@@ -83,8 +83,7 @@ export function NotificationBell() {
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
             <Badge
-              variant="destructive"
-              className="absolute -right-1 -top-1 h-5 min-w-5 justify-center rounded-full px-1 text-[10px] leading-none tabular-nums"
+              className="bg-jigsaw-primary-accent absolute -top-1 -right-1 h-5 min-w-5 justify-center rounded-full border-transparent px-1 text-[10px] leading-none text-white tabular-nums"
               aria-label={t("unreadCount", { count: unreadCount })}
             >
               {unreadCount > 99 ? "99+" : unreadCount}

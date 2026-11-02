@@ -55,11 +55,7 @@ function CategoriesPage() {
   // actions row), like the collections page — the list keeps the full width.
   usePageHeaderActions(
     () => (
-      <Button
-        variant="brand"
-        size="sm"
-        onClick={() => setDialog({ mode: "create" })}
-      >
+      <Button size="sm" onClick={() => setDialog({ mode: "create" })}>
         <Plus className="h-4 w-4" />
         {t("add")}
       </Button>

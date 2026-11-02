@@ -101,7 +101,7 @@ export function ThreadSubjectAvatar({
 
 // The list pane: loading / error / empty / rows. The page head titles the
 // page and carries the New menu (published by the /messages layout).
-// `guideBeside`: the page shows InboxGuide next to the list from md, so the
+// `guideBeside`: the page shows InboxGuide next to the list from lg, so the
 // empty state leaves its how-to hint to that pane there.
 export function ThreadList({
   activeThreadId,
@@ -188,9 +188,9 @@ function ThreadListBody({
         <EmptyState
           title={t("empty")}
           sub={t("emptyHint")}
-          subClassName={guideBeside ? "md:hidden" : undefined}
+          subClassName={guideBeside ? "lg:hidden" : undefined}
           action={
-            <Button asChild variant="brand">
+            <Button asChild>
               <Link href="/people">
                 <UserRound className="h-4 w-4" />
                 {t("circle.messageMember")}

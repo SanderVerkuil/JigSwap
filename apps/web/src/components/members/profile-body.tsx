@@ -227,7 +227,7 @@ function HeroSection({
             {handle && (
               <span className="inline-flex items-center gap-1">
                 <AtSign className="size-3.5" />
-                <span className="font-mono">{handle}</span>
+                <span>{handle}</span>
               </span>
             )}
             {hero.location && (
@@ -486,7 +486,7 @@ function StorySection({
       <div className="relative">
         <span
           aria-hidden
-          className="font-heading text-jigsaw-primary/10 pointer-events-none absolute -top-6 -left-2 select-none text-8xl leading-none"
+          className="font-heading text-primary-text/10 pointer-events-none absolute -top-6 -left-2 select-none text-8xl leading-none"
         >
           &ldquo;
         </span>
@@ -514,7 +514,7 @@ function StatStrip({ stats }: { stats: UnlockedProfile["stats"] }) {
           key={cell.label}
           className={cn("px-3 text-center", i > 0 && "sm:border-l")}
         >
-          <div className="font-heading text-jigsaw-primary text-4xl leading-none font-bold">
+          <div className="text-primary-text font-sans text-4xl leading-none font-semibold tabular-nums">
             {cell.value.toLocaleString()}
           </div>
           <div className="text-muted-foreground mt-2 text-sm">{cell.label}</div>
@@ -561,7 +561,7 @@ function RecordsRow({ records }: { records: UnlockedProfile["records"] }) {
       {records.hardest && (
         <RecordCard
           icon={Mountain}
-          chipClass="bg-jigsaw-primary/10 text-jigsaw-primary"
+          chipClass="bg-jigsaw-primary/10 text-primary-text"
           label={t("hardestLabel")}
           title={records.hardest.title}
           sub={t("piecesValue", { count: records.hardest.pieceCount })}
@@ -595,9 +595,7 @@ function RecordCard({
         <Icon className="size-5" />
       </div>
       <div className="min-w-0">
-        <div className="text-muted-foreground font-mono text-xs uppercase">
-          {label}
-        </div>
+        <div className="text-muted-foreground text-xs">{label}</div>
         <div className="truncate font-semibold">{title}</div>
         <div className="text-muted-foreground text-sm">{sub}</div>
       </div>
@@ -774,7 +772,7 @@ function InvitedBanner({
   if (kind === "household") {
     return (
       <div className="border-jigsaw-primary/20 bg-jigsaw-primary/5 flex flex-col items-center gap-1 rounded-xl border px-4 py-3 text-center text-sm">
-        <p className="text-jigsaw-primary flex items-center justify-center gap-2 font-medium">
+        <p className="text-primary-text flex items-center justify-center gap-2 font-medium">
           <Sparkles className="size-4 shrink-0" />
           {t("householdInvitedYou", { name })}
         </p>
@@ -783,7 +781,7 @@ function InvitedBanner({
     );
   }
   return (
-    <div className="border-jigsaw-primary/20 bg-jigsaw-primary/5 text-jigsaw-primary flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-center text-sm font-medium">
+    <div className="border-jigsaw-primary/20 bg-jigsaw-primary/5 text-primary-text flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-center text-sm font-medium">
       <Sparkles className="size-4 shrink-0" />
       {t("invitedYou", { name })}
     </div>
@@ -825,7 +823,7 @@ export function ProfileCtaBand({ returnToHref }: { returnToHref?: string }) {
   return (
     <section className="border-border/60 mt-4 border-t">
       <div className="mx-auto flex max-w-3xl flex-col items-center gap-3 px-4 py-14 text-center">
-        <Sparkles className="text-jigsaw-primary size-7" />
+        <Sparkles className="text-primary-text size-7" />
         <h2 className="font-heading text-2xl">{t("ctaTitle")}</h2>
         <p className="text-muted-foreground max-w-md">{t("ctaSub")}</p>
         <Button asChild variant="brand" size="lg" className="mt-1">

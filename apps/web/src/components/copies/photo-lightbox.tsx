@@ -217,7 +217,7 @@ export function PhotoLightbox({
               >
                 <ChevronRight className="h-5 w-5" />
               </button>
-              <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/55 px-2.5 py-1 font-mono text-xs font-semibold text-white">
+              <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/55 px-2.5 py-1 text-xs font-semibold text-white tabular-nums">
                 {t("counter", { current: index + 1, total: count })}
               </span>
             </>
@@ -396,7 +396,7 @@ function PhotoComments({ photoId }: { photoId: Id<"ownedPuzzleImages"> }) {
       <div className="text-muted-foreground mb-3 flex items-center gap-2 text-sm font-semibold">
         <MessageCircle className="h-4 w-4" />
         {t("comments")}
-        <span className="font-mono text-xs">{list.length}</span>
+        <span className="text-xs tabular-nums">{list.length}</span>
       </div>
 
       {/* Composer */}
@@ -420,7 +420,6 @@ function PhotoComments({ photoId }: { photoId: Id<"ownedPuzzleImages"> }) {
           className="flex-1"
         />
         <Button
-          variant="brand"
           onClick={() => void submit()}
           disabled={posting || text.trim().length === 0}
         >

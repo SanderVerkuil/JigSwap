@@ -261,11 +261,7 @@ function ProposalReview({
           >
             {t("reject")}
           </Button>
-          <Button
-            variant="brand"
-            disabled={busy}
-            onClick={() => setConfirmingApprove(true)}
-          >
+          <Button disabled={busy} onClick={() => setConfirmingApprove(true)}>
             {t("approve")}
           </Button>
         </>

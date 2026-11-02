@@ -66,7 +66,7 @@ export function CopyVisibilityControl({
               <Icon
                 className={cn(
                   "mt-0.5 size-4 shrink-0",
-                  selected ? "text-jigsaw-primary" : "text-muted-foreground",
+                  selected ? "text-primary-text" : "text-muted-foreground",
                 )}
               />
               <span className="min-w-0">

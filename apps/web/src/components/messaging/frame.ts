@@ -13,6 +13,7 @@ export const MESSAGES_FRAME_CLASS =
 export const MESSAGES_IMMERSIVE_CLASS =
   "-mx-4 -mt-[18px] -mb-6 flex h-dvh flex-col md:m-0 md:flex-row";
 
-// Desktop list pane beside the thread.
+// List pane beside the thread, from lg: below it the sidebar leaves the thread too narrow,
+// so a tablet shows one pane at a time like a phone.
 export const LIST_PANE_CLASS =
-  "hidden w-[340px] shrink-0 flex-col border-r md:flex xl:w-[360px]";
+  "hidden w-[340px] shrink-0 flex-col border-r lg:flex xl:w-[360px]";

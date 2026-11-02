@@ -18,7 +18,7 @@ function trustLevelKey(
 }
 
 // The profile's key numbers as four centered, hairline-divided columns — big
-// font-heading figures in the brand primary over muted labels, straight on the
+// figures in the primary ink over muted labels, straight on the
 // page ground (no stat cards). The old trust-level meter survives below as a
 // slim centered strip.
 export function ProfileStatsSection({ member }: { member: Member }) {
@@ -69,7 +69,7 @@ export function ProfileStatsSection({ member }: { member: Member }) {
               i === 2 && "sm:border-l",
             )}
           >
-            <div className="font-heading text-jigsaw-primary text-4xl leading-none font-bold">
+            <div className="text-primary-text font-sans text-4xl leading-none font-semibold tabular-nums">
               {item.value}
             </div>
             <div className="text-muted-foreground mt-2 text-sm">
@@ -83,13 +83,13 @@ export function ProfileStatsSection({ member }: { member: Member }) {
       <div className="mx-auto w-full max-w-sm text-center">
         <div className="text-sm font-semibold">
           {t("trustLevel")}:{" "}
-          <span className="text-jigsaw-primary">
+          <span className="text-primary-text">
             {t(`trustLevels.${trustKey}`)}
           </span>
         </div>
         <div className="bg-muted mt-2 h-1.5 w-full overflow-hidden rounded-full">
           <div
-            className="bg-jigsaw-primary h-full rounded-full transition-all duration-300"
+            className="bg-jigsaw-primary h-full rounded-full transition-[width] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]"
             style={{ width: `${trustProgress}%` }}
           />
         </div>

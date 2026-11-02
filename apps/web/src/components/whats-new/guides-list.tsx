@@ -49,7 +49,7 @@ export function GuidesList({
           <section key={area} aria-labelledby={headingId}>
             <h2
               id={headingId}
-              className="text-muted-foreground mb-4 flex items-center gap-3 font-mono text-[11px] font-medium tracking-[0.09em] uppercase"
+              className="font-heading mb-4 flex items-center gap-3 text-lg"
             >
               {t(`areas.${area}`)}
               <span aria-hidden className="bg-border h-px flex-1" />
@@ -99,7 +99,7 @@ function GuideCard({
         <div className="flex min-w-0 flex-1 items-start gap-4">
           <div
             aria-hidden
-            className="bg-jigsaw-primary/10 text-jigsaw-primary dark:bg-jigsaw-primary/20 flex size-10 shrink-0 items-center justify-center rounded-lg dark:text-violet-300 [&>svg]:size-5"
+            className="bg-jigsaw-primary/10 text-primary-text dark:bg-jigsaw-primary/20 flex size-10 shrink-0 items-center justify-center rounded-lg [&>svg]:size-5"
           >
             <Icon />
           </div>
@@ -109,19 +109,19 @@ function GuideCard({
               <h3
                 id={titleId}
                 tabIndex={-1}
-                className="font-heading text-card-foreground leading-tight font-semibold focus-visible:outline-none"
+                className="font-heading text-card-foreground leading-tight focus-visible:outline-none"
               >
                 {t(keys.title)}
               </h3>
               {state.kind === "resume" && (
-                <span className="bg-muted text-muted-foreground rounded-full px-2.5 py-0.5 text-xs font-semibold">
+                <span className="bg-muted text-muted-foreground rounded-md px-2.5 py-0.5 text-xs font-semibold">
                   {t("tour.stepOf", { step: state.step, total: state.total })}
                 </span>
               )}
               {state.kind === "replay" && (
                 <span
                   className={cn(
-                    "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold [&>svg]:size-3",
+                    "inline-flex items-center gap-1 rounded-md px-2.5 py-0.5 text-xs font-semibold [&>svg]:size-3",
                     CATEGORY_META.improvement.className,
                   )}
                 >

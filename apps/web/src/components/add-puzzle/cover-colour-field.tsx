@@ -195,7 +195,7 @@ export function CoverColourField({
                       onSelectPhoto(opt.url);
                     }}
                     className={[
-                      "relative size-11 overflow-hidden rounded-md cursor-pointer shadow-[0_0_0_1px_var(--border)]",
+                      "relative size-11 overflow-hidden rounded-md cursor-pointer border",
                       selected
                         ? "ring-2 ring-foreground"
                         : "ring-2 ring-transparent",
@@ -226,7 +226,7 @@ export function CoverColourField({
               {isBest && (
                 <span
                   aria-hidden
-                  className="absolute -top-2 left-1/2 -translate-x-1/2 inline-flex items-center gap-0.5 rounded-full bg-jigsaw-secondary px-1.5 py-0.5 text-[9px] font-semibold leading-none text-white shadow-sm ring-2 ring-card whitespace-nowrap"
+                  className="absolute -top-2 left-1/2 -translate-x-1/2 inline-flex items-center gap-0.5 rounded-sm bg-jigsaw-secondary px-1.5 py-0.5 text-[9px] font-semibold leading-none text-white ring-2 ring-card whitespace-nowrap"
                 >
                   <Star className="size-2.5" fill="currentColor" />
                   {t("coverBest")}
@@ -246,11 +246,9 @@ export function CoverColourField({
               aria-label={`Cover colour ${i + 1}`}
               aria-pressed={selected}
               onClick={() => onSelectColor(c)}
-              style={{
-                background: `linear-gradient(140deg, ${c}, color-mix(in oklab, ${c}, black 30%))`,
-              }}
+              style={{ background: c }}
               className={[
-                "size-9 rounded-md cursor-pointer shadow-[0_0_0_1px_var(--border)]",
+                "size-9 rounded-md cursor-pointer border",
                 selected ? "ring-2 ring-foreground" : "ring-2 ring-transparent",
               ].join(" ")}
             />

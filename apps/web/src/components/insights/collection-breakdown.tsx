@@ -35,10 +35,10 @@ export interface CollectionBreakdownData {
 
 const PALETTE = [
   "var(--chart-1)",
-  "var(--chart-2)",
   "var(--chart-3)",
   "var(--chart-4)",
   "var(--chart-5)",
+  "var(--chart-2)",
 ];
 
 function hasValues(entries: DistributionEntry[]): boolean {
@@ -68,7 +68,12 @@ function PieceCountChart({ data }: { data: DistributionEntry[] }) {
           allowDecimals={false}
         />
         <ChartTooltip content={<ChartTooltipContent />} />
-        <Bar dataKey="value" fill="var(--color-value)" radius={4} />
+        <Bar
+          dataKey="value"
+          fill="var(--color-value)"
+          radius={4}
+          maxBarSize={28}
+        />
       </BarChart>
     </ChartContainer>
   );
@@ -82,7 +87,7 @@ function BrandChart({ data }: { data: DistributionEntry[] }) {
     [data],
   );
   const config = {
-    value: { label: t("count"), color: "var(--chart-2)" },
+    value: { label: t("count"), color: "var(--chart-1)" },
   } satisfies ChartConfig;
 
   return (
@@ -98,7 +103,12 @@ function BrandChart({ data }: { data: DistributionEntry[] }) {
         />
         <XAxis type="number" hide allowDecimals={false} />
         <ChartTooltip content={<ChartTooltipContent />} />
-        <Bar dataKey="value" fill="var(--color-value)" radius={4}>
+        <Bar
+          dataKey="value"
+          fill="var(--color-value)"
+          radius={4}
+          maxBarSize={28}
+        >
           <LabelList
             dataKey="value"
             position="right"
@@ -127,7 +137,7 @@ function DifficultyChart({ data }: { data: DistributionEntry[] }) {
     >
       <PieChart>
         <ChartTooltip content={<ChartTooltipContent nameKey="label" />} />
-        <Pie data={data} dataKey="value" nameKey="label" innerRadius={50}>
+        <Pie data={data} dataKey="value" nameKey="label" innerRadius={68}>
           {data.map((entry, i) => (
             <Cell key={entry.label} fill={PALETTE[i % PALETTE.length]} />
           ))}

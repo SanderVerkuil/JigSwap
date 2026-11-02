@@ -333,7 +333,7 @@ function EditProfileFormLoaded({
         </p>
         <p className="text-muted-foreground truncate text-xs">
           {t("slug.preview")}{" "}
-          <span className="font-mono">
+          <span className="font-medium">
             {origin}/members/{slugPreviewHandle}
           </span>
         </p>

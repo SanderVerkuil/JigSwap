@@ -131,7 +131,6 @@ function AddPuzzlesToCollectionPage() {
             {tCommon("cancel")}
           </Button>
           <Button
-            variant="brand"
             size="sm"
             onClick={handleAddSelectedPuzzles}
             disabled={selectedCount === 0}

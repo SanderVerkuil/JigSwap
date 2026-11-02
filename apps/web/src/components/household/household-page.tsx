@@ -109,7 +109,6 @@ export function NoHousehold({
           sub={t("empty.sub")}
           action={
             <Button
-              variant="brand"
               data-tour="household-main"
               data-tour-action=""
               disabled={create.isPending}
@@ -150,7 +149,6 @@ export function NoHousehold({
             <div className="flex shrink-0 flex-wrap gap-2">
               <Button
                 size="sm"
-                variant="brand"
                 className="pointer-coarse:min-h-11"
                 disabled={accept.isPending}
                 onClick={() => accept.mutate({ inviteId: invite.inviteId })}
@@ -237,7 +235,6 @@ export function HouseholdDetails({
       actions:
         isAdmin && !isMobile ? (
           <Button
-            variant="brand"
             data-tour="household-invite"
             onClick={() => setInviteOpen(true)}
           >
@@ -568,7 +565,6 @@ function SwitchInviteCard({
       <div className="flex shrink-0 flex-wrap gap-2">
         <Button
           size="sm"
-          variant="brand"
           className="pointer-coarse:min-h-11"
           disabled={busy}
           onClick={() => setConfirmOpen(true)}

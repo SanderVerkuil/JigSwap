@@ -269,14 +269,14 @@ function CollectionDetailPage() {
       {/* Hero — open block, not a boxed card. */}
       <div className="flex flex-wrap items-start gap-5">
         <CoverChip
-          color={collection.color || "#6048e8"}
+          color={collection.color || "var(--jigsaw-primary)"}
           icon={FolderOpen}
           emoji={collection.icon || undefined}
           size={96}
         />
         <div className="min-w-0 flex-1 space-y-3">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="font-heading text-2xl font-bold tracking-tight">
+            <h1 className="font-heading text-2xl font-bold">
               {collection.name}
             </h1>
             <Badge
@@ -296,7 +296,7 @@ function CollectionDetailPage() {
             </p>
           )}
           <div className="flex flex-wrap items-center gap-2.5">
-            <Button variant="brand" asChild>
+            <Button asChild>
               <Link href={`/collections/${id}/add-puzzles`}>
                 <Plus className="h-4 w-4" />
                 {t("addPuzzles")}
@@ -348,7 +348,7 @@ function CollectionDetailPage() {
       {/* Section head */}
       <div className="flex items-center justify-between border-b pb-2.5">
         <h2 className="font-heading flex items-center gap-2 text-lg font-bold">
-          <Puzzle aria-hidden className="text-jigsaw-primary h-5 w-5" />
+          <Puzzle aria-hidden className="text-primary-text h-5 w-5" />
           {t("puzzlesInCollection")}
         </h2>
         <span className="text-muted-foreground text-sm">
@@ -362,7 +362,7 @@ function CollectionDetailPage() {
           title={t("noPuzzlesInCollection")}
           sub={t("addPuzzlesFirst")}
           action={
-            <Button variant="brand" asChild>
+            <Button asChild>
               <Link href={`/collections/${id}/add-puzzles`}>
                 <Plus className="h-4 w-4" />
                 {t("addPuzzles")}

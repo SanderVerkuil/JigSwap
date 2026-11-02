@@ -185,7 +185,7 @@ export function HouseholdLinkInviteCard({
         className="mb-6 flex w-full flex-col gap-3 rounded-xl border px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
       >
         <div className="flex items-start gap-2.5">
-          <Home className="text-jigsaw-primary mt-0.5 size-4 shrink-0" />
+          <Home className="text-primary-text mt-0.5 size-4 shrink-0" />
           <div className="flex flex-col gap-1">
             <h2 id={headingId} className="text-sm font-medium">
               {t("householdAskPendingTitle", { name: inviterName })}
@@ -253,7 +253,7 @@ export function HouseholdLinkInviteCard({
       className="border-jigsaw-primary/20 bg-jigsaw-primary/5 mb-6 flex w-full flex-col gap-3 rounded-xl border px-4 py-4"
     >
       <div className="flex items-start gap-2.5">
-        <Home className="text-jigsaw-primary mt-0.5 size-4 shrink-0" />
+        <Home className="text-primary-text mt-0.5 size-4 shrink-0" />
         <div className="flex flex-col gap-1">
           <h2 id={headingId} className="text-sm font-medium">
             {t("householdLinkTitle", { name: inviterName })}

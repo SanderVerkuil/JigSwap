@@ -201,7 +201,7 @@ function CircleInvitationRow({
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-2 sm:justify-end">
-        <Button size="sm" variant="brand" disabled={busy} onClick={onAccept}>
+        <Button size="sm" disabled={busy} onClick={onAccept}>
           <Check className="h-4 w-4" />
           {t("invitations.accept")}
         </Button>

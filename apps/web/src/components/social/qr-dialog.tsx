@@ -76,7 +76,7 @@ function QrDialogContent(props: QrDialogProps & { onNavigate?: () => void }) {
       <div className="flex max-w-sm flex-col items-center gap-4 text-center">
         <h2 className="font-heading text-xl">{t("needUsernameTitle")}</h2>
         <p className="text-muted-foreground text-sm">{t("needUsernameBody")}</p>
-        <Button asChild variant="brand">
+        <Button asChild>
           <Link to="/profile" onClick={props.onNavigate}>
             {t("openSettings")}
           </Link>
@@ -111,9 +111,7 @@ function QrDialogContent(props: QrDialogProps & { onNavigate?: () => void }) {
         )}
       </div>
       {displayUrl ? (
-        <span className="text-muted-foreground font-mono text-sm">
-          {displayUrl}
-        </span>
+        <span className="text-muted-foreground text-sm">{displayUrl}</span>
       ) : null}
       <p className="text-muted-foreground text-sm">{t("scanHint")}</p>
       <div className="flex gap-3">
@@ -123,7 +121,6 @@ function QrDialogContent(props: QrDialogProps & { onNavigate?: () => void }) {
         </Button>
         {canShare ? (
           <Button
-            variant="brand"
             disabled={!qrUrl}
             onClick={() => {
               if (qrUrl) void navigator.share({ url: qrUrl });

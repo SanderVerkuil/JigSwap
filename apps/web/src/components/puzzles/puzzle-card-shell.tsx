@@ -56,15 +56,15 @@ export interface PuzzleCardShellProps {
 function difficultyColor(difficulty?: string | null) {
   switch (difficulty) {
     case "easy":
-      return "bg-green-100 text-green-800";
+      return "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200";
     case "medium":
-      return "bg-yellow-100 text-yellow-800";
+      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-200";
     case "hard":
-      return "bg-orange-100 text-orange-800";
+      return "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200";
     case "expert":
-      return "bg-red-100 text-red-800";
+      return "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200";
     default:
-      return "bg-gray-100 text-gray-800";
+      return "bg-muted text-muted-foreground";
   }
 }
 
@@ -104,7 +104,7 @@ export function PuzzleCardShell({
   };
 
   const renderImage = () => {
-    // Box art is optional; when missing, show a warm gradient + puzzle glyph
+    // Box art is optional; when missing, show a flat tint + puzzle glyph
     // rather than a broken <img> pointing at a non-existent placeholder file.
     // This is THE unified no-image fallback both contexts share.
     const inner = (
@@ -114,13 +114,12 @@ export function PuzzleCardShell({
             src={puzzle.imageUrl}
             alt={puzzle.title || "Puzzle"}
             fill
-            className={cn(
-              "transition-transform group-hover:scale-105",
-              imageFit === "contain" ? "object-contain" : "object-cover",
-            )}
+            className={
+              imageFit === "contain" ? "object-contain" : "object-cover"
+            }
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-jigsaw-primary/15 to-jigsaw-primary-accent/15 text-jigsaw-primary/50">
+          <div className="bg-muted text-primary-text/50 absolute inset-0 flex items-center justify-center">
             <Puzzle className="h-1/3 w-1/3" />
             {imageChecking && <BoxArtCheckingLabel />}
           </div>
@@ -221,14 +220,13 @@ export function PuzzleCardShell({
       </>
     );
 
-  // p-0/gap-0/overflow-hidden so the cover (or its gradient placeholder) sits
+  // p-0/gap-0/overflow-hidden so the cover (or its placeholder) sits
   // flush against the card's top edge instead of inset by the Card's default
   // padding; renderContent supplies its own p-4.
   const card = (
     <Card
       className={cn(
-        // `group` so the cover zooms on hover of the WHOLE card (the stretched-link
-        // overlay covers the image, so image-only :hover no longer fires).
+        // `group` so the corner chips brighten on hover of the WHOLE card.
         "group relative h-full gap-0 overflow-hidden p-0",
         selected && "ring-2 ring-primary",
         (href || selectable) && "cursor-pointer",

@@ -45,7 +45,7 @@ export function hrefParts(href: string): {
 // Same tones as the /trades status pill.
 const STATUS_TONES: Partial<Record<NotificationExchangeStatus, string>> = {
   proposed: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  accepted: "bg-jigsaw-primary/10 text-jigsaw-primary",
+  accepted: "bg-jigsaw-primary/10 text-primary-text",
   disputed: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
   completed: "bg-green-500/15 text-green-700 dark:text-green-400",
 };
@@ -164,12 +164,6 @@ export function NotificationItem({
         unavailable && "opacity-70",
       )}
     >
-      {unread && (
-        <span
-          aria-hidden="true"
-          className="bg-primary absolute inset-y-0 left-0 w-0.5"
-        />
-      )}
       <NotificationActor
         actors={view.actors}
         actorCount={view.actorCount}

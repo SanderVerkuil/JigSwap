@@ -167,7 +167,7 @@ export function QuickStartDonePanel({
     <div className="flex flex-col items-center gap-4 py-10 text-center">
       <span aria-hidden className="relative flex size-14">
         <span className="bg-jigsaw-primary/30 absolute inset-0 rounded-2xl motion-safe:animate-ping motion-safe:[animation-iteration-count:1]" />
-        <span className="bg-jigsaw-primary-tint text-jigsaw-primary motion-safe:animate-in motion-safe:zoom-in-90 relative flex size-14 items-center justify-center rounded-2xl">
+        <span className="bg-jigsaw-primary-tint text-primary-text motion-safe:animate-in motion-safe:zoom-in-90 relative flex size-14 items-center justify-center rounded-2xl">
           <Puzzle className="size-7" />
         </span>
       </span>

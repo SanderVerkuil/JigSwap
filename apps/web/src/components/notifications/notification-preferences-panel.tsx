@@ -96,7 +96,7 @@ export function NotificationPreferencesPanel() {
           {t("channelsNote")}
         </p>
         <nav aria-label={t("jumpTo")}>
-          <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
+          <p className="text-muted-foreground mb-2 text-xs font-medium">
             {t("jumpTo")}
           </p>
           <ul className="flex flex-col gap-1.5">

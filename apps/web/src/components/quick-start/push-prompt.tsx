@@ -68,7 +68,7 @@ export function PushPromptCard({
   return (
     <div className="bg-card motion-safe:animate-in motion-safe:fade-in-0 flex flex-col gap-3 rounded-xl border p-4">
       <p className="flex items-center gap-2 text-sm font-medium">
-        <Bell aria-hidden className="text-jigsaw-primary size-4 shrink-0" />
+        <Bell aria-hidden className="text-primary-text size-4 shrink-0" />
         {t("title")}
       </p>
       <div className="flex flex-wrap gap-2">

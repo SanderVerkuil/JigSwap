@@ -34,12 +34,10 @@ export function InboxGuide() {
       <ul role="list" className="flex flex-col gap-4">
         {WAYS.map(({ key, Icon }) => (
           <li key={key} className="flex items-start gap-3">
-            <span
+            <Icon
               aria-hidden
-              className="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full"
-            >
-              <Icon className="size-4" />
-            </span>
+              className="text-muted-foreground mt-0.5 size-4 shrink-0"
+            />
             <p className="text-muted-foreground text-sm">
               <span className="text-foreground font-medium">
                 {t(`guide.${key}.title`)}

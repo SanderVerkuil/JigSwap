@@ -22,13 +22,13 @@ export function LivePreviewCard(props: LivePreviewProps) {
         backgroundSize: "cover",
       }
     : {
-        background: `linear-gradient(150deg, ${props.coverColor}, color-mix(in oklab, ${props.coverColor}, black 35%))`,
+        background: props.coverColor,
       };
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+    <div className="overflow-hidden rounded-lg border border-border bg-card">
       <div className="relative aspect-square w-full" style={cover}>
         {props.available && (
-          <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-jigsaw-secondary px-2.5 py-1 text-xs font-semibold text-white">
+          <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-md bg-jigsaw-secondary px-2.5 py-1 text-xs font-semibold text-white">
             <span className="size-1.5 rounded-full bg-white" />{" "}
             {t("previewAvailable")}
           </span>

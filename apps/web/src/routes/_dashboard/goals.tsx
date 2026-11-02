@@ -110,7 +110,6 @@ function GoalsPage() {
           {headerMeta}
         </span>
         <Button
-          variant="brand"
           size="sm"
           onClick={() => setOpen(true)}
           data-tour="goals-create"
@@ -207,7 +206,7 @@ function GoalsPage() {
           title={t("empty")}
           sub={t("emptyHint")}
           action={
-            <Button variant="brand" onClick={() => setOpen(true)}>
+            <Button onClick={() => setOpen(true)}>
               <Plus className="h-4 w-4" />
               {t("create")}
             </Button>
@@ -266,7 +265,7 @@ function GoalTile({ goal }: { goal: GoalRow }) {
             "inline-flex size-9 shrink-0 items-center justify-center rounded-full",
             goal.isAchieved
               ? "bg-jigsaw-secondary/15 text-jigsaw-secondary"
-              : "bg-jigsaw-primary/10 text-jigsaw-primary",
+              : "bg-jigsaw-primary/10 text-primary-text",
           )}
         >
           <GoalIcon className="size-[17px]" />
@@ -290,10 +289,10 @@ function GoalTile({ goal }: { goal: GoalRow }) {
           </div>
         </div>
         <div className="text-right">
-          <div className="font-heading text-xl leading-none font-bold">
+          <div className="font-sans text-xl leading-none font-semibold tabular-nums">
             {pct}%
           </div>
-          <div className="text-muted-foreground font-mono text-xs">
+          <div className="text-muted-foreground text-xs tabular-nums">
             {t("progressShort", {
               current: goal.currentCompletions,
               target: goal.targetCompletions,
@@ -304,7 +303,7 @@ function GoalTile({ goal }: { goal: GoalRow }) {
       <div className="bg-muted h-2.5 w-full overflow-hidden rounded-full">
         <div
           className={cn(
-            "h-full rounded-full transition-all",
+            "h-full rounded-full transition-[width] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]",
             goal.isAchieved ? "bg-jigsaw-secondary" : "bg-jigsaw-primary",
           )}
           style={{ width: `${pct}%` }}

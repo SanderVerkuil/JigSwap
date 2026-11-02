@@ -48,7 +48,7 @@ import {
 } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Puzzle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
@@ -397,13 +397,13 @@ function AddPuzzlePage() {
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-2xl">
-            🧩
+          <div className="flex h-full w-full items-center justify-center">
+            <Puzzle aria-hidden className="text-primary-text size-6" />
           </div>
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="font-mono text-[10px] uppercase tracking-[0.09em] text-muted-foreground">
+        <div className="text-xs text-muted-foreground">
           {t("chooser.chosenPuzzle")}
         </div>
         <div className="mt-1 truncate font-semibold">
@@ -983,9 +983,7 @@ function AddPuzzlePage() {
 
   const previewColumn = (
     <>
-      <div className="font-mono text-[10px] uppercase tracking-[0.09em] text-muted-foreground">
-        {t("livePreview")}
-      </div>
+      <div className="text-xs text-muted-foreground">{t("livePreview")}</div>
       <LivePreviewCard
         title={specificPuzzle?.title ?? form.title}
         brand={
