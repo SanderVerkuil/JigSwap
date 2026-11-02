@@ -146,6 +146,10 @@ const buttonNamed = (name: string) =>
     (button) => button.textContent?.trim() === name,
   );
 
+// The whole row is one toggle; it is the only expandable control until the row is open.
+const rowToggle = () =>
+  document.querySelector<HTMLButtonElement>("button[aria-expanded]");
+
 const confirmDialog = () => document.querySelector('[role="alertdialog"]');
 
 let container: HTMLDivElement | undefined;
@@ -166,9 +170,9 @@ const openExchange = async (
   await act(async () => {
     root?.render(<RouterProvider router={router} />);
   });
-  await vi.waitFor(() => expect(buttonNamed(en.common.view)).toBeDefined());
+  await vi.waitFor(() => expect(rowToggle()).not.toBeNull());
   await act(async () => {
-    buttonNamed(en.common.view)?.click();
+    rowToggle()?.click();
   });
 };
 
