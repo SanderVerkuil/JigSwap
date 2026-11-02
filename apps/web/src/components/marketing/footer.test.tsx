@@ -16,10 +16,8 @@ import { MarketingFooter } from "./footer";
 const consent = vi.hoisted(() => ({ openCookieSettings: vi.fn() }));
 vi.mock("@/lib/analytics-consent", () => consent);
 
-const startHref = vi.hoisted(() => ({ current: "/sign-up" }));
-vi.mock("@/components/marketing/use-start-href", () => ({
-  useStartHref: () => startHref.current,
-}));
+const auth = vi.hoisted(() => ({ isAuthenticated: false }));
+vi.mock("convex/react", () => ({ useConvexAuth: () => auth }));
 
 vi.mock("@/compat/link", () => ({
   Link: ({ href, ...rest }: ComponentProps<"a"> & { href: string }) => (
@@ -52,7 +50,7 @@ afterEach(cleanup);
 
 describe("MarketingFooter start link", () => {
   afterEach(() => {
-    startHref.current = "/sign-up";
+    auth.isAuthenticated = false;
   });
 
   it("invites a visitor to start", () => {
@@ -63,7 +61,7 @@ describe("MarketingFooter start link", () => {
   });
 
   it("takes a member to their dashboard, under that name", () => {
-    startHref.current = "/dashboard";
+    auth.isAuthenticated = true;
     renderFooter();
     expect(screen.queryByRole("link", { name: "Start trading" })).toBeNull();
     expect(

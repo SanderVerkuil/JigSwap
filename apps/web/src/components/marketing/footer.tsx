@@ -1,6 +1,6 @@
 import { Link } from "@/compat/link";
 import { Container } from "@/components/marketing/container";
-import { useStartHref } from "@/components/marketing/use-start-href";
+import { useStartLink } from "@/components/marketing/use-start-link";
 import { Wordmark } from "@/components/marketing/wordmark";
 import { openCookieSettings } from "@/lib/analytics-consent";
 import { Link as RouterLink } from "@tanstack/react-router";
@@ -16,7 +16,7 @@ const linkCls =
 // Four-column marketing footer: brand blurb + Product / Community / Legal.
 export function MarketingFooter() {
   const t = useTranslations("marketing");
-  const startHref = useStartHref();
+  const start = useStartLink();
 
   const col = (title: string, links: FooterLink[], extra?: React.ReactNode) => (
     <div className="flex flex-col gap-3 pointer-coarse:gap-0">
@@ -47,14 +47,7 @@ export function MarketingFooter() {
             { href: "/catalog", label: t("nav.catalog") },
             { href: "/features", label: t("nav.features") },
             { href: "/docs", label: t("nav.docs") },
-            // A member isn't asked to start: this is their way back in.
-            {
-              href: startHref,
-              label:
-                startHref === "/dashboard"
-                  ? t("nav.dashboard")
-                  : t("nav.startTrading"),
-            },
+            start,
           ])}
           {col(t("footer.community"), [
             { href: "/about", label: t("nav.about") },

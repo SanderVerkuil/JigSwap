@@ -19,8 +19,10 @@ vi.mock("@/compat/link", () => ({
     <a href={href} {...rest} />
   ),
 }));
-vi.mock("@/components/marketing/use-start-href", () => ({
-  useStartHref: () => "/sign-up",
+const auth = vi.hoisted(() => ({ isAuthenticated: false }));
+vi.mock("convex/react", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("convex/react")>()),
+  useConvexAuth: () => auth,
 }));
 vi.mock("next-themes", () => ({
   useTheme: () => ({ resolvedTheme: "light" }),
@@ -102,7 +104,10 @@ describe("toPlankBox", () => {
 });
 
 describe("Hero", () => {
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    auth.isAuthenticated = false;
+  });
 
   // Answers the hero's Convex reads: the platform count and one member's avatar. The sample
   // plank's puzzles stay unloaded, as on a server render.
@@ -164,6 +169,22 @@ describe("Hero", () => {
     expect(stacks).toHaveLength(1);
     // An inline display would beat the class that hides it.
     expect(stacks[0].style.display).toBe("");
+  });
+
+  it("invites a visitor to start", () => {
+    renderHero();
+    expect(
+      screen.getByRole("link", { name: "Start trading" }).getAttribute("href"),
+    ).toBe("/sign-up");
+  });
+
+  it("takes a member to their dashboard, under that name", () => {
+    auth.isAuthenticated = true;
+    renderHero();
+    expect(screen.queryByRole("link", { name: "Start trading" })).toBeNull();
+    expect(
+      screen.getByRole("link", { name: "Dashboard" }).getAttribute("href"),
+    ).toBe("/dashboard");
   });
 
   it("sets the lead in the body colour, which holds its contrast over the shelf art", () => {

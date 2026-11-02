@@ -2,7 +2,7 @@ import { Link } from "@/compat/link";
 import { Container } from "@/components/marketing/container";
 import { PieceMotif } from "@/components/marketing/piece-motif";
 import { Section } from "@/components/marketing/section";
-import { useStartHref } from "@/components/marketing/use-start-href";
+import { useStartLink } from "@/components/marketing/use-start-link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { useTranslations } from "use-intl";
@@ -12,7 +12,7 @@ import { useTranslations } from "use-intl";
 // the deep 300 step to keep the panel — and the white text on it — at AA.
 export function FinalCTA() {
   const t = useTranslations("marketing");
-  const startHref = useStartHref();
+  const start = useStartLink();
   return (
     <Section>
       <Container>
@@ -41,8 +41,8 @@ export function FinalCTA() {
                 className="h-11 px-6 text-[15px] bg-white text-mk-violet-600 dark:text-mk-violet-300 hover:bg-white/90"
                 asChild
               >
-                <Link href={startHref}>
-                  {t("nav.startTrading")}
+                <Link href={start.href}>
+                  {start.label}
                   <ArrowRight size={17} />
                 </Link>
               </Button>
